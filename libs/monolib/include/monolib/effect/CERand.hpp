@@ -1,0 +1,80 @@
+#pragma once
+
+#include <types.h>
+#include "monolib/math.hpp"
+#include <climits>
+
+class IRandomizer {
+public:
+    virtual u32 rand();        //0x8
+    virtual float randF();     //0xC
+    virtual float randFHalf(); //0x10
+    virtual float randSign();  //0x14
+};
+
+//Consider maybe omitting the unused constructors/destructors?
+class CERandomizer : public IRandomizer {
+public:
+    ~CERandomizer(){}
+
+    virtual u32 rand(){
+        return ml::math::mtRand();
+    }
+
+    virtual float randF(){
+        return (float)ml::math::mtRand()/INT_MAX;
+    }
+
+    virtual float randFHalf(){
+        return ((float)ml::math::mtRand()/INT_MAX) - 0.5f;
+    }
+
+    virtual float randSign(){
+        return (ml::math::mtRand() % 2 != 0) ? 1.0f : -1.0f;
+    }
+};
+
+class CERandomizerSimple : public IRandomizer {
+public:
+    CERandomizerSimple();
+    ~CERandomizerSimple(){}
+
+    virtual u32 rand(){
+        u32 temp = seed1 * 673 + 945;
+        seed1 = (temp / 10) % 100003;
+        return temp % 10007;
+    }
+
+    virtual float randF(){
+        return rand()/10006.0f;
+    }
+
+    virtual float randFHalf(){
+        return (rand()/10006.0f) - 0.5f;
+    }
+
+    virtual float randSign(){
+        return (rand() % 2 != 0) ? 1.0f : -1.0f;
+    }
+
+    void create(int);
+    void execute(float);
+
+private:
+    u16 seed1; //0x4
+    u16 seed2; //0x6
+    float age; //0x8
+};
+
+class CERand {
+public:
+    static void init();
+    static void execute(float);
+    static void randVec(ml::CVec3*);
+    static void randSignVec(ml::CVec3*);
+
+    static const int defaultSeed = 14992;
+};
+
+extern CERandomizer ceRandomizer;
+extern CERandomizerSimple ceRandomizerSimple;

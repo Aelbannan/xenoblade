@@ -366,6 +366,12 @@ bool CLibHbm::OnFileEvent(CEventFile* pFile){
     return true;
 }
 
+//Doesn't work as an inline :/
+#define ADD_CENTERED_TEX(draw, x, y, width, height, texWidth, texHeight) \
+draw.add((CDeviceVI::getRenderModeObj()->fbWidth - width + x*2)/2, (CDeviceVI::getRenderModeObj()->efbHeight - height + y*2)/2, 0, 0);                \
+draw.add((CDeviceVI::getRenderModeObj()->fbWidth + width + x*2)/2, (CDeviceVI::getRenderModeObj()->efbHeight - height + y*2)/2, texWidth,0);          \
+draw.add((CDeviceVI::getRenderModeObj()->fbWidth - width + x*2)/2, (CDeviceVI::getRenderModeObj()->efbHeight + height + y*2)/2, 0, texHeight);        \
+draw.add((CDeviceVI::getRenderModeObj()->fbWidth + width + x*2)/2, (CDeviceVI::getRenderModeObj()->efbHeight + height + y*2)/2, texWidth, texHeight); \
 
 void CLibHbm::renderHbmstopIcon(){
     if(spInstance == nullptr) return;
@@ -420,7 +426,7 @@ void CLibHbm::renderHbmstopIcon(){
     draw.setFlag4();
     draw.setTex(&sTplTexObj, tplData->imageHeader.width, tplData->imageHeader.height);
 
-    draw.begin(PRIM_6, 4);
+    draw.begin(PRIM_TRIANGLESTRIP, 4);
 
     float scale;
 
@@ -430,19 +436,9 @@ void CLibHbm::renderHbmstopIcon(){
         scale = (tplData->imageHeader.width * CDeviceVI::VI_WIDTH_16_9) / CDeviceVI::SCREEN_WIDTH;
     }
 
-    int iVar6 = scale;
+    int width = scale;
 
-    //Send the four points for where to draw the image
-    //TODO: this should be an inline/macro
-
-    draw.add((CDeviceVI::getRenderModeObj()->fbWidth - iVar6) / 2,
-((CDeviceVI::getRenderModeObj()->efbHeight - tplData->imageHeader.height) - 220)/2, 0, 0);
-    draw.add((iVar6 + CDeviceVI::getRenderModeObj()->fbWidth) / 2,
-    ((CDeviceVI::getRenderModeObj()->efbHeight - tplData->imageHeader.height) - 220)/2, tplData->imageHeader.width,0);
-    draw.add((CDeviceVI::getRenderModeObj()->fbWidth - iVar6) / 2,
-    ((tplData->imageHeader.height + CDeviceVI::getRenderModeObj()->efbHeight) - 220)/2, 0, tplData->imageHeader.height);
-    draw.add((iVar6 + CDeviceVI::getRenderModeObj()->fbWidth) / 2,
-    (((tplData->imageHeader.height + CDeviceVI::getRenderModeObj()->efbHeight) - 220)/2), tplData->imageHeader.width,tplData->imageHeader.height);
+    ADD_CENTERED_TEX(draw, 0, -110, width, tplData->imageHeader.height, tplData->imageHeader.width, tplData->imageHeader.height);
 
     draw.end();
 

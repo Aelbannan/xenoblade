@@ -89,15 +89,15 @@ void CDrawGX::setPrimType(u32 primType){
     mFlags = (u16)(mFlags & ~FLAG_INITIALIZED);
 
     switch(primType){
-        case PRIM_1:
+        case PRIM_POINTS:
             mPrimitive = GX_POINTS;
             mFlags |= FLAG_16;
             break;
-        case PRIM_2:
+        case PRIM_LINES:
             mPrimitive = GX_LINES;
             mFlags |= FLAG_LINES;
             break;
-        case PRIM_9:
+        case PRIM_QUADS:
             mPrimitive = GX_QUADS;
             mFlags |= FLAG_20;
             break;
@@ -109,27 +109,27 @@ void CDrawGX::setPrimType(u32 primType){
             mPrimitive = GX_LINESTRIP;
             mFlags |= (FLAG_19 | FLAG_LINES);
             break;
-        case PRIM_6:
+        case PRIM_TRIANGLESTRIP:
             mPrimitive = GX_TRIANGLESTRIP;
             mFlags |= FLAG_19;
             break;
-        case PRIM_7:
+        case PRIM_TRIANGLEFAN:
             mPrimitive = GX_TRIANGLEFAN;
             mFlags |= FLAG_19;
             break;
-        case PRIM_3:
+        case PRIM_LINES_DIRECT_COLOR:
             mPrimitive = GX_LINES;
             mFlags |= (FLAG_DIRECT_COLOR | FLAG_LINES);
             break;
-        case PRIM_5:
+        case PRIM_LINESTRIP_DIRECT_COLOR:
             mPrimitive = GX_LINESTRIP;
             mFlags |= (FLAG_19 | FLAG_DIRECT_COLOR | FLAG_LINES);
             break;
-        case PRIM_8:
+        case PRIM_TRIANGLESTRIP_DIRECT_COLOR:
             mPrimitive = GX_TRIANGLESTRIP;
             mFlags |= (FLAG_19 | FLAG_DIRECT_COLOR);
             break;
-        case PRIM_0:
+        case PRIM_REPEAT:
             break;
     }
 }
@@ -205,13 +205,13 @@ void CDrawGX::begin(u32 primType, u32 r5){
     }
 
     switch(primType){
-        case PRIM_1:
+        case PRIM_POINTS:
             mVerts = r5;
             break;
-        case PRIM_2:
+        case PRIM_LINES:
             mVerts = r5 * 2;
             break;
-        case PRIM_9:
+        case PRIM_QUADS:
             mVerts = r5 * 4;
             break;
         case PRIM_10:
@@ -220,22 +220,22 @@ void CDrawGX::begin(u32 primType, u32 r5){
         case PRIM_4:
             mVerts = r5;
             break;
-        case PRIM_6:
+        case PRIM_TRIANGLESTRIP:
             mVerts = r5;
             break;
-        case PRIM_7:
+        case PRIM_TRIANGLEFAN:
             mVerts = r5;
             break;
-        case PRIM_3:
+        case PRIM_LINES_DIRECT_COLOR:
             mVerts = r5 * 2;
             break;
-        case PRIM_5:
+        case PRIM_LINESTRIP_DIRECT_COLOR:
             mVerts = r5;
             break;
-        case PRIM_8:
+        case PRIM_TRIANGLESTRIP_DIRECT_COLOR:
             mVerts = r5;
             break;
-        case PRIM_0:
+        case PRIM_REPEAT:
             break;
     }
 
@@ -326,6 +326,7 @@ void CDrawGX::add(s16 x, s16 y){
 
 void CDrawGX::end(){
     if(mVertCount != 0 && mPrimitive != 0){
+        GXEnd();
         mVertCount = 0;
     }
 }
@@ -334,7 +335,7 @@ void CDrawGX::renderRect(const ml::CRect16& r4){
     setFlag(FLAG_3, false);
     setFlag(FLAG_1, false);
 
-    begin(PRIM_6, 4);
+    begin(PRIM_TRIANGLESTRIP, 4);
 
     add(r4.mPos.x,r4.mPos.y);
     add(r4.mPos.x + r4.mSize.x,r4.mPos.y);
@@ -344,62 +345,95 @@ void CDrawGX::renderRect(const ml::CRect16& r4){
     end();
 }
 
-void CDrawGX::renderCube(const ml::CVec3& r4, const ml::CVec3& r5){
-    //Sides
-    begin(PRIM_6, 10);
+/*
+Renders a box given two opposite corner points.
+It splits it into 3 triangle strips, with 1 for the top/bottom
+faces, and 2 more for the sides. The following diagram shows
+the order of the points used in the main strip (A to H):
 
-    add(r4);
-    add(ml::CVec3(r5.x, r4.y, r4.z));
-    add(ml::CVec3(r4.x, r5.y, r4.z));
-    add(ml::CVec3(r5.x, r5.y, r4.z));
-    add(ml::CVec3(r4.x, r5.y, r5.z));
-    add(ml::CVec3(r5.x, r5.y, r5.z));
-    add(ml::CVec3(r4.x, r4.y, r5.z));
-    add(ml::CVec3(r5.x, r4.y, r5.z));
-    add(r4);
-    add(ml::CVec3(r5.x, r4.y, r4.z));
+     E------F
+    /|     /|
+   C------D |
+   | |    | |
+   | G----|-H
+   |/     |/
+   A------B
+   
+The given corner points p1 and p2, representing (0,0,0) and (1,1,1),
+are A and F respectively, with all other points being derived from them.
+   
+Triangles:
+   1st strip:
+   Front: ABC, BCD
+   Top: CDE, DEF
+   Back: EFG, FGH
+   Bottom: GHA, HAB
+   
+   2nd strip:
+   Left: ACG, CGE
+   
+   3rd strip:
+   Right: DBF, BFH
+*/
+void CDrawGX::renderCube(const ml::CVec3& p1, const ml::CVec3& p2){
+    //Front/back/top/bottom sides
+    begin(PRIM_TRIANGLESTRIP, 10);
 
+    add(p1);
+    add(ml::CVec3(p2.x, p1.y, p1.z));
+    add(ml::CVec3(p1.x, p2.y, p1.z));
+    add(ml::CVec3(p2.x, p2.y, p1.z));
+    add(ml::CVec3(p1.x, p2.y, p2.z));
+    add(ml::CVec3(p2.x, p2.y, p2.z));
+    add(ml::CVec3(p1.x, p1.y, p2.z));
+    add(ml::CVec3(p2.x, p1.y, p2.z));
+    add(p1);
+    add(ml::CVec3(p2.x, p1.y, p1.z));
+
+    //Left side
     end();
 
-    begin(PRIM_6, 4);
+    begin(PRIM_TRIANGLESTRIP, 4);
 
-    add(r4);
-    add(ml::CVec3(r4.x, r5.y, r4.z));
-    add(ml::CVec3(r4.x, r4.y, r5.z));
-    add(ml::CVec3(r4.x, r5.y, r5.z));
+    add(p1);
+    add(ml::CVec3(p1.x, p2.y, p1.z));
+    add(ml::CVec3(p1.x, p1.y, p2.z));
+    add(ml::CVec3(p1.x, p2.y, p2.z));
 
+    //Right side
     end();
 
-    begin(PRIM_6, 4);
+    begin(PRIM_TRIANGLESTRIP, 4);
 
-    add(ml::CVec3(r5.x, r5.y, r4.z));
-    add(ml::CVec3(r5.x, r4.y, r4.z));
-    add(ml::CVec3(r5.x, r5.y, r5.z));
-    add(ml::CVec3(r5.x, r4.y, r5.z));
+    add(ml::CVec3(p2.x, p2.y, p1.z));
+    add(ml::CVec3(p2.x, p1.y, p1.z));
+    add(ml::CVec3(p2.x, p2.y, p2.z));
+    add(ml::CVec3(p2.x, p1.y, p2.z));
 
     end();
 }
 
-void CDrawGX::renderCircle(const ml::CVec3& pos, int verts, float r){
+//Renders a circle with the specified number of sides.
+void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
     if(checkFlag(FLAG_3)){
         //3D circle on XZ plane
-        begin(PRIM_7, verts + 2);
+        begin(PRIM_TRIANGLEFAN, sides + 2);
 
         add(pos);
 
-        for(int i = verts; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * ml::math::sin(i*(ml::tau/verts)), pos.y, pos.z + r * ml::math::cos(i*(ml::tau/verts))));
+        for(int i = sides; i >= 0; i--){
+            add(ml::CVec3(pos.x + r * ml::math::sin(i*(ml::tau/sides)), pos.y, pos.z + r * ml::math::cos(i*(ml::tau/sides))));
         }
 
         end();
     }else{
         //2D circle
-        begin(PRIM_7, verts + 2);
+        begin(PRIM_TRIANGLEFAN, sides + 2);
 
         add(pos);
 
-        for(int i = verts; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * ml::math::sin(i*(ml::tau/verts)), pos.y + r * ml::math::cos(i*(ml::tau/verts)), 0));
+        for(int i = sides; i >= 0; i--){
+            add(ml::CVec3(pos.x + r * ml::math::sin(i*(ml::tau/sides)), pos.y + r * ml::math::cos(i*(ml::tau/sides)), 0));
         }
 
         end();

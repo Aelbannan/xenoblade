@@ -90,7 +90,7 @@ void CDesktop::setAppException(int r3){
 
     if(desktop == nullptr) return;
 
-    desktop->wkSetEvent(r3 != 0 ? EVT_10 : EVT_11);
+    desktop->wkSetEvent(r3 != 0 ? EVT_APPEXCEPTION_ON : EVT_APPEXCEPTION_OFF);
 }
 
 namespace{

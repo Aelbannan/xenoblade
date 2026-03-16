@@ -380,7 +380,7 @@ void CDeviceVI::cb(CDeviceVICb::VICallback callback){
 }
 
 void CDeviceVI::beginFrame(){
-    if(!spInstance->isRunning() || spInstance->isThreadFlag0() || CDeviceGX::getInstance() == nullptr){
+    if(!spInstance->isRunning() || spInstance->isNoEvent() || CDeviceGX::getInstance() == nullptr){
         return;
     }
 
@@ -414,7 +414,7 @@ void CDeviceVI::waitForDrawDone(){
 }
 
 void CDeviceVI::endFrame(){
-    if(!spInstance->isRunning() || spInstance->isThreadFlag0() || CDeviceGX::getInstance() == nullptr){
+    if(!spInstance->isRunning() || spInstance->isNoEvent() || CDeviceGX::getInstance() == nullptr){
         return;
     }
 

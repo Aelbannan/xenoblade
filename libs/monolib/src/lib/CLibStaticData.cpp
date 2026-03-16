@@ -67,7 +67,7 @@ bool CLibStaticData::getStaticFileData(const char* pName, StaticDataHandle* pHan
 }
 
 bool CLibStaticData::wkStandbyLogin(){
-    if(isThreadFlag0()) return CWorkThread::wkStandbyLogin();
+    if(isNoEvent()) return CWorkThread::wkStandbyLogin();
     if(!CWorkSystemPack::func_804DE08C()) return false;
 
     switch(mState){

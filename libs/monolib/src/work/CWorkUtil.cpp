@@ -31,7 +31,7 @@ void CWorkUtil::entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepen
     if(pChild != nullptr){
         CWorkRoot::entryWork(pChild, pParent, prepend);
 
-        if(pParent != nullptr && pParent->isThreadFlag0()){
+        if(pParent != nullptr && pParent->isNoEvent()){
             pChild->wkSetEvent(CWorkThread::EVT_NONE);
         }
     }

@@ -76,22 +76,22 @@ public:
         EVT_7,
         EVT_8,
         EVT_9,
-        EVT_10,
-        EVT_11,
+        EVT_APPEXCEPTION_ON,
+        EVT_APPEXCEPTION_OFF,
     };
 
     enum ThreadFlags{
-        THREAD_FLAG_0 = 1 << 0,
-        THREAD_FLAG_1 = 1 << 1,
+        THREAD_FLAG_NO_EVENT = 1 << 0,
+        THREAD_FLAG_EVT1 = 1 << 1,
         THREAD_FLAG_2 = 1 << 2,
         THREAD_FLAG_3 = 1 << 3,
         THREAD_FLAG_EXCEPTION = 1 << 4,
-        THREAD_FLAG_5 = 1 << 5,
-        THREAD_FLAG_6 = 1 << 6,
-        THREAD_FLAG_7 = 1 << 7,
-        THREAD_FLAG_8 = 1 << 8,
-        THREAD_FLAG_9 = 1 << 9,
-        THREAD_FLAG_10 = 1 << 10,
+        THREAD_FLAG_EVT3 = 1 << 5,
+        THREAD_FLAG_EVT4 = 1 << 6,
+        THREAD_FLAG_PAUSE = 1 << 7,
+        THREAD_FLAG_EVT9 = 1 << 8,
+        THREAD_FLAG_EVT7 = 1 << 9,
+        THREAD_FLAG_APPEXCEPTION = 1 << 10,
     };
 
     enum ThreadState{
@@ -147,24 +147,24 @@ public:
         return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
     }
 
-    DECOMP_DONT_INLINE bool CWorkThread_inline2() const {
-        return checkFlag(THREAD_FLAG_5) ? true : mMsgQueue.find(EVT_3) >= 0;
+    bool isEvent3() const {
+        return checkFlag(THREAD_FLAG_EVT3) ? true : mMsgQueue.find(EVT_3) >= 0;
     }
     
-    bool isThreadFlag0() const {
-        return checkFlag(THREAD_FLAG_0);
+    bool isNoEvent() const {
+        return checkFlag(THREAD_FLAG_NO_EVENT);
     }
 
-    bool isThreadFlag7And6() const {
-        return checkFlag(THREAD_FLAG_7) && checkFlag(THREAD_FLAG_6);
+    bool isPaused() const {
+        return checkFlag(THREAD_FLAG_PAUSE) && checkFlag(THREAD_FLAG_EVT4);
     }
 
-    bool isThreadFlag9AndNot8() const {
-        return checkFlag(THREAD_FLAG_9) && !checkFlag(THREAD_FLAG_8);
+    bool isEvent7() const {
+        return checkFlag(THREAD_FLAG_EVT7) && !checkFlag(THREAD_FLAG_EVT9);
     }
 
-    bool isThreadFlag10() const {
-        return checkFlag(THREAD_FLAG_10);
+    bool isAppException() const {
+        return checkFlag(THREAD_FLAG_APPEXCEPTION);
     }
 
     bool checkFlag(ThreadFlags flag) const {

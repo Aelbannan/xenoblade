@@ -90,7 +90,7 @@ void CGame::wkUpdate(){
         unk1F8 = 0;
     }
 
-    if(isThreadFlag0() && CTaskGame::getInstance() != nullptr){
+    if(isNoEvent() && CTaskGame::getInstance() != nullptr){
         (void)CTaskGame::getInstance(); //What are we doing
         if(CTaskGame::func_800426F0() == false){
             CTaskGame::getInstance()->func_80042720();
@@ -248,7 +248,7 @@ void CGame::GameMain(){
 /* Creates a new error entry using the given error message and callback class. This is used specifically
 for the error messages related to controller related issues (e.g. controller disconnect). */
 void CGame::registerControllerErrorEntry(const wchar_t* message, IGameException* r4, u32 param){
-    if(spInstance != nullptr && CTaskGame::func_800426F0() == nullptr && !spInstance->isThreadFlag0()){
+    if(spInstance != nullptr && CTaskGame::func_800426F0() == nullptr && !spInstance->isNoEvent()){
         CException* exception = CException::func_80457CA4(spInstance, message, 5);
         if(exception != nullptr){
             exception->mException = r4;
@@ -261,7 +261,7 @@ void CGame::registerControllerErrorEntry(const wchar_t* message, IGameException*
 matches the one for CException, the corresponding function in the error handler class instance is called to
 handle the exception. */
 bool CGame::wkStandbyExceptionRetry(u32 wid){
-    if(isThreadFlag0()) return true;
+    if(isNoEvent()) return true;
     if(CLibHbm::func_8045DE00()) return false;
 
     //Get the work thread for the given id

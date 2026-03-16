@@ -13,6 +13,8 @@ void HBMInit();
 void HBMDelete();
 void HBMDeleteSound();
 
+void HBMUpdateSound();
+
 HBMSelectBtnNum HBMCalc(const HBMControllerData* pController);
 void HBMDraw();
 

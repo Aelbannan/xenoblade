@@ -18,7 +18,7 @@ CProcRoot* CProcRoot::getInstance(){
 }
 
 bool CProcRoot::wkStandbyLogin(){
-    if(isThreadFlag0()){
+    if(isNoEvent()){
         return CWorkThread::wkStandbyLogin();
     }
 

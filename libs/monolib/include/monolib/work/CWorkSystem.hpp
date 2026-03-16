@@ -41,21 +41,26 @@ private:
     static ExitFunc sExitFunc;
 };
 
-//TODO: find a better place to put this (gets used in CLibHbmControl, CWorkSystem, and CErrorWii)
+/* TODO: find a better place to put this (gets used in CLibHbmControl, CWorkSystem, and CErrorWii).
+Also, ideally this all can be merged into one function without needing macros, but CWorkSystem.cpp refuses
+to inline everything if the inlined function gets too long. */
+
+#define EXIT_FUNC_DELAY(){       \
+    CWorkSystem::callExitFunc(); \
+                                 \
+    VISetBlack(VI_TRUE);         \
+    VIFlush();                   \
+                                 \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    }                           
+
 static inline void resetGame(){
-    CWorkSystem::callExitFunc();
-
-    //Set the screen to black
-    VISetBlack(VI_TRUE);
-    VIFlush();
-
-    //Wait for 6 frames for whatever reason
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
+    EXIT_FUNC_DELAY();
 
     //Restart
     OSReport("exit wii reset\n");
@@ -63,19 +68,16 @@ static inline void resetGame(){
 }
 
 static inline void shutdownGame(){
-    CWorkSystem::callExitFunc();
+    EXIT_FUNC_DELAY();
 
-    //Set the screen to black
-    VISetBlack(VI_TRUE);
-    VIFlush();
+    //Restart
+    OSReport("exit wii power off\n");
+    OSShutdownSystem();
+}
 
-    //Wait for 6 frames for whatever reason
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
-    VIWaitForRetrace();
+
+static inline void returnToWiiMenu(){
+    EXIT_FUNC_DELAY();
 
     //Restart
     OSReport("exit wii power off\n");

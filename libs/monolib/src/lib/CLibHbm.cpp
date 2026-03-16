@@ -179,7 +179,7 @@ void CLibHbm::wkUpdate(){
             if(CLibHbmControl::func_8045E530()) return;
 
             if(CDeviceFileCri::getInstance()->isException()){
-                if(!CLibHbmControl::getInstance()->isThreadFlag0() && mState < STATE_0 && !unk264){
+                if(!CLibHbmControl::getInstance()->isNoEvent() && mState < STATE_0 && !unk264){
                     if(mState == STATE_NEG1){
                         setState(STATE_0);
                     }
@@ -348,7 +348,7 @@ bool CLibHbm::OnFileEvent(CEventFile* pFile){
             mFlags |= 0x40;
 
             if(CLibHbmControl::getInstance() != nullptr){
-                if(!CLibHbmControl::getInstance()->checkFlag(THREAD_FLAG_0)){
+                if(!CLibHbmControl::getInstance()->isNoEvent()){
                     CLibHbmControl::getInstance()->wkSetEvent(EVT_NONE);
                 }
             }

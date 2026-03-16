@@ -19,32 +19,32 @@ CWorkThread::CWorkThread(const char* pName, CWorkThread* pParent, int capacity)
         mChildren.reserve(mAllocHandle, capacity);
     }
 
-    if(pParent != nullptr && pParent->CWorkThread_inline2()){
-        mFlags |= THREAD_FLAG_5;
+    if(pParent != nullptr && pParent->isEvent3()){
+        mFlags |= THREAD_FLAG_EVT3;
     }
 
-    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_6)){
-        mFlags |= THREAD_FLAG_6;
+    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_EVT4)){
+        mFlags |= THREAD_FLAG_EVT4;
     }
 
-    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_7)){
-        mFlags |= THREAD_FLAG_7;
+    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_PAUSE)){
+        mFlags |= THREAD_FLAG_PAUSE;
     }
 
-    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_9)){
-        mFlags |= THREAD_FLAG_9;
+    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_EVT7)){
+        mFlags |= THREAD_FLAG_EVT7;
     }
 
-    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_8)){
-        mFlags |= THREAD_FLAG_8;
+    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_EVT9)){
+        mFlags |= THREAD_FLAG_EVT9;
     }
 
-    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_10)){
-        mFlags |= THREAD_FLAG_10;
+    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_APPEXCEPTION)){
+        mFlags |= THREAD_FLAG_APPEXCEPTION;
     }
 
-    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_0)){
-        mFlags |= THREAD_FLAG_0;
+    if(pParent != nullptr && (pParent->mFlags & THREAD_FLAG_NO_EVENT)){
+        mFlags |= THREAD_FLAG_NO_EVENT;
     }
 }
 
@@ -84,8 +84,8 @@ void CWorkThread::wkRemoveChild(CWorkThread* pChild){
 
 void CWorkThread::wkSetEvent(EVT evt){
     if(evt == EVT_NONE){
-        mFlags |= THREAD_FLAG_0;
-    } else{
+        mFlags |= THREAD_FLAG_NO_EVENT;
+    }else{
         mMsgQueue.enqueue(evt);
     }
 
@@ -104,7 +104,7 @@ bool CWorkThread::wkCheckTimeout(u32 arg0, bool arg1, const char* pMessage){
         return false;
     }
 
-    if(mFlags & THREAD_FLAG_1){
+    if(mFlags & THREAD_FLAG_EVT1){
         return true;
     }
 
@@ -150,7 +150,7 @@ bool CWorkThread::wkStandbyInit(){
 }
 
 bool CWorkThread::wkStandbyRun(){
-    if(isThreadFlag0()){
+    if(isNoEvent()){
         mState = THREAD_STATE_RUN;
         wkTimeoutInit();
     }
@@ -170,7 +170,7 @@ void CWorkThread::wkStandby(){
     while(!mMsgQueue.empty()){
         switch(mMsgQueue.front().command){
             case EVT_1:{
-                mFlags |= THREAD_FLAG_1;
+                mFlags |= THREAD_FLAG_EVT1;
                 break;
             }
 
@@ -181,55 +181,55 @@ void CWorkThread::wkStandby(){
             }
 
             case EVT_3:{
-                mFlags |= THREAD_FLAG_5;
+                mFlags |= THREAD_FLAG_EVT3;
                 break;
             }
 
             case EVT_4:{
-                mFlags |= THREAD_FLAG_6;
+                mFlags |= THREAD_FLAG_EVT4;
                 break;
             }
 
             case EVT_PAUSE:{
-                mFlags |= THREAD_FLAG_7;
+                mFlags |= THREAD_FLAG_PAUSE;
                 OnPauseTrigger(true);
                 break;
             }
 
             case EVT_UNPAUSE:{
-                mFlags &= ~THREAD_FLAG_7;
+                mFlags &= ~THREAD_FLAG_PAUSE;
                 OnPauseTrigger(false);
                 break;
             }
 
             case EVT_7:{
-                if(!(mFlags & THREAD_FLAG_8)){
-                    mFlags |= THREAD_FLAG_9;
+                if(!(mFlags & THREAD_FLAG_EVT9)){
+                    mFlags |= THREAD_FLAG_EVT7;
                 }
                 break;
             }
 
             case EVT_8:{
-                if(!(mFlags & THREAD_FLAG_8)){
-                    mFlags &= ~THREAD_FLAG_9;
+                if(!(mFlags & THREAD_FLAG_EVT9)){
+                    mFlags &= ~THREAD_FLAG_EVT7;
                 }
                 break;
             }
 
-            case EVT_10:{
-                mFlags |= THREAD_FLAG_10;
+            case EVT_APPEXCEPTION_ON:{
+                mFlags |= THREAD_FLAG_APPEXCEPTION;
                 OnPauseTrigger(true);
                 break;
             }
 
-            case EVT_11:{
-                mFlags &= ~THREAD_FLAG_10;
+            case EVT_APPEXCEPTION_OFF:{
+                mFlags &= ~THREAD_FLAG_APPEXCEPTION;
                 OnPauseTrigger(false);
                 break;
             }
 
             case EVT_9:{
-                mFlags |= THREAD_FLAG_8;
+                mFlags |= THREAD_FLAG_EVT9;
                 break;
             }
         }
@@ -248,7 +248,7 @@ void CWorkThread::wkStandby(){
             }
 
             case THREAD_STATE_INIT:{
-                if(isThreadFlag0()){
+                if(isNoEvent()){
                     mState = THREAD_STATE_LOGIN;
                     wkTimeoutInit();
                 } else if(!wkStandbyLogin()){

@@ -88,7 +88,7 @@ void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
     reslist<CWorkThread*>* children = &pThread->mChildren;
     
     //Something is sus here
-    if(!(arg1 ^ pThread->CWorkThread_inline2())){
+    if(!(arg1 ^ pThread->isEvent3())){
         pThread->wkStandby();
 
         //Recursively call standbyWork on this thread's children
@@ -124,11 +124,11 @@ void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
 }
 
 void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
-    if(!(arg1 ^ pThread->CWorkThread_inline2())){
+    if(!(arg1 ^ pThread->isEvent3())){
         if(pThread->isRunning()){
-            bool r4 = !(pThread->isThreadFlag7And6() || pThread->isThreadFlag9AndNot8() || pThread->isThreadFlag10());
+            bool r4 = !(pThread->isPaused() || pThread->isEvent7() || pThread->isAppException());
 
-            if(r4 || pThread->isThreadFlag0()){
+            if(r4 || pThread->isNoEvent()){
                 pThread->wkUpdate();
             }
         }

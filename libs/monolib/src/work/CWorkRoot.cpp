@@ -214,16 +214,13 @@ void CWorkRoot::exit(){
     //Check the current exit mode to determine how to handle the program stopping
     if(sExitMode == EXIT_WII_MENU){
         //Exit to Wii menu
-        OSReport("exit wii menu\n");
-        OSReturnToMenu();
+        returnToWiiMenu(true);
     }else if(sExitMode == EXIT_RESTART){
         //Restart the game
-        OSReport("exit wii reset\n");
-        OSRestart(0);
+        resetGame(true);
     }else if(sExitMode == EXIT_SHUTDOWN){
         //Shutdown the console
-        OSReport("exit wii power off\n");
-        OSShutdownSystem();
+        shutdownGame(true);
     }else{
         /* If still set to the default mode, just exit without doing anything.
         This probably was what was used during debugging. */

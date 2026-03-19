@@ -115,7 +115,7 @@ void CErrorWii::errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar){
 }
 
 void CErrorWii::postExceptionCallback(){
-    resetGame();
+    resetGame(false);
 }
 
 //Stubbed?

@@ -58,12 +58,12 @@ void CWorkSystem::wkUpdate(){
     if(mSaveLoadInvalidReset == false){
         if(mPowerOff == false && CErrorWii::isPowerCallbackCalled()){
             mPowerOff = true;
-            shutdownGame();
+            shutdownGame(false);
         }
     
         if(mReset == false && CErrorWii::isResetCallbackCalled()){
             mReset = true;
-            resetGame();
+            resetGame(false);
         }
     }
 }

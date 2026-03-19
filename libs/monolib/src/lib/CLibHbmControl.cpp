@@ -77,10 +77,10 @@ void CLibHbmControl::wkUpdate(){
             wkSetEvent(EVT_NONE);
             break;
         case HBM_SELECT_BTN1:
-            returnToWiiMenu();
+            returnToWiiMenu(false);
             break;
         case HBM_SELECT_BTN2:
-            resetGame();
+            resetGame(false);
             break;
         default:
             break;

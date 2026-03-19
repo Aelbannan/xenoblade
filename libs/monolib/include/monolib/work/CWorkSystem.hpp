@@ -41,11 +41,11 @@ private:
     static ExitFunc sExitFunc;
 };
 
-/* TODO: find a better place to put this (gets used in CLibHbmControl, CWorkSystem, and CErrorWii).
-Also, ideally this all can be merged into one function without needing macros, but CWorkSystem.cpp refuses
-to inline everything if the inlined function gets too long. */
+//Reset handling functions. Due to string pooling, these had to have been defined outside of a class as static functions.
 
-#define EXIT_FUNC_DELAY(){       \
+/* TODO: Ideally this wouldn't need to be a macro, but for files using O4,s (CWorkSystem.cpp), if a function
+ends up calling the same function twice, which happens in CWorkSystem::wkUpdate, it refuses to inline it. */
+#define prepareReset(){          \
     CWorkSystem::callExitFunc(); \
                                  \
     VISetBlack(VI_TRUE);         \
@@ -57,18 +57,22 @@ to inline everything if the inlined function gets too long. */
     VIWaitForRetrace();          \
     VIWaitForRetrace();          \
     VIWaitForRetrace();          \
-    }                           
+}                           
 
-static inline void resetGame(){
-    EXIT_FUNC_DELAY();
+static inline void resetGame(bool direct){
+    if(!direct){
+        prepareReset();
+    }
 
     //Restart
     OSReport("exit wii reset\n");
     OSRestart(0);
 }
 
-static inline void shutdownGame(){
-    EXIT_FUNC_DELAY();
+static inline void shutdownGame(bool direct){
+    if(!direct){
+        prepareReset();
+    }
 
     //Restart
     OSReport("exit wii power off\n");
@@ -76,10 +80,12 @@ static inline void shutdownGame(){
 }
 
 
-static inline void returnToWiiMenu(){
-    EXIT_FUNC_DELAY();
+static inline void returnToWiiMenu(bool direct){
+    if(!direct){
+        prepareReset();
+    }
 
     //Restart
-    OSReport("exit wii power off\n");
+    OSReport("exit wii menu\n");
     OSShutdownSystem();
 }

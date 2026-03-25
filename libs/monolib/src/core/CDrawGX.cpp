@@ -47,7 +47,7 @@ void CDrawGX::setPerspective(const ml::CMat34& mat, float f1, float f2, float f3
     unk60 = mat;
     unk60.invert(&unk60);
 
-    setFlag(FLAG_3, true);
+    setFlag(FLAG_PERSPECTIVE, true);
     setFlag(FLAG_INITIALIZED, false);
 }
 
@@ -80,7 +80,7 @@ void CDrawGX::func_8045657C(int r4){
 void CDrawGX::setTex(GXTexObj* pTexObj, u16 width, u16 height){
     CDeviceGX::getCacheInstance()->func_8044B4B8(pTexObj, width, height);
 
-    setFlag(FLAG_1, true);
+    setFlag(FLAG_USE_TEX, true);
     setFlag(FLAG_INITIALIZED, false);
 }
 
@@ -91,7 +91,7 @@ void CDrawGX::setPrimType(u32 primType){
     switch(primType){
         case PRIM_POINTS:
             mPrimitive = GX_POINTS;
-            mFlags |= FLAG_16;
+            mFlags |= FLAG_POINTS;
             break;
         case PRIM_LINES:
             mPrimitive = GX_LINES;
@@ -143,13 +143,13 @@ void CDrawGX::setupGX(){
 
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
 
-    if(checkFlag(FLAG_3)){
+    if(checkFlag(FLAG_PERSPECTIVE)){
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_CLR_RGBA, GX_F32, 0);
     }else{
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_CLR_RGBA, GX_S16, 0);
     }
 
-    if(checkFlag(FLAG_1)){
+    if(checkFlag(FLAG_USE_TEX)){
         GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_CLR_RGBA, GX_S16, 0);
     }
@@ -158,13 +158,13 @@ void CDrawGX::setupGX(){
         ml::CCol4 col = mCol;
         col.a *= mOpacity;
 
-        if(checkFlag(FLAG_1)){
+        if(checkFlag(FLAG_USE_TEX)){
             CDeviceGX::getCacheInstance()->func_8044AE8C(col, 0);
         }else{
             CDeviceGX::getCacheInstance()->func_8044ACDC(col, 0);
         }
     }else{
-        if(checkFlag(FLAG_1)){
+        if(checkFlag(FLAG_USE_TEX)){
             CDeviceGX::getCacheInstance()->func_8044B168(0);
         }else{
             CDeviceGX::getCacheInstance()->func_8044B03C(0);
@@ -180,7 +180,7 @@ void CDrawGX::setupGX(){
         CDeviceGX::getCacheInstance()->func_8044A6C8((mFlags >> 4) & 1, 0);
     }
 
-    if(checkFlag(FLAG_3)){
+    if(checkFlag(FLAG_PERSPECTIVE)){
         if(checkFlag(FLAG_5)){
             CDeviceGX::getCacheInstance()->func_8044B8CC(unk2C, unk28, unk24);
             ml::CMat34 mat = unk90 * unk60;
@@ -194,7 +194,7 @@ void CDrawGX::setupGX(){
         CDeviceGX::getCacheInstance()->func_8044B660();
     }
 
-    if(checkFlag(FLAG_LINES | FLAG_16)){
+    if(checkFlag(FLAG_LINES | FLAG_POINTS)){
         GXSetLineWidth(mLineWidth, 0);
     }
 }
@@ -287,7 +287,7 @@ void CDrawGX::add(const ml::CRect16& r4){
 }
 
 void CDrawGX::add(s16 x, s16 y, s16 r6, s16 r7){
-    if(checkFlag(FLAG_1)){
+    if(checkFlag(FLAG_USE_TEX)){
         GXPosition3s16(x, y, mZPos);
         GXTexCoord2s16(r6, r7);
 
@@ -301,7 +301,7 @@ void CDrawGX::add(s16 x, s16 y, s16 r6, s16 r7){
 }
 
 void CDrawGX::add(const ml::CVec3& vec){
-    if(checkFlag(FLAG_3)){
+    if(checkFlag(FLAG_PERSPECTIVE)){
         GXPosition3f32(vec.x, vec.y, vec.z);
     }else{
         //Convert to unsigned 16 bit values
@@ -332,8 +332,8 @@ void CDrawGX::end(){
 }
 
 void CDrawGX::renderRect(const ml::CRect16& r4){
-    setFlag(FLAG_3, false);
-    setFlag(FLAG_1, false);
+    setFlag(FLAG_PERSPECTIVE, false);
+    setFlag(FLAG_USE_TEX, false);
 
     begin(PRIM_TRIANGLESTRIP, 4);
 
@@ -362,18 +362,19 @@ the order of the points used in the main strip (A to H):
 The given corner points p1 and p2, representing (0,0,0) and (1,1,1),
 are A and F respectively, with all other points being derived from them.
    
-Triangles:
+Triangles (the triangles with points in the wrong winding order (should be clockwise)
+have the right order in parentheses after):
    1st strip:
-   Front: ABC, BCD
-   Top: CDE, DEF
-   Back: EFG, FGH
-   Bottom: GHA, HAB
+   Front: ABC (ACB), BCD
+   Top: CDE (CED), DEF
+   Back: EFG (EGF), FGH
+   Bottom: GHA (GAH), HAB
    
    2nd strip:
-   Left: ACG, CGE
+   Left: ACG (AGC), CGE
    
    3rd strip:
-   Right: DBF, BFH
+   Right: DBF (DFB), BFH
 */
 void CDrawGX::renderCube(const ml::CVec3& p1, const ml::CVec3& p2){
     //Front/back/top/bottom sides
@@ -415,10 +416,11 @@ void CDrawGX::renderCube(const ml::CVec3& p1, const ml::CVec3& p2){
 
 //Renders a circle with the specified number of sides.
 void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
-    if(checkFlag(FLAG_3)){
+    if(checkFlag(FLAG_PERSPECTIVE)){
         //3D circle on XZ plane
         begin(PRIM_TRIANGLEFAN, sides + 2);
 
+        //Add the center point for the fan
         add(pos);
 
         for(int i = sides; i >= 0; i--){
@@ -430,6 +432,7 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         //2D circle
         begin(PRIM_TRIANGLEFAN, sides + 2);
 
+        //Add the center point for the fan
         add(pos);
 
         for(int i = sides; i >= 0; i--){

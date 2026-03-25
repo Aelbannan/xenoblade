@@ -16,6 +16,7 @@
 #include <decomp.h>
 #include <lang.h>
 #include <macros.h>
+#include <build_settings.h>
 
 typedef unsigned long long u64;
 typedef signed long long s64;

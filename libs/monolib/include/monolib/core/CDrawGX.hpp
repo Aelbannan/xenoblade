@@ -61,9 +61,9 @@ public:
 private:
     enum Flags{
         FLAG_0 = (1 << 0),
-        FLAG_1 = (1 << 1),
+        FLAG_USE_TEX = (1 << 1),
         FLAG_INITIALIZED = (1 << 2),
-        FLAG_3 = (1 << 3),
+        FLAG_PERSPECTIVE = (1 << 3),
         FLAG_4 = (1 << 4),
         FLAG_5 = (1 << 5),
         FLAG_6 = (1 << 6),
@@ -76,7 +76,7 @@ private:
         FLAG_13 = (1 << 13),
         FLAG_14 = (1 << 14),
         FLAG_15 = (1 << 15),
-        FLAG_16 = (1 << 16),
+        FLAG_POINTS = (1 << 16),
         FLAG_LINES = (1 << 17),
         FLAG_DIRECT_COLOR = (1 << 18),
         FLAG_19 = (1 << 19),

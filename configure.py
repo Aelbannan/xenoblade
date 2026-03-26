@@ -180,7 +180,7 @@ config.ldflags = [
     "-nodefaults",
 ]
 if args.debug:
-    config.ldflags.append("-g")  # Or -gdwarf-2 for Wii linkers
+    config.ldflags.append("-gdwarf-2")  # Or -gdwarf-2 for Wii linkers
 if args.map:
     config.ldflags.append("-mapunused")
     # config.ldflags.append("-listclosure") # For Wii linkers
@@ -246,8 +246,11 @@ cflags_base = [
 
 # Debug flags
 if args.debug:
-    # Or -sym dwarf-2 for Wii compilers
-    cflags_base.extend(["-sym on", "-DDEBUG=1"])
+    cflags_base.extend(["-DDEBUG=1"])
+    cflags_base.extend(["-sym dwarf-2"])
+    # Do not work currently
+    #cflags_base.extend(['-pragma "dont_inline on"'])
+    #cflags_base.extend(['-pragma "optimization_level 0"'])
 else:
     cflags_base.append("-DNDEBUG=1")
 

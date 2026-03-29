@@ -246,8 +246,7 @@ cflags_base = [
 
 # Debug flags
 if args.debug:
-    cflags_base.extend(["-DDEBUG=1"])
-    cflags_base.extend(["-sym dwarf-2"])
+    cflags_base.extend(["-DDEBUG=1", "-sym dwarf-2"])
     # Do not work currently
     #cflags_base.extend(['-pragma "dont_inline on"'])
     #cflags_base.extend(['-pragma "optimization_level 0"'])

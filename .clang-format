@@ -4,9 +4,14 @@ Language: Cpp
 Standard: Cpp03
 
 AccessModifierOffset: -4
+AlignAfterOpenBracket: DontAlign
 AllowShortFunctionsOnASingleLine: Empty
+AllowShortEnumsOnASingleLine: "false"
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AlwaysBreakBeforeMultilineStrings: "true"
 AttributeMacros: [DECOMP_INLINE, DECOMP_DONT_INLINE]
-ColumnLimit: 120
+BinPackArguments: "false"
+ColumnLimit: 140
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 FixNamespaceComments: true
 IncludeBlocks: Regroup
@@ -17,10 +22,7 @@ PointerAlignment: Left
 ShortNamespaceLines: 0
 SortIncludes: "true"
 SortUsingDeclarations: "true"
-SpaceBeforeParens: Custom
-SpaceBeforeParensOptions:
-  AfterForeachMacros: false
-  AfterControlStatements: false
+SpaceBeforeParens: Never
 SpacesInLineCommentPrefix:
   Minimum: 0
   Maximum: 0

@@ -40,8 +40,8 @@
       "function": "CView::setCurrent",
       "symbol": "setCurrent__5CViewFv",
       "address": "0x8043F3D8",
-      "source": null,
-      "unit": null,
+      "source": "libs/monolib/src/core/CView.cpp",
+      "unit": "monolib/src/core/CView",
       "required_level": "FULL_MATCH",
       "notes": "Source file not in public tree yet; trace via Ghidra first."
     },
@@ -52,8 +52,8 @@
       "function": "CView::setRect",
       "symbol": "setRect__5CViewFRCQ22ml7CRect16",
       "address": "0x8043F514",
-      "source": null,
-      "unit": null,
+      "source": "libs/monolib/src/core/CView.cpp",
+      "unit": "monolib/src/core/CView",
       "required_level": "FULL_MATCH",
       "notes": "Source file not in public tree yet."
     },

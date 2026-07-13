@@ -5,6 +5,7 @@
 #include "monolib/math.hpp"
 #include "monolib/util.hpp"
 #include "monolib/core/CViewFrame.hpp"
+#include "monolib/core/CViewRectData.hpp"
 
 //size: 0x4
 class CFontLayer {
@@ -24,6 +25,8 @@ struct CView_UnkStruct1 {
     s16 unk10;
     s16 unk12;
 };
+
+// Kept for compatibility; CView uses CViewRectData at unk1C8.
 
 //size: 0x470
 class CView : public CWorkThread, public CFontLayer {
@@ -49,6 +52,8 @@ public:
     void attachRenderWork(CWorkThread* pThread);
     void setDisp(bool r4, bool r5);
     void setCurrent();
+
+    static ml::CCol4 sFrameColor;
 
     //Tries to cast the given thread to CView.
     static CView* convertToView(CWorkThread* pThread) {
@@ -77,10 +82,25 @@ public:
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CView_UnkStruct1 unk1C8;
+    CViewRectData unk1C8;
     CViewFrame unk1DC;
-    u8 unk238[0x400 - 0x238];
-    ml::FixStr<64> unk400;
+    u8 unk238[0x278 - 0x238];
+    u32 unk278;
+    u8 unk27C[0x284 - 0x27C];
+    u8 mContextRing[0x3EC - 0x284];
+    void* mContextRingBase;
+    u32 unk3F0;
+    u32 mContextRingWriteIndex;
+    u32 mContextRingCapacity;
+    u32 unk3FC;
+    ml::FixStr<64> mName;
     ml::CVec4 unk444;
-    u8 unk454[0x470 - 0x454];
+    u8 unk454[0x45C - 0x454];
+    void* unk45C;
+    u32 unk460;
+    s16 unk464;
+    s16 unk466;
+    s16 unk468;
+    s16 unk46A;
+    u8 unk46C[0x470 - 0x46C];
 };

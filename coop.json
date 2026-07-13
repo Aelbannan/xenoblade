@@ -1,0 +1,15 @@
+{
+  "project_root": ".",
+  "region": "us",
+  "match_policy": "full",
+  "default_required_level": "FULL_MATCH",
+  "configure_args": ["--map"],
+  "non_matching": false,
+  "targets_file": "tools/coop/targets.json",
+  "attempt_log": "docs/evidence/decomp/attempts.jsonl",
+  "report_cache": "build/coop-last-report.json",
+  "objdiff_report_args": [
+    "--config",
+    "functionRelocDiffs=data_value"
+  ]
+}

@@ -3,6 +3,29 @@
 #include <types.h>
 
 namespace cf {
+    // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
+    // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
+    // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
+    struct CBattleStateEntry {
+        u32 unk00; // 0x00
+        u32 unk04; // 0x04
+        u32 unk08; // 0x08
+        u16 unk0C; // 0x0C - id; also bit index into CBattleState::unk15AC
+        s32 unk10; // 0x10 - clamped value
+        s16 unk14; // 0x14
+        s16 unk16; // 0x16
+        s16 unk18; // 0x18 - lower clamp bound (0 == no lower clamp)
+        s16 unk1A; // 0x1A
+        f32 unk1C; // 0x1C
+        f32 unk20; // 0x20
+        f32 unk24; // 0x24
+        f32 unk28; // 0x28
+        u16 unk2C; // 0x2C
+        u16 unk2E; // 0x2E
+        u32 unk30; // 0x30
+    };
+
+    // size: 0x15DC
     class CBattleState {
     public:
         virtual void CBattleState_UnkVirtualFunc1();  //0x8
@@ -41,6 +64,16 @@ namespace cf {
 
         CBattleState();
 
-        u8 unkC[0x15DC - 0xC];
+        u16 unk4;
+        u16 unk6;
+        u8 unk8[0x1520];
+        u8 unk1528[4];
+        u8 unk152C[0x80];
+        u8 unk15AC[0x15DC - 0x15AC];
     };
 }
+
+// symbols.txt mangles Fv; retail leaves the arg entry in r4 (same pattern
+// as cf::CAIAction's UnkVirtualFunc1/2).
+extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg);

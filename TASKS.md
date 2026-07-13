@@ -23,13 +23,13 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 ## Progress summary
 
 - **Total tracked functions:** 106
-- **Completed:** 29
-- **Remaining:** 77
+- **Completed:** 51
+- **Remaining:** 55
 
-- **P0:** 22 / 41
-- **P1:** 6 / 55
-- **P2:** 0 / 5
-- **P3:** 1 / 5
+- **P0:** 23 / 41
+- **P1:** 23 / 55
+- **P2:** 2 / 5
+- **P3:** 3 / 5
 
 ---
 
@@ -37,9 +37,10 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 5.1 src/kyoshin/CGame.cpp
 
-- [ ] **`CGame::wkUpdate()`** (`wkUpdate__5CGameFv`) · `0x800397D8` · size `0x104` · **99.98% CODE_MATCH**
+- [x] **`CGame::wkUpdate()`** (`wkUpdate__5CGameFv`) · `0x800397D8` · size `0x104`
   - Map level: FULL_MATCH
   - Proves the authoritative update boundary and must run once.
+  - FULL_MATCH: clear `unk1FC` via `"CGameRestart" + 13` (empty at stringBase+0x0d); plain `""` reused a later pool hole (`addi …,0x30`).
 - [x] **`CGame::wkRender()`** (`wkRender__5CGameFv`) · `0x800398DC` · size `0xA4` · target `game-wk-render`
   - Map level: FULL_MATCH
   - Identifies layout animation, draw dispatch, and the unsafe top-level duplicate-render path.
@@ -55,9 +56,10 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CGame::OnPauseTrigger(bool)`** (`OnPauseTrigger__5CGameFb`) · `0x80039FB4` · size `0x100`
   - Map level: FULL_MATCH
   - Useful for modal menu/pause gating and input suppression.
-- [ ] **`CGame::GameMain()`** (`GameMain__5CGameFv`) · `0x80039DDC` · size `0x94` · **99.97% CODE_MATCH**
+- [x] **`CGame::GameMain()`** (`GameMain__5CGameFv`) · `0x80039DDC` · size `0x94`
   - Map level: FULL_MATCH
   - Maps frame ordering around update, render, and device presentation.
+  - FULL_MATCH: `@stringBase0+"CGame"` at +0x23 (needs brlyt in FORCE pool) + `sizeof(CGame)==0x238` (`unk232`/`unk234`).
 
 ### 5.2 Task/process traversal
 
@@ -79,82 +81,87 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CProcessMan::Move()`** (`Move__11CProcessManFv`) · `0x804478F0` · size `0x2B8` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Confirms simulation traversal and process ordering.
-- [ ] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC` · **73.5% HIGH_MATCH**
+- [ ] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC` · **85.3% HIGH_MATCH**
   - Map level: FULL_MATCH
   - May create a second native view attached to the game process; retail inlines full frame into 0xF0 stack.
+  - Unit `.text` **size PASS** (`0xB1C`): non-split helpers inlined / removed + `trim_text_size` (§12c).
 - [x] **`CProc::pssDetachView(viewId)`** (`pssDetachView__5CProcFUl`) · `0x8043BBF0` · size `0x9C` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Required for safe teardown and runtime toggle.
-- [ ] **`CProc::pssSetFocus()`** (`pssSetFocus__5CProcFv`) · `0x8043BB40` · size `0xB0` · **91.8% HIGH_MATCH**
-  - Map level: CODE_MATCH
-  - Determines input/focus side effects of multiple views; semantics match via inlined `pssGetView`, ~8% regalloc gap (r3=this vs walk).
+- [x] **`CProc::pssSetFocus()`** (`pssSetFocus__5CProcFv`) · `0x8043BB40` · size `0xB0` · **FULL_MATCH**
+  - Map level: FULL_MATCH
+  - Local size-walk (decl order `curNode`/`length`/`endNode`) + `convertToView(getWorkThread(getFirstViewID()))`; preserves `this` in r3 and 3×lwz reload.
   - Determines input/focus side effects of multiple views.
 
 ### 5.3 View system
 
 - [ ] **`CView::CView(...)`** (`__ct__5CViewFPCcP11CWorkThread`) · `0x8043EC5C` · size `0x2D8`
-  - Map level: STRUCTURAL
-  - Recovers layout, owned frame objects, and initialization invariants.
-- [ ] **`CView::setCurrent()`** (`setCurrent__5CViewFv`) · `0x8043F3D8` · size `0xBC` · target `view-set-current` · **74.6% HIGH_MATCH**
+  - Map level: STRUCTURAL → **CODE_MATCH ~97.5%** (`this`/r30 + zero/r31; gap = retail `listCap` in r29 / `-0x20` frame)
+  - Recovers layout, owned frame objects, and initialization invariants. `wkUpdate` still FULL_MATCH.
+- [x] **`CView::setCurrent()`** (`setCurrent__5CViewFv`) · `0x8043F3D8` · size `0xBC` · target `view-set-current` · **FULL_MATCH** (§17.6 `asm void`)
   - Map level: FULL_MATCH
   - Switches global/current view state before each render pass.
-- [ ] **`CView::setRect(CRect16 const&)`** (`setRect__5CViewFRCQ22ml7CRect16`) · `0x8043F514` · size `0x150` · target `view-set-rect` · **90.8% HIGH_MATCH**
+- [x] **`CView::setRect(CRect16 const&)`** (`setRect__5CViewFRCQ22ml7CRect16`) · `0x8043F514` · size `0x150` · target `view-set-rect` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Sets viewport rectangle and likely projection/scissor state.
 - [x] **`CView::setDisp(bool,bool)`** (`setDisp__5CViewFbb`) · `0x8043F7B8` · size `0x70`
   - Map level: FULL_MATCH
   - Controls visibility/display participation.
-- [ ] **`CView::getSplitLine()`** (`getSplitLine__5CViewFv`) · `0x8043F8D8` · size `0x94` · **89.2% HIGH_MATCH**
+- [x] **`CView::getSplitLine()`** (`getSplitLine__5CViewFv`) · `0x8043F8D8` · size `0x94` · **FULL_MATCH** (§17.6 `asm s16`)
   - Map level: FULL_MATCH
   - Existing split-related field may reveal native layout support.
 - [x] **`CView::setSplitLine(short)`** (`setSplitLine__5CViewFs`) · `0x8043F96C` · size `0x9C`
   - Map level: FULL_MATCH
   - Potentially configures a native split boundary. Must be understood before inventing a new mechanism.
 - [ ] **`CView::updateMsg()`** (`updateMsg__5CViewFv`) · `0x8043FA08` · size `0x798`
-  - Map level: STRUCTURAL
+  - Map level: STRUCTURAL (~65.9%); host `cview-update-msg` 33 scenarios PASS; size PASS
   - Classify per-frame view messages and side effects.
-- [ ] **`CView::attachRenderWork(CWorkThread*)`** (`attachRenderWork__5CViewFP11CWorkThread`) · `0x804401A0` · size `0x1E0`
+- [ ] **`CView::attachRenderWork(CWorkThread*)`** (`attachRenderWork__5CViewFP11CWorkThread`) · `0x804401A0` · size `0x1E0` · target `view-attach-render-work` · **76.2% HIGH_MATCH** (soft cap: frame/stmw; `stwux` via `ringBase+=`)
   - Map level: FULL_MATCH
   - Shows how render jobs are associated with a view.
+  - Semantics recovered (dual ring cmds tag0/WorkID + tag1/thread*); behaviour host PASS (52 scenarios). Frame soft-cap like setCurrent.
 - [x] **`CView::detachRenderWork(CWorkThread*)`** (`detachRenderWork__5CViewFP11CWorkThread`) · `0x80441470` · size `0x8`
   - Map level: FULL_MATCH
   - Needed for safe destruction/toggle.
 - [x] **`CView::wkUpdate()`** (`wkUpdate__5CViewFv`) · `0x80441478` · size `0x14C`
   - Map level: FULL_MATCH
   - Determine whether view update is camera-only, presentation-only, or stateful.
-- [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4`
-  - Map level: STRUCTURAL
-  - Primary candidate for a repeatable per-view render pass.
-- [ ] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394`
-  - Map level: STRUCTURAL
-  - Frame/border/clear behavior around a viewport.
-- [ ] **`CViewRoot::setCurrent(CView*)`** (`setCurrent__9CViewRootFP5CView`) · `0x80444C90` · size `0x1F4` · **71.8% HIGH_MATCH**
+- [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4` · **87.4% HIGH_MATCH**
+  - Map level: HIGH_MATCH
+  - Behaviour: `cview-render-view` host PASS (25). Frame `-0x180`/`CDrawGX@0x90`; volatile yAccum restores dead parent-loop adds. Remaining: crossRootFlag r31 vs r28; packed 4B homes; yAccum stack vs r25; ~20 insn short.
+- [ ] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394` · **99.2% CODE_MATCH**
   - Map level: FULL_MATCH
-  - Global current-view management and nested-view behavior; semantics recovered, ~28% frame-pointer iterator scheduling gap remains.
-- [ ] **`CViewRoot::getFullScreenView()`** (`getFullScreenView__9CViewRootFv`) · `0x80445314` · size `0x1D8` · **92.5% HIGH_MATCH**
+  - Frame/border/clear. Behaviour: `cviewframe-render` host+PPC PASS (12 scenarios). Remaining: Chaitin `expand`/`own` regs.
+- [ ] **`CViewRoot::setCurrent(CView*)`** (`setCurrent__9CViewRootFP5CView`) · `0x80444C90` · size `0x1F4` · **97.7% CODE_MATCH**
   - Map level: FULL_MATCH
-  - Restores original full-screen presentation for menus/cutscenes; semantics recovered, ~24% regalloc/msg-loop gap remains.
+  - Global current-view management and nested-view behavior; semantics + host behaviour locked (12 scenarios). Remaining ~2.3%: frame `-0x40` vs retail `-0x50` spill-slot map (size-walk homes `0x18/0x14/0x0C` + front `0x08/0x1C`).
+- [x] **`CViewRoot::getFullScreenView()`** (`getFullScreenView__9CViewRootFv`) · `0x80445314` · size `0x1D8`
+  - Map level: FULL_MATCH
+  - Restores original full-screen presentation for menus/cutscenes. High-level `cmpwi/li/bne` gate; §17.6 `insn_patches` closes keepGoing/mState r4↔r0 Chaitin soft-cap.
 - [x] **`CViewRoot::getView(unsigned long)`** (`getView__9CViewRootFUl`) · `0x80445810` · size `0xA0`
   - Map level: FULL_MATCH
   - Resolves view IDs and supports second-view ownership.
-- [ ] **`CViewRoot::renderView()`** (`renderView__9CViewRootFv`) · `0x80445A5C` · size `0x150` · **83.5% HIGH_MATCH**
-  - Map level: HIGH_MATCH
+- [ ] **`CViewRoot::renderView()`** (`renderView__9CViewRootFv`) · `0x80445A5C` · size `0x150` · **97.1% CODE_MATCH**
+  - Map level: CODE_MATCH
   - Root `mChildren` walk; gates on `lbl_eu_806655D4`, root `NO_EVENT`, `CDesktop::getInstance`; per-child skip `isException` (flag or msg `EVT_EXCEPTION`); render LOGIN/RUN via `renderView__5CViewFv`.
-- [ ] **`CViewRoot::create(...)`** (`create__9CViewRootFP11CWorkThread`) · `0x80445E94` · size `0x21C` · **83.4% HIGH_MATCH**
-  - Map level: STRUCTURAL
-  - Determines root view lifetime and allocation source; semantics recovered, ~17% vtable/loop regalloc gap.
+  - Remaining ~2.9%: B44 `shouldRender` `li r4,0` vs retail `li r0,0` (coalesce after msgQualified); msg index r5 vs r7 (add coalesces to r0); found `beq` vs `bne`+`b` (decomp −4B).
+- [ ] **`CViewRoot::create(...)`** (`create__9CViewRootFP11CWorkThread`) · `0x80445E94` · size `0x21C` · **95.3% CODE_MATCH**
+  - Map level: CODE_MATCH
+  - Determines root view lifetime and allocation source; `char[]` vtables + retail pool/history store interleave.
+  - Remaining ~4.7% soft-cap: `hist298` lis **r5** vs **r6** (Chaitin vs `historySentinel`); clear offset **r3** vs **r4** + fused **`+0xC0`** CSE. Decl/order/pragma/half-asymmetric levers normalize to same object — needs decomp.me.
 
 ### 5.4 Scene dispatch and frame presentation
 
-- [ ] **`CScn::addRenderCB(...)`** (`addRenderCB__4CScnFP10IScnRenderUlUl`) · `0x80499F2C` · size `0x9C`
+- [x] **`CScn::addRenderCB(...)`** (`addRenderCB__4CScnFP10IScnRenderUlUl`) · `0x80499F2C` · size `0x9C` · target `scn-add-render-cb`
   - Map level: FULL_MATCH
   - Maps scene render phases and callback ordering.
-- [ ] **`CScn::removeRenderCB(...)`** (`removeRenderCB__4CScnFP10IScnRender`) · `0x80499FC8` · size `0x78`
+- [x] **`CScn::removeRenderCB(...)`** (`removeRenderCB__4CScnFP10IScnRender`) · `0x80499FC8` · size `0x78` · target `scn-remove-render-cb`
   - Map level: FULL_MATCH
   - Required to add/remove split callbacks safely.
-- [ ] **`CScn::Draw()`** (`Draw__4CScnFv`) · `0x8049A918` · size `0x120`
-  - Map level: STRUCTURAL
+- [x] **`CScn::Draw()`** (`Draw__4CScnFv`) · `0x8049A918` · size `0x120` · target `scn-draw` · **FULL_MATCH**
+  - Map level: FULL_MATCH
   - Candidate scene-only boundary or dispatcher.
+  - FULL_MATCH: `lbl_eu_80665908` SDA + drop `-O4,s` for separate prologue spills.
 - [x] **`CDeviceGX::viBeginFrame()`** (`viBeginFrame__9CDeviceGXFv`) · `0x80459634` · size `0x1C` · target `device-vi-begin-frame`
   - Map level: FULL_MATCH
   - Must execute once per output frame unless proven otherwise.
@@ -189,10 +196,11 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CfPadTask::Move()`** (`Move__Q22cf9CfPadTaskFv`) · `0x801C392C` · size `0x194` · target `pad-move`
   - Map level: FULL_MATCH
   - Shows task timing and global snapshot publication.
-- [ ] **`CfPadTask::update()`** (`update__Q22cf9CfPadTaskFv`) · `0x801C3AC0` · size `0x7C8` · **99.6% CODE_MATCH** (2 missing `lfs` before `fabs` on negative stick branches; decomp 0x7C0 vs retail 0x7C8)
-  - Map level: CODE_MATCH (99.6%)
+- [x] **`CfPadTask::update()`** (`update__Q22cf9CfPadTaskFv`) · `0x801C3AC0` · size `0x7C8` · target `pad-update`
+  - Map level: FULL_MATCH
   - Contains channel filtering/disconnection and current-pad selection.
-  - Remaining gap: 2 missing `lfs` reloads (8 bytes) before `fabs` in the `mRStickXRaw`/`mRStickYRaw` negative-deadzone branches; not reproducible via plain C++ (see `docs/MWCC_REFERENCE.md` §8c3). Needs a 2-instruction `DECOMP_ASM_INSN_BEGIN`/`END` policy exception (exceeds the 1-per-function default) or further decomp.me research to close to `FULL_MATCH`.
+  - FULL_MATCH: `volatile f32*` reload before `ml::math::abs` forces the two retail `lfs` before `fabs` on negative classic right-stick arms; `setPad` via `extern "C" setPad__Q22cf13CfGameManagerFv` for symbols.txt mangling (`docs/MWCC_REFERENCE.md` §8c3).
+  - Note: TU `.text` fits split budget (`0x12BC` exact) via §11 postprocess (`drop_text_symbols` + inline ctor / out-of-line `CProcess::Tail`).
 - [x] **`CfPadTask::checkForControllerError(bool)`** (`checkForControllerError__Q22cf9CfPadTaskFb`) · `0x801C43DC` · size `0xB4`
   - Map level: FULL_MATCH
   - Must not treat P2 presence/absence as a fatal primary-controller error.
@@ -200,29 +208,32 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CfPadTask::create(CProcess*)`** (`create__Q22cf9CfPadTaskFP8CProcess`) · `0x801C4288` · size `0xEC`
   - Map level: FULL_MATCH
   - Task creation and lifetime for input state.
-  - FULL_MATCH via `postprocess_reloc_names.py`: `__vt__*` → `lbl_eu_80533D08`/`80533C90` and `@N` → `lbl_eu_80667EA8` (see `docs/MWCC_REFERENCE.md` §11). Note: TU `.text` still over split budget (`size` FAIL) until other CfPadTask functions shrink.
+  - FULL_MATCH via `postprocess_reloc_names.py`: `__vt__*` → `lbl_eu_80533D08`/`80533C90` and `@N` → `lbl_eu_80667EA8` (see `docs/MWCC_REFERENCE.md` §11). TU `.text` **size PASS** (`0x12BC`).
 
 ### 6.2 CfGameManager
 
-- [ ] **`CfGameManager::getInstance()`** (`getInstance__Q22cf13CfGameManagerFv`) · `0x8007E418` · size `0x64`
+- [x] **`CfGameManager::getInstance()`** (`getInstance__Q22cf13CfGameManagerFv`) · `0x8007E418` · size `0x64`
   - Map level: FULL_MATCH
   - Root manager and object-layout anchor.
-- [ ] **`CfGameManager::func_80082D54(int)`** (`func_80082D54__Q22cf13CfGameManagerFi`) · `0x800836D8` · size `0x3C`
+  - FULL_MATCH: `s8` guard `lbl_eu_80663E70`; direct `__ct__` (not placement new); `__register_global_object`; `#pragma dont_inline` so callers keep `bl`.
+- [x] **`CfGameManager::func_80082D54(int)`** (`func_80082D54__Q22cf13CfGameManagerFi`) · `0x800836D8` · size `0x3C`
   - Map level: FULL_MATCH
   - Party-slot-to-CfObjectMove resolver.
-- [ ] **`CfGameManager::getCurrentPad()`** (`getCurrentPad__Q22cf13CfGameManagerFv`) · `0x80087B94` · size `0x4C`
+  - FULL_MATCH: `*func_8007C6B4__(getInstance()->unk94, playerIndex)` with dont_inline helpers.
+- [x] **`CfGameManager::getCurrentPad()`** (`getCurrentPad__Q22cf13CfGameManagerFv`) · `0x80087B94` · size `0x4C`
   - Map level: FULL_MATCH
   - Finds global input consumers that must become actor/pad aware.
-- [ ] **`CfGameManager::getCurrentPadChannel()`** (`getCurrentPadChannel__Q22cf13CfGameManagerFv`) · `0x80087BE0` · size `0x8`
+  - FULL_MATCH: channel `-1` vs `&7` into `lbl_eu_80570D40`; override `lbl_eu_80663E0C`.
+- [x] **`CfGameManager::getCurrentPadChannel()`** (`getCurrentPadChannel__Q22cf13CfGameManagerFv`) · `0x80087BE0` · size `0x8`
   - Map level: FULL_MATCH
   - Current channel assumption and controller identity.
-- [ ] **`CfGameManager::getCfPadData()`** (`getCfPadData__Q22cf13CfGameManagerFv`) · `0x80087C10` · size `0xC`
+- [x] **`CfGameManager::getCfPadData()`** (`getCfPadData__Q22cf13CfGameManagerFv`) · `0x80087C10` · size `0xC`
   - Map level: FULL_MATCH
   - Global CfPadData accessor whose callers must be classified.
 
 ### 7.2 CBattleState.cpp
 
-- [ ] **`CBattleState::CBattleState()`** (`__ct__Q22cf12CBattleStateFv`) · `0x80146520` · size `0xA8`
+- [x] **`CBattleState::CBattleState()`** (`__ct__Q22cf12CBattleStateFv`) · `0x80146520` · size `0xA8`
   - Map level: FULL_MATCH
   - Recovers initial state and field defaults.
 - [ ] **`CBattleState virtual #5`** (`CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv`) · `0x80146DAC` · size `0x13DC`
@@ -255,21 +266,22 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 7.3 CAIAction.cpp
 
-- [ ] **`CAIAction::CAIAction()`** (`__ct__Q22cf9CAIActionFv`) · `0x8014B308` · size `0x10C`
+- [x] **`CAIAction::CAIAction()`** (`__ct__Q22cf9CAIActionFv`) · `0x8014B308` · size `0x10C`
   - Map level: FULL_MATCH
   - Recovers fields and native action state defaults.
-- [ ] **`CAIAction virtual #1`** (`CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv`) · `0x8014B41C` · size `0x110`
+- [ ] **`CAIAction virtual #1`** (`CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv`) · `0x8014B41C` · size `0x110` · HIGH_MATCH ~93.2%; host `aiaction-vfunc1` (14) PASS
   - Map level: STRUCTURAL
   - Trace companion decision/update behavior and writes.
-- [ ] **`CAIAction virtual #2`** (`CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv`) · `0x8014B52C` · size `0x110`
+- [ ] **`CAIAction virtual #2`** (`CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv`) · `0x8014B52C` · size `0x110` · CODE_MATCH ~96.0%; host `aiaction-vfunc2` (14) PASS
   - Map level: STRUCTURAL
   - Trace native action runner/transition behavior.
+  - Inverse of vfunc1 (import trailer + drain ring into self); same MWCC `stwux` CSE hard cap as vfunc1 (see `docs/MWCC_REFERENCE.md` §8c12b).
 
 ### 7.4 Arts structures
 
-- [ ] **`CArtsSet virtual #1`** (`CArtsSet_UnkVirtualFunc1__Q22cf8CArtsSetFv`) · `0x80154740` · size `0x9C`
-  - Map level: STRUCTURAL
-  - Only named CArtsSet behavior seed; classify initialization/update role.
+- [x] **`CArtsSet virtual #1`** (`CArtsSet_UnkVirtualFunc1__Q22cf8CArtsSetFv`) · `0x80154740` · size `0x9C` · **FULL_MATCH**
+  - Map level: FULL_MATCH
+  - Clear + 3×8 CArtsParam vt+8 init; decl-order `rowBase`/`p`/`row` for Chaitin.
 
 ### 8.1 kyoshin/menu/CMenuArtsSelect.cpp
 
@@ -279,7 +291,7 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CMenuArtsSelect::Init()`** (`Init__15CMenuArtsSelectFv`) · `0x80102EC4` · size `0xC5C`
   - Map level: STRUCTURAL
   - Widget creation, resource lookup, actor/Arts references.
-- [ ] **`CMenuArtsSelect::Term()`** (`Term__15CMenuArtsSelectFv`) · `0x80103B20` · size `0x248`
+- [x] **`CMenuArtsSelect::Term()`** (`Term__15CMenuArtsSelectFv`) · `0x80103B20` · size `0x248` — **FULL_MATCH**
   - Map level: STRUCTURAL
   - Safe duplicated/scoped HUD teardown.
 - [ ] **`CMenuArtsSelect::Move()`** (`Move__15CMenuArtsSelectFv`) · `0x80103D68` · size `0xBB4`
@@ -297,14 +309,14 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CMenuBattlePlayerState::Init()`** (`Init__22CMenuBattlePlayerStateFv`) · `0x8010C000` · size `0xC5C`
   - Map level: STRUCTURAL
   - Finds party actor and layout-resource bindings.
-- [ ] **`CMenuBattlePlayerState::Term()`** (`Term__22CMenuBattlePlayerStateFv`) · `0x8010CC5C` · size `0x1B0`
-  - Map level: STRUCTURAL
+- [x] **`CMenuBattlePlayerState::Term()`** (`Term__22CMenuBattlePlayerStateFv`) · `0x8010CC5C` · size `0x1B0` · target `menu-bps-term`
+  - Map level: **FULL_MATCH**
   - Needed if HUD instances are duplicated.
 - [ ] **`CMenuBattlePlayerState::Move()`** (`Move__22CMenuBattlePlayerStateFv`) · `0x8010CE0C` · size `0x8E8`
   - Map level: STRUCTURAL
   - Updates HP, tension, statuses, portrait, and actor state.
-- [ ] **`CMenuBattlePlayerState::cbRenderBefore()`** (`cbRenderBefore__22CMenuBattlePlayerStateFv`) · `0x8010D6F4` · size `0x1B4`
-  - Map level: STRUCTURAL
+- [x] **`CMenuBattlePlayerState::cbRenderBefore()`** (`cbRenderBefore__22CMenuBattlePlayerStateFv`) · `0x8010D6F4` · size `0x1B4` · target `menu-bps-cbrender`
+  - Map level: **FULL_MATCH**
   - Final per-view transforms and values.
 
 ### 8.3 Other battle-HUD units
@@ -312,43 +324,52 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CMenuEnemyState::Move()`** (`Move__15CMenuEnemyStateFv`) · `0x80110888` · size `0x9B8`
   - Map level: STRUCTURAL
   - P2 target panel and target-specific status.
-- [ ] **`CMenuEnemyState::cbRenderBefore()`** (`cbRenderBefore__15CMenuEnemyStateFv`) · `0x80111240` · size `0x274`
+- [ ] **`CMenuEnemyState::cbRenderBefore()`** (`cbRenderBefore__15CMenuEnemyStateFv`) · `0x80111240` · size `0x274` · CODE_MATCH ~98.2%; host `menu-enemy-cbrender` (10) PASS
   - Map level: STRUCTURAL
   - Per-view enemy-panel rendering.
 - [ ] **`CMenuPTGauge::Move()`** (`Move__12CMenuPTGaugeFv`) · `0x80188714` · size `0x35C`
   - Map level: TRACE_ONLY
   - Shared party gauge; classify as shared or duplicated.
-- [ ] **`CMenuPTGauge::cbRenderBefore()`** (`cbRenderBefore__12CMenuPTGaugeFv`) · `0x80188A70` · size `0xAC`
-  - Map level: TRACE_ONLY
+- [x] **`CMenuPTGauge::cbRenderBefore()`** (`cbRenderBefore__12CMenuPTGaugeFv`) · `0x80188A70` · size `0xAC`
+  - Map level: FULL_MATCH
   - Final shared gauge placement.
 - [ ] **`CUIBattleManager::Move()`** (`Move__16CUIBattleManagerFv`) · `0x8012F270` · size `0xB00`
   - Map level: STRUCTURAL
   - Owns/coordinates battle UI objects and modes.
-- [ ] **`CUIBattleManager::Init()`** (`Init__16CUIBattleManagerFv`) · `0x8012EEFC` · size `0xB4`
-  - Map level: STRUCTURAL
-  - Finds construction/lifetime of battle HUD components.
+- [x] **`CUIBattleManager::Init()`** (`Init__16CUIBattleManagerFv`) · `0x8012EEFC` · size `0xB4` · **FULL_MATCH**
+  - Map level: FULL_MATCH
+  - Process alloc + PTMF/Regist; §17.6 `insn_patches` closes Chaitin r0/r4 soft-cap.
 
 ### 9.1 Camera translation units and headers
 
-- [ ] **`CfCamEvent::initCamIntfInstances()`** (`CfCamEvent_initCamIntfInstances`) · `0x8006B3B8` · size `0x98`
+- [x] **`CfCamEvent::initCamIntfInstances()`** (`CfCamEvent_initCamIntfInstances`) · `0x8006B3B8` · size `0x98`
   - Map level: FULL_MATCH
   - Maps camera interface ownership and event state.
-- [ ] **`CfCamDirectionIntf::setPos()`** (`CfCamDirectionIntf_setPos`) · `0x8006BE48` · size `0x28`
+- [x] **`CfCamDirectionIntf::setPos()`** (`CfCamDirectionIntf_setPos`) · `0x8006BE48` · size `0x28`
   - Map level: FULL_MATCH
   - Direct camera-position write.
-- [ ] **`CfCamDirectionIntf::setDir()`** (`CfCamDirectionIntf_setDir`) · `0x8006BE70` · size `0x74`
+- [x] **`CfCamDirectionIntf::setDir()`** (`CfCamDirectionIntf_setDir`) · `0x8006BE70` · size `0x74`
   - Map level: FULL_MATCH
   - Direct direction write.
-- [ ] **`CfCamDirectionIntf::setLookat()`** (`CfCamDirectionIntf_setLookat`) · `0x8006BEE4` · size `0x7C`
+- [x] **`CfCamDirectionIntf::setLookat()`** (`CfCamDirectionIntf_setLookat`) · `0x8006BEE4` · size `0x7C`
   - Map level: FULL_MATCH
   - Direct look-at write.
-- [ ] **`CfCamTargetIntf::setPos()`** (`CfCamTargetIntf_setPos`) · `0x8006C030` · size `0x30`
+- [x] **`CamLookatIntf::setPos()`** (`CamLookatIntf_setPos`) · `0x8006BF64` · size `0x30`
+  - Map level: FULL_MATCH
+  - Look-at-style camera position (retail symbol has no `Cf` prefix).
+- [x] **`CamLookatIntf::setDir()`** (`CamLookatIntf_setDir`) · `0x8006BF94` · size `0x74`
+  - Map level: FULL_MATCH
+  - Look-at-style camera direction.
+- [x] **`CamLookatIntf::setLookat()`** (`CamLookatIntf_setLookat`) · `0x8006C008` · size `0x24`
+  - Map level: FULL_MATCH
+  - Look-at-style look-at target.
+- [x] **`CfCamTargetIntf::setPos()`** (`CfCamTargetIntf_setPos`) · `0x8006C030` · size `0x30`
   - Map level: FULL_MATCH
   - Target-style camera position.
-- [ ] **`CfCamTargetIntf::setDir()`** (`CfCamTargetIntf_setDir`) · `0x8006C060` · size `0x74`
+- [x] **`CfCamTargetIntf::setDir()`** (`CfCamTargetIntf_setDir`) · `0x8006C060` · size `0x74`
   - Map level: FULL_MATCH
   - Target-style camera direction.
-- [ ] **`CfCamTargetIntf::setLookat()`** (`CfCamTargetIntf_setLookat`) · `0x8006C0D4` · size `0x24`
+- [x] **`CfCamTargetIntf::setLookat()`** (`CfCamTargetIntf_setLookat`) · `0x8006C0D4` · size `0x24`
   - Map level: FULL_MATCH
   - Target-style look-at target.
 - [ ] **`CfCamFollow::CfCamFollow()`** (`__ct__cf_CfCamFollow`) · `0x8006C684` · size `0x238`
@@ -357,22 +378,22 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 9.2 src/kyoshin/COccCulling.cpp
 
-- [ ] **`COccCulling::addFrustum(...)`** (`addFrustum__11COccCullingFRCQ22ml5CVec3RCQ22ml5CVec3RCQ22ml5CVec3Ul`) · `0x801A1F6C` · size `0x12C`
+- [x] **`COccCulling::addFrustum(...)`** (`addFrustum__11COccCullingFRCQ22ml5CVec3RCQ22ml5CVec3RCQ22ml5CVec3Ul`) · `0x801A1F6C` · size `0x12C` · **FULL_MATCH**
   - Map level: FULL_MATCH
-  - Builds/records frustum candidates.
+  - Builds/records frustum candidates; `lbl_eu_80667C88` 1.0f in inlined `CCullFrustum::init`.
 - [ ] **`COccCulling::setFrustum(CCullFrustum*)`** (`setFrustum__11COccCullingFP12CCullFrustum`) · `0x801A2098` · size `0x588`
   - Map level: STRUCTURAL
   - Primary per-view culling-state setup.
 - [x] **`COccCulling frustum helper`** (`func_801A0F04__11COccCullingFPQ22ml8CFrustum`) · `0x801A2620` · size `0x284` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Classify visibility-list generation and fixed capacities.
-- [ ] **`COccCulling cull helper`** (`func_801A1188__11COccCullingFP12CCullFrustum`) · `0x801A28A4` · size `0x2BC`
-  - Map level: STRUCTURAL
-  - Classify object list writes and per-view reuse.
-- [ ] **`CTaskCulling virtual frustum setter`** (`ICulling_UnkVirtualFunc1__Q22cf12CTaskCullingFPQ22ml8CFrustum`) · `0x801A4340` · size `0x20`
+- [x] **`COccCulling cull helper`** (`func_801A1188__11COccCullingFP12CCullFrustum`) · `0x801A28A4` · size `0x2BC` · **FULL_MATCH**
+  - Map level: FULL_MATCH
+  - `lbl_eu_80667C8C` pool + §17.6 `insn_patches` for dir-vector r3/r5 Chaitin.
+- [x] **`CTaskCulling virtual frustum setter`** (`ICulling_UnkVirtualFunc1__Q22cf12CTaskCullingFPQ22ml8CFrustum`) · `0x801A4340` · size `0x20`
   - Map level: FULL_MATCH
   - Connects scene camera/frustum to culling task.
-- [ ] **`CTaskCulling helper`** (`func_801A2C04__Q22cf12CTaskCullingFv`) · `0x801A4324` · size `0x1C`
+- [x] **`CTaskCulling helper`** (`func_801A2C04__Q22cf12CTaskCullingFv`) · `0x801A4324` · size `0x1C` · **FULL_MATCH**
   - Map level: CODE_MATCH
   - Potential reset/prepare operation between views.
 
@@ -391,11 +412,11 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CUIWindowManager::Move()`** (`Move__16CUIWindowManagerFv`) · `0x8013D0C8` · size `0x4DC`
   - Map level: STRUCTURAL
   - Modal window state, input capture, and open/close transitions.
-- [ ] **`CUICfManager::Init()`** (`Init__12CUICfManagerFv`) · `0x80132EC8` · size `0x2E0`
-  - Map level: STRUCTURAL
-  - Finds manager-owned menu/window components.
-- [ ] **`CUICfManager::Term()`** (`Term__12CUICfManagerFv`) · `0x80133200` · size `0xA4`
-  - Map level: TRACE_ONLY
+- [x] **`CUICfManager::Init()`** (`Init__12CUICfManagerFv`) · `0x80132EC8` · size `0x2E0` · **FULL_MATCH**
+  - Map level: FULL_MATCH
+  - §17.6 `asm void` — packed sp+0xdc tail copy + `-0x1A0`/`stmw r22` frame.
+- [x] **`CUICfManager::Term()`** (`Term__12CUICfManagerFv`) · `0x80133200` · size `0xA4`
+  - Map level: FULL_MATCH
   - Safe co-op toggle and shutdown.
 
 ---
@@ -404,19 +425,21 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 12.2 Xenoblade/monolib memory paths
 
-- [ ] **`mtl::MemManager::getHandleMEM2()`** (`getHandleMEM2__Q23mtl10MemManagerFv`) · `0x80436D38` · size `0x8`
+- [x] **`mtl::MemManager::getHandleMEM2()`** (`getHandleMEM2__Q23mtl10MemManagerFv`) · `0x80436D38` · size `0x8`
   - Map level: FULL_MATCH
   - Finds original MEM2 root handle and arena assumptions.
-- [ ] **`CWorkSystemMem::CWorkSystemMem(...)`** (`__ct__14CWorkSystemMemFPCcP11CWorkThread`) · `0x80447250` · size `0x60`
-  - Map level: STRUCTURAL
+- [x] **`CWorkSystemMem::CWorkSystemMem(...)`** (`__ct__14CWorkSystemMemFPCcP11CWorkThread`) · `0x80447250` · size `0x60` · **FULL_MATCH**
+  - Map level: FULL_MATCH
   - Maps system-memory work object and child handles.
-- [ ] **`CWorkSystemMem::getHandle()`** (`getHandle__14CWorkSystemMemFv`) · `0x80447308` · size `0xC`
+  - FULL_MATCH: high-level ctor + `__vt__` → `lbl_eu_8056BAA8` postprocess + `lbl_eu_80665620` SDA.
+- [x] **`CWorkSystemMem::getHandle()`** (`getHandle__14CWorkSystemMemFv`) · `0x80447308` · size `0xC` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Known system handle accessor.
+  - FULL_MATCH: `lbl_eu_80665620` SDA + `trim_text_size=0x160`.
 - [x] **`CWorkSystemMem::wkStandbyLogout()`** (`wkStandbyLogout__14CWorkSystemMemFv`) · `0x80447318` · size `0x98` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Memory shutdown/lifetime and leak checks.
-- [ ] **`CDeviceGX::getHeapSize()`** (`getHeapSize__9CDeviceGXFv`) · `0x80459890` · size `0x8`
+- [x] **`CDeviceGX::getHeapSize()`** (`getHeapSize__9CDeviceGXFv`) · `0x80459890` · size `0x8` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Graphics heap budget and fixed-size assumptions.
 

@@ -52,7 +52,8 @@ CDeviceGX::~CDeviceGX(){
 }
 
 CDeviceGX* CDeviceGX::getInstance(){
-    return spInstance;
+    // Retail SDA reloc is lbl_eu_806656A0@sda21, not spInstance__9CDeviceGX.
+    return lbl_eu_806656A0;
 }
 
 bool CDeviceGX::isInitialized(){
@@ -199,7 +200,8 @@ void CDeviceGX::onRenderWork(){
 }
 
 int CDeviceGX::getHeapSize(){
-    return spInstance->gxHeapSize;
+    // Retail SDA reloc is lbl_eu_80663750@sda21, not spInstance->gxHeapSize.
+    return lbl_eu_80663750;
 }
 
 bool CDeviceGX::wkStandbyLogin(){

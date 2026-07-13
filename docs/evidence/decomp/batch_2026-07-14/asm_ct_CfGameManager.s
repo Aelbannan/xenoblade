@@ -1,0 +1,23 @@
+.fn __ct__Q22cf13CfGameManagerFv, global
+/* 8007CE54 00046094  38 00 00 00 */	li r0, 0x0
+/* 8007CE58 00046098  98 03 00 28 */	stb r0, 0x28(r3)
+/* 8007CE5C 0004609C  90 03 00 68 */	stw r0, 0x68(r3)
+/* 8007CE60 000460A0  98 03 00 6C */	stb r0, 0x6c(r3)
+/* 8007CE64 000460A4  90 03 00 7C */	stw r0, 0x7c(r3)
+/* 8007CE68 000460A8  90 03 00 8C */	stw r0, 0x8c(r3)
+/* 8007CE6C 000460AC  90 03 00 A0 */	stw r0, 0xa0(r3)
+/* 8007CE70 000460B0  90 03 00 A4 */	stw r0, 0xa4(r3)
+/* 8007CE74 000460B4  90 03 00 A8 */	stw r0, 0xa8(r3)
+/* 8007CE78 000460B8  90 03 00 AC */	stw r0, 0xac(r3)
+/* 8007CE7C 000460BC  90 03 00 B0 */	stw r0, 0xb0(r3)
+/* 8007CE80 000460C0  90 03 00 B4 */	stw r0, 0xb4(r3)
+/* 8007CE84 000460C4  90 0D A5 94 */	stw r0, lbl_eu_80663E14@sda21(r0)
+/* 8007CE88 000460C8  90 0D A5 E0 */	stw r0, lbl_eu_80663E60@sda21(r0)
+/* 8007CE8C 000460CC  90 0D A5 E4 */	stw r0, lbl_eu_80663E64@sda21(r0)
+/* 8007CE90 000460D0  90 0D A5 A4 */	stw r0, lbl_eu_80663E24@sda21(r0)
+/* 8007CE94 000460D4  90 0D A5 A8 */	stw r0, lbl_eu_80663E28@sda21(r0)
+/* 8007CE98 000460D8  90 03 00 00 */	stw r0, 0x0(r3)
+/* 8007CE9C 000460DC  90 03 00 04 */	stw r0, 0x4(r3)
+/* 8007CEA0 000460E0  90 03 00 08 */	stw r0, 0x8(r3)
+/* 8007CEA4 000460E4  4E 80 00 20 */	blr
+.endfn __ct__Q22cf13CfGameManagerFv

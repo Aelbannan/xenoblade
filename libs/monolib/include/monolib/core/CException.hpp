@@ -5,7 +5,7 @@
 
 class IGameException {
 public:
-    virtual ~IGameException(){}
+    virtual ~IGameException() {}
     virtual bool gameExceptionCB(u32 r4) = 0;
 };
 

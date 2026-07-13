@@ -19,8 +19,9 @@ from typing import List
 script_dir = os.path.dirname(os.path.realpath(__file__))
 root_dir = os.path.abspath(os.path.join(script_dir, ".."))
 src_dir = os.path.join(root_dir, "src")
-include_dirs: List[str] = [  # Set with -I flag
+include_dirs: List[str] = [  # Defaults; override with -I
     os.path.join(root_dir, "include"),
+    os.path.join(root_dir, "src"),
     os.path.join(root_dir, "libs/PowerPC_EABI_Support/include/stl"),
     os.path.join(root_dir, "libs/PowerPC_EABI_Support/include"),
     os.path.join(root_dir, "libs/monolib/include"),
@@ -161,10 +162,9 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.include is None:
-        exit("No include directories specified")
     global include_dirs
-    include_dirs = args.include
+    if args.include is not None:
+        include_dirs = args.include
     global exclude_globs
     exclude_globs = args.exclude or []
     prelude_defines = args.define or []

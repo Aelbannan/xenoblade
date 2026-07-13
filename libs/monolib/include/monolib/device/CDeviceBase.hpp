@@ -14,7 +14,7 @@ public:
     CDeviceBase(const char* pName, CWorkThread* pParent, int capacity) : CWorkThread(pName, pParent, capacity) {
         mFlags = 0;
     }
-    virtual ~CDeviceBase(){}
+    virtual ~CDeviceBase();
 
     inline void CDeviceBase_inline1(CWorkThread* pWorkThread){
         CWorkUtil::entryWork(this, pWorkThread, false);

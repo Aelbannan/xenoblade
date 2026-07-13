@@ -1,19 +1,23 @@
 #include "monolib/work.hpp"
 
+// Retail SDA singleton (getHandle / ctor / dtor reloc name).
+extern "C" CWorkSystemMem* lbl_eu_80665620;
+
+// Keep for ABI; retail sbss slot is lbl_eu_80665620.
 CWorkSystemMem* CWorkSystemMem::spInstance;
 
 CWorkSystemMem::CWorkSystemMem(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 1),
 mHandle(mtl::INVALID_HANDLE){
-    spInstance = this;
+    lbl_eu_80665620 = this;
     mHandle = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), REGION_SIZE, mName.c_str());
 }
 
 CWorkSystemMem::~CWorkSystemMem(){
-    spInstance = nullptr;
+    lbl_eu_80665620 = nullptr;
 }
 
 mtl::ALLOC_HANDLE CWorkSystemMem::getHandle(){
-    return spInstance->mHandle;
+    return lbl_eu_80665620->mHandle;
 }
 
 bool CWorkSystemMem::wkStandbyLogin(){

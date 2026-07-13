@@ -1,3 +1,4 @@
+// DEPRECATED: superseded by src/kyoshin/cf/CfCamLookatIntf.cpp (retail C-linkage CamLookatIntf_*).
 #include "kyoshin/cf/camera/CfCamLookatIntf.hpp"
 
 using namespace ml;

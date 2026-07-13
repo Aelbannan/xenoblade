@@ -39,6 +39,9 @@ CProcess::~CProcess() {
     }
 }
 
+void CProcess::Tail() {
+}
+
 void CProcess::Regist(CProcess* parent, bool insertTop) {
     if (mIsRegist) {
         return;

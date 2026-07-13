@@ -5,6 +5,8 @@
 
 using namespace ml;
 
+CDeviceBase::~CDeviceBase() {}
+
 namespace {
     //size: 0x1c8
     class CDeviceException : public CWorkThread {

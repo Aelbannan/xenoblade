@@ -8,6 +8,8 @@ namespace ml {
         static CVec4 unitZ;
         static CVec4 unit;
 
+        CVec4() {}
+
         CVec4(float x, float y, float z, float w){
             this->x = x;
             this->y = y;

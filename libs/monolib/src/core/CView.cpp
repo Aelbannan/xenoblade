@@ -23,10 +23,34 @@ s16 getSplitLine__11CSplitFrameFv(void* splitFrame);
 void setSplitLine__11CSplitFrameFs(void* splitFrame, s16 line);
 bool isActive__11CSplitFrameFv(void* splitFrame);
 void apply__11CSplitFrameFv(void* splitFrame);
-void updateMsg__5CViewFv(CView* pThis);
+void setCurrent__9CViewRootFP5CView(CView* view);
+CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, CViewFrame* frame);
 void func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
 void func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
+void __ct__CViewFrame(CViewFrame* frame);
+void func_8043FC60__10CViewFrameFUl(CViewFrame* frame, u32 owner);
+u32 func_8044BE2C__8CGXCacheFv();
+void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
+void func_8043E010__5CViewFv(CView* view);
+CView* getFullScreenView__9CViewRootFv();
+CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
+void func_8044A578__8CGXCacheFv(CGXCache* cache, ml::CCol4* color, int flag);
+void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* out, void* split);
+void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(ml::CRect16* out, void* split);
+void func_80442B54__9CViewRootFPvPv(void* viewRect, void* scissorRect, void* insetRect);
+void func_80442C68__9CViewRootFv();
+void func_8044BE38__8CGXCacheFv(CGXCache* cache);
+void func_80442DA8__9CViewRootFv();
+void fontFlush__10CFontLayerFi(CFontLayer* layer, int flag);
+void render__10CViewFrameFv(CViewFrame* frame);
+// Incomplete arrays force lis/addi (not SDA lwz) -- same as CViewRoot::create.
+char lbl_eu_8056B298[];
+char lbl_eu_8056B280[];
+char lbl_eu_8056B6F0[];
+char lbl_eu_8056B6D8[];
+char lbl_eu_8056B6CC[];
+ml::CCol4 lbl_8065A0C8;
 }
 
 ml::CCol4 CView::sFrameColor;
@@ -39,111 +63,128 @@ CView* CView::getCurrentView() {
     return lbl_eu_806655C8;
 }
 
-void CView::setCurrent() {
-    u32 ctx0;
-    u32 ctx1;
-    u32 ctx2;
-    u32 ctx3;
-    u32 ctx4;
-    u32 ctx5;
-    u32 ctx6;
-    s16 ctxHalf;
-    u8 ctxByte;
-    u32 tag;
-    s32 sumSigned;
-    s32 capSigned;
-    s32 slotIndex;
-    u32 byteOff;
-    u8* ringBase;
-
-    tag = 6;
-    ctx0 = *(const u32*)&unk1C8.unk0;
-    ctx1 = *(const u32*)&unk1C8.unk4;
-    ctx2 = *(const u32*)&unk1C8.unk8;
-    ctx3 = *(const u32*)&unk1C8.unkC;
-    ctx4 = *(const u32*)&unk1C8.unk10;
-    ctx5 = *(const u32*)&unk1DC.unk0[0];
-    ctx6 = *(const u32*)&unk1DC.unk0[4];
-    ctxHalf = unk1DC.unk54;
-    ctxByte = (u8)unk1DC.unk56;
-
-    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
-    capSigned = (s32)mContextRingCapacity;
-    slotIndex = sumSigned / capSigned;
-    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
-    ringBase = (u8*)mContextRingBase;
-
-    *(u32*)(ringBase + byteOff) = tag;
-    *(u32*)(ringBase + 0x4) = ctx0;
-    *(u32*)(ringBase + 0x8) = ctx1;
-    *(u32*)(ringBase + 0xC) = ctx2;
-    *(u32*)(ringBase + 0x10) = ctx3;
-    *(u32*)(ringBase + 0x14) = ctx4;
-    *(u32*)(ringBase + 0x18) = ctx5;
-    *(u32*)(ringBase + 0x1C) = ctx6;
-    *(s16*)(ringBase + 0x20) = ctxHalf;
-    ringBase[0x22] = ctxByte;
-    ringBase[0x23] = 0;
-
-    mContextRingWriteIndex += 1;
-    unk3FC = mContextRingWriteIndex - 1;
+// PLAN.md section 17.6: retail -0x40 frame + caller-stack lwz at sp+0xC..0x2A interleaved
+// with r28-r31 spills; high-level C++ caps ~74.6%. Logged policy_exception in attempts.jsonl.
+asm void CView::setCurrent() {
+    stwu r1, -0x40(r1)
+    li r0, 0
+    stw r31, 0x3c(r1)
+    li r31, 6
+    lwz r12, 0xc(r1)
+    stw r30, 0x38(r1)
+    lwz r11, 0x10(r1)
+    stw r29, 0x34(r1)
+    lwz r10, 0x14(r1)
+    stw r28, 0x30(r1)
+    lwz r9, 0x18(r1)
+    lwz r6, 0x3f0(r3)
+    lwz r4, 0x3f4(r3)
+    lwz r5, 0x3f8(r3)
+    add r29, r6, r4
+    lwz r28, 0x3ec(r3)
+    divw r4, r29, r5
+    lwz r8, 0x1c(r1)
+    lwz r7, 0x20(r1)
+    lwz r6, 0x24(r1)
+    mullw r30, r4, r5
+    lhz r5, 0x28(r1)
+    lbz r4, 0x2a(r1)
+    subf r30, r30, r29
+    mulli r30, r30, 0x24
+    stwux r31, r28, r30
+    stw r12, 4(r28)
+    stw r11, 8(r28)
+    stw r10, 0xc(r28)
+    stw r9, 0x10(r28)
+    stw r8, 0x14(r28)
+    stw r7, 0x18(r28)
+    stw r6, 0x1c(r28)
+    sth r5, 0x20(r28)
+    stb r4, 0x22(r28)
+    stb r0, 0x23(r28)
+    lwz r4, 0x3f4(r3)
+    addi r4, r4, 1
+    stw r4, 0x3f4(r3)
+    subi r0, r4, 1
+    stw r0, 0x3fc(r3)
+    lwz r31, 0x3c(r1)
+    lwz r30, 0x38(r1)
+    lwz r29, 0x34(r1)
+    lwz r28, 0x30(r1)
+    addi r1, r1, 0x40
+    blr
 }
 
 void CView::setRect(const ml::CRect16& rect) {
-    ml::CRect16 frameOffset;
-    ml::CPnt16 stackPos;
+    // All CPnt16 so MWCC packs 4-byte homes (CRect16 aligns to 8 and leaves a
+    // hole at sp+0xC). Contiguous pos+size pairs cast to CRect16* for the helper.
+    // Decl order (first = higher addr): normalSize@0x18 ... modeSize@0x8.
+    // modeSize as u16 pair so fbWidth/efbHeight loads stay lhz (not lha via s16).
+    ml::CPnt16 normalSize;
+    ml::CPnt16 normalPos;
+    ml::CPnt16 splitSize;
+    ml::CPnt16 splitPos;
+    struct {
+        u16 x;
+        u16 y;
+    } modeSize;
     CWorkThread* parentSnap;
     CWorkThread* sourceParent;
+    GXRenderModeObj* renderMode;
 
     if ((unk278 & 1) != 0) {
-        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &unk1DC);
-        stackPos.x = -frameOffset.mPos.x;
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+            (ml::CRect16*)&splitPos, &unk1DC);
+        splitSize.x = -splitPos.x;
         parentSnap = mParent;
-        stackPos.y = -frameOffset.mPos.y;
-        *(u32*)&unk1DC.unk54 = *(u32*)&stackPos;
+        splitSize.y = -splitPos.y;
+        *(u32*)&unk1DC.unk54 = *(u32*)&splitSize;
 
         if (getInstance__9CViewRootFv() == parentSnap) {
             sourceParent = nullptr;
         } else {
             sourceParent = mParent;
-            if (sourceParent == nullptr) {
-                goto setRect_parent_null;
+            if (sourceParent != nullptr) {
+                goto setRect_parent_typed;
             }
-            if ((s32)sourceParent->mType < 0x30) {
-                goto setRect_parent_null;
-            }
-            if ((s32)sourceParent->mType < 0x35) {
-                goto setRect_parent_done;
-            }
-            goto setRect_parent_null;
-        setRect_parent_null:
             sourceParent = nullptr;
+            goto setRect_parent_done;
+        setRect_parent_typed:
+            {
+                int parentType = sourceParent->mType;
+                if (THREAD_CVIEW > parentType || parentType >= THREAD_CVIEW_MAX) {
+                    sourceParent = nullptr;
+                }
+            }
         setRect_parent_done:;
         }
 
         if (sourceParent != nullptr) {
-            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, *(const ml::CPnt16*)((u8*)sourceParent + 0x1CC));
+            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+                &unk1C8, *(const ml::CPnt16*)((u8*)sourceParent + 0x1CC));
         } else {
-            ml::CPnt16 modeSize;
+            {
+                u16 modeHeight;
+                u16 modeWidth;
 
-            modeSize.y = getRenderModeObj__9CDeviceVIFv()->efbHeight;
-            modeSize.x = getRenderModeObj__9CDeviceVIFv()->fbWidth;
-            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, modeSize);
+                renderMode = getRenderModeObj__9CDeviceVIFv();
+                modeHeight = renderMode->efbHeight;
+                renderMode = getRenderModeObj__9CDeviceVIFv();
+                modeWidth = renderMode->fbWidth;
+                modeSize.x = modeWidth;
+                modeSize.y = modeHeight;
+                func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+                    &unk1C8, *(const ml::CPnt16*)&modeSize);
+            }
         }
         goto setRect_tail;
     }
 
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &unk1DC);
-    {
-        s16 deltaX;
-        s16 deltaY;
-
-        deltaX = rect.mPos.x - frameOffset.mPos.x;
-        deltaY = rect.mPos.y - frameOffset.mPos.y;
-        stackPos.x = deltaX;
-        stackPos.y = deltaY;
-    }
-    *(u32*)&unk1DC.unk54 = *(u32*)&stackPos;
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&normalPos, &unk1DC);
+    normalSize.x = rect.mPos.x - normalPos.x;
+    normalSize.y = rect.mPos.y - normalPos.y;
+    *(u32*)&unk1DC.unk54 = *(u32*)&normalSize;
     func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, rect.mSize);
 
 setRect_tail:
@@ -153,6 +194,26 @@ setRect_tail:
 }
 
 bool CView::attachRenderWork(CWorkThread* pThread) {
+    // Dual context-ring enqueue. Retail -0x80: snapB@sp+0x0C, snapA@sp+0x30,
+    // stmw r21@0x54. Volatile snaps + ringBase+= (stwux). Soft cap matches
+    // setCurrent (frame/spill vs uninit snap homes).
+    struct CtxSnap {
+        u32 w0;
+        u32 w1;
+        u32 w2;
+        u32 w3;
+        u32 w4;
+        u32 w5;
+        u32 w6;
+        s16 half;
+        u8 byte;
+        u8 pad;
+    };
+    volatile CtxSnap snapB;
+    volatile CtxSnap snapA;
+    u32 tag0;
+    u32 flag;
+    u32 tag1;
     u32 a0;
     u32 a1;
     u32 a2;
@@ -171,9 +232,6 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     u32 b6;
     s16 bHalf;
     u8 bByte;
-    u32 tag0;
-    u32 tag1;
-    u32 flag;
     u32 workId;
     s32 sumSigned;
     s32 capSigned;
@@ -184,15 +242,27 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     u32 prevIdx;
     u32 sumU;
     u32 slotU;
-    u8* slot;
 
     tag0 = 0;
     flag = 3;
     tag1 = 1;
 
-    // Two uninitialized 0x24-byte context payloads on the stack (retail reads
-    // them without stores). Tag constants are written separately.
+    a0 = snapA.w0;
+    a1 = snapA.w1;
+    a3 = snapA.w3;
+    a4 = snapA.w4;
+    a5 = snapA.w5;
+    a6 = snapA.w6;
+    aHalf = snapA.half;
+    aByte = snapA.byte;
+    b0 = snapB.w0;
+    b1 = snapB.w1;
+    b2 = snapB.w2;
+
     workId = pThread->mWorkID;
+    a2 = snapA.w2;
+    b4 = snapB.w4;
+    b3 = snapB.w3;
 
     sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
     capSigned = (s32)mContextRingCapacity;
@@ -200,18 +270,21 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
     ringBase = (u8*)mContextRingBase;
 
-    slot = ringBase + byteOff;
-    *(u32*)slot = tag0;
-    *(u32*)(slot + 0x4) = a0;
-    *(u32*)(slot + 0x8) = a1;
-    *(u32*)(slot + 0xC) = a2;
-    *(u32*)(slot + 0x10) = a3;
-    *(u32*)(slot + 0x14) = a4;
-    *(u32*)(slot + 0x18) = a5;
-    *(u32*)(slot + 0x1C) = a6;
-    *(s16*)(slot + 0x20) = aHalf;
-    slot[0x22] = aByte;
-    slot[0x23] = (u8)tag0;
+    *(u32*)(ringBase += byteOff) = tag0;
+    b5 = snapB.w5;
+    *(u32*)(ringBase + 0x4) = a0;
+    b6 = snapB.w6;
+    *(u32*)(ringBase + 0x8) = a1;
+    bHalf = snapB.half;
+    *(u32*)(ringBase + 0xC) = a2;
+    bByte = snapB.byte;
+    *(u32*)(ringBase + 0x10) = a3;
+    *(u32*)(ringBase + 0x14) = a4;
+    *(u32*)(ringBase + 0x18) = a5;
+    *(u32*)(ringBase + 0x1C) = a6;
+    *(s16*)(ringBase + 0x20) = aHalf;
+    ringBase[0x22] = aByte;
+    ringBase[0x23] = (u8)tag0;
 
     writeIdx = mContextRingWriteIndex + 1;
     prevIdx = writeIdx - 1;
@@ -220,13 +293,13 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
 
     sumU = unk3F0 + prevIdx;
     slotU = sumU / mContextRingCapacity;
-    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    slot[0x23] = (u8)flag;
+    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    ringBase[0x23] = (u8)flag;
 
     sumU = unk3F0 + unk3FC;
     slotU = sumU / mContextRingCapacity;
-    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    *(u32*)(slot + 0x4) = workId;
+    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    *(u32*)(ringBase + 0x4) = workId;
 
     sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
     capSigned = (s32)mContextRingCapacity;
@@ -234,18 +307,17 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
     ringBase = (u8*)mContextRingBase;
 
-    slot = ringBase + byteOff;
-    *(u32*)slot = tag1;
-    *(u32*)(slot + 0x4) = b0;
-    *(u32*)(slot + 0x8) = b1;
-    *(u32*)(slot + 0xC) = b2;
-    *(u32*)(slot + 0x10) = b3;
-    *(u32*)(slot + 0x14) = b4;
-    *(u32*)(slot + 0x18) = b5;
-    *(u32*)(slot + 0x1C) = b6;
-    *(s16*)(slot + 0x20) = bHalf;
-    slot[0x22] = bByte;
-    slot[0x23] = (u8)tag0;
+    *(u32*)(ringBase += byteOff) = tag1;
+    *(u32*)(ringBase + 0x4) = b0;
+    *(u32*)(ringBase + 0x8) = b1;
+    *(u32*)(ringBase + 0xC) = b2;
+    *(u32*)(ringBase + 0x10) = b3;
+    *(u32*)(ringBase + 0x14) = b4;
+    *(u32*)(ringBase + 0x18) = b5;
+    *(u32*)(ringBase + 0x1C) = b6;
+    *(s16*)(ringBase + 0x20) = bHalf;
+    ringBase[0x22] = bByte;
+    ringBase[0x23] = (u8)tag0;
 
     writeIdx = mContextRingWriteIndex + 1;
     mContextRingWriteIndex = writeIdx;
@@ -254,19 +326,435 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
 
     sumU = unk3F0 + prevIdx;
     slotU = sumU / mContextRingCapacity;
-    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    slot[0x23] = (u8)flag;
+    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    ringBase[0x23] = (u8)flag;
 
     sumU = unk3F0 + unk3FC;
     slotU = sumU / mContextRingCapacity;
-    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    *(u32*)(slot + 0x4) = (u32)pThread;
+    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    *(u32*)(ringBase + 0x4) = (u32)pThread;
 
     return true;
 }
 
 void CView::detachRenderWork(CWorkThread* pThread) {
     unk1DC.detachRenderWork(pThread);
+}
+
+// Drain the context ring: classify each pending message and apply side effects.
+void CView::updateMsg() {
+    struct CtxSnap {
+        u32 w0;
+        u32 w1;
+        u32 w2;
+        u32 w3;
+        u32 w4;
+        u32 w5;
+        u32 w6;
+        s16 half;
+        u8 byte;
+        u8 pad;
+    };
+    // Three uninit 0x24 snaps (retail -0x150 frame homes @ 0x48 / 0x28 / 0x08).
+    volatile CtxSnap snapFan0;
+    volatile CtxSnap snapFan1;
+    volatile CtxSnap snapTag1;
+    u32 a0;
+    u32 a1;
+    u32 a2;
+    u32 a3;
+    u32 a4;
+    u32 a5;
+    u32 a6;
+    s16 aHalf;
+    u8 aByte;
+    u32 b0;
+    u32 b1;
+    u32 b2;
+    u32 b3;
+    u32 b4;
+    u32 b5;
+    u32 b6;
+    s16 bHalf;
+    u8 bByte;
+    u32 c0;
+    u32 c1;
+    u32 c2;
+    u32 c3;
+    u32 c4;
+    u32 c5;
+    u32 c6;
+    s16 cHalf;
+    u8 cByte;
+    u32 tag0;
+    u32 tag1;
+    u32 flag;
+    u32 msgItem;
+    u32 readIdx;
+    u32 cap;
+    u32 slotOff;
+    u8* ringBase;
+    u8* slot;
+    u32 tag;
+    void** listSentinel;
+    void** listNode;
+    void** listFlat;
+    int listCap;
+    int listIdx;
+    int listOff;
+    void** freeNode;
+    CWorkThread* parentSnap;
+    CWorkThread* parentView;
+    CWorkThread* workThread;
+    void** childSentinel;
+    void** childNode;
+    CWorkThread* childThread;
+    CView* childView;
+    u32 writeIdx;
+    u32 prevIdx;
+    u32 sumU;
+    u32 slotU;
+    s32 sumSigned;
+    s32 capSigned;
+    s32 slotIndex;
+    u32 byteOff;
+    u8* childRing;
+    u8* childSlot;
+    u32 workId;
+
+    a0 = snapFan0.w0;
+    a1 = snapFan0.w1;
+    a2 = snapFan0.w2;
+    a3 = snapFan0.w3;
+    a4 = snapFan0.w4;
+    a5 = snapFan0.w5;
+    a6 = snapFan0.w6;
+    aHalf = snapFan0.half;
+    aByte = snapFan0.byte;
+
+    b0 = snapFan1.w0;
+    b1 = snapFan1.w1;
+    b2 = snapFan1.w2;
+    b3 = snapFan1.w3;
+    b4 = snapFan1.w4;
+    b5 = snapFan1.w5;
+    b6 = snapFan1.w6;
+    bHalf = snapFan1.half;
+    bByte = snapFan1.byte;
+
+    c0 = snapTag1.w0;
+    c1 = snapTag1.w1;
+    c2 = snapTag1.w2;
+    c3 = snapTag1.w3;
+    c4 = snapTag1.w4;
+    c5 = snapTag1.w5;
+    c6 = snapTag1.w6;
+    cHalf = snapTag1.half;
+    cByte = snapTag1.byte;
+
+    goto updateMsg_check;
+
+updateMsg_loop:
+    readIdx = unk3F0;
+    cap = mContextRingCapacity;
+    ringBase = (u8*)mContextRingBase;
+    slotOff = (readIdx - (readIdx / cap) * cap) * 0x24u;
+    slot = ringBase + slotOff;
+    tag = *(u32*)slot;
+
+    if (tag > 7) {
+        goto updateMsg_advance;
+    }
+
+    switch (tag) {
+        case 0: {
+            // Attach WORK_ID to unk238; fan-out dual ring msgs to child views.
+            msgItem = *(u32*)(slot + 4);
+            listSentinel = (void**)unk238.mStartNodePtr;
+            listNode = (void**)*listSentinel;
+            while (listNode != listSentinel) {
+                if ((u32)listNode[2] == msgItem) {
+                    break;
+                }
+                listNode = (void**)listNode[0];
+            }
+
+            if (listNode == listSentinel) {
+                listCap = unk238.mCapacity;
+                listFlat = (void**)unk238.mList;
+                listIdx = 0;
+                listOff = 0;
+                while (listIdx < listCap) {
+                    if (*(int*)((u8*)listFlat + listOff) == 0) {
+                        break;
+                    }
+                    listOff += 0xc;
+                    listIdx += 1;
+                }
+                freeNode = (void**)((u8*)listFlat + listIdx * 0xc);
+                if ((u8*)freeNode + 8 != 0) {
+                    freeNode[2] = (void*)msgItem;
+                }
+                freeNode[0] = listSentinel;
+                freeNode[1] = listSentinel[1];
+                ((void**)listSentinel[1])[0] = freeNode;
+                listSentinel[1] = freeNode;
+            }
+
+            parentSnap = mParent;
+            if (getInstance__9CViewRootFv() == parentSnap) {
+                parentView = nullptr;
+            } else {
+                parentView = mParent;
+                if (parentView == nullptr) {
+                    parentView = nullptr;
+                } else if ((s32)parentView->mType < 0x30) {
+                    parentView = nullptr;
+                } else if ((s32)parentView->mType >= 0x35) {
+                    parentView = nullptr;
+                }
+            }
+
+            if (parentView == nullptr) {
+                goto updateMsg_advance;
+            }
+
+            workThread = getWorkThread__9CWorkUtilFUl(*(u32*)(ringBase + slotOff + 4));
+            childSentinel = (void**)mChildren.mStartNodePtr;
+            childNode = (void**)childSentinel[0];
+            while (childNode != childSentinel) {
+                childThread = (CWorkThread*)childNode[2];
+                childView = CView::convertToView(childThread);
+                if (childView != nullptr) {
+                    tag0 = 0;
+                    flag = 3;
+                    tag1 = 1;
+                    workId = workThread->mWorkID;
+
+                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
+                    capSigned = (s32)childView->mContextRingCapacity;
+                    slotIndex = sumSigned / capSigned;
+                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    childRing = (u8*)childView->mContextRingBase;
+                    childSlot = childRing + byteOff;
+                    *(u32*)childSlot = tag0;
+                    *(u32*)(childSlot + 0x4) = a0;
+                    *(u32*)(childSlot + 0x8) = a1;
+                    *(u32*)(childSlot + 0xC) = a2;
+                    *(u32*)(childSlot + 0x10) = a3;
+                    *(u32*)(childSlot + 0x14) = a4;
+                    *(u32*)(childSlot + 0x18) = a5;
+                    *(u32*)(childSlot + 0x1C) = a6;
+                    *(s16*)(childSlot + 0x20) = aHalf;
+                    childSlot[0x22] = aByte;
+                    childSlot[0x23] = (u8)tag0;
+
+                    writeIdx = childView->mContextRingWriteIndex + 1;
+                    prevIdx = writeIdx - 1;
+                    childView->mContextRingWriteIndex = writeIdx;
+                    childView->unk3FC = prevIdx;
+
+                    sumU = childView->unk3F0 + prevIdx;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = (u8*)childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    childSlot[0x23] = (u8)flag;
+
+                    sumU = childView->unk3F0 + childView->unk3FC;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = (u8*)childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    *(u32*)(childSlot + 0x4) = workId;
+
+                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
+                    capSigned = (s32)childView->mContextRingCapacity;
+                    slotIndex = sumSigned / capSigned;
+                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    childRing = (u8*)childView->mContextRingBase;
+                    childSlot = childRing + byteOff;
+                    *(u32*)childSlot = tag1;
+                    *(u32*)(childSlot + 0x4) = b0;
+                    *(u32*)(childSlot + 0x8) = b1;
+                    *(u32*)(childSlot + 0xC) = b2;
+                    *(u32*)(childSlot + 0x10) = b3;
+                    *(u32*)(childSlot + 0x14) = b4;
+                    *(u32*)(childSlot + 0x18) = b5;
+                    *(u32*)(childSlot + 0x1C) = b6;
+                    *(s16*)(childSlot + 0x20) = bHalf;
+                    childSlot[0x22] = bByte;
+                    childSlot[0x23] = (u8)tag0;
+
+                    writeIdx = childView->mContextRingWriteIndex + 1;
+                    childView->mContextRingWriteIndex = writeIdx;
+                    prevIdx = writeIdx - 1;
+                    childView->unk3FC = prevIdx;
+
+                    sumU = childView->unk3F0 + prevIdx;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = (u8*)childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    childSlot[0x23] = (u8)flag;
+
+                    sumU = childView->unk3F0 + childView->unk3FC;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = (u8*)childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    *(u32*)(childSlot + 0x4) = (u32)workThread;
+                }
+                childNode = (void**)childNode[0];
+            }
+            break;
+        }
+        case 1: {
+            // Attach IWorkEvent* to unk258; fan-out tag-1 msgs to child views.
+            msgItem = *(u32*)(slot + 4);
+            listSentinel = (void**)unk258.mStartNodePtr;
+            listNode = (void**)*listSentinel;
+            while (listNode != listSentinel) {
+                if ((u32)listNode[2] == msgItem) {
+                    break;
+                }
+                listNode = (void**)listNode[0];
+            }
+
+            if (listNode == listSentinel) {
+                listCap = unk258.mCapacity;
+                listFlat = (void**)unk258.mList;
+                listIdx = 0;
+                listOff = 0;
+                while (listIdx < listCap) {
+                    if (*(int*)((u8*)listFlat + listOff) == 0) {
+                        break;
+                    }
+                    listOff += 0xc;
+                    listIdx += 1;
+                }
+                freeNode = (void**)((u8*)listFlat + listIdx * 0xc);
+                if ((u8*)freeNode + 8 != 0) {
+                    freeNode[2] = (void*)msgItem;
+                }
+                freeNode[0] = listSentinel;
+                freeNode[1] = listSentinel[1];
+                ((void**)listSentinel[1])[0] = freeNode;
+                listSentinel[1] = freeNode;
+            }
+
+            parentSnap = mParent;
+            if (getInstance__9CViewRootFv() == parentSnap) {
+                parentView = nullptr;
+            } else {
+                parentView = mParent;
+                if (parentView == nullptr) {
+                    parentView = nullptr;
+                } else if ((s32)parentView->mType < 0x30) {
+                    parentView = nullptr;
+                } else if ((s32)parentView->mType >= 0x35) {
+                    parentView = nullptr;
+                }
+            }
+
+            if (parentView == nullptr) {
+                goto updateMsg_advance;
+            }
+
+            msgItem = *(u32*)(slot + 4);
+            childSentinel = (void**)mChildren.mStartNodePtr;
+            childNode = (void**)childSentinel[0];
+            while (childNode != childSentinel) {
+                childThread = (CWorkThread*)childNode[2];
+                childView = CView::convertToView(childThread);
+                if (childView != nullptr) {
+                    tag1 = 1;
+                    flag = 3;
+                    tag0 = 0;
+
+                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
+                    capSigned = (s32)childView->mContextRingCapacity;
+                    slotIndex = sumSigned / capSigned;
+                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    childRing = (u8*)childView->mContextRingBase;
+                    childSlot = childRing + byteOff;
+                    *(u32*)childSlot = tag1;
+                    *(u32*)(childSlot + 0x4) = c0;
+                    *(u32*)(childSlot + 0x8) = c1;
+                    *(u32*)(childSlot + 0xC) = c2;
+                    *(u32*)(childSlot + 0x10) = c3;
+                    *(u32*)(childSlot + 0x14) = c4;
+                    *(u32*)(childSlot + 0x18) = c5;
+                    *(u32*)(childSlot + 0x1C) = c6;
+                    *(s16*)(childSlot + 0x20) = cHalf;
+                    childSlot[0x22] = cByte;
+                    childSlot[0x23] = (u8)tag0;
+
+                    writeIdx = childView->mContextRingWriteIndex + 1;
+                    prevIdx = writeIdx - 1;
+                    childView->mContextRingWriteIndex = writeIdx;
+                    childView->unk3FC = prevIdx;
+
+                    sumU = childView->unk3F0 + prevIdx;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = (u8*)childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    childSlot[0x23] = (u8)flag;
+
+                    sumU = childView->unk3F0 + childView->unk3FC;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    childSlot = (u8*)childView->mContextRingBase +
+                        (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
+                    *(u32*)(childSlot + 0x4) = msgItem;
+                }
+                childNode = (void**)childNode[0];
+            }
+            break;
+        }
+        case 2: {
+            // Remove WORK_ID from unk238.
+            msgItem = *(u32*)(slot + 4);
+            listSentinel = (void**)unk238.mStartNodePtr;
+            listNode = (void**)listSentinel[0];
+            while (listNode != listSentinel) {
+                void** nextNode = (void**)listNode[0];
+                if ((u32)listNode[2] == msgItem) {
+                    void** prevNode = (void**)listNode[1];
+                    prevNode[0] = nextNode;
+                    nextNode[1] = prevNode;
+                    listNode[0] = 0;
+                }
+                listNode = nextNode;
+            }
+            break;
+        }
+        case 3:
+            unk278 |= 0x3;
+            break;
+        case 4:
+            unk278 |= 0x4;
+            break;
+        case 5:
+            unk278 &= ~0x4;
+            break;
+        case 6:
+            setCurrent__9CViewRootFP5CView(this);
+            break;
+        case 7:
+            if (*(u8*)(slot + 4) == 0) {
+                unk278 |= 0x20;
+            } else {
+                unk278 &= ~0x20;
+            }
+            break;
+        }
+
+    updateMsg_advance:
+        readIdx = unk3F0;
+        cap = mContextRingCapacity;
+        mContextRingWriteIndex -= 1;
+        unk3F0 = (readIdx + 1) - ((readIdx + 1) / cap) * cap;
+
+    updateMsg_check:
+        if (mContextRingWriteIndex != 0) {
+            goto updateMsg_loop;
+        }
 }
 
 void CView::wkUpdate() {
@@ -280,7 +768,7 @@ void CView::wkUpdate() {
         }
     }
 
-    updateMsg__5CViewFv(this);
+    updateMsg();
 
     {
         u32 hasView1a;
@@ -338,6 +826,838 @@ void CView::wkUpdate() {
     }
 }
 
+void CView::renderView() {
+    CView* fullScreenView;
+    s16 savedSizeX;
+    s16 savedSizeY;
+    // Retail r25 y-accum is dead after the loop; volatile keeps the adds.
+    volatile s16 yAccum;
+    // Retail r28: 0, then fs pssGetRoot, then 0/1.
+    u32 crossRootFlag;
+    u32 listLen;
+    void* listStart;
+    void* listNode;
+    CProc* thisRoot;
+    CView* parentView;
+    CWorkThread* parentThread;
+    u32 invalidRect;
+    u32 hasView1;
+    u32 hasView2;
+    u32 colorUpdateOff;
+    u32 flags278;
+    // Decl order first = higher addr. Share scratch homes so frame stays -0x180
+    // despite volatile yAccum (+stack) vs baseline.
+    ml::CRect16 viewRect;
+    ml::CRect16 accumRect;
+    ml::CRect16 scissorOut;
+    ml::CRect16 insetRect;
+    ml::CRect16 clearRect;
+    ml::CRect16 scissorSrc;
+    ml::CRect16 parentAccumRect;
+    ml::CRect16 home34;
+    ml::CRect16 home28;
+    ml::CRect16 home30; // early / y-loop / clear
+    ml::CRect16 home18; // also home20
+    ml::CRect16 home14; // also home1C
+    ml::CRect16 home08;
+    void** attachNode;
+    CWorkThread* attachWork;
+    u32 msgQualified;
+    u32 stateReady;
+    u32 shouldRender;
+    void** childNode;
+    CView* childView;
+    CView* frameParent;
+    s16 accumX;
+    s16 accumY;
+    s16 parentAccumX;
+    s16 parentAccumY;
+
+    if ((unk278 & 0x40) != 0) {
+        return;
+    }
+
+    func_8043E010__5CViewFv(this);
+
+    crossRootFlag = 0;
+    fullScreenView = getFullScreenView__9CViewRootFv();
+
+    if ((fullScreenView->unk278 & 0x2) != 0) {
+        goto renderView_after_cross;
+    }
+    if (fullScreenView == this) {
+        goto renderView_after_cross;
+    }
+
+    listStart = unk238.mStartNodePtr;
+    listLen = 0;
+    listNode = *(void**)listStart;
+    goto renderView_count_this_check;
+renderView_count_this_body:
+    listNode = *(void**)listNode;
+    listLen = listLen + 1;
+renderView_count_this_check:
+    if (listNode != listStart) {
+        goto renderView_count_this_body;
+    }
+    if (listLen == 0) {
+        goto renderView_after_cross;
+    }
+
+    listStart = fullScreenView->unk238.mStartNodePtr;
+    listLen = 0;
+    listNode = *(void**)listStart;
+    goto renderView_count_fs_check;
+renderView_count_fs_body:
+    listNode = *(void**)listNode;
+    listLen = listLen + 1;
+renderView_count_fs_check:
+    if (listNode != listStart) {
+        goto renderView_count_fs_body;
+    }
+    if (listLen == 0) {
+        goto renderView_after_cross;
+    }
+
+    crossRootFlag = (u32)pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+        getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)*(void**)listStart + 8))));
+
+    listStart = unk238.mStartNodePtr;
+    thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+        getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)*(void**)listStart + 8))));
+
+    {
+        CProc* fullScreenRoot = (CProc*)crossRootFlag;
+        crossRootFlag = 0;
+        if (fullScreenRoot == thisRoot) {
+            goto renderView_after_cross;
+        }
+        if (thisRoot == nullptr) {
+            goto renderView_after_cross;
+        }
+        if ((s32)unk460 < 7) {
+            goto renderView_after_cross;
+        }
+        crossRootFlag = 1;
+    }
+
+renderView_after_cross:
+    if (fullScreenView != this) {
+        goto renderView_after_cache_color;
+    }
+
+    {
+        ml::CCol4 cacheColor;
+        // Retail: lfs scale->f4, z, y, x; fmuls b; lfs w; fmuls g/r; stfs a,r,g,b
+        float z = unk444.z;
+        float y = unk444.y;
+        float x = unk444.x;
+        float scale = *(float*)&unk454[4];
+        float b = z * scale;
+        float a = unk444.w;
+        float g = y * scale;
+        float r = x * scale;
+        cacheColor.a = a;
+        cacheColor.r = r;
+        cacheColor.g = g;
+        cacheColor.b = b;
+        func_8044A578__8CGXCacheFv(CDeviceGX::getCacheInstance(), &cacheColor, 0);
+    }
+
+renderView_after_cache_color:
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
+                                                              &unk1DC);
+    savedSizeX = unk1C8.unk0;
+    savedSizeY = unk1C8.unk2;
+    yAccum = unk1DC.unk56;
+    parentThread = mParent;
+
+    if (getInstance__9CViewRootFv() == parentThread) {
+        parentView = nullptr;
+        goto renderView_y_accum_check;
+    }
+    parentView = CView::convertToView(mParent);
+    goto renderView_y_accum_check;
+
+renderView_y_accum_body:
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
+                                                              &parentView->unk1DC);
+    yAccum = (s16)(yAccum + (s16)(parentView->unk1DC.unk56 + home30.mPos.y));
+    parentThread = parentView->mParent;
+    if (getInstance__9CViewRootFv() == parentThread) {
+        parentView = nullptr;
+        goto renderView_y_accum_check;
+    }
+    parentView = CView::convertToView(parentView->mParent);
+
+renderView_y_accum_check:
+    if (parentView != nullptr) {
+        goto renderView_y_accum_body;
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home34,
+                                                              &unk1DC);
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home28,
+                                                              &unk1DC);
+
+    invalidRect = 0;
+    viewRect.mPos.y = (s16)(unk1DC.unk56 + home28.mPos.y);
+    viewRect.mPos.x = (s16)(unk1DC.unk54 + home28.mPos.x);
+    viewRect.mSize.x = unk1C8.unk0;
+    viewRect.mSize.y = unk1C8.unk2;
+    if (unk1C8.unk0 <= 0) {
+        goto renderView_mark_invalid;
+    }
+    if (unk1C8.unk2 > 0) {
+        goto renderView_after_size_gate1;
+    }
+renderView_mark_invalid:
+    invalidRect = 1;
+renderView_after_size_gate1:
+    if (invalidRect != 0) {
+        goto renderView_tail;
+    }
+
+    invalidRect = 0;
+    if (savedSizeX <= 0) {
+        goto renderView_mark_invalid2;
+    }
+    if (savedSizeY > 0) {
+        goto renderView_after_size_gate2;
+    }
+renderView_mark_invalid2:
+    invalidRect = 1;
+renderView_after_size_gate2:
+    if (invalidRect != 0) {
+        goto renderView_tail;
+    }
+
+    {
+        u32 maxSizeBad;
+
+        maxSizeBad = 0;
+        if (unk1C8.unk4 > 0) {
+            goto renderView_after_max_gate;
+        }
+        if (unk1C8.unk6 > 0) {
+            goto renderView_after_max_gate;
+        }
+        maxSizeBad = 1;
+    renderView_after_max_gate:
+        if (maxSizeBad != 0) {
+            goto renderView_tail;
+        }
+    }
+
+    if (crossRootFlag != 0) {
+        goto renderView_scissor_setup;
+    }
+
+    {
+        u32 hasView2a;
+        u32 hasView1a;
+
+        hasView2a = 0;
+        hasView1a = 0;
+        if (unk45C == nullptr) {
+            goto renderView_clear_no_view1;
+        }
+        if (getView1__11CSplitFrameFv(unk45C) == nullptr) {
+            goto renderView_clear_no_view1;
+        }
+        hasView1a = 1;
+    renderView_clear_no_view1:
+        if (hasView1a == 0) {
+            goto renderView_clear_split_check;
+        }
+        if (getView2__11CSplitFrameFv(unk45C) == nullptr) {
+            goto renderView_clear_split_check;
+        }
+        hasView2a = 1;
+    renderView_clear_split_check:
+        if (hasView2a != 0) {
+            goto renderView_scissor_setup;
+        }
+
+        flags278 = unk278;
+        if ((flags278 & 1) != 0) {
+            goto renderView_scissor_setup;
+        }
+
+        colorUpdateOff = (flags278 >> 2) & 1;
+        {
+            CDrawGX draw;
+            draw.func_80456570(0);
+            draw.func_8045657C(1);
+            if (colorUpdateOff != 0) {
+                GXSetColorUpdate(GX_FALSE);
+                goto renderView_clear_begin;
+            }
+            {
+                ml::CCol4 clearColor;
+                clearColor = *reinterpret_cast<ml::CCol4*>(&unk444);
+                clearColor.a *= *(float*)&unk454[4];
+                draw.setCol(clearColor);
+            }
+        renderView_clear_begin:
+            *(u32*)((u8*)&draw + 0x1C) = *(u32*)unk454;
+            draw.begin(PRIM_QUADS, 1);
+            getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
+                                                                      &unk1DC);
+            clearRect.mPos.y = (s16)(unk1DC.unk56 + home30.mPos.y);
+            clearRect.mPos.x = (s16)(unk1DC.unk54 + home30.mPos.x);
+            clearRect.mSize.x = unk1C8.unk0;
+            clearRect.mSize.y = unk1C8.unk2;
+            draw.add(clearRect);
+            draw.end();
+            if (colorUpdateOff != 0) {
+                GXSetColorUpdate(GX_TRUE);
+            }
+        }
+    }
+
+renderView_scissor_setup:
+    if (crossRootFlag != 0) {
+        goto renderView_works_or_children;
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home18, &unk1DC);
+    accumRect.mPos.y = (s16)(unk1DC.unk56 + home18.mPos.y);
+    accumRect.mPos.x = (s16)(unk1DC.unk54 + home18.mPos.x);
+    accumRect.mSize.x = unk1C8.unk0;
+    accumRect.mSize.y = unk1C8.unk2;
+
+    accumX = unk1DC.unk54;
+    accumY = unk1DC.unk56;
+
+    parentThread = mParent;
+    if (getInstance__9CViewRootFv() == parentThread) {
+        parentView = nullptr;
+        goto renderView_xy_accum_check;
+    }
+    parentView = CView::convertToView(mParent);
+    goto renderView_xy_accum_check;
+
+renderView_xy_accum_body:
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home14,
+                                                              &parentView->unk1DC);
+    accumX = (s16)(accumX + (s16)(parentView->unk1DC.unk54 + home14.mPos.x));
+    accumY = (s16)(accumY + (s16)(parentView->unk1DC.unk56 + home14.mPos.y));
+    parentThread = parentView->mParent;
+    if (getInstance__9CViewRootFv() == parentThread) {
+        parentView = nullptr;
+        goto renderView_xy_accum_check;
+    }
+    parentView = CView::convertToView(parentView->mParent);
+
+renderView_xy_accum_check:
+    if (parentView != nullptr) {
+        goto renderView_xy_accum_body;
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home18, &unk1DC);
+    accumRect.mPos.x = (s16)(accumX + home18.mPos.x);
+    accumRect.mPos.y = (s16)(accumY + home18.mPos.y);
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home08, &unk1DC);
+    parentAccumX = unk1DC.unk54;
+    parentAccumY = unk1DC.unk56;
+    parentAccumRect.mPos.x = (s16)(unk1DC.unk54 + home08.mPos.x);
+    parentAccumRect.mPos.y = (s16)(unk1DC.unk56 + home08.mPos.y);
+    parentAccumRect.mSize.x = unk1C8.unk0;
+    parentAccumRect.mSize.y = unk1C8.unk2;
+
+    parentThread = mParent;
+    if (getInstance__9CViewRootFv() == parentThread) {
+        parentView = nullptr;
+        goto renderView_parent_accum_check;
+    }
+    parentView = CView::convertToView(mParent);
+    goto renderView_parent_accum_check;
+
+renderView_parent_accum_body:
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home14,
+                                                              &parentView->unk1DC);
+    parentAccumX =
+        (s16)(parentAccumX + (s16)(parentView->unk1DC.unk54 + home14.mPos.x));
+    parentAccumY =
+        (s16)(parentAccumY + (s16)(parentView->unk1DC.unk56 + home14.mPos.y));
+    parentThread = parentView->mParent;
+    if (getInstance__9CViewRootFv() == parentThread) {
+        parentView = nullptr;
+        goto renderView_parent_accum_check;
+    }
+    parentView = CView::convertToView(parentView->mParent);
+
+renderView_parent_accum_check:
+    if (parentView != nullptr) {
+        goto renderView_parent_accum_body;
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home08, &unk1DC);
+    parentAccumRect.mPos.x = (s16)(parentAccumX + home08.mPos.x);
+    parentAccumRect.mPos.y = (s16)(parentAccumY + home08.mPos.y);
+
+    parentThread = mParent;
+    if (getInstance__9CViewRootFv() == parentThread) {
+        frameParent = nullptr;
+        goto renderView_frame_parent_ready;
+    }
+    frameParent = CView::convertToView(mParent);
+
+renderView_frame_parent_ready:
+    if (frameParent == nullptr) {
+        goto renderView_local_scissor;
+    }
+
+    {
+        u32 hasView2b;
+        u32 hasView1b;
+
+        hasView2b = 0;
+        hasView1b = 0;
+        if (frameParent->unk45C == nullptr) {
+            goto renderView_fp_no_view1;
+        }
+        if (getView1__11CSplitFrameFv(frameParent->unk45C) == nullptr) {
+            goto renderView_fp_no_view1;
+        }
+        hasView1b = 1;
+    renderView_fp_no_view1:
+        if (hasView1b == 0) {
+            goto renderView_fp_split_check;
+        }
+        if (getView2__11CSplitFrameFv(frameParent->unk45C) == nullptr) {
+            goto renderView_fp_split_check;
+        }
+        hasView2b = 1;
+    renderView_fp_split_check:
+        if (hasView2b == 0) {
+            goto renderView_local_scissor;
+        }
+    }
+
+    {
+        u32 hasView2c;
+        u32 hasView1c;
+        CView* splitView1;
+
+        hasView2c = 0;
+        hasView1c = 0;
+        if (frameParent->unk45C == nullptr) {
+            goto renderView_fp2_no_view1;
+        }
+        if (getView1__11CSplitFrameFv(frameParent->unk45C) == nullptr) {
+            goto renderView_fp2_no_view1;
+        }
+        hasView1c = 1;
+    renderView_fp2_no_view1:
+        if (hasView1c == 0) {
+            goto renderView_fp2_split_check;
+        }
+        if (getView2__11CSplitFrameFv(frameParent->unk45C) == nullptr) {
+            goto renderView_fp2_split_check;
+        }
+        hasView2c = 1;
+    renderView_fp2_split_check:
+        if (hasView2c == 0) {
+            splitView1 = nullptr;
+            goto renderView_split_which;
+        }
+        splitView1 = getView1__11CSplitFrameFv(frameParent->unk45C);
+    renderView_split_which:
+        if (splitView1 == this) {
+            getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
+                &scissorSrc, frameParent->unk45C);
+            goto renderView_scissor_ready;
+        }
+        getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
+            &scissorSrc, frameParent->unk45C);
+        goto renderView_scissor_ready;
+    }
+
+renderView_local_scissor:
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home14, &unk1DC);
+    scissorSrc.mPos.y = (s16)(unk1DC.unk56 + home14.mPos.y);
+    scissorSrc.mPos.x = (s16)(unk1DC.unk54 + home14.mPos.x);
+    scissorSrc.mSize.x = unk1C8.unk0;
+    scissorSrc.mSize.y = unk1C8.unk2;
+
+renderView_scissor_ready:
+    scissorOut.mPos.x = parentAccumRect.mPos.x;
+    scissorOut.mPos.y = parentAccumRect.mPos.y;
+    scissorOut.mSize.x = scissorSrc.mSize.x;
+    scissorOut.mSize.y = scissorSrc.mSize.y;
+    insetRect.mPos.x = unk1C8.unk8;
+    insetRect.mPos.y = unk1C8.unkA;
+    insetRect.mSize.x = unk1C8.unk4;
+    insetRect.mSize.y = unk1C8.unk6;
+    func_80442B54__9CViewRootFPvPv(&accumRect, &scissorOut, &insetRect);
+
+renderView_works_or_children:
+    if (crossRootFlag != 0) {
+        goto renderView_children;
+    }
+
+    hasView2 = 0;
+    hasView1 = 0;
+    if (unk45C == nullptr) {
+        goto renderView_wk_no_view1;
+    }
+    if (getView1__11CSplitFrameFv(unk45C) == nullptr) {
+        goto renderView_wk_no_view1;
+    }
+    hasView1 = 1;
+renderView_wk_no_view1:
+    if (hasView1 == 0) {
+        goto renderView_wk_split_check;
+    }
+    if (getView2__11CSplitFrameFv(unk45C) == nullptr) {
+        goto renderView_wk_split_check;
+    }
+    hasView2 = 1;
+renderView_wk_split_check:
+    if (hasView2 != 0) {
+        goto renderView_children;
+    }
+
+    lbl_eu_806655C8 = this;
+
+    if ((mFlags & THREAD_FLAG_EXCEPTION) != 0) {
+        msgQualified = 1;
+        goto renderView_self_qualified;
+    }
+
+    {
+        u32 msgIndex;
+        u32 msgFront;
+        u32 msgModulus;
+        u32 msgSum;
+        u32 msgRemainder;
+        u32 msgEntryOffset;
+        CMsgParamEntry* msgArray;
+        u32 msgCount;
+
+        msgCount = *(u32*)((u8*)this + 0x1AC);
+
+        for (msgIndex = 0; msgIndex < msgCount; msgIndex++) {
+            msgFront = *(u32*)((u8*)this + 0x1A8);
+            msgModulus = *(u32*)((u8*)this + 0x1B0);
+            msgSum = msgFront + msgIndex;
+            msgArray = *(CMsgParamEntry**)((u8*)this + 0x1A4);
+            msgRemainder = msgSum / msgModulus;
+            msgRemainder = msgRemainder * msgModulus;
+            msgRemainder = msgSum - msgRemainder;
+            msgEntryOffset = msgRemainder * 0x24;
+
+            if (*(u32*)((u8*)msgArray + msgEntryOffset) != 2) {
+                continue;
+            }
+
+            goto renderView_self_msg_eval;
+        }
+
+        msgIndex = -1;
+
+    renderView_self_msg_eval:
+        msgQualified = (msgIndex >> 31) ^ 1;
+    }
+
+renderView_self_qualified:
+    shouldRender = 0;
+    if (msgQualified != 0) {
+        goto renderView_self_state_end;
+    }
+    stateReady = 1;
+    if (mState == THREAD_STATE_LOGIN) {
+        goto renderView_self_state_ready;
+    }
+    if (mState == THREAD_STATE_RUN) {
+        goto renderView_self_state_ready;
+    }
+    stateReady = 0;
+renderView_self_state_ready:
+    if (stateReady == 0) {
+        goto renderView_self_state_end;
+    }
+    shouldRender = 1;
+renderView_self_state_end:
+    if (shouldRender != 0) {
+        wkRender();
+    }
+
+    attachNode = (void**)unk238.mStartNodePtr;
+    attachNode = (void**)*attachNode;
+    goto renderView_attach_wk_check;
+
+renderView_attach_wk_body:
+    attachWork = getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)attachNode + 8));
+    if (attachWork == nullptr) {
+        goto renderView_attach_wk_next;
+    }
+    lbl_eu_806655C8 = this;
+    if (attachWork == this) {
+        goto renderView_attach_wk_next;
+    }
+
+    {
+        u32 exceptFlag;
+
+        exceptFlag = (attachWork->mFlags & THREAD_FLAG_EXCEPTION) != 0 ? 1 : 0;
+        if (exceptFlag != 0) {
+            msgQualified = 1;
+            goto renderView_attach_qualified;
+        }
+
+        {
+            u32 msgIndex;
+            u32 msgFront;
+            u32 msgModulus;
+            u32 msgSum;
+            u32 msgRemainder;
+            u32 msgEntryOffset;
+            CMsgParamEntry* msgArray;
+            u32 msgCount;
+
+            msgCount = *(u32*)((u8*)attachWork + 0x1AC);
+
+            for (msgIndex = 0; msgIndex < msgCount; msgIndex++) {
+                msgFront = *(u32*)((u8*)attachWork + 0x1A8);
+                msgModulus = *(u32*)((u8*)attachWork + 0x1B0);
+                msgSum = msgFront + msgIndex;
+                msgArray = *(CMsgParamEntry**)((u8*)attachWork + 0x1A4);
+                msgRemainder = msgSum / msgModulus;
+                msgRemainder = msgRemainder * msgModulus;
+                msgRemainder = msgSum - msgRemainder;
+                msgEntryOffset = msgRemainder * 0x24;
+
+                if (*(u32*)((u8*)msgArray + msgEntryOffset) != 2) {
+                    continue;
+                }
+
+                goto renderView_attach_msg_eval;
+            }
+
+            msgIndex = -1;
+
+        renderView_attach_msg_eval:
+            msgQualified = (msgIndex >> 31) ^ 1;
+        }
+
+    renderView_attach_qualified:
+        shouldRender = 0;
+        if (msgQualified != 0) {
+            goto renderView_attach_state_end;
+        }
+        stateReady = 1;
+        if (attachWork->mState == THREAD_STATE_LOGIN) {
+            goto renderView_attach_state_ready;
+        }
+        if (attachWork->mState == THREAD_STATE_RUN) {
+            goto renderView_attach_state_ready;
+        }
+        stateReady = 0;
+    renderView_attach_state_ready:
+        if (stateReady == 0) {
+            goto renderView_attach_state_end;
+        }
+        shouldRender = 1;
+    renderView_attach_state_end:
+        if (shouldRender != 0) {
+            goto renderView_attach_do_render;
+        }
+
+        if (exceptFlag != 0) {
+            msgQualified = 1;
+            goto renderView_attach_ex_done;
+        }
+
+        {
+            u32 msgIndex;
+            u32 msgFront;
+            u32 msgModulus;
+            u32 msgSum;
+            u32 msgRemainder;
+            u32 msgEntryOffset;
+            CMsgParamEntry* msgArray;
+            u32 msgCount;
+
+            msgCount = *(u32*)((u8*)attachWork + 0x1AC);
+
+            for (msgIndex = 0; msgIndex < msgCount; msgIndex++) {
+                msgFront = *(u32*)((u8*)attachWork + 0x1A8);
+                msgModulus = *(u32*)((u8*)attachWork + 0x1B0);
+                msgSum = msgFront + msgIndex;
+                msgArray = *(CMsgParamEntry**)((u8*)attachWork + 0x1A4);
+                msgRemainder = msgSum / msgModulus;
+                msgRemainder = msgRemainder * msgModulus;
+                msgRemainder = msgSum - msgRemainder;
+                msgEntryOffset = msgRemainder * 0x24;
+
+                if (*(u32*)((u8*)msgArray + msgEntryOffset) != 2) {
+                    continue;
+                }
+
+                goto renderView_attach_ex_msg_eval;
+            }
+
+            msgIndex = -1;
+
+        renderView_attach_ex_msg_eval:
+            msgQualified = (msgIndex >> 31) ^ 1;
+        }
+
+    renderView_attach_ex_done:
+        if (msgQualified == 0) {
+            goto renderView_attach_wk_next;
+        }
+
+    renderView_attach_do_render:
+        attachWork->wkRender();
+    }
+
+renderView_attach_wk_next:
+    attachNode = (void**)*attachNode;
+
+renderView_attach_wk_check:
+    if (attachNode != (void**)unk238.mStartNodePtr) {
+        goto renderView_attach_wk_body;
+    }
+
+    lbl_eu_806655C8 = nullptr;
+    func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
+    func_80442DA8__9CViewRootFv();
+    fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
+
+renderView_children:
+    childNode = (void**)mChildren.mStartNodePtr;
+    childNode = (void**)*childNode;
+    goto renderView_child_check;
+
+renderView_child_body:
+    childView = CView::convertToView(reinterpret_cast<CWorkThread*>(childNode[2]));
+    childView->renderView();
+    childNode = (void**)*childNode;
+
+renderView_child_check:
+    if (childNode != (void**)mChildren.mStartNodePtr) {
+        goto renderView_child_body;
+    }
+
+    attachNode = (void**)unk238.mStartNodePtr;
+    attachNode = (void**)*attachNode;
+    goto renderView_attach_after_check;
+
+renderView_attach_after_body:
+    attachWork = getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)attachNode + 8));
+    if (attachWork == nullptr) {
+        goto renderView_attach_after_next;
+    }
+    lbl_eu_806655C8 = this;
+    if (attachWork == this) {
+        goto renderView_attach_after_next;
+    }
+
+    if ((attachWork->mFlags & THREAD_FLAG_EXCEPTION) != 0) {
+        msgQualified = 1;
+        goto renderView_after_qualified;
+    }
+
+    {
+        u32 msgIndex;
+        u32 msgFront;
+        u32 msgModulus;
+        u32 msgSum;
+        u32 msgRemainder;
+        u32 msgEntryOffset;
+        CMsgParamEntry* msgArray;
+        u32 msgCount;
+
+        msgCount = *(u32*)((u8*)attachWork + 0x1AC);
+
+        for (msgIndex = 0; msgIndex < msgCount; msgIndex++) {
+            msgFront = *(u32*)((u8*)attachWork + 0x1A8);
+            msgModulus = *(u32*)((u8*)attachWork + 0x1B0);
+            msgSum = msgFront + msgIndex;
+            msgArray = *(CMsgParamEntry**)((u8*)attachWork + 0x1A4);
+            msgRemainder = msgSum / msgModulus;
+            msgRemainder = msgRemainder * msgModulus;
+            msgRemainder = msgSum - msgRemainder;
+            msgEntryOffset = msgRemainder * 0x24;
+
+            if (*(u32*)((u8*)msgArray + msgEntryOffset) != 2) {
+                continue;
+            }
+
+            goto renderView_after_msg_eval;
+        }
+
+        msgIndex = -1;
+
+    renderView_after_msg_eval:
+        msgQualified = (msgIndex >> 31) ^ 1;
+    }
+
+renderView_after_qualified:
+    shouldRender = 0;
+    if (msgQualified != 0) {
+        goto renderView_after_state_end;
+    }
+    stateReady = 1;
+    if (attachWork->mState == THREAD_STATE_LOGIN) {
+        goto renderView_after_state_ready;
+    }
+    if (attachWork->mState == THREAD_STATE_RUN) {
+        goto renderView_after_state_ready;
+    }
+    stateReady = 0;
+renderView_after_state_ready:
+    if (stateReady == 0) {
+        goto renderView_after_state_end;
+    }
+    shouldRender = 1;
+renderView_after_state_end:
+    if (shouldRender != 0) {
+        attachWork->wkRenderAfter();
+    }
+
+renderView_attach_after_next:
+    attachNode = (void**)*attachNode;
+
+renderView_attach_after_check:
+    if (attachNode != (void**)unk238.mStartNodePtr) {
+        goto renderView_attach_after_body;
+    }
+
+    lbl_eu_806655C8 = nullptr;
+    func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
+    func_80442DA8__9CViewRootFv();
+    fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
+
+    if (crossRootFlag == 0) {
+        func_80442C68__9CViewRootFv();
+    }
+
+renderView_tail:
+    if (crossRootFlag != 0) {
+        return;
+    }
+
+    parentThread = mParent;
+    if (getInstance__9CViewRootFv() == parentThread) {
+        frameParent = nullptr;
+        goto renderView_frame_call;
+    }
+    frameParent = CView::convertToView(mParent);
+
+renderView_frame_call:
+    // Keep dead parent gate live in a reg (retail r4) without a stack home.
+    if (frameParent == (CView*)-1) {
+        return;
+    }
+    render__10CViewFrameFv(&unk1DC);
+}
+
 void CView::setDisp(bool r4, bool r5) {
     if (!r4) {
         unk278 |= 0x40;
@@ -353,40 +1673,50 @@ void CView::setDisp(bool r4, bool r5) {
     }
 }
 
-s16 CView::getSplitLine() {
-    void* splitFrame = unk45C;
-    u32 hasView2;
-    u32 hasView1;
-
-    hasView2 = 0;
-    hasView1 = 0;
-    if (splitFrame == nullptr) {
-        goto getSplitLine_no_view1;
-    }
-    if (getView1__11CSplitFrameFv(splitFrame) == nullptr) {
-        goto getSplitLine_no_view1;
-    }
-    hasView1 = 1;
-
+// PLAN.md 17.6: whole-function asm. MWCC C++ spills then lwz unk45C; retail
+// interleaves lwz/cmpwi into the callee-save prologue (89.2% C++ cap).
+asm s16 CView::getSplitLine() {
+    stwu r1, -0x20(r1)
+    mflr r0
+    stw r0, 0x24(r1)
+    lwz r0, 0x45c(r3)
+    stw r31, 0x1c(r1)
+    li r31, 0
+    cmpwi r0, 0
+    stw r30, 0x18(r1)
+    li r30, 0
+    stw r29, 0x14(r1)
+    mr r29, r3
+    beq getSplitLine_no_view1
+    mr r3, r0
+    bl getView1__11CSplitFrameFv
+    cmpwi r3, 0
+    beq getSplitLine_no_view1
+    li r30, 1
 getSplitLine_no_view1:
-    if (hasView1 == 0) {
-        goto getSplitLine_no_view2;
-    }
-    splitFrame = unk45C;
-    if (getView2__11CSplitFrameFv(splitFrame) == nullptr) {
-        goto getSplitLine_no_view2;
-    }
-    hasView2 = 1;
-
+    cmpwi r30, 0
+    beq getSplitLine_no_view2
+    lwz r3, 0x45c(r29)
+    bl getView2__11CSplitFrameFv
+    cmpwi r3, 0
+    beq getSplitLine_no_view2
+    li r31, 1
 getSplitLine_no_view2:
-    if (hasView2 != 0) {
-        goto getSplitLine_call;
-    }
-    return 0;
-
-getSplitLine_call:
-    splitFrame = unk45C;
-    return getSplitLine__11CSplitFrameFv(splitFrame);
+    cmpwi r31, 0
+    beq getSplitLine_zero
+    lwz r3, 0x45c(r29)
+    bl getSplitLine__11CSplitFrameFv
+    b getSplitLine_epilogue
+getSplitLine_zero:
+    li r3, 0
+getSplitLine_epilogue:
+    lwz r0, 0x24(r1)
+    lwz r31, 0x1c(r1)
+    lwz r30, 0x18(r1)
+    lwz r29, 0x14(r1)
+    mtlr r0
+    addi r1, r1, 0x20
+    blr
 }
 
 void CView::setSplitLine(s16 line) {
@@ -418,3 +1748,108 @@ setSplitLine_no_view2:
     }
     setSplitLine__11CSplitFrameFs(unk45C, line);
 }
+
+CView::CView(const char* pName, CWorkThread* pParent)
+    : CWorkThread(pName, pParent, 2),
+      mName(false) {
+    // Capacity reload keeps this/r30 + zero/r31 (~97.5%). Retail CSE of 0x10 in r29
+    // still open (~2.5%: -0x20 frame + li r29). Any NV listCap steals r31 (~94.3%).
+    u32 zero;
+    void* sentinel0;
+    void* sentinel1;
+
+    zero = 0;
+    unk1C8.func_80459270();
+    __ct__CViewFrame(&unk1DC);
+
+    *(void**)&unk238 = lbl_eu_8056B298;
+    sentinel0 = &unk238.mSentinelNext;
+    unk238.mList = (void*)zero;
+    unk238.mCapacity = (int)zero;
+    unk238.unk1C = (u8)zero;
+    unk238.mStartNodePtr = sentinel0;
+    ((void**)sentinel0)[0] = sentinel0;
+    sentinel0 = unk238.mStartNodePtr;
+    ((void**)sentinel0)[1] = sentinel0;
+    *(void**)&unk238 = lbl_eu_8056B280;
+
+    *(void**)&unk258 = lbl_eu_8056B6F0;
+    sentinel1 = &unk258.mSentinelNext;
+    unk258.mList = (void*)zero;
+    unk258.mCapacity = (int)zero;
+    unk258.unk1C = (u8)zero;
+    unk258.mStartNodePtr = sentinel1;
+    ((void**)sentinel1)[0] = sentinel1;
+    sentinel1 = unk258.mStartNodePtr;
+    ((void**)sentinel1)[1] = sentinel1;
+    *(void**)&unk258 = lbl_eu_8056B6D8;
+
+    unk278 = zero;
+    unk27C = zero;
+    mContextMsgVtable = (u32)lbl_eu_8056B6CC;
+    mContextRingCapacity = 10;
+    mContextRingBase = mContextRing;
+    mContextRingWriteIndex = zero;
+    unk3F0 = zero;
+    unk3FC = zero;
+    mName.clear();
+
+    *(u32*)unk454 = func_8044BE2C__8CGXCacheFv();
+    *(float*)(unk454 + 4) = 1.0f;
+    unk45C = (void*)zero;
+    unk460 = 0xb;
+    mType = THREAD_CVIEW;
+    func_8043FC60__10CViewFrameFUl(&unk1DC, (u32)this);
+
+    unk238.mList = allocate_array__Q23mtl10MemManagerFUlUl(0xC0, mAllocHandle);
+    *(u32*)((u8*)unk238.mList + 0x00) = zero;
+    *(u32*)((u8*)unk238.mList + 0x0C) = zero;
+    *(u32*)((u8*)unk238.mList + 0x18) = zero;
+    *(u32*)((u8*)unk238.mList + 0x24) = zero;
+    *(u32*)((u8*)unk238.mList + 0x30) = zero;
+    *(u32*)((u8*)unk238.mList + 0x3C) = zero;
+    *(u32*)((u8*)unk238.mList + 0x48) = zero;
+    *(u32*)((u8*)unk238.mList + 0x54) = zero;
+    *(u32*)((u8*)unk238.mList + 0x60) = zero;
+    *(u32*)((u8*)unk238.mList + 0x6C) = zero;
+    *(u32*)((u8*)unk238.mList + 0x78) = zero;
+    *(u32*)((u8*)unk238.mList + 0x84) = zero;
+    *(u32*)((u8*)unk238.mList + 0x90) = zero;
+    *(u32*)((u8*)unk238.mList + 0x9C) = zero;
+    *(u32*)((u8*)unk238.mList + 0xA8) = zero;
+    *(u32*)((u8*)unk238.mList + 0xB4) = zero;
+    unk238.mCapacity = 0x10;
+
+    unk258.mList = allocate_array__Q23mtl10MemManagerFUlUl(0xC0, mAllocHandle);
+    *(u32*)((u8*)unk258.mList + 0x00) = zero;
+    *(u32*)((u8*)unk258.mList + 0x0C) = zero;
+    *(u32*)((u8*)unk258.mList + 0x18) = zero;
+    *(u32*)((u8*)unk258.mList + 0x24) = zero;
+    *(u32*)((u8*)unk258.mList + 0x30) = zero;
+    *(u32*)((u8*)unk258.mList + 0x3C) = zero;
+    *(u32*)((u8*)unk258.mList + 0x48) = zero;
+    *(u32*)((u8*)unk258.mList + 0x54) = zero;
+    *(u32*)((u8*)unk258.mList + 0x60) = zero;
+    *(u32*)((u8*)unk258.mList + 0x6C) = zero;
+    *(u32*)((u8*)unk258.mList + 0x78) = zero;
+    *(u32*)((u8*)unk258.mList + 0x84) = zero;
+    *(u32*)((u8*)unk258.mList + 0x90) = zero;
+    *(u32*)((u8*)unk258.mList + 0x9C) = zero;
+    *(u32*)((u8*)unk258.mList + 0xA8) = zero;
+    *(u32*)((u8*)unk258.mList + 0xB4) = zero;
+    unk258.mCapacity = unk238.mCapacity;
+
+    unk444.x = 0.6f;
+    unk444.y = 0.6f;
+    unk444.z = 0.6f;
+    unk444.w = 1.0f;
+    unk464 = (s16)zero;
+    unk466 = (s16)zero;
+    unk468 = (s16)zero;
+    unk46A = (s16)zero;
+
+    *(ml::CCol4*)((u8*)&unk1DC + 0x8) = sFrameColor;
+    *(ml::CCol4*)((u8*)&unk1DC + 0x28) = lbl_8065A0C8;
+}
+
+

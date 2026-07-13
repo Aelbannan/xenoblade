@@ -14,9 +14,9 @@ extern "C" {
 CViewRoot* lbl_eu_806655D0;
 u8 lbl_eu_806655D4;
 char lbl_eu_8052266C[];
-void* lbl_eu_8056B710;
-void* lbl_eu_8056B280;
-void* lbl_eu_8056B298;
+char lbl_eu_8056B710[];
+char lbl_eu_8056B280[];
+char lbl_eu_8056B298[];
 mtl::ALLOC_HANDLE getWorkMem__17CWorkThreadSystemFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
@@ -103,21 +103,20 @@ void CViewRoot::func_80442DA8() {
 }
 
 void CViewRoot::setCurrent(CView* view) {
+    u32 length;
     CViewRoot* root;
-    u32 renderWorkCount;
-    _reslist_node<CWorkThread*>* walkSentinel;
-    _reslist_node<CWorkThread*>* walkNode;
-    WORK_ID renderWorkId;
-    CWorkThread* renderThread;
+    _reslist_node<WORK_ID>* endNode;
+    _reslist_node<WORK_ID>* volatile endCopy;
+    _reslist_node<WORK_ID>* volatile beginSave;
+    _reslist_node<WORK_ID>* volatile curNode;
+    _reslist_node<WORK_ID>* volatile frontNode;
     CProc* proc;
     CProc* rootProc;
+    WORK_ID workId;
     _reslist_node<WORK_ID>* historySentinel;
     _reslist_node<WORK_ID>* historyNode;
-    u32 historyUsed;
-    int historyIndex;
-    _reslist_node<WORK_ID>* historyEntry;
 
-    root = getInstance();
+    root = lbl_eu_806655D0;
 
     if (root == nullptr) {
         return;
@@ -127,16 +126,21 @@ void CViewRoot::setCurrent(CView* view) {
         return;
     }
 
-    renderWorkCount = 0;
-    walkSentinel = view->unk238.mStartNodePtr;
-    walkNode = walkSentinel->mNext;
+    // unk238 POD twin of reslist<WORK_ID>: volatile cur/end homes approx retail
+    // iterator walk. push_back→setItem yields FP epilogue. Soft-cap: decomp
+    // frame -0x40 vs retail -0x50 (spill map 0x18/0x14/0x0C + front 0x08/0x1C).
+    length = 0;
+    endNode = (_reslist_node<WORK_ID>*)view->unk238.mStartNodePtr;
+    endCopy = endNode;
+    beginSave = endNode->mNext;
+    curNode = beginSave;
 
-    while (walkNode != walkSentinel) {
-        walkNode = walkNode->mNext;
-        renderWorkCount++;
+    while (curNode != endCopy) {
+        length++;
+        curNode = curNode->mNext;
     }
 
-    if (renderWorkCount == 0) {
+    if (length == 0) {
         return;
     }
 
@@ -144,34 +148,15 @@ void CViewRoot::setCurrent(CView* view) {
         return;
     }
 
-    walkSentinel = view->unk238.mStartNodePtr;
-    walkNode = walkSentinel->mNext;
-    renderWorkId = *(WORK_ID*)&walkNode->mItem;
-    renderThread = getWorkThread__9CWorkUtilFUl(renderWorkId);
-
-    if (renderThread == nullptr) {
-        proc = nullptr;
-        goto setCurrent_after_proc;
-    }
-
-    if (renderThread->mType < THREAD_CPROC) {
-        proc = nullptr;
-        goto setCurrent_after_proc;
-    }
-
-    if (renderThread->mType >= THREAD_CPROC_MAX) {
-        proc = nullptr;
-        goto setCurrent_after_proc;
-    }
-
-    proc = static_cast<CProc*>(renderThread);
-
-setCurrent_after_proc:
+    frontNode = endNode->mNext;
+    proc = CProc::convertToProc(getWorkThread__9CWorkUtilFUl(frontNode->mItem));
     rootProc = pssGetRoot__5CProcFP5CProc(proc);
 
     if (proc == nullptr) {
         return;
     }
+
+    root = lbl_eu_806655D0;
 
     if (root->mCurrentView == nullptr) {
         goto setCurrent_update;
@@ -195,40 +180,23 @@ setCurrent_after_proc:
 
 setCurrent_update:
     root->mCurrentView = view;
-    getInstance()->mAttachedProc1 = rootProc;
-    getInstance()->mAttachedProc0 = proc;
+    lbl_eu_806655D0->mAttachedProc1 = rootProc;
+    lbl_eu_806655D0->mAttachedProc0 = proc;
 
-    historySentinel = getInstance()->mViewHistory.mStartNodePtr;
+    workId = view->mWorkID;
+    historySentinel = lbl_eu_806655D0->mViewHistory.mStartNodePtr;
     historyNode = historySentinel->mNext;
 
-    while (historyNode != historySentinel) {
-        if (historyNode->mItem == view->mWorkID) {
-            return;
-        }
+    while (historyNode != historySentinel && workId != historyNode->mItem) {
         historyNode = historyNode->mNext;
     }
 
-    historyUsed = 0;
-    historyIndex = 0;
-
-    while (historyUsed < (u32)getInstance()->mViewHistory.mCapacity) {
-        if (getInstance()->mViewHistory.mList[historyIndex].mNext == nullptr) {
-            goto setCurrent_push_slot;
-        }
-        historyIndex++;
-        historyUsed++;
+    if (historyNode != historySentinel) {
+        return;
     }
 
-setCurrent_push_slot:
-    historyEntry = &getInstance()->mViewHistory.mList[historyIndex];
-    historySentinel = getInstance()->mViewHistory.mStartNodePtr;
-    historyEntry->mItem = view->mWorkID;
-    historyEntry->mNext = historySentinel;
-    historyEntry->mPrev = historySentinel->mPrev;
-    historySentinel->mPrev->mNext = historyEntry;
-    historySentinel->mPrev = historyEntry;
+    lbl_eu_806655D0->mViewHistory.push_back(workId);
 }
-
 void CViewRoot::invalidCurrent(CView* view) {
 }
 
@@ -238,15 +206,9 @@ CView* CViewRoot::getFullScreenView() {
     CView* childView;
     _reslist_node<CWorkThread*>* walkNode;
     u32 viewFlags;
-    u32 msgIndex;
-    u32 msgFront;
-    u32 msgModulus;
-    u32 msgRemainder;
-    u32 msgEntryOffset;
-    CMsgParamEntry* msgArray;
-    u32 msgCount;
     u32 msgQualified;
     u32 loginRunKeep;
+    u32 keepGoing;
     ml::CRect16 frameOffset;
     s16 posSumY;
     s16 posSumX;
@@ -268,64 +230,29 @@ CView* CViewRoot::getFullScreenView() {
     while (walkNode != desktopView->mChildren.mStartNodePtr) {
         childView = CView::convertToView((CWorkThread*)walkNode->mItem);
 
+        // One flags load into viewFlags (retail r7) for EXCEPTION + later NO_EVENT.
         viewFlags = childView->mFlags;
+        msgQualified = (viewFlags & THREAD_FLAG_EXCEPTION)
+                           ? 1
+                           : (childView->mMsgQueue.find(EVT_EXCEPTION) >= 0);
 
-        if ((viewFlags & THREAD_FLAG_EXCEPTION) != 0) {
-            msgQualified = 1;
-            goto getFullScreenView_after_msg_eval;
-        }
-
-        msgCount = *(u32*)((u8*)childView + 0x1AC);
-
-        for (msgIndex = 0; msgIndex < msgCount; msgIndex++) {
-            msgFront = *(u32*)((u8*)childView + 0x1A8);
-            msgModulus = *(u32*)((u8*)childView + 0x1B0);
-            msgArray = *(CMsgParamEntry**)((u8*)childView + 0x1A4);
-            msgRemainder = (msgFront + msgIndex) / msgModulus;
-            msgRemainder = msgRemainder * msgModulus;
-            msgRemainder = (msgFront + msgIndex) - msgRemainder;
-            msgEntryOffset = msgRemainder * 0x24;
-
-            if (*(u32*)((u8*)msgArray + msgEntryOffset) != 2) {
-                continue;
-            }
-
-            goto getFullScreenView_msg_eval;
-        }
-
-        msgIndex = -1;
-
-getFullScreenView_msg_eval:
-        msgQualified = (msgIndex >> 31) ^ 1;
-
-getFullScreenView_after_msg_eval:
-        // Reuse msgQualified as keepGoing (retail: cmpwi r0 / li r0,0 / bne).
+        // keepGoing=0 before the branch: retail cmpwi/li/bne shape (size 0x1D8).
+        // MWCC homes keepGoing in r4 vs retail r0 (cascades mState); closed by
+        // tools/postprocess_reloc_names.py CViewRoot.o insn_patches (§17.6).
+        keepGoing = 0;
         if (msgQualified != 0) {
-            msgQualified = 0;
-            goto getFullScreenView_after_state;
+        } else {
+            loginRunKeep = 1;
+            if (childView->mState == THREAD_STATE_LOGIN) {
+            } else if (childView->mState == THREAD_STATE_RUN) {
+            } else {
+                loginRunKeep = 0;
+            }
+            if (loginRunKeep != 0) {
+                keepGoing = 1;
+            }
         }
-
-        loginRunKeep = 1;
-
-        if (childView->mState == THREAD_STATE_LOGIN) {
-            goto getFullScreenView_state_ready;
-        }
-
-        if (childView->mState == THREAD_STATE_RUN) {
-            goto getFullScreenView_state_ready;
-        }
-
-        loginRunKeep = 0;
-
-getFullScreenView_state_ready:
-        if (loginRunKeep == 0) {
-            goto getFullScreenView_after_state;
-        }
-
-        msgQualified = 1;
-
-getFullScreenView_after_state:
-        if (msgQualified == 0) {
+        if (keepGoing == 0) {
             goto getFullScreenView_next;
         }
 
@@ -378,22 +305,12 @@ getFullScreenView_next:
 }
 
 void CViewRoot::renderView() {
-    u32 shouldRender;
-    u32 stateReady;
     CView* childView;
     _reslist_node<CWorkThread*>* walkNode;
     u32 viewFlags;
-    u32 msgIndex;
-    u32 msgFront;
-    u32 msgModulus;
-    u32 msgRemainder;
-    u32 msgEntryOffset;
-    CMsgParamEntry* msgArray;
-    u32 msgCount;
-    u32 msgCounter;
     u32 msgQualified;
 
-    if (getInstance() == nullptr) {
+    if (lbl_eu_806655D0 == nullptr) {
         return;
     }
 
@@ -401,7 +318,7 @@ void CViewRoot::renderView() {
         return;
     }
 
-    if ((getInstance()->mFlags & THREAD_FLAG_NO_EVENT) != 0) {
+    if ((lbl_eu_806655D0->mFlags & THREAD_FLAG_NO_EVENT) != 0) {
         return;
     }
 
@@ -409,99 +326,96 @@ void CViewRoot::renderView() {
         return;
     }
 
-    walkNode = getInstance()->mChildren.mStartNodePtr->mNext;
+    walkNode = lbl_eu_806655D0->mChildren.mStartNodePtr->mNext;
     goto renderView_loop_check;
 
 renderView_loop_body:
-    childView = (CView*)walkNode->mItem;
-
-    if (childView != nullptr) {
-        if (childView->mType < THREAD_CVIEW) {
-            childView = nullptr;
-        } else if (childView->mType >= THREAD_CVIEW_MAX) {
-            childView = nullptr;
-        }
-    }
+    childView = CView::convertToView((CWorkThread*)walkNode->mItem);
 
     viewFlags = childView->mFlags;
 
     if ((viewFlags & THREAD_FLAG_EXCEPTION) != 0) {
-        shouldRender = 1;
+        msgQualified = 1;
         goto renderView_qualified;
     }
 
-    msgCount = *(u32*)((u8*)childView + 0x1AC);
-    msgIndex = 0;
+    {
+        // Decl order: front/mod/sum/array claim r0/r4/r5/r6; msgIndex last → r7 like retail.
+        u32 msgFront;
+        u32 msgModulus;
+        u32 msgSum;
+        u32 msgRemainder;
+        u32 msgEntryOffset;
+        CMsgParamEntry* msgArray;
+        u32 msgCount;
+        u32 msgIndex;
 
-    if ((s32)msgCount <= 0) {
-        msgIndex = -1;
-        goto renderView_msg_eval;
-    }
+        msgCount = *(u32*)((u8*)childView + 0x1AC);
 
-    msgCounter = msgCount;
+        for (msgIndex = 0; msgIndex < msgCount; msgIndex++) {
+            msgFront = *(u32*)((u8*)childView + 0x1A8);
+            msgModulus = *(u32*)((u8*)childView + 0x1B0);
+            msgSum = msgFront + msgIndex;
+            msgArray = *(CMsgParamEntry**)((u8*)childView + 0x1A4);
+            msgRemainder = msgSum / msgModulus;
+            msgRemainder = msgRemainder * msgModulus;
+            msgRemainder = msgSum - msgRemainder;
+            msgEntryOffset = msgRemainder * 0x24;
 
-    while (true) {
-        msgFront = *(u32*)((u8*)childView + 0x1A8);
-        msgModulus = *(u32*)((u8*)childView + 0x1B0);
-        msgArray = *(CMsgParamEntry**)((u8*)childView + 0x1A4);
-        msgRemainder = (msgFront + msgIndex) / msgModulus;
-        msgRemainder = msgRemainder * msgModulus;
-        msgRemainder = (msgFront + msgIndex) - msgRemainder;
-        msgEntryOffset = msgRemainder * 0x24;
-
-        if (*(u32*)((u8*)msgArray + msgEntryOffset) == 2) {
+            // Keep msgIndex in r7 (decl last). Found-path still beq vs retail bne+b
+            // (+4B soft-cap); empty/self-assign/switch all lower to beq.
+            if (*(u32*)((u8*)msgArray + msgEntryOffset) != 2) {
+                continue;
+            }
             goto renderView_msg_eval;
         }
 
-        msgIndex++;
-        msgCounter--;
-
-        if (msgCounter != 0) {
-            continue;
-        }
-
         msgIndex = -1;
-        goto renderView_msg_eval;
-    }
 
 renderView_msg_eval:
-    msgQualified = (msgIndex >> 31) ^ 1;
-    shouldRender = msgQualified;
+        msgQualified = (msgIndex >> 31) ^ 1;
+    }
 
 renderView_qualified:
-    if (shouldRender != 0) {
+    {
+        u32 shouldRender;
+        u32 stateReady;
+
         shouldRender = 0;
-        goto renderView_state_check_end;
-    }
 
-    stateReady = 1;
+        if (msgQualified != 0) {
+            goto renderView_state_check_end;
+        }
 
-    if (childView->mState == THREAD_STATE_LOGIN) {
-        goto renderView_state_ready;
-    }
+        stateReady = 1;
 
-    if (childView->mState == THREAD_STATE_RUN) {
-        goto renderView_state_ready;
-    }
+        if (childView->mState == THREAD_STATE_LOGIN) {
+            goto renderView_state_ready;
+        }
 
-    stateReady = 0;
+        if (childView->mState == THREAD_STATE_RUN) {
+            goto renderView_state_ready;
+        }
+
+        stateReady = 0;
 
 renderView_state_ready:
-    if (stateReady == 0) {
-        goto renderView_state_check_end;
-    }
+        if (stateReady == 0) {
+            goto renderView_state_check_end;
+        }
 
-    shouldRender = 1;
+        shouldRender = 1;
 
 renderView_state_check_end:
-    if (shouldRender != 0) {
-        renderView__5CViewFv(childView);
+        if (shouldRender != 0) {
+            renderView__5CViewFv(childView);
+        }
     }
 
     walkNode = walkNode->mNext;
 
 renderView_loop_check:
-    if (walkNode != getInstance()->mChildren.mStartNodePtr) {
+    if (walkNode != lbl_eu_806655D0->mChildren.mStartNodePtr) {
         goto renderView_loop_body;
     }
 }
@@ -511,15 +425,19 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     CWorkThread* parent;
     mtl::ALLOC_HANDLE handle;
     CViewRoot* root;
+    void* rootVt;
+    void* histVtTemp;
+    void* histVtFinal;
     u32 zero;
     u32 poolCapacity;
     _reslist_node<CWorkThread*>* pool0Sentinel;
     _reslist_node<CWorkThread*>* pool1Sentinel;
     _reslist_node<CWorkThread*>* pool2Sentinel;
     _reslist_node<WORK_ID>* historySentinel;
-    u8* poolArray;
-    u32 addrOffset;
+    void* histList;
     u32 loopCount;
+    u32 addrOffset;
+    u8* clearRow;
 
     name = lbl_eu_8052266C;
     parent = pParent;
@@ -532,92 +450,89 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
 
     __ct__11CWorkThreadFPCcP11CWorkThreadi(root, name, parent, 128);
 
-    zero = 0;
+    rootVt = lbl_eu_8056B710;
+    histVtTemp = lbl_eu_8056B298;
+    *(void**)root = rootVt;
+
     poolCapacity = 0x20;
-
-    *(void**)root = lbl_eu_8056B710;
-
+    histVtFinal = lbl_eu_8056B280;
+    root->mPool0.mCapacity = poolCapacity;
     pool0Sentinel = &root->mPool0.mSentinel;
+    zero = 0;
     pool1Sentinel = &root->mPool1.mSentinel;
+    root->mPool0.mStartNodePtr = pool0Sentinel;
     pool2Sentinel = &root->mPool2.mSentinel;
     historySentinel = &root->mViewHistory.mStartNode;
+    root->mPool0.mUsed = zero;
+    root->mPool0.mList = (_reslist_node<CWorkThread*>*)zero;
 
-    root->mPool0.mStartNodePtr = pool0Sentinel;
-    root->mPool0.mCapacity = poolCapacity;
-    root->mPool0.mList = nullptr;
-    root->mPool0.mUsed = 0;
-
-    root->mPool1.mStartNodePtr = pool1Sentinel;
     root->mPool1.mCapacity = poolCapacity;
-    root->mPool1.mList = nullptr;
-    root->mPool1.mUsed = 0;
+    root->mPool1.mStartNodePtr = pool1Sentinel;
+    root->mPool1.mUsed = zero;
+    root->mPool1.mList = (_reslist_node<CWorkThread*>*)zero;
 
-    root->mPool2.mStartNodePtr = pool2Sentinel;
     root->mPool2.mCapacity = poolCapacity;
-    root->mPool2.mList = nullptr;
-    root->mPool2.mUsed = 0;
+    root->mPool2.mStartNodePtr = pool2Sentinel;
+    root->mPool2.mUsed = zero;
+    root->mPool2.mList = (_reslist_node<CWorkThread*>*)zero;
 
-    *(void**)&root->mViewHistory = lbl_eu_8056B298;
+    *(void**)&root->mViewHistory = histVtTemp;
+    root->mViewHistory.mList = (_reslist_node<WORK_ID>*)zero;
+    root->mViewHistory.mCapacity = (int)zero;
+    root->mViewHistory.unk1C = (bool)zero;
     root->mViewHistory.mStartNodePtr = historySentinel;
-    root->mViewHistory.mList = nullptr;
-    root->mViewHistory.mCapacity = 0;
-    root->mViewHistory.unk1C = 0;
-
     historySentinel->mNext = historySentinel;
     historySentinel = root->mViewHistory.mStartNodePtr;
     historySentinel->mPrev = historySentinel;
+    *(void**)&root->mViewHistory = histVtFinal;
 
-    *(void**)&root->mViewHistory = lbl_eu_8056B280;
-
-    root->mCurrentView = nullptr;
-    root->mAttachedProc0 = nullptr;
-    root->mAttachedProc1 = nullptr;
+    root->mCurrentView = (CView*)zero;
+    root->mAttachedProc0 = (CProc*)zero;
+    root->mAttachedProc1 = (CProc*)zero;
 
     lbl_eu_806655D0 = root;
     root->mType = THREAD_CVIEWROOT;
 
-    poolArray = (u8*)allocate_array__Q23mtl10MemManagerFUlUl(0x600, root->mAllocHandle);
-    root->mViewHistory.mList = (_reslist_node<WORK_ID>*)poolArray;
-
-    addrOffset = 0;
+    histList = allocate_array__Q23mtl10MemManagerFUlUl(0x600, root->mAllocHandle);
     loopCount = 8;
+    root->mViewHistory.mList = (_reslist_node<WORK_ID>*)histList;
+    addrOffset = 0;
     goto create_clear_test;
 
 create_clear_loop:
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0xC] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x18] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x24] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x30] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x3C] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x48] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x54] = zero;
+    *(u32*)((u8*)root->mViewHistory.mList + addrOffset) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0xC) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x18) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x24) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x30) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x3C) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x48) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
     addrOffset += 0x60;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0xC] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x18] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x24] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x30] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x3C] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x48] = zero;
-    poolArray = (u8*)root->mViewHistory.mList;
-    *(u32*)&poolArray[addrOffset + 0x54] = zero;
+    *(u32*)(clearRow + 0x54) = zero;
+
+    *(u32*)((u8*)root->mViewHistory.mList + addrOffset) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0xC) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x18) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x24) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x30) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x3C) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
+    *(u32*)(clearRow + 0x48) = zero;
+    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
     addrOffset += 0x60;
+    *(u32*)(clearRow + 0x54) = zero;
     loopCount--;
 
 create_clear_test:
@@ -630,10 +545,7 @@ create_clear_test:
 
 create_entry_work:
     entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(root, parent, false);
-
-    if (root != nullptr) {
-        root->func_804385CC(0);
-    }
+    root->func_804385CC(0);
 
     return root;
 }

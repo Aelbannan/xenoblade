@@ -4,13 +4,11 @@
 
 class CProcRoot : public CWorkThread {
 public:
-    CProcRoot(const char* pName, CWorkThread* pParent);
+    // No out-of-line ctor - retail create inlines CWorkThread + vtable init.
     ~CProcRoot();
 
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
-
-    DECL_WORKTHREAD_CREATE(CProcRoot);
 
     static CProcRoot* create(CWorkThread* pParent);
     static CProcRoot* getInstance();

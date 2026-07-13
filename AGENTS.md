@@ -9,6 +9,7 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 3. **`DECOMP_MAP.md`** — per-function targets, symbols, and tiers.
 4. **`TASKS.md`** — agent checklist; check off functions at `FULL_MATCH`.
 5. **`tools/test/compare_behaviour/README.md`** — retail vs decomp behaviour tests (**mandatory below 100% static match**).
+6. **`FORK.md`** — inventory of fork-only tools, PPC harness, docs, and policy vs upstream `xbret/xenoblade`.
 
 ## Quick commands
 

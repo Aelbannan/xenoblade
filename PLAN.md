@@ -9,6 +9,9 @@
 **Companion documents:**
 
 - `DECOMP_MAP.md` — decompilation targets, symbols, and critical-path functions
+- `FORK.md` — fork-only tooling inventory (coop runner, symbol recovery, host/PPC behaviour tests, postprocess)
+- `TASKS.md` — agent checklist (`FULL_MATCH` only)
+- `AGENTS.md` / `.cursor/skills/xenoblade-decomp/SKILL.md` — agent entry + decomp loop
 - `Xenoblade_Wii_Coop_Decompilation_Guide.md` — deeper per-function decompilation procedures (when present)
 
 ---

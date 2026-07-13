@@ -9,6 +9,7 @@
 
 //size: 0x4
 class CFontLayer {
+public:
     CFontLayer();
     virtual ~CFontLayer();
 };
@@ -33,6 +34,23 @@ struct CView_UnkStruct1 {
     s16 unkE;
     s16 unk10;
     s16 unk12;
+};
+
+// POD reslist header (size 0x20) so CView::__ct__ can init after ViewFrame.
+struct CViewResList {
+    void* vtable;
+    void* mStartNodePtr;
+    void* mSentinelNext;
+    void* mSentinelPrev;
+    void* mSentinelItem;
+    void* mList;
+    int mCapacity;
+    u8 unk1C;
+    u8 pad[3];
+
+    bool empty() const {
+        return *(void**)mStartNodePtr == mStartNodePtr;
+    }
 };
 
 //size: 0x470
@@ -63,6 +81,8 @@ public:
     s16 getSplitLine();
     void setSplitLine(s16 line);
     void setCurrent();
+    void updateMsg();
+    void renderView();
 
     static ml::CCol4 sFrameColor;
 
@@ -93,23 +113,24 @@ public:
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CViewRectDataCore unk1C8;
-    CViewFrame unk1DC;
-    reslist<CWorkThread*> unk238; //0x238 - checked empty() in wkUpdate
-    u8 unk258[0x278 - 0x258];
-    u32 unk278;
-    u8 unk27C[0x284 - 0x27C];
-    u8 mContextRing[0x3EC - 0x284];
-    void* mContextRingBase;
-    u32 unk3F0;
-    u32 mContextRingWriteIndex;
-    u32 mContextRingCapacity;
-    u32 unk3FC;
-    ml::FixStr<64> mName;
-    ml::CVec4 unk444;
-    u8 unk454[0x45C - 0x454];
-    void* unk45C;
-    u32 unk460;
+    CViewRectDataCore unk1C8; //0x1C8
+    CViewFrame unk1DC; //0x1DC
+    CViewResList unk238; //0x238 reslist<WORK_ID>
+    CViewResList unk258; //0x258 reslist<IWorkEvent*>
+    u32 unk278; //0x278
+    u32 unk27C; //0x27C
+    u32 mContextMsgVtable; //0x280
+    u8 mContextRing[0x3EC - 0x284]; //0x284
+    void* mContextRingBase; //0x3EC
+    u32 unk3F0; //0x3F0
+    u32 mContextRingWriteIndex; //0x3F4
+    u32 mContextRingCapacity; //0x3F8
+    u32 unk3FC; //0x3FC
+    ml::FixStr<64> mName; //0x400
+    ml::CVec4 unk444; //0x444
+    u8 unk454[0x45C - 0x454]; //0x454
+    void* unk45C; //0x45C
+    u32 unk460; //0x460
     s16 unk464;
     s16 unk466;
     s16 unk468;

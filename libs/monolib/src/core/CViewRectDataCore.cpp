@@ -23,28 +23,35 @@ CViewRectDataCore* CViewRectDataCore::func_80459270() {
 }
 
 void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
-    BOOL overW;
-    BOOL overH;
-    s16 maxHeight;
-    s16 heightLimit;
-    s16 partialH;
     s16 maxWidth;
-    s16 widthLimit;
+    s16 maxHeight;
+    int partialH;
+    int widthRemain;
+    int heightRemain;
+    int overW;
+    int overH;
 
     *(ml::CPnt16*)&unk0 = size;
+
     maxWidth = (s16)(unk0 - unkC - unk10);
-    widthLimit = (s16)(unk4 - maxWidth);
-    partialH = (s16)(unk2 - unkE);
-    if ((overW = (s32)unk8 > (s32)unk4 - (s32)maxWidth, maxHeight = (s16)(partialH - unk12), overW)) {
-        unk8 = widthLimit;
+    // Keep remains/partial as int so cmpw / subf skip extra extsh (retail).
+    widthRemain = unk4 - maxWidth;
+    partialH = unk2 - unkE;
+
+    // Retail: cmpw unk8,widthRemain then maxHeight=partialH-unk12 then ble.
+    if ((overW = (unk8 > widthRemain), maxHeight = (s16)(partialH - unk12), overW)) {
+        unk8 = widthRemain;
     }
-    heightLimit = (s16)(unk6 - maxHeight);
-    if ((overH = (s32)unkA > (s32)unk6 - (s32)maxHeight, overH)) {
-        unkA = heightLimit;
+
+    heightRemain = unk6 - maxHeight;
+    if ((overH = (unkA > heightRemain), overH)) {
+        unkA = heightRemain;
     }
+
     if (unk8 < 0) {
         unk8 = 0;
     }
+
     if (unkA >= 0) {
         return;
     }

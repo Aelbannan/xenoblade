@@ -248,6 +248,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 
 | Path | Role |
 |------|------|
+| `FORK.md` | Fork-only tooling inventory vs upstream `xbret/xenoblade` |
 | `PLAN.md` | Co-op architecture, agent rules, milestones |
 | `DECOMP_MAP.md` | Function-level decompilation map |
 | `TASKS.md` | Agent checklist — check off at `FULL_MATCH` |

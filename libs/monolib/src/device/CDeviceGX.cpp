@@ -115,9 +115,10 @@ void CDeviceGX::viAfterDrawDone(){
 }
 
 void CDeviceGX::viBeginFrame(){
-    if(spInstance->mDevicesInitialized != true){
-        cacheInstance->func_8044BE38();
+    if(spInstance->mDevicesInitialized == 1){
+        return;
     }
+    cacheInstance->func_8044BE38();
 }
 
 void CDeviceGX::drawFrame(){

@@ -6,6 +6,8 @@
 //size: 0x5C
 class CViewFrame {
 public:
+    void detachRenderWork(CWorkThread* pThread);
+
     u8 unk0[0x54];
     s16 unk54;
     s16 unk56;

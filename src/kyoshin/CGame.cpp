@@ -151,7 +151,7 @@ bool CGame::wkStandbyLogin(){
     CView* view = mView;
     const char* nameTemp = scViewName;
 
-    view->unk400 = nameTemp;
+    view->mName = nameTemp;
     if(view->mName.size() == 0){
         view->mName = nameTemp;
     }

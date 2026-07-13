@@ -2,6 +2,8 @@
 
 Compare **retail split objects** (`build/<region>/obj/...`) with **decompiled objects** (`build/<region>/src/...`).
 
+Fork-wide tooling context: [`FORK.md`](../../../FORK.md) §5.
+
 | Layer | What it checks | Dolphin? |
 |-------|----------------|----------|
 | **static** | objdiff instruction + relocation match | No |
@@ -92,7 +94,13 @@ coop run cycle <target>     # static match
 | `cfpadtask-update` | `CfPadTask` | update stick normalize + pad gate (~99.6%) |
 | `cfpadtask-updatecfdapdata` | `CfPadTask` | updateCfPadData deadzone/dpad/turbo |
 | `cview-wkupdate-gate` | `CView` | wkUpdate split-frame gate logic |
+| `cview-get-split-line` | `CView` | getSplitLine gate (~89.2%) + PPC slices |
+| `cview-set-split-line` | `CView` | setSplitLine gate + PPC slices |
+| `cview-set-disp` | `CView` | setDisp flag/invalidCurrent + PPC slices |
 | `cviewroot-getview` | `CViewRoot` | getView reslist walk (FULL_MATCH guard) |
+| `cviewroot-get-fullscreen-view` | `CViewRoot` | getFullScreenView gate (~99.7%) + PPC slices |
+| `cview-render-view` | `CView` | renderView gates (~84.5%) + PPC semantic slices |
+| `cviewframe-render` | `CViewFrame` | expand/badSize gates (~99.2%) + PPC semantic slices |
 
 PPC harnesses exist for rows marked **PPC** in the eligibility table above (`view-rect-data-*`, `mtrand-getinstance`, `mtrand-integer-rng`).
 
@@ -127,11 +135,14 @@ python tools/coop/run.py behaviour ppc --all                      # all ppc_sour
 | `game-wk-standby-login` | no | same `CGame.o` unit |
 | `view-set-current-ring` | no | `CView.o` retail — 80 undefined symbols |
 | `cview-get-current-view` | yes | 11 scenarios; lbl oracle slices (`cview_get_current_view_*.c`) — full `CView.o` link crashes mwldeppc |
-| `cview-get-split-line` | no | trimmed `CView.o` crashes mwldeppc |
-| `cview-set-split-line` | no | same |
-| `cview-set-disp` | no | same |
+| `cview-get-split-line` | yes | 20+ scenarios; semantic retail/decomp slices |
+| `cview-set-split-line` | yes | semantic slices (FULL_MATCH guard) |
+| `cview-set-disp` | yes | semantic slices (FULL_MATCH guard) |
 | `cview-wkupdate-gate` | no | `CView.o` — needs full object + extern stubs |
 | `cviewroot-getview` | yes | 13 scenarios; semantic retail/decomp slices (`cviewroot_ppc_*.c`) — trimmed `.o` crashes mwldeppc |
+| `cviewroot-get-fullscreen-view` | yes | 14 scenarios; gfsv mock + semantic slices (full `CViewRoot.o` needs CDesktop/VI) |
+| `cview-render-view` | yes | 25 scenarios; gate DAG mock (full `CView.o` unlinkable) |
+| `cviewframe-render` | yes | 12 scenarios; expand/badSize mock (avoids CDrawGX) |
 | `cfpadtask-update` | no | `CfPadTask.o` — 52+ WPAD/KPAD/game symbols |
 | `cfpadtask-updatecfdapdata` | no | same `CfPadTask.o` unit |
 

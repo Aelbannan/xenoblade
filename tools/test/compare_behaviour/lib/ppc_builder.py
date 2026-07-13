@@ -232,6 +232,16 @@ def _blr_pool_object(
     return alias_obj
 
 
+def _uses_cview_semantic_slices(test: BehaviourTest) -> bool:
+    """CView tests that link hand-written rb_/dc_ slices instead of trimmed CView.o."""
+    return test.unit == CVIEW_UNIT and bool(test.ppc_stubs)
+
+
+def _uses_semantic_slices(test: BehaviourTest) -> bool:
+    """Hand-written rb_/dc_ slices in ppc_stubs — do not link full unit .o."""
+    return bool(test.ppc_stubs)
+
+
 def _extra_stub_sources(test: BehaviourTest) -> list[Path]:
     paths: list[Path] = []
     if test.ppc_stubs:
@@ -239,6 +249,8 @@ def _extra_stub_sources(test: BehaviourTest) -> list[Path]:
             path = PPC_DIR / name
             if path.is_file():
                 paths.append(path)
+    # getCurrentView uses a minimal stub set (no unit stub). Other CView slice tests
+    # still need monolib_src_core_CView.c for CSplitFrame / CViewRoot mocks.
     if test.unit == CVIEW_UNIT and test.id == "cview-get-current-view":
         return paths
     unit_stub = _unit_stub_path(test.unit)
@@ -334,7 +346,7 @@ def build_ppc_test(test: BehaviourTest) -> PpcBuildResult:
     if test.unit == CVIEWROOT_UNIT:
         pass
     elif test.unit == CVIEW_UNIT:
-        if test.id != "cview-get-current-view":
+        if not _uses_cview_semantic_slices(test):
             decomp_slice = obj_dir / "decomp_slice.o"
             _trim_object_to_symbol(objcopy, decomp_prefixed, decomp_slice, f"dc_{test.symbol}")
             objects.append(decomp_slice)
@@ -352,6 +364,9 @@ def build_ppc_test(test: BehaviourTest) -> PpcBuildResult:
                     output=str(exc),
                 )
             objects.append(retail_slice)
+    elif _uses_semantic_slices(test):
+        # CViewFrame / other units: ppc_stubs supply rb_/dc_ — skip full prefixed .o.
+        pass
     else:
         objects.extend([retail_prefixed, decomp_prefixed])
 

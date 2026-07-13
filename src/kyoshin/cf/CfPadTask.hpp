@@ -11,7 +11,12 @@ namespace cf {
 
     class CfPadTask : public CTTask<CfPadTask>, public IGameException, public IHBMCallback {
     public:
-        CfPadTask();
+        // Inline so create's placement-new inlines ctor; retail has no __ct__Q22cf9CfPadTaskFv.
+        CfPadTask() : CTTask<CfPadTask>(), mFrameCounter(0) {
+            CLibHbm::addCallback(this);
+            sInputDisableTimer = 0;
+            sButtonDisableTimer = 0;
+        }
         virtual ~CfPadTask();
 
         virtual void Init();

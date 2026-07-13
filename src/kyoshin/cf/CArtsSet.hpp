@@ -148,7 +148,7 @@ namespace cf {
     class CArtsSet : _sArtsSet {
     public:
         CArtsSet(){}
-        virtual void _sArtsSet_UnkVirtualFunc1(); //0x8
+        virtual void CArtsSet_UnkVirtualFunc1(); //0x8
 
         //0x0: vtable
         //0x0-38: _sArtsSet

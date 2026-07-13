@@ -62,6 +62,24 @@
       "ppc_skip_reason": "setCurrent reads caller stack snapshot; host oracle only for now"
     },
     {
+      "id": "view-attach-render-work",
+      "description": "CView::attachRenderWork dual context-ring enqueue (HIGH_MATCH ~72%; host ≥30)",
+      "unit": "monolib/src/core/CView",
+      "symbol": "attachRenderWork__5CViewFP11CWorkThread",
+      "host_binary": "view_attach_render_work",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "payload snaps uninit on retail stack; host oracle for tag/WorkID/thread patches"
+    },
+    {
+      "id": "cview-update-msg",
+      "description": "CView::updateMsg ring drain tags 0-7 (STRUCTURAL ~65.9%; host ≥30)",
+      "unit": "monolib/src/core/CView",
+      "symbol": "updateMsg__5CViewFv",
+      "host_binary": "cview_update_msg",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "fan-out needs child graph + getWorkThread/setCurrent; host oracle on ring/list/flags"
+    },
+    {
       "id": "cview-get-current-view",
       "description": "CView::getCurrentView lbl_eu_806655C8 SDA load (FULL_MATCH guard; PPC uses lbl oracle slices)",
       "unit": "monolib/src/core/CView",
@@ -77,30 +95,42 @@
     },
     {
       "id": "cview-get-split-line",
-      "description": "CView::getSplitLine CSplitFrame gate + delegate (FULL_MATCH guard)",
+      "description": "CView::getSplitLine CSplitFrame gate + delegate (HIGH_MATCH ~89.2%; PPC uses semantic slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "getSplitLine__5CViewFv",
       "host_binary": "cview_get_split_line",
-      "ppc_eligible": false,
-      "ppc_skip_reason": "mwldeppc crashes linking trimmed CView.o; awaiting per-function retail extract"
+      "ppc_source": "cview_get_split_line.c",
+      "ppc_stubs": [
+        "cview_mock.c",
+        "cview_get_split_line_retail.c",
+        "cview_get_split_line_decomp.c"
+      ]
     },
     {
       "id": "cview-set-split-line",
-      "description": "CView::setSplitLine CSplitFrame delegate (FULL_MATCH guard)",
+      "description": "CView::setSplitLine CSplitFrame delegate (FULL_MATCH; PPC uses semantic slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "setSplitLine__5CViewFs",
       "host_binary": "cview_set_split_line",
-      "ppc_eligible": false,
-      "ppc_skip_reason": "mwldeppc crashes linking trimmed CView.o; awaiting per-function retail extract"
+      "ppc_source": "cview_set_split_line.c",
+      "ppc_stubs": [
+        "cview_mock.c",
+        "cview_set_split_line_retail.c",
+        "cview_set_split_line_decomp.c"
+      ]
     },
     {
       "id": "cview-set-disp",
-      "description": "CView::setDisp unk278 bit6 + invalidCurrent gate (FULL_MATCH guard)",
+      "description": "CView::setDisp unk278 bit6 + invalidCurrent gate (FULL_MATCH; PPC uses semantic slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "setDisp__5CViewFbb",
       "host_binary": "cview_set_disp",
-      "ppc_eligible": false,
-      "ppc_skip_reason": "mwldeppc crashes linking trimmed CView.o; awaiting per-function retail extract"
+      "ppc_source": "cview_set_disp.c",
+      "ppc_stubs": [
+        "cview_mock.c",
+        "cview_set_disp_retail.c",
+        "cview_set_disp_decomp.c"
+      ]
     },
     {
       "id": "mtrand-float-rng",
@@ -164,6 +194,28 @@
       "ppc_stubs": ["cviewroot_mock.c"]
     },
     {
+      "id": "cviewroot-get-fullscreen-view",
+      "description": "CViewRoot::getFullScreenView desktop walk + exception/LOGIN gate + fullscreen size (CODE_MATCH ~99.7%)",
+      "unit": "monolib/src/core/CViewRoot",
+      "symbol": "getFullScreenView__9CViewRootFv",
+      "host_binary": "cviewroot_get_fullscreen_view",
+      "ppc_source": "cviewroot_get_fullscreen_view.c",
+      "ppc_stubs": [
+        "cviewroot_gfsv_mock.c",
+        "cviewroot_get_fullscreen_view_retail.c",
+        "cviewroot_get_fullscreen_view_decomp.c"
+      ]
+    },
+    {
+      "id": "viewroot-set-current",
+      "description": "CViewRoot::setCurrent early-outs + proc resolve + history push (CODE_MATCH ~97.7%)",
+      "unit": "monolib/src/core/CViewRoot",
+      "symbol": "setCurrent__9CViewRootFP5CView",
+      "host_binary": "cviewroot_set_current",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "setCurrent needs getWorkThread/pssGetRoot + reslist push_back; host oracle on focus/history"
+    },
+    {
       "id": "proc-pss-create-view",
       "description": "CProc::pssCreateView client-rect + view-name semantics (HIGH_MATCH ~73.5%)",
       "unit": "monolib/src/core/CProc",
@@ -171,6 +223,95 @@
       "host_binary": "proc_pss_create_view",
       "ppc_eligible": false,
       "ppc_skip_reason": "CProc.o pssCreateView needs allocate/entryWork/reslist chain; host oracle on inlined rect path"
+    },
+    {
+      "id": "cview-render-view",
+      "description": "CView::renderView early-out / crossRoot / size+clear / wkRender / tail gates (HIGH_MATCH ~84.5%; PPC semantic slices)",
+      "unit": "monolib/src/core/CView",
+      "symbol": "renderView__5CViewFv",
+      "host_binary": "cview_render_view",
+      "ppc_source": "cview_render_view.c",
+      "ppc_stubs": [
+        "cview_render_view_mock.c",
+        "cview_render_view_retail.c",
+        "cview_render_view_decomp.c"
+      ]
+    },
+    {
+      "id": "cviewframe-render",
+      "description": "CViewFrame::render owner/expand/badSize early gates (CODE_MATCH ~99.2%; PPC semantic slices)",
+      "unit": "monolib/src/core/CViewFrame",
+      "symbol": "render__10CViewFrameFv",
+      "host_binary": "cviewframe_render",
+      "ppc_source": "cviewframe_render.c",
+      "ppc_stubs": [
+        "cviewframe_render_mock.c",
+        "cviewframe_render_retail.c",
+        "cviewframe_render_decomp.c"
+      ]
+    },
+    {
+      "id": "battle-mgr-init",
+      "description": "CUIBattleManager::Init CProcess alloc, __ptmf_null copy, Regist via lbl_eu_80664048 (~99.1%)",
+      "unit": "kyoshin/CUIBattleManager",
+      "symbol": "Init__16CUIBattleManagerFv",
+      "host_binary": "battle_mgr_init",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "CUIBattleManager TU depends on CProcessMan and work-thread alloc"
+    },
+    {
+      "id": "uicf-init",
+      "description": "CUICfManager::Init file mode, process registration, and eight-slot zero initialization",
+      "unit": "kyoshin/CUICfManager",
+      "symbol": "Init__12CUICfManagerFv",
+      "host_binary": "uicf_init",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "CUICfManager requires CDeviceFile, CProcess, and UI helper dependencies"
+    },
+    {
+      "id": "occ-cull-helper",
+      "description": "COccCulling frustum early-out, depth, and plane-orientation gates (CODE_MATCH ~99.8%)",
+      "unit": "kyoshin/COccCulling",
+      "symbol": "func_801A1188__11COccCullingFP12CCullFrustum",
+      "host_binary": "occ_cull_helper",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "COccCulling.o depends on PSMTXMultVec and CPlane construction"
+    },
+    {
+      "id": "menu-ptgauge-move",
+      "description": "CMenuPTGauge::Move gates and unk8C state machine (CODE_MATCH ~97.1%)",
+      "unit": "kyoshin/menu/CMenuPTGauge",
+      "symbol": "Move__12CMenuPTGaugeFv",
+      "host_binary": "menu_ptgauge_move",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Move fans out to layout virtuals, PTMF table, and UI sound helpers"
+    },
+    {
+      "id": "aiaction-vfunc1",
+      "description": "CAIAction_UnkVirtualFunc1 trailer export + ring copy into outB (HIGH_MATCH ~93.2%)",
+      "unit": "kyoshin/cf/object/CAIAction",
+      "symbol": "CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv",
+      "host_binary": "aiaction_vfunc1",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Leaf ring-copy; host covers trailer/outA/outB semantics without PPC"
+    },
+    {
+      "id": "aiaction-vfunc2",
+      "description": "CAIAction_UnkVirtualFunc2 trailer import from inA + ring copy from inB into self->unk20C (CODE_MATCH ~96.0%)",
+      "unit": "kyoshin/cf/object/CAIAction",
+      "symbol": "CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv",
+      "host_binary": "aiaction_vfunc2",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Leaf ring-copy; host covers trailer/inA/inB semantics without PPC"
+    },
+    {
+      "id": "menu-enemy-cbrender",
+      "description": "CMenuEnemyState::cbRenderBefore gates + depth sort + panel draw flags (CODE_MATCH ~98.2%)",
+      "unit": "kyoshin/menu/CMenuEnemyState",
+      "symbol": "cbRenderBefore__15CMenuEnemyStateFv",
+      "host_binary": "menu_enemy_cbrender",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Render path calls GX/lyt DrawInfo and layout helpers; host covers gate/sort/draw decisions"
     }
   ]
 }

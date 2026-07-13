@@ -52,7 +52,9 @@ public:
     float unk224;
     int unk228;
     u32 unk22C;
-    s16 unk230;
+    s16 unk230; //0x230 - letterbox half-band (retail ctor: 57)
+    u16 unk232; // pad
+    u32 unk234; //0x234 - sizeof(CGame)==0x238 for retail GameMain allocate
 
 private:
     static const int MAX_CHILD = 8;

@@ -39,13 +39,6 @@ namespace cf{
     float CfPadTask::sButtonDisableTimer;
     WPADInfo CfPadTask::sWpadInfo;
 
-    CfPadTask::CfPadTask() : CTTask<CfPadTask>(),
-    mFrameCounter(0){
-        CLibHbm::addCallback(this);
-        sInputDisableTimer = 0;
-        sButtonDisableTimer = 0;
-    }
-
     CfPadTask::~CfPadTask(){
         lbl_80666D3C = PAD_TYPE_NONE;
         sMainPadType = PAD_TYPE_NONE;

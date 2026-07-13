@@ -1,0 +1,22 @@
+.fn getCurrentPad__Q22cf13CfGameManagerFv, global
+/* 80087B94 00050DD4  80 8D 83 48 */	lwz r4, lbl_eu_80661BC8@sda21(r0)
+/* 80087B98 00050DD8  3C 04 00 01 */	addis r0, r4, 0x1
+/* 80087B9C 00050DDC  28 00 FF FF */	cmplwi r0, 0xffff
+/* 80087BA0 00050DE0  40 82 00 1C */	bne .L_80087BBC
+/* 80087BA4 00050DE4  80 6D A5 8C */	lwz r3, lbl_eu_80663E0C@sda21(r0)
+/* 80087BA8 00050DE8  2C 03 00 00 */	cmpwi r3, 0x0
+/* 80087BAC 00050DEC  4C 82 00 20 */	bnelr
+/* 80087BB0 00050DF0  3C 60 80 57 */	lis r3, lbl_eu_80570D40@ha
+/* 80087BB4 00050DF4  38 63 0D 40 */	addi r3, r3, lbl_eu_80570D40@l
+/* 80087BB8 00050DF8  4E 80 00 20 */	blr
+.L_80087BBC:
+/* 80087BBC 00050DFC  80 6D A5 8C */	lwz r3, lbl_eu_80663E0C@sda21(r0)
+/* 80087BC0 00050E00  2C 03 00 00 */	cmpwi r3, 0x0
+/* 80087BC4 00050E04  4C 82 00 20 */	bnelr
+/* 80087BC8 00050E08  54 80 07 7E */	clrlwi r0, r4, 29
+/* 80087BCC 00050E0C  3C 60 80 57 */	lis r3, lbl_eu_80570D40@ha
+/* 80087BD0 00050E10  1C 00 00 F8 */	mulli r0, r0, 0xf8
+/* 80087BD4 00050E14  38 63 0D 40 */	addi r3, r3, lbl_eu_80570D40@l
+/* 80087BD8 00050E18  7C 63 02 14 */	add r3, r3, r0
+/* 80087BDC 00050E1C  4E 80 00 20 */	blr
+.endfn getCurrentPad__Q22cf13CfGameManagerFv

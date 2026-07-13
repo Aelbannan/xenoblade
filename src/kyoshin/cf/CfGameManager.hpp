@@ -16,6 +16,8 @@ namespace cf{
     //unofficial name
     class CfGameManager{
     public:
+        CfGameManager();
+
         static CfGameManager* getInstance();
         static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
 

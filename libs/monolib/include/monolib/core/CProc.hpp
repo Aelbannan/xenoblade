@@ -20,13 +20,11 @@ public:
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
 
-    CView* pssGetView(WORK_ID id) const;
     static CProc* pssGetRoot(CProc* pProc);
     void pssSetFocus();
     bool pssDetachView(WORK_ID id);
-    void pssDetachView();
-    void pssAttachView(CView* pView);
-    DECOMP_INLINE ml::CRect16& pssMakeClientRect(ml::CRect16& rect) const;
+    // pssGetView / pssAttachView / no-arg pssDetachView / pssMakeClientRect are
+    // not separate US .text symbols; attach/detach-all are inlined at call sites.
     CView* pssCreateView(const char* pName, CWorkThread* pThread2, int r6);
 
     CWorkThread* pssGetParent() const {

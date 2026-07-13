@@ -2,6 +2,9 @@
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 
+// Retail sbss singleton (getView / getInstance / getException SDA reloc).
+extern "C" CDesktop* lbl_eu_806656AC;
+
 DesktopIcon* CDesktop::spIcon;
 CDesktop* CDesktop::spInstance;
 bool CDesktop::sIconInitialized = false;
@@ -22,11 +25,11 @@ CDesktop::~CDesktop(){
 }
 
 CDesktop* CDesktop::getInstance(){
-    return spInstance;
+    return lbl_eu_806656AC;
 }
 
 CView* CDesktop::getView(){
-    CDesktop* desktop = getInstance();
+    CDesktop* desktop = lbl_eu_806656AC;
     if(desktop == nullptr){
         return nullptr; 
     }

@@ -210,8 +210,15 @@ def cmd_diff(
 
     if write_function_diff and symbol and fn_match:
         out = config.resolve(Path("build/coop-function-diff.json"))
-        diff_function_json(project, unit, symbol, out)
-        print(f"function diff: {out}")
+        try:
+            diff_function_json(project, unit, symbol, out)
+            print(f"function diff: {out}")
+        except subprocess.CalledProcessError as exc:
+            # Newer objdiff-cli dropped `diff -o/--format`; match % already from report.
+            print(
+                f"WARNING: function-diff JSON skipped ({exc.returncode}): {' '.join(exc.cmd)}",
+                file=sys.stderr,
+            )
 
     status = classify_status(
         fn_match.match_percent if fn_match else None,

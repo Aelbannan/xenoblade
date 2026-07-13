@@ -1,0 +1,17 @@
+.fn func_80082D54__Q22cf13CfGameManagerFi, global
+/* 800836D8 0004C918  94 21 FF F0 */	stwu r1, -0x10(r1)
+/* 800836DC 0004C91C  7C 08 02 A6 */	mflr r0
+/* 800836E0 0004C920  90 01 00 14 */	stw r0, 0x14(r1)
+/* 800836E4 0004C924  93 E1 00 0C */	stw r31, 0xc(r1)
+/* 800836E8 0004C928  7C 7F 1B 78 */	mr r31, r3
+/* 800836EC 0004C92C  4B FF AD 2D */	bl getInstance__Q22cf13CfGameManagerFv
+/* 800836F0 0004C930  7F E4 FB 78 */	mr r4, r31
+/* 800836F4 0004C934  38 63 00 94 */	addi r3, r3, 0x94
+/* 800836F8 0004C938  4B FF 99 59 */	bl func_8007C6B4__Q22cf13CfGameManagerFv
+/* 800836FC 0004C93C  83 E1 00 0C */	lwz r31, 0xc(r1)
+/* 80083700 0004C940  80 01 00 14 */	lwz r0, 0x14(r1)
+/* 80083704 0004C944  80 63 00 00 */	lwz r3, 0x0(r3)
+/* 80083708 0004C948  7C 08 03 A6 */	mtlr r0
+/* 8008370C 0004C94C  38 21 00 10 */	addi r1, r1, 0x10
+/* 80083710 0004C950  4E 80 00 20 */	blr
+.endfn func_80082D54__Q22cf13CfGameManagerFi

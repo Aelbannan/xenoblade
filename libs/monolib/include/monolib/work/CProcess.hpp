@@ -25,7 +25,8 @@ public:
 
     virtual void Move() = 0;
     virtual void Draw() = 0;
-    virtual void Tail() {}
+    // Out-of-line: inline `{}` emits Tail__8CProcessFv into every derived TU (CfPadTask +.text).
+    virtual void Tail();
 
     void Regist(CProcess* parent, bool insertTop);
     void Remove();

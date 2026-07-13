@@ -24,11 +24,12 @@ extern void func_801BFFAC(float f1, float f2);
 extern void func_801644BC(u32 r3);
 extern void func_80044FBC(u32 r3);
 
-DECOMP_FORCEACTIVE(CGame_cpp_wkStandbyLogin,
-    "CGameRestart",
-    "43",
-    "arc",
-    "4_3mode.brlyt");
+// Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in 0x1C.
+void force_cgame_strings(const char*, const char*, const char*, const char*, const char*);
+void FORCEACTIVECGame_cpp_wkStandbyLogin(void);
+void FORCEACTIVECGame_cpp_wkStandbyLogin(void) {
+    force_cgame_strings("CGameRestart", "", "43", "arc", "4_3mode.brlyt");
+}
 
 CGame* CGame::spInstance;
 static FixStr<64> lbl_80573C80;
@@ -96,7 +97,9 @@ void CGame::wkUpdate(){
 
         unk1F4 = -1;
         unk1F6 = -1;
-        unk1FC = "";
+        // Empty string is pooled nul after "CGameRestart" (stringBase+0x0d).
+        // plain "" can reuse a later pool hole (addi 0x30).
+        unk1FC = "CGameRestart" + 13;
         unk1F8 = 0;
     }
 
@@ -259,7 +262,6 @@ void CGame::GameMain(){
     if(spInstance != nullptr){
         spInstance->pssSetFocus();
     }else{
-        //TODO: can this inline be rewritten to only take the first two arguments?
         create("CGame", CDesktop::getInstance(), CDesktop::getView()->mWorkID);
     }
 }

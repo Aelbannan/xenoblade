@@ -168,7 +168,7 @@ recovery_level: TRACE_ONLY|STRUCTURAL|BEHAVIORAL|CODE_MATCH|FULL_MATCH
 | `CGame::wkStandbyLogin()` | `wkStandbyLogin__5CGameFv` | `0x80039A64` | `0x1D8` | Shows creation/attachment of the primary view and top-level tasks. | **STRUCTURAL** |
 | `CGame::wkStandbyLogout()` | `wkStandbyLogout__5CGameFv` | `0x80039C3C` | `0xEC` | Required for safe teardown and runtime co-op toggles. | **STRUCTURAL** |
 | `CGame::OnPauseTrigger(bool)` | `OnPauseTrigger__5CGameFb` | `0x80039FB4` | `0x100` | Useful for modal menu/pause gating and input suppression. | **CODE_MATCH** |
-| `CGame::GameMain()` | `GameMain__5CGameFv` | `0x80039DDC` | `0x94` | Maps frame ordering around update, render, and device presentation. | **STRUCTURAL** |
+| `CGame::GameMain()` | `GameMain__5CGameFv` | `0x80039DDC` | `0x94` | Maps frame ordering around update, render, and device presentation. | **FULL_MATCH** |
 
 
 **Acceptance gate:** produce a frame-order trace showing one complete normal frame from input sampling through update, scene rendering, HUD rendering, EFB copy, and VI presentation. Mark every function that writes simulation state.
@@ -199,9 +199,9 @@ The exact repository path for an unreconstructed logical translation unit may di
 | `CProcessMan::DrawImpl(CProcess*)` | `DrawImpl__11CProcessManFP8CProcess` | `0x80448308` | `0x1F8` | Classifies per-process Draw callbacks and view filtering. | **FULL_MATCH** |
 | `CProcessMan::TailImpl(CProcess*)` | `TailImpl__11CProcessManFP8CProcess` | `0x80448500` | `0x1F8` | Identifies finalization that must not run per viewport. | **FULL_MATCH** |
 | `CProcessMan::Move()` | `Move__11CProcessManFv` | `0x804478F0` | `0x2B8` | Confirms simulation traversal and process ordering. | **CODE_MATCH** |
-| `CProc::pssCreateView(...)` | `pssCreateView__5CProcFPCcP11CWorkThreadi` | `0x8043BC8C` | `0x3AC` | May create a second native view attached to the game process. | **FULL_MATCH** |
+| `CProc::pssCreateView(...)` | `pssCreateView__5CProcFPCcP11CWorkThreadi` | `0x8043BC8C` | `0x3AC` | May create a second native view attached to the game process. | **85.3% HIGH_MATCH** |
 | `CProc::pssDetachView(viewId)` | `pssDetachView__5CProcFUl` | `0x8043BBF0` | `0x9C` | Required for safe teardown and runtime toggle. | **FULL_MATCH** |
-| `CProc::pssSetFocus()` | `pssSetFocus__5CProcFv` | `0x8043BB40` | `0xB0` | Determines input/focus side effects of multiple views. | **CODE_MATCH** |
+| `CProc::pssSetFocus()` | `pssSetFocus__5CProcFv` | `0x8043BB40` | `0xB0` | Determines input/focus side effects of multiple views. | **FULL_MATCH** |
 
 
 **Required output:** a process inventory for one gameplay frame. For every root and relevant child process, record whether its `Draw()` and `Tail()` methods are pure presentation, mutate timers, generate audio, allocate memory, or write gameplay state.
@@ -214,23 +214,23 @@ This is the highest-value P0 decompilation slice. The first implementation may u
 
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
-| `CView::CView(...)` | `__ct__5CViewFPCcP11CWorkThread` | `0x8043EC5C` | `0x2D8` | Recovers layout, owned frame objects, and initialization invariants. | **STRUCTURAL** |
+| `CView::CView(...)` | `__ct__5CViewFPCcP11CWorkThread` | `0x8043EC5C` | `0x2D8` | Recovers layout, owned frame objects, and initialization invariants. | **CODE_MATCH ~97.5%** |
 | `CView::setCurrent()` | `setCurrent__5CViewFv` | `0x8043F3D8` | `0xBC` | Switches global/current view state before each render pass. | **FULL_MATCH** |
 | `CView::setRect(CRect16 const&)` | `setRect__5CViewFRCQ22ml7CRect16` | `0x8043F514` | `0x150` | Sets viewport rectangle and likely projection/scissor state. | **FULL_MATCH** |
 | `CView::setDisp(bool,bool)` | `setDisp__5CViewFbb` | `0x8043F7B8` | `0x70` | Controls visibility/display participation. | **FULL_MATCH** |
 | `CView::getSplitLine()` | `getSplitLine__5CViewFv` | `0x8043F8D8` | `0x94` | Existing split-related field may reveal native layout support. | **FULL_MATCH** |
 | `CView::setSplitLine(short)` | `setSplitLine__5CViewFs` | `0x8043F96C` | `0x9C` | Potentially configures a native split boundary. Must be understood before inventing a new mechanism. | **FULL_MATCH** |
-| `CView::updateMsg()` | `updateMsg__5CViewFv` | `0x8043FA08` | `0x798` | Classify per-frame view messages and side effects. | **STRUCTURAL** |
-| `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **FULL_MATCH** |
+| `CView::updateMsg()` | `updateMsg__5CViewFv` | `0x8043FA08` | `0x798` | Classify per-frame view messages and side effects. | **STRUCTURAL ~65.9%** |
+| `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **76.2% HIGH_MATCH** (frame soft-cap) |
 | `CView::detachRenderWork(CWorkThread*)` | `detachRenderWork__5CViewFP11CWorkThread` | `0x80441470` | `0x8` | Needed for safe destruction/toggle. | **FULL_MATCH** |
 | `CView::wkUpdate()` | `wkUpdate__5CViewFv` | `0x80441478` | `0x14C` | Determine whether view update is camera-only, presentation-only, or stateful. | **FULL_MATCH** |
 | `CView::renderView()` | `renderView__5CViewFv` | `0x804415C4` | `0xCB4` | Primary candidate for a repeatable per-view render pass. | **STRUCTURAL** |
-| `CViewFrame::render()` | `render__10CViewFrameFv` | `0x80442CDC` | `0x394` | Frame/border/clear behavior around a viewport. | **STRUCTURAL** |
+| `CViewFrame::render()` | `render__10CViewFrameFv` | `0x80442CDC` | `0x394` | Frame/border/clear behavior around a viewport. | **99.2% CODE_MATCH** |
 | `CViewRoot::setCurrent(CView*)` | `setCurrent__9CViewRootFP5CView` | `0x80444C90` | `0x1F4` | Global current-view management and nested-view behavior. | **FULL_MATCH** |
 | `CViewRoot::getFullScreenView()` | `getFullScreenView__9CViewRootFv` | `0x80445314` | `0x1D8` | Restores original full-screen presentation for menus/cutscenes. | **FULL_MATCH** |
 | `CViewRoot::getView(unsigned long)` | `getView__9CViewRootFUl` | `0x80445810` | `0xA0` | Resolves view IDs and supports second-view ownership. | **FULL_MATCH** |
 | `CViewRoot::renderView()` | `renderView__9CViewRootFv` | `0x80445A5C` | `0x150` | Maps root-level view traversal and finalization. | **STRUCTURAL** |
-| `CViewRoot::create(...)` | `create__9CViewRootFP11CWorkThread` | `0x80445E94` | `0x21C` | Determines root view lifetime and allocation source. | **STRUCTURAL** |
+| `CViewRoot::create(...)` | `create__9CViewRootFP11CWorkThread` | `0x80445E94` | `0x21C` | Determines root view lifetime and allocation source. | **CODE_MATCH** |
 
 
 **Decisive experiments:**
@@ -291,9 +291,9 @@ kyoshin/cf/CtrlPc.cpp
 | `CfPadTask::copyInputFlag(...)` | `copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl` | `0x801C3494` | `0xC4` | Maps held/pressed/repeat flags into game input. | **FULL_MATCH** |
 | `CfPadTask::updateCfPadData(...)` | `updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad` | `0x801C35C8` | `0x364` | Converts one CPad into one CfPadData; should become reusable for both players. | **FULL_MATCH** |
 | `CfPadTask::Move()` | `Move__Q22cf9CfPadTaskFv` | `0x801C392C` | `0x194` | Shows task timing and global snapshot publication. | **FULL_MATCH** |
-| `CfPadTask::update()` | `update__Q22cf9CfPadTaskFv` | `0x801C3AC0` | `0x7C8` | Contains channel filtering/disconnection and current-pad selection. | **STRUCTURAL** |
+| `CfPadTask::update()` | `update__Q22cf9CfPadTaskFv` | `0x801C3AC0` | `0x7C8` | Contains channel filtering/disconnection and current-pad selection. | **FULL_MATCH** |
 | `CfPadTask::checkForControllerError(bool)` | `checkForControllerError__Q22cf9CfPadTaskFb` | `0x801C43DC` | `0xB4` | Must not treat P2 presence/absence as a fatal primary-controller error. | **FULL_MATCH** |
-| `CfPadTask::create(CProcess*)` | `create__Q22cf9CfPadTaskFP8CProcess` | `0x801C4288` | `0xEC` | Task creation and lifetime for input state. | **CODE_MATCH** |
+| `CfPadTask::create(CProcess*)` | `create__Q22cf9CfPadTaskFP8CProcess` | `0x801C4288` | `0xEC` | Task creation and lifetime for input state. | **FULL_MATCH** |
 
 
 **Required data recovery:**
@@ -420,8 +420,9 @@ The goal is to split **decision ownership** from the existing **action executor*
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
 | `CAIAction::CAIAction()` | `__ct__Q22cf9CAIActionFv` | `0x8014B308` | `0x10C` | Recovers fields and native action state defaults. | **FULL_MATCH** |
-| `CAIAction virtual #1` | `CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv` | `0x8014B41C` | `0x110` | Trace companion decision/update behavior and writes. | **STRUCTURAL** |
-| `CAIAction virtual #2` | `CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv` | `0x8014B52C` | `0x110` | Trace native action runner/transition behavior. | **STRUCTURAL** |
+| `CAIAction virtual #1` | `CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv` | `0x8014B41C` | `0x110` | Fv+outA/outB ring export; host `aiaction-vfunc1`. | **HIGH_MATCH ~93.2%** |
+
+| `CAIAction virtual #2` | `CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv` | `0x8014B52C` | `0x110` | Fv+inA/inB inverse ring import; host `aiaction-vfunc2`. | **CODE_MATCH ~96.0%** |
 
 
 **Mandatory convergence trace:** compare the call path when:
@@ -515,9 +516,9 @@ The easiest implementation is a scoped HUD context only if runtime evidence show
 |---|---|---:|---:|---|---|
 | `CMenuBattlePlayerState::CMenuBattlePlayerState()` | `__ct__CMenuBattlePlayerState` | `0x8010B880` | `0x580` | Recovers native HP/portrait/status widget graph. | **STRUCTURAL** |
 | `CMenuBattlePlayerState::Init()` | `Init__22CMenuBattlePlayerStateFv` | `0x8010C000` | `0xC5C` | Finds party actor and layout-resource bindings. | **STRUCTURAL** |
-| `CMenuBattlePlayerState::Term()` | `Term__22CMenuBattlePlayerStateFv` | `0x8010CC5C` | `0x1B0` | Needed if HUD instances are duplicated. | **STRUCTURAL** |
+| `CMenuBattlePlayerState::Term()` | `Term__22CMenuBattlePlayerStateFv` | `0x8010CC5C` | `0x1B0` | Needed if HUD instances are duplicated. | **FULL_MATCH** |
 | `CMenuBattlePlayerState::Move()` | `Move__22CMenuBattlePlayerStateFv` | `0x8010CE0C` | `0x8E8` | Updates HP, tension, statuses, portrait, and actor state. | **STRUCTURAL** |
-| `CMenuBattlePlayerState::cbRenderBefore()` | `cbRenderBefore__22CMenuBattlePlayerStateFv` | `0x8010D6F4` | `0x1B4` | Final per-view transforms and values. | **STRUCTURAL** |
+| `CMenuBattlePlayerState::cbRenderBefore()` | `cbRenderBefore__22CMenuBattlePlayerStateFv` | `0x8010D6F4` | `0x1B4` | Final per-view transforms and values. | **FULL_MATCH** |
 
 
 ### 8.3 Other battle-HUD units
@@ -535,7 +536,7 @@ kyoshin/CUIBattleManager.cpp
 | `CMenuEnemyState::Move()` | `Move__15CMenuEnemyStateFv` | `0x80110888` | `0x9B8` | P2 target panel and target-specific status. | **STRUCTURAL** |
 | `CMenuEnemyState::cbRenderBefore()` | `cbRenderBefore__15CMenuEnemyStateFv` | `0x80111240` | `0x274` | Per-view enemy-panel rendering. | **STRUCTURAL** |
 | `CMenuPTGauge::Move()` | `Move__12CMenuPTGaugeFv` | `0x80188714` | `0x35C` | Shared party gauge; classify as shared or duplicated. | **TRACE_ONLY** |
-| `CMenuPTGauge::cbRenderBefore()` | `cbRenderBefore__12CMenuPTGaugeFv` | `0x80188A70` | `0xAC` | Final shared gauge placement. | **TRACE_ONLY** |
+| `CMenuPTGauge::cbRenderBefore()` | `cbRenderBefore__12CMenuPTGaugeFv` | `0x80188A70` | `0xAC` | Final shared gauge placement. | **FULL_MATCH** |
 | `CUIBattleManager::Move()` | `Move__16CUIBattleManagerFv` | `0x8012F270` | `0xB00` | Owns/coordinates battle UI objects and modes. | **STRUCTURAL** |
 | `CUIBattleManager::Init()` | `Init__16CUIBattleManagerFv` | `0x8012EEFC` | `0xB4` | Finds construction/lifetime of battle HUD components. | **STRUCTURAL** |
 
@@ -651,7 +652,7 @@ src/kyoshin/cf/IFlagEvent.hpp
 | `CUICfManager helper` | `func_80133324__12CUICfManagerFv` | `0x80133DF8` | `0x3C0` | Candidate mode/window state query/update. | **TRACE_ONLY** |
 | `CUIWindowManager::Move()` | `Move__16CUIWindowManagerFv` | `0x8013D0C8` | `0x4DC` | Modal window state, input capture, and open/close transitions. | **STRUCTURAL** |
 | `CUICfManager::Init()` | `Init__12CUICfManagerFv` | `0x80132EC8` | `0x2E0` | Finds manager-owned menu/window components. | **STRUCTURAL** |
-| `CUICfManager::Term()` | `Term__12CUICfManagerFv` | `0x80133200` | `0xA4` | Safe co-op toggle and shutdown. | **TRACE_ONLY** |
+| `CUICfManager::Term()` | `Term__12CUICfManagerFv` | `0x80133200` | `0xA4` | Safe co-op toggle and shutdown. | **FULL_MATCH** |
 
 
 ### 10.2 Event/cutscene/loading paths to discover
@@ -749,7 +750,7 @@ root work/task initialization paths that create MEM1/MEM2 child handles
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
 | `mtl::MemManager::getHandleMEM2()` | `getHandleMEM2__Q23mtl10MemManagerFv` | `0x80436D38` | `0x8` | Finds original MEM2 root handle and arena assumptions. | **FULL_MATCH** |
-| `CWorkSystemMem::CWorkSystemMem(...)` | `__ct__14CWorkSystemMemFPCcP11CWorkThread` | `0x80447250` | `0x60` | Maps system-memory work object and child handles. | **STRUCTURAL** |
+| `CWorkSystemMem::CWorkSystemMem(...)` | `__ct__14CWorkSystemMemFPCcP11CWorkThread` | `0x80447250` | `0x60` | Maps system-memory work object and child handles. | **FULL_MATCH** |
 | `CWorkSystemMem::getHandle()` | `getHandle__14CWorkSystemMemFv` | `0x80447308` | `0xC` | Known system handle accessor. | **FULL_MATCH** |
 | `CWorkSystemMem::wkStandbyLogout()` | `wkStandbyLogout__14CWorkSystemMemFv` | `0x80447318` | `0x98` | Memory shutdown/lifetime and leak checks. | **STRUCTURAL** |
 | `CDeviceGX::getHeapSize()` | `getHeapSize__9CDeviceGXFv` | `0x80459890` | `0x8` | Graphics heap budget and fixed-size assumptions. | **FULL_MATCH** |

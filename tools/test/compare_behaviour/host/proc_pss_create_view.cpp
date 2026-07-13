@@ -31,14 +31,14 @@ struct MockProc {
 static constexpr float kScale = 0.6f;
 
 static s16 retail_float_margin(s16 size) {
-    const float f = static_cast<float>(size);
-    const float delta = (f * kScale - f) * 0.5f;
-    return static_cast<s16>(std::trunc(delta));
+    // Retail: (s16)(size * 0.6f) then integer (scaled - size) / 2 (fctiwz + srawi).
+    const s16 scaled = static_cast<s16>(static_cast<float>(size) * kScale);
+    return static_cast<s16>((scaled - size) / 2);
 }
 
 static s16 decomp_float_margin(s16 size) {
-    const float f = static_cast<float>(size);
-    return static_cast<s16>((f * kScale - f) / 2.0f);
+    const s16 scaled = static_cast<s16>(static_cast<float>(size) * kScale);
+    return static_cast<s16>((scaled - size) / 2);
 }
 
 static CRect16 retail_make_client_rect(const MockProc& proc) {
@@ -97,7 +97,7 @@ static bool rects_equal(const CRect16& a, const CRect16& b) {
     return a.mPosX == b.mPosX && a.mPosY == b.mPosY && a.mSizeX == b.mSizeX && a.mSizeY == b.mSizeY;
 }
 
-static void run_rect_scenario(const char* name, const MockProc& proc) {
+static void run_scenario_rect(const char* name, const MockProc& proc) {
     const CRect16 retail = retail_make_client_rect(proc);
     const CRect16 decomp = decomp_make_client_rect(proc);
     if (!rects_equal(retail, decomp)) {
@@ -109,7 +109,7 @@ static void run_rect_scenario(const char* name, const MockProc& proc) {
     std::printf("PASS %s\n", name);
 }
 
-static void run_name_scenario(const char* name, const char* suffix) {
+static void run_scenario_name(const char* name, const char* suffix) {
     char retail[64]{};
     char decomp[64]{};
     build_view_name_retail(retail, suffix);
@@ -124,89 +124,89 @@ static void run_name_scenario(const char* name, const char* suffix) {
 int main() {
     MockView views[4]{};
 
-    run_rect_scenario("empty_view_list", MockProc{0, nullptr});
-    run_rect_scenario("null_first_view", MockProc{1, nullptr});
+    run_scenario_rect("empty_view_list", MockProc{0, nullptr});
+    run_scenario_rect("null_first_view", MockProc{1, nullptr});
 
     views[0] = MockView{640, 480, 0, 0, 10, 20, 0};
-    run_rect_scenario("default_640x480_no_children", MockProc{1, &views[0]});
+    run_scenario_rect("default_640x480_no_children", MockProc{1, &views[0]});
 
     views[1] = MockView{640, 480, 5, -3, 0, 0, 1};
-    run_rect_scenario("one_child_offset", MockProc{1, &views[1]});
+    run_scenario_rect("one_child_offset", MockProc{1, &views[1]});
 
     views[2] = MockView{320, 240, -10, 15, 30, 40, 2};
-    run_rect_scenario("two_children_frame_offset", MockProc{1, &views[2]});
+    run_scenario_rect("two_children_frame_offset", MockProc{1, &views[2]});
 
     views[3] = MockView{100, 100, 0, 0, 0, 0, 3};
-    run_rect_scenario("three_children_square", MockProc{1, &views[3]});
+    run_scenario_rect("three_children_square", MockProc{1, &views[3]});
 
     views[0] = MockView{200, 150, 12, -8, 4, 6, 0};
-    run_rect_scenario("small_rect_pos_bias", MockProc{1, &views[0]});
+    run_scenario_rect("small_rect_pos_bias", MockProc{1, &views[0]});
 
     views[1] = MockView{800, 600, -20, 25, -5, 7, 1};
-    run_rect_scenario("large_rect_negative_frame", MockProc{1, &views[1]});
+    run_scenario_rect("large_rect_negative_frame", MockProc{1, &views[1]});
 
     views[2] = MockView{50, 50, 1, 1, 1, 1, 4};
-    run_rect_scenario("tiny_four_children", MockProc{1, &views[2]});
+    run_scenario_rect("tiny_four_children", MockProc{1, &views[2]});
 
     views[3] = MockView{640, 480, 100, 200, -100, -200, 0};
-    run_rect_scenario("big_frame_translation", MockProc{1, &views[3]});
+    run_scenario_rect("big_frame_translation", MockProc{1, &views[3]});
 
     views[0] = MockView{1, 1, 0, 0, 0, 0, 0};
-    run_rect_scenario("min_size_one", MockProc{1, &views[0]});
+    run_scenario_rect("min_size_one", MockProc{1, &views[0]});
 
     views[1] = MockView{127, 127, 0, 0, 0, 0, 0};
-    run_rect_scenario("size_127", MockProc{1, &views[1]});
+    run_scenario_rect("size_127", MockProc{1, &views[1]});
 
     views[2] = MockView{128, 128, 0, 0, 0, 0, 0};
-    run_rect_scenario("size_128", MockProc{1, &views[2]});
+    run_scenario_rect("size_128", MockProc{1, &views[2]});
 
     views[3] = MockView{255, 255, 0, 0, 0, 0, 0};
-    run_rect_scenario("size_255", MockProc{1, &views[3]});
+    run_scenario_rect("size_255", MockProc{1, &views[3]});
 
     views[0] = MockView{256, 256, 0, 0, 0, 0, 0};
-    run_rect_scenario("size_256", MockProc{1, &views[0]});
+    run_scenario_rect("size_256", MockProc{1, &views[0]});
 
     views[1] = MockView{400, 300, 3, -3, 9, -9, 1};
-    run_rect_scenario("mid_size_mixed_sign", MockProc{1, &views[1]});
+    run_scenario_rect("mid_size_mixed_sign", MockProc{1, &views[1]});
 
     views[2] = MockView{640, 480, 0, 0, 50, 60, 5};
-    run_rect_scenario("five_children", MockProc{1, &views[2]});
+    run_scenario_rect("five_children", MockProc{1, &views[2]});
 
     views[3] = MockView{640, 480, 0, 0, 0, 0, 10};
-    run_rect_scenario("ten_children", MockProc{1, &views[3]});
+    run_scenario_rect("ten_children", MockProc{1, &views[3]});
 
     views[0] = MockView{-100, -50, 0, 0, 0, 0, 0};
-    run_rect_scenario("negative_size_dims", MockProc{1, &views[0]});
+    run_scenario_rect("negative_size_dims", MockProc{1, &views[0]});
 
     views[1] = MockView{640, 480, -50, -50, 25, 25, 2};
-    run_rect_scenario("negative_frame_offset", MockProc{1, &views[1]});
+    run_scenario_rect("negative_frame_offset", MockProc{1, &views[1]});
 
     views[2] = MockView{300, 200, 10, 10, -10, -10, 3};
-    run_rect_scenario("mixed_child_and_frame", MockProc{1, &views[2]});
+    run_scenario_rect("mixed_child_and_frame", MockProc{1, &views[2]});
 
     views[3] = MockView{512, 384, 7, 11, 13, 17, 6};
-    run_rect_scenario("six_children_prime_offsets", MockProc{1, &views[3]});
+    run_scenario_rect("six_children_prime_offsets", MockProc{1, &views[3]});
 
     views[0] = MockView{640, 480, 1, 2, 3, 4, 7};
-    run_rect_scenario("seven_children", MockProc{1, &views[0]});
+    run_scenario_rect("seven_children", MockProc{1, &views[0]});
 
     views[1] = MockView{1024, 768, 0, 0, 0, 0, 8};
-    run_rect_scenario("eight_children_hd", MockProc{1, &views[1]});
+    run_scenario_rect("eight_children_hd", MockProc{1, &views[1]});
 
     views[2] = MockView{160, 120, 0, 0, 5, 5, 9};
-    run_rect_scenario("nine_children_low_res", MockProc{1, &views[2]});
+    run_scenario_rect("nine_children_low_res", MockProc{1, &views[2]});
 
     views[3] = MockView{640, 480, 0, 0, 0, 0, 15};
-    run_rect_scenario("fifteen_children", MockProc{1, &views[3]});
+    run_scenario_rect("fifteen_children", MockProc{1, &views[3]});
 
-    run_name_scenario("name_empty_suffix", "");
-    run_name_scenario("name_game", "Game");
-    run_name_scenario("name_scn", "Scn");
-    run_name_scenario("name_long", "VeryLongChildViewNameForProc");
-    run_name_scenario("name_digits", "12345");
-    run_name_scenario("name_underscore", "_child");
-    run_name_scenario("name_slash", "/sub");
-    run_name_scenario("name_space", " child");
+    run_scenario_name("name_empty_suffix", "");
+    run_scenario_name("name_game", "Game");
+    run_scenario_name("name_scn", "Scn");
+    run_scenario_name("name_long", "VeryLongChildViewNameForProc");
+    run_scenario_name("name_digits", "12345");
+    run_scenario_name("name_underscore", "_child");
+    run_scenario_name("name_slash", "/sub");
+    run_scenario_name("name_space", " child");
 
     std::printf("host proc_pss_create_view: all scenarios passed\n");
     return 0;

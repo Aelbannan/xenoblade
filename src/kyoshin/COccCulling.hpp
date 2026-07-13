@@ -4,6 +4,8 @@
 #include "monolib/util.hpp"
 #include "monolib/math.hpp"
 
+// Retail SDA 1.0f — used by inlined CCullFrustum::init (addFrustum reloc match).
+extern "C" const float lbl_eu_80667C88;
 
 //Some type of view frustum?
 struct CCullFrustum{
@@ -16,12 +18,12 @@ struct CCullFrustum{
     void init(const ml::CVec3& pos, const ml::CVec3& rot, const ml::CVec3& scale, u32 flags){
         mPos = pos;
         mRot = rot;
-        mScale = ml::CVec3(scale.x, scale.y, 1);
+        mScale = ml::CVec3(scale.x, scale.y, lbl_eu_80667C88);
         mInFirstList = true;
-        unkC0[0] = 1;
-        unkC0[1] = 1;
-        unkC0[2] = 1;
-        unkC0[3] = 1;
+        unkC0[0] = lbl_eu_80667C88;
+        unkC0[1] = lbl_eu_80667C88;
+        unkC0[2] = lbl_eu_80667C88;
+        unkC0[3] = lbl_eu_80667C88;
         unk12C = 1;
         mFlags = flags;
     }

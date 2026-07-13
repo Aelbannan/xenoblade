@@ -2,6 +2,8 @@
 
 using namespace ml;
 
+extern "C" const float lbl_eu_80667C8C;
+
 CVec3 COccCulling::sPlaneCoords[] = {
     CVec3(-0.5f, 0, 0),
     CVec3(0.5f, 0, 0),
@@ -195,7 +197,7 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
     pFrustum->unk124 = -r1_20.z;
     float dot = CVec3::dot(pFrustum->mDir, unk24->unk10C - pFrustum->mPos);
 
-    if(dot < 0){
+    if(dot < lbl_eu_80667C8C){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);
         pFrustum->mPlane1.set(unk24->unk10C, pFrustum->unk90[0], pFrustum->unk90[1]);
         pFrustum->mPlane2.set(unk24->unk10C, pFrustum->unk90[1], pFrustum->unk90[2]);

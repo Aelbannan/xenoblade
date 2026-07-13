@@ -4,6 +4,11 @@
 #include <cstring>
 #include <cmath>
 
+// Retail SDA slot for MemManager::sHandleMEM2 (getHandleMEM2 / setHandleMEM2).
+extern "C" {
+mtl::ALLOC_HANDLE lbl_eu_8066350C;
+}
+
 namespace mtl {
 
 //End address of the root MEM2 region
@@ -497,7 +502,8 @@ void MemManager::initialize() {
     sHandleMEM1 = create(mem1RegionLo,
         (u8*)OSGetMEM1ArenaHi() - (u8*)mem1RegionMax, scRegionNameMEM1);
 
-    sHandleMEM2 = create(OSGetMEM2ArenaLo(),
+    // Retail SDA slot is lbl_eu_8066350C (same as getHandleMEM2 / setHandleMEM2).
+    lbl_eu_8066350C = create(OSGetMEM2ArenaLo(),
         (u8*)MEM2_REGION_END - (u8*)OSGetMEM2ArenaLo(), scRegionNameMEM2);
 }
 #pragma global_optimizer reset
@@ -657,7 +663,8 @@ Gets the allocation handle for the root MEM2 region.
 MEM2 is used for assets and other large allocations.
 */
 ALLOC_HANDLE MemManager::getHandleMEM2() {
-    return sHandleMEM2;
+    // Retail SDA reloc is lbl_eu_8066350C@sda21, not sHandleMEM2__Q23mtl10MemManager.
+    return lbl_eu_8066350C;
 }
 
 /*
@@ -665,7 +672,8 @@ Sets the allocation handle for the root MEM2 region.
 MEM2 is used for assets and other large allocations.
 */
 void MemManager::setHandleMEM2(ALLOC_HANDLE handle) {
-    sHandleMEM2 = handle;
+    // Same retail SDA slot as getHandleMEM2 (do not dual-write sHandleMEM2).
+    lbl_eu_8066350C = handle;
 }
 
 /*

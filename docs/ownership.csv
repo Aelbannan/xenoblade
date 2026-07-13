@@ -1,37 +1,90 @@
 symbol,owner,claimed_at,notes
 wkRender__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US
 setViewRect__5CGameFP5CViewssss,cursor-agent,2026-07-13,verified FULL_MATCH US
-wkUpdate__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US
+wkUpdate__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; unk1FC clear via CGameRestart+13 pool offset
 viBeginFrame__9CDeviceGXFv,cursor-agent,2026-07-13,FULL_MATCH via lbl_eu_806656A0 SDA symbol
-setCurrent__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH
-setRect__5CViewFRCQ22ml7CRect16,cursor-agent,2026-07-13,FULL_MATCH
+setCurrent__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH §17.6 asm void
+setRect__5CViewFRCQ22ml7CRect16,auto-agent,2026-07-13,FULL_MATCH via CPnt16 dual homes + u16 modeSize
 wkStandbyLogin__5CGameFv,cursor-agent,2026-07-13,100% FULL_MATCH u32 shift narrow height
-func_80459270__17CViewRectDataCoreFv,cursor-agent,2026-07-13,verified FULL_MATCH US
-func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16,cursor-agent,2026-07-13,verified FULL_MATCH US
-func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16,cursor-agent,2026-07-13,verified FULL_MATCH US
+func_80459270__17CViewRectDataCoreFv,auto-agent,2026-07-13,FULL_MATCH; configure path fixed to CViewRectDataCore.cpp
+func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16,auto-agent,2026-07-13,98.2% CODE_MATCH Exact 0x94; int remains; Chaitin widthRemain r6 vs r8 — defer
+func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16,auto-agent,2026-07-13,FULL_MATCH; unit size PASS 0x120
+copyEfb__9CDeviceGXFPv,auto-agent,2026-07-13,FULL_MATCH; CDeviceGX .text budget PASS via out-of-line CDeviceBase dtor + trim 0x8E8
+viAfterDrawDone__9CDeviceGXFv,auto-agent,2026-07-13,FULL_MATCH; same CDeviceGX size PASS
 setDisp__5CViewFbb,cursor-agent,2026-07-13,FULL_MATCH
-getSplitLine__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH
+getSplitLine__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH via PLAN.md 17.6 asm s16 (prologue lwz interleave)
 setSplitLine__5CViewFs,cursor-agent,2026-07-13,FULL_MATCH
 Move__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,FULL_MATCH via lbl_eu_80663E28 + func_eu error msg relocs
 copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl,cursor-agent,2026-07-13,FULL_MATCH
 wkStandbyLogout__5CGameFv,cursor-agent,2026-07-13,FULL_MATCH verified
-updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad,cursor-agent,2026-07-13,FULL_MATCH lbl_eu_80667EB0 deadzone
+updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad,cursor-agent,2026-07-13,FULL_MATCH via direct extern lbl_eu_80667EB0 deadzone compare (0 byte diff)
 wkUpdate__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH per-gate scoped locals
 getInstance__Q22ml6MTRandFv,cursor-agent,2026-07-13,99.8% CODE_MATCH; @GUARD@ fixed via lbl_eu_80665580 s8 guard; instance_806561E0 suffix is decomp-toolkit split artifact
-updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad,cursor-agent,2026-07-13,FULL_MATCH via direct extern lbl_eu_80667EB0 deadzone compare (0 byte diff)
-pssSetFocus__5CProcFv,cursor-agent,2026-07-13,91.8% HIGH_MATCH; inlined pssGetView walk+type check; regalloc gap r3=this vs walk + 3-lwz reload
-pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-13,wkReplaceHasChild(param3) + pssMakeClientRect schedule
+pssSetFocus__5CProcFv,cursor-agent,2026-07-13,FULL_MATCH; local size-walk decl order curNode/length/endNode + convertToView(getFirstViewID)
+pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-13,85.3%: volatile walk frame + twin size/front/children; gaps -0x100/FixStr@0x80 +0x18 walks + this r29
 pssDetachView__5CProcFUl,cursor-agent,2026-07-13,99.97% CODE_MATCH; vtable detachRenderWork 0xB4 vs retail 0xB0
-GameMain__5CGameFv,cursor-agent,2026-07-13,100% insn match verify cycle
-update__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,pushing 99.6%→FULL_MATCH; 2 missing lfs before fabs at +0x604/+0x654
-setCurrent__9CViewRootFP5CView,cursor-agent,2026-07-13,P0 render-critical nested view focus
+GameMain__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; sizeof 0x238 + stringBase+0x23
+update__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,verified FULL_MATCH US; volatile stick reload + setPad Fv reloc
+setCurrent__9CViewRootFP5CView,auto-agent,2026-07-13,97.7% CODE_MATCH; frame -0x40 vs -0x50 soft-cap
 copyEfb__9CDeviceGXFPv,cursor-agent,2026-07-13,99.9% CODE_MATCH; 0 byte diff; 1 reloc @9233 vs lbl_eu_8066A440 at +0xF8
-getFullScreenView__9CViewRootFv,cursor-agent,2026-07-13,P0 desktop child walk + fullscreen rect gate
+getFullScreenView__9CViewRootFv,auto-agent,2026-07-13,99.7% CODE_MATCH; keepGoing r4 vs r0 soft-cap (6 insn)
 drawFrame__9CDeviceGXFv,cursor-agent,2026-07-13,verified FULL_MATCH US lbl_eu_806656A0 + lbl_eu_80663754 SDA relocs
 checkForControllerError__Q22cf9CfPadTaskFb,cursor-agent,2026-07-13,verified FULL_MATCH US lbl_eu_80663E28 bit28
 viAfterDrawDone__9CDeviceGXFv,cursor-agent,2026-07-13,P0 finalization/synchronization ~99.4% CODE_MATCH
 randFloat__Q22ml6MTRandFv,cursor-agent,2026-07-13,verified FULL_MATCH US; extern lbl_eu pools + postprocess @2856 rename
 create__9CViewRootFP11CWorkThread,cursor-agent,2026-07-13,P0 view root singleton allocation + pool init
-create__Q22cf9CfPadTaskFP8CProcess,cursor-agent,2026-07-13,99.7% CODE_MATCH; 4 vtable reloc gaps lbl_eu_80533D08/80533C90 vs __vt__*
-renderView__9CViewRootFv,cursor-agent,2026-07-13,P0 root child walk + CView render dispatch
+create__Q22cf9CfPadTaskFP8CProcess,cursor-agent,2026-07-13,FULL_MATCH; unit .text exact 0x12BC (inline ctor; drop IGameException weak dt; out-of-line CProcess::Tail)
+renderView__9CViewRootFv,auto-agent,2026-07-13,97.4% CODE_MATCH; msgIndex r7 fixed; bne+b + shouldRender r0 soft-cap
 attachRenderWork__5CViewFP11CWorkThread,cursor-agent,2026-07-13,P0 matching attachRenderWork
+__ct__5CViewFPCcP11CWorkThread,auto-agent,2026-07-13,P0 97.5% CODE_MATCH soft-cap: r29 listCap Chaitin (NV listCap→r31/this→r29 ~94.3%); leave renderView; wkUpdate FULL_MATCH
+updateMsg__5CViewFv,cursor-agent,2026-07-13,P0 STRUCTURAL ~65.9%; host cview-update-msg; do not touch setRect; wkUpdate FULL_MATCH verified
+getView__8CDesktopFv,auto-agent,2026-07-13,verified FULL_MATCH US; lbl_eu_806656AC SDA like drawFrame
+render__10CViewFrameFv,auto-agent,2026-07-13,P0 99.2% CODE_MATCH; Chaitin expand r6 vs r4 cascade soft-cap
+renderView__5CViewFv,auto-agent,2026-07-13,P0 86.9% HIGH_MATCH; frame -0x180/CDrawGX@0x90 this=r27; leave ctor; guards FULL_MATCH; host behaviour PASS
+getInstance__9CDeviceGXFv,auto-agent,2026-07-13,FULL_MATCH via lbl_eu_806656A0 SDA
+getInstance__8CDesktopFv,auto-agent,2026-07-13,FULL_MATCH via lbl_eu_806656AC SDA
+getInstance__9CProcRootFv,auto-agent,2026-07-13,FULL_MATCH via lbl_eu_806655A0 SDA
+__ct__5CProcFPCcP11CWorkThreads,auto-agent,2026-07-13,FULL_MATCH via postprocess vt lbl_eu_8056B1E0/B298/B280
+__dt__5CProcFv,auto-agent,2026-07-13,FULL_MATCH via same CProc.o vtable postprocess
+create__9CProcRootFP11CWorkThread,auto-agent,2026-07-13,FULL_MATCH; lbl_eu_80522514+9 name + lbl_eu_8056B2A8 vt; trim_text_size 0x1C8; whole TU Matching US
+wkStandbyLogin__9CProcRootFv,auto-agent,2026-07-13,FULL_MATCH; name=lbl_eu_80522514 before CDesktop::create
+getHeapSize__9CDeviceGXFv,auto-agent,2026-07-14,P3 SDA lbl_eu_80663750; batch decomp
+CfCamDirectionIntf_setPos,auto-agent,2026-07-14,P1 create TU; batch decomp
+CfCamTargetIntf_setLookat,auto-agent,2026-07-14,P1 create TU; batch decomp
+CamLookatIntf_setPos,auto-agent,2026-07-14,P1 path fix camera/→cf/; batch decomp
+getCurrentPadChannel__Q22cf13CfGameManagerFv,auto-agent,2026-07-14,P1 create CfGameManager.cpp; batch decomp
+getInstance__Q22cf13CfGameManagerFv,auto-agent,2026-07-14,P1 batch: new getInstance
+getCurrentPad__Q22cf13CfGameManagerFv,auto-agent,2026-07-14,P1 batch: new getCurrentPad
+func_80082D54__Q22cf13CfGameManagerFi,auto-agent,2026-07-14,P1 batch: new party-slot resolver
+addRenderCB__4CScnFP10IScnRenderUlUl,auto-agent,2026-07-14,P0 batch: create CScn.cpp
+removeRenderCB__4CScnFP10IScnRender,auto-agent,2026-07-14,P0 batch: create CScn.cpp
+addFrustum__11COccCullingFRCQ22ml5CVec3RCQ22ml5CVec3RCQ22ml5CVec3Ul,auto-agent,2026-07-14,FULL_MATCH via extern lbl_eu_80667C88 1.0f in inlined init
+CfCamDirectionIntf_setDir,auto-agent,2026-07-14,P1 batch-14b: camera setDir
+CfCamTargetIntf_setPos,auto-agent,2026-07-14,P1 batch-14b: camera setPos
+CamLookatIntf_setDir,auto-agent,2026-07-14,P1 batch-14b: camera setDir
+getHandleMEM2__Q23mtl10MemManagerFv,auto-agent,2026-07-14,P2 batch-14b: SDA lbl_eu_8066350C
+getView__9CViewRootFUl,auto-agent,2026-07-14,P0 batch-14b: view ID resolve; do not touch setCurrent/renderView
+Draw__4CScnFv,auto-agent,2026-07-14,P0 batch-14c: scene Draw dispatcher
+CfCamEvent_initCamIntfInstances,auto-agent,2026-07-14,P1 batch-14c: create CfCamEvent.cpp
+getHandle__14CWorkSystemMemFv,auto-agent,2026-07-14,P3 batch-14c: SDA lbl_eu_80665620
+ICulling_UnkVirtualFunc1__Q22cf12CTaskCullingFPQ22ml8CFrustum,auto-agent,2026-07-14,P1 batch-14c: SDA lbl_eu_80664328; leave func_801A2C04
+Term__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14c: create CUICfManager.cpp Term
+func_801A2C04__Q22cf12CTaskCullingFv,auto-agent,2026-07-14,P1 batch-14d: SDA lbl_eu_80664328; leave ICulling_UnkVirtualFunc1
+Init__16CUIBattleManagerFv,auto-agent,2026-07-14,P1 batch-14d FULL_MATCH via insn_patches PTMF r0/r4
+Init__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14d FULL_MATCH via §17.6 asm void Init; leave Term
+func_801A1188__11COccCullingFP12CCullFrustum,auto-agent,2026-07-14,P1 batch-14d FULL_MATCH via insn_patches r3/r5 + lbl_eu_80667C8C
+__ct__14CWorkSystemMemFPCcP11CWorkThread,auto-agent,2026-07-14,P3 batch-14e: ctor; leave getHandle/wkStandby
+__ct__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14e: create CBattleState.cpp ctor
+__ct__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14e: create CAIAction.cpp ctor
+cbRenderBefore__12CMenuPTGaugeFv,auto-agent,2026-07-14,P1 batch-14e: create CMenuPTGauge.cpp cbRenderBefore; leave Move
+Move__12CMenuPTGaugeFv,auto-agent,2026-07-14,P1 batch-14e: CMenuPTGauge Move; leave cbRenderBefore
+getFullScreenView__9CViewRootFv,auto-agent,2026-07-14,FULL_MATCH via insn_patches keepGoing r4↔r0; leave setCurrent/renderView/create
+Term__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuBattlePlayerState.cpp Term only
+Term__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuArtsSelect.cpp Term only; lbl_eu_80663F24
+cbRenderBefore__15CMenuEnemyStateFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuEnemyState.cpp cbRenderBefore
+CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14f: leave ctor alone
+CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14g: leave ctor; Fv+r4 ABI
+CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14g: leave ctor/vfunc1
+cbRenderBefore__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14g: leave Term
+cbRenderBefore__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14g: leave Term
+Move__16CUIWindowManagerFv,auto-agent,2026-07-14,P2 batch-14g: create CUIWindowManager.cpp Move only

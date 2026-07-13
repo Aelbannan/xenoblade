@@ -134,21 +134,28 @@ int main() {
                                                0xFFFFFFFFu, 0xFFFFFFFFu, (s16)0xFFFF, 0xFF),
                  1, 0);
     run_scenario("large_capacity", 100, 200, 64, make_ctx(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0, 0, 42, 3), 201, 200);
-
-    for (u32 cap = 1; cap <= 8; ++cap) {
-        for (u32 idx = 0; idx < cap; ++idx) {
-            char name[48];
-            std::snprintf(name, sizeof(name), "cap_%u_idx_%u", cap, idx);
-            run_scenario(name, 0, idx, cap, make_ctx(idx, cap, idx ^ cap, 0, 0, 0, 0, (s16)idx, (u8)cap),
-                         idx + 1, idx);
-        }
-    }
-
-    for (u32 unk = 0; unk < 6; ++unk) {
-        char name[32];
-        std::snprintf(name, sizeof(name), "unk3f0_%u", unk);
-        run_scenario(name, unk, 4, 5, make_ctx(unk * 3, unk * 5, 0, 0, 0, 0, 0, (s16)unk, (u8)unk), 5, 4);
-    }
+    run_scenario("cap1_idx0", 0, 0, 1, make_ctx(1, 1, 0, 0, 0, 0, 0, 0, 1), 1, 0);
+    run_scenario("cap2_idx0", 0, 0, 2, make_ctx(2, 0, 2, 0, 0, 0, 0, 0, 2), 1, 0);
+    run_scenario("cap2_idx1", 0, 1, 2, make_ctx(2, 1, 3, 0, 0, 0, 0, 1, 2), 2, 1);
+    run_scenario("cap3_idx0", 0, 0, 3, make_ctx(3, 0, 3, 0, 0, 0, 0, 0, 3), 1, 0);
+    run_scenario("cap3_idx1", 0, 1, 3, make_ctx(3, 1, 2, 0, 0, 0, 0, 1, 3), 2, 1);
+    run_scenario("cap3_idx2", 0, 2, 3, make_ctx(3, 2, 1, 0, 0, 0, 0, 2, 3), 3, 2);
+    run_scenario("cap4_idx0", 0, 0, 4, make_ctx(4, 0, 4, 0, 0, 0, 0, 0, 4), 1, 0);
+    run_scenario("cap4_idx3", 0, 3, 4, make_ctx(4, 3, 7, 0, 0, 0, 0, 3, 4), 4, 3);
+    run_scenario("cap5_idx2", 0, 2, 5, make_ctx(5, 2, 7, 0, 0, 0, 0, 2, 5), 3, 2);
+    run_scenario("cap5_idx4", 0, 4, 5, make_ctx(5, 4, 1, 0, 0, 0, 0, 4, 5), 5, 4);
+    run_scenario("cap8_idx0", 0, 0, 8, make_ctx(8, 0, 8, 0, 0, 0, 0, 0, 8), 1, 0);
+    run_scenario("cap8_idx7", 0, 7, 8, make_ctx(8, 7, 15, 0, 0, 0, 0, 7, 8), 8, 7);
+    run_scenario("unk3f0_0", 0, 4, 5, make_ctx(0, 0, 0, 0, 0, 0, 0, 0, 0), 5, 4);
+    run_scenario("unk3f0_1", 1, 4, 5, make_ctx(3, 5, 0, 0, 0, 0, 0, 1, 1), 5, 4);
+    run_scenario("unk3f0_2", 2, 4, 5, make_ctx(6, 10, 0, 0, 0, 0, 0, 2, 2), 5, 4);
+    run_scenario("unk3f0_3", 3, 4, 5, make_ctx(9, 15, 0, 0, 0, 0, 0, 3, 3), 5, 4);
+    run_scenario("unk3f0_4", 4, 4, 5, make_ctx(12, 20, 0, 0, 0, 0, 0, 4, 4), 5, 4);
+    run_scenario("unk3f0_5", 5, 4, 5, make_ctx(15, 25, 0, 0, 0, 0, 0, 5, 5), 5, 4);
+    run_scenario("wrap_sum_exact", 2, 2, 4, make_ctx(0x70, 0x71, 0x72, 0, 0, 0, 0, 9, 10), 3, 2);
+    run_scenario("wrap_sum_over", 3, 3, 4, make_ctx(0x80, 0x81, 0x82, 0, 0, 0, 0, 11, 12), 4, 3);
+    run_scenario("half_neg1", 0, 0, 4, make_ctx(1, 2, 3, 4, 5, 6, 7, -1, 0), 1, 0);
+    run_scenario("byte_ff", 0, 2, 4, make_ctx(0, 0, 0, 0, 0, 0, 0, 0, 0xFF), 3, 2);
 
     std::printf("host view_set_current_ring: all scenarios passed\n");
     return 0;

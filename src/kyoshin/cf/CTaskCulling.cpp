@@ -4,6 +4,9 @@
 #include "monolib/scn.hpp"
 #include <cstring>
 
+// Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
+extern "C" cf::CTaskCulling* lbl_eu_80664328;
+
 namespace cf{
     CTaskCulling* CTaskCulling::spInstance;
 
@@ -41,14 +44,12 @@ namespace cf{
     }
 
     UNKTYPE* CTaskCulling::func_801A2C04(){
-        CTaskCulling* instance = spInstance;
-
-        if(instance == nullptr) return nullptr;
-        return instance->unk94;
+        if(lbl_eu_80664328 == nullptr) return nullptr;
+        return lbl_eu_80664328->unk94;
     }
 
     bool CTaskCulling::ICulling_UnkVirtualFunc1(ml::CFrustum* r4){
-        if(spInstance == nullptr) return false;
+        if(lbl_eu_80664328 == nullptr) return false;
         return mOccCulling.func_801A0F04(r4);
     }
 

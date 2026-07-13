@@ -1,0 +1,32 @@
+# Co-op decompilation runner configuration.
+# Copy to coop.json in the repository root (or pass --config).
+#
+#   cp tools/coop/coop.example.json coop.json
+
+project_root: .
+
+region: us
+
+match_policy: full
+default_required_level: FULL_MATCH
+
+# Optional: override if not on PATH or before first configure build.
+# objdiff_cli: build/tools/objdiff-cli
+# ninja: ninja
+
+configure_args:
+  - --map
+
+# Pass --non-matching when building mod objects alongside decomp work.
+non_matching: false
+
+targets_file: tools/coop/targets.json
+
+attempt_log: docs/evidence/decomp/attempts.jsonl
+
+# Written by `coop diff` / `coop cycle` for quick inspection.
+report_cache: build/coop-last-report.json
+
+objdiff_report_args:
+  - --config
+  - functionRelocDiffs=data_value

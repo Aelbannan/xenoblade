@@ -9,10 +9,16 @@ Usage (from repository root):
   python tools/coop/run.py ctx src/kyoshin/cf/CfPadTask.cpp
   python tools/coop/run.py build kyoshin/cf/CfPadTask
   python tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl
+  python tools/coop/run.py size monolib/src/core/CViewRectDataCore
+  python tools/coop/run.py size --all
   python tools/coop/run.py cycle pad-copy-input-flag
   python tools/coop/run.py queue --tier P1
   python tools/coop/run.py targets list
   python tools/coop/run.py log --tail 20
+  python tools/coop/run.py symbols list
+  python tools/coop/run.py behaviour audit
+  python tools/coop/run.py behaviour compare --all
+  python tools/coop/run.py symbols show UnkClass_8045F564
 """
 
 from __future__ import annotations
@@ -37,6 +43,7 @@ from tools.coop.lib.objdiff_report import (
     meets_required_level,
     report_unit,
 )
+from tools.coop.lib.object_size import ObjectSizeCheck, check_object_size, format_size_check
 from tools.coop.lib.project import Project
 from tools.coop.lib.targets import get_target, load_targets, pending_targets
 
@@ -120,6 +127,7 @@ def cmd_build(project: Project, hint: str) -> int:
         obj = project.build_object_for_source(
             hint_path if hint_path.is_absolute() else project.root / hint_path
         )
+        _postprocess_mtrand_object(project, obj)
     else:
         unit = project.resolve_unit(hint)
         if not unit.base_path:
@@ -127,8 +135,46 @@ def cmd_build(project: Project, hint: str) -> int:
             return 1
         project.ninja_build(str(unit.base_path.relative_to(project.root)))
         obj = unit.base_path
+        _postprocess_mtrand_object(project, obj)
     print(obj)
     return 0
+
+
+def _postprocess_reloc_object(project: Project, obj: Path | None) -> None:
+    """PLAN.md §17.6 reloc name drift — see tools/postprocess_reloc_names.py."""
+    if obj is None:
+        return
+    script = project.root / "tools" / "postprocess_reloc_names.py"
+    if not script.is_file():
+        return
+    # Script no-ops when the basename has no rules.
+    subprocess.run([sys.executable, str(script), str(obj)], cwd=project.root, check=False)
+
+
+def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
+    _postprocess_reloc_object(project, obj)
+
+
+def _object_paths_for_unit(project: Project, unit) -> tuple[Path | None, Path | None]:
+  # objdiff: target_path = retail split object, base_path = decompiled object
+    retail = unit.target_path
+    decomp = unit.base_path
+    return retail, decomp
+
+
+def _print_object_size(project: Project, config: CoopConfig, unit_hint: str, unit) -> ObjectSizeCheck:
+    retail, decomp = _object_paths_for_unit(project, unit)
+    check = check_object_size(
+        project_root=project.root,
+        region=config.region,
+        unit_hint=unit_hint,
+        retail_object=retail,
+        decomp_object=decomp,
+    )
+    print(f"size:    {format_size_check(check)}")
+    if check.split_path:
+        print(f"          split: {check.split_path}")
+    return check
 
 
 def cmd_diff(
@@ -142,6 +188,7 @@ def cmd_diff(
     unit = project.resolve_unit(hint)
     if unit.base_path:
         project.ninja_build(str(unit.base_path.relative_to(project.root)))
+        _postprocess_mtrand_object(project, unit.base_path)
     unit_report = report_unit(project, unit)
     fn_match = find_function_match(unit_report, symbol)
 
@@ -172,7 +219,42 @@ def cmd_diff(
         symbol=symbol,
     )
     print(f"status: {status}")
+    size_check = _print_object_size(project, config, hint, unit)
+    if not size_check.ok:
+        return 1
     return 0
+
+
+def cmd_size(
+    project: Project,
+    config: CoopConfig,
+    hint: str | None,
+    *,
+    check_all: bool,
+) -> int:
+    failures = 0
+    if check_all:
+        units = project.load_objdiff_units()
+        for unit in units:
+            if unit.base_path is None:
+                continue
+            print(f"unit: {unit.name}")
+            check = _print_object_size(project, config, unit.name, unit)
+            if not check.ok:
+                failures += 1
+            print()
+        return 1 if failures else 0
+
+    if hint is None:
+        print("ERROR: unit hint required (or use --all)", file=sys.stderr)
+        return 2
+
+    unit = project.resolve_unit(hint)
+    if unit.base_path:
+        project.ninja_build(str(unit.base_path.relative_to(project.root)))
+        _postprocess_mtrand_object(project, unit.base_path)
+    check = _print_object_size(project, config, hint, unit)
+    return 0 if check.ok else 1
 
 
 def cmd_cycle(
@@ -196,7 +278,8 @@ def cmd_cycle(
     ctx_out = target.source.with_suffix(".ctx.c")
     cmd_ctx(project, target.source.relative_to(project.root), ctx_out)
     cmd_build(project, target.unit)
-    cmd_diff(project, config, target.unit, target.symbol, write_function_diff=True)
+    if cmd_diff(project, config, target.unit, target.symbol, write_function_diff=True) != 0:
+        return 1
 
     unit = project.resolve_unit(target.unit)
     unit_report = report_unit(project, unit)
@@ -307,6 +390,29 @@ def cmd_log(config: CoopConfig, tail: Optional[int], target_id: Optional[str]) -
     return 0
 
 
+def cmd_symbols(symrecover_args: list[str]) -> int:
+    if symrecover_args and symrecover_args[0] == "--":
+        symrecover_args = symrecover_args[1:]
+    if not symrecover_args:
+        symrecover_args = ["--help"]
+    old_argv = sys.argv
+    try:
+        sys.argv = ["symrecover", *symrecover_args]
+        from tools.symrecover import main as symrecover_main
+
+        return symrecover_main()
+    finally:
+        sys.argv = old_argv
+
+
+def cmd_behaviour(behaviour_args: list[str]) -> int:
+    if behaviour_args and behaviour_args[0] == "--":
+        behaviour_args = behaviour_args[1:]
+    script = ROOT / "tools" / "test" / "compare_behaviour" / "run.py"
+    cmd = [sys.executable, str(script), *behaviour_args]
+    return subprocess.run(cmd, cwd=ROOT, check=False).returncode
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Xenoblade co-op decompilation runner")
     parser.add_argument(
@@ -331,6 +437,10 @@ def main() -> int:
     p_diff.add_argument("unit", help="objdiff unit hint or source path")
     p_diff.add_argument("--symbol", help="Function symbol for per-function stats")
 
+    p_size = sub.add_parser("size", help="Check decomp .text size against split budget")
+    p_size.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
+    p_size.add_argument("--all", action="store_true", help="Check every buildable objdiff unit")
+
     p_cycle = sub.add_parser("cycle", help="ctx + build + diff + JSONL log for one target id")
     p_cycle.add_argument("target_id")
     p_cycle.add_argument("--hypothesis", default="")
@@ -352,6 +462,26 @@ def main() -> int:
     p_log.add_argument("--tail", type=int)
     p_log.add_argument("--target")
 
+    p_symbols = sub.add_parser(
+        "symbols",
+        help="Symbol recovery helpers (wraps tools/symrecover.py)",
+    )
+    p_symbols.add_argument(
+        "symrecover_args",
+        nargs=argparse.REMAINDER,
+        help="symrecover subcommand and flags (e.g. list, show 8043C59C)",
+    )
+
+    p_behaviour = sub.add_parser(
+        "behaviour",
+        help="Retail vs decomp behaviour tests (tools/test/compare_behaviour)",
+    )
+    p_behaviour.add_argument(
+        "behaviour_args",
+        nargs=argparse.REMAINDER,
+        help="compare_behaviour subcommand (audit, compare --all, compare <id>, …)",
+    )
+
     args = parser.parse_args()
     config = load_config(args.config, ROOT)
     project = Project(config)
@@ -368,6 +498,8 @@ def main() -> int:
         return cmd_build(project, args.unit)
     if args.command == "diff":
         return cmd_diff(project, config, args.unit, args.symbol, write_function_diff=False)
+    if args.command == "size":
+        return cmd_size(project, config, args.unit, check_all=args.all)
     if args.command == "cycle":
         return cmd_cycle(
             project,
@@ -385,6 +517,10 @@ def main() -> int:
         return cmd_targets_show(config, args.target_id)
     if args.command == "log":
         return cmd_log(config, args.tail, args.target)
+    if args.command == "symbols":
+        return cmd_symbols(args.symrecover_args)
+    if args.command == "behaviour":
+        return cmd_behaviour(args.behaviour_args)
 
     parser.error(f"unknown command: {args.command}")
     return 2

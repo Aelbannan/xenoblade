@@ -8,6 +8,10 @@
 #include "monolib/core.hpp"
 #include "monolib/device.hpp"
 #include "monolib/work.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "monolib/lib/CLibStaticData.hpp"
+#include "decomp.h"
+#include <cstring>
 #include <revolution/GX.h>
 #include <revolution/VI.h>
 #include <revolution/WPAD.h>
@@ -19,6 +23,12 @@ extern float func_801C0014();
 extern void func_801BFFAC(float f1, float f2);
 extern void func_801644BC(u32 r3);
 extern void func_80044FBC(u32 r3);
+
+DECOMP_FORCEACTIVE(CGame_cpp_wkStandbyLogin,
+    "CGameRestart",
+    "43",
+    "arc",
+    "4_3mode.brlyt");
 
 CGame* CGame::spInstance;
 static FixStr<64> lbl_80573C80;
@@ -141,55 +151,64 @@ void CGame::setViewRect(CView* view, s16 x, s16 y, s16 width, s16 height){
     view->setRect(ml::CRect16(x, y, width, height));
 }
 
+
+
 bool CGame::wkStandbyLogin(){
-    //Wait for the static files to be loaded
-    if(!CLibStaticData::isInitialized()) return false;
+    StaticDataHandle handle;
 
-    //Create the CView instance for CGame
-    CView* desktopView = CDesktop::getView();
-    mView = pssCreateView(scViewName, desktopView, 0);
-    CView* view = mView;
-    const char* nameTemp = scViewName;
-
-    view->mName = nameTemp;
-    if(view->mName.size() == 0){
-        view->mName = nameTemp;
+    if(!CLibStaticData::isInitialized()){
+        return false;
     }
 
-    //Almost equivalent to func_800395F4
+    {
+        CView* view = pssCreateView(scViewName, CDesktop::getView(), 0);
+        mView = view;
+        const char* viewName = scViewName;
+        view->mName = viewName;
+        if(static_cast<CWorkThread*>(view)->mName.size() == 0){
+            static_cast<CWorkThread*>(view)->mName = viewName;
+        }
+    }
+
     if(CDeviceSC::isWideAspectRatio()){
         setViewRect(mView, 0, 0,
-        CDeviceVI::getRenderModeObj()->fbWidth, CDeviceVI::getRenderModeObj()->efbHeight);
+            CDeviceVI::getRenderModeObj()->fbWidth,
+            CDeviceVI::getRenderModeObj()->efbHeight);
     }else{
-        setViewRect(mView, 0, 56,
-        CDeviceVI::getRenderModeObj()->fbWidth, CDeviceVI::getRenderModeObj()->efbHeight - 114);
+        setViewRect(mView, 0,
+            (s16)((u16)unk230 - 1),
+            CDeviceVI::getRenderModeObj()->fbWidth,
+            (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
+                - ((u32)(u16)unk230 << 1)));
     }
 
-    StaticDataHandle handle;
-    mView->unk444 = CVec4(0,0,0,1);
+    {
+        float spills[4];
+        spills[0] = 0.0f;
+        CView* vecView = mView;
+        spills[1] = 0.0f;
+        spills[2] = 0.0f;
+        spills[3] = 1.0f;
+        *(u32*)&vecView->unk444.x = *(u32*)&spills[0];
+        *(u32*)&vecView->unk444.y = *(u32*)&spills[1];
+        *(u32*)&vecView->unk444.z = *(u32*)&spills[2];
+        *(u32*)&vecView->unk444.w = *(u32*)&spills[3];
+    }
 
-    /* This function does the same thing as above, but for the static instance of CGame. Since
-    there's only one instance of CGame though, this seems pointless :p */
     func_800395F4(CDeviceSC::isWideAspectRatio());
     CDeviceGX::updateVerticalFilter(VFILTER_NONE);
-
-    //Reset the task manager, and create CTaskGame
     CTaskManager::Reset();
     CTaskGame::create(mView, this, 1);
-
-    //Standard WPAD/VI initialization
     WPADSetAutoSleepTime(5);
-    VIEnableDimming(VI_ENABLE);
+    VIEnableDimming(1);
     VISetTimeToDimming(1);
 
-    //Fetch the 4:3 mode brlyt file
-    if(CLibStaticData::getStaticFileData("43", &handle, nullptr)){
+    if(CLibStaticData::getStaticFileData("CGameRestart" + 14, &handle, nullptr)){
         sArcResourceAccessor = CLibLayout::createArcResourceAccessor();
-        sArcResourceAccessor->Attach(handle.data, "arc");
-        func_80136E84(&lbl_80666604, sArcResourceAccessor, "4_3mode.brlyt");
+        sArcResourceAccessor->Attach(handle.data, "CGameRestart" + 17);
+        func_80136E84(&lbl_80666604, sArcResourceAccessor, "CGameRestart" + 21);
     }
 
-    //Call base
     return CProc::wkStandbyLogin();
 }
 

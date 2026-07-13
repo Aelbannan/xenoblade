@@ -94,63 +94,39 @@ void CProc::pssAttachView(CView* pView){
 
 //TODO: According to XCX's symbol, this shouldn't have a parameter, but XC1 and XCX's code suggest otherwise
 ml::CRect16& CProc::pssMakeClientRect(ml::CRect16& rect) const {
-    /*
-    Idk why but mwcc/monolith devs do this for each size call??? Weird??
-    _reslist_node<WORK_ID>* node = mViewIDList.mStartNodePtr;
-    CProc_UnkStruct1 r1_8;
-    u32 r4 = 0;
-    r1_8.unk0 = node;
-    r1_8.unk8 = node;
-    r1_8.unk4 = node->mNext;
-    r1_8.unkC = node->mNext;
-
-    while(r1_8.unkC != r1_8.unk8){
-        r4++;
-        r1_8.unkC = r1_8.unkC->mNext;
-    }
-
-    return r4;
-    */
-
     if(mViewIDList.size() == 0){
         rect.set(0, 0, 0, 0);
         return rect;
-    }else{
-        CView* view = pssGetView(INVALID_WORK_ID);
-
-        //BUG: no null check!!
-
-        u32 numChildren = view->mChildren.size();
-
-        ml::CRect16 rect_40;
-        view->getRect(rect_40);
-
-        float someX = rect_40.mSize.x;
-        float someY = rect_40.mSize.y;
-        s16 anotherX = (someX*0.6f - someX)/2;
-        s16 anotherY = (someY*0.6f - someY)/2;
-        rect.mPos.x = (rect_40.mPos.x - anotherX) + numChildren * 20;
-        rect.mPos.y = (rect_40.mPos.y - anotherY) + numChildren * 20;
-        rect.mSize.x = rect_40.mSize.x + anotherX*2;
-        rect.mSize.y = rect_40.mSize.y + anotherY*2;
-
-        return rect;
     }
+
+    CView* view = pssGetView(INVALID_WORK_ID);
+    u32 numChildren = view->mChildren.size();
+
+    ml::CRect16 rect_40;
+    view->getRect(rect_40);
+
+    float someX = rect_40.mSize.x;
+    float someY = rect_40.mSize.y;
+    s16 anotherX = (someX*0.6f - someX)/2;
+    s16 anotherY = (someY*0.6f - someY)/2;
+    rect.mPos.x = (rect_40.mPos.x - anotherX) + numChildren * 20;
+    rect.mPos.y = (rect_40.mPos.y - anotherY) + numChildren * 20;
+    rect.mSize.x = rect_40.mSize.x + anotherX*2;
+    rect.mSize.y = rect_40.mSize.y + anotherY*2;
+
+    return rect;
 }
 
 CView* CProc::pssCreateView(const char* pName, CWorkThread* pThread, int param3){
-    //Add "(View)" before the parent class name for the name of the associated view
     ml::FixStr<64> viewName = "(View)";
     viewName += pName;
     CView* view = CView::create(viewName.c_str(), pThread);
-    view->wkReplaceHasChild(0); //Set the view's max child count to 0
+    view->wkReplaceHasChild((s16)param3);
     pssAttachView(view);
 
-    //If this CProc instance has a CProc parent, update the view rect based on its view
     CWorkThread* parent = mParent;
 
     if(parent->mType == THREAD_CPROC){
-        //Is it *really* CProc though?? Gotta be sure...
         CProc* parentProc = convertToProc(parent);
         ml::CRect16 rect;
         view->setRect(parentProc->pssMakeClientRect(rect));

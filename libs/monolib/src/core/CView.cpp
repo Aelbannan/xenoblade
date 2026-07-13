@@ -3,15 +3,32 @@
 #include "monolib/device.hpp"
 #include "monolib/work/CWorkThread.hpp"
 
+//Not yet decompiled (monolib/src/core/CSplitFrame.cpp); only its virtual destructor is
+//referenced here (CView::wkUpdate deletes it once it goes inactive), so a minimal stub with a
+//single virtual function is enough to reproduce the retail vtable-slot call.
+class CSplitFrame {
+public:
+    virtual ~CSplitFrame();
+};
+
 extern "C" {
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame();
+CView* lbl_eu_806655C8;
 CViewRoot* getInstance__9CViewRootFv();
+CView* getCurrent__9CViewRootFv();
+void invalidCurrent__9CViewRootFP5CView(CView* view);
 GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
-void func_804592F0__17UnkClass_8043C59CFv();
-void func_80459384__17UnkClass_8043C59CFv();
+CView* getView1__11CSplitFrameFv(void* splitFrame);
+CView* getView2__11CSplitFrameFv(void* splitFrame);
+s16 getSplitLine__11CSplitFrameFv(void* splitFrame);
+void setSplitLine__11CSplitFrameFs(void* splitFrame, s16 line);
+bool isActive__11CSplitFrameFv(void* splitFrame);
+void apply__11CSplitFrameFv(void* splitFrame);
+void updateMsg__5CViewFv(CView* pThis);
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, CViewFrame* frame);
+void func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
+void func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
 }
 
-static CView* spCurrentView;
 ml::CCol4 CView::sFrameColor;
 
 void CView::setDefaultFrameColor(const ml::CCol4& color) {
@@ -19,154 +36,385 @@ void CView::setDefaultFrameColor(const ml::CCol4& color) {
 }
 
 CView* CView::getCurrentView() {
-    return spCurrentView;
+    return lbl_eu_806655C8;
 }
 
-asm void CView::setCurrent() {
-    stwu r1, -0x40(r1)
-    li r0, 0
-    stw r31, 0x3c(r1)
-    li r31, 6
-    lwz r12, 0xc(r1)
-    stw r30, 0x38(r1)
-    lwz r11, 0x10(r1)
-    stw r29, 0x34(r1)
-    lwz r10, 0x14(r1)
-    stw r28, 0x30(r1)
-    lwz r9, 0x18(r1)
-    lwz r6, 0x3f0(r3)
-    lwz r4, 0x3f4(r3)
-    lwz r5, 0x3f8(r3)
-    add r29, r6, r4
-    lwz r28, 0x3ec(r3)
-    divw r4, r29, r5
-    lwz r8, 0x1c(r1)
-    lwz r7, 0x20(r1)
-    lwz r6, 0x24(r1)
-    mullw r30, r4, r5
-    lhz r5, 0x28(r1)
-    lbz r4, 0x2a(r1)
-    subf r30, r30, r29
-    mulli r30, r30, 0x24
-    stwux r31, r28, r30
-    stw r12, 4(r28)
-    stw r11, 8(r28)
-    stw r10, 0xc(r28)
-    stw r9, 0x10(r28)
-    stw r8, 0x14(r28)
-    stw r7, 0x18(r28)
-    stw r6, 0x1c(r28)
-    sth r5, 0x20(r28)
-    stb r4, 0x22(r28)
-    stb r0, 0x23(r28)
-    lwz r4, 0x3f4(r3)
-    addi r4, r4, 1
-    stw r4, 0x3f4(r3)
-    subi r0, r4, 1
-    stw r0, 0x3fc(r3)
-    lwz r31, 0x3c(r1)
-    lwz r30, 0x38(r1)
-    lwz r29, 0x34(r1)
-    lwz r28, 0x30(r1)
-    addi r1, r1, 0x40
-    blr
+void CView::setCurrent() {
+    u32 ctx0;
+    u32 ctx1;
+    u32 ctx2;
+    u32 ctx3;
+    u32 ctx4;
+    u32 ctx5;
+    u32 ctx6;
+    s16 ctxHalf;
+    u8 ctxByte;
+    u32 tag;
+    s32 sumSigned;
+    s32 capSigned;
+    s32 slotIndex;
+    u32 byteOff;
+    u8* ringBase;
+
+    tag = 6;
+    ctx0 = *(const u32*)&unk1C8.unk0;
+    ctx1 = *(const u32*)&unk1C8.unk4;
+    ctx2 = *(const u32*)&unk1C8.unk8;
+    ctx3 = *(const u32*)&unk1C8.unkC;
+    ctx4 = *(const u32*)&unk1C8.unk10;
+    ctx5 = *(const u32*)&unk1DC.unk0[0];
+    ctx6 = *(const u32*)&unk1DC.unk0[4];
+    ctxHalf = unk1DC.unk54;
+    ctxByte = (u8)unk1DC.unk56;
+
+    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
+    capSigned = (s32)mContextRingCapacity;
+    slotIndex = sumSigned / capSigned;
+    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+    ringBase = (u8*)mContextRingBase;
+
+    *(u32*)(ringBase + byteOff) = tag;
+    *(u32*)(ringBase + 0x4) = ctx0;
+    *(u32*)(ringBase + 0x8) = ctx1;
+    *(u32*)(ringBase + 0xC) = ctx2;
+    *(u32*)(ringBase + 0x10) = ctx3;
+    *(u32*)(ringBase + 0x14) = ctx4;
+    *(u32*)(ringBase + 0x18) = ctx5;
+    *(u32*)(ringBase + 0x1C) = ctx6;
+    *(s16*)(ringBase + 0x20) = ctxHalf;
+    ringBase[0x22] = ctxByte;
+    ringBase[0x23] = 0;
+
+    mContextRingWriteIndex += 1;
+    unk3FC = mContextRingWriteIndex - 1;
 }
 
-asm void CView::setRect(const ml::CRect16& rect) {
-    stwu r1, -0x30(r1)
-    mflr r0
-    stw r0, 0x34(r1)
-    stw r31, 0x2c(r1)
-    mr r31, r4
-    stw r30, 0x28(r1)
-    mr r30, r3
-    stw r29, 0x24(r1)
-    lwz r0, 0x278(r3)
-    clrlwi. r0, r0, 31
-    beq setRect_normal
-    addi r3, r1, 0xc
-    addi r4, r30, 0x1dc
-    bl getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame
-    lha r3, 0xc(r1)
-    lha r0, 0xe(r1)
-    neg r3, r3
-    sth r3, 0x10(r1)
-    neg r0, r0
-    lwz r29, 0x58(r30)
-    sth r0, 0x12(r1)
-    lwz r0, 0x10(r1)
-    stw r0, 0x230(r30)
-    bl getInstance__9CViewRootFv
-    cmplw r3, r29
-    bne setRect_parent
-    li r4, 0
-    b setRect_parent_check
-setRect_parent:
-    lwz r4, 0x58(r30)
-    cmpwi r4, 0
-    bne setRect_type
-    li r4, 0
-    b setRect_parent_check
-setRect_type:
-    lwz r0, 0x50(r4)
-    cmpwi r0, 0x30
-    blt setRect_parent_null
-    cmpwi r0, 0x35
-    blt setRect_parent_check
-setRect_parent_null:
-    li r4, 0
-setRect_parent_check:
-    cmpwi r4, 0
-    beq setRect_mode
-    addi r3, r30, 0x1c8
-    addi r4, r4, 0x1cc
-    bl func_804592F0__17UnkClass_8043C59CFv
-    b setRect_tail
-setRect_mode:
-    bl getRenderModeObj__9CDeviceVIFv
-    lhz r29, 0x6(r3)
-    bl getRenderModeObj__9CDeviceVIFv
-    lhz r0, 0x4(r3)
-    addi r3, r30, 0x1c8
-    sth r0, 0x8(r1)
-    addi r4, r1, 0x8
-    sth r29, 0xa(r1)
-    bl func_804592F0__17UnkClass_8043C59CFv
-    b setRect_tail
-setRect_normal:
-    addi r3, r1, 0x14
-    addi r4, r30, 0x1dc
-    bl getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame
-    lha r7, 0x14(r1)
-    addi r3, r30, 0x1c8
-    lha r6, 0(r31)
-    addi r4, r31, 4
-    lha r5, 0x16(r1)
-    lha r0, 2(r31)
-    subf r6, r7, r6
-    sth r6, 0x18(r1)
-    subf r0, r5, r0
-    sth r0, 0x1a(r1)
-    lwz r0, 0x18(r1)
-    stw r0, 0x230(r30)
-    bl func_804592F0__17UnkClass_8043C59CFv
+void CView::setRect(const ml::CRect16& rect) {
+    ml::CRect16 frameOffset;
+    ml::CPnt16 stackPos;
+    CWorkThread* parentSnap;
+    CWorkThread* sourceParent;
+
+    if ((unk278 & 1) != 0) {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &unk1DC);
+        stackPos.x = -frameOffset.mPos.x;
+        parentSnap = mParent;
+        stackPos.y = -frameOffset.mPos.y;
+        *(u32*)&unk1DC.unk54 = *(u32*)&stackPos;
+
+        if (getInstance__9CViewRootFv() == parentSnap) {
+            sourceParent = nullptr;
+        } else {
+            sourceParent = mParent;
+            if (sourceParent == nullptr) {
+                goto setRect_parent_null;
+            }
+            if ((s32)sourceParent->mType < 0x30) {
+                goto setRect_parent_null;
+            }
+            if ((s32)sourceParent->mType < 0x35) {
+                goto setRect_parent_done;
+            }
+            goto setRect_parent_null;
+        setRect_parent_null:
+            sourceParent = nullptr;
+        setRect_parent_done:;
+        }
+
+        if (sourceParent != nullptr) {
+            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, *(const ml::CPnt16*)((u8*)sourceParent + 0x1CC));
+        } else {
+            ml::CPnt16 modeSize;
+
+            modeSize.y = getRenderModeObj__9CDeviceVIFv()->efbHeight;
+            modeSize.x = getRenderModeObj__9CDeviceVIFv()->fbWidth;
+            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, modeSize);
+        }
+        goto setRect_tail;
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &unk1DC);
+    {
+        s16 deltaX;
+        s16 deltaY;
+
+        deltaX = rect.mPos.x - frameOffset.mPos.x;
+        deltaY = rect.mPos.y - frameOffset.mPos.y;
+        stackPos.x = deltaX;
+        stackPos.y = deltaY;
+    }
+    *(u32*)&unk1DC.unk54 = *(u32*)&stackPos;
+    func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, rect.mSize);
+
 setRect_tail:
-    lwz r0, 0x278(r30)
-    rlwinm. r0, r0, 0, 27, 27
-    bne setRect_epilogue
-    addi r3, r30, 0x1c8
-    addi r4, r31, 4
-    bl func_80459384__17UnkClass_8043C59CFv
-setRect_epilogue:
-    lwz r0, 0x34(r1)
-    lwz r31, 0x2c(r1)
-    lwz r30, 0x28(r1)
-    lwz r29, 0x24(r1)
-    mtlr r0
-    addi r1, r1, 0x30
-    blr
+    if ((unk278 & 0x10) == 0) {
+        func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, rect.mSize);
+    }
+}
+
+bool CView::attachRenderWork(CWorkThread* pThread) {
+    u32 a0;
+    u32 a1;
+    u32 a2;
+    u32 a3;
+    u32 a4;
+    u32 a5;
+    u32 a6;
+    s16 aHalf;
+    u8 aByte;
+    u32 b0;
+    u32 b1;
+    u32 b2;
+    u32 b3;
+    u32 b4;
+    u32 b5;
+    u32 b6;
+    s16 bHalf;
+    u8 bByte;
+    u32 tag0;
+    u32 tag1;
+    u32 flag;
+    u32 workId;
+    s32 sumSigned;
+    s32 capSigned;
+    s32 slotIndex;
+    u32 byteOff;
+    u8* ringBase;
+    u32 writeIdx;
+    u32 prevIdx;
+    u32 sumU;
+    u32 slotU;
+    u8* slot;
+
+    tag0 = 0;
+    flag = 3;
+    tag1 = 1;
+
+    // Two uninitialized 0x24-byte context payloads on the stack (retail reads
+    // them without stores). Tag constants are written separately.
+    workId = pThread->mWorkID;
+
+    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
+    capSigned = (s32)mContextRingCapacity;
+    slotIndex = sumSigned / capSigned;
+    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+    ringBase = (u8*)mContextRingBase;
+
+    slot = ringBase + byteOff;
+    *(u32*)slot = tag0;
+    *(u32*)(slot + 0x4) = a0;
+    *(u32*)(slot + 0x8) = a1;
+    *(u32*)(slot + 0xC) = a2;
+    *(u32*)(slot + 0x10) = a3;
+    *(u32*)(slot + 0x14) = a4;
+    *(u32*)(slot + 0x18) = a5;
+    *(u32*)(slot + 0x1C) = a6;
+    *(s16*)(slot + 0x20) = aHalf;
+    slot[0x22] = aByte;
+    slot[0x23] = (u8)tag0;
+
+    writeIdx = mContextRingWriteIndex + 1;
+    prevIdx = writeIdx - 1;
+    mContextRingWriteIndex = writeIdx;
+    unk3FC = prevIdx;
+
+    sumU = unk3F0 + prevIdx;
+    slotU = sumU / mContextRingCapacity;
+    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    slot[0x23] = (u8)flag;
+
+    sumU = unk3F0 + unk3FC;
+    slotU = sumU / mContextRingCapacity;
+    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    *(u32*)(slot + 0x4) = workId;
+
+    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
+    capSigned = (s32)mContextRingCapacity;
+    slotIndex = sumSigned / capSigned;
+    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+    ringBase = (u8*)mContextRingBase;
+
+    slot = ringBase + byteOff;
+    *(u32*)slot = tag1;
+    *(u32*)(slot + 0x4) = b0;
+    *(u32*)(slot + 0x8) = b1;
+    *(u32*)(slot + 0xC) = b2;
+    *(u32*)(slot + 0x10) = b3;
+    *(u32*)(slot + 0x14) = b4;
+    *(u32*)(slot + 0x18) = b5;
+    *(u32*)(slot + 0x1C) = b6;
+    *(s16*)(slot + 0x20) = bHalf;
+    slot[0x22] = bByte;
+    slot[0x23] = (u8)tag0;
+
+    writeIdx = mContextRingWriteIndex + 1;
+    mContextRingWriteIndex = writeIdx;
+    prevIdx = writeIdx - 1;
+    unk3FC = prevIdx;
+
+    sumU = unk3F0 + prevIdx;
+    slotU = sumU / mContextRingCapacity;
+    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    slot[0x23] = (u8)flag;
+
+    sumU = unk3F0 + unk3FC;
+    slotU = sumU / mContextRingCapacity;
+    slot = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
+    *(u32*)(slot + 0x4) = (u32)pThread;
+
+    return true;
 }
 
 void CView::detachRenderWork(CWorkThread* pThread) {
     unk1DC.detachRenderWork(pThread);
+}
+
+void CView::wkUpdate() {
+    u32 hasView1;
+    u32 hasView2;
+
+    if (unk45C != nullptr && !isActive__11CSplitFrameFv(unk45C)) {
+        if (unk45C != nullptr) {
+            delete static_cast<CSplitFrame*>(unk45C);
+            unk45C = nullptr;
+        }
+    }
+
+    updateMsg__5CViewFv(this);
+
+    {
+        u32 hasView1a;
+        u32 hasView2a;
+
+        hasView2a = 0;
+        hasView1a = 0;
+        if (unk45C == nullptr) {
+            goto wkUpdate_no_apply;
+        }
+        if (getView1__11CSplitFrameFv(unk45C) == nullptr) {
+            goto wkUpdate_no_apply;
+        }
+        hasView1a = 1;
+
+    wkUpdate_no_apply:
+        if (hasView1a == 0) {
+            goto wkUpdate_apply_check;
+        }
+        if (getView2__11CSplitFrameFv(unk45C) == nullptr) {
+            goto wkUpdate_apply_check;
+        }
+        hasView2a = 1;
+
+    wkUpdate_apply_check:
+        if (hasView2a != 0) {
+            apply__11CSplitFrameFv(unk45C);
+        }
+    }
+
+    if (mChildren.empty() && unk238.empty()) {
+        hasView2 = 0;
+        hasView1 = 0;
+        if (unk45C == nullptr) {
+            goto wkUpdate_no_setevent_check;
+        }
+        if (getView1__11CSplitFrameFv(unk45C) == nullptr) {
+            goto wkUpdate_no_setevent_check;
+        }
+        hasView1 = 1;
+
+    wkUpdate_no_setevent_check:
+        if (hasView1 == 0) {
+            goto wkUpdate_setevent;
+        }
+        if (getView2__11CSplitFrameFv(unk45C) == nullptr) {
+            goto wkUpdate_setevent;
+        }
+        hasView2 = 1;
+
+    wkUpdate_setevent:
+        if (hasView2 == 0) {
+            wkSetEvent(EVT_NONE);
+        }
+    }
+}
+
+void CView::setDisp(bool r4, bool r5) {
+    if (!r4) {
+        unk278 |= 0x40;
+    } else {
+        unk278 &= ~0x40;
+    }
+
+    if (r5 && !r4) {
+        CView* current = getCurrent__9CViewRootFv();
+        if (current == this) {
+            invalidCurrent__9CViewRootFP5CView(this);
+        }
+    }
+}
+
+s16 CView::getSplitLine() {
+    void* splitFrame = unk45C;
+    u32 hasView2;
+    u32 hasView1;
+
+    hasView2 = 0;
+    hasView1 = 0;
+    if (splitFrame == nullptr) {
+        goto getSplitLine_no_view1;
+    }
+    if (getView1__11CSplitFrameFv(splitFrame) == nullptr) {
+        goto getSplitLine_no_view1;
+    }
+    hasView1 = 1;
+
+getSplitLine_no_view1:
+    if (hasView1 == 0) {
+        goto getSplitLine_no_view2;
+    }
+    splitFrame = unk45C;
+    if (getView2__11CSplitFrameFv(splitFrame) == nullptr) {
+        goto getSplitLine_no_view2;
+    }
+    hasView2 = 1;
+
+getSplitLine_no_view2:
+    if (hasView2 != 0) {
+        goto getSplitLine_call;
+    }
+    return 0;
+
+getSplitLine_call:
+    splitFrame = unk45C;
+    return getSplitLine__11CSplitFrameFv(splitFrame);
+}
+
+void CView::setSplitLine(s16 line) {
+    u32 hasView2;
+    u32 hasView1;
+
+    hasView2 = 0;
+    hasView1 = 0;
+    if (unk45C == nullptr) {
+        goto setSplitLine_no_view1;
+    }
+    if (getView1__11CSplitFrameFv(unk45C) == nullptr) {
+        goto setSplitLine_no_view1;
+    }
+    hasView1 = 1;
+
+setSplitLine_no_view1:
+    if (hasView1 == 0) {
+        goto setSplitLine_no_view2;
+    }
+    if (getView2__11CSplitFrameFv(unk45C) == nullptr) {
+        goto setSplitLine_no_view2;
+    }
+    hasView2 = 1;
+
+setSplitLine_no_view2:
+    if (hasView2 == 0) {
+        return;
+    }
+    setSplitLine__11CSplitFrameFs(unk45C, line);
 }

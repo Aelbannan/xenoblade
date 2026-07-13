@@ -1388,12 +1388,12 @@ Every missing function should be approached as a bounded question, not “decomp
 ```text
 select one function/question
 -> import symbols and types
--> export assembly, relocations, decompiler output, callers, callees
--> produce conservative candidate C++
+-> export assembly, relocations, decompiler output, callers, callees (**reference only — not shipped source**)
+-> produce conservative candidate **high-level C or C++** (semantics and types, not register-level transcription)
 -> compile with the pinned original toolchain
 -> compare with objdiff
 -> classify mismatches
--> revise source shape/types/control flow
+-> revise source shape/types/control flow in readable C/C++ only
 -> repeat toward exact code and relocation match
 -> instrument original binary in Dolphin
 -> verify semantic behavior
@@ -1415,6 +1415,48 @@ select one function/question
 A byte match proves faithful code generation, not the semantic name of every unknown field or hook safety.
 
 **Current project policy:** the required acceptance bar for every decompilation target is **`FULL_MATCH`**. Intermediate statuses remain useful for logging progress, but a target is not complete until it reaches `FULL_MATCH`.
+
+### 17.2.1 Behaviour comparison (below `FULL_MATCH`)
+
+When static objdiff match is below 100%, agents must run **host dual-oracle tests** in `tools/test/compare_behaviour/`:
+
+```bash
+python tools/coop/run.py behaviour audit
+python tools/coop/run.py behaviour compare <test-id>
+```
+
+Each test compares **retail oracle** semantics (from asm/Ghidra) against **decompiled source** on the same inputs. Minimum scenario counts scale with match % (8–30 `run_scenario` cases). Do not mark `BEHAVIOR_VERIFIED` until `behaviour audit` passes. See `tools/test/compare_behaviour/README.md`.
+
+### 17.2.2 Split object size (`.text` budget)
+
+Each translation unit occupies a fixed `.text` range in `config/<region>/splits.txt` (`start`/`end`). Before promoting a unit to `Matching` in `configure.py` or claiming `FULL_MATCH`, verify the decompiled object’s **`.text` section** does not exceed that budget:
+
+```bash
+python tools/coop/run.py size <unit>
+python tools/coop/run.py size --all
+```
+
+`coop run diff`, `cycle`, and `behaviour compare` print a `size:` line and exit non-zero when decomp `.text` is larger than the split slice. Behaviour tests may pass while size fails — semantics can be correct before codegen fits the retail slot. Implementation: `tools/coop/lib/object_size.py`.
+
+**Source language:** matched functions must be expressed as **high-level C or C++** in `src/**` and `libs/**`. Do not commit MWCC inline assembly, standalone `.s` units, transcribed retail asm, or register/stack micro-matching (`register rN`, fake `sp` buffers, `goto` chains copied from asm). Use asm/disassembly only to recover semantics for readable C++.
+
+See **§17.6** for narrow, logged exceptions when C++ and decomp.me cannot close the last instruction(s).
+
+### 17.6 Policy exceptions (last-percent FULL_MATCH)
+
+Use only after normal C++ and decomp.me fail, and **log every use** in `docs/evidence/decomp/attempts.jsonl` with `"policy_exception": true` and a one-line justification.
+
+| Exception | Allowed when | Requirements |
+|-----------|----------------|--------------|
+| **MWCC PPC intrinsics** | Opcode selection (`slwi` vs `rlwinm`, bitfield inserts) | Use `DECOMP_PPC_*` macros from `include/decomp.h` (same family as SDK `__rlwimi` / `__rlwinm`). Document in `MWCC_REFERENCE.md` if a new pattern is reusable. |
+| **Whole-function `asm void`** | Caller-stack ABI; high-level C++ capped well below 100% after decomp.me | Log `policy_exception`; document in `MWCC_REFERENCE.md`. Example: `CView::setCurrent` (retail `-0x40` frame + `lwz sp+0xC..0x2A`). |
+| **Single-instruction inline asm** | Exactly one insn differs in an otherwise ≥99% function; semantics proven equivalent | Wrap in `DECOMP_ASM_INSN_BEGIN` / `DECOMP_ASM_INSN_END` (or a named `DECOMP_ASM_*` helper macro). No register variables; asm must mirror retail mnemonic/operands only. Max **one** insn per function unless user approves more. |
+| **Goto gate chains** | CSplitFrame / multi-exit guards (see `setSplitLine` 100%) | Gotos for control-flow gates are OK; not for prologue spill ordering alone. |
+| **Relocation name drift** | `functionRelocDiffs=data_value` already compares values; TU-local `@N` vs retail `lbl_eu_*` at same offset | Prefer `extern "C" lbl_eu_*` when it does not regress codegen. If names still block 100% with identical instructions/data, post-process the object with `powerpc-eabi-objcopy --redefine-sym` (see `tools/postprocess_mtrand_object.py`; log in `attempts.jsonl`). `objdiff.json` `symbol_mappings` does not affect CLI reports (objdiff #279). |
+
+**Not approved:** `register rN`, fake `sp[]` buffers, whole-function asm, standalone `.s` units, or transcribed retail asm blocks.
+
+**Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, decomp.me, and single-instruction asm per row above — not wholesale asm functions.
 
 ### 17.3 Common mismatch categories
 

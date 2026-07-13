@@ -7,6 +7,16 @@
 
 using namespace ml;
 
+extern "C" {
+CDeviceGX* lbl_eu_806656A0;
+const char* lbl_eu_80663754;
+int lbl_eu_80663750;
+extern const f64 lbl_eu_8066A440;  // int→double magic (unsigned)
+extern const f64 lbl_eu_8066A448;  // int→double magic (signed)
+extern const f32 lbl_eu_8066A438;
+f32 lbl_eu_80665698;
+}
+
 float CDeviceGX::sCostTime;
 GXPixelFmt CDeviceGX::pixelFormat;
 CDeviceGX* CDeviceGX::spInstance;
@@ -109,20 +119,20 @@ void CDeviceGX::viAfterDrawDone(){
         temp2 = temp - temp1;
     }else{
         temp1 -= temp;
-        temp2 = gxHeapSize - temp1;
+        temp2 = lbl_eu_80663750 - temp1;
     }
-    unk264 = ((float)temp2/(float)gxHeapSize) * 2.0f;
+    unk264 = ((f32)temp2 / (f32)lbl_eu_80663750) * lbl_eu_8066A438;
 }
 
 void CDeviceGX::viBeginFrame(){
-    if(spInstance->mDevicesInitialized == 1){
+    if(lbl_eu_806656A0->mDevicesInitialized == 1){
         return;
     }
     cacheInstance->func_8044BE38();
 }
 
 void CDeviceGX::drawFrame(){
-    if(spInstance->mDevicesInitialized == true){
+    if(lbl_eu_806656A0->mDevicesInitialized == 1){
         GXFlush();
 
         GXFifoObj fifoTemp;
@@ -131,14 +141,14 @@ void CDeviceGX::drawFrame(){
 
         GXGetCPUFifo(&fifoTemp);
         GXGetFifoPtrs(&fifoTemp, &readPtr, &writePtr);
-        spInstance->unk26C = (u32)writePtr;
-        spInstance->unk270 = (u32)readPtr;
+        lbl_eu_806656A0->unk26C = (u32)writePtr;
+        lbl_eu_806656A0->unk270 = (u32)readPtr;
         GXEnableBreakPt(writePtr);
 
         GXSetDrawSync(token1);
         cacheInstance->func_8044BE38();
 
-        if(spInstance->unk274 == 0){
+        if(lbl_eu_806656A0->unk274 == 0){
             CDrawGX something;
             something.setCol(*cacheInstance->func_8044B5B4());
             s16 efbHeight = CDeviceVI::getRenderModeObj()->efbHeight;
@@ -147,33 +157,32 @@ void CDeviceGX::drawFrame(){
             something.renderRect(rect);
         }
     }else{
-        CStopwatchUtil::entry(someString);
+        CStopwatchUtil::entry(lbl_eu_80663754);
     }
 }
 
 
 //Copies the EFB to the destination external framebuffer.
 void CDeviceGX::copyEfbToXfb(void* pDestFrameBuffer){
-    CDeviceGX* gx = spInstance;
+    CDeviceGX* gx = lbl_eu_806656A0;
     GXBool vf = gx->mFilter != VFILTER_NONE;
     GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
     GXBool aa = CDeviceVI::getRenderModeObj()->aa;
     u8* vfilter = gx->mVFilter;
     GXSetCopyFilter(aa, rmode->sample_pattern, vf, vfilter);
-    GXCopyDisp(pDestFrameBuffer, spInstance->unk274);
+    GXCopyDisp(pDestFrameBuffer, lbl_eu_806656A0->unk274);
 }
 
 void CDeviceGX::calculateCost(){
-    CStopwatchUtil::updateCostTime(someString);
-    float visPerFrame = CDeviceVI::getVisPerFrame();
-    float costTime = CStopwatchUtil::getCostTime(someString);
-    //Correct the cost time to match the target framerate
-    sCostTime = costTime/visPerFrame;
+    CStopwatchUtil::updateCostTime(lbl_eu_80663754);
+    f32 visPerFrame = (f32)CDeviceVI::getVisPerFrame();
+    f32 costTime = CStopwatchUtil::getCostTime(lbl_eu_80663754);
+    lbl_eu_80665698 = costTime / visPerFrame;
 }
 
 
 void CDeviceGX::copyEfb(void* pDestFrameBuffer){
-    if(spInstance->mDevicesInitialized == true){
+    if(lbl_eu_806656A0->mDevicesInitialized == true){
         GXSetDrawSync(token2);
         copyEfbToXfb(pDestFrameBuffer);
         while(GXReadDrawSync() != token2){}
@@ -244,7 +253,7 @@ bool CDeviceGX::wkStandbyLogout(){
 
 void CDeviceGX::drawSyncCallback(u16 token){
     if(token == token1){
-        CStopwatchUtil::entry(someString);
+        CStopwatchUtil::entry(lbl_eu_80663754);
     }else if(token == token2){
         calculateCost();
     }

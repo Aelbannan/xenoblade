@@ -6,10 +6,10 @@
 #include "monolib/util.hpp"
 
 struct CProc_UnkStruct1 {
-    _reslist_node<u32>* unk0;
-    _reslist_node<u32>* unk4;
-    _reslist_node<u32>* unk8;
-    _reslist_node<u32>* unkC;
+    void* unk0;
+    void* unk4;
+    void* unk8;
+    void* unkC;
 };
 
 //size: 0x1ec

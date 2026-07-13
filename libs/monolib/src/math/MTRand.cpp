@@ -1,10 +1,22 @@
 #include "monolib/math.hpp"
 
+extern "C" {
+    extern const f64 lbl_eu_8066A1D8;
+    extern const f32 lbl_eu_8066A1D0;
+    extern const f32 lbl_eu_8066A1E0;
+    s8 lbl_eu_80665580;
+}
+
 namespace ml{
 
     MTRand* MTRand::getInstance(){
-        static MTRand sInstance;
-        return &sInstance;
+        static MTRand instance;
+        if(!lbl_eu_80665580){
+            instance.srand(0x012BD6AA);
+            instance.pNext = instance.state;
+            lbl_eu_80665580 = 1;
+        }
+        return &instance;
     }
 
     void MTRand::srand(u32 seed) {
@@ -28,12 +40,6 @@ namespace ml{
         left = N;
         pNext = state;
 
-        /* Same as:
-        for(int i = 0; i < N; i++){
-            state[i] = twist(state[(i + M) % N],state[i],state[(i + 1) % N]);
-        } */
-
-        //Stupid
         int i;
         u32* p = state;
 
@@ -48,7 +54,6 @@ namespace ml{
 
     inline u32 MTRand::rand32() {
         left--;
-        //If left reached 0, then regenerate the twister
         if(left <= 0) nextMt();
 
         u32 r4 = *pNext++;
@@ -63,17 +68,14 @@ namespace ml{
         return rand32() >> 1;
     }
 
-    /* Could also be 1/4294967296, but since it doesn't make a difference there's
-    no way to know */
-
     //func_80435B5C
     float MTRand::randFloat() {
-        return float(rand32()) * float(1.0/4294967295.0);
+        return (f32)rand32() * lbl_eu_8066A1D0;
     }
 
     //func_80435BF8
     float MTRand::randFloat1() {
-        return (float(rand32()) + 0.5f) * float(1.0/4294967295.0);
+        return ((f32)rand32() + lbl_eu_8066A1E0) * lbl_eu_8066A1D0;
     }
 
 } //namespace ml

@@ -2,6 +2,36 @@ symbol,owner,claimed_at,notes
 wkRender__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US
 setViewRect__5CGameFP5CViewssss,cursor-agent,2026-07-13,verified FULL_MATCH US
 wkUpdate__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US
-viBeginFrame__9CDeviceGXFv,cursor-agent,2026-07-13,in progress 99.3%
+viBeginFrame__9CDeviceGXFv,cursor-agent,2026-07-13,FULL_MATCH via lbl_eu_806656A0 SDA symbol
 setCurrent__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH
 setRect__5CViewFRCQ22ml7CRect16,cursor-agent,2026-07-13,FULL_MATCH
+wkStandbyLogin__5CGameFv,cursor-agent,2026-07-13,100% FULL_MATCH u32 shift narrow height
+func_80459270__17CViewRectDataCoreFv,cursor-agent,2026-07-13,verified FULL_MATCH US
+func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16,cursor-agent,2026-07-13,verified FULL_MATCH US
+func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16,cursor-agent,2026-07-13,verified FULL_MATCH US
+setDisp__5CViewFbb,cursor-agent,2026-07-13,FULL_MATCH
+getSplitLine__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH
+setSplitLine__5CViewFs,cursor-agent,2026-07-13,FULL_MATCH
+Move__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,FULL_MATCH via lbl_eu_80663E28 + func_eu error msg relocs
+copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl,cursor-agent,2026-07-13,FULL_MATCH
+wkStandbyLogout__5CGameFv,cursor-agent,2026-07-13,FULL_MATCH verified
+updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad,cursor-agent,2026-07-13,FULL_MATCH lbl_eu_80667EB0 deadzone
+wkUpdate__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH per-gate scoped locals
+getInstance__Q22ml6MTRandFv,cursor-agent,2026-07-13,99.8% CODE_MATCH; @GUARD@ fixed via lbl_eu_80665580 s8 guard; instance_806561E0 suffix is decomp-toolkit split artifact
+updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad,cursor-agent,2026-07-13,FULL_MATCH via direct extern lbl_eu_80667EB0 deadzone compare (0 byte diff)
+pssSetFocus__5CProcFv,cursor-agent,2026-07-13,91.8% HIGH_MATCH; inlined pssGetView walk+type check; regalloc gap r3=this vs walk + 3-lwz reload
+pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-13,wkReplaceHasChild(param3) + pssMakeClientRect schedule
+pssDetachView__5CProcFUl,cursor-agent,2026-07-13,99.97% CODE_MATCH; vtable detachRenderWork 0xB4 vs retail 0xB0
+GameMain__5CGameFv,cursor-agent,2026-07-13,100% insn match verify cycle
+update__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,pushing 99.6%→FULL_MATCH; 2 missing lfs before fabs at +0x604/+0x654
+setCurrent__9CViewRootFP5CView,cursor-agent,2026-07-13,P0 render-critical nested view focus
+copyEfb__9CDeviceGXFPv,cursor-agent,2026-07-13,99.9% CODE_MATCH; 0 byte diff; 1 reloc @9233 vs lbl_eu_8066A440 at +0xF8
+getFullScreenView__9CViewRootFv,cursor-agent,2026-07-13,P0 desktop child walk + fullscreen rect gate
+drawFrame__9CDeviceGXFv,cursor-agent,2026-07-13,verified FULL_MATCH US lbl_eu_806656A0 + lbl_eu_80663754 SDA relocs
+checkForControllerError__Q22cf9CfPadTaskFb,cursor-agent,2026-07-13,verified FULL_MATCH US lbl_eu_80663E28 bit28
+viAfterDrawDone__9CDeviceGXFv,cursor-agent,2026-07-13,P0 finalization/synchronization ~99.4% CODE_MATCH
+randFloat__Q22ml6MTRandFv,cursor-agent,2026-07-13,verified FULL_MATCH US; extern lbl_eu pools + postprocess @2856 rename
+create__9CViewRootFP11CWorkThread,cursor-agent,2026-07-13,P0 view root singleton allocation + pool init
+create__Q22cf9CfPadTaskFP8CProcess,cursor-agent,2026-07-13,99.7% CODE_MATCH; 4 vtable reloc gaps lbl_eu_80533D08/80533C90 vs __vt__*
+renderView__9CViewRootFv,cursor-agent,2026-07-13,P0 root child walk + CView render dispatch
+attachRenderWork__5CViewFP11CWorkThread,cursor-agent,2026-07-13,P0 matching attachRenderWork

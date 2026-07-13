@@ -7,9 +7,13 @@
 namespace nw4r {
 namespace ut {
 
+extern "C" detail::RuntimeTypeInfo lbl_eu_80665548;
+
 class FileStream : public IOStream {
 public:
-    NW4R_UT_RTTI_DECL(FileStream);
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
+        return &lbl_eu_80665548;
+    }
 
     enum SeekOrigin { SEEK_ORIGIN_BEG, SEEK_ORIGIN_CUR, SEEK_ORIGIN_END };
 

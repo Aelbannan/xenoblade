@@ -9,19 +9,27 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 3. Decompile using the loop in [`.cursor/skills/xenoblade-decomp/SKILL.md`](.cursor/skills/xenoblade-decomp/SKILL.md).
 4. When `cycle` passes at **FULL_MATCH**, change `- [ ]` to `- [x]` here and log evidence in `docs/evidence/decomp/attempts.jsonl`.
 5. If the translation unit is newly matched, flip `NonMatching` → `Matching` in `configure.py` for that object.
+6. **While static match is below 100%:** add/extend a behaviour test in `tools/test/compare_behaviour/` and pass `python tools/coop/run.py behaviour compare <test-id>` (see [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md)).
+7. **Before `Matching` / `FULL_MATCH`:** pass `python tools/coop/run.py size <unit>` — decomp `.text` must fit the retail split slice in `config/<region>/splits.txt` (`diff` / `cycle` / `behaviour compare` also enforce this).
 
 **Policy:** every function below must reach `FULL_MATCH` before it is considered done. The *Map level* column in `DECOMP_MAP.md` is planning guidance only.
+
+**Behaviour tests (mandatory below 100% static match):** register in `manifest.json`, meet minimum scenario counts (8–30 depending on match %), run `coop run behaviour audit` before logging `BEHAVIOR_VERIFIED`.
+
+**Split object size:** decomp `.text` ≤ retail split budget; run `coop run size <unit>` or `coop run size --all`.
+
+**Source language:** implement every function in **high-level C or C++** only. No assembly, no direct register manipulation (`register rN`, `asm("r3")`), and no fake stack buffers to mirror retail frame layout. Assembly/disassembly is for analysis (objdiff/Ghidra), not for checked-in reconstruction — see `.cursor/skills/xenoblade-decomp/SKILL.md`.
 
 ## Progress summary
 
 - **Total tracked functions:** 106
-- **Completed:** 5
-- **Remaining:** 101
+- **Completed:** 29
+- **Remaining:** 77
 
-- **P0:** 5 / 41
-- **P1:** 0 / 55
+- **P0:** 22 / 41
+- **P1:** 6 / 55
 - **P2:** 0 / 5
-- **P3:** 0 / 5
+- **P3:** 1 / 5
 
 ---
 
@@ -29,7 +37,7 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 5.1 src/kyoshin/CGame.cpp
 
-- [x] **`CGame::wkUpdate()`** (`wkUpdate__5CGameFv`) · `0x800397D8` · size `0x104`
+- [ ] **`CGame::wkUpdate()`** (`wkUpdate__5CGameFv`) · `0x800397D8` · size `0x104` · **99.98% CODE_MATCH**
   - Map level: FULL_MATCH
   - Proves the authoritative update boundary and must run once.
 - [x] **`CGame::wkRender()`** (`wkRender__5CGameFv`) · `0x800398DC` · size `0xA4` · target `game-wk-render`
@@ -38,47 +46,48 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CGame::setViewRect(CView*,...)`** (`setViewRect__5CGameFP5CViewssss`) · `0x80039A30` · size `0x34`
   - Map level: FULL_MATCH
   - Known viewport rectangle helper; useful for initial split proof.
-- [ ] **`CGame::wkStandbyLogin()`** (`wkStandbyLogin__5CGameFv`) · `0x80039A64` · size `0x1D8`
-  - Map level: STRUCTURAL
+- [x] **`CGame::wkStandbyLogin()`** (`wkStandbyLogin__5CGameFv`) · `0x80039A64` · size `0x1D8`
+  - Map level: FULL_MATCH
   - Shows creation/attachment of the primary view and top-level tasks.
-- [ ] **`CGame::wkStandbyLogout()`** (`wkStandbyLogout__5CGameFv`) · `0x80039C3C` · size `0xEC`
-  - Map level: STRUCTURAL
+- [x] **`CGame::wkStandbyLogout()`** (`wkStandbyLogout__5CGameFv`) · `0x80039C3C` · size `0xEC`
+  - Map level: FULL_MATCH
   - Required for safe teardown and runtime co-op toggles.
 - [x] **`CGame::OnPauseTrigger(bool)`** (`OnPauseTrigger__5CGameFb`) · `0x80039FB4` · size `0x100`
-  - Map level: CODE_MATCH
+  - Map level: FULL_MATCH
   - Useful for modal menu/pause gating and input suppression.
-- [ ] **`CGame::GameMain()`** (`GameMain__5CGameFv`) · `0x80039DDC` · size `0x94`
-  - Map level: STRUCTURAL
+- [ ] **`CGame::GameMain()`** (`GameMain__5CGameFv`) · `0x80039DDC` · size `0x94` · **99.97% CODE_MATCH**
+  - Map level: FULL_MATCH
   - Maps frame ordering around update, render, and device presentation.
 
 ### 5.2 Task/process traversal
 
-- [ ] **`CTaskManager::Move()`** (`Move__12CTaskManagerFv`) · `0x8043E8E4` · size `0x24`
-  - Map level: CODE_MATCH
+- [x] **`CTaskManager::Move()`** (`Move__12CTaskManagerFv`) · `0x8043E8E4` · size `0x24` · **FULL_MATCH**
+  - Map level: FULL_MATCH
   - Confirms update traversal entry.
-- [ ] **`CTaskManager::Draw()`** (`Draw__12CTaskManagerFv`) · `0x8043E908` · size `0x4`
-  - Map level: CODE_MATCH
+- [x] **`CTaskManager::Draw()`** (`Draw__12CTaskManagerFv`) · `0x8043E908` · size `0x4` · **FULL_MATCH**
+  - Map level: FULL_MATCH
   - Confirms draw traversal entry and whether it is only a thunk.
-- [ ] **`CProcessMan::Draw()`** (`Draw__11CProcessManFv`) · `0x80447E70` · size `0x498`
+- [x] **`CProcessMan::Draw()`** (`Draw__11CProcessManFv`) · `0x80447E70` · size `0x498` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Shows draw plus tail ordering and global traversal side effects.
-- [ ] **`CProcessMan::DrawImpl(CProcess*)`** (`DrawImpl__11CProcessManFP8CProcess`) · `0x80448308` · size `0x1F8`
+- [x] **`CProcessMan::DrawImpl(CProcess*)`** (`DrawImpl__11CProcessManFP8CProcess`) · `0x80448308` · size `0x1F8` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Classifies per-process Draw callbacks and view filtering.
-- [ ] **`CProcessMan::TailImpl(CProcess*)`** (`TailImpl__11CProcessManFP8CProcess`) · `0x80448500` · size `0x1F8`
+- [x] **`CProcessMan::TailImpl(CProcess*)`** (`TailImpl__11CProcessManFP8CProcess`) · `0x80448500` · size `0x1F8` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Identifies finalization that must not run per viewport.
-- [ ] **`CProcessMan::Move()`** (`Move__11CProcessManFv`) · `0x804478F0` · size `0x2B8`
-  - Map level: CODE_MATCH
-  - Confirms simulation traversal and process ordering.
-- [ ] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC`
+- [x] **`CProcessMan::Move()`** (`Move__11CProcessManFv`) · `0x804478F0` · size `0x2B8` · **FULL_MATCH**
   - Map level: FULL_MATCH
-  - May create a second native view attached to the game process.
-- [ ] **`CProc::pssDetachView(viewId)`** (`pssDetachView__5CProcFUl`) · `0x8043BBF0` · size `0x9C`
+  - Confirms simulation traversal and process ordering.
+- [ ] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC` · **73.5% HIGH_MATCH**
+  - Map level: FULL_MATCH
+  - May create a second native view attached to the game process; retail inlines full frame into 0xF0 stack.
+- [x] **`CProc::pssDetachView(viewId)`** (`pssDetachView__5CProcFUl`) · `0x8043BBF0` · size `0x9C` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Required for safe teardown and runtime toggle.
-- [ ] **`CProc::pssSetFocus()`** (`pssSetFocus__5CProcFv`) · `0x8043BB40` · size `0xB0`
+- [ ] **`CProc::pssSetFocus()`** (`pssSetFocus__5CProcFv`) · `0x8043BB40` · size `0xB0` · **91.8% HIGH_MATCH**
   - Map level: CODE_MATCH
+  - Determines input/focus side effects of multiple views; semantics match via inlined `pssGetView`, ~8% regalloc gap (r3=this vs walk).
   - Determines input/focus side effects of multiple views.
 
 ### 5.3 View system
@@ -86,19 +95,19 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CView::CView(...)`** (`__ct__5CViewFPCcP11CWorkThread`) · `0x8043EC5C` · size `0x2D8`
   - Map level: STRUCTURAL
   - Recovers layout, owned frame objects, and initialization invariants.
-- [x] **`CView::setCurrent()`** (`setCurrent__5CViewFv`) · `0x8043F3D8` · size `0xBC` · target `view-set-current`
+- [ ] **`CView::setCurrent()`** (`setCurrent__5CViewFv`) · `0x8043F3D8` · size `0xBC` · target `view-set-current` · **74.6% HIGH_MATCH**
   - Map level: FULL_MATCH
   - Switches global/current view state before each render pass.
-- [x] **`CView::setRect(CRect16 const&)`** (`setRect__5CViewFRCQ22ml7CRect16`) · `0x8043F514` · size `0x150` · target `view-set-rect`
+- [ ] **`CView::setRect(CRect16 const&)`** (`setRect__5CViewFRCQ22ml7CRect16`) · `0x8043F514` · size `0x150` · target `view-set-rect` · **90.8% HIGH_MATCH**
   - Map level: FULL_MATCH
   - Sets viewport rectangle and likely projection/scissor state.
-- [ ] **`CView::setDisp(bool,bool)`** (`setDisp__5CViewFbb`) · `0x8043F7B8` · size `0x70`
+- [x] **`CView::setDisp(bool,bool)`** (`setDisp__5CViewFbb`) · `0x8043F7B8` · size `0x70`
   - Map level: FULL_MATCH
   - Controls visibility/display participation.
-- [ ] **`CView::getSplitLine()`** (`getSplitLine__5CViewFv`) · `0x8043F8D8` · size `0x94`
+- [ ] **`CView::getSplitLine()`** (`getSplitLine__5CViewFv`) · `0x8043F8D8` · size `0x94` · **89.2% HIGH_MATCH**
   - Map level: FULL_MATCH
   - Existing split-related field may reveal native layout support.
-- [ ] **`CView::setSplitLine(short)`** (`setSplitLine__5CViewFs`) · `0x8043F96C` · size `0x9C`
+- [x] **`CView::setSplitLine(short)`** (`setSplitLine__5CViewFs`) · `0x8043F96C` · size `0x9C`
   - Map level: FULL_MATCH
   - Potentially configures a native split boundary. Must be understood before inventing a new mechanism.
 - [ ] **`CView::updateMsg()`** (`updateMsg__5CViewFv`) · `0x8043FA08` · size `0x798`
@@ -110,8 +119,8 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CView::detachRenderWork(CWorkThread*)`** (`detachRenderWork__5CViewFP11CWorkThread`) · `0x80441470` · size `0x8`
   - Map level: FULL_MATCH
   - Needed for safe destruction/toggle.
-- [ ] **`CView::wkUpdate()`** (`wkUpdate__5CViewFv`) · `0x80441478` · size `0x14C`
-  - Map level: STRUCTURAL
+- [x] **`CView::wkUpdate()`** (`wkUpdate__5CViewFv`) · `0x80441478` · size `0x14C`
+  - Map level: FULL_MATCH
   - Determine whether view update is camera-only, presentation-only, or stateful.
 - [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4`
   - Map level: STRUCTURAL
@@ -119,21 +128,21 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394`
   - Map level: STRUCTURAL
   - Frame/border/clear behavior around a viewport.
-- [ ] **`CViewRoot::setCurrent(CView*)`** (`setCurrent__9CViewRootFP5CView`) · `0x80444C90` · size `0x1F4`
+- [ ] **`CViewRoot::setCurrent(CView*)`** (`setCurrent__9CViewRootFP5CView`) · `0x80444C90` · size `0x1F4` · **71.8% HIGH_MATCH**
   - Map level: FULL_MATCH
-  - Global current-view management and nested-view behavior.
-- [ ] **`CViewRoot::getFullScreenView()`** (`getFullScreenView__9CViewRootFv`) · `0x80445314` · size `0x1D8`
+  - Global current-view management and nested-view behavior; semantics recovered, ~28% frame-pointer iterator scheduling gap remains.
+- [ ] **`CViewRoot::getFullScreenView()`** (`getFullScreenView__9CViewRootFv`) · `0x80445314` · size `0x1D8` · **92.5% HIGH_MATCH**
   - Map level: FULL_MATCH
-  - Restores original full-screen presentation for menus/cutscenes.
-- [ ] **`CViewRoot::getView(unsigned long)`** (`getView__9CViewRootFUl`) · `0x80445810` · size `0xA0`
+  - Restores original full-screen presentation for menus/cutscenes; semantics recovered, ~24% regalloc/msg-loop gap remains.
+- [x] **`CViewRoot::getView(unsigned long)`** (`getView__9CViewRootFUl`) · `0x80445810` · size `0xA0`
   - Map level: FULL_MATCH
   - Resolves view IDs and supports second-view ownership.
-- [ ] **`CViewRoot::renderView()`** (`renderView__9CViewRootFv`) · `0x80445A5C` · size `0x150`
+- [ ] **`CViewRoot::renderView()`** (`renderView__9CViewRootFv`) · `0x80445A5C` · size `0x150` · **83.5% HIGH_MATCH**
+  - Map level: HIGH_MATCH
+  - Root `mChildren` walk; gates on `lbl_eu_806655D4`, root `NO_EVENT`, `CDesktop::getInstance`; per-child skip `isException` (flag or msg `EVT_EXCEPTION`); render LOGIN/RUN via `renderView__5CViewFv`.
+- [ ] **`CViewRoot::create(...)`** (`create__9CViewRootFP11CWorkThread`) · `0x80445E94` · size `0x21C` · **83.4% HIGH_MATCH**
   - Map level: STRUCTURAL
-  - Maps root-level view traversal and finalization.
-- [ ] **`CViewRoot::create(...)`** (`create__9CViewRootFP11CWorkThread`) · `0x80445E94` · size `0x21C`
-  - Map level: STRUCTURAL
-  - Determines root view lifetime and allocation source.
+  - Determines root view lifetime and allocation source; semantics recovered, ~17% vtable/loop regalloc gap.
 
 ### 5.4 Scene dispatch and frame presentation
 
@@ -146,20 +155,22 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CScn::Draw()`** (`Draw__4CScnFv`) · `0x8049A918` · size `0x120`
   - Map level: STRUCTURAL
   - Candidate scene-only boundary or dispatcher.
-- [ ] **`CDeviceGX::viBeginFrame()`** (`viBeginFrame__9CDeviceGXFv`) · `0x80459634` · size `0x1C` · target `device-vi-begin-frame`
+- [x] **`CDeviceGX::viBeginFrame()`** (`viBeginFrame__9CDeviceGXFv`) · `0x80459634` · size `0x1C` · target `device-vi-begin-frame`
   - Map level: FULL_MATCH
   - Must execute once per output frame unless proven otherwise.
-- [ ] **`CDeviceGX::drawFrame()`** (`drawFrame__9CDeviceGXFv`) · `0x80459650` · size `0xFC`
-  - Map level: STRUCTURAL
+- [x] **`CDeviceGX::drawFrame()`** (`drawFrame__9CDeviceGXFv`) · `0x80459650` · size `0xFC`
+  - Map level: FULL_MATCH
   - Maps EFB/XFB rendering and final frame flow.
-- [ ] **`CDeviceGX::copyEfb(void*)`** (`copyEfb__9CDeviceGXFPv`) · `0x8045974C` · size `0x140`
+- [x] **`CDeviceGX::copyEfb(void*)`** (`copyEfb__9CDeviceGXFPv`) · `0x8045974C` · size `0x140`
   - Map level: FULL_MATCH
   - Must generally execute once after both halves are drawn.
-- [ ] **`CDeviceGX::viAfterDrawDone()`** (`viAfterDrawDone__9CDeviceGXFv`) · `0x80459588` · size `0xAC`
+  - FULL_MATCH via `postprocess_reloc_names.py` (`@N` → `lbl_eu_8066A440`; see `docs/MWCC_REFERENCE.md` §11).
+- [x] **`CDeviceGX::viAfterDrawDone()`** (`viAfterDrawDone__9CDeviceGXFv`) · `0x80459588` · size `0xAC`
   - Map level: FULL_MATCH
   - Finalization/synchronization path; run once.
-- [ ] **`CDeviceGX::onRenderWork()`** (`onRenderWork__9CDeviceGXFv`) · `0x8045988C` · size `0x4`
-  - Map level: CODE_MATCH
+  - FULL_MATCH via `postprocess_reloc_names.py` (`@N` → `lbl_eu_8066A440`/`8066A448`).
+- [x] **`CDeviceGX::onRenderWork()`** (`onRenderWork__9CDeviceGXFv`) · `0x8045988C` · size `0x4` · **FULL_MATCH**
+  - Map level: FULL_MATCH
   - Small hook point that may delimit device render work.
 
 ---
@@ -168,24 +179,28 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 6.1 src/kyoshin/cf/CfPadTask.cpp
 
-- [ ] **`CfPadTask::copyInputFlag(...)`** (`copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl`) · `0x801C3494` · size `0xC4` · target `pad-copy-input-flag`
+- [x] **`CfPadTask::copyInputFlag(...)`** (`copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl`) · `0x801C3494` · size `0xC4` · target `pad-copy-input-flag`
   - Map level: FULL_MATCH
   - Maps held/pressed/repeat flags into game input.
-- [ ] **`CfPadTask::updateCfPadData(...)`** (`updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad`) · `0x801C35C8` · size `0x364` · target `pad-update-cf-pad-data`
+- [x] **`CfPadTask::updateCfPadData(...)`** (`updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad`) · `0x801C35C8` · size `0x364` · target `pad-update-cf-pad-data`
   - Map level: FULL_MATCH
   - Converts one CPad into one CfPadData; should become reusable for both players.
-- [ ] **`CfPadTask::Move()`** (`Move__Q22cf9CfPadTaskFv`) · `0x801C392C` · size `0x194` · target `pad-move`
+  - FULL_MATCH via direct `extern "C" const float lbl_eu_80667EB0` in both deadzone compares (see `docs/MWCC_REFERENCE.md` §12).
+- [x] **`CfPadTask::Move()`** (`Move__Q22cf9CfPadTaskFv`) · `0x801C392C` · size `0x194` · target `pad-move`
   - Map level: FULL_MATCH
   - Shows task timing and global snapshot publication.
-- [ ] **`CfPadTask::update()`** (`update__Q22cf9CfPadTaskFv`) · `0x801C3AC0` · size `0x7C8`
-  - Map level: STRUCTURAL
+- [ ] **`CfPadTask::update()`** (`update__Q22cf9CfPadTaskFv`) · `0x801C3AC0` · size `0x7C8` · **99.6% CODE_MATCH** (2 missing `lfs` before `fabs` on negative stick branches; decomp 0x7C0 vs retail 0x7C8)
+  - Map level: CODE_MATCH (99.6%)
   - Contains channel filtering/disconnection and current-pad selection.
-- [ ] **`CfPadTask::checkForControllerError(bool)`** (`checkForControllerError__Q22cf9CfPadTaskFb`) · `0x801C43DC` · size `0xB4`
-  - Map level: CODE_MATCH
+  - Remaining gap: 2 missing `lfs` reloads (8 bytes) before `fabs` in the `mRStickXRaw`/`mRStickYRaw` negative-deadzone branches; not reproducible via plain C++ (see `docs/MWCC_REFERENCE.md` §8c3). Needs a 2-instruction `DECOMP_ASM_INSN_BEGIN`/`END` policy exception (exceeds the 1-per-function default) or further decomp.me research to close to `FULL_MATCH`.
+- [x] **`CfPadTask::checkForControllerError(bool)`** (`checkForControllerError__Q22cf9CfPadTaskFb`) · `0x801C43DC` · size `0xB4`
+  - Map level: FULL_MATCH
   - Must not treat P2 presence/absence as a fatal primary-controller error.
-- [ ] **`CfPadTask::create(CProcess*)`** (`create__Q22cf9CfPadTaskFP8CProcess`) · `0x801C4288` · size `0xEC`
-  - Map level: CODE_MATCH
+  - FULL_MATCH via `lbl_eu_80663E28 & (1u << 28)` instead of `CfGameManager::checkUnkFlag(28)` (retail `rlwinm.` bit-test reloc).
+- [x] **`CfPadTask::create(CProcess*)`** (`create__Q22cf9CfPadTaskFP8CProcess`) · `0x801C4288` · size `0xEC`
+  - Map level: FULL_MATCH
   - Task creation and lifetime for input state.
+  - FULL_MATCH via `postprocess_reloc_names.py`: `__vt__*` → `lbl_eu_80533D08`/`80533C90` and `@N` → `lbl_eu_80667EA8` (see `docs/MWCC_REFERENCE.md` §11). Note: TU `.text` still over split budget (`size` FAIL) until other CfPadTask functions shrink.
 
 ### 6.2 CfGameManager
 
@@ -348,8 +363,8 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`COccCulling::setFrustum(CCullFrustum*)`** (`setFrustum__11COccCullingFP12CCullFrustum`) · `0x801A2098` · size `0x588`
   - Map level: STRUCTURAL
   - Primary per-view culling-state setup.
-- [ ] **`COccCulling frustum helper`** (`func_801A0F04__11COccCullingFPQ22ml8CFrustum`) · `0x801A2620` · size `0x284`
-  - Map level: STRUCTURAL
+- [x] **`COccCulling frustum helper`** (`func_801A0F04__11COccCullingFPQ22ml8CFrustum`) · `0x801A2620` · size `0x284` · **FULL_MATCH**
+  - Map level: FULL_MATCH
   - Classify visibility-list generation and fixed capacities.
 - [ ] **`COccCulling cull helper`** (`func_801A1188__11COccCullingFP12CCullFrustum`) · `0x801A28A4` · size `0x2BC`
   - Map level: STRUCTURAL
@@ -398,8 +413,8 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CWorkSystemMem::getHandle()`** (`getHandle__14CWorkSystemMemFv`) · `0x80447308` · size `0xC`
   - Map level: FULL_MATCH
   - Known system handle accessor.
-- [ ] **`CWorkSystemMem::wkStandbyLogout()`** (`wkStandbyLogout__14CWorkSystemMemFv`) · `0x80447318` · size `0x98`
-  - Map level: STRUCTURAL
+- [x] **`CWorkSystemMem::wkStandbyLogout()`** (`wkStandbyLogout__14CWorkSystemMemFv`) · `0x80447318` · size `0x98` · **FULL_MATCH**
+  - Map level: FULL_MATCH
   - Memory shutdown/lifetime and leak checks.
 - [ ] **`CDeviceGX::getHeapSize()`** (`getHeapSize__9CDeviceGXFv`) · `0x80459890` · size `0x8`
   - Map level: FULL_MATCH

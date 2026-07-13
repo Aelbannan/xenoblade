@@ -2,11 +2,11 @@
 #include "monolib/core.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-static PluginFuncData sPluginPadFuncs[] = {
-    {"get", pad_get},
-    {"enable", pad_enable},
-    {NULL,NULL}
-};
+extern "C" {
+    extern char lbl_eu_804FB1D8[];
+    extern PluginFuncData lbl_eu_80526690[];
+    extern u32 lbl_eu_80663E28;
+}
 
 int pad_get(VMThread* pThread) {
     ButtonFlagsType type;
@@ -44,21 +44,19 @@ int pad_enable(VMThread* pThread) {
     u32 enableFlags = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     BOOL enable = vmArgBoolGet(3, vmArgPtrGet(pThread, 2));
     
-    if (!(cf::CfGameManager::checkUnkFlag(24))) {
-        //You can just use the original variable...?
+    if (!(lbl_eu_80663E28 & 0x01000000)) {
         bool dontEnable = enable == false;
         cf::CfGameManager::enablePadFlags(enableFlags, !dontEnable);
 
-        //TODO: Probably an inline?
-        u32 newFlags = cf::CfGameManager::sUnkFlags & ~(1 << 17);
+        u32 newFlags = lbl_eu_80663E28 & ~(1 << 17);
         if (dontEnable) {
-            newFlags = cf::CfGameManager::sUnkFlags | (1 << 17);
+            newFlags = lbl_eu_80663E28 | (1 << 17);
         }
-        cf::CfGameManager::sUnkFlags = newFlags;
+        lbl_eu_80663E28 = newFlags;
     }
     return 0;
 }
 
 void pluginPadRegist(){
-    vmPluginRegist("pad", sPluginPadFuncs);
+    vmPluginRegist(lbl_eu_804FB1D8, lbl_eu_80526690);
 }

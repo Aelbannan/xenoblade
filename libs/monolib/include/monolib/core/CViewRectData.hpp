@@ -3,12 +3,12 @@
 #include <types.h>
 #include "monolib/math.hpp"
 
-// UnkClass_8043C59C: viewport rectangle state at CView::unk1C8 (size 0x14).
-class CViewRectData {
+// CViewRectDataCore: viewport rectangle state at CView::unk1C8 (size 0x14).
+class CViewRectDataCore {
 public:
-    void func_80459270();
-    void func_804592F0(const ml::CRect16& rect);
-    void func_80459384(const ml::CRect16& rect);
+    CViewRectDataCore* func_80459270();
+    void func_804592F0(const ml::CPnt16& size);
+    void func_80459384(const ml::CPnt16& maxSize);
 
     s16 unk0;
     s16 unk2;

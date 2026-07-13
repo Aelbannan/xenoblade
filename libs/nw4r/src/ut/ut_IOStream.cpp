@@ -1,9 +1,9 @@
 #include <nw4r/ut.h>
 
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665540(NULL);
+
 namespace nw4r {
 namespace ut {
-
-NW4R_UT_RTTI_DEF_BASE(IOStream);
 
 bool IOStream::ReadAsync(void* pDst, u32 size, StreamCallback pCallback,
                          void* pCallbackArg) {

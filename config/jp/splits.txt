@@ -6363,7 +6363,7 @@ monolib/src/core/CException.cpp:
 	.sbss       start:0x80667F98 end:0x80667FA8
 	.sdata2     start:0x8066CC40 end:0x8066CC88
 
-monolib/src/core/UnkClass_8043C59C.cpp:
+monolib/src/core/CViewRectDataCore.cpp:
 	extab       start:0x8001D470 end:0x8001D478
 	extabindex  start:0x800350C0 end:0x800350CC
 	.text       start:0x80459270 end:0x80459390

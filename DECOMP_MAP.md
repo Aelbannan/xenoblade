@@ -223,7 +223,7 @@ This is the highest-value P0 decompilation slice. The first implementation may u
 | `CView::updateMsg()` | `updateMsg__5CViewFv` | `0x8043FA08` | `0x798` | Classify per-frame view messages and side effects. | **STRUCTURAL** |
 | `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **FULL_MATCH** |
 | `CView::detachRenderWork(CWorkThread*)` | `detachRenderWork__5CViewFP11CWorkThread` | `0x80441470` | `0x8` | Needed for safe destruction/toggle. | **FULL_MATCH** |
-| `CView::wkUpdate()` | `wkUpdate__5CViewFv` | `0x80441478` | `0x14C` | Determine whether view update is camera-only, presentation-only, or stateful. | **STRUCTURAL** |
+| `CView::wkUpdate()` | `wkUpdate__5CViewFv` | `0x80441478` | `0x14C` | Determine whether view update is camera-only, presentation-only, or stateful. | **FULL_MATCH** |
 | `CView::renderView()` | `renderView__5CViewFv` | `0x804415C4` | `0xCB4` | Primary candidate for a repeatable per-view render pass. | **STRUCTURAL** |
 | `CViewFrame::render()` | `render__10CViewFrameFv` | `0x80442CDC` | `0x394` | Frame/border/clear behavior around a viewport. | **STRUCTURAL** |
 | `CViewRoot::setCurrent(CView*)` | `setCurrent__9CViewRootFP5CView` | `0x80444C90` | `0x1F4` | Global current-view management and nested-view behavior. | **FULL_MATCH** |
@@ -257,7 +257,7 @@ libs/nw4r/src/g3d/g3d_workmem.cpp
 | `CScn::removeRenderCB(...)` | `removeRenderCB__4CScnFP10IScnRender` | `0x80499FC8` | `0x78` | Required to add/remove split callbacks safely. | **FULL_MATCH** |
 | `CScn::Draw()` | `Draw__4CScnFv` | `0x8049A918` | `0x120` | Candidate scene-only boundary or dispatcher. | **STRUCTURAL** |
 | `CDeviceGX::viBeginFrame()` | `viBeginFrame__9CDeviceGXFv` | `0x80459634` | `0x1C` | Must execute once per output frame unless proven otherwise. | **FULL_MATCH** |
-| `CDeviceGX::drawFrame()` | `drawFrame__9CDeviceGXFv` | `0x80459650` | `0xFC` | Maps EFB/XFB rendering and final frame flow. | **STRUCTURAL** |
+| `CDeviceGX::drawFrame()` | `drawFrame__9CDeviceGXFv` | `0x80459650` | `0xFC` | Maps EFB/XFB rendering and final frame flow. | **FULL_MATCH** |
 | `CDeviceGX::copyEfb(void*)` | `copyEfb__9CDeviceGXFPv` | `0x8045974C` | `0x140` | Must generally execute once after both halves are drawn. | **FULL_MATCH** |
 | `CDeviceGX::viAfterDrawDone()` | `viAfterDrawDone__9CDeviceGXFv` | `0x80459588` | `0xAC` | Finalization/synchronization path; run once. | **FULL_MATCH** |
 | `CDeviceGX::onRenderWork()` | `onRenderWork__9CDeviceGXFv` | `0x8045988C` | `0x4` | Small hook point that may delimit device render work. | **CODE_MATCH** |
@@ -292,7 +292,7 @@ kyoshin/cf/CtrlPc.cpp
 | `CfPadTask::updateCfPadData(...)` | `updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad` | `0x801C35C8` | `0x364` | Converts one CPad into one CfPadData; should become reusable for both players. | **FULL_MATCH** |
 | `CfPadTask::Move()` | `Move__Q22cf9CfPadTaskFv` | `0x801C392C` | `0x194` | Shows task timing and global snapshot publication. | **FULL_MATCH** |
 | `CfPadTask::update()` | `update__Q22cf9CfPadTaskFv` | `0x801C3AC0` | `0x7C8` | Contains channel filtering/disconnection and current-pad selection. | **STRUCTURAL** |
-| `CfPadTask::checkForControllerError(bool)` | `checkForControllerError__Q22cf9CfPadTaskFb` | `0x801C43DC` | `0xB4` | Must not treat P2 presence/absence as a fatal primary-controller error. | **CODE_MATCH** |
+| `CfPadTask::checkForControllerError(bool)` | `checkForControllerError__Q22cf9CfPadTaskFb` | `0x801C43DC` | `0xB4` | Must not treat P2 presence/absence as a fatal primary-controller error. | **FULL_MATCH** |
 | `CfPadTask::create(CProcess*)` | `create__Q22cf9CfPadTaskFP8CProcess` | `0x801C4288` | `0xEC` | Task creation and lifetime for input state. | **CODE_MATCH** |
 
 

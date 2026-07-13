@@ -34,6 +34,18 @@
       "required_level": "FULL_MATCH"
     },
     {
+      "id": "pad-update",
+      "tier": "P1",
+      "milestone": "input",
+      "function": "CfPadTask::update",
+      "symbol": "update__Q22cf9CfPadTaskFv",
+      "address": "0x801C3AC0",
+      "source": "src/kyoshin/cf/CfPadTask.cpp",
+      "unit": "kyoshin/cf/CfPadTask",
+      "required_level": "FULL_MATCH",
+      "notes": "99.6% CODE_MATCH; 2 missing lfs before fabs on negative stick arms (+0x604/+0x654)."
+    },
+    {
       "id": "view-set-current",
       "tier": "P0",
       "milestone": "render",
@@ -56,6 +68,17 @@
       "unit": "monolib/src/core/CView",
       "required_level": "FULL_MATCH",
       "notes": "Source file not in public tree yet."
+    },
+    {
+      "id": "view-attach-render-work",
+      "tier": "P0",
+      "milestone": "render",
+      "function": "CView::attachRenderWork",
+      "symbol": "attachRenderWork__5CViewFP11CWorkThread",
+      "address": "0x804401A0",
+      "source": "libs/monolib/src/core/CView.cpp",
+      "unit": "monolib/src/core/CView",
+      "required_level": "FULL_MATCH"
     },
     {
       "id": "game-wk-render",

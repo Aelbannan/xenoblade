@@ -7,9 +7,13 @@
 namespace nw4r {
 namespace ut {
 
+extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
+
 class IOStream {
 public:
-    NW4R_UT_RTTI_DECL(IOStream);
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
+        return &lbl_eu_80665540;
+    }
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
@@ -35,15 +39,9 @@ public:
     virtual bool CanRead() const = 0;  // at 0x2C
     virtual bool CanWrite() const = 0; // at 0x30
 
-    virtual u32 GetOffsetAlign() const {
-        return 1;
-    } // at 0x34
-    virtual u32 GetSizeAlign() const {
-        return 1;
-    } // at 0x38
-    virtual u32 GetBufferAlign() const {
-        return 1;
-    } // at 0x3C
+    virtual u32 GetOffsetAlign() const; // at 0x34
+    virtual u32 GetSizeAlign() const; // at 0x38
+    virtual u32 GetBufferAlign() const; // at 0x3C
 
     bool IsAvailable() const {
         return mAvailable;

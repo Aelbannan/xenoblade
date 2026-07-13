@@ -52,6 +52,7 @@ public:
     float unk224;
     int unk228;
     u32 unk22C;
+    s16 unk230;
 
 private:
     static const int MAX_CHILD = 8;

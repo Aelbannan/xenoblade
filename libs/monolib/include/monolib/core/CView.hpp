@@ -13,6 +13,15 @@ class CFontLayer {
     virtual ~CFontLayer();
 };
 
+// Context ring slot written by setCurrent (0x24 bytes).
+struct CViewContextRingEntry {
+    u32 tag;
+    u8 payload[0x1C];
+    s16 unk54;
+    u8 unk56Hi;
+    u8 pad;
+};
+
 struct CView_UnkStruct1 {
     s16 unk0;
     s16 unk2;
@@ -26,8 +35,6 @@ struct CView_UnkStruct1 {
     s16 unk12;
 };
 
-// Kept for compatibility; CView uses CViewRectData at unk1C8.
-
 //size: 0x470
 class CView : public CWorkThread, public CFontLayer {
 public:
@@ -36,8 +43,10 @@ public:
     
     DECL_WORKTHREAD_CREATE(CView);
 
+    virtual void CView_UnkVirtualFunc0();
     virtual void CView_UnkVirtualFunc1();
     virtual void detachRenderWork(CWorkThread* pThread);
+    virtual void wkUpdate();
     virtual void CView_UnkVirtualFunc3();
     virtual void CView_UnkVirtualFunc4();
     virtual void CView_UnkVirtualFunc5();
@@ -49,8 +58,10 @@ public:
     static void setDefaultFrameColor(const ml::CCol4& color);
     static CView* getCurrentView();
     void setRect(const ml::CRect16& rect);
-    void attachRenderWork(CWorkThread* pThread);
+    bool attachRenderWork(CWorkThread* pThread);
     void setDisp(bool r4, bool r5);
+    s16 getSplitLine();
+    void setSplitLine(s16 line);
     void setCurrent();
 
     static ml::CCol4 sFrameColor;
@@ -82,9 +93,10 @@ public:
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CViewRectData unk1C8;
+    CViewRectDataCore unk1C8;
     CViewFrame unk1DC;
-    u8 unk238[0x278 - 0x238];
+    reslist<CWorkThread*> unk238; //0x238 - checked empty() in wkUpdate
+    u8 unk258[0x278 - 0x258];
     u32 unk278;
     u8 unk27C[0x284 - 0x27C];
     u8 mContextRing[0x3EC - 0x284];

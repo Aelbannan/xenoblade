@@ -1,10 +1,10 @@
 #include "kyoshin/plugin/pluginMath.hpp"
 #include "monolib/math.hpp"
 
-static PluginFuncData sPluginMathFuncs[] = {
-    {"random", math_random},
-    {NULL,NULL}
-};
+extern "C" {
+    extern char lbl_eu_804FB050[];
+    extern PluginFuncData lbl_eu_805261B8[];
+}
 
 int math_random(VMThread* pThread) {
     int min = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -18,5 +18,5 @@ int math_random(VMThread* pThread) {
 }
 
 void pluginMathRegist(){
-    vmPluginRegist("math", sPluginMathFuncs);
+    vmPluginRegist(lbl_eu_804FB050, lbl_eu_805261B8);
 }

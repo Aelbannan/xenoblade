@@ -34,7 +34,5 @@ namespace ml {
 
         CPnt16 mPos; //0x0
         CPnt16 mSize; //0x4
-
-        static CRect16 zero;
     };
 } //namespace ml

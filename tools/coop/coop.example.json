@@ -11,5 +11,6 @@
   "objdiff_report_args": [
     "--config",
     "functionRelocDiffs=data_value"
-  ]
+  ],
+  "dolphin": "/Applications/Dolphin.app/Contents/MacOS/Dolphin"
 }

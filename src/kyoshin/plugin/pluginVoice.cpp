@@ -5,6 +5,13 @@
 
 extern reslist<cf::CfObject*>* func_800B6BA4();
 
+extern "C" {
+    extern char lbl_eu_80513988[];
+    extern PluginFuncData lbl_eu_8053B880[];
+    extern float lbl_eu_80669008;
+    extern float lbl_eu_8066900C;
+}
+
 
 int voice_play(VMThread* pThread) {
     int r30 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
@@ -16,7 +23,7 @@ int voice_play(VMThread* pThread) {
         cf::CfObjectPc* object = static_cast<cf::CfObjectPc*>(*it);
         if(object->CActorParam_UnkVirtualFunc138() == 0){
             if(r30 == object->unk8C_3){
-                object->func_800BE898(r27, 0x14, 1.0f, 30.0f);
+                object->func_800BE898(r27, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
                 break;
             }
         }
@@ -25,11 +32,6 @@ int voice_play(VMThread* pThread) {
     return 0;
 }
 
-static PluginFuncData sPluginVoiceFuncs[] = {
-    {"play", voice_play},
-    {NULL,NULL}
-};
-
 void pluginVoiceRegist(){
-    vmPluginRegist("voice", sPluginVoiceFuncs);
+    vmPluginRegist(lbl_eu_80513988, lbl_eu_8053B880);
 }

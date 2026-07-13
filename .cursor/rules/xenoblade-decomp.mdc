@@ -13,4 +13,12 @@ At the **start of every task** in this repository:
 
 **Policy:** all decompilation targets require **`FULL_MATCH`** until the policy in `coop.json` / `PLAN.md` is revised.
 
+**MWCC reference:** read `docs/MWCC_REFERENCE.md` for matching work; **append reusable patterns and breakthroughs** there when you find them (not only in `attempts.jsonl`).
+
+**Source language:** decompilation output is **high-level C/C++ only** — no asm, `.s`, register variables, or stack-offset tricks in `src/**` / `libs/**` (retail asm is reference-only).
+
 When editing `src/**`, `libs/**`, or `configure.py`, run `coop run cycle` or `coop run diff` for the affected unit before claiming a target is complete.
+
+**Split object size:** decomp `.text` must fit the retail split slice (`config/<region>/splits.txt`). Run `python tools/coop/run.py size <unit>` — `diff`, `cycle`, and `behaviour compare` also print a `size:` line and fail when over budget.
+
+**Below 100% static match:** register and pass `python tools/coop/run.py behaviour compare <test-id>` with extensive host scenarios (see `tools/test/compare_behaviour/README.md`). Run `behaviour audit` before claiming `BEHAVIOR_VERIFIED`.

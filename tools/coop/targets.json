@@ -1,0 +1,83 @@
+{
+  "targets": [
+    {
+      "id": "pad-copy-input-flag",
+      "tier": "P1",
+      "milestone": "input",
+      "function": "CfPadTask::copyInputFlag",
+      "symbol": "copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl",
+      "address": "0x801C3494",
+      "source": "src/kyoshin/cf/CfPadTask.cpp",
+      "unit": "kyoshin/cf/CfPadTask",
+      "required_level": "FULL_MATCH"
+    },
+    {
+      "id": "pad-update-cf-pad-data",
+      "tier": "P1",
+      "milestone": "input",
+      "function": "CfPadTask::updateCfPadData",
+      "symbol": "updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad",
+      "address": "0x801C35C8",
+      "source": "src/kyoshin/cf/CfPadTask.cpp",
+      "unit": "kyoshin/cf/CfPadTask",
+      "required_level": "FULL_MATCH"
+    },
+    {
+      "id": "pad-move",
+      "tier": "P1",
+      "milestone": "input",
+      "function": "CfPadTask::Move",
+      "symbol": "Move__Q22cf9CfPadTaskFv",
+      "address": "0x801C392C",
+      "source": "src/kyoshin/cf/CfPadTask.cpp",
+      "unit": "kyoshin/cf/CfPadTask",
+      "required_level": "FULL_MATCH"
+    },
+    {
+      "id": "view-set-current",
+      "tier": "P0",
+      "milestone": "render",
+      "function": "CView::setCurrent",
+      "symbol": "setCurrent__5CViewFv",
+      "address": "0x8043F3D8",
+      "source": null,
+      "unit": null,
+      "required_level": "FULL_MATCH",
+      "notes": "Source file not in public tree yet; trace via Ghidra first."
+    },
+    {
+      "id": "view-set-rect",
+      "tier": "P0",
+      "milestone": "render",
+      "function": "CView::setRect",
+      "symbol": "setRect__5CViewFRCQ22ml7CRect16",
+      "address": "0x8043F514",
+      "source": null,
+      "unit": null,
+      "required_level": "FULL_MATCH",
+      "notes": "Source file not in public tree yet."
+    },
+    {
+      "id": "game-wk-render",
+      "tier": "P0",
+      "milestone": "render",
+      "function": "CGame::wkRender",
+      "symbol": "wkRender__5CGameFv",
+      "address": null,
+      "source": "src/kyoshin/CGame.cpp",
+      "unit": "kyoshin/CGame",
+      "required_level": "FULL_MATCH"
+    },
+    {
+      "id": "device-vi-begin-frame",
+      "tier": "P0",
+      "milestone": "render",
+      "function": "CDeviceGX::viBeginFrame",
+      "symbol": "viBeginFrame__9CDeviceGXFv",
+      "address": "0x80459634",
+      "source": "libs/monolib/src/device/CDeviceGX.cpp",
+      "unit": "monolib/device/CDeviceGX",
+      "required_level": "FULL_MATCH"
+    }
+  ]
+}

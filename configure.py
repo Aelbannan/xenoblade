@@ -27,7 +27,7 @@ from tools.project import (
 )
 
 # Game versions
-DEFAULT_VERSION = 0
+DEFAULT_VERSION = 2
 VERSIONS = [
     "jp",  # 0
     "eu",  # 1

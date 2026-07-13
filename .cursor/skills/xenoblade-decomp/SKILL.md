@@ -1,12 +1,15 @@
 ---
 name: xenoblade-decomp
 description: >-
-  Start matching decompilation on the Xenoblade Chronicles Wii co-op fork.
-  Use when decompiling functions, running the coop runner, objdiff cycles,
-  FULL_MATCH work, DECOMP_MAP targets, or MWCC matching in this repository.
+  Primary agent workflow for the Xenoblade Chronicles Wii co-op decompilation
+  fork. Always read and follow at the start of tasks in this repository when
+  decompiling, matching, editing src/kyoshin or configure.py, running the coop
+  runner, objdiff, DECOMP_MAP targets, or MWCC FULL_MATCH work.
 ---
 
 # Xenoblade decompilation
+
+> **Auto-loaded** via root `AGENTS.md` and `.cursor/rules/xenoblade-decomp.mdc` (`alwaysApply: true`).
 
 ## Before you edit code
 
@@ -108,6 +111,7 @@ Then reconfigure and verify `ninja` still succeeds.
 |------|------|
 | `PLAN.md` | Co-op architecture, agent rules, milestones |
 | `DECOMP_MAP.md` | Function-level decompilation map |
+| `TASKS.md` | Agent checklist — check off at `FULL_MATCH` |
 | `tools/coop/run.py` | Runner CLI |
 | `tools/coop/targets.json` | Curated target queue |
 | `configure.py` | Per-object matching flags and compiler options |

@@ -1,0 +1,16 @@
+---
+description: Auto-load Xenoblade decompilation workflow for this fork
+alwaysApply: true
+---
+
+# Xenoblade decompilation (auto)
+
+At the **start of every task** in this repository:
+
+1. Read `.cursor/skills/xenoblade-decomp/SKILL.md` and follow it.
+2. Consult `PLAN.md` before changing gameplay, render, input, or memory behavior.
+3. Use `tools/coop/run.py` for build/diff/cycle loops — do not improvise a separate pipeline.
+
+**Policy:** all decompilation targets require **`FULL_MATCH`** until the policy in `coop.json` / `PLAN.md` is revised.
+
+When editing `src/**`, `libs/**`, or `configure.py`, run `coop run cycle` or `coop run diff` for the affected unit before claiming a target is complete.

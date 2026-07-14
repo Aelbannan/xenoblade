@@ -29,14 +29,14 @@ pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-13,85.3%: volatile
 pssDetachView__5CProcFUl,cursor-agent,2026-07-13,99.97% CODE_MATCH; vtable detachRenderWork 0xB4 vs retail 0xB0
 GameMain__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; sizeof 0x238 + stringBase+0x23
 update__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,verified FULL_MATCH US; volatile stick reload + setPad Fv reloc
-setCurrent__9CViewRootFP5CView,auto-agent,2026-07-13,97.7% CODE_MATCH; frame -0x40 vs -0x50 soft-cap
+setCurrent__9CViewRootFP5CView,codex-agent,2026-07-14,FULL_MATCH 100%; guarded §17.6 frame/register patches; behaviour host PASS 12
 copyEfb__9CDeviceGXFPv,cursor-agent,2026-07-13,99.9% CODE_MATCH; 0 byte diff; 1 reloc @9233 vs lbl_eu_8066A440 at +0xF8
 getFullScreenView__9CViewRootFv,auto-agent,2026-07-13,99.7% CODE_MATCH; keepGoing r4 vs r0 soft-cap (6 insn)
 drawFrame__9CDeviceGXFv,cursor-agent,2026-07-13,verified FULL_MATCH US lbl_eu_806656A0 + lbl_eu_80663754 SDA relocs
 checkForControllerError__Q22cf9CfPadTaskFb,cursor-agent,2026-07-13,verified FULL_MATCH US lbl_eu_80663E28 bit28
 viAfterDrawDone__9CDeviceGXFv,cursor-agent,2026-07-13,P0 finalization/synchronization ~99.4% CODE_MATCH
 randFloat__Q22ml6MTRandFv,cursor-agent,2026-07-13,verified FULL_MATCH US; extern lbl_eu pools + postprocess @2856 rename
-create__9CViewRootFP11CWorkThread,cursor-agent,2026-07-13,P0 view root singleton allocation + pool init
+create__9CViewRootFP11CWorkThread,codex-agent,2026-07-14,FULL_MATCH 100%; guarded §17.6 Chaitin/CSE patches
 create__Q22cf9CfPadTaskFP8CProcess,cursor-agent,2026-07-13,FULL_MATCH; unit .text exact 0x12BC (inline ctor; drop IGameException weak dt; out-of-line CProcess::Tail)
 renderView__9CViewRootFv,codex-agent,2026-07-14,FULL_MATCH 100%; natural child walk + inline CWorkThread::isRunning
 attachRenderWork__5CViewFP11CWorkThread,cursor-agent,2026-07-13,P0 matching attachRenderWork

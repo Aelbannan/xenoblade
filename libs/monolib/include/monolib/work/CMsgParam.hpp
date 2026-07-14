@@ -63,19 +63,28 @@ public:
 
     void enqueue(u32 msg){
         volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
         int index = (int)(mFront + mSize) % (int)mCapacity;
         u8* dst = reinterpret_cast<u8*>(mArrayPtr);
 
         *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
-        *reinterpret_cast<u32*>(dst + 0x4) = entry.wid;
-        *reinterpret_cast<u32*>(dst + 0x8) = entry.unk8;
-        *reinterpret_cast<u32*>(dst + 0xC) = entry.unkC;
-        *reinterpret_cast<u32*>(dst + 0x10) = entry.unk10;
-        *reinterpret_cast<u32*>(dst + 0x14) = entry.unk14;
-        *reinterpret_cast<u32*>(dst + 0x18) = entry.unk18;
-        *reinterpret_cast<u32*>(dst + 0x1C) = entry.unk1C;
-        *reinterpret_cast<u16*>(dst + 0x20) = entry.unk20;
-        *(dst + 0x22) = entry.unk22;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
         *(dst + 0x23) = 0;
 
         mSize++;

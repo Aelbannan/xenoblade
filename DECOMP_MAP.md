@@ -230,7 +230,7 @@ This is the highest-value P0 decompilation slice. The first implementation may u
 | `CViewRoot::getFullScreenView()` | `getFullScreenView__9CViewRootFv` | `0x80445314` | `0x1D8` | Restores original full-screen presentation for menus/cutscenes. | **FULL_MATCH** |
 | `CViewRoot::getView(unsigned long)` | `getView__9CViewRootFUl` | `0x80445810` | `0xA0` | Resolves view IDs and supports second-view ownership. | **FULL_MATCH** |
 | `CViewRoot::renderView()` | `renderView__9CViewRootFv` | `0x80445A5C` | `0x150` | Maps root-level view traversal and finalization. | **STRUCTURAL** |
-| `CViewRoot::create(...)` | `create__9CViewRootFP11CWorkThread` | `0x80445E94` | `0x21C` | Determines root view lifetime and allocation source. | **CODE_MATCH** |
+| `CViewRoot::create(...)` | `create__9CViewRootFP11CWorkThread` | `0x80445E94` | `0x21C` | Determines root view lifetime and allocation source. | **FULL_MATCH** |
 
 
 **Decisive experiments:**

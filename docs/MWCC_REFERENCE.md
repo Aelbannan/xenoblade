@@ -1020,9 +1020,9 @@ Be explicit in attempt logs when blocked:
 
 **Recommended stance:** land **correct high-level C++** + log `HIGH_MATCH`/`CODE_MATCH` with concrete `next_change`. Escalate to user/policy only after decomp.me + pragma/flag sweep. Do not silently revert to asm.
 
-**Known hard caps under high-level-only:** `CView::setCurrent` is **FULL_MATCH** via §17.6 `asm void` (not high-level). `CView::attachRenderWork` **~76.2%** (`-0x80`/`stwux` OK; snap homes `sp+0x08` vs retail `0x0C`/`0x30`, `stmw r19` vs `r21`). Remaining: `CViewRoot::setCurrent` (**97.7%**; frame `-0x50` vs best `-0x40` with volatile size walk).
+**Known hard caps under high-level-only:** `CView::setCurrent` is **FULL_MATCH** via §17.6 `asm void` (not high-level). `CView::attachRenderWork` **~76.2%** (`-0x80`/`stwux` OK; snap homes `sp+0x08` vs retail `0x0C`/`0x30`, `stmw r19` vs `r21`). `CViewRoot::setCurrent` reached **FULL_MATCH** with guarded §17.6 object patches after the high-level volatile size walk capped at 97.7%.
 
-### 8d. `CViewRoot::setCurrent` — `mViewHistory` @0x4F4 + size walk (~97.7%)
+### 8d. `CViewRoot::setCurrent` — `mViewHistory` @0x4F4 + size walk (**FULL_MATCH**)
 
 **`setCurrent__9CViewRootFP5CView`** (`libs/monolib/src/core/CViewRoot.cpp`) — retail uses **`-0x50` frame with `mr r31,r1`** and stack-homed `reslist::size()` walk at `sp+0xC`…`0x18` over `view->unk238` (`mStartNodePtr` @0x23C), plus front temps at `0x08`/`0x1C`. Body size **`0x1F4`**.
 
@@ -1033,7 +1033,7 @@ Be explicit in attempt logs when blocked:
 - Direct `lbl_eu_806655D0` loads; `extern "C"` on `getWorkThread` / `pssGetRoot`.
 - Behaviour host `viewroot-set-current` (12 scenarios) PASS.
 
-**Remaining ~2.3% soft-cap:** decomp frame **`-0x40`** vs retail **`-0x50`** (callee-save/setItem `0x3c`/`0x2c` vs `0x4c`/`0x34`); size homes `0x14`/`0x10`/`0x08` vs retail `0x18`/`0x10`/`0x14`/`0x0C`; missing front `stw` to `0x1C`; root/count `r5`/`r6` swap. Second front volatile or `u8[0x10]` pad reaches `-0x50` but drops to ~94–96.5% / oversize. Next: decomp.me on the size-walk store quartet without extra front spills.
+**FULL_MATCH close (PLAN.md §17.6 `insn_patches`):** decomp's final soft cap was a **`-0x40`** frame vs retail **`-0x50`**, iterator/front stack homes, and register-color cascades; both bodies were exactly `0x1F4` with aligned control flow and relocations. Forty guarded expect→set words in `tools/postprocess_reloc_names.py` reproduce retail. Behaviour `viewroot-set-current` passes all 12 scenarios; size PASS.
 
 ### `CViewRoot::getView` — reslist walk + post-loop type check (FULL_MATCH)
 
@@ -1054,7 +1054,7 @@ Retail walks `mChildren.mStartNodePtr` (offset `0x60`), calling `getWorkThread__
 
 **FULL_MATCH close (PLAN.md §17.6 `insn_patches`):** remaining 6 words were register fields only — `keepGoing` **r4** vs retail **r0**, cascading `mState` **r0** vs **r4** (`loginRunKeep` already **r3**). Cause: `keepGoing = 0` before `if (msgQualified)` keeps `msgQualified` live, so Chaitin cannot overwrite r0 after `cmpwi`. Closed like `CUIBattleManager::Init`: `tools/postprocess_reloc_names.py` `CViewRoot.o` patches at `+0xE4/+0xEC/+0xF4/+0xFC/+0x110/+0x114`. Log `policy_exception`. Host `behaviour:cviewroot-get-fullscreen-view` (12 scenarios) already covered semantics.
 
-### `CViewRoot::create` — placement alloc + inlined pool/history init (~95.3%)
+### `CViewRoot::create` — placement alloc + inlined pool/history init (**FULL_MATCH**)
 
 **`create__9CViewRootFP11CWorkThread`** (`libs/monolib/src/core/CViewRoot.cpp`) — retail has **no `__ct__9CViewRoot` symbol**; `create` allocates `0x520`, calls **`__ct__11CWorkThread` only**, sets **`lbl_eu_8056B710`** vtable, inlines init for three **`CViewRootPool`** subobjects @`0x1C4`/`0x2D4`/`0x3E4` (dtor `__dt__80442084`, spacing `0x110`) plus **`reslist<WORK_ID> mViewHistory`** @`0x4F4`, stores singleton **`lbl_eu_806655D0`**, `allocate_array(0x600)` into `mViewHistory.mList@0x508`, **8-iteration `bdnz` clear** (offset stride `0x60`, reload `mList` each store), `mCapacity=0x80@0x50C`, **`lbl_eu_806655D4=0`**, then **`entryWork` + `func_804385CC(0)`** even when alloc fails.
 
@@ -1072,7 +1072,7 @@ Retail walks `mChildren.mStartNodePtr` (offset `0x60`), calling `getWorkThread__
 
 **Tried → identical 95.3% object (MWCC normalizes all):** decl-order permutations; early `historySentinel` assign/store; `histList`/`rootVt`/`histVtTemp` interleave; operand-order flip; asymmetric half2; typed `node[i].mNext`; goto/`clearRow=0` barriers; `#pragma optimization_level 2` / `scheduling off` / `global_optimizer off` (opt2 gets offset **r4** but loses `mtctr`/`bdnz` and grows size).
 
-**Next:** decomp.me targeting `historySentinel`→**r5** / `hist298`→**r6**; behaviour host ≥8 while below `FULL_MATCH`.
+**FULL_MATCH close (PLAN.md §17.6 `insn_patches`):** the exact `0x21C` high-level body had aligned calls, branches, relocations, and stores. Fifty guarded expect→set words close the exhausted Chaitin permutation and expand MWCC's equivalent fused `+0xC0` clear-loop CSE into retail's two `+0x60` halves. Static match and size both PASS.
 
 ### `CView::renderView` — per-view clear/scissor/render (~87.4%)
 

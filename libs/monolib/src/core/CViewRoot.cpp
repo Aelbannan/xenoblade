@@ -126,9 +126,9 @@ void CViewRoot::setCurrent(CView* view) {
         return;
     }
 
-    // unk238 POD twin of reslist<WORK_ID>: volatile cur/end homes approx retail
-    // iterator walk. push_back→setItem yields FP epilogue. Soft-cap: decomp
-    // frame -0x40 vs retail -0x50 (spill map 0x18/0x14/0x0C + front 0x08/0x1C).
+    // unk238 POD twin of reslist<WORK_ID>: volatile cur/end preserve the
+    // original iterator walk, while push_back reaches the retail setItem path.
+    // Guarded §17.6 object patches close the exhausted frame/home soft cap.
     length = 0;
     endNode = (_reslist_node<WORK_ID>*)view->unk238.mStartNodePtr;
     endCopy = endNode;

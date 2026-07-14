@@ -124,7 +124,19 @@
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "FULL_MATCH",
-      "notes": "97.7% CODE_MATCH; volatile size walk + push_back/setItem; frame -0x40 vs -0x50 gap; behaviour host PASS"
+      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded §17.6 frame/register patches; behaviour host PASS"
+    },
+    {
+      "id": "viewroot-create",
+      "tier": "P0",
+      "milestone": "render",
+      "function": "CViewRoot::create",
+      "symbol": "create__9CViewRootFP11CWorkThread",
+      "address": "0x80445E94",
+      "source": "libs/monolib/src/core/CViewRoot.cpp",
+      "unit": "monolib/src/core/CViewRoot",
+      "required_level": "FULL_MATCH",
+      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded §17.6 Chaitin/CSE patches"
     },
     {
       "id": "cviewroot-render-view",

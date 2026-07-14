@@ -17,7 +17,15 @@
 struct CMsgParamEntry{
     u32 command; //0x0
     WORK_ID wid; //0x4
-    u8 unk8[0x24 - 0x8];
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
 };
 
 template <int N>
@@ -53,8 +61,30 @@ public:
         return mArrayPtr[mFront % mCapacity];
     }
 
-    //TODO(kiwi) Emitted at 804380b4
-    void enqueue(u32 msg){}
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = entry.wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = entry.unk8;
+        *reinterpret_cast<u32*>(dst + 0xC) = entry.unkC;
+        *reinterpret_cast<u32*>(dst + 0x10) = entry.unk10;
+        *reinterpret_cast<u32*>(dst + 0x14) = entry.unk14;
+        *reinterpret_cast<u32*>(dst + 0x18) = entry.unk18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = entry.unk1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = entry.unk20;
+        *(dst + 0x22) = entry.unk22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
 
     void pop(){
         mSize--;

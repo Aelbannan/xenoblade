@@ -845,15 +845,17 @@ after_bit21:
                     s32 nextIdx = (i == 8) ? 0 : (i + 1);
                     if (unk200[nextIdx]->unkBB & 1) {
                         u32 v = unk310;
-                        u32 bit18 = 1u << (i + 18);
+                        u32 bit18;
                         u32 bitI = 1u << i;
                         if (v & bitI) {
+                            bit18 = 1u << (i + 18);
                             u32 notBit18 = !(v & bit18);
                             u32 merged = notBit18 | (v & (1u << (i + 9)));
                             int visible = merged != 0;
                             func_80137038(unk104[i], &drawInfo, 0, visible);
                             unk310 |= bit18;
                         } else {
+                            bit18 = 1u << (i + 18);
                             unk310 &= ~bit18;
                         }
 

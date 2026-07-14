@@ -199,7 +199,7 @@ The exact repository path for an unreconstructed logical translation unit may di
 | `CProcessMan::DrawImpl(CProcess*)` | `DrawImpl__11CProcessManFP8CProcess` | `0x80448308` | `0x1F8` | Classifies per-process Draw callbacks and view filtering. | **FULL_MATCH** |
 | `CProcessMan::TailImpl(CProcess*)` | `TailImpl__11CProcessManFP8CProcess` | `0x80448500` | `0x1F8` | Identifies finalization that must not run per viewport. | **FULL_MATCH** |
 | `CProcessMan::Move()` | `Move__11CProcessManFv` | `0x804478F0` | `0x2B8` | Confirms simulation traversal and process ordering. | **CODE_MATCH** |
-| `CProc::pssCreateView(...)` | `pssCreateView__5CProcFPCcP11CWorkThreadi` | `0x8043BC8C` | `0x3AC` | May create a second native view attached to the game process. | **85.3% HIGH_MATCH** |
+| `CProc::pssCreateView(...)` | `pssCreateView__5CProcFPCcP11CWorkThreadi` | `0x8043BC8C` | `0x3AC` | May create a second native view attached to the game process. | **88.4% HIGH_MATCH** |
 | `CProc::pssDetachView(viewId)` | `pssDetachView__5CProcFUl` | `0x8043BBF0` | `0x9C` | Required for safe teardown and runtime toggle. | **FULL_MATCH** |
 | `CProc::pssSetFocus()` | `pssSetFocus__5CProcFv` | `0x8043BB40` | `0xB0` | Determines input/focus side effects of multiple views. | **FULL_MATCH** |
 
@@ -220,12 +220,12 @@ This is the highest-value P0 decompilation slice. The first implementation may u
 | `CView::setDisp(bool,bool)` | `setDisp__5CViewFbb` | `0x8043F7B8` | `0x70` | Controls visibility/display participation. | **FULL_MATCH** |
 | `CView::getSplitLine()` | `getSplitLine__5CViewFv` | `0x8043F8D8` | `0x94` | Existing split-related field may reveal native layout support. | **FULL_MATCH** |
 | `CView::setSplitLine(short)` | `setSplitLine__5CViewFs` | `0x8043F96C` | `0x9C` | Potentially configures a native split boundary. Must be understood before inventing a new mechanism. | **FULL_MATCH** |
-| `CView::updateMsg()` | `updateMsg__5CViewFv` | `0x8043FA08` | `0x798` | Classify per-frame view messages and side effects. | **STRUCTURAL ~65.9%** |
+| `CView::updateMsg()` | `updateMsg__5CViewFv` | `0x8043FA08` | `0x798` | Classify per-frame view messages and side effects. | **74.4% HIGH_MATCH** |
 | `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **76.2% HIGH_MATCH** (frame soft-cap) |
 | `CView::detachRenderWork(CWorkThread*)` | `detachRenderWork__5CViewFP11CWorkThread` | `0x80441470` | `0x8` | Needed for safe destruction/toggle. | **FULL_MATCH** |
 | `CView::wkUpdate()` | `wkUpdate__5CViewFv` | `0x80441478` | `0x14C` | Determine whether view update is camera-only, presentation-only, or stateful. | **FULL_MATCH** |
 | `CView::renderView()` | `renderView__5CViewFv` | `0x804415C4` | `0xCB4` | Primary candidate for a repeatable per-view render pass. | **STRUCTURAL** |
-| `CViewFrame::render()` | `render__10CViewFrameFv` | `0x80442CDC` | `0x394` | Frame/border/clear behavior around a viewport. | **99.2% CODE_MATCH** |
+| `CViewFrame::render()` | `render__10CViewFrameFv` | `0x80442CDC` | `0x394` | Frame/border/clear behavior around a viewport. | **FULL_MATCH** |
 | `CViewRoot::setCurrent(CView*)` | `setCurrent__9CViewRootFP5CView` | `0x80444C90` | `0x1F4` | Global current-view management and nested-view behavior. | **FULL_MATCH** |
 | `CViewRoot::getFullScreenView()` | `getFullScreenView__9CViewRootFv` | `0x80445314` | `0x1D8` | Restores original full-screen presentation for menus/cutscenes. | **FULL_MATCH** |
 | `CViewRoot::getView(unsigned long)` | `getView__9CViewRootFUl` | `0x80445810` | `0xA0` | Resolves view IDs and supports second-view ownership. | **FULL_MATCH** |
@@ -396,7 +396,7 @@ The large virtual functions are priority targets because they likely contain the
 | `CBattleState virtual #10` | `CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv` | `0x80148A18` | `0x444` | Large state routine; likely mode-specific battle behavior. | **TRACE_ONLY** |
 | `CBattleState virtual #11` | `CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv` | `0x80148FC8` | `0x174` | Mask-clear entries + dup-id scan + unk15AC bit; Chaitin soft-cap (dead trip r3 / found r0). Host `battlestate-vfunc11` PASS. | **CODE_MATCH ~96.2%** |
 | `CBattleState virtual #26` | `CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv` | `0x80148364` | `0x12C` | Candidate action/target helper. | **TRACE_ONLY** |
-| `CBattleState virtual #29` | `CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv` | `0x80148490` | `0x15C` | Clear 8 entries @+0x1388 + 13×8 id scan + unk15AC bit; Chaitin soft-cap (dead trip r3 / found r0 / scan r4). Host `battlestate-vfunc29` PASS. | **CODE_MATCH ~95.5%** |
+| `CBattleState virtual #29` | `CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv` | `0x80148490` | `0x15C` | Clear 8 entries @+0x1388 + 104-entry id scan + unk15AC bit clear. Natural linear loop recovers retail's 13×8 MWCC unroll. Host `battlestate-vfunc29` PASS. | **FULL_MATCH** |
 | `CBattleState virtual #31` | `CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv` | `0x80149EA4` | `0x160` | id→bitmask lookup; `return (this->unk4 & mask) != 0`. | **FULL_MATCH** |
 | `CBattleState virtual #33` | `CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv` | `0x8014A014` | `0x160` | Leaf id→mask vs `unk6` (+0x6); same shape as vfunc31. | **FULL_MATCH** |
 

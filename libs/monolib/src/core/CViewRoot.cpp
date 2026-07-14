@@ -72,7 +72,7 @@ void CViewRoot::destroyProc(CProc* proc) {
 }
 
 CView* CViewRoot::getView(WORK_ID id) {
-    CViewRoot* root = getInstance();
+    CViewRoot* root = lbl_eu_806655D0;
 
     if(root == nullptr){
         return nullptr;
@@ -82,7 +82,7 @@ CView* CViewRoot::getView(WORK_ID id) {
     _reslist_node<CWorkThread*>* node = sentinel->mNext;
     CWorkThread* thread = nullptr;
 
-    while(node != getInstance()->mChildren.mStartNodePtr){
+    while(node != lbl_eu_806655D0->mChildren.mStartNodePtr){
         thread = CWorkUtil::getWorkThread(id);
 
         if(thread != nullptr){

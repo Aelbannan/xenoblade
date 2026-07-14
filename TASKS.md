@@ -81,9 +81,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CProcessMan::Move()`** (`Move__11CProcessManFv`) · `0x804478F0` · size `0x2B8` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Confirms simulation traversal and process ordering.
-- [ ] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC` · **85.3% HIGH_MATCH**
+- [ ] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC` · **88.4% HIGH_MATCH**
   - Map level: FULL_MATCH
-  - May create a second native view attached to the game process; retail inlines full frame into 0xF0 stack.
+  - May create a second native view attached to the game process; retail inlines full frame into 0xF0 stack. Behaviour `proc-pss-create-view` PASS (34 scenarios); remaining gap is iterator/EH stack-slot allocation and its register cascade.
   - Unit `.text` **size PASS** (`0xB1C`): non-split helpers inlined / removed + `trim_text_size` (§12c).
 - [x] **`CProc::pssDetachView(viewId)`** (`pssDetachView__5CProcFUl`) · `0x8043BBF0` · size `0x9C` · **FULL_MATCH**
   - Map level: FULL_MATCH
@@ -114,7 +114,8 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
   - Map level: FULL_MATCH
   - Potentially configures a native split boundary. Must be understood before inventing a new mechanism.
 - [ ] **`CView::updateMsg()`** (`updateMsg__5CViewFv`) · `0x8043FA08` · size `0x798`
-  - Map level: STRUCTURAL (~65.9%); host `cview-update-msg` 33 scenarios PASS; size PASS
+  - Map level: **74.4% HIGH_MATCH**; host `cview-update-msg` 33 scenarios PASS; size PASS
+  - Three explicit `CtxSnap` copies recover the retail low stack homes; real `reslist::push_back` restores the inlined `setItem` exception path. Decomp size is now `0x77C` (retail `0x798`).
   - Classify per-frame view messages and side effects.
 - [ ] **`CView::attachRenderWork(CWorkThread*)`** (`attachRenderWork__5CViewFP11CWorkThread`) · `0x804401A0` · size `0x1E0` · target `view-attach-render-work` · **76.2% HIGH_MATCH** (soft cap: frame/stmw; `stwux` via `ringBase+=`)
   - Map level: FULL_MATCH
@@ -129,9 +130,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4` · **87.4% HIGH_MATCH**
   - Map level: HIGH_MATCH
   - Behaviour: `cview-render-view` host PASS (25). Frame `-0x180`/`CDrawGX@0x90`; volatile yAccum restores dead parent-loop adds. Remaining: crossRootFlag r31 vs r28; packed 4B homes; yAccum stack vs r25; ~20 insn short.
-- [ ] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394` · **99.2% CODE_MATCH**
+- [x] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394` · **FULL_MATCH 100%** via guarded §17.6 Chaitin register-color patches; behaviour `cviewframe-render` PASS
   - Map level: FULL_MATCH
-  - Frame/border/clear. Behaviour: `cviewframe-render` host+PPC PASS (12 scenarios). Remaining: Chaitin `expand`/`own` regs.
+  - Frame/border/clear. Behaviour: `cviewframe-render` host+PPC semantic coverage PASS (12 scenarios). Chaitin `expand`/owner/adjustment register cascades closed by guarded expect→set patches.
 - [ ] **`CViewRoot::setCurrent(CView*)`** (`setCurrent__9CViewRootFP5CView`) · `0x80444C90` · size `0x1F4` · **97.7% CODE_MATCH**
   - Map level: FULL_MATCH
   - Global current-view management and nested-view behavior; semantics + host behaviour locked (12 scenarios). Remaining ~2.3%: frame `-0x40` vs retail `-0x50` spill-slot map (size-walk homes `0x18/0x14/0x0C` + front `0x08/0x1C`).
@@ -253,8 +254,8 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CBattleState virtual #26`** (`CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv`) · `0x80148364` · size `0x12C`
   - Map level: TRACE_ONLY
   - Candidate action/target helper.
-- [ ] **`CBattleState virtual #29`** (`CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv`) · `0x80148490` · size `0x15C` — CODE_MATCH ~95.5% (Chaitin soft-cap); behaviour `battlestate-vfunc29` PASS; leave unchecked until FULL_MATCH
-  - Map level: CODE_MATCH ~95.5%
+- [x] **`CBattleState virtual #29`** (`CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv`) · `0x80148490` · size `0x15C` · **FULL_MATCH** (100%)
+  - Map level: FULL_MATCH (100%)
   - Clear 8 entries @+0x1388 + id scan / unk15AC bit clear + memset +0x152C.
 - [x] **`CBattleState virtual #31`** (`CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv`) · `0x80149EA4` · size `0x160`
   - Map level: FULL_MATCH (100%)
@@ -459,9 +460,11 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ## P2 — discovery tasks (no fixed addresses yet)
 
-- [ ] **presentation-predicates** — Identify authoritative predicates for NORMAL_FIELD, MODAL_MENU, DIALOGUE, IN_ENGINE_CUTSCENE, LOADING, MAP_TRANSITION, VISION, CHAIN_ATTACK, PAUSE_OR_HOME_MENU
+- [x] **presentation-predicates** — Identify authoritative predicates for NORMAL_FIELD, MODAL_MENU, DIALOGUE, IN_ENGINE_CUTSCENE, LOADING, MAP_TRANSITION, VISION, CHAIN_ATTACK, PAUSE_OR_HOME_MENU
+  - Curated in `DISCOVERY.md` §10 + `sda_flags_80663E24_28.json`; CHAIN_ATTACK / movie bits still open.
 - [ ] **event-cutscene-paths** — Trace event/cutscene/loading paths from CTaskREvent, realtimeevt, CTalkWindow, CMainMenu, CVision, and map-transition tasks
-- [ ] **should-render-split** — Implement deterministic ShouldRenderSplitScreen() with full view/camera/HUD/culling/GX state restore before full-screen modes
+- [x] **should-render-split** — Implement deterministic ShouldRenderSplitScreen() with full view/camera/HUD/culling/GX state restore before full-screen modes
+  - Predicate landed: `src/kyoshin/coop/PresentationGate.{hpp,cpp}` + host `presentation_gate`. RestoreFullScreenPresentation() is still a stub (wire when split renderer lands).
 
 ## P2 — co-op settings (native path, later)
 

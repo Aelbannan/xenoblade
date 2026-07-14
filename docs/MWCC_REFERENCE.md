@@ -562,7 +562,7 @@ Wrong layout causes branch/frame divergence even when control flow looks right.
 
 **`pssSetFocus` (100%):** do **not** call thin `pssGetView(INVALID_WORK_ID)` — MWCC CSE-saves the size-walk’s first node and walks in `r3` (91.8%). Expand the reslist size-walk in `pssSetFocus` and declare locals as **`curNode`, `length`, `endNode`, `view`** (that order). After the loop, `convertToView(getWorkThread(getFirstViewID()))` reloads via `this` (`3× lwz` from `0x1C8`). Yields retail regs: count `r5`, head `r6`, walk `r4`, `this` stays `r3`. `#pragma global_optimizer off` forces the reload but adds a frame pointer (regresses). Manual `CProc_UnkStruct1` walks regress to ~68–80%.
 
-**`pssCreateView` (~85.3%):** retail inlines FixStr+create+attach+twin `mViewIDList` size walks+front+`mChildren` size+margins in one `-0xF0` frame with walks at `sp+0x08–0x3C`. High-level `pssMakeClientRect` IPA keeps walks registerized (`-0xC0`, ~77%). Fix: keep create/attach; declare a function-scope **`PssCreateWalkFrame`** (volatile `void*` size/front/children slots + `frameOffset`/`clientRect`) after FixStr and inline the dual size/front/children walks there. Volatile forces stack reloads. **Do not** add bare `volatile u8 gap[0x30]` / early wf touches — those shift FixStr or regress. Remaining: walks sit +0x18 high, frame often `-0x100`/`FixStr@0x80`, `this` in r29 vs r30, push_back `stw r1@0x1c` vs `@0x64`.
+**`pssCreateView` (~88.4%):** retail inlines FixStr+create+attach+twin `mViewIDList` size walks+front+`mChildren` size+margins in one `-0xF0` frame with walks at `sp+0x08–0x3C`. Keep direct typed `push_back(view->mWorkID)`, a typed `PssCreateWalkFrame`, and an inline `CRect16&` helper: the reference return restores the missing branch-local `addi r4`, giving exact `0x3AC` size and all 235 instruction offsets aligned. The remaining 134 word differences are not a narrow `CView`-constructor-style patch: MWCC places the context at `sp+0x20–0x66` and the push-back EH home at `sp+0x1c`, while retail uses `sp+0x08–0x4e` and EH `sp+0x64`, causing a broad register/schedule cascade. `CWorkRoot::updateWork` (100%) and `standbyWork` (99.18%) prove the shared iterator loop and `reslist::size()` source already match retail in registers. Historical `pssGetView`/`pssAttachView`/`pssMakeClientRect` helpers confirm semantics, but forced-inline produces 73.55% and out-of-line helpers remain calls. Treat the stack homes as a CProc-specific original whole-program IPA artifact; do not change shared `reslist` or encode a broad instruction patch.
 
 ### 8b. Per-block-scoped temporaries when the SAME pair repeats with opposite regalloc order — `CView::wkUpdate`
 
@@ -1114,6 +1114,8 @@ Retail walks `mChildren.mStartNodePtr` (offset `0x60`), calling `getWorkThread__
 
 Decl-order / type / volatile / fresh-name levers already lock flags to r4/r5 and owner/view to r7/r8 in the prologue. Next: decomp.me on expand→r4 / own→r3.
 
+**FULL_MATCH close (PLAN.md §17.6 `insn_patches`):** the high-level body already had identical control flow, calls, relocations, stack frame, and `0x394` size. The remaining 33 words were three register-color cascades only: early `expand`/rect loads, post-clip owner/view/flags, and the final split adjustment. Guarded expect→set patches in `tools/postprocess_reloc_names.py` close the symbol to **100%**; `behaviour:cviewframe-render` covers the semantics.
+
 ### `CViewRoot::renderView` — root child walk + render dispatch (~97.4%)
 
 
@@ -1148,9 +1150,9 @@ Decl-order / type / volatile / fresh-name levers already lock flags to r4/r5 and
 | 6 | `CViewRoot::setCurrent(this)` |
 | 7 | payload byte0==0 → `unk278 \|= 0x20`, else `&= ~0x20` |
 
-**Match notes (~65.9% STRUCTURAL):** Prefer real **`CView::updateMsg()`** (not `extern "C"` mangled) so `wkUpdate` keeps `bl updateMsg__5CViewFv` at **FULL_MATCH**. Three `volatile CtxSnap` + goto drain loop; `convertToView` for children. Soft-cap same class as **`attachRenderWork`**: decomp **`0x700`/`-0xF0`** vs retail **`0x798`/`-0x150`**. Host **`cview-update-msg`** (33 scenarios) covers ring advance + list + flags (fan-out stubbed).
+**Match notes (65.9% → 74.4% HIGH_MATCH):** Prefer real **`CView::updateMsg()`** (not `extern "C"` mangled) so `wkUpdate` keeps `bl updateMsg__5CViewFv` at **FULL_MATCH**. Model both sides of each of the three cold copies as `volatile CtxSnap` objects; scalar destination locals let MWCC keep the copies in registers and cap the function at `0x700`, while explicit destination structs recover the three low stack homes. Use the real typed **`reslist::push_back`** for absent tag-0/tag-1 entries: its inlined `setItem` try/catch restores the exception-frame path that hand-linking omits. Block-scope each tag's `msgItem` so payloads stay in distinct registers. Result: decomp **`0x77C`** vs retail **`0x798`**, up from `0x700`; host **`cview-update-msg`** (33 scenarios) PASS and size PASS.
 
-**Next:** force retail snap load/store prologue + interleaved fan-out reloads to grow toward `-0x150`; decomp.me on cases 0/1 bodies.
+**Next:** align the remaining frame/save set (`-0x140`/`stmw r17` vs retail `-0x150`/`stmw r14`) and snapshot source/home ordering; then decomp.me on cases 0/1 register colors.
 
 ### `CView::CView(const char*, CWorkThread*)` — MI + POD reslist init (~97.5%)
 
@@ -1426,20 +1428,15 @@ this sibling requires `lhz 0x6(r3)`.
 
 ---
 
-### 8c15c. `CBattleState_UnkVirtualFunc29` — same dead-trip / found / scan Chaitin soft-cap (~95.5% CODE_MATCH)
+### 8c15c. `CBattleState_UnkVirtualFunc29` — natural linear scan recovers the 13×8 unroll (FULL_MATCH)
 
-**`CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **CODE_MATCH ~95.5%**, size decomp `0x154` vs retail `0x15C`): **true `Fv`**. Loop `i=0..7` over entries at `this+0x1388` (= `entries[0x60..0x67]` inside the `+0x8` bank): save `unk0C`, `memset(entry,0,0x34)`; if `id < 0x12f` run the same 13×8 halfword id scan at `this+0x14..0x180`; if not found (or `id >= 0x12f`) clear bit `id` in `this+0x15AC`; after the loop `memset(this+0x152C,0,0x80)`.
+**`CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **FULL_MATCH 100%**, exact `0x15C`): **true `Fv`**. Loop `i=0..7` over entries at `this+0x1388`, save `unk0C`, and `memset(entry,0,0x34)`. For ids below `0x12f`, scan all `0x68` entries from `this+8`; if no duplicate remains, clear bit `id` in `this+0x15AC`. Finish with `memset(this+0x152C,0,0x80)`.
 
-**Retail register split (identical class to §8c15b):**
-| Role | Retail | Best decomp (goto found-paths) |
-|------|--------|--------------------------------|
-| scan base `p` | **r4** | **r3** |
-| dead trip | **r3** (`li 0` / `addi +7`) | DSE'd (−8 bytes → `0x154`) |
-| found flag | **r0** | **r0** ✓ |
+**Breakthrough:** do not spell the retail listing as 13 manual groups of eight field checks. Write one natural `j < 0x68` loop with a byte scan pointer starting at `this`; MWCC performs the retail 8-way unroll itself. Declare `j` before `scan`, use goto-shaped found exits, and order the comma increments as `scan += sizeof(CBattleStateEntry), j++`. This yields retail's `scan=r4`, dead unrolled induction `j=r3` (`li 0` / `addi +7`), and `found=r0`, including the exact instruction schedule.
 
-**Tried and rejected:** `trip & 0` / `trip ^ trip` / `opt_propagation off` — MWCC still folds and DSE's the trip chain; `#pragma optimization_level 1` → **78.3%** (loses `mtctr`/`bdnz` shape). Break form (no goto) keeps scan in **r4** but coalesces found into **r3** and still drops the trip — net same ~95.5%. Cannot reach exact `0x15C` with register-only diffs, so §17.6 `insn_patches` does not apply yet.
+The previous manual 13×8 form capped at ~95.5% / `0x154` because MWCC had no source induction variable to retain. `trip & 0`, `trip ^ trip`, pragma changes, and manual break/goto permutations could not recreate that live-range graph. The natural loop needs no asm, intrinsic, or object patch.
 
-**Keep:** goto found-paths + self-relative 13×8 scan + `unk15AC` `andc` bit clear + `memset(unk152C,0,0x80)`. Host **`battlestate-vfunc29`** (12 scenarios) PASS; size PASS. `runtime_test: behaviour:battlestate-vfunc29`.
+Host **`battlestate-vfunc29`** (12 scenarios) PASS. Split size PASS (`0x110C` decomp `.text` within `0x3C64` budget). `runtime_test: behaviour:battlestate-vfunc29`.
 
 ---
 

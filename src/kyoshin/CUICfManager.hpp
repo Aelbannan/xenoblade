@@ -137,6 +137,11 @@ public:
     // member that actually reads r4/r5/r6 event args; see CUICfManager.cpp).
     friend void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
 
+    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
+    u16 getFlags() const {
+        return mFlags;
+    }
+
 private:
     // 0x000-0x054 CTTask
     // 0x054-0x058 IWorkEvent

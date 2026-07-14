@@ -561,18 +561,16 @@ void func_8012FFB4(void*); // &mInitSlots[0].unk04
 typedef void* (*CUICfVPtrFn)(void*);
 
 void CUICfManager::Move() {
-    // Locals ordered to force retail-ish -0x120 frame with FP (setItem try/catch).
+    // Locals: setItem try/catch → mr r31,r1; framePad grows toward retail -0x120.
     void* created;
-    void* created2;
-    void* created3;
-    void* created4;
-    void* created5;
+    int framePad[4];
     CUICfEnumListHolder holder;
     f32 posC[3];
     f32 posB[3];
     f32 posA[3];
     _reslist_node<CUICfMenuItem*>* pending[18];
     u16 flags;
+    u16* flagPtr;
     CUICfManager* inst;
     int i;
     int byteOff;
@@ -599,20 +597,23 @@ void CUICfManager::Move() {
     int canUnroll;
     int nextCount;
 
-    flags = mFlags;
+    framePad[0] = 0;
+    flagPtr = &mFlags;
+    flags = *flagPtr;
 
     if ((flags & 0x2) != 0) {
-        mFlags = (u16)(mFlags & ~0x2);
+        // Pointer reload: retail lhz+andi. 0xfffd (not CSE of early r4).
+        *flagPtr = (u16)(*flagPtr & 0xfffd);
         func_801338C8(this);
         goto after_flags;
     }
     if ((flags & 0x1) != 0) {
-        mFlags = (u16)(mFlags & ~0x1);
+        *flagPtr = (u16)(*flagPtr & ~0x1); // rlwinm …,16,30
         func_80133770();
         goto after_flags;
     }
     if ((flags & 0x4) != 0) {
-        mFlags = (u16)(mFlags & ~0x4);
+        *flagPtr = (u16)(*flagPtr & 0xfffb);
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -621,7 +622,7 @@ void CUICfManager::Move() {
             inst->mFlags = (u16)(inst->mFlags | 0x4);
             goto after_flags;
         }
-        inst->mFlags = (u16)(inst->mFlags & ~0x4);
+        inst->mFlags = (u16)(inst->mFlags & 0xfffb);
         inst = (CUICfManager*)lbl_eu_80664054;
         inst->mFlags = (u16)(inst->mFlags | 0x8);
         inst = (CUICfManager*)lbl_eu_80664054;
@@ -635,7 +636,7 @@ void CUICfManager::Move() {
         goto after_flags;
     }
     if ((flags & 0x8) != 0) {
-        mFlags = (u16)(mFlags & ~0x8);
+        *flagPtr = (u16)(*flagPtr & 0xfff7);
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -647,7 +648,7 @@ void CUICfManager::Move() {
             inst->mFlags = (u16)(inst->mFlags | 0x8);
             goto after_flags;
         }
-        inst->mFlags = (u16)(inst->mFlags & ~0x8);
+        inst->mFlags = (u16)(inst->mFlags & 0xfff7);
         inst = (CUICfManager*)lbl_eu_80664054;
         created = __ct__CMenuKeyAssign(inst->unk144, inst->unk11C);
         if (created == NULL) {
@@ -679,7 +680,7 @@ void CUICfManager::Move() {
         goto after_flags;
     }
     if ((flags & 0x10) != 0) {
-        mFlags = (u16)(mFlags & ~0x10);
+        *flagPtr = (u16)(*flagPtr & 0xffef);
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -691,10 +692,10 @@ void CUICfManager::Move() {
             inst->mFlags = (u16)(inst->mFlags | 0x10);
             goto after_flags;
         }
-        inst->mFlags = (u16)(inst->mFlags & ~0x10);
+        inst->mFlags = (u16)(inst->mFlags & 0xffef);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created2 = func_801109D8(inst->unk144, inst->unk11C, NULL);
-        if (created2 == NULL) {
+        created = func_801109D8(inst->unk144, inst->unk11C, NULL);
+        if (created == NULL) {
             goto after_flags;
         }
         inst = (CUICfManager*)lbl_eu_80664054;
@@ -715,7 +716,7 @@ void CUICfManager::Move() {
         }
     push10_found:
         temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created2);
+        temp->setItem(created);
         temp->mNext = startNode;
         temp->mPrev = startNode->mPrev;
         startNode->mPrev->mNext = temp;
@@ -723,7 +724,7 @@ void CUICfManager::Move() {
         goto after_flags;
     }
     if ((flags & 0x20) != 0) {
-        mFlags = (u16)(mFlags & ~0x20);
+        *flagPtr = (u16)(*flagPtr & 0xffdf);
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -735,10 +736,10 @@ void CUICfManager::Move() {
             inst->mFlags = (u16)(inst->mFlags | 0x20);
             goto after_flags;
         }
-        inst->mFlags = (u16)(inst->mFlags & ~0x20);
+        inst->mFlags = (u16)(inst->mFlags & 0xffdf);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created3 = func_8011E4C4(inst->unk144, inst->unk11C);
-        if (created3 == NULL) {
+        created = func_8011E4C4(inst->unk144, inst->unk11C);
+        if (created == NULL) {
             goto after_flags;
         }
         inst = (CUICfManager*)lbl_eu_80664054;
@@ -759,7 +760,7 @@ void CUICfManager::Move() {
         }
     push20_found:
         temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created3);
+        temp->setItem(created);
         temp->mNext = startNode;
         temp->mPrev = startNode->mPrev;
         startNode->mPrev->mNext = temp;
@@ -767,7 +768,7 @@ void CUICfManager::Move() {
         goto after_flags;
     }
     if ((flags & 0x40) != 0) {
-        mFlags = (u16)(mFlags & ~0x40);
+        *flagPtr = (u16)(*flagPtr & 0xffbf);
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -779,10 +780,10 @@ void CUICfManager::Move() {
             inst->mFlags = (u16)(inst->mFlags | 0x40);
             goto after_flags;
         }
-        inst->mFlags = (u16)(inst->mFlags & ~0x40);
+        inst->mFlags = (u16)(inst->mFlags & 0xffbf);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created4 = __ct__CMenuBattleMode(inst->unk144, inst->unk11C);
-        if (created4 == NULL) {
+        created = __ct__CMenuBattleMode(inst->unk144, inst->unk11C);
+        if (created == NULL) {
             goto after_flags;
         }
         inst = (CUICfManager*)lbl_eu_80664054;
@@ -803,7 +804,7 @@ void CUICfManager::Move() {
         }
     push40_found:
         temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created4);
+        temp->setItem(created);
         temp->mNext = startNode;
         temp->mPrev = startNode->mPrev;
         startNode->mPrev->mNext = temp;
@@ -811,7 +812,7 @@ void CUICfManager::Move() {
         goto after_flags;
     }
     if ((flags & 0x80) != 0) {
-        mFlags = (u16)(mFlags & ~0x80);
+        *flagPtr = (u16)(*flagPtr & 0xff7f);
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -823,10 +824,10 @@ void CUICfManager::Move() {
             inst->mFlags = (u16)(inst->mFlags | 0x80);
             goto after_flags;
         }
-        inst->mFlags = (u16)(inst->mFlags & ~0x80);
+        inst->mFlags = (u16)(inst->mFlags & 0xff7f);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created5 = __ct__CMenuLvUp(inst->unk144, inst->unk11C);
-        if (created5 == NULL) {
+        created = __ct__CMenuLvUp(inst->unk144, inst->unk11C);
+        if (created == NULL) {
             goto after_flags;
         }
         inst = (CUICfManager*)lbl_eu_80664054;
@@ -847,7 +848,7 @@ void CUICfManager::Move() {
         }
     push80_found:
         temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created5);
+        temp->setItem(created);
         temp->mNext = startNode;
         temp->mPrev = startNode->mPrev;
         startNode->mPrev->mNext = temp;
@@ -855,6 +856,7 @@ void CUICfManager::Move() {
     }
 
 after_flags:
+    framePad[1] = framePad[0];
     // Gate: bits 6|21 then bit 13 of lbl_eu_80663E24 (0x02040400)
     if ((lbl_eu_80663E24 & 0x02040400u) != 0) {
         goto after_enum;
@@ -1045,4 +1047,5 @@ unlink_done:
     if (nextCount < 0) {
         unk120 = 0;
     }
+    framePad[2] = framePad[1];
 }

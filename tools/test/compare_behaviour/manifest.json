@@ -364,6 +364,15 @@
       "ppc_skip_reason": "Render path calls GX/lyt DrawInfo and layout helpers; host covers gate/bitfield/draw decisions"
     },
     {
+      "id": "menu-arts-move",
+      "description": "CMenuArtsSelect::Move HUD gates + main FSM + party latch + slot 2A0/2C0/2E4 + animate bits (HIGH_MATCH ~93%)",
+      "unit": "kyoshin/menu/CMenuArtsSelect",
+      "symbol": "Move__15CMenuArtsSelectFv",
+      "host_binary": "menu_arts_move",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Move fans out to layout/anim/party helpers; host covers gates/FSM/slot/animate decisions"
+    },
+    {
       "id": "uiwindowmanager-move",
       "description": "CUIWindowManager::Move timer scan + mark-propagation + collect/remove (HIGH_MATCH ~79.3%)",
       "unit": "kyoshin/CUIWindowManager",
@@ -416,6 +425,15 @@
       "host_binary": "uicf_func_80133324",
       "ppc_eligible": false,
       "ppc_skip_reason": "Dispatcher fans out to UI helpers; host covers range gates, SDA, and list-insert semantics"
+    },
+    {
+      "id": "uicf-move",
+      "description": "CUICfManager::Move mFlags cascade + mark-from-head + collect/unlink + countdown (HIGH_MATCH ~85%)",
+      "unit": "kyoshin/CUICfManager",
+      "symbol": "Move__12CUICfManagerFv",
+      "host_binary": "uicf_move",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Move fans out to menu ctors / enum list / DeviceVI; host covers flags/mark/collect/countdown"
     },
     {
       "id": "menu-bps-move",

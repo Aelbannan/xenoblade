@@ -283,6 +283,7 @@ after_ce48:
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
+            // f32[5] stack homes → frame -0x70 with stfs at sp+0x10..0x20.
             f32 homes[5];
             homes[0] = lbl_eu_80666F28;
             homes[1] = lbl_eu_80666F40 * unk88->GetFrame();
@@ -294,10 +295,10 @@ after_ce48:
             t[0] = homes[0];
             t[1] = homes[1];
             t[2] = homes[2];
-            // Sink homes[3]/4] so the array storage is not truncated.
-            (void)*(volatile f32*)&homes[3];
-            (void)*(volatile f32*)&homes[4];
             unk308 |= 0x1u;
+            if (homes[3] + homes[4] == 0.0f) {
+                t[0] = homes[4];
+            }
         }
         break;
     case 4:
@@ -370,10 +371,8 @@ after_ce48:
                 }
 
                 f32 zeroF = lbl_eu_80666F28;
-                u8* slot = reinterpret_cast<u8*>(this);
                 for (s32 i = 0; i < 8; i++) {
-                    s32* p2a0 = reinterpret_cast<s32*>(slot + 0x2a0);
-                    switch (static_cast<s32>(*p2a0)) {
+                    switch (static_cast<s32>(unk2A0[i])) {
                     case 9:
                         func_80106C30(this, i);
                         break;
@@ -419,19 +418,11 @@ after_ce48:
                                 }
                             }
                         }
-                        nw4r::lyt::AnimTransform* animE4 =
-                            *reinterpret_cast<nw4r::lyt::AnimTransform**>(
-                                slot + 0xe4);
-                        nw4r::lyt::Layout* layoutA4 =
-                            *reinterpret_cast<nw4r::lyt::Layout**>(slot + 0xa4);
-                        nw4r::lyt::AnimTransform* animC4 =
-                            *reinterpret_cast<nw4r::lyt::AnimTransform**>(
-                                slot + 0xc4);
-                        if (func_80137444(animE4, lbl_eu_80666F2C) != 0 ||
+                        if (func_80137444(unkE4[i], lbl_eu_80666F2C) != 0 ||
                             ready != 0) {
-                            *p2a0 = 0xb;
-                            layoutA4->SetAnimationEnable(animE4, false);
-                            layoutA4->SetAnimationEnable(animC4, true);
+                            unk2A0[i] = 0xb;
+                            unkA4[i]->SetAnimationEnable(unkE4[i], false);
+                            unkA4[i]->SetAnimationEnable(unkC4[i], true);
                         }
                         break;
                     }
@@ -441,7 +432,6 @@ after_ce48:
                     default:
                         break;
                     }
-                    slot += 4;
                 }
             }
 

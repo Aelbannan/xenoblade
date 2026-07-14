@@ -809,6 +809,66 @@
       "unit": "kyoshin/CUICfManager",
       "required_level": "FULL_MATCH",
       "notes": "Batch 14j; bitflag child create/teardown; leave Init/Term/func_80133324; size 0x97C"
+    },
+    {
+      "id": "battlestate-vfunc10",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CBattleState::CBattleState_UnkVirtualFunc10",
+      "symbol": "CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv",
+      "address": "0x80148A18",
+      "source": "src/kyoshin/cf/object/CBattleState.cpp",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14k; Fv+r4 arg; leave ctor/other vfuncs; size 0x444"
+    },
+    {
+      "id": "menu-arts-ctor",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuArtsSelect::CMenuArtsSelect",
+      "symbol": "__ct__CMenuArtsSelect",
+      "address": "0x80102B08",
+      "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
+      "unit": "kyoshin/menu/CMenuArtsSelect",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14k; Process+vt/PTMF ctor; leave Term/Move/cbRenderBefore; size 0x288"
+    },
+    {
+      "id": "menu-bps-ctor",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuBattlePlayerState::CMenuBattlePlayerState",
+      "symbol": "__ct__CMenuBattlePlayerState",
+      "address": "0x8010B880",
+      "source": "src/kyoshin/menu/CMenuBattlePlayerState.cpp",
+      "unit": "kyoshin/menu/CMenuBattlePlayerState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14k; Process+vt/PTMF ctor; leave Term/Move/cbRenderBefore; size 0x580"
+    },
+    {
+      "id": "cam-follow-ctor",
+      "tier": "P1",
+      "milestone": "camera",
+      "function": "CfCamFollow::CfCamFollow",
+      "symbol": "__ct__cf_CfCamFollow",
+      "address": "0x8006C684",
+      "source": "src/kyoshin/cf/CfCam.cpp",
+      "unit": "kyoshin/cf/CfCam",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14k; create CfCam.cpp with ctor only; retail symbol __ct__cf_CfCamFollow; size 0x238"
+    },
+    {
+      "id": "menu-enemy-ctor",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuEnemyState::CMenuEnemyState",
+      "symbol": "__ct__CMenuEnemyState",
+      "address": "0x8010FC4C",
+      "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
+      "unit": "kyoshin/menu/CMenuEnemyState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14k; Process+vt/PTMF ctor; leave Move/cbRenderBefore; size 0x250"
     }
   ]
 }

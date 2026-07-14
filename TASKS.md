@@ -141,10 +141,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CViewRoot::getView(unsigned long)`** (`getView__9CViewRootFUl`) · `0x80445810` · size `0xA0`
   - Map level: FULL_MATCH
   - Resolves view IDs and supports second-view ownership.
-- [ ] **`CViewRoot::renderView()`** (`renderView__9CViewRootFv`) · `0x80445A5C` · size `0x150` · **97.1% CODE_MATCH**
-  - Map level: CODE_MATCH
-  - Root `mChildren` walk; gates on `lbl_eu_806655D4`, root `NO_EVENT`, `CDesktop::getInstance`; per-child skip `isException` (flag or msg `EVT_EXCEPTION`); render LOGIN/RUN via `renderView__5CViewFv`.
-  - Remaining ~2.9%: B44 `shouldRender` `li r4,0` vs retail `li r0,0` (coalesce after msgQualified); msg index r5 vs r7 (add coalesces to r0); found `beq` vs `bne`+`b` (decomp −4B).
+- [x] **`CViewRoot::renderView()`** (`renderView__9CViewRootFv`) · `0x80445A5C` · size `0x150`
+  - Map level: FULL_MATCH
+  - Natural child-list traversal plus inline `CWorkThread::isRunning()` reproduces the retail exception-message scan and LOGIN/RUN gate byte-for-byte.
 - [ ] **`CViewRoot::create(...)`** (`create__9CViewRootFP11CWorkThread`) · `0x80445E94` · size `0x21C` · **95.3% CODE_MATCH**
   - Map level: CODE_MATCH
   - Determines root view lifetime and allocation source; `char[]` vtables + retail pool/history store interleave.

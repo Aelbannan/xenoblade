@@ -34,7 +34,7 @@ viAfterDrawDone__9CDeviceGXFv,cursor-agent,2026-07-13,P0 finalization/synchroniz
 randFloat__Q22ml6MTRandFv,cursor-agent,2026-07-13,verified FULL_MATCH US; extern lbl_eu pools + postprocess @2856 rename
 create__9CViewRootFP11CWorkThread,cursor-agent,2026-07-13,P0 view root singleton allocation + pool init
 create__Q22cf9CfPadTaskFP8CProcess,cursor-agent,2026-07-13,FULL_MATCH; unit .text exact 0x12BC (inline ctor; drop IGameException weak dt; out-of-line CProcess::Tail)
-renderView__9CViewRootFv,auto-agent,2026-07-13,97.4% CODE_MATCH; msgIndex r7 fixed; bne+b + shouldRender r0 soft-cap
+renderView__9CViewRootFv,codex-agent,2026-07-14,FULL_MATCH 100%; natural child walk + inline CWorkThread::isRunning
 attachRenderWork__5CViewFP11CWorkThread,cursor-agent,2026-07-13,P0 matching attachRenderWork
 __ct__5CViewFPCcP11CWorkThread,auto-agent,2026-07-13,P0 97.5% CODE_MATCH soft-cap: r29 listCap Chaitin (NV listCap→r31/this→r29 ~94.3%); leave renderView; wkUpdate FULL_MATCH
 updateMsg__5CViewFv,cursor-agent,2026-07-13,P0 STRUCTURAL ~65.9%; host cview-update-msg; do not touch setRect; wkUpdate FULL_MATCH verified
@@ -104,3 +104,8 @@ CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 bat
 Move__16CUIBattleManagerFv,auto-agent,2026-07-14,P1 batch-14j: create Move only; leave Init
 Move__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14j: Move only; leave Term/cbRenderBefore
 Move__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14j: Move only; leave Init/Term/func_80133324
+CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14k: only UnkVirtualFunc10; leave other vfuncs
+__ct__CMenuArtsSelect,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Term/Move/cbRenderBefore
+__ct__CMenuBattlePlayerState,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Term/Move/cbRenderBefore
+__ct__cf_CfCamFollow,auto-agent,2026-07-14,P1 batch-14k: create CfCam.cpp ctor only
+__ct__CMenuEnemyState,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Move/cbRenderBefore

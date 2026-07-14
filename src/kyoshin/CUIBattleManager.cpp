@@ -114,11 +114,13 @@ void CUIBattleManager::Move() {
     _reslist_node<CUIBattleChild*>* pending[8];
     char pathBufF8[0x80];
     char pathBuf178[0x8C];
+    // Grow frame toward retail -0x220 (spare between pending and paths).
+    int framePad[4];
     u32 localVal;
     int pendingCount;
     int i;
-    int capacity;
     int byteOff;
+    int capacity;
     _reslist_node<CUIBattleChild*>* startNode;
     _reslist_node<CUIBattleChild*>* temp;
     _reslist_node<CUIBattleChild*>* node;
@@ -181,10 +183,10 @@ after_bit21:
                     savedRet20 = func_801096B8(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                     if (savedRet20 != NULL) {
                         inst = lbl_eu_80664048;
-                        startNode = inst->mChildList.mStartNodePtr;
-                        capacity = inst->mChildList.mCapacity;
                         i = 0;
                         byteOff = 0;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
                         pad0C = capacity;
                         pad10 = byteOff;
                         pad14 = i;
@@ -228,10 +230,10 @@ after_bit21:
                     savedRet1C = func_801ACCE0(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                     if (savedRet1C != NULL) {
                         inst = lbl_eu_80664048;
-                        startNode = inst->mChildList.mStartNodePtr;
-                        capacity = inst->mChildList.mCapacity;
                         i = 0;
                         byteOff = 0;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
                         pad18 = capacity;
                         pad1C = byteOff;
                         pad20 = i;
@@ -266,9 +268,13 @@ after_bit21:
             flags &= 0xef;
             unk82 = flags;
             if (lbl_eu_80664048 != NULL) {
-                if (!func_8009CF8C(0x3357)) {
+                // Retail: cntlzw + srwi. zero-test. compat.h stubs __cntlzw to 0.
+#undef __cntlzw
+                if (__cntlzw((u32)func_8009CF8C(0x3357)) >> 5) {
                     lbl_eu_80664048->unk82 |= 0x10;
-                } else if (func_801355F4() == NULL) {
+                    goto after_bit10;
+                }
+                if (func_801355F4() == NULL) {
                     lbl_eu_80664048->unk82 |= 0x10;
                 } else {
                     flags = lbl_eu_80664048->unk82;
@@ -277,10 +283,10 @@ after_bit21:
                     savedRet18 = func_80187694(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                     if (savedRet18 != NULL) {
                         inst = lbl_eu_80664048;
-                        startNode = inst->mChildList.mStartNodePtr;
-                        capacity = inst->mChildList.mCapacity;
                         i = 0;
                         byteOff = 0;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
                         goto slot_check_10;
                     slot_body_10:
                         if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
@@ -306,6 +312,7 @@ after_bit21:
         }
     }
 
+after_bit10:
     if ((unk82 & 0x20) != 0) {
         if (func_801355A0() != 0) {
             flags = unk82;
@@ -321,10 +328,10 @@ after_bit21:
                     savedRet14 = func_801B0E0C(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
                     if (savedRet14 != NULL) {
                         inst = lbl_eu_80664048;
-                        startNode = inst->mChildList.mStartNodePtr;
-                        capacity = inst->mChildList.mCapacity;
                         i = 0;
                         byteOff = 0;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
                         goto slot_check_20;
                     slot_body_20:
                         if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
@@ -456,11 +463,11 @@ after_assets:
                                                             lbl_eu_80664048->unk58);
                                                         if (savedRet0C != NULL) {
                                                             inst = lbl_eu_80664048;
+                                                            i = 0;
+                                                            byteOff = 0;
                                                             startNode =
                                                                 inst->mChildList.mStartNodePtr;
                                                             capacity = inst->mChildList.mCapacity;
-                                                            i = 0;
-                                                            byteOff = 0;
                                                             goto slot_check_a;
                                                         slot_body_a:
                                                             if (*(u32*)((u8*)inst->mChildList.mList +
@@ -509,10 +516,10 @@ after_assets:
                                                        lbl_eu_80664048->unk58);
                             if (savedRet08 != NULL) {
                                 inst = lbl_eu_80664048;
-                                startNode = inst->mChildList.mStartNodePtr;
-                                capacity = inst->mChildList.mCapacity;
                                 i = 0;
                                 byteOff = 0;
+                                startNode = inst->mChildList.mStartNodePtr;
+                                capacity = inst->mChildList.mCapacity;
                                 goto slot_check_b;
                             slot_body_b:
                                 if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
@@ -573,5 +580,6 @@ mark_remove:
 
     unk80 = 0;
     unk81 = 0;
+    framePad[0] = pendingCount;
 done:;
 }

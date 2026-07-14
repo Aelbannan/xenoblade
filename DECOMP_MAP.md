@@ -199,7 +199,7 @@ The exact repository path for an unreconstructed logical translation unit may di
 | `CProcessMan::DrawImpl(CProcess*)` | `DrawImpl__11CProcessManFP8CProcess` | `0x80448308` | `0x1F8` | Classifies per-process Draw callbacks and view filtering. | **FULL_MATCH** |
 | `CProcessMan::TailImpl(CProcess*)` | `TailImpl__11CProcessManFP8CProcess` | `0x80448500` | `0x1F8` | Identifies finalization that must not run per viewport. | **FULL_MATCH** |
 | `CProcessMan::Move()` | `Move__11CProcessManFv` | `0x804478F0` | `0x2B8` | Confirms simulation traversal and process ordering. | **CODE_MATCH** |
-| `CProc::pssCreateView(...)` | `pssCreateView__5CProcFPCcP11CWorkThreadi` | `0x8043BC8C` | `0x3AC` | May create a second native view attached to the game process. | **88.4% HIGH_MATCH** |
+| `CProc::pssCreateView(...)` | `pssCreateView__5CProcFPCcP11CWorkThreadi` | `0x8043BC8C` | `0x3AC` | May create a second native view attached to the game process. | **FULL_MATCH** |
 | `CProc::pssDetachView(viewId)` | `pssDetachView__5CProcFUl` | `0x8043BBF0` | `0x9C` | Required for safe teardown and runtime toggle. | **FULL_MATCH** |
 | `CProc::pssSetFocus()` | `pssSetFocus__5CProcFv` | `0x8043BB40` | `0xB0` | Determines input/focus side effects of multiple views. | **FULL_MATCH** |
 
@@ -214,17 +214,17 @@ This is the highest-value P0 decompilation slice. The first implementation may u
 
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
-| `CView::CView(...)` | `__ct__5CViewFPCcP11CWorkThread` | `0x8043EC5C` | `0x2D8` | Recovers layout, owned frame objects, and initialization invariants. | **CODE_MATCH ~97.5%** |
+| `CView::CView(...)` | `__ct__5CViewFPCcP11CWorkThread` | `0x8043EC5C` | `0x2D8` | Recovers layout, owned frame objects, and initialization invariants. | **FULL_MATCH** |
 | `CView::setCurrent()` | `setCurrent__5CViewFv` | `0x8043F3D8` | `0xBC` | Switches global/current view state before each render pass. | **FULL_MATCH** |
 | `CView::setRect(CRect16 const&)` | `setRect__5CViewFRCQ22ml7CRect16` | `0x8043F514` | `0x150` | Sets viewport rectangle and likely projection/scissor state. | **FULL_MATCH** |
 | `CView::setDisp(bool,bool)` | `setDisp__5CViewFbb` | `0x8043F7B8` | `0x70` | Controls visibility/display participation. | **FULL_MATCH** |
 | `CView::getSplitLine()` | `getSplitLine__5CViewFv` | `0x8043F8D8` | `0x94` | Existing split-related field may reveal native layout support. | **FULL_MATCH** |
 | `CView::setSplitLine(short)` | `setSplitLine__5CViewFs` | `0x8043F96C` | `0x9C` | Potentially configures a native split boundary. Must be understood before inventing a new mechanism. | **FULL_MATCH** |
 | `CView::updateMsg()` | `updateMsg__5CViewFv` | `0x8043FA08` | `0x798` | Classify per-frame view messages and side effects. | **74.4% HIGH_MATCH** |
-| `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **76.2% HIGH_MATCH** (frame soft-cap) |
+| `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **85.0% HIGH_MATCH** |
 | `CView::detachRenderWork(CWorkThread*)` | `detachRenderWork__5CViewFP11CWorkThread` | `0x80441470` | `0x8` | Needed for safe destruction/toggle. | **FULL_MATCH** |
 | `CView::wkUpdate()` | `wkUpdate__5CViewFv` | `0x80441478` | `0x14C` | Determine whether view update is camera-only, presentation-only, or stateful. | **FULL_MATCH** |
-| `CView::renderView()` | `renderView__5CViewFv` | `0x804415C4` | `0xCB4` | Primary candidate for a repeatable per-view render pass. | **STRUCTURAL** |
+| `CView::renderView()` | `renderView__5CViewFv` | `0x804415C4` | `0xCB4` | Primary candidate for a repeatable per-view render pass. | **95.3% CODE_MATCH** |
 | `CViewFrame::render()` | `render__10CViewFrameFv` | `0x80442CDC` | `0x394` | Frame/border/clear behavior around a viewport. | **FULL_MATCH** |
 | `CViewRoot::setCurrent(CView*)` | `setCurrent__9CViewRootFP5CView` | `0x80444C90` | `0x1F4` | Global current-view management and nested-view behavior. | **FULL_MATCH** |
 | `CViewRoot::getFullScreenView()` | `getFullScreenView__9CViewRootFv` | `0x80445314` | `0x1D8` | Restores original full-screen presentation for menus/cutscenes. | **FULL_MATCH** |
@@ -648,7 +648,7 @@ src/kyoshin/cf/IFlagEvent.hpp
 
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
-| `CUICfManager::Move()` | `Move__12CUICfManagerFv` | `0x801332A4` | `0x97C` | Central UI state and event/menu activity. | **STRUCTURAL** |
+| `CUICfManager::Move()` | `Move__12CUICfManagerFv` | `0x801332A4` | `0x97C` | Central UI state and event/menu activity. | **HIGH_MATCH ~89.4%** |
 | `CUICfManager helper` | `func_80133324__12CUICfManagerFv` | `0x80133DF8` | `0x3C0` | Event id range dispatch (Fv+r4/r5/r6); SDA/list insert. | **CODE_MATCH ~98.2%** |
 | `CUIWindowManager::Move()` | `Move__16CUIWindowManagerFv` | `0x8013D0C8` | `0x4DC` | Modal window state, input capture, and open/close transitions. | **HIGH_MATCH** (~79.3%, host-verified) |
 | `CUICfManager::Init()` | `Init__12CUICfManagerFv` | `0x80132EC8` | `0x2E0` | Finds manager-owned menu/window components. | **STRUCTURAL** |

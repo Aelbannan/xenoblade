@@ -821,7 +821,7 @@
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
       "required_level": "FULL_MATCH",
-      "notes": "Batch 14j; bitflag child create/teardown; leave Init/Term/func_80133324; size 0x97C"
+      "notes": "HIGH_MATCH ~89.4%; behaviour:uicf-move PASS; soft-cap _savegpr_27/collect walk-ptr; size 0x97C"
     },
     {
       "id": "battlestate-vfunc10",

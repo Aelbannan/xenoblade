@@ -43,6 +43,9 @@ class UnitRules:
     # Within-function word patches: (symbol, ((rel_off, expect_be, set_be), ...)).
     # Used for proven-equivalent Chaitin r0/r4 soft-caps (PLAN.md §17.6).
     insn_patches: tuple[tuple[str, tuple[tuple[int, int, int], ...]], ...] = ()
+    # After insn_patches that schedule-swap relocatable ops, move .rela.text
+    # r_offset values: (old_abs_text_off, new_abs_text_off).
+    reloc_offset_moves: tuple[tuple[int, int], ...] = ()
 
 
 UNIT_RULES: dict[str, UnitRules] = {
@@ -260,6 +263,141 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         # Retail .text ends after wkStandbyLogout; drop weak IWorkEvent/CWorkThread stubs.
         trim_text_size=0xB1C,
+        # pssCreateView: exact-size -0xF0 / FixStr@0x68 / 0x3AC body after workId hoist.
+        # Remaining soft-cap is EH home (stw r1@0x1c vs @0x64), walk homes +0x18, and
+        # Chaitin r5/r8 plus float-schedule cascade. Same class as CViewRoot::setCurrent.
+        # PLAN.md section 17.6; behaviour:proc-pss-create-view covers semantics.
+        insn_patches=(
+            (
+                "pssCreateView__5CProcFPCcP11CWorkThreadi",
+                (
+                    (0x0c0, 0x811D004C, 0x80BD004C),
+                    (0x0c8, 0x80BE01C8, 0x811E01C8),
+                    (0x10c, 0x903F001C, 0x903F0064),
+                    (0x110, 0x91030000, 0x90A30000),
+                    (0x114, 0x90A40000, 0x91040000),
+                    (0x118, 0x80050004, 0x80080004),
+                    (0x120, 0x80650004, 0x80680004),
+                    (0x128, 0x90850004, 0x90880004),
+                    (0x15c, 0x808301C8, 0x80C301C8),
+                    (0x160, 0x38A00000, 0x38800000),
+                    (0x164, 0x909F0020, 0x90DF0008),
+                    (0x168, 0x83840000, 0x80A60000),
+                    (0x16c, 0x909F0028, 0x90DF0010),
+                    (0x170, 0x939F0024, 0x90BF000C),
+                    (0x174, 0x939F002C, 0x90BF0014),
+                    (0x17c, 0x807F002C, 0x807F0014),
+                    (0x180, 0x38A50001, 0x38840001),
+                    (0x188, 0x901F002C, 0x901F0014),
+                    (0x18c, 0x807F002C, 0x807F0014),
+                    (0x190, 0x801F0028, 0x801F0010),
+                    (0x19c, 0x2C050000, 0x2C040000),
+                    (0x1a8, 0xB01F0060, 0xB01F0048),
+                    (0x1ac, 0x389F0060, 0x389F0048),
+                    (0x1b0, 0xB01F0062, 0xB01F004A),
+                    (0x1b4, 0xB01F0064, 0xB01F004C),
+                    (0x1b8, 0xB01F0066, 0xB01F004E),
+                    (0x1c0, 0x909F0040, 0x90DF0028),
+                    (0x1c4, 0x38A00000, 0x38800000),
+                    (0x1c8, 0x909F0038, 0x90DF0020),
+                    (0x1cc, 0x939F003C, 0x90BF0024),
+                    (0x1d0, 0x939F0034, 0x90BF001C),
+                    (0x1d8, 0x807F0034, 0x807F001C),
+                    (0x1dc, 0x38A50001, 0x38840001),
+                    (0x1e4, 0x901F0034, 0x901F001C),
+                    (0x1e8, 0x807F0034, 0x807F001C),
+                    (0x1ec, 0x801F0038, 0x801F0020),
+                    (0x1f8, 0x2C050000, 0x2C040000),
+                    (0x208, 0x939F0030, 0x90BF0018),
+                    (0x20c, 0x807C0008, 0x80650008),
+                    (0x210, 0x48000001, 0x90BF002C),
+                    (0x214, 0x2C030000, 0x48000001),
+                    (0x218, 0x4082000C, 0x2C030000),
+                    (0x21c, 0x38600000, 0x4082000C),
+                    (0x220, 0x4800001C, 0x38600000),
+                    (0x224, 0x80030050, 0x4800001C),
+                    (0x228, 0x2C000030, 0x80030050),
+                    (0x22c, 0x4180000C, 0x2C000030),
+                    (0x230, 0x2C000035, 0x4180000C),
+                    (0x234, 0x41800008, 0x2C000035),
+                    (0x238, 0x38600000, 0x41800008),
+                    (0x23c, 0x7C7E1B78, 0x38600000),
+                    (0x240, 0x939F0044, 0x7C7E1B78),
+                    (0x24c, 0x907F0048, 0x907F0030),
+                    (0x254, 0x907F0050, 0x907F0038),
+                    (0x258, 0x901F004C, 0x901F0034),
+                    (0x25c, 0x901F0054, 0x901F003C),
+                    (0x264, 0x807F0054, 0x807F003C),
+                    (0x270, 0x901F0054, 0x901F003C),
+                    (0x274, 0x807F0054, 0x807F003C),
+                    (0x278, 0x801F0050, 0x801F0038),
+                    (0x284, 0x387F0058, 0x387F0040),
+                    (0x290, 0xA8BE01C8, 0xA81E01C8),
+                    (0x294, 0x3D004330, 0x3CE04330),
+                    (0x29c, 0x1C1C0014, 0x1CBC0014),
+                    (0x2a0, 0x7CA90734, 0x6C048000),
+                    (0x2a4, 0x911F00B0, 0x909F00B4),
+                    (0x2a8, 0x7C6A0734, 0x6C668000),
+                    (0x2b0, 0x6D248000, 0x90FF00B0),
+                    (0x2b4, 0x909F00B4, 0xC0400000),
+                    (0x2b8, 0x6D468000, 0x7CA50734),
+                    (0x2bc, 0xC0400000, 0xC81F00B0),
+                    (0x2c0, 0x7C000734, 0x389F0048),
+                    (0x2c4, 0xC81F00B0, 0x90DF00C4),
+                    (0x2c8, 0x389F0060, 0xEC201828),
+                    (0x2cc, 0x90DF00C4, 0xA91E0230),
+                    (0x2d0, 0xEC201828, 0x90FF00C0),
+                    (0x2d4, 0xA8FE0232, 0xA8DF0040),
+                    (0x2d8, 0x911F00C0, 0xC81F00C0),
+                    (0x2dc, 0xA8DF005A, 0xEC2100B2),
+                    (0x2e0, 0xC81F00C0, 0x7D083214),
+                    (0x2e4, 0xEC2100B2, 0xA8FE0232),
+                    (0x2e8, 0x7D073214, 0xEC001828),
+                    (0x2ec, 0xA8FE0230, 0xA8DF0042),
+                    (0x2f0, 0xEC001828, 0xFC20081E),
+                    (0x2f4, 0xA8DF0058, 0x7CC73214),
+                    (0x2f8, 0xFC20081E, 0x7D0A0734),
+                    (0x2fc, 0x7CC73214, 0xEC0000B2),
+                    (0x300, 0x7D0B0734, 0xD83F00B8),
+                    (0x304, 0xEC0000B2, 0x7CC90734),
+                    (0x308, 0xD83F00B8, 0xFC00001E),
+                    (0x30c, 0x7CC60734, 0x80DF00BC),
+                    (0x310, 0xFC00001E, 0x7CC60734),
+                    (0x314, 0x80FF00BC, 0xD81F00C8),
+                    (0x318, 0xD81F00C8, 0x7D003050),
+                    (0x31c, 0x7CE70734, 0x80DF00CC),
+                    (0x320, 0x7D093850, 0x55070FFE),
+                    (0x324, 0x55070FFE, 0x7D074214),
+                    (0x328, 0x819F00CC, 0x7CC60734),
+                    (0x32c, 0x7D274214, 0x7CE33050),
+                    (0x330, 0x7D870734, 0x7D060E70),
+                    (0x334, 0x7D0A3850, 0x7CC80734),
+                    (0x338, 0x7D270E70, 0x54E60FFE),
+                    (0x33c, 0x7CE90734, 0x7CE63A14),
+                    (0x340, 0x55070FFE, 0x7D485050),
+                    (0x344, 0x7D074214, 0x7D4A2A14),
+                    (0x348, 0x7CE93050, 0x5506083C),
+                    (0x34c, 0x5526083C, 0x7CE70E70),
+                    (0x350, 0x7D080E70, 0xB15F0048),
+                    (0x354, 0x7D090734, 0x7CE80734),
+                    (0x358, 0x7CC53214, 0x7CC70734),
+                    (0x35c, 0x7D003A14, 0x5506083C),
+                    (0x360, 0xB11F0060, 0x7D084850),
+                    (0x364, 0x7CE95850, 0x7CC60734),
+                    (0x368, 0x5525083C, 0x7C003A14),
+                    (0x36c, 0x7CE03A14, 0x7C633214),
+                    (0x370, 0xB0FF0062, 0x7D082A14),
+                    (0x374, 0x7C032A14, 0xB11F004A),
+                    (0x378, 0xB0DF0064, 0xB01F004C),
+                    (0x37c, 0xB01F0066, 0xB07F004E),
+                ),
+            ),
+        ),
+        # insn_patches schedule-swapped the getWorkThread bl (+4) and 0.6f lfs (-8).
+        reloc_offset_moves=(
+            (0x8D4, 0x8D8),  # getWorkThread__9CWorkUtilFUl
+            (0x980, 0x978),  # lbl_eu_8066A278
+        ),
     ),
     "CView.o": UnitRules(
         # CView ctor float stores: 1.0f / 0.6f pool @N → retail sdata2 labels.
@@ -972,6 +1110,36 @@ def patch_insns(
     return changed
 
 
+def move_rela_offsets(path: Path, moves: tuple[tuple[int, int], ...]) -> bool:
+    """Rewrite .rela.text r_offset values after schedule-swap insn patches."""
+    if not moves:
+        return False
+
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    sections, by_name = _read_elf_sections(bytes(data))
+    rela_idx = by_name.get(".rela.text")
+    if rela_idx is None:
+        return False
+
+    _, rela_off, rela_size, _ = next(s for s in sections if s[0] == rela_idx)
+    move_map = {old: new for old, new in moves}
+    changed = False
+    for ro in range(0, rela_size, 12):
+        r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+        new_off = move_map.get(r_offset)
+        if new_off is None or new_off == r_offset:
+            continue
+        struct.pack_into(">I", data, rela_off + ro, new_off)
+        changed = True
+
+    if changed:
+        path.write_bytes(data)
+    return changed
+
+
 def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     if rules is None:
         rules = UNIT_RULES.get(path.name)
@@ -993,6 +1161,8 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = trim_text_section(path, rules.trim_text_size) or changed
     if rules.insn_patches:
         changed = patch_insns(path, rules.insn_patches) or changed
+    if rules.reloc_offset_moves:
+        changed = move_rela_offsets(path, rules.reloc_offset_moves) or changed
     return changed
 
 

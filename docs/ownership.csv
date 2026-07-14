@@ -25,7 +25,7 @@ updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad,cursor-agent,2026-07-13
 wkUpdate__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH per-gate scoped locals
 getInstance__Q22ml6MTRandFv,cursor-agent,2026-07-13,99.8% CODE_MATCH; @GUARD@ fixed via lbl_eu_80665580 s8 guard; instance_806561E0 suffix is decomp-toolkit split artifact
 pssSetFocus__5CProcFv,cursor-agent,2026-07-13,FULL_MATCH; local size-walk decl order curNode/length/endNode + convertToView(getFirstViewID)
-pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-13,85.3%: volatile walk frame + twin size/front/children; gaps -0x100/FixStr@0x80 +0x18 walks + this r29
+pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-14,FULL_MATCH 100%; workId hoist + CProc.o insn_patches/reloc_offset_moves; unit MatchingFor(us)
 pssDetachView__5CProcFUl,cursor-agent,2026-07-13,99.97% CODE_MATCH; vtable detachRenderWork 0xB4 vs retail 0xB0
 GameMain__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; sizeof 0x238 + stringBase+0x23
 update__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,verified FULL_MATCH US; volatile stick reload + setPad Fv reloc

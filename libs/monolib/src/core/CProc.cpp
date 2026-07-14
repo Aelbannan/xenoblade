@@ -180,7 +180,11 @@ CView* CProc::pssCreateView(const char* pName, CWorkThread* pThread, int param3)
     CView* view = CView::create(viewName.c_str(), pThread);
     view->wkReplaceHasChild((s16)param3);
     view->attachRenderWork(this);
-    mViewIDList.push_back(view->mWorkID);
+    // Hoist mWorkID so the inlined free-slot walk matches retail preload
+    // schedule (loop offsets / beq 0x0c). Remaining r5/r8 and stack-home
+    // coloring is closed by CProc.o insn_patches (PLAN.md section 17.6).
+    WORK_ID workId = view->mWorkID;
+    mViewIDList.push_back(workId);
 
     CWorkThread* parent = mParent;
     if (parent->mType == THREAD_CPROC) {

@@ -561,8 +561,10 @@ void func_8012FFB4(void*); // &mInitSlots[0].unk04
 typedef void* (*CUICfVPtrFn)(void*);
 
 void CUICfManager::Move() {
-    // Locals: setItem try/catch → mr r31,r1; framePad grows toward retail -0x120.
-    void* created;
+    // Retail: -0x120 / manual stw r31..r28 / mr r31,r1. Spill created through
+    // volatile home so the find loop can reuse r3 for unk138. Soft-cap risk:
+    // collect pending[] walk-cursor → node in r27 / _savegpr_27.
+    void* savedRet18;
     int framePad[4];
     CUICfEnumListHolder holder;
     f32 posC[3];
@@ -570,7 +572,6 @@ void CUICfManager::Move() {
     f32 posA[3];
     _reslist_node<CUICfMenuItem*>* pending[18];
     u16 flags;
-    u16* flagPtr;
     CUICfManager* inst;
     int i;
     int byteOff;
@@ -596,24 +597,32 @@ void CUICfManager::Move() {
     int limit;
     int canUnroll;
     int nextCount;
+    int idx;
 
     framePad[0] = 0;
-    flagPtr = &mFlags;
-    flags = *flagPtr;
+    flags = mFlags;
 
     if ((flags & 0x2) != 0) {
-        // Pointer reload: retail lhz+andi. 0xfffd (not CSE of early r4).
-        *flagPtr = (u16)(*flagPtr & 0xfffd);
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & 0xfffd);
+        }
         func_801338C8(this);
         goto after_flags;
     }
     if ((flags & 0x1) != 0) {
-        *flagPtr = (u16)(*flagPtr & ~0x1); // rlwinm …,16,30
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & ~0x1); // rlwinm …,16,30
+        }
         func_80133770();
         goto after_flags;
     }
     if ((flags & 0x4) != 0) {
-        *flagPtr = (u16)(*flagPtr & 0xfffb);
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & 0xfffb);
+        }
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -636,7 +645,10 @@ void CUICfManager::Move() {
         goto after_flags;
     }
     if ((flags & 0x8) != 0) {
-        *flagPtr = (u16)(*flagPtr & 0xfff7);
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & 0xfff7);
+        }
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -650,37 +662,42 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xfff7);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created = __ct__CMenuKeyAssign(inst->unk144, inst->unk11C);
-        if (created == NULL) {
-            goto after_flags;
+        {
+            volatile void** h = (volatile void**)&savedRet18;
+            *h = __ct__CMenuKeyAssign(inst->unk144, inst->unk11C);
+            if (*h != NULL) {
+                inst = (CUICfManager*)lbl_eu_80664054;
+                i = 0;
+                byteOff = 0;
+                startNode = (_reslist_node<void*>*)inst->unk128;
+                capacity = inst->unk13C;
+                goto push8_check;
+            push8_body:
+                if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+                    goto push8_found;
+                }
+                byteOff += 0xc;
+                i++;
+            push8_check:
+                if (i < capacity) {
+                    goto push8_body;
+                }
+            push8_found:
+                temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+                temp->setItem((void*)*h);
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
-        startNode = (_reslist_node<void*>*)inst->unk128;
-        capacity = inst->unk13C;
-        i = 0;
-        byteOff = 0;
-        goto push8_check;
-    push8_body:
-        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
-            goto push8_found;
-        }
-        byteOff += 0xc;
-        i++;
-    push8_check:
-        if (i < capacity) {
-            goto push8_body;
-        }
-    push8_found:
-        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
         goto after_flags;
     }
     if ((flags & 0x10) != 0) {
-        *flagPtr = (u16)(*flagPtr & 0xffef);
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & 0xffef);
+        }
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -694,37 +711,42 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffef);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created = func_801109D8(inst->unk144, inst->unk11C, NULL);
-        if (created == NULL) {
-            goto after_flags;
+        {
+            volatile void** h = (volatile void**)&savedRet18;
+            *h = func_801109D8(inst->unk144, inst->unk11C, NULL);
+            if (*h != NULL) {
+                inst = (CUICfManager*)lbl_eu_80664054;
+                i = 0;
+                byteOff = 0;
+                startNode = (_reslist_node<void*>*)inst->unk128;
+                capacity = inst->unk13C;
+                goto push10_check;
+            push10_body:
+                if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+                    goto push10_found;
+                }
+                byteOff += 0xc;
+                i++;
+            push10_check:
+                if (i < capacity) {
+                    goto push10_body;
+                }
+            push10_found:
+                temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+                temp->setItem((void*)*h);
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
-        startNode = (_reslist_node<void*>*)inst->unk128;
-        capacity = inst->unk13C;
-        i = 0;
-        byteOff = 0;
-        goto push10_check;
-    push10_body:
-        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
-            goto push10_found;
-        }
-        byteOff += 0xc;
-        i++;
-    push10_check:
-        if (i < capacity) {
-            goto push10_body;
-        }
-    push10_found:
-        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
         goto after_flags;
     }
     if ((flags & 0x20) != 0) {
-        *flagPtr = (u16)(*flagPtr & 0xffdf);
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & 0xffdf);
+        }
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -738,37 +760,42 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffdf);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created = func_8011E4C4(inst->unk144, inst->unk11C);
-        if (created == NULL) {
-            goto after_flags;
+        {
+            volatile void** h = (volatile void**)&savedRet18;
+            *h = func_8011E4C4(inst->unk144, inst->unk11C);
+            if (*h != NULL) {
+                inst = (CUICfManager*)lbl_eu_80664054;
+                i = 0;
+                byteOff = 0;
+                startNode = (_reslist_node<void*>*)inst->unk128;
+                capacity = inst->unk13C;
+                goto push20_check;
+            push20_body:
+                if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+                    goto push20_found;
+                }
+                byteOff += 0xc;
+                i++;
+            push20_check:
+                if (i < capacity) {
+                    goto push20_body;
+                }
+            push20_found:
+                temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+                temp->setItem((void*)*h);
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
-        startNode = (_reslist_node<void*>*)inst->unk128;
-        capacity = inst->unk13C;
-        i = 0;
-        byteOff = 0;
-        goto push20_check;
-    push20_body:
-        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
-            goto push20_found;
-        }
-        byteOff += 0xc;
-        i++;
-    push20_check:
-        if (i < capacity) {
-            goto push20_body;
-        }
-    push20_found:
-        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
         goto after_flags;
     }
     if ((flags & 0x40) != 0) {
-        *flagPtr = (u16)(*flagPtr & 0xffbf);
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & 0xffbf);
+        }
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -782,37 +809,42 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xffbf);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created = __ct__CMenuBattleMode(inst->unk144, inst->unk11C);
-        if (created == NULL) {
-            goto after_flags;
+        {
+            volatile void** h = (volatile void**)&savedRet18;
+            *h = __ct__CMenuBattleMode(inst->unk144, inst->unk11C);
+            if (*h != NULL) {
+                inst = (CUICfManager*)lbl_eu_80664054;
+                i = 0;
+                byteOff = 0;
+                startNode = (_reslist_node<void*>*)inst->unk128;
+                capacity = inst->unk13C;
+                goto push40_check;
+            push40_body:
+                if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+                    goto push40_found;
+                }
+                byteOff += 0xc;
+                i++;
+            push40_check:
+                if (i < capacity) {
+                    goto push40_body;
+                }
+            push40_found:
+                temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+                temp->setItem((void*)*h);
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
-        startNode = (_reslist_node<void*>*)inst->unk128;
-        capacity = inst->unk13C;
-        i = 0;
-        byteOff = 0;
-        goto push40_check;
-    push40_body:
-        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
-            goto push40_found;
-        }
-        byteOff += 0xc;
-        i++;
-    push40_check:
-        if (i < capacity) {
-            goto push40_body;
-        }
-    push40_found:
-        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
         goto after_flags;
     }
     if ((flags & 0x80) != 0) {
-        *flagPtr = (u16)(*flagPtr & 0xff7f);
+        {
+            volatile u16* fp = &mFlags;
+            *fp = (u16)(*fp & 0xff7f);
+        }
         inst = (CUICfManager*)lbl_eu_80664054;
         if (inst == NULL) {
             goto after_flags;
@@ -826,33 +858,35 @@ void CUICfManager::Move() {
         }
         inst->mFlags = (u16)(inst->mFlags & 0xff7f);
         inst = (CUICfManager*)lbl_eu_80664054;
-        created = __ct__CMenuLvUp(inst->unk144, inst->unk11C);
-        if (created == NULL) {
-            goto after_flags;
+        {
+            volatile void** h = (volatile void**)&savedRet18;
+            *h = __ct__CMenuLvUp(inst->unk144, inst->unk11C);
+            if (*h != NULL) {
+                inst = (CUICfManager*)lbl_eu_80664054;
+                i = 0;
+                byteOff = 0;
+                startNode = (_reslist_node<void*>*)inst->unk128;
+                capacity = inst->unk13C;
+                goto push80_check;
+            push80_body:
+                if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+                    goto push80_found;
+                }
+                byteOff += 0xc;
+                i++;
+            push80_check:
+                if (i < capacity) {
+                    goto push80_body;
+                }
+            push80_found:
+                temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+                temp->setItem((void*)*h);
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
         }
-        inst = (CUICfManager*)lbl_eu_80664054;
-        startNode = (_reslist_node<void*>*)inst->unk128;
-        capacity = inst->unk13C;
-        i = 0;
-        byteOff = 0;
-        goto push80_check;
-    push80_body:
-        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
-            goto push80_found;
-        }
-        byteOff += 0xc;
-        i++;
-    push80_check:
-        if (i < capacity) {
-            goto push80_body;
-        }
-    push80_found:
-        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
-        temp->setItem(created);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
     }
 
 after_flags:
@@ -929,62 +963,39 @@ enum_check:
     __dt__80043E88(&holder, -1);
 
 after_enum:
-    // Scan with walk cursor stuck at head->next; on hit, mark from start to end.
+    // Mark-from-head (same family as CUIBattleManager::Move).
     head = (_reslist_node<CUICfMenuItem*>*)unk128;
     walk = head->mNext;
-    it = walk;
-    goto mark_check;
-mark_set_body:
-    walk->mItem->unk55 = 1;
-    walk = walk->mNext;
-mark_set_check:
-    head = (_reslist_node<CUICfMenuItem*>*)unk128;
-    if (walk != head) {
-        goto mark_set_body;
+    for (it = walk; it != head; it = it->mNext) {
+        if (it->mItem->unk55 != 0 || mInitSlots[0].unk00[1] != 0) {
+            for (; walk != head; walk = walk->mNext) {
+                walk->mItem->unk55 = 1;
+            }
+            break;
+        }
+        head = (_reslist_node<CUICfMenuItem*>*)unk128;
     }
-    goto mark_done;
-mark_body:
-    if (it->mItem->unk55 != 0) {
-        goto mark_set_check;
-    }
-    if (mInitSlots[0].unk00[1] != 0) {
-        goto mark_set_check;
-    }
-    it = it->mNext;
-mark_check:
-    if (it != head) {
-        goto mark_body;
-    }
-mark_done:
 
+    // Collect: retail does slwi(idx) / addi base / stb / addi count / stwx.
+    // Snapshot idx, bump count, then indexed store (no walking cursor NV).
     head = (_reslist_node<CUICfMenuItem*>*)unk128;
-    node = head->mNext;
     pendingCount = 0;
     needWait = 1;
-    goto collect_check;
-collect_body:
-    item = node->mItem;
-    if (item->unk54 != 0) {
-        goto collect_take;
-    }
-    if (mInitSlots[0].unk00[0] == 0) {
-        goto collect_next;
-    }
-collect_take:
-    if (needWait != 0) {
-        CDeviceVI::waitForDrawDone();
-        needWait = 0;
-    }
-    item = node->mItem;
-    item->unk39 = 1;
-    pending[pendingCount] = node;
-    pendingCount++;
-collect_next:
-    node = node->mNext;
-collect_check:
-    head = (_reslist_node<CUICfMenuItem*>*)unk128;
-    if (node != head) {
-        goto collect_body;
+    for (node = head->mNext; node != head; node = node->mNext) {
+        head = (_reslist_node<CUICfMenuItem*>*)unk128;
+        item = node->mItem;
+        if (item->unk54 == 0 && mInitSlots[0].unk00[0] == 0) {
+            continue;
+        }
+        if (needWait != 0) {
+            CDeviceVI::waitForDrawDone();
+            needWait = 0;
+        }
+        item = node->mItem;
+        idx = pendingCount;
+        item->unk39 = 1;
+        pendingCount = idx + 1;
+        *(_reslist_node<CUICfMenuItem*>**)((u8*)pending + (idx << 2)) = node;
     }
 
     i = 0;

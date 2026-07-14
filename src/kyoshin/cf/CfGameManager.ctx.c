@@ -1,10 +1,7 @@
-/* "libs/monolib/src/core/CProc.cpp" line 0 "monolib/work.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 0 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
+/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -712,7 +709,97 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
+
+class CPad;
+class CScnNw4r;
+class CView;
+
+/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
+or due to being in separate files, but compiled together in one file (unity compilation). For now,
+to make things simpler, everything exists in a single class. */
+namespace cf{
+    class CfPadData;
+    class CfObjectMove;
+
+    //unofficial name
+    class CfGameManager{
+    public:
+        CfGameManager();
+
+        static CfGameManager* getInstance();
+        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
+
+        static void func_80086B5C(int arg1, int arg2, int arg3);
+        static void enablePadFlags(u32 enableFlags, bool enable);
+        static bool func_8007E1B4();
+        static void func_8007E218();
+        static void func_8007E514(int, int, char const*, int, int);
+        static void func_8007F930(bool arg1);
+        static UNKWORD func_800829B8();
+        static u32 getCurrentPadChannel();
+        static UNKTYPE* func_80083298();
+        static CfObjectMove* func_80082D54(int playerIndex);
+        static u32 getEnabledInputFlags();
+        static bool func_80086F9C(s16);
+        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
+        static CPad* getPad(int r3);
+        static void setPad(int r3, CPad* pPad, u32 r5);
+        static CfPadData* getCfPadData();
+        static CPad* getCurrentPad();
+
+        static bool checkUnkFlag(int bit){
+            return sUnkFlags & (1 << bit);
+        }
+
+        static void setUnkFlag(int bit, bool state){
+            if(state == true) sUnkFlags |= (1 << bit);
+            else sUnkFlags &= ~(1 << bit);
+        }
+
+        u32 unk0;
+        u32 unk4;
+        u32 unk8;
+        u8 unkC[0x28 - 0xC];
+        u8 unk28;
+        u8 unk29[0x68 - 0x29];
+        u32 unk68;
+        u8 unk6C;
+        u8 unk6D[0x7C - 0x6D];
+        u32 unk7C;
+        u8 unk80[0x8C - 0x80];
+        u32 unk8C;
+        u32 unk90;
+        //between CObjectParam - CfObjectMove
+        //likely player character object array, seems to always store pointers
+        //to CfObjectPc objects except pointing at the 4th vtable
+        CfObjectMove* unk94[3];
+        u32 unkA0;
+        u32 unkA4;
+        u32 unkA8;
+        u32 unkAC;
+        u32 unkB0;
+        u32 unkB4;
+
+        static u32 sUnkFlags;
+        static CScnNw4r* spScene;
+    }; //size = 0xB8
+
+} //namespace cf
+/* end "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 1 "kyoshin/cf/CfPadData.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CfPadData.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/CfPadData.hpp" line 3 "monolib/core.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 3 "monolib/monolib_types.hpp" */
 #pragma once
 
 //List of forward declarations for commonly used classes.
@@ -751,6 +838,16 @@ class CEventFile;
 class CProcess;
 class CProc;
 class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 4 "monolib/work.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
 /* end "monolib/monolib_types.hpp" */
 
 class CEventFile {
@@ -13029,18 +13126,6 @@ public:
 /* end "monolib/work/CWorkUtil.hpp" */
 /* "libs/monolib/include/monolib/work.hpp" line 19 "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work.hpp" */
-/* "libs/monolib/src/core/CProc.cpp" line 1 "monolib/core.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 4 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
 /* "libs/monolib/include/monolib/core/CArcItem.hpp" line 5 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
@@ -233512,231 +233597,119 @@ public:
 };
 /* end "monolib/core/CViewRoot.hpp" */
 /* end "monolib/core.hpp" */
-/* "libs/monolib/src/core/CProc.cpp" line 2 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
+
+namespace cf{
+    //Separate deadzone value specifically for CfPadData
+    static const float CFPAD_STICK_DEADZONE = 0.5f;
+
+    //TODO: unsure if it inherits CPad or not
+    //max size: 0x128
+    struct CfPadData {
+        CPad mPad; //0x0
+        //Is having a separate set of flags *really* necessary, Monolithsoft?
+        u32 mHeldButtonFlags; //0xF8
+        u32 mPrevHeldButtonFlags; //0xFC
+        u32 mPressedButtonFlags; //0x100
+        u32 mTurboPressButtonFlags; //0x104
+        u8 mButtonHoldTimersTurbo[MAX_PAD_INPUT_FLAGS]; //0x108
+    };
+}
+/* end "kyoshin/cf/CfPadData.hpp" */
+
+/* "src/kyoshin/cf/CfGameManager.cpp" line 3 "monolib/core/CPadManager.hpp" */
+/* end "monolib/core/CPadManager.hpp" */
 
 extern "C" {
-extern const char lbl_eu_80522500[]; // "(View)"
-extern float lbl_eu_8066A278; // 0.6f
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, CViewFrame* frame);
+u32 lbl_eu_80661BC8;
+cf::CfPadData lbl_eu_80571500;
+s8 lbl_eu_80663E70;
+cf::CfGameManager lbl_eu_80571758;
+u8 lbl_eu_80571748[0x10];
+CPad* lbl_eu_80663E0C;
+CPad lbl_eu_80570D40[8];
+u32 lbl_eu_80663E14;
+u32 lbl_eu_80663E60;
+u32 lbl_eu_80663E64;
+u32 lbl_eu_80663E24;
+u32 lbl_eu_80663E28;
+
+// symbols.txt: Fv, but callers leave the index in r4 (see func_80082D54).
+cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
+
+void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
+void __dt__Q22cf13CfGameManagerFv();
+void* __register_global_object(void* object, void* destructor, void* registration);
 }
 
-CProc::CProc(const char* pName, CWorkThread* pParent, s16 capacity) :
-CWorkThread(pName, pParent, capacity),
-unk1E4(mtl::INVALID_HANDLE){
-    unk1E8 = 2;
-    mType = THREAD_CPROC;
-    mViewIDList.reserve(mAllocHandle, 16);
+namespace cf {
+
+CfGameManager::CfGameManager() {
+    unk28 = 0;
+    unk68 = 0;
+    unk6C = 0;
+    unk7C = 0;
+    unk8C = 0;
+    unkA0 = 0;
+    unkA4 = 0;
+    unkA8 = 0;
+    unkAC = 0;
+    unkB0 = 0;
+    unkB4 = 0;
+    lbl_eu_80663E14 = 0;
+    lbl_eu_80663E60 = 0;
+    lbl_eu_80663E64 = 0;
+    lbl_eu_80663E24 = 0;
+    lbl_eu_80663E28 = 0;
+    unk0 = 0;
+    unk4 = 0;
+    unk8 = 0;
 }
 
-CProc::~CProc(){
-    //Empty loop. Maybe had stubbed code?
-    for(reslist<u32>::iterator it = mViewIDList.begin(); it != mViewIDList.end(); it++){
+#pragma dont_inline on
+CfGameManager* CfGameManager::getInstance() {
+    if (!lbl_eu_80663E70) {
+        // Call mangled ctor directly: placement new inserts a null check retail lacks.
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv, lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
     }
+    return &lbl_eu_80571758;
+}
+#pragma dont_inline off
+
+u32 CfGameManager::getCurrentPadChannel() {
+    return lbl_eu_80661BC8;
 }
 
-//Finds the root CProc instance for the given instance
-CProc* CProc::pssGetRoot(CProc* pProc) {
-    if (pProc == nullptr) {
-        return nullptr;
-    }
-
-    //If the parent is CProcRoot, return null
-    if (pProc->pssGetParent() == CProcRoot::getInstance()){
-        return nullptr;
-    }
-
-    //If the parent is CDesktop, return this instance as the root
-    if (pProc->pssGetParent() == CDesktop::getInstance()){
-        return pProc;
-    }
-
-    CProc* parent = convertToProc(pProc->pssGetParent());
-    return pssGetRoot(parent);
+CfPadData* CfGameManager::getCfPadData() {
+    return &lbl_eu_80571500;
 }
 
-void CProc::pssSetFocus(){
-    _reslist_node<WORK_ID>* curNode;
-    u32 length;
-    _reslist_node<WORK_ID>* endNode;
-    CView* view;
-
-    length = 0;
-    endNode = mViewIDList.mStartNodePtr;
-    curNode = endNode->mNext;
-
-    while (curNode != endNode) {
-        length++;
-        curNode = curNode->mNext;
-    }
-
-    if (length == 0) {
-        view = nullptr;
-    } else {
-        view = CView::convertToView(CWorkUtil::getWorkThread(getFirstViewID()));
-    }
-
-    if (view != nullptr) {
-        view->setDisp(true, true);
-        view->setCurrent();
-    }
-}
-
-bool CProc::pssDetachView(WORK_ID id){
-    reslist<WORK_ID>::iterator it = mViewIDList.find(id);
-
-    if(it != mViewIDList.end()){
-        CView* view = CViewRoot::getView(*it);
-        view->detachRenderWork(this);
-        mViewIDList.erase(it);
-        return true;
-    }
-
-    return false;
-}
-
-CView* CProc::pssCreateView(const char* pName, CWorkThread* pThread, int param3){
-    // Retail -0xF0 / FixStr@0x68. Volatile walk homes force stack reloads (~85.3%).
-    // Remaining: frame often -0x100 / FixStr@0x80; walks +0x18; this in r29 vs r30.
-    struct PssCreateWalkFrame {
-        void* volatile size0;
-        void* volatile size4;
-        void* volatile size8;
-        void* volatile sizeC;
-        void* volatile front1;
-        void* volatile size2_0;
-        void* volatile size2_4;
-        void* volatile size2_8;
-        void* volatile size2_C;
-        void* volatile front2;
-        void* volatile child0;
-        void* volatile child4;
-        void* volatile child8;
-        void* volatile childC;
-        ml::CRect16 frameOffset;
-        ml::CRect16 clientRect;
-    };
-
-    ml::FixStr<64> viewName = lbl_eu_80522500;
-    PssCreateWalkFrame wf;
-
-    viewName += pName;
-    CView* view = CView::create(viewName.c_str(), pThread);
-    view->wkReplaceHasChild((s16)param3);
-    // Retail inlines attach (no separate pssAttachView symbol in this split).
-    view->attachRenderWork(this);
-    mViewIDList.push_back(view->mWorkID);
-
-    CWorkThread* parent = mParent;
-
-    if (parent->mType == THREAD_CPROC) {
-        CProc* parentProc = convertToProc(parent);
-        u32 length;
-        _reslist_node<WORK_ID>* endNode;
-        _reslist_node<WORK_ID>* curNode;
-
-        length = 0;
-        endNode = parentProc->mViewIDList.mStartNodePtr;
-        wf.size0 = endNode;
-        curNode = endNode->mNext;
-        wf.size8 = endNode;
-        wf.size4 = curNode;
-        wf.sizeC = curNode;
-        while (wf.sizeC != wf.size8) {
-            length++;
-            wf.sizeC = ((_reslist_node<WORK_ID>*)wf.sizeC)->mNext;
+CPad* CfGameManager::getCurrentPad() {
+    u32 channel = lbl_eu_80661BC8;
+    if (channel == 0xFFFFFFFF) {
+        CPad* pad = lbl_eu_80663E0C;
+        if (pad != 0) {
+            return pad;
         }
-
-        if (length == 0) {
-            wf.clientRect.set(0, 0, 0, 0);
-        } else {
-            CView* parentView;
-            u32 numChildren;
-            _reslist_node<CWorkThread*>* childEnd;
-            _reslist_node<CWorkThread*>* childCur;
-
-            length = 0;
-            wf.size2_C = endNode;
-            wf.size2_4 = endNode;
-            wf.size2_8 = curNode;
-            wf.size2_0 = curNode;
-            while (wf.size2_0 != wf.size2_4) {
-                length++;
-                wf.size2_0 = ((_reslist_node<WORK_ID>*)wf.size2_0)->mNext;
-            }
-
-            if (length == 0) {
-                parentView = nullptr;
-            } else {
-                wf.front1 = curNode;
-                parentView = CView::convertToView(
-                    CWorkUtil::getWorkThread(curNode->mItem));
-                wf.front2 = curNode;
-            }
-
-            numChildren = 0;
-            childEnd = parentView->mChildren.mStartNodePtr;
-            wf.child0 = childEnd;
-            childCur = childEnd->mNext;
-            wf.child8 = childEnd;
-            wf.child4 = childCur;
-            wf.childC = childCur;
-            while (wf.childC != wf.child8) {
-                numChildren++;
-                wf.childC = ((_reslist_node<CWorkThread*>*)wf.childC)->mNext;
-            }
-
-            getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-                &wf.frameOffset, &parentView->unk1DC);
-
-            s16 sizeX = parentView->unk1C8.unk0;
-            s16 sizeY = parentView->unk1C8.unk2;
-            s16 scaledX = (s16)((float)sizeX * lbl_eu_8066A278);
-            s16 scaledY = (s16)((float)sizeY * lbl_eu_8066A278);
-            s16 anotherX = (scaledX - sizeX) / 2;
-            s16 anotherY = (scaledY - sizeY) / 2;
-            s16 childOff = (s16)(numChildren * 20);
-            s16 posX = (s16)(parentView->unk1DC.unk54 + wf.frameOffset.mPos.x);
-            s16 posY = (s16)(parentView->unk1DC.unk56 + wf.frameOffset.mPos.y);
-
-            wf.clientRect.mPos.x = (s16)((posX - anotherX) + childOff);
-            wf.clientRect.mPos.y = (s16)((posY - anotherY) + childOff);
-            wf.clientRect.mSize.x = (s16)(sizeX + anotherX * 2);
-            wf.clientRect.mSize.y = (s16)(sizeY + anotherY * 2);
-        }
-
-        view->setRect(wf.clientRect);
+        return lbl_eu_80570D40;
     }
-
-    return view;
+    CPad* pad = lbl_eu_80663E0C;
+    if (pad != 0) {
+        return pad;
+    }
+    return &lbl_eu_80570D40[channel & 7];
 }
 
-bool CProc::wkStandbyLogin(){
-    //Kind of strange that it just calls this function. Maybe there was code here that got stubbed?
-    return CWorkThread::wkStandbyLogin();
+CfObjectMove* CfGameManager::func_80082D54(int playerIndex) {
+    return *func_8007C6B4__Q22cf13CfGameManagerFv(getInstance()->unk94, playerIndex);
 }
 
-bool CProc::wkStandbyLogout(){
-    // Retail inlines detach-all (no separate pssDetachView() symbol in this split).
-    for (reslist<u32>::iterator it = mViewIDList.begin(); it != mViewIDList.end();
-         it++) {
-        u32 value = *it;
-        CView* view = CViewRoot::getView(value);
-        view->detachRenderWork(this);
-    }
-    {
-        _reslist_node<u32>* endNode = mViewIDList.mStartNodePtr;
-        _reslist_node<u32>* curNode = endNode->mNext;
+} // namespace cf
 
-        while (curNode != mViewIDList.mStartNodePtr) {
-            _reslist_node<u32>* oldNode = curNode;
-            curNode = curNode->mNext;
-            oldNode->mNext = nullptr;
-        }
-
-        mViewIDList.mStartNodePtr->mNext = mViewIDList.mStartNodePtr;
-        mViewIDList.mStartNodePtr->mPrev = mViewIDList.mStartNodePtr;
-    }
-    CViewRoot::destroyProc(this);
-    return CWorkThread::wkStandbyLogout();
+#pragma dont_inline on
+extern "C" cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots,
+                                                                    int index) {
+    return &slots[index];
 }
+#pragma dont_inline off

@@ -279,6 +279,8 @@ Not exhaustive — highlights of co-op-critical reconstruction beyond upstream:
 | `src/kyoshin/CGame.cpp` / `.hpp` | View rect, wkStandbyLogin, wkUpdate/wkRender investigation |
 | `src/kyoshin/cf/CfPadTask.cpp` | Stick normalize, pad data, turbo/dpad deadzone |
 | `src/kyoshin/plugin/plugin*.cpp` | Supporting edits as needed for link/match |
+| `src/kyoshin/coop/PresentationGate.{hpp,cpp}` | Fork-only `ShouldRenderSplitScreen` (SDA E24/E28 + pause/HBM/modal); not in `configure.py` until split renderer links it |
+| `DISCOVERY.md` + `docs/evidence/decomp/sda_flags_80663E24_28.json` | Presentation / streaming / camera flag dictionary from object parse |
 
 ### Build config
 

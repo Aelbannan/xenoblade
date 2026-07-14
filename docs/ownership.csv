@@ -118,3 +118,17 @@ Term__16CUIWindowManagerFv,auto-agent,2026-07-14,batch-14l: window-mgr-term
 Init__15CMenuBattleModeFv,auto-agent,2026-07-14,batch-14l: menu-battlemode-init
 __ct__Q22cf10CArtsParamFv,auto-agent,2026-07-14,batch-14l: arts-param-ctor
 OnPauseTrigger__5CGameFb,auto-agent,2026-07-14,batch-14l: game-on-pause-trigger
+render__10CViewFrameFv,codex,2026-07-14,FULL_MATCH 100%; exact 0x394; guarded §17.6 Chaitin patches; behaviour cviewframe-render PASS
+updateMsg__5CViewFv,codex,2026-07-14,74.4% HIGH_MATCH; CtxSnap copies + reslist push_back; behaviour PASS
+getCurrentPad__Q22cf13CfGameManagerFv,claude-batch,2026-07-14,claimed; decomp in progress
+CfCamTargetIntf_setPos,claude-batch,2026-07-14,claimed; decomp in progress
+CfCamDirectionIntf_setDir,claude-batch,2026-07-14,claimed; decomp in progress
+getView__9CViewRootFUl,claude-batch,2026-07-14,claimed; decomp in progress
+addFrustum__11COccCullingFRCQ22ml5CVec3RCQ22ml5CVec3RCQ22ml5CVec3Ul,claude-batch,2026-07-14,claimed; decomp in progress
+pssCreateView__5CProcFPCcP11CWorkThreadi,codex-subagent-1,2026-07-14,CLAIMED; attempt FULL_MATCH in CProc only
+cbRenderBefore__15CMenuArtsSelectFv,codex-subagent-2,2026-07-14,CLAIMED; attempt FULL_MATCH; leave other CMenuArtsSelect functions untouched
+func_80133324__12CUICfManagerFv,codex-subagent-3,2026-07-14,CLAIMED; attempt FULL_MATCH; leave Init/Term/Move untouched
+setFrustum__11COccCullingFP12CCullFrustum,codex-subagent-4,2026-07-14,CLAIMED; attempt FULL_MATCH; leave other COccCulling functions untouched
+CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv,codex-subagent-5,2026-07-14,CLAIMED; attempt FULL_MATCH; leave ctor/vfunc1 untouched
+CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv,codex,2026-07-14,FULL_MATCH 100%; natural 104-entry scan; exact 0x15C; behaviour PASS; size PASS
+ShouldRenderSplitScreen,cursor-agent,2026-07-14,fork-only PresentationGate predicate; restore stub; host presentation_gate

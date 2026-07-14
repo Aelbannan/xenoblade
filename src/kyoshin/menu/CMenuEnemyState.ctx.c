@@ -247886,14 +247886,13 @@ after_bit21:
         // Rematerialize &indices[j] each step (retail addi r1,0x8). Load depthB before
         // depthA so fcmpo uses f1/f0. XOR via store-reload of order[j]/pair[1].
         {
-            s32 pass = 0;
             u32* order = indices;
-            s32 limit;
+            u8 pass = 0;
             u32 left;
             for (left = 0x17; left != 0; left--) {
                 u8 swapped = 0;
                 u8 pass8 = pass;
-                limit = 0x17 - pass8;
+                s32 limit = 0x17 - pass8;
                 u8 j = 0;
                 goto sort_test;
             sort_body: {
@@ -247930,11 +247929,11 @@ after_bit21:
         {
             u8* entry;
             u32* order;
-            u32 i;
+            u8 i;
             order = indices;
             i = 0;
             do {
-                entry = reinterpret_cast<u8*>(this) + order[static_cast<u8>(i)] * 0x4c;
+                entry = reinterpret_cast<u8*>(this) + order[i] * 0x4c;
                 if (entry[0xb9] == 0) {
                     goto draw_next;
                 }

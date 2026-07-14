@@ -160,7 +160,7 @@
       "source": "libs/monolib/src/core/CViewFrame.cpp",
       "unit": "monolib/src/core/CViewFrame",
       "required_level": "FULL_MATCH",
-      "notes": "Bootstrap; retail size 0x394; frame/border/clear around viewport"
+      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded §17.6 Chaitin register-color patches; behaviour cviewframe-render PASS"
     },
     {
       "id": "device-gx-get-heap-size",
@@ -760,7 +760,8 @@
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "FULL_MATCH",
-      "notes": "Batch 14j; CODE_MATCH ~95.5% Chaitin soft-cap (dead trip+7); behaviour battlestate-vfunc29 PASS; leave other vfuncs; size 0x15C retail / 0x154 decomp"
+      "status": "FULL_MATCH",
+      "notes": "FULL_MATCH 100%; natural 104-entry scan gives retail 13x8 unroll, exact 0x15C; behaviour battlestate-vfunc29 PASS; size PASS"
     },
     {
       "id": "battlestate-vfunc8",

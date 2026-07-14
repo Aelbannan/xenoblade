@@ -33,9 +33,14 @@ void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
 
     *(ml::CPnt16*)&unk0 = size;
 
+    // Match retail register allocation:
+    // maxWidth in r5 (via extsh), widthRemain in r8, partialH in r4
     maxWidth = (s16)(unk0 - unkC - unk10);
-    // Keep remains/partial as int so cmpw / subf skip extra extsh (retail).
+
+    // Compute widthRemain first so it stays in r8 (unk4 in r4, maxWidth in r5)
     widthRemain = unk4 - maxWidth;
+
+    // Then partialH in r4 (unk2 in r6, unkE in r7)
     partialH = unk2 - unkE;
 
     // Retail: cmpw unk8,widthRemain then maxHeight=partialH-unk12 then ble.

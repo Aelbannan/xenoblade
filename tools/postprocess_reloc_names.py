@@ -126,6 +126,41 @@ UNIT_RULES: dict[str, UnitRules] = {
                     (0x25C, 0x909E0268, 0x981E007E),  # stw 0x268 -> stb 0x7e
                 ),
             ),
+            (
+                "cbRenderBefore__15CMenuArtsSelectFv",
+                (
+                    (0x19C, 0x3BA00000, 0x3B800000),
+                    (0x1A8, 0x7FE0E830, 0x7FE0E030),
+                    (0x1B4, 0x381D0012, 0x381C0012),
+                    (0x1B8, 0x387D0009, 0x387C0009),
+                    (0x210, 0x381D0012, 0x381C0012),
+                    (0x220, 0x3BBD0001, 0x3B9C0001),
+                    (0x228, 0x2C1D0008, 0x2C1C0008),
+                    (0x234, 0x3BA00000, 0x3B600000),
+                    (0x23C, 0x387DFFF8, 0x387BFFF8),
+                    (0x240, 0x201D0008, 0x201B0008),
+                    (0x248, 0x381D0001, 0x381B0001),
+                    (0x270, 0x7FFBE830, 0x7FFCD830),
+                    (0x274, 0x7CC0D839, 0x7CC0E039),
+                    (0x27C, 0x387D0012, 0x387B0012),
+                    (0x280, 0x381D0009, 0x381B0009),
+                    (0x284, 0x7FFC1830, 0x7FFD1830),
+                    (0x28C, 0x7CC4E038, 0x7CC4E838),
+                    (0x2C0, 0x7C00E378, 0x7C00EB78),
+                    (0x2CC, 0x381D0012, 0x381B0012),
+                    (0x2D0, 0x7FFC0030, 0x7FFD0030),
+                    (0x2D4, 0x7CC0E078, 0x7CC0E878),
+                    (0x2EC, 0x7CE0D839, 0x7CE0E039),
+                    (0x2F4, 0x7CE3E038, 0x7CE3E838),
+                    (0x2F8, 0x381D0009, 0x381B0009),
+                    (0x330, 0x7C00E378, 0x7C00EB78),
+                    (0x33C, 0x7CE0E078, 0x7CE0E878),
+                    (0x34C, 0x7C00E078, 0x7C00E878),
+                    (0x358, 0x381D0012, 0x381B0012),
+                    (0x37C, 0x3BBD0001, 0x3B7B0001),
+                    (0x384, 0x2C1D0009, 0x2C1B0009),
+                ),
+            ),
         ),
     ),
     "CMenuBattlePlayerState.o": UnitRules(
@@ -218,6 +253,7 @@ UNIT_RULES: dict[str, UnitRules] = {
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8066A280"),
         ),
         exact_renames=(
+            ("@stringBase0", "lbl_eu_80522500"),
             ("__vt__5CProc", "lbl_eu_8056B1E0"),
             ("__vt__17_reslist_base<Ul>", "lbl_eu_8056B298"),
             ("__vt__11reslist<Ul>", "lbl_eu_8056B280"),
@@ -233,6 +269,27 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         exact_renames=(
             ("__vt__5CView", "lbl_eu_8056B5E0"),
+            ("__ct__10CFontLayerFv", "__ct__CFontLayer"),
+        ),
+        # Constructor: the high-level POD list initialization reaches exact
+        # scheduling and size; only MWCC's three-way color choice for the two
+        # vtable pointers and second sentinel differs. PLAN.md §17.6.
+        insn_patches=(
+            (
+                "__ct__5CViewFPCcP11CWorkThread",
+                (
+                    (0x64, 0x3CE00000, 0x3D000000),
+                    (0x6C, 0x3CC00000, 0x3CE00000),
+                    (0x7C, 0x38E70000, 0x39080000),
+                    (0x80, 0x38C60000, 0x38E70000),
+                    (0x84, 0x391E0260, 0x38DE0260),
+                    (0xA8, 0x90FE0238, 0x911E0238),
+                    (0xAC, 0x90DE0258, 0x90FE0258),
+                    (0xBC, 0x911E025C, 0x90DE025C),
+                    (0xC0, 0x91080000, 0x90C60000),
+                    (0xC4, 0x91080004, 0x90C60004),
+                ),
+            ),
         ),
     ),
     "CViewRoot.o": UnitRules(
@@ -248,6 +305,51 @@ UNIT_RULES: dict[str, UnitRules] = {
                     (0xFC, 0x2C000003, 0x2C040003),  # cmpwi r0,3 -> r4
                     (0x110, 0x38800001, 0x38000001),  # li r4,1 -> r0
                     (0x114, 0x2C040000, 0x2C000000),  # cmpwi r4,0 -> r0
+                ),
+            ),
+        ),
+    ),
+    "CViewFrame.o": UnitRules(
+        # render: three Chaitin register-color cascades after high-level C++
+        # reached exact control flow, calls, stack frame, and size. Semantics are
+        # covered by behaviour:cviewframe-render. PLAN.md §17.6.
+        insn_patches=(
+            (
+                "render__10CViewFrameFv",
+                (
+                    (0x34, 0x38C00000, 0x38800000),
+                    (0x40, 0xA8A80230, 0xA8C80230),
+                    (0x48, 0xA8880232, 0xA8A80232),
+                    (0x54, 0xB0A10018, 0xB0C10018),
+                    (0x58, 0xB081001A, 0xB0A1001A),
+                    (0x7C, 0x38C00001, 0x38800001),
+                    (0x80, 0x2C060000, 0x2C040000),
+                    (0x8C, 0x38A00000, 0x38800000),
+                    (0x9C, 0xA881001C, 0xA8A1001C),
+                    (0xA8, 0x7C040214, 0x7C050214),
+                    (0xC8, 0x38A00001, 0x38800001),
+                    (0xCC, 0x2C050000, 0x2C040000),
+                    (0x180, 0x80DD0004, 0x807D0004),
+                    (0x18C, 0x80E601E0, 0x80C301E0),
+                    (0x190, 0x8067027C, 0x80E6027C),
+                    (0x194, 0xABE701C8, 0xABE601C8),
+                    (0x198, 0x546007FF, 0x54E007FF),
+                    (0x19C, 0xABC701CA, 0xABC601CA),
+                    (0x1A4, 0x80070278, 0x80060278),
+                    (0x1BC, 0x80070278, 0x80060278),
+                    (0x1D4, 0xA8A60234, 0xA8A30234),
+                    (0x1D8, 0x546007BD, 0x54E007BD),
+                    (0x1E0, 0x54A3083C, 0x54A7083C),
+                    (0x1E4, 0x7C600734, 0x7CE00734),
+                    (0x1F0, 0x80C70278, 0x80660278),
+                    (0x1F4, 0x54C007FF, 0x546007FF),
+                    (0x1FC, 0x54C007BD, 0x546007BD),
+                    (0x22C, 0x7C600734, 0x7CE00734),
+                    (0x330, 0xA89D0058, 0xA87D0058),
+                    (0x334, 0xA8610022, 0xA8A10022),
+                    (0x338, 0x38840016, 0x38630016),
+                    (0x340, 0x7C840734, 0x7C640734),
+                    (0x344, 0x7C632214, 0x7C652214),
                 ),
             ),
         ),
@@ -774,6 +876,10 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = patch_sdata2_magic(path) or changed
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     changed = rename_exact(path, rules.exact_renames) or changed
+    # A second objcopy pass for exact renames can uniquify a pool symbol when
+    # the retail name also exists in another section. Re-apply content-based
+    # pool naming last so @N numbering never becomes part of a unit rule.
+    changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     if rules.drop_text_symbols:
         changed = drop_text_symbols(path, rules.drop_text_symbols) or changed
     if rules.trim_text_size is not None:

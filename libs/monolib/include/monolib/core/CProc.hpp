@@ -11,7 +11,6 @@ struct CProc_UnkStruct1 {
     void* unk8;
     void* unkC;
 };
-
 //size: 0x1ec
 class CProc : public CWorkThread {
 public:

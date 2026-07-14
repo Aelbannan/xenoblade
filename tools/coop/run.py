@@ -449,11 +449,10 @@ def cmd_equivalence(equivalence_args: list[str]) -> int:
 def cmd_opcodes(opcodes_args: list[str], config: CoopConfig) -> int:
     if opcodes_args and opcodes_args[0] == "--":
         opcodes_args = opcodes_args[1:]
-    script = ROOT / "tools" / "dol_opcodes.py"
     # Default to this region's main.dol when the caller did not pass a path.
     if not opcodes_args or opcodes_args[0].startswith("-"):
         opcodes_args = [str(config.main_dol), *opcodes_args]
-    cmd = [sys.executable, str(script), *opcodes_args]
+    cmd = [sys.executable, "-m", "tools.dol_opcodes", *opcodes_args]
     return subprocess.run(cmd, cwd=ROOT, check=False).returncode
 
 
@@ -528,7 +527,7 @@ def main() -> int:
 
     p_equivalence = sub.add_parser(
         "equivalence",
-        help="SMT equivalence check for supported straight-line PPC32 blocks",
+        help="SMT equivalence check for supported Broadway PPC32 blocks",
     )
     p_equivalence.add_argument(
         "equivalence_args",
@@ -538,7 +537,7 @@ def main() -> int:
 
     p_opcodes = sub.add_parser(
         "opcodes",
-        help="List PowerPC opcodes used in main.dol (wraps tools/dol_opcodes.py)",
+        help="List PowerPC opcodes used in main.dol (wraps tools.dol_opcodes)",
     )
     p_opcodes.add_argument(
         "opcodes_args",

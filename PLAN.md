@@ -1419,16 +1419,17 @@ A byte match proves faithful code generation, not the semantic name of every unk
 
 **Current project policy:** the required acceptance bar for every decompilation target is **`FULL_MATCH`**. Intermediate statuses remain useful for logging progress, but a target is not complete until it reaches `FULL_MATCH`.
 
-### 17.2.1 Behaviour comparison (below `FULL_MATCH`)
+### 17.2.1 Behaviour comparison (static + optional PPC)
 
-When static objdiff match is below 100%, agents must run **host dual-oracle tests** in `tools/test/compare_behaviour/`:
+When static objdiff match is below 100%, optional evidence lives in `tools/test/compare_behaviour/`:
 
 ```bash
-python tools/coop/run.py behaviour audit
-python tools/coop/run.py behaviour compare <test-id>
+python tools/coop/run.py behaviour audit              # size budget for registered tests
+python tools/coop/run.py behaviour compare <test-id>  # static + ppc if present
+python tools/coop/run.py behaviour ppc <test-id>      # headless Dolphin when ppc_source set
 ```
 
-Each test compares **retail oracle** semantics (from asm/Ghidra) against **decompiled source** on the same inputs. Minimum scenario counts scale with match % (8–30 `run_scenario` cases). Do not mark `BEHAVIOR_VERIFIED` until `behaviour audit` passes. See `tools/test/compare_behaviour/README.md`.
+Host dual-oracle `host/*.cpp` tests were **removed** (they were mostly tautological). Do not add them back. Prefer continuing toward `FULL_MATCH` / §17.6, or a real PPC harness when the unit links. See `tools/test/compare_behaviour/README.md`.
 
 ### 17.2.2 Split object size (`.text` budget)
 

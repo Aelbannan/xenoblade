@@ -17,13 +17,13 @@ class EquivalenceContract:
     name: str = "manual"
 
     def __post_init__(self) -> None:
-        if not self.observables:
+        if not self.observables and self.name != "live-out":
             raise ValueError("at least one observable is required")
         if not 1 <= self.timeout_ms <= 600_000:
             raise ValueError("solver timeout must be between 1 and 600000 ms")
 
 
-CONTRACT_PRESETS = ("ppc-eabi", "strict")
+CONTRACT_PRESETS = ("ppc-eabi", "strict", "live-out")
 
 
 def preset_observable_names(name: str) -> tuple[str, ...]:
@@ -58,6 +58,7 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "cr2",
             "cr3",
             "cr4",
+            "memory",
         )
     if name == "strict":
         return tuple(f"r{index}" for index in range(32)) + (
@@ -67,7 +68,10 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "xer.so",
             "lr",
             "ctr",
+            "memory",
         )
+    if name == "live-out":
+        raise ValueError("live-out observables require decoded instructions")
     raise ValueError(f"unknown contract preset '{name}'")
 
 
@@ -76,12 +80,14 @@ def make_contract(
     preset: str | None,
     observe: list[str] | tuple[str, ...] | None,
     timeout_ms: int,
+    live_out: tuple[str, ...] | None = None,
 ) -> EquivalenceContract:
     if preset is not None and observe:
         raise ValueError("--contract and --observe are mutually exclusive")
     if preset is not None:
+        names = live_out if preset == "live-out" else preset_observable_names(preset)
         return EquivalenceContract(
-            parse_observables(preset_observable_names(preset)),
+            parse_observables(names) if names else (),
             timeout_ms,
             preset,
         )
@@ -108,6 +114,8 @@ def parse_observables(values: list[str] | tuple[str, ...]) -> tuple[Observable, 
             result.append(Observable("cr_field", token, int(token[2:])))
         elif token in ("cr", "lr", "ctr"):
             result.append(Observable(token, token))
+        elif token == "memory":
+            result.append(Observable("memory", "memory"))
         elif token in ("xer.ca", "xer.ov", "xer.so"):
             result.append(Observable("xer", token, None))
         else:

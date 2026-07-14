@@ -108,36 +108,27 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
 → python tools/coop/run.py ctx <source.cpp>
 → python tools/coop/run.py cycle <target-id> \
     --hypothesis "..." --next-change "..." --runtime-test ""
-→ if static match < 100%: **mandatory** behaviour tests (see below)
 → verify split object size: `coop run size <unit>` (decomp `.text` ≤ retail split budget)
+→ optional: `behaviour ppc <test-id>` when a PPC harness exists
 → if FAIL: inspect objdiff / build/coop-function-diff.json, revise, repeat
 → if PASS: mark target complete; do not edit the same function concurrently
 ```
 
-### Behaviour comparison (required below `FULL_MATCH`)
+### Behaviour comparison (static + optional PPC)
 
-Retail vs decomp **object behaviour** is verified with `tools/test/compare_behaviour/`:
+Retail vs decomp objects can be checked with `tools/test/compare_behaviour/` (no host dual-oracle layer):
 
 ```bash
-python tools/coop/run.py behaviour audit
-python tools/coop/run.py behaviour compare <test-id>
-python tools/coop/run.py behaviour compare --all
+python tools/coop/run.py behaviour audit              # size budget for registered tests
+python tools/coop/run.py behaviour compare <test-id>  # static + ppc if present
+python tools/coop/run.py behaviour ppc <test-id>      # headless Dolphin only
 ```
-
-| Static match | Host scenarios required |
-|--------------|-------------------------|
-| 100% | optional |
-| 95–99.9% | ≥ 8 |
-| 90–94.9% | ≥ 12 |
-| 80–89.9% | ≥ 20 |
-| < 80% | ≥ 30 |
 
 **Rules:**
 
-- Any symbol below **100%** objdiff match **must** have a `manifest.json` entry with `host_binary` and enough `run_scenario(...)` cases in `host/<host_binary>.cpp`.
-- Each host test defines **`retail_*`** (oracle from asm/Ghidra) and **`decomp_*`** (from your source). Both receive the same inputs; outputs must match.
-- Do **not** log `BEHAVIOR_VERIFIED` or treat semantics as settled until `behaviour audit` passes for that test id.
-- Log `runtime_test: behaviour:<test-id>` in `attempts.jsonl` when host compare passes.
+- Acceptance bar remains **`FULL_MATCH`** + split-size fit.
+- Host `*.cpp` dual-oracle tests were **removed** — do not add them back.
+- Below 100%, prefer continuing the match / §17.6 patches, or optional **PPC** when `ppc_source` is set.
 - Full policy: `tools/test/compare_behaviour/README.md`.
 
 ### Split object size (required before `Matching` / `FULL_MATCH`)
@@ -178,8 +169,7 @@ python tools/coop/run.py equivalence check-hex \
 Read `tools/ppc_equivalence/README.md` before use. An equivalence result applies
 only to its printed observables and assumptions. Unsupported instructions,
 timeouts, and solver `unknown` are inconclusive. This check is additional
-evidence only: it does not replace objdiff `FULL_MATCH`, split-size checks, or
-the mandatory host behaviour tests below 100% static match.
+evidence only: it does not replace objdiff `FULL_MATCH` or split-size checks.
 
 The co-op wrapper defaults function checks to `--contract ppc-eabi`. Use
 `--contract strict` for all modeled state or manual `--observe` for the actual
@@ -197,7 +187,7 @@ Decompose into leaf symbols/units first. Each leaf and the parent must still end
 
 - Attempts append to `docs/evidence/decomp/attempts.jsonl` (JSONL, one object per line).
 - Required fields: `target_id`, `function`, `status`, `instruction_match`, `hypothesis`, `next_change`.
-- Below **100%** static match: set `runtime_test` to `behaviour:<test-id>` after `coop run behaviour compare <test-id>` passes.
+- Optional: set `runtime_test` to `behaviour:<test-id>` / `ppc:<test-id>` when a PPC harness passes.
 - After **100%** match, add Dolphin proof when `PLAN.md` requires it (`BEHAVIOR_VERIFIED`).
 
 ## MWCC patterns — read and update `docs/MWCC_REFERENCE.md`

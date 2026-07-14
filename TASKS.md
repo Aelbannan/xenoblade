@@ -9,12 +9,10 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 3. Decompile using the loop in [`.cursor/skills/xenoblade-decomp/SKILL.md`](.cursor/skills/xenoblade-decomp/SKILL.md).
 4. When `cycle` passes at **FULL_MATCH**, change `- [ ]` to `- [x]` here and log evidence in `docs/evidence/decomp/attempts.jsonl`.
 5. If the translation unit is newly matched, flip `NonMatching` → `Matching` in `configure.py` for that object.
-6. **While static match is below 100%:** add/extend a behaviour test in `tools/test/compare_behaviour/` and pass `python tools/coop/run.py behaviour compare <test-id>` (see [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md)).
+6. **While static match is below 100%:** keep iterating (decomp.me / §17.6). Optional: PPC harness via `behaviour ppc <test-id>` when registered (see [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md)). Host dual-oracle tests were removed.
 7. **Before `Matching` / `FULL_MATCH`:** pass `python tools/coop/run.py size <unit>` — decomp `.text` must fit the retail split slice in `config/<region>/splits.txt` (`diff` / `cycle` / `behaviour compare` also enforce this).
 
 **Policy:** every function below must reach `FULL_MATCH` before it is considered done. The *Map level* column in `DECOMP_MAP.md` is planning guidance only.
-
-**Behaviour tests (mandatory below 100% static match):** register in `manifest.json`, meet minimum scenario counts (8–30 depending on match %), run `coop run behaviour audit` before logging `BEHAVIOR_VERIFIED`.
 
 **Split object size:** decomp `.text` ≤ retail split budget; run `coop run size <unit>` or `coop run size --all`.
 

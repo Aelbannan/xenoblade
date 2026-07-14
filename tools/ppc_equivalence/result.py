@@ -18,11 +18,17 @@ class ProofStatus(str, Enum):
 @dataclass(slots=True)
 class ProofResult:
     status: ProofStatus
-    architecture_model: str = "ppc32-be-v1"
-    format: int = 1
+    architecture_model: str = "broadway-ppc32-be-v2"
+    format: int = 2
     contract: str = "manual"
     observables: list[str] = field(default_factory=list)
-    assumptions: list[str] = field(default_factory=lambda: ["straight-line integer block", "no memory or exceptions"])
+    assumptions: list[str] = field(default_factory=lambda: [
+        "32-bit big-endian user-mode integer semantics",
+        "shared byte-addressed initial memory",
+        "all accessed addresses are mapped ordinary RAM and naturally aligned",
+        "division results compared only on architecturally defined inputs",
+        "loops and external call continuations are not summarized",
+    ])
     original_instruction_count: int = 0
     candidate_instruction_count: int = 0
     solver: dict[str, Any] = field(default_factory=dict)

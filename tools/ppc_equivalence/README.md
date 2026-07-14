@@ -1,7 +1,7 @@
 # PPC equivalence check
 
-This check proves or refutes equivalence of supported, straight-line Wii
-PowerPC blocks even when their instruction bytes differ. Both blocks execute
+This check proves or refutes equivalence of supported Wii Broadway PowerPC
+blocks even when their instruction bytes differ. Both blocks execute
 from the same symbolic input state; Z3 searches for a difference in the state
 selected by the contract.
 
@@ -76,14 +76,17 @@ explicit choice.
 
 | Contract | Compared state |
 |---|---|
-| `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, `r13`–`r31`, and `CR2`–`CR4` |
-| `strict` | All modeled GPRs, complete CR, `XER.CA/OV/SO`, LR, and CTR |
+| `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, `r13`–`r31`, `CR2`–`CR4`, and all final memory |
+| `strict` | All modeled GPRs, complete CR, `XER.CA/OV/SO`, LR, CTR, and all final memory |
+| `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
 The ABI preset is for completed function boundaries. It intentionally excludes
 volatile scratch registers and flags. It conservatively treats `r3:r4` as a
 return pair; for a `void` function or a known narrower return contract, use a
 manual list. For an internal basic block, pass the
-actual live-outs manually because a volatile register can still be live:
+actual live-outs manually because a volatile register can still be live. The
+automatic `live-out` contract is sound but intentionally conservative; it can
+reject a transformation that only changes a dead write:
 
 ```bash
 python3 tools/coop/run.py equivalence check-hex \
@@ -92,7 +95,7 @@ python3 tools/coop/run.py equivalence check-hex \
 ```
 
 `--observe` may be repeated or comma-separated. Supported names are `r0`–`r31`,
-`cr`, `cr0`–`cr7`, `xer.ca`, `xer.ov`, `xer.so`, `lr`, and `ctr`.
+`cr`, `cr0`–`cr7`, `xer.ca`, `xer.ov`, `xer.so`, `lr`, `ctr`, and `memory`.
 
 | Exit | Meaning |
 |---:|---|
@@ -106,32 +109,46 @@ JSON proof results record the architecture model, observables, assumptions,
 instruction counts, solver/version/timing, and—when applicable—the first
 observable mismatch and replayable input state.
 
-## Supported MVP
+## Supported model (phases 1 and 2)
 
-The current `ppc32-be-v1` model is deliberately narrow:
+The current `broadway-ppc32-be-v2` model supports:
 
-- straight-line blocks only, up to 256 instructions;
-- no loads/stores, calls, branches, exceptions, floating point, paired-single,
-  atomics, MMIO, or loops;
-- `addi`, `addis`, `mulli`;
-- `ori`, `oris`, `xori`, `xoris`, `andi.`, `andis.`;
-- `and`, `or`, `xor`, `nor`;
-- `rlwinm`, `rlwimi`;
-- `add`, `subf` without `OE`;
-- `cmpw`, `cmplw`, `cmpwi`, `cmplwi`;
-- `extsb`, `extsh`, `cntlzw`;
-- record-form CR0 effects and comparison propagation of `XER.SO`.
+- integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
+  multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
+- immediate and register logical operations, rotates, masks, logical/arithmetic
+  shifts, record forms, integer compares, and CR logical operations;
+- `mfcr`, `mtcrf`, and user-visible XER/LR/CTR `mfspr`/`mtspr` forms;
+- byte, halfword, and word integer loads/stores in D-form and indexed form,
+  update forms, `lmw`/`stmw`, and byte-reversed halfword/word forms;
+- a shared symbolic byte-addressed memory array with big-endian multi-byte
+  access and exact final-array comparison;
+- `b`, `bc`, `bclr`, and `bcctr`, including AA/LK, CR tests, CTR decrement/test,
+  LR updates, indirect aligned targets, acyclic CFG paths, and exit comparison;
+- configurable `--max-instructions` and `--max-paths` bounds.
 
-All other encodings return `inconclusive_unsupported`. Memory and acyclic
-control flow should be added as later model versions, with independent
-differential tests, rather than silently broadening `ppc32-be-v1`.
+Loops/back-edges, continuations after external calls, floating point,
+paired-single, VMX, atomics/reservations, cache/MMIO behavior, privileged state,
+and memory/protection/alignment exceptions return inconclusive or are outside
+the declared model. Division outputs are compared only where the ISA defines
+the quotient. Direct calls are compared as terminal call exits (target, LR,
+contract state); the callee is not guessed or silently skipped.
+
+See [ISA references](REFERENCES.md) for the source hierarchy and modeled
+assumptions.
 
 ## Development and quality gate
 
 ```bash
 python3 -m unittest discover -s tools/ppc_equivalence/tests -v
+python3 -m unittest discover -s tools/test/compare_behaviour/tests -v
+python3 tools/coop/run.py behaviour ppc ppc-equivalence-broadway
 python3 tools/ppc_equivalence/run.py --help
 ```
+
+The Dolphin command runs 40 representative Broadway instruction scenarios and
+one memory-layout assertion through Dolphin's interpreter. It is the independent
+concrete ISA oracle for the phase-1/phase-2 model; failures print actual and
+expected result/CR/XER triples.
 
 Every new opcode must add encoding fixtures, concrete edge cases, symbolic
 positive and negative equivalence cases, state-preservation checks, and an

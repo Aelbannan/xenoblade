@@ -10,10 +10,10 @@ from . import __version__
 from .contract import CONTRACT_PRESETS, Observable, make_contract, parse_observables
 from .decoder import decode_block, parse_hex
 from .engine import check_equivalence
-from .ir import DecodeError, UnsupportedInstruction
+from .ir import DecodeError, ExecutionInconclusive, UnsupportedInstruction
 from .model import MachineState, concrete_state
 from .result import ProofResult, ProofStatus
-from .semantics import ConcreteOps, execute_block
+from .semantics import ConcreteOps, automatic_live_out, execute_cfg
 
 
 def _parse_int(value: str) -> int:
@@ -35,6 +35,8 @@ def _observable_concrete(state: MachineState, observable: Observable) -> object:
         return f"0x{int(getattr(state, observable.kind)) & 0xFFFFFFFF:08x}"
     if observable.kind == "xer":
         return int(bool(getattr(state.xer, observable.name.split(".", 1)[1])))
+    if observable.kind == "memory":
+        return state.memory
     raise AssertionError(observable.kind)
 
 
@@ -101,17 +103,20 @@ def _emit(result: ProofResult, json_output: bool, result_file: Path | None, repl
 
 
 def _run_check(args: argparse.Namespace, original_code: bytes, candidate_code: bytes) -> int:
-    contract = make_contract(
-        preset=args.contract,
-        observe=args.observe,
-        timeout_ms=args.timeout_ms,
-    )
-    observables = contract.observables
     original_hex = _format_hex(original_code)
     candidate_hex = _format_hex(candidate_code)
     try:
         original = decode_block(original_code, args.base_original)
         candidate = decode_block(candidate_code, args.base_candidate)
+        live_out = None
+        if args.contract == "live-out":
+            live_out = tuple(dict.fromkeys(automatic_live_out(original) + automatic_live_out(candidate)))
+        contract = make_contract(
+            preset=args.contract,
+            observe=args.observe,
+            timeout_ms=args.timeout_ms,
+            live_out=live_out,
+        )
         result = check_equivalence(
             original,
             candidate,
@@ -119,12 +124,16 @@ def _run_check(args: argparse.Namespace, original_code: bytes, candidate_code: b
             original_hex=original_hex,
             candidate_hex=candidate_hex,
             smt_output=str(args.smt_out) if args.smt_out else None,
+            max_instructions=args.max_instructions,
+            max_paths=args.max_paths,
         )
-    except UnsupportedInstruction as exc:
+    except (UnsupportedInstruction, ExecutionInconclusive) as exc:
+        contract_name = args.contract or "manual"
+        observable_names = list(args.observe or ())
         result = ProofResult(
             status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
-            contract=contract.name,
-            observables=[item.name for item in observables],
+            contract=contract_name,
+            observables=observable_names,
             unsupported=[str(exc)],
         )
     return _emit(result, args.json, args.result, args.replay_out)
@@ -153,8 +162,13 @@ def cmd_replay(args: argparse.Namespace) -> int:
     observables = parse_observables(list(case["observables"]))
     initial = concrete_state(case.get("initial_state"))
     ops = ConcreteOps()
-    original_final = execute_block(initial, decode_block(original_code, validate_with_capstone=False), ops)
-    candidate_final = execute_block(initial, decode_block(candidate_code, validate_with_capstone=False), ops)
+    original = decode_block(original_code, int(case.get("base_original", 0)), validate_with_capstone=False)
+    candidate = decode_block(candidate_code, int(case.get("base_candidate", 0)), validate_with_capstone=False)
+    original_exits = [item for item in execute_cfg(initial, original, ops) if item.condition]
+    candidate_exits = [item for item in execute_cfg(initial, candidate, ops) if item.condition]
+    if len(original_exits) != 1 or len(candidate_exits) != 1:
+        raise ValueError("replay did not select exactly one path per program")
+    original_final, candidate_final = original_exits[0].state, candidate_exits[0].state
     mismatches = []
     for observable in observables:
         left = _observable_concrete(original_final, observable)
@@ -183,9 +197,11 @@ def _add_check_options(parser: argparse.ArgumentParser) -> None:
     contract.add_argument(
         "--observe",
         action="append",
-        help="manual observables: r0..r31, cr/cr0..cr7, xer.ca/ov/so, lr, ctr; comma-separated or repeated",
+        help="manual observables: r0..r31, cr/cr0..cr7, xer.ca/ov/so, lr, ctr, memory; comma-separated or repeated",
     )
     parser.add_argument("--timeout-ms", type=int, default=10_000)
+    parser.add_argument("--max-instructions", type=int, default=512, help="per-path execution bound")
+    parser.add_argument("--max-paths", type=int, default=128, help="symbolic path bound")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--result", type=Path, help="write the complete JSON proof result")
     parser.add_argument("--replay-out", type=Path, help="write a replayable counterexample when inequivalent")
@@ -193,7 +209,7 @@ def _add_check_options(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Xenoblade Wii PPC straight-line equivalence checker")
+    parser = argparse.ArgumentParser(description="Xenoblade Wii Broadway PPC32 equivalence checker")
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
 

@@ -1,42 +1,30 @@
 {
   "region": "us",
-  "policy": {
-    "non_full_match_requires_host": true,
-    "scenario_minimums": [
-      {
-        "below_percent": 95.0,
-        "min_scenarios": 8
-      },
-      {
-        "below_percent": 90.0,
-        "min_scenarios": 12
-      },
-      {
-        "below_percent": 80.0,
-        "min_scenarios": 20
-      },
-      {
-        "below_percent": 0.0,
-        "min_scenarios": 30
-      }
-    ]
-  },
   "tests": [
+    {
+      "id": "ppc-equivalence-broadway",
+      "description": "Broadway integer/memory/branch oracle for tools/ppc_equivalence",
+      "unit": "monolib/src/math/MTRand",
+      "symbol": "ppc_equivalence_oracle",
+      "ppc_source": "ppc_equivalence_broadway.c",
+      "ppc_cpu_core": 0,
+      "ppc_stubs": [
+        "ppc_equivalence_oracle.c"
+      ]
+    },
     {
       "id": "game-set-view-rect",
       "description": "CGame::setViewRect thin wrapper (FULL_MATCH sanity baseline)",
       "unit": "kyoshin/CGame",
       "symbol": "setViewRect__5CGameFP5CViewssss",
-      "host_binary": "set_view_rect",
       "ppc_eligible": false,
       "ppc_skip_reason": "kyoshin/CGame.o has 64 undefined SDK/game symbols"
     },
     {
       "id": "view-rect-data-clamp",
-      "description": "CViewRectDataCore::func_804592F0 clamp \u2014 static ~88%, extensive host required",
+      "description": "CViewRectDataCore::func_804592F0 clamp",
       "unit": "monolib/src/core/CViewRectDataCore",
       "symbol": "func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16",
-      "host_binary": "view_rect_data_core",
       "ppc_source": "view_rect_data_clamp.c"
     },
     {
@@ -44,7 +32,6 @@
       "description": "CViewRectDataCore::func_80459384 max-size store",
       "unit": "monolib/src/core/CViewRectDataCore",
       "symbol": "func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16",
-      "host_binary": "view_rect_data_store",
       "ppc_source": "view_rect_data_store.c"
     },
     {
@@ -52,7 +39,6 @@
       "description": "CViewRectDataCore::func_80459270 render-mode init",
       "unit": "monolib/src/core/CViewRectDataCore",
       "symbol": "func_80459270__17CViewRectDataCoreFv",
-      "host_binary": "view_rect_data_init",
       "ppc_source": "view_rect_data_init.c"
     },
     {
@@ -60,34 +46,30 @@
       "description": "wkStandbyLogin rect/vec4 helpers (CODE_MATCH ~99.5%)",
       "unit": "kyoshin/CGame",
       "symbol": "wkStandbyLogin__5CGameFv",
-      "host_binary": "wk_standby_login",
       "ppc_eligible": false,
       "ppc_skip_reason": "kyoshin/CGame.o has 64 undefined SDK/game symbols"
     },
     {
       "id": "view-set-current-ring",
-      "description": "CView::setCurrent context-ring semantics (semantic lock for asm\u2192C++)",
+      "description": "CView::setCurrent context-ring semantics",
       "unit": "monolib/src/core/CView",
       "symbol": "setCurrent__5CViewFv",
-      "host_binary": "view_set_current_ring",
       "ppc_eligible": false,
       "ppc_skip_reason": "setCurrent reads caller stack snapshot; host oracle only for now"
     },
     {
       "id": "view-attach-render-work",
-      "description": "CView::attachRenderWork dual context-ring enqueue (HIGH_MATCH ~72%; host \u226530)",
+      "description": "CView::attachRenderWork dual context-ring enqueue (HIGH_MATCH ~72%)",
       "unit": "monolib/src/core/CView",
       "symbol": "attachRenderWork__5CViewFP11CWorkThread",
-      "host_binary": "view_attach_render_work",
       "ppc_eligible": false,
       "ppc_skip_reason": "payload snaps uninit on retail stack; host oracle for tag/WorkID/thread patches"
     },
     {
       "id": "cview-update-msg",
-      "description": "CView::updateMsg ring drain tags 0-7 (STRUCTURAL ~65.9%; host \u226530)",
+      "description": "CView::updateMsg ring drain tags 0-7 (STRUCTURAL ~65.9%)",
       "unit": "monolib/src/core/CView",
       "symbol": "updateMsg__5CViewFv",
-      "host_binary": "cview_update_msg",
       "ppc_eligible": false,
       "ppc_skip_reason": "fan-out needs child graph + getWorkThread/setCurrent; host oracle on ring/list/flags"
     },
@@ -96,7 +78,6 @@
       "description": "CView::getCurrentView lbl_eu_806655C8 SDA load (FULL_MATCH guard; PPC uses lbl oracle slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "getCurrentView__5CViewFv",
-      "host_binary": "cview_get_current_view",
       "ppc_source": "cview_get_current_view.c",
       "ppc_stubs": [
         "cview_mock.c",
@@ -110,7 +91,6 @@
       "description": "CView::getSplitLine CSplitFrame gate + delegate (HIGH_MATCH ~89.2%; PPC uses semantic slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "getSplitLine__5CViewFv",
-      "host_binary": "cview_get_split_line",
       "ppc_source": "cview_get_split_line.c",
       "ppc_stubs": [
         "cview_mock.c",
@@ -123,7 +103,6 @@
       "description": "CView::setSplitLine CSplitFrame delegate (FULL_MATCH; PPC uses semantic slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "setSplitLine__5CViewFs",
-      "host_binary": "cview_set_split_line",
       "ppc_source": "cview_set_split_line.c",
       "ppc_stubs": [
         "cview_mock.c",
@@ -136,7 +115,6 @@
       "description": "CView::setDisp unk278 bit6 + invalidCurrent gate (FULL_MATCH; PPC uses semantic slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "setDisp__5CViewFbb",
-      "host_binary": "cview_set_disp",
       "ppc_source": "cview_set_disp.c",
       "ppc_stubs": [
         "cview_mock.c",
@@ -149,16 +127,14 @@
       "description": "MTRand::randFloat sequence vs retail int-to-double oracle (FULL_MATCH)",
       "unit": "monolib/src/math/MTRand",
       "symbol": "randFloat__Q22ml6MTRandFv",
-      "host_binary": "mtrand_float",
       "ppc_eligible": false,
       "ppc_skip_reason": "PPC harness not yet wired; static FULL_MATCH verified via objdiff + host oracle"
     },
     {
       "id": "mtrand-integer-rng",
-      "description": "MTRand integer path \u2014 rand31 sequence vs retail oracle (NonMatching unit)",
+      "description": "MTRand integer path — rand31 sequence vs retail oracle (NonMatching unit)",
       "unit": "monolib/src/math/MTRand",
       "symbol": "rand31__Q22ml6MTRandFv",
-      "host_binary": "mtrand_integer",
       "ppc_source": "mtrand_integer.c"
     },
     {
@@ -166,7 +142,6 @@
       "description": "MTRand::getInstance singleton init and guard (CODE_MATCH ~99.8%)",
       "unit": "monolib/src/math/MTRand",
       "symbol": "getInstance__Q22ml6MTRandFv",
-      "host_binary": "mtrand_getinstance",
       "ppc_source": "mtrand_getinstance.c"
     },
     {
@@ -174,7 +149,6 @@
       "description": "CfPadTask::update classic stick normalize + pad gate (CODE_MATCH ~99.6%)",
       "unit": "kyoshin/cf/CfPadTask",
       "symbol": "update__Q22cf9CfPadTaskFv",
-      "host_binary": "cfpadtask_update",
       "ppc_eligible": false,
       "ppc_skip_reason": "kyoshin/cf/CfPadTask.o has 52+ undefined WPAD/KPAD/game symbols"
     },
@@ -183,16 +157,14 @@
       "description": "CfPadTask::updateCfPadData deadzone/dpad/turbo semantics (FULL_MATCH guard)",
       "unit": "kyoshin/cf/CfPadTask",
       "symbol": "updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad",
-      "host_binary": "cfpadtask_updatecfdapdata",
       "ppc_eligible": false,
-      "ppc_skip_reason": "same CfPadTask.o unit as update \u2014 not linkable in isolation"
+      "ppc_skip_reason": "same CfPadTask.o unit as update — not linkable in isolation"
     },
     {
       "id": "cview-wkupdate-gate",
       "description": "CView::wkUpdate split-frame apply/setevent gate logic (FULL_MATCH guard)",
       "unit": "monolib/src/core/CView",
       "symbol": "wkUpdate__5CViewFv",
-      "host_binary": "cview_wkupdate_gate",
       "ppc_eligible": false,
       "ppc_skip_reason": "wkUpdate needs delete/isActive/updateMsg chain; host gate oracle only"
     },
@@ -201,7 +173,6 @@
       "description": "CViewRoot::getView reslist walk + CVIEW type filter (FULL_MATCH guard)",
       "unit": "monolib/src/core/CViewRoot",
       "symbol": "getView__9CViewRootFUl",
-      "host_binary": "cviewroot_getview",
       "ppc_source": "cviewroot_getview.c",
       "ppc_stubs": [
         "cviewroot_mock.c"
@@ -212,7 +183,6 @@
       "description": "CViewRoot::getFullScreenView desktop walk + exception/LOGIN gate + fullscreen size (CODE_MATCH ~99.7%)",
       "unit": "monolib/src/core/CViewRoot",
       "symbol": "getFullScreenView__9CViewRootFv",
-      "host_binary": "cviewroot_get_fullscreen_view",
       "ppc_source": "cviewroot_get_fullscreen_view.c",
       "ppc_stubs": [
         "cviewroot_gfsv_mock.c",
@@ -225,7 +195,6 @@
       "description": "CViewRoot::setCurrent early-outs + proc resolve + history push (CODE_MATCH ~97.7%)",
       "unit": "monolib/src/core/CViewRoot",
       "symbol": "setCurrent__9CViewRootFP5CView",
-      "host_binary": "cviewroot_set_current",
       "ppc_eligible": false,
       "ppc_skip_reason": "setCurrent needs getWorkThread/pssGetRoot + reslist push_back; host oracle on focus/history"
     },
@@ -234,7 +203,6 @@
       "description": "CProc::pssCreateView client-rect + view-name semantics (HIGH_MATCH ~73.5%)",
       "unit": "monolib/src/core/CProc",
       "symbol": "pssCreateView__5CProcFPCcP11CWorkThreadi",
-      "host_binary": "proc_pss_create_view",
       "ppc_eligible": false,
       "ppc_skip_reason": "CProc.o pssCreateView needs allocate/entryWork/reslist chain; host oracle on inlined rect path"
     },
@@ -243,7 +211,6 @@
       "description": "CView::renderView early-out / crossRoot / size+clear / wkRender / tail gates (HIGH_MATCH ~84.5%; PPC semantic slices)",
       "unit": "monolib/src/core/CView",
       "symbol": "renderView__5CViewFv",
-      "host_binary": "cview_render_view",
       "ppc_source": "cview_render_view.c",
       "ppc_stubs": [
         "cview_render_view_mock.c",
@@ -256,7 +223,6 @@
       "description": "CViewFrame::render owner/expand/badSize early gates (CODE_MATCH ~99.2%; PPC semantic slices)",
       "unit": "monolib/src/core/CViewFrame",
       "symbol": "render__10CViewFrameFv",
-      "host_binary": "cviewframe_render",
       "ppc_source": "cviewframe_render.c",
       "ppc_stubs": [
         "cviewframe_render_mock.c",
@@ -269,7 +235,6 @@
       "description": "CUIBattleManager::Init CProcess alloc, __ptmf_null copy, Regist via lbl_eu_80664048 (~99.1%)",
       "unit": "kyoshin/CUIBattleManager",
       "symbol": "Init__16CUIBattleManagerFv",
-      "host_binary": "battle_mgr_init",
       "ppc_eligible": false,
       "ppc_skip_reason": "CUIBattleManager TU depends on CProcessMan and work-thread alloc"
     },
@@ -278,7 +243,6 @@
       "description": "CUIBattleManager::Move gates + unk82 create cascade + mark-from-head + collect/unlink (CODE_MATCH ~95.4%)",
       "unit": "kyoshin/CUIBattleManager",
       "symbol": "Move__16CUIBattleManagerFv",
-      "host_binary": "battle_mgr_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "Move fans out to UI factories / CfGameManager / DeviceFile; host covers gates/flags/mark/collect"
     },
@@ -287,7 +251,6 @@
       "description": "CUICfManager::Init file mode, process registration, and eight-slot zero initialization",
       "unit": "kyoshin/CUICfManager",
       "symbol": "Init__12CUICfManagerFv",
-      "host_binary": "uicf_init",
       "ppc_eligible": false,
       "ppc_skip_reason": "CUICfManager requires CDeviceFile, CProcess, and UI helper dependencies"
     },
@@ -296,7 +259,6 @@
       "description": "COccCulling frustum early-out, depth, and plane-orientation gates (CODE_MATCH ~99.8%)",
       "unit": "kyoshin/COccCulling",
       "symbol": "func_801A1188__11COccCullingFP12CCullFrustum",
-      "host_binary": "occ_cull_helper",
       "ppc_eligible": false,
       "ppc_skip_reason": "COccCulling.o depends on PSMTXMultVec and CPlane construction"
     },
@@ -305,7 +267,6 @@
       "description": "COccCulling::setFrustum matrix/corner/radius/plane construction (HIGH_MATCH ~88.5%)",
       "unit": "kyoshin/COccCulling",
       "symbol": "setFrustum__11COccCullingFP12CCullFrustum",
-      "host_binary": "occ_set_frustum",
       "ppc_eligible": false,
       "ppc_skip_reason": "COccCulling.o depends on NW4R matrix and plane routines; host oracle covers transform, radius, and FLAGS_01 plane setup"
     },
@@ -314,7 +275,6 @@
       "description": "CMenuPTGauge::Move gates and unk8C state machine (CODE_MATCH ~97.1%)",
       "unit": "kyoshin/menu/CMenuPTGauge",
       "symbol": "Move__12CMenuPTGaugeFv",
-      "host_binary": "menu_ptgauge_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "Move fans out to layout virtuals, PTMF table, and UI sound helpers"
     },
@@ -323,7 +283,6 @@
       "description": "CAIAction_UnkVirtualFunc1 trailer export + ring copy into outB (HIGH_MATCH ~93.2%)",
       "unit": "kyoshin/cf/object/CAIAction",
       "symbol": "CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv",
-      "host_binary": "aiaction_vfunc1",
       "ppc_eligible": false,
       "ppc_skip_reason": "Leaf ring-copy; host covers trailer/outA/outB semantics without PPC"
     },
@@ -332,7 +291,6 @@
       "description": "CAIAction_UnkVirtualFunc2 trailer import from inA + ring copy from inB into self->unk20C (CODE_MATCH ~96.0%)",
       "unit": "kyoshin/cf/object/CAIAction",
       "symbol": "CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv",
-      "host_binary": "aiaction_vfunc2",
       "ppc_eligible": false,
       "ppc_skip_reason": "Leaf ring-copy; host covers trailer/inA/inB semantics without PPC"
     },
@@ -341,7 +299,6 @@
       "description": "CBattleState_UnkVirtualFunc6 bitfield set + 8-slot match/clamp/fill + vtable-0x48 tail call (HIGH_MATCH ~92.2%)",
       "unit": "kyoshin/cf/object/CBattleState",
       "symbol": "CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv",
-      "host_binary": "battlestate_vfunc6",
       "ppc_eligible": false,
       "ppc_skip_reason": "Manual vtable-slot tail call + 0x15DC-byte CBattleState; host covers bitfield/match/clamp/fill semantics"
     },
@@ -350,7 +307,6 @@
       "description": "CMenuEnemyState::cbRenderBefore gates + depth sort + panel draw flags (CODE_MATCH ~98.2%)",
       "unit": "kyoshin/menu/CMenuEnemyState",
       "symbol": "cbRenderBefore__15CMenuEnemyStateFv",
-      "host_binary": "menu_enemy_cbrender",
       "ppc_eligible": false,
       "ppc_skip_reason": "Render path calls GX/lyt DrawInfo and layout helpers; host covers gate/sort/draw decisions"
     },
@@ -359,7 +315,6 @@
       "description": "CMenuEnemyState::Move gates + target pulse + panel cull/HUD + anim SM (HIGH_MATCH ~85.6%)",
       "unit": "kyoshin/menu/CMenuEnemyState",
       "symbol": "Move__15CMenuEnemyStateFv",
-      "host_binary": "menu_enemy_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "Move fans out to B708C/BFC68/layout anim helpers; host covers gates/cull/anim decisions"
     },
@@ -368,7 +323,6 @@
       "description": "CMenuArtsSelect::cbRenderBefore gates + unk1B8/unk80/unk98/unkA4/unk104/unk170 draw-flag bitfield logic (CODE_MATCH ~95.2%)",
       "unit": "kyoshin/menu/CMenuArtsSelect",
       "symbol": "cbRenderBefore__15CMenuArtsSelectFv",
-      "host_binary": "menu_arts_cbrender",
       "ppc_eligible": false,
       "ppc_skip_reason": "Render path calls GX/lyt DrawInfo and layout helpers; host covers gate/bitfield/draw decisions"
     },
@@ -377,7 +331,6 @@
       "description": "CMenuArtsSelect::Move HUD gates + main FSM + party latch + slot 2A0/2C0/2E4 + animate bits (HIGH_MATCH ~93%)",
       "unit": "kyoshin/menu/CMenuArtsSelect",
       "symbol": "Move__15CMenuArtsSelectFv",
-      "host_binary": "menu_arts_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "Move fans out to layout/anim/party helpers; host covers gates/FSM/slot/animate decisions"
     },
@@ -386,7 +339,6 @@
       "description": "CUIWindowManager::Move timer scan + mark-propagation + collect/remove (HIGH_MATCH ~79.3%)",
       "unit": "kyoshin/CUIWindowManager",
       "symbol": "Move__16CUIWindowManagerFv",
-      "host_binary": "uiwindowmanager_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "CUIWindowManager.o has undefined CTTask/CProcess/reslist symbols; host oracle covers semantics"
     },
@@ -395,7 +347,6 @@
       "description": "CBattleState_UnkVirtualFunc29 clear 8 entries @+0x1388 + 13x8 id scan + unk15AC bit clear + memset +0x152C (CODE_MATCH ~95.5%)",
       "unit": "kyoshin/cf/object/CBattleState",
       "symbol": "CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv",
-      "host_binary": "battlestate_vfunc29",
       "ppc_eligible": false,
       "ppc_skip_reason": "0x15DC-byte CBattleState; host covers special-bank clear / scan / bitfield / pad152C semantics"
     },
@@ -404,7 +355,6 @@
       "description": "CBattleState_UnkVirtualFunc11 entries[0x68] mask-clear + dup-id scan + unk15AC bit clear (CODE_MATCH ~96.2%)",
       "unit": "kyoshin/cf/object/CBattleState",
       "symbol": "CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv",
-      "host_binary": "battlestate_vfunc11",
       "ppc_eligible": false,
       "ppc_skip_reason": "Manual vtable-slot-0x4C tail call + 0x15DC-byte CBattleState; host covers scan/mask/bitfield semantics"
     },
@@ -413,7 +363,6 @@
       "description": "CBattleState_UnkVirtualFunc8 Fv+r4 entry; flat cmpwi kind tree; match/clear loop + dup scan (CODE_MATCH ~98.0%)",
       "unit": "kyoshin/cf/object/CBattleState",
       "symbol": "CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv",
-      "host_binary": "battlestate_vfunc8",
       "ppc_eligible": false,
       "ppc_skip_reason": "Manual vt+0x2C/0x4C calls + 0x15DC-byte CBattleState; host covers kind/match/scan/bitfield semantics"
     },
@@ -422,7 +371,6 @@
       "description": "CBattleState_UnkVirtualFunc10 Fv+r4 entry; clear-by-unk2E + flat kind tree + dup scan (CODE_MATCH ~98.2%)",
       "unit": "kyoshin/cf/object/CBattleState",
       "symbol": "CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv",
-      "host_binary": "battlestate_vfunc10",
       "ppc_eligible": false,
       "ppc_skip_reason": "Manual vt+0x4C calls + 0x15DC-byte CBattleState; host covers key/match/scan/bitfield semantics"
     },
@@ -431,7 +379,6 @@
       "description": "CBattleState_UnkVirtualFunc26 Fv+r4 src table; vt+0x78 then 8x entry build→vt+0x1C; 0x80 pair-copy to +0x152C (HIGH_MATCH ~75%)",
       "unit": "kyoshin/cf/object/CBattleState",
       "symbol": "CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv",
-      "host_binary": "battlestate_vfunc26",
       "ppc_eligible": false,
       "ppc_skip_reason": "Manual vtable calls + 0x15DC-byte CBattleState; host covers skip/fill/bit15/copy semantics"
     },
@@ -440,7 +387,6 @@
       "description": "CUICfManager::func_80133324 Fv+r4/r5/r6 event range dispatch + SDA/list insert (CODE_MATCH ~98.2%)",
       "unit": "kyoshin/CUICfManager",
       "symbol": "func_80133324__12CUICfManagerFv",
-      "host_binary": "uicf_func_80133324",
       "ppc_eligible": false,
       "ppc_skip_reason": "Dispatcher fans out to UI helpers; host covers range gates, SDA, and list-insert semantics"
     },
@@ -449,7 +395,6 @@
       "description": "CUICfManager::Move mFlags cascade + mark-from-head + collect/unlink + countdown (HIGH_MATCH ~85%)",
       "unit": "kyoshin/CUICfManager",
       "symbol": "Move__12CUICfManagerFv",
-      "host_binary": "uicf_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "Move fans out to menu ctors / enum list / DeviceVI; host covers flags/mark/collect/countdown"
     },
@@ -458,7 +403,6 @@
       "description": "CMenuBattlePlayerState::Move gates + per-slot HP/tension/anim SM + shared layout FSM + full-HP timer (CODE_MATCH ~97.7%)",
       "unit": "kyoshin/menu/CMenuBattlePlayerState",
       "symbol": "Move__22CMenuBattlePlayerStateFv",
-      "host_binary": "menu_bps_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "Move fans out to party resolve / layout anim helpers; host covers gates/dirty/tension/FSM/timer"
     },
@@ -467,7 +411,6 @@
       "description": "CMenuBattlePlayerState ctor Process+PTMF/MI vt + construct_array + per-slot defaults (STRUCTURAL ~55%)",
       "unit": "kyoshin/menu/CMenuBattlePlayerState",
       "symbol": "__ct__CMenuBattlePlayerState",
-      "host_binary": "menu_bps_ctor",
       "ppc_eligible": false,
       "ppc_skip_reason": "Ctor fans out to CProcess/UnkClass/construct_array; host covers post-ctor field defaults"
     }

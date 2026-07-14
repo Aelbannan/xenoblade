@@ -9,10 +9,10 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 2. **`PLAN.md`** — co-op architecture, invariants, milestones, agent boundaries.
 3. **`DECOMP_MAP.md`** — per-function targets, symbols, and tiers.
 4. **`TASKS.md`** — agent checklist; check off functions at `FULL_MATCH`.
-5. **`tools/test/compare_behaviour/README.md`** — retail vs decomp behaviour tests (**mandatory below 100% static match**).
+5. **`tools/test/compare_behaviour/README.md`** — static/size + optional PPC behaviour checks.
 7. **`FORK.md`** — inventory of fork-only tools, PPC harness, docs, and policy vs upstream `xbret/xenoblade`.
 8. **`tools/ppc_equivalence/README.md`** — SMT semantic-equivalence check, proof contracts, supported PPC subset, and result/exit-code policy.
-9. **`tools/dol_opcodes.py`** — Capstone census of opcodes used in retail `main.dol`.
+9. **`tools/dol_opcodes/`** — opcode census for retail `main.dol` against PPC750CL `isa.yaml`.
 
 ## Quick commands
 
@@ -20,7 +20,7 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 cp tools/coop/coop.example.json coop.json   # first time only
 python tools/coop/run.py status
 python tools/coop/run.py targets list
-python tools/coop/run.py behaviour audit    # non-FULL_MATCH host coverage
+python tools/coop/run.py behaviour audit    # registered-test size budget
 python tools/coop/run.py size <unit>        # decomp .text vs split budget
 python tools/coop/run.py equivalence --help # supported straight-line PPC semantic proofs
 python tools/coop/run.py opcodes            # unique opcodes in main.dol

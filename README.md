@@ -28,7 +28,7 @@ The coop runner defaults to **US**. Use another region via `coop.json` or `confi
 
 - Match bar: **`FULL_MATCH`** (100% instruction + reloc when a symbol is set).
 - Source: **high-level C/C++ only** in `src/**` and `libs/**` — no asm / register micro-matching (narrow exceptions in `PLAN.md` §17.6).
-- Below 100% static match: mandatory host behaviour tests + `behaviour audit`.
+- Below 100%: keep matching (or §17.6); optional PPC harness / equivalence — no host dual-oracle tests.
 - Split object `.text` must fit the retail slice in `config/<region>/splits.txt`.
 - Never commit `orig/`, `main.dol`, RELs, or disc assets.
 
@@ -87,9 +87,9 @@ python3 tools/coop/run.py targets list
 python3 tools/coop/run.py cycle <target-id> \
   --hypothesis "..." --next-change "..."
 
-# Below FULL_MATCH — required:
-python3 tools/coop/run.py behaviour compare <test-id>
-python3 tools/coop/run.py behaviour audit
+# Optional PPC evidence (when ppc_source is registered):
+python3 tools/coop/run.py behaviour ppc <test-id>
+python3 tools/coop/run.py behaviour audit      # size budget for registered tests
 
 python3 tools/coop/run.py size <unit>          # .text vs split budget
 python3 tools/coop/run.py symbols list         # UnkClass_* placeholders

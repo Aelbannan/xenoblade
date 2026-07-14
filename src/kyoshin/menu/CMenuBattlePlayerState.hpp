@@ -11,11 +11,11 @@
 // Per-party slot (stride 0x270). Exception table: member array at 0x74, count 3.
 struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Layout* unk00; // +0x00 → this+0x74
-    u8 pad04[0x08 - 0x04];
+    nw4r::lyt::AnimTransform* unk04; // +0x04 → this+0x78
     nw4r::lyt::Layout* unk08; // +0x08 → this+0x7c
     u8 pad0C[0x18 - 0x0C];
     nw4r::lyt::Layout* unk18; // +0x18 → this+0x8c
-    u8 pad1C[0x20 - 0x1C];
+    nw4r::lyt::AnimTransform* unk1C; // +0x1C → this+0x90
     nw4r::lyt::Layout* unk20; // +0x20 → this+0x94
     u8 pad24[0x28 - 0x24];
     nw4r::lyt::Layout* unk28; // +0x28 → this+0x9c
@@ -23,8 +23,26 @@ struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Layout* unk78; // +0x78 → this+0xec
     u8 pad7C[0x80 - 0x7C];
     u8 unk80; // +0x80 → this+0xf4: gates the extra unk78 draw in cbRenderBefore
-    u8 pad81[0x244 - 0x81];
-    u32 unk244; // +0x244 → this+0x2b8: per-slot render/active gate
+    u8 pad81[0x204 - 0x81];
+    u8 unk204; // +0x204: snapshot of actor+0x3f28 (low byte)
+    u8 pad205[0x208 - 0x205];
+    u32 unk208; // +0x208
+    u32 unk20C; // +0x20C: previous vt+0x108 value
+    u32 unk210; // +0x210: current HP
+    u32 unk214; // +0x214: current max HP
+    u32 unk218; // +0x218
+    u32 unk21C; // +0x21C: previous unk218
+    f32 unk220; // +0x220: HP ratio (0..100)
+    f32 unk224; // +0x224: tension-like A
+    f32 unk228; // +0x228: tension-like B
+    f32 unk22C; // +0x22C: displayed tension A
+    u32 unk230; // +0x230
+    u8 pad234[0x238 - 0x234];
+    u32 unk238; // +0x238
+    u8 pad23C[0x240 - 0x23C];
+    u8 unk240; // +0x240: dirty / in-combat gate
+    u8 pad241[0x244 - 0x241];
+    u32 unk244; // +0x244 → this+0x2b8: per-slot anim state / active gate
     u8 pad248[0x25C - 0x248];
     u32 unk25C; // +0x25C → this+0x2d0: per-layout draw flag bits
     u8 pad260[0x270 - 0x260];
@@ -40,18 +58,25 @@ class CMenuBattlePlayerState : public CMenuBattlePlayerStateBase,
                                public IScnRender {
 public:
     void Term();
+    void Move();
     void cbRenderBefore();
 
     // IWorkEvent @0x58; IScnRender @0x5c (extab)
     CScn* mScn; // 0x60
     UnkClass_8045F564 unk64; // 0x64
     CMenuBattlePlayerStateSlot mSlots[3]; // 0x74
-    u8 pad7C4[0x7C9 - 0x7C4];
+    f32 unk7C4; // 0x7c4: full-HP hold timer
+    u8 unk7C8; // 0x7c8: once-guard for func_80138078(0x9a)
     u8 unk7C9; // 0x7c9: cbRenderBefore early-out gate (skip render when nonzero)
     u8 pad7CA[0x7D0 - 0x7CA];
     UnkClass_8045F564 unk7D0; // 0x7d0
     u8 pad7E0[0x7E4 - 0x7E0];
     nw4r::lyt::Layout* unk7E4; // 0x7e4
-    u8 pad7E8[0x7F8 - 0x7E8];
-    u32 unk7F8; // 0x7f8: gates the trailing unk7E4 draw in cbRenderBefore
+    nw4r::lyt::AnimTransform* unk7E8; // 0x7e8
+    nw4r::lyt::AnimTransform* unk7EC; // 0x7ec
+    nw4r::lyt::AnimTransform* unk7F0; // 0x7f0
+    u8 unk7F4; // 0x7f4
+    u8 unk7F5; // 0x7f5: feeds pane translate Y scaling
+    u8 pad7F6[0x7F8 - 0x7F6];
+    u32 unk7F8; // 0x7f8: gates the trailing unk7E4 draw / shared anim state
 };

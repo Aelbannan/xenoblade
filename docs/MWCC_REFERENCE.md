@@ -1310,6 +1310,27 @@ Same §8c9 gate prefix. After `GXSetZMode` + stack `DrawInfo` + `func_80137250`:
 
 ---
 
+### 8c13b. `CMenuArtsSelect::cbRenderBefore` — 9-slot bitfield draw gates (~95.2%, batch 2026-07-14g)
+
+**`cbRenderBefore__15CMenuArtsSelectFv`** (`src/kyoshin/menu/CMenuArtsSelect.cpp`, **CODE_MATCH ~95.2%**, size Exact `0x3C0`):
+
+Same §8c9 gate prefix (`CTaskGame::func_800426F0` → `lbl_eu_80663E28` bit21 → `func_8013BE50` → `lbl_eu_80663E24 & 0xAFA40000` → `func_8018A608` → `func_80122448`). After `GXSetZMode` + stack `DrawInfo` + `func_80137250`, the body is **five draw regions**, each a distinct branchless-boolean idiom over `unk308`/`unk318`/`unk310`/`unk314` bitfields:
+
+1. **Loop-1** (`unk298 > 1 && !(unk308 & 0x80)`): `for (i=0;i<9;i++) if (unk30C & (1<<i)) func_80137038(unk1B8[i], &drawInfo, 0, 1);` — visible arg is a plain literal `1`, not a bool expr.
+2. **`unk80`** (unconditional): `visible = ((unk308 & 0x30) | !(unk308 & 0x40)) != 0` — write as bitwise `|` between a masked field and a boolified `!`, **not** `||`, to get retail's branchless `rlwinm`/`cntlzw`-free `or`. Then unconditionally `unk308 |= 0x40`.
+3. **`unk98`** (`unk298>1 && unk328==4 && (unk308&0x2)`, else clear bit `0x8` either way — the two "else" arms for `unk328!=4` and `bit0x2==0` collapse to **one shared `unk308 &= ~0x8` statement outside the `if/else`**, not duplicated in each branch, to match retail's single clear block): `visible = ((unk308&0x1) | !(unk308&0x8)) != 0`.
+4. **8-loop** (`unkA4[i]`, gated additionally by `unk340==0` for the actual draw call but the latch-bit update on `unk318` runs regardless of `unk340`): per-bit `v=unk318; if (v&(1<<i)) { visible=(!(v&bit18) | (v&(1<<(i+9)))) != 0; unk318|=bit18; } else unk318 &= ~bit18;` where `bit18 = 1<<(i+18)`.
+5. **9-loop** (`unk104[i]` + conditionally `unk170[i]`), gated by `unk200[(i==8)?0:(i+1)]->unkBB & 1` (rotated index, **not** `(i+1)%9`): same `unk310` latch pattern as the 8-loop for `unk104`, then nested `if (unk2C0[i]==0xC)` gates an identical `unk314` latch pattern for `unk170`; the `else` for both the outer gate and the mode check independently clear the corresponding `bit18` bits.
+
+**Proven progression (70.7% → 95.2%):**
+- `||` → `|` bitwise-with-boolify for **every** `func_80137038` visible-arg expression (region 2 alone: 70.7%→88.2%).
+- 9-loop rotated index as `(i==8) ? 0 : (i+1)` ternary, not `(i+1)%9` — MWCC's `%9` constant-modulo codegen (`mulhwu`+shifts) never matches retail's branchless ternary here (88.2%→94.1%).
+- Region 3's two structurally-different "else, clear bit 0x8" arms (`unk328!=4` branch vs. `unk308&0x2==0` branch) must be written as **one shared statement after the closing brace of the nested if**, not copy-pasted into each `else` — duplicating it compiles to two separate `rlwinm` clears instead of retail's one (94.1%→95.2%).
+
+**Remaining ~4.8% soft cap:** Chaitin register-coloring choice for the loop-counter register differs between the two bitfield loops in region 4 vs region 5 (retail keeps a consistent physical register across both; decomp's identical high-level loop shape gets a different color per-loop). Tried and made **no difference**: swapping `bitI`/`bit18` local declaration order inside the region-5 body; hoisting `bit18` computation above the `if (v & bitI)` gate. No high-level C++ variant found that forces retail's specific coloring — same class of soft cap as §8c13's sort-loop register homes. Host **`menu-arts-cbrender`** (22 scenarios, `tools/test/compare_behaviour/host/menu_arts_cbrender.cpp`) PASS; `behaviour audit` clean.
+
+---
+
 ### 8c14. `CMenuBattlePlayerState::cbRenderBefore` — per-slot flag draws (**FULL_MATCH**)
 
 **`cbRenderBefore__22CMenuBattlePlayerStateFv`** (`src/kyoshin/menu/CMenuBattlePlayerState.cpp`, **FULL_MATCH**, size `0x1B4`):
@@ -1318,7 +1339,236 @@ Same §8c9 gate prefix, plus an extra `this+0x7c9 != 0` early-out and mask `0xAF
 
 **Pitfall (cost one full cycle → 99.9%, `+0xC` cascading offset drift):** a per-slot struct field placed *immediately* after a smaller member without an explicit pad for an unused gap will silently shrink the struct — every access after the array (and the array's own stride constant, `mulli`) shifts by the missing bytes. Concretely: `CMenuBattlePlayerStateSlot` has `nw4r::lyt::Layout* unk78` at rel `0x78` (ends `0x7C`) and a real field at rel `0x80`; omitting `u8 pad7C[0x80 - 0x7C];` between them made `sizeof(slot)` compile to `0x26C` instead of `0x270` (retail `mulli r0,r0,0x270` vs decomp `0x26c`), and every class field *after* `mSlots[3]` (here `unk7C9`, `unk7E4`, `unk7F8`) was off by exactly `3 * 4 = 0xC`. **Fix:** always insert an explicit `u8 padN[gapEnd - gapStart];` for every unused byte range between named fields — never let two fields abut unless their real offsets are contiguous. When several unrelated absolute offsets are all off by the same multiple-of-stride amount, suspect a missing pad inside an array element type, not the class itself.
 
-**Debugging note:** this repo's `objdiff-cli 3.4.4` dropped `diff -o/--format json-pretty` (see `tools/coop/run.py` `WARNING: function-diff JSON skipped`) and the interactive TUI needs a real TTY (fails headless with `Device not configured`, and hangs even under `script`/`openpty` in a sandboxed shell). To find the exact differing words at <100% match, hand-parse both `.o` files' `.symtab` + `.text` (ELF32 big-endian, no external deps needed) and diff the raw 4-byte words for the symbol's byte range — a constant per-word offset delta across many diffs is the struct-layout-drift signature above.
+**Debugging note:** this repo's `objdiff-cli 3.4.4` dropped `diff -o/--format json-pretty` (see `tools/coop/run.py` `WARNING: function-diff JSON skipped`) and the interactive TUI needs a real TTY (fails headless with `Device not configured`, and hangs even under `script`/`openpty` in a sandboxed shell). To find the exact differing words at <100% match, hand-parse both `.o` files' `.symtab` + `.text` (ELF32 big-endian, no external deps needed) and diff the raw 4-byte words for the symbol's byte range — a constant per-word offset delta across many diffs is the struct-layout-drift signature above. **Simpler alternative:** this repo's toolchain already vendors a real PPC objdump at `build/binutils/powerpc-eabi-objdump` (downloaded by `configure.py`/baseline) — `./build/binutils/powerpc-eabi-objdump -d build/<region>/src/<unit>.o` disassembles the decomp `.o` directly with symbol names and branch targets resolved, no ELF hand-parsing needed. Diff its output line-by-line against the retail `build/<region>/asm/**/*.s` for the same symbol.
+
+### 8c15. `CBattleState_UnkVirtualFunc31` — id→bitmask leaf switch (**FULL_MATCH**, batch 2026-07-14h)
+
+**`CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **FULL_MATCH**, size `0x160` — exact retail match): fake-`Fv`, retail keeps the id in **r4**. Leaf, no stack frame:
+
+```cpp
+extern "C" int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, u32 id) {
+    u16 mask;
+    if (id >= 0x12f) {
+        return 0;
+    }
+    mask = 0;
+    switch (id) {
+    case 0x4:  mask = 0x1;    break;
+    /* ... one case per id, masks 0x1..0x8000 ... */
+    case 0xdc: mask = 0x100;  break;   // must precede case 0x12 — see below
+    case 0x12: mask = 0x200;  break;
+    case 0x117: mask = 0x8000; break; // needs lis/addi, li can't hold unsigned 0x8000
+    }
+    return (self->unk4 & mask) != 0;
+}
+```
+
+Went **96.0% → 100%** in two source-order fixes, no asm/intrinsics needed:
+
+1. **Default-value hoist point (96.0% → 99.9%).** Retail computes `mask`'s zero default **once**, immediately after the `id >= 0x12f` early-return check, *before* the decision tree forks (`cmpwi r4,0x13` / `li r0,0` / `beq`/`bge`…) — not inside a switch `default:` arm at the merge point. A `default: mask = 0; break;` case (or `u16 mask = 0;` declared *before* the early-return `if`) makes MWCC either duplicate the store at the tail merge (+1 insn, function 4B too big) or hoist it above the early-return branch (dead store on the return-0 path, but shifts every subsequent branch target by 4B — still only 96–97.6% because the *shape* differs from retail even though total size can coincidentally match). **Fix:** declare `u16 mask;` (uninitialized) before the `if`, then assign `mask = 0;` as its own statement **after** the early-return `if` and before the `switch` — matches retail's dominance point exactly (conditionally executed only on the switch-continuing path, once, right at tree entry).
+2. **Switch case declaration order = generated block layout order (99.9% → 100%).** MWCC lays out each `case` arm's code block in **source declaration order**, not id/value order. Retail's block layout is `id 0xdc → mask 0x100` **before** `id 0x12 → mask 0x200` (ids are *not* monotonic here relative to their target block addresses); writing the `case 0x12` arm before `case 0xdc` in source produced byte-identical instructions/relocations but with those two blocks' relative order flipped, shifting every branch offset that targets or follows them by 8 bytes (match capped at 99.9%, single relocation-free instruction-word diff). **Fix:** when a switch is 100% except for a handful of branch-offset-only words, diff the decomp `.o` block *order* (via `powerpc-eabi-objdump -d`, see debugging note above) against retail's label order in the `.s` reference — reorder `case` arms in source to match, not case *values*.
+
+No behaviour host test required (100% static match). Host coverage optional per policy.
+
+**Sibling application — `CBattleState_UnkVirtualFunc33` (FULL_MATCH):** the
+same fake-`Fv`/`r4=id`, default-hoist, source-ordered switch, and final
+`(field & mask) != 0` boolify pattern matches the `0x160` retail leaf exactly
+when the final field is the separately declared `u16 unk6` at `this+0x6`.
+Do not reuse `unk4`: its otherwise identical load is `lhz 0x4(r3)`, while
+this sibling requires `lhz 0x6(r3)`.
+
+---
+
+### 8c15b. `CBattleState_UnkVirtualFunc11` — dead trip / found / scan-base Chaitin soft-cap (~96.2% CODE_MATCH)
+
+**`CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **CODE_MATCH ~96.2%**, size decomp `0x16C` vs retail `0x174`): fake-`Fv` + **r4=mask**. Walk `this+0x8` entries (stride `0x34`, count `0x68`); on `unk30 & mask`: call **vt+0x4C**, remember `unk0C` id, `memset(entry,0,0x34)`; if `id < 0x12f` scan 13×8 id groups via raw `self+0x14..0x180` offsets; if no dup, clear bit `id` in `this+0x15AC`.
+
+**Retail register split the decomp cannot reproduce in high-level C++:**
+| Role | Retail | Best decomp |
+|------|--------|-------------|
+| scan base `p` | **r4** (`mr r4,this` / `addi +0x1a0`) | **r4** ✓ |
+| dead trip | **r3** (`li 0` / `addi +7` / unused after `bdnz`) | coalesced away |
+| found flag | **r0** (`li 0/1` + `cmpwi r0`) | **r3** (coalesced with trip's init) |
+| NV homes | `this→r29, mask→r30, entry→r26, 1→r27, 13→r28` | permutation differs (`this→r27` etc.) |
+| vtable temp | `lwz r12,0(this)` | `lwz r5,0(this)` then `lwz r12,0x4c(r5)` |
+
+**Tried and rejected (all ≤96.3% or regress):**
+- Dead trip kept via `stillActive = trip > 1000` → ~92.7% (multi-insn boolify; also swaps p/trip into r3/r4).
+- `trip & 0`, `trip ^ trip`, `(trip, 0)` → MWCC folds to `li r0,0` and **DSE's** the addi+7 (back to 0x16C).
+- `volatile int trip` → ~92.3% (stack traffic).
+- Goto found-paths with found in **r0** → ~96.3% but walks via **r3** (loses retail's r4 scan base); net similar.
+- NV decl-order `one`/`thirteen` / block-scope variants → no full retail K coloring.
+
+**Keep:** direct self-relative id checks (avoids LICM hoisting a `self+8` entry pointer that diverges from retail's `mr r4,this`). Host **`battlestate-vfunc11`** (14 scenarios) PASS; size PASS. `runtime_test: behaviour:battlestate-vfunc11`. Next for FULL_MATCH: decomp.me on the r3 trip + r0 found split, or §17.6 `insn_patches` only if a future C++ shape lands at exact `0x174` with register-only diffs.
+
+---
+
+### 8c15c. `CBattleState_UnkVirtualFunc29` — same dead-trip / found / scan Chaitin soft-cap (~95.5% CODE_MATCH)
+
+**`CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **CODE_MATCH ~95.5%**, size decomp `0x154` vs retail `0x15C`): **true `Fv`**. Loop `i=0..7` over entries at `this+0x1388` (= `entries[0x60..0x67]` inside the `+0x8` bank): save `unk0C`, `memset(entry,0,0x34)`; if `id < 0x12f` run the same 13×8 halfword id scan at `this+0x14..0x180`; if not found (or `id >= 0x12f`) clear bit `id` in `this+0x15AC`; after the loop `memset(this+0x152C,0,0x80)`.
+
+**Retail register split (identical class to §8c15b):**
+| Role | Retail | Best decomp (goto found-paths) |
+|------|--------|--------------------------------|
+| scan base `p` | **r4** | **r3** |
+| dead trip | **r3** (`li 0` / `addi +7`) | DSE'd (−8 bytes → `0x154`) |
+| found flag | **r0** | **r0** ✓ |
+
+**Tried and rejected:** `trip & 0` / `trip ^ trip` / `opt_propagation off` — MWCC still folds and DSE's the trip chain; `#pragma optimization_level 1` → **78.3%** (loses `mtctr`/`bdnz` shape). Break form (no goto) keeps scan in **r4** but coalesces found into **r3** and still drops the trip — net same ~95.5%. Cannot reach exact `0x15C` with register-only diffs, so §17.6 `insn_patches` does not apply yet.
+
+**Keep:** goto found-paths + self-relative 13×8 scan + `unk15AC` `andc` bit clear + `memset(unk152C,0,0x80)`. Host **`battlestate-vfunc29`** (12 scenarios) PASS; size PASS. `runtime_test: behaviour:battlestate-vfunc29`.
+
+---
+
+### 8c17. `CUICfManager::func_80133324` — reslist push_back/setItem + range body order (~98.2% CODE_MATCH)
+
+**`func_80133324__12CUICfManagerFv`** (`src/kyoshin/CUICfManager.cpp`, retail `0x80133DF8`, size Exact **`0x3C0`**): fake-`Fv` free fn with **(self, id, a1, a2)**; early-out `a1==a2`; nested `cmpwi` id ranges; SDA **`lbl_eu_80664050`** / **`lbl_eu_80664054`**.
+
+**Proven 33% → 98.2%:**
+- Emit leaf bodies in **retail text order** (`221 → 312c → 7fc → 22 → 609`) via goto gates — MWCC lays out like the cascade.
+- Event queue node is **`_reslist_node<u32>` layout** (`mNext@0`, `mPrev@4`, `mItem@8`), **not** prev/next swapped. Empty slots: `mNext == 0`.
+- Insert = **`reslist::push_back` → `setItem`** (try/catch). That forces **`-0x80` / `mr r31,r1` / `stw r1` FP epilogue** matching retail.
+- `func_8013B428` must be **C++ linkage** → `func_8013B428__FUl`; `func_801361E8` / `func_8013606C` stay **`extern "C"`** unmangled (retail labels).
+
+**98.2% → 98.0% (batch 2026-07-14h resume) — two more fixes:**
+- **Target/index declaration order in a 0-terminated table scan.** Retail's id-table search loop reloads the search key into **r26** and inits the loop counter into **r25** (`target` before `i` in source, i.e. declare the *reload* before the *counter* even though the counter is used first in the loop test) — decomp had them swapped (r25/r26 flipped) *and* it shifted the whole idTable struct's stack home from retail's `sp+0x28` down to `sp+0x20`. Swapping `int target = lbl_eu_80664050; u8 i = 0;` (target first) fixed **both** the r25/r26 assignment *and* the idTable offset in one change (90.4% → 96.2%). Lesson: a single decl-order swap can simultaneously fix a register-number mismatch and an unrelated stack-layout mismatch elsewhere in the same function — always recheck *all* prior diff deltas after any decl-order experiment, not just the one you targeted.
+- **Don't pre-mask a "default-or-computed-byte" value at declaration; mask at each use site instead.** `u32 diff = (u8)(id - 0x312c);` (pre-masked once) compiles to one `clrlwi` then a plain `mr` on the branch-taken path. Retail keeps `diff` as the **full unmasked** 32-bit subtraction result and masks it **twice** — once for the `!= 0` test, again for the `code = ...` assignment — because retail's source reads the *same unmasked variable* twice via two separate `(u8)` casts. Fix: `u32 diff = id - 0x312c; u32 code = 0xc8; if ((u8)diff != 0) code = (u8)diff;` — reproduces retail's exact 4-instruction `subi/li/clrlwi./clrlwi/clrlwi` sequence (96.2% → 98.0%, single change). General rule: when retail shows *two* `clrlwi`s masking the *same logical byte value* at two points, don't let a single pre-masked local absorb both — keep the wide value alive and mask on each read.
+
+**Remaining ~2% soft-cap (Chaitin regalloc, not structural):** retail spills `func_8014A1D4`'s return to **`stw r3,0x8(r31)`** immediately after the call (before the find-loop, regardless of branch outcome) and reloads it from stack right before the store into the new node — because retail's find-loop reuses **r3** for the `unk138` pointer reload each iteration, forcing the spill. Decomp's loop happens to pick a different GPR for that reload and never clobbers r3, so MWCC proves the spill/reload redundant and elides it (savedRet stays live in-register end-to-end) — 8 fewer bytes, but behaviourally identical. Tried and **failed to move the needle**: `volatile`/pointer-indirection round-trips on `savedRet` (no byte change — compiler proves them redundant too), reordering `capacity`/`i`/`byteOff`/`startNode` declarations (no byte change), dropping the redundant `_reslist_node<u32>*` cast in the slot-search pointer arithmetic (no byte change, kept for clarity). This looks like a genuine Chaitin ceiling absent whole-function asm. Host **`uicf-func-80133324`** (35 scenarios, independently re-derived from the retail listing + decomp source, includes a deliberate-bug harness self-check) PASS; `behaviour audit` PASS; size PASS.
+
+---
+
+### 8c16. `CUIWindowManager::Move` — reslist find-then-propagate mark, iterator ctor zero-init trap (~79.3% HIGH_MATCH, batch 2026-07-14g)
+
+`Move__16CUIWindowManagerFv` (`src/kyoshin/CUIWindowManager.cpp`, `0x8013D0C8`, size `0x4DC`): scans `lbl_eu_80664088`'s two `reslist<IUIWindow*>` queues for a live transition timer, then walks `this`'s own two queues to propagate an update-mark and collect+unlink flagged windows. Three real bugs found and fixed (65.5% → 79.3%); remaining gap is a Chaitin register-coloring soft-cap in the 8x-unrolled unlink loop.
+
+**Bug 1 — access-specifier order ≠ layout order.** A recovered type with `public:` members declared *before* `private:` members compiles those public members at offsets `0x0`/`0x4`/`0x8`/`0x9` (their *declaration* position), not their intended retail offsets `0x5C`/`0x60`/`0x64`/`0x65` — MWCC lays out data members strictly in **declaration order**, independent of which access-specifier block they fall under. **Fix:** always declare the private "opaque prefix" bytes (`u8 unk00[N]`) *before* the public named fields in a partially-recovered class, even though the accessor (`SetRemove()`) reads more naturally first. A ~14-point match swing (65.5%→78.6%) came from this alone; verify recovered-type field offsets against retail's own `lwz/stw N(rX)` operands, not just against the struct's *intended* size.
+
+**Bug 2 — "mark all if any found" is not the same as "propagate from first hit".** Retail's mark-update logic is **not** two independent passes ("scan for any qualifying window, then if found mark *every* window from the head"); it's a **single continuous walk**: scan from the head for the first window where `unk65 != 0 || unkA1 != 0`, then — **starting exactly at that node, not restarting from the head** — set `unk65 = true` on it and every node after it to the end of the queue. If the scan reaches the sentinel without finding anything, the second loop never runs.
+```cpp
+for (it = q.begin(); it != q.end(); ++it) {
+    if ((*it)->unk65 != 0 || unkA1 != 0) break;
+}
+for (; it != q.end(); ++it) {          // continues from where the scan broke, no restart
+    (*it)->unk65 = true;
+}
+```
+Restarting the second loop from `q.begin()` (marking the *entire* queue once any hit is found) compiles to extra flag-bookkeeping (`li r8,1`/`cmpwi r8,0`) that retail doesn't have and drops match ~4-5 points. Recognize this "find-then-continue" idiom whenever retail's asm shows a search loop whose "found" branch jumps into the *middle* of a second loop's body (not back to that loop's own head-check).
+
+**Bug 3 — non-trivial-ctor element type in a stack array forces a hidden zero-init loop.** `reslist<T>::iterator` has a user-defined default ctor (`_reslist_iterator() : mNode(nullptr){}`). Declaring `iterator pending[18];` as a scratch buffer makes MWCC **default-construct all 18 elements up front** — an 8x-unrolled `stw 0,...` zero-fill loop (~40 extra instructions) that retail's code never emits, because retail's buffer is a POD `_reslist_node<T>*[18]` (raw node pointers, trivial type, no ctor). **Fix:** for scratch "pending items to process later" buffers, use the underlying node/pointer type directly (`_reslist_node<T>*`, itself public on `reslist`'s `_reslist_base`), not the iterator wrapper — reserve `iterator` for actual traversal, not storage. Removing this one array's ctor cost was the single biggest jump (65.5%→79.2%).
+
+**Remaining ~20% gap — confirmed soft-cap, not a source bug.** After the three fixes, decomp is 313 instructions vs retail's 311 (near-identical count) but only ~79% instruction-exact:
+- Retail's unrolled unlink loop processes one `pending[i]` fully (load node → load `mPrev`/`mNext` → 3 stores) before moving to `pending[i+1]`, reusing 3 volatile registers (`r7`/`r8`/`r9`) throughout. Decomp's identical-looking C (`WindowNode* prev = pending[i]->mPrev; WindowNode* next = pending[i]->mNext; ...`) makes MWCC's unroller **batch-load all 8 `pending[i..i+7]` pointers up front** before processing any of them, needing far more live temporaries and forcing `r29`–`r31` callee-saved spills retail's prologue (`stwu r1,-0x50(r1)` only) never pays.
+- Tried and reverted (all regressed, several severely): dropping the named `prev`/`next` locals for direct chained `pending[i]->mPrev->mNext = ...` (67.0%, MORE register pressure, not less); a `WindowNode** p` pointer-walk instead of `int i` + array index (41.3% — collapses the unroll into a totally different, much smaller loop shape); hoisting `prev`/`next` to function scope shared across both remove loops (no change, MWCC normalizes it — same object); reordering `node`/`pending`/`i` declarations (no change); rewriting the mark-search `for+break` as a negated `while` (74.0%, worse — changes the search loop's own branch layout, not just the propagate loop).
+- The mark-propagate blocks also have a **fixed branch-polarity mismatch** vs retail: retail's second (last, OR-chained) condition test inverts sense (`beq CONTINUE` else falls into FOUND) while decomp's compiles the opposite way (`bne FOUND` else falls into CONTINUE) — same logic, ~4 extra instructions per block from the different fallthrough choice. Both `if (a||b) break;` phrasing and swapped operand order produce the same fallthrough; not resolved by any tried source change.
+
+Added mandatory host behaviour test **`uiwindowmanager-move`** (34 scenarios — <80% tier requires ≥30) covering: null-instance no-op, timer-scan priority (subview vs `unk60` fallback, zero/negative timers, cross-queue precedence), mark-propagation-from-head/middle/tail (not "mark everyone"), `unkA1`/`unkA0` global overrides, single/alternating/all-flagged removal, the 8-and-17-element unroll-boundary sizes, and combined multi-effect scenarios. `runtime_test: behaviour:uiwindowmanager-move` logged in `attempts.jsonl`.
+
+---
+
+## `CBattleState_UnkVirtualFunc6` — 92.2% HIGH_MATCH ceiling (GPR/FPR dest allocation, no source fix found)
+
+`0x80148210`, size `0x154`. Set-bit-into-bitfield + scan-8-entries-for-id-match
+(clamp `unk10`) else fill-first-free-slot (struct copy, `unk1C := unk20`,
+`unk28 := 0.9f (lbl_eu_80667414) * unk24`), then **tail-call** vtable slot
+`0x48` (`UnkVirtualFunc17`) with the matched/filled entry — `self`/`entry` in
+`r3`/`r4`, manual `lwz r12,0(r3) / lwz r12,0x48(r12) / mtctr r12 / bctr`
+dispatch (not a normal virtual call — the extra `entry` arg breaks the
+implicit-`this`-only ABI a real `self->Vfunc()` call would emit).
+
+**Every instruction shape, branch, and relocation matches retail 1:1** —
+diffing `objdump -d` output of both `.o`s side-by-side shows **zero
+opcode/operand-shape differences**, only **register-number** substitutions:
+
+- GPR: retail's long-lived `entries`/`p`/`n` locals land in `r5`/`r7`/`r0`;
+  decomp's land in `r8`/`r9`/`r10`. Retail's second-loop iterator reuses `r5`
+  (already used for the same "entries" pointer's first-loop copy) but
+  decomp's reuses `r8`. Verified via `objdump -r` that this is **not** an SDA
+  or relocation issue — `R_PPC_EMB_SDA21 lbl_eu_80667414` at the float-const
+  load is byte-identical in both.
+- FPR: retail's `fmuls f0,f0,f1` (dest reuses the *const*'s register); decomp
+  emits `fmuls f1,f0,f1` (dest reuses the *loaded-field*'s register) — same
+  operands, same 1 float-multiply, different destination register MWCC's
+  allocator happened to pick.
+
+**Tried and reverted (no match-% change, code got *larger* — 0x5D0 → 0x668
+→ 0x6D0 bytes as other agents' functions accreted in the same TU, but the
+*delta* from this change alone was strictly worse than baseline):**
+splitting the single compound bitfield statement
+(`*(u32*)(...) |= 1u << (...);`) into named temps in retail's apparent
+live-range order (`id`, `one=1`, `entries`, `n=8`, then
+`byteOffset`/`bit`/`wordAddr`/`word`/`shifted` in a nested block, with
+`p = entries` assigned mid-block to mirror retail's `mr r7,r5`). MWCC's
+register allocator did **not** follow the manual ordering — same registers
+(`r8`/`r9`/`r10`) came out regardless, plus the extra named temps added
+dead-store-adjacent instructions the original compound form didn't need.
+
+**Conclusion:** this looks like a genuine MWCC register-bank-selection
+artifact tied to *how many/which registers are already consumed earlier in
+the object file's other functions/the compiler's internal counter*, not to
+this function's own source shape — the same class of "no visible source
+change moves the needle" case noted for other targets in this doc. Left at
+**HIGH_MATCH (92.2%)** with a required 16-scenario behaviour host test
+(`tools/test/compare_behaviour/host/battlestate_vfunc6.cpp`, registered as
+`battlestate-vfunc6` in `manifest.json`) exercising: free-slot-fill (first/
+mid/last slot, incl. float scale + `unk1C:=unk20` override order), all-full
+no-op, id-match clamp-up/clamp-down/no-lower-clamp/negative-clamp-bound/
+already-satisfied-no-op, and bitfield bit-index edge cases (low/high/word-
+boundary/next-word). If a future agent finds the actual register-allocator
+lever (e.g. reordering *other* functions earlier in the same translation
+unit, or a different vtable-dispatch idiom), re-run
+`python tools/coop/run.py behaviour compare battlestate-vfunc6` to confirm
+before dropping the host test.
+
+---
+
+### 8c16. `CBattleState_UnkVirtualFunc26` — Fv+r4 src table → 75% HIGH_MATCH soft-cap (batch 2026-07-14h)
+
+**`CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **HIGH_MATCH 75.0%**, exact retail size `0x12C`): fake-`Fv`, retail keeps the `SrcEntry*` table in **r4**. Shape: `stmw r25` / call **vt+0x78** (`UnkVirtualFunc29`) / loop `i=0..7` with dual induction `rec`+`recFlags` / skip when `unk00|unk02|unk04` all zero / `memset(entry,0,0x34)` + field fill / call **vt+0x1C** (`UnkVirtualFunc6`) / tail **16×** pair-copy into `this+0x152C`.
+
+**Proven:**
+- Nested `if (unk00==0) if (unk02==0) if (unk04==0) allZero=1` → retail's three `lhz`/`cmpwi`/`bne` chain + final `li r3,1`.
+- `((u32)recFlags->unk0E >> 15) & 1` → exact retail **`extrwi.`** (`rlwinm. r0,r0,17,31,31`). Plain `u16 >> 15` emits **`srawi.`** (signed promote); `(u32)>>15` without `&1` emits `rlwinm. …,15,31`.
+- Tail `do { a=*(s+1); b=*(s+=2); *(dst+1)=a; *(dst+=2)=b; } while (--i)` with `dst=(u32*)(this+0x1528)`, `s=(u32*)src-1` → compact **`lwzu`/`stwu`** body at exact `0x12C`.
+- `for (left=0x10; left!=0; left--)` **fully unrolls** to `0x208` (32× `lwz`/`stw`); `#pragma opt_unroll_loops off` did **not** stop it. Prefer do-while.
+
+**Soft-cap (~25% gap, verified byte-diff):**
+1. MWCC **hoists** the `unk0E` load/`extrwi.` **before** the entry field stores (retail does them after `stw flags`); `#pragma scheduling off`, volatile cast, and `entry.unk30-flags` addr dependency all failed or regressed (dependency → 70.9%).
+2. Vtable load uses **r5** then `lwz r12,0x1c(r5)` vs retail **r12**/`lwz r12,0x1c(r12)`.
+3. Tail counter is **`addic./bne`** vs retail **`mtctr`/`bdnz`** (and mid-body `addic` splits the two loads).
+
+**mtctr/bdnz vs addic./bne — more dead ends (do not retry):**
+- `memcpy(dst, src, 0x80)` for the tail is **not inlined** at this opt level — always a real `bl memcpy`, unlike the record-loop `memset` (also a real `bl memset`, matching retail). Retail's tail is definitely a hand-written pointer loop, not a libc call.
+- Hiding the trip count from the constant-unroller via `volatile u32 vTrip = 0x10; u32 i = vTrip;` still emits **`addic./bne`** (adds a dead `stw`/`lwz` round-trip through the stack, net regression) — the `do{}while(--i)` codegen path picks the GPR-decrement idiom independent of whether the bound is a visible compile-time literal.
+- `#pragma opt_unroll_loops off/reset` and `#pragma opt_full_unroll_limit 0/reset` around just this loop compile clean (no "unknown pragma" warning from this MWCC build) but produce **byte-identical codegen** to no pragma at all — either silently unsupported on this PPC EABI target/version, or scoped differently than the mobileGT reference pragma docs describe. Not a viable lever here.
+- `for (left=0x10; left!=0; left--)` (canonical `CMenuEnemyState::cbRenderBefore`-style outer-CTR idiom, §8c13) does **not** reproduce here — it fully unrolls to `0x208` for this trip/body combo (16 iters × trivial 2-word body is apparently still "cheap enough" to unroll, unlike the 23-iteration bubble-sort body in §8c13). Trip count alone does not predict unroll-vs-mtctr; body cost model differs per call site.
+- Conclusion: `do{}while(--i)` is the best reachable high-level shape (compact `0x12C`, correct `lwzu`/`stwu` addressing) — only the counter register class (CTR vs GPR) differs from retail. Next avenue if revisited: decomp.me diffing on this exact 5-insn loop body, or a logged §17.6 single-instruction `asm` swap of just the `bne`/`bdnz` branch once the rest of the function is ≥99%.
+
+Host **`battlestate-vfunc26`** (32 scenarios) PASS — skip rules, bit15→`0x4000`, fill fields, and 0x80 pair-copy. `runtime_test: behaviour:battlestate-vfunc26`.
+
+---
+
+### 8c15c. `CBattleState_UnkVirtualFunc8` — flat if+goto kind tree (**CODE_MATCH ~98.0%**, batch 2026-07-14j)
+
+**`CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **CODE_MATCH ~98.0%**, decomp size `0x420` vs retail `0x428`): fake-`Fv` + **r4=`CBattleStateEntry*`**. Nested retail `cmpwi` on `entry->unk0C` → kind `{0,1,2,3}`; kind==3 clears `this+0x1528`; call **vt+0x2C**; walk `this+0x8` (`0x68`× stride `0x34`): id match (+ field eq unless `unk30 & 0x200`) → word-copy / `memset` / vt+0x2C / id-dup scan / clear `unk15AC` bit / vt+0x4C; stop if `arg->unk0C == 0`.
+
+**Proven (45% → 98%):**
+1. **`int id`** (not `u16`) → retail **`cmpwi`** (not `cmplwi`).
+2. **Flat `if (id >= X) goto L_…` / `if (id == X) goto kindN`** mirroring the retail cmpwi chain **exactly**, with **shared** `kind0`/`kind1`/`kind3`/`kind2` leaves. Nested `if/else` + `kind=N` preserves pivots but **duplicates every leaf** (`0x598`). Nested `if/else` + `goto kindN` lets MWCC **rebuild** a different decision tree (top pivot `0xdc`). Flat if+goto alone keeps both pivot order and shared leaves → exact retail size target region and ~92%+.
+3. Interleave memset args with the first lwz/stw word-copy pair (`a=s[0]; clearPtr=slot; b=s[1]; clearVal=0; saved[1]=b; clearLen=0x34; saved[0]=a; …`) — typed `saved=*slot` emits `lhz`/`sth` and bloats.
+
+**Soft-cap (~2%, same class as §8c15b UnkVirtualFunc11):**
+| Role | Retail | Best decomp |
+|------|--------|-------------|
+| this / entry | **r28 / r29** | **r27 / r28** |
+| thirteen | **r27** | **r29** |
+| scan base | **r4** (`mr r4,this`) | **r3** |
+| dead trip | **r3** (`li 0` / `addi +7`) | DSE'd (−2 insn → `0x420`) |
+| savedId | **r5** | **r4** |
+| vtable temp | `lwz r12,0(this)` | `lwz r5,0(this)` then `lwz r12,0x2c(r5)` |
+
+Tried and rejected for the last 2%: early-hoist `one`/`thirteen` (sunk to first use), `stillActive \|= trip & 0` (still DSE/`0x420`), decl-order swaps. Host **`battlestate-vfunc8`** (≥14 scenarios + kind-table) PASS; size PASS (unit under budget). `runtime_test: behaviour:battlestate-vfunc8`.
 
 ---
 
@@ -1330,6 +1580,51 @@ Same §8c9 gate prefix, plus an extra `this+0x7c9 != 0` early-out and mask `0xAF
 - [ ] No asm / `register rN` / fake `sp[]` in source
 - [ ] Attempt logged in `docs/evidence/decomp/attempts.jsonl` (`policy_exception` if using objcopy rename)
 - [ ] `TASKS.md` / `configure.py` `Matching` updated for whole TU
+
+---
+
+### 8c14. `CMenuEnemyState::Move` — frame/savegpr + panel semantics (~85.6%)
+
+**`Move__15CMenuEnemyStateFv`** (`src/kyoshin/menu/CMenuEnemyState.cpp`, **HIGH_MATCH ~85.6%**, retail size `0x9B8`):
+
+**Proven toward retail prologue:**
+- Same §8c9 bit21 asm carve-out + `extern "C" int func_8013BE50()` + mask `0xAFA40000`.
+- Hoist loop-invariant `f32` (`lbl_eu_80666FE8` / `66FEC` / `67014`) + stack `VEC3` homes **immediately before** the `0x18` panel loop → frame **`-0xe0`** with **f28–f31** saved (was `-0x90` / no paired floats).
+- Still **`_savegpr_21`** (`this` in r21) vs retail **`_savegpr_22`** (`this` in r23) — one extra callee-saved live across the loop.
+
+**Semantics fixed vs first draft (match 76.8% → 85.6%):**
+- After a successful target pulse, retail sets the gate GPR to **0**; **clear `unk830` only when no active target** (not when found).
+- Panel HUD / flag toggles use **`func_8016FE34()` (actor2)**, not the early battle-target pointer (that GPR is reused).
+- **FEC cull:** `vt+0x128 == animMarker` **and** `panelData[0x1c]==0` → clear `+0x15` (flag1c nonzero falls through to skipDist).
+- **Distance + frustum** only when `panelData[0x28]==0 && pc!=NULL`; otherwise skip both and continue to flag work.
+- Distance via `VEC3Sub` into stack homes + length² vs `lbl_eu_80667014`; PC pos from embedded `pc+0x3e9c` vt+0xAC.
+- Before `func_80111B08` / `func_80111E70`, call **both** vt+0x12C and vt+0x128; pass **`(f1=128, f2=12c)`** (two-float decls).
+
+**Host:** `menu-enemy-move` (24 scenarios) PASS. Next: shed one long-lived GPR for `_savegpr_22`; tighten distance PS schedule vs retail `psq_l`/`ps_madd` copy.
+
+**Dead-slot register tried, no effect (still `_savegpr_21`):** `objdump -d` on the unlinked `.o` shows one GPR written exactly once and never read back (e.g. `addi r26,r1,0x60` with zero later references to `r26`) — a materialized-but-unused stack-buffer-address local (`VEC3* pDelta = &delta;` passed once to an inlined `VEC3Sub`, whose paired-single codegen never actually re-derefs through that register). Removing the separate pointer NV and using `&delta` directly at the call site does **not** shrink the callee-saved set — MWCC just relocates the same "write-once, never read" waste onto a *different* GPR (e.g. `pc+0x3e9c` embed pointer went from 3 refs to 1). Total stays at 11 GPRs (`r21`–`r31`) vs retail's 10 (`r22`–`r31`); the extra live range appears to be structural (Chaitin interference from the whole-function live set), not a single removable NV. Consistent with the §8c13/8c15b soft-cap class — do not keep re-trying isolated dead-pointer removal on this target without a new structural hypothesis.
+
+---
+
+### 8c17. `CMenuBattlePlayerState::Move` — HUD gates + slot FSM (~99.3%)
+
+**`Move__22CMenuBattlePlayerStateFv`** (`src/kyoshin/menu/CMenuBattlePlayerState.cpp`, **CODE_MATCH ~99.3%**, exact retail size `0x8E8`):
+
+- Same §8c9 gate family as other HUD Moves, plus `unk7C9`, mask **`0xAFE40000`** (not `0xAFA40000`), and `CfGameManager::func_800829B8`.
+- Party fill: `int* p = party + fi; func_800B8B94(p[1]); actors[fi]=…` → one shared `clrlslwi` + `add`/`lwz 4(r3)` / `stwx` (plain `party[fi+1]` emits a second shift for the store).
+- Slot address: `row = this + i*0x270; slot = row + 0x74` (not `this+0x74` base).
+- Per-slot: HP/max via vt+0x128/0x12c + `__cvt_fp2unsigned`; dirty bits `0x1`/`0x2`/`0x4`; tension signed vt+0x1f0 vs unsigned vt+0x1e8; anim SM cases 0–3 with case1 `(flags & ~0x300) | 0xc0` and case3 `(flags | 0xc0) & ~0x700`.
+- Shared `unk7F8` FSM + pane translate (`lbl_eu_804FD720+0x95`) + full-HP hold timer vs `lbl_eu_80666FC4` (360) → `func_80138078(0x9a)`.
+- Force `cmpwi` on state switches via `switch (static_cast<s32>(…))`; pass `lbl_eu_80666F90`/`F94` directly into `func_80137444` / `SetFrame` for `lfs f1`.
+- **`hpRatio = lbl_eu_80666F94`** (not a `zero` NV) → retail `lfs f26` instead of `fmr` from a live zero register.
+
+**Bias-before-gauge float schedule (97.7% → 99.3%):** do **not** hoist `f32 hundred/one/zero = lbl_…` locals before the party loop. Named `f32` NVs force MWCC to emit those `lfs` **before** the int→float bias `lfd`s. Using `lbl_eu_80666FC0` / `F90` / `F94` at use sites lets MWCC hoist **`lfd` FB8/FA8 first**, then the gauge `lfs` — matching retail load order (FPR **homes** still differ: retail `f30/f27/f28/f29/f31` vs decomp `f31/f28/f29/f30/f27`).
+
+**Tried and regressed:** explicit `f64 bias = lbl_eu_80666FB8/FA8` “warm” locals (+ fake `bias-bias` keep-alives) duplicate the convert pools and bloat the ratio path; reordering actors/aliveCount zeroing; vt `(*GetF32Fn**)[…]` spelling; delaying `hpRatio` zero to the fail path.
+
+**Postprocess:** `CMenuBattlePlayerState.o` `pool_patterns` rename TU-local magic doubles `@N` → `lbl_eu_80666FA8` / `80666FB8` (§11).
+
+**Remaining ~0.7% (exact `0x8E8`, ~74 register-field words):** Chaitin GPR (party/actors/vt temp) + FPR homes across converts/pane `fnmsubs`. Host **`menu-bps-move`** PASS. Next for FULL_MATCH: decomp.me on FPR permutation, or logged §17.6 `insn_patches` remapping the 74 words (larger than prior 6–8 word patches — prefer decomp.me first).
 
 ---
 

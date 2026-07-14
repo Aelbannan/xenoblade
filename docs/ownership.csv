@@ -88,3 +88,19 @@ CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14g:
 cbRenderBefore__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14g: leave Term
 cbRenderBefore__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14g: leave Term
 Move__16CUIWindowManagerFv,auto-agent,2026-07-14,P2 batch-14g: create CUIWindowManager.cpp Move only
+CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14h: leave ctor/vfunc6/other vfuncs
+CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14h: leave ctor/vfunc6/other vfuncs
+CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14h: leaf id→mask; leave other vfuncs
+Move__15CMenuEnemyStateFv,auto-agent,2026-07-14,P1 batch-14h: leave cbRenderBefore
+func_80133324__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14h: leave Init/Term
+Move__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14h: leave Term/cbRenderBefore
+CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14i: leaf id→mask vs +0x6; leave other vfuncs
+Move__12CMenuPTGaugeFv,auto-agent,2026-07-14,P1 batch-14i: polish Move ~97.1%; leave cbRenderBefore
+Move__16CUIWindowManagerFv,auto-agent,2026-07-14,P2 batch-14i: polish Move ~79.3%
+cbRenderBefore__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14i: polish cbRenderBefore ~95.2%; leave Term
+setFrustum__11COccCullingFP12CCullFrustum,auto-agent,2026-07-14,P1 batch-14i: polish setFrustum ~88.5%; leave addFrustum/func_801A1188
+CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14j: only UnkVirtualFunc29; leave other vfuncs
+CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14j: Fv+r4 entry; leave other vfuncs
+Move__16CUIBattleManagerFv,auto-agent,2026-07-14,P1 batch-14j: create Move only; leave Init
+Move__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14j: Move only; leave Term/cbRenderBefore
+Move__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14j: Move only; leave Init/Term/func_80133324

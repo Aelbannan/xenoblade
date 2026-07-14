@@ -26367,6 +26367,15 @@ struct CUICfUnk144 {
     u8 unk39; // 0x39
 };
 
+// Queue item type for CUICfManager::Move list walks (CProcess-sized prefix).
+struct CUICfMenuItem {
+    u8 unk00[0x39];
+    u8 unk39; // 0x39 - remove / SetRemove
+    u8 unk3A[0x54 - 0x3A];
+    u8 unk54; // 0x54
+    u8 unk55; // 0x55
+};
+
 struct CUICfInitBlock {
     u32 unk00;
     u16 unk04;
@@ -26418,6 +26427,28 @@ struct CUICfInitState {
     u8 unk02[2];
 };
 
+// 0xC-byte pool node for func_80133324's event queue - same layout as
+// `_reslist_node<u32>` (mNext@0, mPrev@4, mItem@8). Empty slots have mNext==0.
+struct CUICfListNode {
+    CUICfListNode* next; // 0x0
+    CUICfListNode* prev; // 0x4
+    u32 item;            // 0x8
+};
+
+// 27-entry, 0-terminated id table copied onto the stack by func_80133324
+// (retail: sp+0x28..0x5D, matches lbl_eu_804FFFDC minus its trailing entry).
+struct CUICfIdTable {
+    u16 ids[27];
+};
+
+class CUICfManager;
+
+// Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
+// reads r4/r5/r6 as real event-dispatch arguments; declared extern "C" here
+// (before the class, so the in-class friend declaration below binds to this
+// same linkage) so its ABI is r3=<unused self>, r4=id, r5=a1, r6=a2.
+extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
 struct CUICfInitSlot {
     u8 unk00[4];
     u8 unk04;
@@ -26441,6 +26472,10 @@ public:
 
     void Init();
     void Term();
+    void Move();
+    // func_80133324__12CUICfManagerFv is a free function below (retail Fv-mangled
+    // member that actually reads r4/r5/r6 event args; see CUICfManager.cpp).
+    friend void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
 
 private:
     // 0x000-0x054 CTTask
@@ -26452,52 +26487,26 @@ private:
     nw4r::ut::PackedFont mPackedFontD8;                  // 0x0D8
     CFileHandle* mFileHandle;                            // 0x114
     int unk118;                                          // 0x118
-    u8 unk11C[0x144 - 0x11C];                            // 0x11C
+    u32 unk11C;                                          // 0x11C
+    u32 unk120;                                          // 0x120 - Move countdown
+    u8 unk124[0x128 - 0x124];                            // 0x124
+    CUICfListNode* unk128;                               // 0x128 (event queue head)
+    u8 unk12C[0x138 - 0x12C];                            // 0x12C
+    CUICfListNode* unk138;                               // 0x138 (event node array)
+    int unk13C;                                          // 0x13C (event node array count)
+    u8 unk140[0x144 - 0x140];                            // 0x140
     CUICfUnk144* unk144;                                 // 0x144
     CUICfInitSlot mInitSlots[8];                         // 0x148
-    u8 unkC88[0xC94 - 0xC88];                            // 0xC88
+    // Slot0.unk00[0]/[1] are manager-wide clear/mark flags (0x148/0x149).
+    u8 unkC88[8];                                        // 0xC88
+    u16 mFlags;                                          // 0xC90 - Move bitflags
+    u8 unkC92[2];                                        // 0xC92
 
     static CUICfManager* spInstance;
 }; // size = 0xC94
 /* end "kyoshin/CUICfManager.hpp" */
 
-/* "src/kyoshin/CUICfManager.cpp" line 2 "kyoshin/code_80135FDC.hpp" */
-#pragma once
-
-/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
-/* end "monolib/device/CFileHandle.hpp" */
-/* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work/IWorkEvent.hpp" */
-
-/* "src/kyoshin/code_80135FDC.hpp" line 5 "revolution/gx/GXTypes.h" */
-/* end "revolution/gx/GXTypes.h" */
-
-/* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
-/* end "nw4r/lyt.h" */
-
-u16 func_8013606C(char*, char*, u16);
-char* func_80136190(char*, char*, u32);
-u32 func_801361E8(void*, char*, u32);
-char* func_8013639C(void*, char*, u16);
-void func_8013676C(nw4r::lyt::Pane*, u32);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
-void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_80137038(nw4r::lyt::Layout* pLayout, nw4r::lyt::DrawInfo* pDrawInfo, int r5, int r6);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
-u8 func_801372B4(u32);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
-char* func_80138F78(u16);
-void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
-void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
-/* end "kyoshin/code_80135FDC.hpp" */
-/* "src/kyoshin/CUICfManager.cpp" line 3 "monolib/device/CDeviceFile.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 2 "monolib/device/CDeviceFile.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 2 "types.h" */
@@ -26570,10 +26579,10 @@ public:
     u8 unk1C8[0x1F0 - 0x1C8];
 };
 /* end "monolib/device/CDeviceFile.hpp" */
-/* "src/kyoshin/CUICfManager.cpp" line 4 "monolib/util/MemManager.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 3 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
 
-/* "src/kyoshin/CUICfManager.cpp" line 6 "decomp.h" */
+/* "src/kyoshin/CUICfManager.cpp" line 5 "decomp.h" */
 /**
  * Codewarrior tricks for matching decomp
  * (Macros generate prototypes to satisfy -requireprotos)
@@ -26758,6 +26767,8 @@ void Regist__8CProcessFP8CProcessb(CProcess*, CProcess*, bool);
 void func_8015704C(void*, const void*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
+void func_801390E0(CFileHandle**);
+void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 }
 
 asm void CUICfManager::Init() {
@@ -26970,4 +26981,2709 @@ void CUICfManager::Term() {
 
     unk144->unk39 = 1;
     lbl_eu_80664054 = NULL;
+}
+
+// ---------------------------------------------------------------------------
+// func_80133324__12CUICfManagerFv
+//
+// Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
+// reads r4/r5/r6 as real event-dispatch arguments and never touches `this`
+// (all state comes from the `lbl_eu_80664054` singleton). Declared as a free
+// `extern "C"` function so the ABI is r3=<unused self>, r4=id, r5=a1, r6=a2.
+//
+// Event-queue insert is the same shape as reslist::push_back -> setItem
+// (try/catch forces -0x80 / mr r31,r1 / stw r1 epilogue). Leaf body order
+// matches retail text: 221 -> 312c -> 7fc -> 22 -> 609.
+/* "src/kyoshin/CUICfManager.cpp" line 252 "monolib/util/reslist.hpp" */
+/* end "monolib/util/reslist.hpp" */
+
+extern "C" {
+int lbl_eu_80664050;
+int func_80138138(int);
+u32 func_8013B87C(u8);
+int func_8014A1D4(void*, u32, u8, int);
+void func_8013DA60(int, int, int);
+void* func_8009EC9C(u16);
+void func_800A21F8(void*, u16, int, int);
+u32 func_801361E8(void*, char*, u32);
+u16 func_8013606C(char*, char*, u16);
+void* lbl_eu_80573D18[];
+u8 lbl_eu_805000A8[];
+u16 lbl_eu_804FFFDC[];
+}
+
+// C++ mangling -> retail `func_8013B428__FUl`.
+void func_8013B428(u32);
+
+void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
+    // Decl order: savedRet@0x8, gap, setItem stw-r1 home, idTable@0x28 (retail frame).
+    int savedRet;
+    int pad0C;
+    int pad10;
+    int pad14;
+    int pad18;
+    int pad1C;
+    int pad20;
+    CUICfIdTable idTable;
+    u8 codePersist;
+
+    if (a1 == a2) {
+        goto end;
+    }
+
+    if (id >= 0x798) {
+        goto ge798;
+    }
+
+    if (id >= 0x221) {
+        goto ge221;
+    }
+
+    if (id >= 0x28) {
+        goto end;
+    }
+    if (id >= 0x22) {
+        goto range_22_27;
+    }
+    goto end;
+
+ge221:
+    if (id == 0x608) {
+        goto end;
+    }
+    if (id >= 0x608) {
+        goto range_609_797;
+    }
+    goto range_221_607;
+
+ge798:
+    if (id >= 0x312c) {
+        goto ge312c;
+    }
+    if (id >= 0x805) {
+        goto end;
+    }
+    if (id >= 0x7fc) {
+        goto range_7fc_804;
+    }
+    goto end;
+
+ge312c:
+    if (id >= 0x31f4) {
+        goto end;
+    }
+    goto range_312c_31f3;
+
+range_221_607: {
+    u32 check = (u32)(a1 - 0xfe);
+    int off = id - 0x220;
+    lbl_eu_80664050 = off;
+    if (check > 1) {
+        goto end;
+    }
+
+    int idx = func_80138138(off);
+    void* tableVal = lbl_eu_80573D18[idx];
+    u8 res = (u8)func_801361E8(tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
+    if (res == 2) {
+        goto end;
+    }
+
+    func_8013DA60(lbl_eu_80664050, 1, 0);
+
+    idTable = *(const CUICfIdTable*)lbl_eu_804FFFDC;
+    {
+        int target = lbl_eu_80664050;
+        u8 i = 0;
+        goto id_check;
+    id_body:
+        if ((u16)idTable.ids[i] == target) {
+            func_8013B428(0xb9);
+            goto end;
+        }
+        i++;
+    id_check:
+        if (idTable.ids[i] != 0) {
+            goto id_body;
+        }
+    }
+    goto end;
+}
+
+range_312c_31f3: {
+    if (a1 == 0) {
+        goto end;
+    }
+    if (a2 != 0) {
+        goto end;
+    }
+
+    {
+        u32 diff = id - 0x312c;
+        u32 code = 0xc8;
+        if ((u8)diff != 0) {
+            code = (u8)diff;
+        }
+        codePersist = (u8)code;
+    }
+
+    func_8013B87C(codePersist);
+
+    CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
+    if (inst != NULL) {
+        savedRet = func_8014A1D4(inst->unk144, inst->unk11C, codePersist, 1);
+        if (savedRet != 0) {
+            inst = (CUICfManager*)lbl_eu_80664054;
+
+            _reslist_node<u32>* startNode = (_reslist_node<u32>*)inst->unk128;
+            int capacity = inst->unk13C;
+            int i = 0;
+            int byteOff = 0;
+            // Keep pads "live" enough that MWCC does not DCE them entirely.
+            pad0C = capacity;
+            pad10 = byteOff;
+            pad14 = i;
+            pad18 = pad0C;
+            pad1C = pad10;
+            pad20 = pad14;
+            goto slot_check;
+        slot_body:
+            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+                goto slot_found;
+            }
+            byteOff += 0xc;
+            i++;
+        slot_check:
+            if (i < capacity) {
+                goto slot_body;
+            }
+        slot_found:
+            {
+                _reslist_node<u32>* temp = (_reslist_node<u32>*)((u8*)inst->unk138 + i * 0xc);
+                temp->setItem((u32)savedRet);
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
+        }
+    }
+
+    {
+        u16 ret2 = func_8013606C((char*)lbl_eu_805000A8 + 0x4d, (char*)lbl_eu_805000A8 + 0x5b,
+                                   codePersist);
+        if (ret2 != 0) {
+            int i = 1;
+            goto party_check;
+        party_body:
+            {
+                void* r = func_8009EC9C((u16)i);
+                func_800A21F8(r, ret2, 0, 0);
+                i++;
+            }
+        party_check:
+            if (i <= 8) {
+                goto party_body;
+            }
+        }
+    }
+    goto end;
+}
+
+range_7fc_804: {
+    int rel = id - 0x7fc;
+    if (rel == 0) {
+        goto case_7fc;
+    }
+    if (rel == 1) {
+        goto case_7fd;
+    }
+    goto end;
+}
+
+case_7fc:
+    if (a1 == 0x64) {
+        func_8013B428(0xc8);
+        goto end;
+    }
+    if (a1 >= 0x32) {
+        func_8013B428(0xc7);
+        goto end;
+    }
+    if (a1 >= 1) {
+        func_8013B428(0xc6);
+    }
+    goto end;
+
+case_7fd:
+    if (a1 == 0x96) {
+        func_8013B428(0xc5);
+        goto end;
+    }
+    if (a1 >= 0x64) {
+        func_8013B428(0xc4);
+        goto end;
+    }
+    if (a1 >= 0x32) {
+        func_8013B428(0xc3);
+    }
+    goto end;
+
+range_22_27:
+    if (a1 < 0xfa0) {
+        goto end;
+    }
+    func_8013B428((u8)(id + 0x81));
+    if (a1 < 0x1f40) {
+        goto end;
+    }
+    func_8013B428(0xa8);
+    func_8013B428(0xa9);
+    goto end;
+
+range_609_797:
+    if (a2 == 0) {
+        if (a1 > 0) {
+            func_8013B428(0x9f);
+            func_8013B428(0xa0);
+            func_8013B428(0xa1);
+            func_8013B428(0xa2);
+        }
+    }
+    if (a1 < 5) {
+        goto end;
+    }
+    func_8013B428(0x9e);
+    goto end;
+
+end:
+    return;
+}
+
+// ---------------------------------------------------------------------------
+// CUICfManager::Move
+//
+// Early r4 is NOT a fake-Fv arg — retail does `lhz r4, 0xc90(r3)` (mFlags).
+// Bitflag-driven create/teardown against lbl_eu_80664054, then optional
+// enum-list proximity spawn, then mark/clear walks of the menu queue.
+// ---------------------------------------------------------------------------
+
+/* "src/kyoshin/CUICfManager.cpp" line 525 "monolib/device/CDeviceVI.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
+/* end "monolib/device/CDeviceBase.hpp" */
+/* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 4 "monolib/device/CDeviceVICb.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CDeviceVICb.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+//size: 0x4
+class CDeviceVICb {
+public:
+    enum VICallback {
+        VI_CALLBACK_BEFORE_DRAW_DONE,
+        VI_CALLBACK_AFTER_DRAW_DONE,
+        VI_CALLBACK_BEGIN_FRAME
+    };
+
+    CDeviceVICb();
+    virtual ~CDeviceVICb();
+    virtual void viBeforeDrawDone(){}
+    virtual void viAfterDrawDone(){}
+    virtual void viBeginFrame(){}
+};
+/* end "monolib/device/CDeviceVICb.hpp" */
+/* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 5 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+/* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 6 "monolib/math.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math.hpp" line 2 "monolib/math/CAttrTransform.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 3 "monolib/math/CVec3.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 2 "monolib/math/Utility.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/Utility.hpp" line 2 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+#define PI 3.14159265f
+#define DEG2RAD(x) ((x)*(PI/180.0f))
+
+//Utility math functions
+namespace ml{
+    namespace math{
+
+    inline float abs(float x){
+        return (double)nw4r::math::FAbs(x);
+    }
+
+    inline float sqrt(float x){
+        return nw4r::math::FSqrt(x);
+    }
+
+    inline float clamp(float x, float min, float max) {
+        if (x < min) x = min;
+        else if(x > max) x = max;
+        return x;
+    }
+
+    inline float sin(float x){
+        return nw4r::math::SinRad(x);
+    }
+
+    inline float cos(float x){
+        return nw4r::math::CosRad(x);
+    }
+
+    inline void sincos(float x, float& sinX, float& cosX){
+        sinX = sin(x);
+        cosX = cos(x);
+    }
+
+    inline float asin(float x){
+        x = clamp(x, -1.0f, 1.0f);
+        return nw4r::math::AsinRad(x);
+    }
+
+    inline float acos(float x){
+        x = clamp(x, -1.0f, 1.0f);
+        return nw4r::math::AcosRad(x);
+    }
+
+    inline float atan2(float y, float x){
+        return nw4r::math::Atan2FIdx(y, x);
+    }
+
+    inline float atan2Deg(float y, float x){
+        return nw4r::math::Atan2Deg(y, x);
+    }
+
+    inline float atan2Rad(float y, float x){
+        return nw4r::math::Atan2Rad(y, x);
+    }
+
+    inline float dot(const float* vec){
+        return vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
+    }
+
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 3 "monolib/math/MathConstants.hpp" */
+#pragma once
+
+namespace ml{
+    //General math constants
+    extern const float pi;
+    extern const float tau;
+    extern const float halfpi;
+    extern const float quarterpi;
+    extern const float epsilon;
+    extern const float rad2deg;
+    extern const float deg2rad;
+    extern const float huge;
+    extern const float hugeminus;
+} //namespace ml
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    //Possibly inherits from nw4r VEC3?
+    struct CVec3 {
+        static CVec3 zero;
+        static CVec3 unitX;
+        static CVec3 unitY;
+        static CVec3 unitZ;
+        static CVec3 unit;
+
+        CVec3(){}
+
+        CVec3(float x, float y, float z){
+            set(x, y, z);
+        }
+
+        CVec3(const CVec3& vec){
+            set(vec.x, vec.y, vec.z);
+        }
+
+        //Conversion functions for converting to the SDK/NW4R vector types.
+        operator Vec*(){
+            return reinterpret_cast<Vec*>(this);
+        }
+
+        operator const Vec*() const {
+            return reinterpret_cast<const Vec*>(this);
+        }
+
+        operator nw4r::math::VEC3*(){
+            return reinterpret_cast<nw4r::math::VEC3*>(this);
+        }
+
+        operator const nw4r::math::VEC3*() const {
+            return reinterpret_cast<const nw4r::math::VEC3*>(this);
+        }
+
+        void set(float x, float y, float z){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+        }
+
+        void set(const CVec3& vec){
+            x = vec.x;
+            y = vec.y;
+            z = vec.z;
+        }
+
+        void setZero(){
+            *this = zero;
+        }
+        
+        CVec3 operator-() const {
+            return CVec3(-x, -y, -z);
+        }
+
+        CVec3 operator+(const CVec3& rhs) const {
+            CVec3 out;
+            //add(out, *this, rhs);
+            nw4r::math::VEC3Add(out, *this, rhs);
+            return out;
+        }
+        CVec3 operator-(const CVec3& rhs) const {
+            CVec3 out;
+            sub(out, *this, rhs);
+            //nw4r::math::VEC3Sub(out, *this, rhs);
+            return out;
+        }
+        CVec3 operator*(float x) const {
+            CVec3 out;
+            scale(out, *this, x);
+            return out;
+        }
+        CVec3 operator/(float x) const {
+            float r = 1/x;
+            return *this * r;
+        }
+
+        CVec3& operator+=(const CVec3& rhs) {
+            add(*this, *this, rhs);
+            return *this;
+        }
+        CVec3& operator-=(const CVec3& rhs) {
+            sub(*this, *this, rhs);
+            return *this;
+        }
+        CVec3& operator*=(float x) {
+            scale(*this, *this, x);
+            return *this;
+        }
+        CVec3& operator/=(float x) {
+            return *this *= (1/x);
+        }
+
+        bool operator==(const CVec3& vec) const {
+            return x == vec.x && y == vec.y && z == vec.z;
+        }
+
+        bool operator!=(const CVec3& vec) const {
+            return x != vec.x || y != vec.y || z != vec.z;
+        }
+
+        void normalize(){
+            if(!isZero()) {
+                normalizeSub();
+            }else{
+                set(0,0,1);
+            }
+        }
+
+        //Unofficial
+        void normalizeSub(){
+            if(x*x + y*y + z*z == 0.0f){
+                setZero();
+            }else {
+                PSVECNormalize(*this,*this);
+            }
+        }
+        
+        //Unofficial
+        float magnitude() const {
+            return x*x + y*y + z*z;
+        }
+
+        float getLength() const {
+            return math::sqrt(magnitude());
+        }
+
+        bool isZero() const {
+            //TODO: this can't be it, right???
+            bool result = false;
+            bool temp = false;
+            if(math::abs(x) <= epsilon && math::abs(y) <= epsilon){
+                temp = true;
+            }
+            if(temp && math::abs(z) <= epsilon) result = true;
+            return result;
+        }
+
+        bool isErr() const;
+
+        //TODO: properly figure out these asm inlines
+
+        static float dot(const CVec3& lhs, const CVec3& rhs) {
+            return nw4r::math::VEC3Dot(lhs, rhs);
+        }
+        
+        static void add(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Add(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+
+        static void sub(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Sub(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+
+        static void scale(CVec3& outVec, const CVec3& vec, float scale){
+            CVec3 temp;
+            nw4r::math::VEC3Scale(temp, vec, scale);
+            outVec.set(temp);
+        }
+
+        static void cross(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Cross(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+        
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+            float z;
+        };
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 4 "monolib/math/CMat34.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 3 "monolib/math/CQuat.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 3 "monolib/math/MathConstants.hpp" */
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 4 "monolib/math/Utility.hpp" */
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 5 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CQuat{
+        CQuat(){}
+
+        CQuat(float x, float y, float z, float w){
+            set(x,y,z,w);
+        }
+
+        operator Quaternion*(){
+            return reinterpret_cast<Quaternion*>(this);
+        }
+
+        operator const Quaternion*() const{
+            return reinterpret_cast<const Quaternion*>(this);
+        }
+
+        CQuat& operator*=(const CQuat& other){
+            PSQUATMultiply(*this, other, *this);
+            return *this;
+        }
+
+        inline void set(float x, float y, float z, float w){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+            this->w = w;
+        }
+
+        inline void setIdentity(){
+            set(0,0,0,1);
+        }
+  
+        //Sets the quaternion from the given euler angle, following the 3-2-1 conversion.
+        inline void setRotXYZ(const CVec3* angle){
+            float x = angle->x * 0.5f;
+            float y = angle->y * 0.5f;
+            float z = angle->z * 0.5f;
+            float sinX = math::sin(x);
+            float cosX = math::cos(x);
+            float sinY = math::sin(y);
+            float cosY = math::cos(y);
+            float sinZ = math::sin(z);
+            float cosZ = math::cos(z);
+
+            this->x = cosZ*(sinX*cosY) - sinZ*(cosX*sinY);
+            this->y = cosZ*(cosX*sinY) + sinZ*(sinX*cosY);
+            this->z = sinZ*(cosX*cosY) - cosZ*(sinX*sinY);
+            this->w = cosZ*(cosX*cosY) + sinZ*(sinX*sinY);
+        }
+
+        //Converts this quaternion to euler angles, storing the result in the given vector.
+        inline void getRotXYZ(CVec3* result) const {
+            //So many variables :p
+            float twoX = x + x;
+            float twoY = y + y;
+            float twoZ = z + z;
+
+            float twoXZ = x * twoZ;
+            float twoYW = w * twoY;
+
+            //NOTE: Unnecessary clamp
+            float input = -(twoXZ - twoYW);
+            if(input >= 1) input = 1;
+            else if(input <= -1) input = -1;
+            //y = asin(-(2xz - 2yw))
+            float angle = math::asin(input);
+            result->y = angle;
+
+            float twoX2 = x * twoX;
+            float twoXY = x * twoY;
+            float twoZ2 = z * twoZ;
+            float twoZW = w * twoZ;
+                    
+            if (angle < halfpi) {
+                if (angle > -halfpi) {
+                    //-pi/2 < angle < pi/2
+                    float twoY2 = y * twoY;
+                    float twoYZ = y * twoZ;
+                    float twoXW = w * twoX;
+                    //x = atan2(2yz + 2xw, 1 - (2x^2 + 2y^2))
+                    result->x = math::atan2Rad(twoYZ + twoXW, 1.0f - (twoX2 + twoY2));
+                    //z = atan2(2xy + 2zw, 1 - (2y^2 + 2z^2))
+                    result->z = math::atan2Rad(twoXY + twoZW, 1.0f - (twoY2 + twoZ2));
+                }else{
+                    //angle > pi/2
+                    //x = -atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
+                    result->x = -math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
+                    result->z = 0;
+                }
+            }else{
+                //angle < -pi/2
+                //x = atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
+                result->x = math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
+                result->z = 0;
+            }
+        }
+
+        static void slerp(CQuat& outQuat, const CQuat& a, const CQuat& b, float t);
+        void setRotZXY(const CVec3* angle);
+        void getRotZXY(CVec3* result) const;
+
+
+        struct{
+        float x;
+        float y;
+        float z;
+        float w;
+        };
+
+        static CQuat zero;
+        static CQuat identity;
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CQuat.hpp" */
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat34{
+        CMat34(){}
+
+        CMat34(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23){
+            set(
+                m00,m01,m02,m03,
+                m10,m11,m12,m13,
+                m20,m21,m22,m23
+            );
+        }
+
+        void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[0][3] = m03;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[1][3] = m13;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+            m[2][3] = m23;
+        }
+
+        operator nw4r::math::MTX34*(){
+            return reinterpret_cast<nw4r::math::MTX34*>(this);
+        }
+
+        operator const nw4r::math::MTX34*() const {
+            return reinterpret_cast<const nw4r::math::MTX34*>(this);
+        }
+
+        //TODO: can this be included without interfering with the above operators?
+        /*
+        operator Mtx*(){
+            return &m;
+        }
+
+        operator const Mtx*() const {
+            return &m;
+        }
+        */
+
+        CMat34 operator*(CMat34& rhs) const {
+            CMat34 mat;
+            mul(mat, *this, rhs);
+            return mat;
+        }
+
+        void mul(CVec3& outVec, const CVec3& vec) const {
+            PSMTXMultVec(mtx, vec, outVec);
+        }
+
+
+        static void mul(CMat34& outMat, const CMat34& mat1, const CMat34& mat2){
+            PSMTXConcat(mat2.mtx, mat1.mtx, outMat.mtx);
+        }
+
+        void setUnit(){
+            PSMTXIdentity(mtx);
+        }
+
+        void setScale(float x, float y, float z){
+            set(
+                x, 0, 0, 0,
+                0, y, 0, 0,
+                0, 0, z, 0
+            );
+        }
+
+        void setScale(const CVec3& scale){
+            setScale(scale.x, scale.y, scale.z);
+        }
+
+        void setRotX(float x){
+            float sinX, cosX;
+            math::sincos(x, sinX, cosX);
+
+            set(
+            1, 0,    0,     0,
+            0, cosX, -sinX, 0,
+            0, sinX, cosX,  0
+            );
+        }
+
+        void setRotY(float y){
+            float sinY, cosY;
+            math::sincos(y, sinY, cosY);
+
+            set(
+            cosY,  0, sinY, 0,
+            0,     1, 0,    0,
+            -sinY, 0, cosY, 0
+            );
+        }
+
+        void setRotZ(float z){
+            float sinZ, cosZ;
+            math::sincos(z, sinZ, cosZ);
+
+            set(
+            cosZ, -sinZ, 0, 0,
+            sinZ, cosZ,  0, 0,
+            0,    0,     1, 0
+            );
+        }
+
+        void addRotX(float x){
+            CMat34 mat;
+            mat.setRotX(x);
+            mul(*this, *this, mat);
+        }
+
+        void addRotY(float y){
+            CMat34 mat;
+            mat.setRotY(y);
+            mul(*this, *this, mat);
+        }
+
+        void addRotZ(float z){
+            CMat34 mat;
+            mat.setRotZ(z);
+            mul(*this, *this, mat);
+        }
+
+        void getRotQuat(CQuat& quat) const{
+            CQuat temp;
+            C_QUATMtx(temp, mtx);
+            quat = temp;
+        }
+
+        void setRotQuat(const CQuat& quat){
+            PSMTXQuat(mtx, quat);
+        }
+
+        void setRotXYZ(const CVec3& angle){
+            nw4r::math::MTX34RotXYZRad(*this, angle.x, angle.y, angle.z);
+        }
+
+        void setRotZXY(const CVec3& angle){
+            setRotZ(angle.z);
+            addRotX(angle.x);
+            addRotY(angle.y);
+        }
+
+        void invert(CMat34* outMat){
+            PSMTXInverse(mtx, outMat->mtx);
+        }
+
+        CVec3 getTranslation(){
+            return CVec3(m[0][3], m[1][3], m[2][3]);
+        }
+
+        void addTranslation(const CVec3& vec){
+            m[0][3] += vec.x;
+            m[1][3] += vec.y;
+            m[2][3] += vec.z;
+        }
+
+
+        void replaceTranslation(const CVec3& vec){
+            m[0][3] = vec.x;
+            m[1][3] = vec.y;
+            m[2][3] = vec.z;
+        }
+
+        void getRotAxis(CVec3& vec, float* outAngle) const;
+        bool getRotXYZ(CVec3& vec) const;
+        bool getRotZXY(CVec3& vec) const;
+        bool getRotZYX(CVec3& vec) const;
+
+        union {
+            float m[3][4];
+            Mtx mtx;
+        };
+
+        static CMat34 zero;
+        static CMat34 identity;
+    };
+} //namespace ml
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 5 "monolib/math/CQuat.hpp" */
+/* end "monolib/math/CQuat.hpp" */
+
+namespace ml{
+    struct CAttrTransform{
+        enum Flags{
+            FLAG_0 = 1 << 0,
+            FLAG_1 = 1 << 1,
+            FLAG_2 = 1 << 2,
+            FLAG_USE_ZXY = 1 << 3
+        };
+
+        CAttrTransform(){
+            clear();
+        }
+
+        void clear();
+        void update();
+
+        CVec3 mPos; //0x0
+        CVec3 mRot; //0xC
+        CMat34 mMtx1; //0x18
+        CMat34 mLocalMat; //0x48
+        CMat34 mLocalMatInv; //0x78
+        CQuat unkA8;
+        CVec3 mPrevPos; //0xB8
+        CVec3 mPrevRot; //0xC4
+        CQuat mLocalQuat; //0xD0
+        u32 mFlags; //0xE0
+    };
+} //namespace ml
+/* end "monolib/math/CAttrTransform.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 3 "monolib/math/CCamUtil.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CCamUtil.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+
+namespace ml {
+    struct CCamUtil {
+        static void getXYZ2ZXY(CVec3& outVec, const CVec3& vec);
+    };
+} //namespace ml
+/* end "monolib/math/CCamUtil.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 4 "monolib/math/CCol3.hpp" */
+#pragma once
+
+namespace ml {
+    struct CCol3{
+        CCol3(){}
+        CCol3(float r, float g, float b){
+            set(r, g, b);
+        }
+
+        void set(float r, float g, float b){
+            this->r = r;
+            this->g = g;
+            this->b = b;
+        }
+
+        void clamp(float min, float max){
+            if(r > max) r = max;
+            else if(r < min) r = min;
+            if(g > max) g = max;
+            else if(g < min) g = min;
+            if(b > max) b = max;
+            else if(b < min) b = min;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float r;
+            float g;
+            float b;
+        };
+
+        static CCol3 white;
+        static CCol3 gray;
+        static CCol3 black;
+        static CCol3 red;
+        static CCol3 green;
+        static CCol3 blue;
+        static CCol3 yellow;
+        static CCol3 cyan;
+        static CCol3 magenta;
+        static CCol3 salmon;
+        static CCol3 orange;
+    };
+} //namespace ml
+/* end "monolib/math/CCol3.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 5 "monolib/math/CCol4.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CCol4.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+
+#define COLOR_TO_U32(r, g, b, a) (((u8)(255 * r) << 24) | ((u8)(255 * g) << 16) | ((u8)(255 * b) << 8) | (u8)(255 * a))
+
+namespace ml {
+    
+    struct CCol4{
+        CCol4(){}
+        CCol4(float r, float g, float b, float a){
+            set(r,g,b,a);
+        }
+
+        void set(float r, float g, float b, float a){
+            this->r = r;
+            this->g = g;
+            this->b = b;
+            this->a = a;
+        }
+
+        void clamp(float min, float max){
+            if(r > max) r = max;
+            else if(r < min) r = min;
+            if(g > max) g = max;
+            else if(g < min) g = min;
+            if(b > max) b = max;
+            else if(b < min) b = min;
+            if(a > max) a = max;
+            else if(a < min) a = min;
+        }
+
+        u32 toU32() const {
+            return COLOR_TO_U32(r, g, b, a);
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+
+        static CCol4 white;
+        static CCol4 gray;
+        static CCol4 black;
+        static CCol4 red;
+        static CCol4 green;
+        static CCol4 blue;
+        static CCol4 yellow;
+        static CCol4 cyan;
+        static CCol4 magenta;
+        static CCol4 salmon;
+        static CCol4 orange;
+        static CCol4 zero;
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CCol4.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 6 "monolib/math/CFrustum.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 3 "monolib/math/CMat34.hpp" */
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 4 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 5 "monolib/math/CPlane.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CPlane.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+
+namespace ml {
+    struct CPlane {
+        CPlane(){
+        }
+        CPlane(const CVec3& pos, const CVec3& p1, const CVec3& p2){
+            set(pos, p1, p2);
+        }
+
+        CPlane* set(const CVec3& pos, const CVec3& p1, const CVec3& p2);
+        static void getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir);
+
+        void normalize(){
+            mNormal.normalizeSub();
+        }
+
+        CVec3 convertRayToNormal(const CVec3& rayStartPos, const CVec3& rayEndPos) const {
+            CVec3 normal = rayEndPos - rayStartPos;
+            normal.normalizeSub();
+            return normal;
+        }
+
+        //Sets this plane from the given ray start/end position.
+        void set(const CVec3& rayStartPos, const CVec3& rayEndPos){
+            mNormal = convertRayToNormal(rayStartPos, rayEndPos);
+            mDist = -CVec3::dot(rayStartPos, mNormal);
+        }
+
+        float getPointDistance(const CVec3& pos) const {
+            return CVec3::dot(pos, mNormal) + mDist;
+        }
+        
+        bool isWithinDistance(const CVec3& vec, float distance) const {
+            if(getPointDistance(vec) < distance) return true;
+            else return false;
+        }
+
+        bool isOnNegativeSide(const CVec3& vec) const {
+            if(getPointDistance(vec) < 0) return true;
+            else return false;
+        }
+
+        bool isOnPositiveSide(const CVec3& vec) const {
+            if(getPointDistance(vec) >= 0) return true;
+            else return false;
+        }
+
+        //Determines if the points are on different sides of the plane.
+        bool isDifferentSide(const CVec3& vec1, const CVec3& vec2) const {
+            float f0 = getPointDistance(vec2);
+            float f1 = getPointDistance(vec1);
+            
+            bool r3 = f1 >= 0;
+            bool r0 = f0 >= 0;
+            //TODO: is this some weird inline for calculating if only one of two conditions are true?
+            return r3 ^ r0;
+        }
+
+        CVec3 mNormal; //0x0
+        float mDist; //0x4
+    };
+
+} //namespace ml
+/* end "monolib/math/CPlane.hpp" */
+
+//TODO: idk if this belongs here in monolib or in the scene code. There's no evidence of it in XCX
+namespace ml{
+
+    struct CFrustum{
+        u8 unk0[0xCC];
+        ml::CMat34 unkCC;
+        u8 unkFC[0x10];
+        ml::CVec3 unk10C;
+        u8 unk118[0x258 - 0x118];
+        ml::CPlane unk248[6];
+    };
+
+} //namespace ml
+/* end "monolib/math/CFrustum.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 7 "monolib/math/CMat33.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 3 "monolib/math/Utility.hpp" */
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat33{
+        CMat33(){}
+
+        CMat33(float m00, float m01, float m02,
+        float m10, float m11, float m12,
+        float m20, float m21, float m22){
+            set(m00, m01, m02, m10, m11, m12, m20, m21, m22);
+        }
+
+        void set(float m00, float m01, float m02,
+        float m10, float m11, float m12,
+        float m20, float m21, float m22){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+        }
+
+        void setRotXYZ(const CVec3& angle){
+            float sinX = math::sin(angle.x);
+            float cosX = math::cos(angle.x);
+            float sinY = math::sin(angle.y);
+            float cosY = math::cos(angle.y);
+            float sinZ = math::sin(angle.z);
+            float cosZ = math::cos(angle.z);
+
+            set(
+            cosY*cosZ, sinX*sinY*cosZ - cosX*sinZ, cosX*sinY*cosZ + sinX*sinZ,
+            cosY*sinZ, sinX*sinY*sinZ + cosX*cosZ, cosX*sinY*sinZ - sinX*cosZ,
+            -sinY,     sinX*cosY,                  cosX*cosY
+            );
+        }
+
+        void getRotZXY(CVec3& outVec){
+            float angle = math::asin(-m[1][2]);
+            outVec.x = angle;
+
+            if(angle < halfpi){
+                if(angle > -halfpi){
+                    //-pi/2 < angle < pi/2
+                    outVec.z = math::atan2Rad(m[1][0], m[1][1]);
+                    outVec.y = math::atan2Rad(m[0][2], m[2][2]);
+                }else{
+                    //angle < -pi/2
+                    outVec.z = -math::atan2Rad(m[2][0], m[0][0]);
+                    outVec.y = 0;
+                }
+            }else{
+                //angle > pi/2
+                outVec.z = math::atan2Rad(m[2][0], m[0][0]);
+                outVec.y = 0;
+            }
+        }
+
+        float m[3][3];
+    };
+} //namespace ml
+/* end "monolib/math/CMat33.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 8 "monolib/math/CMat34.hpp" */
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 9 "monolib/math/CMat44.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat44.hpp" line 2 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat44{
+        CMat44(){}
+
+        CMat44(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[0][3] = m03;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[1][3] = m13;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+            m[2][3] = m23;
+            m[3][0] = m30;
+            m[3][1] = m31;
+            m[3][2] = m32;
+            m[3][3] = m33;
+        }
+
+        union {
+            float m[4][4];
+            Mtx44 mtx;
+        };
+    
+        static CMat44 zero;
+        static CMat44 identity;
+    };
+} //namespace ml
+/* end "monolib/math/CMat44.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 10 "monolib/math/CPlane.hpp" */
+/* end "monolib/math/CPlane.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 11 "monolib/math/CPnt16.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CPnt16.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace ml {
+    struct CPnt16{
+        CPnt16(){}
+
+        CPnt16(s16 x, s16 y){
+            set(x,y);
+        }
+
+        void set(s16 x, s16 y){
+            this->x = x;
+            this->y = y;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lhz/sth. */
+        struct{
+            s16 x;
+            s16 y;
+        };
+    };
+} //namespace ml
+/* end "monolib/math/CPnt16.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 12 "monolib/math/CQuat.hpp" */
+/* end "monolib/math/CQuat.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 13 "monolib/math/CRect16.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CRect16.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CRect16.hpp" line 3 "monolib/math/CPnt16.hpp" */
+/* end "monolib/math/CPnt16.hpp" */
+
+namespace ml {
+    struct CRect16 {
+        CRect16(){
+        }
+    
+        CRect16(s16 x, s16 y, s16 width, s16 height){
+            set(x, y, width, height);
+        }
+
+        CRect16(const CPnt16& pos, const CPnt16& size){
+            set(pos, size);
+        }
+
+        void set(s16 x, s16 y, s16 width, s16 height){
+            mPos.x = x;
+            mPos.y = y;
+            mSize.x = width;
+            mSize.y = height;
+        }
+
+        void set(const CPnt16& pos, const CPnt16& size){
+            mPos.x = pos.x;
+            mPos.y = pos.y;
+            mSize.x = size.x;
+            mSize.y = size.y;
+        }
+    
+        bool isInside(const CPnt16& point) const;
+
+        CPnt16 mPos; //0x0
+        CPnt16 mSize; //0x4
+    };
+} //namespace ml
+/* end "monolib/math/CRect16.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 14 "monolib/math/CVec2.hpp" */
+#pragma once
+
+/* Not known to be used yet, but it's here anyways just in case they did end up using it (it exists
+in XCX, so it probably at least existed). It also doesn't hurt to have anyway for modding and stuff. */
+namespace ml {
+    struct CVec2 {
+
+        CVec2(){}
+
+        CVec2(float x, float y){
+            set(x, y);
+        }
+
+        CVec2(const CVec2& vec){
+            set(vec.x, vec.y);
+        }
+
+        void set(float x, float y){
+            this->x = x;
+            this->y = y;
+        }
+
+        void set(const CVec2& vec){
+            x = vec.x;
+            y = vec.y;
+        }
+
+        bool operator==(const CVec2& vec) const {
+            return x == vec.x && y == vec.y;
+        }
+
+        bool operator!=(const CVec2& vec) const {
+            return x != vec.x || y != vec.y;
+        }
+        
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+        };
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CVec2.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 15 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 16 "monolib/math/CVec4.hpp" */
+#pragma once
+
+namespace ml {
+    struct CVec4{
+        static CVec4 zero;
+        static CVec4 unitX;
+        static CVec4 unitY;
+        static CVec4 unitZ;
+        static CVec4 unit;
+
+        CVec4() {}
+
+        CVec4(float x, float y, float z, float w){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+            this->w = w;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+            float z;
+            float w;
+        };
+
+    };
+} //namespace ml
+/* end "monolib/math/CVec4.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 17 "monolib/math/Main.hpp" */
+#pragma once
+
+namespace ml{
+    namespace math{
+        void initialize();
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Main.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 18 "monolib/math/FloatUtils.hpp" */
+#pragma once
+
+#define FLOAT_LARGE 1e14f
+#define FLOAT_SMALL -1e14f
+#define FLOAT_MAX_HEX 0xD3D3D3D3
+#define FLOAT_MAX_HEX_NEG 0xF3F3F3F3
+#define FLOAT_NAN 0xFFFFFFFF
+#define FLOAT_TO_HEX(f) (*(u32*)&f)
+
+namespace ml{
+    namespace math{
+        bool isErrFloat(float f);
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/FloatUtils.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 19 "monolib/math/MathConstants.hpp" */
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 20 "monolib/math/MTRand.hpp" */
+//Original copyright comments:
+
+// Mersenne Twister random number generator -- a C++ class MTRand
+// Based on code by Makoto Matsumoto, Takuji Nishimura, and Shawn Cokus
+// Richard J. Wagner  v1.1  28 September 2009  wagnerr@umich.edu
+
+// The Mersenne Twister is an algorithm for generating random numbers.  It
+// was designed with consideration of the flaws in various other generators.
+// The period, 2^19937-1, and the order of equidistribution, 623 dimensions,
+// are far greater.  The generator is also fast; it avoids multiplication and
+// division, and it benefits from caches and pipelines.  For more information
+// see the inventors' web page at
+// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+
+// Reference
+// M. Matsumoto and T. Nishimura, "Mersenne Twister: A 623-Dimensionally
+// Equidistributed Uniform Pseudo-Random Number Generator", ACM Transactions on
+// Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
+
+// Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+// Copyright (C) 2000 - 2009, Richard J. Wagner
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 
+//   1. Redistributions of source code must retain the above copyright
+//      notice, this list of conditions and the following disclaimer.
+//
+//   2. Redistributions in binary form must reproduce the above copyright
+//      notice, this list of conditions and the following disclaimer in the
+//      documentation and/or other materials provided with the distribution.
+//
+//   3. The names of its contributors may not be used to endorse or promote 
+//      products derived from this software without specific prior written 
+//      permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+// The original code included the following notice:
+// 
+//     When you use this, send an email to: m-mat@math.sci.hiroshima-u.ac.jp
+//     with an appropriate reference to your work.
+// 
+// It would be nice to CC: wagnerr@umich.edu and Cokus@math.washington.edu
+// when you write.
+
+
+/* Monolithsoft made slight modifications from the most commonly found version,
+most notably changing function names.
+This might be the version this is based on: https://gist.github.com/yuikns/10017640 */
+
+#pragma once
+
+/* "libs/monolib/include/monolib/math/MTRand.hpp" line 65 "types.h" */
+/* end "types.h" */
+
+namespace ml{
+
+//Probably uses a singleton template
+
+class MTRand{
+protected:
+    static const int N = 624; //length
+    static const int M = 397; //period
+    u32 state[N]; //twister
+    int left; //0x9C0
+    BOOL initialized; //0x9C4
+    u32* pNext; //0x9C8
+    u32 unk9D0;
+
+public:
+    static MTRand* getInstance();
+    void srand(u32);
+    void nextMt();
+    u32 rand32();
+    u32 rand31();
+    float randFloat();
+    float randFloat1();
+
+    inline u32 rand(){
+        return rand31();
+    }
+
+    inline u32 rand(int max){
+        if(max != 0){
+            int randVal = rand();
+            return randVal % max;
+        }else{
+            return 0;
+        }
+    }
+
+    inline u32 rand(int min, int max){
+        int range = max - min;
+        int result = 0;
+
+        if(range != 0){
+            int randVal = rand();
+            result = (randVal % range);
+        }else{
+            result = 0;
+        }
+
+        return min + result; //wtf? why not just add it before?
+    }
+
+protected:
+    inline u32 hiBit(u32 u) { return u & 0x80000000; }
+    inline u32 loBit(u32 u) { return u & 0x00000001; }
+    inline u32 loBits(u32 u) { return u & 0x7fffffff; }
+    inline u32 mixBits(u32 u, u32 v) { return hiBit(u) | loBits(v); }
+    inline u32 magic(u32 u) { return loBit(u) ? 0x9908b0dfUL : 0x0UL; }
+    inline u32 twist(u32 m, u32 s0, u32 s1) {
+        const u32 y = mixBits(s0, s1);
+        const u32 mask = magic(s1);
+        return m ^ (mask ^ (y >> 1));
+    }
+};
+
+} //namespace ml
+/* end "monolib/math/MTRand.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 21 "monolib/math/Random.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace ml{
+    namespace math{
+        void mtInit(u32 seed);
+        int mtRand();
+        int mtRand(int max);
+        int mtRand(int min,int max);
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Random.hpp" */
+/* end "monolib/math.hpp" */
+/* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 7 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+/* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 8 "revolution/VI.h" */
+/* end "revolution/VI.h" */
+
+//size: 0x2c0
+class CDeviceVI : public CDeviceBase, public IErrorWii {
+public:
+    CDeviceVI(const char* pName, CWorkThread* pParent);
+    virtual ~CDeviceVI();
+    static CDeviceVI* getInstance();
+
+    static void setFlag4(bool state);
+    static bool checkFlag4();
+    static bool checkFlag2();
+    static bool func_804482DC();
+    static void setFlag0(bool state);
+    static bool checkFlag0();
+
+    static void func_804483DC(u32 gamma);
+    static GXRenderModeObj* getRenderModeObj();
+    static u32 getTargetFramerate();
+    static float getSecPerFrame();
+    static u32 func_80448420();
+    static u32 getVisPerFrame();
+    static bool entryCb(CDeviceVICb* entry);
+    static bool removeCb(CDeviceVICb* entry);
+    static bool isWideAspectRatio();
+    static bool isTvFormatPal();
+    static u32 getXfbBuffersSize();
+    static float getWidthScale();
+    static bool initBaseRenderModeStruct(u32 r3, u32 r4);
+    bool updateMainRenderModeStruct();
+    virtual void wkUpdate();
+    static void beginFrame();
+    static void waitForDrawDone();
+    static void endFrame();
+    static bool onPreRetrace();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+    static void setUseStaticHandle(bool state);
+    static bool usingStaticHandle();
+    void func_80448E88();
+    virtual void errorWiiCB();
+
+    static bool unkInline1();
+    static void copyEfb(u32 index);
+    void setNextFrameBuffer();
+    static void cb(CDeviceVICb::VICallback callback);
+    static void setupRenderMode2(GXRenderModeObj* pRenderMode, u32 viWidth);
+    void unkInline3(u32 index, u32 val);
+
+    static inline CDeviceVI* create(const char* pName, CWorkThread* pParent){
+        CDeviceVI* device = new (CWorkThreadSystem::getWorkMem()) CDeviceVI(pName, pParent);
+        CWorkUtil::entryWork(device, pParent, false);
+        device->mFlags |= FLAG_CREATED;
+        return device;
+    }
+
+    static inline u16 getEfbHeight(){
+        return getRenderModeObj()->efbHeight;
+    }
+
+    static inline u16 getFbWidth(){
+        return getRenderModeObj()->fbWidth;
+    }
+
+    //0x0: vtable
+    //0x0-1C8: CDeviceBase
+    //0x1C8-1CC: UnkClass_80447FDC
+    u32 mViFlags; //0x1CC
+    reslist<CDeviceVICb*> mCallbackList; //0x1D0
+    u32 mTvFormat; //0x1F0
+    u32 mGammaLevel; //0x1F4
+    u32 mScanMode; //0x1F8
+    u32 mDimmingCount; //0x1FC
+    GXRenderModeObj mMainRenderMode; //0x200
+    GXRenderModeObj mBaseRenderMode; //0x23C
+    //These four are unused?
+    u16 mViXOrigin; //0x278
+    u16 mViYOrigin; //0x27A
+    u16 mViWidth; //0x27C
+    u16 mViHeight; //0x27E
+    u8* mXfbBuffersPtr; //0x280
+    u32 unk284;
+    void* mFrameBufferPtrArray[3]; //0x288
+    u32 unk294;
+    u32 unk298;
+    u32 unk29C;
+    ml::CPnt16 unk2A0;
+    u32 unk2A4;
+    u32 mVisPerFrame; //0x2A8
+    u32 unk2AC;
+    u32 mNewVisPerFrame;
+    u8 unk2B4; //padding?
+    u8 unk2B5;
+    u8 unk2B6[2]; //padding?
+    u32 mTargetFramerate; //0x2B8
+    float mSecPerFrame; //0x2BC
+
+    //General screen dimensions
+    static const int SCREEN_WIDTH = 640;
+    static const int SCREEN_HEIGHT = 456;
+
+    static const int NTSC_VPS = 60;
+    static const int PAL_VPS = 50;
+    //2 VIs (vertical interrupts) per frame -> 30fps
+    static const int VI_PER_FRAME = 2;
+
+    //VI max output dimensions
+    static const int VI_MAX_WIDTH = 720;
+    static const int VI_MAX_HEIGHT = 480;
+    //VI width
+    static const int VI_WIDTH_4_3 = 670;
+    static const int VI_WIDTH_16_9 = 686;
+
+    static const int TARGET_FRAMERATE = NTSC_VPS/VI_PER_FRAME;
+
+private:
+    enum Flags{
+        VI_FLAG_0 = 0,
+        VI_FLAG_1 = 1,
+        VI_FLAG_2 = 2,
+        VI_FLAG_3 = 3,
+        VI_FLAG_4 = 4,
+        VI_FLAG_31 = 31
+    };
+
+    //Custom tv format/scan mode enums for the render mode table
+    enum TVFormat {
+        TV_FORMAT_NTSC,
+        TV_FORMAT_PAL,
+        TV_FORMAT_EURGB60,
+        TV_FORMAT_MPAL,
+        MAX_TV_FORMAT = 4
+    };
+
+    enum ScanMode {
+        SCAN_MODE_DS,
+        SCAN_MODE_INT,
+        SCAN_MODE_PROG,
+        SCAN_MODE_PROGSOFT,
+        MAX_SCAN_MODE = 4
+    };
+
+    u32 getTvFormatIndex() const;
+    u32 getScanModeIndex() const;
+    u32 calculateRenderModeIndex() const;
+    
+    void setFlag(u32 flag, bool state){
+        if(state != false) mViFlags |= (1 << flag);
+        else mViFlags &= ~(1 << flag);
+    }
+
+    bool checkFlag(u32 flag) const {
+        return mViFlags & (1 << flag);
+    }
+
+    //XFB dimensions
+    //JP: 640x480, US: 640x456, PAL: 640x542
+    static const int XFB_WIDTH = 640;
+    #if defined(VERSION_JP)
+    static const int XFB_HEIGHT = 480;
+    #elif defined(VERSION_EU)
+    static const int XFB_HEIGHT = 542;
+    #elif defined(VERSION_US)
+    static const int XFB_HEIGHT = 456;
+    #endif
+
+    static const int NUM_XFB_BUFFERS = 2; //double buffered
+
+    static const int MAX_CHILD = 8;
+
+    static CDeviceVI* spInstance;
+    static const VIGamma gammaLevels[];
+    static GXRenderModeObj* renderModes[];
+    static ml::CPnt16 lbl_8065A6B8[];
+    static bool sUseStaticHandle;
+};
+
+/* Utility defines since some code just directly uses hardcoded constants for
+framerate stuff */
+//TODO: idk where else to put these but ideally smth better than this maybe
+static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
+
+#define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
+/* end "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 526 "kyoshin/cf/CfGameManager.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CPad;
+class CScnNw4r;
+class CView;
+
+/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
+or due to being in separate files, but compiled together in one file (unity compilation). For now,
+to make things simpler, everything exists in a single class. */
+namespace cf{
+    class CfPadData;
+    class CfObjectMove;
+
+    //unofficial name
+    class CfGameManager{
+    public:
+        CfGameManager();
+
+        static CfGameManager* getInstance();
+        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
+
+        static void func_80086B5C(int arg1, int arg2, int arg3);
+        static void enablePadFlags(u32 enableFlags, bool enable);
+        static bool func_8007E1B4();
+        static void func_8007E218();
+        static void func_8007E514(int, int, char const*, int, int);
+        static void func_8007F930(bool arg1);
+        static UNKWORD func_800829B8();
+        static u32 getCurrentPadChannel();
+        static UNKTYPE* func_80083298();
+        static CfObjectMove* func_80082D54(int playerIndex);
+        static u32 getEnabledInputFlags();
+        static bool func_80086F9C(s16);
+        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
+        static CPad* getPad(int r3);
+        static void setPad(int r3, CPad* pPad, u32 r5);
+        static CfPadData* getCfPadData();
+        static CPad* getCurrentPad();
+
+        static bool checkUnkFlag(int bit){
+            return sUnkFlags & (1 << bit);
+        }
+
+        static void setUnkFlag(int bit, bool state){
+            if(state == true) sUnkFlags |= (1 << bit);
+            else sUnkFlags &= ~(1 << bit);
+        }
+
+        u32 unk0;
+        u32 unk4;
+        u32 unk8;
+        u8 unkC[0x28 - 0xC];
+        u8 unk28;
+        u8 unk29[0x68 - 0x29];
+        u32 unk68;
+        u8 unk6C;
+        u8 unk6D[0x7C - 0x6D];
+        u32 unk7C;
+        u8 unk80[0x8C - 0x80];
+        u32 unk8C;
+        u32 unk90;
+        //between CObjectParam - CfObjectMove
+        //likely player character object array, seems to always store pointers
+        //to CfObjectPc objects except pointing at the 4th vtable
+        CfObjectMove* unk94[3];
+        u32 unkA0;
+        u32 unkA4;
+        u32 unkA8;
+        u32 unkAC;
+        u32 unkB0;
+        u32 unkB4;
+
+        static u32 sUnkFlags;
+        static CScnNw4r* spScene;
+    }; //size = 0xB8
+
+} //namespace cf
+/* end "kyoshin/cf/CfGameManager.hpp" */
+
+extern "C" {
+u32 lbl_eu_80663E24;
+u32 lbl_eu_80663E28;
+f32 lbl_eu_806672CC;
+
+void func_801338C8(CUICfManager*);
+void func_80133770();
+void* __ct__CMenuKeyAssign(void*, u32);
+void* func_801109D8(void*, u32, void*); // create menu; r5=0 or enum object*
+void* func_8011E4C4(void*, u32);
+void* __ct__CMenuBattleMode(void*, u32);
+void* __ct__CMenuLvUp(void*, u32);
+
+// Opaque 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
+struct CUICfEnumListHolder {
+    void* list; // 0x0
+    u32 handle; // 0x4
+};
+
+void func_80043D90(CUICfEnumListHolder*);
+void* func_80043F18(CUICfEnumListHolder*); // returns holder->list
+void __dt__80043E88(CUICfEnumListHolder*, s16);
+void func_800F4A98(void* list, int type, int);
+void* __ct__800FB044(void* list, f32, void* obj, int);
+void* func_80496264(void* obj, int index);
+void* func_800F6EC0(void* list, int index); // &slot → has +0x4 object ptr
+void* func_800F6E98(void* list, int index); // *slot → object*
+int func_800B8920(void*);
+int func_8013A4B4(void* a, void* b, void* c);
+void func_8012FFB4(void*); // &mInitSlots[0].unk04
+}
+
+typedef void* (*CUICfVPtrFn)(void*);
+
+void CUICfManager::Move() {
+    // Locals ordered to force retail-ish -0x120 frame with FP (setItem try/catch).
+    void* created;
+    void* created2;
+    void* created3;
+    void* created4;
+    void* created5;
+    CUICfEnumListHolder holder;
+    f32 posC[3];
+    f32 posB[3];
+    f32 posA[3];
+    _reslist_node<CUICfMenuItem*>* pending[18];
+    u16 flags;
+    CUICfManager* inst;
+    int i;
+    int byteOff;
+    int capacity;
+    _reslist_node<void*>* startNode;
+    _reslist_node<void*>* temp;
+    void* party;
+    void* list;
+    void* handle;
+    void* qpos;
+    void* pose;
+    void* slot;
+    void* createdArg;
+    _reslist_node<CUICfMenuItem*>* head;
+    _reslist_node<CUICfMenuItem*>* it;
+    _reslist_node<CUICfMenuItem*>* walk;
+    _reslist_node<CUICfMenuItem*>* node;
+    _reslist_node<CUICfMenuItem*>* prev;
+    _reslist_node<CUICfMenuItem*>* next;
+    CUICfMenuItem* item;
+    int pendingCount;
+    int needWait;
+    int limit;
+    int canUnroll;
+    int nextCount;
+
+    flags = mFlags;
+
+    if ((flags & 0x2) != 0) {
+        mFlags = (u16)(mFlags & ~0x2);
+        func_801338C8(this);
+        goto after_flags;
+    }
+    if ((flags & 0x1) != 0) {
+        mFlags = (u16)(mFlags & ~0x1);
+        func_80133770();
+        goto after_flags;
+    }
+    if ((flags & 0x4) != 0) {
+        mFlags = (u16)(mFlags & ~0x4);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x4);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x4);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x8);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x10);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x20);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x40);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x80);
+        goto after_flags;
+    }
+    if ((flags & 0x8) != 0) {
+        mFlags = (u16)(mFlags & ~0x8);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x8);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x8);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created = __ct__CMenuKeyAssign(inst->unk144, inst->unk11C);
+        if (created == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push8_check;
+    push8_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push8_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push8_check:
+        if (i < capacity) {
+            goto push8_body;
+        }
+    push8_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x10) != 0) {
+        mFlags = (u16)(mFlags & ~0x10);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x10);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x10);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created2 = func_801109D8(inst->unk144, inst->unk11C, NULL);
+        if (created2 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push10_check;
+    push10_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push10_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push10_check:
+        if (i < capacity) {
+            goto push10_body;
+        }
+    push10_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created2);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x20) != 0) {
+        mFlags = (u16)(mFlags & ~0x20);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x20);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x20);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created3 = func_8011E4C4(inst->unk144, inst->unk11C);
+        if (created3 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push20_check;
+    push20_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push20_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push20_check:
+        if (i < capacity) {
+            goto push20_body;
+        }
+    push20_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created3);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x40) != 0) {
+        mFlags = (u16)(mFlags & ~0x40);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x40);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x40);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created4 = __ct__CMenuBattleMode(inst->unk144, inst->unk11C);
+        if (created4 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push40_check;
+    push40_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push40_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push40_check:
+        if (i < capacity) {
+            goto push40_body;
+        }
+    push40_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created4);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x80) != 0) {
+        mFlags = (u16)(mFlags & ~0x80);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x80);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x80);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created5 = __ct__CMenuLvUp(inst->unk144, inst->unk11C);
+        if (created5 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push80_check;
+    push80_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push80_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push80_check:
+        if (i < capacity) {
+            goto push80_body;
+        }
+    push80_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created5);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+
+after_flags:
+    // Gate: bits 6|21 then bit 13 of lbl_eu_80663E24 (0x02040400)
+    if ((lbl_eu_80663E24 & 0x02040400u) != 0) {
+        goto after_enum;
+    }
+    party = cf::CfGameManager::func_80082D54(0);
+    if (party == NULL) {
+        goto after_enum;
+    }
+
+    func_80043D90(&holder);
+    list = func_80043F18(&holder);
+    func_800F4A98(list, 0x130, 0);
+    party = cf::CfGameManager::func_80082D54(0);
+    {
+        void** vt = *reinterpret_cast<void***>(party);
+        handle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
+    }
+    list = func_80043F18(&holder);
+    __ct__800FB044(list, lbl_eu_806672CC, handle, 0);
+
+    pose = func_80496264((void*)unk11C, -1);
+    posA[0] = *reinterpret_cast<f32*>((u8*)pose + 0x10c);
+    posA[1] = *reinterpret_cast<f32*>((u8*)pose + 0x110);
+    posA[2] = *reinterpret_cast<f32*>((u8*)pose + 0x114);
+    posB[0] = *reinterpret_cast<f32*>((u8*)pose + 0x138);
+    posB[1] = *reinterpret_cast<f32*>((u8*)pose + 0x13c);
+    posB[2] = *reinterpret_cast<f32*>((u8*)pose + 0x140);
+
+    i = 0;
+    goto enum_check;
+enum_body:
+    list = func_80043F18(&holder);
+    slot = func_800F6EC0(list, i);
+    handle = *(void**)((u8*)slot + 4);
+    if (handle == NULL) {
+        goto enum_next;
+    }
+    {
+        void** vt = *reinterpret_cast<void***>(handle);
+        if (reinterpret_cast<int (*)(void*)>(vt[0x160 / 4])(handle) == 0) {
+            goto enum_next;
+        }
+    }
+    if (func_800B8920(handle) == 0) {
+        goto enum_next;
+    }
+    list = func_80043F18(&holder);
+    slot = func_800F6EC0(list, i);
+    handle = *(void**)((u8*)slot + 4);
+    {
+        void** vt = *reinterpret_cast<void***>(handle);
+        qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(handle);
+    }
+    posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
+    posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
+    posC[2] = *reinterpret_cast<f32*>((u8*)qpos + 8);
+    if (func_8013A4B4(posA, posB, posC) == 0) {
+        goto enum_next;
+    }
+    list = func_80043F18(&holder);
+    createdArg = func_800F6E98(list, i);
+    func_801109D8(unk144, unk11C, createdArg);
+enum_next:
+    i++;
+enum_check:
+    list = func_80043F18(&holder);
+    if ((u32)i < *(u32*)((u8*)list + 0x620)) {
+        goto enum_body;
+    }
+    __dt__80043E88(&holder, -1);
+
+after_enum:
+    // Scan with walk cursor stuck at head->next; on hit, mark from start to end.
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    walk = head->mNext;
+    it = walk;
+    goto mark_check;
+mark_set_body:
+    walk->mItem->unk55 = 1;
+    walk = walk->mNext;
+mark_set_check:
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    if (walk != head) {
+        goto mark_set_body;
+    }
+    goto mark_done;
+mark_body:
+    if (it->mItem->unk55 != 0) {
+        goto mark_set_check;
+    }
+    if (mInitSlots[0].unk00[1] != 0) {
+        goto mark_set_check;
+    }
+    it = it->mNext;
+mark_check:
+    if (it != head) {
+        goto mark_body;
+    }
+mark_done:
+
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    node = head->mNext;
+    pendingCount = 0;
+    needWait = 1;
+    goto collect_check;
+collect_body:
+    item = node->mItem;
+    if (item->unk54 != 0) {
+        goto collect_take;
+    }
+    if (mInitSlots[0].unk00[0] == 0) {
+        goto collect_next;
+    }
+collect_take:
+    if (needWait != 0) {
+        CDeviceVI::waitForDrawDone();
+        needWait = 0;
+    }
+    item = node->mItem;
+    item->unk39 = 1;
+    pending[pendingCount] = node;
+    pendingCount++;
+collect_next:
+    node = node->mNext;
+collect_check:
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    if (node != head) {
+        goto collect_body;
+    }
+
+    i = 0;
+    if (pendingCount <= 0) {
+        goto unlink_done;
+    }
+    if (pendingCount <= 8) {
+        goto unlink_tail;
+    }
+    limit = pendingCount - 8;
+    canUnroll = 0;
+    if (pendingCount < 0) {
+        goto unlink_unroll_test;
+    }
+    if (pendingCount > (int)0x7FFFFFFE) {
+        goto unlink_unroll_test;
+    }
+    canUnroll = 1;
+unlink_unroll_test:
+    if (canUnroll == 0) {
+        goto unlink_tail;
+    }
+    goto unlink_unroll_check;
+unlink_unroll_body:
+    for (byteOff = 0; byteOff < 8; byteOff++) {
+        temp = (_reslist_node<void*>*)pending[i + byteOff];
+        prev = (_reslist_node<CUICfMenuItem*>*)((_reslist_node<CUICfMenuItem*>*)temp)->mPrev;
+        next = (_reslist_node<CUICfMenuItem*>*)((_reslist_node<CUICfMenuItem*>*)temp)->mNext;
+        prev->mNext = next;
+        next->mPrev = prev;
+        ((_reslist_node<CUICfMenuItem*>*)temp)->mNext = NULL;
+    }
+    i += 8;
+unlink_unroll_check:
+    if (i < limit) {
+        goto unlink_unroll_body;
+    }
+unlink_tail:
+    goto unlink_tail_check;
+unlink_tail_body:
+    node = pending[i];
+    prev = node->mPrev;
+    next = node->mNext;
+    prev->mNext = next;
+    next->mPrev = prev;
+    node->mNext = NULL;
+    i++;
+unlink_tail_check:
+    if (i < pendingCount) {
+        goto unlink_tail_body;
+    }
+unlink_done:
+
+    mInitSlots[0].unk00[0] = 0;
+    mInitSlots[0].unk00[1] = 0;
+    func_8012FFB4(&mInitSlots[0].unk04);
+
+    nextCount = (int)unk120 - 1;
+    unk120 = (u32)nextCount;
+    if (nextCount < 0) {
+        unk120 = 0;
+    }
 }

@@ -391,14 +391,14 @@ The large virtual functions are priority targets because they likely contain the
 |---|---|---:|---:|---|---|
 | `CBattleState::CBattleState()` | `__ct__Q22cf12CBattleStateFv` | `0x80146520` | `0xA8` | Recovers initial state and field defaults. | **FULL_MATCH** |
 | `CBattleState virtual #5` | `CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv` | `0x80146DAC` | `0x13DC` | Large core state/update routine; trace player confirm, target, and Art activation. | **STRUCTURAL** |
-| `CBattleState virtual #6` | `CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv` | `0x80148210` | `0x154` | Potential transition/input helper. | **TRACE_ONLY** |
+| `CBattleState virtual #6` | `CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv` | `0x80148210` | `0x154` | Bitfield set + 8-slot entry match/clamp/fill, tail-call vt+0x48; host `battlestate-vfunc6` (16) PASS. | **HIGH_MATCH ~92.2%** |
 | `CBattleState virtual #8` | `CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv` | `0x801485EC` | `0x428` | Large state routine; classify writes and command calls. | **TRACE_ONLY** |
 | `CBattleState virtual #10` | `CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv` | `0x80148A18` | `0x444` | Large state routine; likely mode-specific battle behavior. | **TRACE_ONLY** |
-| `CBattleState virtual #11` | `CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv` | `0x80148FC8` | `0x174` | Candidate request/transition helper. | **TRACE_ONLY** |
+| `CBattleState virtual #11` | `CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv` | `0x80148FC8` | `0x174` | Mask-clear entries + dup-id scan + unk15AC bit; Chaitin soft-cap (dead trip r3 / found r0). Host `battlestate-vfunc11` PASS. | **CODE_MATCH ~96.2%** |
 | `CBattleState virtual #26` | `CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv` | `0x80148364` | `0x12C` | Candidate action/target helper. | **TRACE_ONLY** |
-| `CBattleState virtual #29` | `CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv` | `0x80148490` | `0x15C` | Candidate mode transition/command helper. | **TRACE_ONLY** |
-| `CBattleState virtual #31` | `CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv` | `0x80149EA4` | `0x160` | Candidate late action state helper. | **TRACE_ONLY** |
-| `CBattleState virtual #33` | `CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv` | `0x8014A014` | `0x160` | Candidate late action state helper. | **TRACE_ONLY** |
+| `CBattleState virtual #29` | `CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv` | `0x80148490` | `0x15C` | Clear 8 entries @+0x1388 + 13×8 id scan + unk15AC bit; Chaitin soft-cap (dead trip r3 / found r0 / scan r4). Host `battlestate-vfunc29` PASS. | **CODE_MATCH ~95.5%** |
+| `CBattleState virtual #31` | `CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv` | `0x80149EA4` | `0x160` | id→bitmask lookup; `return (this->unk4 & mask) != 0`. | **FULL_MATCH** |
+| `CBattleState virtual #33` | `CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv` | `0x8014A014` | `0x160` | Leaf id→mask vs `unk6` (+0x6); same shape as vfunc31. | **FULL_MATCH** |
 
 
 **Do not decompile these blindly in numeric order.** Trace the player-controlled character while:
@@ -517,7 +517,7 @@ The easiest implementation is a scoped HUD context only if runtime evidence show
 | `CMenuBattlePlayerState::CMenuBattlePlayerState()` | `__ct__CMenuBattlePlayerState` | `0x8010B880` | `0x580` | Recovers native HP/portrait/status widget graph. | **STRUCTURAL** |
 | `CMenuBattlePlayerState::Init()` | `Init__22CMenuBattlePlayerStateFv` | `0x8010C000` | `0xC5C` | Finds party actor and layout-resource bindings. | **STRUCTURAL** |
 | `CMenuBattlePlayerState::Term()` | `Term__22CMenuBattlePlayerStateFv` | `0x8010CC5C` | `0x1B0` | Needed if HUD instances are duplicated. | **FULL_MATCH** |
-| `CMenuBattlePlayerState::Move()` | `Move__22CMenuBattlePlayerStateFv` | `0x8010CE0C` | `0x8E8` | Updates HP, tension, statuses, portrait, and actor state. | **STRUCTURAL** |
+| `CMenuBattlePlayerState::Move()` | `Move__22CMenuBattlePlayerStateFv` | `0x8010CE0C` | `0x8E8` | Updates HP, tension, statuses, portrait, and actor state. | **CODE_MATCH ~97.7%** |
 | `CMenuBattlePlayerState::cbRenderBefore()` | `cbRenderBefore__22CMenuBattlePlayerStateFv` | `0x8010D6F4` | `0x1B4` | Final per-view transforms and values. | **FULL_MATCH** |
 
 
@@ -649,8 +649,8 @@ src/kyoshin/cf/IFlagEvent.hpp
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
 | `CUICfManager::Move()` | `Move__12CUICfManagerFv` | `0x801332A4` | `0x97C` | Central UI state and event/menu activity. | **STRUCTURAL** |
-| `CUICfManager helper` | `func_80133324__12CUICfManagerFv` | `0x80133DF8` | `0x3C0` | Candidate mode/window state query/update. | **TRACE_ONLY** |
-| `CUIWindowManager::Move()` | `Move__16CUIWindowManagerFv` | `0x8013D0C8` | `0x4DC` | Modal window state, input capture, and open/close transitions. | **STRUCTURAL** |
+| `CUICfManager helper` | `func_80133324__12CUICfManagerFv` | `0x80133DF8` | `0x3C0` | Event id range dispatch (Fv+r4/r5/r6); SDA/list insert. | **CODE_MATCH ~98.2%** |
+| `CUIWindowManager::Move()` | `Move__16CUIWindowManagerFv` | `0x8013D0C8` | `0x4DC` | Modal window state, input capture, and open/close transitions. | **HIGH_MATCH** (~79.3%, host-verified) |
 | `CUICfManager::Init()` | `Init__12CUICfManagerFv` | `0x80132EC8` | `0x2E0` | Finds manager-owned menu/window components. | **STRUCTURAL** |
 | `CUICfManager::Term()` | `Term__12CUICfManagerFv` | `0x80133200` | `0xA4` | Safe co-op toggle and shutdown. | **FULL_MATCH** |
 

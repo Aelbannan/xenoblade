@@ -101,6 +101,7 @@ coop run cycle <target>     # static match
 | `cviewroot-get-fullscreen-view` | `CViewRoot` | getFullScreenView gate (~99.7%) + PPC slices |
 | `cview-render-view` | `CView` | renderView gates (~84.5%) + PPC semantic slices |
 | `cviewframe-render` | `CViewFrame` | expand/badSize gates (~99.2%) + PPC semantic slices |
+| `battlestate-vfunc11` | `CBattleState` | UnkVirtualFunc11 entries[0x68] mask-clear + dup-id scan + unk15AC bit clear (~96.2%) |
 
 PPC harnesses exist for rows marked **PPC** in the eligibility table above (`view-rect-data-*`, `mtrand-getinstance`, `mtrand-integer-rng`).
 

@@ -1,6 +1,5 @@
 #include "kyoshin/CUICfManager.hpp"
 
-#include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 
@@ -24,6 +23,8 @@ void Regist__8CProcessFP8CProcessb(CProcess*, CProcess*, bool);
 void func_8015704C(void*, const void*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
+void func_801390E0(CFileHandle**);
+void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 }
 
 asm void CUICfManager::Init() {
@@ -236,4 +237,812 @@ void CUICfManager::Term() {
 
     unk144->unk39 = 1;
     lbl_eu_80664054 = NULL;
+}
+
+// ---------------------------------------------------------------------------
+// func_80133324__12CUICfManagerFv
+//
+// Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
+// reads r4/r5/r6 as real event-dispatch arguments and never touches `this`
+// (all state comes from the `lbl_eu_80664054` singleton). Declared as a free
+// `extern "C"` function so the ABI is r3=<unused self>, r4=id, r5=a1, r6=a2.
+//
+// Event-queue insert is the same shape as reslist::push_back -> setItem
+// (try/catch forces -0x80 / mr r31,r1 / stw r1 epilogue). Leaf body order
+// matches retail text: 221 -> 312c -> 7fc -> 22 -> 609.
+#include "monolib/util/reslist.hpp"
+
+extern "C" {
+int lbl_eu_80664050;
+int func_80138138(int);
+u32 func_8013B87C(u8);
+int func_8014A1D4(void*, u32, u8, int);
+void func_8013DA60(int, int, int);
+void* func_8009EC9C(u16);
+void func_800A21F8(void*, u16, int, int);
+u32 func_801361E8(void*, char*, u32);
+u16 func_8013606C(char*, char*, u16);
+void* lbl_eu_80573D18[];
+u8 lbl_eu_805000A8[];
+u16 lbl_eu_804FFFDC[];
+}
+
+// C++ mangling -> retail `func_8013B428__FUl`.
+void func_8013B428(u32);
+
+void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
+    // Decl order: savedRet@0x8, gap, setItem stw-r1 home, idTable@0x28 (retail frame).
+    int savedRet;
+    int pad0C;
+    int pad10;
+    int pad14;
+    int pad18;
+    int pad1C;
+    int pad20;
+    CUICfIdTable idTable;
+    u8 codePersist;
+
+    if (a1 == a2) {
+        goto end;
+    }
+
+    if (id >= 0x798) {
+        goto ge798;
+    }
+
+    if (id >= 0x221) {
+        goto ge221;
+    }
+
+    if (id >= 0x28) {
+        goto end;
+    }
+    if (id >= 0x22) {
+        goto range_22_27;
+    }
+    goto end;
+
+ge221:
+    if (id == 0x608) {
+        goto end;
+    }
+    if (id >= 0x608) {
+        goto range_609_797;
+    }
+    goto range_221_607;
+
+ge798:
+    if (id >= 0x312c) {
+        goto ge312c;
+    }
+    if (id >= 0x805) {
+        goto end;
+    }
+    if (id >= 0x7fc) {
+        goto range_7fc_804;
+    }
+    goto end;
+
+ge312c:
+    if (id >= 0x31f4) {
+        goto end;
+    }
+    goto range_312c_31f3;
+
+range_221_607: {
+    u32 check = (u32)(a1 - 0xfe);
+    int off = id - 0x220;
+    lbl_eu_80664050 = off;
+    if (check > 1) {
+        goto end;
+    }
+
+    int idx = func_80138138(off);
+    void* tableVal = lbl_eu_80573D18[idx];
+    u8 res = (u8)func_801361E8(tableVal, (char*)lbl_eu_805000A8 + 0x43, lbl_eu_80664050);
+    if (res == 2) {
+        goto end;
+    }
+
+    func_8013DA60(lbl_eu_80664050, 1, 0);
+
+    idTable = *(const CUICfIdTable*)lbl_eu_804FFFDC;
+    {
+        int target = lbl_eu_80664050;
+        u8 i = 0;
+        goto id_check;
+    id_body:
+        if ((u16)idTable.ids[i] == target) {
+            func_8013B428(0xb9);
+            goto end;
+        }
+        i++;
+    id_check:
+        if (idTable.ids[i] != 0) {
+            goto id_body;
+        }
+    }
+    goto end;
+}
+
+range_312c_31f3: {
+    if (a1 == 0) {
+        goto end;
+    }
+    if (a2 != 0) {
+        goto end;
+    }
+
+    {
+        u32 diff = id - 0x312c;
+        u32 code = 0xc8;
+        if ((u8)diff != 0) {
+            code = (u8)diff;
+        }
+        codePersist = (u8)code;
+    }
+
+    func_8013B87C(codePersist);
+
+    CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
+    if (inst != NULL) {
+        savedRet = func_8014A1D4(inst->unk144, inst->unk11C, codePersist, 1);
+        if (savedRet != 0) {
+            inst = (CUICfManager*)lbl_eu_80664054;
+
+            _reslist_node<u32>* startNode = (_reslist_node<u32>*)inst->unk128;
+            int capacity = inst->unk13C;
+            int i = 0;
+            int byteOff = 0;
+            // Keep pads "live" enough that MWCC does not DCE them entirely.
+            pad0C = capacity;
+            pad10 = byteOff;
+            pad14 = i;
+            pad18 = pad0C;
+            pad1C = pad10;
+            pad20 = pad14;
+            goto slot_check;
+        slot_body:
+            if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+                goto slot_found;
+            }
+            byteOff += 0xc;
+            i++;
+        slot_check:
+            if (i < capacity) {
+                goto slot_body;
+            }
+        slot_found:
+            {
+                _reslist_node<u32>* temp = (_reslist_node<u32>*)((u8*)inst->unk138 + i * 0xc);
+                temp->setItem((u32)savedRet);
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
+        }
+    }
+
+    {
+        u16 ret2 = func_8013606C((char*)lbl_eu_805000A8 + 0x4d, (char*)lbl_eu_805000A8 + 0x5b,
+                                   codePersist);
+        if (ret2 != 0) {
+            int i = 1;
+            goto party_check;
+        party_body:
+            {
+                void* r = func_8009EC9C((u16)i);
+                func_800A21F8(r, ret2, 0, 0);
+                i++;
+            }
+        party_check:
+            if (i <= 8) {
+                goto party_body;
+            }
+        }
+    }
+    goto end;
+}
+
+range_7fc_804: {
+    int rel = id - 0x7fc;
+    if (rel == 0) {
+        goto case_7fc;
+    }
+    if (rel == 1) {
+        goto case_7fd;
+    }
+    goto end;
+}
+
+case_7fc:
+    if (a1 == 0x64) {
+        func_8013B428(0xc8);
+        goto end;
+    }
+    if (a1 >= 0x32) {
+        func_8013B428(0xc7);
+        goto end;
+    }
+    if (a1 >= 1) {
+        func_8013B428(0xc6);
+    }
+    goto end;
+
+case_7fd:
+    if (a1 == 0x96) {
+        func_8013B428(0xc5);
+        goto end;
+    }
+    if (a1 >= 0x64) {
+        func_8013B428(0xc4);
+        goto end;
+    }
+    if (a1 >= 0x32) {
+        func_8013B428(0xc3);
+    }
+    goto end;
+
+range_22_27:
+    if (a1 < 0xfa0) {
+        goto end;
+    }
+    func_8013B428((u8)(id + 0x81));
+    if (a1 < 0x1f40) {
+        goto end;
+    }
+    func_8013B428(0xa8);
+    func_8013B428(0xa9);
+    goto end;
+
+range_609_797:
+    if (a2 == 0) {
+        if (a1 > 0) {
+            func_8013B428(0x9f);
+            func_8013B428(0xa0);
+            func_8013B428(0xa1);
+            func_8013B428(0xa2);
+        }
+    }
+    if (a1 < 5) {
+        goto end;
+    }
+    func_8013B428(0x9e);
+    goto end;
+
+end:
+    return;
+}
+
+// ---------------------------------------------------------------------------
+// CUICfManager::Move
+//
+// Early r4 is NOT a fake-Fv arg — retail does `lhz r4, 0xc90(r3)` (mFlags).
+// Bitflag-driven create/teardown against lbl_eu_80664054, then optional
+// enum-list proximity spawn, then mark/clear walks of the menu queue.
+// ---------------------------------------------------------------------------
+
+#include "monolib/device/CDeviceVI.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+
+extern "C" {
+u32 lbl_eu_80663E24;
+u32 lbl_eu_80663E28;
+f32 lbl_eu_806672CC;
+
+void func_801338C8(CUICfManager*);
+void func_80133770();
+void* __ct__CMenuKeyAssign(void*, u32);
+void* func_801109D8(void*, u32, void*); // create menu; r5=0 or enum object*
+void* func_8011E4C4(void*, u32);
+void* __ct__CMenuBattleMode(void*, u32);
+void* __ct__CMenuLvUp(void*, u32);
+
+// Opaque 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
+struct CUICfEnumListHolder {
+    void* list; // 0x0
+    u32 handle; // 0x4
+};
+
+void func_80043D90(CUICfEnumListHolder*);
+void* func_80043F18(CUICfEnumListHolder*); // returns holder->list
+void __dt__80043E88(CUICfEnumListHolder*, s16);
+void func_800F4A98(void* list, int type, int);
+void* __ct__800FB044(void* list, f32, void* obj, int);
+void* func_80496264(void* obj, int index);
+void* func_800F6EC0(void* list, int index); // &slot → has +0x4 object ptr
+void* func_800F6E98(void* list, int index); // *slot → object*
+int func_800B8920(void*);
+int func_8013A4B4(void* a, void* b, void* c);
+void func_8012FFB4(void*); // &mInitSlots[0].unk04
+}
+
+typedef void* (*CUICfVPtrFn)(void*);
+
+void CUICfManager::Move() {
+    // Locals ordered to force retail-ish -0x120 frame with FP (setItem try/catch).
+    void* created;
+    void* created2;
+    void* created3;
+    void* created4;
+    void* created5;
+    CUICfEnumListHolder holder;
+    f32 posC[3];
+    f32 posB[3];
+    f32 posA[3];
+    _reslist_node<CUICfMenuItem*>* pending[18];
+    u16 flags;
+    CUICfManager* inst;
+    int i;
+    int byteOff;
+    int capacity;
+    _reslist_node<void*>* startNode;
+    _reslist_node<void*>* temp;
+    void* party;
+    void* list;
+    void* handle;
+    void* qpos;
+    void* pose;
+    void* slot;
+    void* createdArg;
+    _reslist_node<CUICfMenuItem*>* head;
+    _reslist_node<CUICfMenuItem*>* it;
+    _reslist_node<CUICfMenuItem*>* walk;
+    _reslist_node<CUICfMenuItem*>* node;
+    _reslist_node<CUICfMenuItem*>* prev;
+    _reslist_node<CUICfMenuItem*>* next;
+    CUICfMenuItem* item;
+    int pendingCount;
+    int needWait;
+    int limit;
+    int canUnroll;
+    int nextCount;
+
+    flags = mFlags;
+
+    if ((flags & 0x2) != 0) {
+        mFlags = (u16)(mFlags & ~0x2);
+        func_801338C8(this);
+        goto after_flags;
+    }
+    if ((flags & 0x1) != 0) {
+        mFlags = (u16)(mFlags & ~0x1);
+        func_80133770();
+        goto after_flags;
+    }
+    if ((flags & 0x4) != 0) {
+        mFlags = (u16)(mFlags & ~0x4);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x4);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x4);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x8);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x10);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x20);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x40);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        inst->mFlags = (u16)(inst->mFlags | 0x80);
+        goto after_flags;
+    }
+    if ((flags & 0x8) != 0) {
+        mFlags = (u16)(mFlags & ~0x8);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x8);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x8);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created = __ct__CMenuKeyAssign(inst->unk144, inst->unk11C);
+        if (created == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push8_check;
+    push8_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push8_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push8_check:
+        if (i < capacity) {
+            goto push8_body;
+        }
+    push8_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x10) != 0) {
+        mFlags = (u16)(mFlags & ~0x10);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x10);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x10);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created2 = func_801109D8(inst->unk144, inst->unk11C, NULL);
+        if (created2 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push10_check;
+    push10_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push10_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push10_check:
+        if (i < capacity) {
+            goto push10_body;
+        }
+    push10_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created2);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x20) != 0) {
+        mFlags = (u16)(mFlags & ~0x20);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x20);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x20);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created3 = func_8011E4C4(inst->unk144, inst->unk11C);
+        if (created3 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push20_check;
+    push20_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push20_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push20_check:
+        if (i < capacity) {
+            goto push20_body;
+        }
+    push20_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created3);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x40) != 0) {
+        mFlags = (u16)(mFlags & ~0x40);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x40);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x40);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created4 = __ct__CMenuBattleMode(inst->unk144, inst->unk11C);
+        if (created4 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push40_check;
+    push40_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push40_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push40_check:
+        if (i < capacity) {
+            goto push40_body;
+        }
+    push40_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created4);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+        goto after_flags;
+    }
+    if ((flags & 0x80) != 0) {
+        mFlags = (u16)(mFlags & ~0x80);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        if (inst == NULL) {
+            goto after_flags;
+        }
+        if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+            goto after_flags;
+        }
+        if (inst->mArcResourceAccessor == NULL) {
+            inst->mFlags = (u16)(inst->mFlags | 0x80);
+            goto after_flags;
+        }
+        inst->mFlags = (u16)(inst->mFlags & ~0x80);
+        inst = (CUICfManager*)lbl_eu_80664054;
+        created5 = __ct__CMenuLvUp(inst->unk144, inst->unk11C);
+        if (created5 == NULL) {
+            goto after_flags;
+        }
+        inst = (CUICfManager*)lbl_eu_80664054;
+        startNode = (_reslist_node<void*>*)inst->unk128;
+        capacity = inst->unk13C;
+        i = 0;
+        byteOff = 0;
+        goto push80_check;
+    push80_body:
+        if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
+            goto push80_found;
+        }
+        byteOff += 0xc;
+        i++;
+    push80_check:
+        if (i < capacity) {
+            goto push80_body;
+        }
+    push80_found:
+        temp = (_reslist_node<void*>*)((u8*)inst->unk138 + i * 0xc);
+        temp->setItem(created5);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+
+after_flags:
+    // Gate: bits 6|21 then bit 13 of lbl_eu_80663E24 (0x02040400)
+    if ((lbl_eu_80663E24 & 0x02040400u) != 0) {
+        goto after_enum;
+    }
+    party = cf::CfGameManager::func_80082D54(0);
+    if (party == NULL) {
+        goto after_enum;
+    }
+
+    func_80043D90(&holder);
+    list = func_80043F18(&holder);
+    func_800F4A98(list, 0x130, 0);
+    party = cf::CfGameManager::func_80082D54(0);
+    {
+        void** vt = *reinterpret_cast<void***>(party);
+        handle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
+    }
+    list = func_80043F18(&holder);
+    __ct__800FB044(list, lbl_eu_806672CC, handle, 0);
+
+    pose = func_80496264((void*)unk11C, -1);
+    posA[0] = *reinterpret_cast<f32*>((u8*)pose + 0x10c);
+    posA[1] = *reinterpret_cast<f32*>((u8*)pose + 0x110);
+    posA[2] = *reinterpret_cast<f32*>((u8*)pose + 0x114);
+    posB[0] = *reinterpret_cast<f32*>((u8*)pose + 0x138);
+    posB[1] = *reinterpret_cast<f32*>((u8*)pose + 0x13c);
+    posB[2] = *reinterpret_cast<f32*>((u8*)pose + 0x140);
+
+    i = 0;
+    goto enum_check;
+enum_body:
+    list = func_80043F18(&holder);
+    slot = func_800F6EC0(list, i);
+    handle = *(void**)((u8*)slot + 4);
+    if (handle == NULL) {
+        goto enum_next;
+    }
+    {
+        void** vt = *reinterpret_cast<void***>(handle);
+        if (reinterpret_cast<int (*)(void*)>(vt[0x160 / 4])(handle) == 0) {
+            goto enum_next;
+        }
+    }
+    if (func_800B8920(handle) == 0) {
+        goto enum_next;
+    }
+    list = func_80043F18(&holder);
+    slot = func_800F6EC0(list, i);
+    handle = *(void**)((u8*)slot + 4);
+    {
+        void** vt = *reinterpret_cast<void***>(handle);
+        qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(handle);
+    }
+    posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
+    posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
+    posC[2] = *reinterpret_cast<f32*>((u8*)qpos + 8);
+    if (func_8013A4B4(posA, posB, posC) == 0) {
+        goto enum_next;
+    }
+    list = func_80043F18(&holder);
+    createdArg = func_800F6E98(list, i);
+    func_801109D8(unk144, unk11C, createdArg);
+enum_next:
+    i++;
+enum_check:
+    list = func_80043F18(&holder);
+    if ((u32)i < *(u32*)((u8*)list + 0x620)) {
+        goto enum_body;
+    }
+    __dt__80043E88(&holder, -1);
+
+after_enum:
+    // Scan with walk cursor stuck at head->next; on hit, mark from start to end.
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    walk = head->mNext;
+    it = walk;
+    goto mark_check;
+mark_set_body:
+    walk->mItem->unk55 = 1;
+    walk = walk->mNext;
+mark_set_check:
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    if (walk != head) {
+        goto mark_set_body;
+    }
+    goto mark_done;
+mark_body:
+    if (it->mItem->unk55 != 0) {
+        goto mark_set_check;
+    }
+    if (mInitSlots[0].unk00[1] != 0) {
+        goto mark_set_check;
+    }
+    it = it->mNext;
+mark_check:
+    if (it != head) {
+        goto mark_body;
+    }
+mark_done:
+
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    node = head->mNext;
+    pendingCount = 0;
+    needWait = 1;
+    goto collect_check;
+collect_body:
+    item = node->mItem;
+    if (item->unk54 != 0) {
+        goto collect_take;
+    }
+    if (mInitSlots[0].unk00[0] == 0) {
+        goto collect_next;
+    }
+collect_take:
+    if (needWait != 0) {
+        CDeviceVI::waitForDrawDone();
+        needWait = 0;
+    }
+    item = node->mItem;
+    item->unk39 = 1;
+    pending[pendingCount] = node;
+    pendingCount++;
+collect_next:
+    node = node->mNext;
+collect_check:
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    if (node != head) {
+        goto collect_body;
+    }
+
+    i = 0;
+    if (pendingCount <= 0) {
+        goto unlink_done;
+    }
+    if (pendingCount <= 8) {
+        goto unlink_tail;
+    }
+    limit = pendingCount - 8;
+    canUnroll = 0;
+    if (pendingCount < 0) {
+        goto unlink_unroll_test;
+    }
+    if (pendingCount > (int)0x7FFFFFFE) {
+        goto unlink_unroll_test;
+    }
+    canUnroll = 1;
+unlink_unroll_test:
+    if (canUnroll == 0) {
+        goto unlink_tail;
+    }
+    goto unlink_unroll_check;
+unlink_unroll_body:
+    for (byteOff = 0; byteOff < 8; byteOff++) {
+        temp = (_reslist_node<void*>*)pending[i + byteOff];
+        prev = (_reslist_node<CUICfMenuItem*>*)((_reslist_node<CUICfMenuItem*>*)temp)->mPrev;
+        next = (_reslist_node<CUICfMenuItem*>*)((_reslist_node<CUICfMenuItem*>*)temp)->mNext;
+        prev->mNext = next;
+        next->mPrev = prev;
+        ((_reslist_node<CUICfMenuItem*>*)temp)->mNext = NULL;
+    }
+    i += 8;
+unlink_unroll_check:
+    if (i < limit) {
+        goto unlink_unroll_body;
+    }
+unlink_tail:
+    goto unlink_tail_check;
+unlink_tail_body:
+    node = pending[i];
+    prev = node->mPrev;
+    next = node->mNext;
+    prev->mNext = next;
+    next->mPrev = prev;
+    node->mNext = NULL;
+    i++;
+unlink_tail_check:
+    if (i < pendingCount) {
+        goto unlink_tail_body;
+    }
+unlink_done:
+
+    mInitSlots[0].unk00[0] = 0;
+    mInitSlots[0].unk00[1] = 0;
+    func_8012FFB4(&mInitSlots[0].unk04);
+
+    nextCount = (int)unk120 - 1;
+    unk120 = (u32)nextCount;
+    if (nextCount < 0) {
+        unk120 = 0;
+    }
 }

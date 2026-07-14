@@ -172,7 +172,7 @@
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
       "unit": "monolib/src/device/CDeviceGX",
       "required_level": "FULL_MATCH",
-      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr — return SDA int, not spInstance->gxHeapSize"
+      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr \u2014 return SDA int, not spInstance->gxHeapSize"
     },
     {
       "id": "cam-dir-set-pos",
@@ -340,7 +340,7 @@
       "source": "libs/monolib/src/util/MemManager.cpp",
       "unit": "monolib/src/util/MemManager",
       "required_level": "FULL_MATCH",
-      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr — return SDA handle, not sHandleMEM2"
+      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr \u2014 return SDA handle, not sHandleMEM2"
     },
     {
       "id": "viewroot-get-view",
@@ -412,7 +412,7 @@
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
       "required_level": "FULL_MATCH",
-      "notes": "Create TU; PackedFont Destroy×3 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4"
+      "notes": "Create TU; PackedFont Destroy\u00d73 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4"
     },
     {
       "id": "task-culling-func-801A2C04",
@@ -460,7 +460,7 @@
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "FULL_MATCH",
-      "notes": "Clear + 3×8 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C"
+      "notes": "Clear + 3\u00d78 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C"
     },
     {
       "id": "battle-mgr-init",
@@ -520,7 +520,7 @@
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "unit": "kyoshin/menu/CMenuPTGauge",
       "required_level": "FULL_MATCH",
-      "notes": "FULL_MATCH; gates + DrawInfo draw; §17.6 asm b for bit21 beq+8;b; leave Move"
+      "notes": "FULL_MATCH; gates + DrawInfo draw; \u00a717.6 asm b for bit21 beq+8;b; leave Move"
     },
     {
       "id": "menu-ptgauge-move",
@@ -653,6 +653,162 @@
       "unit": "kyoshin/CUIWindowManager",
       "required_level": "FULL_MATCH",
       "notes": "Batch 14g; create TU with Move only; lbl_eu_80664088/8C SDA; size 0x4DC"
+    },
+    {
+      "id": "battlestate-vfunc11",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CBattleState::CBattleState_UnkVirtualFunc11",
+      "symbol": "CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv",
+      "address": "0x80148FC8",
+      "source": "src/kyoshin/cf/object/CBattleState.cpp",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14h; CODE_MATCH ~96.2% Chaitin soft-cap (dead trip r3/found r0); behaviour:battlestate-vfunc11 PASS; leave ctor/vfunc6"
+    },
+    {
+      "id": "battlestate-vfunc26",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CBattleState::CBattleState_UnkVirtualFunc26",
+      "symbol": "CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv",
+      "address": "0x80148364",
+      "source": "src/kyoshin/cf/object/CBattleState.cpp",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries \u2192 vt+0x1c; leave other vfuncs; size 0x12C"
+    },
+    {
+      "id": "battlestate-vfunc31",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CBattleState::CBattleState_UnkVirtualFunc31",
+      "symbol": "CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv",
+      "address": "0x80149EA4",
+      "source": "src/kyoshin/cf/object/CBattleState.cpp",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14h; leaf id\u2192mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160"
+    },
+    {
+      "id": "menu-enemy-move",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuEnemyState::Move",
+      "symbol": "Move__15CMenuEnemyStateFv",
+      "address": "0x80110888",
+      "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
+      "unit": "kyoshin/menu/CMenuEnemyState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14h; large HUD Move; leave cbRenderBefore; size 0x9B8"
+    },
+    {
+      "id": "uicf-func-80133324",
+      "tier": "P2",
+      "milestone": "presentation",
+      "function": "CUICfManager::func_80133324",
+      "symbol": "func_80133324__12CUICfManagerFv",
+      "address": "0x80133DF8",
+      "source": "src/kyoshin/CUICfManager.cpp",
+      "unit": "kyoshin/CUICfManager",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14h; Fv+r4/r5/r6 event switch; leave Init/Term; size 0x3C0"
+    },
+    {
+      "id": "menu-bps-move",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuBattlePlayerState::Move",
+      "symbol": "Move__22CMenuBattlePlayerStateFv",
+      "address": "0x8010CE0C",
+      "source": "src/kyoshin/menu/CMenuBattlePlayerState.cpp",
+      "unit": "kyoshin/menu/CMenuBattlePlayerState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14h; large HUD Move; leave Term/cbRenderBefore; size 0x8E8"
+    },
+    {
+      "id": "battlestate-vfunc33",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CBattleState::CBattleState_UnkVirtualFunc33",
+      "symbol": "CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv",
+      "address": "0x8014A014",
+      "source": "src/kyoshin/cf/object/CBattleState.cpp",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14i; leaf like vfunc31 but lhz +0x6; Fv+r4 ABI; leave other vfuncs; size 0x160"
+    },
+    {
+      "id": "occ-set-frustum",
+      "tier": "P1",
+      "milestone": "render",
+      "function": "COccCulling::setFrustum",
+      "symbol": "setFrustum__11COccCullingFP12CCullFrustum",
+      "address": "0x801A2098",
+      "source": "src/kyoshin/COccCulling.cpp",
+      "unit": "kyoshin/COccCulling",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14i; HIGH_MATCH ~88.5%; tight .text spare (~0x14); leave addFrustum/func_801A1188; size 0x588"
+    },
+    {
+      "id": "battlestate-vfunc29",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CBattleState::CBattleState_UnkVirtualFunc29",
+      "symbol": "CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv",
+      "address": "0x80148490",
+      "source": "src/kyoshin/cf/object/CBattleState.cpp",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14j; CODE_MATCH ~95.5% Chaitin soft-cap (dead trip+7); behaviour battlestate-vfunc29 PASS; leave other vfuncs; size 0x15C retail / 0x154 decomp"
+    },
+    {
+      "id": "battlestate-vfunc8",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CBattleState::CBattleState_UnkVirtualFunc8",
+      "symbol": "CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv",
+      "address": "0x801485EC",
+      "source": "src/kyoshin/cf/object/CBattleState.cpp",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14j; Fv+r4 entry; nested id cmpwi tree; leave other vfuncs; size 0x428"
+    },
+    {
+      "id": "battle-mgr-move",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CUIBattleManager::Move",
+      "symbol": "Move__16CUIBattleManagerFv",
+      "address": "0x8012F270",
+      "source": "src/kyoshin/CUIBattleManager.cpp",
+      "unit": "kyoshin/CUIBattleManager",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14j; battle UI coordinator Move; leave Init; size 0xB00"
+    },
+    {
+      "id": "menu-arts-move",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuArtsSelect::Move",
+      "symbol": "Move__15CMenuArtsSelectFv",
+      "address": "0x80103D68",
+      "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
+      "unit": "kyoshin/menu/CMenuArtsSelect",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14j; HUD Move; leave Term/cbRenderBefore; size 0xBB4"
+    },
+    {
+      "id": "uicf-move",
+      "tier": "P2",
+      "milestone": "presentation",
+      "function": "CUICfManager::Move",
+      "symbol": "Move__12CUICfManagerFv",
+      "address": "0x801332A4",
+      "source": "src/kyoshin/CUICfManager.cpp",
+      "unit": "kyoshin/CUICfManager",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14j; bitflag child create/teardown; leave Init/Term/func_80133324; size 0x97C"
     }
   ]
 }

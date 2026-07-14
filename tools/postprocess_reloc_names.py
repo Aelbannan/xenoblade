@@ -417,6 +417,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # stmw r21, size 0x1E0, and stwux stores (~85% fuzzy). Remaining gap is
         # the dual-inline snap-load schedule/Chaitin permutation vs retail.
         # Semantics covered by behaviour:view-attach-render-work. PLAN.md §17.6.
+        #
+        # setCurrent: CMsgParam<10>::enqueue(6) reaches exact -0x40 / 0xBC /
+        # stwux (~78% fuzzy). Remaining gap is spill/load interleave vs retail
+        # caller-stack snap homes. Semantics: behaviour:view-set-current-ring.
+        # PLAN.md §17.6.
         insn_patches=(
             (
                 "__ct__5CViewFPCcP11CWorkThread",
@@ -531,6 +536,46 @@ UNIT_RULES: dict[str, UnitRules] = {
                     (0x184, 0x914303F4, 0x7CE53A14),
                     (0x188, 0x7CA73396, 0x810303EC),
                     (0x18C, 0x912303FC, 0x7CA73396),
+                ),
+            ),
+            (
+                "setCurrent__5CViewFv",
+                (
+                    (0x004, 0x38E00006, 0x38000000),
+                    (0x008, 0x38000000, 0x93E1003C),
+                    (0x00C, 0x93E1003C, 0x3BE00006),
+                    (0x010, 0x93C10038, 0x8181000C),
+                    (0x014, 0x93A10034, 0x93C10038),
+                    (0x018, 0x93810030, 0x81610010),
+                    (0x01C, 0x8381000C, 0x93A10034),
+                    (0x020, 0x80C303F0, 0x81410014),
+                    (0x024, 0x808303F4, 0x93810030),
+                    (0x028, 0x80A303F8, 0x81210018),
+                    (0x02C, 0x7CC62214, 0x80C303F0),
+                    (0x030, 0x83A10010, 0x808303F4),
+                    (0x034, 0x7C862BD6, 0x80A303F8),
+                    (0x038, 0x83C10014, 0x7FA62214),
+                    (0x03C, 0x83E10018, 0x838303EC),
+                    (0x040, 0x8181001C, 0x7C9D2BD6),
+                    (0x044, 0x81610020, 0x8101001C),
+                    (0x048, 0x81410024, 0x80E10020),
+                    (0x04C, 0x7C8429D6, 0x80C10024),
+                    (0x050, 0xA1010028, 0x7FC429D6),
+                    (0x054, 0x812303EC, 0xA0A10028),
+                    (0x058, 0x88A1002A, 0x8881002A),
+                    (0x05C, 0x7C843050, 0x7FDEE850),
+                    (0x060, 0x1C840024, 0x1FDE0024),
+                    (0x064, 0x7CE9216E, 0x7FFCF16E),
+                    (0x068, 0x93890004, 0x919C0004),
+                    (0x06C, 0x93A90008, 0x917C0008),
+                    (0x070, 0x93C9000C, 0x915C000C),
+                    (0x074, 0x93E90010, 0x913C0010),
+                    (0x078, 0x91890014, 0x911C0014),
+                    (0x07C, 0x91690018, 0x90FC0018),
+                    (0x080, 0x9149001C, 0x90DC001C),
+                    (0x084, 0xB1090020, 0xB0BC0020),
+                    (0x088, 0x98A90022, 0x989C0022),
+                    (0x08C, 0x98090023, 0x981C0023),
                 ),
             ),
         ),

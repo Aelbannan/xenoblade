@@ -821,7 +821,7 @@
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
       "required_level": "FULL_MATCH",
-      "notes": "HIGH_MATCH ~89.4%; behaviour:uicf-move PASS; soft-cap _savegpr_27/collect walk-ptr; size 0x97C"
+      "notes": "HIGH_MATCH ~94.3%; Exact size 0x97C; behaviour:uicf-move PASS; soft-cap enum r28/r30 + stwx Chaitin"
     },
     {
       "id": "battlestate-vfunc10",

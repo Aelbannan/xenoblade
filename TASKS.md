@@ -98,7 +98,7 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CView::CView(...)`** (`__ct__5CViewFPCcP11CWorkThread`) · `0x8043EC5C` · size `0x2D8` · **FULL_MATCH 100%**
   - Map level: FULL_MATCH. Typed `reslist::reserve` recovers the retail capacity lifetime; guarded §17.6 patches close the final ten-word Chaitin permutation. Pool relocation naming is content-based and stable across `@N` renumbering.
   - Recovers layout, owned frame objects, and initialization invariants. `wkUpdate` remains FULL_MATCH.
-- [x] **`CView::setCurrent()`** (`setCurrent__5CViewFv`) · `0x8043F3D8` · size `0xBC` · target `view-set-current` · **FULL_MATCH** (§17.6 `asm void`)
+- [x] **`CView::setCurrent()`** (`setCurrent__5CViewFv`) · `0x8043F3D8` · size `0xBC` · target `view-set-current` · **FULL_MATCH** (high-level `CMsgParam::enqueue(6)` + §17.6 `insn_patches`)
   - Map level: FULL_MATCH
   - Switches global/current view state before each render pass.
 - [x] **`CView::setRect(CRect16 const&)`** (`setRect__5CViewFRCQ22ml7CRect16`) · `0x8043F514` · size `0x150` · target `view-set-rect` · **FULL_MATCH**
@@ -413,7 +413,7 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 10.1 UI/window managers
 
-- [ ] **`CUICfManager::Move()`** (`Move__12CUICfManagerFv`) · `0x801332A4` · size `0x97C` — HIGH_MATCH ~89.4%; behaviour host `uicf-move` (30 scenarios) PASS; soft-cap `_savegpr_27` + collect walk-ptr (see MWCC_REFERENCE.md §8c18)
+- [ ] **`CUICfManager::Move()`** (`Move__12CUICfManagerFv`) · `0x801332A4` · size `0x97C` — HIGH_MATCH ~94.3%; decomp size Exact `0x97C`; frame/homes/mark retail-shaped; behaviour host `uicf-move` PASS; soft-cap enum r28↔r30 + collect stwx Chaitin (see MWCC_REFERENCE.md §8c18)
   - Map level: STRUCTURAL
   - Central UI state and event/menu activity.
 - [ ] **`CUICfManager helper`** (`func_80133324__12CUICfManagerFv`) · `0x80133DF8` · size `0x3C0` — CODE_MATCH 98.0%; behaviour host `uicf-func-80133324` (35 scenarios) + audit PASS; remaining gap is Chaitin savedRet spill/reload regalloc, not structural (see MWCC_REFERENCE.md §8c17)

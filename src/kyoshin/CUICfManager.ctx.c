@@ -29272,7 +29272,7 @@ void CUICfManager::Move() {
     _reslist_node<void*>* temp;
     void* party;
     void* list;
-    void* handle;
+    void* partyHandle;
     void* qpos;
     void* pose;
     void* slot;
@@ -29575,11 +29575,13 @@ after_flags:
     // Retail: dual SDA load + rlwinm/rlwimi on bits 6|21, then bit 13 alone.
     {
         u32 g0 = lbl_eu_80663E24;
-        u32 g1 = lbl_eu_80663E24;
-        if ((g0 & 0x02000000u) != 0 || (g0 & 0x00000400u) != 0) {
+        u32 g1 = *(volatile u32*)&lbl_eu_80663E24;
+        u32 bits = __rlwinm(g0, 0, 6, 6);
+        bits = __rlwimi(bits, g0, 0, 21, 21);
+        if (bits != 0) {
             goto after_enum;
         }
-        if ((g1 & 0x00040000u) != 0) {
+        if (__rlwinm(g1, 0, 13, 13) != 0) {
             goto after_enum;
         }
     }
@@ -29594,10 +29596,10 @@ after_flags:
     party = cf::CfGameManager::func_80082D54(0);
     {
         void** vt = *reinterpret_cast<void***>(party);
-        handle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
+        partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);
     }
     list = func_80043F18(&holder);
-    __ct__800FB044(list, lbl_eu_806672CC, handle, 0);
+    __ct__800FB044(list, lbl_eu_806672CC, partyHandle, 0);
 
     pose = func_80496264((void*)unk11C, -1);
     posA[0] = *reinterpret_cast<f32*>((u8*)pose + 0x10c);
@@ -29612,25 +29614,25 @@ after_flags:
 enum_body:
     list = func_80043F18(&holder);
     slot = func_800F6EC0(list, i);
-    handle = *(void**)((u8*)slot + 4);
-    if (handle == NULL) {
+    partyHandle = *(void**)((u8*)slot + 4);
+    if (partyHandle == NULL) {
         goto enum_next;
     }
     {
-        void** vt = *reinterpret_cast<void***>(handle);
-        if (reinterpret_cast<int (*)(void*)>(vt[0x160 / 4])(handle) == 0) {
+        void** vt = *reinterpret_cast<void***>(partyHandle);
+        if (reinterpret_cast<int (*)(void*)>(vt[0x160 / 4])(partyHandle) == 0) {
             goto enum_next;
         }
     }
-    if (func_800B8920(handle) == 0) {
+    if (func_800B8920(partyHandle) == 0) {
         goto enum_next;
     }
     list = func_80043F18(&holder);
     slot = func_800F6EC0(list, i);
-    handle = *(void**)((u8*)slot + 4);
+    partyHandle = *(void**)((u8*)slot + 4);
     {
-        void** vt = *reinterpret_cast<void***>(handle);
-        qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(handle);
+        void** vt = *reinterpret_cast<void***>(partyHandle);
+        qpos = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(partyHandle);
     }
     posC[0] = *reinterpret_cast<f32*>((u8*)qpos + 0);
     posC[1] = *reinterpret_cast<f32*>((u8*)qpos + 4);
@@ -29654,42 +29656,59 @@ after_enum:
     // Mark-from-head (retail reloads head only inside the set-loop).
     head = (_reslist_node<CUICfMenuItem*>*)unk128;
     walk = head->mNext;
-    for (it = walk; it != head; it = it->mNext) {
-        if (it->mItem->unk55 != 0 || mInitSlots[0].unk00[1] != 0) {
-            for (;;) {
-                head = (_reslist_node<CUICfMenuItem*>*)unk128;
-                if (walk == head) {
-                    break;
-                }
-                walk->mItem->unk55 = 1;
-                walk = walk->mNext;
-            }
-            break;
-        }
+    it = walk;
+    goto mark_scan_check;
+mark_scan_body:
+    if (it->mItem->unk55 != 0) {
+        goto mark_set_check;
     }
+    if (mInitSlots[0].unk00[1] == 0) {
+        goto mark_scan_next;
+    }
+    goto mark_set_check;
+mark_set_body:
+    walk->mItem->unk55 = 1;
+    walk = walk->mNext;
+mark_set_check:
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    if (walk != head) {
+        goto mark_set_body;
+    }
+    goto mark_done;
+mark_scan_next:
+    it = it->mNext;
+mark_scan_check:
+    if (it != head) {
+        goto mark_scan_body;
+    }
+mark_done:
 
     // Collect: snapshot idx, bump count, indexed store (retail stwx schedule).
     head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    node = head->mNext;
     pendingCount = 0;
     needWait = 1;
-    for (node = head->mNext;; node = node->mNext) {
-        head = (_reslist_node<CUICfMenuItem*>*)unk128;
-        if (node == head) {
-            break;
-        }
-        item = node->mItem;
-        if (item->unk54 == 0 && mInitSlots[0].unk00[0] == 0) {
-            continue;
-        }
-        if (needWait != 0) {
-            CDeviceVI::waitForDrawDone();
-            needWait = 0;
-        }
-        item = node->mItem;
-        idx = pendingCount;
-        item->unk39 = 1;
-        pendingCount = idx + 1;
-        *(_reslist_node<CUICfMenuItem*>**)((u8*)pending + (idx << 2)) = node;
+    goto collect_check;
+collect_body:
+    item = node->mItem;
+    if (item->unk54 == 0 && mInitSlots[0].unk00[0] == 0) {
+        goto collect_next;
+    }
+    if (needWait != 0) {
+        CDeviceVI::waitForDrawDone();
+        needWait = 0;
+    }
+    item = node->mItem;
+    idx = pendingCount;
+    item->unk39 = 1;
+    pendingCount = idx + 1;
+    *(_reslist_node<CUICfMenuItem*>**)((u8*)pending + (idx << 2)) = node;
+collect_next:
+    node = node->mNext;
+collect_check:
+    head = (_reslist_node<CUICfMenuItem*>*)unk128;
+    if (node != head) {
+        goto collect_body;
     }
 
     i = 0;

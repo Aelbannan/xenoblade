@@ -7,7 +7,7 @@ wkRender__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US
 setViewRect__5CGameFP5CViewssss,cursor-agent,2026-07-13,verified FULL_MATCH US
 wkUpdate__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; unk1FC clear via CGameRestart+13 pool offset
 viBeginFrame__9CDeviceGXFv,cursor-agent,2026-07-13,FULL_MATCH via lbl_eu_806656A0 SDA symbol
-setCurrent__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH §17.6 asm void
+setCurrent__5CViewFv,cursor-agent,2026-07-14,FULL_MATCH high-level+insn_patches
 setRect__5CViewFRCQ22ml7CRect16,auto-agent,2026-07-13,FULL_MATCH via CPnt16 dual homes + u16 modeSize
 wkStandbyLogin__5CGameFv,cursor-agent,2026-07-13,100% FULL_MATCH u32 shift narrow height
 func_80459270__17CViewRectDataCoreFv,auto-agent,2026-07-13,FULL_MATCH; configure path fixed to CViewRectDataCore.cpp

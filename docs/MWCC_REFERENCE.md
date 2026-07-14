@@ -489,7 +489,7 @@ return result; // last cmpwi uses bnelr when result already in r3
 
 When retail reads **caller stack** (`sp+0xC`…), express the **same data** via struct members:
 
-- **`CView::setCurrent`**: snapshot `unk1C8`, `unk1DC`, ring index into `mContextRingBase` slots — correct semantics; high-level **~74.6%** (frame `-0x40`, spill interleaving). **FULL_MATCH** via §17.6 `asm void` (see §10b).
+- **`CView::setCurrent`**: `CMsgParam<10>::enqueue(6)` onto the context ring — correct semantics; high-level reaches exact `-0x40` / `0xBC` / `stwux` (~78% fuzzy). Spill/load interleave vs retail caller-stack snap homes closed by **`CView.o` insn_patches** (§17.6) — **FULL_MATCH**, no whole-function asm. Behaviour host `view-set-current-ring` PASS.
 - **`CView::attachRenderWork`**: model the ring at `this+0x280` as the real **`CMsgParam<10>`** and call `enqueue(0)` / `enqueue(1)`, then edit `last().unk23` and `last().wid`. A `volatile CMsgParamEntry` inside `enqueue`, scalarized before index arithmetic, restores the retail `-0x80` frame, `stmw r21@0x54`, uninitialized homes at `sp+0x0C`/`sp+0x30`, exact `0x1E0` size, and both **`stwux`** stores (~85% fuzzy). Dual-inline snap-load schedule/Chaitin permutation closed by **`CView.o` insn_patches** (§17.6) — **FULL_MATCH**, no whole-function asm. Behaviour host `view-attach-render-work` (52 scenarios) PASS.
 
 This is the preferred high-level approach even when match % drops.
@@ -558,7 +558,7 @@ Wrong layout causes branch/frame divergence even when control flow looks right.
 
 **`setSplitLine` (100%):** declare `hasView2` before `hasView1` so MWCC maps r31/r30 like retail.
 
-**`getSplitLine` (100%, PLAN.md §17.6 `asm s16`):** high-level C++ with `splitFrame = unk45C` + goto gate + `if (hasView2 != 0) goto call` tops out at **89.2%**. Body after the prologue matches retail byte-for-byte; the gap is only prologue schedule — retail does `lwz r0,0x45c(r3)` / `cmpwi r0,0` interleaved with `stw r31`/`li r31,0`/`stw r30`, while MWCC always spills r31–r29 then loads. Comma-defer, `#pragma scheduling`, `volatile`, nested scopes, and helpers cannot force that interleave. Restore `asm s16 CView::getSplitLine()` (same pattern as `setCurrent`). Keep `setSplitLine` as high-level C++ (**100%**).
+**`getSplitLine` (100%, PLAN.md §17.6 `asm s16`):** high-level C++ with `splitFrame = unk45C` + goto gate + `if (hasView2 != 0) goto call` tops out at **89.2%**. Body after the prologue matches retail byte-for-byte; the gap is only prologue schedule — retail does `lwz r0,0x45c(r3)` / `cmpwi r0,0` interleaved with `stw r31`/`li r31,0`/`stw r30`, while MWCC always spills r31–r29 then loads. Comma-defer, `#pragma scheduling`, `volatile`, nested scopes, and helpers cannot force that interleave. Restore `asm s16 CView::getSplitLine()` (or close with `insn_patches` like `setCurrent`). Keep `setSplitLine` as high-level C++ (**100%**).
 
 **`pssSetFocus` (100%):** do **not** call thin `pssGetView(INVALID_WORK_ID)` — MWCC CSE-saves the size-walk’s first node and walks in `r3` (91.8%). Expand the reslist size-walk in `pssSetFocus` and declare locals as **`curNode`, `length`, `endNode`, `view`** (that order). After the loop, `convertToView(getWorkThread(getFirstViewID()))` reloads via `this` (`3× lwz` from `0x1C8`). Yields retail regs: count `r5`, head `r6`, walk `r4`, `this` stays `r3`. `#pragma global_optimizer off` forces the reload but adds a frame pointer (regresses). Manual `CProc_UnkStruct1` walks regress to ~68–80%.
 
@@ -846,11 +846,9 @@ Log `"policy_exception": true` in `attempts.jsonl` on first use per function. If
 
 Allowed when **exactly one** insn differs (e.g. `wkStandbyLogin` `slwi` vs `rlwinm`). Wrap with `DECOMP_ASM_INSN_BEGIN` / `END`, mirror retail operands, no `register` variables.
 
-### 10b. Whole-function `asm void` — `CView::setCurrent` (**FULL_MATCH**)
+### 10b. Whole-function `asm void` — retired for `CView::setCurrent`
 
-**`setCurrent__5CViewFv`** — high-level member snapshots of `unk1C8`/`unk1DC` + signed ring index are semantically correct but hard-cap at **~74.6%** (`-0x20` frame, member `lwz`, `stwx`). Retail needs **`-0x40` frame** with **caller-stack** loads `lwz`/`lhz`/`lbz` at `sp+0xC..0x2A` interleaved with `r28`–`r31` spills and `stwux` first-slot store.
-
-Per `PLAN.md` §17.6, restore the verified `asm void CView::setCurrent()` body (log `"policy_exception": true`). `wkUpdate` remains **FULL_MATCH** when only this function is swapped. Do not use this pattern elsewhere without the same logged exception.
+**`setCurrent__5CViewFv`** — prefer **high-level** `CMsgParam<10>::enqueue(6)` (exact `-0x40` / `0xBC` / `stwux`) + **`CView.o` insn_patches** for the spill/load interleave soft-cap. Same pattern as `attachRenderWork`. Log `"policy_exception": true` for the patches. Do not restore whole-function asm for this symbol.
 
 **`attachRenderWork__5CViewFP11CWorkThread`** — keep **high-level** `CMsgParam<10>::enqueue` + `last()` (exact frame/size/`stwux`). Close the dual-inline snap schedule with **`insn_patches`** on `CView.o` (not whole-function asm). Log `"policy_exception": true`.
 
@@ -1022,7 +1020,7 @@ Be explicit in attempt logs when blocked:
 
 **Recommended stance:** land **correct high-level C++** + log `HIGH_MATCH`/`CODE_MATCH` with concrete `next_change`. Escalate to user/policy only after decomp.me + pragma/flag sweep. Do not silently revert to asm.
 
-**Known hard caps under high-level-only:** `CView::setCurrent` is **FULL_MATCH** via §17.6 `asm void` (not high-level). `CView::attachRenderWork` is **FULL_MATCH** via high-level `CMsgParam` + §17.6 `insn_patches` (dual-inline snap schedule). `CViewRoot::setCurrent` reached **FULL_MATCH** with guarded §17.6 object patches after the high-level volatile size walk capped at 97.7%.
+**Known hard caps under high-level-only:** `CView::setCurrent` and `CView::attachRenderWork` are **FULL_MATCH** via high-level `CMsgParam` + §17.6 `insn_patches` (spill/schedule soft-caps). `CViewRoot::setCurrent` reached **FULL_MATCH** with guarded §17.6 object patches after the high-level volatile size walk capped at 97.7%.
 
 ### 8d. `CViewRoot::setCurrent` — `mViewHistory` @0x4F4 + size walk (**FULL_MATCH**)
 
@@ -1630,23 +1628,25 @@ Host **`battlestate-vfunc10`** (≥10 scenarios + kind-table) PASS; size PASS (u
 
 ---
 
-### 8c18. `CUICfManager::Move` — mFlags@0xC90 + created spill (~89.4% HIGH_MATCH)
+### 8c18. `CUICfManager::Move` — mFlags@0xC90 + per-site homes (~94.3% HIGH_MATCH)
 
-**`Move__12CUICfManagerFv`** (`src/kyoshin/CUICfManager.cpp`, retail `0x801332A4`, size Exact **`0x97C`**, decomp **`0x960`**): early `lhz r4, 0xc90(r3)` — **field flags, not a fake-Fv arg**. Priority cascade `0x2 → 0x1 → 0x4 → 0x8 → … → 0x80`; create/teardown via **`lbl_eu_80664054`** + **`lbl_eu_80663E28` bit7 (`0x01000000`)**; enum fill gated by **`lbl_eu_80663E24` bits 6|21|13 (`0x02040400`)**.
+**`Move__12CUICfManagerFv`** (`src/kyoshin/CUICfManager.cpp`, retail `0x801332A4`, size Exact **`0x97C`**, decomp **`0x97C`**): early `lhz r4, 0xc90(r3)` — **field flags, not a fake-Fv arg**. Priority cascade `0x2 → 0x1 → 0x4 → 0x8 → … → 0x80`; create/teardown via **`lbl_eu_80664054`** + **`lbl_eu_80663E28` bit7 (`0x01000000`)**; enum fill gated by **`lbl_eu_80663E24` bits 6|21|13**.
 
-**Proven 53% → 85% → 89.4%:**
-- **Inline `_reslist_node::setItem` + link** into `Move` (do not extract a free helper) — try/catch must live in `Move` so the prologue gets `mr r31,r1` / EH frame like retail (out-of-line push stalled at ~53% with `-0xE0` / no FP).
-- **Mark walk is mark-from-head-on-hit, not find-then-continue:** retail keeps `r6` stuck at `head->next` during the scan; on first `unk55!=0` **or** manager `0x149` mark-all, the set-loop starts from the original head—**different from** `CUIWindowManager::Move` §8c16.
-- `pending[18]` POD node pointers (not iterators).
-- **`volatile u16* fp = &mFlags; *fp = *fp & mask`** on each clear arm → retail `lhz`+`andi.`/`rlwinm` reload (plain `mFlags &=` CSEs the early `r4`).
-- **`*createdHome = ctor(...); … setItem((void*)*createdHome)`** with `createdHome = (volatile void**)&savedRet18` → stack spill between `cmpwi`/`beq` and reload after find. That frees r3 so the find loop can `lwz r3,0x138(r4)` like retail (without the spill, created stays in r3 across the loop). Zero `i`/`byteOff` before `startNode`/`capacity`. Frame reaches retail **`-0x120`**.
+**Proven 53% → 85% → 89% → 94.3%:**
+- **Inline `_reslist_node::setItem` + link** into `Move` (do not extract a free helper) — try/catch must live in `Move` so the prologue gets `mr r31,r1` / EH frame like retail.
+- **Mark walk is mark-from-head-on-hit:** retail `r6` stuck at `head->next`; on first `unk55!=0` **or** manager `0x149`, set-loop from original head. Emit as **goto-shaped OR** (`if unk55→set; if manager==0→next; goto set`) so MWCC keeps the second `b` (plain `||` merges it away). Set-loop is mid-test (`goto check; body; check:`) like retail.
+- Collect is the same mid-test shape; `idx`/`stwx` schedule → **r28=node / r30=count**, manual saves (no `_savegpr_27`).
+- **`volatile u16* fp = &mFlags; *fp = *fp & mask`** on each clear arm → retail `lhz`+`andi.`/`rlwinm`.
+- **Per-site volatile homes** (`savedRet18/14/10/0C/08` + address-taken `home*`) → retail spills at **`0x18…0x08`**, EH **`0xc4…0x64`**, holder **`0x20`**, floats **`0x28…0x48`**, pending **`0xc8`**, frame **`-0x120`**. Shared single home stalled at `0x8` / `-0x110`.
+- Gate: dual SDA load + `__rlwinm`/`__rlwimi` on bits 6|21 then bit 13 (not a single `& 0x02040400`). Second load via `*(volatile u32*)&lbl_eu_80663E24` when CSE merges.
+- Decl order `posA/posB/posC` → retail float homes; reuse one `partyHandle` for enum objects.
 
-**Remaining soft-cap (~10.6%, size `0x960` vs `0x97C`):**
-- Collect still strength-reduces `pending[pendingCount++]=node` into a walking NV cursor → **node in r27** → prologue **`_savegpr_27`** vs retail **manual `stw r31…r28`** with **node in r28** + indexed `stwx`.
-- Created home lands at **`0x8(r31)`** vs retail **`0x18(r31)`** (layout shift of later locals); Chaitin on insert r5/r6/r7 vs r4/r5/r6.
-- Tried and **failed**: `volatile int pendingCount`, `(u8*)+slwi` indexed store, pad locals for 0x18 home (DCE'd), removing `flagPtr` alone.
+**Remaining soft-cap (~5.7%):**
+- Enum phase still swaps **r28↔r30** (`partyHandle`/`i` vs retail `i`/`handle`); collect/store Chaitin (`li`/`addi` order on the `stwx` block); post-collect **`cmpwi cr1`** vs plain `cmpwi`.
+- Tried and **failed** for the NV swap: union `partyHandle`↔`pendingCount`, keep-alive/`partyHandle==node` anti-coalesce (DCE'd).
 
-Host **`uicf-move`** (30 scenarios) PASS; size PASS; `runtime_test: behaviour:uicf-move`. Same soft-cap class as §8c19 battle-mgr-move / menu-enemy-move.
+Host **`uicf-move`** (30 scenarios) PASS; size PASS; `runtime_test: behaviour:uicf-move`.
+
 
 ---
 

@@ -8,9 +8,10 @@ Fork-wide tooling context: [`FORK.md`](../../../FORK.md) §5.
 |-------|----------------|----------|
 | **static** | objdiff instruction + relocation match | No |
 | **size** | decomp `.text` ≤ retail split budget (`splits.txt`) | No |
-| **host** | Same inputs → retail oracle vs decomp → same outputs | No |
 | **ppc** | Real PPC retail vs decomp objects (when `ppc_source` set) | Yes (headless) |
-| **audit** | Non-`FULL_MATCH` entries: host scenarios + size budget | No |
+| **audit** | Registered tests: size budget (PPC optional) | No |
+
+Host dual-oracle binaries (`host/*.cpp`) were removed — they were mostly tautological shared models and are no longer part of policy.
 
 ## Quick start
 
@@ -18,6 +19,7 @@ Fork-wide tooling context: [`FORK.md`](../../../FORK.md) §5.
 python tools/coop/run.py behaviour audit
 python tools/coop/run.py behaviour compare --all
 python tools/coop/run.py behaviour compare view-rect-data-clamp
+python tools/coop/run.py behaviour ppc view-rect-data-clamp
 ```
 
 Standalone:
@@ -40,76 +42,39 @@ python tools/coop/run.py size --all
 
 `diff`, `cycle`, and `behaviour compare` also print a size line. `decomp .text` larger than the split budget exits non-zero. Behaviour tests may pass while size fails — treat overflow as a blocker for `FULL_MATCH` and `configure.py` `Matching` promotion.
 
-## Policy: non-`FULL_MATCH` objects
+## Policy
 
-**Any function below 100% static match MUST have a host test** registered in `manifest.json`.
+Acceptance remains **`FULL_MATCH`** (objdiff) + split-size fit. Below 100%, prefer:
 
-Minimum `run_scenario(...)` count in `host/<host_binary>.cpp`:
+1. Continue matching / §17.6 exceptions (`insn_patches`, narrow asm) when co-op needs the symbol.
+2. Optional **PPC** harness when the unit links (`ppc_source` in `manifest.json`).
+3. Optional Capstone+Z3 checks via `tools/ppc_equivalence/` for supported blocks.
 
-| Static match | Min scenarios |
-|--------------|---------------|
-| ≥ 100% | 0 (host optional) |
-| 95–99.9% | 8 |
-| 90–94.9% | 12 |
-| 80–89.9% | 20 |
-| < 80% | 30 |
-
-`compare` and `audit` enforce host scenario counts. `audit` also fails when decomp `.text` exceeds the split budget. Agents may not log `BEHAVIOR_VERIFIED` or stop semantic iteration on a below-`FULL_MATCH` symbol until `audit` passes for that test id.
+`behaviour audit` only fails on split-size overflow for registered tests — it does **not** require host scenario counts.
 
 ### Agent workflow
 
 ```text
 coop run cycle <target>     # static match
-→ if match < 100%:
-    add/extend host/<name>.cpp (retail oracle from asm + decomp from src/)
-    register manifest.json
-    coop run behaviour compare <test-id>
-    coop run behaviour audit
-→ log attempts.jsonl with runtime_test: behaviour:<test-id>
+→ verify size: coop run size <unit>
+→ optional: behaviour ppc <test-id> when ppc_source exists
+→ log attempts.jsonl
 ```
 
-## Adding a test
+## Adding a PPC test
 
-1. Add entry to `manifest.json` (`id`, `unit`, `symbol`, `host_binary`).
-2. Create `host/<host_binary>.cpp`:
-   - `retail_*` — semantics from retail asm / Ghidra (not from decomp source)
-   - `decomp_*` — from `src/` / `libs/` (keep in sync when editing)
-   - `run_scenario(name, ...)` for each case; meet minimum count for match tier
-3. `python tools/coop/run.py behaviour compare <id>`
-4. `python tools/coop/run.py behaviour audit`
-
-## Registered tests
-
-| id | Unit | Purpose |
-|----|------|---------|
-| `game-set-view-rect` | `kyoshin/CGame` | FULL_MATCH sanity baseline |
-| `view-rect-data-clamp` | `CViewRectDataCore` | Clamp path (~88% static) |
-| `view-rect-data-store` | `CViewRectDataCore` | Max-size store |
-| `view-rect-data-init` | `CViewRectDataCore` | Render-mode init |
-| `game-wk-standby-login` | `CGame` | wkStandbyLogin rect/vec4 helpers (~99.5%) |
-| `view-set-current-ring` | `CView` | setCurrent ring semantics (asm→C++ lock) |
-| `mtrand-float-rng` | `MTRand` | randFloat BE int-to-double oracle (~89.6%) |
-| `mtrand-integer-rng` | `MTRand` | Integer RNG sequence |
-| `mtrand-getinstance` | `MTRand` | getInstance singleton init (~99.8%) |
-| `cfpadtask-update` | `CfPadTask` | update stick normalize + pad gate (~99.6%) |
-| `cfpadtask-updatecfdapdata` | `CfPadTask` | updateCfPadData deadzone/dpad/turbo |
-| `cview-wkupdate-gate` | `CView` | wkUpdate split-frame gate logic |
-| `cview-get-split-line` | `CView` | getSplitLine gate (~89.2%) + PPC slices |
-| `cview-set-split-line` | `CView` | setSplitLine gate + PPC slices |
-| `cview-set-disp` | `CView` | setDisp flag/invalidCurrent + PPC slices |
-| `cviewroot-getview` | `CViewRoot` | getView reslist walk (FULL_MATCH guard) |
-| `cviewroot-get-fullscreen-view` | `CViewRoot` | getFullScreenView gate (~99.7%) + PPC slices |
-| `cview-render-view` | `CView` | renderView gates (~84.5%) + PPC semantic slices |
-| `cviewframe-render` | `CViewFrame` | expand/badSize gates (~99.2%) + PPC semantic slices |
-| `battlestate-vfunc11` | `CBattleState` | UnkVirtualFunc11 entries[0x68] mask-clear + dup-id scan + unk15AC bit clear (~96.2%) |
-
-PPC harnesses exist for rows marked **PPC** in the eligibility table above (`view-rect-data-*`, `mtrand-getinstance`, `mtrand-integer-rng`).
+1. Add entry to `manifest.json` (`id`, `unit`, `symbol`, optional `ppc_source` / `ppc_stubs`).
+   Use `ppc_cpu_core: 0` only for an ISA oracle that must run through Dolphin's
+   interpreter; ordinary retail/decomp tests should use Dolphin's default JIT.
+2. Create harness under `ppc/` (see existing slices/mocks).
+3. `python tools/coop/run.py behaviour ppc <id>`
+4. `python tools/coop/run.py behaviour compare <id>`
 
 ## Relation to objdiff
 
 - **static** = same as `coop run diff` (retail `.o` vs your `.o`).
-- At **100%**, static match implies identical behaviour; host tests are optional regression guards.
-- Below **100%**, host tests are **mandatory** evidence that retail and decomp semantics agree on documented inputs.
+- At **100%**, static match implies identical behaviour for that function.
+- Below **100%**, PPC (when available) is real dual-object evidence; static/size alone do not prove semantics.
 
 ## PPC runtime harness (headless Dolphin)
 
@@ -118,38 +83,9 @@ For tests with `ppc_source` in `manifest.json`, the runner builds a minimal test
 
 ```bash
 python tools/coop/run.py behaviour ppc view-rect-data-clamp
-python tools/coop/run.py behaviour compare view-rect-data-clamp   # static + host + ppc
+python tools/coop/run.py behaviour compare view-rect-data-clamp   # static + ppc
 python tools/coop/run.py behaviour ppc --all                      # all ppc_source tests
 ```
-
-### PPC eligibility (2026-07-13)
-
-| Test | PPC | Notes |
-|------|-----|-------|
-| `view-rect-data-clamp` | yes | 32 scenarios |
-| `view-rect-data-store` | yes | 11 scenarios |
-| `view-rect-data-init` | yes | 8 scenarios |
-| `mtrand-getinstance` | yes | retail BSS stub via `ppc/stubs/monolib_src_math_MTRand.c` |
-| `mtrand-integer-rng` | yes | `srand` + `rand31` on stack objects |
-| `mtrand-float-rng` | no | `randFloat` codegen diverges (~89.6% static) |
-| `game-set-view-rect` | no | `CGame.o` — 64 undefined symbols |
-| `game-wk-standby-login` | no | same `CGame.o` unit |
-| `view-set-current-ring` | no | `CView.o` retail — 80 undefined symbols |
-| `cview-get-current-view` | yes | 11 scenarios; lbl oracle slices (`cview_get_current_view_*.c`) — full `CView.o` link crashes mwldeppc |
-| `cview-get-split-line` | yes | 20+ scenarios; semantic retail/decomp slices |
-| `cview-set-split-line` | yes | semantic slices (FULL_MATCH guard) |
-| `cview-set-disp` | yes | semantic slices (FULL_MATCH guard) |
-| `cview-wkupdate-gate` | no | `CView.o` — needs full object + extern stubs |
-| `cviewroot-getview` | yes | 13 scenarios; semantic retail/decomp slices (`cviewroot_ppc_*.c`) — trimmed `.o` crashes mwldeppc |
-| `cviewroot-get-fullscreen-view` | yes | 14 scenarios; gfsv mock + semantic slices (full `CViewRoot.o` needs CDesktop/VI) |
-| `cview-render-view` | yes | 25 scenarios; gate DAG mock (full `CView.o` unlinkable) |
-| `cviewframe-render` | yes | 12 scenarios; expand/badSize mock (avoids CDrawGX) |
-| `cfpadtask-update` | no | `CfPadTask.o` — 52+ WPAD/KPAD/game symbols |
-| `cfpadtask-updatecfdapdata` | no | same `CfPadTask.o` unit |
-
-Units with only **one** undefined symbol (`getRenderModeObj`) or **retail BSS stubs** (MTRand) link cleanly. Large game/lib slices need a stub layer not yet implemented.
-
-Retail `MTRand.o` references `@LOCAL@…instance_806561E0` externally; the builder renames that UND to `rb_mtrand_singleton` via `objcopy --redefine-sym` on the prefixed retail object.
 
 Requirements:
 
@@ -158,5 +94,25 @@ Requirements:
 - Dolphin runs with `--batch --exec <test.dol>` (no GUI)
 - Results are read back via Dolphin's GDB stub (`General.GDBPort = 2160` in an isolated user folder)
 
-If Dolphin is missing, PPC build still runs and the step is reported as **SKIP** (host/objdiff
-checks remain authoritative).
+If Dolphin is missing, PPC build still runs and the step is reported as **SKIP** (static/size remain authoritative).
+
+### Broadway equivalence oracle
+
+The equivalence checker's supported phase-1/phase-2 instruction families have
+an independent concrete oracle:
+
+```bash
+python tools/coop/run.py behaviour ppc ppc-equivalence-broadway
+```
+
+It executes 40 register/flag/control-flow scenarios plus a memory-layout check
+in Dolphin's PowerPC interpreter. The interpreter is intentional: this test has
+found ARM64-JIT differences in CR0's SO bit, while the interpreter follows the
+Broadway/PowerPC architectural result. A passing run reports `passed: 41
+failed: 0`. Failures include the actual and expected result/CR/XER triples.
+
+The oracle covers carry/overflow and sticky SO, signed and unsigned arithmetic,
+shifts and rotates, CR operations and comparisons, CR- and CTR-selected
+branches, big-endian and byte-reversed memory, update addressing, and
+`lmw`/`stmw`. It does not certify the documented out-of-scope floating-point,
+paired-single, VMX, atomic, privileged, cache/MMIO, or exception behavior.

@@ -14,9 +14,9 @@ class BehaviourTest:
     description: str
     unit: str
     symbol: str
-    host_binary: Optional[str]
     ppc_source: Optional[str] = None
     ppc_stubs: Optional[list[str]] = None
+    ppc_cpu_core: Optional[int] = None
     region: str = "us"
 
 
@@ -34,9 +34,9 @@ def load_manifest(path: Optional[Path] = None) -> tuple[str, List[BehaviourTest]
                 description=item.get("description", ""),
                 unit=item["unit"],
                 symbol=item["symbol"],
-                host_binary=item.get("host_binary"),
                 ppc_source=item.get("ppc_source"),
                 ppc_stubs=item.get("ppc_stubs"),
+                ppc_cpu_core=item.get("ppc_cpu_core"),
                 region=region,
             )
         )

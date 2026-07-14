@@ -72,24 +72,24 @@ def find_dolphin() -> str | None:
     return None
 
 
-def _write_dolphin_user_ini(user_dir: Path, *, gdb_port: int, log_path: Path) -> None:
+def _write_dolphin_user_ini(
+    user_dir: Path, *, gdb_port: int, log_path: Path, cpu_core: int | None = None
+) -> None:
     config_dir = user_dir / "Config"
     config_dir.mkdir(parents=True, exist_ok=True)
     ini = config_dir / "Dolphin.ini"
-    ini.write_text(
-        "\n".join(
-            [
-                "[General]",
-                f"GDBPort = {gdb_port}",
-                "",
-                "[Logger]",
-                "LogToFile = True",
-                f"LogFilePath = {log_path}",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    lines = [
+        "[General]",
+        f"GDBPort = {gdb_port}",
+        "",
+        "[Logger]",
+        "LogToFile = True",
+        f"LogFilePath = {log_path}",
+        "",
+    ]
+    if cpu_core is not None:
+        lines.extend(["[Core]", f"CPUCore = {cpu_core}", ""])
+    ini.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _read_guest_mem(region: str, test_id: str, address: int, size: int) -> bytes | None:
@@ -173,7 +173,9 @@ def run_ppc_compare(test: BehaviourTest, *, require_dolphin: bool = False) -> Pp
         log_path.unlink()
 
     gdb_port = 2160
-    _write_dolphin_user_ini(user_dir, gdb_port=gdb_port, log_path=log_path)
+    _write_dolphin_user_ini(
+        user_dir, gdb_port=gdb_port, log_path=log_path, cpu_core=test.ppc_cpu_core
+    )
     result_addr = _result_address(build)
     exit_addr = lookup_symbol_address(build.map_path, "exit") if build.map_path else None
 

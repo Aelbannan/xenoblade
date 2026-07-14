@@ -46,32 +46,24 @@ python tools/coop/run.py cycle view-set-current --hypothesis "..." --next-change
 | Strict relocs | `coop.json` → `functionRelocDiffs=data_value` |
 | Context for scratch | `python tools/coop/run.py ctx <path>` |
 | Match policy | `FULL_MATCH` only; log in `docs/evidence/decomp/attempts.jsonl` |
-| Behaviour below 100% | `python tools/coop/run.py behaviour compare <id>` + `behaviour audit` — see `tools/test/compare_behaviour/README.md` |
+| Behaviour below 100% | optional `behaviour ppc` / equivalence — host dual-oracle removed; see `tools/test/compare_behaviour/README.md` |
 | No asm matching | See `SKILL.md` “Low-level techniques — do not use” |
 
 `coop.json` passes `--config functionRelocDiffs=data_value` to objdiff — stricter than upstream default (`functionRelocDiffs=none`).
 
 ---
 
-## Behaviour comparison (non-`FULL_MATCH`)
+## Behaviour comparison (static + optional PPC)
 
-When static objdiff match is **below 100%**, byte identity is not yet proven. Use **host dual-oracle tests** (`tools/test/compare_behaviour/`):
+When static objdiff match is **below 100%**, byte identity is not yet proven. Prefer continuing toward `FULL_MATCH` / §17.6 patches. Optional evidence:
 
 ```bash
-python tools/coop/run.py behaviour audit
-python tools/coop/run.py behaviour compare view-rect-data-clamp
+python tools/coop/run.py behaviour audit              # size budget
+python tools/coop/run.py behaviour ppc <test-id>      # when ppc_source registered
+python tools/coop/run.py equivalence check-hex …      # Capstone+Z3 for supported blocks
 ```
 
-Each test file defines `retail_*` (oracle from asm) and `decomp_*` (from source) with the same inputs. Minimum scenario counts:
-
-| Match % | Min `run_scenario` calls |
-|---------|--------------------------|
-| 95–99.9 | 8 |
-| 90–94.9 | 12 |
-| 80–89.9 | 20 |
-| < 80 | 30 |
-
-Do not treat semantics as settled until `behaviour audit` passes. Log `runtime_test: behaviour:<test-id>` in `attempts.jsonl`.
+Host dual-oracle `host/*.cpp` tests were **removed**. See `tools/test/compare_behaviour/README.md`.
 
 ---
 

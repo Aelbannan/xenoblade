@@ -24,4 +24,4 @@ When editing `src/**`, `libs/**`, or `configure.py`, run `coop run cycle` or `co
 
 **Split object size:** decomp `.text` must fit the retail split slice (`config/<region>/splits.txt`). Run `python tools/coop/run.py size <unit>` — `diff`, `cycle`, and `behaviour compare` also print a `size:` line and fail when over budget.
 
-**Below 100% static match:** register and pass `python tools/coop/run.py behaviour compare <test-id>` with extensive host scenarios (see `tools/test/compare_behaviour/README.md`). Run `behaviour audit` before claiming `BEHAVIOR_VERIFIED`.
+**Below 100% static match:** keep iterating toward `FULL_MATCH` (or §17.6 exceptions). Optional evidence: `behaviour ppc <test-id>` when a harness exists, or Capstone+Z3 via `equivalence`. Host dual-oracle tests were removed.

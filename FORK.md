@@ -20,7 +20,7 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 | Symbol recovery | [`tools/symrecover.py`](tools/symrecover.py) | `UnkClass_*` list/show/xref/rename |
 | Behaviour tests | [`tools/test/compare_behaviour/`](tools/test/compare_behaviour/) | Host + PPC retail-vs-decomp oracles |
 | PPC equivalence | [`tools/ppc_equivalence/`](tools/ppc_equivalence/) | Capstone + Z3 semantic equivalence for supported straight-line blocks |
-| DOL opcode census | [`tools/dol_opcodes.py`](tools/dol_opcodes.py) | Capstone scan of `main.dol` text sections → unique PPC mnemonics / primary opcodes |
+| DOL opcode census | [`tools/dol_opcodes/`](tools/dol_opcodes/) | Match `main.dol` words against vendored [PPC750CL `isa.yaml`](https://github.com/riptl/ppc750cl/blob/master/isa.yaml); optional Capstone compare |
 | Reloc postprocess | [`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py) | Rename MWCC `@N` pools → retail `lbl_eu_*` |
 | MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Living matching reference |
 | Evidence | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) | Attempt log (JSONL) |
@@ -42,7 +42,7 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 
 - Match bar is **`FULL_MATCH`** (100%) via `coop.json` (`match_policy: full`).
 - Reconstruction is **high-level C/C++ only** (no asm / register micro-matching in `src/**` / `libs/**`), with narrow exceptions in `PLAN.md` §17.6.
-- Below 100% static match → **mandatory** host behaviour tests + audit.
+- Below 100% static match → continue matching / §17.6; optional PPC harness (host dual-oracle tests removed).
 - Split object **`.text` size** must fit `config/<region>/splits.txt` before `Matching` / `FULL_MATCH`.
 
 ---
@@ -95,7 +95,7 @@ Config knobs (`coop.json` / example): `region` (`us` default), `match_policy`, `
 | `symbols …` | Wraps `tools/symrecover.py` |
 | `behaviour …` | Wraps `tools/test/compare_behaviour/run.py` |
 | `equivalence …` | Wraps `tools/ppc_equivalence/run.py` (`decode`, `check-hex`, `check`, `replay`) |
-| `opcodes …` | Wraps `tools/dol_opcodes.py` (default: this region's `main.dol`) |
+| `opcodes …` | Wraps `python -m tools.dol_opcodes` (default: PPC750CL isa.yaml match on this region's `main.dol`) |
 
 ### Library
 
@@ -140,13 +140,12 @@ Implementation: `tools/symbolrecover/lib/` (`parser`, `mwcc`, `catalog`, `xref`,
 
 **Primary doc:** [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md)
 
-Four layers on every registered test:
+Three layers on every registered test:
 
 | Layer | Check | Needs Dolphin? |
 |-------|-------|----------------|
 | **static** | objdiff instruction + reloc match | No |
 | **size** | decomp `.text` ≤ split budget | No |
-| **host** | Same inputs → retail oracle vs decomp → same outputs (native host binary) | No |
 | **ppc** | Minimal DOL: retail + decomp objects, headless Dolphin, GDB stub result buffer | Yes |
 
 ```bash
@@ -159,28 +158,17 @@ python3 tools/coop/run.py behaviour ppc --all
 
 Standalone: `python3 tools/test/compare_behaviour/run.py …`.
 
-### Policy (non-`FULL_MATCH`)
+### Policy
 
-Any symbol below 100% static match **must** have a `manifest.json` entry with `host_binary` and enough `run_scenario(...)` cases:
-
-| Static match | Min host scenarios |
-|--------------|-------------------|
-| ≥ 100% | 0 (optional) |
-| 95–99.9% | 8 |
-| 90–94.9% | 12 |
-| 80–89.9% | 20 |
-| < 80% | 30 |
-
-`audit` enforces coverage + size. Do not log `BEHAVIOR_VERIFIED` until audit passes.
+Acceptance remains **`FULL_MATCH`** + split-size fit. `audit` enforces size only for registered tests. Host dual-oracle binaries (`host/*.cpp`) were **removed** — do not reintroduce them.
 
 ### Layout
 
 ```text
 tools/test/compare_behaviour/
   manifest.json          # test registry + PPC flags
-  run.py                 # list | audit | static | host | ppc | compare
+  run.py                 # list | audit | static | ppc | compare
   README.md
-  host/*.cpp             # dual oracles (retail_* + decomp_*) + scenarios
   ppc/*.c                # MWCC harnesses, mocks, retail/decomp slices, stubs
   ppc/ldscript.lcf       # minimal DOL layout
   ppc/crt0.c             # entry
@@ -188,9 +176,8 @@ tools/test/compare_behaviour/
     ppc_builder.py       # link retail+decomp .o → test.dol (symbol prefixing, stubs)
     ppc_runner.py        # headless Dolphin + GDB stub readback
     gdb_stub.py          # Dolphin GDB protocol
-    host_runner.py       # compile/run host tests
     static_compare.py    # objdiff wrapper
-    audit.py / policy.py / manifest.py / map_lookup.py / paths.py
+    audit.py / manifest.py / map_lookup.py / paths.py
 ```
 
 ### How PPC tests work
@@ -199,33 +186,13 @@ tools/test/compare_behaviour/
 2. `ppc_builder.py` compiles the harness with MWCC (via `wibo`), prefixes retail/decomp symbols to avoid clashes, optionally injects `ppc/stubs/` and semantic **slices** when full `.o` link fails (`mwldeppc` undefined refs), links with `ldscript.lcf` → DOL.
 3. `ppc_runner.py` launches Dolphin `--batch --exec <test.dol>` with an isolated user folder (`General.GDBPort = 2160`).
 4. Harness writes a result struct (`BEHAVIOUR_RESULT_MAGIC = 0xBEEFCAFE`); runner reads it over the GDB stub.
-5. If Dolphin is missing, PPC is **SKIP** (host/static remain authoritative).
+5. If Dolphin is missing, PPC is **SKIP** (static/size remain authoritative).
 
 Configure Dolphin path via `"dolphin"` in `coop.json` or `DOLPHIN` env.
 
 ### Registered tests (manifest)
 
-| id | Unit | Host | PPC |
-|----|------|------|-----|
-| `game-set-view-rect` | `CGame` | yes | no — large undefined set |
-| `game-wk-standby-login` | `CGame` | yes | no — same |
-| `view-rect-data-clamp` | `CViewRectDataCore` | yes | **yes** |
-| `view-rect-data-store` | `CViewRectDataCore` | yes | **yes** |
-| `view-rect-data-init` | `CViewRectDataCore` | yes | **yes** |
-| `view-set-current-ring` | `CView` | yes | no — stack snapshot / link limits |
-| `view-attach-render-work` | `CView` | yes | no |
-| `cview-get-current-view` | `CView` | yes | **yes** (lbl oracle slices) |
-| `cview-get-split-line` | `CView` | yes | **yes** (semantic slices) |
-| `cview-set-split-line` | `CView` | yes | **yes** |
-| `cview-set-disp` | `CView` | yes | **yes** |
-| `cview-wkupdate-gate` | `CView` | yes | no |
-| `cviewroot-getview` | `CViewRoot` | yes | **yes** (semantic slices) |
-| `mtrand-float-rng` | `MTRand` | yes | no (not wired; static host lock) |
-| `mtrand-integer-rng` | `MTRand` | yes | **yes** |
-| `mtrand-getinstance` | `MTRand` | yes | **yes** (BSS stub) |
-| `cfpadtask-update` | `CfPadTask` | yes | no — WPAD/KPAD externs |
-| `cfpadtask-updatecfdapdata` | `CfPadTask` | yes | no |
-| `proc-pss-create-view` | `CProc` | yes | no |
+See `tools/test/compare_behaviour/manifest.json` for the full registry. Rows with `ppc_source` run headless Dolphin; others are static/size only.
 
 **PPC techniques used when full `.o` won’t link:**
 
@@ -337,9 +304,8 @@ claim symbol in docs/ownership.csv
 → high-level C++ in owning TU
 → python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
 → if match < 100%:
-     extend tools/test/compare_behaviour/ host (+ ppc_source if linkable)
-     python3 tools/coop/run.py behaviour compare <test-id>
-     python3 tools/coop/run.py behaviour audit
+     optional: add/run ppc_source harness when unit links
+     python3 tools/coop/run.py behaviour ppc <test-id>   # when registered
 → python3 tools/coop/run.py size <unit>
 → on FULL_MATCH: check TASKS.md; optional rename-all; flip Matching in configure.py
 → append reusable MWCC insight to docs/MWCC_REFERENCE.md

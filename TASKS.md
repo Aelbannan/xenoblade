@@ -239,30 +239,30 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CBattleState virtual #5`** (`CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv`) · `0x80146DAC` · size `0x13DC`
   - Map level: STRUCTURAL
   - Large core state/update routine; trace player confirm, target, and Art activation.
-- [ ] **`CBattleState virtual #6`** (`CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv`) · `0x80148210` · size `0x154`
-  - Map level: TRACE_ONLY
-  - Potential transition/input helper.
+- [ ] **`CBattleState virtual #6`** (`CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv`) · `0x80148210` · size `0x154` · **HIGH_MATCH ~92.2%**
+  - Map level: HIGH_MATCH
+  - Bitfield set + 8-slot entry match/clamp/fill, tail-call vt+0x48; host `battlestate-vfunc6` (16 scenarios) PASS. Remaining gap is GPR/FPR destination-register allocation only (see `docs/MWCC_REFERENCE.md`).
 - [ ] **`CBattleState virtual #8`** (`CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv`) · `0x801485EC` · size `0x428`
   - Map level: TRACE_ONLY
   - Large state routine; classify writes and command calls.
 - [ ] **`CBattleState virtual #10`** (`CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv`) · `0x80148A18` · size `0x444`
   - Map level: TRACE_ONLY
   - Large state routine; likely mode-specific battle behavior.
-- [ ] **`CBattleState virtual #11`** (`CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv`) · `0x80148FC8` · size `0x174`
+- [ ] **`CBattleState virtual #11`** (`CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv`) · `0x80148FC8` · size `0x174` — CODE_MATCH ~96.2% (Chaitin soft-cap); behaviour `battlestate-vfunc11` PASS; leave unchecked until FULL_MATCH
   - Map level: TRACE_ONLY
   - Candidate request/transition helper.
 - [ ] **`CBattleState virtual #26`** (`CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv`) · `0x80148364` · size `0x12C`
   - Map level: TRACE_ONLY
   - Candidate action/target helper.
-- [ ] **`CBattleState virtual #29`** (`CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv`) · `0x80148490` · size `0x15C`
-  - Map level: TRACE_ONLY
-  - Candidate mode transition/command helper.
-- [ ] **`CBattleState virtual #31`** (`CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv`) · `0x80149EA4` · size `0x160`
-  - Map level: TRACE_ONLY
-  - Candidate late action state helper.
-- [ ] **`CBattleState virtual #33`** (`CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv`) · `0x8014A014` · size `0x160`
-  - Map level: TRACE_ONLY
-  - Candidate late action state helper.
+- [ ] **`CBattleState virtual #29`** (`CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv`) · `0x80148490` · size `0x15C` — CODE_MATCH ~95.5% (Chaitin soft-cap); behaviour `battlestate-vfunc29` PASS; leave unchecked until FULL_MATCH
+  - Map level: CODE_MATCH ~95.5%
+  - Clear 8 entries @+0x1388 + id scan / unk15AC bit clear + memset +0x152C.
+- [x] **`CBattleState virtual #31`** (`CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv`) · `0x80149EA4` · size `0x160`
+  - Map level: FULL_MATCH (100%)
+  - Fake-`Fv` `(self, u32 id)`; leaf id→bitmask switch; `return (self->unk4 & mask) != 0`.
+- [x] **`CBattleState virtual #33`** (`CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv`) · `0x8014A014` · size `0x160`
+  - Map level: FULL_MATCH (100%)
+  - Same leaf as vfunc31; id→mask vs `unk6` at `this+0x6`.
 
 ### 7.3 CAIAction.cpp
 
@@ -297,9 +297,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CMenuArtsSelect::Move()`** (`Move__15CMenuArtsSelectFv`) · `0x80103D68` · size `0xBB4`
   - Map level: STRUCTURAL
   - Cursor input, selected Art, prompt state, and UI update.
-- [ ] **`CMenuArtsSelect::cbRenderBefore()`** (`cbRenderBefore__15CMenuArtsSelectFv`) · `0x8010491C` · size `0x3C0`
-  - Map level: STRUCTURAL
-  - Final render-time actor/Art data and transform binding.
+- [ ] **`CMenuArtsSelect::cbRenderBefore()`** (`cbRenderBefore__15CMenuArtsSelectFv`) · `0x8010491C` · size `0x3C0` · **95.2% CODE_MATCH**; host `menu-arts-cbrender` PASS
+  - Map level: CODE_MATCH
+  - Soft-cap: Chaitin regalloc across bitfield loops.
 
 ### 8.2 kyoshin/menu/CMenuBattlePlayerState.cpp
 
@@ -321,15 +321,15 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 8.3 Other battle-HUD units
 
-- [ ] **`CMenuEnemyState::Move()`** (`Move__15CMenuEnemyStateFv`) · `0x80110888` · size `0x9B8`
+- [ ] **`CMenuEnemyState::Move()`** (`Move__15CMenuEnemyStateFv`) · `0x80110888` · size `0x9B8` · HIGH_MATCH ~85.6%; host `menu-enemy-move` (24) PASS; soft-capped on `_savegpr_21` vs retail `_savegpr_22` (see MWCC_REFERENCE §8c14)
   - Map level: STRUCTURAL
   - P2 target panel and target-specific status.
 - [ ] **`CMenuEnemyState::cbRenderBefore()`** (`cbRenderBefore__15CMenuEnemyStateFv`) · `0x80111240` · size `0x274` · CODE_MATCH ~98.2%; host `menu-enemy-cbrender` (10) PASS
   - Map level: STRUCTURAL
   - Per-view enemy-panel rendering.
-- [ ] **`CMenuPTGauge::Move()`** (`Move__12CMenuPTGaugeFv`) · `0x80188714` · size `0x35C`
-  - Map level: TRACE_ONLY
-  - Shared party gauge; classify as shared or duplicated.
+- [ ] **`CMenuPTGauge::Move()`** (`Move__12CMenuPTGaugeFv`) · `0x80188714` · size `0x35C` · **97.1% CODE_MATCH**; host `menu-ptgauge-move` (16) PASS
+  - Map level: CODE_MATCH
+  - Soft-cap: MWCC allocation / float schedule / byte-range folding.
 - [x] **`CMenuPTGauge::cbRenderBefore()`** (`cbRenderBefore__12CMenuPTGaugeFv`) · `0x80188A70` · size `0xAC`
   - Map level: FULL_MATCH
   - Final shared gauge placement.
@@ -381,9 +381,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`COccCulling::addFrustum(...)`** (`addFrustum__11COccCullingFRCQ22ml5CVec3RCQ22ml5CVec3RCQ22ml5CVec3Ul`) · `0x801A1F6C` · size `0x12C` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Builds/records frustum candidates; `lbl_eu_80667C88` 1.0f in inlined `CCullFrustum::init`.
-- [ ] **`COccCulling::setFrustum(CCullFrustum*)`** (`setFrustum__11COccCullingFP12CCullFrustum`) · `0x801A2098` · size `0x588`
-  - Map level: STRUCTURAL
-  - Primary per-view culling-state setup.
+- [ ] **`COccCulling::setFrustum(CCullFrustum*)`** (`setFrustum__11COccCullingFP12CCullFrustum`) · `0x801A2098` · size `0x588` · **88.5% HIGH_MATCH**; host `occ-set-frustum` (20) PASS
+  - Map level: HIGH_MATCH
+  - Soft-cap: MWCC schedule/regalloc in matrix/plane setup; split spare ~0x14.
 - [x] **`COccCulling frustum helper`** (`func_801A0F04__11COccCullingFPQ22ml8CFrustum`) · `0x801A2620` · size `0x284` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Classify visibility-list generation and fixed capacities.
@@ -406,12 +406,12 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CUICfManager::Move()`** (`Move__12CUICfManagerFv`) · `0x801332A4` · size `0x97C`
   - Map level: STRUCTURAL
   - Central UI state and event/menu activity.
-- [ ] **`CUICfManager helper`** (`func_80133324__12CUICfManagerFv`) · `0x80133DF8` · size `0x3C0`
+- [ ] **`CUICfManager helper`** (`func_80133324__12CUICfManagerFv`) · `0x80133DF8` · size `0x3C0` — CODE_MATCH 98.0%; behaviour host `uicf-func-80133324` (35 scenarios) + audit PASS; remaining gap is Chaitin savedRet spill/reload regalloc, not structural (see MWCC_REFERENCE.md §8c17)
   - Map level: TRACE_ONLY
   - Candidate mode/window state query/update.
-- [ ] **`CUIWindowManager::Move()`** (`Move__16CUIWindowManagerFv`) · `0x8013D0C8` · size `0x4DC`
-  - Map level: STRUCTURAL
-  - Modal window state, input capture, and open/close transitions.
+- [ ] **`CUIWindowManager::Move()`** (`Move__16CUIWindowManagerFv`) · `0x8013D0C8` · size `0x4DC` · **79.3% HIGH_MATCH**; host `uiwindowmanager-move` (34) PASS
+  - Map level: HIGH_MATCH
+  - Soft-cap: MWCC regalloc in 8× unrolled unlink loops.
 - [x] **`CUICfManager::Init()`** (`Init__12CUICfManagerFv`) · `0x80132EC8` · size `0x2E0` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - §17.6 `asm void` — packed sp+0xdc tail copy + `-0x1A0`/`stmw r22` frame.

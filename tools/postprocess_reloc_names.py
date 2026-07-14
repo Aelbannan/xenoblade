@@ -84,6 +84,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Weak IWorkEvent/CWorkThread stubs after setValues; retail .text ends at 0x8E8.
         trim_text_size=0x8E8,
     ),
+    "CMenuBattlePlayerState.o": UnitRules(
+        # Move: MWCC int→float biases as TU-local @N; retail lbl_eu_80666FA8/FB8.
+        pool_patterns=(
+            (struct.pack(">II", MAGIC_HI, 0), "lbl_eu_80666FA8"),
+            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80666FB8"),
+        ),
+    ),
     "COccCulling.o": UnitRules(
         # Inline CPlane::isOnPositiveSide emits a TU-local 0.0f pool.
         pool_patterns=(
@@ -105,6 +112,10 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CUIBattleManager.o": UnitRules(
+        # functions.hpp declares C++-linkage bool; retail reloc is unmangled.
+        exact_renames=(
+            ("func_8009CF8C__Fi", "func_8009CF8C"),
+        ),
         # Init: MWCC Chaitin colors PTMF pair as r4/r0; retail uses r0/r4
         # (semantics identical; host battle-mgr-init PASS). PLAN.md §17.6.
         insn_patches=(

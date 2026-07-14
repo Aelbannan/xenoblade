@@ -5,7 +5,7 @@
 #include "monolib/scn.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 
-// Minimal layout for batch-14f matching (Term only).
+// Minimal layout for batch-14f/14g/14j matching (Term / cbRenderBefore / Move).
 // Retail: CTTask<IUIBattle>, IWorkEvent@0x58, IScnRender@0x5c, IObjectInfo@0x60.
 
 // Object pointed by lbl_eu_80663F24 (SDA); Term clears +0xb0 and ORs +0x68.
@@ -16,7 +16,7 @@ struct UnkArtsSelectRef {
     void* unkB0; // 0xB0
 };
 
-// Element of unk200[]; cbRenderBefore only reads the low bit of +0xBB.
+// Element of unk200[]; flag byte at +0xBB (Pane::mFlag / bit0).
 struct UnkArtsSelectEntry {
     u8 unk00[0xBB];
     u8 unkBB; // 0xBB - bit0 gates per-slot draw in cbRenderBefore
@@ -25,46 +25,62 @@ struct UnkArtsSelectEntry {
 class CMenuArtsSelect {
 public:
     void Term();
+    void Move();
     void cbRenderBefore();
 
-    u8 unk00[0x64];
+    u8 unk00[0x54];
+    u8 unk54; // 0x54 - set when case-3 hide anim completes
+    u8 unk55[0x64 - 0x55];
     CScn* mScn; // 0x64
     u32 unk68; // 0x68
     UnkClass_8045F564 unk6C; // 0x6C
-    u8 unk7C[0x80 - 0x7C];
+    s8 unk7C; // 0x7C
+    s8 unk7D; // 0x7D
+    s8 unk7E; // 0x7E
+    u8 unk7F;
     nw4r::lyt::Layout* unk80; // 0x80
-    u8 unk84[0x8C - 0x84];
+    nw4r::lyt::AnimTransform* unk84; // 0x84
+    nw4r::lyt::AnimTransform* unk88; // 0x88
     nw4r::lyt::Layout* unk8C; // 0x8C
     u8 unk90[0x98 - 0x90];
     nw4r::lyt::Layout* unk98; // 0x98
-    u8 unk9C[0xA4 - 0x9C];
+    u8 unk9C[0xA0 - 0x9C];
+    nw4r::lyt::AnimTransform* unkA0; // 0xA0
     nw4r::lyt::Layout* unkA4[8]; // 0xA4
-    u8 unkC4[0x104 - 0xC4];
+    nw4r::lyt::AnimTransform* unkC4[8]; // 0xC4
+    nw4r::lyt::AnimTransform* unkE4[8]; // 0xE4
     nw4r::lyt::Layout* unk104[9]; // 0x104
-    u8 unk128[0x170 - 0x128];
+    nw4r::lyt::AnimTransform* unk128[9]; // 0x128
+    nw4r::lyt::AnimTransform* unk14C[9]; // 0x14C
     nw4r::lyt::Layout* unk170[9]; // 0x170
-    u8 unk194[0x1B8 - 0x194];
+    nw4r::lyt::AnimTransform* unk194[9]; // 0x194
     nw4r::lyt::Layout* unk1B8[9]; // 0x1B8 - cbRenderBefore loop keyed by unk30C bits
-    u8 unk1DC[0x200 - 0x1DC];
+    nw4r::lyt::AnimTransform* unk1DC[9]; // 0x1DC
     UnkArtsSelectEntry* unk200[9]; // 0x200 - indexed (i+1)%9 in cbRenderBefore
-    u8 unk224[0x294 - 0x224];
+    u8 unk224[0x26C - 0x224];
+    UnkArtsSelectEntry* unk26C[7]; // 0x26C..0x284 - visibility flag group
+    u8 unk288[0x294 - 0x288];
     nw4r::lyt::Layout* unk294; // 0x294
-    s32 unk298; // 0x298 - cbRenderBefore loop-1 gate (drawn when > 1)
-    u8 unk29C[0x2C0 - 0x29C];
+    s32 unk298; // 0x298 - main FSM / cbRenderBefore loop-1 gate (drawn when > 1)
+    s32 unk29C; // 0x29C - secondary FSM when unk328 == 4
+    s32 unk2A0[8]; // 0x2A0 - per-art slot substate (9/10/11)
     s32 unk2C0[9]; // 0x2C0 - per-slot mode, compared against 0xC
-    u8 unk2E4[0x308 - 0x2E4];
+    s32 unk2E4[9]; // 0x2E4 - per-slot alt mode (0x10..0x13)
     u32 unk308; // 0x308 - render flag bits (cbRenderBefore)
     u16 unk30C; // 0x30C - per-slot (unk1B8) visibility bits
     u8 unk30E[0x310 - 0x30E];
     u32 unk310; // 0x310 - per-slot (unk104) latch bits 0..8
     u32 unk314; // 0x314 - per-slot (unk170) latch bits 0..8
     u32 unk318; // 0x318 - per-slot (unkA4) latch bits 0..7
-    u8 unk31C[0x328 - 0x31C];
+    u8 unk31C[0x324 - 0x31C];
+    s32 unk324; // 0x324 - compared to 4 after func_80107580
     s32 unk328; // 0x328 - render mode (unk98 draw gate == 4)
     u8 unk32C[0x334 - 0x32C];
     u8 unk334; // 0x334
     u8 unk335[0x340 - 0x335];
     u16 unk340; // 0x340 - gate for per-slot (unkA4) draw call
+    u8 unk342[0x348 - 0x342];
+    u8 unk348; // 0x348 - party-target latch
 };
 
 extern "C" {

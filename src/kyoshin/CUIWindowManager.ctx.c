@@ -12312,6 +12312,15 @@ struct IUIWindowSubView {
 // `reslist<P9IUIWindow>` / `__dt__9IUIWindowFv`). Only the fields touched by
 // CUIWindowManager::Move are named; the rest is CTTask<IUIWindow>/CProcess.
 class IUIWindow {
+private:
+    // Field order matters here: this private CTTask/CProcess prefix must
+    // come first in declaration order so the public members below land at
+    // their retail offsets (MWCC lays out members in declaration order,
+    // independent of the access-specifier they fall under).
+    u8 unk00[0x39];
+    bool mIsRemove; //0x39 (CProcess::mIsRemove)
+    u8 unk3A[0x5C - 0x3A];
+
 public:
     void SetRemove() { mIsRemove = true; }
 
@@ -12319,14 +12328,10 @@ public:
     s32 unk60;               //0x60 - fallback timer when unk5C is null
     bool unk64;              //0x64 - pending removal flag
     bool unk65;              //0x65 - pending update-mark flag
-
-private:
-    u8 unk00[0x39];
-    bool mIsRemove; //0x39 (CProcess::mIsRemove)
-    u8 unk3A[0x5C - 0x3A];
 };
 
 typedef reslist<IUIWindow*>::iterator WindowIter;
+typedef _reslist_node<IUIWindow*> WindowNode;
 
 void CUIWindowManager::Move() {
     CUIWindowManager* inst = lbl_eu_80664088;
@@ -12352,65 +12357,75 @@ void CUIWindowManager::Move() {
         }
     }
 
-    // If any window in a queue already needs an update (or a mark-all
-    // request is pending), force the flag on every window in that queue.
+    // Walk each queue looking for the first window that already needs an
+    // update (or a global mark-all request); once found, propagate the
+    // update flag to that window and every window after it in the queue.
     {
-        bool markAll = false;
-        for (WindowIter it = mWindowList1.begin(); it != mWindowList1.end(); ++it) {
+        WindowIter it = mWindowList1.begin();
+        for (; it != mWindowList1.end(); ++it) {
             if ((*it)->unk65 != 0 || unkA1 != 0) {
-                markAll = true;
                 break;
             }
         }
-        if (markAll) {
-            for (WindowIter it = mWindowList1.begin(); it != mWindowList1.end(); ++it) {
-                (*it)->unk65 = true;
-            }
+        for (; it != mWindowList1.end(); ++it) {
+            (*it)->unk65 = true;
         }
     }
     {
-        bool markAll = false;
-        for (WindowIter it = mWindowList2.begin(); it != mWindowList2.end(); ++it) {
+        WindowIter it = mWindowList2.begin();
+        for (; it != mWindowList2.end(); ++it) {
             if ((*it)->unk65 != 0 || unkA1 != 0) {
-                markAll = true;
                 break;
             }
         }
-        if (markAll) {
-            for (WindowIter it = mWindowList2.begin(); it != mWindowList2.end(); ++it) {
-                (*it)->unk65 = true;
-            }
+        for (; it != mWindowList2.end(); ++it) {
+            (*it)->unk65 = true;
         }
     }
 
     // Remove every window flagged for closure (or all of them, if a
-    // close-all request is pending) from each queue.
-    WindowIter pending[18];
+    // close-all request is pending) from each queue. The pending buffer is
+    // an array of raw list-node pointers (a trivial type) rather than
+    // reslist<T>::iterator, since iterator's non-trivial default ctor would
+    // force MWCC to zero-init all 18 slots up front - overhead retail's
+    // code never pays.
+    WindowNode* node;
+    WindowNode* pending[18];
     int pendingCount;
     int i;
+    WindowNode* prev;
+    WindowNode* next;
 
     pendingCount = 0;
-    for (WindowIter it = mWindowList1.begin(); it != mWindowList1.end(); ++it) {
-        IUIWindow* window = *it;
+    for (node = mWindowList1.mStartNodePtr->mNext; node != mWindowList1.mStartNodePtr; node = node->mNext) {
+        IUIWindow* window = node->mItem;
         if (window->unk64 != 0 || unkA0 != 0) {
+            pending[pendingCount++] = node;
             window->SetRemove();
-            pending[pendingCount++] = it;
         }
     }
     for (i = 0; i < pendingCount; i++) {
-        mWindowList1.erase(pending[i]);
+        prev = pending[i]->mPrev;
+        next = pending[i]->mNext;
+        prev->mNext = next;
+        next->mPrev = prev;
+        pending[i]->mNext = NULL;
     }
 
     pendingCount = 0;
-    for (WindowIter it = mWindowList2.begin(); it != mWindowList2.end(); ++it) {
-        IUIWindow* window = *it;
+    for (node = mWindowList2.mStartNodePtr->mNext; node != mWindowList2.mStartNodePtr; node = node->mNext) {
+        IUIWindow* window = node->mItem;
         if (window->unk64 != 0 || unkA0 != 0) {
+            pending[pendingCount++] = node;
             window->SetRemove();
-            pending[pendingCount++] = it;
         }
     }
     for (i = 0; i < pendingCount; i++) {
-        mWindowList2.erase(pending[i]);
+        prev = pending[i]->mPrev;
+        next = pending[i]->mNext;
+        prev->mNext = next;
+        next->mPrev = prev;
+        pending[i]->mNext = NULL;
     }
 
     unkA0 = false;

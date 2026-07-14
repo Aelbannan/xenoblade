@@ -194,6 +194,9 @@ setRect_tail:
 }
 
 bool CView::attachRenderWork(CWorkThread* pThread) {
+    // Dual context-ring enqueue: tag0+WorkID then tag1+thread*. Typed
+    // CMsgParam<10> restores exact -0x80 / stmw r21 / 0x1E0 / stwux; remaining
+    // dual-inline snap schedule is closed by CView.o insn_patches (§17.6).
     CMsgParam<10>& messages =
         *reinterpret_cast<CMsgParam<10>*>(&mContextMsgVtable);
 
@@ -204,149 +207,6 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     messages.last().unk23 = 3;
     messages.last().wid = (WORK_ID)pThread;
     return true;
-#if 0
-    // Dual context-ring enqueue. Retail -0x80: snapB@sp+0x0C, snapA@sp+0x30,
-    // stmw r21@0x54. Volatile snaps + ringBase+= (stwux). Soft cap matches
-    // setCurrent (frame/spill vs uninit snap homes).
-    struct CtxSnap {
-        u32 w0;
-        u32 w1;
-        u32 w2;
-        u32 w3;
-        u32 w4;
-        u32 w5;
-        u32 w6;
-        s16 half;
-        u8 byte;
-        u8 pad;
-    };
-    volatile CtxSnap snapB;
-    volatile CtxSnap snapA;
-    u32 tag0;
-    u32 flag;
-    u32 tag1;
-    u32 a0;
-    u32 a1;
-    u32 a2;
-    u32 a3;
-    u32 a4;
-    u32 a5;
-    u32 a6;
-    s16 aHalf;
-    u8 aByte;
-    u32 b0;
-    u32 b1;
-    u32 b2;
-    u32 b3;
-    u32 b4;
-    u32 b5;
-    u32 b6;
-    s16 bHalf;
-    u8 bByte;
-    u32 workId;
-    s32 sumSigned;
-    s32 capSigned;
-    s32 slotIndex;
-    u32 byteOff;
-    u8* ringBase;
-    u32 writeIdx;
-    u32 prevIdx;
-    u32 sumU;
-    u32 slotU;
-
-    tag0 = 0;
-    flag = 3;
-    tag1 = 1;
-
-    a0 = snapA.w0;
-    a1 = snapA.w1;
-    a3 = snapA.w3;
-    a4 = snapA.w4;
-    a5 = snapA.w5;
-    a6 = snapA.w6;
-    aHalf = snapA.half;
-    aByte = snapA.byte;
-    b0 = snapB.w0;
-    b1 = snapB.w1;
-    b2 = snapB.w2;
-
-    workId = pThread->mWorkID;
-    a2 = snapA.w2;
-    b4 = snapB.w4;
-    b3 = snapB.w3;
-
-    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
-    capSigned = (s32)mContextRingCapacity;
-    slotIndex = sumSigned / capSigned;
-    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
-    ringBase = (u8*)mContextRingBase;
-
-    *(u32*)(ringBase += byteOff) = tag0;
-    b5 = snapB.w5;
-    *(u32*)(ringBase + 0x4) = a0;
-    b6 = snapB.w6;
-    *(u32*)(ringBase + 0x8) = a1;
-    bHalf = snapB.half;
-    *(u32*)(ringBase + 0xC) = a2;
-    bByte = snapB.byte;
-    *(u32*)(ringBase + 0x10) = a3;
-    *(u32*)(ringBase + 0x14) = a4;
-    *(u32*)(ringBase + 0x18) = a5;
-    *(u32*)(ringBase + 0x1C) = a6;
-    *(s16*)(ringBase + 0x20) = aHalf;
-    ringBase[0x22] = aByte;
-    ringBase[0x23] = (u8)tag0;
-
-    writeIdx = mContextRingWriteIndex + 1;
-    prevIdx = writeIdx - 1;
-    mContextRingWriteIndex = writeIdx;
-    unk3FC = prevIdx;
-
-    sumU = unk3F0 + prevIdx;
-    slotU = sumU / mContextRingCapacity;
-    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    ringBase[0x23] = (u8)flag;
-
-    sumU = unk3F0 + unk3FC;
-    slotU = sumU / mContextRingCapacity;
-    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    *(u32*)(ringBase + 0x4) = workId;
-
-    sumSigned = (s32)unk3F0 + (s32)mContextRingWriteIndex;
-    capSigned = (s32)mContextRingCapacity;
-    slotIndex = sumSigned / capSigned;
-    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
-    ringBase = (u8*)mContextRingBase;
-
-    *(u32*)(ringBase += byteOff) = tag1;
-    *(u32*)(ringBase + 0x4) = b0;
-    *(u32*)(ringBase + 0x8) = b1;
-    *(u32*)(ringBase + 0xC) = b2;
-    *(u32*)(ringBase + 0x10) = b3;
-    *(u32*)(ringBase + 0x14) = b4;
-    *(u32*)(ringBase + 0x18) = b5;
-    *(u32*)(ringBase + 0x1C) = b6;
-    *(s16*)(ringBase + 0x20) = bHalf;
-    ringBase[0x22] = bByte;
-    ringBase[0x23] = (u8)tag0;
-
-    writeIdx = mContextRingWriteIndex + 1;
-    mContextRingWriteIndex = writeIdx;
-    prevIdx = writeIdx - 1;
-    unk3FC = prevIdx;
-
-    sumU = unk3F0 + prevIdx;
-    slotU = sumU / mContextRingCapacity;
-    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    ringBase[0x23] = (u8)flag;
-
-    sumU = unk3F0 + unk3FC;
-    slotU = sumU / mContextRingCapacity;
-    ringBase = (u8*)mContextRingBase + (sumU - slotU * mContextRingCapacity) * 0x24u;
-    *(u32*)(ringBase + 0x4) = (u32)pThread;
-
-    return true;
-#endif
 }
 
 void CView::detachRenderWork(CWorkThread* pThread) {

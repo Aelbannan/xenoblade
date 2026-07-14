@@ -221,7 +221,7 @@ This is the highest-value P0 decompilation slice. The first implementation may u
 | `CView::getSplitLine()` | `getSplitLine__5CViewFv` | `0x8043F8D8` | `0x94` | Existing split-related field may reveal native layout support. | **FULL_MATCH** |
 | `CView::setSplitLine(short)` | `setSplitLine__5CViewFs` | `0x8043F96C` | `0x9C` | Potentially configures a native split boundary. Must be understood before inventing a new mechanism. | **FULL_MATCH** |
 | `CView::updateMsg()` | `updateMsg__5CViewFv` | `0x8043FA08` | `0x798` | Classify per-frame view messages and side effects. | **74.4% HIGH_MATCH** |
-| `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **85.0% HIGH_MATCH** |
+| `CView::attachRenderWork(CWorkThread*)` | `attachRenderWork__5CViewFP11CWorkThread` | `0x804401A0` | `0x1E0` | Shows how render jobs are associated with a view. | **FULL_MATCH** (`CMsgParam` + §17.6 `insn_patches`) |
 | `CView::detachRenderWork(CWorkThread*)` | `detachRenderWork__5CViewFP11CWorkThread` | `0x80441470` | `0x8` | Needed for safe destruction/toggle. | **FULL_MATCH** |
 | `CView::wkUpdate()` | `wkUpdate__5CViewFv` | `0x80441478` | `0x14C` | Determine whether view update is camera-only, presentation-only, or stateful. | **FULL_MATCH** |
 | `CView::renderView()` | `renderView__5CViewFv` | `0x804415C4` | `0xCB4` | Primary candidate for a repeatable per-view render pass. | **95.3% CODE_MATCH** |

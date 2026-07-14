@@ -63,56 +63,13 @@ CView* CView::getCurrentView() {
     return lbl_eu_806655C8;
 }
 
-// PLAN.md section 17.6: retail -0x40 frame + caller-stack lwz at sp+0xC..0x2A interleaved
-// with r28-r31 spills; high-level C++ caps ~74.6%. Logged policy_exception in attempts.jsonl.
-asm void CView::setCurrent() {
-    stwu r1, -0x40(r1)
-    li r0, 0
-    stw r31, 0x3c(r1)
-    li r31, 6
-    lwz r12, 0xc(r1)
-    stw r30, 0x38(r1)
-    lwz r11, 0x10(r1)
-    stw r29, 0x34(r1)
-    lwz r10, 0x14(r1)
-    stw r28, 0x30(r1)
-    lwz r9, 0x18(r1)
-    lwz r6, 0x3f0(r3)
-    lwz r4, 0x3f4(r3)
-    lwz r5, 0x3f8(r3)
-    add r29, r6, r4
-    lwz r28, 0x3ec(r3)
-    divw r4, r29, r5
-    lwz r8, 0x1c(r1)
-    lwz r7, 0x20(r1)
-    lwz r6, 0x24(r1)
-    mullw r30, r4, r5
-    lhz r5, 0x28(r1)
-    lbz r4, 0x2a(r1)
-    subf r30, r30, r29
-    mulli r30, r30, 0x24
-    stwux r31, r28, r30
-    stw r12, 4(r28)
-    stw r11, 8(r28)
-    stw r10, 0xc(r28)
-    stw r9, 0x10(r28)
-    stw r8, 0x14(r28)
-    stw r7, 0x18(r28)
-    stw r6, 0x1c(r28)
-    sth r5, 0x20(r28)
-    stb r4, 0x22(r28)
-    stb r0, 0x23(r28)
-    lwz r4, 0x3f4(r3)
-    addi r4, r4, 1
-    stw r4, 0x3f4(r3)
-    subi r0, r4, 1
-    stw r0, 0x3fc(r3)
-    lwz r31, 0x3c(r1)
-    lwz r30, 0x38(r1)
-    lwz r29, 0x34(r1)
-    lwz r28, 0x30(r1)
-    addi r1, r1, 0x40
-    blr
+// Enqueue tag 6 onto the context ring (CMsgParam<10>). High-level enqueue
+// restores signed ring index + stwux; retail -0x40 spill interleave is closed
+// by CView.o insn_patches (§17.6). behaviour:view-set-current-ring.
+void CView::setCurrent() {
+    CMsgParam<10>& messages =
+        *reinterpret_cast<CMsgParam<10>*>(&mContextMsgVtable);
+    messages.enqueue(6);
 }
 
 void CView::setRect(const ml::CRect16& rect) {

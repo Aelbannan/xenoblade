@@ -215,7 +215,7 @@ This is the highest-value P0 decompilation slice. The first implementation may u
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
 | `CView::CView(...)` | `__ct__5CViewFPCcP11CWorkThread` | `0x8043EC5C` | `0x2D8` | Recovers layout, owned frame objects, and initialization invariants. | **FULL_MATCH** |
-| `CView::setCurrent()` | `setCurrent__5CViewFv` | `0x8043F3D8` | `0xBC` | Switches global/current view state before each render pass. | **FULL_MATCH** |
+| `CView::setCurrent()` | `setCurrent__5CViewFv` | `0x8043F3D8` | `0xBC` | Switches global/current view state before each render pass. | **FULL_MATCH** (`enqueue(6)` + §17.6 `insn_patches`) |
 | `CView::setRect(CRect16 const&)` | `setRect__5CViewFRCQ22ml7CRect16` | `0x8043F514` | `0x150` | Sets viewport rectangle and likely projection/scissor state. | **FULL_MATCH** |
 | `CView::setDisp(bool,bool)` | `setDisp__5CViewFbb` | `0x8043F7B8` | `0x70` | Controls visibility/display participation. | **FULL_MATCH** |
 | `CView::getSplitLine()` | `getSplitLine__5CViewFv` | `0x8043F8D8` | `0x94` | Existing split-related field may reveal native layout support. | **FULL_MATCH** |
@@ -648,7 +648,7 @@ src/kyoshin/cf/IFlagEvent.hpp
 
 | Function | Symbol-map name | US address | Size | Why it matters | Required recovery |
 |---|---|---:|---:|---|---|
-| `CUICfManager::Move()` | `Move__12CUICfManagerFv` | `0x801332A4` | `0x97C` | Central UI state and event/menu activity. | **HIGH_MATCH ~89.4%** |
+| `CUICfManager::Move()` | `Move__12CUICfManagerFv` | `0x801332A4` | `0x97C` | Central UI state and event/menu activity. | **HIGH_MATCH ~94.3%** |
 | `CUICfManager helper` | `func_80133324__12CUICfManagerFv` | `0x80133DF8` | `0x3C0` | Event id range dispatch (Fv+r4/r5/r6); SDA/list insert. | **CODE_MATCH ~98.2%** |
 | `CUIWindowManager::Move()` | `Move__16CUIWindowManagerFv` | `0x8013D0C8` | `0x4DC` | Modal window state, input capture, and open/close transitions. | **HIGH_MATCH** (~79.3%, host-verified) |
 | `CUICfManager::Init()` | `Init__12CUICfManagerFv` | `0x80132EC8` | `0x2E0` | Finds manager-owned menu/window components. | **STRUCTURAL** |

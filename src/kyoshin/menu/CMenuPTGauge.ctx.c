@@ -22905,42 +22905,1369 @@ protected:
 #endif
 /* end "nw4r/lyt.h" */
 
-// Minimal layout for batch-14e matching (cbRenderBefore / Move).
-class CMenuPTGauge {
+/* "src/kyoshin/menu/CMenuPTGauge.hpp" line 5 "monolib/lib/UnkClass_8045F564.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class UnkClass_8045F564{
 public:
-    void Move();
-    void cbRenderBefore();
+    int unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
 
-    // 0x00: base / unknown
-    u8 unk00[0x74];
-    nw4r::lyt::Layout* unk74; // 0x74 — layout draw target
-    nw4r::lyt::AnimTransform* unk78; // 0x78
-    u8 unk7C[0x88 - 0x7C];
-    nw4r::lyt::AnimTransform* unk88; // 0x88
-    s32 unk8C; // 0x8C — render/move state
-    s32 unk90; // 0x90 — PTMF / substate index
-    s32 unk94; // 0x94
-    s32 unk98; // 0x98
-    s32 unk9C; // 0x9C
-    s32 unkA0; // 0xA0 — gauge value latch
+    UnkClass_8045F564();
+    ~UnkClass_8045F564();
+
+    
+    void createRegion(int, int, const char*, int);
+    void func_8045F778();
+    void func_8045F810();
 };
-/* end "kyoshin/menu/CMenuPTGauge.hpp" */
 
-/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 2 "kyoshin/CTaskGame.hpp" */
+class Class_8045F858{
+public:
+    void* unk0;
+    u32 unk4;
+
+    Class_8045F858(UnkClass_8045F564* unkClass);
+    ~Class_8045F858();
+};
+/* end "monolib/lib/UnkClass_8045F564.hpp" */
+/* "src/kyoshin/menu/CMenuPTGauge.hpp" line 6 "monolib/scn.hpp" */
 #pragma once
 
-/* "src/kyoshin/CTaskGame.hpp" line 2 "types.h" */
+/* "libs/monolib/include/monolib/scn.hpp" line 2 "monolib/scn/CLight.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math.hpp" line 2 "monolib/math/CAttrTransform.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 3 "monolib/math/CVec3.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 2 "monolib/math/Utility.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/Utility.hpp" line 2 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+#define PI 3.14159265f
+#define DEG2RAD(x) ((x)*(PI/180.0f))
+
+//Utility math functions
+namespace ml{
+    namespace math{
+
+    inline float abs(float x){
+        return (double)nw4r::math::FAbs(x);
+    }
+
+    inline float sqrt(float x){
+        return nw4r::math::FSqrt(x);
+    }
+
+    inline float clamp(float x, float min, float max) {
+        if (x < min) x = min;
+        else if(x > max) x = max;
+        return x;
+    }
+
+    inline float sin(float x){
+        return nw4r::math::SinRad(x);
+    }
+
+    inline float cos(float x){
+        return nw4r::math::CosRad(x);
+    }
+
+    inline void sincos(float x, float& sinX, float& cosX){
+        sinX = sin(x);
+        cosX = cos(x);
+    }
+
+    inline float asin(float x){
+        x = clamp(x, -1.0f, 1.0f);
+        return nw4r::math::AsinRad(x);
+    }
+
+    inline float acos(float x){
+        x = clamp(x, -1.0f, 1.0f);
+        return nw4r::math::AcosRad(x);
+    }
+
+    inline float atan2(float y, float x){
+        return nw4r::math::Atan2FIdx(y, x);
+    }
+
+    inline float atan2Deg(float y, float x){
+        return nw4r::math::Atan2Deg(y, x);
+    }
+
+    inline float atan2Rad(float y, float x){
+        return nw4r::math::Atan2Rad(y, x);
+    }
+
+    inline float dot(const float* vec){
+        return vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
+    }
+
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 3 "monolib/math/MathConstants.hpp" */
+#pragma once
+
+namespace ml{
+    //General math constants
+    extern const float pi;
+    extern const float tau;
+    extern const float halfpi;
+    extern const float quarterpi;
+    extern const float epsilon;
+    extern const float rad2deg;
+    extern const float deg2rad;
+    extern const float huge;
+    extern const float hugeminus;
+} //namespace ml
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    //Possibly inherits from nw4r VEC3?
+    struct CVec3 {
+        static CVec3 zero;
+        static CVec3 unitX;
+        static CVec3 unitY;
+        static CVec3 unitZ;
+        static CVec3 unit;
+
+        CVec3(){}
+
+        CVec3(float x, float y, float z){
+            set(x, y, z);
+        }
+
+        CVec3(const CVec3& vec){
+            set(vec.x, vec.y, vec.z);
+        }
+
+        //Conversion functions for converting to the SDK/NW4R vector types.
+        operator Vec*(){
+            return reinterpret_cast<Vec*>(this);
+        }
+
+        operator const Vec*() const {
+            return reinterpret_cast<const Vec*>(this);
+        }
+
+        operator nw4r::math::VEC3*(){
+            return reinterpret_cast<nw4r::math::VEC3*>(this);
+        }
+
+        operator const nw4r::math::VEC3*() const {
+            return reinterpret_cast<const nw4r::math::VEC3*>(this);
+        }
+
+        void set(float x, float y, float z){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+        }
+
+        void set(const CVec3& vec){
+            x = vec.x;
+            y = vec.y;
+            z = vec.z;
+        }
+
+        void setZero(){
+            *this = zero;
+        }
+        
+        CVec3 operator-() const {
+            return CVec3(-x, -y, -z);
+        }
+
+        CVec3 operator+(const CVec3& rhs) const {
+            CVec3 out;
+            //add(out, *this, rhs);
+            nw4r::math::VEC3Add(out, *this, rhs);
+            return out;
+        }
+        CVec3 operator-(const CVec3& rhs) const {
+            CVec3 out;
+            sub(out, *this, rhs);
+            //nw4r::math::VEC3Sub(out, *this, rhs);
+            return out;
+        }
+        CVec3 operator*(float x) const {
+            CVec3 out;
+            scale(out, *this, x);
+            return out;
+        }
+        CVec3 operator/(float x) const {
+            float r = 1/x;
+            return *this * r;
+        }
+
+        CVec3& operator+=(const CVec3& rhs) {
+            add(*this, *this, rhs);
+            return *this;
+        }
+        CVec3& operator-=(const CVec3& rhs) {
+            sub(*this, *this, rhs);
+            return *this;
+        }
+        CVec3& operator*=(float x) {
+            scale(*this, *this, x);
+            return *this;
+        }
+        CVec3& operator/=(float x) {
+            return *this *= (1/x);
+        }
+
+        bool operator==(const CVec3& vec) const {
+            return x == vec.x && y == vec.y && z == vec.z;
+        }
+
+        bool operator!=(const CVec3& vec) const {
+            return x != vec.x || y != vec.y || z != vec.z;
+        }
+
+        void normalize(){
+            if(!isZero()) {
+                normalizeSub();
+            }else{
+                set(0,0,1);
+            }
+        }
+
+        //Unofficial
+        void normalizeSub(){
+            if(x*x + y*y + z*z == 0.0f){
+                setZero();
+            }else {
+                PSVECNormalize(*this,*this);
+            }
+        }
+        
+        //Unofficial
+        float magnitude() const {
+            return x*x + y*y + z*z;
+        }
+
+        float getLength() const {
+            return math::sqrt(magnitude());
+        }
+
+        bool isZero() const {
+            //TODO: this can't be it, right???
+            bool result = false;
+            bool temp = false;
+            if(math::abs(x) <= epsilon && math::abs(y) <= epsilon){
+                temp = true;
+            }
+            if(temp && math::abs(z) <= epsilon) result = true;
+            return result;
+        }
+
+        bool isErr() const;
+
+        //TODO: properly figure out these asm inlines
+
+        static float dot(const CVec3& lhs, const CVec3& rhs) {
+            return nw4r::math::VEC3Dot(lhs, rhs);
+        }
+        
+        static void add(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Add(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+
+        static void sub(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Sub(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+
+        static void scale(CVec3& outVec, const CVec3& vec, float scale){
+            CVec3 temp;
+            nw4r::math::VEC3Scale(temp, vec, scale);
+            outVec.set(temp);
+        }
+
+        static void cross(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Cross(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+        
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+            float z;
+        };
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 4 "monolib/math/CMat34.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 3 "monolib/math/CQuat.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 3 "monolib/math/MathConstants.hpp" */
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 4 "monolib/math/Utility.hpp" */
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 5 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CQuat{
+        CQuat(){}
+
+        CQuat(float x, float y, float z, float w){
+            set(x,y,z,w);
+        }
+
+        operator Quaternion*(){
+            return reinterpret_cast<Quaternion*>(this);
+        }
+
+        operator const Quaternion*() const{
+            return reinterpret_cast<const Quaternion*>(this);
+        }
+
+        CQuat& operator*=(const CQuat& other){
+            PSQUATMultiply(*this, other, *this);
+            return *this;
+        }
+
+        inline void set(float x, float y, float z, float w){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+            this->w = w;
+        }
+
+        inline void setIdentity(){
+            set(0,0,0,1);
+        }
+  
+        //Sets the quaternion from the given euler angle, following the 3-2-1 conversion.
+        inline void setRotXYZ(const CVec3* angle){
+            float x = angle->x * 0.5f;
+            float y = angle->y * 0.5f;
+            float z = angle->z * 0.5f;
+            float sinX = math::sin(x);
+            float cosX = math::cos(x);
+            float sinY = math::sin(y);
+            float cosY = math::cos(y);
+            float sinZ = math::sin(z);
+            float cosZ = math::cos(z);
+
+            this->x = cosZ*(sinX*cosY) - sinZ*(cosX*sinY);
+            this->y = cosZ*(cosX*sinY) + sinZ*(sinX*cosY);
+            this->z = sinZ*(cosX*cosY) - cosZ*(sinX*sinY);
+            this->w = cosZ*(cosX*cosY) + sinZ*(sinX*sinY);
+        }
+
+        //Converts this quaternion to euler angles, storing the result in the given vector.
+        inline void getRotXYZ(CVec3* result) const {
+            //So many variables :p
+            float twoX = x + x;
+            float twoY = y + y;
+            float twoZ = z + z;
+
+            float twoXZ = x * twoZ;
+            float twoYW = w * twoY;
+
+            //NOTE: Unnecessary clamp
+            float input = -(twoXZ - twoYW);
+            if(input >= 1) input = 1;
+            else if(input <= -1) input = -1;
+            //y = asin(-(2xz - 2yw))
+            float angle = math::asin(input);
+            result->y = angle;
+
+            float twoX2 = x * twoX;
+            float twoXY = x * twoY;
+            float twoZ2 = z * twoZ;
+            float twoZW = w * twoZ;
+                    
+            if (angle < halfpi) {
+                if (angle > -halfpi) {
+                    //-pi/2 < angle < pi/2
+                    float twoY2 = y * twoY;
+                    float twoYZ = y * twoZ;
+                    float twoXW = w * twoX;
+                    //x = atan2(2yz + 2xw, 1 - (2x^2 + 2y^2))
+                    result->x = math::atan2Rad(twoYZ + twoXW, 1.0f - (twoX2 + twoY2));
+                    //z = atan2(2xy + 2zw, 1 - (2y^2 + 2z^2))
+                    result->z = math::atan2Rad(twoXY + twoZW, 1.0f - (twoY2 + twoZ2));
+                }else{
+                    //angle > pi/2
+                    //x = -atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
+                    result->x = -math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
+                    result->z = 0;
+                }
+            }else{
+                //angle < -pi/2
+                //x = atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
+                result->x = math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
+                result->z = 0;
+            }
+        }
+
+        static void slerp(CQuat& outQuat, const CQuat& a, const CQuat& b, float t);
+        void setRotZXY(const CVec3* angle);
+        void getRotZXY(CVec3* result) const;
+
+
+        struct{
+        float x;
+        float y;
+        float z;
+        float w;
+        };
+
+        static CQuat zero;
+        static CQuat identity;
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CQuat.hpp" */
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat34{
+        CMat34(){}
+
+        CMat34(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23){
+            set(
+                m00,m01,m02,m03,
+                m10,m11,m12,m13,
+                m20,m21,m22,m23
+            );
+        }
+
+        void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[0][3] = m03;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[1][3] = m13;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+            m[2][3] = m23;
+        }
+
+        operator nw4r::math::MTX34*(){
+            return reinterpret_cast<nw4r::math::MTX34*>(this);
+        }
+
+        operator const nw4r::math::MTX34*() const {
+            return reinterpret_cast<const nw4r::math::MTX34*>(this);
+        }
+
+        //TODO: can this be included without interfering with the above operators?
+        /*
+        operator Mtx*(){
+            return &m;
+        }
+
+        operator const Mtx*() const {
+            return &m;
+        }
+        */
+
+        CMat34 operator*(CMat34& rhs) const {
+            CMat34 mat;
+            mul(mat, *this, rhs);
+            return mat;
+        }
+
+        void mul(CVec3& outVec, const CVec3& vec) const {
+            PSMTXMultVec(mtx, vec, outVec);
+        }
+
+
+        static void mul(CMat34& outMat, const CMat34& mat1, const CMat34& mat2){
+            PSMTXConcat(mat2.mtx, mat1.mtx, outMat.mtx);
+        }
+
+        void setUnit(){
+            PSMTXIdentity(mtx);
+        }
+
+        void setScale(float x, float y, float z){
+            set(
+                x, 0, 0, 0,
+                0, y, 0, 0,
+                0, 0, z, 0
+            );
+        }
+
+        void setScale(const CVec3& scale){
+            setScale(scale.x, scale.y, scale.z);
+        }
+
+        void setRotX(float x){
+            float sinX, cosX;
+            math::sincos(x, sinX, cosX);
+
+            set(
+            1, 0,    0,     0,
+            0, cosX, -sinX, 0,
+            0, sinX, cosX,  0
+            );
+        }
+
+        void setRotY(float y){
+            float sinY, cosY;
+            math::sincos(y, sinY, cosY);
+
+            set(
+            cosY,  0, sinY, 0,
+            0,     1, 0,    0,
+            -sinY, 0, cosY, 0
+            );
+        }
+
+        void setRotZ(float z){
+            float sinZ, cosZ;
+            math::sincos(z, sinZ, cosZ);
+
+            set(
+            cosZ, -sinZ, 0, 0,
+            sinZ, cosZ,  0, 0,
+            0,    0,     1, 0
+            );
+        }
+
+        void addRotX(float x){
+            CMat34 mat;
+            mat.setRotX(x);
+            mul(*this, *this, mat);
+        }
+
+        void addRotY(float y){
+            CMat34 mat;
+            mat.setRotY(y);
+            mul(*this, *this, mat);
+        }
+
+        void addRotZ(float z){
+            CMat34 mat;
+            mat.setRotZ(z);
+            mul(*this, *this, mat);
+        }
+
+        void getRotQuat(CQuat& quat) const{
+            CQuat temp;
+            C_QUATMtx(temp, mtx);
+            quat = temp;
+        }
+
+        void setRotQuat(const CQuat& quat){
+            PSMTXQuat(mtx, quat);
+        }
+
+        void setRotXYZ(const CVec3& angle){
+            nw4r::math::MTX34RotXYZRad(*this, angle.x, angle.y, angle.z);
+        }
+
+        void setRotZXY(const CVec3& angle){
+            setRotZ(angle.z);
+            addRotX(angle.x);
+            addRotY(angle.y);
+        }
+
+        void invert(CMat34* outMat){
+            PSMTXInverse(mtx, outMat->mtx);
+        }
+
+        CVec3 getTranslation(){
+            return CVec3(m[0][3], m[1][3], m[2][3]);
+        }
+
+        void addTranslation(const CVec3& vec){
+            m[0][3] += vec.x;
+            m[1][3] += vec.y;
+            m[2][3] += vec.z;
+        }
+
+
+        void replaceTranslation(const CVec3& vec){
+            m[0][3] = vec.x;
+            m[1][3] = vec.y;
+            m[2][3] = vec.z;
+        }
+
+        void getRotAxis(CVec3& vec, float* outAngle) const;
+        bool getRotXYZ(CVec3& vec) const;
+        bool getRotZXY(CVec3& vec) const;
+        bool getRotZYX(CVec3& vec) const;
+
+        union {
+            float m[3][4];
+            Mtx mtx;
+        };
+
+        static CMat34 zero;
+        static CMat34 identity;
+    };
+} //namespace ml
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 5 "monolib/math/CQuat.hpp" */
+/* end "monolib/math/CQuat.hpp" */
+
+namespace ml{
+    struct CAttrTransform{
+        enum Flags{
+            FLAG_0 = 1 << 0,
+            FLAG_1 = 1 << 1,
+            FLAG_2 = 1 << 2,
+            FLAG_USE_ZXY = 1 << 3
+        };
+
+        CAttrTransform(){
+            clear();
+        }
+
+        void clear();
+        void update();
+
+        CVec3 mPos; //0x0
+        CVec3 mRot; //0xC
+        CMat34 mMtx1; //0x18
+        CMat34 mLocalMat; //0x48
+        CMat34 mLocalMatInv; //0x78
+        CQuat unkA8;
+        CVec3 mPrevPos; //0xB8
+        CVec3 mPrevRot; //0xC4
+        CQuat mLocalQuat; //0xD0
+        u32 mFlags; //0xE0
+    };
+} //namespace ml
+/* end "monolib/math/CAttrTransform.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 3 "monolib/math/CCamUtil.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CCamUtil.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+
+namespace ml {
+    struct CCamUtil {
+        static void getXYZ2ZXY(CVec3& outVec, const CVec3& vec);
+    };
+} //namespace ml
+/* end "monolib/math/CCamUtil.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 4 "monolib/math/CCol3.hpp" */
+#pragma once
+
+namespace ml {
+    struct CCol3{
+        CCol3(){}
+        CCol3(float r, float g, float b){
+            set(r, g, b);
+        }
+
+        void set(float r, float g, float b){
+            this->r = r;
+            this->g = g;
+            this->b = b;
+        }
+
+        void clamp(float min, float max){
+            if(r > max) r = max;
+            else if(r < min) r = min;
+            if(g > max) g = max;
+            else if(g < min) g = min;
+            if(b > max) b = max;
+            else if(b < min) b = min;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float r;
+            float g;
+            float b;
+        };
+
+        static CCol3 white;
+        static CCol3 gray;
+        static CCol3 black;
+        static CCol3 red;
+        static CCol3 green;
+        static CCol3 blue;
+        static CCol3 yellow;
+        static CCol3 cyan;
+        static CCol3 magenta;
+        static CCol3 salmon;
+        static CCol3 orange;
+    };
+} //namespace ml
+/* end "monolib/math/CCol3.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 5 "monolib/math/CCol4.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CCol4.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-/* "src/kyoshin/CTaskGame.hpp" line 4 "monolib/core.hpp" */
+
+#define COLOR_TO_U32(r, g, b, a) (((u8)(255 * r) << 24) | ((u8)(255 * g) << 16) | ((u8)(255 * b) << 8) | (u8)(255 * a))
+
+namespace ml {
+    
+    struct CCol4{
+        CCol4(){}
+        CCol4(float r, float g, float b, float a){
+            set(r,g,b,a);
+        }
+
+        void set(float r, float g, float b, float a){
+            this->r = r;
+            this->g = g;
+            this->b = b;
+            this->a = a;
+        }
+
+        void clamp(float min, float max){
+            if(r > max) r = max;
+            else if(r < min) r = min;
+            if(g > max) g = max;
+            else if(g < min) g = min;
+            if(b > max) b = max;
+            else if(b < min) b = min;
+            if(a > max) a = max;
+            else if(a < min) a = min;
+        }
+
+        u32 toU32() const {
+            return COLOR_TO_U32(r, g, b, a);
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+
+        static CCol4 white;
+        static CCol4 gray;
+        static CCol4 black;
+        static CCol4 red;
+        static CCol4 green;
+        static CCol4 blue;
+        static CCol4 yellow;
+        static CCol4 cyan;
+        static CCol4 magenta;
+        static CCol4 salmon;
+        static CCol4 orange;
+        static CCol4 zero;
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CCol4.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 6 "monolib/math/CFrustum.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 3 "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 3 "monolib/math/CMat34.hpp" */
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 4 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 5 "monolib/math/CPlane.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CPlane.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+
+namespace ml {
+    struct CPlane {
+        CPlane(){
+        }
+        CPlane(const CVec3& pos, const CVec3& p1, const CVec3& p2){
+            set(pos, p1, p2);
+        }
+
+        CPlane* set(const CVec3& pos, const CVec3& p1, const CVec3& p2);
+        static void getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir);
+
+        void normalize(){
+            mNormal.normalizeSub();
+        }
+
+        CVec3 convertRayToNormal(const CVec3& rayStartPos, const CVec3& rayEndPos) const {
+            CVec3 normal = rayEndPos - rayStartPos;
+            normal.normalizeSub();
+            return normal;
+        }
+
+        //Sets this plane from the given ray start/end position.
+        void set(const CVec3& rayStartPos, const CVec3& rayEndPos){
+            mNormal = convertRayToNormal(rayStartPos, rayEndPos);
+            mDist = -CVec3::dot(rayStartPos, mNormal);
+        }
+
+        float getPointDistance(const CVec3& pos) const {
+            return CVec3::dot(pos, mNormal) + mDist;
+        }
+        
+        bool isWithinDistance(const CVec3& vec, float distance) const {
+            if(getPointDistance(vec) < distance) return true;
+            else return false;
+        }
+
+        bool isOnNegativeSide(const CVec3& vec) const {
+            if(getPointDistance(vec) < 0) return true;
+            else return false;
+        }
+
+        bool isOnPositiveSide(const CVec3& vec) const {
+            if(getPointDistance(vec) >= 0) return true;
+            else return false;
+        }
+
+        //Determines if the points are on different sides of the plane.
+        bool isDifferentSide(const CVec3& vec1, const CVec3& vec2) const {
+            float f0 = getPointDistance(vec2);
+            float f1 = getPointDistance(vec1);
+            
+            bool r3 = f1 >= 0;
+            bool r0 = f0 >= 0;
+            //TODO: is this some weird inline for calculating if only one of two conditions are true?
+            return r3 ^ r0;
+        }
+
+        CVec3 mNormal; //0x0
+        float mDist; //0x4
+    };
+
+} //namespace ml
+/* end "monolib/math/CPlane.hpp" */
+
+//TODO: idk if this belongs here in monolib or in the scene code. There's no evidence of it in XCX
+namespace ml{
+
+    struct CFrustum{
+        u8 unk0[0xCC];
+        ml::CMat34 unkCC;
+        u8 unkFC[0x10];
+        ml::CVec3 unk10C;
+        u8 unk118[0x258 - 0x118];
+        ml::CPlane unk248[6];
+    };
+
+} //namespace ml
+/* end "monolib/math/CFrustum.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 7 "monolib/math/CMat33.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 3 "monolib/math/Utility.hpp" */
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat33{
+        CMat33(){}
+
+        CMat33(float m00, float m01, float m02,
+        float m10, float m11, float m12,
+        float m20, float m21, float m22){
+            set(m00, m01, m02, m10, m11, m12, m20, m21, m22);
+        }
+
+        void set(float m00, float m01, float m02,
+        float m10, float m11, float m12,
+        float m20, float m21, float m22){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+        }
+
+        void setRotXYZ(const CVec3& angle){
+            float sinX = math::sin(angle.x);
+            float cosX = math::cos(angle.x);
+            float sinY = math::sin(angle.y);
+            float cosY = math::cos(angle.y);
+            float sinZ = math::sin(angle.z);
+            float cosZ = math::cos(angle.z);
+
+            set(
+            cosY*cosZ, sinX*sinY*cosZ - cosX*sinZ, cosX*sinY*cosZ + sinX*sinZ,
+            cosY*sinZ, sinX*sinY*sinZ + cosX*cosZ, cosX*sinY*sinZ - sinX*cosZ,
+            -sinY,     sinX*cosY,                  cosX*cosY
+            );
+        }
+
+        void getRotZXY(CVec3& outVec){
+            float angle = math::asin(-m[1][2]);
+            outVec.x = angle;
+
+            if(angle < halfpi){
+                if(angle > -halfpi){
+                    //-pi/2 < angle < pi/2
+                    outVec.z = math::atan2Rad(m[1][0], m[1][1]);
+                    outVec.y = math::atan2Rad(m[0][2], m[2][2]);
+                }else{
+                    //angle < -pi/2
+                    outVec.z = -math::atan2Rad(m[2][0], m[0][0]);
+                    outVec.y = 0;
+                }
+            }else{
+                //angle > pi/2
+                outVec.z = math::atan2Rad(m[2][0], m[0][0]);
+                outVec.y = 0;
+            }
+        }
+
+        float m[3][3];
+    };
+} //namespace ml
+/* end "monolib/math/CMat33.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 8 "monolib/math/CMat34.hpp" */
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 9 "monolib/math/CMat44.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat44.hpp" line 2 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat44{
+        CMat44(){}
+
+        CMat44(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[0][3] = m03;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[1][3] = m13;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+            m[2][3] = m23;
+            m[3][0] = m30;
+            m[3][1] = m31;
+            m[3][2] = m32;
+            m[3][3] = m33;
+        }
+
+        union {
+            float m[4][4];
+            Mtx44 mtx;
+        };
+    
+        static CMat44 zero;
+        static CMat44 identity;
+    };
+} //namespace ml
+/* end "monolib/math/CMat44.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 10 "monolib/math/CPlane.hpp" */
+/* end "monolib/math/CPlane.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 11 "monolib/math/CPnt16.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CPnt16.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace ml {
+    struct CPnt16{
+        CPnt16(){}
+
+        CPnt16(s16 x, s16 y){
+            set(x,y);
+        }
+
+        void set(s16 x, s16 y){
+            this->x = x;
+            this->y = y;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lhz/sth. */
+        struct{
+            s16 x;
+            s16 y;
+        };
+    };
+} //namespace ml
+/* end "monolib/math/CPnt16.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 12 "monolib/math/CQuat.hpp" */
+/* end "monolib/math/CQuat.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 13 "monolib/math/CRect16.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CRect16.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CRect16.hpp" line 3 "monolib/math/CPnt16.hpp" */
+/* end "monolib/math/CPnt16.hpp" */
+
+namespace ml {
+    struct CRect16 {
+        CRect16(){
+        }
+    
+        CRect16(s16 x, s16 y, s16 width, s16 height){
+            set(x, y, width, height);
+        }
+
+        CRect16(const CPnt16& pos, const CPnt16& size){
+            set(pos, size);
+        }
+
+        void set(s16 x, s16 y, s16 width, s16 height){
+            mPos.x = x;
+            mPos.y = y;
+            mSize.x = width;
+            mSize.y = height;
+        }
+
+        void set(const CPnt16& pos, const CPnt16& size){
+            mPos.x = pos.x;
+            mPos.y = pos.y;
+            mSize.x = size.x;
+            mSize.y = size.y;
+        }
+    
+        bool isInside(const CPnt16& point) const;
+
+        CPnt16 mPos; //0x0
+        CPnt16 mSize; //0x4
+    };
+} //namespace ml
+/* end "monolib/math/CRect16.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 14 "monolib/math/CVec2.hpp" */
+#pragma once
+
+/* Not known to be used yet, but it's here anyways just in case they did end up using it (it exists
+in XCX, so it probably at least existed). It also doesn't hurt to have anyway for modding and stuff. */
+namespace ml {
+    struct CVec2 {
+
+        CVec2(){}
+
+        CVec2(float x, float y){
+            set(x, y);
+        }
+
+        CVec2(const CVec2& vec){
+            set(vec.x, vec.y);
+        }
+
+        void set(float x, float y){
+            this->x = x;
+            this->y = y;
+        }
+
+        void set(const CVec2& vec){
+            x = vec.x;
+            y = vec.y;
+        }
+
+        bool operator==(const CVec2& vec) const {
+            return x == vec.x && y == vec.y;
+        }
+
+        bool operator!=(const CVec2& vec) const {
+            return x != vec.x || y != vec.y;
+        }
+        
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+        };
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CVec2.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 15 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 16 "monolib/math/CVec4.hpp" */
+#pragma once
+
+namespace ml {
+    struct CVec4{
+        static CVec4 zero;
+        static CVec4 unitX;
+        static CVec4 unitY;
+        static CVec4 unitZ;
+        static CVec4 unit;
+
+        CVec4() {}
+
+        CVec4(float x, float y, float z, float w){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+            this->w = w;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+            float z;
+            float w;
+        };
+
+    };
+} //namespace ml
+/* end "monolib/math/CVec4.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 17 "monolib/math/Main.hpp" */
+#pragma once
+
+namespace ml{
+    namespace math{
+        void initialize();
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Main.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 18 "monolib/math/FloatUtils.hpp" */
+#pragma once
+
+#define FLOAT_LARGE 1e14f
+#define FLOAT_SMALL -1e14f
+#define FLOAT_MAX_HEX 0xD3D3D3D3
+#define FLOAT_MAX_HEX_NEG 0xF3F3F3F3
+#define FLOAT_NAN 0xFFFFFFFF
+#define FLOAT_TO_HEX(f) (*(u32*)&f)
+
+namespace ml{
+    namespace math{
+        bool isErrFloat(float f);
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/FloatUtils.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 19 "monolib/math/MathConstants.hpp" */
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 20 "monolib/math/MTRand.hpp" */
+//Original copyright comments:
+
+// Mersenne Twister random number generator -- a C++ class MTRand
+// Based on code by Makoto Matsumoto, Takuji Nishimura, and Shawn Cokus
+// Richard J. Wagner  v1.1  28 September 2009  wagnerr@umich.edu
+
+// The Mersenne Twister is an algorithm for generating random numbers.  It
+// was designed with consideration of the flaws in various other generators.
+// The period, 2^19937-1, and the order of equidistribution, 623 dimensions,
+// are far greater.  The generator is also fast; it avoids multiplication and
+// division, and it benefits from caches and pipelines.  For more information
+// see the inventors' web page at
+// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+
+// Reference
+// M. Matsumoto and T. Nishimura, "Mersenne Twister: A 623-Dimensionally
+// Equidistributed Uniform Pseudo-Random Number Generator", ACM Transactions on
+// Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
+
+// Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+// Copyright (C) 2000 - 2009, Richard J. Wagner
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 
+//   1. Redistributions of source code must retain the above copyright
+//      notice, this list of conditions and the following disclaimer.
+//
+//   2. Redistributions in binary form must reproduce the above copyright
+//      notice, this list of conditions and the following disclaimer in the
+//      documentation and/or other materials provided with the distribution.
+//
+//   3. The names of its contributors may not be used to endorse or promote 
+//      products derived from this software without specific prior written 
+//      permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+// The original code included the following notice:
+// 
+//     When you use this, send an email to: m-mat@math.sci.hiroshima-u.ac.jp
+//     with an appropriate reference to your work.
+// 
+// It would be nice to CC: wagnerr@umich.edu and Cokus@math.washington.edu
+// when you write.
+
+
+/* Monolithsoft made slight modifications from the most commonly found version,
+most notably changing function names.
+This might be the version this is based on: https://gist.github.com/yuikns/10017640 */
+
+#pragma once
+
+/* "libs/monolib/include/monolib/math/MTRand.hpp" line 65 "types.h" */
+/* end "types.h" */
+
+namespace ml{
+
+//Probably uses a singleton template
+
+class MTRand{
+protected:
+    static const int N = 624; //length
+    static const int M = 397; //period
+    u32 state[N]; //twister
+    int left; //0x9C0
+    BOOL initialized; //0x9C4
+    u32* pNext; //0x9C8
+    u32 unk9D0;
+
+public:
+    static MTRand* getInstance();
+    void srand(u32);
+    void nextMt();
+    u32 rand32();
+    u32 rand31();
+    float randFloat();
+    float randFloat1();
+
+    inline u32 rand(){
+        return rand31();
+    }
+
+    inline u32 rand(int max){
+        if(max != 0){
+            int randVal = rand();
+            return randVal % max;
+        }else{
+            return 0;
+        }
+    }
+
+    inline u32 rand(int min, int max){
+        int range = max - min;
+        int result = 0;
+
+        if(range != 0){
+            int randVal = rand();
+            result = (randVal % range);
+        }else{
+            result = 0;
+        }
+
+        return min + result; //wtf? why not just add it before?
+    }
+
+protected:
+    inline u32 hiBit(u32 u) { return u & 0x80000000; }
+    inline u32 loBit(u32 u) { return u & 0x00000001; }
+    inline u32 loBits(u32 u) { return u & 0x7fffffff; }
+    inline u32 mixBits(u32 u, u32 v) { return hiBit(u) | loBits(v); }
+    inline u32 magic(u32 u) { return loBit(u) ? 0x9908b0dfUL : 0x0UL; }
+    inline u32 twist(u32 m, u32 s0, u32 s1) {
+        const u32 y = mixBits(s0, s1);
+        const u32 mask = magic(s1);
+        return m ^ (mask ^ (y >> 1));
+    }
+};
+
+} //namespace ml
+/* end "monolib/math/MTRand.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 21 "monolib/math/Random.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace ml{
+    namespace math{
+        void mtInit(u32 seed);
+        int mtRand();
+        int mtRand(int max);
+        int mtRand(int min,int max);
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Random.hpp" */
+/* end "monolib/math.hpp" */
+
+class CLight{
+public:
+    CLight();
+    virtual ~CLight(){}
+
+    ml::CVec3 unk4;
+    ml::CVec3 unk10;
+    ml::CVec3 unk1C;
+    float unk28;
+    u32 unk2C;
+    u32 unk30;
+    u32 unk34;
+    float unk38;
+    float unk3C;
+};
+/* end "monolib/scn/CLight.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 3 "monolib/monolib_types.hpp" */
 #pragma once
 
 //List of forward declarations for commonly used classes.
@@ -22980,7 +24307,20 @@ class CProcess;
 class CProc;
 class CWorkThread;
 /* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 4 "monolib/work.hpp" */
+
+//Unofficial name
+class ICulling {
+public:
+    virtual ~ICulling(){}
+    virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
+    virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
+    virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
+};
+/* end "monolib/scn/ICulling.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 4 "monolib/scn/CScn.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
@@ -26317,6 +27657,168 @@ public:
 /* "libs/monolib/include/monolib/work.hpp" line 19 "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work.hpp" */
+
+struct ScnRenderCB {
+    IScnRender* cb; //0x0
+    u32 prio; //0x4
+    u8 flag; //0x8
+}; // size = 0xC
+
+// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
+struct UnkScn68 {
+    u8 unk00[0x34];
+    s32 unk34; //0x34
+};
+
+// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
+struct UnkScn8C {
+    virtual ~UnkScn8C() {}
+    virtual void vf0C() = 0;
+    virtual void vf10() = 0;
+    virtual void vf14() = 0;
+    virtual void vf18() = 0;
+    virtual void vf1C() = 0;
+};
+
+// IScnRender draw callback shape: vt+0xC(cb, scn).
+struct IScnRenderDraw {
+    virtual ~IScnRenderDraw() {}
+    virtual void onRender(CScn* scn) = 0;
+};
+
+class CScn : public CTTask<CScn>, public IWorkEvent{
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+    virtual void Draw();
+
+    //0x000: vtable 1 (CTTask)
+    //0x000-054: CTTask
+    //0x054: vtable 2 (IWorkEvent)
+    u8 unk58[0x68 - 0x058]; //0x058
+    UnkScn68* mCamWork; //0x068
+    u8 unk6C[0x8C - 0x06C]; //0x06C
+    UnkScn8C* mUnk8C; //0x08C
+    u8 unk90[0x0B4 - 0x090]; //0x090
+    ICulling* unkB4; //0x0B4
+    u32 unkB8; //0x0B8
+    ScnRenderCB mRenderCBs[64]; //0x0BC
+    u32 mRenderCBCount; //0x3BC
+    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
+    u8 unk_3E4; //0x3E4
+    u8 unk_3E5; //0x3E5
+    u8 unk_3E6; //0x3E6
+    u8 unk_3E7; //0x3E7
+    u8 unk_3E8; //0x3E8
+    u8 unk_3E9; //0x3E9
+    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
+}; // size = 0x3EC
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 5 "monolib/scn/CScnNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 2 "monolib/scn/CScn.hpp" */
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 3 "functions.hpp" */
+#pragma once
+
+/* "include/functions.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+//Vec4 constructor? Defined before CTaskGame::Term
+struct func_800407C8_tmp {
+    f32 unk00[4];
+};
+func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
+
+void func_8004302C(int, int);
+bool func_8009CF8C(int);
+void func_8009D018(int, int);
+int* func_8009ECB0();
+void func_8009E574(int*, int, int, int);
+/* end "functions.hpp" */
+
+class CScnNw4r : public CScn{
+public:
+    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
+    void func_8007DAE0(int arg1, f32* arg2);
+
+private:
+    //0x000-0x3EC CScn
+}; // size = 0x3EC
+/* end "monolib/scn/CScnNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 6 "monolib/scn/CScnRootNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnRootNw4r.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* end "monolib/scn/CScnRootNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 7 "monolib/scn/CScnTexWorkMan.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+mtl::ALLOC_HANDLE func_80490098();
+void func_804900A0(u32 r3);
+/* end "monolib/scn/CScnTexWorkMan.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 8 "monolib/scn/IScnRender.hpp" */
+#pragma once
+
+class IScnRender {
+public:
+    virtual ~IScnRender(){}
+    virtual void cbRenderBefore();
+};
+/* end "monolib/scn/IScnRender.hpp" */
+/* end "monolib/scn.hpp" */
+
+// Minimal layout for batch-14e/14l matching (cbRenderBefore / Move / Init).
+class CMenuPTGauge {
+public:
+    void Init();
+    void Move();
+    void cbRenderBefore();
+
+    // 0x00: base / unknown
+    u8 unk00[0x60];
+    CScn* mScn; // 0x60 — owning scene; addRenderCB target in Init
+    UnkClass_8045F564 unk64; // 0x64 — layout memory region (Init createRegion)
+    nw4r::lyt::Layout* unk74; // 0x74 — layout draw target
+    nw4r::lyt::AnimTransform* unk78; // 0x78
+    nw4r::lyt::AnimTransform* unk7C; // 0x7C
+    nw4r::lyt::AnimTransform* unk80; // 0x80
+    nw4r::lyt::AnimTransform* unk84; // 0x84
+    nw4r::lyt::AnimTransform* unk88; // 0x88
+    s32 unk8C; // 0x8C — render/move state
+    s32 unk90; // 0x90 — PTMF / substate index
+    s32 unk94; // 0x94
+    s32 unk98; // 0x98
+    s32 unk9C; // 0x9C
+    s32 unkA0; // 0xA0 — gauge value latch
+};
+/* end "kyoshin/menu/CMenuPTGauge.hpp" */
+
+/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 2 "kyoshin/CTaskGame.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGame.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "src/kyoshin/CTaskGame.hpp" line 4 "monolib/core.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 4 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
 /* "libs/monolib/include/monolib/core/CArcItem.hpp" line 5 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
 /* "libs/monolib/include/monolib/core/CArcItem.hpp" line 6 "revolution/ARC.h" */
@@ -26416,1305 +27918,6 @@ public:
 /* "libs/monolib/include/monolib/core/CView.hpp" line 3 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
 /* "libs/monolib/include/monolib/core/CView.hpp" line 4 "monolib/math.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math.hpp" line 2 "monolib/math/CAttrTransform.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 3 "monolib/math/CVec3.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 2 "monolib/math/Utility.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/Utility.hpp" line 2 "nw4r/math.h" */
-/* end "nw4r/math.h" */
-
-#define PI 3.14159265f
-#define DEG2RAD(x) ((x)*(PI/180.0f))
-
-//Utility math functions
-namespace ml{
-    namespace math{
-
-    inline float abs(float x){
-        return (double)nw4r::math::FAbs(x);
-    }
-
-    inline float sqrt(float x){
-        return nw4r::math::FSqrt(x);
-    }
-
-    inline float clamp(float x, float min, float max) {
-        if (x < min) x = min;
-        else if(x > max) x = max;
-        return x;
-    }
-
-    inline float sin(float x){
-        return nw4r::math::SinRad(x);
-    }
-
-    inline float cos(float x){
-        return nw4r::math::CosRad(x);
-    }
-
-    inline void sincos(float x, float& sinX, float& cosX){
-        sinX = sin(x);
-        cosX = cos(x);
-    }
-
-    inline float asin(float x){
-        x = clamp(x, -1.0f, 1.0f);
-        return nw4r::math::AsinRad(x);
-    }
-
-    inline float acos(float x){
-        x = clamp(x, -1.0f, 1.0f);
-        return nw4r::math::AcosRad(x);
-    }
-
-    inline float atan2(float y, float x){
-        return nw4r::math::Atan2FIdx(y, x);
-    }
-
-    inline float atan2Deg(float y, float x){
-        return nw4r::math::Atan2Deg(y, x);
-    }
-
-    inline float atan2Rad(float y, float x){
-        return nw4r::math::Atan2Rad(y, x);
-    }
-
-    inline float dot(const float* vec){
-        return vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
-    }
-
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 3 "monolib/math/MathConstants.hpp" */
-#pragma once
-
-namespace ml{
-    //General math constants
-    extern const float pi;
-    extern const float tau;
-    extern const float halfpi;
-    extern const float quarterpi;
-    extern const float epsilon;
-    extern const float rad2deg;
-    extern const float deg2rad;
-    extern const float huge;
-    extern const float hugeminus;
-} //namespace ml
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    //Possibly inherits from nw4r VEC3?
-    struct CVec3 {
-        static CVec3 zero;
-        static CVec3 unitX;
-        static CVec3 unitY;
-        static CVec3 unitZ;
-        static CVec3 unit;
-
-        CVec3(){}
-
-        CVec3(float x, float y, float z){
-            set(x, y, z);
-        }
-
-        CVec3(const CVec3& vec){
-            set(vec.x, vec.y, vec.z);
-        }
-
-        //Conversion functions for converting to the SDK/NW4R vector types.
-        operator Vec*(){
-            return reinterpret_cast<Vec*>(this);
-        }
-
-        operator const Vec*() const {
-            return reinterpret_cast<const Vec*>(this);
-        }
-
-        operator nw4r::math::VEC3*(){
-            return reinterpret_cast<nw4r::math::VEC3*>(this);
-        }
-
-        operator const nw4r::math::VEC3*() const {
-            return reinterpret_cast<const nw4r::math::VEC3*>(this);
-        }
-
-        void set(float x, float y, float z){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-        }
-
-        void set(const CVec3& vec){
-            x = vec.x;
-            y = vec.y;
-            z = vec.z;
-        }
-
-        void setZero(){
-            *this = zero;
-        }
-        
-        CVec3 operator-() const {
-            return CVec3(-x, -y, -z);
-        }
-
-        CVec3 operator+(const CVec3& rhs) const {
-            CVec3 out;
-            //add(out, *this, rhs);
-            nw4r::math::VEC3Add(out, *this, rhs);
-            return out;
-        }
-        CVec3 operator-(const CVec3& rhs) const {
-            CVec3 out;
-            sub(out, *this, rhs);
-            //nw4r::math::VEC3Sub(out, *this, rhs);
-            return out;
-        }
-        CVec3 operator*(float x) const {
-            CVec3 out;
-            scale(out, *this, x);
-            return out;
-        }
-        CVec3 operator/(float x) const {
-            float r = 1/x;
-            return *this * r;
-        }
-
-        CVec3& operator+=(const CVec3& rhs) {
-            add(*this, *this, rhs);
-            return *this;
-        }
-        CVec3& operator-=(const CVec3& rhs) {
-            sub(*this, *this, rhs);
-            return *this;
-        }
-        CVec3& operator*=(float x) {
-            scale(*this, *this, x);
-            return *this;
-        }
-        CVec3& operator/=(float x) {
-            return *this *= (1/x);
-        }
-
-        bool operator==(const CVec3& vec) const {
-            return x == vec.x && y == vec.y && z == vec.z;
-        }
-
-        bool operator!=(const CVec3& vec) const {
-            return x != vec.x || y != vec.y || z != vec.z;
-        }
-
-        void normalize(){
-            if(!isZero()) {
-                normalizeSub();
-            }else{
-                set(0,0,1);
-            }
-        }
-
-        //Unofficial
-        void normalizeSub(){
-            if(x*x + y*y + z*z == 0.0f){
-                setZero();
-            }else {
-                PSVECNormalize(*this,*this);
-            }
-        }
-        
-        //Unofficial
-        float magnitude() const {
-            return x*x + y*y + z*z;
-        }
-
-        float getLength() const {
-            return math::sqrt(magnitude());
-        }
-
-        bool isZero() const {
-            //TODO: this can't be it, right???
-            bool result = false;
-            bool temp = false;
-            if(math::abs(x) <= epsilon && math::abs(y) <= epsilon){
-                temp = true;
-            }
-            if(temp && math::abs(z) <= epsilon) result = true;
-            return result;
-        }
-
-        bool isErr() const;
-
-        //TODO: properly figure out these asm inlines
-
-        static float dot(const CVec3& lhs, const CVec3& rhs) {
-            return nw4r::math::VEC3Dot(lhs, rhs);
-        }
-        
-        static void add(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Add(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-
-        static void sub(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Sub(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-
-        static void scale(CVec3& outVec, const CVec3& vec, float scale){
-            CVec3 temp;
-            nw4r::math::VEC3Scale(temp, vec, scale);
-            outVec.set(temp);
-        }
-
-        static void cross(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Cross(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-        
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-            float z;
-        };
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 4 "monolib/math/CMat34.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 3 "monolib/math/CQuat.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 3 "monolib/math/MathConstants.hpp" */
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 4 "monolib/math/Utility.hpp" */
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 5 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CQuat{
-        CQuat(){}
-
-        CQuat(float x, float y, float z, float w){
-            set(x,y,z,w);
-        }
-
-        operator Quaternion*(){
-            return reinterpret_cast<Quaternion*>(this);
-        }
-
-        operator const Quaternion*() const{
-            return reinterpret_cast<const Quaternion*>(this);
-        }
-
-        CQuat& operator*=(const CQuat& other){
-            PSQUATMultiply(*this, other, *this);
-            return *this;
-        }
-
-        inline void set(float x, float y, float z, float w){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            this->w = w;
-        }
-
-        inline void setIdentity(){
-            set(0,0,0,1);
-        }
-  
-        //Sets the quaternion from the given euler angle, following the 3-2-1 conversion.
-        inline void setRotXYZ(const CVec3* angle){
-            float x = angle->x * 0.5f;
-            float y = angle->y * 0.5f;
-            float z = angle->z * 0.5f;
-            float sinX = math::sin(x);
-            float cosX = math::cos(x);
-            float sinY = math::sin(y);
-            float cosY = math::cos(y);
-            float sinZ = math::sin(z);
-            float cosZ = math::cos(z);
-
-            this->x = cosZ*(sinX*cosY) - sinZ*(cosX*sinY);
-            this->y = cosZ*(cosX*sinY) + sinZ*(sinX*cosY);
-            this->z = sinZ*(cosX*cosY) - cosZ*(sinX*sinY);
-            this->w = cosZ*(cosX*cosY) + sinZ*(sinX*sinY);
-        }
-
-        //Converts this quaternion to euler angles, storing the result in the given vector.
-        inline void getRotXYZ(CVec3* result) const {
-            //So many variables :p
-            float twoX = x + x;
-            float twoY = y + y;
-            float twoZ = z + z;
-
-            float twoXZ = x * twoZ;
-            float twoYW = w * twoY;
-
-            //NOTE: Unnecessary clamp
-            float input = -(twoXZ - twoYW);
-            if(input >= 1) input = 1;
-            else if(input <= -1) input = -1;
-            //y = asin(-(2xz - 2yw))
-            float angle = math::asin(input);
-            result->y = angle;
-
-            float twoX2 = x * twoX;
-            float twoXY = x * twoY;
-            float twoZ2 = z * twoZ;
-            float twoZW = w * twoZ;
-                    
-            if (angle < halfpi) {
-                if (angle > -halfpi) {
-                    //-pi/2 < angle < pi/2
-                    float twoY2 = y * twoY;
-                    float twoYZ = y * twoZ;
-                    float twoXW = w * twoX;
-                    //x = atan2(2yz + 2xw, 1 - (2x^2 + 2y^2))
-                    result->x = math::atan2Rad(twoYZ + twoXW, 1.0f - (twoX2 + twoY2));
-                    //z = atan2(2xy + 2zw, 1 - (2y^2 + 2z^2))
-                    result->z = math::atan2Rad(twoXY + twoZW, 1.0f - (twoY2 + twoZ2));
-                }else{
-                    //angle > pi/2
-                    //x = -atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
-                    result->x = -math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
-                    result->z = 0;
-                }
-            }else{
-                //angle < -pi/2
-                //x = atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
-                result->x = math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
-                result->z = 0;
-            }
-        }
-
-        static void slerp(CQuat& outQuat, const CQuat& a, const CQuat& b, float t);
-        void setRotZXY(const CVec3* angle);
-        void getRotZXY(CVec3* result) const;
-
-
-        struct{
-        float x;
-        float y;
-        float z;
-        float w;
-        };
-
-        static CQuat zero;
-        static CQuat identity;
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CQuat.hpp" */
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat34{
-        CMat34(){}
-
-        CMat34(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23){
-            set(
-                m00,m01,m02,m03,
-                m10,m11,m12,m13,
-                m20,m21,m22,m23
-            );
-        }
-
-        void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[0][3] = m03;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[1][3] = m13;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-            m[2][3] = m23;
-        }
-
-        operator nw4r::math::MTX34*(){
-            return reinterpret_cast<nw4r::math::MTX34*>(this);
-        }
-
-        operator const nw4r::math::MTX34*() const {
-            return reinterpret_cast<const nw4r::math::MTX34*>(this);
-        }
-
-        //TODO: can this be included without interfering with the above operators?
-        /*
-        operator Mtx*(){
-            return &m;
-        }
-
-        operator const Mtx*() const {
-            return &m;
-        }
-        */
-
-        CMat34 operator*(CMat34& rhs) const {
-            CMat34 mat;
-            mul(mat, *this, rhs);
-            return mat;
-        }
-
-        void mul(CVec3& outVec, const CVec3& vec) const {
-            PSMTXMultVec(mtx, vec, outVec);
-        }
-
-
-        static void mul(CMat34& outMat, const CMat34& mat1, const CMat34& mat2){
-            PSMTXConcat(mat2.mtx, mat1.mtx, outMat.mtx);
-        }
-
-        void setUnit(){
-            PSMTXIdentity(mtx);
-        }
-
-        void setScale(float x, float y, float z){
-            set(
-                x, 0, 0, 0,
-                0, y, 0, 0,
-                0, 0, z, 0
-            );
-        }
-
-        void setScale(const CVec3& scale){
-            setScale(scale.x, scale.y, scale.z);
-        }
-
-        void setRotX(float x){
-            float sinX, cosX;
-            math::sincos(x, sinX, cosX);
-
-            set(
-            1, 0,    0,     0,
-            0, cosX, -sinX, 0,
-            0, sinX, cosX,  0
-            );
-        }
-
-        void setRotY(float y){
-            float sinY, cosY;
-            math::sincos(y, sinY, cosY);
-
-            set(
-            cosY,  0, sinY, 0,
-            0,     1, 0,    0,
-            -sinY, 0, cosY, 0
-            );
-        }
-
-        void setRotZ(float z){
-            float sinZ, cosZ;
-            math::sincos(z, sinZ, cosZ);
-
-            set(
-            cosZ, -sinZ, 0, 0,
-            sinZ, cosZ,  0, 0,
-            0,    0,     1, 0
-            );
-        }
-
-        void addRotX(float x){
-            CMat34 mat;
-            mat.setRotX(x);
-            mul(*this, *this, mat);
-        }
-
-        void addRotY(float y){
-            CMat34 mat;
-            mat.setRotY(y);
-            mul(*this, *this, mat);
-        }
-
-        void addRotZ(float z){
-            CMat34 mat;
-            mat.setRotZ(z);
-            mul(*this, *this, mat);
-        }
-
-        void getRotQuat(CQuat& quat) const{
-            CQuat temp;
-            C_QUATMtx(temp, mtx);
-            quat = temp;
-        }
-
-        void setRotQuat(const CQuat& quat){
-            PSMTXQuat(mtx, quat);
-        }
-
-        void setRotXYZ(const CVec3& angle){
-            nw4r::math::MTX34RotXYZRad(*this, angle.x, angle.y, angle.z);
-        }
-
-        void setRotZXY(const CVec3& angle){
-            setRotZ(angle.z);
-            addRotX(angle.x);
-            addRotY(angle.y);
-        }
-
-        void invert(CMat34* outMat){
-            PSMTXInverse(mtx, outMat->mtx);
-        }
-
-        CVec3 getTranslation(){
-            return CVec3(m[0][3], m[1][3], m[2][3]);
-        }
-
-        void addTranslation(const CVec3& vec){
-            m[0][3] += vec.x;
-            m[1][3] += vec.y;
-            m[2][3] += vec.z;
-        }
-
-
-        void replaceTranslation(const CVec3& vec){
-            m[0][3] = vec.x;
-            m[1][3] = vec.y;
-            m[2][3] = vec.z;
-        }
-
-        void getRotAxis(CVec3& vec, float* outAngle) const;
-        bool getRotXYZ(CVec3& vec) const;
-        bool getRotZXY(CVec3& vec) const;
-        bool getRotZYX(CVec3& vec) const;
-
-        union {
-            float m[3][4];
-            Mtx mtx;
-        };
-
-        static CMat34 zero;
-        static CMat34 identity;
-    };
-} //namespace ml
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 5 "monolib/math/CQuat.hpp" */
-/* end "monolib/math/CQuat.hpp" */
-
-namespace ml{
-    struct CAttrTransform{
-        enum Flags{
-            FLAG_0 = 1 << 0,
-            FLAG_1 = 1 << 1,
-            FLAG_2 = 1 << 2,
-            FLAG_USE_ZXY = 1 << 3
-        };
-
-        CAttrTransform(){
-            clear();
-        }
-
-        void clear();
-        void update();
-
-        CVec3 mPos; //0x0
-        CVec3 mRot; //0xC
-        CMat34 mMtx1; //0x18
-        CMat34 mLocalMat; //0x48
-        CMat34 mLocalMatInv; //0x78
-        CQuat unkA8;
-        CVec3 mPrevPos; //0xB8
-        CVec3 mPrevRot; //0xC4
-        CQuat mLocalQuat; //0xD0
-        u32 mFlags; //0xE0
-    };
-} //namespace ml
-/* end "monolib/math/CAttrTransform.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 3 "monolib/math/CCamUtil.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CCamUtil.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-
-namespace ml {
-    struct CCamUtil {
-        static void getXYZ2ZXY(CVec3& outVec, const CVec3& vec);
-    };
-} //namespace ml
-/* end "monolib/math/CCamUtil.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 4 "monolib/math/CCol3.hpp" */
-#pragma once
-
-namespace ml {
-    struct CCol3{
-        CCol3(){}
-        CCol3(float r, float g, float b){
-            set(r, g, b);
-        }
-
-        void set(float r, float g, float b){
-            this->r = r;
-            this->g = g;
-            this->b = b;
-        }
-
-        void clamp(float min, float max){
-            if(r > max) r = max;
-            else if(r < min) r = min;
-            if(g > max) g = max;
-            else if(g < min) g = min;
-            if(b > max) b = max;
-            else if(b < min) b = min;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float r;
-            float g;
-            float b;
-        };
-
-        static CCol3 white;
-        static CCol3 gray;
-        static CCol3 black;
-        static CCol3 red;
-        static CCol3 green;
-        static CCol3 blue;
-        static CCol3 yellow;
-        static CCol3 cyan;
-        static CCol3 magenta;
-        static CCol3 salmon;
-        static CCol3 orange;
-    };
-} //namespace ml
-/* end "monolib/math/CCol3.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 5 "monolib/math/CCol4.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CCol4.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-
-#define COLOR_TO_U32(r, g, b, a) (((u8)(255 * r) << 24) | ((u8)(255 * g) << 16) | ((u8)(255 * b) << 8) | (u8)(255 * a))
-
-namespace ml {
-    
-    struct CCol4{
-        CCol4(){}
-        CCol4(float r, float g, float b, float a){
-            set(r,g,b,a);
-        }
-
-        void set(float r, float g, float b, float a){
-            this->r = r;
-            this->g = g;
-            this->b = b;
-            this->a = a;
-        }
-
-        void clamp(float min, float max){
-            if(r > max) r = max;
-            else if(r < min) r = min;
-            if(g > max) g = max;
-            else if(g < min) g = min;
-            if(b > max) b = max;
-            else if(b < min) b = min;
-            if(a > max) a = max;
-            else if(a < min) a = min;
-        }
-
-        u32 toU32() const {
-            return COLOR_TO_U32(r, g, b, a);
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float r;
-            float g;
-            float b;
-            float a;
-        };
-
-        static CCol4 white;
-        static CCol4 gray;
-        static CCol4 black;
-        static CCol4 red;
-        static CCol4 green;
-        static CCol4 blue;
-        static CCol4 yellow;
-        static CCol4 cyan;
-        static CCol4 magenta;
-        static CCol4 salmon;
-        static CCol4 orange;
-        static CCol4 zero;
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CCol4.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 6 "monolib/math/CFrustum.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 3 "monolib/math/CMat34.hpp" */
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 4 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 5 "monolib/math/CPlane.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CPlane.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-
-namespace ml {
-    struct CPlane {
-        CPlane(){
-        }
-        CPlane(const CVec3& pos, const CVec3& p1, const CVec3& p2){
-            set(pos, p1, p2);
-        }
-
-        CPlane* set(const CVec3& pos, const CVec3& p1, const CVec3& p2);
-        static void getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir);
-
-        void normalize(){
-            mNormal.normalizeSub();
-        }
-
-        CVec3 convertRayToNormal(const CVec3& rayStartPos, const CVec3& rayEndPos) const {
-            CVec3 normal = rayEndPos - rayStartPos;
-            normal.normalizeSub();
-            return normal;
-        }
-
-        //Sets this plane from the given ray start/end position.
-        void set(const CVec3& rayStartPos, const CVec3& rayEndPos){
-            mNormal = convertRayToNormal(rayStartPos, rayEndPos);
-            mDist = -CVec3::dot(rayStartPos, mNormal);
-        }
-
-        float getPointDistance(const CVec3& pos) const {
-            return CVec3::dot(pos, mNormal) + mDist;
-        }
-        
-        bool isWithinDistance(const CVec3& vec, float distance) const {
-            if(getPointDistance(vec) < distance) return true;
-            else return false;
-        }
-
-        bool isOnNegativeSide(const CVec3& vec) const {
-            if(getPointDistance(vec) < 0) return true;
-            else return false;
-        }
-
-        bool isOnPositiveSide(const CVec3& vec) const {
-            if(getPointDistance(vec) >= 0) return true;
-            else return false;
-        }
-
-        //Determines if the points are on different sides of the plane.
-        bool isDifferentSide(const CVec3& vec1, const CVec3& vec2) const {
-            float f0 = getPointDistance(vec2);
-            float f1 = getPointDistance(vec1);
-            
-            bool r3 = f1 >= 0;
-            bool r0 = f0 >= 0;
-            //TODO: is this some weird inline for calculating if only one of two conditions are true?
-            return r3 ^ r0;
-        }
-
-        CVec3 mNormal; //0x0
-        float mDist; //0x4
-    };
-
-} //namespace ml
-/* end "monolib/math/CPlane.hpp" */
-
-//TODO: idk if this belongs here in monolib or in the scene code. There's no evidence of it in XCX
-namespace ml{
-
-    struct CFrustum{
-        u8 unk0[0xCC];
-        ml::CMat34 unkCC;
-        u8 unkFC[0x10];
-        ml::CVec3 unk10C;
-        u8 unk118[0x258 - 0x118];
-        ml::CPlane unk248[6];
-    };
-
-} //namespace ml
-/* end "monolib/math/CFrustum.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 7 "monolib/math/CMat33.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 3 "monolib/math/Utility.hpp" */
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat33{
-        CMat33(){}
-
-        CMat33(float m00, float m01, float m02,
-        float m10, float m11, float m12,
-        float m20, float m21, float m22){
-            set(m00, m01, m02, m10, m11, m12, m20, m21, m22);
-        }
-
-        void set(float m00, float m01, float m02,
-        float m10, float m11, float m12,
-        float m20, float m21, float m22){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-        }
-
-        void setRotXYZ(const CVec3& angle){
-            float sinX = math::sin(angle.x);
-            float cosX = math::cos(angle.x);
-            float sinY = math::sin(angle.y);
-            float cosY = math::cos(angle.y);
-            float sinZ = math::sin(angle.z);
-            float cosZ = math::cos(angle.z);
-
-            set(
-            cosY*cosZ, sinX*sinY*cosZ - cosX*sinZ, cosX*sinY*cosZ + sinX*sinZ,
-            cosY*sinZ, sinX*sinY*sinZ + cosX*cosZ, cosX*sinY*sinZ - sinX*cosZ,
-            -sinY,     sinX*cosY,                  cosX*cosY
-            );
-        }
-
-        void getRotZXY(CVec3& outVec){
-            float angle = math::asin(-m[1][2]);
-            outVec.x = angle;
-
-            if(angle < halfpi){
-                if(angle > -halfpi){
-                    //-pi/2 < angle < pi/2
-                    outVec.z = math::atan2Rad(m[1][0], m[1][1]);
-                    outVec.y = math::atan2Rad(m[0][2], m[2][2]);
-                }else{
-                    //angle < -pi/2
-                    outVec.z = -math::atan2Rad(m[2][0], m[0][0]);
-                    outVec.y = 0;
-                }
-            }else{
-                //angle > pi/2
-                outVec.z = math::atan2Rad(m[2][0], m[0][0]);
-                outVec.y = 0;
-            }
-        }
-
-        float m[3][3];
-    };
-} //namespace ml
-/* end "monolib/math/CMat33.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 8 "monolib/math/CMat34.hpp" */
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 9 "monolib/math/CMat44.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat44.hpp" line 2 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat44{
-        CMat44(){}
-
-        CMat44(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[0][3] = m03;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[1][3] = m13;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-            m[2][3] = m23;
-            m[3][0] = m30;
-            m[3][1] = m31;
-            m[3][2] = m32;
-            m[3][3] = m33;
-        }
-
-        union {
-            float m[4][4];
-            Mtx44 mtx;
-        };
-    
-        static CMat44 zero;
-        static CMat44 identity;
-    };
-} //namespace ml
-/* end "monolib/math/CMat44.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 10 "monolib/math/CPlane.hpp" */
-/* end "monolib/math/CPlane.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 11 "monolib/math/CPnt16.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CPnt16.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace ml {
-    struct CPnt16{
-        CPnt16(){}
-
-        CPnt16(s16 x, s16 y){
-            set(x,y);
-        }
-
-        void set(s16 x, s16 y){
-            this->x = x;
-            this->y = y;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lhz/sth. */
-        struct{
-            s16 x;
-            s16 y;
-        };
-    };
-} //namespace ml
-/* end "monolib/math/CPnt16.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 12 "monolib/math/CQuat.hpp" */
-/* end "monolib/math/CQuat.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 13 "monolib/math/CRect16.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CRect16.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CRect16.hpp" line 3 "monolib/math/CPnt16.hpp" */
-/* end "monolib/math/CPnt16.hpp" */
-
-namespace ml {
-    struct CRect16 {
-        CRect16(){
-        }
-    
-        CRect16(s16 x, s16 y, s16 width, s16 height){
-            set(x, y, width, height);
-        }
-
-        CRect16(const CPnt16& pos, const CPnt16& size){
-            set(pos, size);
-        }
-
-        void set(s16 x, s16 y, s16 width, s16 height){
-            mPos.x = x;
-            mPos.y = y;
-            mSize.x = width;
-            mSize.y = height;
-        }
-
-        void set(const CPnt16& pos, const CPnt16& size){
-            mPos.x = pos.x;
-            mPos.y = pos.y;
-            mSize.x = size.x;
-            mSize.y = size.y;
-        }
-    
-        bool isInside(const CPnt16& point) const;
-
-        CPnt16 mPos; //0x0
-        CPnt16 mSize; //0x4
-    };
-} //namespace ml
-/* end "monolib/math/CRect16.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 14 "monolib/math/CVec2.hpp" */
-#pragma once
-
-/* Not known to be used yet, but it's here anyways just in case they did end up using it (it exists
-in XCX, so it probably at least existed). It also doesn't hurt to have anyway for modding and stuff. */
-namespace ml {
-    struct CVec2 {
-
-        CVec2(){}
-
-        CVec2(float x, float y){
-            set(x, y);
-        }
-
-        CVec2(const CVec2& vec){
-            set(vec.x, vec.y);
-        }
-
-        void set(float x, float y){
-            this->x = x;
-            this->y = y;
-        }
-
-        void set(const CVec2& vec){
-            x = vec.x;
-            y = vec.y;
-        }
-
-        bool operator==(const CVec2& vec) const {
-            return x == vec.x && y == vec.y;
-        }
-
-        bool operator!=(const CVec2& vec) const {
-            return x != vec.x || y != vec.y;
-        }
-        
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-        };
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CVec2.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 15 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 16 "monolib/math/CVec4.hpp" */
-#pragma once
-
-namespace ml {
-    struct CVec4{
-        static CVec4 zero;
-        static CVec4 unitX;
-        static CVec4 unitY;
-        static CVec4 unitZ;
-        static CVec4 unit;
-
-        CVec4() {}
-
-        CVec4(float x, float y, float z, float w){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            this->w = w;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-            float z;
-            float w;
-        };
-
-    };
-} //namespace ml
-/* end "monolib/math/CVec4.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 17 "monolib/math/Main.hpp" */
-#pragma once
-
-namespace ml{
-    namespace math{
-        void initialize();
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Main.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 18 "monolib/math/FloatUtils.hpp" */
-#pragma once
-
-#define FLOAT_LARGE 1e14f
-#define FLOAT_SMALL -1e14f
-#define FLOAT_MAX_HEX 0xD3D3D3D3
-#define FLOAT_MAX_HEX_NEG 0xF3F3F3F3
-#define FLOAT_NAN 0xFFFFFFFF
-#define FLOAT_TO_HEX(f) (*(u32*)&f)
-
-namespace ml{
-    namespace math{
-        bool isErrFloat(float f);
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/FloatUtils.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 19 "monolib/math/MathConstants.hpp" */
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 20 "monolib/math/MTRand.hpp" */
-//Original copyright comments:
-
-// Mersenne Twister random number generator -- a C++ class MTRand
-// Based on code by Makoto Matsumoto, Takuji Nishimura, and Shawn Cokus
-// Richard J. Wagner  v1.1  28 September 2009  wagnerr@umich.edu
-
-// The Mersenne Twister is an algorithm for generating random numbers.  It
-// was designed with consideration of the flaws in various other generators.
-// The period, 2^19937-1, and the order of equidistribution, 623 dimensions,
-// are far greater.  The generator is also fast; it avoids multiplication and
-// division, and it benefits from caches and pipelines.  For more information
-// see the inventors' web page at
-// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
-
-// Reference
-// M. Matsumoto and T. Nishimura, "Mersenne Twister: A 623-Dimensionally
-// Equidistributed Uniform Pseudo-Random Number Generator", ACM Transactions on
-// Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
-
-// Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
-// Copyright (C) 2000 - 2009, Richard J. Wagner
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 
-//   1. Redistributions of source code must retain the above copyright
-//      notice, this list of conditions and the following disclaimer.
-//
-//   2. Redistributions in binary form must reproduce the above copyright
-//      notice, this list of conditions and the following disclaimer in the
-//      documentation and/or other materials provided with the distribution.
-//
-//   3. The names of its contributors may not be used to endorse or promote 
-//      products derived from this software without specific prior written 
-//      permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-
-// The original code included the following notice:
-// 
-//     When you use this, send an email to: m-mat@math.sci.hiroshima-u.ac.jp
-//     with an appropriate reference to your work.
-// 
-// It would be nice to CC: wagnerr@umich.edu and Cokus@math.washington.edu
-// when you write.
-
-
-/* Monolithsoft made slight modifications from the most commonly found version,
-most notably changing function names.
-This might be the version this is based on: https://gist.github.com/yuikns/10017640 */
-
-#pragma once
-
-/* "libs/monolib/include/monolib/math/MTRand.hpp" line 65 "types.h" */
-/* end "types.h" */
-
-namespace ml{
-
-//Probably uses a singleton template
-
-class MTRand{
-protected:
-    static const int N = 624; //length
-    static const int M = 397; //period
-    u32 state[N]; //twister
-    int left; //0x9C0
-    BOOL initialized; //0x9C4
-    u32* pNext; //0x9C8
-    u32 unk9D0;
-
-public:
-    static MTRand* getInstance();
-    void srand(u32);
-    void nextMt();
-    u32 rand32();
-    u32 rand31();
-    float randFloat();
-    float randFloat1();
-
-    inline u32 rand(){
-        return rand31();
-    }
-
-    inline u32 rand(int max){
-        if(max != 0){
-            int randVal = rand();
-            return randVal % max;
-        }else{
-            return 0;
-        }
-    }
-
-    inline u32 rand(int min, int max){
-        int range = max - min;
-        int result = 0;
-
-        if(range != 0){
-            int randVal = rand();
-            result = (randVal % range);
-        }else{
-            result = 0;
-        }
-
-        return min + result; //wtf? why not just add it before?
-    }
-
-protected:
-    inline u32 hiBit(u32 u) { return u & 0x80000000; }
-    inline u32 loBit(u32 u) { return u & 0x00000001; }
-    inline u32 loBits(u32 u) { return u & 0x7fffffff; }
-    inline u32 mixBits(u32 u, u32 v) { return hiBit(u) | loBits(v); }
-    inline u32 magic(u32 u) { return loBit(u) ? 0x9908b0dfUL : 0x0UL; }
-    inline u32 twist(u32 m, u32 s0, u32 s1) {
-        const u32 y = mixBits(s0, s1);
-        const u32 mask = magic(s1);
-        return m ^ (mask ^ (y >> 1));
-    }
-};
-
-} //namespace ml
-/* end "monolib/math/MTRand.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 21 "monolib/math/Random.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace ml{
-    namespace math{
-        void mtInit(u32 seed);
-        int mtRand();
-        int mtRand(int max);
-        int mtRand(int min,int max);
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Random.hpp" */
 /* end "monolib/math.hpp" */
 /* "libs/monolib/include/monolib/core/CView.hpp" line 5 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
@@ -244996,170 +245199,6 @@ public:
 /* end "monolib/core/CViewRoot.hpp" */
 /* end "monolib/core.hpp" */
 /* "src/kyoshin/CTaskGame.hpp" line 5 "monolib/scn.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn.hpp" line 2 "monolib/scn/CLight.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
-/* end "monolib/math.hpp" */
-
-class CLight{
-public:
-    CLight();
-    virtual ~CLight(){}
-
-    ml::CVec3 unk4;
-    ml::CVec3 unk10;
-    ml::CVec3 unk1C;
-    float unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    float unk38;
-    float unk3C;
-};
-/* end "monolib/scn/CLight.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-
-//Unofficial name
-class ICulling {
-public:
-    virtual ~ICulling(){}
-    virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
-    virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
-    virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
-};
-/* end "monolib/scn/ICulling.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 4 "monolib/scn/CScn.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
-/* end "monolib/work.hpp" */
-
-struct ScnRenderCB {
-    IScnRender* cb; //0x0
-    u32 prio; //0x4
-    u8 flag; //0x8
-}; // size = 0xC
-
-// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
-struct UnkScn68 {
-    u8 unk00[0x34];
-    s32 unk34; //0x34
-};
-
-// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
-struct UnkScn8C {
-    virtual ~UnkScn8C() {}
-    virtual void vf0C() = 0;
-    virtual void vf10() = 0;
-    virtual void vf14() = 0;
-    virtual void vf18() = 0;
-    virtual void vf1C() = 0;
-};
-
-// IScnRender draw callback shape: vt+0xC(cb, scn).
-struct IScnRenderDraw {
-    virtual ~IScnRenderDraw() {}
-    virtual void onRender(CScn* scn) = 0;
-};
-
-class CScn : public CTTask<CScn>, public IWorkEvent{
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-    virtual void Draw();
-
-    //0x000: vtable 1 (CTTask)
-    //0x000-054: CTTask
-    //0x054: vtable 2 (IWorkEvent)
-    u8 unk58[0x68 - 0x058]; //0x058
-    UnkScn68* mCamWork; //0x068
-    u8 unk6C[0x8C - 0x06C]; //0x06C
-    UnkScn8C* mUnk8C; //0x08C
-    u8 unk90[0x0B4 - 0x090]; //0x090
-    ICulling* unkB4; //0x0B4
-    u32 unkB8; //0x0B8
-    ScnRenderCB mRenderCBs[64]; //0x0BC
-    u32 mRenderCBCount; //0x3BC
-    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
-    u8 unk_3E4; //0x3E4
-    u8 unk_3E5; //0x3E5
-    u8 unk_3E6; //0x3E6
-    u8 unk_3E7; //0x3E7
-    u8 unk_3E8; //0x3E8
-    u8 unk_3E9; //0x3E9
-    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
-}; // size = 0x3EC
-/* end "monolib/scn/CScn.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 5 "monolib/scn/CScnNw4r.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 2 "monolib/scn/CScn.hpp" */
-/* end "monolib/scn/CScn.hpp" */
-/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 3 "functions.hpp" */
-#pragma once
-
-/* "include/functions.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-//Vec4 constructor? Defined before CTaskGame::Term
-struct func_800407C8_tmp {
-    f32 unk00[4];
-};
-func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
-
-void func_8004302C(int, int);
-bool func_8009CF8C(int);
-void func_8009D018(int, int);
-int* func_8009ECB0();
-void func_8009E574(int*, int, int, int);
-/* end "functions.hpp" */
-
-class CScnNw4r : public CScn{
-public:
-    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
-    void func_8007DAE0(int arg1, f32* arg2);
-
-private:
-    //0x000-0x3EC CScn
-}; // size = 0x3EC
-/* end "monolib/scn/CScnNw4r.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 6 "monolib/scn/CScnRootNw4r.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnRootNw4r.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* end "monolib/scn/CScnRootNw4r.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 7 "monolib/scn/CScnTexWorkMan.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-mtl::ALLOC_HANDLE func_80490098();
-void func_804900A0(u32 r3);
-/* end "monolib/scn/CScnTexWorkMan.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 8 "monolib/scn/IScnRender.hpp" */
-#pragma once
-
-class IScnRender {
-public:
-    virtual ~IScnRender(){}
-    virtual void cbRenderBefore();
-};
-/* end "monolib/scn/IScnRender.hpp" */
 /* end "monolib/scn.hpp" */
 /* "src/kyoshin/CTaskGame.hpp" line 6 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
@@ -245735,6 +245774,16 @@ namespace cf {
 // (same ABI pattern as UnkVirtualFunc6 above).
 extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
     cf::CBattleState* self, const cf::CBattleStateSrcEntry* src);
+
+// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
+// ABI as UnkVirtualFunc6 above).
+extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* entry);
+
+// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
+// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
+extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
 #pragma once
@@ -246983,8 +247032,40 @@ void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 /* end "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 5 "monolib/device/CDeviceFont.hpp" */
+#pragma once
 
-/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 6 "decomp.h" */
+/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 4 "monolib/device/CDeviceBase.hpp" */
+/* end "monolib/device/CDeviceBase.hpp" */
+
+/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 6 "nw4r/lyt/lyt_layout.h" */
+/* end "nw4r/lyt/lyt_layout.h" */
+
+//size: 0x1f0
+class CDeviceFont : public CDeviceBase {
+public:
+    CDeviceFont(const char* pName, CWorkThread* pParent);
+    static CDeviceFont* getInstance();
+
+    //todo: when true return type is found clean :
+    // CMCEffCrystal::func_80224CE4
+    // CTitleAHelp::OnFileEvent
+    static void* func_80452C10(u32, nw4r::lyt::Layout*);
+
+    DECL_WORKTHREAD_CREATE(CDeviceFont);
+
+    //0x0: vtable
+    //0x0-1c8: CDeviceBase
+    u8 unk1C8[0x1F0 - 0x1C8];
+};
+/* end "monolib/device/CDeviceFont.hpp" */
+/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 6 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+
+/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 8 "decomp.h" */
 /**
  * Codewarrior tricks for matching decomp
  * (Macros generate prototypes to satisfy -requireprotos)
@@ -247150,7 +247231,7 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 
 #endif
 /* end "decomp.h" */
-/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 7 "revolution/GX.h" */
+/* "src/kyoshin/menu/CMenuPTGauge.cpp" line 9 "revolution/GX.h" */
 /**
  * References: YAGCD, Dolphin Emulator, publicly available patents
  */
@@ -247451,6 +247532,7 @@ typedef enum {
 /* end "revolution/GX.h" */
 
 // Batch 2026-07-14e: menu-ptgauge-move and menu-ptgauge-cbrender own their methods exclusively.
+// Batch 2026-07-14l: menu-ptgauge-init owns Init exclusively.
 
 extern "C" {
 extern u32 lbl_eu_80663E24;
@@ -247463,12 +247545,68 @@ extern const f32 lbl_eu_806679EC; // 1.0f
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
 int func_8013BE50();
 u32 func_80137510(void* anim, float frame);
+// Retail links this unmangled (not CUICfManager::func_801355F4) — see
+// MWCC_REFERENCE.md 8c19.
+nw4r::lyt::ArcResourceAccessor* func_801355F4();
+// Retail links this unmangled (not the FPQ34nw4r3lyt4PaneUl-mangled decl in
+// code_80135FDC.hpp); void* param (same overload trick as func_80137510
+// above) selects this bare-name overload — cast the Pane* arg at call sites.
+void func_8013676C(void* pane, u32 val);
 }
 
 extern void func_80138078(u32);
 
 typedef void (CMenuPTGauge::*CMenuPTGaugePtmf)(s32);
 extern CMenuPTGaugePtmf lbl_eu_805323F8[];
+
+void CMenuPTGauge::Init() {
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    unk64.createRegion(handle, 0x1200, lbl_eu_805039C8, 0);
+    Class_8045F858 regionGuard(&unk64);
+
+    nw4r::lyt::ArcResourceAccessor* accessor;
+
+    accessor = func_801355F4();
+    func_80136E84(&unk74, accessor, lbl_eu_805039C8 + 0xd);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk78, accessor, lbl_eu_805039C8 + 0x29);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk7C, accessor, lbl_eu_805039C8 + 0x48);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk80, accessor, lbl_eu_805039C8 + 0x6f);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk84, accessor, lbl_eu_805039C8 + 0x96);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk88, accessor, lbl_eu_805039C8 + 0xb7);
+
+    // Retail: CDeviceFont::func_80452C10(1, layout) returns an object whose
+    // vt+0x24 (no explicit args) yields the u32 passed to func_8013676C.
+    nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
+    void* fontObj = CDeviceFont::func_80452C10(1, unk74);
+    typedef u32 (*FontVFn)(void*);
+    u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+    func_8013676C(rootPane, fontResult);
+
+    unk74->Animate(0);
+    unk74->UnbindAllAnimation();
+    unk74->BindAnimation(unk78);
+    unk74->SetAnimationEnable(unk78, true);
+
+    // MI adjust: IScnRender at +0x5c (null-this safe), same pattern as
+    // CMenuArtsSelect::Term.
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+    if (this != NULL) {
+        cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+    }
+    mScn->addRenderCB(cb, 0xa, 0);
+
+    unk64.func_8045F810();
+}
 
 void CMenuPTGauge::Move() {
     CTaskGame::getInstance();
@@ -247496,28 +247634,35 @@ after_bit21:
     switch (unk8C) {
     case 0: {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        if (bm->mActorList1.size() == 0) {
+        _reslist_node<cf::CfObjectActor*>* actorNode;
+        u32 actorCount;
+        _reslist_node<cf::CfObjectActor*>* actorEnd;
+        actorEnd = bm->mActorList1.mStartNodePtr;
+        actorNode = actorEnd->mNext;
+        actorCount = 0;
+        while (actorNode != actorEnd) {
+            actorNode = actorNode->mNext;
+            ++actorCount;
+        }
+        if (actorCount == 0) {
             break;
         }
 
-        nw4r::lyt::Layout* layout = unk74;
         unk94 = 0;
         unk90 = 0;
         unk8C = 1;
 
-        if (layout != NULL) {
+        if (unk74 != NULL) {
             if (unkA0 != 0) {
                 unkA0 = 0;
                 nw4r::lyt::Pane* pane =
-                    layout->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true);
+                    unk74->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true);
                 if (pane != NULL) {
-                    f32 e0 = lbl_eu_806679E0;
-                    f32 e4 = lbl_eu_806679E4;
-                    f32 h = pane->GetSize().height;
-                    f32 e8 = lbl_eu_806679E8;
-                    e0 = e0 / e4;
-                    e8 = e8 * e0;
-                    pane->SetSize(nw4r::lyt::Size(e8, h));
+                    nw4r::lyt::Size size;
+                    size.width =
+                        lbl_eu_806679E8 * (lbl_eu_806679E0 / lbl_eu_806679E4);
+                    size.height = pane->GetSize().height;
+                    pane->SetSize(size);
                 }
             }
         }
@@ -247538,7 +247683,17 @@ after_bit21:
 
         if (partyVal <= 0) {
             bm = cf::CBattleManager::getInstance();
-            if (bm->mActorList1.size() == 0) {
+            _reslist_node<cf::CfObjectActor*>* actorNode;
+            u32 actorCount;
+            _reslist_node<cf::CfObjectActor*>* actorEnd;
+            actorEnd = bm->mActorList1.mStartNodePtr;
+            actorNode = actorEnd->mNext;
+            actorCount = 0;
+            while (actorNode != actorEnd) {
+                actorNode = actorNode->mNext;
+                ++actorCount;
+            }
+            if (actorCount == 0) {
                 unk8C = 3;
                 unk74->Animate(0);
                 unk74->UnbindAllAnimation();
@@ -247554,14 +247709,15 @@ after_bit21:
         }
 
         bm = cf::CBattleManager::getInstance();
+        s32 flag;
         u8 byte = *(reinterpret_cast<u8*>(bm) + 0x1aa);
-        s32 flag = 0;
-#pragma push
-#pragma optimization_level 1
-        if (byte < 1) {
+        u16 lowerByte = byte;
+        u32 upperByte = byte;
+        flag = 0;
+        if (lowerByte < 1) {
             goto range_done;
         }
-        if (byte > 0x18) {
+        if (upperByte > 0x18) {
             goto range_done;
         }
         flag = 1;
@@ -247577,7 +247733,6 @@ after_bit21:
     not_five:
         flag = 0;
     after_five:
-#pragma pop
         if (flag == 0) {
             break;
         }
@@ -247643,4 +247798,3 @@ after_bit21:
 done:
     ;
 }
-

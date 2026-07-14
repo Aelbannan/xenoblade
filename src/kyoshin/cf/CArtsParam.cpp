@@ -11,7 +11,7 @@ namespace cf {
     }
 
     CArtsParam::CArtsParam(){
-        CArtsParam_UnkVirtualFunc1();
+        static_cast<CAttackParam*>(this)->CAttackParam_UnkVirtualFunc1();
     }
 
     void CArtsParam::CArtsParam_UnkVirtualFunc1(){

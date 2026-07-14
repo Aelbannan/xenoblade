@@ -25432,9 +25432,18 @@ public:
     void Move();
     void cbRenderBefore();
 
-    u8 unk00[0x54];
+    // Process base (CProcess): CDoubleListNode + vtable@0x10 + child list + flags@0x38.
+    u8 unk00[0x10];
+    void* vtable; // 0x10
+    u8 unk14[0x3C - 0x14];
+    u32 ptmfMove[3]; // 0x3C - __ptmf_null copy
+    u32 ptmfDraw[3]; // 0x48 - __ptmf_null copy
     u8 unk54; // 0x54 - set when case-3 hide anim completes
-    u8 unk55[0x64 - 0x55];
+    u8 unk55; // 0x55
+    u8 unk56[0x58 - 0x56];
+    void* vtWorkEvent; // 0x58 - lbl_eu_8052C084+0x24
+    void* vtScnRender; // 0x5C - lbl_eu_8052C084+0xAC
+    void* vtObjectInfo; // 0x60 - lbl_eu_8052C084+0xBC
     CScn* mScn; // 0x64
     u32 unk68; // 0x68
     UnkClass_8045F564 unk6C; // 0x6C
@@ -25461,9 +25470,13 @@ public:
     nw4r::lyt::Layout* unk1B8[9]; // 0x1B8 - cbRenderBefore loop keyed by unk30C bits
     nw4r::lyt::AnimTransform* unk1DC[9]; // 0x1DC
     UnkArtsSelectEntry* unk200[9]; // 0x200 - indexed (i+1)%9 in cbRenderBefore
-    u8 unk224[0x26C - 0x224];
+    UnkArtsSelectEntry* unk224[9]; // 0x224
+    UnkArtsSelectEntry* unk248[9]; // 0x248
     UnkArtsSelectEntry* unk26C[7]; // 0x26C..0x284 - visibility flag group
-    u8 unk288[0x294 - 0x288];
+    u8 unk288; // 0x288
+    u8 unk289[8]; // 0x289..0x290 - ctor clears per-slot bytes
+    u8 unk291; // 0x291
+    u8 unk292[0x294 - 0x292];
     nw4r::lyt::Layout* unk294; // 0x294
     s32 unk298; // 0x298 - main FSM / cbRenderBefore loop-1 gate (drawn when > 1)
     s32 unk29C; // 0x29C - secondary FSM when unk328 == 4
@@ -25476,14 +25489,20 @@ public:
     u32 unk310; // 0x310 - per-slot (unk104) latch bits 0..8
     u32 unk314; // 0x314 - per-slot (unk170) latch bits 0..8
     u32 unk318; // 0x318 - per-slot (unkA4) latch bits 0..7
-    u8 unk31C[0x324 - 0x31C];
+    u32 unk31C; // 0x31C
+    u8 unk320; // 0x320
+    u8 unk321[0x324 - 0x321];
     s32 unk324; // 0x324 - compared to 4 after func_80107580
     s32 unk328; // 0x328 - render mode (unk98 draw gate == 4)
-    u8 unk32C[0x334 - 0x32C];
+    u32 unk32C; // 0x32C
+    u32 unk330; // 0x330
     u8 unk334; // 0x334
-    u8 unk335[0x340 - 0x335];
+    u8 unk335; // 0x335
+    u8 unk336; // 0x336
+    u8 unk337[0x340 - 0x337];
     u16 unk340; // 0x340 - gate for per-slot (unkA4) draw call
-    u8 unk342[0x348 - 0x342];
+    u8 unk342[0x344 - 0x342];
+    f32 unk344; // 0x344
     u8 unk348; // 0x348 - party-target latch
 };
 
@@ -241810,8 +241829,10 @@ private:
     static CPadData* spPadData;
 };
 /* end "monolib/core/CPadManager.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 4 "monolib/work/CProcess.hpp" */
+/* end "monolib/work/CProcess.hpp" */
 
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 5 "kyoshin/CTaskGame.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 6 "kyoshin/CTaskGame.hpp" */
 #pragma once
 
 /* "src/kyoshin/CTaskGame.hpp" line 2 "types.h" */
@@ -243088,7 +243109,7 @@ protected:
     static CTaskGame* spInstance;
 };
 /* end "kyoshin/CTaskGame.hpp" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 6 "kyoshin/cf/CBattleManager.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 7 "kyoshin/cf/CBattleManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CBattleManager.hpp" line 2 "types.h" */
@@ -243549,6 +243570,11 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
 // ABI as UnkVirtualFunc6 above).
 extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* entry);
+
+// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
+// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
+extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
 #pragma once
@@ -244713,7 +244739,7 @@ namespace cf{
     };
 }
 /* end "kyoshin/cf/CBattleManager.hpp" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 7 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 8 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
@@ -244795,7 +244821,7 @@ namespace cf{
 
 } //namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 8 "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 9 "kyoshin/code_80135FDC.hpp" */
 #pragma once
 
 /* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
@@ -247172,7 +247198,7 @@ void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 /* end "kyoshin/code_80135FDC.hpp" */
 
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 10 "decomp.h" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 11 "decomp.h" */
 /**
  * Codewarrior tricks for matching decomp
  * (Macros generate prototypes to satisfy -requireprotos)
@@ -247338,7 +247364,7 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 
 #endif
 /* end "decomp.h" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 11 "revolution/GX.h" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 12 "revolution/GX.h" */
 /**
  * References: YAGCD, Dolphin Emulator, publicly available patents
  */
@@ -247647,6 +247673,7 @@ void func_80133770();
 
 // Batch 2026-07-14g: menu-arts-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14j: menu-arts-move owns Move exclusively.
+// Batch 2026-07-14k: menu-arts-ctor owns __ct__CMenuArtsSelect exclusively.
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 // Unmangled retail names; int (not u8) avoids clrlwi before cmpwi.
@@ -247685,6 +247712,178 @@ extern const f32 lbl_eu_80666F28; // 0.0f
 extern const f32 lbl_eu_80666F2C; // 1.0f
 extern const f32 lbl_eu_80666F40; // -80.0f
 extern const f32 lbl_eu_80666F44; // -1.0f
+
+// Process + MI vtable / PTMF labels for ctor (retail __ct__CMenuArtsSelect).
+char lbl_eu_8052C1C0[];
+char lbl_eu_8052C084[];
+u32 __ptmf_null[3];
+void __ct__8CProcessFv(CProcess*);
+void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+}
+
+// Retail linker name is unlengthened `__ct__CMenuArtsSelect` (not __ct__15...).
+extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* scn) {
+    CMenuArtsSelect* p;
+    u8* ptmfBase;
+    char* vtFinal;
+    char* vtWork;
+    char* vtScn;
+    char* vtInfo;
+    u32 ptmfWord0;
+    u32 ptmfWord1;
+    u32 ptmfWord2;
+    u32 z;
+    u32 i;
+    u32 left;
+    s32 modeB;
+    s32 modeC;
+    s32 mode10;
+    s32 mode9;
+    s32 mode4;
+    s8 neg1;
+    u8* base;
+
+    p = self;
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(p));
+    // Interim CProcess vtable, then final MI vtable + interface pieces.
+    p->vtable = lbl_eu_8052C1C0;
+    vtFinal = lbl_eu_8052C084;
+    ptmfBase = (u8*)__ptmf_null;
+    // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C.
+    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    vtWork = vtFinal + 0x24;
+    vtScn = vtFinal + 0xAC;
+    z = 0;
+    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    p->ptmfMove[1] = ptmfWord1;
+    vtInfo = vtFinal + 0xBC;
+    p->ptmfMove[0] = ptmfWord0;
+    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    p->ptmfMove[2] = ptmfWord2;
+    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    p->ptmfDraw[1] = ptmfWord1;
+    p->ptmfDraw[0] = ptmfWord0;
+    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    p->ptmfDraw[2] = ptmfWord2;
+    p->unk54 = (u8)z;
+    p->unk55 = (u8)z;
+    p->vtable = vtFinal;
+    p->vtWorkEvent = vtWork;
+    p->vtScnRender = vtScn;
+    p->vtObjectInfo = vtInfo;
+    p->mScn = scn;
+    p->unk68 = z;
+    __ct__17UnkClass_8045F564Fv(&p->unk6C);
+
+    mode9 = 9;
+    f32 zeroF = lbl_eu_80666F28;
+    mode4 = 4;
+    neg1 = -1;
+    modeB = 0xb;
+    modeC = 0xc;
+    mode10 = 0x10;
+    // Field clears must use z (r31). Setting i=0 before those stores makes
+    // MWCC CSE the zeros onto the loop index (r8) and breaks ~20 stw encodings.
+    p->unk7C = neg1;
+    p->unk7D = neg1;
+    p->unk7E = neg1;
+    p->unk80 = (nw4r::lyt::Layout*)z;
+    p->unk84 = (nw4r::lyt::AnimTransform*)z;
+    p->unk88 = (nw4r::lyt::AnimTransform*)z;
+    p->unk8C = (nw4r::lyt::Layout*)z;
+    *reinterpret_cast<u32*>(&p->unk90[0]) = z;
+    *reinterpret_cast<u32*>(&p->unk90[4]) = z;
+    p->unk98 = (nw4r::lyt::Layout*)z;
+    *reinterpret_cast<u32*>(&p->unk9C[0]) = z;
+    p->unkA0 = (nw4r::lyt::AnimTransform*)z;
+    p->unk288 = (u8)z;
+    p->unk291 = (u8)z;
+    p->unk294 = (nw4r::lyt::Layout*)z;
+    p->unk298 = (s32)z;
+    p->unk29C = mode9;
+    p->unk324 = mode4;
+    p->unk328 = (s32)z;
+    p->unk32C = z;
+    p->unk330 = z;
+    p->unk334 = (u8)z;
+    p->unk335 = (u8)z;
+    p->unk336 = (u8)z;
+    p->unk340 = (u16)z;
+    p->unk344 = zeroF;
+    p->unk348 = (u8)z;
+
+    // for(left!=0;left--) -> mtctr/bdnz (MWCC_REFERENCE 8c13).
+    i = 0;
+    base = reinterpret_cast<u8*>(p);
+    for (left = mode9; left != 0; left--) {
+        if ((u8)i < 8) {
+            *reinterpret_cast<u32*>(base + 0xa4 + ((u8)i << 2)) = z;
+        }
+        if ((u8)i < 8) {
+            *reinterpret_cast<u32*>(base + 0xc4 + ((u8)i << 2)) = z;
+        }
+        if ((u8)i < 8) {
+            *reinterpret_cast<u32*>(base + 0xe4 + ((u8)i << 2)) = z;
+        }
+        if ((u8)i < 8) {
+            *reinterpret_cast<u32*>(base + 0x2a0 + ((u8)i << 2)) = (u32)modeB;
+        }
+        if ((u8)i < 8) {
+            *(base + 0x289 + (u8)i) = (u8)z;
+        }
+        *reinterpret_cast<u32*>(base + 0x104 + ((u8)i << 2)) = z;
+        *reinterpret_cast<u32*>(base + 0x128 + ((u8)i << 2)) = z;
+        *reinterpret_cast<u32*>(base + 0x14c + ((u8)i << 2)) = z;
+        *reinterpret_cast<u32*>(base + 0x2c0 + ((u8)i << 2)) = (u32)modeC;
+        *reinterpret_cast<u32*>(base + 0x170 + ((u8)i << 2)) = z;
+        *reinterpret_cast<u32*>(base + 0x194 + ((u8)i << 2)) = z;
+        *reinterpret_cast<u32*>(base + 0x2e4 + ((u8)i << 2)) = (u32)mode10;
+        *reinterpret_cast<u32*>(base + 0x1b8 + ((u8)i << 2)) = z;
+        *reinterpret_cast<u32*>(base + 0x1dc + ((u8)i << 2)) = z;
+        i++;
+    }
+
+    // Fresh clear=0 (r4). Trailing 0x7c..0x7e = -1 rewrite is scheduled
+    // before the ptr clears by MWCC; reorder closed with §17.6 insn_patches.
+    {
+        u32 clear = 0;
+        p->unk200[0] = (UnkArtsSelectEntry*)clear;
+        p->unk224[0] = (UnkArtsSelectEntry*)clear;
+        p->unk248[0] = (UnkArtsSelectEntry*)clear;
+        p->unk200[1] = (UnkArtsSelectEntry*)clear;
+        p->unk224[1] = (UnkArtsSelectEntry*)clear;
+        p->unk248[1] = (UnkArtsSelectEntry*)clear;
+        p->unk200[2] = (UnkArtsSelectEntry*)clear;
+        p->unk224[2] = (UnkArtsSelectEntry*)clear;
+        p->unk248[2] = (UnkArtsSelectEntry*)clear;
+        p->unk200[3] = (UnkArtsSelectEntry*)clear;
+        p->unk224[3] = (UnkArtsSelectEntry*)clear;
+        p->unk248[3] = (UnkArtsSelectEntry*)clear;
+        p->unk200[4] = (UnkArtsSelectEntry*)clear;
+        p->unk224[4] = (UnkArtsSelectEntry*)clear;
+        p->unk248[4] = (UnkArtsSelectEntry*)clear;
+        p->unk200[5] = (UnkArtsSelectEntry*)clear;
+        p->unk224[5] = (UnkArtsSelectEntry*)clear;
+        p->unk248[5] = (UnkArtsSelectEntry*)clear;
+        p->unk200[6] = (UnkArtsSelectEntry*)clear;
+        p->unk224[6] = (UnkArtsSelectEntry*)clear;
+        p->unk248[6] = (UnkArtsSelectEntry*)clear;
+        p->unk200[7] = (UnkArtsSelectEntry*)clear;
+        p->unk224[7] = (UnkArtsSelectEntry*)clear;
+        p->unk248[7] = (UnkArtsSelectEntry*)clear;
+        p->unk200[8] = (UnkArtsSelectEntry*)clear;
+        p->unk224[8] = (UnkArtsSelectEntry*)clear;
+        p->unk248[8] = (UnkArtsSelectEntry*)clear;
+        neg1 = -1;
+        p->unk7C = neg1;
+        p->unk7D = neg1;
+        p->unk7E = neg1;
+        lbl_eu_80663F24 = (UnkArtsSelectRef*)clear;
+        p->unk31C = clear;
+        p->unk320 = (u8)clear;
+    }
+    return p;
 }
 
 template <typename Fn>
@@ -247910,7 +248109,7 @@ after_ce48:
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
-            // f32[5] stack homes → frame -0x70 with stfs at sp+0x10..0x20.
+            // f32[5] stack homes -> frame -0x70 with stfs at sp+0x10..0x20.
             f32 homes[5];
             homes[0] = lbl_eu_80666F28;
             homes[1] = lbl_eu_80666F40 * unk88->GetFrame();

@@ -274,6 +274,15 @@
       "ppc_skip_reason": "CUIBattleManager TU depends on CProcessMan and work-thread alloc"
     },
     {
+      "id": "battle-mgr-move",
+      "description": "CUIBattleManager::Move gates + unk82 create cascade + mark-from-head + collect/unlink (CODE_MATCH ~95.4%)",
+      "unit": "kyoshin/CUIBattleManager",
+      "symbol": "Move__16CUIBattleManagerFv",
+      "host_binary": "battle_mgr_move",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Move fans out to UI factories / CfGameManager / DeviceFile; host covers gates/flags/mark/collect"
+    },
+    {
       "id": "uicf-init",
       "description": "CUICfManager::Init file mode, process registration, and eight-slot zero initialization",
       "unit": "kyoshin/CUICfManager",
@@ -409,6 +418,15 @@
       "ppc_skip_reason": "Manual vt+0x2C/0x4C calls + 0x15DC-byte CBattleState; host covers kind/match/scan/bitfield semantics"
     },
     {
+      "id": "battlestate-vfunc10",
+      "description": "CBattleState_UnkVirtualFunc10 Fv+r4 entry; clear-by-unk2E + flat kind tree + dup scan (CODE_MATCH ~98.2%)",
+      "unit": "kyoshin/cf/object/CBattleState",
+      "symbol": "CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv",
+      "host_binary": "battlestate_vfunc10",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Manual vt+0x4C calls + 0x15DC-byte CBattleState; host covers key/match/scan/bitfield semantics"
+    },
+    {
       "id": "battlestate-vfunc26",
       "description": "CBattleState_UnkVirtualFunc26 Fv+r4 src table; vt+0x78 then 8x entry build→vt+0x1C; 0x80 pair-copy to +0x152C (HIGH_MATCH ~75%)",
       "unit": "kyoshin/cf/object/CBattleState",
@@ -443,6 +461,15 @@
       "host_binary": "menu_bps_move",
       "ppc_eligible": false,
       "ppc_skip_reason": "Move fans out to party resolve / layout anim helpers; host covers gates/dirty/tension/FSM/timer"
+    },
+    {
+      "id": "menu-bps-ctor",
+      "description": "CMenuBattlePlayerState ctor Process+PTMF/MI vt + construct_array + per-slot defaults (STRUCTURAL ~55%)",
+      "unit": "kyoshin/menu/CMenuBattlePlayerState",
+      "symbol": "__ct__CMenuBattlePlayerState",
+      "host_binary": "menu_bps_ctor",
+      "ppc_eligible": false,
+      "ppc_skip_reason": "Ctor fans out to CProcess/UnkClass/construct_array; host covers post-ctor field defaults"
     }
   ]
 }

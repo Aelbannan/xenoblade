@@ -856,7 +856,7 @@
       "source": "src/kyoshin/cf/CfCam.cpp",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "FULL_MATCH",
-      "notes": "Batch 14k; create CfCam.cpp with ctor only; retail symbol __ct__cf_CfCamFollow; size 0x238"
+      "notes": "FULL_MATCH via extern-C ctor + SDA floats; §17.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)"
     },
     {
       "id": "menu-enemy-ctor",
@@ -869,6 +869,66 @@
       "unit": "kyoshin/menu/CMenuEnemyState",
       "required_level": "FULL_MATCH",
       "notes": "Batch 14k; Process+vt/PTMF ctor; leave Move/cbRenderBefore; size 0x250"
+    },
+    {
+      "id": "menu-ptgauge-init",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuPTGauge::Init",
+      "symbol": "Init__12CMenuPTGaugeFv",
+      "address": "0x801884E8",
+      "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
+      "unit": "kyoshin/menu/CMenuPTGauge",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14l; widget/resource Init; leave Move/cbRenderBefore; size 0x1AC"
+    },
+    {
+      "id": "window-mgr-term",
+      "tier": "P2",
+      "milestone": "presentation",
+      "function": "CUIWindowManager::Term",
+      "symbol": "Term__16CUIWindowManagerFv",
+      "address": "0x8013D068",
+      "source": "src/kyoshin/CUIWindowManager.cpp",
+      "unit": "kyoshin/CUIWindowManager",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14l; teardown; leave Move; size 0x60"
+    },
+    {
+      "id": "menu-battlemode-init",
+      "tier": "P1",
+      "milestone": "presentation",
+      "function": "CMenuBattleMode::Init",
+      "symbol": "Init__15CMenuBattleModeFv",
+      "address": "0x801A15E0",
+      "source": "src/kyoshin/menu/CMenuBattleMode.cpp",
+      "unit": "kyoshin/menu/CMenuBattleMode",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14l; create TU with Init only; size 0x134"
+    },
+    {
+      "id": "arts-param-ctor",
+      "tier": "P1",
+      "milestone": "combat",
+      "function": "CArtsParam::CArtsParam",
+      "symbol": "__ct__Q22cf10CArtsParamFv",
+      "address": "0x80155FD8",
+      "source": "src/kyoshin/cf/CArtsParam.cpp",
+      "unit": "kyoshin/cf/CArtsParam",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14l; CArtsParam ctor; leave sibling vfuncs as structural unless needed for link; size 0x74"
+    },
+    {
+      "id": "game-on-pause-trigger",
+      "tier": "P0",
+      "milestone": "presentation",
+      "function": "CGame::OnPauseTrigger",
+      "symbol": "OnPauseTrigger__5CGameFb",
+      "address": "0x80039FB4",
+      "source": "src/kyoshin/CGame.cpp",
+      "unit": "kyoshin/CGame",
+      "required_level": "FULL_MATCH",
+      "notes": "Batch 14l; modal pause gate; DECOMP_MAP CODE_MATCH; leave other CGame methods; size 0x100"
     }
   ]
 }

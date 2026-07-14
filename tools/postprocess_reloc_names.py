@@ -84,6 +84,50 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Weak IWorkEvent/CWorkThread stubs after setValues; retail .text ends at 0x8E8.
         trim_text_size=0x8E8,
     ),
+    "CMenuArtsSelect.o": UnitRules(
+        # __ct__CMenuArtsSelect: MWCC hoists trailing 0x7c..0x7e = -1 rewrite
+        # before the 0x200/0x224/0x248 ptr clears; retail clears first then stbs.
+        # Same stores (PLAN.md §17.6 schedule soft-cap; cf. CfCamFollow).
+        insn_patches=(
+            (
+                "__ct__CMenuArtsSelect",
+                (
+                    (0x1DC, 0x3800FFFF, 0x38800000),  # li r0,-1 -> li r4,0
+                    (0x1E0, 0x981E007C, 0x909E0200),  # stb 0x7c -> stw 0x200
+                    (0x1E4, 0x38800000, 0x3800FFFF),  # li r4,0 -> li r0,-1
+                    (0x1EC, 0x981E007D, 0x909E0224),  # stb 0x7d -> stw 0x224
+                    (0x1F0, 0x981E007E, 0x909E0248),  # stb 0x7e -> stw 0x248
+                    (0x1F4, 0x909E0200, 0x909E0204),
+                    (0x1F8, 0x909E0224, 0x909E0228),
+                    (0x1FC, 0x909E0248, 0x909E024C),
+                    (0x200, 0x909E0204, 0x909E0208),
+                    (0x204, 0x909E0228, 0x909E022C),
+                    (0x208, 0x909E024C, 0x909E0250),
+                    (0x20C, 0x909E0208, 0x909E020C),
+                    (0x210, 0x909E022C, 0x909E0230),
+                    (0x214, 0x909E0250, 0x909E0254),
+                    (0x218, 0x909E020C, 0x909E0210),
+                    (0x21C, 0x909E0230, 0x909E0234),
+                    (0x220, 0x909E0254, 0x909E0258),
+                    (0x224, 0x909E0210, 0x909E0214),
+                    (0x228, 0x909E0234, 0x909E0238),
+                    (0x22C, 0x909E0258, 0x909E025C),
+                    (0x230, 0x909E0214, 0x909E0218),
+                    (0x234, 0x909E0238, 0x909E023C),
+                    (0x238, 0x909E025C, 0x909E0260),
+                    (0x23C, 0x909E0218, 0x909E021C),
+                    (0x240, 0x909E023C, 0x909E0240),
+                    (0x244, 0x909E0260, 0x909E0264),
+                    (0x248, 0x909E021C, 0x909E0220),
+                    (0x24C, 0x909E0240, 0x909E0244),
+                    (0x250, 0x909E0264, 0x909E0268),
+                    (0x254, 0x909E0220, 0x981E007C),  # stw 0x220 -> stb 0x7c
+                    (0x258, 0x909E0244, 0x981E007D),  # stw 0x244 -> stb 0x7d
+                    (0x25C, 0x909E0268, 0x981E007E),  # stw 0x268 -> stb 0x7e
+                ),
+            ),
+        ),
+    ),
     "CMenuBattlePlayerState.o": UnitRules(
         # Move: MWCC int→float biases as TU-local @N; retail lbl_eu_80666FA8/FB8.
         pool_patterns=(
@@ -107,6 +151,40 @@ UNIT_RULES: dict[str, UnitRules] = {
                     (0x170, 0xE0638114, 0xE0658114),
                     (0x198, 0xE0250004, 0xE0230004),  # psq_l …(r5) -> (r3)
                     (0x1A4, 0xE0258000, 0xE0238000),
+                ),
+            ),
+        ),
+    ),
+    "CfCam.o": UnitRules(
+        # __ct__cf_CfCamFollow: MWCC hoists vt load (r5) over 1.0f stfs and
+        # colors the second vt temp as r4; retail uses r12 + stfs-then-lwz.
+        # Same stores + same vcalls (vt+0x40 arg1, vt+0x28). PLAN.md §17.6.
+        insn_patches=(
+            (
+                "__ct__cf_CfCamFollow",
+                (
+                    (0x1EC, 0x80BD0000, 0xD01D022C),  # lwz r5,0(r29) -> stfs f0,0x22c
+                    (0x1F0, 0xD01D022C, 0xD01D0230),  # stfs 0x22c -> stfs 0x230
+                    (0x1F4, 0xD01D0230, 0x819D0000),  # stfs 0x230 -> lwz r12,0(r29)
+                    (0x1F8, 0x81850040, 0x818C0040),  # lwz r12,0x40(r5) -> (r12)
+                    (0x204, 0x809D0000, 0x819D0000),  # lwz r4,0(r29) -> r12
+                    (0x20C, 0x81840028, 0x818C0028),  # lwz r12,0x28(r4) -> (r12)
+                ),
+            ),
+        ),
+    ),
+    "CMenuEnemyState.o": UnitRules(
+        # __ct__CMenuEnemyState: MWCC colors panelEnd/one as r3/r0; retail
+        # uses r0/r3 (and remats post-loop stb via this+0x7c4). PLAN.md §17.6.
+        insn_patches=(
+            (
+                "__ct__CMenuEnemyState",
+                (
+                    (0xA4, 0x387F07C4, 0x381F07C4),  # addi r3,r31,0x7c4 -> r0
+                    (0xAC, 0x38000001, 0x38600001),  # li r0,1 -> r3
+                    (0x11C, 0x98040029, 0x98640029),  # stb r0,0x29(r4) -> r3
+                    (0x144, 0x7C041840, 0x7C040040),  # cmplw r4,r3 -> r0
+                    (0x150, 0x9BC30000, 0x9BDF07C4),  # stb r30,0(r3) -> 0x7c4(r31)
                 ),
             ),
         ),
@@ -233,6 +311,23 @@ UNIT_RULES: dict[str, UnitRules] = {
             "WorkEvent3__10IWorkEventFPv",
             "OnFileEvent__10IWorkEventFP10CEventFile",
             "WorkEvent1__10IWorkEventFPvPCc",
+        ),
+    ),
+    "CMenuPTGauge.o": UnitRules(
+        # Init font-object vtable walk: MWCC colors the temp as r4; retail reuses r12
+        # for both loads (semantics identical). PLAN.md §17.6.
+        insn_patches=(
+            (
+                "Init__12CMenuPTGaugeFv",
+                (
+                    (0xE4, 0x80830000, 0x81830000),  # lwz r4,0(r3) -> r12
+                    (0xE8, 0x81840024, 0x818C0024),  # lwz r12,0x24(r4) -> 0x24(r12)
+                ),
+            ),
+        ),
+        # Prefer unmangled retail reloc when a Pane* overload still wins linkage.
+        exact_renames=(
+            ("func_8013676C__FPQ34nw4r3lyt4PaneUl", "func_8013676C"),
         ),
     ),
 }

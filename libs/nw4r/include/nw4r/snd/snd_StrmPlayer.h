@@ -163,60 +163,65 @@ private:
     void SetAdpcmLoopContext(int channels, u16* pPredScale);
 
 private:
-    StrmInfo mStrmInfo; // at 0x80
+    // Retail StrmPlayer reserves 0x68 bytes between its base subobjects and
+    // the stream-specific state. Without this gap every member below is
+    // addressed 0x68 bytes too early (for example mTaskCancelFlag at 0xBD
+    // instead of 0x125).
+    u8 _padding80[0x68];
+    StrmInfo mStrmInfo; // at 0xE8
 
-    bool mSetupFlag;           // at 0xB8
-    bool mActiveFlag;          // at 0xB9
-    bool mStartedFlag;         // at 0xBA
-    bool mPreparedFlag;        // at 0xBB
-    bool mTaskErrorFlag;       // at 0xBC
-    bool mTaskCancelFlag;      // at 0xBD
-    bool mLoadingDelayFlag;    // at 0xBE
-    bool mPauseFlag;           // at 0xBF
-    bool mPauseStatus;         // at 0xC0
-    bool mLoadWaitFlag;        // at 0xC1
-    bool mNoRealtimeLoadFlag;  // at 0xC2
-    bool mSkipUpdateAdpcmLoop; // at 0xC3
-    bool mValidAdpcmLoop;      // at 0xC4
-    bool mPlayFinishFlag;      // at 0xC5
-    bool mLoadFinishFlag;      // at 0xC6
+    bool mSetupFlag;           // at 0x120
+    bool mActiveFlag;          // at 0x121
+    bool mStartedFlag;         // at 0x122
+    bool mPreparedFlag;        // at 0x123
+    bool mTaskErrorFlag;       // at 0x124
+    bool mTaskCancelFlag;      // at 0x125
+    bool mLoadingDelayFlag;    // at 0x126
+    bool mPauseFlag;           // at 0x127
+    bool mPauseStatus;         // at 0x128
+    bool mLoadWaitFlag;        // at 0x129
+    bool mNoRealtimeLoadFlag;  // at 0x12A
+    bool mSkipUpdateAdpcmLoop; // at 0x12B
+    bool mValidAdpcmLoop;      // at 0x12C
+    bool mPlayFinishFlag;      // at 0x12D
+    bool mLoadFinishFlag;      // at 0x12E
 
-    s32 mLoopCounter;    // at 0xC8
-    int mPrepareCounter; // at 0xCC
+    s32 mLoopCounter;    // at 0x130
+    int mPrepareCounter; // at 0x134
 
-    int mChangeNumBlocks;      // at 0xD0
-    int mDataBlockSize;        // at 0xD4
-    int mBufferBlockCount;     // at 0xD8
-    int mBufferBlockCountBase; // at 0xDC
+    int mChangeNumBlocks;      // at 0x138
+    int mDataBlockSize;        // at 0x13C
+    int mBufferBlockCount;     // at 0x140
+    int mBufferBlockCountBase; // at 0x144
 
-    int mLoadingBufferBlockCount; // at 0xE0
-    int mLoadingBufferBlockIndex; // at 0xE4
-    int mLoadingDataBlockIndex;   // at 0xE8
+    int mLoadingBufferBlockCount; // at 0x148
+    int mLoadingBufferBlockIndex; // at 0x14C
+    int mLoadingDataBlockIndex;   // at 0x150
 
-    int mPlayingBufferBlockCount; // at 0xEC
-    int mPlayingBufferBlockIndex; // at 0xF0
-    int mPlayingDataBlockIndex;   // at 0xF4
-    int mLoopStartBlockIndex;     // at 0xF8
-    int mLastBlockIndex;          // at 0xFC
+    int mPlayingBufferBlockCount; // at 0x154
+    int mPlayingBufferBlockIndex; // at 0x158
+    int mPlayingDataBlockIndex;   // at 0x15C
+    int mLoopStartBlockIndex;     // at 0x160
+    int mLastBlockIndex;          // at 0x164
 
-    StartOffsetType mStartOffsetType; // at 0x100
-    int mStartOffset;                 // at 0x104
+    StartOffsetType mStartOffsetType; // at 0x168
+    int mStartOffset;                 // at 0x16C
 
-    StrmHeaderLoadTask mStrmHeaderLoadTask;                       // at 0x108
-    StrmDataLoadTaskList mStrmDataLoadTaskList;                   // at 0x128
-    InstancePool<StrmDataLoadTask> mStrmDataLoadTaskPool;         // at 0x134
-    StrmDataLoadTask mStrmDataLoadTaskArea[DATA_BLOCK_COUNT_MAX]; // at 0x138
+    StrmHeaderLoadTask mStrmHeaderLoadTask;                       // at 0x170
+    StrmDataLoadTaskList mStrmDataLoadTaskList;                   // at 0x190
+    InstancePool<StrmDataLoadTask> mStrmDataLoadTaskPool;         // at 0x19C
+    StrmDataLoadTask mStrmDataLoadTaskArea[DATA_BLOCK_COUNT_MAX]; // at 0x1A0
 
-    StrmBufferPool* mBufferPool; // at 0x7B8
-    ut::FileStream* mFileStream; // at 0x7BC
-    Voice* mVoice;               // at 0x7C0
-    s32 mChannelCount;           // at 0x7C4
-    s32 mVoiceOutCount;          // at 0x7C8
+    StrmBufferPool* mBufferPool; // at 0x820
+    ut::FileStream* mFileStream; // at 0x824
+    Voice* mVoice;               // at 0x828
+    s32 mChannelCount;           // at 0x82C
+    s32 mVoiceOutCount;          // at 0x830
 
-    StrmChannel mChannels[CHANNEL_MAX];   // at 0x7CC
-    u16 mAdpcmLoopPredScale[CHANNEL_MAX]; // at 0x83C
-    u16 mAdpcmLoopYn1[CHANNEL_MAX];       // at 0x840
-    u16 mAdpcmLoopYn2[CHANNEL_MAX];       // at 0x844
+    StrmChannel mChannels[CHANNEL_MAX];   // at 0x834
+    u16 mAdpcmLoopPredScale[CHANNEL_MAX]; // at 0x8A4
+    u16 mAdpcmLoopYn1[CHANNEL_MAX];       // at 0x8A8
+    u16 mAdpcmLoopYn2[CHANNEL_MAX];       // at 0x8AC
 
     static u8 sLoadBuffer[LOAD_BUFFER_SIZE] ALIGN(32);
     static OSMutex sLoadBufferMutex;

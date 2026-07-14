@@ -19,11 +19,16 @@ struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Layout* unk20; // +0x20 → this+0x94
     u8 pad24[0x28 - 0x24];
     nw4r::lyt::Layout* unk28; // +0x28 → this+0x9c
-    u8 pad2C[0x78 - 0x2C];
+    u8 pad2C[0x74 - 0x2C];
+    void* unk74; // +0x74: cleared by slot ctor
     nw4r::lyt::Layout* unk78; // +0x78 → this+0xec
-    u8 pad7C[0x80 - 0x7C];
+    void* unk7C; // +0x7c
     u8 unk80; // +0x80 → this+0xf4: gates the extra unk78 draw in cbRenderBefore
-    u8 pad81[0x204 - 0x81];
+    u8 pad81[0x84 - 0x81];
+    void* unk84; // +0x84
+    void* unk88; // +0x88
+    void* unk8C; // +0x8c
+    u8 pad90[0x204 - 0x90]; // cleared each ctor pass (retail 0x90..0x204)
     u8 unk204; // +0x204: snapshot of actor+0x3f28 (low byte)
     u8 pad205[0x208 - 0x205];
     u32 unk208; // +0x208
@@ -43,14 +48,23 @@ struct CMenuBattlePlayerStateSlot {
     u8 unk240; // +0x240: dirty / in-combat gate
     u8 pad241[0x244 - 0x241];
     u32 unk244; // +0x244 → this+0x2b8: per-slot anim state / active gate
-    u8 pad248[0x25C - 0x248];
+    u32 unk248; // +0x248: ctor default 4
+    u8 pad24C[0x250 - 0x24C];
+    u32 unk250; // +0x250: ctor default 6
+    u32 unk254; // +0x254: ctor default 0xb
+    u32 unk258; // +0x258: slot index
     u32 unk25C; // +0x25C → this+0x2d0: per-layout draw flag bits
-    u8 pad260[0x270 - 0x260];
+    u8 pad260[0x264 - 0x260];
+    f32 unk264; // +0x264
+    u8 pad268[0x270 - 0x268];
 };
 
 // IUICf/CTTask is 0x54; retail places IWorkEvent at 0x58 (extab), so pad 4.
 class CMenuBattlePlayerStateBase : public IUICf {
-    u8 pad54[4];
+public:
+    u8 unk54; // 0x54
+    u8 unk55; // 0x55
+    u8 pad56[2];
 };
 
 class CMenuBattlePlayerState : public CMenuBattlePlayerStateBase,
@@ -68,9 +82,10 @@ public:
     f32 unk7C4; // 0x7c4: full-HP hold timer
     u8 unk7C8; // 0x7c8: once-guard for func_80138078(0x9a)
     u8 unk7C9; // 0x7c9: cbRenderBefore early-out gate (skip render when nonzero)
-    u8 pad7CA[0x7D0 - 0x7CA];
+    u8 pad7CA[0x7CC - 0x7CA];
+    char* unk7CC; // 0x7cc: retail embeds lbl_eu_8052C42C
     UnkClass_8045F564 unk7D0; // 0x7d0
-    u8 pad7E0[0x7E4 - 0x7E0];
+    void* unk7E0; // 0x7e0
     nw4r::lyt::Layout* unk7E4; // 0x7e4
     nw4r::lyt::AnimTransform* unk7E8; // 0x7e8
     nw4r::lyt::AnimTransform* unk7EC; // 0x7ec

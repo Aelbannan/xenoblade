@@ -26403,11 +26403,16 @@ struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Layout* unk20; // +0x20 → this+0x94
     u8 pad24[0x28 - 0x24];
     nw4r::lyt::Layout* unk28; // +0x28 → this+0x9c
-    u8 pad2C[0x78 - 0x2C];
+    u8 pad2C[0x74 - 0x2C];
+    void* unk74; // +0x74: cleared by slot ctor
     nw4r::lyt::Layout* unk78; // +0x78 → this+0xec
-    u8 pad7C[0x80 - 0x7C];
+    void* unk7C; // +0x7c
     u8 unk80; // +0x80 → this+0xf4: gates the extra unk78 draw in cbRenderBefore
-    u8 pad81[0x204 - 0x81];
+    u8 pad81[0x84 - 0x81];
+    void* unk84; // +0x84
+    void* unk88; // +0x88
+    void* unk8C; // +0x8c
+    u8 pad90[0x204 - 0x90]; // cleared each ctor pass (retail 0x90..0x204)
     u8 unk204; // +0x204: snapshot of actor+0x3f28 (low byte)
     u8 pad205[0x208 - 0x205];
     u32 unk208; // +0x208
@@ -26427,14 +26432,23 @@ struct CMenuBattlePlayerStateSlot {
     u8 unk240; // +0x240: dirty / in-combat gate
     u8 pad241[0x244 - 0x241];
     u32 unk244; // +0x244 → this+0x2b8: per-slot anim state / active gate
-    u8 pad248[0x25C - 0x248];
+    u32 unk248; // +0x248: ctor default 4
+    u8 pad24C[0x250 - 0x24C];
+    u32 unk250; // +0x250: ctor default 6
+    u32 unk254; // +0x254: ctor default 0xb
+    u32 unk258; // +0x258: slot index
     u32 unk25C; // +0x25C → this+0x2d0: per-layout draw flag bits
-    u8 pad260[0x270 - 0x260];
+    u8 pad260[0x264 - 0x260];
+    f32 unk264; // +0x264
+    u8 pad268[0x270 - 0x268];
 };
 
 // IUICf/CTTask is 0x54; retail places IWorkEvent at 0x58 (extab), so pad 4.
 class CMenuBattlePlayerStateBase : public IUICf {
-    u8 pad54[4];
+public:
+    u8 unk54; // 0x54
+    u8 unk55; // 0x55
+    u8 pad56[2];
 };
 
 class CMenuBattlePlayerState : public CMenuBattlePlayerStateBase,
@@ -26452,9 +26466,10 @@ public:
     f32 unk7C4; // 0x7c4: full-HP hold timer
     u8 unk7C8; // 0x7c8: once-guard for func_80138078(0x9a)
     u8 unk7C9; // 0x7c9: cbRenderBefore early-out gate (skip render when nonzero)
-    u8 pad7CA[0x7D0 - 0x7CA];
+    u8 pad7CA[0x7CC - 0x7CA];
+    char* unk7CC; // 0x7cc: retail embeds lbl_eu_8052C42C
     UnkClass_8045F564 unk7D0; // 0x7d0
-    u8 pad7E0[0x7E4 - 0x7E0];
+    void* unk7E0; // 0x7e0
     nw4r::lyt::Layout* unk7E4; // 0x7e4
     nw4r::lyt::AnimTransform* unk7E8; // 0x7e8
     nw4r::lyt::AnimTransform* unk7EC; // 0x7ec
@@ -245840,6 +245855,11 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
 // ABI as UnkVirtualFunc6 above).
 extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* entry);
+
+// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
+// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
+extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
 #pragma once
@@ -247222,8 +247242,10 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 /* end "kyoshin/code_80135FDC.hpp" */
 /* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 7 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 8 "monolib/work/CProcess.hpp" */
+/* end "monolib/work/CProcess.hpp" */
 
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 9 "decomp.h" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 10 "decomp.h" */
 /**
  * Codewarrior tricks for matching decomp
  * (Macros generate prototypes to satisfy -requireprotos)
@@ -247389,11 +247411,11 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 
 #endif
 /* end "decomp.h" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 10 "functions.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 11 "functions.hpp" */
 /* end "functions.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 11 "nw4r/math.h" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 12 "nw4r/math.h" */
 /* end "nw4r/math.h" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 12 "revolution/GX.h" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 13 "revolution/GX.h" */
 /**
  * References: YAGCD, Dolphin Emulator, publicly available patents
  */
@@ -247696,11 +247718,28 @@ typedef enum {
 // Batch 2026-07-14g: menu-bps-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-bps-move owns Move exclusively; do not touch
 // Term / cbRenderBefore.
+// Batch 2026-07-14k: menu-bps-ctor owns __ct__CMenuBattlePlayerState only.
+
+struct CMenuBpsProcessShim {
+    u8 unk00[0x10];
+    void* vtable;
+    u8 unk14[0x28];
+    u32 callbacks[6]; // +0x3c
+};
 
 extern "C" {
 extern CMenuBattlePlayerState* lbl_eu_80663F48;
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
+char lbl_eu_8052C1C0[];
+char lbl_eu_8052C330[];
+char lbl_eu_8052C42C[];
+u32 __ptmf_null[3];
+void __ct__8CProcessFv(CProcess*);
+void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+void func_8010B324(CMenuBattlePlayerStateSlot*);
+void __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
+void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // Unmangled retail name; int (not u8) avoids clrlwi before cmpwi.
 int func_8013BE50();
 void* func_800B8B94(int id);
@@ -247718,6 +247757,7 @@ extern const f32 lbl_eu_80666F94; // 0.0f
 extern const f32 lbl_eu_80666F98; // 110.0f
 extern const f32 lbl_eu_80666F9C; // 86.0f
 extern const f32 lbl_eu_80666FA0; // -178.0f
+extern const f32 lbl_eu_80666FB0; // -1.0f
 extern const f32 lbl_eu_80666FC0; // 100.0f
 extern const f32 lbl_eu_80666FC4; // 360.0f
 }
@@ -247727,6 +247767,204 @@ extern void func_80138078(u32);
 template <typename Fn>
 static inline Fn vslot(void* obj, u32 offset) {
     return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
+}
+
+// Retail linker name is untyped `__ct__CMenuBattlePlayerState` (takes CScn* in r4).
+extern "C" CMenuBattlePlayerState*
+__ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
+    CMenuBpsProcessShim* process;
+    u8* ptmfBase;
+    char* vtFinal;
+    char* vtWork;
+    char* vtRender;
+    u32 ptmfWord0;
+    u32 ptmfWord1;
+    u32 ptmfWord2;
+    u32 z;
+    u32 v4;
+    u32 v6;
+    u32 vB;
+    u8 i;
+    UnkClass_8045F564* unk64p;
+
+    process = reinterpret_cast<CMenuBpsProcessShim*>(self);
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
+
+    // Interim CProcess vtable, then final MI vtable + interface pieces.
+    // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C (ArtsSelect order).
+    process->vtable = lbl_eu_8052C1C0;
+    vtFinal = lbl_eu_8052C330;
+    ptmfBase = (u8*)__ptmf_null;
+    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    vtWork = vtFinal + 0x24;
+    vtRender = vtFinal + 0xac;
+    z = 0;
+    unk64p = &self->unk64;
+    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    process->callbacks[1] = ptmfWord1;
+    process->callbacks[0] = ptmfWord0;
+    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    process->callbacks[2] = ptmfWord2;
+    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    process->callbacks[4] = ptmfWord1;
+    process->callbacks[3] = ptmfWord0;
+    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    process->callbacks[5] = ptmfWord2;
+    self->unk54 = (u8)z;
+    self->unk55 = (u8)z;
+    process->vtable = vtFinal;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x58) = vtWork;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x5c) = vtRender;
+    self->mScn = scn;
+
+    __ct__17UnkClass_8045F564Fv(unk64p);
+    __construct_array(self->mSlots, reinterpret_cast<void*>(func_8010B324),
+                      reinterpret_cast<void*>(__dt__8010B444), 0x270, 3);
+
+    // Retail stores 0.0f then constructs unk7D0 before loading loop floats.
+    self->unk7C4 = lbl_eu_80666F94;
+    self->unk7C8 = (u8)z;
+    self->unk7C9 = (u8)z;
+    self->unk7CC = lbl_eu_8052C42C;
+    __ct__17UnkClass_8045F564Fv(&self->unk7D0);
+
+    self->unk7F4 = 1;
+    self->unk7E0 = (void*)z;
+    self->unk7E4 = (nw4r::lyt::Layout*)z;
+    self->unk7E8 = (nw4r::lyt::AnimTransform*)z;
+    self->unk7EC = (nw4r::lyt::AnimTransform*)z;
+    self->unk7F0 = (nw4r::lyt::AnimTransform*)z;
+    self->unk7F8 = z;
+
+    {
+        f32 zeroF;
+        f32 neg1F;
+        u32 step60;
+        u32 stepC;
+        u8* mid;
+        u8* midEnd;
+        u8* midLim60;
+        u32* head;
+        u32* headEnd;
+
+        // Hoist chunk sizes before the loop (retail r25=0x60 / r26=0xC) so the
+        // prologue keeps them + the loop temps across_savegpr_21 range.
+        v4 = 4;
+        v6 = 6;
+        vB = 0xb;
+        zeroF = lbl_eu_80666F94;
+        neg1F = lbl_eu_80666FB0;
+        step60 = 0x60;
+        stepC = 0xc;
+        i = 0;
+        do {
+            CMenuBattlePlayerStateSlot slot;
+            u8* p;
+            u32 n;
+
+            // Inlined func_8010B324 header: clear +0x74..+0x8c.
+            slot.unk74 = (void*)z;
+            slot.unk78 = (nw4r::lyt::Layout*)z;
+            slot.unk7C = (void*)z;
+            slot.unk80 = (u8)z;
+            slot.unk84 = (void*)z;
+            slot.unk88 = (void*)z;
+            slot.unk8C = (void*)z;
+
+            // Inlined func_8010B324 body: 0x60-word then 0xC-word fills over
+            // +0x90..+0x204 (retail mtctr/bdnz unrolls — not a word pointer walk).
+            mid = reinterpret_cast<u8*>(&slot) + 0x90;
+            midEnd = reinterpret_cast<u8*>(&slot) + 0x204;
+            midLim60 = midEnd - step60;
+            p = mid;
+            if (p < midEnd) {
+                n = (u32)((midLim60 + 0x5f) - p) / step60;
+                if (p < midLim60) {
+                    for (; n != 0; n--) {
+                        u32* w = reinterpret_cast<u32*>(p);
+                        w[0] = z;
+                        w[1] = z;
+                        w[2] = z;
+                        w[3] = z;
+                        w[4] = z;
+                        w[5] = z;
+                        w[6] = z;
+                        w[7] = z;
+                        w[8] = z;
+                        w[9] = z;
+                        w[10] = z;
+                        w[11] = z;
+                        w[12] = z;
+                        w[13] = z;
+                        w[14] = z;
+                        w[15] = z;
+                        w[16] = z;
+                        w[17] = z;
+                        w[18] = z;
+                        w[19] = z;
+                        w[20] = z;
+                        w[21] = z;
+                        w[22] = z;
+                        w[23] = z;
+                        p += step60;
+                    }
+                }
+                n = (u32)((midEnd + 0xb) - p) / stepC;
+                if (p < midEnd) {
+                    for (; n != 0; n--) {
+                        u32* w = reinterpret_cast<u32*>(p);
+                        w[0] = z;
+                        w[1] = z;
+                        w[2] = z;
+                        p += stepC;
+                    }
+                }
+            }
+
+            slot.unk220 = zeroF;
+            slot.unk224 = zeroF;
+            slot.unk228 = zeroF;
+            slot.unk22C = neg1F;
+            slot.unk248 = v4;
+            slot.unk250 = v6;
+            slot.unk254 = vB;
+            slot.unk258 = i;
+            slot.unk264 = zeroF;
+
+            // Retail then zeros the slot head (+0x00..+0x40) and sparse
+            // tail fields before the aggregate copy into mSlots[i].
+            head = reinterpret_cast<u32*>(&slot);
+            headEnd = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x40);
+            while (head < headEnd) {
+                *head = z;
+                head++;
+            }
+            slot.unk204 = (u8)z;
+            slot.unk208 = z;
+            slot.unk20C = z;
+            slot.unk210 = z;
+            slot.unk214 = z;
+            slot.unk218 = z;
+            slot.unk21C = z;
+            slot.unk230 = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x234) = z;
+            slot.unk238 = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x23c) = z;
+            slot.unk25C = z;
+            slot.unk240 = (u8)z;
+            slot.unk244 = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x24c) = z;
+            *reinterpret_cast<u8*>(reinterpret_cast<u8*>(&slot) + 0x260) = (u8)z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x268) = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x26c) = z;
+
+            self->mSlots[i] = slot;
+            i = (u8)(i + 1);
+        } while (i < 3);
+    }
+
+    return self;
 }
 
 void CMenuBattlePlayerState::Term() {

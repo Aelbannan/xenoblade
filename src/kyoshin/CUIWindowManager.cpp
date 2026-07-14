@@ -7,6 +7,9 @@
 extern "C" {
 CUIWindowManager* lbl_eu_80664088;
 s16 lbl_eu_8066408C;
+
+void func_8009D0B4();
+void func_8009D514(cf::IFlagEvent*);
 }
 
 // Unrecovered view type referenced through IUIWindow::unk5C; only the +0x828
@@ -40,6 +43,15 @@ public:
 
 typedef reslist<IUIWindow*>::iterator WindowIter;
 typedef _reslist_node<IUIWindow*> WindowNode;
+
+void CUIWindowManager::Term() {
+    cf::IFlagEvent* flagEvent = this; // implicit MI conversion — do not static_cast / ternary / if
+    func_8009D0B4();
+    func_8009D514(flagEvent);
+
+    unk9C->SetRemove();
+    lbl_eu_80664088 = NULL;
+}
 
 void CUIWindowManager::Move() {
     CUIWindowManager* inst = lbl_eu_80664088;

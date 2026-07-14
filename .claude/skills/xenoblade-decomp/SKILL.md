@@ -2,18 +2,17 @@
 name: xenoblade-decomp
 description: >-
   Primary agent workflow for the Xenoblade Chronicles Wii co-op decompilation
-  fork. Always read and follow at the start of tasks in this repository when
-  decompiling, matching, editing src/kyoshin or configure.py, running the coop
-  runner, objdiff, DECOMP_MAP targets, or MWCC FULL_MATCH work.
+  fork. Invoke at the start of tasks in this repository when decompiling,
+  matching, editing src/kyoshin or configure.py, running the coop runner,
+  objdiff, DECOMP_MAP targets, or MWCC FULL_MATCH work.
 ---
 
 # Xenoblade decompilation
 
-> **Source of truth:** `.claude/skills/xenoblade-decomp/SKILL.md` (Claude Code
-> skill). This file is a **mirror** for Cursor use only — edit the `.claude`
-> copy and sync this one from it. Do not diverge.
-
-> **Auto-loaded** via root `AGENTS.md` and `.cursor/rules/xenoblade-decomp.mdc` (`alwaysApply: true`).
+> **Auto-loaded** via root `AGENTS.md` and this skill. Follow it at the start of
+> tasks in this repository when decompiling, matching, editing `src/kyoshin` or
+> `configure.py`, running the coop runner, objdiff, `DECOMP_MAP` targets, or
+> MWCC `FULL_MATCH` work.
 
 ## Before you edit code
 

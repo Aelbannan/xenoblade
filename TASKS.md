@@ -278,6 +278,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 7.4 Arts structures
 
+- [x] **`CArtsParam::CArtsParam()`** (`__ct__Q22cf10CArtsParamFv`) · `0x80155FD8` · size `0x74` · **FULL_MATCH** (batch 14l)
+  - Map level: FULL_MATCH
+  - Inline CAttackParam clears + vt+8, then Arts vt swap + CArtsParam_UnkVirtualFunc1.
 - [x] **`CArtsSet virtual #1`** (`CArtsSet_UnkVirtualFunc1__Q22cf8CArtsSetFv`) · `0x80154740` · size `0x9C` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Clear + 3×8 CArtsParam vt+8 init; decl-order `rowBase`/`p`/`row` for Chaitin.
@@ -326,12 +329,18 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CMenuEnemyState::cbRenderBefore()`** (`cbRenderBefore__15CMenuEnemyStateFv`) · `0x80111240` · size `0x274` · CODE_MATCH ~98.2%; host `menu-enemy-cbrender` (10) PASS
   - Map level: STRUCTURAL
   - Per-view enemy-panel rendering.
-- [ ] **`CMenuPTGauge::Move()`** (`Move__12CMenuPTGaugeFv`) · `0x80188714` · size `0x35C` · **97.1% CODE_MATCH**; host `menu-ptgauge-move` (16) PASS
-  - Map level: CODE_MATCH
-  - Soft-cap: MWCC allocation / float schedule / byte-range folding.
+- [x] **`CMenuPTGauge::Init()`** (`Init__12CMenuPTGaugeFv`) · `0x801884E8` · size `0x1AC` · **FULL_MATCH** (batch 14l); void* cast for unmangled `func_8013676C`; §17.6 insn_patches font vt r12 walk
+  - Map level: FULL_MATCH
+  - createRegion + layout/anims + font + addRenderCB.
+- [x] **`CMenuPTGauge::Move()`** (`Move__12CMenuPTGaugeFv`) · `0x80188714` · size `0x35C` · **FULL_MATCH**; host `menu-ptgauge-move` (16) PASS
+  - Map level: FULL_MATCH
+  - Explicit reslist walks, width-before-height assignment, and distinct-width byte aliases recover retail MWCC scheduling.
 - [x] **`CMenuPTGauge::cbRenderBefore()`** (`cbRenderBefore__12CMenuPTGaugeFv`) · `0x80188A70` · size `0xAC`
   - Map level: FULL_MATCH
   - Final shared gauge placement.
+- [x] **`CMenuBattleMode::Init()`** (`Init__15CMenuBattleModeFv`) · `0x801A15E0` · size `0x134` · **FULL_MATCH** (batch 14l)
+  - Map level: FULL_MATCH
+  - Sibling of PTGauge Init (region/layout/anims/addRenderCB); `lbl_eu_80667C80` SetFrame.
 - [ ] **`CUIBattleManager::Move()`** (`Move__16CUIBattleManagerFv`) · `0x8012F270` · size `0xB00`
   - Map level: STRUCTURAL
   - Owns/coordinates battle UI objects and modes.
@@ -371,8 +380,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CfCamTargetIntf::setLookat()`** (`CfCamTargetIntf_setLookat`) · `0x8006C0D4` · size `0x24`
   - Map level: FULL_MATCH
   - Target-style look-at target.
-- [ ] **`CfCamFollow::CfCamFollow()`** (`__ct__cf_CfCamFollow`) · `0x8006C684` · size `0x238`
-  - Map level: STRUCTURAL
+- [x] **`CfCamFollow::CfCamFollow()`** (`__ct__cf_CfCamFollow`) · `0x8006C684` · size `0x238` · **FULL_MATCH**
+  - Map level: FULL_MATCH
+  - `extern "C"` retail mangling; SDA floats; §17.6 `insn_patches` for vt-load r12 schedule.
   - Recovers follow subject, offsets, smoothing, and collision state fields.
 
 ### 9.2 src/kyoshin/COccCulling.cpp
@@ -411,6 +421,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CUIWindowManager::Move()`** (`Move__16CUIWindowManagerFv`) · `0x8013D0C8` · size `0x4DC` · **79.3% HIGH_MATCH**; host `uiwindowmanager-move` (34) PASS
   - Map level: HIGH_MATCH
   - Soft-cap: MWCC regalloc in 8× unrolled unlink loops.
+- [x] **`CUIWindowManager::Term()`** (`Term__16CUIWindowManagerFv`) · `0x8013D068` · size `0x60` · **FULL_MATCH**
+  - Map level: FULL_MATCH
+  - Implicit MI `this`→`cf::IFlagEvent*` null-adjust (§14 pattern); widened `unk9C` to `IUIWindow*`, calls `SetRemove()`, clears `lbl_eu_80664088`.
 - [x] **`CUICfManager::Init()`** (`Init__12CUICfManagerFv`) · `0x80132EC8` · size `0x2E0` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - §17.6 `asm void` — packed sp+0xdc tail copy + `-0x1A0`/`stmw r22` frame.

@@ -535,7 +535,7 @@ kyoshin/CUIBattleManager.cpp
 |---|---|---:|---:|---|---|
 | `CMenuEnemyState::Move()` | `Move__15CMenuEnemyStateFv` | `0x80110888` | `0x9B8` | P2 target panel and target-specific status. | **STRUCTURAL** |
 | `CMenuEnemyState::cbRenderBefore()` | `cbRenderBefore__15CMenuEnemyStateFv` | `0x80111240` | `0x274` | Per-view enemy-panel rendering. | **STRUCTURAL** |
-| `CMenuPTGauge::Move()` | `Move__12CMenuPTGaugeFv` | `0x80188714` | `0x35C` | Shared party gauge; classify as shared or duplicated. | **TRACE_ONLY** |
+| `CMenuPTGauge::Move()` | `Move__12CMenuPTGaugeFv` | `0x80188714` | `0x35C` | Shared party gauge; classify as shared or duplicated. | **FULL_MATCH** |
 | `CMenuPTGauge::cbRenderBefore()` | `cbRenderBefore__12CMenuPTGaugeFv` | `0x80188A70` | `0xAC` | Final shared gauge placement. | **FULL_MATCH** |
 | `CUIBattleManager::Move()` | `Move__16CUIBattleManagerFv` | `0x8012F270` | `0xB00` | Owns/coordinates battle UI objects and modes. | **STRUCTURAL** |
 | `CUIBattleManager::Init()` | `Init__16CUIBattleManagerFv` | `0x8012EEFC` | `0xB4` | Finds construction/lifetime of battle HUD components. | **STRUCTURAL** |
@@ -603,7 +603,7 @@ kyoshin/cf/CfCamEvent_1.cpp 0x800758E8-0x8007CA94
 | `CfCamTargetIntf::setPos()` | `CfCamTargetIntf_setPos` | `0x8006C030` | `0x30` | Target-style camera position. | **FULL_MATCH** |
 | `CfCamTargetIntf::setDir()` | `CfCamTargetIntf_setDir` | `0x8006C060` | `0x74` | Target-style camera direction. | **FULL_MATCH** |
 | `CfCamTargetIntf::setLookat()` | `CfCamTargetIntf_setLookat` | `0x8006C0D4` | `0x24` | Target-style look-at target. | **FULL_MATCH** |
-| `CfCamFollow::CfCamFollow()` | `__ct__cf_CfCamFollow` | `0x8006C684` | `0x238` | Recovers follow subject, offsets, smoothing, and collision state fields. | **STRUCTURAL** |
+| `CfCamFollow::CfCamFollow()` | `__ct__cf_CfCamFollow` | `0x8006C684` | `0x238` | Recovers follow subject, offsets, smoothing, and collision state fields. | **FULL_MATCH** |
 
 
 **Discovery targets inside the camera call graph:**

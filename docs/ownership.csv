@@ -1,4 +1,8 @@
 symbol,owner,claimed_at,notes
+CHelp_UnkVirtualFunc3__Q22cf12CHelp_TargetFv,codex-aiaction,2026-07-14,FULL_MATCH 100%; exact function/unit size 0x174
+OnCancel__Q54nw4r3snd6detail10StrmPlayer16StrmDataLoadTaskFv,codex-view-ui,2026-07-14,FULL_MATCH 100%; recovered 0x68 StrmPlayer reserved region
+OnCancel__Q54nw4r3snd6detail10StrmPlayer18StrmHeaderLoadTaskFv,codex-view-ui,2026-07-14,FULL_MATCH 100%; recovered 0x68 StrmPlayer reserved region
+wkStandbyLogout__5CProcFv,codex-aiaction,2026-07-14,FULL_MATCH 100%; explicit reslist clear; unit size exact 0xB1C
 wkRender__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US
 setViewRect__5CGameFP5CViewssss,cursor-agent,2026-07-13,verified FULL_MATCH US
 wkUpdate__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; unk1FC clear via CGameRestart+13 pool offset
@@ -77,7 +81,7 @@ __ct__14CWorkSystemMemFPCcP11CWorkThread,auto-agent,2026-07-14,P3 batch-14e: cto
 __ct__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14e: create CBattleState.cpp ctor
 __ct__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14e: create CAIAction.cpp ctor
 cbRenderBefore__12CMenuPTGaugeFv,auto-agent,2026-07-14,P1 batch-14e: create CMenuPTGauge.cpp cbRenderBefore; leave Move
-Move__12CMenuPTGaugeFv,auto-agent,2026-07-14,P1 batch-14e: CMenuPTGauge Move; leave cbRenderBefore
+Move__12CMenuPTGaugeFv,codex-ptgauge,2026-07-14,FULL_MATCH 100%; explicit reslist walks and width-specific byte aliases
 getFullScreenView__9CViewRootFv,auto-agent,2026-07-14,FULL_MATCH via insn_patches keepGoing r4↔r0; leave setCurrent/renderView/create
 Term__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuBattlePlayerState.cpp Term only
 Term__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuArtsSelect.cpp Term only; lbl_eu_80663F24
@@ -95,7 +99,7 @@ Move__15CMenuEnemyStateFv,auto-agent,2026-07-14,P1 batch-14h: leave cbRenderBefo
 func_80133324__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14h: leave Init/Term
 Move__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14h: leave Term/cbRenderBefore
 CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14i: leaf id→mask vs +0x6; leave other vfuncs
-Move__12CMenuPTGaugeFv,auto-agent,2026-07-14,P1 batch-14i: polish Move ~97.1%; leave cbRenderBefore
+Move__12CMenuPTGaugeFv,codex-ptgauge,2026-07-14,FULL_MATCH 100%; leave cbRenderBefore
 Move__16CUIWindowManagerFv,auto-agent,2026-07-14,P2 batch-14i: polish Move ~79.3%
 cbRenderBefore__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14i: polish cbRenderBefore ~95.2%; leave Term
 setFrustum__11COccCullingFP12CCullFrustum,auto-agent,2026-07-14,P1 batch-14i: polish setFrustum ~88.5%; leave addFrustum/func_801A1188
@@ -109,3 +113,8 @@ __ct__CMenuArtsSelect,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Term/
 __ct__CMenuBattlePlayerState,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Term/Move/cbRenderBefore
 __ct__cf_CfCamFollow,auto-agent,2026-07-14,P1 batch-14k: create CfCam.cpp ctor only
 __ct__CMenuEnemyState,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Move/cbRenderBefore
+Init__12CMenuPTGaugeFv,auto-agent,2026-07-14,batch-14l: menu-ptgauge-init
+Term__16CUIWindowManagerFv,auto-agent,2026-07-14,batch-14l: window-mgr-term
+Init__15CMenuBattleModeFv,auto-agent,2026-07-14,batch-14l: menu-battlemode-init
+__ct__Q22cf10CArtsParamFv,auto-agent,2026-07-14,batch-14l: arts-param-ctor
+OnPauseTrigger__5CGameFb,auto-agent,2026-07-14,batch-14l: game-on-pause-trigger

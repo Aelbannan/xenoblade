@@ -295,6 +295,15 @@ Ctor/dtor **stores** should target the same `lbl_eu_*` (not dual-write `spInstan
 
 **`CWorkSystemMem` ctor** (**FULL_MATCH**): high-level `CWorkThread(pName, pParent, 1)`, `mHandle(INVALID_HANDLE)`, `lbl_eu_80665620 = this`, `create(getHandleMEM2(), REGION_SIZE, mName.c_str())` is **byte-identical** at `0x60` (`REGION_SIZE = 0x1000 - sizeof(MemBlock)` → `0xfe0`). Remaining gap was reloc-only: MWCC emits `__vt__14CWorkSystemMem`; retail names `lbl_eu_8056BAA8`. Exact rename in `postprocess_reloc_names.py` (same §11 pattern as `CView` / `CProc`).
 
+### 3a0. `cf::CfCamFollow` ctor — freestanding retail mangling + SDA floats (**FULL_MATCH**)
+
+**`__ct__cf_CfCamFollow`** (`src/kyoshin/cf/CfCam.cpp`, size `0x238`) — retail symbol is **not** `__ct__Q22cf11CfCamFollowFv`; use `extern "C"`. Flow: `__ct__cf_CfCam(self, arg2)` → `vtable = lbl_eu_80527260` → embed inits via `func_8004B0B0` / `func_8004B60C(..., lbl_eu_806662DC×3)` → float field block (`806662DC`/`80661B50`/`806662B8`/`806662A0`/`806662F0`) → `lbl_eu_80663DEC = self` → `func_8006BEC4` / `BEE4` / `BF14`+`memset(0xC0)` → `1.0f` (`lbl_eu_806662D0`) + vt+`0x40`(arg=1) + vt+`0x28`.
+
+**Pitfalls:**
+- Do **not** keep a `f32 zero = lbl_eu_806662DC` NV — spills f31 and grows frame to `-0x30` (~88%).
+- Pass SDA labels at each use site (same §8c2 / §8c2a).
+- Soft-cap ~98.5% (exact size): MWCC hoists `lwz r5,0(this)` over the two `stfs` of `lbl_eu_806662D0` and colors the second vt temp **r4**; retail uses **r12** after the stores. Volatile store casts **regressed** schedule. Closed with §17.6 **`insn_patches`** on `CfCam.o` (six words). Do **not** promote whole huge `CfCam` TU to `Matching` for this leaf.
+
 ### 3a. Camera interface TUs — C-linkage retail names + float pool via field
 
 **`CfCamDirectionIntf`**, **`CfCamTargetIntf`**, **`CfCamLookatIntf`** (`src/kyoshin/cf/CfCam*.cpp`) — retail symbols are freestanding C names (`CfCamDirectionIntf_setPos`, `CamLookatIntf_setPos` — Lookat omits the `Cf` prefix), not MWCC-mangled members.
@@ -881,13 +890,15 @@ Worked examples (`tools/postprocess_reloc_names.py`, wired via `coop run build/d
 | `MTRand.o` | `@N` → `lbl_eu_8066A1D8` (int→double); `@LOCAL@…@instance` → `…@instance_806561E0` | Magic byte patch + pool rename + exact LOCAL rename → `getInstance` / `randFloat` / `randFloat1` **FULL_MATCH** |
 | `CfPadTask.o` | `@N` float pools → `lbl_eu_80667EA8`/`EB0`/…; `__vt__*` → `lbl_eu_80533D08`/`80533C90`; unit +0xF8 | Pool + vtable rename; **inline ctor**; **out-of-line `CProcess::Tail`**; **`drop_text_symbols`** for `__dt__14IGameExceptionFv` → exact `.text` **`0x12BC`** + create/update/`Move`/… **FULL_MATCH** |
 | `CDeviceGX.o` | `@N` → `lbl_eu_8066A440` / `8066A448` (both magic doubles) | Pool rename only (**do not** patch unsigned `…00000000` → signed — retail keeps both) → `viAfterDrawDone` / `copyEfb` **FULL_MATCH** |
-| `CProc.o` | `@N` → `lbl_eu_8066A280`; `__vt__*` → `lbl_eu_8056B1E0` / `8056B298` / `8056B280`; unit was +0x310 (`pssGetView` / no-arg `pssDetachView` / `pssAttachView` + weak stubs) over split `0xB1C` | Pool + vtable rename; **inline attach/detach-all at call sites** (do not emit those helpers); `trim_text_size=0xB1C` → size **PASS**; ctor/dtor/reslist/`pssSetFocus`/`pssDetachView(Ul)` **FULL_MATCH**; `pssCreateView` ~85%; `wkStandbyLogout` ~98.7% |
+| `CProc.o` | `@N` → `lbl_eu_8066A280`; `__vt__*` → `lbl_eu_8056B1E0` / `8056B298` / `8056B280`; unit was +0x310 (`pssGetView` / no-arg `pssDetachView` / `pssAttachView` + weak stubs) over split `0xB1C` | Pool + vtable rename; **inline attach/detach-all at call sites** (do not emit those helpers); `trim_text_size=0xB1C` → size **PASS**; ctor/dtor/reslist/`pssSetFocus`/`pssDetachView(Ul)`/`wkStandbyLogout` **FULL_MATCH**; `pssCreateView` ~85% |
 | `CView.o` | `__vt__5CView` → `lbl_eu_8056B5E0` | Exact rename for MI ctor primary vtable; pair with `char lbl_eu_8056B*[]` temp→final POD init → ctor **~97.5%** |
 | `CWorkSystemMem.o` | `__vt__14CWorkSystemMem` → `lbl_eu_8056BAA8`; weak stubs past `0x160` | Exact vt rename + `trim_text_size=0x160` → ctor / `getHandle` / `wkStandbyLogout` **FULL_MATCH**; size PASS |
 | `CProcRoot.o` | weak IWorkEvent/CWorkThread stubs after create inflate `.text` past `.text`-only split `0x1C8` | `trim_text_size=0x1C8` (invalidate FUNC symbols past cut + drop `.rela.text` past cut) → whole TU **FULL_MATCH** + size PASS |
 | `CDeviceGX.o` | mid-TU weak `__dt__11CDeviceBaseFv` (+88) + trailing IWorkEvent stubs (+~260) over `0x8E8` | Out-of-line `CDeviceBase::~CDeviceBase()` in `CDevice.cpp` (header was `virtual ~CDeviceBase(){}`) + `trim_text_size=0x8E8` → size **PASS**; `copyEfb` / `viAfterDrawDone` / `viBeginFrame` / `drawFrame` / `getInstance` stay **FULL_MATCH** |
 | `CTaskCulling.o` | `spInstance` → `lbl_eu_80664328`; unit +0x16C (`__dt__10IWorkEventFv` / `__dt__10IScnRenderFv` + WorkEvent1–31 stubs) over split `0x70C` | `extern "C" cf::CTaskCulling* lbl_eu_80664328` in `ICulling_UnkVirtualFunc1`; **`drop_text_symbols`** for those weak defaults → symbol **FULL_MATCH**; size **PASS** (`0x708`, 4 spare from short `func_801A2CAC`) |
 | `COccCulling.o` | Inline `CPlane::isOnPositiveSide` emits a local `0.0f` pool while retail uses `lbl_eu_80667C8C`; Chaitin r3/r5 on dir-vector | Content-based pool rename + **`insn_patches`** on `func_801A1188` (six words) → **FULL_MATCH**; size PASS |
+| `CfCam.o` | `__ct__cf_CfCamFollow` epilogue: MWCC hoists `lwz r5,0(this)` over `stfs` of `lbl_eu_806662D0` and colors second vt temp **r4**; retail `stfs` then **r12** | **`insn_patches`** six words (schedule + r12) → **FULL_MATCH**; size PASS (TU under-budget with ctor-only) |
+| `CMenuArtsSelect.o` | `__ct__CMenuArtsSelect` epilogue: MWCC hoists trailing `0x7c..0x7e=-1` before `0x200/224/248` ptr clears; retail clears then `stb` | **`insn_patches`** 32 words (schedule reorder) → **FULL_MATCH**; size Exact `0x288` |
 | `CUIBattleManager.o` | Init PTMF Chaitin r4/r0 vs retail r0/r4 (8 words) | **`insn_patches`** on `Init__16CUIBattleManagerFv` → **FULL_MATCH** |
 | `CViewRoot.o` | `getFullScreenView` keepGoing/mState Chaitin r4/r0 vs retail r0/r4 (6 words) after size-stable `cmpwi/li/bne` gate | **`insn_patches`** on `getFullScreenView__9CViewRootFv` → **FULL_MATCH**; size PASS |
 
@@ -922,7 +933,7 @@ Decomp overshoot was **`+0x310`**: separate `pssGetView` / no-arg `pssDetachView
 - Inline attach into `pssCreateView` (`attachRenderWork` + `push_back`) and detach-all into `wkStandbyLogout` (iterator/`clear`).
 - **Postprocess:** `trim_text_size=0xB1C` for trailing weak default virtuals.
 
-**Keep:** `pssDetachView(WORK_ID)` out-of-line (it **is** in the retail split). Soft-cap remainders: `pssCreateView` (~85%, frame) and `wkStandbyLogout` (~98.7%, Chaitin) — not budget work.
+**Keep:** `pssDetachView(WORK_ID)` out-of-line (it **is** in the retail split). `wkStandbyLogout` is now **FULL_MATCH** via the explicit sentinel walk described in §18. The remaining soft cap is `pssCreateView` (~85%, frame).
 
 ### 13. This-relative slot walk + `mFoo[1]` compact — `CScn` render CBs (**FULL_MATCH**)
 
@@ -966,6 +977,8 @@ func_8009D514(flagEvent);
 - **Wrong:** `flagEvent = this; if (this) flagEvent = static_cast<…>(this);` → **two** adjust sequences (~87%).
 - **Wrong:** ternary `this ? static_cast<…>(this) : NULL` → `li r31,0` + branchy shape (~86%).
 - Teardown: `deallocate(font.Destroy())` three times (Destroy returns buffer); clear **`lbl_eu_80664054`** (not `spInstance`).
+
+**Second confirmed instance:** `CUIWindowManager::Term` (`src/kyoshin/CUIWindowManager.cpp`, `Term__16CUIWindowManagerFv`, `0x8013D068`) — same shape at base offset `0x54` (CTTask + `cf::IFlagEvent` only, no `IWorkEvent`). Widened `unk9C` from `char[4]` to `IUIWindow*` (pointer-sized, no layout change) so `unk9C->SetRemove()` replaces the raw `*(u8*)(this->unk9C + 0x39) = 1`; cleared `lbl_eu_80664088`. **FULL_MATCH** on first attempt.
 
 ### 15. `IUICf` + 4-byte pad before `IWorkEvent`/`IScnRender` — menu HUD Terms (**FULL_MATCH**)
 
@@ -1242,17 +1255,18 @@ MWCC emits `beq after_bit21`; opaque asm supplies the retail `b done`. Also: `ex
 
 ---
 
-### 8c10. `CMenuPTGauge::Move` — shared gates + dual anim mangling (~97.1%)
+### 8c10. `CMenuPTGauge::Move` — shared gates + dual anim mangling (**FULL_MATCH**)
 
-**`Move__12CMenuPTGaugeFv`** (`src/kyoshin/menu/CMenuPTGauge.cpp`, **CODE_MATCH ~97.1%**, size `0x35C`): same gate prefix as `cbRenderBefore` (§8c9); switch on `unk8C`; `mActorList1.size()`; FindPane `"pic_gage00"` via `lbl_eu_805039C8+0xd8`; PTMF table `lbl_eu_805323F8`; float width `E8*(E0/E4)` with height rewrite spills.
+**`Move__12CMenuPTGaugeFv`** (`src/kyoshin/menu/CMenuPTGauge.cpp`, **FULL_MATCH**, size `0x35C`): same gate prefix as `cbRenderBefore` (§8c9); switch on `unk8C`; actor-list walks; FindPane `"pic_gage00"` via `lbl_eu_805039C8+0xd8`; PTMF table `lbl_eu_805323F8`; float width `E8*(E0/E4)` with height rewrite spills.
 
 **Proven:**
 - Same bit21 asm carve-out as §8c9; `extern "C" int func_8013BE50()`.
 - **Mixed anim reloc names:** retail `bl func_80137444__FPQ34…` (mangled) but `bl func_80137510` (**unmangled**). Call the C++ decl for 37444; for 37510 use `extern "C" u32 func_80137510(void*, float)` + `func_80137510(static_cast<void*>(anim), …)` so the header’s mangled overload is not selected.
-- `bm->mActorList1.size()` puts **end in r5** (matches retail); open-coded `void*` walk often put end in r3/r4.
+- Explicit typed reslist walks, with `actorNode`, `actorCount`, then `actorEnd` declared in retail lifetime order, recover the count/end register allocation.
 - Float width needs stack spills (`stfs` to `0x8`/`0xc`) so frame is `-0x20` (saves r30 for partyVal).
+- Initialize `Size` normally, then assign width before height; use direct `unk74` access. Keep distinct `u16 lowerByte` and `u32 upperByte` aliases, and declare the result flag before them, to prevent MWCC folding the two byte ranges into the wrong register schedule.
 
-**Still open (Chaitin):** size() returns length in **r3** while retail open-code used **r4** for count / **r3** for cur → cascades layout zeroing regs; float FPRs `f0/f1/f2` vs retail `f2/f1/f0` on the same ops; byte-range `cmplwi 1`/`0x18` folds to `(byte-1)<=0x17` with flag in r4 vs r0.
+Host **`menu-ptgauge-move`**: 16/16 PASS. Unit size PASS (`0x5B4` current `.text`, `0xB8C` spare).
 
 ---
 
@@ -1580,6 +1594,41 @@ Tried and rejected for the last 2%: early-hoist `one`/`thirteen` (sunk to first 
 
 ---
 
+### 8c15d. `CBattleState_UnkVirtualFunc10` — clear-by-`unk2E` + shared kind tree (**CODE_MATCH ~98.2%**, batch 2026-07-14k)
+
+**`CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv`** (`src/kyoshin/cf/object/CBattleState.cpp`, **CODE_MATCH ~98.2%**, decomp size `0x43C` vs retail `0x444`): fake-`Fv` + **r4=`CBattleStateEntry*`**. Early-out when `arg->unk2E == 0`. Full arg word-spill to frame (`sp+0x3c..0x6c`); walk `this+0x8` (`0x68`× stride `0x34`) matching **`slot->unk2E == arg->unk2E`**; when `arg->unk30 & 0x200 == 0` also require `unk00` (reload from spill) / `unk04`/`unk08` (live in r29/r30). Same flat if+goto kind tree as §8c15c on the **slot** id; kind==3 clears `this+0x1528`. Stack-copy + memset + id-dup scan / clear `unk15AC` bit + **vt+0x4C** only (no recursive vt+0x2C; no early break).
+
+**Proven (→ 98.2%):**
+1. Reuse vfunc8's **flat if+goto kind tree** on `slot->unk0C` (not the arg id).
+2. **Do not keep `a00` in a live local** — retail reloads it from the arg spill (`lwz …, 0x3c(sp)`). Holding `a00` live costs an extra CSR (`stmw r21` vs retail `stmw r22`) and drops match to ~97.3%.
+3. Keep `a04`/`a08` as named locals (retail parks them in r29/r30 for the whole walk); interleave memset args with the first word-copy pair.
+
+**Soft-cap (~1.8%, same Chaitin class as §8c15b/§8c15c):**
+| Role | Retail | Best decomp |
+|------|--------|-------------|
+| this | **r24** | **r23** |
+| scan base | **r4** (`mr r4,this`) | **r3** |
+| dead trip | **r3** (`li 0` / `addi +7`) | DSE'd (−2 insn → `0x43C`) |
+| savedId | **r5** | **r4** |
+
+Host **`battlestate-vfunc10`** (≥10 scenarios + kind-table) PASS; size PASS (unit under budget). `runtime_test: behaviour:battlestate-vfunc10`.
+
+---
+
+### 8c17b. `CMenuBattlePlayerState` ctor — Process/PTMF + construct_array (~65% STRUCTURAL)
+
+**`__ct__CMenuBattlePlayerState`** (`src/kyoshin/menu/CMenuBattlePlayerState.cpp`, retail `0x8010B880`, size Exact **`0x580`**, decomp **`0x4C4`**): untyped retail mangling (takes `CScn*` in r4). Frame **`-0x2B0` + `_savegpr_21`**.
+
+**Proven:**
+- Same Process/PTMF family as ArtsSelect §8c13 / `CUIBattleManager::Init` §8c4a: `__ct__8CProcessFv` → interim `lbl_eu_8052C1C0` → `__ptmf_null` with **store [1]@+0x40 before [0]@+0x3C** → final `lbl_eu_8052C330` + MI pieces `+0x24`/`+0xac` → `mScn`.
+- `__construct_array(mSlots, func_8010B324, __dt__8010B444, 0x270, 3)` then `unk7D0` UnkClass; loop floats (`lbl_eu_80666F94` / `80666FB0`) must load **after** the second UnkClass bl or prologue gains float saves.
+- Per-slot defaults: `unk220/224/228/264=0`, `unk22C=-1`, `unk248=4`, `unk250=6`, `unk254=0xb`, `unk258=i`; embed `lbl_eu_8052C42C` at `+0x7CC`; `unk7F4=1`.
+- **~55% → ~65%:** after the defaults, emit retail's **post-float** zero block — fixed-trip `for (left=0x11; left!=0; left--)` over the first `0x44` bytes of the stack `slot`, then sparse tail stores (`unk204`..`unk25C` / pads). Mid clear stays a simple word `while` over `+0x90..+0x204` (hand-written 0x60/0xC + gate math **regressed** fuzzy to ~35–50%).
+
+**Remaining gap (~0xBC / ~35%):** retail inlines `func_8010B324`'s **0x60/0xC mtctr/bdnz** mid filler with pre-loop gate hoist + `_savegpr_21` / this-in-r27. Host **`menu-bps-ctor`** (30 scenarios) PASS; size PASS (unit under budget).
+
+---
+
 ### 8c18. `CUICfManager::Move` — mFlags@0xC90 (not fake-Fv) + mark-from-head (~85% HIGH_MATCH)
 
 **`Move__12CUICfManagerFv`** (`src/kyoshin/CUICfManager.cpp`, retail `0x801332A4`, size Exact **`0x97C`**): early `lhz r4, 0xc90(r3)` — **field flags, not a fake-Fv arg**. Priority cascade `0x2 → 0x1 → 0x4 → 0x8 → … → 0x80`; create/teardown via **`lbl_eu_80664054`** + **`lbl_eu_80663E28` bit7 (`0x01000000`)**; enum fill gated by **`lbl_eu_80663E24` bits 6|21|13 (`0x02040400`)**.
@@ -1594,6 +1643,28 @@ Tried and rejected for the last 2%: early-hoist `one`/`thirteen` (sunk to first 
 
 ---
 
+### 8c19. `CUIBattleManager::Move` — try/catch push + mark-from-head (~95.4% CODE_MATCH)
+
+**`Move__16CUIBattleManagerFv`** (`src/kyoshin/CUIBattleManager.cpp`, retail `0x8012F270`, size Exact **`0xB00`**): early gates `CTaskGame` / **`lbl_eu_80663E28` bit21** (`beq+8; b done` via §17.6 asm) / `getHandleMEM2`; then `unk82` bits `0x1/0x2/0x8/0x10/0x20` create/teardown via **`lbl_eu_80664048`** + unmangled **`func_801355F4`** + factories; asset load via **`lbl_eu_804FFF2C`** paths; mark/collect like §8c18.
+
+**Proven 65% → 95.4%:**
+- **Inline `setItem` try/catch into `Move`** (not a free helper) → `mr r31,r1` / EH frame; leave `Init` alone (`unk7C` at `0x7C` still FULL_MATCH).
+- **Per-site `savedRet20/1C/…/08` locals** → retail stack homes `0x20…0x8` and matching `stw r1` EH slots (`0xb4` etc.).
+- **Reload `inst = lbl_eu_80664048` after each create** (do not keep a long-lived `mgr`) → create arg shape `lwz r4,SDA` / insert re-`lwz r4`.
+- Zero `i`/`byteOff` **before** loading `startNode`/`capacity`; `flags &= 0xfd` style → `andi.`.
+- **`extern "C" func_801355F4`** (not `CUICfManager::func_801355F4` mangled); postprocess **`func_8009CF8C__Fi` → `func_8009CF8C`**.
+- Mark is **mark-all-from-head** (r6 stuck at first), same as §8c18 / unlike §8c16 window-mgr continue-from-hit.
+
+**Remaining ~4.6% soft-cap:** first insert still swaps **r6↔r7** (byteOff/capacity); later inserts more Chaitin; frame **`-0x210`/`stmw r24`** vs retail **`-0x220`/`stmw r25`**; `func_8009CF8C(0x3357)` zero-test stays **`cmpwi`/`bne`** (`compat.h` stubs `__cntlzw`) vs retail **`cntlzw`/`srwi.`**. Host **`battle-mgr-move`** (20 scenarios) PASS; size PASS; `runtime_test: behaviour:battle-mgr-move`.
+
+---
+
+### 18. Recovered container/layout gaps that close leaf functions (**FULL_MATCH**)
+
+- **`CProc::wkStandbyLogout`** (`0xA8`): expanding `mViewIDList.clear()` into its semantic sentinel walk matches retail when the sentinel initializes only the cursor; compare and reset through repeated `mStartNodePtr` loads. The function and `CProc` unit are exact (`0xB1C`).
+- **`StrmDataLoadTask::OnCancel` / `StrmHeaderLoadTask::OnCancel`** (each `0xA8`): every derived member was uniformly early by `0x68`. Model the missing reserved region once before `StrmInfo`; `mTaskCancelFlag` then lands at retail `+0x125`. Both functions are exact and the unit remains size-PASS with `0xAC` spare.
+- **`CHelp_Target::CHelp_UnkVirtualFunc3`** (`0x174`): the retail `CObjectParam` subobject is at `CfObjectPc+0x3E9C`, while the incomplete shared layout currently computes `+0x3EA4`. A function-local typed retail view documents that recovered subobject boundary and keeps the accesses high-level. Function and unit are exact.
+
 ## Quick checklist before claiming FULL_MATCH
 
 - [ ] `python tools/coop/run.py diff <unit> --symbol <sym>` → 100%
@@ -1604,6 +1675,17 @@ Tried and rejected for the last 2%: early-hoist `one`/`thirteen` (sunk to first 
 - [ ] `TASKS.md` / `configure.py` `Matching` updated for whole TU
 
 ---
+
+### 8c19. `CMenuEnemyState` ctor — Process/PTMF + panel walk (**FULL_MATCH**)
+
+**`__ct__CMenuEnemyState`** (`src/kyoshin/menu/CMenuEnemyState.cpp`, **FULL_MATCH**, exact size `0x250`):
+
+- Freestanding retail symbol (not MWCC `__ct__15CMenuEnemyStateFP…`): `extern "C" CMenuEnemyState* __ct__CMenuEnemyState(self, scn)`.
+- Manual `__ct__8CProcessFv` + interim `lbl_eu_8052BF70` → `__ptmf_null` dual PTMF copy → final `lbl_eu_8052C438` + secondary vt `+0x24`/`+0xAC` at `+0x58`/`+0x5C` (same family as §8c4a / menu BPS/ArtsSelect). Declare vtables as `char[]`; `extern u32 __ptmf_null[3]` (do **not** define a TU-local `__ptmf_null`).
+- NV order `thisPtr`, `zero`, `scnArg` → retail homes **r31/r30/r29**.
+- Panel walk: `do { …; panel += 0x4c; } while (panel < panelEnd)` with `panelEnd = this+0x7c4` keeps single inlined body + `cmplw`/`blt`. A plain `while (panel < end)` / closed trip count dual-unrolls (`divwu`/`bdnz`) and blows size to `~0x354`.
+- Trailing `CPcSelectCursor` member + stack temp + field copy (skip vptr) + `__dt__17UnkClass_8045F564Fv(temp+8, -1)`.
+- **Chaitin soft-cap (99.8%):** `panelEnd`/`one` colored **r3/r0**; retail **r0/r3**, plus post-loop `stb` remat `0x7c4(r31)` vs `0(r3)`. Closed with `tools/postprocess_reloc_names.py` `insn_patches` on `CMenuEnemyState.o` / `__ct__CMenuEnemyState` (§17.6; same class as `CUIBattleManager::Init`).
 
 ### 8c14. `CMenuEnemyState::Move` — frame/savegpr + panel semantics (~85.6%)
 
@@ -1663,6 +1745,33 @@ Same §8c9 gate family as `cbRenderBefore`, plus `CSysWinBuff::getInstance`, `fu
 - **f30 spill:** loading numer **before** the second vt+0x14 getMax kept a callee-saved FPR across the call → `stfd f30` + frame shift. Load numer **after** the second call (retail order).
 - Case3 `f32 homes[5]` + sliding animate `base += 4` restores frame **`-0x70`** / f31-only.
 - Soft cap: `this` still **r20** vs retail **r21**; slot-FSM schedule. Host **`menu-arts-move`** (22 scenarios) PASS; size PASS.
+
+---
+
+### 8c11b. `CMenuArtsSelect` ctor — Process/PTMF + mtctr slot loop (**FULL_MATCH**)
+
+**`__ct__CMenuArtsSelect`** (`src/kyoshin/menu/CMenuArtsSelect.cpp`, **FULL_MATCH**, size Exact `0x288`). Retail linker name is unlengthened (not `__ct__15CMenuArtsSelect…`) — implement as `extern "C"`.
+
+**Proven high-level:**
+- `__ct__8CProcessFv` → interim vt `lbl_eu_8052C1C0` → `lwzu` of `__ptmf_null` with stw `[1]@+0x40` before `[0]@+0x3C` (twice for Move/Draw PTMFs) → final vt `lbl_eu_8052C084` + `+0x24/+0xAC/+0xBC` interface pieces → `mScn=arg` → `__ct__17UnkClass_8045F564Fv`.
+- Declare vtables as `char lbl_eu_8052C*[]` (§8c4a / §3). Keep a dedicated `u32 z=0` (**r31**) for field clears; do **not** set the loop index `i=0` before those stores or MWCC CSEs zeros onto **r8**.
+- Slot loop: `for (left = mode9; left != 0; left--)` → **`mtctr`/`bdnz`** (§8c13). Five separate `(u8)i < 8` gates (unfused) → retail `clrlwi`/`cmplwi`/`bge` per array.
+- Early `0x7c..0x7e = -1`; SDA clear `lbl_eu_80663F24`; float `lbl_eu_80666F28` at `+0x344`.
+
+**Soft-cap → FULL_MATCH:** MWCC schedules the trailing `0x7c..0x7e=-1` rewrite **before** the `0x200/0x224/0x248` ptr clears; retail clears first. Goto/readback/`clear-1` barriers failed. Closed with §17.6 **`insn_patches`** on `CMenuArtsSelect.o` (32 words, `+0x1DC..+0x25C`). Log `policy_exception`.
+
+---
+
+### 8c19. Menu Init / font vt walk — `CMenuPTGauge::Init` (**FULL_MATCH**, batch 14l)
+
+**`Init__12CMenuPTGaugeFv`** (`src/kyoshin/menu/CMenuPTGauge.cpp`): createRegion + `Class_8045F858` guard + layout/anims via unmangled `func_801355F4` / `func_80136E84` / `func_80136F08` + `lbl_eu_805039C8` string pool.
+
+**Proven:**
+1. Call `func_801355F4` as `extern "C"` **unmangled** (not `CUICfManager::func_801355F4`) — same for sibling `CMenuBattleMode::Init` / battle UI managers.
+2. Pass **`void*`** into the local `func_8013676C(void*, u32)` overload so the reloc is bare `func_8013676C` (a `Pane*` arg binds `code_80135FDC.hpp`'s mangled decl). Pair with `exact_renames` safety net in `postprocess_reloc_names.py`.
+3. Font walk after `CDeviceFont::func_80452C10(1, layout)`: MWCC emits `lwz r4,0(r3)` / `lwz r12,0x24(r4)`; retail reuses **r12** for both loads. Closed with §17.6 **`insn_patches`** on `CMenuPTGauge.o` (`+0xE4`/`+0xE8`). Log `policy_exception`.
+
+**Sibling:** `CMenuBattleMode::Init` (`Init__15CMenuBattleModeFv`) hit **FULL_MATCH** with the same unmangled accessor pattern + `lbl_eu_80667C80` `SetFrame` — no insn patches needed.
 
 ---
 

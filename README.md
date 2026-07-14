@@ -99,6 +99,7 @@ python3 tools/coop/run.py symbols list         # UnkClass_* placeholders
 |-----------|--------|
 | Coop CLI | `python3 tools/coop/run.py --help` |
 | Behaviour + PPC | [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md) |
+| PPC equivalence | [`tools/ppc_equivalence/README.md`](tools/ppc_equivalence/README.md) · `python3 tools/coop/run.py equivalence --help` |
 | Symbol recovery | `python3 tools/symrecover.py --help` · [`FORK.md`](FORK.md) §4 |
 | MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) |
 | Attempt log | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) |

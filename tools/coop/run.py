@@ -18,6 +18,8 @@ Usage (from repository root):
   python tools/coop/run.py symbols list
   python tools/coop/run.py behaviour audit
   python tools/coop/run.py behaviour compare --all
+  python tools/coop/run.py equivalence check-hex --original ... --candidate ... --observe r3
+  python tools/coop/run.py opcodes
   python tools/coop/run.py symbols show UnkClass_8045F564
 """
 
@@ -420,6 +422,41 @@ def cmd_behaviour(behaviour_args: list[str]) -> int:
     return subprocess.run(cmd, cwd=ROOT, check=False).returncode
 
 
+def _equivalence_args_with_default_contract(equivalence_args: list[str]) -> list[str]:
+    args = list(equivalence_args)
+    if not args or args[0] not in {"check", "check-hex"}:
+        return args
+    has_contract = any(
+        arg in {"--contract", "--observe"}
+        or arg.startswith("--contract=")
+        or arg.startswith("--observe=")
+        for arg in args[1:]
+    )
+    if not has_contract:
+        args[1:1] = ["--contract", "ppc-eabi"]
+    return args
+
+
+def cmd_equivalence(equivalence_args: list[str]) -> int:
+    if equivalence_args and equivalence_args[0] == "--":
+        equivalence_args = equivalence_args[1:]
+    equivalence_args = _equivalence_args_with_default_contract(equivalence_args)
+    script = ROOT / "tools" / "ppc_equivalence" / "run.py"
+    cmd = [sys.executable, str(script), *equivalence_args]
+    return subprocess.run(cmd, cwd=ROOT, check=False).returncode
+
+
+def cmd_opcodes(opcodes_args: list[str], config: CoopConfig) -> int:
+    if opcodes_args and opcodes_args[0] == "--":
+        opcodes_args = opcodes_args[1:]
+    script = ROOT / "tools" / "dol_opcodes.py"
+    # Default to this region's main.dol when the caller did not pass a path.
+    if not opcodes_args or opcodes_args[0].startswith("-"):
+        opcodes_args = [str(config.main_dol), *opcodes_args]
+    cmd = [sys.executable, str(script), *opcodes_args]
+    return subprocess.run(cmd, cwd=ROOT, check=False).returncode
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Xenoblade co-op decompilation runner")
     parser.add_argument(
@@ -489,6 +526,26 @@ def main() -> int:
         help="compare_behaviour subcommand (audit, compare --all, compare <id>, …)",
     )
 
+    p_equivalence = sub.add_parser(
+        "equivalence",
+        help="SMT equivalence check for supported straight-line PPC32 blocks",
+    )
+    p_equivalence.add_argument(
+        "equivalence_args",
+        nargs=argparse.REMAINDER,
+        help="equivalence subcommand (decode, check-hex, check, replay)",
+    )
+
+    p_opcodes = sub.add_parser(
+        "opcodes",
+        help="List PowerPC opcodes used in main.dol (wraps tools/dol_opcodes.py)",
+    )
+    p_opcodes.add_argument(
+        "opcodes_args",
+        nargs=argparse.REMAINDER,
+        help="optional DOL path and flags (e.g. --sort count, --names-only, --json)",
+    )
+
     args = parser.parse_args()
     config = load_config(args.config, ROOT)
     project = Project(config)
@@ -528,6 +585,10 @@ def main() -> int:
         return cmd_symbols(args.symrecover_args)
     if args.command == "behaviour":
         return cmd_behaviour(args.behaviour_args)
+    if args.command == "equivalence":
+        return cmd_equivalence(args.equivalence_args)
+    if args.command == "opcodes":
+        return cmd_opcodes(args.opcodes_args, config)
 
     parser.error(f"unknown command: {args.command}")
     return 2

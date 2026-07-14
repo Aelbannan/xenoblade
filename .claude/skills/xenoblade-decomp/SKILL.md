@@ -165,6 +165,26 @@ python tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol <mangled-symbol>
 python tools/coop/run.py size kyoshin/cf/CfPadTask
 ```
 
+### PPC semantic equivalence (optional additional evidence)
+
+For supported straight-line integer blocks, the Capstone + Z3 checker can prove
+or refute selected live-out state even when bytes differ:
+
+```bash
+python tools/coop/run.py equivalence check-hex \
+  --original <retail-hex> --candidate <decomp-hex>
+```
+
+Read `tools/ppc_equivalence/README.md` before use. An equivalence result applies
+only to its printed observables and assumptions. Unsupported instructions,
+timeouts, and solver `unknown` are inconclusive. This check is additional
+evidence only: it does not replace objdiff `FULL_MATCH`, split-size checks, or
+the mandatory host behaviour tests below 100% static match.
+
+The co-op wrapper defaults function checks to `--contract ppc-eabi`. Use
+`--contract strict` for all modeled state or manual `--observe` for the actual
+live-outs of an internal basic block.
+
 ### decomp.me (optional)
 
 For stubborn **small** functions: generate ctx → open unit in **objdiff** → Create scratch on decomp.me → paste matched code back → `cycle` again.

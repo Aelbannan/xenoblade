@@ -19,6 +19,8 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 | Coop runner | [`tools/coop/`](tools/coop/) | Build / diff / cycle / size / symbols / behaviour |
 | Symbol recovery | [`tools/symrecover.py`](tools/symrecover.py) | `UnkClass_*` list/show/xref/rename |
 | Behaviour tests | [`tools/test/compare_behaviour/`](tools/test/compare_behaviour/) | Host + PPC retail-vs-decomp oracles |
+| PPC equivalence | [`tools/ppc_equivalence/`](tools/ppc_equivalence/) | Capstone + Z3 semantic equivalence for supported straight-line blocks |
+| DOL opcode census | [`tools/dol_opcodes.py`](tools/dol_opcodes.py) | Capstone scan of `main.dol` text sections → unique PPC mnemonics / primary opcodes |
 | Reloc postprocess | [`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py) | Rename MWCC `@N` pools → retail `lbl_eu_*` |
 | MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Living matching reference |
 | Evidence | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) | Attempt log (JSONL) |
@@ -92,6 +94,8 @@ Config knobs (`coop.json` / example): `region` (`us` default), `match_policy`, `
 | `log [--tail N]` | Read attempt log |
 | `symbols …` | Wraps `tools/symrecover.py` |
 | `behaviour …` | Wraps `tools/test/compare_behaviour/run.py` |
+| `equivalence …` | Wraps `tools/ppc_equivalence/run.py` (`decode`, `check-hex`, `check`, `replay`) |
+| `opcodes …` | Wraps `tools/dol_opcodes.py` (default: this region's `main.dol`) |
 
 ### Library
 
@@ -228,6 +232,31 @@ Configure Dolphin path via `"dolphin"` in `coop.json` or `DOLPHIN` env.
 - **Semantic slices** — thin C files compiling only the retail/decomp function body under test (`cview_*_retail.c` / `*_decomp.c`, `cviewroot_ppc_*.c`).
 - **Mocks / stubs** — `cview_mock.*`, `cviewroot_mock.*`, `ppc/stubs/monolib_src_*`.
 - **Symbol redefine** — e.g. MTRand retail `@LOCAL@…` → `rb_mtrand_singleton` via `objcopy --redefine-sym`.
+
+## 5.1 PPC semantic equivalence check
+
+[`tools/ppc_equivalence/`](tools/ppc_equivalence/) implements the first
+sound-by-default vertical slice from the PPC equivalence-checker plan:
+
+- Capstone decoding cross-checked against direct PPC field extraction;
+- shared concrete and symbolic integer semantics;
+- explicit GPR, CR, XER, LR, and CTR contracts;
+- Z3 `equivalent` / `not_equivalent` / `inconclusive` results;
+- JSON proof metadata, SMT-LIB export, and replayable counterexamples;
+- unsupported opcodes are inconclusive, never no-ops.
+- `coop run equivalence check*` defaults to the `ppc-eabi` function-boundary
+  contract; `--contract strict` and manual `--observe` remain available.
+
+It is evidence in addition to objdiff and behaviour testing. It does not relax
+the fork's `FULL_MATCH` policy. Full scope, installation, supported opcodes,
+and examples are in its [README](tools/ppc_equivalence/README.md).
+
+```bash
+python3 -m pip install -r tools/ppc_equivalence/requirements.txt
+python3 tools/coop/run.py equivalence check-hex \
+  --original 5463103a --candidate 1c630004
+python3 -m unittest discover -s tools/ppc_equivalence/tests -v
+```
 
 ---
 

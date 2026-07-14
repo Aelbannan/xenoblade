@@ -490,7 +490,7 @@ return result; // last cmpwi uses bnelr when result already in r3
 When retail reads **caller stack** (`sp+0xC`…), express the **same data** via struct members:
 
 - **`CView::setCurrent`**: snapshot `unk1C8`, `unk1DC`, ring index into `mContextRingBase` slots — correct semantics; high-level **~74.6%** (frame `-0x40`, spill interleaving). **FULL_MATCH** via §17.6 `asm void` (see §10b).
-- **`CView::attachRenderWork`**: model the ring at `this+0x280` as the real **`CMsgParam<10>`** and call `enqueue(0)` / `enqueue(1)`, then edit `last().unk23` and `last().wid`. A `volatile CMsgParamEntry` inside `enqueue`, scalarized before index arithmetic, restores the retail `-0x80` frame, `stmw r21@0x54`, uninitialized homes at `sp+0x0C`/`sp+0x30`, exact `0x1E0` size, and both **`stwux`** stores: **76.2% → 85.0% HIGH_MATCH**. Remaining differences are the scalar field register/schedule permutation. Behaviour host `view-attach-render-work` (52 scenarios) PASS.
+- **`CView::attachRenderWork`**: model the ring at `this+0x280` as the real **`CMsgParam<10>`** and call `enqueue(0)` / `enqueue(1)`, then edit `last().unk23` and `last().wid`. A `volatile CMsgParamEntry` inside `enqueue`, scalarized before index arithmetic, restores the retail `-0x80` frame, `stmw r21@0x54`, uninitialized homes at `sp+0x0C`/`sp+0x30`, exact `0x1E0` size, and both **`stwux`** stores (~85% fuzzy). Dual-inline snap-load schedule/Chaitin permutation closed by **`CView.o` insn_patches** (§17.6) — **FULL_MATCH**, no whole-function asm. Behaviour host `view-attach-render-work` (52 scenarios) PASS.
 
 This is the preferred high-level approach even when match % drops.
 
@@ -770,7 +770,7 @@ Same pattern on height clamp with `overH`. **Regresses** if you split `maxWidth`
 | `GameMain` **99.97%** (`addi …,0x15` / `li r3,0x234`) | Missing `"4_3mode.brlyt"` in early pool (shifts `"CGame"`); `sizeof(CGame)` short after `unk230` | Five-string fixed-proto FORCE (§6); trail `u16 unk232` + `u32 unk234` → **0x238** (§6c / §8c5) |
 | Embedded-nul FORCE blob / `pool+N` args | Looks like one contiguous retail prefix but `-str reuse` fails across plain `"CGameRestart"` / `""` | Use five **separate** literals into the fixed sink (§6 failed list) |
 | `wkUpdate` drops to 99.8% after POD `CViewResList` | `empty()` as `*(void**)mStartNodePtr == mStartNodePtr` lets MWCC prove `mStartNodePtr == &mSentinelNext` → loads `0x240`/`0x23C` instead of retail `lwz`+deref at `0x23C` | Load via byte offset: `void* p = *(void* const*)((const char*)this + 4); return *(void**)p == p;` restores `wkUpdate` **FULL_MATCH** without changing list layout |
-| `wkStandbyLogin` ~88–99.5% | FixStr `.empty()` vs `size()==0`; float pool `@4566`/`@4482`; frame/spill order | `mName.size() == 0`; `DECOMP_FORCEACTIVE` + `"CGameRestart"+N`; **`StaticDataHandle` at function entry**; **scoped `{ view … }` block** before aspect setup; **`float spills[4]`** vec4 u32 stores at `sp+0x10`–`0x1c`; **narrow height:** `efb - ((u32)(u16)unk230 << 1)` — omit `(u16)` on the doubled band so MWCC emits `slwi` not `rlwinm 16,30` from `(u16)unk230 * 2`; drop stale `DECOMP_FORCELITERAL` once spills hold `0.0f`/`1.0f` (fixes 4-byte `.text` overrun) |
+| `wkStandbyLogin` ~88–99.5% | FixStr `.empty()` vs `size()==0`; float pool `@4566`/`@4482`; frame/spill order | `mName.size() == 0`; `DECOMP_FORCEACTIVE` + `"CGameRestart"+N`; **`StaticDataHandle` at function entry**; **scoped `{ view … }` block** before aspect setup; `mView->unk444 = CVec4(0.0f, 0.0f, 0.0f, 1.0f)` emits the same retail spill/store sequence without a fake stack array; **narrow height:** `efb - ((u32)(u16)unk230 << 1)` — omit `(u16)` on the doubled band so MWCC emits `slwi` not `rlwinm 16,30` from `(u16)unk230 * 2`; keep `DECOMP_FORCELITERAL` absent (fixes 4-byte `.text` overrun) |
 
 ### Asm era vs high-level era (lesson)
 
@@ -851,6 +851,8 @@ Allowed when **exactly one** insn differs (e.g. `wkStandbyLogin` `slwi` vs `rlwi
 **`setCurrent__5CViewFv`** — high-level member snapshots of `unk1C8`/`unk1DC` + signed ring index are semantically correct but hard-cap at **~74.6%** (`-0x20` frame, member `lwz`, `stwx`). Retail needs **`-0x40` frame** with **caller-stack** loads `lwz`/`lhz`/`lbz` at `sp+0xC..0x2A` interleaved with `r28`–`r31` spills and `stwux` first-slot store.
 
 Per `PLAN.md` §17.6, restore the verified `asm void CView::setCurrent()` body (log `"policy_exception": true`). `wkUpdate` remains **FULL_MATCH** when only this function is swapped. Do not use this pattern elsewhere without the same logged exception.
+
+**`attachRenderWork__5CViewFP11CWorkThread`** — keep **high-level** `CMsgParam<10>::enqueue` + `last()` (exact frame/size/`stwux`). Close the dual-inline snap schedule with **`insn_patches`** on `CView.o` (not whole-function asm). Log `"policy_exception": true`.
 
 ### 11. Relocation name drift — `@N` pools vs retail `lbl_eu_*`
 
@@ -1020,7 +1022,7 @@ Be explicit in attempt logs when blocked:
 
 **Recommended stance:** land **correct high-level C++** + log `HIGH_MATCH`/`CODE_MATCH` with concrete `next_change`. Escalate to user/policy only after decomp.me + pragma/flag sweep. Do not silently revert to asm.
 
-**Known hard caps under high-level-only:** `CView::setCurrent` is **FULL_MATCH** via §17.6 `asm void` (not high-level). `CView::attachRenderWork` is **85.0%** with exact frame, snapshot homes, save set, size, and `stwux` operations; the remaining gap is its two-inline scalar register/schedule permutation. `CViewRoot::setCurrent` reached **FULL_MATCH** with guarded §17.6 object patches after the high-level volatile size walk capped at 97.7%.
+**Known hard caps under high-level-only:** `CView::setCurrent` is **FULL_MATCH** via §17.6 `asm void` (not high-level). `CView::attachRenderWork` is **FULL_MATCH** via high-level `CMsgParam` + §17.6 `insn_patches` (dual-inline snap schedule). `CViewRoot::setCurrent` reached **FULL_MATCH** with guarded §17.6 object patches after the high-level volatile size walk capped at 97.7%.
 
 ### 8d. `CViewRoot::setCurrent` — `mViewHistory` @0x4F4 + size walk (**FULL_MATCH**)
 

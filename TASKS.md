@@ -117,10 +117,10 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
   - Map level: **74.4% HIGH_MATCH**; host `cview-update-msg` 33 scenarios PASS; size PASS
   - Three explicit `CtxSnap` copies recover the retail low stack homes; real `reslist::push_back` restores the inlined `setItem` exception path. Decomp size is now `0x77C` (retail `0x798`).
   - Classify per-frame view messages and side effects.
-- [ ] **`CView::attachRenderWork(CWorkThread*)`** (`attachRenderWork__5CViewFP11CWorkThread`) · `0x804401A0` · size `0x1E0` · target `view-attach-render-work` · **85.0% HIGH_MATCH**
+- [x] **`CView::attachRenderWork(CWorkThread*)`** (`attachRenderWork__5CViewFP11CWorkThread`) · `0x804401A0` · size `0x1E0` · target `view-attach-render-work` · **FULL_MATCH** (high-level `CMsgParam` + §17.6 `insn_patches`)
   - Map level: FULL_MATCH
   - Shows how render jobs are associated with a view.
-  - Recovered as two real inlined `CMsgParam<10>::enqueue` operations. Scalarized entry fields restore retail `-0x80`, `stmw r21@0x54`, snapshot homes `sp+0x0C/0x30`, exact size, and both `stwux` stores. Behaviour host PASS (52 scenarios).
+  - Semantics: dual `CMsgParam<10>` enqueue (tag0+WorkID, tag1+thread*). Exact frame/size/`stwux` in C++; dual-inline snap schedule closed by `CView.o` insn_patches. Behaviour host PASS (52 scenarios).
 - [x] **`CView::detachRenderWork(CWorkThread*)`** (`detachRenderWork__5CViewFP11CWorkThread`) · `0x80441470` · size `0x8`
   - Map level: FULL_MATCH
   - Needed for safe destruction/toggle.

@@ -81,7 +81,7 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CProcessMan::Move()`** (`Move__11CProcessManFv`) · `0x804478F0` · size `0x2B8` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Confirms simulation traversal and process ordering.
-- [ ] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC` · **88.4% HIGH_MATCH**
+- [x] **`CProc::pssCreateView(...)`** (`pssCreateView__5CProcFPCcP11CWorkThreadi`) · `0x8043BC8C` · size `0x3AC` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - May create a second native view attached to the game process; retail inlines full frame into 0xF0 stack. Behaviour `proc-pss-create-view` PASS (34 scenarios); remaining gap is iterator/EH stack-slot allocation and its register cascade.
   - Unit `.text` **size PASS** (`0xB1C`): non-split helpers inlined / removed + `trim_text_size` (§12c).
@@ -95,9 +95,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 5.3 View system
 
-- [ ] **`CView::CView(...)`** (`__ct__5CViewFPCcP11CWorkThread`) · `0x8043EC5C` · size `0x2D8`
-  - Map level: STRUCTURAL → **CODE_MATCH ~97.5%** (`this`/r30 + zero/r31; gap = retail `listCap` in r29 / `-0x20` frame)
-  - Recovers layout, owned frame objects, and initialization invariants. `wkUpdate` still FULL_MATCH.
+- [x] **`CView::CView(...)`** (`__ct__5CViewFPCcP11CWorkThread`) · `0x8043EC5C` · size `0x2D8` · **FULL_MATCH 100%**
+  - Map level: FULL_MATCH. Typed `reslist::reserve` recovers the retail capacity lifetime; guarded §17.6 patches close the final ten-word Chaitin permutation. Pool relocation naming is content-based and stable across `@N` renumbering.
+  - Recovers layout, owned frame objects, and initialization invariants. `wkUpdate` remains FULL_MATCH.
 - [x] **`CView::setCurrent()`** (`setCurrent__5CViewFv`) · `0x8043F3D8` · size `0xBC` · target `view-set-current` · **FULL_MATCH** (§17.6 `asm void`)
   - Map level: FULL_MATCH
   - Switches global/current view state before each render pass.
@@ -117,19 +117,19 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
   - Map level: **74.4% HIGH_MATCH**; host `cview-update-msg` 33 scenarios PASS; size PASS
   - Three explicit `CtxSnap` copies recover the retail low stack homes; real `reslist::push_back` restores the inlined `setItem` exception path. Decomp size is now `0x77C` (retail `0x798`).
   - Classify per-frame view messages and side effects.
-- [ ] **`CView::attachRenderWork(CWorkThread*)`** (`attachRenderWork__5CViewFP11CWorkThread`) · `0x804401A0` · size `0x1E0` · target `view-attach-render-work` · **76.2% HIGH_MATCH** (soft cap: frame/stmw; `stwux` via `ringBase+=`)
+- [ ] **`CView::attachRenderWork(CWorkThread*)`** (`attachRenderWork__5CViewFP11CWorkThread`) · `0x804401A0` · size `0x1E0` · target `view-attach-render-work` · **85.0% HIGH_MATCH**
   - Map level: FULL_MATCH
   - Shows how render jobs are associated with a view.
-  - Semantics recovered (dual ring cmds tag0/WorkID + tag1/thread*); behaviour host PASS (52 scenarios). Frame soft-cap like setCurrent.
+  - Recovered as two real inlined `CMsgParam<10>::enqueue` operations. Scalarized entry fields restore retail `-0x80`, `stmw r21@0x54`, snapshot homes `sp+0x0C/0x30`, exact size, and both `stwux` stores. Behaviour host PASS (52 scenarios).
 - [x] **`CView::detachRenderWork(CWorkThread*)`** (`detachRenderWork__5CViewFP11CWorkThread`) · `0x80441470` · size `0x8`
   - Map level: FULL_MATCH
   - Needed for safe destruction/toggle.
 - [x] **`CView::wkUpdate()`** (`wkUpdate__5CViewFv`) · `0x80441478` · size `0x14C`
   - Map level: FULL_MATCH
   - Determine whether view update is camera-only, presentation-only, or stateful.
-- [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4` · **87.4% HIGH_MATCH**
-  - Map level: HIGH_MATCH
-  - Behaviour: `cview-render-view` host PASS (25). Frame `-0x180`/`CDrawGX@0x90`; volatile yAccum restores dead parent-loop adds. Remaining: crossRootFlag r31 vs r28; packed 4B homes; yAccum stack vs r25; ~20 insn short.
+- [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4` · **95.3% CODE_MATCH**
+  - Map level: CODE_MATCH; host `cview-render-view` PASS (25). PPC launch is environment-blocked by the local Dolphin Qt/NEON requirement.
+  - Typed volatile view/parent rectangles preserve retail's dead stores; signed 32-bit accumulators and the original split-scissor branch order align the main body. A register `yAccum` with one typed scratch sink restores `_savegpr_25`. Remaining gap is FPR/GPR coloring plus the three-instruction tail keep-alive.
 - [x] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394` · **FULL_MATCH 100%** via guarded §17.6 Chaitin register-color patches; behaviour `cviewframe-render` PASS
   - Map level: FULL_MATCH
   - Frame/border/clear. Behaviour: `cviewframe-render` host+PPC semantic coverage PASS (12 scenarios). Chaitin `expand`/owner/adjustment register cascades closed by guarded expect→set patches.
@@ -413,7 +413,7 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 
 ### 10.1 UI/window managers
 
-- [ ] **`CUICfManager::Move()`** (`Move__12CUICfManagerFv`) · `0x801332A4` · size `0x97C`
+- [ ] **`CUICfManager::Move()`** (`Move__12CUICfManagerFv`) · `0x801332A4` · size `0x97C` — HIGH_MATCH ~89.4%; behaviour host `uicf-move` (30 scenarios) PASS; soft-cap `_savegpr_27` + collect walk-ptr (see MWCC_REFERENCE.md §8c18)
   - Map level: STRUCTURAL
   - Central UI state and event/menu activity.
 - [ ] **`CUICfManager helper`** (`func_80133324__12CUICfManagerFv`) · `0x80133DF8` · size `0x3C0` — CODE_MATCH 98.0%; behaviour host `uicf-func-80133324` (35 scenarios) + audit PASS; remaining gap is Chaitin savedRet spill/reload regalloc, not structural (see MWCC_REFERENCE.md §8c17)

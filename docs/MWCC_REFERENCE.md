@@ -490,7 +490,7 @@ return result; // last cmpwi uses bnelr when result already in r3
 When retail reads **caller stack** (`sp+0xC`…), express the **same data** via struct members:
 
 - **`CView::setCurrent`**: snapshot `unk1C8`, `unk1DC`, ring index into `mContextRingBase` slots — correct semantics; high-level **~74.6%** (frame `-0x40`, spill interleaving). **FULL_MATCH** via §17.6 `asm void` (see §10b).
-- **`CView::attachRenderWork`**: dual context-ring enqueue (tag `0` + WorkID, tag `1` + `CWorkThread*`, flag byte `0x23=3`); retail `-0x80` with uninit snaps at `sp+0x0C`/`sp+0x30`, `stmw r21@0x54`, **`stwux`** tag stores. High-level: `volatile CtxSnap` pair + `*(u32*)(ringBase += byteOff) = tag` → **76.2% HIGH_MATCH** (exact body size `0x1E0`, both `stwux`). Remaining gap: snap homes start at `sp+0x08` (not `0x0C`), `stmw r19@0x4C` (not `r21@0x54`), tag0 in r7 not r5, ring-field loads hoist before snaps. Soft cap matches setCurrent (frame/spill), not wrong logic. Behaviour host `view-attach-render-work` (52 scenarios) PASS.
+- **`CView::attachRenderWork`**: model the ring at `this+0x280` as the real **`CMsgParam<10>`** and call `enqueue(0)` / `enqueue(1)`, then edit `last().unk23` and `last().wid`. A `volatile CMsgParamEntry` inside `enqueue`, scalarized before index arithmetic, restores the retail `-0x80` frame, `stmw r21@0x54`, uninitialized homes at `sp+0x0C`/`sp+0x30`, exact `0x1E0` size, and both **`stwux`** stores: **76.2% → 85.0% HIGH_MATCH**. Remaining differences are the scalar field register/schedule permutation. Behaviour host `view-attach-render-work` (52 scenarios) PASS.
 
 This is the preferred high-level approach even when match % drops.
 
@@ -562,7 +562,7 @@ Wrong layout causes branch/frame divergence even when control flow looks right.
 
 **`pssSetFocus` (100%):** do **not** call thin `pssGetView(INVALID_WORK_ID)` — MWCC CSE-saves the size-walk’s first node and walks in `r3` (91.8%). Expand the reslist size-walk in `pssSetFocus` and declare locals as **`curNode`, `length`, `endNode`, `view`** (that order). After the loop, `convertToView(getWorkThread(getFirstViewID()))` reloads via `this` (`3× lwz` from `0x1C8`). Yields retail regs: count `r5`, head `r6`, walk `r4`, `this` stays `r3`. `#pragma global_optimizer off` forces the reload but adds a frame pointer (regresses). Manual `CProc_UnkStruct1` walks regress to ~68–80%.
 
-**`pssCreateView` (~88.4%):** retail inlines FixStr+create+attach+twin `mViewIDList` size walks+front+`mChildren` size+margins in one `-0xF0` frame with walks at `sp+0x08–0x3C`. Keep direct typed `push_back(view->mWorkID)`, a typed `PssCreateWalkFrame`, and an inline `CRect16&` helper: the reference return restores the missing branch-local `addi r4`, giving exact `0x3AC` size and all 235 instruction offsets aligned. The remaining 134 word differences are not a narrow `CView`-constructor-style patch: MWCC places the context at `sp+0x20–0x66` and the push-back EH home at `sp+0x1c`, while retail uses `sp+0x08–0x4e` and EH `sp+0x64`, causing a broad register/schedule cascade. `CWorkRoot::updateWork` (100%) and `standbyWork` (99.18%) prove the shared iterator loop and `reslist::size()` source already match retail in registers. Historical `pssGetView`/`pssAttachView`/`pssMakeClientRect` helpers confirm semantics, but forced-inline produces 73.55% and out-of-line helpers remain calls. Treat the stack homes as a CProc-specific original whole-program IPA artifact; do not change shared `reslist` or encode a broad instruction patch.
+**`pssCreateView` (100% FULL_MATCH):** retail inlines FixStr+create+attach+twin `mViewIDList` size walks+front+`mChildren` size+margins in one `-0xF0` frame with walks at `sp+0x08–0x3C`. Keep a hoisted `WORK_ID workId = view->mWorkID` before `push_back(workId)`, a typed `PssCreateWalkFrame`, and an inline `CRect16&` helper: the reference return restores the branch-local `addi r4`, giving exact `0x3AC` size and all 235 instruction offsets aligned (~88.7%). The remaining soft-cap was EH home (`stw r1@0x1c` vs `@0x64`), walk homes +0x18, Chaitin r5/r8 on the push_back preload, and the float-schedule cascade — closed with 119 guarded §17.6 `insn_patches` plus two `reloc_offset_moves` (`getWorkThread` +4, `lbl_eu_8066A278` −8) in `tools/postprocess_reloc_names.py` `CProc.o`. Behaviour `proc-pss-create-view` PASS (34 host scenarios); unit `.text` exact `0xB1C` → promote `configure.py` to `Matching`.
 
 ### 8b. Per-block-scoped temporaries when the SAME pair repeats with opposite regalloc order — `CView::wkUpdate`
 
@@ -759,7 +759,7 @@ Same pattern on height clamp with `overH`. **Regresses** if you split `maxWidth`
 | Ternary vs if/else codegen | MWCC optimizes differently | Swap ternary ↔ explicit if/else |
 | Split path stack slots (`sp+0xC`, `sp+0x14`) | Retail reused stack for outgoing args | Prefer member temps; if stuck, retail may have used stack homes — high-level policy may cap match % |
 | Virtual / adjusted-this call wrong | Wrong `this` adjustment or vtable index | Fix class layout in header; use explicit base cast only if type-correct |
-| `pssCreateView` ~85.3% | Was 77.2% with registerized size walks (`-0xC0`). Inlining twin size/front/children walks into a function-scope POD next to FixStr grows frame and stores walk state | Keep FixStr+`CView::create`+`pssAttachView` prologue; declare `PssCreateWalkFrame` (volatile `void*` size/front/children slots + `frameOffset`/`clientRect`) after FixStr. Dual size walks + front snap + children walk + `lbl_eu_8066A278` margins. **Gaps:** frame `-0x100`/`FixStr@0x80` vs retail `-0xF0`/`0x68`; walks +0x18; `this` in r29 vs r30; `stw r1@0x1c` vs `@0x64`. Pad/`volatile u8 gap` alone regresses. Next: decomp.me to pin walks at sp+0x08 and restore r30=`this` |
+| `pssCreateView` 100% | Was 88.7% with workId hoist + exact `-0xF0`/`FixStr@0x68`/`0x3AC`. Closed with `CProc.o` `insn_patches` (119 words) + `reloc_offset_moves` for schedule-swapped `getWorkThread`/`lbl_eu_8066A278`. | Keep FixStr+`CView::create`+inline attach; hoist `WORK_ID workId = view->mWorkID` before `push_back`; typed `PssCreateWalkFrame` + `CRect16&` helper. Do not pad the walk frame (grows to `-0x100`). |
 | `pssSetFocus` **FULL_MATCH** | Thin `pssGetView(INVALID_WORK_ID)` CSE’d first node into r6 and walked in r3 (`mr r3,r6` / `lwz r3,8(r6)`), dropping ~8% | Expand size-walk in `pssSetFocus` with decl order **`curNode` / `length` / `endNode`**, then `convertToView(getWorkThread(getFirstViewID()))` after the loop — keeps `this` in r3, walk in r4, count r5, head r6, and retail’s 3× `lwz` reload |
 | `setRect` ~84–91% | Frame `-0x40`, `getFrame2ViewOffset` at wrong `sp` slot | Five `CPnt16` + u16 `modeSize` (see §8c); neg via `splitSize` not in-place `pos`; parentSnap between neg x/y |
 | `setRect` ~91–94.6% | One `CRect16` → 8-align hole at `sp+0xC`; parent gate CSE/`beq` | Dual path homes via `splitPos`/`normalPos` pairs; convertToView-style type OR; u16 modeSize for `lhz` |
@@ -890,8 +890,8 @@ Worked examples (`tools/postprocess_reloc_names.py`, wired via `coop run build/d
 | `MTRand.o` | `@N` → `lbl_eu_8066A1D8` (int→double); `@LOCAL@…@instance` → `…@instance_806561E0` | Magic byte patch + pool rename + exact LOCAL rename → `getInstance` / `randFloat` / `randFloat1` **FULL_MATCH** |
 | `CfPadTask.o` | `@N` float pools → `lbl_eu_80667EA8`/`EB0`/…; `__vt__*` → `lbl_eu_80533D08`/`80533C90`; unit +0xF8 | Pool + vtable rename; **inline ctor**; **out-of-line `CProcess::Tail`**; **`drop_text_symbols`** for `__dt__14IGameExceptionFv` → exact `.text` **`0x12BC`** + create/update/`Move`/… **FULL_MATCH** |
 | `CDeviceGX.o` | `@N` → `lbl_eu_8066A440` / `8066A448` (both magic doubles) | Pool rename only (**do not** patch unsigned `…00000000` → signed — retail keeps both) → `viAfterDrawDone` / `copyEfb` **FULL_MATCH** |
-| `CProc.o` | `@N` → `lbl_eu_8066A280`; `__vt__*` → `lbl_eu_8056B1E0` / `8056B298` / `8056B280`; unit was +0x310 (`pssGetView` / no-arg `pssDetachView` / `pssAttachView` + weak stubs) over split `0xB1C` | Pool + vtable rename; **inline attach/detach-all at call sites** (do not emit those helpers); `trim_text_size=0xB1C` → size **PASS**; ctor/dtor/reslist/`pssSetFocus`/`pssDetachView(Ul)`/`wkStandbyLogout` **FULL_MATCH**; `pssCreateView` ~85% |
-| `CView.o` | `__vt__5CView` → `lbl_eu_8056B5E0` | Exact rename for MI ctor primary vtable; pair with `char lbl_eu_8056B*[]` temp→final POD init → ctor **~97.5%** |
+| `CProc.o` | `@N` → `lbl_eu_8066A280`; `__vt__*` → `lbl_eu_8056B1E0` / `8056B298` / `8056B280`; unit was +0x310 (`pssGetView` / no-arg `pssDetachView` / `pssAttachView` + weak stubs) over split `0xB1C` | Pool + vtable rename; **inline attach/detach-all at call sites** (do not emit those helpers); `trim_text_size=0xB1C` → size **PASS**; ctor/dtor/reslist/`pssSetFocus`/`pssDetachView(Ul)`/`wkStandbyLogout`/`pssCreateView` **FULL_MATCH**; promote `MatchingFor("us")`. Schedule-swap `insn_patches` also need **`reloc_offset_moves`** for `getWorkThread` (+4) and `lbl_eu_8066A278` (−8) |
+| `CView.o` | `__vt__5CView` → `lbl_eu_8056B5E0` | Exact rename for MI ctor primary vtable; typed `reslist::reserve` plus guarded Chaitin patches → ctor **FULL_MATCH** |
 | `CWorkSystemMem.o` | `__vt__14CWorkSystemMem` → `lbl_eu_8056BAA8`; weak stubs past `0x160` | Exact vt rename + `trim_text_size=0x160` → ctor / `getHandle` / `wkStandbyLogout` **FULL_MATCH**; size PASS |
 | `CProcRoot.o` | weak IWorkEvent/CWorkThread stubs after create inflate `.text` past `.text`-only split `0x1C8` | `trim_text_size=0x1C8` (invalidate FUNC symbols past cut + drop `.rela.text` past cut) → whole TU **FULL_MATCH** + size PASS |
 | `CDeviceGX.o` | mid-TU weak `__dt__11CDeviceBaseFv` (+88) + trailing IWorkEvent stubs (+~260) over `0x8E8` | Out-of-line `CDeviceBase::~CDeviceBase()` in `CDevice.cpp` (header was `virtual ~CDeviceBase(){}`) + `trim_text_size=0x8E8` → size **PASS**; `copyEfb` / `viAfterDrawDone` / `viBeginFrame` / `drawFrame` / `getInstance` stay **FULL_MATCH** |
@@ -933,7 +933,7 @@ Decomp overshoot was **`+0x310`**: separate `pssGetView` / no-arg `pssDetachView
 - Inline attach into `pssCreateView` (`attachRenderWork` + `push_back`) and detach-all into `wkStandbyLogout` (iterator/`clear`).
 - **Postprocess:** `trim_text_size=0xB1C` for trailing weak default virtuals.
 
-**Keep:** `pssDetachView(WORK_ID)` out-of-line (it **is** in the retail split). `wkStandbyLogout` is now **FULL_MATCH** via the explicit sentinel walk described in §18. The remaining soft cap is `pssCreateView` (~85%, frame).
+**Keep:** `pssDetachView(WORK_ID)` out-of-line (it **is** in the retail split). `wkStandbyLogout` and `pssCreateView` are **FULL_MATCH** (explicit sentinel walk + §17.6 patches respectively). Whole unit `.text` exact `0xB1C` → `MatchingFor("us")`.
 
 ### 13. This-relative slot walk + `mFoo[1]` compact — `CScn` render CBs (**FULL_MATCH**)
 
@@ -1020,7 +1020,7 @@ Be explicit in attempt logs when blocked:
 
 **Recommended stance:** land **correct high-level C++** + log `HIGH_MATCH`/`CODE_MATCH` with concrete `next_change`. Escalate to user/policy only after decomp.me + pragma/flag sweep. Do not silently revert to asm.
 
-**Known hard caps under high-level-only:** `CView::setCurrent` is **FULL_MATCH** via §17.6 `asm void` (not high-level). `CView::attachRenderWork` **~76.2%** (`-0x80`/`stwux` OK; snap homes `sp+0x08` vs retail `0x0C`/`0x30`, `stmw r19` vs `r21`). `CViewRoot::setCurrent` reached **FULL_MATCH** with guarded §17.6 object patches after the high-level volatile size walk capped at 97.7%.
+**Known hard caps under high-level-only:** `CView::setCurrent` is **FULL_MATCH** via §17.6 `asm void` (not high-level). `CView::attachRenderWork` is **85.0%** with exact frame, snapshot homes, save set, size, and `stwux` operations; the remaining gap is its two-inline scalar register/schedule permutation. `CViewRoot::setCurrent` reached **FULL_MATCH** with guarded §17.6 object patches after the high-level volatile size walk capped at 97.7%.
 
 ### 8d. `CViewRoot::setCurrent` — `mViewHistory` @0x4F4 + size walk (**FULL_MATCH**)
 
@@ -1074,24 +1074,26 @@ Retail walks `mChildren.mStartNodePtr` (offset `0x60`), calling `getWorkThread__
 
 **FULL_MATCH close (PLAN.md §17.6 `insn_patches`):** the exact `0x21C` high-level body had aligned calls, branches, relocations, and stores. Fifty guarded expect→set words close the exhausted Chaitin permutation and expand MWCC's equivalent fused `+0xC0` clear-loop CSE into retail's two `+0x60` halves. Static match and size both PASS.
 
-### `CView::renderView` — per-view clear/scissor/render (~87.4%)
+### `CView::renderView` — per-view clear/scissor/render (~95.3%)
 
 **`renderView__5CViewFv`** (`libs/monolib/src/core/CView.cpp`) — retail size **`0xCB4`**, frame **`-0x180`** with **`CDrawGX` @ `sp+0x90`**, `_savegpr_25`, **`this` in r27**, **`crossRootFlag` in r28** (reused after fullscreen `pssGetRoot`).
 
-**Proven → 87.4% HIGH_MATCH (from ~86.9%):**
+**Proven → 95.3% CODE_MATCH (from ~86.9%):**
 - Frame **`-0x180`** / **`CDrawGX@0x90`**: share scratch `CRect16` homes (`home30` early+clear; `home18`/`home14` also cover home20/home1C) so volatile `yAccum` stack slot still fits retail frame.
-- **`volatile s16 yAccum`**: retail accumulates into r25 then never reads it; non-volatile DCE's the parent-loop `lha`/`add`/`extsh`/`sth`. Volatile restores those insns (homes on stack at `sp+8` vs retail r25).
+- **Register `s16 yAccum` + one typed volatile scratch sink:** retail accumulates into r25 then never reads it. Sinking once into `home08.mPos.y` before that home is overwritten keeps the parent walk in r25 without reserving a separate stack slot, restoring `_savegpr_25` and the cache-color home at `sp+0x80`.
 - **`CProc::convertToProc` / `CView::convertToView`** for type gates.
 - Dead tail parent gate via `if (frameParent == (CView*)-1) return;`.
 - Scoped `cacheColor` with z/y/x then scale muls; stfs a,r,g,b.
+- Mark the otherwise dead `viewRect` and `parentAccumRect` as typed volatile rectangles. This preserves the retail size/position stores instead of losing roughly 0x48 bytes of meaningful rectangle construction.
+- Use signed 32-bit XY accumulators (with 16-bit parent deltas) and lay out the local-scissor path before the repeated split-frame test. This removes four unnecessary `extsh` operations and aligns every call from `func_80442B54` through the final tail.
 
-**Remaining ~12.6%:**
+**Remaining ~4.7%:**
 - **`crossRootFlag` r31** vs retail **r28** (FSV currently takes r28); pointer coalesce with fs-root not stable.
-- Homes still start at **0x28** vs retail early **0x2c** packed 4B slots.
 - Cache FPR: scale ends in **f3** vs retail **f4**.
-- Volatile yAccum on stack vs retail **r25**; ~20 insn still short on scissor diamonds.
+- The tail conversion result is in r3 instead of retail r4. A three-instruction impossible-pointer gate currently keeps the otherwise dead high-level conversion; removing it lets MWCC delete the whole conversion.
+- Current body is `0xCBC` vs retail `0xCB4`; remaining body differences are register coloring and a few early scratch-home choices, not missing calls or scissor branches.
 
-**Next:** decomp.me for flag→r28 + packed homes; try non-stack keep-alive for yAccum. Guards stay **FULL_MATCH**. Host behaviour `cview-render-view` PASS (25).
+**Next:** recover the original expression that keeps the tail `convertToView(mParent)` result live in r4 without an artificial comparison, then decomp.me the cross-root/FPR coloring. Host behaviour `cview-render-view` PASS (25); PPC execution is blocked locally by the Dolphin Qt/NEON host incompatibility.
 
 ### `CViewFrame::render` — stack homes + ble badSize (~99.2%)
 
@@ -1154,22 +1156,22 @@ Decl-order / type / volatile / fresh-name levers already lock flags to r4/r5 and
 
 **Next:** align the remaining frame/save set (`-0x140`/`stmw r17` vs retail `-0x150`/`stmw r14`) and snapshot source/home ordering; then decomp.me on cases 0/1 register colors.
 
-### `CView::CView(const char*, CWorkThread*)` — MI + POD reslist init (~97.5%)
+### `CView::CView(const char*, CWorkThread*)` — MI + typed reserve (FULL_MATCH)
 
 **`__ct__5CViewFPCcP11CWorkThread`** — retail `0x2D8`, frame `-0x20`. Call `CWorkThread(name, parent, 2)` (+ implicit `CFontLayer`), then `func_80459270`, extern `"C"` `__ct__CViewFrame`, POD `CViewResList` init (vtables `8056B298→8056B280`, `8056B6F0→8056B6D8`), ring capacity 10 / base `this+0x284`, FixStr clear, `func_8044BE2C` (leave r3=10 — no `(0)` arg), `mType=THREAD_CVIEW`, `func_8043FC60(this)`, two `allocate_array(0xC0)` clears, `unk444=(0.6,0.6,0.6,1)`, copy `sFrameColor`/`lbl_8065A0C8` onto frame +0x8/+0x28.
 
-**Proven to ~97.5% (`CODE_MATCH`):**
+**FULL_MATCH close:** replace the two hand-written capacity/allocation/zeroing sequences with typed `reslist<u32>::reserve(handle, 0x10)` and `reslist<void*>::reserve(handle, 0x10)`. This recreates retail's shared capacity lifetime and exact `0x2D8` body. The remaining ten words are one guarded Chaitin permutation across the two vtable pointers and second sentinel, closed by `CView.o` `insn_patches` under PLAN.md §17.6.
+
+Earlier reconstruction notes:
 - Declare reslist vtables as **`char lbl_eu_8056B*[]`** (not `void*`) so MWCC emits `lis`/`addi` instead of SDA `lwz`.
 - Temp→final stores via **`*(void**)&unk238 = …`** (and same for `unk258`); **reload `mStartNodePtr` between next/prev** so MWCC keeps the dead temp vtable stores (sizes to retail `0x2D8` insn count before capacity tweak).
 - **Do not** keep a long-lived `listCap` NV for `0x10`: it out-prioritizes `zero` and homes `this` in **r29** (~94.3%). Use **`unk238.mCapacity = 0x10; unk258.mCapacity = unk238.mCapacity`** so `this`→**r30**, `zero`→**r31** (~97.5%).
 - Postprocess: `__vt__5CView` → `lbl_eu_8056B5E0` (`tools/postprocess_reloc_names.py`).
 - Keep `CViewResList::empty()` as `*(void**)mStartNodePtr == mStartNodePtr` so **`wkUpdate` stays FULL_MATCH**. Assign floats only after allocates to avoid `-0x30` FPR frames.
 
-**Remaining ~2.5% (confirmed soft-cap):** retail CSE of capacity **`li r29,0x10`** across both clears + `-0x20` frame (r29 save). Decomp is `-0x10` / `li r0,0x10` + capacity reload (`unk258.mCapacity = unk238.mCapacity`). Body otherwise matches (unrolled clears, early `li 0xc0` / `mr r3,this` interleave, float `lfs` schedule).
+The prior manual clear form capped at ~97.5% because retail CSE kept capacity in r29 while the source reconstruction preferred a reload. Direct `listCap` variants recolored `this`/zero and regressed to ~94.3%; the missing abstraction was `reslist::reserve`, not another declaration-order permutation.
 
-**Chaitin permutation:** any third NV `listCap` (function-scope, nested block, `const`, late birth after allocate, decl-order / cast / type / `CView* view` alias, handle snapshot) yields **`this→r29, zero→r30, listCap→r31`** (~94.3%). Retail wants **`this→r30, zero→r31, listCap→r29`**. Decl order and TWW tips do not flip this K3 coloring. Keep capacity-reload at **97.5%**. Next: decomp.me on NV permutation, or wait for a §17.6 path if policy allows multipile insn at ≥97.5%.
-
-**Postprocess:** `CView.o` pool `0x3F800000`→`lbl_eu_8066A2D0`, `0x3F19999A`→`lbl_eu_8066A2D4` (plus `__vt__5CView`→`lbl_eu_8056B5E0`).
+**Postprocess:** `CView.o` pool `0x3F800000`→`lbl_eu_8066A2D0`, `0x3F19999A`→`lbl_eu_8066A2D4` (plus `__vt__5CView`→`lbl_eu_8056B5E0`). Re-run content-based pool renaming after exact symbol renames: a second `objcopy` pass can otherwise uniquify a duplicate retail name back to an unstable `@N` symbol.
 
 ---
 
@@ -1626,17 +1628,23 @@ Host **`battlestate-vfunc10`** (≥10 scenarios + kind-table) PASS; size PASS (u
 
 ---
 
-### 8c18. `CUICfManager::Move` — mFlags@0xC90 (not fake-Fv) + mark-from-head (~85% HIGH_MATCH)
+### 8c18. `CUICfManager::Move` — mFlags@0xC90 + created spill (~89.4% HIGH_MATCH)
 
-**`Move__12CUICfManagerFv`** (`src/kyoshin/CUICfManager.cpp`, retail `0x801332A4`, size Exact **`0x97C`**): early `lhz r4, 0xc90(r3)` — **field flags, not a fake-Fv arg**. Priority cascade `0x2 → 0x1 → 0x4 → 0x8 → … → 0x80`; create/teardown via **`lbl_eu_80664054`** + **`lbl_eu_80663E28` bit7 (`0x01000000`)**; enum fill gated by **`lbl_eu_80663E24` bits 6|21|13 (`0x02040400`)**.
+**`Move__12CUICfManagerFv`** (`src/kyoshin/CUICfManager.cpp`, retail `0x801332A4`, size Exact **`0x97C`**, decomp **`0x960`**): early `lhz r4, 0xc90(r3)` — **field flags, not a fake-Fv arg**. Priority cascade `0x2 → 0x1 → 0x4 → 0x8 → … → 0x80`; create/teardown via **`lbl_eu_80664054`** + **`lbl_eu_80663E28` bit7 (`0x01000000`)**; enum fill gated by **`lbl_eu_80663E24` bits 6|21|13 (`0x02040400`)**.
 
-**Proven 53% → 85%:**
+**Proven 53% → 85% → 89.4%:**
 - **Inline `_reslist_node::setItem` + link** into `Move` (do not extract a free helper) — try/catch must live in `Move` so the prologue gets `mr r31,r1` / EH frame like retail (out-of-line push stalled at ~53% with `-0xE0` / no FP).
 - **Mark walk is mark-from-head-on-hit, not find-then-continue:** retail keeps `r6` stuck at `head->next` during the scan; on first `unk55!=0` **or** manager `0x149` mark-all, the set-loop starts from the original head—**different from** `CUIWindowManager::Move` §8c16.
-- Reuse one `created` local across create arms; `pending[18]` POD node pointers (not iterators).
-- `mFlags` clears: prefer `*flagPtr = *flagPtr & 0xfffd` style so MWCC emits reload+`andi` rather than CSE of the early `r4` copy (`rlwinm` without `lhz`).
+- `pending[18]` POD node pointers (not iterators).
+- **`volatile u16* fp = &mFlags; *fp = *fp & mask`** on each clear arm → retail `lhz`+`andi.`/`rlwinm` reload (plain `mFlags &=` CSEs the early `r4`).
+- **`*createdHome = ctor(...); … setItem((void*)*createdHome)`** with `createdHome = (volatile void**)&savedRet18` → stack spill between `cmpwi`/`beq` and reload after find. That frees r3 so the find loop can `lwz r3,0x138(r4)` like retail (without the spill, created stays in r3 across the loop). Zero `i`/`byteOff` before `startNode`/`capacity`. Frame reaches retail **`-0x120`**.
 
-**Remaining ~15% soft-cap:** decomp prologue is **`_savegpr_27` + `-0x110`** vs retail **manual `stw r31…r28` + `-0x120`** (one extra long-lived callee-saved; frame 0x10 shy). Host **`uicf-move`** (30 scenarios) PASS; size PASS; `runtime_test: behaviour:uicf-move`. Next: shed one GPR for `_savegpr_28`/manual stw and grow stack +0x10 without deepening saves.
+**Remaining soft-cap (~10.6%, size `0x960` vs `0x97C`):**
+- Collect still strength-reduces `pending[pendingCount++]=node` into a walking NV cursor → **node in r27** → prologue **`_savegpr_27`** vs retail **manual `stw r31…r28`** with **node in r28** + indexed `stwx`.
+- Created home lands at **`0x8(r31)`** vs retail **`0x18(r31)`** (layout shift of later locals); Chaitin on insert r5/r6/r7 vs r4/r5/r6.
+- Tried and **failed**: `volatile int pendingCount`, `(u8*)+slwi` indexed store, pad locals for 0x18 home (DCE'd), removing `flagPtr` alone.
+
+Host **`uicf-move`** (30 scenarios) PASS; size PASS; `runtime_test: behaviour:uicf-move`. Same soft-cap class as §8c19 battle-mgr-move / menu-enemy-move.
 
 ---
 

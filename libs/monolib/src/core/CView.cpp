@@ -802,8 +802,6 @@ void CView::renderView() {
     CProc* thisRoot;
     s16 savedSizeX;
     s16 savedSizeY;
-    // Retail r25 y-accum is dead after the loop; volatile keeps the adds.
-    volatile s16 yAccum;
     void* listNode;
     u32 listLen;
     void* listStart;
@@ -814,8 +812,8 @@ void CView::renderView() {
     u32 hasView2;
     u32 colorUpdateOff;
     u32 flags278;
-    // Decl order first = higher addr. Share scratch homes so frame stays -0x180
-    // despite volatile yAccum (+stack) vs baseline.
+    // Decl order first = higher addr. Share scratch homes so the frame stays
+    // -0x180 while preserving the retail rectangle lifetimes.
     volatile ml::CRect16 viewRect;
     ml::CRect16 accumRect;
     ml::CRect16 scissorOut;
@@ -829,6 +827,7 @@ void CView::renderView() {
     ml::CRect16 home18; // also home20
     ml::CRect16 home14; // also home1C
     ml::CRect16 home08;
+    s16 yAccum;
     void** attachNode;
     CWorkThread* attachWork;
     u32 msgQualified;
@@ -963,6 +962,7 @@ renderView_y_accum_check:
     if (parentView != nullptr) {
         goto renderView_y_accum_body;
     }
+    *reinterpret_cast<volatile s16*>(&home08.mPos.y) = yAccum;
 
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home34,
                                                               &unk1DC);
@@ -1741,8 +1741,8 @@ setSplitLine_no_view2:
 CView::CView(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 2),
       mName(false) {
-    // Capacity reload keeps this/r30 + zero/r31 (~97.5%). Retail CSE of 0x10 in r29
-    // still open (~2.5%: -0x20 frame + li r29). Any NV listCap steals r31 (~94.3%).
+    // The typed reserve calls below recover retail's shared 0x10 capacity
+    // lifetime; guarded postprocessing closes the final register permutation.
     u32 zero;
     void* sentinel1;
     void* sentinel0;

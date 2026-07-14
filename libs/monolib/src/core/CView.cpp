@@ -836,7 +836,7 @@ void CView::renderView() {
     u32 shouldRender;
     void** childNode;
     CView* childView;
-    CView* volatile frameParent;
+    CView* frameParent;
     s32 accumX;
     s32 accumY;
     s32 parentAccumX;
@@ -1640,6 +1640,10 @@ renderView_tail:
     frameParent = CView::convertToView(mParent);
 
 renderView_frame_call:
+    // Keep the retail parent conversion live through the final frame call.
+    if (frameParent == (CView*)-1) {
+        return;
+    }
     render__10CViewFrameFv(&unk1DC);
 }
 

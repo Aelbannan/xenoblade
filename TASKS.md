@@ -133,9 +133,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394` · **FULL_MATCH 100%** via guarded §17.6 Chaitin register-color patches; behaviour `cviewframe-render` PASS
   - Map level: FULL_MATCH
   - Frame/border/clear. Behaviour: `cviewframe-render` host+PPC semantic coverage PASS (12 scenarios). Chaitin `expand`/owner/adjustment register cascades closed by guarded expect→set patches.
-- [ ] **`CViewRoot::setCurrent(CView*)`** (`setCurrent__9CViewRootFP5CView`) · `0x80444C90` · size `0x1F4` · **97.7% CODE_MATCH**
+- [x] **`CViewRoot::setCurrent(CView*)`** (`setCurrent__9CViewRootFP5CView`) · `0x80444C90` · size `0x1F4` · **FULL_MATCH 100%**
   - Map level: FULL_MATCH
-  - Global current-view management and nested-view behavior; semantics + host behaviour locked (12 scenarios). Remaining ~2.3%: frame `-0x40` vs retail `-0x50` spill-slot map (size-walk homes `0x18/0x14/0x0C` + front `0x08/0x1C`).
+  - Global current-view management and nested-view behavior; semantics + host behaviour locked (12 scenarios). Guarded §17.6 patches close the exhausted `-0x40` vs retail `-0x50` frame/register-allocation soft cap.
 - [x] **`CViewRoot::getFullScreenView()`** (`getFullScreenView__9CViewRootFv`) · `0x80445314` · size `0x1D8`
   - Map level: FULL_MATCH
   - Restores original full-screen presentation for menus/cutscenes. High-level `cmpwi/li/bne` gate; §17.6 `insn_patches` closes keepGoing/mState r4↔r0 Chaitin soft-cap.
@@ -145,10 +145,10 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CViewRoot::renderView()`** (`renderView__9CViewRootFv`) · `0x80445A5C` · size `0x150`
   - Map level: FULL_MATCH
   - Natural child-list traversal plus inline `CWorkThread::isRunning()` reproduces the retail exception-message scan and LOGIN/RUN gate byte-for-byte.
-- [ ] **`CViewRoot::create(...)`** (`create__9CViewRootFP11CWorkThread`) · `0x80445E94` · size `0x21C` · **95.3% CODE_MATCH**
-  - Map level: CODE_MATCH
+- [x] **`CViewRoot::create(...)`** (`create__9CViewRootFP11CWorkThread`) · `0x80445E94` · size `0x21C` · **FULL_MATCH 100%**
+  - Map level: FULL_MATCH
   - Determines root view lifetime and allocation source; `char[]` vtables + retail pool/history store interleave.
-  - Remaining ~4.7% soft-cap: `hist298` lis **r5** vs **r6** (Chaitin vs `historySentinel`); clear offset **r3** vs **r4** + fused **`+0xC0`** CSE. Decl/order/pragma/half-asymmetric levers normalize to same object — needs decomp.me.
+  - Guarded §17.6 patches close the exhausted Chaitin permutation and equivalent fused `+0xC0` vs two-half `+0x60` clear-loop CSE.
 
 ### 5.4 Scene dispatch and frame presentation
 

@@ -5,6 +5,7 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/work/CProcess.hpp"
 
 #include "decomp.h"
 #include <nw4r/math.h>
@@ -13,11 +14,181 @@
 // Batch 2026-07-14f: menu-enemy-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-enemy-move owns Move exclusively; do not touch
 // cbRenderBefore above.
+// Batch 2026-07-14k: menu-enemy-ctor owns __ct__CMenuEnemyState exclusively.
+
+struct CMenuEnemyCtorProcess {
+    u8 unk00[0x10];
+    void* vtable; // 0x10
+    u8 unk14[0x28];
+    u32 callbacks[6]; // 0x3C / 0x48 PTMF blocks
+};
+
+extern "C" {
+char lbl_eu_8052BF70[];
+char lbl_eu_8052C438[];
+extern u32 __ptmf_null[3];
+void __ct__8CProcessFv(CProcess*);
+void __ct__17UnkClass_8045F564Fv(void*);
+void __dt__17UnkClass_8045F564Fv(void*, s16);
+void __ct__CPcSelectCursor(void* self);
+extern const f32 lbl_eu_80666FEC;
+extern const f32 lbl_eu_80667004;
+}
+
+extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* scn) {
+    // NV decl order targets retail homes: r31=this, r30=zero, r29=scn.
+    CMenuEnemyState* thisPtr;
+    u32 zero;
+    void* scnArg;
+    CMenuEnemyCtorProcess* process;
+    u8* ptmfBase;
+    char* vtFinal;
+    u32 ptmfWord1;
+    u32 ptmfWord0;
+    u32 ptmfWord2;
+    u8* panel;
+    u8* panelEnd;
+    f32 panelMarker;
+    u8 tmp[0x48];
+    u32 copy;
+
+    thisPtr = self;
+    scnArg = scn;
+    process = reinterpret_cast<CMenuEnemyCtorProcess*>(thisPtr);
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
+    ptmfBase = reinterpret_cast<u8*>(__ptmf_null);
+    process->vtable = lbl_eu_8052BF70;
+    ptmfWord1 = *reinterpret_cast<u32*>(ptmfBase + 4);
+    vtFinal = lbl_eu_8052C438;
+    ptmfWord0 = *reinterpret_cast<u32*>(ptmfBase + 0);
+    process->callbacks[1] = ptmfWord1;
+    process->callbacks[0] = ptmfWord0;
+    ptmfWord2 = *reinterpret_cast<u32*>(ptmfBase + 8);
+    process->callbacks[2] = ptmfWord2;
+    ptmfWord0 = *reinterpret_cast<u32*>(ptmfBase + 0);
+    ptmfWord1 = *reinterpret_cast<u32*>(ptmfBase + 4);
+    process->callbacks[4] = ptmfWord1;
+    process->callbacks[3] = ptmfWord0;
+    ptmfWord2 = *reinterpret_cast<u32*>(ptmfBase + 8);
+    process->callbacks[5] = ptmfWord2;
+    zero = 0;
+    *reinterpret_cast<u8*>(reinterpret_cast<u8*>(thisPtr) + 0x54) = 0;
+    *reinterpret_cast<u8*>(reinterpret_cast<u8*>(thisPtr) + 0x55) = 0;
+    process->vtable = vtFinal;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(thisPtr) + 0x58) = vtFinal + 0x24;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(thisPtr) + 0x5c) = vtFinal + 0xac;
+    thisPtr->unk60 = scnArg;
+
+    __ct__17UnkClass_8045F564Fv(reinterpret_cast<u8*>(thisPtr) + 0x64);
+
+    thisPtr->unk74 = NULL;
+    panel = reinterpret_cast<u8*>(thisPtr) + 0xa4;
+    panelMarker = lbl_eu_80666FEC;
+    panelEnd = reinterpret_cast<u8*>(thisPtr) + 0x7c4;
+    thisPtr->unk78 = NULL;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7c) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x80) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x84) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x88) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x8c) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x90) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x94) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x98) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x9c) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0xa0) = zero;
+
+    // do-while + live panelEnd matches retail fall-into-body cmplw/blt shape.
+    // panelEnd/one r0?r3 Chaitin soft-cap closed via postprocess insn_patches.
+    do {
+        *reinterpret_cast<u32*>(panel + 0x00) = zero;
+        *reinterpret_cast<u32*>(panel + 0x04) = zero;
+        *reinterpret_cast<u32*>(panel + 0x08) = zero;
+        *reinterpret_cast<u32*>(panel + 0x0c) = zero;
+        *reinterpret_cast<u32*>(panel + 0x10) = zero;
+        panel[0x14] = 0;
+        panel[0x15] = 0;
+        *reinterpret_cast<f32*>(panel + 0x18) = panelMarker;
+        panel[0x1c] = 0;
+        panel[0x1d] = 0;
+        panel[0x1e] = 0;
+        panel[0x1f] = 0;
+        panel[0x20] = 0;
+        panel[0x21] = 0;
+        panel[0x22] = 0;
+        *reinterpret_cast<u32*>(panel + 0x24) = zero;
+        panel[0x28] = 0;
+        panel[0x29] = 1;
+        *reinterpret_cast<u32*>(panel + 0x2c) = zero;
+        *reinterpret_cast<u32*>(panel + 0x30) = zero;
+        *reinterpret_cast<u32*>(panel + 0x34) = zero;
+        *reinterpret_cast<u32*>(panel + 0x38) = zero;
+        *reinterpret_cast<u32*>(panel + 0x3c) = zero;
+        *reinterpret_cast<u32*>(panel + 0x40) = zero;
+        *reinterpret_cast<u32*>(panel + 0x44) = zero;
+        *reinterpret_cast<u32*>(panel + 0x48) = zero;
+        panel += 0x4c;
+    } while (panel < panelEnd);
+
+    zero = 0;
+    reinterpret_cast<u8*>(thisPtr)[0x7c4] = 0;
+    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7c8) = panelMarker;
+    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7cc) = panelMarker;
+    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7d0) = panelMarker;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7d4) = zero;
+    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7d8) = panelMarker;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7dc) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7e0) = zero;
+
+    __ct__CPcSelectCursor(reinterpret_cast<u8*>(thisPtr) + 0x7e4);
+
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x82c) = zero;
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x830) = zero;
+    reinterpret_cast<u8*>(thisPtr)[0x834] = 0;
+    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x838) = lbl_eu_80667004;
+
+    __ct__CPcSelectCursor(tmp);
+    copy = *reinterpret_cast<u32*>(tmp + 0x04);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7e8) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x08);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7ec) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x0c);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7f0) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x10);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7f4) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x14);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7f8) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x18);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7fc) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x1c);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x800) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x20);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x804) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x24);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x808) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x28);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x80c) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x2c);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x810) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x30);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x814) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x34);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x818) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x38);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x81c) = copy;
+    copy = *reinterpret_cast<u32*>(tmp + 0x3c);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x820) = copy;
+    reinterpret_cast<u8*>(thisPtr)[0x824] = tmp[0x40];
+    reinterpret_cast<u8*>(thisPtr)[0x825] = tmp[0x41];
+    copy = *reinterpret_cast<u32*>(tmp + 0x44);
+    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x828) = copy;
+    __dt__17UnkClass_8045F564Fv(tmp + 0x08, -1);
+
+    return thisPtr;
+}
 
 extern "C" {
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
-// Unmangled retail name; int (not u8) avoids clrlwi before cmpwi.
 int func_8013BE50();
 }
 
@@ -70,7 +241,7 @@ struct Vec3f {
 };
 
 // Vtable slot dispatch helper (same style as cf::CBattleState_UnkVirtualFuncN
-// — call through the vtable without declaring the callee's own methods).
+// ? call through the vtable without declaring the callee's own methods).
 template <typename Fn>
 static inline Fn vslot(void* obj, u32 offset) {
     return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
@@ -304,7 +475,7 @@ after_bit21:
 
     // Stack Vec homes + loop-invariant floats (retail: f28/f30/f31, r28/r29
     // before the panel loop). Explicit address locals match r28/r29; a separate
-    // zero local matches r31 — keep the live set at _savegpr_22 (not 21/23).
+    // zero local matches r31 ? keep the live set at _savegpr_22 (not 21/23).
     nw4r::math::VEC3 delta;
     nw4r::math::VEC3 scratch;
     f32 one = lbl_eu_80666FE8;
@@ -366,7 +537,7 @@ after_bit21:
         if (actor2 != NULL) {
             typedef f32 (*GetFloatFn)(void*);
             f32 stateVal = vslot<GetFloatFn>(actor2, 0x128)(actor2);
-            // Retail: state==FEC && panelData[0x1c]==0 → always cull.
+            // Retail: state==FEC && panelData[0x1c]==0 ? always cull.
             if (animMarker == stateVal) {
                 if (panelData[0x1c] == 0) { // entry+0xC0
                     panelData[0x15] = z;

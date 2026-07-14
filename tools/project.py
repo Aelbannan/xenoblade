@@ -1542,9 +1542,14 @@ def generate_build_ninja(
     else:
         n.default(build_config_path)
 
-    # Write build.ninja
-    with open("build.ninja", "w", encoding="utf-8") as f:
+    # Write build.ninja (atomically — avoid concurrent readers seeing a
+    # torn/partial write when multiple agents reconfigure the same repo).
+    # Per-PID temp name so concurrent writers don't clobber each other's
+    # in-progress temp file before the atomic rename.
+    tmp_path = f"build.ninja.tmp.{os.getpid()}"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         f.write(out.getvalue())
+    os.replace(tmp_path, "build.ninja")
     out.close()
 
 
@@ -1557,12 +1562,19 @@ def generate_objdiff_config(
     if build_config is None:
         return
 
-    # Load existing objdiff.json
+    # Load existing objdiff.json. Tolerate transient corruption from a
+    # concurrent writer (e.g. another agent reconfiguring the same repo) —
+    # fall back to an empty cache rather than crashing the whole build.
     existing_units = {}
     if Path("objdiff.json").is_file():
-        with open("objdiff.json", "r", encoding="utf-8") as r:
-            existing_config = json.load(r)
-            existing_units = {unit["name"]: unit for unit in existing_config["units"]}
+        try:
+            with open("objdiff.json", "r", encoding="utf-8") as r:
+                existing_config = json.load(r)
+                existing_units = {
+                    unit["name"]: unit for unit in existing_config["units"]
+                }
+        except (json.JSONDecodeError, KeyError, TypeError):
+            existing_units = {}
 
     if config.ninja_path:
         ninja = str(config.ninja_path.absolute())
@@ -1769,13 +1781,14 @@ def generate_objdiff_config(
         else:
             return d
 
-    # Write objdiff.json
-    with open("objdiff.json", "w", encoding="utf-8") as w:
+    # Write objdiff.json atomically — same rationale as build.ninja above.
+    def unix_path(input: Any) -> str:
+        return str(input).replace(os.sep, "/") if input else ""
 
-        def unix_path(input: Any) -> str:
-            return str(input).replace(os.sep, "/") if input else ""
-
+    tmp_path = f"objdiff.json.tmp.{os.getpid()}"
+    with open(tmp_path, "w", encoding="utf-8") as w:
         json.dump(cleandict(objdiff_config), w, indent=2, default=unix_path)
+    os.replace(tmp_path, "objdiff.json")
 
 
 def generate_compile_commands(

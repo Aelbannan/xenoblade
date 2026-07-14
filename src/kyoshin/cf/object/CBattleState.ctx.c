@@ -809,6 +809,11 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
 // ABI as UnkVirtualFunc6 above).
 extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* entry);
+
+// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
+// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
+extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 
 extern "C" void* memset(void* dest, int val, size_t count);
@@ -1583,5 +1588,351 @@ kind_done:
                 break;
             }
         }
+    }
+}
+
+// Batch 2026-07-14k: battlestate-vfunc10 owns CBattleState_UnkVirtualFunc10
+// exclusively. Do not touch ctor / other vfuncs.
+//
+// symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
+// fake-Fv ABI as UnkVirtualFunc8). Early-out when arg->unk2E == 0. Walks
+// this+0x8 (0x68 × stride 0x34): match on slot->unk2E (== arg->unk2E);
+// when arg->unk30 bit 0x200 is clear also require unk00/04/08 eq. Same
+// flat if+goto kind tree on the *slot* id as UnkVirtualFunc8; kind==3
+// clears this+0x1528. Stack-copy + memset slot, id-dup scan / clear
+// unk15AC bit, then vt+0x4C (UnkVirtualFunc18). No recursive vt+0x2C;
+// walks all slots (no early break).
+extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg) {
+    typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
+
+    int one;
+    int thirteen;
+    cf::CBattleStateEntry* slot;
+    int i;
+    // Full arg spill (retail sp+0x3c..0x6c). Do not keep stackedWords[0] in a
+    // separate local — retail reloads it from the frame on the optional-eq
+    // path; holding it live costs an extra CSR (stmw r21 vs retail stmw r22).
+    u32 stackedWords[0x34 / 4];
+    u32* aw;
+    u16 key;
+    u32 flagBit;
+    u32 a04;
+    u32 a08;
+
+    if (arg->unk2E == 0) {
+        return;
+    }
+
+    aw = (u32*)arg;
+    stackedWords[0] = aw[0];
+    stackedWords[1] = aw[1];
+    stackedWords[2] = aw[2];
+    stackedWords[3] = aw[3];
+    stackedWords[4] = aw[4];
+    stackedWords[5] = aw[5];
+    stackedWords[6] = aw[6];
+    stackedWords[7] = aw[7];
+    stackedWords[8] = aw[8];
+    stackedWords[9] = aw[9];
+    stackedWords[10] = aw[10];
+    stackedWords[11] = aw[11];
+    stackedWords[12] = aw[12];
+
+    // Match key = lhz of low half of word at arg+0x2C (unk2E). a04/a08 stay
+    // live in GPRs (retail r29/r30); a00 is only read back from the spill.
+    key = *(u16*)((u8*)stackedWords + 0x2e);
+    flagBit = stackedWords[12] & 0x200;
+    a04 = stackedWords[1];
+    a08 = stackedWords[2];
+
+    one = 1;
+    thirteen = 0xd;
+    slot = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+    i = 0;
+
+    for (; i < 0x68; i++, slot++) {
+        int id;
+        int kind;
+        u32 savedId;
+        int stillActive;
+        u32 savedWords[0x34 / 4];
+        u32* s;
+        u32 a;
+        u32 b;
+        void* clearPtr;
+        int clearVal;
+        int clearLen;
+        int trip;
+        int g;
+        u8* p;
+
+        if (slot->unk2E != key) {
+            continue;
+        }
+
+        if (flagBit == 0) {
+            if (slot->unk00 != stackedWords[0]) {
+                continue;
+            }
+            if (slot->unk04 != a04) {
+                continue;
+            }
+            if (slot->unk08 != a08) {
+                continue;
+            }
+        }
+
+        // Flat if+goto mirrors retail's cmpwi/beq/bge chain on slot->unk0C
+        // (same leaf set as UnkVirtualFunc8).
+        id = slot->unk0C;
+
+        if (id >= 0xd4)
+            goto L10_80148BE0;
+        if (id >= 0x3e)
+            goto L10_80148B78;
+        if (id >= 0x2c)
+            goto L10_80148B4C;
+        if (id == 0x27)
+            goto kind0;
+        if (id >= 0x27)
+            goto L10_80148B40;
+        if (id >= 4)
+            goto L10_80148B34;
+        if (id >= 2)
+            goto kind0;
+        goto kind2;
+
+    L10_80148B34:
+        if (id >= 0x14)
+            goto kind2;
+        goto kind1;
+
+    L10_80148B40:
+        if (id >= 0x2a)
+            goto kind1;
+        goto kind2;
+
+    L10_80148B4C:
+        if (id == 0x36)
+            goto kind0;
+        if (id >= 0x36)
+            goto L10_80148B6C;
+        if (id >= 0x35)
+            goto kind2;
+        if (id >= 0x33)
+            goto kind0;
+        goto kind2;
+
+    L10_80148B6C:
+        if (id >= 0x3c)
+            goto kind1;
+        goto kind2;
+
+    L10_80148B78:
+        if (id == 0x5f)
+            goto kind0;
+        if (id >= 0x5f)
+            goto L10_80148BB4;
+        if (id >= 0x52)
+            goto L10_80148BA0;
+        if (id >= 0x46)
+            goto kind2;
+        if (id >= 0x44)
+            goto kind0;
+        goto kind2;
+
+    L10_80148BA0:
+        if (id >= 0x5d)
+            goto kind2;
+        if (id >= 0x58)
+            goto kind0;
+        goto kind1;
+
+    L10_80148BB4:
+        if (id == 0x93)
+            goto kind0;
+        if (id >= 0x93)
+            goto L10_80148BD4;
+        if (id >= 0x6a)
+            goto kind2;
+        if (id >= 0x65)
+            goto kind1;
+        goto kind2;
+
+    L10_80148BD4:
+        if (id >= 0xce)
+            goto kind0;
+        goto kind2;
+
+    L10_80148BE0:
+        if (id >= 0x103)
+            goto L10_80148C40;
+        if (id == 0xeb)
+            goto kind2;
+        if (id >= 0xeb)
+            goto L10_80148C1C;
+        if (id >= 0xdf)
+            goto L10_80148C08;
+        if (id == 0xdc)
+            goto kind1;
+        goto kind2;
+
+    L10_80148C08:
+        if (id >= 0xea)
+            goto kind3;
+        if (id >= 0xe3)
+            goto kind2;
+        goto kind1;
+
+    L10_80148C1C:
+        if (id == 0xf7)
+            goto kind0;
+        if (id >= 0xf7)
+            goto L10_80148C34;
+        if (id >= 0xed)
+            goto kind3;
+        goto kind0;
+
+    L10_80148C34:
+        if (id == 0xff)
+            goto kind2;
+        goto kind3;
+
+    L10_80148C40:
+        if (id == 0x117)
+            goto kind1;
+        if (id >= 0x117)
+            goto L10_80148C74;
+        if (id >= 0x109)
+            goto L10_80148C60;
+        if (id == 0x106)
+            goto kind3;
+        goto kind2;
+
+    L10_80148C60:
+        if (id >= 0x111)
+            goto kind3;
+        if (id >= 0x10d)
+            goto kind2;
+        goto kind3;
+
+    L10_80148C74:
+        if (id == 0x12d)
+            goto kind0;
+        if (id >= 0x12d)
+            goto kind2;
+        if (id == 0x11e)
+            goto kind0;
+        goto kind2;
+
+    kind0:
+        kind = 0;
+        goto kind_done;
+    kind1:
+        kind = 1;
+        goto kind_done;
+    kind3:
+        kind = 3;
+        goto kind_done;
+    kind2:
+        kind = 2;
+    kind_done:
+
+        if (kind == 3) {
+            *(u32*)self->unk1528 = 0;
+        }
+
+        // Retail schedules memset args into the first pair of the
+        // word-copy (lwz r6/r0, mr dest, li val/len, stw pair hi/lo).
+        s = (u32*)slot;
+        a = s[0];
+        clearPtr = slot;
+        b = s[1];
+        clearVal = 0;
+        savedWords[1] = b;
+        clearLen = 0x34;
+        savedWords[0] = a;
+        a = s[2];
+        b = s[3];
+        savedWords[3] = b;
+        savedWords[2] = a;
+        a = s[4];
+        b = s[5];
+        savedWords[5] = b;
+        savedWords[4] = a;
+        a = s[6];
+        b = s[7];
+        savedWords[7] = b;
+        savedWords[6] = a;
+        a = s[8];
+        b = s[9];
+        savedWords[9] = b;
+        savedWords[8] = a;
+        a = s[10];
+        b = s[11];
+        savedWords[11] = b;
+        savedWords[10] = a;
+        savedWords[12] = s[12];
+        memset(clearPtr, clearVal, clearLen);
+
+        // Load halfword id into a wide local first (retail lhz → r5).
+        savedId = *(u16*)((u8*)savedWords + 0xc);
+        if (savedId >= 0x12f) {
+            stillActive = 0;
+        } else {
+            // Retail: found in r0, dead trip in r3 (li 0 / addi +7 /
+            // unused after bdnz), scan base in r4.
+            p = (u8*)self;
+            trip = 0;
+            stillActive = 0;
+            for (g = thirteen; g != 0; g--) {
+                if (savedId == *(u16*)(p + 0x14)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x48)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x7c)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0xb0)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0xe4)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x118)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x14c)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x180)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                p += 0x1a0;
+                trip += 7;
+            }
+            stillActive = 0;
+        scan_done:
+            stillActive |= trip & 0;
+        }
+
+        if (stillActive == 0) {
+            u8* wordPtr = self->unk15AC + ((savedId >> 3) & ~3u);
+            *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
+        }
+
+        ((Vfunc18Fn)(*(void***)self)[19])(
+            self, (cf::CBattleStateEntry*)savedWords);
     }
 }

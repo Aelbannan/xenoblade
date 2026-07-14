@@ -211,7 +211,19 @@ bool CProc::wkStandbyLogout(){
         CView* view = CViewRoot::getView(value);
         view->detachRenderWork(this);
     }
-    mViewIDList.clear();
+    {
+        _reslist_node<u32>* endNode = mViewIDList.mStartNodePtr;
+        _reslist_node<u32>* curNode = endNode->mNext;
+
+        while (curNode != mViewIDList.mStartNodePtr) {
+            _reslist_node<u32>* oldNode = curNode;
+            curNode = curNode->mNext;
+            oldNode->mNext = nullptr;
+        }
+
+        mViewIDList.mStartNodePtr->mNext = mViewIDList.mStartNodePtr;
+        mViewIDList.mStartNodePtr->mPrev = mViewIDList.mStartNodePtr;
+    }
     CViewRoot::destroyProc(this);
     return CWorkThread::wkStandbyLogout();
 }

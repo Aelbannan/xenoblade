@@ -5,6 +5,9 @@ alwaysApply: true
 
 # Xenoblade decompilation (auto)
 
+> **Source of truth:** `.claude/skills/xenoblade-decomp/SKILL.md`. This rule is a
+> mirror for Cursor; keep it in sync with the `.claude` copy.
+
 At the **start of every task** in this repository:
 
 1. Read `.cursor/skills/xenoblade-decomp/SKILL.md` and follow it.

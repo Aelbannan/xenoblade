@@ -3,11 +3,14 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "monolib/util/MemManager.hpp"
 
 #include "decomp.h"
 #include <revolution/GX.h>
 
 // Batch 2026-07-14e: menu-ptgauge-move and menu-ptgauge-cbrender own their methods exclusively.
+// Batch 2026-07-14l: menu-ptgauge-init owns Init exclusively.
 
 extern "C" {
 extern u32 lbl_eu_80663E24;
@@ -20,12 +23,71 @@ extern const f32 lbl_eu_806679EC; // 1.0f
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
 int func_8013BE50();
 u32 func_80137510(void* anim, float frame);
+// Retail links this unmangled (not CUICfManager::func_801355F4) — see
+// MWCC_REFERENCE.md 8c19.
+nw4r::lyt::ArcResourceAccessor* func_801355F4();
+// Retail links this unmangled (not the FPQ34nw4r3lyt4PaneUl-mangled decl in
+// code_80135FDC.hpp); void* param (same overload trick as func_80137510
+// above) selects this bare-name overload — cast the Pane* arg at call sites.
+void func_8013676C(void* pane, u32 val);
 }
 
 extern void func_80138078(u32);
 
 typedef void (CMenuPTGauge::*CMenuPTGaugePtmf)(s32);
 extern CMenuPTGaugePtmf lbl_eu_805323F8[];
+
+void CMenuPTGauge::Init() {
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    unk64.createRegion(handle, 0x1200, lbl_eu_805039C8, 0);
+    Class_8045F858 regionGuard(&unk64);
+
+    nw4r::lyt::ArcResourceAccessor* accessor;
+
+    accessor = func_801355F4();
+    func_80136E84(&unk74, accessor, lbl_eu_805039C8 + 0xd);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk78, accessor, lbl_eu_805039C8 + 0x29);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk7C, accessor, lbl_eu_805039C8 + 0x48);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk80, accessor, lbl_eu_805039C8 + 0x6f);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk84, accessor, lbl_eu_805039C8 + 0x96);
+
+    accessor = func_801355F4();
+    func_80136F08(unk74, &unk88, accessor, lbl_eu_805039C8 + 0xb7);
+
+    // Retail: layout+0x10 is the root pane (GetRootPane inlines to this load).
+    // CDeviceFont::func_80452C10(1, layout) returns an object whose vt+0x24
+    // (no explicit args) yields the u32 passed to func_8013676C. Pass void*
+    // so the call binds the unmangled reloc (not Pane*-mangled from
+    // code_80135FDC.hpp).
+    nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
+    void* fontObj = CDeviceFont::func_80452C10(1, unk74);
+    typedef u32 (*FontVFn)(void*);
+    u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+    func_8013676C(static_cast<void*>(rootPane), fontResult);
+
+    unk74->Animate(0);
+    unk74->UnbindAllAnimation();
+    unk74->BindAnimation(unk78);
+    unk74->SetAnimationEnable(unk78, true);
+
+    // MI adjust: IScnRender at +0x5c (null-this safe), same pattern as
+    // CMenuArtsSelect::Term.
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+    if (this != NULL) {
+        cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+    }
+    mScn->addRenderCB(cb, 0xa, 0);
+
+    unk64.func_8045F810();
+}
 
 void CMenuPTGauge::Move() {
     CTaskGame::getInstance();
@@ -53,28 +115,35 @@ after_bit21:
     switch (unk8C) {
     case 0: {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        if (bm->mActorList1.size() == 0) {
+        _reslist_node<cf::CfObjectActor*>* actorNode;
+        u32 actorCount;
+        _reslist_node<cf::CfObjectActor*>* actorEnd;
+        actorEnd = bm->mActorList1.mStartNodePtr;
+        actorNode = actorEnd->mNext;
+        actorCount = 0;
+        while (actorNode != actorEnd) {
+            actorNode = actorNode->mNext;
+            ++actorCount;
+        }
+        if (actorCount == 0) {
             break;
         }
 
-        nw4r::lyt::Layout* layout = unk74;
         unk94 = 0;
         unk90 = 0;
         unk8C = 1;
 
-        if (layout != NULL) {
+        if (unk74 != NULL) {
             if (unkA0 != 0) {
                 unkA0 = 0;
                 nw4r::lyt::Pane* pane =
-                    layout->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true);
+                    unk74->GetRootPane()->FindPaneByName(lbl_eu_805039C8 + 0xd8, true);
                 if (pane != NULL) {
-                    f32 e0 = lbl_eu_806679E0;
-                    f32 e4 = lbl_eu_806679E4;
-                    f32 h = pane->GetSize().height;
-                    f32 e8 = lbl_eu_806679E8;
-                    e0 = e0 / e4;
-                    e8 = e8 * e0;
-                    pane->SetSize(nw4r::lyt::Size(e8, h));
+                    nw4r::lyt::Size size;
+                    size.width =
+                        lbl_eu_806679E8 * (lbl_eu_806679E0 / lbl_eu_806679E4);
+                    size.height = pane->GetSize().height;
+                    pane->SetSize(size);
                 }
             }
         }
@@ -95,7 +164,17 @@ after_bit21:
 
         if (partyVal <= 0) {
             bm = cf::CBattleManager::getInstance();
-            if (bm->mActorList1.size() == 0) {
+            _reslist_node<cf::CfObjectActor*>* actorNode;
+            u32 actorCount;
+            _reslist_node<cf::CfObjectActor*>* actorEnd;
+            actorEnd = bm->mActorList1.mStartNodePtr;
+            actorNode = actorEnd->mNext;
+            actorCount = 0;
+            while (actorNode != actorEnd) {
+                actorNode = actorNode->mNext;
+                ++actorCount;
+            }
+            if (actorCount == 0) {
                 unk8C = 3;
                 unk74->Animate(0);
                 unk74->UnbindAllAnimation();
@@ -111,14 +190,15 @@ after_bit21:
         }
 
         bm = cf::CBattleManager::getInstance();
+        s32 flag;
         u8 byte = *(reinterpret_cast<u8*>(bm) + 0x1aa);
-        s32 flag = 0;
-#pragma push
-#pragma optimization_level 1
-        if (byte < 1) {
+        u16 lowerByte = byte;
+        u32 upperByte = byte;
+        flag = 0;
+        if (lowerByte < 1) {
             goto range_done;
         }
-        if (byte > 0x18) {
+        if (upperByte > 0x18) {
             goto range_done;
         }
         flag = 1;
@@ -134,7 +214,6 @@ after_bit21:
     not_five:
         flag = 0;
     after_five:
-#pragma pop
         if (flag == 0) {
             break;
         }
@@ -200,4 +279,3 @@ after_bit21:
 done:
     ;
 }
-

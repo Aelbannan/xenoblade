@@ -12273,6 +12273,7 @@ public:
     static CUIWindowManager* getInstance();
     static CUIWindowManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
 
+    void Term();
     void Move();
 
 private:
@@ -12281,7 +12282,7 @@ private:
     char unk58[0x5C - 0x58]; //0x58
     reslist<IUIWindow*> mWindowList1; //0x5C - primary window queue
     reslist<IUIWindow*> mWindowList2; //0x7C - secondary window queue
-    char unk9C[0xA0 - 0x9C]; //0x9C
+    IUIWindow* unk9C; //0x9C - child window flagged for removal on Term
     bool unkA0; //0xA0 - request: remove flagged/all windows in both queues
     bool unkA1; //0xA1 - request: force update-mark on all windows in both queues
     char unkA2[0xA4 - 0xA2]; //0xA2
@@ -12299,6 +12300,9 @@ private:
 extern "C" {
 CUIWindowManager* lbl_eu_80664088;
 s16 lbl_eu_8066408C;
+
+void func_8009D0B4();
+void func_8009D514(cf::IFlagEvent*);
 }
 
 // Unrecovered view type referenced through IUIWindow::unk5C; only the +0x828
@@ -12332,6 +12336,15 @@ public:
 
 typedef reslist<IUIWindow*>::iterator WindowIter;
 typedef _reslist_node<IUIWindow*> WindowNode;
+
+void CUIWindowManager::Term() {
+    cf::IFlagEvent* flagEvent = this; // implicit MI conversion — do not static_cast / ternary / if
+    func_8009D0B4();
+    func_8009D514(flagEvent);
+
+    unk9C->SetRemove();
+    lbl_eu_80664088 = NULL;
+}
 
 void CUIWindowManager::Move() {
     CUIWindowManager* inst = lbl_eu_80664088;

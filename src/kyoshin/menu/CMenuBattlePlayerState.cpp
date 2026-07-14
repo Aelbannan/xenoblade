@@ -6,6 +6,7 @@
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/work/CProcess.hpp"
 
 #include "decomp.h"
 #include "functions.hpp"
@@ -15,11 +16,28 @@
 // Batch 2026-07-14g: menu-bps-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-bps-move owns Move exclusively; do not touch
 // Term / cbRenderBefore.
+// Batch 2026-07-14k: menu-bps-ctor owns __ct__CMenuBattlePlayerState only.
+
+struct CMenuBpsProcessShim {
+    u8 unk00[0x10];
+    void* vtable;
+    u8 unk14[0x28];
+    u32 callbacks[6]; // +0x3c
+};
 
 extern "C" {
 extern CMenuBattlePlayerState* lbl_eu_80663F48;
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
+char lbl_eu_8052C1C0[];
+char lbl_eu_8052C330[];
+char lbl_eu_8052C42C[];
+u32 __ptmf_null[3];
+void __ct__8CProcessFv(CProcess*);
+void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+void func_8010B324(CMenuBattlePlayerStateSlot*);
+void __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
+void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // Unmangled retail name; int (not u8) avoids clrlwi before cmpwi.
 int func_8013BE50();
 void* func_800B8B94(int id);
@@ -37,6 +55,7 @@ extern const f32 lbl_eu_80666F94; // 0.0f
 extern const f32 lbl_eu_80666F98; // 110.0f
 extern const f32 lbl_eu_80666F9C; // 86.0f
 extern const f32 lbl_eu_80666FA0; // -178.0f
+extern const f32 lbl_eu_80666FB0; // -1.0f
 extern const f32 lbl_eu_80666FC0; // 100.0f
 extern const f32 lbl_eu_80666FC4; // 360.0f
 }
@@ -46,6 +65,151 @@ extern void func_80138078(u32);
 template <typename Fn>
 static inline Fn vslot(void* obj, u32 offset) {
     return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
+}
+
+// Retail linker name is untyped `__ct__CMenuBattlePlayerState` (takes CScn* in r4).
+extern "C" CMenuBattlePlayerState*
+__ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
+    CMenuBpsProcessShim* process;
+    u8* ptmfBase;
+    char* vtFinal;
+    char* vtWork;
+    char* vtRender;
+    u32 ptmfWord0;
+    u32 ptmfWord1;
+    u32 ptmfWord2;
+    u32 z;
+    u32 v4;
+    u32 v6;
+    u32 vB;
+    u8 i;
+    UnkClass_8045F564* unk64p;
+
+    process = reinterpret_cast<CMenuBpsProcessShim*>(self);
+    __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
+
+    // Interim CProcess vtable, then final MI vtable + interface pieces.
+    // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C (ArtsSelect order).
+    process->vtable = lbl_eu_8052C1C0;
+    vtFinal = lbl_eu_8052C330;
+    ptmfBase = (u8*)__ptmf_null;
+    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    vtWork = vtFinal + 0x24;
+    vtRender = vtFinal + 0xac;
+    z = 0;
+    unk64p = &self->unk64;
+    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    process->callbacks[1] = ptmfWord1;
+    process->callbacks[0] = ptmfWord0;
+    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    process->callbacks[2] = ptmfWord2;
+    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    process->callbacks[4] = ptmfWord1;
+    process->callbacks[3] = ptmfWord0;
+    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    process->callbacks[5] = ptmfWord2;
+    self->unk54 = (u8)z;
+    self->unk55 = (u8)z;
+    process->vtable = vtFinal;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x58) = vtWork;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x5c) = vtRender;
+    self->mScn = scn;
+
+    __ct__17UnkClass_8045F564Fv(unk64p);
+    __construct_array(self->mSlots, reinterpret_cast<void*>(func_8010B324),
+                      reinterpret_cast<void*>(__dt__8010B444), 0x270, 3);
+
+    // Retail stores 0.0f then constructs unk7D0 before loading loop floats.
+    self->unk7C4 = lbl_eu_80666F94;
+    self->unk7C8 = (u8)z;
+    self->unk7C9 = (u8)z;
+    self->unk7CC = lbl_eu_8052C42C;
+    __ct__17UnkClass_8045F564Fv(&self->unk7D0);
+
+    self->unk7F4 = 1;
+    self->unk7E0 = (void*)z;
+    self->unk7E4 = (nw4r::lyt::Layout*)z;
+    self->unk7E8 = (nw4r::lyt::AnimTransform*)z;
+    self->unk7EC = (nw4r::lyt::AnimTransform*)z;
+    self->unk7F0 = (nw4r::lyt::AnimTransform*)z;
+    self->unk7F8 = z;
+
+    {
+        f32 zeroF;
+        f32 neg1F;
+
+        v4 = 4;
+        v6 = 6;
+        vB = 0xb;
+        zeroF = lbl_eu_80666F94;
+        neg1F = lbl_eu_80666FB0;
+        i = 0;
+        do {
+            CMenuBattlePlayerStateSlot slot;
+            u32* p;
+            u32* end;
+
+            // Inlined func_8010B324: clear +0x74..+0x8c then +0x90..+0x204.
+            slot.unk74 = (void*)z;
+            slot.unk78 = (nw4r::lyt::Layout*)z;
+            slot.unk7C = (void*)z;
+            slot.unk80 = (u8)z;
+            slot.unk84 = (void*)z;
+            slot.unk88 = (void*)z;
+            slot.unk8C = (void*)z;
+            p = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x90);
+            end = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x204);
+            while (p < end) {
+                *p = z;
+                p++;
+            }
+
+            slot.unk220 = zeroF;
+            slot.unk224 = zeroF;
+            slot.unk228 = zeroF;
+            slot.unk22C = neg1F;
+            slot.unk248 = v4;
+            slot.unk250 = v6;
+            slot.unk254 = vB;
+            slot.unk258 = i;
+            slot.unk264 = zeroF;
+
+            // Post-float zeros: retail fills slot+0x00..+0x40 then sparse tail
+            // before the aggregate copy into mSlots[i].
+            {
+                u32* hp = reinterpret_cast<u32*>(&slot);
+                u32 left;
+                for (left = 0x11; left != 0; left--) {
+                    *hp = z;
+                    hp++;
+                }
+            }
+            slot.unk204 = (u8)z;
+            slot.unk208 = z;
+            slot.unk20C = z;
+            slot.unk210 = z;
+            slot.unk214 = z;
+            slot.unk218 = z;
+            slot.unk21C = z;
+            slot.unk230 = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x234) = z;
+            slot.unk238 = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x23c) = z;
+            slot.unk25C = z;
+            slot.unk240 = (u8)z;
+            slot.unk244 = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x24c) = z;
+            *reinterpret_cast<u8*>(reinterpret_cast<u8*>(&slot) + 0x260) = (u8)z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x268) = z;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x26c) = z;
+
+            self->mSlots[i] = slot;
+            i = (u8)(i + 1);
+        } while (i < 3);
+    }
+
+    return self;
 }
 
 void CMenuBattlePlayerState::Term() {

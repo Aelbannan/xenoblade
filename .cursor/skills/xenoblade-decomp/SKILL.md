@@ -9,6 +9,10 @@ description: >-
 
 # Xenoblade decompilation
 
+> **Source of truth:** `.claude/skills/xenoblade-decomp/SKILL.md` (Claude Code
+> skill). This file is a **mirror** for Cursor use only — edit the `.claude`
+> copy and sync this one from it. Do not diverge.
+
 > **Auto-loaded** via root `AGENTS.md` and `.cursor/rules/xenoblade-decomp.mdc` (`alwaysApply: true`).
 
 ## Before you edit code

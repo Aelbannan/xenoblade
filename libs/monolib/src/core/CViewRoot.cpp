@@ -305,11 +305,6 @@ getFullScreenView_next:
 }
 
 void CViewRoot::renderView() {
-    CView* childView;
-    _reslist_node<CWorkThread*>* walkNode;
-    u32 viewFlags;
-    u32 msgQualified;
-
     if (lbl_eu_806655D0 == nullptr) {
         return;
     }
@@ -326,97 +321,13 @@ void CViewRoot::renderView() {
         return;
     }
 
-    walkNode = lbl_eu_806655D0->mChildren.mStartNodePtr->mNext;
-    goto renderView_loop_check;
-
-renderView_loop_body:
-    childView = CView::convertToView((CWorkThread*)walkNode->mItem);
-
-    viewFlags = childView->mFlags;
-
-    if ((viewFlags & THREAD_FLAG_EXCEPTION) != 0) {
-        msgQualified = 1;
-        goto renderView_qualified;
-    }
-
-    {
-        // Decl order: front/mod/sum/array claim r0/r4/r5/r6; msgIndex last → r7 like retail.
-        u32 msgFront;
-        u32 msgModulus;
-        u32 msgSum;
-        u32 msgRemainder;
-        u32 msgEntryOffset;
-        CMsgParamEntry* msgArray;
-        u32 msgCount;
-        u32 msgIndex;
-
-        msgCount = *(u32*)((u8*)childView + 0x1AC);
-
-        for (msgIndex = 0; msgIndex < msgCount; msgIndex++) {
-            msgFront = *(u32*)((u8*)childView + 0x1A8);
-            msgModulus = *(u32*)((u8*)childView + 0x1B0);
-            msgSum = msgFront + msgIndex;
-            msgArray = *(CMsgParamEntry**)((u8*)childView + 0x1A4);
-            msgRemainder = msgSum / msgModulus;
-            msgRemainder = msgRemainder * msgModulus;
-            msgRemainder = msgSum - msgRemainder;
-            msgEntryOffset = msgRemainder * 0x24;
-
-            // Keep msgIndex in r7 (decl last). Found-path still beq vs retail bne+b
-            // (+4B soft-cap); empty/self-assign/switch all lower to beq.
-            if (*(u32*)((u8*)msgArray + msgEntryOffset) != 2) {
-                continue;
-            }
-            goto renderView_msg_eval;
-        }
-
-        msgIndex = -1;
-
-renderView_msg_eval:
-        msgQualified = (msgIndex >> 31) ^ 1;
-    }
-
-renderView_qualified:
-    {
-        u32 shouldRender;
-        u32 stateReady;
-
-        shouldRender = 0;
-
-        if (msgQualified != 0) {
-            goto renderView_state_check_end;
-        }
-
-        stateReady = 1;
-
-        if (childView->mState == THREAD_STATE_LOGIN) {
-            goto renderView_state_ready;
-        }
-
-        if (childView->mState == THREAD_STATE_RUN) {
-            goto renderView_state_ready;
-        }
-
-        stateReady = 0;
-
-renderView_state_ready:
-        if (stateReady == 0) {
-            goto renderView_state_check_end;
-        }
-
-        shouldRender = 1;
-
-renderView_state_check_end:
-        if (shouldRender != 0) {
+    _reslist_node<CWorkThread*>* walkNode = lbl_eu_806655D0->mChildren.mStartNodePtr->mNext;
+    while (walkNode != lbl_eu_806655D0->mChildren.mStartNodePtr) {
+        CView* childView = CView::convertToView(walkNode->mItem);
+        if (childView->isRunning()) {
             renderView__5CViewFv(childView);
         }
-    }
-
-    walkNode = walkNode->mNext;
-
-renderView_loop_check:
-    if (walkNode != lbl_eu_806655D0->mChildren.mStartNodePtr) {
-        goto renderView_loop_body;
+        walkNode = walkNode->mNext;
     }
 }
 

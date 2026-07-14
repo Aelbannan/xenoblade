@@ -981,6 +981,14 @@ Then `mScn->removeRenderCB(this)` emits the retail null-this adjust (`addi …, 
 
 **Result:** `Term` **FULL_MATCH**; size PASS (Term-only TU well under split `0x3CC0`).
 
+### 16. Prefer an existing semantic inline over hand-expanded logic — `CViewRoot::renderView` (**FULL_MATCH**)
+
+**`renderView__9CViewRootFv`** (`libs/monolib/src/core/CViewRoot.cpp`) stalled at **97.4%** when `CMsgParam::find(EVT_EXCEPTION)` and the LOGIN/RUN state gate were manually expanded. The equivalent code had the right instructions but different queue-scan registers, branch direction, and result-register coalescing.
+
+**Fix:** use the natural child-list `while` loop and call the existing inline `childView->isRunning()` before `renderView__5CViewFv(childView)`. MWCC inlines `isException()`, `CMsgParam::find`, and the state test with the retail register allocation and branch shape.
+
+**Result:** `renderView` **FULL_MATCH**, exact size `0x150`; split-size PASS.
+
 ---
 
 ## When FULL_MATCH may be unrealistic (high-level-only)
@@ -1572,6 +1580,20 @@ Tried and rejected for the last 2%: early-hoist `one`/`thirteen` (sunk to first 
 
 ---
 
+### 8c18. `CUICfManager::Move` — mFlags@0xC90 (not fake-Fv) + mark-from-head (~85% HIGH_MATCH)
+
+**`Move__12CUICfManagerFv`** (`src/kyoshin/CUICfManager.cpp`, retail `0x801332A4`, size Exact **`0x97C`**): early `lhz r4, 0xc90(r3)` — **field flags, not a fake-Fv arg**. Priority cascade `0x2 → 0x1 → 0x4 → 0x8 → … → 0x80`; create/teardown via **`lbl_eu_80664054`** + **`lbl_eu_80663E28` bit7 (`0x01000000`)**; enum fill gated by **`lbl_eu_80663E24` bits 6|21|13 (`0x02040400`)**.
+
+**Proven 53% → 85%:**
+- **Inline `_reslist_node::setItem` + link** into `Move` (do not extract a free helper) — try/catch must live in `Move` so the prologue gets `mr r31,r1` / EH frame like retail (out-of-line push stalled at ~53% with `-0xE0` / no FP).
+- **Mark walk is mark-from-head-on-hit, not find-then-continue:** retail keeps `r6` stuck at `head->next` during the scan; on first `unk55!=0` **or** manager `0x149` mark-all, the set-loop starts from the original head—**different from** `CUIWindowManager::Move` §8c16.
+- Reuse one `created` local across create arms; `pending[18]` POD node pointers (not iterators).
+- `mFlags` clears: prefer `*flagPtr = *flagPtr & 0xfffd` style so MWCC emits reload+`andi` rather than CSE of the early `r4` copy (`rlwinm` without `lhz`).
+
+**Remaining ~15% soft-cap:** decomp prologue is **`_savegpr_27` + `-0x110`** vs retail **manual `stw r31…r28` + `-0x120`** (one extra long-lived callee-saved; frame 0x10 shy). Host **`uicf-move`** (30 scenarios) PASS; size PASS; `runtime_test: behaviour:uicf-move`. Next: shed one GPR for `_savegpr_28`/manual stw and grow stack +0x10 without deepening saves.
+
+---
+
 ## Quick checklist before claiming FULL_MATCH
 
 - [ ] `python tools/coop/run.py diff <unit> --symbol <sym>` → 100%
@@ -1625,6 +1647,22 @@ Tried and rejected for the last 2%: early-hoist `one`/`thirteen` (sunk to first 
 **Postprocess:** `CMenuBattlePlayerState.o` `pool_patterns` rename TU-local magic doubles `@N` → `lbl_eu_80666FA8` / `80666FB8` (§11).
 
 **Remaining ~0.7% (exact `0x8E8`, ~74 register-field words):** Chaitin GPR (party/actors/vt temp) + FPR homes across converts/pane `fnmsubs`. Host **`menu-bps-move`** PASS. Next for FULL_MATCH: decomp.me on FPR permutation, or logged §17.6 `insn_patches` remapping the 74 words (larger than prior 6–8 word patches — prefer decomp.me first).
+
+---
+
+### 8c18. `CMenuArtsSelect::Move` — HUD gates + arts FSM (~93.8%)
+
+**`Move__15CMenuArtsSelectFv`** (`src/kyoshin/menu/CMenuArtsSelect.cpp`, **HIGH_MATCH ~93.8%**, retail size `0xBB4`):
+
+Same §8c9 gate family as `cbRenderBefore`, plus `CSysWinBuff::getInstance`, `func_80110A70` / `func_8010CE48` (second §17.6 `beq+8; b done` on CE48 null), then `func_801080F8` + 7× pane `unkBB` flag merge from `func_8013BEB8`.
+
+**Proven:**
+- Bit21 + CE48 dual carve-outs; `extern "C" int` unmangled gates; mask `0xAFA40000`.
+- Party actor: `func_80082D54(0)` then `−0x3e9c` when non-null; `func_80174C98` latch into `unk348` / `unk328=4`.
+- Jump-table FSM on `unk298` (0..8); case1 strings via `lbl_eu_804FD1E0+0x249/254/259/69/5c` (retail typo **`txt_suject`**).
+- **f30 spill:** loading numer **before** the second vt+0x14 getMax kept a callee-saved FPR across the call → `stfd f30` + frame shift. Load numer **after** the second call (retail order).
+- Case3 `f32 homes[5]` + sliding animate `base += 4` restores frame **`-0x70`** / f31-only.
+- Soft cap: `this` still **r20** vs retail **r21**; slot-FSM schedule. Host **`menu-arts-move`** (22 scenarios) PASS; size PASS.
 
 ---
 

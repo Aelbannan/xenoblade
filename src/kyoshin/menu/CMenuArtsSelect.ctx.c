@@ -247773,6 +247773,10 @@ void CMenuArtsSelect::Term() {
 }
 
 void CMenuArtsSelect::Move() {
+    // Extra early NV (live across the function) nudges this into r21 so
+    // savegpr starts at r20 like retail.
+    u32 one = 1;
+
     CTaskGame::getInstance();
     if (CTaskGame::func_800426F0()) {
         goto done;
@@ -247906,6 +247910,7 @@ after_ce48:
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
+            // f32[5] stack homes → frame -0x70 with stfs at sp+0x10..0x20.
             f32 homes[5];
             homes[0] = lbl_eu_80666F28;
             homes[1] = lbl_eu_80666F40 * unk88->GetFrame();
@@ -247918,8 +247923,7 @@ after_ce48:
             t[1] = homes[1];
             t[2] = homes[2];
             unk308 |= 0x1u;
-            // Keep homes[3]/[4] live (retail stfs them to sp+0x1c/0x20).
-            if (homes[3] != homes[1] || homes[4] != homes[0]) {
+            if (homes[3] + homes[4] == 0.0f) {
                 t[0] = homes[4];
             }
         }
@@ -248000,7 +248004,7 @@ after_ce48:
                         func_80106C30(this, i);
                         break;
                     case 10: {
-                        unk318 |= (1u << i) | (1u << (i + 9));
+                        unk318 |= (one << i) | (one << (i + 9));
                         cf::CfGameManager::func_80082D54(0);
                         void* skillSrc = func_8016FE34();
                         int ready = 0;
@@ -248028,8 +248032,6 @@ after_ce48:
                                 f32 denom = getMax(info);
                                 f32 ratio;
                                 if (denom != zeroF) {
-                                    // Retail: second getMax, then lfs numer
-                                    // (avoids keeping numer across the call → no f30).
                                     denom = getMax(info);
                                     ratio =
                                         *reinterpret_cast<f32*>(
@@ -248179,7 +248181,6 @@ after_ce48:
     {
         u8* base = reinterpret_cast<u8*>(this);
         s32 i = 0;
-        u32 one = 1;
         do {
             if (i < 8) {
                 if (unk318 & (one << (i + 9))) {

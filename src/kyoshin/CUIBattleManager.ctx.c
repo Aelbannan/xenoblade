@@ -235417,22 +235417,31 @@ void CUIBattleManager::Init() {
 }
 
 void CUIBattleManager::Move() {
-    // Retail stack homes (r31=frame): savedRet slots, pending@0xb8, paths@0xf8/0x178.
-    // try/catch via setItem forces mr r31,r1 / stmw r25 / -0x220 frame.
-    void* savedRet;
+    // Retail frame -0x220 / stmw r25 / mr r31,r1. Per-site savedRet homes at
+    // 0x20..0x8 and setItem try/catch force the exception frame.
+    void* savedRet20;
+    void* savedRet1C;
+    void* savedRet18;
+    void* savedRet14;
+    void* savedRet10;
+    void* savedRet0C;
+    void* savedRet08;
     int pad0C;
     int pad10;
     int pad14;
     int pad18;
     int pad1C;
+    int pad20;
     _reslist_node<CUIBattleChild*>* pending[8];
-    char pathBufA[0x80];
-    char pathBufB[0x80];
+    char pathBufF8[0x80];
+    char pathBuf178[0x8C];
+    // Grow frame toward retail -0x220 (spare between pending and paths).
+    int framePad[4];
     u32 localVal;
     int pendingCount;
     int i;
-    int capacity;
     int byteOff;
+    int capacity;
     _reslist_node<CUIBattleChild*>* startNode;
     _reslist_node<CUIBattleChild*>* temp;
     _reslist_node<CUIBattleChild*>* node;
@@ -235440,7 +235449,7 @@ void CUIBattleManager::Move() {
     _reslist_node<CUIBattleChild*>* next;
     _reslist_node<CUIBattleChild*>* it;
     _reslist_node<CUIBattleChild*>* walk;
-    CUIBattleManager* mgr;
+    CUIBattleManager* inst;
     void* actor2;
     cf::CfObjectMove* objMove;
     cf::CfObjectPc* objPc;
@@ -235459,7 +235468,6 @@ void CUIBattleManager::Move() {
     if (CTaskGame::func_800426F0()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done.
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -235493,17 +235501,19 @@ after_bit21:
                     flags = lbl_eu_80664048->unk82;
                     flags &= 0xfd;
                     lbl_eu_80664048->unk82 = flags;
-                    mgr = lbl_eu_80664048;
-                    savedRet = func_801096B8(mgr->unk7C, mgr->unk58);
-                    if (savedRet != NULL) {
-                        startNode = mgr->mChildList.mStartNodePtr;
-                        capacity = mgr->mChildList.mCapacity;
+                    savedRet20 = func_801096B8(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    if (savedRet20 != NULL) {
+                        inst = lbl_eu_80664048;
                         i = 0;
                         byteOff = 0;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
                         pad0C = capacity;
+                        pad10 = byteOff;
+                        pad14 = i;
                         goto slot_check_2;
                     slot_body_2:
-                        if (*(u32*)((u8*)mgr->mChildList.mList + byteOff) == 0) {
+                        if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
                             goto slot_found_2;
                         }
                         byteOff += 0xc;
@@ -235513,9 +235523,9 @@ after_bit21:
                             goto slot_body_2;
                         }
                     slot_found_2:
-                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)mgr->mChildList.mList +
+                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)inst->mChildList.mList +
                                                                 i * 0xc);
-                        temp->setItem((CUIBattleChild*)savedRet);
+                        temp->setItem((CUIBattleChild*)savedRet20);
                         temp->mNext = startNode;
                         temp->mPrev = startNode->mPrev;
                         startNode->mPrev->mNext = temp;
@@ -235538,17 +235548,19 @@ after_bit21:
                     flags = lbl_eu_80664048->unk82;
                     flags &= 0xf7;
                     lbl_eu_80664048->unk82 = flags;
-                    mgr = lbl_eu_80664048;
-                    savedRet = func_801ACCE0(mgr->unk7C, mgr->unk58);
-                    if (savedRet != NULL) {
-                        startNode = mgr->mChildList.mStartNodePtr;
-                        capacity = mgr->mChildList.mCapacity;
+                    savedRet1C = func_801ACCE0(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    if (savedRet1C != NULL) {
+                        inst = lbl_eu_80664048;
                         i = 0;
                         byteOff = 0;
-                        pad10 = capacity;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
+                        pad18 = capacity;
+                        pad1C = byteOff;
+                        pad20 = i;
                         goto slot_check_8;
                     slot_body_8:
-                        if (*(u32*)((u8*)mgr->mChildList.mList + byteOff) == 0) {
+                        if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
                             goto slot_found_8;
                         }
                         byteOff += 0xc;
@@ -235558,9 +235570,9 @@ after_bit21:
                             goto slot_body_8;
                         }
                     slot_found_8:
-                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)mgr->mChildList.mList +
+                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)inst->mChildList.mList +
                                                                 i * 0xc);
-                        temp->setItem((CUIBattleChild*)savedRet);
+                        temp->setItem((CUIBattleChild*)savedRet1C);
                         temp->mNext = startNode;
                         temp->mPrev = startNode->mPrev;
                         startNode->mPrev->mNext = temp;
@@ -235577,25 +235589,28 @@ after_bit21:
             flags &= 0xef;
             unk82 = flags;
             if (lbl_eu_80664048 != NULL) {
-                if (!func_8009CF8C(0x3357)) {
+                // Retail: cntlzw + srwi. zero-test. compat.h stubs __cntlzw to 0.
+#undef __cntlzw
+                if (__cntlzw((u32)func_8009CF8C(0x3357)) >> 5) {
                     lbl_eu_80664048->unk82 |= 0x10;
-                } else if (func_801355F4() == NULL) {
+                    goto after_bit10;
+                }
+                if (func_801355F4() == NULL) {
                     lbl_eu_80664048->unk82 |= 0x10;
                 } else {
                     flags = lbl_eu_80664048->unk82;
                     flags &= 0xef;
                     lbl_eu_80664048->unk82 = flags;
-                    mgr = lbl_eu_80664048;
-                    savedRet = func_80187694(mgr->unk7C, mgr->unk58);
-                    if (savedRet != NULL) {
-                        startNode = mgr->mChildList.mStartNodePtr;
-                        capacity = mgr->mChildList.mCapacity;
+                    savedRet18 = func_80187694(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    if (savedRet18 != NULL) {
+                        inst = lbl_eu_80664048;
                         i = 0;
                         byteOff = 0;
-                        pad14 = capacity;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
                         goto slot_check_10;
                     slot_body_10:
-                        if (*(u32*)((u8*)mgr->mChildList.mList + byteOff) == 0) {
+                        if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
                             goto slot_found_10;
                         }
                         byteOff += 0xc;
@@ -235605,9 +235620,9 @@ after_bit21:
                             goto slot_body_10;
                         }
                     slot_found_10:
-                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)mgr->mChildList.mList +
+                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)inst->mChildList.mList +
                                                                 i * 0xc);
-                        temp->setItem((CUIBattleChild*)savedRet);
+                        temp->setItem((CUIBattleChild*)savedRet18);
                         temp->mNext = startNode;
                         temp->mPrev = startNode->mPrev;
                         startNode->mPrev->mNext = temp;
@@ -235618,6 +235633,7 @@ after_bit21:
         }
     }
 
+after_bit10:
     if ((unk82 & 0x20) != 0) {
         if (func_801355A0() != 0) {
             flags = unk82;
@@ -235630,17 +235646,16 @@ after_bit21:
                     flags = lbl_eu_80664048->unk82;
                     flags &= 0xdf;
                     lbl_eu_80664048->unk82 = flags;
-                    mgr = lbl_eu_80664048;
-                    savedRet = func_801B0E0C(mgr->unk7C, mgr->unk58);
-                    if (savedRet != NULL) {
-                        startNode = mgr->mChildList.mStartNodePtr;
-                        capacity = mgr->mChildList.mCapacity;
+                    savedRet14 = func_801B0E0C(lbl_eu_80664048->unk7C, lbl_eu_80664048->unk58);
+                    if (savedRet14 != NULL) {
+                        inst = lbl_eu_80664048;
                         i = 0;
                         byteOff = 0;
-                        pad18 = capacity;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        capacity = inst->mChildList.mCapacity;
                         goto slot_check_20;
                     slot_body_20:
-                        if (*(u32*)((u8*)mgr->mChildList.mList + byteOff) == 0) {
+                        if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
                             goto slot_found_20;
                         }
                         byteOff += 0xc;
@@ -235650,9 +235665,9 @@ after_bit21:
                             goto slot_body_20;
                         }
                     slot_found_20:
-                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)mgr->mChildList.mList +
+                        temp = (_reslist_node<CUIBattleChild*>*)((u8*)inst->mChildList.mList +
                                                                 i * 0xc);
-                        temp->setItem((CUIBattleChild*)savedRet);
+                        temp->setItem((CUIBattleChild*)savedRet14);
                         temp->mNext = startNode;
                         temp->mPrev = startNode->mPrev;
                         startNode->mPrev->mNext = temp;
@@ -235683,21 +235698,19 @@ after_bit21:
                     if (*(CFileHandle**)(slotBase + 0xa0) == NULL) {
                         faceId = (u8)partyId;
                         if (faceId == 4) {
-                            // Treat flag-query return as int (retail cmplwi vs 0x21).
-                            int flag20 = (int)(u32)func_8009CF8C(0x20);
-                            if (flag20 < 0x21) {
+                            if ((int)(u32)func_8009CF8C(0x20) < 0x21) {
                                 if ((int)(u32)func_8009CF8C(0x3508) == 0) {
                                     faceId = 0xc;
                                 }
                             }
                         }
-                        sprintf(pathBufB, lbl_eu_804FFF2C + 0x3d, (unsigned)faceId);
+                        sprintf(pathBuf178, lbl_eu_804FFF2C + 0x3d, (unsigned)faceId);
                         *(CFileHandle**)(slotBase + 0x94) =
-                            CDeviceFile::readFile(mHeap, pathBufB, battleWorkEvent(this), 0, 0);
+                            CDeviceFile::readFile(mHeap, pathBuf178, battleWorkEvent(this), 0, 0);
                     }
-                    sprintf(pathBufA, lbl_eu_804FFF2C + 0x59, partyId);
+                    sprintf(pathBufF8, lbl_eu_804FFF2C + 0x59, partyId);
                     *(CFileHandle**)(slotBase + 0xac) =
-                        CDeviceFile::readFile(mHeap, pathBufA, battleWorkEvent(this), 0, 0);
+                        CDeviceFile::readFile(mHeap, pathBufF8, battleWorkEvent(this), 0, 0);
                 }
                 off += 4;
                 slotBase += 4;
@@ -235765,20 +235778,20 @@ after_assets:
                                                         }
                                                     }
                                                     lbl_eu_8066404C = (void*)handle;
-                                                    mgr = lbl_eu_80664048;
-                                                    if (mgr != NULL) {
-                                                        savedRet =
-                                                            func_80104210(mgr->unk7C, mgr->unk58);
-                                                        if (savedRet != NULL) {
-                                                            startNode =
-                                                                mgr->mChildList.mStartNodePtr;
-                                                            capacity = mgr->mChildList.mCapacity;
+                                                    if (lbl_eu_80664048 != NULL) {
+                                                        savedRet0C = func_80104210(
+                                                            lbl_eu_80664048->unk7C,
+                                                            lbl_eu_80664048->unk58);
+                                                        if (savedRet0C != NULL) {
+                                                            inst = lbl_eu_80664048;
                                                             i = 0;
                                                             byteOff = 0;
-                                                            pad1C = capacity;
+                                                            startNode =
+                                                                inst->mChildList.mStartNodePtr;
+                                                            capacity = inst->mChildList.mCapacity;
                                                             goto slot_check_a;
                                                         slot_body_a:
-                                                            if (*(u32*)((u8*)mgr->mChildList.mList +
+                                                            if (*(u32*)((u8*)inst->mChildList.mList +
                                                                         byteOff) == 0) {
                                                                 goto slot_found_a;
                                                             }
@@ -235790,10 +235803,10 @@ after_assets:
                                                             }
                                                         slot_found_a:
                                                             temp = (_reslist_node<CUIBattleChild*>*)(
-                                                                (u8*)mgr->mChildList.mList +
+                                                                (u8*)inst->mChildList.mList +
                                                                 i * 0xc);
                                                             temp->setItem(
-                                                                (CUIBattleChild*)savedRet);
+                                                                (CUIBattleChild*)savedRet0C);
                                                             temp->mNext = startNode;
                                                             temp->mPrev = startNode->mPrev;
                                                             startNode->mPrev->mNext = temp;
@@ -235819,17 +235832,18 @@ after_assets:
                             handle = vslot<GetIntFn>(moveBase, 0x4c)(moveBase);
                         }
                         lbl_eu_8066404C = (void*)handle;
-                        mgr = lbl_eu_80664048;
-                        if (mgr != NULL) {
-                            savedRet = func_80104210(mgr->unk7C, mgr->unk58);
-                            if (savedRet != NULL) {
-                                startNode = mgr->mChildList.mStartNodePtr;
-                                capacity = mgr->mChildList.mCapacity;
+                        if (lbl_eu_80664048 != NULL) {
+                            savedRet08 = func_80104210(lbl_eu_80664048->unk7C,
+                                                       lbl_eu_80664048->unk58);
+                            if (savedRet08 != NULL) {
+                                inst = lbl_eu_80664048;
                                 i = 0;
                                 byteOff = 0;
+                                startNode = inst->mChildList.mStartNodePtr;
+                                capacity = inst->mChildList.mCapacity;
                                 goto slot_check_b;
                             slot_body_b:
-                                if (*(u32*)((u8*)mgr->mChildList.mList + byteOff) == 0) {
+                                if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
                                     goto slot_found_b;
                                 }
                                 byteOff += 0xc;
@@ -235840,8 +235854,8 @@ after_assets:
                                 }
                             slot_found_b:
                                 temp = (_reslist_node<CUIBattleChild*>*)(
-                                    (u8*)mgr->mChildList.mList + i * 0xc);
-                                temp->setItem((CUIBattleChild*)savedRet);
+                                    (u8*)inst->mChildList.mList + i * 0xc);
+                                temp->setItem((CUIBattleChild*)savedRet08);
                                 temp->mNext = startNode;
                                 temp->mPrev = startNode->mPrev;
                                 startNode->mPrev->mNext = temp;
@@ -235887,5 +235901,6 @@ mark_remove:
 
     unk80 = 0;
     unk81 = 0;
+    framePad[0] = pendingCount;
 done:;
 }

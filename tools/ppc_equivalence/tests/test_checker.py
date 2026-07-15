@@ -27,6 +27,15 @@ from tools.ppc_equivalence.model import MachineState, concrete_state
 from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.semantics import (
     ConcreteOps,
+    FPSCR_FEX,
+    FPSCR_FX,
+    FPSCR_VE,
+    FPSCR_VX,
+    FPSCR_VXIMZ,
+    FPSCR_VXSNAN,
+    FPSCR_VXVC,
+    SymbolicOps,
+    _fpscr_raise,
     automatic_live_out,
     execute_block,
     execute_cfg,
@@ -134,6 +143,11 @@ class DecoderTests(unittest.TestCase):
         # fadd has no FC operand; GekkoDisassembler::fdabc rejects it.
         with self.assertRaises(UnsupportedInstruction):
             decode("fc00006a")
+        # fcmpo encodes BF in bits 23..25 and requires bits 21..22 and Rc zero.
+        compare = decode("fd811040")[0]
+        self.assertEqual((compare.opcode, compare.operands), (Opcode.FCMPO, (3, 1, 2)))
+        with self.assertRaises(UnsupportedInstruction):
+            decode("fc611040")
 
     def test_direct_fp_instruction_execution_fails_closed(self) -> None:
         state = concrete_state()
@@ -204,9 +218,114 @@ class FloatingPointConcreteTests(unittest.TestCase):
         with self.assertRaises(ExecutionInconclusive):
             execute_block(state, decode("fce1102a"), ConcreteOps())
 
+    def test_fmuls_force25_and_clears_fi_fr(self) -> None:
+        state = concrete_state({
+            "fpr": {"f1": 1.0, "f3": "0x3ff0000010000001"},
+            "fpscr": 0x00060000,
+        })
+        final = execute_block(state, decode("ece100f2"), ConcreteOps())
+        self.assertEqual(final.fpr[7], 0x3FF0000000000000)
+        self.assertEqual(final.fpscr, 0x00004000)
+
+    def test_fpscr_exception_summary_foundation(self) -> None:
+        ops = ConcreteOps()
+        raised = _fpscr_raise(concrete_state(), FPSCR_VXIMZ, ops)
+        self.assertEqual(raised.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXIMZ)
+        enabled = _fpscr_raise(concrete_state({"fpscr": FPSCR_VE}), FPSCR_VXIMZ, ops)
+        self.assertEqual(
+            enabled.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXIMZ | FPSCR_VE,
+        )
+        already_sticky = _fpscr_raise(concrete_state({"fpscr": FPSCR_VXIMZ}), FPSCR_VXIMZ, ops)
+        self.assertEqual(already_sticky.fpscr, FPSCR_VX | FPSCR_VXIMZ)
+
+    def test_ordered_compare_nan_exception_behavior(self) -> None:
+        ordered = decode("fd811040")
+        qnan = execute_block(concrete_state({
+            "fpr": {"f1": "0x7ff8000012345678", "f2": 2.0},
+        }), ordered, ConcreteOps())
+        self.assertEqual(qnan.cr, 0x00010000)
+        self.assertEqual(qnan.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXVC | 0x1000)
+
+        snan_enabled = execute_block(concrete_state({
+            "fpr": {"f1": "0x7ff0000012345678", "f2": 2.0},
+            "fpscr": FPSCR_VE,
+        }), ordered, ConcreteOps())
+        self.assertEqual(snan_enabled.cr, 0x00010000)
+        self.assertEqual(
+            snan_enabled.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXSNAN | FPSCR_VE | 0x1000,
+        )
+
+    def test_unordered_compare_signaling_nan_sets_vxsnan(self) -> None:
+        final = execute_block(concrete_state({
+            "fpr": {"f1": "0x7ff0000000000001", "f2": 2.0},
+        }), decode("fc011000"), ConcreteOps())
+        self.assertEqual(final.cr, 0x10000000)
+        self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXSNAN | 0x1000)
+
 
 @unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")
 class FloatingPointSymbolicTests(unittest.TestCase):
+    def test_signaling_nan_classification_matches_concrete(self) -> None:
+        symbolic = SymbolicOps()
+        concrete = ConcreteOps()
+        vectors = {
+            0x7FF0000000000000: False,
+            0x7FF0000000000001: True,
+            0xFFF0000012345678: True,
+            0x7FF8000000000000: False,
+            0x7FF8000012345678: False,
+            0x3FF0000000000000: False,
+        }
+        for bits, expected in vectors.items():
+            with self.subTest(bits=f"0x{bits:016x}"):
+                self.assertEqual(concrete.fp_is_snan_bits(bits), expected)
+                expression = symbolic.fp_is_snan_bits(symbolic.fp_const64(bits))
+                self.assertEqual(symbolic.z3.is_true(symbolic.z3.simplify(expression)), expected)
+
+    def test_identical_fcmpo_is_proved_for_nan_domain(self) -> None:
+        code = decode("fd811040")
+        result = check_equivalence(
+            code, code, EquivalenceContract(parse_observables(["cr3,fpscr"]), timeout_ms=5_000),
+            original_hex="fd811040", candidate_hex="fd811040",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_ordered_and_unordered_compare_differ_on_nan_exceptions(self) -> None:
+        result = check_equivalence(
+            decode("fc011040"), decode("fc011000"),
+            EquivalenceContract(parse_observables(["cr0,fpscr"]), timeout_ms=5_000),
+            original_hex="fc011040", candidate_hex="fc011000",
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_force25_symbolic_matches_concrete_edge(self) -> None:
+        ops = SymbolicOps()
+        vectors = {
+            0x0000000000000000: 0x0000000000000000,
+            0x8000000000000000: 0x8000000000000000,
+            0x0000000000000001: 0x0000000000000001,
+            0x0000000002000001: 0x0000000002000002,
+            0x3FF0000010000001: 0x3FF0000010000000,
+            0xBFF0000010000001: 0xBFF0000010000000,
+            0x7FF0000000000000: 0x7FF0000000000000,
+        }
+        concrete = ConcreteOps()
+        for source, expected in vectors.items():
+            with self.subTest(source=f"0x{source:016x}"):
+                self.assertEqual(concrete.fp_force_25bit(source), expected)
+                expression = ops.fp_force_25bit(ops.fp_const64(source))
+                self.assertEqual(ops.z3.simplify(expression).as_long(), expected)
+
+    def test_identical_fmuls_is_proved(self) -> None:
+        code = decode("ece100f2")
+        result = check_equivalence(
+            code, code, EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+            original_hex="ece100f2", candidate_hex="ece100f2",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
     def test_fp_automatic_live_out_tracks_fpr_fpscr_and_cr1(self) -> None:
         self.assertEqual(
             automatic_live_out(decode("fce1102b")),

@@ -8,6 +8,37 @@ from .model import ConcreteMemory, MachineState
 
 MASK32 = 0xFFFFFFFF
 
+# FPSCR numeric masks (Gekko.h UReg_FPSCR bitfield layout).
+FPSCR_FX = 1 << 31
+FPSCR_FEX = 1 << 30
+FPSCR_VX = 1 << 29
+FPSCR_OX = 1 << 28
+FPSCR_UX = 1 << 27
+FPSCR_ZX = 1 << 26
+FPSCR_XX = 1 << 25
+FPSCR_VXSNAN = 1 << 24
+FPSCR_VXISI = 1 << 23
+FPSCR_VXIDI = 1 << 22
+FPSCR_VXZDZ = 1 << 21
+FPSCR_VXIMZ = 1 << 20
+FPSCR_VXVC = 1 << 19
+FPSCR_FR = 1 << 18
+FPSCR_FI = 1 << 17
+FPSCR_FPRF_MASK = 0x1F << 12
+FPSCR_VXSOFT = 1 << 10
+FPSCR_VXSQRT = 1 << 9
+FPSCR_VXCVI = 1 << 8
+FPSCR_VE = 1 << 7
+FPSCR_OE = 1 << 6
+FPSCR_UE = 1 << 5
+FPSCR_ZE = 1 << 4
+FPSCR_XE = 1 << 3
+FPSCR_VX_ANY = (
+    FPSCR_VXSNAN | FPSCR_VXISI | FPSCR_VXIDI | FPSCR_VXZDZ | FPSCR_VXIMZ
+    | FPSCR_VXVC | FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI
+)
+FPSCR_ANY_ENABLE = FPSCR_VE | FPSCR_OE | FPSCR_UE | FPSCR_ZE | FPSCR_XE
+
 
 class WordOps(Protocol):
     def const(self, value: int) -> Any: ...
@@ -46,6 +77,8 @@ class WordOps(Protocol):
     def fp_clear_sign(self, bits: Any) -> Any: ...
     def fp_set_sign(self, bits: Any) -> Any: ...
     def fp_fprf(self, bits: Any) -> Any: ...
+    def fp_force_25bit(self, bits: Any) -> Any: ...
+    def fp_is_snan_bits(self, bits: Any) -> Any: ...
     def fp_bits_to_double(self, bits: Any) -> Any: ...
     def fp_double_to_bits(self, value: Any) -> Any: ...
     def fp_rm_rne(self) -> Any: ...
@@ -148,6 +181,24 @@ class ConcreteOps:
             if not fraction: return 0x12 if sign else 0x02
             return 0x18 if sign else 0x14
         return 0x08 if sign else 0x04
+    def fp_force_25bit(self, bits: int) -> int:
+        bits &= 0xFFFFFFFFFFFFFFFF
+        exponent = bits & 0x7FF0000000000000
+        fraction = bits & 0x000FFFFFFFFFFFFF
+        if exponent == 0 and fraction:
+            shift = (64 - fraction.bit_length()) - 11
+            signed_mask = 0xFFFFFFFFF8000000 - (1 << 64)
+            keep_mask = (signed_mask >> shift) & 0xFFFFFFFFFFFFFFFF
+            round_bit = 0x08000000 >> shift
+            return ((bits & keep_mask) + (bits & round_bit)) & 0xFFFFFFFFFFFFFFFF
+        return ((bits & 0xFFFFFFFFF8000000) + (bits & 0x08000000)) & 0xFFFFFFFFFFFFFFFF
+
+    def fp_is_snan_bits(self, bits: int) -> bool:
+        bits &= 0xFFFFFFFFFFFFFFFF
+        exponent = bits & 0x7FF0000000000000
+        fraction = bits & 0x000FFFFFFFFFFFFF
+        quiet = bits & 0x0008000000000000
+        return exponent == 0x7FF0000000000000 and fraction != 0 and quiet == 0
 
     def fp_bits_to_double(self, bits: int) -> float:
         import struct
@@ -301,6 +352,45 @@ class SymbolicOps:
                 z3.If(fraction_zero, z3.If(sign, self.const(0x12), self.const(0x02)), z3.If(sign, self.const(0x18), self.const(0x14))),
                 z3.If(sign, self.const(0x08), self.const(0x04)),
             ),
+        )
+    def fp_force_25bit(self, bits: Any) -> Any:
+        z3 = self.z3
+        normal = (
+            (bits & z3.BitVecVal(0xFFFFFFFFF8000000, 64))
+            + (bits & z3.BitVecVal(0x08000000, 64))
+        )
+        fraction = z3.Extract(51, 0, bits)
+        subnormal = normal
+        # Force25Bit shifts its keep/round masks according to the highest set
+        # fraction bit for double subnormals.  Build the finite 52-way choice
+        # explicitly so the result stays a pure bit-vector expression.
+        signed_mask = 0xFFFFFFFFF8000000 - (1 << 64)
+        for highest_bit in range(52):
+            shift = 52 - highest_bit
+            keep_mask = (signed_mask >> shift) & 0xFFFFFFFFFFFFFFFF
+            round_bit = 0x08000000 >> shift
+            rounded = (
+                (bits & z3.BitVecVal(keep_mask, 64))
+                + (bits & z3.BitVecVal(round_bit, 64))
+            )
+            is_highest = z3.And(
+                z3.Extract(highest_bit, highest_bit, fraction) == z3.BitVecVal(1, 1),
+                z3.Extract(51, highest_bit + 1, fraction) == z3.BitVecVal(0, 51 - highest_bit)
+                if highest_bit < 51 else z3.BoolVal(True),
+            )
+            subnormal = z3.If(is_highest, rounded, subnormal)
+        exponent_zero = z3.Extract(62, 52, bits) == z3.BitVecVal(0, 11)
+        fraction_nonzero = fraction != z3.BitVecVal(0, 52)
+        return z3.If(z3.And(exponent_zero, fraction_nonzero), subnormal, normal)
+    def fp_is_snan_bits(self, bits: Any) -> Any:
+        z3 = self.z3
+        exponent = z3.Extract(62, 52, bits)
+        fraction = z3.Extract(51, 0, bits)
+        quiet = z3.Extract(51, 51, bits)
+        return z3.And(
+            exponent == z3.BitVecVal(0x7FF, 11),
+            fraction != z3.BitVecVal(0, 52),
+            quiet == z3.BitVecVal(0, 1),
         )
     def fp_bits_to_double(self, bits: Any) -> Any:
         return self.z3.fpBVToFP(bits, self.z3.Float64())
@@ -529,7 +619,7 @@ _FP_PSQ_OPS = {
 }
 _FP_SCALAR_ARITH = _FP_SINGLE_ARITH | _FP_DOUBLE_ARITH | _FP_AUX_OPS
 _FP_VALUE_ARITH = {
-    Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS,
+    Opcode.FADDS, Opcode.FSUBS, Opcode.FMULS, Opcode.FDIVS,
     Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV, Opcode.FRSP,
 }
 _FP_ROUNDING_SENSITIVE = _FP_VALUE_ARITH | {
@@ -581,6 +671,41 @@ def _fp_compare_nibble(a: Any, b: Any, ops: WordOps) -> Any:
 def _fpcc_nibble(state: MachineState, value: Any, ops: WordOps) -> Any:
     zero = ops.fp_bits_to_double(ops.fp_const64(0))
     return _fp_compare_nibble(value, zero, ops)
+
+
+def _fpscr_replace_mask(fpscr: Any, mask_value: int, value: Any, ops: WordOps) -> Any:
+    mask = ops.const(mask_value)
+    return ops.bor(ops.band(fpscr, ops.bnot(mask)), ops.band(value, mask))
+
+
+def _fpscr_set_fprf(state: MachineState, fpr_bits: Any, ops: WordOps) -> MachineState:
+    value = ops.shl(ops.fp_fprf(fpr_bits), ops.const(12))
+    return state.with_fpscr(_fpscr_replace_mask(state.fpscr, FPSCR_FPRF_MASK, value, ops))
+
+
+def _fpscr_cr1(state: MachineState, ops: WordOps) -> Any:
+    return ops.band(ops.lshr(state.fpscr, ops.const(28)), ops.const(0xF))
+
+
+def _fpscr_raise(state: MachineState, exception_mask: int, ops: WordOps) -> MachineState:
+    """Set a sticky FPSCR exception and recompute FX/VX/FEX summaries."""
+    mask = ops.const(exception_mask)
+    already_set = ops.eq(ops.band(state.fpscr, mask), mask)
+    value = ops.bor(state.fpscr, mask)
+    value = ops.ite(already_set, value, ops.bor(value, ops.const(FPSCR_FX)))
+    vx_set = ops.lnot(ops.eq(ops.band(value, ops.const(FPSCR_VX_ANY)), ops.const(0)))
+    value = ops.ite(vx_set, ops.bor(value, ops.const(FPSCR_VX)), ops.band(value, ops.bnot(ops.const(FPSCR_VX))))
+    enabled = ops.band(ops.lshr(value, ops.const(22)), ops.band(value, ops.const(FPSCR_ANY_ENABLE)))
+    fex_set = ops.lnot(ops.eq(enabled, ops.const(0)))
+    value = ops.ite(fex_set, ops.bor(value, ops.const(FPSCR_FEX)), ops.band(value, ops.bnot(ops.const(FPSCR_FEX))))
+    return state.with_fpscr(value)
+
+
+def _fpscr_raise_if(
+    state: MachineState, condition: Any, exception_mask: int, ops: WordOps,
+) -> MachineState:
+    raised = _fpscr_raise(state, exception_mask, ops)
+    return state.with_fpscr(ops.ite(condition, raised.fpscr, state.fpscr))
 
 
 def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) -> MachineState:
@@ -947,7 +1072,8 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         # round the result to binary32; they do not pre-round every operand.
         op_fa = ops.fp_bits_to_double(state.fpr[fa])
         op_fb = ops.fp_bits_to_double(state.fpr[fb])
-        op_fc = ops.fp_bits_to_double(state.fpr[fc])
+        fc_bits = ops.fp_force_25bit(state.fpr[fc]) if op == Opcode.FMULS else state.fpr[fc]
+        op_fc = ops.fp_bits_to_double(fc_bits)
 
         if op == Opcode.FSEL:
             result_bits = ops.ite(ops.fp_is_ge_zero(op_fa), state.fpr[fc], state.fpr[fb])
@@ -1011,6 +1137,23 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         elif op in (Opcode.FCMPU, Opcode.FCMPO):
             bf = fd
             cr_nibble = _fp_compare_nibble(op_fa, op_fb, ops)
+            is_snan = ops.lor(
+                ops.fp_is_snan_bits(state.fpr[fa]),
+                ops.fp_is_snan_bits(state.fpr[fb]),
+            )
+            is_nan = ops.lor(ops.fp_is_nan(op_fa), ops.fp_is_nan(op_fb))
+            state = _fpscr_raise_if(state, is_snan, FPSCR_VXSNAN, ops)
+            if op == Opcode.FCMPO:
+                invalid_enabled = ops.lnot(ops.eq(
+                    ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+                ))
+                # Ordered compare raises VXVC for every quiet NaN, and for a
+                # signaling NaN only when invalid exceptions are disabled.
+                raise_vxvc = ops.land(
+                    is_nan,
+                    ops.lor(ops.lnot(is_snan), ops.lnot(invalid_enabled)),
+                )
+                state = _fpscr_raise_if(state, raise_vxvc, FPSCR_VXVC, ops)
             # FPCC is the low four bits of FPSCR.FPRF (numeric bits 15..12).
             new_fpscr = ops.bor(
                 ops.band(state.fpscr, ops.bnot(ops.const(0xF000))),
@@ -1132,22 +1275,19 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
             if op in (Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS, Opcode.FADD, Opcode.FSUB, Opcode.FDIV):
                 inputs_finite = ops.land(finite(op_fa), finite(op_fb))
-            elif op == Opcode.FMUL:
+            elif op in (Opcode.FMULS, Opcode.FMUL):
                 inputs_finite = ops.land(finite(op_fa), finite(op_fc))
             else:
                 inputs_finite = finite(op_fb)
             state = replace(state, valid=ops.land(state.valid, ops.land(inputs_finite, finite(d))))
         d_bits = ops.fp_double_to_bits(d)
-        fprf = ops.fp_fprf(d_bits)
-        new_fpscr = ops.bor(
-            ops.band(state.fpscr, ops.bnot(ops.const(0x1F000))),
-            ops.shl(fprf, ops.const(12)),
-        )
-        state = state.with_fpr(fd, d_bits).with_fpscr(new_fpscr)
+        state = _fpscr_set_fprf(state.with_fpr(fd, d_bits), d_bits, ops)
+        if op in (Opcode.FMULS, Opcode.FMUL):
+            state = state.with_fpscr(ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR))))
         if insn.record:
             # Rc copies FPSCR[FX,FEX,VX,OX] into CR1; it does not classify the
             # arithmetic result.
-            cr1 = ops.band(ops.lshr(state.fpscr, ops.const(28)), ops.const(0xF))
+            cr1 = _fpscr_cr1(state, ops)
             state = _set_cr_field(state, 1, cr1, ops)
         return state
 
@@ -1298,7 +1438,9 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
     elif op in (Opcode.FCMPU, Opcode.FCMPO):
         for idx in a[1:]:
             if 0 <= idx < 32: reads.add(f"f{idx}")
+        reads.add("fpscr")
         writes.add(f"cr{a[0]}")
+        writes.add("fpscr")
     elif op in (Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1):
         for idx in a[1:]:
             if 0 <= idx < 32: reads.add(f"f{idx}")

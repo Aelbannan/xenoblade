@@ -164,19 +164,22 @@ The current `broadway-ppc32-be-v3` model supports:
   LR updates, indirect aligned targets, acyclic CFG paths, and exit comparison;
 - scalar FP D-form/indexed loads and stores (`lfs*`, `lfd*`, `stfs*`, `stfd*`,
   `stfiwx`) with big-endian memory and binary32/binary64 conversion;
-- scalar `fadd[s]`, `fsub[s]`, `fdiv[s]`, double `fmul`, `frsp`,
-  `fsel`, `fcmpu`, and bit-exact `fmr`/`fneg`/`fabs`/`fnabs`;
+- scalar `fadd[s]`, `fsub[s]`, `fmuls`, `fdiv[s]`, double `fmul`, `frsp`,
+  `fsel`, ordered/unordered `fcmpo`/`fcmpu`, and bit-exact
+  `fmr`/`fneg`/`fabs`/`fnabs`;
 - FPSCR rounding-mode input, FPRF/FPCC result classification, Rc-to-CR1, FP
-  observables, and EABI FP return/nonvolatile registers;
+  compare invalid causes (`VXSNAN`/`VXVC`) with `FX`/`VX`/`FEX` summaries and
+  `VE` behavior, FP observables, and EABI FP return/nonvolatile registers;
 - configurable `--max-instructions` and `--max-paths` bounds.
 
 Modeled arithmetic is restricted to finite inputs/results, round-to-nearest-even,
 and `FPSCR.NI=0`; this keeps ConcreteOps, Z3, and the Broadway oracle on the
-same explicit domain. Floating-point sticky exception flags,
-exception-enable result suppression, and traps are outside the declared
-value-semantics model. Instructions whose core
-result depends on those details (`fctiw*`, `fcmpo`, FPSCR mutation/access),
-square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`), fused/special-multiply
+same explicit domain. Arithmetic floating-point sticky exception flags,
+exception-enable result suppression, and architectural trap delivery are
+outside the declared value-semantics model. Compare invalid exceptions are
+modeled, but instructions whose core result depends on the remaining details
+(`fctiw*`, FPSCR mutation/access),
+square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`) and fused multiply-add/subtract
 forms, paired-single/quantized operations, VMX, atomics/reservations,
 cache/MMIO behavior, privileged state, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive

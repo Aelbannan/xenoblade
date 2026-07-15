@@ -26,9 +26,9 @@ class ProofResult:
         "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
         "shared byte-addressed initial memory",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
-        "floating-point exception flags and enabled-exception suppression/traps are not tracked",
+        "FP compare invalid flags are tracked; arithmetic exception flags, enabled-result suppression, and traps are not",
         "modeled FP arithmetic requires finite inputs/results, FPSCR.RN=nearest-even, and NI=0",
-        "fres, frsqrte, conversions, fused/special multiply forms, and paired-single are unsupported",
+        "fres, frsqrte, conversions, fused multiply-add/subtract forms, and paired-single are unsupported",
         "division results compared only on architecturally defined inputs",
         "loops and external call continuations are not summarized",
     ])

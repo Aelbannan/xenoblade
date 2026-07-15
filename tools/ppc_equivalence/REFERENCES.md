@@ -20,6 +20,8 @@ PowerPC architecture, checked against a mature Wii implementation.
 4. Dolphin's Wii/GC PowerPC interpreter is the implementation cross-reference:
    [integer semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_Integer.cpp),
    [integer storage semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_LoadStore.cpp),
+   [floating-point semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_FloatingPoint.cpp),
+   [Broadway FP helpers](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_FPUtils.h),
    and the [PowerPC core sources](https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/Core/PowerPC).
 
 ## Deliberate model choices
@@ -39,3 +41,10 @@ PowerPC architecture, checked against a mature Wii implementation.
   path bound, instruction bound, or unknown continuation is inconclusive.
 - External direct/indirect calls are terminal exits. Both sides must agree on
   exit kind and target; no unsound “call is a no-op” summary is used.
+- `fmuls` applies Broadway's `Force25Bit` rounding to `frC` before the
+  multiply, then rounds the product to binary32. The shared corpus contains
+  normal and subnormal cases that differ from a plain IEEE multiply/cast.
+- `fcmpu` and `fcmpo` classify signaling NaNs from the original binary64 FPR
+  bits so payload conversion cannot quiet them first. Ordered compare models
+  Dolphin's `VXSNAN`/`VXVC` split, `VE` interaction, exception summaries, and
+  unconditional CR/FPCC update; trap delivery remains outside the model.

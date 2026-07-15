@@ -182,6 +182,11 @@ def _fp_x(fd: int, fa: int, fb: int, xo_bits: int, *, rc: int = 0) -> int:
     )
 
 
+def _fp_cmp(bf: int, fa: int, fb: int, xo_bits: int) -> int:
+    # Compare encodes BF in bits 23..25; bits 21..22 are reserved and zero.
+    return _fp_x((bf & 7) << 2, fa, fb, xo_bits)
+
+
 FIXTURES: tuple[FixtureCase, ...] = (
     _case(
         "addc",
@@ -733,8 +738,11 @@ FIXTURES += (
 # Scalar floating-point value-semantics corpus.  These cases are also executed
 # by Dolphin's Broadway interpreter and compare FPR/FPSCR state directly.
 _F15 = 0x3FF8000000000000
+_F1 = 0x3FF0000000000000
 _F2 = 0x4000000000000000
 _F4 = 0x4010000000000000
+_QNAN = 0x7FF8000012345678
+_SNAN = 0x7FF0000012345678
 _FP_INPUTS = {"f1": _F15, "f2": _F2, "f3": _F4}
 
 FIXTURES += (
@@ -758,6 +766,9 @@ FIXTURES += (
 
     _case("fadds", ("fp", "single", "record"), _state(fpr=_FP_INPUTS, fpscr=0x80000000), [_fp_a(59, 7, 1, 2, 0, 42, rc=1)], result=0, cr=0x08000000, xer=0, expected_fpr={7: 0x400C000000000000}, expected_fpscr=0x80004000),
     _case("fsubs", ("fp", "single"), _state(fpr=_FP_INPUTS), [_fp_a(59, 7, 1, 2, 0, 40)], result=0, cr=0, xer=0, expected_fpr={7: 0xBFE0000000000000}, expected_fpscr=0x00008000),
+    _case("fmuls", ("fp", "single", "record"), _state(fpr=_FP_INPUTS, fpscr=0x80060000), [_fp_a(59, 7, 1, 0, 3, 50, rc=1)], result=0, cr=0x08000000, xer=0, expected_fpr={7: 0x4018000000000000}, expected_fpscr=0x80004000),
+    _case("fmuls-force25", ("fp", "single", "force25"), _state(fpr={"f1": _F1, "f3": 0x3FF0000010000001}), [_fp_a(59, 7, 1, 0, 3, 50)], result=0, cr=0, xer=0, expected_fpr={7: _F1}, expected_fpscr=0x00004000),
+    _case("fmuls-force25-subnormal", ("fp", "single", "force25", "subnormal"), _state(fpr={"f1": 0xFF5A52F1A05885AC, "f3": 0x0000000002000001}), [_fp_a(59, 7, 1, 0, 3, 50)], result=0, cr=0, xer=0, expected_fpr={7: 0xBDCA52F1C0000000}, expected_fpscr=0x00008000),
     _case("fdivs", ("fp", "single"), _state(fpr=_FP_INPUTS), [_fp_a(59, 7, 1, 2, 0, 36)], result=0, cr=0, xer=0, expected_fpr={7: 0x3FE8000000000000}, expected_fpscr=0x00004000),
     _case("fadd", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 0, 42)], result=0, cr=0, xer=0, expected_fpr={7: 0x400C000000000000}, expected_fpscr=0x00004000),
     _case("fsub", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 0, 40)], result=0, cr=0, xer=0, expected_fpr={7: 0xBFE0000000000000}, expected_fpscr=0x00008000),
@@ -765,6 +776,12 @@ FIXTURES += (
     _case("fdiv", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 0, 36)], result=0, cr=0, xer=0, expected_fpr={7: 0x3FE8000000000000}, expected_fpscr=0x00004000),
     _case("fsel", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 3, 46)], result=0, cr=0, xer=0, expected_fpr={7: _F4}, expected_fpscr=0),
     _case("fcmpu", ("fp", "compare"), _state(fpr=_FP_INPUTS), [_fp_x(0, 1, 2, 0)], result=0, cr=0x80000000, xer=0, expected_fpscr=0x00008000),
+    _case("fcmpu-snan", ("fp", "compare", "snan"), _state(fpr={"f1": _SNAN, "f2": _F2}), [_fp_cmp(3, 1, 2, 0)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA1001000),
+    _case("fcmpo", ("fp", "compare", "ordered"), _state(fpr=_FP_INPUTS), [_fp_cmp(3, 1, 2, 32)], result=0, cr=0x00080000, xer=0, expected_fpscr=0x00008000),
+    _case("fcmpo-qnan", ("fp", "compare", "ordered", "qnan"), _state(fpr={"f1": _QNAN, "f2": _F2}), [_fp_cmp(3, 1, 2, 32)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA0081000),
+    _case("fcmpo-qnan-ve", ("fp", "compare", "ordered", "qnan", "ve"), _state(fpr={"f1": _QNAN, "f2": _F2}, fpscr=0x80), [_fp_cmp(3, 1, 2, 32)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xE0081080),
+    _case("fcmpo-snan", ("fp", "compare", "ordered", "snan"), _state(fpr={"f1": _SNAN, "f2": _F2}), [_fp_cmp(3, 1, 2, 32)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA1081000),
+    _case("fcmpo-snan-ve", ("fp", "compare", "ordered", "snan", "ve"), _state(fpr={"f1": _SNAN, "f2": _F2}, fpscr=0x80), [_fp_cmp(3, 1, 2, 32)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xE1001080),
     _case("frsp", ("fp", "single"), _state(fpr={"f2": _F15}), [_fp_x(7, 0, 2, 12)], result=0, cr=0, xer=0, expected_fpr={7: _F15}, expected_fpscr=0x00004000),
     _case("fneg", ("fp", "move"), _state(fpr={"f2": _F15}), [_fp_x(7, 0, 2, 40)], result=0, cr=0, xer=0, expected_fpr={7: 0xBFF8000000000000}),
     _case("fmr", ("fp", "move"), _state(fpr={"f2": 0x7FF8000012345678}), [_fp_x(7, 0, 2, 72)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000012345678}),

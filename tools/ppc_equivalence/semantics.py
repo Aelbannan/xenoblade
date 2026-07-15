@@ -40,6 +40,27 @@ FPSCR_VX_ANY = (
 FPSCR_ANY_ENABLE = FPSCR_VE | FPSCR_OE | FPSCR_UE | FPSCR_ZE | FPSCR_XE
 FPSCR_HW_MASK = 0xFFFFF7FF
 
+FRES_TABLE = (
+    (0x7FF800, 0x3E1), (0x783800, 0x3A7), (0x70EA00, 0x371), (0x6A0800, 0x340),
+    (0x638800, 0x313), (0x5D6200, 0x2EA), (0x579000, 0x2C4), (0x520800, 0x2A0),
+    (0x4CC800, 0x27F), (0x47CA00, 0x261), (0x430800, 0x245), (0x3E8000, 0x22A),
+    (0x3A2C00, 0x212), (0x360800, 0x1FB), (0x321400, 0x1E5), (0x2E4A00, 0x1D1),
+    (0x2AA800, 0x1BE), (0x272C00, 0x1AC), (0x23D600, 0x19B), (0x209E00, 0x18B),
+    (0x1D8800, 0x17C), (0x1A9000, 0x16E), (0x17AE00, 0x15B), (0x14F800, 0x15B),
+    (0x124400, 0x143), (0x0FBE00, 0x143), (0x0D3800, 0x12D), (0x0ADE00, 0x12D),
+    (0x088400, 0x11A), (0x065000, 0x11A), (0x041C00, 0x108), (0x020C00, 0x106),
+)
+FRSQRTE_TABLE = (
+    (0x1A7E800, -0x568), (0x17CB800, -0x4F3), (0x1552800, -0x48D), (0x130C000, -0x435),
+    (0x10F2000, -0x3E7), (0x0EFF000, -0x3A2), (0x0D2E000, -0x365), (0x0B7C000, -0x32E),
+    (0x09E5000, -0x2FC), (0x0867000, -0x2D0), (0x06FF000, -0x2A8), (0x05AB800, -0x283),
+    (0x046A000, -0x261), (0x0339800, -0x243), (0x0218800, -0x226), (0x0105800, -0x20B),
+    (0x3FFA000, -0x7A4), (0x3C29000, -0x700), (0x38AA000, -0x670), (0x3572000, -0x5F2),
+    (0x3279000, -0x584), (0x2FB7000, -0x524), (0x2D26000, -0x4CC), (0x2AC0000, -0x47E),
+    (0x2881000, -0x43A), (0x2665000, -0x3FA), (0x2468000, -0x3C2), (0x2287000, -0x38E),
+    (0x20C1000, -0x35E), (0x1F12000, -0x332), (0x1D79000, -0x30A), (0x1BF4000, -0x2E6),
+)
+
 
 class WordOps(Protocol):
     def const(self, value: int) -> Any: ...
@@ -78,6 +99,8 @@ class WordOps(Protocol):
     def fp_clear_sign(self, bits: Any) -> Any: ...
     def fp_set_sign(self, bits: Any) -> Any: ...
     def fp_fprf(self, bits: Any) -> Any: ...
+    def fp_approx_reciprocal_bits(self, bits: Any) -> Any: ...
+    def fp_approx_rsqrt_bits(self, bits: Any) -> Any: ...
     def fp_force_25bit(self, bits: Any) -> Any: ...
     def fp_is_snan_bits(self, bits: Any) -> Any: ...
     def fp_signs_equal_bits(self, left: Any, right: Any) -> Any: ...
@@ -193,6 +216,51 @@ class ConcreteOps:
             if not fraction: return 0x12 if sign else 0x02
             return 0x18 if sign else 0x14
         return 0x08 if sign else 0x04
+    def fp_approx_reciprocal_bits(self, bits: int) -> int:
+        bits &= 0xFFFFFFFFFFFFFFFF
+        sign = bits & (1 << 63)
+        exponent = (bits >> 52) & 0x7FF
+        mantissa = bits & ((1 << 52) - 1)
+        if exponent == 0 and mantissa == 0:
+            return sign | 0x7FF0000000000000
+        if exponent == 0x7FF:
+            return sign if mantissa == 0 else self.fp_quiet_nan_bits(bits)
+        if exponent < 895:
+            return sign | 0x47EFFFFFE0000000
+        if exponent >= 1149:
+            return sign
+        out_exponent = 0x7FD - exponent
+        i = mantissa >> 37
+        base, decrement = FRES_TABLE[i // 1024]
+        estimate = base - (decrement * (i % 1024) + 1) // 2
+        return sign | (out_exponent << 52) | (estimate << 29)
+    def fp_approx_rsqrt_bits(self, bits: int) -> int:
+        bits &= 0xFFFFFFFFFFFFFFFF
+        sign = bits & (1 << 63)
+        exponent = (bits >> 52) & 0x7FF
+        mantissa = bits & ((1 << 52) - 1)
+        if exponent == 0 and mantissa == 0:
+            return sign | 0x7FF0000000000000
+        if exponent == 0x7FF:
+            if mantissa == 0:
+                return 0x7FF8000000000000 if sign else 0
+            return self.fp_quiet_nan_bits(bits)
+        if sign:
+            return 0x7FF8000000000000
+        if exponent == 0:
+            while not (mantissa & (1 << 52)):
+                exponent -= 1
+                mantissa <<= 1
+            mantissa &= (1 << 52) - 1
+            exponent += 1
+        exponent_lsb = exponent & 1
+        difference = exponent - 0x3FE
+        half = (difference + 1) // 2
+        out_exponent = (0x3FF - half) & 0x7FF
+        i = ((exponent_lsb << 52) | mantissa) >> 37
+        base, decrement = FRSQRTE_TABLE[i // 2048]
+        estimate = base + decrement * (i % 2048)
+        return (out_exponent << 52) | (estimate << 26)
     def fp_force_25bit(self, bits: int) -> int:
         bits &= 0xFFFFFFFFFFFFFFFF
         exponent = bits & 0x7FF0000000000000
@@ -436,6 +504,93 @@ class SymbolicOps:
                 exponent_zero,
                 z3.If(fraction_zero, z3.If(sign, self.const(0x12), self.const(0x02)), z3.If(sign, self.const(0x18), self.const(0x14))),
                 z3.If(sign, self.const(0x08), self.const(0x04)),
+            ),
+        )
+    def fp_approx_reciprocal_bits(self, bits: Any) -> Any:
+        z3 = self.z3
+        sign = z3.Extract(63, 63, bits)
+        exponent = z3.Extract(62, 52, bits)
+        mantissa = z3.Extract(51, 0, bits)
+        index = z3.Extract(14, 10, z3.Extract(51, 37, bits))
+        remainder = z3.Extract(9, 0, z3.Extract(51, 37, bits))
+        base = z3.BitVecVal(FRES_TABLE[-1][0], 32)
+        decrement = z3.BitVecVal(FRES_TABLE[-1][1], 32)
+        for table_index in range(30, -1, -1):
+            condition = index == z3.BitVecVal(table_index, 5)
+            base = z3.If(condition, z3.BitVecVal(FRES_TABLE[table_index][0], 32), base)
+            decrement = z3.If(condition, z3.BitVecVal(FRES_TABLE[table_index][1], 32), decrement)
+        estimate = base - z3.LShR(decrement * z3.ZeroExt(22, remainder) + 1, 1)
+        normal = z3.Concat(
+            sign, z3.Extract(10, 0, z3.BitVecVal(0x7FD, 12) - z3.ZeroExt(1, exponent)),
+            z3.Extract(22, 0, estimate), z3.BitVecVal(0, 29),
+        )
+        zero = z3.Concat(sign, z3.Extract(62, 0, z3.BitVecVal(0x7FF0000000000000, 64)))
+        signed_zero = z3.Concat(sign, z3.BitVecVal(0, 63))
+        float_max = z3.Concat(sign, z3.Extract(62, 0, z3.BitVecVal(0x47EFFFFFE0000000, 64)))
+        quiet_nan = bits | z3.BitVecVal(0x0008000000000000, 64)
+        exponent_zero = exponent == z3.BitVecVal(0, 11)
+        mantissa_zero = mantissa == z3.BitVecVal(0, 52)
+        exponent_ones = exponent == z3.BitVecVal(0x7FF, 11)
+        return z3.If(
+            z3.And(exponent_zero, mantissa_zero), zero,
+            z3.If(
+                exponent_ones, z3.If(mantissa_zero, signed_zero, quiet_nan),
+                z3.If(z3.ULT(exponent, z3.BitVecVal(895, 11)), float_max,
+                      z3.If(z3.UGE(exponent, z3.BitVecVal(1149, 11)), signed_zero, normal)),
+            ),
+        )
+    def fp_approx_rsqrt_bits(self, bits: Any) -> Any:
+        z3 = self.z3
+        sign = z3.Extract(63, 63, bits)
+        exponent = z3.Extract(62, 52, bits)
+        mantissa = z3.Extract(51, 0, bits)
+        normalized_mantissa = mantissa
+        normalized_exponent = z3.ZeroExt(2, exponent)
+        for highest_bit in range(52):
+            higher_clear = (
+                z3.Extract(51, highest_bit + 1, mantissa) == z3.BitVecVal(0, 51 - highest_bit)
+                if highest_bit < 51 else z3.BoolVal(True)
+            )
+            is_highest = z3.And(
+                z3.Extract(highest_bit, highest_bit, mantissa) == z3.BitVecVal(1, 1),
+                higher_clear,
+            )
+            shift = 52 - highest_bit
+            shifted = z3.Extract(51, 0, z3.ZeroExt(12, mantissa) << shift)
+            normalized_mantissa = z3.If(is_highest, shifted, normalized_mantissa)
+            normalized_exponent = z3.If(
+                is_highest, z3.BitVecVal(1 - shift, 13), normalized_exponent,
+            )
+        is_subnormal = z3.And(exponent == 0, mantissa != 0)
+        normalized_mantissa = z3.If(is_subnormal, normalized_mantissa, mantissa)
+        normalized_exponent = z3.If(is_subnormal, normalized_exponent, z3.ZeroExt(2, exponent))
+        difference = normalized_exponent - z3.BitVecVal(0x3FE, 13)
+        half = (difference + z3.BitVecVal(1, 13)) >> 1
+        out_exponent = z3.Extract(10, 0, z3.BitVecVal(0x3FF, 13) - half)
+        combined_index = z3.Concat(z3.Extract(0, 0, normalized_exponent), z3.Extract(51, 37, normalized_mantissa))
+        index = z3.Extract(15, 11, combined_index)
+        remainder = z3.Extract(10, 0, combined_index)
+        base = z3.BitVecVal(FRSQRTE_TABLE[-1][0], 32)
+        decrement = z3.BitVecVal(FRSQRTE_TABLE[-1][1], 32)
+        for table_index in range(30, -1, -1):
+            condition = index == z3.BitVecVal(table_index, 5)
+            base = z3.If(condition, z3.BitVecVal(FRSQRTE_TABLE[table_index][0], 32), base)
+            decrement = z3.If(condition, z3.BitVecVal(FRSQRTE_TABLE[table_index][1], 32), decrement)
+        estimate = base + decrement * z3.ZeroExt(21, remainder)
+        normal = z3.Concat(z3.BitVecVal(0, 1), out_exponent, z3.Extract(25, 0, estimate), z3.BitVecVal(0, 26))
+        infinity = z3.Concat(sign, z3.Extract(62, 0, z3.BitVecVal(0x7FF0000000000000, 64)))
+        quiet_nan = bits | z3.BitVecVal(0x0008000000000000, 64)
+        canonical_nan = z3.BitVecVal(0x7FF8000000000000, 64)
+        exponent_zero = exponent == z3.BitVecVal(0, 11)
+        mantissa_zero = mantissa == z3.BitVecVal(0, 52)
+        exponent_ones = exponent == z3.BitVecVal(0x7FF, 11)
+        negative = sign == z3.BitVecVal(1, 1)
+        return z3.If(
+            z3.And(exponent_zero, mantissa_zero), infinity,
+            z3.If(
+                exponent_ones,
+                z3.If(mantissa_zero, z3.If(negative, canonical_nan, z3.BitVecVal(0, 64)), quiet_nan),
+                z3.If(negative, canonical_nan, normal),
             ),
         )
     def fp_force_25bit(self, bits: Any) -> Any:
@@ -881,6 +1036,7 @@ _FP_FUSED_DOUBLE = {Opcode.FMADD, Opcode.FMSUB, Opcode.FNMADD, Opcode.FNMSUB}
 _FP_FUSED = _FP_FUSED_SINGLE | _FP_FUSED_DOUBLE
 _FP_FUSED_SUBTRACT = {Opcode.FMSUBS, Opcode.FNMSUBS, Opcode.FMSUB, Opcode.FNMSUB}
 _FP_FUSED_NEGATE = {Opcode.FNMADDS, Opcode.FNMSUBS, Opcode.FNMADD, Opcode.FNMSUB}
+_FP_ESTIMATE = {Opcode.FRES, Opcode.FRSQRTE}
 _FP_ROUNDING_SENSITIVE = _FP_VALUE_ARITH | {
     Opcode.STFS, Opcode.STFSU, Opcode.STFSX, Opcode.STFSUX,
 } | _FP_FUSED | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM
@@ -1636,6 +1792,51 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
         return state
 
+    elif op in _FP_ESTIMATE:
+        fd, _, fb, _ = a
+        source_bits = state.fpr[fb]
+        source = ops.fp_bits_to_double(source_bits)
+        zero_value = ops.fp_bits_to_double(ops.fp_const64(0))
+        is_zero = ops.fp_is_eq(source, zero_value)
+        is_snan = ops.fp_is_snan_bits(source_bits)
+        is_nan = ops.fp_is_nan(source)
+        is_inf = ops.fp_is_inf(source)
+        negative = ops.fp_is_lt(source, zero_value)
+
+        if op == Opcode.FRES:
+            invalid = is_snan
+            result_bits = ops.fp_approx_reciprocal_bits(source_bits)
+        else:
+            invalid = ops.lor(negative, is_snan)
+            result_bits = ops.fp_approx_rsqrt_bits(source_bits)
+            state = _fpscr_raise_if(state, negative, FPSCR_VXSQRT, ops)
+        state = _fpscr_raise_if(state, is_zero, FPSCR_ZX, ops)
+        state = _fpscr_raise_if(state, is_snan, FPSCR_VXSNAN, ops)
+
+        invalid_enabled = ops.lnot(ops.eq(
+            ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+        ))
+        zero_enabled = ops.lnot(ops.eq(
+            ops.band(state.fpscr, ops.const(FPSCR_ZE)), ops.const(0),
+        ))
+        suppress = ops.lor(
+            ops.land(invalid, invalid_enabled),
+            ops.land(is_zero, zero_enabled),
+        )
+        clear_fifr = ops.lor(
+            invalid, ops.lor(is_zero, ops.lor(is_nan, is_inf)),
+        )
+        cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
+        state = state.with_fpscr(ops.ite(clear_fifr, cleared, state.fpscr))
+        state = _fp_write_result_if(state, fd, result_bits, ops.lnot(suppress), ops)
+        if op == Opcode.FRES:
+            state = state.with_ps1(
+                fd, ops.ite(ops.lnot(suppress), result_bits, state.ps1[fd]),
+            )
+        if insn.record:
+            state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+        return state
+
     elif op in _FP_PS_CMP:
         bf, fa, fb = a
         lane1 = op in (Opcode.PS_CMPU1, Opcode.PS_CMPO1)
@@ -2305,6 +2506,13 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
             reads |= {f"f{index}", f"f{index}.ps1"}
         if insn.record:
             reads.add("fpscr")
+            writes.add("cr1")
+    elif op in _FP_ESTIMATE:
+        writes |= {f"f{a[0]}", "fpscr"}
+        if op == Opcode.FRES:
+            writes.add(f"f{a[0]}.ps1")
+        reads |= {f"f{a[2]}", "fpscr"}
+        if insn.record:
             writes.add("cr1")
     elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH):
         writes.add(f"f{a[0]}")

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .encode import BLR, bc, dform, mform, pack_xer, parse_int, words_to_hex, x_logical, xl, xo
+from ..semantics import FRES_TABLE, FRSQRTE_TABLE
 
 SANDBOX_BASE = 0x00001000
 CODE_BASE = 0x80018000
@@ -778,6 +779,41 @@ FIXTURES += (
     _case("stwux", ("memory", "update"), _state(_gpr(r5=0x11223344, r6=4), memory_words={4: 0}), [xo(31, 5, 4, 6, 183)], result=0, cr=0, xer=0, expected_memory={4: 0x11223344}),
 )
 
+# Probe every Broadway estimate-table row with a nonzero interpolation
+# remainder.  The generated DOL independently validates both table bases and
+# slopes against the hardware-compatible Dolphin interpreter.
+for table_index, (base, decrement) in enumerate(FRES_TABLE):
+    remainder = 777
+    lookup_input = table_index * 1024 + remainder
+    source = (0x3FF << 52) | (lookup_input << 37)
+    estimate = base - (decrement * remainder + 1) // 2
+    expected = (0x3FE << 52) | (estimate << 29)
+    FIXTURES += (_case(
+        f"fres-table-{table_index:02d}",
+        ("fp", "estimate", "reciprocal", "table-row", "interpolate"),
+        _state(fpr={"f2": source}),
+        [_fp_a(59, 7, 0, 2, 0, 48)],
+        result=0, cr=0, xer=0, expected_fpr={7: expected}, expected_fpscr=0x00004000,
+    ),)
+
+for table_index, (base, decrement) in enumerate(FRSQRTE_TABLE):
+    remainder = 1337
+    lookup_input = table_index * 2048 + remainder
+    odd_exponent = table_index >= 16
+    exponent = 0x3FF if odd_exponent else 0x3FE
+    mantissa = (lookup_input & 0x7FFF) << 37
+    source = (exponent << 52) | mantissa
+    estimate = base + decrement * remainder
+    out_exponent = 0x3FE if odd_exponent else 0x3FF
+    expected = (out_exponent << 52) | (estimate << 26)
+    FIXTURES += (_case(
+        f"frsqrte-table-{table_index:02d}",
+        ("fp", "estimate", "rsqrt", "table-row", "interpolate"),
+        _state(fpr={"f2": source}),
+        [_fp_a(63, 7, 0, 2, 0, 52)],
+        result=0, cr=0, xer=0, expected_fpr={7: expected}, expected_fpscr=0x00004000,
+    ),)
+
 
 # Scalar floating-point value-semantics corpus.  These cases are also executed
 # by Dolphin's Broadway interpreter and compare FPR/FPSCR state directly.
@@ -1050,6 +1086,13 @@ FIXTURES += (
     _case("fnmadd-vxisi-ve", ("fp", "fused", "double", "add", "negate", "invalid", "ve", "suppress", "record"), _state(fpr={"f1": _PINF, "f2": _NINF, "f3": _F1, "f7": _F2}, fpscr=0x80), [_fp_a(63, 7, 1, 2, 3, 62, rc=1)], result=0, cr=0x0E000000, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xE0800080),
     _case("fnmsub", ("fp", "fused", "double", "subtract", "negate", "preserve-fifr"), _state(fpr=_FP_INPUTS, fpscr=0x00060000), [_fp_a(63, 7, 1, 2, 3, 60)], result=0, cr=0, xer=0, expected_fpr={7: 0xC010000000000000}, expected_fpscr=0x00068000),
     _case("fnmsub-vximz", ("fp", "fused", "double", "subtract", "negate", "invalid"), _state(fpr={"f1": 0, "f2": _F1, "f3": _PINF}), [_fp_a(63, 7, 1, 2, 3, 60)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA0111000),
+    _case("fres", ("fp", "estimate", "reciprocal", "table", "fill", "record"), _state(_gpr(r5=0), fpr={"f2": _F1}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _fp_a(59, 7, 0, 2, 0, 48, rc=1), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x3F7FF800, 4: 0x3F7FF800}, expected_fpr={7: 0x3FEFFF0000000000}, expected_fpscr=0x00004000),
+    _case("fres-small", ("fp", "estimate", "reciprocal", "small", "saturate"), _state(fpr={"f2": 1}), [_fp_a(59, 7, 0, 2, 0, 48)], result=0, cr=0, xer=0, expected_fpr={7: 0x47EFFFFFE0000000}, expected_fpscr=0x00004000),
+    _case("fres-zero-ze", ("fp", "estimate", "reciprocal", "zero", "ze", "suppress", "record"), _state(fpr={"f2": 0, "f7": _F2}, fpscr=0x10), [_fp_a(59, 7, 0, 2, 0, 48, rc=1)], result=0, cr=0x0C000000, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xC4000010),
+    _case("fres-snan-ve", ("fp", "estimate", "reciprocal", "snan", "ve", "suppress"), _state(fpr={"f2": 0x7FF0000012345678, "f7": _F2}, fpscr=0x80), [_fp_a(59, 7, 0, 2, 0, 48)], result=0, cr=0, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xE1000080),
+    _case("frsqrte", ("fp", "estimate", "rsqrt", "table", "preserve-ps1"), _state(_gpr(r5=0), fpr={"f2": _F1, "f3": _F2}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(7, 2, 3, 528), _fp_a(63, 7, 0, 2, 0, 52), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x3F7FF400, 4: 0x40000000}, expected_fpr={7: 0x3FEFFE8000000000}, expected_fpscr=0x00004000),
+    _case("frsqrte-subnormal", ("fp", "estimate", "rsqrt", "subnormal", "normalize"), _state(fpr={"f2": 1}), [_fp_a(63, 7, 0, 2, 0, 52)], result=0, cr=0, xer=0, expected_fpr={7: 0x617FFE8000000000}, expected_fpscr=0x00004000),
+    _case("frsqrte-negative", ("fp", "estimate", "rsqrt", "negative", "vxsqrt", "clear-fifr"), _state(fpr={"f2": 0xBFF0000000000000}, fpscr=0x00060000), [_fp_a(63, 7, 0, 2, 0, 52)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA0011200),
     _case("fsel", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 3, 46)], result=0, cr=0, xer=0, expected_fpr={7: _F4}, expected_fpscr=0),
     _case("fcmpu", ("fp", "compare"), _state(fpr=_FP_INPUTS), [_fp_x(0, 1, 2, 0)], result=0, cr=0x80000000, xer=0, expected_fpscr=0x00008000),
     _case("fcmpu-snan", ("fp", "compare", "snan"), _state(fpr={"f1": _SNAN, "f2": _F2}), [_fp_cmp(3, 1, 2, 0)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA1001000),

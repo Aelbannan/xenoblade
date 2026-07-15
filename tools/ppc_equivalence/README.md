@@ -149,7 +149,7 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v9` model supports:
+The current `broadway-ppc32-be-v10` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -168,6 +168,9 @@ The current `broadway-ppc32-be-v9` model supports:
   `fsel`, ordered/unordered `fcmpo`/`fcmpu`, and bit-exact
   `fmr`/`fneg`/`fabs`/`fnabs`, `fctiw`/`fctiwz` conversion, and the complete
   scalar fused family: `fmadd[s]`, `fmsub[s]`, `fnmadd[s]`, and `fnmsub[s]`;
+- Broadway table-exact reciprocal estimates `fres` and `frsqrte`, including
+  normal/subnormal inputs, signed zero, infinities, NaNs, `ZX`/`VXSNAN`/
+  `VXSQRT`, enabled-result suppression, destination-lane behavior, and Rc;
 - complete FPSCR access/mutation semantics for `mffs`, `mtfsf`, `mtfsfi`,
   `mtfsb0`, `mtfsb1`, and `mcrfs`, including reserved-bit masking and summary
   recomputation;
@@ -212,7 +215,7 @@ Fused-single and paired-fused ConcreteOps follow Broadway's
 mixed-precision/Force25 behavior for arbitrary FPR inputs; symbolic proofs
 require each finite operand to be an exact binary32 value expanded into an FPR,
 matching the dominant compiler use.
-Remaining square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`),
+Remaining square-root instructions (`fsqrt[s]`),
 paired division/estimate arithmetic, VMX, atomics/reservations,
 cache/MMIO behavior, privileged state, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive

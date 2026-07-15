@@ -37,6 +37,7 @@ from tools.ppc_equivalence.semantics import (
     FPSCR_VXIMZ,
     FPSCR_VXISI,
     FPSCR_VXSNAN,
+    FPSCR_VXSQRT,
     FPSCR_VXVC,
     FPSCR_VXZDZ,
     FPSCR_VXCVI,
@@ -140,8 +141,6 @@ class DecoderTests(unittest.TestCase):
 
     def test_unmodeled_fp_fails_closed(self) -> None:
         words = (
-            0xEC000030,  # fres (hardware estimate)
-            0xFC000034,  # frsqrte (hardware estimate)
             0xEC00182C,  # fsqrts (not implemented by Broadway interpreter)
             0xFC00182C,  # fsqrt (not implemented by Broadway interpreter)
         )
@@ -157,14 +156,15 @@ class DecoderTests(unittest.TestCase):
     def test_scalar_fp_encodings_match_gekko_disassembler(self) -> None:
         words = (
             "c0030000 d8030000 ec00002a ece110f8 ece110fa ece110fc ece110fe "
-            "fce110f8 fce110fa fce110fc fce110fe fc00002a fc000050 fc000090 fc000210"
+            "fce110f8 fce110fa fce110fc fce110fe fc00002a fc000050 fc000090 fc000210 "
+            "ece01030 fce01034"
         )
         self.assertEqual(
             [item.opcode for item in decode(words)],
             [Opcode.LFS, Opcode.STFD, Opcode.FADDS, Opcode.FMSUBS, Opcode.FMADDS,
              Opcode.FNMSUBS, Opcode.FNMADDS,
              Opcode.FMSUB, Opcode.FMADD, Opcode.FNMSUB, Opcode.FNMADD, Opcode.FADD,
-             Opcode.FNEG, Opcode.FMR, Opcode.FABS],
+             Opcode.FNEG, Opcode.FMR, Opcode.FABS, Opcode.FRES, Opcode.FRSQRTE],
         )
 
     def test_paired_move_and_merge_encodings_match_gekko_disassembler(self) -> None:
@@ -577,6 +577,68 @@ class FloatingPointConcreteTests(unittest.TestCase):
         self.assertEqual(final.fpr[7], 0x3FF0000000000000)
         self.assertEqual(final.ps1[7], 0x3FF0000000000000)
         self.assertEqual(final.fpscr, 0x00004000)
+
+    def test_reciprocal_estimates_use_broadway_tables_and_destination_shapes(self) -> None:
+        state = concrete_state({
+            "fpr": {"f2": 1.0, "f7": 3.0}, "ps1": {"f7": 4.0},
+        })
+        reciprocal = execute_block(state, decode("ece01030"), ConcreteOps())
+        self.assertEqual(reciprocal.fpr[7], 0x3FEFFF0000000000)
+        self.assertEqual(reciprocal.ps1[7], 0x3FEFFF0000000000)
+        self.assertEqual(reciprocal.fpscr, 0x4000)
+
+        rsqrt = execute_block(state, decode("fce01034"), ConcreteOps())
+        self.assertEqual(rsqrt.fpr[7], 0x3FEFFE8000000000)
+        self.assertEqual(rsqrt.ps1[7], state.ps1[7])
+        self.assertEqual(rsqrt.fpscr, 0x4000)
+
+        vectors = {
+            0x4000000000000000: (0x3FDFFF0000000000, 0x3FE69FA000000000),
+            0x0000000000000001: (0x47EFFFFFE0000000, 0x617FFE8000000000),
+            0x7FF0000000000000: (0, 0),
+            0xFFF0000000000000: (0x8000000000000000, 0x7FF8000000000000),
+            0x7FF0000012345678: (0x7FF8000012345678, 0x7FF8000012345678),
+        }
+        for source, (fres_bits, frsqrte_bits) in vectors.items():
+            with self.subTest(source=f"0x{source:016x}"):
+                input_state = concrete_state({"fpr": {"f2": f"0x{source:016x}"}})
+                fres = execute_block(input_state, decode("ece01030"), ConcreteOps())
+                frsqrte = execute_block(input_state, decode("fce01034"), ConcreteOps())
+                self.assertEqual(fres.fpr[7], fres_bits)
+                self.assertEqual(frsqrte.fpr[7], frsqrte_bits)
+
+    def test_reciprocal_estimate_exceptions_enables_and_record(self) -> None:
+        original0 = 0x4008000000000000
+        original1 = 0x4010000000000000
+        zero_suppressed = execute_block(concrete_state({
+            "fpr": {"f2": 0.0, "f7": original0}, "ps1": {"f7": original1},
+            "fpscr": FPSCR_ZE,
+        }), decode("ece01031"), ConcreteOps())
+        self.assertEqual((zero_suppressed.fpr[7], zero_suppressed.ps1[7]), (original0, original1))
+        self.assertEqual(
+            zero_suppressed.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_ZX | FPSCR_ZE,
+        )
+        self.assertEqual(zero_suppressed.cr & 0x0F000000, 0x0C000000)
+
+        snan_suppressed = execute_block(concrete_state({
+            "fpr": {"f2": "0x7ff0000012345678", "f7": original0},
+            "fpscr": FPSCR_VE,
+        }), decode("fce01035"), ConcreteOps())
+        self.assertEqual(snan_suppressed.fpr[7], original0)
+        self.assertEqual(
+            snan_suppressed.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXSNAN | FPSCR_VE,
+        )
+
+        negative = execute_block(concrete_state({
+            "fpr": {"f2": -1.0}, "fpscr": FPSCR_FI | FPSCR_FR,
+        }), decode("fce01034"), ConcreteOps())
+        self.assertEqual(negative.fpr[7], 0x7FF8000000000000)
+        self.assertEqual(
+            negative.fpscr,
+            FPSCR_FX | FPSCR_VX | FPSCR_VXSQRT | 0x11000,
+        )
 
     def test_fpscr_exception_summary_foundation(self) -> None:
         ops = ConcreteOps()
@@ -1082,6 +1144,27 @@ class FloatingPointSymbolicTests(unittest.TestCase):
                     original_hex=encoded, candidate_hex=encoded,
                 )
                 self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_reciprocal_estimate_symbolic_proofs(self) -> None:
+        for encoded, observables in (
+            ("ece01031", ["f7,f7.ps1,fpscr,cr1"]),
+            ("fce01035", ["f7,fpscr,cr1"]),
+        ):
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables(observables), timeout_ms=10_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        different = check_equivalence(
+            decode("ece01030"), decode("fce01034"),
+            EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=10_000),
+            original_hex="ece01030", candidate_hex="fce01034",
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
 
     def test_float_to_integer_symbolic_proofs(self) -> None:
         for encoded in ("fce0101c", "fce0101e"):

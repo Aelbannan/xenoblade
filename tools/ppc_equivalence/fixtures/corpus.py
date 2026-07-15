@@ -202,6 +202,13 @@ def _psq_x(load: bool, update: bool, fr: int, ra: int, rb: int, w: int, i: int) 
     )
 
 
+def _ps_x(fd: int, fa: int, fb: int, xo_bits: int, *, rc: int = 0) -> int:
+    return (
+        (4 << 26) | ((fd & 31) << 21) | ((fa & 31) << 16)
+        | ((fb & 31) << 11) | ((xo_bits & 0x3FF) << 1) | (rc & 1)
+    )
+
+
 def _mtfsf(fm: int, fb: int, *, rc: int = 0) -> int:
     return (63 << 26) | ((fm & 0xFF) << 17) | ((fb & 31) << 11) | (711 << 1) | (rc & 1)
 
@@ -775,6 +782,38 @@ _NINF = 0xFFF0000000000000
 _NZERO = 0x8000000000000000
 _FP_INPUTS = {"f1": _F15, "f2": _F2, "f3": _F4}
 
+
+def _paired_simple_case(
+    id_: str, xo_bits: int, expected_ps0: int, expected_words: tuple[int, int],
+    *, merge: bool = False, rc: int = 0,
+) -> FixtureCase:
+    # OX is directly writable through the harness mtfsf initialization path;
+    # derived FX/VX summary bits cannot be injected without their causes.
+    initial_fpscr = 0x10000000 if rc else 0
+    return _case(
+        id_, ("fp", "paired", "move" if not merge else "merge", "lane-bits"),
+        _state(
+            _gpr(r5=0), fpscr=initial_fpscr,
+            memory_words={
+                0: 0x3FC00000, 4: 0xC0000000,
+                8: 0xC0400000, 12: 0x40800000,
+                16: 0, 20: 0,
+            },
+        ),
+        [
+            _mtspr(5, 913),
+            _psq_d(56, 1, 4, 0, 0, 1),
+            _psq_d(56, 2, 4, 8, 0, 1),
+            _ps_x(7, 1 if merge else 0, 2 if merge else 1, xo_bits, rc=rc),
+            _psq_d(60, 7, 4, 16, 0, 1),
+        ],
+        result=0, cr=0x01000000 if rc else 0, xer=0,
+        expected_memory={16: expected_words[0], 20: expected_words[1]},
+        expected_fpr={7: expected_ps0},
+        expected_fpscr=initial_fpscr,
+    )
+
+
 FIXTURES += (
     _case("mffs", ("fp", "fpscr", "read"), _state(fpscr=0xA0100000), [_fp_x(7, 0, 0, 583)], result=0, cr=0, xer=0, expected_fpr={7: 0xFFF80000A0100000}, expected_fpscr=0xA0100000),
     _case("mtfsf", ("fp", "fpscr", "write", "record"), _state(fpr={"f2": 0xFFF8000000100880}), [_mtfsf(0xFF, 2, rc=1)], result=0, cr=0x06000000, xer=0, expected_fpscr=0x60100080),
@@ -782,6 +821,18 @@ FIXTURES += (
     _case("mtfsb1", ("fp", "fpscr", "bit", "exception"), _state(fpscr=0x80), [_fp_x(11, 0, 0, 38)], result=0, cr=0, xer=0, expected_fpscr=0xE0100080),
     _case("mtfsb0", ("fp", "fpscr", "bit", "summary"), _state(fpscr=0xE0100080), [_fp_x(11, 0, 0, 70)], result=0, cr=0, xer=0, expected_fpscr=0x80000080),
     _case("mcrfs", ("fp", "fpscr", "cr", "clear"), _state(fpscr=0xA0100000), [_mcrfs(3, 2)], result=0, cr=0x00010000, xer=0, expected_fpscr=0x80000000),
+    _paired_simple_case("ps_neg", 40, 0xBFF8000000000000, (0xBFC00000, 0x40000000), rc=1),
+    _paired_simple_case("ps_mr", 72, _F15, (0x3FC00000, 0xC0000000)),
+    _paired_simple_case("ps_nabs", 136, 0xBFF8000000000000, (0xBFC00000, 0xC0000000)),
+    _paired_simple_case("ps_abs", 264, _F15, (0x3FC00000, 0x40000000)),
+    _paired_simple_case("ps_merge00", 528, _F15, (0x3FC00000, 0xC0400000), merge=True),
+    _paired_simple_case("ps_merge01", 560, _F15, (0x3FC00000, 0x40800000), merge=True),
+    _paired_simple_case("ps_merge10", 592, 0xC000000000000000, (0xC0000000, 0xC0400000), merge=True),
+    _paired_simple_case("ps_merge11", 624, 0xC000000000000000, (0xC0000000, 0x40800000), merge=True),
+    _case("ps_cmpu0", ("fp", "paired", "compare", "unordered", "ps0"), _state(fpr={"f1": _F15, "f2": _F2}), [_ps_x(3 << 2, 1, 2, 0)], result=0, cr=0x00080000, xer=0, expected_fpscr=0x00008000),
+    _case("ps_cmpo0", ("fp", "paired", "compare", "ordered", "ps0", "qnan"), _state(fpr={"f1": _QNAN, "f2": _F2}), [_ps_x(3 << 2, 1, 2, 32)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA0081000),
+    _case("ps_cmpu1", ("fp", "paired", "compare", "unordered", "ps1", "snan"), _state(fpr={"f1": _SNAN, "f2": _F2}), [_ps_x(3, 2, 1, 528), _ps_x(4, 2, 2, 528), _ps_x(3 << 2, 3, 4, 64)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA1001000),
+    _case("ps_cmpo1", ("fp", "paired", "compare", "ordered", "ps1", "snan", "ve"), _state(fpr={"f1": _SNAN, "f2": _F2}, fpscr=0x80), [_ps_x(3, 2, 1, 528), _ps_x(4, 2, 2, 528), _ps_x(3 << 2, 3, 4, 96)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xE1001080),
     _case("psq-l-st-quantized", ("fp", "psq", "gqr", "quantized", "pair", "memory"), _state(_gpr(r5=0x01060204), memory_words={0: 0xFE080000, 8: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x0010AAAA}, expected_fpr={7: 0xBFF0000000000000}),
     _case("psq-u8-load-s8-store", ("fp", "psq", "gqr", "u8", "s8", "scale", "pair"), _state(_gpr(r5=0x02040106), memory_words={0: 0x080CAAAA, 4: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 4, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0406AAAA}, expected_fpr={7: _F2}),
     _case("psq-u16-load-float-store", ("fp", "psq", "gqr", "u16", "float", "scale", "pair"), _state(_gpr(r5=0x01050000), memory_words={0: 0x00020008, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F800000, 12: 0x40800000}, expected_fpr={7: _F1}),

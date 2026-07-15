@@ -24,6 +24,7 @@ PowerPC architecture, checked against a mature Wii implementation.
    [Broadway FP helpers](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_FPUtils.h),
    [FPSCR system-register semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_SystemRegisters.cpp),
    [quantized paired load/store semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_LoadStorePaired.cpp),
+   [paired-single arithmetic and move semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_Paired.cpp),
    and the [PowerPC core sources](https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/Core/PowerPC).
 
 ## Deliberate model choices
@@ -84,3 +85,9 @@ PowerPC architecture, checked against a mature Wii implementation.
   conversion. Integer stores round through binary32, truncate toward zero, and
   saturate; float stores flush binary32 subnormals to signed zero. Invalid GQR
   type encodings and non-finite integer stores are outside the defined domain.
+- Paired move/sign and merge operations copy the two modeled lanes independently.
+  Sign operations change only binary64 bit 63, so NaN payloads and signed zero
+  remain bit-exact; merge forms select lanes without floating-point conversion.
+- Paired comparisons select PS0 or PS1 and then use the same ordered/unordered
+  compare rules as scalar `fcmpo`/`fcmpu`, including FPCC, `VXSNAN`, `VXVC`,
+  summary-bit recomputation, and `VE` interaction.

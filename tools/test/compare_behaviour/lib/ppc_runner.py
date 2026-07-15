@@ -232,9 +232,12 @@ def run_ppc_compare(test: BehaviourTest, *, require_dolphin: bool = False) -> Pp
             failed_scenarios = _parse_failures(log_text)
         if not failure_details:
             failure_details = _parse_failure_details(log_text)
+        # A guest that never executes scenarios can still emit exit=0; treat that
+        # as failure so a crashed/aborted Dolphin run cannot look green.
+        ok = exit_code == 0 and failed == 0 and passed > 0
         return PpcRunResult(
             dol=build.dol,
-            ok=exit_code == 0 and failed == 0,
+            ok=ok,
             skipped=False,
             passed=passed,
             failed=failed,

@@ -208,6 +208,79 @@ def _add_check_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--smt-out", type=Path, help="write the generated SMT-LIB query")
 
 
+def cmd_differential(args: argparse.Namespace) -> int:
+    from tools.ppc_equivalence.fixtures.corpus import FIXTURES, load_fixtures
+    from tools.ppc_equivalence.fixtures.runner import compare_fixture
+    from tools.ppc_equivalence.gen_fixture_blob import DEFAULT_HEADER, generate_header
+
+    cases = load_fixtures(args.fixtures) if args.fixtures else FIXTURES
+    if args.id:
+        cases = tuple(case for case in cases if case.id == args.id or case.id.startswith(args.id.rstrip("*")))
+        if not cases:
+            raise ValueError(f"no fixtures matched id {args.id!r}")
+
+    failures: list[dict[str, Any]] = []
+    for case in cases:
+        mismatches = compare_fixture(case)
+        if mismatches:
+            failures.append({"id": case.id, "mismatches": mismatches})
+
+    header_stale = DEFAULT_HEADER.read_text(encoding="utf-8") != generate_header() if DEFAULT_HEADER.is_file() else True
+    payload = {
+        "format": 1,
+        "checked": len(cases),
+        "failed": len(failures),
+        "failures": failures,
+        "header_stale": header_stale,
+    }
+
+    dolphin_status = None
+    if args.dolphin:
+        import subprocess
+        from pathlib import Path as _Path
+
+        root = _Path(__file__).resolve().parents[2]
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(root / "tools" / "test" / "compare_behaviour" / "run.py"),
+                "ppc",
+                "ppc-equivalence-fixtures",
+            ],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        dolphin_status = {
+            "exit_code": proc.returncode,
+            "stdout": proc.stdout,
+            "stderr": proc.stderr,
+        }
+        payload["dolphin"] = {"exit_code": proc.returncode}
+
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"concrete fixtures: {len(cases) - len(failures)}/{len(cases)} passed")
+        for failure in failures:
+            print(f"  FAIL {failure['id']}: {', '.join(failure['mismatches'])}")
+        if header_stale:
+            print("warning: ppc_fixture_cases.inc is stale; run tools/ppc_equivalence/gen_fixture_blob.py")
+        if dolphin_status is not None:
+            print(f"dolphin exit: {dolphin_status['exit_code']}")
+            text = (dolphin_status["stdout"] or "") + (dolphin_status["stderr"] or "")
+            if text.strip():
+                print(text.strip())
+
+    if failures or header_stale:
+        return 1
+    if dolphin_status is not None and dolphin_status["exit_code"] not in (0,):
+        # Return Dolphin's code when concrete fixtures passed; SKIP often uses 0.
+        return dolphin_status["exit_code"] if dolphin_status["exit_code"] else 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Xenoblade Wii Broadway PPC32 equivalence checker")
     parser.add_argument("--version", action="version", version=__version__)
@@ -233,6 +306,19 @@ def build_parser() -> argparse.ArgumentParser:
     replay = sub.add_parser("replay", help="replay an inequivalence counterexample concretely")
     replay.add_argument("case", type=Path)
     replay.add_argument("--json", action="store_true")
+
+    differential = sub.add_parser(
+        "differential",
+        help="run the shared Broadway fixture corpus against ConcreteOps (+ optional Dolphin)",
+    )
+    differential.add_argument("--fixtures", type=Path, help="optional JSONL override (default: in-repo corpus)")
+    differential.add_argument("--id", help="run a single fixture id (or prefix*)")
+    differential.add_argument(
+        "--dolphin",
+        action="store_true",
+        help="also build/run the ppc-equivalence-fixtures Dolphin DOL",
+    )
+    differential.add_argument("--json", action="store_true")
     return parser
 
 
@@ -248,6 +334,8 @@ def main(argv: list[str] | None = None) -> int:
             return _run_check(args, args.original.read_bytes(), args.candidate.read_bytes())
         if args.command == "replay":
             return cmd_replay(args)
+        if args.command == "differential":
+            return cmd_differential(args)
     except (DecodeError, ValueError, OSError, json.JSONDecodeError) as exc:
         if getattr(args, "json", False):
             print(json.dumps({"format": 1, "status": "invalid_input", "error": str(exc)}))

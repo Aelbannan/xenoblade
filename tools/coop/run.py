@@ -532,7 +532,7 @@ def main() -> int:
     p_equivalence.add_argument(
         "equivalence_args",
         nargs=argparse.REMAINDER,
-        help="equivalence subcommand (decode, check-hex, check, replay)",
+        help="equivalence subcommand (decode, check-hex, check, replay, differential)",
     )
 
     p_opcodes = sub.add_parser(

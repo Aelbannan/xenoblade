@@ -96,23 +96,24 @@ Requirements:
 
 If Dolphin is missing, PPC build still runs and the step is reported as **SKIP** (static/size remain authoritative).
 
-### Broadway equivalence oracle
+### Broadway equivalence fixtures (closed loop)
 
-The equivalence checker's supported phase-1/phase-2 instruction families have
-an independent concrete oracle:
+The equivalence checker's supported phase-1/phase-2 families share one corpus
+with the Python model:
 
 ```bash
-python tools/coop/run.py behaviour ppc ppc-equivalence-broadway
+python tools/ppc_equivalence/gen_fixture_blob.py
+python tools/coop/run.py equivalence differential
+python tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
 ```
 
-It executes 40 register/flag/control-flow scenarios plus a memory-layout check
-in Dolphin's PowerPC interpreter. The interpreter is intentional: this test has
-found ARM64-JIT differences in CR0's SO bit, while the interpreter follows the
-Broadway/PowerPC architectural result. A passing run reports `passed: 41
-failed: 0`. Failures include the actual and expected result/CR/XER triples.
+`ppc-equivalence-fixtures` builds a generic DOL that loads each fixture’s
+GPR/CR/XER/CTR state, copies instruction words into a scratch buffer, runs them
+under Dolphin’s PowerPC interpreter (`CPUCore = 0`), and compares the same
+expected result/CR/XER/(memory) values that Python `ConcreteOps` checks. The
+interpreter is intentional: this path has found ARM64-JIT differences in
+CR0’s SO bit.
 
-The oracle covers carry/overflow and sticky SO, signed and unsigned arithmetic,
-shifts and rotates, CR operations and comparisons, CR- and CTR-selected
-branches, big-endian and byte-reversed memory, update addressing, and
-`lmw`/`stmw`. It does not certify the documented out-of-scope floating-point,
-paired-single, VMX, atomic, privileged, cache/MMIO, or exception behavior.
+Edit cases only in `tools/ppc_equivalence/fixtures/corpus.py`, then regenerate.
+A passing Dolphin run reports `passed: 40 failed: 0`. Failures include actual
+and expected result/CR/XER triples.

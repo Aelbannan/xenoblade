@@ -1,0 +1,111 @@
+#include <string.h>
+
+#include <types.h>
+
+#include "behaviour_result.h"
+#include "ppc_fixture_exec.h"
+
+extern void behaviour_emit_summary(const char* test_id, volatile BehaviourResult* result);
+extern void OSReport(const char* fmt, ...);
+
+static void set_last_fail(volatile BehaviourResult* result, const char* name) {
+    int i;
+    for (i = 0; i < 63 && name[i] != '\0'; ++i) {
+        result->last_fail[i] = name[i];
+    }
+    result->last_fail[i] = '\0';
+}
+
+static void append_hex_u32(char* line, u32* length, u32 value) {
+    static const char digits[] = "0123456789ABCDEF";
+    int shift;
+
+    for (shift = 28; shift >= 0; shift -= 4) {
+        line[(*length)++] = digits[(value >> shift) & 0xFu];
+    }
+}
+
+static void log_case_diff(const char* name, u32 ar, u32 ac, u32 ax, u32 er, u32 ec, u32 ex) {
+    char line[192];
+    const char* text;
+    u32 length = 0;
+
+#define APPEND_TEXT(value) \
+    do { \
+        text = (value); \
+        while (*text != '\0') line[length++] = *text++; \
+    } while (0)
+
+    APPEND_TEXT("BEHAVIOUR_DIFF ");
+    APPEND_TEXT(name);
+    APPEND_TEXT(" actual=");
+    append_hex_u32(line, &length, ar);
+    line[length++] = ',';
+    append_hex_u32(line, &length, ac);
+    line[length++] = ',';
+    append_hex_u32(line, &length, ax);
+    APPEND_TEXT(" expected=");
+    append_hex_u32(line, &length, er);
+    line[length++] = ',';
+    append_hex_u32(line, &length, ec);
+    line[length++] = ',';
+    append_hex_u32(line, &length, ex);
+    line[length] = '\0';
+    OSReport("%s", line);
+
+#undef APPEND_TEXT
+}
+
+int behaviour_main(void) {
+    volatile BehaviourResult* result = &g_behaviour_result;
+    u32 sandbox[PPC_FIXTURE_MEM_WORDS];
+    PpcFixtureActual actual;
+    int case_index;
+    u32 mem_index;
+    int mismatch;
+
+    behaviour_result_init(result);
+
+    for (case_index = 0; case_index < PPC_FIXTURE_COUNT; ++case_index) {
+        const PpcFixtureCase* fixture = &g_ppc_fixtures[case_index];
+
+        memset(&actual, 0xA5, sizeof(actual));
+        ppc_fixture_run_case(fixture, sandbox, &actual);
+
+        mismatch = 0;
+        if (actual.result != fixture->expected_result || actual.cr != fixture->expected_cr ||
+            actual.xer != fixture->expected_xer) {
+            mismatch = 1;
+        }
+        for (mem_index = 0; mem_index < fixture->expected_mem_count; ++mem_index) {
+            u32 offset = fixture->expected_mem_off[mem_index];
+            u32 word_index = offset / 4u;
+            if (word_index >= PPC_FIXTURE_MEM_WORDS || actual.mem[word_index] != fixture->expected_mem_val[mem_index]) {
+                mismatch = 1;
+            }
+        }
+
+        if (mismatch) {
+            result->failed++;
+            behaviour_log_fail(fixture->name);
+            log_case_diff(
+                fixture->name,
+                actual.result,
+                actual.cr,
+                actual.xer,
+                fixture->expected_result,
+                fixture->expected_cr,
+                fixture->expected_xer
+            );
+            set_last_fail(result, fixture->name);
+        } else {
+            result->passed++;
+        }
+    }
+
+    /* Require every fixture to report a pass; zero executed cases is a hard fail. */
+    result->exit_code =
+        (result->failed == 0 && result->passed == (u32)PPC_FIXTURE_COUNT) ? 0 : 1;
+    behaviour_emit_summary("ppc-equivalence-fixtures", result);
+    return (int)result->exit_code;
+}

@@ -75,6 +75,17 @@ class DolphinConfigTests(unittest.TestCase):
             text = (user_dir / "Config" / "Dolphin.ini").read_text(encoding="utf-8")
         self.assertNotIn("CPUCore", text)
 
+    def test_disables_panic_handlers_and_analytics_prompts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            user_dir = Path(directory)
+            _write_dolphin_user_ini(
+                user_dir, gdb_port=2160, log_path=user_dir / "dolphin.log"
+            )
+            text = (user_dir / "Config" / "Dolphin.ini").read_text(encoding="utf-8")
+        self.assertIn("[Interface]\nUsePanicHandlers = False\n", text)
+        self.assertIn("ConfirmStop = False\n", text)
+        self.assertIn("[Analytics]\nEnabled = False\nPermissionAsked = True\n", text)
+
 
 if __name__ == "__main__":
     unittest.main()

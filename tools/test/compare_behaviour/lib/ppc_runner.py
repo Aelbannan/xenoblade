@@ -78,9 +78,18 @@ def _write_dolphin_user_ini(
     config_dir = user_dir / "Config"
     config_dir.mkdir(parents=True, exist_ok=True)
     ini = config_dir / "Dolphin.ini"
+    # Keep headless PPC runs non-interactive: no panic dialogs / analytics prompts.
     lines = [
         "[General]",
         f"GDBPort = {gdb_port}",
+        "",
+        "[Interface]",
+        "UsePanicHandlers = False",
+        "ConfirmStop = False",
+        "",
+        "[Analytics]",
+        "Enabled = False",
+        "PermissionAsked = True",
         "",
         "[Logger]",
         "LogToFile = True",

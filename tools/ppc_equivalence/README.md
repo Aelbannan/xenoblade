@@ -146,21 +146,40 @@ python3 tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
 python3 tools/ppc_equivalence/run.py --help
 ```
 
+| Gate | Required where | Command |
+|---|---|---|
+| Fixture regenerate freshness | CI + local | `gen_fixture_blob.py --check` |
+| ConcreteOps corpus | CI + local | `equivalence differential` |
+| Dolphin interpreter DOL | Local before advertising opcodes | `behaviour ppc ppc-equivalence-fixtures` |
+
 The shared fixture corpus in `tools/ppc_equivalence/fixtures/` is the single
 source of truth for the closed loop:
 
 1. Python `ConcreteOps` executes every fixture (`equivalence differential` / CI).
-2. `gen_fixture_blob.py` emits `ppc_fixture_cases.inc` + `broadway.jsonl`.
-3. The generic Dolphin DOL (`ppc-equivalence-fixtures`) copies each case’s
-   instruction words into a scratch buffer, runs them under the interpreter
+2. `gen_fixture_blob.py` emits `ppc_fixture_cases.inc`, `ppc_fixture_payloads.c`,
+   and `broadway.jsonl`.
+3. The generic Dolphin DOL (`ppc-equivalence-fixtures`) loads each case’s state,
+   `blrl`s into a generated `.text` payload under the interpreter
    (`CPUCore = 0`), and compares the same expected result/CR/XER(/memory).
+   Headless user inis disable panic handlers and analytics prompts.
 
-Do not hand-edit `ppc_fixture_cases.inc`. Add or change cases in
+Do not hand-edit generated `ppc_fixture_*.inc/.c` files. Edit
 `fixtures/corpus.py`, regenerate, then run both gates.
 
-Every new opcode must add fixtures to that corpus, concrete/symbolic
-positive and negative equivalence cases, state-preservation checks, and a
-passing Dolphin fixture run (when Dolphin is available) before it is
-advertised as supported. Real-game regression cases must not commit
-proprietary binaries; store legal small fixtures or hashes/extraction
-instructions instead.
+### New opcode / model-change checklist
+
+Before advertising a newly supported opcode or semantic change:
+
+1. Add edge fixtures in `fixtures/corpus.py` (record form, CA/OV/SO, update
+   addressing, and at least one negative neighbour when useful).
+2. Run `python3 tools/ppc_equivalence/gen_fixture_blob.py`.
+3. Pass `python3 tools/coop/run.py equivalence differential`.
+4. Pass unit tests under `tools/ppc_equivalence/tests/` (encode + positive /
+   negative symbolic cases as applicable).
+5. Pass `python3 tools/coop/run.py behaviour ppc ppc-equivalence-fixtures`
+   (Dolphin interpreter; required locally when Dolphin is available).
+6. Update `REFERENCES.md` / README supported-model notes if the contract or
+   assumptions changed.
+
+Real-game regression cases must not commit proprietary binaries; store legal
+small fixtures or hashes/extraction instructions instead.

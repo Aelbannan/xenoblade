@@ -113,8 +113,8 @@ explicit choice.
 
 | Contract | Compared state |
 |---|---|
-| `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, FP return `f1`, `r13`–`r31`, nonvolatile `f14`–`f31`, `CR2`–`CR4`, and all final memory |
-| `strict` | All modeled GPRs/FPRs, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, and all final memory |
+| `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, both lanes of FP return `f1`, `r13`–`r31`, both lanes of nonvolatile `f14`–`f31`, `CR2`–`CR4`, and all final memory |
+| `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
 The ABI preset is for completed function boundaries. It intentionally excludes
@@ -133,7 +133,7 @@ python3 tools/coop/run.py equivalence check-hex \
 
 `--observe` may be repeated or comma-separated. Supported names are `r0`–`r31`,
 `f0`–`f31`, `cr`, `cr0`–`cr7`, `fpscr`, `xer.ca`, `xer.ov`, `xer.so`, `lr`,
-`ctr`, and `memory`.
+`ctr`, `gqr0`–`gqr7`, `f0.ps1`–`f31.ps1`, and `memory`.
 
 | Exit | Meaning |
 |---:|---|
@@ -149,13 +149,13 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v3` model supports:
+The current `broadway-ppc32-be-v4` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
 - immediate and register logical operations, rotates, masks, logical/arithmetic
   shifts, record forms, integer compares, and CR logical operations;
-- `mfcr`, `mtcrf`, and user-visible XER/LR/CTR `mfspr`/`mtspr` forms;
+- `mfcr`, `mtcrf`, and user-visible XER/LR/CTR/GQR `mfspr`/`mtspr` forms;
 - byte, halfword, and word integer loads/stores in D-form and indexed form,
   update forms, `lmw`/`stmw`, and byte-reversed halfword/word forms;
 - a shared symbolic byte-addressed memory array with big-endian multi-byte
@@ -168,6 +168,12 @@ The current `broadway-ppc32-be-v3` model supports:
   `fsel`, ordered/unordered `fcmpo`/`fcmpu`, and bit-exact
   `fmr`/`fneg`/`fabs`/`fnabs`, `fctiw`/`fctiwz` conversion, and the complete
   scalar fused family: `fmadd[s]`, `fmsub[s]`, `fnmadd[s]`, and `fnmsub[s]`;
+- complete FPSCR access/mutation semantics for `mffs`, `mtfsf`, `mtfsfi`,
+  `mtfsb0`, `mtfsb1`, and `mcrfs`, including reserved-bit masking and summary
+  recomputation;
+- quantized paired-single loads/stores (`psq_l[u][x]` and `psq_st[u][x]`) with
+  separate PS1 lane state, all eight GQRs, float/U8/U16/S8/S16 formats,
+  signed six-bit scaling, saturation, W=1 lane filling, and update addressing;
 - FPSCR rounding-mode input, FPRF/FPCC result classification, Rc-to-CR1, FP
   compare invalid causes (`VXSNAN`/`VXVC`) with `FX`/`VX`/`FEX` summaries and
   `VE` behavior, scalar add/subtract/multiply/divide invalid causes and
@@ -187,9 +193,8 @@ model. `fctiw`/`fctiwz` separately model conversion inexact and invalid flags.
 Fused-single ConcreteOps follows Broadway's mixed-precision/Force25 behavior
 for arbitrary FPR inputs; symbolic proofs require each finite operand to be an
 exact binary32 value expanded into an FPR, matching the dominant compiler use.
-Instructions whose core result depends on remaining FPSCR mutation/access details,
-square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`),
-paired-single/quantized operations, VMX, atomics/reservations,
+Remaining square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`),
+paired-single arithmetic, VMX, atomics/reservations,
 cache/MMIO behavior, privileged state, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where

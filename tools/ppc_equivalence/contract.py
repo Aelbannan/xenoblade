@@ -56,6 +56,7 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "r30",
             "r31",
             "f1",
+            "f1.ps1",
             "f14",
             "f15",
             "f16",
@@ -74,13 +75,18 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "f29",
             "f30",
             "f31",
+            "f14.ps1", "f15.ps1", "f16.ps1", "f17.ps1", "f18.ps1", "f19.ps1",
+            "f20.ps1", "f21.ps1", "f22.ps1", "f23.ps1", "f24.ps1", "f25.ps1",
+            "f26.ps1", "f27.ps1", "f28.ps1", "f29.ps1", "f30.ps1", "f31.ps1",
             "cr2",
             "cr3",
             "cr4",
             "memory",
         )
     if name == "strict":
-        return tuple(f"r{index}" for index in range(32)) + tuple(f"f{index}" for index in range(32)) + (
+        return tuple(f"r{index}" for index in range(32)) + tuple(f"f{index}" for index in range(32)) + tuple(
+            f"f{index}.ps1" for index in range(32)
+        ) + tuple(f"gqr{index}" for index in range(8)) + (
             "cr",
             "fpscr",
             "xer.ca",
@@ -132,6 +138,10 @@ def parse_observables(values: list[str] | tuple[str, ...]) -> tuple[Observable, 
             result.append(Observable("gpr", token, int(token[1:])))
         elif token.startswith("f") and token[1:].isdigit() and 0 <= int(token[1:]) < 32:
             result.append(Observable("fpr", token, int(token[1:])))
+        elif token.startswith("f") and token.endswith(".ps1") and token[1:-4].isdigit() and 0 <= int(token[1:-4]) < 32:
+            result.append(Observable("ps1", token, int(token[1:-4])))
+        elif token.startswith("gqr") and token[3:].isdigit() and 0 <= int(token[3:]) < 8:
+            result.append(Observable("gqr", token, int(token[3:])))
         elif token.startswith("cr") and token[2:].isdigit() and 0 <= int(token[2:]) < 8:
             result.append(Observable("cr_field", token, int(token[2:])))
         elif token in ("cr", "lr", "ctr"):

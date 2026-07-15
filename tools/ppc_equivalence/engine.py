@@ -16,6 +16,8 @@ def _symbolic_initial(ops: SymbolicOps) -> MachineState:
     return MachineState(
         tuple(z3.BitVec(f"input.gpr.r{i}", 32) for i in range(32)),
         tuple(z3.BitVec(f"input.fpr.f{i}", 64) for i in range(32)),
+        tuple(z3.BitVec(f"input.ps1.f{i}", 64) for i in range(32)),
+        tuple(z3.BitVec(f"input.gqr.gqr{i}", 32) for i in range(8)),
         z3.BitVec("input.cr", 32),
         XerState(z3.Bool("input.xer.ca"), z3.Bool("input.xer.ov"), z3.Bool("input.xer.so")),
         z3.BitVec("input.fpscr", 32),
@@ -33,6 +35,12 @@ def _observable_value(state: MachineState, observable: Observable, ops: Symbolic
     if observable.kind == "fpr":
         assert observable.index is not None
         return state.fpr[observable.index]
+    if observable.kind == "ps1":
+        assert observable.index is not None
+        return state.ps1[observable.index]
+    if observable.kind == "gqr":
+        assert observable.index is not None
+        return state.gqr[observable.index]
     if observable.kind == "cr_field":
         assert observable.index is not None
         shift = (7 - observable.index) * 4
@@ -185,7 +193,7 @@ def check_equivalence(
                     right_value: object = _bool_value(model, right, z3)
                 elif observable.kind == "memory":
                     left_value, right_value = "different final arrays", "different final arrays"
-                elif observable.kind in ("fpr", "fpscr"):
+                elif observable.kind in ("fpr", "ps1", "fpscr"):
                     left_value, right_value = _hex_value64(model, left), _hex_value64(model, right)
                 else:
                     left_value, right_value = _hex_value(model, left), _hex_value(model, right)
@@ -196,6 +204,8 @@ def check_equivalence(
     initial_state = {
         "gpr": {f"r{i}": _hex_value(model, initial.gpr[i]) for i in relevant_gprs},
         "fpr": {f"f{i}": _hex_value64(model, initial.fpr[i]) for i in range(32)},
+        "ps1": {f"f{i}": _hex_value64(model, initial.ps1[i]) for i in range(32)},
+        "gqr": {f"gqr{i}": _hex_value(model, initial.gqr[i]) for i in range(8)},
         "cr": _hex_value(model, initial.cr),
         "fpscr": _hex_value(model, initial.fpscr),
         "xer": {name: _bool_value(model, getattr(initial.xer, name), z3) for name in ("ca", "ov", "so")},
@@ -205,7 +215,7 @@ def check_equivalence(
     }
     result.counterexample = {"initial_state": initial_state}
     result.replay = {
-        "format": 2, "architecture": "broadway-ppc32-be-v3", "contract": contract.name,
+        "format": 2, "architecture": "broadway-ppc32-be-v4", "contract": contract.name,
         "original_hex": original_hex, "candidate_hex": candidate_hex,
         "base_original": original[0].address, "base_candidate": candidate[0].address,
         "observables": [item.name for item in contract.observables], "initial_state": initial_state,

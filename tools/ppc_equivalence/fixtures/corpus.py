@@ -187,6 +187,33 @@ def _fp_cmp(bf: int, fa: int, fb: int, xo_bits: int) -> int:
     return _fp_x((bf & 7) << 2, fa, fb, xo_bits)
 
 
+def _psq_d(primary: int, fr: int, ra: int, disp: int, w: int, i: int) -> int:
+    return (
+        ((primary & 0x3F) << 26) | ((fr & 31) << 21) | ((ra & 31) << 16)
+        | ((w & 1) << 15) | ((i & 7) << 12) | (disp & 0xFFF)
+    )
+
+
+def _psq_x(load: bool, update: bool, fr: int, ra: int, rb: int, w: int, i: int) -> int:
+    return (
+        (4 << 26) | ((fr & 31) << 21) | ((ra & 31) << 16) | ((rb & 31) << 11)
+        | ((w & 1) << 10) | ((i & 7) << 7) | (int(update) << 6)
+        | ((6 if load else 7) << 1)
+    )
+
+
+def _mtfsf(fm: int, fb: int, *, rc: int = 0) -> int:
+    return (63 << 26) | ((fm & 0xFF) << 17) | ((fb & 31) << 11) | (711 << 1) | (rc & 1)
+
+
+def _mtfsfi(bf: int, imm4: int, *, rc: int = 0) -> int:
+    return (63 << 26) | ((bf & 7) << 23) | ((imm4 & 0xF) << 12) | (134 << 1) | (rc & 1)
+
+
+def _mcrfs(bf: int, bfa: int) -> int:
+    return (63 << 26) | ((bf & 7) << 23) | ((bfa & 7) << 18) | (64 << 1)
+
+
 FIXTURES: tuple[FixtureCase, ...] = (
     _case(
         "addc",
@@ -749,6 +776,22 @@ _NZERO = 0x8000000000000000
 _FP_INPUTS = {"f1": _F15, "f2": _F2, "f3": _F4}
 
 FIXTURES += (
+    _case("mffs", ("fp", "fpscr", "read"), _state(fpscr=0xA0100000), [_fp_x(7, 0, 0, 583)], result=0, cr=0, xer=0, expected_fpr={7: 0xFFF80000A0100000}, expected_fpscr=0xA0100000),
+    _case("mtfsf", ("fp", "fpscr", "write", "record"), _state(fpr={"f2": 0xFFF8000000100880}), [_mtfsf(0xFF, 2, rc=1)], result=0, cr=0x06000000, xer=0, expected_fpscr=0x60100080),
+    _case("mtfsfi", ("fp", "fpscr", "immediate"), _state(), [_mtfsfi(7, 3)], result=0, cr=0, xer=0, expected_fpscr=3),
+    _case("mtfsb1", ("fp", "fpscr", "bit", "exception"), _state(fpscr=0x80), [_fp_x(11, 0, 0, 38)], result=0, cr=0, xer=0, expected_fpscr=0xE0100080),
+    _case("mtfsb0", ("fp", "fpscr", "bit", "summary"), _state(fpscr=0xE0100080), [_fp_x(11, 0, 0, 70)], result=0, cr=0, xer=0, expected_fpscr=0x80000080),
+    _case("mcrfs", ("fp", "fpscr", "cr", "clear"), _state(fpscr=0xA0100000), [_mcrfs(3, 2)], result=0, cr=0x00010000, xer=0, expected_fpscr=0x80000000),
+    _case("psq-l-st-quantized", ("fp", "psq", "gqr", "quantized", "pair", "memory"), _state(_gpr(r5=0x01060204), memory_words={0: 0xFE080000, 8: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x0010AAAA}, expected_fpr={7: 0xBFF0000000000000}),
+    _case("psq-u8-load-s8-store", ("fp", "psq", "gqr", "u8", "s8", "scale", "pair"), _state(_gpr(r5=0x02040106), memory_words={0: 0x080CAAAA, 4: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 4, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0406AAAA}, expected_fpr={7: _F2}),
+    _case("psq-u16-load-float-store", ("fp", "psq", "gqr", "u16", "float", "scale", "pair"), _state(_gpr(r5=0x01050000), memory_words={0: 0x00020008, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F800000, 12: 0x40800000}, expected_fpr={7: _F1}),
+    _case("psq-st-float-ftz", ("fp", "psq", "gqr", "float", "subnormal", "ftz", "w1"), _state(_gpr(r5=0), memory_words={0: 0}, fpr={"f7": 0xB6A0000000000000}), [_mtspr(5, 913), _psq_d(60, 7, 4, 0, 1, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x80000000}),
+    _case("psq-lu-w1", ("fp", "psq", "load", "update", "w1"), _state(_gpr(r5=0), memory_words={4: 0x3FC00000}), [_mtspr(5, 913), _psq_d(57, 7, 4, 4, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_fpr={7: _F15}),
+    _case("psq-stu-w1", ("fp", "psq", "store", "update", "w1"), _state(_gpr(r5=0), memory_words={4: 0}, fpr={"f7": _F15}), [_mtspr(5, 913), _psq_d(61, 7, 4, 4, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}),
+    _case("psq-lx-s16", ("fp", "psq", "load", "indexed", "s16"), _state(_gpr(r5=0x01070000, r6=0), memory_words={0: 0xFFFE0008}), [_mtspr(5, 913), _psq_x(True, False, 7, 4, 6, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0xFFFE0008}, expected_fpr={7: 0xBFF0000000000000}),
+    _case("psq-lux-s8", ("fp", "psq", "load", "indexed", "update", "s8"), _state(_gpr(r5=0x01060000, r6=4), memory_words={4: 0xFE080000}), [_mtspr(5, 913), _psq_x(True, True, 7, 4, 6, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0xFE080000}, expected_fpr={7: 0xBFF0000000000000}),
+    _case("psq-stx-u16", ("fp", "psq", "store", "indexed", "u16", "w1"), _state(_gpr(r5=0x00000105, r6=4), memory_words={4: 0xAAAAAAAA}, fpr={"f7": _F2}), [_mtspr(5, 913), _psq_x(False, False, 7, 4, 6, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0004AAAA}),
+    _case("psq-stux-s16", ("fp", "psq", "store", "indexed", "update", "s16", "w1"), _state(_gpr(r5=0x00000107, r6=4), memory_words={4: 0xAAAAAAAA}, fpr={"f7": 0xC000000000000000}), [_mtspr(5, 913), _psq_x(False, True, 7, 4, 6, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0xFFFCAAAA}),
     _case("lfs", ("fp", "memory"), _state(memory_words={0: 0x3FC00000}), [dform(48, 7, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}),
     _case("lfsu", ("fp", "memory", "update"), _state(memory_words={4: 0x3FC00000}), [dform(49, 7, 4, 4)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_fpr={7: _F15}),
     _case("lfd", ("fp", "memory"), _state(memory_words={0: 0x3FF80000, 4: 0}), [dform(50, 7, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}),

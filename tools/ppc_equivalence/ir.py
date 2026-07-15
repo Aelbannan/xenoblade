@@ -244,6 +244,10 @@ SUPPORTED_FP_OPCODES = frozenset({
     Opcode.FSEL, Opcode.FCMPU, Opcode.FCMPO, Opcode.FRSP,
     Opcode.FCTIW, Opcode.FCTIWZ,
     Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS,
+    Opcode.MFFS, Opcode.MTFSF, Opcode.MTFSFI,
+    Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS,
+    Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
+    Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX,
 })
 
 

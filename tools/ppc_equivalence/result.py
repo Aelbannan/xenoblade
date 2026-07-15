@@ -18,7 +18,7 @@ class ProofStatus(str, Enum):
 @dataclass(slots=True)
 class ProofResult:
     status: ProofStatus
-    architecture_model: str = "broadway-ppc32-be-v6"
+    architecture_model: str = "broadway-ppc32-be-v7"
     format: int = 2
     contract: str = "manual"
     observables: list[str] = field(default_factory=list)
@@ -29,7 +29,7 @@ class ProofResult:
         "FP invalid/divide-zero and conversion flags plus VE/ZE suppression are tracked; arithmetic OX/UX/XX and traps are not",
         "FP arithmetic requires RN=nearest-even and NI=0; finite-input overflow is excluded, modeled invalid/ZX cases are included",
         "fused-single proofs require finite operands to be exact binary32 values expanded in FPRs",
-        "fres, frsqrte, square-root, and paired-single arithmetic instructions are unsupported",
+        "fres, frsqrte, square-root, and remaining paired-single arithmetic instructions are unsupported",
         "division results compared only on architecturally defined inputs",
         "loops and external call continuations are not summarized",
     ])

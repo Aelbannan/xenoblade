@@ -91,3 +91,9 @@ PowerPC architecture, checked against a mature Wii implementation.
 - Paired comparisons select PS0 or PS1 and then use the same ordered/unordered
   compare rules as scalar `fcmpo`/`fcmpu`, including FPCC, `VXSNAN`, `VXVC`,
   summary-bit recomputation, and `VE` interaction.
+- Basic paired add/subtract/multiply executes PS0 then PS1, rounds each result
+  to binary32, accumulates invalid causes across both lanes, and classifies FPRF
+  from PS0. Multiply and scalar-multiply forms apply Force25 to their selected
+  multiplier lane before evaluation. Dolphin's paired path writes both lanes
+  even when `VE` is enabled; the model and hardware corpus preserve that
+  distinction from scalar enabled-result suppression.

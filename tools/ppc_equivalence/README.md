@@ -139,19 +139,28 @@ assumptions.
 ## Development and quality gate
 
 ```bash
+python3 tools/ppc_equivalence/gen_fixture_blob.py
 python3 -m unittest discover -s tools/ppc_equivalence/tests -v
-python3 -m unittest discover -s tools/test/compare_behaviour/tests -v
-python3 tools/coop/run.py behaviour ppc ppc-equivalence-broadway
+python3 tools/coop/run.py equivalence differential
+python3 tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
 python3 tools/ppc_equivalence/run.py --help
 ```
 
-The Dolphin command runs 40 representative Broadway instruction scenarios and
-one memory-layout assertion through Dolphin's interpreter. It is the independent
-concrete ISA oracle for the phase-1/phase-2 model; failures print actual and
-expected result/CR/XER triples.
+The shared fixture corpus in `tools/ppc_equivalence/fixtures/` is the single
+source of truth for the closed loop:
 
-Every new opcode must add encoding fixtures, concrete edge cases, symbolic
-positive and negative equivalence cases, state-preservation checks, and an
-independent Dolphin/QEMU/reference test before it is advertised as supported.
-Real-game regression cases must not commit proprietary binaries; store legal
-small fixtures or hashes/extraction instructions instead.
+1. Python `ConcreteOps` executes every fixture (`equivalence differential` / CI).
+2. `gen_fixture_blob.py` emits `ppc_fixture_cases.inc` + `broadway.jsonl`.
+3. The generic Dolphin DOL (`ppc-equivalence-fixtures`) copies each case’s
+   instruction words into a scratch buffer, runs them under the interpreter
+   (`CPUCore = 0`), and compares the same expected result/CR/XER(/memory).
+
+Do not hand-edit `ppc_fixture_cases.inc`. Add or change cases in
+`fixtures/corpus.py`, regenerate, then run both gates.
+
+Every new opcode must add fixtures to that corpus, concrete/symbolic
+positive and negative equivalence cases, state-preservation checks, and a
+passing Dolphin fixture run (when Dolphin is available) before it is
+advertised as supported. Real-game regression cases must not commit
+proprietary binaries; store legal small fixtures or hashes/extraction
+instructions instead.

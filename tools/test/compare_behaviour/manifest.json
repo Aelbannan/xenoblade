@@ -2,14 +2,15 @@
   "region": "us",
   "tests": [
     {
-      "id": "ppc-equivalence-broadway",
-      "description": "Broadway integer/memory/branch oracle for tools/ppc_equivalence",
+      "id": "ppc-equivalence-fixtures",
+      "description": "Data-driven Broadway fixture DOL for tools/ppc_equivalence (shared corpus)",
       "unit": "monolib/src/math/MTRand",
-      "symbol": "ppc_equivalence_oracle",
-      "ppc_source": "ppc_equivalence_broadway.c",
+      "symbol": "ppc_fixture_run_case",
+      "ppc_source": "ppc_equivalence_fixtures.c",
       "ppc_cpu_core": 0,
       "ppc_stubs": [
-        "ppc_equivalence_oracle.c"
+        "ppc_fixture_exec.c",
+        "ppc_fixture_payloads.c"
       ]
     },
     {

@@ -94,7 +94,7 @@ Config knobs (`coop.json` / example): `region` (`us` default), `match_policy`, `
 | `log [--tail N]` | Read attempt log |
 | `symbols …` | Wraps `tools/symrecover.py` |
 | `behaviour …` | Wraps `tools/test/compare_behaviour/run.py` |
-| `equivalence …` | Wraps `tools/ppc_equivalence/run.py` (`decode`, `check-hex`, `check`, `replay`) |
+| `equivalence …` | Wraps `tools/ppc_equivalence/run.py` (`decode`, `check-hex`, `check`, `replay`, `differential`) |
 | `opcodes …` | Wraps `python -m tools.dol_opcodes` (default: PPC750CL isa.yaml match on this region's `main.dol`) |
 
 ### Library
@@ -222,8 +222,14 @@ and examples are in its [README](tools/ppc_equivalence/README.md).
 python3 -m pip install -r tools/ppc_equivalence/requirements.txt
 python3 tools/coop/run.py equivalence check-hex \
   --original 5463103a --candidate 1c630004
+python3 tools/ppc_equivalence/gen_fixture_blob.py
+python3 tools/coop/run.py equivalence differential
+python3 tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
 python3 -m unittest discover -s tools/ppc_equivalence/tests -v
 ```
+
+Shared fixtures in `tools/ppc_equivalence/fixtures/` drive both Python
+`ConcreteOps` and the generic Dolphin fixture DOL (`ppc-equivalence-fixtures`).
 
 ---
 

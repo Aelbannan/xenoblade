@@ -41,6 +41,11 @@ class MachineState:
     fpscr: Any
     lr: Any
     ctr: Any
+    msr: Any
+    sr: tuple[Any, ...]
+    time_base: Any
+    srr0: Any
+    srr1: Any
     memory: Any
     valid: Any
     memory_touches: tuple[Any, ...] = ()
@@ -73,6 +78,11 @@ class MachineState:
 
     def with_fpscr(self, value: Any) -> "MachineState":
         return replace(self, fpscr=value)
+
+    def with_sr(self, index: int, value: Any) -> "MachineState":
+        registers = list(self.sr)
+        registers[index] = value
+        return replace(self, sr=tuple(registers))
 
 
 def _parse(value: object) -> int:
@@ -142,6 +152,9 @@ def concrete_state(values: dict[str, object] | None = None) -> MachineState:
     gqr_values = values.get("gqr", {})
     assert isinstance(gqr_values, dict)
     gqr = tuple(_parse(gqr_values.get(f"gqr{i}", 0)) & 0xFFFFFFFF for i in range(8))
+    sr_values = values.get("sr", {})
+    assert isinstance(sr_values, dict)
+    sr = tuple(_parse(sr_values.get(f"sr{i}", 0)) & 0xFFFFFFFF for i in range(16))
     xer_values = values.get("xer", {})
     assert isinstance(xer_values, dict)
     fpscr = _parse(values.get("fpscr", 0)) & 0xFFFFFFFF
@@ -172,6 +185,11 @@ def concrete_state(values: dict[str, object] | None = None) -> MachineState:
         fpscr,
         _parse(values.get("lr", 0)) & 0xFFFFFFFF,
         _parse(values.get("ctr", 0)) & 0xFFFFFFFF,
+        _parse(values.get("msr", 0)) & 0xFFFFFFFF,
+        sr,
+        _parse(values.get("time_base", 0)) & 0xFFFFFFFFFFFFFFFF,
+        _parse(values.get("srr0", 0)) & 0xFFFFFFFF,
+        _parse(values.get("srr1", 0)) & 0xFFFFFFFF,
         memory,
         True,
     )

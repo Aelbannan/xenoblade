@@ -23,6 +23,11 @@ def _symbolic_initial(ops: SymbolicOps) -> MachineState:
         z3.BitVec("input.fpscr", 32),
         z3.BitVec("input.lr", 32),
         z3.BitVec("input.ctr", 32),
+        z3.BitVec("input.msr", 32),
+        tuple(z3.BitVec(f"input.sr.sr{i}", 32) for i in range(16)),
+        z3.BitVec("input.time_base", 64),
+        z3.BitVec("input.srr0", 32),
+        z3.BitVec("input.srr1", 32),
         z3.Array("input.memory", z3.BitVecSort(32), z3.BitVecSort(8)),
         z3.BoolVal(True),
     )
@@ -41,11 +46,14 @@ def _observable_value(state: MachineState, observable: Observable, ops: Symbolic
     if observable.kind == "gqr":
         assert observable.index is not None
         return state.gqr[observable.index]
+    if observable.kind == "sr":
+        assert observable.index is not None
+        return state.sr[observable.index]
     if observable.kind == "cr_field":
         assert observable.index is not None
         shift = (7 - observable.index) * 4
         return ops.z3.Extract(shift + 3, shift, state.cr)
-    if observable.kind in ("cr", "lr", "ctr", "memory"):
+    if observable.kind in ("cr", "lr", "ctr", "msr", "time_base", "srr0", "srr1", "memory"):
         return getattr(state, observable.kind)
     if observable.kind == "fpscr":
         return state.fpscr
@@ -193,7 +201,7 @@ def check_equivalence(
                     right_value: object = _bool_value(model, right, z3)
                 elif observable.kind == "memory":
                     left_value, right_value = "different final arrays", "different final arrays"
-                elif observable.kind in ("fpr", "ps1", "fpscr"):
+                elif observable.kind in ("fpr", "ps1", "time_base"):
                     left_value, right_value = _hex_value64(model, left), _hex_value64(model, right)
                 else:
                     left_value, right_value = _hex_value(model, left), _hex_value(model, right)
@@ -211,11 +219,16 @@ def check_equivalence(
         "xer": {name: _bool_value(model, getattr(initial.xer, name), z3) for name in ("ca", "ov", "so")},
         "lr": _hex_value(model, initial.lr),
         "ctr": _hex_value(model, initial.ctr),
+        "msr": _hex_value(model, initial.msr),
+        "sr": {f"sr{i}": _hex_value(model, initial.sr[i]) for i in range(16)},
+        "time_base": _hex_value64(model, initial.time_base),
+        "srr0": _hex_value(model, initial.srr0),
+        "srr1": _hex_value(model, initial.srr1),
         "memory": _memory_entries(model, initial.memory, left_exit.state.memory_touches + right_exit.state.memory_touches, z3),
     }
     result.counterexample = {"initial_state": initial_state}
     result.replay = {
-        "format": 2, "architecture": "broadway-ppc32-be-v10", "contract": contract.name,
+        "format": 2, "architecture": "broadway-ppc32-be-v12", "contract": contract.name,
         "original_hex": original_hex, "candidate_hex": candidate_hex,
         "base_original": original[0].address, "base_candidate": candidate[0].address,
         "observables": [item.name for item in contract.observables], "initial_state": initial_state,

@@ -33,7 +33,8 @@ python3 tools/ppc_equivalence/run.py --install-deps
 This creates the ignored `tools/ppc_equivalence/.venv/` with the exact pinned
 Capstone and Z3 versions. No shell activation is required.
 
-The pinned runtime dependencies are Capstone (optional decoder cross-check) and Z3.
+The pinned runtime dependencies are Capstone (optional decoder cross-check),
+Z3, and PyYAML for the Broadway ISA census.
 The semantic decoder validates instruction fields directly; Capstone, when
 installed, only cross-checks instruction boundaries. Semantics do not depend on
 formatted disassembly text.
@@ -114,7 +115,7 @@ explicit choice.
 | Contract | Compared state |
 |---|---|
 | `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, both lanes of FP return `f1`, `r13`–`r31`, both lanes of nonvolatile `f14`–`f31`, `CR2`–`CR4`, and all final memory |
-| `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, and all final memory |
+| `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
 The ABI preset is for completed function boundaries. It intentionally excludes
@@ -133,7 +134,8 @@ python3 tools/coop/run.py equivalence check-hex \
 
 `--observe` may be repeated or comma-separated. Supported names are `r0`–`r31`,
 `f0`–`f31`, `cr`, `cr0`–`cr7`, `fpscr`, `xer.ca`, `xer.ov`, `xer.so`, `lr`,
-`ctr`, `gqr0`–`gqr7`, `f0.ps1`–`f31.ps1`, and `memory`.
+`ctr`, `gqr0`–`gqr7`, `sr0`–`sr15`, `msr`, `time_base`, `srr0`, `srr1`,
+`f0.ps1`–`f31.ps1`, and `memory`.
 
 | Exit | Meaning |
 |---:|---|
@@ -149,7 +151,7 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v10` model supports:
+The current `broadway-ppc32-be-v12` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -160,6 +162,14 @@ The current `broadway-ppc32-be-v10` model supports:
   update forms, `lmw`/`stmw`, and byte-reversed halfword/word forms;
 - a shared symbolic byte-addressed memory array with big-endian multi-byte
   access and exact final-array comparison;
+- cache/order operations `dcbf`, `dcbi`, `dcbst`, `dcbt`, `icbi`, `sync`, and
+  `isync` under coherent ordinary-RAM/no-DMA/no-self-modifying-code assumptions,
+  plus 32-byte aligned memory zeroing for `dcbz` and `dcbz_l`;
+- MSR and all 16 segment registers through `mfmsr`, `mtmsr`, `mfsr`, and
+  `mtsr`, SRR0/SRR1 SPR transfers, and stable-block time-base reads through
+  `mftb`;
+- synchronous `twi`, `sc`, and `rfi` control exits, including trap predicates,
+  exception vectors, SRR0/SRR1 saves, and Broadway MSR entry/restore masks;
 - `b`, `bc`, `bclr`, and `bcctr`, including AA/LK, CR tests, CTR decrement/test,
   LR updates, indirect aligned targets, acyclic CFG paths, and exit comparison;
 - scalar FP D-form/indexed loads and stores (`lfs*`, `lfd*`, `stfs*`, `stfd*`,
@@ -187,6 +197,13 @@ The current `broadway-ppc32-be-v10` model supports:
   independent binary32-rounded lanes, Force25 multiplier handling, PS0 FPRF,
   accumulated lane exceptions, FI/FR clearing/preservation, unconditional
   paired result writeback under enabled invalid exceptions, and Rc-to-CR1;
+- paired division (`ps_div`) with independent binary32-rounded lanes,
+  accumulated `VXZDZ`/`VXIDI`/`VXSNAN`/`ZX` exceptions, unconditional paired
+  writeback under enabled exceptions, PS0 FPRF, and Rc-to-CR1;
+- Broadway table-exact paired estimates (`ps_res`, `ps_rsqrte`) across both
+  lanes, including zero, infinity, NaN, signaling-NaN, negative-rsqrt,
+  ForceSingle rsqrt results, accumulated exceptions, unconditional writeback,
+  PS0 FPRF, and Rc-to-CR1;
 - paired fused arithmetic (`ps_madd`, `ps_msub`, `ps_nmadd`, `ps_nmsub`,
   `ps_madds0/1`) with independently fused and binary32-rounded lanes,
   broadcast multipliers, Force25 handling, NaN operand priority, accumulated
@@ -215,9 +232,10 @@ Fused-single and paired-fused ConcreteOps follow Broadway's
 mixed-precision/Force25 behavior for arbitrary FPR inputs; symbolic proofs
 require each finite operand to be an exact binary32 value expanded into an FPR,
 matching the dominant compiler use.
-Remaining square-root instructions (`fsqrt[s]`),
-paired division/estimate arithmetic, VMX, atomics/reservations,
-cache/MMIO behavior, privileged state, loops/back-edges, external call
+The `fsqrt`/`fsqrts` encodings found in later PowerPC revisions are reserved on
+Broadway and are rejected by the decoder. VMX, atomics/reservations, detailed
+cache locking/coherency, asynchronous interrupts, MMIO behavior, address
+translation effects, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where
 the ISA defines the result. Direct calls are terminal exits; the callee is not

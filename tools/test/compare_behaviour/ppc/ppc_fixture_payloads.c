@@ -303,3 +303,84 @@ asm void ppc_fixture_payload_39(void) {
     opword 0x7CE74378
     blr
 }
+
+/* li */
+asm void ppc_fixture_payload_40(void) {
+    nofralloc
+    opword 0x38E01234
+    blr
+}
+
+/* addze */
+asm void ppc_fixture_payload_41(void) {
+    nofralloc
+    opword 0x7CE50195
+    blr
+}
+
+/* add-so-sticky */
+asm void ppc_fixture_payload_42(void) {
+    nofralloc
+    opword 0x7CE53615
+    blr
+}
+
+/* sraw32 */
+asm void ppc_fixture_payload_43(void) {
+    nofralloc
+    opword 0x7CA73631
+    blr
+}
+
+/* and. */
+asm void ppc_fixture_payload_44(void) {
+    nofralloc
+    opword 0x7CA73039
+    blr
+}
+
+/* cmpwi */
+asm void ppc_fixture_payload_45(void) {
+    nofralloc
+    opword 0x2C050001
+    blr
+}
+
+/* mtcrf-cr0 */
+asm void ppc_fixture_payload_46(void) {
+    nofralloc
+    opword 0x7CA80120
+    opword 0x7CE00026
+    blr
+}
+
+/* lbzu */
+asm void ppc_fixture_payload_47(void) {
+    nofralloc
+    opword 0x8D0A0001
+    opword 0x7CE45050
+    blr
+}
+
+/* lhbrx */
+asm void ppc_fixture_payload_48(void) {
+    nofralloc
+    opword 0xB0A40008
+    opword 0x7CE4362C
+    blr
+}
+
+/* bc-cr-fallthrough */
+asm void ppc_fixture_payload_49(void) {
+    nofralloc
+    opword 0x41800008
+    opword 0x38E00001
+    blr
+}
+
+/* subfze */
+asm void ppc_fixture_payload_50(void) {
+    nofralloc
+    opword 0x7CE50191
+    blr
+}

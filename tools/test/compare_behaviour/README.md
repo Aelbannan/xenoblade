@@ -114,6 +114,8 @@ expected result/CR/XER/(memory) values that Python `ConcreteOps` checks. The
 interpreter is intentional: this path has found ARM64-JIT differences in
 CR0’s SO bit.
 
-Edit cases only in `tools/ppc_equivalence/fixtures/corpus.py`, then regenerate.
-A passing Dolphin run reports `passed: 40 failed: 0`. Failures include actual
-and expected result/CR/XER triples.
+Edit cases only in `tools/ppc_equivalence/fixtures/corpus.py`, then regenerate
+(`python3 tools/ppc_equivalence/gen_fixture_blob.py`). A passing Dolphin run
+reports `passed: N failed: 0` for every corpus case. Failures include actual
+and expected result/CR/XER triples. Headless Dolphin user folders disable panic
+handlers so invalid-guest alerts cannot block automation.

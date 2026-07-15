@@ -4,6 +4,9 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any
 
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v14"
+RESULT_FORMAT = 3
+
 
 class ProofStatus(str, Enum):
     EQUIVALENT = "equivalent"
@@ -18,17 +21,18 @@ class ProofStatus(str, Enum):
 @dataclass(slots=True)
 class ProofResult:
     status: ProofStatus
-    architecture_model: str = "broadway-ppc32-be-v14"
-    format: int = 2
+    architecture_model: str = ARCHITECTURE_MODEL
+    format: int = RESULT_FORMAT
     contract: str = "manual"
+    contract_resolution: dict[str, Any] | None = None
     observables: list[str] = field(default_factory=list)
     assumptions: list[str] = field(default_factory=lambda: [
         "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
         "shared byte-addressed initial memory",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
-        "FP invalid/divide-zero and conversion flags plus VE/ZE suppression are tracked; arithmetic OX/UX/XX and traps are not",
+        "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX and traps are not",
         "FP arithmetic requires RN=nearest-even and NI=0; finite-input overflow is excluded, modeled invalid/ZX cases are included",
-        "fused-single proofs require finite operands to be exact binary32 values expanded in FPRs",
+        "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
         "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
         "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
         "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",

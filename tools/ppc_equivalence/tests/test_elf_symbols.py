@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import io
 import importlib.util
+import json
 import struct
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
 
 from tools.coop.run import _equivalence_args_with_default_contract
+from tools.coop.lib.equivalence_check import prove_unit_symbol
 from tools.ppc_equivalence import cli
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block
@@ -27,6 +32,7 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 _EQ_LEFT = bytes.fromhex("38630004 4e800020")
 # addi r3,r3,5 ; blr
 _NEQ = bytes.fromhex("38630005 4e800020")
+_FP_FUNCTION = bytes.fromhex("fce1102a 4e800020")
 
 _HAS_Z3 = importlib.util.find_spec("z3") is not None
 
@@ -228,6 +234,34 @@ class CheckObjectsApiTests(unittest.TestCase):
             self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 
     @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_check_objects_defaults_to_auditable_auto_contract(self) -> None:
+        for code_bytes, expected_added in (
+            (_EQ_LEFT, []),
+            (_FP_FUNCTION, ["fpscr"]),
+        ):
+            with self.subTest(expected_added=expected_added), tempfile.TemporaryDirectory() as tmp:
+                left = Path(tmp) / "a.o"
+                right = Path(tmp) / "b.o"
+                left.write_bytes(build_reloc_elf({"f": code_bytes}))
+                right.write_bytes(build_reloc_elf({"f": code_bytes}))
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    exit_code = cli.main([
+                        "check-objects",
+                        "--original", str(left),
+                        "--candidate", str(right),
+                        "--symbol", "f",
+                        "--json",
+                    ])
+                self.assertEqual(exit_code, 0)
+                payload = json.loads(output.getvalue())
+                self.assertEqual(payload["format"], 3)
+                self.assertEqual(payload["contract"], "auto")
+                self.assertEqual(payload["contract_resolution"]["base"], "ppc-eabi")
+                self.assertEqual(payload["contract_resolution"]["added"], expected_added)
+                self.assertIn("memory", payload["observables"])
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
     def test_inequivalent_objects(self) -> None:
         left = build_reloc_elf({"f": _EQ_LEFT})
         right = build_reloc_elf({"f": _NEQ})
@@ -293,15 +327,27 @@ class CheckObjectsApiTests(unittest.TestCase):
 
 
 class CoopDefaultContractTests(unittest.TestCase):
-    def test_check_objects_defaults_to_ppc_eabi(self) -> None:
+    def test_check_objects_defaults_to_auto(self) -> None:
         args = _equivalence_args_with_default_contract(
             ["check-objects", "--original", "a.o", "--candidate", "b.o", "--symbol", "f"]
         )
-        self.assertEqual(args[1:3], ["--contract", "ppc-eabi"])
+        self.assertEqual(args[1:3], ["--contract", "auto"])
         self.assertEqual(
             _equivalence_args_with_default_contract(["check-unit", "unit", "--symbol", "f"]),
             ["check-unit", "unit", "--symbol", "f"],
         )
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_automatic_equivalent_match_probe_uses_auto(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            retail = Path(tmp) / "retail.o"
+            decomp = Path(tmp) / "decomp.o"
+            retail.write_bytes(build_reloc_elf({"f": _FP_FUNCTION}))
+            decomp.write_bytes(build_reloc_elf({"f": _FP_FUNCTION}))
+            unit = SimpleNamespace(target_path=retail, base_path=decomp)
+            probe = prove_unit_symbol(None, unit, "f")  # type: ignore[arg-type]
+            self.assertEqual(probe.status, ProofStatus.EQUIVALENT)
+            self.assertEqual(probe.detail, "auto contract: ppc-eabi + fpscr")
 
 
 class CoopCheckUnitTests(unittest.TestCase):

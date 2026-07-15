@@ -470,7 +470,8 @@ def _equivalence_args_with_default_contract(equivalence_args: list[str]) -> list
         for arg in args[1:]
     )
     if not has_contract:
-        args[1:1] = ["--contract", "ppc-eabi"]
+        default_contract = "auto" if args[0] == "check-objects" else "ppc-eabi"
+        args[1:1] = ["--contract", default_contract]
     return args
 
 

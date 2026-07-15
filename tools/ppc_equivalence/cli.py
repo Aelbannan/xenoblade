@@ -65,6 +65,12 @@ def _print_result(result: ProofResult) -> None:
         print("INCONCLUSIVE")
     print(f"status: {result.status.value}")
     print(f"contract: {result.contract}")
+    if result.contract_resolution:
+        print(f"contract base: {result.contract_resolution['base']}")
+        added = result.contract_resolution.get("added", [])
+        print(f"auto-added: {', '.join(added) if added else '(none)'}")
+        for reason in result.contract_resolution.get("reasons", []):
+            print(f"contract reason: {reason}")
     if result.observables:
         print(f"compared: {', '.join(result.observables)}")
     if result.mismatch:
@@ -128,6 +134,10 @@ def _run_check(
 ) -> int:
     original_hex = _format_hex(original_code)
     candidate_hex = _format_hex(candidate_code)
+    contract = None
+    requested_contract = args.contract
+    if requested_contract is None and not args.observe:
+        requested_contract = getattr(args, "default_contract", None)
     try:
         original = decode_block(
             original_code,
@@ -137,14 +147,18 @@ def _run_check(
             candidate_code,
             args.base_candidate if base_candidate is None else base_candidate,
         )
+        original_live_out = automatic_live_out(original)
+        candidate_live_out = automatic_live_out(candidate)
         live_out = None
-        if args.contract == "live-out":
-            live_out = tuple(dict.fromkeys(automatic_live_out(original) + automatic_live_out(candidate)))
+        if requested_contract == "live-out":
+            live_out = tuple(dict.fromkeys(original_live_out + candidate_live_out))
         contract = make_contract(
-            preset=args.contract,
+            preset=requested_contract,
             observe=args.observe,
             timeout_ms=args.timeout_ms,
             live_out=live_out,
+            original_live_out=original_live_out,
+            candidate_live_out=candidate_live_out,
         )
         result = check_equivalence(
             original,
@@ -157,11 +171,15 @@ def _run_check(
             max_paths=args.max_paths,
         )
     except (UnsupportedInstruction, ExecutionInconclusive) as exc:
-        contract_name = args.contract or "manual"
-        observable_names = list(args.observe or ())
+        contract_name = requested_contract or "manual"
+        observable_names = (
+            [item.name for item in contract.observables]
+            if contract else list(args.observe or ())
+        )
         result = ProofResult(
             status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
             contract=contract_name,
+            contract_resolution=contract.resolution_dict() if contract else None,
             observables=observable_names,
             unsupported=[str(exc)],
         )
@@ -219,6 +237,7 @@ def _add_check_options(
     *,
     base_original_default: int | None = 0,
     base_candidate_default: int | None = 0,
+    default_contract: str | None = None,
 ) -> None:
     parser.add_argument(
         "--base-original",
@@ -232,12 +251,14 @@ def _add_check_options(
         default=base_candidate_default,
         help="decode base for candidate (default: 0, or ELF symbol address for check-objects)",
     )
-    contract = parser.add_mutually_exclusive_group(required=True)
+    contract = parser.add_mutually_exclusive_group(required=default_contract is None)
     contract.add_argument(
         "--contract",
         choices=CONTRACT_PRESETS,
         help="named observable-state contract",
     )
+    if default_contract is not None:
+        parser.set_defaults(default_contract=default_contract)
     contract.add_argument(
         "--observe",
         action="append",
@@ -432,7 +453,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--candidate-symbol",
         help="candidate symbol when names differ (default: same as --symbol)",
     )
-    _add_check_options(check_objects, base_original_default=None, base_candidate_default=None)
+    _add_check_options(
+        check_objects,
+        base_original_default=None,
+        base_candidate_default=None,
+        default_contract="auto",
+    )
 
     extract = sub.add_parser("extract", help="extract named .text bytes from an ELF32 BE object")
     extract.add_argument("--object", type=Path, required=True)

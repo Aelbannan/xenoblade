@@ -211,13 +211,15 @@ sound-by-default vertical slice from the PPC equivalence-checker plan:
 - Z3 `equivalent` / `not_equivalent` / `inconclusive` results;
 - JSON proof metadata, SMT-LIB export, and replayable counterexamples;
 - unsupported opcodes are inconclusive, never no-ops.
-- `coop run equivalence check*` defaults to the `ppc-eabi` function-boundary
-  contract; `--contract strict` and manual `--observe` remain available.
+- Object/function checks default to the effect-aware `auto` contract
+  (`ppc-eabi` plus written persistent state); raw block checks default to
+  `ppc-eabi`. `--contract strict` and manual `--observe` remain available.
 - `check-objects` / `check-unit` extract a named `.text` symbol from the
   objdiff retail/decomp ELF pair and feed those bytes into the checker.
 
 It is evidence used by the fork’s **`EQUIVALENT_MATCH`** acceptance bar (fuzzy
-≥ 50% + SMT `EQUIVALENT` under `ppc-eabi`). `FULL_MATCH` is the other
+≥ 50% + SMT `EQUIVALENT` under `auto`, which is `ppc-eabi` or stronger).
+`FULL_MATCH` is the other
 equal-tier acceptance outcome. Split-size fit remains mandatory. Full scope, installation,
 supported opcodes, and examples are in its [README](tools/ppc_equivalence/README.md).
 

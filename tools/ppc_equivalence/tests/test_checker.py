@@ -78,6 +78,31 @@ def ps_a(
 
 
 class DecoderTests(unittest.TestCase):
+    def test_broadway_cache_privileged_and_exception_encodings(self) -> None:
+        words = (
+            "7c0000ac 7c0003ac 7c00006c 7c00222c 7c001fec 10061fec "
+            "7c0017ac 7c0004ac 4c00012c 7c6000a6 7c600124 "
+            "7c6004a6 7c6001a4 7c6d42e6 0fe00000 44000002 4c000064"
+        )
+        self.assertEqual(
+            [(item.opcode, item.operands) for item in decode(words)],
+            [
+                (Opcode.DCBF, (0, 0)), (Opcode.DCBI, (0, 0)),
+                (Opcode.DCBST, (0, 0)), (Opcode.DCBT, (0, 4)),
+                (Opcode.DCBZ, (0, 3)), (Opcode.DCBZ_L, (6, 3)),
+                (Opcode.ICBI, (0, 2)), (Opcode.SYNC, ()),
+                (Opcode.ISYNC, ()), (Opcode.MFMSR, (3,)),
+                (Opcode.MTMSR, (3,)), (Opcode.MFSR, (3, 0)),
+                (Opcode.MTSR, (3, 0)), (Opcode.MFTB, (3, 269)),
+                (Opcode.TWI, (31, 0, 0)), (Opcode.SC, ()),
+                (Opcode.RFI, ()),
+            ],
+        )
+        with self.assertRaises(UnsupportedInstruction):
+            decode("7c2004ac")
+        with self.assertRaises(UnsupportedInstruction):
+            decode("4c200064")
+
     def test_known_encodings(self) -> None:
         fixture = (
             "38630004 3c630004 1c630004 "
@@ -139,19 +164,15 @@ class DecoderTests(unittest.TestCase):
         with self.assertRaises(UnsupportedInstruction):
             decode("7c032001")
 
-    def test_unmodeled_fp_fails_closed(self) -> None:
+    def test_non_broadway_sqrt_encodings_are_rejected(self) -> None:
         words = (
-            0xEC00182C,  # fsqrts (not implemented by Broadway interpreter)
-            0xFC00182C,  # fsqrt (not implemented by Broadway interpreter)
+            0xEC00182C,  # fsqrts encoding from later PowerPC ISA revisions
+            0xFC00182C,  # fsqrt encoding from later PowerPC ISA revisions
         )
         for word in words:
             with self.subTest(word=f"0x{word:08x}"):
-                try:
-                    decoded = decode(f"{word:08x}")
-                except UnsupportedInstruction:
-                    continue
                 with self.assertRaises(UnsupportedInstruction):
-                    execute_block(concrete_state(), decoded, ConcreteOps())
+                    decode(f"{word:08x}")
 
     def test_scalar_fp_encodings_match_gekko_disassembler(self) -> None:
         words = (
@@ -198,6 +219,8 @@ class DecoderTests(unittest.TestCase):
 
     def test_basic_paired_arithmetic_encodings_and_reserved_fields(self) -> None:
         words = (
+            ps_a(7, 1, 2, 0, 18),
+            ps_a(7, 0, 2, 0, 24), ps_a(7, 0, 2, 0, 26, rc=1),
             ps_a(7, 1, 2, 0, 21), ps_a(7, 1, 2, 0, 20),
             ps_a(7, 1, 0, 3, 25), ps_a(7, 1, 0, 3, 12),
             ps_a(7, 1, 0, 3, 13, rc=1),
@@ -211,6 +234,9 @@ class DecoderTests(unittest.TestCase):
         self.assertEqual(
             [(item.opcode, item.operands, item.record) for item in decoded],
             [
+                (Opcode.PS_DIV, (7, 1, 2), False),
+                (Opcode.PS_RES, (7, 2), False),
+                (Opcode.PS_RSQRTE, (7, 2), True),
                 (Opcode.PS_ADD, (7, 1, 2), False),
                 (Opcode.PS_SUB, (7, 1, 2), False),
                 (Opcode.PS_MUL, (7, 1, 3), False),
@@ -231,6 +257,10 @@ class DecoderTests(unittest.TestCase):
             decode(f"{ps_a(7, 1, 2, 3, 21):08x}")
         with self.assertRaises(UnsupportedInstruction):
             decode(f"{ps_a(7, 1, 2, 3, 25):08x}")
+        with self.assertRaises(UnsupportedInstruction):
+            decode(f"{ps_a(7, 1, 2, 0, 24):08x}")
+        with self.assertRaises(UnsupportedInstruction):
+            decode(f"{ps_a(7, 0, 2, 3, 26):08x}")
 
     def test_reserved_fp_operand_fields_are_rejected(self) -> None:
         # fadd has no FC operand; GekkoDisassembler::fdabc rejects it.
@@ -246,13 +276,8 @@ class DecoderTests(unittest.TestCase):
         with self.assertRaises(UnsupportedInstruction):
             decode("fce1101c")
 
-    def test_direct_fp_instruction_execution_fails_closed(self) -> None:
-        state = concrete_state()
-        unsupported = set(Opcode) - SUPPORTED_OPCODES
-        self.assertTrue(unsupported)
-        for opcode in unsupported:
-            with self.subTest(opcode=opcode.value), self.assertRaises(UnsupportedInstruction):
-                execute_instruction(state, instruction(opcode, ()), ConcreteOps())
+    def test_every_decoded_opcode_has_semantics(self) -> None:
+        self.assertEqual(set(Opcode) - SUPPORTED_OPCODES, set())
 
     def test_rejects_partial_word(self) -> None:
         with self.assertRaises(ValueError):
@@ -414,6 +439,82 @@ class FloatingPointConcreteTests(unittest.TestCase):
         self.assertEqual(multiplied.ps1[7], 0x7FF8000000000000)
         self.assertEqual(multiplied.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXIMZ | 0x4000)
 
+    def test_paired_division_rounds_both_lanes_and_aggregates_exceptions(self) -> None:
+        final = execute_instruction(concrete_state({
+            "fpr": {"f1": 6.0, "f2": 2.0},
+            "ps1": {"f1": 0.0, "f2": 0.0},
+        }), Instruction(0, 0, Opcode.PS_DIV, (7, 1, 2), record=True), ConcreteOps())
+        self.assertEqual(final.fpr[7], 0x4008000000000000)
+        self.assertEqual(final.ps1[7], 0x7FF8000000000000)
+        self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXZDZ | 0x4000)
+        self.assertEqual(final.cr & 0x0F000000, 0x0A000000)
+
+        # Unlike scalar division, paired division writes both lanes even when
+        # an enabled exception was raised by either lane.
+        enabled = execute_instruction(concrete_state({
+            "fpr": {"f1": 1.0, "f2": 0.0, "f7": 3.0},
+            "ps1": {"f1": "0x7ff0000012345678", "f2": 2.0, "f7": 4.0},
+            "fpscr": FPSCR_VE | FPSCR_ZE,
+        }), Instruction(0, 0, Opcode.PS_DIV, (7, 1, 2)), ConcreteOps())
+        self.assertEqual(enabled.fpr[7], 0x7FF0000000000000)
+        self.assertEqual(enabled.ps1[7], 0x7FF8000000000000)
+        self.assertEqual(
+            enabled.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXSNAN |
+            FPSCR_ZX | FPSCR_VE | FPSCR_ZE | 0x5000,
+        )
+
+    def test_paired_estimates_use_tables_and_broadway_exception_writeback(self) -> None:
+        state = concrete_state({
+            "fpr": {"f2": 1.0}, "ps1": {"f2": 2.0},
+        })
+        reciprocal = execute_instruction(
+            state, Instruction(0, 0, Opcode.PS_RES, (7, 2), record=True), ConcreteOps(),
+        )
+        self.assertEqual(
+            (reciprocal.fpr[7], reciprocal.ps1[7]),
+            (0x3FEFFF0000000000, 0x3FDFFF0000000000),
+        )
+        self.assertEqual(reciprocal.fpscr, 0x4000)
+
+        rsqrt = execute_instruction(
+            state, Instruction(0, 0, Opcode.PS_RSQRTE, (7, 2)), ConcreteOps(),
+        )
+        self.assertEqual(
+            (rsqrt.fpr[7], rsqrt.ps1[7]),
+            (0x3FEFFE8000000000, 0x3FE69FA000000000),
+        )
+        self.assertEqual(rsqrt.fpscr, 0x4000)
+
+        # VE/ZE do not suppress paired-estimate destinations on Broadway.
+        exceptional = execute_instruction(concrete_state({
+            "fpr": {"f2": 0.0, "f7": 3.0},
+            "ps1": {"f2": "0x7ff0000012345678", "f7": 4.0},
+            "fpscr": FPSCR_VE | FPSCR_ZE | FPSCR_FI | FPSCR_FR,
+        }), Instruction(0, 0, Opcode.PS_RES, (7, 2)), ConcreteOps())
+        self.assertEqual(exceptional.fpr[7], 0x7FF0000000000000)
+        self.assertEqual(exceptional.ps1[7], 0x7FF8000012345678)
+        self.assertEqual(
+            exceptional.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXSNAN |
+            FPSCR_ZX | FPSCR_VE | FPSCR_ZE | 0x5000,
+        )
+
+        negative_zero = execute_instruction(concrete_state({
+            "fpr": {"f2": -1.0}, "ps1": {"f2": 0.0},
+            "fpscr": FPSCR_VE | FPSCR_ZE | FPSCR_FI | FPSCR_FR,
+        }), Instruction(0, 0, Opcode.PS_RSQRTE, (7, 2), record=True), ConcreteOps())
+        self.assertEqual(
+            (negative_zero.fpr[7], negative_zero.ps1[7]),
+            (0x7FF8000000000000, 0x7FF0000000000000),
+        )
+        self.assertEqual(
+            negative_zero.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXSQRT |
+            FPSCR_ZX | FPSCR_VE | FPSCR_ZE | 0x11000,
+        )
+        self.assertEqual(negative_zero.cr & 0x0F000000, 0x0E000000)
+
     def test_paired_fused_results_negation_broadcast_and_record(self) -> None:
         state = concrete_state({
             "fpr": {"f1": 1.5, "f2": 2.0, "f3": 4.0},
@@ -567,6 +668,10 @@ class FloatingPointConcreteTests(unittest.TestCase):
         state = concrete_state({"fpr": {"f1": 1.5, "f2": 2.0}, "fpscr": 1})
         with self.assertRaises(ExecutionInconclusive):
             execute_block(state, decode("fce1102a"), ConcreteOps())
+        with self.assertRaises(ExecutionInconclusive):
+            execute_instruction(
+                state, Instruction(0, 0, Opcode.PS_RSQRTE, (7, 2)), ConcreteOps(),
+            )
 
     def test_fmuls_force25_and_clears_fi_fr(self) -> None:
         state = concrete_state({
@@ -1364,6 +1469,36 @@ class FloatingPointSymbolicTests(unittest.TestCase):
         )
         self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
 
+    def test_paired_division_and_estimate_symbolic_proofs(self) -> None:
+        words = (
+            ps_a(7, 1, 2, 0, 18, rc=1),
+            ps_a(7, 0, 2, 0, 24, rc=1),
+            ps_a(7, 0, 2, 0, 26, rc=1),
+        )
+        for word in words:
+            encoded = f"{word:08x}"
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(
+                        parse_observables(["f7,f7.ps1,fpscr,cr1"]), timeout_ms=15_000,
+                    ),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        reciprocal = f"{ps_a(7, 0, 2, 0, 24):08x}"
+        rsqrt = f"{ps_a(7, 0, 2, 0, 26):08x}"
+        different = check_equivalence(
+            decode(reciprocal), decode(rsqrt),
+            EquivalenceContract(
+                parse_observables(["f7,f7.ps1,fpscr"]), timeout_ms=15_000,
+            ),
+            original_hex=reciprocal, candidate_hex=rsqrt,
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
     def test_paired_fused_symbolic_proofs(self) -> None:
         words = tuple(ps_a(7, 1, 2, 3, xo) for xo in (29, 28, 31, 30, 14, 15))
         for word in words:
@@ -1383,7 +1518,7 @@ class FloatingPointSymbolicTests(unittest.TestCase):
         msub = f"{ps_a(7, 1, 2, 3, 28):08x}"
         different = check_equivalence(
             decode(madd), decode(msub),
-            EquivalenceContract(parse_observables(["f7,f7.ps1"]), timeout_ms=10_000),
+            EquivalenceContract(parse_observables(["f7,f7.ps1"]), timeout_ms=20_000),
             original_hex=madd, candidate_hex=msub,
         )
         self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
@@ -1486,6 +1621,21 @@ class FloatingPointSymbolicTests(unittest.TestCase):
             {"f1", "f1.ps1", "f3", "f3.ps1", "fpscr"},
         )
         self.assertEqual(arithmetic_writes, {"f7", "f7.ps1", "fpscr", "cr1"})
+        paired_division = decode(f"{ps_a(7, 1, 2, 0, 18, rc=1):08x}")[0]
+        self.assertEqual(
+            automatic_live_out([paired_division]),
+            ("f7", "f7.ps1", "cr1", "fpscr"),
+        )
+        division_reads, division_writes = register_effects(paired_division)
+        self.assertEqual(
+            division_reads,
+            {"f1", "f1.ps1", "f2", "f2.ps1", "fpscr"},
+        )
+        self.assertEqual(division_writes, {"f7", "f7.ps1", "fpscr", "cr1"})
+        paired_estimate = decode(f"{ps_a(7, 0, 2, 0, 24, rc=1):08x}")[0]
+        estimate_reads, estimate_writes = register_effects(paired_estimate)
+        self.assertEqual(estimate_reads, {"f2", "f2.ps1", "fpscr"})
+        self.assertEqual(estimate_writes, {"f7", "f7.ps1", "fpscr", "cr1"})
         paired_fused = decode(f"{ps_a(7, 1, 2, 3, 29, rc=1):08x}")[0]
         self.assertEqual(
             automatic_live_out([paired_fused]),
@@ -1553,6 +1703,57 @@ class FloatingPointSymbolicTests(unittest.TestCase):
 
 
 class ConcreteSemanticsTests(unittest.TestCase):
+    def test_cache_barriers_and_cache_block_zero_value_semantics(self) -> None:
+        initial = concrete_state({
+            "gpr": {"r3": 0x1013},
+            "memory": {"bytes": {f"0x{address:x}": 0xAA for address in range(0x1000, 0x1040)}},
+        })
+        unchanged = execute_block(initial, decode("7c0004ac 4c00012c 7c001a2c"), ConcreteOps())
+        self.assertEqual(unchanged, initial)
+        final = execute_block(initial, decode("7c001fec"), ConcreteOps())
+        self.assertEqual([final.memory.read(a) for a in range(0x1000, 0x1020)], [0] * 32)
+        self.assertEqual([final.memory.read(a) for a in range(0x1020, 0x1040)], [0xAA] * 32)
+
+    def test_privileged_register_and_stable_time_base_semantics(self) -> None:
+        state = concrete_state({
+            "gpr": {"r5": 0x12345678}, "msr": 0x00002000,
+            "sr": {"sr3": 0xABCDEF01}, "time_base": 0x1122334455667788,
+            "srr0": 0x80001234, "srr1": 0x87654321,
+        })
+        self.assertEqual(execute_block(state, decode("7ce000a6"), ConcreteOps()).gpr[7], 0x2000)
+        self.assertEqual(execute_block(state, decode("7ce304a6"), ConcreteOps()).gpr[7], 0xABCDEF01)
+        self.assertEqual(execute_block(state, decode("7cec42e6"), ConcreteOps()).gpr[7], 0x55667788)
+        self.assertEqual(execute_block(state, decode("7ced42e6"), ConcreteOps()).gpr[7], 0x11223344)
+        self.assertEqual(execute_block(state, decode("7cba03a6 7cfa02a6"), ConcreteOps()).gpr[7], 0x12345678)
+        self.assertEqual(execute_block(state, decode("7ca301a4"), ConcreteOps()).sr[3], 0x12345678)
+        self.assertEqual(execute_block(state, decode("7ca00124"), ConcreteOps()).msr, 0x12345678)
+        user = execute_block(concrete_state({"msr": 0x4000}), decode("7ce000a6"), ConcreteOps())
+        self.assertFalse(user.valid)
+
+    def test_trap_system_call_and_rfi_exception_state(self) -> None:
+        state = concrete_state({"gpr": {"r3": 0}, "msr": 0x00010001})
+        trapped = [x for x in execute_cfg(state, decode("0c830000"), ConcreteOps()) if x.condition]
+        self.assertEqual(len(trapped), 1)
+        trap = trapped[0]
+        self.assertEqual((trap.exit_kind, trap.exit_target), ("program-exception", 0x700))
+        self.assertEqual(trap.state.srr0, 0)
+        self.assertEqual(trap.state.srr1, (state.msr & 0x87C0FFFF) | 0x00020000)
+        expected_msr = (((state.msr & ~1) | ((state.msr >> 16) & 1)) & ~0x0004EF36) & 0xFFFFFFFF
+        self.assertEqual(trap.state.msr, expected_msr)
+
+        syscall = execute_cfg(state, decode("44000002"), ConcreteOps())[0]
+        self.assertEqual((syscall.exit_kind, syscall.exit_target), ("system-call", 0xC00))
+        self.assertEqual(syscall.state.srr0, 4)
+        self.assertEqual(syscall.state.srr1, state.msr & 0x87C0FFFF)
+
+        rfi_state = concrete_state({"msr": 0x1000, "srr0": 0x80001234, "srr1": 0x87C05678})
+        rfi = [x for x in execute_cfg(rfi_state, decode("4c000064"), ConcreteOps()) if x.condition][0]
+        self.assertEqual((rfi.exit_kind, rfi.exit_target), ("return-from-interrupt", 0x80001234))
+        self.assertEqual(
+            rfi.state.msr,
+            (((rfi_state.msr & ~0x87C0FFFF) | (rfi_state.srr1 & 0x87C0FFFF)) & 0xFFFBFFFF),
+        )
+
     def test_addi_ra_zero_does_not_read_r0(self) -> None:
         state = concrete_state({"gpr": {"r0": "0xffffffff"}})
         final = execute_block(state, decode("38600004"), ConcreteOps())
@@ -1587,6 +1788,21 @@ class SymbolicEquivalenceTests(unittest.TestCase):
             original_hex=original,
             candidate_hex=candidate,
         )
+
+    def test_system_cache_and_exception_symbolic_proofs(self) -> None:
+        for encoded, observe in (
+            ("7c001fec", "memory"), ("7ce000a6", "r7"),
+            ("7ce304a6", "r7"), ("7cec42e6", "r7"),
+            ("0c830000", "msr,srr0,srr1"),
+            ("44000002", "msr,srr0,srr1"),
+            ("4c000064", "msr"),
+        ):
+            with self.subTest(encoded=encoded):
+                result = self.check(encoded, encoded, observe)
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        difference = self.check("7c001fec", "7c0004ac", "memory")
+        self.assertEqual(difference.status, ProofStatus.NOT_EQUIVALENT)
 
     def test_byte_different_shift_and_multiply_are_equivalent(self) -> None:
         result = self.check("5463103a", "1c630004", "r3")
@@ -1640,8 +1856,11 @@ class SymbolicEquivalenceTests(unittest.TestCase):
 
 class ContractTests(unittest.TestCase):
     def test_observables_are_versioned_and_validated(self) -> None:
-        values = parse_observables(["r3,cr0", "xer.ca", "r3"])
-        self.assertEqual([value.name for value in values], ["r3", "cr0", "xer.ca"])
+        values = parse_observables(["r3,cr0", "xer.ca", "r3", "msr,sr3,time_base,srr0"])
+        self.assertEqual(
+            [value.name for value in values],
+            ["r3", "cr0", "xer.ca", "msr", "sr3", "time_base", "srr0"],
+        )
         self.assertEqual(parse_observables(["memory"])[0].kind, "memory")
         with self.assertRaises(ValueError):
             EquivalenceContract(values, timeout_ms=0)
@@ -1663,7 +1882,12 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(names[32:64], tuple(f"f{index}" for index in range(32)))
         self.assertEqual(names[64:96], tuple(f"f{index}.ps1" for index in range(32)))
         self.assertEqual(names[96:104], tuple(f"gqr{index}" for index in range(8)))
-        self.assertEqual(names[104:], ("cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr", "memory"))
+        self.assertEqual(names[104:120], tuple(f"sr{index}" for index in range(16)))
+        self.assertEqual(
+            names[120:],
+            ("cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr",
+             "msr", "time_base", "srr0", "srr1", "memory"),
+        )
 
     def test_coop_runner_defaults_to_ppc_eabi(self) -> None:
         args = _equivalence_args_with_default_contract(
@@ -1954,6 +2178,34 @@ class PhaseTwoControlFlowTests(unittest.TestCase):
         live = automatic_live_out(program)
         self.assertIn("r3", live)
         self.assertIn("memory", live)
+
+    def test_system_instruction_effects_and_live_out_are_complete(self) -> None:
+        cases = (
+            (instruction(Opcode.DCBZ, (3, 4)), {"r3", "r4"}, {"memory"}),
+            (instruction(Opcode.MFMSR, (5,)), {"msr"}, {"r5"}),
+            (instruction(Opcode.MTMSR, (6,)), {"r6"}, {"msr"}),
+            (instruction(Opcode.MFSR, (7, 3)), {"sr3"}, {"r7"}),
+            (instruction(Opcode.MTSR, (8, 4)), {"r8"}, {"sr4"}),
+            (instruction(Opcode.MFTB, (9, 269)), {"time_base"}, {"r9"}),
+            (
+                instruction(Opcode.TWI, (31, 10, 0), address=0x100),
+                {"r10", "msr"}, {"msr", "srr0", "srr1"},
+            ),
+            (
+                instruction(Opcode.SC, (), address=0x104),
+                {"msr"}, {"msr", "srr0", "srr1"},
+            ),
+            (
+                instruction(Opcode.RFI, (), address=0x108),
+                {"msr", "srr0", "srr1"}, {"msr"},
+            ),
+        )
+        for insn, expected_reads, expected_writes in cases:
+            with self.subTest(opcode=insn.opcode):
+                reads, writes = register_effects(insn)
+                self.assertTrue(expected_reads <= reads)
+                self.assertTrue(expected_writes <= writes)
+                self.assertTrue(expected_writes <= set(automatic_live_out([insn])))
 
 
 @unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")

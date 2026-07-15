@@ -18,7 +18,7 @@ class ProofStatus(str, Enum):
 @dataclass(slots=True)
 class ProofResult:
     status: ProofStatus
-    architecture_model: str = "broadway-ppc32-be-v10"
+    architecture_model: str = "broadway-ppc32-be-v12"
     format: int = 2
     contract: str = "manual"
     observables: list[str] = field(default_factory=list)
@@ -29,7 +29,11 @@ class ProofResult:
         "FP invalid/divide-zero and conversion flags plus VE/ZE suppression are tracked; arithmetic OX/UX/XX and traps are not",
         "FP arithmetic requires RN=nearest-even and NI=0; finite-input overflow is excluded, modeled invalid/ZX cases are included",
         "fused-single proofs require finite operands to be exact binary32 values expanded in FPRs",
-        "fres, frsqrte, square-root, and remaining paired-single arithmetic instructions are unsupported",
+        "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz_l lock state is unobserved",
+        "privileged register operations are defined only in supervisor mode; segment/MSR translation effects are outside ordinary-RAM checks",
+        "the 64-bit time base is stable for the duration of a bounded checked block",
+        "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+        "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
         "division results compared only on architecturally defined inputs",
         "loops and external call continuations are not summarized",
     ])

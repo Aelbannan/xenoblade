@@ -44,6 +44,17 @@ def _decode_word(word: int, address: int) -> Instruction:
     rb = (word >> 11) & 31
     imm = word & 0xFFFF
 
+    if primary == 3:
+        return _insn(address, word, Opcode.TWI, (rt, ra, _signed(imm, 16)))
+    if primary == 17:
+        if word != 0x44000002:
+            raise UnsupportedInstruction(address, word, "reserved system-call encoding")
+        return _insn(address, word, Opcode.SC, ())
+    if primary == 4 and ((word >> 1) & 0x3FF) == 1014 and rt == 0:
+        if word & 1:
+            raise UnsupportedInstruction(address, word, "reserved dcbz_l Rc bit is set")
+        return _insn(address, word, Opcode.DCBZ_L, (ra, rb))
+
     immediate = {
         7: (Opcode.MULLI, True),
         8: (Opcode.SUBFIC, True),
@@ -135,6 +146,14 @@ def _decode_word(word: int, address: int) -> Instruction:
         bi = (word >> 16) & 31
         bh = (word >> 11) & 3
         reserved = (word >> 13) & 7
+        if xo == 50:
+            if word != 0x4C000064:
+                raise UnsupportedInstruction(address, word, "reserved rfi fields are nonzero")
+            return _insn(address, word, Opcode.RFI, ())
+        if xo == 150:
+            if word != 0x4C00012C:
+                raise UnsupportedInstruction(address, word, "reserved isync fields are nonzero")
+            return _insn(address, word, Opcode.ISYNC, ())
         if xo in (16, 528):
             if reserved:
                 raise UnsupportedInstruction(address, word, "reserved branch-register bits are set")
@@ -207,11 +226,44 @@ def _decode_word(word: int, address: int) -> Instruction:
             if ((word >> 11) & 1) or rc:
                 raise UnsupportedInstruction(address, word, "reserved mtcrf bits are set")
             return _insn(address, word, Opcode.MTCRF, (rt, fxm))
+        cache_ops = {
+            54: Opcode.DCBST, 86: Opcode.DCBF, 278: Opcode.DCBT,
+            470: Opcode.DCBI, 982: Opcode.ICBI, 1014: Opcode.DCBZ,
+        }
+        if xo in cache_ops:
+            if rt != 0 or rc:
+                raise UnsupportedInstruction(address, word, "reserved cache-operation fields are nonzero")
+            return _insn(address, word, cache_ops[xo], (ra, rb))
+        if xo == 598:
+            if word != 0x7C0004AC:
+                raise UnsupportedInstruction(address, word, "reserved sync fields are nonzero")
+            return _insn(address, word, Opcode.SYNC, ())
+        if xo == 83:
+            if word & 0x001FFFFF != 0x000000A6:
+                raise UnsupportedInstruction(address, word, "reserved mfmsr fields are nonzero")
+            return _insn(address, word, Opcode.MFMSR, (rt,))
+        if xo == 146:
+            if word & 0x001FFFFF != 0x00000124:
+                raise UnsupportedInstruction(address, word, "reserved mtmsr fields are nonzero")
+            return _insn(address, word, Opcode.MTMSR, (rt,))
+        if xo == 595:
+            if word & 0x0010FFFF != 0x000004A6:
+                raise UnsupportedInstruction(address, word, "reserved mfsr fields are nonzero")
+            return _insn(address, word, Opcode.MFSR, (rt, (word >> 16) & 0xF))
+        if xo == 210:
+            if word & 0x0010FFFF != 0x000001A4:
+                raise UnsupportedInstruction(address, word, "reserved mtsr fields are nonzero")
+            return _insn(address, word, Opcode.MTSR, (rt, (word >> 16) & 0xF))
+        if xo == 371:
+            tbr = ((word >> 16) & 31) | (((word >> 11) & 31) << 5)
+            if rc or tbr not in (268, 269):
+                raise UnsupportedInstruction(address, word, f"unsupported time-base register {tbr}")
+            return _insn(address, word, Opcode.MFTB, (rt, tbr))
         if xo in (339, 467):
             spr = ((word >> 16) & 31) | (((word >> 11) & 31) << 5)
             if rc:
                 raise UnsupportedInstruction(address, word, "reserved SPR transfer Rc bit is set")
-            if spr not in (1, 8, 9) and not 912 <= spr <= 919:
+            if spr not in (1, 8, 9, 26, 27) and not 912 <= spr <= 919:
                 raise UnsupportedInstruction(address, word, f"unsupported special-purpose register {spr}")
             return _insn(address, word, Opcode.MFSPR if xo == 339 else Opcode.MTSPR, (rt, spr))
 
@@ -283,10 +335,14 @@ def _decode_word(word: int, address: int) -> Instruction:
             return _insn(address, word, opcode, (fd, ra, rb, wx, ix))
         if xo5 in ps_5bit:
             opcode = ps_5bit[xo5]
-            if opcode in (Opcode.PS_ADD, Opcode.PS_SUB):
+            if opcode in (Opcode.PS_DIV, Opcode.PS_ADD, Opcode.PS_SUB):
                 if fc:
-                    raise UnsupportedInstruction(address, word, "reserved paired add/sub FC field is nonzero")
+                    raise UnsupportedInstruction(address, word, "reserved paired divide/add/sub FC field is nonzero")
                 return _insn(address, word, opcode, (fd, fa, fb), record=bool(word & 1))
+            if opcode in (Opcode.PS_RES, Opcode.PS_RSQRTE):
+                if fa or fc:
+                    raise UnsupportedInstruction(address, word, "reserved paired estimate FA/FC field is nonzero")
+                return _insn(address, word, opcode, (fd, fb), record=bool(word & 1))
             if opcode in (Opcode.PS_MUL, Opcode.PS_MULS0, Opcode.PS_MULS1):
                 if fb:
                     raise UnsupportedInstruction(address, word, "reserved paired multiply FB field is nonzero")
@@ -334,7 +390,7 @@ def _decode_word(word: int, address: int) -> Instruction:
         sub = word & 0x3E
         sp_arith = {
             36: Opcode.FDIVS, 40: Opcode.FSUBS, 42: Opcode.FADDS,
-            44: Opcode.FSQRTS, 48: Opcode.FRES, 50: Opcode.FMULS,
+            48: Opcode.FRES, 50: Opcode.FMULS,
             56: Opcode.FMSUBS, 58: Opcode.FMADDS, 60: Opcode.FNMSUBS, 62: Opcode.FNMADDS,
         }
         if sub not in sp_arith:
@@ -342,7 +398,7 @@ def _decode_word(word: int, address: int) -> Instruction:
         opcode = sp_arith[sub]
         if opcode in (Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS) and fc != 0:
             raise UnsupportedInstruction(address, word, "reserved FP FC field is nonzero")
-        if opcode in (Opcode.FSQRTS, Opcode.FRES) and (fa != 0 or fc != 0):
+        if opcode == Opcode.FRES and (fa != 0 or fc != 0):
             raise UnsupportedInstruction(address, word, "reserved FP FA/FC field is nonzero")
         if opcode == Opcode.FMULS and fb != 0:
             raise UnsupportedInstruction(address, word, "reserved FP FB field is nonzero")
@@ -359,7 +415,7 @@ def _decode_word(word: int, address: int) -> Instruction:
         if is_double:
             sub = word & 0x1E
             dp_arith = {
-                4: Opcode.FDIV, 8: Opcode.FSUB, 10: Opcode.FADD, 12: Opcode.FSQRT,
+                4: Opcode.FDIV, 8: Opcode.FSUB, 10: Opcode.FADD,
                 14: Opcode.FSEL, 18: Opcode.FMUL, 20: Opcode.FRSQRTE,
                 24: Opcode.FMSUB, 26: Opcode.FMADD, 28: Opcode.FNMSUB, 30: Opcode.FNMADD,
             }
@@ -368,7 +424,7 @@ def _decode_word(word: int, address: int) -> Instruction:
             opcode = dp_arith[sub]
             if opcode in (Opcode.FADD, Opcode.FSUB, Opcode.FDIV) and fc != 0:
                 raise UnsupportedInstruction(address, word, "reserved FP FC field is nonzero")
-            if opcode in (Opcode.FSQRT, Opcode.FRSQRTE) and (fa != 0 or fc != 0):
+            if opcode == Opcode.FRSQRTE and (fa != 0 or fc != 0):
                 raise UnsupportedInstruction(address, word, "reserved FP FA/FC field is nonzero")
             if opcode == Opcode.FMUL and fb != 0:
                 raise UnsupportedInstruction(address, word, "reserved FP FB field is nonzero")

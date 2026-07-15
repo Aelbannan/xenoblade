@@ -72,6 +72,25 @@ class Opcode(str, Enum):
     MTCRF = "mtcrf"
     MFSPR = "mfspr"
     MTSPR = "mtspr"
+    MFMSR = "mfmsr"
+    MTMSR = "mtmsr"
+    MFSR = "mfsr"
+    MTSR = "mtsr"
+    MFTB = "mftb"
+
+    # Cache, ordering, and system control.
+    DCBF = "dcbf"
+    DCBI = "dcbi"
+    DCBST = "dcbst"
+    DCBT = "dcbt"
+    DCBZ = "dcbz"
+    DCBZ_L = "dcbz_l"
+    ICBI = "icbi"
+    SYNC = "sync"
+    ISYNC = "isync"
+    TWI = "twi"
+    SC = "sc"
+    RFI = "rfi"
 
     # Integer storage access (big-endian unless BRX).
     LBZ = "lbz"
@@ -141,7 +160,6 @@ class Opcode(str, Enum):
     FSUBS = "fsubs"
     FMULS = "fmuls"
     FDIVS = "fdivs"
-    FSQRTS = "fsqrts"
     FRES = "fres"
     FMADDS = "fmadds"
     FMSUBS = "fmsubs"
@@ -153,7 +171,6 @@ class Opcode(str, Enum):
     FSUB = "fsub"
     FMUL = "fmul"
     FDIV = "fdiv"
-    FSQRT = "fsqrt"
     FRSQRTE = "frsqrte"
     FSEL = "fsel"
     FMADD = "fmadd"
@@ -256,6 +273,7 @@ SUPPORTED_FP_OPCODES = frozenset({
     Opcode.PS_MADD, Opcode.PS_MSUB, Opcode.PS_NMADD, Opcode.PS_NMSUB,
     Opcode.PS_MADDS0, Opcode.PS_MADDS1,
     Opcode.PS_SUM0, Opcode.PS_SUM1, Opcode.PS_SEL,
+    Opcode.PS_DIV, Opcode.PS_RES, Opcode.PS_RSQRTE,
 })
 
 

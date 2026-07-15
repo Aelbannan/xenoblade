@@ -87,6 +87,7 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
         return tuple(f"r{index}" for index in range(32)) + tuple(f"f{index}" for index in range(32)) + tuple(
             f"f{index}.ps1" for index in range(32)
         ) + tuple(f"gqr{index}" for index in range(8)) + (
+            *(f"sr{index}" for index in range(16)),
             "cr",
             "fpscr",
             "xer.ca",
@@ -94,6 +95,10 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "xer.so",
             "lr",
             "ctr",
+            "msr",
+            "time_base",
+            "srr0",
+            "srr1",
             "memory",
         )
     if name == "live-out":
@@ -142,9 +147,11 @@ def parse_observables(values: list[str] | tuple[str, ...]) -> tuple[Observable, 
             result.append(Observable("ps1", token, int(token[1:-4])))
         elif token.startswith("gqr") and token[3:].isdigit() and 0 <= int(token[3:]) < 8:
             result.append(Observable("gqr", token, int(token[3:])))
+        elif token.startswith("sr") and token[2:].isdigit() and 0 <= int(token[2:]) < 16:
+            result.append(Observable("sr", token, int(token[2:])))
         elif token.startswith("cr") and token[2:].isdigit() and 0 <= int(token[2:]) < 8:
             result.append(Observable("cr_field", token, int(token[2:])))
-        elif token in ("cr", "lr", "ctr"):
+        elif token in ("cr", "lr", "ctr", "msr", "time_base", "srr0", "srr1"):
             result.append(Observable(token, token))
         elif token == "memory":
             result.append(Observable("memory", "memory"))

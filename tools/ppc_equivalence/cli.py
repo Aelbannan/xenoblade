@@ -29,11 +29,23 @@ def _observable_concrete(state: MachineState, observable: Observable) -> object:
     if observable.kind == "gpr":
         assert observable.index is not None
         return f"0x{int(state.gpr[observable.index]) & 0xFFFFFFFF:08x}"
+    if observable.kind == "sr":
+        assert observable.index is not None
+        return f"0x{int(state.sr[observable.index]) & 0xFFFFFFFF:08x}"
     if observable.kind == "cr_field":
         assert observable.index is not None
         return f"0x{(int(state.cr) >> ((7 - observable.index) * 4)) & 0xF:x}"
-    if observable.kind in ("cr", "lr", "ctr"):
+    if observable.kind in ("cr", "lr", "ctr", "msr", "srr0", "srr1"):
         return f"0x{int(getattr(state, observable.kind)) & 0xFFFFFFFF:08x}"
+    if observable.kind == "time_base":
+        return f"0x{int(state.time_base) & 0xFFFFFFFFFFFFFFFF:016x}"
+    if observable.kind == "fpscr":
+        return f"0x{int(state.fpscr) & 0xFFFFFFFF:08x}"
+    if observable.kind in ("fpr", "ps1", "gqr"):
+        assert observable.index is not None
+        value = getattr(state, observable.kind)[observable.index]
+        width = 16 if observable.kind in ("fpr", "ps1") else 8
+        return f"0x{int(value) & ((1 << (width * 4)) - 1):0{width}x}"
     if observable.kind == "xer":
         return int(bool(getattr(state.xer, observable.name.split(".", 1)[1])))
     if observable.kind == "memory":
@@ -226,7 +238,11 @@ def _add_check_options(
     contract.add_argument(
         "--observe",
         action="append",
-        help="manual observables: r0..r31, cr/cr0..cr7, xer.ca/ov/so, lr, ctr, memory; comma-separated or repeated",
+        help=(
+            "manual observables: r0..r31, f0..f31[.ps1], gqr0..gqr7, "
+            "sr0..sr15, cr/cr0..cr7, fpscr, xer.ca/ov/so, lr, ctr, msr, "
+            "time_base, srr0, srr1, memory; comma-separated or repeated"
+        ),
     )
     parser.add_argument("--timeout-ms", type=int, default=10_000)
     parser.add_argument("--max-instructions", type=int, default=512, help="per-path execution bound")

@@ -982,11 +982,11 @@ FP_X_MEM = {**FP_X_LOADS, **FP_X_STORES}
 FP_UPDATES = {Opcode.LFSU, Opcode.LFDU, Opcode.LFSUX, Opcode.LFDUX, Opcode.STFSU, Opcode.STFDU, Opcode.STFSUX, Opcode.STFDUX}
 
 _FP_SINGLE_ARITH = {
-    Opcode.FADDS, Opcode.FSUBS, Opcode.FMULS, Opcode.FDIVS, Opcode.FSQRTS, Opcode.FRES,
+    Opcode.FADDS, Opcode.FSUBS, Opcode.FMULS, Opcode.FDIVS, Opcode.FRES,
     Opcode.FMADDS, Opcode.FMSUBS, Opcode.FNMADDS, Opcode.FNMSUBS, Opcode.FRSP,
 }
 _FP_DOUBLE_ARITH = {
-    Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV, Opcode.FSQRT, Opcode.FRSQRTE, Opcode.FSEL,
+    Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV, Opcode.FRSQRTE, Opcode.FSEL,
     Opcode.FMADD, Opcode.FMSUB, Opcode.FNMADD, Opcode.FNMSUB,
 }
 _FP_AUX_OPS = {
@@ -994,9 +994,8 @@ _FP_AUX_OPS = {
     Opcode.FCTIW, Opcode.FCTIWZ, Opcode.MFFS, Opcode.MTFSF, Opcode.MTFSFI,
     Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS,
 }
-_FP_PS_ARITH = {
-    Opcode.PS_DIV, Opcode.PS_RES, Opcode.PS_RSQRTE,
-}
+_FP_PS_DIV = {Opcode.PS_DIV}
+_FP_PS_ESTIMATE = {Opcode.PS_RES, Opcode.PS_RSQRTE}
 _FP_PS_BASIC = {
     Opcode.PS_ADD, Opcode.PS_SUB, Opcode.PS_MUL, Opcode.PS_MULS0, Opcode.PS_MULS1,
 }
@@ -1039,7 +1038,9 @@ _FP_FUSED_NEGATE = {Opcode.FNMADDS, Opcode.FNMSUBS, Opcode.FNMADD, Opcode.FNMSUB
 _FP_ESTIMATE = {Opcode.FRES, Opcode.FRSQRTE}
 _FP_ROUNDING_SENSITIVE = _FP_VALUE_ARITH | {
     Opcode.STFS, Opcode.STFSU, Opcode.STFSX, Opcode.STFSUX,
-} | _FP_FUSED | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM
+} | _FP_FUSED | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | {
+    Opcode.PS_RSQRTE,
+}
 
 
 def _ps_extract0(fpr_bits: Any, ops: WordOps) -> Any:
@@ -1266,6 +1267,69 @@ def _execute_ps_basic_lane(
     return replace(state, valid=ops.land(state.valid, defined_result)), result_bits
 
 
+def _execute_ps_div_lane(
+    state: MachineState, numerator_bits: Any, denominator_bits: Any,
+    ops: WordOps,
+) -> tuple[MachineState, Any]:
+    numerator = ops.fp_bits_to_double(numerator_bits)
+    denominator = ops.fp_bits_to_double(denominator_bits)
+    rm = ops.fp_rm_rne()
+    value = ops.fp_div(rm, numerator, denominator)
+
+    nan_a = ops.fp_is_nan(numerator)
+    nan_b = ops.fp_is_nan(denominator)
+    any_nan = ops.lor(nan_a, nan_b)
+    no_nan = ops.lnot(any_nan)
+    any_snan = ops.lor(
+        ops.fp_is_snan_bits(numerator_bits), ops.fp_is_snan_bits(denominator_bits),
+    )
+    inf_a = ops.fp_is_inf(numerator)
+    inf_b = ops.fp_is_inf(denominator)
+    zero = ops.fp_bits_to_double(ops.fp_const64(0))
+    zero_a = ops.fp_is_eq(numerator, zero)
+    zero_b = ops.fp_is_eq(denominator, zero)
+    vxzdz = ops.land(no_nan, ops.land(zero_a, zero_b))
+    vxidi = ops.land(no_nan, ops.land(inf_a, inf_b))
+    zx = ops.land(no_nan, ops.land(ops.lnot(zero_a), zero_b))
+    invalid = ops.lor(any_snan, ops.lor(vxzdz, vxidi))
+    nan_result = ops.lor(any_nan, ops.lor(vxzdz, vxidi))
+
+    state = _fpscr_raise_if(state, any_snan, FPSCR_VXSNAN, ops)
+    state = _fpscr_raise_if(state, vxzdz, FPSCR_VXZDZ, ops)
+    state = _fpscr_raise_if(state, vxidi, FPSCR_VXIDI, ops)
+    state = _fpscr_raise_if(state, zx, FPSCR_ZX, ops)
+
+    propagated_nan = ops.ite(
+        nan_a,
+        ops.fp_quiet_nan_bits(numerator_bits),
+        ops.ite(
+            nan_b,
+            ops.fp_quiet_nan_bits(denominator_bits),
+            ops.fp_const64(0x7FF8000000000000),
+        ),
+    )
+    propagated_nan = ops.fp_single_nan_bits(propagated_nan)
+    rounded = ops.fp_round_to_single(rm, value)
+    result_bits = ops.ite(
+        nan_result, propagated_nan, ops.fp_double_to_bits(rounded),
+    )
+
+    cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
+    state = state.with_fpscr(ops.ite(nan_result, cleared, state.fpscr))
+    finite = lambda item: ops.lnot(ops.lor(ops.fp_is_nan(item), ops.fp_is_inf(item)))
+    handled_nonfinite = ops.lor(
+        any_nan, ops.lor(invalid, ops.lor(zx, ops.lor(inf_a, inf_b))),
+    )
+    state = replace(state, valid=ops.land(
+        state.valid,
+        ops.lor(
+            ops.land(ops.land(finite(numerator), finite(denominator)), finite(rounded)),
+            handled_nonfinite,
+        ),
+    ))
+    return state, result_bits
+
+
 def _execute_ps_fused_lane(
     state: MachineState, opcode: Opcode, a_bits: Any, b_bits: Any, c_bits: Any,
     ops: WordOps,
@@ -1451,7 +1515,42 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
     destination: int | None = None
     overflow = ops.bool(False)
 
-    if op in (Opcode.ADDI, Opcode.ADDIS, Opcode.MULLI, Opcode.ADDIC, Opcode.ADDIC_DOT, Opcode.SUBFIC):
+    if op in {
+        Opcode.DCBF, Opcode.DCBI, Opcode.DCBST, Opcode.DCBT,
+        Opcode.ICBI, Opcode.SYNC, Opcode.ISYNC,
+    }:
+        # Under the explicit coherent ordinary-RAM/no-DMA/no-self-modifying-code
+        # contract, these ordering and cache-state operations have no visible
+        # value-semantics effect.
+        return state
+    if op in (Opcode.DCBZ, Opcode.DCBZ_L):
+        ra, rb = a
+        address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
+        block = ops.band(address, ops.const(0xFFFFFFE0))
+        for offset in range(32):
+            byte_address = ops.add(block, ops.const(offset))
+            state = _touch_memory(state, byte_address, 1, ops)
+            state = replace(
+                state, memory=ops.store_byte(state.memory, byte_address, ops.const(0)),
+            )
+        return state
+
+    if op in (Opcode.MFMSR, Opcode.MTMSR, Opcode.MFSR, Opcode.MTSR, Opcode.RFI):
+        supervisor = ops.eq(ops.band(state.msr, ops.const(0x00004000)), ops.const(0))
+        state = replace(state, valid=ops.land(state.valid, supervisor))
+
+    if op == Opcode.MFMSR:
+        destination, result = a[0], state.msr
+    elif op == Opcode.MTMSR:
+        return replace(state, msr=state.gpr[a[0]])
+    elif op == Opcode.MFSR:
+        destination, result = a[0], state.sr[a[1]]
+    elif op == Opcode.MTSR:
+        return state.with_sr(a[1], state.gpr[a[0]])
+    elif op == Opcode.MFTB:
+        destination = a[0]
+        result = ops.fp_low_word(state.time_base) if a[1] == 268 else ops.fp_high_word(state.time_base)
+    elif op in (Opcode.ADDI, Opcode.ADDIS, Opcode.MULLI, Opcode.ADDIC, Opcode.ADDIC_DOT, Opcode.SUBFIC):
         rd, ra, immediate = a
         base = ops.const(0) if ra == 0 and op in (Opcode.ADDI, Opcode.ADDIS) else state.gpr[ra]
         immediate_value = immediate << 16 if op == Opcode.ADDIS else immediate
@@ -1632,6 +1731,9 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         return state.with_cr(ops.bor(ops.band(state.cr, ops.bnot(mask)), ops.band(state.gpr[rs], mask)))
     elif op in (Opcode.MFSPR, Opcode.MTSPR):
         reg, spr = a
+        if spr in (26, 27):
+            supervisor = ops.eq(ops.band(state.msr, ops.const(0x00004000)), ops.const(0))
+            state = replace(state, valid=ops.land(state.valid, supervisor))
         if spr == 1:
             packed = ops.bor(ops.ite(state.xer.so, ops.const(1 << 31), ops.const(0)), ops.bor(ops.ite(state.xer.ov, ops.const(1 << 30), ops.const(0)), ops.ite(state.xer.ca, ops.const(1 << 29), ops.const(0))))
             if op == Opcode.MFSPR: destination, result = reg, packed
@@ -1648,6 +1750,12 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         elif spr == 9:
             if op == Opcode.MFSPR: destination, result = reg, state.ctr
             else: return replace(state, ctr=state.gpr[reg])
+        elif spr == 26:
+            if op == Opcode.MFSPR: destination, result = reg, state.srr0
+            else: return replace(state, srr0=state.gpr[reg])
+        elif spr == 27:
+            if op == Opcode.MFSPR: destination, result = reg, state.srr1
+            else: return replace(state, srr1=state.gpr[reg])
         else:
             gqr_index = spr - 912
             if op == Opcode.MFSPR:
@@ -1735,6 +1843,55 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             right1 = ops.fp_force_25bit(right1)
         state, result0 = _execute_ps_basic_lane(state, op, left0, right0, ops)
         state, result1 = _execute_ps_basic_lane(state, op, left1, right1, ops)
+        state = _fpscr_set_fprf(
+            state.with_fpr(fd, result0).with_ps1(fd, result1), result0, ops,
+        )
+        if insn.record:
+            state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+        return state
+
+    elif op in _FP_PS_DIV:
+        fd, fa, fb = a
+        state, result0 = _execute_ps_div_lane(state, state.fpr[fa], state.fpr[fb], ops)
+        state, result1 = _execute_ps_div_lane(state, state.ps1[fa], state.ps1[fb], ops)
+        state = _fpscr_set_fprf(
+            state.with_fpr(fd, result0).with_ps1(fd, result1), result0, ops,
+        )
+        if insn.record:
+            state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+        return state
+
+    elif op in _FP_PS_ESTIMATE:
+        fd, fb = a
+        source0_bits, source1_bits = state.fpr[fb], state.ps1[fb]
+        source0 = ops.fp_bits_to_double(source0_bits)
+        source1 = ops.fp_bits_to_double(source1_bits)
+        zero = ops.fp_bits_to_double(ops.fp_const64(0))
+        zero0, zero1 = ops.fp_is_eq(source0, zero), ops.fp_is_eq(source1, zero)
+        snan0 = ops.fp_is_snan_bits(source0_bits)
+        snan1 = ops.fp_is_snan_bits(source1_bits)
+        any_zero = ops.lor(zero0, zero1)
+        any_snan = ops.lor(snan0, snan1)
+        any_nan_inf = ops.lor(
+            ops.lor(ops.fp_is_nan(source0), ops.fp_is_inf(source0)),
+            ops.lor(ops.fp_is_nan(source1), ops.fp_is_inf(source1)),
+        )
+        state = _fpscr_raise_if(state, any_zero, FPSCR_ZX, ops)
+        state = _fpscr_raise_if(state, any_snan, FPSCR_VXSNAN, ops)
+        if op == Opcode.PS_RES:
+            result0 = ops.fp_approx_reciprocal_bits(source0_bits)
+            result1 = ops.fp_approx_reciprocal_bits(source1_bits)
+            clear_fifr = ops.lor(any_zero, any_nan_inf)
+        else:
+            negative0 = ops.fp_is_lt(source0, zero)
+            negative1 = ops.fp_is_lt(source1, zero)
+            any_negative = ops.lor(negative0, negative1)
+            state = _fpscr_raise_if(state, any_negative, FPSCR_VXSQRT, ops)
+            result0 = _force_ps_single_bits(ops.fp_approx_rsqrt_bits(source0_bits), ops)
+            result1 = _force_ps_single_bits(ops.fp_approx_rsqrt_bits(source1_bits), ops)
+            clear_fifr = ops.lor(any_zero, ops.lor(any_negative, any_nan_inf))
+        cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
+        state = state.with_fpscr(ops.ite(clear_fifr, cleared, state.fpscr))
         state = _fpscr_set_fprf(
             state.with_fpr(fd, result0).with_ps1(fd, result1), result0, ops,
         )
@@ -1872,75 +2029,14 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
         return state
 
-    elif op in _FP_SCALAR_ARITH or op in _FP_PS_ARITH or op in _FP_PSQ_OPS:
+    elif op in _FP_SCALAR_ARITH or op in _FP_PSQ_OPS:
         fd, fa = a[0], a[1] if len(a) > 1 else 0
         fb = a[2] if len(a) > 2 else 0
         fc = a[3] if len(a) > 3 else 0
         rn_bits = ops.band(state.fpscr, ops.const(3))
         rm = ops.fp_rm_from_rn(rn_bits)
         is_single = op in _FP_SINGLE_ARITH
-        is_ps = op in _FP_PS_ARITH
         ni = ops.lnot(ops.eq(ops.band(state.fpscr, ops.const(4)), ops.const(0)))
-
-        if is_ps:
-            _fa_bits = state.fpr[fa]
-            _fb_bits = state.fpr[fb]
-            _fc_bits = state.fpr[fc]
-            fa_ps0 = _ps_extract0(_fa_bits, ops)
-            fa_ps1 = _ps_extract1(_fa_bits, ops)
-            fb_ps0 = _ps_extract0(_fb_bits, ops)
-            fb_ps1 = _ps_extract1(_fb_bits, ops)
-            fc_ps0 = _ps_extract0(_fc_bits, ops)
-            fc_ps1 = _ps_extract1(_fc_bits, ops)
-            rm_ps = ops.fp_rm_rne()
-            if op == Opcode.PS_DIV:
-                r0, r1 = ops.fp_div(rm_ps, fa_ps0, fb_ps0), ops.fp_div(rm_ps, fa_ps1, fb_ps1)
-            elif op == Opcode.PS_SUB:
-                r0, r1 = ops.fp_sub(rm_ps, fa_ps0, fb_ps0), ops.fp_sub(rm_ps, fa_ps1, fb_ps1)
-            elif op == Opcode.PS_ADD:
-                r0, r1 = ops.fp_add(rm_ps, fa_ps0, fb_ps0), ops.fp_add(rm_ps, fa_ps1, fb_ps1)
-            elif op == Opcode.PS_SEL:
-                r0 = ops.fp_sel(fa_ps0, fc_ps0, fb_ps0)
-                r1 = ops.fp_sel(fa_ps1, fc_ps1, fb_ps1)
-            elif op == Opcode.PS_RES:
-                r0 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), fa_ps0)
-                r1 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), fa_ps1)
-            elif op == Opcode.PS_MUL:
-                r0, r1 = ops.fp_mul(rm_ps, fa_ps0, fc_ps0), ops.fp_mul(rm_ps, fa_ps1, fc_ps1)
-            elif op == Opcode.PS_RSQRTE:
-                r0 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), ops.fp_sqrt(rm_ps, fa_ps0))
-                r1 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), ops.fp_sqrt(rm_ps, fa_ps1))
-            elif op == Opcode.PS_MSUB:
-                r0, r1 = ops.fp_fms(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fms(rm_ps, fa_ps1, fc_ps1, fb_ps1)
-            elif op == Opcode.PS_MADD:
-                r0, r1 = ops.fp_fma(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fma(rm_ps, fa_ps1, fc_ps1, fb_ps1)
-            elif op == Opcode.PS_NMSUB:
-                r0, r1 = ops.fp_fnms(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fnms(rm_ps, fa_ps1, fc_ps1, fb_ps1)
-            elif op == Opcode.PS_NMADD:
-                r0, r1 = ops.fp_fnma(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fnma(rm_ps, fa_ps1, fc_ps1, fb_ps1)
-            elif op == Opcode.PS_SUM0:
-                r0 = ops.fp_add(rm_ps, fa_ps0, fb_ps0)
-                r1 = fc_ps1
-            elif op == Opcode.PS_SUM1:
-                r0 = fc_ps0
-                r1 = ops.fp_add(rm_ps, fa_ps1, fb_ps1)
-            elif op == Opcode.PS_MULS0:
-                r0 = ops.fp_mul(rm_ps, fa_ps0, fc_ps0)
-                r1 = ops.fp_mul(rm_ps, fa_ps1, fc_ps0)
-            elif op == Opcode.PS_MULS1:
-                r0 = ops.fp_mul(rm_ps, fa_ps0, fc_ps1)
-                r1 = ops.fp_mul(rm_ps, fa_ps1, fc_ps1)
-            elif op == Opcode.PS_MADDS0:
-                r0 = ops.fp_fma(rm_ps, fa_ps0, fc_ps0, fb_ps0)
-                r1 = ops.fp_fma(rm_ps, fa_ps1, fc_ps0, fb_ps1)
-            elif op == Opcode.PS_MADDS1:
-                r0 = ops.fp_fma(rm_ps, fa_ps0, fc_ps1, fb_ps0)
-                r1 = ops.fp_fma(rm_ps, fa_ps1, fc_ps1, fb_ps1)
-            else:
-                raise UnsupportedInstruction(insn.address, insn.raw, f"unhandled PS opcode {op.value}")
-            result = _ps_merge(r0, r1, ops)
-            state = state.with_fpr(fd, result)
-            return state
 
         # Scalar single instructions consume the register's double value and
         # round the result to binary32; they do not pre-round every operand.
@@ -1969,8 +2065,6 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             d = ops.fp_mul(rm, op_fa, op_fc)
         elif op in (Opcode.FDIVS, Opcode.FDIV):
             d = ops.fp_div(rm, op_fa, op_fb)
-        elif op in (Opcode.FSQRTS, Opcode.FSQRT):
-            d = ops.fp_sqrt(rm, op_fb)
         elif op == Opcode.FRES:
             d = ops.fp_div(rm, ops.fp_round_to_single(rm, ops.fp_bits_to_double(ops.fp_const64(0x3FF0000000000000))), op_fb)
         elif op == Opcode.FRSQRTE:
@@ -2393,6 +2487,31 @@ def _branch_condition(state: MachineState, bo: int, bi: int, ops: WordOps, *, al
     return ops.land(ctr_ok, cond_ok), state
 
 
+def _trap_condition(state: MachineState, to: int, ra: int, immediate: int, ops: WordOps) -> Any:
+    left, right = state.gpr[ra], ops.const(immediate)
+    condition = ops.bool(False)
+    if to & 16: condition = ops.lor(condition, ops.signed_lt(left, right))
+    if to & 8: condition = ops.lor(condition, ops.signed_lt(right, left))
+    if to & 4: condition = ops.lor(condition, ops.eq(left, right))
+    if to & 2: condition = ops.lor(condition, ops.unsigned_lt(left, right))
+    if to & 1: condition = ops.lor(condition, ops.unsigned_lt(right, left))
+    return condition
+
+
+def _exception_entry(
+    state: MachineState, return_pc: int, cause: int, ops: WordOps,
+) -> MachineState:
+    saved_msr = ops.bor(ops.band(state.msr, ops.const(0x87C0FFFF)), ops.const(cause))
+    le_from_ile = ops.band(ops.lshr(state.msr, ops.const(16)), ops.const(1))
+    entered_msr = ops.band(
+        ops.bor(ops.band(state.msr, ops.bnot(ops.const(1))), le_from_ile),
+        ops.bnot(ops.const(0x0004EF36)),
+    )
+    return replace(
+        state, srr0=ops.const(return_pc), srr1=saved_msr, msr=entered_msr,
+    )
+
+
 def execute_cfg(
     state: MachineState,
     instructions: list[Instruction],
@@ -2422,6 +2541,44 @@ def execute_cfg(
         if pc in visited:
             raise ExecutionInconclusive(f"loop/back-edge encountered at 0x{pc:08x}")
         new_visited = visited | {pc}
+        if insn.opcode == Opcode.TWI:
+            trap = _trap_condition(current, *insn.operands, ops)
+            trapped = _exception_entry(current, pc, 0x00020000, ops)
+            terminals.append(Terminal(
+                ops.land(condition, trap), trapped, "program-exception", ops.const(0x700),
+            ))
+            work.append((
+                pc + 4, current, ops.land(condition, ops.lnot(trap)),
+                new_visited, steps + 1,
+            ))
+            continue
+        if insn.opcode == Opcode.SC:
+            entered = _exception_entry(current, pc + 4, 0, ops)
+            terminals.append(Terminal(condition, entered, "system-call", ops.const(0xC00)))
+            continue
+        if insn.opcode == Opcode.RFI:
+            privileged = ops.lnot(ops.eq(
+                ops.band(current.msr, ops.const(0x00004000)), ops.const(0),
+            ))
+            exception_state = _exception_entry(current, pc, 0x00040000, ops)
+            terminals.append(Terminal(
+                ops.land(condition, privileged), exception_state,
+                "program-exception", ops.const(0x700),
+            ))
+            mask = ops.const(0x87C0FFFF)
+            restored_msr = ops.band(
+                ops.bor(
+                    ops.band(current.msr, ops.bnot(mask)),
+                    ops.band(current.srr1, mask),
+                ),
+                ops.const(0xFFFBFFFF),
+            )
+            restored = replace(current, msr=restored_msr)
+            terminals.append(Terminal(
+                ops.land(condition, ops.lnot(privileged)), restored,
+                "return-from-interrupt", current.srr0,
+            ))
+            continue
         if insn.opcode not in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
             work.append((pc + 4, execute_instruction(current, insn, ops), condition, new_visited, steps + 1))
             continue
@@ -2472,7 +2629,40 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
     reads: set[str] = set()
     writes: set[str] = set()
     op, a = insn.opcode, insn.operands
-    if op in FP_D_LOADS or op in FP_X_LOADS:
+    if op in (Opcode.DCBF, Opcode.DCBI, Opcode.DCBST, Opcode.DCBT, Opcode.ICBI):
+        if a[0]: reads.add(f"r{a[0]}")
+        reads.add(f"r{a[1]}")
+    elif op in (Opcode.DCBZ, Opcode.DCBZ_L):
+        if a[0]: reads.add(f"r{a[0]}")
+        reads.add(f"r{a[1]}")
+        writes.add("memory")
+    elif op in (Opcode.SYNC, Opcode.ISYNC):
+        pass
+    elif op == Opcode.MFMSR:
+        reads.add("msr")
+        writes.add(f"r{a[0]}")
+    elif op == Opcode.MTMSR:
+        reads.add(f"r{a[0]}")
+        writes.add("msr")
+    elif op == Opcode.MFSR:
+        reads.add(f"sr{a[1]}")
+        writes.add(f"r{a[0]}")
+    elif op == Opcode.MTSR:
+        reads.add(f"r{a[0]}")
+        writes.add(f"sr{a[1]}")
+    elif op == Opcode.MFTB:
+        reads.add("time_base")
+        writes.add(f"r{a[0]}")
+    elif op == Opcode.TWI:
+        reads |= {f"r{a[1]}", "msr"}
+        writes |= {"msr", "srr0", "srr1"}
+    elif op == Opcode.SC:
+        reads.add("msr")
+        writes |= {"msr", "srr0", "srr1"}
+    elif op == Opcode.RFI:
+        reads |= {"msr", "srr0", "srr1"}
+        writes.add("msr")
+    elif op in FP_D_LOADS or op in FP_X_LOADS:
         writes.add(f"f{a[0]}")
         if op in (Opcode.LFS, Opcode.LFSU, Opcode.LFSX, Opcode.LFSUX):
             writes.add(f"f{a[0]}.ps1")
@@ -2493,7 +2683,7 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         if insn.record:
             reads.add("fpscr")
             writes.add("cr1")
-    elif op in (_FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM):
+    elif op in (_FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | _FP_PS_ESTIMATE):
         writes |= {f"f{a[0]}", f"f{a[0]}.ps1", "fpscr"}
         reads.add("fpscr")
         for index in a[1:]:
@@ -2514,7 +2704,7 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         reads |= {f"f{a[2]}", "fpscr"}
         if insn.record:
             writes.add("cr1")
-    elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH):
+    elif op in _FP_SCALAR_ARITH:
         writes.add(f"f{a[0]}")
         if op in _FP_SINGLE_ARITH:
             writes.add(f"f{a[0]}.ps1")
@@ -2551,6 +2741,19 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         reads.add("fpscr")
         writes.add("fpscr")
         writes.add(f"cr{a[0]}")
+    elif op in (Opcode.MFSPR, Opcode.MTSPR):
+        reg, spr = a
+        name = (
+            "xer" if spr == 1 else "lr" if spr == 8 else "ctr" if spr == 9
+            else "srr0" if spr == 26 else "srr1" if spr == 27
+            else f"gqr{spr - 912}"
+        )
+        if op == Opcode.MFSPR:
+            writes.add(f"r{reg}")
+            reads |= {"xer.ca", "xer.ov", "xer.so"} if name == "xer" else {name}
+        else:
+            reads.add(f"r{reg}")
+            writes |= {"xer.ca", "xer.ov", "xer.so"} if name == "xer" else {name}
     elif op in _FP_PSQ_OPS:
         is_load = op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX)
         is_indexed = op in (Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX)
@@ -2609,7 +2812,19 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
     written: set[str] = set()
     for insn in instructions:
         op, a = insn.opcode, insn.operands
-        if op in LOADS:
+        if op in (Opcode.DCBZ, Opcode.DCBZ_L):
+            written.add("memory")
+        elif op in (Opcode.MFMSR, Opcode.MFSR, Opcode.MFTB):
+            written.add(f"r{a[0]}")
+        elif op == Opcode.MTMSR:
+            written.add("msr")
+        elif op == Opcode.MTSR:
+            written.add(f"sr{a[1]}")
+        elif op in (Opcode.TWI, Opcode.SC):
+            written |= {"msr", "srr0", "srr1"}
+        elif op == Opcode.RFI:
+            written.add("msr")
+        elif op in LOADS:
             written.add(f"r{a[0]}")
             if LOADS[op][2]: written.add(f"r{a[1]}")
         elif op in STORES:
@@ -2627,9 +2842,9 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
                      Opcode.PS_CMPU1, Opcode.PS_CMPO1):
             written.add(f"cr{a[0]}")
             written.add("fpscr")
-        elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_SELECT | _FP_PS_CMP | _FP_PS_SIMPLE):
+        elif op in (_FP_SCALAR_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | _FP_PS_ESTIMATE | _FP_PS_SELECT | _FP_PS_CMP | _FP_PS_SIMPLE):
             written.add(f"f{a[0]}")
-            if op in (_FP_SINGLE_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_SELECT | _FP_PS_SIMPLE):
+            if op in (_FP_SINGLE_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | _FP_PS_ESTIMATE | _FP_PS_SELECT | _FP_PS_SIMPLE):
                 written.add(f"f{a[0]}.ps1")
             if op not in ({Opcode.FSEL, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS} | _FP_PS_SELECT | _FP_PS_SIMPLE):
                 written.add("fpscr")
@@ -2659,6 +2874,8 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
             if a[1] == 1: written |= {"xer.ca", "xer.ov", "xer.so"}
             elif a[1] == 8: written.add("lr")
             elif a[1] == 9: written.add("ctr")
+            elif a[1] == 26: written.add("srr0")
+            elif a[1] == 27: written.add("srr1")
             elif 912 <= a[1] <= 919: written.add(f"gqr{a[1] - 912}")
         elif op in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
             if insn.link: written.add("lr")
@@ -2670,14 +2887,15 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
             if insn.overflow:
                 written |= {"xer.ov", "xer.so"}
         if insn.record:
-            written.add("cr1" if op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_SELECT | _FP_PS_SIMPLE) else "cr0")
+            written.add("cr1" if op in (_FP_SCALAR_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | _FP_PS_ESTIMATE | _FP_PS_SELECT | _FP_PS_SIMPLE) else "cr0")
         elif op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT):
             written.add("cr0")
     order = [
         *(f"r{i}" for i in range(32)), *(f"f{i}" for i in range(32)),
         *(f"f{i}.ps1" for i in range(32)), *(f"gqr{i}" for i in range(8)),
+        *(f"sr{i}" for i in range(16)),
         "cr", *(f"cr{i}" for i in range(8)), "fpscr", "xer.ca", "xer.ov",
-        "xer.so", "lr", "ctr", "memory",
+        "xer.so", "lr", "ctr", "msr", "time_base", "srr0", "srr1", "memory",
     ]
     return tuple(item for item in order if item in written)
 

@@ -50,8 +50,9 @@ python3 tools/coop/run.py equivalence check-hex \
   --candidate 1c630004
 ```
 
-The co-op runner supplies `--contract ppc-eabi` when neither `--contract` nor
-`--observe` is present.
+The co-op runner supplies `--contract ppc-eabi` for raw block checks when
+neither `--contract` nor `--observe` is present. Object/function checks default
+to the effect-aware `auto` contract described below.
 
 Find and save a counterexample:
 
@@ -108,17 +109,27 @@ Split-size fit remains mandatory.
 
 ## Contract and exit codes
 
-Choose one named `--contract` or a manual `--observe` list. The co-op runner
-defaults checks to `--contract ppc-eabi`; the standalone checker requires an
-explicit choice.
+Choose one named `--contract` or a manual `--observe` list. `check-objects` and
+`check-unit` default to `auto`; raw block checks through the co-op runner
+default to `ppc-eabi`. The standalone raw-block checker requires an explicit
+choice.
 
 | Contract | Compared state |
 |---|---|
+| `auto` | `ppc-eabi`, augmented with each persistent non-ABI component written by either implementation: FPSCR, individual GQRs/SRs, MSR, time base, SRR0/SRR1, and modeled auxiliary SPRs |
 | `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, both lanes of FP return `f1`, `r13`–`r31`, both lanes of nonvolatile `f14`–`f31`, `CR2`–`CR4`, and all final memory |
+| `ppc-eabi-fp` | `ppc-eabi` plus FPSCR, available as an explicit fixed alternative to `auto` |
 | `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, every modeled auxiliary SPR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
-The ABI preset is for completed function boundaries. It intentionally excludes
+`auto` is the default completed-function contract. It resolves from the union
+of both decoded implementations' write effects, so a state component cannot
+escape comparison merely because only one side writes it. Volatile compiler
+scratch—GPR/FPR temporaries, volatile CR fields, XER, LR, and CTR—is not added.
+Text and JSON results report the `ppc-eabi` base, every automatically added
+observable, and which side wrote it.
+
+The fixed ABI preset intentionally excludes
 volatile scratch registers and flags. It conservatively treats `r3:r4` as a
 return pair; for a `void` function or a known narrower return contract, use a
 manual list. For an internal basic block, pass the
@@ -146,9 +157,10 @@ and `pmc1`), `f0.ps1`–`f31.ps1`, and `memory`.
 | 3 | Invalid input or contract |
 | 4 | Missing dependency or internal tool error |
 
-JSON proof results record the architecture model, observables, assumptions,
-instruction counts, solver/version/timing, and—when applicable—the first
-observable mismatch and replayable input state.
+JSON proof results (format 3) record the architecture model, requested and
+resolved contract metadata, observables, assumptions, instruction counts,
+solver/version/timing, and—when applicable—the first observable mismatch and
+replayable input state.
 
 ## Supported model (phases 1–3)
 

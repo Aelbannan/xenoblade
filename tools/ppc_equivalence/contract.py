@@ -17,6 +17,9 @@ class EquivalenceContract:
     observables: tuple[Observable, ...]
     timeout_ms: int = 10_000
     name: str = "manual"
+    base_name: str | None = None
+    auto_added: tuple[str, ...] = ()
+    auto_reasons: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.observables and self.name != "live-out":
@@ -24,8 +27,32 @@ class EquivalenceContract:
         if not 1 <= self.timeout_ms <= 600_000:
             raise ValueError("solver timeout must be between 1 and 600000 ms")
 
+    def resolution_dict(self) -> dict[str, object] | None:
+        if self.base_name is None:
+            return None
+        return {
+            "base": self.base_name,
+            "added": list(self.auto_added),
+            "reasons": list(self.auto_reasons),
+        }
 
-CONTRACT_PRESETS = ("ppc-eabi", "strict", "live-out")
+
+CONTRACT_PRESETS = ("auto", "ppc-eabi", "ppc-eabi-fp", "strict", "live-out")
+
+# State that persists beyond a normal function call but is not part of the
+# compiler's ordinary EABI register contract.  Auto adds a component only when
+# either implementation writes it.  Volatile compiler scratch (GPR/FPR, CR,
+# XER, LR, and CTR) deliberately remains governed by ppc-eabi.
+AUTO_PERSISTENT_OBSERVABLES = (
+    "fpscr",
+    *(f"gqr{index}" for index in range(8)),
+    *(f"sr{index}" for index in range(16)),
+    "msr",
+    "time_base",
+    "srr0",
+    "srr1",
+    *AUX_SPR_OBSERVABLES,
+)
 
 
 def preset_observable_names(name: str) -> tuple[str, ...]:
@@ -85,6 +112,8 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "cr4",
             "memory",
         )
+    if name == "ppc-eabi-fp":
+        return preset_observable_names("ppc-eabi") + ("fpscr",)
     if name == "strict":
         return tuple(f"r{index}" for index in range(32)) + tuple(f"f{index}" for index in range(32)) + tuple(
             f"f{index}.ps1" for index in range(32)
@@ -106,7 +135,41 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
         )
     if name == "live-out":
         raise ValueError("live-out observables require decoded instructions")
+    if name == "auto":
+        raise ValueError("auto observables require decoded instructions")
     raise ValueError(f"unknown contract preset '{name}'")
+
+
+def _auto_contract(
+    original_live_out: tuple[str, ...],
+    candidate_live_out: tuple[str, ...],
+    timeout_ms: int,
+) -> EquivalenceContract:
+    base_names = preset_observable_names("ppc-eabi")
+    base_set = set(base_names)
+    original_writes = set(original_live_out)
+    candidate_writes = set(candidate_live_out)
+    added = tuple(
+        name
+        for name in AUTO_PERSISTENT_OBSERVABLES
+        if name not in base_set and (name in original_writes or name in candidate_writes)
+    )
+    reasons: list[str] = []
+    for name in added:
+        sides = []
+        if name in original_writes:
+            sides.append("original")
+        if name in candidate_writes:
+            sides.append("candidate")
+        reasons.append(f"{name} written by {' and '.join(sides)}")
+    return EquivalenceContract(
+        parse_observables(base_names + added),
+        timeout_ms,
+        "auto",
+        base_name="ppc-eabi",
+        auto_added=added,
+        auto_reasons=tuple(reasons),
+    )
 
 
 def make_contract(
@@ -115,10 +178,16 @@ def make_contract(
     observe: list[str] | tuple[str, ...] | None,
     timeout_ms: int,
     live_out: tuple[str, ...] | None = None,
+    original_live_out: tuple[str, ...] | None = None,
+    candidate_live_out: tuple[str, ...] | None = None,
 ) -> EquivalenceContract:
     if preset is not None and observe:
         raise ValueError("--contract and --observe are mutually exclusive")
     if preset is not None:
+        if preset == "auto":
+            if original_live_out is None or candidate_live_out is None:
+                raise ValueError("auto contract requires both decoded instruction sequences")
+            return _auto_contract(original_live_out, candidate_live_out, timeout_ms)
         names = live_out if preset == "live-out" else preset_observable_names(preset)
         return EquivalenceContract(
             parse_observables(names) if names else (),

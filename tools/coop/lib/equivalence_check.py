@@ -12,6 +12,7 @@ from tools.ppc_equivalence.elf_symbols import ElfSymbolError, extract_function_p
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, UnsupportedInstruction
 from tools.ppc_equivalence.result import ProofStatus
+from tools.ppc_equivalence.semantics import automatic_live_out
 
 
 # Fuzzy match floor for EQUIVALENT_MATCH (strictly below FULL_MATCH).
@@ -34,7 +35,7 @@ def prove_unit_symbol(
     unit: ObjdiffUnit,
     symbol: str,
     *,
-    contract: str = "ppc-eabi",
+    contract: str = "auto",
 ) -> EquivalenceProbe:
     """SMT-check one named function from the unit's retail/decomp objects."""
     retail = unit.target_path
@@ -48,21 +49,40 @@ def prove_unit_symbol(
         left, right = extract_function_pair(retail, decomp, symbol)
         original = decode_block(left.code, left.base, validate_with_capstone=False)
         candidate = decode_block(right.code, right.base, validate_with_capstone=False)
+        original_live_out = automatic_live_out(original)
+        candidate_live_out = automatic_live_out(candidate)
+        live_out = None
+        if contract == "live-out":
+            live_out = tuple(dict.fromkeys(original_live_out + candidate_live_out))
+        resolved_contract = make_contract(
+            preset=contract,
+            observe=None,
+            timeout_ms=10_000,
+            live_out=live_out,
+            original_live_out=original_live_out,
+            candidate_live_out=candidate_live_out,
+        )
         result = check_equivalence(
             original,
             candidate,
-            make_contract(preset=contract),
+            resolved_contract,
             original_hex=left.code.hex(),
             candidate_hex=right.code.hex(),
         )
         detail = ""
+        if result.contract_resolution:
+            added = result.contract_resolution.get("added", [])
+            detail = "auto contract: ppc-eabi"
+            if added:
+                detail += " + " + ", ".join(str(item) for item in added)
         if result.unsupported:
             detail = "; ".join(result.unsupported)
         elif result.mismatch:
-            detail = (
+            mismatch = (
                 f"{result.mismatch.get('name')}: "
                 f"{result.mismatch.get('original')} != {result.mismatch.get('candidate')}"
             )
+            detail = f"{detail}; {mismatch}" if detail else mismatch
         return EquivalenceProbe(result.status, detail)
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, str(exc))

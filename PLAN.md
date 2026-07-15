@@ -1412,7 +1412,7 @@ select one function/question
 | `STRUCTURAL` | Control-flow and calls broadly align. |
 | `HIGH_MATCH` | Most instructions/relocations match (≥ ~70% fuzzy). |
 | `CODE_MATCH` | Instruction bytes largely match (≥ ~95% fuzzy); data/relocations may remain. |
-| `EQUIVALENT_MATCH` | Fuzzy ≥ **50%**, `ppc_equivalence` proves `EQUIVALENT` under `ppc-eabi` (or stronger), and split-size fit. |
+| `EQUIVALENT_MATCH` | Fuzzy ≥ **50%**, `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto` (`ppc-eabi` or stronger), and split-size fit. |
 | `FULL_MATCH` | Code, relocations, expected stack/function size match (100% static), and split-size fit. |
 | `BEHAVIOR_VERIFIED` | Runtime tests confirm the interpretation. |
 

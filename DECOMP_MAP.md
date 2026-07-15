@@ -32,7 +32,7 @@ Use one of these levels for every target.
 | **BEHAVIORAL** | Reimplementation passes controlled runtime tests against the original. | Suitable for downstream replacement when exact matching is not needed. |
 | **CODE_MATCH** | Generated instruction bytes match for the function body. | Strong evidence for helpers, getters, state setters, and hook-critical leaf functions. |
 | **FULL_MATCH** | Instructions, relocations, stack shape, constants, relevant data match, and split-size fit. | One of two equal-tier acceptance outcomes for this project (alongside `EQUIVALENT_MATCH`). |
-| **EQUIVALENT_MATCH** | Fuzzy ≥ 50%, SMT proves behavioral equivalence under `ppc-eabi`, and split-size fit. | One of two equal-tier acceptance outcomes for this project. |
+| **EQUIVALENT_MATCH** | Fuzzy ≥ 50%, SMT proves behavioral equivalence under effect-aware `auto` (`ppc-eabi` or stronger), and split-size fit. | One of two equal-tier acceptance outcomes for this project. |
 
 **Current project policy:** every decompilation target must reach **`EQUIVALENT_MATCH`** or **`FULL_MATCH`** before it is considered complete. Both are equal-tier outcomes — `EQUIVALENT_MATCH` guarantees semantic correctness via SMT proof + split-size fit, `FULL_MATCH` guarantees byte-level identity + split-size fit. Use the levels above as progress labels during iteration, but do not stop at `STRUCTURAL`, `CODE_MATCH`, or `HIGH_MATCH`.
 

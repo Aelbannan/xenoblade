@@ -1948,6 +1948,35 @@ class SymbolicEquivalenceTests(unittest.TestCase):
         self.assertEqual(abi.contract, "ppc-eabi")
         self.assertEqual(strict.contract, "strict")
 
+    def test_auto_detects_fpscr_only_difference_that_eabi_ignores(self) -> None:
+        original = decode("60000000")  # nop
+        candidate = decode("fc011000")  # fcmpu cr0,f1,f2
+        abi = check_equivalence(
+            original,
+            candidate,
+            make_contract(preset="ppc-eabi", observe=None, timeout_ms=5_000),
+            original_hex="60000000",
+            candidate_hex="fc011000",
+        )
+        auto_contract = make_contract(
+            preset="auto",
+            observe=None,
+            timeout_ms=5_000,
+            original_live_out=automatic_live_out(original),
+            candidate_live_out=automatic_live_out(candidate),
+        )
+        automatic = check_equivalence(
+            original,
+            candidate,
+            auto_contract,
+            original_hex="60000000",
+            candidate_hex="fc011000",
+        )
+        self.assertEqual(abi.status, ProofStatus.EQUIVALENT)
+        self.assertEqual(automatic.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual(auto_contract.auto_added, ("fpscr",))
+        self.assertEqual(automatic.contract_resolution, auto_contract.resolution_dict())
+
 
 class ContractTests(unittest.TestCase):
     def test_observables_are_versioned_and_validated(self) -> None:
@@ -1973,6 +2002,56 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(names[-4:], ("cr2", "cr3", "cr4", "memory"))
         self.assertNotIn("r5", names)
         self.assertNotIn("cr0", names)
+
+    def test_ppc_eabi_fp_adds_only_fpscr(self) -> None:
+        base = preset_observable_names("ppc-eabi")
+        fp = preset_observable_names("ppc-eabi-fp")
+        self.assertEqual(fp, base + ("fpscr",))
+
+    def test_auto_contract_adds_persistent_writes_not_volatile_scratch(self) -> None:
+        contract = make_contract(
+            preset="auto",
+            observe=None,
+            timeout_ms=5_000,
+            original_live_out=(
+                "r5", "f7", "cr1", "xer.ca", "lr", "ctr",
+                "fpscr", "gqr3", "sr2", "msr", "srr0", "hid0",
+            ),
+            candidate_live_out=("fpscr", "time_base", "srr1", "pmc1"),
+        )
+        self.assertEqual(contract.name, "auto")
+        self.assertEqual(
+            contract.auto_added,
+            (
+                "fpscr", "gqr3", "sr2", "msr", "time_base", "srr0",
+                "srr1", "pmc1", "hid0",
+            ),
+        )
+        names = {item.name for item in contract.observables}
+        self.assertTrue(set(contract.auto_added) <= names)
+        self.assertFalse({"r5", "f7", "cr1", "xer.ca", "lr", "ctr"} & names)
+        self.assertEqual(
+            contract.resolution_dict(),
+            {
+                "base": "ppc-eabi",
+                "added": list(contract.auto_added),
+                "reasons": [
+                    "fpscr written by original and candidate",
+                    "gqr3 written by original",
+                    "sr2 written by original",
+                    "msr written by original",
+                    "time_base written by candidate",
+                    "srr0 written by original",
+                    "srr1 written by candidate",
+                    "pmc1 written by candidate",
+                    "hid0 written by original",
+                ],
+            },
+        )
+
+    def test_auto_contract_requires_both_decoded_paths(self) -> None:
+        with self.assertRaises(ValueError):
+            make_contract(preset="auto", observe=None, timeout_ms=5_000)
 
     def test_strict_preset_covers_all_modeled_state(self) -> None:
         names = preset_observable_names("strict")

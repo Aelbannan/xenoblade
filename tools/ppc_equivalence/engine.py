@@ -7,7 +7,7 @@ from typing import Any
 from .contract import EquivalenceContract, Observable
 from .ir import Instruction
 from .model import MachineState, XerState
-from .result import ProofResult, ProofStatus
+from .result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofResult, ProofStatus
 from .semantics import SymbolicOps, Terminal, execute_cfg, read_gprs
 from .spr import AUX_SPR_OBSERVABLES
 
@@ -158,6 +158,7 @@ def check_equivalence(
     result = ProofResult(
         status=ProofStatus.INCONCLUSIVE_UNKNOWN,
         contract=contract.name,
+        contract_resolution=contract.resolution_dict(),
         observables=[item.name for item in contract.observables],
         original_instruction_count=len(original),
         candidate_instruction_count=len(candidate),
@@ -237,7 +238,8 @@ def check_equivalence(
     }
     result.counterexample = {"initial_state": initial_state}
     result.replay = {
-        "format": 2, "architecture": "broadway-ppc32-be-v14", "contract": contract.name,
+        "format": RESULT_FORMAT, "architecture": ARCHITECTURE_MODEL,
+        "contract": contract.name, "contract_resolution": contract.resolution_dict(),
         "original_hex": original_hex, "candidate_hex": candidate_hex,
         "base_original": original[0].address, "base_candidate": candidate[0].address,
         "observables": [item.name for item in contract.observables], "initial_state": initial_state,

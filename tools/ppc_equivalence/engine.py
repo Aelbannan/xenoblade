@@ -15,8 +15,10 @@ def _symbolic_initial(ops: SymbolicOps) -> MachineState:
     z3 = ops.z3
     return MachineState(
         tuple(z3.BitVec(f"input.gpr.r{i}", 32) for i in range(32)),
+        tuple(z3.BitVec(f"input.fpr.f{i}", 64) for i in range(32)),
         z3.BitVec("input.cr", 32),
         XerState(z3.Bool("input.xer.ca"), z3.Bool("input.xer.ov"), z3.Bool("input.xer.so")),
+        z3.BitVec("input.fpscr", 32),
         z3.BitVec("input.lr", 32),
         z3.BitVec("input.ctr", 32),
         z3.Array("input.memory", z3.BitVecSort(32), z3.BitVecSort(8)),
@@ -28,12 +30,17 @@ def _observable_value(state: MachineState, observable: Observable, ops: Symbolic
     if observable.kind == "gpr":
         assert observable.index is not None
         return state.gpr[observable.index]
+    if observable.kind == "fpr":
+        assert observable.index is not None
+        return state.fpr[observable.index]
     if observable.kind == "cr_field":
         assert observable.index is not None
         shift = (7 - observable.index) * 4
         return ops.z3.Extract(shift + 3, shift, state.cr)
     if observable.kind in ("cr", "lr", "ctr", "memory"):
         return getattr(state, observable.kind)
+    if observable.kind == "fpscr":
+        return state.fpscr
     if observable.kind == "xer":
         return getattr(state.xer, observable.name.split(".", 1)[1])
     raise AssertionError(f"unknown observable kind: {observable.kind}")
@@ -64,6 +71,11 @@ def _terminal_difference(left: Terminal, right: Terminal, contract: EquivalenceC
 def _hex_value(model: Any, expression: Any) -> str:
     value = model.eval(expression, model_completion=True)
     return f"0x{value.as_long() & 0xFFFFFFFF:08x}"
+
+
+def _hex_value64(model: Any, expression: Any) -> str:
+    value = model.eval(expression, model_completion=True)
+    return f"0x{value.as_long() & 0xFFFFFFFFFFFFFFFF:016x}"
 
 
 def _bool_value(model: Any, expression: Any, z3: Any) -> int:
@@ -173,6 +185,8 @@ def check_equivalence(
                     right_value: object = _bool_value(model, right, z3)
                 elif observable.kind == "memory":
                     left_value, right_value = "different final arrays", "different final arrays"
+                elif observable.kind in ("fpr", "fpscr"):
+                    left_value, right_value = _hex_value64(model, left), _hex_value64(model, right)
                 else:
                     left_value, right_value = _hex_value(model, left), _hex_value(model, right)
                 result.mismatch = {"kind": observable.kind, "name": observable.name, "original": left_value, "candidate": right_value}
@@ -181,7 +195,9 @@ def check_equivalence(
     relevant_gprs = sorted(read_gprs(original) | read_gprs(candidate))
     initial_state = {
         "gpr": {f"r{i}": _hex_value(model, initial.gpr[i]) for i in relevant_gprs},
+        "fpr": {f"f{i}": _hex_value64(model, initial.fpr[i]) for i in range(32)},
         "cr": _hex_value(model, initial.cr),
+        "fpscr": _hex_value(model, initial.fpscr),
         "xer": {name: _bool_value(model, getattr(initial.xer, name), z3) for name in ("ca", "ov", "so")},
         "lr": _hex_value(model, initial.lr),
         "ctr": _hex_value(model, initial.ctr),
@@ -189,7 +205,7 @@ def check_equivalence(
     }
     result.counterexample = {"initial_state": initial_state}
     result.replay = {
-        "format": 2, "architecture": "broadway-ppc32-be-v2", "contract": contract.name,
+        "format": 2, "architecture": "broadway-ppc32-be-v3", "contract": contract.name,
         "original_hex": original_hex, "candidate_hex": candidate_hex,
         "base_original": original[0].address, "base_candidate": candidate[0].address,
         "observables": [item.name for item in contract.observables], "initial_state": initial_state,

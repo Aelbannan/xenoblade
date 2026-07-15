@@ -38,6 +38,16 @@ def _gpr_array(initial: dict) -> list[int]:
     return regs
 
 
+def _fpr_array(initial: dict) -> list[int]:
+    regs = [0] * 32
+    fpr = initial.get("fpr", {})
+    assert isinstance(fpr, dict)
+    for name, value in fpr.items():
+        if str(name).startswith("f"):
+            regs[int(str(name)[1:])] = parse_int(value) & 0xFFFFFFFFFFFFFFFF
+    return regs
+
+
 def _mem_words(initial: dict) -> list[int]:
     words = [0] * MEM_WORDS
     memory = initial.get("memory")
@@ -92,6 +102,8 @@ def generate_header() -> str:
         "typedef struct PpcFixtureCase {",
         f"    char name[{NAME_MAX + 1}];",
         "    u32 gpr[32];",
+        "    u64 fpr[32];",
+        "    u64 fpscr_image;",
         "    u32 cr;",
         "    u32 xer;",
         "    u32 lr;",
@@ -105,6 +117,11 @@ def generate_header() -> str:
         "    u32 expected_mem_count;",
         "    u32 expected_mem_off[8];",
         "    u32 expected_mem_val[8];",
+        "    u32 expected_fpr_count;",
+        "    u32 expected_fpr_index[8];",
+        "    u64 expected_fpr_value[8];",
+        "    u32 observe_fpscr;",
+        "    u32 expected_fpscr;",
         "    PpcFixturePayloadFn payload;",
         "} PpcFixtureCase;",
         "",
@@ -121,17 +138,26 @@ def generate_header() -> str:
             raise SystemExit(f"{case.id}: name longer than {NAME_MAX}")
         if len(case.expected_memory) > 8:
             raise SystemExit(f"{case.id}: too many expected memory words")
+        if len(case.expected_fpr) > 8:
+            raise SystemExit(f"{case.id}: too many expected FPRs")
 
         gpr = _gpr_array(case.initial)
+        fpr = _fpr_array(case.initial)
         mem = _mem_words(case.initial)
         mem_offs = list(case.expected_memory.keys())
         mem_vals = [case.expected_memory[offset] for offset in mem_offs]
         mem_offs += [0] * (8 - len(mem_offs))
         mem_vals += [0] * (8 - len(mem_vals))
+        fpr_indices = list(case.expected_fpr)
+        fpr_values = [case.expected_fpr[index] for index in fpr_indices]
+        fpr_indices += [0] * (8 - len(fpr_indices))
+        fpr_values += [0] * (8 - len(fpr_values))
 
         lines.append("    {")
         lines.append(f"        {_c_string(case.id)},")
         lines.append("        {" + ", ".join(f"0x{value:08X}u" for value in gpr) + "},")
+        lines.append("        {" + ", ".join(f"0x{value:016X}ull" for value in fpr) + "},")
+        lines.append(f"        0x{parse_int(case.initial.get('fpscr', 0)):016X}ull,")
         lines.append(f"        0x{parse_int(case.initial.get('cr', 0)):08X}u,")
         lines.append(f"        0x{_xer_word(case.initial):08X}u,")
         lines.append(f"        0x{parse_int(case.initial.get('lr', 0)):08X}u,")
@@ -145,6 +171,11 @@ def generate_header() -> str:
         lines.append(f"        {len(case.expected_memory)}u,")
         lines.append("        {" + ", ".join(f"0x{value:X}u" for value in mem_offs) + "},")
         lines.append("        {" + ", ".join(f"0x{value:08X}u" for value in mem_vals) + "},")
+        lines.append(f"        {len(case.expected_fpr)}u,")
+        lines.append("        {" + ", ".join(f"{value}u" for value in fpr_indices) + "},")
+        lines.append("        {" + ", ".join(f"0x{value:016X}ull" for value in fpr_values) + "},")
+        lines.append(f"        {1 if case.expected_fpscr is not None else 0}u,")
+        lines.append(f"        0x{(case.expected_fpscr or 0):08X}u,")
         lines.append(f"        ppc_fixture_payload_{index},")
         lines.append("    },")
 

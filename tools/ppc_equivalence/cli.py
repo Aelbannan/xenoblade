@@ -9,6 +9,7 @@ from typing import Any
 from . import __version__
 from .contract import CONTRACT_PRESETS, Observable, make_contract, parse_observables
 from .decoder import decode_block, parse_hex
+from .elf_symbols import ElfSymbolError, extract_function, extract_function_pair, list_text_functions
 from .engine import check_equivalence
 from .ir import DecodeError, ExecutionInconclusive, UnsupportedInstruction
 from .model import MachineState, concrete_state
@@ -102,12 +103,25 @@ def _emit(result: ProofResult, json_output: bool, result_file: Path | None, repl
     return _exit_for_status(result.status)
 
 
-def _run_check(args: argparse.Namespace, original_code: bytes, candidate_code: bytes) -> int:
+def _run_check(
+    args: argparse.Namespace,
+    original_code: bytes,
+    candidate_code: bytes,
+    *,
+    base_original: int | None = None,
+    base_candidate: int | None = None,
+) -> int:
     original_hex = _format_hex(original_code)
     candidate_hex = _format_hex(candidate_code)
     try:
-        original = decode_block(original_code, args.base_original)
-        candidate = decode_block(candidate_code, args.base_candidate)
+        original = decode_block(
+            original_code,
+            args.base_original if base_original is None else base_original,
+        )
+        candidate = decode_block(
+            candidate_code,
+            args.base_candidate if base_candidate is None else base_candidate,
+        )
         live_out = None
         if args.contract == "live-out":
             live_out = tuple(dict.fromkeys(automatic_live_out(original) + automatic_live_out(candidate)))
@@ -185,9 +199,24 @@ def cmd_replay(args: argparse.Namespace) -> int:
     return 0 if mismatches else 4
 
 
-def _add_check_options(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--base-original", type=_parse_int, default=0)
-    parser.add_argument("--base-candidate", type=_parse_int, default=0)
+def _add_check_options(
+    parser: argparse.ArgumentParser,
+    *,
+    base_original_default: int | None = 0,
+    base_candidate_default: int | None = 0,
+) -> None:
+    parser.add_argument(
+        "--base-original",
+        type=_parse_int,
+        default=base_original_default,
+        help="decode base for original (default: 0, or ELF symbol address for check-objects)",
+    )
+    parser.add_argument(
+        "--base-candidate",
+        type=_parse_int,
+        default=base_candidate_default,
+        help="decode base for candidate (default: 0, or ELF symbol address for check-objects)",
+    )
     contract = parser.add_mutually_exclusive_group(required=True)
     contract.add_argument(
         "--contract",
@@ -206,6 +235,76 @@ def _add_check_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--result", type=Path, help="write the complete JSON proof result")
     parser.add_argument("--replay-out", type=Path, help="write a replayable counterexample when inequivalent")
     parser.add_argument("--smt-out", type=Path, help="write the generated SMT-LIB query")
+
+
+def cmd_extract(args: argparse.Namespace) -> int:
+    if args.list:
+        functions = list_text_functions(args.object)
+        payload = [
+            {
+                "name": item.name,
+                "size": item.size,
+                "value": f"0x{item.value:x}",
+                "base": f"0x{item.base:08x}",
+                "section": item.section_name,
+            }
+            for item in functions
+        ]
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            for item in payload:
+                print(f"{item['value']}  {item['size']:6}  {item['name']}")
+        return 0
+
+    if not args.symbol:
+        raise ValueError("--symbol is required unless --list is set")
+    function = extract_function(args.object, args.symbol)
+    if args.out:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_bytes(function.code)
+    payload = {
+        "name": function.name,
+        "path": str(function.path),
+        "size": function.size,
+        "value": f"0x{function.value:x}",
+        "base": f"0x{function.base:08x}",
+        "section": function.section_name,
+        "hex": _format_hex(function.code),
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2))
+    else:
+        print(f"{function.name}: {function.size} bytes @ 0x{function.base:08x}")
+        print(payload["hex"])
+        if args.out:
+            print(f"wrote: {args.out}")
+    return 0
+
+
+def cmd_check_objects(args: argparse.Namespace) -> int:
+    left, right = extract_function_pair(
+        args.original,
+        args.candidate,
+        args.symbol,
+        candidate_symbol=args.candidate_symbol,
+    )
+    if not args.json:
+        print(
+            f"original:  {left.name}  {left.size} bytes @ 0x{left.base:08x}  ({left.path})"
+        )
+        print(
+            f"candidate: {right.name}  {right.size} bytes @ 0x{right.base:08x}  ({right.path})"
+        )
+    base_original = left.base if args.base_original is None else args.base_original
+    base_candidate = right.base if args.base_candidate is None else args.base_candidate
+    return _run_check(
+        args,
+        left.code,
+        right.code,
+        base_original=base_original,
+        base_candidate=base_candidate,
+    )
 
 
 def cmd_differential(args: argparse.Namespace) -> int:
@@ -303,6 +402,26 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--candidate", type=Path, required=True)
     _add_check_options(check)
 
+    check_objects = sub.add_parser(
+        "check-objects",
+        help="prove or refute a named function from two ELF32 BE object files",
+    )
+    check_objects.add_argument("--original", type=Path, required=True, help="retail / target .o")
+    check_objects.add_argument("--candidate", type=Path, required=True, help="decomp / base .o")
+    check_objects.add_argument("--symbol", required=True, help="mangled symbol name (or unique substring)")
+    check_objects.add_argument(
+        "--candidate-symbol",
+        help="candidate symbol when names differ (default: same as --symbol)",
+    )
+    _add_check_options(check_objects, base_original_default=None, base_candidate_default=None)
+
+    extract = sub.add_parser("extract", help="extract named .text bytes from an ELF32 BE object")
+    extract.add_argument("--object", type=Path, required=True)
+    extract.add_argument("--symbol", help="mangled symbol name (or unique substring)")
+    extract.add_argument("--list", action="store_true", help="list sized .text symbols")
+    extract.add_argument("--out", type=Path, help="write raw instruction bytes")
+    extract.add_argument("--json", action="store_true")
+
     replay = sub.add_parser("replay", help="replay an inequivalence counterexample concretely")
     replay.add_argument("case", type=Path)
     replay.add_argument("--json", action="store_true")
@@ -332,11 +451,15 @@ def main(argv: list[str] | None = None) -> int:
             return _run_check(args, parse_hex(args.original), parse_hex(args.candidate))
         if args.command == "check":
             return _run_check(args, args.original.read_bytes(), args.candidate.read_bytes())
+        if args.command == "check-objects":
+            return cmd_check_objects(args)
+        if args.command == "extract":
+            return cmd_extract(args)
         if args.command == "replay":
             return cmd_replay(args)
         if args.command == "differential":
             return cmd_differential(args)
-    except (DecodeError, ValueError, OSError, json.JSONDecodeError) as exc:
+    except (DecodeError, ElfSymbolError, ValueError, OSError, json.JSONDecodeError) as exc:
         if getattr(args, "json", False):
             print(json.dumps({"format": 1, "status": "invalid_input", "error": str(exc)}))
         else:

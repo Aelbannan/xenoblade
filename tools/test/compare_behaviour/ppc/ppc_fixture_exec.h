@@ -9,6 +9,8 @@ typedef struct PpcFixtureActual {
     u32 result;
     u32 cr;
     u32 xer;
+    u64 fpr[32];
+    u32 fpscr;
     u32 mem[PPC_FIXTURE_MEM_WORDS];
 } PpcFixtureActual;
 

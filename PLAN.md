@@ -10,7 +10,7 @@
 
 - `DECOMP_MAP.md` — decompilation targets, symbols, and critical-path functions
 - `FORK.md` — fork-only tooling inventory (coop runner, symbol recovery, host/PPC behaviour tests, postprocess)
-- `TASKS.md` — agent checklist (`FULL_MATCH` only)
+- `TASKS.md` — agent checklist (`EQUIVALENT_MATCH` or better)
 - `AGENTS.md` / `.cursor/skills/xenoblade-decomp/SKILL.md` — agent entry + decomp loop
 - `Xenoblade_Wii_Coop_Decompilation_Guide.md` — deeper per-function decompilation procedures (when present)
 
@@ -1410,14 +1410,15 @@ select one function/question
 | `NOT_STARTED` | No reconstruction attempt. |
 | `COMPILES` | Candidate compiles; no correctness claim. |
 | `STRUCTURAL` | Control-flow and calls broadly align. |
-| `HIGH_MATCH` | Most instructions/relocations match. |
-| `CODE_MATCH` | Instruction bytes match; data/relocations may remain. |
-| `FULL_MATCH` | Code, relocations, expected stack/function size match. |
+| `HIGH_MATCH` | Most instructions/relocations match (≥ ~70% fuzzy). |
+| `CODE_MATCH` | Instruction bytes largely match (≥ ~95% fuzzy); data/relocations may remain. |
+| `EQUIVALENT_MATCH` | Fuzzy ≥ **50%**, `ppc_equivalence` proves `EQUIVALENT` under `ppc-eabi` (or stronger), and split-size fit. |
+| `FULL_MATCH` | Code, relocations, expected stack/function size match (100% static), and split-size fit. |
 | `BEHAVIOR_VERIFIED` | Runtime tests confirm the interpretation. |
 
 A byte match proves faithful code generation, not the semantic name of every unknown field or hook safety.
 
-**Current project policy:** the required acceptance bar for every decompilation target is **`FULL_MATCH`**. Intermediate statuses remain useful for logging progress, but a target is not complete until it reaches `FULL_MATCH`.
+**Current project policy:** the required acceptance bar for every decompilation target is **`EQUIVALENT_MATCH`** or **`FULL_MATCH`** — both are equal-tier outcomes. `EQUIVALENT_MATCH` guarantees semantic correctness via SMT proof; `FULL_MATCH` guarantees byte-level identity. Intermediate statuses remain useful for logging progress. `coop run cycle` exits non-zero until `EQUIVALENT_MATCH` or `FULL_MATCH` (plus split-size fit).
 
 ### 17.2.1 Behaviour comparison (static + optional PPC)
 
@@ -1429,11 +1430,11 @@ python tools/coop/run.py behaviour compare <test-id>  # static + ppc if present
 python tools/coop/run.py behaviour ppc <test-id>      # headless Dolphin when ppc_source set
 ```
 
-Host dual-oracle `host/*.cpp` tests were **removed** (they were mostly tautological). Do not add them back. Prefer continuing toward `FULL_MATCH` / §17.6, or a real PPC harness when the unit links. See `tools/test/compare_behaviour/README.md`.
+Host dual-oracle `host/*.cpp` tests were **removed** (they were mostly tautological). Do not add them back. Prefer continuing toward `EQUIVALENT_MATCH` / `FULL_MATCH` / §17.6, or a real PPC harness when the unit links. See `tools/test/compare_behaviour/README.md`.
 
 ### 17.2.2 Split object size (`.text` budget)
 
-Each translation unit occupies a fixed `.text` range in `config/<region>/splits.txt` (`start`/`end`). Before promoting a unit to `Matching` in `configure.py` or claiming `FULL_MATCH`, verify the decompiled object’s **`.text` section** does not exceed that budget:
+Each translation unit occupies a fixed `.text` range in `config/<region>/splits.txt` (`start`/`end`). Before promoting a unit to `Matching` in `configure.py` or claiming ``EQUIVALENT_MATCH` / `FULL_MATCH``, verify the decompiled object’s **`.text` section** does not exceed that budget:
 
 ```bash
 python tools/coop/run.py size <unit>
@@ -1446,7 +1447,7 @@ python tools/coop/run.py size --all
 
 See **§17.6** for narrow, logged exceptions when C++ and decomp.me cannot close the last instruction(s).
 
-### 17.6 Policy exceptions (last-percent FULL_MATCH)
+### 17.6 Policy exceptions (closing the gap to FULL_MATCH or EQUIVALENT_MATCH)
 
 Use only after normal C++ and decomp.me fail, and **log every use** in `docs/evidence/decomp/attempts.jsonl` with `"policy_exception": true` and a one-line justification.
 
@@ -1487,12 +1488,12 @@ Store records as JSONL for automated review.
 
 ### 17.5 Large functions
 
-For large functions under the current **`FULL_MATCH` policy**:
+For large functions under the current **`EQUIVALENT_MATCH` or `FULL_MATCH` policy**:
 
-- match leaf helpers first, but do not mark the parent target complete until the parent function also reaches `FULL_MATCH`;
+- match leaf helpers first, but do not mark the parent target complete until the parent function also reaches `EQUIVALENT_MATCH` or `FULL_MATCH`;
 - divide by state-machine cases;
 - identify exact call sites;
-- use narrow reversible hooks only after the hooked leaf or enclosing function is at `FULL_MATCH`;
+- use narrow reversible hooks only after the hooked leaf or enclosing function is at `EQUIVALENT_MATCH` or `FULL_MATCH`;
 - decompose work into smaller symbols/units, but do not accept `STRUCTURAL` or `CODE_MATCH` as the final state for any target.
 
 ---

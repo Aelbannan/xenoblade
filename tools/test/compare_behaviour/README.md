@@ -40,15 +40,16 @@ python tools/coop/run.py size monolib/src/core/CViewRectDataCore
 python tools/coop/run.py size --all
 ```
 
-`diff`, `cycle`, and `behaviour compare` also print a size line. `decomp .text` larger than the split budget exits non-zero. Behaviour tests may pass while size fails — treat overflow as a blocker for `FULL_MATCH` and `configure.py` `Matching` promotion.
+`diff`, `cycle`, and `behaviour compare` also print a size line. `decomp .text` larger than the split budget exits non-zero. Behaviour tests may pass while size fails — treat overflow as a blocker for acceptance and `configure.py` `Matching` promotion.
 
 ## Policy
 
-Acceptance remains **`FULL_MATCH`** (objdiff) + split-size fit. Below 100%, prefer:
+Acceptance remains **`EQUIVALENT_MATCH`** (or `FULL_MATCH`) + split-size fit. Below the bar, prefer:
 
 1. Continue matching / §17.6 exceptions (`insn_patches`, narrow asm) when co-op needs the symbol.
 2. Optional **PPC** harness when the unit links (`ppc_source` in `manifest.json`).
-3. Optional Capstone+Z3 checks via `tools/ppc_equivalence/` for supported blocks.
+3. Optional Capstone+Z3 checks via `tools/ppc_equivalence/` for supported blocks
+   (`check-hex`, `check-objects`, or `coop run equivalence check-unit <unit> --symbol …`).
 
 `behaviour audit` only fails on split-size overflow for registered tests — it does **not** require host scenario counts.
 

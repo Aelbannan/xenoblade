@@ -16,6 +16,8 @@ class FixtureObservation:
     cr: int
     xer: int
     memory: dict[int, int]
+    fpr: dict[int, int]
+    fpscr: int
 
 
 def _memory_word(state, address: int) -> int:
@@ -61,6 +63,8 @@ def run_fixture_concrete(case: FixtureCase) -> FixtureObservation:
         cr=int(final.cr) & 0xFFFFFFFF,
         xer=xer,
         memory=memory,
+        fpr={index: int(final.fpr[index]) & 0xFFFFFFFFFFFFFFFF for index in case.expected_fpr},
+        fpscr=int(final.fpscr) & 0xFFFFFFFF,
     )
 
 
@@ -81,4 +85,14 @@ def compare_fixture(case: FixtureCase) -> list[str]:
             mismatches.append(
                 f"mem+0x{offset:x} 0x{(got or 0):08x} != 0x{expected:08x}"
             )
+    for index, expected in case.expected_fpr.items():
+        got = actual.fpr.get(index)
+        if got != expected:
+            mismatches.append(
+                f"f{index} 0x{(got or 0):016x} != 0x{expected:016x}"
+            )
+    if case.expected_fpscr is not None and actual.fpscr != case.expected_fpscr:
+        mismatches.append(
+            f"fpscr 0x{actual.fpscr:08x} != 0x{case.expected_fpscr:08x}"
+        )
     return mismatches

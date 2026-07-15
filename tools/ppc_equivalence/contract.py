@@ -29,8 +29,8 @@ CONTRACT_PRESETS = ("ppc-eabi", "strict", "live-out")
 def preset_observable_names(name: str) -> tuple[str, ...]:
     if name == "ppc-eabi":
         # Function-boundary contract for the 32-bit PowerPC EABI used by MWCC:
-        # stack/small-data bases, scalar return pair, nonvolatile GPRs, and the
-        # nonvolatile CR fields. Volatile scratch state is intentionally omitted.
+        # stack/small-data bases, integer and FP returns, nonvolatile GPRs/FPRs,
+        # and the nonvolatile CR fields. Volatile scratch state is omitted.
         return (
             "r1",
             "r2",
@@ -55,14 +55,34 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "r29",
             "r30",
             "r31",
+            "f1",
+            "f14",
+            "f15",
+            "f16",
+            "f17",
+            "f18",
+            "f19",
+            "f20",
+            "f21",
+            "f22",
+            "f23",
+            "f24",
+            "f25",
+            "f26",
+            "f27",
+            "f28",
+            "f29",
+            "f30",
+            "f31",
             "cr2",
             "cr3",
             "cr4",
             "memory",
         )
     if name == "strict":
-        return tuple(f"r{index}" for index in range(32)) + (
+        return tuple(f"r{index}" for index in range(32)) + tuple(f"f{index}" for index in range(32)) + (
             "cr",
+            "fpscr",
             "xer.ca",
             "xer.ov",
             "xer.so",
@@ -110,6 +130,8 @@ def parse_observables(values: list[str] | tuple[str, ...]) -> tuple[Observable, 
         seen.add(token)
         if token.startswith("r") and token[1:].isdigit() and 0 <= int(token[1:]) < 32:
             result.append(Observable("gpr", token, int(token[1:])))
+        elif token.startswith("f") and token[1:].isdigit() and 0 <= int(token[1:]) < 32:
+            result.append(Observable("fpr", token, int(token[1:])))
         elif token.startswith("cr") and token[2:].isdigit() and 0 <= int(token[2:]) < 8:
             result.append(Observable("cr_field", token, int(token[2:])))
         elif token in ("cr", "lr", "ctr"):
@@ -118,6 +140,8 @@ def parse_observables(values: list[str] | tuple[str, ...]) -> tuple[Observable, 
             result.append(Observable("memory", "memory"))
         elif token in ("xer.ca", "xer.ov", "xer.so"):
             result.append(Observable("xer", token, None))
+        elif token == "fpscr":
+            result.append(Observable("fpscr", "fpscr"))
         else:
             raise ValueError(f"unsupported observable '{token}'")
     return tuple(result)

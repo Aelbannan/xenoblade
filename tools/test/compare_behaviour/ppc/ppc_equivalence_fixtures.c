@@ -56,12 +56,25 @@ static void log_case_diff(const char* name, u32 ar, u32 ac, u32 ax, u32 er, u32 
 #undef APPEND_TEXT
 }
 
+static void log_fp_diff(const char* name, u32 index, u64 actual, u64 expected) {
+    OSReport(
+        "BEHAVIOUR_FP_DIFF %s f%u actual=%08X%08X expected=%08X%08X",
+        name,
+        index,
+        (u32)(actual >> 32),
+        (u32)actual,
+        (u32)(expected >> 32),
+        (u32)expected
+    );
+}
+
 int behaviour_main(void) {
     volatile BehaviourResult* result = &g_behaviour_result;
     u32 sandbox[PPC_FIXTURE_MEM_WORDS];
     PpcFixtureActual actual;
     int case_index;
     u32 mem_index;
+    u32 fpr_index;
     int mismatch;
 
     behaviour_result_init(result);
@@ -83,6 +96,42 @@ int behaviour_main(void) {
             if (word_index >= PPC_FIXTURE_MEM_WORDS || actual.mem[word_index] != fixture->expected_mem_val[mem_index]) {
                 mismatch = 1;
             }
+        }
+        for (fpr_index = 0; fpr_index < fixture->expected_fpr_count; ++fpr_index) {
+            u32 index = fixture->expected_fpr_index[fpr_index];
+            if (index >= 32u || actual.fpr[index] != fixture->expected_fpr_value[fpr_index]) {
+                mismatch = 1;
+                if (index < 32u) {
+                    log_fp_diff(fixture->name, index, actual.fpr[index], fixture->expected_fpr_value[fpr_index]);
+                    log_case_diff(
+                        fixture->name,
+                        (u32)(actual.fpr[index] >> 32),
+                        (u32)actual.fpr[index],
+                        actual.fpscr,
+                        (u32)(fixture->expected_fpr_value[fpr_index] >> 32),
+                        (u32)fixture->expected_fpr_value[fpr_index],
+                        fixture->expected_fpscr
+                    );
+                }
+            }
+        }
+        if (fixture->observe_fpscr && actual.fpscr != fixture->expected_fpscr) {
+            mismatch = 1;
+            OSReport(
+                "BEHAVIOUR_FPSCR_DIFF %s actual=%08X expected=%08X",
+                fixture->name,
+                actual.fpscr,
+                fixture->expected_fpscr
+            );
+            log_case_diff(
+                fixture->name,
+                0,
+                0,
+                actual.fpscr,
+                0,
+                0,
+                fixture->expected_fpscr
+            );
         }
 
         if (mismatch) {

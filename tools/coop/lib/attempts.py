@@ -24,6 +24,8 @@ class AttemptRecord:
     runtime_test: str = ""
     git_commit: Optional[str] = None
     timestamp: str = ""
+    equivalence_status: Optional[str] = None
+    equivalence_detail: str = ""
 
     def to_json(self) -> Dict[str, Any]:
         data = asdict(self)

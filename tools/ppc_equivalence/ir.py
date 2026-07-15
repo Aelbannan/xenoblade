@@ -115,6 +115,147 @@ class Opcode(str, Enum):
     BCLR = "bclr"
     BCCTR = "bcctr"
 
+    # Floating-point load/store (D-form).
+    LFS = "lfs"
+    LFSU = "lfsu"
+    LFD = "lfd"
+    LFDU = "lfdu"
+    STFS = "stfs"
+    STFSU = "stfsu"
+    STFD = "stfd"
+    STFDU = "stfdu"
+
+    # Floating-point load/store indexed (X-form).
+    LFSX = "lfsx"
+    LFSUX = "lfsux"
+    LFDX = "lfdx"
+    LFDUX = "lfdux"
+    STFSX = "stfsx"
+    STFSUX = "stfsux"
+    STFDX = "stfdx"
+    STFDUX = "stfdux"
+    STFIWX = "stfiwx"
+
+    # Single-precision floating-point arithmetic.
+    FADDS = "fadds"
+    FSUBS = "fsubs"
+    FMULS = "fmuls"
+    FDIVS = "fdivs"
+    FSQRTS = "fsqrts"
+    FRES = "fres"
+    FMADDS = "fmadds"
+    FMSUBS = "fmsubs"
+    FNMADDS = "fnmadds"
+    FNMSUBS = "fnmsubs"
+
+    # Double-precision floating-point arithmetic.
+    FADD = "fadd"
+    FSUB = "fsub"
+    FMUL = "fmul"
+    FDIV = "fdiv"
+    FSQRT = "fsqrt"
+    FRSQRTE = "frsqrte"
+    FSEL = "fsel"
+    FMADD = "fmadd"
+    FMSUB = "fmsub"
+    FNMADD = "fnmadd"
+    FNMSUB = "fnmsub"
+
+    # Floating-point compare / convert / move.
+    FCMPU = "fcmpu"
+    FCMPO = "fcmpo"
+    FRSP = "frsp"
+    FCTIW = "fctiw"
+    FCTIWZ = "fctiwz"
+    FNEG = "fneg"
+    FMR = "fmr"
+    FNABS = "fnabs"
+    FABS = "fabs"
+
+    # FPSCR access.
+    MTFSB0 = "mtfsb0"
+    MTFSB1 = "mtfsb1"
+    MTFSFI = "mtfsfi"
+    MFFS = "mffs"
+    MTFSF = "mtfsf"
+    MCRFS = "mcrfs"
+
+    # Paired-single arithmetic.
+    PS_DIV = "ps_div"
+    PS_SUB = "ps_sub"
+    PS_ADD = "ps_add"
+    PS_SEL = "ps_sel"
+    PS_RES = "ps_res"
+    PS_MUL = "ps_mul"
+    PS_RSQRTE = "ps_rsqrte"
+    PS_MSUB = "ps_msub"
+    PS_MADD = "ps_madd"
+    PS_NMSUB = "ps_nmsub"
+    PS_NMADD = "ps_nmadd"
+    PS_SUM0 = "ps_sum0"
+    PS_SUM1 = "ps_sum1"
+    PS_MULS0 = "ps_muls0"
+    PS_MULS1 = "ps_muls1"
+    PS_MADDS0 = "ps_madds0"
+    PS_MADDS1 = "ps_madds1"
+    PS_NEG = "ps_neg"
+    PS_MR = "ps_mr"
+    PS_NABS = "ps_nabs"
+    PS_ABS = "ps_abs"
+
+    # Paired-single compare.
+    PS_CMPU0 = "ps_cmpu0"
+    PS_CMPO0 = "ps_cmpo0"
+    PS_CMPU1 = "ps_cmpu1"
+    PS_CMPO1 = "ps_cmpo1"
+
+    # Paired-single merge.
+    PS_MERGE00 = "ps_merge00"
+    PS_MERGE01 = "ps_merge01"
+    PS_MERGE10 = "ps_merge10"
+    PS_MERGE11 = "ps_merge11"
+
+    # Paired-single quantized load/store (D-form).
+    PSQ_L = "psq_l"
+    PSQ_LU = "psq_lu"
+    PSQ_ST = "psq_st"
+    PSQ_STU = "psq_stu"
+
+    # Paired-single quantized load/store indexed (X-form).
+    PSQ_LX = "psq_lx"
+    PSQ_LUX = "psq_lux"
+    PSQ_STX = "psq_stx"
+    PSQ_STUX = "psq_stux"
+
+
+# Scalar FP instructions whose value semantics are implemented by both
+# ConcreteOps and SymbolicOps.  Broadway exception-enable/trap behavior and
+# sticky exception flags remain outside the proof model (see README.md); keep
+# instructions that fundamentally depend on those details out of this set.
+SUPPORTED_FP_OPCODES = frozenset({
+    Opcode.LFS, Opcode.LFSU, Opcode.LFD, Opcode.LFDU,
+    Opcode.STFS, Opcode.STFSU, Opcode.STFD, Opcode.STFDU,
+    Opcode.LFSX, Opcode.LFSUX, Opcode.LFDX, Opcode.LFDUX,
+    Opcode.STFSX, Opcode.STFSUX, Opcode.STFDX, Opcode.STFDUX, Opcode.STFIWX,
+    Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS,
+    Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV,
+    Opcode.FSEL, Opcode.FCMPU, Opcode.FRSP,
+    Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS,
+})
+
+
+SUPPORTED_OPCODES = frozenset(
+    opcode
+    for opcode in Opcode
+    if (
+        not opcode.name.startswith(("F", "LF", "STF", "PS"))
+        and opcode not in {
+            Opcode.MCRFS, Opcode.MFFS, Opcode.MTFSB0, Opcode.MTFSB1,
+            Opcode.MTFSFI, Opcode.MTFSF,
+        }
+    )
+) | SUPPORTED_FP_OPCODES
+
 
 @dataclass(frozen=True, slots=True)
 class Instruction:

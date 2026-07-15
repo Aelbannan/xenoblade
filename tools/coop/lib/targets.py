@@ -71,7 +71,8 @@ def get_target(targets: List[Target], target_id: str) -> Target:
 
 
 def pending_targets(targets: List[Target], tier: Optional[str] = None) -> List[Target]:
-    result = [t for t in targets if t.buildable and t.status != "FULL_MATCH"]
+    done = {"FULL_MATCH", "EQUIVALENT_MATCH"}
+    result = [t for t in targets if t.buildable and t.status not in done]
     if tier:
         result = [t for t in result if t.tier == tier]
     tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}

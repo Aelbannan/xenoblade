@@ -19,6 +19,7 @@ Usage (from repository root):
   python tools/coop/run.py behaviour audit
   python tools/coop/run.py behaviour compare --all
   python tools/coop/run.py equivalence check-hex --original ... --candidate ... --observe r3
+  python tools/coop/run.py equivalence check-unit kyoshin/CGame --symbol OnPauseTrigger__5CGameFv
   python tools/coop/run.py opcodes
   python tools/coop/run.py symbols show UnkClass_8045F564
 """
@@ -39,8 +40,8 @@ if str(ROOT) not in sys.path:
 from tools.coop.lib.attempts import AttemptRecord, append_attempt, count_attempts, read_attempts
 from tools.coop.lib.config import CoopConfig, load_config
 from tools.coop.lib.objdiff_report import (
-    classify_status,
     diff_function_json,
+    evaluate_unit_match,
     find_function_match,
     meets_required_level,
     report_unit,
@@ -191,8 +192,10 @@ def cmd_diff(
     if unit.base_path:
         project.ninja_build(str(unit.base_path.relative_to(project.root)))
         _postprocess_mtrand_object(project, unit.base_path)
-    unit_report = report_unit(project, unit)
-    fn_match = find_function_match(unit_report, symbol)
+
+    evaluation = evaluate_unit_match(project, unit, symbol)
+    unit_report = evaluation.unit_report
+    fn_match = evaluation.fn_match
 
     print(f"unit: {unit.name}")
     print(
@@ -210,6 +213,10 @@ def cmd_diff(
     elif symbol:
         print(f"WARNING: symbol not found in report: {symbol}", file=sys.stderr)
 
+    if evaluation.equivalence is not None:
+        detail = f" ({evaluation.equivalence_detail})" if evaluation.equivalence_detail else ""
+        print(f"equivalence: {evaluation.equivalence.value}{detail}")
+
     if write_function_diff and symbol and fn_match:
         out = config.resolve(Path("build/coop-function-diff.json"))
         try:
@@ -222,12 +229,7 @@ def cmd_diff(
                 file=sys.stderr,
             )
 
-    status = classify_status(
-        fn_match.match_percent if fn_match else None,
-        unit_report,
-        symbol=symbol,
-    )
-    print(f"status: {status}")
+    print(f"status: {evaluation.status}")
     size_check = _print_object_size(project, config, hint, unit)
     if not size_check.ok:
         return 1
@@ -287,17 +289,48 @@ def cmd_cycle(
     ctx_out = target.source.with_suffix(".ctx.c")
     cmd_ctx(project, target.source.relative_to(project.root), ctx_out)
     cmd_build(project, target.unit)
-    if cmd_diff(project, config, target.unit, target.symbol, write_function_diff=True) != 0:
-        return 1
 
     unit = project.resolve_unit(target.unit)
-    unit_report = report_unit(project, unit)
-    fn_match = find_function_match(unit_report, target.symbol)
-    status = classify_status(
-        fn_match.match_percent if fn_match else None,
-        unit_report,
-        symbol=target.symbol,
+    if unit.base_path:
+        _postprocess_mtrand_object(project, unit.base_path)
+
+    evaluation = evaluate_unit_match(project, unit, target.symbol)
+    unit_report = evaluation.unit_report
+    fn_match = evaluation.fn_match
+
+    print(f"unit: {unit.name}")
+    print(
+        f"code: {unit_report.code_match_percent:.1f}%  "
+        f"data: {unit_report.data_match_percent:.1f}%  "
+        f"fuzzy: {unit_report.fuzzy_match_percent:.1f}%  "
+        f"functions: {unit_report.matched_functions}/{unit_report.total_functions}"
     )
+    if fn_match:
+        print(
+            f"symbol: {fn_match.name}  "
+            f"match: {fn_match.match_percent:.1f}%  "
+            f"size: 0x{fn_match.size:X}"
+        )
+    if evaluation.equivalence is not None:
+        detail = f" ({evaluation.equivalence_detail})" if evaluation.equivalence_detail else ""
+        print(f"equivalence: {evaluation.equivalence.value}{detail}")
+    print(f"status: {evaluation.status}")
+
+    if target.symbol and fn_match:
+        out = config.resolve(Path("build/coop-function-diff.json"))
+        try:
+            diff_function_json(project, unit, target.symbol, out)
+            print(f"function diff: {out}")
+        except subprocess.CalledProcessError as exc:
+            print(
+                f"WARNING: function-diff JSON skipped ({exc.returncode}): {' '.join(exc.cmd)}",
+                file=sys.stderr,
+            )
+
+    size_check = _print_object_size(project, config, target.unit, unit)
+    if not size_check.ok:
+        return 1
+
     attempt_num = count_attempts(config.resolve(config.attempt_log), target.id) + 1
     record = AttemptRecord(
         target_id=target.id,
@@ -305,7 +338,7 @@ def cmd_cycle(
         region=config.region,
         unit=unit.name,
         symbol=target.symbol,
-        status=status,
+        status=evaluation.status,
         instruction_match=fn_match.match_percent if fn_match else unit_report.fuzzy_match_percent,
         relocation_match=None,
         code_match_percent=unit_report.code_match_percent,
@@ -314,6 +347,8 @@ def cmd_cycle(
         next_change=next_change,
         runtime_test=runtime_test,
         git_commit=_git_head(project),
+        equivalence_status=evaluation.equivalence.value if evaluation.equivalence else None,
+        equivalence_detail=evaluation.equivalence_detail,
     )
     log_path = append_attempt(config.resolve(config.attempt_log), record)
     print(f"attempt #{attempt_num} logged to {log_path}")
@@ -321,15 +356,17 @@ def cmd_cycle(
     fn_percent = fn_match.match_percent if fn_match else None
     if not meets_required_level(
         target.required_level,
-        status,
+        evaluation.status,
         function_match=fn_percent,
         unit=unit_report,
         symbol=target.symbol,
+        equivalence=evaluation.equivalence,
     ):
         print(
-            f"FAIL: required {target.required_level}, got {status} "
+            f"FAIL: required {target.required_level}, got {evaluation.status} "
             f"(function={fn_percent}, code={unit_report.code_match_percent:.1f}%, "
-            f"data={unit_report.data_match_percent:.1f}%)",
+            f"data={unit_report.data_match_percent:.1f}%, "
+            f"equivalence={evaluation.equivalence.value if evaluation.equivalence else 'n/a'})",
             file=sys.stderr,
         )
         return 1
@@ -424,7 +461,7 @@ def cmd_behaviour(behaviour_args: list[str]) -> int:
 
 def _equivalence_args_with_default_contract(equivalence_args: list[str]) -> list[str]:
     args = list(equivalence_args)
-    if not args or args[0] not in {"check", "check-hex"}:
+    if not args or args[0] not in {"check", "check-hex", "check-objects"}:
         return args
     has_contract = any(
         arg in {"--contract", "--observe"}
@@ -437,9 +474,82 @@ def _equivalence_args_with_default_contract(equivalence_args: list[str]) -> list
     return args
 
 
-def cmd_equivalence(equivalence_args: list[str]) -> int:
+def _cmd_equivalence_check_unit(project: Project, config: CoopConfig, unit_args: list[str]) -> int:
+    """Resolve an objdiff unit pair, extract one symbol, and run check-objects."""
+    parser = argparse.ArgumentParser(
+        prog="equivalence check-unit",
+        description="SMT-check one function from an objdiff retail/decomp object pair",
+    )
+    parser.add_argument("unit", help="objdiff unit hint or source path")
+    parser.add_argument(
+        "--symbol",
+        required=True,
+        help="function symbol (mangled or unique substring / demangled token)",
+    )
+    parser.add_argument(
+        "--candidate-symbol",
+        help="candidate symbol when names differ (default: resolved --symbol)",
+    )
+    parser.add_argument(
+        "--no-build",
+        action="store_true",
+        help="do not ninja-build / post-process the decomp object first",
+    )
+    parsed, rest = parser.parse_known_args(unit_args)
+
+    unit = project.resolve_unit(parsed.unit)
+    retail, decomp = _object_paths_for_unit(project, unit)
+    if retail is None or not retail.is_file():
+        print(f"ERROR: retail object missing for unit {unit.name}: {retail}", file=sys.stderr)
+        return 3
+    if decomp is None:
+        print(f"ERROR: unit has no compiled base path: {unit.name}", file=sys.stderr)
+        return 3
+
+    if not parsed.no_build:
+        project.ninja_build(str(decomp.relative_to(project.root)))
+        _postprocess_mtrand_object(project, decomp)
+    if not decomp.is_file():
+        print(f"ERROR: decomp object missing for unit {unit.name}: {decomp}", file=sys.stderr)
+        return 3
+
+    symbol = parsed.symbol
+    # Prefer the mangled name from the objdiff report when the user passed a demangled hint.
+    try:
+        fn_match = find_function_match(report_unit(project, unit), parsed.symbol)
+        if fn_match is not None:
+            symbol = fn_match.name
+            print(
+                f"unit: {unit.name}  symbol: {fn_match.name}  "
+                f"objdiff fuzzy: {fn_match.match_percent:.1f}%",
+                flush=True,
+            )
+        else:
+            print(f"unit: {unit.name}  symbol: {symbol}", flush=True)
+    except (FileNotFoundError, ValueError, subprocess.CalledProcessError) as exc:
+        print(f"unit: {unit.name}  symbol: {symbol}", flush=True)
+        print(f"warning: objdiff report unavailable ({exc})", file=sys.stderr)
+
+    forwarded = [
+        "check-objects",
+        "--original",
+        str(retail),
+        "--candidate",
+        str(decomp),
+        "--symbol",
+        symbol,
+    ]
+    if parsed.candidate_symbol:
+        forwarded.extend(["--candidate-symbol", parsed.candidate_symbol])
+    forwarded.extend(rest)
+    return cmd_equivalence(project, config, forwarded)
+
+
+def cmd_equivalence(project: Project, config: CoopConfig, equivalence_args: list[str]) -> int:
     if equivalence_args and equivalence_args[0] == "--":
         equivalence_args = equivalence_args[1:]
+    if equivalence_args and equivalence_args[0] == "check-unit":
+        return _cmd_equivalence_check_unit(project, config, equivalence_args[1:])
     equivalence_args = _equivalence_args_with_default_contract(equivalence_args)
     script = ROOT / "tools" / "ppc_equivalence" / "run.py"
     cmd = [sys.executable, str(script), *equivalence_args]
@@ -532,7 +642,7 @@ def main() -> int:
     p_equivalence.add_argument(
         "equivalence_args",
         nargs=argparse.REMAINDER,
-        help="equivalence subcommand (decode, check-hex, check, replay, differential)",
+        help="equivalence subcommand (decode, check-hex, check, check-objects, check-unit, extract, replay, differential)",
     )
 
     p_opcodes = sub.add_parser(
@@ -585,7 +695,7 @@ def main() -> int:
     if args.command == "behaviour":
         return cmd_behaviour(args.behaviour_args)
     if args.command == "equivalence":
-        return cmd_equivalence(args.equivalence_args)
+        return cmd_equivalence(project, config, args.equivalence_args)
     if args.command == "opcodes":
         return cmd_opcodes(args.opcodes_args, config)
 

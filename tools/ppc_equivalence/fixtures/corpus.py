@@ -23,6 +23,8 @@ class FixtureCase:
     expected_cr: int
     expected_xer: int
     expected_memory: dict[int, int] = field(default_factory=dict)
+    expected_fpr: dict[int, int] = field(default_factory=dict)
+    expected_fpscr: int | None = None
     max_instructions: int = 32
     allow_paths: int = 1
 
@@ -45,11 +47,21 @@ class FixtureCase:
                     f"0x{offset:08x}": f"0x{value:08x}"
                     for offset, value in sorted(self.expected_memory.items())
                 },
+                "fpr": [f"f{index}" for index in sorted(self.expected_fpr)],
+                "fpscr": self.expected_fpscr is not None,
             },
             "expected": {
                 "result": f"0x{self.expected_result & 0xFFFFFFFF:08x}",
                 "cr": f"0x{self.expected_cr & 0xFFFFFFFF:08x}",
                 "xer": f"0x{self.expected_xer & 0xFFFFFFFF:08x}",
+                "fpr": {
+                    f"f{index}": f"0x{value & 0xFFFFFFFFFFFFFFFF:016x}"
+                    for index, value in sorted(self.expected_fpr.items())
+                },
+                "fpscr": (
+                    f"0x{self.expected_fpscr & 0xFFFFFFFF:08x}"
+                    if self.expected_fpscr is not None else None
+                ),
             },
         }
 
@@ -77,6 +89,8 @@ def _state(
     lr: int = 0,
     ctr: int = 0,
     memory_words: dict[int, int] | None = None,
+    fpr: dict[str, int] | None = None,
+    fpscr: int = 0,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "gpr": dict(gpr or {}),
@@ -88,6 +102,8 @@ def _state(
         },
         "lr": f"0x{lr & 0xFFFFFFFF:08x}",
         "ctr": f"0x{ctr & 0xFFFFFFFF:08x}",
+        "fpr": {name: f"0x{value & 0xFFFFFFFFFFFFFFFF:016x}" for name, value in (fpr or {}).items()},
+        "fpscr": f"0x{fpscr & 0xFFFFFFFF:08x}",
     }
     if memory_words is not None:
         payload["memory"] = {"bytes": _mem_bytes(memory_words)}
@@ -106,6 +122,8 @@ def _case(
     xer: int,
     result_reg: int = 7,
     expected_memory: dict[int, int] | None = None,
+    expected_fpr: dict[int, int] | None = None,
+    expected_fpscr: int | None = None,
     allow_paths: int = 1,
 ) -> FixtureCase:
     return FixtureCase(
@@ -118,6 +136,8 @@ def _case(
         expected_cr=cr & 0xFFFFFFFF,
         expected_xer=xer & 0xFFFFFFFF,
         expected_memory=dict(expected_memory or {}),
+        expected_fpr=dict(expected_fpr or {}),
+        expected_fpscr=expected_fpscr,
         allow_paths=allow_paths,
     )
 
@@ -146,6 +166,20 @@ def _cmp(ra: int, rb: int, *, unsigned: bool = False, field: int = 0) -> int:
     # Primary 31; xo 0 (cmp) / 32 (cmpl); L=0 for word; crfD in bits 6..8.
     xo_bits = 32 if unsigned else 0
     return (31 << 26) | ((field & 7) << 23) | ((ra & 0x1F) << 16) | ((rb & 0x1F) << 11) | (xo_bits << 1)
+
+
+def _fp_a(primary: int, fd: int, fa: int, fb: int, fc: int, sub: int, *, rc: int = 0) -> int:
+    return (
+        ((primary & 0x3F) << 26) | ((fd & 31) << 21) | ((fa & 31) << 16)
+        | ((fb & 31) << 11) | ((fc & 31) << 6) | (sub & 0x3E) | (rc & 1)
+    )
+
+
+def _fp_x(fd: int, fa: int, fb: int, xo_bits: int, *, rc: int = 0) -> int:
+    return (
+        (63 << 26) | ((fd & 31) << 21) | ((fa & 31) << 16)
+        | ((fb & 31) << 11) | ((xo_bits & 0x3FF) << 1) | (rc & 1)
+    )
 
 
 FIXTURES: tuple[FixtureCase, ...] = (
@@ -641,6 +675,104 @@ FIXTURES: tuple[FixtureCase, ...] = (
 )
 
 
+# One interpreter-backed smoke case for every otherwise-unrepresented opcode.
+# Edge-heavy family cases remain above; this block prevents accepted decoder
+# growth from silently outrunning the ConcreteOps/Dolphin corpus.
+FIXTURES += (
+    _case("addic", ("integer", "xer.ca"), _state(_gpr(r5=0xFFFFFFFF)), [dform(12, 7, 5, 1)], result=0, cr=0, xer=pack_xer(ca=1)),
+    _case("addic-dot", ("integer", "xer.ca", "record"), _state(_gpr(r5=0xFFFFFFFF)), [dform(13, 7, 5, 1)], result=0, cr=0x20000000, xer=pack_xer(ca=1)),
+    _case("addis", ("integer",), _state(_gpr(r5=2)), [dform(15, 7, 5, 1)], result=0x00010002, cr=0, xer=0),
+    _case("andi-dot", ("logical", "record"), _state(_gpr(r5=0x1234)), [dform(28, 5, 7, 0x00FF)], result=0x34, cr=0x40000000, xer=0),
+    _case("andis-dot", ("logical", "record"), _state(_gpr(r5=0x12345678)), [dform(29, 5, 7, 0x00FF)], result=0x00340000, cr=0x40000000, xer=0),
+    _case("cmplwi", ("compare",), _state(_gpr(r5=0xFFFFFFFF, r7=0)), [(10 << 26) | (5 << 16) | 1], result=0, cr=0x40000000, xer=0),
+    _case("mulli", ("integer",), _state(_gpr(r5=3)), [dform(7, 7, 5, 0xFFFE)], result=0xFFFFFFFA, cr=0, xer=0),
+    _case("ori", ("logical",), _state(_gpr(r5=0x1000)), [dform(24, 5, 7, 0x23)], result=0x1023, cr=0, xer=0),
+    _case("oris", ("logical",), _state(_gpr(r5=0x1000)), [dform(25, 5, 7, 0x23)], result=0x00231000, cr=0, xer=0),
+    _case("subfic", ("integer", "xer.ca"), _state(_gpr(r5=1)), [dform(8, 7, 5, 0)], result=0xFFFFFFFF, cr=0, xer=0),
+    _case("subfme", ("integer", "xer.ca", "record"), _state(_gpr(r5=0), xer=pack_xer(ca=1)), [xo(31, 7, 5, 0, 232, rc=1)], result=0xFFFFFFFF, cr=0x80000000, xer=0),
+    _case("addme-carry-in", ("integer", "xer.ca", "record"), _state(_gpr(r5=0), xer=pack_xer(ca=1)), [xo(31, 7, 5, 0, 234, rc=1)], result=0, cr=0x20000000, xer=0),
+    _case("subfme-carry-clear", ("integer", "xer.ca", "record"), _state(_gpr(r5=0)), [xo(31, 7, 5, 0, 232, rc=1)], result=0xFFFFFFFE, cr=0x80000000, xer=pack_xer(ca=1)),
+    _case("xori", ("logical",), _state(_gpr(r5=0x1234)), [dform(26, 5, 7, 0x00FF)], result=0x12CB, cr=0, xer=0),
+    _case("xoris", ("logical",), _state(_gpr(r5=0x12345678)), [dform(27, 5, 7, 0x00FF)], result=0x12CB5678, cr=0, xer=0),
+
+    _case("crandc", ("cr",), _state(_gpr(r7=0), cr=0x80000000), [xl(19, 2, 0, 1, 129), xo(31, 7, 0, 0, 19)], result=0xA0000000, cr=0xA0000000, xer=0),
+    _case("crnand", ("cr",), _state(_gpr(r7=0), cr=0xC0000000), [xl(19, 2, 0, 1, 225), xo(31, 7, 0, 0, 19)], result=0xC0000000, cr=0xC0000000, xer=0),
+    _case("crnor", ("cr",), _state(_gpr(r7=0), cr=0), [xl(19, 2, 0, 1, 33), xo(31, 7, 0, 0, 19)], result=0x20000000, cr=0x20000000, xer=0),
+    _case("cror", ("cr",), _state(_gpr(r7=0), cr=0x80000000), [xl(19, 2, 0, 1, 449), xo(31, 7, 0, 0, 19)], result=0xA0000000, cr=0xA0000000, xer=0),
+
+    _case("b-direct", ("branch",), _state(_gpr(r7=0)), [(18 << 26) | (2 << 2), dform(14, 7, 0, 1), dform(14, 7, 0, 2)], result=2, cr=0, xer=0),
+    _case("bclr-not-taken", ("branch",), _state(_gpr(r7=0), cr=0), [xl(19, 12, 0, 0, 16), dform(14, 7, 0, 1)], result=1, cr=0, xer=0),
+    _case("bcctr-not-taken", ("branch",), _state(_gpr(r7=0), cr=0, ctr=4), [xl(19, 12, 0, 0, 528), dform(14, 7, 0, 1)], result=1, cr=0, xer=0),
+
+    _case("lwz", ("memory",), _state(_gpr(r7=0), memory_words={4: 0x89ABCDEF}), [dform(32, 7, 4, 4)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
+    _case("lwzu", ("memory", "update"), _state(_gpr(r7=0), memory_words={4: 0x89ABCDEF}), [dform(33, 7, 4, 4)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
+    _case("lbzx", ("memory",), _state(_gpr(r6=1, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 87)], result=0x22, cr=0, xer=0, expected_memory={0: 0x11223344}),
+    _case("lbzux", ("memory", "update"), _state(_gpr(r6=1, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 119)], result=0x22, cr=0, xer=0, expected_memory={0: 0x11223344}),
+    _case("lhzu", ("memory", "update"), _state(_gpr(r7=0), memory_words={0: 0x11223344}), [dform(41, 7, 4, 2)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}),
+    _case("lhau", ("memory", "update"), _state(_gpr(r7=0), memory_words={0: 0x11228001}), [dform(43, 7, 4, 2)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}),
+    _case("lhzx", ("memory",), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 279)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}),
+    _case("lhzux", ("memory", "update"), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 311)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}),
+    _case("lhax", ("memory",), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11228001}), [xo(31, 7, 4, 6, 343)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}),
+    _case("lhaux", ("memory", "update"), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11228001}), [xo(31, 7, 4, 6, 375)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}),
+    _case("lwzx", ("memory",), _state(_gpr(r6=4, r7=0), memory_words={4: 0x89ABCDEF}), [xo(31, 7, 4, 6, 23)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
+    _case("lwzux", ("memory", "update"), _state(_gpr(r6=4, r7=0), memory_words={4: 0x89ABCDEF}), [xo(31, 7, 4, 6, 55)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
+
+    _case("stb", ("memory",), _state(_gpr(r5=0xAA), memory_words={0: 0}), [dform(38, 5, 4, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
+    _case("stbu", ("memory", "update"), _state(_gpr(r5=0xAA), memory_words={0: 0}), [dform(39, 5, 4, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
+    _case("stbx", ("memory",), _state(_gpr(r5=0xAA, r6=1), memory_words={0: 0}), [xo(31, 5, 4, 6, 215)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
+    _case("stbux", ("memory", "update"), _state(_gpr(r5=0xAA, r6=1), memory_words={0: 0}), [xo(31, 5, 4, 6, 247)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
+    _case("sthu", ("memory", "update"), _state(_gpr(r5=0xAABB), memory_words={0: 0}), [dform(45, 5, 4, 2)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}),
+    _case("sthx", ("memory",), _state(_gpr(r5=0xAABB, r6=2), memory_words={0: 0}), [xo(31, 5, 4, 6, 407)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}),
+    _case("sthux", ("memory", "update"), _state(_gpr(r5=0xAABB, r6=2), memory_words={0: 0}), [xo(31, 5, 4, 6, 439)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}),
+    _case("sthbrx", ("memory",), _state(_gpr(r5=0x1122, r6=2), memory_words={0: 0}), [xo(31, 5, 4, 6, 918)], result=0, cr=0, xer=0, expected_memory={0: 0x00002211}),
+    _case("stwx", ("memory",), _state(_gpr(r5=0x11223344, r6=4), memory_words={4: 0}), [xo(31, 5, 4, 6, 151)], result=0, cr=0, xer=0, expected_memory={4: 0x11223344}),
+    _case("stwux", ("memory", "update"), _state(_gpr(r5=0x11223344, r6=4), memory_words={4: 0}), [xo(31, 5, 4, 6, 183)], result=0, cr=0, xer=0, expected_memory={4: 0x11223344}),
+)
+
+
+# Scalar floating-point value-semantics corpus.  These cases are also executed
+# by Dolphin's Broadway interpreter and compare FPR/FPSCR state directly.
+_F15 = 0x3FF8000000000000
+_F2 = 0x4000000000000000
+_F4 = 0x4010000000000000
+_FP_INPUTS = {"f1": _F15, "f2": _F2, "f3": _F4}
+
+FIXTURES += (
+    _case("lfs", ("fp", "memory"), _state(memory_words={0: 0x3FC00000}), [dform(48, 7, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}),
+    _case("lfsu", ("fp", "memory", "update"), _state(memory_words={4: 0x3FC00000}), [dform(49, 7, 4, 4)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_fpr={7: _F15}),
+    _case("lfd", ("fp", "memory"), _state(memory_words={0: 0x3FF80000, 4: 0}), [dform(50, 7, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}),
+    _case("lfdu", ("fp", "memory", "update"), _state(memory_words={8: 0x3FF80000, 12: 0}), [dform(51, 7, 4, 8)], result=0, cr=0, xer=0, expected_memory={8: 0x3FF80000, 12: 0}, expected_fpr={7: _F15}),
+    _case("stfs", ("fp", "memory"), _state(memory_words={0: 0}, fpr={"f5": _F15}), [dform(52, 5, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}),
+    _case("stfsu", ("fp", "memory", "update"), _state(memory_words={4: 0}, fpr={"f5": _F15}), [dform(53, 5, 4, 4)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}),
+    _case("stfd", ("fp", "memory"), _state(memory_words={0: 0, 4: 0}, fpr={"f5": _F15}), [dform(54, 5, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}),
+    _case("stfdu", ("fp", "memory", "update"), _state(memory_words={8: 0, 12: 0}, fpr={"f5": _F15}), [dform(55, 5, 4, 8)], result=0, cr=0, xer=0, expected_memory={8: 0x3FF80000, 12: 0}),
+    _case("lfsx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0x3FC00000}), [xo(31, 7, 4, 6, 535)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}),
+    _case("lfsux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0x3FC00000}), [xo(31, 7, 4, 6, 567)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}),
+    _case("lfdx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0x3FF80000, 4: 0}), [xo(31, 7, 4, 6, 599)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}),
+    _case("lfdux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0x3FF80000, 4: 0}), [xo(31, 7, 4, 6, 631)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}),
+    _case("stfsx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 663)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}),
+    _case("stfsux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 695)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}),
+    _case("stfdx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0, 4: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 727)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}),
+    _case("stfdux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0, 4: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 759)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}),
+    _case("stfiwx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0}, fpr={"f5": 0x1122334455667788}), [xo(31, 5, 4, 6, 983)], result=0, cr=0, xer=0, expected_memory={0: 0x55667788}),
+
+    _case("fadds", ("fp", "single", "record"), _state(fpr=_FP_INPUTS, fpscr=0x80000000), [_fp_a(59, 7, 1, 2, 0, 42, rc=1)], result=0, cr=0x08000000, xer=0, expected_fpr={7: 0x400C000000000000}, expected_fpscr=0x80004000),
+    _case("fsubs", ("fp", "single"), _state(fpr=_FP_INPUTS), [_fp_a(59, 7, 1, 2, 0, 40)], result=0, cr=0, xer=0, expected_fpr={7: 0xBFE0000000000000}, expected_fpscr=0x00008000),
+    _case("fdivs", ("fp", "single"), _state(fpr=_FP_INPUTS), [_fp_a(59, 7, 1, 2, 0, 36)], result=0, cr=0, xer=0, expected_fpr={7: 0x3FE8000000000000}, expected_fpscr=0x00004000),
+    _case("fadd", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 0, 42)], result=0, cr=0, xer=0, expected_fpr={7: 0x400C000000000000}, expected_fpscr=0x00004000),
+    _case("fsub", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 0, 40)], result=0, cr=0, xer=0, expected_fpr={7: 0xBFE0000000000000}, expected_fpscr=0x00008000),
+    _case("fmul", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 0, 3, 50)], result=0, cr=0, xer=0, expected_fpr={7: 0x4018000000000000}, expected_fpscr=0x00004000),
+    _case("fdiv", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 0, 36)], result=0, cr=0, xer=0, expected_fpr={7: 0x3FE8000000000000}, expected_fpscr=0x00004000),
+    _case("fsel", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 3, 46)], result=0, cr=0, xer=0, expected_fpr={7: _F4}, expected_fpscr=0),
+    _case("fcmpu", ("fp", "compare"), _state(fpr=_FP_INPUTS), [_fp_x(0, 1, 2, 0)], result=0, cr=0x80000000, xer=0, expected_fpscr=0x00008000),
+    _case("frsp", ("fp", "single"), _state(fpr={"f2": _F15}), [_fp_x(7, 0, 2, 12)], result=0, cr=0, xer=0, expected_fpr={7: _F15}, expected_fpscr=0x00004000),
+    _case("fneg", ("fp", "move"), _state(fpr={"f2": _F15}), [_fp_x(7, 0, 2, 40)], result=0, cr=0, xer=0, expected_fpr={7: 0xBFF8000000000000}),
+    _case("fmr", ("fp", "move"), _state(fpr={"f2": 0x7FF8000012345678}), [_fp_x(7, 0, 2, 72)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000012345678}),
+    _case("fnabs", ("fp", "move"), _state(fpr={"f2": _F15}), [_fp_x(7, 0, 2, 136)], result=0, cr=0, xer=0, expected_fpr={7: 0xBFF8000000000000}),
+    _case("fabs", ("fp", "move"), _state(fpr={"f2": 0xBFF8000000000000}), [_fp_x(7, 0, 2, 264)], result=0, cr=0, xer=0, expected_fpr={7: _F15}),
+)
+
+
 def load_fixtures(path: Path | None = None) -> tuple[FixtureCase, ...]:
     if path is None:
         return FIXTURES
@@ -657,6 +789,10 @@ def load_fixtures(path: Path | None = None) -> tuple[FixtureCase, ...]:
             parse_int(key) if parse_int(key) < SANDBOX_BASE else parse_int(key) - SANDBOX_BASE: parse_int(value)
             for key, value in (observe.get("memory") or {}).items()
         }
+        fpr_exp = {
+            int(name[1:]): parse_int(value)
+            for name, value in (expected.get("fpr") or {}).items()
+        }
         cases.append(
             FixtureCase(
                 id=payload["id"],
@@ -668,6 +804,11 @@ def load_fixtures(path: Path | None = None) -> tuple[FixtureCase, ...]:
                 expected_cr=parse_int(expected["cr"]),
                 expected_xer=parse_int(expected["xer"]),
                 expected_memory=memory_exp,
+                expected_fpr=fpr_exp,
+                expected_fpscr=(
+                    parse_int(expected["fpscr"])
+                    if expected.get("fpscr") is not None else None
+                ),
                 max_instructions=int(payload.get("bounds", {}).get("max_instructions", 32)),
                 allow_paths=int(payload.get("bounds", {}).get("allow_paths", 1)),
             )

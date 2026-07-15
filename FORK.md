@@ -15,7 +15,7 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 |------|------|------|
 | Co-op architecture | [`PLAN.md`](PLAN.md) | Split-screen design, invariants, milestones, agent roles |
 | Decomp targets | [`DECOMP_MAP.md`](DECOMP_MAP.md) | Per-function addresses, symbols, tiers |
-| Checklist | [`TASKS.md`](TASKS.md) | Check off at `FULL_MATCH` |
+| Checklist | [`TASKS.md`](TASKS.md) | Check off at `EQUIVALENT_MATCH` |
 | Coop runner | [`tools/coop/`](tools/coop/) | Build / diff / cycle / size / symbols / behaviour |
 | Symbol recovery | [`tools/symrecover.py`](tools/symrecover.py) | `UnkClass_*` list/show/xref/rename |
 | Behaviour tests | [`tools/test/compare_behaviour/`](tools/test/compare_behaviour/) | Host + PPC retail-vs-decomp oracles |
@@ -35,15 +35,15 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 | Path | Purpose |
 |------|---------|
 | [`AGENTS.md`](AGENTS.md) | Entry point: reading order, quick commands, legal “do not” |
-| [`.cursor/rules/xenoblade-decomp.mdc`](.cursor/rules/xenoblade-decomp.mdc) | Always-on: read skill, use `coop run`, `FULL_MATCH` policy |
+| [`.cursor/rules/xenoblade-decomp.mdc`](.cursor/rules/xenoblade-decomp.mdc) | Always-on: read skill, use `coop run`, `EQUIVALENT_MATCH` policy |
 | [`.cursor/skills/xenoblade-decomp/SKILL.md`](.cursor/skills/xenoblade-decomp/SKILL.md) | Full decomp loop, behaviour rules, symbol recovery, §17.6 exceptions |
 
 **Policy deltas vs upstream:**
 
-- Match bar is **`FULL_MATCH`** (100%) via `coop.json` (`match_policy: full`).
+- Match bar is **`EQUIVALENT_MATCH`** (fuzzy ≥ 50% + SMT equivalent + split-size fit) or **`FULL_MATCH`** (100% static + split-size fit) — both are equal-tier acceptance outcomes via `coop.json` (`match_policy: equivalent`).
 - Reconstruction is **high-level C/C++ only** (no asm / register micro-matching in `src/**` / `libs/**`), with narrow exceptions in `PLAN.md` §17.6.
 - Below 100% static match → continue matching / §17.6; optional PPC harness (host dual-oracle tests removed).
-- Split object **`.text` size** must fit `config/<region>/splits.txt` before `Matching` / `FULL_MATCH`.
+- Split object **`.text` size** must fit `config/<region>/splits.txt` before `Matching` / acceptance.
 
 ---
 
@@ -88,13 +88,13 @@ Config knobs (`coop.json` / example): `region` (`us` default), `match_policy`, `
 | `build <unit>` | Build one translation unit |
 | `diff <unit> [--symbol …]` | Build + objdiff report; enforces size budget |
 | `size <unit>` / `size --all` | Decomp `.text` ≤ retail split slice |
-| `cycle <target-id>` | ctx + build + diff + append `attempts.jsonl`; fails until `FULL_MATCH` |
+| `cycle <target-id>` | ctx + build + diff/equivalence + append `attempts.jsonl`; fails until `EQUIVALENT_MATCH` |
 | `queue [--tier P0]` | Cycle pending targets from `targets.json` |
 | `targets list` / `show` | Curated target queue (`tools/coop/targets.json`) |
 | `log [--tail N]` | Read attempt log |
 | `symbols …` | Wraps `tools/symrecover.py` |
 | `behaviour …` | Wraps `tools/test/compare_behaviour/run.py` |
-| `equivalence …` | Wraps `tools/ppc_equivalence/run.py` (`decode`, `check-hex`, `check`, `replay`, `differential`) |
+| `equivalence …` | Wraps `tools/ppc_equivalence/run.py` (`decode`, `check-hex`, `check`, `check-objects`, `check-unit`, `extract`, `replay`, `differential`) |
 | `opcodes …` | Wraps `python -m tools.dol_opcodes` (default: PPC750CL isa.yaml match on this region's `main.dol`) |
 
 ### Library
@@ -104,7 +104,7 @@ Config knobs (`coop.json` / example): `region` (`us` default), `match_policy`, `
 | `lib/config.py` | Load `coop.json` / yaml |
 | `lib/project.py` | Paths, ninja, objdiff-cli |
 | `lib/targets.py` | Parse `targets.json` |
-| `lib/objdiff_report.py` | Match % / status classification (`FULL_MATCH`, …) |
+| `lib/objdiff_report.py` | Match % / status (`EQUIVALENT_MATCH`, `FULL_MATCH`, …) + equivalence probe |
 | `lib/object_size.py` | Split `.text` budget vs `splits.txt` |
 | `lib/attempts.py` | JSONL append/read |
 
@@ -160,7 +160,7 @@ Standalone: `python3 tools/test/compare_behaviour/run.py …`.
 
 ### Policy
 
-Acceptance remains **`FULL_MATCH`** + split-size fit. `audit` enforces size only for registered tests. Host dual-oracle binaries (`host/*.cpp`) were **removed** — do not reintroduce them.
+Acceptance remains **`EQUIVALENT_MATCH`** (or `FULL_MATCH`) + split-size fit. `audit` enforces size only for registered tests. Host dual-oracle binaries (`host/*.cpp`) were **removed** — do not reintroduce them.
 
 ### Layout
 
@@ -213,15 +213,20 @@ sound-by-default vertical slice from the PPC equivalence-checker plan:
 - unsupported opcodes are inconclusive, never no-ops.
 - `coop run equivalence check*` defaults to the `ppc-eabi` function-boundary
   contract; `--contract strict` and manual `--observe` remain available.
+- `check-objects` / `check-unit` extract a named `.text` symbol from the
+  objdiff retail/decomp ELF pair and feed those bytes into the checker.
 
-It is evidence in addition to objdiff and behaviour testing. It does not relax
-the fork's `FULL_MATCH` policy. Full scope, installation, supported opcodes,
-and examples are in its [README](tools/ppc_equivalence/README.md).
+It is evidence used by the fork’s **`EQUIVALENT_MATCH`** acceptance bar (fuzzy
+≥ 50% + SMT `EQUIVALENT` under `ppc-eabi`). `FULL_MATCH` is the other
+equal-tier acceptance outcome. Split-size fit remains mandatory. Full scope, installation,
+supported opcodes, and examples are in its [README](tools/ppc_equivalence/README.md).
 
 ```bash
 python3 -m pip install -r tools/ppc_equivalence/requirements.txt
 python3 tools/coop/run.py equivalence check-hex \
   --original 5463103a --candidate 1c630004
+python3 tools/coop/run.py equivalence check-unit kyoshin/CGame \
+  --symbol OnPauseTrigger__5CGameFv --no-build
 python3 tools/ppc_equivalence/gen_fixture_blob.py
 python3 tools/coop/run.py equivalence differential
 python3 tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
@@ -313,7 +318,7 @@ claim symbol in docs/ownership.csv
      optional: add/run ppc_source harness when unit links
      python3 tools/coop/run.py behaviour ppc <test-id>   # when registered
 → python3 tools/coop/run.py size <unit>
-→ on FULL_MATCH: check TASKS.md; optional rename-all; flip Matching in configure.py
+→ on EQUIVALENT_MATCH/FULL_MATCH: check TASKS.md; optional rename-all; flip Matching in configure.py
 → append reusable MWCC insight to docs/MWCC_REFERENCE.md
 ```
 

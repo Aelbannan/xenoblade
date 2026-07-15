@@ -1141,6 +1141,31 @@ FIXTURES += (
     _case("fabs", ("fp", "move"), _state(fpr={"f2": 0xBFF8000000000000}), [_fp_x(7, 0, 2, 264)], result=0, cr=0, xer=0, expected_fpr={7: _F15}),
 )
 
+FIXTURES += (
+    _case(
+        "lmw-overlapping-base",
+        ("memory", "broadway-observed"),
+        _state(
+            _gpr(),
+            memory_words={index * 4: 0xA0000000 + index for index in range(32)},
+        ),
+        [
+            dform(36, 1, 4, 120),       # Preserve the harness stack pointer.
+            dform(36, 14, 4, 124),      # Preserve its live-state pointer.
+            x_logical(3, 4, 4, 444),    # mr r3,r4
+            _mtspr(4, 9),               # Keep the sandbox base in CTR.
+            dform(46, 0, 3, 0),         # Retail MetroTRK form: lmw r0,0(r3).
+            _mfspr(4, 9),
+            dform(32, 1, 4, 120),
+            dform(32, 14, 4, 124),
+        ],
+        result=0xA0000007,
+        result_reg=7,
+        cr=0,
+        xer=0,
+    ),
+)
+
 
 def load_fixtures(path: Path | None = None) -> tuple[FixtureCase, ...]:
     if path is None:

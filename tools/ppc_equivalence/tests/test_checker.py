@@ -1897,6 +1897,12 @@ class SymbolicEquivalenceTests(unittest.TestCase):
         result = self.check("5463103a", "1c630004", "r3")
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 
+    def test_overlapping_lmw_latches_its_base_before_register_writes(self) -> None:
+        # Copying the base to r31 before the load is unobservable because both
+        # forms latch the same EA and then overwrite every GPR, including RA.
+        result = self.check("b8030000", "7c7f1b78 b81f0000", "r0,r3,r31")
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
     def test_off_by_one_produces_replayable_counterexample(self) -> None:
         result = self.check("38630004", "38630005", "r3")
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
@@ -2076,8 +2082,17 @@ class PhaseOneDecoderTests(unittest.TestCase):
             decode(f"{((33 << 26) | (3 << 21) | (3 << 16)):08x}")
         with self.assertRaises(UnsupportedInstruction):
             decode(self.xo(3, 4, 5, 75, oe=1))
+        overlapping_lmw = parse_hex(f"{((46 << 26) | (28 << 21) | (29 << 16)):08x}")
+        self.assertEqual(
+            decode_block(overlapping_lmw, validate_with_capstone=False)[0].opcode,
+            Opcode.LMW,
+        )
         with self.assertRaises(UnsupportedInstruction):
-            decode(f"{((46 << 26) | (28 << 21) | (29 << 16)):08x}")
+            decode_block(
+                overlapping_lmw,
+                validate_with_capstone=False,
+                allow_broadway_lmw_overlap=False,
+            )
 
     def test_branch_and_special_register_families_decode(self) -> None:
         self.assertEqual(decode("7c0802a6")[0].operands, (0, 8))  # mflr r0
@@ -2120,6 +2135,17 @@ class PhaseOneConcreteSemanticsTests(unittest.TestCase):
             state = state.with_gpr(index, 0)
         state = execute_instruction(state, instruction(Opcode.LMW, (28, 3, 0)), ConcreteOps())
         self.assertEqual(state.gpr[28:32], tuple(i * 0x01010101 for i in range(28, 32)))
+
+    def test_lmw_overlap_uses_the_latched_effective_address(self) -> None:
+        memory = {
+            f"0x{0x200 + index * 4 + byte:08x}":
+                ((0xA0000000 + index) >> (24 - byte * 8)) & 0xFF
+            for index in range(32)
+            for byte in range(4)
+        }
+        state = concrete_state({"gpr": {"r3": 0x200}, "memory": memory})
+        state = execute_instruction(state, instruction(Opcode.LMW, (0, 3, 0)), ConcreteOps())
+        self.assertEqual(state.gpr, tuple(0xA0000000 + index for index in range(32)))
 
     def test_carry_overflow_and_sticky_so_edges(self) -> None:
         state = concrete_state({"gpr": {"r4": 0xFFFFFFFF, "r5": 1}})

@@ -152,7 +152,7 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v13` model supports:
+The current `broadway-ppc32-be-v14` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -162,7 +162,11 @@ The current `broadway-ppc32-be-v13` model supports:
   hardware/cache, DMA, performance, and debug `mfspr`/`mtspr` operands as
   explicit architectural values;
 - byte, halfword, and word integer loads/stores in D-form and indexed form,
-  update forms, `lmw`/`stmw`, and byte-reversed halfword/word forms;
+  update forms, `lmw`/`stmw`, and byte-reversed halfword/word forms. Broadway's
+  observed `lmw` behavior is modeled when RA lies in the destination range:
+  the effective address is latched before any GPR is written. Generic PowerPC
+  calls this form boundedly undefined; decoder clients can retain that strict
+  rejection with `allow_broadway_lmw_overlap=False`;
 - a shared symbolic byte-addressed memory array with big-endian multi-byte
   access and exact final-array comparison;
 - cache/order operations `dcbf`, `dcbi`, `dcbst`, `dcbt`, `icbi`, `sync`, and

@@ -38,7 +38,12 @@ def _insn(
     return Instruction(address, word, opcode, operands, record, overflow, link)
 
 
-def _decode_word(word: int, address: int) -> Instruction:
+def _decode_word(
+    word: int,
+    address: int,
+    *,
+    allow_broadway_lmw_overlap: bool,
+) -> Instruction:
     primary = word >> 26
     rt = (word >> 21) & 31
     ra = (word >> 16) & 31
@@ -113,7 +118,7 @@ def _decode_word(word: int, address: int) -> Instruction:
             raise UnsupportedInstruction(address, word, "update-form memory access has RA=0")
         if opcode in (Opcode.LWZU, Opcode.LBZU, Opcode.LHZU, Opcode.LHAU) and ra == rt:
             raise UnsupportedInstruction(address, word, "update-form load has RA=RT")
-        if opcode == Opcode.LMW and ra >= rt:
+        if opcode == Opcode.LMW and ra >= rt and not allow_broadway_lmw_overlap:
             raise UnsupportedInstruction(address, word, "lmw base register is in the destination range")
         return _insn(address, word, opcode, (rt, ra, _signed(imm, 16)))
 
@@ -496,7 +501,13 @@ def _capstone_validate(code: bytes, base: int) -> list[str | None]:
     return mnemonics
 
 
-def decode_block(code: bytes, base: int = 0, *, validate_with_capstone: bool = True) -> list[Instruction]:
+def decode_block(
+    code: bytes,
+    base: int = 0,
+    *,
+    validate_with_capstone: bool = True,
+    allow_broadway_lmw_overlap: bool = True,
+) -> list[Instruction]:
     if not code or len(code) % 4:
         raise DecodeError("PowerPC input must be a non-empty multiple of four bytes")
     if base < 0 or base > 0xFFFFFFFF or base % 4:
@@ -509,7 +520,11 @@ def decode_block(code: bytes, base: int = 0, *, validate_with_capstone: bool = T
         mnemonics = [None] * (len(code) // 4)
     result: list[Instruction] = []
     for index in range(0, len(code), 4):
-        insn = _decode_word(int.from_bytes(code[index:index + 4], "big"), base + index)
+        insn = _decode_word(
+            int.from_bytes(code[index:index + 4], "big"),
+            base + index,
+            allow_broadway_lmw_overlap=allow_broadway_lmw_overlap,
+        )
         result.append(Instruction(
             insn.address, insn.raw, insn.opcode, insn.operands, insn.record,
             insn.overflow, insn.link, mnemonics[index // 4],

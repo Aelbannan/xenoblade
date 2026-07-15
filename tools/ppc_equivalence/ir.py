@@ -229,17 +229,20 @@ class Opcode(str, Enum):
 
 
 # Scalar FP instructions whose value semantics are implemented by both
-# ConcreteOps and SymbolicOps.  Compare invalid exceptions are modeled;
-# arithmetic exception-enable suppression and architectural trap delivery
-# remain outside the proof model (see README.md).
+# ConcreteOps and SymbolicOps. Compare/scalar invalid causes, divide-by-zero,
+# conversion exceptions, and enabled-result suppression are modeled. Arithmetic
+# OX/UX/XX and architectural trap delivery remain outside (see README.md).
 SUPPORTED_FP_OPCODES = frozenset({
     Opcode.LFS, Opcode.LFSU, Opcode.LFD, Opcode.LFDU,
     Opcode.STFS, Opcode.STFSU, Opcode.STFD, Opcode.STFDU,
     Opcode.LFSX, Opcode.LFSUX, Opcode.LFDX, Opcode.LFDUX,
     Opcode.STFSX, Opcode.STFSUX, Opcode.STFDX, Opcode.STFDUX, Opcode.STFIWX,
     Opcode.FADDS, Opcode.FSUBS, Opcode.FMULS, Opcode.FDIVS,
+    Opcode.FMADDS, Opcode.FMSUBS, Opcode.FNMADDS, Opcode.FNMSUBS,
+    Opcode.FMADD, Opcode.FMSUB, Opcode.FNMADD, Opcode.FNMSUB,
     Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV,
     Opcode.FSEL, Opcode.FCMPU, Opcode.FCMPO, Opcode.FRSP,
+    Opcode.FCTIW, Opcode.FCTIWZ,
     Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS,
 })
 

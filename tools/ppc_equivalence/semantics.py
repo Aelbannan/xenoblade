@@ -79,6 +79,9 @@ class WordOps(Protocol):
     def fp_fprf(self, bits: Any) -> Any: ...
     def fp_force_25bit(self, bits: Any) -> Any: ...
     def fp_is_snan_bits(self, bits: Any) -> Any: ...
+    def fp_signs_equal_bits(self, left: Any, right: Any) -> Any: ...
+    def fp_quiet_nan_bits(self, bits: Any) -> Any: ...
+    def fp_single_nan_bits(self, bits: Any) -> Any: ...
     def fp_bits_to_double(self, bits: Any) -> Any: ...
     def fp_double_to_bits(self, value: Any) -> Any: ...
     def fp_rm_rne(self) -> Any: ...
@@ -92,6 +95,9 @@ class WordOps(Protocol):
     def fp_div(self, rm: Any, a: Any, b: Any) -> Any: ...
     def fp_sqrt(self, rm: Any, a: Any) -> Any: ...
     def fp_fma(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
+    def fp_fma_single_precise(self, rm: Any, a: Any, c: Any, b: Any) -> Any: ...
+    def fp_fma_to_single_exact(self, rm: Any, a: Any, c: Any, b: Any, precise: Any) -> Any: ...
+    def fp_is_exact_single(self, value: Any) -> Any: ...
     def fp_fms(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
     def fp_fnma(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
     def fp_fnms(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
@@ -99,8 +105,11 @@ class WordOps(Protocol):
     def fp_abs(self, a: Any) -> Any: ...
     def fp_sel(self, a: Any, c: Any, b: Any) -> Any: ...
     def fp_round_to_single(self, rm: Any, a: Any) -> Any: ...
+    def fp_round_to_integral(self, rm: Any, a: Any) -> Any: ...
     def fp_to_sint32(self, rm: Any, a: Any) -> Any: ...
     def fp_to_sint32_trunc(self, a: Any) -> Any: ...
+    def fp_integer_result_bits(self, value: Any, negative_zero: Any) -> Any: ...
+    def fp_is_negative_zero_bits(self, bits: Any) -> Any: ...
     def fp_is_lt(self, a: Any, b: Any) -> Any: ...
     def fp_is_gt(self, a: Any, b: Any) -> Any: ...
     def fp_is_eq(self, a: Any, b: Any) -> Any: ...
@@ -200,6 +209,17 @@ class ConcreteOps:
         quiet = bits & 0x0008000000000000
         return exponent == 0x7FF0000000000000 and fraction != 0 and quiet == 0
 
+    def fp_signs_equal_bits(self, left: int, right: int) -> bool:
+        return ((left ^ right) & (1 << 63)) == 0
+
+    def fp_quiet_nan_bits(self, bits: int) -> int:
+        return (bits | 0x0008000000000000) & 0xFFFFFFFFFFFFFFFF
+
+    def fp_single_nan_bits(self, bits: int) -> int:
+        # ForceSingle followed by Fill(float): retain the binary32 payload bits
+        # that survive conversion, then represent that float as binary64.
+        return bits & 0xFFFFFFFFE0000000
+
     def fp_bits_to_double(self, bits: int) -> float:
         import struct
         return struct.unpack(">d", struct.pack(">Q", bits & 0xFFFFFFFFFFFFFFFF))[0]
@@ -248,7 +268,36 @@ class ConcreteOps:
     def fp_sqrt(self, rm: str, a: float) -> float:
         import math
         return math.sqrt(a) if a >= 0 else float("nan")
-    def fp_fma(self, rm: str, a: float, b: float, c: float) -> float: return a * b + c
+    def fp_fma(self, rm: str, a: float, b: float, c: float) -> float:
+        import math
+        try:
+            return math.fma(a, b, c)
+        except ValueError:
+            return float("nan")
+    def fp_fma_single_precise(self, rm: str, a: float, c: float, b: float) -> float:
+        import math
+        import struct
+        try:
+            result = math.fma(a, c, b)
+        except ValueError:
+            return float("nan")
+        result_bits = struct.unpack(">Q", struct.pack(">d", result))[0]
+        if (result_bits & 0x000000001FFFFFFF) == 0x0000000010000000:
+            a_prime = b - result
+            b_prime = result + a_prime
+            delta_a = math.fma(a, c, a_prime)
+            delta_b = b - b_prime
+            error = delta_a + delta_b
+            if error != 0.0:
+                result_bits += 1 if (error > 0.0) == (result > 0.0) else -1
+                result = struct.unpack(">d", struct.pack(">Q", result_bits & 0xFFFFFFFFFFFFFFFF))[0]
+        return result
+    def fp_fma_to_single_exact(
+        self, rm: str, a: float, c: float, b: float, precise: float,
+    ) -> float:
+        return self._fp_to_single(precise)
+    def fp_is_exact_single(self, value: float) -> bool:
+        return self._fp_to_single(value) == value
     def fp_fms(self, rm: str, a: float, b: float, c: float) -> float: return a * b - c
     def fp_fnma(self, rm: str, a: float, b: float, c: float) -> float: return -(a * b + c)
     def fp_fnms(self, rm: str, a: float, b: float, c: float) -> float: return -(a * b - c)
@@ -256,6 +305,11 @@ class ConcreteOps:
     def fp_abs(self, a: float) -> float: return abs(a)
     def fp_sel(self, a: float, c: float, b: float) -> float: return c if a >= 0.0 else b
     def fp_round_to_single(self, rm: str, a: float) -> float: return self._fp_to_single(a)
+    def fp_round_to_integral(self, rm: str, a: float) -> float:
+        import math
+        if math.isnan(a) or math.isinf(a):
+            return a
+        return self._fp_round_int(a, rm)
     def fp_to_sint32(self, rm: str, a: float) -> int:
         import math
         if math.isnan(a) or math.isinf(a): return 0x80000000
@@ -264,6 +318,10 @@ class ConcreteOps:
         import math
         if math.isnan(a) or math.isinf(a): return 0x80000000
         return int(a) & 0xFFFFFFFF
+    def fp_integer_result_bits(self, value: int, negative_zero: bool) -> int:
+        return 0xFFF8000000000000 | ((1 << 32) if negative_zero else 0) | (value & MASK32)
+    def fp_is_negative_zero_bits(self, bits: int) -> bool:
+        return (bits & 0xFFFFFFFFFFFFFFFF) == 0x8000000000000000
     def fp_is_lt(self, a: float, b: float) -> bool: return a < b
     def fp_is_gt(self, a: float, b: float) -> bool: return a > b
     def fp_is_eq(self, a: float, b: float) -> bool: return a == b
@@ -392,6 +450,12 @@ class SymbolicOps:
             fraction != z3.BitVecVal(0, 52),
             quiet == z3.BitVecVal(0, 1),
         )
+    def fp_signs_equal_bits(self, left: Any, right: Any) -> Any:
+        return self.z3.Extract(63, 63, left) == self.z3.Extract(63, 63, right)
+    def fp_quiet_nan_bits(self, bits: Any) -> Any:
+        return bits | self.z3.BitVecVal(0x0008000000000000, 64)
+    def fp_single_nan_bits(self, bits: Any) -> Any:
+        return bits & self.z3.BitVecVal(0xFFFFFFFFE0000000, 64)
     def fp_bits_to_double(self, bits: Any) -> Any:
         return self.z3.fpBVToFP(bits, self.z3.Float64())
     def fp_double_to_bits(self, value: Any) -> Any:
@@ -414,6 +478,20 @@ class SymbolicOps:
     def fp_div(self, rm: Any, a: Any, b: Any) -> Any: return self.z3.fpDiv(rm, a, b)
     def fp_sqrt(self, rm: Any, a: Any) -> Any: return self.z3.fpSqrt(rm, a)
     def fp_fma(self, rm: Any, a: Any, b: Any, c: Any) -> Any: return self.z3.fpFMA(rm, a, b, c)
+    def fp_fma_single_precise(self, rm: Any, a: Any, c: Any, b: Any) -> Any:
+        return self.z3.fpFMA(rm, a, c, b)
+    def fp_fma_to_single_exact(
+        self, rm: Any, a: Any, c: Any, b: Any, precise: Any,
+    ) -> Any:
+        a32 = self.z3.fpFPToFP(self.z3.RNE(), a, self.z3.Float32())
+        c32 = self.z3.fpFPToFP(self.z3.RNE(), c, self.z3.Float32())
+        b32 = self.z3.fpFPToFP(self.z3.RNE(), b, self.z3.Float32())
+        single = self.z3.fpFMA(rm, a32, c32, b32)
+        return self.z3.fpFPToFP(self.z3.RNE(), single, self.z3.Float64())
+    def fp_is_exact_single(self, value: Any) -> Any:
+        single = self.z3.fpFPToFP(self.z3.RNE(), value, self.z3.Float32())
+        restored = self.z3.fpFPToFP(self.z3.RNE(), single, self.z3.Float64())
+        return self.z3.fpEQ(value, restored)
     def fp_fms(self, rm: Any, a: Any, b: Any, c: Any) -> Any:
         return self.z3.fpFMA(rm, a, b, self.z3.fpNeg(c))
     def fp_fnma(self, rm: Any, a: Any, b: Any, c: Any) -> Any:
@@ -427,14 +505,21 @@ class SymbolicOps:
     def fp_round_to_single(self, rm: Any, a: Any) -> Any:
         single = self.z3.fpFPToFP(rm, a, self.z3.Float32())
         return self.z3.fpFPToFP(self.z3.RNE(), single, self.z3.Float64())
+    def fp_round_to_integral(self, rm: Any, a: Any) -> Any:
+        return self.z3.fpRoundToIntegral(rm, a)
     def fp_to_sint32(self, rm: Any, a: Any) -> Any:
-        bv = self.z3.fpToSBV(rm, a, self.z3.BitVecSort(32))
-        ext = self.z3.ZeroExt(32, bv)
-        return ext
+        return self.z3.fpToSBV(rm, a, self.z3.BitVecSort(32))
     def fp_to_sint32_trunc(self, a: Any) -> Any:
-        bv = self.z3.fpToSBV(self.z3.RTZ(), a, self.z3.BitVecSort(32))
-        ext = self.z3.ZeroExt(32, bv)
-        return ext
+        return self.z3.fpToSBV(self.z3.RTZ(), a, self.z3.BitVecSort(32))
+    def fp_integer_result_bits(self, value: Any, negative_zero: Any) -> Any:
+        high = self.z3.If(
+            negative_zero,
+            self.z3.BitVecVal(0xFFF80001, 32),
+            self.z3.BitVecVal(0xFFF80000, 32),
+        )
+        return self.z3.Concat(high, value)
+    def fp_is_negative_zero_bits(self, bits: Any) -> Any:
+        return bits == self.z3.BitVecVal(0x8000000000000000, 64)
     def fp_is_lt(self, a: Any, b: Any) -> Any: return self.z3.fpLT(a, b)
     def fp_is_gt(self, a: Any, b: Any) -> Any: return self.z3.fpGT(a, b)
     def fp_is_eq(self, a: Any, b: Any) -> Any: return self.z3.fpEQ(a, b)
@@ -622,9 +707,18 @@ _FP_VALUE_ARITH = {
     Opcode.FADDS, Opcode.FSUBS, Opcode.FMULS, Opcode.FDIVS,
     Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV, Opcode.FRSP,
 }
+_FP_EXCEPTION_ARITH = {
+    Opcode.FADDS, Opcode.FSUBS, Opcode.FMULS, Opcode.FDIVS,
+    Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV,
+}
+_FP_FUSED_SINGLE = {Opcode.FMADDS, Opcode.FMSUBS, Opcode.FNMADDS, Opcode.FNMSUBS}
+_FP_FUSED_DOUBLE = {Opcode.FMADD, Opcode.FMSUB, Opcode.FNMADD, Opcode.FNMSUB}
+_FP_FUSED = _FP_FUSED_SINGLE | _FP_FUSED_DOUBLE
+_FP_FUSED_SUBTRACT = {Opcode.FMSUBS, Opcode.FNMSUBS, Opcode.FMSUB, Opcode.FNMSUB}
+_FP_FUSED_NEGATE = {Opcode.FNMADDS, Opcode.FNMSUBS, Opcode.FNMADD, Opcode.FNMSUB}
 _FP_ROUNDING_SENSITIVE = _FP_VALUE_ARITH | {
     Opcode.STFS, Opcode.STFSU, Opcode.STFSX, Opcode.STFSUX,
-}
+} | _FP_FUSED
 
 
 def _ps_extract0(fpr_bits: Any, ops: WordOps) -> Any:
@@ -706,6 +800,62 @@ def _fpscr_raise_if(
 ) -> MachineState:
     raised = _fpscr_raise(state, exception_mask, ops)
     return state.with_fpscr(ops.ite(condition, raised.fpscr, state.fpscr))
+
+
+def _fp_write_result_if(
+    state: MachineState, fd: int, result_bits: Any, condition: Any, ops: WordOps,
+) -> MachineState:
+    old_bits = state.fpr[fd]
+    written = _fpscr_set_fprf(state.with_fpr(fd, result_bits), result_bits, ops)
+    state = state.with_fpr(fd, ops.ite(condition, written.fpr[fd], old_bits))
+    return state.with_fpscr(ops.ite(condition, written.fpscr, state.fpscr))
+
+
+def _fp_convert_to_integer(
+    state: MachineState, fd: int, source_bits: Any, rm: Any, ops: WordOps,
+) -> MachineState:
+    source = ops.fp_bits_to_double(source_bits)
+    rounded = ops.fp_round_to_integral(rm, source)
+    is_nan = ops.fp_is_nan(source)
+    no_nan = ops.lnot(is_nan)
+    positive_limit = ops.fp_bits_to_double(ops.fp_const64(0x41E0000000000000))
+    negative_limit = ops.fp_bits_to_double(ops.fp_const64(0xC1E0000000000000))
+    positive_invalid = ops.land(no_nan, ops.lnot(ops.fp_is_lt(rounded, positive_limit)))
+    negative_invalid = ops.land(no_nan, ops.fp_is_lt(rounded, negative_limit))
+    invalid = ops.lor(is_nan, ops.lor(positive_invalid, negative_invalid))
+    is_snan = ops.fp_is_snan_bits(source_bits)
+
+    state = _fpscr_raise_if(state, is_snan, FPSCR_VXSNAN, ops)
+    state = _fpscr_raise_if(state, invalid, FPSCR_VXCVI, ops)
+
+    converted = ops.fp_to_sint32(rm, source)
+    value = ops.ite(
+        ops.lor(is_nan, negative_invalid),
+        ops.const(0x80000000),
+        ops.ite(positive_invalid, ops.const(0x7FFFFFFF), converted),
+    )
+    exact = ops.fp_is_eq(rounded, source)
+    inexact = ops.land(ops.lnot(invalid), ops.lnot(exact))
+    state = _fpscr_raise_if(state, inexact, FPSCR_XX, ops)
+
+    rounded_away = ops.fp_is_gt(ops.fp_abs(rounded), ops.fp_abs(source))
+    clear_mask = ops.bnot(ops.const(FPSCR_FI | FPSCR_FR))
+    fpscr = ops.band(state.fpscr, clear_mask)
+    fpscr = ops.ite(inexact, ops.bor(fpscr, ops.const(FPSCR_FI)), fpscr)
+    fpscr = ops.ite(
+        ops.land(inexact, rounded_away), ops.bor(fpscr, ops.const(FPSCR_FR)), fpscr,
+    )
+    state = state.with_fpscr(fpscr)
+
+    negative = ops.lnot(ops.fp_signs_equal_bits(source_bits, ops.fp_const64(0)))
+    negative_zero_result = ops.land(ops.eq(value, ops.const(0)), negative)
+    result_bits = ops.fp_integer_result_bits(value, negative_zero_result)
+    invalid_enabled = ops.lnot(ops.eq(
+        ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+    ))
+    write_result = ops.lnot(ops.land(invalid, invalid_enabled))
+    state = state.with_fpr(fd, ops.ite(write_result, result_bits, state.fpr[fd]))
+    return state
 
 
 def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) -> MachineState:
@@ -1070,10 +1220,14 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
 
         # Scalar single instructions consume the register's double value and
         # round the result to binary32; they do not pre-round every operand.
-        op_fa = ops.fp_bits_to_double(state.fpr[fa])
-        op_fb = ops.fp_bits_to_double(state.fpr[fb])
-        fc_bits = ops.fp_force_25bit(state.fpr[fc]) if op == Opcode.FMULS else state.fpr[fc]
+        fa_bits = state.fpr[fa]
+        fb_bits = state.fpr[fb]
+        op_fa = ops.fp_bits_to_double(fa_bits)
+        op_fb = ops.fp_bits_to_double(fb_bits)
+        fc_source_bits = state.fpr[fc]
+        fc_bits = ops.fp_force_25bit(fc_source_bits) if op in ({Opcode.FMULS} | _FP_FUSED_SINGLE) else fc_source_bits
         op_fc = ops.fp_bits_to_double(fc_bits)
+        fused_single = None
 
         if op == Opcode.FSEL:
             result_bits = ops.ite(ops.fp_is_ge_zero(op_fa), state.fpr[fc], state.fpr[fb])
@@ -1097,14 +1251,13 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             d = ops.fp_div(rm, ops.fp_round_to_single(rm, ops.fp_bits_to_double(ops.fp_const64(0x3FF0000000000000))), op_fb)
         elif op == Opcode.FRSQRTE:
             d = ops.fp_div(rm, ops.fp_bits_to_double(ops.fp_const64(0x3FF0000000000000)), ops.fp_sqrt(rm, op_fb))
-        elif op in (Opcode.FMADDS, Opcode.FMADD):
-            d = ops.fp_fma(rm, op_fa, op_fc, op_fb)
-        elif op in (Opcode.FMSUBS, Opcode.FMSUB):
-            d = ops.fp_fms(rm, op_fa, op_fc, op_fb)
-        elif op in (Opcode.FNMADDS, Opcode.FNMADD):
-            d = ops.fp_fnma(rm, op_fa, op_fc, op_fb)
-        elif op in (Opcode.FNMSUBS, Opcode.FNMSUB):
-            d = ops.fp_fnms(rm, op_fa, op_fc, op_fb)
+        elif op in _FP_FUSED:
+            addend = ops.fp_neg(op_fb) if op in _FP_FUSED_SUBTRACT else op_fb
+            if op in _FP_FUSED_SINGLE:
+                d = ops.fp_fma_single_precise(rm, op_fa, op_fc, addend)
+                fused_single = ops.fp_fma_to_single_exact(rm, op_fa, op_fc, addend, d)
+            else:
+                d = ops.fp_fma(rm, op_fa, op_fc, addend)
         elif op in (Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
             source_bits = state.fpr[fb]
             if op == Opcode.FNEG:
@@ -1123,16 +1276,14 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         elif op == Opcode.FRSP:
             d = ops.fp_round_to_single(rm, op_fb)
         elif op == Opcode.FCTIW:
-            result_bits = ops.fp_to_sint32(rm, op_fb)
-            state = state.with_fpr(fd, result_bits)
+            state = _fp_convert_to_integer(state, fd, fb_bits, rm, ops)
             if insn.record:
-                state = _set_cr_field(state, 1, _fpcc_nibble(state, result_bits, ops), ops)
+                state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
             return state
         elif op == Opcode.FCTIWZ:
-            result_bits = ops.fp_to_sint32_trunc(op_fb)
-            state = state.with_fpr(fd, result_bits)
+            state = _fp_convert_to_integer(state, fd, fb_bits, ops.fp_rm_rtz(), ops)
             if insn.record:
-                state = _set_cr_field(state, 1, _fpcc_nibble(state, result_bits, ops), ops)
+                state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
             return state
         elif op in (Opcode.FCMPU, Opcode.FCMPO):
             bf = fd
@@ -1269,8 +1420,218 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         else:
             raise UnsupportedInstruction(insn.address, insn.raw, f"semantics not implemented for {op.value}")
 
-        if is_single and op not in (Opcode.FRSP, Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
+        if op in _FP_FUSED_SINGLE:
+            assert fused_single is not None
+        elif is_single and op not in (Opcode.FRSP, Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
             d = ops.fp_round_to_single(rm, d)
+        if op in _FP_FUSED:
+            nan_a = ops.fp_is_nan(op_fa)
+            nan_b = ops.fp_is_nan(op_fb)
+            nan_c = ops.fp_is_nan(ops.fp_bits_to_double(fc_source_bits))
+            any_nan = ops.lor(nan_a, ops.lor(nan_b, nan_c))
+            no_nan = ops.lnot(any_nan)
+            any_snan = ops.lor(
+                ops.fp_is_snan_bits(fa_bits),
+                ops.lor(
+                    ops.fp_is_snan_bits(fb_bits),
+                    ops.fp_is_snan_bits(fc_source_bits),
+                ),
+            )
+            inf_a = ops.fp_is_inf(op_fa)
+            inf_b = ops.fp_is_inf(op_fb)
+            inf_c = ops.fp_is_inf(ops.fp_bits_to_double(fc_source_bits))
+            zero = ops.fp_bits_to_double(ops.fp_const64(0))
+            zero_a = ops.fp_is_eq(op_fa, zero)
+            zero_c = ops.fp_is_eq(ops.fp_bits_to_double(fc_source_bits), zero)
+            vximz = ops.land(no_nan, ops.lor(
+                ops.land(inf_a, zero_c), ops.land(zero_a, inf_c),
+            ))
+            product_infinite = ops.lor(
+                ops.land(inf_a, ops.lnot(zero_c)),
+                ops.land(inf_c, ops.lnot(zero_a)),
+            )
+            product_positive = ops.fp_signs_equal_bits(fa_bits, fc_source_bits)
+            b_positive = ops.fp_signs_equal_bits(fb_bits, ops.fp_const64(0))
+            product_matches_b = ops.lor(
+                ops.land(product_positive, b_positive),
+                ops.land(ops.lnot(product_positive), ops.lnot(b_positive)),
+            )
+            invalid_signs = product_matches_b if op in _FP_FUSED_SUBTRACT else ops.lnot(product_matches_b)
+            vxisi = ops.land(
+                no_nan,
+                ops.land(
+                    ops.lnot(vximz),
+                    ops.land(product_infinite, ops.land(inf_b, invalid_signs)),
+                ),
+            )
+            invalid = ops.lor(any_snan, ops.lor(vximz, vxisi))
+            nan_result = ops.lor(any_nan, ops.lor(vximz, vxisi))
+
+            state = _fpscr_raise_if(state, any_snan, FPSCR_VXSNAN, ops)
+            state = _fpscr_raise_if(state, vximz, FPSCR_VXIMZ, ops)
+            state = _fpscr_raise_if(state, vxisi, FPSCR_VXISI, ops)
+
+            propagated_nan = ops.ite(
+                nan_a,
+                ops.fp_quiet_nan_bits(fa_bits),
+                ops.ite(
+                    nan_b,
+                    ops.fp_quiet_nan_bits(fb_bits),
+                    ops.ite(
+                        nan_c,
+                        ops.fp_quiet_nan_bits(fc_source_bits),
+                        ops.fp_const64(0x7FF8000000000000),
+                    ),
+                ),
+            )
+            if op in _FP_FUSED_SINGLE:
+                propagated_nan = ops.fp_single_nan_bits(propagated_nan)
+                assert fused_single is not None
+                normal_bits = ops.fp_double_to_bits(fused_single)
+            else:
+                normal_bits = ops.fp_double_to_bits(d)
+            if op in _FP_FUSED_NEGATE:
+                normal_bits = ops.fp_xor_sign(normal_bits)
+            result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
+
+            invalid_enabled = ops.lnot(ops.eq(
+                ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+            ))
+            write_result = ops.lnot(ops.land(invalid, invalid_enabled))
+            any_inf = ops.lor(inf_a, ops.lor(inf_b, inf_c))
+            clear_fifr = ops.lor(nan_result, any_inf)
+            cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
+            state = state.with_fpscr(ops.ite(clear_fifr, cleared, state.fpscr))
+            state = _fp_write_result_if(state, fd, result_bits, write_result, ops)
+
+            if op == Opcode.FMADDS:
+                fi = ops.lnot(ops.fp_is_eq(d, fused_single))
+                write_fpscr = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
+                write_fpscr = ops.ite(fi, ops.bor(write_fpscr, ops.const(FPSCR_FI)), write_fpscr)
+                state = state.with_fpscr(ops.ite(write_result, write_fpscr, state.fpscr))
+
+            finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
+            handled_nonfinite = ops.lor(any_nan, ops.lor(invalid, any_inf))
+            state = replace(state, valid=ops.land(
+                state.valid, ops.lor(finite(d), handled_nonfinite),
+            ))
+            if isinstance(ops, SymbolicOps) and op in _FP_FUSED_SINGLE:
+                # Keep fused-single proofs in decidable FP theory. This is the common
+                # compiler case: inputs are binary32 values expanded in FPRs.
+                single_origin = ops.land(
+                    ops.lor(ops.lnot(finite(op_fa)), ops.fp_is_exact_single(op_fa)),
+                    ops.land(
+                        ops.lor(ops.lnot(finite(op_fb)), ops.fp_is_exact_single(op_fb)),
+                        ops.lor(
+                            ops.lnot(finite(ops.fp_bits_to_double(fc_source_bits))),
+                            ops.fp_is_exact_single(ops.fp_bits_to_double(fc_source_bits)),
+                        ),
+                    ),
+                )
+                state = replace(state, valid=ops.land(state.valid, single_origin))
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+            return state
+        if op in _FP_EXCEPTION_ARITH:
+            right_bits = fc_bits if op in (Opcode.FMULS, Opcode.FMUL) else fb_bits
+            right_value = op_fc if op in (Opcode.FMULS, Opcode.FMUL) else op_fb
+            nan_a = ops.fp_is_nan(op_fa)
+            nan_b = ops.fp_is_nan(right_value)
+            any_nan = ops.lor(nan_a, nan_b)
+            any_snan = ops.lor(
+                ops.fp_is_snan_bits(fa_bits), ops.fp_is_snan_bits(right_bits),
+            )
+            inf_a = ops.fp_is_inf(op_fa)
+            inf_b = ops.fp_is_inf(right_value)
+            zero = ops.fp_bits_to_double(ops.fp_const64(0))
+            zero_a = ops.fp_is_eq(op_fa, zero)
+            zero_b = ops.fp_is_eq(right_value, zero)
+            signs_equal = ops.fp_signs_equal_bits(fa_bits, right_bits)
+            no_nan = ops.lnot(any_nan)
+
+            vxisi = ops.bool(False)
+            vximz = ops.bool(False)
+            vxzdz = ops.bool(False)
+            vxidi = ops.bool(False)
+            zx = ops.bool(False)
+            if op in (Opcode.FADDS, Opcode.FADD):
+                vxisi = ops.land(no_nan, ops.land(
+                    ops.land(inf_a, inf_b), ops.lnot(signs_equal),
+                ))
+            elif op in (Opcode.FSUBS, Opcode.FSUB):
+                vxisi = ops.land(no_nan, ops.land(ops.land(inf_a, inf_b), signs_equal))
+            elif op in (Opcode.FMULS, Opcode.FMUL):
+                vximz = ops.land(no_nan, ops.lor(
+                    ops.land(inf_a, zero_b), ops.land(zero_a, inf_b),
+                ))
+            else:
+                vxzdz = ops.land(no_nan, ops.land(zero_a, zero_b))
+                vxidi = ops.land(no_nan, ops.land(inf_a, inf_b))
+                zx = ops.land(no_nan, ops.land(
+                    zero_b, ops.lnot(ops.lor(zero_a, inf_b)),
+                ))
+
+            state = _fpscr_raise_if(state, any_snan, FPSCR_VXSNAN, ops)
+            state = _fpscr_raise_if(state, vxisi, FPSCR_VXISI, ops)
+            state = _fpscr_raise_if(state, vximz, FPSCR_VXIMZ, ops)
+            state = _fpscr_raise_if(state, vxzdz, FPSCR_VXZDZ, ops)
+            state = _fpscr_raise_if(state, vxidi, FPSCR_VXIDI, ops)
+            state = _fpscr_raise_if(state, zx, FPSCR_ZX, ops)
+
+            invalid = ops.lor(
+                any_snan,
+                ops.lor(vxisi, ops.lor(vximz, ops.lor(vxzdz, vxidi))),
+            )
+            nan_result = ops.lor(any_nan, ops.lor(
+                vxisi, ops.lor(vximz, ops.lor(vxzdz, vxidi)),
+            ))
+            propagated_nan = ops.ite(
+                nan_a,
+                ops.fp_quiet_nan_bits(fa_bits),
+                ops.ite(
+                    nan_b,
+                    ops.fp_quiet_nan_bits(right_bits),
+                    ops.fp_const64(0x7FF8000000000000),
+                ),
+            )
+            if is_single:
+                propagated_nan = ops.fp_single_nan_bits(propagated_nan)
+            normal_bits = ops.fp_double_to_bits(d)
+            result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
+
+            invalid_enabled = ops.lnot(ops.eq(
+                ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+            ))
+            zero_enabled = ops.lnot(ops.eq(
+                ops.band(state.fpscr, ops.const(FPSCR_ZE)), ops.const(0),
+            ))
+            suppress = ops.lor(
+                ops.land(invalid, invalid_enabled), ops.land(zx, zero_enabled),
+            )
+
+            clear_fifr = nan_result
+            if op in (Opcode.FADDS, Opcode.FADD, Opcode.FSUBS, Opcode.FSUB):
+                clear_fifr = ops.lor(clear_fifr, ops.lor(inf_a, inf_b))
+            if op in (Opcode.FMULS, Opcode.FMUL):
+                clear_fifr = ops.bool(True)
+            cleared_fpscr = ops.band(
+                state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)),
+            )
+            state = state.with_fpscr(ops.ite(clear_fifr, cleared_fpscr, state.fpscr))
+            state = _fp_write_result_if(state, fd, result_bits, ops.lnot(suppress), ops)
+
+            finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
+            handled_nonfinite = ops.lor(
+                any_nan,
+                ops.lor(invalid, ops.lor(zx, ops.lor(inf_a, inf_b))),
+            )
+            state = replace(state, valid=ops.land(
+                state.valid, ops.lor(finite(d), handled_nonfinite),
+            ))
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+            return state
+
         if op in _FP_VALUE_ARITH:
             finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
             if op in (Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS, Opcode.FADD, Opcode.FSUB, Opcode.FDIV):
@@ -1282,8 +1643,6 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             state = replace(state, valid=ops.land(state.valid, ops.land(inputs_finite, finite(d))))
         d_bits = ops.fp_double_to_bits(d)
         state = _fpscr_set_fprf(state.with_fpr(fd, d_bits), d_bits, ops)
-        if op in (Opcode.FMULS, Opcode.FMUL):
-            state = state.with_fpscr(ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR))))
         if insn.record:
             # Rc copies FPSCR[FX,FEX,VX,OX] into CR1; it does not classify the
             # arithmetic result.
@@ -1430,6 +1789,9 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         writes.add(f"f{a[0]}")
         for idx in a[1:]:
             if 0 <= idx < 32: reads.add(f"f{idx}")
+        if op in (Opcode.FCTIW, Opcode.FCTIWZ):
+            reads.add("fpscr")
+            writes.add("fpscr")
         if insn.record: writes.add("cr1")
     elif op in _FP_PS_CMP_MERGE:
         writes.add(f"f{a[0]}")

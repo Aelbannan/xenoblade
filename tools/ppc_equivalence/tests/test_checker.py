@@ -28,12 +28,22 @@ from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.semantics import (
     ConcreteOps,
     FPSCR_FEX,
+    FPSCR_FI,
+    FPSCR_FR,
     FPSCR_FX,
     FPSCR_VE,
     FPSCR_VX,
+    FPSCR_VXIDI,
     FPSCR_VXIMZ,
+    FPSCR_VXISI,
     FPSCR_VXSNAN,
     FPSCR_VXVC,
+    FPSCR_VXZDZ,
+    FPSCR_VXCVI,
+    FPSCR_XE,
+    FPSCR_XX,
+    FPSCR_ZE,
+    FPSCR_ZX,
     SymbolicOps,
     _fpscr_raise,
     automatic_live_out,
@@ -132,10 +142,15 @@ class DecoderTests(unittest.TestCase):
                     execute_block(concrete_state(), decoded, ConcreteOps())
 
     def test_scalar_fp_encodings_match_gekko_disassembler(self) -> None:
-        words = "c0030000 d8030000 ec00002a fc00002a fc000050 fc000090 fc000210"
+        words = (
+            "c0030000 d8030000 ec00002a ece110f8 ece110fa ece110fc ece110fe "
+            "fce110f8 fce110fa fce110fc fce110fe fc00002a fc000050 fc000090 fc000210"
+        )
         self.assertEqual(
             [item.opcode for item in decode(words)],
-            [Opcode.LFS, Opcode.STFD, Opcode.FADDS, Opcode.FADD,
+            [Opcode.LFS, Opcode.STFD, Opcode.FADDS, Opcode.FMSUBS, Opcode.FMADDS,
+             Opcode.FNMSUBS, Opcode.FNMADDS,
+             Opcode.FMSUB, Opcode.FMADD, Opcode.FNMSUB, Opcode.FNMADD, Opcode.FADD,
              Opcode.FNEG, Opcode.FMR, Opcode.FABS],
         )
 
@@ -148,6 +163,10 @@ class DecoderTests(unittest.TestCase):
         self.assertEqual((compare.opcode, compare.operands), (Opcode.FCMPO, (3, 1, 2)))
         with self.assertRaises(UnsupportedInstruction):
             decode("fc611040")
+        conversion = decode("fce0101c")[0]
+        self.assertEqual((conversion.opcode, conversion.operands), (Opcode.FCTIW, (7, 0, 2, 0)))
+        with self.assertRaises(UnsupportedInstruction):
+            decode("fce1101c")
 
     def test_direct_fp_instruction_execution_fails_closed(self) -> None:
         state = concrete_state()
@@ -264,6 +283,291 @@ class FloatingPointConcreteTests(unittest.TestCase):
         self.assertEqual(final.cr, 0x10000000)
         self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXSNAN | 0x1000)
 
+    def test_arithmetic_invalid_causes_and_nan_results(self) -> None:
+        vectors = (
+            ("fce1102a", {"f1": "0x7ff0000000000000", "f2": "0xfff0000000000000"}, FPSCR_VXISI),
+            ("fce11028", {"f1": "0x7ff0000000000000", "f2": "0x7ff0000000000000"}, FPSCR_VXISI),
+            ("fce100f2", {"f1": 0.0, "f3": "0x7ff0000000000000"}, FPSCR_VXIMZ),
+            ("fce11024", {"f1": 0.0, "f2": "0x8000000000000000"}, FPSCR_VXZDZ),
+            ("fce11024", {"f1": "0x7ff0000000000000", "f2": "0xfff0000000000000"}, FPSCR_VXIDI),
+        )
+        for code, fpr, cause in vectors:
+            with self.subTest(code=code, cause=f"0x{cause:08x}"):
+                final = execute_block(concrete_state({"fpr": fpr}), decode(code), ConcreteOps())
+                self.assertEqual(final.fpr[7], 0x7FF8000000000000)
+                self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | cause | 0x11000)
+
+    def test_arithmetic_enable_bits_suppress_destination_and_fprf(self) -> None:
+        original = 0x3FF0000000000000
+        invalid = execute_block(concrete_state({
+            "fpr": {
+                "f1": "0x7ff0000000000000",
+                "f2": "0xfff0000000000000",
+                "f7": f"0x{original:016x}",
+            },
+            "fpscr": FPSCR_VE,
+        }), decode("fce1102a"), ConcreteOps())
+        self.assertEqual(invalid.fpr[7], original)
+        self.assertEqual(invalid.fpscr, FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXISI | FPSCR_VE)
+
+        divide_zero = execute_block(concrete_state({
+            "fpr": {"f1": 2.0, "f2": "0x8000000000000000", "f7": original},
+            "fpscr": FPSCR_ZE,
+        }), decode("fce11024"), ConcreteOps())
+        self.assertEqual(divide_zero.fpr[7], original)
+        self.assertEqual(divide_zero.fpscr, FPSCR_FX | FPSCR_FEX | FPSCR_ZX | FPSCR_ZE)
+
+    def test_signaling_nan_payload_is_quieted_and_single_is_truncated(self) -> None:
+        double = execute_block(concrete_state({
+            "fpr": {"f1": "0xfff0000012345678", "f2": 2.0},
+        }), decode("fce1102a"), ConcreteOps())
+        self.assertEqual(double.fpr[7], 0xFFF8000012345678)
+        self.assertEqual(double.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXSNAN | 0x11000)
+
+        single = execute_block(concrete_state({
+            "fpr": {"f1": "0xfff0000012345678", "f2": 2.0},
+        }), decode("ece1102a"), ConcreteOps())
+        self.assertEqual(single.fpr[7], 0xFFF8000000000000)
+        self.assertEqual(single.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXSNAN | 0x11000)
+
+        quiet = execute_block(concrete_state({
+            "fpr": {"f1": "0x7ff8000012345678", "f2": 2.0},
+        }), decode("fce1102a"), ConcreteOps())
+        self.assertEqual(quiet.fpr[7], 0x7FF8000012345678)
+        self.assertEqual(quiet.fpscr, 0x11000)
+
+    def test_float_to_integer_rounding_flags_and_packed_result(self) -> None:
+        vectors = (
+            ("fce0101c", 1.5, 0, 0xFFF8000000000002, FPSCR_FX | FPSCR_XX | 0x60000),
+            ("fce0101c", 2.5, 0, 0xFFF8000000000002, FPSCR_FX | FPSCR_XX | FPSCR_FI),
+            ("fce0101c", -1.4, 3, 0xFFF80000FFFFFFFE, FPSCR_FX | FPSCR_XX | 0x60003),
+            ("fce0101e", -0.4, 3, 0xFFF8000100000000, FPSCR_FX | FPSCR_XX | FPSCR_FI | 3),
+        )
+        for code, source, fpscr, expected_bits, expected_fpscr in vectors:
+            with self.subTest(code=code, source=source, fpscr=fpscr):
+                final = execute_block(concrete_state({
+                    "fpr": {"f2": source}, "fpscr": fpscr,
+                }), decode(code), ConcreteOps())
+                self.assertEqual(final.fpr[7], expected_bits)
+                self.assertEqual(final.fpscr, expected_fpscr)
+
+    def test_float_to_integer_invalid_and_enabled_suppression(self) -> None:
+        cases = (
+            ("0x7ff8000012345678", FPSCR_VXCVI),
+            ("0x7ff0000012345678", FPSCR_VXSNAN | FPSCR_VXCVI),
+            (2147483648.0, FPSCR_VXCVI),
+            (-2147483649.0, FPSCR_VXCVI),
+        )
+        for source, causes in cases:
+            with self.subTest(source=source):
+                final = execute_block(concrete_state({"fpr": {"f2": source}}), decode("fce0101c"), ConcreteOps())
+                self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | causes)
+
+        original = 0x3FF0000000000000
+        suppressed = execute_block(concrete_state({
+            "fpr": {"f2": "0x7ff8000012345678", "f7": original},
+            "fpscr": FPSCR_VE,
+        }), decode("fce0101d"), ConcreteOps())
+        self.assertEqual(suppressed.fpr[7], original)
+        self.assertEqual(
+            suppressed.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXCVI | FPSCR_VE,
+        )
+        self.assertEqual(suppressed.cr, 0x0E000000)
+
+    def test_float_to_integer_inexact_enable_sets_fex(self) -> None:
+        final = execute_block(concrete_state({
+            "fpr": {"f2": 1.5}, "fpscr": FPSCR_XE,
+        }), decode("fce0101c"), ConcreteOps())
+        self.assertEqual(
+            final.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_XX | FPSCR_FI | FPSCR_FR | FPSCR_XE,
+        )
+
+    def test_fmadds_force25_and_single_rounding_correction(self) -> None:
+        force25 = execute_block(concrete_state({
+            "fpr": {"f1": 1.0, "f2": 0.0, "f3": "0x3ff0000010000001"},
+        }), decode("ece110fa"), ConcreteOps())
+        self.assertEqual(force25.fpr[7], 0x3FF0000000000000)
+        self.assertEqual(force25.fpscr, FPSCR_FI | 0x4000)
+
+        # Dolphin's documented single-rounding counterexample: a double FMA
+        # followed by a float cast gives ...18, Broadway fmadds gives ...17.
+        corrected = execute_block(concrete_state({
+            "fpr": {
+                "f1": "0x4049000000000000",
+                "f2": "0x3b638e5400000000",
+                "f3": "0xbf91198700000000",
+            },
+        }), decode("ece110fa"), ConcreteOps())
+        self.assertEqual(corrected.fpr[7], 0xBFEAB7E2E0000000)
+        self.assertEqual(corrected.fpscr, FPSCR_FI | 0x8000)
+
+    def test_fmadds_nan_order_invalid_and_suppression(self) -> None:
+        nan_order = execute_block(concrete_state({
+            "fpr": {
+                "f1": "0x7ff1000000000001",
+                "f2": "0x7ff2000000000001",
+                "f3": "0x7ff3000000000001",
+            },
+        }), decode("ece110fa"), ConcreteOps())
+        self.assertEqual(nan_order.fpr[7], 0x7FF9000000000000)
+        self.assertEqual(
+            nan_order.fpscr,
+            FPSCR_FX | FPSCR_VX | FPSCR_VXSNAN | FPSCR_FI | 0x11000,
+        )
+
+        vximz = execute_block(concrete_state({
+            "fpr": {"f1": 0.0, "f2": 1.0, "f3": "0x7ff0000000000000"},
+        }), decode("ece110fa"), ConcreteOps())
+        self.assertEqual(vximz.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXIMZ | FPSCR_FI | 0x11000)
+
+        original = 0x4000000000000000
+        suppressed = execute_block(concrete_state({
+            "fpr": {
+                "f1": 0.0,
+                "f2": 1.0,
+                "f3": "0x7ff0000000000000",
+                "f7": original,
+            },
+            "fpscr": FPSCR_VE,
+        }), decode("ece110fb"), ConcreteOps())
+        self.assertEqual(suppressed.fpr[7], original)
+        self.assertEqual(
+            suppressed.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXIMZ | FPSCR_VE,
+        )
+        self.assertEqual(suppressed.cr, 0x0E000000)
+
+    def test_fused_subtract_and_negative_subtract_results(self) -> None:
+        initial_fpscr = FPSCR_FI | FPSCR_FR
+        state = concrete_state({
+            "fpr": {"f1": 1.5, "f2": 2.0, "f3": 4.0},
+            "fpscr": initial_fpscr,
+        })
+        subtracted = execute_block(state, decode("ece110f8"), ConcreteOps())
+        negated = execute_block(state, decode("ece110fc"), ConcreteOps())
+        self.assertEqual(subtracted.fpr[7], 0x4010000000000000)
+        self.assertEqual(subtracted.fpscr, initial_fpscr | 0x4000)
+        self.assertEqual(negated.fpr[7], 0xC010000000000000)
+        self.assertEqual(negated.fpscr, initial_fpscr | 0x8000)
+
+        zero_state = concrete_state({"fpr": {"f1": 1.0, "f2": 1.0, "f3": 1.0}})
+        positive_zero = execute_block(zero_state, decode("ece110f8"), ConcreteOps())
+        negative_zero = execute_block(zero_state, decode("ece110fc"), ConcreteOps())
+        self.assertEqual(positive_zero.fpr[7], 0x0000000000000000)
+        self.assertEqual(positive_zero.fpscr, 0x2000)
+        self.assertEqual(negative_zero.fpr[7], 0x8000000000000000)
+        self.assertEqual(negative_zero.fpscr, 0x12000)
+
+    def test_fused_subtract_nan_is_not_negated_and_invalid_signs(self) -> None:
+        nan_state = concrete_state({
+            "fpr": {"f1": "0xfff8000012345678", "f2": 2.0, "f3": 4.0},
+        })
+        for encoded in ("ece110f8", "ece110fc"):
+            with self.subTest(encoded=encoded, case="nan"):
+                final = execute_block(nan_state, decode(encoded), ConcreteOps())
+                self.assertEqual(final.fpr[7], 0xFFF8000000000000)
+                self.assertEqual(final.fpscr, 0x11000)
+
+        invalid_state = concrete_state({
+            "fpr": {
+                "f1": "0x7ff0000000000000",
+                "f2": "0x7ff0000000000000",
+                "f3": 1.0,
+            },
+        })
+        for encoded in ("ece110f8", "ece110fc"):
+            with self.subTest(encoded=encoded, case="vxisi"):
+                final = execute_block(invalid_state, decode(encoded), ConcreteOps())
+                self.assertEqual(final.fpr[7], 0x7FF8000000000000)
+                self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXISI | 0x11000)
+
+    def test_complete_fused_family_results_flags_and_signed_zero(self) -> None:
+        cases = {
+            "fce110fa": (0x4020000000000000, 0x4000, -1.0, 0),
+            "fce110f8": (0x4010000000000000, 0x4000, 1.0, 0),
+            "fce110fe": (0xC020000000000000, 0x8000, -1.0, 0x8000000000000000),
+            "fce110fc": (0xC010000000000000, 0x8000, 1.0, 0x8000000000000000),
+            "ece110fe": (0xC020000000000000, 0x8000, -1.0, 0x8000000000000000),
+        }
+        for encoded, (expected, fprf, zero_b, expected_zero) in cases.items():
+            with self.subTest(encoded=encoded, case="finite"):
+                state = concrete_state({
+                    "fpr": {"f1": 1.5, "f2": 2.0, "f3": 4.0},
+                    "fpscr": FPSCR_FI | FPSCR_FR,
+                })
+                final = execute_block(state, decode(encoded), ConcreteOps())
+                self.assertEqual(final.fpr[7], expected)
+                self.assertEqual(final.fpscr, FPSCR_FI | FPSCR_FR | fprf)
+            with self.subTest(encoded=encoded, case="zero"):
+                state = concrete_state({"fpr": {"f1": 1.0, "f2": zero_b, "f3": 1.0}})
+                final = execute_block(state, decode(encoded), ConcreteOps())
+                self.assertEqual(final.fpr[7], expected_zero)
+
+    def test_double_fused_family_rounds_only_once(self) -> None:
+        # (1 + 2^-27) * (1 - 2^-27) is exactly 1 - 2^-54. A separate
+        # multiply rounds that to 1 before the add/subtract; an FMA retains it.
+        product_inputs = {
+            "f1": "0x3ff0000002000000",
+            "f3": "0x3feffffffc000000",
+        }
+        cases = {
+            "fce110fa": (-1.0, 0xBC90000000000000),
+            "fce110f8": (1.0, 0xBC90000000000000),
+            "fce110fe": (-1.0, 0x3C90000000000000),
+            "fce110fc": (1.0, 0x3C90000000000000),
+        }
+        for encoded, (addend, expected) in cases.items():
+            with self.subTest(encoded=encoded):
+                state = concrete_state({"fpr": {**product_inputs, "f2": addend}})
+                final = execute_block(state, decode(encoded), ConcreteOps())
+                self.assertEqual(final.fpr[7], expected)
+
+    def test_complete_fused_family_preserves_nan_payload_and_never_negates_nan(self) -> None:
+        for encoded in ("fce110fa", "fce110f8", "fce110fe", "fce110fc"):
+            with self.subTest(encoded=encoded):
+                state = concrete_state({
+                    "fpr": {"f1": "0xfff8000012345678", "f2": 2.0, "f3": 4.0},
+                })
+                final = execute_block(state, decode(encoded), ConcreteOps())
+                self.assertEqual(final.fpr[7], 0xFFF8000012345678)
+                self.assertEqual(final.fpscr, 0x11000)
+
+        single = execute_block(concrete_state({
+            "fpr": {"f1": "0xfff8000012345678", "f2": 2.0, "f3": 4.0},
+        }), decode("ece110fe"), ConcreteOps())
+        self.assertEqual(single.fpr[7], 0xFFF8000000000000)
+        self.assertEqual(single.fpscr, 0x11000)
+
+    def test_double_fused_invalid_signs_and_enabled_suppression(self) -> None:
+        positive_inf = "0x7ff0000000000000"
+        negative_inf = "0xfff0000000000000"
+        cases = (
+            ("fce110fa", negative_inf), ("fce110fe", negative_inf),
+            ("fce110f8", positive_inf), ("fce110fc", positive_inf),
+        )
+        for encoded, addend in cases:
+            with self.subTest(encoded=encoded):
+                state = concrete_state({
+                    "fpr": {"f1": positive_inf, "f2": addend, "f3": 1.0},
+                })
+                final = execute_block(state, decode(encoded), ConcreteOps())
+                self.assertEqual(final.fpr[7], 0x7FF8000000000000)
+                self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXISI | 0x11000)
+
+        original = 0x4000000000000000
+        suppressed = execute_block(concrete_state({
+            "fpr": {"f1": positive_inf, "f2": negative_inf, "f3": 1.0, "f7": original},
+            "fpscr": FPSCR_VE,
+        }), decode("fce110ff"), ConcreteOps())
+        self.assertEqual(suppressed.fpr[7], original)
+        self.assertEqual(
+            suppressed.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXISI | FPSCR_VE,
+        )
+        self.assertEqual(suppressed.cr, 0x0E000000)
+
 
 @unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")
 class FloatingPointSymbolicTests(unittest.TestCase):
@@ -300,6 +604,87 @@ class FloatingPointSymbolicTests(unittest.TestCase):
         )
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
 
+    def test_identical_exceptional_arithmetic_is_proved(self) -> None:
+        for encoded in ("fce1102a", "fce100f2", "fce11024"):
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables(["f7,fpscr,cr1"]), timeout_ms=5_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_float_to_integer_symbolic_proofs(self) -> None:
+        for encoded in ("fce0101c", "fce0101e"):
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        different = check_equivalence(
+            decode("fce0101c"), decode("fce0101e"),
+            EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+            original_hex="fce0101c", candidate_hex="fce0101e",
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_fmadds_symbolic_proofs_on_single_origin_domain(self) -> None:
+        fused = decode("ece110fa")
+        identical = check_equivalence(
+            fused, fused,
+            EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+            original_hex="ece110fa", candidate_hex="ece110fa",
+        )
+        self.assertEqual(identical.status, ProofStatus.EQUIVALENT)
+
+        different = check_equivalence(
+            fused, decode("ece100f2"),
+            EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+            original_hex="ece110fa", candidate_hex="ece100f2",
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_fused_subtract_symbolic_proofs(self) -> None:
+        for encoded in ("ece110f8", "ece110fc"):
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                identical = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(identical.status, ProofStatus.EQUIVALENT)
+
+        sign_difference = check_equivalence(
+            decode("ece110f8"), decode("ece110fc"),
+            EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+            original_hex="ece110f8", candidate_hex="ece110fc",
+        )
+        self.assertEqual(sign_difference.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_complete_fused_family_symbolic_proofs(self) -> None:
+        for encoded in ("ece110fe", "fce110fa", "fce110f8", "fce110fe", "fce110fc"):
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                identical = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(identical.status, ProofStatus.EQUIVALENT)
+
+        different = check_equivalence(
+            decode("ece110fa"), decode("ece110fe"),
+            EquivalenceContract(parse_observables(["f7"]), timeout_ms=15_000),
+            original_hex="ece110fa", candidate_hex="ece110fe",
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
     def test_force25_symbolic_matches_concrete_edge(self) -> None:
         ops = SymbolicOps()
         vectors = {
@@ -334,6 +719,10 @@ class FloatingPointSymbolicTests(unittest.TestCase):
         self.assertEqual(
             automatic_live_out(decode("fc011000")),
             ("cr0", "fpscr"),
+        )
+        self.assertEqual(
+            automatic_live_out(decode("fce0101d")),
+            ("f7", "cr1", "fpscr"),
         )
 
     def test_identical_fp_arithmetic_is_proved(self) -> None:

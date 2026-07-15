@@ -18,7 +18,7 @@ class ProofStatus(str, Enum):
 @dataclass(slots=True)
 class ProofResult:
     status: ProofStatus
-    architecture_model: str = "broadway-ppc32-be-v12"
+    architecture_model: str = "broadway-ppc32-be-v13"
     format: int = 2
     contract: str = "manual"
     observables: list[str] = field(default_factory=list)
@@ -29,9 +29,10 @@ class ProofResult:
         "FP invalid/divide-zero and conversion flags plus VE/ZE suppression are tracked; arithmetic OX/UX/XX and traps are not",
         "FP arithmetic requires RN=nearest-even and NI=0; finite-input overflow is excluded, modeled invalid/ZX cases are included",
         "fused-single proofs require finite operands to be exact binary32 values expanded in FPRs",
-        "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz_l lock state is unobserved",
-        "privileged register operations are defined only in supervisor mode; segment/MSR translation effects are outside ordinary-RAM checks",
-        "the 64-bit time base is stable for the duration of a bounded checked block",
+        "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+        "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+        "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+        "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
         "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
         "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
         "division results compared only on architecturally defined inputs",

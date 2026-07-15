@@ -5,6 +5,15 @@ from typing import Any, Protocol
 
 from .ir import ExecutionInconclusive, Instruction, Opcode, SUPPORTED_OPCODES, UnsupportedInstruction
 from .model import ConcreteMemory, MachineState
+from .spr import (
+    AUX_SPR_INDEX,
+    AUX_SPR_NAMES,
+    HID0_DCE,
+    HID2_LCE,
+    SPR_HID0,
+    SPR_HID2,
+    TIME_BASE_WRITE_SPRS,
+)
 
 MASK32 = 0xFFFFFFFF
 
@@ -1525,6 +1534,18 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         return state
     if op in (Opcode.DCBZ, Opcode.DCBZ_L):
         ra, rb = a
+        dcache_enabled = ops.lnot(ops.eq(
+            ops.band(state.spr[AUX_SPR_INDEX[SPR_HID0]], ops.const(HID0_DCE)),
+            ops.const(0),
+        ))
+        enabled = dcache_enabled
+        if op == Opcode.DCBZ_L:
+            locked_cache_enabled = ops.lnot(ops.eq(
+                ops.band(state.spr[AUX_SPR_INDEX[SPR_HID2]], ops.const(HID2_LCE)),
+                ops.const(0),
+            ))
+            enabled = ops.land(enabled, locked_cache_enabled)
+        state = replace(state, valid=ops.land(state.valid, enabled))
         address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
         block = ops.band(address, ops.const(0xFFFFFFE0))
         for offset in range(32):
@@ -1731,7 +1752,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         return state.with_cr(ops.bor(ops.band(state.cr, ops.bnot(mask)), ops.band(state.gpr[rs], mask)))
     elif op in (Opcode.MFSPR, Opcode.MTSPR):
         reg, spr = a
-        if spr in (26, 27):
+        if spr in (26, 27) or spr in AUX_SPR_INDEX or spr in TIME_BASE_WRITE_SPRS:
             supervisor = ops.eq(ops.band(state.msr, ops.const(0x00004000)), ops.const(0))
             state = replace(state, valid=ops.land(state.valid, supervisor))
         if spr == 1:
@@ -1756,6 +1777,17 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         elif spr == 27:
             if op == Opcode.MFSPR: destination, result = reg, state.srr1
             else: return replace(state, srr1=state.gpr[reg])
+        elif spr in AUX_SPR_INDEX:
+            index = AUX_SPR_INDEX[spr]
+            if op == Opcode.MFSPR:
+                destination, result = reg, state.spr[index]
+            else:
+                return state.with_spr(index, state.gpr[reg])
+        elif spr in TIME_BASE_WRITE_SPRS:
+            source = state.gpr[reg]
+            high = source if spr == 285 else ops.fp_high_word(state.time_base)
+            low = source if spr == 284 else ops.fp_low_word(state.time_base)
+            return replace(state, time_base=ops.fp_join_words(high, low))
         else:
             gqr_index = spr - 912
             if op == Opcode.MFSPR:
@@ -2635,6 +2667,8 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
     elif op in (Opcode.DCBZ, Opcode.DCBZ_L):
         if a[0]: reads.add(f"r{a[0]}")
         reads.add(f"r{a[1]}")
+        reads.add("hid0")
+        if op == Opcode.DCBZ_L: reads.add("hid2")
         writes.add("memory")
     elif op in (Opcode.SYNC, Opcode.ISYNC):
         pass
@@ -2746,6 +2780,8 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         name = (
             "xer" if spr == 1 else "lr" if spr == 8 else "ctr" if spr == 9
             else "srr0" if spr == 26 else "srr1" if spr == 27
+            else AUX_SPR_NAMES[spr] if spr in AUX_SPR_NAMES
+            else "time_base" if spr in TIME_BASE_WRITE_SPRS
             else f"gqr{spr - 912}"
         )
         if op == Opcode.MFSPR:
@@ -2876,6 +2912,8 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
             elif a[1] == 9: written.add("ctr")
             elif a[1] == 26: written.add("srr0")
             elif a[1] == 27: written.add("srr1")
+            elif a[1] in AUX_SPR_NAMES: written.add(AUX_SPR_NAMES[a[1]])
+            elif a[1] in TIME_BASE_WRITE_SPRS: written.add("time_base")
             elif 912 <= a[1] <= 919: written.add(f"gqr{a[1] - 912}")
         elif op in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
             if insn.link: written.add("lr")
@@ -2894,6 +2932,7 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
         *(f"r{i}" for i in range(32)), *(f"f{i}" for i in range(32)),
         *(f"f{i}.ps1" for i in range(32)), *(f"gqr{i}" for i in range(8)),
         *(f"sr{i}" for i in range(16)),
+        *(AUX_SPR_NAMES[number] for number in AUX_SPR_NAMES),
         "cr", *(f"cr{i}" for i in range(8)), "fpscr", "xer.ca", "xer.ov",
         "xer.so", "lr", "ctr", "msr", "time_base", "srr0", "srr1", "memory",
     ]

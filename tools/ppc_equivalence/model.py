@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any
 
+from .spr import AUX_SPR_OBSERVABLES
+
 
 @dataclass(frozen=True, slots=True)
 class XerState:
@@ -46,6 +48,7 @@ class MachineState:
     time_base: Any
     srr0: Any
     srr1: Any
+    spr: tuple[Any, ...]
     memory: Any
     valid: Any
     memory_touches: tuple[Any, ...] = ()
@@ -83,6 +86,11 @@ class MachineState:
         registers = list(self.sr)
         registers[index] = value
         return replace(self, sr=tuple(registers))
+
+    def with_spr(self, index: int, value: Any) -> "MachineState":
+        registers = list(self.spr)
+        registers[index] = value
+        return replace(self, spr=tuple(registers))
 
 
 def _parse(value: object) -> int:
@@ -155,6 +163,12 @@ def concrete_state(values: dict[str, object] | None = None) -> MachineState:
     sr_values = values.get("sr", {})
     assert isinstance(sr_values, dict)
     sr = tuple(_parse(sr_values.get(f"sr{i}", 0)) & 0xFFFFFFFF for i in range(16))
+    spr_values = values.get("spr", {})
+    assert isinstance(spr_values, dict)
+    spr = tuple(
+        _parse(spr_values.get(name, 0)) & 0xFFFFFFFF
+        for name in AUX_SPR_OBSERVABLES
+    )
     xer_values = values.get("xer", {})
     assert isinstance(xer_values, dict)
     fpscr = _parse(values.get("fpscr", 0)) & 0xFFFFFFFF
@@ -190,6 +204,7 @@ def concrete_state(values: dict[str, object] | None = None) -> MachineState:
         _parse(values.get("time_base", 0)) & 0xFFFFFFFFFFFFFFFF,
         _parse(values.get("srr0", 0)) & 0xFFFFFFFF,
         _parse(values.get("srr1", 0)) & 0xFFFFFFFF,
+        spr,
         memory,
         True,
     )

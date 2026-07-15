@@ -4,6 +4,7 @@ import re
 from collections.abc import Sequence
 
 from .ir import DecodeError, Instruction, Opcode, UnsupportedInstruction
+from .spr import READABLE_SPRS, WRITABLE_SPRS
 
 
 def _signed(value: int, width: int) -> int:
@@ -263,7 +264,8 @@ def _decode_word(word: int, address: int) -> Instruction:
             spr = ((word >> 16) & 31) | (((word >> 11) & 31) << 5)
             if rc:
                 raise UnsupportedInstruction(address, word, "reserved SPR transfer Rc bit is set")
-            if spr not in (1, 8, 9, 26, 27) and not 912 <= spr <= 919:
+            allowed = READABLE_SPRS if xo == 339 else WRITABLE_SPRS
+            if spr not in allowed:
                 raise UnsupportedInstruction(address, word, f"unsupported special-purpose register {spr}")
             return _insn(address, word, Opcode.MFSPR if xo == 339 else Opcode.MTSPR, (rt, spr))
 

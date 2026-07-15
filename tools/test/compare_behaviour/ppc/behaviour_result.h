@@ -23,7 +23,8 @@ static inline void behaviour_result_init(volatile BehaviourResult* result) {
     result->magic = BEHAVIOUR_RESULT_MAGIC;
     result->passed = 0;
     result->failed = 0;
-    result->exit_code = 0;
+    /* A crash before the harness writes its final status must never look green. */
+    result->exit_code = 0xFFFFFFFFu;
     result->last_fail[0] = '\0';
 }
 

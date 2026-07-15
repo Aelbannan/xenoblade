@@ -54,10 +54,24 @@ from tools.ppc_equivalence.semantics import (
     register_effects,
     rotate_mask,
 )
+from tools.ppc_equivalence.spr import (
+    AUX_SPR_INDEX,
+    AUX_SPR_NAMES,
+    AUX_SPR_OBSERVABLES,
+    TIME_BASE_WRITE_SPRS,
+)
 
 
 def decode(hex_words: str):
     return decode_block(parse_hex(hex_words), validate_with_capstone=False)
+
+
+def spr_transfer(reg: int, spr: int, *, write: bool) -> int:
+    xo_bits = 467 if write else 339
+    return (
+        (31 << 26) | ((reg & 31) << 21) | ((spr & 31) << 16)
+        | (((spr >> 5) & 31) << 11) | (xo_bits << 1)
+    )
 
 
 def ps_x(fd: int, fa: int, fb: int, xo: int, *, rc: int = 0) -> int:
@@ -78,6 +92,19 @@ def ps_a(
 
 
 class DecoderTests(unittest.TestCase):
+    def test_all_retail_auxiliary_spr_transfers_decode(self) -> None:
+        for spr, name in AUX_SPR_NAMES.items():
+            for write, expected in ((False, Opcode.MFSPR), (True, Opcode.MTSPR)):
+                with self.subTest(spr=spr, name=name, write=write):
+                    decoded = decode(f"{spr_transfer(7, spr, write=write):08x}")[0]
+                    self.assertEqual((decoded.opcode, decoded.operands), (expected, (7, spr)))
+        for spr in TIME_BASE_WRITE_SPRS:
+            with self.subTest(spr=spr):
+                decoded = decode(f"{spr_transfer(7, spr, write=True):08x}")[0]
+                self.assertEqual((decoded.opcode, decoded.operands), (Opcode.MTSPR, (7, spr)))
+                with self.assertRaises(UnsupportedInstruction):
+                    decode(f"{spr_transfer(7, spr, write=False):08x}")
+
     def test_broadway_cache_privileged_and_exception_encodings(self) -> None:
         words = (
             "7c0000ac 7c0003ac 7c00006c 7c00222c 7c001fec 10061fec "
@@ -1703,9 +1730,42 @@ class FloatingPointSymbolicTests(unittest.TestCase):
 
 
 class ConcreteSemanticsTests(unittest.TestCase):
+    def test_auxiliary_spr_and_time_base_write_semantics(self) -> None:
+        for spr, name in AUX_SPR_NAMES.items():
+            value = (0xA5000000 | spr) & 0xFFFFFFFF
+            with self.subTest(spr=spr, name=name):
+                state = concrete_state({"spr": {name: value}})
+                read = execute_instruction(
+                    state, instruction(Opcode.MFSPR, (7, spr)), ConcreteOps(),
+                )
+                self.assertEqual(read.gpr[7], value)
+                written = execute_instruction(
+                    state.with_gpr(8, value ^ 0xFFFFFFFF),
+                    instruction(Opcode.MTSPR, (8, spr)), ConcreteOps(),
+                )
+                self.assertEqual(written.spr[AUX_SPR_INDEX[spr]], value ^ 0xFFFFFFFF)
+                user = execute_instruction(
+                    concrete_state({"msr": 0x4000}),
+                    instruction(Opcode.MFSPR, (7, spr)), ConcreteOps(),
+                )
+                self.assertFalse(user.valid)
+
+        initial = concrete_state({
+            "gpr": {"r7": 0x11223344}, "time_base": 0xAABBCCDDEEFF0011,
+        })
+        low = execute_instruction(
+            initial, instruction(Opcode.MTSPR, (7, 284)), ConcreteOps(),
+        )
+        high = execute_instruction(
+            initial, instruction(Opcode.MTSPR, (7, 285)), ConcreteOps(),
+        )
+        self.assertEqual(low.time_base, 0xAABBCCDD11223344)
+        self.assertEqual(high.time_base, 0x11223344EEFF0011)
+
     def test_cache_barriers_and_cache_block_zero_value_semantics(self) -> None:
         initial = concrete_state({
             "gpr": {"r3": 0x1013},
+            "spr": {"hid0": 0x00004000, "hid2": 0x10000000},
             "memory": {"bytes": {f"0x{address:x}": 0xAA for address in range(0x1000, 0x1040)}},
         })
         unchanged = execute_block(initial, decode("7c0004ac 4c00012c 7c001a2c"), ConcreteOps())
@@ -1713,6 +1773,13 @@ class ConcreteSemanticsTests(unittest.TestCase):
         final = execute_block(initial, decode("7c001fec"), ConcreteOps())
         self.assertEqual([final.memory.read(a) for a in range(0x1000, 0x1020)], [0] * 32)
         self.assertEqual([final.memory.read(a) for a in range(0x1020, 0x1040)], [0xAA] * 32)
+        locked = execute_block(initial, decode("10061fec"), ConcreteOps())
+        self.assertTrue(locked.valid)
+        disabled = execute_instruction(
+            concrete_state({"gpr": {"r3": 0x1013}}),
+            instruction(Opcode.DCBZ_L, (0, 3)), ConcreteOps(),
+        )
+        self.assertFalse(disabled.valid)
 
     def test_privileged_register_and_stable_time_base_semantics(self) -> None:
         state = concrete_state({
@@ -1789,6 +1856,28 @@ class SymbolicEquivalenceTests(unittest.TestCase):
             candidate_hex=candidate,
         )
 
+    def test_auxiliary_spr_symbolic_state_is_observable(self) -> None:
+        hid0 = f"{spr_transfer(7, 1008, write=False):08x}"
+        hid1 = f"{spr_transfer(7, 1009, write=False):08x}"
+        self.assertEqual(self.check(hid0, hid0, "r7").status, ProofStatus.EQUIVALENT)
+        self.assertEqual(self.check(hid0, hid1, "r7").status, ProofStatus.NOT_EQUIVALENT)
+
+        write_hid0 = f"{spr_transfer(7, 1008, write=True):08x}"
+        difference = self.check(write_hid0, "60000000", "hid0")
+        self.assertEqual(difference.status, ProofStatus.NOT_EQUIVALENT)
+        assert difference.replay is not None
+        replay_initial = concrete_state(difference.replay["initial_state"])
+        left = execute_block(replay_initial, decode(write_hid0), ConcreteOps())
+        right = execute_block(replay_initial, decode("60000000"), ConcreteOps())
+        self.assertNotEqual(
+            left.spr[AUX_SPR_INDEX[1008]], right.spr[AUX_SPR_INDEX[1008]],
+        )
+        write_tbl = f"{spr_transfer(7, 284, write=True):08x}"
+        self.assertEqual(
+            self.check(write_tbl, "60000000", "time_base").status,
+            ProofStatus.NOT_EQUIVALENT,
+        )
+
     def test_system_cache_and_exception_symbolic_proofs(self) -> None:
         for encoded, observe in (
             ("7c001fec", "memory"), ("7ce000a6", "r7"),
@@ -1856,11 +1945,14 @@ class SymbolicEquivalenceTests(unittest.TestCase):
 
 class ContractTests(unittest.TestCase):
     def test_observables_are_versioned_and_validated(self) -> None:
-        values = parse_observables(["r3,cr0", "xer.ca", "r3", "msr,sr3,time_base,srr0"])
+        values = parse_observables([
+            "r3,cr0", "xer.ca", "r3", "msr,sr3,time_base,srr0,hid0,pmc1",
+        ])
         self.assertEqual(
             [value.name for value in values],
-            ["r3", "cr0", "xer.ca", "msr", "sr3", "time_base", "srr0"],
+            ["r3", "cr0", "xer.ca", "msr", "sr3", "time_base", "srr0", "hid0", "pmc1"],
         )
+        self.assertEqual(parse_observables(["hid0"])[0].kind, "spr")
         self.assertEqual(parse_observables(["memory"])[0].kind, "memory")
         with self.assertRaises(ValueError):
             EquivalenceContract(values, timeout_ms=0)
@@ -1883,11 +1975,13 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(names[64:96], tuple(f"f{index}.ps1" for index in range(32)))
         self.assertEqual(names[96:104], tuple(f"gqr{index}" for index in range(8)))
         self.assertEqual(names[104:120], tuple(f"sr{index}" for index in range(16)))
-        self.assertEqual(
-            names[120:],
-            ("cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr",
-             "msr", "time_base", "srr0", "srr1", "memory"),
+        fixed = (
+            "cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr",
+            "msr", "time_base", "srr0", "srr1",
         )
+        self.assertEqual(names[120:131], fixed)
+        self.assertEqual(names[131:-1], AUX_SPR_OBSERVABLES)
+        self.assertEqual(names[-1], "memory")
 
     def test_coop_runner_defaults_to_ppc_eabi(self) -> None:
         args = _equivalence_args_with_default_contract(
@@ -2181,7 +2275,8 @@ class PhaseTwoControlFlowTests(unittest.TestCase):
 
     def test_system_instruction_effects_and_live_out_are_complete(self) -> None:
         cases = (
-            (instruction(Opcode.DCBZ, (3, 4)), {"r3", "r4"}, {"memory"}),
+            (instruction(Opcode.DCBZ, (3, 4)), {"r3", "r4", "hid0"}, {"memory"}),
+            (instruction(Opcode.DCBZ_L, (3, 4)), {"r3", "r4", "hid0", "hid2"}, {"memory"}),
             (instruction(Opcode.MFMSR, (5,)), {"msr"}, {"r5"}),
             (instruction(Opcode.MTMSR, (6,)), {"r6"}, {"msr"}),
             (instruction(Opcode.MFSR, (7, 3)), {"sr3"}, {"r7"}),
@@ -2199,6 +2294,9 @@ class PhaseTwoControlFlowTests(unittest.TestCase):
                 instruction(Opcode.RFI, (), address=0x108),
                 {"msr", "srr0", "srr1"}, {"msr"},
             ),
+            (instruction(Opcode.MFSPR, (11, 1008)), {"hid0"}, {"r11"}),
+            (instruction(Opcode.MTSPR, (12, 953)), {"r12"}, {"pmc1"}),
+            (instruction(Opcode.MTSPR, (13, 284)), {"r13"}, {"time_base"}),
         )
         for insn, expected_reads, expected_writes in cases:
             with self.subTest(opcode=insn.opcode):

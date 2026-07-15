@@ -115,7 +115,7 @@ explicit choice.
 | Contract | Compared state |
 |---|---|
 | `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, both lanes of FP return `f1`, `r13`–`r31`, both lanes of nonvolatile `f14`–`f31`, `CR2`–`CR4`, and all final memory |
-| `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, and all final memory |
+| `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, every modeled auxiliary SPR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
 The ABI preset is for completed function boundaries. It intentionally excludes
@@ -135,7 +135,8 @@ python3 tools/coop/run.py equivalence check-hex \
 `--observe` may be repeated or comma-separated. Supported names are `r0`–`r31`,
 `f0`–`f31`, `cr`, `cr0`–`cr7`, `fpscr`, `xer.ca`, `xer.ov`, `xer.so`, `lr`,
 `ctr`, `gqr0`–`gqr7`, `sr0`–`sr15`, `msr`, `time_base`, `srr0`, `srr1`,
-`f0.ps1`–`f31.ps1`, and `memory`.
+the lower-case names listed in `spr.py` (for example `dsisr`, `ibat0u`, `hid0`,
+and `pmc1`), `f0.ps1`–`f31.ps1`, and `memory`.
 
 | Exit | Meaning |
 |---:|---|
@@ -151,23 +152,26 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v12` model supports:
+The current `broadway-ppc32-be-v13` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
 - immediate and register logical operations, rotates, masks, logical/arithmetic
   shifts, record forms, integer compares, and CR logical operations;
-- `mfcr`, `mtcrf`, and user-visible XER/LR/CTR/GQR `mfspr`/`mtspr` forms;
+- `mfcr`, `mtcrf`, and all retail XER/LR/CTR/GQR plus exception, MMU, BAT,
+  hardware/cache, DMA, performance, and debug `mfspr`/`mtspr` operands as
+  explicit architectural values;
 - byte, halfword, and word integer loads/stores in D-form and indexed form,
   update forms, `lmw`/`stmw`, and byte-reversed halfword/word forms;
 - a shared symbolic byte-addressed memory array with big-endian multi-byte
   access and exact final-array comparison;
 - cache/order operations `dcbf`, `dcbi`, `dcbst`, `dcbt`, `icbi`, `sync`, and
   `isync` under coherent ordinary-RAM/no-DMA/no-self-modifying-code assumptions,
-  plus 32-byte aligned memory zeroing for `dcbz` and `dcbz_l`;
+  plus 32-byte aligned memory zeroing for `dcbz` when HID0.DCE is enabled and
+  `dcbz_l` when HID0.DCE plus HID2.LCE are enabled;
 - MSR and all 16 segment registers through `mfmsr`, `mtmsr`, `mfsr`, and
-  `mtsr`, SRR0/SRR1 SPR transfers, and stable-block time-base reads through
-  `mftb`;
+  `mtsr`, SRR0/SRR1 SPR transfers, stable-block time-base reads through `mftb`,
+  and TBL/TBU writes through `mtspr`;
 - synchronous `twi`, `sc`, and `rfi` control exits, including trap predicates,
   exception vectors, SRR0/SRR1 saves, and Broadway MSR entry/restore masks;
 - `b`, `bc`, `bclr`, and `bcctr`, including AA/LK, CR tests, CTR decrement/test,
@@ -233,9 +237,12 @@ mixed-precision/Force25 behavior for arbitrary FPR inputs; symbolic proofs
 require each finite operand to be an exact binary32 value expanded into an FPR,
 matching the dominant compiler use.
 The `fsqrt`/`fsqrts` encodings found in later PowerPC revisions are reserved on
-Broadway and are rejected by the decoder. VMX, atomics/reservations, detailed
-cache locking/coherency, asynchronous interrupts, MMIO behavior, address
-translation effects, loops/back-edges, external call
+Broadway and are rejected by the decoder. Auxiliary SPR values are compared,
+but decrementer/performance-counter progression and the behavioral effects of
+BAT/SDR1 translation, HID/L2/cache locking, DMA, and debug registers are
+explicitly outside the bounded value-semantics model. VMX,
+atomics/reservations, detailed cache locking/coherency, asynchronous interrupts,
+MMIO behavior, address translation effects, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where
 the ISA defines the result. Direct calls are terminal exits; the callee is not

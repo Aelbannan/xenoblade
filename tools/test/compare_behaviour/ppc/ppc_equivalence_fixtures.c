@@ -70,7 +70,8 @@ static void log_fp_diff(const char* name, u32 index, u64 actual, u64 expected) {
 
 int behaviour_main(void) {
     volatile BehaviourResult* result = &g_behaviour_result;
-    u32 sandbox[PPC_FIXTURE_MEM_WORDS];
+    u32 sandbox_storage[PPC_FIXTURE_MEM_WORDS + 7];
+    u32* sandbox = (u32*)(((u32)sandbox_storage + 31u) & ~31u);
     PpcFixtureActual actual;
     int case_index;
     u32 mem_index;

@@ -237,7 +237,7 @@ def check_equivalence(
     }
     result.counterexample = {"initial_state": initial_state}
     result.replay = {
-        "format": 2, "architecture": "broadway-ppc32-be-v13", "contract": contract.name,
+        "format": 2, "architecture": "broadway-ppc32-be-v14", "contract": contract.name,
         "original_hex": original_hex, "candidate_hex": candidate_hex,
         "base_original": original[0].address, "base_candidate": candidate[0].address,
         "observables": [item.name for item in contract.observables], "initial_state": initial_state,

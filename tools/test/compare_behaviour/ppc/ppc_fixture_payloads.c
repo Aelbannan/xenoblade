@@ -2571,3 +2571,17 @@ asm void ppc_fixture_payload_336(void) {
     opword 0xFCE01210
     blr
 }
+
+/* lmw-overlapping-base */
+asm void ppc_fixture_payload_337(void) {
+    nofralloc
+    opword 0x90240078
+    opword 0x91C4007C
+    opword 0x7C832378
+    opword 0x7C8903A6
+    opword 0xB8030000
+    opword 0x7C8902A6
+    opword 0x80240078
+    opword 0x81C4007C
+    blr
+}

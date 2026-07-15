@@ -264,6 +264,8 @@ def _decode_word(word: int, address: int) -> Instruction:
             13: Opcode.PS_MULS1, 14: Opcode.PS_MADDS0, 15: Opcode.PS_MADDS1,
         }
         if xo5 == 6:
+            if word & 1:
+                raise UnsupportedInstruction(address, word, "reserved indexed PSQ Rc bit is set")
             opcode = Opcode.PSQ_LUX if word & 0x40 else Opcode.PSQ_LX
             ix = (word >> 7) & 7
             wx = (word >> 10) & 1
@@ -271,6 +273,8 @@ def _decode_word(word: int, address: int) -> Instruction:
                 raise UnsupportedInstruction(address, word, "update-form PSQ memory access has RA=0")
             return _insn(address, word, opcode, (fd, ra, rb, wx, ix))
         if xo5 == 7:
+            if word & 1:
+                raise UnsupportedInstruction(address, word, "reserved indexed PSQ Rc bit is set")
             opcode = Opcode.PSQ_STUX if word & 0x40 else Opcode.PSQ_STX
             ix = (word >> 7) & 7
             wx = (word >> 10) & 1
@@ -279,7 +283,7 @@ def _decode_word(word: int, address: int) -> Instruction:
             return _insn(address, word, opcode, (fd, ra, rb, wx, ix))
         if xo5 in ps_5bit:
             opcode = ps_5bit[xo5]
-            return _insn(address, word, opcode, (fd, fa, fb, fc))
+            return _insn(address, word, opcode, (fd, fa, fb, fc), record=bool(word & 1))
         ps_10bit = {
             40: Opcode.PS_NEG, 72: Opcode.PS_MR, 136: Opcode.PS_NABS, 264: Opcode.PS_ABS,
             0: Opcode.PS_CMPU0, 32: Opcode.PS_CMPO0, 64: Opcode.PS_CMPU1, 96: Opcode.PS_CMPO1,
@@ -290,8 +294,14 @@ def _decode_word(word: int, address: int) -> Instruction:
             opcode = ps_10bit[xo10]
             bf = (word >> 23) & 7
             if opcode in (Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1):
+                if word & 0x00600001:
+                    raise UnsupportedInstruction(address, word, "reserved paired-single compare field is nonzero")
                 return _insn(address, word, opcode, (bf, fa, fb))
-            return _insn(address, word, opcode, (fd, fa, fb))
+            if opcode in (Opcode.PS_NEG, Opcode.PS_MR, Opcode.PS_NABS, Opcode.PS_ABS):
+                if fa:
+                    raise UnsupportedInstruction(address, word, "reserved paired-single FA field is nonzero")
+                return _insn(address, word, opcode, (fd, fb), record=bool(word & 1))
+            return _insn(address, word, opcode, (fd, fa, fb), record=bool(word & 1))
         raise UnsupportedInstruction(address, word, f"unsupported paired-single instruction (xo5={xo5}, xo10={xo10})")
 
     # PSQ load/store D-form (primary 56-61).

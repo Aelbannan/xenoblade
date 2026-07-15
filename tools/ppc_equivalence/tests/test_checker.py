@@ -59,6 +59,13 @@ def decode(hex_words: str):
     return decode_block(parse_hex(hex_words), validate_with_capstone=False)
 
 
+def ps_x(fd: int, fa: int, fb: int, xo: int, *, rc: int = 0) -> int:
+    return (
+        (4 << 26) | ((fd & 31) << 21) | ((fa & 31) << 16)
+        | ((fb & 31) << 11) | ((xo & 0x3FF) << 1) | (rc & 1)
+    )
+
+
 class DecoderTests(unittest.TestCase):
     def test_known_encodings(self) -> None:
         fixture = (
@@ -151,6 +158,35 @@ class DecoderTests(unittest.TestCase):
              Opcode.FNEG, Opcode.FMR, Opcode.FABS],
         )
 
+    def test_paired_move_and_merge_encodings_match_gekko_disassembler(self) -> None:
+        words = (
+            ps_x(7, 0, 2, 40), ps_x(7, 0, 2, 72),
+            ps_x(7, 0, 2, 136), ps_x(7, 0, 2, 264),
+            ps_x(7, 1, 2, 528), ps_x(7, 1, 2, 560),
+            ps_x(7, 1, 2, 592), ps_x(7, 1, 2, 624),
+            ps_x(3 << 2, 1, 2, 0), ps_x(3 << 2, 1, 2, 32),
+            ps_x(3 << 2, 1, 2, 64), ps_x(3 << 2, 1, 2, 96),
+        )
+        decoded = decode(" ".join(f"{word:08x}" for word in words))
+        self.assertEqual(
+            [(item.opcode, item.operands) for item in decoded],
+            [
+                (Opcode.PS_NEG, (7, 2)), (Opcode.PS_MR, (7, 2)),
+                (Opcode.PS_NABS, (7, 2)), (Opcode.PS_ABS, (7, 2)),
+                (Opcode.PS_MERGE00, (7, 1, 2)), (Opcode.PS_MERGE01, (7, 1, 2)),
+                (Opcode.PS_MERGE10, (7, 1, 2)), (Opcode.PS_MERGE11, (7, 1, 2)),
+                (Opcode.PS_CMPU0, (3, 1, 2)), (Opcode.PS_CMPO0, (3, 1, 2)),
+                (Opcode.PS_CMPU1, (3, 1, 2)), (Opcode.PS_CMPO1, (3, 1, 2)),
+            ],
+        )
+        with self.assertRaises(UnsupportedInstruction):
+            decode(f"{ps_x(7, 1, 2, 72):08x}")
+        self.assertTrue(decode(f"{ps_x(7, 0, 2, 72, rc=1):08x}")[0].record)
+        with self.assertRaises(UnsupportedInstruction):
+            decode(f"{ps_x(7, 1, 2, 0, rc=1):08x}")
+        with self.assertRaises(UnsupportedInstruction):
+            decode(f"{ps_x(3, 1, 2, 0):08x}")
+
     def test_reserved_fp_operand_fields_are_rejected(self) -> None:
         # fadd has no FC operand; GekkoDisassembler::fdabc rejects it.
         with self.assertRaises(UnsupportedInstruction):
@@ -215,6 +251,77 @@ class FloatingPointConcreteTests(unittest.TestCase):
         negated = execute_block(state, decode("fce01050"), ConcreteOps())
         self.assertEqual(moved.fpr[7], payload)
         self.assertEqual(negated.fpr[7], payload ^ (1 << 63))
+
+    def test_paired_moves_and_merges_preserve_both_lane_bits(self) -> None:
+        ps0_a = 0x7FF8000012345678
+        ps1_a = 0x8000000000000000
+        ps0_b = 0xFFF00000ABCDEF01
+        ps1_b = 0x3FF8000000000000
+        state = concrete_state({
+            "fpr": {"f1": ps0_a, "f2": ps0_b},
+            "ps1": {"f1": ps1_a, "f2": ps1_b},
+            "fpscr": 0xA0000000,
+        })
+
+        move_expected = {
+            Opcode.PS_MR: (ps0_a, ps1_a),
+            Opcode.PS_NEG: (ps0_a ^ (1 << 63), ps1_a ^ (1 << 63)),
+            Opcode.PS_NABS: (ps0_a | (1 << 63), ps1_a | (1 << 63)),
+            Opcode.PS_ABS: (ps0_a & ~(1 << 63), ps1_a & ~(1 << 63)),
+        }
+        for opcode, expected in move_expected.items():
+            with self.subTest(opcode=opcode.value):
+                final = execute_instruction(
+                    state, Instruction(0, 0, opcode, (7, 1), record=True), ConcreteOps(),
+                )
+                self.assertEqual((final.fpr[7], final.ps1[7]), expected)
+                self.assertEqual(final.cr & 0x0F000000, 0x0A000000)
+                self.assertEqual(final.fpscr, state.fpscr)
+
+        merge_expected = {
+            Opcode.PS_MERGE00: (ps0_a, ps0_b),
+            Opcode.PS_MERGE01: (ps0_a, ps1_b),
+            Opcode.PS_MERGE10: (ps1_a, ps0_b),
+            Opcode.PS_MERGE11: (ps1_a, ps1_b),
+        }
+        for opcode, expected in merge_expected.items():
+            with self.subTest(opcode=opcode.value):
+                final = execute_instruction(
+                    state, Instruction(0, 0, opcode, (1, 1, 2)), ConcreteOps(),
+                )
+                self.assertEqual((final.fpr[1], final.ps1[1]), expected)
+
+    def test_paired_compares_select_lane_and_share_scalar_exception_rules(self) -> None:
+        finite = concrete_state({
+            "fpr": {"f1": 1.0, "f2": 2.0},
+            "ps1": {"f1": 3.0, "f2": 2.0},
+        })
+        low = execute_instruction(
+            finite, Instruction(0, 0, Opcode.PS_CMPU0, (3, 1, 2)), ConcreteOps(),
+        )
+        high = execute_instruction(
+            finite, Instruction(0, 0, Opcode.PS_CMPU1, (3, 1, 2)), ConcreteOps(),
+        )
+        self.assertEqual((low.cr, low.fpscr), (0x00080000, 0x00008000))
+        self.assertEqual((high.cr, high.fpscr), (0x00040000, 0x00004000))
+
+        ordered_qnan = execute_instruction(concrete_state({
+            "ps1": {"f1": "0x7ff8000012345678", "f2": 2.0},
+        }), Instruction(0, 0, Opcode.PS_CMPO1, (3, 1, 2)), ConcreteOps())
+        self.assertEqual(ordered_qnan.cr, 0x00010000)
+        self.assertEqual(
+            ordered_qnan.fpscr,
+            FPSCR_FX | FPSCR_VX | FPSCR_VXVC | 0x1000,
+        )
+
+        unordered_snan = execute_instruction(concrete_state({
+            "ps1": {"f1": "0x7ff0000012345678", "f2": 2.0},
+        }), Instruction(0, 0, Opcode.PS_CMPU1, (3, 1, 2)), ConcreteOps())
+        self.assertEqual(unordered_snan.cr, 0x00010000)
+        self.assertEqual(
+            unordered_snan.fpscr,
+            FPSCR_FX | FPSCR_VX | FPSCR_VXSNAN | 0x1000,
+        )
 
     def test_big_endian_fp_load_store_round_trip(self) -> None:
         state = concrete_state({
@@ -864,6 +971,68 @@ class FloatingPointSymbolicTests(unittest.TestCase):
         )
         self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
 
+    def test_paired_move_and_merge_symbolic_proofs(self) -> None:
+        words = (
+            ps_x(7, 0, 2, 40, rc=1), ps_x(7, 0, 2, 72),
+            ps_x(7, 0, 2, 136), ps_x(7, 0, 2, 264),
+            ps_x(7, 1, 2, 528), ps_x(7, 1, 2, 560),
+            ps_x(7, 1, 2, 592), ps_x(7, 1, 2, 624),
+        )
+        for word in words:
+            encoded = f"{word:08x}"
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(
+                        parse_observables(["f7,f7.ps1,cr1"]), timeout_ms=5_000,
+                    ),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        merge00 = f"{ps_x(7, 1, 2, 528):08x}"
+        merge01 = f"{ps_x(7, 1, 2, 560):08x}"
+        different = check_equivalence(
+            decode(merge00), decode(merge01),
+            EquivalenceContract(parse_observables(["f7.ps1"]), timeout_ms=5_000),
+            original_hex=merge00, candidate_hex=merge01,
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_paired_compare_symbolic_proofs(self) -> None:
+        words = (
+            ps_x(3 << 2, 1, 2, 0), ps_x(3 << 2, 1, 2, 32),
+            ps_x(3 << 2, 1, 2, 64), ps_x(3 << 2, 1, 2, 96),
+        )
+        for word in words:
+            encoded = f"{word:08x}"
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables(["cr3,fpscr"]), timeout_ms=5_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        cmp0 = f"{ps_x(3 << 2, 1, 2, 0):08x}"
+        cmp1 = f"{ps_x(3 << 2, 1, 2, 64):08x}"
+        lane_difference = check_equivalence(
+            decode(cmp0), decode(cmp1),
+            EquivalenceContract(parse_observables(["cr3,fpscr"]), timeout_ms=5_000),
+            original_hex=cmp0, candidate_hex=cmp1,
+        )
+        self.assertEqual(lane_difference.status, ProofStatus.NOT_EQUIVALENT)
+
+        ordered = f"{ps_x(3 << 2, 1, 2, 32):08x}"
+        ordering_difference = check_equivalence(
+            decode(ordered), decode(cmp0),
+            EquivalenceContract(parse_observables(["fpscr"]), timeout_ms=5_000),
+            original_hex=ordered, candidate_hex=cmp0,
+        )
+        self.assertEqual(ordering_difference.status, ProofStatus.NOT_EQUIVALENT)
+
     def test_force25_symbolic_matches_concrete_edge(self) -> None:
         ops = SymbolicOps()
         vectors = {
@@ -907,6 +1076,26 @@ class FloatingPointSymbolicTests(unittest.TestCase):
             automatic_live_out(decode("e0e41000")),
             ("f7", "f7.ps1"),
         )
+        self.assertEqual(
+            automatic_live_out(decode(f"{ps_x(7, 1, 2, 560, rc=1):08x}")),
+            ("f7", "f7.ps1", "cr1"),
+        )
+        paired_reads, paired_writes = register_effects(
+            decode(f"{ps_x(7, 1, 2, 560):08x}")[0],
+        )
+        self.assertEqual(
+            paired_reads,
+            {"f1", "f1.ps1", "f2", "f2.ps1"},
+        )
+        self.assertEqual(paired_writes, {"f7", "f7.ps1"})
+        paired_compare = decode(f"{ps_x(3 << 2, 1, 2, 64):08x}")[0]
+        self.assertEqual(
+            automatic_live_out([paired_compare]),
+            ("cr3", "fpscr"),
+        )
+        compare_reads, compare_writes = register_effects(paired_compare)
+        self.assertEqual(compare_reads, {"f1.ps1", "f2.ps1", "fpscr"})
+        self.assertEqual(compare_writes, {"cr3", "fpscr"})
         immediate_reads, _ = register_effects(
             Instruction(0, 0, Opcode.PSQ_L, (7, 4, 12, 0, 1)),
         )

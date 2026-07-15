@@ -149,7 +149,7 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v4` model supports:
+The current `broadway-ppc32-be-v6` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -174,6 +174,12 @@ The current `broadway-ppc32-be-v4` model supports:
 - quantized paired-single loads/stores (`psq_l[u][x]` and `psq_st[u][x]`) with
   separate PS1 lane state, all eight GQRs, float/U8/U16/S8/S16 formats,
   signed six-bit scaling, saturation, W=1 lane filling, and update addressing;
+- bit-exact paired-single moves/sign operations (`ps_mr`, `ps_neg`, `ps_abs`,
+  `ps_nabs`) and all four `ps_merge**` lane-selection forms, including aliasing,
+  NaN payload preservation, signed zero, and Rc-to-CR1;
+- paired ordered/unordered comparisons (`ps_cmpo0/1`, `ps_cmpu0/1`) over either
+  PS lane, including CR-field and FPSCR.FPCC updates, `VXSNAN`/`VXVC`, summary
+  bits, and invalid-enable interaction;
 - FPSCR rounding-mode input, FPRF/FPCC result classification, Rc-to-CR1, FP
   compare invalid causes (`VXSNAN`/`VXVC`) with `FX`/`VX`/`FEX` summaries and
   `VE` behavior, scalar add/subtract/multiply/divide invalid causes and

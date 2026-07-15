@@ -843,12 +843,18 @@ _FP_PS_ARITH = {
     Opcode.PS_DIV, Opcode.PS_SUB, Opcode.PS_ADD, Opcode.PS_SEL, Opcode.PS_RES, Opcode.PS_MUL,
     Opcode.PS_RSQRTE, Opcode.PS_MSUB, Opcode.PS_MADD, Opcode.PS_NMSUB, Opcode.PS_NMADD,
     Opcode.PS_SUM0, Opcode.PS_SUM1, Opcode.PS_MULS0, Opcode.PS_MULS1,
-    Opcode.PS_MADDS0, Opcode.PS_MADDS1, Opcode.PS_NEG, Opcode.PS_MR, Opcode.PS_NABS, Opcode.PS_ABS,
+    Opcode.PS_MADDS0, Opcode.PS_MADDS1,
 }
-_FP_PS_CMP_MERGE = {
+_FP_PS_CMP = {
     Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1,
+}
+_FP_PS_MOVE = {
+    Opcode.PS_NEG, Opcode.PS_MR, Opcode.PS_NABS, Opcode.PS_ABS,
+}
+_FP_PS_MERGE = {
     Opcode.PS_MERGE00, Opcode.PS_MERGE01, Opcode.PS_MERGE10, Opcode.PS_MERGE11,
 }
+_FP_PS_SIMPLE = _FP_PS_MOVE | _FP_PS_MERGE
 _FP_PSQ_OPS = {
     Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
     Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX,
@@ -972,6 +978,37 @@ def _fpscr_raise_if(
 ) -> MachineState:
     raised = _fpscr_raise(state, exception_mask, ops)
     return state.with_fpscr(ops.ite(condition, raised.fpscr, state.fpscr))
+
+
+def _execute_fp_compare(
+    state: MachineState, bf: int, left_bits: Any, right_bits: Any,
+    ordered: bool, ops: WordOps,
+) -> MachineState:
+    left = ops.fp_bits_to_double(left_bits)
+    right = ops.fp_bits_to_double(right_bits)
+    cr_nibble = _fp_compare_nibble(left, right, ops)
+    is_snan = ops.lor(
+        ops.fp_is_snan_bits(left_bits), ops.fp_is_snan_bits(right_bits),
+    )
+    is_nan = ops.lor(ops.fp_is_nan(left), ops.fp_is_nan(right))
+    state = _fpscr_raise_if(state, is_snan, FPSCR_VXSNAN, ops)
+    if ordered:
+        invalid_enabled = ops.lnot(ops.eq(
+            ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+        ))
+        # Ordered compare raises VXVC for every quiet NaN, and for a signaling
+        # NaN only when invalid exceptions are disabled.
+        raise_vxvc = ops.land(
+            is_nan,
+            ops.lor(ops.lnot(is_snan), ops.lnot(invalid_enabled)),
+        )
+        state = _fpscr_raise_if(state, raise_vxvc, FPSCR_VXVC, ops)
+    # FPCC is the low four bits of FPSCR.FPRF (numeric bits 15..12).
+    new_fpscr = ops.bor(
+        ops.band(state.fpscr, ops.bnot(ops.const(0xF000))),
+        ops.shl(cr_nibble, ops.const(12)),
+    )
+    return _set_cr_field(state.with_fpscr(new_fpscr), bf, cr_nibble, ops)
 
 
 def _fp_write_result_if(
@@ -1319,6 +1356,41 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             return state
 
     # -- Floating-point arithmetic (scalar single, double, paired-single, FPSCR) --
+    elif op in _FP_PS_CMP:
+        bf, fa, fb = a
+        lane1 = op in (Opcode.PS_CMPU1, Opcode.PS_CMPO1)
+        left_bits = state.ps1[fa] if lane1 else state.fpr[fa]
+        right_bits = state.ps1[fb] if lane1 else state.fpr[fb]
+        return _execute_fp_compare(
+            state, bf, left_bits, right_bits,
+            op in (Opcode.PS_CMPO0, Opcode.PS_CMPO1), ops,
+        )
+
+    elif op in _FP_PS_SIMPLE:
+        if op in _FP_PS_MOVE:
+            fd, fb = a
+            ps0, ps1 = state.fpr[fb], state.ps1[fb]
+            if op == Opcode.PS_NEG:
+                ps0, ps1 = ops.fp_xor_sign(ps0), ops.fp_xor_sign(ps1)
+            elif op == Opcode.PS_NABS:
+                ps0, ps1 = ops.fp_set_sign(ps0), ops.fp_set_sign(ps1)
+            elif op == Opcode.PS_ABS:
+                ps0, ps1 = ops.fp_clear_sign(ps0), ops.fp_clear_sign(ps1)
+        else:
+            fd, fa, fb = a
+            if op == Opcode.PS_MERGE00:
+                ps0, ps1 = state.fpr[fa], state.fpr[fb]
+            elif op == Opcode.PS_MERGE01:
+                ps0, ps1 = state.fpr[fa], state.ps1[fb]
+            elif op == Opcode.PS_MERGE10:
+                ps0, ps1 = state.ps1[fa], state.fpr[fb]
+            else:
+                ps0, ps1 = state.ps1[fa], state.ps1[fb]
+        state = state.with_fpr(fd, ps0).with_ps1(fd, ps1)
+        if insn.record:
+            state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+        return state
+
     elif op in _FP_SCALAR_ARITH or op in _FP_PS_ARITH or op in _FP_PSQ_OPS:
         fd, fa = a[0], a[1] if len(a) > 1 else 0
         fb = a[2] if len(a) > 2 else 0
@@ -1383,15 +1455,6 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             elif op == Opcode.PS_MADDS1:
                 r0 = ops.fp_fma(rm_ps, fa_ps0, fc_ps1, fb_ps0)
                 r1 = ops.fp_fma(rm_ps, fa_ps1, fc_ps1, fb_ps1)
-            elif op == Opcode.PS_NEG:
-                r0, r1 = ops.fp_neg(fa_ps0), ops.fp_neg(fa_ps1)
-            elif op == Opcode.PS_MR:
-                r0, r1 = fa_ps0, fa_ps1
-            elif op == Opcode.PS_NABS:
-                r0 = ops.fp_neg(ops.fp_abs(fa_ps0))
-                r1 = ops.fp_neg(ops.fp_abs(fa_ps1))
-            elif op == Opcode.PS_ABS:
-                r0, r1 = ops.fp_abs(fa_ps0), ops.fp_abs(fa_ps1)
             else:
                 raise UnsupportedInstruction(insn.address, insn.raw, f"unhandled PS opcode {op.value}")
             result = _ps_merge(r0, r1, ops)
@@ -1466,31 +1529,9 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
                 state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
             return state
         elif op in (Opcode.FCMPU, Opcode.FCMPO):
-            bf = fd
-            cr_nibble = _fp_compare_nibble(op_fa, op_fb, ops)
-            is_snan = ops.lor(
-                ops.fp_is_snan_bits(state.fpr[fa]),
-                ops.fp_is_snan_bits(state.fpr[fb]),
+            return _execute_fp_compare(
+                state, fd, state.fpr[fa], state.fpr[fb], op == Opcode.FCMPO, ops,
             )
-            is_nan = ops.lor(ops.fp_is_nan(op_fa), ops.fp_is_nan(op_fb))
-            state = _fpscr_raise_if(state, is_snan, FPSCR_VXSNAN, ops)
-            if op == Opcode.FCMPO:
-                invalid_enabled = ops.lnot(ops.eq(
-                    ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
-                ))
-                # Ordered compare raises VXVC for every quiet NaN, and for a
-                # signaling NaN only when invalid exceptions are disabled.
-                raise_vxvc = ops.land(
-                    is_nan,
-                    ops.lor(ops.lnot(is_snan), ops.lnot(invalid_enabled)),
-                )
-                state = _fpscr_raise_if(state, raise_vxvc, FPSCR_VXVC, ops)
-            # FPCC is the low four bits of FPSCR.FPRF (numeric bits 15..12).
-            new_fpscr = ops.bor(
-                ops.band(state.fpscr, ops.bnot(ops.const(0xF000))),
-                ops.shl(cr_nibble, ops.const(12)),
-            )
-            return _set_cr_field(state.with_fpscr(new_fpscr), bf, cr_nibble, ops)
         elif op == Opcode.MFFS:
             fpscr_bits = ops.fp_join_words(ops.const(0xFFF80000), state.fpscr)
             state = state.with_fpr(fd, fpscr_bits)
@@ -1546,36 +1587,6 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             new_fpscr = ops.band(state.fpscr, ops.bnot(ops.const(clear_mask)))
             state = state.with_fpscr(_fpscr_normalize(new_fpscr, ops))
             return _set_cr_field(state, bf, cr_nibble, ops)
-        elif op in (Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1):
-            bf = fd
-            fa_bits = state.fpr[fa]
-            fb_bits = state.fpr[fb]
-            if op in (Opcode.PS_CMPU0, Opcode.PS_CMPO0):
-                fa_s = _ps_extract0(fa_bits, ops)
-                fb_s = _ps_extract0(fb_bits, ops)
-            else:
-                fa_s = _ps_extract1(fa_bits, ops)
-                fb_s = _ps_extract1(fb_bits, ops)
-            cr_nibble = _fp_compare_nibble(fa_s, fb_s, ops)
-            return _set_cr_field(state, bf, cr_nibble, ops)
-        elif op in (Opcode.PS_MERGE00, Opcode.PS_MERGE01, Opcode.PS_MERGE10, Opcode.PS_MERGE11):
-            fa_bits = state.fpr[fa]
-            fb_bits = state.fpr[fb]
-            if op == Opcode.PS_MERGE00:
-                lo = _ps_extract0(fa_bits, ops)
-                hi = _ps_extract0(fb_bits, ops)
-            elif op == Opcode.PS_MERGE01:
-                lo = _ps_extract0(fa_bits, ops)
-                hi = _ps_extract1(fb_bits, ops)
-            elif op == Opcode.PS_MERGE10:
-                lo = _ps_extract1(fa_bits, ops)
-                hi = _ps_extract0(fb_bits, ops)
-            else:
-                lo = _ps_extract1(fa_bits, ops)
-                hi = _ps_extract1(fb_bits, ops)
-            result = _ps_merge(lo, hi, ops)
-            state = state.with_fpr(fd, result)
-            return state
         elif op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
                      Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX):
             if op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU):
@@ -1994,6 +2005,13 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         if op in INDEXED_MEMORY: reads.add(f"r{a[2]}")
         if op in FP_UPDATES: writes.add(f"r{a[1]}")
         writes.add("memory")
+    elif op in _FP_PS_SIMPLE:
+        writes |= {f"f{a[0]}", f"f{a[0]}.ps1"}
+        for index in a[1:]:
+            reads |= {f"f{index}", f"f{index}.ps1"}
+        if insn.record:
+            reads.add("fpscr")
+            writes.add("cr1")
     elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH):
         writes.add(f"f{a[0]}")
         if op in _FP_SINGLE_ARITH:
@@ -2004,10 +2022,6 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
             reads.add("fpscr")
             writes.add("fpscr")
         if insn.record: writes.add("cr1")
-    elif op in _FP_PS_CMP_MERGE:
-        writes.add(f"f{a[0]}")
-        for idx in a[1:]:
-            if 0 <= idx < 32: reads.add(f"f{idx}")
     elif op in (Opcode.FCMPU, Opcode.FCMPO):
         for idx in a[1:]:
             if 0 <= idx < 32: reads.add(f"f{idx}")
@@ -2015,9 +2029,12 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         writes.add(f"cr{a[0]}")
         writes.add("fpscr")
     elif op in (Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1):
+        suffix = ".ps1" if op in (Opcode.PS_CMPU1, Opcode.PS_CMPO1) else ""
         for idx in a[1:]:
-            if 0 <= idx < 32: reads.add(f"f{idx}")
+            if 0 <= idx < 32: reads.add(f"f{idx}{suffix}")
+        reads.add("fpscr")
         writes.add(f"cr{a[0]}")
+        writes.add("fpscr")
     elif op in (Opcode.MFFS, Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP, Opcode.FNEG,
                  Opcode.FMR, Opcode.FNABS, Opcode.FABS):
         reads.add("fpscr" if op == Opcode.MFFS else f"f{a[1]}" if len(a) > 1 else "")
@@ -2108,11 +2125,11 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
                      Opcode.PS_CMPU1, Opcode.PS_CMPO1):
             written.add(f"cr{a[0]}")
             written.add("fpscr")
-        elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_CMP_MERGE):
+        elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_CMP | _FP_PS_SIMPLE):
             written.add(f"f{a[0]}")
-            if op in _FP_SINGLE_ARITH:
+            if op in (_FP_SINGLE_ARITH | _FP_PS_SIMPLE):
                 written.add(f"f{a[0]}.ps1")
-            if op not in (Opcode.FSEL, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS):
+            if op not in ({Opcode.FSEL, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS} | _FP_PS_SIMPLE):
                 written.add("fpscr")
         elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP, Opcode.FNEG, Opcode.FMR,
                      Opcode.FNABS, Opcode.FABS, Opcode.MFFS):
@@ -2151,7 +2168,7 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
             if insn.overflow:
                 written |= {"xer.ov", "xer.so"}
         if insn.record:
-            written.add("cr1" if op in (_FP_SCALAR_ARITH | _FP_PS_ARITH) else "cr0")
+            written.add("cr1" if op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_SIMPLE) else "cr0")
         elif op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT):
             written.add("cr0")
     order = [

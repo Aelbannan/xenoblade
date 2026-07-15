@@ -251,6 +251,7 @@ SUPPORTED_FP_OPCODES = frozenset({
     Opcode.PS_NEG, Opcode.PS_MR, Opcode.PS_NABS, Opcode.PS_ABS,
     Opcode.PS_MERGE00, Opcode.PS_MERGE01, Opcode.PS_MERGE10, Opcode.PS_MERGE11,
     Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1,
+    Opcode.PS_ADD, Opcode.PS_SUB, Opcode.PS_MUL, Opcode.PS_MULS0, Opcode.PS_MULS1,
 })
 
 

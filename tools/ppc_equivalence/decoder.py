@@ -283,6 +283,14 @@ def _decode_word(word: int, address: int) -> Instruction:
             return _insn(address, word, opcode, (fd, ra, rb, wx, ix))
         if xo5 in ps_5bit:
             opcode = ps_5bit[xo5]
+            if opcode in (Opcode.PS_ADD, Opcode.PS_SUB):
+                if fc:
+                    raise UnsupportedInstruction(address, word, "reserved paired add/sub FC field is nonzero")
+                return _insn(address, word, opcode, (fd, fa, fb), record=bool(word & 1))
+            if opcode in (Opcode.PS_MUL, Opcode.PS_MULS0, Opcode.PS_MULS1):
+                if fb:
+                    raise UnsupportedInstruction(address, word, "reserved paired multiply FB field is nonzero")
+                return _insn(address, word, opcode, (fd, fa, fc), record=bool(word & 1))
             return _insn(address, word, opcode, (fd, fa, fb, fc), record=bool(word & 1))
         ps_10bit = {
             40: Opcode.PS_NEG, 72: Opcode.PS_MR, 136: Opcode.PS_NABS, 264: Opcode.PS_ABS,

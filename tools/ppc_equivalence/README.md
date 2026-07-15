@@ -149,7 +149,7 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v6` model supports:
+The current `broadway-ppc32-be-v7` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -180,6 +180,10 @@ The current `broadway-ppc32-be-v6` model supports:
 - paired ordered/unordered comparisons (`ps_cmpo0/1`, `ps_cmpu0/1`) over either
   PS lane, including CR-field and FPSCR.FPCC updates, `VXSNAN`/`VXVC`, summary
   bits, and invalid-enable interaction;
+- paired basic arithmetic (`ps_add`, `ps_sub`, `ps_mul`, `ps_muls0/1`) with
+  independent binary32-rounded lanes, Force25 multiplier handling, PS0 FPRF,
+  accumulated lane exceptions, FI/FR clearing/preservation, unconditional
+  paired result writeback under enabled invalid exceptions, and Rc-to-CR1;
 - FPSCR rounding-mode input, FPRF/FPCC result classification, Rc-to-CR1, FP
   compare invalid causes (`VXSNAN`/`VXVC`) with `FX`/`VX`/`FEX` summaries and
   `VE` behavior, scalar add/subtract/multiply/divide invalid causes and
@@ -200,7 +204,7 @@ Fused-single ConcreteOps follows Broadway's mixed-precision/Force25 behavior
 for arbitrary FPR inputs; symbolic proofs require each finite operand to be an
 exact binary32 value expanded into an FPR, matching the dominant compiler use.
 Remaining square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`),
-paired-single arithmetic, VMX, atomics/reservations,
+paired division/select/estimate/fused/sum arithmetic, VMX, atomics/reservations,
 cache/MMIO behavior, privileged state, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where

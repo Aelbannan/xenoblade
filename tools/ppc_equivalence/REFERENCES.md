@@ -22,6 +22,8 @@ PowerPC architecture, checked against a mature Wii implementation.
    [integer storage semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_LoadStore.cpp),
    [floating-point semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_FloatingPoint.cpp),
    [Broadway FP helpers](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_FPUtils.h),
+   [FPSCR system-register semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_SystemRegisters.cpp),
+   [quantized paired load/store semantics](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/PowerPC/Interpreter/Interpreter_LoadStorePaired.cpp),
    and the [PowerPC core sources](https://github.com/dolphin-emu/dolphin/tree/master/Source/Core/Core/PowerPC).
 
 ## Deliberate model choices
@@ -73,3 +75,12 @@ PowerPC architecture, checked against a mature Wii implementation.
   operation, retain full double NaN payloads, implement the add/subtract
   `VXISI` sign rules, and suppress writeback when an invalid exception is
   enabled. Negative forms never negate NaNs.
+- FPSCR writes apply the Broadway writable mask, recompute the derived VX/FEX
+  summaries, preserve FX stickiness where required, and copy final FX/FEX/VX/OX
+  into CR1 for record forms. `mcrfs` clears only exception bits in the selected
+  source field.
+- PSQ operations model PS0 and PS1 separately. GQR load/store type and scale
+  fields select float, unsigned/signed 8-bit, or unsigned/signed 16-bit
+  conversion. Integer stores round through binary32, truncate toward zero, and
+  saturate; float stores flush binary32 subnormals to signed zero. Invalid GQR
+  type encodings and non-finite integer stores are outside the defined domain.

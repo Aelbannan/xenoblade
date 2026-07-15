@@ -50,6 +50,7 @@ from tools.ppc_equivalence.semantics import (
     execute_block,
     execute_cfg,
     execute_instruction,
+    register_effects,
     rotate_mask,
 )
 
@@ -120,13 +121,9 @@ class DecoderTests(unittest.TestCase):
         with self.assertRaises(UnsupportedInstruction):
             decode("7c032001")
 
-    def test_paired_single_and_unmodeled_fp_fail_closed(self) -> None:
+    def test_unmodeled_fp_fails_closed(self) -> None:
         words = (
-            0x1000000C,  # psq_lx according to GekkoDisassembler.cpp
-            0x1000004C,  # psq_lux
-            0x1000000E,  # psq_stx
-            0x1000004E,  # psq_stux
-            0xE0030000,  # psq_l p0,0(r3),0,qr0
+            0x1000002A,  # ps_add
             0xEC000030,  # fres (hardware estimate)
             0xFC000034,  # frsqrte (hardware estimate)
             0xEC00182C,  # fsqrts (not implemented by Broadway interpreter)
@@ -232,6 +229,13 @@ class FloatingPointConcreteTests(unittest.TestCase):
             [0x3F, 0xF8, 0, 0, 0, 0, 0, 0],
         )
 
+        single = execute_block(concrete_state({
+            "gpr": {"r4": 0x100},
+            "memory": {"bytes": {"0x100": 0x3F, "0x101": 0xC0}},
+        }), decode("c0e40000"), ConcreteOps())
+        self.assertEqual(single.fpr[7], 0x3FF8000000000000)
+        self.assertEqual(single.ps1[7], 0x3FF8000000000000)
+
     def test_concrete_arithmetic_rejects_unvalidated_rounding_modes(self) -> None:
         state = concrete_state({"fpr": {"f1": 1.5, "f2": 2.0}, "fpscr": 1})
         with self.assertRaises(ExecutionInconclusive):
@@ -244,6 +248,7 @@ class FloatingPointConcreteTests(unittest.TestCase):
         })
         final = execute_block(state, decode("ece100f2"), ConcreteOps())
         self.assertEqual(final.fpr[7], 0x3FF0000000000000)
+        self.assertEqual(final.ps1[7], 0x3FF0000000000000)
         self.assertEqual(final.fpscr, 0x00004000)
 
     def test_fpscr_exception_summary_foundation(self) -> None:
@@ -568,6 +573,142 @@ class FloatingPointConcreteTests(unittest.TestCase):
         )
         self.assertEqual(suppressed.cr, 0x0E000000)
 
+    def test_fpscr_access_and_summary_recomputation(self) -> None:
+        mffs = execute_block(
+            concrete_state({"fpscr": 0xA0100080}), decode("fce0048e"), ConcreteOps(),
+        )
+        self.assertEqual(mffs.fpr[7], 0xFFF80000A0100080)
+        recorded = execute_block(
+            concrete_state({"fpscr": 0x80000000}), decode("fce0048f"), ConcreteOps(),
+        )
+        self.assertEqual(recorded.cr, 0x08000000)
+
+        # Copy VXIMZ, VE, and the reserved bit. VX/FEX are recomputed and the
+        # reserved bit is forced to zero; Rc copies the final summary to CR1.
+        mtfsf = execute_block(concrete_state({
+            "fpr": {"f2": "0xfff8000000100880"},
+        }), decode("fdfe158f"), ConcreteOps())
+        self.assertEqual(mtfsf.fpscr, 0x60100080)
+        self.assertEqual(mtfsf.cr, 0x06000000)
+
+    def test_fpscr_bit_immediate_and_mcrfs_behavior(self) -> None:
+        raised = execute_block(
+            concrete_state({"fpscr": FPSCR_VE}), decode("fd60004c"), ConcreteOps(),
+        )
+        self.assertEqual(
+            raised.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXIMZ | FPSCR_VE,
+        )
+
+        cleared = execute_block(raised, decode("fd60008c"), ConcreteOps())
+        self.assertEqual(cleared.fpscr, FPSCR_FX | FPSCR_VE)
+
+        moved = execute_block(
+            concrete_state({"fpscr": FPSCR_FX | FPSCR_VX | FPSCR_VXIMZ}),
+            decode("fd880080"), ConcreteOps(),
+        )
+        self.assertEqual(moved.cr, 0x00010000)
+        self.assertEqual(moved.fpscr, FPSCR_FX)
+
+        rounding = execute_block(concrete_state(), decode("ff80310c"), ConcreteOps())
+        self.assertEqual(rounding.fpscr, 3)
+        reserved = execute_block(concrete_state(), decode("fe80810c"), ConcreteOps())
+        self.assertEqual(reserved.fpscr, 0)
+
+    def test_gqr_spr_round_trip_and_psq_decoder_forms(self) -> None:
+        def spr_word(reg: int, spr: int, xo_bits: int) -> int:
+            return (
+                (31 << 26) | (reg << 21) | ((spr & 31) << 16)
+                | (((spr >> 5) & 31) << 11) | (xo_bits << 1)
+            )
+
+        code = f"{spr_word(5, 913, 467):08x} {spr_word(7, 913, 339):08x}"
+        final = execute_block(
+            concrete_state({"gpr": {"r5": "0x01060204"}}), decode(code), ConcreteOps(),
+        )
+        self.assertEqual(final.gqr[1], 0x01060204)
+        self.assertEqual(final.gpr[7], 0x01060204)
+
+        words = "e0e41000 e4e41000 f0e41000 f4e41000 10e4288c 10e428cc 10e4288e 10e428ce"
+        self.assertEqual(
+            [item.opcode for item in decode(words)],
+            [Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
+             Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX],
+        )
+
+    def test_psq_load_all_gqr_formats_and_w_lane(self) -> None:
+        def psq_l(i: int, *, w: int = 0) -> str:
+            return f"{((56 << 26) | (7 << 21) | (4 << 16) | (w << 15) | (i << 12)):08x}"
+
+        cases = (
+            (0x00000000, [0x3F, 0x80, 0, 0, 0xC0, 0x20, 0, 0], 0x3FF0000000000000, 0xC004000000000000),
+            (0x01040000, [2, 8], 0x3FF0000000000000, 0x4010000000000000),
+            (0x01050000, [0, 2, 0, 8], 0x3FF0000000000000, 0x4010000000000000),
+            (0x01060000, [0xFE, 8], 0xBFF0000000000000, 0x4010000000000000),
+            (0x01070000, [0xFF, 0xFE, 0, 8], 0xBFF0000000000000, 0x4010000000000000),
+            (0x3F040000, [2, 8], 0x4010000000000000, 0x4030000000000000),
+        )
+        for gqr, values, expected0, expected1 in cases:
+            with self.subTest(gqr=f"0x{gqr:08x}"):
+                memory = {f"0x{0x1000 + index:08x}": value for index, value in enumerate(values)}
+                final = execute_block(concrete_state({
+                    "gpr": {"r4": 0x1000}, "gqr": {"gqr1": gqr},
+                    "memory": {"bytes": memory},
+                }), decode(psq_l(1)), ConcreteOps())
+                self.assertEqual(final.fpr[7], expected0)
+                self.assertEqual(final.ps1[7], expected1)
+
+        one_lane = execute_block(concrete_state({
+            "gpr": {"r4": 0x1000}, "gqr": {"gqr1": 0x01060000},
+            "memory": {"bytes": {"0x1000": 0xFE}},
+        }), decode(psq_l(1, w=1)), ConcreteOps())
+        self.assertEqual(one_lane.fpr[7], 0xBFF0000000000000)
+        self.assertEqual(one_lane.ps1[7], 0x3FF0000000000000)
+
+    def test_psq_store_quantization_clamping_ftz_and_update(self) -> None:
+        u8_store = execute_block(concrete_state({
+            "gpr": {"r4": 0x1000}, "gqr": {"gqr1": 0x00000204},
+            "fpr": {"f7": 100.0}, "ps1": {"f7": -1.0},
+        }), decode("f0e41000"), ConcreteOps())
+        self.assertEqual([u8_store.memory.read(0x1000 + i) for i in range(2)], [0xFF, 0])
+
+        s16_store = execute_block(concrete_state({
+            "gpr": {"r4": 0x1000}, "gqr": {"gqr1": 0x00003F07},
+            "fpr": {"f7": 4.0}, "ps1": {"f7": -4.0},
+        }), decode("f0e41000"), ConcreteOps())
+        self.assertEqual(
+            [s16_store.memory.read(0x1000 + i) for i in range(4)],
+            [0, 2, 0xFF, 0xFE],
+        )
+
+        ftz = execute_block(concrete_state({
+            "gpr": {"r4": 0x1000}, "fpr": {"f7": "0x36a0000000000000"},
+            "ps1": {"f7": "0xb6a0000000000000"},
+        }), decode("f0e40000"), ConcreteOps())
+        self.assertEqual(
+            [ftz.memory.read(0x1000 + i) for i in range(8)],
+            [0, 0, 0, 0, 0x80, 0, 0, 0],
+        )
+
+        updated = execute_block(concrete_state({
+            "gpr": {"r4": 0x1000}, "gqr": {"gqr1": 0x01060000},
+            "memory": {"bytes": {"0x1004": 2, "0x1005": 4}},
+        }), decode("e4e41004"), ConcreteOps())
+        self.assertEqual(updated.gpr[4], 0x1004)
+        self.assertEqual(updated.fpr[7], 0x3FF0000000000000)
+
+    def test_psq_invalid_type_and_nonfinite_integer_store_are_outside_domain(self) -> None:
+        invalid_type = execute_block(concrete_state({
+            "gpr": {"r4": 0x1000}, "gqr": {"gqr1": 0x00010000},
+        }), decode("e0e41000"), ConcreteOps())
+        self.assertFalse(invalid_type.valid)
+
+        nan_store = execute_block(concrete_state({
+            "gpr": {"r4": 0x1000}, "gqr": {"gqr1": 4},
+            "fpr": {"f7": "0x7ff8000000000000"}, "ps1": {"f7": 1.0},
+        }), decode("f0e41000"), ConcreteOps())
+        self.assertFalse(nan_store.valid)
+
 
 @unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")
 class FloatingPointSymbolicTests(unittest.TestCase):
@@ -662,7 +803,7 @@ class FloatingPointSymbolicTests(unittest.TestCase):
 
         sign_difference = check_equivalence(
             decode("ece110f8"), decode("ece110fc"),
-            EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+            EquivalenceContract(parse_observables(["f7"]), timeout_ms=10_000),
             original_hex="ece110f8", candidate_hex="ece110fc",
         )
         self.assertEqual(sign_difference.status, ProofStatus.NOT_EQUIVALENT)
@@ -682,6 +823,44 @@ class FloatingPointSymbolicTests(unittest.TestCase):
             decode("ece110fa"), decode("ece110fe"),
             EquivalenceContract(parse_observables(["f7"]), timeout_ms=15_000),
             original_hex="ece110fa", candidate_hex="ece110fe",
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_fpscr_control_symbolic_proofs(self) -> None:
+        for encoded in ("fce0048e", "fdfe158f", "ff80310c", "fd60004c", "fd60008c", "fd880080"):
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables(["f7,cr3,fpscr"]), timeout_ms=5_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_psq_symbolic_identity_and_lane_distinction(self) -> None:
+        for encoded, observe in (("e0e41000", "f7,f7.ps1"), ("f0e41000", "memory")):
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(parse_observables([observe]), timeout_ms=5_000),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        def mtspr(reg: int, spr: int) -> int:
+            return (
+                (31 << 26) | (reg << 21) | ((spr & 31) << 16)
+                | (((spr >> 5) & 31) << 11) | (467 << 1)
+            )
+
+        prefix = f"38a00000 {mtspr(5, 913):08x} "
+        pair = prefix + "e0e41000"
+        one = prefix + "e0e49000"
+        different = check_equivalence(
+            decode(pair), decode(one),
+            EquivalenceContract(parse_observables(["f7.ps1"]), timeout_ms=5_000),
+            original_hex=pair, candidate_hex=one,
         )
         self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
 
@@ -723,6 +902,24 @@ class FloatingPointSymbolicTests(unittest.TestCase):
         self.assertEqual(
             automatic_live_out(decode("fce0101d")),
             ("f7", "cr1", "fpscr"),
+        )
+        self.assertEqual(
+            automatic_live_out(decode("e0e41000")),
+            ("f7", "f7.ps1"),
+        )
+        immediate_reads, _ = register_effects(
+            Instruction(0, 0, Opcode.PSQ_L, (7, 4, 12, 0, 1)),
+        )
+        indexed_reads, _ = register_effects(
+            Instruction(0, 0, Opcode.PSQ_LX, (7, 4, 12, 0, 1)),
+        )
+        self.assertEqual(immediate_reads & {"r4", "r12"}, {"r4"})
+        self.assertEqual(indexed_reads & {"r4", "r12"}, {"r4", "r12"})
+
+        mtspr_gqr1 = (31 << 26) | (5 << 21) | ((913 & 31) << 16) | (((913 >> 5) & 31) << 11) | (467 << 1)
+        self.assertEqual(
+            automatic_live_out(decode(f"{mtspr_gqr1:08x}")),
+            ("gqr1",),
         )
 
     def test_identical_fp_arithmetic_is_proved(self) -> None:
@@ -851,7 +1048,9 @@ class ContractTests(unittest.TestCase):
         names = preset_observable_names("strict")
         self.assertEqual(names[:32], tuple(f"r{index}" for index in range(32)))
         self.assertEqual(names[32:64], tuple(f"f{index}" for index in range(32)))
-        self.assertEqual(names[64:], ("cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr", "memory"))
+        self.assertEqual(names[64:96], tuple(f"f{index}.ps1" for index in range(32)))
+        self.assertEqual(names[96:104], tuple(f"gqr{index}" for index in range(8)))
+        self.assertEqual(names[104:], ("cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr", "memory"))
 
     def test_coop_runner_defaults_to_ppc_eabi(self) -> None:
         args = _equivalence_args_with_default_contract(

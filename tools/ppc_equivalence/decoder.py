@@ -44,11 +44,6 @@ def _decode_word(word: int, address: int) -> Instruction:
     rb = (word >> 11) & 31
     imm = word & 0xFFFF
 
-    # Paired-single and quantized paired-single are separate Gekko extensions;
-    # scalar FP is decoded below, while PS remains fail-closed.
-    if primary in (4, 56, 57, 60, 61):
-        raise UnsupportedInstruction(address, word, "paired-single instructions are unsupported")
-
     immediate = {
         7: (Opcode.MULLI, True),
         8: (Opcode.SUBFIC, True),
@@ -216,7 +211,7 @@ def _decode_word(word: int, address: int) -> Instruction:
             spr = ((word >> 16) & 31) | (((word >> 11) & 31) << 5)
             if rc:
                 raise UnsupportedInstruction(address, word, "reserved SPR transfer Rc bit is set")
-            if spr not in (1, 8, 9):
+            if spr not in (1, 8, 9) and not 912 <= spr <= 919:
                 raise UnsupportedInstruction(address, word, f"unsupported special-purpose register {spr}")
             return _insn(address, word, Opcode.MFSPR if xo == 339 else Opcode.MTSPR, (rt, spr))
 
@@ -261,8 +256,6 @@ def _decode_word(word: int, address: int) -> Instruction:
         fb = (word >> 11) & 31
         fc = (word >> 6) & 31
         ps_5bit = {
-            6: (Opcode.PSQ_LX if word & 0x40 else Opcode.PSQ_STX,),
-            7: (Opcode.PSQ_LUX if word & 0x40 else Opcode.PSQ_STUX,),
             18: Opcode.PS_DIV, 20: Opcode.PS_SUB, 21: Opcode.PS_ADD,
             23: Opcode.PS_SEL, 24: Opcode.PS_RES, 25: Opcode.PS_MUL,
             26: Opcode.PS_RSQRTE, 28: Opcode.PS_MSUB, 29: Opcode.PS_MADD,
@@ -270,14 +263,22 @@ def _decode_word(word: int, address: int) -> Instruction:
             10: Opcode.PS_SUM0, 11: Opcode.PS_SUM1, 12: Opcode.PS_MULS0,
             13: Opcode.PS_MULS1, 14: Opcode.PS_MADDS0, 15: Opcode.PS_MADDS1,
         }
+        if xo5 == 6:
+            opcode = Opcode.PSQ_LUX if word & 0x40 else Opcode.PSQ_LX
+            ix = (word >> 7) & 7
+            wx = (word >> 10) & 1
+            if opcode == Opcode.PSQ_LUX and ra == 0:
+                raise UnsupportedInstruction(address, word, "update-form PSQ memory access has RA=0")
+            return _insn(address, word, opcode, (fd, ra, rb, wx, ix))
+        if xo5 == 7:
+            opcode = Opcode.PSQ_STUX if word & 0x40 else Opcode.PSQ_STX
+            ix = (word >> 7) & 7
+            wx = (word >> 10) & 1
+            if opcode == Opcode.PSQ_STUX and ra == 0:
+                raise UnsupportedInstruction(address, word, "update-form PSQ memory access has RA=0")
+            return _insn(address, word, opcode, (fd, ra, rb, wx, ix))
         if xo5 in ps_5bit:
             opcode = ps_5bit[xo5]
-            if isinstance(opcode, tuple):
-                opcode = opcode[0]
-            if xo5 in (6, 7):
-                ix = (word >> 7) & 7
-                wx = (word >> 10) & 1
-                return _insn(address, word, opcode, (fd, ra, rb, wx, ix))
             return _insn(address, word, opcode, (fd, fa, fb, fc))
         ps_10bit = {
             40: Opcode.PS_NEG, 72: Opcode.PS_MR, 136: Opcode.PS_NABS, 264: Opcode.PS_ABS,
@@ -301,6 +302,8 @@ def _decode_word(word: int, address: int) -> Instruction:
         w = (word >> 15) & 1
         i = (word >> 12) & 7
         d12 = word & 0xFFF
+        if opcode in (Opcode.PSQ_LU, Opcode.PSQ_STU) and ra == 0:
+            raise UnsupportedInstruction(address, word, "update-form PSQ memory access has RA=0")
         return _insn(address, word, opcode, (rs, ra, _signed(d12, 12), w, i))
 
     # Single-precision floating-point arithmetic (primary 59) — A-form.

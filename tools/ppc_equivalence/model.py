@@ -34,6 +34,8 @@ class ConcreteMemory:
 class MachineState:
     gpr: tuple[Any, ...]
     fpr: tuple[Any, ...]
+    ps1: tuple[Any, ...]
+    gqr: tuple[Any, ...]
     cr: Any
     xer: XerState
     fpscr: Any
@@ -52,6 +54,16 @@ class MachineState:
         registers = list(self.fpr)
         registers[index] = value
         return replace(self, fpr=tuple(registers))
+
+    def with_ps1(self, index: int, value: Any) -> "MachineState":
+        registers = list(self.ps1)
+        registers[index] = value
+        return replace(self, ps1=tuple(registers))
+
+    def with_gqr(self, index: int, value: Any) -> "MachineState":
+        registers = list(self.gqr)
+        registers[index] = value
+        return replace(self, gqr=tuple(registers))
 
     def with_cr(self, value: Any) -> "MachineState":
         return replace(self, cr=value)
@@ -124,6 +136,12 @@ def concrete_state(values: dict[str, object] | None = None) -> MachineState:
     fpr_values = values.get("fpr", {})
     assert isinstance(fpr_values, dict)
     fpr = tuple(_parse_fpr_bits(fpr_values.get(f"f{i}", 0)) for i in range(32))
+    ps1_values = values.get("ps1", {})
+    assert isinstance(ps1_values, dict)
+    ps1 = tuple(_parse_fpr_bits(ps1_values.get(f"f{i}", 0)) for i in range(32))
+    gqr_values = values.get("gqr", {})
+    assert isinstance(gqr_values, dict)
+    gqr = tuple(_parse(gqr_values.get(f"gqr{i}", 0)) & 0xFFFFFFFF for i in range(8))
     xer_values = values.get("xer", {})
     assert isinstance(xer_values, dict)
     fpscr = _parse(values.get("fpscr", 0)) & 0xFFFFFFFF
@@ -143,6 +161,8 @@ def concrete_state(values: dict[str, object] | None = None) -> MachineState:
     return MachineState(
         gpr,
         fpr,
+        ps1,
+        gqr,
         _parse(values.get("cr", 0)) & 0xFFFFFFFF,
         XerState(
             bool(_parse(xer_values.get("ca", 0))),

@@ -9,6 +9,7 @@ from .ir import Instruction
 from .model import MachineState, XerState
 from .result import ProofResult, ProofStatus
 from .semantics import SymbolicOps, Terminal, execute_cfg, read_gprs
+from .spr import AUX_SPR_OBSERVABLES
 
 
 def _symbolic_initial(ops: SymbolicOps) -> MachineState:
@@ -28,6 +29,7 @@ def _symbolic_initial(ops: SymbolicOps) -> MachineState:
         z3.BitVec("input.time_base", 64),
         z3.BitVec("input.srr0", 32),
         z3.BitVec("input.srr1", 32),
+        tuple(z3.BitVec(f"input.spr.{name}", 32) for name in AUX_SPR_OBSERVABLES),
         z3.Array("input.memory", z3.BitVecSort(32), z3.BitVecSort(8)),
         z3.BoolVal(True),
     )
@@ -49,6 +51,9 @@ def _observable_value(state: MachineState, observable: Observable, ops: Symbolic
     if observable.kind == "sr":
         assert observable.index is not None
         return state.sr[observable.index]
+    if observable.kind == "spr":
+        assert observable.index is not None
+        return state.spr[observable.index]
     if observable.kind == "cr_field":
         assert observable.index is not None
         shift = (7 - observable.index) * 4
@@ -224,11 +229,15 @@ def check_equivalence(
         "time_base": _hex_value64(model, initial.time_base),
         "srr0": _hex_value(model, initial.srr0),
         "srr1": _hex_value(model, initial.srr1),
+        "spr": {
+            name: _hex_value(model, initial.spr[index])
+            for index, name in enumerate(AUX_SPR_OBSERVABLES)
+        },
         "memory": _memory_entries(model, initial.memory, left_exit.state.memory_touches + right_exit.state.memory_touches, z3),
     }
     result.counterexample = {"initial_state": initial_state}
     result.replay = {
-        "format": 2, "architecture": "broadway-ppc32-be-v12", "contract": contract.name,
+        "format": 2, "architecture": "broadway-ppc32-be-v13", "contract": contract.name,
         "original_hex": original_hex, "candidate_hex": candidate_hex,
         "base_original": original[0].address, "base_candidate": candidate[0].address,
         "observables": [item.name for item in contract.observables], "initial_state": initial_state,

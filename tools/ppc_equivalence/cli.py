@@ -32,6 +32,9 @@ def _observable_concrete(state: MachineState, observable: Observable) -> object:
     if observable.kind == "sr":
         assert observable.index is not None
         return f"0x{int(state.sr[observable.index]) & 0xFFFFFFFF:08x}"
+    if observable.kind == "spr":
+        assert observable.index is not None
+        return f"0x{int(state.spr[observable.index]) & 0xFFFFFFFF:08x}"
     if observable.kind == "cr_field":
         assert observable.index is not None
         return f"0x{(int(state.cr) >> ((7 - observable.index) * 4)) & 0xF:x}"
@@ -241,7 +244,7 @@ def _add_check_options(
         help=(
             "manual observables: r0..r31, f0..f31[.ps1], gqr0..gqr7, "
             "sr0..sr15, cr/cr0..cr7, fpscr, xer.ca/ov/so, lr, ctr, msr, "
-            "time_base, srr0, srr1, memory; comma-separated or repeated"
+            "time_base, srr0, srr1, named SPRs, memory; comma-separated or repeated"
         ),
     )
     parser.add_argument("--timeout-ms", type=int, default=10_000)

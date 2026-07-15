@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .spr import AUX_SPR_NAME_INDEX, AUX_SPR_OBSERVABLES
+
 
 @dataclass(frozen=True, slots=True)
 class Observable:
@@ -99,6 +101,7 @@ def preset_observable_names(name: str) -> tuple[str, ...]:
             "time_base",
             "srr0",
             "srr1",
+            *AUX_SPR_OBSERVABLES,
             "memory",
         )
     if name == "live-out":
@@ -149,6 +152,8 @@ def parse_observables(values: list[str] | tuple[str, ...]) -> tuple[Observable, 
             result.append(Observable("gqr", token, int(token[3:])))
         elif token.startswith("sr") and token[2:].isdigit() and 0 <= int(token[2:]) < 16:
             result.append(Observable("sr", token, int(token[2:])))
+        elif token in AUX_SPR_NAME_INDEX:
+            result.append(Observable("spr", token, AUX_SPR_NAME_INDEX[token]))
         elif token.startswith("cr") and token[2:].isdigit() and 0 <= int(token[2:]) < 8:
             result.append(Observable("cr_field", token, int(token[2:])))
         elif token in ("cr", "lr", "ctr", "msr", "time_base", "srr0", "srr1"):

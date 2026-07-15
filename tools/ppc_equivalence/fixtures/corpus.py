@@ -92,6 +92,7 @@ def _state(
     memory_words: dict[int, int] | None = None,
     fpr: dict[str, int] | None = None,
     fpscr: int = 0,
+    spr: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "gpr": dict(gpr or {}),
@@ -106,6 +107,10 @@ def _state(
         "fpr": {name: f"0x{value & 0xFFFFFFFFFFFFFFFF:016x}" for name, value in (fpr or {}).items()},
         "fpscr": f"0x{fpscr & 0xFFFFFFFF:08x}",
     }
+    if spr:
+        payload["spr"] = {
+            name: f"0x{value & 0xFFFFFFFF:08x}" for name, value in spr.items()
+        }
     if memory_words is not None:
         payload["memory"] = {"bytes": _mem_bytes(memory_words)}
         payload["gpr"].setdefault("r4", f"0x{SANDBOX_BASE:08x}")
@@ -962,13 +967,18 @@ FIXTURES += (
     _case("icbi", ("cache", "instruction", "no-self-modifying-code"), _state(_gpr(r4=SANDBOX_BASE)), [xo(31, 0, 0, 4, 982)], result=0, cr=0, xer=0),
     _case("sync", ("ordering", "ordinary-ram"), _state(), [0x7C0004AC], result=0, cr=0, xer=0),
     _case("isync", ("ordering", "no-self-modifying-code"), _state(), [0x4C00012C], result=0, cr=0, xer=0),
-    _case("dcbz", ("cache", "zero", "block", "memory"), _state(memory_words={0: 0xAAAAAAAA, 4: 0xBBBBBBBB}), [xo(31, 0, 0, 4, 1014)], result=0, cr=0, xer=0, expected_memory={0: 0, 4: 0}),
-    _case("dcbz_l", ("cache", "zero", "locked", "memory"), _state(memory_words={0: 0xAAAAAAAA, 4: 0xBBBBBBBB}), [(4 << 26) | (4 << 11) | (1014 << 1)], result=0, cr=0, xer=0, expected_memory={0: 0, 4: 0}),
+    _case("dcbz", ("cache", "zero", "block", "memory"), _state(memory_words={0: 0xAAAAAAAA, 4: 0xBBBBBBBB}, spr={"hid0": 0x00004000}), [xo(31, 0, 0, 4, 1014)], result=0, cr=0, xer=0, expected_memory={0: 0, 4: 0}),
+    _case("dcbz_l", ("cache", "zero", "locked", "decode-only"), _state(), [0x48000008, (4 << 26) | (4 << 11) | (1014 << 1), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
     _case("mfmsr", ("system", "msr", "privileged"), _state(), [0x7CA000A6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
     _case("mtmsr", ("system", "msr", "privileged", "decode-only"), _state(), [0x48000008, 0x7CA00124, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
     _case("mfsr", ("system", "segment", "privileged"), _state(), [0x7CA004A6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
     _case("mtsr", ("system", "segment", "privileged", "decode-only"), _state(), [0x48000008, 0x7CA001A4, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
     _case("mftb", ("system", "time-base", "stable-block"), _state(), [0x7CAC42E6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mfspr_pvr", ("system", "spr", "identity"), _state(), [_mfspr(5, 287), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mfspr_hid0", ("system", "spr", "hardware-control"), _state(), [_mfspr(5, 1008), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mfspr_sprg1", ("system", "spr", "context"), _state(), [_mfspr(5, 273), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mtspr_aux", ("system", "spr", "privileged", "decode-only"), _state(), [0x48000008, _mtspr(5, 1008), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("mtspr_tbl", ("system", "time-base", "privileged", "decode-only"), _state(), [0x48000008, _mtspr(5, 284), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
     _case("twi", ("system", "trap", "not-taken"), _state(), [0x0C000000], result=0, cr=0, xer=0),
     _case("sc", ("system", "exception", "decode-only"), _state(), [0x48000008, 0x44000002, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
     _case("rfi", ("system", "exception-return", "decode-only"), _state(), [0x48000008, 0x4C000064, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),

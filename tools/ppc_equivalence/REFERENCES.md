@@ -35,6 +35,17 @@ PowerPC architecture, checked against a mature Wii implementation.
 - The defined proof domain requires naturally aligned accesses to mapped,
   ordinary RAM. MMU/protection/cache/MMIO behavior is not modeled. This is
   explicit in every proof result.
+- `dcbz` is defined in the value model only with HID0.DCE enabled; `dcbz_l`
+  additionally requires HID2.LCE. Both clear the aligned 32-byte line on that
+  domain, matching Dolphin's interpreter checks. Disabled-cache alignment and
+  illegal-instruction exception delivery remain outside ordinary-RAM proofs.
+- Retail auxiliary SPR transfers preserve each named 32-bit SPR as explicit
+  state, including exception, BAT/MMU, HID/cache, locked-cache DMA,
+  performance, and debug registers. TBL/TBU writes update the modeled 64-bit
+  time base. The model compares those raw values but deliberately excludes
+  address-translation, cache-mode, DMA, breakpoint, and device side effects.
+  Time base, decrementer, and performance-counter progression are stable during
+  a bounded proof unless the supplied instructions explicitly write them.
 - `XER.CA`, `XER.OV`, sticky `XER.SO`, record-form CR0, comparison SO copying,
   LR link updates, and CTR decrement-before-test are architectural state, not
   decoder annotations.

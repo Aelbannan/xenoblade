@@ -26,9 +26,10 @@ class ProofResult:
         "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
         "shared byte-addressed initial memory",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
-        "FP compare invalid flags are tracked; arithmetic exception flags, enabled-result suppression, and traps are not",
-        "modeled FP arithmetic requires finite inputs/results, FPSCR.RN=nearest-even, and NI=0",
-        "fres, frsqrte, conversions, fused multiply-add/subtract forms, and paired-single are unsupported",
+        "FP invalid/divide-zero and conversion flags plus VE/ZE suppression are tracked; arithmetic OX/UX/XX and traps are not",
+        "FP arithmetic requires RN=nearest-even and NI=0; finite-input overflow is excluded, modeled invalid/ZX cases are included",
+        "fused-single proofs require finite operands to be exact binary32 values expanded in FPRs",
+        "fres, frsqrte, square-root, and paired-single instructions are unsupported",
         "division results compared only on architecturally defined inputs",
         "loops and external call continuations are not summarized",
     ])

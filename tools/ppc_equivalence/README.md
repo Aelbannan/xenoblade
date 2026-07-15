@@ -166,21 +166,30 @@ The current `broadway-ppc32-be-v3` model supports:
   `stfiwx`) with big-endian memory and binary32/binary64 conversion;
 - scalar `fadd[s]`, `fsub[s]`, `fmuls`, `fdiv[s]`, double `fmul`, `frsp`,
   `fsel`, ordered/unordered `fcmpo`/`fcmpu`, and bit-exact
-  `fmr`/`fneg`/`fabs`/`fnabs`;
+  `fmr`/`fneg`/`fabs`/`fnabs`, `fctiw`/`fctiwz` conversion, and the complete
+  scalar fused family: `fmadd[s]`, `fmsub[s]`, `fnmadd[s]`, and `fnmsub[s]`;
 - FPSCR rounding-mode input, FPRF/FPCC result classification, Rc-to-CR1, FP
   compare invalid causes (`VXSNAN`/`VXVC`) with `FX`/`VX`/`FEX` summaries and
-  `VE` behavior, FP observables, and EABI FP return/nonvolatile registers;
+  `VE` behavior, scalar add/subtract/multiply/divide invalid causes and
+  divide-by-zero (`ZX`) with `VE`/`ZE` result suppression, FP observables, and
+  conversion `VXSNAN`/`VXCVI`/`XX`/`FI`/`FR`, packed integer-result format,
+  all four rounding modes, EABI FP return/nonvolatile registers;
 - configurable `--max-instructions` and `--max-paths` bounds.
 
-Modeled arithmetic is restricted to finite inputs/results, round-to-nearest-even,
-and `FPSCR.NI=0`; this keeps ConcreteOps, Z3, and the Broadway oracle on the
-same explicit domain. Arithmetic floating-point sticky exception flags,
-exception-enable result suppression, and architectural trap delivery are
-outside the declared value-semantics model. Compare invalid exceptions are
-modeled, but instructions whose core result depends on the remaining details
-(`fctiw*`, FPSCR mutation/access),
-square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`) and fused multiply-add/subtract
-forms, paired-single/quantized operations, VMX, atomics/reservations,
+Modeled arithmetic requires round-to-nearest-even and `FPSCR.NI=0`.
+Non-finite results are admitted when caused by non-finite inputs or the modeled
+invalid/divide-by-zero cases; finite-input overflow remains outside the domain.
+Invalid-operation and divide-by-zero causes plus enabled-result suppression are
+modeled for supported scalar add/subtract/multiply/divide. Arithmetic overflow,
+underflow, and inexact-result flags,
+and architectural trap delivery remain outside the declared value-semantics
+model. `fctiw`/`fctiwz` separately model conversion inexact and invalid flags.
+Fused-single ConcreteOps follows Broadway's mixed-precision/Force25 behavior
+for arbitrary FPR inputs; symbolic proofs require each finite operand to be an
+exact binary32 value expanded into an FPR, matching the dominant compiler use.
+Instructions whose core result depends on remaining FPSCR mutation/access details,
+square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`),
+paired-single/quantized operations, VMX, atomics/reservations,
 cache/MMIO behavior, privileged state, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where

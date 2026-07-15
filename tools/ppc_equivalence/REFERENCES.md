@@ -48,3 +48,28 @@ PowerPC architecture, checked against a mature Wii implementation.
   bits so payload conversion cannot quiet them first. Ordered compare models
   Dolphin's `VXSNAN`/`VXVC` split, `VE` interaction, exception summaries, and
   unconditional CR/FPCC update; trap delivery remains outside the model.
+- Scalar add/subtract/multiply/divide follow Dolphin's `NI_add`, `NI_sub`,
+  `NI_mul`, and `NI_div` cause precedence. The model propagates and quiets the
+  first NaN operand, distinguishes `VXISI`/`VXIMZ`/`VXZDZ`/`VXIDI`, raises
+  `ZX` for nonzero division by zero, and suppresses FPR/FPRF writes under
+  `VE`/`ZE`. Overflow, underflow, inexact flags, and trap delivery are separate.
+- `fctiw`/`fctiwz` follow Dolphin's `ConvertToInteger`: rounding occurs before
+  the signed-32-bit range check, results use the `0xFFF80000xxxxxxxx` FPR
+  format, negative values rounded to zero set the marker bit, and
+  `VXSNAN`/`VXCVI`/`XX`/`FI`/`FR` plus `VE` suppression are modeled.
+- `fmadds` follows Dolphin's `NI_madd<true>` including `frC` Force25 rounding,
+  one-round binary32 behavior, NaN priority `frA` then `frB` then `frC`,
+  `VXSNAN`/`VXIMZ`/`VXISI`, `VE` suppression, and direct `FI`/`FR` updates.
+  ConcreteOps includes Dolphin's tie correction; the symbolic contract requires
+  finite operands to originate as binary32 values so proofs remain decidable.
+- `fmsubs` and `fnmsubs` reuse `NI_msub<true>`. Subtraction reverses the
+  infinity-sign condition for `VXISI`; unlike `fmadds`, these instructions do
+  not assign `FI`/`FR` on finite writeback. `fnmsubs` negates the rounded result
+  only when it is not NaN, preserving NaN sign and payload.
+- `fnmadds` uses `NI_madd<true>` with the same Force25 and exact binary32
+  result path, then negates only a non-NaN result. Like the subtract forms, it
+  preserves `FI`/`FR` on finite writeback.
+- Double `fmadd`, `fmsub`, `fnmadd`, and `fnmsub` use one binary64 fused
+  operation, retain full double NaN payloads, implement the add/subtract
+  `VXISI` sign rules, and suppress writeback when an invalid exception is
+  enabled. Negative forms never negate NaNs.

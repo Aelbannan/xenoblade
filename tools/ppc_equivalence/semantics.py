@@ -840,14 +840,19 @@ _FP_AUX_OPS = {
     Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS,
 }
 _FP_PS_ARITH = {
-    Opcode.PS_DIV, Opcode.PS_SEL, Opcode.PS_RES,
-    Opcode.PS_RSQRTE, Opcode.PS_MSUB, Opcode.PS_MADD, Opcode.PS_NMSUB, Opcode.PS_NMADD,
-    Opcode.PS_SUM0, Opcode.PS_SUM1,
-    Opcode.PS_MADDS0, Opcode.PS_MADDS1,
+    Opcode.PS_DIV, Opcode.PS_RES, Opcode.PS_RSQRTE,
 }
 _FP_PS_BASIC = {
     Opcode.PS_ADD, Opcode.PS_SUB, Opcode.PS_MUL, Opcode.PS_MULS0, Opcode.PS_MULS1,
 }
+_FP_PS_FUSED = {
+    Opcode.PS_MADD, Opcode.PS_MSUB, Opcode.PS_NMADD, Opcode.PS_NMSUB,
+    Opcode.PS_MADDS0, Opcode.PS_MADDS1,
+}
+_FP_PS_FUSED_SUBTRACT = {Opcode.PS_MSUB, Opcode.PS_NMSUB}
+_FP_PS_FUSED_NEGATE = {Opcode.PS_NMADD, Opcode.PS_NMSUB}
+_FP_PS_SUM = {Opcode.PS_SUM0, Opcode.PS_SUM1}
+_FP_PS_SELECT = {Opcode.PS_SEL}
 _FP_PS_CMP = {
     Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1,
 }
@@ -878,7 +883,7 @@ _FP_FUSED_SUBTRACT = {Opcode.FMSUBS, Opcode.FNMSUBS, Opcode.FMSUB, Opcode.FNMSUB
 _FP_FUSED_NEGATE = {Opcode.FNMADDS, Opcode.FNMSUBS, Opcode.FNMADD, Opcode.FNMSUB}
 _FP_ROUNDING_SENSITIVE = _FP_VALUE_ARITH | {
     Opcode.STFS, Opcode.STFSU, Opcode.STFSX, Opcode.STFSUX,
-} | _FP_FUSED | _FP_PS_BASIC
+} | _FP_FUSED | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM
 
 
 def _ps_extract0(fpr_bits: Any, ops: WordOps) -> Any:
@@ -1103,6 +1108,117 @@ def _execute_ps_basic_lane(
         ops.land(finite_inputs, finite(rounded)), handled_nonfinite,
     )
     return replace(state, valid=ops.land(state.valid, defined_result)), result_bits
+
+
+def _execute_ps_fused_lane(
+    state: MachineState, opcode: Opcode, a_bits: Any, b_bits: Any, c_bits: Any,
+    ops: WordOps,
+) -> tuple[MachineState, Any]:
+    """Execute one paired-single fused lane and accumulate its FPSCR effects."""
+    a = ops.fp_bits_to_double(a_bits)
+    b = ops.fp_bits_to_double(b_bits)
+    c_forced_bits = ops.fp_force_25bit(c_bits)
+    c = ops.fp_bits_to_double(c_forced_bits)
+    subtract = opcode in _FP_PS_FUSED_SUBTRACT
+    addend = ops.fp_neg(b) if subtract else b
+    rm = ops.fp_rm_rne()
+    precise = ops.fp_fma_single_precise(rm, a, c, addend)
+    single = ops.fp_fma_to_single_exact(rm, a, c, addend, precise)
+
+    nan_a = ops.fp_is_nan(a)
+    nan_b = ops.fp_is_nan(b)
+    nan_c = ops.fp_is_nan(ops.fp_bits_to_double(c_bits))
+    any_nan = ops.lor(nan_a, ops.lor(nan_b, nan_c))
+    no_nan = ops.lnot(any_nan)
+    any_snan = ops.lor(
+        ops.fp_is_snan_bits(a_bits),
+        ops.lor(ops.fp_is_snan_bits(b_bits), ops.fp_is_snan_bits(c_bits)),
+    )
+    inf_a = ops.fp_is_inf(a)
+    inf_b = ops.fp_is_inf(b)
+    inf_c = ops.fp_is_inf(ops.fp_bits_to_double(c_bits))
+    zero = ops.fp_bits_to_double(ops.fp_const64(0))
+    zero_a = ops.fp_is_eq(a, zero)
+    zero_c = ops.fp_is_eq(ops.fp_bits_to_double(c_bits), zero)
+    vximz = ops.land(no_nan, ops.lor(
+        ops.land(inf_a, zero_c), ops.land(zero_a, inf_c),
+    ))
+    product_infinite = ops.lor(
+        ops.land(inf_a, ops.lnot(zero_c)),
+        ops.land(inf_c, ops.lnot(zero_a)),
+    )
+    product_positive = ops.fp_signs_equal_bits(a_bits, c_bits)
+    b_positive = ops.fp_signs_equal_bits(b_bits, ops.fp_const64(0))
+    product_matches_b = ops.lor(
+        ops.land(product_positive, b_positive),
+        ops.land(ops.lnot(product_positive), ops.lnot(b_positive)),
+    )
+    invalid_signs = product_matches_b if subtract else ops.lnot(product_matches_b)
+    vxisi = ops.land(
+        no_nan,
+        ops.land(ops.lnot(vximz), ops.land(product_infinite, ops.land(inf_b, invalid_signs))),
+    )
+    invalid = ops.lor(any_snan, ops.lor(vximz, vxisi))
+    nan_result = ops.lor(any_nan, ops.lor(vximz, vxisi))
+
+    state = _fpscr_raise_if(state, any_snan, FPSCR_VXSNAN, ops)
+    state = _fpscr_raise_if(state, vximz, FPSCR_VXIMZ, ops)
+    state = _fpscr_raise_if(state, vxisi, FPSCR_VXISI, ops)
+
+    propagated_nan = ops.ite(
+        nan_a,
+        ops.fp_quiet_nan_bits(a_bits),
+        ops.ite(
+            nan_b,
+            ops.fp_quiet_nan_bits(b_bits),
+            ops.ite(
+                nan_c,
+                ops.fp_quiet_nan_bits(c_bits),
+                ops.fp_const64(0x7FF8000000000000),
+            ),
+        ),
+    )
+    propagated_nan = ops.fp_single_nan_bits(propagated_nan)
+    normal_bits = ops.fp_double_to_bits(single)
+    if opcode in _FP_PS_FUSED_NEGATE:
+        normal_bits = ops.fp_xor_sign(normal_bits)
+    result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
+
+    any_inf = ops.lor(inf_a, ops.lor(inf_b, inf_c))
+    clear_fifr = ops.lor(nan_result, any_inf)
+    cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
+    state = state.with_fpscr(ops.ite(clear_fifr, cleared, state.fpscr))
+
+    finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
+    handled_nonfinite = ops.lor(any_nan, ops.lor(invalid, any_inf))
+    state = replace(state, valid=ops.land(
+        state.valid, ops.lor(finite(precise), handled_nonfinite),
+    ))
+    if isinstance(ops, SymbolicOps):
+        # Z3 computes the exact binary32 FMA directly.  Keep proofs on the
+        # common paired-single domain where finite lane values originated as
+        # binary32 values expanded into FPR storage; ConcreteOps retains the
+        # Broadway mixed-precision behavior for arbitrary FPR contents.
+        single_origin = ops.land(
+            ops.lor(ops.lnot(finite(a)), ops.fp_is_exact_single(a)),
+            ops.land(
+                ops.lor(ops.lnot(finite(b)), ops.fp_is_exact_single(b)),
+                ops.lor(
+                    ops.lnot(finite(ops.fp_bits_to_double(c_bits))),
+                    ops.fp_is_exact_single(ops.fp_bits_to_double(c_bits)),
+                ),
+            ),
+        )
+        state = replace(state, valid=ops.land(state.valid, single_origin))
+    return state, result_bits
+
+
+def _force_ps_single_bits(bits: Any, ops: WordOps) -> Any:
+    """Force an FPR lane to binary32 without changing architectural flags."""
+    value = ops.fp_bits_to_double(bits)
+    rounded = ops.fp_round_to_single(ops.fp_rm_rne(), value)
+    nan_bits = ops.fp_single_nan_bits(ops.fp_quiet_nan_bits(bits))
+    return ops.ite(ops.fp_is_nan(value), nan_bits, ops.fp_double_to_bits(rounded))
 
 
 def _fp_write_result_if(
@@ -1466,6 +1582,56 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         state = _fpscr_set_fprf(
             state.with_fpr(fd, result0).with_ps1(fd, result1), result0, ops,
         )
+        if insn.record:
+            state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+        return state
+
+    elif op in _FP_PS_FUSED:
+        fd, fa, fb, fc = a
+        a0, a1 = state.fpr[fa], state.ps1[fa]
+        b0, b1 = state.fpr[fb], state.ps1[fb]
+        c0, c1 = state.fpr[fc], state.ps1[fc]
+        if op == Opcode.PS_MADDS0:
+            c1 = c0
+        elif op == Opcode.PS_MADDS1:
+            c0 = c1
+        state, result0 = _execute_ps_fused_lane(state, op, a0, b0, c0, ops)
+        state, result1 = _execute_ps_fused_lane(state, op, a1, b1, c1, ops)
+        state = _fpscr_set_fprf(
+            state.with_fpr(fd, result0).with_ps1(fd, result1), result0, ops,
+        )
+        if insn.record:
+            state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+        return state
+
+    elif op in _FP_PS_SUM:
+        fd, fa, fb, fc = a
+        # Both forms add A.ps0 + B.ps1. The other result lane is a
+        # binary32-forced copy from C, and only the arithmetic lane can raise
+        # invalid-operation exceptions.
+        state, summed = _execute_ps_basic_lane(
+            state, Opcode.PS_ADD, state.fpr[fa], state.ps1[fb], ops,
+        )
+        if op == Opcode.PS_SUM0:
+            result0, result1 = summed, _force_ps_single_bits(state.ps1[fc], ops)
+            fprf_result = result0
+        else:
+            result0, result1 = _force_ps_single_bits(state.fpr[fc], ops), summed
+            fprf_result = result1
+        state = _fpscr_set_fprf(
+            state.with_fpr(fd, result0).with_ps1(fd, result1), fprf_result, ops,
+        )
+        if insn.record:
+            state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+        return state
+
+    elif op in _FP_PS_SELECT:
+        fd, fa, fb, fc = a
+        predicate0 = ops.fp_is_ge_zero(ops.fp_bits_to_double(state.fpr[fa]))
+        predicate1 = ops.fp_is_ge_zero(ops.fp_bits_to_double(state.ps1[fa]))
+        result0 = ops.ite(predicate0, state.fpr[fc], state.fpr[fb])
+        result1 = ops.ite(predicate1, state.ps1[fc], state.ps1[fb])
+        state = state.with_fpr(fd, result0).with_ps1(fd, result1)
         if insn.record:
             state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
         return state
@@ -2126,12 +2292,19 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         if insn.record:
             reads.add("fpscr")
             writes.add("cr1")
-    elif op in _FP_PS_BASIC:
+    elif op in (_FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM):
         writes |= {f"f{a[0]}", f"f{a[0]}.ps1", "fpscr"}
         reads.add("fpscr")
         for index in a[1:]:
             reads |= {f"f{index}", f"f{index}.ps1"}
         if insn.record:
+            writes.add("cr1")
+    elif op in _FP_PS_SELECT:
+        writes |= {f"f{a[0]}", f"f{a[0]}.ps1"}
+        for index in a[1:]:
+            reads |= {f"f{index}", f"f{index}.ps1"}
+        if insn.record:
+            reads.add("fpscr")
             writes.add("cr1")
     elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH):
         writes.add(f"f{a[0]}")
@@ -2246,11 +2419,11 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
                      Opcode.PS_CMPU1, Opcode.PS_CMPO1):
             written.add(f"cr{a[0]}")
             written.add("fpscr")
-        elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_BASIC | _FP_PS_CMP | _FP_PS_SIMPLE):
+        elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_SELECT | _FP_PS_CMP | _FP_PS_SIMPLE):
             written.add(f"f{a[0]}")
-            if op in (_FP_SINGLE_ARITH | _FP_PS_BASIC | _FP_PS_SIMPLE):
+            if op in (_FP_SINGLE_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_SELECT | _FP_PS_SIMPLE):
                 written.add(f"f{a[0]}.ps1")
-            if op not in ({Opcode.FSEL, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS} | _FP_PS_SIMPLE):
+            if op not in ({Opcode.FSEL, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS} | _FP_PS_SELECT | _FP_PS_SIMPLE):
                 written.add("fpscr")
         elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP, Opcode.FNEG, Opcode.FMR,
                      Opcode.FNABS, Opcode.FABS, Opcode.MFFS):
@@ -2289,7 +2462,7 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
             if insn.overflow:
                 written |= {"xer.ov", "xer.so"}
         if insn.record:
-            written.add("cr1" if op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_BASIC | _FP_PS_SIMPLE) else "cr0")
+            written.add("cr1" if op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_SELECT | _FP_PS_SIMPLE) else "cr0")
         elif op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT):
             written.add("cr0")
     order = [

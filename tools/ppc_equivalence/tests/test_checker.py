@@ -201,6 +201,11 @@ class DecoderTests(unittest.TestCase):
             ps_a(7, 1, 2, 0, 21), ps_a(7, 1, 2, 0, 20),
             ps_a(7, 1, 0, 3, 25), ps_a(7, 1, 0, 3, 12),
             ps_a(7, 1, 0, 3, 13, rc=1),
+            ps_a(7, 1, 2, 3, 29), ps_a(7, 1, 2, 3, 28),
+            ps_a(7, 1, 2, 3, 31), ps_a(7, 1, 2, 3, 30),
+            ps_a(7, 1, 2, 3, 14), ps_a(7, 1, 2, 3, 15, rc=1),
+            ps_a(7, 1, 2, 3, 10), ps_a(7, 1, 2, 3, 11, rc=1),
+            ps_a(7, 1, 2, 3, 23),
         )
         decoded = decode(" ".join(f"{word:08x}" for word in words))
         self.assertEqual(
@@ -211,6 +216,15 @@ class DecoderTests(unittest.TestCase):
                 (Opcode.PS_MUL, (7, 1, 3), False),
                 (Opcode.PS_MULS0, (7, 1, 3), False),
                 (Opcode.PS_MULS1, (7, 1, 3), True),
+                (Opcode.PS_MADD, (7, 1, 2, 3), False),
+                (Opcode.PS_MSUB, (7, 1, 2, 3), False),
+                (Opcode.PS_NMADD, (7, 1, 2, 3), False),
+                (Opcode.PS_NMSUB, (7, 1, 2, 3), False),
+                (Opcode.PS_MADDS0, (7, 1, 2, 3), False),
+                (Opcode.PS_MADDS1, (7, 1, 2, 3), True),
+                (Opcode.PS_SUM0, (7, 1, 2, 3), False),
+                (Opcode.PS_SUM1, (7, 1, 2, 3), True),
+                (Opcode.PS_SEL, (7, 1, 2, 3), False),
             ],
         )
         with self.assertRaises(UnsupportedInstruction):
@@ -399,6 +413,135 @@ class FloatingPointConcreteTests(unittest.TestCase):
         }), Instruction(0, 0, Opcode.PS_MUL, (7, 1, 3)), ConcreteOps())
         self.assertEqual(multiplied.ps1[7], 0x7FF8000000000000)
         self.assertEqual(multiplied.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXIMZ | 0x4000)
+
+    def test_paired_fused_results_negation_broadcast_and_record(self) -> None:
+        state = concrete_state({
+            "fpr": {"f1": 1.5, "f2": 2.0, "f3": 4.0},
+            "ps1": {"f1": -2.0, "f2": 4.0, "f3": -0.5},
+        })
+        expected = {
+            Opcode.PS_MADD: (8.0, 5.0),
+            Opcode.PS_MSUB: (4.0, -3.0),
+            Opcode.PS_NMADD: (-8.0, -5.0),
+            Opcode.PS_NMSUB: (-4.0, 3.0),
+            Opcode.PS_MADDS0: (8.0, -4.0),
+            Opcode.PS_MADDS1: (1.25, 5.0),
+        }
+        expected_bits = {
+            value: concrete_state({"fpr": {"f1": value}}).fpr[1]
+            for pair in expected.values() for value in pair
+        }
+        for opcode, pair in expected.items():
+            with self.subTest(opcode=opcode.value):
+                final = execute_instruction(
+                    state, Instruction(0, 0, opcode, (7, 1, 2, 3), record=True),
+                    ConcreteOps(),
+                )
+                self.assertEqual(
+                    (final.fpr[7], final.ps1[7]),
+                    (expected_bits[pair[0]], expected_bits[pair[1]]),
+                )
+                self.assertEqual(final.cr & 0x0F000000, 0)
+                self.assertEqual(
+                    final.fpscr & 0x1F000,
+                    0x8000 if pair[0] < 0 else 0x4000,
+                )
+
+    def test_paired_fused_nan_priority_lane_exceptions_and_ve_writeback(self) -> None:
+        snan_a = 0xFFF0000012345678
+        qnan_b = 0x7FF80000ABCDEF01
+        final = execute_instruction(concrete_state({
+            "fpr": {"f1": snan_a, "f2": qnan_b, "f3": 2.0, "f7": 1.0},
+            "ps1": {
+                "f1": 0.0, "f2": "0xfff0000000000000",
+                "f3": "0x7ff0000000000000", "f7": 1.0,
+            },
+            "fpscr": FPSCR_VE,
+        }), Instruction(0, 0, Opcode.PS_NMADD, (7, 1, 2, 3)), ConcreteOps())
+        # NaN results are quieted in A/B/C priority and are not sign-negated.
+        self.assertEqual(final.fpr[7], 0xFFF8000000000000)
+        self.assertEqual(final.ps1[7], 0x7FF8000000000000)
+        self.assertEqual(
+            final.fpscr,
+            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXSNAN |
+            FPSCR_VXIMZ | FPSCR_VE | 0x11000,
+        )
+
+        lane_vxisi = execute_instruction(concrete_state({
+            "fpr": {"f1": 1.0, "f2": 2.0, "f3": 3.0},
+            "ps1": {
+                "f1": "0x7ff0000000000000",
+                "f2": "0xfff0000000000000",
+                "f3": 1.0,
+            },
+        }), Instruction(0, 0, Opcode.PS_MADD, (7, 1, 2, 3)), ConcreteOps())
+        self.assertEqual(lane_vxisi.fpr[7], 0x4014000000000000)
+        self.assertEqual(lane_vxisi.ps1[7], 0x7FF8000000000000)
+        self.assertEqual(
+            lane_vxisi.fpscr,
+            FPSCR_FX | FPSCR_VX | FPSCR_VXISI | 0x4000,
+        )
+
+    def test_paired_sums_use_cross_lanes_copy_c_and_select_fprf_lane(self) -> None:
+        state = concrete_state({
+            "fpr": {"f1": 1.5, "f2": 10.0, "f3": 3.0},
+            "ps1": {"f1": 99.0, "f2": -2.0, "f3": 4.0},
+        })
+        sum0 = execute_instruction(
+            state, Instruction(0, 0, Opcode.PS_SUM0, (7, 1, 2, 3), record=True),
+            ConcreteOps(),
+        )
+        self.assertEqual(
+            (sum0.fpr[7], sum0.ps1[7]),
+            (0xBFE0000000000000, 0x4010000000000000),
+        )
+        self.assertEqual(sum0.fpscr & 0x1F000, 0x8000)
+
+        sum1 = execute_instruction(
+            state, Instruction(0, 0, Opcode.PS_SUM1, (7, 1, 2, 3), record=True),
+            ConcreteOps(),
+        )
+        self.assertEqual(
+            (sum1.fpr[7], sum1.ps1[7]),
+            (0x4008000000000000, 0xBFE0000000000000),
+        )
+        # ps_sum1 classifies its arithmetic result from PS1, not copied PS0.
+        self.assertEqual(sum1.fpscr & 0x1F000, 0x8000)
+
+    def test_paired_sum_only_arithmetic_lane_raises_invalid(self) -> None:
+        copied_snan = 0x7FF0000012345678
+        copied = execute_instruction(concrete_state({
+            "fpr": {"f1": 1.0, "f3": copied_snan},
+            "ps1": {"f2": 2.0},
+        }), Instruction(0, 0, Opcode.PS_SUM1, (7, 1, 2, 3)), ConcreteOps())
+        self.assertEqual(copied.fpr[7], 0x7FF8000000000000)
+        self.assertEqual(copied.ps1[7], 0x4008000000000000)
+        self.assertEqual(copied.fpscr, 0x4000)
+
+        invalid = execute_instruction(concrete_state({
+            "fpr": {"f1": "0x7ff0000000000000", "f3": 1.0},
+            "ps1": {"f2": "0xfff0000000000000", "f3": 2.0},
+        }), Instruction(0, 0, Opcode.PS_SUM0, (7, 1, 2, 3)), ConcreteOps())
+        self.assertEqual(invalid.fpr[7], 0x7FF8000000000000)
+        self.assertEqual(invalid.ps1[7], 0x4000000000000000)
+        self.assertEqual(invalid.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXISI | 0x11000)
+
+    def test_ps_sel_preserves_bits_and_handles_signed_zero_and_nan_predicates(self) -> None:
+        b0, b1 = 0xFFF8000012345678, 0x8000000000000000
+        c0, c1 = 0x7FF80000ABCDEF01, 0x3FF8000000000000
+        state = concrete_state({
+            "fpr": {"f1": "0x8000000000000000", "f2": b0, "f3": c0},
+            "ps1": {"f1": "0x7ff8000000000001", "f2": b1, "f3": c1},
+            "fpscr": 0xA0000000,
+        })
+        final = execute_instruction(
+            state, Instruction(0, 0, Opcode.PS_SEL, (7, 1, 2, 3), record=True),
+            ConcreteOps(),
+        )
+        # -0.0 selects C; a NaN predicate selects B.
+        self.assertEqual((final.fpr[7], final.ps1[7]), (c0, b1))
+        self.assertEqual(final.fpscr, state.fpscr)
+        self.assertEqual(final.cr & 0x0F000000, 0x0A000000)
 
     def test_big_endian_fp_load_store_round_trip(self) -> None:
         state = concrete_state({
@@ -1138,6 +1281,54 @@ class FloatingPointSymbolicTests(unittest.TestCase):
         )
         self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
 
+    def test_paired_fused_symbolic_proofs(self) -> None:
+        words = tuple(ps_a(7, 1, 2, 3, xo) for xo in (29, 28, 31, 30, 14, 15))
+        for word in words:
+            encoded = f"{word:08x}"
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(
+                        parse_observables(["f7,f7.ps1,fpscr"]), timeout_ms=10_000,
+                    ),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        madd = f"{ps_a(7, 1, 2, 3, 29):08x}"
+        msub = f"{ps_a(7, 1, 2, 3, 28):08x}"
+        different = check_equivalence(
+            decode(madd), decode(msub),
+            EquivalenceContract(parse_observables(["f7,f7.ps1"]), timeout_ms=10_000),
+            original_hex=madd, candidate_hex=msub,
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_paired_sum_and_select_symbolic_proofs(self) -> None:
+        words = tuple(ps_a(7, 1, 2, 3, xo) for xo in (10, 11, 23))
+        for word in words:
+            encoded = f"{word:08x}"
+            with self.subTest(encoded=encoded):
+                code = decode(encoded)
+                result = check_equivalence(
+                    code, code,
+                    EquivalenceContract(
+                        parse_observables(["f7,f7.ps1,cr1,fpscr"]), timeout_ms=10_000,
+                    ),
+                    original_hex=encoded, candidate_hex=encoded,
+                )
+                self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+        sum0 = f"{ps_a(7, 1, 2, 3, 10):08x}"
+        sum1 = f"{ps_a(7, 1, 2, 3, 11):08x}"
+        different = check_equivalence(
+            decode(sum0), decode(sum1),
+            EquivalenceContract(parse_observables(["f7,f7.ps1,fpscr"]), timeout_ms=10_000),
+            original_hex=sum0, candidate_hex=sum1,
+        )
+        self.assertEqual(different.status, ProofStatus.NOT_EQUIVALENT)
+
     def test_force25_symbolic_matches_concrete_edge(self) -> None:
         ops = SymbolicOps()
         vectors = {
@@ -1212,6 +1403,40 @@ class FloatingPointSymbolicTests(unittest.TestCase):
             {"f1", "f1.ps1", "f3", "f3.ps1", "fpscr"},
         )
         self.assertEqual(arithmetic_writes, {"f7", "f7.ps1", "fpscr", "cr1"})
+        paired_fused = decode(f"{ps_a(7, 1, 2, 3, 29, rc=1):08x}")[0]
+        self.assertEqual(
+            automatic_live_out([paired_fused]),
+            ("f7", "f7.ps1", "cr1", "fpscr"),
+        )
+        fused_reads, fused_writes = register_effects(paired_fused)
+        self.assertEqual(
+            fused_reads,
+            {
+                "f1", "f1.ps1", "f2", "f2.ps1", "f3", "f3.ps1",
+                "fpscr",
+            },
+        )
+        self.assertEqual(fused_writes, {"f7", "f7.ps1", "fpscr", "cr1"})
+        paired_sum = decode(f"{ps_a(7, 1, 2, 3, 11, rc=1):08x}")[0]
+        sum_reads, sum_writes = register_effects(paired_sum)
+        self.assertEqual(
+            sum_reads,
+            {
+                "f1", "f1.ps1", "f2", "f2.ps1", "f3", "f3.ps1",
+                "fpscr",
+            },
+        )
+        self.assertEqual(sum_writes, {"f7", "f7.ps1", "fpscr", "cr1"})
+        paired_select = decode(f"{ps_a(7, 1, 2, 3, 23, rc=1):08x}")[0]
+        select_reads, select_writes = register_effects(paired_select)
+        self.assertEqual(
+            select_reads,
+            {
+                "f1", "f1.ps1", "f2", "f2.ps1", "f3", "f3.ps1",
+                "fpscr",
+            },
+        )
+        self.assertEqual(select_writes, {"f7", "f7.ps1", "cr1"})
         immediate_reads, _ = register_effects(
             Instruction(0, 0, Opcode.PSQ_L, (7, 4, 12, 0, 1)),
         )

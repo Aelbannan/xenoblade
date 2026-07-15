@@ -18,7 +18,7 @@ class ProofStatus(str, Enum):
 @dataclass(slots=True)
 class ProofResult:
     status: ProofStatus
-    architecture_model: str = "broadway-ppc32-be-v7"
+    architecture_model: str = "broadway-ppc32-be-v9"
     format: int = 2
     contract: str = "manual"
     observables: list[str] = field(default_factory=list)

@@ -149,7 +149,7 @@ observable mismatch and replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v7` model supports:
+The current `broadway-ppc32-be-v9` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -184,6 +184,14 @@ The current `broadway-ppc32-be-v7` model supports:
   independent binary32-rounded lanes, Force25 multiplier handling, PS0 FPRF,
   accumulated lane exceptions, FI/FR clearing/preservation, unconditional
   paired result writeback under enabled invalid exceptions, and Rc-to-CR1;
+- paired fused arithmetic (`ps_madd`, `ps_msub`, `ps_nmadd`, `ps_nmsub`,
+  `ps_madds0/1`) with independently fused and binary32-rounded lanes,
+  broadcast multipliers, Force25 handling, NaN operand priority, accumulated
+  lane exceptions, unconditional paired writeback, PS0 FPRF, and Rc-to-CR1;
+- paired cross-lane sums (`ps_sum0/1`) with binary32 result/copy forcing,
+  arithmetic-lane exception behavior, selected-lane FPRF, and Rc-to-CR1;
+- bit-preserving paired selection (`ps_sel`), including signed-zero and NaN
+  predicates, independent lanes, unchanged FPSCR, and Rc-to-CR1;
 - FPSCR rounding-mode input, FPRF/FPCC result classification, Rc-to-CR1, FP
   compare invalid causes (`VXSNAN`/`VXVC`) with `FX`/`VX`/`FEX` summaries and
   `VE` behavior, scalar add/subtract/multiply/divide invalid causes and
@@ -200,11 +208,12 @@ modeled for supported scalar add/subtract/multiply/divide. Arithmetic overflow,
 underflow, and inexact-result flags,
 and architectural trap delivery remain outside the declared value-semantics
 model. `fctiw`/`fctiwz` separately model conversion inexact and invalid flags.
-Fused-single ConcreteOps follows Broadway's mixed-precision/Force25 behavior
-for arbitrary FPR inputs; symbolic proofs require each finite operand to be an
-exact binary32 value expanded into an FPR, matching the dominant compiler use.
+Fused-single and paired-fused ConcreteOps follow Broadway's
+mixed-precision/Force25 behavior for arbitrary FPR inputs; symbolic proofs
+require each finite operand to be an exact binary32 value expanded into an FPR,
+matching the dominant compiler use.
 Remaining square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`),
-paired division/select/estimate/fused/sum arithmetic, VMX, atomics/reservations,
+paired division/estimate arithmetic, VMX, atomics/reservations,
 cache/MMIO behavior, privileged state, loops/back-edges, external call
 continuations, and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where

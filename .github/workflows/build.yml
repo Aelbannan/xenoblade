@@ -25,7 +25,7 @@ jobs:
     - name: Run checker quality gate
       run: |
         python tools/ppc_equivalence/gen_fixture_blob.py --check
-        python -m unittest discover -s tools/ppc_equivalence/tests -v
+        python tools/ppc_equivalence/run.py --self-test
         python tools/coop/run.py equivalence differential
         python tools/ppc_equivalence/run.py --help
 

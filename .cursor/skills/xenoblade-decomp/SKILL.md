@@ -4,7 +4,7 @@ description: >-
   Primary agent workflow for the Xenoblade Chronicles Wii co-op decompilation
   fork. Invoke at the start of tasks in this repository when decompiling,
   matching, editing src/kyoshin or configure.py, running the coop runner,
-  objdiff, DECOMP_MAP targets, or MWCC FULL_MATCH work.
+  objdiff, DECOMP_MAP targets, or MWCC EQUIVALENT_MATCH / FULL_MATCH work.
 ---
 
 # Xenoblade decompilation
@@ -12,7 +12,7 @@ description: >-
 > **Auto-loaded** via root `AGENTS.md` and this skill. Follow it at the start of
 > tasks in this repository when decompiling, matching, editing `src/kyoshin` or
 > `configure.py`, running the coop runner, objdiff, `DECOMP_MAP` targets, or
-> MWCC `FULL_MATCH` work.
+> MWCC `EQUIVALENT_MATCH` / `FULL_MATCH` work.
 
 ## Before you edit code
 
@@ -21,7 +21,7 @@ description: >-
 3. For MWCC matching work, read `docs/MWCC_REFERENCE.md` before editing source.
 4. Confirm this is a **private/downstream fork** — do not upstream LLM-assisted matching work to `xbret/xenoblade`.
 
-**Current policy:** every target must reach **`FULL_MATCH`** (100% function match when a symbol is set; 100% code + data for whole units). `coop run cycle` exits non-zero until the bar is met.
+**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under `ppc-eabi` **and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes. `coop run cycle` / `diff` probe equivalence automatically when fuzzy is in `[50, 100)`. Unit-level (no symbol) still requires 100% code + data.
 
 **Source language:** reconstruction must be **high-level C or C++ only** (MWCC). Express recovered **semantics** — fields, locals, control flow, and normal function calls — not register-level or stack-level implementation detail.
 
@@ -54,7 +54,7 @@ Claim symbols in `docs/ownership.csv` before editing (see `PLAN.md` §6).
 
 ## Symbol recovery (`tools/symrecover.py`)
 
-After **`FULL_MATCH`** on a function (or when investigating `UnkClass_*` / `func_*` placeholders), run symbol recovery **before** renaming types in source.
+After **`EQUIVALENT_MATCH`** / **`FULL_MATCH`** on a function (or when investigating `UnkClass_*` / `func_*` placeholders), run symbol recovery **before** renaming types in source.
 
 ```bash
 # List unknown placeholder types in the active region
@@ -85,14 +85,14 @@ Equivalent standalone CLI: `python tools/symrecover.py <subcommand> …`
 1. `symbols show` + `symbols xref` — methods, namespaces, split unit, source files.
 2. `symbols demangle` on each symbol in the unit — recover method names and signatures.
 3. `symbols rename-plan <old> <new>` — confirm mangling-compatible length when possible.
-4. Decompile / match all functions in the unit at `FULL_MATCH`.
+4. Decompile / match all functions in the unit at `EQUIVALENT_MATCH` (or `FULL_MATCH`).
 5. **`symbols rename-all <old> <new>`** — updates `symbols.txt`, source, `configure.py`, `splits.txt`, `ownership.csv`, and renames `UnkClass_*.cpp/.hpp` files (use `--dry-run` first).
 6. `python configure.py && ninja` and `coop run diff` every affected symbol.
 7. Log the recovered name in `attempts.jsonl` (`hypothesis` / `next_change`).
 
 **Rules:**
 
-- Retail `main.dol` is stripped — `symbols.txt` names are decomp annotations; recovered names must still match MWCC mangling for `FULL_MATCH`.
+- Retail `main.dol` is stripped — `symbols.txt` names are decomp annotations; recovered names must still match MWCC mangling for matching.
 - Prefer **same-length** renames (`UnkClass_8045F564` → `CLibLayoutRegion`, 17 chars) to avoid re-mangling every symbol. `rename-all` refuses length mismatches unless `--force`.
 - `rename-apply` without `--all` only edits symbol maps; use **`rename-all`** (or `rename-apply --all`) for source and build files.
 - Headers already named semantically (e.g. `CViewRectData.hpp`) are updated in place; only files **named** `UnkClass_<addr>.cpp` are renamed on disk.
@@ -126,12 +126,12 @@ python tools/coop/run.py behaviour ppc <test-id>      # headless Dolphin only
 
 **Rules:**
 
-- Acceptance bar remains **`FULL_MATCH`** + split-size fit.
+- Acceptance bar remains **`EQUIVALENT_MATCH`** (or `FULL_MATCH`) + split-size fit.
 - Host `*.cpp` dual-oracle tests were **removed** — do not add them back.
-- Below 100%, prefer continuing the match / §17.6 patches, or optional **PPC** when `ppc_source` is set.
+- Below 100%, continue matching toward `EQUIVALENT_MATCH` (SMT + split-size) or `FULL_MATCH`, with optional **PPC** when `ppc_source` is set.
 - Full policy: `tools/test/compare_behaviour/README.md`.
 
-### Split object size (required before `Matching` / `FULL_MATCH`)
+### Split object size (required before `Matching` / acceptance)
 
 Each translation unit has a fixed retail `.text` slice in `config/<region>/splits.txt`. The decompiled object’s **`.text` section** must not exceed that budget — otherwise the unit cannot be linked into `main.dol` at the retail address.
 
@@ -143,7 +143,7 @@ python tools/coop/run.py size --all
 **Rules:**
 
 - `diff`, `cycle`, and `behaviour compare` print a `size:` line and **exit non-zero** when decomp `.text` exceeds the split budget.
-- Behaviour tests can pass while size fails (semantics ≠ codegen fit) — treat size overflow as a blocker for `FULL_MATCH` and `configure.py` `Matching` promotion.
+- Behaviour tests can pass while size fails (semantics ≠ codegen fit) — treat size overflow as a blocker for acceptance and `configure.py` `Matching` promotion.
 - Retail budget = `splits.txt` `.text end - start`; compared against ELF `.text` in `build/<region>/src/...o` vs retail `build/<region>/obj/...o`.
 - Implementation: `tools/coop/lib/object_size.py`.
 
@@ -164,14 +164,17 @@ or refute selected live-out state even when bytes differ:
 ```bash
 python tools/coop/run.py equivalence check-hex \
   --original <retail-hex> --candidate <decomp-hex>
+python tools/coop/run.py equivalence check-unit <unit> --symbol <mangled-or-token>
 ```
 
 Read `tools/ppc_equivalence/README.md` before use. An equivalence result applies
 only to its printed observables and assumptions. Unsupported instructions,
 timeouts, and solver `unknown` are inconclusive. This check is additional
-evidence only: it does not replace objdiff `FULL_MATCH` or split-size checks.
+feeds `EQUIVALENT_MATCH` when fuzzy ≥ 50%; it does not replace split-size checks. Continue to `FULL_MATCH` or close at `EQUIVALENT_MATCH` — both satisfy the acceptance bar.
 
-The co-op wrapper defaults function checks to `--contract ppc-eabi`. Use
+`check-unit` / `check-objects` extract the named `.text` symbol from the
+objdiff retail/decomp `.o` pair (raw reloc immediates as encoded). The co-op
+wrapper defaults function checks to `--contract ppc-eabi`. Use
 `--contract strict` for all modeled state or manual `--observe` for the actual
 live-outs of an internal basic block.
 
@@ -181,7 +184,7 @@ For stubborn **small** functions: generate ctx → open unit in **objdiff** → 
 
 ### Large functions
 
-Decompose into leaf symbols/units first. Each leaf and the parent must still end at **`FULL_MATCH`** before the target is closed.
+Decompose into leaf symbols/units first. Each leaf and the parent must still end at **`EQUIVALENT_MATCH`** (or `FULL_MATCH`) before the target is closed.
 
 ## Logging and evidence
 
@@ -198,7 +201,7 @@ Decompose into leaf symbols/units first. Each leaf and the parent must still end
   - Proven high-level fix → **Patterns that work in this repo** (new numbered subsection) or extend an existing one.
   - Symptom → cause → fix → **Pitfalls and failure modes** tables.
   - Compiler/tooling note → **MWCC compiler behavior** or **decomp.me workflow**.
-  - Confirmed policy limit → **When FULL_MATCH may be unrealistic**.
+  - Confirmed policy limit → **When FULL_MATCH or EQUIVALENT_MATCH may be unrealistic**.
 - Keep entries concise: function/symbol, symptom, fix, match %, and file path. Link to retail symbol names where relevant.
 
 ## Marking configure.py matching
@@ -252,7 +255,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 
 - Commit `orig/`, `main.dol`, RELs, or disc assets
 - Call `CGame::wkRender` or full frame update twice for split-screen experiments
-- Accept `STRUCTURAL` / `CODE_MATCH` as final state (project policy is `FULL_MATCH`)
+- Accept `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` as final state (policy is `EQUIVALENT_MATCH`)
 - Submit AI-assisted reconstruction upstream
 - **Use assembly as decompilation output** — no whole-function `asm { }` / `asm void` / `.s` units; **single-instruction** asm allowed per `PLAN.md` §17.6
 - **Micro-manage registers or the stack in source** — use §17.6 intrinsics or logged single-instruction asm when C++ is exhausted
@@ -264,10 +267,10 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `FORK.md` | Fork-only tooling inventory vs upstream `xbret/xenoblade` |
 | `PLAN.md` | Co-op architecture, agent rules, milestones |
 | `DECOMP_MAP.md` | Function-level decompilation map |
-| `TASKS.md` | Agent checklist — check off at `FULL_MATCH` |
+| `TASKS.md` | Agent checklist — check off at `EQUIVALENT_MATCH` |
 | `tools/coop/run.py` | Runner CLI (`symbols`, `behaviour`, `size` subcommands) |
 | `tools/coop/lib/object_size.py` | Split `.text` budget check vs `config/<region>/splits.txt` |
-| `tools/test/compare_behaviour/` | Retail vs decomp behaviour tests — **required below FULL_MATCH** |
+| `tools/test/compare_behaviour/` | Retail vs decomp behaviour tests — optional evidence below the bar |
 | `tools/symrecover.py` | Symbol recovery: list/show/xref/demangle/rename-plan |
 | `tools/symbolrecover/lib/` | symrecover library (parser, MWCC demangle, xref, rename) |
 | `tools/coop/targets.json` | Curated target queue |

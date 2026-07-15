@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
-from .ir import ExecutionInconclusive, Instruction, Opcode, UnsupportedInstruction
+from .ir import ExecutionInconclusive, Instruction, Opcode, SUPPORTED_OPCODES, UnsupportedInstruction
 from .model import ConcreteMemory, MachineState
 
 MASK32 = 0xFFFFFFFF
@@ -36,6 +36,47 @@ class WordOps(Protocol):
     def sub_overflow(self, left: Any, right: Any, borrow: Any) -> Any: ...
     def load_byte(self, memory: Any, address: Any) -> Any: ...
     def store_byte(self, memory: Any, address: Any, value: Any) -> Any: ...
+
+    # Floating-point helpers — FPRs are stored as 64-bit bitvectors internally.
+    def fp_const64(self, value: int) -> Any: ...
+    def fp_low_word(self, bits: Any) -> Any: ...
+    def fp_high_word(self, bits: Any) -> Any: ...
+    def fp_join_words(self, high: Any, low: Any) -> Any: ...
+    def fp_xor_sign(self, bits: Any) -> Any: ...
+    def fp_clear_sign(self, bits: Any) -> Any: ...
+    def fp_set_sign(self, bits: Any) -> Any: ...
+    def fp_fprf(self, bits: Any) -> Any: ...
+    def fp_bits_to_double(self, bits: Any) -> Any: ...
+    def fp_double_to_bits(self, value: Any) -> Any: ...
+    def fp_rm_rne(self) -> Any: ...
+    def fp_rm_rtz(self) -> Any: ...
+    def fp_rm_rtp(self) -> Any: ...
+    def fp_rm_rtn(self) -> Any: ...
+    def fp_rm_from_rn(self, rn: Any) -> Any: ...
+    def fp_add(self, rm: Any, a: Any, b: Any) -> Any: ...
+    def fp_sub(self, rm: Any, a: Any, b: Any) -> Any: ...
+    def fp_mul(self, rm: Any, a: Any, b: Any) -> Any: ...
+    def fp_div(self, rm: Any, a: Any, b: Any) -> Any: ...
+    def fp_sqrt(self, rm: Any, a: Any) -> Any: ...
+    def fp_fma(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
+    def fp_fms(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
+    def fp_fnma(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
+    def fp_fnms(self, rm: Any, a: Any, b: Any, c: Any) -> Any: ...
+    def fp_neg(self, a: Any) -> Any: ...
+    def fp_abs(self, a: Any) -> Any: ...
+    def fp_sel(self, a: Any, c: Any, b: Any) -> Any: ...
+    def fp_round_to_single(self, rm: Any, a: Any) -> Any: ...
+    def fp_to_sint32(self, rm: Any, a: Any) -> Any: ...
+    def fp_to_sint32_trunc(self, a: Any) -> Any: ...
+    def fp_is_lt(self, a: Any, b: Any) -> Any: ...
+    def fp_is_gt(self, a: Any, b: Any) -> Any: ...
+    def fp_is_eq(self, a: Any, b: Any) -> Any: ...
+    def fp_is_nan(self, a: Any) -> Any: ...
+    def fp_is_inf(self, a: Any) -> Any: ...
+    def fp_is_ge_zero(self, a: Any) -> Any: ...
+    def fp_const_f32(self, value: float) -> Any: ...
+    def fp_double_to_f32_bits(self, rm: Any, value: Any) -> Any: ...
+    def fp_bits32_to_double(self, bits: Any) -> Any: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +128,109 @@ class ConcreteOps:
     def store_byte(self, memory: ConcreteMemory, address: int, value: int) -> ConcreteMemory:
         return memory.write(address, value)
 
+    def fp_const64(self, value: int) -> int: return value & 0xFFFFFFFFFFFFFFFF
+    def fp_low_word(self, bits: int) -> int: return bits & MASK32
+    def fp_high_word(self, bits: int) -> int: return (bits >> 32) & MASK32
+    def fp_join_words(self, high: int, low: int) -> int:
+        return ((high & MASK32) << 32) | (low & MASK32)
+    def fp_xor_sign(self, bits: int) -> int: return bits ^ (1 << 63)
+    def fp_clear_sign(self, bits: int) -> int: return bits & ~(1 << 63)
+    def fp_set_sign(self, bits: int) -> int: return bits | (1 << 63)
+    def fp_fprf(self, bits: int) -> int:
+        bits &= 0xFFFFFFFFFFFFFFFF
+        sign = bool(bits & (1 << 63))
+        exponent = (bits >> 52) & 0x7FF
+        fraction = bits & ((1 << 52) - 1)
+        if exponent == 0x7FF:
+            if fraction: return 0x11
+            return 0x09 if sign else 0x05
+        if exponent == 0:
+            if not fraction: return 0x12 if sign else 0x02
+            return 0x18 if sign else 0x14
+        return 0x08 if sign else 0x04
+
+    def fp_bits_to_double(self, bits: int) -> float:
+        import struct
+        return struct.unpack(">d", struct.pack(">Q", bits & 0xFFFFFFFFFFFFFFFF))[0]
+
+    def fp_double_to_bits(self, value: float) -> int:
+        import struct
+        return struct.unpack(">Q", struct.pack(">d", value))[0]
+
+    def fp_rm_rne(self) -> str: return "rne"
+    def fp_rm_rtz(self) -> str: return "rtz"
+    def fp_rm_rtp(self) -> str: return "rtp"
+    def fp_rm_rtn(self) -> str: return "rtn"
+
+    def fp_rm_from_rn(self, rn: int) -> str:
+        return {0: "rne", 1: "rtz", 2: "rtp", 3: "rtn"}.get(rn & 3, "rne")
+
+    def _fp_round_int(self, value: float, rm: str) -> float:
+        """Round a double to the nearest integer following the given IEEE mode."""
+        import math
+        if rm == "rtz":
+            return float(int(value)) if value >= 0 else float(int(value))
+        if rm == "rtp":
+            return math.ceil(value)
+        if rm == "rtn":
+            return math.floor(value)
+        return round(value)
+
+    def _fp_to_single(self, value: float) -> float:
+        import math
+        import struct
+        try:
+            return struct.unpack(">f", struct.pack(">f", float(value)))[0]
+        except OverflowError:
+            return math.copysign(float("inf"), value)
+
+    def fp_add(self, rm: str, a: float, b: float) -> float: return a + b
+    def fp_sub(self, rm: str, a: float, b: float) -> float: return a - b
+    def fp_mul(self, rm: str, a: float, b: float) -> float: return a * b
+    def fp_div(self, rm: str, a: float, b: float) -> float:
+        import math
+        if math.isnan(a) or math.isnan(b): return float("nan")
+        if b == 0.0:
+            if a == 0.0: return float("nan")
+            return math.copysign(float("inf"), a * b if b else a * math.copysign(1.0, b))
+        return a / b
+    def fp_sqrt(self, rm: str, a: float) -> float:
+        import math
+        return math.sqrt(a) if a >= 0 else float("nan")
+    def fp_fma(self, rm: str, a: float, b: float, c: float) -> float: return a * b + c
+    def fp_fms(self, rm: str, a: float, b: float, c: float) -> float: return a * b - c
+    def fp_fnma(self, rm: str, a: float, b: float, c: float) -> float: return -(a * b + c)
+    def fp_fnms(self, rm: str, a: float, b: float, c: float) -> float: return -(a * b - c)
+    def fp_neg(self, a: float) -> float: return -a
+    def fp_abs(self, a: float) -> float: return abs(a)
+    def fp_sel(self, a: float, c: float, b: float) -> float: return c if a >= 0.0 else b
+    def fp_round_to_single(self, rm: str, a: float) -> float: return self._fp_to_single(a)
+    def fp_to_sint32(self, rm: str, a: float) -> int:
+        import math
+        if math.isnan(a) or math.isinf(a): return 0x80000000
+        return int(self._fp_round_int(a, rm)) & 0xFFFFFFFF
+    def fp_to_sint32_trunc(self, a: float) -> int:
+        import math
+        if math.isnan(a) or math.isinf(a): return 0x80000000
+        return int(a) & 0xFFFFFFFF
+    def fp_is_lt(self, a: float, b: float) -> bool: return a < b
+    def fp_is_gt(self, a: float, b: float) -> bool: return a > b
+    def fp_is_eq(self, a: float, b: float) -> bool: return a == b
+    def fp_is_nan(self, a: float) -> bool:
+        import math
+        return math.isnan(a)
+    def fp_is_inf(self, a: float) -> bool:
+        import math
+        return math.isinf(a)
+    def fp_is_ge_zero(self, a: float) -> bool: return a >= 0.0
+    def fp_const_f32(self, value: float) -> float: return value
+    def fp_double_to_f32_bits(self, rm: str, value: float) -> int:
+        import struct
+        return struct.unpack(">I", struct.pack(">f", self._fp_to_single(value)))[0]
+    def fp_bits32_to_double(self, bits: int) -> float:
+        import struct
+        return struct.unpack(">f", struct.pack(">I", bits & 0xFFFFFFFF))[0]
+
 
 class SymbolicOps:
     def __init__(self) -> None:
@@ -130,6 +274,95 @@ class SymbolicOps:
     def load_byte(self, memory: Any, address: Any) -> Any: return self.z3.ZeroExt(24, self.z3.Select(memory, address))
     def store_byte(self, memory: Any, address: Any, value: Any) -> Any:
         return self.z3.Store(memory, address, self.z3.Extract(7, 0, value))
+
+    def fp_const64(self, value: int) -> Any: return self.z3.BitVecVal(value & 0xFFFFFFFFFFFFFFFF, 64)
+    def fp_low_word(self, bits: Any) -> Any: return self.z3.Extract(31, 0, bits)
+    def fp_high_word(self, bits: Any) -> Any: return self.z3.Extract(63, 32, bits)
+    def fp_join_words(self, high: Any, low: Any) -> Any: return self.z3.Concat(high, low)
+    def fp_xor_sign(self, bits: Any) -> Any:
+        return bits ^ self.z3.BitVecVal(1 << 63, 64)
+    def fp_clear_sign(self, bits: Any) -> Any:
+        return bits & self.z3.BitVecVal((1 << 63) - 1, 64)
+    def fp_set_sign(self, bits: Any) -> Any:
+        return bits | self.z3.BitVecVal(1 << 63, 64)
+    def fp_fprf(self, bits: Any) -> Any:
+        z3 = self.z3
+        sign = z3.Extract(63, 63, bits) == z3.BitVecVal(1, 1)
+        exponent = z3.Extract(62, 52, bits)
+        fraction = z3.Extract(51, 0, bits)
+        exponent_zero = exponent == z3.BitVecVal(0, 11)
+        exponent_ones = exponent == z3.BitVecVal(0x7FF, 11)
+        fraction_zero = fraction == z3.BitVecVal(0, 52)
+        return z3.If(
+            exponent_ones,
+            z3.If(fraction_zero, z3.If(sign, self.const(0x09), self.const(0x05)), self.const(0x11)),
+            z3.If(
+                exponent_zero,
+                z3.If(fraction_zero, z3.If(sign, self.const(0x12), self.const(0x02)), z3.If(sign, self.const(0x18), self.const(0x14))),
+                z3.If(sign, self.const(0x08), self.const(0x04)),
+            ),
+        )
+    def fp_bits_to_double(self, bits: Any) -> Any:
+        return self.z3.fpBVToFP(bits, self.z3.Float64())
+    def fp_double_to_bits(self, value: Any) -> Any:
+        return self.z3.fpToIEEEBV(value)
+
+    def fp_rm_rne(self) -> Any: return self.z3.RNE()
+    def fp_rm_rtz(self) -> Any: return self.z3.RTZ()
+    def fp_rm_rtp(self) -> Any: return self.z3.RTP()
+    def fp_rm_rtn(self) -> Any: return self.z3.RTN()
+
+    def fp_rm_from_rn(self, rn: Any) -> Any:
+        return self.ite(
+            self.eq(rn, self.const(1)), self.fp_rm_rtz(),
+            self.ite(self.eq(rn, self.const(2)), self.fp_rm_rtp(),
+                     self.ite(self.eq(rn, self.const(3)), self.fp_rm_rtn(), self.fp_rm_rne())))
+
+    def fp_add(self, rm: Any, a: Any, b: Any) -> Any: return self.z3.fpAdd(rm, a, b)
+    def fp_sub(self, rm: Any, a: Any, b: Any) -> Any: return self.z3.fpSub(rm, a, b)
+    def fp_mul(self, rm: Any, a: Any, b: Any) -> Any: return self.z3.fpMul(rm, a, b)
+    def fp_div(self, rm: Any, a: Any, b: Any) -> Any: return self.z3.fpDiv(rm, a, b)
+    def fp_sqrt(self, rm: Any, a: Any) -> Any: return self.z3.fpSqrt(rm, a)
+    def fp_fma(self, rm: Any, a: Any, b: Any, c: Any) -> Any: return self.z3.fpFMA(rm, a, b, c)
+    def fp_fms(self, rm: Any, a: Any, b: Any, c: Any) -> Any:
+        return self.z3.fpFMA(rm, a, b, self.z3.fpNeg(c))
+    def fp_fnma(self, rm: Any, a: Any, b: Any, c: Any) -> Any:
+        return self.z3.fpNeg(self.z3.fpFMA(rm, a, b, c))
+    def fp_fnms(self, rm: Any, a: Any, b: Any, c: Any) -> Any:
+        return self.z3.fpNeg(self.z3.fpFMA(rm, a, b, self.z3.fpNeg(c)))
+    def fp_neg(self, a: Any) -> Any: return self.z3.fpNeg(a)
+    def fp_abs(self, a: Any) -> Any: return self.z3.fpAbs(a)
+    def fp_sel(self, a: Any, c: Any, b: Any) -> Any:
+        return self.z3.If(self.fp_is_ge_zero(a), c, b)
+    def fp_round_to_single(self, rm: Any, a: Any) -> Any:
+        single = self.z3.fpFPToFP(rm, a, self.z3.Float32())
+        return self.z3.fpFPToFP(self.z3.RNE(), single, self.z3.Float64())
+    def fp_to_sint32(self, rm: Any, a: Any) -> Any:
+        bv = self.z3.fpToSBV(rm, a, self.z3.BitVecSort(32))
+        ext = self.z3.ZeroExt(32, bv)
+        return ext
+    def fp_to_sint32_trunc(self, a: Any) -> Any:
+        bv = self.z3.fpToSBV(self.z3.RTZ(), a, self.z3.BitVecSort(32))
+        ext = self.z3.ZeroExt(32, bv)
+        return ext
+    def fp_is_lt(self, a: Any, b: Any) -> Any: return self.z3.fpLT(a, b)
+    def fp_is_gt(self, a: Any, b: Any) -> Any: return self.z3.fpGT(a, b)
+    def fp_is_eq(self, a: Any, b: Any) -> Any: return self.z3.fpEQ(a, b)
+    def fp_is_nan(self, a: Any) -> Any: return self.z3.fpIsNaN(a)
+    def fp_is_inf(self, a: Any) -> Any: return self.z3.fpIsInf(a)
+    def fp_is_ge_zero(self, a: Any) -> Any:
+        return self.z3.And(
+            self.z3.Not(self.fp_is_nan(a)),
+            self.z3.Not(self.fp_is_lt(a, self.z3.FPVal(-0.0, self.z3.Float64()))),
+        )
+    def fp_const_f32(self, value: float) -> Any:
+        return self.z3.FPVal(value, self.z3.Float32())
+    def fp_double_to_f32_bits(self, rm: Any, value: Any) -> Any:
+        f32 = self.z3.fpFPToFP(rm, value, self.z3.Float32())
+        return self.z3.fpToIEEEBV(f32)
+    def fp_bits32_to_double(self, bits: Any) -> Any:
+        f32 = self.z3.fpBVToFP(bits, self.z3.Float32())
+        return self.z3.fpFPToFP(self.z3.RNE(), f32, self.z3.Float64())
 
 
 def rotate_mask(mb: int, me: int) -> int:
@@ -247,11 +480,123 @@ INDEXED_MEMORY = {
     Opcode.LBZX, Opcode.LBZUX, Opcode.LHZX, Opcode.LHZUX, Opcode.LHAX, Opcode.LHAUX,
     Opcode.LWZX, Opcode.LWZUX, Opcode.LHBRX, Opcode.LWBRX, Opcode.STBX, Opcode.STBUX,
     Opcode.STHX, Opcode.STHUX, Opcode.STWX, Opcode.STWUX, Opcode.STHBRX, Opcode.STWBRX,
+    Opcode.LFSX, Opcode.LFSUX, Opcode.LFDX, Opcode.LFDUX,
+    Opcode.STFSX, Opcode.STFSUX, Opcode.STFDX, Opcode.STFDUX, Opcode.STFIWX,
 }
+
+FP_D_LOADS = {
+    Opcode.LFS: (4, False), Opcode.LFSU: (4, True), Opcode.LFD: (8, False), Opcode.LFDU: (8, True),
+}
+FP_X_LOADS = {
+    Opcode.LFSX: 4, Opcode.LFSUX: 4, Opcode.LFDX: 8, Opcode.LFDUX: 8,
+}
+FP_D_STORES = {
+    Opcode.STFS: (4, False), Opcode.STFSU: (4, True), Opcode.STFD: (8, False), Opcode.STFDU: (8, True),
+}
+FP_X_STORES = {
+    Opcode.STFSX: 4, Opcode.STFSUX: 4, Opcode.STFDX: 8, Opcode.STFDUX: 8, Opcode.STFIWX: 4,
+}
+FP_D_MEM = {**FP_D_LOADS, **FP_D_STORES}
+FP_X_MEM = {**FP_X_LOADS, **FP_X_STORES}
+FP_UPDATES = {Opcode.LFSU, Opcode.LFDU, Opcode.LFSUX, Opcode.LFDUX, Opcode.STFSU, Opcode.STFDU, Opcode.STFSUX, Opcode.STFDUX}
+
+_FP_SINGLE_ARITH = {
+    Opcode.FADDS, Opcode.FSUBS, Opcode.FMULS, Opcode.FDIVS, Opcode.FSQRTS, Opcode.FRES,
+    Opcode.FMADDS, Opcode.FMSUBS, Opcode.FNMADDS, Opcode.FNMSUBS, Opcode.FRSP,
+}
+_FP_DOUBLE_ARITH = {
+    Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV, Opcode.FSQRT, Opcode.FRSQRTE, Opcode.FSEL,
+    Opcode.FMADD, Opcode.FMSUB, Opcode.FNMADD, Opcode.FNMSUB,
+}
+_FP_AUX_OPS = {
+    Opcode.FCMPU, Opcode.FCMPO, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS,
+    Opcode.FCTIW, Opcode.FCTIWZ, Opcode.MFFS, Opcode.MTFSF, Opcode.MTFSFI,
+    Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS,
+}
+_FP_PS_ARITH = {
+    Opcode.PS_DIV, Opcode.PS_SUB, Opcode.PS_ADD, Opcode.PS_SEL, Opcode.PS_RES, Opcode.PS_MUL,
+    Opcode.PS_RSQRTE, Opcode.PS_MSUB, Opcode.PS_MADD, Opcode.PS_NMSUB, Opcode.PS_NMADD,
+    Opcode.PS_SUM0, Opcode.PS_SUM1, Opcode.PS_MULS0, Opcode.PS_MULS1,
+    Opcode.PS_MADDS0, Opcode.PS_MADDS1, Opcode.PS_NEG, Opcode.PS_MR, Opcode.PS_NABS, Opcode.PS_ABS,
+}
+_FP_PS_CMP_MERGE = {
+    Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1,
+    Opcode.PS_MERGE00, Opcode.PS_MERGE01, Opcode.PS_MERGE10, Opcode.PS_MERGE11,
+}
+_FP_PSQ_OPS = {
+    Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
+    Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX,
+}
+_FP_SCALAR_ARITH = _FP_SINGLE_ARITH | _FP_DOUBLE_ARITH | _FP_AUX_OPS
+_FP_VALUE_ARITH = {
+    Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS,
+    Opcode.FADD, Opcode.FSUB, Opcode.FMUL, Opcode.FDIV, Opcode.FRSP,
+}
+_FP_ROUNDING_SENSITIVE = _FP_VALUE_ARITH | {
+    Opcode.STFS, Opcode.STFSU, Opcode.STFSX, Opcode.STFSUX,
+}
+
+
+def _ps_extract0(fpr_bits: Any, ops: WordOps) -> Any:
+    if isinstance(ops, ConcreteOps):
+        import struct
+        return struct.unpack(">f", struct.pack(">I", fpr_bits & 0xFFFFFFFF))[0]
+    z3 = ops.z3
+    low32 = z3.Extract(31, 0, fpr_bits)
+    return z3.fpFPToFP(z3.RNE(), low32, z3.Float32())
+
+
+def _ps_extract1(fpr_bits: Any, ops: WordOps) -> Any:
+    if isinstance(ops, ConcreteOps):
+        import struct
+        return struct.unpack(">f", struct.pack(">I", (fpr_bits >> 32) & 0xFFFFFFFF))[0]
+    z3 = ops.z3
+    high32 = z3.Extract(63, 32, fpr_bits)
+    return z3.fpFPToFP(z3.RNE(), high32, z3.Float32())
+
+
+def _ps_merge(lo_f32: Any, hi_f32: Any, ops: WordOps) -> Any:
+    if isinstance(ops, ConcreteOps):
+        import struct
+        lo_bits = struct.unpack(">I", struct.pack(">f", float(lo_f32)))[0]
+        hi_bits = struct.unpack(">I", struct.pack(">f", float(hi_f32)))[0]
+        return ((hi_bits & 0xFFFFFFFF) << 32) | (lo_bits & 0xFFFFFFFF)
+    z3 = ops.z3
+    lo_bits = z3.fpToIEEEBV(lo_f32)
+    hi_bits = z3.fpToIEEEBV(hi_f32)
+    return z3.Concat(hi_bits, lo_bits)
+
+
+def _fp_compare_nibble(a: Any, b: Any, ops: WordOps) -> Any:
+    lt = ops.fp_is_lt(a, b)
+    gt = ops.fp_is_gt(a, b)
+    eq = ops.fp_is_eq(a, b)
+    un = ops.lor(ops.fp_is_nan(a), ops.fp_is_nan(b))
+    return ops.bor(
+        ops.bor(ops.ite(lt, ops.const(8), ops.const(0)), ops.ite(gt, ops.const(4), ops.const(0))),
+        ops.bor(ops.ite(eq, ops.const(2), ops.const(0)), ops.ite(un, ops.const(1), ops.const(0))),
+    )
+
+
+def _fpcc_nibble(state: MachineState, value: Any, ops: WordOps) -> Any:
+    zero = ops.fp_bits_to_double(ops.fp_const64(0))
+    return _fp_compare_nibble(value, zero, ops)
 
 
 def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) -> MachineState:
     op, a = insn.opcode, insn.operands
+
+    # Defense in depth for callers that construct Instruction objects without
+    # going through decoder.py.
+    if op not in SUPPORTED_OPCODES:
+        raise UnsupportedInstruction(insn.address, insn.raw, f"semantics are unsupported for {op.value}")
+    if op in _FP_ROUNDING_SENSITIVE:
+        # ConcreteOps is validated against Broadway with RN=nearest-even and
+        # NI disabled.  Keep the symbolic proof on that same explicit domain.
+        standard_fp_mode = ops.eq(ops.band(state.fpscr, ops.const(7)), ops.const(0))
+        if isinstance(ops, ConcreteOps) and not standard_fp_mode:
+            raise ExecutionInconclusive("FP ConcreteOps requires FPSCR.RN=nearest-even and NI=0")
+        state = replace(state, valid=ops.land(state.valid, standard_fp_mode))
     result: Any | None = None
     destination: int | None = None
     overflow = ops.bool(False)
@@ -341,6 +686,13 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             partial = ops.add(left, right)
             result = ops.add(partial, carry_in)
             carry = ops.lor(_carry_add(left, right, partial, ops), _carry_add(partial, carry_in, result, ops))
+            if op == Opcode.ADDME:
+                # Dolphin/PowerPC Helper_Carry(left, CA - 1): with CA=1
+                # this form always clears CA; with CA=0 it sets CA iff RA!=0.
+                carry = ops.land(
+                    ops.lnot(state.xer.ca),
+                    ops.lnot(ops.eq(left, ops.const(0))),
+                )
             overflow = ops.add_overflow(left, right, carry_in)
         elif op == Opcode.NEG:
             result = ops.sub(ops.const(0), left)
@@ -353,6 +705,14 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
                 partial = ops.add(inverted, minuend)
                 result = ops.add(partial, carry_in)
                 carry = ops.lor(_carry_add(inverted, minuend, partial, ops), _carry_add(partial, carry_in, result, ops))
+                if op == Opcode.SUBFME:
+                    # Dolphin/PowerPC Helper_Carry(~RA, CA - 1): with CA=1
+                    # this form always clears CA; with CA=0 it sets CA unless
+                    # RA is 0xffffffff.
+                    carry = ops.land(
+                        ops.lnot(state.xer.ca),
+                        ops.lnot(ops.eq(left, ops.const(MASK32))),
+                    )
             else:
                 result = ops.sub(minuend, left)
                 carry = ops.lnot(ops.unsigned_lt(minuend, left))
@@ -457,6 +817,340 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         state = replace(state, memory=_store(state.memory, address, state.gpr[reg], width, ops, reverse=reverse_bytes))
         if update: state = state.with_gpr(ra, address)
         return state
+    elif op in FP_D_MEM or op in FP_X_MEM:
+        rt, ra, third = a
+        if op in INDEXED_MEMORY:
+            address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[third])
+        else:
+            address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(third))
+        is_load = op in FP_D_LOADS or op in FP_X_LOADS
+        if is_load:
+            width = FP_D_LOADS[op][0] if op in FP_D_LOADS else FP_X_LOADS[op]
+        else:
+            width = FP_D_STORES[op][0] if op in FP_D_STORES else FP_X_STORES[op]
+        if op == Opcode.STFIWX:
+            fpr_bits = state.fpr[rt]
+            value32 = ops.fp_low_word(fpr_bits)
+            state = _touch_memory(state, address, 4, ops)
+            state = replace(state, memory=_store(state.memory, address, value32, 4, ops))
+            return state
+        if is_load:
+            update = op in (Opcode.LFSU, Opcode.LFDU, Opcode.LFSUX, Opcode.LFDUX)
+            state = _touch_memory(state, address, width, ops)
+            if width == 4:
+                raw = _load(state.memory, address, 4, ops)
+                result = ops.fp_double_to_bits(ops.fp_bits32_to_double(raw))
+            else:
+                high = _load(state.memory, address, 4, ops)
+                low = _load(state.memory, ops.add(address, ops.const(4)), 4, ops)
+                result = ops.fp_join_words(high, low)
+            state = state.with_fpr(rt, result)
+            if update: state = state.with_gpr(ra, address)
+            return state
+        else:
+            update = op in (Opcode.STFSU, Opcode.STFDU, Opcode.STFSUX, Opcode.STFDUX)
+            state = _touch_memory(state, address, width, ops)
+            fpr_bits = state.fpr[rt]
+            if width == 4:
+                rm = ops.fp_rm_from_rn(ops.band(state.fpscr, ops.const(3)))
+                bits32 = ops.fp_double_to_f32_bits(rm, ops.fp_bits_to_double(fpr_bits))
+                state = replace(state, memory=_store(state.memory, address, bits32, 4, ops))
+            else:
+                state = replace(state, memory=_store(state.memory, address, ops.fp_high_word(fpr_bits), 4, ops))
+                state = replace(state, memory=_store(
+                    state.memory, ops.add(address, ops.const(4)), ops.fp_low_word(fpr_bits), 4, ops,
+                ))
+            if update: state = state.with_gpr(ra, address)
+            return state
+
+    # -- Floating-point arithmetic (scalar single, double, paired-single, FPSCR) --
+    elif op in _FP_SCALAR_ARITH or op in _FP_PS_ARITH:
+        fd, fa = a[0], a[1] if len(a) > 1 else 0
+        fb = a[2] if len(a) > 2 else 0
+        fc = a[3] if len(a) > 3 else 0
+        rn_bits = ops.band(state.fpscr, ops.const(3))
+        rm = ops.fp_rm_from_rn(rn_bits)
+        is_single = op in _FP_SINGLE_ARITH
+        is_ps = op in _FP_PS_ARITH
+        ni = ops.lnot(ops.eq(ops.band(state.fpscr, ops.const(4)), ops.const(0)))
+
+        if is_ps:
+            _fa_bits = state.fpr[fa]
+            _fb_bits = state.fpr[fb]
+            _fc_bits = state.fpr[fc]
+            fa_ps0 = _ps_extract0(_fa_bits, ops)
+            fa_ps1 = _ps_extract1(_fa_bits, ops)
+            fb_ps0 = _ps_extract0(_fb_bits, ops)
+            fb_ps1 = _ps_extract1(_fb_bits, ops)
+            fc_ps0 = _ps_extract0(_fc_bits, ops)
+            fc_ps1 = _ps_extract1(_fc_bits, ops)
+            rm_ps = ops.fp_rm_rne()
+            if op == Opcode.PS_DIV:
+                r0, r1 = ops.fp_div(rm_ps, fa_ps0, fb_ps0), ops.fp_div(rm_ps, fa_ps1, fb_ps1)
+            elif op == Opcode.PS_SUB:
+                r0, r1 = ops.fp_sub(rm_ps, fa_ps0, fb_ps0), ops.fp_sub(rm_ps, fa_ps1, fb_ps1)
+            elif op == Opcode.PS_ADD:
+                r0, r1 = ops.fp_add(rm_ps, fa_ps0, fb_ps0), ops.fp_add(rm_ps, fa_ps1, fb_ps1)
+            elif op == Opcode.PS_SEL:
+                r0 = ops.fp_sel(fa_ps0, fc_ps0, fb_ps0)
+                r1 = ops.fp_sel(fa_ps1, fc_ps1, fb_ps1)
+            elif op == Opcode.PS_RES:
+                r0 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), fa_ps0)
+                r1 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), fa_ps1)
+            elif op == Opcode.PS_MUL:
+                r0, r1 = ops.fp_mul(rm_ps, fa_ps0, fc_ps0), ops.fp_mul(rm_ps, fa_ps1, fc_ps1)
+            elif op == Opcode.PS_RSQRTE:
+                r0 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), ops.fp_sqrt(rm_ps, fa_ps0))
+                r1 = ops.fp_div(rm_ps, ops.fp_const_f32(1.0), ops.fp_sqrt(rm_ps, fa_ps1))
+            elif op == Opcode.PS_MSUB:
+                r0, r1 = ops.fp_fms(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fms(rm_ps, fa_ps1, fc_ps1, fb_ps1)
+            elif op == Opcode.PS_MADD:
+                r0, r1 = ops.fp_fma(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fma(rm_ps, fa_ps1, fc_ps1, fb_ps1)
+            elif op == Opcode.PS_NMSUB:
+                r0, r1 = ops.fp_fnms(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fnms(rm_ps, fa_ps1, fc_ps1, fb_ps1)
+            elif op == Opcode.PS_NMADD:
+                r0, r1 = ops.fp_fnma(rm_ps, fa_ps0, fc_ps0, fb_ps0), ops.fp_fnma(rm_ps, fa_ps1, fc_ps1, fb_ps1)
+            elif op == Opcode.PS_SUM0:
+                r0 = ops.fp_add(rm_ps, fa_ps0, fb_ps0)
+                r1 = fc_ps1
+            elif op == Opcode.PS_SUM1:
+                r0 = fc_ps0
+                r1 = ops.fp_add(rm_ps, fa_ps1, fb_ps1)
+            elif op == Opcode.PS_MULS0:
+                r0 = ops.fp_mul(rm_ps, fa_ps0, fc_ps0)
+                r1 = ops.fp_mul(rm_ps, fa_ps1, fc_ps0)
+            elif op == Opcode.PS_MULS1:
+                r0 = ops.fp_mul(rm_ps, fa_ps0, fc_ps1)
+                r1 = ops.fp_mul(rm_ps, fa_ps1, fc_ps1)
+            elif op == Opcode.PS_MADDS0:
+                r0 = ops.fp_fma(rm_ps, fa_ps0, fc_ps0, fb_ps0)
+                r1 = ops.fp_fma(rm_ps, fa_ps1, fc_ps0, fb_ps1)
+            elif op == Opcode.PS_MADDS1:
+                r0 = ops.fp_fma(rm_ps, fa_ps0, fc_ps1, fb_ps0)
+                r1 = ops.fp_fma(rm_ps, fa_ps1, fc_ps1, fb_ps1)
+            elif op == Opcode.PS_NEG:
+                r0, r1 = ops.fp_neg(fa_ps0), ops.fp_neg(fa_ps1)
+            elif op == Opcode.PS_MR:
+                r0, r1 = fa_ps0, fa_ps1
+            elif op == Opcode.PS_NABS:
+                r0 = ops.fp_neg(ops.fp_abs(fa_ps0))
+                r1 = ops.fp_neg(ops.fp_abs(fa_ps1))
+            elif op == Opcode.PS_ABS:
+                r0, r1 = ops.fp_abs(fa_ps0), ops.fp_abs(fa_ps1)
+            else:
+                raise UnsupportedInstruction(insn.address, insn.raw, f"unhandled PS opcode {op.value}")
+            result = _ps_merge(r0, r1, ops)
+            state = state.with_fpr(fd, result)
+            return state
+
+        # Scalar single instructions consume the register's double value and
+        # round the result to binary32; they do not pre-round every operand.
+        op_fa = ops.fp_bits_to_double(state.fpr[fa])
+        op_fb = ops.fp_bits_to_double(state.fpr[fb])
+        op_fc = ops.fp_bits_to_double(state.fpr[fc])
+
+        if op == Opcode.FSEL:
+            result_bits = ops.ite(ops.fp_is_ge_zero(op_fa), state.fpr[fc], state.fpr[fb])
+            state = state.with_fpr(fd, result_bits)
+            if insn.record:
+                cr1 = ops.band(ops.lshr(state.fpscr, ops.const(28)), ops.const(0xF))
+                state = _set_cr_field(state, 1, cr1, ops)
+            return state
+
+        if op in (Opcode.FADDS, Opcode.FADD):
+            d = ops.fp_add(rm, op_fa, op_fb)
+        elif op in (Opcode.FSUBS, Opcode.FSUB):
+            d = ops.fp_sub(rm, op_fa, op_fb)
+        elif op in (Opcode.FMULS, Opcode.FMUL):
+            d = ops.fp_mul(rm, op_fa, op_fc)
+        elif op in (Opcode.FDIVS, Opcode.FDIV):
+            d = ops.fp_div(rm, op_fa, op_fb)
+        elif op in (Opcode.FSQRTS, Opcode.FSQRT):
+            d = ops.fp_sqrt(rm, op_fb)
+        elif op == Opcode.FRES:
+            d = ops.fp_div(rm, ops.fp_round_to_single(rm, ops.fp_bits_to_double(ops.fp_const64(0x3FF0000000000000))), op_fb)
+        elif op == Opcode.FRSQRTE:
+            d = ops.fp_div(rm, ops.fp_bits_to_double(ops.fp_const64(0x3FF0000000000000)), ops.fp_sqrt(rm, op_fb))
+        elif op in (Opcode.FMADDS, Opcode.FMADD):
+            d = ops.fp_fma(rm, op_fa, op_fc, op_fb)
+        elif op in (Opcode.FMSUBS, Opcode.FMSUB):
+            d = ops.fp_fms(rm, op_fa, op_fc, op_fb)
+        elif op in (Opcode.FNMADDS, Opcode.FNMADD):
+            d = ops.fp_fnma(rm, op_fa, op_fc, op_fb)
+        elif op in (Opcode.FNMSUBS, Opcode.FNMSUB):
+            d = ops.fp_fnms(rm, op_fa, op_fc, op_fb)
+        elif op in (Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
+            source_bits = state.fpr[fb]
+            if op == Opcode.FNEG:
+                result_bits = ops.fp_xor_sign(source_bits)
+            elif op == Opcode.FNABS:
+                result_bits = ops.fp_set_sign(source_bits)
+            elif op == Opcode.FABS:
+                result_bits = ops.fp_clear_sign(source_bits)
+            else:
+                result_bits = source_bits
+            state = state.with_fpr(fd, result_bits)
+            if insn.record:
+                cr1 = ops.band(ops.lshr(state.fpscr, ops.const(28)), ops.const(0xF))
+                state = _set_cr_field(state, 1, cr1, ops)
+            return state
+        elif op == Opcode.FRSP:
+            d = ops.fp_round_to_single(rm, op_fb)
+        elif op == Opcode.FCTIW:
+            result_bits = ops.fp_to_sint32(rm, op_fb)
+            state = state.with_fpr(fd, result_bits)
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpcc_nibble(state, result_bits, ops), ops)
+            return state
+        elif op == Opcode.FCTIWZ:
+            result_bits = ops.fp_to_sint32_trunc(op_fb)
+            state = state.with_fpr(fd, result_bits)
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpcc_nibble(state, result_bits, ops), ops)
+            return state
+        elif op in (Opcode.FCMPU, Opcode.FCMPO):
+            bf = fd
+            cr_nibble = _fp_compare_nibble(op_fa, op_fb, ops)
+            # FPCC is the low four bits of FPSCR.FPRF (numeric bits 15..12).
+            new_fpscr = ops.bor(
+                ops.band(state.fpscr, ops.bnot(ops.const(0xF000))),
+                ops.shl(cr_nibble, ops.const(12)),
+            )
+            return _set_cr_field(state.with_fpscr(new_fpscr), bf, cr_nibble, ops)
+        elif op == Opcode.MFFS:
+            fpscr_bits = ops.fp_double_to_bits(ops.fp_bits_to_double(
+                ops.shl(state.fpscr, ops.const(32))))
+            state = state.with_fpr(fd, fpscr_bits)
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpcc_nibble(state, fpscr_bits, ops), ops)
+            return state
+        elif op == Opcode.MTFSF:
+            fm, rb_fpr = a
+            source = state.fpr[rb_fpr]
+            mask = 0
+            for field in range(8):
+                if fm & (1 << (7 - field)):
+                    mask |= 0xF << ((7 - field) * 4)
+            src32 = ops.band(source, ops.const(0xFFFFFFFF))
+            new_fpscr = ops.bor(ops.band(state.fpscr, ops.bnot(ops.const(mask))),
+                                ops.band(src32, ops.const(mask)))
+            state = state.with_fpscr(new_fpscr)
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpcc_nibble(state, new_fpscr, ops), ops)
+            return state
+        elif op == Opcode.MTFSFI:
+            bf, imm4 = a
+            shift = (7 - bf) * 4
+            new_fpscr = ops.bor(
+                ops.band(state.fpscr, ops.bnot(ops.const(0xF << shift))),
+                ops.shl(ops.const(imm4 & 0xF), ops.const(shift)))
+            state = state.with_fpscr(new_fpscr)
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpcc_nibble(state, new_fpscr, ops), ops)
+            return state
+        elif op in (Opcode.MTFSB0, Opcode.MTFSB1):
+            bt = fd
+            bit_val = 1 if op == Opcode.MTFSB1 else 0
+            new_fpscr = ops.bor(
+                ops.band(state.fpscr, ops.bnot(ops.const(1 << (31 - bt)))),
+                ops.const(bit_val << (31 - bt)) if bit_val else ops.const(0))
+            state = state.with_fpscr(new_fpscr)
+            if insn.record:
+                state = _set_cr_field(state, 1, _fpcc_nibble(state, new_fpscr, ops), ops)
+            return state
+        elif op == Opcode.MCRFS:
+            bf, bfa = a
+            shift = (7 - bfa) * 4
+            cr_nibble = ops.band(ops.lshr(state.fpscr, ops.const(shift)), ops.const(0xF))
+            new_fpscr = ops.band(state.fpscr, ops.bnot(ops.const(0xF << shift)))
+            state = state.with_fpscr(new_fpscr)
+            return _set_cr_field(state, bf, cr_nibble, ops)
+        elif op in (Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1):
+            bf = fd
+            fa_bits = state.fpr[fa]
+            fb_bits = state.fpr[fb]
+            if op in (Opcode.PS_CMPU0, Opcode.PS_CMPO0):
+                fa_s = _ps_extract0(fa_bits, ops)
+                fb_s = _ps_extract0(fb_bits, ops)
+            else:
+                fa_s = _ps_extract1(fa_bits, ops)
+                fb_s = _ps_extract1(fb_bits, ops)
+            cr_nibble = _fp_compare_nibble(fa_s, fb_s, ops)
+            return _set_cr_field(state, bf, cr_nibble, ops)
+        elif op in (Opcode.PS_MERGE00, Opcode.PS_MERGE01, Opcode.PS_MERGE10, Opcode.PS_MERGE11):
+            fa_bits = state.fpr[fa]
+            fb_bits = state.fpr[fb]
+            if op == Opcode.PS_MERGE00:
+                lo = _ps_extract0(fa_bits, ops)
+                hi = _ps_extract0(fb_bits, ops)
+            elif op == Opcode.PS_MERGE01:
+                lo = _ps_extract0(fa_bits, ops)
+                hi = _ps_extract1(fb_bits, ops)
+            elif op == Opcode.PS_MERGE10:
+                lo = _ps_extract1(fa_bits, ops)
+                hi = _ps_extract0(fb_bits, ops)
+            else:
+                lo = _ps_extract1(fa_bits, ops)
+                hi = _ps_extract1(fb_bits, ops)
+            result = _ps_merge(lo, hi, ops)
+            state = state.with_fpr(fd, result)
+            return state
+        elif op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
+                     Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX):
+            if op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU):
+                rs, ra, disp, w, i = a
+                address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(disp))
+            else:
+                rs, ra, rb, w, i = a
+                address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
+            is_psq_load = op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX)
+            if is_psq_load:
+                state = _touch_memory(state, address, 8, ops)
+                lo_raw = _load(state.memory, address, 4, ops)
+                hi_raw = _load(state.memory, ops.add(address, ops.const(4)), 4, ops)
+                lo_s = ops.fp_bits_to_double(ops.bor(ops.shl(lo_raw, ops.const(32)), ops.const(0)))
+                hi_s = ops.fp_bits_to_double(ops.bor(ops.shl(hi_raw, ops.const(32)), ops.const(0)))
+                result = _ps_merge(lo_s, hi_s, ops)
+                state = state.with_fpr(rs, result)
+            else:
+                fpr_bits = state.fpr[rs]
+                lo_bits = ops.band(fpr_bits, ops.const(0xFFFFFFFF))
+                hi_bits = ops.band(ops.lshr(fpr_bits, ops.const(32)), ops.const(0xFFFFFFFF))
+                state = _touch_memory(state, address, 8, ops)
+                state = replace(state, memory=_store(state.memory, address, lo_bits, 4, ops))
+                state = replace(state, memory=_store(state.memory, ops.add(address, ops.const(4)), hi_bits, 4, ops))
+            update = op in (Opcode.PSQ_LU, Opcode.PSQ_STU, Opcode.PSQ_LUX, Opcode.PSQ_STUX)
+            if update:
+                state = state.with_gpr(ra, address)
+            return state
+        else:
+            raise UnsupportedInstruction(insn.address, insn.raw, f"semantics not implemented for {op.value}")
+
+        if is_single and op not in (Opcode.FRSP, Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
+            d = ops.fp_round_to_single(rm, d)
+        if op in _FP_VALUE_ARITH:
+            finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
+            if op in (Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS, Opcode.FADD, Opcode.FSUB, Opcode.FDIV):
+                inputs_finite = ops.land(finite(op_fa), finite(op_fb))
+            elif op == Opcode.FMUL:
+                inputs_finite = ops.land(finite(op_fa), finite(op_fc))
+            else:
+                inputs_finite = finite(op_fb)
+            state = replace(state, valid=ops.land(state.valid, ops.land(inputs_finite, finite(d))))
+        d_bits = ops.fp_double_to_bits(d)
+        fprf = ops.fp_fprf(d_bits)
+        new_fpscr = ops.bor(
+            ops.band(state.fpscr, ops.bnot(ops.const(0x1F000))),
+            ops.shl(fprf, ops.const(12)),
+        )
+        state = state.with_fpr(fd, d_bits).with_fpscr(new_fpscr)
+        if insn.record:
+            # Rc copies FPSCR[FX,FEX,VX,OX] into CR1; it does not classify the
+            # arithmetic result.
+            cr1 = ops.band(ops.lshr(state.fpscr, ops.const(28)), ops.const(0xF))
+            state = _set_cr_field(state, 1, cr1, ops)
+        return state
+
     elif op in (Opcode.LMW, Opcode.STMW):
         reg, ra, displacement = a
         address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(displacement))
@@ -580,12 +1274,60 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
     reads: set[str] = set()
     writes: set[str] = set()
     op, a = insn.opcode, insn.operands
-    # GPR effects are deliberately conservative; false liveness only makes proofs stricter.
-    for index in range(32):
-        marker = f"r{index}"
-        if marker in str(a):
-            pass
-    if op in LOADS:
+    if op in FP_D_LOADS or op in FP_X_LOADS:
+        writes.add(f"f{a[0]}")
+        if a[1]: reads.add(f"r{a[1]}")
+        if op in INDEXED_MEMORY: reads.add(f"r{a[2]}")
+        if op in FP_UPDATES: writes.add(f"r{a[1]}")
+        reads.add("memory")
+    elif op in FP_D_STORES or op in FP_X_STORES:
+        reads.add(f"f{a[0]}")
+        if a[1]: reads.add(f"r{a[1]}")
+        if op in INDEXED_MEMORY: reads.add(f"r{a[2]}")
+        if op in FP_UPDATES: writes.add(f"r{a[1]}")
+        writes.add("memory")
+    elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH):
+        writes.add(f"f{a[0]}")
+        for idx in a[1:]:
+            if 0 <= idx < 32: reads.add(f"f{idx}")
+        if insn.record: writes.add("cr1")
+    elif op in _FP_PS_CMP_MERGE:
+        writes.add(f"f{a[0]}")
+        for idx in a[1:]:
+            if 0 <= idx < 32: reads.add(f"f{idx}")
+    elif op in (Opcode.FCMPU, Opcode.FCMPO):
+        for idx in a[1:]:
+            if 0 <= idx < 32: reads.add(f"f{idx}")
+        writes.add(f"cr{a[0]}")
+    elif op in (Opcode.PS_CMPU0, Opcode.PS_CMPO0, Opcode.PS_CMPU1, Opcode.PS_CMPO1):
+        for idx in a[1:]:
+            if 0 <= idx < 32: reads.add(f"f{idx}")
+        writes.add(f"cr{a[0]}")
+    elif op in (Opcode.MFFS, Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP, Opcode.FNEG,
+                 Opcode.FMR, Opcode.FNABS, Opcode.FABS):
+        reads.add("fpscr" if op == Opcode.MFFS else f"f{a[1]}" if len(a) > 1 else "")
+        writes.add(f"f{a[0]}")
+        if insn.record: writes.add("cr1")
+    elif op in (Opcode.MTFSF, Opcode.MTFSFI, Opcode.MTFSB0, Opcode.MTFSB1):
+        reads.add("fpscr")
+        if op == Opcode.MTFSF: reads.add(f"f{a[1]}")
+        writes.add("fpscr")
+        if insn.record: writes.add("cr1")
+    elif op == Opcode.MCRFS:
+        reads.add("fpscr")
+        writes.add("fpscr")
+        writes.add(f"cr{a[0]}")
+    elif op in _FP_PSQ_OPS:
+        is_load = op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX)
+        if is_load: writes.add(f"f{a[0]}")
+        else: reads.add(f"f{a[0]}")
+        if a[1]: reads.add(f"r{a[1]}")
+        if len(a) > 2 and not isinstance(a[2], bool): reads.add(f"r{a[2]}")
+        if is_load: reads.add("memory")
+        else: writes.add("memory")
+        if op in (Opcode.PSQ_LU, Opcode.PSQ_STU, Opcode.PSQ_LUX, Opcode.PSQ_STUX):
+            writes.add(f"r{a[1]}")
+    elif op in LOADS:
         writes.add(f"r{a[0]}")
         if a[1]: reads.add(f"r{a[1]}")
         if op in INDEXED_MEMORY: reads.add(f"r{a[2]}")
@@ -635,6 +1377,33 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
         elif op in STORES:
             written.add("memory")
             if STORES[op][1]: written.add(f"r{a[1]}")
+        elif op in FP_D_LOADS or op in FP_X_LOADS:
+            written.add(f"f{a[0]}")
+            if op in FP_UPDATES: written.add(f"r{a[1]}")
+        elif op in FP_D_STORES or op in FP_X_STORES:
+            written.add("memory")
+            if op in FP_UPDATES: written.add(f"r{a[1]}")
+        elif op in (Opcode.FCMPU, Opcode.FCMPO, Opcode.PS_CMPU0, Opcode.PS_CMPO0,
+                     Opcode.PS_CMPU1, Opcode.PS_CMPO1):
+            written.add(f"cr{a[0]}")
+            written.add("fpscr")
+        elif op in (_FP_SCALAR_ARITH | _FP_PS_ARITH | _FP_PS_CMP_MERGE):
+            written.add(f"f{a[0]}")
+            if op not in (Opcode.FSEL, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS):
+                written.add("fpscr")
+        elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP, Opcode.FNEG, Opcode.FMR,
+                     Opcode.FNABS, Opcode.FABS, Opcode.MFFS):
+            written.add(f"f{a[0]}")
+        elif op in (Opcode.MTFSF, Opcode.MTFSFI, Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS):
+            written.add("fpscr")
+            if op == Opcode.MCRFS: written.add(f"cr{a[0]}")
+        elif op in _FP_PSQ_OPS:
+            if op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX):
+                written.add(f"f{a[0]}")
+            else:
+                written.add("memory")
+            if op in (Opcode.PSQ_LU, Opcode.PSQ_STU, Opcode.PSQ_LUX, Opcode.PSQ_STUX):
+                written.add(f"r{a[1]}")
         elif op == Opcode.LMW:
             written |= {f"r{i}" for i in range(a[0], 32)}
         elif op == Opcode.STMW:
@@ -656,9 +1425,11 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
                 written.add("xer.ca")
             if insn.overflow:
                 written |= {"xer.ov", "xer.so"}
-        if insn.record or op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT):
+        if insn.record:
+            written.add("cr1" if op in (_FP_SCALAR_ARITH | _FP_PS_ARITH) else "cr0")
+        elif op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT):
             written.add("cr0")
-    order = [*(f"r{i}" for i in range(32)), "cr", *(f"cr{i}" for i in range(8)), "xer.ca", "xer.ov", "xer.so", "lr", "ctr", "memory"]
+    order = [*(f"r{i}" for i in range(32)), *(f"f{i}" for i in range(32)), "cr", *(f"cr{i}" for i in range(8)), "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr", "memory"]
     return tuple(item for item in order if item in written)
 
 

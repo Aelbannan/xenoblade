@@ -1,18 +1,18 @@
 # Decompilation task checklist
 
-Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off functions only after they reach **`FULL_MATCH`** via `python tools/coop/run.py cycle <target-id>` (or equivalent `diff` + evidence).
+Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off functions only after they reach **`EQUIVALENT_MATCH`** (or **`FULL_MATCH`**) via `python tools/coop/run.py cycle <target-id>` (or equivalent `diff` + evidence).
 
 ## How to use
 
 1. Pick an unchecked task in priority order (**P0 → P1 → P2 → P3**).
 2. Read the matching section in `DECOMP_MAP.md` and claim the symbol in `docs/ownership.csv` (see `PLAN.md` §6).
 3. Decompile using the loop in [`.cursor/skills/xenoblade-decomp/SKILL.md`](.cursor/skills/xenoblade-decomp/SKILL.md).
-4. When `cycle` passes at **FULL_MATCH**, change `- [ ]` to `- [x]` here and log evidence in `docs/evidence/decomp/attempts.jsonl`.
-5. If the translation unit is newly matched, flip `NonMatching` → `Matching` in `configure.py` for that object.
-6. **While static match is below 100%:** keep iterating (decomp.me / §17.6). Optional: PPC harness via `behaviour ppc <test-id>` when registered (see [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md)). Host dual-oracle tests were removed.
-7. **Before `Matching` / `FULL_MATCH`:** pass `python tools/coop/run.py size <unit>` — decomp `.text` must fit the retail split slice in `config/<region>/splits.txt` (`diff` / `cycle` / `behaviour compare` also enforce this).
+4. When `cycle` passes at **EQUIVALENT_MATCH** (fuzzy ≥ 50% + SMT equivalent + split-size fit) or **FULL_MATCH** (100% static + split-size fit), change `- [ ]` to `- [x]` here and log evidence in `docs/evidence/decomp/attempts.jsonl`.
+5. If the translation unit is newly matched, flip `NonMatching` → `Matching` in `configure.py` for that object (prefer `EQUIVALENT_MATCH` or `FULL_MATCH` before whole-TU Matching when possible).
+6. **While below the bar:** keep iterating; once fuzzy ≥ 50%, `cycle`/`diff` auto-probe `ppc_equivalence`. Optional: PPC harness via `behaviour ppc <test-id>` when registered (see [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md)).
+7. **Before `Matching` / closing a target:** pass `python tools/coop/run.py size <unit>` — decomp `.text` must fit the retail split slice in `config/<region>/splits.txt` (`diff` / `cycle` / `behaviour compare` also enforce this).
 
-**Policy:** every function below must reach `FULL_MATCH` before it is considered done. The *Map level* column in `DECOMP_MAP.md` is planning guidance only.
+**Policy:** every function below must reach `EQUIVALENT_MATCH` (fuzzy ≥ 50% + SMT equivalent + split-size fit) or `FULL_MATCH` (100% static + split-size fit) before it is considered done. The *Map level* column in `DECOMP_MAP.md` is planning guidance only.
 
 **Split object size:** decomp `.text` ≤ retail split budget; run `coop run size <unit>` or `coop run size --all`.
 

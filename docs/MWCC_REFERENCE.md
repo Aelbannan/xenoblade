@@ -1,8 +1,8 @@
-# MWCC reference — reaching FULL_MATCH
+# MWCC reference — reaching EQUIVALENT_MATCH or FULL_MATCH
 
-Practical reference for reaching **`FULL_MATCH`** (100% instruction + relocation match) on Xenoblade Chronicles Wii using **high-level C/C++ only**. Retail assembly, Ghidra, and `build/us/asm/` are **reference only** — do not ship asm, `register rN`, fake stack buffers, or register-named parameters in `src/**` or `libs/**`.
+Practical reference for reaching **`EQUIVALENT_MATCH`** (fuzzy ≥ 50% + SMT equivalent) or **`FULL_MATCH`** (100% byte match) on Xenoblade Chronicles Wii using **high-level C/C++ only**. Retail assembly, Ghidra, and `build/us/asm/` are **reference only** — do not ship asm, `register rN`, fake stack buffers, or register-named parameters in `src/**` or `libs/**`.
 
-**Policy sources:** `.cursor/skills/xenoblade-decomp/SKILL.md`, `PLAN.md` §17, `coop.json` (`match_policy: full`, `functionRelocDiffs=data_value`).
+**Policy sources:** `.cursor/skills/xenoblade-decomp/SKILL.md`, `PLAN.md` §17, `coop.json` (`match_policy: equivalent`, `functionRelocDiffs=data_value`).
 
 **Fork constraint:** many community projects use inline asm, `register` variables, or asm labels for the last 1–5%. This fork requires **high-level C/C++ only** — techniques marked ⚠️ asm/register are listed for **diagnosis**, not as approved fixes.
 
@@ -55,7 +55,7 @@ python tools/coop/run.py cycle view-set-current --hypothesis "..." --next-change
 
 ## Behaviour comparison (static + optional PPC)
 
-When static objdiff match is **below 100%**, byte identity is not yet proven. Prefer continuing toward `FULL_MATCH` / §17.6 patches. Optional evidence:
+When static objdiff match is **below 100%**, byte identity is not yet proven. Continue toward `FULL_MATCH` / `EQUIVALENT_MATCH` / §17.6 patches. Optional evidence:
 
 ```bash
 python tools/coop/run.py behaviour audit              # size budget

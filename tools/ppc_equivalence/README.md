@@ -7,7 +7,7 @@ selected by the contract.
 
 It complements, but does not replace:
 
-- objdiff / `FULL_MATCH`, which remains the acceptance bar for decomp targets;
+- objdiff / byte-level matching, which remains one of two equal-tier acceptance bars for decomp targets;
 - host behaviour tests, which remain mandatory below `FULL_MATCH`;
 - the Dolphin PPC harness, which supplies independent concrete evidence.
 
@@ -23,9 +23,20 @@ From the repository root:
 python3 -m pip install -r tools/ppc_equivalence/requirements.txt
 ```
 
-The pinned runtime dependencies are Capstone (decoder cross-check) and Z3.
-The semantic decoder also validates instruction fields directly; semantics do
-not depend on formatted disassembly text.
+For a repository-local environment that is automatically used by both the
+standalone checker and `coop run equivalence`, run:
+
+```bash
+python3 tools/ppc_equivalence/run.py --install-deps
+```
+
+This creates the ignored `tools/ppc_equivalence/.venv/` with the exact pinned
+Capstone and Z3 versions. No shell activation is required.
+
+The pinned runtime dependencies are Capstone (optional decoder cross-check) and Z3.
+The semantic decoder validates instruction fields directly; Capstone, when
+installed, only cross-checks instruction boundaries. Semantics do not depend on
+formatted disassembly text.
 
 ## Quick checks
 
@@ -56,17 +67,43 @@ python3 tools/coop/run.py equivalence replay \
   build/ppc-equivalence/counterexample.json
 ```
 
-Decode a block or check raw binary files:
+Decode a block, extract a symbol from an object, or check raw binary files /
+named ELF functions:
 
 ```bash
 python3 tools/coop/run.py equivalence decode \
   --hex "38630004 5463103a" --base 0x80001000
 
+python3 tools/coop/run.py equivalence extract \
+  --object build/us/obj/kyoshin/CGame.o --list
+
+python3 tools/coop/run.py equivalence extract \
+  --object build/us/obj/kyoshin/CGame.o \
+  --symbol OnPauseTrigger__5CGameFv --out build/ppc-equivalence/orig.bin
+
 python3 tools/coop/run.py equivalence check \
   --original original.bin --candidate candidate.bin \
   --base-original 0x80001000 --base-candidate 0x80002000 \
   --observe r3,cr0,xer.ca --json
+
+# Direct object pair (retail / decomp .o files from objdiff):
+python3 tools/coop/run.py equivalence check-objects \
+  --original build/us/obj/kyoshin/CGame.o \
+  --candidate build/us/src/kyoshin/CGame.o \
+  --symbol OnPauseTrigger__5CGameFv
+
+# Same, resolved from objdiff.json (builds/post-processes the decomp object):
+python3 tools/coop/run.py equivalence check-unit kyoshin/CGame \
+  --symbol OnPauseTrigger__5CGameFv
 ```
+
+`check-objects` / `check-unit` load instruction bytes from the named `.text`
+symbol in each ELF32 big-endian object (the same pair objdiff compares). Decode
+bases default to each symbol’s section address + `st_value`. Raw reloc immediates
+are compared as encoded. When fuzzy match is in `[50%, 100%)`, `coop run diff` /
+`cycle` run this automatically and may promote status to **`EQUIVALENT_MATCH`**
+(the fork’s default acceptance bar, alongside `FULL_MATCH`).
+Split-size fit remains mandatory.
 
 ## Contract and exit codes
 
@@ -76,8 +113,8 @@ explicit choice.
 
 | Contract | Compared state |
 |---|---|
-| `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, `r13`–`r31`, `CR2`–`CR4`, and all final memory |
-| `strict` | All modeled GPRs, complete CR, `XER.CA/OV/SO`, LR, CTR, and all final memory |
+| `ppc-eabi` | `r1`, `r2`, return pair `r3:r4`, FP return `f1`, `r13`–`r31`, nonvolatile `f14`–`f31`, `CR2`–`CR4`, and all final memory |
+| `strict` | All modeled GPRs/FPRs, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
 The ABI preset is for completed function boundaries. It intentionally excludes
@@ -95,7 +132,8 @@ python3 tools/coop/run.py equivalence check-hex \
 ```
 
 `--observe` may be repeated or comma-separated. Supported names are `r0`–`r31`,
-`cr`, `cr0`–`cr7`, `xer.ca`, `xer.ov`, `xer.so`, `lr`, `ctr`, and `memory`.
+`f0`–`f31`, `cr`, `cr0`–`cr7`, `fpscr`, `xer.ca`, `xer.ov`, `xer.so`, `lr`,
+`ctr`, and `memory`.
 
 | Exit | Meaning |
 |---:|---|
@@ -109,9 +147,9 @@ JSON proof results record the architecture model, observables, assumptions,
 instruction counts, solver/version/timing, and—when applicable—the first
 observable mismatch and replayable input state.
 
-## Supported model (phases 1 and 2)
+## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v2` model supports:
+The current `broadway-ppc32-be-v3` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -124,14 +162,27 @@ The current `broadway-ppc32-be-v2` model supports:
   access and exact final-array comparison;
 - `b`, `bc`, `bclr`, and `bcctr`, including AA/LK, CR tests, CTR decrement/test,
   LR updates, indirect aligned targets, acyclic CFG paths, and exit comparison;
+- scalar FP D-form/indexed loads and stores (`lfs*`, `lfd*`, `stfs*`, `stfd*`,
+  `stfiwx`) with big-endian memory and binary32/binary64 conversion;
+- scalar `fadd[s]`, `fsub[s]`, `fdiv[s]`, double `fmul`, `frsp`,
+  `fsel`, `fcmpu`, and bit-exact `fmr`/`fneg`/`fabs`/`fnabs`;
+- FPSCR rounding-mode input, FPRF/FPCC result classification, Rc-to-CR1, FP
+  observables, and EABI FP return/nonvolatile registers;
 - configurable `--max-instructions` and `--max-paths` bounds.
 
-Loops/back-edges, continuations after external calls, floating point,
-paired-single, VMX, atomics/reservations, cache/MMIO behavior, privileged state,
-and memory/protection/alignment exceptions return inconclusive or are outside
-the declared model. Division outputs are compared only where the ISA defines
-the quotient. Direct calls are compared as terminal call exits (target, LR,
-contract state); the callee is not guessed or silently skipped.
+Modeled arithmetic is restricted to finite inputs/results, round-to-nearest-even,
+and `FPSCR.NI=0`; this keeps ConcreteOps, Z3, and the Broadway oracle on the
+same explicit domain. Floating-point sticky exception flags,
+exception-enable result suppression, and traps are outside the declared
+value-semantics model. Instructions whose core
+result depends on those details (`fctiw*`, `fcmpo`, FPSCR mutation/access),
+square-root/estimate instructions (`fsqrt[s]`, `fres`, `frsqrte`), fused/special-multiply
+forms, paired-single/quantized operations, VMX, atomics/reservations,
+cache/MMIO behavior, privileged state, loops/back-edges, external call
+continuations, and memory/protection/alignment exceptions return inconclusive
+or are outside the declared model. Division outputs are compared only where
+the ISA defines the result. Direct calls are terminal exits; the callee is not
+guessed or silently skipped.
 
 See [ISA references](REFERENCES.md) for the source hierarchy and modeled
 assumptions.
@@ -140,7 +191,7 @@ assumptions.
 
 ```bash
 python3 tools/ppc_equivalence/gen_fixture_blob.py
-python3 -m unittest discover -s tools/ppc_equivalence/tests -v
+python3 tools/ppc_equivalence/run.py --self-test
 python3 tools/coop/run.py equivalence differential
 python3 tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
 python3 tools/ppc_equivalence/run.py --help
@@ -149,6 +200,7 @@ python3 tools/ppc_equivalence/run.py --help
 | Gate | Required where | Command |
 |---|---|---|
 | Fixture regenerate freshness | CI + local | `gen_fixture_blob.py --check` |
+| Full Python suite in pinned environment | CI + local | `run.py --self-test` |
 | ConcreteOps corpus | CI + local | `equivalence differential` |
 | Dolphin interpreter DOL | Local before advertising opcodes | `behaviour ppc ppc-equivalence-fixtures` |
 
@@ -158,9 +210,10 @@ source of truth for the closed loop:
 1. Python `ConcreteOps` executes every fixture (`equivalence differential` / CI).
 2. `gen_fixture_blob.py` emits `ppc_fixture_cases.inc`, `ppc_fixture_payloads.c`,
    and `broadway.jsonl`.
-3. The generic Dolphin DOL (`ppc-equivalence-fixtures`) loads each case’s state,
-   `blrl`s into a generated `.text` payload under the interpreter
-   (`CPUCore = 0`), and compares the same expected result/CR/XER(/memory).
+3. The generic Dolphin DOL (`ppc-equivalence-fixtures`) loads each case’s GPR,
+   FPR, CR, XER, FPSCR, and memory state, `blrl`s into a generated `.text`
+   payload under the interpreter (`CPUCore = 0`), and compares the same
+   expected state.
    Headless user inis disable panic handlers and analytics prompts.
 
 Do not hand-edit generated `ppc_fixture_*.inc/.c` files. Edit

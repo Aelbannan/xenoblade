@@ -7,8 +7,8 @@ project_root: .
 
 region: us
 
-match_policy: full
-default_required_level: FULL_MATCH
+match_policy: equivalent
+default_required_level: EQUIVALENT_MATCH
 
 # Optional: override if not on PATH or before first configure build.
 # objdiff_cli: build/tools/objdiff-cli

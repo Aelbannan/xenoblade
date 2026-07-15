@@ -6,7 +6,7 @@
 
 **Primary rule:** decompile the smallest connected behavior slice needed to implement and prove the feature. Do not require the entire game to be decompiled before implementation begins.
 
-**Current project policy (2026-07):** treat every listed target as **`FULL_MATCH` required for now**. Recovery-level columns in the tables below remain as historical planning notes; the active acceptance bar for decompilation work is full byte and relocation match unless this policy is explicitly revised.
+**Current project policy (2026-07):** every listed target must reach **`EQUIVALENT_MATCH`** or **`FULL_MATCH`** — both are equal-tier acceptance outcomes. Recovery-level columns below remain as historical planning notes; the active acceptance bar for decompilation work is `EQUIVALENT_MATCH` (fuzzy ≥ 50% + SMT equivalent + split-size fit) or `FULL_MATCH` (100% static + split-size fit).
 
 **Companion documents:**
 
@@ -31,11 +31,12 @@ Use one of these levels for every target.
 | **STRUCTURAL** | Compilable pseudocode/C++ captures control flow and object accesses, but may not match instructions. | Needed to understand state ownership, split update from render, or safely refactor a large routine. |
 | **BEHAVIORAL** | Reimplementation passes controlled runtime tests against the original. | Suitable for downstream replacement when exact matching is not needed. |
 | **CODE_MATCH** | Generated instruction bytes match for the function body. | Strong evidence for helpers, getters, state setters, and hook-critical leaf functions. |
-| **FULL_MATCH** | Instructions, relocations, stack shape, constants, and relevant data match. | **Current default acceptance bar for all targets in this project.** |
+| **FULL_MATCH** | Instructions, relocations, stack shape, constants, relevant data match, and split-size fit. | One of two equal-tier acceptance outcomes for this project (alongside `EQUIVALENT_MATCH`). |
+| **EQUIVALENT_MATCH** | Fuzzy ≥ 50%, SMT proves behavioral equivalence under `ppc-eabi`, and split-size fit. | One of two equal-tier acceptance outcomes for this project. |
 
-**Current project policy:** every decompilation target must reach **`FULL_MATCH`** before it is considered complete. Use the levels above as progress labels during iteration, but do not stop at `STRUCTURAL`, `CODE_MATCH`, or `HIGH_MATCH` unless this policy is explicitly revised.
+**Current project policy:** every decompilation target must reach **`EQUIVALENT_MATCH`** or **`FULL_MATCH`** before it is considered complete. Both are equal-tier outcomes — `EQUIVALENT_MATCH` guarantees semantic correctness via SMT proof + split-size fit, `FULL_MATCH` guarantees byte-level identity + split-size fit. Use the levels above as progress labels during iteration, but do not stop at `STRUCTURAL`, `CODE_MATCH`, or `HIGH_MATCH`.
 
-A large function does **not** need to be understood in one pass, but it **does** need to reach `FULL_MATCH` before the target is closed. Large render/UI/battle routines may be decomposed into leaf helpers first; each helper and the parent function must still end at `FULL_MATCH`.
+A large function does **not** need to be understood in one pass, but it **does** need to reach `EQUIVALENT_MATCH` or `FULL_MATCH` before the target is closed. Large render/UI/battle routines may be decomposed into leaf helpers first; each helper and the parent function must still end at `EQUIVALENT_MATCH` or `FULL_MATCH`.
 
 ---
 

@@ -16,7 +16,13 @@ from tools.ppc_equivalence.contract import (
 )
 from tools.ppc_equivalence.decoder import decode_block, parse_hex
 from tools.ppc_equivalence.engine import check_equivalence
-from tools.ppc_equivalence.ir import ExecutionInconclusive, Instruction, Opcode, UnsupportedInstruction
+from tools.ppc_equivalence.ir import (
+    ExecutionInconclusive,
+    Instruction,
+    Opcode,
+    SUPPORTED_OPCODES,
+    UnsupportedInstruction,
+)
 from tools.ppc_equivalence.model import MachineState, concrete_state
 from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.semantics import (
@@ -95,6 +101,48 @@ class DecoderTests(unittest.TestCase):
         with self.assertRaises(UnsupportedInstruction):
             decode("7c032001")
 
+    def test_paired_single_and_unmodeled_fp_fail_closed(self) -> None:
+        words = (
+            0x1000000C,  # psq_lx according to GekkoDisassembler.cpp
+            0x1000004C,  # psq_lux
+            0x1000000E,  # psq_stx
+            0x1000004E,  # psq_stux
+            0xE0030000,  # psq_l p0,0(r3),0,qr0
+            0xEC000030,  # fres (hardware estimate)
+            0xFC000034,  # frsqrte (hardware estimate)
+            0xEC00182C,  # fsqrts (not implemented by Broadway interpreter)
+            0xFC00182C,  # fsqrt (not implemented by Broadway interpreter)
+        )
+        for word in words:
+            with self.subTest(word=f"0x{word:08x}"):
+                try:
+                    decoded = decode(f"{word:08x}")
+                except UnsupportedInstruction:
+                    continue
+                with self.assertRaises(UnsupportedInstruction):
+                    execute_block(concrete_state(), decoded, ConcreteOps())
+
+    def test_scalar_fp_encodings_match_gekko_disassembler(self) -> None:
+        words = "c0030000 d8030000 ec00002a fc00002a fc000050 fc000090 fc000210"
+        self.assertEqual(
+            [item.opcode for item in decode(words)],
+            [Opcode.LFS, Opcode.STFD, Opcode.FADDS, Opcode.FADD,
+             Opcode.FNEG, Opcode.FMR, Opcode.FABS],
+        )
+
+    def test_reserved_fp_operand_fields_are_rejected(self) -> None:
+        # fadd has no FC operand; GekkoDisassembler::fdabc rejects it.
+        with self.assertRaises(UnsupportedInstruction):
+            decode("fc00006a")
+
+    def test_direct_fp_instruction_execution_fails_closed(self) -> None:
+        state = concrete_state()
+        unsupported = set(Opcode) - SUPPORTED_OPCODES
+        self.assertTrue(unsupported)
+        for opcode in unsupported:
+            with self.subTest(opcode=opcode.value), self.assertRaises(UnsupportedInstruction):
+                execute_instruction(state, instruction(opcode, ()), ConcreteOps())
+
     def test_rejects_partial_word(self) -> None:
         with self.assertRaises(ValueError):
             parse_hex("386300")
@@ -118,6 +166,72 @@ class PrimitiveTests(unittest.TestCase):
                         break
                     active = (active + 1) & 31
                 self.assertEqual(rotate_mask(mb, me), expected)
+
+
+class FloatingPointConcreteTests(unittest.TestCase):
+    def test_arithmetic_rounding_compare_and_fprf(self) -> None:
+        state = concrete_state({"fpr": {"f1": 1.5, "f2": 2.0, "f3": 4.0}})
+        added = execute_block(state, decode("fce1102a"), ConcreteOps())
+        self.assertEqual(added.fpr[7], 0x400C000000000000)
+        self.assertEqual(added.fpscr & 0x1F000, 0x4000)
+        compared = execute_block(state, decode("fc011000"), ConcreteOps())
+        self.assertEqual(compared.cr >> 28, 8)
+        self.assertEqual(compared.fpscr & 0xF000, 0x8000)
+
+    def test_moves_preserve_nan_payload_and_sign_bits(self) -> None:
+        payload = 0x7FF8000012345678
+        state = concrete_state({"fpr": {"f2": payload}})
+        moved = execute_block(state, decode("fce01090"), ConcreteOps())
+        negated = execute_block(state, decode("fce01050"), ConcreteOps())
+        self.assertEqual(moved.fpr[7], payload)
+        self.assertEqual(negated.fpr[7], payload ^ (1 << 63))
+
+    def test_big_endian_fp_load_store_round_trip(self) -> None:
+        state = concrete_state({
+            "gpr": {"r3": 0x100},
+            "fpr": {"f2": 1.5},
+        })
+        stored = execute_block(state, decode("d8430000"), ConcreteOps())
+        loaded = execute_block(stored, decode("c8630000"), ConcreteOps())
+        self.assertEqual(loaded.fpr[3], 0x3FF8000000000000)
+        self.assertEqual(
+            [loaded.memory.read(0x100 + index) for index in range(8)],
+            [0x3F, 0xF8, 0, 0, 0, 0, 0, 0],
+        )
+
+    def test_concrete_arithmetic_rejects_unvalidated_rounding_modes(self) -> None:
+        state = concrete_state({"fpr": {"f1": 1.5, "f2": 2.0}, "fpscr": 1})
+        with self.assertRaises(ExecutionInconclusive):
+            execute_block(state, decode("fce1102a"), ConcreteOps())
+
+
+@unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")
+class FloatingPointSymbolicTests(unittest.TestCase):
+    def test_fp_automatic_live_out_tracks_fpr_fpscr_and_cr1(self) -> None:
+        self.assertEqual(
+            automatic_live_out(decode("fce1102b")),
+            ("f7", "cr1", "fpscr"),
+        )
+        self.assertEqual(
+            automatic_live_out(decode("fc011000")),
+            ("cr0", "fpscr"),
+        )
+
+    def test_identical_fp_arithmetic_is_proved(self) -> None:
+        code = decode("fce1102a")
+        result = check_equivalence(
+            code, code, EquivalenceContract(parse_observables(["f7,fpscr"]), timeout_ms=5_000),
+            original_hex="fce1102a", candidate_hex="fce1102a",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_add_and_subtract_are_distinguished(self) -> None:
+        result = check_equivalence(
+            decode("fce1102a"), decode("fce11028"),
+            EquivalenceContract(parse_observables(["f7"]), timeout_ms=5_000),
+            original_hex="fce1102a", candidate_hex="fce11028",
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
 
 
 class ConcreteSemanticsTests(unittest.TestCase):
@@ -218,6 +332,9 @@ class ContractTests(unittest.TestCase):
         names = preset_observable_names("ppc-eabi")
         self.assertEqual(names[:5], ("r1", "r2", "r3", "r4", "r13"))
         self.assertIn("r31", names)
+        self.assertIn("f1", names)
+        self.assertIn("f14", names)
+        self.assertIn("f31", names)
         self.assertEqual(names[-4:], ("cr2", "cr3", "cr4", "memory"))
         self.assertNotIn("r5", names)
         self.assertNotIn("cr0", names)
@@ -225,7 +342,8 @@ class ContractTests(unittest.TestCase):
     def test_strict_preset_covers_all_modeled_state(self) -> None:
         names = preset_observable_names("strict")
         self.assertEqual(names[:32], tuple(f"r{index}" for index in range(32)))
-        self.assertEqual(names[32:], ("cr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr", "memory"))
+        self.assertEqual(names[32:64], tuple(f"f{index}" for index in range(32)))
+        self.assertEqual(names[64:], ("cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr", "ctr", "memory"))
 
     def test_coop_runner_defaults_to_ppc_eabi(self) -> None:
         args = _equivalence_args_with_default_contract(
@@ -360,10 +478,8 @@ class PhaseOneConcreteSemanticsTests(unittest.TestCase):
         registers["r3"] = 0x200
         state = concrete_state({"gpr": registers})
         state = execute_instruction(state, instruction(Opcode.STMW, (28, 3, 0)), ConcreteOps())
-        cleared = list(state.gpr)
         for index in range(28, 32):
-            cleared[index] = 0
-        state = MachineState(tuple(cleared), state.cr, state.xer, state.lr, state.ctr, state.memory, state.valid)
+            state = state.with_gpr(index, 0)
         state = execute_instruction(state, instruction(Opcode.LMW, (28, 3, 0)), ConcreteOps())
         self.assertEqual(state.gpr[28:32], tuple(i * 0x01010101 for i in range(28, 32)))
 
@@ -377,6 +493,46 @@ class PhaseOneConcreteSemanticsTests(unittest.TestCase):
         self.assertEqual(state.gpr[3], 0x80000000)
         self.assertTrue(state.xer.ov)
         self.assertTrue(state.xer.so)
+
+    def test_addme_and_subfme_special_carry_rules(self) -> None:
+        addme = execute_instruction(
+            concrete_state({"gpr": {"r4": 0}, "xer": {"ca": 1}}),
+            instruction(Opcode.ADDME, (3, 4)),
+            ConcreteOps(),
+        )
+        self.assertEqual(addme.gpr[3], 0)
+        self.assertFalse(addme.xer.ca)
+
+        subfme_with_carry = execute_instruction(
+            concrete_state({"gpr": {"r4": 0}, "xer": {"ca": 1}}),
+            instruction(Opcode.SUBFME, (3, 4)),
+            ConcreteOps(),
+        )
+        self.assertEqual(subfme_with_carry.gpr[3], 0xFFFFFFFF)
+        self.assertFalse(subfme_with_carry.xer.ca)
+
+        subfme_without_carry = execute_instruction(
+            concrete_state({"gpr": {"r4": 0}, "xer": {"ca": 0}}),
+            instruction(Opcode.SUBFME, (3, 4)),
+            ConcreteOps(),
+        )
+        self.assertEqual(subfme_without_carry.gpr[3], 0xFFFFFFFE)
+        self.assertTrue(subfme_without_carry.xer.ca)
+
+    def test_randomized_addme_and_subfme_reference(self) -> None:
+        rng = random.Random(0xADD5F)
+        for carry_in in (0, 1):
+            for _ in range(256):
+                value = rng.getrandbits(32)
+                state = concrete_state({"gpr": {"r4": value}, "xer": {"ca": carry_in}})
+
+                added = execute_instruction(state, instruction(Opcode.ADDME, (3, 4)), ConcreteOps())
+                self.assertEqual(added.gpr[3], (value - 1 + carry_in) & 0xFFFFFFFF)
+                self.assertEqual(added.xer.ca, carry_in == 0 and value != 0)
+
+                subtracted = execute_instruction(state, instruction(Opcode.SUBFME, (3, 4)), ConcreteOps())
+                self.assertEqual(subtracted.gpr[3], ((~value) - 1 + carry_in) & 0xFFFFFFFF)
+                self.assertEqual(subtracted.xer.ca, carry_in == 0 and value != 0xFFFFFFFF)
 
     def test_shift_edge_rules_and_sraw_carry(self) -> None:
         state = concrete_state({"gpr": {"r3": 0xFFFFFFFF, "r4": 32}})

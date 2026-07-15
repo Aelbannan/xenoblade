@@ -9,7 +9,7 @@
       "address": "0x801C3494",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "unit": "kyoshin/cf/CfPadTask",
-      "required_level": "FULL_MATCH"
+      "required_level": "EQUIVALENT_MATCH"
     },
     {
       "id": "pad-update-cf-pad-data",
@@ -20,7 +20,7 @@
       "address": "0x801C35C8",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "unit": "kyoshin/cf/CfPadTask",
-      "required_level": "FULL_MATCH"
+      "required_level": "EQUIVALENT_MATCH"
     },
     {
       "id": "pad-move",
@@ -31,7 +31,7 @@
       "address": "0x801C392C",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "unit": "kyoshin/cf/CfPadTask",
-      "required_level": "FULL_MATCH"
+      "required_level": "EQUIVALENT_MATCH"
     },
     {
       "id": "pad-update",
@@ -42,7 +42,7 @@
       "address": "0x801C3AC0",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "unit": "kyoshin/cf/CfPadTask",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "FULL_MATCH via volatile stick reload + setPad__\u2026Fv reloc"
     },
     {
@@ -54,7 +54,7 @@
       "address": "0x8043F3D8",
       "source": "libs/monolib/src/core/CView.cpp",
       "unit": "monolib/src/core/CView",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Source file not in public tree yet; trace via Ghidra first."
     },
     {
@@ -66,7 +66,7 @@
       "address": "0x8043F514",
       "source": "libs/monolib/src/core/CView.cpp",
       "unit": "monolib/src/core/CView",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Source file not in public tree yet."
     },
     {
@@ -78,7 +78,7 @@
       "address": "0x804401A0",
       "source": "libs/monolib/src/core/CView.cpp",
       "unit": "monolib/src/core/CView",
-      "required_level": "FULL_MATCH"
+      "required_level": "EQUIVALENT_MATCH"
     },
     {
       "id": "view-update-msg",
@@ -89,7 +89,7 @@
       "address": "0x8043FA08",
       "source": "libs/monolib/src/core/CView.cpp",
       "unit": "monolib/src/core/CView",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Context-ring drain; tags 0-7; extern-C mangled entry for wkUpdate"
     },
     {
@@ -101,7 +101,7 @@
       "address": null,
       "source": "src/kyoshin/CGame.cpp",
       "unit": "kyoshin/CGame",
-      "required_level": "FULL_MATCH"
+      "required_level": "EQUIVALENT_MATCH"
     },
     {
       "id": "device-vi-begin-frame",
@@ -112,7 +112,7 @@
       "address": "0x80459634",
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
       "unit": "monolib/device/CDeviceGX",
-      "required_level": "FULL_MATCH"
+      "required_level": "EQUIVALENT_MATCH"
     },
     {
       "id": "viewroot-set-current",
@@ -123,8 +123,8 @@
       "address": "0x80444C90",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
-      "required_level": "FULL_MATCH",
-      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded §17.6 frame/register patches; behaviour host PASS"
+      "required_level": "EQUIVALENT_MATCH",
+      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded \u00a717.6 frame/register patches; behaviour host PASS"
     },
     {
       "id": "viewroot-create",
@@ -135,8 +135,8 @@
       "address": "0x80445E94",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
-      "required_level": "FULL_MATCH",
-      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded §17.6 Chaitin/CSE patches"
+      "required_level": "EQUIVALENT_MATCH",
+      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded \u00a717.6 Chaitin/CSE patches"
     },
     {
       "id": "cviewroot-render-view",
@@ -147,7 +147,7 @@
       "address": "0x80445A5C",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Root mChildren walk + CView render dispatch; 97.1% CODE_MATCH"
     },
     {
@@ -159,7 +159,7 @@
       "address": "0x804415C4",
       "source": "libs/monolib/src/core/CView.cpp",
       "unit": "monolib/src/core/CView",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Primary per-view render pass; size 0xCB4; do not touch ctor/wkUpdate"
     },
     {
@@ -171,8 +171,8 @@
       "address": "0x80442CDC",
       "source": "libs/monolib/src/core/CViewFrame.cpp",
       "unit": "monolib/src/core/CViewFrame",
-      "required_level": "FULL_MATCH",
-      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded §17.6 Chaitin register-color patches; behaviour cviewframe-render PASS"
+      "required_level": "EQUIVALENT_MATCH",
+      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded \u00a717.6 Chaitin register-color patches; behaviour cviewframe-render PASS"
     },
     {
       "id": "device-gx-get-heap-size",
@@ -183,7 +183,7 @@
       "address": "0x80459890",
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
       "unit": "monolib/src/device/CDeviceGX",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr \u2014 return SDA int, not spInstance->gxHeapSize"
     },
     {
@@ -195,7 +195,7 @@
       "address": "0x8006BE48",
       "source": "src/kyoshin/cf/CfCamDirectionIntf.cpp",
       "unit": "kyoshin/cf/CfCamDirectionIntf",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create TU; retail C-linkage name CfCamDirectionIntf_setPos; size 0x28"
     },
     {
@@ -207,7 +207,7 @@
       "address": "0x8006C0D4",
       "source": "src/kyoshin/cf/CfCamTargetIntf.cpp",
       "unit": "kyoshin/cf/CfCamTargetIntf",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create TU; retail C-linkage; size 0x24; uses lbl_eu_80666268 float 0"
     },
     {
@@ -219,7 +219,7 @@
       "address": "0x8006BF64",
       "source": "src/kyoshin/cf/CfCamLookatIntf.cpp",
       "unit": "kyoshin/cf/CfCamLookatIntf",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Retail symbol is CamLookatIntf_setPos (no Cf prefix); draft in camera/ must move to cf/"
     },
     {
@@ -231,7 +231,7 @@
       "address": "0x80087BE0",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "unit": "kyoshin/cf/CfGameManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create TU stub; retail lwz lbl_eu_80661BC8@sda21; size 0x8; unit under-budget OK"
     },
     {
@@ -243,7 +243,7 @@
       "address": "0x8007E418",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "unit": "kyoshin/cf/CfGameManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Meyer-style BSS singleton; s8 guard lbl_eu_80663E70; storage lbl_eu_80571758; __register_global_object + ctor/dtor"
     },
     {
@@ -255,7 +255,7 @@
       "address": "0x80087B94",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "unit": "kyoshin/cf/CfGameManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Channel lbl_eu_80661BC8; pad table lbl_eu_80570D40 stride 0xF8; fallback via lbl_eu_80663E0C"
     },
     {
@@ -267,7 +267,7 @@
       "address": "0x800836D8",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "unit": "kyoshin/cf/CfGameManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Party-slot resolver; calls getInstance + func_8007C6B4 (slwi+add on &unk94) then lwz *result"
     },
     {
@@ -279,7 +279,7 @@
       "address": "0x80499F2C",
       "source": "libs/monolib/src/scn/CScn.cpp",
       "unit": "monolib/src/scn/CScn",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create CScn.cpp; insert CB at count 0x3BC then bubble-sort by priority field 0xC0; entry size 0xC at base 0xBC"
     },
     {
@@ -291,7 +291,7 @@
       "address": "0x80499FC8",
       "source": "libs/monolib/src/scn/CScn.cpp",
       "unit": "monolib/src/scn/CScn",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create CScn.cpp; find CB by pointer then compact array; count at 0x3BC"
     },
     {
@@ -303,7 +303,7 @@
       "address": "0x801A1F6C",
       "source": "src/kyoshin/COccCulling.cpp",
       "unit": "kyoshin/COccCulling",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Inline CCullFrustum::init; 1.0f via lbl_eu_80667C88@sda21; size 0x12C"
     },
     {
@@ -315,7 +315,7 @@
       "address": "0x8006BE70",
       "source": "src/kyoshin/cf/CfCamDirectionIntf.cpp",
       "unit": "kyoshin/cf/CfCamDirectionIntf",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "C-linkage; bl func_80074900; write lookat@0x268 + dir@0x25C; size 0x74"
     },
     {
@@ -327,7 +327,7 @@
       "address": "0x8006C030",
       "source": "src/kyoshin/cf/CfCamTargetIntf.cpp",
       "unit": "kyoshin/cf/CfCamTargetIntf",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "C-linkage leaf; lbl_eu_80666268 for unk25C.z; size 0x30"
     },
     {
@@ -339,7 +339,7 @@
       "address": "0x8006BF94",
       "source": "src/kyoshin/cf/CfCamLookatIntf.cpp",
       "unit": "kyoshin/cf/CfCamLookatIntf",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Retail CamLookatIntf_setDir; bl func_80074488 on &mLookat; size 0x74"
     },
     {
@@ -351,7 +351,7 @@
       "address": "0x80436D38",
       "source": "libs/monolib/src/util/MemManager.cpp",
       "unit": "monolib/src/util/MemManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Retail lwz lbl_eu_8066350C@sda21; blr \u2014 return SDA handle, not sHandleMEM2"
     },
     {
@@ -363,7 +363,7 @@
       "address": "0x80445810",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "r3=WORK_ID; instance lbl_eu_806655D0; children walk + getWorkThread + type gate; size 0xA0"
     },
     {
@@ -375,7 +375,7 @@
       "address": "0x8049A918",
       "source": "libs/monolib/src/scn/CScn.cpp",
       "unit": "monolib/src/scn/CScn",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Scene draw dispatcher; lbl_eu_80665908 current-scn SDA; CB walk + IScnRender vt+0xC; size 0x120"
     },
     {
@@ -387,7 +387,7 @@
       "address": "0x8006B3B8",
       "source": "src/kyoshin/cf/CfCamEvent.cpp",
       "unit": "kyoshin/cf/CfCamEvent",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Once-guards for three cam intf vtables; switch *(this+8) 8/9/0xA; create TU"
     },
     {
@@ -399,7 +399,7 @@
       "address": "0x80447308",
       "source": "libs/monolib/src/work/CWorkSystemMem.cpp",
       "unit": "monolib/src/work/CWorkSystemMem",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "lwz lbl_eu_80665620@sda21 then mHandle@0x1C4; TU size budget 0x160"
     },
     {
@@ -411,7 +411,7 @@
       "address": "0x801A4340",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "unit": "kyoshin/cf/CTaskCulling",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "SDA lbl_eu_80664328; tail to mOccCulling+0x60 / func_801A0F04; size 0x20"
     },
     {
@@ -423,7 +423,7 @@
       "address": "0x80133200",
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create TU; PackedFont Destroy\u00d73 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4"
     },
     {
@@ -435,7 +435,7 @@
       "address": "0x801A4324",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "unit": "kyoshin/cf/CTaskCulling",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "SDA lbl_eu_80664328 then unk94@0x94; size 0x1C; leave ICulling_UnkVirtualFunc1 alone"
     },
     {
@@ -447,7 +447,7 @@
       "address": "0x80132EC8",
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Manager-owned menu/window setup; leave Term alone; size 0x2E0"
     },
     {
@@ -459,7 +459,7 @@
       "address": "0x801A28A4",
       "source": "src/kyoshin/COccCulling.cpp",
       "unit": "kyoshin/COccCulling",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Cull plane setup; lbl_eu_80667C8C; leave addFrustum alone; size 0x2BC"
     },
     {
@@ -471,7 +471,7 @@
       "address": "0x80154740",
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "unit": "kyoshin/cf/CArtsSet",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Clear + 3\u00d78 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C"
     },
     {
@@ -483,7 +483,7 @@
       "address": "0x8012EEFC",
       "source": "src/kyoshin/CUIBattleManager.cpp",
       "unit": "kyoshin/CUIBattleManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create TU; CProcess alloc + Regist via lbl_eu_80664048; size 0xB4"
     },
     {
@@ -495,7 +495,7 @@
       "address": "0x80447250",
       "source": "libs/monolib/src/work/CWorkSystemMem.cpp",
       "unit": "monolib/src/work/CWorkSystemMem",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "CWorkThread(1) + lbl_eu_8056BAA8 vt + lbl_eu_80665620 SDA + create(0xfe0); leave getHandle; size 0x60"
     },
     {
@@ -507,7 +507,7 @@
       "address": "0x80146520",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create TU; vt lbl_eu_8052E9B0; memset/clear loops; size 0xA8"
     },
     {
@@ -519,7 +519,7 @@
       "address": "0x8014B308",
       "source": "src/kyoshin/cf/object/CAIAction.cpp",
       "unit": "kyoshin/cf/object/CAIAction",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Create TU; vt lbl_eu_8052F598; slot memset loops; size 0x10C"
     },
     {
@@ -531,7 +531,7 @@
       "address": "0x80188A70",
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "unit": "kyoshin/menu/CMenuPTGauge",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "FULL_MATCH; gates + DrawInfo draw; \u00a717.6 asm b for bit21 beq+8;b; leave Move"
     },
     {
@@ -543,7 +543,7 @@
       "address": "0x80188714",
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "unit": "kyoshin/menu/CMenuPTGauge",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Same gates as cbRenderBefore; state machine on unk8C; leave cbRenderBefore; size 0x35C"
     },
     {
@@ -555,7 +555,7 @@
       "address": "0x80445314",
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14f; ~99.7%; lbl_eu_806655D0 SDA; leave setCurrent/renderView/create"
     },
     {
@@ -567,7 +567,7 @@
       "address": "0x8010CC5C",
       "source": "src/kyoshin/menu/CMenuBattlePlayerState.cpp",
       "unit": "kyoshin/menu/CMenuBattlePlayerState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14f; create TU with Term only; slot stride 0x270 deletes; size 0x1B0"
     },
     {
@@ -579,7 +579,7 @@
       "address": "0x80103B20",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "unit": "kyoshin/menu/CMenuArtsSelect",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14f; create TU with Term only; lbl_eu_80663F24 SDA clear; size 0x248"
     },
     {
@@ -591,7 +591,7 @@
       "address": "0x80111240",
       "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
       "unit": "kyoshin/menu/CMenuEnemyState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14f; create TU with cbRenderBefore only; PTGauge-like gates + sort/draw; size 0x274"
     },
     {
@@ -603,7 +603,7 @@
       "address": "0x8014B41C",
       "source": "src/kyoshin/cf/object/CAIAction.cpp",
       "unit": "kyoshin/cf/object/CAIAction",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14f; Fv mangling but r4/r5 outbufs; leave ctor; size 0x110"
     },
     {
@@ -615,7 +615,7 @@
       "address": "0x80148210",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14g; Fv mangling but r4 arg; slot walk 0x1388 stride 0x34; leave ctor; size 0x154"
     },
     {
@@ -627,7 +627,7 @@
       "address": "0x8014B52C",
       "source": "src/kyoshin/cf/object/CAIAction.cpp",
       "unit": "kyoshin/cf/object/CAIAction",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14g; inverse of vfunc1; r4/r5 ABI; leave ctor/vfunc1; size 0x110"
     },
     {
@@ -639,7 +639,7 @@
       "address": "0x8010D6F4",
       "source": "src/kyoshin/menu/CMenuBattlePlayerState.cpp",
       "unit": "kyoshin/menu/CMenuBattlePlayerState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14g; PTGauge-like gates + slot draw; leave Term; size 0x1B4"
     },
     {
@@ -651,7 +651,7 @@
       "address": "0x8010491C",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "unit": "kyoshin/menu/CMenuArtsSelect",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14g; gates + layout draws; leave Term; size 0x3C0"
     },
     {
@@ -663,7 +663,7 @@
       "address": "0x8013D0C8",
       "source": "src/kyoshin/CUIWindowManager.cpp",
       "unit": "kyoshin/CUIWindowManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14g; create TU with Move only; lbl_eu_80664088/8C SDA; size 0x4DC"
     },
     {
@@ -675,7 +675,7 @@
       "address": "0x80148FC8",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14h; CODE_MATCH ~96.2% Chaitin soft-cap (dead trip r3/found r0); behaviour:battlestate-vfunc11 PASS; leave ctor/vfunc6"
     },
     {
@@ -687,7 +687,7 @@
       "address": "0x80148364",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries \u2192 vt+0x1c; leave other vfuncs; size 0x12C"
     },
     {
@@ -699,7 +699,7 @@
       "address": "0x80149EA4",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14h; leaf id\u2192mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160"
     },
     {
@@ -711,7 +711,7 @@
       "address": "0x80110888",
       "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
       "unit": "kyoshin/menu/CMenuEnemyState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14h; large HUD Move; leave cbRenderBefore; size 0x9B8"
     },
     {
@@ -723,7 +723,7 @@
       "address": "0x80133DF8",
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14h; Fv+r4/r5/r6 event switch; leave Init/Term; size 0x3C0"
     },
     {
@@ -735,7 +735,7 @@
       "address": "0x8010CE0C",
       "source": "src/kyoshin/menu/CMenuBattlePlayerState.cpp",
       "unit": "kyoshin/menu/CMenuBattlePlayerState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14h; large HUD Move; leave Term/cbRenderBefore; size 0x8E8"
     },
     {
@@ -747,7 +747,7 @@
       "address": "0x8014A014",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14i; leaf like vfunc31 but lhz +0x6; Fv+r4 ABI; leave other vfuncs; size 0x160"
     },
     {
@@ -759,7 +759,7 @@
       "address": "0x801A2098",
       "source": "src/kyoshin/COccCulling.cpp",
       "unit": "kyoshin/COccCulling",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14i; HIGH_MATCH ~88.5%; tight .text spare (~0x14); leave addFrustum/func_801A1188; size 0x588"
     },
     {
@@ -771,7 +771,7 @@
       "address": "0x80148490",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "status": "FULL_MATCH",
       "notes": "FULL_MATCH 100%; natural 104-entry scan gives retail 13x8 unroll, exact 0x15C; behaviour battlestate-vfunc29 PASS; size PASS"
     },
@@ -784,7 +784,7 @@
       "address": "0x801485EC",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14j; Fv+r4 entry; nested id cmpwi tree; leave other vfuncs; size 0x428"
     },
     {
@@ -796,7 +796,7 @@
       "address": "0x8012F270",
       "source": "src/kyoshin/CUIBattleManager.cpp",
       "unit": "kyoshin/CUIBattleManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14j; battle UI coordinator Move; leave Init; size 0xB00"
     },
     {
@@ -808,7 +808,7 @@
       "address": "0x80103D68",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "unit": "kyoshin/menu/CMenuArtsSelect",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14j; HUD Move; leave Term/cbRenderBefore; size 0xBB4"
     },
     {
@@ -820,7 +820,7 @@
       "address": "0x801332A4",
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "HIGH_MATCH ~94.3%; Exact size 0x97C; behaviour:uicf-move PASS; soft-cap enum r28/r30 + stwx Chaitin"
     },
     {
@@ -832,7 +832,7 @@
       "address": "0x80148A18",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14k; Fv+r4 arg; leave ctor/other vfuncs; size 0x444"
     },
     {
@@ -844,7 +844,7 @@
       "address": "0x80102B08",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "unit": "kyoshin/menu/CMenuArtsSelect",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14k; Process+vt/PTMF ctor; leave Term/Move/cbRenderBefore; size 0x288"
     },
     {
@@ -856,7 +856,7 @@
       "address": "0x8010B880",
       "source": "src/kyoshin/menu/CMenuBattlePlayerState.cpp",
       "unit": "kyoshin/menu/CMenuBattlePlayerState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14k; Process+vt/PTMF ctor; leave Term/Move/cbRenderBefore; size 0x580"
     },
     {
@@ -868,8 +868,8 @@
       "address": "0x8006C684",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "unit": "kyoshin/cf/CfCam",
-      "required_level": "FULL_MATCH",
-      "notes": "FULL_MATCH via extern-C ctor + SDA floats; §17.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)"
+      "required_level": "EQUIVALENT_MATCH",
+      "notes": "FULL_MATCH via extern-C ctor + SDA floats; \u00a717.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)"
     },
     {
       "id": "menu-enemy-ctor",
@@ -880,7 +880,7 @@
       "address": "0x8010FC4C",
       "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
       "unit": "kyoshin/menu/CMenuEnemyState",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14k; Process+vt/PTMF ctor; leave Move/cbRenderBefore; size 0x250"
     },
     {
@@ -892,7 +892,7 @@
       "address": "0x801884E8",
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "unit": "kyoshin/menu/CMenuPTGauge",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14l; widget/resource Init; leave Move/cbRenderBefore; size 0x1AC"
     },
     {
@@ -904,7 +904,7 @@
       "address": "0x8013D068",
       "source": "src/kyoshin/CUIWindowManager.cpp",
       "unit": "kyoshin/CUIWindowManager",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14l; teardown; leave Move; size 0x60"
     },
     {
@@ -916,7 +916,7 @@
       "address": "0x801A15E0",
       "source": "src/kyoshin/menu/CMenuBattleMode.cpp",
       "unit": "kyoshin/menu/CMenuBattleMode",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14l; create TU with Init only; size 0x134"
     },
     {
@@ -928,7 +928,7 @@
       "address": "0x80155FD8",
       "source": "src/kyoshin/cf/CArtsParam.cpp",
       "unit": "kyoshin/cf/CArtsParam",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14l; CArtsParam ctor; leave sibling vfuncs as structural unless needed for link; size 0x74"
     },
     {
@@ -940,8 +940,9 @@
       "address": "0x80039FB4",
       "source": "src/kyoshin/CGame.cpp",
       "unit": "kyoshin/CGame",
-      "required_level": "FULL_MATCH",
+      "required_level": "EQUIVALENT_MATCH",
       "notes": "Batch 14l; modal pause gate; DECOMP_MAP CODE_MATCH; leave other CGame methods; size 0x100"
     }
-  ]
+  ],
+  "default_required_level": "EQUIVALENT_MATCH"
 }

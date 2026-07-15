@@ -1,9 +1,11 @@
 {
   "project_root": ".",
   "region": "us",
-  "match_policy": "full",
-  "default_required_level": "FULL_MATCH",
-  "configure_args": ["--map"],
+  "match_policy": "equivalent",
+  "default_required_level": "EQUIVALENT_MATCH",
+  "configure_args": [
+    "--map"
+  ],
   "non_matching": false,
   "targets_file": "tools/coop/targets.json",
   "attempt_log": "docs/evidence/decomp/attempts.jsonl",

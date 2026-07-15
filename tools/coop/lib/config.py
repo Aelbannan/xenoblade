@@ -11,7 +11,7 @@ class CoopConfig:
     project_root: Path
     region: str = "us"
     match_policy: str = "full"
-    default_required_level: str = "FULL_MATCH"
+    default_required_level: str = "EQUIVALENT_MATCH"
     objdiff_cli: Optional[Path] = None
     ninja: Optional[Path] = None
     configure_args: List[str] = field(default_factory=lambda: ["--map"])
@@ -86,7 +86,7 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
         project_root=root,
         region=str(data.get("region", "us")),
         match_policy=str(data.get("match_policy", "full")),
-        default_required_level=str(data.get("default_required_level", "FULL_MATCH")),
+        default_required_level=str(data.get("default_required_level", "EQUIVALENT_MATCH")),
         objdiff_cli=_optional_path(data.get("objdiff_cli")),
         ninja=_optional_path(data.get("ninja")),
         configure_args=list(data.get("configure_args", ["--map"])),

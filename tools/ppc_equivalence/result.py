@@ -18,14 +18,17 @@ class ProofStatus(str, Enum):
 @dataclass(slots=True)
 class ProofResult:
     status: ProofStatus
-    architecture_model: str = "broadway-ppc32-be-v2"
+    architecture_model: str = "broadway-ppc32-be-v3"
     format: int = 2
     contract: str = "manual"
     observables: list[str] = field(default_factory=list)
     assumptions: list[str] = field(default_factory=lambda: [
-        "32-bit big-endian user-mode integer semantics",
+        "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
         "shared byte-addressed initial memory",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
+        "floating-point exception flags and enabled-exception suppression/traps are not tracked",
+        "modeled FP arithmetic requires finite inputs/results, FPSCR.RN=nearest-even, and NI=0",
+        "fres, frsqrte, conversions, fused/special multiply forms, and paired-single are unsupported",
         "division results compared only on architecturally defined inputs",
         "loops and external call continuations are not summarized",
     ])

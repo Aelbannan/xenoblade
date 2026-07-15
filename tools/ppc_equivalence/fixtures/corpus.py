@@ -855,6 +855,69 @@ def _paired_arithmetic_case(
     )
 
 
+def _paired_fused_case(
+    id_: str, xo5: int, expected_words: tuple[int, int], expected_ps0: int,
+    *, rc: int = 0,
+) -> FixtureCase:
+    initial_fpscr = 0x10000000 if rc else 0
+    expected_fprf = 0x8000 if expected_ps0 & (1 << 63) else 0x4000
+    return _case(
+        id_, ("fp", "paired", "fused", "round-single", "lanes"),
+        _state(
+            _gpr(r5=0), fpscr=initial_fpscr,
+            memory_words={
+                0: 0x3FC00000, 4: 0xC0000000,
+                8: 0x40000000, 12: 0x40800000,
+                16: 0x40800000, 20: 0xBF000000,
+                24: 0, 28: 0,
+            },
+        ),
+        [
+            _mtspr(5, 913),
+            _psq_d(56, 1, 4, 0, 0, 1),
+            _psq_d(56, 2, 4, 8, 0, 1),
+            _psq_d(56, 3, 4, 16, 0, 1),
+            _ps_a(7, 1, 2, 3, xo5, rc=rc),
+            _psq_d(60, 7, 4, 24, 0, 1),
+        ],
+        result=0, cr=0x01000000 if rc else 0, xer=0,
+        expected_memory={24: expected_words[0], 28: expected_words[1]},
+        expected_fpr={7: expected_ps0},
+        expected_fpscr=initial_fpscr | expected_fprf,
+    )
+
+
+def _paired_sum_case(
+    id_: str, xo5: int, expected_words: tuple[int, int], expected_ps0: int,
+    expected_fprf: int, *, rc: int = 0,
+) -> FixtureCase:
+    initial_fpscr = 0x10000000 if rc else 0
+    return _case(
+        id_, ("fp", "paired", "sum", "cross-lane", "copy", "round-single"),
+        _state(
+            _gpr(r5=0), fpscr=initial_fpscr,
+            memory_words={
+                0: 0x3FC00000, 4: 0x42C60000,
+                8: 0x41200000, 12: 0xC0000000,
+                16: 0x40400000, 20: 0x40800000,
+                24: 0, 28: 0,
+            },
+        ),
+        [
+            _mtspr(5, 913),
+            _psq_d(56, 1, 4, 0, 0, 1),
+            _psq_d(56, 2, 4, 8, 0, 1),
+            _psq_d(56, 3, 4, 16, 0, 1),
+            _ps_a(7, 1, 2, 3, xo5, rc=rc),
+            _psq_d(60, 7, 4, 24, 0, 1),
+        ],
+        result=0, cr=0x01000000 if rc else 0, xer=0,
+        expected_memory={24: expected_words[0], 28: expected_words[1]},
+        expected_fpr={7: expected_ps0},
+        expected_fpscr=initial_fpscr | expected_fprf,
+    )
+
+
 FIXTURES += (
     _case("mffs", ("fp", "fpscr", "read"), _state(fpscr=0xA0100000), [_fp_x(7, 0, 0, 583)], result=0, cr=0, xer=0, expected_fpr={7: 0xFFF80000A0100000}, expected_fpscr=0xA0100000),
     _case("mtfsf", ("fp", "fpscr", "write", "record"), _state(fpr={"f2": 0xFFF8000000100880}), [_mtfsf(0xFF, 2, rc=1)], result=0, cr=0x06000000, xer=0, expected_fpscr=0x60100080),
@@ -883,6 +946,17 @@ FIXTURES += (
     _case("ps_add-lane-exceptions", ("fp", "paired", "add", "invalid", "lanes", "record", "clear-fifr"), _state(fpr={"f1": _PINF, "f2": _NINF, "f3": _SNAN, "f4": _F2}, fpscr=0x00060000), [_ps_x(5, 1, 3, 528), _ps_x(6, 2, 4, 528), _ps_a(7, 5, 6, 0, 21, rc=1)], result=0, cr=0x0A000000, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA1811000),
     _case("ps_add-ve-writes", ("fp", "paired", "add", "invalid", "ve", "write-result"), _state(fpr={"f1": _PINF, "f2": _F1, "f3": _NINF, "f4": _F2, "f7": _F1}, fpscr=0x80), [_ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_a(7, 5, 6, 0, 21)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xE0811080),
     _case("ps_mul-vximz-ps1", ("fp", "paired", "multiply", "invalid", "ps1"), _state(fpr={"f1": _F1, "f2": 0, "f3": _F2, "f4": _PINF}), [_ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_a(7, 5, 0, 6, 25)], result=0, cr=0, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xA0104000),
+    _paired_fused_case("ps_madd", 29, (0x41000000, 0x40A00000), 0x4020000000000000, rc=1),
+    _paired_fused_case("ps_msub", 28, (0x40800000, 0xC0400000), 0x4010000000000000),
+    _paired_fused_case("ps_nmadd", 31, (0xC1000000, 0xC0A00000), 0xC020000000000000),
+    _paired_fused_case("ps_nmsub", 30, (0xC0800000, 0x40400000), 0xC010000000000000),
+    _paired_fused_case("ps_madds0", 14, (0x41000000, 0xC0800000), 0x4020000000000000),
+    _paired_fused_case("ps_madds1", 15, (0x3FA00000, 0x40A00000), 0x3FF4000000000000),
+    _case("ps_nmadd-lane-invalid-ve", ("fp", "paired", "fused", "snan", "vximz", "ve", "write-result"), _state(_gpr(r5=0), fpr={"f1": 0xFFF0000012345678, "f2": 0, "f3": 0x7FF80000ABCDEF01, "f4": _NINF, "f8": _F2, "f9": _PINF}, fpscr=0x80, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_x(10, 8, 9, 528), _ps_a(7, 5, 6, 10, 31), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0xFFC00000, 4: 0x7FC00000}, expected_fpr={7: 0xFFF8000000000000}, expected_fpscr=0xE1111080),
+    _paired_sum_case("ps_sum0", 10, (0xBF000000, 0x40800000), 0xBFE0000000000000, 0x8000),
+    _paired_sum_case("ps_sum1", 11, (0x40400000, 0xBF000000), 0x4008000000000000, 0x8000, rc=1),
+    _case("ps_sum0-vxisi", ("fp", "paired", "sum", "cross-lane", "invalid"), _state(_gpr(r5=0), fpr={"f1": _PINF, "f2": _NINF, "f3": _F2}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 1, 528), _ps_x(6, 2, 2, 528), _ps_x(8, 3, 3, 528), _ps_a(7, 5, 6, 8, 10), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7FC00000, 4: 0x40000000}, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA0811000),
+    _case("ps_sel-signed-zero-nan", ("fp", "paired", "select", "signed-zero", "nan", "lane-bits", "record"), _state(_gpr(r5=0), fpscr=0x10000000, memory_words={0: 0x80000000, 4: 0x7FC00001, 8: 0xFFC12345, 12: 0x80000000, 16: 0x3FC00000, 20: 0x40800000, 24: 0, 28: 0}), [_mtspr(5, 913), _psq_d(56, 1, 4, 0, 0, 1), _psq_d(56, 2, 4, 8, 0, 1), _psq_d(56, 3, 4, 16, 0, 1), _ps_a(7, 1, 2, 3, 23, rc=1), _psq_d(60, 7, 4, 24, 0, 1)], result=0, cr=0x01000000, xer=0, expected_memory={24: 0x3FC00000, 28: 0x80000000}, expected_fpr={7: _F15}, expected_fpscr=0x10000000),
     _case("psq-l-st-quantized", ("fp", "psq", "gqr", "quantized", "pair", "memory"), _state(_gpr(r5=0x01060204), memory_words={0: 0xFE080000, 8: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x0010AAAA}, expected_fpr={7: 0xBFF0000000000000}),
     _case("psq-u8-load-s8-store", ("fp", "psq", "gqr", "u8", "s8", "scale", "pair"), _state(_gpr(r5=0x02040106), memory_words={0: 0x080CAAAA, 4: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 4, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0406AAAA}, expected_fpr={7: _F2}),
     _case("psq-u16-load-float-store", ("fp", "psq", "gqr", "u16", "float", "scale", "pair"), _state(_gpr(r5=0x01050000), memory_words={0: 0x00020008, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F800000, 12: 0x40800000}, expected_fpr={7: _F1}),

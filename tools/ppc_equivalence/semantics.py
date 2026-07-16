@@ -2549,8 +2549,8 @@ def execute_cfg(
     instructions: list[Instruction],
     ops: WordOps,
     *,
-    max_instructions: int = 512,
-    max_paths: int = 128,
+    max_instructions: int = 2048,
+    max_paths: int = 256,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
@@ -2649,7 +2649,7 @@ def execute_cfg(
     return terminals
 
 
-def execute_block(state: MachineState, instructions: list[Instruction], ops: WordOps, max_instructions: int = 512) -> MachineState:
+def execute_block(state: MachineState, instructions: list[Instruction], ops: WordOps, max_instructions: int = 2048) -> MachineState:
     terminals = execute_cfg(state, instructions, ops, max_instructions=max_instructions)
     if len(terminals) != 1 or terminals[0].exit_kind != "fallthrough":
         raise ExecutionInconclusive("concrete replay has multiple paths or a non-fallthrough exit")

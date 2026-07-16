@@ -21,7 +21,7 @@ description: >-
 3. For MWCC matching work, read `docs/MWCC_REFERENCE.md` before editing source.
 4. Confirm this is a **private/downstream fork** — do not upstream LLM-assisted matching work to `xbret/xenoblade`.
 
-**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under `ppc-eabi` **and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes. `coop run cycle` / `diff` probe equivalence automatically when fuzzy is in `[50, 100)`. Unit-level (no symbol) still requires 100% code + data.
+**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes. `coop run cycle` / `diff` probe equivalence automatically when fuzzy is in `[50, 100)`. Unit-level (no symbol) still requires 100% code + data.
 
 **Source language:** reconstruction must be **high-level C or C++ only** (MWCC). Express recovered **semantics** — fields, locals, control flow, and normal function calls — not register-level or stack-level implementation detail.
 
@@ -158,7 +158,7 @@ python tools/coop/run.py size kyoshin/cf/CfPadTask
 
 ### PPC semantic equivalence (optional additional evidence)
 
-For supported straight-line integer blocks, the Capstone + Z3 checker can prove
+For supported bounded PPC blocks, the field decoder + Z3 checker can prove
 or refute selected live-out state even when bytes differ:
 
 ```bash
@@ -169,12 +169,13 @@ python tools/coop/run.py equivalence check-unit <unit> --symbol <mangled-or-toke
 
 Read `tools/ppc_equivalence/README.md` before use. An equivalence result applies
 only to its printed observables and assumptions. Unsupported instructions,
-timeouts, and solver `unknown` are inconclusive. This check is additional
-feeds `EQUIVALENT_MATCH` when fuzzy ≥ 50%; it does not replace split-size checks. Continue to `FULL_MATCH` or close at `EQUIVALENT_MATCH` — both satisfy the acceptance bar.
+timeouts, and solver `unknown` are inconclusive. This check feeds
+`EQUIVALENT_MATCH` when fuzzy ≥ 50%; it does not replace split-size checks. Continue to `FULL_MATCH` or close at `EQUIVALENT_MATCH` — both satisfy the acceptance bar.
 
 `check-unit` / `check-objects` extract the named `.text` symbol from the
-objdiff retail/decomp `.o` pair (raw reloc immediates as encoded). The co-op
-wrapper defaults function checks to `--contract ppc-eabi`. Use
+objdiff retail/decomp `.o` pair. Functions with unresolved ELF relocations are
+inconclusive rather than proving placeholder immediates. The co-op wrapper
+defaults function checks to effect-aware `--contract auto`. Use
 `--contract strict` for all modeled state or manual `--observe` for the actual
 live-outs of an internal basic block.
 

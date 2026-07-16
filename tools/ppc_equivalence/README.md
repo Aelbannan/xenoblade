@@ -101,8 +101,12 @@ python3 tools/coop/run.py equivalence check-unit kyoshin/CGame \
 
 `check-objects` / `check-unit` load instruction bytes from the named `.text`
 symbol in each ELF32 big-endian object (the same pair objdiff compares). Decode
-bases default to each symbol’s section address + `st_value`. Raw reloc immediates
-are compared as encoded. When fuzzy match is in `[50%, 100%)`, `coop run diff` /
+bases default to each symbol’s section address + `st_value`. A function with
+unresolved `.rel.text` / `.rela.text` entries is **inconclusive**: placeholder
+immediates are not the linked program, and treating them as constants could
+produce a false equivalence proof. Supply relocation-applied linked bytes to a
+raw `check` when such a function must be checked. When fuzzy match is in
+`[50%, 100%)`, `coop run diff` /
 `cycle` run this automatically and may promote status to **`EQUIVALENT_MATCH`**
 (the fork’s default acceptance bar, alongside `FULL_MATCH`).
 Split-size fit remains mandatory.
@@ -159,7 +163,7 @@ and `pmc1`), `f0.ps1`–`f31.ps1`, and `memory`.
 
 JSON proof results (format 3) record the architecture model, requested and
 resolved contract metadata, observables, assumptions, instruction counts,
-solver/version/timing, and—when applicable—the first observable mismatch and
+solver/version/timing, and—when applicable—the first mismatch and
 replayable input state.
 
 ## Supported model (phases 1–3)

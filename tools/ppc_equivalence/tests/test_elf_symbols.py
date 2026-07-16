@@ -41,13 +41,15 @@ def build_reloc_elf(
     functions: dict[str, bytes],
     *,
     text_addr: int = 0,
+    relocations: tuple[tuple[int, str, int, int], ...] = (),
+    e_type: int = 1,
 ) -> bytes:
     """Build a minimal big-endian ELF32 ET_REL with .text/.symtab/.strtab."""
     text = b"".join(functions.values())
     if len(text) % 4:
         raise ValueError("function bytes must be word-aligned in aggregate")
 
-    shstr = b"\x00.text\x00.strtab\x00.shstrtab\x00.symtab\x00"
+    shstr = b"\x00.text\x00.strtab\x00.shstrtab\x00.symtab\x00.rela.text\x00"
     strtab = bytearray(b"\x00")
     name_offsets: dict[str, int] = {}
     for name in functions:
@@ -55,14 +57,16 @@ def build_reloc_elf(
         strtab.extend(name.encode("ascii") + b"\x00")
 
     symtab = bytearray(b"\x00" * 16)
+    symbol_indexes: dict[str, int] = {}
     cursor = 0
-    for name, code in functions.items():
+    for symbol_index, (name, code) in enumerate(functions.items(), start=1):
+        symbol_indexes[name] = symbol_index
         st_info = (1 << 4) | 2  # STB_GLOBAL | STT_FUNC
         symtab.extend(
             struct.pack(
                 ">IIIBBH",
                 name_offsets[name],
-                cursor,
+                cursor if e_type == 1 else text_addr + cursor,
                 len(code),
                 st_info,
                 0,
@@ -71,7 +75,13 @@ def build_reloc_elf(
         )
         cursor += len(code)
 
-    e_shnum = 5
+    rela = bytearray()
+    for offset, symbol, relocation_type, addend in relocations:
+        if symbol not in symbol_indexes:
+            raise ValueError(f"unknown relocation symbol {symbol!r}")
+        rela.extend(struct.pack(">IIi", offset, (symbol_indexes[symbol] << 8) | relocation_type, addend))
+
+    e_shnum = 6 if relocations else 5
     e_shentsize = 40
     e_shoff = 52
     payload_off = e_shoff + e_shnum * e_shentsize
@@ -80,6 +90,7 @@ def build_reloc_elf(
     strtab_off = text_off + len(text)
     shstr_off = strtab_off + len(strtab)
     symtab_off = shstr_off + len(shstr)
+    rela_off = symtab_off + len(symtab)
 
     def shdr(
         name_off: int,
@@ -111,6 +122,7 @@ def build_reloc_elf(
     strtab_name = shstr.index(b".strtab\x00")
     shstr_name = shstr.index(b".shstrtab\x00")
     symtab_name = shstr.index(b".symtab\x00")
+    rela_name = shstr.index(b".rela.text\x00")
 
     headers = (
         shdr(0, 0, 0, 0, 0, 0)
@@ -119,6 +131,8 @@ def build_reloc_elf(
         + shdr(shstr_name, 3, 0, 0, shstr_off, len(shstr), align=1)
         + shdr(symtab_name, 2, 0, 0, symtab_off, len(symtab), link=2, info=1, align=4, entsize=16)
     )
+    if relocations:
+        headers += shdr(rela_name, 4, 0, 0, rela_off, len(rela), link=4, info=1, align=4, entsize=12)
 
     ident = bytearray(16)
     ident[0:4] = b"\x7fELF"
@@ -128,7 +142,7 @@ def build_reloc_elf(
 
     header = bytes(ident) + struct.pack(
         ">HHIIIIIHHHHHH",
-        1,
+        e_type,
         20,
         1,
         0,
@@ -143,7 +157,7 @@ def build_reloc_elf(
         3,
     )
     assert len(header) == 52
-    return header + headers + text + bytes(strtab) + shstr + bytes(symtab)
+    return header + headers + text + bytes(strtab) + shstr + bytes(symtab) + bytes(rela)
 
 
 def _check_extracted(left_code: bytes, right_code: bytes, *, base: int = 0):
@@ -192,6 +206,39 @@ class ElfBuilderTests(unittest.TestCase):
             path.write_bytes(elf)
             fn = extract_function(path, "f")
             self.assertEqual(fn.base, 0x80001000)
+
+    def test_extracts_linked_elf_symbol_values_as_virtual_addresses(self) -> None:
+        elf = build_reloc_elf(
+            {"first": _EQ_LEFT, "second": _NEQ},
+            text_addr=0x80001000,
+            e_type=2,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "linked.elf"
+            path.write_bytes(elf)
+            second = extract_function(path, "second")
+        self.assertEqual(second.code, _NEQ)
+        self.assertEqual(second.value, 0x80001000 + len(_EQ_LEFT))
+        self.assertEqual(second.base, second.value)
+
+    def test_records_text_relocations_inside_each_function(self) -> None:
+        elf = build_reloc_elf(
+            {"first": _EQ_LEFT, "second": _NEQ},
+            relocations=((4, "second", 10, -4), (len(_EQ_LEFT), "first", 6, 0)),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "reloc.o"
+            path.write_bytes(elf)
+            first = extract_function(path, "first")
+            second = extract_function(path, "second")
+        self.assertEqual(
+            [(item.offset, item.relocation_type, item.symbol, item.addend) for item in first.relocations],
+            [(4, 10, "second", -4)],
+        )
+        self.assertEqual(
+            [(item.offset, item.relocation_type, item.symbol, item.addend) for item in second.relocations],
+            [(0, 6, "first", 0)],
+        )
 
     def test_substring_and_ambiguity(self) -> None:
         elf = build_reloc_elf(
@@ -325,6 +372,51 @@ class CheckObjectsApiTests(unittest.TestCase):
             )
             self.assertEqual(code, 1)
 
+    def test_check_objects_is_inconclusive_for_unresolved_relocations(self) -> None:
+        relocated = build_reloc_elf(
+            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            left = Path(tmp) / "a.o"
+            right = Path(tmp) / "b.o"
+            left.write_bytes(relocated)
+            right.write_bytes(relocated)
+            output = io.StringIO()
+            with redirect_stdout(output):
+                exit_code = cli.main([
+                    "check-objects", "--original", str(left), "--candidate", str(right),
+                    "--symbol", "f", "--json",
+                ])
+            payload = json.loads(output.getvalue())
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(payload["status"], "inconclusive_unsupported")
+        self.assertIn("unresolved ELF relocations", payload["unsupported"][0])
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_replay_reproduces_exit_target_mismatch(self) -> None:
+        original = decode_block(bytes.fromhex("48000008"), 0, validate_with_capstone=False)
+        candidate = decode_block(bytes.fromhex("4800000c"), 0, validate_with_capstone=False)
+        result = check_equivalence(
+            original,
+            candidate,
+            make_contract(preset=None, observe=["r3"], timeout_ms=5_000),
+            original_hex="48000008",
+            candidate_hex="4800000c",
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual(result.mismatch["name"], "exit.target")
+        assert result.replay is not None
+        with tempfile.TemporaryDirectory() as tmp:
+            case = Path(tmp) / "exit.json"
+            case.write_text(json.dumps(result.replay), encoding="utf-8")
+            output = io.StringIO()
+            with redirect_stdout(output):
+                exit_code = cli.main(["replay", str(case), "--json"])
+            payload = json.loads(output.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(payload["reproduced"])
+        self.assertEqual(payload["mismatches"][0]["name"], "exit.target")
+
 
 class CoopDefaultContractTests(unittest.TestCase):
     def test_check_objects_defaults_to_auto(self) -> None:
@@ -348,6 +440,20 @@ class CoopDefaultContractTests(unittest.TestCase):
             probe = prove_unit_symbol(None, unit, "f")  # type: ignore[arg-type]
             self.assertEqual(probe.status, ProofStatus.EQUIVALENT)
             self.assertEqual(probe.detail, "auto contract: ppc-eabi + fpscr")
+
+    def test_automatic_probe_rejects_unresolved_relocations(self) -> None:
+        relocated = build_reloc_elf(
+            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            retail = Path(tmp) / "retail.o"
+            decomp = Path(tmp) / "decomp.o"
+            retail.write_bytes(relocated)
+            decomp.write_bytes(relocated)
+            unit = SimpleNamespace(target_path=retail, base_path=decomp)
+            probe = prove_unit_symbol(None, unit, "f")  # type: ignore[arg-type]
+        self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertIn("unresolved ELF relocations", probe.detail)
 
 
 class CoopCheckUnitTests(unittest.TestCase):

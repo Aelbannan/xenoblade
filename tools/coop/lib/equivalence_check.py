@@ -8,7 +8,11 @@ from typing import Optional
 from tools.coop.lib.project import ObjdiffUnit, Project
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block
-from tools.ppc_equivalence.elf_symbols import ElfSymbolError, extract_function_pair
+from tools.ppc_equivalence.elf_symbols import (
+    ElfSymbolError,
+    extract_function_pair,
+    require_relocation_free,
+)
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, UnsupportedInstruction
 from tools.ppc_equivalence.result import ProofStatus
@@ -16,7 +20,7 @@ from tools.ppc_equivalence.semantics import automatic_live_out
 
 
 # Fuzzy match floor for EQUIVALENT_MATCH (strictly below FULL_MATCH).
-EQUIVALENT_MATCH_MIN_PERCENT = 80.0
+EQUIVALENT_MATCH_MIN_PERCENT = 50.0
 
 
 @dataclass(frozen=True)
@@ -47,6 +51,7 @@ def prove_unit_symbol(
 
     try:
         left, right = extract_function_pair(retail, decomp, symbol)
+        require_relocation_free(left, right)
         original = decode_block(left.code, left.base, validate_with_capstone=False)
         candidate = decode_block(right.code, right.base, validate_with_capstone=False)
         original_live_out = automatic_live_out(original)

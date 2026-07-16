@@ -28,6 +28,7 @@ class ProofResult:
     observables: list[str] = field(default_factory=list)
     assumptions: list[str] = field(default_factory=lambda: [
         "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+        "instruction immediates are final linked values; object checks reject unresolved text relocations",
         "shared byte-addressed initial memory",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
         "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX and traps are not",

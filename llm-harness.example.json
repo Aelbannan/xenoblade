@@ -1,0 +1,34 @@
+{
+  "project_adapter": "tools.llm_harness.xenoblade_project",
+  "output_dir": "build/llm-harness",
+  "project": {
+    "coop_config": "coop.json",
+    "prompt_dir": "tools/llm_harness/prompts",
+    "max_source_chars": 120000,
+    "mwcc_knowledge_enabled": true,
+    "mwcc_knowledge_limit": 8,
+    "mwcc_knowledge_body_chars": 5000
+  },
+  "providers": {
+    "opencode": {
+      "binary": "opencode",
+      "timeout_seconds": 900
+    }
+  },
+  "models": [
+    {
+      "id": "model-a",
+      "provider": "opencode",
+      "model": "provider/model-a",
+      "agent": "plan",
+      "runs": 3
+    },
+    {
+      "id": "model-b",
+      "provider": "opencode",
+      "model": "provider/model-b",
+      "agent": "plan",
+      "runs": 3
+    }
+  ]
+}

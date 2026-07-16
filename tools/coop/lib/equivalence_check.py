@@ -15,10 +15,8 @@ from tools.ppc_equivalence.decoder import decode_block
 from tools.ppc_equivalence.dol_symbols import DolSymbolError, extract_by_address as extract_dol_slice
 from tools.ppc_equivalence.elf_symbols import (
     ElfSymbolError,
-    RelocationsPresent,
     extract_function,
     extract_function_pair,
-    require_relocation_free,
 )
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
@@ -73,7 +71,19 @@ def _cache_key(
     observables: tuple[str, ...],
     original_hex: str,
     candidate_hex: str,
+    original_base: int,
+    candidate_base: int,
+    original_relocations: tuple = (),
+    candidate_relocations: tuple = (),
+    original_local_symbol: str | None = None,
+    candidate_local_symbol: str | None = None,
+    assumed_callees: frozenset[int | str] = frozenset(),
 ) -> str:
+    def relocations(items: tuple) -> list[tuple]:
+        return [
+            (item.offset, item.relocation_type, item.symbol, item.addend)
+            for item in items
+        ]
     payload = json.dumps(
         {
             "architecture": ARCHITECTURE_MODEL,
@@ -82,6 +92,13 @@ def _cache_key(
             "observables": sorted(observables),
             "original_hex": original_hex,
             "candidate_hex": candidate_hex,
+            "original_base": original_base,
+            "candidate_base": candidate_base,
+            "original_relocations": relocations(original_relocations),
+            "candidate_relocations": relocations(candidate_relocations),
+            "original_local_symbol": original_local_symbol,
+            "candidate_local_symbol": candidate_local_symbol,
+            "assumed_callees": sorted(assumed_callees, key=str),
         },
         sort_keys=True,
     )
@@ -106,7 +123,10 @@ def _cache_get(key: str, cache_dir: Path | None) -> EquivalenceProbe | None:
         return None
 
 
-def _cache_put(key: str, probe: EquivalenceProbe, cache_dir: Path | None) -> None:
+def _cache_put(
+    key: str, probe: EquivalenceProbe, cache_dir: Path | None,
+    assumed_callees: set[int | str] | frozenset[int | str] = frozenset(),
+) -> None:
     if cache_dir is None:
         return
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -118,6 +138,7 @@ def _cache_put(key: str, probe: EquivalenceProbe, cache_dir: Path | None) -> Non
                 "result_format": RESULT_FORMAT,
                 "status": probe.status.value,
                 "detail": probe.detail,
+                "assumed_callees": sorted(assumed_callees, key=str),
                 "created_at": time.time(),
             },
             sort_keys=True,
@@ -126,11 +147,13 @@ def _cache_put(key: str, probe: EquivalenceProbe, cache_dir: Path | None) -> Non
     )
 
 
-def _load_counterexample(project: Project, symbol: str, orig_hex: str) -> dict | None:
+def _load_counterexample(
+    project: Project, symbol: str, orig_hex: str, proof_context: str = "",
+) -> dict | None:
     sd = _state_dir(project)
     if sd is None:
         return None
-    key = hashlib.sha256(f"{symbol}:{orig_hex}".encode()).hexdigest()
+    key = hashlib.sha256(f"{symbol}:{orig_hex}:{proof_context}".encode()).hexdigest()
     path = sd / f"{key}_ce.json"
     if not path.is_file():
         return None
@@ -140,12 +163,15 @@ def _load_counterexample(project: Project, symbol: str, orig_hex: str) -> dict |
         return None
 
 
-def _save_counterexample(project: Project, symbol: str, orig_hex: str, ce: dict) -> None:
+def _save_counterexample(
+    project: Project, symbol: str, orig_hex: str, ce: dict,
+    proof_context: str = "",
+) -> None:
     sd = _state_dir(project)
     if sd is None:
         return
     sd.mkdir(parents=True, exist_ok=True)
-    key = hashlib.sha256(f"{symbol}:{orig_hex}".encode()).hexdigest()
+    key = hashlib.sha256(f"{symbol}:{orig_hex}:{proof_context}".encode()).hexdigest()
     (sd / f"{key}_ce.json").write_text(json.dumps(ce, sort_keys=True), encoding="utf-8")
 
 
@@ -232,13 +258,19 @@ def should_probe_equivalence(match_percent: Optional[float]) -> bool:
     return match_percent is not None and EQUIVALENT_MATCH_MIN_PERCENT <= match_percent < 100.0
 
 
-def _extract_call_targets(instructions: list) -> frozenset[int]:
-    targets: set[int] = set()
+def _extract_call_targets(instructions: list) -> frozenset[int | str]:
+    targets: set[int | str] = set()
     for insn in instructions:
-        if insn.opcode == Opcode.B and insn.link:
-            targets.add(insn.operands[0])
-        elif insn.opcode == Opcode.BC and insn.link:
-            targets.add(insn.operands[2])
+        if insn.opcode == Opcode.B and (insn.link or insn.relocation is not None):
+            targets.add(
+                insn.relocation.canonical_symbol
+                if insn.relocation is not None else insn.operands[0]
+            )
+        elif insn.opcode == Opcode.BC and (insn.link or insn.relocation is not None):
+            targets.add(
+                insn.relocation.canonical_symbol
+                if insn.relocation is not None else insn.operands[2]
+            )
     return frozenset(targets)
 
 
@@ -255,6 +287,10 @@ def _prove_bytes(
     max_instructions: int,
     max_paths: int,
     fallback_note: str = "",
+    original_relocations: tuple = (),
+    candidate_relocations: tuple = (),
+    original_local_symbol: str | None = None,
+    candidate_local_symbol: str | None = None,
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
 
@@ -263,8 +299,16 @@ def _prove_bytes(
     ``fallback_note`` is prefixed to the returned ``detail`` so callers can see
     which path produced the result.
     """
-    original = decode_block(orig_code, orig_base, validate_with_capstone=False)
-    candidate = decode_block(cand_code, cand_base, validate_with_capstone=False)
+    original = decode_block(
+        orig_code, orig_base, validate_with_capstone=False,
+        relocations=original_relocations,
+        local_symbol=original_local_symbol,
+    )
+    candidate = decode_block(
+        cand_code, cand_base, validate_with_capstone=False,
+        relocations=candidate_relocations,
+        local_symbol=candidate_local_symbol,
+    )
     original_live_out = automatic_live_out(original)
     candidate_live_out = automatic_live_out(candidate)
     live_out = None
@@ -287,7 +331,23 @@ def _prove_bytes(
     observables = tuple(item.name for item in resolved_contract.observables)
     orig_hex = orig_code.hex()
     cand_hex = cand_code.hex()
-    key = _cache_key(resolved_contract.name, observables, orig_hex, cand_hex)
+    call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
+    known_addresses = _load_known_equivalent_targets(project)
+    # Symbolic object-file calls are explicit proof premises: the caller proof
+    # assumes each named callee has already been matched independently.
+    assumed_callees = frozenset(
+        target for target in call_targets
+        if isinstance(target, str) or target in known_addresses
+    )
+    key = _cache_key(
+        resolved_contract.name, observables, orig_hex, cand_hex,
+        orig_base, cand_base,
+        original_relocations=original_relocations,
+        candidate_relocations=candidate_relocations,
+        original_local_symbol=original_local_symbol,
+        candidate_local_symbol=candidate_local_symbol,
+        assumed_callees=assumed_callees,
+    )
 
     cache_d = _cache_dir(project)
     cached = _cache_get(key, cache_d)
@@ -296,7 +356,7 @@ def _prove_bytes(
             cached = EquivalenceProbe(cached.status, f"{fallback_note}; {cached.detail}")
         return cached
 
-    previous_ce = _load_counterexample(project, symbol, orig_hex)
+    previous_ce = _load_counterexample(project, symbol, orig_hex, key)
     if previous_ce:
         still_differs, detail = _replay_counterexample(
             original, candidate, resolved_contract.name, previous_ce,
@@ -308,11 +368,7 @@ def _prove_bytes(
                 if fallback_note else f"previous counterexample still mismatches: {detail}",
             )
 
-    assumed_callees = _load_known_equivalent_targets(project)
-    call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
-    assumed_callees = assumed_callees & call_targets
-
-    callees_used: set[int] = set()
+    callees_used: set[int | str] = set()
     result = check_equivalence(
         original,
         candidate,
@@ -348,17 +404,20 @@ def _prove_bytes(
             )
 
     if result.status == ProofStatus.NOT_EQUIVALENT and result.counterexample:
-        _save_counterexample(project, symbol, orig_hex, result.counterexample)
+        _save_counterexample(project, symbol, orig_hex, result.counterexample, key)
 
     if result.assumed_callees:
-        detail += " | assumed callees: 0x" + ", 0x".join(f"{t:08x}" for t in result.assumed_callees)
+        detail += " | assumed callees: " + ", ".join(
+            f"0x{target:08x}" if isinstance(target, int) else target
+            for target in result.assumed_callees
+        )
 
     if fallback_note:
         detail = f"{fallback_note}; {detail}" if detail else fallback_note
 
     probe = EquivalenceProbe(result.status, detail)
     if result.status == ProofStatus.EQUIVALENT and cache_d is not None:
-        _cache_put(key, probe, cache_d)
+        _cache_put(key, probe, cache_d, callees_used)
 
     return probe
 
@@ -377,12 +436,9 @@ def prove_unit_symbol(
 ) -> EquivalenceProbe:
     """SMT-check one named function from the unit's retail/decomp objects.
 
-    With ``linked=True`` (default off), if the unlinked ``.o`` pair carries
-    unresolved ELF relocations the proof retries once using bytes extracted from
-    the retail DOL (``project.main_dol``) and the linked decomp ELF
-    (``project.linked_elf_path``). The retail side is located by ``(address,
-    size)`` looked up in ``config/<region>/symbols.txt``; the candidate side by
-    symbol name in the linked ELF.
+    Supported unresolved ELF relocations are proved symbolically.  With
+    ``linked=True``, an unsupported symbolic-relocation case retries once using
+    bytes extracted from the retail DOL and linked decomp ELF.
     """
     retail = unit.target_path
     decomp = unit.base_path
@@ -394,23 +450,26 @@ def prove_unit_symbol(
     try:
         left, right = extract_function_pair(retail, decomp, symbol)
         try:
-            require_relocation_free(left, right)
-        except RelocationsPresent:
-            if not linked:
+            return _prove_bytes(
+                project, symbol,
+                left.code, left.base,
+                right.code, right.base,
+                contract=contract,
+                timeout_ms=timeout_ms,
+                max_instructions=max_instructions,
+                max_paths=max_paths,
+                original_relocations=left.relocations,
+                candidate_relocations=right.relocations,
+                original_local_symbol=left.name,
+                candidate_local_symbol=right.name,
+            )
+        except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
+            if not linked or not (left.relocations or right.relocations):
                 raise
             return _run_linked_fallback(
                 project, symbol, candidate_symbol, contract,
                 timeout_ms, max_instructions, max_paths,
             )
-        return _prove_bytes(
-            project, symbol,
-            left.code, left.base,
-            right.code, right.base,
-            contract=contract,
-            timeout_ms=timeout_ms,
-            max_instructions=max_instructions,
-            max_paths=max_paths,
-        )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, str(exc))
     except RuntimeError as exc:
@@ -430,7 +489,7 @@ def _run_linked_fallback(
     """Retry the proof using linked bytes from ``main.dol`` + ``main.elf``.
 
     Called from :func:`prove_unit_symbol` only when ``linked=True`` and the
-    unlinked ``.o`` pair raised :class:`RelocationsPresent`. The retail side is
+    unlinked symbolic-relocation proof is unsupported. The retail side is
     sliced out of the linked DOL by ``(address, size)`` looked up in
     ``config/<region>/symbols.txt``; the candidate side is taken from the
     linked ELF (``main.elf``, produced by ``ninja build/<region>/main.elf``) by

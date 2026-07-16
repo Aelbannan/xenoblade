@@ -3,31 +3,32 @@
 Co-op decompilation runner for the Xenoblade downstream fork.
 
 Usage (from repository root):
-  python tools/coop/run.py status
-  python tools/coop/run.py baseline
-  python tools/coop/run.py configure
-  python tools/coop/run.py ctx src/kyoshin/cf/CfPadTask.cpp
-  python tools/coop/run.py build kyoshin/cf/CfPadTask
-  python tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl
-  python tools/coop/run.py size monolib/src/core/CViewRectDataCore
-  python tools/coop/run.py size --all
-  python tools/coop/run.py cycle pad-copy-input-flag
-  python tools/coop/run.py queue --tier P1
-  python tools/coop/run.py targets list
-  python tools/coop/run.py log --tail 20
-  python tools/coop/run.py symbols list
-  python tools/coop/run.py behaviour audit
-  python tools/coop/run.py behaviour compare --all
-  python tools/coop/run.py equivalence check-hex --original ... --candidate ... --observe r3
-  python tools/coop/run.py equivalence check-unit kyoshin/CGame --symbol OnPauseTrigger__5CGameFv
-  python tools/coop/run.py opcodes
-  python tools/coop/run.py symbols show UnkClass_8045F564
+  python3 tools/coop/run.py status
+  python3 tools/coop/run.py baseline
+  python3 tools/coop/run.py configure
+  python3 tools/coop/run.py ctx src/kyoshin/cf/CfPadTask.cpp
+  python3 tools/coop/run.py build kyoshin/cf/CfPadTask
+  python3 tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl
+  python3 tools/coop/run.py size monolib/src/core/CViewRectDataCore
+  python3 tools/coop/run.py size --all
+  python3 tools/coop/run.py cycle pad-copy-input-flag
+  python3 tools/coop/run.py queue --tier P1
+  python3 tools/coop/run.py targets list
+  python3 tools/coop/run.py log --tail 20
+  python3 tools/coop/run.py symbols list
+  python3 tools/coop/run.py behaviour audit
+  python3 tools/coop/run.py behaviour compare --all
+  python3 tools/coop/run.py equivalence check-hex --original ... --candidate ... --observe r3
+  python3 tools/coop/run.py equivalence check-unit kyoshin/CGame --symbol OnPauseTrigger__5CGameFv
+  python3 tools/coop/run.py opcodes
+  python3 tools/coop/run.py symbols show UnkClass_8045F564
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -48,7 +49,18 @@ from tools.coop.lib.objdiff_report import (
 )
 from tools.coop.lib.object_size import ObjectSizeCheck, check_object_size, format_size_check
 from tools.coop.lib.project import ObjdiffUnit, Project
-from tools.coop.lib.targets import get_target, load_targets, pending_targets
+from tools.coop.lib.targets import (
+    claim_target,
+    get_target,
+    import_symbols,
+    load_targets,
+    pending_targets,
+    release_target,
+    sync_results_from_attempts,
+    update_target_result,
+    validate_targets,
+    write_targets_document,
+)
 
 
 def _git_head(project: Project) -> Optional[str]:
@@ -354,6 +366,14 @@ def cmd_cycle(
     )
     log_path = append_attempt(config.resolve(config.attempt_log), record)
     print(f"attempt #{attempt_num} logged to {log_path}")
+    update_target_result(
+        config,
+        target.id,
+        status=evaluation.status,
+        instruction_match=record.instruction_match,
+        equivalence_status=record.equivalence_status,
+    )
+    print(f"target registry updated: {target.id}")
 
     fn_percent = fn_match.match_percent if fn_match else None
     if not meets_required_level(
@@ -399,15 +419,34 @@ def cmd_queue(
     return 1 if failures else 0
 
 
-def cmd_targets_list(config: CoopConfig, tier: Optional[str]) -> int:
+def cmd_targets_list(
+    config: CoopConfig,
+    tier: Optional[str],
+    milestone: Optional[str],
+    workflow_status: Optional[str],
+    match_status: Optional[str],
+    kind: Optional[str],
+    include_catalog: bool,
+) -> int:
     targets = load_targets(config)
+    if not include_catalog:
+        targets = [target for target in targets if target.extra.get("origin") != "symbols.txt"]
     if tier:
         targets = [t for t in targets if t.tier == tier]
+    if milestone:
+        targets = [t for t in targets if t.milestone == milestone]
+    if workflow_status:
+        targets = [t for t in targets if t.workflow_status == workflow_status]
+    if match_status:
+        targets = [t for t in targets if t.status == match_status]
+    if kind:
+        targets = [t for t in targets if t.kind == kind]
     for target in targets:
         buildable = "yes" if target.buildable else "no"
         print(
-            f"{target.id:28} {target.tier:3} {target.milestone:8} "
-            f"buildable={buildable:3} req={target.required_level:12} {target.function}"
+            f"{target.id:28} {target.tier:3} {target.milestone:16} "
+            f"flow={target.workflow_status:12} match={target.status:16} "
+            f"buildable={buildable:3} {target.function}"
         )
     return 0
 
@@ -423,9 +462,290 @@ def cmd_targets_show(config: CoopConfig, target_id: str) -> int:
     print(f"source:   {target.source}")
     print(f"unit:     {target.unit}")
     print(f"required: {target.required_level}")
-    print(f"status:   {target.status}")
+    print(f"workflow: {target.workflow_status}")
+    print(f"match:    {target.status}")
+    print(f"kind:     {target.kind}")
     if target.notes:
         print(f"notes:    {target.notes}")
+    claim = target.extra.get("claim")
+    if isinstance(claim, dict):
+        print(f"owner:    {claim.get('owner')}")
+        print(f"scope:    {', '.join(claim.get('allowed_paths', []))}")
+    return 0
+
+
+def _resolved_target_rows(config: CoopConfig) -> list[dict]:
+    rows: list[dict] = []
+    for target in load_targets(config):
+        match_status = target.status
+        instruction_match = target.extra.get("instruction_match")
+        workflow = target.workflow_status
+        if match_status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
+            workflow = "ACCEPTED"
+        rows.append(
+            {
+                "id": target.id,
+                "function": target.function,
+                "kind": target.kind,
+                "tier": target.tier,
+                "milestone": target.milestone,
+                "workflow_status": workflow,
+                "match_status": match_status,
+                "instruction_match": instruction_match,
+                "buildable": target.buildable,
+                "unit": target.unit,
+                "catalog": target.extra.get("origin") == "symbols.txt",
+                "owner": (
+                    target.extra.get("claim", {}).get("owner")
+                    if isinstance(target.extra.get("claim"), dict)
+                    else None
+                ),
+            }
+        )
+    return rows
+
+
+def _filter_target_rows(
+    rows: list[dict],
+    *,
+    tier: Optional[str],
+    milestone: Optional[str],
+    kind: Optional[str],
+    include_catalog: bool,
+) -> list[dict]:
+    if not include_catalog:
+        rows = [row for row in rows if not row["catalog"]]
+    if tier:
+        rows = [row for row in rows if row["tier"] == tier]
+    if milestone:
+        rows = [row for row in rows if row["milestone"] == milestone]
+    if kind:
+        rows = [row for row in rows if row["kind"] == kind]
+    return rows
+
+
+def _render_target_status_markdown(rows: list[dict], region: str) -> str:
+    workflow_counts: dict[str, int] = {}
+    for row in rows:
+        workflow = row["workflow_status"]
+        workflow_counts[workflow] = workflow_counts.get(workflow, 0) + 1
+    lines = [
+        "<!-- GENERATED by tools/coop/run.py targets status. Do not edit. -->",
+        "",
+        "# Target status",
+        "",
+        f"Region: `{region}`",
+        "",
+        "## Summary",
+        "",
+        f"- Total: {len(rows)}",
+    ]
+    for name in sorted(workflow_counts):
+        lines.append(f"- {name}: {workflow_counts[name]}")
+    by_milestone: dict[str, list[dict]] = {}
+    for row in rows:
+        by_milestone.setdefault(row["milestone"], []).append(row)
+    for milestone in sorted(by_milestone):
+        lines.extend(
+            [
+                "",
+                f"## {milestone}",
+                "",
+                "| Target | Function | Tier | Workflow | Match | Percent | Owner | Buildable |",
+                "|---|---|---|---|---|---:|---|---|",
+            ]
+        )
+        for row in sorted(by_milestone[milestone], key=lambda item: (item["tier"], item["id"])):
+            percent = row["instruction_match"]
+            percent_text = f"{percent:.1f}%" if isinstance(percent, (int, float)) else "—"
+            function = str(row["function"]).replace("|", "\\|")
+            lines.append(
+                f"| `{row['id']}` | {function} | {row['tier']} | "
+                f"{row['workflow_status']} | {row['match_status']} | {percent_text} | "
+                f"{row['owner'] or '—'} | "
+                f"{'yes' if row['buildable'] else 'no'} |"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def cmd_targets_status(
+    config: CoopConfig,
+    *,
+    tier: Optional[str],
+    milestone: Optional[str],
+    kind: Optional[str],
+    output: Optional[Path],
+    output_format: str,
+    include_catalog: bool,
+) -> int:
+    rows = _filter_target_rows(
+        _resolved_target_rows(config),
+        tier=tier,
+        milestone=milestone,
+        kind=kind,
+        include_catalog=include_catalog,
+    )
+    if output_format == "json":
+        rendered = json.dumps({"region": config.region, "targets": rows}, indent=2) + "\n"
+    else:
+        rendered = _render_target_status_markdown(rows, config.region)
+    if output:
+        path = output if output.is_absolute() else config.project_root / output
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rendered, encoding="utf-8")
+        print(path)
+    else:
+        print(rendered, end="")
+    return 0
+
+
+def cmd_targets_validate(config: CoopConfig) -> int:
+    errors = validate_targets(config)
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        print(f"target registry invalid: {len(errors)} error(s)", file=sys.stderr)
+        return 1
+    print(f"target registry valid: {len(load_targets(config))} target(s)")
+    return 0
+
+
+def cmd_targets_import_symbols(
+    project: Project,
+    config: CoopConfig,
+    *,
+    kind: str,
+    dry_run: bool,
+) -> int:
+    data, added, skipped = import_symbols(project, config, kind=kind)
+    label = "all symbols" if kind == "all" else f"{kind} symbols"
+    print(f"import {label}: {added} add, {skipped} already present")
+    if dry_run:
+        print("dry-run: registry not changed")
+        return 0
+    path = write_targets_document(config, data)
+    print(f"updated: {path}")
+    return cmd_targets_validate(config)
+
+
+def cmd_targets_sync_attempts(config: CoopConfig) -> int:
+    attempts = read_attempts(config.resolve(config.attempt_log))
+    changed = sync_results_from_attempts(config, attempts)
+    print(f"synced latest attempts into target registry: {changed} target(s) changed")
+    return cmd_targets_validate(config)
+
+
+def cmd_targets_claim(
+    config: CoopConfig,
+    target_id: str,
+    *,
+    owner: str,
+    allowed_paths: list[str],
+    note: str,
+) -> int:
+    target = get_target(load_targets(config), target_id)
+    if not allowed_paths and target.source:
+        allowed_paths = [str(target.source.relative_to(config.project_root))]
+    path = claim_target(
+        config,
+        target_id,
+        owner=owner,
+        allowed_paths=allowed_paths,
+        note=note,
+    )
+    print(f"claimed {target_id} for {owner}: {path}")
+    return 0
+
+
+def cmd_targets_release(config: CoopConfig, target_id: str, *, owner: Optional[str]) -> int:
+    path = release_target(config, target_id, owner=owner)
+    print(f"released {target_id}: {path}")
+    return 0
+
+
+def _render_target_brief(config: CoopConfig, target_id: str) -> str:
+    target = get_target(load_targets(config), target_id)
+    source = str(target.source.relative_to(config.project_root)) if target.source else "unresolved"
+    claim = target.extra.get("claim") if isinstance(target.extra.get("claim"), dict) else {}
+    allowed_paths = claim.get("allowed_paths") or ([source] if source != "unresolved" else [])
+    dependencies = target.extra.get("depends_on", [])
+    questions = target.extra.get("questions", [])
+    capabilities = target.extra.get("capabilities", [])
+    lines = [
+        "<!-- GENERATED by tools/coop/run.py targets brief. Do not edit. -->",
+        "",
+        f"# Worker brief: {target.id}",
+        "",
+        "## Objective",
+        "",
+        f"Reach `{target.required_level}` (or a stronger accepted result) for "
+        f"`{target.function}` under the current runner policy.",
+        "",
+        "## Ground truth",
+        "",
+        f"- Region: `{target.region or config.region}`",
+        f"- Symbol: `{target.symbol}`",
+        f"- Address: `{target.address}`",
+        f"- Unit: `{target.unit}`",
+        f"- Source: `{source}`",
+        f"- Priority/milestone: `{target.tier}` / `{target.milestone}`",
+        f"- Current workflow/match: `{target.workflow_status}` / `{target.status}`",
+        f"- Owner: `{claim.get('owner', 'unclaimed')}`",
+    ]
+    if capabilities:
+        lines.append(f"- Capabilities: {', '.join(f'`{value}`' for value in capabilities)}")
+    if dependencies:
+        lines.append(f"- Dependencies: {', '.join(f'`{value}`' for value in dependencies)}")
+    if questions:
+        lines.extend(["", "## Questions", ""] + [f"- {value}" for value in questions])
+    lines.extend(["", "## Edit scope", ""])
+    if allowed_paths:
+        lines.extend([f"- Allowed: `{value}`" for value in allowed_paths])
+    else:
+        lines.append("- Resolve and claim an explicit source path before editing.")
+    lines.extend(
+        [
+            "- Do not edit sibling functions or unrelated shared headers.",
+            "- High-level C/C++ only; retail assembly is read-only reference.",
+            "",
+            "## Loop",
+            "",
+            "1. State one mismatch hypothesis.",
+            "2. Make one bounded source change.",
+            f"3. Run `python3 tools/coop/run.py cycle {target.id} --hypothesis \"...\" --next-change \"...\"`.",
+            "4. Preserve the best candidate and record regressions explicitly.",
+            "5. After three non-improving attempts, emit the stall packet required by the skill.",
+            "",
+            "## Acceptance",
+            "",
+            "- `cycle` exits zero at the registry's resolved required level.",
+            "- Split `.text` size passes.",
+            "- Equivalence result and contract are reported when that route is used.",
+            "- Changes remain inside the claimed scope.",
+            "- The claim is released after handoff.",
+            "",
+            "## Final response",
+            "",
+            "Report match status/percent, equivalence contract/result, size, changed files, "
+            "reusable MWCC insight, claim release, and remaining risk.",
+        ]
+    )
+    if target.notes:
+        lines.extend(["", "## Existing notes", "", target.notes])
+    return "\n".join(lines) + "\n"
+
+
+def cmd_targets_brief(
+    config: CoopConfig, target_id: str, *, output: Optional[Path]
+) -> int:
+    rendered = _render_target_brief(config, target_id)
+    if output:
+        path = output if output.is_absolute() else config.project_root / output
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rendered, encoding="utf-8")
+        print(path)
+    else:
+        print(rendered, end="")
     return 0
 
 
@@ -646,7 +966,7 @@ def main() -> int:
 
     sub.add_parser("status", help="Show runner and project health")
     sub.add_parser("baseline", help="Verify main.dol, configure, and full ninja build")
-    sub.add_parser("configure", help="Run python configure.py for the selected region")
+    sub.add_parser("configure", help="Run python3 configure.py for the selected region")
 
     p_ctx = sub.add_parser("ctx", help="Generate decomp.me context for a source file")
     p_ctx.add_argument("source", type=Path)
@@ -690,12 +1010,65 @@ def main() -> int:
     p_queue.add_argument("--tier", choices=["P0", "P1", "P2", "P3"])
     p_queue.add_argument("--dry-run", action="store_true")
 
-    p_targets = sub.add_parser("targets", help="Inspect curated targets")
+    p_targets = sub.add_parser("targets", help="Inspect and maintain the canonical target registry")
     p_targets_sub = p_targets.add_subparsers(dest="targets_cmd", required=True)
     p_targets_list = p_targets_sub.add_parser("list")
-    p_targets_list.add_argument("--tier", choices=["P0", "P1", "P2", "P3"])
+    p_targets_list.add_argument("--tier")
+    p_targets_list.add_argument("--milestone")
+    p_targets_list.add_argument("--workflow-status")
+    p_targets_list.add_argument("--match-status")
+    p_targets_list.add_argument("--kind")
+    p_targets_list.add_argument(
+        "--include-catalog",
+        action="store_true",
+        help="Include P9 records imported directly from symbols.txt",
+    )
     p_targets_show = p_targets_sub.add_parser("show")
     p_targets_show.add_argument("target_id")
+    p_targets_status = p_targets_sub.add_parser(
+        "status", help="Render a generated human-readable or JSON status view"
+    )
+    p_targets_status.add_argument("--tier")
+    p_targets_status.add_argument("--milestone")
+    p_targets_status.add_argument("--kind", default="function")
+    p_targets_status.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    p_targets_status.add_argument("--output", type=Path)
+    p_targets_status.add_argument(
+        "--include-catalog",
+        action="store_true",
+        help="Include unassigned records imported directly from symbols.txt",
+    )
+    p_targets_sub.add_parser("validate", help="Validate registry identities and status vocabularies")
+    p_targets_sub.add_parser(
+        "sync-attempts",
+        help="Migrate each target's latest attempts.jsonl result into current registry state",
+    )
+    p_targets_claim = p_targets_sub.add_parser(
+        "claim", help="Record the current owner and exclusive edit scope in the registry"
+    )
+    p_targets_claim.add_argument("target_id")
+    p_targets_claim.add_argument("--owner", required=True)
+    p_targets_claim.add_argument("--allowed-path", action="append", default=[])
+    p_targets_claim.add_argument("--note", default="")
+    p_targets_release = p_targets_sub.add_parser("release", help="Release a current claim")
+    p_targets_release.add_argument("target_id")
+    p_targets_release.add_argument("--owner")
+    p_targets_brief = p_targets_sub.add_parser(
+        "brief", help="Generate a synchronized worker prompt for one target"
+    )
+    p_targets_brief.add_argument("target_id")
+    p_targets_brief.add_argument("--output", type=Path)
+    p_targets_import = p_targets_sub.add_parser(
+        "import-symbols",
+        help="Idempotently add symbols from config/<region>/symbols.txt",
+    )
+    p_targets_import.add_argument(
+        "--kind",
+        choices=["function", "object", "label", "all"],
+        default="function",
+        help="Import every function by default; use 'all' for every game symbol",
+    )
+    p_targets_import.add_argument("--dry-run", action="store_true")
 
     p_log = sub.add_parser("log", help="Show JSONL attempt log")
     p_log.add_argument("--tail", type=int)
@@ -775,9 +1148,47 @@ def main() -> int:
     if args.command == "queue":
         return cmd_queue(project, config, args.tier, dry_run=args.dry_run)
     if args.command == "targets" and args.targets_cmd == "list":
-        return cmd_targets_list(config, args.tier)
+        return cmd_targets_list(
+            config,
+            args.tier,
+            args.milestone,
+            args.workflow_status,
+            args.match_status,
+            args.kind,
+            args.include_catalog,
+        )
     if args.command == "targets" and args.targets_cmd == "show":
         return cmd_targets_show(config, args.target_id)
+    if args.command == "targets" and args.targets_cmd == "status":
+        return cmd_targets_status(
+            config,
+            tier=args.tier,
+            milestone=args.milestone,
+            kind=args.kind,
+            output=args.output,
+            output_format=args.format,
+            include_catalog=args.include_catalog,
+        )
+    if args.command == "targets" and args.targets_cmd == "validate":
+        return cmd_targets_validate(config)
+    if args.command == "targets" and args.targets_cmd == "sync-attempts":
+        return cmd_targets_sync_attempts(config)
+    if args.command == "targets" and args.targets_cmd == "claim":
+        return cmd_targets_claim(
+            config,
+            args.target_id,
+            owner=args.owner,
+            allowed_paths=args.allowed_path,
+            note=args.note,
+        )
+    if args.command == "targets" and args.targets_cmd == "release":
+        return cmd_targets_release(config, args.target_id, owner=args.owner)
+    if args.command == "targets" and args.targets_cmd == "brief":
+        return cmd_targets_brief(config, args.target_id, output=args.output)
+    if args.command == "targets" and args.targets_cmd == "import-symbols":
+        return cmd_targets_import_symbols(
+            project, config, kind=args.kind, dry_run=args.dry_run
+        )
     if args.command == "log":
         return cmd_log(config, args.tail, args.target)
     if args.command == "symbols":

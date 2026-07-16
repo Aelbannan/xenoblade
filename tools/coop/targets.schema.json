@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xenoblade.local/tools/coop/targets.schema.json",
+  "title": "Xenoblade co-op target registry",
+  "type": "object",
+  "required": ["schema_version", "default_required_level", "targets"],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "default_required_level": { "type": "string" },
+    "targets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/target" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "target": {
+      "type": "object",
+      "required": ["id", "symbol", "address"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "region": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["function", "object", "label", "unknown"]
+        },
+        "tier": { "type": "string" },
+        "milestone": { "type": "string" },
+        "function": { "type": "string" },
+        "symbol": { "type": ["string", "null"] },
+        "address": {
+          "type": ["string", "null"],
+          "pattern": "^0x[0-9A-Fa-f]+$"
+        },
+        "size": {
+          "type": ["string", "null"],
+          "pattern": "^0x[0-9A-Fa-f]+$"
+        },
+        "source": { "type": "string" },
+        "unit": { "type": ["string", "null"] },
+        "required_level": { "type": "string" },
+        "workflow_status": {
+          "enum": [
+            "BACKLOG",
+            "DISCOVERY",
+            "QUEUED",
+            "CLAIMED",
+            "ACTIVE",
+            "ACCEPTED",
+            "BLOCKED",
+            "NOT_REQUIRED"
+          ]
+        },
+        "status": {
+          "enum": [
+            "NOT_STARTED",
+            "COMPILES",
+            "STRUCTURAL",
+            "HIGH_MATCH",
+            "CODE_MATCH",
+            "EQUIVALENT_MATCH",
+            "FULL_MATCH",
+            "BEHAVIOR_VERIFIED"
+          ]
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "questions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "acceptance_evidence": {
+          "type": "array",
+          "items": { "type": ["string", "object"] }
+        },
+        "notes": { "type": "string" },
+        "origin": { "type": "string" },
+        "claim": {
+          "type": "object",
+          "required": ["owner", "claimed_at", "allowed_paths"],
+          "properties": {
+            "owner": { "type": "string", "minLength": 1 },
+            "claimed_at": { "type": "string" },
+            "allowed_paths": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "note": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

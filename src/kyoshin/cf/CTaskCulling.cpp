@@ -79,7 +79,7 @@ namespace cf{
         UNKTYPE* r3 = cf::CfGameManager::func_80083298();
         u32 r4, r5, r6, r7;
 
-        func_800AA318(*(UNKTYPE**)((u32)r3 + 0x70), &r4, &r5, &r6, &r7);
+        func_800AA318(*(u32*)((u32)r3 + 0x70), &r4, &r5, &r6, &r7);
         func_800AA33C(spInstance->unk98, *(UNKTYPE**)((u32)r3 + 0x70), 0, 0);
         func_800AA33C(spInstance->unkDC, *(UNKTYPE**)((u32)r3 + 0x70), 1, 0);
 

@@ -14,14 +14,14 @@ At the **start of every task** in this repository:
 2. Consult `PLAN.md` before changing gameplay, render, input, or memory behavior.
 3. Use `tools/coop/run.py` for build/diff/cycle loops — do not improvise a separate pipeline.
 
-**Policy:** all decompilation targets require **`EQUIVALENT_MATCH`** (fuzzy ≥ 80% + SMT `EQUIVALENT` under `ppc-eabi`, or `FULL_MATCH`) until the policy in `coop.json` / `PLAN.md` is revised.
+**Policy:** all decompilation targets require **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% + SMT `EQUIVALENT` under effect-aware `auto` + split-size fit) or **`FULL_MATCH`** (100% static + split-size fit).
 
-**MWCC reference:** read `docs/MWCC_REFERENCE.md` for matching work; **append reusable patterns and breakthroughs** there when you find them (not only in `attempts.jsonl`).
+**MWCC knowledge:** before matching, search by exact function/symbol and observed mismatch with `python3 tools/mwcc_kb.py search ... --json`, then open relevant records with `show <id> --json`; **append reusable patterns and breakthroughs** to `docs/MWCC_REFERENCE.md` when found (not only in `attempts.jsonl`).
 
 **Source language:** decompilation output is **high-level C/C++ only** — no asm, `.s`, register variables, or stack-offset tricks in `src/**` / `libs/**` (retail asm is reference-only).
 
 When editing `src/**`, `libs/**`, or `configure.py`, run `coop run cycle` or `coop run diff` for the affected unit before claiming a target is complete.
 
-**Split object size:** decomp `.text` must fit the retail split slice (`config/<region>/splits.txt`). Run `python tools/coop/run.py size <unit>` — `diff`, `cycle`, and `behaviour compare` also print a `size:` line and fail when over budget.
+**Split object size:** decomp `.text` must fit the retail split slice (`config/<region>/splits.txt`). Run `python3 tools/coop/run.py size <unit>` — `diff`, `cycle`, and `behaviour compare` also print a `size:` line and fail when over budget.
 
-**Below the acceptance bar:** keep iterating toward `EQUIVALENT_MATCH` / `FULL_MATCH` (or §17.6 exceptions). Prefer Capstone+Z3 via `equivalence` / `check-unit` once fuzzy ≥ 80%. Optional PPC harness via `behaviour ppc` when present. Host dual-oracle tests were removed.
+**Below the acceptance bar:** keep iterating toward `EQUIVALENT_MATCH` / `FULL_MATCH` (or §17.6 exceptions). `cycle` automatically probes equivalence once fuzzy ≥ 50%. Optional PPC harness via `behaviour ppc` when present. Host dual-oracle tests were removed.

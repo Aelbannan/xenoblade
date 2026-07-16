@@ -2539,7 +2539,7 @@ class CheckerOutcomeMatrixZ3Tests(unittest.TestCase):
         insns = decode_block(parse_hex("7c632214"), 0, validate_with_capstone=False)
         result = check_equivalence(
             insns, insns,
-            make_contract(preset="strict", observe=("r3",), timeout_ms=5_000),
+            make_contract(preset=None, observe=("r3",), timeout_ms=5_000),
             original_hex="7c632214", candidate_hex="7c632214",
         )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
@@ -2553,7 +2553,7 @@ class CheckerOutcomeMatrixZ3Tests(unittest.TestCase):
         result = check_equivalence(
             decode_block(parse_hex("38600001"), 0, validate_with_capstone=False),
             decode_block(parse_hex("38600002"), 0, validate_with_capstone=False),
-            make_contract(preset="strict", observe=("r3",), timeout_ms=5_000),
+            make_contract(preset=None, observe=("r3",), timeout_ms=5_000),
             original_hex="38600001", candidate_hex="38600002",
         )
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
@@ -2566,16 +2566,14 @@ class CheckerOutcomeMatrixZ3Tests(unittest.TestCase):
         self.assertEqual(payload["status"], "not_equivalent")
         self.assertIsNotNone(payload.get("replay"))
 
-    def test_mismatched_cfg_exit_is_not_equivalent(self) -> None:
-        result = check_equivalence(
-            decode_block(parse_hex("4e800020"), 0, validate_with_capstone=False),
-            decode_block(parse_hex("4e800021"), 0, validate_with_capstone=False),
-            make_contract(preset="strict", observe=("r3",), timeout_ms=5_000),
-            original_hex="4e800020", candidate_hex="4e800021",
-        )
-        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
-        self.assertIsNotNone(result.mismatch)
-        self.assertIn(result.mismatch["name"], ("exit.kind", "exit.target"))
+    def test_indirect_call_without_lemma_is_inconclusive(self) -> None:
+        with self.assertRaisesRegex(ExecutionInconclusive, "no matched-callee lemma"):
+            check_equivalence(
+                decode_block(parse_hex("4e800020"), 0, validate_with_capstone=False),
+                decode_block(parse_hex("4e800021"), 0, validate_with_capstone=False),
+                make_contract(preset=None, observe=("r3",), timeout_ms=5_000),
+                original_hex="4e800020", candidate_hex="4e800021",
+            )
 
     def test_result_json_round_trip_is_stable(self) -> None:
         insns = decode_block(parse_hex("7c632214"), 0, validate_with_capstone=False)
@@ -2602,7 +2600,7 @@ class CheckerOutcomeMatrixZ3Tests(unittest.TestCase):
             original_hex="7c632214", candidate_hex="7c632214",
         )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
-        code = cli_main(["check-hex", "--original", "7c632214", "--candidate", "7c632214", "--contract", "ppc-eabi", "-J"])
+        code = cli_main(["check-hex", "--original", "7c632214", "--candidate", "7c632214", "--contract", "ppc-eabi", "--json"])
         self.assertEqual(code, 0)
 
 

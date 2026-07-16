@@ -4,6 +4,41 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+# ELF32 PowerPC relocation types used by the Xenoblade retail/decomp objects.
+R_PPC_ADDR16_LO = 4
+R_PPC_ADDR16_HI = 5
+R_PPC_ADDR16_HA = 6
+R_PPC_REL24 = 10
+R_PPC_REL14 = 11
+R_PPC_EMB_SDA21 = 109
+
+SUPPORTED_TEXT_RELOCATIONS = frozenset({
+    R_PPC_ADDR16_LO,
+    R_PPC_ADDR16_HI,
+    R_PPC_ADDR16_HA,
+    R_PPC_REL24,
+    R_PPC_REL14,
+    R_PPC_EMB_SDA21,
+})
+
+
+@dataclass(frozen=True, slots=True)
+class RelocationRef:
+    """Solver-independent logical relocation attached to one instruction field.
+
+    ``symbol`` is the object-file spelling retained for diagnostics;
+    ``canonical_symbol`` is the identity shared by the two implementations.
+    Relocation expressions are interpreted by semantics rather than folded into
+    placeholder instruction bytes by the decoder.
+    """
+
+    offset: int
+    relocation_type: int
+    symbol: str
+    canonical_symbol: str
+    addend: int
+
+
 class Opcode(str, Enum):
     # Immediate integer arithmetic/logical.
     ADDI = "addi"
@@ -300,6 +335,7 @@ class Instruction:
     overflow: bool = False
     link: bool = False
     display_mnemonic: str | None = None
+    relocation: RelocationRef | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -311,6 +347,16 @@ class Instruction:
             "overflow": self.overflow,
             "link": self.link,
             "display_mnemonic": self.display_mnemonic or self.opcode.value,
+            "relocation": (
+                {
+                    "offset": self.relocation.offset,
+                    "type": self.relocation.relocation_type,
+                    "symbol": self.relocation.symbol,
+                    "canonical_symbol": self.relocation.canonical_symbol,
+                    "addend": self.relocation.addend,
+                }
+                if self.relocation is not None else None
+            ),
         }
 
 

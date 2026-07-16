@@ -14,17 +14,17 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 | Area | Path | Role |
 |------|------|------|
 | Co-op architecture | [`PLAN.md`](PLAN.md) | Split-screen design, invariants, milestones, agent roles |
-| Decomp targets | [`DECOMP_MAP.md`](DECOMP_MAP.md) | Per-function addresses, symbols, tiers |
-| Checklist | [`TASKS.md`](TASKS.md) | Check off at `EQUIVALENT_MATCH` |
+| Target registry | [`tools/coop/targets.json`](tools/coop/targets.json) | Canonical function identity, workflow, and match state |
+| Implementation map | [`COOP_IMPLEMENTATION_MAP.md`](COOP_IMPLEMENTATION_MAP.md) | Capability graph and feature handoffs |
 | Coop runner | [`tools/coop/`](tools/coop/) | Build / diff / cycle / size / symbols / behaviour |
 | Symbol recovery | [`tools/symrecover.py`](tools/symrecover.py) | `UnkClass_*` list/show/xref/rename |
-| Behaviour tests | [`tools/test/compare_behaviour/`](tools/test/compare_behaviour/) | Host + PPC retail-vs-decomp oracles |
+| Behaviour tests | [`tools/test/compare_behaviour/`](tools/test/compare_behaviour/) | Static/size checks plus optional real-PPC harnesses |
 | PPC equivalence | [`tools/ppc_equivalence/`](tools/ppc_equivalence/) | Capstone + Z3 semantic equivalence for supported straight-line blocks |
 | DOL opcode census | [`tools/dol_opcodes/`](tools/dol_opcodes/) | Match `main.dol` words against vendored [PPC750CL `isa.yaml`](https://github.com/riptl/ppc750cl/blob/master/isa.yaml); optional Capstone compare |
 | Reloc postprocess | [`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py) | Rename MWCC `@N` pools → retail `lbl_eu_*` |
 | MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Living matching reference |
 | Evidence | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) | Attempt log (JSONL) |
-| Ownership | [`docs/ownership.csv`](docs/ownership.csv) | Symbol claim table |
+| Claims | [`tools/coop/targets.json`](tools/coop/targets.json) | Current owner and exclusive edit scope (`targets claim/release`) |
 | Agent skill | [`.cursor/skills/xenoblade-decomp/`](.cursor/skills/xenoblade-decomp/) | Auto-loaded decomp workflow |
 | Policy macros | [`include/decomp.h`](include/decomp.h) | `DECOMP_PPC_*`, single-insn asm markers |
 
@@ -52,10 +52,10 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 | Document | Contents |
 |----------|----------|
 | [`PLAN.md`](PLAN.md) | Co-op mission, legal boundaries, architecture invariants (§3), multi-agent org (§6), contracts, render/HUD/input plan, decomp loop (§17), size/behaviour policy |
-| [`DECOMP_MAP.md`](DECOMP_MAP.md) | Critical-path functions for split-screen (addresses, mangled symbols, tiers P0–P3) |
-| [`TASKS.md`](TASKS.md) | Agent checklist synced to the map (~106 tracked; progress summarized at top) |
+| [`tools/coop/targets.json`](tools/coop/targets.json) | Canonical registry for symbols, addresses, priorities, dependencies, and current state |
+| [`COOP_IMPLEMENTATION_MAP.md`](COOP_IMPLEMENTATION_MAP.md) | Critical capability slices without duplicated target state |
 | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Compiler behaviour, repo-proven patterns, pitfalls — **append breakthroughs here** |
-| [`docs/ownership.csv`](docs/ownership.csv) | Who owns which symbol (`CLAIMED` / status) |
+| [`docs/ownership.csv`](docs/ownership.csv) | Legacy claim history; not current coordination state |
 | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) | Per-cycle hypothesis / match % / `runtime_test` |
 | [`FORK.md`](FORK.md) | This catalog |
 
@@ -90,7 +90,10 @@ Config knobs (`coop.json` / example): `region` (`us` default), `match_policy`, `
 | `size <unit>` / `size --all` | Decomp `.text` ≤ retail split slice |
 | `cycle <target-id>` | ctx + build + diff/equivalence + append `attempts.jsonl`; fails until `EQUIVALENT_MATCH` |
 | `queue [--tier P0]` | Cycle pending targets from `targets.json` |
-| `targets list` / `show` | Curated target queue (`tools/coop/targets.json`) |
+| `targets list` / `show` | Query the canonical target registry |
+| `targets status` | Generate a Markdown or JSON human-readable status view |
+| `targets import-symbols` | Idempotently add every missing function (`--kind all` for every symbol) |
+| `targets validate` | Check IDs, symbol uniqueness, and state vocabularies |
 | `log [--tail N]` | Read attempt log |
 | `symbols …` | Wraps `tools/symrecover.py` |
 | `behaviour …` | Wraps `tools/test/compare_behaviour/run.py` |
@@ -298,7 +301,7 @@ Not exhaustive — highlights of co-op-critical reconstruction beyond upstream:
 - `configure.py` — objects flipped / added for new TUs; compiler flags as matching requires.
 - Region workflows oriented around **US** (`coop.json` default) while preserving upstream multi-region configure.
 
-Track completed symbols in [`TASKS.md`](TASKS.md) and hypotheses in [`attempts.jsonl`](docs/evidence/decomp/attempts.jsonl).
+Track current symbol state in [`tools/coop/targets.json`](tools/coop/targets.json) and hypotheses in [`attempts.jsonl`](docs/evidence/decomp/attempts.jsonl). `cycle` updates both automatically.
 
 ---
 
@@ -314,7 +317,7 @@ Track completed symbols in [`TASKS.md`](TASKS.md) and hypotheses in [`attempts.j
 ## 10. Typical agent loop (recap)
 
 ```text
-claim symbol in docs/ownership.csv
+python3 tools/coop/run.py targets claim <target-id> --owner <agent>
 → Ghidra/objdiff (reference only)
 → high-level C++ in owning TU
 → python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
@@ -322,7 +325,8 @@ claim symbol in docs/ownership.csv
      optional: add/run ppc_source harness when unit links
      python3 tools/coop/run.py behaviour ppc <test-id>   # when registered
 → python3 tools/coop/run.py size <unit>
-→ on EQUIVALENT_MATCH/FULL_MATCH: check TASKS.md; optional rename-all; flip Matching in configure.py
+→ on EQUIVALENT_MATCH/FULL_MATCH: registry becomes ACCEPTED; optional rename-all; flip Matching in configure.py when the whole unit qualifies
+→ python3 tools/coop/run.py targets release <target-id> --owner <agent>
 → append reusable MWCC insight to docs/MWCC_REFERENCE.md
 ```
 

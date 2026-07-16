@@ -8,9 +8,9 @@
 
 **Companion documents:**
 
-- `DECOMP_MAP.md` — decompilation targets, symbols, and critical-path functions
+- `tools/coop/targets.json` — canonical function registry and current target state
+- `COOP_IMPLEMENTATION_MAP.md` — capability graph and critical feature handoffs
 - `FORK.md` — fork-only tooling inventory (coop runner, symbol recovery, host/PPC behaviour tests, postprocess)
-- `TASKS.md` — agent checklist (`EQUIVALENT_MATCH` or better)
 - `AGENTS.md` / `.cursor/skills/xenoblade-decomp/SKILL.md` — agent entry + decomp loop
 - `Xenoblade_Wii_Coop_Decompilation_Guide.md` — deeper per-function decompilation procedures (when present)
 
@@ -453,13 +453,15 @@ Owns:
 
 ### Function ownership rule
 
-No two agents may modify the same original function concurrently without lead approval. Use `docs/ownership.csv`:
+No two agents may modify the same original function concurrently without lead approval. Current claims live in `tools/coop/targets.json` and are managed atomically through the runner:
 
-```csv
-symbol,region,address,owner,branch,status,reason
-Move__15CMenuArtsSelectFv,us,0x80103D68,U,agent/hud-arts,CLAIMED,Hud subject and cursor trace
-wkRender__5CGameFv,us,<resolve>,R,agent/render-boundary,CLAIMED,Top-level render split investigation
+```bash
+python3 tools/coop/run.py targets claim menu-arts-move --owner agent-hud \
+  --note "HUD subject and cursor trace"
+python3 tools/coop/run.py targets release menu-arts-move --owner agent-hud
 ```
+
+`docs/ownership.csv` is retained only as legacy claim history.
 
 ---
 
@@ -489,7 +491,7 @@ project/
     functions/
     experiments/
     reports/
-    ownership.csv
+    evidence/legacy-ownership.csv
     milestone-status.md
   tools/
     ghidra/
@@ -529,7 +531,7 @@ Required tools:
 ```bash
 sha1sum "$MAIN_DOL"
 git -C "$XENO_DECOMP" rev-parse HEAD
-python configure.py --version us --map
+python3 configure.py --version us --map
 ninja
 ```
 
@@ -1425,20 +1427,20 @@ A byte match proves faithful code generation, not the semantic name of every unk
 When static objdiff match is below 100%, optional evidence lives in `tools/test/compare_behaviour/`:
 
 ```bash
-python tools/coop/run.py behaviour audit              # size budget for registered tests
-python tools/coop/run.py behaviour compare <test-id>  # static + ppc if present
-python tools/coop/run.py behaviour ppc <test-id>      # headless Dolphin when ppc_source set
+python3 tools/coop/run.py behaviour audit              # size budget for registered tests
+python3 tools/coop/run.py behaviour compare <test-id>  # static + ppc if present
+python3 tools/coop/run.py behaviour ppc <test-id>      # headless Dolphin when ppc_source set
 ```
 
 Host dual-oracle `host/*.cpp` tests were **removed** (they were mostly tautological). Do not add them back. Prefer continuing toward `EQUIVALENT_MATCH` / `FULL_MATCH` / §17.6, or a real PPC harness when the unit links. See `tools/test/compare_behaviour/README.md`.
 
 ### 17.2.2 Split object size (`.text` budget)
 
-Each translation unit occupies a fixed `.text` range in `config/<region>/splits.txt` (`start`/`end`). Before promoting a unit to `Matching` in `configure.py` or claiming ``EQUIVALENT_MATCH` / `FULL_MATCH``, verify the decompiled object’s **`.text` section** does not exceed that budget:
+Each translation unit occupies a fixed `.text` range in `config/<region>/splits.txt` (`start`/`end`). Before promoting a unit to `Matching` in `configure.py` or claiming `EQUIVALENT_MATCH` / `FULL_MATCH`, verify the decompiled object’s **`.text` section** does not exceed that budget:
 
 ```bash
-python tools/coop/run.py size <unit>
-python tools/coop/run.py size --all
+python3 tools/coop/run.py size <unit>
+python3 tools/coop/run.py size --all
 ```
 
 `coop run diff`, `cycle`, and `behaviour compare` print a `size:` line and exit non-zero when decomp `.text` is larger than the split slice. Behaviour tests may pass while size fails — semantics can be correct before codegen fits the retail slot. Implementation: `tools/coop/lib/object_size.py`.
@@ -1454,7 +1456,6 @@ Use only after normal C++ and decomp.me fail, and **log every use** in `docs/evi
 | Exception | Allowed when | Requirements |
 |-----------|----------------|--------------|
 | **MWCC PPC intrinsics** | Opcode selection (`slwi` vs `rlwinm`, bitfield inserts) | Use `DECOMP_PPC_*` macros from `include/decomp.h` (same family as SDK `__rlwimi` / `__rlwinm`). Document in `MWCC_REFERENCE.md` if a new pattern is reusable. |
-| **Whole-function `asm void`** | Caller-stack ABI; high-level C++ capped well below 100% after decomp.me | Log `policy_exception`; document in `MWCC_REFERENCE.md`. Example: `CView::setCurrent` (retail `-0x40` frame + `lwz sp+0xC..0x2A`). |
 | **Single-instruction inline asm** | Exactly one insn differs in an otherwise ≥99% function; semantics proven equivalent | Wrap in `DECOMP_ASM_INSN_BEGIN` / `DECOMP_ASM_INSN_END` (or a named `DECOMP_ASM_*` helper macro). No register variables; asm must mirror retail mnemonic/operands only. Max **one** insn per function unless user approves more. |
 | **Goto gate chains** | CSplitFrame / multi-exit guards (see `setSplitLine` 100%) | Gotos for control-flow gates are OK; not for prologue spill ordering alone. |
 | **Relocation name drift** | `functionRelocDiffs=data_value` already compares values; TU-local `@N` vs retail `lbl_eu_*` at same offset | Prefer `extern "C" lbl_eu_*` when it does not regress codegen. If names still block 100% with identical instructions/data, post-process the object with `powerpc-eabi-objcopy --redefine-sym` (see `tools/postprocess_mtrand_object.py`; log in `attempts.jsonl`). `objdiff.json` `symbol_mappings` does not affect CLI reports (objdiff #279). |
@@ -2184,8 +2185,8 @@ Never report a hypothesis as confirmed. Every function or field claim must be ma
 Do not call the complete CGame::wkRender/task draw path twice. Identify a lower scene-only render boundary. The simulation, UI model updates, camera updates, particles, audio, frame tail, and present must occur only at their intended counts.
 
 Create and maintain:
-- docs/ownership.csv;
-- docs/milestone-status.md;
+- current claims and function state in `tools/coop/targets.json`;
+- milestone status through `targets status` generated views;
 - architecture contracts;
 - per-function dossiers;
 - JSONL objdiff attempt logs;

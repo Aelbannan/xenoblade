@@ -304,7 +304,7 @@ class CheckObjectsApiTests(unittest.TestCase):
                     ])
                 self.assertEqual(exit_code, 0)
                 payload = json.loads(output.getvalue())
-                self.assertEqual(payload["format"], 3)
+                self.assertEqual(payload["format"], 4)
                 self.assertEqual(payload["contract"], "auto")
                 self.assertEqual(payload["contract_resolution"]["base"], "ppc-eabi")
                 self.assertEqual(payload["contract_resolution"]["added"], expected_added)
@@ -374,9 +374,11 @@ class CheckObjectsApiTests(unittest.TestCase):
             )
             self.assertEqual(code, 1)
 
-    def test_check_objects_is_inconclusive_for_unresolved_relocations(self) -> None:
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_check_objects_proves_supported_symbolic_relocations(self) -> None:
         relocated = build_reloc_elf(
-            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+            {"f": bytes.fromhex("48000001 38630004 4e800020"), "leaf": bytes.fromhex("4e800020")},
+            relocations=((0, "leaf", 10, 0),),
         )
         with tempfile.TemporaryDirectory() as tmp:
             left = Path(tmp) / "a.o"
@@ -390,9 +392,9 @@ class CheckObjectsApiTests(unittest.TestCase):
                     "--symbol", "f", "--json",
                 ])
             payload = json.loads(output.getvalue())
-        self.assertEqual(exit_code, 2)
-        self.assertEqual(payload["status"], "inconclusive_unsupported")
-        self.assertIn("unresolved ELF relocations", payload["unsupported"][0])
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(payload["status"], "equivalent")
+        self.assertEqual(payload["assumed_callees"], ["leaf"])
 
     @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
     def test_replay_reproduces_exit_target_mismatch(self) -> None:
@@ -443,9 +445,11 @@ class CoopDefaultContractTests(unittest.TestCase):
             self.assertEqual(probe.status, ProofStatus.EQUIVALENT)
             self.assertEqual(probe.detail, "auto contract: ppc-eabi + fpscr")
 
-    def test_automatic_probe_rejects_unresolved_relocations(self) -> None:
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_automatic_probe_proves_supported_symbolic_relocations(self) -> None:
         relocated = build_reloc_elf(
-            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+            {"f": bytes.fromhex("48000001 38630004 4e800020"), "leaf": bytes.fromhex("4e800020")},
+            relocations=((0, "leaf", 10, 0),),
         )
         with tempfile.TemporaryDirectory() as tmp:
             retail = Path(tmp) / "retail.o"
@@ -454,8 +458,8 @@ class CoopDefaultContractTests(unittest.TestCase):
             decomp.write_bytes(relocated)
             unit = SimpleNamespace(target_path=retail, base_path=decomp)
             probe = prove_unit_symbol(None, unit, "f")  # type: ignore[arg-type]
-        self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
-        self.assertIn("unresolved ELF relocations", probe.detail)
+        self.assertEqual(probe.status, ProofStatus.EQUIVALENT)
+        self.assertIn("assumed callees: leaf", probe.detail)
 
     def test_require_relocation_free_raises_relocations_present(self) -> None:
         """The sentinel RelocationsPresent must be raised (not plain ElfSymbolError)."""
@@ -536,8 +540,8 @@ class CoopDefaultContractTests(unittest.TestCase):
         self.assertIn("fell back to DOL/ELF linked bytes", probe.detail)
         self.assertIn("not in config/us/symbols.txt", probe.detail)
 
-    def test_linked_false_keeps_today_inconclusive_on_relocs(self) -> None:
-        """Sanity: without --linked, today's INCONCLUSIVE_UNSUPPORTED behavior is preserved."""
+    def test_linked_false_rejects_malformed_relocation_instruction_pair(self) -> None:
+        """Malformed relocation/instruction pairs fail closed without linked fallback."""
         relocated = build_reloc_elf(
             {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
         )
@@ -549,7 +553,7 @@ class CoopDefaultContractTests(unittest.TestCase):
             unit = SimpleNamespace(target_path=retail, base_path=decomp)
             probe = prove_unit_symbol(None, unit, "f", linked=False)  # type: ignore[arg-type]
         self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
-        self.assertIn("unresolved ELF relocations", probe.detail)
+        self.assertIn("REL24 requires b/bl", probe.detail)
 
 
 class CoopCheckUnitTests(unittest.TestCase):

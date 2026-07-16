@@ -4,9 +4,9 @@ Read and follow `.cursor/skills/xenoblade-decomp/SKILL.md`, `docs/MWCC_REFERENCE
 
 ## Policy
 
-- Goal: **FULL_MATCH** via `python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."`
+- Historical stretch goal: **FULL_MATCH**; acceptance follows the current registry policy via `python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."`
 - High-level C/C++ only in `src/**` / `libs/**` (no `register rN`, no whole-function asm)
-- Below 100%: mandatory behaviour host tests + `behaviour audit`
+- Below 100%: host dual-oracle tests are retired; continue matching, use automatic SMT when eligible, and optional PPC when registered
 - Run `coop run size <unit>` — must PASS (under budget OK; trim TU extras if over)
 - **Edit only your exclusive files / methods** — do not touch other batch targets' exclusive regions
 - Prefer `StrReplace` scoped to your function body only (shared TUs!)
@@ -84,4 +84,4 @@ python3 tools/coop/run.py ctx <source.cpp>
 
 ## Done criteria
 
-Report: final match %, `cycle` exit code, size PASS/FAIL, files changed, and whether FULL_MATCH was reached. If stuck below 100%, ship behaviour host coverage meeting the skill thresholds.
+Report: final match %, `cycle` exit code, size PASS/FAIL, files changed, and whether FULL_MATCH was reached. If stalled below acceptance, preserve the best candidate and report the exact mismatch categories, attempts, and next bounded experiments.

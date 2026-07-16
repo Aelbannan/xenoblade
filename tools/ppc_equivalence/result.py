@@ -49,6 +49,8 @@ class ProofResult:
     mismatch: dict[str, Any] | None = None
     counterexample: dict[str, Any] | None = None
     replay: dict[str, Any] | None = None
+    repair_hint: dict[str, Any] | None = None
+    assumed_callees: list[int] = field(default_factory=list)
     unsupported: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 

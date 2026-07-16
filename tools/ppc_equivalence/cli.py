@@ -131,6 +131,18 @@ def _print_result(result: ProofResult) -> None:
             print("counterexample inputs:")
             for name, value in registers.items():
                 print(f"  {name} = {value}")
+    if result.repair_hint:
+        rh = result.repair_hint
+        if "diverged_register" in rh:
+            print(
+                f"repair hint: {rh['diverged_register']} diverged at insn {rh['instruction_index']}"
+            )
+            print(f"  original:  {rh.get('original_insn', '?')}  →  {rh.get('original_value', '?')}")
+            print(f"  candidate: {rh.get('candidate_insn', '?')}  →  {rh.get('candidate_value', '?')}")
+        elif "detail" in rh:
+            print(f"repair hint: {rh['detail']}")
+    if result.assumed_callees:
+        print(f"assumed callees: {', '.join(f'0x{t:08x}' for t in result.assumed_callees)}")
     for warning in result.warnings:
         print(f"warning: {warning}")
     for item in result.unsupported:

@@ -104,12 +104,47 @@ symbol in each ELF32 big-endian object (the same pair objdiff compares). Decode
 bases default to each symbol’s section address + `st_value`. A function with
 unresolved `.rel.text` / `.rela.text` entries is **inconclusive**: placeholder
 immediates are not the linked program, and treating them as constants could
-produce a false equivalence proof. Supply relocation-applied linked bytes to a
-raw `check` when such a function must be checked. When fuzzy match is in
-`[50%, 100%)`, `coop run diff` /
-`cycle` run this automatically and may promote status to **`EQUIVALENT_MATCH`**
-(the fork’s default acceptance bar, alongside `FULL_MATCH`).
-Split-size fit remains mandatory.
+produce a false equivalence proof. When fuzzy match is in `[50%, 100%)`,
+`coop run diff` / `cycle` run this automatically and may promote status to
+**`EQUIVALENT_MATCH`** (the fork’s default acceptance bar, alongside
+`FULL_MATCH`). Split-size fit remains mandatory.
+
+### Linked-bytes fallback (`--linked`)
+
+When an unlinked `.o` pair carries unresolved relocations the proof is
+`inconclusive_unsupported` by default. Pass `--linked` to make `diff` /
+`cycle` / `equivalence check-unit` retry once with **already-linked bytes**
+extracted from:
+
+- the retail side: `orig/<region>/sys/main.dol`, sliced by `(address, size)`
+  looked up in `config/<region>/symbols.txt`, via
+  `tools/ppc_equivalence/dol_symbols.extract_by_address`;
+- the candidate side: `build/<region>/main.elf` (the linked ELF consumed by
+  `elf2dol`; gitignored, produced by `ninja build/<region>/main.elf`), via
+  `tools.ppc_equivalence.elf_symbols.extract_function`.
+
+Both sources are relocation-free, so `require_relocation_free` passes and the
+proof proceeds. Results are decorated with `fell back to DOL/ELF linked bytes`
+in their `detail` field.
+
+```bash
+# Run ninja first so the linked ELF exists for the candidate side:
+ninja build/us/main.elf
+
+# Then any of:
+python tools/coop/run.py diff kyoshin/CGame --symbol OnPauseTrigger__5CGameFv --linked
+python tools/coop/run.py cycle pad-copy-input-flag --linked
+python tools/coop/run.py equivalence check-unit kyoshin/CGame --symbol OnPauseTrigger__5CGameFv --linked
+```
+
+The fallback path returns a real `equivalent` / `not_equivalent` verdict
+whenever the linked bytes decode cleanly; it stays `inconclusive_unsupported`
+only when the DOL or ELF is missing, the symbol is absent from `symbols.txt`,
+or the engine hits an unsupported instruction. The linked path is a strict
+*concretization* of the proof — it bakes in retail’s concrete addresses, so a
+decomp function whose only difference is link layout can be reported
+`not_equivalent` here; a future symbolic-relocation mode (planned, see
+`REFERENCES.md`) is the principled answer for that case.
 
 ## Contract and exit codes
 

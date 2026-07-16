@@ -57,6 +57,15 @@ class ElfSymbolError(ValueError):
     """Invalid ELF or missing/ambiguous function symbol."""
 
 
+class RelocationsPresent(ElfSymbolError):
+    """``require_relocation_free`` rejected a function carrying unresolved relocations.
+
+    Distinct from a symbol lookup failure so callers can retry with linked bytes
+    (see ``tools/ppc_equivalence.dol_symbols``) without masking genuine
+    "symbol not found" / "not an ELF file" errors.
+    """
+
+
 def _require_elf32_be(data: bytes, path: Path) -> int:
     if len(data) < 52 or data[:4] != b"\x7fELF":
         raise ElfSymbolError(f"not an ELF file: {path}")
@@ -286,7 +295,7 @@ def require_relocation_free(*functions: FunctionBytes) -> None:
         if len(function.relocations) > 4:
             sample += f", ... ({len(function.relocations)} total)"
         details.append(f"{function.path}:{function.name} [{sample}]")
-    raise ElfSymbolError(
+    raise RelocationsPresent(
         "function contains unresolved ELF relocations; linked relocation values must be "
         "supplied before a sound semantic proof: " + "; ".join(details)
     )

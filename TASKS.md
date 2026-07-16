@@ -125,9 +125,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CView::wkUpdate()`** (`wkUpdate__5CViewFv`) · `0x80441478` · size `0x14C`
   - Map level: FULL_MATCH
   - Determine whether view update is camera-only, presentation-only, or stateful.
-- [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4` · **95.3% CODE_MATCH**
+- [ ] **`CView::renderView()`** (`renderView__5CViewFv`) · `0x804415C4` · size `0xCB4` · **95.7% CODE_MATCH**
   - Map level: CODE_MATCH; host `cview-render-view` PASS (25). PPC launch is environment-blocked by the local Dolphin Qt/NEON requirement.
-  - Typed volatile view/parent rectangles preserve retail's dead stores; signed 32-bit accumulators and the original split-scissor branch order align the main body. A register `yAccum` with one typed scratch sink restores `_savegpr_25`. Remaining gap is FPR/GPR coloring plus the three-instruction tail keep-alive.
+  - Tail fixed: function-pointer-cast trick keeps `frameParent` in r4 naturally, removing the artificial -1 gate. Size exact 0xCB4. Remaining ~4.3% gap: `crossRootFlag` r31 vs r28, cache FPR f3 vs f4, `mr r28 r27` prologue — purely Chaitin register coloring.
 - [x] **`CViewFrame::render()`** (`render__10CViewFrameFv`) · `0x80442CDC` · size `0x394` · **FULL_MATCH 100%** via guarded §17.6 Chaitin register-color patches; behaviour `cviewframe-render` PASS
   - Map level: FULL_MATCH
   - Frame/border/clear. Behaviour: `cviewframe-render` host+PPC semantic coverage PASS (12 scenarios). Chaitin `expand`/owner/adjustment register cascades closed by guarded expect→set patches.
@@ -234,19 +234,19 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CBattleState::CBattleState()`** (`__ct__Q22cf12CBattleStateFv`) · `0x80146520` · size `0xA8`
   - Map level: FULL_MATCH
   - Recovers initial state and field defaults.
-- [ ] **`CBattleState virtual #5`** (`CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv`) · `0x80146DAC` · size `0x13DC`
+- [ ] **`CBattleState virtual #5`** (`CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv`) · `0x80146DAC` · size `0x13DC` · **34.2% STRUCTURAL**
   - Map level: STRUCTURAL
-  - Large core state/update routine; trace player confirm, target, and Art activation.
-- [ ] **`CBattleState virtual #6`** (`CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv`) · `0x80148210` · size `0x154` · **HIGH_MATCH ~92.2%**
+  - Large core state/update routine; trace player confirm, target, and Art activation. Id-specific init, kind classification, branch dispatch, 0x68-entry scan.
+- [ ] **`CBattleState virtual #6`** (`CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv`) · `0x80148210` · size `0x154` · **HIGH_MATCH 92.2%**
   - Map level: HIGH_MATCH
-  - Bitfield set + 8-slot entry match/clamp/fill, tail-call vt+0x48; host `battlestate-vfunc6` (16 scenarios) PASS. Remaining gap is GPR/FPR destination-register allocation only (see `docs/MWCC_REFERENCE.md`).
+  - Bitfield set + 8-slot entry match/clamp/fill, tail-call vt+0x48; host `battlestate-vfunc6` (16 scenarios) PASS. Remaining gap is GPR/FPR destination-register allocation only.
 - [ ] **`CBattleState virtual #8`** (`CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv`) · `0x801485EC` · size `0x428`
   - Map level: TRACE_ONLY
   - Large state routine; classify writes and command calls.
 - [ ] **`CBattleState virtual #10`** (`CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv`) · `0x80148A18` · size `0x444`
   - Map level: TRACE_ONLY
   - Large state routine; likely mode-specific battle behavior.
-- [ ] **`CBattleState virtual #11`** (`CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv`) · `0x80148FC8` · size `0x174` — CODE_MATCH ~96.2% (Chaitin soft-cap); behaviour `battlestate-vfunc11` PASS; leave unchecked until FULL_MATCH
+- [ ] **`CBattleState virtual #11`** (`CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv`) · `0x80148FC8` · size `0x174` — CODE_MATCH 96.2% (Chaitin soft-cap); behaviour `battlestate-vfunc11` PASS; leave unchecked until FULL_MATCH
   - Map level: TRACE_ONLY
   - Candidate request/transition helper.
 - [ ] **`CBattleState virtual #26`** (`CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv`) · `0x80148364` · size `0x12C`
@@ -267,10 +267,10 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [x] **`CAIAction::CAIAction()`** (`__ct__Q22cf9CAIActionFv`) · `0x8014B308` · size `0x10C`
   - Map level: FULL_MATCH
   - Recovers fields and native action state defaults.
-- [ ] **`CAIAction virtual #1`** (`CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv`) · `0x8014B41C` · size `0x110` · HIGH_MATCH ~93.2%; host `aiaction-vfunc1` (14) PASS
-  - Map level: STRUCTURAL
+- [ ] **`CAIAction virtual #1`** (`CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv`) · `0x8014B41C` · size `0x110` · **96.0% CODE_MATCH**; host `aiaction-vfunc1` (14) PASS
+  - Map level: CODE_MATCH
   - Trace companion decision/update behavior and writes.
-- [ ] **`CAIAction virtual #2`** (`CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv`) · `0x8014B52C` · size `0x110` · CODE_MATCH ~96.0%; host `aiaction-vfunc2` (14) PASS
+- [ ] **`CAIAction virtual #2`** (`CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv`) · `0x8014B52C` · size `0x110` · CODE_MATCH 96.0%; host `aiaction-vfunc2` (14) PASS
   - Map level: STRUCTURAL
   - Trace native action runner/transition behavior.
   - Inverse of vfunc1 (import trailer + drain ring into self); same MWCC `stwux` CSE hard cap as vfunc1 (see `docs/MWCC_REFERENCE.md` §8c12b).
@@ -289,9 +289,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CMenuArtsSelect::CMenuArtsSelect()`** (`__ct__CMenuArtsSelect`) · `0x80102B08` · size `0x288`
   - Map level: STRUCTURAL
   - Recovers widget/state fields and default bindings.
-- [ ] **`CMenuArtsSelect::Init()`** (`Init__15CMenuArtsSelectFv`) · `0x80102EC4` · size `0xC5C`
+- [ ] **`CMenuArtsSelect::Init()`** (`Init__15CMenuArtsSelectFv`) · `0x80102EC4` · size `0xC5C` · **STRUCTURAL** (0.0%)
   - Map level: STRUCTURAL
-  - Widget creation, resource lookup, actor/Arts references.
+  - Widget creation, resource lookup, actor/Arts references. First-pass: layout region + animations + per-slot pane config + font binding.
 - [x] **`CMenuArtsSelect::Term()`** (`Term__15CMenuArtsSelectFv`) · `0x80103B20` · size `0x248` — **FULL_MATCH**
   - Map level: STRUCTURAL
   - Safe duplicated/scoped HUD teardown.
@@ -307,9 +307,9 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CMenuBattlePlayerState::CMenuBattlePlayerState()`** (`__ct__CMenuBattlePlayerState`) · `0x8010B880` · size `0x580`
   - Map level: STRUCTURAL
   - Recovers native HP/portrait/status widget graph.
-- [ ] **`CMenuBattlePlayerState::Init()`** (`Init__22CMenuBattlePlayerStateFv`) · `0x8010C000` · size `0xC5C`
+- [ ] **`CMenuBattlePlayerState::Init()`** (`Init__22CMenuBattlePlayerStateFv`) · `0x8010C000` · size `0xC5C` · **57.5% STRUCTURAL**
   - Map level: STRUCTURAL
-  - Finds party actor and layout-resource bindings.
+  - Finds party actor and layout-resource bindings. Resource region setup → per-slot layout creation → font/pane binding → render callback registration.
 - [x] **`CMenuBattlePlayerState::Term()`** (`Term__22CMenuBattlePlayerStateFv`) · `0x8010CC5C` · size `0x1B0` · target `menu-bps-term`
   - Map level: **FULL_MATCH**
   - Needed if HUD instances are duplicated.
@@ -414,12 +414,12 @@ Agent-facing checklist derived from [`DECOMP_MAP.md`](DECOMP_MAP.md). Check off 
 - [ ] **`CUICfManager::Move()`** (`Move__12CUICfManagerFv`) · `0x801332A4` · size `0x97C` — HIGH_MATCH ~94.3%; decomp size Exact `0x97C`; frame/homes/mark retail-shaped; behaviour host `uicf-move` PASS; soft-cap enum r28↔r30 + collect stwx Chaitin (see MWCC_REFERENCE.md §8c18)
   - Map level: STRUCTURAL
   - Central UI state and event/menu activity.
-- [ ] **`CUICfManager helper`** (`func_80133324__12CUICfManagerFv`) · `0x80133DF8` · size `0x3C0` — CODE_MATCH 98.0%; behaviour host `uicf-func-80133324` (35 scenarios) + audit PASS; remaining gap is Chaitin savedRet spill/reload regalloc, not structural (see MWCC_REFERENCE.md §8c17)
+- [ ] **`CUICfManager helper`** (`func_80133324__12CUICfManagerFv`) · `0x80133DF8` · size `0x3C0` — CODE_MATCH 98.2%; volatile+intermediate approach closed stw/lwz savedRet gap; remaining Chaitin register coloring (see MWCC_REFERENCE.md §8c17)
   - Map level: TRACE_ONLY
   - Candidate mode/window state query/update.
-- [ ] **`CUIWindowManager::Move()`** (`Move__16CUIWindowManagerFv`) · `0x8013D0C8` · size `0x4DC` · **79.3% HIGH_MATCH**; host `uiwindowmanager-move` (34) PASS
+- [ ] **`CUIWindowManager::Move()`** (`Move__16CUIWindowManagerFv`) · `0x8013D0C8` · size `0x4DC` · **80.2% HIGH_MATCH**; host `uiwindowmanager-move` (34) PASS
   - Map level: HIGH_MATCH
-  - Soft-cap: MWCC regalloc in 8× unrolled unlink loops.
+  - Soft-cap: MWCC regalloc in 8× unrolled unlink loops; poison-store `pending[i]=0` serialization fixes prologue to retail stwu -0x50.
 - [x] **`CUIWindowManager::Term()`** (`Term__16CUIWindowManagerFv`) · `0x8013D068` · size `0x60` · **FULL_MATCH**
   - Map level: FULL_MATCH
   - Implicit MI `this`→`cf::IFlagEvent*` null-adjust (§14 pattern); widened `unk9C` to `IUIWindow*`, calls `SetRemove()`, clears `lbl_eu_80664088`.

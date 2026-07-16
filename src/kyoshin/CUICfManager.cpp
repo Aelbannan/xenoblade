@@ -272,7 +272,7 @@ void func_8013B428(u32);
 
 void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
     // Decl order: savedRet@0x8, gap, setItem stw-r1 home, idTable@0x28 (retail frame).
-    int savedRet;
+    volatile int savedRet;
     int pad0C;
     int pad10;
     int pad14;
@@ -386,8 +386,9 @@ range_312c_31f3: {
 
     CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
     if (inst != NULL) {
-        savedRet = func_8014A1D4(inst->unk144, inst->unk11C, codePersist, 1);
-        if (savedRet != 0) {
+        int tempRet = (int)func_8014A1D4(inst->unk144, inst->unk11C, codePersist, 1);
+        savedRet = tempRet;
+        if (tempRet != 0) {
             inst = (CUICfManager*)lbl_eu_80664054;
 
             _reslist_node<u32>* startNode = (_reslist_node<u32>*)inst->unk128;
@@ -561,8 +562,6 @@ void func_8012FFB4(void*); // &mInitSlots[0].unk04
 typedef void* (*CUICfVPtrFn)(void*);
 
 void CUICfManager::Move() {
-    // Retail: -0x120 / manual stw r31..r28 / mr r31,r1. Per-create volatile
-    // homes at 0x18/0x14/0x10/0x0C/0x08 (§8c19 battle-mgr pattern); holder@0x20.
     void* savedRet18;
     void* savedRet14;
     void* savedRet10;
@@ -578,7 +577,6 @@ void CUICfManager::Move() {
     f32 posB[3];
     f32 posC[3];
     _reslist_node<CUICfMenuItem*>* pending[18];
-    u16 flags;
     CUICfManager* inst;
     int i;
     int byteOff;
@@ -606,13 +604,12 @@ void CUICfManager::Move() {
     int nextCount;
     int idx;
 
-    // Address-take every home so they cannot share one stack slot.
     home18 = (volatile void**)&savedRet18;
     home14 = (volatile void**)&savedRet14;
     home10 = (volatile void**)&savedRet10;
     home0C = (volatile void**)&savedRet0C;
     home08 = (volatile void**)&savedRet08;
-    flags = mFlags;
+    u16 flags = mFlags;
 
     if ((flags & 0x2) != 0) {
         {

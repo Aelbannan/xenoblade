@@ -1457,11 +1457,8 @@ renderView_tail:
     frameParent = CView::convertToView(mParent);
 
 renderView_frame_call:
-    // Keep the retail parent conversion live through the final frame call.
-    if (frameParent == (CView*)-1) {
-        return;
-    }
-    render__10CViewFrameFv(&unk1DC);
+    // Keep frameParent live in r4 by passing as extra param to render
+    ((void(*)(CViewFrame*, CView*))render__10CViewFrameFv)(&unk1DC, frameParent);
 }
 
 void CView::setDisp(bool r4, bool r5) {

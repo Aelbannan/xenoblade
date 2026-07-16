@@ -3,6 +3,16 @@
 extern "C" void* memset(void* dest, int val, size_t count);
 extern "C" void* memcpy(void* dest, const void* src, size_t count);
 
+// sdata2 float constants used by CBattleState_UnkVirtualFunc5
+extern "C" const float lbl_eu_80667400;  // 0x80146E48: id==0x35 unk24
+extern "C" const float lbl_eu_80667404;  // 0x80146E90: unk20 *= float
+extern "C" const double lbl_eu_80667408; // 0x80146EC4: unk20 *= double
+extern "C" const float lbl_eu_80667410;  // 0x80146ED4: compared with unk20
+extern "C" const float lbl_eu_80667414;  // 0x80148134: 0.9f scaling (same as vfunc6)
+
+extern "C" void func_80109784(void* ptr, u32 id, int arg);
+extern "C" void func_8013DB6C(int a, u32 id, int b, int c);
+
 namespace cf {
 
 CBattleState::CBattleState() {
@@ -83,7 +93,6 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 //
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
 extern "C" const float lbl_eu_80667414;
-
 extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* arg) {
     typedef void (*Vfunc17Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
@@ -127,15 +136,13 @@ extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
             entries->unk1C = arg->unk1C;
             entries->unk20 = arg->unk20;
             entries->unk24 = arg->unk24;
-            {
-                f32 scaled = lbl_eu_80667414 * entries->unk24;
-                entries->unk28 = arg->unk28;
-                entries->unk2C = arg->unk2C;
-                entries->unk2E = arg->unk2E;
-                entries->unk30 = arg->unk30;
-                entries->unk1C = entries->unk20;
-                entries->unk28 = scaled;
-            }
+            f32 scaled = lbl_eu_80667414 * entries->unk24;
+            entries->unk28 = arg->unk28;
+            entries->unk2C = arg->unk2C;
+            entries->unk2E = arg->unk2E;
+            entries->unk30 = arg->unk30;
+            entries->unk1C = entries->unk20;
+            entries->unk28 = scaled;
             ((Vfunc17Fn)(*(void***)self)[18])(self, entries);
             return;
         }
@@ -1111,4 +1118,740 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
         ((Vfunc18Fn)(*(void***)self)[19])(
             self, (cf::CBattleStateEntry*)savedWords);
     }
+}
+
+// Batch 2026-07-16: battlestate-vfunc5 owns CBattleState_UnkVirtualFunc5
+// exclusively. Do not touch ctor / other vfuncs.
+//
+// symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
+// fake-Fv ABI as UnkVirtualFunc6). Core battle-state-machine: id-specific
+// init, kind-based routing through vfunc1/2 helpers + sound/event dispatch,
+// then slot scan + copy/accumulate for entries sharing the same id/keys.
+extern "C" void CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg) {
+    typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
+
+    u32 id;
+    int kind2;
+
+    id = arg->unk0C;
+
+    // ── Phase 1: id-specific init (flat if/goto to match retail's
+    //   cmpwi/beq/bge chain) ─────────────────────────────────────────
+    if (id == 0xf)
+        goto P1_setzero;
+    if (id >= 0xf)
+        goto P1_geF;
+    if (id == 0x9)
+        goto P1_setzero;
+    if (id >= 0x9)
+        goto P1_ge9;
+    if (id == 0x6)
+        goto P1_setzero;
+    goto P1_done;
+
+P1_ge9:
+    if (id >= 0xd)
+        goto P1_done;
+    if (id >= 0xb)
+        goto P1_setzero;
+    goto P1_done;
+
+P1_geF:
+    if (id >= 0x2e)
+        goto P1_ge2E;
+    if (id >= 0x2c)
+        goto P1_2c;
+    if (id >= 0x11)
+        goto P1_done;
+    goto P1_10;
+
+P1_2c:
+    if (arg->unk10 == 0) {
+        arg->unk10 = 0x64;
+    }
+    goto P1_done;
+
+P1_ge2E:
+    if (id == 0x35) {
+        arg->unk24 = lbl_eu_80667400;
+    }
+    goto P1_done;
+
+P1_10:
+    arg->unk04 = 0;
+    arg->unk00 = 0;
+    {
+        cf::CBattleState* obj;
+        obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+        if (*(u32*)((u8*)obj + 0x3374) & 0x20) {
+            arg->unk20 *= lbl_eu_80667404;
+        } else {
+            obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+            if (*(u32*)((u8*)obj + 0x3374) & 0x40) {
+                arg->unk20 = (float)((double)arg->unk20 * lbl_eu_80667408);
+            }
+        }
+    }
+    goto P1_done;
+
+P1_setzero:
+    arg->unk04 = 0;
+    arg->unk00 = 0;
+
+P1_done:
+
+    // ── Phase 2: set unk30 bit 0 based on unk20 vs constant ─────────
+    if (lbl_eu_80667410 == arg->unk20) {
+        arg->unk30 |= 1;
+    } else {
+        arg->unk30 &= ~1u;
+    }
+
+    // ── Phase 3: kind classification #1 (r0 in retail) ──────────────
+    {
+        int k;
+        if (id >= 0xd4) goto K1_5;
+        if (id >= 0x3e) goto K1_4;
+        if (id >= 0x2c) goto K1_3;
+        if (id == 0x27) { k = 0; goto K1_done; }
+        if (id >= 0x27) goto K1_2;
+        if (id >= 4) goto K1_1;
+        if (id >= 2) { k = 0; goto K1_done; }
+        k = 2; goto K1_done;
+    K1_1: if (id >= 0x14) { k = 2; goto K1_done; } k = 1; goto K1_done;
+    K1_2: if (id >= 0x2a) { k = 1; goto K1_done; } k = 2; goto K1_done;
+    K1_3: if (id == 0x36) { k = 0; goto K1_done; }
+        if (id >= 0x36) { goto K1_3b; }
+        if (id >= 0x35) { k = 2; goto K1_done; }
+        if (id >= 0x33) { k = 0; goto K1_done; }
+        k = 2; goto K1_done;
+    K1_3b: if (id >= 0x3c) { k = 1; goto K1_done; } k = 2; goto K1_done;
+    K1_4: if (id == 0x5f) { k = 0; goto K1_done; }
+        if (id >= 0x5f) goto K1_4b;
+        if (id >= 0x52) goto K1_4c;
+        if (id >= 0x46) { k = 2; goto K1_done; }
+        if (id >= 0x44) { k = 0; goto K1_done; }
+        k = 2; goto K1_done;
+    K1_4c: if (id >= 0x5d) { k = 2; goto K1_done; } if (id >= 0x58) { k = 0; goto K1_done; } k = 1; goto K1_done;
+    K1_4b: if (id == 0x93) { k = 0; goto K1_done; }
+        if (id >= 0x93) goto K1_4d;
+        if (id >= 0x6a) { k = 2; goto K1_done; }
+        if (id >= 0x65) { k = 1; goto K1_done; }
+        k = 2; goto K1_done;
+    K1_4d: if (id >= 0xce) { k = 0; goto K1_done; } k = 2; goto K1_done;
+    K1_5: if (id >= 0x103) goto K1_5b;
+        if (id == 0xeb) { k = 2; goto K1_done; }
+        if (id >= 0xeb) goto K1_5c;
+        if (id >= 0xdf) goto K1_5d;
+        if (id == 0xdc) { k = 1; goto K1_done; }
+        k = 2; goto K1_done;
+    K1_5d: if (id >= 0xea) { k = 3; goto K1_done; } if (id >= 0xe3) { k = 2; goto K1_done; } k = 1; goto K1_done;
+    K1_5c: if (id == 0xf7) { k = 0; goto K1_done; }
+        if (id >= 0xf7) goto K1_5e;
+        if (id >= 0xed) { k = 3; goto K1_done; }
+        k = 0; goto K1_done;
+    K1_5e: if (id == 0xff) { k = 2; goto K1_done; } k = 3; goto K1_done;
+    K1_5b: if (id == 0x117) { k = 1; goto K1_done; }
+        if (id >= 0x117) goto K1_5f;
+        if (id >= 0x109) goto K1_5g;
+        if (id == 0x106) { k = 3; goto K1_done; }
+        k = 2; goto K1_done;
+    K1_5g: if (id >= 0x111) { k = 3; goto K1_done; } if (id >= 0x10d) { k = 2; goto K1_done; } k = 3; goto K1_done;
+    K1_5f: if (id == 0x12d) { k = 0; goto K1_done; } if (id >= 0x12d) { k = 2; goto K1_done; } if (id == 0x11e) { k = 0; goto K1_done; } k = 2;
+    K1_done:
+        if (k == 3) {
+            *(u32*)self->unk1528 = id;
+        }
+    }
+
+    // ── Phase 4: set bitfield at this+0x15AC ────────────────────────
+    {
+        u32 wordOff = (id >> 3) & ~3u;
+        u32 bitPos = id & 0x1F;
+        *(u32*)(self->unk15AC + wordOff) |= (1u << bitPos);
+    }
+
+    // ── Phase 5: kind classification #2 (r31 in retail) ─────────────
+    if (id >= 0xd4) goto K2_5;
+    if (id >= 0x3e) goto K2_4;
+    if (id >= 0x2c) goto K2_3;
+    if (id == 0x27) { kind2 = 0; goto K2_done; }
+    if (id >= 0x27) goto K2_2;
+    if (id >= 4) goto K2_1;
+    if (id >= 2) { kind2 = 0; goto K2_done; }
+    kind2 = 2; goto K2_done;
+K2_1: if (id >= 0x14) { kind2 = 2; goto K2_done; } kind2 = 1; goto K2_done;
+K2_2: if (id >= 0x2a) { kind2 = 1; goto K2_done; } kind2 = 2; goto K2_done;
+K2_3: if (id == 0x36) { kind2 = 0; goto K2_done; }
+    if (id >= 0x36) { goto K2_3b; }
+    if (id >= 0x35) { kind2 = 2; goto K2_done; }
+    if (id >= 0x33) { kind2 = 0; goto K2_done; }
+    kind2 = 2; goto K2_done;
+K2_3b: if (id >= 0x3c) { kind2 = 1; goto K2_done; } kind2 = 2; goto K2_done;
+K2_4: if (id == 0x5f) { kind2 = 0; goto K2_done; }
+    if (id >= 0x5f) goto K2_4b;
+    if (id >= 0x52) goto K2_4c;
+    if (id >= 0x46) { kind2 = 2; goto K2_done; }
+    if (id >= 0x44) { kind2 = 0; goto K2_done; }
+    kind2 = 2; goto K2_done;
+K2_4c: if (id >= 0x5d) { kind2 = 2; goto K2_done; } if (id >= 0x58) { kind2 = 0; goto K2_done; } kind2 = 1; goto K2_done;
+K2_4b: if (id == 0x93) { kind2 = 0; goto K2_done; }
+    if (id >= 0x93) goto K2_4d;
+    if (id >= 0x6a) { kind2 = 2; goto K2_done; }
+    if (id >= 0x65) { kind2 = 1; goto K2_done; }
+    kind2 = 2; goto K2_done;
+K2_4d: if (id >= 0xce) { kind2 = 0; goto K2_done; } kind2 = 2; goto K2_done;
+K2_5: if (id >= 0x103) goto K2_5b;
+    if (id == 0xeb) { kind2 = 2; goto K2_done; }
+    if (id >= 0xeb) goto K2_5c;
+    if (id >= 0xdf) goto K2_5d;
+    if (id == 0xdc) { kind2 = 1; goto K2_done; }
+    kind2 = 2; goto K2_done;
+K2_5d: if (id >= 0xea) { kind2 = 3; goto K2_done; } if (id >= 0xe3) { kind2 = 2; goto K2_done; } kind2 = 1; goto K2_done;
+K2_5c: if (id == 0xf7) { kind2 = 0; goto K2_done; }
+    if (id >= 0xf7) goto K2_5e;
+    if (id >= 0xed) { kind2 = 3; goto K2_done; }
+    kind2 = 0; goto K2_done;
+K2_5e: if (id == 0xff) { kind2 = 2; goto K2_done; } kind2 = 3; goto K2_done;
+K2_5b: if (id == 0x117) { kind2 = 1; goto K2_done; }
+    if (id >= 0x117) goto K2_5f;
+    if (id >= 0x109) goto K2_5g;
+    if (id == 0x106) { kind2 = 3; goto K2_done; }
+    kind2 = 2; goto K2_done;
+K2_5g: if (id >= 0x111) { kind2 = 3; goto K2_done; } if (id >= 0x10d) { kind2 = 2; goto K2_done; } kind2 = 3; goto K2_done;
+K2_5f: if (id == 0x12d) { kind2 = 0; goto K2_done; } if (id >= 0x12d) { kind2 = 2; goto K2_done; } if (id == 0x11e) { kind2 = 0; goto K2_done; } kind2 = 2;
+K2_done:
+
+    // ── Phase 6: choose Branch A or B based on arg->unk08 ───────────
+    if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
+        if (!(arg->unk30 & 0x200)) {
+            goto BranchA;
+        }
+    }
+
+BranchB:
+    // ── Branch B (retail jumps to 0x801476AC) ───────────────────────
+    {
+        int k;
+        if (id >= 0xd4) goto B5_5;
+        if (id >= 0x3e) goto B5_4;
+        if (id >= 0x2c) goto B5_3;
+        if (id == 0x27) { k = 0; goto B5_done; }
+        if (id >= 0x27) goto B5_2;
+        if (id >= 4) goto B5_1;
+        if (id >= 2) { k = 0; goto B5_done; }
+        k = 2; goto B5_done;
+    B5_1: if (id >= 0x14) { k = 2; goto B5_done; } k = 1; goto B5_done;
+    B5_2: if (id >= 0x2a) { k = 1; goto B5_done; } k = 2; goto B5_done;
+    B5_3: if (id == 0x36) { k = 0; goto B5_done; }
+        if (id >= 0x36) { goto B5_3b; }
+        if (id >= 0x35) { k = 2; goto B5_done; }
+        if (id >= 0x33) { k = 0; goto B5_done; }
+        k = 2; goto B5_done;
+    B5_3b: if (id >= 0x3c) { k = 1; goto B5_done; } k = 2; goto B5_done;
+    B5_4: if (id == 0x5f) { k = 0; goto B5_done; }
+        if (id >= 0x5f) goto B5_4b;
+        if (id >= 0x52) goto B5_4c;
+        if (id >= 0x46) { k = 2; goto B5_done; }
+        if (id >= 0x44) { k = 0; goto B5_done; }
+        k = 2; goto B5_done;
+    B5_4c: if (id >= 0x5d) { k = 2; goto B5_done; } if (id >= 0x58) { k = 0; goto B5_done; } k = 1; goto B5_done;
+    B5_4b: if (id == 0x93) { k = 0; goto B5_done; }
+        if (id >= 0x93) goto B5_4d;
+        if (id >= 0x6a) { k = 2; goto B5_done; }
+        if (id >= 0x65) { k = 1; goto B5_done; }
+        k = 2; goto B5_done;
+    B5_4d: if (id >= 0xce) { k = 0; goto B5_done; } k = 2; goto B5_done;
+    B5_5: if (id >= 0x103) goto B5_5b;
+        if (id == 0xeb) { k = 2; goto B5_done; }
+        if (id >= 0xeb) goto B5_5c;
+        if (id >= 0xdf) goto B5_5d;
+        if (id == 0xdc) { k = 1; goto B5_done; }
+        k = 2; goto B5_done;
+    B5_5d: if (id >= 0xea) { k = 3; goto B5_done; } if (id >= 0xe3) { k = 2; goto B5_done; } k = 1; goto B5_done;
+    B5_5c: if (id == 0xf7) { k = 0; goto B5_done; }
+        if (id >= 0xf7) goto B5_5e;
+        if (id >= 0xed) { k = 3; goto B5_done; }
+        k = 0; goto B5_done;
+    B5_5e: if (id == 0xff) { k = 2; goto B5_done; } k = 3; goto B5_done;
+    B5_5b: if (id == 0x117) { k = 1; goto B5_done; }
+        if (id >= 0x117) goto B5_5f;
+        if (id >= 0x109) goto B5_5g;
+        if (id == 0x106) { k = 3; goto B5_done; }
+        k = 2; goto B5_done;
+    B5_5g: if (id >= 0x111) { k = 3; goto B5_done; } if (id >= 0x10d) { k = 2; goto B5_done; } k = 3; goto B5_done;
+    B5_5f: if (id == 0x12d) { k = 0; goto B5_done; } if (id >= 0x12d) { k = 2; goto B5_done; } if (id == 0x11e) { k = 0; goto B5_done; } k = 2;
+    B5_done:
+        if (k == 0) {
+            if (!(arg->unk30 & 0x200)) {
+                if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
+                    cf::CBattleState* obj;
+                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+                    func_80109784((u8*)obj + 0x3F10, id, 1);
+                    func_8013DB6C(6, id, 0, 0);
+                    goto after_dispatch;
+                }
+            }
+        }
+    }
+
+    {
+        int k;
+        if (id >= 0xd4) goto B6_5;
+        if (id >= 0x3e) goto B6_4;
+        if (id >= 0x2c) goto B6_3;
+        if (id == 0x27) { k = 0; goto B6_done; }
+        if (id >= 0x27) goto B6_2;
+        if (id >= 4) goto B6_1;
+        if (id >= 2) { k = 0; goto B6_done; }
+        k = 2; goto B6_done;
+    B6_1: if (id >= 0x14) { k = 2; goto B6_done; } k = 1; goto B6_done;
+    B6_2: if (id >= 0x2a) { k = 1; goto B6_done; } k = 2; goto B6_done;
+    B6_3: if (id == 0x36) { k = 0; goto B6_done; }
+        if (id >= 0x36) { goto B6_3b; }
+        if (id >= 0x35) { k = 2; goto B6_done; }
+        if (id >= 0x33) { k = 0; goto B6_done; }
+        k = 2; goto B6_done;
+    B6_3b: if (id >= 0x3c) { k = 1; goto B6_done; } k = 2; goto B6_done;
+    B6_4: if (id == 0x5f) { k = 0; goto B6_done; }
+        if (id >= 0x5f) goto B6_4b;
+        if (id >= 0x52) goto B6_4c;
+        if (id >= 0x46) { k = 2; goto B6_done; }
+        if (id >= 0x44) { k = 0; goto B6_done; }
+        k = 2; goto B6_done;
+    B6_4c: if (id >= 0x5d) { k = 2; goto B6_done; } if (id >= 0x58) { k = 0; goto B6_done; } k = 1; goto B6_done;
+    B6_4b: if (id == 0x93) { k = 0; goto B6_done; }
+        if (id >= 0x93) goto B6_4d;
+        if (id >= 0x6a) { k = 2; goto B6_done; }
+        if (id >= 0x65) { k = 1; goto B6_done; }
+        k = 2; goto B6_done;
+    B6_4d: if (id >= 0xce) { k = 0; goto B6_done; } k = 2; goto B6_done;
+    B6_5: if (id >= 0x103) goto B6_5b;
+        if (id == 0xeb) { k = 2; goto B6_done; }
+        if (id >= 0xeb) goto B6_5c;
+        if (id >= 0xdf) goto B6_5d;
+        if (id == 0xdc) { k = 1; goto B6_done; }
+        k = 2; goto B6_done;
+    B6_5d: if (id >= 0xea) { k = 3; goto B6_done; } if (id >= 0xe3) { k = 2; goto B6_done; } k = 1; goto B6_done;
+    B6_5c: if (id == 0xf7) { k = 0; goto B6_done; }
+        if (id >= 0xf7) goto B6_5e;
+        if (id >= 0xed) { k = 3; goto B6_done; }
+        k = 0; goto B6_done;
+    B6_5e: if (id == 0xff) { k = 2; goto B6_done; } k = 3; goto B6_done;
+    B6_5b: if (id == 0x117) { k = 1; goto B6_done; }
+        if (id >= 0x117) goto B6_5f;
+        if (id >= 0x109) goto B6_5g;
+        if (id == 0x106) { k = 3; goto B6_done; }
+        k = 2; goto B6_done;
+    B6_5g: if (id >= 0x111) { k = 3; goto B6_done; } if (id >= 0x10d) { k = 2; goto B6_done; } k = 3; goto B6_done;
+    B6_5f: if (id == 0x12d) { k = 0; goto B6_done; } if (id >= 0x12d) { k = 2; goto B6_done; } if (id == 0x11e) { k = 0; goto B6_done; } k = 2;
+    B6_done:
+        if (k == 1) {
+            if (!(arg->unk30 & 0x200)) {
+                if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
+                    cf::CBattleState* obj;
+                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+                    if (arg->unk30 & 0x10000) {
+                        func_80109784((u8*)obj + 0x3F10, id, 0x20);
+                    } else {
+                        func_80109784((u8*)obj + 0x3F10, id, 2);
+                    }
+                    func_8013DB6C(6, id, 0, 0);
+                    goto after_dispatch;
+                }
+            }
+        }
+    }
+
+    {
+        int k;
+        if (id >= 0xd4) goto B7_5;
+        if (id >= 0x3e) goto B7_4;
+        if (id >= 0x2c) goto B7_3;
+        if (id == 0x27) { k = 0; goto B7_done; }
+        if (id >= 0x27) goto B7_2;
+        if (id >= 4) goto B7_1;
+        if (id >= 2) { k = 0; goto B7_done; }
+        k = 2; goto B7_done;
+    B7_1: if (id >= 0x14) { k = 2; goto B7_done; } k = 1; goto B7_done;
+    B7_2: if (id >= 0x2a) { k = 1; goto B7_done; } k = 2; goto B7_done;
+    B7_3: if (id == 0x36) { k = 0; goto B7_done; }
+        if (id >= 0x36) { goto B7_3b; }
+        if (id >= 0x35) { k = 2; goto B7_done; }
+        if (id >= 0x33) { k = 0; goto B7_done; }
+        k = 2; goto B7_done;
+    B7_3b: if (id >= 0x3c) { k = 1; goto B7_done; } k = 2; goto B7_done;
+    B7_4: if (id == 0x5f) { k = 0; goto B7_done; }
+        if (id >= 0x5f) goto B7_4b;
+        if (id >= 0x52) goto B7_4c;
+        if (id >= 0x46) { k = 2; goto B7_done; }
+        if (id >= 0x44) { k = 0; goto B7_done; }
+        k = 2; goto B7_done;
+    B7_4c: if (id >= 0x5d) { k = 2; goto B7_done; } if (id >= 0x58) { k = 0; goto B7_done; } k = 1; goto B7_done;
+    B7_4b: if (id == 0x93) { k = 0; goto B7_done; }
+        if (id >= 0x93) goto B7_4d;
+        if (id >= 0x6a) { k = 2; goto B7_done; }
+        if (id >= 0x65) { k = 1; goto B7_done; }
+        k = 2; goto B7_done;
+    B7_4d: if (id >= 0xce) { k = 0; goto B7_done; } k = 2; goto B7_done;
+    B7_5: if (id >= 0x103) goto B7_5b;
+        if (id == 0xeb) { k = 2; goto B7_done; }
+        if (id >= 0xeb) goto B7_5c;
+        if (id >= 0xdf) goto B7_5d;
+        if (id == 0xdc) { k = 1; goto B7_done; }
+        k = 2; goto B7_done;
+    B7_5d: if (id >= 0xea) { k = 3; goto B7_done; } if (id >= 0xe3) { k = 2; goto B7_done; } k = 1; goto B7_done;
+    B7_5c: if (id == 0xf7) { k = 0; goto B7_done; }
+        if (id >= 0xf7) goto B7_5e;
+        if (id >= 0xed) { k = 3; goto B7_done; }
+        k = 0; goto B7_done;
+    B7_5e: if (id == 0xff) { k = 2; goto B7_done; } k = 3; goto B7_done;
+    B7_5b: if (id == 0x117) { k = 1; goto B7_done; }
+        if (id >= 0x117) goto B7_5f;
+        if (id >= 0x109) goto B7_5g;
+        if (id == 0x106) { k = 3; goto B7_done; }
+        k = 2; goto B7_done;
+    B7_5g: if (id >= 0x111) { k = 3; goto B7_done; } if (id >= 0x10d) { k = 2; goto B7_done; } k = 3; goto B7_done;
+    B7_5f: if (id == 0x12d) { k = 0; goto B7_done; } if (id >= 0x12d) { k = 2; goto B7_done; } if (id == 0x11e) { k = 0; goto B7_done; } k = 2;
+    B7_done:
+        if (k == 3) {
+            if (!(arg->unk30 & 0x200)) {
+                cf::CBattleState* obj;
+                obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+                func_80109784((u8*)obj + 0x3F10, id, 1);
+                func_8013DB6C(6, id, 0, 0);
+            }
+        }
+    }
+
+    goto after_dispatch;
+
+BranchA:
+    // ── Branch A: kind #3 → if kind==0, call func_80109784(ptr, id, 5) ──
+    {
+        int k;
+        if (id >= 0xd4) goto A3_5;
+        if (id >= 0x3e) goto A3_4;
+        if (id >= 0x2c) goto A3_3;
+        if (id == 0x27) { k = 0; goto A3_done; }
+        if (id >= 0x27) goto A3_2;
+        if (id >= 4) goto A3_1;
+        if (id >= 2) { k = 0; goto A3_done; }
+        k = 2; goto A3_done;
+    A3_1: if (id >= 0x14) { k = 2; goto A3_done; } k = 1; goto A3_done;
+    A3_2: if (id >= 0x2a) { k = 1; goto A3_done; } k = 2; goto A3_done;
+    A3_3: if (id == 0x36) { k = 0; goto A3_done; }
+        if (id >= 0x36) { goto A3_3b; }
+        if (id >= 0x35) { k = 2; goto A3_done; }
+        if (id >= 0x33) { k = 0; goto A3_done; }
+        k = 2; goto A3_done;
+    A3_3b: if (id >= 0x3c) { k = 1; goto A3_done; } k = 2; goto A3_done;
+    A3_4: if (id == 0x5f) { k = 0; goto A3_done; }
+        if (id >= 0x5f) goto A3_4b;
+        if (id >= 0x52) goto A3_4c;
+        if (id >= 0x46) { k = 2; goto A3_done; }
+        if (id >= 0x44) { k = 0; goto A3_done; }
+        k = 2; goto A3_done;
+    A3_4c: if (id >= 0x5d) { k = 2; goto A3_done; } if (id >= 0x58) { k = 0; goto A3_done; } k = 1; goto A3_done;
+    A3_4b: if (id == 0x93) { k = 0; goto A3_done; }
+        if (id >= 0x93) goto A3_4d;
+        if (id >= 0x6a) { k = 2; goto A3_done; }
+        if (id >= 0x65) { k = 1; goto A3_done; }
+        k = 2; goto A3_done;
+    A3_4d: if (id >= 0xce) { k = 0; goto A3_done; } k = 2; goto A3_done;
+    A3_5: if (id >= 0x103) goto A3_5b;
+        if (id == 0xeb) { k = 2; goto A3_done; }
+        if (id >= 0xeb) goto A3_5c;
+        if (id >= 0xdf) goto A3_5d;
+        if (id == 0xdc) { k = 1; goto A3_done; }
+        k = 2; goto A3_done;
+    A3_5d: if (id >= 0xea) { k = 3; goto A3_done; } if (id >= 0xe3) { k = 2; goto A3_done; } k = 1; goto A3_done;
+    A3_5c: if (id == 0xf7) { k = 0; goto A3_done; }
+        if (id >= 0xf7) goto A3_5e;
+        if (id >= 0xed) { k = 3; goto A3_done; }
+        k = 0; goto A3_done;
+    A3_5e: if (id == 0xff) { k = 2; goto A3_done; } k = 3; goto A3_done;
+    A3_5b: if (id == 0x117) { k = 1; goto A3_done; }
+        if (id >= 0x117) goto A3_5f;
+        if (id >= 0x109) goto A3_5g;
+        if (id == 0x106) { k = 3; goto A3_done; }
+        k = 2; goto A3_done;
+    A3_5g: if (id >= 0x111) { k = 3; goto A3_done; } if (id >= 0x10d) { k = 2; goto A3_done; } k = 3; goto A3_done;
+    A3_5f: if (id == 0x12d) { k = 0; goto A3_done; } if (id >= 0x12d) { k = 2; goto A3_done; } if (id == 0x11e) { k = 0; goto A3_done; } k = 2;
+    A3_done:
+        if (k == 0) {
+            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+            func_80109784((u8*)obj + 0x3F10, id, 5);
+        }
+    }
+
+    // ── Branch A: kind #4 → func_80109784 with 6 or 4 ──────────────
+    {
+        int k;
+        if (id >= 0xd4) goto A4_5;
+        if (id >= 0x3e) goto A4_4;
+        if (id >= 0x2c) goto A4_3;
+        if (id == 0x27) { k = 0; goto A4_done; }
+        if (id >= 0x27) goto A4_2;
+        if (id >= 4) goto A4_1;
+        if (id >= 2) { k = 0; goto A4_done; }
+        k = 2; goto A4_done;
+    A4_1: if (id >= 0x14) { k = 2; goto A4_done; } k = 1; goto A4_done;
+    A4_2: if (id >= 0x2a) { k = 1; goto A4_done; } k = 2; goto A4_done;
+    A4_3: if (id == 0x36) { k = 0; goto A4_done; }
+        if (id >= 0x36) { goto A4_3b; }
+        if (id >= 0x35) { k = 2; goto A4_done; }
+        if (id >= 0x33) { k = 0; goto A4_done; }
+        k = 2; goto A4_done;
+    A4_3b: if (id >= 0x3c) { k = 1; goto A4_done; } k = 2; goto A4_done;
+    A4_4: if (id == 0x5f) { k = 0; goto A4_done; }
+        if (id >= 0x5f) goto A4_4b;
+        if (id >= 0x52) goto A4_4c;
+        if (id >= 0x46) { k = 2; goto A4_done; }
+        if (id >= 0x44) { k = 0; goto A4_done; }
+        k = 2; goto A4_done;
+    A4_4c: if (id >= 0x5d) { k = 2; goto A4_done; } if (id >= 0x58) { k = 0; goto A4_done; } k = 1; goto A4_done;
+    A4_4b: if (id == 0x93) { k = 0; goto A4_done; }
+        if (id >= 0x93) goto A4_4d;
+        if (id >= 0x6a) { k = 2; goto A4_done; }
+        if (id >= 0x65) { k = 1; goto A4_done; }
+        k = 2; goto A4_done;
+    A4_4d: if (id >= 0xce) { k = 0; goto A4_done; } k = 2; goto A4_done;
+    A4_5: if (id >= 0x103) goto A4_5b;
+        if (id == 0xeb) { k = 2; goto A4_done; }
+        if (id >= 0xeb) goto A4_5c;
+        if (id >= 0xdf) goto A4_5d;
+        if (id == 0xdc) { k = 1; goto A4_done; }
+        k = 2; goto A4_done;
+    A4_5d: if (id >= 0xea) { k = 3; goto A4_done; } if (id >= 0xe3) { k = 2; goto A4_done; } k = 1; goto A4_done;
+    A4_5c: if (id == 0xf7) { k = 0; goto A4_done; }
+        if (id >= 0xf7) goto A4_5e;
+        if (id >= 0xed) { k = 3; goto A4_done; }
+        k = 0; goto A4_done;
+    A4_5e: if (id == 0xff) { k = 2; goto A4_done; } k = 3; goto A4_done;
+    A4_5b: if (id == 0x117) { k = 1; goto A4_done; }
+        if (id >= 0x117) goto A4_5f;
+        if (id >= 0x109) goto A4_5g;
+        if (id == 0x106) { k = 3; goto A4_done; }
+        k = 2; goto A4_done;
+    A4_5g: if (id >= 0x111) { k = 3; goto A4_done; } if (id >= 0x10d) { k = 2; goto A4_done; } k = 3; goto A4_done;
+    A4_5f: if (id == 0x12d) { k = 0; goto A4_done; } if (id >= 0x12d) { k = 2; goto A4_done; } if (id == 0x11e) { k = 0; goto A4_done; } k = 2;
+    A4_done:
+        {
+            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+            if (k == 1) {
+                func_80109784((u8*)obj + 0x3F10, id, 6);
+            } else {
+                func_80109784((u8*)obj + 0x3F10, id, 4);
+            }
+        }
+    }
+
+    func_8013DB6C(6, id, 0, 0);
+
+after_dispatch:
+    // ── Final: entry-slot scan + copy ───────────────────────────────
+    {
+        u32 entryId = arg->unk0C;
+
+        // Decision tree matching retail's cmpwi/beq/bge chain
+        if (entryId == 0x10d)
+            goto F_skip_scan;
+        if (entryId >= 0x10d)
+            goto F_ge10d;
+        if (entryId == 0xd7)
+            goto F_do_scan;
+        if (entryId >= 0xd7)
+            goto F_geD7;
+        if (entryId == 0x99)
+            goto F_skip_scan;
+        if (entryId < 0x99)
+            goto F_do_scan;
+        if (entryId >= 0xd4)
+            goto F_skip_scan;
+        goto F_do_scan;
+
+    F_geD7:
+        if (entryId >= 0x107) {
+            if (entryId >= 0x109)
+                goto F_do_scan;
+            goto F_skip_scan;
+        }
+        if (entryId >= 0xe4)
+            goto F_do_scan;
+        goto F_skip_scan;
+
+    F_ge10d:
+        if (entryId == 0x11e)
+            goto F_do_scan;
+        if (entryId >= 0x11e) {
+            if (entryId == 0x124)
+                goto F_skip_scan;
+            if (entryId >= 0x120)
+                goto F_do_scan;
+            goto F_skip_scan;
+        }
+        if (entryId == 0x11a)
+            goto F_do_scan;
+        if (entryId >= 0x11a)
+            goto F_skip_scan;
+        if (entryId >= 0x118)
+            goto F_skip_scan;
+        goto F_do_scan;
+
+    F_do_scan:
+        {
+            cf::CBattleStateEntry* slot;
+            int count;
+
+            slot = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+            for (count = 0x68; count != 0; count--, slot++) {
+                if (slot->unk0C != entryId)
+                    goto F_next;
+                if (slot->unk00 != arg->unk00)
+                    goto F_next;
+                if (slot->unk04 != arg->unk04)
+                    goto F_next;
+                if (slot->unk08 != arg->unk08)
+                    goto F_next;
+
+                if (entryId - 0xf <= 1u) {
+                    f32 old1C = slot->unk1C;
+                    f32 old20 = slot->unk20;
+                    f32 old28 = slot->unk28;
+                    slot->unk00 = arg->unk00;
+                    slot->unk04 = arg->unk04;
+                    slot->unk08 = arg->unk08;
+                    slot->unk0C = arg->unk0C;
+                    slot->unk10 = arg->unk10;
+                    slot->unk14 = arg->unk14;
+                    slot->unk16 = arg->unk16;
+                    slot->unk18 = arg->unk18;
+                    slot->unk1A = arg->unk1A;
+                    slot->unk1C = arg->unk1C + old1C;
+                    slot->unk20 = arg->unk20 + old20;
+                    slot->unk24 = arg->unk24;
+                    slot->unk28 = arg->unk28 + old28;
+                    slot->unk2C = arg->unk2C;
+                    slot->unk2E = arg->unk2E;
+                    slot->unk30 = arg->unk30 | 8;
+                    ((Vfunc18Fn)(*(void***)self)[18])(self, slot);
+                    goto F_slot_done;
+                }
+
+                if ((slot->unk30 & 8) && (arg->unk30 & 8)) {
+                    s32 old10 = slot->unk10;
+                    f32 old28 = slot->unk28;
+                    slot->unk00 = arg->unk00;
+                    slot->unk04 = arg->unk04;
+                    slot->unk08 = arg->unk08;
+                    slot->unk0C = arg->unk0C;
+                    slot->unk10 = arg->unk10 + old10;
+                    slot->unk14 = arg->unk14;
+                    slot->unk16 = arg->unk16;
+                    slot->unk18 = arg->unk18;
+                    slot->unk1A = arg->unk1A;
+                    slot->unk1C = arg->unk1C;
+                    slot->unk20 = arg->unk20;
+                    slot->unk24 = arg->unk24;
+                    slot->unk28 = arg->unk28;
+                    slot->unk2C = arg->unk2C;
+                    slot->unk2E = arg->unk2E;
+                    slot->unk30 = arg->unk30;
+                    slot->unk1C = slot->unk20;
+                    if (slot->unk18 < slot->unk10)
+                        slot->unk10 = slot->unk18;
+                    slot->unk28 = old28;
+                    slot->unk30 |= 8;
+                    ((Vfunc18Fn)(*(void***)self)[18])(self, slot);
+                    goto F_slot_done;
+                }
+
+                if (slot->unk10 > (s32)arg->unk10) {
+                    if (!(slot->unk20 < arg->unk20))
+                        goto F_next;
+                }
+                {
+                    f32 old28 = slot->unk28;
+                    slot->unk00 = arg->unk00;
+                    slot->unk04 = arg->unk04;
+                    slot->unk08 = arg->unk08;
+                    slot->unk0C = arg->unk0C;
+                    slot->unk10 = arg->unk10;
+                    slot->unk14 = arg->unk14;
+                    slot->unk16 = arg->unk16;
+                    slot->unk18 = arg->unk18;
+                    slot->unk1A = arg->unk1A;
+                    slot->unk1C = arg->unk1C;
+                    slot->unk20 = arg->unk20;
+                    slot->unk24 = arg->unk24;
+                    slot->unk28 = arg->unk28;
+                    slot->unk2C = arg->unk2C;
+                    slot->unk2E = arg->unk2E;
+                    slot->unk30 = arg->unk30;
+                    slot->unk1C = slot->unk20;
+                    slot->unk28 = old28;
+                    slot->unk30 |= 8;
+                    ((Vfunc18Fn)(*(void***)self)[18])(self, slot);
+                    goto F_slot_done;
+                }
+
+            F_next:
+                ;
+            }
+        }
+
+        // 3-array empty-slot scan
+        {
+            u8* base1 = (u8*)self + 0x8;
+            u8* base2 = (u8*)self + 0x688;
+            u8* base3 = (u8*)self + 0xD08;
+            int trip;
+
+            for (trip = 0x20; trip != 0; trip--) {
+                cf::CBattleStateEntry* dst;
+
+                if (kind2 == 0)
+                    dst = (cf::CBattleStateEntry*)base1;
+                else if (kind2 == 1)
+                    dst = (cf::CBattleStateEntry*)base2;
+                else
+                    dst = (cf::CBattleStateEntry*)base3;
+
+                if (dst->unk0C == 0) {
+                    dst->unk00 = arg->unk00;
+                    dst->unk04 = arg->unk04;
+                    dst->unk08 = arg->unk08;
+                    dst->unk0C = arg->unk0C;
+                    dst->unk10 = arg->unk10;
+                    dst->unk14 = arg->unk14;
+                    dst->unk16 = arg->unk16;
+                    dst->unk18 = arg->unk18;
+                    dst->unk1A = arg->unk1A;
+                    dst->unk1C = arg->unk1C;
+                    dst->unk20 = arg->unk20;
+                    dst->unk24 = arg->unk24;
+                    dst->unk28 = arg->unk28;
+                    dst->unk2C = arg->unk2C;
+                    dst->unk2E = arg->unk2E;
+                    dst->unk30 = arg->unk30;
+                    dst->unk1C = dst->unk20;
+                    if (lbl_eu_80667410 == dst->unk28) {
+                        dst->unk28 = lbl_eu_80667414 * dst->unk24;
+                    }
+                    ((Vfunc18Fn)(*(void***)self)[18])(self, dst);
+                    goto F_slot_done;
+                }
+
+                base1 += 0x34;
+                base2 += 0x34;
+                base3 += 0x34;
+            }
+        }
+    }
+
+F_skip_scan:
+F_slot_done:
+    ;
 }

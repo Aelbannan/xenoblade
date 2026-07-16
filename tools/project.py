@@ -691,8 +691,10 @@ def generate_build_ninja(
 
     # MWLD
     mwld = compiler_path / "mwldeppc.exe"
-    mwld_cmd = f"{wrapper_cmd}{mwld} $ldflags -o $out @$out.rsp"
-    mwld_implicit: List[Optional[Path]] = [compilers_implicit or mwld, wrapper_implicit]
+    # Run postprocess symbol fixes before linking (co-op fork)
+    postprocess_link_script = config.tools_dir / "postprocess_link_fixes.py"
+    mwld_cmd = f"$python {postprocess_link_script} && {wrapper_cmd}{mwld} $ldflags -o $out @$out.rsp"
+    mwld_implicit: List[Optional[Path]] = [compilers_implicit or mwld, wrapper_implicit, postprocess_link_script]
 
     # GNU as
     gnu_as = binutils / f"powerpc-eabi-as{EXE}"

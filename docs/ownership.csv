@@ -1,4 +1,5 @@
 symbol,owner,claimed_at,notes
+func_80133324__12CUICfManagerFv,Ahmed,2026-07-16,CLAIMED; CODE_MATCH 98.2%; volatile+tempRet closed stw/lwz gap; leave Init/Term/Move
 CHelp_UnkVirtualFunc3__Q22cf12CHelp_TargetFv,codex-aiaction,2026-07-14,FULL_MATCH 100%; exact function/unit size 0x174
 OnCancel__Q54nw4r3snd6detail10StrmPlayer16StrmDataLoadTaskFv,codex-view-ui,2026-07-14,FULL_MATCH 100%; recovered 0x68 StrmPlayer reserved region
 OnCancel__Q54nw4r3snd6detail10StrmPlayer18StrmHeaderLoadTaskFv,codex-view-ui,2026-07-14,FULL_MATCH 100%; recovered 0x68 StrmPlayer reserved region
@@ -44,7 +45,7 @@ __ct__5CViewFPCcP11CWorkThread,auto-agent,2026-07-13,P0 97.5% CODE_MATCH soft-ca
 updateMsg__5CViewFv,cursor-agent,2026-07-13,P0 STRUCTURAL ~65.9%; host cview-update-msg; do not touch setRect; wkUpdate FULL_MATCH verified
 getView__8CDesktopFv,auto-agent,2026-07-13,verified FULL_MATCH US; lbl_eu_806656AC SDA like drawFrame
 render__10CViewFrameFv,auto-agent,2026-07-13,P0 99.2% CODE_MATCH; Chaitin expand r6 vs r4 cascade soft-cap
-renderView__5CViewFv,auto-agent,2026-07-13,P0 86.9% HIGH_MATCH; frame -0x180/CDrawGX@0x90 this=r27; leave ctor; guards FULL_MATCH; host behaviour PASS
+renderView__5CViewFv,ahmed,2026-07-16,POLISHED 95.7% CODE_MATCH; tail fixed: function-pointer-cast trick keeps frameParent in r4; remaining ~4.3% is crossRootFlag r31 vs r28, cache FPR f3 vs f4, mr r28 r27 prologue (Chaitin register coloring); EXACT size 0xCB4; leave ctor/wkUpdate
 getInstance__9CDeviceGXFv,auto-agent,2026-07-13,FULL_MATCH via lbl_eu_806656A0 SDA
 getInstance__8CDesktopFv,auto-agent,2026-07-13,FULL_MATCH via lbl_eu_806656AC SDA
 getInstance__9CProcRootFv,auto-agent,2026-07-13,FULL_MATCH via lbl_eu_806655A0 SDA
@@ -86,7 +87,7 @@ getFullScreenView__9CViewRootFv,auto-agent,2026-07-14,FULL_MATCH via insn_patche
 Term__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuBattlePlayerState.cpp Term only
 Term__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuArtsSelect.cpp Term only; lbl_eu_80663F24
 cbRenderBefore__15CMenuEnemyStateFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuEnemyState.cpp cbRenderBefore
-CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14f: leave ctor alone
+CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv,ahmed-agent,2026-07-16,CLAIMED; attempt FULL_MATCH; leave ctor/vfunc2
 CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14g: leave ctor; Fv+r4 ABI
 CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14g: leave ctor/vfunc1
 cbRenderBefore__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14g: leave Term
@@ -100,14 +101,14 @@ func_80133324__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14h: leave Init/T
 Move__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14h: leave Term/cbRenderBefore
 CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14i: leaf id→mask vs +0x6; leave other vfuncs
 Move__12CMenuPTGaugeFv,codex-ptgauge,2026-07-14,FULL_MATCH 100%; leave cbRenderBefore
-Move__16CUIWindowManagerFv,auto-agent,2026-07-14,P2 batch-14i: polish Move ~79.3%
+Move__16CUIWindowManagerFv,cursor-agent,2026-07-16,POLISHED 80.2% HIGH_MATCH; poison-store serialization: pending[i]=(WindowNode*)0 after each unlink forces MWCC serialization, fixes prologue to stwu -0x50 (no CSRs) matching retail; leave Term
 cbRenderBefore__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14i: polish cbRenderBefore ~95.2%; leave Term
 setFrustum__11COccCullingFP12CCullFrustum,auto-agent,2026-07-14,P1 batch-14i: polish setFrustum ~88.5%; leave addFrustum/func_801A1188
 CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14j: only UnkVirtualFunc29; leave other vfuncs
 CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14j: Fv+r4 entry; leave other vfuncs
 Move__16CUIBattleManagerFv,auto-agent,2026-07-14,P1 batch-14j: create Move only; leave Init
 Move__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14j: Move only; leave Term/cbRenderBefore
-Move__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14j: Move only; leave Init/Term/func_80133324
+Move__12CUICfManagerFv,ahmed-elbannan,2026-07-16,CLAIMED; attempt FULL_MATCH; leave Init/Term/func_80133324
 CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14k: only UnkVirtualFunc10; leave other vfuncs
 __ct__CMenuArtsSelect,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Term/Move/cbRenderBefore
 __ct__CMenuBattlePlayerState,auto-agent,2026-07-14,P1 batch-14k: ctor only; leave Term/Move/cbRenderBefore
@@ -132,3 +133,6 @@ setFrustum__11COccCullingFP12CCullFrustum,codex-subagent-4,2026-07-14,CLAIMED; a
 CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv,codex-subagent-5,2026-07-14,CLAIMED; attempt FULL_MATCH; leave ctor/vfunc1 untouched
 CBattleState_UnkVirtualFunc29__Q22cf12CBattleStateFv,codex,2026-07-14,FULL_MATCH 100%; natural 104-entry scan; exact 0x15C; behaviour PASS; size PASS
 ShouldRenderSplitScreen,cursor-agent,2026-07-14,fork-only PresentationGate predicate; restore stub; host presentation_gate
+CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv,opencode,2026-07-16,34.2% STRUCTURAL; first-pass skeleton from asm; id-kind tree + branch dispatch + 0x68-entry scan; size PASS
+Init__15CMenuArtsSelectFv,opencode,2026-07-16,STRUCTURAL first-pass; layout regions + per-slot pane config + font/anim binding; header Init() declared
+Init__22CMenuBattlePlayerStateFv,opencode,2026-07-16,57.5% STRUCTURAL; resource region setup + per-slot layout creation + font binding + render CB registration; size PASS

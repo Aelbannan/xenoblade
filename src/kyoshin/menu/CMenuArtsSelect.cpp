@@ -5,6 +5,7 @@
 #include "monolib/work/CProcess.hpp"
 
 #include "kyoshin/CTaskGame.hpp"
+#include <nw4r/math.h>
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -34,6 +35,7 @@ u8 func_8013BEB8();
 void func_801080F8(CMenuArtsSelect* self);
 int func_8012FA5C();
 void func_80138078(u32);
+nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_80137510(void* anim, float frame);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void* func_8016FE34();
@@ -56,6 +58,16 @@ int func_80107970(CMenuArtsSelect* self, s32 index);
 int func_80107C54(CMenuArtsSelect* self, s32 index);
 
 extern char lbl_eu_804FD1E0[];
+extern u8 lbl_eu_804FD0D0[];
+
+// Init-only declarations
+u32 getAllocHandle__10CLibLayoutFv();
+void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+void __ct__CTagProcessor(void*);
+void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+void func_80108994(CMenuArtsSelect*);
+void func_80139198(u32);
+u32 func_801392C0();
 extern const f32 lbl_eu_80666F28; // 0.0f
 extern const f32 lbl_eu_80666F2C; // 1.0f
 extern const f32 lbl_eu_80666F40; // -80.0f
@@ -232,6 +244,269 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
         p->unk320 = (u8)clear;
     }
     return p;
+}
+
+void CMenuArtsSelect::Init() {
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    unk6C.createRegion(handle, 0x17a00, lbl_eu_804FD1E0, 0);
+    Class_8045F858 regionGuard(&unk6C);
+
+    mtl::MemManager::func_80434A4C(0);
+    u32 allocHandle = getAllocHandle__10CLibLayoutFv();
+    void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, allocHandle);
+    if (tagProc != NULL) {
+        __ct__CTagProcessor(tagProc);
+    }
+    unk294 = static_cast<nw4r::lyt::Layout*>(tagProc);
+
+    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    unk68 = reinterpret_cast<u32>(accessor);
+
+    func_80136E84(&unk80, accessor, lbl_eu_804FD1E0 + 0x10);
+    func_80136F08(unk80, &unk84, accessor, lbl_eu_804FD1E0 + 0x27);
+    func_80136F08(unk80, &unk88, accessor, lbl_eu_804FD1E0 + 0x41);
+
+    {
+        nw4r::lyt::Pane* rootPane = unk80->GetRootPane();
+        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
+        typedef u32 (*FontVFn)(void*);
+        u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+        func_8013676C(rootPane, fontResult);
+    }
+
+    {
+        nw4r::lyt::Pane* pane = unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x5c, true);
+        if (pane != NULL) {
+            *reinterpret_cast<void**>(reinterpret_cast<u8*>(pane) + 0xF8) = unk294;
+        }
+    }
+
+    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
+    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, NULL, reinterpret_cast<u32>(unk294));
+
+    unk80->SetAnimationEnable(unk88, false);
+    unk80->SetAnimationEnable(unk84, true);
+    unk80->Animate(0);
+
+    func_80136E84(&unk8C, accessor, lbl_eu_804FD1E0 + 0x74);
+    func_80136F08(unk8C, &unk90, accessor, lbl_eu_804FD1E0 + 0x8d);
+    func_80136F08(unk8C, &unk94, accessor, lbl_eu_804FD1E0 + 0xa9);
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        s32 idx = unk324;
+        nw4r::lyt::Pane* pane = unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xc7, true);
+        {
+            nw4r::math::VEC3 trans = pane->GetTranslate();
+            trans.x = static_cast<f32>(posX[idx]);
+            trans.y = static_cast<f32>(posY[idx]);
+            pane->SetTranslate(trans);
+        }
+        {
+            f32 s = scale[idx];
+            pane->SetScale(nw4r::math::VEC2(s, s));
+        }
+        pane->SetVisible(false);
+    }
+
+    unk8C->SetAnimationEnable(unk90, false);
+    unk8C->SetAnimationEnable(unk94, true);
+    unk8C->Animate(0);
+
+    func_80136E84(&unk98, accessor, lbl_eu_804FD1E0 + 0xd2);
+    func_80136F08(unk98, &unk9C, accessor, lbl_eu_804FD1E0 + 0xf0);
+    func_80136F08(unk98, &unkA0, accessor, lbl_eu_804FD1E0 + 0x113);
+
+    {
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        nw4r::lyt::Pane* pane = unk98->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x139, true);
+        {
+            nw4r::math::VEC3 trans = pane->GetTranslate();
+            trans.x = 0.0f;
+            trans.y = static_cast<f32>(posY[4]);
+            pane->SetTranslate(trans);
+        }
+        {
+            f32 s = scale[4];
+            pane->SetScale(nw4r::math::VEC2(s, s));
+        }
+    }
+
+    unk98->SetAnimationEnable(unkA0, false);
+    unk98->SetAnimationEnable(unk9C, true);
+    unk9C->SetFrame(0.0f);
+    unk98->Animate(0);
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 8; i++) {
+            func_80136E84(&unkA4[i], accessor, lbl_eu_804FD1E0 + 0xd2);
+            func_80136F08(unkA4[i], &unkC4[i], accessor, lbl_eu_804FD1E0 + 0xf0);
+            func_80136F08(unkA4[i], &unkE4[i], accessor, lbl_eu_804FD1E0 + 0x113);
+
+            nw4r::lyt::Pane* pane = unkA4[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x139, true);
+
+            s32 lookupIdx = (i < 4) ? i : (i + 1);
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
+
+            unkA4[i]->SetAnimationEnable(unkE4[i], false);
+            unkA4[i]->SetAnimationEnable(unkC4[i], true);
+
+            f32 frame = static_cast<f32>(unkC4[i]->GetFrameSize()) - 1.0f;
+            unkC4[i]->SetFrame(frame);
+
+            unkA4[i]->Animate(0);
+
+            unk337[i] = 1;
+        }
+    }
+
+    unk318 = 0;
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 9; i++) {
+            func_80136E84(&unk104[i], accessor, lbl_eu_804FD1E0 + 0x142);
+            func_80136F08(unk104[i], &unk128[i], accessor, lbl_eu_804FD1E0 + 0x160);
+            func_80136F08(unk104[i], &unk14C[i], accessor, lbl_eu_804FD1E0 + 0x181);
+
+            nw4r::lyt::Pane* pane = unk104[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x1a3, true);
+
+            s32 lookupIdx;
+            if (i >= 8) {
+                lookupIdx = 4;
+            } else if (i < 4) {
+                lookupIdx = i;
+            } else {
+                lookupIdx = i + 1;
+            }
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
+
+            unk104[i]->SetAnimationEnable(unk14C[i], false);
+            unk104[i]->SetAnimationEnable(unk128[i], true);
+            unk128[i]->SetFrame(0.0f);
+            unk104[i]->Animate(0);
+        }
+    }
+
+    unk310 = 0;
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 9; i++) {
+            func_80136E84(&unk170[i], accessor, lbl_eu_804FD1E0 + 0x1ac);
+            func_80136F08(unk170[i], &unk194[i], accessor, lbl_eu_804FD1E0 + 0x1cb);
+
+            unk170[i]->SetAnimationEnable(unk194[i], true);
+            unk194[i]->SetFrame(0.0f);
+            unk170[i]->Animate(0);
+
+            nw4r::lyt::Pane* pane = unk170[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x1ed, true);
+
+            s32 lookupIdx;
+            if (i >= 8) {
+                lookupIdx = 4;
+            } else if (i < 4) {
+                lookupIdx = i;
+            } else {
+                lookupIdx = i + 1;
+            }
+            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
+            f32 s = scale[lookupIdx];
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+        }
+    }
+
+    unk314 = 0;
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 9; i++) {
+            func_80136E84(&unk1B8[i], accessor, lbl_eu_804FD1E0 + 0x1f7);
+            func_80136F08(unk1B8[i], &unk1DC[i], accessor, lbl_eu_804FD1E0 + 0x217);
+
+            nw4r::lyt::Pane* pane = unk1B8[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x23e, true);
+
+            s32 lookupIdx;
+            if (i >= 8) {
+                lookupIdx = 4;
+            } else if (i < 4) {
+                lookupIdx = i;
+            } else {
+                lookupIdx = i + 1;
+            }
+            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
+            f32 s = scale[lookupIdx];
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+
+            unk1B8[i]->SetAnimationEnable(unk1DC[i], true);
+
+            f32 frame = static_cast<f32>(unk1DC[i]->GetFrameSize()) - 1.0f;
+            unk1DC[i]->SetFrame(frame);
+
+            unk1B8[i]->Animate(0);
+        }
+    }
+
+    unk30C = 0;
+    unk308 = 4;
+
+    func_80108994(this);
+    func_80139198(0);
+    unk31C = func_801392C0();
+
+    {
+        IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+        if (this != NULL) {
+            cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+        }
+        mScn->addRenderCB(cb, 0xa, 0);
+    }
+
+    unk6C.func_8045F810();
 }
 
 template <typename Fn>

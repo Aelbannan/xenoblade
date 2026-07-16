@@ -20,7 +20,7 @@ struct IUIWindowSubView {
 };
 
 // Minimal recovery of the window queue item type (IUIWindow, per retail
-// `reslist<P9IUIWindow>` / `__dt__9IUIWindowFv`). Only the fields touched by
+// `reslist<P9IWindow>` / `__dt__9IUIWindowFv`). Only the fields touched by
 // CUIWindowManager::Move are named; the rest is CTTask<IUIWindow>/CProcess.
 class IUIWindow {
 private:
@@ -59,7 +59,6 @@ void CUIWindowManager::Move() {
         return;
     }
 
-    // Report the first live transition timer found in either queue.
     for (WindowIter it = inst->mWindowList1.begin(); it != inst->mWindowList1.end(); ++it) {
         IUIWindow* window = *it;
         s32 timer = window->unk5C != NULL ? window->unk5C->unk828 : window->unk60;
@@ -77,9 +76,6 @@ void CUIWindowManager::Move() {
         }
     }
 
-    // Walk each queue looking for the first window that already needs an
-    // update (or a global mark-all request); once found, propagate the
-    // update flag to that window and every window after it in the queue.
     {
         WindowIter it = mWindowList1.begin();
         for (; it != mWindowList1.end(); ++it) {
@@ -103,12 +99,6 @@ void CUIWindowManager::Move() {
         }
     }
 
-    // Remove every window flagged for closure (or all of them, if a
-    // close-all request is pending) from each queue. The pending buffer is
-    // an array of raw list-node pointers (a trivial type) rather than
-    // reslist<T>::iterator, since iterator's non-trivial default ctor would
-    // force MWCC to zero-init all 18 slots up front - overhead retail's
-    // code never pays.
     WindowNode* node;
     WindowNode* pending[18];
     int pendingCount;
@@ -130,6 +120,7 @@ void CUIWindowManager::Move() {
         prev->mNext = next;
         next->mPrev = prev;
         pending[i]->mNext = NULL;
+        pending[i] = (WindowNode*)0;
     }
 
     pendingCount = 0;
@@ -146,6 +137,7 @@ void CUIWindowManager::Move() {
         prev->mNext = next;
         next->mPrev = prev;
         pending[i]->mNext = NULL;
+        pending[i] = (WindowNode*)0;
     }
 
     unkA0 = false;

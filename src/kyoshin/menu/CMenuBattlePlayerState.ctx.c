@@ -12159,7 +12159,15 @@ private:
 struct CMsgParamEntry{
     u32 command; //0x0
     WORK_ID wid; //0x4
-    u8 unk8[0x24 - 0x8];
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
 };
 
 template <int N>
@@ -12195,8 +12203,39 @@ public:
         return mArrayPtr[mFront % mCapacity];
     }
 
-    //TODO(kiwi) Emitted at 804380b4
-    void enqueue(u32 msg){}
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
 
     void pop(){
         mSize--;
@@ -26397,16 +26436,35 @@ struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Layout* unk00; // +0x00 → this+0x74
     nw4r::lyt::AnimTransform* unk04; // +0x04 → this+0x78
     nw4r::lyt::Layout* unk08; // +0x08 → this+0x7c
-    u8 pad0C[0x18 - 0x0C];
+    nw4r::lyt::AnimTransform* unk0C; // +0x0C → this+0x80
+    nw4r::lyt::AnimTransform* unk10; // +0x10 → this+0x84
+    nw4r::lyt::AnimTransform* unk14; // +0x14 → this+0x88
     nw4r::lyt::Layout* unk18; // +0x18 → this+0x8c
     nw4r::lyt::AnimTransform* unk1C; // +0x1C → this+0x90
     nw4r::lyt::Layout* unk20; // +0x20 → this+0x94
-    u8 pad24[0x28 - 0x24];
+    nw4r::lyt::AnimTransform* unk24; // +0x24 → this+0x98
     nw4r::lyt::Layout* unk28; // +0x28 → this+0x9c
-    u8 pad2C[0x74 - 0x2C];
-    void* unk74; // +0x74: cleared by slot ctor
+    nw4r::lyt::AnimTransform* unk2C; // +0x2C → this+0xA0
+    nw4r::lyt::AnimTransform* unk30; // +0x30 → this+0xA4
+    nw4r::lyt::AnimTransform* unk34; // +0x34 → this+0xA8
+    nw4r::lyt::AnimTransform* unk38; // +0x38 → this+0xAC
+    nw4r::lyt::AnimTransform* unk3C; // +0x3C → this+0xB0
+    nw4r::lyt::AnimTransform* unk40; // +0x40 → this+0xB4
+    nw4r::lyt::Pane* unk44; // +0x44: "Txt_Dr_Lv"
+    nw4r::lyt::Pane* unk48; // +0x48: "Txt_Dr"
+    nw4r::lyt::Pane* unk4C; // +0x4C: "Txt_LvNum"
+    nw4r::lyt::Pane* unk50; // +0x50: "N_HpGauge"
+    nw4r::lyt::Pane* unk54; // +0x54: "N_HpGauge_Max"
+    nw4r::lyt::Pane* unk58; // +0x58: "N_Tension"
+    nw4r::lyt::Pane* unk5C; // +0x5C: "N_Tension_Gauge"
+    nw4r::lyt::Pane* unk60; // +0x60: "N_PartyOn"
+    nw4r::lyt::Pane* unk64; // +0x64: "N_ArtsEn"
+    nw4r::lyt::Pane* unk68; // +0x68: "N_Tension_Star"
+    nw4r::lyt::Pane* unk6C; // +0x6C: "N_Level_Star"
+    nw4r::lyt::Pane* unk70; // +0x70: "N_AutoHeal"
+    void* unk74; // +0x74: saved ArcResourceAccessor* (sub-layout)
     nw4r::lyt::Layout* unk78; // +0x78 → this+0xec
-    void* unk7C; // +0x7c
+    nw4r::lyt::AnimTransform* unk7C; // +0x7c
     u8 unk80; // +0x80 → this+0xf4: gates the extra unk78 draw in cbRenderBefore
     u8 pad81[0x84 - 0x81];
     void* unk84; // +0x84
@@ -26455,6 +26513,7 @@ class CMenuBattlePlayerState : public CMenuBattlePlayerStateBase,
                                public IWorkEvent,
                                public IScnRender {
 public:
+    void Init();
     void Term();
     void Move();
     void cbRenderBefore();
@@ -26546,7 +26605,6 @@ struct CProc_UnkStruct1 {
     void* unk8;
     void* unkC;
 };
-
 //size: 0x1ec
 class CProc : public CWorkThread {
 public:
@@ -245394,7 +245452,247 @@ protected:
     static CTaskGame* spInstance;
 };
 /* end "kyoshin/CTaskGame.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 3 "kyoshin/cf/CBattleManager.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 3 "kyoshin/CUICfManager.hpp" */
+#pragma once
+
+/* "src/kyoshin/CUICfManager.hpp" line 2 "kyoshin/cf/IFlagEvent.hpp" */
+#pragma once
+
+namespace cf{
+
+    class IFlagEvent{
+    public:
+        virtual ~IFlagEvent();
+
+        virtual void FlagEvent1(int arg1, int arg2, int arg3);
+        virtual void OnFileEvent(void* arg1);
+        virtual void FlagEvent3(int arg1, int arg2, int arg3);
+    };
+
+} //namespace cf
+/* end "kyoshin/cf/IFlagEvent.hpp" */
+/* "src/kyoshin/CUICfManager.hpp" line 3 "monolib/device/CFileHandle.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+enum CBM {
+    CBM_0,
+    CBM_1,
+    CBM_2,
+    CBM_3,
+    CBM_4,
+    CBM_5
+};
+
+struct CFileHandle {
+    int unk0;
+    void* mData; //0x4
+    u8 unk8[0x10 - 0x8];
+    int unk10;
+    u32 unk14;
+    u8 unk18[0x3C - 0x18];
+    u32 mLength; //0x3C
+    u8 unk40[0x5C - 0x40];
+    ml::FixStr<32> mName; //0x5C
+    u8 unk80[0x160 - 0x80];
+    u32 unk160;
+
+    void call(CBM cbm);
+    bool checkExistRsrc(CBM cbm);
+    UNKTYPE* getRsrc();
+
+    inline void* getData(){
+        void* r31 = mData;
+        mData = nullptr;
+        return r31;
+    }
+
+    inline bool unkInline2() const {
+        return unk10 != 0 && unk10 == mLength;
+    }
+
+    inline u32 getLength() const {
+        return mLength;
+    }
+
+};
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/CUICfManager.hpp" line 4 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+/* "src/kyoshin/CUICfManager.hpp" line 6 "nw4r/lyt.h" */
+/* end "nw4r/lyt.h" */
+/* "src/kyoshin/CUICfManager.hpp" line 7 "types.h" */
+/* end "types.h" */
+
+namespace nw4r {
+namespace ut {
+
+// Stub: retail size 0x3C; Destroy returns buffer for MemManager::deallocate.
+class PackedFont {
+public:
+    void* Destroy();
+
+private:
+    u8 unk[0x3C];
+};
+
+} // namespace ut
+} // namespace nw4r
+
+struct CUICfUnk144 {
+    u8 unk00[0x39];
+    u8 unk39; // 0x39
+};
+
+// Queue item type for CUICfManager::Move list walks (CProcess-sized prefix).
+struct CUICfMenuItem {
+    u8 unk00[0x39];
+    u8 unk39; // 0x39 - remove / SetRemove
+    u8 unk3A[0x54 - 0x3A];
+    u8 unk54; // 0x54
+    u8 unk55; // 0x55
+};
+
+struct CUICfInitBlock {
+    u32 unk00;
+    u16 unk04;
+    u8 unk06[0x34 - 6];
+};
+
+struct CUICfInitTail {
+    u32 unk00;
+    u32 unk04;
+    u32 unk08;
+    u32 unk0C;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u32 unk20;
+    u32 unk24;
+    u32 unk28;
+    u32 unk2C;
+    u32 unk30;
+    u32 unk34;
+    u32 unk38;
+    u32 unk3C;
+    u32 unk40;
+    u32 unk44;
+    u32 unk48;
+    u32 unk4C;
+    u32 unk50;
+    u32 unk54;
+    u32 unk58;
+    u32 unk5C;
+    u32 unk60;
+    u32 unk64;
+    u32 unk68;
+    u32 unk6C;
+    u32 unk70;
+    u32 unk74;
+    u32 unk78;
+    u32 unk7C;
+    u32 unk80;
+    u32 unk84;
+    u32 unk88;
+    u32 unk8C;
+};
+
+struct CUICfInitState {
+    u8 mode;
+    u8 state;
+    u8 unk02[2];
+};
+
+// 0xC-byte pool node for func_80133324's event queue - same layout as
+// `_reslist_node<u32>` (mNext@0, mPrev@4, mItem@8). Empty slots have mNext==0.
+struct CUICfListNode {
+    CUICfListNode* next; // 0x0
+    CUICfListNode* prev; // 0x4
+    u32 item;            // 0x8
+};
+
+// 27-entry, 0-terminated id table copied onto the stack by func_80133324
+// (retail: sp+0x28..0x5D, matches lbl_eu_804FFFDC minus its trailing entry).
+struct CUICfIdTable {
+    u16 ids[27];
+};
+
+class CUICfManager;
+
+// Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
+// reads r4/r5/r6 as real event-dispatch arguments; declared extern "C" here
+// (before the class, so the in-class friend declaration below binds to this
+// same linkage) so its ABI is r3=<unused self>, r4=id, r5=a1, r6=a2.
+extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
+struct CUICfInitSlot {
+    u8 unk00[4];
+    u8 unk04;
+    u8 unk05;
+    u8 unk06[2];
+    CUICfInitBlock unk08;
+    CUICfInitBlock unk3C;
+    CUICfInitBlock unk70;
+    CUICfInitBlock unkA4;
+    CUICfInitTail unkD8;
+}; // size = 0x168
+
+class CUICfManager : public CTTask<CUICfManager>, public IWorkEvent, public cf::IFlagEvent {
+public:
+    static CUICfManager* getInstance() {
+        return spInstance;
+    }
+    static CUICfManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
+    static nw4r::lyt::ArcResourceAccessor* func_801355F4();
+    static int func_80135FDC();
+
+    void Init();
+    void Term();
+    void Move();
+    // func_80133324__12CUICfManagerFv is a free function below (retail Fv-mangled
+    // member that actually reads r4/r5/r6 event args; see CUICfManager.cpp).
+    friend void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
+    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
+    u16 getFlags() const {
+        return mFlags;
+    }
+
+private:
+    // 0x000-0x054 CTTask
+    // 0x054-0x058 IWorkEvent
+    // 0x058-0x05C cf::IFlagEvent
+    nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; // 0x05C
+    nw4r::ut::PackedFont mPackedFont60;                  // 0x060
+    nw4r::ut::PackedFont mPackedFont9C;                  // 0x09C
+    nw4r::ut::PackedFont mPackedFontD8;                  // 0x0D8
+    CFileHandle* mFileHandle;                            // 0x114
+    int unk118;                                          // 0x118
+    u32 unk11C;                                          // 0x11C
+    u32 unk120;                                          // 0x120 - Move countdown
+    u8 unk124[0x128 - 0x124];                            // 0x124
+    CUICfListNode* unk128;                               // 0x128 (event queue head)
+    u8 unk12C[0x138 - 0x12C];                            // 0x12C
+    CUICfListNode* unk138;                               // 0x138 (event node array)
+    int unk13C;                                          // 0x13C (event node array count)
+    u8 unk140[0x144 - 0x140];                            // 0x140
+    CUICfUnk144* unk144;                                 // 0x144
+    CUICfInitSlot mInitSlots[8];                         // 0x148
+    // Slot0.unk00[0]/[1] are manager-wide clear/mark flags (0x148/0x149).
+    u8 unkC88[8];                                        // 0xC88
+    u16 mFlags;                                          // 0xC90 - Move bitflags
+    u8 unkC92[2];                                        // 0xC92
+
+    static CUICfManager* spInstance;
+}; // size = 0xC94
+/* end "kyoshin/CUICfManager.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 4 "kyoshin/cf/CBattleManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CBattleManager.hpp" line 2 "types.h" */
@@ -247024,7 +247322,7 @@ namespace cf{
     };
 }
 /* end "kyoshin/cf/CBattleManager.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 4 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 5 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
@@ -247106,7 +247404,7 @@ namespace cf{
 
 } //namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 5 "kyoshin/cf/object/CfObjectPc.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 6 "kyoshin/cf/object/CfObjectPc.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/object/CfObjectPc.hpp" line 2 "types.h" */
@@ -247156,58 +247454,10 @@ namespace cf {
     };
 }
 /* end "kyoshin/cf/object/CfObjectPc.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 6 "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 7 "kyoshin/code_80135FDC.hpp" */
 #pragma once
 
 /* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-enum CBM {
-    CBM_0,
-    CBM_1,
-    CBM_2,
-    CBM_3,
-    CBM_4,
-    CBM_5
-};
-
-struct CFileHandle {
-    int unk0;
-    void* mData; //0x4
-    u8 unk8[0x10 - 0x8];
-    int unk10;
-    u32 unk14;
-    u8 unk18[0x3C - 0x18];
-    u32 mLength; //0x3C
-    u8 unk40[0x5C - 0x40];
-    ml::FixStr<32> mName; //0x5C
-    u8 unk80[0x160 - 0x80];
-    u32 unk160;
-
-    void call(CBM cbm);
-    bool checkExistRsrc(CBM cbm);
-    UNKTYPE* getRsrc();
-
-    inline void* getData(){
-        void* r31 = mData;
-        mData = nullptr;
-        return r31;
-    }
-
-    inline bool unkInline2() const {
-        return unk10 != 0 && unk10 == mLength;
-    }
-
-    inline u32 getLength() const {
-        return mLength;
-    }
-
-};
 /* end "monolib/device/CFileHandle.hpp" */
 /* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work/IWorkEvent.hpp" */
@@ -247240,12 +247490,14 @@ void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 /* end "kyoshin/code_80135FDC.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 7 "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 8 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 8 "monolib/work/CProcess.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 9 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 10 "monolib/work/CProcess.hpp" */
 /* end "monolib/work/CProcess.hpp" */
 
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 10 "decomp.h" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 12 "decomp.h" */
 /**
  * Codewarrior tricks for matching decomp
  * (Macros generate prototypes to satisfy -requireprotos)
@@ -247411,11 +247663,11 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 
 #endif
 /* end "decomp.h" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 11 "functions.hpp" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 13 "functions.hpp" */
 /* end "functions.hpp" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 12 "nw4r/math.h" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 14 "nw4r/math.h" */
 /* end "nw4r/math.h" */
-/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 13 "revolution/GX.h" */
+/* "src/kyoshin/menu/CMenuBattlePlayerState.cpp" line 15 "revolution/GX.h" */
 /**
  * References: YAGCD, Dolphin Emulator, publicly available patents
  */
@@ -247763,6 +248015,20 @@ extern const f32 lbl_eu_80666FC4; // 360.0f
 }
 
 extern void func_80138078(u32);
+extern void* func_8012FDBC();
+extern u32 func_801355BC();
+extern u32 func_801355D8();
+extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
+
+extern "C" {
+extern s16 lbl_eu_80663F30[4];
+extern s16 lbl_eu_80663F38[4];
+extern s16 lbl_eu_80663F40[4];
+}
+
+typedef f32 (*GetF32Fn)(void*);
+typedef u32 (*GetU32Fn)(void*);
+typedef int (*GetIntFn)(void*);
 
 template <typename Fn>
 static inline Fn vslot(void* obj, u32 offset) {
@@ -247840,86 +248106,31 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     {
         f32 zeroF;
         f32 neg1F;
-        u32 step60;
-        u32 stepC;
-        u8* mid;
-        u8* midEnd;
-        u8* midLim60;
-        u32* head;
-        u32* headEnd;
 
-        // Hoist chunk sizes before the loop (retail r25=0x60 / r26=0xC) so the
-        // prologue keeps them + the loop temps across_savegpr_21 range.
         v4 = 4;
         v6 = 6;
         vB = 0xb;
         zeroF = lbl_eu_80666F94;
         neg1F = lbl_eu_80666FB0;
-        step60 = 0x60;
-        stepC = 0xc;
         i = 0;
         do {
             CMenuBattlePlayerStateSlot slot;
-            u8* p;
-            u32 n;
+            u32* p;
+            u32* end;
 
-            // Inlined func_8010B324 header: clear +0x74..+0x8c.
+            // Inlined func_8010B324: clear +0x74..+0x8c then +0x90..+0x204.
             slot.unk74 = (void*)z;
             slot.unk78 = (nw4r::lyt::Layout*)z;
-            slot.unk7C = (void*)z;
+            slot.unk7C = (nw4r::lyt::AnimTransform*)z;
             slot.unk80 = (u8)z;
             slot.unk84 = (void*)z;
             slot.unk88 = (void*)z;
             slot.unk8C = (void*)z;
-
-            // Inlined func_8010B324 body: 0x60-word then 0xC-word fills over
-            // +0x90..+0x204 (retail mtctr/bdnz unrolls — not a word pointer walk).
-            mid = reinterpret_cast<u8*>(&slot) + 0x90;
-            midEnd = reinterpret_cast<u8*>(&slot) + 0x204;
-            midLim60 = midEnd - step60;
-            p = mid;
-            if (p < midEnd) {
-                n = (u32)((midLim60 + 0x5f) - p) / step60;
-                if (p < midLim60) {
-                    for (; n != 0; n--) {
-                        u32* w = reinterpret_cast<u32*>(p);
-                        w[0] = z;
-                        w[1] = z;
-                        w[2] = z;
-                        w[3] = z;
-                        w[4] = z;
-                        w[5] = z;
-                        w[6] = z;
-                        w[7] = z;
-                        w[8] = z;
-                        w[9] = z;
-                        w[10] = z;
-                        w[11] = z;
-                        w[12] = z;
-                        w[13] = z;
-                        w[14] = z;
-                        w[15] = z;
-                        w[16] = z;
-                        w[17] = z;
-                        w[18] = z;
-                        w[19] = z;
-                        w[20] = z;
-                        w[21] = z;
-                        w[22] = z;
-                        w[23] = z;
-                        p += step60;
-                    }
-                }
-                n = (u32)((midEnd + 0xb) - p) / stepC;
-                if (p < midEnd) {
-                    for (; n != 0; n--) {
-                        u32* w = reinterpret_cast<u32*>(p);
-                        w[0] = z;
-                        w[1] = z;
-                        w[2] = z;
-                        p += stepC;
-                    }
-                }
+            p = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x90);
+            end = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x204);
+            while (p < end) {
+                *p = z;
+                p++;
             }
 
             slot.unk220 = zeroF;
@@ -247932,13 +248143,15 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
             slot.unk258 = i;
             slot.unk264 = zeroF;
 
-            // Retail then zeros the slot head (+0x00..+0x40) and sparse
-            // tail fields before the aggregate copy into mSlots[i].
-            head = reinterpret_cast<u32*>(&slot);
-            headEnd = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x40);
-            while (head < headEnd) {
-                *head = z;
-                head++;
+            // Post-float zeros: retail fills slot+0x00..+0x40 then sparse tail
+            // before the aggregate copy into mSlots[i].
+            {
+                u32* hp = reinterpret_cast<u32*>(&slot);
+                u32 left;
+                for (left = 0x11; left != 0; left--) {
+                    *hp = z;
+                    hp++;
+                }
             }
             slot.unk204 = (u8)z;
             slot.unk208 = z;
@@ -247965,6 +248178,343 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     }
 
     return self;
+}
+
+void CMenuBattlePlayerState::Init() {
+    mtl::ALLOC_HANDLE handle;
+    nw4r::lyt::ArcResourceAccessor* accessor;
+    void* actors[3];
+    u32 z;
+    int i;
+    void* actor;
+    int* party;
+    u32 hp;
+    u32 maxHp;
+    f32 tA;
+    int tB;
+    IScnRender* cb;
+
+    handle = mtl::MemManager::getHandleMEM2();
+    accessor = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
+        func_8012FDBC());
+    unk64.createRegion(reinterpret_cast<int>(accessor), 0xE00,
+                       lbl_eu_804FD720 + 0xF7, 0);
+
+    {
+        Class_8045F858 regionGuard(&unk64);
+        z = 0;
+        actors[0] = NULL;
+        actors[1] = NULL;
+        actors[2] = NULL;
+
+        for (i = 0; i < 3; i++) {
+            CMenuBattlePlayerStateSlot& slot = mSlots[i];
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136E84(&slot.unk00, accessor, lbl_eu_804FD720 + 0x10E);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136F08(slot.unk00, &slot.unk04, accessor,
+                           lbl_eu_804FD720 + 0x12E);
+
+            slot.unk00->SetAnimationEnable(slot.unk04, true);
+            slot.unk04->SetFrame(0.0f);
+            slot.unk00->Animate(0);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136E84(&slot.unk08, accessor, lbl_eu_804FD720 + 0x151);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136F08(slot.unk08, &slot.unk0C, accessor,
+                           lbl_eu_804FD720 + 0x174);
+            func_80136F08(slot.unk08, &slot.unk10, accessor,
+                           lbl_eu_804FD720 + 0x19A);
+            func_80136F08(slot.unk08, &slot.unk14, accessor,
+                           lbl_eu_804FD720 + 0x1C5);
+
+            slot.unk08->SetAnimationEnable(slot.unk10, false);
+            slot.unk08->SetAnimationEnable(slot.unk14, false);
+            slot.unk08->SetAnimationEnable(slot.unk0C, true);
+            slot.unk0C->SetFrame(0.0f);
+            slot.unk08->Animate(0);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136E84(&slot.unk18, accessor, lbl_eu_804FD720 + 0x1F0);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136F08(slot.unk18, &slot.unk1C, accessor,
+                           lbl_eu_804FD720 + 0x210);
+
+            {
+                nw4r::lyt::Pane* rootPane = slot.unk18->GetRootPane();
+                u32 fontHandle = func_801355BC();
+                func_8013676C(rootPane, fontHandle);
+            }
+            {
+                u32 fontAccessor = func_801355D8();
+                func_801368C0(slot.unk18, lbl_eu_804FD720 + 0x233,
+                              fontAccessor);
+                func_801368C0(slot.unk18, lbl_eu_804FD720 + 0x23C,
+                              fontAccessor);
+            }
+
+            {
+                unsigned long long rect = func_80139658(
+                    slot.unk18, lbl_eu_804FD720 + 0x245, 1);
+                lbl_eu_80663F30[0] = static_cast<s16>(rect & 0xFFFF);
+                lbl_eu_80663F30[1] = static_cast<s16>((rect >> 16) & 0xFFFF);
+                lbl_eu_80663F30[2] = static_cast<s16>((rect >> 32) & 0xFFFF);
+                lbl_eu_80663F30[3] = static_cast<s16>((rect >> 48) & 0xFFFF);
+                lbl_eu_80663F38[3] = lbl_eu_80663F30[3];
+                lbl_eu_80663F40[3] = lbl_eu_80663F30[3];
+            }
+
+            {
+                nw4r::lyt::Pane* rp = slot.unk18->GetRootPane();
+                slot.unk44 = rp->FindPaneByName(lbl_eu_804FD720 + 0x233, true);
+                slot.unk48 = rp->FindPaneByName(lbl_eu_804FD720 + 0x23C, true);
+                slot.unk4C = rp->FindPaneByName(lbl_eu_804FD720 + 0x245, true);
+                slot.unk50 = rp->FindPaneByName(lbl_eu_804FD720 + 0x24C, true);
+                slot.unk54 = rp->FindPaneByName(lbl_eu_804FD720 + 0x255, true);
+                slot.unk58 = rp->FindPaneByName(lbl_eu_804FD720 + 0x262, true);
+                slot.unk5C = rp->FindPaneByName(lbl_eu_804FD720 + 0x26F, true);
+                slot.unk60 = rp->FindPaneByName(lbl_eu_804FD720 + 0x27C, true);
+                slot.unk64 = rp->FindPaneByName(lbl_eu_804FD720 + 0x289, true);
+                slot.unk68 = rp->FindPaneByName(lbl_eu_804FD720 + 0x295, true);
+                slot.unk6C = rp->FindPaneByName(lbl_eu_804FD720 + 0x2A1, true);
+                slot.unk70 = rp->FindPaneByName(lbl_eu_804FD720 + 0x2AE, true);
+            }
+
+            slot.unk18->SetAnimationEnable(slot.unk1C, true);
+            slot.unk1C->SetFrame(0.0f);
+            slot.unk18->Animate(0);
+
+            {
+                nw4r::lyt::Pane* rp = slot.unk18->GetRootPane();
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x233, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x23C, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x245, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x24C, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x255, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x262, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x26F, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x27C, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x289, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x295, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x2A1, true);
+                rp->FindPaneByName(lbl_eu_804FD720 + 0x2AE, true);
+            }
+
+            slot.unk25C = 7;
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136E84(&slot.unk20, accessor, lbl_eu_804FD720 + 0x2BB);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136F08(slot.unk20, &slot.unk24, accessor,
+                           lbl_eu_804FD720 + 0x2DE);
+
+            slot.unk20->SetAnimationEnable(slot.unk24, true);
+            slot.unk24->SetFrame(0.0f);
+            slot.unk20->Animate(0);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136E84(&slot.unk28, accessor, lbl_eu_804FD720 + 0x304);
+
+            accessor = CUICfManager::func_801355F4();
+            func_80136F08(slot.unk28, &slot.unk2C, accessor,
+                           lbl_eu_804FD720 + 0x323);
+            func_80136F08(slot.unk28, &slot.unk30, accessor,
+                           lbl_eu_804FD720 + 0x347);
+            func_80136F08(slot.unk28, &slot.unk34, accessor,
+                           lbl_eu_804FD720 + 0x36D);
+            func_80136F08(slot.unk28, &slot.unk38, accessor,
+                           lbl_eu_804FD720 + 0x392);
+            func_80136F08(slot.unk28, &slot.unk3C, accessor,
+                           lbl_eu_804FD720 + 0x3B6);
+            func_80136F08(slot.unk28, &slot.unk40, accessor,
+                           lbl_eu_804FD720 + 0x3DC);
+
+            slot.unk28->UnbindAllAnimation();
+            slot.unk28->BindAnimation(slot.unk2C);
+            slot.unk28->SetAnimationEnable(slot.unk2C, true);
+            slot.unk28->Animate(0);
+            slot.unk28->UnbindAllAnimation();
+
+            {
+                f32 yOff = 86.0f * static_cast<f32>(i);
+                nw4r::lyt::Pane* p;
+
+                p = slot.unk00->GetRootPane();
+                p->SetTranslate(nw4r::math::VEC3(
+                    p->GetTranslate().x, p->GetTranslate().y - yOff,
+                    p->GetTranslate().z));
+
+                p = slot.unk08->GetRootPane();
+                p->SetTranslate(nw4r::math::VEC3(
+                    p->GetTranslate().x, p->GetTranslate().y - yOff,
+                    p->GetTranslate().z));
+
+                p = slot.unk18->GetRootPane();
+                p->SetTranslate(nw4r::math::VEC3(
+                    p->GetTranslate().x, p->GetTranslate().y - yOff,
+                    p->GetTranslate().z));
+
+                p = slot.unk20->GetRootPane();
+                p->SetTranslate(nw4r::math::VEC3(
+                    p->GetTranslate().x, p->GetTranslate().y - yOff,
+                    p->GetTranslate().z));
+
+                p = slot.unk28->GetRootPane();
+                p->SetTranslate(nw4r::math::VEC3(
+                    p->GetTranslate().x, p->GetTranslate().y - yOff,
+                    p->GetTranslate().z));
+            }
+
+            accessor = CUICfManager::func_801355F4();
+            slot.unk74 = accessor;
+
+            func_80136E84(&slot.unk78, accessor, lbl_eu_804FD720 + 0xA2);
+            func_80136F08(slot.unk78, &slot.unk7C,
+                           static_cast<nw4r::lyt::ArcResourceAccessor*>(
+                               slot.unk74),
+                           lbl_eu_804FD720 + 0xBC);
+
+            {
+                nw4r::lyt::Pane* subRoot = slot.unk78->GetRootPane();
+                u32 fontHandle = func_801355BC();
+                func_8013676C(subRoot, fontHandle);
+            }
+
+            slot.unk78->SetAnimationEnable(slot.unk7C, true);
+            slot.unk7C->SetFrame(0.0f);
+            slot.unk78->Animate(0);
+
+            {
+                nw4r::lyt::Pane* found =
+                    slot.unk78->GetRootPane()->FindPaneByName(
+                        lbl_eu_804FD720 + 0xD9, true);
+                if (found != NULL) {
+                    f32 yOff2 = 86.0f * static_cast<f32>(i);
+                    found->SetTranslate(nw4r::math::VEC3(
+                        found->GetTranslate().x,
+                        found->GetTranslate().y - yOff2,
+                        found->GetTranslate().z));
+                }
+            }
+        }
+
+        {
+            UnkClass_8045F564 temp;
+            u32* tp = reinterpret_cast<u32*>(&temp);
+            u32 z32 = 0;
+            temp.unk0 = z32;
+            temp.unk4 = z32;
+            temp.unk8 = z32;
+            temp.unkC = z32;
+            tp[4] = z32;
+            tp[5] = z32;
+            tp[6] = z32;
+            tp[7] = z32;
+            tp[8] = z32;
+            *reinterpret_cast<u8*>(&tp[9]) = 1;
+            tp[10] = z32;
+
+            unk7D0.unk0 = temp.unk0;
+            unk7D0.unk4 = temp.unk4;
+            unk7D0.unk8 = temp.unk8;
+            unk7D0.unkC = temp.unkC;
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7E0)) = tp[4];
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7E4)) = tp[5];
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7E8)) = tp[6];
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7EC)) = tp[7];
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7F0)) = tp[8];
+            *reinterpret_cast<u8*>(reinterpret_cast<u8*>(&unk7F4)) =
+                *reinterpret_cast<u8*>(&tp[9]);
+            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7F8)) = tp[10];
+        }
+
+        accessor = CUICfManager::func_801355F4();
+        unk7E0 = accessor;
+
+        handle = mtl::MemManager::getHandleMEM2();
+        unk7D0.createRegion(handle, 0x2000, lbl_eu_804FD720, 0);
+
+        {
+            Class_8045F858 scoped2(&unk7D0);
+            mtl::MemManager::func_80434A4C(false);
+
+            func_80136E84(&unk7E4,
+                           static_cast<nw4r::lyt::ArcResourceAccessor*>(
+                               unk7E0),
+                           lbl_eu_804FD720 + 0x12);
+            func_80136F08(unk7E4, &unk7E8,
+                           static_cast<nw4r::lyt::ArcResourceAccessor*>(
+                               unk7E0),
+                           lbl_eu_804FD720 + 0x30);
+            func_80136F08(unk7E4, &unk7EC,
+                           static_cast<nw4r::lyt::ArcResourceAccessor*>(
+                               unk7E0),
+                           lbl_eu_804FD720 + 0x51);
+            func_80136F08(unk7E4, &unk7F0,
+                           static_cast<nw4r::lyt::ArcResourceAccessor*>(
+                               unk7E0),
+                           lbl_eu_804FD720 + 0x72);
+
+            unk7E4->SetAnimationEnable(unk7EC, false);
+            unk7E4->SetAnimationEnable(unk7F0, false);
+            unk7E4->SetAnimationEnable(unk7E8, true);
+            unk7E4->Animate(0);
+        }
+
+        party = func_8009ECB0();
+        for (i = 0; i < 3; i++) {
+            actor = func_800B8B94(party[i + 1]);
+            actors[i] = actor;
+        }
+
+        for (i = 0; i < 3; i++) {
+            actor = actors[i];
+            if (actor == NULL) {
+                continue;
+            }
+
+            CMenuBattlePlayerStateSlot& slot = mSlots[i];
+
+            tA = static_cast<f32>(
+                vslot<GetU32Fn>(actor, 0x1E8)(actor));
+            slot.unk224 = tA;
+
+            tB = vslot<GetIntFn>(actor, 0x1F0)(actor);
+            slot.unk228 = static_cast<f32>(tB);
+            if (slot.unk228 == 1.0f) {
+                slot.unk224 = 0.0f;
+            }
+
+            if (slot.unk22C < 0.0f) {
+                slot.unk22C = slot.unk224;
+            }
+
+            slot.unk218 = vslot<GetU32Fn>(actor, 0x200)(actor);
+            slot.unk21C = slot.unk218;
+
+            hp = static_cast<u32>(
+                vslot<GetF32Fn>(actor, 0x128)(actor));
+            maxHp = static_cast<u32>(
+                vslot<GetF32Fn>(actor, 0x12C)(actor));
+            slot.unk210 = hp;
+            slot.unk214 = maxHp;
+        }
+
+        cb = this;
+        if (this != NULL) {
+            cb = reinterpret_cast<IScnRender*>(
+                reinterpret_cast<u8*>(this) + 0x5C);
+        }
+        mScn->addRenderCB(cb, 0xA, 0);
+
+        unk64.func_8045F810();
+    }
 }
 
 void CMenuBattlePlayerState::Term() {
@@ -248063,9 +248613,6 @@ after_bit21:
         // Gauge/bias NVs intentionally not hoisted as named locals: retail loads
         // int→float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
 
-        typedef f32 (*GetF32Fn)(void*);
-        typedef u32 (*GetU32Fn)(void*);
-        typedef int (*GetIntFn)(void*);
         typedef s16* (*GetS16PairFn)(void*);
 
         for (u8 i = 0; i < 3; i++) {

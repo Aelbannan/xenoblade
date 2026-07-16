@@ -154,6 +154,8 @@ class WordOps(Protocol):
     def fp_bits32_to_double(self, bits: Any) -> Any: ...
     def fp_dequantize_int(self, value: Any, width: int, signed: bool, scale: Any) -> Any: ...
     def fp_quantize_int(self, value: Any, width: int, signed: bool, scale: Any) -> Any: ...
+    def fresh_bv32(self, name: str) -> Any: ...
+    def fresh_bv64(self, name: str) -> Any: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -443,6 +445,14 @@ class ConcreteOps:
         maximum = (1 << (width - 1)) - 1 if signed else (1 << width) - 1
         converted = min(max(converted, float(minimum)), float(maximum))
         return int(converted) & ((1 << width) - 1)
+
+    def fresh_bv32(self, name: str) -> int:
+        import random
+        return random.getrandbits(32)
+
+    def fresh_bv64(self, name: str) -> int:
+        import random
+        return random.getrandbits(64)
 
 
 class SymbolicOps:
@@ -764,6 +774,12 @@ class SymbolicOps:
             else self.z3.fpToUBV(self.z3.RTZ(), clamped, self.z3.BitVecSort(width))
         )
         return self.z3.ZeroExt(32 - width, narrowed)
+
+    def fresh_bv32(self, name: str) -> Any:
+        return self.z3.BitVec(name, 32)
+
+    def fresh_bv64(self, name: str) -> Any:
+        return self.z3.BitVec(name, 64)
 
 
 def rotate_mask(mb: int, me: int) -> int:
@@ -2544,6 +2560,66 @@ def _exception_entry(
     )
 
 
+def _apply_call_summary(state: MachineState, ops: WordOps, call_id: int) -> MachineState:
+    prefix = f"call_summary.0x{call_id:08x}"
+    fresh_gprs = list(state.gpr)
+    for i in (0,) + tuple(range(3, 13)):
+        fresh_gprs[i] = ops.fresh_bv32(f"{prefix}.r{i}")
+    fresh_fprs = list(state.fpr)
+    fresh_ps1 = list(state.ps1)
+    for i in range(14):
+        fresh_fprs[i] = ops.fresh_bv64(f"{prefix}.f{i}")
+        fresh_ps1[i] = ops.fresh_bv64(f"{prefix}.f{i}.ps1")
+    fresh_xer = state.xer
+    fresh_xer = XerState(
+        ops.fresh_bv32(f"{prefix}.xer.ca"),
+        ops.fresh_bv32(f"{prefix}.xer.ov"),
+        ops.fresh_bv32(f"{prefix}.xer.so"),
+    )
+    fresh_lr = ops.fresh_bv32(f"{prefix}.lr")
+    fresh_ctr = ops.fresh_bv32(f"{prefix}.ctr")
+    fresh_cr_bits = tuple(
+        ops.fresh_bv32(f"{prefix}.cr{n}") for n in (0, 1, 5, 6, 7)
+    )
+    volatile_cr_mask = 0xF000F00F
+    fresh_cr = ops.bor(
+        ops.band(state.cr, ops.const(~volatile_cr_mask & 0xFFFFFFFF)),
+        ops.bor(
+            ops.shl(fresh_cr_bits[0], ops.const(28)),
+            ops.bor(
+                ops.shl(fresh_cr_bits[1], ops.const(24)),
+                ops.bor(
+                    ops.shl(fresh_cr_bits[2], ops.const(12)),
+                    ops.bor(
+                        ops.shl(fresh_cr_bits[3], ops.const(8)),
+                        ops.shl(fresh_cr_bits[4], ops.const(4)),
+                    ),
+                ),
+            ),
+        ),
+    )
+    return MachineState(
+        tuple(fresh_gprs),
+        tuple(fresh_fprs),
+        tuple(fresh_ps1),
+        state.gqr,
+        fresh_cr,
+        fresh_xer,
+        state.fpscr,
+        fresh_lr,
+        fresh_ctr,
+        state.msr,
+        state.sr,
+        state.time_base,
+        state.srr0,
+        state.srr1,
+        state.spr,
+        state.memory,
+        state.valid,
+        state.memory_touches,
+    )
+
+
 def execute_cfg(
     state: MachineState,
     instructions: list[Instruction],
@@ -2551,6 +2627,8 @@ def execute_cfg(
     *,
     max_instructions: int = 2048,
     max_paths: int = 256,
+    assumed_callees: frozenset[int] = frozenset(),
+    assumed_callees_used: set[int] | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
@@ -2621,6 +2699,11 @@ def execute_cfg(
             target = insn.operands[0]
             if target in by_address or target == end:
                 work.append((target, linked, condition, new_visited, steps + 1))
+            elif insn.link and target in assumed_callees:
+                if assumed_callees_used is not None:
+                    assumed_callees_used.add(target)
+                summarized = _apply_call_summary(linked, ops, target)
+                work.append((pc + 4, summarized, condition, new_visited, steps + 1))
             else:
                 terminals.append(Terminal(condition, linked, "call" if insn.link else "direct-branch", ops.const(target)))
             continue
@@ -2641,6 +2724,11 @@ def execute_cfg(
 
         if isinstance(target, int) and (target in by_address or target == end):
             work.append((target, branched_state, taken_condition, new_visited, steps + 1))
+        elif isinstance(target, int) and insn.link and kind == "call" and target in assumed_callees:
+            if assumed_callees_used is not None:
+                assumed_callees_used.add(target)
+            summarized = _apply_call_summary(branched_state, ops, target)
+            work.append((pc + 4, summarized, taken_condition, new_visited, steps + 1))
         else:
             terminals.append(Terminal(taken_condition, branched_state, kind, ops.const(target) if isinstance(target, int) else target))
         work.append((pc + 4, branched_state, fall_condition, new_visited, steps + 1))

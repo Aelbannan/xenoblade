@@ -24,6 +24,7 @@ struct UnkArtsSelectEntry {
 
 class CMenuArtsSelect {
 public:
+    void Init();
     void Term();
     void Move();
     void cbRenderBefore();
@@ -51,9 +52,10 @@ public:
     nw4r::lyt::AnimTransform* unk84; // 0x84
     nw4r::lyt::AnimTransform* unk88; // 0x88
     nw4r::lyt::Layout* unk8C; // 0x8C
-    u8 unk90[0x98 - 0x90];
+    nw4r::lyt::AnimTransform* unk90; // 0x90
+    nw4r::lyt::AnimTransform* unk94; // 0x94
     nw4r::lyt::Layout* unk98; // 0x98
-    u8 unk9C[0xA0 - 0x9C];
+    nw4r::lyt::AnimTransform* unk9C; // 0x9C
     nw4r::lyt::AnimTransform* unkA0; // 0xA0
     nw4r::lyt::Layout* unkA4[8]; // 0xA4
     nw4r::lyt::AnimTransform* unkC4[8]; // 0xC4

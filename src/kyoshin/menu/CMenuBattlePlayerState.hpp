@@ -13,16 +13,35 @@ struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Layout* unk00; // +0x00 → this+0x74
     nw4r::lyt::AnimTransform* unk04; // +0x04 → this+0x78
     nw4r::lyt::Layout* unk08; // +0x08 → this+0x7c
-    u8 pad0C[0x18 - 0x0C];
+    nw4r::lyt::AnimTransform* unk0C; // +0x0C → this+0x80
+    nw4r::lyt::AnimTransform* unk10; // +0x10 → this+0x84
+    nw4r::lyt::AnimTransform* unk14; // +0x14 → this+0x88
     nw4r::lyt::Layout* unk18; // +0x18 → this+0x8c
     nw4r::lyt::AnimTransform* unk1C; // +0x1C → this+0x90
     nw4r::lyt::Layout* unk20; // +0x20 → this+0x94
-    u8 pad24[0x28 - 0x24];
+    nw4r::lyt::AnimTransform* unk24; // +0x24 → this+0x98
     nw4r::lyt::Layout* unk28; // +0x28 → this+0x9c
-    u8 pad2C[0x74 - 0x2C];
-    void* unk74; // +0x74: cleared by slot ctor
+    nw4r::lyt::AnimTransform* unk2C; // +0x2C → this+0xA0
+    nw4r::lyt::AnimTransform* unk30; // +0x30 → this+0xA4
+    nw4r::lyt::AnimTransform* unk34; // +0x34 → this+0xA8
+    nw4r::lyt::AnimTransform* unk38; // +0x38 → this+0xAC
+    nw4r::lyt::AnimTransform* unk3C; // +0x3C → this+0xB0
+    nw4r::lyt::AnimTransform* unk40; // +0x40 → this+0xB4
+    nw4r::lyt::Pane* unk44; // +0x44: "Txt_Dr_Lv"
+    nw4r::lyt::Pane* unk48; // +0x48: "Txt_Dr"
+    nw4r::lyt::Pane* unk4C; // +0x4C: "Txt_LvNum"
+    nw4r::lyt::Pane* unk50; // +0x50: "N_HpGauge"
+    nw4r::lyt::Pane* unk54; // +0x54: "N_HpGauge_Max"
+    nw4r::lyt::Pane* unk58; // +0x58: "N_Tension"
+    nw4r::lyt::Pane* unk5C; // +0x5C: "N_Tension_Gauge"
+    nw4r::lyt::Pane* unk60; // +0x60: "N_PartyOn"
+    nw4r::lyt::Pane* unk64; // +0x64: "N_ArtsEn"
+    nw4r::lyt::Pane* unk68; // +0x68: "N_Tension_Star"
+    nw4r::lyt::Pane* unk6C; // +0x6C: "N_Level_Star"
+    nw4r::lyt::Pane* unk70; // +0x70: "N_AutoHeal"
+    void* unk74; // +0x74: saved ArcResourceAccessor* (sub-layout)
     nw4r::lyt::Layout* unk78; // +0x78 → this+0xec
-    void* unk7C; // +0x7c
+    nw4r::lyt::AnimTransform* unk7C; // +0x7c
     u8 unk80; // +0x80 → this+0xf4: gates the extra unk78 draw in cbRenderBefore
     u8 pad81[0x84 - 0x81];
     void* unk84; // +0x84
@@ -71,6 +90,7 @@ class CMenuBattlePlayerState : public CMenuBattlePlayerStateBase,
                                public IWorkEvent,
                                public IScnRender {
 public:
+    void Init();
     void Term();
     void Move();
     void cbRenderBefore();

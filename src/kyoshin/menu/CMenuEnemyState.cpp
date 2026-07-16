@@ -473,9 +473,6 @@ after_bit21:
     cf::CfObjectPc* pc =
         func_800BFC68(cf::CfGameManager::func_80082D54(0));
 
-    // Stack Vec homes + loop-invariant floats (retail: f28/f30/f31, r28/r29
-    // before the panel loop). Explicit address locals match r28/r29; a separate
-    // zero local matches r31 ? keep the live set at _savegpr_22 (not 21/23).
     nw4r::math::VEC3 delta;
     nw4r::math::VEC3 scratch;
     f32 one = lbl_eu_80666FE8;
@@ -493,17 +490,14 @@ after_bit21:
 
         u8* panelData = entry + 0xA4;
 
-        if (panelData[0x28] == 0) { // entry+0xCC
+        if (panelData[0x28] == 0) {
             if (func_8013BF48()) {
-                void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-                void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-                void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-                u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-                u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-                u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-                *b1 = (*b1 & 0xFE) | 1;
-                *b2 = (*b2 & 0xFE) | 1;
-                *b3 = (*b3 & 0xFE) | 1;
+                u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
+                *bp = (*bp & 0xFE) | 1;
+                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
+                *bp = (*bp & 0xFE) | 1;
+                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
+                *bp = (*bp & 0xFE) | 1;
             }
         }
 
@@ -517,32 +511,22 @@ after_bit21:
         // r24 in retail's loop = result of func_8016FE34 (not the early target).
         void* actor2 = func_8016FE34();
         int skipDist = 0;
-        int hasSub = 0;
         if (actor2 != NULL) {
             void* sub3f34 =
                 *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor2) + 0x3f34);
             if (sub3f34 != NULL) {
-                hasSub = 1;
-            }
-        }
-        if (hasSub) {
-            void* sub3f34 =
-                *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor2) + 0x3f34);
-            u32 bits = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(sub3f34) + 0x7a4);
-            if ((bits >> 26) & 1) {
-                skipDist = 1;
+                u32 bits = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(sub3f34) + 0x7a4);
+                if ((bits >> 26) & 1) {
+                    skipDist = 1;
+                }
             }
         }
 
         if (actor2 != NULL) {
             typedef f32 (*GetFloatFn)(void*);
-            f32 stateVal = vslot<GetFloatFn>(actor2, 0x128)(actor2);
-            // Retail: state==FEC && panelData[0x1c]==0 ? always cull.
-            if (animMarker == stateVal) {
-                if (panelData[0x1c] == 0) { // entry+0xC0
-                    panelData[0x15] = z;
-                    continue;
-                }
+            if (animMarker == vslot<GetFloatFn>(actor2, 0x128)(actor2) && panelData[0x1c] == 0) {
+                panelData[0x15] = z;
+                continue;
             }
         }
         if (skipDist) {
@@ -550,8 +534,6 @@ after_bit21:
             continue;
         }
 
-        // Distance cull + frustum test only when panelData[0x28]==0 and pc!=NULL.
-        // Retail skips both when either gate fails (falls through to flag work).
         if (panelData[0x28] == 0 && pc != NULL) {
             typedef void* (*GetPosFn)(void*);
             void* handlePos = vslot<GetPosFn>(handle, 0xAC)(handle);
@@ -563,9 +545,7 @@ after_bit21:
                 reinterpret_cast<const nw4r::math::VEC3*>(pcPos),
                 reinterpret_cast<const nw4r::math::VEC3*>(handlePos));
             scratch = delta;
-            f32 distSq = scratch.x * scratch.x + scratch.y * scratch.y +
-                         scratch.z * scratch.z;
-            if (distSq > distThresh) {
+            if (scratch.x * scratch.x + scratch.y * scratch.y + scratch.z * scratch.z > distThresh) {
                 panelData[0x15] = z;
                 continue;
             }
@@ -581,11 +561,11 @@ after_bit21:
                 b.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x13c);
                 b.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x140);
 
-                void* qpos = vslot<GetPosFn>(handle, 0xAC)(handle);
+                void* cpos = vslot<GetPosFn>(handle, 0xAC)(handle);
                 Vec3f c;
-                c.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 0);
-                c.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 4);
-                c.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 8);
+                c.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(cpos) + 0);
+                c.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(cpos) + 4);
+                c.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(cpos) + 8);
 
                 if (!func_8013A4B4(&a, &b, &c)) {
                     panelData[0x15] = z;
@@ -594,17 +574,13 @@ after_bit21:
             }
         }
 
-        if (panelData[0x28] == 0) { // entry+0xCC
-            if (panelData[0x1d] != 0) { // entry+0xC1
+        if (panelData[0x28] == 0) {
+            if (panelData[0x1d] != 0) {
                 if (actor2 != NULL) {
-                    void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-                    void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-                    void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-                    u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-                    u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-                    u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-
+                    u8* b1 = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
                     *b1 = (*b1 & 0xFE) | 1;
+
+                    u8* b2 = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
                     *b2 = *b2 & 0xFE;
 
                     typedef void* (*GetPtrFn)(void*);
@@ -614,20 +590,18 @@ after_bit21:
                         *b2 = (*b2 & 0xFE) | 1;
                     }
 
+                    u8* b3 = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
                     typedef u32 (*GetU8Fn)(void*);
                     u32 byteVal = vslot<GetU8Fn>(actor2, 0x260)(actor2) & 0xFF;
                     *b3 = (*b3 & 0xFE) | static_cast<u8>(byteVal);
                 }
             } else {
-                void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-                void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-                void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-                u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-                u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-                u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-                *b1 = *b1 & 0xFE;
-                *b2 = *b2 & 0xFE;
-                *b3 = *b3 & 0xFE;
+                u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
+                *bp = *bp & 0xFE;
+                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
+                *bp = *bp & 0xFE;
+                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
+                *bp = *bp & 0xFE;
             }
         }
 
@@ -637,28 +611,33 @@ after_bit21:
             Vec3f posTmp;
             Vec3f posA;
             Vec3f posB;
-            Vec3f* posTmpPtr = &posTmp;
 
-            typedef void* (*GetVecFn)(void*, int);
-            void* r = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
-            if (r != NULL) {
-                posTmpPtr->x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0xc);
-                posTmpPtr->y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0x1c);
-                posTmpPtr->z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0x2c);
-                posA = *posTmpPtr;
-            } else {
-                typedef void* (*GetPosFn)(void*);
-                void* p = vslot<GetPosFn>(handle, 0xAC)(handle);
-                posA.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 0);
-                posA.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 4);
-                posA.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 8);
+            {
+                typedef void* (*GetVecFn)(void*, int);
+                void* tmp = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
+                if (tmp != NULL) {
+                    posTmp.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(tmp) + 0xc);
+                    posTmp.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(tmp) + 0x1c);
+                    posTmp.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(tmp) + 0x2c);
+                    posA.x = posTmp.x;
+                    posA.y = posTmp.y;
+                    posA.z = posTmp.z;
+                } else {
+                    typedef void* (*GetPosFn)(void*);
+                    void* pp = vslot<GetPosFn>(handle, 0xAC)(handle);
+                    posA.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 0);
+                    posA.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 4);
+                    posA.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 8);
+                }
             }
 
-            typedef void* (*GetPosFn)(void*);
-            void* p2 = vslot<GetPosFn>(handle, 0xAC)(handle);
-            posB.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 0);
-            posB.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 4);
-            posB.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 8);
+            {
+                typedef void* (*GetPosFn)(void*);
+                void* pp = vslot<GetPosFn>(handle, 0xAC)(handle);
+                posB.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 0);
+                posB.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 4);
+                posB.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 8);
+            }
 
             u32 flagWord = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(handle) + 0x64);
             if ((flagWord & 0x4000) != 0 || (flagWord & 0x8000) != 0) {
@@ -703,25 +682,19 @@ after_bit21:
         }
 
         if (panelData[0x28] != 0) {
-            void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-            void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-            void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-            u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-            u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-            u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-            *b1 = *b1 & 0xFE;
-            *b2 = *b2 & 0xFE;
-            *b3 = *b3 & 0xFE;
+            u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
+            *bp = *bp & 0xFE;
+            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
+            *bp = *bp & 0xFE;
+            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
+            *bp = *bp & 0xFE;
         } else if (!func_8013BF48()) {
-            void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-            void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-            void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-            u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-            u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-            u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-            *b1 = *b1 & 0xFE;
-            *b2 = *b2 & 0xFE;
-            *b3 = *b3 & 0xFE;
+            u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
+            *bp = *bp & 0xFE;
+            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
+            *bp = *bp & 0xFE;
+            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
+            *bp = *bp & 0xFE;
         }
     }
 

@@ -862,25 +862,17 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
         if (id >= 0x12f) {
             found = 0;
         } else {
-            // Soft-cap (CODE_MATCH ~95.5%): retail keeps a dead trip counter in
-            // r3 (li 0 / addi +7 / unused after bdnz) alongside found in r0 and
-            // scan base in r4. Goto found-paths put found in r0 but walks via
-            // r3 (loses r4 scan); break form keeps r4 scan but coalesces found
-            // into r3 and DSE's the trip. Same Chaitin class as UnkVirtualFunc11.
-            u8* p = (u8*)this;
-            int g;
+            int j;
+            u8* scan;
 
             found = 0;
-            for (g = 13; g != 0; g--) {
-                if (id == *(u16*)(p + 0x14)) { found = 1; goto scan_done; }
-                if (id == *(u16*)(p + 0x48)) { found = 1; goto scan_done; }
-                if (id == *(u16*)(p + 0x7c)) { found = 1; goto scan_done; }
-                if (id == *(u16*)(p + 0xb0)) { found = 1; goto scan_done; }
-                if (id == *(u16*)(p + 0xe4)) { found = 1; goto scan_done; }
-                if (id == *(u16*)(p + 0x118)) { found = 1; goto scan_done; }
-                if (id == *(u16*)(p + 0x14c)) { found = 1; goto scan_done; }
-                if (id == *(u16*)(p + 0x180)) { found = 1; goto scan_done; }
-                p += 0x1a0;
+            // The retail 13x8 listing is MWCC's unroll of this linear scan.
+            scan = (u8*)this;
+            for (j = 0; j < 0x68; scan += sizeof(CBattleStateEntry), j++) {
+                if (id == *(u16*)(scan + 0x14)) {
+                    found = 1;
+                    goto scan_done;
+                }
             }
             found = 0;
         scan_done:
@@ -907,7 +899,6 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 //
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
 extern "C" const float lbl_eu_80667414;
-
 extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* arg) {
     typedef void (*Vfunc17Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
@@ -951,15 +942,13 @@ extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
             entries->unk1C = arg->unk1C;
             entries->unk20 = arg->unk20;
             entries->unk24 = arg->unk24;
-            {
-                f32 scaled = lbl_eu_80667414 * entries->unk24;
-                entries->unk28 = arg->unk28;
-                entries->unk2C = arg->unk2C;
-                entries->unk2E = arg->unk2E;
-                entries->unk30 = arg->unk30;
-                entries->unk1C = entries->unk20;
-                entries->unk28 = scaled;
-            }
+            f32 scaled = lbl_eu_80667414 * entries->unk24;
+            entries->unk28 = arg->unk28;
+            entries->unk2C = arg->unk2C;
+            entries->unk2E = arg->unk2E;
+            entries->unk30 = arg->unk30;
+            entries->unk1C = entries->unk20;
+            entries->unk28 = scaled;
             ((Vfunc17Fn)(*(void***)self)[18])(self, entries);
             return;
         }

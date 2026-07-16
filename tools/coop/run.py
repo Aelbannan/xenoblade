@@ -47,7 +47,7 @@ from tools.coop.lib.objdiff_report import (
     report_unit,
 )
 from tools.coop.lib.object_size import ObjectSizeCheck, check_object_size, format_size_check
-from tools.coop.lib.project import Project
+from tools.coop.lib.project import ObjdiffUnit, Project
 from tools.coop.lib.targets import get_target, load_targets, pending_targets
 
 
@@ -187,13 +187,14 @@ def cmd_diff(
     symbol: Optional[str],
     *,
     write_function_diff: bool,
+    linked: bool = False,
 ) -> int:
     unit = project.resolve_unit(hint)
     if unit.base_path:
         project.ninja_build(str(unit.base_path.relative_to(project.root)))
         _postprocess_mtrand_object(project, unit.base_path)
 
-    evaluation = evaluate_unit_match(project, unit, symbol)
+    evaluation = evaluate_unit_match(project, unit, symbol, linked=linked)
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
 
@@ -276,6 +277,7 @@ def cmd_cycle(
     hypothesis: str,
     next_change: str,
     runtime_test: str,
+    linked: bool = False,
 ) -> int:
     targets = load_targets(config)
     target = get_target(targets, target_id)
@@ -294,7 +296,7 @@ def cmd_cycle(
     if unit.base_path:
         _postprocess_mtrand_object(project, unit.base_path)
 
-    evaluation = evaluate_unit_match(project, unit, target.symbol)
+    evaluation = evaluate_unit_match(project, unit, target.symbol, linked=linked)
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
 
@@ -496,6 +498,16 @@ def _cmd_equivalence_check_unit(project: Project, config: CoopConfig, unit_args:
         action="store_true",
         help="do not ninja-build / post-process the decomp object first",
     )
+    parser.add_argument(
+        "--linked",
+        action="store_true",
+        help=(
+            "When the unlinked .o pair has unresolved relocations, retry the "
+            "proof with linked bytes from main.dol (retail) and main.elf "
+            "(candidate). Requires `ninja build/<region>/main.elf` for the "
+            "candidate side."
+        ),
+    )
     parsed, rest = parser.parse_known_args(unit_args)
 
     unit = project.resolve_unit(parsed.unit)
@@ -531,6 +543,9 @@ def _cmd_equivalence_check_unit(project: Project, config: CoopConfig, unit_args:
         print(f"unit: {unit.name}  symbol: {symbol}", flush=True)
         print(f"warning: objdiff report unavailable ({exc})", file=sys.stderr)
 
+    if parsed.linked:
+        return _run_check_unit_linked(project, config, unit, symbol, parsed.candidate_symbol, rest)
+
     forwarded = [
         "check-objects",
         "--original",
@@ -544,6 +559,59 @@ def _cmd_equivalence_check_unit(project: Project, config: CoopConfig, unit_args:
         forwarded.extend(["--candidate-symbol", parsed.candidate_symbol])
     forwarded.extend(rest)
     return cmd_equivalence(project, config, forwarded)
+
+
+def _run_check_unit_linked(
+    project: Project,
+    config: CoopConfig,
+    unit: ObjdiffUnit,
+    symbol: str,
+    candidate_symbol: Optional[str],
+    rest: list[str],
+) -> int:
+    """`check-unit --linked`: invoke prove_unit_symbol directly and print the result.
+
+    The library fallback path can retry the proof with linked bytes from
+    main.dol + main.elf when the unlinked `.o` pair carries unresolved
+    relocations. Passthrough ``rest`` args (`--contract`, `--observe`, ...) are
+    honored for `--contract`; others are ignored in linked mode.
+    """
+    from tools.coop.lib.equivalence_check import prove_unit_symbol
+    from tools.ppc_equivalence.result import ProofStatus
+
+    contract = "auto"
+    rest_iter = iter(rest)
+    for arg in rest_iter:
+        if arg == "--contract":
+            contract = next(rest_iter, contract)
+        elif arg.startswith("--contract="):
+            contract = arg.split("=", 1)[1]
+
+    probe = prove_unit_symbol(
+        project, unit, symbol,
+        contract=contract,
+        candidate_symbol=candidate_symbol,
+        linked=True,
+    )
+    status = probe.status
+    label = {
+        ProofStatus.EQUIVALENT: "EQUIVALENT",
+        ProofStatus.NOT_EQUIVALENT: "NOT_EQUIVALENT",
+        ProofStatus.INCONCLUSIVE_UNSUPPORTED: "INCONCLUSIVE_UNSUPPORTED",
+        ProofStatus.INVALID_INPUT: "INVALID_INPUT",
+        ProofStatus.INTERNAL_ERROR: "INTERNAL_ERROR",
+    }.get(status, status.value)
+    print(f"check-unit --linked: {label}")
+    if probe.detail:
+        print(f"  detail: {probe.detail}")
+
+    if status == ProofStatus.EQUIVALENT:
+        return 0
+    if status == ProofStatus.NOT_EQUIVALENT:
+        return 1
+    if status == ProofStatus.INVALID_INPUT:
+        return 3
+    return 2
 
 
 def cmd_equivalence(project: Project, config: CoopConfig, equivalence_args: list[str]) -> int:
@@ -590,6 +658,15 @@ def main() -> int:
     p_diff = sub.add_parser("diff", help="Build and diff one translation unit")
     p_diff.add_argument("unit", help="objdiff unit hint or source path")
     p_diff.add_argument("--symbol", help="Function symbol for per-function stats")
+    p_diff.add_argument(
+        "--linked",
+        action="store_true",
+        help=(
+            "When the SMT equivalence probe would otherwise be inconclusive due "
+            "to unresolved relocations, retry with linked bytes from main.dol + "
+            "main.elf (build the latter with `ninja build/<region>/main.elf`)."
+        ),
+    )
 
     p_size = sub.add_parser("size", help="Check decomp .text size against split budget")
     p_size.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
@@ -600,6 +677,14 @@ def main() -> int:
     p_cycle.add_argument("--hypothesis", default="")
     p_cycle.add_argument("--next-change", default="")
     p_cycle.add_argument("--runtime-test", default="")
+    p_cycle.add_argument(
+        "--linked",
+        action="store_true",
+        help=(
+            "Allow the SMT equivalence probe to fall back to linked DOL/ELF bytes "
+            "when the unlinked .o pair has unresolved relocations."
+        ),
+    )
 
     p_queue = sub.add_parser("queue", help="Run cycle on pending targets")
     p_queue.add_argument("--tier", choices=["P0", "P1", "P2", "P3"])
@@ -671,7 +756,10 @@ def main() -> int:
     if args.command == "build":
         return cmd_build(project, args.unit)
     if args.command == "diff":
-        return cmd_diff(project, config, args.unit, args.symbol, write_function_diff=False)
+        return cmd_diff(
+            project, config, args.unit, args.symbol,
+            write_function_diff=False, linked=args.linked,
+        )
     if args.command == "size":
         return cmd_size(project, config, args.unit, check_all=args.all)
     if args.command == "cycle":
@@ -682,6 +770,7 @@ def main() -> int:
             hypothesis=args.hypothesis,
             next_change=args.next_change,
             runtime_test=args.runtime_test,
+            linked=args.linked,
         )
     if args.command == "queue":
         return cmd_queue(project, config, args.tier, dry_run=args.dry_run)

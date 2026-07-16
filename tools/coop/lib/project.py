@@ -5,10 +5,12 @@ import os
 import shutil
 import subprocess
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from tools.coop.lib.config import CoopConfig
+from tools.symbolrecover.lib.parser import SymbolEntry, load_symbols
 
 
 @dataclass
@@ -120,6 +122,48 @@ class Project:
             raise ValueError(f"Ambiguous unit '{hint}'. Matches include: {names}")
 
         raise ValueError(f"No objdiff unit found for '{hint}'")
+
+    @property
+    def linked_elf_path(self) -> Path:
+        """Path to the ninja-produced linked ELF (consumed by ``elf2dol``).
+
+        Gitignored per ``.gitignore``; produced by ``ninja build/<region>/main.elf``.
+        Used as a relocation-free candidate source for SMT linked-byes fallback.
+        """
+        return self.config.build_dir / "main.elf"
+
+    @lru_cache(maxsize=4)
+    def _symbol_table(self) -> Dict[str, SymbolEntry]:
+        path = self.root / "config" / self.config.region / "symbols.txt"
+        if not path.is_file():
+            return {}
+        entries: Dict[str, SymbolEntry] = {}
+        for entry in load_symbols(path):
+            entries[entry.name] = entry
+        return entries
+
+    def symbol_entry(self, name: str) -> Optional[SymbolEntry]:
+        """Look up a mangled symbol in ``config/<region>/symbols.txt`` by name."""
+        table = self._symbol_table()
+        if name in table:
+            return table[name]
+        # Case-insensitive fallback (objdiff demangled tokens may differ in case).
+        lowered = name.lower()
+        for key, value in table.items():
+            if key.lower() == lowered:
+                return value
+        return None
+
+    def symbol_address(self, name: str) -> Optional[Tuple[int, int]]:
+        """Return ``(virtual_address, size_bytes)`` for a named function symbol.
+
+        Used to extract linked bytes from ``main.dol`` when the unlinked ``.o``
+        pair carries unresolved relocations.
+        """
+        entry = self.symbol_entry(name)
+        if entry is None or entry.size is None or entry.size <= 0:
+            return None
+        return entry.address, entry.size
 
 
 def _path_or_none(root: Path, value: Any) -> Optional[Path]:

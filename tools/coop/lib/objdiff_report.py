@@ -144,6 +144,7 @@ def evaluate_unit_match(
     symbol: Optional[str],
     *,
     run_equivalence: bool = True,
+    linked: bool = False,
 ) -> MatchEvaluation:
     unit_report = report_unit(project, unit)
     fn_match = find_function_match(unit_report, symbol)
@@ -151,7 +152,9 @@ def evaluate_unit_match(
     detail = ""
     pct = fn_match.match_percent if fn_match else None
     if run_equivalence and symbol and fn_match and should_probe_equivalence(pct):
-        probe: EquivalenceProbe = prove_unit_symbol(project, unit, fn_match.name)
+        probe: EquivalenceProbe = prove_unit_symbol(
+            project, unit, fn_match.name, linked=linked
+        )
         equivalence = probe.status
         detail = probe.detail
     status = classify_status(pct, unit_report, symbol=symbol, equivalence=equivalence)

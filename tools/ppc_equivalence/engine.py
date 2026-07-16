@@ -1,14 +1,24 @@
 from __future__ import annotations
 
+import random
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
 from .contract import EquivalenceContract, Observable
-from .ir import Instruction
-from .model import MachineState, XerState
+from .ir import Instruction, Opcode
+from .model import ConcreteMemory, MachineState, XerState, concrete_state
 from .result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofResult, ProofStatus
-from .semantics import SymbolicOps, Terminal, execute_cfg, read_gprs
+from .semantics import (
+    ConcreteOps,
+    SymbolicOps,
+    Terminal,
+    execute_block,
+    execute_cfg,
+    execute_instruction,
+    read_gprs,
+)
 from .spr import AUX_SPR_OBSERVABLES
 
 
@@ -67,6 +77,41 @@ def _observable_value(state: MachineState, observable: Observable, ops: Symbolic
     raise AssertionError(f"unknown observable kind: {observable.kind}")
 
 
+def _observable_concrete(state: MachineState, observable: Observable) -> object:
+    if observable.kind == "gpr":
+        assert observable.index is not None
+        return int(state.gpr[observable.index]) & 0xFFFFFFFF
+    if observable.kind == "fpr":
+        assert observable.index is not None
+        return int(state.fpr[observable.index]) & 0xFFFFFFFFFFFFFFFF
+    if observable.kind == "ps1":
+        assert observable.index is not None
+        return int(state.ps1[observable.index]) & 0xFFFFFFFFFFFFFFFF
+    if observable.kind == "gqr":
+        assert observable.index is not None
+        return int(state.gqr[observable.index]) & 0xFFFFFFFF
+    if observable.kind == "sr":
+        assert observable.index is not None
+        return int(state.sr[observable.index]) & 0xFFFFFFFF
+    if observable.kind == "spr":
+        assert observable.index is not None
+        return int(state.spr[observable.index]) & 0xFFFFFFFF
+    if observable.kind == "cr_field":
+        assert observable.index is not None
+        return (int(state.cr) >> ((7 - observable.index) * 4)) & 0xF
+    if observable.kind in ("cr", "lr", "ctr", "msr", "srr0", "srr1"):
+        return int(getattr(state, observable.kind)) & 0xFFFFFFFF
+    if observable.kind == "time_base":
+        return int(state.time_base) & 0xFFFFFFFFFFFFFFFF
+    if observable.kind == "fpscr":
+        return int(state.fpscr) & 0xFFFFFFFF
+    if observable.kind == "xer":
+        return int(bool(getattr(state.xer, observable.name.split(".", 1)[1])))
+    if observable.kind == "memory":
+        return state.memory
+    raise AssertionError(f"unknown observable kind: {observable.kind}")
+
+
 def _terminal_difference(left: Terminal, right: Terminal, contract: EquivalenceContract, ops: SymbolicOps) -> Any:
     z3 = ops.z3
     kind_difference = z3.BoolVal(left.exit_kind != right.exit_kind)
@@ -104,7 +149,6 @@ def _bool_value(model: Any, expression: Any, z3: Any) -> int:
 
 
 def _memory_entries(model: Any, memory: Any, touches: tuple[Any, ...], z3: Any) -> dict[str, object]:
-    """Extract the finite stores selected by Z3; unspecified bytes use its array default."""
     value = model.eval(memory, model_completion=True)
     entries: dict[str, str] = {}
     try:
@@ -126,6 +170,128 @@ def _memory_entries(model: Any, memory: Any, touches: tuple[Any, ...], z3: Any) 
     return {"default": f"0x{default:02x}", "bytes": entries}
 
 
+_RANDOM_CHECK_SAMPLES = 5
+
+
+def _random_concrete_check(
+    original: list[Instruction],
+    candidate: list[Instruction],
+    contract: EquivalenceContract,
+) -> bool:
+    ops = ConcreteOps()
+    for _ in range(_RANDOM_CHECK_SAMPLES):
+        rng = random.Random()
+        initial = MachineState(
+            tuple(rng.getrandbits(32) for _ in range(32)),
+            tuple(rng.getrandbits(64) for _ in range(32)),
+            tuple(rng.getrandbits(64) for _ in range(32)),
+            tuple(rng.getrandbits(32) for _ in range(8)),
+            rng.getrandbits(32),
+            XerState(rng.choice([True, False]), rng.choice([True, False]), rng.choice([True, False])),
+            rng.getrandbits(32),
+            rng.getrandbits(32),
+            rng.getrandbits(32),
+            rng.getrandbits(32),
+            tuple(rng.getrandbits(32) for _ in range(16)),
+            rng.getrandbits(64),
+            rng.getrandbits(32),
+            rng.getrandbits(32),
+            tuple(rng.getrandbits(32) for _ in range(66)),
+            ConcreteMemory(),
+            True,
+        )
+        try:
+            orig_state = execute_block(initial, original, ops, max_instructions=len(original) + 256)
+            cand_state = execute_block(initial, candidate, ops, max_instructions=len(candidate) + 256)
+        except Exception:
+            continue
+        if not bool(orig_state.valid) and not bool(cand_state.valid):
+            continue
+        if bool(orig_state.valid) != bool(cand_state.valid):
+            return True
+        for observable in contract.observables:
+            try:
+                o_val = _observable_concrete(orig_state, observable)
+                c_val = _observable_concrete(cand_state, observable)
+            except Exception:
+                continue
+            if o_val != c_val:
+                return True
+    return False
+
+
+def _instruction_level_diff(
+    original: list[Instruction],
+    candidate: list[Instruction],
+    initial_state: dict[str, Any],
+) -> dict[str, Any] | None:
+    try:
+        from .model import concrete_state as _cs
+        state = _cs(initial_state)
+    except Exception:
+        return None
+    ops = ConcreteOps()
+    orig_state = state
+    cand_state = state
+    min_len = min(len(original), len(candidate))
+    for i in range(min_len):
+        o_insn, c_insn = original[i], candidate[i]
+        try:
+            orig_state = execute_instruction(orig_state, o_insn, ops)
+            cand_state = execute_instruction(cand_state, c_insn, ops)
+        except Exception:
+            return {"instruction_index": i, "detail": "execution error during instruction-level diff"}
+        for reg_idx in range(32):
+            if orig_state.gpr[reg_idx] != cand_state.gpr[reg_idx]:
+                return {
+                    "instruction_index": i,
+                    "diverged_register": f"r{reg_idx}",
+                    "original_value": f"0x{int(orig_state.gpr[reg_idx]) & 0xFFFFFFFF:08x}",
+                    "candidate_value": f"0x{int(cand_state.gpr[reg_idx]) & 0xFFFFFFFF:08x}",
+                    "original_insn": f"{o_insn.opcode.value} {o_insn.operands}",
+                    "candidate_insn": f"{c_insn.opcode.value} {c_insn.operands}",
+                }
+        for reg_idx in range(32):
+            if orig_state.fpr[reg_idx] != cand_state.fpr[reg_idx]:
+                return {
+                    "instruction_index": i,
+                    "diverged_register": f"f{reg_idx}",
+                    "original_value": f"0x{int(orig_state.fpr[reg_idx]) & 0xFFFFFFFFFFFFFFFF:016x}",
+                    "candidate_value": f"0x{int(cand_state.fpr[reg_idx]) & 0xFFFFFFFFFFFFFFFF:016x}",
+                    "original_insn": f"{o_insn.opcode.value} {o_insn.operands}",
+                    "candidate_insn": f"{c_insn.opcode.value} {c_insn.operands}",
+                }
+    return None
+
+
+def _run_with_tactics(z3_module: Any, build_solver, timeout_ms: int) -> tuple[Any, Any, float, str]:
+    solver = build_solver()
+    solver.set(timeout=timeout_ms)
+    started = time.perf_counter()
+    try:
+        answer = solver.check()
+        elapsed = round((time.perf_counter() - started) * 1000, 3)
+
+        try:
+            tactic_solver = build_solver()
+            t = z3_module.Then("simplify", "bit-blast", "sat")
+            t_start = time.perf_counter()
+            try:
+                bit_solver = t(tactic_solver)
+                bit_answer = bit_solver.check()
+                if bit_answer == z3_module.sat or bit_answer == z3_module.unsat:
+                    return bit_solver, bit_answer, round((time.perf_counter() - t_start) * 1000, 3), "bit-blast"
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        return solver, answer, elapsed, "default"
+    except Exception:
+        elapsed = round((time.perf_counter() - started) * 1000, 3)
+        return solver, z3_module.unknown, elapsed, "default"
+
+
 def check_equivalence(
     original: list[Instruction],
     candidate: list[Instruction],
@@ -136,25 +302,45 @@ def check_equivalence(
     smt_output: str | None = None,
     max_instructions: int = 2048,
     max_paths: int = 256,
+    assumed_callees: frozenset[int] = frozenset(),
+    assumed_callees_used: set[int] | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
     initial = _symbolic_initial(ops)
-    original_exits = execute_cfg(initial, original, ops, max_instructions=max_instructions, max_paths=max_paths)
-    candidate_exits = execute_cfg(initial, candidate, ops, max_instructions=max_instructions, max_paths=max_paths)
+    callees_used: set[int] = set()
+    original_exits = execute_cfg(
+        initial, original, ops,
+        max_instructions=max_instructions, max_paths=max_paths,
+        assumed_callees=assumed_callees, assumed_callees_used=callees_used,
+    )
+    candidate_exits = execute_cfg(
+        initial, candidate, ops,
+        max_instructions=max_instructions, max_paths=max_paths,
+        assumed_callees=assumed_callees, assumed_callees_used=callees_used,
+    )
+    if assumed_callees_used is not None:
+        assumed_callees_used.update(callees_used)
+
     pair_differences = [
         _terminal_difference(left, right, contract, ops)
         for left in original_exits
         for right in candidate_exits
     ]
-    solver = z3.Solver()
-    solver.set(timeout=contract.timeout_ms)
-    solver.add(z3.Or(*pair_differences))
+
+    def _build_solver() -> Any:
+        s = z3.Solver()
+        s.add(z3.Or(*pair_differences))
+        return s
+
+    solver = _build_solver()
     if smt_output is not None:
         Path(smt_output).write_text(solver.to_smt2(), encoding="utf-8")
-    started = time.perf_counter()
-    answer = solver.check()
-    elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
+
+    winning_solver, answer, elapsed_ms, tactic = _run_with_tactics(
+        z3, _build_solver, contract.timeout_ms,
+    )
+
     result = ProofResult(
         status=ProofStatus.INCONCLUSIVE_UNKNOWN,
         contract=contract.name,
@@ -166,19 +352,21 @@ def check_equivalence(
             "name": "z3", "version": z3.get_version_string(), "result": str(answer),
             "elapsed_ms": elapsed_ms, "timeout_ms": contract.timeout_ms,
             "original_paths": len(original_exits), "candidate_paths": len(candidate_exits),
+            "tactic": tactic,
         },
+        assumed_callees=sorted(callees_used),
     )
     if answer == z3.unsat:
         result.status = ProofStatus.EQUIVALENT
         return result
     if answer == z3.unknown:
-        reason = solver.reason_unknown()
+        reason = winning_solver.reason_unknown()
         result.status = ProofStatus.INCONCLUSIVE_TIMEOUT if "timeout" in reason.lower() else ProofStatus.INCONCLUSIVE_UNKNOWN
         result.warnings.append(reason)
         return result
 
     result.status = ProofStatus.NOT_EQUIVALENT
-    model = solver.model()
+    model = winning_solver.model()
     selected: tuple[Terminal, Terminal] | None = None
     for left in original_exits:
         for right in candidate_exits:
@@ -237,6 +425,11 @@ def check_equivalence(
         "memory": _memory_entries(model, initial.memory, left_exit.state.memory_touches + right_exit.state.memory_touches, z3),
     }
     result.counterexample = {"initial_state": initial_state}
+
+    repair_hint = _instruction_level_diff(original, candidate, initial_state)
+    if repair_hint:
+        result.repair_hint = repair_hint
+
     result.replay = {
         "format": RESULT_FORMAT, "architecture": ARCHITECTURE_MODEL,
         "contract": contract.name, "contract_resolution": contract.resolution_dict(),

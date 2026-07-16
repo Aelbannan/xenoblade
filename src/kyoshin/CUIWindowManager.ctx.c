@@ -12276,6 +12276,11 @@ public:
     void Term();
     void Move();
 
+    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
+    bool hasOpenWindows() const {
+        return !mWindowList1.empty() || !mWindowList2.empty();
+    }
+
 private:
     //0x00-0x54 CTTask
     //0x54-0x58 cf::IFlagEvent

@@ -19,9 +19,11 @@ from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block
 from tools.ppc_equivalence.elf_symbols import (
     ElfSymbolError,
+    RelocationsPresent,
     extract_function,
     extract_function_pair,
     list_text_functions,
+    require_relocation_free,
 )
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.ir import ExecutionInconclusive, UnsupportedInstruction
@@ -452,6 +454,100 @@ class CoopDefaultContractTests(unittest.TestCase):
             decomp.write_bytes(relocated)
             unit = SimpleNamespace(target_path=retail, base_path=decomp)
             probe = prove_unit_symbol(None, unit, "f")  # type: ignore[arg-type]
+        self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertIn("unresolved ELF relocations", probe.detail)
+
+    def test_require_relocation_free_raises_relocations_present(self) -> None:
+        """The sentinel RelocationsPresent must be raised (not plain ElfSymbolError)."""
+        relocated = build_reloc_elf(
+            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            retail = Path(tmp) / "retail.o"
+            decomp = Path(tmp) / "decomp.o"
+            retail.write_bytes(relocated)
+            decomp.write_bytes(relocated)
+            left, right = extract_function_pair(retail, decomp, "f")
+            with self.assertRaises(RelocationsPresent) as ctx:
+                require_relocation_free(left, right)
+        self.assertIsInstance(ctx.exception, ElfSymbolError)
+        self.assertIn("unresolved ELF relocations", str(ctx.exception))
+
+    def test_linked_fallback_without_dol_returns_inconclusive(self) -> None:
+        """prove_unit_symbol(linked=True) must report missing main.dol/ELF cleanly."""
+        relocated = build_reloc_elf(
+            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            retail = root / "retail.o"
+            decomp = root / "decomp.o"
+            retail.write_bytes(relocated)
+            decomp.write_bytes(relocated)
+            unit = SimpleNamespace(target_path=retail, base_path=decomp)
+            project = SimpleNamespace(
+                config=SimpleNamespace(
+                    main_dol=root / "missing.dol",
+                    build_dir=root / "build",
+                    region="us",
+                ),
+                linked_elf_path=root / "missing.elf",
+                symbol_address=lambda _name: (0x80004000, 0x10),
+                root=root,
+            )
+            probe = prove_unit_symbol(project, unit, "f", linked=True)  # type: ignore[arg-type]
+        self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertIn("fell back to DOL/ELF linked bytes", probe.detail)
+        # Either the DOL or the ELF will be reported first depending on which
+        # exists — both are missing here, so the DOL wins (checked first).
+        self.assertIn("retail DOL missing", probe.detail)
+
+    def test_linked_fallback_without_symbol_entry_returns_inconclusive(self) -> None:
+        """When --linked is on but the symbol isn't in symbols.txt, stay inconclusive."""
+        relocated = build_reloc_elf(
+            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            retail = root / "retail.o"
+            decomp = root / "decomp.o"
+            retail.write_bytes(relocated)
+            decomp.write_bytes(relocated)
+            # An empty DOL is enough — the symbol_table miss fires first.
+            from tools.ppc_equivalence.tests.test_dol_symbols import _build_dol
+            dol_bytes = _build_dol([(0x80004000, 0x100, relocated[:0])])
+            dol_path = root / "main.dol"
+            elf_path = root / "main.elf"
+            dol_path.write_bytes(dol_bytes)
+            elf_path.write_bytes(relocated)  # not a real ELF; we never reach the ELF step
+            unit = SimpleNamespace(target_path=retail, base_path=decomp)
+            project = SimpleNamespace(
+                config=SimpleNamespace(
+                    main_dol=dol_path,
+                    build_dir=root,
+                    region="us",
+                ),
+                linked_elf_path=elf_path,
+                symbol_address=lambda _name: None,
+                root=root,
+            )
+            probe = prove_unit_symbol(project, unit, "f", linked=True)  # type: ignore[arg-type]
+        self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertIn("fell back to DOL/ELF linked bytes", probe.detail)
+        self.assertIn("not in config/us/symbols.txt", probe.detail)
+
+    def test_linked_false_keeps_today_inconclusive_on_relocs(self) -> None:
+        """Sanity: without --linked, today's INCONCLUSIVE_UNSUPPORTED behavior is preserved."""
+        relocated = build_reloc_elf(
+            {"f": _EQ_LEFT}, relocations=((0, "f", 10, 0),),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            retail = Path(tmp) / "retail.o"
+            decomp = Path(tmp) / "decomp.o"
+            retail.write_bytes(relocated)
+            decomp.write_bytes(relocated)
+            unit = SimpleNamespace(target_path=retail, base_path=decomp)
+            probe = prove_unit_symbol(None, unit, "f", linked=False)  # type: ignore[arg-type]
         self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
         self.assertIn("unresolved ELF relocations", probe.detail)
 

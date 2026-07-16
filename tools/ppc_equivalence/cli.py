@@ -184,6 +184,10 @@ def _run_check(
     requested_contract = args.contract
     if requested_contract is None and not args.observe:
         requested_contract = getattr(args, "default_contract", None)
+    timeout_ms = args.timeout_ms
+    if timeout_ms <= 0:
+        instr_count = max(len(original_code), len(candidate_code)) // 4
+        timeout_ms = max(5_000, min(120_000, instr_count * 20))
     try:
         original = decode_block(
             original_code,
@@ -201,7 +205,7 @@ def _run_check(
         contract = make_contract(
             preset=requested_contract,
             observe=args.observe,
-            timeout_ms=args.timeout_ms,
+            timeout_ms=timeout_ms,
             live_out=live_out,
             original_live_out=original_live_out,
             candidate_live_out=candidate_live_out,
@@ -319,9 +323,9 @@ def _add_check_options(
             "time_base, srr0, srr1, named SPRs, memory; comma-separated or repeated"
         ),
     )
-    parser.add_argument("--timeout-ms", type=int, default=10_000)
-    parser.add_argument("--max-instructions", type=int, default=512, help="per-path execution bound")
-    parser.add_argument("--max-paths", type=int, default=128, help="symbolic path bound")
+    parser.add_argument("--timeout-ms", type=int, default=0, help="solver timeout in ms (0 = auto-scale: 20ms/insn, floor 5s, ceiling 120s)")
+    parser.add_argument("--max-instructions", type=int, default=2048, help="per-path execution bound")
+    parser.add_argument("--max-paths", type=int, default=256, help="symbolic path bound")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--result", type=Path, help="write the complete JSON proof result")
     parser.add_argument("--replay-out", type=Path, help="write a replayable counterexample when inequivalent")

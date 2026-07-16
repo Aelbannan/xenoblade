@@ -134,8 +134,8 @@ def check_equivalence(
     original_hex: str,
     candidate_hex: str,
     smt_output: str | None = None,
-    max_instructions: int = 512,
-    max_paths: int = 128,
+    max_instructions: int = 2048,
+    max_paths: int = 256,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3

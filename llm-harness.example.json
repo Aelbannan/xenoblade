@@ -7,12 +7,22 @@
     "max_source_chars": 120000,
     "mwcc_knowledge_enabled": true,
     "mwcc_knowledge_limit": 8,
-    "mwcc_knowledge_body_chars": 5000
+    "mwcc_knowledge_body_chars": 5000,
+    "tu_context_chars": 300,
+    "tu_section_byte_limit": 16384
   },
   "providers": {
     "opencode": {
       "binary": "opencode",
       "timeout_seconds": 900
+    }
+  },
+  "execution": {
+    "max_parallel": 1,
+    "max_retries": 1,
+    "isolation": {
+      "mode": "none",
+      "copy_dirty": true
     }
   },
   "models": [

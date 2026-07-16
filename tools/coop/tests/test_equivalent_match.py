@@ -3,9 +3,20 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+from pathlib import Path
 
-from tools.coop.lib.equivalence_check import EQUIVALENT_MATCH_MIN_PERCENT, should_probe_equivalence
+from tools.coop.lib.config import CoopConfig
+from tools.coop.lib.equivalence_check import (
+    CertifiedCalleeContext,
+    EQUIVALENT_MATCH_MIN_PERCENT,
+    _prove_bytes,
+    should_probe_equivalence,
+)
 from tools.coop.lib.objdiff_report import UnitReport, classify_status, meets_required_level
+from tools.coop.lib.project import Project
+from tools.ppc_equivalence.elf_symbols import FunctionRelocation
+from tools.ppc_equivalence.ir import R_PPC_REL24
 from tools.ppc_equivalence.result import ProofStatus
 
 
@@ -145,6 +156,28 @@ class ProbeGateTests(unittest.TestCase):
         self.assertTrue(should_probe_equivalence(50.0))
         self.assertTrue(should_probe_equivalence(99.9))
         self.assertFalse(should_probe_equivalence(100.0))
+
+    def test_registry_proof_fails_closed_without_current_callee_certificate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Project(CoopConfig(project_root=Path(tmp), region="us"))
+            probe = _prove_bytes(
+                project,
+                "caller",
+                bytes.fromhex("48000001 4e800020"),
+                0,
+                bytes.fromhex("48000001 4e800020"),
+                0,
+                contract="auto",
+                timeout_ms=1000,
+                max_instructions=32,
+                max_paths=8,
+                original_relocations=(FunctionRelocation(0, R_PPC_REL24, "leaf", 0),),
+                candidate_relocations=(FunctionRelocation(0, R_PPC_REL24, "leaf", 0),),
+                certificate_target_id="caller-id",
+                certified_context=CertifiedCalleeContext({}, ()),
+            )
+        self.assertEqual(probe.status, ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE)
+        self.assertIn("leaf", probe.detail)
 
 
 if __name__ == "__main__":

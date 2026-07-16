@@ -111,6 +111,13 @@ addresses, not placeholder instruction fields. The current set is
 **`EQUIVALENT_MATCH`** (the fork’s default acceptance bar, alongside
 `FULL_MATCH`). Split-size fit remains mandatory.
 
+The solver also enforces the conditions needed for those symbolic values to be
+linkable: REL24/REL14 targets must be word-aligned and within the encoded signed
+range, and SDA21 must be within signed-16 reach of either the initial r2 or r13.
+An impossible set of bindings is `inconclusive_layout`, never a vacuous proof.
+`decoder.specialize_relocations` provides an independent concrete linker model
+used by boundary tests for HA carry, branch range/alignment, and SDA base choice.
+
 ### Linked-bytes fallback (`--linked`)
 
 Symbolic relocation checking is the default. Pass `--linked` to let `diff` /
@@ -150,9 +157,26 @@ relocation in the function.
 
 Direct relocated calls compose modularly. Each named callee is an explicit
 matched-callee premise, modeled as one deterministic opaque ABI transition,
-and execution continues through the remainder of the caller. Distinct callee
-symbols receive distinct transitions. Raw/linked calls without a registered
-callee lemma are inconclusive; result JSON records every premise actually used.
+and execution continues through the remainder of the caller. For same-object
+matched callees, standalone checks can derive read/write sets from both bodies.
+The target workflow is stricter: `cycle` issues a semantic certificate in
+`tools/coop/targets.json` only after both bodies validate against the summary
+and have only normal returns. The certificate binds the architecture/result
+model, function-local bytes and relocations, summary, and the hashes of every
+callee certificate. Before a caller consumes it, the workflow re-extracts and
+hashes both current object functions. A missing, malformed, stale, or
+transitively stale certificate returns `inconclusive_unvalidated_callee`.
+`harness --selection callees-accepted` uses this same certified frontier rather
+than match status alone. A contract that writes memory
+may modify any caller-frame byte reachable through an alias. Only a validated
+memory-free contract preserves the input memory array unchanged. Distinct
+callee symbols receive distinct transitions.
+Raw/linked calls without a registered callee lemma are inconclusive; result JSON
+records every premise actually used, including the contract source and complete
+validated/fallback read/write sets. An UNSAT result through these summaries is
+still a valid compositional proof, but a SAT model involving one is
+`inconclusive_abstraction` rather than `not_equivalent` because an opaque
+function may choose behavior that the real matched callee cannot.
 
 ## Contract and exit codes
 
@@ -168,6 +192,14 @@ choice.
 | `ppc-eabi-fp` | `ppc-eabi` plus FPSCR, available as an explicit fixed alternative to `auto` |
 | `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, every modeled auxiliary SPR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
+
+Final-memory comparison excludes function-private stack bytes in the unsigned
+interval from each implementation's lowest observed r1 up to entry r1. This
+mask is disabled after a call or when an r1-derived value is stored to memory,
+because the frame may then be reachable through an alias. Stores outside the
+interval always remain observable. The proof additionally requires a
+well-formed, non-wrapping downward stack; impossible stack/link layouts are
+reported as `inconclusive_layout`.
 
 `auto` is the default completed-function contract. It resolves from the union
 of both decoded implementations' write effects, so a state component cannot

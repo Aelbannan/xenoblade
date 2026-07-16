@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,7 @@ from .ir import Instruction, Opcode
 from .model import ConcreteMemory, MachineState, XerState, concrete_state
 from .result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofResult, ProofStatus
 from .semantics import (
+    CalleeContract,
     ConcreteOps,
     SymbolicOps,
     Terminal,
@@ -24,7 +26,7 @@ from .spr import AUX_SPR_OBSERVABLES
 
 def _symbolic_initial(ops: SymbolicOps) -> MachineState:
     z3 = ops.z3
-    return MachineState(
+    state = MachineState(
         tuple(z3.BitVec(f"input.gpr.r{i}", 32) for i in range(32)),
         tuple(z3.BitVec(f"input.fpr.f{i}", 64) for i in range(32)),
         tuple(z3.BitVec(f"input.ps1.f{i}", 64) for i in range(32)),
@@ -42,6 +44,177 @@ def _symbolic_initial(ops: SymbolicOps) -> MachineState:
         tuple(z3.BitVec(f"input.spr.{name}", 32) for name in AUX_SPR_OBSERVABLES),
         z3.Array("input.memory", z3.BitVecSort(32), z3.BitVecSort(8)),
         z3.BoolVal(True),
+    )
+    return replace(
+        state, stack_low=state.gpr[1], stack_layout_valid=ops.bool(True),
+        stack_private=ops.bool(True),
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class CalleeContractValidation:
+    valid: bool
+    required_reads: frozenset[str]
+    required_writes: frozenset[str]
+    missing_reads: frozenset[str]
+    missing_writes: frozenset[str]
+    reason: str = ""
+
+
+def _contract_components(state: MachineState, z3: Any) -> dict[str, Any]:
+    components: dict[str, Any] = {
+        **{f"r{i}": state.gpr[i] for i in range(32)},
+        **{f"f{i}": state.fpr[i] for i in range(32)},
+        **{f"f{i}.ps1": state.ps1[i] for i in range(32)},
+        **{f"gqr{i}": state.gqr[i] for i in range(8)},
+        **{f"sr{i}": state.sr[i] for i in range(16)},
+        **{name: state.spr[index] for index, name in enumerate(AUX_SPR_OBSERVABLES)},
+        "xer.ca": state.xer.ca,
+        "xer.ov": state.xer.ov,
+        "xer.so": state.xer.so,
+        "fpscr": state.fpscr,
+        "lr": state.lr,
+        "ctr": state.ctr,
+        "msr": state.msr,
+        "time_base": state.time_base,
+        "srr0": state.srr0,
+        "srr1": state.srr1,
+        "memory": state.memory,
+        "valid": state.valid,
+    }
+    for field in range(8):
+        shift = (7 - field) * 4
+        components[f"cr{field}"] = z3.Extract(shift + 3, shift, state.cr)
+    return components
+
+
+def _contract_covers(required: str, declared: frozenset[str]) -> bool:
+    if "*" in declared or required in declared:
+        return True
+    return required.startswith("cr") and "cr" in declared
+
+
+def validate_callee_contract(
+    instructions: list[Instruction],
+    contract: CalleeContract,
+    *,
+    max_instructions: int = 2048,
+    max_paths: int = 256,
+    assumed_callees: frozenset[int | str] = frozenset(),
+    callee_contracts: dict[int | str, CalleeContract] | None = None,
+    require_normal_return: bool = False,
+) -> CalleeContractValidation:
+    """Check a declared dependency/effect contract against symbolic semantics.
+
+    This validation is intentionally conservative: syntactic dependencies in
+    the semantic expressions count as reads even when later simplification
+    could prove them irrelevant.
+    """
+    ops = SymbolicOps()
+    z3 = ops.z3
+    initial = replace(_symbolic_initial(ops), valid=z3.Bool("input.valid"))
+    try:
+        terminals = execute_cfg(
+            initial, instructions, ops,
+            max_instructions=max_instructions, max_paths=max_paths,
+            assumed_callees=assumed_callees,
+            callee_contracts=callee_contracts,
+        )
+    except Exception as exc:
+        return CalleeContractValidation(
+            False, frozenset(), frozenset(), frozenset(), frozenset(),
+            f"semantic validation unavailable: {exc}",
+        )
+
+    if require_normal_return:
+        abnormal: set[str] = set()
+        for terminal in terminals:
+            if terminal.exit_kind == "return":
+                continue
+            feasibility = z3.Solver()
+            feasibility.add(terminal.condition)
+            if terminal.state.stack_layout_valid is not None:
+                feasibility.add(terminal.state.stack_layout_valid)
+            if feasibility.check() == z3.sat:
+                abnormal.add(terminal.exit_kind)
+        abnormal = sorted(abnormal)
+        if abnormal:
+            return CalleeContractValidation(
+                False, frozenset(), frozenset(), frozenset(), frozenset(),
+                "callee does not have only normal returns: " + ", ".join(abnormal),
+            )
+
+    initial_components = _contract_components(initial, z3)
+    input_names = {
+        **{f"input.gpr.r{i}": f"r{i}" for i in range(32)},
+        **{f"input.fpr.f{i}": f"f{i}" for i in range(32)},
+        **{f"input.ps1.f{i}": f"f{i}.ps1" for i in range(32)},
+        **{f"input.gqr.gqr{i}": f"gqr{i}" for i in range(8)},
+        **{f"input.sr.sr{i}": f"sr{i}" for i in range(16)},
+        **{f"input.spr.{name}": name for name in AUX_SPR_OBSERVABLES},
+        "input.cr": "cr",
+        "input.xer.ca": "xer.ca",
+        "input.xer.ov": "xer.ov",
+        "input.xer.so": "xer.so",
+        "input.fpscr": "fpscr",
+        "input.lr": "lr",
+        "input.ctr": "ctr",
+        "input.msr": "msr",
+        "input.time_base": "time_base",
+        "input.srr0": "srr0",
+        "input.srr1": "srr1",
+        "input.memory": "memory",
+        "input.valid": "valid",
+    }
+    required_writes: set[str] = set()
+    dependency_expressions: list[Any] = []
+    for terminal in terminals:
+        dependency_expressions.append(terminal.condition)
+        if terminal.exit_kind not in ("return", "fallthrough") and terminal.exit_target is not None:
+            dependency_expressions.append(terminal.exit_target)
+        final_components = _contract_components(terminal.state, z3)
+        for name, initial_value in initial_components.items():
+            final_value = final_components[name]
+            changed = not z3.eq(final_value, initial_value)
+            if name == "memory" and changed:
+                memory_solver = z3.Solver()
+                memory_solver.add(
+                    terminal.condition,
+                    terminal.state.stack_layout_valid,
+                    _memory_difference(terminal.state, initial, initial, ops),
+                )
+                changed = memory_solver.check() != z3.unsat
+            elif changed:
+                value_solver = z3.Solver()
+                value_solver.add(
+                    terminal.condition,
+                    terminal.state.stack_layout_valid,
+                    final_value != initial_value,
+                )
+                changed = value_solver.check() != z3.unsat
+            if changed:
+                required_writes.add(name)
+                dependency_expressions.append(final_value)
+
+    required_reads: set[str] = set()
+    for expression in dependency_expressions:
+        for variable in z3.z3util.get_vars(expression):
+            component = input_names.get(str(variable.decl().name()))
+            if component is not None:
+                required_reads.add(component)
+
+    missing_reads = frozenset(
+        name for name in required_reads if not _contract_covers(name, contract.reads)
+    )
+    missing_writes = frozenset(
+        name for name in required_writes if not _contract_covers(name, contract.writes)
+    )
+    return CalleeContractValidation(
+        not missing_reads and not missing_writes,
+        frozenset(required_reads),
+        frozenset(required_writes),
+        missing_reads,
+        missing_writes,
     )
 
 
@@ -112,7 +285,61 @@ def _observable_concrete(state: MachineState, observable: Observable) -> object:
     raise AssertionError(f"unknown observable kind: {observable.kind}")
 
 
-def _terminal_difference(left: Terminal, right: Terminal, contract: EquivalenceContract, ops: SymbolicOps) -> Any:
+def _private_stack_address(
+    address: Any, stack_low: Any | None, entry_sp: Any, stack_private: Any | None,
+    ops: SymbolicOps,
+) -> Any:
+    if stack_low is None or stack_private is None:
+        return ops.z3.BoolVal(False)
+    z3 = ops.z3
+    return z3.And(
+        z3.ULE(stack_low, entry_sp),
+        z3.UGE(address, stack_low),
+        z3.ULT(address, entry_sp),
+        stack_private,
+    )
+
+
+def _memory_difference(
+    left: MachineState, right: MachineState, initial: MachineState,
+    ops: SymbolicOps,
+) -> Any:
+    """Compare memory outside either implementation's private stack frame."""
+    z3 = ops.z3
+    differences: list[Any] = []
+    for address in left.memory_touches + right.memory_touches:
+        initial_byte = z3.Select(initial.memory, address)
+        private = z3.Or(
+            _private_stack_address(
+                address, left.stack_low, initial.gpr[1], left.stack_private, ops,
+            ),
+            _private_stack_address(
+                address, right.stack_low, initial.gpr[1], right.stack_private, ops,
+            ),
+        )
+        left_byte = z3.If(private, initial_byte, z3.Select(left.memory, address))
+        right_byte = z3.If(private, initial_byte, z3.Select(right.memory, address))
+        differences.append(left_byte != right_byte)
+    if len(left.memory_effects) != len(right.memory_effects):
+        differences.append(z3.BoolVal(True))
+    else:
+        differences.extend(a != b for a, b in zip(left.memory_effects, right.memory_effects))
+    return z3.Or(*differences) if differences else z3.BoolVal(False)
+
+
+def _observable_difference(
+    left: MachineState, right: MachineState, observable: Observable,
+    initial: MachineState, ops: SymbolicOps,
+) -> Any:
+    if observable.kind == "memory":
+        return _memory_difference(left, right, initial, ops)
+    return _observable_value(left, observable, ops) != _observable_value(right, observable, ops)
+
+
+def _terminal_difference(
+    left: Terminal, right: Terminal, contract: EquivalenceContract,
+    initial: MachineState, ops: SymbolicOps,
+) -> Any:
     z3 = ops.z3
     kind_difference = z3.BoolVal(left.exit_kind != right.exit_kind)
     target_difference = z3.BoolVal(False)
@@ -122,7 +349,7 @@ def _terminal_difference(left: Terminal, right: Terminal, contract: EquivalenceC
         else:
             target_difference = left.exit_target != right.exit_target
     values = [
-        _observable_value(left.state, item, ops) != _observable_value(right.state, item, ops)
+        _observable_difference(left.state, right.state, item, initial, ops)
         for item in contract.observables
     ]
     valid_difference = left.state.valid != right.state.valid
@@ -304,6 +531,8 @@ def check_equivalence(
     max_paths: int = 256,
     assumed_callees: frozenset[int | str] = frozenset(),
     assumed_callees_used: set[int | str] | None = None,
+    callee_contracts: dict[int | str, CalleeContract] | None = None,
+    relocation_bindings: dict[str, int] | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -313,23 +542,36 @@ def check_equivalence(
         initial, original, ops,
         max_instructions=max_instructions, max_paths=max_paths,
         assumed_callees=assumed_callees, assumed_callees_used=callees_used,
+        callee_contracts=callee_contracts,
     )
     candidate_exits = execute_cfg(
         initial, candidate, ops,
         max_instructions=max_instructions, max_paths=max_paths,
         assumed_callees=assumed_callees, assumed_callees_used=callees_used,
+        callee_contracts=callee_contracts,
     )
     if assumed_callees_used is not None:
         assumed_callees_used.update(callees_used)
 
     pair_differences = [
-        _terminal_difference(left, right, contract, ops)
+        _terminal_difference(left, right, contract, initial, ops)
         for left in original_exits
         for right in candidate_exits
     ]
+    layout_constraints = ops.layout_constraints(initial)
+    for terminal in original_exits + candidate_exits:
+        if terminal.state.stack_layout_valid is not None:
+            layout_constraints.append(z3.Implies(
+                terminal.condition, terminal.state.stack_layout_valid,
+            ))
+    for name, value in (relocation_bindings or {}).items():
+        if name not in ops.relocation_values:
+            raise ValueError(f"relocation binding names unused symbol {name!r}")
+        layout_constraints.append(ops.relocation_values[name] == ops.const(value))
 
     def _build_solver() -> Any:
         s = z3.Solver()
+        s.add(*layout_constraints)
         s.add(z3.Or(*pair_differences))
         return s
 
@@ -355,7 +597,33 @@ def check_equivalence(
             "tactic": tactic,
         },
         assumed_callees=sorted(callees_used, key=str),
+        callee_contracts={
+            str(callee): {
+                "source": (callee_contracts or {}).get(
+                    callee, CalleeContract.opaque_eabi(),
+                ).source,
+                "reads": sorted((callee_contracts or {}).get(
+                    callee, CalleeContract.opaque_eabi(),
+                ).reads),
+                "writes": sorted((callee_contracts or {}).get(
+                    callee, CalleeContract.opaque_eabi(),
+                ).writes),
+            }
+            for callee in sorted(callees_used, key=str)
+        },
     )
+    feasibility = z3.Solver()
+    feasibility.set(timeout=contract.timeout_ms)
+    feasibility.add(*layout_constraints)
+    feasibility_answer = feasibility.check()
+    if feasibility_answer != z3.sat:
+        result.status = ProofStatus.INCONCLUSIVE_LAYOUT
+        result.abstractions.append("linker-layout-feasibility")
+        result.warnings.append(
+            "no feasible linker layout satisfies the relocation field ranges"
+            if feasibility_answer == z3.unsat else feasibility.reason_unknown()
+        )
+        return result
     if answer == z3.unsat:
         result.status = ProofStatus.EQUIVALENT
         return result
@@ -365,12 +633,29 @@ def check_equivalence(
         result.warnings.append(reason)
         return result
 
-    result.status = ProofStatus.NOT_EQUIVALENT
+    if callees_used:
+        result.status = ProofStatus.INCONCLUSIVE_ABSTRACTION
+        result.abstractions = [
+            f"opaque_callee:{callee}:"
+            f"{(callee_contracts or {}).get(callee, CalleeContract.opaque_eabi()).source}"
+            for callee in sorted(callees_used, key=str)
+        ]
+        result.counterexample_kind = "abstract"
+        result.warnings.append(
+            "the solver found a difference only in the opaque matched-callee model; "
+            "this is not a concrete inequivalence witness"
+        )
+    else:
+        result.status = ProofStatus.NOT_EQUIVALENT
+        result.counterexample_kind = "concrete"
     model = winning_solver.model()
     selected: tuple[Terminal, Terminal] | None = None
     for left in original_exits:
         for right in candidate_exits:
-            if z3.is_true(model.eval(_terminal_difference(left, right, contract, ops), model_completion=True)):
+            if z3.is_true(model.eval(
+                _terminal_difference(left, right, contract, initial, ops),
+                model_completion=True,
+            )):
                 selected = (left, right)
                 break
         if selected:
@@ -388,7 +673,10 @@ def check_equivalence(
         for observable in contract.observables:
             left = _observable_value(left_exit.state, observable, ops)
             right = _observable_value(right_exit.state, observable, ops)
-            if z3.is_true(model.eval(left != right, model_completion=True)):
+            difference = _observable_difference(
+                left_exit.state, right_exit.state, observable, initial, ops,
+            )
+            if z3.is_true(model.eval(difference, model_completion=True)):
                 mismatch_observable = observable
                 if observable.kind == "xer":
                     left_value: object = _bool_value(model, left, z3)

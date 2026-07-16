@@ -90,12 +90,16 @@ def parse_opencode_output(stdout: str) -> tuple[str, list[Dict[str, Any]], Dict[
 
     chunks: list[str] = []
     usage: Dict[str, Any] = {}
+    step_usage: list[Dict[str, Any]] = []
     for event in events:
         for value in _walk(event):
             if isinstance(value, dict):
                 candidate_usage = value.get("usage")
                 if isinstance(candidate_usage, dict):
                     usage = _normalise_usage(candidate_usage, value)
+                candidate_tokens = value.get("tokens")
+                if isinstance(candidate_tokens, dict):
+                    step_usage.append(_normalise_usage(candidate_tokens, value))
         part = event.get("part")
         if isinstance(part, dict) and part.get("type") in {"text", "output_text"}:
             if isinstance(part.get("text"), str):
@@ -103,6 +107,8 @@ def parse_opencode_output(stdout: str) -> tuple[str, list[Dict[str, Any]], Dict[
         elif event.get("type") in {"text", "output_text"} and isinstance(event.get("text"), str):
             chunks.append(event["text"])
 
+    if step_usage:
+        usage = _sum_usage(step_usage)
     if chunks:
         return "".join(chunks).strip(), events, usage
     # Some versions emit a single JSON response object rather than text events.
@@ -128,6 +134,14 @@ def _normalise_usage(usage: Dict[str, Any], parent: Dict[str, Any]) -> Dict[str,
         "input": usage.get("input") or usage.get("input_tokens") or usage.get("promptTokens"),
         "output": usage.get("output") or usage.get("output_tokens") or usage.get("completionTokens"),
         "cost": usage.get("cost") or parent.get("cost"),
+    }
+
+
+def _sum_usage(rows: list[Dict[str, Any]]) -> Dict[str, Any]:
+    return {
+        "input": sum(int(row.get("input") or 0) for row in rows),
+        "output": sum(int(row.get("output") or 0) for row in rows),
+        "cost": sum(float(row.get("cost") or 0) for row in rows),
     }
 
 

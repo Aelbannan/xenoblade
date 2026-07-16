@@ -7,12 +7,35 @@ from pathlib import Path
 
 from tools.coop.lib.config import CoopConfig
 from tools.coop.lib.targets import (
+    Target,
     claim_target,
+    harness_targets,
     import_symbols,
     load_split_ranges,
+    parse_asm_calls,
     release_target,
     validate_targets,
+    equivalence_certificate_hash,
 )
+from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
+
+
+def _certificate(target_id: str, callees: list[dict[str, str]] | None = None) -> dict:
+    certificate = {
+        "version": 1,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
+        "target_id": target_id,
+        "evidence": "symbolic-equivalence",
+        "retail_sha256": "1" * 64,
+        "candidate_sha256": "2" * 64,
+        "summary": {"reads": ["r3"], "writes": ["r3"], "return_behavior": "normal"},
+        "callees": callees or [],
+        "helpers": [],
+    }
+    certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
+    return certificate
 
 
 class _Unit:
@@ -131,6 +154,103 @@ class TargetRegistryTests(unittest.TestCase):
             claim_target(self.config, "a", owner="two", allowed_paths=[])
         release_target(self.config, "a", owner="one")
         claim_target(self.config, "a", owner="two", allowed_paths=[])
+
+    def test_parse_calls_resolves_direct_destination_and_marks_indirect(self) -> None:
+        asm = self.root / "calls.s"
+        asm.write_text(
+            ".fn caller, global\n"
+            "/* 80001000 00000000  48 00 00 09 */\tbl callee\n"
+            "/* 80001004 00000004  4E 80 04 21 */\tbctrl\n"
+            ".endfn caller\n",
+            encoding="utf-8",
+        )
+        parsed = parse_asm_calls(asm)
+        self.assertEqual(parsed[0].address, 0x80001000)
+        self.assertEqual(parsed[0].direct, [("callee", 0x80001008)])
+        self.assertTrue(parsed[0].has_indirect)
+
+    def test_harness_bottom_up_selections(self) -> None:
+        def target(target_id: str, status: str, **extra) -> Target:
+            return Target(
+                id=target_id,
+                tier="P9",
+                milestone="unassigned",
+                function=target_id,
+                symbol=target_id,
+                address="0x1",
+                source=self.root / "src/foo/Bar.cpp",
+                unit="foo/Bar",
+                required_level="EQUIVALENT_MATCH",
+                status=status,
+                extra=extra,
+            )
+
+        accepted = target(
+            "accepted", "EQUIVALENT_MATCH", callgraph_status="complete",
+            equivalence_certificate=_certificate("accepted"),
+        )
+        leaf = target("leaf", "NOT_STARTED", callgraph_status="complete", called_functions=[])
+        ready = target(
+            "ready",
+            "NOT_STARTED",
+            callgraph_status="complete",
+            called_functions=["accepted"],
+        )
+        blocked = target(
+            "blocked",
+            "NOT_STARTED",
+            callgraph_status="complete",
+            called_functions=["leaf"],
+        )
+        indirect = target(
+            "indirect",
+            "NOT_STARTED",
+            callgraph_status="complete",
+            called_functions=[],
+            has_indirect_calls=True,
+        )
+        unresolved = target(
+            "unresolved",
+            "NOT_STARTED",
+            callgraph_status="complete",
+            called_functions=[],
+            unresolved_called_functions=["unknown"],
+        )
+        rows = [accepted, leaf, ready, blocked, indirect, unresolved]
+        self.assertEqual(
+            [item.id for item in harness_targets(rows, selection="leaf")], ["leaf"]
+        )
+        self.assertEqual(
+            [item.id for item in harness_targets(rows, selection="callees-accepted")],
+            ["ready"],
+        )
+        self.assertEqual(
+            [item.id for item in harness_targets(rows, selection="ready")],
+            ["leaf", "ready"],
+        )
+
+    def test_validation_rejects_stale_certificate_dependency(self) -> None:
+        callee = {
+            "id": "callee", "symbol": "callee", "address": "0x1",
+            "equivalence_certificate": _certificate("callee"),
+        }
+        caller_certificate = _certificate("caller", [{
+            "target_id": "callee",
+            "certificate_sha256": "f" * 64,
+        }])
+        rows = [
+            callee,
+            {
+                "id": "caller", "symbol": "caller", "address": "0x2",
+                "called_functions": ["callee"],
+                "equivalence_certificate": caller_certificate,
+            },
+        ]
+        (self.root / "tools/coop/targets.json").write_text(
+            json.dumps({"schema_version": 2, "targets": rows}), encoding="utf-8",
+        )
+        errors = validate_targets(self.config)
+        self.assertTrue(any("callee certificate changed" in error for error in errors))
 
 
 if __name__ == "__main__":

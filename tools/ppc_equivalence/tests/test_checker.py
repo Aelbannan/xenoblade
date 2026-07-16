@@ -2526,6 +2526,8 @@ class CheckerOutcomeMatrixTests(unittest.TestCase):
         self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_TIMEOUT), 2)
         self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_UNKNOWN), 2)
         self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_UNSUPPORTED), 2)
+        self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_ABSTRACTION), 2)
+        self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_LAYOUT), 2)
         self.assertEqual(_exit_for_status(ProofStatus.INVALID_INPUT), 3)
         self.assertEqual(_exit_for_status(ProofStatus.INTERNAL_ERROR), 4)
 

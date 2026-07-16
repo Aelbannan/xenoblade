@@ -10,6 +10,18 @@
     "targets": {
       "type": "array",
       "items": { "$ref": "#/$defs/target" }
+    },
+    "callgraph": {
+      "type": "object",
+      "required": ["region", "source", "format"],
+      "properties": {
+        "region": { "type": "string" },
+        "source": { "type": "string" },
+        "format": { "const": 1 },
+        "direct_calls": { "type": "string" },
+        "indirect_calls_are_unresolved": { "type": "boolean" }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true,
@@ -80,8 +92,27 @@
           "type": "array",
           "items": { "type": ["string", "object"] }
         },
+        "equivalence_certificate": { "$ref": "#/$defs/equivalence_certificate" },
         "notes": { "type": "string" },
         "origin": { "type": "string" },
+        "called_functions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "unresolved_called_functions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "abi_helper_calls": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "has_indirect_calls": { "type": "boolean" },
+        "callgraph_status": { "enum": ["complete"] },
+        "callgraph_source": { "type": "string" },
         "claim": {
           "type": "object",
           "required": ["owner", "claimed_at", "allowed_paths"],
@@ -98,6 +129,53 @@
         }
       },
       "additionalProperties": true
+    },
+    "equivalence_certificate": {
+      "type": "object",
+      "required": [
+        "version", "status", "architecture", "result_format", "target_id",
+        "evidence", "retail_sha256", "candidate_sha256", "summary", "callees", "helpers",
+        "certificate_sha256"
+      ],
+      "properties": {
+        "version": { "const": 1 },
+        "status": { "const": "SEMANTIC_CERTIFIED" },
+        "architecture": { "type": "string" },
+        "result_format": { "type": "integer" },
+        "target_id": { "type": "string", "minLength": 1 },
+        "evidence": { "enum": ["symbolic-equivalence", "full-instruction-match"] },
+        "retail_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "candidate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "summary": {
+          "type": "object",
+          "required": ["reads", "writes", "return_behavior"],
+          "properties": {
+            "reads": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "writes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "return_behavior": { "const": "normal" }
+          },
+          "additionalProperties": false
+        },
+        "callees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["target_id", "certificate_sha256"],
+            "properties": {
+              "target_id": { "type": "string" },
+              "certificate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "helpers": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^_(save|rest)(gpr|fpr)_[0-9]+$" },
+          "uniqueItems": true
+        },
+        "certificate_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
     }
   }
 }

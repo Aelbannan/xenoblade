@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -10,6 +11,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from tools.coop.lib.config import CoopConfig, _load_yaml
 from tools.symbolrecover.lib.mwcc import demangle_symbol
 from tools.symbolrecover.lib.parser import SymbolEntry, load_symbols
+from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
 
 MATCH_STATUSES = {
@@ -33,6 +35,92 @@ WORKFLOW_STATUSES = {
     "BLOCKED",
     "NOT_REQUIRED",
 }
+
+ACCEPTED_MATCH_STATUSES = {"EQUIVALENT_MATCH", "FULL_MATCH"}
+EQUIVALENCE_CERTIFICATE_VERSION = 1
+
+
+def equivalence_certificate_hash(certificate: Dict[str, Any]) -> str:
+    """Hash a certificate's signed payload (everything except its own hash)."""
+    payload = {key: value for key, value in certificate.items() if key != "certificate_sha256"}
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def equivalence_certificate_error(
+    row: Dict[str, Any],
+    rows_by_id: Dict[str, Dict[str, Any]],
+    *,
+    _checking: Optional[set[str]] = None,
+) -> Optional[str]:
+    """Return why a registry certificate cannot be trusted, or ``None``."""
+    certificate = row.get("equivalence_certificate")
+    if not isinstance(certificate, dict):
+        return "missing equivalence_certificate"
+    required = {
+        "version", "status", "architecture", "result_format", "target_id",
+        "retail_sha256", "candidate_sha256", "summary", "callees",
+        "helpers", "certificate_sha256",
+    }
+    missing = sorted(required - certificate.keys())
+    if missing:
+        return "certificate missing " + ", ".join(missing)
+    if certificate.get("version") != EQUIVALENCE_CERTIFICATE_VERSION:
+        return f"certificate version is not {EQUIVALENCE_CERTIFICATE_VERSION}"
+    if certificate.get("status") != "SEMANTIC_CERTIFIED":
+        return "certificate status is not SEMANTIC_CERTIFIED"
+    if certificate.get("architecture") != ARCHITECTURE_MODEL:
+        return f"certificate architecture is not {ARCHITECTURE_MODEL}"
+    if certificate.get("result_format") != RESULT_FORMAT:
+        return f"certificate result_format is not {RESULT_FORMAT}"
+    if certificate.get("target_id") != row.get("id"):
+        return "certificate target_id does not match target"
+    if certificate.get("evidence") not in {"symbolic-equivalence", "full-instruction-match"}:
+        return "certificate evidence is not recognized"
+    for name in ("retail_sha256", "candidate_sha256", "certificate_sha256"):
+        value = certificate.get(name)
+        if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+            return f"certificate {name} is not a lowercase SHA-256"
+    summary = certificate.get("summary")
+    if not isinstance(summary, dict):
+        return "certificate summary is not an object"
+    for name in ("reads", "writes"):
+        value = summary.get(name)
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            return f"certificate summary.{name} is not a string array"
+    if summary.get("return_behavior") != "normal":
+        return "certificate does not guarantee normal return"
+    if certificate.get("certificate_sha256") != equivalence_certificate_hash(certificate):
+        return "certificate_sha256 does not match certificate payload"
+
+    dependencies = certificate.get("callees")
+    if not isinstance(dependencies, list):
+        return "certificate callees is not an array"
+    helpers = certificate.get("helpers")
+    if not isinstance(helpers, list) or not all(isinstance(item, str) for item in helpers):
+        return "certificate helpers is not a string array"
+    target_id = str(row.get("id", ""))
+    checking = set(_checking or ())
+    if target_id in checking:
+        return "certificate dependency cycle"
+    checking.add(target_id)
+    for dependency in dependencies:
+        if not isinstance(dependency, dict):
+            return "certificate callee entry is not an object"
+        callee_id = dependency.get("target_id")
+        expected_hash = dependency.get("certificate_sha256")
+        if not isinstance(callee_id, str) or not isinstance(expected_hash, str):
+            return "certificate callee entry needs target_id and certificate_sha256"
+        callee = rows_by_id.get(callee_id)
+        if callee is None:
+            return f"certificate refers to unknown callee {callee_id!r}"
+        actual = callee.get("equivalence_certificate")
+        if not isinstance(actual, dict) or actual.get("certificate_sha256") != expected_hash:
+            return f"callee certificate changed for {callee_id!r}"
+        error = equivalence_certificate_error(callee, rows_by_id, _checking=checking)
+        if error:
+            return f"callee {callee_id!r}: {error}"
+    return None
 
 
 @dataclass
@@ -87,6 +175,8 @@ def update_target_result(
     status: str,
     instruction_match: Optional[float],
     equivalence_status: Optional[str] = None,
+    equivalence_certificate: Optional[Dict[str, Any]] = None,
+    certificate_checked: bool = False,
 ) -> Path:
     """Persist the latest result so the registry remains current state."""
     data = load_targets_document(config)
@@ -98,6 +188,11 @@ def update_target_result(
             row["instruction_match"] = round(float(instruction_match), 3)
         if equivalence_status:
             row["equivalence_status"] = equivalence_status
+        if certificate_checked:
+            if equivalence_certificate is None:
+                row.pop("equivalence_certificate", None)
+            else:
+                row["equivalence_certificate"] = equivalence_certificate
         if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
             row["workflow_status"] = "ACCEPTED"
         elif row.get("workflow_status") in {None, "BACKLOG", "QUEUED", "CLAIMED"}:
@@ -255,6 +350,68 @@ def pending_targets(targets: List[Target], tier: Optional[str] = None) -> List[T
     return result
 
 
+def harness_targets(
+    targets: List[Target],
+    *,
+    selection: str,
+    tier: Optional[str] = None,
+    include_catalog: bool = False,
+) -> List[Target]:
+    """Select a safe bottom-up call-graph frontier for the cycle harness."""
+    rows_by_id = {
+        target.id: {"id": target.id, **target.extra} for target in targets
+    }
+    certified_ids = {
+        target.id
+        for target in targets
+        if target.status in ACCEPTED_MATCH_STATUSES
+        and equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None
+    }
+    candidates = [
+        target
+        for target in targets
+        if target.buildable
+        and target.status not in ACCEPTED_MATCH_STATUSES
+        and target.workflow_status not in {"ACCEPTED", "NOT_REQUIRED", "BLOCKED"}
+        and (include_catalog or target.extra.get("origin") != "symbols.txt")
+    ]
+    if tier:
+        candidates = [target for target in candidates if target.tier == tier]
+
+    def is_leaf(target: Target) -> bool:
+        return (
+            target.extra.get("callgraph_status") == "complete"
+            and not target.extra.get("called_functions", [])
+            and not target.extra.get("unresolved_called_functions", [])
+            and not target.extra.get("has_indirect_calls", False)
+        )
+
+    def has_accepted_callees(target: Target) -> bool:
+        called = target.extra.get("called_functions", [])
+        return (
+            target.extra.get("callgraph_status") == "complete"
+            and bool(called)
+            and not target.extra.get("unresolved_called_functions", [])
+            and not target.extra.get("has_indirect_calls", False)
+            and all(target_id in certified_ids for target_id in called)
+        )
+
+    if selection == "leaf":
+        candidates = [target for target in candidates if is_leaf(target)]
+    elif selection == "callees-accepted":
+        candidates = [target for target in candidates if has_accepted_callees(target)]
+    elif selection == "ready":
+        candidates = [
+            target for target in candidates if is_leaf(target) or has_accepted_callees(target)
+        ]
+    elif selection != "pending":
+        raise ValueError(f"Unknown harness selection: {selection}")
+
+    tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P9": 9}
+    candidates.sort(key=lambda target: (tier_order.get(target.tier, 99), target.id))
+    return candidates
+
+
 def validate_targets(config: CoopConfig) -> List[str]:
     data = load_targets_document(config)
     errors: List[str] = []
@@ -295,6 +452,25 @@ def validate_targets(config: CoopConfig) -> List[str]:
         workflow = row.get("workflow_status", row.get("tracking", "BACKLOG"))
         if workflow not in WORKFLOW_STATUSES:
             errors.append(f"{label} has unknown workflow_status {workflow!r}")
+    known_ids = set(ids)
+    rows_by_id = {
+        str(row.get("id")): row for row in rows
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            continue
+        called = row.get("called_functions", [])
+        if not isinstance(called, list) or not all(isinstance(value, str) for value in called):
+            errors.append(f"targets[{index}].called_functions must be an array of target IDs")
+            continue
+        for called_id in called:
+            if called_id not in known_ids:
+                errors.append(f"targets[{index}] calls unknown target id {called_id!r}")
+        if "equivalence_certificate" in row:
+            error = equivalence_certificate_error(row, rows_by_id)
+            if error:
+                errors.append(f"targets[{index}].equivalence_certificate: {error}")
     return errors
 
 
@@ -439,3 +615,143 @@ def import_symbols(
         added += 1
     rows.sort(key=lambda row: (str(row.get("region", config.region)), str(row.get("address") or ""), row["id"]))
     return data, added, skipped
+
+
+@dataclass
+class FunctionCalls:
+    symbol: str
+    address: Optional[int]
+    direct: List[tuple[Optional[str], int]] = field(default_factory=list)
+    has_indirect: bool = False
+
+
+_ASM_FN_RE = re.compile(r'^\.fn\s+"?(?P<symbol>[^",\s]+)"?\s*,')
+_ASM_ENDFN_RE = re.compile(r"^\.endfn\b")
+_ABI_HELPER_RE = re.compile(r"^_(?:save|rest)(?:gpr|fpr)_\d+$")
+_ASM_INSN_RE = re.compile(
+    r"^/\*\s*(?P<address>[0-9A-Fa-f]{8})\s+[0-9A-Fa-f]{8}\s+"
+    r"(?P<bytes>(?:[0-9A-Fa-f]{2}\s+){3}[0-9A-Fa-f]{2})\s*\*/\s*"
+    r"(?P<mnemonic>\S+)(?:\s+(?P<operand>\S+))?"
+)
+
+
+def _branch_destination(address: int, word: int) -> int:
+    displacement = word & 0x03FFFFFC
+    if displacement & 0x02000000:
+        displacement -= 0x04000000
+    if word & 0x2:  # AA: absolute address
+        return displacement & 0xFFFFFFFF
+    return (address + displacement) & 0xFFFFFFFF
+
+
+def parse_asm_calls(path: Path) -> List[FunctionCalls]:
+    functions: List[FunctionCalls] = []
+    current: Optional[FunctionCalls] = None
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        fn_match = _ASM_FN_RE.match(line)
+        if fn_match:
+            current = FunctionCalls(symbol=fn_match.group("symbol"), address=None)
+            continue
+        if current is None:
+            continue
+        if _ASM_ENDFN_RE.match(line):
+            functions.append(current)
+            current = None
+            continue
+        instruction = _ASM_INSN_RE.match(line)
+        if not instruction:
+            continue
+        address = int(instruction.group("address"), 16)
+        if current.address is None:
+            current.address = address
+        mnemonic = instruction.group("mnemonic")
+        if mnemonic == "bl":
+            word = int(instruction.group("bytes").replace(" ", ""), 16)
+            operand = (instruction.group("operand") or "").split("+")[0]
+            current.direct.append((operand or None, _branch_destination(address, word)))
+        elif mnemonic in {"bctrl", "blrl"}:
+            current.has_indirect = True
+    return functions
+
+
+def sync_called_functions(
+    project: Any,
+    config: CoopConfig,
+) -> tuple[Dict[str, Any], int, int, int]:
+    """Populate direct call edges from generated retail assembly.
+
+    Returns the updated document and counts for scanned functions, resolved
+    direct edges, and unresolved direct edges.
+    """
+    data = load_targets_document(config)
+    rows = data.get("targets", [])
+    by_address: Dict[tuple[str, str], List[Dict[str, Any]]] = {}
+    by_symbol: Dict[tuple[str, str], List[Dict[str, Any]]] = {}
+    for row in rows:
+        if row.get("kind", "function") != "function":
+            continue
+        region = str(row.get("region", config.region))
+        address = row.get("address")
+        symbol = row.get("symbol")
+        if address:
+            by_address.setdefault((region, str(address).upper()), []).append(row)
+        if symbol:
+            by_symbol.setdefault((region, str(symbol)), []).append(row)
+
+    scanned = 0
+    resolved_edges = 0
+    unresolved_edges = 0
+    asm_root = project.root / "build" / config.region / "asm"
+    if not asm_root.is_dir():
+        raise FileNotFoundError(
+            f"Retail assembly not found: {asm_root}; run configure/baseline first"
+        )
+    for asm_path in sorted(asm_root.rglob("*.s")):
+        for function in parse_asm_calls(asm_path):
+            caller_rows = (
+                by_address.get((config.region, f"0X{function.address:08X}"), [])
+                if function.address is not None
+                else []
+            )
+            if not caller_rows:
+                caller_rows = by_symbol.get((config.region, function.symbol), [])
+            if not caller_rows:
+                continue
+            called_ids: set[str] = set()
+            unresolved: set[str] = set()
+            abi_helpers: set[str] = set()
+            for operand, destination in function.direct:
+                if operand and _ABI_HELPER_RE.match(operand):
+                    abi_helpers.add(operand)
+                    continue
+                destination_rows = by_address.get(
+                    (config.region, f"0X{destination:08X}"), []
+                )
+                if not destination_rows and operand:
+                    destination_rows = by_symbol.get((config.region, operand), [])
+                if operand and len(destination_rows) > 1:
+                    exact = [row for row in destination_rows if row.get("symbol") == operand]
+                    if exact:
+                        destination_rows = exact
+                if destination_rows:
+                    called_ids.add(str(destination_rows[0]["id"]))
+                    resolved_edges += 1
+                else:
+                    unresolved.add(operand or f"0x{destination:08X}")
+                    unresolved_edges += 1
+            for row in caller_rows:
+                row["called_functions"] = sorted(called_ids)
+                row["unresolved_called_functions"] = sorted(unresolved)
+                row["abi_helper_calls"] = sorted(abi_helpers)
+                row["has_indirect_calls"] = function.has_indirect
+                row["callgraph_status"] = "complete"
+                row["callgraph_source"] = str(asm_path.relative_to(project.root))
+                scanned += 1
+    data["callgraph"] = {
+        "region": config.region,
+        "source": f"build/{config.region}/asm",
+        "format": 1,
+        "direct_calls": "PPC bl destination",
+        "indirect_calls_are_unresolved": True,
+    }
+    return data, scanned, resolved_edges, unresolved_edges

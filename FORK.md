@@ -93,7 +93,9 @@ Config knobs (`coop.json` / example): `region` (`us` default), `match_policy`, `
 | `targets list` / `show` | Query the canonical target registry |
 | `targets status` | Generate a Markdown or JSON human-readable status view |
 | `targets import-symbols` | Idempotently add every missing function (`--kind all` for every symbol) |
+| `targets sync-calls` | Populate direct callee target IDs and indirect/unresolved call flags from retail asm |
 | `targets validate` | Check IDs, symbol uniqueness, and state vocabularies |
+| `harness --selection leaf|callees-accepted|ready` | Run bottom-up safe call-graph frontiers |
 | `log [--tail N]` | Read attempt log |
 | `symbols …` | Wraps `tools/symrecover.py` |
 | `behaviour …` | Wraps `tools/test/compare_behaviour/run.py` |

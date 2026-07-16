@@ -8,6 +8,10 @@
 extern void behaviour_emit_summary(const char* test_id, volatile BehaviourResult* result);
 extern void OSReport(const char* fmt, ...);
 
+#define SANDBOX_MEM1_ADDR 0x80004000u
+#define PYTHON_SANDBOX_BASE 0x00001000u
+#define PYTHON_SANDBOX_LIMIT (PYTHON_SANDBOX_BASE + (PPC_FIXTURE_MEM_WORDS * 4u))
+
 static void set_last_fail(volatile BehaviourResult* result, const char* name) {
     int i;
     for (i = 0; i < 63 && name[i] != '\0'; ++i) {
@@ -70,12 +74,13 @@ static void log_fp_diff(const char* name, u32 index, u64 actual, u64 expected) {
 
 int behaviour_main(void) {
     volatile BehaviourResult* result = &g_behaviour_result;
-    u32 sandbox_storage[PPC_FIXTURE_MEM_WORDS + 7];
-    u32* sandbox = (u32*)(((u32)sandbox_storage + 31u) & ~31u);
+    u32* sandbox = (u32*)SANDBOX_MEM1_ADDR;
     PpcFixtureActual actual;
     int case_index;
     u32 mem_index;
     u32 fpr_index;
+    u32 gqr_index;
+    u32 gpr_index;
     int mismatch;
 
     behaviour_result_init(result);
@@ -132,6 +137,57 @@ int behaviour_main(void) {
                 0,
                 0,
                 fixture->expected_fpscr
+            );
+        }
+        for (gqr_index = 0; gqr_index < fixture->expected_gqr_count; ++gqr_index) {
+            u32 idx = fixture->expected_gqr_index[gqr_index];
+            if (actual.gqr[idx] != fixture->expected_gqr_value[gqr_index]) {
+                mismatch = 1;
+                OSReport(
+                    "BEHAVIOUR_GQR_DIFF %s gqr%u actual=%08X expected=%08X",
+                    fixture->name,
+                    idx,
+                    actual.gqr[idx],
+                    fixture->expected_gqr_value[gqr_index]
+                );
+            }
+        }
+        for (gpr_index = 0; gpr_index < fixture->expected_gpr_count; ++gpr_index) {
+            u32 idx = fixture->expected_gpr_index[gpr_index];
+            u32 expected = fixture->expected_gpr_value[gpr_index];
+            if (idx == 1 || idx == 2 || idx == 13 || idx == 14 || idx == 15) {
+                continue;
+            }
+            if (expected >= PYTHON_SANDBOX_BASE && expected < PYTHON_SANDBOX_LIMIT) {
+                expected = (expected - PYTHON_SANDBOX_BASE) + SANDBOX_MEM1_ADDR;
+            }
+            if (actual.gpr[idx] != expected) {
+                mismatch = 1;
+                OSReport(
+                    "BEHAVIOUR_GPR_DIFF %s r%u actual=%08X expected=%08X",
+                    fixture->name,
+                    idx,
+                    actual.gpr[idx],
+                    expected
+                );
+            }
+        }
+        if (fixture->observe_lr && actual.lr != fixture->expected_lr) {
+            mismatch = 1;
+            OSReport(
+                "BEHAVIOUR_LR_DIFF %s actual=%08X expected=%08X",
+                fixture->name,
+                actual.lr,
+                fixture->expected_lr
+            );
+        }
+        if (fixture->observe_ctr && actual.ctr != fixture->expected_ctr) {
+            mismatch = 1;
+            OSReport(
+                "BEHAVIOUR_CTR_DIFF %s actual=%08X expected=%08X",
+                fixture->name,
+                actual.ctr,
+                fixture->expected_ctr
             );
         }
 

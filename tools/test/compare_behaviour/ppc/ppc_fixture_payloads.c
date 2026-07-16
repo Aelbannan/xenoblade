@@ -547,666 +547,727 @@ asm void ppc_fixture_payload_72(void) {
     blr
 }
 
-/* lwz */
+/* bl-direct */
 asm void ppc_fixture_payload_73(void) {
+    nofralloc
+    opword 0x48000009
+    opword 0x38E00001
+    opword 0x38E00002
+    blr
+}
+
+/* bclr-taken */
+asm void ppc_fixture_payload_74(void) {
+    nofralloc
+    opword 0x4E800020
+    opword 0x38E00001
+    opword 0x38E00002
+    opword 0x38E00003
+    blr
+}
+
+/* bclrl-taken */
+asm void ppc_fixture_payload_75(void) {
+    nofralloc
+    opword 0x4E800021
+    opword 0x38E00001
+    opword 0x38E00002
+    opword 0x38E00003
+    blr
+}
+
+/* bcctr-taken */
+asm void ppc_fixture_payload_76(void) {
+    nofralloc
+    opword 0x4E800420
+    opword 0x38E00001
+    opword 0x38E00002
+    opword 0x38E00003
+    blr
+}
+
+/* lwz */
+asm void ppc_fixture_payload_77(void) {
     nofralloc
     opword 0x80E40004
     blr
 }
 
 /* lwzu */
-asm void ppc_fixture_payload_74(void) {
+asm void ppc_fixture_payload_78(void) {
     nofralloc
     opword 0x84E40004
     blr
 }
 
 /* lbzx */
-asm void ppc_fixture_payload_75(void) {
+asm void ppc_fixture_payload_79(void) {
     nofralloc
     opword 0x7CE430AE
     blr
 }
 
 /* lbzux */
-asm void ppc_fixture_payload_76(void) {
+asm void ppc_fixture_payload_80(void) {
     nofralloc
     opword 0x7CE430EE
     blr
 }
 
 /* lhzu */
-asm void ppc_fixture_payload_77(void) {
+asm void ppc_fixture_payload_81(void) {
     nofralloc
     opword 0xA4E40002
     blr
 }
 
 /* lhau */
-asm void ppc_fixture_payload_78(void) {
+asm void ppc_fixture_payload_82(void) {
     nofralloc
     opword 0xACE40002
     blr
 }
 
 /* lhzx */
-asm void ppc_fixture_payload_79(void) {
+asm void ppc_fixture_payload_83(void) {
     nofralloc
     opword 0x7CE4322E
     blr
 }
 
 /* lhzux */
-asm void ppc_fixture_payload_80(void) {
+asm void ppc_fixture_payload_84(void) {
     nofralloc
     opword 0x7CE4326E
     blr
 }
 
 /* lhax */
-asm void ppc_fixture_payload_81(void) {
+asm void ppc_fixture_payload_85(void) {
     nofralloc
     opword 0x7CE432AE
     blr
 }
 
 /* lhaux */
-asm void ppc_fixture_payload_82(void) {
+asm void ppc_fixture_payload_86(void) {
     nofralloc
     opword 0x7CE432EE
     blr
 }
 
 /* lwzx */
-asm void ppc_fixture_payload_83(void) {
+asm void ppc_fixture_payload_87(void) {
     nofralloc
     opword 0x7CE4302E
     blr
 }
 
 /* lwzux */
-asm void ppc_fixture_payload_84(void) {
+asm void ppc_fixture_payload_88(void) {
     nofralloc
     opword 0x7CE4306E
     blr
 }
 
 /* stb */
-asm void ppc_fixture_payload_85(void) {
+asm void ppc_fixture_payload_89(void) {
     nofralloc
     opword 0x98A40001
     blr
 }
 
 /* stbu */
-asm void ppc_fixture_payload_86(void) {
+asm void ppc_fixture_payload_90(void) {
     nofralloc
     opword 0x9CA40001
     blr
 }
 
 /* stbx */
-asm void ppc_fixture_payload_87(void) {
+asm void ppc_fixture_payload_91(void) {
     nofralloc
     opword 0x7CA431AE
     blr
 }
 
 /* stbux */
-asm void ppc_fixture_payload_88(void) {
+asm void ppc_fixture_payload_92(void) {
     nofralloc
     opword 0x7CA431EE
     blr
 }
 
 /* sthu */
-asm void ppc_fixture_payload_89(void) {
+asm void ppc_fixture_payload_93(void) {
     nofralloc
     opword 0xB4A40002
     blr
 }
 
 /* sthx */
-asm void ppc_fixture_payload_90(void) {
+asm void ppc_fixture_payload_94(void) {
     nofralloc
     opword 0x7CA4332E
     blr
 }
 
 /* sthux */
-asm void ppc_fixture_payload_91(void) {
+asm void ppc_fixture_payload_95(void) {
     nofralloc
     opword 0x7CA4336E
     blr
 }
 
 /* sthbrx */
-asm void ppc_fixture_payload_92(void) {
+asm void ppc_fixture_payload_96(void) {
     nofralloc
     opword 0x7CA4372C
     blr
 }
 
 /* stwx */
-asm void ppc_fixture_payload_93(void) {
+asm void ppc_fixture_payload_97(void) {
     nofralloc
     opword 0x7CA4312E
     blr
 }
 
 /* stwux */
-asm void ppc_fixture_payload_94(void) {
+asm void ppc_fixture_payload_98(void) {
     nofralloc
     opword 0x7CA4316E
     blr
 }
 
-/* fres-table-00 */
-asm void ppc_fixture_payload_95(void) {
-    nofralloc
-    opword 0xECE01030
-    blr
-}
-
-/* fres-table-01 */
-asm void ppc_fixture_payload_96(void) {
-    nofralloc
-    opword 0xECE01030
-    blr
-}
-
-/* fres-table-02 */
-asm void ppc_fixture_payload_97(void) {
-    nofralloc
-    opword 0xECE01030
-    blr
-}
-
-/* fres-table-03 */
-asm void ppc_fixture_payload_98(void) {
-    nofralloc
-    opword 0xECE01030
-    blr
-}
-
-/* fres-table-04 */
+/* stb-canary */
 asm void ppc_fixture_payload_99(void) {
     nofralloc
-    opword 0xECE01030
+    opword 0x98A40001
     blr
 }
 
-/* fres-table-05 */
+/* sth-canary */
 asm void ppc_fixture_payload_100(void) {
     nofralloc
-    opword 0xECE01030
+    opword 0xB0A40000
     blr
 }
 
-/* fres-table-06 */
+/* stb-negative-displacement */
 asm void ppc_fixture_payload_101(void) {
     nofralloc
-    opword 0xECE01030
+    opword 0x39440002
+    opword 0x98AAFFFF
     blr
 }
 
-/* fres-table-07 */
+/* fres-table-00 */
 asm void ppc_fixture_payload_102(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-08 */
+/* fres-table-01 */
 asm void ppc_fixture_payload_103(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-09 */
+/* fres-table-02 */
 asm void ppc_fixture_payload_104(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-10 */
+/* fres-table-03 */
 asm void ppc_fixture_payload_105(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-11 */
+/* fres-table-04 */
 asm void ppc_fixture_payload_106(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-12 */
+/* fres-table-05 */
 asm void ppc_fixture_payload_107(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-13 */
+/* fres-table-06 */
 asm void ppc_fixture_payload_108(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-14 */
+/* fres-table-07 */
 asm void ppc_fixture_payload_109(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-15 */
+/* fres-table-08 */
 asm void ppc_fixture_payload_110(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-16 */
+/* fres-table-09 */
 asm void ppc_fixture_payload_111(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-17 */
+/* fres-table-10 */
 asm void ppc_fixture_payload_112(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-18 */
+/* fres-table-11 */
 asm void ppc_fixture_payload_113(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-19 */
+/* fres-table-12 */
 asm void ppc_fixture_payload_114(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-20 */
+/* fres-table-13 */
 asm void ppc_fixture_payload_115(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-21 */
+/* fres-table-14 */
 asm void ppc_fixture_payload_116(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-22 */
+/* fres-table-15 */
 asm void ppc_fixture_payload_117(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-23 */
+/* fres-table-16 */
 asm void ppc_fixture_payload_118(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-24 */
+/* fres-table-17 */
 asm void ppc_fixture_payload_119(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-25 */
+/* fres-table-18 */
 asm void ppc_fixture_payload_120(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-26 */
+/* fres-table-19 */
 asm void ppc_fixture_payload_121(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-27 */
+/* fres-table-20 */
 asm void ppc_fixture_payload_122(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-28 */
+/* fres-table-21 */
 asm void ppc_fixture_payload_123(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-29 */
+/* fres-table-22 */
 asm void ppc_fixture_payload_124(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-30 */
+/* fres-table-23 */
 asm void ppc_fixture_payload_125(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* fres-table-31 */
+/* fres-table-24 */
 asm void ppc_fixture_payload_126(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-00 */
+/* fres-table-25 */
 asm void ppc_fixture_payload_127(void) {
     nofralloc
-    opword 0xFCE01034
+    opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-01 */
+/* fres-table-26 */
 asm void ppc_fixture_payload_128(void) {
     nofralloc
-    opword 0xFCE01034
+    opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-02 */
+/* fres-table-27 */
 asm void ppc_fixture_payload_129(void) {
     nofralloc
-    opword 0xFCE01034
+    opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-03 */
+/* fres-table-28 */
 asm void ppc_fixture_payload_130(void) {
     nofralloc
-    opword 0xFCE01034
+    opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-04 */
+/* fres-table-29 */
 asm void ppc_fixture_payload_131(void) {
     nofralloc
-    opword 0xFCE01034
+    opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-05 */
+/* fres-table-30 */
 asm void ppc_fixture_payload_132(void) {
     nofralloc
-    opword 0xFCE01034
+    opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-06 */
+/* fres-table-31 */
 asm void ppc_fixture_payload_133(void) {
     nofralloc
-    opword 0xFCE01034
+    opword 0xECE01030
     blr
 }
 
-/* frsqrte-table-07 */
+/* frsqrte-table-00 */
 asm void ppc_fixture_payload_134(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-08 */
+/* frsqrte-table-01 */
 asm void ppc_fixture_payload_135(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-09 */
+/* frsqrte-table-02 */
 asm void ppc_fixture_payload_136(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-10 */
+/* frsqrte-table-03 */
 asm void ppc_fixture_payload_137(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-11 */
+/* frsqrte-table-04 */
 asm void ppc_fixture_payload_138(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-12 */
+/* frsqrte-table-05 */
 asm void ppc_fixture_payload_139(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-13 */
+/* frsqrte-table-06 */
 asm void ppc_fixture_payload_140(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-14 */
+/* frsqrte-table-07 */
 asm void ppc_fixture_payload_141(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-15 */
+/* frsqrte-table-08 */
 asm void ppc_fixture_payload_142(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-16 */
+/* frsqrte-table-09 */
 asm void ppc_fixture_payload_143(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-17 */
+/* frsqrte-table-10 */
 asm void ppc_fixture_payload_144(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-18 */
+/* frsqrte-table-11 */
 asm void ppc_fixture_payload_145(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-19 */
+/* frsqrte-table-12 */
 asm void ppc_fixture_payload_146(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-20 */
+/* frsqrte-table-13 */
 asm void ppc_fixture_payload_147(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-21 */
+/* frsqrte-table-14 */
 asm void ppc_fixture_payload_148(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-22 */
+/* frsqrte-table-15 */
 asm void ppc_fixture_payload_149(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-23 */
+/* frsqrte-table-16 */
 asm void ppc_fixture_payload_150(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-24 */
+/* frsqrte-table-17 */
 asm void ppc_fixture_payload_151(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-25 */
+/* frsqrte-table-18 */
 asm void ppc_fixture_payload_152(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-26 */
+/* frsqrte-table-19 */
 asm void ppc_fixture_payload_153(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-27 */
+/* frsqrte-table-20 */
 asm void ppc_fixture_payload_154(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-28 */
+/* frsqrte-table-21 */
 asm void ppc_fixture_payload_155(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-29 */
+/* frsqrte-table-22 */
 asm void ppc_fixture_payload_156(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-30 */
+/* frsqrte-table-23 */
 asm void ppc_fixture_payload_157(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* frsqrte-table-31 */
+/* frsqrte-table-24 */
 asm void ppc_fixture_payload_158(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
-/* dcbf */
+/* frsqrte-table-25 */
 asm void ppc_fixture_payload_159(void) {
+    nofralloc
+    opword 0xFCE01034
+    blr
+}
+
+/* frsqrte-table-26 */
+asm void ppc_fixture_payload_160(void) {
+    nofralloc
+    opword 0xFCE01034
+    blr
+}
+
+/* frsqrte-table-27 */
+asm void ppc_fixture_payload_161(void) {
+    nofralloc
+    opword 0xFCE01034
+    blr
+}
+
+/* frsqrte-table-28 */
+asm void ppc_fixture_payload_162(void) {
+    nofralloc
+    opword 0xFCE01034
+    blr
+}
+
+/* frsqrte-table-29 */
+asm void ppc_fixture_payload_163(void) {
+    nofralloc
+    opword 0xFCE01034
+    blr
+}
+
+/* frsqrte-table-30 */
+asm void ppc_fixture_payload_164(void) {
+    nofralloc
+    opword 0xFCE01034
+    blr
+}
+
+/* frsqrte-table-31 */
+asm void ppc_fixture_payload_165(void) {
+    nofralloc
+    opword 0xFCE01034
+    blr
+}
+
+/* dcbf */
+asm void ppc_fixture_payload_166(void) {
     nofralloc
     opword 0x7C0020AC
     blr
 }
 
 /* dcbi */
-asm void ppc_fixture_payload_160(void) {
+asm void ppc_fixture_payload_167(void) {
     nofralloc
     opword 0x7C0023AC
     blr
 }
 
 /* dcbst */
-asm void ppc_fixture_payload_161(void) {
+asm void ppc_fixture_payload_168(void) {
     nofralloc
     opword 0x7C00206C
     blr
 }
 
 /* dcbt */
-asm void ppc_fixture_payload_162(void) {
+asm void ppc_fixture_payload_169(void) {
     nofralloc
     opword 0x7C00222C
     blr
 }
 
 /* icbi */
-asm void ppc_fixture_payload_163(void) {
+asm void ppc_fixture_payload_170(void) {
     nofralloc
     opword 0x7C0027AC
     blr
 }
 
 /* sync */
-asm void ppc_fixture_payload_164(void) {
+asm void ppc_fixture_payload_171(void) {
     nofralloc
     opword 0x7C0004AC
     blr
 }
 
 /* isync */
-asm void ppc_fixture_payload_165(void) {
+asm void ppc_fixture_payload_172(void) {
     nofralloc
     opword 0x4C00012C
     blr
 }
 
 /* dcbz */
-asm void ppc_fixture_payload_166(void) {
+asm void ppc_fixture_payload_173(void) {
     nofralloc
     opword 0x7C0027EC
     blr
 }
 
 /* dcbz_l */
-asm void ppc_fixture_payload_167(void) {
+asm void ppc_fixture_payload_174(void) {
     nofralloc
     opword 0x48000008
     opword 0x100027EC
@@ -1215,7 +1276,7 @@ asm void ppc_fixture_payload_167(void) {
 }
 
 /* mfmsr */
-asm void ppc_fixture_payload_168(void) {
+asm void ppc_fixture_payload_175(void) {
     nofralloc
     opword 0x7CA000A6
     opword 0x7CE52850
@@ -1223,7 +1284,7 @@ asm void ppc_fixture_payload_168(void) {
 }
 
 /* mtmsr */
-asm void ppc_fixture_payload_169(void) {
+asm void ppc_fixture_payload_176(void) {
     nofralloc
     opword 0x48000008
     opword 0x7CA00124
@@ -1232,7 +1293,7 @@ asm void ppc_fixture_payload_169(void) {
 }
 
 /* mfsr */
-asm void ppc_fixture_payload_170(void) {
+asm void ppc_fixture_payload_177(void) {
     nofralloc
     opword 0x7CA004A6
     opword 0x7CE52850
@@ -1240,7 +1301,7 @@ asm void ppc_fixture_payload_170(void) {
 }
 
 /* mtsr */
-asm void ppc_fixture_payload_171(void) {
+asm void ppc_fixture_payload_178(void) {
     nofralloc
     opword 0x48000008
     opword 0x7CA001A4
@@ -1249,7 +1310,7 @@ asm void ppc_fixture_payload_171(void) {
 }
 
 /* mftb */
-asm void ppc_fixture_payload_172(void) {
+asm void ppc_fixture_payload_179(void) {
     nofralloc
     opword 0x7CAC42E6
     opword 0x7CE52850
@@ -1257,7 +1318,7 @@ asm void ppc_fixture_payload_172(void) {
 }
 
 /* mfspr_pvr */
-asm void ppc_fixture_payload_173(void) {
+asm void ppc_fixture_payload_180(void) {
     nofralloc
     opword 0x7CBF42A6
     opword 0x7CE52850
@@ -1265,7 +1326,7 @@ asm void ppc_fixture_payload_173(void) {
 }
 
 /* mfspr_hid0 */
-asm void ppc_fixture_payload_174(void) {
+asm void ppc_fixture_payload_181(void) {
     nofralloc
     opword 0x7CB0FAA6
     opword 0x7CE52850
@@ -1273,7 +1334,7 @@ asm void ppc_fixture_payload_174(void) {
 }
 
 /* mfspr_sprg1 */
-asm void ppc_fixture_payload_175(void) {
+asm void ppc_fixture_payload_182(void) {
     nofralloc
     opword 0x7CB142A6
     opword 0x7CE52850
@@ -1281,7 +1342,7 @@ asm void ppc_fixture_payload_175(void) {
 }
 
 /* mtspr_aux */
-asm void ppc_fixture_payload_176(void) {
+asm void ppc_fixture_payload_183(void) {
     nofralloc
     opword 0x48000008
     opword 0x7CB0FBA6
@@ -1290,7 +1351,7 @@ asm void ppc_fixture_payload_176(void) {
 }
 
 /* mtspr_tbl */
-asm void ppc_fixture_payload_177(void) {
+asm void ppc_fixture_payload_184(void) {
     nofralloc
     opword 0x48000008
     opword 0x7CBC43A6
@@ -1299,14 +1360,14 @@ asm void ppc_fixture_payload_177(void) {
 }
 
 /* twi */
-asm void ppc_fixture_payload_178(void) {
+asm void ppc_fixture_payload_185(void) {
     nofralloc
     opword 0x0C000000
     blr
 }
 
 /* sc */
-asm void ppc_fixture_payload_179(void) {
+asm void ppc_fixture_payload_186(void) {
     nofralloc
     opword 0x48000008
     opword 0x44000002
@@ -1315,7 +1376,7 @@ asm void ppc_fixture_payload_179(void) {
 }
 
 /* rfi */
-asm void ppc_fixture_payload_180(void) {
+asm void ppc_fixture_payload_187(void) {
     nofralloc
     opword 0x48000008
     opword 0x4C000064
@@ -1324,49 +1385,49 @@ asm void ppc_fixture_payload_180(void) {
 }
 
 /* mffs */
-asm void ppc_fixture_payload_181(void) {
+asm void ppc_fixture_payload_188(void) {
     nofralloc
     opword 0xFCE0048E
     blr
 }
 
 /* mtfsf */
-asm void ppc_fixture_payload_182(void) {
+asm void ppc_fixture_payload_189(void) {
     nofralloc
     opword 0xFDFE158F
     blr
 }
 
 /* mtfsfi */
-asm void ppc_fixture_payload_183(void) {
+asm void ppc_fixture_payload_190(void) {
     nofralloc
     opword 0xFF80310C
     blr
 }
 
 /* mtfsb1 */
-asm void ppc_fixture_payload_184(void) {
+asm void ppc_fixture_payload_191(void) {
     nofralloc
     opword 0xFD60004C
     blr
 }
 
 /* mtfsb0 */
-asm void ppc_fixture_payload_185(void) {
+asm void ppc_fixture_payload_192(void) {
     nofralloc
     opword 0xFD60008C
     blr
 }
 
 /* mcrfs */
-asm void ppc_fixture_payload_186(void) {
+asm void ppc_fixture_payload_193(void) {
     nofralloc
     opword 0xFD880080
     blr
 }
 
 /* ps_neg */
-asm void ppc_fixture_payload_187(void) {
+asm void ppc_fixture_payload_194(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1377,7 +1438,7 @@ asm void ppc_fixture_payload_187(void) {
 }
 
 /* ps_mr */
-asm void ppc_fixture_payload_188(void) {
+asm void ppc_fixture_payload_195(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1388,7 +1449,7 @@ asm void ppc_fixture_payload_188(void) {
 }
 
 /* ps_nabs */
-asm void ppc_fixture_payload_189(void) {
+asm void ppc_fixture_payload_196(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1399,7 +1460,7 @@ asm void ppc_fixture_payload_189(void) {
 }
 
 /* ps_abs */
-asm void ppc_fixture_payload_190(void) {
+asm void ppc_fixture_payload_197(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1410,7 +1471,7 @@ asm void ppc_fixture_payload_190(void) {
 }
 
 /* ps_merge00 */
-asm void ppc_fixture_payload_191(void) {
+asm void ppc_fixture_payload_198(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1421,7 +1482,7 @@ asm void ppc_fixture_payload_191(void) {
 }
 
 /* ps_merge01 */
-asm void ppc_fixture_payload_192(void) {
+asm void ppc_fixture_payload_199(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1432,7 +1493,7 @@ asm void ppc_fixture_payload_192(void) {
 }
 
 /* ps_merge10 */
-asm void ppc_fixture_payload_193(void) {
+asm void ppc_fixture_payload_200(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1443,7 +1504,7 @@ asm void ppc_fixture_payload_193(void) {
 }
 
 /* ps_merge11 */
-asm void ppc_fixture_payload_194(void) {
+asm void ppc_fixture_payload_201(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1454,21 +1515,21 @@ asm void ppc_fixture_payload_194(void) {
 }
 
 /* ps_cmpu0 */
-asm void ppc_fixture_payload_195(void) {
+asm void ppc_fixture_payload_202(void) {
     nofralloc
     opword 0x11811000
     blr
 }
 
 /* ps_cmpo0 */
-asm void ppc_fixture_payload_196(void) {
+asm void ppc_fixture_payload_203(void) {
     nofralloc
     opword 0x11811040
     blr
 }
 
 /* ps_cmpu1 */
-asm void ppc_fixture_payload_197(void) {
+asm void ppc_fixture_payload_204(void) {
     nofralloc
     opword 0x10620C20
     opword 0x10821420
@@ -1477,7 +1538,7 @@ asm void ppc_fixture_payload_197(void) {
 }
 
 /* ps_cmpo1 */
-asm void ppc_fixture_payload_198(void) {
+asm void ppc_fixture_payload_205(void) {
     nofralloc
     opword 0x10620C20
     opword 0x10821420
@@ -1486,7 +1547,7 @@ asm void ppc_fixture_payload_198(void) {
 }
 
 /* ps_add */
-asm void ppc_fixture_payload_199(void) {
+asm void ppc_fixture_payload_206(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1497,7 +1558,7 @@ asm void ppc_fixture_payload_199(void) {
 }
 
 /* ps_sub */
-asm void ppc_fixture_payload_200(void) {
+asm void ppc_fixture_payload_207(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1508,7 +1569,7 @@ asm void ppc_fixture_payload_200(void) {
 }
 
 /* ps_mul */
-asm void ppc_fixture_payload_201(void) {
+asm void ppc_fixture_payload_208(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1519,7 +1580,7 @@ asm void ppc_fixture_payload_201(void) {
 }
 
 /* ps_muls0 */
-asm void ppc_fixture_payload_202(void) {
+asm void ppc_fixture_payload_209(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1530,7 +1591,7 @@ asm void ppc_fixture_payload_202(void) {
 }
 
 /* ps_muls1 */
-asm void ppc_fixture_payload_203(void) {
+asm void ppc_fixture_payload_210(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1541,7 +1602,7 @@ asm void ppc_fixture_payload_203(void) {
 }
 
 /* ps_mul-force25 */
-asm void ppc_fixture_payload_204(void) {
+asm void ppc_fixture_payload_211(void) {
     nofralloc
     opword 0x10210C20
     opword 0x10631C20
@@ -1550,7 +1611,7 @@ asm void ppc_fixture_payload_204(void) {
 }
 
 /* ps_add-lane-exceptions */
-asm void ppc_fixture_payload_205(void) {
+asm void ppc_fixture_payload_212(void) {
     nofralloc
     opword 0x10A11C20
     opword 0x10C22420
@@ -1559,7 +1620,7 @@ asm void ppc_fixture_payload_205(void) {
 }
 
 /* ps_add-ve-writes */
-asm void ppc_fixture_payload_206(void) {
+asm void ppc_fixture_payload_213(void) {
     nofralloc
     opword 0x10A11420
     opword 0x10C32420
@@ -1568,7 +1629,7 @@ asm void ppc_fixture_payload_206(void) {
 }
 
 /* ps_mul-vximz-ps1 */
-asm void ppc_fixture_payload_207(void) {
+asm void ppc_fixture_payload_214(void) {
     nofralloc
     opword 0x10A11420
     opword 0x10C32420
@@ -1577,7 +1638,7 @@ asm void ppc_fixture_payload_207(void) {
 }
 
 /* ps_div */
-asm void ppc_fixture_payload_208(void) {
+asm void ppc_fixture_payload_215(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1588,7 +1649,7 @@ asm void ppc_fixture_payload_208(void) {
 }
 
 /* ps_div-enabled-lane-exceptions */
-asm void ppc_fixture_payload_209(void) {
+asm void ppc_fixture_payload_216(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10A11C20
@@ -1599,7 +1660,7 @@ asm void ppc_fixture_payload_209(void) {
 }
 
 /* ps_res */
-asm void ppc_fixture_payload_210(void) {
+asm void ppc_fixture_payload_217(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0441000
@@ -1609,7 +1670,7 @@ asm void ppc_fixture_payload_210(void) {
 }
 
 /* ps_res-enabled-lane-exceptions */
-asm void ppc_fixture_payload_211(void) {
+asm void ppc_fixture_payload_218(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10A11420
@@ -1619,7 +1680,7 @@ asm void ppc_fixture_payload_211(void) {
 }
 
 /* ps_rsqrte */
-asm void ppc_fixture_payload_212(void) {
+asm void ppc_fixture_payload_219(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0441000
@@ -1629,7 +1690,7 @@ asm void ppc_fixture_payload_212(void) {
 }
 
 /* ps_rsqrte-enabled-negative-zero */
-asm void ppc_fixture_payload_213(void) {
+asm void ppc_fixture_payload_220(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10A11420
@@ -1639,7 +1700,7 @@ asm void ppc_fixture_payload_213(void) {
 }
 
 /* ps_madd */
-asm void ppc_fixture_payload_214(void) {
+asm void ppc_fixture_payload_221(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1651,7 +1712,7 @@ asm void ppc_fixture_payload_214(void) {
 }
 
 /* ps_msub */
-asm void ppc_fixture_payload_215(void) {
+asm void ppc_fixture_payload_222(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1663,7 +1724,7 @@ asm void ppc_fixture_payload_215(void) {
 }
 
 /* ps_nmadd */
-asm void ppc_fixture_payload_216(void) {
+asm void ppc_fixture_payload_223(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1675,7 +1736,7 @@ asm void ppc_fixture_payload_216(void) {
 }
 
 /* ps_nmsub */
-asm void ppc_fixture_payload_217(void) {
+asm void ppc_fixture_payload_224(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1687,7 +1748,7 @@ asm void ppc_fixture_payload_217(void) {
 }
 
 /* ps_madds0 */
-asm void ppc_fixture_payload_218(void) {
+asm void ppc_fixture_payload_225(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1699,7 +1760,7 @@ asm void ppc_fixture_payload_218(void) {
 }
 
 /* ps_madds1 */
-asm void ppc_fixture_payload_219(void) {
+asm void ppc_fixture_payload_226(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1711,7 +1772,7 @@ asm void ppc_fixture_payload_219(void) {
 }
 
 /* ps_nmadd-lane-invalid-ve */
-asm void ppc_fixture_payload_220(void) {
+asm void ppc_fixture_payload_227(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10A11420
@@ -1723,7 +1784,7 @@ asm void ppc_fixture_payload_220(void) {
 }
 
 /* ps_sum0 */
-asm void ppc_fixture_payload_221(void) {
+asm void ppc_fixture_payload_228(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1735,7 +1796,7 @@ asm void ppc_fixture_payload_221(void) {
 }
 
 /* ps_sum1 */
-asm void ppc_fixture_payload_222(void) {
+asm void ppc_fixture_payload_229(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1747,7 +1808,7 @@ asm void ppc_fixture_payload_222(void) {
 }
 
 /* ps_sum0-vxisi */
-asm void ppc_fixture_payload_223(void) {
+asm void ppc_fixture_payload_230(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10A10C20
@@ -1759,7 +1820,7 @@ asm void ppc_fixture_payload_223(void) {
 }
 
 /* ps_sel-signed-zero-nan */
-asm void ppc_fixture_payload_224(void) {
+asm void ppc_fixture_payload_231(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0241000
@@ -1771,7 +1832,7 @@ asm void ppc_fixture_payload_224(void) {
 }
 
 /* psq-l-st-quantized */
-asm void ppc_fixture_payload_225(void) {
+asm void ppc_fixture_payload_232(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0E41000
@@ -1780,7 +1841,7 @@ asm void ppc_fixture_payload_225(void) {
 }
 
 /* psq-u8-load-s8-store */
-asm void ppc_fixture_payload_226(void) {
+asm void ppc_fixture_payload_233(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0E41000
@@ -1789,7 +1850,7 @@ asm void ppc_fixture_payload_226(void) {
 }
 
 /* psq-u16-load-float-store */
-asm void ppc_fixture_payload_227(void) {
+asm void ppc_fixture_payload_234(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE0E41000
@@ -1798,7 +1859,7 @@ asm void ppc_fixture_payload_227(void) {
 }
 
 /* psq-st-float-ftz */
-asm void ppc_fixture_payload_228(void) {
+asm void ppc_fixture_payload_235(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xF0E49000
@@ -1806,7 +1867,7 @@ asm void ppc_fixture_payload_228(void) {
 }
 
 /* psq-lu-w1 */
-asm void ppc_fixture_payload_229(void) {
+asm void ppc_fixture_payload_236(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xE4E49004
@@ -1814,7 +1875,7 @@ asm void ppc_fixture_payload_229(void) {
 }
 
 /* psq-stu-w1 */
-asm void ppc_fixture_payload_230(void) {
+asm void ppc_fixture_payload_237(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xF4E49004
@@ -1822,7 +1883,7 @@ asm void ppc_fixture_payload_230(void) {
 }
 
 /* psq-lx-s16 */
-asm void ppc_fixture_payload_231(void) {
+asm void ppc_fixture_payload_238(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10E4308C
@@ -1830,7 +1891,7 @@ asm void ppc_fixture_payload_231(void) {
 }
 
 /* psq-lux-s8 */
-asm void ppc_fixture_payload_232(void) {
+asm void ppc_fixture_payload_239(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10E430CC
@@ -1838,7 +1899,7 @@ asm void ppc_fixture_payload_232(void) {
 }
 
 /* psq-stx-u16 */
-asm void ppc_fixture_payload_233(void) {
+asm void ppc_fixture_payload_240(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10E4348E
@@ -1846,7 +1907,7 @@ asm void ppc_fixture_payload_233(void) {
 }
 
 /* psq-stux-s16 */
-asm void ppc_fixture_payload_234(void) {
+asm void ppc_fixture_payload_241(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10E434CE
@@ -1854,581 +1915,581 @@ asm void ppc_fixture_payload_234(void) {
 }
 
 /* lfs */
-asm void ppc_fixture_payload_235(void) {
+asm void ppc_fixture_payload_242(void) {
     nofralloc
     opword 0xC0E40000
     blr
 }
 
 /* lfsu */
-asm void ppc_fixture_payload_236(void) {
+asm void ppc_fixture_payload_243(void) {
     nofralloc
     opword 0xC4E40004
     blr
 }
 
 /* lfd */
-asm void ppc_fixture_payload_237(void) {
+asm void ppc_fixture_payload_244(void) {
     nofralloc
     opword 0xC8E40000
     blr
 }
 
 /* lfdu */
-asm void ppc_fixture_payload_238(void) {
+asm void ppc_fixture_payload_245(void) {
     nofralloc
     opword 0xCCE40008
     blr
 }
 
 /* stfs */
-asm void ppc_fixture_payload_239(void) {
+asm void ppc_fixture_payload_246(void) {
     nofralloc
     opword 0xD0A40000
     blr
 }
 
 /* stfsu */
-asm void ppc_fixture_payload_240(void) {
+asm void ppc_fixture_payload_247(void) {
     nofralloc
     opword 0xD4A40004
     blr
 }
 
 /* stfd */
-asm void ppc_fixture_payload_241(void) {
+asm void ppc_fixture_payload_248(void) {
     nofralloc
     opword 0xD8A40000
     blr
 }
 
 /* stfdu */
-asm void ppc_fixture_payload_242(void) {
+asm void ppc_fixture_payload_249(void) {
     nofralloc
     opword 0xDCA40008
     blr
 }
 
 /* lfsx */
-asm void ppc_fixture_payload_243(void) {
+asm void ppc_fixture_payload_250(void) {
     nofralloc
     opword 0x7CE4342E
     blr
 }
 
 /* lfsux */
-asm void ppc_fixture_payload_244(void) {
+asm void ppc_fixture_payload_251(void) {
     nofralloc
     opword 0x7CE4346E
     blr
 }
 
 /* lfdx */
-asm void ppc_fixture_payload_245(void) {
+asm void ppc_fixture_payload_252(void) {
     nofralloc
     opword 0x7CE434AE
     blr
 }
 
 /* lfdux */
-asm void ppc_fixture_payload_246(void) {
+asm void ppc_fixture_payload_253(void) {
     nofralloc
     opword 0x7CE434EE
     blr
 }
 
 /* stfsx */
-asm void ppc_fixture_payload_247(void) {
+asm void ppc_fixture_payload_254(void) {
     nofralloc
     opword 0x7CA4352E
     blr
 }
 
 /* stfsux */
-asm void ppc_fixture_payload_248(void) {
+asm void ppc_fixture_payload_255(void) {
     nofralloc
     opword 0x7CA4356E
     blr
 }
 
 /* stfdx */
-asm void ppc_fixture_payload_249(void) {
+asm void ppc_fixture_payload_256(void) {
     nofralloc
     opword 0x7CA435AE
     blr
 }
 
 /* stfdux */
-asm void ppc_fixture_payload_250(void) {
+asm void ppc_fixture_payload_257(void) {
     nofralloc
     opword 0x7CA435EE
     blr
 }
 
 /* stfiwx */
-asm void ppc_fixture_payload_251(void) {
+asm void ppc_fixture_payload_258(void) {
     nofralloc
     opword 0x7CA437AE
     blr
 }
 
 /* fadds */
-asm void ppc_fixture_payload_252(void) {
+asm void ppc_fixture_payload_259(void) {
     nofralloc
     opword 0xECE1102B
     blr
 }
 
 /* fsubs */
-asm void ppc_fixture_payload_253(void) {
+asm void ppc_fixture_payload_260(void) {
     nofralloc
     opword 0xECE11028
     blr
 }
 
 /* fmuls */
-asm void ppc_fixture_payload_254(void) {
+asm void ppc_fixture_payload_261(void) {
     nofralloc
     opword 0xECE100F3
     blr
 }
 
 /* fmuls-force25 */
-asm void ppc_fixture_payload_255(void) {
+asm void ppc_fixture_payload_262(void) {
     nofralloc
     opword 0xECE100F2
     blr
 }
 
 /* fmuls-force25-subnormal */
-asm void ppc_fixture_payload_256(void) {
+asm void ppc_fixture_payload_263(void) {
     nofralloc
     opword 0xECE100F2
     blr
 }
 
 /* fdivs */
-asm void ppc_fixture_payload_257(void) {
+asm void ppc_fixture_payload_264(void) {
     nofralloc
     opword 0xECE11024
     blr
 }
 
 /* fadd */
-asm void ppc_fixture_payload_258(void) {
+asm void ppc_fixture_payload_265(void) {
     nofralloc
     opword 0xFCE1102A
     blr
 }
 
 /* fsub */
-asm void ppc_fixture_payload_259(void) {
+asm void ppc_fixture_payload_266(void) {
     nofralloc
     opword 0xFCE11028
     blr
 }
 
 /* fmul */
-asm void ppc_fixture_payload_260(void) {
+asm void ppc_fixture_payload_267(void) {
     nofralloc
     opword 0xFCE100F2
     blr
 }
 
 /* fdiv */
-asm void ppc_fixture_payload_261(void) {
+asm void ppc_fixture_payload_268(void) {
     nofralloc
     opword 0xFCE11024
     blr
 }
 
 /* fadd-vxisi */
-asm void ppc_fixture_payload_262(void) {
+asm void ppc_fixture_payload_269(void) {
     nofralloc
     opword 0xFCE1102B
     blr
 }
 
 /* fadd-vxisi-ve */
-asm void ppc_fixture_payload_263(void) {
+asm void ppc_fixture_payload_270(void) {
     nofralloc
     opword 0xFCE1102B
     blr
 }
 
 /* fadds-snan */
-asm void ppc_fixture_payload_264(void) {
+asm void ppc_fixture_payload_271(void) {
     nofralloc
     opword 0xECE1102A
     blr
 }
 
 /* fadds-snan-ve */
-asm void ppc_fixture_payload_265(void) {
+asm void ppc_fixture_payload_272(void) {
     nofralloc
     opword 0xECE1102A
     blr
 }
 
 /* fadd-qnan */
-asm void ppc_fixture_payload_266(void) {
+asm void ppc_fixture_payload_273(void) {
     nofralloc
     opword 0xFCE1102A
     blr
 }
 
 /* fsub-vxisi */
-asm void ppc_fixture_payload_267(void) {
+asm void ppc_fixture_payload_274(void) {
     nofralloc
     opword 0xFCE11028
     blr
 }
 
 /* fmul-vximz */
-asm void ppc_fixture_payload_268(void) {
+asm void ppc_fixture_payload_275(void) {
     nofralloc
     opword 0xFCE100F2
     blr
 }
 
 /* fmuls-vximz */
-asm void ppc_fixture_payload_269(void) {
+asm void ppc_fixture_payload_276(void) {
     nofralloc
     opword 0xECE100F2
     blr
 }
 
 /* fdiv-vxzdz */
-asm void ppc_fixture_payload_270(void) {
+asm void ppc_fixture_payload_277(void) {
     nofralloc
     opword 0xFCE11024
     blr
 }
 
 /* fdiv-vxidi */
-asm void ppc_fixture_payload_271(void) {
+asm void ppc_fixture_payload_278(void) {
     nofralloc
     opword 0xFCE11024
     blr
 }
 
 /* fdiv-zx */
-asm void ppc_fixture_payload_272(void) {
+asm void ppc_fixture_payload_279(void) {
     nofralloc
     opword 0xFCE11024
     blr
 }
 
 /* fdiv-zx-ze */
-asm void ppc_fixture_payload_273(void) {
+asm void ppc_fixture_payload_280(void) {
     nofralloc
     opword 0xFCE11024
     blr
 }
 
 /* fdivs-zx */
-asm void ppc_fixture_payload_274(void) {
+asm void ppc_fixture_payload_281(void) {
     nofralloc
     opword 0xECE11024
     blr
 }
 
 /* fdivs-zx-ze */
-asm void ppc_fixture_payload_275(void) {
+asm void ppc_fixture_payload_282(void) {
     nofralloc
     opword 0xECE11024
     blr
 }
 
 /* fctiw-rne-away */
-asm void ppc_fixture_payload_276(void) {
+asm void ppc_fixture_payload_283(void) {
     nofralloc
     opword 0xFCE0101D
     blr
 }
 
 /* fctiw-rne-even */
-asm void ppc_fixture_payload_277(void) {
-    nofralloc
-    opword 0xFCE0101C
-    blr
-}
-
-/* fctiw-rtz */
-asm void ppc_fixture_payload_278(void) {
-    nofralloc
-    opword 0xFCE0101C
-    blr
-}
-
-/* fctiw-rtp */
-asm void ppc_fixture_payload_279(void) {
-    nofralloc
-    opword 0xFCE0101C
-    blr
-}
-
-/* fctiw-rtn */
-asm void ppc_fixture_payload_280(void) {
-    nofralloc
-    opword 0xFCE0101C
-    blr
-}
-
-/* fctiwz-negative-zero-result */
-asm void ppc_fixture_payload_281(void) {
-    nofralloc
-    opword 0xFCE0101E
-    blr
-}
-
-/* fctiw-exact-clears-fifr */
-asm void ppc_fixture_payload_282(void) {
-    nofralloc
-    opword 0xFCE0101C
-    blr
-}
-
-/* fctiw-negative-zero */
-asm void ppc_fixture_payload_283(void) {
-    nofralloc
-    opword 0xFCE0101C
-    blr
-}
-
-/* fctiw-qnan */
 asm void ppc_fixture_payload_284(void) {
     nofralloc
     opword 0xFCE0101C
     blr
 }
 
-/* fctiw-snan */
+/* fctiw-rtz */
 asm void ppc_fixture_payload_285(void) {
     nofralloc
     opword 0xFCE0101C
     blr
 }
 
-/* fctiw-positive-overflow */
+/* fctiw-rtp */
 asm void ppc_fixture_payload_286(void) {
     nofralloc
     opword 0xFCE0101C
     blr
 }
 
-/* fctiw-negative-overflow */
+/* fctiw-rtn */
 asm void ppc_fixture_payload_287(void) {
     nofralloc
     opword 0xFCE0101C
     blr
 }
 
-/* fctiw-ve */
+/* fctiwz-negative-zero-result */
 asm void ppc_fixture_payload_288(void) {
+    nofralloc
+    opword 0xFCE0101E
+    blr
+}
+
+/* fctiw-exact-clears-fifr */
+asm void ppc_fixture_payload_289(void) {
+    nofralloc
+    opword 0xFCE0101C
+    blr
+}
+
+/* fctiw-negative-zero */
+asm void ppc_fixture_payload_290(void) {
+    nofralloc
+    opword 0xFCE0101C
+    blr
+}
+
+/* fctiw-qnan */
+asm void ppc_fixture_payload_291(void) {
+    nofralloc
+    opword 0xFCE0101C
+    blr
+}
+
+/* fctiw-snan */
+asm void ppc_fixture_payload_292(void) {
+    nofralloc
+    opword 0xFCE0101C
+    blr
+}
+
+/* fctiw-positive-overflow */
+asm void ppc_fixture_payload_293(void) {
+    nofralloc
+    opword 0xFCE0101C
+    blr
+}
+
+/* fctiw-negative-overflow */
+asm void ppc_fixture_payload_294(void) {
+    nofralloc
+    opword 0xFCE0101C
+    blr
+}
+
+/* fctiw-ve */
+asm void ppc_fixture_payload_295(void) {
     nofralloc
     opword 0xFCE0101D
     blr
 }
 
 /* fctiw-xe */
-asm void ppc_fixture_payload_289(void) {
+asm void ppc_fixture_payload_296(void) {
     nofralloc
     opword 0xFCE0101D
     blr
 }
 
 /* fmadds */
-asm void ppc_fixture_payload_290(void) {
+asm void ppc_fixture_payload_297(void) {
     nofralloc
     opword 0xECE110FB
     blr
 }
 
 /* fmadds-force25 */
-asm void ppc_fixture_payload_291(void) {
+asm void ppc_fixture_payload_298(void) {
     nofralloc
     opword 0xECE110FA
     blr
 }
 
 /* fmadds-single-rounding */
-asm void ppc_fixture_payload_292(void) {
+asm void ppc_fixture_payload_299(void) {
     nofralloc
     opword 0xECE110FA
     blr
 }
 
 /* fmadds-nan-order */
-asm void ppc_fixture_payload_293(void) {
+asm void ppc_fixture_payload_300(void) {
     nofralloc
     opword 0xECE110FA
     blr
 }
 
 /* fmadds-vximz */
-asm void ppc_fixture_payload_294(void) {
+asm void ppc_fixture_payload_301(void) {
     nofralloc
     opword 0xECE110FA
     blr
 }
 
 /* fmadds-vximz-ve */
-asm void ppc_fixture_payload_295(void) {
+asm void ppc_fixture_payload_302(void) {
     nofralloc
     opword 0xECE110FB
     blr
 }
 
 /* fmadds-vxisi */
-asm void ppc_fixture_payload_296(void) {
+asm void ppc_fixture_payload_303(void) {
     nofralloc
     opword 0xECE110FA
     blr
 }
 
 /* fmsubs */
-asm void ppc_fixture_payload_297(void) {
-    nofralloc
-    opword 0xECE110F8
-    blr
-}
-
-/* fnmsubs */
-asm void ppc_fixture_payload_298(void) {
-    nofralloc
-    opword 0xECE110FC
-    blr
-}
-
-/* fmsubs-positive-zero */
-asm void ppc_fixture_payload_299(void) {
-    nofralloc
-    opword 0xECE110F8
-    blr
-}
-
-/* fnmsubs-negative-zero */
-asm void ppc_fixture_payload_300(void) {
-    nofralloc
-    opword 0xECE110FC
-    blr
-}
-
-/* fmsubs-single-rounding */
-asm void ppc_fixture_payload_301(void) {
-    nofralloc
-    opword 0xECE110F8
-    blr
-}
-
-/* fnmsubs-single-rounding */
-asm void ppc_fixture_payload_302(void) {
-    nofralloc
-    opword 0xECE110FC
-    blr
-}
-
-/* fnmsubs-nan-not-negated */
-asm void ppc_fixture_payload_303(void) {
-    nofralloc
-    opword 0xECE110FC
-    blr
-}
-
-/* fmsubs-vxisi */
 asm void ppc_fixture_payload_304(void) {
     nofralloc
     opword 0xECE110F8
     blr
 }
 
-/* fnmsubs-vximz */
+/* fnmsubs */
 asm void ppc_fixture_payload_305(void) {
     nofralloc
     opword 0xECE110FC
     blr
 }
 
-/* fnmsubs-vxisi-ve */
+/* fmsubs-positive-zero */
 asm void ppc_fixture_payload_306(void) {
+    nofralloc
+    opword 0xECE110F8
+    blr
+}
+
+/* fnmsubs-negative-zero */
+asm void ppc_fixture_payload_307(void) {
+    nofralloc
+    opword 0xECE110FC
+    blr
+}
+
+/* fmsubs-single-rounding */
+asm void ppc_fixture_payload_308(void) {
+    nofralloc
+    opword 0xECE110F8
+    blr
+}
+
+/* fnmsubs-single-rounding */
+asm void ppc_fixture_payload_309(void) {
+    nofralloc
+    opword 0xECE110FC
+    blr
+}
+
+/* fnmsubs-nan-not-negated */
+asm void ppc_fixture_payload_310(void) {
+    nofralloc
+    opword 0xECE110FC
+    blr
+}
+
+/* fmsubs-vxisi */
+asm void ppc_fixture_payload_311(void) {
+    nofralloc
+    opword 0xECE110F8
+    blr
+}
+
+/* fnmsubs-vximz */
+asm void ppc_fixture_payload_312(void) {
+    nofralloc
+    opword 0xECE110FC
+    blr
+}
+
+/* fnmsubs-vxisi-ve */
+asm void ppc_fixture_payload_313(void) {
     nofralloc
     opword 0xECE110FD
     blr
 }
 
 /* fnmadds */
-asm void ppc_fixture_payload_307(void) {
+asm void ppc_fixture_payload_314(void) {
     nofralloc
     opword 0xECE110FE
     blr
 }
 
 /* fnmadds-nan-not-negated */
-asm void ppc_fixture_payload_308(void) {
+asm void ppc_fixture_payload_315(void) {
     nofralloc
     opword 0xECE110FE
     blr
 }
 
 /* fmadd */
-asm void ppc_fixture_payload_309(void) {
+asm void ppc_fixture_payload_316(void) {
     nofralloc
     opword 0xFCE110FA
     blr
 }
 
 /* fmadd-single-rounding */
-asm void ppc_fixture_payload_310(void) {
+asm void ppc_fixture_payload_317(void) {
     nofralloc
     opword 0xFCE110FA
     blr
 }
 
 /* fmadd-nan-payload */
-asm void ppc_fixture_payload_311(void) {
+asm void ppc_fixture_payload_318(void) {
     nofralloc
     opword 0xFCE110FA
     blr
 }
 
 /* fmsub */
-asm void ppc_fixture_payload_312(void) {
+asm void ppc_fixture_payload_319(void) {
     nofralloc
     opword 0xFCE110F8
     blr
 }
 
 /* fnmadd */
-asm void ppc_fixture_payload_313(void) {
+asm void ppc_fixture_payload_320(void) {
     nofralloc
     opword 0xFCE110FE
     blr
 }
 
 /* fnmadd-vxisi-ve */
-asm void ppc_fixture_payload_314(void) {
+asm void ppc_fixture_payload_321(void) {
     nofralloc
     opword 0xFCE110FF
     blr
 }
 
 /* fnmsub */
-asm void ppc_fixture_payload_315(void) {
+asm void ppc_fixture_payload_322(void) {
     nofralloc
     opword 0xFCE110FC
     blr
 }
 
 /* fnmsub-vximz */
-asm void ppc_fixture_payload_316(void) {
+asm void ppc_fixture_payload_323(void) {
     nofralloc
     opword 0xFCE110FC
     blr
 }
 
 /* fres */
-asm void ppc_fixture_payload_317(void) {
+asm void ppc_fixture_payload_324(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0xECE01031
@@ -2437,28 +2498,28 @@ asm void ppc_fixture_payload_317(void) {
 }
 
 /* fres-small */
-asm void ppc_fixture_payload_318(void) {
+asm void ppc_fixture_payload_325(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
 /* fres-zero-ze */
-asm void ppc_fixture_payload_319(void) {
+asm void ppc_fixture_payload_326(void) {
     nofralloc
     opword 0xECE01031
     blr
 }
 
 /* fres-snan-ve */
-asm void ppc_fixture_payload_320(void) {
+asm void ppc_fixture_payload_327(void) {
     nofralloc
     opword 0xECE01030
     blr
 }
 
 /* frsqrte */
-asm void ppc_fixture_payload_321(void) {
+asm void ppc_fixture_payload_328(void) {
     nofralloc
     opword 0x7CB1E3A6
     opword 0x10E21C20
@@ -2468,112 +2529,112 @@ asm void ppc_fixture_payload_321(void) {
 }
 
 /* frsqrte-subnormal */
-asm void ppc_fixture_payload_322(void) {
+asm void ppc_fixture_payload_329(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
 /* frsqrte-negative */
-asm void ppc_fixture_payload_323(void) {
+asm void ppc_fixture_payload_330(void) {
     nofralloc
     opword 0xFCE01034
     blr
 }
 
 /* fsel */
-asm void ppc_fixture_payload_324(void) {
+asm void ppc_fixture_payload_331(void) {
     nofralloc
     opword 0xFCE110EE
     blr
 }
 
 /* fcmpu */
-asm void ppc_fixture_payload_325(void) {
+asm void ppc_fixture_payload_332(void) {
     nofralloc
     opword 0xFC011000
     blr
 }
 
 /* fcmpu-snan */
-asm void ppc_fixture_payload_326(void) {
+asm void ppc_fixture_payload_333(void) {
     nofralloc
     opword 0xFD811000
     blr
 }
 
 /* fcmpo */
-asm void ppc_fixture_payload_327(void) {
+asm void ppc_fixture_payload_334(void) {
     nofralloc
     opword 0xFD811040
     blr
 }
 
 /* fcmpo-qnan */
-asm void ppc_fixture_payload_328(void) {
+asm void ppc_fixture_payload_335(void) {
     nofralloc
     opword 0xFD811040
     blr
 }
 
 /* fcmpo-qnan-ve */
-asm void ppc_fixture_payload_329(void) {
+asm void ppc_fixture_payload_336(void) {
     nofralloc
     opword 0xFD811040
     blr
 }
 
 /* fcmpo-snan */
-asm void ppc_fixture_payload_330(void) {
+asm void ppc_fixture_payload_337(void) {
     nofralloc
     opword 0xFD811040
     blr
 }
 
 /* fcmpo-snan-ve */
-asm void ppc_fixture_payload_331(void) {
+asm void ppc_fixture_payload_338(void) {
     nofralloc
     opword 0xFD811040
     blr
 }
 
 /* frsp */
-asm void ppc_fixture_payload_332(void) {
+asm void ppc_fixture_payload_339(void) {
     nofralloc
     opword 0xFCE01018
     blr
 }
 
 /* fneg */
-asm void ppc_fixture_payload_333(void) {
+asm void ppc_fixture_payload_340(void) {
     nofralloc
     opword 0xFCE01050
     blr
 }
 
 /* fmr */
-asm void ppc_fixture_payload_334(void) {
+asm void ppc_fixture_payload_341(void) {
     nofralloc
     opword 0xFCE01090
     blr
 }
 
 /* fnabs */
-asm void ppc_fixture_payload_335(void) {
+asm void ppc_fixture_payload_342(void) {
     nofralloc
     opword 0xFCE01110
     blr
 }
 
 /* fabs */
-asm void ppc_fixture_payload_336(void) {
+asm void ppc_fixture_payload_343(void) {
     nofralloc
     opword 0xFCE01210
     blr
 }
 
 /* lmw-overlapping-base */
-asm void ppc_fixture_payload_337(void) {
+asm void ppc_fixture_payload_344(void) {
     nofralloc
     opword 0x90240078
     opword 0x91C4007C

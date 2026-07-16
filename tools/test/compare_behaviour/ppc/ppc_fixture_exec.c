@@ -19,6 +19,7 @@ typedef struct PpcFixtureLiveState {
     u32 xer;
     u32 lr;
     u32 ctr;
+    u32 gqr[8];
 } PpcFixtureLiveState;
 
 static PpcFixtureLiveState s_live;
@@ -63,6 +64,23 @@ static asm void ppc_fixture_enter(PpcFixtureLiveState* live, PpcFixturePayloadFn
     stfd f30, 232(r1)
     stfd f31, 240(r1)
 
+    mfspr r0, 912
+    stw r0, 248(r1)
+    mfspr r0, 913
+    stw r0, 252(r1)
+    mfspr r0, 914
+    stw r0, 256(r1)
+    mfspr r0, 915
+    stw r0, 260(r1)
+    mfspr r0, 916
+    stw r0, 264(r1)
+    mfspr r0, 917
+    stw r0, 268(r1)
+    mfspr r0, 918
+    stw r0, 272(r1)
+    mfspr r0, 919
+    stw r0, 276(r1)
+
     mr r14, r3
     mr r15, r4
 
@@ -72,6 +90,8 @@ static asm void ppc_fixture_enter(PpcFixtureLiveState* live, PpcFixturePayloadFn
     mtcrf 0xff, r0
     lwz r0, 396(r14)
     mtxer r0
+    lwz r0, 400(r14)
+    mtlr r0
     lwz r0, 404(r14)
     mtctr r0
 
@@ -207,8 +227,27 @@ static asm void ppc_fixture_enter(PpcFixtureLiveState* live, PpcFixturePayloadFn
     stw r0, 392(r14)
     mfxer r0
     stw r0, 396(r14)
+    mflr r0
+    stw r0, 400(r14)
     mfctr r0
     stw r0, 404(r14)
+
+    mfspr r0, 912
+    stw r0, 408(r14)
+    mfspr r0, 913
+    stw r0, 412(r14)
+    mfspr r0, 914
+    stw r0, 416(r14)
+    mfspr r0, 915
+    stw r0, 420(r14)
+    mfspr r0, 916
+    stw r0, 424(r14)
+    mfspr r0, 917
+    stw r0, 428(r14)
+    mfspr r0, 918
+    stw r0, 432(r14)
+    mfspr r0, 919
+    stw r0, 436(r14)
 
     lwz r2, 92(r1)
     lwz r13, 96(r1)
@@ -236,6 +275,24 @@ static asm void ppc_fixture_enter(PpcFixtureLiveState* live, PpcFixturePayloadFn
     mtxer r0
     lwz r0, 88(r1)
     mtctr r0
+
+    lwz r0, 248(r1)
+    mtspr 912, r0
+    lwz r0, 252(r1)
+    mtspr 913, r0
+    lwz r0, 256(r1)
+    mtspr 914, r0
+    lwz r0, 260(r1)
+    mtspr 915, r0
+    lwz r0, 264(r1)
+    mtspr 916, r0
+    lwz r0, 268(r1)
+    mtspr 917, r0
+    lwz r0, 272(r1)
+    mtspr 918, r0
+    lwz r0, 276(r1)
+    mtspr 919, r0
+
     lmw r14, 8(r1)
     lwz r0, 292(r1)
     mtlr r0
@@ -269,8 +326,12 @@ void ppc_fixture_run_case(const PpcFixtureCase* fixture, u32* sandbox, PpcFixtur
     actual->result = s_live.gpr[fixture->result_reg];
     actual->cr = s_live.cr;
     actual->xer = s_live.xer;
+    actual->lr = s_live.lr;
+    actual->ctr = s_live.ctr;
     memcpy(actual->fpr, s_live.fpr, sizeof(actual->fpr));
     actual->fpscr = (u32)s_live.fpscr_image;
+    memcpy(actual->gqr, s_live.gqr, sizeof(actual->gqr));
+    memcpy(actual->gpr, s_live.gpr, sizeof(actual->gpr));
     for (index = 0; index < PPC_FIXTURE_MEM_WORDS; ++index) {
         actual->mem[index] = sandbox[index];
     }

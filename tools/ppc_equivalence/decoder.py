@@ -567,6 +567,70 @@ def decode_block(
     return result
 
 
+def specialize_relocations(
+    code: bytes,
+    base_address: int,
+    relocations: Sequence[RelocationRef],
+    symbol_addresses: dict[str, int],
+    *,
+    sda_bases: dict[int, int] | None = None,
+) -> bytes:
+    """Apply supported relocation transforms independently of the SMT model."""
+    linked = bytearray(code)
+    sda_bases = sda_bases or {}
+    for relocation in relocations:
+        if relocation.canonical_symbol not in symbol_addresses:
+            raise DecodeError(
+                f"no concrete address for relocation symbol {relocation.canonical_symbol!r}"
+            )
+        target = (symbol_addresses[relocation.canonical_symbol] + relocation.addend) & 0xFFFFFFFF
+        relocation_type = relocation.relocation_type
+        offset = relocation.offset
+        instruction_offset = offset - 2 if relocation_type in (
+            R_PPC_ADDR16_LO, R_PPC_ADDR16_HI, R_PPC_ADDR16_HA,
+        ) else offset
+        if instruction_offset < 0 or instruction_offset + 4 > len(linked):
+            raise DecodeError(f"relocation at +0x{offset:x} lies outside function bytes")
+        word = int.from_bytes(linked[instruction_offset:instruction_offset + 4], "big")
+        if relocation_type == R_PPC_ADDR16_LO:
+            word = (word & 0xFFFF0000) | (target & 0xFFFF)
+        elif relocation_type == R_PPC_ADDR16_HI:
+            word = (word & 0xFFFF0000) | ((target >> 16) & 0xFFFF)
+        elif relocation_type == R_PPC_ADDR16_HA:
+            word = (word & 0xFFFF0000) | (((target + 0x8000) >> 16) & 0xFFFF)
+        elif relocation_type in (R_PPC_REL24, R_PPC_REL14):
+            place = (base_address + instruction_offset) & 0xFFFFFFFF
+            delta = target - place
+            if delta & 3:
+                raise DecodeError(f"branch relocation target 0x{target:08x} is not aligned")
+            low, high, mask = (
+                (-0x02000000, 0x01FFFFFC, 0x03FFFFFC)
+                if relocation_type == R_PPC_REL24
+                else (-0x8000, 0x7FFC, 0x0000FFFC)
+            )
+            if not low <= delta <= high:
+                raise DecodeError(
+                    f"branch relocation displacement {delta:+#x} is outside [{low:+#x}, {high:+#x}]"
+                )
+            word = (word & ~mask) | (delta & mask)
+        elif relocation_type == R_PPC_EMB_SDA21:
+            choices = [
+                (register, target - (address & 0xFFFFFFFF))
+                for register, address in sda_bases.items() if register in (2, 13)
+            ]
+            fitting = [(register, delta) for register, delta in choices if -0x8000 <= delta <= 0x7FFF]
+            if not fitting:
+                raise DecodeError(
+                    f"SDA21 target 0x{target:08x} is not within signed-16 range of r2 or r13"
+                )
+            register, delta = sorted(fitting, key=lambda item: item[0] != 13)[0]
+            word = (word & ~0x001FFFFF) | (register << 16) | (delta & 0xFFFF)
+        else:
+            raise DecodeError(f"unsupported text relocation type {relocation_type}")
+        linked[instruction_offset:instruction_offset + 4] = word.to_bytes(4, "big")
+    return bytes(linked)
+
+
 _ADDR16_OPCODES = frozenset({
     Opcode.ADDI, Opcode.ADDIS, Opcode.ADDIC, Opcode.ADDIC_DOT,
     Opcode.ORI,

@@ -15,12 +15,25 @@ class ModelConfig:
 
 
 @dataclass
+class SourcePatch:
+    slot_id: str
+    source: str
+
+
+@dataclass
 class Candidate:
-    full_source: str
+    source: str
     hypothesis: str
     notes: List[str] = field(default_factory=list)
     next_change: str = ""
     confidence: Optional[float] = None
+    patches: List[SourcePatch] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        self.patches = [
+            value if isinstance(value, SourcePatch) else SourcePatch(**value)
+            for value in self.patches
+        ]
 
 
 @dataclass
@@ -31,6 +44,7 @@ class Evaluation:
     size_ok: Optional[bool] = None
     equivalence: Optional[str] = None
     detail: str = ""
+    metrics: Dict[str, Any] = field(default_factory=dict)
 
     def rank(self) -> tuple[int, float]:
         # Project policy decides acceptance. Match percentage is only a tie-breaker.
@@ -74,8 +88,14 @@ class ExperimentRecord:
 class ProjectAdapter(Protocol):
     root: Any
 
-    def build_prompt(self, workflow: str, target_id: str, history: List[Dict[str, Any]]) -> str: ...
+    def build_prompt(
+        self,
+        workflow: str,
+        target_id: str,
+        history: List[Dict[str, Any]],
+        options: Optional[Dict[str, Any]] = None,
+    ) -> str: ...
 
-    def evaluate(self, target_id: str, candidate: Candidate) -> Evaluation: ...
+    def evaluate(self, workflow: str, target_id: str, candidate: Candidate) -> Evaluation: ...
 
     def finalize(self) -> None: ...

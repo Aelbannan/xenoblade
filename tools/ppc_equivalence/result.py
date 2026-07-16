@@ -4,8 +4,8 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v15"
-RESULT_FORMAT = 4
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v17"
+RESULT_FORMAT = 7
 
 
 class ProofStatus(str, Enum):
@@ -14,6 +14,9 @@ class ProofStatus(str, Enum):
     INCONCLUSIVE_TIMEOUT = "inconclusive_timeout"
     INCONCLUSIVE_UNKNOWN = "inconclusive_unknown"
     INCONCLUSIVE_UNSUPPORTED = "inconclusive_unsupported"
+    INCONCLUSIVE_ABSTRACTION = "inconclusive_abstraction"
+    INCONCLUSIVE_LAYOUT = "inconclusive_layout"
+    INCONCLUSIVE_UNVALIDATED_CALLEE = "inconclusive_unvalidated_callee"
     INVALID_INPUT = "invalid_input"
     INTERNAL_ERROR = "internal_error"
 
@@ -30,6 +33,8 @@ class ProofResult:
         "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
         "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
         "shared byte-addressed initial memory",
+        "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private; calls or storing an r1-derived pointer disable that masking",
+        "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
         "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX and traps are not",
         "FP arithmetic requires RN=nearest-even and NI=0; finite-input overflow is excluded, modeled invalid/ZX cases are included",
@@ -42,7 +47,7 @@ class ProofResult:
         "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
         "division results compared only on architecturally defined inputs",
         "loops are unsupported; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
-        "matched-callee summaries preserve EABI nonvolatile registers and machine-control state while allowing arbitrary deterministic volatile, FPSCR, memory, and defined-domain effects",
+        "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
         "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
     ])
     original_instruction_count: int = 0
@@ -53,6 +58,9 @@ class ProofResult:
     replay: dict[str, Any] | None = None
     repair_hint: dict[str, Any] | None = None
     assumed_callees: list[int | str] = field(default_factory=list)
+    callee_contracts: dict[str, dict[str, Any]] = field(default_factory=dict)
+    abstractions: list[str] = field(default_factory=list)
+    counterexample_kind: str | None = None
     unsupported: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 

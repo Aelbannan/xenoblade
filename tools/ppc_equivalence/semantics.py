@@ -30,6 +30,30 @@ from .spr import (
 
 MASK32 = 0xFFFFFFFF
 
+
+@dataclass(frozen=True, slots=True)
+class CalleeContract:
+    """Architectural dependency/effect summary for an already-matched callee."""
+
+    reads: frozenset[str]
+    writes: frozenset[str]
+    source: str = "inferred"
+
+    @classmethod
+    def opaque_eabi(cls) -> "CalleeContract":
+        return cls(
+            frozenset({"*"}),
+            frozenset({
+                *(f"r{i}" for i in (0, *range(3, 13))),
+                *(f"f{i}" for i in range(14)),
+                *(f"f{i}.ps1" for i in range(14)),
+                "cr0", "cr1", "cr5", "cr6", "cr7",
+                "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr",
+                "memory", "valid",
+            }),
+            "opaque-eabi",
+        )
+
 # FPSCR numeric masks (Gekko.h UReg_FPSCR bitfield layout).
 FPSCR_FX = 1 << 31
 FPSCR_FEX = 1 << 30
@@ -482,6 +506,7 @@ class SymbolicOps:
             raise RuntimeError("z3-solver is required; install tools/ppc_equivalence/requirements.txt") from exc
         self.z3 = z3
         self.relocation_values: dict[str, Any] = {}
+        self.relocation_uses: set[tuple[str, int, int, int]] = set()
         self._call_functions: dict[tuple[str, str], Any] = {}
         self._relocation_world = z3.BitVec("reloc.world", 32)
 
@@ -815,17 +840,71 @@ class SymbolicOps:
             self.relocation_values[name] = value
         return value
 
-    def call_token(self, callee: str, state: MachineState) -> Any:
+    def note_relocation(self, relocation: RelocationRef, instruction_address: int) -> None:
+        self.relocation_uses.add((
+            relocation.canonical_symbol,
+            relocation.relocation_type,
+            instruction_address & MASK32,
+            relocation.addend,
+        ))
+
+    def layout_constraints(self, initial: MachineState) -> list[Any]:
+        """Return the field-range/alignment conditions a real PPC linker needs."""
+        z3 = self.z3
+        constraints: list[Any] = []
+        for symbol, relocation_type, place, addend in sorted(self.relocation_uses):
+            target = self.relocation_values[symbol] + self.const(addend)
+            if relocation_type in (R_PPC_REL24, R_PPC_REL14):
+                constraints.append((target & self.const(3)) == self.const(0))
+                delta = z3.ZeroExt(1, target) - z3.BitVecVal(place, 33)
+                low, high = (
+                    (-0x02000000, 0x01FFFFFC)
+                    if relocation_type == R_PPC_REL24 else (-0x8000, 0x7FFC)
+                )
+                constraints.extend((
+                    delta >= z3.BitVecVal(low, 33),
+                    delta <= z3.BitVecVal(high, 33),
+                ))
+            elif relocation_type == R_PPC_EMB_SDA21:
+                def fits(base: Any) -> Any:
+                    delta = z3.ZeroExt(1, target) - z3.ZeroExt(1, base)
+                    return z3.And(
+                        delta >= z3.BitVecVal(-0x8000, 33),
+                        delta <= z3.BitVecVal(0x7FFF, 33),
+                    )
+                constraints.append(z3.Or(fits(initial.gpr[2]), fits(initial.gpr[13])))
+        return constraints
+
+    def call_token(self, callee: str, state: MachineState, contract: CalleeContract) -> Any:
         """A deterministic opaque transition key for an already-proved callee."""
         import hashlib
-        arguments = (
-            *state.gpr, *state.fpr, *state.ps1, *state.gqr, state.cr,
-            state.xer.ca, state.xer.ov, state.xer.so, state.fpscr,
-            state.ctr, state.msr, *state.sr, state.time_base, state.srr0,
-            state.srr1, *state.spr, state.memory, state.valid,
+        components: dict[str, Any] = {
+            **{f"r{i}": state.gpr[i] for i in range(32)},
+            **{f"f{i}": state.fpr[i] for i in range(32)},
+            **{f"f{i}.ps1": state.ps1[i] for i in range(32)},
+            **{f"gqr{i}": state.gqr[i] for i in range(8)},
+            **{f"sr{i}": state.sr[i] for i in range(16)},
+            **{
+                AUX_SPR_NAMES[number]: state.spr[index]
+                for number, index in AUX_SPR_INDEX.items()
+            },
+            "cr": state.cr, "xer.ca": state.xer.ca, "xer.ov": state.xer.ov,
+            "xer.so": state.xer.so, "fpscr": state.fpscr, "ctr": state.ctr,
+            "lr": state.lr, "msr": state.msr, "time_base": state.time_base, "srr0": state.srr0,
+            "srr1": state.srr1, "memory": state.memory, "valid": state.valid,
+        }
+        for field in range(8):
+            shift = (7 - field) * 4
+            components[f"cr{field}"] = self.z3.Extract(shift + 3, shift, state.cr)
+        names = (
+            sorted(name for name in components if name != "lr")
+            if "*" in contract.reads else sorted(contract.reads)
+        )
+        arguments = tuple(components[name] for name in names if name in components) + (
             self._relocation_world,
         )
-        key = (callee, "token")
+        signature = ",".join(names)
+        key = (callee, f"token:{signature}")
         function = self._call_functions.get(key)
         if function is None:
             digest = hashlib.sha256(callee.encode("utf-8")).hexdigest()[:16]
@@ -937,6 +1016,8 @@ def _relocation_address(insn: Instruction, ops: WordOps) -> Any:
     relocation = insn.relocation
     if relocation is None:
         raise ExecutionInconclusive("instruction has no relocation")
+    if isinstance(ops, SymbolicOps):
+        ops.note_relocation(relocation, insn.address)
     return ops.add(ops.relocation_address(relocation), ops.const(relocation.addend))
 
 
@@ -987,6 +1068,19 @@ def _touch_memory(state: MachineState, address: Any, width: int, ops: WordOps) -
         state = replace(state, valid=ops.land(state.valid, aligned))
     touches = state.memory_touches + tuple(ops.add(address, ops.const(offset)) for offset in range(width))
     return replace(state, memory_touches=touches)
+
+
+def _mark_stack_pointer_escape(
+    state: MachineState, stored_value: Any, ops: WordOps,
+) -> MachineState:
+    if not isinstance(ops, SymbolicOps):
+        return state
+    if any(
+        str(variable.decl().name()) == "input.gpr.r1"
+        for variable in ops.z3.z3util.get_vars(stored_value)
+    ):
+        return replace(state, stack_private=ops.bool(False))
+    return state
 
 
 _PSQ_INTEGER_TYPES = {
@@ -1951,6 +2045,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             return state
         width, update, reverse_bytes = STORES[op]
         state = _touch_memory(state, address, width, ops)
+        state = _mark_stack_pointer_escape(state, state.gpr[reg], ops)
         state = replace(state, memory=_store(state.memory, address, state.gpr[reg], width, ops, reverse=reverse_bytes))
         if update: state = state.with_gpr(ra, address)
         return state
@@ -2624,6 +2719,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             if op == Opcode.LMW:
                 state = state.with_gpr(index, _load(state.memory, address, 4, ops))
             else:
+                state = _mark_stack_pointer_escape(state, state.gpr[index], ops)
                 state = replace(state, memory=_store(state.memory, address, state.gpr[index], 4, ops))
             address = ops.add(address, ops.const(4))
         return state
@@ -2685,31 +2781,47 @@ def _exception_entry(
     )
 
 
-def _apply_call_summary(state: MachineState, ops: WordOps, call_id: int | str) -> MachineState:
+def _apply_call_summary(
+    state: MachineState,
+    ops: WordOps,
+    call_id: int | str,
+    contract: CalleeContract,
+) -> MachineState:
     if not isinstance(ops, SymbolicOps):
         raise ExecutionInconclusive("matched-callee summaries require symbolic execution")
     callee = str(call_id)
-    token = ops.call_token(callee, state)
+    token = ops.call_token(callee, state, contract)
 
     def result(component: str, sort: Any) -> Any:
         return ops.call_result(callee, component, token, sort)
     fresh_gprs = list(state.gpr)
     for i in (0,) + tuple(range(3, 13)):
-        fresh_gprs[i] = result(f"r{i}", state.gpr[i].sort())
+        if f"r{i}" in contract.writes:
+            fresh_gprs[i] = result(f"r{i}", state.gpr[i].sort())
     fresh_fprs = list(state.fpr)
     fresh_ps1 = list(state.ps1)
     for i in range(14):
-        fresh_fprs[i] = result(f"f{i}", state.fpr[i].sort())
-        fresh_ps1[i] = result(f"f{i}.ps1", state.ps1[i].sort())
+        if f"f{i}" in contract.writes:
+            fresh_fprs[i] = result(f"f{i}", state.fpr[i].sort())
+        if f"f{i}.ps1" in contract.writes:
+            fresh_ps1[i] = result(f"f{i}.ps1", state.ps1[i].sort())
     fresh_xer = XerState(
-        result("xer.ca", state.xer.ca.sort()),
-        result("xer.ov", state.xer.ov.sort()),
-        result("xer.so", state.xer.so.sort()),
+        result("xer.ca", state.xer.ca.sort()) if "xer.ca" in contract.writes else state.xer.ca,
+        result("xer.ov", state.xer.ov.sort()) if "xer.ov" in contract.writes else state.xer.ov,
+        result("xer.so", state.xer.so.sort()) if "xer.so" in contract.writes else state.xer.so,
     )
-    volatile_cr_mask = 0xFF000FFF  # CR0, CR1, CR5, CR6, CR7
+    volatile_cr_mask = sum(
+        0xF << ((7 - field) * 4)
+        for field in (0, 1, 5, 6, 7)
+        if f"cr{field}" in contract.writes or "cr" in contract.writes
+    )
     fresh_cr = ops.bor(
         ops.band(state.cr, ops.const(~volatile_cr_mask & MASK32)),
         ops.band(result("cr", state.cr.sort()), ops.const(volatile_cr_mask)),
+    )
+    memory = (
+        result("memory", state.memory.sort())
+        if "memory" in contract.writes else state.memory
     )
     return MachineState(
         tuple(fresh_gprs),
@@ -2718,18 +2830,22 @@ def _apply_call_summary(state: MachineState, ops: WordOps, call_id: int | str) -
         state.gqr,
         fresh_cr,
         fresh_xer,
-        result("fpscr", state.fpscr.sort()),
+        result("fpscr", state.fpscr.sort()) if "fpscr" in contract.writes else state.fpscr,
         state.lr,
-        result("ctr", state.ctr.sort()),
+        result("ctr", state.ctr.sort()) if "ctr" in contract.writes else state.ctr,
         state.msr,
         state.sr,
         state.time_base,
         state.srr0,
         state.srr1,
         state.spr,
-        result("memory", state.memory.sort()),
-        result("valid", state.valid.sort()),
+        memory,
+        result("valid", state.valid.sort()) if "valid" in contract.writes else state.valid,
         state.memory_touches,
+        state.stack_low,
+        state.memory_effects + ((token,) if "memory" in contract.writes else ()),
+        state.stack_layout_valid,
+        ops.bool(False),
     )
 
 
@@ -2752,9 +2868,17 @@ def execute_cfg(
     max_paths: int = 256,
     assumed_callees: frozenset[int | str] = frozenset(),
     assumed_callees_used: set[int | str] | None = None,
+    callee_contracts: dict[int | str, CalleeContract] | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
+    if state.stack_low is None:
+        state = replace(
+            state, stack_low=state.gpr[1], stack_layout_valid=ops.bool(True),
+            stack_private=ops.bool(True),
+        )
+    caller_frame_top = state.gpr[1]
+    callee_contracts = callee_contracts or {}
     by_address = {item.address: item for item in instructions}
     start = instructions[0].address
     end = instructions[-1].address + 4
@@ -2813,7 +2937,21 @@ def execute_cfg(
             ))
             continue
         if insn.opcode not in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
-            work.append((pc + 4, execute_instruction(current, insn, ops), condition, new_visited, steps + 1))
+            next_state = execute_instruction(current, insn, ops)
+            assert current.stack_low is not None
+            next_state = replace(
+                next_state,
+                stack_low=ops.ite(
+                    ops.unsigned_lt(next_state.gpr[1], current.stack_low),
+                    next_state.gpr[1],
+                    current.stack_low,
+                ),
+                stack_layout_valid=ops.land(
+                    current.stack_layout_valid,
+                    ops.lnot(ops.unsigned_lt(caller_frame_top, next_state.gpr[1])),
+                ),
+            )
+            work.append((pc + 4, next_state, condition, new_visited, steps + 1))
             continue
 
         old_lr, old_ctr = current.lr, current.ctr
@@ -2825,12 +2963,18 @@ def execute_cfg(
             elif insn.link and target_key in assumed_callees:
                 if assumed_callees_used is not None:
                     assumed_callees_used.add(target_key)
-                summarized = _apply_call_summary(linked, ops, target_key)
+                summarized = _apply_call_summary(
+                    linked, ops, target_key,
+                    callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
+                )
                 work.append((pc + 4, summarized, condition, new_visited, steps + 1))
             elif not insn.link and target_key in assumed_callees:
                 if assumed_callees_used is not None:
                     assumed_callees_used.add(target_key)
-                summarized = _apply_call_summary(linked, ops, target_key)
+                summarized = _apply_call_summary(
+                    linked, ops, target_key,
+                    callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
+                )
                 terminals.append(Terminal(
                     condition, summarized, "return",
                     ops.band(current.lr, ops.const(0xFFFFFFFC)),
@@ -2870,12 +3014,18 @@ def execute_cfg(
         elif insn.link and kind == "call" and target_key is not None and target_key in assumed_callees:
             if assumed_callees_used is not None:
                 assumed_callees_used.add(target_key)
-            summarized = _apply_call_summary(branched_state, ops, target_key)
+            summarized = _apply_call_summary(
+                branched_state, ops, target_key,
+                callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
+            )
             work.append((pc + 4, summarized, taken_condition, new_visited, steps + 1))
         elif not insn.link and target_key is not None and target_key in assumed_callees:
             if assumed_callees_used is not None:
                 assumed_callees_used.add(target_key)
-            summarized = _apply_call_summary(branched_state, ops, target_key)
+            summarized = _apply_call_summary(
+                branched_state, ops, target_key,
+                callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
+            )
             terminals.append(Terminal(
                 taken_condition, summarized, "return",
                 ops.band(old_lr, ops.const(0xFFFFFFFC)),
@@ -2900,7 +3050,14 @@ def execute_block(state: MachineState, instructions: list[Instruction], ops: Wor
     terminals = execute_cfg(state, instructions, ops, max_instructions=max_instructions)
     if len(terminals) != 1 or terminals[0].exit_kind != "fallthrough":
         raise ExecutionInconclusive("concrete replay has multiple paths or a non-fallthrough exit")
-    return terminals[0].state
+    # Stack-bound metadata is proof bookkeeping, not architectural state exposed
+    # by this single-block compatibility helper.
+    return replace(
+        terminals[0].state,
+        stack_low=state.stack_low,
+        stack_layout_valid=state.stack_layout_valid,
+        stack_private=state.stack_private,
+    )
 
 
 def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
@@ -3098,6 +3255,55 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         if op in destination_ops: writes.add(f"r{a[0]}")
         if insn.record or op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT): writes.add("cr0")
     return reads, writes
+
+
+def infer_callee_contract(instructions: list[Instruction]) -> CalleeContract:
+    """Infer a conservative EABI exit contract from a matched function body.
+
+    Reads are a conservative union of instruction dependencies. Writes are
+    limited to ABI-volatile architectural state, so temporary saves/restores of
+    nonvolatile registers do not become false exit effects.
+    """
+    reads: set[str] = {"valid"}
+    observed_writes: set[str] = set()
+    has_nested_call = False
+    for insn in instructions:
+        insn_reads, insn_writes = register_effects(insn)
+        if (
+            insn.opcode == Opcode.BCLR
+            and not insn.link
+            and insn.operands[:2] == (20, 0)
+        ):
+            # The numeric link-register return address is continuation metadata,
+            # not a semantic input to a location-independent matched callee.
+            insn_reads -= {"lr", "cr", "ctr"}
+        reads.update(name for name in insn_reads if name)
+        observed_writes.update(name for name in insn_writes if name)
+        has_nested_call |= (
+            insn.opcode in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR)
+            and (insn.link or insn.relocation is not None)
+        )
+    if has_nested_call:
+        opaque = CalleeContract.opaque_eabi()
+        return CalleeContract(opaque.reads, opaque.writes, "nested-call-opaque-eabi")
+
+    volatile = {
+        *(f"r{i}" for i in (0, *range(3, 13))),
+        *(f"f{i}" for i in range(14)),
+        *(f"f{i}.ps1" for i in range(14)),
+        "cr", "cr0", "cr1", "cr5", "cr6", "cr7",
+        "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr", "memory",
+    }
+    writes = observed_writes & volatile
+    # A memory transformer must depend on the old array to represent bytes it
+    # does not modify. Definedness remains conservative until instruction-level
+    # preconditions are emitted as a separate callee lemma.
+    if "memory" in writes:
+        reads.add("memory")
+    if any(name == "cr" or name.startswith("cr") for name in writes):
+        reads.add("cr")
+    writes.add("valid")
+    return CalleeContract(frozenset(reads), frozenset(writes), "matched-body-effects")
 
 
 def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:

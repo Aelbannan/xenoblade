@@ -160,6 +160,9 @@ state into this document.
 # Validate uniqueness and status vocabularies
 python3 tools/coop/run.py targets validate
 
+# Refresh direct call edges from build/<region>/asm
+python3 tools/coop/run.py targets sync-calls
+
 # Add every missing function from config/<region>/symbols.txt
 python3 tools/coop/run.py targets import-symbols
 
@@ -179,3 +182,26 @@ python3 tools/coop/run.py targets release <id> --owner <agent>
 
 Imports are idempotent. Existing curated records and IDs win; generated IDs
 use `<region>-<address>` and remain stable across later semantic renames.
+
+## Bottom-up harness frontiers
+
+The registry stores direct retail `bl` edges as target IDs in
+`called_functions`. It separately records unresolved direct calls and indirect
+`bctrl`/`blrl` calls so uncertain functions are not mislabeled as leaves.
+MWCC `_savegpr_*`, `_restgpr_*`, `_savefpr_*`, and `_restfpr_*` entry calls are
+recorded as `abi_helper_calls` and ignored for semantic dependency ordering.
+
+```bash
+# No direct, unresolved, or indirect calls
+python3 tools/coop/run.py harness --selection leaf --include-catalog --dry-run
+
+# Non-leaves whose complete direct callee set is EQUIVALENT_MATCH or stronger
+python3 tools/coop/run.py harness --selection callees-accepted --include-catalog --dry-run
+
+# Both safe groups; execute at most 20 this pass
+python3 tools/coop/run.py harness --selection ready --include-catalog --limit 20
+```
+
+The frontier is evaluated before a harness pass. Rerun it after the pass to
+advance to newly unblocked callers. `--dry-run` is recommended before a large
+catalog run.

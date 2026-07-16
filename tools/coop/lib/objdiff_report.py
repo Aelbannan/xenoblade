@@ -10,6 +10,7 @@ from tools.coop.lib.config import CoopConfig
 from tools.coop.lib.equivalence_check import (
     EQUIVALENT_MATCH_MIN_PERCENT,
     EquivalenceProbe,
+    certify_unit_symbol,
     prove_unit_symbol,
     should_probe_equivalence,
 )
@@ -136,6 +137,8 @@ class MatchEvaluation:
     status: str
     equivalence: Optional[ProofStatus]
     equivalence_detail: str = ""
+    equivalence_certificate: dict | None = None
+    certificate_checked: bool = False
 
 
 def evaluate_unit_match(
@@ -145,18 +148,27 @@ def evaluate_unit_match(
     *,
     run_equivalence: bool = True,
     linked: bool = False,
+    target_id: str | None = None,
 ) -> MatchEvaluation:
     unit_report = report_unit(project, unit)
     fn_match = find_function_match(unit_report, symbol)
     equivalence: Optional[ProofStatus] = None
     detail = ""
+    certificate = None
+    certificate_checked = bool(target_id and symbol and fn_match and run_equivalence)
     pct = fn_match.match_percent if fn_match else None
     if run_equivalence and symbol and fn_match and should_probe_equivalence(pct):
         probe: EquivalenceProbe = prove_unit_symbol(
-            project, unit, fn_match.name, linked=linked
+            project, unit, fn_match.name, linked=linked, target_id=target_id,
         )
         equivalence = probe.status
         detail = probe.detail
+        certificate = probe.certificate
+    elif run_equivalence and target_id and symbol and fn_match and pct is not None and pct >= 100.0:
+        probe = certify_unit_symbol(project, unit, fn_match.name, target_id)
+        equivalence = probe.status
+        detail = probe.detail
+        certificate = probe.certificate
     status = classify_status(pct, unit_report, symbol=symbol, equivalence=equivalence)
     return MatchEvaluation(
         unit_report=unit_report,
@@ -164,6 +176,8 @@ def evaluate_unit_match(
         status=status,
         equivalence=equivalence,
         equivalence_detail=detail,
+        equivalence_certificate=certificate,
+        certificate_checked=certificate_checked,
     )
 
 

@@ -7,6 +7,6 @@ namespace cf{
     //size: 0x10
     class CHelp_ArtsSet : public CHelp {
     public:
-        virtual bool CHelp_UnkVirtualFunc3();
+        bool func_802B7D9C();
     };
 }

@@ -52,11 +52,13 @@ from tools.coop.lib.project import ObjdiffUnit, Project
 from tools.coop.lib.targets import (
     claim_target,
     get_target,
+    harness_targets,
     import_symbols,
     load_targets,
     pending_targets,
     release_target,
     sync_results_from_attempts,
+    sync_called_functions,
     update_target_result,
     validate_targets,
     write_targets_document,
@@ -206,7 +208,18 @@ def cmd_diff(
         project.ninja_build(str(unit.base_path.relative_to(project.root)))
         _postprocess_mtrand_object(project, unit.base_path)
 
-    evaluation = evaluate_unit_match(project, unit, symbol, linked=linked)
+    target_id = None
+    if symbol:
+        registry_matches = [
+            target for target in load_targets(config)
+            if target.symbol == symbol and target.unit
+            and (target.unit == unit.name or unit.name.endswith("/" + target.unit))
+        ]
+        if len(registry_matches) == 1:
+            target_id = registry_matches[0].id
+    evaluation = evaluate_unit_match(
+        project, unit, symbol, linked=linked, target_id=target_id,
+    )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
 
@@ -308,7 +321,9 @@ def cmd_cycle(
     if unit.base_path:
         _postprocess_mtrand_object(project, unit.base_path)
 
-    evaluation = evaluate_unit_match(project, unit, target.symbol, linked=linked)
+    evaluation = evaluate_unit_match(
+        project, unit, target.symbol, linked=linked, target_id=target.id,
+    )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
 
@@ -328,6 +343,13 @@ def cmd_cycle(
     if evaluation.equivalence is not None:
         detail = f" ({evaluation.equivalence_detail})" if evaluation.equivalence_detail else ""
         print(f"equivalence: {evaluation.equivalence.value}{detail}")
+    if evaluation.equivalence_certificate:
+        print(
+            "certificate: semantic-certified "
+            + evaluation.equivalence_certificate["certificate_sha256"]
+        )
+    elif evaluation.certificate_checked:
+        print("certificate: unavailable (target cannot yet serve as a trusted callee)")
     print(f"status: {evaluation.status}")
 
     if target.symbol and fn_match:
@@ -372,6 +394,8 @@ def cmd_cycle(
         status=evaluation.status,
         instruction_match=record.instruction_match,
         equivalence_status=record.equivalence_status,
+        equivalence_certificate=evaluation.equivalence_certificate,
+        certificate_checked=evaluation.certificate_checked,
     )
     print(f"target registry updated: {target.id}")
 
@@ -402,8 +426,22 @@ def cmd_queue(
     tier: Optional[str],
     *,
     dry_run: bool,
+    selection: str = "pending",
+    include_catalog: bool = False,
+    limit: Optional[int] = None,
 ) -> int:
-    targets = pending_targets(load_targets(config), tier)
+    all_targets = load_targets(config)
+    if selection == "pending" and not include_catalog:
+        targets = pending_targets(all_targets, tier)
+    else:
+        targets = harness_targets(
+            all_targets,
+            selection=selection,
+            tier=tier,
+            include_catalog=include_catalog,
+        )
+    if limit is not None:
+        targets = targets[:limit]
     if not targets:
         print("no pending buildable targets")
         return 0
@@ -413,7 +451,14 @@ def cmd_queue(
         print(f"\n==> {target.id} ({target.tier})")
         if dry_run:
             continue
-        rc = cmd_cycle(project, config, target.id, hypothesis="", next_change="", runtime_test="")
+        rc = cmd_cycle(
+            project,
+            config,
+            target.id,
+            hypothesis=f"harness selection: {selection}",
+            next_change="inspect remaining static/equivalence mismatch",
+            runtime_test="",
+        )
         if rc != 0:
             failures += 1
     return 1 if failures else 0
@@ -471,6 +516,23 @@ def cmd_targets_show(config: CoopConfig, target_id: str) -> int:
     if isinstance(claim, dict):
         print(f"owner:    {claim.get('owner')}")
         print(f"scope:    {', '.join(claim.get('allowed_paths', []))}")
+    if target.extra.get("callgraph_status"):
+        print(f"calls:    {len(target.extra.get('called_functions', []))} resolved")
+        for called_id in target.extra.get("called_functions", []):
+            print(f"          - {called_id}")
+        for unresolved in target.extra.get("unresolved_called_functions", []):
+            print(f"          - unresolved: {unresolved}")
+        if target.extra.get("abi_helper_calls"):
+            print(
+                "          - ABI helpers: "
+                + ", ".join(target.extra["abi_helper_calls"])
+            )
+        if target.extra.get("has_indirect_calls"):
+            print("          - indirect call present")
+    certificate = target.extra.get("equivalence_certificate")
+    if isinstance(certificate, dict):
+        print(f"certificate: {certificate.get('status', 'invalid')}")
+        print(f"          {certificate.get('certificate_sha256', 'missing hash')}")
     return 0
 
 
@@ -635,6 +697,20 @@ def cmd_targets_sync_attempts(config: CoopConfig) -> int:
     return cmd_targets_validate(config)
 
 
+def cmd_targets_sync_calls(project: Project, config: CoopConfig, *, dry_run: bool) -> int:
+    data, scanned, resolved, unresolved = sync_called_functions(project, config)
+    print(
+        f"call graph: {scanned} function record(s), "
+        f"{resolved} resolved direct edge(s), {unresolved} unresolved direct edge(s)"
+    )
+    if dry_run:
+        print("dry-run: registry not changed")
+        return 0
+    path = write_targets_document(config, data)
+    print(f"updated: {path}")
+    return cmd_targets_validate(config)
+
+
 def cmd_targets_claim(
     config: CoopConfig,
     target_id: str,
@@ -669,6 +745,7 @@ def _render_target_brief(config: CoopConfig, target_id: str) -> str:
     claim = target.extra.get("claim") if isinstance(target.extra.get("claim"), dict) else {}
     allowed_paths = claim.get("allowed_paths") or ([source] if source != "unresolved" else [])
     dependencies = target.extra.get("depends_on", [])
+    called_functions = target.extra.get("called_functions", [])
     questions = target.extra.get("questions", [])
     capabilities = target.extra.get("capabilities", [])
     lines = [
@@ -696,6 +773,25 @@ def _render_target_brief(config: CoopConfig, target_id: str) -> str:
         lines.append(f"- Capabilities: {', '.join(f'`{value}`' for value in capabilities)}")
     if dependencies:
         lines.append(f"- Dependencies: {', '.join(f'`{value}`' for value in dependencies)}")
+    if target.extra.get("callgraph_status") == "complete":
+        lines.append(
+            "- Direct callees: "
+            + (", ".join(f"`{value}`" for value in called_functions) or "none (leaf)")
+        )
+        if target.extra.get("has_indirect_calls"):
+            lines.append("- Indirect calls: present; target is not leaf-safe")
+        if target.extra.get("unresolved_called_functions"):
+            lines.append(
+                "- Unresolved direct calls: "
+                + ", ".join(
+                    f"`{value}`" for value in target.extra["unresolved_called_functions"]
+                )
+            )
+        if target.extra.get("abi_helper_calls"):
+            lines.append(
+                "- Ignored MWCC ABI helpers: "
+                + ", ".join(f"`{value}`" for value in target.extra["abi_helper_calls"])
+            )
     if questions:
         lines.extend(["", "## Questions", ""] + [f"- {value}" for value in questions])
     lines.extend(["", "## Edit scope", ""])
@@ -1006,9 +1102,32 @@ def main() -> int:
         ),
     )
 
-    p_queue = sub.add_parser("queue", help="Run cycle on pending targets")
-    p_queue.add_argument("--tier", choices=["P0", "P1", "P2", "P3"])
-    p_queue.add_argument("--dry-run", action="store_true")
+    def add_harness_args(command_parser: argparse.ArgumentParser) -> None:
+        command_parser.add_argument("--tier")
+        command_parser.add_argument(
+            "--selection",
+            choices=["pending", "leaf", "callees-accepted", "ready"],
+            default="pending",
+            help=(
+                "pending=normal queue; leaf=no direct/indirect/unresolved calls; "
+                "callees-accepted=non-leaf with every known callee at least EQUIVALENT_MATCH; "
+                "ready=union of leaf and callees-accepted"
+            ),
+        )
+        command_parser.add_argument(
+            "--include-catalog",
+            action="store_true",
+            help="Include buildable P9 functions imported from symbols.txt",
+        )
+        command_parser.add_argument("--limit", type=int)
+        command_parser.add_argument("--dry-run", action="store_true")
+
+    p_queue = sub.add_parser("queue", help="Run cycle on a selected target frontier")
+    add_harness_args(p_queue)
+    p_harness = sub.add_parser(
+        "harness", help="Run bottom-up cycle harness selections from the call graph"
+    )
+    add_harness_args(p_harness)
 
     p_targets = sub.add_parser("targets", help="Inspect and maintain the canonical target registry")
     p_targets_sub = p_targets.add_subparsers(dest="targets_cmd", required=True)
@@ -1043,6 +1162,10 @@ def main() -> int:
         "sync-attempts",
         help="Migrate each target's latest attempts.jsonl result into current registry state",
     )
+    p_targets_calls = p_targets_sub.add_parser(
+        "sync-calls", help="Populate called_functions from generated retail assembly"
+    )
+    p_targets_calls.add_argument("--dry-run", action="store_true")
     p_targets_claim = p_targets_sub.add_parser(
         "claim", help="Record the current owner and exclusive edit scope in the registry"
     )
@@ -1146,7 +1269,25 @@ def main() -> int:
             linked=args.linked,
         )
     if args.command == "queue":
-        return cmd_queue(project, config, args.tier, dry_run=args.dry_run)
+        return cmd_queue(
+            project,
+            config,
+            args.tier,
+            dry_run=args.dry_run,
+            selection=args.selection,
+            include_catalog=args.include_catalog,
+            limit=args.limit,
+        )
+    if args.command == "harness":
+        return cmd_queue(
+            project,
+            config,
+            args.tier,
+            dry_run=args.dry_run,
+            selection=args.selection,
+            include_catalog=args.include_catalog,
+            limit=args.limit,
+        )
     if args.command == "targets" and args.targets_cmd == "list":
         return cmd_targets_list(
             config,
@@ -1173,6 +1314,8 @@ def main() -> int:
         return cmd_targets_validate(config)
     if args.command == "targets" and args.targets_cmd == "sync-attempts":
         return cmd_targets_sync_attempts(config)
+    if args.command == "targets" and args.targets_cmd == "sync-calls":
+        return cmd_targets_sync_calls(project, config, dry_run=args.dry_run)
     if args.command == "targets" and args.targets_cmd == "claim":
         return cmd_targets_claim(
             config,

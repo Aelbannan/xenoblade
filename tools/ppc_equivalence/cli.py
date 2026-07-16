@@ -145,6 +145,8 @@ def _print_result(result: ProofResult) -> None:
             f"0x{target:08x}" if isinstance(target, int) else target
             for target in result.assumed_callees
         ))
+        for callee, contract in result.callee_contracts.items():
+            print(f"callee contract: {callee} ({contract.get('source', 'unknown')})")
     for warning in result.warnings:
         print(f"warning: {warning}")
     for item in result.unsupported:
@@ -160,6 +162,9 @@ def _exit_for_status(status: ProofStatus) -> int:
         ProofStatus.INCONCLUSIVE_TIMEOUT,
         ProofStatus.INCONCLUSIVE_UNKNOWN,
         ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+        ProofStatus.INCONCLUSIVE_ABSTRACTION,
+        ProofStatus.INCONCLUSIVE_LAYOUT,
+        ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
     ):
         return 2
     if status == ProofStatus.INVALID_INPUT:

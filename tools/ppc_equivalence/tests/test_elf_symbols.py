@@ -27,7 +27,7 @@ from tools.ppc_equivalence.elf_symbols import (
 )
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.ir import ExecutionInconclusive, UnsupportedInstruction
-from tools.ppc_equivalence.result import ProofResult, ProofStatus
+from tools.ppc_equivalence.result import ProofResult, ProofStatus, RESULT_FORMAT
 
 
 # addi r3,r3,4 ; blr
@@ -304,7 +304,7 @@ class CheckObjectsApiTests(unittest.TestCase):
                     ])
                 self.assertEqual(exit_code, 0)
                 payload = json.loads(output.getvalue())
-                self.assertEqual(payload["format"], 4)
+                self.assertEqual(payload["format"], RESULT_FORMAT)
                 self.assertEqual(payload["contract"], "auto")
                 self.assertEqual(payload["contract_resolution"]["base"], "ppc-eabi")
                 self.assertEqual(payload["contract_resolution"]["added"], expected_added)

@@ -48,9 +48,25 @@ Region defaults to `us` in `coop.json`. Change with `--config` or edit `region`.
 ```bash
 python3 tools/coop/run.py targets list
 python3 tools/coop/run.py targets show <target-id>
+python3 tools/coop/run.py targets sync-calls
 ```
 
 Prefer `P0` / `P1` tiers unless the user names a specific function. Skip targets with `buildable=no` until source exists — recover via Ghidra first, add `.cpp` to `configure.py`, reconfigure.
+
+For bottom-up matching across the complete symbol catalog, use the retail call
+graph. `leaf` requires no direct, unresolved, or indirect calls;
+`callees-accepted` requires at least one direct callee and every callee at
+`EQUIVALENT_MATCH` or stronger; `ready` is their union:
+
+```bash
+python3 tools/coop/run.py harness --selection leaf --include-catalog --dry-run
+python3 tools/coop/run.py harness --selection callees-accepted --include-catalog --dry-run
+python3 tools/coop/run.py harness --selection ready --include-catalog --limit 20
+```
+
+Functions with indirect or unresolved calls are excluded from these safe
+frontiers until those edges are modeled. Rerun `targets sync-calls` after
+regenerating retail assembly or changing the symbol map.
 
 Claim the target before editing; the registry supplies the source path as the default exclusive scope:
 

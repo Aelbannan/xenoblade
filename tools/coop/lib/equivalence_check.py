@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from tools.coop.lib.project import ObjdiffUnit, Project
+from tools.coop.lib.targets import (
+    ACCEPTED_MATCH_STATUSES,
+    EQUIVALENCE_CERTIFICATE_VERSION,
+    equivalence_certificate_error,
+    equivalence_certificate_hash,
+    load_targets_document,
+)
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block
 from tools.ppc_equivalence.dol_symbols import DolSymbolError, extract_by_address as extract_dol_slice
@@ -18,10 +26,16 @@ from tools.ppc_equivalence.elf_symbols import (
     extract_function,
     extract_function_pair,
 )
-from tools.ppc_equivalence.engine import check_equivalence
+from tools.ppc_equivalence.engine import check_equivalence, validate_callee_contract
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
-from tools.ppc_equivalence.semantics import ConcreteOps, automatic_live_out, execute_cfg
+from tools.ppc_equivalence.semantics import (
+    CalleeContract,
+    ConcreteOps,
+    automatic_live_out,
+    execute_cfg,
+    infer_callee_contract,
+)
 
 
 # Fuzzy match floor for EQUIVALENT_MATCH (strictly below FULL_MATCH).
@@ -37,6 +51,160 @@ _TIMEOUT_MS_PER_INSN = 20
 class EquivalenceProbe:
     status: ProofStatus
     detail: str = ""
+    certificate: dict | None = None
+
+
+@dataclass(frozen=True)
+class CertifiedCalleeContext:
+    contracts: dict[int | str, CalleeContract]
+    dependencies: tuple[dict[str, str], ...]
+    errors: tuple[str, ...] = ()
+    helpers: tuple[str, ...] = ()
+
+
+def _function_sha256(function: object) -> str:
+    """Hash function-local code and relocation identity, not the whole object."""
+    payload = {
+        "name": function.name,
+        "base": function.base,
+        "code": function.code.hex(),
+        "relocations": [
+            [item.offset, item.relocation_type, item.symbol, item.addend]
+            for item in function.relocations
+        ],
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _certificate_contract(certificate: dict) -> CalleeContract:
+    summary = certificate["summary"]
+    return CalleeContract(
+        frozenset(summary["reads"]),
+        frozenset(summary["writes"]),
+        f"certified:{certificate['certificate_sha256']}",
+    )
+
+
+def _reattest_certificate_tree(
+    project: Project,
+    target_id: str,
+    by_id: dict[str, dict],
+    memo: dict[str, str | None],
+    checking: set[str] | None = None,
+) -> str | None:
+    """Re-hash a certificate and every transitive function dependency."""
+    if target_id in memo:
+        return memo[target_id]
+    active = set(checking or ())
+    if target_id in active:
+        return "certificate dependency cycle"
+    active.add(target_id)
+    row = by_id.get(target_id)
+    if row is None:
+        return f"unknown target {target_id!r}"
+    if row.get("status") not in ACCEPTED_MATCH_STATUSES:
+        return "target is not accepted"
+    error = equivalence_certificate_error(row, by_id)
+    if error:
+        return error
+    symbol = row.get("symbol")
+    unit_hint = row.get("unit")
+    if not isinstance(symbol, str) or not isinstance(unit_hint, str):
+        return "target lacks a buildable symbol/unit"
+    certificate = row["equivalence_certificate"]
+    try:
+        unit = project.resolve_unit(unit_hint)
+        if unit.target_path is None or unit.base_path is None:
+            raise ValueError("unit has no retail/candidate object pair")
+        left, right = extract_function_pair(unit.target_path, unit.base_path, symbol)
+    except (ElfSymbolError, FileNotFoundError, ValueError) as exc:
+        return f"cannot be re-attested: {exc}"
+    if _function_sha256(left) != certificate.get("retail_sha256"):
+        return "retail function changed"
+    if _function_sha256(right) != certificate.get("candidate_sha256"):
+        return "candidate function changed"
+    for dependency in certificate.get("callees", []):
+        callee_id = dependency["target_id"]
+        error = _reattest_certificate_tree(project, callee_id, by_id, memo, active)
+        if error:
+            return f"callee {callee_id!r}: {error}"
+    memo[target_id] = None
+    return None
+
+
+def _load_certified_callees(project: Project, target_id: str) -> CertifiedCalleeContext:
+    """Load and re-attest every direct callee declared by the target registry."""
+    document = load_targets_document(project.config)
+    rows = [row for row in document.get("targets", []) if isinstance(row, dict)]
+    by_id = {str(row.get("id")): row for row in rows if isinstance(row.get("id"), str)}
+    caller = by_id.get(target_id)
+    if caller is None:
+        return CertifiedCalleeContext({}, (), (f"unknown target id {target_id!r}",))
+    errors: list[str] = []
+    if caller.get("unresolved_called_functions"):
+        errors.append("registry has unresolved direct callees")
+    if caller.get("has_indirect_calls"):
+        errors.append("registry has an unresolved indirect call")
+    called_ids = caller.get("called_functions", [])
+    if not isinstance(called_ids, list):
+        return CertifiedCalleeContext({}, (), ("called_functions is not an array",))
+
+    contracts: dict[int | str, CalleeContract] = {}
+    dependencies: list[dict[str, str]] = []
+    attestation_memo: dict[str, str | None] = {}
+    for callee_id in called_ids:
+        callee = by_id.get(str(callee_id))
+        if callee is None:
+            errors.append(f"unknown callee target {callee_id!r}")
+            continue
+        if callee.get("status") not in ACCEPTED_MATCH_STATUSES:
+            errors.append(f"callee {callee_id!r} is not accepted")
+            continue
+        attestation_error = _reattest_certificate_tree(
+            project, str(callee_id), by_id, attestation_memo,
+        )
+        if attestation_error:
+            errors.append(f"callee {callee_id!r}: {attestation_error}")
+            continue
+        symbol = callee.get("symbol")
+        unit_hint = callee.get("unit")
+        if not isinstance(symbol, str) or not isinstance(unit_hint, str):
+            errors.append(f"callee {callee_id!r} lacks a buildable symbol/unit")
+            continue
+        certificate = callee["equivalence_certificate"]
+        contract = _certificate_contract(certificate)
+        contracts[symbol] = contract
+        address = callee.get("address")
+        if isinstance(address, str):
+            try:
+                contracts[int(address, 0)] = contract
+            except ValueError:
+                pass
+        dependencies.append({
+            "target_id": str(callee_id),
+            "certificate_sha256": certificate["certificate_sha256"],
+        })
+    helpers = caller.get("abi_helper_calls", [])
+    if not isinstance(helpers, list) or not all(isinstance(item, str) for item in helpers):
+        errors.append("abi_helper_calls is not a string array")
+        helpers = []
+    helper_pattern = re.compile(r"^_(?:save|rest)(?:gpr|fpr)_\d+$")
+    for helper in helpers:
+        if helper_pattern.fullmatch(helper) is None:
+            errors.append(f"unrecognized ABI helper {helper!r}")
+            continue
+        contracts[helper] = CalleeContract(
+            CalleeContract.opaque_eabi().reads,
+            CalleeContract.opaque_eabi().writes,
+            f"fixed-eabi-runtime-helper:{helper}",
+        )
+    return CertifiedCalleeContext(
+        contracts,
+        tuple(sorted(dependencies, key=lambda item: item["target_id"])),
+        tuple(errors),
+        tuple(sorted(helpers)),
+    )
 
 
 def _ppc_equivalence_dir(project: Project) -> Path | None:
@@ -78,6 +246,8 @@ def _cache_key(
     original_local_symbol: str | None = None,
     candidate_local_symbol: str | None = None,
     assumed_callees: frozenset[int | str] = frozenset(),
+    callee_contracts: dict[int | str, CalleeContract] | None = None,
+    certificate_target_id: str | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -99,6 +269,15 @@ def _cache_key(
             "original_local_symbol": original_local_symbol,
             "candidate_local_symbol": candidate_local_symbol,
             "assumed_callees": sorted(assumed_callees, key=str),
+            "callee_contracts": {
+                str(name): {
+                    "reads": sorted(contract.reads),
+                    "writes": sorted(contract.writes),
+                    "source": contract.source,
+                }
+                for name, contract in sorted((callee_contracts or {}).items(), key=lambda item: str(item[0]))
+            },
+            "certificate_target_id": certificate_target_id,
         },
         sort_keys=True,
     )
@@ -118,7 +297,11 @@ def _cache_get(key: str, cache_dir: Path | None) -> EquivalenceProbe | None:
         if data.get("result_format") != RESULT_FORMAT:
             return None
         status = ProofStatus(data["status"])
-        return EquivalenceProbe(status, data.get("detail", ""))
+        certificate = data.get("certificate")
+        return EquivalenceProbe(
+            status, data.get("detail", ""),
+            certificate if isinstance(certificate, dict) else None,
+        )
     except (KeyError, ValueError, json.JSONDecodeError):
         return None
 
@@ -138,6 +321,7 @@ def _cache_put(
                 "result_format": RESULT_FORMAT,
                 "status": probe.status.value,
                 "detail": probe.detail,
+                "certificate": probe.certificate,
                 "assumed_callees": sorted(assumed_callees, key=str),
                 "created_at": time.time(),
             },
@@ -274,6 +458,118 @@ def _extract_call_targets(instructions: list) -> frozenset[int | str]:
     return frozenset(targets)
 
 
+def _infer_matched_callee_contracts(
+    call_targets: frozenset[int | str],
+    original_object: Path | None,
+    candidate_object: Path | None,
+) -> dict[int | str, CalleeContract]:
+    """Generate paired effect contracts for named callees in the same objects."""
+    if original_object is None or candidate_object is None:
+        return {}
+    contracts: dict[int | str, CalleeContract] = {}
+    for target in call_targets:
+        if not isinstance(target, str):
+            continue
+        try:
+            left = extract_function(original_object, target)
+            right = extract_function(candidate_object, target)
+            left_instructions = decode_block(
+                left.code, left.base, validate_with_capstone=False,
+                relocations=left.relocations, local_symbol=left.name,
+            )
+            right_instructions = decode_block(
+                right.code, right.base, validate_with_capstone=False,
+                relocations=right.relocations, local_symbol=right.name,
+            )
+            left_contract = infer_callee_contract(left_instructions)
+            right_contract = infer_callee_contract(right_instructions)
+        except (ElfSymbolError, DecodeError, UnsupportedInstruction, ValueError):
+            continue
+        contracts[target] = CalleeContract(
+            left_contract.reads | right_contract.reads,
+            left_contract.writes | right_contract.writes,
+            "matched-pair-body-effects",
+        )
+        merged = contracts[target]
+        if (
+            left_contract.source == "matched-body-effects"
+            and right_contract.source == "matched-body-effects"
+        ):
+            left_validation = validate_callee_contract(left_instructions, merged)
+            right_validation = validate_callee_contract(right_instructions, merged)
+            if left_validation.valid and right_validation.valid:
+                contracts[target] = CalleeContract(
+                    left_validation.required_reads | right_validation.required_reads,
+                    left_validation.required_writes | right_validation.required_writes,
+                    "validated-matched-pair-semantic-effects",
+                )
+            else:
+                opaque = CalleeContract.opaque_eabi()
+                contracts[target] = CalleeContract(
+                    opaque.reads, opaque.writes, "validation-fallback-opaque-eabi",
+                )
+    return contracts
+
+
+def _build_equivalence_certificate(
+    target_id: str,
+    left_function: object,
+    right_function: object,
+    original: list,
+    candidate: list,
+    *,
+    call_targets: frozenset[int | str],
+    callee_contracts: dict[int | str, CalleeContract],
+    dependencies: tuple[dict[str, str], ...],
+    helpers: tuple[str, ...],
+    evidence: str,
+    max_instructions: int,
+    max_paths: int,
+) -> tuple[dict | None, str]:
+    """Derive and validate a normal-return semantic effect summary."""
+    declared = CalleeContract.opaque_eabi()
+    validations = [
+        validate_callee_contract(
+            instructions,
+            declared,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+            assumed_callees=call_targets,
+            callee_contracts=callee_contracts,
+            require_normal_return=True,
+        )
+        for instructions in (original, candidate)
+    ]
+    for side, validation in zip(("retail", "candidate"), validations):
+        if not validation.valid:
+            detail = validation.reason or (
+                "contract omitted reads " + ", ".join(sorted(validation.missing_reads))
+                + "; writes " + ", ".join(sorted(validation.missing_writes))
+            )
+            return None, f"{side} certificate validation failed: {detail}"
+    reads = sorted(validations[0].required_reads | validations[1].required_reads)
+    writes = sorted(validations[0].required_writes | validations[1].required_writes)
+    certificate = {
+        "version": EQUIVALENCE_CERTIFICATE_VERSION,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
+        "target_id": target_id,
+        "evidence": evidence,
+        "retail_sha256": _function_sha256(left_function),
+        "candidate_sha256": _function_sha256(right_function),
+        "summary": {
+            "reads": reads,
+            "writes": writes,
+            "return_behavior": "normal",
+        },
+        "callees": list(dependencies),
+        "helpers": list(helpers),
+    }
+    certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
+    return certificate, ""
+
+
 def _prove_bytes(
     project: Project,
     symbol: str,
@@ -291,6 +587,13 @@ def _prove_bytes(
     candidate_relocations: tuple = (),
     original_local_symbol: str | None = None,
     candidate_local_symbol: str | None = None,
+    original_object: Path | None = None,
+    candidate_object: Path | None = None,
+    original_function: object | None = None,
+    candidate_function: object | None = None,
+    certificate_target_id: str | None = None,
+    certified_context: CertifiedCalleeContext | None = None,
+    certificate_evidence: str = "symbolic-equivalence",
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
 
@@ -332,13 +635,34 @@ def _prove_bytes(
     orig_hex = orig_code.hex()
     cand_hex = cand_code.hex()
     call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
-    known_addresses = _load_known_equivalent_targets(project)
-    # Symbolic object-file calls are explicit proof premises: the caller proof
-    # assumes each named callee has already been matched independently.
-    assumed_callees = frozenset(
-        target for target in call_targets
-        if isinstance(target, str) or target in known_addresses
-    )
+    if certificate_target_id is not None:
+        context = certified_context or CertifiedCalleeContext({}, (), ("callee context missing",))
+        if context.errors:
+            return EquivalenceProbe(
+                ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
+                "; ".join(context.errors),
+            )
+        missing = sorted((target for target in call_targets if target not in context.contracts), key=str)
+        if missing:
+            return EquivalenceProbe(
+                ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
+                "calls lack current certificates: " + ", ".join(str(item) for item in missing),
+            )
+        assumed_callees = call_targets
+        callee_contracts = {
+            target: context.contracts[target] for target in call_targets
+        }
+    else:
+        known_addresses = _load_known_equivalent_targets(project)
+        # Standalone CLI compatibility: infer same-object summaries. Registry
+        # workflows use only durable, re-attested certificates above.
+        assumed_callees = frozenset(
+            target for target in call_targets
+            if isinstance(target, str) or target in known_addresses
+        )
+        callee_contracts = _infer_matched_callee_contracts(
+            assumed_callees, original_object, candidate_object,
+        )
     key = _cache_key(
         resolved_contract.name, observables, orig_hex, cand_hex,
         orig_base, cand_base,
@@ -347,13 +671,17 @@ def _prove_bytes(
         original_local_symbol=original_local_symbol,
         candidate_local_symbol=candidate_local_symbol,
         assumed_callees=assumed_callees,
+        callee_contracts=callee_contracts,
+        certificate_target_id=certificate_target_id,
     )
 
     cache_d = _cache_dir(project)
     cached = _cache_get(key, cache_d)
     if cached is not None:
         if fallback_note and cached.detail and fallback_note not in cached.detail:
-            cached = EquivalenceProbe(cached.status, f"{fallback_note}; {cached.detail}")
+            cached = EquivalenceProbe(
+                cached.status, f"{fallback_note}; {cached.detail}", cached.certificate,
+            )
         return cached
 
     previous_ce = _load_counterexample(project, symbol, orig_hex, key)
@@ -379,6 +707,7 @@ def _prove_bytes(
         max_paths=max_paths,
         assumed_callees=assumed_callees,
         assumed_callees_used=callees_used,
+        callee_contracts=callee_contracts,
     )
     detail = ""
     if result.contract_resolution:
@@ -415,7 +744,30 @@ def _prove_bytes(
     if fallback_note:
         detail = f"{fallback_note}; {detail}" if detail else fallback_note
 
-    probe = EquivalenceProbe(result.status, detail)
+    certificate = None
+    if (
+        result.status == ProofStatus.EQUIVALENT
+        and certificate_target_id is not None
+        and original_function is not None
+        and candidate_function is not None
+    ):
+        certificate, certificate_error = _build_equivalence_certificate(
+            certificate_target_id,
+            original_function,
+            candidate_function,
+            original,
+            candidate,
+            call_targets=call_targets,
+            callee_contracts=callee_contracts,
+            dependencies=(certified_context or CertifiedCalleeContext({}, ())).dependencies,
+            helpers=(certified_context or CertifiedCalleeContext({}, ())).helpers,
+            evidence=certificate_evidence,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+        )
+        if certificate_error:
+            detail = f"{detail} | {certificate_error}" if detail else certificate_error
+    probe = EquivalenceProbe(result.status, detail, certificate)
     if result.status == ProofStatus.EQUIVALENT and cache_d is not None:
         _cache_put(key, probe, cache_d, callees_used)
 
@@ -433,6 +785,7 @@ def prove_unit_symbol(
     max_paths: int = 256,
     candidate_symbol: str | None = None,
     linked: bool = False,
+    target_id: str | None = None,
 ) -> EquivalenceProbe:
     """SMT-check one named function from the unit's retail/decomp objects.
 
@@ -449,6 +802,7 @@ def prove_unit_symbol(
 
     try:
         left, right = extract_function_pair(retail, decomp, symbol)
+        certified_context = _load_certified_callees(project, target_id) if target_id else None
         try:
             return _prove_bytes(
                 project, symbol,
@@ -462,6 +816,12 @@ def prove_unit_symbol(
                 candidate_relocations=right.relocations,
                 original_local_symbol=left.name,
                 candidate_local_symbol=right.name,
+                original_object=retail,
+                candidate_object=decomp,
+                original_function=left,
+                candidate_function=right,
+                certificate_target_id=target_id,
+                certified_context=certified_context,
             )
         except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
             if not linked or not (left.relocations or right.relocations):
@@ -469,11 +829,70 @@ def prove_unit_symbol(
             return _run_linked_fallback(
                 project, symbol, candidate_symbol, contract,
                 timeout_ms, max_instructions, max_paths,
+                target_id=target_id,
+                certified_context=certified_context,
             )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, str(exc))
     except RuntimeError as exc:
         # Missing Z3, etc.
+        return EquivalenceProbe(ProofStatus.INTERNAL_ERROR, str(exc))
+
+
+def certify_unit_symbol(
+    project: Project,
+    unit: ObjdiffUnit,
+    symbol: str,
+    target_id: str,
+    *,
+    evidence: str = "full-instruction-match",
+    max_instructions: int = 2048,
+    max_paths: int = 256,
+) -> EquivalenceProbe:
+    """Issue a current semantic effect certificate for an already-equal pair."""
+    if unit.target_path is None or unit.base_path is None:
+        return EquivalenceProbe(ProofStatus.INVALID_INPUT, "unit lacks an object pair")
+    try:
+        left, right = extract_function_pair(unit.target_path, unit.base_path, symbol)
+        original = decode_block(
+            left.code, left.base, validate_with_capstone=False,
+            relocations=left.relocations, local_symbol=left.name,
+        )
+        candidate = decode_block(
+            right.code, right.base, validate_with_capstone=False,
+            relocations=right.relocations, local_symbol=right.name,
+        )
+        context = _load_certified_callees(project, target_id)
+        if context.errors:
+            return EquivalenceProbe(
+                ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE, "; ".join(context.errors),
+            )
+        call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
+        missing = sorted((item for item in call_targets if item not in context.contracts), key=str)
+        if missing:
+            return EquivalenceProbe(
+                ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
+                "calls lack current certificates: " + ", ".join(str(item) for item in missing),
+            )
+        contracts = {item: context.contracts[item] for item in call_targets}
+        certificate, detail = _build_equivalence_certificate(
+            target_id, left, right, original, candidate,
+            call_targets=call_targets,
+            callee_contracts=contracts,
+            dependencies=context.dependencies,
+            helpers=context.helpers,
+            evidence=evidence,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+        )
+        return EquivalenceProbe(
+            ProofStatus.EQUIVALENT if certificate else ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            detail,
+            certificate,
+        )
+    except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
+        return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, str(exc))
+    except RuntimeError as exc:
         return EquivalenceProbe(ProofStatus.INTERNAL_ERROR, str(exc))
 
 
@@ -485,6 +904,9 @@ def _run_linked_fallback(
     timeout_ms: int,
     max_instructions: int,
     max_paths: int,
+    *,
+    target_id: str | None = None,
+    certified_context: CertifiedCalleeContext | None = None,
 ) -> EquivalenceProbe:
     """Retry the proof using linked bytes from ``main.dol`` + ``main.elf``.
 
@@ -544,6 +966,8 @@ def _run_linked_fallback(
             max_instructions=max_instructions,
             max_paths=max_paths,
             fallback_note=note,
+            certificate_target_id=target_id,
+            certified_context=certified_context,
         )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, f"{note}; {exc}")

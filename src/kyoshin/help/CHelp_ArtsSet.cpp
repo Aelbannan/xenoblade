@@ -4,7 +4,7 @@
 extern "C" bool func_8022F530();
 
 namespace cf{
-    bool CHelp_ArtsSet::CHelp_UnkVirtualFunc3(){
+    bool CHelp_ArtsSet::func_802B7D9C(){
         if(unkC != 0 && CfGameManager::func_800822F4() < unkC){
             return false;
         }

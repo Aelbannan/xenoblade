@@ -1,0 +1,65 @@
+{
+  "project_adapter": "tools.llm_harness.xenoblade_project",
+  "output_dir": "build/llm-harness",
+  "project": {
+    "coop_config": "coop.json",
+    "prompt_dir": "tools/llm_harness/prompts",
+    "max_source_chars": 120000,
+    "mwcc_knowledge_enabled": true,
+    "mwcc_knowledge_limit": 8,
+    "mwcc_knowledge_body_chars": 5000,
+    "tu_context_chars": 300,
+    "tu_section_byte_limit": 16384
+  },
+  "providers": {
+    "opencode": {
+      "binary": "opencode",
+      "timeout_seconds": 900
+    }
+  },
+  "execution": {
+    "max_parallel": 5,
+    "max_retries": 1,
+    "isolation": {
+      "mode": "git-worktree",
+      "copy_dirty": true
+    }
+  },
+  "models": [
+    {
+      "id": "deepseek-v4-pro",
+      "provider": "opencode",
+      "model": "opencode-go/deepseek-v4-pro",
+      "agent": "plan",
+      "runs": 1
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "provider": "opencode",
+      "model": "opencode-go/deepseek-v4-flash",
+      "agent": "plan",
+      "runs": 1
+    },
+    {
+      "id": "mimo-v2.5",
+      "provider": "opencode",
+      "model": "opencode-go/mimo-v2.5",
+      "agent": "plan",
+      "runs": 1
+    },
+    {
+      "id": "mimo-v2.5-pro",
+      "provider": "opencode",
+      "model": "opencode-go/mimo-v2.5-pro",
+      "agent": "plan",
+      "runs": 1
+    },
+    {
+      "id": "minimax-m3",
+      "provider": "opencode",
+      "model": "opencode-go/minimax-m3",
+      "agent": "plan",
+      "runs": 1
+    }
+  ]
+}

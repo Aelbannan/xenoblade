@@ -303,6 +303,28 @@ class DecoderTests(unittest.TestCase):
         with self.assertRaises(UnsupportedInstruction):
             decode("fce1101c")
 
+    def test_reserved_fp_system_and_move_fields_are_rejected(self) -> None:
+        # These fixed-field masks come from the vendored PPC750CL ISA table.
+        valid_and_reserved_bit = (
+            (0xFD880080, 0),   # mcrfs: Rc is reserved
+            (0xFD880080, 11),  # mcrfs: reserved middle field
+            (0xFD60008C, 11),  # mtfsb0
+            (0xFD60004C, 20),  # mtfsb1
+            (0xFF80310C, 11),  # mtfsfi
+            (0xFDFE158F, 16),  # mtfsf
+            (0xFCE01050, 16),  # fneg FA
+            (0xFCE01090, 20),  # fmr FA
+            (0xFCE01110, 18),  # fnabs FA
+            (0xFCE01210, 17),  # fabs FA
+            (0x7CA437AE, 0),   # stfiwx Rc is reserved
+            (0x7CA80120, 20),  # mtcrf reserved bit
+        )
+        for valid, bit in valid_and_reserved_bit:
+            with self.subTest(valid=f"0x{valid:08x}", bit=bit):
+                decode(f"{valid:08x}")
+                with self.assertRaises(UnsupportedInstruction):
+                    decode(f"{valid ^ (1 << bit):08x}")
+
     def test_every_decoded_opcode_has_semantics(self) -> None:
         self.assertEqual(set(Opcode) - SUPPORTED_OPCODES, set())
 
@@ -2377,6 +2399,16 @@ class PhaseTwoControlFlowTests(unittest.TestCase):
         live = automatic_live_out(program)
         self.assertIn("r3", live)
         self.assertIn("memory", live)
+        self.assertEqual(automatic_live_out(decode("7c0004ac 4c00012c")), ())
+
+    def test_multiword_effects_include_every_source_and_destination(self) -> None:
+        lmw_reads, lmw_writes = register_effects(decode("b8a40000")[0])
+        stmw_reads, stmw_writes = register_effects(decode("bca40000")[0])
+        self.assertTrue({"r4", "memory"} <= lmw_reads)
+        self.assertTrue({f"r{index}" for index in range(5, 32)} <= lmw_writes)
+        self.assertTrue({f"r{index}" for index in range(5, 32)} <= stmw_reads)
+        self.assertIn("r4", stmw_reads)
+        self.assertEqual(stmw_writes, {"memory"})
 
     def test_system_instruction_effects_and_live_out_are_complete(self) -> None:
         cases = (

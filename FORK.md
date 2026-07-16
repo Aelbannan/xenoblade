@@ -215,7 +215,9 @@ sound-by-default vertical slice from the PPC equivalence-checker plan:
   (`ppc-eabi` plus written persistent state); raw block checks default to
   `ppc-eabi`. `--contract strict` and manual `--observe` remain available.
 - `check-objects` / `check-unit` extract a named `.text` symbol from the
-  objdiff retail/decomp ELF pair and feed those bytes into the checker.
+  objdiff retail/decomp ELF pair and feed those bytes into the checker;
+  unresolved text relocations are rejected as inconclusive so placeholder
+  immediates cannot be mistaken for linked semantics.
 
 It is evidence used by the fork’s **`EQUIVALENT_MATCH`** acceptance bar (fuzzy
 ≥ 50% + SMT `EQUIVALENT` under `auto`, which is `ppc-eabi` or stronger).

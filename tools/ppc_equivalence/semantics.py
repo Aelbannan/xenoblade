@@ -2804,6 +2804,16 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         else: writes.add("memory")
         if op in (Opcode.PSQ_LU, Opcode.PSQ_STU, Opcode.PSQ_LUX, Opcode.PSQ_STUX):
             writes.add(f"r{a[1]}")
+    elif op == Opcode.LMW:
+        if a[1]:
+            reads.add(f"r{a[1]}")
+        reads.add("memory")
+        writes |= {f"r{index}" for index in range(a[0], 32)}
+    elif op == Opcode.STMW:
+        reads |= {f"r{index}" for index in range(a[0], 32)}
+        if a[1]:
+            reads.add(f"r{a[1]}")
+        writes.add("memory")
     elif op in LOADS:
         writes.add(f"r{a[0]}")
         if a[1]: reads.add(f"r{a[1]}")
@@ -2848,7 +2858,12 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
     written: set[str] = set()
     for insn in instructions:
         op, a = insn.opcode, insn.operands
-        if op in (Opcode.DCBZ, Opcode.DCBZ_L):
+        if op in (
+            Opcode.DCBF, Opcode.DCBI, Opcode.DCBST, Opcode.DCBT,
+            Opcode.ICBI, Opcode.SYNC, Opcode.ISYNC,
+        ):
+            pass
+        elif op in (Opcode.DCBZ, Opcode.DCBZ_L):
             written.add("memory")
         elif op in (Opcode.MFMSR, Opcode.MFSR, Opcode.MFTB):
             written.add(f"r{a[0]}")

@@ -9,7 +9,13 @@ from typing import Any
 from . import __version__
 from .contract import CONTRACT_PRESETS, Observable, make_contract, parse_observables
 from .decoder import decode_block, parse_hex
-from .elf_symbols import ElfSymbolError, extract_function, extract_function_pair, list_text_functions
+from .elf_symbols import (
+    ElfSymbolError,
+    extract_function,
+    extract_function_pair,
+    list_text_functions,
+    require_relocation_free,
+)
 from .engine import check_equivalence
 from .ir import DecodeError, ExecutionInconclusive, UnsupportedInstruction
 from .model import MachineState, concrete_state
@@ -56,6 +62,46 @@ def _observable_concrete(state: MachineState, observable: Observable) -> object:
     raise AssertionError(observable.kind)
 
 
+def _terminal_mismatches_concrete(
+    left: Any,
+    right: Any,
+    observables: tuple[Observable, ...],
+) -> list[dict[str, object]]:
+    """Mirror the symbolic terminal comparison for counterexample replay."""
+    mismatches: list[dict[str, object]] = []
+    if left.exit_kind != right.exit_kind:
+        mismatches.append({
+            "name": "exit.kind", "original": left.exit_kind, "candidate": right.exit_kind,
+        })
+        return mismatches
+    if left.exit_kind != "fallthrough" and left.exit_target != right.exit_target:
+        def target(value: object) -> object:
+            return f"0x{int(value) & 0xFFFFFFFF:08x}" if value is not None else None
+        mismatches.append({
+            "name": "exit.target",
+            "original": target(left.exit_target),
+            "candidate": target(right.exit_target),
+        })
+        return mismatches
+    if bool(left.state.valid) != bool(right.state.valid):
+        mismatches.append({
+            "name": "defined-domain",
+            "original": int(bool(left.state.valid)),
+            "candidate": int(bool(right.state.valid)),
+        })
+        return mismatches
+    if not bool(left.state.valid):
+        return mismatches
+    for observable in observables:
+        original = _observable_concrete(left.state, observable)
+        candidate = _observable_concrete(right.state, observable)
+        if original != candidate:
+            mismatches.append({
+                "name": observable.name, "original": original, "candidate": candidate,
+            })
+    return mismatches
+
+
 def _print_result(result: ProofResult) -> None:
     if result.status == ProofStatus.EQUIVALENT:
         print("EQUIVALENT UNDER CONTRACT")
@@ -75,7 +121,7 @@ def _print_result(result: ProofResult) -> None:
         print(f"compared: {', '.join(result.observables)}")
     if result.mismatch:
         print(
-            "first observable mismatch: "
+            "first mismatch: "
             f"{result.mismatch['name']} "
             f"({result.mismatch['original']} != {result.mismatch['candidate']})"
         )
@@ -215,21 +261,26 @@ def cmd_replay(args: argparse.Namespace) -> int:
     candidate_exits = [item for item in execute_cfg(initial, candidate, ops) if item.condition]
     if len(original_exits) != 1 or len(candidate_exits) != 1:
         raise ValueError("replay did not select exactly one path per program")
-    original_final, candidate_final = original_exits[0].state, candidate_exits[0].state
-    mismatches = []
-    for observable in observables:
-        left = _observable_concrete(original_final, observable)
-        right = _observable_concrete(candidate_final, observable)
-        if left != right:
-            mismatches.append({"name": observable.name, "original": left, "candidate": right})
-    payload = {"reproduced": bool(mismatches), "mismatches": mismatches}
+    mismatches = _terminal_mismatches_concrete(
+        original_exits[0], candidate_exits[0], observables,
+    )
+    expected = case.get("expected_mismatch")
+    reproduced = (
+        any(item["name"] == expected for item in mismatches)
+        if expected is not None else bool(mismatches)
+    )
+    payload = {
+        "reproduced": reproduced,
+        "expected_mismatch": expected,
+        "mismatches": mismatches,
+    }
     if args.json:
         print(json.dumps(payload, indent=2))
     else:
-        print("COUNTEREXAMPLE REPRODUCED" if mismatches else "COUNTEREXAMPLE NOT REPRODUCED")
+        print("COUNTEREXAMPLE REPRODUCED" if reproduced else "COUNTEREXAMPLE NOT REPRODUCED")
         for mismatch in mismatches:
             print(f"{mismatch['name']}: {mismatch['original']} != {mismatch['candidate']}")
-    return 0 if mismatches else 4
+    return 0 if reproduced else 4
 
 
 def _add_check_options(
@@ -287,6 +338,7 @@ def cmd_extract(args: argparse.Namespace) -> int:
                 "value": f"0x{item.value:x}",
                 "base": f"0x{item.base:08x}",
                 "section": item.section_name,
+                "relocations": len(item.relocations),
             }
             for item in functions
         ]
@@ -294,7 +346,10 @@ def cmd_extract(args: argparse.Namespace) -> int:
             print(json.dumps(payload, indent=2))
         else:
             for item in payload:
-                print(f"{item['value']}  {item['size']:6}  {item['name']}")
+                print(
+                    f"{item['value']}  {item['size']:6}  {item['name']}"
+                    f"  relocations={item['relocations']}"
+                )
         return 0
 
     if not args.symbol:
@@ -310,6 +365,15 @@ def cmd_extract(args: argparse.Namespace) -> int:
         "value": f"0x{function.value:x}",
         "base": f"0x{function.base:08x}",
         "section": function.section_name,
+        "relocations": [
+            {
+                "offset": f"0x{item.offset:x}",
+                "type": item.relocation_type,
+                "symbol": item.symbol,
+                "addend": item.addend,
+            }
+            for item in function.relocations
+        ],
         "hex": _format_hex(function.code),
     }
     if args.json:
@@ -329,6 +393,17 @@ def cmd_check_objects(args: argparse.Namespace) -> int:
         args.symbol,
         candidate_symbol=args.candidate_symbol,
     )
+    try:
+        require_relocation_free(left, right)
+    except ElfSymbolError as exc:
+        requested_contract = args.contract or getattr(args, "default_contract", None) or "manual"
+        result = ProofResult(
+            status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            contract=requested_contract,
+            observables=list(args.observe or ()),
+            unsupported=[str(exc)],
+        )
+        return _emit(result, args.json, args.result, args.replay_out)
     if not args.json:
         print(
             f"original:  {left.name}  {left.size} bytes @ 0x{left.base:08x}  ({left.path})"

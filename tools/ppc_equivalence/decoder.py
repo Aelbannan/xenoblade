@@ -229,7 +229,7 @@ def _decode_word(
             return _insn(address, word, Opcode.MFCR, (rt,))
         if xo == 144:
             fxm = (word >> 12) & 0xFF
-            if ((word >> 11) & 1) or rc:
+            if (word & 0x00100801) != 0:
                 raise UnsupportedInstruction(address, word, "reserved mtcrf bits are set")
             return _insn(address, word, Opcode.MTCRF, (rt, fxm))
         cache_ops = {
@@ -299,7 +299,7 @@ def _decode_word(
         }
         if xo in fp_x_memory:
             opcode = fp_x_memory[xo]
-            if rc and opcode != Opcode.STFIWX:
+            if rc:
                 raise UnsupportedInstruction(address, word, "reserved FP memory Rc bit is set")
             update = opcode in (Opcode.LFSUX, Opcode.LFDUX, Opcode.STFSUX, Opcode.STFDUX)
             if update and ra == 0:
@@ -453,13 +453,20 @@ def _decode_word(
                     bf = (word >> 23) & 7
                     return _insn(address, word, opcode, (bf, fa, fb))
                 if opcode == Opcode.MCRFS:
+                    if (word & 0xFC63FFFF) != 0xFC000080:
+                        raise UnsupportedInstruction(address, word, "reserved mcrfs fields are nonzero")
                     bf = (word >> 23) & 7
                     bfa = (word >> 18) & 7
                     return _insn(address, word, opcode, (bf, bfa))
                 if opcode in (Opcode.MTFSB0, Opcode.MTFSB1):
+                    expected = 0xFC00008C if opcode == Opcode.MTFSB0 else 0xFC00004C
+                    if (word & 0xFC1FFFFE) != expected:
+                        raise UnsupportedInstruction(address, word, "reserved mtfsb fields are nonzero")
                     bt = fd
                     return _insn(address, word, opcode, (bt,), record=rc)
                 if opcode == Opcode.MTFSFI:
+                    if (word & 0xFC7F0FFE) != 0xFC00010C:
+                        raise UnsupportedInstruction(address, word, "reserved mtfsfi fields are nonzero")
                     bf = (word >> 23) & 7
                     imm4 = (word >> 12) & 0xF
                     return _insn(address, word, opcode, (bf, imm4), record=rc)
@@ -468,10 +475,14 @@ def _decode_word(
                         raise UnsupportedInstruction(address, word, "reserved mffs fields are nonzero")
                     return _insn(address, word, opcode, (fd,), record=rc)
                 if opcode == Opcode.MTFSF:
+                    if (word & 0xFE0107FE) != 0xFC00058E:
+                        raise UnsupportedInstruction(address, word, "reserved mtfsf fields are nonzero")
                     fm = (word >> 17) & 0xFF
                     return _insn(address, word, opcode, (fm, fb), record=rc)
                 if opcode in (Opcode.FRSP, Opcode.FCTIW, Opcode.FCTIWZ) and (fa != 0 or fc != 0):
                     raise UnsupportedInstruction(address, word, "reserved FP FA/FC field is nonzero")
+                if opcode in (Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS) and fa != 0:
+                    raise UnsupportedInstruction(address, word, "reserved FP FA field is nonzero")
                 return _insn(address, word, opcode, (fd, fa, fb, fc), record=rc)
             raise UnsupportedInstruction(address, word, f"unsupported FP auxiliary opcode (xo={xo})")
 

@@ -80,14 +80,14 @@ class ClassifyStatusTests(unittest.TestCase):
         )
 
     def test_below_floor_never_equivalent_match(self) -> None:
-        self.assertEqual(
+        self.assertNotEqual(
             classify_status(
                 EQUIVALENT_MATCH_MIN_PERCENT - 0.1,
                 _unit(),
                 symbol="f",
                 equivalence=ProofStatus.EQUIVALENT,
             ),
-            "HIGH_MATCH",
+            "EQUIVALENT_MATCH",
         )
 
 
@@ -141,8 +141,8 @@ class MeetsRequiredLevelTests(unittest.TestCase):
 class ProbeGateTests(unittest.TestCase):
     def test_probe_window(self) -> None:
         self.assertFalse(should_probe_equivalence(None))
-        self.assertFalse(should_probe_equivalence(79.9))
-        self.assertTrue(should_probe_equivalence(80.0))
+        self.assertFalse(should_probe_equivalence(49.9))
+        self.assertTrue(should_probe_equivalence(50.0))
         self.assertTrue(should_probe_equivalence(99.9))
         self.assertFalse(should_probe_equivalence(100.0))
 

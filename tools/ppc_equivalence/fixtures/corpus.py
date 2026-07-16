@@ -26,6 +26,10 @@ class FixtureCase:
     expected_memory: dict[int, int] = field(default_factory=dict)
     expected_fpr: dict[int, int] = field(default_factory=dict)
     expected_fpscr: int | None = None
+    expected_gpr: dict[int, int] = field(default_factory=dict)
+    expected_gqr: dict[int, int] = field(default_factory=dict)
+    expected_lr: int | None = None
+    expected_ctr: int | None = None
     max_instructions: int = 32
     allow_paths: int = 1
 
@@ -44,17 +48,32 @@ class FixtureCase:
                 "result_reg": self.result_reg,
                 "cr": True,
                 "xer": True,
+                "lr": self.expected_lr is not None,
+                "ctr": self.expected_ctr is not None,
                 "memory": {
                     f"0x{offset:08x}": f"0x{value:08x}"
                     for offset, value in sorted(self.expected_memory.items())
                 },
                 "fpr": [f"f{index}" for index in sorted(self.expected_fpr)],
                 "fpscr": self.expected_fpscr is not None,
+                "gqr": [f"gqr{index}" for index in sorted(self.expected_gqr)],
+                "gpr": {
+                    f"r{index}": f"0x{value:08x}"
+                    for index, value in sorted(self.expected_gpr.items())
+                },
             },
             "expected": {
                 "result": f"0x{self.expected_result & 0xFFFFFFFF:08x}",
                 "cr": f"0x{self.expected_cr & 0xFFFFFFFF:08x}",
                 "xer": f"0x{self.expected_xer & 0xFFFFFFFF:08x}",
+                "lr": (
+                    f"0x{self.expected_lr & 0xFFFFFFFF:08x}"
+                    if self.expected_lr is not None else None
+                ),
+                "ctr": (
+                    f"0x{self.expected_ctr & 0xFFFFFFFF:08x}"
+                    if self.expected_ctr is not None else None
+                ),
                 "fpr": {
                     f"f{index}": f"0x{value & 0xFFFFFFFFFFFFFFFF:016x}"
                     for index, value in sorted(self.expected_fpr.items())
@@ -63,6 +82,14 @@ class FixtureCase:
                     f"0x{self.expected_fpscr & 0xFFFFFFFF:08x}"
                     if self.expected_fpscr is not None else None
                 ),
+                "gqr": {
+                    f"gqr{index}": f"0x{value & 0xFFFFFFFF:08x}"
+                    for index, value in sorted(self.expected_gqr.items())
+                },
+                "gpr": {
+                    f"r{index}": f"0x{value:08x}"
+                    for index, value in sorted(self.expected_gpr.items())
+                },
             },
         }
 
@@ -130,20 +157,28 @@ def _case(
     expected_memory: dict[int, int] | None = None,
     expected_fpr: dict[int, int] | None = None,
     expected_fpscr: int | None = None,
+    expected_gpr: dict[int, int] | None = None,
+    expected_gqr: dict[int, int] | None = None,
+    expected_lr: int | None = None,
+    expected_ctr: int | None = None,
     allow_paths: int = 1,
 ) -> FixtureCase:
     return FixtureCase(
         id=id_,
         tags=tags,
         initial=initial,
-        code_words=tuple(word & 0xFFFFFFFF for word in code),
+        code_words=tuple(code),
         result_reg=result_reg,
-        expected_result=result & 0xFFFFFFFF,
-        expected_cr=cr & 0xFFFFFFFF,
-        expected_xer=xer & 0xFFFFFFFF,
+        expected_result=result,
+        expected_cr=cr,
+        expected_xer=xer,
         expected_memory=dict(expected_memory or {}),
         expected_fpr=dict(expected_fpr or {}),
         expected_fpscr=expected_fpscr,
+        expected_gpr=dict(expected_gpr or {}),
+        expected_gqr=dict(expected_gqr or {}),
+        expected_lr=expected_lr,
+        expected_ctr=expected_ctr,
         allow_paths=allow_paths,
     )
 
@@ -561,6 +596,7 @@ FIXTURES: tuple[FixtureCase, ...] = (
         result=0xFFFF8001,
         cr=0,
         xer=0,
+        expected_memory={4: 0x80010000},
     ),
     _case(
         "byte-reverse",
@@ -581,6 +617,7 @@ FIXTURES: tuple[FixtureCase, ...] = (
         cr=0,
         xer=0,
         expected_memory={12: 0x11223344},
+        expected_gpr={10: SANDBOX_BASE + 12},
     ),
     _case(
         "lmw-stmw",
@@ -597,6 +634,7 @@ FIXTURES: tuple[FixtureCase, ...] = (
         cr=0,
         xer=0,
         expected_memory={48: 1, 52: 2, 56: 3, 60: 4},
+        expected_gpr={28: 1, 29: 2, 30: 3, 31: 4},
     ),
     _case(
         "bc-cr",
@@ -621,6 +659,8 @@ FIXTURES: tuple[FixtureCase, ...] = (
         result=0x00000001,
         cr=0,
         xer=0,
+        expected_ctr=0x00000001,
+        expected_gpr={8: 0x00000001},
     ),
     # --- Edge expansions (thin families / corner rules) ---
     _case(
@@ -698,6 +738,7 @@ FIXTURES: tuple[FixtureCase, ...] = (
         cr=0,
         xer=0,
         expected_memory={0: 0x11223344},
+        expected_gpr={8: 0x22, 10: SANDBOX_BASE + 1},
     ),
     _case(
         "lhbrx",
@@ -707,6 +748,7 @@ FIXTURES: tuple[FixtureCase, ...] = (
         result=0x2211,
         cr=0,
         xer=0,
+        expected_memory={8: 0x11220000},
     ),
     _case(
         "bc-cr-fallthrough",
@@ -758,30 +800,37 @@ FIXTURES += (
     _case("b-direct", ("branch",), _state(_gpr(r7=0)), [(18 << 26) | (2 << 2), dform(14, 7, 0, 1), dform(14, 7, 0, 2)], result=2, cr=0, xer=0),
     _case("bclr-not-taken", ("branch",), _state(_gpr(r7=0), cr=0), [xl(19, 12, 0, 0, 16), dform(14, 7, 0, 1)], result=1, cr=0, xer=0),
     _case("bcctr-not-taken", ("branch",), _state(_gpr(r7=0), cr=0, ctr=4), [xl(19, 12, 0, 0, 528), dform(14, 7, 0, 1)], result=1, cr=0, xer=0),
+    _case("bl-direct", ("branch", "lr"), _state(_gpr(r7=0)), [(18 << 26) | (2 << 2) | 1, dform(14, 7, 0, 1), dform(14, 7, 0, 2)], result=2, cr=0, xer=0, expected_lr=CODE_BASE + 4),
+    _case("bclr-taken", ("branch", "lr", "ctr"), _state(_gpr(r7=0), lr=CODE_BASE + 12, ctr=0xDEADBEEF), [xl(19, 20, 0, 0, 16), dform(14, 7, 0, 1), dform(14, 7, 0, 2), dform(14, 7, 0, 3)], result=3, cr=0, xer=0, expected_lr=CODE_BASE + 12, expected_ctr=0xDEADBEEF),
+    _case("bclrl-taken", ("branch", "lr", "ctr"), _state(_gpr(r7=0), lr=CODE_BASE + 12, ctr=0xDEADBEEF), [xl(19, 20, 0, 0, 16, lk=1), dform(14, 7, 0, 1), dform(14, 7, 0, 2), dform(14, 7, 0, 3)], result=3, cr=0, xer=0, expected_lr=CODE_BASE + 4, expected_ctr=0xDEADBEEF),
+    _case("bcctr-taken", ("branch", "lr", "ctr"), _state(_gpr(r7=0), lr=0xDEADBEEF, ctr=CODE_BASE + 12), [xl(19, 20, 0, 0, 528), dform(14, 7, 0, 1), dform(14, 7, 0, 2), dform(14, 7, 0, 3)], result=3, cr=0, xer=0, expected_lr=0xDEADBEEF, expected_ctr=CODE_BASE + 12),
 
     _case("lwz", ("memory",), _state(_gpr(r7=0), memory_words={4: 0x89ABCDEF}), [dform(32, 7, 4, 4)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
-    _case("lwzu", ("memory", "update"), _state(_gpr(r7=0), memory_words={4: 0x89ABCDEF}), [dform(33, 7, 4, 4)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
+    _case("lwzu", ("memory", "update"), _state(_gpr(r7=0), memory_words={4: 0x89ABCDEF}), [dform(33, 7, 4, 4)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}, expected_gpr={4: SANDBOX_BASE + 4}),
     _case("lbzx", ("memory",), _state(_gpr(r6=1, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 87)], result=0x22, cr=0, xer=0, expected_memory={0: 0x11223344}),
-    _case("lbzux", ("memory", "update"), _state(_gpr(r6=1, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 119)], result=0x22, cr=0, xer=0, expected_memory={0: 0x11223344}),
-    _case("lhzu", ("memory", "update"), _state(_gpr(r7=0), memory_words={0: 0x11223344}), [dform(41, 7, 4, 2)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}),
-    _case("lhau", ("memory", "update"), _state(_gpr(r7=0), memory_words={0: 0x11228001}), [dform(43, 7, 4, 2)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}),
+    _case("lbzux", ("memory", "update"), _state(_gpr(r6=1, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 119)], result=0x22, cr=0, xer=0, expected_memory={0: 0x11223344}, expected_gpr={4: SANDBOX_BASE + 1}),
+    _case("lhzu", ("memory", "update"), _state(_gpr(r7=0), memory_words={0: 0x11223344}), [dform(41, 7, 4, 2)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}, expected_gpr={4: SANDBOX_BASE + 2}),
+    _case("lhau", ("memory", "update"), _state(_gpr(r7=0), memory_words={0: 0x11228001}), [dform(43, 7, 4, 2)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}, expected_gpr={4: SANDBOX_BASE + 2}),
     _case("lhzx", ("memory",), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 279)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}),
-    _case("lhzux", ("memory", "update"), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 311)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}),
+    _case("lhzux", ("memory", "update"), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11223344}), [xo(31, 7, 4, 6, 311)], result=0x3344, cr=0, xer=0, expected_memory={0: 0x11223344}, expected_gpr={4: SANDBOX_BASE + 2}),
     _case("lhax", ("memory",), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11228001}), [xo(31, 7, 4, 6, 343)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}),
-    _case("lhaux", ("memory", "update"), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11228001}), [xo(31, 7, 4, 6, 375)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}),
+    _case("lhaux", ("memory", "update"), _state(_gpr(r6=2, r7=0), memory_words={0: 0x11228001}), [xo(31, 7, 4, 6, 375)], result=0xFFFF8001, cr=0, xer=0, expected_memory={0: 0x11228001}, expected_gpr={4: SANDBOX_BASE + 2}),
     _case("lwzx", ("memory",), _state(_gpr(r6=4, r7=0), memory_words={4: 0x89ABCDEF}), [xo(31, 7, 4, 6, 23)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
-    _case("lwzux", ("memory", "update"), _state(_gpr(r6=4, r7=0), memory_words={4: 0x89ABCDEF}), [xo(31, 7, 4, 6, 55)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}),
+    _case("lwzux", ("memory", "update"), _state(_gpr(r6=4, r7=0), memory_words={4: 0x89ABCDEF}), [xo(31, 7, 4, 6, 55)], result=0x89ABCDEF, cr=0, xer=0, expected_memory={4: 0x89ABCDEF}, expected_gpr={4: SANDBOX_BASE + 4}),
 
     _case("stb", ("memory",), _state(_gpr(r5=0xAA), memory_words={0: 0}), [dform(38, 5, 4, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
-    _case("stbu", ("memory", "update"), _state(_gpr(r5=0xAA), memory_words={0: 0}), [dform(39, 5, 4, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
+    _case("stbu", ("memory", "update"), _state(_gpr(r5=0xAA), memory_words={0: 0}), [dform(39, 5, 4, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}, expected_gpr={4: SANDBOX_BASE + 1}),
     _case("stbx", ("memory",), _state(_gpr(r5=0xAA, r6=1), memory_words={0: 0}), [xo(31, 5, 4, 6, 215)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
-    _case("stbux", ("memory", "update"), _state(_gpr(r5=0xAA, r6=1), memory_words={0: 0}), [xo(31, 5, 4, 6, 247)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}),
-    _case("sthu", ("memory", "update"), _state(_gpr(r5=0xAABB), memory_words={0: 0}), [dform(45, 5, 4, 2)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}),
+    _case("stbux", ("memory", "update"), _state(_gpr(r5=0xAA, r6=1), memory_words={0: 0}), [xo(31, 5, 4, 6, 247)], result=0, cr=0, xer=0, expected_memory={0: 0x00AA0000}, expected_gpr={4: SANDBOX_BASE + 1}),
+    _case("sthu", ("memory", "update"), _state(_gpr(r5=0xAABB), memory_words={0: 0}), [dform(45, 5, 4, 2)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}, expected_gpr={4: SANDBOX_BASE + 2}),
     _case("sthx", ("memory",), _state(_gpr(r5=0xAABB, r6=2), memory_words={0: 0}), [xo(31, 5, 4, 6, 407)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}),
-    _case("sthux", ("memory", "update"), _state(_gpr(r5=0xAABB, r6=2), memory_words={0: 0}), [xo(31, 5, 4, 6, 439)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}),
+    _case("sthux", ("memory", "update"), _state(_gpr(r5=0xAABB, r6=2), memory_words={0: 0}), [xo(31, 5, 4, 6, 439)], result=0, cr=0, xer=0, expected_memory={0: 0x0000AABB}, expected_gpr={4: SANDBOX_BASE + 2}),
     _case("sthbrx", ("memory",), _state(_gpr(r5=0x1122, r6=2), memory_words={0: 0}), [xo(31, 5, 4, 6, 918)], result=0, cr=0, xer=0, expected_memory={0: 0x00002211}),
     _case("stwx", ("memory",), _state(_gpr(r5=0x11223344, r6=4), memory_words={4: 0}), [xo(31, 5, 4, 6, 151)], result=0, cr=0, xer=0, expected_memory={4: 0x11223344}),
-    _case("stwux", ("memory", "update"), _state(_gpr(r5=0x11223344, r6=4), memory_words={4: 0}), [xo(31, 5, 4, 6, 183)], result=0, cr=0, xer=0, expected_memory={4: 0x11223344}),
+    _case("stwux", ("memory", "update"), _state(_gpr(r5=0x11223344, r6=4), memory_words={4: 0}), [xo(31, 5, 4, 6, 183)], result=0, cr=0, xer=0, expected_memory={4: 0x11223344}, expected_gpr={4: SANDBOX_BASE + 4}),
+    _case("stb-canary", ("memory", "canary"), _state(_gpr(r5=0xAA), memory_words={0: 0x11223344}), [dform(38, 5, 4, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x11AA3344}),
+    _case("sth-canary", ("memory", "canary"), _state(_gpr(r5=0xAABB), memory_words={0: 0x11223344}), [dform(44, 5, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0xAABB3344}),
+    _case("stb-negative-displacement", ("memory", "canary"), _state(_gpr(r5=0xAA), memory_words={0: 0x11223344, 4: 0x55667788, 8: 0x99AABBCC}), [dform(14, 10, 4, 2), dform(38, 5, 10, (-1) & 0xFFFF)], result=0, cr=0, xer=0, expected_memory={0: 0x11AA3344, 4: 0x55667788, 8: 0x99AABBCC}, expected_gpr={10: SANDBOX_BASE + 2}),
 )
 
 # Probe every Broadway estimate-table row with a nonzero interpolation
@@ -837,12 +886,13 @@ _FP_INPUTS = {"f1": _F15, "f2": _F2, "f3": _F4}
 def _paired_simple_case(
     id_: str, xo_bits: int, expected_ps0: int, expected_words: tuple[int, int],
     *, merge: bool = False, rc: int = 0,
+    tags: tuple[str, ...] = ("fp", "paired"),
 ) -> FixtureCase:
     # OX is directly writable through the harness mtfsf initialization path;
     # derived FX/VX summary bits cannot be injected without their causes.
     initial_fpscr = 0x10000000 if rc else 0
     return _case(
-        id_, ("fp", "paired", "move" if not merge else "merge", "lane-bits"),
+        id_, tags,
         _state(
             _gpr(r5=0), fpscr=initial_fpscr,
             memory_words={
@@ -862,6 +912,7 @@ def _paired_simple_case(
         expected_memory={16: expected_words[0], 20: expected_words[1]},
         expected_fpr={7: expected_ps0},
         expected_fpscr=initial_fpscr,
+        expected_gqr={1: 0},
     )
 
 
@@ -873,7 +924,7 @@ def _paired_arithmetic_case(
     initial_fpscr = 0x10000000 if rc else 0
     expected_fprf = 0x8000 if expected_ps0 & (1 << 63) else 0x4000
     return _case(
-        id_, ("fp", "paired", "arithmetic", "round-single", "lanes"),
+        id_, ("fp", "paired", "arithmetic", "round-single", "lanes", "partial-observation"),
         _state(
             _gpr(r5=0), fpscr=initial_fpscr,
             memory_words={
@@ -893,6 +944,7 @@ def _paired_arithmetic_case(
         expected_memory={16: expected_words[0], 20: expected_words[1]},
         expected_fpr={7: expected_ps0},
         expected_fpscr=initial_fpscr | expected_fprf,
+        expected_gqr={1: 0},
     )
 
 
@@ -903,7 +955,7 @@ def _paired_fused_case(
     initial_fpscr = 0x10000000 if rc else 0
     expected_fprf = 0x8000 if expected_ps0 & (1 << 63) else 0x4000
     return _case(
-        id_, ("fp", "paired", "fused", "round-single", "lanes"),
+        id_, ("fp", "paired", "fused", "round-single", "lanes", "partial-observation"),
         _state(
             _gpr(r5=0), fpscr=initial_fpscr,
             memory_words={
@@ -925,6 +977,7 @@ def _paired_fused_case(
         expected_memory={24: expected_words[0], 28: expected_words[1]},
         expected_fpr={7: expected_ps0},
         expected_fpscr=initial_fpscr | expected_fprf,
+        expected_gqr={1: 0},
     )
 
 
@@ -934,7 +987,7 @@ def _paired_sum_case(
 ) -> FixtureCase:
     initial_fpscr = 0x10000000 if rc else 0
     return _case(
-        id_, ("fp", "paired", "sum", "cross-lane", "copy", "round-single"),
+        id_, ("fp", "paired", "sum", "cross-lane", "copy", "round-single", "partial-observation"),
         _state(
             _gpr(r5=0), fpscr=initial_fpscr,
             memory_words={
@@ -956,6 +1009,7 @@ def _paired_sum_case(
         expected_memory={24: expected_words[0], 28: expected_words[1]},
         expected_fpr={7: expected_ps0},
         expected_fpscr=initial_fpscr | expected_fprf,
+        expected_gqr={1: 0},
     )
 
 
@@ -967,91 +1021,91 @@ FIXTURES += (
     _case("icbi", ("cache", "instruction", "no-self-modifying-code"), _state(_gpr(r4=SANDBOX_BASE)), [xo(31, 0, 0, 4, 982)], result=0, cr=0, xer=0),
     _case("sync", ("ordering", "ordinary-ram"), _state(), [0x7C0004AC], result=0, cr=0, xer=0),
     _case("isync", ("ordering", "no-self-modifying-code"), _state(), [0x4C00012C], result=0, cr=0, xer=0),
-    _case("dcbz", ("cache", "zero", "block", "memory"), _state(memory_words={0: 0xAAAAAAAA, 4: 0xBBBBBBBB}, spr={"hid0": 0x00004000}), [xo(31, 0, 0, 4, 1014)], result=0, cr=0, xer=0, expected_memory={0: 0, 4: 0}),
-    _case("dcbz_l", ("cache", "zero", "locked", "decode-only"), _state(), [0x48000008, (4 << 26) | (4 << 11) | (1014 << 1), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
-    _case("mfmsr", ("system", "msr", "privileged"), _state(), [0x7CA000A6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
-    _case("mtmsr", ("system", "msr", "privileged", "decode-only"), _state(), [0x48000008, 0x7CA00124, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
-    _case("mfsr", ("system", "segment", "privileged"), _state(), [0x7CA004A6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
-    _case("mtsr", ("system", "segment", "privileged", "decode-only"), _state(), [0x48000008, 0x7CA001A4, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
-    _case("mftb", ("system", "time-base", "stable-block"), _state(), [0x7CAC42E6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
-    _case("mfspr_pvr", ("system", "spr", "identity"), _state(), [_mfspr(5, 287), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
-    _case("mfspr_hid0", ("system", "spr", "hardware-control"), _state(), [_mfspr(5, 1008), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
-    _case("mfspr_sprg1", ("system", "spr", "context"), _state(), [_mfspr(5, 273), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
-    _case("mtspr_aux", ("system", "spr", "privileged", "decode-only"), _state(), [0x48000008, _mtspr(5, 1008), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
-    _case("mtspr_tbl", ("system", "time-base", "privileged", "decode-only"), _state(), [0x48000008, _mtspr(5, 284), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
-    _case("twi", ("system", "trap", "not-taken"), _state(), [0x0C000000], result=0, cr=0, xer=0),
-    _case("sc", ("system", "exception", "decode-only"), _state(), [0x48000008, 0x44000002, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
-    _case("rfi", ("system", "exception-return", "decode-only"), _state(), [0x48000008, 0x4C000064, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("dcbz", ("cache", "zero", "block", "memory", "canary"), _state(memory_words={0: 0xAAAAAAAA, 4: 0xBBBBBBBB, 8: 0xCCCCCCCC, 12: 0xDDDDDDDD, 16: 0xEEEEEEEE, 20: 0xFFFFFFFF, 24: 0x11111111, 28: 0x22222222, 32: 0x33333333, 36: 0x44444444, 40: 0x55555555, 44: 0x66666666}, spr={"hid0": 0x00004000}), [xo(31, 0, 0, 4, 1014)], result=0, cr=0, xer=0, expected_memory={0: 0, 4: 0, 8: 0, 12: 0, 16: 0, 20: 0, 24: 0, 28: 0, 32: 0x33333333, 36: 0x44444444, 40: 0x55555555, 44: 0x66666666}),
+    _case("dcbz_l", ("cache", "zero", "locked", "decode-only", "partial-observation"), _state(), [0x48000008, (4 << 26) | (4 << 11) | (1014 << 1), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("mfmsr", ("system", "msr", "privileged", "partial-observation"), _state(), [0x7CA000A6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mtmsr", ("system", "msr", "privileged", "decode-only", "partial-observation"), _state(), [0x48000008, 0x7CA00124, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("mfsr", ("system", "segment", "privileged", "partial-observation"), _state(), [0x7CA004A6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mtsr", ("system", "segment", "privileged", "decode-only", "partial-observation"), _state(), [0x48000008, 0x7CA001A4, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("mftb", ("system", "time-base", "stable-block", "partial-observation"), _state(), [0x7CAC42E6, xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mfspr_pvr", ("system", "spr", "identity", "partial-observation"), _state(), [_mfspr(5, 287), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mfspr_hid0", ("system", "spr", "hardware-control", "partial-observation"), _state(), [_mfspr(5, 1008), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mfspr_sprg1", ("system", "spr", "context", "partial-observation"), _state(), [_mfspr(5, 273), xo(31, 7, 5, 5, 40)], result=0, cr=0, xer=0),
+    _case("mtspr_aux", ("system", "spr", "privileged", "decode-only", "partial-observation"), _state(), [0x48000008, _mtspr(5, 1008), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("mtspr_tbl", ("system", "time-base", "privileged", "decode-only", "partial-observation"), _state(), [0x48000008, _mtspr(5, 284), dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("twi", ("system", "trap", "not-taken", "partial-observation"), _state(), [0x0C000000], result=0, cr=0, xer=0),
+    _case("sc", ("system", "exception", "decode-only", "partial-observation"), _state(), [0x48000008, 0x44000002, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
+    _case("rfi", ("system", "exception-return", "decode-only", "partial-observation"), _state(), [0x48000008, 0x4C000064, dform(14, 7, 0, 0)], result=0, cr=0, xer=0),
     _case("mffs", ("fp", "fpscr", "read"), _state(fpscr=0xA0100000), [_fp_x(7, 0, 0, 583)], result=0, cr=0, xer=0, expected_fpr={7: 0xFFF80000A0100000}, expected_fpscr=0xA0100000),
     _case("mtfsf", ("fp", "fpscr", "write", "record"), _state(fpr={"f2": 0xFFF8000000100880}), [_mtfsf(0xFF, 2, rc=1)], result=0, cr=0x06000000, xer=0, expected_fpscr=0x60100080),
     _case("mtfsfi", ("fp", "fpscr", "immediate"), _state(), [_mtfsfi(7, 3)], result=0, cr=0, xer=0, expected_fpscr=3),
     _case("mtfsb1", ("fp", "fpscr", "bit", "exception"), _state(fpscr=0x80), [_fp_x(11, 0, 0, 38)], result=0, cr=0, xer=0, expected_fpscr=0xE0100080),
     _case("mtfsb0", ("fp", "fpscr", "bit", "summary"), _state(fpscr=0xE0100080), [_fp_x(11, 0, 0, 70)], result=0, cr=0, xer=0, expected_fpscr=0x80000080),
     _case("mcrfs", ("fp", "fpscr", "cr", "clear"), _state(fpscr=0xA0100000), [_mcrfs(3, 2)], result=0, cr=0x00010000, xer=0, expected_fpscr=0x80000000),
-    _paired_simple_case("ps_neg", 40, 0xBFF8000000000000, (0xBFC00000, 0x40000000), rc=1),
-    _paired_simple_case("ps_mr", 72, _F15, (0x3FC00000, 0xC0000000)),
-    _paired_simple_case("ps_nabs", 136, 0xBFF8000000000000, (0xBFC00000, 0xC0000000)),
-    _paired_simple_case("ps_abs", 264, _F15, (0x3FC00000, 0x40000000)),
-    _paired_simple_case("ps_merge00", 528, _F15, (0x3FC00000, 0xC0400000), merge=True),
-    _paired_simple_case("ps_merge01", 560, _F15, (0x3FC00000, 0x40800000), merge=True),
-    _paired_simple_case("ps_merge10", 592, 0xC000000000000000, (0xC0000000, 0xC0400000), merge=True),
-    _paired_simple_case("ps_merge11", 624, 0xC000000000000000, (0xC0000000, 0x40800000), merge=True),
+    _paired_simple_case("ps_neg", 40, 0xBFF8000000000000, (0xBFC00000, 0x40000000), rc=1, tags=("fp", "paired", "move", "lane-bits", "partial-observation")),
+    _paired_simple_case("ps_mr", 72, _F15, (0x3FC00000, 0xC0000000), tags=("fp", "paired", "move", "lane-bits", "partial-observation")),
+    _paired_simple_case("ps_nabs", 136, 0xBFF8000000000000, (0xBFC00000, 0xC0000000), tags=("fp", "paired", "move", "lane-bits", "partial-observation")),
+    _paired_simple_case("ps_abs", 264, _F15, (0x3FC00000, 0x40000000), tags=("fp", "paired", "move", "lane-bits", "partial-observation")),
+    _paired_simple_case("ps_merge00", 528, _F15, (0x3FC00000, 0xC0400000), merge=True, tags=("fp", "paired", "merge", "lane-bits", "partial-observation")),
+    _paired_simple_case("ps_merge01", 560, _F15, (0x3FC00000, 0x40800000), merge=True, tags=("fp", "paired", "merge", "lane-bits", "partial-observation")),
+    _paired_simple_case("ps_merge10", 592, 0xC000000000000000, (0xC0000000, 0xC0400000), merge=True, tags=("fp", "paired", "merge", "lane-bits", "partial-observation")),
+    _paired_simple_case("ps_merge11", 624, 0xC000000000000000, (0xC0000000, 0x40800000), merge=True, tags=("fp", "paired", "merge", "lane-bits", "partial-observation")),
     _case("ps_cmpu0", ("fp", "paired", "compare", "unordered", "ps0"), _state(fpr={"f1": _F15, "f2": _F2}), [_ps_x(3 << 2, 1, 2, 0)], result=0, cr=0x00080000, xer=0, expected_fpscr=0x00008000),
     _case("ps_cmpo0", ("fp", "paired", "compare", "ordered", "ps0", "qnan"), _state(fpr={"f1": _QNAN, "f2": _F2}), [_ps_x(3 << 2, 1, 2, 32)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA0081000),
-    _case("ps_cmpu1", ("fp", "paired", "compare", "unordered", "ps1", "snan"), _state(fpr={"f1": _SNAN, "f2": _F2}), [_ps_x(3, 2, 1, 528), _ps_x(4, 2, 2, 528), _ps_x(3 << 2, 3, 4, 64)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA1001000),
-    _case("ps_cmpo1", ("fp", "paired", "compare", "ordered", "ps1", "snan", "ve"), _state(fpr={"f1": _SNAN, "f2": _F2}, fpscr=0x80), [_ps_x(3, 2, 1, 528), _ps_x(4, 2, 2, 528), _ps_x(3 << 2, 3, 4, 96)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xE1001080),
+    _case("ps_cmpu1", ("fp", "paired", "compare", "unordered", "ps1", "snan", "partial-observation"), _state(fpr={"f1": _SNAN, "f2": _F2}), [_ps_x(3, 2, 1, 528), _ps_x(4, 2, 2, 528), _ps_x(3 << 2, 3, 4, 64)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xA1001000),
+    _case("ps_cmpo1", ("fp", "paired", "compare", "ordered", "ps1", "snan", "ve", "partial-observation"), _state(fpr={"f1": _SNAN, "f2": _F2}, fpscr=0x80), [_ps_x(3, 2, 1, 528), _ps_x(4, 2, 2, 528), _ps_x(3 << 2, 3, 4, 96)], result=0, cr=0x00010000, xer=0, expected_fpscr=0xE1001080),
     _paired_arithmetic_case("ps_add", 21, (0x40000000, 0x40800000), (0x40600000, 0x40000000), 0x400C000000000000, rc=1),
     _paired_arithmetic_case("ps_sub", 20, (0x40000000, 0x40800000), (0xBF000000, 0xC0C00000), 0xBFE0000000000000),
     _paired_arithmetic_case("ps_mul", 25, (0x40800000, 0xBF000000), (0x40C00000, 0x3F800000), 0x4018000000000000, multiply=True),
     _paired_arithmetic_case("ps_muls0", 12, (0x40800000, 0xBF000000), (0x40C00000, 0xC1000000), 0x4018000000000000, multiply=True),
     _paired_arithmetic_case("ps_muls1", 13, (0x40800000, 0xBF000000), (0xBF400000, 0x3F800000), 0xBFE8000000000000, multiply=True),
-    _case("ps_mul-force25", ("fp", "paired", "multiply", "force25", "preserve-fifr"), _state(fpr={"f1": _F1, "f3": 0x3FF0000010000001}, fpscr=0x00060000), [_ps_x(1, 1, 1, 528), _ps_x(3, 3, 3, 528), _ps_a(7, 1, 0, 3, 25)], result=0, cr=0, xer=0, expected_fpr={7: _F1}, expected_fpscr=0x00064000),
-    _case("ps_add-lane-exceptions", ("fp", "paired", "add", "invalid", "lanes", "record", "clear-fifr"), _state(fpr={"f1": _PINF, "f2": _NINF, "f3": _SNAN, "f4": _F2}, fpscr=0x00060000), [_ps_x(5, 1, 3, 528), _ps_x(6, 2, 4, 528), _ps_a(7, 5, 6, 0, 21, rc=1)], result=0, cr=0x0A000000, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA1811000),
-    _case("ps_add-ve-writes", ("fp", "paired", "add", "invalid", "ve", "write-result"), _state(fpr={"f1": _PINF, "f2": _F1, "f3": _NINF, "f4": _F2, "f7": _F1}, fpscr=0x80), [_ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_a(7, 5, 6, 0, 21)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xE0811080),
-    _case("ps_mul-vximz-ps1", ("fp", "paired", "multiply", "invalid", "ps1"), _state(fpr={"f1": _F1, "f2": 0, "f3": _F2, "f4": _PINF}), [_ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_a(7, 5, 0, 6, 25)], result=0, cr=0, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xA0104000),
-    _case("ps_div", ("fp", "paired", "divide", "round-single", "lanes"), _state(_gpr(r5=0), memory_words={0: 0x40C00000, 4: 0xC0800000, 8: 0x40000000, 12: 0x3F000000, 16: 0, 20: 0}), [_mtspr(5, 913), _psq_d(56, 1, 4, 0, 0, 1), _psq_d(56, 2, 4, 8, 0, 1), _ps_a(7, 1, 2, 0, 18), _psq_d(60, 7, 4, 16, 0, 1)], result=0, cr=0, xer=0, expected_memory={16: 0x40400000, 20: 0xC1000000}, expected_fpr={7: 0x4008000000000000}, expected_fpscr=0x00004000),
-    _case("ps_div-enabled-lane-exceptions", ("fp", "paired", "divide", "snan", "zero", "ve", "ze", "write-result"), _state(_gpr(r5=0), fpr={"f1": _F1, "f2": 0, "f3": _SNAN, "f4": _F2}, fpscr=0x00060090, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 3, 528), _ps_x(6, 2, 4, 528), _ps_a(7, 5, 6, 0, 18), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7F800000, 4: 0x7FC00000}, expected_fpr={7: _PINF}, expected_fpscr=0xE5005090),
-    _case("ps_res", ("fp", "paired", "estimate", "reciprocal", "table", "lanes"), _state(_gpr(r5=0), memory_words={0: 0x3F800000, 4: 0x40000000, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 2, 4, 0, 0, 1), _ps_a(7, 0, 2, 0, 24), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F7FF800, 12: 0x3EFFF800}, expected_fpr={7: 0x3FEFFF0000000000}, expected_fpscr=0x00004000),
-    _case("ps_res-enabled-lane-exceptions", ("fp", "paired", "estimate", "reciprocal", "snan", "zero", "ve", "ze", "write-result"), _state(_gpr(r5=0), fpr={"f1": 0, "f2": _SNAN}, fpscr=0x00060090, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 2, 528), _ps_a(7, 0, 5, 0, 24), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7F800000, 4: 0x7FC00000}, expected_fpr={7: _PINF}, expected_fpscr=0xE5005090),
-    _case("ps_rsqrte", ("fp", "paired", "estimate", "rsqrt", "table", "lanes"), _state(_gpr(r5=0), memory_words={0: 0x3F800000, 4: 0x40000000, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 2, 4, 0, 0, 1), _ps_a(7, 0, 2, 0, 26), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F7FF400, 12: 0x3F34FD00}, expected_fpr={7: 0x3FEFFE8000000000}, expected_fpscr=0x00004000),
-    _case("ps_rsqrte-enabled-negative-zero", ("fp", "paired", "estimate", "rsqrt", "negative", "zero", "ve", "ze", "write-result"), _state(_gpr(r5=0), fpr={"f1": 0xBFF0000000000000, "f2": 0}, fpscr=0x00060090, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 2, 528), _ps_a(7, 0, 5, 0, 26), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7FC00000, 4: 0x7F800000}, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xE4011290),
+    _case("ps_mul-force25", ("fp", "paired", "multiply", "force25", "preserve-fifr", "partial-observation"), _state(fpr={"f1": _F1, "f3": 0x3FF0000010000001}, fpscr=0x00060000), [_ps_x(1, 1, 1, 528), _ps_x(3, 3, 3, 528), _ps_a(7, 1, 0, 3, 25)], result=0, cr=0, xer=0, expected_fpr={7: _F1}, expected_fpscr=0x00064000),
+    _case("ps_add-lane-exceptions", ("fp", "paired", "add", "invalid", "lanes", "record", "clear-fifr", "partial-observation"), _state(fpr={"f1": _PINF, "f2": _NINF, "f3": _SNAN, "f4": _F2}, fpscr=0x00060000), [_ps_x(5, 1, 3, 528), _ps_x(6, 2, 4, 528), _ps_a(7, 5, 6, 0, 21, rc=1)], result=0, cr=0x0A000000, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA1811000),
+    _case("ps_add-ve-writes", ("fp", "paired", "add", "invalid", "ve", "write-result", "partial-observation"), _state(fpr={"f1": _PINF, "f2": _F1, "f3": _NINF, "f4": _F2, "f7": _F1}, fpscr=0x80), [_ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_a(7, 5, 6, 0, 21)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xE0811080),
+    _case("ps_mul-vximz-ps1", ("fp", "paired", "multiply", "invalid", "ps1", "partial-observation"), _state(fpr={"f1": _F1, "f2": 0, "f3": _F2, "f4": _PINF}), [_ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_a(7, 5, 0, 6, 25)], result=0, cr=0, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xA0104000),
+    _case("ps_div", ("fp", "paired", "divide", "round-single", "lanes", "partial-observation"), _state(_gpr(r5=0), memory_words={0: 0x40C00000, 4: 0xC0800000, 8: 0x40000000, 12: 0x3F000000, 16: 0, 20: 0}), [_mtspr(5, 913), _psq_d(56, 1, 4, 0, 0, 1), _psq_d(56, 2, 4, 8, 0, 1), _ps_a(7, 1, 2, 0, 18), _psq_d(60, 7, 4, 16, 0, 1)], result=0, cr=0, xer=0, expected_memory={16: 0x40400000, 20: 0xC1000000}, expected_fpr={7: 0x4008000000000000}, expected_fpscr=0x00004000, expected_gqr={1: 0}),
+    _case("ps_div-enabled-lane-exceptions", ("fp", "paired", "divide", "snan", "zero", "ve", "ze", "write-result", "partial-observation"), _state(_gpr(r5=0), fpr={"f1": _F1, "f2": 0, "f3": _SNAN, "f4": _F2}, fpscr=0x00060090, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 3, 528), _ps_x(6, 2, 4, 528), _ps_a(7, 5, 6, 0, 18), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7F800000, 4: 0x7FC00000}, expected_fpr={7: _PINF}, expected_fpscr=0xE5005090, expected_gqr={1: 0}),
+    _case("ps_res", ("fp", "paired", "estimate", "reciprocal", "table", "lanes", "partial-observation"), _state(_gpr(r5=0), memory_words={0: 0x3F800000, 4: 0x40000000, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 2, 4, 0, 0, 1), _ps_a(7, 0, 2, 0, 24), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F7FF800, 12: 0x3EFFF800}, expected_fpr={7: 0x3FEFFF0000000000}, expected_fpscr=0x00004000, expected_gqr={1: 0}),
+    _case("ps_res-enabled-lane-exceptions", ("fp", "paired", "estimate", "reciprocal", "snan", "zero", "ve", "ze", "write-result", "partial-observation"), _state(_gpr(r5=0), fpr={"f1": 0, "f2": _SNAN}, fpscr=0x00060090, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 2, 528), _ps_a(7, 0, 5, 0, 24), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7F800000, 4: 0x7FC00000}, expected_fpr={7: _PINF}, expected_fpscr=0xE5005090, expected_gqr={1: 0}),
+    _case("ps_rsqrte", ("fp", "paired", "estimate", "rsqrt", "table", "lanes", "partial-observation"), _state(_gpr(r5=0), memory_words={0: 0x3F800000, 4: 0x40000000, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 2, 4, 0, 0, 1), _ps_a(7, 0, 2, 0, 26), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F7FF400, 12: 0x3F34FD00}, expected_fpr={7: 0x3FEFFE8000000000}, expected_fpscr=0x00004000, expected_gqr={1: 0}),
+    _case("ps_rsqrte-enabled-negative-zero", ("fp", "paired", "estimate", "rsqrt", "negative", "zero", "ve", "ze", "write-result", "partial-observation"), _state(_gpr(r5=0), fpr={"f1": 0xBFF0000000000000, "f2": 0}, fpscr=0x00060090, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 2, 528), _ps_a(7, 0, 5, 0, 26), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7FC00000, 4: 0x7F800000}, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xE4011290, expected_gqr={1: 0}),
     _paired_fused_case("ps_madd", 29, (0x41000000, 0x40A00000), 0x4020000000000000, rc=1),
     _paired_fused_case("ps_msub", 28, (0x40800000, 0xC0400000), 0x4010000000000000),
     _paired_fused_case("ps_nmadd", 31, (0xC1000000, 0xC0A00000), 0xC020000000000000),
     _paired_fused_case("ps_nmsub", 30, (0xC0800000, 0x40400000), 0xC010000000000000),
     _paired_fused_case("ps_madds0", 14, (0x41000000, 0xC0800000), 0x4020000000000000),
     _paired_fused_case("ps_madds1", 15, (0x3FA00000, 0x40A00000), 0x3FF4000000000000),
-    _case("ps_nmadd-lane-invalid-ve", ("fp", "paired", "fused", "snan", "vximz", "ve", "write-result"), _state(_gpr(r5=0), fpr={"f1": 0xFFF0000012345678, "f2": 0, "f3": 0x7FF80000ABCDEF01, "f4": _NINF, "f8": _F2, "f9": _PINF}, fpscr=0x80, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_x(10, 8, 9, 528), _ps_a(7, 5, 6, 10, 31), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0xFFC00000, 4: 0x7FC00000}, expected_fpr={7: 0xFFF8000000000000}, expected_fpscr=0xE1111080),
+    _case("ps_nmadd-lane-invalid-ve", ("fp", "paired", "fused", "snan", "vximz", "ve", "write-result", "partial-observation"), _state(_gpr(r5=0), fpr={"f1": 0xFFF0000012345678, "f2": 0, "f3": 0x7FF80000ABCDEF01, "f4": _NINF, "f8": _F2, "f9": _PINF}, fpscr=0x80, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 2, 528), _ps_x(6, 3, 4, 528), _ps_x(10, 8, 9, 528), _ps_a(7, 5, 6, 10, 31), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0xFFC00000, 4: 0x7FC00000}, expected_fpr={7: 0xFFF8000000000000}, expected_fpscr=0xE1111080, expected_gqr={1: 0}),
     _paired_sum_case("ps_sum0", 10, (0xBF000000, 0x40800000), 0xBFE0000000000000, 0x8000),
     _paired_sum_case("ps_sum1", 11, (0x40400000, 0xBF000000), 0x4008000000000000, 0x8000, rc=1),
-    _case("ps_sum0-vxisi", ("fp", "paired", "sum", "cross-lane", "invalid"), _state(_gpr(r5=0), fpr={"f1": _PINF, "f2": _NINF, "f3": _F2}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 1, 528), _ps_x(6, 2, 2, 528), _ps_x(8, 3, 3, 528), _ps_a(7, 5, 6, 8, 10), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7FC00000, 4: 0x40000000}, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA0811000),
-    _case("ps_sel-signed-zero-nan", ("fp", "paired", "select", "signed-zero", "nan", "lane-bits", "record"), _state(_gpr(r5=0), fpscr=0x10000000, memory_words={0: 0x80000000, 4: 0x7FC00001, 8: 0xFFC12345, 12: 0x80000000, 16: 0x3FC00000, 20: 0x40800000, 24: 0, 28: 0}), [_mtspr(5, 913), _psq_d(56, 1, 4, 0, 0, 1), _psq_d(56, 2, 4, 8, 0, 1), _psq_d(56, 3, 4, 16, 0, 1), _ps_a(7, 1, 2, 3, 23, rc=1), _psq_d(60, 7, 4, 24, 0, 1)], result=0, cr=0x01000000, xer=0, expected_memory={24: 0x3FC00000, 28: 0x80000000}, expected_fpr={7: _F15}, expected_fpscr=0x10000000),
-    _case("psq-l-st-quantized", ("fp", "psq", "gqr", "quantized", "pair", "memory"), _state(_gpr(r5=0x01060204), memory_words={0: 0xFE080000, 8: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x0010AAAA}, expected_fpr={7: 0xBFF0000000000000}),
-    _case("psq-u8-load-s8-store", ("fp", "psq", "gqr", "u8", "s8", "scale", "pair"), _state(_gpr(r5=0x02040106), memory_words={0: 0x080CAAAA, 4: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 4, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0406AAAA}, expected_fpr={7: _F2}),
-    _case("psq-u16-load-float-store", ("fp", "psq", "gqr", "u16", "float", "scale", "pair"), _state(_gpr(r5=0x01050000), memory_words={0: 0x00020008, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F800000, 12: 0x40800000}, expected_fpr={7: _F1}),
-    _case("psq-st-float-ftz", ("fp", "psq", "gqr", "float", "subnormal", "ftz", "w1"), _state(_gpr(r5=0), memory_words={0: 0}, fpr={"f7": 0xB6A0000000000000}), [_mtspr(5, 913), _psq_d(60, 7, 4, 0, 1, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x80000000}),
-    _case("psq-lu-w1", ("fp", "psq", "load", "update", "w1"), _state(_gpr(r5=0), memory_words={4: 0x3FC00000}), [_mtspr(5, 913), _psq_d(57, 7, 4, 4, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_fpr={7: _F15}),
-    _case("psq-stu-w1", ("fp", "psq", "store", "update", "w1"), _state(_gpr(r5=0), memory_words={4: 0}, fpr={"f7": _F15}), [_mtspr(5, 913), _psq_d(61, 7, 4, 4, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}),
-    _case("psq-lx-s16", ("fp", "psq", "load", "indexed", "s16"), _state(_gpr(r5=0x01070000, r6=0), memory_words={0: 0xFFFE0008}), [_mtspr(5, 913), _psq_x(True, False, 7, 4, 6, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0xFFFE0008}, expected_fpr={7: 0xBFF0000000000000}),
-    _case("psq-lux-s8", ("fp", "psq", "load", "indexed", "update", "s8"), _state(_gpr(r5=0x01060000, r6=4), memory_words={4: 0xFE080000}), [_mtspr(5, 913), _psq_x(True, True, 7, 4, 6, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0xFE080000}, expected_fpr={7: 0xBFF0000000000000}),
-    _case("psq-stx-u16", ("fp", "psq", "store", "indexed", "u16", "w1"), _state(_gpr(r5=0x00000105, r6=4), memory_words={4: 0xAAAAAAAA}, fpr={"f7": _F2}), [_mtspr(5, 913), _psq_x(False, False, 7, 4, 6, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0004AAAA}),
-    _case("psq-stux-s16", ("fp", "psq", "store", "indexed", "update", "s16", "w1"), _state(_gpr(r5=0x00000107, r6=4), memory_words={4: 0xAAAAAAAA}, fpr={"f7": 0xC000000000000000}), [_mtspr(5, 913), _psq_x(False, True, 7, 4, 6, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0xFFFCAAAA}),
+    _case("ps_sum0-vxisi", ("fp", "paired", "sum", "cross-lane", "invalid", "partial-observation"), _state(_gpr(r5=0), fpr={"f1": _PINF, "f2": _NINF, "f3": _F2}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(5, 1, 1, 528), _ps_x(6, 2, 2, 528), _ps_x(8, 3, 3, 528), _ps_a(7, 5, 6, 8, 10), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x7FC00000, 4: 0x40000000}, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA0811000),
+    _case("ps_sel-signed-zero-nan", ("fp", "paired", "select", "signed-zero", "nan", "lane-bits", "record", "partial-observation"), _state(_gpr(r5=0), fpscr=0x10000000, memory_words={0: 0x80000000, 4: 0x7FC00001, 8: 0xFFC12345, 12: 0x80000000, 16: 0x3FC00000, 20: 0x40800000, 24: 0, 28: 0}), [_mtspr(5, 913), _psq_d(56, 1, 4, 0, 0, 1), _psq_d(56, 2, 4, 8, 0, 1), _psq_d(56, 3, 4, 16, 0, 1), _ps_a(7, 1, 2, 3, 23, rc=1), _psq_d(60, 7, 4, 24, 0, 1)], result=0, cr=0x01000000, xer=0, expected_memory={24: 0x3FC00000, 28: 0x80000000}, expected_fpr={7: _F15}, expected_fpscr=0x10000000, expected_gqr={1: 0}),
+    _case("psq-l-st-quantized", ("fp", "psq", "gqr", "quantized", "pair", "memory"), _state(_gpr(r5=0x01060204), memory_words={0: 0xFE080000, 8: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x0010AAAA}, expected_fpr={7: 0xBFF0000000000000}, expected_gqr={1: 0x01060204}),
+    _case("psq-u8-load-s8-store", ("fp", "psq", "gqr", "u8", "s8", "scale", "pair"), _state(_gpr(r5=0x02040106), memory_words={0: 0x080CAAAA, 4: 0xAAAAAAAA}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 4, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0406AAAA}, expected_fpr={7: _F2}, expected_gqr={1: 0x02040106}),
+    _case("psq-u16-load-float-store", ("fp", "psq", "gqr", "u16", "float", "scale", "pair"), _state(_gpr(r5=0x01050000), memory_words={0: 0x00020008, 8: 0, 12: 0}), [_mtspr(5, 913), _psq_d(56, 7, 4, 0, 0, 1), _psq_d(60, 7, 4, 8, 0, 1)], result=0, cr=0, xer=0, expected_memory={8: 0x3F800000, 12: 0x40800000}, expected_fpr={7: _F1}, expected_gqr={1: 0x01050000}),
+    _case("psq-st-float-ftz", ("fp", "psq", "gqr", "float", "subnormal", "ftz", "w1"), _state(_gpr(r5=0), memory_words={0: 0}, fpr={"f7": 0xB6A0000000000000}), [_mtspr(5, 913), _psq_d(60, 7, 4, 0, 1, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x80000000}, expected_gqr={1: 0}),
+    _case("psq-lu-w1", ("fp", "psq", "load", "update", "w1"), _state(_gpr(r5=0), memory_words={4: 0x3FC00000}), [_mtspr(5, 913), _psq_d(57, 7, 4, 4, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_fpr={7: _F15}, expected_gpr={4: SANDBOX_BASE + 4}, expected_gqr={1: 0}),
+    _case("psq-stu-w1", ("fp", "psq", "store", "update", "w1"), _state(_gpr(r5=0), memory_words={4: 0}, fpr={"f7": _F15}), [_mtspr(5, 913), _psq_d(61, 7, 4, 4, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_gpr={4: SANDBOX_BASE + 4}, expected_gqr={1: 0}),
+    _case("psq-lx-s16", ("fp", "psq", "load", "indexed", "s16"), _state(_gpr(r5=0x01070000, r6=0), memory_words={0: 0xFFFE0008}), [_mtspr(5, 913), _psq_x(True, False, 7, 4, 6, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0xFFFE0008}, expected_fpr={7: 0xBFF0000000000000}, expected_gqr={1: 0x01070000}),
+    _case("psq-lux-s8", ("fp", "psq", "load", "indexed", "update", "s8"), _state(_gpr(r5=0x01060000, r6=4), memory_words={4: 0xFE080000}), [_mtspr(5, 913), _psq_x(True, True, 7, 4, 6, 0, 1)], result=0, cr=0, xer=0, expected_memory={4: 0xFE080000}, expected_fpr={7: 0xBFF0000000000000}, expected_gpr={4: SANDBOX_BASE + 4}, expected_gqr={1: 0x01060000}),
+    _case("psq-stx-u16", ("fp", "psq", "store", "indexed", "u16", "w1"), _state(_gpr(r5=0x00000105, r6=4), memory_words={4: 0xAAAAAAAA}, fpr={"f7": _F2}), [_mtspr(5, 913), _psq_x(False, False, 7, 4, 6, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0x0004AAAA}, expected_gqr={1: 0x105}),
+    _case("psq-stux-s16", ("fp", "psq", "store", "indexed", "update", "s16", "w1"), _state(_gpr(r5=0x00000107, r6=4), memory_words={4: 0xAAAAAAAA}, fpr={"f7": 0xC000000000000000}), [_mtspr(5, 913), _psq_x(False, True, 7, 4, 6, 1, 1)], result=0, cr=0, xer=0, expected_memory={4: 0xFFFCAAAA}, expected_gpr={4: SANDBOX_BASE + 4}, expected_gqr={1: 0x107}),
     _case("lfs", ("fp", "memory"), _state(memory_words={0: 0x3FC00000}), [dform(48, 7, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}),
-    _case("lfsu", ("fp", "memory", "update"), _state(memory_words={4: 0x3FC00000}), [dform(49, 7, 4, 4)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_fpr={7: _F15}),
+    _case("lfsu", ("fp", "memory", "update"), _state(memory_words={4: 0x3FC00000}), [dform(49, 7, 4, 4)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_fpr={7: _F15}, expected_gpr={4: SANDBOX_BASE + 4}),
     _case("lfd", ("fp", "memory"), _state(memory_words={0: 0x3FF80000, 4: 0}), [dform(50, 7, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}),
-    _case("lfdu", ("fp", "memory", "update"), _state(memory_words={8: 0x3FF80000, 12: 0}), [dform(51, 7, 4, 8)], result=0, cr=0, xer=0, expected_memory={8: 0x3FF80000, 12: 0}, expected_fpr={7: _F15}),
+    _case("lfdu", ("fp", "memory", "update"), _state(memory_words={8: 0x3FF80000, 12: 0}), [dform(51, 7, 4, 8)], result=0, cr=0, xer=0, expected_memory={8: 0x3FF80000, 12: 0}, expected_fpr={7: _F15}, expected_gpr={4: SANDBOX_BASE + 8}),
     _case("stfs", ("fp", "memory"), _state(memory_words={0: 0}, fpr={"f5": _F15}), [dform(52, 5, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}),
-    _case("stfsu", ("fp", "memory", "update"), _state(memory_words={4: 0}, fpr={"f5": _F15}), [dform(53, 5, 4, 4)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}),
+    _case("stfsu", ("fp", "memory", "update"), _state(memory_words={4: 0}, fpr={"f5": _F15}), [dform(53, 5, 4, 4)], result=0, cr=0, xer=0, expected_memory={4: 0x3FC00000}, expected_gpr={4: SANDBOX_BASE + 4}),
     _case("stfd", ("fp", "memory"), _state(memory_words={0: 0, 4: 0}, fpr={"f5": _F15}), [dform(54, 5, 4, 0)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}),
-    _case("stfdu", ("fp", "memory", "update"), _state(memory_words={8: 0, 12: 0}, fpr={"f5": _F15}), [dform(55, 5, 4, 8)], result=0, cr=0, xer=0, expected_memory={8: 0x3FF80000, 12: 0}),
+    _case("stfdu", ("fp", "memory", "update"), _state(memory_words={8: 0, 12: 0}, fpr={"f5": _F15}), [dform(55, 5, 4, 8)], result=0, cr=0, xer=0, expected_memory={8: 0x3FF80000, 12: 0}, expected_gpr={4: SANDBOX_BASE + 8}),
     _case("lfsx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0x3FC00000}), [xo(31, 7, 4, 6, 535)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}),
-    _case("lfsux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0x3FC00000}), [xo(31, 7, 4, 6, 567)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}),
+    _case("lfsux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0x3FC00000}), [xo(31, 7, 4, 6, 567)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_fpr={7: _F15}, expected_gpr={4: SANDBOX_BASE}),
     _case("lfdx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0x3FF80000, 4: 0}), [xo(31, 7, 4, 6, 599)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}),
-    _case("lfdux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0x3FF80000, 4: 0}), [xo(31, 7, 4, 6, 631)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}),
+    _case("lfdux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0x3FF80000, 4: 0}), [xo(31, 7, 4, 6, 631)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_fpr={7: _F15}, expected_gpr={4: SANDBOX_BASE}),
     _case("stfsx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 663)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}),
-    _case("stfsux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 695)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}),
+    _case("stfsux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 695)], result=0, cr=0, xer=0, expected_memory={0: 0x3FC00000}, expected_gpr={4: SANDBOX_BASE}),
     _case("stfdx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0, 4: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 727)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}),
-    _case("stfdux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0, 4: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 759)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}),
+    _case("stfdux", ("fp", "memory", "update"), _state(_gpr(r6=0), memory_words={0: 0, 4: 0}, fpr={"f5": _F15}), [xo(31, 5, 4, 6, 759)], result=0, cr=0, xer=0, expected_memory={0: 0x3FF80000, 4: 0}, expected_gpr={4: SANDBOX_BASE}),
     _case("stfiwx", ("fp", "memory"), _state(_gpr(r6=0), memory_words={0: 0}, fpr={"f5": 0x1122334455667788}), [xo(31, 5, 4, 6, 983)], result=0, cr=0, xer=0, expected_memory={0: 0x55667788}),
 
     _case("fadds", ("fp", "single", "record"), _state(fpr=_FP_INPUTS, fpscr=0x80000000), [_fp_a(59, 7, 1, 2, 0, 42, rc=1)], result=0, cr=0x08000000, xer=0, expected_fpr={7: 0x400C000000000000}, expected_fpscr=0x80004000),
@@ -1119,11 +1173,11 @@ FIXTURES += (
     _case("fnmadd-vxisi-ve", ("fp", "fused", "double", "add", "negate", "invalid", "ve", "suppress", "record"), _state(fpr={"f1": _PINF, "f2": _NINF, "f3": _F1, "f7": _F2}, fpscr=0x80), [_fp_a(63, 7, 1, 2, 3, 62, rc=1)], result=0, cr=0x0E000000, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xE0800080),
     _case("fnmsub", ("fp", "fused", "double", "subtract", "negate", "preserve-fifr"), _state(fpr=_FP_INPUTS, fpscr=0x00060000), [_fp_a(63, 7, 1, 2, 3, 60)], result=0, cr=0, xer=0, expected_fpr={7: 0xC010000000000000}, expected_fpscr=0x00068000),
     _case("fnmsub-vximz", ("fp", "fused", "double", "subtract", "negate", "invalid"), _state(fpr={"f1": 0, "f2": _F1, "f3": _PINF}), [_fp_a(63, 7, 1, 2, 3, 60)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA0111000),
-    _case("fres", ("fp", "estimate", "reciprocal", "table", "fill", "record"), _state(_gpr(r5=0), fpr={"f2": _F1}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _fp_a(59, 7, 0, 2, 0, 48, rc=1), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x3F7FF800, 4: 0x3F7FF800}, expected_fpr={7: 0x3FEFFF0000000000}, expected_fpscr=0x00004000),
+    _case("fres", ("fp", "estimate", "reciprocal", "table", "fill", "record"), _state(_gpr(r5=0), fpr={"f2": _F1}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _fp_a(59, 7, 0, 2, 0, 48, rc=1), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x3F7FF800, 4: 0x3F7FF800}, expected_fpr={7: 0x3FEFFF0000000000}, expected_fpscr=0x00004000, expected_gqr={1: 0}),
     _case("fres-small", ("fp", "estimate", "reciprocal", "small", "saturate"), _state(fpr={"f2": 1}), [_fp_a(59, 7, 0, 2, 0, 48)], result=0, cr=0, xer=0, expected_fpr={7: 0x47EFFFFFE0000000}, expected_fpscr=0x00004000),
     _case("fres-zero-ze", ("fp", "estimate", "reciprocal", "zero", "ze", "suppress", "record"), _state(fpr={"f2": 0, "f7": _F2}, fpscr=0x10), [_fp_a(59, 7, 0, 2, 0, 48, rc=1)], result=0, cr=0x0C000000, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xC4000010),
     _case("fres-snan-ve", ("fp", "estimate", "reciprocal", "snan", "ve", "suppress"), _state(fpr={"f2": 0x7FF0000012345678, "f7": _F2}, fpscr=0x80), [_fp_a(59, 7, 0, 2, 0, 48)], result=0, cr=0, xer=0, expected_fpr={7: _F2}, expected_fpscr=0xE1000080),
-    _case("frsqrte", ("fp", "estimate", "rsqrt", "table", "preserve-ps1"), _state(_gpr(r5=0), fpr={"f2": _F1, "f3": _F2}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(7, 2, 3, 528), _fp_a(63, 7, 0, 2, 0, 52), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x3F7FF400, 4: 0x40000000}, expected_fpr={7: 0x3FEFFE8000000000}, expected_fpscr=0x00004000),
+    _case("frsqrte", ("fp", "estimate", "rsqrt", "table", "preserve-ps1"), _state(_gpr(r5=0), fpr={"f2": _F1, "f3": _F2}, memory_words={0: 0, 4: 0}), [_mtspr(5, 913), _ps_x(7, 2, 3, 528), _fp_a(63, 7, 0, 2, 0, 52), _psq_d(60, 7, 4, 0, 0, 1)], result=0, cr=0, xer=0, expected_memory={0: 0x3F7FF400, 4: 0x40000000}, expected_fpr={7: 0x3FEFFE8000000000}, expected_fpscr=0x00004000, expected_gqr={1: 0}),
     _case("frsqrte-subnormal", ("fp", "estimate", "rsqrt", "subnormal", "normalize"), _state(fpr={"f2": 1}), [_fp_a(63, 7, 0, 2, 0, 52)], result=0, cr=0, xer=0, expected_fpr={7: 0x617FFE8000000000}, expected_fpscr=0x00004000),
     _case("frsqrte-negative", ("fp", "estimate", "rsqrt", "negative", "vxsqrt", "clear-fifr"), _state(fpr={"f2": 0xBFF0000000000000}, fpscr=0x00060000), [_fp_a(63, 7, 0, 2, 0, 52)], result=0, cr=0, xer=0, expected_fpr={7: 0x7FF8000000000000}, expected_fpscr=0xA0011200),
     _case("fsel", ("fp", "double"), _state(fpr=_FP_INPUTS), [_fp_a(63, 7, 1, 2, 3, 46)], result=0, cr=0, xer=0, expected_fpr={7: _F4}, expected_fpscr=0),
@@ -1163,6 +1217,28 @@ FIXTURES += (
         result_reg=7,
         cr=0,
         xer=0,
+        expected_gpr={
+            0: 0xA0000000,
+            1: 0,
+            2: 0xA0000002, 3: 0xA0000003,
+            4: SANDBOX_BASE,
+            5: 0xA0000005, 6: 0xA0000006,
+            7: 0xA0000007, 8: 0xA0000008, 9: 0xA0000009,
+            10: 0xA000000A, 11: 0xA000000B, 12: 0xA000000C,
+            13: 0xA000000D,
+            14: 0,
+            15: 0xA000000F, 16: 0xA0000010, 17: 0xA0000011,
+            18: 0xA0000012, 19: 0xA0000013, 20: 0xA0000014,
+            21: 0xA0000015, 22: 0xA0000016, 23: 0xA0000017,
+            24: 0xA0000018, 25: 0xA0000019, 26: 0xA000001A,
+            27: 0xA000001B, 28: 0xA000001C, 29: 0xA000001D,
+            30: 0,
+            31: 0,
+        },
+        expected_ctr=SANDBOX_BASE,
+        expected_memory={
+            120: 0, 124: 0,
+        },
     ),
 )
 
@@ -1202,6 +1278,20 @@ def load_fixtures(path: Path | None = None) -> tuple[FixtureCase, ...]:
                 expected_fpscr=(
                     parse_int(expected["fpscr"])
                     if expected.get("fpscr") is not None else None
+                ),
+                expected_gpr=(
+                    {int(k.lstrip("r")): parse_int(v) for k, v in (expected.get("gpr") or {}).items()}
+                ),
+                expected_gqr=(
+                    {int(k.lstrip("gqr")): parse_int(v) for k, v in (expected.get("gqr") or {}).items()}
+                ),
+                expected_lr=(
+                    parse_int(expected["lr"])
+                    if expected.get("lr") is not None else None
+                ),
+                expected_ctr=(
+                    parse_int(expected["ctr"])
+                    if expected.get("ctr") is not None else None
                 ),
                 max_instructions=int(payload.get("bounds", {}).get("max_instructions", 32)),
                 allow_paths=int(payload.get("bounds", {}).get("allow_paths", 1)),

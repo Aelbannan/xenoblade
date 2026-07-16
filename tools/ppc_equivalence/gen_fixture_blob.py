@@ -115,13 +115,23 @@ def generate_header() -> str:
         "    u32 expected_cr;",
         "    u32 expected_xer;",
         "    u32 expected_mem_count;",
-        "    u32 expected_mem_off[8];",
-        "    u32 expected_mem_val[8];",
+        "    u32 expected_mem_off[16];",
+        "    u32 expected_mem_val[16];",
         "    u32 expected_fpr_count;",
         "    u32 expected_fpr_index[8];",
         "    u64 expected_fpr_value[8];",
+        "    u32 expected_gqr_count;",
+        "    u32 expected_gqr_index[8];",
+        "    u32 expected_gqr_value[8];",
+        "    u32 expected_gpr_count;",
+        "    u32 expected_gpr_index[32];",
+        "    u32 expected_gpr_value[32];",
         "    u32 observe_fpscr;",
         "    u32 expected_fpscr;",
+        "    u32 observe_lr;",
+        "    u32 expected_lr;",
+        "    u32 observe_ctr;",
+        "    u32 expected_ctr;",
         "    PpcFixturePayloadFn payload;",
         "} PpcFixtureCase;",
         "",
@@ -136,22 +146,34 @@ def generate_header() -> str:
             raise SystemExit(f"{case.id}: code length {len(case.code_words)} exceeds {CODE_MAX}")
         if len(case.id) > NAME_MAX:
             raise SystemExit(f"{case.id}: name longer than {NAME_MAX}")
-        if len(case.expected_memory) > 8:
+        if len(case.expected_memory) > 16:
             raise SystemExit(f"{case.id}: too many expected memory words")
         if len(case.expected_fpr) > 8:
             raise SystemExit(f"{case.id}: too many expected FPRs")
+        if len(case.expected_gqr) > 8:
+            raise SystemExit(f"{case.id}: too many expected GQRs")
+        if len(case.expected_gpr) > 32:
+            raise SystemExit(f"{case.id}: too many expected GPRs")
 
         gpr = _gpr_array(case.initial)
         fpr = _fpr_array(case.initial)
         mem = _mem_words(case.initial)
         mem_offs = list(case.expected_memory.keys())
         mem_vals = [case.expected_memory[offset] for offset in mem_offs]
-        mem_offs += [0] * (8 - len(mem_offs))
-        mem_vals += [0] * (8 - len(mem_vals))
+        mem_offs += [0] * (16 - len(mem_offs))
+        mem_vals += [0] * (16 - len(mem_vals))
         fpr_indices = list(case.expected_fpr)
         fpr_values = [case.expected_fpr[index] for index in fpr_indices]
         fpr_indices += [0] * (8 - len(fpr_indices))
         fpr_values += [0] * (8 - len(fpr_values))
+        gqr_indices = list(case.expected_gqr)
+        gqr_values = [case.expected_gqr[index] for index in gqr_indices]
+        gqr_indices += [0] * (8 - len(gqr_indices))
+        gqr_values += [0] * (8 - len(gqr_values))
+        gpr_indices = list(case.expected_gpr)
+        gpr_values = [case.expected_gpr[index] for index in gpr_indices]
+        gpr_indices += [0] * (32 - len(gpr_indices))
+        gpr_values += [0] * (32 - len(gpr_values))
 
         lines.append("    {")
         lines.append(f"        {_c_string(case.id)},")
@@ -174,8 +196,18 @@ def generate_header() -> str:
         lines.append(f"        {len(case.expected_fpr)}u,")
         lines.append("        {" + ", ".join(f"{value}u" for value in fpr_indices) + "},")
         lines.append("        {" + ", ".join(f"0x{value:016X}ull" for value in fpr_values) + "},")
+        lines.append(f"        {len(case.expected_gqr)}u,")
+        lines.append("        {" + ", ".join(f"{value}u" for value in gqr_indices) + "},")
+        lines.append("        {" + ", ".join(f"0x{value:08X}u" for value in gqr_values) + "},")
+        lines.append(f"        {len(case.expected_gpr)}u,")
+        lines.append("        {" + ", ".join(f"{value}u" for value in gpr_indices) + "},")
+        lines.append("        {" + ", ".join(f"0x{value:08X}u" for value in gpr_values) + "},")
         lines.append(f"        {1 if case.expected_fpscr is not None else 0}u,")
         lines.append(f"        0x{(case.expected_fpscr or 0):08X}u,")
+        lines.append(f"        {1 if case.expected_lr is not None else 0}u,")
+        lines.append(f"        0x{(case.expected_lr or 0):08X}u,")
+        lines.append(f"        {1 if case.expected_ctr is not None else 0}u,")
+        lines.append(f"        0x{(case.expected_ctr or 0):08X}u,")
         lines.append(f"        ppc_fixture_payload_{index},")
         lines.append("    },")
 

@@ -13,11 +13,15 @@ from tools.ppc_equivalence.semantics import ConcreteOps, execute_cfg
 @dataclass(frozen=True, slots=True)
 class FixtureObservation:
     result: int
+    gpr: tuple[int, ...]
     cr: int
     xer: int
+    lr: int
+    ctr: int
     memory: dict[int, int]
     fpr: dict[int, int]
     fpscr: int
+    gqr: tuple[int, ...]
 
 
 def _memory_word(state, address: int) -> int:
@@ -60,11 +64,15 @@ def run_fixture_concrete(case: FixtureCase) -> FixtureObservation:
     memory = {offset: _memory_word(final, base + offset) for offset in case.expected_memory}
     return FixtureObservation(
         result=int(final.gpr[case.result_reg]) & 0xFFFFFFFF,
+        gpr=tuple(int(v) & 0xFFFFFFFF for v in final.gpr),
         cr=int(final.cr) & 0xFFFFFFFF,
         xer=xer,
+        lr=int(final.lr) & 0xFFFFFFFF,
+        ctr=int(final.ctr) & 0xFFFFFFFF,
         memory=memory,
         fpr={index: int(final.fpr[index]) & 0xFFFFFFFFFFFFFFFF for index in case.expected_fpr},
         fpscr=int(final.fpscr) & 0xFFFFFFFF,
+        gqr=tuple(int(v) & 0xFFFFFFFF for v in final.gqr),
     )
 
 
@@ -75,10 +83,20 @@ def compare_fixture(case: FixtureCase) -> list[str]:
         mismatches.append(
             f"result 0x{actual.result:08x} != 0x{case.expected_result:08x}"
         )
+    for index, expected in case.expected_gpr.items():
+        got = actual.gpr[index]
+        if got != expected:
+            mismatches.append(
+                f"r{index} 0x{got:08x} != 0x{expected:08x}"
+            )
     if actual.cr != case.expected_cr:
         mismatches.append(f"cr 0x{actual.cr:08x} != 0x{case.expected_cr:08x}")
     if actual.xer != case.expected_xer:
         mismatches.append(f"xer 0x{actual.xer:08x} != 0x{case.expected_xer:08x}")
+    if case.expected_lr is not None and actual.lr != case.expected_lr:
+        mismatches.append(f"lr 0x{actual.lr:08x} != 0x{case.expected_lr:08x}")
+    if case.expected_ctr is not None and actual.ctr != case.expected_ctr:
+        mismatches.append(f"ctr 0x{actual.ctr:08x} != 0x{case.expected_ctr:08x}")
     for offset, expected in case.expected_memory.items():
         got = actual.memory.get(offset)
         if got != expected:
@@ -95,4 +113,10 @@ def compare_fixture(case: FixtureCase) -> list[str]:
         mismatches.append(
             f"fpscr 0x{actual.fpscr:08x} != 0x{case.expected_fpscr:08x}"
         )
+    for index, expected in case.expected_gqr.items():
+        got = actual.gqr[index]
+        if got != expected:
+            mismatches.append(
+                f"gqr{index} 0x{got:08x} != 0x{expected:08x}"
+            )
     return mismatches

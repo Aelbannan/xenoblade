@@ -24,7 +24,7 @@ from tools.ppc_equivalence.ir import (
     UnsupportedInstruction,
 )
 from tools.ppc_equivalence.model import MachineState, concrete_state
-from tools.ppc_equivalence.result import ProofStatus
+from tools.ppc_equivalence.result import ProofResult, ProofStatus, RESULT_FORMAT
 from tools.ppc_equivalence.semantics import (
     ConcreteOps,
     FPSCR_FEX,
@@ -2476,6 +2476,135 @@ class PhaseOneTwoSymbolicTests(unittest.TestCase):
             candidate_hex="2c030000 40820008 4800001c 48000014",
         )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+
+OUTCOME_EQUIVALENT = (0, "equivalent")
+OUTCOME_NOT_EQUIVALENT = (1, "not_equivalent")
+OUTCOME_INCONCLUSIVE = (2, "inconclusive_*")
+OUTCOME_INVALID_INPUT = (3, "invalid_input")
+OUTCOME_INTERNAL_ERROR = (4, "internal_error")
+
+
+class CheckerOutcomeMatrixTests(unittest.TestCase):
+    """End-to-end result status, exit code, and JSON round-trip coverage
+    that does **not** require the Z3 solver."""
+
+    def test_unsupported_instruction_is_inconclusive(self) -> None:
+        from tools.ppc_equivalence.cli import _exit_for_status
+        result = ProofResult(
+            status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            contract="manual",
+            unsupported=["dcbz_l at 0x80018004"],
+        )
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertEqual(len(result.unsupported), 1)
+        self.assertEqual(_exit_for_status(result.status), 2)
+        payload = result.to_dict()
+        self.assertEqual(payload["status"], "inconclusive_unsupported")
+
+    def test_concrete_loop_bound_raises_inconclusive(self) -> None:
+        program = decode_block(parse_hex("48000000"), 0, validate_with_capstone=False)
+        with self.assertRaises(ExecutionInconclusive):
+            execute_cfg(concrete_state(), program, ConcreteOps(), max_instructions=16)
+
+    def test_concrete_path_bound_raises_inconclusive(self) -> None:
+        branches = decode_block(
+            parse_hex("40820008 4800000c 38600001 38600002"), 0,
+            validate_with_capstone=False,
+        )
+        with self.assertRaises(ExecutionInconclusive):
+            execute_cfg(concrete_state(), branches, ConcreteOps(), max_paths=1)
+
+    def test_invalid_contract_observable_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            make_contract(preset="strict", observe=("nonexistent_reg",), timeout_ms=5_000)
+
+    def test_stable_exit_codes_for_every_status(self) -> None:
+        from tools.ppc_equivalence.cli import _exit_for_status
+        self.assertEqual(_exit_for_status(ProofStatus.EQUIVALENT), 0)
+        self.assertEqual(_exit_for_status(ProofStatus.NOT_EQUIVALENT), 1)
+        self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_TIMEOUT), 2)
+        self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_UNKNOWN), 2)
+        self.assertEqual(_exit_for_status(ProofStatus.INCONCLUSIVE_UNSUPPORTED), 2)
+        self.assertEqual(_exit_for_status(ProofStatus.INVALID_INPUT), 3)
+        self.assertEqual(_exit_for_status(ProofStatus.INTERNAL_ERROR), 4)
+
+
+@unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")
+class CheckerOutcomeMatrixZ3Tests(unittest.TestCase):
+    """End-to-end result status, JSON round-trip, replay shape, and CLI
+    exit-code tests that require the Z3 solver."""
+
+    def test_equivalent_exit_code_and_json(self) -> None:
+        insns = decode_block(parse_hex("7c632214"), 0, validate_with_capstone=False)
+        result = check_equivalence(
+            insns, insns,
+            make_contract(preset="strict", observe=("r3",), timeout_ms=5_000),
+            original_hex="7c632214", candidate_hex="7c632214",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+        payload = result.to_dict()
+        self.assertEqual(payload["status"], "equivalent")
+        self.assertEqual(payload["format"], RESULT_FORMAT)
+        self.assertIn("contract", payload)
+        self.assertTrue(len(json.dumps(payload)) > 0)
+
+    def test_not_equivalent_produces_replayable_counterexample(self) -> None:
+        result = check_equivalence(
+            decode_block(parse_hex("38600001"), 0, validate_with_capstone=False),
+            decode_block(parse_hex("38600002"), 0, validate_with_capstone=False),
+            make_contract(preset="strict", observe=("r3",), timeout_ms=5_000),
+            original_hex="38600001", candidate_hex="38600002",
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertIsNotNone(result.replay)
+        self.assertIn("original_hex", result.replay)
+        self.assertIn("candidate_hex", result.replay)
+        self.assertEqual(result.replay["original_hex"], "38600001")
+        self.assertEqual(result.replay["candidate_hex"], "38600002")
+        payload = result.to_dict()
+        self.assertEqual(payload["status"], "not_equivalent")
+        self.assertIsNotNone(payload.get("replay"))
+
+    def test_mismatched_cfg_exit_is_not_equivalent(self) -> None:
+        result = check_equivalence(
+            decode_block(parse_hex("4e800020"), 0, validate_with_capstone=False),
+            decode_block(parse_hex("4e800021"), 0, validate_with_capstone=False),
+            make_contract(preset="strict", observe=("r3",), timeout_ms=5_000),
+            original_hex="4e800020", candidate_hex="4e800021",
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertIsNotNone(result.mismatch)
+        self.assertIn(result.mismatch["name"], ("exit.kind", "exit.target"))
+
+    def test_result_json_round_trip_is_stable(self) -> None:
+        insns = decode_block(parse_hex("7c632214"), 0, validate_with_capstone=False)
+        result = check_equivalence(
+            insns, insns,
+            make_contract(preset="ppc-eabi", observe=None, timeout_ms=5_000),
+            original_hex="7c632214", candidate_hex="7c632214",
+        )
+        payload = result.to_dict()
+        round_tripped = json.dumps(payload, sort_keys=True)
+        loaded = json.loads(round_tripped)
+        self.assertEqual(loaded["status"], result.status.value)
+        self.assertEqual(loaded["format"], RESULT_FORMAT)
+        self.assertEqual(loaded["contract"], result.contract)
+        for key in ("original_instruction_count", "candidate_instruction_count"):
+            self.assertEqual(loaded[key], getattr(result, key), key)
+
+    def test_cli_entry_point_returns_zero_on_identical_hex(self) -> None:
+        from tools.ppc_equivalence.cli import main as cli_main
+        result = check_equivalence(
+            decode_block(parse_hex("7c632214"), 0, validate_with_capstone=False),
+            decode_block(parse_hex("7c632214"), 0, validate_with_capstone=False),
+            make_contract(preset="ppc-eabi", observe=None, timeout_ms=5_000),
+            original_hex="7c632214", candidate_hex="7c632214",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+        code = cli_main(["check-hex", "--original", "7c632214", "--candidate", "7c632214", "--contract", "ppc-eabi", "-J"])
+        self.assertEqual(code, 0)
+
 
 
 if __name__ == "__main__":

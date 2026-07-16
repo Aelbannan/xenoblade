@@ -2738,16 +2738,6 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         reads |= {f"f{a[2]}", "fpscr"}
         if insn.record:
             writes.add("cr1")
-    elif op in _FP_SCALAR_ARITH:
-        writes.add(f"f{a[0]}")
-        if op in _FP_SINGLE_ARITH:
-            writes.add(f"f{a[0]}.ps1")
-        for idx in a[1:]:
-            if 0 <= idx < 32: reads.add(f"f{idx}")
-        if op in (Opcode.FCTIW, Opcode.FCTIWZ):
-            reads.add("fpscr")
-            writes.add("fpscr")
-        if insn.record: writes.add("cr1")
     elif op in (Opcode.FCMPU, Opcode.FCMPO):
         for idx in a[1:]:
             if 0 <= idx < 32: reads.add(f"f{idx}")
@@ -2775,6 +2765,16 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         reads.add("fpscr")
         writes.add("fpscr")
         writes.add(f"cr{a[0]}")
+    elif op in _FP_SCALAR_ARITH:
+        writes.add(f"f{a[0]}")
+        if op in _FP_SINGLE_ARITH:
+            writes.add(f"f{a[0]}.ps1")
+        for idx in a[1:]:
+            if 0 <= idx < 32: reads.add(f"f{idx}")
+        if op in (Opcode.FCTIW, Opcode.FCTIWZ):
+            reads.add("fpscr")
+            writes.add("fpscr")
+        if insn.record: writes.add("cr1")
     elif op in (Opcode.MFSPR, Opcode.MTSPR):
         reg, spr = a
         name = (

@@ -16,10 +16,10 @@ Host dual-oracle binaries (`host/*.cpp`) were removed — they were mostly tauto
 ## Quick start
 
 ```bash
-python tools/coop/run.py behaviour audit
-python tools/coop/run.py behaviour compare --all
-python tools/coop/run.py behaviour compare view-rect-data-clamp
-python tools/coop/run.py behaviour ppc view-rect-data-clamp
+python3 tools/coop/run.py behaviour audit
+python3 tools/coop/run.py behaviour compare --all
+python3 tools/coop/run.py behaviour compare view-rect-data-clamp
+python3 tools/coop/run.py behaviour ppc view-rect-data-clamp
 ```
 
 Standalone:
@@ -29,15 +29,15 @@ python tools/test/compare_behaviour/run.py audit
 python tools/test/compare_behaviour/run.py compare --all
 ```
 
-Requires `python tools/coop/run.py baseline` (or `ninja`) so retail and decomp `.o` files exist.
+Requires `python3 tools/coop/run.py baseline` (or `ninja`) so retail and decomp `.o` files exist.
 
 ## Split object size
 
 Decompiled `.text` must fit the retail split slice in `config/<region>/splits.txt`:
 
 ```bash
-python tools/coop/run.py size monolib/src/core/CViewRectDataCore
-python tools/coop/run.py size --all
+python3 tools/coop/run.py size monolib/src/core/CViewRectDataCore
+python3 tools/coop/run.py size --all
 ```
 
 `diff`, `cycle`, and `behaviour compare` also print a size line. `decomp .text` larger than the split budget exits non-zero. Behaviour tests may pass while size fails — treat overflow as a blocker for acceptance and `configure.py` `Matching` promotion.
@@ -68,8 +68,8 @@ coop run cycle <target>     # static match
    Use `ppc_cpu_core: 0` only for an ISA oracle that must run through Dolphin's
    interpreter; ordinary retail/decomp tests should use Dolphin's default JIT.
 2. Create harness under `ppc/` (see existing slices/mocks).
-3. `python tools/coop/run.py behaviour ppc <id>`
-4. `python tools/coop/run.py behaviour compare <id>`
+3. `python3 tools/coop/run.py behaviour ppc <id>`
+4. `python3 tools/coop/run.py behaviour compare <id>`
 
 ## Relation to objdiff
 
@@ -83,9 +83,9 @@ For tests with `ppc_source` in `manifest.json`, the runner builds a minimal test
 (retail + decomp `.o` with prefixed symbols + MWCC harness) and runs it **headless**:
 
 ```bash
-python tools/coop/run.py behaviour ppc view-rect-data-clamp
-python tools/coop/run.py behaviour compare view-rect-data-clamp   # static + ppc
-python tools/coop/run.py behaviour ppc --all                      # all ppc_source tests
+python3 tools/coop/run.py behaviour ppc view-rect-data-clamp
+python3 tools/coop/run.py behaviour compare view-rect-data-clamp   # static + ppc
+python3 tools/coop/run.py behaviour ppc --all                      # all ppc_source tests
 ```
 
 Requirements:
@@ -104,8 +104,8 @@ with the Python model:
 
 ```bash
 python tools/ppc_equivalence/gen_fixture_blob.py
-python tools/coop/run.py equivalence differential
-python tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
+python3 tools/coop/run.py equivalence differential
+python3 tools/coop/run.py behaviour ppc ppc-equivalence-fixtures
 ```
 
 `ppc-equivalence-fixtures` builds a generic DOL that loads each fixture’s

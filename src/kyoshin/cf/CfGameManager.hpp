@@ -27,6 +27,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();

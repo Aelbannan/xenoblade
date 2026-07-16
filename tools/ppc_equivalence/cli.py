@@ -14,10 +14,9 @@ from .elf_symbols import (
     extract_function,
     extract_function_pair,
     list_text_functions,
-    require_relocation_free,
 )
 from .engine import check_equivalence
-from .ir import DecodeError, ExecutionInconclusive, UnsupportedInstruction
+from .ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
 from .model import MachineState, concrete_state
 from .result import ProofResult, ProofStatus
 from .semantics import ConcreteOps, automatic_live_out, execute_cfg
@@ -142,7 +141,10 @@ def _print_result(result: ProofResult) -> None:
         elif "detail" in rh:
             print(f"repair hint: {rh['detail']}")
     if result.assumed_callees:
-        print(f"assumed callees: {', '.join(f'0x{t:08x}' for t in result.assumed_callees)}")
+        print("assumed callees: " + ", ".join(
+            f"0x{target:08x}" if isinstance(target, int) else target
+            for target in result.assumed_callees
+        ))
     for warning in result.warnings:
         print(f"warning: {warning}")
     for item in result.unsupported:
@@ -189,6 +191,10 @@ def _run_check(
     *,
     base_original: int | None = None,
     base_candidate: int | None = None,
+    original_relocations: tuple[Any, ...] = (),
+    candidate_relocations: tuple[Any, ...] = (),
+    original_symbol: str | None = None,
+    candidate_symbol: str | None = None,
 ) -> int:
     original_hex = _format_hex(original_code)
     candidate_hex = _format_hex(candidate_code)
@@ -204,10 +210,19 @@ def _run_check(
         original = decode_block(
             original_code,
             args.base_original if base_original is None else base_original,
+            relocations=original_relocations,
+            local_symbol=original_symbol,
         )
         candidate = decode_block(
             candidate_code,
             args.base_candidate if base_candidate is None else base_candidate,
+            relocations=candidate_relocations,
+            local_symbol=candidate_symbol,
+        )
+        assumed_callees = frozenset(
+            insn.relocation.canonical_symbol
+            for insn in (*original, *candidate)
+            if insn.opcode in (Opcode.B, Opcode.BC) and insn.relocation is not None
         )
         original_live_out = automatic_live_out(original)
         candidate_live_out = automatic_live_out(candidate)
@@ -231,6 +246,7 @@ def _run_check(
             smt_output=str(args.smt_out) if args.smt_out else None,
             max_instructions=args.max_instructions,
             max_paths=args.max_paths,
+            assumed_callees=assumed_callees,
         )
     except (UnsupportedInstruction, ExecutionInconclusive) as exc:
         contract_name = requested_contract or "manual"
@@ -409,17 +425,6 @@ def cmd_check_objects(args: argparse.Namespace) -> int:
         args.symbol,
         candidate_symbol=args.candidate_symbol,
     )
-    try:
-        require_relocation_free(left, right)
-    except ElfSymbolError as exc:
-        requested_contract = args.contract or getattr(args, "default_contract", None) or "manual"
-        result = ProofResult(
-            status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
-            contract=requested_contract,
-            observables=list(args.observe or ()),
-            unsupported=[str(exc)],
-        )
-        return _emit(result, args.json, args.result, args.replay_out)
     if not args.json:
         print(
             f"original:  {left.name}  {left.size} bytes @ 0x{left.base:08x}  ({left.path})"
@@ -435,6 +440,10 @@ def cmd_check_objects(args: argparse.Namespace) -> int:
         right.code,
         base_original=base_original,
         base_candidate=base_candidate,
+        original_relocations=left.relocations,
+        candidate_relocations=right.relocations,
+        original_symbol=left.name,
+        candidate_symbol=right.name,
     )
 
 

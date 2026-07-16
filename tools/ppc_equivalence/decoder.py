@@ -2,8 +2,23 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
+from dataclasses import replace
+from typing import Any
 
-from .ir import DecodeError, Instruction, Opcode, UnsupportedInstruction
+from .ir import (
+    DecodeError,
+    Instruction,
+    Opcode,
+    RelocationRef,
+    R_PPC_ADDR16_HA,
+    R_PPC_ADDR16_HI,
+    R_PPC_ADDR16_LO,
+    R_PPC_EMB_SDA21,
+    R_PPC_REL14,
+    R_PPC_REL24,
+    SUPPORTED_TEXT_RELOCATIONS,
+    UnsupportedInstruction,
+)
 from .spr import READABLE_SPRS, WRITABLE_SPRS
 
 
@@ -518,6 +533,9 @@ def decode_block(
     *,
     validate_with_capstone: bool = True,
     allow_broadway_lmw_overlap: bool = True,
+    relocations: Sequence[Any] = (),
+    canonical_symbols: dict[str, str] | None = None,
+    local_symbol: str | None = None,
 ) -> list[Instruction]:
     if not code or len(code) % 4:
         raise DecodeError("PowerPC input must be a non-empty multiple of four bytes")
@@ -540,4 +558,115 @@ def decode_block(
             insn.address, insn.raw, insn.opcode, insn.operands, insn.record,
             insn.overflow, insn.link, mnemonics[index // 4],
         ))
+    if relocations:
+        result = _attach_relocations(
+            result, len(code), relocations,
+            canonical_symbols=canonical_symbols or {},
+            local_symbol=local_symbol,
+        )
+    return result
+
+
+_ADDR16_OPCODES = frozenset({
+    Opcode.ADDI, Opcode.ADDIS, Opcode.ADDIC, Opcode.ADDIC_DOT,
+    Opcode.ORI,
+    Opcode.LBZ, Opcode.LBZU, Opcode.LHZ, Opcode.LHZU, Opcode.LHA,
+    Opcode.LHAU, Opcode.LWZ, Opcode.LWZU, Opcode.STB, Opcode.STBU,
+    Opcode.STH, Opcode.STHU, Opcode.STW, Opcode.STWU,
+    Opcode.LFS, Opcode.LFSU, Opcode.LFD, Opcode.LFDU,
+    Opcode.STFS, Opcode.STFSU, Opcode.STFD, Opcode.STFDU,
+})
+
+_SDA21_OPCODES = frozenset({
+    Opcode.ADDI,
+    Opcode.LBZ, Opcode.LHZ, Opcode.LHA, Opcode.LWZ,
+    Opcode.STB, Opcode.STH, Opcode.STW,
+    Opcode.LFS, Opcode.LFD, Opcode.STFS,
+})
+
+
+def _attach_relocations(
+    instructions: list[Instruction],
+    code_size: int,
+    relocations: Sequence[Any],
+    *,
+    canonical_symbols: dict[str, str],
+    local_symbol: str | None,
+) -> list[Instruction]:
+    """Attach validated ELF relocation records to decoded instruction fields."""
+    result = list(instructions)
+    occupied: set[int] = set()
+    for item in relocations:
+        offset = int(item.offset)
+        relocation_type = int(item.relocation_type)
+        symbol = str(item.symbol)
+        addend_value = item.addend
+        if relocation_type not in SUPPORTED_TEXT_RELOCATIONS:
+            raise DecodeError(
+                f"unsupported text relocation type {relocation_type} "
+                f"for {symbol or '<section>'} at +0x{offset:x}"
+            )
+        if addend_value is None:
+            # The checked objects currently use RELA. Recovering implicit REL
+            # addends is type-specific; guessing zero would be unsound.
+            raise DecodeError(
+                f"implicit REL addend is unsupported for relocation type "
+                f"{relocation_type} at +0x{offset:x}"
+            )
+        if relocation_type in (R_PPC_ADDR16_LO, R_PPC_ADDR16_HI, R_PPC_ADDR16_HA):
+            if offset % 4 != 2:
+                raise DecodeError(
+                    f"16-bit relocation at +0x{offset:x} does not address an instruction low half"
+                )
+            instruction_offset = offset - 2
+        else:
+            if offset % 4:
+                raise DecodeError(
+                    f"word relocation at +0x{offset:x} is not instruction-aligned"
+                )
+            instruction_offset = offset
+        if instruction_offset < 0 or instruction_offset + 4 > code_size:
+            raise DecodeError(f"relocation at +0x{offset:x} lies outside function bytes")
+        index = instruction_offset // 4
+        if index in occupied:
+            raise DecodeError(f"multiple relocations affect instruction at +0x{instruction_offset:x}")
+        insn = result[index]
+        if relocation_type == R_PPC_ADDR16_LO and insn.opcode not in _ADDR16_OPCODES:
+            raise DecodeError(f"ADDR16_LO is unsupported on {insn.opcode.value} at 0x{insn.address:08x}")
+        if relocation_type in (R_PPC_ADDR16_HI, R_PPC_ADDR16_HA) and insn.opcode != Opcode.ADDIS:
+            raise DecodeError(f"ADDR16_HI/HA requires addis at 0x{insn.address:08x}")
+        if relocation_type == R_PPC_REL24 and insn.opcode != Opcode.B:
+            raise DecodeError(f"REL24 requires b/bl at 0x{insn.address:08x}")
+        if relocation_type == R_PPC_REL14 and insn.opcode != Opcode.BC:
+            raise DecodeError(f"REL14 requires bc/bcl at 0x{insn.address:08x}")
+        if relocation_type == R_PPC_EMB_SDA21 and insn.opcode not in _SDA21_OPCODES:
+            raise DecodeError(f"EMB_SDA21 is unsupported on {insn.opcode.value} at 0x{insn.address:08x}")
+        if (
+            local_symbol is not None
+            and symbol == local_symbol
+            and relocation_type in (R_PPC_REL24, R_PPC_REL14)
+        ):
+            target = (instructions[0].address + int(addend_value)) & 0xFFFFFFFF
+            operands = (
+                (target, insn.operands[1])
+                if insn.opcode == Opcode.B
+                else (insn.operands[0], insn.operands[1], target, insn.operands[3])
+            )
+            result[index] = replace(insn, operands=operands)
+            occupied.add(index)
+            continue
+        canonical = canonical_symbols.get(symbol, symbol)
+        if not canonical:
+            raise DecodeError(f"relocation at +0x{offset:x} has no canonical symbol identity")
+        result[index] = replace(
+            insn,
+            relocation=RelocationRef(
+                offset=offset,
+                relocation_type=relocation_type,
+                symbol=symbol,
+                canonical_symbol=canonical,
+                addend=int(addend_value),
+            ),
+        )
+        occupied.add(index)
     return result

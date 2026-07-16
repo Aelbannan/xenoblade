@@ -4,26 +4,23 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 
 ## Required reading order
 
-1. **`.claude/skills/xenoblade-decomp/SKILL.md`** — Claude Code skill: decompilation workflow, coop runner, `EQUIVALENT_MATCH` policy. **Follow this for all work in this repo unless the user explicitly asks for something else.**
-1. **`.cursor/skills/xenoblade-decomp/SKILL.md`** — Cursor-equivalent of the same skill (used when editing in Cursor).
-2. **`PLAN.md`** — co-op architecture, invariants, milestones, agent boundaries.
-3. **`DECOMP_MAP.md`** — per-function targets, symbols, and tiers.
-4. **`TASKS.md`** — agent checklist; check off functions at `EQUIVALENT_MATCH` (or `FULL_MATCH`).
-5. **`tools/test/compare_behaviour/README.md`** — static/size + optional PPC behaviour checks.
-7. **`FORK.md`** — inventory of fork-only tools, PPC harness, docs, and policy vs upstream `xbret/xenoblade`.
-8. **`tools/ppc_equivalence/README.md`** — SMT semantic-equivalence check, proof contracts, supported PPC subset, and result/exit-code policy.
-9. **`tools/dol_opcodes/`** — opcode census for retail `main.dol` against PPC750CL `isa.yaml`.
+1. **`.claude/skills/xenoblade-decomp/SKILL.md`** — operational workflow and acceptance policy. Follow it unless the user explicitly asks for something else.
+2. **`tools/coop/targets.json`** — sole source of truth for function identity and current target state; use `targets show/status`, not hand-maintained checklists.
+3. **`PLAN.md` §§2, 3, 17** — legal boundaries, architecture invariants, and matching policy. Read other sections only when the task touches that subsystem.
+4. **`COOP_IMPLEMENTATION_MAP.md`** — capability graph and feature handoffs; read for co-op architecture work.
+5. **`docs/MWCC_REFERENCE.md`** — consult relevant patterns for matching work.
+6. Read the behaviour, equivalence, symbol-recovery, or opcode documentation only when invoking that subsystem.
 
 ## Quick commands
 
 ```bash
 cp tools/coop/coop.example.json coop.json   # first time only
-python tools/coop/run.py status
-python tools/coop/run.py targets list
-python tools/coop/run.py behaviour audit    # registered-test size budget
-python tools/coop/run.py size <unit>        # decomp .text vs split budget
-python tools/coop/run.py equivalence --help # PPC semantic proofs (check-hex / check-objects / check-unit / …)
-python tools/coop/run.py opcodes            # unique opcodes in main.dol
+python3 tools/coop/run.py status
+python3 tools/coop/run.py targets validate
+python3 tools/coop/run.py targets status
+python3 tools/coop/run.py targets show <target-id>
+python3 tools/coop/run.py targets brief <target-id>
+python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
 ```
 
 ## Do not

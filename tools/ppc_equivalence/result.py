@@ -4,8 +4,8 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v14"
-RESULT_FORMAT = 3
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v15"
+RESULT_FORMAT = 4
 
 
 class ProofStatus(str, Enum):
@@ -28,7 +28,7 @@ class ProofResult:
     observables: list[str] = field(default_factory=list)
     assumptions: list[str] = field(default_factory=lambda: [
         "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
-        "instruction immediates are final linked values; object checks reject unresolved text relocations",
+        "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
         "shared byte-addressed initial memory",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
         "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX and traps are not",
@@ -41,7 +41,9 @@ class ProofResult:
         "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
         "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
         "division results compared only on architecturally defined inputs",
-        "loops and external call continuations are not summarized",
+        "loops are unsupported; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+        "matched-callee summaries preserve EABI nonvolatile registers and machine-control state while allowing arbitrary deterministic volatile, FPSCR, memory, and defined-domain effects",
+        "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
     ])
     original_instruction_count: int = 0
     candidate_instruction_count: int = 0
@@ -50,7 +52,7 @@ class ProofResult:
     counterexample: dict[str, Any] | None = None
     replay: dict[str, Any] | None = None
     repair_hint: dict[str, Any] | None = None
-    assumed_callees: list[int] = field(default_factory=list)
+    assumed_callees: list[int | str] = field(default_factory=list)
     unsupported: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 

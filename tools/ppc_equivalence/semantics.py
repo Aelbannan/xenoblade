@@ -3,8 +3,21 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
-from .ir import ExecutionInconclusive, Instruction, Opcode, SUPPORTED_OPCODES, UnsupportedInstruction
-from .model import ConcreteMemory, MachineState
+from .ir import (
+    ExecutionInconclusive,
+    Instruction,
+    Opcode,
+    RelocationRef,
+    R_PPC_ADDR16_HA,
+    R_PPC_ADDR16_HI,
+    R_PPC_ADDR16_LO,
+    R_PPC_EMB_SDA21,
+    R_PPC_REL14,
+    R_PPC_REL24,
+    SUPPORTED_OPCODES,
+    UnsupportedInstruction,
+)
+from .model import ConcreteMemory, MachineState, XerState
 from .spr import (
     AUX_SPR_INDEX,
     AUX_SPR_NAMES,
@@ -156,6 +169,7 @@ class WordOps(Protocol):
     def fp_quantize_int(self, value: Any, width: int, signed: bool, scale: Any) -> Any: ...
     def fresh_bv32(self, name: str) -> Any: ...
     def fresh_bv64(self, name: str) -> Any: ...
+    def relocation_address(self, relocation: RelocationRef) -> Any: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -454,6 +468,11 @@ class ConcreteOps:
         import random
         return random.getrandbits(64)
 
+    def relocation_address(self, relocation: RelocationRef) -> int:
+        raise ExecutionInconclusive(
+            f"concrete execution needs a value for relocation {relocation.canonical_symbol}"
+        )
+
 
 class SymbolicOps:
     def __init__(self) -> None:
@@ -462,6 +481,9 @@ class SymbolicOps:
         except ImportError as exc:
             raise RuntimeError("z3-solver is required; install tools/ppc_equivalence/requirements.txt") from exc
         self.z3 = z3
+        self.relocation_values: dict[str, Any] = {}
+        self._call_functions: dict[tuple[str, str], Any] = {}
+        self._relocation_world = z3.BitVec("reloc.world", 32)
 
     def const(self, value: int) -> Any: return self.z3.BitVecVal(value & MASK32, 32)
     def bool(self, value: bool) -> Any: return self.z3.BoolVal(value)
@@ -781,6 +803,52 @@ class SymbolicOps:
     def fresh_bv64(self, name: str) -> Any:
         return self.z3.BitVec(name, 64)
 
+    def relocation_address(self, relocation: RelocationRef) -> Any:
+        name = relocation.canonical_symbol
+        value = self.relocation_values.get(name)
+        if value is None:
+            # Z3 accepts punctuation in symbol names, but a stable digest keeps
+            # generated SMT and diagnostics compact and collision-free.
+            import hashlib
+            digest = hashlib.sha256(name.encode("utf-8")).hexdigest()[:16]
+            value = self.z3.BitVec(f"reloc.addr.{digest}", 32)
+            self.relocation_values[name] = value
+        return value
+
+    def call_token(self, callee: str, state: MachineState) -> Any:
+        """A deterministic opaque transition key for an already-proved callee."""
+        import hashlib
+        arguments = (
+            *state.gpr, *state.fpr, *state.ps1, *state.gqr, state.cr,
+            state.xer.ca, state.xer.ov, state.xer.so, state.fpscr,
+            state.ctr, state.msr, *state.sr, state.time_base, state.srr0,
+            state.srr1, *state.spr, state.memory, state.valid,
+            self._relocation_world,
+        )
+        key = (callee, "token")
+        function = self._call_functions.get(key)
+        if function is None:
+            digest = hashlib.sha256(callee.encode("utf-8")).hexdigest()[:16]
+            function = self.z3.Function(
+                f"call.{digest}.transition",
+                *(argument.sort() for argument in arguments),
+                self.z3.BitVecSort(64),
+            )
+            self._call_functions[key] = function
+        return function(*arguments)
+
+    def call_result(self, callee: str, component: str, token: Any, sort: Any) -> Any:
+        import hashlib
+        key = (callee, component)
+        function = self._call_functions.get(key)
+        if function is None:
+            digest = hashlib.sha256(f"{callee}:{component}".encode("utf-8")).hexdigest()[:16]
+            function = self.z3.Function(
+                f"call.{digest}.{component}", self.z3.BitVecSort(64), sort,
+            )
+            self._call_functions[key] = function
+        return function(token)
+
 
 def rotate_mask(mb: int, me: int) -> int:
     if not 0 <= mb < 32 or not 0 <= me < 32:
@@ -863,6 +931,54 @@ def _sign_extend(value: Any, bits: int, ops: WordOps) -> Any:
     low_mask = (1 << bits) - 1
     low = ops.band(value, ops.const(low_mask))
     return ops.ite(ops.eq(ops.band(low, ops.const(1 << (bits - 1))), ops.const(0)), low, ops.bor(low, ops.const(~low_mask)))
+
+
+def _relocation_address(insn: Instruction, ops: WordOps) -> Any:
+    relocation = insn.relocation
+    if relocation is None:
+        raise ExecutionInconclusive("instruction has no relocation")
+    return ops.add(ops.relocation_address(relocation), ops.const(relocation.addend))
+
+
+def _immediate_operand(
+    insn: Instruction, immediate: int, ops: WordOps, *, signed: bool,
+) -> Any:
+    """Return a D-form immediate after applying an attached ELF relocation.
+
+    Relocations are represented before linking, so the proof quantifies over a
+    single logical address for each canonical symbol.  This deliberately models
+    the linker's field transform rather than guessing a concrete load address.
+    """
+    relocation = insn.relocation
+    if relocation is None:
+        return ops.const(immediate)
+    address = _relocation_address(insn, ops)
+    if relocation.relocation_type == R_PPC_ADDR16_LO:
+        field = ops.band(address, ops.const(0xFFFF))
+    elif relocation.relocation_type == R_PPC_ADDR16_HI:
+        field = ops.band(ops.lshr(address, ops.const(16)), ops.const(0xFFFF))
+    elif relocation.relocation_type == R_PPC_ADDR16_HA:
+        field = ops.band(
+            ops.lshr(ops.add(address, ops.const(0x8000)), ops.const(16)),
+            ops.const(0xFFFF),
+        )
+    else:
+        raise ExecutionInconclusive(
+            f"relocation type {relocation.relocation_type} is not an immediate-field relocation"
+        )
+    return _sign_extend(field, 16, ops) if signed else field
+
+
+def _dform_address(
+    state: MachineState, insn: Instruction, ra: int, displacement: int, ops: WordOps,
+) -> Any:
+    relocation = insn.relocation
+    if relocation is not None and relocation.relocation_type == R_PPC_EMB_SDA21:
+        # SDA21 chooses r2 or r13 and patches RA together with the displacement.
+        # Its architectural effective address is exactly S + A.
+        return _relocation_address(insn, ops)
+    base = ops.const(0) if ra == 0 else state.gpr[ra]
+    return ops.add(base, _immediate_operand(insn, displacement, ops, signed=True))
 
 
 def _touch_memory(state: MachineState, address: Any, width: int, ops: WordOps) -> MachineState:
@@ -1590,8 +1706,15 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
     elif op in (Opcode.ADDI, Opcode.ADDIS, Opcode.MULLI, Opcode.ADDIC, Opcode.ADDIC_DOT, Opcode.SUBFIC):
         rd, ra, immediate = a
         base = ops.const(0) if ra == 0 and op in (Opcode.ADDI, Opcode.ADDIS) else state.gpr[ra]
-        immediate_value = immediate << 16 if op == Opcode.ADDIS else immediate
-        right = ops.const(immediate_value)
+        if insn.relocation is not None and insn.relocation.relocation_type == R_PPC_EMB_SDA21:
+            if op != Opcode.ADDI:
+                raise ExecutionInconclusive("SDA21 arithmetic is only supported for addi")
+            base = ops.const(0)
+            right = _relocation_address(insn, ops)
+        else:
+            right = _immediate_operand(insn, immediate, ops, signed=True)
+            if op == Opcode.ADDIS:
+                right = ops.shl(right, ops.const(16))
         if op == Opcode.MULLI:
             result = ops.mul(base, right)
         elif op == Opcode.SUBFIC:
@@ -1604,10 +1727,12 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         destination = rd
     elif op in (Opcode.ORI, Opcode.ORIS, Opcode.XORI, Opcode.XORIS, Opcode.ANDI_DOT, Opcode.ANDIS_DOT):
         ra, rs, immediate = a
-        value = immediate << 16 if op in (Opcode.ORIS, Opcode.XORIS, Opcode.ANDIS_DOT) else immediate
-        if op in (Opcode.ORI, Opcode.ORIS): result = ops.bor(state.gpr[rs], ops.const(value))
-        elif op in (Opcode.XORI, Opcode.XORIS): result = ops.bxor(state.gpr[rs], ops.const(value))
-        else: result = ops.band(state.gpr[rs], ops.const(value))
+        value = _immediate_operand(insn, immediate, ops, signed=False)
+        if op in (Opcode.ORIS, Opcode.XORIS, Opcode.ANDIS_DOT):
+            value = ops.shl(value, ops.const(16))
+        if op in (Opcode.ORI, Opcode.ORIS): result = ops.bor(state.gpr[rs], value)
+        elif op in (Opcode.XORI, Opcode.XORIS): result = ops.bxor(state.gpr[rs], value)
+        else: result = ops.band(state.gpr[rs], value)
         destination = ra
     elif op in (Opcode.RLWINM, Opcode.RLWIMI, Opcode.RLWNM):
         if op == Opcode.RLWNM:
@@ -1815,7 +1940,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         if op in INDEXED_MEMORY:
             address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[third])
         else:
-            address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(third))
+            address = _dform_address(state, insn, ra, third, ops)
         if op in LOADS:
             width, signed, update, reverse_bytes = LOADS[op]
             state = _touch_memory(state, address, width, ops)
@@ -1834,7 +1959,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         if op in INDEXED_MEMORY:
             address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[third])
         else:
-            address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(third))
+            address = _dform_address(state, insn, ra, third, ops)
         is_load = op in FP_D_LOADS or op in FP_X_LOADS
         if is_load:
             width = FP_D_LOADS[op][0] if op in FP_D_LOADS else FP_X_LOADS[op]
@@ -2560,43 +2685,31 @@ def _exception_entry(
     )
 
 
-def _apply_call_summary(state: MachineState, ops: WordOps, call_id: int) -> MachineState:
-    prefix = f"call_summary.0x{call_id:08x}"
+def _apply_call_summary(state: MachineState, ops: WordOps, call_id: int | str) -> MachineState:
+    if not isinstance(ops, SymbolicOps):
+        raise ExecutionInconclusive("matched-callee summaries require symbolic execution")
+    callee = str(call_id)
+    token = ops.call_token(callee, state)
+
+    def result(component: str, sort: Any) -> Any:
+        return ops.call_result(callee, component, token, sort)
     fresh_gprs = list(state.gpr)
     for i in (0,) + tuple(range(3, 13)):
-        fresh_gprs[i] = ops.fresh_bv32(f"{prefix}.r{i}")
+        fresh_gprs[i] = result(f"r{i}", state.gpr[i].sort())
     fresh_fprs = list(state.fpr)
     fresh_ps1 = list(state.ps1)
     for i in range(14):
-        fresh_fprs[i] = ops.fresh_bv64(f"{prefix}.f{i}")
-        fresh_ps1[i] = ops.fresh_bv64(f"{prefix}.f{i}.ps1")
-    fresh_xer = state.xer
+        fresh_fprs[i] = result(f"f{i}", state.fpr[i].sort())
+        fresh_ps1[i] = result(f"f{i}.ps1", state.ps1[i].sort())
     fresh_xer = XerState(
-        ops.fresh_bv32(f"{prefix}.xer.ca"),
-        ops.fresh_bv32(f"{prefix}.xer.ov"),
-        ops.fresh_bv32(f"{prefix}.xer.so"),
+        result("xer.ca", state.xer.ca.sort()),
+        result("xer.ov", state.xer.ov.sort()),
+        result("xer.so", state.xer.so.sort()),
     )
-    fresh_lr = ops.fresh_bv32(f"{prefix}.lr")
-    fresh_ctr = ops.fresh_bv32(f"{prefix}.ctr")
-    fresh_cr_bits = tuple(
-        ops.fresh_bv32(f"{prefix}.cr{n}") for n in (0, 1, 5, 6, 7)
-    )
-    volatile_cr_mask = 0xF000F00F
+    volatile_cr_mask = 0xFF000FFF  # CR0, CR1, CR5, CR6, CR7
     fresh_cr = ops.bor(
-        ops.band(state.cr, ops.const(~volatile_cr_mask & 0xFFFFFFFF)),
-        ops.bor(
-            ops.shl(fresh_cr_bits[0], ops.const(28)),
-            ops.bor(
-                ops.shl(fresh_cr_bits[1], ops.const(24)),
-                ops.bor(
-                    ops.shl(fresh_cr_bits[2], ops.const(12)),
-                    ops.bor(
-                        ops.shl(fresh_cr_bits[3], ops.const(8)),
-                        ops.shl(fresh_cr_bits[4], ops.const(4)),
-                    ),
-                ),
-            ),
-        ),
+        ops.band(state.cr, ops.const(~volatile_cr_mask & MASK32)),
+        ops.band(result("cr", state.cr.sort()), ops.const(volatile_cr_mask)),
     )
     return MachineState(
         tuple(fresh_gprs),
@@ -2605,19 +2718,29 @@ def _apply_call_summary(state: MachineState, ops: WordOps, call_id: int) -> Mach
         state.gqr,
         fresh_cr,
         fresh_xer,
-        state.fpscr,
-        fresh_lr,
-        fresh_ctr,
+        result("fpscr", state.fpscr.sort()),
+        state.lr,
+        result("ctr", state.ctr.sort()),
         state.msr,
         state.sr,
         state.time_base,
         state.srr0,
         state.srr1,
         state.spr,
-        state.memory,
-        state.valid,
+        result("memory", state.memory.sort()),
+        result("valid", state.valid.sort()),
         state.memory_touches,
     )
+
+
+def _cfg_branch_target(insn: Instruction, ops: WordOps) -> tuple[Any, int | str]:
+    relocation = insn.relocation
+    if relocation is not None:
+        if relocation.relocation_type not in (R_PPC_REL24, R_PPC_REL14):
+            raise ExecutionInconclusive("branch has a non-branch relocation")
+        return _relocation_address(insn, ops), relocation.canonical_symbol
+    target = insn.operands[0] if insn.opcode == Opcode.B else insn.operands[2]
+    return target, target
 
 
 def execute_cfg(
@@ -2627,8 +2750,8 @@ def execute_cfg(
     *,
     max_instructions: int = 2048,
     max_paths: int = 256,
-    assumed_callees: frozenset[int] = frozenset(),
-    assumed_callees_used: set[int] | None = None,
+    assumed_callees: frozenset[int | str] = frozenset(),
+    assumed_callees_used: set[int | str] | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
@@ -2696,24 +2819,44 @@ def execute_cfg(
         old_lr, old_ctr = current.lr, current.ctr
         linked = replace(current, lr=ops.const(pc + 4)) if insn.link else current
         if insn.opcode == Opcode.B:
-            target = insn.operands[0]
-            if target in by_address or target == end:
+            target, target_key = _cfg_branch_target(insn, ops)
+            if isinstance(target, int) and (target in by_address or target == end):
                 work.append((target, linked, condition, new_visited, steps + 1))
-            elif insn.link and target in assumed_callees:
+            elif insn.link and target_key in assumed_callees:
                 if assumed_callees_used is not None:
-                    assumed_callees_used.add(target)
-                summarized = _apply_call_summary(linked, ops, target)
+                    assumed_callees_used.add(target_key)
+                summarized = _apply_call_summary(linked, ops, target_key)
                 work.append((pc + 4, summarized, condition, new_visited, steps + 1))
+            elif not insn.link and target_key in assumed_callees:
+                if assumed_callees_used is not None:
+                    assumed_callees_used.add(target_key)
+                summarized = _apply_call_summary(linked, ops, target_key)
+                terminals.append(Terminal(
+                    condition, summarized, "return",
+                    ops.band(current.lr, ops.const(0xFFFFFFFC)),
+                ))
+            elif insn.link and isinstance(ops, SymbolicOps):
+                raise ExecutionInconclusive(
+                    f"call target {target_key!r} has no matched-callee lemma"
+                )
+            elif insn.relocation is not None and isinstance(ops, SymbolicOps):
+                raise ExecutionInconclusive(
+                    f"tail-call target {target_key!r} has no matched-callee lemma"
+                )
             else:
-                terminals.append(Terminal(condition, linked, "call" if insn.link else "direct-branch", ops.const(target)))
+                terminals.append(Terminal(
+                    condition, linked, "call" if insn.link else "direct-branch",
+                    ops.const(target) if isinstance(target, int) else target,
+                ))
             continue
 
         bo, bi = insn.operands[:2]
         predicate, branched_state = _branch_condition(linked, bo, bi, ops, allow_ctr=insn.opcode != Opcode.BCCTR)
         taken_condition = ops.land(condition, predicate)
         fall_condition = ops.land(condition, ops.lnot(predicate))
+        target_key: int | str | None = None
         if insn.opcode == Opcode.BC:
-            target: Any = insn.operands[2]
+            target, target_key = _cfg_branch_target(insn, ops)
             kind = "call" if insn.link else "direct-branch"
         elif insn.opcode == Opcode.BCLR:
             target = ops.band(old_lr, ops.const(0xFFFFFFFC))
@@ -2724,11 +2867,27 @@ def execute_cfg(
 
         if isinstance(target, int) and (target in by_address or target == end):
             work.append((target, branched_state, taken_condition, new_visited, steps + 1))
-        elif isinstance(target, int) and insn.link and kind == "call" and target in assumed_callees:
+        elif insn.link and kind == "call" and target_key is not None and target_key in assumed_callees:
             if assumed_callees_used is not None:
-                assumed_callees_used.add(target)
-            summarized = _apply_call_summary(branched_state, ops, target)
+                assumed_callees_used.add(target_key)
+            summarized = _apply_call_summary(branched_state, ops, target_key)
             work.append((pc + 4, summarized, taken_condition, new_visited, steps + 1))
+        elif not insn.link and target_key is not None and target_key in assumed_callees:
+            if assumed_callees_used is not None:
+                assumed_callees_used.add(target_key)
+            summarized = _apply_call_summary(branched_state, ops, target_key)
+            terminals.append(Terminal(
+                taken_condition, summarized, "return",
+                ops.band(old_lr, ops.const(0xFFFFFFFC)),
+            ))
+        elif insn.link and isinstance(ops, SymbolicOps):
+            raise ExecutionInconclusive(
+                f"call target {target_key!r} has no matched-callee lemma"
+            )
+        elif insn.relocation is not None and isinstance(ops, SymbolicOps):
+            raise ExecutionInconclusive(
+                f"tail-call target {target_key!r} has no matched-callee lemma"
+            )
         else:
             terminals.append(Terminal(taken_condition, branched_state, kind, ops.const(target) if isinstance(target, int) else target))
         work.append((pc + 4, branched_state, fall_condition, new_visited, steps + 1))
@@ -3019,7 +3178,16 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
             elif a[1] in TIME_BASE_WRITE_SPRS: written.add("time_base")
             elif 912 <= a[1] <= 919: written.add(f"gqr{a[1] - 912}")
         elif op in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
-            if insn.link: written.add("lr")
+            if insn.link or (
+                insn.relocation is not None and op in (Opcode.B, Opcode.BC)
+            ):
+                written |= {
+                    *(f"r{i}" for i in (0, *range(3, 13))),
+                    *(f"f{i}" for i in range(14)),
+                    *(f"f{i}.ps1" for i in range(14)),
+                    "cr", "fpscr", "xer.ca", "xer.ov", "xer.so", "lr",
+                    "ctr", "memory",
+                }
             if op in (Opcode.BC, Opcode.BCLR) and not (a[0] & 4): written.add("ctr")
         else:
             written.add(f"r{a[0]}")

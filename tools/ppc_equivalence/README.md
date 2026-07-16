@@ -8,7 +8,7 @@ selected by the contract.
 It complements, but does not replace:
 
 - objdiff / byte-level matching, which remains one of two equal-tier acceptance bars for decomp targets;
-- host behaviour tests, which remain mandatory below `FULL_MATCH`;
+- optional real-PPC behaviour harnesses, when a linked test is registered;
 - the Dolphin PPC harness, which supplies independent concrete evidence.
 
 An `equivalent` result is scoped to the listed observables and assumptions. An
@@ -102,18 +102,20 @@ python3 tools/coop/run.py equivalence check-unit kyoshin/CGame \
 `check-objects` / `check-unit` load instruction bytes from the named `.text`
 symbol in each ELF32 big-endian object (the same pair objdiff compares). Decode
 bases default to each symbol’s section address + `st_value`. A function with
-unresolved `.rel.text` / `.rela.text` entries is **inconclusive**: placeholder
-immediates are not the linked program, and treating them as constants could
-produce a false equivalence proof. When fuzzy match is in `[50%, 100%)`,
+supported unresolved `.rela.text` entries is checked with canonical symbolic
+addresses, not placeholder instruction fields. The current set is
+`R_PPC_ADDR16_LO`, `R_PPC_ADDR16_HI`, `R_PPC_ADDR16_HA`, `R_PPC_REL24`,
+`R_PPC_REL14`, and `R_PPC_EMB_SDA21`. Unsupported relocation types and implicit
+`.rel.text` addends fail closed. When fuzzy match is in `[50%, 100%)`,
 `coop run diff` / `cycle` run this automatically and may promote status to
 **`EQUIVALENT_MATCH`** (the fork’s default acceptance bar, alongside
 `FULL_MATCH`). Split-size fit remains mandatory.
 
 ### Linked-bytes fallback (`--linked`)
 
-When an unlinked `.o` pair carries unresolved relocations the proof is
-`inconclusive_unsupported` by default. Pass `--linked` to make `diff` /
-`cycle` / `equivalence check-unit` retry once with **already-linked bytes**
+Symbolic relocation checking is the default. Pass `--linked` to let `diff` /
+`cycle` / `equivalence check-unit` retry an unsupported relocation case once
+with **already-linked bytes**
 extracted from:
 
 - the retail side: `orig/<region>/sys/main.dol`, sliced by `(address, size)`
@@ -123,8 +125,8 @@ extracted from:
   `elf2dol`; gitignored, produced by `ninja build/<region>/main.elf`), via
   `tools.ppc_equivalence.elf_symbols.extract_function`.
 
-Both sources are relocation-free, so `require_relocation_free` passes and the
-proof proceeds. Results are decorated with `fell back to DOL/ELF linked bytes`
+Both sources are relocation-free. Results are decorated with
+`fell back to DOL/ELF linked bytes`
 in their `detail` field.
 
 ```bash
@@ -132,19 +134,25 @@ in their `detail` field.
 ninja build/us/main.elf
 
 # Then any of:
-python tools/coop/run.py diff kyoshin/CGame --symbol OnPauseTrigger__5CGameFv --linked
-python tools/coop/run.py cycle pad-copy-input-flag --linked
-python tools/coop/run.py equivalence check-unit kyoshin/CGame --symbol OnPauseTrigger__5CGameFv --linked
+python3 tools/coop/run.py diff kyoshin/CGame --symbol OnPauseTrigger__5CGameFv --linked
+python3 tools/coop/run.py cycle pad-copy-input-flag --linked
+python3 tools/coop/run.py equivalence check-unit kyoshin/CGame --symbol OnPauseTrigger__5CGameFv --linked
 ```
 
-The fallback path returns a real `equivalent` / `not_equivalent` verdict
+The fallback path returns an address-specialized `equivalent` / `not_equivalent` verdict
 whenever the linked bytes decode cleanly; it stays `inconclusive_unsupported`
 only when the DOL or ELF is missing, the symbol is absent from `symbols.txt`,
 or the engine hits an unsupported instruction. The linked path is a strict
 *concretization* of the proof — it bakes in retail’s concrete addresses, so a
 decomp function whose only difference is link layout can be reported
-`not_equivalent` here; a future symbolic-relocation mode (planned, see
-`REFERENCES.md`) is the principled answer for that case.
+`not_equivalent` here. Prefer the default symbolic proof when it supports every
+relocation in the function.
+
+Direct relocated calls compose modularly. Each named callee is an explicit
+matched-callee premise, modeled as one deterministic opaque ABI transition,
+and execution continues through the remainder of the caller. Distinct callee
+symbols receive distinct transitions. Raw/linked calls without a registered
+callee lemma are inconclusive; result JSON records every premise actually used.
 
 ## Contract and exit codes
 
@@ -196,14 +204,14 @@ and `pmc1`), `f0.ps1`–`f31.ps1`, and `memory`.
 | 3 | Invalid input or contract |
 | 4 | Missing dependency or internal tool error |
 
-JSON proof results (format 3) record the architecture model, requested and
+JSON proof results (format 4) record the architecture model, requested and
 resolved contract metadata, observables, assumptions, instruction counts,
 solver/version/timing, and—when applicable—the first mismatch and
 replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v14` model supports:
+The current `broadway-ppc32-be-v15` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -297,11 +305,12 @@ but decrementer/performance-counter progression and the behavioral effects of
 BAT/SDR1 translation, HID/L2/cache locking, DMA, and debug registers are
 explicitly outside the bounded value-semantics model. VMX,
 atomics/reservations, detailed cache locking/coherency, asynchronous interrupts,
-MMIO behavior, address translation effects, loops/back-edges, external call
-continuations, and memory/protection/alignment exceptions return inconclusive
+MMIO behavior, address translation effects, loops/back-edges, indirect calls,
+and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where
-the ISA defines the result. Direct calls are terminal exits; the callee is not
-guessed or silently skipped.
+the ISA defines the result. A direct call is summarized only under a recorded
+matched-callee premise; otherwise it fails closed and code after the call is
+never silently skipped.
 
 See [ISA references](REFERENCES.md) for the source hierarchy and modeled
 assumptions.

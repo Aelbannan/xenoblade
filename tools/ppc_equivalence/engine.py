@@ -302,13 +302,13 @@ def check_equivalence(
     smt_output: str | None = None,
     max_instructions: int = 2048,
     max_paths: int = 256,
-    assumed_callees: frozenset[int] = frozenset(),
-    assumed_callees_used: set[int] | None = None,
+    assumed_callees: frozenset[int | str] = frozenset(),
+    assumed_callees_used: set[int | str] | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
     initial = _symbolic_initial(ops)
-    callees_used: set[int] = set()
+    callees_used: set[int | str] = set()
     original_exits = execute_cfg(
         initial, original, ops,
         max_instructions=max_instructions, max_paths=max_paths,
@@ -354,7 +354,7 @@ def check_equivalence(
             "original_paths": len(original_exits), "candidate_paths": len(candidate_exits),
             "tactic": tactic,
         },
-        assumed_callees=sorted(callees_used),
+        assumed_callees=sorted(callees_used, key=str),
     )
     if answer == z3.unsat:
         result.status = ProofStatus.EQUIVALENT
@@ -424,18 +424,32 @@ def check_equivalence(
         },
         "memory": _memory_entries(model, initial.memory, left_exit.state.memory_touches + right_exit.state.memory_touches, z3),
     }
-    result.counterexample = {"initial_state": initial_state}
-
-    repair_hint = _instruction_level_diff(original, candidate, initial_state)
-    if repair_hint:
-        result.repair_hint = repair_hint
-
-    result.replay = {
-        "format": RESULT_FORMAT, "architecture": ARCHITECTURE_MODEL,
-        "contract": contract.name, "contract_resolution": contract.resolution_dict(),
-        "original_hex": original_hex, "candidate_hex": candidate_hex,
-        "base_original": original[0].address, "base_candidate": candidate[0].address,
-        "observables": [item.name for item in contract.observables], "initial_state": initial_state,
-        "expected_mismatch": result.mismatch["name"] if result.mismatch else (mismatch_observable.name if mismatch_observable else None),
+    relocation_values = {
+        name: _hex_value(model, value)
+        for name, value in sorted(ops.relocation_values.items())
     }
+    result.counterexample = {
+        "initial_state": initial_state,
+        "relocations": relocation_values,
+    }
+
+    contextual_proof = bool(relocation_values or callees_used)
+    if contextual_proof:
+        result.warnings.append(
+            "concrete replay and instruction repair hints are unavailable for "
+            "symbolic relocations or opaque callee summaries"
+        )
+    else:
+        repair_hint = _instruction_level_diff(original, candidate, initial_state)
+        if repair_hint:
+            result.repair_hint = repair_hint
+
+        result.replay = {
+            "format": RESULT_FORMAT, "architecture": ARCHITECTURE_MODEL,
+            "contract": contract.name, "contract_resolution": contract.resolution_dict(),
+            "original_hex": original_hex, "candidate_hex": candidate_hex,
+            "base_original": original[0].address, "base_candidate": candidate[0].address,
+            "observables": [item.name for item in contract.observables], "initial_state": initial_state,
+            "expected_mismatch": result.mismatch["name"] if result.mismatch else (mismatch_observable.name if mismatch_observable else None),
+        }
     return result

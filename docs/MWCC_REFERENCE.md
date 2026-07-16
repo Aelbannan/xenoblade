@@ -28,23 +28,23 @@ objdiff compares **relocatable `.o` files**: the **target** (split from retail `
 | `CODE_MATCH` | `>= 95.0` (instructions; relocs may still differ) |
 | `HIGH_MATCH` | `>= 70.0` |
 
-Only **`FULL_MATCH`** closes a target. Treat **`coop run cycle` PASS** + `docs/evidence/decomp/attempts.jsonl` as ground truth over stale `TASKS.md` checkboxes.
+**`EQUIVALENT_MATCH`** and **`FULL_MATCH`** are equal-tier acceptance outcomes. Treat `tools/coop/targets.json` as current state and `docs/evidence/decomp/attempts.jsonl` as append-only history.
 
 **Important distinction:** instructions can match in the linked ELF while objdiff still reports &lt;100% because **relocation records** differ (e.g. `spInstance__9CDeviceGX` vs `lbl_eu_806656A0@sda21`, or TU-local `@2856` vs `lbl_eu_8066A1D8`). See **§11** when `extern "C" lbl_eu_*` is not enough.
 
 ### Commands
 
 ```bash
-python tools/coop/run.py build monolib/src/core/CView
-python tools/coop/run.py diff monolib/src/core/CView --symbol setCurrent__5CViewFv
-python tools/coop/run.py cycle view-set-current --hypothesis "..." --next-change "..."
+python3 tools/coop/run.py build monolib/src/core/CView
+python3 tools/coop/run.py diff monolib/src/core/CView --symbol setCurrent__5CViewFv
+python3 tools/coop/run.py cycle view-set-current --hypothesis "..." --next-change "..."
 ```
 
 | Generic workflow step | This repo |
 |-----------------------|-----------|
-| objdiff function diff | `python tools/coop/run.py diff <unit> --symbol <sym>` |
+| objdiff function diff | `python3 tools/coop/run.py diff <unit> --symbol <sym>` |
 | Strict relocs | `coop.json` → `functionRelocDiffs=data_value` |
-| Context for scratch | `python tools/coop/run.py ctx <path>` |
+| Context for scratch | `python3 tools/coop/run.py ctx <path>` |
 | Match policy | `FULL_MATCH` only; log in `docs/evidence/decomp/attempts.jsonl` |
 | Behaviour below 100% | optional `behaviour ppc` / equivalence — host dual-oracle removed; see `tools/test/compare_behaviour/README.md` |
 | No asm matching | See `SKILL.md` “Low-level techniques — do not use” |
@@ -58,9 +58,9 @@ python tools/coop/run.py cycle view-set-current --hypothesis "..." --next-change
 When static objdiff match is **below 100%**, byte identity is not yet proven. Continue toward `FULL_MATCH` / `EQUIVALENT_MATCH` / §17.6 patches. Optional evidence:
 
 ```bash
-python tools/coop/run.py behaviour audit              # size budget
-python tools/coop/run.py behaviour ppc <test-id>      # when ppc_source registered
-python tools/coop/run.py equivalence check-hex …      # Capstone+Z3 for supported blocks
+python3 tools/coop/run.py behaviour audit              # size budget
+python3 tools/coop/run.py behaviour ppc <test-id>      # when ppc_source registered
+python3 tools/coop/run.py equivalence check-hex …      # Capstone+Z3 for supported blocks
 ```
 
 Host dual-oracle `host/*.cpp` tests were **removed**. See `tools/test/compare_behaviour/README.md`.
@@ -394,7 +394,7 @@ float MTRand::randFloat() {
 
 **Superseded (~89.6% / 99.7%):** TU-local `const f32 lbl_eu_8066A1D0/E0` fixed scheduling but left `@2857`/`@2854` relocs; `objdiff.json` `symbol_mappings` alone did not reach 100% under strict reloc diff.
 
-**decomp.me:** `python tools/coop/run.py ctx libs/monolib/src/math/MTRand.cpp` — iterate `randFloat` / `getInstance` in scratch (move single function from Context → Source).
+**decomp.me:** `python3 tools/coop/run.py ctx libs/monolib/src/math/MTRand.cpp` — iterate `randFloat` / `getInstance` in scratch (move single function from Context → Source).
 
 **`getInstance` bytes:** compiled `.text` for `getInstance` is **byte-identical** to retail (0x238). Guard relocs match via `s8 lbl_eu_80665580`. The remaining `@LOCAL@…@instance` vs `…@instance_806561E0` suffix is closed by `postprocess_reloc_names.py` exact rename → **FULL_MATCH** (decomp-toolkit address suffix; not reachable from source alone).
 
@@ -756,7 +756,7 @@ Same pattern on height clamp with `overH`. **Regresses** if you split `maxWidth`
 | `setRect` ~84–91% | Frame `-0x40`, `getFrame2ViewOffset` at wrong `sp` slot | Five `CPnt16` + u16 `modeSize` (see §8c); neg via `splitSize` not in-place `pos`; parentSnap between neg x/y |
 | `setRect` ~91–94.6% | One `CRect16` → 8-align hole at `sp+0xC`; parent gate CSE/`beq` | Dual path homes via `splitPos`/`normalPos` pairs; convertToView-style type OR; u16 modeSize for `lhz` |
 | `func_804592F0` ~87% | Retail interleaves `cmpw` → `subf` (maxHeight) → `ble` while reusing r0/r5; high-level `if (unk8 > limit)` schedules compare after maxHeight | Semantics correct (`CPnt16&`, `unk6 - (unk2-unkE-unk12)`); **comma-defer** `if ((overW = unk8 > widthLimit, maxHeight = partialH - unk12, overW))` reaches **~88.5%**; remaining gap is maxWidth regalloc (r0/r8) + BOOL spill extsh + tail `bgelr` vs `bge` |
-| Decomp `.text` exceeds split budget | Extra instructions / frame growth in a translation unit | `python tools/coop/run.py size <unit>` — budget from `config/<region>/splits.txt`; behaviour tests may still pass; blocks `FULL_MATCH` and `Matching` promotion until `.text` fits |
+| Decomp `.text` exceeds split budget | Extra instructions / frame growth in a translation unit | `python3 tools/coop/run.py size <unit>` — budget from `config/<region>/splits.txt`; behaviour tests may still pass; blocks `FULL_MATCH` and `Matching` promotion until `.text` fits |
 | `CGame` unit `.text` **+4** when forcing 5 pool strings | `DECOMP_FORCEACTIVE` → varargs `fake_function(...)` emits **`crclr cr1eq`** | Fixed five-arg sink (`force_cgame_strings`); see §6 — stub stays **0x1C**, budget **0xD08** |
 | `wkUpdate` **99.98%** (`addi …,0x0d` vs `0x30`) | Bare `unk1FC = ""` reused a **later** `@stringBase0` empty hole | Force `""` immediately after `"CGameRestart"` in the pool sink **and/or** clear with `"CGameRestart" + 13` (§6b) |
 | `GameMain` **99.97%** (`addi …,0x15` / `li r3,0x234`) | Missing `"4_3mode.brlyt"` in early pool (shifts `"CGame"`); `sizeof(CGame)` short after `unk230` | Five-string fixed-proto FORCE (§6); trail `u16 unk232` + `u32 unk234` → **0x238** (§6c / §8c5) |
@@ -792,7 +792,7 @@ Config: `objdiff.json` maps `target_path` (retail split) ↔ `base_path` (your b
 
 1. **Build context**
    ```bash
-   python tools/coop/run.py ctx libs/monolib/src/core/CView.cpp
+   python3 tools/coop/run.py ctx libs/monolib/src/core/CView.cpp
    # Or after configure + ninja (uses same -I/-D as the object):
    ninja build/us/src/libs/monolib/src/core/CView.ctx.c
    ```
@@ -808,7 +808,7 @@ Config: `objdiff.json` maps `target_path` (retail split) ↔ `base_path` (your b
 
 6. **Verify locally**
    ```bash
-   python tools/coop/run.py diff monolib/src/core/CView --symbol <mangled-symbol>
+   python3 tools/coop/run.py diff monolib/src/core/CView --symbol <mangled-symbol>
    ```
 
 7. **Log attempt** — append to `docs/evidence/decomp/attempts.jsonl`.
@@ -1541,7 +1541,7 @@ already-satisfied-no-op, and bitfield bit-index edge cases (low/high/word-
 boundary/next-word). If a future agent finds the actual register-allocator
 lever (e.g. reordering *other* functions earlier in the same translation
 unit, or a different vtable-dispatch idiom), re-run
-`python tools/coop/run.py behaviour compare battlestate-vfunc6` to confirm
+`python3 tools/coop/run.py behaviour compare battlestate-vfunc6` to confirm
 before dropping the host test.
 
 ---
@@ -1676,12 +1676,12 @@ Host **`uicf-move`** (30 scenarios) PASS; size PASS; `runtime_test: behaviour:ui
 
 ## Quick checklist before claiming FULL_MATCH
 
-- [ ] `python tools/coop/run.py diff <unit> --symbol <sym>` → 100%
+- [ ] `python3 tools/coop/run.py diff <unit> --symbol <sym>` → 100%
 - [ ] Relocations tab clean (not just instructions) — 99.7–99.9% with identical insn words → check `@N` vs `lbl_eu_*` (§11)
 - [ ] Same `extra_cflags` as `configure.py` for that object
 - [ ] No asm / `register rN` / fake `sp[]` in source
 - [ ] Attempt logged in `docs/evidence/decomp/attempts.jsonl` (`policy_exception` if using objcopy rename)
-- [ ] `TASKS.md` / `configure.py` `Matching` updated for whole TU
+- [ ] `tools/coop/targets.json` updated by `cycle`; `configure.py` `Matching` updated for the whole TU when appropriate
 
 ---
 

@@ -115,6 +115,10 @@ def main(argv: list[str] | None = None) -> int:
     rescore = sub.add_parser("rescore", help="Re-evaluate saved candidates without new model calls")
     rescore.add_argument("experiment", type=Path)
     rescore.add_argument("--max-parallel", type=int)
+    repair = sub.add_parser("repair", help="Run compile-repair loop on a COMPILE_ERROR experiment")
+    repair.add_argument("experiment", type=Path)
+    repair.add_argument("--budget", type=int, default=3, help="Max repair iterations")
+    repair.add_argument("--dry-run", action="store_true")
     sub.add_parser("stats")
     args = parser.parse_args(argv)
     harness = Harness(args.config)
@@ -178,6 +182,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "rescore":
         print(harness.rescore(args.experiment, max_parallel=args.max_parallel))
+        return 0
+    if args.command == "repair":
+        print(harness.repair(
+            args.experiment, budget=args.budget, dry_run=args.dry_run
+        ))
         return 0
     if args.command in {"new", "improve", "tu-complete"} and args.number is not None:
         if args.target_id is not None:

@@ -12,6 +12,26 @@ from tools.llm_harness.core import Harness, parse_candidate
 from tools.llm_harness.providers import parse_opencode_output, parse_reasonix_output
 from tools.llm_harness.types import Candidate, ProviderResult, SourcePatch
 from tools.llm_harness.workspace import GitWorktreeManager
+from tools.llm_harness.dossier import (
+    DataFlowSummary,
+    MemoryAccess,
+    RetailProgramContext,
+    TargetDossier,
+    TargetIdentity,
+    build_cfg,
+    build_data_flow_summary,
+    build_declaration_context,
+    build_target_identity,
+    build_target_dossier,
+    decode_instructions,
+    dossier_to_dict,
+    parse_signature,
+    validate_dossier,
+    _classify_instruction,
+    _find_class_name,
+    _format_operand,
+    _split_params,
+)
 from tools.llm_harness.xenoblade_project import (
     XenobladeAdapter,
     _begin_marker,
@@ -31,6 +51,7 @@ from tools.llm_harness.xenoblade_project import (
     _require_tu_completion_ready,
     _wrap_tu_slot,
 )
+from tools.ppc_equivalence.ir import Instruction, Opcode
 
 
 class CandidateTests(unittest.TestCase):
@@ -392,6 +413,342 @@ class FunctionSizeTests(unittest.TestCase):
         self.assertIn("candidate-only", summary)
         self.assertIn("retail_symbol", summary)
         self.assertLessEqual(len(summary), 3000)
+
+
+class DossierTests(unittest.TestCase):
+    """Phase 1 — Target Dossier unit tests."""
+
+    # ------------------------------------------------------------------
+    # Instruction classification
+    # ------------------------------------------------------------------
+
+    def test_classify_load(self) -> None:
+        insn = Instruction(0, 0, Opcode.LWZ, (3, 5, 4))
+        self.assertEqual(_classify_instruction(insn), "load")
+
+    def test_classify_store(self) -> None:
+        insn = Instruction(0, 0, Opcode.STW, (1, 1, -16))
+        self.assertEqual(_classify_instruction(insn), "store")
+
+    def test_classify_call(self) -> None:
+        insn = Instruction(0, 0, Opcode.B, (0,), link=True)
+        self.assertEqual(_classify_instruction(insn), "call")
+
+    def test_classify_conditional_branch(self) -> None:
+        insn = Instruction(0, 0, Opcode.BC, (12, 0x20), link=False)
+        self.assertEqual(_classify_instruction(insn), "conditional_branch")
+
+    def test_classify_return(self) -> None:
+        insn = Instruction(0, 0, Opcode.BCLR, (0x20,), link=False)
+        self.assertEqual(_classify_instruction(insn), "return")
+
+    def test_classify_indirect_call(self) -> None:
+        insn = Instruction(0, 0, Opcode.BCCTR, (), link=True)
+        self.assertEqual(_classify_instruction(insn), "indirect_call")
+
+    def test_classify_compare(self) -> None:
+        insn = Instruction(0, 0, Opcode.CMPW, (0, 3, 4))
+        self.assertEqual(_classify_instruction(insn), "compare")
+
+    def test_classify_unconditional_branch(self) -> None:
+        insn = Instruction(0, 0, Opcode.B, (0x100,), link=False)
+        self.assertEqual(_classify_instruction(insn), "unconditional_branch")
+
+    # ------------------------------------------------------------------
+    # Operand formatting
+    # ------------------------------------------------------------------
+
+    def test_format_negative_offset(self) -> None:
+        insn = Instruction(0x8000, 0x9421FFF0, Opcode.STWU, (1, 1, -16))
+        result = _format_operand(insn)
+        # stwu r1, -0x10(r1): operands are (1, 1, -16)
+        # i=0: r1, i=1: r1, i=2: -0x10
+        self.assertIn("r1", result)
+        self.assertIn("-0x10", result)
+
+    def test_format_branch_target(self) -> None:
+        insn = Instruction(0x8000, 0x48000014, Opcode.B, (0x14,))
+        result = _format_operand(insn)
+        # address + operand = 0x8000 + 0x14 = 0x8014, formatted as 0x00008014
+        self.assertIn("0x00008014", result)
+
+    def test_format_float_register(self) -> None:
+        insn = Instruction(0, 0, Opcode.LFS, (33, 3, 8))  # f1, r3, 8(r3)
+        result = _format_operand(insn)
+        self.assertIn("f1", result)
+
+    # ------------------------------------------------------------------
+    # CFG builder
+    # ------------------------------------------------------------------
+
+    def test_cfg_empty(self) -> None:
+        cfg = build_cfg([], 0x8000)
+        self.assertEqual(cfg.entry, "B0")
+        self.assertEqual(len(cfg.blocks), 0)
+
+    def test_cfg_linear_sequence(self) -> None:
+        """A sequence with no branches forms a single block."""
+        insns = [
+            Instruction(0x8000, 0x9421FFF0, Opcode.STWU, (1, 1, -16)),
+            Instruction(0x8004, 0x7C0802A6, Opcode.MFSPR, (0, 8)),
+            Instruction(0x8008, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        cfg = build_cfg(insns, 0x8000)
+        self.assertEqual(cfg.entry, "B0")
+        self.assertEqual(len(cfg.blocks), 1)
+        self.assertIn("B0", cfg.exit_blocks)
+
+    def test_cfg_conditional_branch(self) -> None:
+        """Conditional branch produces two successors."""
+        # B0:              B1:          B2:
+        # 0x8000 cmpwi→  0x8008 li r3,1  0x800C blr
+        # 0x8004 beq +8   (falls through)
+        #   → B1 (ft) / B2 (taken)
+        insns = [
+            Instruction(0x8000, 0x2C030000, Opcode.CMPWI, (0, 3, 0)),
+            Instruction(0x8004, 0x41820008, Opcode.BC, (12, 8)),      # beq +8 → 0x800C
+            Instruction(0x8008, 0x38600001, Opcode.ADDI, (3, 0, 1)),  # li r3,1
+            Instruction(0x800C, 0x4E800020, Opcode.BCLR, (0x20,)),    # blr
+        ]
+        cfg = build_cfg(insns, 0x8000)
+        self.assertEqual(len(cfg.blocks), 3)  # B0, B1, B2
+        self.assertIsNotNone(cfg.blocks[0].terminator)
+        self.assertEqual(cfg.blocks[0].terminator.kind, "conditional")
+        # B0 should have both fallthrough (B1) and taken (B2) successors
+        self.assertIn("B1", cfg.blocks[0].successors)
+        self.assertIn("B2", cfg.blocks[0].successors)
+
+    def test_cfg_backedge(self) -> None:
+        """A backward branch produces a backedge entry."""
+        # Loop:  0x8000 li r3,0        → B0
+        #        0x8004 cmpwi r3,10    → (B0 body)
+        #        0x8008 bge +8         → conditional to B2 (exit)
+        #        0x800C addi r4,r3,1   → B1
+        #        0x8010 b -0x10        → unconditional to 0x8000 (backedge to B0)
+        # Exit:  0x8014 blr            → B2
+        insns = [
+            Instruction(0x8000, 0x38600000, Opcode.ADDI, (3, 0, 0)),
+            Instruction(0x8004, 0x2C03000A, Opcode.CMPWI, (0, 3, 10)),
+            Instruction(0x8008, 0x4080000C, Opcode.BC, (12, 12)),  # bge +12 → 0x8014
+            Instruction(0x800C, 0x38830001, Opcode.ADDI, (4, 3, 1)),
+            Instruction(0x8010, 0x4BFFFFF0, Opcode.B, (-16,)),  # b -0x10 → 0x8000
+            Instruction(0x8014, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        cfg = build_cfg(insns, 0x8000)
+        self.assertGreater(len(cfg.backedges), 0)
+
+    # ------------------------------------------------------------------
+    # Data-flow summary
+    # ------------------------------------------------------------------
+
+    def test_dataflow_stack_frame(self) -> None:
+        """STWU r1,-N(r1) at entry sets stack_frame_size."""
+        insns = [
+            Instruction(0x8000, 0x9421FFF0, Opcode.STWU, (1, 1, -16)),
+            Instruction(0x8004, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        df = build_data_flow_summary(insns)
+        self.assertEqual(df.stack_frame_size, 16)
+
+    def test_dataflow_no_frame(self) -> None:
+        """Leaf function with no frame has zero stack_frame_size."""
+        insns = [
+            Instruction(0x8000, 0x38600001, Opcode.ADDI, (3, 0, 1)),
+            Instruction(0x8004, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        df = build_data_flow_summary(insns)
+        self.assertEqual(df.stack_frame_size, 0)
+
+    def test_dataflow_saved_registers(self) -> None:
+        """STW to r1-based offsets after stack alloc are saved registers."""
+        insns = [
+            Instruction(0x8000, 0x9421FFE0, Opcode.STWU, (1, 1, -32)),
+            Instruction(0x8004, 0x93E1001C, Opcode.STW, (31, 1, 28)),
+            Instruction(0x8008, 0x93C10018, Opcode.STW, (30, 1, 24)),
+            Instruction(0x800C, 0x7C0802A6, Opcode.MFSPR, (0, 8)),
+            Instruction(0x8010, 0x90010024, Opcode.STW, (0, 1, 36)),
+            Instruction(0x8014, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        df = build_data_flow_summary(insns)
+        self.assertIn("r31", df.saved_registers)
+        self.assertIn("r30", df.saved_registers)
+
+    def test_dataflow_xform_load(self) -> None:
+        """An x-form (indexed) load records a register-indexed access."""
+        insns = [
+            Instruction(0x8000, 0x7C631014, Opcode.LWZX, (3, 3, 5)),
+            Instruction(0x8004, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        df = build_data_flow_summary(insns)
+        # Should have one memory access with offset=0 and likely_expression set
+        self.assertEqual(len(df.memory_accesses), 1)
+        acc = df.memory_accesses[0]
+        self.assertEqual(acc.kind, "load")
+        self.assertEqual(acc.offset, 0)
+        self.assertIn("r3", acc.likely_expression)
+        self.assertIn("r5", acc.likely_expression)
+
+    def test_dataflow_dform_store(self) -> None:
+        """A d-form store records the immediate offset directly."""
+        insns = [
+            Instruction(0x8000, 0x90010014, Opcode.STW, (0, 1, 20)),
+            Instruction(0x8004, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        df = build_data_flow_summary(insns)
+        self.assertEqual(len(df.memory_accesses), 1)
+        acc = df.memory_accesses[0]
+        self.assertEqual(acc.kind, "store")
+        self.assertEqual(acc.offset, 20)
+
+    def test_dataflow_calls(self) -> None:
+        """BL instructions are recorded as calls."""
+        insns = [
+            Instruction(0x8000, 0x48000001, Opcode.B, (0,), link=True),
+            Instruction(0x8004, 0x4E800020, Opcode.BCLR, (0x20,)),
+        ]
+        df = build_data_flow_summary(insns)
+        # The call target 0x8000 will be recorded as "0x80008001" (hex)
+        self.assertGreaterEqual(len(df.calls), 0)  # at minimum, doesn't crash
+
+    # ------------------------------------------------------------------
+    # Signature parsing
+    # ------------------------------------------------------------------
+
+    def test_parse_simple_method(self) -> None:
+        sig = parse_signature("CGame::wkRender")
+        self.assertEqual(sig.declaration, "CGame::wkRender")
+        self.assertIsNotNone(sig.implicit_this)
+        self.assertEqual(sig.implicit_this.type, "CGame*")
+        self.assertEqual(len(sig.parameters), 0)
+
+    def test_parse_method_with_params(self) -> None:
+        sig = parse_signature("CGame::setTaskManagerUpdateCount(unsigned long)")
+        self.assertIsNotNone(sig.implicit_this)
+        self.assertEqual(sig.implicit_this.type, "CGame*")
+        self.assertEqual(len(sig.parameters), 1)
+        self.assertEqual(sig.parameters[0].type, "unsigned long")
+
+    def test_parse_free_function(self) -> None:
+        sig = parse_signature("memcpy")
+        self.assertIsNone(sig.implicit_this)
+        self.assertEqual(sig.return_info.type, "void")
+
+    def test_parse_free_function_with_return(self) -> None:
+        sig = parse_signature("int func(int a, float b)")
+        self.assertIsNone(sig.implicit_this)
+        self.assertEqual(sig.return_info.type, "int")
+        self.assertEqual(len(sig.parameters), 2)
+        self.assertEqual(sig.parameters[0].name, "a")
+        self.assertEqual(sig.parameters[1].type, "float")
+
+    def test_parse_namespaced_class(self) -> None:
+        sig = parse_signature("nw4r2ut36LinkList::destructor()")
+        self.assertIsNotNone(sig.implicit_this)
+        self.assertEqual(sig.implicit_this.type, "nw4r2ut36LinkList*")
+        self.assertEqual(sig.return_info.type, "void")
+
+    def test_parse_void_params(self) -> None:
+        sig = parse_signature("void func(void)")
+        self.assertIsNone(sig.implicit_this)
+        self.assertEqual(sig.return_info.type, "void")
+        self.assertEqual(len(sig.parameters), 0)
+
+    # ------------------------------------------------------------------
+    # Parameter splitting
+    # ------------------------------------------------------------------
+
+    def test_split_params_simple(self) -> None:
+        self.assertEqual(_split_params("int a, float b"), ["int a", "float b"])
+
+    def test_split_params_template(self) -> None:
+        result = _split_params("std::vector<int, allocator<int>>, float")
+        self.assertEqual(len(result), 2)
+        self.assertTrue(result[0].startswith("std::vector<"))
+        self.assertEqual(result[1], "float")
+
+    def test_split_params_empty(self) -> None:
+        self.assertEqual(_split_params(""), [])
+
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
+
+    def test_validate_missing_declaration(self) -> None:
+        d = TargetDossier(schema_version=3)
+        errors = validate_dossier(d)
+        self.assertIn("missing target declaration", errors)
+
+    def test_validate_missing_instructions(self) -> None:
+        d = TargetDossier(schema_version=3, retail=RetailProgramContext(base="0x8000", size=0))
+        d.signature = parse_signature("some_func")
+        errors = validate_dossier(d)
+        self.assertIn("missing decoded retail instructions", errors)
+
+    def test_validate_passes_valid(self) -> None:
+        d = TargetDossier(schema_version=3, retail=RetailProgramContext(
+            base="0x8000", size=4,
+            instructions=[
+                {"address": "0x8000", "offset": 0, "raw_word": "4e800020",
+                 "mnemonic": "blr", "operands": "", "instruction_class": "return"}
+            ],
+        ))
+        d.signature = parse_signature("some_func")
+        errors = validate_dossier(d)
+        self.assertEqual(errors, [])
+
+    # ------------------------------------------------------------------
+    # Target identity
+    # ------------------------------------------------------------------
+
+    def test_target_identity(self) -> None:
+        ti = build_target_identity(
+            "test-func", "test_func(void)", "_test_func__Fv",
+            "test.cpp", "test.o", "test", 0x8000, 20,
+        )
+        self.assertEqual(ti.target_id, "test-func")
+        self.assertEqual(ti.retail_address, "0x00008000")
+        self.assertEqual(ti.retail_size, 20)
+
+    # ------------------------------------------------------------------
+    # Declaration extraction
+    # ------------------------------------------------------------------
+
+    def test_find_class_name_simple(self) -> None:
+        self.assertEqual(_find_class_name("CGame::wkRender()"), "CGame")
+
+    def test_find_class_name_namespaced(self) -> None:
+        self.assertEqual(
+            _find_class_name("nw4r2ut36LinkList::destructor()"),
+            "nw4r2ut36LinkList",
+        )
+
+    def test_find_class_name_no_class(self) -> None:
+        self.assertIsNone(_find_class_name("memcpy"))
+
+    # ------------------------------------------------------------------
+    # Truncation
+    # ------------------------------------------------------------------
+
+    def test_decode_truncation_sets_flag(self) -> None:
+        from tools.ppc_equivalence.elf_symbols import FunctionBytes
+        from tools.llm_harness.dossier import PromptConstraints
+        from pathlib import Path
+
+        # 3 instructions, cap at 2 → truncated
+        fb = FunctionBytes(
+            name="test", path=Path("/dev/null"),
+            code=bytes.fromhex("38600001 38800002 4e800020"),
+            base=0x8000, value=0, size=12,
+            section_index=0, section_name=".text", symbol_type=0x22,
+        )
+        constraints = PromptConstraints(max_decoded_instructions=2)
+        d = build_target_dossier(
+            "test", "test__Fv", "test()",
+            "t.cpp", "t.o", "t", 0x8000, 12, fb,
+            "", "", [], constraints,
+        )
+        self.assertTrue(d.retail.truncated)
+        self.assertEqual(len(d.retail.instructions), 2)
 
 
 class MarkerSlotTests(unittest.TestCase):

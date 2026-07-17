@@ -14,6 +14,7 @@ from tools.coop.lib.equivalence_check import (
     prove_unit_symbol,
     should_probe_equivalence,
 )
+from tools.coop.lib.equivalence_policy import classify_for_promotion
 from tools.coop.lib.project import ObjdiffUnit, Project
 from tools.ppc_equivalence.result import ProofStatus
 
@@ -59,6 +60,8 @@ def meets_required_level(
     unit: UnitReport,
     symbol: Optional[str],
     equivalence: Optional[ProofStatus] = None,
+    policy: Optional[CoopConfig] = None,
+    certificate: Optional[dict] = None,
 ) -> bool:
     if required_level == "FULL_MATCH":
         if symbol:
@@ -70,11 +73,19 @@ def meets_required_level(
         if symbol:
             if function_match is not None and function_match >= 100.0:
                 return True
-            return (
+            if (
                 function_match is not None
                 and function_match >= EQUIVALENT_MATCH_MIN_PERCENT
                 and equivalence == ProofStatus.EQUIVALENT
-            )
+            ):
+                if policy is None:
+                    return True
+                decision = classify_for_promotion(
+                    equivalence, function_match, policy,
+                    certificate=certificate,
+                )
+                return decision.allowed
+            return False
         # Unit-level: still require full code+data until unit-wide proofs exist.
         return unit.code_match_percent >= 100.0 and unit.data_match_percent >= 100.0
     if required_level == "CODE_MATCH":
@@ -101,17 +112,27 @@ def classify_status(
     *,
     symbol: Optional[str],
     equivalence: Optional[ProofStatus] = None,
+    policy: Optional[CoopConfig] = None,
+    certificate: Optional[dict] = None,
 ) -> str:
     if symbol:
         if function_match is None:
             return "NOT_STARTED"
         if function_match >= 100.0:
             return "FULL_MATCH"
-        if (
+        can_equivalent = (
             function_match >= EQUIVALENT_MATCH_MIN_PERCENT
             and equivalence == ProofStatus.EQUIVALENT
-        ):
-            return "EQUIVALENT_MATCH"
+        )
+        if can_equivalent:
+            if policy is None:
+                return "EQUIVALENT_MATCH"
+            decision = classify_for_promotion(
+                equivalence, function_match, policy,
+                certificate=certificate,
+            )
+            if decision.allowed:
+                return "EQUIVALENT_MATCH"
         if function_match >= 95.0:
             return "CODE_MATCH"
         if function_match >= 70.0:
@@ -178,7 +199,10 @@ def evaluate_unit_match(
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate
-    status = classify_status(pct, unit_report, symbol=symbol, equivalence=equivalence)
+    status = classify_status(
+        pct, unit_report, symbol=symbol, equivalence=equivalence,
+        policy=project.config, certificate=certificate,
+    )
     return MatchEvaluation(
         unit_report=unit_report,
         fn_match=fn_match,

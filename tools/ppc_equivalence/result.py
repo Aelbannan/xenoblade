@@ -4,8 +4,77 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v18"
-RESULT_FORMAT = 7
+from tools.ppc_equivalence.memory_profile import MemoryEnvironment
+
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v19"
+RESULT_FORMAT = 8
+
+
+MASKING_SEMANTICS = "per-implementation-independent-v1"
+
+
+@dataclass(slots=True)
+class PrivateStackInfo:
+    enabled_on_all_terminal_paths: bool
+    disabled_reasons: list[str] = field(default_factory=list)
+    frame_relation: str = "symbolic-below-entry-sp"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "enabled_on_all_terminal_paths": self.enabled_on_all_terminal_paths,
+            "disabled_reasons": list(self.disabled_reasons),
+            "frame_relation": self.frame_relation,
+        }
+
+
+@dataclass(slots=True)
+class MemoryScope:
+    comparison: str = "touched-byte-extensional"
+    masking_semantics: str = MASKING_SEMANTICS
+    original: PrivateStackInfo | None = None
+    candidate: PrivateStackInfo | None = None
+
+    @classmethod
+    def from_terminals(
+        cls,
+        original_terminals: list[Any],
+        candidate_terminals: list[Any],
+        ops: Any,
+    ) -> MemoryScope:
+        """Build a MemoryScope by inspecting terminal stack-private states."""
+        def _side_info(terminals: list[Any]) -> PrivateStackInfo:
+            enabled_all = True
+            disabled_reasons: list[str] = []
+            for term in terminals:
+                sp = term.state.stack_private
+                if sp is not None:
+                    if isinstance(sp, ops.z3.BoolRef) and ops.z3.is_false(sp):
+                        enabled_all = False
+            if not enabled_all:
+                disabled_reasons.append("stack-escape-or-call")
+            return PrivateStackInfo(
+                enabled_on_all_terminal_paths=enabled_all,
+                disabled_reasons=disabled_reasons,
+            )
+
+        if not original_terminals or not candidate_terminals:
+            return cls()
+        original = _side_info(original_terminals)
+        candidate = _side_info(candidate_terminals)
+        return cls(original=original, candidate=candidate)
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {
+            "comparison": self.comparison,
+            "private_stack": {
+                "masking_semantics": self.masking_semantics,
+            },
+        }
+        if self.original is not None:
+            d["private_stack"]["original"] = self.original.to_dict()
+        if self.candidate is not None:
+            d["private_stack"]["candidate"] = self.candidate.to_dict()
+        return d
 
 
 class ProofStatus(str, Enum):
@@ -33,7 +102,7 @@ class ProofResult:
         "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
         "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
         "shared byte-addressed initial memory",
-        "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private; calls or storing an r1-derived pointer disable that masking",
+        "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
         "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
         "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX and traps are not",
@@ -61,6 +130,8 @@ class ProofResult:
     assumed_callees: list[int | str] = field(default_factory=list)
     callee_contracts: dict[str, dict[str, Any]] = field(default_factory=dict)
     abstractions: list[str] = field(default_factory=list)
+    environment: MemoryEnvironment | None = None
+    memory_scope: MemoryScope | None = None
     counterexample_kind: str | None = None
     unsupported: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -68,4 +139,12 @@ class ProofResult:
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
         value["status"] = self.status.value
+        if self.memory_scope is not None:
+            value["memory_scope"] = self.memory_scope.to_dict()
+        else:
+            value.pop("memory_scope", None)
+        if isinstance(self.environment, MemoryEnvironment):
+            value["environment"] = self.environment.to_dict()
+        else:
+            value.pop("environment", None)
         return value

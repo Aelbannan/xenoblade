@@ -1,7 +1,159 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol
+
+
+class PipelineStage(str, Enum):
+    BASELINE = "baseline"
+    RECONSTRUCT = "reconstruct"
+    COMPILE_REPAIR = "compile_repair"
+    STRUCTURAL_ANALYSIS = "structural_analysis"
+    SEMANTIC_REPAIR = "semantic_repair"
+    MATCH_IMPROVE = "match_improve"
+    EQUIVALENCE = "equivalence"
+    PROMOTION = "promotion"
+    COMPLETE = "complete"
+    BLOCKED = "blocked"
+
+
+class CandidateStatus(str, Enum):
+    MODEL_ERROR = "model_error"
+    INVALID_RESPONSE = "invalid_response"
+    PATCH_ERROR = "patch_error"
+    COMPILE_ERROR = "compile_error"
+    BLOCKED = "blocked"
+    COMPILES = "compiles"
+    STRUCTURALLY_ALIGNED = "structurally_aligned"
+    CODE_MATCH = "code_match"
+    EQUIVALENT_MATCH = "equivalent_match"
+    FULL_MATCH = "full_match"
+
+
+class BlockedReason(str, Enum):
+    MISSING_DECLARATION = "missing_declaration"
+    UNKNOWN_TYPE = "unknown_type"
+    UNCERTAIN_SIGNATURE = "uncertain_signature"
+    SOURCE_BOUNDARY = "source_boundary"
+    UNSUPPORTED_CONTEXT = "unsupported_context"
+    REPEATED_DIAGNOSTIC = "repeated_diagnostic"
+    UNSUPPORTED_INSTRUCTION = "unsupported_instruction"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+
+
+@dataclass(frozen=True)
+class CompilerDiagnostic:
+    category: str
+    severity: str
+    message: str
+    file: str | None = None
+    line: int | None = None
+    column: int | None = None
+    symbol: str | None = None
+    fingerprint: str = ""
+
+
+@dataclass
+class CompileReport:
+    succeeded: bool
+    exit_code: int = 0
+    diagnostics: List[CompilerDiagnostic] = field(default_factory=list)
+    raw_output_path: str | None = None
+    root_fingerprint: str | None = None
+
+
+@dataclass
+class StructuralComponent:
+    score: float
+    matched: int
+    expected: int
+    details: List[str] = field(default_factory=list)
+
+
+@dataclass
+class StructuralReport:
+    total_score: float
+    calls: StructuralComponent
+    relocations: StructuralComponent
+    memory_accesses: StructuralComponent
+    cfg: StructuralComponent
+    constants: StructuralComponent
+    returns: StructuralComponent
+    instruction_classes: StructuralComponent
+    unexpected_effects: List[str] = field(default_factory=list)
+    missing_effects: List[str] = field(default_factory=list)
+
+
+@dataclass
+class CandidateEvaluation:
+    status: CandidateStatus
+    compile_report: CompileReport
+    match_percent: float = 0.0
+    structural_report: StructuralReport | None = None
+    equivalence_status: str | None = None
+    function_size: int | None = None
+    retail_size: int | None = None
+    object_regressions: List[str] = field(default_factory=list)
+    accepted_function_regressions: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+
+
+@dataclass
+class CandidateLineage:
+    candidate_id: str
+    parent_candidate_id: str | None
+    root_candidate_id: str
+    stage: PipelineStage
+    generation_index: int
+    repair_depth: int
+    model_id: str
+
+
+@dataclass
+class BaselineSnapshot:
+    target_id: str
+    source_text: str
+    source_hash: str
+    evaluation: CandidateEvaluation | None
+    captured_at: str
+    root_revision: str | None = None
+    dirty_paths: List[str] = field(default_factory=list)
+
+
+@dataclass
+class PromotionResult:
+    promoted: bool
+    rolled_back: bool
+    reason: str
+    target_id: str = ""
+    source_hash_before: str = ""
+    source_hash_after: str | None = None
+    baseline_rank: tuple = ()
+    candidate_rank: tuple = ()
+    validation_steps: List[Dict[str, Any]] = field(default_factory=list)
+    rollback_error: str | None = None
+
+
+@dataclass(frozen=True)
+class PromotionPolicy:
+    enabled: bool = True
+    require_monotonic_rank: bool = True
+    allow_first_compile: bool = True
+    first_compile_min_structural_score: float = 0.60
+    structural_alignment_threshold: float = 0.75
+    protect_accepted_functions: bool = True
+    revalidate_against_latest_root: bool = True
+    rollback_on_failure: bool = True
+
+
+@dataclass
+class ValidationStepResult:
+    name: str
+    succeeded: bool
+    exit_code: int | None
+    detail: str
+    artifact_paths: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -116,3 +268,7 @@ class ProjectAdapter(Protocol):
     # def rank_candidate(self, workflow, evaluation) -> tuple: ...
     # def model_context_mode(self, workflow) -> str: ...
     # def build_context_files(self, ...) -> Dict[str, str]: ...
+    # --- Phase 0 / Promotion safety optional methods ---
+    # def read_target_source(self, target_id: str) -> str: ...
+    # def target_source_path(self, target_id: str) -> Path: ...
+    # def evaluate_canon(self, target_id: str, artifact_dir: Path) -> CandidateEvaluation | Evaluation: ...

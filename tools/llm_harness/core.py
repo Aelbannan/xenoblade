@@ -16,8 +16,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .compile_diagnostic import normalize_compile_output, select_root_diagnostic
+from .promotion import PromotionManager, evaluation_to_candidate, capture_baseline
 from .providers import DeepSeekRawProvider, OpenCodeProvider, ReasonixProvider
-from .types import Candidate, ExperimentRecord, ModelConfig, ProjectAdapter, SourcePatch
+from .types import (
+    BaselineSnapshot,
+    Candidate,
+    CandidateEvaluation,
+    ExperimentRecord,
+    ModelConfig,
+    ProjectAdapter,
+    PromotionPolicy,
+    SourcePatch,
+)
 from .workspace import GitWorktreeManager
 
 
@@ -46,8 +57,26 @@ class Harness:
         )
         self.max_retries = int(execution.get("max_retries", 1))
         self._adapter_lock = threading.RLock()
+        self._promotion_lock = threading.Lock()
         self._log_lock = threading.Lock()
         self._debug_lock = threading.Lock()
+        policy_cfg = execution.get("promotion", {})
+        self.promotion_manager = PromotionManager(
+            self.root,
+            policy=PromotionPolicy(
+                enabled=bool(policy_cfg.get("enabled", True)),
+                require_monotonic_rank=bool(policy_cfg.get("require_monotonic_rank", True)),
+                allow_first_compile=bool(policy_cfg.get("allow_first_compile", True)),
+                first_compile_min_structural_score=float(
+                    policy_cfg.get("first_compile_min_structural_score", 0.60)
+                ),
+                protect_accepted_functions=bool(policy_cfg.get("protect_accepted_functions", True)),
+                revalidate_against_latest_root=bool(
+                    policy_cfg.get("revalidate_against_latest_root", True)
+                ),
+                rollback_on_failure=bool(policy_cfg.get("rollback_on_failure", True)),
+            ),
+        )
         isolation = execution.get("isolation", {})
         self.isolation_mode = isolation.get("mode", "none")
         self.workspace_manager = (
@@ -214,7 +243,7 @@ class Harness:
             context_mode_fn = getattr(self.adapter, "model_context_mode", None)
             context_mode = context_mode_fn(workflow) if context_mode_fn else "files"
             state = {
-                "schema_version": 1,
+                "schema_version": 2,
                 "experiment_id": experiment_id,
                 "workflow": workflow,
                 "target_id": target_id,
@@ -222,10 +251,39 @@ class Harness:
                 "logged": False,
                 "logged_keys": [],
                 "records": [],
+                "baseline": None,
                 "workflow_options": {"full_context": full_context},
                 "context_dir": str(context_dir.relative_to(self.root)),
                 "context_mode": context_mode,
             }
+            # Phase 0: capture baseline before any model call
+            try:
+                baseline = capture_baseline(self.adapter, target_id, experiment_dir)
+                state["baseline"] = {
+                    "source_hash": baseline.source_hash,
+                    "source_text": baseline.source_text,
+                    "evaluation": (
+                        {
+                            "status": baseline.evaluation.status.value
+                            if baseline.evaluation
+                            else "UNKNOWN",
+                            "match_percent": baseline.evaluation.match_percent
+                            if baseline.evaluation
+                            else 0.0,
+                            "accepted": False,
+                        }
+                        if baseline.evaluation
+                        else None
+                    ),
+                }
+                self._debug(
+                    f"baseline captured target={target_id} "
+                    f"hash={baseline.source_hash[:12]}"
+                )
+            except Exception as exc:
+                self._debug(
+                    f"baseline capture failed target={target_id}: {exc}"
+                )
             self._write_state(experiment_dir, state)
         self._debug(
             "function decompile started "
@@ -365,33 +423,16 @@ class Harness:
             state["logged_keys"] = sorted(logged_keys)
             state["logged"] = True
             self._write_state(experiment_dir, state)
-            # Auto-promote winning candidate if it reached COMPILES or better
+            # Phase 0: promotion-gate-based auto-promotion
             if best_record is not None and workflow in {"new", "improve", "tu-complete"}:
                 ev = best_record.evaluation or {}
                 bstatus = ev.get("status", "")
                 if bstatus in ("COMPILES", "CODE_MATCH", "FULL_MATCH", "EQUIVALENT_MATCH"):
                     try:
-                        promote_diff = self.promote(experiment_dir, write=True)
-                        self._debug(
-                            f"auto-promoted {target_id} ({bstatus}): "
-                            + promote_diff.replace("\n", " ")[:200]
-                        )
-                        import subprocess
-                        cycle_result = subprocess.run(
-                            [sys.executable, "tools/coop/run.py", "cycle", target_id,
-                             "--hypothesis", f"Auto-promote {bstatus}",
-                             "--next-change", "None"],
-                            cwd=self.root, text=True, capture_output=True, timeout=600,
-                        )
-                        cycle_summary = (
-                            cycle_result.stdout.split("\n")[-10:]
-                            if cycle_result.stdout
-                            else []
-                        )
-                        self._debug(
-                            f"cycle {target_id}: exit={cycle_result.returncode} "
-                            + " ".join(l.strip() for l in cycle_summary if l.strip())[:200]
-                        )
+                        with self._promotion_lock:
+                            self._promote_with_gate(
+                                experiment_dir, state, best_record, target_id, workflow,
+                            )
                     except Exception as exc:
                         self._debug(f"auto-promotion failed for {target_id}: {exc}")
         finally:
@@ -746,6 +787,75 @@ class Harness:
             max_tokens is not None and tokens >= max_tokens
         )
 
+    def _promote_with_gate(
+        self,
+        experiment_dir: Path,
+        state: Dict[str, Any],
+        best_record: ExperimentRecord,
+        target_id: str,
+        workflow: str,
+    ) -> None:
+        """Phase 0: gated transactional promotion with rollback journal."""
+        candidate_eval = evaluation_to_candidate(best_record.evaluation or {})
+        baseline_data = state.get("baseline")
+        baseline_eval: Optional[CandidateEvaluation] = None
+        baseline_source = ""
+        if baseline_data and baseline_data.get("evaluation"):
+            baseline_eval = evaluation_to_candidate(baseline_data["evaluation"])
+            baseline_source = baseline_data.get("source_text", "")
+
+        # Use baseline if available, otherwise treat as first (no gate needed)
+        if baseline_eval is not None:
+            passed, reason = self.promotion_manager.compare_for_promotion(
+                baseline_eval, candidate_eval,
+                baseline_source=baseline_source,
+            )
+            if not passed:
+                self._debug(
+                    f"promotion gate blocked target={target_id} reason={reason}"
+                )
+                return
+
+        # Extract candidate source
+        candidate_source = ""
+        candidate_artifact_path = self.root / best_record.artifact
+        if candidate_artifact_path.is_file():
+            try:
+                artifact = json.loads(
+                    candidate_artifact_path.read_text(encoding="utf-8")
+                )
+                candidate_source = (
+                    artifact.get("candidate", {}).get("source")
+                    or artifact.get("candidate", {}).get("patches", [{}])[0].get("source")
+                    or ""
+                )
+            except (OSError, json.JSONDecodeError, IndexError):
+                pass
+
+        # Promote via PromotionManager (transactional, with validation)
+        result = self.promotion_manager.promote(
+            self.adapter,
+            workflow,
+            target_id,
+            candidate_source,
+            experiment_dir,
+            write=True,
+        )
+
+        if result.promoted:
+            self._debug(
+                f"promoted target={target_id} reason={result.reason} "
+                f"steps={len(result.validation_steps)}"
+            )
+        elif result.rolled_back:
+            self._debug(
+                f"promotion rolled back target={target_id} reason={result.reason}"
+            )
+        else:
+            self._debug(
+                f"promotion skipped target={target_id} reason={result.reason}"
+            )
+
     def records(self, target_id: Optional[str] = None) -> List[Dict[str, Any]]:
         if not self.log_path.is_file():
             return []
@@ -922,6 +1032,233 @@ class Harness:
             bool(record.evaluation.get("accepted")),
             record.evaluation.get("match_percent") or 0.0,
         )
+
+    def repair(
+        self,
+        experiment_dir: Path,
+        *,
+        budget: int = 3,
+        dry_run: bool = False,
+    ) -> Path:
+        directory = experiment_dir.resolve()
+        state = json.loads((directory / "state.json").read_text(encoding="utf-8"))
+        best = json.loads((directory / "best.json").read_text(encoding="utf-8"))
+        candidate = Candidate(**best["candidate"])
+        evaluation = best.get("evaluation", {})
+
+        status = evaluation.get("status", "")
+        if status != "COMPILE_ERROR":
+            self._debug(
+                f"repair skipped target={state.get('target_id')}: "
+                f"status={status} (expected COMPILE_ERROR)"
+            )
+            return directory
+
+        compile_detail = str(evaluation.get("detail", ""))
+        diagnostics = normalize_compile_output(compile_detail)
+        root = select_root_diagnostic(diagnostics)
+        root_fp = root.fingerprint if root else "unknown"
+        self._debug(
+            f"repair started target={state.get('target_id')} "
+            f"experiment={state.get('experiment_id')} "
+            f"root_diagnostic={root_fp} diagnostics={len(diagnostics)}"
+        )
+
+        if dry_run:
+            return directory
+
+        prompt = self._build_repair_prompt(
+            candidate, compile_detail, diagnostics, state, budget=budget,
+        )
+
+        models = self.models_for_workflow(state.get("workflow", "new"))
+        if not models:
+            raise ValueError("No model configured for repair")
+
+        model = models[0]
+        provider = self.providers.get(model.provider)
+        if provider is None:
+            raise ValueError(f"Unsupported provider: {model.provider}")
+
+        started = time.monotonic()
+        repairs_dir = directory / "repairs"
+        repairs_dir.mkdir(exist_ok=True)
+        seen_fingerprints: set[str] = set()
+
+        for repair_index in range(1, budget + 1):
+            self._debug(
+                f"repair iteration {repair_index}/{budget} "
+                f"target={state.get('target_id')}"
+            )
+
+            try:
+                result = provider.invoke(
+                    prompt, model, directory / "context" if (directory / "context").is_dir() else directory
+                )
+            except Exception as exc:
+                repair_artifact = repairs_dir / f"repair-{repair_index}.json"
+                repair_artifact.write_text(
+                    json.dumps({"error": str(exc), "repair_index": repair_index}) + "\n",
+                    encoding="utf-8",
+                )
+                self._debug(
+                    f"repair iteration {repair_index} failed: {exc}"
+                )
+                break
+
+            response_text = result.text
+            new_source = _extract_repair_source(response_text)
+            if not new_source:
+                repair_artifact = repairs_dir / f"repair-{repair_index}.json"
+                repair_artifact.write_text(
+                    json.dumps({
+                        "repair_index": repair_index,
+                        "error": "model returned empty source",
+                        "model_response": response_text,
+                    }) + "\n",
+                    encoding="utf-8",
+                )
+                break
+
+            new_candidate = Candidate(
+                source=new_source,
+                hypothesis=f"repair {repair_index}: {root_fp}",
+                notes=[f"Compile repair iteration {repair_index}"],
+            )
+
+            try:
+                ev = self.adapter.evaluate(
+                    state.get("workflow", "new"),
+                    state.get("target_id", ""),
+                    new_candidate,
+                )
+            except Exception as exc:
+                repair_artifact = repairs_dir / f"repair-{repair_index}.json"
+                repair_artifact.write_text(
+                    json.dumps({
+                        "repair_index": repair_index,
+                        "error": f"evaluation failed: {exc}",
+                        "candidate": asdict(new_candidate),
+                    }) + "\n",
+                    encoding="utf-8",
+                )
+                break
+
+            repair_artifact = repairs_dir / f"repair-{repair_index}.json"
+            repair_artifact.write_text(
+                json.dumps({
+                    "repair_index": repair_index,
+                    "candidate": asdict(new_candidate),
+                    "evaluation": asdict(ev),
+                }, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            ev_status = str(getattr(ev, "status", ev.get("status", "")))
+            if ev_status != "COMPILE_ERROR":
+                self._debug(
+                    f"repair iteration {repair_index} succeeded: "
+                    f"status={ev_status} match={getattr(ev, 'match_percent', ev.get('match_percent'))}%"
+                )
+                return directory
+
+            # Parse new compile errors for next iteration
+            new_detail = str(getattr(ev, "detail", ev.get("detail", "")))
+            new_diagnostics = normalize_compile_output(new_detail)
+            new_root = select_root_diagnostic(new_diagnostics)
+            new_fp = new_root.fingerprint if new_root else "unknown"
+
+            if new_fp in seen_fingerprints:
+                self._debug(
+                    f"repair iteration {repair_index} blocked: "
+                    f"repeated diagnostic {new_fp}"
+                )
+                break
+            seen_fingerprints.add(new_fp)
+
+            # Build prompt for next iteration
+            prompt = self._build_repair_prompt(
+                new_candidate, new_detail, new_diagnostics, state,
+                budget=budget,
+                repair_index=repair_index,
+                seen_fingerprints=list(seen_fingerprints),
+            )
+
+        self._debug(
+            f"repair exhausted target={state.get('target_id')} "
+            f"budget={budget} iterations={repair_index}"
+        )
+        return directory
+
+    def _build_repair_prompt(
+        self,
+        candidate: Candidate,
+        compile_detail: str,
+        diagnostics,
+        state: Dict[str, Any],
+        *,
+        budget: int = 3,
+        repair_index: int = 0,
+        seen_fingerprints: list[str] | None = None,
+    ) -> str:
+        prompt_dir = self.root / self.config.get("prompt_dir", "tools/llm_harness/prompts")
+        common_path = prompt_dir / "common.md"
+        repair_path = prompt_dir / "compile_repair.md"
+        common = common_path.read_text(encoding="utf-8") if common_path.is_file() else ""
+        repair_instruction = repair_path.read_text(encoding="utf-8") if repair_path.is_file() else ""
+
+        lines: list[str] = [
+            common,
+            "",
+            "---",
+            "",
+            repair_instruction,
+            "",
+            "---",
+            "## Current candidate source",
+            candidate.source,
+            "",
+            "## Compiler diagnostic report",
+            compile_detail,
+        ]
+
+        if diagnostics:
+            lines.append("")
+            lines.append("## Normalized diagnostics")
+            for i, d in enumerate(diagnostics):
+                symbol = f" symbol={d.symbol}" if d.symbol else ""
+                lines.append(
+                    f"  {i+1}. [{d.category}] {d.file}:{d.line}{symbol} — {d.message}"
+                )
+
+        if seen_fingerprints:
+            lines.append("")
+            lines.append("## Previously attempted repairs (fingerprints already seen)")
+            for fp in seen_fingerprints:
+                lines.append(f"  - {fp}")
+
+        lines.append("")
+        lines.append(f"## Repair iteration {repair_index + 1} of {budget}")
+        return "\n".join(lines)
+
+
+def _extract_repair_source(text: str) -> str:
+    cleaned = text.strip()
+    fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", cleaned, re.DOTALL)
+    if fenced:
+        cleaned = fenced.group(1)
+    else:
+        start, end = cleaned.find("{"), cleaned.rfind("}")
+        if start >= 0 and end > start:
+            cleaned = cleaned[start : end + 1]
+    try:
+        data = json.loads(cleaned)
+        src = data.get("source", "")
+        if isinstance(src, str) and src.strip():
+            return src
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return ""
 
 
 def parse_candidate(

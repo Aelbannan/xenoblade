@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .providers import OpenCodeProvider
+from .providers import OpenCodeProvider, ReasonixProvider
 from .types import Candidate, ExperimentRecord, ModelConfig, ProjectAdapter, SourcePatch
 from .workspace import GitWorktreeManager
 
@@ -55,14 +55,20 @@ class Harness:
             if self.isolation_mode == "git-worktree"
             else None
         )
-        provider_cfg = self.config.get("providers", {}).get("opencode", {})
-        self.providers = {
-            "opencode": OpenCodeProvider(
-                binary=provider_cfg.get("binary", "opencode"),
-                timeout_seconds=int(provider_cfg.get("timeout_seconds", 900)),
-                pure=bool(provider_cfg.get("pure", True)),
-            )
+        _PROVIDER_CLASSES = {
+            "opencode": OpenCodeProvider,
+            "reasonix": ReasonixProvider,
         }
+        self.providers = {}
+        for name, cfg in self.config.get("providers", {}).items():
+            cls = _PROVIDER_CLASSES.get(name)
+            if cls is None:
+                continue
+            self.providers[name] = cls(
+                binary=cfg.get("binary", name),
+                timeout_seconds=int(cfg.get("timeout_seconds", 900)),
+                pure=bool(cfg.get("pure", True)),
+            )
 
     def _load_adapter(self, root: Path) -> ProjectAdapter:
         ref = self.config["project_adapter"]
@@ -337,14 +343,15 @@ class Harness:
 
             records = [ExperimentRecord(**row) for row in state["records"]]
             successful = [r for r in records if not r.error]
+            best_record = None
             if successful:
-                best = max(
+                best_record = max(
                     successful,
                     key=lambda r: self._rank_record(workflow, r),
                 )
-                best.winner = True
+                best_record.winner = True
                 (experiment_dir / "best.json").write_text(
-                    (self.root / best.artifact).read_text(encoding="utf-8"), encoding="utf-8"
+                    (self.root / best_record.artifact).read_text(encoding="utf-8"), encoding="utf-8"
                 )
             state["records"] = [record.to_json() for record in records]
             state["status"] = "complete"
@@ -357,6 +364,35 @@ class Harness:
             state["logged_keys"] = sorted(logged_keys)
             state["logged"] = True
             self._write_state(experiment_dir, state)
+            # Auto-promote winning candidate if it reached COMPILES or better
+            if best_record is not None and workflow in {"new", "improve", "tu-complete"}:
+                ev = best_record.evaluation or {}
+                bstatus = ev.get("status", "")
+                if bstatus in ("COMPILES", "CODE_MATCH", "FULL_MATCH", "EQUIVALENT_MATCH"):
+                    try:
+                        promote_diff = self.promote(experiment_dir, write=True)
+                        self._debug(
+                            f"auto-promoted {target_id} ({bstatus}): "
+                            + promote_diff.replace("\n", " ")[:200]
+                        )
+                        import subprocess
+                        cycle_result = subprocess.run(
+                            [sys.executable, "tools/coop/run.py", "cycle", target_id,
+                             "--hypothesis", f"Auto-promote {bstatus}",
+                             "--next-change", "None"],
+                            cwd=self.root, text=True, capture_output=True, timeout=600,
+                        )
+                        cycle_summary = (
+                            cycle_result.stdout.split("\n")[-10:]
+                            if cycle_result.stdout
+                            else []
+                        )
+                        self._debug(
+                            f"cycle {target_id}: exit={cycle_result.returncode} "
+                            + " ".join(l.strip() for l in cycle_summary if l.strip())[:200]
+                        )
+                    except Exception as exc:
+                        self._debug(f"auto-promotion failed for {target_id}: {exc}")
         finally:
             self.adapter.finalize()
         self._debug(
@@ -454,7 +490,7 @@ class Harness:
         return batch_dir
 
     def select_new_targets(
-        self, number: int, *, ignore_called_functions: bool = False
+        self, number: int, *, ignore_called_functions: bool = False, certified_funcs: bool = False
     ) -> List[str]:
         """Ask the project adapter for fresh function targets."""
         if number < 1:
@@ -468,6 +504,7 @@ class Harness:
                     number,
                     self.records(),
                     ignore_called_functions=ignore_called_functions,
+                    certified_funcs=certified_funcs,
                 )
             )
         if len(target_ids) != number:
@@ -476,7 +513,9 @@ class Harness:
             )
         return target_ids
 
-    def select_targets(self, workflow: str, number: int, *, randomize: bool = False) -> List[str]:
+    def select_targets(
+        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False
+    ) -> List[str]:
         """Ask the project adapter for an automatic workflow target selection."""
         if workflow not in {"improve", "tu-complete"}:
             raise ValueError("Automatic selection supports improve or tu-complete")
@@ -486,7 +525,9 @@ class Harness:
         if select is None:
             raise ValueError("Configured project adapter does not support automatic target selection")
         with self._adapter_lock:
-            target_ids = list(select(workflow, number, randomize=randomize))
+            target_ids = list(
+                select(workflow, number, randomize=randomize, certified_funcs=certified_funcs)
+            )
         if len(target_ids) != number:
             raise ValueError(
                 f"Project adapter returned {len(target_ids)} targets; expected {number}"
@@ -740,6 +781,10 @@ class Harness:
                 ),
                 "input_tokens": sum(int(r.get("input_tokens") or 0) for r in rows),
                 "output_tokens": sum(int(r.get("output_tokens") or 0) for r in rows),
+                "non_cached_tokens": sum(
+                    max(0, int(r.get("input_tokens") or 0) - int(r.get("cache_read_tokens") or 0))
+                    for r in rows
+                ),
                 "cache_read_tokens": sum(int(r.get("cache_read_tokens") or 0) for r in rows),
                 "cache_write_tokens": sum(int(r.get("cache_write_tokens") or 0) for r in rows),
                 "total_cost": sum(float(r.get("cost") or 0) for r in rows),
@@ -757,7 +802,7 @@ class Harness:
             })
         return output
 
-    def promote(self, experiment_dir: Path, *, write: bool = False, owner: str = "") -> str:
+    def promote(self, experiment_dir: Path, *, write: bool = False) -> str:
         directory = experiment_dir.resolve()
         state = json.loads((directory / "state.json").read_text(encoding="utf-8"))
         best = json.loads((directory / "best.json").read_text(encoding="utf-8"))
@@ -766,7 +811,7 @@ class Harness:
         if promote_fn is None:
             raise ValueError("Configured project adapter does not support promotion")
         return promote_fn(
-            state["workflow"], state["target_id"], candidate, write=write, owner=owner
+            state["workflow"], state["target_id"], candidate, write=write
         )
 
     def rescore(self, experiment_dir: Path, *, max_parallel: Optional[int] = None) -> Path:

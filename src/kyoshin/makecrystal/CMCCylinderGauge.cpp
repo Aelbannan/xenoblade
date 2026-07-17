@@ -62,8 +62,8 @@ void CMCCylinderGauge::func_80221FE0() {
 }
 
 void CMCCylinderGauge::func_80222070(nw4r::lyt::DrawInfo* pDrawInfo) {
-    if(unk1c != 0) {
-        func_80137038(mLayout, pDrawInfo, 0, 1);
+    if (this->unk1c != 0) {
+        func_80137038(this->mLayout, pDrawInfo, 0, 1);
     }
 }
 

@@ -111,9 +111,9 @@ namespace cf{
         classPtr->func_800B88E0(this);
     }
 
-    CBattleManager* CBattleManager::getInstance(){
-        return spInstance;
-    }
+CBattleManager* CBattleManager::getInstance() {
+    return spInstance;
+}
 
     void CBattleManager::func_800D9190(){
         spInstance = new (mtl::MemManager::getHandleMEM2()) CBattleManager();

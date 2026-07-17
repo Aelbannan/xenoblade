@@ -31,17 +31,17 @@ namespace cf{
         spInstance = nullptr;
     }
 
-    void CTaskCulling::func_801A2BD0(u32 r3){
-        CTaskCulling* instance = spInstance;
-        
-        if(instance != nullptr){
-            if(r3 != 0){
-                instance->unk120 |= 8;
-            }else{
-                instance->unk120 &= ~8;
-            }
+void CTaskCulling::func_801A2BD0(unsigned long r3){
+    CTaskCulling* instance = spInstance;
+    
+    if(instance != nullptr){
+        if(r3 != 0){
+            instance->unk120 |= 8;
+        }else{
+            instance->unk120 &= ~8;
         }
     }
+}
 
     UNKTYPE* CTaskCulling::func_801A2C04(){
         if(lbl_eu_80664328 == nullptr) return nullptr;
@@ -53,23 +53,21 @@ namespace cf{
         return mOccCulling.func_801A0F04(r4);
     }
 
-    bool CTaskCulling::ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5){
+bool CTaskCulling::ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5){
         if(spInstance == nullptr) return false;
         return (unk120 & 8) ? false : mOccCulling.func_801A1444(r4, r5);
     }
 
-    bool CTaskCulling::ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
+bool CTaskCulling::ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
         if(spInstance == nullptr) return false;
         return mOccCulling.func_801A1550(r4, r5, r6);
     }
 
-    void CTaskCulling::func_801A2C94(){
-        CTaskCulling* instance = spInstance;
-
-        if(spInstance != nullptr){
-            spInstance->mOccCulling.func_801A0794();
-        }
-    }
+void CTaskCulling::func_801A2C94(){
+    CTaskCulling* instance = spInstance;
+    if (instance == nullptr) return;
+    instance->mOccCulling.func_801A0794();
+}
 
     void CTaskCulling::func_801A2CAC(){
         if(spInstance == nullptr) return;
@@ -105,9 +103,9 @@ namespace cf{
         }
     }
 
-    CTaskCulling* CTaskCulling::getInstance(){
-        return spInstance;
-    }
+CTaskCulling* CTaskCulling::getInstance() {
+    return lbl_eu_80664328;
+}
 
     void CTaskCulling::Init(){
         cf::CfGameManager::spScene->addRenderCB(this, 1, 0);
@@ -125,10 +123,10 @@ namespace cf{
 
         DELETE_OBJ(unk94);
     }
-    void CTaskCulling::Move(){}
-    void CTaskCulling::Draw(){}
+void CTaskCulling::Move(){}
+void CTaskCulling::Draw(){}
 
-    void CTaskCulling::cbRenderBefore(){}
+void CTaskCulling::cbRenderBefore(){}
 
     CTaskCulling* CTaskCulling::create(CProcess* pParent, CScn* pScene){
         CTaskCulling* taskCulling = new (CWorkThreadSystem::getWorkMem()) CTaskCulling(pScene);

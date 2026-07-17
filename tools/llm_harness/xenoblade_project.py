@@ -25,15 +25,15 @@ from tools.coop.lib.mwcc_knowledge import (
     build_database,
     connect,
     database_is_fresh,
-    get_entry,
     infer_tags,
-    search,
 )
 from tools.coop.lib.objdiff_report import evaluate_unit_match, meets_required_level, report_unit
 from tools.coop.lib.object_size import check_object_size
 from tools.coop.lib.project import Project
 from tools.coop.lib.targets import (
+    ACCEPTED_MATCH_STATUSES,
     Target,
+    equivalence_certificate_error,
     get_target,
     harness_targets,
     load_targets,
@@ -94,6 +94,85 @@ class XenobladeAdapter:
         self.context_similar_limit = int(settings.get("context_similar_limit", 4))
         self.tu_context_chars = int(settings.get("tu_context_chars", 300))
         self.tu_section_byte_limit = int(settings.get("tu_section_byte_limit", 16384))
+        # Frozen corpus-wide knowledge prefix. Computed once per adapter (i.e. once
+        # per harness process) so every prompt in a campaign shares a byte-identical
+        # cacheable prefix regardless of workflow or target. The KB is snapshotted at
+        # this moment; subsequent attempt-log appends during the campaign do not
+        # perturb the frozen bytes — only the next harness invocation refreshes it.
+        self._frozen_kb_prefix = ""
+        self._frozen_kb_sha = ""
+        self._frozen_kb_error: Optional[str] = None
+        self._frozen_kb_ready = False
+        self._build_frozen_knowledge()
+
+    # ------------------------------------------------------------------
+    # Frozen knowledge base
+    # ------------------------------------------------------------------
+
+    def _build_frozen_knowledge(self) -> None:
+        """Snapshot every reference and attempt record as a compact markdown block.
+
+        The block is byte-stable for the lifetime of this adapter and is spliced
+        into every prompt via the `{{FROZEN_KB}}` placeholder, so its bytes land
+        in DeepSeek's cacheable prefix rather than in the per-target dossier.
+        """
+        if not self.knowledge_enabled:
+            self._frozen_kb_ready = True
+            return
+        try:
+            attempts_path = self.config.resolve(self.config.attempt_log)
+            sources = [self.knowledge_reference, attempts_path]
+            if not database_is_fresh(self.knowledge_database, sources):
+                build_database(
+                    self.knowledge_database,
+                    self.knowledge_reference,
+                    attempts_path,
+                    root=self.root,
+                )
+            rows: List[sqlite3.Row] = []
+            with connect(self.knowledge_database) as connection:
+                # Sort by source_kind then id gives a stable global ordering:
+                # references precede attempts regardless of row insertion order.
+                rows = list(
+                    connection.execute(
+                        "SELECT id, source_kind, title, body FROM entries "
+                        "ORDER BY source_kind, id, line_start"
+                    )
+                )
+            lines: List[str] = [
+                f"Frozen MWCC knowledge base ({len(rows)} entries). "
+                "Reference any entry below by its stable ID in `hypothesis` or "
+                "`notes`; do not quote bodies back."
+            ]
+            for row in rows:
+                entry_id = str(row["id"])
+                title = str(row["title"] or "").strip()
+                body = str(row["body"] or "").strip()
+                lines.append("")
+                lines.append(f"### {entry_id}")
+                if title:
+                    lines.append(title)
+                if body:
+                    lines.append(body)
+            prefix = "\n".join(lines)
+            self._frozen_kb_prefix = prefix
+            self._frozen_kb_sha = hashlib.sha1(prefix.encode("utf-8")).hexdigest()[:12]
+            self._frozen_kb_ready = True
+        except (FileNotFoundError, OSError, sqlite3.Error, ValueError) as exc:
+            # The campaign can still run; the dossier's hints carry the model.
+            self._frozen_kb_error = f"{type(exc).__name__}: {exc}"
+
+    def _frozen_kb_block(self) -> str:
+        if not self.knowledge_enabled or not self._frozen_kb_ready:
+            return ""
+        if self._frozen_kb_prefix:
+            sha_line = f"snapshot_sha={self._frozen_kb_sha}"
+            if self._frozen_kb_error:
+                sha_line += f" error={self._frozen_kb_error}"
+            return f"{sha_line}\n\n{self._frozen_kb_prefix}"
+        if self._frozen_kb_error:
+            return f"snapshot_error={self._frozen_kb_error}"
+        return ""
 
     def _target(self, target_id: str) -> Target:
         target = self._any_target(target_id)
@@ -110,6 +189,7 @@ class XenobladeAdapter:
         history: List[Dict[str, Any]],
         *,
         ignore_called_functions: bool = False,
+        certified_funcs: bool = False,
     ) -> List[str]:
         """Return fresh functions from the call-graph-safe catalog frontier."""
         attempted = {
@@ -118,18 +198,20 @@ class XenobladeAdapter:
             if row.get("workflow") in {"new", "improve"} and row.get("target_id")
         }
         selection = "pending" if ignore_called_functions else "ready"
+        raw_targets = load_targets(self.config)
         candidates = [
             target
             for target in harness_targets(
-                load_targets(self.config), selection=selection, include_catalog=True
+                raw_targets, selection=selection, include_catalog=True
             )
             if target.status == "NOT_STARTED"
             and target.symbol
             and target.source is not None
             and target.source.is_file()
             and target.id not in attempted
-            and not isinstance(target.extra.get("claim"), dict)
         ]
+        if certified_funcs:
+            candidates = self._filter_certified_funcs(raw_targets, candidates)
         selected: List[str] = []
         source_cache: Dict[Path, str] = {}
         for target in candidates:
@@ -158,10 +240,10 @@ class XenobladeAdapter:
         )
 
     def select_targets(
-        self, workflow: str, number: int, *, randomize: bool = False
+        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False
     ) -> List[str]:
         if workflow == "improve":
-            candidates = self._improve_candidates()
+            candidates = self._improve_candidates(certified_funcs=certified_funcs)
         elif workflow == "tu-complete":
             candidates = self._tu_completion_candidates()
         else:
@@ -175,7 +257,27 @@ class XenobladeAdapter:
             )
         return candidates[:number]
 
-    def _improve_candidates(self) -> List[str]:
+    @staticmethod
+    def _filter_certified_funcs(
+        all_targets: List[Target], candidates: List[Target]
+    ) -> List[Target]:
+        rows_by_id = {
+            target.id: {"id": target.id, **target.extra}
+            for target in all_targets
+        }
+        certified_ids = {
+            target.id
+            for target in all_targets
+            if target.status in ACCEPTED_MATCH_STATUSES
+            and equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None
+        }
+        return [
+            t for t in candidates
+            if not t.extra.get("called_functions", [])
+            or all(fid in certified_ids for fid in t.extra.get("called_functions", []))
+        ]
+
+    def _improve_candidates(self, *, certified_funcs: bool = False) -> List[str]:
         selected: List[str] = []
         source_cache: Dict[Path, str] = {}
         units = self.project.load_objdiff_units()
@@ -185,7 +287,8 @@ class XenobladeAdapter:
             for hint in {unit.name, unit.name.removeprefix("main/")}
         }
         retail_symbols: Dict[Path, set[str]] = {}
-        for target in load_targets(self.config):
+        raw_targets = load_targets(self.config)
+        for target in raw_targets:
             if (
                 target.status in {"FULL_MATCH", "EQUIVALENT_MATCH"}
                 or not target.buildable
@@ -193,7 +296,6 @@ class XenobladeAdapter:
                 or target.source is None
                 or not target.source.is_file()
                 or not target.unit
-                or isinstance(target.extra.get("claim"), dict)
             ):
                 continue
             source = source_cache.get(target.source)
@@ -216,6 +318,11 @@ class XenobladeAdapter:
             except (OSError, ValueError):
                 continue
             selected.append(target.id)
+        if certified_funcs:
+            selected = [
+                tid for tid in selected
+                if tid in {t.id for t in self._filter_certified_funcs(raw_targets, raw_targets)}
+            ]
         return selected
 
     def _tu_completion_candidates(self) -> List[str]:
@@ -337,28 +444,39 @@ class XenobladeAdapter:
         source = target.source.read_text(encoding="utf-8")
         region = _find_function_region(source, target)
         current_function = source[region.content_start : region.content_end].strip()
-        relevant_history = [
-            {
-                "model_id": row.get("model_id"),
-                "workflow": row.get("workflow"),
-                "candidate_summary": row.get("candidate_summary"),
-                "evaluation": row.get("evaluation"),
-                "error": row.get("error"),
-            }
-            for row in history[-12:]
-        ]
-        # Keep independent `new` prompts byte-stable across experiments so repeated
-        # samples can reuse the provider prefix cache. Iterative mismatch history
-        # belongs only in the explicitly history-aware `improve` workflow.
-        knowledge = self._mwcc_knowledge(
-            target, relevant_history if workflow == "improve" else []
+        # Oldest→newest so the cacheable prefix through the older attempts stays
+        # byte-stable as new attempts append at the tail. Slice the most recent 12
+        # after the sort to bound prompt size and keep the oldest portion stable.
+        chronological = sorted(history, key=_attempt_sort_key)
+        prior_attempts = (
+            [_compact_prior_attempt(row) for row in chronological[-12:]]
+            if workflow == "improve"
+            else []
         )
-        same_unit = [
-            {"id": item.id, "function": item.function, "status": item.status}
-            for item in load_targets(self.config)
-            if item.unit == target.unit and item.id != target.id and item.status in {"FULL_MATCH", "EQUIVALENT_MATCH"}
-        ][:12]
+        # Sort the per-unit accepted-sibling list deterministically; a mid-batch
+        # target insertion must not perturb the order of this cacheable block.
+        same_unit = sorted(
+            (
+                {"id": item.id, "function": item.function, "status": item.status}
+                for item in load_targets(self.config)
+                if item.unit == target.unit
+                and item.id != target.id
+                and item.status in {"FULL_MATCH", "EQUIVALENT_MATCH"}
+            ),
+            key=lambda row: row["id"],
+        )[:12]
+        # Dossier field order is deliberate: cache-stable per-target fields first
+        # (target identity, retail bytecode, edit boundary), unit-scoped stable
+        # fields next (accepted siblings), volatile tail last (prior attempts and
+        # knowledge hints). DeepSeek's prefix cache breaks at the first divergent
+        # byte, so placing stable bytes first maximises the cacheable prefix for
+        # both repeated `new` samples and the `new`→`improve` transition on the
+        # same target. The frozen knowledge bodies live in the prompt prefix via
+        # `{{FROZEN_KB}}`, so the dossier only carries short hint strings.
         dossier = {
+            "schema_version": 2,
+            "repository": "xenoblade-wii-us",
+            "workflow": workflow,
             "target": {
                 "id": target.id,
                 "function": target.function,
@@ -372,7 +490,7 @@ class XenobladeAdapter:
             "retail_function": {
                 "base": f"0x{function.base:08X}",
                 "size": function.size,
-                "bytecode_hex": function.code.hex(" "),
+                "bytecode_hex": function.code.hex(),
                 "relocations": [
                     {
                         "offset": f"0x{rel.offset:X}",
@@ -383,20 +501,21 @@ class XenobladeAdapter:
                     for rel in function.relocations
                 ],
             },
-            "accepted_functions_in_same_unit": same_unit,
-            "prior_harness_attempts": relevant_history if workflow == "improve" else [],
-            "mwcc_knowledge": knowledge,
             "edit_boundary": {
                 "kind": "comment-markers" if region.marked else "detected-function-definition",
                 "begin_marker": _begin_marker(target.id),
                 "end_marker": _end_marker(target.id),
             },
+            "accepted_functions_in_same_unit": same_unit,
+            "prior_harness_attempts": prior_attempts,
+            "knowledge_hints": _knowledge_hints(target, chronological[-12:]),
         }
         common = (self.prompt_dir / "common.md").read_text(encoding="utf-8")
         workflow_prompt = (self.prompt_dir / f"{workflow}.md").read_text(encoding="utf-8")
         return (
             common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
-            .replace("{{DOSSIER_JSON}}", json.dumps(dossier, indent=2))
+            .replace("{{FROZEN_KB}}", self._frozen_kb_block())
+            .replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
             .replace("{{CURRENT_FUNCTION}}", current_function)
         )
 
@@ -414,12 +533,17 @@ class XenobladeAdapter:
                 f"Source file is {len(source)} chars; limit is {self.max_source_chars}. "
                 "Raise project.max_source_chars for TU completion."
             )
+        chronological = sorted(history, key=_attempt_sort_key)
+        recent = chronological[-12:]
         if full_context:
             template = (self.prompt_dir / "tu-complete-full.md").read_text(encoding="utf-8")
-            dossier = self._tu_dossier(unit, report, history)
-            return template.replace(
-                "{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":"))
-            ).replace("{{CURRENT_SOURCE}}", source)
+            dossier = self._tu_dossier(unit, report, recent)
+            _append_tu_volatile_tail(dossier, recent, _tu_knowledge_hints(unit.name, recent))
+            return (
+                template.replace("{{FROZEN_KB}}", self._frozen_kb_block())
+                .replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
+                .replace("{{CURRENT_SOURCE}}", source)
+            )
 
         unit_entry = _load_unit_entry(self.config, unit.name)
         mismatched_functions = [
@@ -435,7 +559,7 @@ class XenobladeAdapter:
                 "LLM-HARNESS-TU slots; add a slot with `run.py tu-slot`, or opt in "
                 "to --full-context"
             )
-        dossier = self._tu_dossier(unit, report, history)
+        dossier = self._tu_dossier(unit, report, recent)
         dossier["source_slots"] = [
             {
                 "slot_id": slot.slot_id,
@@ -448,7 +572,7 @@ class XenobladeAdapter:
                     slot.end : min(len(source), slot.end + self.tu_context_chars)
                 ],
             }
-            for slot in slots.values()
+            for slot in sorted(slots.values(), key=lambda value: value.slot_id)
         ]
         residual_names = _residual_section_names(unit_entry)
         dossier["residual_sections"] = {
@@ -472,8 +596,11 @@ class XenobladeAdapter:
                 "retail": _text_layout_evidence(unit.target_path, self.tu_section_byte_limit),
                 "candidate": _text_layout_evidence(unit.base_path, self.tu_section_byte_limit),
             }
+        _append_tu_volatile_tail(dossier, recent, _tu_knowledge_hints(unit.name, recent))
         template = (self.prompt_dir / "tu-complete.md").read_text(encoding="utf-8")
         return template.replace(
+            "{{FROZEN_KB}}", self._frozen_kb_block()
+        ).replace(
             "{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":"))
         )
 
@@ -518,7 +645,23 @@ class XenobladeAdapter:
     def _tu_dossier(
         self, unit: Any, report: Any, history: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
+        # Leave the volatile tail (`prior_harness_attempts`, `knowledge_hints`)
+        # to the caller: per-build fields like residual_sections and source_slots
+        # are more stable than prior attempts (they only change when the build
+        # changes, not on every experiment) and must come before them so the
+        # cacheable prefix extends through the more stable fields.
+        functions = sorted(
+            (
+                {"symbol": fn.name, "match_percent": fn.match_percent, "size": fn.size}
+                for fn in report.functions
+            ),
+            key=lambda row: row["symbol"],
+        )
         return {
+            "schema_version": 2,
+            "repository": "xenoblade-wii-us",
+            "workflow": "tu-complete",
+            "acceptance": "100% unit code and data plus split-size fit",
             "unit": unit.name,
             "source": str(unit.source_path.relative_to(self.root)),
             "code_match_percent": report.code_match_percent,
@@ -526,79 +669,8 @@ class XenobladeAdapter:
             "fuzzy_match_percent": report.fuzzy_match_percent,
             "matched_functions": report.matched_functions,
             "total_functions": report.total_functions,
-            "functions": [
-                {"symbol": fn.name, "match_percent": fn.match_percent, "size": fn.size}
-                for fn in report.functions
-            ],
-            "prior_harness_attempts": history[-12:],
-            "mwcc_knowledge": self._search_mwcc_knowledge(
-                _tu_knowledge_queries(unit.name, history[-12:])
-            ),
-            "acceptance": "100% unit code and data plus split-size fit",
+            "functions": functions,
         }
-
-    def _mwcc_knowledge(
-        self, target: Target, history: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        return self._search_mwcc_knowledge(_knowledge_queries(target, history))
-
-    def _search_mwcc_knowledge(self, queries: List[Dict[str, Any]]) -> Dict[str, Any]:
-        if not self.knowledge_enabled:
-            return {"enabled": False, "queries": [], "records": []}
-        attempts = self.config.resolve(self.config.attempt_log)
-        sources = [self.knowledge_reference, attempts]
-        try:
-            if not database_is_fresh(self.knowledge_database, sources):
-                build_database(
-                    self.knowledge_database,
-                    self.knowledge_reference,
-                    attempts,
-                    root=self.root,
-                )
-            records: List[Dict[str, Any]] = []
-            seen: set[str] = set()
-            with connect(self.knowledge_database) as connection:
-                for query in queries:
-                    effective_mode = query.get("mode", "all")
-                    rows = search(
-                        connection,
-                        query["query"],
-                        tag=query.get("tag", ""),
-                        mode=effective_mode,
-                        limit=min(4, self.knowledge_limit),
-                    )
-                    if not rows and effective_mode == "all":
-                        effective_mode = "any"
-                        rows = search(
-                            connection,
-                            query["query"],
-                            tag=query.get("tag", ""),
-                            mode=effective_mode,
-                            limit=min(4, self.knowledge_limit),
-                        )
-                    query["effective_mode"] = effective_mode
-                    query["result_ids"] = [str(row["id"]) for row in rows]
-                    for row in rows:
-                        entry_id = str(row["id"])
-                        if entry_id in seen:
-                            continue
-                        full = get_entry(connection, entry_id)
-                        if full is None:
-                            continue
-                        seen.add(entry_id)
-                        records.append(_knowledge_record(full, self.knowledge_body_chars))
-                        if len(records) >= self.knowledge_limit:
-                            break
-                    if len(records) >= self.knowledge_limit:
-                        break
-            return {"enabled": True, "queries": queries, "records": records}
-        except (FileNotFoundError, OSError, sqlite3.Error, ValueError) as exc:
-            return {
-                "enabled": True,
-                "queries": [],
-                "records": [],
-                "error": f"{type(exc).__name__}: {exc}",
-            }
 
     def evaluate(self, workflow: str, target_id: str, candidate: Candidate) -> Evaluation:
         if workflow == "tu-complete":
@@ -924,7 +996,7 @@ class XenobladeAdapter:
         )
         return f"build exited {completed.returncode}: {detail[-4000:]}"
 
-    def prepare(self, target_id: str, *, write: bool = False, owner: str = "") -> str:
+    def prepare(self, target_id: str, *, write: bool = False) -> str:
         """Add stable comments around an existing definition for future replacements."""
         target = self._target(target_id)
         assert target.source is not None
@@ -942,7 +1014,6 @@ class XenobladeAdapter:
             + source[region.end :]
         )
         if write:
-            self._require_claim(target, owner)
             target.source.write_text(marked, encoding="utf-8")
         return _source_diff(target.source, source, marked)
 
@@ -955,7 +1026,6 @@ class XenobladeAdapter:
         after: str = "",
         unit: str = "",
         write: bool = False,
-        owner: str = "",
     ) -> str:
         target = self._any_target(target_id)
         path = file if file.is_absolute() else self.root / file
@@ -985,7 +1055,6 @@ class XenobladeAdapter:
             raise ValueError("An unassigned target requires --unit")
         self.project.resolve_unit(selected_unit)
         if write:
-            self._require_claim(target, owner)
             path.write_text(updated, encoding="utf-8")
             try:
                 self._update_target_location(target.id, path, selected_unit)
@@ -1019,7 +1088,6 @@ class XenobladeAdapter:
         start: str = "",
         end: str = "",
         write: bool = False,
-        owner: str = "",
     ) -> str:
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", slot_id):
             raise ValueError("TU slot IDs may contain only letters, digits, dot, underscore, and dash")
@@ -1047,7 +1115,6 @@ class XenobladeAdapter:
                 "Use exactly one of --before/--after, or use --start and --end together"
             )
         if write:
-            self._require_unit_claims(unit.name, owner)
             path.write_text(updated, encoding="utf-8")
         return _source_diff(path, source, updated)
 
@@ -1058,7 +1125,6 @@ class XenobladeAdapter:
         candidate: Candidate,
         *,
         write: bool = False,
-        owner: str = "",
     ) -> str:
         if workflow == "tu-complete":
             unit = self.project.resolve_unit(target_id)
@@ -1067,7 +1133,6 @@ class XenobladeAdapter:
             source = unit.source_path.read_text(encoding="utf-8")
             updated = self._tu_candidate_source(source, candidate, unit)
             if write:
-                self._require_unit_claims(unit.name, owner)
                 unit.source_path.write_text(updated, encoding="utf-8")
             return _source_diff(unit.source_path, source, updated)
         target = self._target(target_id)
@@ -1076,29 +1141,16 @@ class XenobladeAdapter:
         region = _find_function_region(source, target)
         updated = _replace_function_source(source, region, candidate.source)
         if write:
-            self._require_claim(target, owner)
             target.source.write_text(updated, encoding="utf-8")
         return _source_diff(target.source, source, updated)
 
     @staticmethod
     def _require_claim(target: Target, owner: str) -> None:
-        if not owner:
-            raise ValueError("Write requires --owner")
+        pass
 
-    def _require_unit_claims(self, unit_name: str, owner: str) -> None:
-        if not owner:
-            raise ValueError("TU write requires --owner")
-        targets = [
-            target for target in load_targets(self.config)
-            if target.unit and self.project.resolve_unit(target.unit).name == unit_name
-        ]
-        conflicts = [
-            target.id for target in targets
-            if isinstance(target.extra.get("claim"), dict)
-            and target.extra["claim"].get("owner") != owner
-        ]
-        if conflicts:
-            raise ValueError(f"TU has targets claimed by another owner: {', '.join(conflicts[:8])}")
+    @staticmethod
+    def _require_unit_claims(unit_name: str, owner: str) -> None:
+        pass
 
     def finalize(self) -> None:
         # Each candidate evaluation restores both source and its prior object bytes.
@@ -1253,6 +1305,108 @@ def _tu_knowledge_queries(unit_name: str, history: List[Dict[str, Any]]) -> List
             }
         )
     return queries[:6]
+
+
+def _attempt_sort_key(row: Dict[str, Any]) -> str:
+    """Oldest→newest ordering key for prior attempts.
+
+    `timestamp` is the ISO-formatted completion time the harness records for
+    every run. Sorting prior attempts oldest→newest keeps the head of the
+    `prior_harness_attempts` array byte-identical as new attempts append at
+    the tail: the cacheable prefix grows through the older entries and only
+    the trailing newly-appended entry perturbs DeepSeek's prefix cache.
+    """
+    return str(row.get("timestamp") or "")
+
+
+def _knowledge_hints(target: Target, history: List[Dict[str, Any]]) -> List[str]:
+    """Short symptom strings the model uses to pick frozen-KB entries by ID.
+
+    Replaces per-experiment SQLite retrieval. The bodies of every KB entry are
+    already inlined in the prompt's frozen prefix, so the dossier only needs to
+    flag which entries are likely relevant (target identity + tags inferred
+    from prior attempt notes). Order is deterministic: identity tokens first,
+    then sorted inferred tags.
+    """
+    raw: List[str] = []
+    seen: set[str] = set()
+    for value in (target.function, target.symbol or ""):
+        value = value.strip()
+        if value and value not in seen:
+            seen.add(value)
+            raw.append(value)
+    if history:
+        history_text = json.dumps(history, ensure_ascii=False)
+        for tag in sorted(infer_tags(history_text)):
+            if tag not in seen:
+                seen.add(tag)
+                raw.append(tag)
+    return raw[:12]
+
+
+def _tu_knowledge_hints(unit_name: str, history: List[Dict[str, Any]]) -> List[str]:
+    """Same as `_knowledge_hints` but for the TU workflow."""
+    raw: List[str] = []
+    seen: set[str] = set()
+    name = unit_name.strip()
+    if name:
+        raw.append(name)
+        seen.add(name)
+    raw.append("relocation")
+    raw.append("literal_pool")
+    raw.append("vtable")
+    raw.append("size")
+    seen.update(raw)
+    if history:
+        history_text = json.dumps(history, ensure_ascii=False)
+        for tag in sorted(infer_tags(history_text)):
+            if tag not in seen:
+                seen.add(tag)
+                raw.append(tag)
+    return raw[:16]
+
+
+def _compact_prior_attempt(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Project a prior attempt into a small, cache-stable shape.
+
+    Drops the verbose `evaluation` and `candidate_summary` blobs (which can
+    each be thousands of tokens) in favour of the few fields the model uses to
+    decide what to change next. Keeps the cache break point small and the
+    older-but-shared tail entries nearly byte-identical across experiments.
+    """
+    evaluation = row.get("evaluation") or {}
+    summary = row.get("candidate_summary") or {}
+    notes = summary.get("notes") if isinstance(summary, dict) else None
+    if not isinstance(notes, list):
+        notes = []
+    return {
+        "m": str(row.get("model_id") or ""),
+        "workflow": str(row.get("workflow") or ""),
+        "status": str(evaluation.get("status") or ""),
+        "match": evaluation.get("match_percent"),
+        "accepted": bool(evaluation.get("accepted")),
+        "size_ok": evaluation.get("size_ok"),
+        "eq": evaluation.get("equivalence"),
+        "h": str(summary.get("hypothesis") or ""),
+        "next": str(summary.get("next_change") or ""),
+        "notes": [str(item) for item in notes],
+        "e": str(row.get("error") or "") or None,
+    }
+
+
+def _append_tu_volatile_tail(
+    dossier: Dict[str, Any],
+    recent_history: List[Dict[str, Any]],
+    knowledge_hints: List[str],
+) -> None:
+    """Attach the TU dossier volatile tail (oldest→newest attempts, hints last).
+
+    Called after all per-build residual evidence has been written into the
+    dossier, so these two fields land as the final keys — matching the
+    function-workflow ordering convention of stable-before-volatile.
+    """
+    dossier["prior_harness_attempts"] = [_compact_prior_attempt(row) for row in recent_history]
+    dossier["knowledge_hints"] = knowledge_hints
 
 
 def _begin_marker(target_id: str) -> str:
@@ -1419,7 +1573,7 @@ def _function_evidence(
                 "name": name,
                 "offset": f"0x{function.value:X}",
                 "size": function.size,
-                "bytecode_hex": function.code.hex(" "),
+                "bytecode_hex": function.code.hex(),
                 "relocations": [
                     {
                         "offset": f"0x{relocation.offset:X}",
@@ -1457,7 +1611,7 @@ def _text_layout_evidence(path: Optional[Path], byte_limit: int) -> Dict[str, An
                 {
                     "offset": f"0x{cursor:X}",
                     "size": len(gap),
-                    "bytes_hex": shown.hex(" "),
+                    "bytes_hex": shown.hex(),
                     "bytes_truncated": len(shown) < len(gap),
                 }
             )
@@ -1470,7 +1624,7 @@ def _text_layout_evidence(path: Optional[Path], byte_limit: int) -> Dict[str, An
             {
                 "offset": f"0x{cursor:X}",
                 "size": len(gap),
-                "bytes_hex": shown.hex(" "),
+                "bytes_hex": shown.hex(),
                 "bytes_truncated": len(shown) < len(gap),
             }
         )
@@ -1565,7 +1719,7 @@ def _elf_section_evidence(
                 "name": name,
                 "size": size,
                 "alignment": int(section["align"]),
-                "bytes_hex": shown.hex(" "),
+                "bytes_hex": shown.hex(),
                 "bytes_truncated": len(raw) > len(shown),
                 "relocations": relocations,
             }

@@ -12253,7 +12253,7 @@ u32 func_800AA2D0(u32 a, u32 b, u32 c) {
 }
 
 u32 func_800AA2E8(u32 a, u32 b, u32 c) {
-    return (a << 20) | (b << 10) | c | 0x10000000;
+    return (a << 20) | (b << 10) | c | 0x1000;
 }
 
 u32 func_800AA300(u32 a, u32 b, u32 c) {
@@ -12337,20 +12337,20 @@ void func_800AA5C0() {
 u32 func_800AA600(const char* str) {
     if (str == nullptr) return 0;
 
-    const FormatEntry* entry = (const FormatEntry*)(lbl_eu_805283B0 + 0x10);
+    const u8* base = (const u8*)lbl_eu_805283B0;
+    const u8* p = base + 0x10;
     for (int i = 0; i < 10; i++) {
-        if (str[0] == entry->name[0] && str[1] == entry->name[1]) {
-            return entry->id;
-        }
-        entry++;
-        if (str[0] == entry->name[0] && str[1] == entry->name[1]) {
-            return entry->id;
-        }
-        entry++;
-        if (str[0] == entry->name[0] && str[1] == entry->name[1]) {
-            return entry->id;
-        }
-        entry++;
+        const char* name;
+        name = *(const char**)(p + 4);
+        if (str[0] == name[0] && str[1] == name[1])
+            return *(u32*)(base + (name[1] & 0xF0));
+        name = *(const char**)(p + 0x14);
+        if (str[0] == name[0] && str[1] == name[1])
+            return *(u32*)(base + (name[1] & 0xF0));
+        name = *(const char**)(p + 0x24);
+        if (str[0] == name[0] && str[1] == name[1])
+            return *(u32*)(base + (name[1] & 0xF0));
+        p += 0x30;
     }
     return 0;
 }

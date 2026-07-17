@@ -1740,8 +1740,8 @@
       "size": "0xC",
       "unit": "kyoshin/main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/main.cpp",
       "called_functions": [],
@@ -1749,7 +1749,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/main.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a2b4",
@@ -1763,8 +1765,8 @@
       "size": "0x8",
       "unit": "kyoshin/main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/main.cpp",
       "called_functions": [],
@@ -1772,7 +1774,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/main.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a2bc",
@@ -1786,8 +1790,8 @@
       "size": "0x4",
       "unit": "kyoshin/main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/main.cpp",
       "called_functions": [],
@@ -1795,7 +1799,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/main.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a2c0",
@@ -1809,8 +1815,8 @@
       "size": "0x4",
       "unit": "kyoshin/main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/main.cpp",
       "called_functions": [],
@@ -1818,7 +1824,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/main.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a2c4",
@@ -1832,8 +1840,8 @@
       "size": "0x4",
       "unit": "kyoshin/main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/main.cpp",
       "called_functions": [],
@@ -1841,7 +1849,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/main.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a2c8",
@@ -1855,8 +1865,8 @@
       "size": "0x4",
       "unit": "kyoshin/main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/main.cpp",
       "called_functions": [],
@@ -1864,7 +1874,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/main.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a2cc",
@@ -1983,8 +1995,8 @@
       "size": "0x8",
       "unit": "kyoshin/plugin/pluginDeb",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginDeb.cpp",
       "called_functions": [],
@@ -1992,7 +2004,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginDeb.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-8003a41c",
@@ -2058,8 +2072,8 @@
       "size": "0x14",
       "unit": "kyoshin/plugin/pluginDeb",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginDeb.cpp",
       "called_functions": [],
@@ -2067,7 +2081,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginDeb.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a498",
@@ -60869,7 +60885,7 @@
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -60877,7 +60893,8 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0
     },
     {
       "id": "us-800aabcc",
@@ -60892,7 +60909,7 @@
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -60900,7 +60917,8 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0
     },
     {
       "id": "us-800aabe4",
@@ -60915,7 +60933,7 @@
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -60923,7 +60941,8 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0
     },
     {
       "id": "us-800aac08",
@@ -60991,7 +61010,7 @@
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -60999,7 +61018,8 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0
     },
     {
       "id": "us-800aafe0",
@@ -61044,7 +61064,7 @@
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -61052,7 +61072,8 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0
     },
     {
       "id": "us-800ab4a0",
@@ -85350,7 +85371,7 @@
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [],
@@ -85358,7 +85379,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CBattleManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 97.5,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-800d9c78",
@@ -110031,7 +110054,7 @@
       "unit": "kyoshin/cf/CfBdat",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfBdat.cpp",
       "called_functions": [],
@@ -110039,7 +110062,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfBdat.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 95.417,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801421bc",
@@ -114878,8 +114903,8 @@
       "size": "0x1C",
       "unit": "kyoshin/cf/CArtsParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CArtsParam.cpp",
       "called_functions": [],
@@ -114887,7 +114912,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CArtsParam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801560b0",
@@ -142606,8 +142633,8 @@
       "size": "0x10C",
       "unit": "kyoshin/COccCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/COccCulling.cpp",
       "called_functions": [],
@@ -142615,7 +142642,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/COccCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801a2c6c",
@@ -143140,7 +143169,7 @@
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143148,7 +143177,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.615,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "task-culling-func-801A2C04",
@@ -143205,7 +143236,7 @@
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143213,7 +143244,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.615,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-801a4394",
@@ -143228,7 +143261,7 @@
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143236,7 +143269,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.375,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-801a43b4",
@@ -143251,7 +143286,7 @@
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143259,7 +143294,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.167,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-801a43cc",
@@ -143305,8 +143342,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143314,7 +143351,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801a4560",
@@ -143382,8 +143421,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143391,7 +143430,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801a4648",
@@ -143405,8 +143446,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143414,7 +143455,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801a464c",
@@ -143428,8 +143471,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/CTaskCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskCulling.cpp",
       "called_functions": [],
@@ -143437,7 +143480,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskCulling.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801a4650",
@@ -145829,8 +145874,8 @@
       "size": "0x8",
       "unit": "kyoshin/plugin/pluginGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginGame.cpp",
       "called_functions": [],
@@ -145838,7 +145883,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801ad520",
@@ -145852,8 +145899,8 @@
       "size": "0x14",
       "unit": "kyoshin/plugin/pluginGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginGame.cpp",
       "called_functions": [],
@@ -145861,7 +145908,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-801ad534",
@@ -152043,7 +152092,7 @@
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -152051,7 +152100,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801c3468",
@@ -152093,7 +152144,11 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "status": "FULL_MATCH",
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error",
+      "workflow_status": "ACCEPTED"
     },
     {
       "id": "us-801c3558",
@@ -152107,8 +152162,8 @@
       "size": "0x2C",
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -152116,7 +152171,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801c3584",
@@ -152131,7 +152188,7 @@
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -152139,7 +152196,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.167,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801c359c",
@@ -152153,8 +152212,8 @@
       "size": "0x2C",
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -152162,7 +152221,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "pad-update-cf-pad-data",
@@ -152328,8 +152389,8 @@
       "size": "0xB4",
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -152337,7 +152398,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801c4490",
@@ -152404,7 +152467,7 @@
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -152412,7 +152475,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 97.5,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801c44f8",
@@ -152427,7 +152492,7 @@
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "called_functions": [],
@@ -152435,7 +152500,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfPadTask.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-801c4520",
@@ -185257,7 +185324,7 @@
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -185265,7 +185332,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.167,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80223cf4",
@@ -185408,8 +185477,8 @@
       "size": "0x8",
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -185417,7 +185486,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80223f38",
@@ -185431,8 +185502,8 @@
       "size": "0x20",
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -185440,7 +185511,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80223f58",
@@ -185506,7 +185579,7 @@
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -185514,7 +185587,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 98.889,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-80224098",
@@ -185529,7 +185604,7 @@
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -185537,7 +185612,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 99.737,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802240e4",
@@ -185552,7 +185629,7 @@
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -185560,7 +185637,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 98.75,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-80224104",

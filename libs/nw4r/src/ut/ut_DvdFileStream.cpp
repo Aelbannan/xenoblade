@@ -1,9 +1,10 @@
 #include <nw4r/ut.h>
 
+extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665548;
+nw4r::ut::detail::RuntimeTypeInfo nw4r::ut::DvdFileStream::typeInfo(&lbl_eu_80665548);
+
 namespace nw4r {
 namespace ut {
-
-NW4R_UT_RTTI_DEF_DERIVED(DvdFileStream, FileStream);
 
 void DvdFileStream::DvdAsyncCallback_(s32 result, DVDFileInfo* pInfo) {
     DvdFileStream* p = reinterpret_cast<DvdFileStreamInfo*>(pInfo)->stream;

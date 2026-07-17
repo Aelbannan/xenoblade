@@ -58,9 +58,9 @@ CGame::CGame(const char* pName, CWorkThread* pParent) :
 }
 
 CGame::~CGame() {
-    CWorkSystem::setExitFunc(nullptr);
+    CWorkSystem::setExitFunc(0);
     CLibHbm::func_8045D5C8(0);
-    spInstance = nullptr;
+    spInstance = 0;
 }
 
 CGame* CGame::getInstance() {

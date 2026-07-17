@@ -28,9 +28,9 @@ namespace cf{
 
     CTaskGameCf::~CTaskGameCf(){}
 
-    CTaskGameCf* CTaskGameCf::getInstance(){
-        return spInstance;
-    }
+CTaskGameCf* CTaskGameCf::getInstance() {
+    return spInstance;
+}
 
     void CTaskGameCf::func_800442DC(){
         unk_54 |= 1;
@@ -57,9 +57,9 @@ namespace cf{
         mMoveFunc = &CTaskGameCf::func_800444DC;
     }
 
-    void CTaskGameCf::Init(){
-        spInstance = this;
-    }
+void CTaskGameCf::Init() {
+    spInstance = this;
+}
 
     void CTaskGameCf::Term(){
         if(cf::CTaskCulling::getInstance()){
@@ -216,10 +216,10 @@ namespace cf{
         }
     }
 
-    void CTaskGameCf::func_8004499C(){
-        pTaskGame->getScene()->unk_3E4 = 0;
-        setUnk54(1, true);
-    }
+void CTaskGameCf::func_8004499C() {
+    pTaskGame->getScene()->unk_3E4 = 0;
+    unk_54 |= 0x02;
+}
 
     CTaskGameCf* CTaskGameCf::create(CProcess* pParent, int arg2){
         CTaskGameCf* task = new(CWorkThreadSystem::getWorkMem()) CTaskGameCf(pParent, arg2);

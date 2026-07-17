@@ -69,14 +69,12 @@ CTaskGame* CTaskGame::getInstance(){
     return spInstance;
 }
 
-u32 CTaskGame::func_800404F0(){
-    CTaskGame* taskGame = spInstance;
-
-    if(taskGame == nullptr){
+u32 CTaskGame::func_800404F0() {
+    CTaskGame* instance = spInstance;
+    if (instance == NULL) {
         return 0;
     }
-
-    return (taskGame->unk68 >> 13) & 1;
+    return (instance->unk68 >> 13) & 1;
 }
 
 void CTaskGame::Init(){

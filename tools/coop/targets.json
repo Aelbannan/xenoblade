@@ -355,7 +355,7 @@
       "size": "0x78",
       "unit": "kyoshin/CGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CGame.cpp",
@@ -369,7 +369,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:10:39.168163+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CGame.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      }
     },
     {
       "id": "us-800396c0",
@@ -383,7 +391,7 @@
       "size": "0x8",
       "unit": "kyoshin/CGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CGame.cpp",
@@ -392,7 +400,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:10:42.846352+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CGame.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      }
     },
     {
       "id": "us-800396c8",
@@ -406,7 +422,7 @@
       "size": "0x28",
       "unit": "kyoshin/CGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CGame.cpp",
@@ -417,7 +433,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:10:46.661668+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CGame.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      }
     },
     {
       "id": "us-800396f0",
@@ -2088,8 +2112,8 @@
       "size": "0x14",
       "unit": "kyoshin/plugin/pluginWait",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginWait.cpp",
       "called_functions": [],
@@ -2097,7 +2121,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginWait.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:10:50.617645+00:00",
+        "allowed_paths": [
+          "src/kyoshin/plugin/pluginWait.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a58c",
@@ -6745,8 +6779,8 @@
       "size": "0x8",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -6754,7 +6788,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:10:53.959859+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 97.5,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80040a6c",
@@ -6768,8 +6812,8 @@
       "size": "0x20",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -6777,7 +6821,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:10:58.207959+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 99.375,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80040a8c",
@@ -9572,7 +9626,7 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
@@ -9581,7 +9635,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskGameCf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:01.905995+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CTaskGameCf.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      }
     },
     {
       "id": "us-80044878",
@@ -9692,7 +9754,7 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
@@ -9701,7 +9763,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskGameCf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:05.707318+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CTaskGameCf.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      }
     },
     {
       "id": "us-80044980",
@@ -10035,7 +10105,7 @@
       "size": "0x20",
       "unit": "kyoshin/cf/CTaskGameCf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CTaskGameCf.cpp",
@@ -10044,7 +10114,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CTaskGameCf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:09.199001+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CTaskGameCf.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      }
     },
     {
       "id": "us-80044f5c",
@@ -14735,8 +14813,8 @@
       "size": "0x14",
       "unit": "kyoshin/plugin/pluginMath",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginMath.cpp",
       "called_functions": [],
@@ -14744,7 +14822,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginMath.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:12.880886+00:00",
+        "allowed_paths": [
+          "src/kyoshin/plugin/pluginMath.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8004b700",
@@ -25242,8 +25330,8 @@
       "size": "0x14",
       "unit": "kyoshin/plugin/pluginPad",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginPad.cpp",
       "called_functions": [],
@@ -25251,7 +25339,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginPad.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:16.044215+00:00",
+        "allowed_paths": [
+          "src/kyoshin/plugin/pluginPad.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-80061f70",
@@ -34921,8 +35019,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/CfCamDirectionIntf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCamDirectionIntf.cpp",
       "called_functions": [],
@@ -34930,7 +35028,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCamDirectionIntf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:19.782959+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCamDirectionIntf.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "cam-dir-set-pos",
@@ -35013,8 +35121,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/CfCamLookatIntf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCamLookatIntf.cpp",
       "called_functions": [],
@@ -35022,7 +35130,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCamLookatIntf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:23.672836+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCamLookatIntf.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "cam-lookat-set-pos",
@@ -35080,8 +35198,8 @@
       "size": "0x24",
       "unit": "kyoshin/cf/CfCamLookatIntf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCamLookatIntf.cpp",
       "called_functions": [],
@@ -35089,7 +35207,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCamLookatIntf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:27.251182+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCamLookatIntf.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-8006c02c",
@@ -35103,8 +35231,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/CfCamTargetIntf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCamTargetIntf.cpp",
       "called_functions": [],
@@ -35112,7 +35240,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCamTargetIntf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:30.751383+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCamTargetIntf.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "cam-tgt-set-pos",
@@ -41335,8 +41473,8 @@
       "size": "0x54",
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "called_functions": [],
@@ -41344,7 +41482,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfGameManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:34.374526+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfGameManager.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-8007cea8",
@@ -49800,8 +49948,8 @@
       "size": "0xC",
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "called_functions": [],
@@ -49809,7 +49957,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfGameManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:38.710575+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfGameManager.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80087c1c",
@@ -60614,8 +60772,8 @@
       "size": "0x108",
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -60623,7 +60781,16 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:43.575504+00:00",
+        "allowed_paths": [
+          "src/kyoshin/code_800AA008.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 0.0
     },
     {
       "id": "us-800aab88",
@@ -60637,8 +60804,8 @@
       "size": "0x14",
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -60646,7 +60813,16 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:46.734748+00:00",
+        "allowed_paths": [
+          "src/kyoshin/code_800AA008.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 0.0
     },
     {
       "id": "us-800aab9c",
@@ -60660,8 +60836,8 @@
       "size": "0x18",
       "unit": "kyoshin/code_800AA008",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_800AA008.cpp",
       "called_functions": [],
@@ -60669,7 +60845,16 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_800AA008.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:11:50.099793+00:00",
+        "allowed_paths": [
+          "src/kyoshin/code_800AA008.cpp"
+        ],
+        "note": "Harness auto-promotion"
+      },
+      "instruction_match": 0.0
     },
     {
       "id": "us-800aabb4",

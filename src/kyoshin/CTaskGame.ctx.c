@@ -1,7 +1,7 @@
-/* "src/kyoshin/cf/CfGameManager.cpp" line 0 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/CTaskGame.cpp" line 0 "kyoshin/CTaskGame.hpp" */
 #pragma once
 
-/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* "src/kyoshin/CTaskGame.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -710,89 +710,7 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 
-class CPad;
-class CScnNw4r;
-class CView;
-
-/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
-or due to being in separate files, but compiled together in one file (unity compilation). For now,
-to make things simpler, everything exists in a single class. */
-namespace cf{
-    class CfPadData;
-    class CfObjectMove;
-
-    //unofficial name
-    class CfGameManager{
-    public:
-        CfGameManager();
-
-        static CfGameManager* getInstance();
-        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
-
-        static void func_80086B5C(int arg1, int arg2, int arg3);
-        static void enablePadFlags(u32 enableFlags, bool enable);
-        static bool func_8007E1B4();
-        static void func_8007E218();
-        static void func_8007E514(int, int, char const*, int, int);
-        static void func_8007F930(bool arg1);
-        static UNKWORD func_800822F4();
-        static UNKWORD func_800829B8();
-        static u32 getCurrentPadChannel();
-        static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
-        static u32 getEnabledInputFlags();
-        static bool func_80086F9C(s16);
-        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
-        static CPad* getPad(int r3);
-        static void setPad(int r3, CPad* pPad, u32 r5);
-        static CfPadData* getCfPadData();
-        static CPad* getCurrentPad();
-
-        static bool checkUnkFlag(int bit){
-            return sUnkFlags & (1 << bit);
-        }
-
-        static void setUnkFlag(int bit, bool state){
-            if(state == true) sUnkFlags |= (1 << bit);
-            else sUnkFlags &= ~(1 << bit);
-        }
-
-        u32 unk0;
-        u32 unk4;
-        u32 unk8;
-        u8 unkC[0x28 - 0xC];
-        u8 unk28;
-        u8 unk29[0x68 - 0x29];
-        u32 unk68;
-        u8 unk6C;
-        u8 unk6D[0x7C - 0x6D];
-        u32 unk7C;
-        u8 unk80[0x8C - 0x80];
-        u32 unk8C;
-        u32 unk90;
-        //between CObjectParam - CfObjectMove
-        //likely player character object array, seems to always store pointers
-        //to CfObjectPc objects except pointing at the 4th vtable
-        CfObjectMove* unk94[3];
-        u32 unkA0;
-        u32 unkA4;
-        u32 unkA8;
-        u32 unkAC;
-        u32 unkB0;
-        u32 unkB4;
-
-        static u32 sUnkFlags;
-        static CScnNw4r* spScene;
-    }; //size = 0xB8
-
-} //namespace cf
-/* end "kyoshin/cf/CfGameManager.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 1 "kyoshin/cf/CfPadData.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/CfPadData.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/CfPadData.hpp" line 3 "monolib/core.hpp" */
+/* "src/kyoshin/CTaskGame.hpp" line 4 "monolib/core.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
@@ -233636,119 +233554,377 @@ public:
 };
 /* end "monolib/core/CViewRoot.hpp" */
 /* end "monolib/core.hpp" */
+/* "src/kyoshin/CTaskGame.hpp" line 5 "monolib/scn.hpp" */
+#pragma once
 
-namespace cf{
-    //Separate deadzone value specifically for CfPadData
-    static const float CFPAD_STICK_DEADZONE = 0.5f;
+/* "libs/monolib/include/monolib/scn.hpp" line 2 "monolib/scn/CLight.hpp" */
+#pragma once
 
-    //TODO: unsure if it inherits CPad or not
-    //max size: 0x128
-    struct CfPadData {
-        CPad mPad; //0x0
-        //Is having a separate set of flags *really* necessary, Monolithsoft?
-        u32 mHeldButtonFlags; //0xF8
-        u32 mPrevHeldButtonFlags; //0xFC
-        u32 mPressedButtonFlags; //0x100
-        u32 mTurboPressButtonFlags; //0x104
-        u8 mButtonHoldTimersTurbo[MAX_PAD_INPUT_FLAGS]; //0x108
-    };
-}
-/* end "kyoshin/cf/CfPadData.hpp" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
+/* end "monolib/math.hpp" */
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 3 "monolib/core/CPadManager.hpp" */
-/* end "monolib/core/CPadManager.hpp" */
+class CLight{
+public:
+    CLight();
+    virtual ~CLight(){}
 
-extern "C" {
-u32 lbl_eu_80661BC8;
-cf::CfPadData lbl_eu_80571500;
-s8 lbl_eu_80663E70;
-cf::CfGameManager lbl_eu_80571758;
-u8 lbl_eu_80571748[0x10];
-CPad* lbl_eu_80663E0C;
-CPad lbl_eu_80570D40[8];
-u32 lbl_eu_80663E14;
-u32 lbl_eu_80663E60;
-u32 lbl_eu_80663E64;
-u32 lbl_eu_80663E24;
-u32 lbl_eu_80663E28;
+    ml::CVec3 unk4;
+    ml::CVec3 unk10;
+    ml::CVec3 unk1C;
+    float unk28;
+    u32 unk2C;
+    u32 unk30;
+    u32 unk34;
+    float unk38;
+    float unk3C;
+};
+/* end "monolib/scn/CLight.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
+#pragma once
 
-// symbols.txt: Fv, but callers leave the index in r4 (see func_80082D54).
-cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
 
-void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
-void __dt__Q22cf13CfGameManagerFv();
-void* __register_global_object(void* object, void* destructor, void* registration);
-}
+//Unofficial name
+class ICulling {
+public:
+    virtual ~ICulling(){}
+    virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
+    virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
+    virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
+};
+/* end "monolib/scn/ICulling.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 4 "monolib/scn/CScn.hpp" */
+#pragma once
 
-namespace cf {
+/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
 
-CfGameManager::CfGameManager() {
-    unk28 = 0;
-    unk68 = 0;
-    unk6C = 0;
-    unk7C = 0;
-    unk8C = 0;
-    unkA0 = 0;
-    unkA4 = 0;
-    unkA8 = 0;
-    unkAC = 0;
-    unkB0 = 0;
-    unkB4 = 0;
-    lbl_eu_80663E14 = 0;
-    lbl_eu_80663E60 = 0;
-    lbl_eu_80663E64 = 0;
-    lbl_eu_80663E24 = 0;
-    lbl_eu_80663E28 = 0;
-    unk0 = 0;
-    unk4 = 0;
-    unk8 = 0;
-}
+struct ScnRenderCB {
+    IScnRender* cb; //0x0
+    u32 prio; //0x4
+    u8 flag; //0x8
+}; // size = 0xC
 
-#pragma dont_inline on
-CfGameManager* CfGameManager::getInstance() {
-    if (!lbl_eu_80663E70) {
-        // Call mangled ctor directly: placement new inserts a null check retail lacks.
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv, lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
+struct UnkScn68 {
+    u8 unk00[0x34];
+    s32 unk34; //0x34
+};
+
+// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
+struct UnkScn8C {
+    virtual ~UnkScn8C() {}
+    virtual void vf0C() = 0;
+    virtual void vf10() = 0;
+    virtual void vf14() = 0;
+    virtual void vf18() = 0;
+    virtual void vf1C() = 0;
+};
+
+// IScnRender draw callback shape: vt+0xC(cb, scn).
+struct IScnRenderDraw {
+    virtual ~IScnRenderDraw() {}
+    virtual void onRender(CScn* scn) = 0;
+};
+
+class CScn : public CTTask<CScn>, public IWorkEvent{
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+    virtual void Draw();
+
+    //0x000: vtable 1 (CTTask)
+    //0x000-054: CTTask
+    //0x054: vtable 2 (IWorkEvent)
+    u8 unk58[0x68 - 0x058]; //0x058
+    UnkScn68* mCamWork; //0x068
+    u8 unk6C[0x8C - 0x06C]; //0x06C
+    UnkScn8C* mUnk8C; //0x08C
+    u8 unk90[0x0B4 - 0x090]; //0x090
+    ICulling* unkB4; //0x0B4
+    u32 unkB8; //0x0B8
+    ScnRenderCB mRenderCBs[64]; //0x0BC
+    u32 mRenderCBCount; //0x3BC
+    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
+    u8 unk_3E4; //0x3E4
+    u8 unk_3E5; //0x3E5
+    u8 unk_3E6; //0x3E6
+    u8 unk_3E7; //0x3E7
+    u8 unk_3E8; //0x3E8
+    u8 unk_3E9; //0x3E9
+    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
+}; // size = 0x3EC
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 5 "monolib/scn/CScnNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 2 "monolib/scn/CScn.hpp" */
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 3 "functions.hpp" */
+#pragma once
+
+/* "include/functions.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+//Vec4 constructor? Defined before CTaskGame::Term
+struct func_800407C8_tmp {
+    f32 unk00[4];
+};
+func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
+
+void func_8004302C(int, int);
+bool func_8009CF8C(int);
+void func_8009D018(int, int);
+int* func_8009ECB0();
+void func_8009E574(int*, int, int, int);
+/* end "functions.hpp" */
+
+class CScnNw4r : public CScn{
+public:
+    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
+    void func_8007DAE0(int arg1, f32* arg2);
+
+private:
+    //0x000-0x3EC CScn
+}; // size = 0x3EC
+/* end "monolib/scn/CScnNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 6 "monolib/scn/CScnRootNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnRootNw4r.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* end "monolib/scn/CScnRootNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 7 "monolib/scn/CScnTexWorkMan.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+mtl::ALLOC_HANDLE func_80490098();
+void func_804900A0(u32 r3);
+/* end "monolib/scn/CScnTexWorkMan.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 8 "monolib/scn/IScnRender.hpp" */
+#pragma once
+
+class IScnRender {
+public:
+    virtual ~IScnRender(){}
+    virtual void cbRenderBefore();
+};
+/* end "monolib/scn/IScnRender.hpp" */
+/* end "monolib/scn.hpp" */
+/* "src/kyoshin/CTaskGame.hpp" line 6 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+/* "src/kyoshin/CTaskGame.hpp" line 7 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+class ITitleMenu{
+public:
+    virtual ~ITitleMenu(){}
+    virtual void ITitleMenu__UnkVirtualFunc1() = 0;
+};
+
+class IErrMesWinSel{
+public:
+    virtual ~IErrMesWinSel(){}
+    virtual void IErrMesWinSel__UnkVirtualFunc1() = 0;
+};
+
+struct UnkClass_8004041C{
+    void func_8004041C(u8 r4, float f1, int r5, u32 r6, u8 r7, u32 r8, u32 r9);
+
+    u8 unk0;
+    float unk4;
+    int unk8;
+    u32 unkC;
+    u8 unk10;
+    u32 unk14;
+    u32 unk18;
+};
+
+class CTaskGame : public CTTask<CTaskGame>,
+                  public IWorkEvent,
+                  public IScnRender,
+                  public IGameException,
+                  public ITitleMenu,
+                  public IErrMesWinSel {
+public:
+    CTaskGame(CView* pView, CWorkThread* pThread, int r6);
+    virtual ~CTaskGame();
+
+    static CTaskGame* getInstance();
+    static u32 func_800404F0();
+    virtual void Init();
+
+    void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
+    static bool func_800426F0();
+    void func_80042710();
+    void func_80042720();
+    static bool func_8004368C();
+    static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
+
+    virtual void Term();
+    virtual void ITitleMenu__UnkVirtualFunc1();
+    virtual void IErrMesWinSel__UnkVirtualFunc1();
+    virtual bool gameExceptionCB(u32 r4);
+
+    CScnNw4r* getScene() const {
+        return unk74;
     }
-    return &lbl_eu_80571758;
-}
-#pragma dont_inline off
 
-u32 CfGameManager::getCurrentPadChannel() {
-    return lbl_eu_80661BC8;
+    //0x0: vtable (CTTask)
+    //0x4-3C: CProcess
+    //0x3C-54: CTTask
+    //0x54: vtable 2 (IWorkEvent)
+    //0x58: vtable 3 (IScnRender)
+    //0x5C: vtable 4 (IGameException)
+    //0x60: vtable 5 (ITitleMenu)
+    //0x64: vtable 6 (IErrMesWinSel)
+    u32 unk68;
+    CWorkThread* unk6C;
+    CView* unk70;
+    CScnNw4r* unk74;
+    u32 unk78;
+    u32 unk7C;
+    u16 unk80;
+    u16 unk82;
+    u16 unk84;
+    u16 unk86;
+    u16 unk88;
+    u16 unk8A;
+    u8 unk8C[2]; //padding?
+    u16 unk8E;
+    u8 unk90;
+    u8 unk91[0xA0 - 0x91];
+    u32 unkA0;
+    ml::FixStr<32> unkA4;
+    u8 unkC8;
+    u8 unkC9[0xCC - 0xC9];
+    u32 unkCC;
+    u32 unkD0;
+    u32 unkD4;
+    int unkD8;
+    u32 unkDC;
+    float unkE0;
+    u32 unkE4;
+    int unkE8;
+    u32 unkEC;
+    u32 unkF0;
+    u32 unkF4;
+    int unkF8;
+    u32 unkFC;
+    u32 unk100;
+    u8 unk104;
+    u8 unk105[0x124 - 0x105];
+    u32 unk124;
+    u32 unk128;
+    u8 unk12C[0x130 - 0x12C];
+    u8 unk130;
+    u8 unk131[0x170 - 0x131];
+    u32 unk170;
+    u8 unk174[0x188 - 0x174];
+    u8 unk188;
+    u8 unk189[0x18C - 0x189]; //padding?
+    UnkClass_8004041C unk18C;
+
+protected:
+    static CTaskGame* spInstance;
+};
+/* end "kyoshin/CTaskGame.hpp" */
+
+void* CTaskGame_cLoadInstance;
+u32 lbl_80666624;
+u32 lbl_80666630;
+u32 lbl_80666634;
+
+void UnkClass_8004041C::func_8004041C(u8 r4, float f1, int r5, u32 r6, u8 r7, u32 r8, u32 r9) {
+    this->unk0  = r4;
+    this->unk4  = f1;
+    this->unk8  = r5;
+    this->unkC  = r6;
+    this->unk10 = r7;
+    this->unk14 = r8;
+    this->unk18 = r9;
 }
 
-CfPadData* CfGameManager::getCfPadData() {
-    return &lbl_eu_80571500;
+CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int r6) :
+    unk68(0),
+    unk6C(pThread),
+    unk70(pView),
+    unk74(0),
+    unk78(0),
+    unk7C(0),
+    unk80(1),
+    unk82(1),
+    unk84(0),
+    unk86(0),
+    unk88(0),
+    unk8A(0),
+    unk8E(0),
+    unk90(0),
+    unkA0(0),
+    unkA4(),
+    unkC8(r6),
+    unkCC(0),
+    unkD0(0),
+    unkD4(0),
+    unkD8(-1),
+    unkDC(2),
+    unkE0(1),
+    unkE4(0),
+    unkE8(-1),
+    unkEC(0),
+    unkF0(0),
+    unkF4(0),
+    unkF8(-1),
+    unkFC(0),
+    unk100(0),
+    unk104(0),
+    unk124(0),
+    unk128(0),
+    unk130(0),
+    unk170(0),
+    unk188(0) {
+    unk18C.func_8004041C(0, -1, 2, 0, 0, 0, 1);
+    spInstance = this;
+    CTaskGame_cLoadInstance = nullptr;
+    lbl_80666624 = 0;
+    lbl_80666630 = 0;
+    lbl_80666634 = 0;
 }
 
-CPad* CfGameManager::getCurrentPad() {
-    u32 channel = lbl_eu_80661BC8;
-    if (channel == 0xFFFFFFFF) {
-        CPad* pad = lbl_eu_80663E0C;
-        if (pad != 0) {
-            return pad;
-        }
-        return lbl_eu_80570D40;
+CTaskGame::~CTaskGame(){
+    spInstance = nullptr;
+}
+
+CTaskGame* CTaskGame::getInstance(){
+    return spInstance;
+}
+
+u32 CTaskGame::func_800404F0() {
+    CTaskGame* instance = spInstance;
+    if (instance == NULL) {
+        return 0;
     }
-    CPad* pad = lbl_eu_80663E0C;
-    if (pad != 0) {
-        return pad;
-    }
-    return &lbl_eu_80570D40[channel & 7];
+    return (instance->unk68 >> 13) & 1;
 }
 
-CfObjectMove* CfGameManager::func_80082D54(int playerIndex) {
-    return *func_8007C6B4__Q22cf13CfGameManagerFv(getInstance()->unk94, playerIndex);
+void CTaskGame::Init(){
+
 }
 
-} // namespace cf
-
-#pragma dont_inline on
-extern "C" cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots,
-                                                                    int index) {
-    return &slots[index];
+CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int r5){
+    mtl::ALLOC_HANDLE handle = CWorkThreadSystem::getWorkMem();
+    CTaskGame* taskGame = new (handle) CTaskGame(pView, pThread, r5);
+    //Register CTaskGame under the root game process
+    CProcess* gameProcess = CTaskManager::GetRootProcGame();
+    taskGame->Regist(gameProcess, false);
+    return taskGame;
 }
-#pragma dont_inline off

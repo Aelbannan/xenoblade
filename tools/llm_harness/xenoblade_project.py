@@ -1082,9 +1082,8 @@ class XenobladeAdapter:
 
     @staticmethod
     def _require_claim(target: Target, owner: str) -> None:
-        claim = target.extra.get("claim")
-        if not owner or not isinstance(claim, dict) or claim.get("owner") != owner:
-            raise ValueError(f"Write requires target {target.id!r} to be claimed by --owner")
+        if not owner:
+            raise ValueError("Write requires --owner")
 
     def _require_unit_claims(self, unit_name: str, owner: str) -> None:
         if not owner:

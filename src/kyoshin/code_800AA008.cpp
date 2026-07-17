@@ -80,27 +80,27 @@ int func_800AA1B4(const char* str, int digitCount, int* out) {
 
     switch (digitCount) {
     case 1:
-        *out = (str[0]) - '0';
+        *out = str[0] - '0';
         break;
     case 2: {
         int val = (str[0] - '0') * 10;
-        val += str[1];
-        *out = val - '0';
+        val += str[1] - '0';
+        *out = val;
         break;
     }
     case 3: {
         int val = (str[0] - '0') * 100;
         val += (str[1] - '0') * 10;
-        val += str[2];
-        *out = val - '0';
+        val += str[2] - '0';
+        *out = val;
         break;
     }
     case 4: {
         int val = (str[0] - '0') * 1000;
         val += (str[1] - '0') * 100;
         val += (str[2] - '0') * 10;
-        val += str[3];
-        *out = val - '0';
+        val += str[3] - '0';
+        *out = val;
         break;
     }
     }
@@ -112,7 +112,7 @@ u32 func_800AA2BC(u32 a, u32 b) {
 }
 
 u32 func_800AA2D0(u32 a, u32 b, u32 c) {
-    return (a << 20) | (b << 10) | c | 0xE0000000;
+    return ((a & 0xFFF) << 20) | ((c & 0x3FF) << 10) | 0xE0000000;
 }
 
 u32 func_800AA2E8(u32 a, u32 b, u32 c) {

@@ -1,7 +1,10 @@
-/* "src/kyoshin/cf/CfGameManager.cpp" line 0 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/plugin/pluginPad.cpp" line 0 "kyoshin/plugin/pluginPad.hpp" */
 #pragma once
 
-/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* "src/kyoshin/plugin/pluginPad.hpp" line 2 "monolib/vm/yvm2.h" */
+#pragma once
+
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -709,90 +712,458 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-
-class CPad;
-class CScnNw4r;
-class CView;
-
-/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
-or due to being in separate files, but compiled together in one file (unity compilation). For now,
-to make things simpler, everything exists in a single class. */
-namespace cf{
-    class CfPadData;
-    class CfObjectMove;
-
-    //unofficial name
-    class CfGameManager{
-    public:
-        CfGameManager();
-
-        static CfGameManager* getInstance();
-        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
-
-        static void func_80086B5C(int arg1, int arg2, int arg3);
-        static void enablePadFlags(u32 enableFlags, bool enable);
-        static bool func_8007E1B4();
-        static void func_8007E218();
-        static void func_8007E514(int, int, char const*, int, int);
-        static void func_8007F930(bool arg1);
-        static UNKWORD func_800822F4();
-        static UNKWORD func_800829B8();
-        static u32 getCurrentPadChannel();
-        static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
-        static u32 getEnabledInputFlags();
-        static bool func_80086F9C(s16);
-        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
-        static CPad* getPad(int r3);
-        static void setPad(int r3, CPad* pPad, u32 r5);
-        static CfPadData* getCfPadData();
-        static CPad* getCurrentPad();
-
-        static bool checkUnkFlag(int bit){
-            return sUnkFlags & (1 << bit);
-        }
-
-        static void setUnkFlag(int bit, bool state){
-            if(state == true) sUnkFlags |= (1 << bit);
-            else sUnkFlags &= ~(1 << bit);
-        }
-
-        u32 unk0;
-        u32 unk4;
-        u32 unk8;
-        u8 unkC[0x28 - 0xC];
-        u8 unk28;
-        u8 unk29[0x68 - 0x29];
-        u32 unk68;
-        u8 unk6C;
-        u8 unk6D[0x7C - 0x6D];
-        u32 unk7C;
-        u8 unk80[0x8C - 0x80];
-        u32 unk8C;
-        u32 unk90;
-        //between CObjectParam - CfObjectMove
-        //likely player character object array, seems to always store pointers
-        //to CfObjectPc objects except pointing at the 4th vtable
-        CfObjectMove* unk94[3];
-        u32 unkA0;
-        u32 unkA4;
-        u32 unkA8;
-        u32 unkAC;
-        u32 unkB0;
-        u32 unkB4;
-
-        static u32 sUnkFlags;
-        static CScnNw4r* spScene;
-    }; //size = 0xB8
-
-} //namespace cf
-/* end "kyoshin/cf/CfGameManager.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 1 "kyoshin/cf/CfPadData.hpp" */
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
 #pragma once
 
-/* "src/kyoshin/cf/CfPadData.hpp" line 2 "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
 /* end "types.h" */
-/* "src/kyoshin/cf/CfPadData.hpp" line 3 "monolib/core.hpp" */
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
+#pragma once
+
+//Types/defines for SB script files.
+
+/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Minimum supported SB version
+#define SB_MIN_VERSION 2
+
+enum SBFlags{
+    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
+    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
+};
+
+typedef struct SBSectionHeader{
+    int entriesOffset;  //0x0
+    int entries; //0x4
+    int offsetSize;  //0x8
+} SBSectionHeader;
+
+typedef struct SBHeader{
+    char magic[4];                      //0x0
+    u8 version;                         //0x4
+    u8 unk5; //unused?
+    u8 flags;                           //0x6
+    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
+    (for the loaded flag) gets used, however. */
+    u8 vmFlags;                         //0x7
+    SBSectionHeader* codeOfs;            //0x8
+    SBSectionHeader* idPoolOfs;          //0xC
+    SBSectionHeader* intPoolOfs;         //0x10
+    SBSectionHeader* fixedPoolOfs;       //0x14
+    SBSectionHeader* stringPoolOfs;      //0x18
+    SBSectionHeader* functionPoolOfs;    //0x1C
+    SBSectionHeader* pluginImportsOfs;   //0x20
+    SBSectionHeader* ocImportsOfs;       //0x24
+    SBSectionHeader* functionImportsOfs; //0x28
+    SBSectionHeader* staticVarsOfs;      //0x2C
+    SBSectionHeader* localPoolOfs;       //0x30
+    SBSectionHeader* sysAtrPoolOfs;      //0x34
+    SBSectionHeader* usrAtrPoolOfs;      //0x38
+    SBSectionHeader* debugSymbolsOfs;    //0x3C
+} SBHeader;
+
+//Section specific structs
+
+//Function pool
+
+typedef struct FunctionPoolEntry{
+    u16 unk0;
+    s16 unk2;
+    u16 unk4;
+    u8 unk8[0xC - 0x8];
+    u32 unkC;
+    u8 unk10[0x14 - 0x10];
+} FunctionPoolEntry;
+
+//Plugin imports
+
+typedef struct PluginImportEntry{
+    u16 unk0;
+    u16 unk2;
+} PluginImportEntry;
+
+//OC imports
+
+typedef struct OCImportEntry{
+    u16 unk0;
+} OCImportEntry;
+
+//Function imports
+
+typedef struct FunctionImportEntry{
+    u16 unk0;
+    u16 unk2;
+} FunctionImportEntry;
+
+//Static vars
+
+typedef struct StaticVarsEntry{
+    u32 unk0;
+    u32 unk4;
+} StaticVarsEntry;
+
+//Local pool
+
+typedef struct LocalPoolEntry{
+    u32 unk0;
+    u32 unk4;
+} LocalPoolEntry;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/sb_types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Misc constants
+
+#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
+#define MAX_PLUGINS 48
+#define MAX_OCS 48
+#define MAX_THREADS 16
+#define MAX_BREAKPOINTS 4
+#define MAX_STACK_ENTRIES 128
+
+#define VMC_MAX 96 //Max number of opcodes
+
+typedef struct VMArg{
+    u8 type; //0x0
+    u16 unk2;
+    union {
+        void* pointerVal;
+        u32 uintVal;
+        int intVal;   
+    } value; //0x4
+} VMArg;
+
+typedef struct VMReg{
+    int pc; //0x0
+    int sp; //0x4
+    int unk8; //0x8
+    int exception; //0xC
+    int unk10; //0x10
+} VMReg;
+
+typedef struct _sVMThread{
+    VMReg reg; //0x0
+    VMArg unk14[2];
+    s16 unk24;
+    u8 unk26[2];
+    u32 unk28;
+    s16 unk2C;
+    u8 unk2E[2];
+    SBHeader* scriptData; //0x30
+    u8* codeData; //0x34
+    StaticVarsEntry* staticVarsEntries; //0x38
+    VMArg* stack; //0x3C
+    u32 unk40;
+    u32 id; //0x44
+    int unk48;
+    BOOL waitMode; //0x4C
+    u32 wkIdx; //0x50
+    u32 unk54;
+    u8 unk58[0x60 - 0x58];
+} VMThread;
+
+//Forward declaration
+struct OCData;
+
+typedef int (*PluginFunc)(VMThread* pThread);
+typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
+typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
+typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
+
+typedef struct PluginFuncData{
+    const char* name; //0x0
+    PluginFunc func; //0x4
+} PluginFuncData;
+
+typedef struct OCProperty{
+    const char* name; //0x0
+    OCGetSetFunc getFunc; //0x4
+    OCGetSetFunc setFunc; //0x8
+    int nameLength; //0xC
+} OCProperty;
+
+typedef struct OCSelector{
+    const char* name; //0x0
+    OCSelectorFunc func; //0x4
+    int nameLength; //0x8
+} OCSelector;
+
+typedef struct OCData{
+    const char* name; //0x0
+    OCCtorFunc ctor; //0x4
+    OCProperty* properties; //0x8
+    OCSelector* selectors; //0xC
+} OCData;
+
+typedef struct VMPackage{
+    SBHeader* scriptDataPtr; //0x0
+    u32 unk4;
+} VMPackage;
+
+typedef struct VMPlugin{
+    char* unk0;
+    PluginFuncData* unk4;
+} VMPlugin;
+
+typedef struct VMOC{
+    OCData* unk0;
+} VMOC;
+
+typedef struct VMBreakpoint{
+    u8 unk0[0xC];
+} VMBreakpoint;
+
+typedef struct VMState{
+    VMPackage packages[MAX_PACKAGES]; //0x0
+    VMThread* activeThread; //0x40
+    u32 nextThreadId; //0x44
+    VMThread* unk48[MAX_THREADS]; //0x48
+    VMThread threads[MAX_THREADS]; //0x88
+    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
+    VMPlugin plugins[MAX_PLUGINS]; //0x4688
+    VMOC ocs[MAX_OCS]; //0x4808
+    OCData* builtinOC; //0x48C8
+    //Unused debug data (based on info from XCX)
+    BOOL debMode; //0x48CC
+    u8 unk48D0[0xC];
+    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
+} VMState;
+
+//Enums
+
+typedef enum VMCResult{
+    VMC_RESULT_0,
+    VMC_RESULT_1,
+    VMC_RESULT_2,
+    VMC_RESULT_3
+} VMCResult;
+
+typedef enum VMCOpcodeType{
+    VMC_OP_NOP,
+    VMC_OP_CONST_0,
+    VMC_OP_CONST_1,
+    VMC_OP_CONST_2,
+    VMC_OP_CONST_3,
+    VMC_OP_CONST_4,
+    VMC_OP_CONST_I,
+    VMC_OP_CONST_I_W,
+    VMC_OP_POOL_INT,
+    VMC_OP_POOL_INT_W,
+    VMC_OP_POOL_FIXED,
+    VMC_OP_POOL_FIXED_W,
+    VMC_OP_POOL_STR,
+    VMC_OP_POOL_STR_W,
+    VMC_OP_LD,
+    VMC_OP_ST,
+    VMC_OP_LD_ARG,
+    VMC_OP_ST_ARG,
+    VMC_OP_ST_ARG_OMIT,
+    VMC_OP_LD_0,
+    VMC_OP_LD_1,
+    VMC_OP_LD_2,
+    VMC_OP_LD_3,
+    VMC_OP_ST_0,
+    VMC_OP_ST_1,
+    VMC_OP_ST_2,
+    VMC_OP_ST_3,
+    VMC_OP_LD_ARG_0,
+    VMC_OP_LD_ARG_1,
+    VMC_OP_LD_ARG_2,
+    VMC_OP_LD_ARG_3,
+    VMC_OP_ST_ARG_0,
+    VMC_OP_ST_ARG_1,
+    VMC_OP_ST_ARG_2,
+    VMC_OP_ST_ARG_3,
+    VMC_OP_LD_STATIC,
+    VMC_OP_LD_STATIC_W,
+    VMC_OP_ST_STATIC,
+    VMC_OP_ST_STATIC_W,
+    VMC_OP_LD_AR,
+    VMC_OP_ST_AR,
+    VMC_OP_LD_NIL,
+    VMC_OP_LD_TRUE,
+    VMC_OP_LD_FALSE,
+    VMC_OP_LD_FUNC,
+    VMC_OP_LD_FUNC_W,
+    VMC_OP_LD_PLUGIN,
+    VMC_OP_LD_PLUGIN_W,
+    VMC_OP_LD_FUNC_FAR,
+    VMC_OP_LD_FUNC_FAR_W,
+    VMC_OP_MINUS,
+    VMC_OP_NOT,
+    VMC_OP_L_NOT,
+    VMC_OP_ADD,
+    VMC_OP_SUB,
+    VMC_OP_MUL,
+    VMC_OP_DIV,
+    VMC_OP_MOD,
+    VMC_OP_OR,
+    VMC_OP_AND,
+    VMC_OP_R_SHIFT,
+    VMC_OP_L_SHIFT,
+    VMC_OP_EQ,
+    VMC_OP_NE,
+    VMC_OP_GT,
+    VMC_OP_LT,
+    VMC_OP_GE,
+    VMC_OP_LE,
+    VMC_OP_L_OR,
+    VMC_OP_L_AND,
+    VMC_OP_JMP,
+    VMC_OP_JPF,
+    VMC_OP_CALL,
+    VMC_OP_CALL_W,
+    VMC_OP_CALL_IND,
+    VMC_OP_RET,
+    VMC_OP_NEXT,
+    VMC_OP_PLUGIN,
+    VMC_OP_PLUGIN_W,
+    VMC_OP_CALL_FAR,
+    VMC_OP_CALL_FAR_W,
+    VMC_OP_GET_OC,
+    VMC_OP_GET_OC_W,
+    VMC_OP_GETTER,
+    VMC_OP_GETTER_W,
+    VMC_OP_SETTER,
+    VMC_OP_SETTER_W,
+    VMC_OP_SEND,
+    VMC_OP_SEND_W,
+    VMC_OP_TYPEOF,
+    VMC_OP_SIZEOF,
+    VMC_OP_SWITCH,
+    VMC_OP_INC,
+    VMC_OP_DEC,
+    VMC_OP_EXIT,
+    VMC_OP_BP //Breakpoint
+} VMCOpcodeType;
+
+typedef enum _VMTypes {
+    VM_TYPE_NIL,
+    VM_TYPE_TRUE,
+    VM_TYPE_FALSE,
+    VM_TYPE_INT,
+    VM_TYPE_FIXED,
+    VM_TYPE_STRING,
+    VM_TYPE_ARRAY,
+    VM_TYPE_FUNCTION,
+    VM_TYPE_PLUGIN,
+    VM_TYPE_OC,
+    VM_TYPE_SYS,
+
+    VM_MAX_TYPE = 11
+} VMTypes;
+
+typedef enum VMException {
+    VM_EXCEPTION_NONE,
+    VM_EXCEPTION_PLUGIN,
+    VM_EXCEPTION_OC,
+    VM_EXCEPTION_DIV_BY_ZERO,
+    VM_EXCEPTION_INVALID_ARRAY,
+    VM_EXCEPTION_INDEX_OOB,
+    VM_EXCEPTION_MATH_INVALID_ARG,
+    VM_EXCEPTION_CALC_INVALID_ARG,
+    VM_EXCEPTION_8,
+    VM_EXCEPTION_JPF_INVALID_ARG,
+    VM_EXCEPTION_CALLIND_INVALID_ARG,
+    VM_EXCEPTION_INVALID_OC,
+    VM_EXCEPTION_SEND_ERROR,
+    VM_EXCEPTION_INVALID_PROPERTY,
+    VM_EXCEPTION_INVALID_GETSET_FUNC
+} VMException;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm_types.h" */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void vmInit();
+BOOL vmLink(u8* pData);
+BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
+void vmStart(u8* pData);
+
+VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
+void vmThreadStart(VMThread* pThread, u32 r4);
+BOOL vmThreadEnd(u32 r3);
+BOOL vmThreadIsAlive(u32 r3);
+BOOL vmThreadSleep(u32 r3);
+void vmThreadSleepAll(u8* pScriptData);
+
+VMArg* vmArgPtrGet(VMThread* pThread, int r4);
+BOOL vmArgOmitChk(VMThread* pThread, int r4);
+BOOL vmArgBoolGet(u32 r3, VMArg* r4);
+int vmArgIntGet(u32 r3, VMArg* r4);
+int vmArgFixedGet(u32 r3, VMArg* r4);
+const char* vmArgStringGet(u32 r3, VMArg* r4);
+u32 vmArgFunctionGet(u32 r3, VMArg* r4);
+void* vmArgArrayGet(u32 r3, VMArg* r4);
+void* vmArgOCGet(u32 r3, VMArg* r4);
+u32 vmDataGet(VMThread* pThread, int startIndex, int length);
+
+void vmRetValSet(VMThread* pThread, VMArg* pArg);
+void vmWaitModeSet(VMThread* pThread);
+u32 vmWkIdxGet(VMThread* pThread);
+void vmWkIdxSet(VMThread* pThread, u32 r4);
+u32* vmWkGet(VMThread* pThread, u32 r4);
+
+void vmPluginExceptionThrow(VMThread* pThread);
+void vmOCExceptionThrow(VMThread* pThread);
+DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
+void vmExceptionThrow(VMThread* pThread, u32 exception);
+
+const char* vmIdPoolGet(SBHeader* data, u32 no);
+int vmIntPoolGet(SBHeader* data, u32 no);
+int vmFixedPoolGet(SBHeader* data, u32 no);
+void* vmStringPoolGet(SBHeader* data, u32 no);
+void* vmLocalPoolGet(SBHeader* data, u32 no);
+void* vmFunctionPoolGet(SBHeader* data, u32 no);
+u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
+u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
+
+u32 vmSysAtrSearch(SBHeader* data, u32 no);
+u32 vmPluginSearch(const char* param1, const char* param2);
+u32 vmOCSearch(const char* pName);
+u32 vmPropertySearch(OCData* pOC, const char* pName);
+u32 vmSelectorSearch(OCData* pOC, const char* pName);
+u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
+
+void encodeScramble(u8* data);
+int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
+
+void vmArgErr();
+void vmHalt();
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm2.h" */
+
+enum ButtonFlagsType{
+    BUTTON_FLAGS_HELD,
+    BUTTON_FLAGS_PRESSED,
+    BUTTON_FLAGS_TURBO
+};
+
+int pad_get(_sVMThread* pThread);
+int pad_enable(_sVMThread* pThread);
+void pluginPadRegist();
+/* end "kyoshin/plugin/pluginPad.hpp" */
+/* "src/kyoshin/plugin/pluginPad.cpp" line 1 "monolib/core.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
@@ -233636,119 +234007,145 @@ public:
 };
 /* end "monolib/core/CViewRoot.hpp" */
 /* end "monolib/core.hpp" */
+/* "src/kyoshin/plugin/pluginPad.cpp" line 2 "kyoshin/cf/CfGameManager.hpp" */
+#pragma once
 
+/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CPad;
+class CScnNw4r;
+class CView;
+
+/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
+or due to being in separate files, but compiled together in one file (unity compilation). For now,
+to make things simpler, everything exists in a single class. */
 namespace cf{
-    //Separate deadzone value specifically for CfPadData
-    static const float CFPAD_STICK_DEADZONE = 0.5f;
+    class CfPadData;
+    class CfObjectMove;
 
-    //TODO: unsure if it inherits CPad or not
-    //max size: 0x128
-    struct CfPadData {
-        CPad mPad; //0x0
-        //Is having a separate set of flags *really* necessary, Monolithsoft?
-        u32 mHeldButtonFlags; //0xF8
-        u32 mPrevHeldButtonFlags; //0xFC
-        u32 mPressedButtonFlags; //0x100
-        u32 mTurboPressButtonFlags; //0x104
-        u8 mButtonHoldTimersTurbo[MAX_PAD_INPUT_FLAGS]; //0x108
-    };
-}
-/* end "kyoshin/cf/CfPadData.hpp" */
+    //unofficial name
+    class CfGameManager{
+    public:
+        CfGameManager();
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 3 "monolib/core/CPadManager.hpp" */
-/* end "monolib/core/CPadManager.hpp" */
+        static CfGameManager* getInstance();
+        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
+
+        static void func_80086B5C(int arg1, int arg2, int arg3);
+        static void enablePadFlags(u32 enableFlags, bool enable);
+        static bool func_8007E1B4();
+        static void func_8007E218();
+        static void func_8007E514(int, int, char const*, int, int);
+        static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
+        static UNKWORD func_800829B8();
+        static u32 getCurrentPadChannel();
+        static UNKTYPE* func_80083298();
+        static CfObjectMove* func_80082D54(int playerIndex);
+        static u32 getEnabledInputFlags();
+        static bool func_80086F9C(s16);
+        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
+        static CPad* getPad(int r3);
+        static void setPad(int r3, CPad* pPad, u32 r5);
+        static CfPadData* getCfPadData();
+        static CPad* getCurrentPad();
+
+        static bool checkUnkFlag(int bit){
+            return sUnkFlags & (1 << bit);
+        }
+
+        static void setUnkFlag(int bit, bool state){
+            if(state == true) sUnkFlags |= (1 << bit);
+            else sUnkFlags &= ~(1 << bit);
+        }
+
+        u32 unk0;
+        u32 unk4;
+        u32 unk8;
+        u8 unkC[0x28 - 0xC];
+        u8 unk28;
+        u8 unk29[0x68 - 0x29];
+        u32 unk68;
+        u8 unk6C;
+        u8 unk6D[0x7C - 0x6D];
+        u32 unk7C;
+        u8 unk80[0x8C - 0x80];
+        u32 unk8C;
+        u32 unk90;
+        //between CObjectParam - CfObjectMove
+        //likely player character object array, seems to always store pointers
+        //to CfObjectPc objects except pointing at the 4th vtable
+        CfObjectMove* unk94[3];
+        u32 unkA0;
+        u32 unkA4;
+        u32 unkA8;
+        u32 unkAC;
+        u32 unkB0;
+        u32 unkB4;
+
+        static u32 sUnkFlags;
+        static CScnNw4r* spScene;
+    }; //size = 0xB8
+
+} //namespace cf
+/* end "kyoshin/cf/CfGameManager.hpp" */
 
 extern "C" {
-u32 lbl_eu_80661BC8;
-cf::CfPadData lbl_eu_80571500;
-s8 lbl_eu_80663E70;
-cf::CfGameManager lbl_eu_80571758;
-u8 lbl_eu_80571748[0x10];
-CPad* lbl_eu_80663E0C;
-CPad lbl_eu_80570D40[8];
-u32 lbl_eu_80663E14;
-u32 lbl_eu_80663E60;
-u32 lbl_eu_80663E64;
-u32 lbl_eu_80663E24;
-u32 lbl_eu_80663E28;
-
-// symbols.txt: Fv, but callers leave the index in r4 (see func_80082D54).
-cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
-
-void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
-void __dt__Q22cf13CfGameManagerFv();
-void* __register_global_object(void* object, void* destructor, void* registration);
+    extern char lbl_eu_804FB1D8[];
+    extern PluginFuncData lbl_eu_80526690[];
+    extern u32 lbl_eu_80663E28;
 }
 
-namespace cf {
+int pad_get(VMThread* pThread) {
+    ButtonFlagsType type;
+    VMArg arg;
 
-CfGameManager::CfGameManager() {
-    unk28 = 0;
-    unk68 = 0;
-    unk6C = 0;
-    unk7C = 0;
-    unk8C = 0;
-    unkA0 = 0;
-    unkA4 = 0;
-    unkA8 = 0;
-    unkAC = 0;
-    unkB0 = 0;
-    unkB4 = 0;
-    lbl_eu_80663E14 = 0;
-    lbl_eu_80663E60 = 0;
-    lbl_eu_80663E64 = 0;
-    lbl_eu_80663E24 = 0;
-    lbl_eu_80663E28 = 0;
-    unk0 = 0;
-    unk4 = 0;
-    unk8 = 0;
-}
-
-#pragma dont_inline on
-CfGameManager* CfGameManager::getInstance() {
-    if (!lbl_eu_80663E70) {
-        // Call mangled ctor directly: placement new inserts a null check retail lacks.
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv, lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
+    if (vmArgOmitChk(pThread, 1)) {
+        type = BUTTON_FLAGS_PRESSED;
+    } else {
+        type = (ButtonFlagsType)vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     }
-    return &lbl_eu_80571758;
-}
-#pragma dont_inline off
 
-u32 CfGameManager::getCurrentPadChannel() {
-    return lbl_eu_80661BC8;
+    switch (type) {
+    case BUTTON_FLAGS_HELD:
+        arg.type = VM_TYPE_INT;
+        arg.value.uintVal = CPadManager::getMainPad()->mHeldButtonFlags;
+        break;
+    case BUTTON_FLAGS_PRESSED:
+        arg.type = VM_TYPE_INT;
+        arg.value.uintVal = CPadManager::getMainPad()->mPressedButtonFlags;
+        break;
+    case BUTTON_FLAGS_TURBO:
+        arg.type = VM_TYPE_INT;
+        arg.value.uintVal = CPadManager::getMainPad()->mTurboPressButtonFlags;
+        break;
+    default:
+        vmPluginExceptionThrow(pThread);
+        return 0;
+    }
+
+    vmRetValSet(pThread, &arg);
+    return 1;
 }
 
-CfPadData* CfGameManager::getCfPadData() {
-    return &lbl_eu_80571500;
-}
+int pad_enable(VMThread* pThread) {
+    u32 enableFlags = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    BOOL enable = vmArgBoolGet(3, vmArgPtrGet(pThread, 2));
+    
+    if (!(lbl_eu_80663E28 & 0x01000000)) {
+        bool dontEnable = enable == false;
+        cf::CfGameManager::enablePadFlags(enableFlags, !dontEnable);
 
-CPad* CfGameManager::getCurrentPad() {
-    u32 channel = lbl_eu_80661BC8;
-    if (channel == 0xFFFFFFFF) {
-        CPad* pad = lbl_eu_80663E0C;
-        if (pad != 0) {
-            return pad;
+        u32 newFlags = lbl_eu_80663E28 & ~(1 << 17);
+        if (dontEnable) {
+            newFlags = lbl_eu_80663E28 | (1 << 17);
         }
-        return lbl_eu_80570D40;
+        lbl_eu_80663E28 = newFlags;
     }
-    CPad* pad = lbl_eu_80663E0C;
-    if (pad != 0) {
-        return pad;
-    }
-    return &lbl_eu_80570D40[channel & 7];
+    return 0;
 }
 
-CfObjectMove* CfGameManager::func_80082D54(int playerIndex) {
-    return *func_8007C6B4__Q22cf13CfGameManagerFv(getInstance()->unk94, playerIndex);
+void pluginPadRegist() {
+    vmPluginRegist(lbl_eu_804FB1D8, lbl_eu_80526690);
 }
-
-} // namespace cf
-
-#pragma dont_inline on
-extern "C" cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots,
-                                                                    int index) {
-    return &slots[index];
-}
-#pragma dont_inline off

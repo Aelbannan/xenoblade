@@ -57,6 +57,6 @@ int pad_enable(VMThread* pThread) {
     return 0;
 }
 
-void pluginPadRegist(){
+void pluginPadRegist() {
     vmPluginRegist(lbl_eu_804FB1D8, lbl_eu_80526690);
 }

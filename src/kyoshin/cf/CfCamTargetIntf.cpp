@@ -11,7 +11,7 @@ namespace cf {
 
 extern "C" {
 
-void CfCamTargetIntf_update(void*) {
+void CfCamTargetIntf_update(void* p) {
 }
 
 void CfCamTargetIntf_setPos(void*, CfCamEvent* camEvent, CVec3 const* pos) {

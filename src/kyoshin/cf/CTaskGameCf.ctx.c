@@ -1,7 +1,9 @@
-/* "src/kyoshin/CGame.cpp" line 0 "kyoshin/CGame.hpp" */
 #pragma once
 
-/* "src/kyoshin/CGame.hpp" line 2 "types.h" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 2 "kyoshin/cf/CTaskGameCf.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CTaskGameCf.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -709,7 +711,757 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* "src/kyoshin/CGame.hpp" line 3 "monolib/util.hpp" */
+
+/* "src/kyoshin/cf/CTaskGameCf.hpp" line 4 "monolib/util/FixStr.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/FixStr.hpp" line 2 "cstring" */
+#ifndef MSL_CPP_CSTRING_H
+#define MSL_CPP_CSTRING_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::__memrchr;
+using ::memchr;
+using ::memcmp;
+using ::memcpy;
+using ::memmove;
+using ::memset;
+using ::strcat;
+using ::strchr;
+using ::strcmp;
+using ::strcpy;
+using ::stricmp;
+using ::strlen;
+using ::strncat;
+using ::strncmp;
+using ::strncpy;
+using ::strstr;
+} // namespace std
+
+#endif
+#endif
+/* end "cstring" */
+/* "libs/monolib/include/monolib/util/FixStr.hpp" line 3 "cstdio" */
+#ifndef MSL_CPP_CSTDIO_H
+#define MSL_CPP_CSTDIO_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstdio" line 2 "stdio.h" */
+#ifndef MSL_STDIO_H
+#define MSL_STDIO_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+#ifndef STDIO_API_H
+#define STDIO_API_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+#ifndef _MSL_COMMON_FILE_STRUC_H
+#define _MSL_COMMON_FILE_STRUC_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
+/* end "types.h" */
+
+typedef unsigned long __file_handle;
+typedef unsigned long fpos_t;
+typedef struct _FILE _FILE, *P_FILE;
+
+#define __ungetc_buffer_size 2
+
+enum __file_kinds {
+    __closed_file,
+    __disk_file,
+    __console_file,
+    __unavailable_file
+};
+
+enum __open_modes {
+    __must_exist,
+    __create_if_necessary,
+    __create_or_truncate
+};
+
+enum __file_orientation {
+    __unoriented,
+    __char_oriented,
+    __wide_oriented
+};
+
+enum __io_modes {
+    __read = 1,
+    __write = 2,
+    __read_write = 3,
+    __append = 4
+};
+
+typedef struct __file_modes {
+    u32 open_mode : 2;
+    u32 io_mode : 3;
+    u32 buffer_mode : 2;
+    u32 file_kind : 3;
+
+#ifdef _MSL_WIDE_CHAR
+    u32 file_orientation : 2;
+#endif /* _MSL_WIDE_CHAR */
+
+    u32 binary_io : 1;
+} __file_modes;
+
+enum __io_states {
+    __neutral,
+    __writing,
+    __reading,
+    __rereading
+};
+
+typedef struct __file_state {
+    u32 io_state : 3;
+    u32 free_buffer : 1;
+    u8 eof;
+    u8 error;
+} __file_state;
+
+typedef void* __ref_con;
+typedef void (*__idle_proc)(void);
+typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
+typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
+typedef int (*__close_proc)(__file_handle file);
+
+struct _FILE {
+    __file_handle handle;                           // _00
+    __file_modes mode;                              // _04
+    __file_state state;                              // _08
+    u8 is_dynamically_allowed;                      // _0C
+    u8 char_buffer;                                 // _0D
+    u8 char_buffer_overflow;                        // _0E
+    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
+    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
+    u32 position;                                   // _18
+    u8* buffer;                                   // _1C
+    u32 buffer_size;                                // _20
+    u8* buffer_ptr;                               // _24
+    u32 buffer_len;                                 // _28
+    u32 buffer_alignment;                           // _2C
+    u32 saved_buffer_len;                           // _30
+    u32 buffer_pos;                                 // _34
+    __pos_proc position_proc;                       // _38
+    __io_proc read_proc;                            // _3C
+    __io_proc write_proc;                           // _40
+    __close_proc close_proc;                        // _44
+    __ref_con ref_con;                              // _48
+    _FILE* next_file_struct;                        // _4C
+};
+
+typedef struct _FILE FILE;
+
+
+#define _IONBF 0
+#define _IOLBF 1
+#define _IOFBF 2
+
+// define standard C file pointer location names
+#define SEEK_SET (0)
+#define SEEK_CUR (1)
+#define SEEK_END (2)
+
+#define stdin &(__files[0])
+#define stdout &(__files[1])
+#define stderr &(__files[2])
+
+#define _STATIC_FILES 4
+
+extern FILE __files[];
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
+#ifndef MSL_WCHAR_H
+#define MSL_WCHAR_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+#ifndef _WCHAR_IO_H
+#define _WCHAR_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fwide(FILE* stream, int mode);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+#ifndef MSL_WCSTOUL_H
+#define MSL_WCSTOUL_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
+/* end "types.h" */
+
+
+unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
+//__wcstoull
+//wcstoul
+//wcstoull
+long wcstol(const wchar_t*, wchar_t**, int);
+//wcstoll
+//watoi
+//watol
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+#ifndef MSL_WMEM_H
+#define MSL_WMEM_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
+/* end "types.h" */
+
+wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
+wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
+void* memmove(void*, const void*, size_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+#ifndef MSL_WPRINTF_H
+#define MSL_WPRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
+/* end "stdio.h" */
+
+//wprintf
+//wprintf_s
+//fwprintf
+//fwprintf_s
+//vwprintf
+//vwprintf_s
+//vfwprintf
+//vfwprintf_s
+int swprintf(wchar_t*, size_t, const wchar_t*, ...);
+//swprintf_s
+//snwprintf_s
+int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
+//vswprintf_s
+//vsnwprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+#ifndef MSL_WSTRING_H
+#define MSL_WSTRING_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
+/* end "types.h" */
+
+size_t wcslen(const wchar_t*);
+wchar_t* wcscpy(wchar_t*, const wchar_t*);
+wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
+wchar_t* wcscat(wchar_t*, const wchar_t*);
+int wcscmp(const wchar_t*, const wchar_t*);
+wchar_t* wcschr(const wchar_t*, wchar_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "wchar.h" */
+
+enum __ReadProcActions {
+    __GetAChar,
+    __UngetAChar,
+    __TestForError
+};
+
+enum __WReadProcActions
+{
+    __GetAwChar,
+    __UngetAwChar,
+    __TestForwcsError
+};
+
+typedef struct {
+    char* CharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __OutStrCtrl;
+
+typedef struct{
+    char* NextChar;
+    int NullCharDetected;
+} __InStrCtrl;
+
+typedef struct {
+    wchar_t * wCharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __wOutStrCtrl;
+
+typedef struct {
+    wchar_t * wNextChar;
+    int    wNullCharDetected;
+} __wInStrCtrl;
+
+//__fread
+size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
+int __StringRead(void *, int, int);
+wint_t __wStringRead(void*, wint_t, int);
+
+#endif // STDIO_API_H
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+#ifndef MSL_FILE_POS_H
+#define MSL_FILE_POS_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+int fseek(FILE* stream, u32 offset, int whence);
+int _fseek(FILE* stream, u32 offset, int whence);
+int ftell(FILE* stream);
+int _ftell(FILE* stream);
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+#ifndef MSL_FILE_IO_H
+#define MSL_FILE_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fclose(FILE* file);
+int fflush(FILE* file);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+#ifndef MSL_PRINTF_H
+#define MSL_PRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+
+//printf
+//printf_s
+int fprintf(FILE*, const char* format, ...);
+//fprintf_s
+int vprintf(const char*, va_list);
+//vprintf_s
+//vfprintf
+//vfprintf_s
+int vsnprintf(char*, size_t, const char*, va_list);
+//vsnprintf_s
+int vsprintf(char*, const char*, va_list);
+//vsprintf_s
+int snprintf(char*, size_t, const char*, ...);
+//snprintf_s
+int sprintf(char*, const char*, ...);
+//sprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+#ifndef MSL_SCANF_H
+#define MSL_SCANF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+
+//fscanf
+//fscanf_s
+//vscanf
+//scanf
+//scanf_s
+//vfscanf
+//vfscanf_s
+int vsscanf(const char*, const char*, va_list);
+//vsscanf_s
+int sscanf(const char*, const char*, ...);
+//sscanf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "stdio.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::fclose;
+using ::fflush;
+using ::FILE;
+using ::ftell;
+using ::fwide;
+using ::snprintf;
+using ::sprintf;
+using ::sscanf;
+using ::vprintf;
+using ::vsnprintf;
+using ::vsprintf;
+} // namespace std
+
+#endif
+#endif
+/* end "cstdio" */
+
+namespace ml{
+
+    template <size_t N>
+    struct FixStr{
+        FixStr(){
+            clear();
+        }
+
+        //probably fake
+        FixStr(bool initialize){
+            if(initialize){
+                clear();
+            }
+        }
+
+        FixStr(const FixStr<N>& str){
+            *this = str;
+        }
+
+        FixStr(const char* str){
+            *this = str;
+        }
+
+        FixStr(const FixStr<N>& str, int pos, int length){
+            copy(str, pos, length);
+        }
+
+        void copy(const FixStr<N>& str, int pos, int length){
+            clear();
+            if (str.empty()) return;
+
+            //Copy entire string if length is -1
+            if (length == npos) length = str.size();
+            std::strncpy(mString, str.mString + pos, length);
+            //Stop the string after the copied characters, and recalculate the length
+            mString[length] = 0;
+            mLength = std::strlen(mString);
+        }
+
+        void clear(){
+            mString[0] = 0;
+            mLength = 0;
+        }
+
+        void operator=(const FixStr<N>& str){
+            mLength = std::strlen(str.mString);
+            std::strcpy(mString, str.mString);
+        }
+
+        void operator=(const char* str){
+            mLength = std::strlen(str);
+            std::strcpy(mString, str);
+        }
+
+        void operator+=(const FixStr<N>& str){
+            int strLength = std::strlen(str.mString);
+            std::strcat(mString, str.mString);
+            mLength += strLength;
+        }
+
+        void operator+=(const char* str){
+            int strLength = std::strlen(str);
+            std::strcat(mString, str);
+            mLength += strLength;
+        }
+
+        bool operator==(const char* str) const {
+            return std::strcmp(c_str(), str) == 0;
+        }
+
+        bool operator!=(const char* str) const {
+            return std::strcmp(c_str(), str) != 0;
+        }
+
+        FixStr<N> operator+(const FixStr<N>& str) const {
+            FixStr<N> result = *this;
+            result += str;
+            return result;
+        }
+
+        char operator[](int index) {
+            return mString[index];
+        }
+
+        const char* c_str() const {
+            return mString;
+        }
+
+        int size() const {
+            return mLength;
+        }
+
+        bool empty() const {
+            return size() == 0;
+        }
+        
+        void format(const char* format, ...){
+            //Why hardcode the buffer size to 256??
+            char buffer[256];
+            va_list args;
+            va_start(args, format);
+            std::vsnprintf(buffer, sizeof(buffer), format, args);
+            *this = buffer;
+        }
+
+        //Sets the given string to the first characters of this string, up to the specified length.
+        //TODO: This might just be substr, but when the start index is 0?
+        const char* substr(int pos = 0, int length = npos) const {
+            FixStr<N> str = FixStr(*this, pos, length);
+            return str.c_str();
+        }
+
+        //void erase(int, int){}
+        //void erase(const char*){}
+        //append_int(const int&){}
+        //void insert(int r4, char const* str, int r6){}
+        //slice(int){}
+
+        //also has version with const char& and const FixStr<64>&
+        int append_back(const char* str){
+
+        }
+
+        int append_front(const char* str){
+
+        }
+
+        int find(const char* str, int pos) const {
+
+        }
+
+        int rfind(const char* str, int pos = npos) const {
+            int length = mLength;
+            
+            if (length == 0) {
+                //Return -1 if the string is empty
+                return npos;
+            }
+            
+            int strLength = std::strlen(str);
+
+            char* string = (char*)mString + pos;
+
+            for (char* p = string + length; p != string; p--) {
+                if (!std::strncmp(p, str, strLength)) {
+                    return (int)(p - mString);
+                }
+            }
+
+            //Reached start of string without finding the string, return -1
+            return npos;
+        }
+
+        int find_last_of(char c, int pos) const {
+
+        }
+
+        //TODO: this might be a CPathUtil inline?
+        void unkInline1(const char* str){
+            int index = rfind(str, -1);
+
+            if(index != -1 && index + 1 < mLength){
+                mString[index + 1] = 0;
+                mLength = index;
+            }
+        }
+
+    private:
+        char mString[N];
+        int mLength;
+
+    public:
+        static const int npos = -1;
+    };
+
+}
+/* end "monolib/util/FixStr.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.hpp" line 5 "monolib/work.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+
+class CEventFile {
+public:
+    BOOL unk0;
+    CFileHandle* mFileHandle; //0x4
+
+    void* getFileDataPtr();
+};
+/* end "monolib/work/CEventFile.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 3 "monolib/work/CMsgParam.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
@@ -9970,683 +10722,6 @@ private:
 /* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 2 "types.h" */
 /* end "types.h" */
 /* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 3 "monolib/util/FixStr.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/FixStr.hpp" line 2 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
-
-#endif
-#endif
-/* end "cstring" */
-/* "libs/monolib/include/monolib/util/FixStr.hpp" line 3 "cstdio" */
-#ifndef MSL_CPP_CSTDIO_H
-#define MSL_CPP_CSTDIO_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstdio" line 2 "stdio.h" */
-#ifndef MSL_STDIO_H
-#define MSL_STDIO_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
-#ifndef STDIO_API_H
-#define STDIO_API_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
-#ifndef _MSL_COMMON_FILE_STRUC_H
-#define _MSL_COMMON_FILE_STRUC_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
-/* end "types.h" */
-
-typedef unsigned long __file_handle;
-typedef unsigned long fpos_t;
-typedef struct _FILE _FILE, *P_FILE;
-
-#define __ungetc_buffer_size 2
-
-enum __file_kinds {
-    __closed_file,
-    __disk_file,
-    __console_file,
-    __unavailable_file
-};
-
-enum __open_modes {
-    __must_exist,
-    __create_if_necessary,
-    __create_or_truncate
-};
-
-enum __file_orientation {
-    __unoriented,
-    __char_oriented,
-    __wide_oriented
-};
-
-enum __io_modes {
-    __read = 1,
-    __write = 2,
-    __read_write = 3,
-    __append = 4
-};
-
-typedef struct __file_modes {
-    u32 open_mode : 2;
-    u32 io_mode : 3;
-    u32 buffer_mode : 2;
-    u32 file_kind : 3;
-
-#ifdef _MSL_WIDE_CHAR
-    u32 file_orientation : 2;
-#endif /* _MSL_WIDE_CHAR */
-
-    u32 binary_io : 1;
-} __file_modes;
-
-enum __io_states {
-    __neutral,
-    __writing,
-    __reading,
-    __rereading
-};
-
-typedef struct __file_state {
-    u32 io_state : 3;
-    u32 free_buffer : 1;
-    u8 eof;
-    u8 error;
-} __file_state;
-
-typedef void* __ref_con;
-typedef void (*__idle_proc)(void);
-typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
-typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
-typedef int (*__close_proc)(__file_handle file);
-
-struct _FILE {
-    __file_handle handle;                           // _00
-    __file_modes mode;                              // _04
-    __file_state state;                              // _08
-    u8 is_dynamically_allowed;                      // _0C
-    u8 char_buffer;                                 // _0D
-    u8 char_buffer_overflow;                        // _0E
-    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
-    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
-    u32 position;                                   // _18
-    u8* buffer;                                   // _1C
-    u32 buffer_size;                                // _20
-    u8* buffer_ptr;                               // _24
-    u32 buffer_len;                                 // _28
-    u32 buffer_alignment;                           // _2C
-    u32 saved_buffer_len;                           // _30
-    u32 buffer_pos;                                 // _34
-    __pos_proc position_proc;                       // _38
-    __io_proc read_proc;                            // _3C
-    __io_proc write_proc;                           // _40
-    __close_proc close_proc;                        // _44
-    __ref_con ref_con;                              // _48
-    _FILE* next_file_struct;                        // _4C
-};
-
-typedef struct _FILE FILE;
-
-
-#define _IONBF 0
-#define _IOLBF 1
-#define _IOFBF 2
-
-// define standard C file pointer location names
-#define SEEK_SET (0)
-#define SEEK_CUR (1)
-#define SEEK_END (2)
-
-#define stdin &(__files[0])
-#define stdout &(__files[1])
-#define stderr &(__files[2])
-
-#define _STATIC_FILES 4
-
-extern FILE __files[];
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
-#ifndef MSL_WCHAR_H
-#define MSL_WCHAR_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
-#ifndef _WCHAR_IO_H
-#define _WCHAR_IO_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-int fwide(FILE* stream, int mode);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
-#ifndef MSL_WCSTOUL_H
-#define MSL_WCSTOUL_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
-/* end "types.h" */
-
-
-unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
-//__wcstoull
-//wcstoul
-//wcstoull
-long wcstol(const wchar_t*, wchar_t**, int);
-//wcstoll
-//watoi
-//watol
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
-#ifndef MSL_WMEM_H
-#define MSL_WMEM_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
-/* end "types.h" */
-
-wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
-wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
-void* memmove(void*, const void*, size_t);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
-#ifndef MSL_WPRINTF_H
-#define MSL_WPRINTF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
-/* end "stdarg.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
-/* end "stdio.h" */
-
-//wprintf
-//wprintf_s
-//fwprintf
-//fwprintf_s
-//vwprintf
-//vwprintf_s
-//vfwprintf
-//vfwprintf_s
-int swprintf(wchar_t*, size_t, const wchar_t*, ...);
-//swprintf_s
-//snwprintf_s
-int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
-//vswprintf_s
-//vsnwprintf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
-#ifndef MSL_WSTRING_H
-#define MSL_WSTRING_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
-/* end "types.h" */
-
-size_t wcslen(const wchar_t*);
-wchar_t* wcscpy(wchar_t*, const wchar_t*);
-wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
-wchar_t* wcscat(wchar_t*, const wchar_t*);
-int wcscmp(const wchar_t*, const wchar_t*);
-wchar_t* wcschr(const wchar_t*, wchar_t);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "wchar.h" */
-
-enum __ReadProcActions {
-    __GetAChar,
-    __UngetAChar,
-    __TestForError
-};
-
-enum __WReadProcActions
-{
-    __GetAwChar,
-    __UngetAwChar,
-    __TestForwcsError
-};
-
-typedef struct {
-    char* CharStr;
-    size_t MaxCharCount;
-    size_t CharsWritten;
-} __OutStrCtrl;
-
-typedef struct{
-    char* NextChar;
-    int NullCharDetected;
-} __InStrCtrl;
-
-typedef struct {
-    wchar_t * wCharStr;
-    size_t MaxCharCount;
-    size_t CharsWritten;
-} __wOutStrCtrl;
-
-typedef struct {
-    wchar_t * wNextChar;
-    int    wNullCharDetected;
-} __wInStrCtrl;
-
-//__fread
-size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
-int __StringRead(void *, int, int);
-wint_t __wStringRead(void*, wint_t, int);
-
-#endif // STDIO_API_H
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
-#ifndef MSL_FILE_POS_H
-#define MSL_FILE_POS_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-int fseek(FILE* stream, u32 offset, int whence);
-int _fseek(FILE* stream, u32 offset, int whence);
-int ftell(FILE* stream);
-int _ftell(FILE* stream);
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
-#ifndef MSL_FILE_IO_H
-#define MSL_FILE_IO_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-int fclose(FILE* file);
-int fflush(FILE* file);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
-#ifndef MSL_PRINTF_H
-#define MSL_PRINTF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
-/* end "stdarg.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-
-//printf
-//printf_s
-int fprintf(FILE*, const char* format, ...);
-//fprintf_s
-int vprintf(const char*, va_list);
-//vprintf_s
-//vfprintf
-//vfprintf_s
-int vsnprintf(char*, size_t, const char*, va_list);
-//vsnprintf_s
-int vsprintf(char*, const char*, va_list);
-//vsprintf_s
-int snprintf(char*, size_t, const char*, ...);
-//snprintf_s
-int sprintf(char*, const char*, ...);
-//sprintf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
-#ifndef MSL_SCANF_H
-#define MSL_SCANF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
-/* end "stdarg.h" */
-
-//fscanf
-//fscanf_s
-//vscanf
-//scanf
-//scanf_s
-//vfscanf
-//vfscanf_s
-int vsscanf(const char*, const char*, va_list);
-//vsscanf_s
-int sscanf(const char*, const char*, ...);
-//sscanf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "stdio.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::fclose;
-using ::fflush;
-using ::FILE;
-using ::ftell;
-using ::fwide;
-using ::snprintf;
-using ::sprintf;
-using ::sscanf;
-using ::vprintf;
-using ::vsnprintf;
-using ::vsprintf;
-} // namespace std
-
-#endif
-#endif
-/* end "cstdio" */
-
-namespace ml{
-
-    template <size_t N>
-    struct FixStr{
-        FixStr(){
-            clear();
-        }
-
-        //probably fake
-        FixStr(bool initialize){
-            if(initialize){
-                clear();
-            }
-        }
-
-        FixStr(const FixStr<N>& str){
-            *this = str;
-        }
-
-        FixStr(const char* str){
-            *this = str;
-        }
-
-        FixStr(const FixStr<N>& str, int pos, int length){
-            copy(str, pos, length);
-        }
-
-        void copy(const FixStr<N>& str, int pos, int length){
-            clear();
-            if (str.empty()) return;
-
-            //Copy entire string if length is -1
-            if (length == npos) length = str.size();
-            std::strncpy(mString, str.mString + pos, length);
-            //Stop the string after the copied characters, and recalculate the length
-            mString[length] = 0;
-            mLength = std::strlen(mString);
-        }
-
-        void clear(){
-            mString[0] = 0;
-            mLength = 0;
-        }
-
-        void operator=(const FixStr<N>& str){
-            mLength = std::strlen(str.mString);
-            std::strcpy(mString, str.mString);
-        }
-
-        void operator=(const char* str){
-            mLength = std::strlen(str);
-            std::strcpy(mString, str);
-        }
-
-        void operator+=(const FixStr<N>& str){
-            int strLength = std::strlen(str.mString);
-            std::strcat(mString, str.mString);
-            mLength += strLength;
-        }
-
-        void operator+=(const char* str){
-            int strLength = std::strlen(str);
-            std::strcat(mString, str);
-            mLength += strLength;
-        }
-
-        bool operator==(const char* str) const {
-            return std::strcmp(c_str(), str) == 0;
-        }
-
-        bool operator!=(const char* str) const {
-            return std::strcmp(c_str(), str) != 0;
-        }
-
-        FixStr<N> operator+(const FixStr<N>& str) const {
-            FixStr<N> result = *this;
-            result += str;
-            return result;
-        }
-
-        char operator[](int index) {
-            return mString[index];
-        }
-
-        const char* c_str() const {
-            return mString;
-        }
-
-        int size() const {
-            return mLength;
-        }
-
-        bool empty() const {
-            return size() == 0;
-        }
-        
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
-
-        //Sets the given string to the first characters of this string, up to the specified length.
-        //TODO: This might just be substr, but when the start index is 0?
-        const char* substr(int pos = 0, int length = npos) const {
-            FixStr<N> str = FixStr(*this, pos, length);
-            return str.c_str();
-        }
-
-        //void erase(int, int){}
-        //void erase(const char*){}
-        //append_int(const int&){}
-        //void insert(int r4, char const* str, int r6){}
-        //slice(int){}
-
-        //also has version with const char& and const FixStr<64>&
-        int append_back(const char* str){
-
-        }
-
-        int append_front(const char* str){
-
-        }
-
-        int find(const char* str, int pos) const {
-
-        }
-
-        int rfind(const char* str, int pos = npos) const {
-            int length = mLength;
-            
-            if (length == 0) {
-                //Return -1 if the string is empty
-                return npos;
-            }
-            
-            int strLength = std::strlen(str);
-
-            char* string = (char*)mString + pos;
-
-            for (char* p = string + length; p != string; p--) {
-                if (!std::strncmp(p, str, strLength)) {
-                    return (int)(p - mString);
-                }
-            }
-
-            //Reached start of string without finding the string, return -1
-            return npos;
-        }
-
-        int find_last_of(char c, int pos) const {
-
-        }
-
-        //TODO: this might be a CPathUtil inline?
-        void unkInline1(const char* str){
-            int index = rfind(str, -1);
-
-            if(index != -1 && index + 1 < mLength){
-                mString[index + 1] = 0;
-                mLength = index;
-            }
-        }
-
-    private:
-        char mString[N];
-        int mLength;
-
-    public:
-        static const int npos = -1;
-    };
-
-}
 /* end "monolib/util/FixStr.hpp" */
 
 namespace ml{
@@ -11185,94 +11260,6 @@ template <typename T> T* PtrSingleton<T>::spInstance;
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
-#pragma once
-
-//List of forward declarations for commonly used classes.
-
-//Core
-class CView;
-class CException;
-
-//Device
-class CFileHandle;
-class CDeviceFileJob;
-
-//Math
-namespace ml {
-    struct CPnt16;
-    struct CRect16;
-    struct CVec3;
-    struct CVec4;
-    struct CCol3;
-    struct CCol4;
-    struct CMat34;
-    struct CFrustum;
-} //namespace ml
-
-//Scene
-class CScn;
-class CScnNw4r;
-class IScnRender;
-class ICulling;
-
-//Util
-class CChildListNode;
-
-//Work
-class CEventFile;
-class CProcess;
-class CProc;
-class CWorkThread;
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-/*
-Handle to a work memory region
-*/
-typedef u32 WORK_ID;
-static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
-
-class CWorkThreadSystem{
-    friend class CWorkThread;
-
-public:
-    static void initialize();
-    static void destroy();
-
-    static WORK_ID allocWID(CWorkThread* thread);
-    static void freeWID(WORK_ID wid){
-        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
-        sWorkThreads[wid] = nullptr;
-    }
-
-    static mtl::ALLOC_HANDLE getWorkMem();
-
-private:
-    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
-
-    //Highest allowed work ID
-    static const WORK_ID MAX_WORK_ID = 2048;
-    //One registration bit flag per work ID
-    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
-
-    static const char* scRegionName;
-    static BOOL sMemAvailable;
-
-    //Handle for all work memory allocations
-    static mtl::ALLOC_HANDLE sAllocHandle;
-
-    //Work thread registration flags, by ID
-    static u32* sAllocFlags;
-
-    //Registered work threads, by ID
-    static CWorkThread** sWorkThreads;
-};
 /* end "monolib/work/CWorkThreadSystem.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
 #ifndef MSL_CPP_ALGORITHM_H
@@ -12119,42 +12106,48 @@ namespace ml{
 }
 /* end "monolib/util/TPLUtils.hpp" */
 /* end "monolib/util.hpp" */
-/* "src/kyoshin/CGame.hpp" line 4 "monolib/core.hpp" */
-#pragma once
 
-/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
-#pragma once
+/*
+Handle to a work memory region
+*/
+typedef u32 WORK_ID;
+static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
 
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 4 "monolib/work.hpp" */
-#pragma once
+class CWorkThreadSystem{
+    friend class CWorkThread;
 
-/* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-
-class CEventFile {
 public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
+    static void initialize();
+    static void destroy();
 
-    void* getFileDataPtr();
+    static WORK_ID allocWID(CWorkThread* thread);
+    static void freeWID(WORK_ID wid){
+        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
+        sWorkThreads[wid] = nullptr;
+    }
+
+    static mtl::ALLOC_HANDLE getWorkMem();
+
+private:
+    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
+
+    //Highest allowed work ID
+    static const WORK_ID MAX_WORK_ID = 2048;
+    //One registration bit flag per work ID
+    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
+
+    static const char* scRegionName;
+    static BOOL sMemAvailable;
+
+    //Handle for all work memory allocations
+    static mtl::ALLOC_HANDLE sAllocHandle;
+
+    //Work thread registration flags, by ID
+    static u32* sAllocFlags;
+
+    //Registered work threads, by ID
+    static CWorkThread** sWorkThreads;
 };
-/* end "monolib/work/CEventFile.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 3 "monolib/work/CMsgParam.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
 /* end "monolib/work/CWorkThreadSystem.hpp" */
 
 //Message param entry format:
@@ -13085,6 +13078,106 @@ public:
 /* end "monolib/work/CWorkUtil.hpp" */
 /* "libs/monolib/include/monolib/work.hpp" line 19 "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work/IWorkEvent.hpp" */
+/* end "monolib/work.hpp" */
+
+class CTaskGame;
+
+namespace cf{
+    class CTaskGameCf : public CTTask<CTaskGameCf>{
+        static CTaskGameCf* spInstance;
+
+    public:
+        CTaskGameCf(CProcess* taskGame, BOOL arg2);
+        virtual ~CTaskGameCf();
+
+        static CTaskGameCf* getInstance();
+        static CTaskGameCf* create(CProcess* pParent, int arg2);
+
+        virtual void Init() override;
+        virtual void Term() override;
+        virtual void Draw() override;
+
+        bool chkUnk54(u32 bit){
+            return unk_54 & (1 << bit);
+        }
+
+        void setUnk54(u32 bit, bool state){
+            if(state){
+                unk_54 |= (1 << bit);
+            } else {
+                unk_54 &= ~(1 << bit);
+            }
+        }
+
+        void func_800442DC();
+        void func_8004431C();
+        void func_8004433C();
+        void func_8004435C(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4);
+
+        void func_80044424();
+        void func_80044444();
+        void func_80044480();
+        void func_800444A0();
+        void func_800444DC();
+        void func_800444FC();
+        void func_8004451C();
+        void func_800447B4();
+        void func_800448DC();
+        void func_80044934();
+        void func_8004499C();
+
+        //0x0-0x54: CTTask
+        u32 unk_54; // 0x54
+        CTaskGame* pTaskGame; // 0x58
+        u16 unk_5C; // 0x5C
+        u16 unk_5E; // 0x5E
+        u16 unk_60; // 0x60
+        u16 unk_62; // 0x62
+        ml::FixStr<32> unk_64; // 0x64
+        u16 unk_88; // 0x88
+        s32 unk_8C; // 0x8C
+    }; //size = 0x90
+
+} //namespace cf
+/* end "kyoshin/cf/CTaskGameCf.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 3 "kyoshin/CTaskEnvironment.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskEnvironment.hpp" line 2 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+class CProcess;
+class CScnNw4r;
+
+class CTaskEnvironment : public CTTask<CTaskEnvironment>{
+public:
+    static CTaskEnvironment* getInstance();
+    static CTaskEnvironment* create(CProcess* pParent, CScnNw4r* pScene);
+
+private:
+    //0x00-0x54 CTTask
+    char unk54[0xEC - 0x54]; //0x54
+
+    static CTaskEnvironment* spInstance;
+}; //size = 0xEC
+/* end "kyoshin/CTaskEnvironment.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 4 "kyoshin/CTaskGame.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGame.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "src/kyoshin/CTaskGame.hpp" line 4 "monolib/core.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 4 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
 /* "libs/monolib/include/monolib/core/CArcItem.hpp" line 5 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
@@ -233555,9 +233648,420 @@ public:
 };
 /* end "monolib/core/CViewRoot.hpp" */
 /* end "monolib/core.hpp" */
-/* "src/kyoshin/CGame.hpp" line 5 "monolib/work.hpp" */
+/* "src/kyoshin/CTaskGame.hpp" line 5 "monolib/scn.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn.hpp" line 2 "monolib/scn/CLight.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
+/* end "monolib/math.hpp" */
+
+class CLight{
+public:
+    CLight();
+    virtual ~CLight(){}
+
+    ml::CVec3 unk4;
+    ml::CVec3 unk10;
+    ml::CVec3 unk1C;
+    float unk28;
+    u32 unk2C;
+    u32 unk30;
+    u32 unk34;
+    float unk38;
+    float unk3C;
+};
+/* end "monolib/scn/CLight.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+//Unofficial name
+class ICulling {
+public:
+    virtual ~ICulling(){}
+    virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
+    virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
+    virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
+};
+/* end "monolib/scn/ICulling.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 4 "monolib/scn/CScn.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
-/* "src/kyoshin/CGame.hpp" line 6 "nw4r/lyt.h" */
+
+struct ScnRenderCB {
+    IScnRender* cb; //0x0
+    u32 prio; //0x4
+    u8 flag; //0x8
+}; // size = 0xC
+
+// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
+struct UnkScn68 {
+    u8 unk00[0x34];
+    s32 unk34; //0x34
+};
+
+// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
+struct UnkScn8C {
+    virtual ~UnkScn8C() {}
+    virtual void vf0C() = 0;
+    virtual void vf10() = 0;
+    virtual void vf14() = 0;
+    virtual void vf18() = 0;
+    virtual void vf1C() = 0;
+};
+
+// IScnRender draw callback shape: vt+0xC(cb, scn).
+struct IScnRenderDraw {
+    virtual ~IScnRenderDraw() {}
+    virtual void onRender(CScn* scn) = 0;
+};
+
+class CScn : public CTTask<CScn>, public IWorkEvent{
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+    virtual void Draw();
+
+    //0x000: vtable 1 (CTTask)
+    //0x000-054: CTTask
+    //0x054: vtable 2 (IWorkEvent)
+    u8 unk58[0x68 - 0x058]; //0x058
+    UnkScn68* mCamWork; //0x068
+    u8 unk6C[0x8C - 0x06C]; //0x06C
+    UnkScn8C* mUnk8C; //0x08C
+    u8 unk90[0x0B4 - 0x090]; //0x090
+    ICulling* unkB4; //0x0B4
+    u32 unkB8; //0x0B8
+    ScnRenderCB mRenderCBs[64]; //0x0BC
+    u32 mRenderCBCount; //0x3BC
+    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
+    u8 unk_3E4; //0x3E4
+    u8 unk_3E5; //0x3E5
+    u8 unk_3E6; //0x3E6
+    u8 unk_3E7; //0x3E7
+    u8 unk_3E8; //0x3E8
+    u8 unk_3E9; //0x3E9
+    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
+}; // size = 0x3EC
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 5 "monolib/scn/CScnNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 2 "monolib/scn/CScn.hpp" */
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 3 "functions.hpp" */
+#pragma once
+
+/* "include/functions.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+//Vec4 constructor? Defined before CTaskGame::Term
+struct func_800407C8_tmp {
+    f32 unk00[4];
+};
+func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
+
+void func_8004302C(int, int);
+bool func_8009CF8C(int);
+void func_8009D018(int, int);
+int* func_8009ECB0();
+void func_8009E574(int*, int, int, int);
+/* end "functions.hpp" */
+
+class CScnNw4r : public CScn{
+public:
+    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
+    void func_8007DAE0(int arg1, f32* arg2);
+
+private:
+    //0x000-0x3EC CScn
+}; // size = 0x3EC
+/* end "monolib/scn/CScnNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 6 "monolib/scn/CScnRootNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnRootNw4r.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* end "monolib/scn/CScnRootNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 7 "monolib/scn/CScnTexWorkMan.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+mtl::ALLOC_HANDLE func_80490098();
+void func_804900A0(u32 r3);
+/* end "monolib/scn/CScnTexWorkMan.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 8 "monolib/scn/IScnRender.hpp" */
+#pragma once
+
+class IScnRender {
+public:
+    virtual ~IScnRender(){}
+    virtual void cbRenderBefore();
+};
+/* end "monolib/scn/IScnRender.hpp" */
+/* end "monolib/scn.hpp" */
+/* "src/kyoshin/CTaskGame.hpp" line 6 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+/* "src/kyoshin/CTaskGame.hpp" line 7 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+class ITitleMenu{
+public:
+    virtual ~ITitleMenu(){}
+    virtual void ITitleMenu__UnkVirtualFunc1() = 0;
+};
+
+class IErrMesWinSel{
+public:
+    virtual ~IErrMesWinSel(){}
+    virtual void IErrMesWinSel__UnkVirtualFunc1() = 0;
+};
+
+struct UnkClass_8004041C{
+    void func_8004041C(u8 r4, float f1, int r5, u32 r6, u8 r7, u32 r8, u32 r9);
+
+    u8 unk0;
+    float unk4;
+    int unk8;
+    u32 unkC;
+    u8 unk10;
+    u32 unk14;
+    u32 unk18;
+};
+
+class CTaskGame : public CTTask<CTaskGame>,
+                  public IWorkEvent,
+                  public IScnRender,
+                  public IGameException,
+                  public ITitleMenu,
+                  public IErrMesWinSel {
+public:
+    CTaskGame(CView* pView, CWorkThread* pThread, int r6);
+    virtual ~CTaskGame();
+
+    static CTaskGame* getInstance();
+    static u32 func_800404F0();
+    virtual void Init();
+
+    void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
+    static bool func_800426F0();
+    void func_80042710();
+    void func_80042720();
+    static bool func_8004368C();
+    static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
+
+    virtual void Term();
+    virtual void ITitleMenu__UnkVirtualFunc1();
+    virtual void IErrMesWinSel__UnkVirtualFunc1();
+    virtual bool gameExceptionCB(u32 r4);
+
+    CScnNw4r* getScene() const {
+        return unk74;
+    }
+
+    //0x0: vtable (CTTask)
+    //0x4-3C: CProcess
+    //0x3C-54: CTTask
+    //0x54: vtable 2 (IWorkEvent)
+    //0x58: vtable 3 (IScnRender)
+    //0x5C: vtable 4 (IGameException)
+    //0x60: vtable 5 (ITitleMenu)
+    //0x64: vtable 6 (IErrMesWinSel)
+    u32 unk68;
+    CWorkThread* unk6C;
+    CView* unk70;
+    CScnNw4r* unk74;
+    u32 unk78;
+    u32 unk7C;
+    u16 unk80;
+    u16 unk82;
+    u16 unk84;
+    u16 unk86;
+    u16 unk88;
+    u16 unk8A;
+    u8 unk8C[2]; //padding?
+    u16 unk8E;
+    u8 unk90;
+    u8 unk91[0xA0 - 0x91];
+    u32 unkA0;
+    ml::FixStr<32> unkA4;
+    u8 unkC8;
+    u8 unkC9[0xCC - 0xC9];
+    u32 unkCC;
+    u32 unkD0;
+    u32 unkD4;
+    int unkD8;
+    u32 unkDC;
+    float unkE0;
+    u32 unkE4;
+    int unkE8;
+    u32 unkEC;
+    u32 unkF0;
+    u32 unkF4;
+    int unkF8;
+    u32 unkFC;
+    u32 unk100;
+    u8 unk104;
+    u8 unk105[0x124 - 0x105];
+    u32 unk124;
+    u32 unk128;
+    u8 unk12C[0x130 - 0x12C];
+    u8 unk130;
+    u8 unk131[0x170 - 0x131];
+    u32 unk170;
+    u8 unk174[0x188 - 0x174];
+    u8 unk188;
+    u8 unk189[0x18C - 0x189]; //padding?
+    UnkClass_8004041C unk18C;
+
+protected:
+    static CTaskGame* spInstance;
+};
+/* end "kyoshin/CTaskGame.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 5 "kyoshin/CUIBattleManager.hpp" */
+#pragma once
+
+/* "src/kyoshin/CUIBattleManager.hpp" line 2 "monolib/device/CFileHandle.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+enum CBM {
+    CBM_0,
+    CBM_1,
+    CBM_2,
+    CBM_3,
+    CBM_4,
+    CBM_5
+};
+
+struct CFileHandle {
+    int unk0;
+    void* mData; //0x4
+    u8 unk8[0x10 - 0x8];
+    int unk10;
+    u32 unk14;
+    u8 unk18[0x3C - 0x18];
+    u32 mLength; //0x3C
+    u8 unk40[0x5C - 0x40];
+    ml::FixStr<32> mName; //0x5C
+    u8 unk80[0x160 - 0x80];
+    u32 unk160;
+
+    void call(CBM cbm);
+    bool checkExistRsrc(CBM cbm);
+    UNKTYPE* getRsrc();
+
+    inline void* getData(){
+        void* r31 = mData;
+        mData = nullptr;
+        return r31;
+    }
+
+    inline bool unkInline2() const {
+        return unk10 != 0 && unk10 == mLength;
+    }
+
+    inline u32 getLength() const {
+        return mLength;
+    }
+
+};
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/CUIBattleManager.hpp" line 3 "monolib/util/reslist.hpp" */
+/* end "monolib/util/reslist.hpp" */
+/* "src/kyoshin/CUIBattleManager.hpp" line 4 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+// Minimal battle-UI child type (IUIWindow-like) for Move's mark/remove walk.
+class CUIBattleChild {
+private:
+    u8 unk00[0x39];
+    bool mIsRemove; // 0x39
+    u8 unk3A[0x54 - 0x3A];
+
+public:
+    void SetRemove() { mIsRemove = true; }
+
+    u8 unk54; // 0x54 - pending-remove request
+    u8 unk55; // 0x55 - pending update-mark
+};
+
+class CUIBattleManager : public CTTask<CUIBattleManager>, public IWorkEvent {
+public:
+    static CUIBattleManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
+
+    static void func_8012F87C(u32);
+
+    void Init();
+    void Move();
+
+private:
+    // 0x00-0x54 CTTask
+    // 0x54-0x58 IWorkEvent
+    void* unk58;                           // 0x58 - scene / create arg
+    reslist<CUIBattleChild*> mChildList;   // 0x5C
+    CProcess* unk7C;                       // 0x7C - Init child process
+    u8 unk80;                              // 0x80 - remove-all request
+    u8 unk81;                              // 0x81 - mark-all request
+    u8 unk82;                              // 0x82 - create/bind request bits
+    u8 unk83;                              // 0x83
+    CFileHandle* mFileArtsElem;            // 0x84
+    CFileHandle* mFileArtsElemDone;        // 0x88
+    CFileHandle* mFileArtsSys;             // 0x8C
+    CFileHandle* mFileArtsSysDone;         // 0x90
+    CFileHandle* mFileArtsPc[3];           // 0x94
+    CFileHandle* mFileArtsPcBusy[3];       // 0xA0
+    CFileHandle* mFileFacePc[3];           // 0xAC
+    u8 unkB8[0xE8 - 0xB8];                 // 0xB8
+    u8 unkE8;                              // 0xE8 - assets ready
+    u8 unkE9;                              // 0xE9 - assets requested
+    u8 unkEA[0xEC - 0xEA];                 // 0xEA
+    mtl::ALLOC_HANDLE mHeap;               // 0xEC
+}; // size = 0xF0
+/* end "kyoshin/CUIBattleManager.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 6 "kyoshin/CUICfManager.hpp" */
+#pragma once
+
+/* "src/kyoshin/CUICfManager.hpp" line 2 "kyoshin/cf/IFlagEvent.hpp" */
+#pragma once
+
+namespace cf{
+
+    class IFlagEvent{
+    public:
+        virtual ~IFlagEvent();
+
+        virtual void FlagEvent1(int arg1, int arg2, int arg3);
+        virtual void OnFileEvent(void* arg1);
+        virtual void FlagEvent3(int arg1, int arg2, int arg3);
+    };
+
+} //namespace cf
+/* end "kyoshin/cf/IFlagEvent.hpp" */
+/* "src/kyoshin/CUICfManager.hpp" line 3 "monolib/device/CFileHandle.hpp" */
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/CUICfManager.hpp" line 4 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+/* "src/kyoshin/CUICfManager.hpp" line 6 "nw4r/lyt.h" */
 #ifndef NW4R_PUBLIC_LYT_H
 #define NW4R_PUBLIC_LYT_H
 
@@ -245009,105 +245513,358 @@ protected:
 
 #endif
 /* end "nw4r/lyt.h" */
+/* "src/kyoshin/CUICfManager.hpp" line 7 "types.h" */
+/* end "types.h" */
 
-class CGame : public CProc {
+namespace nw4r {
+namespace ut {
+
+// Stub: retail size 0x3C; Destroy returns buffer for MemManager::deallocate.
+class PackedFont {
 public:
-    enum ShutdownState {
-        SHUTDOWN_STATE_0,
-        SHUTDOWN_STATE_1,
-        SHUTDOWN_STATE_2
-    };
-
-    CGame(const char* pName, CWorkThread* pParent);
-    virtual ~CGame();
-    static CGame* getInstance();
-    static bool func_8003933C();
-    static void func_80039364();
-    static void setTaskManagerUpdateCount(u32 count);
-    virtual void wkUpdate();
-    virtual void wkRender();
-    static void func_800395F4(bool r3);
-    static void setViewRect(CView* view, s16 x, s16 y, s16 width, s16 height);
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-    static void GameMain();
-    static void registerControllerErrorEntry(const wchar_t* message, IGameException* r4, u32 param);
-    virtual bool wkStandbyExceptionRetry(u32 r4);
-    virtual void OnPauseTrigger(bool paused);
-    static void onExit();
-
-    static inline CGame* create(const char* pName, CWorkThread* pParent, u32 capacity){
-        CGame* game = new (CWorkThreadSystem::getWorkMem()) CGame(pName, pParent);
-        CWorkUtil::entryWork(game, pParent, false);
-        game->unk1E4 = capacity;
-        return game;
-    }
-
-    //0x0: vtable
-    //0x0-1ec: CProc
-    CView* mView; //0x1EC
-    ShutdownState mShutdownState; //0x1F0
-    s16 unk1F4;
-    s16 unk1F6;
-    s16 unk1F8;
-    u8 unk1FA[2];
-    ml::FixStr<32> unk1FC;
-    u32 mTaskManUpdateCount; //0x220
-    float unk224;
-    int unk228;
-    u32 unk22C;
-    s16 unk230; //0x230 - letterbox half-band (retail ctor: 57)
-    u16 unk232; // pad
-    u32 unk234; //0x234 - sizeof(CGame)==0x238 for retail GameMain allocate
+    void* Destroy();
 
 private:
-    static const int MAX_CHILD = 8;
-
-    static CGame* spInstance;
-    static nw4r::lyt::Layout* lbl_80666604;
-    static nw4r::lyt::ArcResourceAccessor* sArcResourceAccessor;
-    static const char* scViewName;
+    u8 unk[0x3C];
 };
 
-namespace {
-    class CGameRestart : public CProc {
-    public:
-        friend class CGame;
+} // namespace ut
+} // namespace nw4r
 
-        CGameRestart(const char* pName, CWorkThread* pParent, int capacity) :
-        CProc(pName, pParent, capacity),
-        mHandle(mtl::INVALID_HANDLE) {}
-        virtual ~CGameRestart(){}
-        virtual void wkUpdate(){
-            CWorkThread* r3 = CWorkThread::getWorkThread(mHandle);
-            if(r3 == nullptr){
-                CGame::GameMain();
-                wkSetEvent(EVT_NONE);
-                spInstance = nullptr;
-            }
-        }
+struct CUICfUnk144 {
+    u8 unk00[0x39];
+    u8 unk39; // 0x39
+};
 
-        static inline CGameRestart* create(const char* pName, CWorkThread* pParent){
-            CGameRestart* gameRestart = new (CWorkThreadSystem::getWorkMem()) CGameRestart(pName, pParent, MAX_CHILD);
-            
-            CWorkUtil::entryWork(gameRestart, pParent, false);
-            gameRestart->unk1E4 = CDesktop::getView()->mWorkID;
-            spInstance = gameRestart;
-            return gameRestart;
-        }
+// Queue item type for CUICfManager::Move list walks (CProcess-sized prefix).
+struct CUICfMenuItem {
+    u8 unk00[0x39];
+    u8 unk39; // 0x39 - remove / SetRemove
+    u8 unk3A[0x54 - 0x3A];
+    u8 unk54; // 0x54
+    u8 unk55; // 0x55
+};
 
-        //0x0: vtable
-        //0x0-1ec: CProc
-        mtl::ALLOC_HANDLE mHandle; //0x1EC
-    
-    private:
-        static const int MAX_CHILD = 8;
+struct CUICfInitBlock {
+    u32 unk00;
+    u16 unk04;
+    u8 unk06[0x34 - 6];
+};
 
-        static CGameRestart* spInstance;
+struct CUICfInitTail {
+    u32 unk00;
+    u32 unk04;
+    u32 unk08;
+    u32 unk0C;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u32 unk20;
+    u32 unk24;
+    u32 unk28;
+    u32 unk2C;
+    u32 unk30;
+    u32 unk34;
+    u32 unk38;
+    u32 unk3C;
+    u32 unk40;
+    u32 unk44;
+    u32 unk48;
+    u32 unk4C;
+    u32 unk50;
+    u32 unk54;
+    u32 unk58;
+    u32 unk5C;
+    u32 unk60;
+    u32 unk64;
+    u32 unk68;
+    u32 unk6C;
+    u32 unk70;
+    u32 unk74;
+    u32 unk78;
+    u32 unk7C;
+    u32 unk80;
+    u32 unk84;
+    u32 unk88;
+    u32 unk8C;
+};
+
+struct CUICfInitState {
+    u8 mode;
+    u8 state;
+    u8 unk02[2];
+};
+
+// 0xC-byte pool node for func_80133324's event queue - same layout as
+// `_reslist_node<u32>` (mNext@0, mPrev@4, mItem@8). Empty slots have mNext==0.
+struct CUICfListNode {
+    CUICfListNode* next; // 0x0
+    CUICfListNode* prev; // 0x4
+    u32 item;            // 0x8
+};
+
+// 27-entry, 0-terminated id table copied onto the stack by func_80133324
+// (retail: sp+0x28..0x5D, matches lbl_eu_804FFFDC minus its trailing entry).
+struct CUICfIdTable {
+    u16 ids[27];
+};
+
+class CUICfManager;
+
+// Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
+// reads r4/r5/r6 as real event-dispatch arguments; declared extern "C" here
+// (before the class, so the in-class friend declaration below binds to this
+// same linkage) so its ABI is r3=<unused self>, r4=id, r5=a1, r6=a2.
+extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
+struct CUICfInitSlot {
+    u8 unk00[4];
+    u8 unk04;
+    u8 unk05;
+    u8 unk06[2];
+    CUICfInitBlock unk08;
+    CUICfInitBlock unk3C;
+    CUICfInitBlock unk70;
+    CUICfInitBlock unkA4;
+    CUICfInitTail unkD8;
+}; // size = 0x168
+
+class CUICfManager : public CTTask<CUICfManager>, public IWorkEvent, public cf::IFlagEvent {
+public:
+    static CUICfManager* getInstance() {
+        return spInstance;
+    }
+    static CUICfManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
+    static nw4r::lyt::ArcResourceAccessor* func_801355F4();
+    static int func_80135FDC();
+
+    void Init();
+    void Term();
+    void Move();
+    // func_80133324__12CUICfManagerFv is a free function below (retail Fv-mangled
+    // member that actually reads r4/r5/r6 event args; see CUICfManager.cpp).
+    friend void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
+    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
+    u16 getFlags() const {
+        return mFlags;
+    }
+
+private:
+    // 0x000-0x054 CTTask
+    // 0x054-0x058 IWorkEvent
+    // 0x058-0x05C cf::IFlagEvent
+    nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; // 0x05C
+    nw4r::ut::PackedFont mPackedFont60;                  // 0x060
+    nw4r::ut::PackedFont mPackedFont9C;                  // 0x09C
+    nw4r::ut::PackedFont mPackedFontD8;                  // 0x0D8
+    CFileHandle* mFileHandle;                            // 0x114
+    int unk118;                                          // 0x118
+    u32 unk11C;                                          // 0x11C
+    u32 unk120;                                          // 0x120 - Move countdown
+    u8 unk124[0x128 - 0x124];                            // 0x124
+    CUICfListNode* unk128;                               // 0x128 (event queue head)
+    u8 unk12C[0x138 - 0x12C];                            // 0x12C
+    CUICfListNode* unk138;                               // 0x138 (event node array)
+    int unk13C;                                          // 0x13C (event node array count)
+    u8 unk140[0x144 - 0x140];                            // 0x140
+    CUICfUnk144* unk144;                                 // 0x144
+    CUICfInitSlot mInitSlots[8];                         // 0x148
+    // Slot0.unk00[0]/[1] are manager-wide clear/mark flags (0x148/0x149).
+    u8 unkC88[8];                                        // 0xC88
+    u16 mFlags;                                          // 0xC90 - Move bitflags
+    u8 unkC92[2];                                        // 0xC92
+
+    static CUICfManager* spInstance;
+}; // size = 0xC94
+/* end "kyoshin/CUICfManager.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 7 "kyoshin/CUIWindowManager.hpp" */
+#pragma once
+
+/* "src/kyoshin/CUIWindowManager.hpp" line 2 "kyoshin/cf/IFlagEvent.hpp" */
+/* end "kyoshin/cf/IFlagEvent.hpp" */
+/* "src/kyoshin/CUIWindowManager.hpp" line 3 "monolib/util/reslist.hpp" */
+/* end "monolib/util/reslist.hpp" */
+/* "src/kyoshin/CUIWindowManager.hpp" line 4 "monolib/work/CTTask.hpp" */
+/* end "monolib/work/CTTask.hpp" */
+
+class IUIWindow;
+
+class CUIWindowManager : public CTTask<CUIWindowManager>, public cf::IFlagEvent{
+public:
+    static CUIWindowManager* getInstance();
+    static CUIWindowManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
+
+    void Term();
+    void Move();
+
+    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
+    bool hasOpenWindows() const {
+        return !mWindowList1.empty() || !mWindowList2.empty();
+    }
+
+private:
+    //0x00-0x54 CTTask
+    //0x54-0x58 cf::IFlagEvent
+    char unk58[0x5C - 0x58]; //0x58
+    reslist<IUIWindow*> mWindowList1; //0x5C - primary window queue
+    reslist<IUIWindow*> mWindowList2; //0x7C - secondary window queue
+    IUIWindow* unk9C; //0x9C - child window flagged for removal on Term
+    bool unkA0; //0xA0 - request: remove flagged/all windows in both queues
+    bool unkA1; //0xA1 - request: force update-mark on all windows in both queues
+    char unkA2[0xA4 - 0xA2]; //0xA2
+
+    static CUIWindowManager* spInstance;
+
+}; //size = 0xA4
+/* end "kyoshin/CUIWindowManager.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 8 "kyoshin/cf/CTaskCulling.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CTaskCulling.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/CTaskCulling.hpp" line 3 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+/* "src/kyoshin/cf/CTaskCulling.hpp" line 4 "monolib/math.hpp" */
+/* end "monolib/math.hpp" */
+/* "src/kyoshin/cf/CTaskCulling.hpp" line 5 "monolib/scn.hpp" */
+/* end "monolib/scn.hpp" */
+/* "src/kyoshin/cf/CTaskCulling.hpp" line 6 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+/* "src/kyoshin/cf/CTaskCulling.hpp" line 7 "kyoshin/COccCulling.hpp" */
+#pragma once
+
+/* "src/kyoshin/COccCulling.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/COccCulling.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+/* "src/kyoshin/COccCulling.hpp" line 4 "monolib/math.hpp" */
+/* end "monolib/math.hpp" */
+
+// Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).
+extern "C" const float lbl_eu_80667C88;
+
+//Some type of view frustum?
+struct CCullFrustum{
+    enum Flags{
+        FLAG_0 = 1 << 0,
+        FLAG_1 = 1 << 1,
+        FLAGS_01 = (FLAG_0 | FLAG_1) 
     };
-}
-/* end "kyoshin/CGame.hpp" */
-/* "src/kyoshin/CGame.cpp" line 1 "kyoshin/cf/CTaskREvent.hpp" */
+
+    void init(const ml::CVec3& pos, const ml::CVec3& rot, const ml::CVec3& scale, u32 flags){
+        mPos = pos;
+        mRot = rot;
+        mScale = ml::CVec3(scale.x, scale.y, lbl_eu_80667C88);
+        mInFirstList = true;
+        unkC0[0] = lbl_eu_80667C88;
+        unkC0[1] = lbl_eu_80667C88;
+        unkC0[2] = lbl_eu_80667C88;
+        unkC0[3] = lbl_eu_80667C88;
+        unk12C = 1;
+        mFlags = flags;
+    }
+
+    ml::CVec3 mPos; //0x0
+    ml::CVec3 mRot; //0xC
+    ml::CVec3 mScale; //0x18
+    //unsure
+    ml::CVec3 mDir; //0x24
+    ml::CMat34 mMat; //0x30
+    ml::CMat34 mMatInv; //0x60
+    ml::CVec3 unk90[4]; //0x90
+    float unkC0[4]; //unused?
+    ml::CPlane mPlane0; //0xD0
+    ml::CPlane mPlane1; //0xE0
+    ml::CPlane mPlane2; //0xF0
+    ml::CPlane mPlane3; //0x100
+    ml::CPlane mPlane4; //0x110
+    bool mInFirstList; //0x120
+    float unk124; //Near plane value?
+    float unk128; //Far plane value?
+    u32 unk12C;
+    u32 mFlags; //0x130
+};
+
+class COccCulling{
+public:
+    COccCulling();
+    virtual ~COccCulling();
+    void func_801A06F8(u32 r4, int size);
+    DECOMP_DONT_INLINE void func_801A0794();
+    int addFrustum(const ml::CVec3& r4, const ml::CVec3& r5, const ml::CVec3& r6, u32 flags);
+    void setFrustum(CCullFrustum* r4);
+    bool func_801A0F04(ml::CFrustum* r4);
+    void func_801A1188(CCullFrustum* r4);
+    bool func_801A1444(const ml::CVec3& vec, float distance);
+    bool func_801A1550(const ml::CVec3& rayStartPos, const ml::CVec3& rayEndPos, UNKWORD r6);
+
+    //0x0: vtable
+    resvector<CCullFrustum*> mFrustumList1; //0x4
+    resvector<CCullFrustum*> mFrustumList2; //0x14
+    ml::CFrustum* unk24;
+    mtl::ALLOC_HANDLE unk28;
+    bool unk2C;
+    u8 unk2D;
+    u8 unk2E;
+
+private:
+    static ml::CVec3 sPlaneCoords[];
+};
+/* end "kyoshin/COccCulling.hpp" */
+
+namespace cf{
+
+    //size: 0x124
+    class CTaskCulling : public CTTask<CTaskCulling>, public IWorkEvent, public IScnRender, public ICulling {
+    public:
+        CTaskCulling(CScn* pScene);
+        virtual ~CTaskCulling();
+
+        static CTaskCulling* create(CProcess* pParent, CScn* pScene);
+        static CTaskCulling* getInstance();
+
+        virtual void Init();
+        virtual void Term();
+        virtual void Move();
+        virtual void Draw();
+
+        virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
+        virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
+        virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
+        virtual void cbRenderBefore();
+
+        static void func_801A2BD0(u32 r3);
+        static UNKTYPE* func_801A2C04();
+        static void func_801A2C94();
+        static void func_801A2CAC();
+
+
+        //0x0: vtable (CTTask)
+        //0x4-3C: CProcess
+        //0x3C-54: CTTask
+        //0x54: vtable 2 (IWorkEvent)
+        //0x58: vtable 3 (IScnRender)
+        //0x5C: vtable 4 (ICulling)
+        COccCulling mOccCulling; //0x60
+        CScn* mpScene; //0x90
+        UNKTYPE* unk94;
+        ml::FixStr<64> unk98;
+        ml::FixStr<64> unkDC;
+        u32 unk120;
+
+    private:
+        static ml::CVec3 lbl_80579018_0;
+        static ml::CVec3 lbl_80579018_C;
+        static ml::CVec3 lbl_80579018_18;
+        static ml::CVec4 lbl_80579018_28;
+
+        static CTaskCulling* spInstance;
+    };
+} //namespace  cf
+/* end "kyoshin/cf/CTaskCulling.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 9 "kyoshin/cf/CTaskREvent.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CTaskREvent.hpp" line 2 "types.h" */
@@ -245136,1637 +245893,7 @@ namespace cf{
     }; //size = 0x1F8
 } //namespace cf
 /* end "kyoshin/cf/CTaskREvent.hpp" */
-/* "src/kyoshin/CGame.cpp" line 2 "kyoshin/cf/CBattleManager.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/CBattleManager.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 3 "kyoshin/cf/IFactoryEvent.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/IFactoryEvent.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf{
-
-    class IFactoryEvent{
-    public:
-        virtual ~IFactoryEvent(){}
-        virtual void FactoryEvent1(){}
-        virtual void FactoryEvent2() = 0;
-        virtual void FactoryEvent3(){}
-        virtual void FactoryEvent4(){}
-    };
-
-}
-/* end "kyoshin/cf/IFactoryEvent.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 4 "kyoshin/cf/object/CfObjectActor.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CfObjectActor.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/object/CfObjectActor.hpp" line 3 "kyoshin/cf/object/CfObjectMove.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CfObjectMove.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/object/CfObjectMove.hpp" line 3 "kyoshin/cf/object/CfObjectModel.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CfObjectModel.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/object/CfObjectModel.hpp" line 3 "kyoshin/cf/object/CfObject.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CfObject.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/object/CfObject.hpp" line 3 "kyoshin/cf/object/CObjectParam.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CObjectParam.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/object/CObjectParam.hpp" line 3 "kyoshin/cf/object/CObjectState.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CObjectState.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    //min size: 0x10
-    class CObjectState {
-    public:
-        virtual void CObjectState_UnkVirtualFunc1();  //0x8
-        virtual void CObjectState_UnkVirtualFunc2();  //0xC
-        virtual void CObjectState_UnkVirtualFunc3();  //0x10
-        virtual void CObjectState_UnkVirtualFunc4();  //0x14
-        virtual void CObjectState_UnkVirtualFunc5();  //0x18
-        virtual void CObjectState_UnkVirtualFunc6();  //0x1C
-        virtual void CObjectState_UnkVirtualFunc7();  //0x20
-        virtual void CObjectState_UnkVirtualFunc8();  //0x24
-        virtual void CObjectState_UnkVirtualFunc9();  //0x28
-        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
-        virtual void CObjectState_UnkVirtualFunc11(); //0x30
-        virtual void CObjectState_UnkVirtualFunc12(); //0x34
-        virtual void CObjectState_UnkVirtualFunc13(); //0x38
-
-        //0x0: vtable
-        u8 unk4_3[0xC];
-    };
-}
-/* end "kyoshin/cf/object/CObjectState.hpp" */
-
-namespace cf {
-    //min size: 0x38
-    class CObjectParam : public CObjectState {
-    public:
-        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
-        virtual void CObjectParam_UnkVirtualFunc2(); //0x40
-        virtual void CObjectParam_UnkVirtualFunc3(); //0x44
-        virtual void CObjectParam_UnkVirtualFunc4(); //0x48
-        virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
-        virtual void CObjectParam_UnkVirtualFunc6(); //0x50
-
-        //0x0: vtable
-        //0x0-10: CObjectState
-        u8 unk10_3[0x28];
-    };
-}
-/* end "kyoshin/cf/object/CObjectParam.hpp" */
-
-namespace cf {
-    //min size: 0x70
-    class CfObject : public CObjectParam {
-    public:
-        //vtable 1 (CfObject)
-        virtual ~CfObject();                      //0x54
-        virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3();      //0x5C
-        virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
-        virtual void CfObject_UnkVirtualFunc5();      //0x64
-        virtual void CfObject_UnkVirtualFunc6();      //0x68
-        virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
-        virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
-        virtual void CfObject_UnkVirtualFunc9();      //0x74
-        virtual void CfObject_UnkVirtualFunc10();     //0x78
-        virtual void CfObject_UnkVirtualFunc11();     //0x7C
-        virtual void CfObject_UnkVirtualFunc12();     //0x80
-        virtual void CfObject_UnkVirtualFunc13();     //0x84
-        virtual void CfObject_UnkVirtualFunc14();     //0x88
-        virtual void CfObject_UnkVirtualFunc15();     //0x8C
-        virtual void CfObject_UnkVirtualFunc16();     //0x90
-        virtual void CfObject_UnkVirtualFunc17();     //0x94
-        virtual void CfObject_UnkVirtualFunc18();     //0x98
-        virtual void CfObject_UnkVirtualFunc19();     //0x9C
-        virtual void CfObject_UnkVirtualFunc20();     //0xA0
-        virtual void CfObject_UnkVirtualFunc21();     //0xA4
-        virtual void CfObject_UnkVirtualFunc22();     //0xA8
-        virtual void CfObject_UnkVirtualFunc23();     //0xAC
-        virtual void CfObject_UnkVirtualFunc24();     //0xB0
-        virtual void CfObject_UnkVirtualFunc25();     //0xB4
-        virtual void CfObject_UnkVirtualFunc26();     //0xB8
-        virtual void CfObject_UnkVirtualFunc27();     //0xBC
-        virtual void CfObject_UnkVirtualFunc28();     //0xC0
-        virtual void CfObject_UnkVirtualFunc29();     //0xC4
-        virtual void CfObject_UnkVirtualFunc30();     //0xC8
-        virtual void CfObject_UnkVirtualFunc31();     //0xCC
-        virtual void CfObject_UnkVirtualFunc32();     //0xD0
-        virtual void CfObject_UnkVirtualFunc33();     //0xD4
-        virtual void CfObject_UnkVirtualFunc34();     //0xD8
-        virtual void CfObject_UnkVirtualFunc35();     //0xDC
-        virtual void CfObject_UnkVirtualFunc36();     //0xE0
-        virtual void CfObject_UnkVirtualFunc37();     //0xE4
-        virtual void CfObject_UnkVirtualFunc38();     //0xE8
-        virtual void CfObject_UnkVirtualFunc39();     //0xEC
-        virtual void CfObject_UnkVirtualFunc40();     //0xF0
-        virtual void CfObject_UnkVirtualFunc41();     //0xF4
-        virtual void CfObject_UnkVirtualFunc42();     //0xF8
-        virtual void CfObject_UnkVirtualFunc43();     //0xFC
-        virtual void CfObject_UnkVirtualFunc44();     //0x100
-        virtual void CfObject_UnkVirtualFunc45();     //0x104
-        virtual void CfObject_UnkVirtualFunc46();     //0x108
-        virtual void CfObject_UnkVirtualFunc47();     //0x10C
-        virtual void CfObject_UnkVirtualFunc48();     //0x110
-        virtual void CfObject_UnkVirtualFunc49();     //0x114
-        virtual void CfObject_UnkVirtualFunc50();     //0x118
-        virtual void CfObject_UnkVirtualFunc51();     //0x11C
-        virtual void CfObject_UnkVirtualFunc52();     //0x120
-        virtual void CfObject_UnkVirtualFunc53();     //0x124
-        virtual void CfObject_UnkVirtualFunc54();     //0x128
-        virtual void CfObject_UnkVirtualFunc55();     //0x12C
-        virtual void CfObject_UnkVirtualFunc56();     //0x130
-        virtual void CfObject_UnkVirtualFunc57();     //0x134
-        virtual void CfObject_UnkVirtualFunc58();     //0x138
-        virtual void CfObject_UnkVirtualFunc59();     //0x13C
-        virtual void CfObject_UnkVirtualFunc60();     //0x140
-        virtual void CfObject_UnkVirtualFunc61();     //0x144
-        virtual void CfObject_UnkVirtualFunc62();     //0x148
-        virtual void CfObject_UnkVirtualFunc63();     //0x14C
-        virtual void CfObject_UnkVirtualFunc64();     //0x150
-        virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
-        virtual void CfObject_UnkVirtualFunc67();     //0x15C
-        virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
-        virtual void CfObject_UnkVirtualFunc69();     //0x164
-        virtual void CfObject_UnkVirtualFunc70();     //0x168
-        virtual void CfObject_UnkVirtualFunc71();     //0x16C
-        virtual void CfObject_UnkVirtualFunc72();     //0x170
-        virtual void CfObject_UnkVirtualFunc73();     //0x174
-
-        //not sure if belongs here? (can be in any class from CObjectState to CfObjectMove)
-        void func_800BE898(int, u32, float, float);
-
-
-        //0x0: vtable
-        //0x0-38: CObjectParam
-        u8 unk38_3[0x64 - 0x38];
-        u32 unk64;
-        u8 unk68[0x70 - 0x68];
-    };
-}
-/* end "kyoshin/cf/object/CfObject.hpp" */
-
-namespace cf {
-    //min size: 0xbe
-    class CfObjectModel : public CfObject {
-    public:
-        //vtable 1 (CfObject)
-        virtual ~CfObjectModel();
-        //vtable 1 (CfObjectModel)
-        virtual void CfObjectModel_UnkVirtualFunc1();  //0x178
-        virtual void CfObjectModel_UnkVirtualFunc2();  //0x17C
-        virtual void CfObjectModel_UnkVirtualFunc3();  //0x180
-        virtual void CfObjectModel_UnkVirtualFunc4();  //0x184
-        virtual void CfObjectModel_UnkVirtualFunc5();  //0x188
-        virtual void CfObjectModel_UnkVirtualFunc6();  //0x18C
-        virtual void CfObjectModel_UnkVirtualFunc7();  //0x190
-        virtual void CfObjectModel_UnkVirtualFunc8();  //0x194
-        virtual void CfObjectModel_UnkVirtualFunc9();  //0x198
-        virtual void CfObjectModel_UnkVirtualFunc10(); //0x19C
-        virtual void CfObjectModel_UnkVirtualFunc11(); //0x1A0
-        virtual void CfObjectModel_UnkVirtualFunc12(); //0x1A4
-        virtual void CfObjectModel_UnkVirtualFunc13(); //0x1A8
-        virtual void CfObjectModel_UnkVirtualFunc14(); //0x1AC
-        virtual void CfObjectModel_UnkVirtualFunc15(); //0x1B0
-        virtual void CfObjectModel_UnkVirtualFunc16(); //0x1B4
-        virtual void CfObjectModel_UnkVirtualFunc17(); //0x1B8
-        virtual void CfObjectModel_UnkVirtualFunc18(); //0x1BC
-        virtual void CfObjectModel_UnkVirtualFunc19(); //0x1C0
-        virtual void CfObjectModel_UnkVirtualFunc20(); //0x1C4
-
-        //0x0: vtable
-        //0x0-70: CfObject
-        u8 unk70_3[0x1C];
-        u16 unk8C_3;
-        u8 unk8E_3[0x30];
-    };
-}
-/* end "kyoshin/cf/object/CfObjectModel.hpp" */
-
-namespace cf {
-    //min size: 0x715
-    class CfObjectMove : public CfObjectModel {
-    public:
-        CfObjectMove();
-        //vtable 1 (CfObject)
-        virtual ~CfObjectMove();
-        //vtable 1 (CfObjectMove)
-        virtual void CfObjectMove_UnkVirtualFunc1();  //0x1C8
-        virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
-        virtual void CfObjectMove_UnkVirtualFunc3();  //0x1D0
-        virtual void CfObjectMove_UnkVirtualFunc4();  //0x1D4
-        virtual void CfObjectMove_UnkVirtualFunc5();  //0x1D8
-        virtual void CfObjectMove_UnkVirtualFunc6();  //0x1DC
-        virtual void CfObjectMove_UnkVirtualFunc7();  //0x1E0
-        virtual void CfObjectMove_UnkVirtualFunc8();  //0x1E4
-        virtual void CfObjectMove_UnkVirtualFunc9();  //0x1E8
-        virtual void CfObjectMove_UnkVirtualFunc10(); //0x1EC
-        virtual void CfObjectMove_UnkVirtualFunc11(); //0x1F0
-        virtual void CfObjectMove_UnkVirtualFunc12(); //0x1F4
-        virtual void CfObjectMove_UnkVirtualFunc13(); //0x1F8
-        virtual void CfObjectMove_UnkVirtualFunc14(); //0x1FC
-        virtual void CfObjectMove_UnkVirtualFunc15(); //0x200
-        virtual void CfObjectMove_UnkVirtualFunc16(); //0x204
-        virtual void CfObjectMove_UnkVirtualFunc17(); //0x208
-        virtual void CfObjectMove_UnkVirtualFunc18(); //0x20C
-        virtual void CfObjectMove_UnkVirtualFunc19(); //0x210
-        virtual void CfObjectMove_UnkVirtualFunc20(); //0x214
-        virtual void CfObjectMove_UnkVirtualFunc21(); //0x218
-        virtual void CfObjectMove_UnkVirtualFunc22(); //0x21C
-        virtual void CfObjectMove_UnkVirtualFunc23(); //0x220
-
-        //0x0: vtable
-        //0x0-BE: CfObjectModel
-        u8 unkBE_3[0x657];
-        u8 unk715[3]; //might not belong here
-    };
-}
-/* end "kyoshin/cf/object/CfObjectMove.hpp" */
-/* "src/kyoshin/cf/object/CfObjectActor.hpp" line 4 "kyoshin/cf/object/CAIAction.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CAIAction.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-
-// 0x20-byte AI action slot (slots[] / trailer / export buffer)
-struct CAIActionSlot {
-    u32 unk00; // 0x00
-    u32 unk04; // 0x04
-    u32 unk08; // 0x08
-    u32 unk0C; // 0x0C
-    u16 unk10; // 0x10
-    s16 unk12; // 0x12
-    f32 unk14; // 0x14
-    u32 unk18; // 0x18
-    u32 unk1C; // 0x1C
-};
-
-// symbols.txt mangles Fv; retail passes out buffers in r4/r5
-struct CAIActionExport {
-    u8 pad[0x200];
-    CAIActionSlot* buffer; // 0x200
-    u32 unk204;            // 0x204
-    u32 unk208;            // 0x208
-    u32 unk20C;            // 0x20C - column stride
-};
-
-// size: 0xB1C
-class CAIAction {
-public:
-    CAIAction();
-
-    // Declared Fv for vtable; body is extern "C" with outA/outB args
-    virtual void CAIAction_UnkVirtualFunc1(); // 0x8
-    virtual void CAIAction_UnkVirtualFunc2(); // 0xC
-
-    // 0x0: vtable
-    u32 unk4;          // 0x4
-    u16 unk8;          // 0x8
-    u8 padA[2];        // 0xA
-    u8 slots[0x200];   // 0xC .. 0x20C (16 * 0x20)
-    void* unk20C;      // 0x20C - pointer to slots
-    u32 unk210;        // 0x210
-    u32 unk214;        // 0x214
-    u32 unk218;        // 0x218 - capacity (0x10)
-    u8 entries[0x8C0]; // 0x21C .. 0xADC (160 * 0xE)
-    u8 trailer[0x20];  // 0xADC .. 0xAFC (CAIActionSlot)
-    u32 unkAFC;        // 0xAFC
-    u8 unkB00;         // 0xB00
-    u8 padB01[0xF];    // 0xB01
-    u32 unkB10;        // 0xB10
-    u32 unkB14;        // 0xB14
-    u32 unkB18;        // 0xB18
-};
-
-} // namespace cf
-
-// Fv mangling, but callers leave outA in r4 and outB in r5
-extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
-                                                              cf::CAIActionSlot* outA,
-                                                              cf::CAIActionExport* outB);
-
-// Inverse of UnkVirtualFunc1: imports trailer from inA, then imports ring
-// entries from inB into this->unk20C. Same Fv mangling / r4-r5 ABI.
-extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
-                                                              cf::CAIActionSlot* inA,
-                                                              cf::CAIActionExport* inB);
-
-extern void func_8014A86C(void*);
-extern void func_8014A8F8();
-/* end "kyoshin/cf/object/CAIAction.hpp" */
-/* "src/kyoshin/cf/object/CfObjectActor.hpp" line 5 "kyoshin/cf/object/CActorParam.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CActorParam.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/object/CActorParam.hpp" line 3 "kyoshin/cf/object/CDebugState.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CDebugState.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    class CDebugState {
-
-    };
-}
-/* end "kyoshin/cf/object/CDebugState.hpp" */
-/* "src/kyoshin/cf/object/CActorParam.hpp" line 4 "kyoshin/cf/object/CBattleState.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CBattleState.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
-    // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
-    // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
-    struct CBattleStateEntry {
-        u32 unk00; // 0x00
-        u32 unk04; // 0x04
-        u32 unk08; // 0x08
-        u16 unk0C; // 0x0C - id; also bit index into CBattleState::unk15AC
-        s32 unk10; // 0x10 - clamped value
-        s16 unk14; // 0x14
-        s16 unk16; // 0x16
-        s16 unk18; // 0x18 - lower clamp bound (0 == no lower clamp)
-        s16 unk1A; // 0x1A
-        f32 unk1C; // 0x1C
-        f32 unk20; // 0x20
-        f32 unk24; // 0x24
-        f32 unk28; // 0x28
-        u16 unk2C; // 0x2C
-        u16 unk2E; // 0x2E
-        u32 unk30; // 0x30
-    };
-
-    // size: 0x15DC
-    class CBattleState {
-    public:
-        virtual void CBattleState_UnkVirtualFunc1();  //0x8
-        virtual void CBattleState_UnkVirtualFunc2();  //0xC
-        virtual void CBattleState_UnkVirtualFunc3();  //0x10
-        virtual void CBattleState_UnkVirtualFunc4();  //0x14
-        virtual void CBattleState_UnkVirtualFunc5();  //0x18
-        virtual void CBattleState_UnkVirtualFunc6();  //0x1C
-        virtual void CBattleState_UnkVirtualFunc7();  //0x20
-        virtual void CBattleState_UnkVirtualFunc8();  //0x24
-        virtual void CBattleState_UnkVirtualFunc9();  //0x28
-        virtual void CBattleState_UnkVirtualFunc10(); //0x2C
-        virtual void CBattleState_UnkVirtualFunc11(); //0x30
-        virtual void CBattleState_UnkVirtualFunc12(); //0x34
-        virtual void CBattleState_UnkVirtualFunc13(); //0x38
-        virtual void CBattleState_UnkVirtualFunc14(); //0x3C
-        virtual void CBattleState_UnkVirtualFunc15(); //0x40
-        virtual void CBattleState_UnkVirtualFunc16(); //0x44
-        virtual void CBattleState_UnkVirtualFunc17(); //0x48
-        virtual void CBattleState_UnkVirtualFunc18(); //0x4C
-        virtual void CBattleState_UnkVirtualFunc19(); //0x50
-        virtual void CBattleState_UnkVirtualFunc20(); //0x54
-        virtual void CBattleState_UnkVirtualFunc21(); //0x58
-        virtual void CBattleState_UnkVirtualFunc22(); //0x5C
-        virtual void CBattleState_UnkVirtualFunc23(); //0x60
-        virtual void CBattleState_UnkVirtualFunc24(); //0x64
-        virtual void CBattleState_UnkVirtualFunc25(); //0x68
-        virtual void CBattleState_UnkVirtualFunc26(); //0x6C
-        virtual void CBattleState_UnkVirtualFunc27(); //0x70
-        virtual void CBattleState_UnkVirtualFunc28(); //0x74
-        virtual void CBattleState_UnkVirtualFunc29(); //0x78
-        virtual void CBattleState_UnkVirtualFunc30(); //0x7C
-        virtual void CBattleState_UnkVirtualFunc31(); //0x80
-        virtual void CBattleState_UnkVirtualFunc32(); //0x84
-        virtual void CBattleState_UnkVirtualFunc33(); //0x88
-
-        CBattleState();
-
-        u16 unk4;
-        u16 unk6;
-        u8 unk8[0x1520];
-        u8 unk1528[4];
-        u8 unk152C[0x80];
-        u8 unk15AC[0x15DC - 0x15AC];
-    };
-}
-
-// symbols.txt mangles Fv; retail leaves the arg entry in r4 (same pattern
-// as cf::CAIAction's UnkVirtualFunc1/2).
-extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
-
-// symbols.txt mangles Fv; retail leaves the caller's mask in r4 (same ABI
-// pattern as CBattleState_UnkVirtualFunc6).
-extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 mask);
-
-// symbols.txt mangles Fv; retail leaves the id in r4 (same fake-Fv ABI as
-// UnkVirtualFunc6 above).
-extern "C" int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 id);
-
-namespace cf {
-    struct CBattleStateSrcEntry;
-}
-
-// symbols.txt mangles Fv; retail leaves the source table pointer in r4
-// (same ABI pattern as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, const cf::CBattleStateSrcEntry* src);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* entry);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
-extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
-/* end "kyoshin/cf/object/CBattleState.hpp" */
-/* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/CActorState.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    class CActorState {
-    public:
-        virtual void CActorState_UnkVirtualFunc1(); //0x8
-
-        CActorState(UNKTYPE* r4){
-            unk4 = r4;
-        }
-
-        UNKTYPE* unk4;
-    };
-}
-/* end "kyoshin/cf/object/CActorState.hpp" */
-/* "src/kyoshin/cf/object/CActorParam.hpp" line 6 "kyoshin/cf/CArtsSet.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/CArtsSet.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/CArtsSet.hpp" line 3 "cstring" */
-/* end "cstring" */
-
-namespace cf {
-    
-    //size: 0x88
-    class CAttackParam {
-    public:
-        u8 unk0;
-        u8 unk4[0x20 - 0x4];
-        u32 unk20;
-        u32 unk24;
-        u16 unk28;
-        u8 unk2A;
-        u8 unk2B;
-        float unk2C;
-        float unk30;
-        u16 unk34;
-        u16 unk36;
-        u8 unk38[4];
-        u16 unk3C;
-        u8 unk3E;
-        u8 unk3F; //padding?
-        u16 unk40;
-        u8 unk42;
-        u8 unk43;
-        u8 unk44;
-        u16 unk46;
-        u16 unk48;
-        u16 unk4A;
-        u16 unk4C;
-        float unk50;
-        float unk54;
-        u16 unk58;
-        u16 unk5A;
-        u16 unk5C;
-        u16 unk5E;
-        float unk60;
-        u16 unk64;
-        u8 unk66;
-        u8 unk67;
-        u16 unk68;
-        u16 unk6A;
-        u8 unk6C[5];
-        u8 unk71; //filler?
-        u16 unk72;
-        u16 unk74;
-        u8 unk76; //filler?
-        u8 unk77;
-        u32 unk78;
-        float unk7C;
-        float unk80;
-        //0x84: vtable
-
-        CAttackParam();
-
-        virtual void CAttackParam_UnkVirtualFunc1(){ //0x8
-            unk0 = 0;
-            unk20 = 0;
-            unk24 = 0;
-            unk28 = 0;
-            unk2A = 1;
-            unk2B = 0;
-            unk2C = 0;
-            unk30 = 0;
-            unk34 = 0;
-            unk36 = 0;
-            unk3C = 0;
-            unk3E = 0;
-            unk40 = 0;
-            unk42 = 0;
-            unk43 = 0;
-            unk44 = 0;
-            unk46 = 0;
-            unk48 = 0;
-            unk4A = 0;
-            unk4C = 0;
-            unk50 = 0;
-            unk54 = 0;
-            unk58 = 0;
-            unk5A = 0;
-            unk5C = 0;
-            unk5E = 0;
-            unk60 = 0;
-            unk64 = 0;
-            unk66 = 0;
-            unk67 = 0;
-            unk68 = 0;
-            unk6A = 0;
-            unk72 = 0;
-            unk74 = 0;
-            unk77 = 0;
-            unk7C = 0;
-            unk80 = 0;  
-
-            std::memset(unk38, 0, sizeof(unk38));
-            std::memset(unk6C, 0, sizeof(unk6C));
-        }
-        virtual u8 CAttackParam_UnkVirtualFunc2(); //0xC
-        virtual void CAttackParam_UnkVirtualFunc3(u8 r4); //0x10
-        virtual void CAttackParam_UnkVirtualFunc4(); //0x14
-
-    };
-
-    struct _sAttackSet {
-    };
-
-    //size: 0x334
-    class CAttackSet : _sAttackSet {
-    public:
-        CAttackSet(){}
-        virtual void func_80153E88();
-        
-        //0x0: vtable
-        CAttackParam mAttackParams[6]; //0x4
-    };
-
-    //size: 0x8C
-    class CArtsParam : public CAttackParam {
-    public:
-        //0x0: vtable
-        //0x0-0x88: CAttackParam
-        UNKTYPE* unk88;
-
-        CArtsParam();
-        virtual void CArtsParam_UnkVirtualFunc1();
-        virtual u8 CArtsParam_UnkVirtualFunc2();
-        virtual void CArtsParam_UnkVirtualFunc3(u8 r4);
-    };
-
-    //size: 0x38
-    struct _sArtsSet {
-        u16 unk0;
-        u8 unk2[2];
-        u8 unk4[0x30];
-        //0x34: vtable
-
-        _sArtsSet();
-        virtual void _sArtsSet_UnkVirtualFunc1(){ //0x8
-            unk0 = 0;
-            std::memset(unk4, 0, sizeof(unk4));
-        }
-    };
-
-    //size: 0xD58
-    class CArtsSet : _sArtsSet {
-    public:
-        CArtsSet(){}
-        virtual void CArtsSet_UnkVirtualFunc1(); //0x8
-
-        //0x0: vtable
-        //0x0-38: _sArtsSet
-        CArtsParam mArtsParams[24]; //0x38
-    };
-};
-/* end "kyoshin/cf/CArtsSet.hpp" */
-/* "src/kyoshin/cf/object/CActorParam.hpp" line 7 "cstring" */
-/* end "cstring" */
-
-namespace cf {
-
-    //size: 0x7C
-    struct CActorParam_UnkStruct2 {
-        u8 unk0[0x40];
-        u16 unk40;
-        u8 unk42[0x78 - 0x42];
-        u32 unk78;
-    };
-
-    //might be fake?
-    struct CActorParam_UnkStruct6 {
-        CActorParam_UnkStruct6(){
-            unk0 = 0;
-        }
-    
-        u8 unk0;
-    };
-
-    struct CActorParam_Bitflags {
-        CActorParam_Bitflags(){
-            flags = 0;
-        }
-
-        u32 flags;
-    };
-
-    //size: 0xBC
-    struct CActorParam_UnkStruct1 {
-        CActorParam_UnkStruct1() {
-            init();
-        }
-
-        void init(){
-            unk0 = 0;
-            unk4 = 0;
-            unk48 = 0;
-            unk4C = -1;
-            unk50 = 0;
-            unk54 = 0;
-            unk58 = 0;
-            unk5C = 0;
-            unk60 = 0;
-            unk64 = 0;
-            unk7C = 0;
-            unk80 = 0;
-            unkB8 = 0;
-            unk68 = 0;
-            unk6C = 0;
-            unk70 = 0;
-            unk72 = 0;
-            std::memset(unk8, 0, sizeof(unk8));
-            std::memset(unk84, 0, sizeof(unk84));
-            mFlagsArray[0].flags = 0;
-            mFlagsArray[1].flags = 0;
-        }
-
-        u32 unk0;
-        u32 unk4;
-        u8 unk8[0x40];
-        u32 unk48;
-        int unk4C;
-        CActorParam_UnkStruct2* unk50;
-        float unk54;
-        float unk58;
-        float unk5C;
-        float unk60;
-        float unk64;
-        float unk68;
-        float unk6C;
-        u16 unk70;
-        u16 unk72;
-        CActorParam_Bitflags mFlagsArray[2]; //0x74
-        u32 unk7C;
-        u16 unk80;
-        u8 unk82[2];
-        u8 unk84[0x34];
-        u32 unkB8;
-
-        enum Flags_74 {
-            FLAG_BIT_0 = (1 << 0),
-            FLAG_BIT_1 = (1 << 1),
-            FLAG_BIT_2 = (1 << 2),
-            FLAG_BIT_3 = (1 << 3),
-            FLAG_BIT_4 = (1 << 4),
-            FLAG_BIT_5 = (1 << 5),
-            FLAG_BIT_6 = (1 << 6),
-            FLAG_BIT_7 = (1 << 7),
-            FLAG_BIT_8 = (1 << 8),
-            FLAG_BIT_9 = (1 << 9),
-            FLAG_BIT_10 = (1 << 10),
-            FLAG_BIT_11 = (1 << 11),
-            FLAG_BIT_12 = (1 << 12),
-            FLAG_BIT_13 = (1 << 13),
-            FLAG_BIT_14 = (1 << 14),
-            FLAG_BIT_15 = (1 << 15),
-            FLAG_BIT_16 = (1 << 16),
-            FLAG_BIT_17 = (1 << 17),
-            FLAG_BIT_18 = (1 << 18),
-            FLAG_BIT_19 = (1 << 19),
-            FLAG_BIT_20 = (1 << 20),
-            FLAG_BIT_21 = (1 << 21),
-            FLAG_BIT_22 = (1 << 22),
-            FLAG_BIT_23 = (1 << 23),
-            FLAG_BIT_24 = (1 << 24),
-            FLAG_BIT_25 = (1 << 25),
-            FLAG_BIT_26 = (1 << 26),
-            FLAG_BIT_27 = (1 << 27),
-            FLAG_BIT_28 = (1 << 28),
-            FLAG_BIT_29 = (1 << 29),
-            FLAG_BIT_30 = (1 << 30),
-            FLAG_BIT_31 = (1 << 31),
-        };
-    };
-
-    //size: 0x52
-    struct CActorParam_UnkStruct4 {
-        CActorParam_UnkStruct4() {
-            std::memset(this, 0, sizeof(*this)); //wtf??
-        }
-
-        u8 unk0[0x4E];
-        CActorParam_UnkStruct6 unk4E[4];
-    };
-
-    //TODO: related to above struct?
-    //size: 0x78
-    struct CActorParam_UnkStruct3 {
-        CActorParam_UnkStruct3() {
-            unk74 = 0;
-
-            std::memset(this, 0, sizeof(*this)); //wtf??
-
-            unk5C = 1.0f;
-            unk38 = 5;
-            unk3A = 5;
-        }
-
-        u8 unk0[0x38];
-        u16 unk38;
-        u16 unk3A;
-        u8 unk3C[0x44 - 0x3C];
-        float unk44;
-        u8 unk48[4];
-        float unk4C;
-        u8 unk50[0x5C - 0x50];
-        float unk5C;
-        u8 unk60[0x70 - 0x60];
-        CActorParam_UnkStruct6 unk70[4];
-        u32 unk74;
-    };
-
-    //size: 0x18
-    struct CActorParam_UnkStruct5 {
-        CActorParam_UnkStruct5(){
-            std::memset(this, 0, sizeof(*this)); //wtf??
-        }
-
-        void init(){
-            unk14 = 0;
-            unk4 = 0;
-            unk0 = 0;
-            unkC = 0;
-            unk8 = 0;
-            unk10 = 0;
-        }
-
-        float unk0;
-        float unk4;
-        float unk8;
-        float unkC;
-        float unk10;
-        u32 unk14;
-    };
-
-    //size: 0x3384
-    class CActorParam : public CActorState, public CBattleState, public CDebugState {
-    public:
-        CActorParam(UNKTYPE* r4, UNKTYPE* r5);
-    #pragma region vtable
-        virtual void CActorParam_UnkVirtualFunc1();   //0x98
-        virtual void CActorParam_UnkVirtualFunc2();   //0x9C
-        virtual void CActorParam_UnkVirtualFunc3();   //0xA0
-        virtual void CActorParam_UnkVirtualFunc4();   //0xA4
-        virtual void CActorParam_UnkVirtualFunc5();   //0xA8
-        virtual void CActorParam_UnkVirtualFunc6();   //0xAC
-        virtual void CActorParam_UnkVirtualFunc7();   //0xB0
-        virtual void CActorParam_UnkVirtualFunc8();   //0xB4
-        virtual void CActorParam_UnkVirtualFunc9();   //0xB8
-        virtual void CActorParam_UnkVirtualFunc10();  //0xBC
-        virtual void CActorParam_UnkVirtualFunc11();  //0xC0
-        virtual void CActorParam_UnkVirtualFunc12();  //0xC4
-        virtual void CActorParam_UnkVirtualFunc13();  //0xC8
-        virtual void CActorParam_UnkVirtualFunc14();  //0xCC
-        virtual void CActorParam_UnkVirtualFunc15();  //0xD0
-        virtual void CActorParam_UnkVirtualFunc16();  //0xD4
-        virtual void CActorParam_UnkVirtualFunc17();  //0xD8
-        virtual void CActorParam_UnkVirtualFunc18();  //0xDC
-        virtual int CActorParam_UnkVirtualFunc19();  //0xE0
-        virtual void CActorParam_UnkVirtualFunc20();  //0xE4
-        virtual void CActorParam_UnkVirtualFunc21();  //0xE8
-        virtual void CActorParam_UnkVirtualFunc22();  //0xEC
-        virtual void CActorParam_UnkVirtualFunc23();  //0xF0
-        virtual void CActorParam_UnkVirtualFunc24();  //0xF4
-        virtual void CActorParam_UnkVirtualFunc25();  //0xF8
-        virtual void CActorParam_UnkVirtualFunc26();  //0xFC
-        virtual void CActorParam_UnkVirtualFunc27();  //0x100
-        virtual void CActorParam_UnkVirtualFunc28();  //0x104
-        virtual void CActorParam_UnkVirtualFunc29();  //0x108
-        virtual void CActorParam_UnkVirtualFunc30();  //0x10C
-        virtual void CActorParam_UnkVirtualFunc31();  //0x110
-        virtual void CActorParam_UnkVirtualFunc32();  //0x114
-        virtual void CActorParam_UnkVirtualFunc33();  //0x118
-        virtual void CActorParam_UnkVirtualFunc34();  //0x11C
-        virtual void CActorParam_UnkVirtualFunc35();  //0x120
-        virtual void CActorParam_UnkVirtualFunc36();  //0x124
-        virtual void CActorParam_UnkVirtualFunc37();  //0x128
-        virtual void CActorParam_UnkVirtualFunc38();  //0x12C
-        virtual void CActorParam_UnkVirtualFunc39();  //0x130
-        virtual void CActorParam_UnkVirtualFunc40();  //0x134
-        virtual void CActorParam_UnkVirtualFunc41();  //0x138
-        virtual void CActorParam_UnkVirtualFunc42();  //0x13C
-        virtual void CActorParam_UnkVirtualFunc43();  //0x140
-        virtual void CActorParam_UnkVirtualFunc44();  //0x144
-        virtual void CActorParam_UnkVirtualFunc45();  //0x148
-        virtual void CActorParam_UnkVirtualFunc46();  //0x14C
-        virtual void CActorParam_UnkVirtualFunc47();  //0x150
-        virtual void CActorParam_UnkVirtualFunc48();  //0x154
-        virtual void CActorParam_UnkVirtualFunc49();  //0x158
-        virtual void CActorParam_UnkVirtualFunc50();  //0x15C
-        virtual void CActorParam_UnkVirtualFunc51();  //0x160
-        virtual void CActorParam_UnkVirtualFunc52();  //0x164
-        virtual void CActorParam_UnkVirtualFunc53();  //0x168
-        virtual void CActorParam_UnkVirtualFunc54();  //0x16C
-        virtual void CActorParam_UnkVirtualFunc55();  //0x170
-        virtual void CActorParam_UnkVirtualFunc56();  //0x174
-        virtual void CActorParam_UnkVirtualFunc57();  //0x178
-        virtual void CActorParam_UnkVirtualFunc58();  //0x17C
-        virtual void CActorParam_UnkVirtualFunc59();  //0x180
-        virtual void CActorParam_UnkVirtualFunc60();  //0x184
-        virtual void CActorParam_UnkVirtualFunc61();  //0x188
-        virtual void CActorParam_UnkVirtualFunc62();  //0x18C
-        virtual void CActorParam_UnkVirtualFunc63();  //0x190
-        virtual void CActorParam_UnkVirtualFunc64();  //0x194
-        virtual void CActorParam_UnkVirtualFunc65();  //0x198
-        virtual void CActorParam_UnkVirtualFunc66();  //0x19C
-        virtual void CActorParam_UnkVirtualFunc67();  //0x1A0
-        virtual void CActorParam_UnkVirtualFunc68();  //0x1A4
-        virtual void CActorParam_UnkVirtualFunc69();  //0x1A8
-        virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
-        virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
-        virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
-        virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
-        virtual void CActorParam_UnkVirtualFunc74();  //0x1BC
-        virtual void CActorParam_UnkVirtualFunc75();  //0x1C0
-        virtual void CActorParam_UnkVirtualFunc76();  //0x1C4
-        virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
-        virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
-        virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
-        virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
-        virtual void CActorParam_UnkVirtualFunc81();  //0x1D8
-        virtual void CActorParam_UnkVirtualFunc82();  //0x1DC
-        virtual void CActorParam_UnkVirtualFunc83();  //0x1E0
-        virtual void CActorParam_UnkVirtualFunc84();  //0x1E4
-        virtual void CActorParam_UnkVirtualFunc85();  //0x1E8
-        virtual void CActorParam_UnkVirtualFunc86();  //0x1EC
-        virtual void CActorParam_UnkVirtualFunc87();  //0x1F0
-        virtual void CActorParam_UnkVirtualFunc88();  //0x1F4
-        virtual void CActorParam_UnkVirtualFunc89();  //0x1F8
-        virtual void CActorParam_UnkVirtualFunc90();  //0x1FC
-        virtual void CActorParam_UnkVirtualFunc91();  //0x200
-        virtual void CActorParam_UnkVirtualFunc92();  //0x204
-        virtual void CActorParam_UnkVirtualFunc93();  //0x208
-        virtual void CActorParam_UnkVirtualFunc94();  //0x20C
-        virtual void CActorParam_UnkVirtualFunc95();  //0x210
-        virtual void CActorParam_UnkVirtualFunc96();  //0x214
-        virtual void CActorParam_UnkVirtualFunc97();  //0x218
-        virtual void CActorParam_UnkVirtualFunc98();  //0x21C
-        virtual void CActorParam_UnkVirtualFunc99();  //0x220
-        virtual void CActorParam_UnkVirtualFunc100(); //0x224
-        virtual void CActorParam_UnkVirtualFunc101(); //0x228
-        virtual void CActorParam_UnkVirtualFunc102(); //0x22C
-        virtual void CActorParam_UnkVirtualFunc103(); //0x230
-        virtual void CActorParam_UnkVirtualFunc104(); //0x234
-        virtual void CActorParam_UnkVirtualFunc105(); //0x238
-        virtual void CActorParam_UnkVirtualFunc106(); //0x23C
-        virtual void CActorParam_UnkVirtualFunc107(); //0x240
-        virtual void CActorParam_UnkVirtualFunc108(); //0x244
-        virtual void CActorParam_UnkVirtualFunc109(); //0x248
-        virtual void CActorParam_UnkVirtualFunc110(); //0x24C
-        virtual void CActorParam_UnkVirtualFunc111(); //0x250
-        virtual void CActorParam_UnkVirtualFunc112(); //0x254
-        virtual void CActorParam_UnkVirtualFunc113(); //0x258
-        virtual void CActorParam_UnkVirtualFunc114(); //0x25C
-        virtual void CActorParam_UnkVirtualFunc115(); //0x260
-        virtual void CActorParam_UnkVirtualFunc116(); //0x264
-        virtual void CActorParam_UnkVirtualFunc117(); //0x268
-        virtual void CActorParam_UnkVirtualFunc118(); //0x26C
-        virtual void CActorParam_UnkVirtualFunc119(); //0x270
-        virtual void CActorParam_UnkVirtualFunc120(); //0x274
-        virtual void CActorParam_UnkVirtualFunc121(); //0x278
-        virtual void CActorParam_UnkVirtualFunc122(); //0x27C
-        virtual void CActorParam_UnkVirtualFunc123(); //0x280
-        virtual void CActorParam_UnkVirtualFunc124(); //0x284
-        virtual void CActorParam_UnkVirtualFunc125(); //0x288
-        virtual void CActorParam_UnkVirtualFunc126(); //0x28C
-        virtual void CActorParam_UnkVirtualFunc127(); //0x290
-        virtual void CActorParam_UnkVirtualFunc128(); //0x294
-        virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
-        virtual void CActorParam_UnkVirtualFunc130(); //0x29C
-        virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
-        virtual void CActorParam_UnkVirtualFunc132(); //0x2A4
-        virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
-        virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
-        virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
-        virtual void CActorParam_UnkVirtualFunc136(); //0x2B4
-        virtual void CActorParam_UnkVirtualFunc137(); //0x2B8
-        virtual bool CActorParam_UnkVirtualFunc138(); //0x2BC
-        virtual void CActorParam_UnkVirtualFunc139(); //0x2C0
-        virtual void CActorParam_UnkVirtualFunc140(); //0x2C4
-        virtual void CActorParam_UnkVirtualFunc141(); //0x2C8
-        virtual void CActorParam_UnkVirtualFunc142(); //0x2CC
-        virtual void CActorParam_UnkVirtualFunc143(); //0x2D0
-        virtual void CActorParam_UnkVirtualFunc144(); //0x2D4
-        virtual void CActorParam_UnkVirtualFunc145(); //0x2D8
-        virtual void CActorParam_UnkVirtualFunc146(); //0x2DC
-        virtual void CActorParam_UnkVirtualFunc147(); //0x2E0
-        virtual void CActorParam_UnkVirtualFunc148(); //0x2E4
-        virtual void CActorParam_UnkVirtualFunc149(); //0x2E8
-        virtual void CActorParam_UnkVirtualFunc150(); //0x2EC
-        virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
-        virtual void CActorParam_UnkVirtualFunc152(); //0x2F4
-        virtual void CActorParam_UnkVirtualFunc153(); //0x2F8
-        virtual void CActorParam_UnkVirtualFunc154(); //0x2FC
-        virtual void CActorParam_UnkVirtualFunc155(); //0x300
-        virtual void CActorParam_UnkVirtualFunc156(); //0x304
-        virtual void CActorParam_UnkVirtualFunc157(); //0x308
-        virtual void CActorParam_UnkVirtualFunc158(); //0x30C
-        virtual void CActorParam_UnkVirtualFunc159(); //0x310
-        virtual void CActorParam_UnkVirtualFunc160(); //0x314
-        virtual void CActorParam_UnkVirtualFunc161(); //0x318
-        virtual void CActorParam_UnkVirtualFunc162(); //0x31C
-        virtual void CActorParam_UnkVirtualFunc163(); //0x320
-        virtual void CActorParam_UnkVirtualFunc164(); //0x324
-        virtual void CActorParam_UnkVirtualFunc165(); //0x328
-        virtual void CActorParam_UnkVirtualFunc166(); //0x32C
-        virtual void CActorParam_UnkVirtualFunc167(); //0x330
-        virtual void CActorParam_UnkVirtualFunc168(); //0x334
-        virtual void CActorParam_UnkVirtualFunc169(); //0x338
-        virtual void CActorParam_UnkVirtualFunc170(); //0x33C
-        virtual void CActorParam_UnkVirtualFunc171(); //0x340
-        virtual void CActorParam_UnkVirtualFunc172(); //0x344
-        virtual void CActorParam_UnkVirtualFunc173(); //0x348
-        virtual void CActorParam_UnkVirtualFunc174(); //0x34C
-        virtual void CActorParam_UnkVirtualFunc175(); //0x350
-        virtual void CActorParam_UnkVirtualFunc176(); //0x354
-        virtual void CActorParam_UnkVirtualFunc177(); //0x358
-        virtual void CActorParam_UnkVirtualFunc178(); //0x35C
-        virtual void CActorParam_UnkVirtualFunc179(); //0x360
-        virtual void CActorParam_UnkVirtualFunc180(); //0x364
-        virtual void CActorParam_UnkVirtualFunc181(); //0x368
-    #pragma endregion
-
-        UNKTYPE* unk15DC;
-        UNKTYPE* unk15E0;
-        u32 unk15E4;
-        float unk15E8;
-        u32 unk15EC;
-        u32 unk15F0;
-        u8 unk15F4[8];
-        float unk15FC;
-        u32 unk1600;
-        u32 unk1604;
-        u32 unk1608;
-        u16 unk160C;
-        u16 unk160E;
-        float unk1610;
-        u16 unk1614;
-        u16 unk1616;
-        float unk1618;
-        u32 unk161C;
-        float unk1620;
-        float unk1624;
-        u8 unk1628;
-        u8 unk1629;
-        u8 unk162A;
-        u8 unk162B;
-        u8 unk162C;
-        float unk1630;
-        u32 unk1634;
-        u32 unk1638;
-        u32 unk163C;
-        u32 unk1640;
-        u32 unk1644;
-        u16 unk1648;
-        u16 unk164A;
-        u16 unk164C;
-        u8 unk164E[2];
-        CActorParam_UnkStruct3 unk1650;
-        CActorParam_UnkStruct3 unk16C8;
-        CActorParam_UnkStruct4 unk1740;
-        CActorParam_UnkStruct4 unk1792;
-        CActorParam_UnkStruct3 unk17E4;
-        CActorParam_UnkStruct3 unk185C;
-        CActorParam_UnkStruct4 unk18D4;
-        u8 unk1926[2]; //filler?
-        CActorParam_UnkStruct5 unk1928[8];
-        CArtsSet mArtsSet; //0x19E8
-        u8 unk2740[0xC];
-        CAttackSet mAttackSet; //0x274C
-        u32 unk2A80; //probably not here
-        CActorParam_UnkStruct1 unk2A84[10];
-        CActorParam_UnkStruct1 unk31DC;
-        CActorParam_UnkStruct1 unk3298;
-        u8 unk3354;
-        u8 unk3355[3]; //padding?
-        u16 unk3358;
-        u16 unk335A;
-        u8 unk335C[5];
-        u8 unk3361[3]; //padding?
-        float unk3364;
-        float unk3368;
-        u32 unk336C;
-        u32 unk3370;
-        u32 unk3374;
-        u8 unk3378[4];
-        float unk337C;
-    };
-}
-/* end "kyoshin/cf/object/CActorParam.hpp" */
-
-namespace cf {
-    //min size: 0x45BC
-    class CfObjectActor : public CActorParam, public CAIAction, public CfObjectMove {
-    public:
-        CfObjectActor();
-        //vtable 4 (CfObjectActor)
-        virtual ~CfObjectActor();                  //0x5A0
-        virtual void CfObjectActor_UnkVirtualFunc2();  //0x5A4
-        virtual void CfObjectActor_UnkVirtualFunc3();  //0x5A8
-        virtual void CfObjectActor_UnkVirtualFunc4();  //0x5AC
-        virtual void CfObjectActor_UnkVirtualFunc5();  //0x5B0
-        virtual void CfObjectActor_UnkVirtualFunc6();  //0x5B4
-        virtual void CfObjectActor_UnkVirtualFunc7();  //0x5B8
-        virtual void CfObjectActor_UnkVirtualFunc8();  //0x5BC
-        virtual void CfObjectActor_UnkVirtualFunc9();  //0x5C0
-        virtual void CfObjectActor_UnkVirtualFunc10(); //0x5C4
-        virtual void CfObjectActor_UnkVirtualFunc11(); //0x5C8
-        virtual void CfObjectActor_UnkVirtualFunc12(); //0x5CC
-        virtual void CfObjectActor_UnkVirtualFunc13(); //0x5D0
-
-        //0x0: vtable 1
-        //0x0-3380: CActorParam
-        //0x3380: vtable 2
-        //0x3380-3e9c: CAIAction
-        //0x3e9c: vtable 3
-        //0x3e9c-45b4: CfObjectMove
-        u8 unk45B4[0x8];
-    };
-}
-/* end "kyoshin/cf/object/CfObjectActor.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 5 "kyoshin/cf/IBattleEvent.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/IBattleEvent.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    class IBattleEvent {
-
-    };
-}
-/* end "kyoshin/cf/IBattleEvent.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 6 "kyoshin/cf/chain/CChain.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChain.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChain.hpp" line 3 "kyoshin/cf/chain/CChainActorList.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainActorList.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChainActorList.hpp" line 3 "kyoshin/cf/chain/UnkClass_8027AD70.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/UnkClass_8027AD70.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/UnkClass_8027AD70.hpp" line 3 "kyoshin/cf/chain/CChainActorPc.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainActorPc.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChainActorPc.hpp" line 3 "kyoshin/cf/chain/CChainActor.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainActor.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChainActor.hpp" line 3 "kyoshin/cf/chain/CChainTemp.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainTemp.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChainTemp.hpp" line 3 "cstring" */
-/* end "cstring" */
-
-namespace cf {
-    //size: 0x68
-    class CChainTemp {
-    public:
-        u8 unk0[0x60];
-        bool unk60; //0x60
-        //0x64: vtable
-
-        CChainTemp(){
-            std::memset(unk0, 0, sizeof(unk0));
-            unk60 = false;
-        }
-        virtual ~CChainTemp(){}
-        virtual void CChainTemp_UnkVirtualFunc1(); //0
-    };
-}
-/* end "kyoshin/cf/chain/CChainTemp.hpp" */
-/* "src/kyoshin/cf/chain/CChainActor.hpp" line 4 "kyoshin/cf/chain/CChainEffect.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainEffect.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChainEffect.hpp" line 3 "kyoshin/cf/object/IObjectInfo.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/object/IObjectInfo.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    class IObjectInfo {
-    public:
-        virtual ~IObjectInfo(){}
-        virtual void IObjectInfo_UnkVirtualFunc1() = 0; //not sure if this exists
-    };
-}
-/* end "kyoshin/cf/object/IObjectInfo.hpp" */
-
-namespace cf {
-    //size: 0xC
-    class CChainEffect : public IObjectInfo {
-    public:
-        CChainEffect();
-        virtual ~CChainEffect(){}
-        virtual void IObjectInfo_UnkVirtualFunc1();
-
-        //0x0: vtable
-        //0x0-4: IObjectInfo
-        u32 unk4;
-        u32 unk8;
-    };
-}
-/* end "kyoshin/cf/chain/CChainEffect.hpp" */
-/* "src/kyoshin/cf/chain/CChainActor.hpp" line 5 "cstring" */
-/* end "cstring" */
-
-namespace cf {
-    //size: 0x80
-    class CChainActor {
-    public:
-        u32 unk0;
-        CChainTemp mChainTemp; //0x4?
-        u16 unk6C;
-        //0x70: vtable
-
-        CChainActor() : unk6C(0) {
-            unk0 = 0;
-        }
-        virtual ~CChainActor();
-
-        CChainEffect mChainEffect; //0x74
-    };
-}
-/* end "kyoshin/cf/chain/CChainActor.hpp" */
-
-namespace cf {
-    class CChainActorPc : public CChainActor {
-
-    };
-}
-/* end "kyoshin/cf/chain/CChainActorPc.hpp" */
-/* "src/kyoshin/cf/chain/UnkClass_8027AD70.hpp" line 4 "kyoshin/cf/chain/CChainActorEne.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainActorEne.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChainActorEne.hpp" line 3 "kyoshin/cf/chain/CChainActor.hpp" */
-/* end "kyoshin/cf/chain/CChainActor.hpp" */
-
-namespace cf {
-    class CChainActorEne : public CChainActor {
-
-    };
-}
-/* end "kyoshin/cf/chain/CChainActorEne.hpp" */
-
-namespace cf {
-    //size: 0x1d80?
-    class UnkClass_8027AD70 {
-    public:
-        UnkClass_8027AD70(){}
-        ~UnkClass_8027AD70(){}
-
-        CChainActorPc mPlayerActors[3]; //0x0
-        CChainActorEne mEnemyActors[56]; //0x180
-    };
-}
-/* end "kyoshin/cf/chain/UnkClass_8027AD70.hpp" */
-/* "src/kyoshin/cf/chain/CChainActorList.hpp" line 4 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-namespace cf {
-    //size: 0x1DB0
-    class CChainActorList {
-    public:
-        UnkClass_8027AD70 unk0; //0x0
-        u8 unk1D80[8];
-        reslist<CChainActor*> mChainActorList; //0x1D88
-        u8 unk1DA8[4];
-        //0x1DAC: vtable
-
-        CChainActorList();
-        virtual ~CChainActorList();
-    };
-}
-/* end "kyoshin/cf/chain/CChainActorList.hpp" */
-/* "src/kyoshin/cf/chain/CChain.hpp" line 4 "kyoshin/cf/chain/CChainMember.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainMember.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    //size: 0xEC
-    class CChainMember {
-    public:
-        u8 unk0[0xE8];
-        //0xE8: vtable
-
-        virtual ~CChainMember(){}
-    };
-}
-/* end "kyoshin/cf/chain/CChainMember.hpp" */
-/* "src/kyoshin/cf/chain/CChain.hpp" line 5 "kyoshin/cf/chain/CChainTimer.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainTimer.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    //size: 0x8
-    class CChainTimer {
-    public:
-        u16 unk0;
-        u8 unk2[2];
-        //0x4: vtable
-        virtual ~CChainTimer(){}
-    };
-}
-/* end "kyoshin/cf/chain/CChainTimer.hpp" */
-/* "src/kyoshin/cf/chain/CChain.hpp" line 6 "kyoshin/cf/chain/CChainTime.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainTime.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/CChainTime.hpp" line 3 "kyoshin/cf/chain/CChainEffect.hpp" */
-/* end "kyoshin/cf/chain/CChainEffect.hpp" */
-
-namespace cf {
-    //size: 0x18
-    class CChainTime {
-    public:
-        u8 unk0[8];
-        CChainEffect mChainEffect; //0x8
-        //0x14: vtable
-
-        CChainTime(){}
-        virtual ~CChainTime(){
-            func_8027CE30();
-        }
-        
-        void func_8027CE30();
-    };
-}
-/* end "kyoshin/cf/chain/CChainTime.hpp" */
-/* "src/kyoshin/cf/chain/CChain.hpp" line 7 "kyoshin/cf/chain/CChainChance.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainChance.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    class CChainChance {
-    public:
-        u16 unk0;
-        u8 unk2[2];
-        u32 unk4;
-        u8 unk8[0x10 - 0x8];
-        //0x10: vtable
-
-        virtual ~CChainChance(){}
-
-        u8 unk14[4];
-    };
-}
-/* end "kyoshin/cf/chain/CChainChance.hpp" */
-/* "src/kyoshin/cf/chain/CChain.hpp" line 8 "kyoshin/cf/chain/CChainCombo.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/CChainCombo.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-void func_80294824(void*);
-void func_80294834(void*);
-void func_802AA338();
-
-namespace cf {
-    
-    /*
-    int lbl_8053C140[3] = {
-        1800, 1200, 600
-    };
-    */
-
-    //size: 0x18
-    class CChainCombo {
-    public:
-        int w; //0x0
-        int a; //0x4
-        bool b; //0x8
-        void* c; //0xC
-        int d; //0x10
-        //0x14: vtable
-        
-        virtual ~CChainCombo(){};
-
-        CChainCombo();
-        void func1();
-    };
-}
-/* end "kyoshin/cf/chain/CChainCombo.hpp" */
-
-namespace cf {
-    //size: 0x1F0C?
-    class CChain {
-    public:
-        CChain();
-        ~CChain(){}
-        void func_8027728C();
-
-        u8 unk0[0x18];
-        CChainActorList mChainActorList; //0x18
-        CChainMember mChainMember; //0x1DC8
-        CChainTimer mChainTimer1; //0x1EB4
-        CChainTimer mChainTimer2; //0x1EBC
-        CChainTime mChainTime; //0x1EC4
-        CChainChance mChainChance; //0x1EDC
-        CChainCombo mChainCombo; //0x1EF4
-        u8 unk1F0C[0x14];
-    };
-}
-/* end "kyoshin/cf/chain/CChain.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 7 "kyoshin/cf/chain/UnkClass_800D8DBC.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/chain/UnkClass_800D8DBC.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/chain/UnkClass_800D8DBC.hpp" line 3 "kyoshin/cf/chain/CChainTemp.hpp" */
-/* end "kyoshin/cf/chain/CChainTemp.hpp" */
-/* "src/kyoshin/cf/chain/UnkClass_800D8DBC.hpp" line 4 "kyoshin/cf/chain/CChainTime.hpp" */
-/* end "kyoshin/cf/chain/CChainTime.hpp" */
-/* "src/kyoshin/cf/chain/UnkClass_800D8DBC.hpp" line 5 "kyoshin/cf/chain/CChainTimer.hpp" */
-/* end "kyoshin/cf/chain/CChainTimer.hpp" */
-/* "src/kyoshin/cf/chain/UnkClass_800D8DBC.hpp" line 6 "kyoshin/cf/object/CfObjectActor.hpp" */
-/* end "kyoshin/cf/object/CfObjectActor.hpp" */
-/* "src/kyoshin/cf/chain/UnkClass_800D8DBC.hpp" line 7 "kyoshin/cf/util/Flusher.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/util/Flusher.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace cf {
-    //size: 0xC
-    template <typename T>
-    class Flusher {
-    public:
-
-        u32 unk0;
-        u32 unk4;
-        //0x8: vtable
-
-        Flusher() : unk0(0), unk4(0) {
-        }
-        virtual ~Flusher(){}
-    };
-}
-/* end "kyoshin/cf/util/Flusher.hpp" */
-
-namespace cf {
-    //size: 0xA4
-    class UnkClass_800D8DBC {
-    public:
-        UnkClass_800D8DBC();
-        ~UnkClass_800D8DBC(){}
-        void func_8027D1A4();
-
-        u16 unk0;
-        u8 unk2[2];
-        u32 unk4;
-        u32 unk8;
-        u32 unkC;
-        Flusher<CfObjectActor> mObjectActorFlusher; //0x10
-        CChainTemp mChainTemp; //0x1C
-        CChainTime mChainTime; //0x84
-        CChainTimer mChainTimer; //0x9C
-    };
-}
-/* end "kyoshin/cf/chain/UnkClass_800D8DBC.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 8 "kyoshin/cf/CVision.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/CVision.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/CVision.hpp" line 3 "kyoshin/cf/object/IObjectInfo.hpp" */
-/* end "kyoshin/cf/object/IObjectInfo.hpp" */
-
-namespace cf{
-    class UnkClass_801A36D0 {
-    public:
-        ~UnkClass_801A36D0(){}
-
-        u8 unk0[0x4818];
-    };
-
-    class UnkClass_801A3728 {
-    public:
-        ~UnkClass_801A3728(){}
-
-        u8 unk0[0x70];
-        u16 unk70;
-        u8 unk72[2];
-        float unk74;
-    };
-
-    //size: 0x2623C
-    class CVision : public IObjectInfo {
-    public:
-        CVision();
-        virtual ~CVision();
-        virtual void IObjectInfo_UnkVirtualFunc1();
-        void func_801A380C();
-        void func_801A929C(u32 r4);
-
-        //0x0: vtable
-        //0x0-4: IObjectInfo
-        u8 unk4[0x20D4 - 0x4];
-        UnkClass_801A36D0 unk20D4[8]; //0x20D4
-        u8 unk26194[0x261C4 - 0x26194]; //0x26194
-        UnkClass_801A3728 unk261C4; //0x261C4
-    };
-
-}
-/* end "kyoshin/cf/CVision.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 9 "kyoshin/cf/CSuddenCommu.hpp" */
-#pragma once
-
-/* "src/kyoshin/cf/CSuddenCommu.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/cf/CSuddenCommu.hpp" line 3 "kyoshin/cf/object/IObjectInfo.hpp" */
-/* end "kyoshin/cf/object/IObjectInfo.hpp" */
-
-namespace cf{
-    //size: 0x30?
-    class CSuddenCommu : public IObjectInfo {
-    public:
-        CSuddenCommu();
-        virtual ~CSuddenCommu(){}
-        virtual void IObjectInfo_UnkVirtualFunc1();
-        void func_801BA1DC();
-
-        //0x0: vtable
-        //0x0-4: IObjectInfo?
-        u8 unk4[0x28 - 0x4];
-        u32 unk28;
-        float unk2C;
-    };
-}
-/* end "kyoshin/cf/CSuddenCommu.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 10 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-/* "src/kyoshin/cf/CBattleManager.hpp" line 11 "cstring" */
-/* end "cstring" */
-
-namespace cf{
-    class UnkClass_8018C5FC {
-    public:
-        UnkClass_8018C5FC();
-        
-        u8 unk0[8];
-    };
-
-    class UnkClass_80192BF4 {
-    public:
-        UnkClass_80192BF4();
-        void __ct__80192C10();
-
-        u8 unk0[0xC];
-    };
-
-    struct CBattleManager_Struct1 {
-        CBattleManager_Struct1(){
-            std::memset(unk0, 0, sizeof(unk0));
-        }
-
-        u8 unk0[8];
-    };
-
-    struct CBattleManager_Struct2 {
-        CBattleManager_Struct2(){
-            clear();
-        }
-
-        void clear(){
-            std::memset(unk0, 0, sizeof(unk0));
-        }
-
-        CBattleManager_Struct1 unk0[32];
-    };
-
-    //size: 0x283D8
-    class CBattleManager : public IFactoryEvent {
-    public:
-        CBattleManager();
-        virtual ~CBattleManager(); //0x8
-        virtual void FactoryEvent2(); //0x10
-        virtual void func_80085220(u32 r4, u32 r5); //0x1C
-        virtual void func_800E2584(); //0x20
-        virtual void func_800F42A0(); //0x24
-        virtual void func_800885F0(); //0x28
-        virtual void func_800EA410(); //0x2C
-        virtual void func_800EA420(); //0x30
-        virtual void func_800EA460(); //0x34
-        virtual void func_800EA470(); //0x38
-        virtual void func_800EA998(); //0x3C
-
-        static CBattleManager* getInstance();
-        static void func_800D9190();
-        static void func_800D91D0();
-        void func_800D9218();
-
-        //0x0: vtable
-        //0x0-4: IFactoryEvent
-        reslist<CfObjectActor*> mActorList1; //0x4
-        reslist<CfObjectActor*> mActorList2; //0x24
-        reslist<CfObjectActor*> mActorList3; //0x44
-        reslist<IBattleEvent*> mBattleEventList; //0x64
-        u32 unk84; //0x84
-        float unk88;
-        u32 unk8C;
-        float unk90;
-        CBattleManager_Struct2 unk94;
-        UnkClass_8018C5FC unk194; //0x194
-        UnkClass_80192BF4 unk19C; //0x19C
-        CChain mChain; //0x1A8
-        UnkClass_800D8DBC unk20C8; //0x20C8
-        CSuddenCommu mSuddenCommu; //0x216C
-        CVision mVision; //0x219C
-
-        static u32 lbl_804F8228[];
-
-    protected:
-        static CBattleManager* spInstance;
-    };
-}
-/* end "kyoshin/cf/CBattleManager.hpp" */
-/* "src/kyoshin/CGame.cpp" line 3 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 10 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
@@ -246849,3626 +245976,284 @@ namespace cf{
 
 } //namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
-/* "src/kyoshin/CGame.cpp" line 4 "kyoshin/CTaskGame.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 11 "kyoshin/cf/CfNandManager.hpp" */
 #pragma once
 
-/* "src/kyoshin/CTaskGame.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "src/kyoshin/CTaskGame.hpp" line 4 "monolib/core.hpp" */
-/* end "monolib/core.hpp" */
-/* "src/kyoshin/CTaskGame.hpp" line 5 "monolib/scn.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn.hpp" line 2 "monolib/scn/CLight.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
-/* end "monolib/math.hpp" */
-
-class CLight{
-public:
-    CLight();
-    virtual ~CLight(){}
-
-    ml::CVec3 unk4;
-    ml::CVec3 unk10;
-    ml::CVec3 unk1C;
-    float unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    float unk38;
-    float unk3C;
-};
-/* end "monolib/scn/CLight.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-
-//Unofficial name
-class ICulling {
-public:
-    virtual ~ICulling(){}
-    virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
-    virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
-    virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
-};
-/* end "monolib/scn/ICulling.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 4 "monolib/scn/CScn.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
-/* end "monolib/work.hpp" */
-
-struct ScnRenderCB {
-    IScnRender* cb; //0x0
-    u32 prio; //0x4
-    u8 flag; //0x8
-}; // size = 0xC
-
-// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
-struct UnkScn68 {
-    u8 unk00[0x34];
-    s32 unk34; //0x34
-};
-
-// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
-struct UnkScn8C {
-    virtual ~UnkScn8C() {}
-    virtual void vf0C() = 0;
-    virtual void vf10() = 0;
-    virtual void vf14() = 0;
-    virtual void vf18() = 0;
-    virtual void vf1C() = 0;
-};
-
-// IScnRender draw callback shape: vt+0xC(cb, scn).
-struct IScnRenderDraw {
-    virtual ~IScnRenderDraw() {}
-    virtual void onRender(CScn* scn) = 0;
-};
-
-class CScn : public CTTask<CScn>, public IWorkEvent{
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-    virtual void Draw();
-
-    //0x000: vtable 1 (CTTask)
-    //0x000-054: CTTask
-    //0x054: vtable 2 (IWorkEvent)
-    u8 unk58[0x68 - 0x058]; //0x058
-    UnkScn68* mCamWork; //0x068
-    u8 unk6C[0x8C - 0x06C]; //0x06C
-    UnkScn8C* mUnk8C; //0x08C
-    u8 unk90[0x0B4 - 0x090]; //0x090
-    ICulling* unkB4; //0x0B4
-    u32 unkB8; //0x0B8
-    ScnRenderCB mRenderCBs[64]; //0x0BC
-    u32 mRenderCBCount; //0x3BC
-    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
-    u8 unk_3E4; //0x3E4
-    u8 unk_3E5; //0x3E5
-    u8 unk_3E6; //0x3E6
-    u8 unk_3E7; //0x3E7
-    u8 unk_3E8; //0x3E8
-    u8 unk_3E9; //0x3E9
-    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
-}; // size = 0x3EC
-/* end "monolib/scn/CScn.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 5 "monolib/scn/CScnNw4r.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 2 "monolib/scn/CScn.hpp" */
-/* end "monolib/scn/CScn.hpp" */
-/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 3 "functions.hpp" */
-#pragma once
-
-/* "include/functions.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-//Vec4 constructor? Defined before CTaskGame::Term
-struct func_800407C8_tmp {
-    f32 unk00[4];
-};
-func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
-
-void func_8004302C(int, int);
-bool func_8009CF8C(int);
-void func_8009D018(int, int);
-int* func_8009ECB0();
-void func_8009E574(int*, int, int, int);
-/* end "functions.hpp" */
-
-class CScnNw4r : public CScn{
-public:
-    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
-    void func_8007DAE0(int arg1, f32* arg2);
-
-private:
-    //0x000-0x3EC CScn
-}; // size = 0x3EC
-/* end "monolib/scn/CScnNw4r.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 6 "monolib/scn/CScnRootNw4r.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnRootNw4r.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* end "monolib/scn/CScnRootNw4r.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 7 "monolib/scn/CScnTexWorkMan.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-mtl::ALLOC_HANDLE func_80490098();
-void func_804900A0(u32 r3);
-/* end "monolib/scn/CScnTexWorkMan.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 8 "monolib/scn/IScnRender.hpp" */
-#pragma once
-
-class IScnRender {
-public:
-    virtual ~IScnRender(){}
-    virtual void cbRenderBefore();
-};
-/* end "monolib/scn/IScnRender.hpp" */
+/* "src/kyoshin/cf/CfNandManager.hpp" line 2 "monolib/scn.hpp" */
 /* end "monolib/scn.hpp" */
-/* "src/kyoshin/CTaskGame.hpp" line 6 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-/* "src/kyoshin/CTaskGame.hpp" line 7 "monolib/work.hpp" */
+/* "src/kyoshin/cf/CfNandManager.hpp" line 3 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
 
-class ITitleMenu{
-public:
-    virtual ~ITitleMenu(){}
-    virtual void ITitleMenu__UnkVirtualFunc1() = 0;
-};
-
-class IErrMesWinSel{
-public:
-    virtual ~IErrMesWinSel(){}
-    virtual void IErrMesWinSel__UnkVirtualFunc1() = 0;
-};
-
-struct UnkClass_8004041C{
-    void func_8004041C(u8 r4, float f1, int r5, u32 r6, u8 r7, u32 r8, u32 r9);
-
-    u8 unk0;
-    float unk4;
-    int unk8;
-    u32 unkC;
-    u8 unk10;
-    u32 unk14;
-    u32 unk18;
-};
-
-class CTaskGame : public CTTask<CTaskGame>,
-                  public IWorkEvent,
-                  public IScnRender,
-                  public IGameException,
-                  public ITitleMenu,
-                  public IErrMesWinSel {
-public:
-    CTaskGame(CView* pView, CWorkThread* pThread, int r6);
-    virtual ~CTaskGame();
-
-    static CTaskGame* getInstance();
-    static u32 func_800404F0();
-    virtual void Init();
-
-    void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
-    static bool func_800426F0();
-    void func_80042710();
-    void func_80042720();
-    static bool func_8004368C();
-    static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
-
-    virtual void Term();
-    virtual void ITitleMenu__UnkVirtualFunc1();
-    virtual void IErrMesWinSel__UnkVirtualFunc1();
-    virtual bool gameExceptionCB(u32 r4);
-
-    CScnNw4r* getScene() const {
-        return unk74;
-    }
-
-    //0x0: vtable (CTTask)
-    //0x4-3C: CProcess
-    //0x3C-54: CTTask
-    //0x54: vtable 2 (IWorkEvent)
-    //0x58: vtable 3 (IScnRender)
-    //0x5C: vtable 4 (IGameException)
-    //0x60: vtable 5 (ITitleMenu)
-    //0x64: vtable 6 (IErrMesWinSel)
-    u32 unk68;
-    CWorkThread* unk6C;
-    CView* unk70;
-    CScnNw4r* unk74;
-    u32 unk78;
-    u32 unk7C;
-    u16 unk80;
-    u16 unk82;
-    u16 unk84;
-    u16 unk86;
-    u16 unk88;
-    u16 unk8A;
-    u8 unk8C[2]; //padding?
-    u16 unk8E;
-    u8 unk90;
-    u8 unk91[0xA0 - 0x91];
-    u32 unkA0;
-    ml::FixStr<32> unkA4;
-    u8 unkC8;
-    u8 unkC9[0xCC - 0xC9];
-    u32 unkCC;
-    u32 unkD0;
-    u32 unkD4;
-    int unkD8;
-    u32 unkDC;
-    float unkE0;
-    u32 unkE4;
-    int unkE8;
-    u32 unkEC;
-    u32 unkF0;
-    u32 unkF4;
-    int unkF8;
-    u32 unkFC;
-    u32 unk100;
-    u8 unk104;
-    u8 unk105[0x124 - 0x105];
-    u32 unk124;
-    u32 unk128;
-    u8 unk12C[0x130 - 0x12C];
-    u8 unk130;
-    u8 unk131[0x170 - 0x131];
-    u32 unk170;
-    u8 unk174[0x188 - 0x174];
-    u8 unk188;
-    u8 unk189[0x18C - 0x189]; //padding?
-    UnkClass_8004041C unk18C;
-
-protected:
-    static CTaskGame* spInstance;
-};
-/* end "kyoshin/CTaskGame.hpp" */
-/* "src/kyoshin/CGame.cpp" line 5 "kyoshin/code_80135FDC.hpp" */
-#pragma once
-
-/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-enum CBM {
-    CBM_0,
-    CBM_1,
-    CBM_2,
-    CBM_3,
-    CBM_4,
-    CBM_5
-};
-
-struct CFileHandle {
-    int unk0;
-    void* mData; //0x4
-    u8 unk8[0x10 - 0x8];
-    int unk10;
-    u32 unk14;
-    u8 unk18[0x3C - 0x18];
-    u32 mLength; //0x3C
-    u8 unk40[0x5C - 0x40];
-    ml::FixStr<32> mName; //0x5C
-    u8 unk80[0x160 - 0x80];
-    u32 unk160;
-
-    void call(CBM cbm);
-    bool checkExistRsrc(CBM cbm);
-    UNKTYPE* getRsrc();
-
-    inline void* getData(){
-        void* r31 = mData;
-        mData = nullptr;
-        return r31;
-    }
-
-    inline bool unkInline2() const {
-        return unk10 != 0 && unk10 == mLength;
-    }
-
-    inline u32 getLength() const {
-        return mLength;
-    }
-
-};
-/* end "monolib/device/CFileHandle.hpp" */
-/* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work/IWorkEvent.hpp" */
-
-/* "src/kyoshin/code_80135FDC.hpp" line 5 "revolution/gx/GXTypes.h" */
-/* end "revolution/gx/GXTypes.h" */
-
-/* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
-/* end "nw4r/lyt.h" */
-
-u16 func_8013606C(char*, char*, u16);
-char* func_80136190(char*, char*, u32);
-u32 func_801361E8(void*, char*, u32);
-char* func_8013639C(void*, char*, u16);
-void func_8013676C(nw4r::lyt::Pane*, u32);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
-void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_80137038(nw4r::lyt::Layout* pLayout, nw4r::lyt::DrawInfo* pDrawInfo, int r5, int r6);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
-u8 func_801372B4(u32);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
-char* func_80138F78(u16);
-void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
-void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
-/* end "kyoshin/code_80135FDC.hpp" */
-/* "src/kyoshin/CGame.cpp" line 6 "monolib/lib.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib.hpp" line 2 "monolib/lib/CLib.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib/CLib.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/lib/CLib.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/lib/CLib.hpp" line 4 "monolib/work/CWorkSystem.hpp" */
-/* end "monolib/work/CWorkSystem.hpp" */
-
-class CLib : public CWorkThread {
-public:
-    CLib(const char* pName, CWorkThread* pParent);
-    ~CLib();
-
-    DECL_WORKTHREAD_CREATE(CLib);
-
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-    static CLib* getInstance();
-
-    static bool isInitialized();
-    void createLibs();
-    static CLib* create();
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u32 unk1C4;
-private:
-    static const int MAX_CHILD = 8;
-
-    static CLib* spInstance;
-};
-/* end "monolib/lib/CLib.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 3 "monolib/lib/CLibCri.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 2 "monolib/device/CDeviceVICb.hpp" */
-/* end "monolib/device/CDeviceVICb.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 3 "monolib/work/CWorkUtil.hpp" */
-/* end "monolib/work/CWorkUtil.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 5 "monolib/util/CErrorWii.hpp" */
-/* end "monolib/util/CErrorWii.hpp" */
-
-//size: 0x1d0
-class CLibCri : public CWorkThread, public CDeviceVICb, public IErrorWii {
-public:
-    CLibCri(const char* pName, CWorkThread* pParent);
-    static CLibCri* getInstance();
-    virtual void errorWiiCB();
-    static void func_80459A80();
-
-    static inline CLibCri* create(const char* pName, CWorkThread* pParent){
-        CLibCri* lib = new (CWorkThreadSystem::getWorkMem()) CLibCri(pName, pParent);
-        CWorkUtil::entryWork(lib, pParent, false);
-        return lib;
-    }
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    //0x1c4-1c8: CDeviceVICb
-    //0x1c8-1cc: UnkClass_80447FDC
-    u32 unk1D0;
-};
-/* end "monolib/lib/CLibCri.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 4 "monolib/lib/CLibG3d.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib/CLibG3d.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/lib/CLibG3d.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CLibG3d : public CWorkThread {
-public:
-    CLibG3d(const char* pName, CWorkThread* pParent);
-
-    DECL_WORKTHREAD_CREATE(CLibG3d);
-
-    static bool isInitialized();
-    static CLibG3d* getInstance();
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u32 unk1C4;
-};
-/* end "monolib/lib/CLibG3d.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 5 "monolib/lib/CLibHbm.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 5 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 6 "revolution/GX.h" */
-/**
- * References: YAGCD, Dolphin Emulator, publicly available patents
- */
-
-#ifndef RVL_SDK_PUBLIC_GX_H
-#define RVL_SDK_PUBLIC_GX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
-/* end "revolution/GX/GXAttr.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
-/* end "revolution/GX/GXBump.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
-/* end "revolution/GX/GXDisplayList.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
-/* end "revolution/GX/GXDraw.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
-/* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
-/* end "revolution/GX/GXFrameBuf.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
-/* end "revolution/GX/GXGeometry.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap8.html#sec8
- * https://www.gc-forever.com/yagcd/chap5.html#sec5
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
- * https://patents.google.com/patent/US6700586B1/en
- * https://patents.google.com/patent/US6639595B1/en
- * https://patents.google.com/patent/US7002591
- * https://patents.google.com/patent/US6697074
- */
-
-#ifndef RVL_SDK_GX_HARDWARE_H
-#define RVL_SDK_GX_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/************************************************************
- *
- *
- * GX FIFO
- *
- *
- ***********************************************************/
-
-/**
- * FIFO write/gather pipe
- */
-extern volatile union {
-    // 1-byte
-    char c;
-    unsigned char uc;
-    // 2-byte
-    short s;
-    unsigned short us;
-    // 4-byte
-    int i;
-    unsigned int ui;
-    void* p;
-    float f;
-} WGPIPE DECL_ADDRESS(0xCC008000);
-
-/**
- * FIFO commands
- */
-typedef enum {
-    GX_FIFO_CMD_NOOP = 0x00,
-
-    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
-    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
-    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
-
-    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
-    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
-    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
-    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
-
-    GX_FIFO_CMD_CALL_DL = 0x40,
-    GX_FIFO_CMD_INVAL_VTX = 0x48,
-
-    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
-    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
-    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
-    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
-    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
-} GXFifoCmd;
-
-/**
- * FIFO command sizes
- */
-#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
-#define GX_FIFO_CMD_DRAW_SIZE 3
-
-#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
-#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
-#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
-
-#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
-        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
-        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
-        WGPIPE.c = reg;                                                        \
-        WGPIPE.i = cmd;                                                        \
-    }
-
-#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
-
-/************************************************************
- *
- *
- * GX Blitting Processor (BP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into BP register
- */
-#define GX_BP_LOAD_REG(data)                                                   \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
-    WGPIPE.i = (data);
-
-/**
- * Set BP command opcode (first 8 bits)
- */
-#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
-
-#define GX_BP_OPCODE_SHIFT 24
-#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Command Processor (CP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into CP register
- */
-#define GX_CP_LOAD_REG(addr, data)                                             \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
-    WGPIPE.c = (addr);                                                         \
-    WGPIPE.i = (data);
-
-#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Transform Unit (XF)
- *
- *
- ***********************************************************/
-
-/**
- * XF memory
- */
-typedef enum {
-    GX_XF_MEM_POSMTX = 0x0000,
-    GX_XF_MEM_NRMMTX = 0x0400,
-    GX_XF_MEM_DUALTEXMTX = 0x0500,
-    GX_XF_MEM_LIGHTOBJ = 0x0600
-} GXXfMem;
-
-/**
- * Header for an XF register load
- */
-#define GX_XF_LOAD_REG_HDR(addr)                                               \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
-    WGPIPE.i = (addr);
-
-/**
- * Load immediate value into XF register
- */
-#define GX_XF_LOAD_REG(addr, data)                                             \
-    GX_XF_LOAD_REG_HDR(addr);                                                  \
-    WGPIPE.i = (data);
-
-#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
-
-/**
- * Load immediate values into multiple XF registers
- */
-#define GX_XF_LOAD_REGS(size, addr)                                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        cmd |= (addr);                                                         \
-        cmd |= (size) << 16;                                                   \
-        GX_XF_LOAD_REG_HDR(cmd);                                               \
-    }
-
-/**
- * Enums for Tex0-Tex7 register fields
- */
-typedef enum {
-    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
-    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
-} GXXfTexProj;
-
-typedef enum {
-    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
-    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
-} GXXfTexForm;
-
-typedef enum {
-    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
-    GX_XF_TG_BUMP,    // Texgen bump mapping
-
-    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                   // color0
-
-    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                  // color1
-} GXXfTexGen;
-
-/**
- * Misc. hardware enums
- */
-typedef enum {
-    GX_RAS_COLOR0A0,
-    GX_RAS_COLOR1A1,
-    GX_RAS_ALPHA_BUMP = 5,
-    GX_RAS_ALPHA_BUMPN,
-    GX_RAS_COLOR_ZERO,
-
-    GX_RAS_MAX_CHANNEL
-} GXRasChannelID;
-
-typedef enum {
-    GX_TEVREG_COLOR,
-    GX_TEVREG_KONST,
-} GXTevRegType;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXHardware.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
-/* end "revolution/GX/GXHardwareBP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
-/* end "revolution/GX/GXHardwareCP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
-/* end "revolution/GX/GXHardwareXF.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
-/* end "revolution/GX/GXInit.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
-/* end "revolution/GX/GXLight.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
-/* end "revolution/GX/GXMisc.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
-/* end "revolution/GX/GXPixel.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
-/* end "revolution/GX/GXTev.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-/* end "revolution/GX/GXTexture.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
-/* end "revolution/GX/GXTransform.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
-/* end "revolution/GX/GXVert.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX.h" */
-/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 7 "revolution/TPL.h" */
-/**
- * References: YAGCD, BrawlBox
- */
-
-#ifndef RVL_SDK_PUBLIC_TPL_H
-#define RVL_SDK_PUBLIC_TPL_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/TPL.h" line 10 "revolution/TPL/TPL.h" */
-/* end "revolution/TPL/TPL.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/TPL.h" */
-/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 8 "revolution/HBM.h" */
-#ifndef RVL_SDK_PUBLIC_HBM_H
-#define RVL_SDK_PUBLIC_HBM_H
-
-/* "libs/RVL_SDK/include/revolution/HBM.h" line 3 "revolution/HBM/HBMApi.h" */
-#ifndef HOME_BUTTON_MINI_LIB_API_H
-#define HOME_BUTTON_MINI_LIB_API_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/HBM/HBMApi.h" line 6 "revolution/HBM/HBMTypes.h" */
-#ifndef HOME_BUTTON_MINI_LIB_TYPES_H
-#define HOME_BUTTON_MINI_LIB_TYPES_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 6 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 8 "revolution/KPAD.h" */
-/* end "revolution/KPAD.h" */
-/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 9 "revolution/MEM.h" */
-/* end "revolution/MEM.h" */
-/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 10 "revolution/WPAD.h" */
-/**
- * References: WiiBrew
- */
-
-#ifndef RVL_SDK_PUBLIC_WPAD_H
-#define RVL_SDK_PUBLIC_WPAD_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/WPAD.h" line 10 "revolution/WPAD/WPAD.h" */
-/* end "revolution/WPAD/WPAD.h" */
-/* "libs/RVL_SDK/include/revolution/WPAD.h" line 11 "revolution/WPAD/WPADInternal.h" */
-/* end "revolution/WPAD/WPADInternal.h" */
-/* "libs/RVL_SDK/include/revolution/WPAD.h" line 12 "revolution/WPAD/debug_msg.h" */
-/* end "revolution/WPAD/debug_msg.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/WPAD.h" */
-
-typedef enum HBMSelectBtnNum {
-    HBM_SELECT_NULL = -1,
-
-    HBM_SELECT_HOMEBTN,
-    HBM_SELECT_BTN1,
-    HBM_SELECT_BTN2,
-    HBM_SELECT_BTN3,
-    HBM_SELECT_BTN4,
-
-    HBM_SELECT_MAX
-} HBMSelectBtnNum;
-
-typedef enum HBMSoundEvent {
-    HBM_SOUND_INIT,
-    HBM_SOUND_POST_INIT,
-    HBM_SOUND_GOTO_MENU,
-    HBM_SOUND_RETURN_APP,
-    HBM_SOUND_STOP,
-    HBM_SOUND_PLAY,
-} HBMSoundEvent;
-
-// Maps to the HomeButtonSe.brsar sound ID
-typedef enum HBMSound {
-    /* 0x00 */ HBM_SE_HOME_BUTTON,
-    /* 0x01 */ HBM_SE_RETURN_APP,
-    /* 0x02 */ HBM_SE_GOTO_MENU,
-    /* 0x03 */ HBM_SE_RESET_APP,
-    /* 0x04 */ HBM_SE_FOCUS,
-    /* 0x05 */ HBM_SE_SELECT,
-    /* 0x06 */ HBM_SE_CANCEL,
-    /* 0x07 */ HBM_SE_OPEN_CONTROLLER,
-    /* 0x08 */ HBM_SE_CLOSE_CONTROLLER,
-    /* 0x09 */ HBM_SE_VOLUME_PLUS,
-    /* 0x0A */ HBM_SE_VOLUME_MINUS,
-    /* 0x0B */ HBM_SE_VOLUME_PLUS_LIMIT,
-    /* 0x0C */ HBM_SE_VOLUME_MINUS_LIMIT,
-    /* 0x0D */ HBM_SE_NOTHING_DONE,
-    /* 0x0E */ HBM_SE_VIBE_ON,
-    /* 0x0F */ HBM_SE_VIBE_OFF,
-    /* 0x10 */ HBM_SE_START_CONNECT_WINDOW,
-    /* 0x11 */ HBM_SE_CONNECTED,
-    /* 0x12 */ HBM_SE_CONNECTED2,
-    /* 0x13 */ HBM_SE_CONNECTED3,
-    /* 0x14 */ HBM_SE_CONNECTED4,
-    /* 0x15 */ HBM_SE_END_CONNECT_WINDOW
-} HBMSound;
-
-// Maps to the SpeakerSe.arc sound ID
-typedef enum HBMSpeakerSound {
-    /* 0x00 */ HBM_SPK_SE_VOLUME,
-    /* 0x01 */ HBM_SPK_SE_CONNECT1,
-    /* 0x02 */ HBM_SPK_SE_CONNECT2,
-    /* 0x03 */ HBM_SPK_SE_CONNECT3,
-    /* 0x04 */ HBM_SPK_SE_CONNECT4,
-} HBMSpeakerSound;
-
-typedef int (*HBMSoundCallback)(int event, int arg);
-
-typedef struct HBMDataInfo {
-    void* layoutBuf;                 // at 0x0
-    void* spkSeBuf;                  // at 0x4
-    void* msgBuf;                    // at 0x8
-    void* configBuf;                 // at 0xC
-    void* mem;                       // at 0x10
-    HBMSoundCallback sound_callback; // at 0x14
-    BOOL backFlag;                   // at 0x18
-    int region;                      // at 0x1C
-    BOOL cursor;                     // at 0x20
-    BOOL messageFlag;                // at 0x24
-    u32 configBufSize;               // at 0x28
-    u32 memSize;                     // at 0x2C
-    f32 frameDelta;                  // at 0x30
-    Vec2 adjust;                     // at 0x34
-    MEMAllocator* pAllocator;        // at 0x3C
-} HBMDataInfo;
-
-typedef struct HBMKPadData {
-    KPADStatus* kpad; // at 0x0
-    Vec2 pos;         // at 0x4
-    u32 use_devtype;  // at 0xC
-} HBMKPadData;
-
-typedef struct HBMControllerData {
-    HBMKPadData wiiCon[WPAD_MAX_CONTROLLERS]; // at 0x0
-} HBMControllerData;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/HBM/HBMTypes.h" */
-
-void HBMCreate(const HBMDataInfo* pHBInfo);
-void HBMCreateSound(void* soundData, void* memBuf, u32 memSize);
-void HBMInit();
-
-void HBMDelete();
-void HBMDeleteSound();
-
-void HBMUpdateSound();
-
-HBMSelectBtnNum HBMCalc(const HBMControllerData* pController);
-void HBMDraw();
-
-void HBMSetAdjustFlag(BOOL flag);
-void HBMStartBlackOut();
-void HBMSetBlackOutColor(u8 r, u8 g, u8 b);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/HBM/HBMApi.h" */
-/* "libs/RVL_SDK/include/revolution/HBM.h" line 4 "revolution/HBM/HBMTypes.h" */
-/* end "revolution/HBM/HBMTypes.h" */
-
-#endif
-/* end "revolution/HBM.h" */
-
-class IHBMCallback {
-public:
-    virtual ~IHBMCallback(){}
-    virtual void onInitHbm();
-    virtual void onDeleteHbm();
-};
-
-//size: 0x268
-class CLibHbm : public CWorkThread {
-public:
-    CLibHbm(const char* pName, CWorkThread* pParent);
-    ~CLibHbm();
-
-    DECL_WORKTHREAD_CREATE(CLibHbm);
-
-    static bool isInitialized();
-    static CLibHbm* getInstance();
-
-    virtual void wkUpdate();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-    virtual bool OnFileEvent(CEventFile* pFile);
-
-    static void setCurrentWpadChannel(int channel);
-    static void func_8045D470(bool r3);
-    static bool func_8045D478();
-    static void loadTplImage(void* pTplData);
-    static void removeTplImage();
-    static void addCallback(IHBMCallback* r3);
-    static void removeCallback(IHBMCallback* r3);
-    static void func_8045D5C8(bool r3);
-    void destroy();
-    static bool isHbmMemPointerValid();
-    static bool checkFlag6();
-    static void loadHbmArcFile();
-    static void initHbm();
-    static void deleteHbm();
-    static bool isHbmControlInitialized();
-    static bool func_8045DE00();
-    static void renderHbmstopIcon();
-    static inline void initHbmInfoStruct();
-
-    void setState(int state){
-        mState = state;
-        if(spHbmstopTplData == nullptr){
-            mState = STATE_NEG1;
-        }
-    }
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    mtl::ALLOC_HANDLE mHandle; //0x1C4
-    int unk1C8; //0x1C8
-    void* mpLayoutBuf; //0x1CC
-    void* mpSpkSeBuf; //0x1D0
-    void* mpHbmSeBuf; //0x1D4
-    void* mpMsgBuf; //0x1D8
-    void* mpConfigBuf; //0x1DC
-    UNKTYPE* mpHbmMem; //0x1E0
-    UNKTYPE* mpHbmSndMem; //0x1E4
-    UNKTYPE* unk1E8; //0x1E8
-    HBMDataInfo unk1EC; //0x1EC
-    u16 mFlags; //0x22C
-    CFileHandle* mpHbmArcFileHandle; //0x230
-    u32 mConfigBufSize; //0x234
-    mtl::fixed_vector<IHBMCallback*, 8> unk238; //0x238
-    float unk25C; //0x25C
-    int mState; //0x260
-    bool unk264; //0x264
-    bool unk265; //0x265
-
-private:
-    enum State{
-        STATE_NEG1 = -1,
-        STATE_0,
-        STATE_1,
-        STATE_2,
-        STATE_3
-    };
-
-    static const int MAX_CHILD = 1;
-    static const int HBM_MEM_SIZE = 0x80000;
-    static const int HBM_SND_MEM_SIZE = 100096;
-
-    static CLibHbm* spInstance;
-
-    static bool lbl_80667FD4;
-    static TPLPalette* spHbmstopTplData;
-    static bool lbl_80667FDC;
-    static bool lbl_80667FDD;
-    static int sCurWpadChannel;
-    static GXTexObj sTplTexObj;
-};
-/* end "monolib/lib/CLibHbm.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 6 "monolib/lib/CLibHbmControl.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib/CLibHbmControl.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/lib/CLibHbmControl.hpp" line 3 "monolib/core/CProc.hpp" */
-/* end "monolib/core/CProc.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibHbmControl.hpp" line 4 "revolution/HBM.h" */
-/* end "revolution/HBM.h" */
-
-class CLibHbmControl : public CProc {
-public:
-    CLibHbmControl(const char* pName, CWorkThread* pParent);
-    ~CLibHbmControl();
-
-    DECL_WORKTHREAD_CREATE(CLibHbmControl);
-
-    static CLibHbmControl* create();
-    static CLibHbmControl* getInstance();
-    static bool func_8045E530();
-    static bool isInitialized();
-
-    virtual void wkUpdate();
-    virtual void wkRender();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-    //0x0: vtable
-    //0x0-1ec: CProc
-    HBMControllerData mHBMControllerData; //0x1EC
-    u32 unk22C;
-    int unk230;
-    u32 unk234;
-private:
-    static const int MAX_CHILD = 8;
-
-    static CLibHbmControl* spInstance;
-};
-/* end "monolib/lib/CLibHbmControl.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 7 "monolib/lib/CLibLayout.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib/CLibLayout.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/lib/CLibLayout.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibLayout.hpp" line 4 "nw4r/lyt/lyt_arcResourceAccessor.h" */
-/* end "nw4r/lyt/lyt_arcResourceAccessor.h" */
-
-class CLibLayout : public CWorkThread {
-public:
-    CLibLayout(const char* pName, CWorkThread* pParent);
-
-    DECL_WORKTHREAD_CREATE(CLibLayout);
-
-    static bool isInitialized();
-    static CLibLayout* getInstance();
-    static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u32 unk1C4;
-    u8 unk1C8[0x2C0 - 0x1C8];
-};
-/* end "monolib/lib/CLibLayout.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 8 "monolib/lib/CLibStaticData.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 5 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-typedef void (*StaticDataCallback)(void* pData, u32 length);
-
-enum MemHandleType {
-    HANDLE_MEM1,
-    HANDLE_MEM2,
-    HANDLE_STATIC
-};
-
-struct StaticDataHandle {
-    void* data; //0x0
-    u32 unk4;
-};
-
-struct StaticArcFileData {
-    const char* mName; //0x0
-    const char* mPath; //0x4
-    MemHandleType mHandleType; //0x8
-    StaticDataCallback mFileLoadedCallback; //0xC
-    StaticDataCallback mFileUnloadedCallback; //0x10
-};
-
-class CLibStaticData : public CWorkThread {
-public:
-    class CItem : public IWorkEvent {
+namespace cf{
+    class CfNandManager : public CTTask<CfNandManager>, public IWorkEvent, public IScnRender{
     public:
-        CItem(StaticArcFileData* arcFileData); //Calls the static data callbacks
-        virtual ~CItem();
-        virtual bool OnFileEvent(CEventFile* pEventFile);
+        static u32 func_8024005C();
 
-            inline mtl::ALLOC_HANDLE getMemHandle(){
-        mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-        MemHandleType type = mFileData->mHandleType;
-        if(type == HANDLE_MEM1){
-            handle = mtl::MemManager::getHandleMEM1();
-        }else if(type == HANDLE_STATIC){
-            handle = mtl::MemManager::getHandleStatic();
-        }
-        return handle;
-        }
-
-        //0x0: vtable
-        StaticArcFileData* mFileData; //0x4
-        CFileHandle* mFileHandle; //0x8
-        void* mData; //0xC
-        u32 mLength; //0x10
-        bool unk14;
-    };
-
-    CLibStaticData(const char* pName, CWorkThread* pParent);
-    virtual ~CLibStaticData();
-
-    DECL_WORKTHREAD_CREATE(CLibStaticData);
-
-    static CLibStaticData* getInstance();
-    static bool isInitialized();
-    static void saveStaticFileArray(StaticArcFileData*);
-    static bool getStaticFileData(const char* pName, StaticDataHandle* pHandle, u32* r5);
-
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-    //0x0: vtable
-    //0x0-1C4: CWorkThread
-    int mState; //0x1C4
-    resvector<CItem*> mItems; //0x1C8
-
-private:
-    enum State{
-        STATE_0,
-        STATE_1,
-        STATE_2
-    };
-
-    static const int MAX_ITEMS = 16;
-    static const int MAX_CHILD = 0;
-
-    static CLibStaticData* spInstance;
-    static StaticArcFileData* sStaticArcFileListPtr;
-};
-/* end "monolib/lib/CLibStaticData.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 9 "monolib/lib/CLibVM.hpp" */
+    private:
+        //0x000-0x054 CTTask
+        //0x054-0x058 IWorkEvent
+        //0x058-0x05C IScnRender
+        char unk05C[0x194 - 0x05C]; //0x05C
+    }; //size = 0x194
+} //namespace cf
+/* end "kyoshin/cf/CfNandManager.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 12 "kyoshin/cf/object/CfObjectSelectorObj.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/lib/CLibVM.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/lib/CLibVM.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
+namespace cf{
 
-class CLibVM : public CWorkThread {
-public:
-    CLibVM(const char* pName, CWorkThread* pParent);
+    class CfObjectSelectorObj{
+    public:        
+        virtual ~CfObjectSelectorObj();
 
-    DECL_WORKTHREAD_CREATE(CLibVM);
+        static void create();
+        static void destroy();
 
-    static bool isInitialized();
-    static CLibVM* getInstance();
+    private:
+        static CfObjectSelectorObj* spInstance;
+        
+        char unk0000[0xC188 - 0x0000]; //0x0000
+    }; //size = 0xC188
 
-    static void setCallbacks(void (*callback1)(), void (*callback2)());
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u32 unk1C4;
-};
-/* end "monolib/lib/CLibVM.hpp" */
-/* "libs/monolib/include/monolib/lib.hpp" line 10 "monolib/lib/UnkClass_8045F564.hpp" */
+} //namespace cf
+/* end "kyoshin/cf/object/CfObjectSelectorObj.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 13 "kyoshin/code_80296898.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp" line 2 "types.h" */
+/* "src/kyoshin/code_80296898.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-class UnkClass_8045F564{
+class Class_80296898{
 public:
-    int unk0;
-    u32 unk4;
-    u32 unk8;
-    u32 unkC;
+    u8 unk00[0x0F - 0x00];
+    u8 unk_0F;
+    u8 unk10[0x40 - 0x10];
 
-    UnkClass_8045F564();
-    ~UnkClass_8045F564();
-
-    
-    void createRegion(int, int, const char*, int);
-    void func_8045F778();
-    void func_8045F810();
-};
-
-class Class_8045F858{
-public:
-    void* unk0;
-    u32 unk4;
-
-    Class_8045F858(UnkClass_8045F564* unkClass);
-    ~Class_8045F858();
-};
-/* end "monolib/lib/UnkClass_8045F564.hpp" */
-/* end "monolib/lib.hpp" */
-/* "src/kyoshin/CGame.cpp" line 7 "monolib/core.hpp" */
-/* end "monolib/core.hpp" */
-/* "src/kyoshin/CGame.cpp" line 8 "monolib/device.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device.hpp" line 2 "monolib/device/CDevice.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDevice.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDevice.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
-/* end "monolib/device/CDeviceBase.hpp" */
-/* "libs/monolib/include/monolib/device/CDevice.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-//size: 0x1c8
-class CDevice : public CWorkThread {
-public:
-    CDevice(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
-        spInstance = this;
-        mType = THREAD_CDEVICE;
+    Class_80296898(){
+        init();
     }
 
-    virtual ~CDevice();
-    static CDevice* getInstance();
-
-    DECL_WORKTHREAD_CREATE(CDevice);
-
-    static int getDevSys1Handle();
-    static int getDevSys2Handle();
-    static bool isAllReady();
-    static bool isColdStartReady();
-    static bool isInitialized();
-    static void initDevices();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-    static CDevice* create();
-    static void createRegions();
-    static void deleteRegions();
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u32 unk1C4;
-
-private:
-    static const int DEVSYS2_REGION_SIZE = 0x1A0000;
-    static const int MAX_CHILD = 32;
-
-    static const char* devSys1String;
-    static const char* devSys2String;
-    static ml::FixStr<64> spNotRunningDeviceName;
-    static ml::FixStr<64> spColdStartNotRunningDeviceName;
-    static mtl::ALLOC_HANDLE sDeviceRegion1Handle;
-    static mtl::ALLOC_HANDLE sDeviceRegion2Handle;
-
-    static CDevice* spInstance;
-};
-/* end "monolib/device/CDevice.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 3 "monolib/device/CDeviceClock.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceClock.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDeviceClock.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
-/* end "monolib/device/CDeviceBase.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceClock.hpp" line 4 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceClock.hpp" line 5 "revolution/OS.h" */
-/**
- * References: YAGCD, WiiBrew, Dolphin Emulator
- */
-
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-/* end "revolution/OS/OS.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
-/* end "revolution/OS/OSAlarm.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
-/* end "revolution/OS/OSAlloc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
-/* end "revolution/OS/OSArena.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
-/* end "revolution/OS/OSAudioSystem.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
-/* end "revolution/OS/OSCache.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
-/* end "revolution/OS/OSCrc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
-/* end "revolution/OS/OSError.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
-/* end "revolution/OS/OSExec.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
-/* end "revolution/OS/OSFastCast.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
-/* end "revolution/OS/OSFatal.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
-/* end "revolution/OS/OSFont.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap4.html#sec4
- * https://www.gc-forever.com/yagcd/chap13.html#sec13
- * https://wiibrew.org/wiki/Memory_map
- */
-
-#ifndef RVL_SDK_OS_HARDWARE_H
-#define RVL_SDK_OS_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
-/* end "revolution/DVD/dvd.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSContext;
-typedef struct OSExecParams;
-
-// Derive offsets for use with OSAddress functions
-#define __DEF_ADDR_OFFSETS(name, addr)                                         \
-    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
-    static const u32 OS_CACHED_##name = (addr);                                \
-    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
-
-// Define a global variable in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name DECL_ADDRESS(addr);                                         \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define a global array in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name arr DECL_ADDRESS(addr);                                     \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define an global variable in the hardware-register range.
-#define OS_DEF_HW_REG(type, name, addr)                                        \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name : (addr);
-
-typedef enum {
-    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
-    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
-} OSBootMagic;
-
-typedef struct OSBootInfo {
-    DVDDiskID diskID; // at 0x0
-    u32 bootMagic;    // at 0x20
-    u32 aplVersion;   // at 0x24
-    u32 physMemSize;  // at 0x28
-    u32 consoleType;  // at 0x2C
-    void* arenaLo;    // at 0x30
-    void* arenaHi;    // at 0x34
-    void* fstStart;   // at 0x38
-    u32 fstSize;      // at 0x3C
-} OSBootInfo;
-
-typedef struct OSDebugInterface {
-    BOOL usingDebugger;    // at 0x0
-    u32 exceptionMask;     // at 0x4
-    void* exceptionHook;   // at 0x8
-    void* exceptionHookLR; // at 0xC
-} OSDebugInterface;
-
-typedef struct OSBI2 {
-    u32 dbgMonitorSize;   // at 0x0
-    u32 simulatedMemSize; // at 0x4
-    u32 argumentOfs;      // at 0x8
-    u32 debugFlag;        // at 0xC
-    u32 trackLocation;    // at 0x10
-    u32 trackSize;        // at 0x14
-    u32 countryCode;      // at 0x18
-    u32 WORD_0x1C;
-    u32 lastInsert;
-    u32 padSpec;            // at 0x24
-    u32 totalTextDataLimit; // at 0x28
-    u32 simulatedMem2Size;  // at 0x2C
-} OSBI2;
-
-/**
- * 0x80000000 - 0x80000100
- */
-// clang-format off
-OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
-OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
-OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
-OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
-OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
-OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
-OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
-OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
-OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
-OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
-OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
-OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
-OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
-// clang-format on
-
-/**
- * 0x80003000 - 0x80003F00
- */
-// clang-format off
-OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
-OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
-OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
-OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
-OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
-OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
-OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
-OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
-OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
-OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
-OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
-OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
-OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
-OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
-OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
-OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
-OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
-OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
-OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
-OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
-OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
-OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
-OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
-OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
-OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
-OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
-OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
-OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
-// clang-format on
-
-/**
- * PI hardware globals
- */
-volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
-typedef enum {
-    PI_INTSR,    //!< 0xCC003000
-    PI_INTMR,    //!< 0xCC003004
-    PI_REG_0x8,  //!< 0xCC003008
-    PI_REG_0xC,  //!< 0xCC00300C
-    PI_REG_0x10, //!< 0xCC003010
-    PI_REG_0x14, //!< 0xCC003014
-    PI_REG_0x18, //!< 0xCC003018
-    PI_REG_0x1C, //!< 0xCC00301C
-    PI_REG_0x20, //!< 0xCC003020
-    PI_RESET,    //!< 0xCC003024
-    // . . .
-} PIHwReg;
-
-// INTSR - Interrupt Cause Register
-#define PI_INTSR_ERROR (1 << 0)
-#define PI_INTSR_RSW (1 << 1)
-#define PI_INTSR_DI (1 << 2)
-#define PI_INTSR_SI (1 << 3)
-#define PI_INTSR_EXI (1 << 4)
-#define PI_INTSR_AI (1 << 5)
-#define PI_INTSR_DSP (1 << 6)
-#define PI_INTSR_MEM (1 << 7)
-#define PI_INTSR_VI (1 << 8)
-#define PI_INTSR_PE_TOKEN (1 << 9)
-#define PI_INTSR_PE_FINISH (1 << 10)
-#define PI_INTSR_CP (1 << 11)
-#define PI_INTSR_DEBUG (1 << 12)
-#define PI_INTSR_HSP (1 << 13)
-#define PI_INTSR_ACR (1 << 14)
-#define PI_INTSR_RSWST (1 << 16)
-
-// INTMR - Interrupt Mask Register
-#define PI_INTMR_ERROR (1 << 0)
-#define PI_INTMR_RSW (1 << 1)
-#define PI_INTMR_DI (1 << 2)
-#define PI_INTMR_SI (1 << 3)
-#define PI_INTMR_EXI (1 << 4)
-#define PI_INTMR_AI (1 << 5)
-#define PI_INTMR_DSP (1 << 6)
-#define PI_INTMR_MEM (1 << 7)
-#define PI_INTMR_VI (1 << 8)
-#define PI_INTMR_PE_TOKEN (1 << 9)
-#define PI_INTMR_PE_FINISH (1 << 10)
-#define PI_INTMR_CP (1 << 11)
-#define PI_INTMR_DEBUG (1 << 12)
-#define PI_INTMR_HSP (1 << 13)
-#define PI_INTMR_ACR (1 << 14)
-
-/**
- * MI hardware registers
- */
-volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
-typedef enum {
-    MI_PAGE_MEM0_H, //!< 0xCC004000
-    MI_PAGE_MEM0_L, //!< 0xCC004002
-    MI_PAGE_MEM1_H, //!< 0xCC004004
-    MI_PAGE_MEM1_L, //!< 0xCC004006
-    MI_PAGE_MEM2_H, //!< 0xCC004008
-    MI_PAGE_MEM2_L, //!< 0xCC00400A
-    MI_PAGE_MEM3_H, //!< 0xCC00400C
-    MI_PAGE_MEM3_L, //!< 0xCC00400E
-    MI_PROT_MEM0,   //!< 0xCC004010
-    MI_PROT_MEM1,   //!< 0xCC004012
-    MI_PROT_MEM2,   //!< 0xCC004014
-    MI_PROT_MEM3,   //!< 0xCC004016
-    MI_REG_0x18,    //!< 0xCC004018
-    MI_REG_0x1A,    //!< 0xCC00401A
-    MI_INTMR,       //!< 0xCC00401C
-    MI_INTSR,       //!< 0xCC00401E
-    MI_REG_0x20,    //!< 0xCC004020
-    MI_ADDRLO,      //!< 0xCC004022
-    MI_ADDRHI,      //!< 0xCC004024
-    MI_REG_0x26,    //!< 0xCC004026
-    MI_REG_0x28,    //!< 0xCC004028
-    // . . .
-} MIHwReg;
-
-// INTMR - Interrupt Mask Register
-#define MI_INTMR_MEM0 (1 << 0)
-#define MI_INTMR_MEM1 (1 << 1)
-#define MI_INTMR_MEM2 (1 << 2)
-#define MI_INTMR_MEM3 (1 << 3)
-#define MI_INTMR_ADDR (1 << 4)
-
-// INTSR - Interrupt Cause Register
-#define MI_INTSR_MEM0 (1 << 0)
-#define MI_INTSR_MEM1 (1 << 1)
-#define MI_INTSR_MEM2 (1 << 2)
-#define MI_INTSR_MEM3 (1 << 3)
-#define MI_INTSR_ADDR (1 << 4)
-
-/**
- * DI hardware registers
- */
-volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
-typedef enum {
-    DI_DMA_ADDR = 5, // !< 0xCD006014
-    DI_CONFIG = 9,   // !< 0xCD006024
-} DIHwReg;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSHardware.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
-/* end "revolution/OS/OSInterrupt.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
-/* end "revolution/OS/OSIpc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
-/* end "revolution/OS/OSLink.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
-/* end "revolution/OS/OSMemory.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
-/* end "revolution/OS/OSMessage.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
-/* end "revolution/OS/OSMutex.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
-/* end "revolution/OS/OSNet.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
-/* end "revolution/OS/OSPlayRecord.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
-/* end "revolution/OS/OSPlayTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
-/* end "revolution/OS/OSReset.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
-/* end "revolution/OS/OSRtc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
-/* end "revolution/OS/OSSerial.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
-/* end "revolution/OS/OSStateFlags.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
-/* end "revolution/OS/OSStateTM.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
-/* end "revolution/OS/OSSync.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
-/* end "revolution/OS/OSTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
-/* end "revolution/OS/OSUtf.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
-/* end "revolution/OS/__ppc_eabi_init.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS.h" */
-
-//Interface that classes can inherit to run code at the start/end of each frame.
-class IDeviceClockFrame {
-public:
-    virtual void IDeviceClockFrame_UnkVirtualFunc1() = 0;
-    virtual void onStartFrame() = 0;
-    virtual void onEndFrame() = 0;
+    void init();
+    static Class_80296898* getInstance();
 };
 
-//size: 0x238
-class CDeviceClock : public CDeviceBase {
-public:
-    CDeviceClock(const char* pName, CWorkThread* pParent);
-    virtual ~CDeviceClock();
-    virtual void wkUpdate();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-    static CDeviceClock* getInstance();
-    static bool isInitialized();
-    static s64 getTimeNow();
-    static void onStartFrame();
-    static void onEndFrame();
-
-    static inline CDeviceClock* create(const char* pName, CWorkThread* pParent){
-        CDeviceClock* device = new (CWorkThreadSystem::getWorkMem()) CDeviceClock(pName, pParent);
-        CWorkUtil::entryWork(device, pParent, false);
-        device->mFlags |= FLAG_CREATED;
-        return device;
-    }
-
-    //0x0: vtable
-    //0x0-1c8: CDeviceBase
-    u32 unk1C8;
-    reslist<IDeviceClockFrame*> mFrameList; //0x1CC
-    u32 unk1EC;
-    s64 unk1F0;
-    s64 mUpdateTime; //0x1F8
-    s64 mFrameStartTime; //0x200
-    s64 mFrameDuration; //0x208
-    OSCalendarTime mCalendar; //0x210
-
-    static CDeviceClock* spInstance;
-};
-/* end "monolib/device/CDeviceClock.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 4 "monolib/device/CDeviceFile.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 4 "monolib/device/CDeviceBase.hpp" */
-/* end "monolib/device/CDeviceBase.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 5 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 6 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-//size: 0x1f0
-class CDeviceFile : public CDeviceBase {
-public:
-    CDeviceFile(const char* pName, CWorkThread* pParent);
-    static CDeviceFile* getInstance();
-
-    DECL_WORKTHREAD_CREATE(CDeviceFile);
-
-    static bool isInitialized();
-    static bool func_8044E768();
-
-    static CFileHandle* readFile(mtl::ALLOC_HANDLE allocHandle, const char* pPath, IWorkEvent* pWorkEvent, int r6, int r7);
-    static CFileHandle* readCommonArchiveFile(mtl::ALLOC_HANDLE allocHandle, const char* pPath, IWorkEvent* pWorkEvent, int r6, int r7);
-    static int getFileSize(const char* pPath);
-
-    static void removeFileJob(CDeviceFileJob* pJob);
-    static void cancel(CFileHandle* pFileHandle);
-    static void func_8044F154(CFileHandle* pFileHandle, int);
-    static void setHandleFlag1(CFileHandle* pFileHandle);
-    static void setHandleFlag2(CFileHandle* pFileHandle);
-
-    //0x0: vtable
-    //0x0-1c8: CDeviceBase
-    u8 unk1C8[0x1F0 - 0x1C8];
-};
-/* end "monolib/device/CDeviceFile.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 5 "monolib/device/CDeviceFileCri.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceFileCri.hpp" line 2 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-struct UnkStruct_8044F65C {
-    ~UnkStruct_8044F65C(){}
-    virtual void UnkStruct_8044F65C_UnkVirtualFunc1() = 0;
-    virtual void UnkStruct_8044F65C_UnkVirtualFunc2() = 0;
-    virtual void UnkStruct_8044F65C_UnkVirtualFunc3() = 0;
-};
-
-class CDeviceFileCri : public CWorkThread, public UnkStruct_8044F65C {
-public:
-    CDeviceFileCri(const char* pName, CWorkThread* pParent);
-    ~CDeviceFileCri();
-    static CDeviceFileCri* getInstance();
-
-    DECL_WORKTHREAD_CREATE(CDeviceFileCri);
-
-    virtual void UnkStruct_8044F65C_UnkVirtualFunc1();
-    virtual void UnkStruct_8044F65C_UnkVirtualFunc2();
-    virtual void UnkStruct_8044F65C_UnkVirtualFunc3();
-
-    static void func_8044F964();
-    static void func_8044FC38();
-
-    static void func_80450B14(const wchar_t*);
-    static void func_80450B1C(const wchar_t*);
-    static void func_80450B24(const wchar_t*);
-};
-/* end "monolib/device/CDeviceFileCri.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 6 "monolib/device/CDeviceFileDvd.hpp" */
-#pragma once
-
-class CDeviceFileDvd {
-public:
-    static void cancelCurrent();
-};
-/* end "monolib/device/CDeviceFileDvd.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 7 "monolib/device/CDeviceFileJob.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceFileJob.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDeviceFileJob.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceFileJob.hpp" line 4 "monolib/device/CFileHandle.hpp" */
-/* end "monolib/device/CFileHandle.hpp" */
-
-//Base class for jobs carried out by CDeviceFile.
-class CDeviceFileJob : public CWorkThread {
-public:
-    CDeviceFileJob(const char* pName, CWorkThread* pParent);
-
-    virtual ~CDeviceFileJob(){}
-    virtual bool CDeviceFileJob_UnkVirtualFunc1(){ return false; }
-    virtual bool cancel(const char* pFilename);
-    virtual bool cancel(CFileHandle* pHandle){ return false; }
-
-    inline const char* getFilename(){
-        return mHandle->mName.c_str();
-    }
-
-    inline void call(CBM cbm){
-        mHandle->call(cbm);
-    }
-
-    //0x0: vtable
-    //0x0-1C4: CWorkThread
-    CFileHandle* mHandle; //0x1C4
-    u8 unk1C8; //FixStr<64>?
-    u8 unk1C9[0x208 - 0x1C9];
-    u32 unk208;
-    u32 unk20C;
-    u8 unk210;
-};
-/* end "monolib/device/CDeviceFileJob.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 8 "monolib/device/CDeviceFileJobReadDvd.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceFileJobReadDvd.hpp" line 2 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceFileJobReadDvd.hpp" line 3 "monolib/device/CDeviceFileJob.hpp" */
-/* end "monolib/device/CDeviceFileJob.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceFileJobReadDvd.hpp" line 4 "revolution/DVD.h" */
-/**
- * References: WiiBrew, YAGCD
- */
-
-#ifndef RVL_SDK_PUBLIC_DVD_H
-#define RVL_SDK_PUBLIC_DVD_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 10 "revolution/DVD/dvd.h" */
-/* end "revolution/DVD/dvd.h" */
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 11 "revolution/DVD/dvd_broadway.h" */
-/* end "revolution/DVD/dvd_broadway.h" */
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 12 "revolution/DVD/dvdDeviceError.h" */
-/* end "revolution/DVD/dvdDeviceError.h" */
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 13 "revolution/DVD/dvderror.h" */
-/* end "revolution/DVD/dvderror.h" */
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 14 "revolution/DVD/dvdfatal.h" */
-/* end "revolution/DVD/dvdfatal.h" */
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 15 "revolution/DVD/dvdfs.h" */
-/* end "revolution/DVD/dvdfs.h" */
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 16 "revolution/DVD/dvdidutils.h" */
-/* end "revolution/DVD/dvdidutils.h" */
-/* "libs/RVL_SDK/include/revolution/DVD.h" line 17 "revolution/DVD/dvdqueue.h" */
-/* end "revolution/DVD/dvdqueue.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/DVD.h" */
-
-class CDeviceFileJobReadDvd : public CDeviceFileJob {
-public:
-    CDeviceFileJobReadDvd(const char* pName, CWorkThread* pParent);
-    virtual ~CDeviceFileJobReadDvd();
-    virtual void wkUpdate();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-    virtual bool cancel(const char* pFilename);
-    virtual bool cancel(CFileHandle* pHandle);
-    void callCBM3();
-    void cancelCurrent();
-
-    //0x0: vtable
-    //0x0-214: CDeviceFileJob
-    DVDFileInfo mDvdFileInfo;
-};
-/* end "monolib/device/CDeviceFileJobReadDvd.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 9 "monolib/device/CDeviceFont.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 4 "monolib/device/CDeviceBase.hpp" */
-/* end "monolib/device/CDeviceBase.hpp" */
-
-/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 6 "nw4r/lyt/lyt_layout.h" */
-/* end "nw4r/lyt/lyt_layout.h" */
-
-//size: 0x1f0
-class CDeviceFont : public CDeviceBase {
-public:
-    CDeviceFont(const char* pName, CWorkThread* pParent);
-    static CDeviceFont* getInstance();
-
-    //todo: when true return type is found clean :
-    // CMCEffCrystal::func_80224CE4
-    // CTitleAHelp::OnFileEvent
-    static void* func_80452C10(u32, nw4r::lyt::Layout*);
-
-    DECL_WORKTHREAD_CREATE(CDeviceFont);
-
-    //0x0: vtable
-    //0x0-1c8: CDeviceBase
-    u8 unk1C8[0x1F0 - 0x1C8];
-};
-/* end "monolib/device/CDeviceFont.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 10 "monolib/device/CDeviceFontLayer.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceFontLayer.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-class CDeviceFontLayer {
-public:
-    static void func_80454E6C();
-    static int func_80454E78();
-};
-/* end "monolib/device/CDeviceFontLayer.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 11 "monolib/device/CDeviceGX.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
-/* end "monolib/device/CDeviceBase.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 4 "monolib/device/CDeviceVICb.hpp" */
-/* end "monolib/device/CDeviceVICb.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 5 "monolib/device/CDeviceVI.hpp" */
+Class_80296898* func_80296A04(Class_80296898* obj);
+void func_80296AE8(u8* src);
+/* end "kyoshin/code_80296898.hpp" */
+/* "src/kyoshin/cf/CTaskGameCf.cpp" line 14 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 6 "monolib/device/CDeviceRemotePad.hpp" */
-#pragma once
 
-/* "libs/monolib/include/monolib/device/CDeviceRemotePad.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDeviceRemotePad.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
-/* end "monolib/device/CDeviceBase.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceRemotePad.hpp" line 4 "monolib/core/CPadManager.hpp" */
-/* end "monolib/core/CPadManager.hpp" */
+namespace cf{
+    CTaskGameCf* CTaskGameCf::spInstance;
 
-//size: 0x1f0
-class CDeviceRemotePad : public CDeviceBase {
-public:
-    CDeviceRemotePad(const char* pName, CWorkThread* pParent);
-    ~CDeviceRemotePad();
-    static CDeviceRemotePad* getInstance();
-
-    DECL_WORKTHREAD_CREATE(CDeviceRemotePad);
-
-    virtual void wkUpdate();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-    static bool isConnected(u32 index);
-    static u32 getHeldButtonFlags(u32 index);
-    static u32 getPressedButtonFlags(u32 index);
-    static CPad* getMainGCPad();
-    static CPad* getPadData(u32 index);
-    static CWpadStatus* getWpadStatus(u32 index);
-
-    static int getFirstConnectedWpadPort(){
-        for(int i = 0; i < WPAD_MAX_CONTROLLERS; i++){
-            if(isConnected(i)){
-                return i;
-            }
+    CTaskGameCf::CTaskGameCf(CProcess* pParent, BOOL arg2)
+        : pTaskGame((CTaskGame*)pParent), unk_54(0), unk_5C(1), unk_5E(1), unk_60(16), unk_62(0){
+        if(arg2){
+            unk_54 |= 8;
+        } else {
+            unk_54 = 0;
         }
-
-        return WPAD_CHAN_INVALID;
     }
 
-    //0x0: vtable
-    //0x0-1c8: CDeviceBase
-    PadUpdateFunc mPadUpdateFunc; //0x1C8
-    CPad* mpPads[8]; //0x1CC
-    u32 unk1EC;
+    CTaskGameCf::~CTaskGameCf(){}
 
-private:
-    static const int MAX_CHILD = 0;
-
-    static CDeviceRemotePad* spInstance;
-};
-/* end "monolib/device/CDeviceRemotePad.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 7 "monolib/device/CGXCache.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CGXCache.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CGXCache.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/device/CGXCache.hpp" line 4 "monolib/work/CMsgParam.hpp" */
-/* end "monolib/work/CMsgParam.hpp" */
-/* "libs/monolib/include/monolib/device/CGXCache.hpp" line 5 "revolution/GX.h" */
-/**
- * References: YAGCD, Dolphin Emulator, publicly available patents
- */
-
-#ifndef RVL_SDK_PUBLIC_GX_H
-#define RVL_SDK_PUBLIC_GX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
-/* end "revolution/GX/GXAttr.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
-/* end "revolution/GX/GXBump.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
-/* end "revolution/GX/GXDisplayList.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
-/* end "revolution/GX/GXDraw.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
-/* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
-/* end "revolution/GX/GXFrameBuf.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
-/* end "revolution/GX/GXGeometry.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap8.html#sec8
- * https://www.gc-forever.com/yagcd/chap5.html#sec5
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
- * https://patents.google.com/patent/US6700586B1/en
- * https://patents.google.com/patent/US6639595B1/en
- * https://patents.google.com/patent/US7002591
- * https://patents.google.com/patent/US6697074
- */
-
-#ifndef RVL_SDK_GX_HARDWARE_H
-#define RVL_SDK_GX_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/************************************************************
- *
- *
- * GX FIFO
- *
- *
- ***********************************************************/
-
-/**
- * FIFO write/gather pipe
- */
-extern volatile union {
-    // 1-byte
-    char c;
-    unsigned char uc;
-    // 2-byte
-    short s;
-    unsigned short us;
-    // 4-byte
-    int i;
-    unsigned int ui;
-    void* p;
-    float f;
-} WGPIPE DECL_ADDRESS(0xCC008000);
-
-/**
- * FIFO commands
- */
-typedef enum {
-    GX_FIFO_CMD_NOOP = 0x00,
-
-    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
-    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
-    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
-
-    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
-    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
-    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
-    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
-
-    GX_FIFO_CMD_CALL_DL = 0x40,
-    GX_FIFO_CMD_INVAL_VTX = 0x48,
-
-    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
-    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
-    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
-    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
-    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
-} GXFifoCmd;
-
-/**
- * FIFO command sizes
- */
-#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
-#define GX_FIFO_CMD_DRAW_SIZE 3
-
-#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
-#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
-#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
-
-#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
-        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
-        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
-        WGPIPE.c = reg;                                                        \
-        WGPIPE.i = cmd;                                                        \
-    }
-
-#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
-
-/************************************************************
- *
- *
- * GX Blitting Processor (BP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into BP register
- */
-#define GX_BP_LOAD_REG(data)                                                   \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
-    WGPIPE.i = (data);
-
-/**
- * Set BP command opcode (first 8 bits)
- */
-#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
-
-#define GX_BP_OPCODE_SHIFT 24
-#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Command Processor (CP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into CP register
- */
-#define GX_CP_LOAD_REG(addr, data)                                             \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
-    WGPIPE.c = (addr);                                                         \
-    WGPIPE.i = (data);
-
-#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Transform Unit (XF)
- *
- *
- ***********************************************************/
-
-/**
- * XF memory
- */
-typedef enum {
-    GX_XF_MEM_POSMTX = 0x0000,
-    GX_XF_MEM_NRMMTX = 0x0400,
-    GX_XF_MEM_DUALTEXMTX = 0x0500,
-    GX_XF_MEM_LIGHTOBJ = 0x0600
-} GXXfMem;
-
-/**
- * Header for an XF register load
- */
-#define GX_XF_LOAD_REG_HDR(addr)                                               \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
-    WGPIPE.i = (addr);
-
-/**
- * Load immediate value into XF register
- */
-#define GX_XF_LOAD_REG(addr, data)                                             \
-    GX_XF_LOAD_REG_HDR(addr);                                                  \
-    WGPIPE.i = (data);
-
-#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
-
-/**
- * Load immediate values into multiple XF registers
- */
-#define GX_XF_LOAD_REGS(size, addr)                                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        cmd |= (addr);                                                         \
-        cmd |= (size) << 16;                                                   \
-        GX_XF_LOAD_REG_HDR(cmd);                                               \
-    }
-
-/**
- * Enums for Tex0-Tex7 register fields
- */
-typedef enum {
-    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
-    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
-} GXXfTexProj;
-
-typedef enum {
-    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
-    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
-} GXXfTexForm;
-
-typedef enum {
-    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
-    GX_XF_TG_BUMP,    // Texgen bump mapping
-
-    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                   // color0
-
-    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                  // color1
-} GXXfTexGen;
-
-/**
- * Misc. hardware enums
- */
-typedef enum {
-    GX_RAS_COLOR0A0,
-    GX_RAS_COLOR1A1,
-    GX_RAS_ALPHA_BUMP = 5,
-    GX_RAS_ALPHA_BUMPN,
-    GX_RAS_COLOR_ZERO,
-
-    GX_RAS_MAX_CHANNEL
-} GXRasChannelID;
-
-typedef enum {
-    GX_TEVREG_COLOR,
-    GX_TEVREG_KONST,
-} GXTevRegType;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXHardware.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
-/* end "revolution/GX/GXHardwareBP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
-/* end "revolution/GX/GXHardwareCP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
-/* end "revolution/GX/GXHardwareXF.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
-/* end "revolution/GX/GXInit.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
-/* end "revolution/GX/GXLight.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
-/* end "revolution/GX/GXMisc.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
-/* end "revolution/GX/GXPixel.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
-/* end "revolution/GX/GXTev.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-/* end "revolution/GX/GXTexture.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
-/* end "revolution/GX/GXTransform.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
-/* end "revolution/GX/GXVert.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX.h" */
-
-//size: 0x4
-class IStateCache {
-public:
-    virtual ~IStateCache();
-};
-
-//size: 0x51c
-class CGXCache : public IStateCache {
-public:
-    CGXCache();
-    virtual ~CGXCache();
-    void func_8044B294(u32 r4);
-    void func_8044B4B8(GXTexObj* pTexObj, u16 r5, u16 r6);
-    ml::CCol4* func_8044B5B4();
-    void func_8044B660();
-    bool func_8044BE38();
-    void func_8044BFC0();
-    void func_8044A94C(int r4, int r5);
-    void func_8044AA7C(int r4, int r5);
-    void func_8044ACDC(const ml::CCol4& r4, int r5);
-    void func_8044AE8C(const ml::CCol4& r4, int r5);
-    void func_8044B03C(int r4);
-    void func_8044B168(int r4);
-    void func_8044A6C8(int r4, int r5);
-    void func_8044B8CC(float f1, float f2, float f3);
-    u32 func_8044BD74(UNKWORD r3);
-
-    //0x0: vtable
-    //0x0-0x4: IStateCache
-    CMsgParam<32> unk4;
-    u8 unk4A0[0x50C - 0x4A0];
-    u32 unk50C;
-    u8 unk510[0xC];
-};
-/* end "monolib/device/CGXCache.hpp" */
-/* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 8 "revolution/GX.h" */
-/**
- * References: YAGCD, Dolphin Emulator, publicly available patents
- */
-
-#ifndef RVL_SDK_PUBLIC_GX_H
-#define RVL_SDK_PUBLIC_GX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
-/* end "revolution/GX/GXAttr.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
-/* end "revolution/GX/GXBump.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
-/* end "revolution/GX/GXDisplayList.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
-/* end "revolution/GX/GXDraw.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
-/* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
-/* end "revolution/GX/GXFrameBuf.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
-/* end "revolution/GX/GXGeometry.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap8.html#sec8
- * https://www.gc-forever.com/yagcd/chap5.html#sec5
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
- * https://patents.google.com/patent/US6700586B1/en
- * https://patents.google.com/patent/US6639595B1/en
- * https://patents.google.com/patent/US7002591
- * https://patents.google.com/patent/US6697074
- */
-
-#ifndef RVL_SDK_GX_HARDWARE_H
-#define RVL_SDK_GX_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/************************************************************
- *
- *
- * GX FIFO
- *
- *
- ***********************************************************/
-
-/**
- * FIFO write/gather pipe
- */
-extern volatile union {
-    // 1-byte
-    char c;
-    unsigned char uc;
-    // 2-byte
-    short s;
-    unsigned short us;
-    // 4-byte
-    int i;
-    unsigned int ui;
-    void* p;
-    float f;
-} WGPIPE DECL_ADDRESS(0xCC008000);
-
-/**
- * FIFO commands
- */
-typedef enum {
-    GX_FIFO_CMD_NOOP = 0x00,
-
-    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
-    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
-    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
-
-    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
-    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
-    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
-    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
-
-    GX_FIFO_CMD_CALL_DL = 0x40,
-    GX_FIFO_CMD_INVAL_VTX = 0x48,
-
-    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
-    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
-    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
-    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
-    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
-} GXFifoCmd;
-
-/**
- * FIFO command sizes
- */
-#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
-#define GX_FIFO_CMD_DRAW_SIZE 3
-
-#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
-#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
-#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
-
-#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
-        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
-        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
-        WGPIPE.c = reg;                                                        \
-        WGPIPE.i = cmd;                                                        \
-    }
-
-#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
-
-/************************************************************
- *
- *
- * GX Blitting Processor (BP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into BP register
- */
-#define GX_BP_LOAD_REG(data)                                                   \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
-    WGPIPE.i = (data);
-
-/**
- * Set BP command opcode (first 8 bits)
- */
-#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
-
-#define GX_BP_OPCODE_SHIFT 24
-#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Command Processor (CP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into CP register
- */
-#define GX_CP_LOAD_REG(addr, data)                                             \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
-    WGPIPE.c = (addr);                                                         \
-    WGPIPE.i = (data);
-
-#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Transform Unit (XF)
- *
- *
- ***********************************************************/
-
-/**
- * XF memory
- */
-typedef enum {
-    GX_XF_MEM_POSMTX = 0x0000,
-    GX_XF_MEM_NRMMTX = 0x0400,
-    GX_XF_MEM_DUALTEXMTX = 0x0500,
-    GX_XF_MEM_LIGHTOBJ = 0x0600
-} GXXfMem;
-
-/**
- * Header for an XF register load
- */
-#define GX_XF_LOAD_REG_HDR(addr)                                               \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
-    WGPIPE.i = (addr);
-
-/**
- * Load immediate value into XF register
- */
-#define GX_XF_LOAD_REG(addr, data)                                             \
-    GX_XF_LOAD_REG_HDR(addr);                                                  \
-    WGPIPE.i = (data);
-
-#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
-
-/**
- * Load immediate values into multiple XF registers
- */
-#define GX_XF_LOAD_REGS(size, addr)                                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        cmd |= (addr);                                                         \
-        cmd |= (size) << 16;                                                   \
-        GX_XF_LOAD_REG_HDR(cmd);                                               \
-    }
-
-/**
- * Enums for Tex0-Tex7 register fields
- */
-typedef enum {
-    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
-    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
-} GXXfTexProj;
-
-typedef enum {
-    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
-    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
-} GXXfTexForm;
-
-typedef enum {
-    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
-    GX_XF_TG_BUMP,    // Texgen bump mapping
-
-    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                   // color0
-
-    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                  // color1
-} GXXfTexGen;
-
-/**
- * Misc. hardware enums
- */
-typedef enum {
-    GX_RAS_COLOR0A0,
-    GX_RAS_COLOR1A1,
-    GX_RAS_ALPHA_BUMP = 5,
-    GX_RAS_ALPHA_BUMPN,
-    GX_RAS_COLOR_ZERO,
-
-    GX_RAS_MAX_CHANNEL
-} GXRasChannelID;
-
-typedef enum {
-    GX_TEVREG_COLOR,
-    GX_TEVREG_KONST,
-} GXTevRegType;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXHardware.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
-/* end "revolution/GX/GXHardwareBP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
-/* end "revolution/GX/GXHardwareCP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
-/* end "revolution/GX/GXHardwareXF.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
-/* end "revolution/GX/GXInit.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
-/* end "revolution/GX/GXLight.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
-/* end "revolution/GX/GXMisc.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
-/* end "revolution/GX/GXPixel.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
-/* end "revolution/GX/GXTev.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-/* end "revolution/GX/GXTexture.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
-/* end "revolution/GX/GXTransform.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
-/* end "revolution/GX/GXVert.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX.h" */
-
-enum EVerticalFilter {
-    VFILTER_NONE,
-    VFILTER_1,
-    VFILTER_2,
-    VFILTER_3
-};
-
-//size: 0x798
-class CDeviceGX : public CDeviceBase, public CDeviceVICb {
-public:
-    CDeviceGX(const char* pName, CWorkThread* pParent);
-    virtual ~CDeviceGX();
-    static bool isInitialized();
-    static void setDevicesInitializedFlag(bool state);
-    static bool devicesInitialized();
-    static CDeviceGX* getInstance();
-    static void updateVerticalFilter(EVerticalFilter filter);
-    virtual void viAfterDrawDone();
-    virtual void viBeginFrame();
-    static void drawFrame();
-    static void copyEfb(void* pDestFrameBuffer);
-    static void onRenderWork();
-    static int getHeapSize();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-    static void drawSyncCallback(u16 token);
-    static void setValues(GXPixelFmt format, u32 heapSize);
-
-
-    static inline CGXCache* getCacheInstance(){
-        return cacheInstance;
-    }
-
-    inline void setUnk260(float f){
-        if(f < 0) f = 0;
-        else if(f > 2) f = 2;
-        unk260 = f;
-    }
-
-    static inline void copyEfbToXfb(void* pDestFrameBuffer);
-    static inline void calculateCost();
-
-    static inline CDeviceGX* create(const char* pName, CWorkThread* pParent){
-        CDeviceGX* device = new (CWorkThreadSystem::getWorkMem()) CDeviceGX(pName, pParent);
-        CWorkUtil::entryWork(device, pParent, false);
-        device->mFlags |= FLAG_CREATED;
-        return device;
-    }
-
-    static inline void initialize(){
-        setValues(GX_PF_RGB8_Z24, REGION_SIZE);
-    }
-
-    //0x0: vtable
-    //0x0-1c8: CDeviceBase
-    //0x1c8-1cc: CDeviceVICb
-    BOOL mDevicesInitialized; //0x1CC
-    GXFifoObj mFifo; //0x1D0
-    u8* mGxHeap; //0x250
-    void* mGxHeapEndAddr; //0x254
-    u8 mVFilter[8]; //0x258
-    float unk260;
-    float unk264;
-    u8 unk268[4];
-    u32 unk26C;
-    u32 unk270;
-    u8 unk274;
-    u8 unk275[3];
-    EVerticalFilter mFilter; //0x278
-    CGXCache unk27C;
-
-    //Graphics callback tokens
-    static const u16 token1 = 0xB00B;
-    static const u16 token2 = 0xBEEF;
-
-private:
-    static const u32 REGION_SIZE = 0x180000;
-
-    static CDeviceGX* spInstance;
-    static CGXCache* cacheInstance;
-    static GXPixelFmt pixelFormat;
-    static int gxHeapSize;
-    static float sCostTime;
-    static const char* someString;
-};
-/* end "monolib/device/CDeviceGX.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 12 "monolib/device/CDeviceRemotePad.hpp" */
-/* end "monolib/device/CDeviceRemotePad.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 13 "monolib/device/CDeviceSC.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceSC.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDeviceSC.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
-/* end "monolib/device/CDeviceBase.hpp" */
-
-//size: 0x1D0
-class CDeviceSC : public CDeviceBase {
-public:
-    CDeviceSC(const char* pName, CWorkThread* pParent);
-    virtual ~CDeviceSC();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-    static CDeviceSC* getInstance();
-    static bool isWideAspectRatio();
-    static bool isSoundModeMono();
-    static u8 getLanguage();
-    static bool isInitialized();
-
-    static inline CDeviceSC* create(const char* pName, CWorkThread* pParent){
-        CDeviceSC* device = new (CWorkThreadSystem::getWorkMem()) CDeviceSC(pName, pParent);
-        CWorkUtil::entryWork(device, pParent, false);
-        device->mFlags |= FLAG_CREATED;
-        return device;
-    }
-
-    //0x0: vtable
-    //0x0-1C8: CDeviceBase
-    u8 mAspectRatio; //0x1c8
-    u8 mEuRgb60Mode; //0x1c9
-    u8 mLanguage; //0x1ca
-    u8 mProgMode; //0x1cb
-    u8 mSoundMode; //0x1cc
-    u8 unk1CD;
-    u8 unk1CE[2];
-
-private:
-    static const int MAX_CHILD = 8;
-
-    static CDeviceSC* spInstance;
-};
-/* end "monolib/device/CDeviceSC.hpp" */
-/* "libs/monolib/include/monolib/device.hpp" line 14 "monolib/device/CDeviceVI.hpp" */
-/* end "monolib/device/CDeviceVI.hpp" */
-/* end "monolib/device.hpp" */
-/* "src/kyoshin/CGame.cpp" line 9 "monolib/work.hpp" */
-/* end "monolib/work.hpp" */
-/* "src/kyoshin/CGame.cpp" line 10 "monolib/lib/CLibLayout.hpp" */
-/* end "monolib/lib/CLibLayout.hpp" */
-/* "src/kyoshin/CGame.cpp" line 11 "monolib/lib/CLibStaticData.hpp" */
-/* end "monolib/lib/CLibStaticData.hpp" */
-/* "src/kyoshin/CGame.cpp" line 12 "decomp.h" */
-/**
- * Codewarrior tricks for matching decomp
- * (Macros generate prototypes to satisfy -requireprotos)
- */
-
-#ifndef DECOMP_H
-#define DECOMP_H
-
-/* "include/decomp.h" line 8 "macros.h" */
-/**
- * Common macros
- */
-
-#ifndef MACROS_H
-#define MACROS_H
-
-/******************************************************************************
- *
- * Strings
- *
- ******************************************************************************/
-
-// Stringify expression
-#define __STR(x) #x
-#define STR(x) __STR(x)
-
-// Concatenate strings
-#define __CONCAT(x, y) x##y
-#define CONCAT(x, y) __CONCAT(x, y)
-
-// Multi-character character constants
-// clang-format off
-#define TWOCC(c0, c1)                                                          \
-    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
-#define THREECC(c0, c1, c2)                                                    \
-    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
-#define FOURCC(c0, c1, c2, c3)                                                 \
-    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
-// clang-format on
-
-/******************************************************************************
- *
- * Arithmetic
- *
- ******************************************************************************/
-
-// Min/max expression
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-
-// Clamp to a range
-#define CLAMP(low, high, x)                                                    \
-    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
-
-// Round up value
-#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
-#define ROUND_UP_PTR(x, align)                                                 \
-    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
-
-// Round down value
-#define ROUND_DOWN(x, align) ((x) & (-(align)))
-#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
-
-// Distance between pointers
-#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
-
-/******************************************************************************
- *
- * Arrays
- *
- ******************************************************************************/
-
-// Size of compile-time arrays
-#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
-#define LENGTHOF(x) ARRAY_SIZE(x)
-
-// Declare an array of hardware registers
-#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
-
-/******************************************************************************
- *
- * Intrinsics
- *
- ******************************************************************************/
-
-// Memory clear intrinsic
-#define MEMCLR(x) __memclr((x), sizeof(*(x)))
-
-/******************************************************************************
- *
- * Attributes
- *
- ******************************************************************************/
-
-// Alignment attribute
-#define ALIGN(x) __attribute__((aligned(x)))
-
-// Place a symbol in a specific ELF section
-#define DECL_SECTION(x) __declspec(section x)
-
-// Give a symbol weak linkage
-#define DECL_WEAK __declspec(weak)
-
-#endif
-/* end "macros.h" */
-
-// Compile without matching hacks.
-#if defined(NONMATCHING) || defined(COMPAT_ANY)
-#define DECOMP_FORCEACTIVE(module, ...)
-#define DECOMP_FORCELITERAL(module, ...)
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)
-#define DECOMP_INLINE
-#define DECOMP_DONT_INLINE
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
-#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
-// Compile with matching hacks.
-// (This version of CW does not support pragmas inside macros.)
-#else
-// Force reference specific data
-#define DECOMP_FORCEACTIVE(module, ...)                                        \
-    void fake_function(...);                                                   \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
-        fake_function(__VA_ARGS__);                                            \
-    }
-
-// Force literal ordering, such as floats in sdata2
-#define DECOMP_FORCELITERAL(module, ...)                                       \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
-        (__VA_ARGS__);                                                         \
-    }
-
-// Force reference destructor
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
-        cls dummy;                                                             \
-        dummy.~cls();                                                          \
-    }
-
-#define DECOMP_INLINE inline
-#define DECOMP_DONT_INLINE __attribute__((never_inline))
-
-/**
- * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
- * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
- */
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
-/** slwi expansion: rlwinm rD,rA,1,0,30 */
-#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
-
-/**
- * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
- * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
- */
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
-
-#endif
-
-#endif
-/* end "decomp.h" */
-/* "src/kyoshin/CGame.cpp" line 13 "cstring" */
-/* end "cstring" */
-/* "src/kyoshin/CGame.cpp" line 14 "revolution/GX.h" */
-/**
- * References: YAGCD, Dolphin Emulator, publicly available patents
- */
-
-#ifndef RVL_SDK_PUBLIC_GX_H
-#define RVL_SDK_PUBLIC_GX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
-/* end "revolution/GX/GXAttr.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
-/* end "revolution/GX/GXBump.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
-/* end "revolution/GX/GXDisplayList.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
-/* end "revolution/GX/GXDraw.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
-/* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
-/* end "revolution/GX/GXFrameBuf.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
-/* end "revolution/GX/GXGeometry.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap8.html#sec8
- * https://www.gc-forever.com/yagcd/chap5.html#sec5
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
- * https://patents.google.com/patent/US6700586B1/en
- * https://patents.google.com/patent/US6639595B1/en
- * https://patents.google.com/patent/US7002591
- * https://patents.google.com/patent/US6697074
- */
-
-#ifndef RVL_SDK_GX_HARDWARE_H
-#define RVL_SDK_GX_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/************************************************************
- *
- *
- * GX FIFO
- *
- *
- ***********************************************************/
-
-/**
- * FIFO write/gather pipe
- */
-extern volatile union {
-    // 1-byte
-    char c;
-    unsigned char uc;
-    // 2-byte
-    short s;
-    unsigned short us;
-    // 4-byte
-    int i;
-    unsigned int ui;
-    void* p;
-    float f;
-} WGPIPE DECL_ADDRESS(0xCC008000);
-
-/**
- * FIFO commands
- */
-typedef enum {
-    GX_FIFO_CMD_NOOP = 0x00,
-
-    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
-    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
-    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
-
-    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
-    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
-    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
-    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
-
-    GX_FIFO_CMD_CALL_DL = 0x40,
-    GX_FIFO_CMD_INVAL_VTX = 0x48,
-
-    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
-    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
-    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
-    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
-    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
-} GXFifoCmd;
-
-/**
- * FIFO command sizes
- */
-#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
-#define GX_FIFO_CMD_DRAW_SIZE 3
-
-#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
-#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
-#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
-
-#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
-        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
-        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
-        WGPIPE.c = reg;                                                        \
-        WGPIPE.i = cmd;                                                        \
-    }
-
-#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
-
-/************************************************************
- *
- *
- * GX Blitting Processor (BP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into BP register
- */
-#define GX_BP_LOAD_REG(data)                                                   \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
-    WGPIPE.i = (data);
-
-/**
- * Set BP command opcode (first 8 bits)
- */
-#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
-
-#define GX_BP_OPCODE_SHIFT 24
-#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Command Processor (CP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into CP register
- */
-#define GX_CP_LOAD_REG(addr, data)                                             \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
-    WGPIPE.c = (addr);                                                         \
-    WGPIPE.i = (data);
-
-#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Transform Unit (XF)
- *
- *
- ***********************************************************/
-
-/**
- * XF memory
- */
-typedef enum {
-    GX_XF_MEM_POSMTX = 0x0000,
-    GX_XF_MEM_NRMMTX = 0x0400,
-    GX_XF_MEM_DUALTEXMTX = 0x0500,
-    GX_XF_MEM_LIGHTOBJ = 0x0600
-} GXXfMem;
-
-/**
- * Header for an XF register load
- */
-#define GX_XF_LOAD_REG_HDR(addr)                                               \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
-    WGPIPE.i = (addr);
-
-/**
- * Load immediate value into XF register
- */
-#define GX_XF_LOAD_REG(addr, data)                                             \
-    GX_XF_LOAD_REG_HDR(addr);                                                  \
-    WGPIPE.i = (data);
-
-#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
-
-/**
- * Load immediate values into multiple XF registers
- */
-#define GX_XF_LOAD_REGS(size, addr)                                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        cmd |= (addr);                                                         \
-        cmd |= (size) << 16;                                                   \
-        GX_XF_LOAD_REG_HDR(cmd);                                               \
-    }
-
-/**
- * Enums for Tex0-Tex7 register fields
- */
-typedef enum {
-    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
-    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
-} GXXfTexProj;
-
-typedef enum {
-    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
-    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
-} GXXfTexForm;
-
-typedef enum {
-    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
-    GX_XF_TG_BUMP,    // Texgen bump mapping
-
-    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                   // color0
-
-    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                  // color1
-} GXXfTexGen;
-
-/**
- * Misc. hardware enums
- */
-typedef enum {
-    GX_RAS_COLOR0A0,
-    GX_RAS_COLOR1A1,
-    GX_RAS_ALPHA_BUMP = 5,
-    GX_RAS_ALPHA_BUMPN,
-    GX_RAS_COLOR_ZERO,
-
-    GX_RAS_MAX_CHANNEL
-} GXRasChannelID;
-
-typedef enum {
-    GX_TEVREG_COLOR,
-    GX_TEVREG_KONST,
-} GXTevRegType;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXHardware.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
-/* end "revolution/GX/GXHardwareBP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
-/* end "revolution/GX/GXHardwareCP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
-/* end "revolution/GX/GXHardwareXF.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
-/* end "revolution/GX/GXInit.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
-/* end "revolution/GX/GXLight.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
-/* end "revolution/GX/GXMisc.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
-/* end "revolution/GX/GXPixel.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
-/* end "revolution/GX/GXTev.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-/* end "revolution/GX/GXTexture.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
-/* end "revolution/GX/GXTransform.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
-/* end "revolution/GX/GXVert.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX.h" */
-/* "src/kyoshin/CGame.cpp" line 15 "revolution/VI.h" */
-/* end "revolution/VI.h" */
-/* "src/kyoshin/CGame.cpp" line 16 "revolution/WPAD.h" */
-/**
- * References: WiiBrew
- */
-
-#ifndef RVL_SDK_PUBLIC_WPAD_H
-#define RVL_SDK_PUBLIC_WPAD_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/WPAD.h" line 10 "revolution/WPAD/WPAD.h" */
-/* end "revolution/WPAD/WPAD.h" */
-/* "libs/RVL_SDK/include/revolution/WPAD.h" line 11 "revolution/WPAD/WPADInternal.h" */
-/* end "revolution/WPAD/WPADInternal.h" */
-/* "libs/RVL_SDK/include/revolution/WPAD.h" line 12 "revolution/WPAD/debug_msg.h" */
-/* end "revolution/WPAD/debug_msg.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/WPAD.h" */
-
-using namespace ml;
-
-extern void func_801BF93C();
-extern float func_801C0014();
-extern void func_801BFFAC(float f1, float f2);
-extern void func_801644BC(u32 value);
-extern void func_80044FBC(u32 value);
-
-// Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in 0x1C.
-void force_cgame_strings(const char*, const char*, const char*, const char*, const char*);
-void FORCEACTIVECGame_cpp_wkStandbyLogin(void);
-void FORCEACTIVECGame_cpp_wkStandbyLogin(void) {
-    force_cgame_strings("CGameRestart", "", "43", "arc", "4_3mode.brlyt");
-}
-
-CGame* CGame::spInstance;
-static FixStr<64> lbl_80573C80;
-nw4r::lyt::Layout* CGame::lbl_80666604;
-nw4r::lyt::ArcResourceAccessor* CGame::sArcResourceAccessor;
-const char* CGame::scViewName = "巨神"; //"Bionis"
-CGameRestart* CGameRestart::spInstance;
-
-CGame::CGame(const char* pName, CWorkThread* pParent) :
-    CProc(pName, pParent, MAX_CHILD),
-    mView(nullptr),
-    mShutdownState(SHUTDOWN_STATE_0),
-    unk1F4(-1),
-    unk1F6(-1),
-    unk1F8(0),
-    unk1FC(),
-    mTaskManUpdateCount(1),
-    unk224(1.0f),
-    unk228(0) {
-    spInstance = this;
-    CLibHbm::func_8045D5C8(1);
-    CWorkSystem::setExitFunc(&onExit);
-    wkSetEvent(EVT_4);
-    CDeviceVI::isTvFormatPal();
-    unk230 = 57;
-}
-
-CGame::~CGame() {
-    CWorkSystem::setExitFunc(0);
-    CLibHbm::func_8045D5C8(0);
-    spInstance = 0;
-}
-
-CGame* CGame::getInstance() {
+CTaskGameCf* CTaskGameCf::getInstance() {
     return spInstance;
 }
 
-bool CGame::func_8003933C() {
-    return func_80164910() == 0;
-}
-
-void CGame::func_80039364() {
-    if (spInstance == nullptr) {
-        GameMain();
-    } else if (CGameRestart::spInstance == nullptr) {
-        CGameRestart* gameRestart = CGameRestart::create("CGameRestart", CDesktop::getInstance());
-
-        if (gameRestart != nullptr) {
-            gameRestart->mHandle = spInstance->mWorkID;
-            spInstance->wkSetEvent(EVT_NONE);
+    void CTaskGameCf::func_800442DC(){
+        unk_54 |= 1;
+        if(cf::CfGameManager::func_8007E1B4()){
+            cf::CfGameManager::sUnkFlags |= 0x200000;
         }
     }
-}
 
-void CGame::setTaskManagerUpdateCount(u32 count) {
-    if (spInstance != nullptr) {
-        spInstance->mTaskManUpdateCount = count;
+    void CTaskGameCf::func_8004431C(){
+        mMoveFunc = &CTaskGameCf::func_80044424;
     }
+
+    void CTaskGameCf::func_8004433C(){
+        mMoveFunc = &CTaskGameCf::func_80044480;
+    }
+
+    void CTaskGameCf::func_8004435C(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4){
+        unk_5C = arg1;
+        unk_5E = arg2;
+        unk_60 = 12;
+        unk_62 = 0;
+        unk_64 = arg3;
+        unk_88 = arg4;
+        mMoveFunc = &CTaskGameCf::func_800444DC;
+    }
+
+void CTaskGameCf::Init() {
+    spInstance = this;
 }
 
-void CGame::wkUpdate() {
-    if ((s16)unk1F4 >= 0 && CTaskGame::getInstance() != nullptr) {
-        if (unk1FC.size() == 0) {
-            CTaskGame::getInstance()->func_80040A3C(unk1F4, unk1F6, nullptr, unk1F8);
+    void CTaskGameCf::Term(){
+        if(cf::CTaskCulling::getInstance()){
+            cf::CTaskCulling::getInstance()->SetRemove();
+        }
+        spInstance = nullptr;
+    }
+
+    void CTaskGameCf::Draw(){}
+
+    void CTaskGameCf::func_80044424(){
+        mMoveFunc = &CTaskGameCf::func_80044444;
+    }
+
+    void CTaskGameCf::func_80044444(){
+        unk_5C = 1;
+        unk_5E = 1;
+        unk_60 = 12;
+        unk_62 = 0;
+        mMoveFunc = &CTaskGameCf::func_8004451C;
+    }
+
+    void CTaskGameCf::func_80044480(){
+        mMoveFunc = &CTaskGameCf::func_800444A0;
+    }
+
+    void CTaskGameCf::func_800444A0(){
+        unk_5C = 1;
+        unk_5E = 1;
+        unk_60 = 12;
+        unk_62 = 0;
+        mMoveFunc = &CTaskGameCf::func_8004451C;
+    }
+
+    void CTaskGameCf::func_800444DC(){
+        mMoveFunc = &CTaskGameCf::func_800444FC;
+    }
+
+    void CTaskGameCf::func_800444FC(){
+        mMoveFunc = &CTaskGameCf::func_8004451C;
+    }
+
+    void CTaskGameCf::func_8004451C(){
+        if(!(unk_54 & 8)){
+            func_800407C8_tmp tmp;
+            pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
+        }
+
+        CUICfManager::func_80135FDC();
+        CfObjectSelectorObj::create();
+
+        bool v5 = !unk_5C && !unk_5E;
+        bool v6 = (unk_54 & 8) == 0;
+        if(v5){
+            v6 = false;
+        }
+
+        CfGameManager::init(pTaskGame->getScene(), pTaskGame->unk70, v6);
+        CfGameManager::func_8007F930((unk_54 >> 3) & 1);
+
+        if(!CfGameManager::checkUnkFlag(24)){
+            CUIWindowManager::create(this, pTaskGame->getScene(), mtl::MemManager::getHandleMEM2());
+            CUIBattleManager::create(this, pTaskGame->getScene(), mtl::INVALID_HANDLE);
+            CfGameManager::setUnkFlag(28, true);
+        }
+
+        if(CTaskGame::func_800404F0()){
+            CfGameManager::setUnkFlag(30, true);
         } else {
-            CTaskGame::getInstance()->func_80040A3C(unk1F4, unk1F6, unk1FC.c_str(), unk1F8);
+            CfGameManager::setUnkFlag(30, false);
         }
 
-        unk1F4 = -1;
-        unk1F6 = -1;
-        // Preserve the retail string-pool reference to the terminator after
-        // "CGameRestart"; a plain "" resolves to a different pool entry.
-        unk1FC = "CGameRestart" + 13;
-        unk1F8 = 0;
-    }
+        CUICfManager::create(CTaskManager::GetRootProcGame(), pTaskGame->getScene(), mtl::INVALID_HANDLE);
+        CTaskREvent::create(CTaskManager::GetRootProcRealTime(), pTaskGame->getScene(), pTaskGame->unk70);
 
-    if (isNoEvent() && CTaskGame::getInstance() != nullptr) {
-        // The repeated singleton lookup is part of the retail call schedule.
-        (void)CTaskGame::getInstance();
-        if (CTaskGame::func_800426F0() == false) {
-            CTaskGame::getInstance()->func_80042720();
-        }
-    }
-
-    for (u32 i = 0; i < mTaskManUpdateCount; i++) {
-        CTaskManager::Move();
-    }
-}
-
-void CGame::wkRender() {
-    if (lbl_80666604 != nullptr) {
-        lbl_80666604->Animate(0);
-    }
-
-    // Draw the 4:3 presentation overlay before dispatching task rendering.
-    if (lbl_80666604 != nullptr) {
-        if (!CDeviceSC::isWideAspectRatio()) {
-            CDeviceGX::getCacheInstance()->func_8044BE38();
-            GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-            nw4r::lyt::DrawInfo drawInfo;
-            func_80137250(&drawInfo);
-            func_80137038(lbl_80666604, &drawInfo, 0, 1);
-            CViewRoot::func_80442DA8();
-        }
-    }
-
-    CTaskManager::Draw();
-}
-
-void CGame::func_800395F4(bool wide) {
-    if (spInstance != nullptr && spInstance->mView != nullptr) {
-        if (!wide) {
-            setViewRect(spInstance->mView, 0, 56,
-                CDeviceVI::getRenderModeObj()->fbWidth,
-                CDeviceVI::getRenderModeObj()->efbHeight - 114);
+        if(v5){
+            func_8009ECB0();
+            func_8009ECB0();
         } else {
-            setViewRect(spInstance->mView, 0, 0,
-                CDeviceVI::getRenderModeObj()->fbWidth,
-                CDeviceVI::getRenderModeObj()->efbHeight);
-        }
-    }
-}
+            int* v18 = func_8009ECB0();
+            func_8009ECB0();
 
-void CGame::setViewRect(CView* view, s16 x, s16 y, s16 width, s16 height) {
-    view->setRect(ml::CRect16(x, y, width, height));
-}
-
-bool CGame::wkStandbyLogin() {
-    StaticDataHandle handle;
-
-    if (!CLibStaticData::isInitialized()) {
-        return false;
-    }
-
-    {
-        CView* view = pssCreateView(scViewName, CDesktop::getView(), 0);
-        mView = view;
-        const char* viewName = scViewName;
-        view->mName = viewName;
-        if (static_cast<CWorkThread*>(view)->mName.size() == 0) {
-            static_cast<CWorkThread*>(view)->mName = viewName;
-        }
-    }
-
-    if (CDeviceSC::isWideAspectRatio()) {
-        setViewRect(mView, 0, 0,
-            CDeviceVI::getRenderModeObj()->fbWidth,
-            CDeviceVI::getRenderModeObj()->efbHeight);
-    } else {
-        setViewRect(mView, 0,
-            (s16)((u16)unk230 - 1),
-            CDeviceVI::getRenderModeObj()->fbWidth,
-            (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
-                - ((u32)(u16)unk230 << 1)));
-    }
-
-    mView->unk444 = CVec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-    func_800395F4(CDeviceSC::isWideAspectRatio());
-    CDeviceGX::updateVerticalFilter(VFILTER_NONE);
-    CTaskManager::Reset();
-    CTaskGame::create(mView, this, 1);
-    WPADSetAutoSleepTime(5);
-    VIEnableDimming(1);
-    VISetTimeToDimming(1);
-
-    if (CLibStaticData::getStaticFileData("CGameRestart" + 14, &handle, nullptr)) {
-        sArcResourceAccessor = CLibLayout::createArcResourceAccessor();
-        sArcResourceAccessor->Attach(handle.data, "CGameRestart" + 17);
-        func_80136E84(&lbl_80666604, sArcResourceAccessor, "CGameRestart" + 21);
-    }
-
-    return CProc::wkStandbyLogin();
-}
-
-bool CGame::wkStandbyLogout() {
-    if (mShutdownState == SHUTDOWN_STATE_0) {
-        CTaskGame::getInstance()->func_80042710();
-        mShutdownState = SHUTDOWN_STATE_1;
-    }
-
-    if (mShutdownState == SHUTDOWN_STATE_1) {
-        if (!(CTaskGame::getInstance()->unk68 & 0x10)) {
-            return false;
-        }
-        mShutdownState = SHUTDOWN_STATE_2;
-    }
-
-    // Teardown can begin only after all child threads have stopped.
-    if (mChildren.empty()) {
-        CTaskManager::Reset();
-
-        if (sArcResourceAccessor != nullptr) {
-            delete sArcResourceAccessor;
-            sArcResourceAccessor = nullptr;
-        }
-
-        if (lbl_80666604 != nullptr) {
-            delete lbl_80666604;
-            lbl_80666604 = nullptr;
-        }
-
-        return CProc::wkStandbyLogout();
-    }
-
-    return false;
-}
-
-// Keep the ArcResourceAccessor destructor instantiated in this translation unit.
-static void dummy() {
-    nw4r::lyt::ArcResourceAccessor* accessor = new nw4r::lyt::ArcResourceAccessor();
-    accessor->Attach(0, 0);
-    delete accessor;
-}
-
-void CGame::GameMain() {
-    if (spInstance != nullptr) {
-        spInstance->pssSetFocus();
-    } else {
-        create("CGame", CDesktop::getInstance(), CDesktop::getView()->mWorkID);
-    }
-}
-
-// Register an exception entry for a controller-related error, such as a disconnect.
-void CGame::registerControllerErrorEntry(const wchar_t* message, IGameException* handler, u32 param) {
-    if (spInstance != nullptr && CTaskGame::func_800426F0() == nullptr && !spInstance->isNoEvent()) {
-        CException* exception = CException::func_80457CA4(spInstance, message, 5);
-        if (exception != nullptr) {
-            exception->mException = handler;
-            exception->unk204 = param;
-        }
-    }
-}
-
-// Retry a controller exception raised by CfPadTask.
-bool CGame::wkStandbyExceptionRetry(u32 wid) {
-    if (isNoEvent()) {
-        return true;
-    }
-    if (CLibHbm::func_8045DE00()) {
-        return false;
-    }
-
-    CWorkThread* workThread = CWorkThread::getWorkThread(wid);
-    CException* exception = CException::convertToException(workThread);
-
-    if (exception == nullptr) {
-        return true;
-    }
-    if (exception->func_80457C8C() == false) {
-        return false;
-    }
-    if (exception->mException == nullptr) {
-        return true;
-    }
-
-    IGameException* handler = exception->mException;
-    return handler->gameExceptionCB(exception->unk204);
-}
-
-void CGame::OnPauseTrigger(bool paused) {
-    if (cf::CfGameManager::func_8007E1B4()) {
-        if (paused) {
-            if (unk228 == 0) {
-                unk224 = func_801C0014();
-                func_801BFFAC(0, 0);
-                func_801644BC(1);
-
-                if (cf::CBattleManager::getInstance() != nullptr) {
-                    cf::CBattleManager* battleManager = cf::CBattleManager::getInstance();
-                    battleManager->mVision.func_801A929C(1);
-                }
-
-                func_80044FBC(1);
-            }
-
-            unk228++;
-        } else {
-            if (unk228 <= 1) {
-                func_801BFFAC(unk224, 0);
-                func_801644BC(0);
-
-                if (cf::CBattleManager::getInstance() != nullptr) {
-                    cf::CBattleManager* battleManager = cf::CBattleManager::getInstance();
-                    battleManager->mVision.func_801A929C(0);
-                }
-
-                func_80044FBC(0);
-            }
-
-            unk228--;
-            if (unk228 < 0) {
-                unk228 = 0;
+            if(!cf::CfGameManager::checkUnkFlag(24)){
+                func_8009E574(v18, 2, 1, 1);
+                func_8009E574(v18, 4, 1, 2);
+                func_8009E574(v18, 3, 2, 0);
+                func_8009E574(v18, 5, 2, 1);
+                func_8009E574(v18, 6, 2, 2);
+                func_8009E574(v18, 7, 2, 3);
             }
         }
-    }
-}
 
-void CGame::onExit() {
-    if (spInstance != nullptr) {
-        if (cf::CfGameManager::func_8007E1B4()) {
-            func_801BF93C();
+        CfGameManager::func_80086B5C(unk_60, unk_62, 0);
+        CfGameManager::func_8007E514(unk_5C, unk_5E, unk_64[0] ? unk_64.c_str() : nullptr, unk_88, CfNandManager::func_8024005C());
+        CTaskEnvironment::create(pTaskGame, pTaskGame->getScene());
+        CTaskCulling::create(pTaskGame, pTaskGame->getScene());
+        if(!func_8009CF8C(32)) func_8009D018(32, 1);
+        func_8004302C(1, 0);
+        mMoveFunc = &CTaskGameCf::func_800447B4;
+    }
+
+    void CTaskGameCf::func_800447B4(){
+        if(Class_80296898::getInstance()->unk_0F == 0){
+            Class_80296898::getInstance()->unk_0F = 10;
+        }
+
+        CDeviceVI::func_804483DC(Class_80296898::getInstance()->unk_0F - 1);
+
+        if(unk_54 & 1){
+            unk_54 &= ~1;
+
+            if(CTaskEnvironment::getInstance()){
+                CTaskEnvironment::getInstance()->SetRemove();
+            }
+
+            if(CTaskCulling::getInstance()){
+                CTaskCulling::getInstance()->SetRemove();
+            }
+
+            if(!CfGameManager::checkUnkFlag(24)){
+                func_800407C8_tmp tmp;
+                pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
+            }
+
+            if(CUIWindowManager::getInstance()){
+                CUIWindowManager::getInstance()->SetRemove();
+            }
+
+            CUIBattleManager::func_8012F87C(0);
+            CTaskREvent::getInstance()->SetRemove();
+            mMoveFunc = &CTaskGameCf::func_800448DC;
         }
     }
+
+    void CTaskGameCf::func_800448DC(){
+        if(CUICfManager::getInstance()){
+            CUICfManager::getInstance()->SetRemove();
+        }
+
+        setUnk54(2, false);
+        pTaskGame->getScene()->unk_3E4 = 1;
+        unk_8C = 2;
+        mMoveFunc = &CTaskGameCf::func_80044934;
+    }
+
+    void CTaskGameCf::func_80044934(){
+        unk_8C--;
+        if(unk_8C <= 0){
+            if(!chkUnk54(2)){
+                CfGameManager::func_8007E218();
+            }
+            CfObjectSelectorObj::destroy();
+            mMoveFunc = &CTaskGameCf::func_8004499C;
+        }
+    }
+
+void CTaskGameCf::func_8004499C() {
+    pTaskGame->getScene()->unk_3E4 = 0;
+    unk_54 |= 0x02;
 }
+
+    CTaskGameCf* CTaskGameCf::create(CProcess* pParent, int arg2){
+        CTaskGameCf* task = new(CWorkThreadSystem::getWorkMem()) CTaskGameCf(pParent, arg2);
+        task->Regist(pParent, false);
+        return task;
+    }
+
+} //namespace cf

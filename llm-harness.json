@@ -13,8 +13,8 @@
     "tu_section_byte_limit": 16384
   },
   "providers": {
-    "reasonix": {
-      "binary": "reasonix",
+    "deepseek-raw": {
+      "binary": "deepseek-raw",
       "timeout_seconds": 300,
       "pure": true
     }
@@ -46,7 +46,7 @@
     "new": [
       {
         "id": "deepseek-flash",
-        "provider": "reasonix",
+        "provider": "deepseek-raw",
         "model": "deepseek-flash",
         "runs": 10
       }
@@ -54,7 +54,7 @@
     "improve": [
       {
         "id": "deepseek-pro",
-        "provider": "reasonix",
+        "provider": "deepseek-raw",
         "model": "deepseek-pro",
         "runs": 10
       }
@@ -62,7 +62,7 @@
     "tu-complete": [
       {
         "id": "deepseek-pro",
-        "provider": "reasonix",
+        "provider": "deepseek-raw",
         "model": "deepseek-pro",
         "runs": 10
       }

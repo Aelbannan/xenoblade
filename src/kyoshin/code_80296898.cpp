@@ -39,8 +39,10 @@ void Class_80296898::init(){
     unk10[0x2A] = r0;
 }
 
-Class_80296898* Class_80296898::getInstance(void){
-    return &lbl_8057A9C8;
+extern "C" Class_80296898 lbl_eu_805772C8;
+
+Class_80296898* Class_80296898::getInstance(void) {
+    return &lbl_eu_805772C8;
 }
 
 void func_80296AE8(u8* src){

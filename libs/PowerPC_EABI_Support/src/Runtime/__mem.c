@@ -309,13 +309,11 @@ void* memset(void* dest, int val, size_t count) {
 
 #pragma section code_type ".text"
 
-size_t strlen(const char* str){
+size_t strlen(const char* str) {
+    const u8* p = (const u8*)str - 1;
     int length = -1;
-    u8* p = (u8*)str - 1;
-
-    do{
+    do {
         length++;
-    }while(*++p);
-
+    } while (*++p);
     return length;
 }

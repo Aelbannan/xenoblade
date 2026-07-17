@@ -38,7 +38,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.coop.lib.attempts import AttemptRecord, append_attempt, count_attempts, read_attempts
+from tools.coop.lib.attempts import AttemptRecord, append_attempt, append_contribution, count_attempts, read_attempts
 from tools.coop.lib.config import CoopConfig, load_config
 from tools.coop.lib.objdiff_report import (
     diff_function_json,
@@ -303,6 +303,7 @@ def cmd_cycle(
     next_change: str,
     runtime_test: str,
     linked: bool = False,
+    add_to_kb: str = "",
 ) -> int:
     targets = load_targets(config)
     target = get_target(targets, target_id)
@@ -385,9 +386,15 @@ def cmd_cycle(
         git_commit=_git_head(project),
         equivalence_status=evaluation.equivalence.value if evaluation.equivalence else None,
         equivalence_detail=evaluation.equivalence_detail,
+        add_to_kb=add_to_kb,
     )
     log_path = append_attempt(config.resolve(config.attempt_log), record)
     print(f"attempt #{attempt_num} logged to {log_path}")
+
+    if add_to_kb.strip():
+        kb_path = append_contribution(project.root, add_to_kb)
+        if kb_path:
+            print(f"kb contribution logged to {kb_path}")
     update_target_result(
         config,
         target.id,
@@ -1093,6 +1100,8 @@ def main() -> int:
     p_cycle.add_argument("--hypothesis", default="")
     p_cycle.add_argument("--next-change", default="")
     p_cycle.add_argument("--runtime-test", default="")
+    p_cycle.add_argument("--add-to-kb", default="",
+                         help="JSON payload for a reusable kb contribution to append to docs/mwcc/contributions.jsonl")
     p_cycle.add_argument(
         "--linked",
         action="store_true",
@@ -1267,6 +1276,7 @@ def main() -> int:
             next_change=args.next_change,
             runtime_test=args.runtime_test,
             linked=args.linked,
+            add_to_kb=args.add_to_kb,
         )
     if args.command == "queue":
         return cmd_queue(

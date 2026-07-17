@@ -98,7 +98,8 @@ bool CBgTex::func_801C3C14() {
 }
 
 void CBgTex::func_801C3D54() {
-    if(unk1c == 0) return;
+    if (unk1c == 0)
+        return;
     mLayout->Animate(0);
 }
 

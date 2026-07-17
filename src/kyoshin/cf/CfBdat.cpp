@@ -285,9 +285,11 @@ void CfBdat::resetMapBdatFileDataPointers(){
         return 0;
     }
 
-    const char* CfBdat::func_801424A8(u16 index){
-        return lbl_80531EC0[index];
-    }
+extern "C" const char* lbl_eu_8052E6F0[];
+
+const char* CfBdat::func_801424A8(u16 index) {
+    return lbl_eu_8052E6F0[index];
+}
 
     bool CfBdat::OnFileEvent(CEventFile* pEventFile){
         bool result = false;

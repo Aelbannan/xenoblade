@@ -1916,8 +1916,8 @@
       "size": "0x4",
       "unit": "kyoshin/main",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/main.cpp",
       "called_functions": [],
@@ -1925,7 +1925,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/main.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8003a2f4",
@@ -6720,8 +6722,8 @@
       "size": "0x20",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -6729,7 +6731,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-800409b8",
@@ -110487,8 +110491,8 @@
       "size": "0x14",
       "unit": "kyoshin/cf/CfBdat",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfBdat.cpp",
       "called_functions": [],
@@ -110496,7 +110500,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfBdat.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80142ec0",
@@ -185431,8 +185437,8 @@
       "size": "0x20",
       "unit": "kyoshin/makecrystal/CMCCylinderGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/makecrystal/CMCCylinderGauge.cpp",
       "called_functions": [],
@@ -185440,7 +185446,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/makecrystal/CMCCylinderGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-80223ed0",
@@ -234899,8 +234907,8 @@
       "size": "0xC",
       "unit": "kyoshin/code_80296898",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/code_80296898.cpp",
       "called_functions": [],
@@ -234908,7 +234916,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/code_80296898.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-80299104",
@@ -254895,8 +254905,8 @@
       "size": "0x14",
       "unit": "kyoshin/plugin/pluginVoice",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginVoice.cpp",
       "called_functions": [],
@@ -254904,7 +254914,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginVoice.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-802bbad4",
@@ -255204,8 +255216,8 @@
       "size": "0x1C",
       "unit": "PowerPC_EABI_Support/src/Runtime/__mem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/__mem.c",
       "called_functions": [],
@@ -255213,7 +255225,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/__mem.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bc044",
@@ -255250,8 +255264,8 @@
       "size": "0x18",
       "unit": "PowerPC_EABI_Support/src/Runtime/global_destructor_chain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/global_destructor_chain.c",
       "called_functions": [],
@@ -255259,7 +255273,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/global_destructor_chain.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bc124",
@@ -255530,8 +255546,8 @@
       "size": "0x28",
       "unit": "PowerPC_EABI_Support/src/Runtime/ptmf",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/ptmf.c",
       "called_functions": [],
@@ -255539,7 +255555,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/ptmf.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bc7f4",
@@ -255649,8 +255667,8 @@
       "size": "0x4C",
       "unit": "PowerPC_EABI_Support/src/Runtime/runtime",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/runtime.c",
       "called_functions": [],
@@ -255658,7 +255676,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/runtime.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bcb44",
@@ -255672,8 +255692,8 @@
       "size": "0x4C",
       "unit": "PowerPC_EABI_Support/src/Runtime/runtime",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/runtime.c",
       "called_functions": [],
@@ -255681,7 +255701,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/runtime.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bcb90",
@@ -255695,8 +255717,8 @@
       "size": "0x4C",
       "unit": "PowerPC_EABI_Support/src/Runtime/runtime",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/runtime.c",
       "called_functions": [],
@@ -255704,7 +255726,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/runtime.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bcbdc",
@@ -255718,8 +255742,8 @@
       "size": "0x4C",
       "unit": "PowerPC_EABI_Support/src/Runtime/runtime",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/runtime.c",
       "called_functions": [],
@@ -255727,7 +255751,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/runtime.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bcc28",
@@ -255975,8 +256001,8 @@
       "size": "0x4C",
       "unit": "PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.cp",
       "called_functions": [],
@@ -255984,7 +256010,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bd2a0",
@@ -255998,8 +256026,8 @@
       "size": "0x28",
       "unit": "PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.cp",
       "called_functions": [],
@@ -256007,7 +256035,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bd2c8",
@@ -256021,8 +256051,8 @@
       "size": "0x98",
       "unit": "PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.cp",
       "called_functions": [],
@@ -256030,7 +256060,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bd360",
@@ -256095,8 +256127,8 @@
       "size": "0x554",
       "unit": "PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.cp",
       "called_functions": [],
@@ -256107,7 +256139,9 @@
       "abi_helper_calls": [
         "_restgpr_27",
         "_savegpr_27"
-      ]
+      ],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bdc14",
@@ -256148,8 +256182,8 @@
       "size": "0x104",
       "unit": "PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.cp",
       "called_functions": [],
@@ -256157,7 +256191,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/Runtime/Gecko_ExceptionPPC.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802be224",
@@ -256437,8 +256473,8 @@
       "size": "0x288",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/ansi_fp",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/ansi_fp.c",
       "called_functions": [],
@@ -256446,7 +256482,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common_Embedded/ansi_fp.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802bf1b0",
@@ -256672,8 +256710,8 @@
       "size": "0x10",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith.c",
       "called_functions": [],
@@ -256681,7 +256719,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802c06dc",
@@ -256695,8 +256735,8 @@
       "size": "0x10",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith.c",
       "called_functions": [],
@@ -256704,7 +256744,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/arith.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802c06ec",
@@ -256719,7 +256761,7 @@
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/buffer_io",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/buffer_io.c",
       "called_functions": [],
@@ -256727,7 +256769,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/buffer_io.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 95.5,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802c0714",
@@ -256848,8 +256892,8 @@
       "size": "0xA8",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/FILE_POS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/FILE_POS.c",
       "called_functions": [],
@@ -256857,7 +256901,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/FILE_POS.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802c0d6c",
@@ -256920,8 +256966,8 @@
       "size": "0x18",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring.c",
       "called_functions": [],
@@ -256929,7 +256975,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802c0f4c",
@@ -256943,8 +256991,8 @@
       "size": "0x4C",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring.c",
       "called_functions": [],
@@ -256952,7 +257000,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802c0f98",
@@ -256966,8 +257016,8 @@
       "size": "0x1C",
       "unit": "PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring.c",
       "called_functions": [],
@@ -256975,7 +257025,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mbstring.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 100.0,
+      "equivalence_status": "internal_error"
     },
     {
       "id": "us-802c0fb4",

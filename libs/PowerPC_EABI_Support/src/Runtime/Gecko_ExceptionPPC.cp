@@ -97,29 +97,29 @@ int __register_fragment(struct __eti_init_info* info, char* TOC){
 }
 #pragma schedule twice
 
-void __unregister_fragment(int fragmentID){
-    ProcessInfo* f;
-    
-    if(fragmentID >= 0 && fragmentID < MAXFRAGMENTS){
-        f = &fragmentinfo[fragmentID];
-        f->exception_info = 0;
-        f->TOC = 0;
-        f->active = 0;
+void __unregister_fragment(unsigned int fragmentID)
+{
+    if (fragmentID < 32) {
+        fragmentinfo[fragmentID].exception_info = 0;
+        fragmentinfo[0].TOC = 0;
+        fragmentinfo[0].active = 0;
     }
 }
 
-static int ExPPC_FindExceptionFragment(char* returnaddr, FragmentInfo* frag)
+int ExPPC_FindExceptionFragment(char* returnaddr, FragmentInfo* frag)
 {
     ProcessInfo* f;
     int i;
     __eti_init_info* eti_info;
     
-    for(i = 0, f = fragmentinfo; i < MAXFRAGMENTS; ++i, ++f){
-        if(f->active){
+    for (i = 0, f = fragmentinfo; i < 32; ++i, ++f) {
+        if (f->active) {
             eti_info = f->exception_info;
             while (1) {
-                if(eti_info->code_size == 0) break;
-                if(returnaddr >= eti_info->code_start && returnaddr < (char*)eti_info->code_start+eti_info->code_size) {
+                if (eti_info->code_size == 0)
+                    break;
+                if (returnaddr >= eti_info->code_start &&
+                    returnaddr < (char*)eti_info->code_start + eti_info->code_size) {
                     frag->exception_start = (ExceptionTableIndex*)eti_info->eti_start;
                     frag->exception_end = (ExceptionTableIndex*)eti_info->eti_end;
                     frag->code_start = 0;
@@ -130,7 +130,7 @@ static int ExPPC_FindExceptionFragment(char* returnaddr, FragmentInfo* frag)
                     frag->active = f->active;
                     return 1;
                 }
-                 eti_info++;
+                eti_info++;
             }
         }
     }
@@ -302,47 +302,48 @@ static exaction_type ExPPC_NextAction(ActionIterator* iter){
     }
 }
 
-static char* ExPPC_PopStackFrame(ThrowContext* context, MWExceptionInfo* info){
+static char* ExPPC_PopStackFrame(ThrowContext* context, MWExceptionInfo* info)
+{
     char *SP, *callers_SP;
-    double* FPR_save_area;
-    long* GPR_save_area;
+    double *FPR_save_area;
+    long *GPR_save_area;
     int saved_GPRs, saved_FPRs;
-    GeckoFPRContext* Vector_save_area;
+    GeckoFPRContext *Vector_save_area;
     int i, j;
     
     SP = context->SP;
     callers_SP = *(char**)SP;
     saved_FPRs = ET_GetSavedFPRs(info->exception_record->et_field);
-
-    if(ET_HasElfVector(info->exception_record->et_field)){
-        Vector_save_area = (GeckoFPRContext *)(callers_SP - saved_FPRs*16);
+    
+    if (ET_HasElfVector(info->exception_record->et_field)) {
+        Vector_save_area = (GeckoFPRContext*)(callers_SP - saved_FPRs * 16);
         FPR_save_area = (double*)Vector_save_area;
-    }else{
-        FPR_save_area = (double*)(callers_SP - saved_FPRs*8);
+    } else {
+        FPR_save_area = (double*)(callers_SP - saved_FPRs * 8);
     }
-
-    if (ET_HasElfVector(info->exception_record->et_field)){
-        for(i = 32 - saved_FPRs, j = 0; i < 32; ++i, ++j){
+    
+    if (ET_HasElfVector(info->exception_record->et_field)) {
+        for (i = 32 - saved_FPRs, j = 0; i < 32; ++i, ++j) {
             context->FPR[i].v.f[0] = Vector_save_area[j].v.f[0];
             context->FPR[i].v.f[1] = Vector_save_area[j].v.f[1];
             context->FPR[i].d = Vector_save_area[j].d;
         }
-    }else{
-        for(i = 32 - saved_FPRs, j = 0; i < 32; ++i, ++j){
-             context->FPR[i].d = FPR_save_area[j];
+    } else {
+        for (i = 32 - saved_FPRs, j = 0; i < 32; ++i, ++j) {
+            context->FPR[i].d = FPR_save_area[j];
         }
     }
-
+    
     saved_GPRs = ET_GetSavedGPRs(info->exception_record->et_field);
     GPR_save_area = (long*)FPR_save_area;
     GPR_save_area -= saved_GPRs;
-
-    for(i = 32 - saved_GPRs, j = 0; i < 32; ++i, ++j){
+    
+    for (i = 32 - saved_GPRs, j = 0; i < 32; ++i, ++j) {
         context->GPR[i] = GPR_save_area[j];
     }
-
+    
     context->SP = callers_SP;
-    return *(char**)(callers_SP + RETURN_ADDRESS);
+    return *(char**)(callers_SP + 4);
 }
 
 static void ExPPC_DestroyLocal(ThrowContext* context, const ex_destroylocal* ex){

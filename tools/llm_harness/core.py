@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .providers import OpenCodeProvider, ReasonixProvider
+from .providers import DeepSeekRawProvider, OpenCodeProvider, ReasonixProvider
 from .types import Candidate, ExperimentRecord, ModelConfig, ProjectAdapter, SourcePatch
 from .workspace import GitWorktreeManager
 
@@ -58,6 +58,7 @@ class Harness:
         _PROVIDER_CLASSES = {
             "opencode": OpenCodeProvider,
             "reasonix": ReasonixProvider,
+            "deepseek-raw": DeepSeekRawProvider,
         }
         self.providers = {}
         for name, cfg in self.config.get("providers", {}).items():
@@ -651,7 +652,7 @@ class Harness:
                 f"match={evaluation.get('match_percent')} accepted="
                 f"{evaluation.get('accepted')} duration={time.monotonic() - started:.1f}s"
             )
-        return ExperimentRecord(
+        record = ExperimentRecord(
             schema_version=4,
             experiment_id=experiment_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -672,6 +673,10 @@ class Harness:
             candidate_summary=candidate_summary,
             error=error,
         )
+        # Log full prompt/response to io.jsonl when a provider result was received
+        if result is not None:
+            self._append_io_log(prompt, result.text, record)
+        return record
 
     def _evaluate_candidate(
         self, workflow: str, target_id: str, candidate: Candidate, label: str
@@ -752,6 +757,40 @@ class Harness:
         with self._log_lock:
             with self.log_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(record.to_json(), separators=(",", ":")) + "\n")
+
+    def _append_io_log(
+        self,
+        prompt: str,
+        response: str,
+        record: ExperimentRecord,
+    ) -> None:
+        """Log full input/output for one provider call to io.jsonl in main output dir."""
+        io_path = self.output_dir / "io.jsonl"
+        io_path.parent.mkdir(parents=True, exist_ok=True)
+        entry = {
+            "timestamp": record.timestamp,
+            "experiment_id": record.experiment_id,
+            "target_id": record.target_id,
+            "workflow": record.workflow,
+            "model_id": record.model_id,
+            "model": record.model,
+            "run_index": record.run_index,
+            "duration_seconds": record.duration_seconds,
+            "input_tokens": record.input_tokens,
+            "output_tokens": record.output_tokens,
+            "cache_read_tokens": record.cache_read_tokens,
+            "cache_write_tokens": record.cache_write_tokens,
+            "cost": record.cost,
+            "evaluation_status": (record.evaluation or {}).get("status"),
+            "match_percent": (record.evaluation or {}).get("match_percent"),
+            "accepted": (record.evaluation or {}).get("accepted"),
+            "error": record.error,
+            "prompt": prompt,
+            "response": response,
+        }
+        with self._log_lock:
+            with io_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, separators=(",", ":")) + "\n")
 
     def stats(self) -> List[Dict[str, Any]]:
         groups: Dict[str, List[Dict[str, Any]]] = {}

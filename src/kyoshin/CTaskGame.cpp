@@ -5,14 +5,24 @@ u32 lbl_80666624;
 u32 lbl_80666630;
 u32 lbl_80666634;
 
-void UnkClass_8004041C::func_8004041C(u8 r4, float f1, int r5, u32 r6, u8 r7, u32 r8, u32 r9) {
-    this->unk0  = r4;
-    this->unk4  = f1;
-    this->unk8  = r5;
-    this->unkC  = r6;
-    this->unk10 = r7;
-    this->unk14 = r8;
-    this->unk18 = r9;
+extern "C" void func_8004041C(void* self, u8 a1, float a2, int a3, u32 a4, u8 a5, u32 a6, u32 a7) {
+    struct Fields {
+        u8 field0;
+        float field4;
+        int field8;
+        u32 fieldC;
+        u8 field10;
+        u32 field14;
+        u32 field18;
+    };
+    Fields& f = *(Fields*)self;
+    f.field0 = a1;
+    f.field4 = a2;
+    f.field8 = a3;
+    f.fieldC = a4;
+    f.field10 = a5;
+    f.field14 = a6;
+    f.field18 = a7;
 }
 
 CTaskGame::CTaskGame(CView* pView, CWorkThread* pThread, int r6) :

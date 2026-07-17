@@ -26,15 +26,19 @@ void CBattery::func_802B92A4(){
     CDeviceFile::setHandleFlag2(mFileHandle);
 }
 
-void CBattery::func_802B92FC(){
-    if(unk22 == false || unk20 == false) return;
+void CBattery::func_802B92FC() {
+    if (unk22 == false || unk20 == false)
+        return;
     mLayout->Animate(0);
 }
 
 //r4 inherits from DrawInfo
-void CBattery::func_802B9334(void* r4){
-    if(unk22 == false || unk20 == false) return;
-    func_80137038(mLayout, static_cast<nw4r::lyt::DrawInfo*>(r4), 0, 1);
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
+void CBattery::func_802B9334(void* param) {
+    if (unk22 == 0 || unk20 == 0)
+        return;
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mLayout, static_cast<nw4r::lyt::DrawInfo*>(param), 0, 1);
 }
 
 void CBattery::func_802B9364(){
@@ -50,7 +54,7 @@ void CBattery::func_802B9364(){
     unk4.func_8045F778();
 }
 
-void CBattery::setBatteryLevel(u8 level){
+void CBattery::setBatteryLevel(u8 level) {
     mBatteryLevel = level;
     updateBatteryImage();
 }

@@ -201,6 +201,47 @@ def parse_attempts(path: Path, *, source_path: Optional[str] = None) -> Iterator
         )
 
 
+def parse_contributions(path: Path, *, source_path: Optional[str] = None) -> Iterator[KnowledgeEntry]:
+    """Parse docs/mwcc/contributions.jsonl into KnowledgeEntry records."""
+    display_path = source_path or path.as_posix()
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        title = str(row.get("title", "") or f"Contribution {line_number}")
+        symptoms = row.get("symptoms", [])
+        fix = row.get("fix", "")
+        tags_list = row.get("tags", [])
+        target_id = str(row.get("target_id", ""))
+        function = str(row.get("function", ""))
+        body_parts = []
+        if symptoms:
+            body_parts.append("Symptoms: " + "; ".join(symptoms))
+        if fix:
+            body_parts.append("Fix: " + fix)
+        notes = str(row.get("notes", ""))
+        if notes:
+            body_parts.append("Notes: " + notes)
+        body = "\n".join(body_parts)
+        combined = f"{title}\n{body}"
+        yield KnowledgeEntry(
+            id=f"kb:{line_number}",
+            source_kind="kb_contribution",
+            source_path=display_path,
+            line_start=line_number,
+            line_end=line_number,
+            section="KB contributions",
+            title=title,
+            body=body,
+            functions=function,
+            target_id=target_id,
+            tags=tuple(tags_list) if isinstance(tags_list, list) else infer_tags(combined),
+        )
+
+
 def connect(path: Path) -> sqlite3.Connection:
     connection = sqlite3.connect(path)
     connection.row_factory = sqlite3.Row
@@ -211,6 +252,7 @@ def build_database(
     database: Path,
     reference: Path,
     attempts: Optional[Path] = None,
+    contributions: Optional[Path] = None,
     *,
     root: Optional[Path] = None,
 ) -> int:
@@ -222,6 +264,9 @@ def build_database(
     if attempts and attempts.is_file():
         attempts_name = attempts.relative_to(root).as_posix() if root else attempts.as_posix()
         entries.extend(parse_attempts(attempts, source_path=attempts_name))
+    if contributions and contributions.is_file():
+        contrib_name = contributions.relative_to(root).as_posix() if root else contributions.as_posix()
+        entries.extend(parse_contributions(contributions, source_path=contrib_name))
 
     with connect(database) as connection:
         connection.executescript(
@@ -293,6 +338,10 @@ def build_database(
                     "attempts_mtime_ns",
                     str(attempts.stat().st_mtime_ns) if attempts and attempts.is_file() else "0",
                 ),
+                (
+                    "contributions_mtime_ns",
+                    str(contributions.stat().st_mtime_ns) if contributions and contributions.is_file() else "0",
+                ),
             ],
         )
     return len(entries)
@@ -310,7 +359,7 @@ def database_is_fresh(database: Path, sources: Sequence[Path]) -> bool:
                 return False
     except (sqlite3.Error, ValueError):
         return False
-    return database.stat().st_mtime_ns >= max(
+    return database.stat().st_mtime_ns > max(
         (path.stat().st_mtime_ns for path in sources if path.is_file()), default=0
     )
 

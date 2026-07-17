@@ -115,7 +115,7 @@ void GXSetFogRangeAdj(GXBool enable, u16 center, const GXFogAdjTable* table) {
     int i;
 
     if (enable) {
-        for (i = 0; i < ARRAY_SIZE(table->r); i += 2) {
+        for (i = 0; i < 10; i += 2) {
             fogRangeRegK = 0;
             GX_BP_SET_FOGRANGEK_HI(fogRangeRegK, table->r[i]);
             GX_BP_SET_FOGRANGEK_LO(fogRangeRegK, table->r[i + 1]);
@@ -133,9 +133,8 @@ void GXSetFogRangeAdj(GXBool enable, u16 center, const GXFogAdjTable* table) {
     gxdt->lastWriteWasXF = FALSE;
 }
 
-void GXSetBlendMode(GXBlendMode mode, GXBlendFactor src, GXBlendFactor dst,
-                    GXLogicOp op) {
-    u32 blendModeReg = gxdt->blendMode;
+void GXSetBlendMode(GXBlendMode mode, GXBlendFactor src, GXBlendFactor dst, GXLogicOp op) {
+    u32 blendModeReg = __GXData->blendMode;
     GX_BP_SET_BLENDMODE_SUBTRACT(blendModeReg, mode == GX_BM_SUBTRACT);
     GX_BP_SET_BLENDMODE_BLEND_ENABLE(blendModeReg, mode);
     GX_BP_SET_BLENDMODE_LOGIC_OP_ENABLE(blendModeReg, mode == GX_BM_LOGIC);
@@ -144,28 +143,24 @@ void GXSetBlendMode(GXBlendMode mode, GXBlendFactor src, GXBlendFactor dst,
     GX_BP_SET_BLENDMODE_DST_FACTOR(blendModeReg, dst);
 
     GX_BP_LOAD_REG(blendModeReg);
-    gxdt->blendMode = blendModeReg;
+    __GXData->blendMode = blendModeReg;
 
-    gxdt->lastWriteWasXF = FALSE;
+    __GXData->lastWriteWasXF = FALSE;
 }
 
 void GXSetColorUpdate(GXBool enable) {
     u32 blendModeReg = gxdt->blendMode;
     GX_BP_SET_BLENDMODE_COLOR_UPDATE(blendModeReg, enable);
-
     GX_BP_LOAD_REG(blendModeReg);
     gxdt->blendMode = blendModeReg;
-
     gxdt->lastWriteWasXF = FALSE;
 }
 
 void GXSetAlphaUpdate(GXBool enable) {
     u32 blendModeReg = gxdt->blendMode;
     GX_BP_SET_BLENDMODE_ALPHA_UPDATE(blendModeReg, enable);
-
     GX_BP_LOAD_REG(blendModeReg);
     gxdt->blendMode = blendModeReg;
-
     gxdt->lastWriteWasXF = FALSE;
 }
 
@@ -174,10 +169,8 @@ void GXSetZMode(GXBool enableTest, GXCompare func, GXBool enableUpdate) {
     GX_BP_SET_ZMODE_TEST_ENABLE(zModeReg, enableTest);
     GX_BP_SET_ZMODE_COMPARE(zModeReg, func);
     GX_BP_SET_ZMODE_UPDATE_ENABLE(zModeReg, enableUpdate);
-
     GX_BP_LOAD_REG(zModeReg);
     gxdt->zMode = zModeReg;
-
     gxdt->lastWriteWasXF = FALSE;
 }
 
@@ -190,7 +183,8 @@ void GXSetZCompLoc(GXBool beforeTex) {
 void GXSetPixelFmt(GXPixelFmt pixelFmt, GXZFmt16 zFmt) {
     static u32 p2f[GX_MAX_PIXELFMT] = {
         GX_PF_RGB8_Z24, GX_PF_RGBA6_Z24, GX_PF_RGBA565_Z16, GX_PF_Z24,
-        GX_PF_Y8,       GX_PF_Y8,        GX_PF_Y8,          GX_PF_U8};
+        GX_PF_Y8,       GX_PF_Y8,        GX_PF_Y8,          GX_PF_U8
+    };
 
     u32 zControlRegOld = gxdt->zControl;
 

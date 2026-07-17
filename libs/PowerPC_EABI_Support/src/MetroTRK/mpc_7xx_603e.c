@@ -1,6 +1,6 @@
 #include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Generic/ppc_targimpl.h"
 
-asm void TRKSaveExtended1Block(){
+asm void TRKSaveExtended1Block() {
     nofralloc
     lis r2, gTRKCPUState@h
     ori r2, r2, gTRKCPUState@l

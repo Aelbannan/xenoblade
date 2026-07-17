@@ -23,9 +23,7 @@ int gdev_cc_initialize(void* flagOut, OSInterruptHandler handler){
     return 0;
 }
 
-int gdev_cc_shutdown(){
-    return 0;
-}
+int gdev_cc_shutdown(void) { return 0; }
 
 int gdev_cc_open(){
     if(gIsInitialized){
@@ -36,7 +34,7 @@ int gdev_cc_open(){
     }
 }
 
-int gdev_cc_close(){
+int gdev_cc_close() {
     return 0;
 }
 

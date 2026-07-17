@@ -52,8 +52,7 @@ Return exactly one JSON object. No preamble, no commentary, no Markdown fences:
   ],
   "hypothesis": "one primary whole-unit mismatch hypothesis",
   "notes": ["short evidence or uncertainty note"],
-  "next_change": "one bounded follow-up if this candidate does not win",
-  "confidence": 0.0
+  "next_change": "one bounded follow-up if this candidate does not win"
 }
 ```
 

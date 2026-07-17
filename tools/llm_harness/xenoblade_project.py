@@ -88,6 +88,19 @@ def _frozen_kb_cache_key(sources: list[Path]) -> str:
     return h.hexdigest()[:32]
 
 
+def _unit_matches(unit: Optional[str], tu: str) -> bool:
+    """Check if a target's unit hint matches a given TU name.
+
+    Strips a trailing ``.o`` suffix from *tu* for convenience, since users
+    naturally pass the object-file name (e.g. ``monolibdata1.o``).
+    """
+    if unit is None:
+        return False
+    if tu.endswith(".o"):
+        tu = tu[:-2]
+    return unit == tu or unit.endswith("/" + tu) or tu.endswith("/" + unit)
+
+
 class XenobladeAdapter:
     def __init__(self, root: Path, settings: Dict[str, Any]) -> None:
         self.root = root.resolve()
@@ -200,6 +213,58 @@ class XenobladeAdapter:
     def _any_target(self, target_id: str) -> Target:
         return get_target(load_targets(self.config), target_id)
 
+    def target_ids_for_unit(self, unit_name: str, workflow: str) -> List[str]:
+        """Return all eligible target IDs in a translation unit for a given workflow."""
+        if workflow not in {"new", "improve", "tu-complete"}:
+            raise ValueError(f"Unsupported workflow: {workflow}")
+        raw_targets = load_targets(self.config)
+        source_cache: Dict[Path, str] = {}
+        done = {"FULL_MATCH", "EQUIVALENT_MATCH"}
+        result: List[str] = []
+        matched_any_unit = False
+        for target in raw_targets:
+            if not target.buildable or not target.symbol or not target.unit:
+                continue
+            if not _unit_matches(target.unit, unit_name):
+                continue
+            matched_any_unit = True
+            if target.source is None or not target.source.is_file():
+                continue
+            if workflow == "new":
+                if target.status in done or target.status != "NOT_STARTED":
+                    continue
+            elif workflow == "improve":
+                if target.status in done:
+                    continue
+            if workflow != "tu-complete" and target.status in done:
+                continue
+            try:
+                source = source_cache.get(target.source)
+                if source is None:
+                    source = target.source.read_text(encoding="utf-8")
+                    source_cache[target.source] = source
+                _find_function_region(source, target)
+            except (OSError, ValueError):
+                continue
+            result.append(target.id)
+        if not matched_any_unit:
+            # Check if the unit exists at all (e.g. a data-only split) to offer a better hint
+            try:
+                unit = self.project.resolve_unit(unit_name)
+                hint = (
+                    f"Unit {unit_name!r} resolves to {unit.name} but has no function targets "
+                    f"in the registry (it may be a data-only split). "
+                    f"Use `tu-complete {unit_name}` for data-level work instead."
+                )
+            except ValueError:
+                hint = (
+                    f"No targets found for unit {unit_name!r}. "
+                    "Use a unit name from splits.txt (strip .o suffix) or a "
+                    "source-path-style name like monolib/src/core/CSchedule."
+                )
+            raise ValueError(hint)
+        return result
+
     def select_new_targets(
         self,
         number: int,
@@ -207,8 +272,9 @@ class XenobladeAdapter:
         *,
         ignore_called_functions: bool = False,
         certified_funcs: bool = False,
+        tu: Optional[str] = None,
     ) -> List[str]:
-        """Return fresh functions from the call-graph-safe catalog frontier."""
+        """Return fresh functions from the call-graph-safe catalog frontier, optionally filtered to a TU."""
         attempted = {
             str(row.get("target_id"))
             for row in history
@@ -226,6 +292,7 @@ class XenobladeAdapter:
             and target.source is not None
             and target.source.is_file()
             and target.id not in attempted
+            and (tu is None or _unit_matches(target.unit, tu))
         ]
         if certified_funcs:
             candidates = self._filter_certified_funcs(raw_targets, candidates)
@@ -257,10 +324,11 @@ class XenobladeAdapter:
         )
 
     def select_targets(
-        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False
+        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False,
+        tu: Optional[str] = None,
     ) -> List[str]:
         if workflow == "improve":
-            candidates = self._improve_candidates(certified_funcs=certified_funcs)
+            candidates = self._improve_candidates(certified_funcs=certified_funcs, tu=tu)
         elif workflow == "tu-complete":
             candidates = self._tu_completion_candidates()
         else:
@@ -294,7 +362,7 @@ class XenobladeAdapter:
             or all(fid in certified_ids for fid in t.extra.get("called_functions", []))
         ]
 
-    def _improve_candidates(self, *, certified_funcs: bool = False) -> List[str]:
+    def _improve_candidates(self, *, certified_funcs: bool = False, tu: Optional[str] = None) -> List[str]:
         selected: List[str] = []
         source_cache: Dict[Path, str] = {}
         units = self.project.load_objdiff_units()
@@ -314,6 +382,8 @@ class XenobladeAdapter:
                 or not target.source.is_file()
                 or not target.unit
             ):
+                continue
+            if tu is not None and not _unit_matches(target.unit, tu):
                 continue
             source = source_cache.get(target.source)
             if source is None:

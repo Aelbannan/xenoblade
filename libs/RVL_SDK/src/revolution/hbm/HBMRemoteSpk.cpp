@@ -104,12 +104,14 @@ static bool MakeVolumeData(const s16* pSrc, s16* pDst, int vol, u32 size) {
 */
 
 void RemoteSpk::ClearPcm() {
-    RemoteSpk* pRmtSpk = GetInstance();
-
-    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        pRmtSpk->info[i].seId = -1;
-        pRmtSpk->info[i].in_pcm = NULL;
-    }
+    info[0].in_pcm = NULL;
+    info[0].seId = -1;
+    info[1].in_pcm = NULL;
+    info[1].seId = -1;
+    info[2].in_pcm = NULL;
+    info[2].seId = -1;
+    info[3].in_pcm = NULL;
+    info[3].seId = -1;
 }
 
 RemoteSpk::RemoteSpk(void* pSpkSeBuf) {
@@ -261,7 +263,7 @@ void RemoteSpk::Play(s32 chan, int seID, s8 vol) {
     info[chan].in_pcm = pPcm;
 }
 
-bool RemoteSpk::isPlaying(s32 chan) const {
+bool homebutton::RemoteSpk::isPlaying(s32 chan) const {
     return info[chan].in_pcm != NULL;
 }
 
@@ -273,8 +275,12 @@ bool RemoteSpk::isPlayingId(s32 chan, int seId) const {
     return false;
 }
 
+namespace homebutton {
+
 bool RemoteSpk::isPlayReady(s32 chan) const {
     return info[chan].playReady != false;
 }
+
+} // namespace homebutton
 
 } // namespace homebutton

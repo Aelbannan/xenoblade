@@ -45,14 +45,16 @@ static u32 currentDirectory = 0;
 static void cbForReadAsync(s32 result, DVDCommandBlock* block);
 static void cbForReadSync(s32 result, DVDCommandBlock* block);
 
-void __DVDFSInit(void) {
-    BootInfo = (OSBootInfo*)OSPhysicalToCached(OS_PHYS_BOOT_INFO);
-    FstStart = (const DVDNode*)BootInfo->fstStart;
+extern OSBootInfo* BootInfo;
+extern const DVDNode* FstStart;
+extern u32 MaxEntryNum;
+extern char* FstStringStart;
 
+void __DVDFSInit(void) {
+    BootInfo = (OSBootInfo*)0x80000000;
+    FstStart = (const DVDNode*)BootInfo->fstStart;
     if (FstStart != NULL) {
-        // Size of FST root
         MaxEntryNum = FstStart->size;
-        // String table is placed after FST nodes
         FstStringStart = (char*)&FstStart[MaxEntryNum];
     }
 }
@@ -399,9 +401,6 @@ s32 DVDReadPrio(DVDFileInfo* info, void* dst, s32 size, s32 offset, s32 prio) {
 }
 
 static void cbForReadSync(s32 result, DVDCommandBlock* block) {
-#pragma unused(result)
-#pragma unused(block)
-
     OSWakeupThread(&__DVDThreadQueue);
 }
 

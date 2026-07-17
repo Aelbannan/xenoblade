@@ -176,62 +176,48 @@ s32 ARCConvertPathToEntrynum(ARCHandle* handle, const char* path) {
     ARCNode* nodes = handle->FSTStart;
 
     while (TRUE) {
-        // End of string -> return what we have
         if (path[0] == '\0') {
             return it;
         }
 
-        // Ignore initial slash: /Path/File vs Path/File
         if (path[0] == '/') {
             it = 0;
             ++path;
             continue;
         }
 
-        // Handle special cases:
-        // -../-, -.., -./-, -.
         if (path[0] == '.') {
             if (path[1] == '.') {
-                // Seek to parent ../
                 if (path[2] == '/') {
                     it = nodes[it].folder.parent;
                     path += 3;
                     continue;
                 }
-                // Return parent folder immediately
                 if (path[2] == '\0') {
                     return nodes[it].folder.parent;
                 }
-                // Malformed: fall through, causing infinite loop
                 goto compare;
             }
 
-            // "." directory does nothing
             if (path[1] == '/') {
                 path += 2;
                 continue;
             }
 
-            // Ignore trailing dot
             if (path[1] == '\0') {
                 return it;
             }
         }
 
-    compare:
-        // We've ensured the directory is not special.
-        // Isolate the name of the current item in the path string.
+compare:
         name_end = path;
         while (name_end[0] != '\0' && name_end[0] != '/') {
             ++name_end;
         }
 
-        // If the name was delimited by a '/' rather than truncated.
-        // This must be expressed as a ternary, and an enum cannot be used..
         name_delimited_by_slash = (name_end[0] == '\0') ? 0 : 1;
         name_length = name_end - path;
 
-        // Traverse all children of the parent.
         anchor = it;
         ++it;
         while (it < nodes[anchor].folder.sibling_next) {
@@ -241,13 +227,11 @@ s32 ARCConvertPathToEntrynum(ARCHandle* handle, const char* path) {
                     char* name_of_it = ((char*)handle->FSTStringStart) +
                                        ARCNodeGetName(nodes[it]);
 
-                    // Skip empty directories
                     if (name_of_it[0] == '.' && name_of_it[1] == '\0') {
                         ++it;
                         continue;
                     }
 
-                    // Advance to the next item in the path
                     if (isSame(path, name_of_it) == TRUE) {
                         goto descend;
                     }
@@ -265,10 +249,7 @@ s32 ARCConvertPathToEntrynum(ARCHandle* handle, const char* path) {
 
         return -1;
 
-    descend:
-        // If the path was truncated, there is nowhere else to go
-        // These basic blocks have to go here right at the end, accessed via a
-        // goto. An odd choice.
+descend:
         if (!name_delimited_by_slash) {
             return it;
         }
@@ -317,7 +298,6 @@ u32 ARCGetLength(ARCFileInfo* info) {
 
 BOOL ARCClose(ARCFileInfo* info) {
 #pragma unused(info)
-
     return TRUE;
 }
 
@@ -363,8 +343,6 @@ BOOL ARCReadDir(ARCDir* dir, ARCDirEntry* entry) {
 
         entry->handle = handle;
         entry->entryNum = it;
-        // All non-file entries are folders.
-        // Collapse to one specific value.
         entry->isDir = ARCNodeIsFolder(nodes[it]) ? TRUE : FALSE;
         entry->name = handle->FSTStringStart + nodes[it].name;
 
@@ -374,8 +352,7 @@ BOOL ARCReadDir(ARCDir* dir, ARCDirEntry* entry) {
             continue;
         }
 
-        dir->location =
-            ARCNodeIsFolder(nodes[it]) ? nodes[it].folder.sibling_next : it + 1;
+        dir->location = ARCNodeIsFolder(nodes[it]) ? nodes[it].folder.sibling_next : it + 1;
         return TRUE;
     }
 }

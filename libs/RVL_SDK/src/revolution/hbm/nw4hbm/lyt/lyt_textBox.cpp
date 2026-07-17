@@ -144,7 +144,9 @@ TextBox::~TextBox() {
 }
 
 ut::Color TextBox::GetVtxColor(u32 idx) const {
-    return GetTextColor(idx / TEXTCOLOR_MAX);
+    // Offset to color array (2 colors, each 4 bytes)
+    const u8* base = reinterpret_cast<const u8*>(this) + 0xd8;
+    return reinterpret_cast<const ut::Color*>(base)[idx >> 1];
 }
 
 void TextBox::SetVtxColor(u32 idx, ut::Color color) {

@@ -715,73 +715,52 @@ void Material::SetIndStageNum(u8 num) {
 
 void Material::SetColorElement(u32 idx, s16 value) {
     switch (idx) {
-    case ANIMTARGET_MATCOLOR_MATR:
-    case ANIMTARGET_MATCOLOR_MATG:
-    case ANIMTARGET_MATCOLOR_MATB:
-    case ANIMTARGET_MATCOLOR_MATA: {
-        if (mGXMemNum.matCol < 1) {
-            break;
-        }
-
+    case 0:
+    case 1:
+    case 2:
+    case 3: {
+        if (mGXMemNum.matCol < 1) break;
         ut::Color* pMatColor = GetMatColAry();
         SetColorComponentValue(pMatColor, idx % 4, value);
         break;
     }
-
-    case ANIMTARGET_MATCOLOR_TEV0R:
-    case ANIMTARGET_MATCOLOR_TEV0G:
-    case ANIMTARGET_MATCOLOR_TEV0B:
-    case ANIMTARGET_MATCOLOR_TEV0A:
-    case ANIMTARGET_MATCOLOR_TEV1R:
-    case ANIMTARGET_MATCOLOR_TEV1G:
-    case ANIMTARGET_MATCOLOR_TEV1B:
-    case ANIMTARGET_MATCOLOR_TEV1A:
-    case ANIMTARGET_MATCOLOR_TEV2R:
-    case ANIMTARGET_MATCOLOR_TEV2G:
-    case ANIMTARGET_MATCOLOR_TEV2B:
-    case ANIMTARGET_MATCOLOR_TEV2A: {
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15: {
         u32 regIdx = (idx - 4) / 4;
-
         switch ((idx - 4) % 4) {
-        case 0: {
-            mTevCols[regIdx].r = value;
-            break;
-        }
-
-        case 1: {
-            mTevCols[regIdx].g = value;
-            break;
-        }
-
-        case 2: {
-            mTevCols[regIdx].b = value;
-            break;
-        }
-
-        case 3: {
-            mTevCols[regIdx].a = value;
-            break;
-        }
+        case 0: mTevCols[regIdx].r = value; break;
+        case 1: mTevCols[regIdx].g = value; break;
+        case 2: mTevCols[regIdx].b = value; break;
+        case 3: mTevCols[regIdx].a = value; break;
         }
         break;
     }
-
-    case ANIMTARGET_MATCOLOR_TEVK0R:
-    case ANIMTARGET_MATCOLOR_TEVK0G:
-    case ANIMTARGET_MATCOLOR_TEVK0B:
-    case ANIMTARGET_MATCOLOR_TEVK0A:
-    case ANIMTARGET_MATCOLOR_TEVK1R:
-    case ANIMTARGET_MATCOLOR_TEVK1G:
-    case ANIMTARGET_MATCOLOR_TEVK1B:
-    case ANIMTARGET_MATCOLOR_TEVK1A:
-    case ANIMTARGET_MATCOLOR_TEVK2R:
-    case ANIMTARGET_MATCOLOR_TEVK2G:
-    case ANIMTARGET_MATCOLOR_TEVK2B:
-    case ANIMTARGET_MATCOLOR_TEVK2A:
-    case ANIMTARGET_MATCOLOR_TEVK3R:
-    case ANIMTARGET_MATCOLOR_TEVK3G:
-    case ANIMTARGET_MATCOLOR_TEVK3B:
-    case ANIMTARGET_MATCOLOR_TEVK3A: {
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+    case 30:
+    case 31: {
         u32 regIdx = (idx - 16) / 4;
         SetColorComponentValue(&mTevKCols[regIdx], idx - 16, value);
         break;

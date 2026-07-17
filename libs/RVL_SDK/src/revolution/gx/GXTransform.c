@@ -43,9 +43,7 @@ inline void Copy6Floats(register f32* dst, register const f32* src) {
 }
 
 void __GXSetProjection(void) {
-    // Temp required to match
     volatile void* wgpipe = &WGPIPE;
-
     GX_XF_LOAD_REGS(ARRAY_SIZE(gxdt->proj), GX_XF_REG_PROJECTIONA);
     WriteProjPS(wgpipe, gxdt->proj);
     WGPIPE.i = gxdt->projType;
@@ -139,18 +137,16 @@ inline void WriteMTXPS4x2(register volatile void* dst, register const Mtx src) {
 }
 
 void GXLoadPosMtxImm(const Mtx mtx, u32 id) {
-    // Position matrices are 4x3
     GX_XF_LOAD_REGS(4 * 3 - 1, id * 4 + GX_XF_MEM_POSMTX);
     WriteMTXPS4x3(&WGPIPE, mtx);
 }
 
 void GXLoadPosMtxIndx(u16 index, u32 id) {
-    // Position matrices are 4x3
     GX_FIFO_LOAD_INDX_A(id * 4 + GX_XF_MEM_POSMTX, 4 * 3 - 1, index);
 }
 
 void GXLoadNrmMtxImm(const Mtx mtx, u32 id) {
-    // Normal matrices are 3x3
+    // Normal matrices are 3x3, each row uses 3 consecutive registers
     GX_XF_LOAD_REGS(3 * 3 - 1, id * 3 + GX_XF_MEM_NRMMTX);
     WriteMTXPS3x3(&WGPIPE, mtx);
 }
@@ -198,16 +194,16 @@ void __GXSetViewport(void) {
     f32 a, b, c, d, e, f;
     f32 near, far;
 
-    a = gxdt->vpSx / 2.0f;
-    b = -gxdt->vpSy / 2.0f;
-    d = gxdt->vpOx + (gxdt->vpSx / 2.0f) + 342.0f;
-    e = gxdt->vpOy + (gxdt->vpSy / 2.0f) + 342.0f;
+    a = __GXData->vpSx / 2.0f;
+    b = -__GXData->vpSy / 2.0f;
+    d = __GXData->vpOx + (__GXData->vpSx / 2.0f) + 342.0f;
+    e = __GXData->vpOy + (__GXData->vpSy / 2.0f) + 342.0f;
 
-    near = gxdt->vpNear * gxdt->scaleZ;
-    far = gxdt->vpFar * gxdt->scaleZ;
+    near = __GXData->vpNear * __GXData->scaleZ;
+    far = __GXData->vpFar * __GXData->scaleZ;
 
     c = far - near;
-    f = far + gxdt->offsetZ;
+    f = far + __GXData->offsetZ;
 
     GX_XF_LOAD_REGS(6 - 1, GX_XF_REG_SCALEX);
     WGPIPE.f = a;

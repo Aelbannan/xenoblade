@@ -1325,9 +1325,7 @@ BOOL DVDLowUnmaskStatusInterrupts(void) {
     return TRUE;
 }
 
-BOOL DVDLowMaskCoverInterrupt(void) {
-    return TRUE;
-}
+BOOL DVDLowMaskCoverInterrupt(void) { return TRUE; }
 
 //unused
 void DVDLowUnmaskCoverInterrupt(){

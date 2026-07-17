@@ -39,7 +39,12 @@ void __AXInitVoiceStacks(void) {
 }
 
 void __AXAllocInit(void) {
-    __AXInitVoiceStacks();
+    u32 i;
+    __AXCallbackStack = NULL;
+    for (i = 0; i < 32; i++) {
+        __AXStackTail[i] = 0;
+        __AXStackHead[i] = 0;
+    }
 }
 
 void __AXAllocQuit(void) {

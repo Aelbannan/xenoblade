@@ -50,77 +50,80 @@ namespace std{
 
 }
 
-extern char __throw_catch_compare(const char* throwtype, const char* catchtype, long* offset_result){
-    const char *cptr1, *cptr2;
+int __throw_catch_compare(const char* throwtype, const char* catchtype, int* offset_result) {
+    const char* p1;
+    const char* p2;
 
     *offset_result = 0;
 
-    if((cptr2 = catchtype) == 0){
-        return true;
+    if (catchtype == 0) {
+        return 1;
     }
 
-    cptr1 = throwtype;
-
-    if(*cptr2 == 'P'){
-        cptr2++;
-        if(*cptr2 == 'C') cptr2++;
-        if(*cptr2 == 'V') cptr2++;
-        if(*cptr2 == 'v'){
-            if(*cptr1 == 'P' || *cptr1 == '*') {
-                return true;
+    p2 = catchtype;
+    if (*p2 == 'P') {
+        p2++;
+        if (*p2 == 'C') p2++;
+        if (*p2 == 'V') p2++;
+        if (*p2 == 'v') {
+            if (*throwtype == 'P' || *throwtype == '*') {
+                return 1;
             }
         }
-        cptr2 = catchtype;
+        p2 = catchtype; /* reset */
     }
 
-    switch(*cptr1){
-    case '*':
-    case '!':
-        if(*cptr1++ != *cptr2++) return false;
-        for(;;){
-            if(*cptr1 == *cptr2++){
-                if(*cptr1++ == '!'){
-                    long offset;
-
-                    for(offset = 0; *cptr1 != '!';){
-                        offset = offset*10 + *cptr1++ - '0';
+    p1 = throwtype;
+    if (*p1 == '*' || *p1 == '!') {
+        while (1) {
+            if (*p1 == *p2) {
+                p1++;
+                p2++;
+                if (p1[-1] == '!') {
+                    int offset = 0;
+                    while (*p1 != '!') {
+                        offset = offset * 10 + (*p1 - '0');
+                        p1++;
                     }
                     *offset_result = offset;
-                    return true;
+                    return 1;
                 }
-            }else{
-                while(*cptr1++ != '!'){}
-                while(*cptr1++ != '!'){}
-                if(*cptr1 == 0) return false;
-
-                cptr2 = catchtype + 1;
+            } else {
+                /* skip to next '!' in throwtype */
+                while (*p1 != '!') p1++;
+                p1++; /* skip '!' */
+                while (*p1 != '!') p1++;
+                p1++; /* skip second '!' */
+                if (*p1 == 0) return 0;
+                p2 = catchtype + 1;
             }
         }
-        return false;
+        return 0;
     }
 
-    while((*cptr1 == 'P' || *cptr1 == 'R') && *cptr1 == *cptr2){
-        cptr1++;
-        cptr2++;
-
-        if(*cptr2 == 'C'){
-            if(*cptr1 == 'C') cptr1++;
-            cptr2++;
+    /* skip leading qualifiers */
+    while ((*p1 == 'P' || *p1 == 'R') && *p1 == *p2) {
+        p1++;
+        p2++;
+        if (*p2 == 'C') {
+            if (*p1 == 'C') p1++;
+            p2++;
         }
-        if(*cptr1 == 'C') return false;
-
-        if(*cptr2 == 'V'){
-            if(*cptr1 == 'V') cptr1++;
-            cptr2++;
+        if (*p1 == 'C') return 0;
+        if (*p2 == 'V') {
+            if (*p1 == 'V') p1++;
+            p2++;
         }
-        if(*cptr1 == 'V') return false;
+        if (*p1 == 'V') return 0;
     }
 
-    for(; *cptr1 == *cptr2; cptr1++, cptr2++){
-        if(*cptr1 == 0) return true;
+    while (*p1 == *p2) {
+        if (*p1 == 0) return 1;
+        p1++;
+        p2++;
     }
 
-    return false;
+    return 0;
 }
 
 class __partial_array_destructor {

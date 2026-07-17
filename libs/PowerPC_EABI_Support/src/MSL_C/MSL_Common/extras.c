@@ -21,22 +21,14 @@ void gcvt(){
 void heapmin(){
 }
 
-int stricmp(char* param_1, char* param_2)
-{
-    s8 a_var;
-    s8 b_var;
-
+int stricmp(const char* s1, const char* s2) {
+    int c1, c2;
     do {
-        b_var = tolower(*param_1++);
-        a_var = tolower(*param_2++);
-
-        if (b_var < a_var) {
-            return -1;
-        }
-        if (b_var > a_var) {
-            return 1;
-        }
-    } while (b_var != 0);
+        c1 = tolower(*s1++);
+        c2 = tolower(*s2++);
+        if (c1 < c2) return -1;
+        if (c1 > c2) return 1;
+    } while (c1 != 0);
     return 0;
 }
 

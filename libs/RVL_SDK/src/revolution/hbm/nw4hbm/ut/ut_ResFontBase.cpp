@@ -28,7 +28,7 @@ int ResFontBase::GetHeight() const {
     return mFontInfo->height;
 }
 
-int ResFontBase::GetAscent() const {
+int nw4hbm::ut::detail::ResFontBase::GetAscent() const {
     return mFontInfo->ascent;
 }
 
@@ -40,7 +40,7 @@ int ResFontBase::GetBaselinePos() const {
     return mFontInfo->pGlyph->baselinePos;
 }
 
-int ResFontBase::GetCellHeight() const {
+int nw4hbm::ut::detail::ResFontBase::GetCellHeight() const {
     return mFontInfo->pGlyph->cellHeight;
 }
 
@@ -69,7 +69,11 @@ CharWidths ResFontBase::GetDefaultCharWidths() const {
 }
 
 void ResFontBase::SetDefaultCharWidths(const CharWidths& rWidths) {
-    mFontInfo->defaultWidth = rWidths;
+    u8* dst = reinterpret_cast<u8*>(mFontInfo) + 4;
+    const u8* src = reinterpret_cast<const u8*>(&rWidths);
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
 }
 
 bool ResFontBase::SetAlternateChar(u16 ch) {
@@ -200,8 +204,7 @@ void ResFontBase::GetGlyphFromIndex(Glyph* pGlyph, u16 index) const {
     u32 pixelX = unitX * (pTexGlyph->cellWidth + 1);
     u32 pixelY = unitY * (pTexGlyph->cellHeight + 1);
 
-    pGlyph->pTexture =
-        pTexGlyph->sheetImage + (glyphSheet * pTexGlyph->sheetSize);
+    pGlyph->pTexture = pTexGlyph->sheetImage + glyphSheet * pTexGlyph->sheetSize;
 
     pGlyph->widths = GetCharWidthsFromIndex(index);
     pGlyph->height = pTexGlyph->cellHeight;

@@ -15,7 +15,7 @@ void FrameController::init(int anmType, f32 maxFrame, f32 minFrame, f32 delta) {
 }
 
 void FrameController::initFrame() {
-    mCurFrame = mAnmType == eAnmType_Backward ? mMaxFrame : mMinFrame;
+    mCurFrame = mAnmType == 1 ? mMaxFrame : mMinFrame;
 }
 
 void FrameController::calc() {

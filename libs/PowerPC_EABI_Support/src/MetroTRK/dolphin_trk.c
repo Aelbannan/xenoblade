@@ -152,19 +152,16 @@ void EnableMetroTRKInterrupts(){
     EnableEXI2Interrupts();
 }
 
-void* TRKTargetTranslate(ui32* addr){
-    if(addr >= lc_base && addr < &lc_base[0x1000]){
-        if(gTRKCPUState.Extended1.DBAT2L & 3) return addr;
+void* TRKTargetTranslate(ui32* addr) {
+    if (addr >= lc_base && addr < &lc_base[0x1000]) {
+        if (gTRKCPUState.Extended1.DBAT2L & 3) return addr;
     }
-
-    if((ui32)addr < 0x3000000){
+    if ((ui32)addr < 0x3000000) {
         return (void*)(((ui32)addr & 0x3FFFFFFF) | BOOTINFO);
     }
-
-    if((ui32)addr >= 0x10000000 && 0x1C000000 > (ui32)addr){
+    if ((ui32)addr >= 0x10000000 && 0x1C000000 > (ui32)addr) {
         return (void*)(((ui32)addr & 0x3FFFFFFF) | MEM2_CACHED);
     }
-    
     return addr;
 }
 
@@ -207,7 +204,6 @@ DSError TRKInitializeTarget(){
     return kNoError;
 }
 
-void __TRKreset(){
-    //Looks like the devs forgot to update this lol
-    OSResetSystem(false, 0, false);
+void __TRKreset() {
+    OSResetSystem(0, 0, 0);
 }

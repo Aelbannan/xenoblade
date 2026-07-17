@@ -37,20 +37,12 @@ AXSTUDIO* __AXGetStudio(void) {
 }
 
 void __AXDepopFadeMain(s32* all, s32* value, s16* depop) {
-    if (*all / AX_SAMPLES_PER_FRAME != 0) {
-        // Average depop across the channel?
-        s32 avg = *all / AX_SAMPLES_PER_FRAME;
-
-        if (avg > DEPOP_MAX) {
-            avg = DEPOP_MAX;
-        }
-
-        if (avg < DEPOP_MIN) {
-            avg = DEPOP_MIN;
-        }
-
+    s32 avg = *all / 96;
+    if (avg != 0) {
+        if (avg > 20) avg = 20;
+        if (avg < -20) avg = -20;
         *value = *all;
-        *all -= avg * AX_SAMPLES_PER_FRAME;
+        *all -= avg * 96;
         *depop = -avg;
     } else {
         *all = 0;
@@ -60,20 +52,12 @@ void __AXDepopFadeMain(s32* all, s32* value, s16* depop) {
 }
 
 void __AXDepopFadeRmt(s32* all, s32* value, s16* depop) {
-    if (*all / AX_SAMPLES_PER_FRAME_RMT != 0) {
-        // Average depop across the channel?
-        s32 avg = *all / AX_SAMPLES_PER_FRAME_RMT;
-
-        if (avg > DEPOP_MAX) {
-            avg = DEPOP_MAX;
-        }
-
-        if (avg < DEPOP_MIN) {
-            avg = DEPOP_MIN;
-        }
-
+    s32 avg = *all / 18;
+    if (avg != 0) {
+        if (avg > 20) avg = 20;
+        if (avg < -20) avg = -20;
         *value = *all;
-        *all -= avg * AX_SAMPLES_PER_FRAME_RMT;
+        *all -= avg * 18;
         *depop = -avg;
     } else {
         *all = 0;

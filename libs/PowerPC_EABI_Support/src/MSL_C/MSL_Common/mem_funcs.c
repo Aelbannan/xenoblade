@@ -13,100 +13,104 @@ void __copy_mem(){
 void __move_mem(){
 }
 
-void __copy_longs_aligned(void *pDest, const void *pSrc, unsigned long len) {
-    unsigned long i = (-(unsigned long)pDest) & 3;
-    srcCharPtr = ((unsigned char *)pSrc) - 1;
-    destCharPtr = ((unsigned char *)pDest) - 1;
-    
-    if (i != 0) {
-        len -= i;
+void __copy_longs_aligned(void *dst, const void *src, unsigned long n) {
+    unsigned long i;
+    unsigned char *d, *s;
+    unsigned long *dw, *sw;
 
+    i = (-(unsigned long)dst) & 3;
+    s = (unsigned char *)src - 1;
+    d = (unsigned char *)dst - 1;
+
+    if (i) {
+        n -= i;
         do {
-            *++(destCharPtr) = *++(srcCharPtr);
+            *++d = *++s;
         } while (--i);
     }
 
-    srcLongPtr = ((unsigned long *)(srcCharPtr + 1)) - 1;
-    destLongPtr = ((unsigned long *)(destCharPtr + 1)) - 1;
+    sw = (unsigned long *)(s + 1) - 1;
+    dw = (unsigned long *)(d + 1) - 1;
 
-    i = len >> 5;
-
-    if (i != 0) {
+    i = n >> 5;
+    if (i) {
         do {
-            *++(destLongPtr) = *++(srcLongPtr);
-            *++(destLongPtr) = *++(srcLongPtr);
-            *++(destLongPtr) = *++(srcLongPtr);
-            *++(destLongPtr) = *++(srcLongPtr);
-            *++(destLongPtr) = *++(srcLongPtr);
-            *++(destLongPtr) = *++(srcLongPtr);
-            *++(destLongPtr) = *++(srcLongPtr);
-            *++(destLongPtr) = *++(srcLongPtr);
+            *++dw = *++sw;
+            *++dw = *++sw;
+            *++dw = *++sw;
+            *++dw = *++sw;
+            *++dw = *++sw;
+            *++dw = *++sw;
+            *++dw = *++sw;
+            *++dw = *++sw;
         } while (--i);
     }
 
-    i = (len & 31) >> 2;
-
-    if (i != 0) {
+    i = (n & 31) >> 2;
+    if (i) {
         do {
-            *++(destLongPtr) = *++(srcLongPtr);
+            *++dw = *++sw;
         } while (--i);
     }
 
-    srcCharPtr = ((unsigned char *) (srcLongPtr + 1)) - 1;
-    destCharPtr = ((unsigned char *) (destLongPtr + 1)) - 1;
+    s = (unsigned char *)(sw + 1) - 1;
+    d = (unsigned char *)(dw + 1) - 1;
 
-    len &= 3;
-    
-    if (len != 0) {
-        do
-            *++(destCharPtr) = *++(srcCharPtr);
-        while (--len);
+    n &= 3;
+    if (n) {
+        do {
+            *++d = *++s;
+        } while (--n);
     }
 }
 
 void __copy_longs_rev_aligned(void *pDest, const void *pSrc, unsigned long len) {
     unsigned long i;
-    srcCharPtr = ((unsigned char *)pSrc) + len;
-    destCharPtr = ((unsigned char *)pDest) + len;
-    i = ((unsigned long) destCharPtr) & 3;
+    unsigned char *dest = (unsigned char *)pDest + len;
+    const unsigned char *src = (const unsigned char *)pSrc + len;
 
+    i = (unsigned long)dest & 3;
     if (i != 0) {
         len -= i;
-
         do {
-            *--destCharPtr = *--srcCharPtr;
-        } while(--i);
+            *--dest = *--src;
+        } while (--i);
     }
 
     i = len >> 5;
-
     if (i != 0) {
+        unsigned long *ldest = (unsigned long *)dest;
+        const unsigned long *lsrc = (const unsigned long *)src;
         do {
-            *--destLongPtr = *--srcLongPtr;
-            *--destLongPtr = *--srcLongPtr;
-            *--destLongPtr = *--srcLongPtr;
-            *--destLongPtr = *--srcLongPtr;
-            *--destLongPtr = *--srcLongPtr;
-            *--destLongPtr = *--srcLongPtr;
-            *--destLongPtr = *--srcLongPtr;
-            *--destLongPtr = *--srcLongPtr;
-        } while(--i);
+            *--ldest = *--lsrc;
+            *--ldest = *--lsrc;
+            *--ldest = *--lsrc;
+            *--ldest = *--lsrc;
+            *--ldest = *--lsrc;
+            *--ldest = *--lsrc;
+            *--ldest = *--lsrc;
+            *--ldest = *--lsrc;
+        } while (--i);
+        dest = (unsigned char *)ldest;
+        src = (const unsigned char *)lsrc;
     }
 
     i = (len & 31) >> 2;
-
     if (i != 0) {
+        unsigned long *ldest = (unsigned long *)dest;
+        const unsigned long *lsrc = (const unsigned long *)src;
         do {
-            *--destLongPtr = *--srcLongPtr;
-        } while(--i);
+            *--ldest = *--lsrc;
+        } while (--i);
+        dest = (unsigned char *)ldest;
+        src = (const unsigned char *)lsrc;
     }
 
     len &= 3;
-
     if (len != 0) {
         do {
-            *--destCharPtr = *--srcCharPtr;
-        } while(--len);
+            *--dest = *--src;
+        } while (--len);
     }
 }
 

@@ -34,23 +34,19 @@ void PSMTXIdentity(register Mtx m) {
 void C_MTXCopy(){
 }
 
-asm void PSMTXCopy(const register Mtx src, register Mtx dst) {
-    // clang-format off
-    nofralloc
-    psq_l  fp0, 0(src),  0, 0
-    psq_st fp0, 0(dst),  0, 0
-    psq_l  fp1, 8(src),  0, 0
-    psq_st fp1, 8(dst),  0, 0
-    psq_l  fp2, 16(src), 0, 0
-    psq_st fp2, 16(dst), 0, 0
-    psq_l  fp3, 24(src), 0, 0
-    psq_st fp3, 24(dst), 0, 0
-    psq_l  fp4, 32(src), 0, 0
-    psq_st fp4, 32(dst), 0, 0
-    psq_l  fp5, 40(src), 0, 0
-    psq_st fp5, 40(dst), 0, 0
-    blr
-    // clang-format on
+void PSMTXCopy(const Mtx src, Mtx dst) {
+    dst[0][0] = src[0][0];
+    dst[0][1] = src[0][1];
+    dst[0][2] = src[0][2];
+    dst[0][3] = src[0][3];
+    dst[1][0] = src[1][0];
+    dst[1][1] = src[1][1];
+    dst[1][2] = src[1][2];
+    dst[1][3] = src[1][3];
+    dst[2][0] = src[2][0];
+    dst[2][1] = src[2][1];
+    dst[2][2] = src[2][2];
+    dst[2][3] = src[2][3];
 }
 
 //unused
@@ -514,110 +510,61 @@ asm void PSMTXTransApply(const register Mtx src, register Mtx dst,
 void C_MTXScale(){
 }
 
-void PSMTXScale(register Mtx m, register f32 xS, register f32 yS,
-                register f32 zS) {
-    register f32 c0 = 0.0f;
-
-    ASM (
-        stfs xS, 0(m)
-        psq_st c0, 4(m), 0, 0
-        psq_st c0, 12(m), 0, 0
-        stfs yS, 20(m)
-        psq_st c0, 24(m), 0, 0
-        psq_st c0, 32(m), 0, 0
-        stfs zS, 40(m)
-        stfs c0, 44(m)
-    )
+void PSMTXScale(Mtx m, f32 xS, f32 yS, f32 zS) {
+    f32 zero = 0.0f;
+    m[0][0] = zero;
+    m[0][1] = m[0][2] = zero;
+    m[0][3] = m[1][0] = zero;
+    m[1][1] = yS;
+    m[1][2] = m[1][3] = zero;
+    m[2][0] = m[2][1] = zero;
+    m[2][2] = zS;
+    m[2][3] = zero;
 }
 
 //unused
 void C_MTXScaleApply(){
 }
 
-asm void PSMTXScaleApply(const register Mtx src, register Mtx dst,
-                         register f32 xS, register f32 yS, register f32 zS) {
-    // clang-format off
-    nofralloc
-    frsp xS, xS
-    psq_l fp4, 0(src), 0, 0
-    frsp yS, yS
-    psq_l fp5, 8(src), 0, 0
-    frsp zS, zS
-
-    ps_muls0 fp4, fp4, xS
-    psq_l fp6, 16(src), 0, 0
-    ps_muls0 fp5, fp5, xS
-    psq_l fp7, 24(src), 0, 0
-
-    ps_muls0 fp6, fp6, yS
-    psq_l fp8, 32(src), 0, 0
-    psq_st fp4, 0(dst), 0, 0
-    ps_muls0 fp7, fp7, yS
-    psq_l fp2, 40(src), 0, 0
-    psq_st fp5, 8(dst), 0, 0
-    ps_muls0 fp8, fp8, zS
-    psq_st fp6, 16(dst), 0, 0
-    ps_muls0 fp2, fp2, zS
-    psq_st fp7, 24(dst), 0, 0
-    psq_st fp8, 32(dst), 0, 0
-    psq_st fp2, 40(dst), 0, 0
-    blr
-    // clang-format on
+void PSMTXScaleApply(const Mtx src, Mtx dst, f32 xS, f32 yS, f32 zS) {
+    dst[0][0] = src[0][0] * xS;
+    dst[0][1] = src[0][1] * xS;
+    dst[0][2] = src[0][2] * xS;
+    dst[0][3] = src[0][3] * xS;
+    dst[1][0] = src[1][0] * yS;
+    dst[1][1] = src[1][1] * yS;
+    dst[1][2] = src[1][2] * yS;
+    dst[1][3] = src[1][3] * yS;
+    dst[2][0] = src[2][0] * zS;
+    dst[2][1] = src[2][1] * zS;
+    dst[2][2] = src[2][2] * zS;
+    dst[2][3] = src[2][3] * zS;
 }
 
 //unused
 void C_MTXQuat(){
 }
 
-void PSMTXQuat(register Mtx m, const register Quaternion* q) {
-    register f32 c_zero, c_one, c_two, scale;
-    register f32 tmp0, tmp1, tmp2, tmp3, tmp4;
-    register f32 tmp5, tmp6, tmp7, tmp8, tmp9;
-    c_one = 1.0f;
+void PSMTXQuat(Mtx m, const Quaternion *q) {
+    float x = q->x, y = q->y, z = q->z, w = q->w;
+    float x2 = x + x, y2 = y + y, z2 = z + z;
+    float xx = x * x2, xy = x * y2, xz = x * z2;
+    float xw = w * x2;
+    float yy = y * y2, yz = y * z2, yw = w * y2;
+    float zz = z * z2, zw = w * z2;
 
-    ASM (
-        psq_l tmp0, 0(q), 0, 0
-        psq_l tmp1, 8(q), 0, 0
-
-        fsubs c_zero, c_one, c_one
-        fadds c_two, c_one, c_one
-
-        ps_mul tmp2, tmp0, tmp0
-        ps_merge10 tmp5, tmp0, tmp0
-        ps_madd tmp4, tmp1, tmp1, tmp2
-        ps_mul tmp3, tmp1, tmp1
-        ps_sum0 scale, tmp4, tmp4, tmp4
-        ps_muls1 tmp7, tmp5, tmp1
-        fres tmp9, scale
-        ps_sum1 tmp4, tmp3, tmp4, tmp2
-        ps_nmsub scale, scale, tmp9, c_two
-        ps_muls1 tmp6, tmp1, tmp1
-        ps_mul scale, tmp9, scale
-        ps_sum0 tmp2, tmp2, tmp2, tmp2
-        fmuls scale, scale, c_two
-        ps_madd tmp8, tmp0, tmp5, tmp6
-        ps_msub tmp6, tmp0, tmp5, tmp6
-        psq_st c_zero, 12(m), 1, 0
-        ps_nmsub tmp2, tmp2, scale, c_one
-        ps_nmsub tmp4, tmp4, scale, c_one
-        psq_st c_zero, 44(m), 1, 0
-        ps_mul tmp8, tmp8, scale
-        ps_mul tmp6, tmp6, scale
-        psq_st tmp2, 40(m), 1, 0
-        ps_madds0 tmp5, tmp0, tmp1, tmp7
-        ps_merge00 tmp1, tmp8, tmp4
-        ps_nmsub tmp7, tmp7, c_two, tmp5
-        ps_merge10 tmp0, tmp4, tmp6
-        psq_st tmp1, 16(m), 0, 0
-        ps_mul tmp5, tmp5, scale
-        ps_mul tmp7, tmp7, scale
-        psq_st tmp0,  0(m), 0, 0
-        psq_st tmp5,  8(m), 1, 0
-        ps_merge10 tmp3, tmp7, c_zero
-        ps_merge01 tmp9, tmp7, tmp5
-        psq_st tmp3, 24(m), 0, 0
-        psq_st tmp9, 32(m), 0, 0
-    )
+    m[0][0] = 1.0f - yy - zz;
+    m[0][1] = xy - zw;
+    m[0][2] = xz + yw;
+    m[0][3] = 0.0f;
+    m[1][0] = xy + zw;
+    m[1][1] = 1.0f - xx - zz;
+    m[1][2] = yz - xw;
+    m[1][3] = 0.0f;
+    m[2][0] = xz - yw;
+    m[2][1] = yz + xw;
+    m[2][2] = 1.0f - xx - yy;
+    m[2][3] = 0.0f;
 }
 
 //unused

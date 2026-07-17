@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Launch the Xenoblade Harness UI
+cd "$(dirname "$0")/.."
+exec .venv/bin/python tools/harness-ui/main.py "$@"

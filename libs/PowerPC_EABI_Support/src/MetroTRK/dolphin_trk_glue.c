@@ -16,7 +16,8 @@ static ui8 gWriteBuf[0x110a]; //unused
 //_MetroTRK_Has_Framing //unused
 
 
-asm void TRKLoadContext(OSContext* ctx, ui32 r4){
+// LLM-HARNESS-BEGIN: us-802ceb80
+asm void TRKLoadContext(OSContext* ctx, ui32 r4) {
     nofralloc
     lwz r0, OSContext.gprs[0](r3)
     lwz r1, OSContext.gprs[1](r3)
@@ -42,8 +43,8 @@ L_802CC250:
     lwz r4, OSContext.xer(r31)
     mtxer r4
     mfmsr r4
-    rlwinm r4, r4, 0, 0x11, 0xf //Turn off external exceptions
-    rlwinm r4, r4, 0, 0x1f, 0x1d //Turn off recoverable exception flag
+    rlwinm r4, r4, 0, 0x11, 0xf
+    rlwinm r4, r4, 0, 0x1f, 0x1d
     mtmsr r4
     mtsprg 1, r2
     lwz r4, OSContext.gprs[3](r31)
@@ -55,6 +56,7 @@ L_802CC250:
     lwz r31, OSContext.gprs[31](r31)
     b TRK_InterruptHandler
 }
+// LLM-HARNESS-END: us-802ceb80
 
 void TRKEXICallBack(OSInterrupt r3, OSContext* ctx){
     OSEnableScheduler();
@@ -91,7 +93,7 @@ int InitMetroTRKCommTable(int hwId){
     }
 }
 
-void TRKUARTInterruptHandler(){
+void TRKUARTInterruptHandler(void) {
 }
 
 UARTError TRK_InitializeIntDrivenUART(ui32 r3, ui32 r4, void* r5){
@@ -100,15 +102,15 @@ UARTError TRK_InitializeIntDrivenUART(ui32 r3, ui32 r4, void* r5){
     return kUARTNoError;
 }
 
-void EnableEXI2Interrupts(){
-    if(!TRK_Use_BBA){
-        if(gDBCommTable.initinterrupts_func != NULL){
+void EnableEXI2Interrupts() {
+    if (!TRK_Use_BBA) {
+        if (gDBCommTable.initinterrupts_func != NULL) {
             gDBCommTable.initinterrupts_func();
         }
     }
 }
 
-int TRKPollUART(){
+int TRKPollUART() {
     return gDBCommTable.peek_func();
 }
 
@@ -130,7 +132,7 @@ void WriteUARTFlush(){
 void WriteUART1(){
 }
 
-void ReserveEXI2Port(){
+void ReserveEXI2Port() {
     gDBCommTable.post_stop_func();
 }
 

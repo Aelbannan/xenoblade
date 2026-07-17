@@ -66,26 +66,30 @@ void TexCoordAry::Reserve(u8 num) {
     }
 }
 
+namespace nw4hbm {
+namespace lyt {
+namespace detail {
+
 void TexCoordAry::SetSize(u8 num) {
-    if (mpData != NULL && num <= mCap) {
-        // clang-format off
-        static TexCoord pCoords = {
+    if (mpData != NULL && num < mCap) {
+        static const math::VEC2 sDefault[4] = {
             math::VEC2(0.0f, 0.0f),
             math::VEC2(1.0f, 0.0f),
             math::VEC2(0.0f, 1.0f),
             math::VEC2(1.0f, 1.0f)
         };
-        // clang-format on
-
         for (int j = mNum; j < num; j++) {
-            for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
-                mpData[j][i] = pCoords[i];
+            for (int i = 0; i < 4; i++) {
+                mpData[j][i] = sDefault[i];
             }
         }
-
         mNum = num;
     }
 }
+
+} // namespace detail
+} // namespace lyt
+} // namespace nw4hbm
 
 void TexCoordAry::SetCoord(u32 idx, const math::VEC2* coord) {
     for(int i = 0; i < VERTEXCOLOR_MAX; i++)
@@ -119,10 +123,10 @@ bool IsModulateVertexColor(ut::Color* pColors, u8 glbAlpha) {
         return true;
     }
 
-    if (pColors != NULL && (pColors[VERTEXCOLOR_LT] != ut::Color::WHITE ||
-                            pColors[VERTEXCOLOR_RT] != ut::Color::WHITE ||
-                            pColors[VERTEXCOLOR_LB] != ut::Color::WHITE ||
-                            pColors[VERTEXCOLOR_RB] != ut::Color::WHITE)) {
+    if (pColors != NULL && (pColors[0] != 0xFFFFFFFF ||
+                            pColors[1] != 0xFFFFFFFF ||
+                            pColors[2] != 0xFFFFFFFF ||
+                            pColors[3] != 0xFFFFFFFF)) {
         return true;
     }
 

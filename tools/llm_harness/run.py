@@ -42,6 +42,10 @@ def main(argv: list[str] | None = None) -> int:
                 action="store_true",
                 help="Only select functions whose called functions are FULL_MATCH or EQUIVALENT+certified",
             )
+            command.add_argument(
+                "--tu",
+                help="Filter to functions in a specific translation unit (e.g. kyoshin/cf/CfPadTask)",
+            )
         if name == "new":
             command.add_argument(
                 "--ignore-called-functions",
@@ -65,7 +69,11 @@ def main(argv: list[str] | None = None) -> int:
         "batch", help="Run a workflow for multiple functions or TUs concurrently"
     )
     batch.add_argument("workflow", choices=("new", "improve", "tu-complete"))
-    batch.add_argument("target_ids", nargs="+")
+    batch.add_argument("target_ids", nargs="*")
+    batch.add_argument(
+        "--tu",
+        help="Run on all eligible functions in a translation unit (alternative to positional target_ids)",
+    )
     batch.add_argument("--runs", type=int)
     batch.add_argument("--dry-run", action="store_true")
     batch.add_argument("--full-context", action="store_true")
@@ -114,9 +122,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(harness.stats(), indent=2))
         return 0
     if args.command == "batch":
+        target_ids = args.target_ids
+        if args.tu:
+            if target_ids:
+                parser.error("batch accepts either target_ids or --tu, not both")
+            target_ids = harness.target_ids_for_unit(args.tu, args.workflow)
+        if not target_ids:
+            parser.error("batch requires target_ids or --tu")
         print(harness.run_batch(
             args.workflow,
-            args.target_ids,
+            target_ids,
             runs=args.runs,
             dry_run=args.dry_run,
             max_target_parallel=args.max_target_parallel,
@@ -180,12 +195,14 @@ def main(argv: list[str] | None = None) -> int:
                     args.number,
                     ignore_called_functions=args.ignore_called_functions,
                     certified_funcs=args.certified_funcs,
+                    tu=getattr(args, "tu", None),
                 )
             else:
                 target_ids = harness.select_targets(
                     args.command, args.number,
                     randomize=args.random,
                     certified_funcs=args.certified_funcs,
+                    tu=getattr(args, "tu", None),
                 )
         except (TypeError, ValueError) as exc:
             parser.error(str(exc))
@@ -198,10 +215,29 @@ def main(argv: list[str] | None = None) -> int:
             full_context=getattr(args, "full_context", False),
         ))
         return 0
+    tu = getattr(args, "tu", None)
+    if tu:
+        if args.target_id is not None:
+            parser.error(f"{args.command} accepts either target_id or --tu, not both")
+        try:
+            target_ids = harness.target_ids_for_unit(tu, args.command)
+        except (TypeError, ValueError) as exc:
+            parser.error(str(exc))
+        if not target_ids:
+            parser.error(f"No eligible {args.command} targets found in unit {tu!r}")
+        print(harness.run_batch(
+            args.command,
+            target_ids,
+            runs=args.runs,
+            dry_run=args.dry_run,
+            model_parallel=args.max_parallel,
+            full_context=getattr(args, "full_context", False),
+        ))
+        return 0
     if getattr(args, "random", False):
         parser.error("--random requires --number")
     if args.target_id is None:
-        parser.error(f"{args.command} requires target_id or --number")
+        parser.error(f"{args.command} requires target_id, --number, or --tu")
     output = harness.run(
         args.command,
         args.target_id,

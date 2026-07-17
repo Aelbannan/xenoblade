@@ -16,8 +16,7 @@ static u8 __DBReadUSB_CSR(void);
 static void __DBWaitForSendMail(void);
 
 void __DBMtrHandler(s32 type, OSContext* ctx) {
-    __DBEXIInputFlag = TRUE;
-
+    __DBEXIInputFlag = 1;
     if (__DBMtrCallback != NULL)
         __DBMtrCallback(0, ctx);
 }

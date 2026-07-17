@@ -221,7 +221,6 @@ void __GXCalculateVLim(void) {
     vcdLo = gxdt->vcdLoReg;
     vcdHi = gxdt->vcdHiReg;
 
-    // GXCompCnt bit of normal parameters
     compCnt = gxdt->vatA[GX_VTXFMT0];
     compCnt = (compCnt & 0x200) >> 9;
 
@@ -236,8 +235,7 @@ void __GXCalculateVLim(void) {
     vlim += GX_CP_GET_VCD_LO_TEX7MATIDX(vcdLo);
 
     vlim += tbl3[GX_CP_GET_VCD_LO_POSITION(vcdLo)];
-    vlim +=
-        tbl3[GX_CP_GET_VCD_LO_NORMAL(vcdLo)] * (compCnt == GX_NRM_NBT ? 3 : 1);
+    vlim += tbl3[GX_CP_GET_VCD_LO_NORMAL(vcdLo)] * (compCnt == GX_NRM_NBT ? 3 : 1);
     vlim += tbl1[GX_CP_GET_VCD_LO_COLORDIFFUSED(vcdLo)];
     vlim += tbl1[GX_CP_GET_VCD_LO_COLORSPECULAR(vcdLo)];
 
@@ -400,7 +398,6 @@ void GXGetVtxDescv(GXVtxDescList* list) {
 
 void GXClearVtxDesc(void) {
     gxdt->vcdLoReg = 0;
-    // GX_VA_POS is required for every vertex descriptor
     GX_CP_SET_VCD_LO_POSITION(gxdt->vcdLoReg, GX_DIRECT);
     gxdt->vcdHiReg = 0;
     gxdt->normal = FALSE;
@@ -527,17 +524,17 @@ void GXSetVtxAttrFmtv(s16 fmt, const GXVtxAttrFmtList* list) {
     u32* vatB;
     u32* vatC;
 
-    vatA = &gxdt->vatA[fmt];
-    vatB = &gxdt->vatB[fmt];
-    vatC = &gxdt->vatC[fmt];
+    vatA = &__GXData->vatA[fmt];
+    vatB = &__GXData->vatB[fmt];
+    vatC = &__GXData->vatC[fmt];
 
     for (; list->attr != GX_VA_NULL; list++) {
         SETVAT(vatA, vatB, vatC, list->attr, list->compCnt, list->compType,
                list->shift);
     }
 
-    gxdt->gxDirtyFlags |= GX_DIRTY_VAT;
-    gxdt->vatDirtyFlags |= (u8)(1 << (u8)fmt);
+    __GXData->gxDirtyFlags |= GX_DIRTY_VAT;
+    __GXData->vatDirtyFlags |= (u8)(1 << (u8)fmt);
 }
 
 void __GXSetVAT(void) {
@@ -712,7 +709,6 @@ void GXSetArray(GXAttr attr, const void* base, u8 stride) {
     idx = attr - GX_VA_POS;
 
     GX_CP_LOAD_REG(GX_BP_REG_SETMODE0_TEX4 | idx,
-                   // Address -> offset?
                    (u32)base & ~0xC0000000);
 
     GX_CP_LOAD_REG(GX_BP_REG_SETIMAGE2_TEX4 | idx, stride);
@@ -815,7 +811,7 @@ void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType type, GXTexGenSrc src,
     switch (type) {
     case GX_TG_MTX2x4: {
         reg = 0;
-        GX_XF_SET_TEX_PROJTYPE(reg, GX_XF_TEX_PROJ_ST); // 2x4 projection
+        GX_XF_SET_TEX_PROJTYPE(reg, GX_XF_TEX_PROJ_ST);
         GX_XF_SET_TEX_INPUTFORM(reg, inputForm);
         GX_XF_SET_TEX_SRCROW(reg, inputRow);
         break;
@@ -823,7 +819,7 @@ void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType type, GXTexGenSrc src,
 
     case GX_TG_MTX3x4: {
         reg = 0;
-        GX_XF_SET_TEX_PROJTYPE(reg, GX_XF_TEX_PROJ_STQ); // 3x4 projection
+        GX_XF_SET_TEX_PROJTYPE(reg, GX_XF_TEX_PROJ_STQ);
         GX_XF_SET_TEX_INPUTFORM(reg, inputForm);
         GX_XF_SET_TEX_SRCROW(reg, inputRow);
         break;
@@ -849,13 +845,11 @@ void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType type, GXTexGenSrc src,
     case GX_TG_SRTG: {
         reg = 0;
         GX_XF_SET_TEX_INPUTFORM(reg, inputForm);
-
         if (src == GX_TG_COLOR0) {
             GX_XF_SET_TEX_TEXGENTYPE(reg, GX_XF_TG_CLR0);
         } else {
             GX_XF_SET_TEX_TEXGENTYPE(reg, GX_XF_TG_CLR1);
         }
-
         GX_XF_SET_TEX_SRCROW(reg, 2);
         break;
     }
@@ -865,57 +859,50 @@ void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType type, GXTexGenSrc src,
     }
     }
 
-    gxdt->texRegs[id] = reg;
-    gxdt->gxDirtyFlags |= GX_DIRTY_TEX0 << id;
+    __GXData->texRegs[id] = reg;
+    __GXData->gxDirtyFlags |= GX_DIRTY_TEX0 << id;
 
     reg = 0;
     GX_XF_SET_DUALTEX_BASEROW(reg, dualTexMtxIdx - GX_PTTEXMTX0);
     GX_XF_SET_DUALTEX_NORMALIZE(reg, normalize);
-    gxdt->dualTexRegs[id] = reg;
+    __GXData->dualTexRegs[id] = reg;
 
     switch (id) {
     case GX_TEXCOORD0: {
-        GX_XF_SET_MATRIXINDEX0_TEX0(gxdt->matrixIndex0, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX0_TEX0(__GXData->matrixIndex0, texMtxIdx);
         break;
     }
-
     case GX_TEXCOORD1: {
-        GX_XF_SET_MATRIXINDEX0_TEX1(gxdt->matrixIndex0, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX0_TEX1(__GXData->matrixIndex0, texMtxIdx);
         break;
     }
-
     case GX_TEXCOORD2: {
-        GX_XF_SET_MATRIXINDEX0_TEX2(gxdt->matrixIndex0, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX0_TEX2(__GXData->matrixIndex0, texMtxIdx);
         break;
     }
-
     case GX_TEXCOORD3: {
-        GX_XF_SET_MATRIXINDEX0_TEX3(gxdt->matrixIndex0, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX0_TEX3(__GXData->matrixIndex0, texMtxIdx);
         break;
     }
-
     case GX_TEXCOORD4: {
-        GX_XF_SET_MATRIXINDEX1_TEX4(gxdt->matrixIndex1, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX1_TEX4(__GXData->matrixIndex1, texMtxIdx);
         break;
     }
-
     case GX_TEXCOORD5: {
-        GX_XF_SET_MATRIXINDEX1_TEX5(gxdt->matrixIndex1, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX1_TEX5(__GXData->matrixIndex1, texMtxIdx);
         break;
     }
-
     case GX_TEXCOORD6: {
-        GX_XF_SET_MATRIXINDEX1_TEX6(gxdt->matrixIndex1, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX1_TEX6(__GXData->matrixIndex1, texMtxIdx);
         break;
     }
-
     default: {
-        GX_XF_SET_MATRIXINDEX1_TEX7(gxdt->matrixIndex1, texMtxIdx);
+        GX_XF_SET_MATRIXINDEX1_TEX7(__GXData->matrixIndex1, texMtxIdx);
         break;
     }
     }
 
-    gxdt->gxDirtyFlags |= GX_DIRTY_MTX_IDX;
+    __GXData->gxDirtyFlags |= GX_DIRTY_MTX_IDX;
 }
 
 void GXSetNumTexGens(u8 num) {

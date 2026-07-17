@@ -147,49 +147,7 @@ for obj_path, symbols in _sinit_targets.items():
         globalize_symbols(obj_path, symbols)
 
 # ---------------------------------------------------------------------------
-# 5. PPC EABI GPR save/restore aliases in recompiled runtime.o
-# ---------------------------------------------------------------------------
-# The recompiled PowerPC_EABI_Support runtime.c (Matching) only exports
-# __save_gpr / __restore_gpr as generic functions.  The retail runtime.o
-# additionally exports per-register entry points (_savegpr_14..31,
-# _restgpr_14..31, _savefpr_14..31, _restfpr_14..31) as symbol aliases
-# at the same addresses.  MWCC-generated call sites reference these
-# per-register symbols directly, so we must recreate them with objcopy.
-_RUNTIME_OBJ = SRC_DIR / "PowerPC_EABI_Support" / "src" / "Runtime" / "runtime.o"
-if _RUNTIME_OBJ.exists():
-    # Check if aliases are already present (idempotency guard)
-    _nm = subprocess.run(
-        [str(OBJCOPY.with_name("powerpc-eabi-nm")), str(_RUNTIME_OBJ)],
-        capture_output=True, text=True,
-    )
-    already_patched = "_savegpr_31" in _nm.stdout
-
-    if not already_patched:
-        # 5a. Globalize the generic functions that are currently local
-        globalize_symbols(
-            _RUNTIME_OBJ,
-            [
-                "__restore_gpr",
-                "__save_fpr",
-                "__restore_fpr",
-            ],
-        )
-
-        # 5b. Add per-register aliases at the same addresses as the retail object
-        _EABI_ALIASES: list[str] = []
-        for reg in range(14, 32):
-            _EABI_ALIASES.append(f"_savegpr_{reg}=.text:0xf4,global")
-            _EABI_ALIASES.append(f"_restgpr_{reg}=.text:0x140,global")
-            _EABI_ALIASES.append(f"_savefpr_{reg}=.text:0x5c,global")
-            _EABI_ALIASES.append(f"_restfpr_{reg}=.text:0xa8,global")
-
-        # Flag must match retail: just "global" (no type flag, size 0).
-        # Using "function" confuses mwld (internal linker error in ELF_linker.c).
-        for alias_spec in _EABI_ALIASES:
-            run_objcopy(f"--add-symbol={alias_spec}", input_file=_RUNTIME_OBJ)
-
-# ---------------------------------------------------------------------------
-# 6. Additional localize / globalize rules discovered during linking.
+# 5. Additional localize / globalize rules discovered during linking.
 #    Extend as needed when new multiply-defined or undefined errors appear.
 #    Each entry should eventually be solved at the source/splits level.
 # ---------------------------------------------------------------------------

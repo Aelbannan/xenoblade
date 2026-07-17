@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xenoblade Harness UI</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>⚔️ Harness UI</h1>
+  <span class="subtitle">Xenoblade decomp co-op</span>
+  <span class="env-badge" id="envBadge">loading…</span>
+</header>
+
+<aside class="sidebar">
+  <nav id="sidebarNav">
+    <button class="nav-item active" data-view="dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" data-view="targets">
+      <span class="nav-icon">🎯</span> Targets
+    </button>
+    <button class="nav-item" data-view="code-map">
+      <span class="nav-icon">🗺️</span> Code Map
+    </button>
+    <button class="nav-item" data-view="runs">
+      <span class="nav-icon">🏃</span> Runs
+    </button>
+    <button class="nav-item" data-view="experiments">
+      <span class="nav-icon">🧪</span> Experiments
+    </button>
+    <div class="nav-section">Actions</div>
+    <button class="nav-item" data-view="start-run">
+      <span class="nav-icon">▶️</span> Start Run
+    </button>
+    <button class="nav-item" data-view="batches">
+      <span class="nav-icon">📦</span> Batches
+    </button>
+    <div class="nav-section">Data</div>
+    <button class="nav-item" data-view="io-browser">
+      <span class="nav-icon">📝</span> IO Browser
+    </button>
+  </nav>
+</aside>
+
+<main class="main-content" id="mainContent">
+  <div id="viewContainer"></div>
+</main>
+
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>

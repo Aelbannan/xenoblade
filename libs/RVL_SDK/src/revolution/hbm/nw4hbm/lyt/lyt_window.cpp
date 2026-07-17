@@ -660,10 +660,8 @@ Material* Window::GetContentMaterial() const {
 }
 
 Material* Window::GetFrameMaterial(u32 idx) const {
-    if (idx >= mFrameNum) {
+    if (idx >= mFrameNum)
         return NULL;
-    }
-
     return mFrames[idx].pMaterial;
 }
 

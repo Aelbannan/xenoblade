@@ -15,14 +15,10 @@ static inline DSError TRKReleaseMutex(void* p1) { return kNoError; }
 static inline DSError TRKAcquireMutex(void* p1) { return kNoError; }
 static inline DSError TRKInitializeMutex(void* p1) { return kNoError; }
 
-DSError TRKInitializeEventQueue()
-{
-    TRKInitializeMutex(&gTRKEventQueue);
-    TRKAcquireMutex(&gTRKEventQueue);
+DSError TRKInitializeEventQueue() {
     gTRKEventQueue.fCount = 0;
     gTRKEventQueue.fFirst = 0;
     gTRKEventQueue.fEventID = 0x100;
-    TRKReleaseMutex(&gTRKEventQueue);
     return kNoError;
 }
 

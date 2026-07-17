@@ -2,11 +2,9 @@
 #include <revolution/OS.h>
 
 asm u32 PPCMfmsr(void) {
-    // clang-format off
     nofralloc
     mfmsr r3
     blr
-    // clang-format on
 }
 
 asm void PPCMtmsr(register u32 val) {
@@ -38,12 +36,8 @@ asm u32 PPCMfhid0(void) {
     // clang-format on
 }
 
-asm void PPCMthid0(register u32 val) {
-    // clang-format off
-    nofralloc
-    mthid0 val
-    blr
-    // clang-format on
+void PPCMthid0(register u32 val) {
+    __asm__ volatile("mtspr 0x3F0, %0" : : "r"(val));
 }
 
 asm u32 PPCMfl2cr(void) {
@@ -54,20 +48,12 @@ asm u32 PPCMfl2cr(void) {
     // clang-format on
 }
 
-asm void PPCMtl2cr(register u32 val) {
-    // clang-format off
-    nofralloc
-    mtl2cr val
-    blr
-    // clang-format on
+void PPCMtl2cr(u32 val) {
+    asm volatile("mtl2cr %0" : : "r"(val));
 }
 
-asm void PPCMtdec(register u32 val) {
-    // clang-format off
-    nofralloc
-    mtdec val
-    blr
-    // clang-format on
+void PPCMtdec(u32 val) {
+    asm("mtdec %0" : : "r"(val));
 }
 
 //unused
@@ -115,24 +101,16 @@ asm void PPCMtmmcr0(register u32 val) {
 asm void PPCMfmmcr1(){
 }
 
-asm void PPCMtmmcr1(register u32 val) {
-    // clang-format off
-    nofralloc
-    mtmmcr1 val
-    blr
-    // clang-format on
+void PPCMtmmcr1(u32 val) {
+    asm volatile("mtmmcr1 %0" : : "r"(val));
 }
 
 //unused
 asm void PPCMfpmc1(){
 }
 
-asm void PPCMtpmc1(register u32 val) {
-    // clang-format off
-    nofralloc
-    mtpmc1 val
-    blr
-    // clang-format on
+void PPCMtpmc1(u32 val) {
+    asm volatile("mtpmc1 %0" : : "r"(val));
 }
 
 //unused
@@ -163,12 +141,8 @@ asm void PPCMtpmc3(register u32 val) {
 asm void PPCMfpmc4(){
 }
 
-asm void PPCMtpmc4(register u32 val){
-    // clang-format off
-    nofralloc
-    mtpmc4 val
-    blr
-    // clang-format on
+void PPCMtpmc4(unsigned long val) {
+    __asm("mtpmc4 %0" : : "r"(val));
 }
 
 //unused
@@ -204,18 +178,16 @@ void PPCMtfpscr(register u32 val) {
     )
 }
 
-asm u32 PPCMfhid2(void) {
-    // clang-format off
-    nofralloc
-    mfspr r3, 0x398 //HID2
-    blr
-    // clang-format on
+u32 PPCMfhid2(void) {
+    u32 value;
+    asm volatile("mfspr %0, 0x398" : "=r"(value));
+    return value;
 }
 
 asm void PPCMthid2(register u32 val) {
     // clang-format off
     nofralloc
-    mtspr 0x398, val //HID2
+    mtspr 0x398, val
     blr
     // clang-format on
 }

@@ -104,7 +104,7 @@ void CBgTex::func_801C3D54() {
 }
 
 void CBgTex::func_801C3D7C(nw4r::lyt::DrawInfo* drawInfo) {
-    if(unk1c == 0) return;
+    if (unk1c == 0) return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 

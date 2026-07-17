@@ -104,30 +104,36 @@ void __AXAuxQuit(void) {
 
 void __AXGetAuxAInput(void** out) {
     if (__AXCallbackAuxA != NULL) {
-        *out = __AXBufferAuxA[__AXAuxDspWritePosition];
+        *out = (void*)&__AXBufferAuxA[__AXAuxDspWritePosition];
     } else {
         *out = NULL;
     }
 }
 
 void __AXGetAuxAOutput(void** out) {
-    *out = __AXBufferAuxA[__AXAuxDspReadPosition];
+    *out = (void*)&__AXBufferAuxA[__AXAuxDspReadPosition];
 }
 
 void __AXGetAuxAInputDpl2(void** out) {
     *out = &__AXBufferAuxA[__AXAuxDspWritePosition][DPL2_SAMPLE_I_BEGIN];
 }
 
+extern u32 __AXAuxDspReadPosition;
+extern u8 __AXBufferAuxA[][0x600];
+
 void __AXGetAuxAOutputDpl2R(void** out) {
-    *out = &__AXBufferAuxA[__AXAuxDspReadPosition][DPL2_SAMPLE_R_BEGIN];
+    *out = &__AXBufferAuxA[__AXAuxDspReadPosition][0x180];
 }
 
 void __AXGetAuxAOutputDpl2Ls(void** out) {
     *out = &__AXBufferAuxA[__AXAuxDspReadPosition][DPL2_SAMPLE_LS_BEGIN];
 }
 
+extern u32 __AXAuxDspReadPosition;
+extern u8 __AXBufferAuxA[][1536];
+
 void __AXGetAuxAOutputDpl2Rs(void** out) {
-    *out = &__AXBufferAuxA[__AXAuxDspReadPosition][DPL2_SAMPLE_RS_BEGIN];
+    *out = &__AXBufferAuxA[__AXAuxDspReadPosition][1152];
 }
 
 void __AXGetAuxBInput(void** out) {
@@ -147,11 +153,13 @@ void __AXGetAuxBInputDpl2(void** out) {
 }
 
 void __AXGetAuxBOutputDpl2R(void** out) {
-    *out = &__AXBufferAuxB[__AXAuxDspReadPosition][DPL2_SAMPLE_R_BEGIN];
+    u32 pos = __AXAuxDspReadPosition;
+    *out = (void*)((u8*)__AXBufferAuxB + pos * 0x600 + 0x180);
 }
 
 void __AXGetAuxBOutputDpl2Ls(void** out) {
-    *out = &__AXBufferAuxB[__AXAuxDspReadPosition][DPL2_SAMPLE_LS_BEGIN];
+    u32 pos = __AXAuxDspReadPosition;
+    *out = (void*)((u8*)__AXBufferAuxB + (pos * 0x600) + 0x300);
 }
 
 void __AXGetAuxBOutputDpl2Rs(void** out) {

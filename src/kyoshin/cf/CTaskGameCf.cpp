@@ -51,9 +51,16 @@ void CTaskGameCf::func_8004431C() {
     *(u32*)((u8*)this + 0x44) = v2;
 }
 
-    void CTaskGameCf::func_8004433C(){
-        mMoveFunc = &CTaskGameCf::func_80044480;
-    }
+extern const u32 lbl_eu_80525AC4[3];
+
+void CTaskGameCf::func_8004433C() {
+    u32 v1 = lbl_eu_80525AC4[1];
+    u32 v0 = lbl_eu_80525AC4[0];
+    reinterpret_cast<u32*>(this)[0x40 / 4] = v1;
+    reinterpret_cast<u32*>(this)[0x3C / 4] = v0;
+    u32 v2 = lbl_eu_80525AC4[2];
+    reinterpret_cast<u32*>(this)[0x44 / 4] = v2;
+}
 
     void CTaskGameCf::func_8004435C(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4){
         unk_5C = arg1;
@@ -107,12 +114,11 @@ void CTaskGameCf::Draw() {}
 extern "C" u32 lbl_eu_80525B0C[3];
 
 void CTaskGameCf::func_800444DC() {
-    u32* base = lbl_eu_80525B0C;
+    const u32* src = reinterpret_cast<u32*>(lbl_eu_80525B0C);
     u32* dest = reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x3C);
-    // store order: +0x40 first, then +0x3C, then +0x44
-    dest[1] = base[1];
-    dest[0] = base[0];
-    dest[2] = base[2];
+    dest[1] = src[1];
+    dest[0] = src[0];
+    dest[2] = src[2];
 }
 
 extern "C" u32 lbl_eu_80525B18[3];
@@ -239,8 +245,10 @@ void CTaskGameCf::func_800448DC() {
     }
 
 void CTaskGameCf::func_8004499C() {
-    pTaskGame->getScene()->unk_3E4 = 0;
-    unk_54 |= 0x02;
+    u32* taskGame = *(u32**)((u8*)this + 0x58);
+    u32* sceneData = *(u32**)((u8*)taskGame + 0x74);
+    *(u8*)((u8*)sceneData + 0x3E4) = 0;
+    *(u32*)((u8*)this + 0x54) |= 2;
 }
 
     CTaskGameCf* CTaskGameCf::create(CProcess* pParent, int arg2){

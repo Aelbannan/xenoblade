@@ -1000,10 +1000,8 @@ s32 ISFS_SeekAsync(s32 fd, s32 offset, IPCSeekMode mode,
 }
 
 s32 ISFS_Read(s32 fd, void* dst, s32 len) {
-    if (dst == NULL || (u32)dst % 32 != 0) {
-        return IPC_RESULT_INVALID;
-    }
-
+    if (dst == NULL || ((u32)dst & 31) != 0)
+        return -101;
     return IOS_Read(fd, dst, len);
 }
 

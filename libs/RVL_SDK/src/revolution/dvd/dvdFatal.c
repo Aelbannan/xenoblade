@@ -183,8 +183,10 @@ BOOL __DVDGetAutoFatalMessaging(void) {
     return FatalFunc != NULL;
 }
 
+extern void (*FatalFunc)(void);
+
 void __DVDPrintFatalMessage(void) {
-    if (FatalFunc != NULL) {
+    if (FatalFunc != 0) {
         FatalFunc();
     }
 }

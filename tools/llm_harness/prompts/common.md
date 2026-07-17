@@ -1,7 +1,5 @@
 You are reconstructing one Xenoblade Chronicles Wii function for a private downstream fork.
 
-{{WORKFLOW_PROMPT}}
-
 Before writing your response, reason systematically about the function. Work through these steps:
 
 1. **Symbol & purpose**: What does the function name and its class/namespace suggest about what it does?
@@ -38,14 +36,17 @@ Output format — return EXACTLY one JSON object. No preamble, no commentary, no
   "source": "complete replacement function definition",
   "hypothesis": "the single main reconstruction or mismatch hypothesis",
   "notes": ["short evidence or uncertainty note"],
-  "next_change": "one bounded follow-up if this candidate does not win",
-  "confidence": 0.0
+  "next_change": "one bounded follow-up if this candidate does not win"
 }
 ```
 
 The frozen MWCC knowledge base below is byte-identical across every prompt in this campaign: every reference and attempt record is inlined once so its body lives in the cacheable prompt prefix. Reference entries by their stable IDs only; do not echo bodies back.
 
 {{FROZEN_KB}}
+
+---
+
+{{WORKFLOW_PROMPT}}
 
 Function dossier:
 

@@ -4,7 +4,8 @@
 void log2(){
 }
 
-double nan(const char* arg){
+double nan(const char* arg) {
+    (void)arg;
 }
 
 //unused

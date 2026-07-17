@@ -264,6 +264,7 @@ def _cache_key(
     assumed_callees: frozenset[int | str] = frozenset(),
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     certificate_target_id: str | None = None,
+    memory_environment: dict[str, Any] | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -294,6 +295,7 @@ def _cache_key(
                 for name, contract in sorted((callee_contracts or {}).items(), key=lambda item: str(item[0]))
             },
             "certificate_target_id": certificate_target_id,
+            "memory_environment": memory_environment,
         },
         sort_keys=True,
     )
@@ -541,6 +543,7 @@ def _build_equivalence_certificate(
     evidence: str,
     max_instructions: int,
     max_paths: int,
+    memory_scope: dict | None = None,
 ) -> tuple[dict | None, str]:
     """Derive and validate a normal-return semantic effect summary."""
     declared = CalleeContract.opaque_eabi()
@@ -582,6 +585,8 @@ def _build_equivalence_certificate(
         "callees": list(dependencies),
         "helpers": list(helpers),
     }
+    if memory_scope is not None:
+        certificate["memory_scope"] = memory_scope
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 
@@ -610,6 +615,7 @@ def _prove_bytes(
     certificate_target_id: str | None = None,
     certified_context: CertifiedCalleeContext | None = None,
     certificate_evidence: str = "symbolic-equivalence",
+    memory_environment: dict[str, Any] | None = None,
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
 
@@ -689,6 +695,7 @@ def _prove_bytes(
         assumed_callees=assumed_callees,
         callee_contracts=callee_contracts,
         certificate_target_id=certificate_target_id,
+        memory_environment=memory_environment,
     )
 
     cache_d = _cache_dir(project)
@@ -713,6 +720,10 @@ def _prove_bytes(
             )
 
     callees_used: set[int | str] = set()
+    mem_env = None
+    if memory_environment:
+        from tools.ppc_equivalence.memory_profile import MemoryEnvironment
+        mem_env = MemoryEnvironment.from_dict(memory_environment)
     result = check_equivalence(
         original,
         candidate,
@@ -724,6 +735,7 @@ def _prove_bytes(
         assumed_callees=assumed_callees,
         assumed_callees_used=callees_used,
         callee_contracts=callee_contracts,
+        memory_environment=mem_env,
     )
     detail = ""
     if result.contract_resolution:
@@ -767,6 +779,7 @@ def _prove_bytes(
         and original_function is not None
         and candidate_function is not None
     ):
+        mem_scope_dict = result.memory_scope.to_dict() if result.memory_scope else None
         certificate, certificate_error = _build_equivalence_certificate(
             certificate_target_id,
             original_function,
@@ -780,6 +793,7 @@ def _prove_bytes(
             evidence=certificate_evidence,
             max_instructions=max_instructions,
             max_paths=max_paths,
+            memory_scope=mem_scope_dict,
         )
         if certificate_error:
             detail = f"{detail} | {certificate_error}" if detail else certificate_error
@@ -802,6 +816,7 @@ def prove_unit_symbol(
     candidate_symbol: str | None = None,
     linked: bool = False,
     target_id: str | None = None,
+    memory_environment: dict[str, Any] | None = None,
 ) -> EquivalenceProbe:
     """SMT-check one named function from the unit's retail/decomp objects.
 
@@ -838,6 +853,7 @@ def prove_unit_symbol(
                 candidate_function=right,
                 certificate_target_id=target_id,
                 certified_context=certified_context,
+                memory_environment=memory_environment,
             )
         except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
             if not linked or not (left.relocations or right.relocations):
@@ -847,6 +863,7 @@ def prove_unit_symbol(
                 timeout_ms, max_instructions, max_paths,
                 target_id=target_id,
                 certified_context=certified_context,
+                memory_environment=memory_environment,
             )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, str(exc))
@@ -923,6 +940,7 @@ def _run_linked_fallback(
     *,
     target_id: str | None = None,
     certified_context: CertifiedCalleeContext | None = None,
+    memory_environment: dict[str, Any] | None = None,
 ) -> EquivalenceProbe:
     """Retry the proof using linked bytes from ``main.dol`` + ``main.elf``.
 
@@ -984,6 +1002,7 @@ def _run_linked_fallback(
             fallback_note=note,
             certificate_target_id=target_id,
             certified_context=certified_context,
+            memory_environment=memory_environment,
         )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, f"{note}; {exc}")

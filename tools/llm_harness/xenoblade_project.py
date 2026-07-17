@@ -39,7 +39,20 @@ from tools.coop.lib.targets import (
     load_targets_document,
     write_targets_document,
 )
-from tools.llm_harness.types import Candidate, Evaluation, SourcePatch
+from tools.llm_harness.dossier import (
+    PromptConstraints,
+    TargetDossier,
+    build_data_flow_summary,
+    build_target_dossier,
+    dossier_to_dict,
+)
+from tools.llm_harness.knowledge_retrieval import (
+    KnowledgeIndex,
+    retrieve_for_target,
+    cluster_attempts,
+)
+from tools.llm_harness.structural import compare_structural
+from tools.llm_harness.types import Candidate, Evaluation, SourcePatch, StructuralReport
 from tools.ppc_equivalence.elf_symbols import (
     ET_REL,
     SHT_NOBITS,
@@ -116,6 +129,12 @@ class XenobladeAdapter:
         self.context_similar_limit = int(settings.get("context_similar_limit", 4))
         self.tu_context_chars = int(settings.get("tu_context_chars", 300))
         self.tu_section_byte_limit = int(settings.get("tu_section_byte_limit", 16384))
+        self.cookbook_path = self.root / settings.get(
+            "cookbook_path", "tools/llm_harness/prompts/cookbook.md"
+        )
+        # Phase 7 — Knowledge retrieval index. Built after frozen KB so both
+        # share the same entry parsing.
+        self._knowledge_index: Optional[KnowledgeIndex] = None
         # Frozen corpus-wide knowledge prefix. Computed once per adapter (i.e. once
         # per harness process) so every prompt in a campaign shares a byte-identical
         # cacheable prefix regardless of workflow or target. The KB is snapshotted at
@@ -132,18 +151,20 @@ class XenobladeAdapter:
     # ------------------------------------------------------------------
 
     def _build_frozen_knowledge(self) -> None:
-        """Snapshot every reference and attempt record as a compact markdown block.
+        """Snapshot every reference, cookbook, and attempt record as a compact markdown block.
 
         The block is byte-stable for the lifetime of this adapter and is spliced
         into every prompt via the `{{FROZEN_KB}}` placeholder, so its bytes land
         in DeepSeek's cacheable prefix rather than in the per-target dossier.
+
+        Also builds the Phase 7 KnowledgeIndex for target-specific retrieval.
         """
         if not self.knowledge_enabled:
             self._frozen_kb_ready = True
             return
         try:
             attempts_path = self.config.resolve(self.config.attempt_log)
-            sources = [self.knowledge_reference, attempts_path]
+            sources = [self.knowledge_reference, self.cookbook_path, attempts_path]
 
             # Content-addressable cache: hash source contents so the same KB
             # source produces the same bytes across every harness invocation.
@@ -162,6 +183,8 @@ class XenobladeAdapter:
             entries: list[KnowledgeEntry] = []
             if self.knowledge_reference.is_file():
                 entries.extend(parse_reference(self.knowledge_reference))
+            if self.cookbook_path.is_file():
+                entries.extend(parse_reference(self.cookbook_path))
             if attempts_path.is_file():
                 entries.extend(parse_attempts(attempts_path))
 
@@ -184,6 +207,9 @@ class XenobladeAdapter:
             self._frozen_kb_prefix = prefix
             self._frozen_kb_sha = hashlib.sha1(prefix.encode("utf-8")).hexdigest()[:12]
             self._frozen_kb_ready = True
+
+            # Build Phase 7 KnowledgeIndex for target-specific retrieval
+            self._knowledge_index = KnowledgeIndex().build(entries)
 
             # Persist to cache so subsequent harness runs reuse the same bytes.
             cache_dir.mkdir(parents=True, exist_ok=True)
@@ -552,57 +578,78 @@ class XenobladeAdapter:
             ),
             key=lambda row: row["id"],
         )[:12]
-        # Dossier field order is deliberate: cache-stable per-target fields first
-        # (target identity, retail bytecode, edit boundary), unit-scoped stable
-        # fields next (accepted siblings), volatile tail last (prior attempts and
-        # knowledge hints). DeepSeek's prefix cache breaks at the first divergent
-        # byte, so placing stable bytes first maximises the cacheable prefix for
-        # both repeated `new` samples and the `new`→`improve` transition on the
-        # same target. The frozen knowledge bodies live in the prompt prefix via
-        # `{{FROZEN_KB}}`, so the dossier only carries short hint strings.
-        dossier = {
-            "schema_version": 2,
-            "repository": "xenoblade-wii-us",
-            "workflow": workflow,
-            "target": {
-                "id": target.id,
-                "function": target.function,
-                "symbol": target.symbol,
-                "address": target.address,
-                "unit": target.unit,
-                "source": str(target.source.relative_to(self.root)),
-                "current_status": target.status,
-                "required_level": target.required_level,
-            },
-            "retail_function": {
-                "base": f"0x{function.base:08X}",
-                "size": function.size,
-                "bytecode_hex": function.code.hex(),
-                "relocations": [
-                    {
-                        "offset": f"0x{rel.offset:X}",
-                        "type": rel.relocation_type,
-                        "symbol": rel.symbol,
-                        "addend": rel.addend,
-                    }
-                    for rel in function.relocations
-                ],
-            },
-            "edit_boundary": {
-                "kind": "comment-markers" if region.marked else "detected-function-definition",
-                "begin_marker": _begin_marker(target.id),
-                "end_marker": _end_marker(target.id),
-            },
-            "accepted_functions_in_same_unit": same_unit,
-            "prior_harness_attempts": prior_attempts,
-            "knowledge_hints": _knowledge_hints(target, chronological[-12:]),
-        }
+        # Find header file in the same directory
+        header_text = ""
+        if target.source is not None:
+            header_candidates = [
+                target.source.with_suffix(".hpp"),
+                target.source.with_suffix(".h"),
+                target.source.with_suffix(".hxx"),
+            ]
+            for hp in header_candidates:
+                if hp.is_file():
+                    try:
+                        header_text = hp.read_text(encoding="utf-8")
+                    except OSError:
+                        pass
+                    break
+        # Build the Phase 1 typed target dossier
+        constraints = PromptConstraints(
+            max_decoded_instructions=int(
+                self.tu_section_byte_limit / 4
+            ),
+            max_declaration_chars=self.tu_context_chars * 10,
+            max_accepted_siblings=self.context_similar_limit,
+        )
+        dossier = build_target_dossier(
+            target_id=target.id,
+            mangled=target.symbol,
+            demangled=target.function,
+            source_file=str(target.source.relative_to(self.root)),
+            object_file=str(
+                (unit.base_path or unit.target_path or "?").relative_to(self.root)
+            ),
+            unit=target.unit,
+            address=function.base,
+            retail_size=function.size,
+            function_bytes=function,
+            source_text=source,
+            header_text=header_text,
+            callee_symbols=list(target.extra.get("called_functions", [])),
+            constraints=constraints,
+        )
+        # Convert to plain dict and add workflow-specific fields
+        dossier_dict = dossier_to_dict(dossier)
+        dossier_dict["schema_version"] = 3
+        dossier_dict["repository"] = "xenoblade-wii-us"
+        dossier_dict["workflow"] = workflow
+        dossier_dict["accepted_functions_in_same_unit"] = same_unit
+        dossier_dict["prior_harness_attempts"] = prior_attempts
+        dossier_dict["knowledge_hints"] = _knowledge_hints(target, chronological[-12:])
+
+        # §15.2 — Target-specific knowledge retrieval
+        target_knowledge: List[Dict[str, Any]] = []
+        if self._knowledge_index is not None:
+            retrieved = retrieve_for_target(
+                self._knowledge_index,
+                target.id,
+                top_k=10,
+                query_tags=set(dossier_dict.get("knowledge_hints", [])),
+            )
+            target_knowledge = [{
+                "id": r.id,
+                "title": r.title,
+                "body": r.body,
+                "score": round(r.score, 2),
+            } for r in retrieved]
+        dossier_dict["target_knowledge"] = target_knowledge
+
         common = (self.prompt_dir / "common.md").read_text(encoding="utf-8")
         workflow_prompt = (self.prompt_dir / f"{workflow}.md").read_text(encoding="utf-8")
         return (
             common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
             .replace("{{FROZEN_KB}}", self._frozen_kb_block())
-            .replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
+            .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
             .replace("{{CURRENT_FUNCTION}}", current_function)
         )
 
@@ -821,6 +868,15 @@ class XenobladeAdapter:
                     accepted=False,
                     detail=f"function-size extraction failed: {exc}",
                 )
+
+            structural_report = None
+            try:
+                structural_report = compare_structural(
+                    retail_function, candidate_function,
+                )
+            except Exception as exc:
+                pass
+
             size_ok, size_detail = _function_size_comparison(
                 retail_function.size, candidate_function.size
             )
@@ -864,6 +920,57 @@ class XenobladeAdapter:
                     "retail_function_size": retail_function.size,
                     "candidate_function_size": candidate_function.size,
                     "function_size_delta": candidate_function.size - retail_function.size,
+                    "structural": (
+                        {
+                            "total_score": structural_report.total_score,
+                            "calls": {
+                                "score": structural_report.calls.score,
+                                "matched": structural_report.calls.matched,
+                                "expected": structural_report.calls.expected,
+                                "details": structural_report.calls.details,
+                            },
+                            "relocations": {
+                                "score": structural_report.relocations.score,
+                                "matched": structural_report.relocations.matched,
+                                "expected": structural_report.relocations.expected,
+                                "details": structural_report.relocations.details,
+                            },
+                            "memory_accesses": {
+                                "score": structural_report.memory_accesses.score,
+                                "matched": structural_report.memory_accesses.matched,
+                                "expected": structural_report.memory_accesses.expected,
+                                "details": structural_report.memory_accesses.details,
+                            },
+                            "cfg": {
+                                "score": structural_report.cfg.score,
+                                "matched": structural_report.cfg.matched,
+                                "expected": structural_report.cfg.expected,
+                                "details": structural_report.cfg.details,
+                            },
+                            "constants": {
+                                "score": structural_report.constants.score,
+                                "matched": structural_report.constants.matched,
+                                "expected": structural_report.constants.expected,
+                                "details": structural_report.constants.details,
+                            },
+                            "returns": {
+                                "score": structural_report.returns.score,
+                                "matched": structural_report.returns.matched,
+                                "expected": structural_report.returns.expected,
+                                "details": structural_report.returns.details,
+                            },
+                            "instruction_classes": {
+                                "score": structural_report.instruction_classes.score,
+                                "matched": structural_report.instruction_classes.matched,
+                                "expected": structural_report.instruction_classes.expected,
+                                "details": structural_report.instruction_classes.details,
+                            },
+                            "unexpected_effects": structural_report.unexpected_effects,
+                            "missing_effects": structural_report.missing_effects,
+                        }
+                        if structural_report
+                        else None
+                    ),
                 },
             )
         finally:
@@ -1242,6 +1349,18 @@ class XenobladeAdapter:
     def finalize(self) -> None:
         # Each candidate evaluation restores both source and its prior object bytes.
         pass
+
+    def read_target_source(self, target_id: str) -> str:
+        """Read the current canonical source for a function target."""
+        target = self._target(target_id)
+        assert target.source is not None
+        return target.source.read_text(encoding="utf-8")
+
+    def target_source_path(self, target_id: str) -> Path:
+        """Return the source file path for a target."""
+        target = self._target(target_id)
+        assert target.source is not None
+        return target.source
 
     def prepare_workspace(self, workspace: Path) -> None:
         """Share immutable retail/toolchain inputs, then configure an isolated build tree."""

@@ -5,6 +5,9 @@ blocks even when their instruction bytes differ. Both blocks execute
 from the same symbolic input state; Z3 searches for a difference in the state
 selected by the contract.
 
+See [SOUNDNESS.md](SOUNDNESS.md) for the formal theorem statement, normative
+definitions, and traceability table mapping claims to implementation and tests.
+
 It complements, but does not replace:
 
 - objdiff / byte-level matching, which remains one of two equal-tier acceptance bars for decomp targets;
@@ -196,13 +199,16 @@ choice.
 | `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, every modeled auxiliary SPR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
-Final-memory comparison excludes function-private stack bytes in the unsigned
-interval from each implementation's lowest observed r1 up to entry r1. This
-mask is disabled after a call or when an r1-derived value is stored to memory,
-because the frame may then be reachable through an alias. Stores outside the
-interval always remain observable. The proof additionally requires a
-well-formed, non-wrapping downward stack; impossible stack/link layouts are
-reported as `inconclusive_layout`.
+Final-memory comparison uses per-implementation independent private-stack
+masking: each implementation's own private stack interval is masked
+independently. An address private to one implementation does not hide a write
+by the other implementation when that write lies outside the other
+implementation's own private interval. Masking is disabled after a call or when
+an r1-derived value is stored to memory, because the frame may then be
+reachable through an alias. Stores outside the interval always remain
+observable. The proof additionally requires a well-formed, non-wrapping
+downward stack; impossible stack/link layouts are reported as
+`inconclusive_layout`.
 
 `auto` is the default completed-function contract. It resolves from the union
 of both decoded implementations' write effects, so a state component cannot
@@ -239,14 +245,14 @@ and `pmc1`), `f0.ps1`–`f31.ps1`, and `memory`.
 | 3 | Invalid input or contract |
 | 4 | Missing dependency or internal tool error |
 
-JSON proof results (format 4) record the architecture model, requested and
+JSON proof results (format 8) record the architecture model, requested and
 resolved contract metadata, observables, assumptions, instruction counts,
 solver/version/timing, and—when applicable—the first mismatch and
 replayable input state.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v15` model supports:
+The current `broadway-ppc32-be-v19` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;

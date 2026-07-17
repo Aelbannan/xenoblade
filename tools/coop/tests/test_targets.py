@@ -7,8 +7,10 @@ from pathlib import Path
 
 from tools.coop.lib.config import CoopConfig
 from tools.coop.lib.targets import (
+    EQUIVALENCE_CERTIFICATE_VERSION,
     Target,
     claim_target,
+    equivalence_certificate_error,
     harness_targets,
     import_symbols,
     load_split_ranges,
@@ -22,7 +24,7 @@ from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
 def _certificate(target_id: str, callees: list[dict[str, str]] | None = None) -> dict:
     certificate = {
-        "version": 1,
+        "version": EQUIVALENCE_CERTIFICATE_VERSION,
         "status": "SEMANTIC_CERTIFIED",
         "architecture": ARCHITECTURE_MODEL,
         "result_format": RESULT_FORMAT,
@@ -251,6 +253,79 @@ class TargetRegistryTests(unittest.TestCase):
         )
         errors = validate_targets(self.config)
         self.assertTrue(any("callee certificate changed" in error for error in errors))
+
+    def _make_row(self, target_id: str, certificate: dict | None) -> dict:
+        return {
+            "id": target_id,
+            "symbol": target_id,
+            "address": "0x1",
+            "equivalence_certificate": certificate,
+        }
+
+    def _rows_by_id(self, rows: list[dict]) -> dict[str, dict]:
+        return {row["id"]: row for row in rows}
+
+    def test_old_architecture_model_certificate_rejected(self) -> None:
+        cert = _certificate("x")
+        cert["architecture"] = "broadway-ppc32-be-v18"
+        cert["certificate_sha256"] = equivalence_certificate_hash(cert)
+        row = self._make_row("x", cert)
+        err = equivalence_certificate_error(row, self._rows_by_id([row]))
+        self.assertIsNotNone(err)
+        self.assertIn("architecture", err or "")
+
+    def test_old_result_format_certificate_rejected(self) -> None:
+        cert = _certificate("x")
+        cert["result_format"] = 7
+        cert["certificate_sha256"] = equivalence_certificate_hash(cert)
+        row = self._make_row("x", cert)
+        err = equivalence_certificate_error(row, self._rows_by_id([row]))
+        self.assertIsNotNone(err)
+        self.assertIn("result_format", err or "")
+
+    def test_wrong_certificate_version_rejected(self) -> None:
+        cert = _certificate("x")
+        cert["version"] = 1
+        cert["certificate_sha256"] = equivalence_certificate_hash(cert)
+        row = self._make_row("x", cert)
+        err = equivalence_certificate_error(row, self._rows_by_id([row]))
+        self.assertIsNotNone(err)
+        self.assertIn("version", err or "")
+
+    def test_transitive_callee_old_model_rejected(self) -> None:
+        callee_cert = _certificate("callee")
+        callee_cert["architecture"] = "broadway-ppc32-be-v18"
+        callee_cert["certificate_sha256"] = equivalence_certificate_hash(callee_cert)
+        caller_cert = _certificate("caller", [{
+            "target_id": "callee",
+            "certificate_sha256": callee_cert["certificate_sha256"],
+        }])
+        rows = [
+            self._make_row("callee", callee_cert),
+            self._make_row("caller", caller_cert),
+        ]
+        err = equivalence_certificate_error(rows[1], self._rows_by_id(rows))
+        self.assertIsNotNone(err)
+        self.assertIn("callee", err or "")
+        self.assertIn("architecture", err or "")
+
+    def test_full_match_not_invalidated_by_stale_certificate(self) -> None:
+        rows = [
+            {
+                "id": "full", "symbol": "f", "address": "0x1",
+                "status": "FULL_MATCH",
+                "equivalence_certificate": _certificate("full"),
+            },
+        ]
+        (self.root / "tools/coop/targets.json").write_text(
+            json.dumps({"schema_version": 2, "targets": rows}), encoding="utf-8",
+        )
+        errors = validate_targets(self.config)
+        full_match_errors = [e for e in errors if "full" in e]
+        self.assertEqual(
+            len(full_match_errors), 0,
+            f"FULL_MATCH should not be flagged: {full_match_errors}",
+        )
 
 
 if __name__ == "__main__":

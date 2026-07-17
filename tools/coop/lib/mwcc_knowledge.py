@@ -55,6 +55,7 @@ class KnowledgeEntry:
     region: str = ""
     unit: str = ""
     tags: tuple[str, ...] = ()
+    timestamp: str = ""
 
 
 def _stable_id(prefix: str, value: str, occurrence: int) -> str:
@@ -176,6 +177,7 @@ def parse_attempts(path: Path, *, source_path: Optional[str] = None) -> Iterator
         ]
         body = "\n".join(part for part in body_parts if part)
         combined = f"{function}\n{body}"
+        timestamp = str(row.get("timestamp", "") or "")
         percent = row.get("instruction_match")
         try:
             match_percent = float(percent) if percent is not None else None
@@ -198,6 +200,7 @@ def parse_attempts(path: Path, *, source_path: Optional[str] = None) -> Iterator
             region=str(row.get("region", "") or ""),
             unit=str(row.get("unit", "") or ""),
             tags=infer_tags(combined),
+            timestamp=timestamp,
         )
 
 

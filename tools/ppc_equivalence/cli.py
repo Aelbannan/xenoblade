@@ -17,6 +17,12 @@ from .elf_symbols import (
 )
 from .engine import check_equivalence
 from .ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
+from .memory_profile import (
+    PROFILE_CHOICES,
+    MemoryEnvironment,
+    MemoryProfile,
+    parse_ranges,
+)
 from .model import MachineState, concrete_state
 from .result import ProofResult, ProofStatus
 from .semantics import ConcreteOps, automatic_live_out, execute_cfg
@@ -211,6 +217,11 @@ def _run_check(
     if timeout_ms <= 0:
         instr_count = max(len(original_code), len(candidate_code)) // 4
         timeout_ms = max(5_000, min(120_000, instr_count * 20))
+    memory_env = None
+    if hasattr(args, "memory_profile") and args.memory_profile:
+        profile = MemoryProfile(args.memory_profile)
+        ranges = parse_ranges(args.memory_ranges) if args.memory_ranges else []
+        memory_env = MemoryEnvironment(profile=profile, ranges=ranges)
     try:
         original = decode_block(
             original_code,
@@ -252,6 +263,7 @@ def _run_check(
             max_instructions=args.max_instructions,
             max_paths=args.max_paths,
             assumed_callees=assumed_callees,
+            memory_environment=memory_env,
         )
     except (UnsupportedInstruction, ExecutionInconclusive) as exc:
         contract_name = requested_contract or "manual"
@@ -363,6 +375,18 @@ def _add_check_options(
     parser.add_argument("--result", type=Path, help="write the complete JSON proof result")
     parser.add_argument("--replay-out", type=Path, help="write a replayable counterexample when inequivalent")
     parser.add_argument("--smt-out", type=Path, help="write the generated SMT-LIB query")
+    parser.add_argument(
+        "--memory-profile",
+        choices=PROFILE_CHOICES,
+        default=None,
+        help="memory-environment profile (default: assumed-ordinary-ram)",
+    )
+    parser.add_argument(
+        "--memory-ranges",
+        nargs="*",
+        default=[],
+        help="valid RAM ranges for bounded profiles: low,high hex pairs",
+    )
 
 
 def cmd_extract(args: argparse.Namespace) -> int:

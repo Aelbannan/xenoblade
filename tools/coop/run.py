@@ -50,8 +50,12 @@ from tools.coop.lib.objdiff_report import (
 )
 from tools.coop.lib.object_size import ObjectSizeCheck, check_object_size, format_size_check
 from tools.coop.lib.project import ObjdiffUnit, Project
+from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
+
 from tools.coop.lib.targets import (
+    ACCEPTED_MATCH_STATUSES,
     claim_target,
+    equivalence_certificate_error,
     get_target,
     harness_targets,
     import_symbols,
@@ -431,6 +435,7 @@ def cmd_cycle(
         unit=unit_report,
         symbol=target.symbol,
         equivalence=evaluation.equivalence,
+        policy=config,
     ):
         print(
             f"FAIL: required {target.required_level}, got {evaluation.status} "
@@ -855,6 +860,69 @@ def _render_target_brief(config: CoopConfig, target_id: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def cmd_targets_audit_promotion(
+    config: CoopConfig, *, dry_run: bool, write_report: Optional[Path],
+) -> int:
+    from tools.coop.lib.targets import load_targets_document
+    data = load_targets_document(config)
+    rows = data.get("targets", [])
+    rows_by_id = {row["id"]: row for row in rows}
+    affected: list[dict[str, Any]] = []
+    valid_count = 0
+    for row in rows:
+        status = row.get("status", "NOT_STARTED")
+        if status not in ACCEPTED_MATCH_STATUSES:
+            continue
+        if status == "FULL_MATCH":
+            valid_count += 1
+            continue
+        cert_error = equivalence_certificate_error(row, rows_by_id)
+        if cert_error:
+            affected.append({
+                "id": row["id"],
+                "status": status,
+                "workflow_status": row.get("workflow_status", "unknown"),
+                "certificate_error": cert_error,
+                "action": "downgrade-to-code_match",
+            })
+        else:
+            cert = row.get("equivalence_certificate", {})
+            arch = cert.get("architecture", "unknown")
+            if arch in config.reject_architecture_models:
+                affected.append({
+                    "id": row["id"],
+                    "status": status,
+                    "workflow_status": row.get("workflow_status", "unknown"),
+                    "certificate_error": f"architecture {arch} in reject_architecture_models",
+                    "action": "require-reproof",
+                })
+            else:
+                valid_count += 1
+
+    print(f"Audit complete: {valid_count} valid, {len(affected)} affected")
+    for entry in affected:
+        print(f"  [{entry['action']}] {entry['id']}: {entry['certificate_error']}")
+
+    if write_report:
+        report = {
+            "architecture_model": ARCHITECTURE_MODEL,
+            "result_format": RESULT_FORMAT,
+            "reject_architecture_models": list(config.reject_architecture_models),
+            "valid_count": valid_count,
+            "affected_count": len(affected),
+            "affected": affected,
+        }
+        path = write_report if write_report.is_absolute() else config.project_root / write_report
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        print(f"Report written to {path}")
+
+    if not dry_run and affected:
+        print("WARNING: --dry-run not set; this command does not modify the registry.")
+        print("Use tools/coop/run.py targets audit-promotion --dry-run to preview changes.")
+    return 1 if affected else 0
+
+
 def cmd_targets_brief(
     config: CoopConfig, target_id: str, *, output: Optional[Path]
 ) -> int:
@@ -1214,6 +1282,15 @@ def main() -> int:
     p_targets_release = p_targets_sub.add_parser("release", help="Release a current claim")
     p_targets_release.add_argument("target_id")
     p_targets_release.add_argument("--owner")
+    p_targets_audit = p_targets_sub.add_parser(
+        "audit-promotion",
+        help="Audit EQUIVALENT_MATCH targets for promotion eligibility",
+    )
+    p_targets_audit.add_argument("--dry-run", action="store_true")
+    p_targets_audit.add_argument(
+        "--write-report", type=Path,
+        help="Write audit JSON report to path",
+    )
     p_targets_brief = p_targets_sub.add_parser(
         "brief", help="Generate a synchronized worker prompt for one target"
     )
@@ -1367,6 +1444,10 @@ def main() -> int:
         )
     if args.command == "targets" and args.targets_cmd == "release":
         return cmd_targets_release(config, args.target_id, owner=args.owner)
+    if args.command == "targets" and args.targets_cmd == "audit-promotion":
+        return cmd_targets_audit_promotion(
+            config, dry_run=args.dry_run, write_report=args.write_report,
+        )
     if args.command == "targets" and args.targets_cmd == "brief":
         return cmd_targets_brief(config, args.target_id, output=args.output)
     if args.command == "targets" and args.targets_cmd == "import-symbols":

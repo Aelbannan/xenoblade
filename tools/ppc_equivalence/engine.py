@@ -8,9 +8,15 @@ from pathlib import Path
 from typing import Any
 
 from .contract import EquivalenceContract, Observable
+from .deadline import Deadline, ProofDeadlineExceeded, SolverPhase
 from .ir import Instruction, Opcode
+from .memory_profile import (
+    MemoryEnvironment,
+    MemoryProfile,
+    build_memory_constraints,
+)
 from .model import ConcreteMemory, MachineState, XerState, concrete_state
-from .result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofResult, ProofStatus
+from .result import ARCHITECTURE_MODEL, RESULT_FORMAT, MemoryScope, ProofResult, ProofStatus
 from .semantics import (
     CalleeContract,
     ConcreteOps,
@@ -304,21 +310,29 @@ def _memory_difference(
     left: MachineState, right: MachineState, initial: MachineState,
     ops: SymbolicOps,
 ) -> Any:
-    """Compare memory outside either implementation's private stack frame."""
+    """Compare memory with independent per-implementation private-stack masking.
+
+    Each implementation's own private stack interval is masked independently.
+    An address private to one implementation does not hide a write by the other
+    implementation when that write lies outside the other implementation's own
+    private interval.
+    """
     z3 = ops.z3
     differences: list[Any] = []
     for address in left.memory_touches + right.memory_touches:
         initial_byte = z3.Select(initial.memory, address)
-        private = z3.Or(
-            _private_stack_address(
-                address, left.stack_low, initial.gpr[1], left.stack_private, ops,
-            ),
-            _private_stack_address(
-                address, right.stack_low, initial.gpr[1], right.stack_private, ops,
-            ),
+        left_is_private = _private_stack_address(
+            address, left.stack_low, initial.gpr[1], left.stack_private, ops,
         )
-        left_byte = z3.If(private, initial_byte, z3.Select(left.memory, address))
-        right_byte = z3.If(private, initial_byte, z3.Select(right.memory, address))
+        right_is_private = _private_stack_address(
+            address, right.stack_low, initial.gpr[1], right.stack_private, ops,
+        )
+        left_byte = z3.If(
+            left_is_private, initial_byte, z3.Select(left.memory, address),
+        )
+        right_byte = z3.If(
+            right_is_private, initial_byte, z3.Select(right.memory, address),
+        )
         differences.append(left_byte != right_byte)
     if len(left.memory_effects) != len(right.memory_effects):
         differences.append(z3.BoolVal(True))
@@ -491,32 +505,45 @@ def _instruction_level_diff(
     return None
 
 
-def _run_with_tactics(z3_module: Any, build_solver, timeout_ms: int) -> tuple[Any, Any, float, str]:
-    solver = build_solver()
-    solver.set(timeout=timeout_ms)
-    started = time.perf_counter()
+def check_with_portfolio(
+    z3_module: Any, build_solver, deadline: Deadline,
+) -> tuple[Any, Any, str, list[SolverPhase]]:
+    """Run default solver then fallback bit-blast only if default is unknown.
+
+    Returns ``(solver, answer, tactic_name, phases)``. Returns immediately
+    when the default solver returns ``sat`` or ``unsat``.
+    """
+    phases: list[SolverPhase] = []
+
+    default_solver = build_solver()
+    default_solver.set(timeout=deadline.require_time("default-solver"))
+    started = time.monotonic_ns()
+    default_answer = default_solver.check()
+    default_elapsed = round((time.monotonic_ns() - started) / 1_000_000, 3)
+    phases.append(SolverPhase("default", str(default_answer), default_elapsed))
+
+    if default_answer in (z3_module.sat, z3_module.unsat):
+        return default_solver, default_answer, "default", phases
+
     try:
-        answer = solver.check()
-        elapsed = round((time.perf_counter() - started) * 1000, 3)
-
-        try:
-            tactic_solver = build_solver()
-            t = z3_module.Then("simplify", "bit-blast", "sat")
-            t_start = time.perf_counter()
-            try:
-                bit_solver = t(tactic_solver)
-                bit_answer = bit_solver.check()
-                if bit_answer == z3_module.sat or bit_answer == z3_module.unsat:
-                    return bit_solver, bit_answer, round((time.perf_counter() - t_start) * 1000, 3), "bit-blast"
-            except Exception:
-                pass
-        except Exception:
-            pass
-
-        return solver, answer, elapsed, "default"
+        t_start = time.monotonic_ns()
+        remaining = deadline.require_time("bitblast-fallback")
+        fallback_solver = build_solver()
+        t = z3_module.Then("simplify", "bit-blast", "sat")
+        fallback_solver.set(timeout=remaining)
+        bit_solver = t(fallback_solver)
+        bit_answer = bit_solver.check()
+        bit_elapsed = round((time.monotonic_ns() - t_start) / 1_000_000, 3)
+        phases.append(SolverPhase("bitblast", str(bit_answer), bit_elapsed))
+        if bit_answer in (z3_module.sat, z3_module.unsat):
+            return bit_solver, bit_answer, "bitblast", phases
+    except ProofDeadlineExceeded:
+        phases.append(SolverPhase("bitblast", "deadline-exceeded", 0))
+        return default_solver, z3_module.unknown, "default", phases
     except Exception:
-        elapsed = round((time.perf_counter() - started) * 1000, 3)
-        return solver, z3_module.unknown, elapsed, "default"
+        phases.append(SolverPhase("bitblast", "error", 0))
+
+    return default_solver, default_answer, "default", phases
 
 
 def check_equivalence(
@@ -533,6 +560,7 @@ def check_equivalence(
     assumed_callees_used: set[int | str] | None = None,
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     relocation_bindings: dict[str, int] | None = None,
+    memory_environment: MemoryEnvironment | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -558,6 +586,9 @@ def check_equivalence(
         for left in original_exits
         for right in candidate_exits
     ]
+    memory_scope = MemoryScope.from_terminals(
+        original_exits, candidate_exits, ops,
+    )
     layout_constraints = ops.layout_constraints(initial)
     for terminal in original_exits + candidate_exits:
         if terminal.state.stack_layout_valid is not None:
@@ -569,22 +600,33 @@ def check_equivalence(
             raise ValueError(f"relocation binding names unused symbol {name!r}")
         layout_constraints.append(ops.relocation_values[name] == ops.const(value))
 
+    memory_constraints = build_memory_constraints(
+        original_exits, candidate_exits,
+        memory_environment or MemoryEnvironment(),
+        ops,
+    )
+    layout_constraints.extend(memory_constraints)
+
     def _build_solver() -> Any:
         s = z3.Solver()
         s.add(*layout_constraints)
         s.add(z3.Or(*pair_differences))
         return s
 
-    solver = _build_solver()
+    deadline = Deadline.after_ms(contract.timeout_ms)
     if smt_output is not None:
-        Path(smt_output).write_text(solver.to_smt2(), encoding="utf-8")
+        s = _build_solver()
+        Path(smt_output).write_text(s.to_smt2(), encoding="utf-8")
 
-    winning_solver, answer, elapsed_ms, tactic = _run_with_tactics(
-        z3, _build_solver, contract.timeout_ms,
+    winning_solver, answer, tactic, phases = check_with_portfolio(
+        z3, _build_solver, deadline,
     )
+    elapsed_ms = round(sum(p.elapsed_ms for p in phases), 3)
 
     result = ProofResult(
         status=ProofStatus.INCONCLUSIVE_UNKNOWN,
+        environment=memory_environment,
+        memory_scope=memory_scope,
         contract=contract.name,
         contract_resolution=contract.resolution_dict(),
         observables=[item.name for item in contract.observables],
@@ -594,7 +636,7 @@ def check_equivalence(
             "name": "z3", "version": z3.get_version_string(), "result": str(answer),
             "elapsed_ms": elapsed_ms, "timeout_ms": contract.timeout_ms,
             "original_paths": len(original_exits), "candidate_paths": len(candidate_exits),
-            "tactic": tactic,
+            "tactic": tactic, "phases": [p.to_dict() for p in phases],
         },
         assumed_callees=sorted(callees_used, key=str),
         callee_contracts={
@@ -613,7 +655,13 @@ def check_equivalence(
         },
     )
     feasibility = z3.Solver()
-    feasibility.set(timeout=contract.timeout_ms)
+    try:
+        layout_deadline = deadline.require_time("layout-feasibility")
+    except ProofDeadlineExceeded:
+        result.status = ProofStatus.INCONCLUSIVE_TIMEOUT
+        result.warnings.append("layout-feasibility deadline exceeded")
+        return result
+    feasibility.set(timeout=layout_deadline)
     feasibility.add(*layout_constraints)
     feasibility_answer = feasibility.check()
     if feasibility_answer != z3.sat:

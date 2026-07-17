@@ -20,6 +20,10 @@ class CoopConfig:
     attempt_log: Path = Path("docs/evidence/decomp/attempts.jsonl")
     report_cache: Path = Path("build/coop-last-report.json")
     objdiff_report_args: List[str] = field(default_factory=list)
+    automatic_promotion: bool = False
+    reject_architecture_models: tuple[str, ...] = ("broadway-ppc32-be-v18",)
+    allowed_confidence_tiers: frozenset[str] = frozenset({"A", "B"})
+    allowed_engine_sha256: str | None = None
 
     @property
     def build_dir(self) -> Path:
@@ -82,6 +86,18 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
     else:
         root = Path(root_value).expanduser().resolve()
 
+    raw_reject = data.get("reject_architecture_models")
+    if isinstance(raw_reject, list):
+        reject_models = tuple(str(m) for m in raw_reject)
+    else:
+        reject_models = ("broadway-ppc32-be-v18",)
+
+    raw_tiers = data.get("allowed_confidence_tiers")
+    if isinstance(raw_tiers, list):
+        allowed_tiers = frozenset(str(t) for t in raw_tiers)
+    else:
+        allowed_tiers = frozenset({"A", "B"})
+
     return CoopConfig(
         project_root=root,
         region=str(data.get("region", "us")),
@@ -95,6 +111,10 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
         attempt_log=Path(data.get("attempt_log", "docs/evidence/decomp/attempts.jsonl")),
         report_cache=Path(data.get("report_cache", "build/coop-last-report.json")),
         objdiff_report_args=list(data.get("objdiff_report_args", [])),
+        automatic_promotion=bool(data.get("automatic_promotion", False)),
+        reject_architecture_models=reject_models,
+        allowed_confidence_tiers=allowed_tiers,
+        allowed_engine_sha256=data.get("allowed_engine_sha256"),
     )
 
 

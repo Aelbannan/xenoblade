@@ -14,5 +14,7 @@
     "--config",
     "functionRelocDiffs=data_value"
   ],
-  "dolphin": "/Applications/Dolphin.app/Contents/MacOS/Dolphin"
+  "dolphin": "/Applications/Dolphin.app/Contents/MacOS/Dolphin",
+  "automatic_promotion": false,
+  "reject_architecture_models": ["broadway-ppc32-be-v18"]
 }

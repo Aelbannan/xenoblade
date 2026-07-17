@@ -155,45 +155,29 @@ ut::Rect Pane::GetPaneRect(const DrawInfo& rInfo) const {
 }
 
 ut::Color Pane::GetVtxColor(u32 idx) const {
-#pragma unused(idx)
-
-    return ut::Color::WHITE;
+    return ut::Color(0xFFFFFFFFu);
 }
 
 void Pane::SetVtxColor(u32 idx, ut::Color color) {
-#pragma unused(idx)
-#pragma unused(color)
+    // empty
 }
 
 u8 Pane::GetColorElement(u32 idx) const {
-    switch (idx) {
-    case ANIMTARGET_PANE_COLOR_ALPHA: {
+    if (idx == 16) {
         return mAlpha;
     }
-
-    default: {
-        return GetVtxColorElement(idx);
-    }
-    }
+    return GetVtxColorElement(idx);
 }
 
-void Pane::SetColorElement(u32 idx, u8 value) {
-    switch (idx) {
-    case ANIMTARGET_PANE_COLOR_ALPHA: {
+void nw4hbm::lyt::Pane::SetColorElement(unsigned long idx, unsigned char value) {
+    if (idx == 16) {
         mAlpha = value;
-        break;
-    }
-
-    default: {
+    } else {
         SetVtxColorElement(idx, value);
-        break;
-    }
     }
 }
 
 u8 Pane::GetVtxColorElement(u32 idx) const {
-#pragma unused(idx)
-
     return 0xFF;
 }
 

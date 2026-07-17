@@ -309,7 +309,6 @@ static wchar_t * long2str(long num, wchar_t * buff, print_format format) {
     int n, digits;
     int minus = 0;
     unsigned_num = num;
-    minus = 0;
     
     p = buff;
     *--p = 0;
@@ -323,26 +322,21 @@ static wchar_t * long2str(long num, wchar_t * buff, print_format format) {
         case L'd':
         case L'i':
             base = 10;
-            
             if (num < 0) {
                 if (num != 0x80000000) {
                     unsigned_num = -num;
                 }
-
                 minus = 1;
             }
             break;
-        
         case L'o':
             base = 8;
             format.sign_options = only_minus;
             break;
-        
         case L'u':
             base = 10;
             format.sign_options = only_minus;
             break;
-        
         case L'x':
         case L'X':
             base = 16;
@@ -356,22 +350,18 @@ static wchar_t * long2str(long num, wchar_t * buff, print_format format) {
         
         if (n < 10) {
             n += L'0';
-        }
-        else {
+        } else {
             n -= 10;
-            
             if (format.conversion_char == L'x') {
                 n += L'a';
-            }
-            else {
+            } else {
                 n += L'A';
             }
         }
         
         *--p = n;
         ++digits;
-    }
-    while (unsigned_num != 0);
+    } while (unsigned_num != 0);
     
     if (base == 8 && format.alternate_form && *p != L'0') {
         *--p = L'0';
@@ -380,10 +370,8 @@ static wchar_t * long2str(long num, wchar_t * buff, print_format format) {
     
     if (format.justification_options == zero_fill) {
         format.precision = format.field_width;
-        
         if (minus || format.sign_options != only_minus)
             --format.precision;
-        
         if (base == 16 && format.alternate_form)
             format.precision -= 2;
     }
@@ -403,11 +391,9 @@ static wchar_t * long2str(long num, wchar_t * buff, print_format format) {
     
     if (minus) {
         *--p = L'-';
-    }
-    else if (format.sign_options == sign_always) {
+    } else if (format.sign_options == sign_always) {
         *--p = L'+';
-    }
-    else if (format.sign_options == space_holder) {
+    } else if (format.sign_options == space_holder) {
         *--p = L' ';
     }
     
@@ -716,26 +702,25 @@ return_zero:
     }
 
     p = (char*)dec->sig.text + new_length + 1;
-    c = *--p - L'0';
+    c = *--p - '0';
 
     if (c == 5) {
         char* q = &((char*)dec->sig.text)[dec->sig.length];
 
-        while (--q > p && *q == '0');
+        while (--q > p && *q == '0')
+            ;
         carry = (q == p) ? p[-1] & 1 : 1;
-    }
-    else {
+    } else {
         carry = (c > 5);
     }
 
     while (new_length != 0) {
-        c = *--p - L'0' + carry;
+        c = *--p - '0' + carry;
 
         if ((carry = (c > 9)) != 0 || c == 0) {
             --new_length;
-        }
-        else {
-            *p = c + L'0';
+        } else {
+            *p = c + '0';
             break;
         }
     }
@@ -745,8 +730,7 @@ return_zero:
         dec->sig.length = 1;
         *dec->sig.text = '1';
         return;
-    }
-    else if (new_length == 0) {
+    } else if (new_length == 0) {
         goto return_zero;
     }
 

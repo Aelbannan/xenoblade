@@ -24,17 +24,13 @@ void __DBExceptionDestinationAux(void) {
     PPCHalt();
 }
 
-asm void __DBExceptionDestination(void){
-    // clang-format off
-    nofralloc
-    
-    // Set up MMU
-    mfmsr r3
-    ori r3, r3, (MSR_IR | MSR_DR)
-    mtmsr r3
-
-    b __DBExceptionDestinationAux
-    // clang-format on
+void __DBExceptionDestination(void) {
+    __asm__ volatile (
+        "mfmsr 3\n\t"
+        "ori 3, 3, 0x30\n\t"
+        "mtmsr 3\n\t"
+        "b __DBExceptionDestinationAux"
+    );
 }
 
 BOOL __DBIsExceptionMarked(u8 exc) {
@@ -49,6 +45,6 @@ void __DBMarkException(){
 void __DBSetPresent(){
 }
 
-void DBPrintf(const char* msg, ...) {
-#pragma unused(msg)
+void DBPrintf(const char* fmt, ...) {
+    (void)fmt;
 }

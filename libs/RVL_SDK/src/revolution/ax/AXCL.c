@@ -67,8 +67,7 @@ void* __AXGetCommandListAddress(void) {
 
     __AXCommandListPosition++;
     __AXCommandListPosition %= LIST_MAX;
-    __AXClWrite =
-        (u16*)(__AXCommandList + __AXCommandListPosition * AX_CL_SIZE);
+    __AXClWrite = (u16*)(__AXCommandList + __AXCommandListPosition * AX_CL_SIZE);
 
     return list;
 }
@@ -260,6 +259,7 @@ u16 AXGetAuxAReturnVolume(void) {
     return __AXAuxAVolume;
 }
 
+extern u16 __AXAuxBVolume;
 u16 AXGetAuxBReturnVolume(void) {
     return __AXAuxBVolume;
 }
@@ -269,8 +269,8 @@ u16 AXGetAuxCReturnVolume(void) {
 }
 
 void AXSetMasterVolume(u16 volume) {
-    if (volume > AX_MAX_VOLUME) {
-        volume = AX_MAX_VOLUME;
+    if (volume > 0x8000) {
+        volume = 0x8000;
     }
 
     __AXMasterVolume = volume;

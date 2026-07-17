@@ -75,10 +75,8 @@ asm ui32 __TRK_get_MSR(){
     blr
 }
 
-asm void __TRK_set_MSR(register ui32 val){
-    nofralloc
-    mtmsr val
-    blr
+void __TRK_set_MSR(ui32 val) {
+    asm("mtmsr %0" : : "r"(val));
 }
 
 //unused
@@ -641,7 +639,7 @@ NonTransportInterrupt:
 }
 
 
-static asm void TRKExceptionHandler(ui16 r3){
+static asm void TRKExceptionHandler(register u16 r3) {
     nofralloc
     lis r2, gTRKExceptionStatus@h
     ori r2, r2, gTRKExceptionStatus@l
@@ -650,43 +648,37 @@ static asm void TRKExceptionHandler(ui16 r3){
     stw r3, ExceptionStatus.exceptionInfo.PC(r2)
 
     lhz r3, ExceptionStatus.exceptionInfo.exceptionID(r2)
-    cmpwi r3, PPC_MACHINECHECK
+    cmpwi r3, 0x200
     beq skip_instruction
-    cmpwi r3, PPC_DATAACCESSERROR
+    cmpwi r3, 0x300
     beq skip_instruction
-    cmpwi r3, PPC_INSTACCESSERROR
+    cmpwi r3, 0x400
     beq skip_instruction
-    cmpwi r3, PPC_ALIGNMENTERROR
+    cmpwi r3, 0x600
     beq skip_instruction
-    cmpwi r3, PPC_PROGRAMERROR
+    cmpwi r3, 0x700
     beq skip_instruction
-    cmpwi r3, PPC_FPUNAVAILABLE
+    cmpwi r3, 0x800
     beq skip_instruction
-#ifdef PPC_INSTR_SKIP_EXCEPTION1
-    cmpwi r3, PPC_INSTR_SKIP_EXCEPTION1
+    cmpwi r3, 0x1000
     beq skip_instruction
-#endif
-#ifdef PPC_INSTR_SKIP_EXCEPTION2
-    cmpwi r3, PPC_INSTR_SKIP_EXCEPTION2
+    cmpwi r3, 0x1100
     beq skip_instruction
-#endif
-#ifdef PPC_INSTR_SKIP_EXCEPTION3
-    cmpwi r3, PPC_INSTR_SKIP_EXCEPTION3
+    cmpwi r3, 0x1200
     beq skip_instruction
-#endif
-#ifdef PPC_INSTR_SKIP_EXCEPTION4
-    cmpwi r3, PPC_INSTR_SKIP_EXCEPTION4
+    cmpwi r3, 0x1300
     beq skip_instruction
-#endif
     b set_exception_flag
+
 skip_instruction:
     mfspr r3, SPR_SRR0
-    addi r3, r3, 0x4
+    addi r3, r3, 4
     mtspr SPR_SRR0, r3
+
 set_exception_flag:
     lis r2, gTRKExceptionStatus@h
     ori r2, r2, gTRKExceptionStatus@l
-    li r3, 0x1
+    li r3, 1
     stb r3, ExceptionStatus.exceptionDetected(r2)
     mfspr r3, SPR_SPRG3
     mtcrf 0xff, r3
@@ -1097,9 +1089,9 @@ void TRKTargetSetStopped(bool val){
     gTRKState.stopped = val;
 }
 
-DSError TRKTargetStop(){
-    TRKTargetSetStopped(true);
-    return kNoError;
+DSError TRKTargetStop() {
+    gTRKState.stopped = 1;
+    return 0;
 }
 
 DSError TRKPPCAccessSPR(void* srcDestPtr, ui32 spr, bool read){
@@ -1155,20 +1147,20 @@ DSError TRKPPCAccessPairedSingleRegister(void* srcDestPtr, ui32 psr, bool read){
 #define FP_FPSCR_ACCESS     32
 #define FP_FPECR_ACCESS     33
 
-asm void ReadFPSCR(){
+asm void ReadFPSCR() {
     nofralloc
     stwu r1, -0x40(r1)
     stfd f31, 0x10(r1)
-    psq_st f31, 32(r1), 0, 0
+    psq_st f31, 0x20(r1), 0, 0
     mffs f31
     stfd f31, 0(r3)
-    psq_l f31, 32(r1), 0, 0
+    psq_l f31, 0x20(r1), 0, 0
     lfd f31, 0x10(r1)
     addi r1, r1, 0x40
     blr
 }
 
-asm void WriteFPSCR(){
+asm void WriteFPSCR() {
     nofralloc
     stwu r1, -0x40(r1)
     stfd f31, 0x10(r1)
@@ -1253,8 +1245,8 @@ ui8 TRKGetInTRKFlag(){
     return gTRKExceptionStatus.inTRK;
 }
 
-ui32 ConvertAddress(ui32 addr){
-    return (addr | BOOTINFO);
+ui32 ConvertAddress(ui32 addr) {
+    return addr | 0x80000000;
 }
 
 #define ACTIVE_THREAD_QUEUE (BOOTINFO + ROOT_THREAD_ADDR)       // 8 bytes

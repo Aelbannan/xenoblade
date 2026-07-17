@@ -491,9 +491,10 @@ class Harness:
         return batch_dir
 
     def select_new_targets(
-        self, number: int, *, ignore_called_functions: bool = False, certified_funcs: bool = False
+        self, number: int, *, ignore_called_functions: bool = False, certified_funcs: bool = False,
+        tu: Optional[str] = None,
     ) -> List[str]:
-        """Ask the project adapter for fresh function targets."""
+        """Ask the project adapter for fresh function targets, optionally filtered to a TU."""
         if number < 1:
             raise ValueError("number must be positive")
         select = getattr(self.adapter, "select_new_targets", None)
@@ -506,6 +507,7 @@ class Harness:
                     self.records(),
                     ignore_called_functions=ignore_called_functions,
                     certified_funcs=certified_funcs,
+                    tu=tu,
                 )
             )
         if len(target_ids) != number:
@@ -515,9 +517,10 @@ class Harness:
         return target_ids
 
     def select_targets(
-        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False
+        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False,
+        tu: Optional[str] = None,
     ) -> List[str]:
-        """Ask the project adapter for an automatic workflow target selection."""
+        """Ask the project adapter for an automatic workflow target selection, optionally filtered to a TU."""
         if workflow not in {"improve", "tu-complete"}:
             raise ValueError("Automatic selection supports improve or tu-complete")
         if number < 1:
@@ -527,13 +530,21 @@ class Harness:
             raise ValueError("Configured project adapter does not support automatic target selection")
         with self._adapter_lock:
             target_ids = list(
-                select(workflow, number, randomize=randomize, certified_funcs=certified_funcs)
+                select(workflow, number, randomize=randomize, certified_funcs=certified_funcs, tu=tu)
             )
         if len(target_ids) != number:
             raise ValueError(
                 f"Project adapter returned {len(target_ids)} targets; expected {number}"
             )
         return target_ids
+
+    def target_ids_for_unit(self, unit_name: str, workflow: str) -> List[str]:
+        """Ask the project adapter for all eligible target IDs in a translation unit."""
+        resolve = getattr(self.adapter, "target_ids_for_unit", None)
+        if resolve is None:
+            raise ValueError("Configured project adapter does not support TU target resolution")
+        with self._adapter_lock:
+            return list(resolve(unit_name, workflow))
 
     def _write_model_context(
         self,
@@ -621,7 +632,6 @@ class Harness:
                 "hypothesis": candidate.hypothesis,
                 "notes": candidate.notes,
                 "next_change": candidate.next_change,
-                "confidence": candidate.confidence,
                 "provider_attempts": provider_attempts,
                 "patch_ids": [patch.slot_id for patch in candidate.patches],
             }
@@ -959,13 +969,11 @@ def parse_candidate(
         notes = [notes]
     if not isinstance(notes, list) or not all(isinstance(v, str) for v in notes):
         raise ValueError("Model output 'notes' must be a list of strings")
-    confidence = data.get("confidence")
     return Candidate(
         source=source,
         hypothesis=str(data.get("hypothesis", "")),
         notes=notes,
         next_change=str(data.get("next_change", "")),
-        confidence=float(confidence) if confidence is not None else None,
         patches=patches,
     )
 

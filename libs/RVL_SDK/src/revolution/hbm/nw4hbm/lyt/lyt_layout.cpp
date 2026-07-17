@@ -271,7 +271,6 @@ void Layout::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable) {
     if (mpRootPane == NULL) {
         return;
     }
-
     mpRootPane->SetAnimationEnable(pAnimTrans, enable, true);
 }
 
@@ -300,12 +299,16 @@ void Layout::Animate(u32 option) {
 }
 
 ut::Rect Layout::GetLayoutRect() const {
-    if (mOriginType == ORIGINTYPE_CENTER) {
-        return ut::Rect(-mLayoutSize.width / 2, mLayoutSize.height / 2,
-                        mLayoutSize.width / 2, -mLayoutSize.height / 2);
+    if (mOriginType == 1) {
+        return ut::Rect(-mLayoutSize.width / 2.0f,
+                        mLayoutSize.height / 2.0f,
+                        mLayoutSize.width / 2.0f,
+                        -mLayoutSize.height / 2.0f);
+    } else {
+        return ut::Rect(0.0f, 0.0f,
+                        mLayoutSize.width,
+                        mLayoutSize.height);
     }
-
-    return ut::Rect(0.0f, 0.0f, mLayoutSize.width, mLayoutSize.height);
 }
 
 void Layout::SetTagProcessor(ut::WideTagProcessor* pProcessor) {

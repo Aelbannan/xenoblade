@@ -5,8 +5,6 @@ void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
                       GXIndTexMtxID mtxId, GXIndTexWrap wrapS,
                       GXIndTexWrap wrapT, GXBool addPrev, GXBool utcLod,
                       GXIndTexAlphaSel alphaSel) {
-    u32 opcode = tevStage + GX_BP_REG_INDTEVSTAGE0;
-
     u32 cmd = 0;
     GX_BP_SET_INDTEVSTAGE_STAGE(cmd, texStage);
     GX_BP_SET_INDTEVSTAGE_FORMAT(cmd, texFmt);
@@ -17,8 +15,7 @@ void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
     GX_BP_SET_INDTEVSTAGE_WRAPT(cmd, wrapT);
     GX_BP_SET_INDTEVSTAGE_UTCLOD(cmd, utcLod);
     GX_BP_SET_INDTEVSTAGE_ADDPREV(cmd, addPrev);
-    GX_BP_SET_OPCODE(cmd, opcode);
-
+    GX_BP_SET_OPCODE(cmd, tevStage + GX_BP_REG_INDTEVSTAGE0);
     GX_BP_LOAD_REG(cmd);
     gxdt->lastWriteWasXF = FALSE;
 }
@@ -64,7 +61,6 @@ void GXSetIndTexMtx(GXIndTexMtxID id, const f32 offset[2][3], s8 scaleExp) {
     GX_BP_SET_OPCODE(cmd, index * 3 + GX_BP_REG_INDMTX0A);
     GX_BP_LOAD_REG(cmd);
 
-    // TODO(kiwi) Match using GX_BP_SET_INDMTXB_EXP
     cmd = 0;
     GX_BP_SET_INDMTXB_M01(cmd, 1024.0f * offset[0][1]);
     GX_BP_SET_INDMTXB_M11(cmd, 1024.0f * offset[1][1]);
@@ -72,7 +68,6 @@ void GXSetIndTexMtx(GXIndTexMtxID id, const f32 offset[2][3], s8 scaleExp) {
     GX_BP_SET_OPCODE(cmd, index * 3 + GX_BP_REG_INDMTX0B);
     GX_BP_LOAD_REG(cmd);
 
-    // TODO(kiwi) Match using GX_BP_SET_INDMTXC_EXP
     cmd = 0;
     GX_BP_SET_INDMTXC_M02(cmd, 1024.0f * offset[0][2]);
     GX_BP_SET_INDMTXC_M12(cmd, 1024.0f * offset[1][2]);
@@ -86,43 +81,33 @@ void GXSetIndTexMtx(GXIndTexMtxID id, const f32 offset[2][3], s8 scaleExp) {
 void GXSetIndTexCoordScale(GXIndTexStageID stage, GXIndTexScale scaleS,
                            GXIndTexScale scaleT) {
     switch (stage) {
-    case GX_INDTEXSTAGE0: {
+    case GX_INDTEXSTAGE0:
         GX_BP_SET_RAS1_SS0_S0(gxdt->ras1_ss0, scaleS);
         GX_BP_SET_RAS1_SS0_T0(gxdt->ras1_ss0, scaleT);
         GX_BP_SET_OPCODE(gxdt->ras1_ss0, GX_BP_REG_RAS1_SS0);
         GX_BP_LOAD_REG(gxdt->ras1_ss0);
         break;
-    }
-
-    case GX_INDTEXSTAGE1: {
+    case GX_INDTEXSTAGE1:
         GX_BP_SET_RAS1_SS0_S1(gxdt->ras1_ss0, scaleS);
         GX_BP_SET_RAS1_SS0_T1(gxdt->ras1_ss0, scaleT);
         GX_BP_SET_OPCODE(gxdt->ras1_ss0, GX_BP_REG_RAS1_SS0);
         GX_BP_LOAD_REG(gxdt->ras1_ss0);
         break;
-    }
-
-    case GX_INDTEXSTAGE2: {
+    case GX_INDTEXSTAGE2:
         GX_BP_SET_RAS1_SS1_S2(gxdt->ras1_ss1, scaleS);
         GX_BP_SET_RAS1_SS1_T2(gxdt->ras1_ss1, scaleT);
         GX_BP_SET_OPCODE(gxdt->ras1_ss1, GX_BP_REG_RAS1_SS1);
         GX_BP_LOAD_REG(gxdt->ras1_ss1);
         break;
-    }
-
-    case GX_INDTEXSTAGE3: {
+    case GX_INDTEXSTAGE3:
         GX_BP_SET_RAS1_SS1_S3(gxdt->ras1_ss1, scaleS);
         GX_BP_SET_RAS1_SS1_T3(gxdt->ras1_ss1, scaleT);
         GX_BP_SET_OPCODE(gxdt->ras1_ss1, GX_BP_REG_RAS1_SS1);
         GX_BP_LOAD_REG(gxdt->ras1_ss1);
         break;
-    }
-
-    default: {
+    default:
         break;
     }
-    }
-
     gxdt->lastWriteWasXF = FALSE;
 }
 

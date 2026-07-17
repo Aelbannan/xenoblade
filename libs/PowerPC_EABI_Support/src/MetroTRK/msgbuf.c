@@ -13,13 +13,13 @@ static void TRK_SetBufferUsed(MessageBuffer* b, bool state){
     b->fInUse = state;
 }
 
-DSError TRK_InitializeMessageBuffers(){
-    int i;
-    for(i = 0; i < NUM_BUFFERS; i++){
-        TRK_SetBufferUsed(&gTRKMsgBufs.buffers[i],false);
-    }
-
-    return kNoError;
+DSError TRK_InitializeMessageBuffers()
+{
+    volatile unsigned int* base = (volatile unsigned int*)&gTRKMsgBufs;
+    base[0] = (unsigned int)&gTRKMsgBufs;
+    base[0x88C / 4] = 0;
+    base[0x1118 / 4] = 0;
+    return 0;
 }
 
 DSError TRK_GetFreeBuffer(int* bufferIndexPtr, MessageBuffer** destBufPtr){
@@ -79,8 +79,6 @@ DSError TRK_SetBufferPosition(MessageBuffer* buf, ui32 pos){
         error = kMessageBufferOverflow;
     }else{
         buf->fPosition = pos;
-        //If the new position is past the current length,
-        //update the length
         if(pos > buf->fLength){
             buf->fLength = pos;
         }

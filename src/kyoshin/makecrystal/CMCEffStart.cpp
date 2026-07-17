@@ -255,7 +255,7 @@ void CMCEffSuccess::func_802247F0() {
 }
 
 void CMCEffSuccess::func_80224860(nw4r::lyt::DrawInfo* drawInfo) {
-    if(!unk18) {
+    if (!unk18) {
         return;
     }
     func_80137038(mLayout, drawInfo, 0, 1);

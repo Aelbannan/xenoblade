@@ -107,7 +107,8 @@ void Picture::SetVtxColor(u32 idx, ut::Color color) {
 }
 
 u8 Picture::GetVtxColorElement(u32 idx) const {
-    return detail::GetVtxColorElement(mVtxColors, idx);
+    const u8* base = reinterpret_cast<const u8*>(this) + 0xD4;
+    return base[(idx & ~3) + (idx & 1)];
 }
 
 void Picture::SetVtxColorElement(u32 idx, u8 value) {

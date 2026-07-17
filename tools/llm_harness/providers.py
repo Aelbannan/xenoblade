@@ -213,8 +213,9 @@ class DeepSeekRawProvider:
         request_body = json.dumps({
             "model": deepseek_model,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0,
+            "temperature": 0.1,
             "max_tokens": 8192,
+            "response_format": {"type": "json_object"},
         })
 
         cmd = [

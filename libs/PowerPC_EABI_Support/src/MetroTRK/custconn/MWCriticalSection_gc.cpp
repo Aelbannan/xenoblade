@@ -9,7 +9,7 @@ void MWEnterCriticalSection(unsigned int* section){
     *section = OSDisableInterrupts();
 }
 
-void MWExitCriticalSection(unsigned int* section){
+void MWExitCriticalSection(unsigned int* section) {
     OSRestoreInterrupts(*section);
 }
 

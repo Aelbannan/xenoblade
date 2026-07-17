@@ -520,14 +520,13 @@ void HomeButton::set_config() {
 
 void HomeButton::set_text() {
     int i = 0, j = 0, k = 0;
-    bool flag = false; // more accurately insideStringFlag
+    bool flag = false;
     wchar_t* message = static_cast<wchar_t*>(mpHBInfo->msgBuf);
 
     for (; message[i] != '\0'; i++) {
-        if (message[i] == L'\"') {
+        if (message[i] == L'"') {
             if (!flag) {
                 flag = true;
-
                 mpText[j][k] = &message[i + 1];
                 j++;
 
@@ -2838,8 +2837,6 @@ void HomeButton::setAdjustFlag(int flag) {
             }
         }
     }
-
-    GXSetCullMode(GX_CULL_NONE);
 }
 
 void HomeButton::setVolume(int vol) {

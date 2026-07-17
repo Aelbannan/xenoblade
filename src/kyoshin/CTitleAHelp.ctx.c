@@ -26982,16 +26982,16 @@ u8 CTitleAHelp::func_801C411C() {
 u8 CTitleAHelp::func_801C4124() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
-    if (unk2c == 0) {
+    if (unk2c != 0) {
         unk2c = 1;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp::func_801C414C() {
-    if (unk2c == 3) {
-        unk2c = 4;
-        unk36 = 0;
+extern "C" void func_801C414C(CTitleAHelp* pThis) {
+    if (pThis->unk2c == 3) {
+        pThis->unk2c = 4;
+        pThis->unk36 = 0;
     }
 }
 
@@ -27223,8 +27223,9 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
  * Utility functions
  *
  ******************************************************************************/
-bool func_801C4648(nw4r::lyt::Pane* pane) {
-    return pane->IsVisible();
+extern "C" bool func_801C4648(const void* self) {
+    const uint8_t* bytes = static_cast<const uint8_t*>(self);
+    return (bytes[0xBB] & 1) != 0;
 }
 
 void sinit_801C4AE4() {
@@ -27236,8 +27237,8 @@ void sinit_801C4AE4() {
 }
 
 void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
-    color->r = r;
-    color->g = g;
-    color->b = b;
     color->a = a;
+    color->b = b;
+    color->g = g;
+    color->r = r;
 }

@@ -46,6 +46,6 @@ void AXQuit(){
     }
 }
 
-BOOL AXIsInit(){
+BOOL AXIsInit() {
     return __init;
 }

@@ -20,15 +20,9 @@ Improvement workflow:
    | Different branch target | wrong if/else structure or loop boundary |
    | `rlwinm` vs `slwi`/`srwi` | mask vs shift — try the other form |
    | Different `addi`/`li` immediate | wrong constant or offset |
+   | `lwz`/`stw` pair per field vs single `lwz`/`stw` pair | field-by-field copy vs struct assignment — try `*dst = *src` |
 3. **Make one bounded change**: Pick the single most impactful mismatch, fix it, and leave everything else alone. Do not restructure the function or change unrelated code.
 4. **Preserve semantics**: The current candidate may already be mostly correct. Do not regress working parts. When in doubt, make the smallest possible edit to the current function.
-5. **Consider MWCC knowledge**: If the dossier includes records about this function or similar mismatch patterns, apply the recorded fix if it genuinely fits.
-
-Common MWCC pitfalls to check:
-
-- **Signed/unsigned mismatch**: MWCC `lbz`/`lhz`/`lwz` are unsigned loads. If retail uses `cmpwi` (signed compare) after `lwz`, the source type is `int`, not `u32`. If retail uses `cmplwi` (unsigned), the source is `u32`.
-- **Type width**: `stb` stores a byte. The source should be `u8`, `s8`, `char`, or `bool`. `sth` is 16-bit, `stw` is 32-bit.
-- **Expression ordering**: If the candidate logic is correct but bytes differ, break `a + b * c + d` into `t = b * c; result = a + t + d` and try different groupings.
-- **Load/store patterns**: MWCC may use `lwz r0, off(rX)` / `stw r0, off(rY)` pairs for struct-to-struct copy instead of field-by-field. Writing a simple assignment `*dst = *src` may match better than individual field copies.
+5. **Consider MWCC knowledge**: If the dossier includes records about this function or similar mismatch patterns, apply the recorded fix if it genuinely fits. The main prompt already includes general MWCC compiler hints; focus on mismatch-specific patterns here.
 
 Return only the complete target function definition.

@@ -186,8 +186,7 @@ static void __AXDSPResumeCallback(DSPTask* task) {
 }
 
 static void __AXDSPDoneCallback(DSPTask* task) {
-#pragma unused(task)
-
+    #pragma unused(task)
     __AXDSPDoneFlag = TRUE;
     OSWakeupThread(&__AXOutThreadQueue);
 }

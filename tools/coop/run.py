@@ -6,6 +6,7 @@ Usage (from repository root):
   python3 tools/coop/run.py status
   python3 tools/coop/run.py baseline
   python3 tools/coop/run.py configure
+  python3 tools/coop/run.py progress
   python3 tools/coop/run.py ctx src/kyoshin/cf/CfPadTask.cpp
   python3 tools/coop/run.py build kyoshin/cf/CfPadTask
   python3 tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol copyInputFlag__Q22cf9CfPadTaskFP4CPadUlUl
@@ -123,6 +124,22 @@ def cmd_configure(project: Project, config: CoopConfig) -> int:
     project.configure()
     print("configure complete")
     return 0
+
+
+def cmd_progress(project: Project, config: CoopConfig, fancy: Optional[bool]) -> int:
+    """Build the report.json via ninja (no linking) and print progress."""
+    report_path = config.build_dir / "report.json"
+    if not report_path.is_file():
+        project.ninja_build(f"build/{config.region}/report.json")
+    if not report_path.is_file():
+        print(f"ERROR: report.json still missing after build attempt", file=sys.stderr)
+        return 1
+    cfg_py = ROOT / "configure.py"
+    cmd = [sys.executable, str(cfg_py), "--version", config.region, "progress"]
+    if fancy is not None:
+        print(f"(use --fancy/--no-fancy by editing configure.py:196-201)")
+    result = subprocess.run(cmd, cwd=ROOT, check=False)
+    return result.returncode
 
 
 def cmd_ctx(project: Project, source: Path, output: Optional[Path]) -> int:
@@ -1071,6 +1088,18 @@ def main() -> int:
     sub.add_parser("baseline", help="Verify main.dol, configure, and full ninja build")
     sub.add_parser("configure", help="Run python3 configure.py for the selected region")
 
+    p_progress = sub.add_parser(
+        "progress", help="Build report and print decompilation progress (no linking required)",
+    )
+    p_progress.add_argument(
+        "--fancy", action="store_true", default=None,
+        help="Force fancy progress output (achievements/collectopaedias)",
+    )
+    p_progress.add_argument(
+        "--no-fancy", action="store_false", dest="fancy", default=None,
+        help="Suppress fancy progress output",
+    )
+
     p_ctx = sub.add_parser("ctx", help="Generate decomp.me context for a source file")
     p_ctx.add_argument("source", type=Path)
     p_ctx.add_argument("-o", "--output", type=Path)
@@ -1256,6 +1285,8 @@ def main() -> int:
         return cmd_baseline(project, config)
     if args.command == "configure":
         return cmd_configure(project, config)
+    if args.command == "progress":
+        return cmd_progress(project, config, args.fancy)
     if args.command == "ctx":
         return cmd_ctx(project, args.source, args.output)
     if args.command == "build":

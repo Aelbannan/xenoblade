@@ -207,9 +207,9 @@ PaneManager::~PaneManager() {
     }
 }
 
-void PaneManager::createLayoutScene(const nw4hbm::lyt::Layout& rLayout) {
+void PaneManager::createLayoutScene(const nw4hbm::lyt::Layout& layout) {
     suIDCounter = 0;
-    walkInChildren(rLayout.GetRootPane()->GetChildList());
+    walkInChildren(layout.GetRootPane()->GetChildList());
 }
 
 void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {

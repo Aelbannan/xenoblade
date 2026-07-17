@@ -342,9 +342,7 @@ AXPB* __AXGetPBs(void) {
 void __AXSetPBDefault(AXVPB* vpb) {
     vpb->pb.state = AX_VOICE_STOP;
     vpb->pb.itd.flag = 0;
-    vpb->sync = AX_PBSYNC_STATE | AX_PBSYNC_ITD | AX_PBSYNC_LPF |
-                AX_PBSYNC_BIQUAD | AX_PBSYNC_REMOTE | AX_PBSYNC_RMTSRC |
-                AX_PBSYNC_RMTIIR;
+    vpb->sync = 0x18A7FFDC;
     vpb->pb.lpf.on = 0;
     vpb->pb.biquad.on = 0;
     vpb->pb.remote = 0;

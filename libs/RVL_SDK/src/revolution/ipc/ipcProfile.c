@@ -31,7 +31,7 @@ void IPCiProfInit(void) {
     IpcNumPendingReqs = 0;
     IpcNumUnIssuedReqs = 0;
 
-    for (i = 0; i < IPC_REQUEST_MAX; i++) {
+    for (i = 0; i < 32; i++) {
         IpcReqPtrArray[i] = NULL;
         IpcFdArray[i] = -1;
     }

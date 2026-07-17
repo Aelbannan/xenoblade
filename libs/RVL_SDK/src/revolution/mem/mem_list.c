@@ -64,6 +64,5 @@ void* MEMGetNextListObject(MEMList* list, void* object) {
     if (object == NULL) {
         return list->head;
     }
-
-    return OBJECT_GET_NODE(list, object)->next;
+    return *(void**)((char*)object + list->offset + 4);
 }

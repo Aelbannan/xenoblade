@@ -23,6 +23,12 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 | Stack slot at wrong offset | MWCC alignment / padding | **§5** — use multiple smaller types (`CPnt16` × N not `CRect16` × 1) |
 | Zeros/sign-extension: `extsh` vs none | `s16` local vs `int` | Use `int` unless retail has `extsh` |
 | Struct offset off by 4/8 | Missing pad or wrong base layout | Fix header layout before tuning C++ |
+| SDA vs far addressing | Different insn (`lwz@sda21` vs `lis`/`addi`) | Correct section/size via linker script |
+| Wrong callee-save depth | `_savegpr_29` vs `_savegpr_28` | Shrink live ranges across large functions |
+| Inlined vs outlined | Extra/missing `bl` | Match retail inline boundaries; IPA pragmas |
+| Wrong float constant pool | `lfs` from wrong `.sdata2` slot | `extern "C" const float lbl_eu_*` |
+| Ternary vs `if/else` codegen | Extra `b` or `sel` | Toggle form |
+| Ghidra `r13` SDA | Misleading decompilation | Set SDA bases in Ghidra |
 
 ---
 
@@ -215,26 +221,6 @@ Fix: use individual components (`ml::CPnt16 splitSize, splitPos, normalSize, nor
 ### 6. Struct layout before logic
 
 Fix offsets in headers before tuning C++ shape. Wrong layout causes branch/frame divergence even when control flow looks right.
-
----
-
-## Common pitfalls
-
-| Pitfall | Symptom | Remedy |
-|---------|---------|--------|
-| Wrong global symbol name | Reloc mismatch at `lwz`/`lfs` | `extern "C"` retail label |
-| SDA vs far addressing | Different insn (`lwz@sda21` vs `lis`/`addi`) | Correct section/size; linker script |
-| Regswap (live-range order) | Same ops, different registers | Reorder locals, split expressions |
-| Missing dead `mr` | 1 insn, ~97–99% | `return this;` or extend temp live range |
-| Wrong callee-save depth | `_savegpr_29` vs `_savegpr_28` | Shrink live ranges across large functions |
-| Stack frame size | `stwu r1,-0xN` differs | Fewer spills or match helper boundaries |
-| Inlined vs outlined | Extra/missing `bl` | Match retail inline usage; IPA pragmas |
-| if/else inversion | Branch to wrong block | Swap per asm |
-| `switch` shape wrong | Jump table vs compare tree | Match asm case order; duplicate cases may be needed |
-| Wrong float constant pool | `lfs` from wrong `.sdata2` slot | `extern "C" const float lbl_eu_*` |
-| C++ mangling on `bl` | Wrong or duplicate symbol | `extern "C"` declaration |
-| Ternary vs if/else codegen | Extra `b` or `sel` | Toggle form |
-| Ghidra r13 SDA | Misleading decompilation | Set SDA bases in Ghidra |
 
 ---
 

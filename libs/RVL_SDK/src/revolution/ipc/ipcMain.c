@@ -47,6 +47,8 @@ void IPCSetBufferHi(void* hi) {
     IPCCurrentBufferHi = hi;
 }
 
+extern void* IPCCurrentBufferLo;
+
 void IPCSetBufferLo(void* lo) {
     IPCCurrentBufferLo = lo;
 }

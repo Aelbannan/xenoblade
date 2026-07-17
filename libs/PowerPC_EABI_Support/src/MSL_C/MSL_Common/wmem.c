@@ -1,8 +1,8 @@
 #include <wchar.h>
 #include <string.h>
 
-wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n){
-    memcpy(dest,src,n * sizeof(wchar_t));
+wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n) {
+    return (wchar_t*)memcpy(dest, src, n * sizeof(wchar_t));
 }
 
 //unused
@@ -22,13 +22,11 @@ void wmemset(){
 }
 
 wchar_t* wmemchr(wchar_t* s, wchar_t c, int n) {
-    s32 i;
-
-    for(i = 0; i != n; s++, i++){
-        if(*s == c) return s;
+    while (n--) {
+        if (*s == c) return s;
+        s++;
     }
-
-    return 0;
+    return NULL;
 }
 
 //unused

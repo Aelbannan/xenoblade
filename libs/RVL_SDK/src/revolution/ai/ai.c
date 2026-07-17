@@ -63,23 +63,25 @@ void AIGetDMAEnableFlag(){
 }
 
 void AIStartDMA(void) {
-    DSP_HW_REGS[DSP_AI_DMA_CSR] |= DSP_AI_DMA_CSR_PLAY;
+    *(volatile unsigned short*)0xCC005036 |= 0x8000;
 }
 
 void AIStopDMA(void) {
-    DSP_HW_REGS[DSP_AI_DMA_CSR] &= ~DSP_AI_DMA_CSR_PLAY;
+    volatile u16* reg = (volatile u16*)0xCC005036;
+    *reg &= 0x7FFF;
 }
 
 u32 AIGetDMABytesLeft(void) {
-    return (DSP_HW_REGS[DSP_AI_DMA_BYTES_LEFT] & 0x7FFF) * 32;
+    return (*(volatile u16*)0xCC00503A & 0x7FFF) * 32;
 }
 
 u32 AIGetDMAStartAddr(void) {
-    return ((DSP_HW_REGS[DSP_AI_DMA_START_H] & 0x1FFF) << 16) | (DSP_HW_REGS[DSP_AI_DMA_START_L] & 0xFFE0);
+    const volatile u16* regs = (const volatile u16*)0xCC005030;
+    return ((regs[0] & 0x1FFF) << 16) | (regs[1] & 0xFFE0);
 }
 
 u32 AIGetDMALength(void) {
-    return (DSP_HW_REGS[DSP_AI_DMA_CSR] & 0x7FFF) << 5;
+    return ((*(volatile u16*)0xCC005036) & 0x7FFF) << 5;
 }
 
 BOOL AICheckInit(void) {

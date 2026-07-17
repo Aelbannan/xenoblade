@@ -36,10 +36,9 @@ from tools.llm_harness.xenoblade_project import (
 class CandidateTests(unittest.TestCase):
     def test_parses_fenced_typed_candidate(self) -> None:
         candidate = parse_candidate(
-            '```json\n{"source":"int f() { return 1; }","notes":"one","confidence":0.8}\n```'
+            '```json\n{"source":"int f() { return 1; }","notes":"one"}\n```'
         )
         self.assertEqual(candidate.notes, ["one"])
-        self.assertEqual(candidate.confidence, 0.8)
 
     def test_rejects_missing_source(self) -> None:
         with self.assertRaises(ValueError):

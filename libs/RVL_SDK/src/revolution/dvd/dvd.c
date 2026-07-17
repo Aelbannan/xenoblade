@@ -400,10 +400,7 @@ static void cbForStateReadingFST(u32 intType) {
     }
 }
 
-static void FatalAlarmHandler(OSAlarm* alarm, OSContext* ctx) {
-#pragma unused(alarm)
-#pragma unused(ctx)
-
+void FatalAlarmHandler(OSAlarm* alarm, OSContext* ctx) {
     __DVDPrintFatalMessage();
 }
 
@@ -484,7 +481,6 @@ static u32 CategorizeError(u32 diimmval) {
         return ERROR_TYPE_ERROR;
     }
 
-    // Mask out state bits
     diimmval &= ~0xFF000000;
 
     if (diimmval == REQUEST_ERROR_MEDIUM_CHANGED ||
@@ -2336,7 +2332,6 @@ BOOL __DVDTestAlarm(const OSAlarm* alarm) {
     if (alarm == &ResetAlarm) {
         return TRUE;
     }
-
     return __DVDLowTestAlarm(alarm);
 }
 
@@ -2355,11 +2350,11 @@ void DVDUnencryptedReadAbsAsyncForBS(){
 BOOL __DVDStopMotorAsync(DVDCommandBlock* block, DVDCommandCallback callback) {
 #pragma unused(block)
 #pragma unused(callback)
-
     return TRUE;
 }
 
-void __DVDRestartMotor(void) {}
+void __DVDRestartMotor(void) {
+}
 
 //unused
 void DVDDownRotationAsync(){

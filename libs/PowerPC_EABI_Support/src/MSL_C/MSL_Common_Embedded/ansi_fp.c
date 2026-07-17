@@ -174,17 +174,15 @@ void __str2dec(decimal* d, const char* s, short exp) {
     }
     d->sig.length = i;
     
-    if (*s != 0){
+    if (*s != 0) {
         if (*s < 5) return;
         if (*s > 5) goto round;
         
         {
             const char* p = s + 1;
-
             for (; *p != 0; p++) {
                 if (*p != '0') goto round;
             }
-
             if ((d->sig.text[i - 1] & 1) == 0) return;
         }
     round:
@@ -319,8 +317,8 @@ BOOL __equals_dec(const decimal* x, const decimal* y) {
 
 BOOL __less_dec(const decimal* x, const decimal* y) {
     if (x->sig.text[0] == 0) {
-        u8 temp_r3 = y->sig.text[0];
-        return ((u32) (-temp_r3 | temp_r3) >> 31);
+        u8 temp = y->sig.text[0];
+        return (u32)(-temp | temp) >> 31;
     }
     
     if (y->sig.text[0] == 0) {
@@ -335,16 +333,16 @@ BOOL __less_dec(const decimal* x, const decimal* y) {
             l = y->sig.length;
         }
 
-        for(i = 0; i < l; i++){
+        for (i = 0; i < l; i++) {
             if (x->sig.text[i] < y->sig.text[i]) {
                 return TRUE;
-            }else if (y->sig.text[i] < x->sig.text[i]) {
+            } else if (y->sig.text[i] < x->sig.text[i]) {
                 return FALSE;
             }
         }
 
         if (l == x->sig.length) {
-            for(; i < y->sig.length; i++){
+            for (; i < y->sig.length; i++) {
                 if (y->sig.text[i] != 0) {
                     return TRUE;
                 }

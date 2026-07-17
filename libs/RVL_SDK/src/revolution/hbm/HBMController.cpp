@@ -171,9 +171,12 @@ void Controller::clrKpadButton() {
     mHBController.release = 0;
 }
 
+extern "C" const float lbl_80518684;
+extern "C" const float lbl_80518688;
+
 void Controller::setInValidPos() {
-    mHBController.x = -10000.0f;
-    mHBController.y = -10000.0f;
+    mHBController.x = lbl_80518684;
+    mHBController.y = lbl_80518688;
 }
 
 int Controller::getChan() const {
@@ -303,10 +306,9 @@ void Controller::ControllerCallback(s32 chan, s32 result) {
 }
 
 bool Controller::getBatteryFlag() const {
-    if (getChan() >= WPAD_MAX_CONTROLLERS) {
+    if (getChan() >= 4) {
         return false;
     }
-
     return sBatteryFlag[getChan()];
 }
 

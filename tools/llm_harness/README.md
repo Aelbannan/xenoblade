@@ -134,8 +134,7 @@ The required model response is:
   "source": "complete replacement function definition",
   "hypothesis": "one bounded hypothesis, naming any MWCC knowledge IDs used",
   "notes": ["evidence or uncertainty"],
-  "next_change": "one follow-up experiment",
-  "confidence": 0.0
+  "next_change": "one follow-up experiment"
 }
 ```
 
@@ -246,8 +245,7 @@ The required response replaces only named slot contents:
   "patches": [{"slot_id": "pad-statics", "source": "bounded replacement C++"}],
   "hypothesis": "one residual-layout hypothesis",
   "notes": [],
-  "next_change": "one bounded follow-up",
-  "confidence": 0.8
+  "next_change": "one bounded follow-up"
 }
 ```
 

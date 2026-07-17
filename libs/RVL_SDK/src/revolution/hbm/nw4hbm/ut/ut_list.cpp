@@ -108,11 +108,10 @@ void List_Remove(List* pList, void* pObject) {
     pList->numObjects--;
 }
 
-void* List_GetNext(const List* pList, const void* pObject) {
+void* nw4hbm::ut::List_GetNext(const List* pList, const void* pObject) {
     if (pObject == NULL) {
         return pList->headObject;
     }
-
     return NW4R_UT_LIST_GET_LINK(*pList, pObject)->nextObject;
 }
 

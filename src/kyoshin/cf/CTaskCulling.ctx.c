@@ -12158,7 +12158,15 @@ private:
 struct CMsgParamEntry{
     u32 command; //0x0
     WORK_ID wid; //0x4
-    u8 unk8[0x24 - 0x8];
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
 };
 
 template <int N>
@@ -12194,8 +12202,39 @@ public:
         return mArrayPtr[mFront % mCapacity];
     }
 
-    //TODO(kiwi) Emitted at 804380b4
-    void enqueue(u32 msg){}
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
 
     void pop(){
         mSize--;
@@ -16233,7 +16272,7 @@ public:
 /* "src/kyoshin/COccCulling.hpp" line 4 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
 
-// Retail SDA 1.0f — used by inlined CCullFrustum::init (addFrustum reloc match).
+// Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).
 extern "C" const float lbl_eu_80667C88;
 
 //Some type of view frustum?
@@ -16386,6 +16425,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
@@ -16445,8 +16485,18 @@ namespace cf{
 /* "src/kyoshin/code_800AA008.hpp" line 3 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
 
-void func_800AA318(UNKTYPE* r3, u32* r4, u32* r5, u32* r6, u32* r7);
-void func_800AA33C(ml::FixStr<64>& r3, UNKTYPE* r4, u32 r5, u32 r6);
+void func_800AA008(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3);
+int func_800AA1B4(const char* str, int digitCount, int* out);
+u32 func_800AA2BC(u32 a, u32 b);
+u32 func_800AA2D0(u32 a, u32 b, u32 c);
+u32 func_800AA2E8(u32 a, u32 b, u32 c);
+u32 func_800AA300(u32 a, u32 b, u32 c);
+void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
+int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+void func_800AA5C0();
+u32 func_800AA600(const char* str);
+u32 func_800AA714(const char* path);
+void sinit_800AABBC();
 /* end "kyoshin/code_800AA008.hpp" */
 /* "src/kyoshin/cf/CTaskCulling.cpp" line 3 "monolib/scn.hpp" */
 /* end "monolib/scn.hpp" */
@@ -16480,17 +16530,17 @@ namespace cf{
         spInstance = nullptr;
     }
 
-    void CTaskCulling::func_801A2BD0(u32 r3){
-        CTaskCulling* instance = spInstance;
-        
-        if(instance != nullptr){
-            if(r3 != 0){
-                instance->unk120 |= 8;
-            }else{
-                instance->unk120 &= ~8;
-            }
+void CTaskCulling::func_801A2BD0(unsigned long r3){
+    CTaskCulling* instance = spInstance;
+    
+    if(instance != nullptr){
+        if(r3 != 0){
+            instance->unk120 |= 8;
+        }else{
+            instance->unk120 &= ~8;
         }
     }
+}
 
     UNKTYPE* CTaskCulling::func_801A2C04(){
         if(lbl_eu_80664328 == nullptr) return nullptr;
@@ -16502,23 +16552,21 @@ namespace cf{
         return mOccCulling.func_801A0F04(r4);
     }
 
-    bool CTaskCulling::ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5){
+bool CTaskCulling::ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5){
         if(spInstance == nullptr) return false;
         return (unk120 & 8) ? false : mOccCulling.func_801A1444(r4, r5);
     }
 
-    bool CTaskCulling::ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
+bool CTaskCulling::ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
         if(spInstance == nullptr) return false;
         return mOccCulling.func_801A1550(r4, r5, r6);
     }
 
-    void CTaskCulling::func_801A2C94(){
-        CTaskCulling* instance = spInstance;
-
-        if(spInstance != nullptr){
-            spInstance->mOccCulling.func_801A0794();
-        }
-    }
+void CTaskCulling::func_801A2C94(){
+    CTaskCulling* instance = spInstance;
+    if (instance == nullptr) return;
+    instance->mOccCulling.func_801A0794();
+}
 
     void CTaskCulling::func_801A2CAC(){
         if(spInstance == nullptr) return;
@@ -16528,9 +16576,9 @@ namespace cf{
         UNKTYPE* r3 = cf::CfGameManager::func_80083298();
         u32 r4, r5, r6, r7;
 
-        func_800AA318(*(UNKTYPE**)((u32)r3 + 0x70), &r4, &r5, &r6, &r7);
-        func_800AA33C(spInstance->unk98, *(UNKTYPE**)((u32)r3 + 0x70), 0, 0);
-        func_800AA33C(spInstance->unkDC, *(UNKTYPE**)((u32)r3 + 0x70), 1, 0);
+        func_800AA318(*(u32*)((u32)r3 + 0x70), &r4, &r5, &r6, &r7);
+        func_800AA33C(spInstance->unk98, *(u32*)((u32)r3 + 0x70), 0, 0);
+        func_800AA33C(spInstance->unkDC, *(u32*)((u32)r3 + 0x70), 1, 0);
 
         spInstance->unkDC.unkInline1("\\");
 
@@ -16554,9 +16602,9 @@ namespace cf{
         }
     }
 
-    CTaskCulling* CTaskCulling::getInstance(){
-        return spInstance;
-    }
+CTaskCulling* CTaskCulling::getInstance() {
+    return lbl_eu_80664328;
+}
 
     void CTaskCulling::Init(){
         cf::CfGameManager::spScene->addRenderCB(this, 1, 0);
@@ -16574,10 +16622,10 @@ namespace cf{
 
         DELETE_OBJ(unk94);
     }
-    void CTaskCulling::Move(){}
-    void CTaskCulling::Draw(){}
+void CTaskCulling::Move(){}
+void CTaskCulling::Draw(){}
 
-    void CTaskCulling::cbRenderBefore(){}
+void CTaskCulling::cbRenderBefore(){}
 
     CTaskCulling* CTaskCulling::create(CProcess* pParent, CScn* pScene){
         CTaskCulling* taskCulling = new (CWorkThreadSystem::getWorkMem()) CTaskCulling(pScene);

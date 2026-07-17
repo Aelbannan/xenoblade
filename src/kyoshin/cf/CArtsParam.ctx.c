@@ -986,10 +986,10 @@ namespace cf {
         }
     }
 
-    u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
-        if(unk88 != nullptr){
-            return *(u8*)unk88;
-        }
-        return unk2A;
+u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
+    if(unk88 != nullptr){
+        return *(u8*)unk88;
     }
+    return unk2A;
+}
 }

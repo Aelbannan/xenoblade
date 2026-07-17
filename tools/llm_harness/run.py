@@ -36,6 +36,12 @@ def main(argv: list[str] | None = None) -> int:
                 action="store_true",
                 help="Shuffle eligible targets before applying --number",
             )
+        if name in {"new", "improve"}:
+            command.add_argument(
+                "--certified-funcs",
+                action="store_true",
+                help="Only select functions whose called functions are FULL_MATCH or EQUIVALENT+certified",
+            )
         if name == "new":
             command.add_argument(
                 "--ignore-called-functions",
@@ -76,7 +82,6 @@ def main(argv: list[str] | None = None) -> int:
     prepare = sub.add_parser("prepare", help="Preview or add markers around an existing target function")
     prepare.add_argument("target_id")
     prepare.add_argument("--write", action="store_true")
-    prepare.add_argument("--owner", default="")
     slot = sub.add_parser("slot", help="Preview or insert an empty marker slot at an exact anchor")
     slot.add_argument("target_id")
     slot.add_argument("--file", type=Path, required=True)
@@ -85,7 +90,6 @@ def main(argv: list[str] | None = None) -> int:
     anchor.add_argument("--after")
     slot.add_argument("--unit", default="", help="Objdiff unit; required for unassigned targets")
     slot.add_argument("--write", action="store_true")
-    slot.add_argument("--owner", default="")
     tu_slot = sub.add_parser(
         "tu-slot", help="Preview or add a bounded source slot for TU completion"
     )
@@ -97,11 +101,9 @@ def main(argv: list[str] | None = None) -> int:
     tu_slot.add_argument("--start", help="Wrap a region beginning at this exact anchor")
     tu_slot.add_argument("--end", help="Wrap a region ending with this exact anchor")
     tu_slot.add_argument("--write", action="store_true")
-    tu_slot.add_argument("--owner", default="")
     promote = sub.add_parser("promote", help="Preview or apply an experiment's best candidate")
     promote.add_argument("experiment", type=Path)
     promote.add_argument("--write", action="store_true")
-    promote.add_argument("--owner", default="")
     rescore = sub.add_parser("rescore", help="Re-evaluate saved candidates without new model calls")
     rescore.add_argument("experiment", type=Path)
     rescore.add_argument("--max-parallel", type=int)
@@ -126,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
         prepare_fn = getattr(harness.adapter, "prepare", None)
         if prepare_fn is None:
             parser.error("Configured project adapter does not support prepare")
-        print(prepare_fn(args.target_id, write=args.write, owner=args.owner))
+        print(prepare_fn(args.target_id, write=args.write))
         return 0
     if args.command == "slot":
         slot_fn = getattr(harness.adapter, "create_slot", None)
@@ -139,7 +141,6 @@ def main(argv: list[str] | None = None) -> int:
             after=args.after or "",
             unit=args.unit,
             write=args.write,
-            owner=args.owner,
         ))
         return 0
     if args.command == "tu-slot":
@@ -155,11 +156,10 @@ def main(argv: list[str] | None = None) -> int:
             start=args.start or "",
             end=args.end or "",
             write=args.write,
-            owner=args.owner,
         ))
         return 0
     if args.command == "promote":
-        print(harness.promote(args.experiment, write=args.write, owner=args.owner))
+        print(harness.promote(args.experiment, write=args.write))
         return 0
     if args.command == "rescore":
         print(harness.rescore(args.experiment, max_parallel=args.max_parallel))
@@ -179,10 +179,13 @@ def main(argv: list[str] | None = None) -> int:
                 target_ids = harness.select_new_targets(
                     args.number,
                     ignore_called_functions=args.ignore_called_functions,
+                    certified_funcs=args.certified_funcs,
                 )
             else:
                 target_ids = harness.select_targets(
-                    args.command, args.number, randomize=args.random
+                    args.command, args.number,
+                    randomize=args.random,
+                    certified_funcs=args.certified_funcs,
                 )
         except (TypeError, ValueError) as exc:
             parser.error(str(exc))

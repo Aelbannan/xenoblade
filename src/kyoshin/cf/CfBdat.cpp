@@ -191,7 +191,7 @@ namespace cf{
         lbl_80666A6C = nullptr;
     }
 
-    void CfBdat::resetMapBdatFileDataPointers(){
+void CfBdat::resetMapBdatFileDataPointers(){
         spCurRouteListFileData = nullptr;
         spCurMapEffListFileData = nullptr;
         spCurMapObjListFileData = nullptr;

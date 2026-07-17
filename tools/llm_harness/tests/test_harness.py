@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from tools.llm_harness.core import Harness, parse_candidate
-from tools.llm_harness.providers import parse_opencode_output
+from tools.llm_harness.providers import parse_opencode_output, parse_reasonix_output
 from tools.llm_harness.types import Candidate, ProviderResult, SourcePatch
 from tools.llm_harness.workspace import GitWorktreeManager
 from tools.llm_harness.xenoblade_project import (
@@ -124,6 +124,62 @@ class OpenCodeOutputTests(unittest.TestCase):
         self.assertEqual(usage["input"], 14)
         self.assertEqual(usage["output"], 5)
         self.assertAlmostEqual(usage["cost"], 0.07)
+
+
+class ReasonixOutputTests(unittest.TestCase):
+    def test_parses_result_and_usage(self) -> None:
+        output = json.dumps({
+            "type": "result",
+            "subtype": "success",
+            "is_error": False,
+            "duration_ms": 2131,
+            "num_turns": 1,
+            "result": '{"source":"int f() { return 1; }"}',
+            "session_id": "20260717-test-session",
+            "total_cost_usd": 0.012569,
+            "usage": {
+                "input_tokens": 12543,
+                "output_tokens": 13,
+                "cache_read_input_tokens": 8000,
+                "cache_creation_input_tokens": 4000,
+            },
+        })
+        text, events, usage = parse_reasonix_output(output)
+        self.assertEqual(text, '{"source":"int f() { return 1; }"}')
+        self.assertEqual(len(events), 1)
+        self.assertEqual(usage["input"], 12543)
+        self.assertEqual(usage["output"], 13)
+        self.assertEqual(usage["cache_read"], 8000)
+        self.assertEqual(usage["cache_write"], 4000)
+        self.assertAlmostEqual(usage["cost"], 0.012569)
+
+    def test_parses_result_without_usage(self) -> None:
+        output = json.dumps({
+            "type": "result",
+            "result": "just text",
+        })
+        text, events, usage = parse_reasonix_output(output)
+        self.assertEqual(text, "just text")
+        self.assertIsNone(usage["input"])
+
+    def test_handles_plain_text_fallback(self) -> None:
+        text, events, usage = parse_reasonix_output("plain text response")
+        self.assertEqual(text, "plain text response")
+        self.assertEqual(events, [])
+        self.assertEqual(usage, {})
+
+    def test_parses_error_result(self) -> None:
+        output = json.dumps({
+            "type": "result",
+            "subtype": "error",
+            "is_error": True,
+            "result": "",
+        })
+        text, events, usage = parse_reasonix_output(output)
+        self.assertEqual(text, "")
+        self.assertEqual(events, [{"type": "result", "subtype": "error", "is_error": True, "result": ""}])
+        self.assertIsNone(usage["input"])
+        self.assertIsNone(usage["cost"])
 
 
 class KnowledgeDossierTests(unittest.TestCase):
@@ -752,6 +808,7 @@ class StatsTests(unittest.TestCase):
             self.assertEqual(stats["errors"], 1)
             self.assertAlmostEqual(stats["total_cost"], 0.3)
             self.assertAlmostEqual(stats["average_cost"], 0.15)
+            self.assertEqual(stats["non_cached_tokens"], 22)
             self.assertEqual(stats["cache_read_tokens"], 8)
             self.assertEqual(stats["cache_write_tokens"], 3)
 

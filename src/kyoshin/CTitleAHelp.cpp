@@ -88,7 +88,7 @@ u8 CTitleAHelp::func_801C4114() {
 }
 
 u8 CTitleAHelp::func_801C411C() {
-    return unk28;
+	return unk28;
 }
 
 u8 CTitleAHelp::func_801C4124() {
@@ -103,7 +103,7 @@ void CTitleAHelp::func_801C412C() {
 }
 
 void CTitleAHelp::func_801C414C() {
-    if(unk2c == 3) {
+    if (unk2c == 3) {
         unk2c = 4;
         unk36 = 0;
     }

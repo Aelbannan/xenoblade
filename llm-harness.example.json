@@ -13,8 +13,8 @@
     "tu_section_byte_limit": 16384
   },
   "providers": {
-    "opencode": {
-      "binary": "opencode",
+    "reasonix": {
+      "binary": "reasonix",
       "timeout_seconds": 900,
       "pure": true
     }
@@ -45,8 +45,8 @@
     "default": [
       {
         "id": "model-a",
-        "provider": "opencode",
-        "model": "provider/model-a",
+        "provider": "reasonix",
+        "model": "deepseek-flash",
         "agent": "plan",
         "runs": 3
       }
@@ -54,8 +54,8 @@
     "tu-complete": [
       {
         "id": "model-b",
-        "provider": "opencode",
-        "model": "provider/model-b",
+        "provider": "reasonix",
+        "model": "deepseek-pro",
         "agent": "plan",
         "runs": 3
       }

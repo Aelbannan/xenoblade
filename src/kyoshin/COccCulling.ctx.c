@@ -15140,7 +15140,7 @@ namespace ml{
 /* end "monolib/math/Random.hpp" */
 /* end "monolib/math.hpp" */
 
-// Retail SDA 1.0f — used by inlined CCullFrustum::init (addFrustum reloc match).
+// Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).
 extern "C" const float lbl_eu_80667C88;
 
 //Some type of view frustum?
@@ -15424,7 +15424,7 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
     }
 }
 
-bool COccCulling::func_801A1444(const CVec3& intersectPoint, float distance){
+bool COccCulling::func_801A1444(const ml::CVec3& intersectPoint, float distance){
     CCullFrustum* frustum;
     
     for(CCullFrustum** it = mFrustumList1.begin(); it != mFrustumList1.end(); it++){

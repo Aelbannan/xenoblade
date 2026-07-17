@@ -84,13 +84,11 @@ const char* const sLanguageFolderPaths2[8] = {
 //Static file callback functions.
 
 void OnBdatFileLoaded(void* pData, u32 length) {
-    CBdat::func_8003AA50();
     CBdat::func_8003AA78(0, pData);
 }
 
 void OnBdatFileUnloaded(void* pData, u32 length) {
     CBdat::func_8003AA8C(0);
-    CBdat::func_8003AA50();
 }
 
 void OnAidatFileLoaded(void* pData, u32 length){
@@ -134,7 +132,7 @@ void vmInitPluginRegistCallback(){
     pluginRegist();
 }
 
-void vmInitCallback(){
+void vmInitCallback() {
     vmInit();
 }
 

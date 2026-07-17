@@ -45,18 +45,18 @@ namespace cf{
         CLibHbm::removeCallback(this);
     }
 
-    void CfPadTask::Init(){
-        mErrorFrameCount = 0;
-        mNoErrorFrameCount = 0;
-        spInstance = this;
-    }
+void CfPadTask::Init(){
+    mErrorFrameCount = 0;
+    mNoErrorFrameCount = 0;
+    spInstance = this;
+}
 
     void CfPadTask::Term(){
         CLibHbm::setCurrentWpadChannel(WPAD_CHAN_INVALID);
         spInstance = nullptr;
     }
 
-    void CfPadTask::copyInputFlag(CPad* pPad, u32 r5, u32 r6){
+void CfPadTask::copyInputFlag(CPad* pPad, u32 r5, u32 r6){
         if(pPad->mPressedButtonFlags & r5) pPad->mPressedButtonFlags |= r6;
         else pPad->mPressedButtonFlags &= ~r6;
 
@@ -76,19 +76,26 @@ namespace cf{
         else pPad->mShortPressButtonFlags &= ~r6;
     }
 
-    void CfPadTask::func_801C1B94(float f1){
-        if(f1 < ml::epsilon) sInputDisableTimer = 0;
-        else if(f1 > sInputDisableTimer) sInputDisableTimer = f1;
-    }
+extern "C" {
+    extern const float lbl_eu_8066A208;
+}
 
-    bool CfPadTask::func_801C1BC0(){
+void CfPadTask::func_801C1B94(float f1){
+    if(f1 < lbl_eu_8066A208) sInputDisableTimer = 0;
+    else if(f1 > sInputDisableTimer) sInputDisableTimer = f1;
+}
+
+bool CfPadTask::func_801C1BC0(){
         return sInputDisableTimer > ml::epsilon;
     }
 
-    void CfPadTask::func_801C1BD8(float f1){
-        if(f1 < ml::epsilon) sButtonDisableTimer = 0;
-        else if(f1 > sButtonDisableTimer) sButtonDisableTimer = f1;
+void CfPadTask::func_801C1BD8(float f1) {
+    if (f1 < lbl_eu_8066A208) {
+        sButtonDisableTimer = lbl_eu_80667EA8;
+    } else if (f1 > sButtonDisableTimer) {
+        sButtonDisableTimer = f1;
     }
+}
 
     void CfPadTask::updateCfPadData(CfPadData* r4, const CPad* r5){
         u32 prevHoldFlags = r4->mHeldButtonFlags;
@@ -424,23 +431,23 @@ namespace cf{
         return false;
     }
 
-    int CfPadTask::checkForControllerError(bool noError){
-        if(!noError){
-            if((sDpadDisableTimer >= SECONDS_TO_FRAMES(1) && sMainPadExtension != PAD_EXT_INVALID) || sMainPadIsGCController){
-                if(sMainPadIsGCController) return ERROR_WIIMOTE_DISCONNECTED;
+int CfPadTask::checkForControllerError(bool noError) {
+    if (!noError) {
+        if ((sDpadDisableTimer >= SECONDS_TO_FRAMES(1) && sMainPadExtension != PAD_EXT_INVALID) || sMainPadIsGCController) {
+            if (sMainPadIsGCController) return ERROR_WIIMOTE_DISCONNECTED;
 
-                if(lbl_eu_80663E28 & (1u << 28)){
-                    if(sMainPadExtension == PAD_EXT_NUNCHUCK) return ERROR_NUNCHUCK_DISCONNECTED;
-                    else if(sMainPadExtension == PAD_EXT_CLASSIC_CONTROLLER) return ERROR_CLASSIC_CONTROLLER_DISCONNECTED;
-                    else if(sMainPadExtension == PAD_EXT_NONE) return ERROR_NO_EXTENSION;
-                }
+            if (lbl_eu_80663E28 & (1u << 28)) {
+                if (sMainPadExtension == PAD_EXT_NUNCHUCK) return ERROR_NUNCHUCK_DISCONNECTED;
+                else if (sMainPadExtension == PAD_EXT_CLASSIC_CONTROLLER) return ERROR_CLASSIC_CONTROLLER_DISCONNECTED;
+                else if (sMainPadExtension == PAD_EXT_NONE) return ERROR_NO_EXTENSION;
             }
-        }else if(sDpadDisableTimer >= SECONDS_TO_FRAMES(1) && (lbl_eu_80663E28 & (1u << 28))){
-            if(sMainPadExtension == PAD_EXT_NONE) return ERROR_NO_EXTENSION;
         }
-        
-        return ERROR_NONE;
+    } else if (sDpadDisableTimer >= SECONDS_TO_FRAMES(1) && (lbl_eu_80663E28 & (1u << 28))) {
+        if (sMainPadExtension == PAD_EXT_NONE) return ERROR_NO_EXTENSION;
     }
+
+    return ERROR_NONE;
+}
 
     void CfPadTask::onInitHbm(){
         u32 channel = cf::CfGameManager::getCurrentPadChannel();
@@ -456,14 +463,14 @@ namespace cf{
         }
     }
 
-    u32 CfPadTask::getWiimoteBattery(){
-        return sWiimoteBattery;
-    }
+u32 CfPadTask::getWiimoteBattery() {
+    return sWiimoteBattery;
+}
 
-    void CfPadTask::wpadGetInfoCallback(s32 chan, s32 result){
-        if(spInstance != nullptr && result == WPAD_ERR_OK){
-            sWiimoteBattery = sWpadInfo.battery;
-        }
+void CfPadTask::wpadGetInfoCallback(s32 chan, s32 result){
+    if(spInstance != NULL && result == WPAD_ERR_OK){
+        sWiimoteBattery = sWpadInfo.battery;
     }
+}
 
 }

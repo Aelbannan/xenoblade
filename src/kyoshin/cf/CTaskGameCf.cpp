@@ -68,7 +68,7 @@ void CTaskGameCf::Init() {
         spInstance = nullptr;
     }
 
-    void CTaskGameCf::Draw(){}
+void CTaskGameCf::Draw(){}
 
     void CTaskGameCf::func_80044424(){
         mMoveFunc = &CTaskGameCf::func_80044444;
@@ -194,16 +194,16 @@ void CTaskGameCf::Init() {
         }
     }
 
-    void CTaskGameCf::func_800448DC(){
-        if(CUICfManager::getInstance()){
-            CUICfManager::getInstance()->SetRemove();
-        }
-
-        setUnk54(2, false);
-        pTaskGame->getScene()->unk_3E4 = 1;
-        unk_8C = 2;
-        mMoveFunc = &CTaskGameCf::func_80044934;
+void CTaskGameCf::func_800448DC() {
+    if (CUICfManager::getInstance()) {
+        CUICfManager::getInstance()->SetRemove();
     }
+
+    setUnk54(2, false);
+    pTaskGame->getScene()->unk_3E4 = 1;
+    unk_8C = 2;
+    mMoveFunc = &CTaskGameCf::func_80044934;
+}
 
     void CTaskGameCf::func_80044934(){
         unk_8C--;

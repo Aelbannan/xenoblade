@@ -4,7 +4,7 @@
 #include "monolib/util.hpp"
 #include "monolib/math.hpp"
 
-// Retail SDA 1.0f — used by inlined CCullFrustum::init (addFrustum reloc match).
+// Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).
 extern "C" const float lbl_eu_80667C88;
 
 //Some type of view frustum?

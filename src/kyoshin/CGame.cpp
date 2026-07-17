@@ -53,6 +53,8 @@ CGame::CGame(const char* pName, CWorkThread* pParent) :
     CLibHbm::func_8045D5C8(1);
     CWorkSystem::setExitFunc(&onExit);
     wkSetEvent(EVT_4);
+    CDeviceVI::isTvFormatPal();
+    unk230 = 57;
 }
 
 CGame::~CGame() {

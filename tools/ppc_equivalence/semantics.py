@@ -2789,6 +2789,32 @@ def _apply_call_summary(
 ) -> MachineState:
     if not isinstance(ops, SymbolicOps):
         raise ExecutionInconclusive("matched-callee summaries require symbolic execution")
+    helper_prefix = "fixed-eabi-runtime-helper:"
+    if contract.source.startswith(helper_prefix):
+        name = contract.source[len(helper_prefix):]
+        parts = name.split("_")
+        if len(parts) != 3 or parts[0] != "" or parts[1] not in {
+            "savegpr", "restgpr", "savefpr", "restfpr",
+        }:
+            raise ExecutionInconclusive(f"invalid fixed EABI helper {name!r}")
+        try:
+            first = int(parts[2])
+        except ValueError as exc:
+            raise ExecutionInconclusive(f"invalid fixed EABI helper {name!r}") from exc
+        is_fpr = "fpr" in parts[1]
+        is_save = parts[1].startswith("save")
+        width = 8 if is_fpr else 4
+        result = state
+        for index in range(first, 32):
+            address = ops.add(state.gpr[11], ops.const(-width * (32 - index)))
+            result = _touch_memory(result, address, width, ops)
+            if is_save:
+                value = state.fpr[index] if is_fpr else state.gpr[index]
+                result = replace(result, memory=_store(result.memory, address, value, width, ops))
+            else:
+                value = _load(result.memory, address, width, ops)
+                result = result.with_fpr(index, value) if is_fpr else result.with_gpr(index, value)
+        return result
     callee = str(call_id)
     token = ops.call_token(callee, state, contract)
 

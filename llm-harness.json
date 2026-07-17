@@ -8,58 +8,81 @@
     "mwcc_knowledge_enabled": true,
     "mwcc_knowledge_limit": 8,
     "mwcc_knowledge_body_chars": 5000,
+    "context_similar_limit": 4,
     "tu_context_chars": 300,
     "tu_section_byte_limit": 16384
   },
   "providers": {
     "opencode": {
       "binary": "opencode",
-      "timeout_seconds": 900
+      "timeout_seconds": 300,
+      "pure": true
     }
   },
   "execution": {
-    "max_parallel": 5,
+    "max_parallel": 1,
+    "max_target_parallel": 10,
+    "batch_model_parallel": 1,
     "max_retries": 1,
     "isolation": {
       "mode": "git-worktree",
       "copy_dirty": true
+    },
+    "pipelines": {
+      "new": {
+        "max_parallel": 3,
+        "max_target_parallel": 10,
+        "batch_model_parallel": 3
+      },
+      "improve": {
+        "max_parallel": 1,
+        "max_target_parallel": 10,
+        "batch_model_parallel": 1
+      }
     }
   },
-  "models": [
-    {
-      "id": "deepseek-v4-pro",
-      "provider": "opencode",
-      "model": "opencode-go/deepseek-v4-pro",
-      "agent": "plan",
-      "runs": 1
-    },
-    {
-      "id": "deepseek-v4-flash",
-      "provider": "opencode",
-      "model": "opencode-go/deepseek-v4-flash",
-      "agent": "plan",
-      "runs": 1
-    },
-    {
-      "id": "mimo-v2.5",
-      "provider": "opencode",
-      "model": "opencode-go/mimo-v2.5",
-      "agent": "plan",
-      "runs": 1
-    },
-    {
-      "id": "mimo-v2.5-pro",
-      "provider": "opencode",
-      "model": "opencode-go/mimo-v2.5-pro",
-      "agent": "plan",
-      "runs": 1
-    },
-    {
-      "id": "minimax-m3",
-      "provider": "opencode",
-      "model": "opencode-go/minimax-m3",
-      "agent": "plan",
-      "runs": 1
-    }
-  ]
+  "models": {
+    "default": [],
+    "new": [
+      {
+        "id": "deepseek-v4-flash",
+        "provider": "opencode",
+        "model": "opencode-go/deepseek-v4-flash",
+        "agent": "plan",
+        "runs": 1
+      },
+      {
+        "id": "mimo-v2.5",
+        "provider": "opencode",
+        "model": "opencode-go/mimo-v2.5",
+        "agent": "plan",
+        "runs": 1
+      },
+      {
+        "id": "minimax-m3",
+        "provider": "opencode",
+        "model": "opencode-go/minimax-m3",
+        "agent": "plan",
+        "runs": 1
+      }
+    ],
+    "improve": [
+      {
+        "id": "deepseek-v4-pro",
+        "provider": "opencode",
+        "model": "opencode-go/deepseek-v4-pro",
+        "agent": "plan",
+        "runs": 10
+      }
+    ],
+    "tu-complete": [
+      {
+        "id": "deepseek-v4-pro",
+        "provider": "opencode",
+        "model": "opencode-go/deepseek-v4-pro",
+        "agent": "plan",
+        "runs": 10
+      }
+    ]
+  }
 }

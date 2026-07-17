@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v17"
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v18"
 RESULT_FORMAT = 7
 
 
@@ -49,6 +49,7 @@ class ProofResult:
         "loops are unsupported; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
         "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
         "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+        "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts",
     ])
     original_instruction_count: int = 0
     candidate_instruction_count: int = 0

@@ -45,7 +45,7 @@ typedef reslist<IUIWindow*>::iterator WindowIter;
 typedef _reslist_node<IUIWindow*> WindowNode;
 
 void CUIWindowManager::Term() {
-    cf::IFlagEvent* flagEvent = this; // implicit MI conversion — do not static_cast / ternary / if
+    cf::IFlagEvent* flagEvent = this; // implicit MI conversion -- do not static_cast / ternary / if
     func_8009D0B4();
     func_8009D514(flagEvent);
 

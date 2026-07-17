@@ -5,9 +5,12 @@ import importlib.util
 import inspect
 import json
 import re
+import subprocess
+import sys
+import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +21,11 @@ from .types import Candidate, ExperimentRecord, ModelConfig, ProjectAdapter, Sou
 from .workspace import GitWorktreeManager
 
 
+def _debug_value(value: Any) -> str:
+    """Keep progress messages single-line and bounded when errors contain paths/output."""
+    return " ".join(str(value).split())[:300]
+
+
 class Harness:
     def __init__(self, config_path: Path) -> None:
         self.config_path = config_path.resolve()
@@ -25,13 +33,21 @@ class Harness:
         self.root = self.config_path.parent.resolve()
         self.output_dir = (self.root / self.config.get("output_dir", "build/llm-harness")).resolve()
         self.log_path = self.output_dir / "experiments.jsonl"
-        self.models = [ModelConfig(**row) for row in self.config.get("models", [])]
-        if not self.models:
-            raise ValueError("Harness config must define at least one model")
+        self.models, self.workflow_models = self._load_models(
+            self.config.get("models", [])
+        )
         self.adapter = self._load_adapter(self.root)
         execution = self.config.get("execution", {})
         self.max_parallel = int(execution.get("max_parallel", 1))
+        self.max_target_parallel = int(execution.get("max_target_parallel", 1))
+        self.batch_model_parallel = int(execution.get("batch_model_parallel", 1))
+        self.workflow_execution = self._load_execution_pipelines(
+            execution.get("pipelines", {})
+        )
         self.max_retries = int(execution.get("max_retries", 1))
+        self._adapter_lock = threading.RLock()
+        self._log_lock = threading.Lock()
+        self._debug_lock = threading.Lock()
         isolation = execution.get("isolation", {})
         self.isolation_mode = isolation.get("mode", "none")
         self.workspace_manager = (
@@ -44,6 +60,7 @@ class Harness:
             "opencode": OpenCodeProvider(
                 binary=provider_cfg.get("binary", "opencode"),
                 timeout_seconds=int(provider_cfg.get("timeout_seconds", 900)),
+                pure=bool(provider_cfg.get("pure", True)),
             )
         }
 
@@ -59,6 +76,82 @@ class Harness:
         else:
             module = importlib.import_module(ref)
         return module.create_adapter(root, self.config.get("project", {}))
+
+    @staticmethod
+    def _load_models(
+        configured: Any,
+    ) -> tuple[List[ModelConfig], Dict[str, List[ModelConfig]]]:
+        if isinstance(configured, list):
+            models = [ModelConfig(**row) for row in configured]
+            if not models:
+                raise ValueError("Harness config must define at least one model")
+            return models, {}
+        if not isinstance(configured, dict):
+            raise ValueError("Harness config 'models' must be a list or object")
+
+        allowed = {"default", "new", "improve", "tu-complete"}
+        unknown = sorted(set(configured) - allowed)
+        if unknown:
+            raise ValueError(f"Unknown models pipeline(s): {', '.join(unknown)}")
+        pipelines: Dict[str, List[ModelConfig]] = {}
+        for workflow, rows in configured.items():
+            if not isinstance(rows, list):
+                raise ValueError(f"Harness models.{workflow} must be a list")
+            pipelines[workflow] = [ModelConfig(**row) for row in rows]
+        if not any(pipelines.values()):
+            raise ValueError("Harness config must define at least one model")
+        return pipelines.get("default", []), pipelines
+
+    def models_for_workflow(self, workflow: str) -> List[ModelConfig]:
+        models = self.workflow_models.get(workflow, self.models)
+        if not models:
+            raise ValueError(
+                f"Harness config must define models.{workflow} or models.default"
+            )
+        return models
+
+    @staticmethod
+    def _load_execution_pipelines(configured: Any) -> Dict[str, Dict[str, int]]:
+        if not isinstance(configured, dict):
+            raise ValueError("Harness execution.pipelines must be an object")
+        allowed_workflows = {"new", "improve", "tu-complete"}
+        unknown_workflows = sorted(set(configured) - allowed_workflows)
+        if unknown_workflows:
+            raise ValueError(
+                f"Unknown execution pipeline(s): {', '.join(unknown_workflows)}"
+            )
+        allowed_options = {
+            "max_parallel",
+            "max_target_parallel",
+            "batch_model_parallel",
+        }
+        pipelines: Dict[str, Dict[str, int]] = {}
+        for workflow, options in configured.items():
+            if not isinstance(options, dict):
+                raise ValueError(f"Harness execution.pipelines.{workflow} must be an object")
+            unknown_options = sorted(set(options) - allowed_options)
+            if unknown_options:
+                raise ValueError(
+                    f"Unknown execution option(s) for {workflow}: "
+                    f"{', '.join(unknown_options)}"
+                )
+            values = {key: int(value) for key, value in options.items()}
+            if any(value < 1 for value in values.values()):
+                raise ValueError(
+                    f"Harness execution.pipelines.{workflow} values must be positive"
+                )
+            pipelines[workflow] = values
+        return pipelines
+
+    def parallelism_for_workflow(self, workflow: str, option: str) -> int:
+        global_values = {
+            "max_parallel": self.max_parallel,
+            "max_target_parallel": self.max_target_parallel,
+            "batch_model_parallel": self.batch_model_parallel,
+        }
+        return self.workflow_execution.get(workflow, {}).get(
+            option, global_values[option]
+        )
 
     def run(
         self,
@@ -99,18 +192,20 @@ class Harness:
             experiment_id = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
             experiment_dir = self.output_dir / target_id / experiment_id
             experiment_dir.mkdir(parents=True, exist_ok=True)
-            history = self.records(target_id=target_id)
-            build_prompt = self.adapter.build_prompt
-            if "options" in inspect.signature(build_prompt).parameters:
-                prompt = build_prompt(
-                    workflow,
-                    target_id,
-                    history,
-                    {"full_context": full_context},
-                )
-            else:
-                prompt = build_prompt(workflow, target_id, history)
+            with self._adapter_lock:
+                history = self.records(target_id=target_id)
+                build_prompt = self.adapter.build_prompt
+                options = {"full_context": full_context}
+                if "options" in inspect.signature(build_prompt).parameters:
+                    prompt = build_prompt(workflow, target_id, history, options)
+                else:
+                    prompt = build_prompt(workflow, target_id, history)
             (experiment_dir / "prompt.md").write_text(prompt, encoding="utf-8")
+            context_dir = self._write_model_context(
+                workflow, target_id, history, prompt, experiment_dir, options
+            )
+            context_mode_fn = getattr(self.adapter, "model_context_mode", None)
+            context_mode = context_mode_fn(workflow) if context_mode_fn else "files"
             state = {
                 "schema_version": 1,
                 "experiment_id": experiment_id,
@@ -121,8 +216,15 @@ class Harness:
                 "logged_keys": [],
                 "records": [],
                 "workflow_options": {"full_context": full_context},
+                "context_dir": str(context_dir.relative_to(self.root)),
+                "context_mode": context_mode,
             }
             self._write_state(experiment_dir, state)
+        self._debug(
+            "function decompile started "
+            f"target={target_id} workflow={workflow} experiment={experiment_id} "
+            f"dry_run={str(dry_run).lower()}"
+        )
         if dry_run:
             return experiment_dir
 
@@ -135,34 +237,84 @@ class Harness:
                 and "complete replacement translation-unit source" in prompt,
             )
         )
+        context_dir = self.root / state.get(
+            "context_dir", str(experiment_dir.relative_to(self.root) / "context")
+        )
+        context_dir.mkdir(parents=True, exist_ok=True)
+        if state.get("context_mode", "files") != "inline":
+            task_path = context_dir / "TASK.md"
+            if not task_path.is_file():
+                task_path.write_text(prompt, encoding="utf-8")
         completed = {(row["model_id"], int(row["run_index"])) for row in state["records"]}
+        workflow_models = self.models_for_workflow(workflow)
         specs = [
             (model, index)
-            for model in self.models
+            for model in workflow_models
             for index in range(1, (runs if runs is not None else model.runs) + 1)
             if (model.id, index) not in completed
         ]
-        parallel = max_parallel if max_parallel is not None else self.max_parallel
+        parallel = (
+            max_parallel
+            if max_parallel is not None
+            else self.parallelism_for_workflow(workflow, "max_parallel")
+        )
         if max_cost is not None or max_tokens is not None:
             parallel = 1
         try:
             if parallel > 1 and len(specs) > 1:
                 with ThreadPoolExecutor(max_workers=parallel) as executor:
-                    futures = {
-                        executor.submit(
-                            self._run_one, workflow, target_id, prompt, experiment_id,
-                            experiment_dir, model, index, effective_full_context,
-                        ): (model.id, index)
-                        for model, index in specs
-                    }
-                    for future in as_completed(futures):
-                        state["records"].append(future.result().to_json())
-                        self._write_state(experiment_dir, state)
+                    pending_specs = iter(specs)
+                    futures = {}
+
+                    def submit_next() -> None:
+                        try:
+                            model, index = next(pending_specs)
+                        except StopIteration:
+                            return
+                        future = executor.submit(
+                            self._run_one,
+                            workflow,
+                            target_id,
+                            prompt,
+                            experiment_id,
+                            experiment_dir,
+                            model,
+                            index,
+                            effective_full_context,
+                            context_dir,
+                        )
+                        futures[future] = (model.id, index)
+
+                    for _ in range(min(parallel, len(specs))):
+                        submit_next()
+                    stop_submitting = False
+                    while futures:
+                        done, _ = wait(futures, return_when=FIRST_COMPLETED)
+                        for future in done:
+                            state["records"].append(future.result().to_json())
+                            self._write_state(experiment_dir, state)
+                            del futures[future]
+                            if self._record_is_full_match(state["records"][-1]):
+                                stop_submitting = True
+                        if stop_submitting:
+                            # Do not launch more agents after FULL_MATCH. Futures
+                            # that have not started can be cancelled; already-running
+                            # agents must be drained so their evidence is persisted.
+                            for pending in list(futures):
+                                if pending.cancel():
+                                    del futures[pending]
+                        else:
+                            for _ in range(len(done)):
+                                submit_next()
             else:
                 for model, index in specs:
                     if self._budget_reached(state["records"], max_cost, max_tokens):
                         state["status"] = "budget_exhausted"
                         self._write_state(experiment_dir, state)
+                        self._debug(
+                            f"function decompile budget exhausted target={target_id} "
+                            f"experiment={experiment_id}"
+                        )
                         return experiment_dir
                     record = self._run_one(
                         workflow,
@@ -173,9 +325,15 @@ class Harness:
                         model,
                         index,
                         effective_full_context,
+                        context_dir,
                     )
                     state["records"].append(record.to_json())
                     self._write_state(experiment_dir, state)
+                    if self._record_is_full_match(record.to_json()):
+                        self._debug(
+                            f"full match reached; stopping remaining agents target={target_id}"
+                        )
+                        break
 
             records = [ExperimentRecord(**row) for row in state["records"]]
             successful = [r for r in records if not r.error]
@@ -201,7 +359,173 @@ class Harness:
             self._write_state(experiment_dir, state)
         finally:
             self.adapter.finalize()
+        self._debug(
+            f"function decompile completed target={target_id} workflow={workflow} "
+            f"experiment={experiment_id} status={state['status']}"
+        )
         return experiment_dir
+
+    def run_batch(
+        self,
+        workflow: str,
+        target_ids: List[str],
+        *,
+        runs: Optional[int] = None,
+        dry_run: bool = False,
+        max_target_parallel: Optional[int] = None,
+        model_parallel: Optional[int] = None,
+        full_context: bool = False,
+    ) -> Path:
+        if workflow not in {"new", "improve", "tu-complete"}:
+            raise ValueError("Batch mode supports new, improve, or tu-complete")
+        targets = list(dict.fromkeys(target_ids))
+        if not targets:
+            raise ValueError("Batch mode requires at least one target")
+        target_parallel = (
+            max_target_parallel
+            if max_target_parallel is not None
+            else self.parallelism_for_workflow(workflow, "max_target_parallel")
+        )
+        per_target_parallel = (
+            model_parallel
+            if model_parallel is not None
+            else self.parallelism_for_workflow(workflow, "batch_model_parallel")
+        )
+        if target_parallel < 1 or per_target_parallel < 1:
+            raise ValueError("Parallelism values must be positive")
+        if target_parallel > 1 and not dry_run and self.workspace_manager is None:
+            raise ValueError(
+                "Parallel target evaluation requires execution.isolation.mode=git-worktree"
+            )
+        batch_id = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
+        batch_dir = self.output_dir / "batches" / batch_id
+        batch_dir.mkdir(parents=True, exist_ok=True)
+        self._debug(
+            f"batch started workflow={workflow} batch={batch_id} "
+            f"targets={len(targets)} target_parallel={target_parallel} "
+            f"model_parallel={per_target_parallel}"
+        )
+        manifest: Dict[str, Any] = {
+            "schema_version": 1,
+            "batch_id": batch_id,
+            "workflow": workflow,
+            "status": "running",
+            "max_target_parallel": target_parallel,
+            "model_parallel": per_target_parallel,
+            "targets": {},
+        }
+        self._write_batch_manifest(batch_dir, manifest)
+
+        def run_target(target_id: str) -> tuple[str, str, Optional[str]]:
+            try:
+                output = self.run(
+                    workflow,
+                    target_id,
+                    runs=runs,
+                    dry_run=dry_run,
+                    max_parallel=per_target_parallel,
+                    full_context=full_context,
+                )
+                return target_id, str(output.relative_to(self.root)), None
+            except Exception as exc:
+                return target_id, "", f"{type(exc).__name__}: {exc}"
+
+        with ThreadPoolExecutor(max_workers=min(target_parallel, len(targets))) as executor:
+            futures = [executor.submit(run_target, target_id) for target_id in targets]
+            for future in as_completed(futures):
+                target_id, output, error = future.result()
+                manifest["targets"][target_id] = {
+                    "experiment": output or None,
+                    "error": error,
+                }
+                self._debug(
+                    f"batch target completed batch={batch_id} target={target_id} "
+                    f"status={'error' if error else 'ok'}"
+                    + (f" detail={_debug_value(error)}" if error else "")
+                )
+                self._write_batch_manifest(batch_dir, manifest)
+        manifest["status"] = (
+            "complete"
+            if all(not row["error"] for row in manifest["targets"].values())
+            else "partial"
+        )
+        self._write_batch_manifest(batch_dir, manifest)
+        self._debug(f"batch completed batch={batch_id} status={manifest['status']}")
+        return batch_dir
+
+    def select_new_targets(
+        self, number: int, *, ignore_called_functions: bool = False
+    ) -> List[str]:
+        """Ask the project adapter for fresh function targets."""
+        if number < 1:
+            raise ValueError("number must be positive")
+        select = getattr(self.adapter, "select_new_targets", None)
+        if select is None:
+            raise ValueError("Configured project adapter does not support automatic target selection")
+        with self._adapter_lock:
+            target_ids = list(
+                select(
+                    number,
+                    self.records(),
+                    ignore_called_functions=ignore_called_functions,
+                )
+            )
+        if len(target_ids) != number:
+            raise ValueError(
+                f"Project adapter returned {len(target_ids)} targets; expected {number}"
+            )
+        return target_ids
+
+    def select_targets(self, workflow: str, number: int, *, randomize: bool = False) -> List[str]:
+        """Ask the project adapter for an automatic workflow target selection."""
+        if workflow not in {"improve", "tu-complete"}:
+            raise ValueError("Automatic selection supports improve or tu-complete")
+        if number < 1:
+            raise ValueError("number must be positive")
+        select = getattr(self.adapter, "select_targets", None)
+        if select is None:
+            raise ValueError("Configured project adapter does not support automatic target selection")
+        with self._adapter_lock:
+            target_ids = list(select(workflow, number, randomize=randomize))
+        if len(target_ids) != number:
+            raise ValueError(
+                f"Project adapter returned {len(target_ids)} targets; expected {number}"
+            )
+        return target_ids
+
+    def _write_model_context(
+        self,
+        workflow: str,
+        target_id: str,
+        history: List[Dict[str, Any]],
+        prompt: str,
+        experiment_dir: Path,
+        options: Dict[str, Any],
+    ) -> Path:
+        context_dir = experiment_dir / "context"
+        context_dir.mkdir(parents=True, exist_ok=True)
+        context_mode_fn = getattr(self.adapter, "model_context_mode", None)
+        context_mode = context_mode_fn(workflow) if context_mode_fn else "files"
+        files: Dict[str, str] = {"TASK.md": prompt} if context_mode != "inline" else {}
+        build_files = getattr(self.adapter, "build_context_files", None)
+        if build_files is not None:
+            with self._adapter_lock:
+                files.update(build_files(workflow, target_id, history, prompt, options))
+        for relative, content in files.items():
+            path = Path(relative)
+            if path.is_absolute() or ".." in path.parts:
+                raise ValueError(f"Unsafe model context path: {relative}")
+            destination = context_dir / path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(content, encoding="utf-8")
+        return context_dir
+
+    @staticmethod
+    def _write_batch_manifest(batch_dir: Path, manifest: Dict[str, Any]) -> None:
+        path = batch_dir / "batch.json"
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        temporary.replace(path)
 
     def _run_one(
         self,
@@ -213,26 +537,40 @@ class Harness:
         model: ModelConfig,
         index: int,
         full_context: bool = False,
+        context_dir: Optional[Path] = None,
     ) -> ExperimentRecord:
         provider = self.providers.get(model.provider)
         if provider is None:
             raise ValueError(f"Unsupported provider: {model.provider}")
         artifact = experiment_dir / f"{model.id}-{index}.json"
         error: Optional[str] = None
+        timed_out = False
         evaluation: Dict[str, Any] = {}
         candidate_summary: Dict[str, Any] = {}
         result = None
         provider_attempts = 0
         candidate = None
+        started = time.monotonic()
+        agent = model.agent or "default"
+        self._debug(
+            f"agent started target={target_id} agent={agent} model={model.model} "
+            f"run={index}"
+        )
         try:
             while True:
                 provider_attempts += 1
                 try:
-                    result = provider.invoke(prompt, model, Path(self.adapter.root))
+                    result = provider.invoke(
+                        prompt, model, context_dir or Path(self.adapter.root)
+                    )
                     break
                 except Exception:
                     if provider_attempts > self.max_retries:
                         raise
+                    self._debug(
+                        f"agent retry target={target_id} agent={agent} model={model.model} "
+                        f"run={index} attempt={provider_attempts + 1}"
+                    )
                     time.sleep(min(2 ** (provider_attempts - 1), 4))
             candidate = parse_candidate(
                 result.text, workflow=workflow, full_context=full_context
@@ -254,13 +592,26 @@ class Harness:
                 encoding="utf-8",
             )
         except Exception as exc:
+            timed_out = isinstance(exc, subprocess.TimeoutExpired)
             error = f"{type(exc).__name__}: {exc}"
+            self._debug(
+                f"agent result target={target_id} agent={agent} model={model.model} "
+                f"run={index} status=error duration={time.monotonic() - started:.1f}s "
+                f"detail={_debug_value(error)}"
+            )
             payload: Dict[str, Any] = {"error": error, "provider_attempts": provider_attempts}
             if candidate is not None:
                 payload["candidate"] = asdict(candidate)
             artifact.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        else:
+            self._debug(
+                f"agent result target={target_id} agent={agent} model={model.model} "
+                f"run={index} status={evaluation.get('status', 'unknown')} "
+                f"match={evaluation.get('match_percent')} accepted="
+                f"{evaluation.get('accepted')} duration={time.monotonic() - started:.1f}s"
+            )
         return ExperimentRecord(
-            schema_version=3,
+            schema_version=4,
             experiment_id=experiment_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
             workflow=workflow,
@@ -268,9 +619,12 @@ class Harness:
             model_id=model.id,
             model=model.model,
             run_index=index,
-            duration_seconds=result.duration_seconds if result else 0.0,
+            duration_seconds=result.duration_seconds if result else time.monotonic() - started,
             input_tokens=result.input_tokens if result else None,
             output_tokens=result.output_tokens if result else None,
+            cache_read_tokens=result.cache_read_tokens if result else None,
+            cache_write_tokens=result.cache_write_tokens if result else None,
+            timed_out=timed_out,
             cost=result.cost if result else None,
             evaluation=evaluation,
             artifact=str(artifact.relative_to(self.root)),
@@ -303,6 +657,26 @@ class Harness:
         temporary.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
         temporary.replace(path)
 
+    def _debug(self, message: str) -> None:
+        """Emit flushed, serialized progress output for interactive harness runs."""
+        timestamp = datetime.now().astimezone().strftime("%H:%M:%S")
+        with self._debug_lock:
+            print(
+                f"[llm-harness {timestamp}] {message}",
+                file=sys.stderr,
+                flush=True,
+            )
+
+    @staticmethod
+    def _record_is_full_match(record: Dict[str, Any]) -> bool:
+        evaluation = record.get("evaluation") or {}
+        return (
+            not record.get("error")
+            and evaluation.get("status") == "FULL_MATCH"
+            and float(evaluation.get("match_percent") or 0.0) >= 100.0
+            and bool(evaluation.get("accepted"))
+        )
+
     @staticmethod
     def _budget_reached(
         records: List[Dict[str, Any]], max_cost: Optional[float], max_tokens: Optional[int]
@@ -319,7 +693,9 @@ class Harness:
     def records(self, target_id: Optional[str] = None) -> List[Dict[str, Any]]:
         if not self.log_path.is_file():
             return []
-        rows = [json.loads(line) for line in self.log_path.read_text(encoding="utf-8").splitlines() if line]
+        with self._log_lock:
+            text = self.log_path.read_text(encoding="utf-8")
+        rows = [json.loads(line) for line in text.splitlines() if line]
         latest: Dict[tuple[Any, ...], Dict[str, Any]] = {}
         for offset, row in enumerate(rows):
             key = (
@@ -332,8 +708,9 @@ class Harness:
 
     def _append_record(self, record: ExperimentRecord) -> None:
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        with self.log_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(record.to_json(), separators=(",", ":")) + "\n")
+        with self._log_lock:
+            with self.log_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(record.to_json(), separators=(",", ":")) + "\n")
 
     def stats(self) -> List[Dict[str, Any]]:
         groups: Dict[str, List[Dict[str, Any]]] = {}
@@ -342,7 +719,8 @@ class Harness:
         output = []
         for model_id, rows in sorted(groups.items()):
             completed = [r for r in rows if not r.get("error")]
-            matches = [r["evaluation"].get("match_percent") for r in completed]
+            measured = [r for r in completed if not r.get("timed_out")]
+            matches = [r["evaluation"].get("match_percent") for r in measured]
             matches = [float(v) for v in matches if v is not None]
             output.append({
                 "model_id": model_id,
@@ -355,16 +733,27 @@ class Harness:
                 ),
                 "accepted": sum(bool(r.get("evaluation", {}).get("accepted")) for r in completed),
                 "average_match_percent": sum(matches) / len(matches) if matches else None,
-                "average_seconds": sum(float(r.get("duration_seconds", 0)) for r in rows) / len(rows),
+                "average_seconds": (
+                    sum(float(r.get("duration_seconds", 0)) for r in measured) / len(measured)
+                    if measured
+                    else None
+                ),
                 "input_tokens": sum(int(r.get("input_tokens") or 0) for r in rows),
                 "output_tokens": sum(int(r.get("output_tokens") or 0) for r in rows),
+                "cache_read_tokens": sum(int(r.get("cache_read_tokens") or 0) for r in rows),
+                "cache_write_tokens": sum(int(r.get("cache_write_tokens") or 0) for r in rows),
                 "total_cost": sum(float(r.get("cost") or 0) for r in rows),
                 "average_cost": (
-                    sum(float(r.get("cost") or 0) for r in rows) / len(rows)
-                    if rows
+                    sum(float(r.get("cost") or 0) for r in measured) / len(measured)
+                    if measured
                     else None
                 ),
                 "errors": sum(bool(r.get("error")) for r in rows),
+                "timeouts": sum(
+                    bool(r.get("timed_out"))
+                    or "TimeoutExpired" in str(r.get("error") or "")
+                    for r in rows
+                ),
             })
         return output
 

@@ -8,37 +8,57 @@
     "mwcc_knowledge_enabled": true,
     "mwcc_knowledge_limit": 8,
     "mwcc_knowledge_body_chars": 5000,
+    "context_similar_limit": 4,
     "tu_context_chars": 300,
     "tu_section_byte_limit": 16384
   },
   "providers": {
     "opencode": {
       "binary": "opencode",
-      "timeout_seconds": 900
+      "timeout_seconds": 900,
+      "pure": true
     }
   },
   "execution": {
     "max_parallel": 1,
+    "max_target_parallel": 1,
+    "batch_model_parallel": 1,
+    "pipelines": {
+      "new": {
+        "max_parallel": 2,
+        "max_target_parallel": 2,
+        "batch_model_parallel": 1
+      },
+      "tu-complete": {
+        "max_parallel": 1,
+        "max_target_parallel": 1,
+        "batch_model_parallel": 1
+      }
+    },
     "max_retries": 1,
     "isolation": {
       "mode": "none",
       "copy_dirty": true
     }
   },
-  "models": [
-    {
-      "id": "model-a",
-      "provider": "opencode",
-      "model": "provider/model-a",
-      "agent": "plan",
-      "runs": 3
-    },
-    {
-      "id": "model-b",
-      "provider": "opencode",
-      "model": "provider/model-b",
-      "agent": "plan",
-      "runs": 3
-    }
-  ]
+  "models": {
+    "default": [
+      {
+        "id": "model-a",
+        "provider": "opencode",
+        "model": "provider/model-a",
+        "agent": "plan",
+        "runs": 3
+      }
+    ],
+    "tu-complete": [
+      {
+        "id": "model-b",
+        "provider": "opencode",
+        "model": "provider/model-b",
+        "agent": "plan",
+        "runs": 3
+      }
+    ]
+  }
 }

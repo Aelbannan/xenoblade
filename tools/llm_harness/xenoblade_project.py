@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import hashlib
 import os
+import random
 import re
 import sqlite3
 import subprocess
@@ -34,6 +35,7 @@ from tools.coop.lib.project import Project
 from tools.coop.lib.targets import (
     Target,
     get_target,
+    harness_targets,
     load_targets,
     load_targets_document,
     write_targets_document,
@@ -89,6 +91,7 @@ class XenobladeAdapter:
         )
         self.knowledge_limit = int(settings.get("mwcc_knowledge_limit", 8))
         self.knowledge_body_chars = int(settings.get("mwcc_knowledge_body_chars", 5000))
+        self.context_similar_limit = int(settings.get("context_similar_limit", 4))
         self.tu_context_chars = int(settings.get("tu_context_chars", 300))
         self.tu_section_byte_limit = int(settings.get("tu_section_byte_limit", 16384))
 
@@ -100,6 +103,158 @@ class XenobladeAdapter:
 
     def _any_target(self, target_id: str) -> Target:
         return get_target(load_targets(self.config), target_id)
+
+    def select_new_targets(
+        self,
+        number: int,
+        history: List[Dict[str, Any]],
+        *,
+        ignore_called_functions: bool = False,
+    ) -> List[str]:
+        """Return fresh functions from the call-graph-safe catalog frontier."""
+        attempted = {
+            str(row.get("target_id"))
+            for row in history
+            if row.get("workflow") in {"new", "improve"} and row.get("target_id")
+        }
+        selection = "pending" if ignore_called_functions else "ready"
+        candidates = [
+            target
+            for target in harness_targets(
+                load_targets(self.config), selection=selection, include_catalog=True
+            )
+            if target.status == "NOT_STARTED"
+            and target.symbol
+            and target.source is not None
+            and target.source.is_file()
+            and target.id not in attempted
+            and not isinstance(target.extra.get("claim"), dict)
+        ]
+        selected: List[str] = []
+        source_cache: Dict[Path, str] = {}
+        for target in candidates:
+            assert (
+                target.source is not None
+                and target.unit is not None
+                and target.symbol is not None
+            )
+            source = source_cache.get(target.source)
+            if source is None:
+                source = target.source.read_text(encoding="utf-8")
+                source_cache[target.source] = source
+            try:
+                _find_function_region(source, target)
+                unit = self.project.resolve_unit(target.unit)
+                if unit.target_path is None or not unit.target_path.is_file():
+                    continue
+                extract_function(unit.target_path, target.symbol)
+            except (OSError, ValueError):
+                continue
+            selected.append(target.id)
+            if len(selected) == number:
+                return selected
+        raise ValueError(
+            f"Only {len(selected)} unattempted, ready functions are available; requested {number}"
+        )
+
+    def select_targets(
+        self, workflow: str, number: int, *, randomize: bool = False
+    ) -> List[str]:
+        if workflow == "improve":
+            candidates = self._improve_candidates()
+        elif workflow == "tu-complete":
+            candidates = self._tu_completion_candidates()
+        else:
+            raise ValueError(f"Unsupported automatic workflow selection: {workflow}")
+        if randomize:
+            random.shuffle(candidates)
+        if len(candidates) < number:
+            raise ValueError(
+                f"Only {len(candidates)} eligible {workflow} targets are available; "
+                f"requested {number}"
+            )
+        return candidates[:number]
+
+    def _improve_candidates(self) -> List[str]:
+        selected: List[str] = []
+        source_cache: Dict[Path, str] = {}
+        units = self.project.load_objdiff_units()
+        unit_by_hint = {
+            hint: unit
+            for unit in units
+            for hint in {unit.name, unit.name.removeprefix("main/")}
+        }
+        retail_symbols: Dict[Path, set[str]] = {}
+        for target in load_targets(self.config):
+            if (
+                target.status in {"FULL_MATCH", "EQUIVALENT_MATCH"}
+                or not target.buildable
+                or not target.symbol
+                or target.source is None
+                or not target.source.is_file()
+                or not target.unit
+                or isinstance(target.extra.get("claim"), dict)
+            ):
+                continue
+            source = source_cache.get(target.source)
+            if source is None:
+                source = target.source.read_text(encoding="utf-8")
+                source_cache[target.source] = source
+            try:
+                _find_function_region(source, target)
+                unit = unit_by_hint.get(target.unit)
+                if unit is None:
+                    continue
+                if unit.target_path is None or not unit.target_path.is_file():
+                    continue
+                symbols = retail_symbols.get(unit.target_path)
+                if symbols is None:
+                    symbols = {fn.name for fn in list_text_functions(unit.target_path)}
+                    retail_symbols[unit.target_path] = symbols
+                if target.symbol not in symbols:
+                    continue
+            except (OSError, ValueError):
+                continue
+            selected.append(target.id)
+        return selected
+
+    def _tu_completion_candidates(self) -> List[str]:
+        report_path = self.config.resolve(self.config.report_cache)
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        units = {unit.name: unit for unit in self.project.load_objdiff_units()}
+        targets = load_targets(self.config)
+        targets_by_symbol: Dict[str, List[Target]] = {}
+        for target in targets:
+            if target.symbol:
+                targets_by_symbol.setdefault(target.symbol, []).append(target)
+        selected: List[str] = []
+        for entry in report.get("units", []):
+            name = str(entry.get("name", ""))
+            unit = units.get(name)
+            functions = entry.get("functions", [])
+            measures = entry.get("measures", {})
+            if (
+                unit is None
+                or unit.source_path is None
+                or not unit.source_path.is_file()
+                or unit.base_path is None
+                or not unit.base_path.is_file()
+                or unit.target_path is None
+                or not unit.target_path.is_file()
+                or not functions
+                or any(float(fn.get("fuzzy_match_percent", 0.0) or 0.0) <= 0.0 for fn in functions)
+                or (
+                    float(measures.get("matched_code_percent", 0.0) or 0.0) >= 100.0
+                    and float(measures.get("matched_data_percent", 0.0) or 0.0) >= 100.0
+                )
+            ):
+                continue
+            source = unit.source_path.read_text(encoding="utf-8")
+            if _find_tu_slots(source) or _has_mapped_imperfect_function(
+                name, unit.source_path, source, functions, targets_by_symbol
+            ):
+                selected.append(name.removeprefix("main/"))
+        return selected
 
     def build_prompt(
         self,
@@ -115,6 +270,60 @@ class XenobladeAdapter:
                 full_context=bool((options or {}).get("full_context")),
             )
         return self._build_function_prompt(workflow, target_id, history)
+
+    def build_context_files(
+        self,
+        workflow: str,
+        target_id: str,
+        history: List[Dict[str, Any]],
+        prompt: str,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, str]:
+        """All workflows use one frozen, self-contained prompt."""
+        return {}
+
+    @staticmethod
+    def model_context_mode(workflow: str) -> str:
+        return "inline"
+
+    def _retail_assembly(self, target: Target) -> str:
+        assert target.unit is not None and target.symbol is not None
+        unit = self.project.resolve_unit(target.unit)
+        relative = unit.name.removeprefix("main/")
+        candidates = [
+            self.root / "build" / self.config.region / "asm" / f"{relative}.s",
+            self.root / "build" / self.config.region / "asm" / f"{target.unit}.s",
+        ]
+        for path in candidates:
+            if not path.is_file():
+                continue
+            block = _assembly_function_block(path.read_text(encoding="utf-8"), target.symbol)
+            if block:
+                return block
+        return ""
+
+    def _accepted_function_context(self, target: Target) -> str:
+        assert target.unit is not None
+        blocks: List[str] = []
+        for item in load_targets(self.config):
+            if (
+                item.id == target.id
+                or item.unit != target.unit
+                or item.status not in {"FULL_MATCH", "EQUIVALENT_MATCH"}
+                or item.source is None
+                or not item.source.is_file()
+            ):
+                continue
+            source = item.source.read_text(encoding="utf-8")
+            try:
+                region = _find_function_region(source, item)
+            except ValueError:
+                continue
+            body = source[region.content_start : region.content_end].strip()
+            blocks.append(f"// {item.id}: {item.status}\n{body}")
+            if len(blocks) >= self.context_similar_limit:
+                break
+        return "\n\n".join(blocks) + ("\n" if blocks else "")
 
     def _build_function_prompt(
         self, workflow: str, target_id: str, history: List[Dict[str, Any]]
@@ -138,7 +347,12 @@ class XenobladeAdapter:
             }
             for row in history[-12:]
         ]
-        knowledge = self._mwcc_knowledge(target, relevant_history)
+        # Keep independent `new` prompts byte-stable across experiments so repeated
+        # samples can reuse the provider prefix cache. Iterative mismatch history
+        # belongs only in the explicitly history-aware `improve` workflow.
+        knowledge = self._mwcc_knowledge(
+            target, relevant_history if workflow == "improve" else []
+        )
         same_unit = [
             {"id": item.id, "function": item.function, "status": item.status}
             for item in load_targets(self.config)
@@ -203,9 +417,9 @@ class XenobladeAdapter:
         if full_context:
             template = (self.prompt_dir / "tu-complete-full.md").read_text(encoding="utf-8")
             dossier = self._tu_dossier(unit, report, history)
-            return template.replace("{{DOSSIER_JSON}}", json.dumps(dossier, indent=2)).replace(
-                "{{CURRENT_SOURCE}}", source
-            )
+            return template.replace(
+                "{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":"))
+            ).replace("{{CURRENT_SOURCE}}", source)
 
         unit_entry = _load_unit_entry(self.config, unit.name)
         mismatched_functions = [
@@ -259,7 +473,9 @@ class XenobladeAdapter:
                 "candidate": _text_layout_evidence(unit.base_path, self.tu_section_byte_limit),
             }
         template = (self.prompt_dir / "tu-complete.md").read_text(encoding="utf-8")
-        return template.replace("{{DOSSIER_JSON}}", json.dumps(dossier, indent=2))
+        return template.replace(
+            "{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":"))
+        )
 
     def _function_tu_slots(
         self,
@@ -413,7 +629,11 @@ class XenobladeAdapter:
                 )
             try:
                 evaluation = evaluate_unit_match(
-                    self.project, unit, target.symbol, target_id=target.id,
+                    self.project,
+                    unit,
+                    target.symbol,
+                    target_id=target.id,
+                    certify_full_match=False,
                 )
             except (subprocess.CalledProcessError, FileNotFoundError, ValueError) as exc:
                 return Evaluation(
@@ -445,7 +665,12 @@ class XenobladeAdapter:
             size_ok, size_detail = _function_size_comparison(
                 retail_function.size, candidate_function.size
             )
-            accepted = size_ok and meets_required_level(
+            mismatch_detail = (
+                _binary_mismatch_summary(retail_function, candidate_function)
+                if match_percent < 100.0
+                else ""
+            )
+            meets_bar = meets_required_level(
                 target.required_level,
                 evaluation.status,
                 function_match=match_percent,
@@ -453,6 +678,14 @@ class XenobladeAdapter:
                 symbol=target.symbol,
                 equivalence=evaluation.equivalence,
             )
+            # An otherwise strong candidate can be usable before every call-graph
+            # dependency has been matched. Keep it in the lower CODE_MATCH band;
+            # this must not make it eligible for EQUIVALENT_MATCH certification.
+            callee_pending = (
+                evaluation.status == "CODE_MATCH"
+                and evaluation.equivalence == ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE
+            )
+            accepted = size_ok and (meets_bar or callee_pending)
             return Evaluation(
                 status=evaluation.status,
                 match_percent=match_percent,
@@ -460,7 +693,13 @@ class XenobladeAdapter:
                 size_ok=size_ok,
                 equivalence=evaluation.equivalence.value if evaluation.equivalence else None,
                 detail="; ".join(
-                    value for value in (evaluation.equivalence_detail, size_detail) if value
+                    value
+                    for value in (
+                        evaluation.equivalence_detail,
+                        size_detail,
+                        mismatch_detail,
+                    )
+                    if value
                 ),
                 metrics={
                     "retail_function_size": retail_function.size,
@@ -904,7 +1143,38 @@ class XenobladeAdapter:
         for flag, path in explicit_paths:
             if path.exists():
                 command.extend([flag, str(path)])
-        subprocess.run(command, cwd=workspace, check=True)
+        # These are intentional retail data-only split units.  They have no
+        # source-side Object entries, so configure.py reports them while
+        # generating the isolated worktree build files.  Keep the normal
+        # configure.py diagnostics intact elsewhere, but avoid repeating this
+        # known noise for every harness candidate worktree.
+        hidden_config_warnings = {
+            "Missing configuration for split1.s",
+            "Missing configuration for criware_data.s",
+            "Missing configuration for nw4r_data.s",
+            "Missing configuration for monolibdata1.s",
+            "Missing configuration for monolibdata2.s",
+        }
+        try:
+            result = subprocess.run(
+                command,
+                cwd=workspace,
+                check=True,
+                text=True,
+                capture_output=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            if exc.stdout:
+                sys.stdout.write(exc.stdout)
+            if exc.stderr:
+                sys.stderr.write(exc.stderr)
+            raise
+        if result.stdout:
+            for line in result.stdout.splitlines(keepends=True):
+                if line.strip() not in hidden_config_warnings:
+                    sys.stdout.write(line)
+        if result.stderr:
+            sys.stderr.write(result.stderr)
 
 
 def create_adapter(root: Path, settings: Dict[str, Any]) -> XenobladeAdapter:
@@ -930,6 +1200,19 @@ def _knowledge_queries(target: Target, history: List[Dict[str, Any]]) -> List[Di
             }
         )
     return queries[:6]
+
+
+def _assembly_function_block(source: str, symbol: str) -> str:
+    start_pattern = re.compile(rf'^\.fn\s+"?{re.escape(symbol)}"?\s*,.*$', re.MULTILINE)
+    start = start_pattern.search(source)
+    if start is None:
+        return ""
+    end_pattern = re.compile(rf'^\.endfn\s+"?{re.escape(symbol)}"?\s*$', re.MULTILINE)
+    end = end_pattern.search(source, start.end())
+    if end is None:
+        return ""
+    line_end = source.find("\n", end.end())
+    return source[start.start() : (line_end + 1 if line_end >= 0 else end.end())]
 
 
 def _knowledge_record(row: Any, body_limit: int) -> Dict[str, Any]:
@@ -1350,6 +1633,41 @@ def _require_tu_completion_ready(report: Any) -> None:
         )
 
 
+def _has_mapped_imperfect_function(
+    unit_name: str,
+    source_path: Path,
+    source: str,
+    functions: List[Dict[str, Any]],
+    targets_by_symbol: Dict[str, List[Target]],
+) -> bool:
+    imperfect = {
+        str(fn.get("name", ""))
+        for fn in functions
+        if float(fn.get("fuzzy_match_percent", 0.0) or 0.0) < 100.0
+    }
+    candidates = [
+        target
+        for symbol in imperfect
+        for target in targets_by_symbol.get(symbol, [])
+    ]
+    for target in candidates:
+        if (
+            not target.symbol
+            or target.symbol not in imperfect
+            or not target.unit
+            or target.source is None
+            or target.source.resolve() != source_path.resolve()
+            or not (unit_name == target.unit or unit_name.endswith("/" + target.unit))
+        ):
+            continue
+        try:
+            _find_function_region(source, target)
+        except ValueError:
+            continue
+        return True
+    return False
+
+
 def _function_size_comparison(retail_size: int, candidate_size: int) -> tuple[bool, str]:
     delta = candidate_size - retail_size
     if delta > 0:
@@ -1362,6 +1680,64 @@ def _function_size_comparison(retail_size: int, candidate_size: int) -> tuple[bo
         f"candidate function size 0x{candidate_size:X} fits retail 0x{retail_size:X} "
         f"(0x{spare:X} spare)"
     )
+
+
+def _binary_mismatch_summary(retail: Any, candidate: Any) -> str:
+    """Return bounded function-local word and relocation diagnostics for history."""
+    retail_words = [
+        int.from_bytes(retail.code[offset : offset + 4], "big")
+        for offset in range(0, len(retail.code), 4)
+    ]
+    candidate_words = [
+        int.from_bytes(candidate.code[offset : offset + 4], "big")
+        for offset in range(0, len(candidate.code), 4)
+    ]
+    lines = ["binary mismatch summary:"]
+    matcher = difflib.SequenceMatcher(
+        None, retail_words, candidate_words, autojunk=False
+    )
+    shown = 0
+    total_regions = 0
+    for tag, left_begin, left_end, right_begin, right_end in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        total_regions += 1
+        if shown >= 6:
+            continue
+        left = " ".join(f"{word:08X}" for word in retail_words[left_begin:left_end][:4])
+        right = " ".join(
+            f"{word:08X}" for word in candidate_words[right_begin:right_end][:4]
+        )
+        left_more = " …" if left_end - left_begin > 4 else ""
+        right_more = " …" if right_end - right_begin > 4 else ""
+        lines.append(
+            f"- {tag}: retail +0x{left_begin * 4:X} [{left}{left_more}] "
+            f"candidate +0x{right_begin * 4:X} [{right}{right_more}]"
+        )
+        shown += 1
+    if total_regions > shown:
+        lines.append(f"- {total_regions - shown} additional instruction regions omitted")
+
+    def relocation_key(item: Any) -> tuple[int, int, str, Any]:
+        return (item.offset, item.relocation_type, item.symbol, item.addend)
+
+    retail_relocations = {relocation_key(item) for item in retail.relocations}
+    candidate_relocations = {relocation_key(item) for item in candidate.relocations}
+    relocation_deltas = [
+        ("retail-only", item)
+        for item in sorted(retail_relocations - candidate_relocations, key=repr)
+    ] + [
+        ("candidate-only", item)
+        for item in sorted(candidate_relocations - retail_relocations, key=repr)
+    ]
+    for side, (offset, relocation_type, symbol, addend) in relocation_deltas[:8]:
+        lines.append(
+            f"- relocation {side}: +0x{offset:X} type={relocation_type} "
+            f"symbol={symbol} addend={addend}"
+        )
+    if len(relocation_deltas) > 8:
+        lines.append(f"- {len(relocation_deltas) - 8} additional relocation deltas omitted")
+    return "\n".join(lines)[:3000]
 
 
 def _object_function_fingerprints(path: Path) -> Dict[str, str]:

@@ -11,6 +11,25 @@ from typing import Any, Dict, Iterable, Optional
 from .types import ModelConfig, ProviderResult
 
 
+def _load_env_vars(path: Path) -> None:
+    """Load KEY=value lines from a .env file into os.environ (no overwrite)."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError):
+        return
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if "=" not in stripped:
+            continue
+        key, _, value = stripped.partition("=")
+        key = key.strip()
+        value = value.strip().strip("'\"")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 class OpenCodeProvider:
     def __init__(
         self, binary: str = "opencode", timeout_seconds: int = 900, pure: bool = True
@@ -151,6 +170,104 @@ class ReasonixProvider:
             cache_write_tokens=_int_or_none(usage.get("cache_write")),
             cost=_float_or_none(usage.get("cost")),
             raw_events=events,
+        )
+
+
+class DeepSeekRawProvider:
+    """Direct DeepSeek API provider — bypasses Reasonix agent scaffolding.
+
+    Calls https://api.deepseek.com/chat/completions directly with *only* the
+    user message (no system prompt, no tool schemas, no environment probes).
+    This gives full control over the exact message bytes so DeepSeek's
+    provider-side prefix caching works reliably across repeated runs.
+
+    The api_key is read from the DEEPSEEK_API_KEY environment variable
+    (same one Reasonix reads from ~/.reasonix/.env).
+    """
+
+    MODEL_MAP = {
+        "deepseek-flash": "deepseek-v4-flash",
+        "deepseek-pro": "deepseek-v4-pro",
+    }
+    API_URL = "https://api.deepseek.com/chat/completions"
+    API_KEY_ENV = "DEEPSEEK_API_KEY"
+
+    def __init__(
+        self, binary: str = "deepseek-raw", timeout_seconds: int = 300, pure: bool = True
+    ) -> None:
+        self.timeout_seconds = timeout_seconds
+        # Load .env from project root and ~/.reasonix/.env as fallbacks
+        _load_env_vars(Path(".env"))
+        _load_env_vars(Path.home() / ".reasonix" / ".env")
+
+    def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
+        started = time.monotonic()
+        api_key = os.environ.get(self.API_KEY_ENV)
+        if not api_key:
+            raise RuntimeError(
+                f"DeepSeek API key not found in ${self.API_KEY_ENV} — "
+                f"set it in ~/.reasonix/.env or your shell profile"
+            )
+
+        deepseek_model = self.MODEL_MAP.get(model.model, model.model)
+        request_body = json.dumps({
+            "model": deepseek_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0,
+            "max_tokens": 8192,
+        })
+
+        cmd = [
+            "curl", "-s", "-w", "\n%{http_code}",
+            "-X", "POST", self.API_URL,
+            "-H", "Content-Type: application/json",
+            "-H", f"Authorization: Bearer {api_key}",
+            "-d", request_body,
+        ]
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=self.timeout_seconds,
+        )
+        # curl -w injects the HTTP status code as the last line of stdout
+        stdout = completed.stdout.strip()
+        lines = stdout.rsplit("\n", 1)
+        if len(lines) != 2:
+            detail = (completed.stderr.strip() or stdout)[:2000]
+            raise RuntimeError(f"DeepSeek API: unexpected curl output: {detail}")
+        response_body, http_code = lines[0].strip(), lines[1]
+
+        if completed.returncode or not http_code.startswith("2"):
+            detail = (completed.stderr.strip() or response_body)[:2000]
+            raise RuntimeError(
+                f"DeepSeek API error (HTTP {http_code}): {detail}"
+            )
+
+        result = json.loads(response_body)
+        choices = result.get("choices", [])
+        if not choices:
+            raise RuntimeError(
+                f"DeepSeek API: no choices in response: {response_body[:500]}"
+            )
+
+        text = choices[0].get("message", {}).get("content", "").strip()
+        usage = result.get("usage", {}) or {}
+
+        return ProviderResult(
+            text=text,
+            duration_seconds=time.monotonic() - started,
+            input_tokens=_int_or_none(usage.get("prompt_tokens")),
+            output_tokens=_int_or_none(usage.get("completion_tokens")),
+            cache_read_tokens=_int_or_none(
+                usage.get("prompt_cache_hit_tokens")
+                or (usage.get("prompt_tokens_details") or {}).get("cached_tokens")
+            ),
+            cache_write_tokens=_int_or_none(
+                usage.get("prompt_cache_miss_tokens")
+            ),
+            cost=None,
+            raw_events=[result],
         )
 
 

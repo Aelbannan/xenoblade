@@ -28,8 +28,10 @@ namespace cf{
 
     CTaskGameCf::~CTaskGameCf(){}
 
+extern "C" cf::CTaskGameCf* lbl_eu_80663D38;
+
 CTaskGameCf* CTaskGameCf::getInstance() {
-    return spInstance;
+    return lbl_eu_80663D38;
 }
 
     void CTaskGameCf::func_800442DC(){
@@ -39,9 +41,15 @@ CTaskGameCf* CTaskGameCf::getInstance() {
         }
     }
 
-    void CTaskGameCf::func_8004431C(){
-        mMoveFunc = &CTaskGameCf::func_80044424;
-    }
+void CTaskGameCf::func_8004431C() {
+    extern const u32 lbl_eu_80525AB8[3];
+    u32 v1 = lbl_eu_80525AB8[1];
+    *(u32*)((u8*)this + 0x40) = v1;
+    u32 v0 = lbl_eu_80525AB8[0];
+    *(u32*)((u8*)this + 0x3c) = v0;
+    u32 v2 = lbl_eu_80525AB8[2];
+    *(u32*)((u8*)this + 0x44) = v2;
+}
 
     void CTaskGameCf::func_8004433C(){
         mMoveFunc = &CTaskGameCf::func_80044480;
@@ -57,8 +65,10 @@ CTaskGameCf* CTaskGameCf::getInstance() {
         mMoveFunc = &CTaskGameCf::func_800444DC;
     }
 
+extern "C" cf::CTaskGameCf* lbl_eu_80663D38;
+
 void CTaskGameCf::Init() {
-    spInstance = this;
+    lbl_eu_80663D38 = this;
 }
 
     void CTaskGameCf::Term(){
@@ -68,7 +78,7 @@ void CTaskGameCf::Init() {
         spInstance = nullptr;
     }
 
-void CTaskGameCf::Draw(){}
+void CTaskGameCf::Draw() {}
 
     void CTaskGameCf::func_80044424(){
         mMoveFunc = &CTaskGameCf::func_80044444;
@@ -94,13 +104,25 @@ void CTaskGameCf::Draw(){}
         mMoveFunc = &CTaskGameCf::func_8004451C;
     }
 
-    void CTaskGameCf::func_800444DC(){
-        mMoveFunc = &CTaskGameCf::func_800444FC;
-    }
+extern "C" u32 lbl_eu_80525B0C[3];
 
-    void CTaskGameCf::func_800444FC(){
-        mMoveFunc = &CTaskGameCf::func_8004451C;
-    }
+void CTaskGameCf::func_800444DC() {
+    u32* base = lbl_eu_80525B0C;
+    u32* dest = reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x3C);
+    // store order: +0x40 first, then +0x3C, then +0x44
+    dest[1] = base[1];
+    dest[0] = base[0];
+    dest[2] = base[2];
+}
+
+extern "C" u32 lbl_eu_80525B18[3];
+
+void CTaskGameCf::func_800444FC() {
+    u32* dst = reinterpret_cast<u32*>(reinterpret_cast<char*>(this) + 0x3c);
+    dst[0] = lbl_eu_80525B18[0];
+    dst[1] = lbl_eu_80525B18[1];
+    dst[2] = lbl_eu_80525B18[2];
+}
 
     void CTaskGameCf::func_8004451C(){
         if(!(unk_54 & 8)){

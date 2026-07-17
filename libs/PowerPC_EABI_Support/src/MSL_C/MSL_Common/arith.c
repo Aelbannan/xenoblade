@@ -3,7 +3,8 @@
 
 int abs(int x)
 {
-    return x > 0 ? x : -x;
+    int mask = x >> 31;
+    return (mask ^ x) - mask;
 }
 
 //might be llabs

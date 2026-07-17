@@ -26,6 +26,7 @@ class AttemptRecord:
     timestamp: str = ""
     equivalence_status: Optional[str] = None
     equivalence_detail: str = ""
+    add_to_kb: str = ""
 
     def to_json(self) -> Dict[str, Any]:
         data = asdict(self)
@@ -40,6 +41,28 @@ def append_attempt(log_path: Path, record: AttemptRecord) -> Path:
         record.timestamp = datetime.now(timezone.utc).isoformat()
     with log_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record.to_json(), separators=(",", ":")) + "\n")
+    return log_path
+
+
+CONTRIBUTIONS_LOG = Path("docs/mwcc/contributions.jsonl")
+
+
+def append_contribution(root: Path, payload: str) -> Optional[Path]:
+    """Append a kb contribution to docs/mwcc/contributions.jsonl.
+
+    Returns the path written, or None when payload is empty.
+    """
+    if not payload.strip():
+        return None
+    try:
+        record = json.loads(payload)
+    except json.JSONDecodeError:
+        record = {"raw": payload}
+    record.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+    log_path = root / CONTRIBUTIONS_LOG
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, separators=(",", ":")) + "\n")
     return log_path
 
 

@@ -103,7 +103,6 @@ void __timesdec(decimal* result, const decimal* x, const decimal* y) {
     u32 accumulator = 0;
     u8 mantissa[SIGDIGLEN * 2];
     int i = x->sig.length + y->sig.length - 1;
-    u8* pDigit;
     u8* ip = mantissa + i + 1;
     u8* ep = ip;
 

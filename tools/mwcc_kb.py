@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,15 +27,17 @@ from tools.coop.lib.mwcc_knowledge import (
 DEFAULT_DATABASE = ROOT / "build" / "mwcc_knowledge.sqlite"
 DEFAULT_REFERENCE = ROOT / "docs" / "MWCC_REFERENCE.md"
 DEFAULT_ATTEMPTS = ROOT / "docs" / "evidence" / "decomp" / "attempts.jsonl"
+DEFAULT_CONTRIBUTIONS = ROOT / "docs" / "mwcc" / "contributions.jsonl"
 
 
 def _ensure_database(args: argparse.Namespace) -> None:
-    sources = [args.reference, args.attempts]
+    sources = [args.reference, args.attempts, args.contributions]
     if args.rebuild or not database_is_fresh(args.database, sources):
         count = build_database(
             args.database,
             args.reference,
             args.attempts,
+            args.contributions,
             root=ROOT,
         )
         print(
@@ -81,13 +84,15 @@ def main() -> int:
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--attempts", type=Path, default=DEFAULT_ATTEMPTS)
+    parser.add_argument("--contributions", type=Path, default=DEFAULT_CONTRIBUTIONS)
     parser.add_argument("--rebuild", action="store_true", help="Rebuild even when the index is fresh")
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(dest="command")
+    sub.required = False
 
     sub.add_parser("build", help="Rebuild the generated SQLite index")
     search_parser = sub.add_parser("search", help="Full-text search reference patterns and attempts")
     search_parser.add_argument("query")
-    search_parser.add_argument("--kind", choices=["reference", "attempt"], default="")
+    search_parser.add_argument("--kind", choices=["reference", "attempt", "kb_contribution"], default="")
     search_parser.add_argument("--status", default="")
     search_parser.add_argument("--tag", choices=sorted(TAG_PATTERNS), default="")
     search_parser.add_argument(
@@ -103,8 +108,41 @@ def main() -> int:
     show_parser.add_argument("--json", action="store_true", help="Emit one machine-readable record")
     sub.add_parser("stats", help="Show indexed entry and taxonomy counts")
     sub.add_parser("tags", help="List the inferred taxonomy")
+    add_parser = sub.add_parser("add", help="Append a KB contribution and rebuild the index")
+    add_parser.add_argument("payload", help="JSON payload or path to a .json file")
+    add_parser.add_argument("--from-file", action="store_true", help="Treat payload as a file path")
 
     args = parser.parse_args()
+
+    # Handle add command before database check (it writes, then rebuilds)
+    if args.command == "add":
+        payload = args.payload
+        if args.from_file:
+            payload = Path(payload).read_text(encoding="utf-8")
+        try:
+            record = json.loads(payload)
+        except json.JSONDecodeError:
+            record = {"raw": payload}
+        record.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        contrib_path = args.contributions
+        contrib_path.parent.mkdir(parents=True, exist_ok=True)
+        with contrib_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, separators=(",", ":")) + "\n")
+        print(f"appended to {contrib_path.relative_to(ROOT)}", file=sys.stderr)
+        # Rebuild index so the new entry is immediately searchable
+        count = build_database(
+            args.database,
+            args.reference,
+            args.attempts,
+            args.contributions,
+            root=ROOT,
+        )
+        print(f"index rebuilt ({count} entries)", file=sys.stderr)
+        return 0
+
+    if args.command is None:
+        parser.error("a subcommand is required (build, search, show, stats, tags, add)")
+
     if args.command == "tags":
         print("\n".join(sorted(TAG_PATTERNS)))
         return 0

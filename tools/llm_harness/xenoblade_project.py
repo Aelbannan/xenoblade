@@ -9,7 +9,6 @@ import hashlib
 import os
 import random
 import re
-import sqlite3
 import subprocess
 import shutil
 import struct
@@ -22,10 +21,10 @@ from typing import Any, Dict, List, Optional
 from tools.coop.lib.config import load_config
 from tools.coop.lib.equivalence_check import prove_unit_symbol
 from tools.coop.lib.mwcc_knowledge import (
-    build_database,
-    connect,
-    database_is_fresh,
+    KnowledgeEntry,
     infer_tags,
+    parse_attempts,
+    parse_reference,
 )
 from tools.coop.lib.objdiff_report import evaluate_unit_match, meets_required_level, report_unit
 from tools.coop.lib.object_size import check_object_size
@@ -74,6 +73,21 @@ class TuSlot:
     content_end: int
 
 
+def _frozen_kb_cache_key(sources: list[Path]) -> str:
+    """Content-hash of KB source files for content-addressable frozen-KB cache.
+
+    Uses SHA-256 of each source file's full content, so identical source
+    material always produces the same cache key regardless of mtime or
+    inode.  Returns a hex digest suitable as a filename.
+    """
+    h = hashlib.sha256()
+    for path in sorted(sources):  # deterministic order regardless of caller
+        h.update(path.name.encode("utf-8"))
+        if path.is_file():
+            h.update(path.read_bytes())
+    return h.hexdigest()[:32]
+
+
 class XenobladeAdapter:
     def __init__(self, root: Path, settings: Dict[str, Any]) -> None:
         self.root = root.resolve()
@@ -83,14 +97,9 @@ class XenobladeAdapter:
         self.prompt_dir = self.root / settings.get("prompt_dir", "tools/llm_harness/prompts")
         self.max_source_chars = int(settings.get("max_source_chars", 120000))
         self.knowledge_enabled = bool(settings.get("mwcc_knowledge_enabled", True))
-        self.knowledge_database = self.root / settings.get(
-            "mwcc_knowledge_database", "build/mwcc_knowledge.sqlite"
-        )
         self.knowledge_reference = self.root / settings.get(
             "mwcc_knowledge_reference", "docs/MWCC_REFERENCE.md"
         )
-        self.knowledge_limit = int(settings.get("mwcc_knowledge_limit", 8))
-        self.knowledge_body_chars = int(settings.get("mwcc_knowledge_body_chars", 5000))
         self.context_similar_limit = int(settings.get("context_similar_limit", 4))
         self.tu_context_chars = int(settings.get("tu_context_chars", 300))
         self.tu_section_byte_limit = int(settings.get("tu_section_byte_limit", 16384))
@@ -122,43 +131,51 @@ class XenobladeAdapter:
         try:
             attempts_path = self.config.resolve(self.config.attempt_log)
             sources = [self.knowledge_reference, attempts_path]
-            if not database_is_fresh(self.knowledge_database, sources):
-                build_database(
-                    self.knowledge_database,
-                    self.knowledge_reference,
-                    attempts_path,
-                    root=self.root,
-                )
-            rows: List[sqlite3.Row] = []
-            with connect(self.knowledge_database) as connection:
-                # Sort by source_kind then id gives a stable global ordering:
-                # references precede attempts regardless of row insertion order.
-                rows = list(
-                    connection.execute(
-                        "SELECT id, source_kind, title, body FROM entries "
-                        "ORDER BY source_kind, id, line_start"
-                    )
-                )
-            lines: List[str] = [
-                f"Frozen MWCC knowledge base ({len(rows)} entries). "
+
+            # Content-addressable cache: hash source contents so the same KB
+            # source produces the same bytes across every harness invocation.
+            # This keeps DeepSeek's prompt prefix cache valid across runs.
+            cache_key = _frozen_kb_cache_key(sources)
+            cache_dir = self.root / "build" / "mwcc-knowledge-frozen-cache"
+            cache_path = cache_dir / f"{cache_key}.txt"
+            if cache_path.is_file():
+                cached = cache_path.read_text(encoding="utf-8")
+                self._frozen_kb_prefix = cached
+                self._frozen_kb_sha = hashlib.sha1(cached.encode("utf-8")).hexdigest()[:12]
+                self._frozen_kb_ready = True
+                return
+
+            # Parse source files directly — no SQLite database.
+            entries: list[KnowledgeEntry] = []
+            if self.knowledge_reference.is_file():
+                entries.extend(parse_reference(self.knowledge_reference))
+            if attempts_path.is_file():
+                entries.extend(parse_attempts(attempts_path))
+
+            # Sort stable: references before attempts, then by id, then line_start.
+            entries.sort(key=lambda e: (e.source_kind, e.id, e.line_start))
+
+            lines: list[str] = [
+                f"Frozen MWCC knowledge base ({len(entries)} entries). "
                 "Reference any entry below by its stable ID in `hypothesis` or "
                 "`notes`; do not quote bodies back."
             ]
-            for row in rows:
-                entry_id = str(row["id"])
-                title = str(row["title"] or "").strip()
-                body = str(row["body"] or "").strip()
+            for entry in entries:
                 lines.append("")
-                lines.append(f"### {entry_id}")
-                if title:
-                    lines.append(title)
-                if body:
-                    lines.append(body)
+                lines.append(f"### {entry.id}")
+                if entry.title:
+                    lines.append(entry.title)
+                if entry.body:
+                    lines.append(entry.body)
             prefix = "\n".join(lines)
             self._frozen_kb_prefix = prefix
             self._frozen_kb_sha = hashlib.sha1(prefix.encode("utf-8")).hexdigest()[:12]
             self._frozen_kb_ready = True
-        except (FileNotFoundError, OSError, sqlite3.Error, ValueError) as exc:
+
+            # Persist to cache so subsequent harness runs reuse the same bytes.
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(prefix, encoding="utf-8")
+        except (FileNotFoundError, OSError, ValueError) as exc:
             # The campaign can still run; the dossier's hints carry the model.
             self._frozen_kb_error = f"{type(exc).__name__}: {exc}"
 

@@ -2,6 +2,9 @@
 .idea/
 .vs/
 
+# Env files (local secrets)
+.env
+
 # Caches
 __pycache__
 .mypy_cache

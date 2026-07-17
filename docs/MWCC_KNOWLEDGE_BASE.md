@@ -28,7 +28,7 @@ Agents should search from observed evidence, not paste an entire function or ask
 1. Inspect canonical identity and current state with `targets show <target-id>`.
 2. Search the exact function name and mangled symbol. This retrieves same-function reference notes and prior attempts.
 3. Classify the current objdiff gap, then issue one short query per mismatch category. Useful vocabulary includes `relocation SDA`, `regalloc Chaitin`, `stack frame spill`, `struct layout offset`, `switch case order`, `loop mtctr bdnz`, `literal pool sdata2`, `vtable slot`, `ABI Fv`, and `inlining IPA`.
-4. Search `--kind reference` for proven transformations and `--kind attempt` for experiments already tried. Do not repeat failed attempts without a new reason.
+4. Search `--kind reference` for proven transformations, `--kind attempt` for experiments already tried, and `--kind kb_contribution` for agent-contributed patterns. Do not repeat failed attempts without a new reason.
 5. Start with the default `--mode all`. If it returns no useful result, remove the least important term or use `--mode any`; then narrow with `--tag`, `--status`, or `--kind`.
 6. Open the best few records with `show <id> --json`. Search snippets are discovery aids; the full record contains caveats, failed variants, and evidence.
 7. Name the selected knowledge IDs in the attempt hypothesis and explain why their symptoms match the current diff. Apply one bounded experiment, then run `cycle`.
@@ -44,6 +44,51 @@ python3 tools/mwcc_kb.py show <result-id> --json
 ```
 
 For automation, use `--json`; index rebuild notices go to stderr, so stdout remains valid JSON. A zero-result search returns a JSON object with an empty `results` array and exit status 1.
+
+## Contributing to the KB (`add_to_kb`)
+
+When an agent discovers a reusable pattern (especially when closing the last few percent of a match), it should contribute it to the knowledge base so future sessions can find it. There are two paths:
+
+### 1. During a `cycle` (inline)
+
+```bash
+python3 tools/coop/run.py cycle <target-id> \
+    --hypothesis "retail uses lbl_eu_80667EB0 not @N" \
+    --next-change "extern the float label" \
+    --add-to-kb '{"title":"Direct extern SDA float in a compare",
+      "symptoms":["instructions byte-identical but reloc names differ","lfs from @N not lbl_eu_*"],
+      "fix":"extern \"C\" const float lbl_eu_*; use verbatim at each site",
+      "tags":["relocation","literal_pool"],
+      "target_id":"<target-id>","function":"<qualified-name>"}'
+```
+
+The contribution is appended to `docs/mwcc/contributions.jsonl` alongside the attempt log.
+
+### 2. Standalone (any agent, any time)
+
+```bash
+python3 tools/mwcc_kb.py add '{"title":"...", "symptoms":[...], "fix":"...", "tags":[...]}'
+python3 tools/mwcc_kb.py add /path/to/payload.json --from-file
+```
+
+This appends to `docs/mwcc/contributions.jsonl` **and** immediately rebuilds the SQLite index — so the contribution is searchable by all subsequent `mwcc_kb.py search` calls within the same session. (It does **not** appear in prompts of already-running agents; their context was frozen at session start.)
+
+### Contribution record format
+
+A minimal record needs `title`. A useful record includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | **Required.** One-line summary of the pattern. |
+| `symptoms` | string[] | What objdiff shows (e.g. `"instructions match but relocation names differ"`). |
+| `fix` | string | The high-level C++ change that closed the gap. |
+| `tags` | string[] | One or more from: `abi`, `compiler_flags`, `control_flow`, `inlining`, `literal_pool`, `loop_codegen`, `policy_exception`, `regalloc`, `relocation`, `semantics`, `size`, `stack_frame`, `struct_layout`, `switch_codegen`, `vtable`. |
+| `target_id` | string | The target this was discovered on (for traceability). |
+| `function` | string | Qualified function name. |
+| `notes` | string | Caveats, pitfalls, or when NOT to use this pattern. |
+| `confidence` | string | `repo_proven`, `hypothesis`, or `negative_result`. |
+
+Records are stored as JSONL (one JSON object per line) in `docs/mwcc/contributions.jsonl`. The SQLite index picks them up with `source_kind=kb_contribution`.
 
 ## Why SQLite is generated, not canonical
 

@@ -68,7 +68,8 @@ void CTitleAHelp::func_801C3FF0() {
 }
 
 void CTitleAHelp::func_801C4080(nw4r::lyt::DrawInfo* drawInfo) {
-    if(unk28 == 0) return;
+    if (unk28 == 0)
+        return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
@@ -83,20 +84,16 @@ void CTitleAHelp::func_801C40A0() {
     unk4.func_8045F778();
 }
 
-u8 CTitleAHelp::func_801C4114() {
-    return unk35;
-}
+u8 CTitleAHelp::func_801C4114() { return unk35; }
 
 u8 CTitleAHelp::func_801C411C() {
 	return unk28;
 }
 
-u8 CTitleAHelp::func_801C4124() {
-    return unk36;
-}
+u8 CTitleAHelp::func_801C4124() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
-    if(unk2c == 0) {
+    if (unk2c == 0) {
         unk2c = 1;
         unk36 = 0;
     }
@@ -350,8 +347,8 @@ void sinit_801C4AE4() {
 }
 
 void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
-    color->a = a;
-    color->b = b;
-    color->g = g;
     color->r = r;
+    color->g = g;
+    color->b = b;
+    color->a = a;
 }

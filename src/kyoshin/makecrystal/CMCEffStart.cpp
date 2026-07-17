@@ -34,11 +34,9 @@ void CMCEffStart::func_80223E40() {
     }
 }
 
-void CMCEffStart::func_80223E9C(nw4r::lyt::DrawInfo* drawInfo) {
-    if(!unk14) {
-        return;
-    }
-    func_80137038(mLayout, drawInfo, 0, 1);
+extern "C" void func_80223E9C(CMCEffStart* obj, nw4r::lyt::DrawInfo* drawInfo) {
+    if (!obj->unk14) return;
+    func_80137038(obj->mLayout, drawInfo, 0, 1);
 }
 
 void CMCEffStart::func_80223EBC() {
@@ -271,8 +269,8 @@ void CMCEffSuccess::func_80224880() {
     }
 }
 
-u8 CMCEffSuccess::func_802248E0() {
-    return unk5;
+extern "C" u8 func_802248E0(void* self) {
+    return *(u8*)((u8*)self + 5);
 }
 
 void CMCEffSuccess::func_802248E8() {

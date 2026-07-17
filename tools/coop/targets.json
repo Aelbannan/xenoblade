@@ -318,7 +318,7 @@
       "size": "0xA8",
       "unit": "kyoshin/CGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CGame.cpp",
@@ -333,7 +333,15 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "agent",
+        "claimed_at": "2026-07-17T00:08:11.269422+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CGame.cpp"
+        ],
+        "note": "Harness FULL_MATCH promotion"
+      }
     },
     {
       "id": "us-80039648",

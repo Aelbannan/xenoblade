@@ -147,6 +147,7 @@ def evaluate_unit_match(
     symbol: Optional[str],
     *,
     run_equivalence: bool = True,
+    certify_full_match: bool = True,
     linked: bool = False,
     target_id: str | None = None,
 ) -> MatchEvaluation:
@@ -164,7 +165,15 @@ def evaluate_unit_match(
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate
-    elif run_equivalence and target_id and symbol and fn_match and pct is not None and pct >= 100.0:
+    elif (
+        run_equivalence
+        and certify_full_match
+        and target_id
+        and symbol
+        and fn_match
+        and pct is not None
+        and pct >= 100.0
+    ):
         probe = certify_unit_symbol(project, unit, fn_match.name, target_id)
         equivalence = probe.status
         detail = probe.detail

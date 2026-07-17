@@ -194,10 +194,26 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         if helper_pattern.fullmatch(helper) is None:
             errors.append(f"unrecognized ABI helper {helper!r}")
             continue
+        match = re.fullmatch(r"_(save|rest)(gpr|fpr)_(\d+)", helper)
+        assert match is not None
+        operation, register_kind, first_text = match.groups()
+        first = int(first_text)
+        if not 14 <= first <= 31:
+            errors.append(f"ABI helper register is out of range in {helper!r}")
+            contracts.pop(helper, None)
+            continue
+        registers = frozenset(
+            f"{'r' if register_kind == 'gpr' else 'f'}{index}"
+            for index in range(first, 32)
+        )
+        if operation == "save":
+            reads = registers | {"r11", "memory", "valid"}
+            writes = frozenset({"memory", "valid"})
+        else:
+            reads = frozenset({"r11", "memory", "valid"})
+            writes = registers | {"valid"}
         contracts[helper] = CalleeContract(
-            CalleeContract.opaque_eabi().reads,
-            CalleeContract.opaque_eabi().writes,
-            f"fixed-eabi-runtime-helper:{helper}",
+            reads, writes, f"fixed-eabi-runtime-helper:{helper}",
         )
     return CertifiedCalleeContext(
         contracts,

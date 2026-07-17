@@ -7,7 +7,7 @@ Hard constraints:
 - Return readable high-level C or C++ only; no whole-function assembly, register bindings, fake stack buffers, or retail assembly transcription.
 - Unit acceptance requires 100% code and data plus split-size fit. Function-level equivalence is not a unit-wide proof.
 - Use retrieved MWCC records only when their symptoms fit, and name selected stable knowledge IDs in `hypothesis`.
-- Do not use tools or edit files.
+- This prompt is self-contained. Do not read, edit, or search files and do not run shell commands.
 - Return only known `slot_id` values from the dossier.
 - Each patch `source` replaces only the contents between that slot's markers; do not repeat the marker comments.
 - Do not return a complete translation unit.

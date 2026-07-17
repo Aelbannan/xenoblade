@@ -12,19 +12,28 @@ from .types import ModelConfig, ProviderResult
 
 
 class OpenCodeProvider:
-    def __init__(self, binary: str = "opencode", timeout_seconds: int = 900) -> None:
+    def __init__(
+        self, binary: str = "opencode", timeout_seconds: int = 900, pure: bool = True
+    ) -> None:
         self.binary = binary
         self.timeout_seconds = timeout_seconds
+        self.pure = pure
 
     def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
         started = time.monotonic()
         prompt_file: Optional[Path] = None
+        temporary_prompt = False
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".md", prefix="llm-harness-", encoding="utf-8", delete=False
-            ) as f:
-                f.write(prompt)
-                prompt_file = Path(f.name)
+            stable_prompt = cwd.parent / "prompt.md"
+            if stable_prompt.is_file() and stable_prompt.read_text(encoding="utf-8") == prompt:
+                prompt_file = stable_prompt
+            else:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".md", prefix="llm-harness-", encoding="utf-8", delete=False
+                ) as f:
+                    f.write(prompt)
+                    prompt_file = Path(f.name)
+                    temporary_prompt = True
             cmd = [
                 self.binary,
                 "run",
@@ -37,14 +46,24 @@ class OpenCodeProvider:
                 "--file",
                 str(prompt_file),
             ]
+            if self.pure:
+                cmd.append("--pure")
             if model.agent:
                 cmd.extend(["--agent", model.agent])
             if model.variant:
                 cmd.extend(["--variant", model.variant])
-            cmd.append(
-                "Read the attached decompilation dossier. Return only the requested JSON object; "
-                "do not edit files or run tools."
-            )
+            has_context_files = any(cwd.iterdir())
+            if has_context_files:
+                cmd.append(
+                    "Read the attached dossier and the curated files in the current context directory. "
+                    "Use read/search tools only when helpful, stay inside this context, do not edit files "
+                    "or run shell commands, and return only the requested JSON object."
+                )
+            else:
+                cmd.append(
+                    "Read the attached self-contained dossier. Do not use tools or inspect files. "
+                    "Return only the requested JSON object."
+                )
             env = os.environ.copy()
             # Dossiers can contain proprietary function bytes; never inherit auto-sharing.
             env["OPENCODE_AUTO_SHARE"] = "false"
@@ -66,11 +85,13 @@ class OpenCodeProvider:
                 duration_seconds=time.monotonic() - started,
                 input_tokens=_int_or_none(usage.get("input")),
                 output_tokens=_int_or_none(usage.get("output")),
+                cache_read_tokens=_int_or_none(usage.get("cache_read")),
+                cache_write_tokens=_int_or_none(usage.get("cache_write")),
                 cost=_float_or_none(usage.get("cost")),
                 raw_events=events,
             )
         finally:
-            if prompt_file is not None:
+            if temporary_prompt and prompt_file is not None:
                 prompt_file.unlink(missing_ok=True)
 
 
@@ -130,9 +151,24 @@ def _walk(value: Any) -> Iterable[Any]:
 
 
 def _normalise_usage(usage: Dict[str, Any], parent: Dict[str, Any]) -> Dict[str, Any]:
+    cache = usage.get("cache") if isinstance(usage.get("cache"), dict) else {}
     return {
         "input": usage.get("input") or usage.get("input_tokens") or usage.get("promptTokens"),
         "output": usage.get("output") or usage.get("output_tokens") or usage.get("completionTokens"),
+        "cache_read": (
+            usage.get("cache_read_tokens")
+            or usage.get("cacheReadTokens")
+            or cache.get("read")
+        ),
+        "cache_write": (
+            usage.get("cache_write_tokens")
+            or usage.get("cacheWriteTokens")
+            or (
+                int(usage.get("cache_write_5m_tokens") or 0)
+                + int(usage.get("cache_write_1h_tokens") or 0)
+            )
+            or cache.get("write")
+        ),
         "cost": usage.get("cost") or parent.get("cost"),
     }
 
@@ -141,6 +177,8 @@ def _sum_usage(rows: list[Dict[str, Any]]) -> Dict[str, Any]:
     return {
         "input": sum(int(row.get("input") or 0) for row in rows),
         "output": sum(int(row.get("output") or 0) for row in rows),
+        "cache_read": sum(int(row.get("cache_read") or 0) for row in rows),
+        "cache_write": sum(int(row.get("cache_write") or 0) for row in rows),
         "cost": sum(float(row.get("cost") or 0) for row in rows),
     }
 

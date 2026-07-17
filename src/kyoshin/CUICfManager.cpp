@@ -5,7 +5,7 @@
 
 #include <decomp.h>
 
-// §17.6 whole-function asm: packed tail copy + -0x1A0/stmw frame not recoverable
+// section 17.6 whole-function asm: packed tail copy + -0x1A0/stmw frame not recoverable
 // in high-level C++ (60% STRUCTURAL). User-approved "Fix it".
 
 extern "C" {
@@ -519,7 +519,7 @@ end:
 // ---------------------------------------------------------------------------
 // CUICfManager::Move
 //
-// Early r4 is NOT a fake-Fv arg — retail does `lhz r4, 0xc90(r3)` (mFlags).
+// Early r4 is NOT a fake-Fv arg -- retail does `lhz r4, 0xc90(r3)` (mFlags).
 // Bitflag-driven create/teardown against lbl_eu_80664054, then optional
 // enum-list proximity spawn, then mark/clear walks of the menu queue.
 // ---------------------------------------------------------------------------
@@ -552,8 +552,8 @@ void __dt__80043E88(CUICfEnumListHolder*, s16);
 void func_800F4A98(void* list, int type, int);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* func_80496264(void* obj, int index);
-void* func_800F6EC0(void* list, int index); // &slot → has +0x4 object ptr
-void* func_800F6E98(void* list, int index); // *slot → object*
+void* func_800F6EC0(void* list, int index); // &slot -> has +0x4 object ptr
+void* func_800F6E98(void* list, int index); // *slot -> object*
 int func_800B8920(void*);
 int func_8013A4B4(void* a, void* b, void* c);
 void func_8012FFB4(void*); // &mInitSlots[0].unk04
@@ -622,7 +622,7 @@ void CUICfManager::Move() {
     if ((flags & 0x1) != 0) {
         {
             volatile u16* fp = &mFlags;
-            *fp = (u16)(*fp & ~0x1); // rlwinm …,16,30
+            *fp = (u16)(*fp & ~0x1); // rlwinm ...,16,30
         }
         func_80133770();
         goto after_flags;

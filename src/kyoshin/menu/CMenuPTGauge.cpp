@@ -23,12 +23,12 @@ extern const f32 lbl_eu_806679EC; // 1.0f
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
 int func_8013BE50();
 u32 func_80137510(void* anim, float frame);
-// Retail links this unmangled (not CUICfManager::func_801355F4) — see
+// Retail links this unmangled (not CUICfManager::func_801355F4) -- see
 // MWCC_REFERENCE.md 8c19.
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 // Retail links this unmangled (not the FPQ34nw4r3lyt4PaneUl-mangled decl in
 // code_80135FDC.hpp); void* param (same overload trick as func_80137510
-// above) selects this bare-name overload — cast the Pane* arg at call sites.
+// above) selects this bare-name overload -- cast the Pane* arg at call sites.
 void func_8013676C(void* pane, u32 val);
 }
 
@@ -94,8 +94,8 @@ void CMenuPTGauge::Move() {
     if (CTaskGame::func_800426F0()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if→goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md §17.6 single-insn carve-out).
+    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
+    // via fallthrough asm b (PLAN.md section 17.6 single-insn carve-out).
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -249,8 +249,8 @@ void CMenuPTGauge::cbRenderBefore() {
     if (CTaskGame::func_800426F0()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if→goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md §17.6 single-insn carve-out).
+    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
+    // via fallthrough asm b (PLAN.md section 17.6 single-insn carve-out).
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }

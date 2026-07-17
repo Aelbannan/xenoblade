@@ -57,6 +57,8 @@ class ProviderResult:
     duration_seconds: float
     input_tokens: Optional[int] = None
     output_tokens: Optional[int] = None
+    cache_read_tokens: Optional[int] = None
+    cache_write_tokens: Optional[int] = None
     cost: Optional[float] = None
     raw_events: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -80,6 +82,9 @@ class ExperimentRecord:
     candidate_summary: Dict[str, Any] = field(default_factory=dict)
     winner: bool = False
     error: Optional[str] = None
+    cache_read_tokens: Optional[int] = None
+    cache_write_tokens: Optional[int] = None
+    timed_out: bool = False
 
     def to_json(self) -> Dict[str, Any]:
         return asdict(self)

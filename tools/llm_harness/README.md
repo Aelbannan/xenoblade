@@ -40,8 +40,24 @@ python3 tools/llm_harness/run.py new pad-copy-input-flag --dry-run
 # Run one sample for each configured model.
 python3 tools/llm_harness/run.py new pad-copy-input-flag
 
+# Automatically select and run the next three unattempted, ready functions.
+python3 tools/llm_harness/run.py new --number 3
+
+# Include functions whose callees are not matched yet.
+python3 tools/llm_harness/run.py new --number 3 --ignore-called-functions
+
 # Run another round with prior harness outcomes included as feedback.
 python3 tools/llm_harness/run.py improve pad-copy-input-flag
+
+# Improve the first eligible non-accepted functions, or sample them randomly.
+python3 tools/llm_harness/run.py improve --number 3
+python3 tools/llm_harness/run.py improve --number 3 --random
+
+# Decompile several functions concurrently. Each gets an independent context.
+python3 tools/llm_harness/run.py batch new <target-a> <target-b> <target-c>
+
+# Complete several ready TUs concurrently.
+python3 tools/llm_harness/run.py batch tu-complete <unit-a> <unit-b> <unit-c>
 
 # Stop between calls when a recorded budget is reached; budgeted runs are sequential.
 python3 tools/llm_harness/run.py new pad-copy-input-flag --max-cost 1.00 --max-tokens 50000
@@ -64,9 +80,31 @@ Pass a different configuration before the subcommand:
 python3 tools/llm_harness/run.py --config another-harness.json new <target-id>
 ```
 
+Models can be assigned per workflow. An exact workflow entry takes precedence
+over `default`; the legacy flat `models` array remains supported:
+
+```json
+{
+  "models": {
+    "default": [{"id": "general", "provider": "opencode", "model": "provider/general"}],
+    "new": [{"id": "fast", "provider": "opencode", "model": "provider/fast"}],
+    "improve": [{"id": "reasoning", "provider": "opencode", "model": "provider/reasoning"}],
+    "tu-complete": [{"id": "large-context", "provider": "opencode", "model": "provider/large-context"}]
+  }
+}
+```
+
+`batch` uses the list for its selected workflow. A workflow without an exact
+entry falls back to `default`; if neither exists, the command reports a
+configuration error. `rescore` does not call models.
+
 ## Function workflows
 
 `new` and `improve` operate on one registered, buildable function. The model does not receive or return the whole translation unit.
+
+When `new` is passed `--number N` without a target, it selects `N` `NOT_STARTED` functions from the safe bottom-up (`ready`) call-graph frontier: leaf functions or functions whose callees are `FULL_MATCH`/`EQUIVALENT_MATCH`. This includes catalog functions. Targets with prior function-harness records, active claims, source definitions that cannot be located, or missing retail symbols are skipped. Pass `--ignore-called-functions` to select from all otherwise eligible pending functions. The selected functions run through the normal batch workflow.
+
+Interactive runs emit timestamped progress messages to stderr for function start, agent/model start and retries, evaluation results, and batch completion. The normal experiment or batch path remains on stdout.
 
 The dossier contains:
 
@@ -75,7 +113,19 @@ The dossier contains:
 - the current function definition;
 - accepted functions in the same unit;
 - prior harness feedback for `improve`;
+- a bounded instruction-word alignment and relocation-delta summary from prior
+  non-matching candidates for `improve`;
 - ranked, deduplicated records from the MWCC knowledge base.
+
+### Model input modes
+
+All workflows use the attached prompt as a single self-contained input. Their `context/` directory is intentionally empty: this avoids duplicating `TASK.md`, dossier JSON, source, knowledge, and history across repeated model turns and gives providers a deterministic prompt prefix to cache.
+
+Independent `new` experiments remain byte-stable while source, target metadata, prompt templates, and the MWCC knowledge base are unchanged. Prior mismatch history is introduced only by `improve`; use `--runs N` when you want multiple samples of one exactly identical cached prompt.
+
+The repository-local `opencode.json` requests `setCacheKey` for `opencode-go`. This asks the gateway to cache eligible prefixes but cannot guarantee a hit; verify `cache_read_tokens` and `cache_write_tokens` in `stats` after a run.
+
+TU completion follows the same inline path. Its prompt already contains the bounded source slots, residual object evidence, selected MWCC records, and prior attempts. The model therefore receives no duplicate mini-workspace and does not need file or search tools. `--full-context` remains an explicit fallback; it embeds the complete source in that one prompt.
 
 The required model response is:
 
@@ -149,6 +199,10 @@ The winner is saved as `best.json`, but source and canonical target state are no
 ```bash
 python3 tools/llm_harness/run.py tu-complete kyoshin/cf/CfPadTask --dry-run
 python3 tools/llm_harness/run.py tu-complete kyoshin/cf/CfPadTask
+
+# Complete the first eligible residual units, or sample them randomly.
+python3 tools/llm_harness/run.py tu-complete --number 3
+python3 tools/llm_harness/run.py tu-complete --number 3 --random
 ```
 
 It automatically exposes imperfect functions that map to canonical targets as `function:<target-id>` slots using the same brace-aware boundary scanner as `new`/`improve`. It never sends unrelated function source.
@@ -251,6 +305,7 @@ Every model call records:
 - wins, accepted wins, and accepted candidates;
 - average match percentage and duration;
 - total input/output tokens;
+- provider-reported cache-read and cache-write tokens;
 - total and average provider-reported cost.
 
 Cost and token fields are `null` or zero when the provider does not emit them. The OpenCode parser supports both generic `usage` objects and step-level `tokens`/`cost` events. Auto-sharing is forcibly disabled for dossiers.
@@ -273,12 +328,38 @@ Configure under `execution`:
 ```json
 {
   "max_parallel": 5,
+  "max_target_parallel": 2,
+  "batch_model_parallel": 1,
+  "pipelines": {
+    "new": {
+      "max_parallel": 5,
+      "max_target_parallel": 3,
+      "batch_model_parallel": 2
+    },
+    "improve": {
+      "max_parallel": 1,
+      "max_target_parallel": 1,
+      "batch_model_parallel": 1
+    },
+    "tu-complete": {
+      "max_parallel": 2,
+      "max_target_parallel": 1,
+      "batch_model_parallel": 1
+    }
+  },
   "max_retries": 1,
   "isolation": {"mode": "git-worktree", "copy_dirty": true}
 }
 ```
 
-Use `--max-parallel 1` for diagnosis. Isolation requires permission to create Git worktree metadata. Setting `mode` to `none` restores sequential source/object swapping.
+`max_parallel` controls model/run concurrency for a single target. `max_target_parallel` controls active functions in `batch`; `batch_model_parallel` controls model concurrency inside each active function. Their product is the maximum batch provider/build concurrency. Override them with `batch --max-target-parallel N --model-parallel M`.
+
+Entries under `execution.pipelines` override those global values for the named
+workflow. Resolution order is CLI override, workflow override, global value,
+then the built-in default of `1`. Set all three workflow values to `1` to make
+that workflow sequential.
+
+Parallel batch evaluation requires Git-worktree isolation; dry-run context generation may run in parallel without it. Use `--max-parallel 1` for single-target diagnosis. Isolation requires permission to create Git worktree metadata. Setting `mode` to `none` restores sequential source/object swapping.
 
 ## Artifacts and state
 
@@ -287,14 +368,18 @@ Outputs default to:
 ```text
 build/llm-harness/
   experiments.jsonl
+  batches/<batch-id>/batch.json
   <target-or-unit>/<experiment-id>/
     prompt.md
+    context/
     <model-id>-<run>.json
     best.json
     state.json
 ```
 
 - `prompt.md` is the exact model dossier.
+- `context/` is empty for every workflow; `prompt.md` is the complete frozen model input.
+- `batch.json` records each target's experiment path or independent failure.
 - Each model artifact contains the typed candidate and evaluation.
 - `best.json` is the winning candidate for that experiment.
 - `experiments.jsonl` is append-only A/B history and is separate from the canonical decomp attempt log.
@@ -336,7 +421,7 @@ Relevant configuration under `project`:
 }
 ```
 
-The disposable index under `build/` is rebuilt when its Markdown or JSONL sources are stale.
+The disposable index under `build/` is rebuilt when its Markdown or JSONL sources are stale. Prompt creation snapshots only the selected queries and capped full records into `prompt.md`, so parallel agents receive stable target-specific knowledge without another context file.
 
 ## Current limitations and next work
 
@@ -344,7 +429,7 @@ The disposable index under `build/` is rebuilt when its Markdown or JSONL source
 - Resume reuses the original prompt. Start a new `improve` experiment when canonical source or KB evidence changes materially.
 - A new marker slot assigns source/unit but does not generate declarations, configure entries, headers, or namespace structure; the exact anchor is intentionally user-selected.
 - Promotion remains source-only and requires the normal `coop cycle` for authoritative acceptance.
-- Function dossiers currently use raw bytecode and relocations. Decoded PPC instructions and narrow caller/callee/type context remain useful follow-up improvements.
+- Function contexts include raw bytecode, relocations, and the named block from generated retail PPC assembly when available. Narrow type/caller/callee context remains a useful follow-up improvement.
 
 ## Adapter boundary
 

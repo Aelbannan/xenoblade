@@ -641,7 +641,7 @@ after_bit21:
         int* party = func_8009ECB0();
         u8 fi = 0;
         while (fi < 3) {
-            // Retail: clrlslwi fi; add party; lwz 4(r3); … stwx actors,same shift.
+            // Retail: clrlslwi fi; add party; lwz 4(r3); ... stwx actors,same shift.
             int* p = party + fi;
             void* actor = func_800B8B94(p[1]);
             actors[fi] = actor;
@@ -652,7 +652,7 @@ after_bit21:
         }
 
         // Gauge/bias NVs intentionally not hoisted as named locals: retail loads
-        // int→float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
+        // int->float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
 
         typedef s16* (*GetS16PairFn)(void*);
 
@@ -678,7 +678,7 @@ after_bit21:
             hp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x128)(actor));
             maxHp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x12C)(actor));
 
-            // Retail: lfs f26, zero pool — not fmr from a zero NV.
+            // Retail: lfs f26, zero pool -- not fmr from a zero NV.
             hpRatio = lbl_eu_80666F94;
             if (hp == 0) {
                 goto skip_ratio;

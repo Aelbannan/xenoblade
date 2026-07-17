@@ -19,6 +19,7 @@ from tools.ppc_equivalence.ir import (
     R_PPC_EMB_SDA21,
     R_PPC_REL24,
 )
+from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.semantics import CalleeContract, infer_callee_contract
 
 
@@ -272,6 +273,26 @@ class MatchedCalleeSummaryTests(unittest.TestCase):
             require_normal_return=True,
         )
         self.assertTrue(validation.valid, validation.reason)
+
+    def test_fixed_savegpr_helper_has_precise_memory_semantics(self) -> None:
+        helper = "_savegpr_31"
+        tail_call = decode("48000000", (R(0, R_PPC_REL24, helper, 0),))
+        inline = decode("93ebfffc 4e800020")  # stw r31,-4(r11); blr
+        helper_contract = CalleeContract(
+            frozenset({"r11", "r31", "memory", "valid"}),
+            frozenset({"memory", "valid"}),
+            f"fixed-eabi-runtime-helper:{helper}",
+        )
+        result = check_equivalence(
+            tail_call,
+            inline,
+            make_contract(preset=None, observe=("memory",), timeout_ms=10_000),
+            original_hex="",
+            candidate_hex="",
+            assumed_callees=frozenset({helper}),
+            callee_contracts={helper: helper_contract},
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 
     def test_semantic_validation_distinguishes_private_and_escaped_stack_memory(self) -> None:
         private = decode("3821fff0 98610008 38210010 4e800020")

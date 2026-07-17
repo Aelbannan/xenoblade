@@ -167,7 +167,10 @@ callee certificate. Before a caller consumes it, the workflow re-extracts and
 hashes both current object functions. A missing, malformed, stale, or
 transitively stale certificate returns `inconclusive_unvalidated_callee`.
 `harness --selection callees-accepted` uses this same certified frontier rather
-than match status alone. A contract that writes memory
+than match status alone. MWCC `_savegpr_*`, `_restgpr_*`, `_savefpr_*`, and
+`_restfpr_*` calls are certificate-bound fixed EABI runtime leaves; the engine
+models their exact r11-relative register load/store ranges instead of treating
+them as arbitrary memory writers. A contract that writes memory
 may modify any caller-frame byte reachable through an alias. Only a validated
 memory-free contract preserves the input memory array unchanged. Distinct
 callee symbols receive distinct transitions.

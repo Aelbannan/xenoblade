@@ -39,7 +39,7 @@ CBattleState::CBattleState() {
 //
 // True Fv (r3=this only). Clears the 8 CBattleStateEntry slots at +0x1388;
 // for each prior id, if it is still present among the 0x68 entries at +0x8
-// (13×8 halfword scan) the this+0x15AC status bit stays; otherwise cleared.
+// (13x8 halfword scan) the this+0x15AC status bit stays; otherwise cleared.
 // Ids >= 0x12f always clear (skip the scan). Ends with memset(+0x152C,0,0x80).
 void CBattleState::CBattleState_UnkVirtualFunc29() {
     CBattleStateEntry* entry;
@@ -88,7 +88,7 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 // exclusively. Do not touch CBattleState::CBattleState() above.
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
-// pattern as cf::CAIAction's UnkVirtualFunc1/2 — see
+// pattern as cf::CAIAction's UnkVirtualFunc1/2 -- see
 // docs/MWCC_REFERENCE.md).
 //
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
@@ -255,7 +255,7 @@ extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
             // scan base in r4. MWCC coalesces found into r3 and DSE's any dead
             // trip (`trip&0`, `trip^trip`, comma) or blows the shape with
             // volatile / `trip>1000` boolify. Instruction shapes, layout, and
-            // the rlwinm bit clear otherwise match — remaining gap is Chaitin
+            // the rlwinm bit clear otherwise match -- remaining gap is Chaitin
             // register coloring only (see MWCC_REFERENCE).
             u8* p = (u8*)self;
             int g;
@@ -285,11 +285,11 @@ extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
 // exclusively. Do not touch ctor / UnkVirtualFunc6 / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the id in r4 (same fake-Fv ABI
-// as UnkVirtualFunc6 — see docs/MWCC_REFERENCE.md).
+// as UnkVirtualFunc6 -- see docs/MWCC_REFERENCE.md).
 //
 // Leaf / no stack frame: maps specific ids to single-bit masks (or 0 for
 // unmapped ids), then returns (self->unk4 & mask) != 0 via the standard
-// MWCC branchless neg/or/srwi boolify idiom (see MWCC_REFERENCE §8c9).
+// MWCC branchless neg/or/srwi boolify idiom (see MWCC_REFERENCE section 8c9).
 extern "C" int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
     cf::CBattleState* self, u32 id) {
     u16 mask;
@@ -418,7 +418,7 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
         entry.unk18 = rec->unk0C;
         entry.unk1A = (s16)rec->unk06;
         entry.unk30 = flags;
-        // u32 >> 15 & 1 → extrwi (rlwinm. …,17,31,31); u16 >> yields srawi
+        // u32 >> 15 & 1 -> extrwi (rlwinm. ...,17,31,31); u16 >> yields srawi
         if ((((u32)recFlags->unk0E >> 15) & 1) != 0) {
             entry.unk08 = flag4000;
         }
@@ -449,8 +449,8 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
 // fake-Fv ABI as UnkVirtualFunc6). Nested cmpwi on entry->unk0C picks a
 // kind; kind==3 clears this+0x1528. Calls vt+0x2C (UnkVirtualFunc10) with
 // the arg, then walks this+0x8 entries (stride 0x34, count 0x68): matching
-// id (+ optional field eq unless unk30 bit 0x200) → stack-copy/clear →
-// vt+0x2C → id-dup scan / clear unk15AC bit → vt+0x4C; stop early if
+// id (+ optional field eq unless unk30 bit 0x200) -> stack-copy/clear ->
+// vt+0x2C -> id-dup scan / clear unk15AC bit -> vt+0x4C; stop early if
 // arg->unk0C == 0.
 extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* entry) {
@@ -707,7 +707,7 @@ kind_done:
             ((Vfunc10Fn)(*(void***)self)[11])(
                 self, (cf::CBattleStateEntry*)savedWords);
 
-            // Load halfword id into a wide local first (retail lhz → r5).
+            // Load halfword id into a wide local first (retail lhz -> r5).
             savedId = *(u16*)((u8*)savedWords + 0xc);
             if (savedId >= 0x12f) {
                 stillActive = 0;
@@ -779,7 +779,7 @@ kind_done:
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
 // fake-Fv ABI as UnkVirtualFunc8). Early-out when arg->unk2E == 0. Walks
-// this+0x8 (0x68 × stride 0x34): match on slot->unk2E (== arg->unk2E);
+// this+0x8 (0x68 x stride 0x34): match on slot->unk2E (== arg->unk2E);
 // when arg->unk30 bit 0x200 is clear also require unk00/04/08 eq. Same
 // flat if+goto kind tree on the *slot* id as UnkVirtualFunc8; kind==3
 // clears this+0x1528. Stack-copy + memset slot, id-dup scan / clear
@@ -794,7 +794,7 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
     cf::CBattleStateEntry* slot;
     int i;
     // Full arg spill (retail sp+0x3c..0x6c). Do not keep stackedWords[0] in a
-    // separate local — retail reloads it from the frame on the optional-eq
+    // separate local -- retail reloads it from the frame on the optional-eq
     // path; holding it live costs an extra CSR (stmw r21 vs retail stmw r22).
     u32 stackedWords[0x34 / 4];
     u32* aw;
@@ -1059,7 +1059,7 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
         savedWords[12] = s[12];
         memset(clearPtr, clearVal, clearLen);
 
-        // Load halfword id into a wide local first (retail lhz → r5).
+        // Load halfword id into a wide local first (retail lhz -> r5).
         savedId = *(u16*)((u8*)savedWords + 0xc);
         if (savedId >= 0x12f) {
             stillActive = 0;
@@ -1136,8 +1136,8 @@ extern "C" void CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv(
 
     id = arg->unk0C;
 
-    // ── Phase 1: id-specific init (flat if/goto to match retail's
-    //   cmpwi/beq/bge chain) ─────────────────────────────────────────
+    // -- Phase 1: id-specific init (flat if/goto to match retail's
+    //   cmpwi/beq/bge chain) -----------------------------------------
     if (id == 0xf)
         goto P1_setzero;
     if (id >= 0xf)
@@ -1201,14 +1201,14 @@ P1_setzero:
 
 P1_done:
 
-    // ── Phase 2: set unk30 bit 0 based on unk20 vs constant ─────────
+    // -- Phase 2: set unk30 bit 0 based on unk20 vs constant ---------
     if (lbl_eu_80667410 == arg->unk20) {
         arg->unk30 |= 1;
     } else {
         arg->unk30 &= ~1u;
     }
 
-    // ── Phase 3: kind classification #1 (r0 in retail) ──────────────
+    // -- Phase 3: kind classification #1 (r0 in retail) --------------
     {
         int k;
         if (id >= 0xd4) goto K1_5;
@@ -1265,14 +1265,14 @@ P1_done:
         }
     }
 
-    // ── Phase 4: set bitfield at this+0x15AC ────────────────────────
+    // -- Phase 4: set bitfield at this+0x15AC ------------------------
     {
         u32 wordOff = (id >> 3) & ~3u;
         u32 bitPos = id & 0x1F;
         *(u32*)(self->unk15AC + wordOff) |= (1u << bitPos);
     }
 
-    // ── Phase 5: kind classification #2 (r31 in retail) ─────────────
+    // -- Phase 5: kind classification #2 (r31 in retail) -------------
     if (id >= 0xd4) goto K2_5;
     if (id >= 0x3e) goto K2_4;
     if (id >= 0x2c) goto K2_3;
@@ -1323,7 +1323,7 @@ K2_5g: if (id >= 0x111) { kind2 = 3; goto K2_done; } if (id >= 0x10d) { kind2 = 
 K2_5f: if (id == 0x12d) { kind2 = 0; goto K2_done; } if (id >= 0x12d) { kind2 = 2; goto K2_done; } if (id == 0x11e) { kind2 = 0; goto K2_done; } kind2 = 2;
 K2_done:
 
-    // ── Phase 6: choose Branch A or B based on arg->unk08 ───────────
+    // -- Phase 6: choose Branch A or B based on arg->unk08 -----------
     if (arg->unk08 == 0x2000 || arg->unk08 == 0x4000 || arg->unk08 == 0x8000) {
         if (!(arg->unk30 & 0x200)) {
             goto BranchA;
@@ -1331,7 +1331,7 @@ K2_done:
     }
 
 BranchB:
-    // ── Branch B (retail jumps to 0x801476AC) ───────────────────────
+    // -- Branch B (retail jumps to 0x801476AC) -----------------------
     {
         int k;
         if (id >= 0xd4) goto B5_5;
@@ -1528,7 +1528,7 @@ BranchB:
     goto after_dispatch;
 
 BranchA:
-    // ── Branch A: kind #3 → if kind==0, call func_80109784(ptr, id, 5) ──
+    // -- Branch A: kind #3 -> if kind==0, call func_80109784(ptr, id, 5) --
     {
         int k;
         if (id >= 0xd4) goto A3_5;
@@ -1586,7 +1586,7 @@ BranchA:
         }
     }
 
-    // ── Branch A: kind #4 → func_80109784 with 6 or 4 ──────────────
+    // -- Branch A: kind #4 -> func_80109784 with 6 or 4 --------------
     {
         int k;
         if (id >= 0xd4) goto A4_5;
@@ -1651,7 +1651,7 @@ BranchA:
     func_8013DB6C(6, id, 0, 0);
 
 after_dispatch:
-    // ── Final: entry-slot scan + copy ───────────────────────────────
+    // -- Final: entry-slot scan + copy -------------------------------
     {
         u32 entryId = arg->unk0C;
 

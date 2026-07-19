@@ -29,6 +29,7 @@ static const double one = 1.0;
 static double one = 1.0;
 #endif
 
+// LLM-HARNESS-BEGIN: us-802cd91c
 #ifdef __STDC__
 double modf(double x, double* iptr)
 #else
@@ -77,7 +78,5 @@ double modf(x, iptr) double x, *iptr;
 		}
 	}
 }
-
-// LLM-HARNESS-BEGIN: us-802cd91c
-double modf(double x, double* iptr) { return 0.0; }
 // LLM-HARNESS-END: us-802cd91c
+

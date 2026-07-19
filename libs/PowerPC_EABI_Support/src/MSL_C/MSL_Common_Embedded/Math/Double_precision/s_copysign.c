@@ -19,6 +19,7 @@
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/fdlibm.h"
 
+// LLM-HARNESS-BEGIN: us-802cd4e4
 #ifdef __STDC__
 double copysign(double x, double y)
 #else
@@ -28,7 +29,5 @@ double copysign(x, y) double x, y;
 	__HI(x) = (__HI(x) & 0x7fffffff) | (__HI(y) & 0x80000000);
 	return x;
 }
-
-// LLM-HARNESS-BEGIN: us-802cd4e4
-double copysign(double x, double y) { return 0.0; }
 // LLM-HARNESS-END: us-802cd4e4
+

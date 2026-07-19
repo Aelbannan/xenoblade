@@ -28,6 +28,7 @@ static const double huge = 1.0e300;
 static double huge = 1.0e300;
 #endif
 
+// LLM-HARNESS-BEGIN: us-802cd398
 #ifdef __STDC__
 double ceil(double x)
 #else
@@ -88,7 +89,5 @@ double ceil(x) double x;
 	__LO(x) = i1;
 	return x;
 }
-
-// LLM-HARNESS-BEGIN: us-802cd398
-double ceil(double x) { return 0.0; }
 // LLM-HARNESS-END: us-802cd398
+

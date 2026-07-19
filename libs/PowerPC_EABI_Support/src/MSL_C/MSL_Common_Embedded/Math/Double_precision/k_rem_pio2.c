@@ -161,6 +161,7 @@ static double
     one = 1.0, two24 = 1.67772160000000000000e+07, /* 0x41700000, 0x00000000 */
     twon24 = 5.96046447753906250000e-08;           /* 0x3E700000, 0x00000000 */
 
+// LLM-HARNESS-BEGIN: us-802cb7a0
 #ifdef __STDC__
 int __kernel_rem_pio2(double* x, double* y, int e0, int nx, int prec, const int* ipio2) /*- cc 020130 -*/
 #else
@@ -351,8 +352,6 @@ recompute:
 	}
 	return n & 7;
 }
-#endif /* _No_Floating_Point  */
-
-// LLM-HARNESS-BEGIN: us-802cb7a0
-void __kernel_rem_pio2() {}
 // LLM-HARNESS-END: us-802cb7a0
+
+#endif /* _No_Floating_Point  */

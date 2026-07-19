@@ -89,6 +89,7 @@ static const double one = 1.0, tiny = 1.0e-300;
 static double one = 1.0, tiny = 1.0e-300;
 #endif
 
+// LLM-HARNESS-BEGIN: us-802cdb78
 #ifdef __STDC__
 double __ieee754_sqrt(double x)
 #else
@@ -202,6 +203,8 @@ double __ieee754_sqrt(x) double x;
 	__LO(z) = ix1;
 	return z;
 }
+// LLM-HARNESS-END: us-802cdb78
+
 
 /*
 Other methods  (use floating-point arithmetic)
@@ -409,7 +412,3 @@ B.  sqrt(x) by Reciproot Iteration
     -------------------------------------------------
     (4)	Special cases (see (4) of Section A).
  */
-
-// LLM-HARNESS-BEGIN: us-802cdb78
-void __ieee754_sqrt() {}
-// LLM-HARNESS-END: us-802cdb78

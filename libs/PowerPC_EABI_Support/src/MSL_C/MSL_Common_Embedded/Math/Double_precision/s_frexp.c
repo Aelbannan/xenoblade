@@ -31,6 +31,7 @@ static double
     two54
     = 1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
 
+// LLM-HARNESS-BEGIN: us-802cd728
 #ifdef __STDC__
 double frexp(double x, int* eptr)
 #else
@@ -56,7 +57,5 @@ int* eptr;
 	__HI(x) = hx;
 	return x;
 }
-
-// LLM-HARNESS-BEGIN: us-802cd728
-double frexp(double x, int* eptr) { return 0.0; }
 // LLM-HARNESS-END: us-802cd728
+

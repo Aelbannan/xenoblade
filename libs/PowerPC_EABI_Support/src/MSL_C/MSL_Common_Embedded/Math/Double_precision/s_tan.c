@@ -43,6 +43,7 @@
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/fdlibm.h"
 
+// LLM-HARNESS-BEGIN: us-802cdae4
 #ifdef __STDC__
 double tan(double x)
 #else
@@ -71,7 +72,5 @@ double tan(x) double x;
 		                            -1 -- n odd */
 	}
 }
-
-// LLM-HARNESS-BEGIN: us-802cdae4
-double tan(double x) { return 0.0; }
 // LLM-HARNESS-END: us-802cdae4
+

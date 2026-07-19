@@ -57,6 +57,7 @@ qS2 =  2.02094576023350569471e+00, /* 0x40002AE5, 0x9C598AC8 */
 qS3 = -6.88283971605453293030e-01, /* 0xBFE6066C, 0x1B8D0159 */
 qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
 
+// LLM-HARNESS-BEGIN: us-802c9bf4
 #ifdef __STDC__
 double __ieee754_acos(double x)
 #else
@@ -105,7 +106,5 @@ double __ieee754_acos(x) double x;
 	    return 2.0*(df+w);
 	}
 }
-
-// LLM-HARNESS-BEGIN: us-802c9bf4
-void __ieee754_acos() {}
 // LLM-HARNESS-END: us-802c9bf4
+

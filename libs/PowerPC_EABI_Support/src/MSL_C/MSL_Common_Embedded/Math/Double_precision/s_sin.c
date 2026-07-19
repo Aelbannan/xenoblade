@@ -44,6 +44,7 @@
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/fdlibm.h"
 
+// LLM-HARNESS-BEGIN: us-802cda18
 #ifdef __STDC__
 double sin(double x)
 #else
@@ -80,7 +81,5 @@ double sin(x) double x;
 		}
 	}
 }
-
-// LLM-HARNESS-BEGIN: us-802cda18
-double sin(double x) { return 0.0; }
 // LLM-HARNESS-END: us-802cda18
+

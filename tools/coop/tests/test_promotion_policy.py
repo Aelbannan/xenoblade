@@ -349,8 +349,9 @@ class CertificateReconstructionTests(unittest.TestCase):
 
 
 def _registry_certificate(target_id: str, callees: list[dict[str, str]] | None = None) -> dict:
-    from tools.ppc_equivalence.provenance import hash_engine_tree
+    from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 
+    repo = Path(__file__).resolve().parents[3]
     certificate = {
         "version": EQUIVALENCE_CERTIFICATE_VERSION,
         "status": "SEMANTIC_CERTIFIED",
@@ -367,7 +368,8 @@ def _registry_certificate(target_id: str, callees: list[dict[str, str]] | None =
         },
         "callees": callees or [],
         "helpers": [],
-        "engine_hash": hash_engine_tree(Path(__file__).resolve().parents[3]),
+        "engine_hash": hash_engine_tree(repo),
+        "certifier_hash": hash_certifier_tree(repo),
     }
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate

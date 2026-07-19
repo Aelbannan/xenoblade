@@ -30,7 +30,11 @@ from tools.ppc_equivalence.callee_inference import infer_matched_callee_contract
 from tools.ppc_equivalence.engine import check_equivalence, validate_callee_contract
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
-from tools.ppc_equivalence.provenance import hash_engine_tree, proof_request_hash
+from tools.ppc_equivalence.provenance import (
+    hash_certifier_tree,
+    hash_engine_tree,
+    proof_request_hash,
+)
 from tools.ppc_equivalence.semantics import (
     CalleeContract,
     ConcreteOps,
@@ -53,6 +57,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 def _current_engine_hash() -> str:
     return hash_engine_tree(_REPO_ROOT)
+
+
+def _current_certifier_hash() -> str:
+    return hash_certifier_tree(_REPO_ROOT)
 
 
 @dataclass(frozen=True)
@@ -278,6 +286,7 @@ def _cache_key(
     floating_point_domain: dict[str, Any] | None = None,
     limits: dict[str, int] | None = None,
     engine_hash: str | None = None,
+    certifier_hash: str | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -296,6 +305,9 @@ def _cache_key(
             "architecture": ARCHITECTURE_MODEL,
             "result_format": RESULT_FORMAT,
             "engine_hash": engine_hash if engine_hash is not None else _current_engine_hash(),
+            "certifier_hash": (
+                certifier_hash if certifier_hash is not None else _current_certifier_hash()
+            ),
             "contract": contract_name,
             "observables": sorted(observables),
             "original_hex": original_hex,
@@ -336,6 +348,7 @@ def _cache_get(
     cache_dir: Path | None,
     *,
     engine_hash: str | None = None,
+    certifier_hash: str | None = None,
 ) -> EquivalenceProbe | None:
     if cache_dir is None:
         return None
@@ -354,6 +367,12 @@ def _cache_get(
         stored_engine = data.get("engine_hash")
         # Reject missing engine_hash (pre-binding entries) and mismatches.
         if not isinstance(stored_engine, str) or stored_engine != expected_engine:
+            return None
+        expected_certifier = (
+            certifier_hash if certifier_hash is not None else _current_certifier_hash()
+        )
+        stored_certifier = data.get("certifier_hash")
+        if not isinstance(stored_certifier, str) or stored_certifier != expected_certifier:
             return None
         status = ProofStatus(data["status"])
         certificate = data.get("certificate")
@@ -420,6 +439,7 @@ def _cache_put(
     assumed_callees: set[int | str] | frozenset[int | str] = frozenset(),
     *,
     engine_hash: str | None = None,
+    certifier_hash: str | None = None,
 ) -> None:
     if cache_dir is None:
         return
@@ -429,6 +449,9 @@ def _cache_put(
         "architecture": ARCHITECTURE_MODEL,
         "result_format": RESULT_FORMAT,
         "engine_hash": engine_hash if engine_hash is not None else _current_engine_hash(),
+        "certifier_hash": (
+            certifier_hash if certifier_hash is not None else _current_certifier_hash()
+        ),
         "status": probe.status.value,
         "detail": probe.detail,
         "certificate": probe.certificate,
@@ -648,8 +671,10 @@ def _build_equivalence_certificate(
     }
     if memory_scope is not None:
         certificate["memory_scope"] = memory_scope
-    # Always bind the live engine tree so certificates fail closed after semantic edits.
+    # Always bind the live engine and certifier trees so certificates fail closed
+    # after semantic or policy edits.
     certificate["engine_hash"] = _current_engine_hash()
+    certificate["certifier_hash"] = _current_certifier_hash()
     if proof is not None:
         engine_hash = getattr(proof, "engine_hash", "") or ""
         source_hash = getattr(proof, "source_hash", "") or ""

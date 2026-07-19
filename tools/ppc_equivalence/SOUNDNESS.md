@@ -335,6 +335,7 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 | `abstractions` | string[] | Reasons for `INCONCLUSIVE_ABSTRACTION` |
 | `opcodes_used` | string[] | Opcodes enumerated for ledger confidence tiering |
 | `engine_hash` | string | SHA-256 of declared engine trust-boundary tree |
+| `certifier_hash` | string | SHA-256 of coop certifier/policy trust-boundary sources |
 | `source_hash` | string | Canonical hash of proof-request inputs |
 | `git_commit` / `git_dirty` | string / bool | Repository identity at proof time |
 | `platform` / `python_version` / `z3_version` / `capstone_version` | string | Runtime identity |

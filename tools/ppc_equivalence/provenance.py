@@ -14,6 +14,14 @@ ENGINE_SOURCE_PATTERNS = [
     "tools/ppc_equivalence/validation_ledger.json",
 ]
 
+# Coop certifier/policy trust boundary (separate from engine_hash so solver
+# provenance stays scoped to tools/ppc_equivalence/**).
+CERTIFIER_SOURCE_PATHS = [
+    "tools/coop/lib/equivalence_check.py",
+    "tools/coop/lib/equivalence_policy.py",
+    "tools/coop/lib/targets.py",
+]
+
 
 def _collect_engine_paths(repo_root: Path) -> list[Path]:
     """Return sorted unique paths included in the engine-tree hash."""
@@ -47,10 +55,10 @@ def _collect_engine_paths(repo_root: Path) -> list[Path]:
     return [by_rel[key] for key in sorted(by_rel)]
 
 
-def hash_engine_tree(repo_root: Path) -> str:
-    """Deterministic SHA-256 over engine trust-boundary sources."""
+def _hash_source_tree(repo_root: Path, paths: list[Path]) -> str:
+    """Deterministic SHA-256 over sorted repo-relative source paths."""
     digest = hashlib.sha256()
-    for path in _collect_engine_paths(repo_root):
+    for path in paths:
         relative = path.relative_to(repo_root).as_posix().encode("utf-8")
         content = path.read_bytes()
         digest.update(len(relative).to_bytes(4, "big"))
@@ -58,6 +66,27 @@ def hash_engine_tree(repo_root: Path) -> str:
         digest.update(len(content).to_bytes(8, "big"))
         digest.update(content)
     return digest.hexdigest()
+
+
+def _collect_certifier_paths(repo_root: Path) -> list[Path]:
+    """Return sorted coop certifier/policy paths included in certifier_hash."""
+    paths: list[Path] = []
+    for relative in CERTIFIER_SOURCE_PATHS:
+        path = repo_root / relative
+        if not path.is_file():
+            raise FileNotFoundError(f"certifier trust-boundary source missing: {relative}")
+        paths.append(path)
+    return paths
+
+
+def hash_engine_tree(repo_root: Path) -> str:
+    """Deterministic SHA-256 over engine trust-boundary sources."""
+    return _hash_source_tree(repo_root, _collect_engine_paths(repo_root))
+
+
+def hash_certifier_tree(repo_root: Path) -> str:
+    """Deterministic SHA-256 over coop certifier/policy trust-boundary sources."""
+    return _hash_source_tree(repo_root, _collect_certifier_paths(repo_root))
 
 
 def canonical_json_sha256(value: object) -> str:

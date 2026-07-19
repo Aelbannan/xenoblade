@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from tools.coop.lib.config import CoopConfig, _load_yaml
 from tools.symbolrecover.lib.mwcc import demangle_symbol
 from tools.symbolrecover.lib.parser import SymbolEntry, load_symbols
-from tools.ppc_equivalence.provenance import hash_engine_tree
+from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
 
@@ -92,6 +92,12 @@ def equivalence_certificate_error(
     expected_engine = hash_engine_tree(_REPO_ROOT)
     if engine_hash != expected_engine:
         return "certificate engine_hash does not match current engine tree"
+    certifier_hash = certificate.get("certifier_hash")
+    if not isinstance(certifier_hash, str) or re.fullmatch(r"[0-9a-f]{64}", certifier_hash) is None:
+        return "certificate certifier_hash is missing or not a lowercase SHA-256"
+    expected_certifier = hash_certifier_tree(_REPO_ROOT)
+    if certifier_hash != expected_certifier:
+        return "certificate certifier_hash does not match current certifier tree"
     summary = certificate.get("summary")
     if not isinstance(summary, dict):
         return "certificate summary is not an object"

@@ -18,7 +18,7 @@ from tools.coop.lib.targets import (
     update_target_result,
     validate_targets,
 )
-from tools.ppc_equivalence.provenance import hash_engine_tree
+from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -46,6 +46,7 @@ def _certificate(
         "callees": callees or [],
         "helpers": [],
         "engine_hash": engine_hash if engine_hash is not None else hash_engine_tree(_REPO_ROOT),
+        "certifier_hash": hash_certifier_tree(_REPO_ROOT),
         "source_hash": "b" * 64,
         "git_commit": "c" * 40,
         "memory_scope": {

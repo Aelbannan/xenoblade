@@ -36,14 +36,14 @@ FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
 FP_FLAG_MODELED: tuple[str, ...] = (
     "VX-causes",
     "ZX-cause",
+    "XX-oracle-scaffold",
+    "FPRF-oracle-scaffold",
 )
 FP_FLAG_ASSUMED: tuple[str, ...] = (
     "OX",
     "UX",
-    "XX",
     "FI",
     "FR",
-    "FPRF",
     "trap-enable-bits",
 )
 FP_FLAG_UNSUPPORTED: tuple[str, ...] = (

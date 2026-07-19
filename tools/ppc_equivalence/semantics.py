@@ -532,6 +532,52 @@ class ConcreteOps:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
 
+    def fp_fsub_rne_bits(self, a_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fsub_binary64_rne
+
+        try:
+            return fsub_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fdiv_rne_bits(self, a_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fdiv_binary64_rne
+
+        try:
+            return fdiv_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fsubs_fpr_bits(self, rm: str, a_fpr: int, b_fpr: int) -> int:
+        from .fp_oracle import fsubs_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fsubs_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF, b_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fdivs_fpr_bits(self, rm: str, a_fpr: int, b_fpr: int) -> int:
+        from .fp_oracle import fdivs_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fdivs_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF, b_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
     def fp_add(self, rm: str, a: float, b: float) -> float: return a + b
     def fp_sub(self, rm: str, a: float, b: float) -> float: return a - b
     def fp_mul(self, rm: str, a: float, b: float) -> float: return a * b
@@ -2599,6 +2645,20 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             d = ops.fp_bits_to_double(oracle_scalar_bits)
         elif isinstance(ops, ConcreteOps) and op == Opcode.FMULS:
             oracle_scalar_bits = ops.fp_fmuls_fpr_bits(rm, fa_bits, fc_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FSUB:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fsub_rne_bits(fa_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FSUBS:
+            oracle_scalar_bits = ops.fp_fsubs_fpr_bits(rm, fa_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FDIV:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fdiv_rne_bits(fa_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FDIVS:
+            oracle_scalar_bits = ops.fp_fdivs_fpr_bits(rm, fa_bits, fb_bits)
             d = ops.fp_bits_to_double(oracle_scalar_bits)
         elif op in (Opcode.FADDS, Opcode.FADD):
             d = ops.fp_add(rm, op_fa, op_fb)

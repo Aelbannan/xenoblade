@@ -114,7 +114,7 @@ extern "C" bool func_8006B6B0() { return false; }
 extern "C" bool func_8006B6B8() { return false; }
 // LLM-HARNESS-END: us-8006c110
 // LLM-HARNESS-BEGIN: us-8006c118
-extern "C" bool func_8006B6C0() { return false; }
+extern "C" bool func_8006B6C0() { return true; }
 // LLM-HARNESS-END: us-8006c118
 // LLM-HARNESS-BEGIN: us-8006c4d8
 extern "C" void func_8006BA80() {}
@@ -153,13 +153,13 @@ extern "C" bool func_8006BEF0() { return false; }
 extern "C" void harness_stub_us_8006c950() {}
 // LLM-HARNESS-END: us-8006c950
 // LLM-HARNESS-BEGIN: us-8006c954
-extern "C" void harness_stub_us_8006c954() {}
+void func_8006BEFC(void* param_1) { *(u32*)param_1 = 0; }
 // LLM-HARNESS-END: us-8006c954
 // LLM-HARNESS-BEGIN: us-8006c960
 extern "C" void harness_stub_us_8006c960() {}
 // LLM-HARNESS-END: us-8006c960
 // LLM-HARNESS-BEGIN: us-8006c96c
-extern "C" void* harness_stub_us_8006c96c() { return 0; }
+void* func_8006BF14(void* r3, int r4) { return (char*)r3 + r4 * 12; }
 // LLM-HARNESS-END: us-8006c96c
 // LLM-HARNESS-BEGIN: us-8006ca14
 extern "C" bool func_8006BFBC() { return false; }

@@ -18,7 +18,8 @@ from tools.llm_harness.dossier import (
     build_target_dossier, build_cfg, build_data_flow_summary,
     build_declaration_context, validate_dossier, dossier_to_dict,
     decode_instructions, _classify_instruction, _find_class_name,
-    _format_operand, _split_params,
+    _format_operand, _split_params, demangled_has_explicit_return,
+    compact_model_facing_dossier,
 )
 from tools.llm_harness.structural import compare_structural
 from tools.ppc_equivalence.elf_symbols import FunctionBytes, FunctionRelocation
@@ -204,6 +205,113 @@ class TestDossierStability(unittest.TestCase):
             0x80000000, 40, fn, "", "", [], constraints=cons,
         )
         self.assertTrue(d.retail.truncated)
+
+
+class TestCompactModelFacingDossier(unittest.TestCase):
+
+    def test_explicit_return_detection(self) -> None:
+        self.assertFalse(demangled_has_explicit_return("CGame::wkRender"))
+        self.assertFalse(demangled_has_explicit_return("func_8006BA80"))
+        self.assertTrue(demangled_has_explicit_return("int func(int a)"))
+        self.assertTrue(demangled_has_explicit_return("void Class::method()"))
+        self.assertTrue(demangled_has_explicit_return("float ns::Class::method(int)"))
+
+    def test_keeps_distinct_mangled_demangled(self) -> None:
+        compacted = compact_model_facing_dossier({
+            "target": {
+                "target_id": "t1",
+                "mangled_name": "foo__6CClassFv",
+                "demangled_name": "CClass::foo(void)",
+                "source_file": "src/a.cpp",
+                "object_file": "build/a.o",
+                "translation_unit": "a",
+                "retail_address": "0x00000010",
+                "retail_size": 32,
+            },
+            "signature": {
+                "declaration": "CClass::foo(void)",
+                "authoritative": True,
+                "implicit_this": {"type": "CClass*", "register": "r3"},
+                "parameters": [],
+                "return_info": {"type": "void", "register": ""},
+            },
+            "retail": {"base": "0x00000010", "size": 32, "truncated": False},
+            "source": {
+                "kind": "detected-function-definition",
+                "begin_marker": "// LLM-HARNESS-BEGIN: t1",
+                "end_marker": "// LLM-HARNESS-END: t1",
+                "source_path": "src/a.cpp",
+                "current_source": "",
+            },
+            "types": {"snippets": [], "total_chars": 0},
+            "schema_version": 3,
+            "repository": "xenoblade-wii-us",
+            "workflow": "new",
+            "retail_asm": "blr",
+        })
+        self.assertEqual(compacted["target"]["mangled_name"], "foo__6CClassFv")
+        self.assertEqual(compacted["target"]["demangled_name"], "CClass::foo(void)")
+        self.assertNotIn("object_file", compacted["target"])
+        self.assertNotIn("retail_address", compacted["target"])
+        self.assertNotIn("retail_size", compacted["target"])
+        self.assertEqual(
+            compacted["retail"],
+            {"base": "0x00000010", "size": 32, "truncated": False},
+        )
+        self.assertNotIn("parameters", compacted["signature"])
+        self.assertNotIn("return_info", compacted["signature"])
+        self.assertNotIn("authoritative", compacted["signature"])
+        self.assertIn("implicit_this", compacted["signature"])
+        self.assertNotIn("source", compacted)
+        self.assertNotIn("types", compacted)
+        self.assertNotIn("schema_version", compacted)
+
+    def test_drops_duplicate_name_when_identical(self) -> None:
+        compacted = compact_model_facing_dossier({
+            "target": {
+                "target_id": "t2",
+                "mangled_name": "func_8006BA80",
+                "demangled_name": "func_8006BA80",
+                "source_file": "src/a.cpp",
+            },
+            "signature": {
+                "declaration": "func_8006BA80",
+                "authoritative": True,
+                "implicit_this": None,
+                "parameters": [],
+                "return_info": {"type": "void", "register": ""},
+            },
+            "retail": {"base": "0x1", "size": 4, "truncated": False},
+        })
+        self.assertNotIn("mangled_name", compacted["target"])
+        self.assertEqual(compacted["target"]["demangled_name"], "func_8006BA80")
+        self.assertNotIn("return_info", compacted["signature"])
+        self.assertNotIn("implicit_this", compacted["signature"])
+
+    def test_keeps_recovered_return_and_parameters(self) -> None:
+        compacted = compact_model_facing_dossier({
+            "target": {
+                "target_id": "t3",
+                "mangled_name": "bar__Fi",
+                "demangled_name": "int bar(int a)",
+                "source_file": "src/a.cpp",
+            },
+            "signature": {
+                "declaration": "int bar(int a)",
+                "authoritative": True,
+                "implicit_this": None,
+                "parameters": [{"name": "a", "type": "int"}],
+                "return_info": {"type": "int", "register": ""},
+            },
+            "types": {"snippets": ["struct S {};"], "total_chars": 12},
+            "retail": {"base": "0x1", "size": 4, "truncated": True},
+        })
+        self.assertEqual(compacted["signature"]["return_info"], {"type": "int"})
+        self.assertEqual(
+            compacted["signature"]["parameters"],
+            [{"name": "a", "type": "int"}],
+        )
+        self.assertEqual(compacted["types"], {"snippets": ["struct S {};"]})
 
 
 if __name__ == "__main__":

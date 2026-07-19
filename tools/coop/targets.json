@@ -35607,8 +35607,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -35616,7 +35616,39 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-19T20:29:01.600463+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 2,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v23",
+        "result_format": 9,
+        "target_id": "us-8006c118",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "fcb330b52c147e98c1d7269e7815c8ec15d0b1747f810d47595248d411ec72c6",
+        "candidate_sha256": "54ecd71ba98a378d704ec9aae2b9d0bbc23a130a574cb6b1c78cb55aa22a35d6",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "23abf6645cae1a4975a74de33698710fa4c2abbf03c7eac1caa30056a536d27e",
+        "certificate_sha256": "25adb1537854159985dc7259ca02c34077b2c26fbf769a0f37f000b98e2f1ff6"
+      }
     },
     {
       "id": "us-8006c120",
@@ -35928,7 +35960,7 @@
       "source": "src/kyoshin/cf/CfCam.cpp",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH via extern-C ctor + SDA floats; \u00a717.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)",
+      "notes": "FULL_MATCH via extern-C ctor + SDA floats; §17.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -36126,8 +36158,8 @@
       "size": "0xC",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -36135,7 +36167,49 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-19T21:12:51.776284+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 3,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v24",
+        "result_format": 10,
+        "target_id": "us-8006c954",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "6e8c139bf28bf4cdf4178a77474a4a90539490012b232d29fc141fd7f1970734",
+        "candidate_sha256": "c4120feb3b24d00046589985575d8d7ebc2dd2770d52a4ced7f8992218126369",
+        "summary": {
+          "reads": [
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "memory",
+            "r0",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "e3a57a13a1efda25d8f87c0e3b0c1ae46172e209807b3e0fc7f30f66d702d697",
+        "certifier_hash": "b8186f1d5daab08906362c3846930ddc6e1a5e8f5a5ae9393926db9355710b9b",
+        "certificate_sha256": "7394ed6a2e7b1ca1964ab426a0597a2260bfe249dc7a014509d101054198d97e"
+      }
     },
     {
       "id": "us-8006c960",
@@ -36172,8 +36246,8 @@
       "size": "0xC",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -36181,7 +36255,44 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-19T21:13:46.643730+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 3,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v24",
+        "result_format": 10,
+        "target_id": "us-8006c96c",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "c4580925a02c9d572b0d4a83095055c5b8ad5eea8cd4b5a20aa7e2fe9b5d486f",
+        "candidate_sha256": "0dccd3c12dc5a3011cdc7bf59028c691f20583bcc085661742b7b0202931cafd",
+        "summary": {
+          "reads": [
+            "r3",
+            "r4"
+          ],
+          "writes": [
+            "r0",
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "e3a57a13a1efda25d8f87c0e3b0c1ae46172e209807b3e0fc7f30f66d702d697",
+        "certifier_hash": "b8186f1d5daab08906362c3846930ddc6e1a5e8f5a5ae9393926db9355710b9b",
+        "certificate_sha256": "7a8a97fe6a57322efb01bea44b7901cb4c61749608e1fad95fb3f6108891f03d"
+      }
     },
     {
       "id": "us-8006c978",
@@ -103604,7 +103715,7 @@
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Create TU; PackedFont Destroy\u00d73 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4",
+      "notes": "Create TU; PackedFont Destroy×3 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -112514,7 +112625,7 @@
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries \u2192 vt+0x1c; leave other vfuncs; size 0x12C",
+      "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries → vt+0x1c; leave other vfuncs; size 0x12C",
       "status": "HIGH_MATCH",
       "instruction_match": 75.04,
       "workflow_status": "ACTIVE",
@@ -112979,7 +113090,7 @@
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Batch 14h; leaf id\u2192mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160",
+      "notes": "Batch 14h; leaf id→mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -114513,7 +114624,7 @@
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Clear + 3\u00d78 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C",
+      "notes": "Clear + 3×8 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -134368,7 +134479,7 @@
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "unit": "kyoshin/menu/CMenuPTGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH; gates + DrawInfo draw; \u00a717.6 asm b for bit21 beq+8;b; leave Move",
+      "notes": "FULL_MATCH; gates + DrawInfo draw; §17.6 asm b for bit21 beq+8;b; leave Move",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -152523,7 +152634,7 @@
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH via volatile stick reload + setPad__\u2026Fv reloc",
+      "notes": "FULL_MATCH via volatile stick reload + setPad__…Fv reloc",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -423150,7 +423261,7 @@
       "source": "libs/monolib/src/util/MemManager.cpp",
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr \u2014 return SDA handle, not sHandleMEM2",
+      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr — return SDA handle, not sHandleMEM2",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -428651,7 +428762,7 @@
       "source": "libs/monolib/src/core/CViewFrame.cpp",
       "unit": "monolib/src/core/CViewFrame",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded \u00a717.6 Chaitin register-color patches; behaviour cviewframe-render PASS",
+      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded §17.6 Chaitin register-color patches; behaviour cviewframe-render PASS",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -429092,7 +429203,7 @@
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded \u00a717.6 frame/register patches; behaviour host PASS",
+      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded §17.6 frame/register patches; behaviour host PASS",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -429444,7 +429555,7 @@
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded \u00a717.6 Chaitin/CSE patches",
+      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded §17.6 Chaitin/CSE patches",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -441058,7 +441169,7 @@
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
       "unit": "monolib/src/device/CDeviceGX",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr \u2014 return SDA int, not spInstance->gxHeapSize",
+      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr — return SDA int, not spInstance->gxHeapSize",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",

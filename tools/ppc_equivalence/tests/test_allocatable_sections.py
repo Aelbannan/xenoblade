@@ -27,6 +27,7 @@ def build_elf_with_rodata(
     rodata_relocations: tuple[tuple[int, str, int, int], ...] = (),
     text_addr: int = 0,
     rodata_addr: int = 0,
+    e_type: int = 1,
 ) -> bytes:
     """Minimal ET_REL with .text + .rodata and optional .rela.rodata (ADDR32)."""
     shstr = (
@@ -152,7 +153,7 @@ def build_elf_with_rodata(
     ident[6] = 1
     header = bytes(ident) + struct.pack(
         ">HHIIIIIHHHHHH",
-        1,
+        e_type,
         20,
         1,
         0,

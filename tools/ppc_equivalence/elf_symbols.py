@@ -144,6 +144,12 @@ def _require_elf32_be(data: bytes, path: Path) -> int:
     return e_type
 
 
+def elf_type(path: Path | str) -> int:
+    """Return the ELF ``e_type`` field (``ET_REL``, ``ET_EXEC``, …)."""
+    obj = Path(path)
+    return _require_elf32_be(obj.read_bytes(), obj)
+
+
 def _section_table(data: bytes) -> tuple[list[dict[str, int | str]], dict[str, int]]:
     e_shoff = struct.unpack_from(">I", data, 0x20)[0]
     e_shentsize = struct.unpack_from(">H", data, 0x2E)[0]

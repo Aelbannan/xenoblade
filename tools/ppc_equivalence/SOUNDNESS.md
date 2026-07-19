@@ -60,6 +60,11 @@ documented per-implementation private-storage abstraction.
   concrete count at or below the bound) complete normally when the exit
   condition becomes concrete.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
+  Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
+  descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`
+  shape does not prove equivalence. Proving switch dispatch still requires
+  readonly-image binding for the table region and indirect-target closure for
+  every loaded entry before an `EQUIVALENT` promotion may use the table.
 - Path count and instruction count are bounded by `max_paths` (default 256) and
   `max_instructions` (default 2048). Exceeding either produces
   `INCONCLUSIVE_UNSUPPORTED`.

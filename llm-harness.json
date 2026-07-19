@@ -72,5 +72,66 @@
         "runs": 10
       }
     ]
+  },
+  "pipeline": {
+    "budgets": {
+      "reconstruct": 3,
+      "compile_repair": 3,
+      "semantic_repair": 2,
+      "match_improve": 2
+    },
+    "stop_on": {
+      "full_match": true,
+      "proved_equivalent": true
+    }
+  },
+  "dossier": {
+    "schema_version": 1,
+    "max_decoded_instructions": 400,
+    "max_declaration_chars": 20000,
+    "max_callers": 3,
+    "max_caller_chars_each": 3000,
+    "max_accepted_siblings": 4,
+    "max_accepted_chars_each": 5000,
+    "max_knowledge_records": 10,
+    "max_attempt_clusters": 8,
+    "include_raw_hex": true
+  },
+  "structural": {
+    "weights": {
+      "calls": 0.20,
+      "relocations": 0.10,
+      "memory_accesses": 0.25,
+      "cfg": 0.20,
+      "constants": 0.10,
+      "returns": 0.10,
+      "instruction_classes": 0.05
+    },
+    "semantic_repair_below": 0.75,
+    "first_compile_promotion_min": 0.60,
+    "max_structural_regression_for_match_improve": 0.02
+  },
+  "promotion": {
+    "enabled": true,
+    "lock_scope": "global",
+    "require_monotonic_rank": true,
+    "allow_first_compile": true,
+    "first_compile_min_structural_score": 0.60,
+    "protect_accepted_functions": true,
+    "revalidate_against_latest_root": true,
+    "rollback_on_failure": true,
+    "run_coop_cycle": true
+  },
+  "knowledge": {
+    "mode": "retrieved",
+    "max_records": 10,
+    "cluster_attempts": true
+  },
+  "features": {
+    "transactional_promotion": true,
+    "typed_dossier": true,
+    "staged_pipeline": true,
+    "structural_routing": true,
+    "retrieved_knowledge": true
   }
 }

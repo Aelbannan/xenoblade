@@ -24,7 +24,8 @@ from .memory_profile import (
     parse_ranges,
 )
 from .model import MachineState, concrete_state
-from .result import ProofResult, ProofStatus
+from .provenance import canonical_json_sha256
+from .result import FloatingPointDomain, ProofResult, ProofStatus
 from .semantics import ConcreteOps, automatic_live_out, execute_cfg
 
 
@@ -96,6 +97,12 @@ def _terminal_mismatches_concrete(
         })
         return mismatches
     if not bool(left.state.valid):
+        if left.state.invalid_reason != right.state.invalid_reason:
+            mismatches.append({
+                "name": "invalid-reason",
+                "original": int(left.state.invalid_reason),
+                "candidate": int(right.state.invalid_reason),
+            })
         return mismatches
     for observable in observables:
         original = _observable_concrete(left.state, observable)
@@ -171,6 +178,7 @@ def _exit_for_status(status: ProofStatus) -> int:
         ProofStatus.INCONCLUSIVE_ABSTRACTION,
         ProofStatus.INCONCLUSIVE_LAYOUT,
         ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
+        ProofStatus.INCONCLUSIVE_UNMODELED_EXCEPTION,
     ):
         return 2
     if status == ProofStatus.INVALID_INPUT:
@@ -253,6 +261,20 @@ def _run_check(
             original_live_out=original_live_out,
             candidate_live_out=candidate_live_out,
         )
+        source_hash = canonical_json_sha256({
+            "original_hex": original_hex,
+            "candidate_hex": candidate_hex,
+            "contract": requested_contract or "manual",
+            "observe": sorted(args.observe) if args.observe else [],
+            "timeout_ms": timeout_ms,
+            "max_instructions": args.max_instructions,
+            "max_paths": args.max_paths,
+            "memory_profile": getattr(args, "memory_profile", None),
+            "memory_ranges": sorted(getattr(args, "memory_ranges", []) or []),
+        })
+        fp_domain: FloatingPointDomain | None = None
+        if hasattr(args, "fp_domain") and args.fp_domain is not None:
+            fp_domain = FloatingPointDomain(**json.loads(args.fp_domain))
         result = check_equivalence(
             original,
             candidate,
@@ -264,6 +286,8 @@ def _run_check(
             max_paths=args.max_paths,
             assumed_callees=assumed_callees,
             memory_environment=memory_env,
+            source_hash=source_hash,
+            floating_point_domain=fp_domain,
         )
     except (UnsupportedInstruction, ExecutionInconclusive) as exc:
         contract_name = requested_contract or "manual"
@@ -386,6 +410,12 @@ def _add_check_options(
         nargs="*",
         default=[],
         help="valid RAM ranges for bounded profiles: low,high hex pairs",
+    )
+    parser.add_argument(
+        "--fp-domain",
+        type=str,
+        default=None,
+        help='JSON string for FloatingPointDomain overrides, e.g. \'{"rounding_modes": ["nearest-even"]}\'',
     )
 
 

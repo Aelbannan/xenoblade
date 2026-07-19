@@ -229,6 +229,17 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("func_8013676C__FPQ34nw4r3lyt4PaneUl", "func_8013676C"),
         ),
     ),
+    "CTaskGameCf.o": UnitRules(
+        # func_8004433C: extern const u32 lbl_eu_80525AC4[3] without extern "C"
+        # causes MWCC to mangle → lbl_eu_80525AC4__2cf; retail uses flat lbl_eu_80525AC4.
+        exact_renames=(
+            ("lbl_eu_80525AC4__2cf", "lbl_eu_80525AC4"),
+        ),
+        # func_80044444: &CTaskGameCf::func_8004451C emits a TU-local PTMF pool
+        # entry instead of retail lbl_eu_80525AE8.  Add a pool pattern here once
+        # the PTMF descriptor content (12 bytes in sdata2) is confirmed.
+        # pool_patterns = ((struct.pack(">III", 0, 0, 0x8004451C), "lbl_eu_80525AE8"),)
+    ),
 }
 
 

@@ -17,7 +17,7 @@ from .ir import (
     SUPPORTED_OPCODES,
     UnsupportedInstruction,
 )
-from .model import ConcreteMemory, MachineState, XerState
+from .model import ConcreteMemory, InvalidReason, MachineState, XerState
 from .spr import (
     AUX_SPR_INDEX,
     AUX_SPR_NAMES,
@@ -31,6 +31,28 @@ from .spr import (
 MASK32 = 0xFFFFFFFF
 
 
+def _constrain_valid(
+    state: MachineState,
+    constraint: Any,
+    reason: InvalidReason,
+    ops: WordOps,
+) -> MachineState:
+    new_valid = ops.land(state.valid, constraint)
+    if isinstance(ops, SymbolicOps):
+        z3 = ops.z3
+        new_reason = z3.If(
+            z3.And(state.valid, z3.Not(constraint)),
+            z3.BitVecVal(reason.value, 8),
+            state.invalid_reason,
+        )
+    else:
+        if state.valid and not constraint:
+            new_reason = reason.value
+        else:
+            new_reason = state.invalid_reason
+    return replace(state, valid=new_valid, invalid_reason=new_reason)
+
+
 @dataclass(frozen=True, slots=True)
 class CalleeContract:
     """Architectural dependency/effect summary for an already-matched callee."""
@@ -38,6 +60,7 @@ class CalleeContract:
     reads: frozenset[str]
     writes: frozenset[str]
     source: str = "inferred"
+    invalid_reasons: frozenset[int] = frozenset()
 
     @classmethod
     def opaque_eabi(cls) -> "CalleeContract":
@@ -49,9 +72,10 @@ class CalleeContract:
                 *(f"f{i}.ps1" for i in range(14)),
                 "cr0", "cr1", "cr5", "cr6", "cr7",
                 "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr",
-                "memory", "valid",
+                "memory", "valid", "invalid_reason",
             }),
             "opaque-eabi",
+            frozenset({r.value for r in InvalidReason}),
         )
 
 # FPSCR numeric masks (Gekko.h UReg_FPSCR bitfield layout).
@@ -1065,7 +1089,7 @@ def _dform_address(
 def _touch_memory(state: MachineState, address: Any, width: int, ops: WordOps) -> MachineState:
     if width > 1:
         aligned = ops.eq(ops.band(address, ops.const(width - 1)), ops.const(0))
-        state = replace(state, valid=ops.land(state.valid, aligned))
+        state = _constrain_valid(state, aligned, InvalidReason.UNALIGNED_ACCESS, ops)
     touches = state.memory_touches + tuple(ops.add(address, ops.const(offset)) for offset in range(width))
     return replace(state, memory_touches=touches)
 
@@ -1165,11 +1189,11 @@ def _psq_domain(state: MachineState, address: Any, w: int, qtype: Any, ops: Word
             ops.bool(True),
         ),
     )
-    valid = ops.land(state.valid, ops.land(valid_type, aligned))
+    state = _constrain_valid(state, ops.land(valid_type, aligned), InvalidReason.PSQ_INVALID_TYPE, ops)
     touches = state.memory_touches + tuple(
         ops.add(address, ops.const(offset)) for offset in range(4 if w else 8)
     )
-    return replace(state, valid=valid, memory_touches=touches)
+    return replace(state, memory_touches=touches)
 
 
 LOADS = {
@@ -1745,7 +1769,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         standard_fp_mode = ops.eq(ops.band(state.fpscr, ops.const(7)), ops.const(0))
         if isinstance(ops, ConcreteOps) and not standard_fp_mode:
             raise ExecutionInconclusive("FP ConcreteOps requires FPSCR.RN=nearest-even and NI=0")
-        state = replace(state, valid=ops.land(state.valid, standard_fp_mode))
+        state = _constrain_valid(state, standard_fp_mode, InvalidReason.FP_ROUNDING_MODE, ops)
     result: Any | None = None
     destination: int | None = None
     overflow = ops.bool(False)
@@ -1771,7 +1795,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
                 ops.const(0),
             ))
             enabled = ops.land(enabled, locked_cache_enabled)
-        state = replace(state, valid=ops.land(state.valid, enabled))
+        state = _constrain_valid(state, enabled, InvalidReason.CACHE_DISABLED, ops)
         address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
         block = ops.band(address, ops.const(0xFFFFFFE0))
         for offset in range(32):
@@ -1782,9 +1806,9 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             )
         return state
 
-    if op in (Opcode.MFMSR, Opcode.MTMSR, Opcode.MFSR, Opcode.MTSR, Opcode.RFI):
+    if op in (Opcode.MFMSR, Opcode.MTMSR, Opcode.MFSR, Opcode.MTSR):
         supervisor = ops.eq(ops.band(state.msr, ops.const(0x00004000)), ops.const(0))
-        state = replace(state, valid=ops.land(state.valid, supervisor))
+        state = _constrain_valid(state, supervisor, InvalidReason.PRIVILEGED_INSTRUCTION, ops)
 
     if op == Opcode.MFMSR:
         destination, result = a[0], state.msr
@@ -1940,7 +1964,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
             zero = ops.eq(right, ops.const(0))
             signed_overflow = ops.land(ops.eq(left, ops.const(0x80000000)), ops.eq(right, ops.const(MASK32)))
             valid = ops.lnot(ops.lor(zero, signed_overflow if op == Opcode.DIVW else ops.bool(False)))
-            state = replace(state, valid=ops.land(state.valid, valid))
+            state = _constrain_valid(state, valid, InvalidReason.DIVIDE_UNDEFINED, ops)
             result = ops.ite(valid, ops.signed_div(left, right) if op == Opcode.DIVW else ops.unsigned_div(left, right), ops.const(0))
             overflow = ops.lnot(valid)
         state = _apply_oe(state, overflow, insn.overflow, ops)
@@ -2456,9 +2480,11 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
                 finite1 = ops.lnot(ops.lor(ops.fp_is_nan(source1), ops.fp_is_inf(source1)))
                 integer_type = ops.lnot(ops.eq(qtype, ops.const(0)))
                 finite_sources = ops.land(finite0, ops.bool(True) if w else finite1)
-                state = replace(
+                state = _constrain_valid(
                     state,
-                    valid=ops.land(state.valid, ops.lor(ops.lnot(integer_type), finite_sources)),
+                    ops.lor(ops.lnot(integer_type), finite_sources),
+                    InvalidReason.PSQ_NONFINITE_INTEGER_STORE,
+                    ops,
                 )
                 state = replace(state, memory=_psq_store_pair(
                     state.memory, address, w, qtype, scale,
@@ -2867,6 +2893,7 @@ def _apply_call_summary(
         state.spr,
         memory,
         result("valid", state.valid.sort()) if "valid" in contract.writes else state.valid,
+        result("invalid_reason", ops.z3.BitVecSort(8)) if "invalid_reason" in contract.writes else state.invalid_reason,
         state.memory_touches,
         state.stack_low,
         state.memory_effects + ((token,) if "memory" in contract.writes else ()),
@@ -3283,6 +3310,41 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
     return reads, writes
 
 
+def _infer_invalid_reasons(instructions: list[Instruction]) -> set[int]:
+    """Return the set of InvalidReason values a callee body may produce."""
+    reasons: set[int] = set()
+    opcodes = {insn.opcode for insn in instructions}
+    MEMORY_OPS = {
+        Opcode.LBZ, Opcode.LBZU, Opcode.LHZ, Opcode.LHZU, Opcode.LHA, Opcode.LHAU,
+        Opcode.LWZ, Opcode.LWZU, Opcode.LBZX, Opcode.LBZUX, Opcode.LHZX, Opcode.LHZUX,
+        Opcode.LHAX, Opcode.LHAUX, Opcode.LWZX, Opcode.LWZUX, Opcode.LHBRX, Opcode.LWBRX,
+        Opcode.STB, Opcode.STBU, Opcode.STH, Opcode.STHU, Opcode.STW, Opcode.STWU,
+        Opcode.STBX, Opcode.STBUX, Opcode.STHX, Opcode.STHUX, Opcode.STWX, Opcode.STWUX,
+        Opcode.STHBRX, Opcode.STWBRX, Opcode.LMW, Opcode.STMW,
+    } | set(FP_D_MEM.keys()) | set(FP_X_MEM.keys()) | _FP_PSQ_OPS
+    if opcodes & MEMORY_OPS:
+        reasons.add(InvalidReason.UNALIGNED_ACCESS.value)
+    DIVIDE_OPS = {
+        Opcode.DIVW, Opcode.DIVWU,
+    }
+    if opcodes & DIVIDE_OPS:
+        reasons.add(InvalidReason.DIVIDE_UNDEFINED.value)
+    ROUNDING_OPS = {Opcode.FCTIW, Opcode.FCTIWZ}
+    if opcodes & ROUNDING_OPS:
+        reasons.add(InvalidReason.FP_ROUNDING_MODE.value)
+    CACHE_OPS = {Opcode.DCBZ, Opcode.DCBZ_L}
+    if opcodes & CACHE_OPS:
+        reasons.add(InvalidReason.CACHE_DISABLED.value)
+    PRIVILEGED_OPS = {Opcode.MFMSR, Opcode.MTMSR, Opcode.MFSR, Opcode.MTSR}
+    if opcodes & PRIVILEGED_OPS:
+        reasons.add(InvalidReason.PRIVILEGED_INSTRUCTION.value)
+    if opcodes & _FP_PSQ_OPS:
+        reasons.add(InvalidReason.PSQ_INVALID_TYPE.value)
+        if opcodes & {Opcode.PSQ_ST, Opcode.PSQ_STU, Opcode.PSQ_STX, Opcode.PSQ_STUX}:
+            reasons.add(InvalidReason.PSQ_NONFINITE_INTEGER_STORE.value)
+    return reasons
+
+
 def infer_callee_contract(instructions: list[Instruction]) -> CalleeContract:
     """Infer a conservative EABI exit contract from a matched function body.
 
@@ -3321,15 +3383,18 @@ def infer_callee_contract(instructions: list[Instruction]) -> CalleeContract:
         "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr", "memory",
     }
     writes = observed_writes & volatile
-    # A memory transformer must depend on the old array to represent bytes it
-    # does not modify. Definedness remains conservative until instruction-level
-    # preconditions are emitted as a separate callee lemma.
     if "memory" in writes:
         reads.add("memory")
     if any(name == "cr" or name.startswith("cr") for name in writes):
         reads.add("cr")
     writes.add("valid")
-    return CalleeContract(frozenset(reads), frozenset(writes), "matched-body-effects")
+    invalid_reasons = _infer_invalid_reasons(instructions)
+    if invalid_reasons:
+        writes.add("invalid_reason")
+    return CalleeContract(
+        frozenset(reads), frozenset(writes), "matched-body-effects",
+        invalid_reasons=frozenset(invalid_reasons),
+    )
 
 
 def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:

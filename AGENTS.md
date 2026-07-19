@@ -25,6 +25,15 @@ python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
 python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
 ```
 
+## CI commands
+
+```bash
+# Fast PR gate (everything except Dolphin)
+python tools/ppc_equivalence/gen_fixture_blob.py --check
+python -m unittest discover -s tools/ppc_equivalence/tests -p "test_*.py"
+python -m tools.ppc_equivalence differential
+```
+
 ## Do not
 
 - Submit LLM-assisted matching work to upstream `xbret/xenoblade`.

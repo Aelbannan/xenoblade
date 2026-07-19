@@ -13,6 +13,7 @@ from tools.ppc_equivalence.result import (
     RESULT_FORMAT,
     ProofStatus,
 )
+from tools.ppc_equivalence.model import InvalidReason
 
 
 SUPPORTED_CONFIDENCE_TIERS = frozenset({"A", "B", "C"})
@@ -39,10 +40,12 @@ def compute_confidence_tier(certificate: dict[str, Any] | None) -> str | None:
         for w in writes + reads
     )
     has_callee_calls = bool(certificate.get("callees"))
+    invalid_reasons: list[int] = summary.get("invalid_reasons", [])
+    has_domain_exception = bool(invalid_reasons)
 
-    if not has_memory_access and not has_fp_access and not has_callee_calls:
+    if not has_memory_access and not has_fp_access and not has_callee_calls and not has_domain_exception:
         return "A"
-    if has_fp_access:
+    if has_fp_access or has_domain_exception:
         return "C"
     return "B"
 

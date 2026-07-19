@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import random
+import subprocess
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, replace
@@ -9,19 +11,23 @@ from typing import Any
 
 from .contract import EquivalenceContract, Observable
 from .deadline import Deadline, ProofDeadlineExceeded, SolverPhase
-from .ir import Instruction, Opcode
+from .ir import Instruction, Opcode, SUPPORTED_FP_OPCODES
 from .memory_profile import (
     MemoryEnvironment,
     MemoryProfile,
     build_memory_constraints,
 )
-from .model import ConcreteMemory, MachineState, XerState, concrete_state
-from .result import ARCHITECTURE_MODEL, RESULT_FORMAT, MemoryScope, ProofResult, ProofStatus
+from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concrete_state
+from .provenance import canonical_json_sha256, hash_engine_tree
+from .result import (
+    ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
+)
 from .semantics import (
     CalleeContract,
     ConcreteOps,
     SymbolicOps,
     Terminal,
+    _infer_invalid_reasons,
     execute_block,
     execute_cfg,
     execute_instruction,
@@ -50,6 +56,7 @@ def _symbolic_initial(ops: SymbolicOps) -> MachineState:
         tuple(z3.BitVec(f"input.spr.{name}", 32) for name in AUX_SPR_OBSERVABLES),
         z3.Array("input.memory", z3.BitVecSort(32), z3.BitVecSort(8)),
         z3.BoolVal(True),
+        z3.BitVecVal(0, 8),
     )
     return replace(
         state, stack_low=state.gpr[1], stack_layout_valid=ops.bool(True),
@@ -64,6 +71,8 @@ class CalleeContractValidation:
     required_writes: frozenset[str]
     missing_reads: frozenset[str]
     missing_writes: frozenset[str]
+    required_invalid_reasons: frozenset[int] = frozenset()
+    missing_invalid_reasons: frozenset[int] = frozenset()
     reason: str = ""
 
 
@@ -87,6 +96,7 @@ def _contract_components(state: MachineState, z3: Any) -> dict[str, Any]:
         "srr1": state.srr1,
         "memory": state.memory,
         "valid": state.valid,
+        "invalid_reason": state.invalid_reason,
     }
     for field in range(8):
         shift = (7 - field) * 4
@@ -128,7 +138,7 @@ def validate_callee_contract(
         )
     except Exception as exc:
         return CalleeContractValidation(
-            False, frozenset(), frozenset(), frozenset(), frozenset(),
+            False, frozenset(), frozenset(), frozenset(), frozenset(), frozenset(), frozenset(),
             f"semantic validation unavailable: {exc}",
         )
 
@@ -146,7 +156,7 @@ def validate_callee_contract(
         abnormal = sorted(abnormal)
         if abnormal:
             return CalleeContractValidation(
-                False, frozenset(), frozenset(), frozenset(), frozenset(),
+                False, frozenset(), frozenset(), frozenset(), frozenset(), frozenset(), frozenset(),
                 "callee does not have only normal returns: " + ", ".join(abnormal),
             )
 
@@ -215,12 +225,18 @@ def validate_callee_contract(
     missing_writes = frozenset(
         name for name in required_writes if not _contract_covers(name, contract.writes)
     )
+    inferred_invalid_reasons = _infer_invalid_reasons(instructions)
+    missing_invalid_reasons = frozenset(
+        r for r in inferred_invalid_reasons if r not in contract.invalid_reasons
+    )
     return CalleeContractValidation(
-        not missing_reads and not missing_writes,
+        not missing_reads and not missing_writes and not missing_invalid_reasons,
         frozenset(required_reads),
         frozenset(required_writes),
         missing_reads,
         missing_writes,
+        frozenset(inferred_invalid_reasons),
+        missing_invalid_reasons,
     )
 
 
@@ -367,11 +383,16 @@ def _terminal_difference(
         for item in contract.observables
     ]
     valid_difference = left.state.valid != right.state.valid
+    both_invalid = z3.And(z3.Not(left.state.valid), z3.Not(right.state.valid))
+    reason_difference = z3.And(
+        both_invalid,
+        left.state.invalid_reason != right.state.invalid_reason,
+    )
     defined_value_difference = z3.And(left.state.valid, right.state.valid, z3.Or(*values))
     return z3.And(
         left.condition,
         right.condition,
-        z3.Or(kind_difference, target_difference, valid_difference, defined_value_difference),
+        z3.Or(kind_difference, target_difference, valid_difference, reason_difference, defined_value_difference),
     )
 
 
@@ -410,6 +431,8 @@ def _memory_entries(model: Any, memory: Any, touches: tuple[Any, ...], z3: Any) 
             entries[f"0x{address:08x}"] = f"0x{byte:02x}"
     return {"default": f"0x{default:02x}", "bytes": entries}
 
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _RANDOM_CHECK_SAMPLES = 5
 
@@ -561,6 +584,8 @@ def check_equivalence(
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     relocation_bindings: dict[str, int] | None = None,
     memory_environment: MemoryEnvironment | None = None,
+    source_hash: str = "",
+    floating_point_domain: FloatingPointDomain | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -654,6 +679,36 @@ def check_equivalence(
             for callee in sorted(callees_used, key=str)
         },
     )
+    result.source_hash = source_hash
+    try:
+        result.git_commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
+            cwd=_REPO_ROOT, check=False,
+        ).stdout.strip()
+        dirty_out = subprocess.run(
+            ["git", "status", "--porcelain"], capture_output=True, text=True,
+            cwd=_REPO_ROOT, check=False,
+        ).stdout.strip()
+        result.git_dirty = bool(dirty_out)
+    except Exception:
+        pass
+    try:
+        result.engine_hash = hash_engine_tree(_REPO_ROOT)
+    except Exception:
+        pass
+    result.platform = sys.platform
+    result.python_version = sys.version
+    result.z3_version = z3.get_version_string()
+    try:
+        import capstone as cs
+        result.capstone_version = ".".join(str(x) for x in cs.version)
+    except Exception:
+        pass
+    all_insns = original + candidate
+    if floating_point_domain is not None:
+        result.floating_point_domain = floating_point_domain
+    elif any(insn.opcode in SUPPORTED_FP_OPCODES for insn in all_insns):
+        result.floating_point_domain = FloatingPointDomain()
     feasibility = z3.Solver()
     try:
         layout_deadline = deadline.require_time("layout-feasibility")
@@ -717,6 +772,19 @@ def check_equivalence(
         result.mismatch = {"kind": "exit", "name": "exit.target", "original": _hex_value(model, left_exit.exit_target), "candidate": _hex_value(model, right_exit.exit_target)}
     elif z3.is_true(model.eval(left_exit.state.valid != right_exit.state.valid, model_completion=True)):
         result.mismatch = {"kind": "definedness", "name": "defined-domain", "original": _bool_value(model, left_exit.state.valid, z3), "candidate": _bool_value(model, right_exit.state.valid, z3)}
+    elif z3.is_true(model.eval(
+        z3.And(
+            z3.Not(left_exit.state.valid), z3.Not(right_exit.state.valid),
+            left_exit.state.invalid_reason != right_exit.state.invalid_reason,
+        ),
+        model_completion=True,
+    )):
+        result.mismatch = {
+            "kind": "definedness",
+            "name": "invalid-reason",
+            "original": str(model.eval(left_exit.state.invalid_reason, model_completion=True)),
+            "candidate": str(model.eval(right_exit.state.invalid_reason, model_completion=True)),
+        }
     else:
         for observable in contract.observables:
             left = _observable_value(left_exit.state, observable, ops)

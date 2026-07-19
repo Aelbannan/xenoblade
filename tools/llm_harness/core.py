@@ -650,6 +650,7 @@ class Harness:
             f"agent started target={target_id} agent={agent} model={model.model} "
             f"run={index}"
         )
+        format_repair_attempted = False
         try:
             while True:
                 provider_attempts += 1
@@ -666,9 +667,24 @@ class Harness:
                         f"run={index} attempt={provider_attempts + 1}"
                     )
                     time.sleep(min(2 ** (provider_attempts - 1), 4))
-            candidate = parse_candidate(
-                result.text, workflow=workflow, full_context=full_context
-            )
+            try:
+                candidate = parse_candidate(
+                    result.text, workflow=workflow, full_context=full_context
+                )
+            except (json.JSONDecodeError, ValueError) as parse_exc:
+                error_msg = f"{type(parse_exc).__name__}: {parse_exc}"
+                self._debug(
+                    f"agent format-repair target={target_id} agent={agent} model={model.model} "
+                    f"run={index} error={_debug_value(error_msg)}"
+                )
+                repair_result = self._attempt_format_repair(
+                    result.text, error_msg, model, provider, context_dir,
+                )
+                if repair_result is not None:
+                    candidate = repair_result
+                    format_repair_attempted = True
+                else:
+                    raise parse_exc
             candidate_summary = {
                 "hypothesis": candidate.hypothesis,
                 "notes": candidate.notes,
@@ -695,6 +711,7 @@ class Harness:
             payload: Dict[str, Any] = {"error": error, "provider_attempts": provider_attempts}
             if candidate is not None:
                 payload["candidate"] = asdict(candidate)
+            payload["format_repair_attempted"] = format_repair_attempted
             artifact.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         else:
             self._debug(
@@ -1190,6 +1207,37 @@ class Harness:
         )
         return directory
 
+    def _attempt_format_repair(
+        self,
+        raw_output: str,
+        error_message: str,
+        model: ModelConfig,
+        provider: Any,
+        context_dir: Optional[Path],
+    ) -> Optional[Candidate]:
+        prompt_dir = self.root / self.config.get("prompt_dir", "tools/llm_harness/prompts")
+        repair_path = prompt_dir / "format_repair.md"
+        if not repair_path.is_file():
+            self._debug(f"format-repair skipped: {repair_path} not found")
+            return None
+        template = repair_path.read_text(encoding="utf-8")
+        lines = raw_output.split("\n")
+        if len(lines) > 80:
+            lines = lines[:80]
+            lines.append("... (truncated)")
+        truncated_raw = "\n".join(lines)
+        prompt_text = template.replace("{{RAW_OUTPUT}}", truncated_raw).replace(
+            "{{ERROR_MESSAGE}}", error_message
+        )
+        try:
+            result = provider.invoke(
+                prompt_text, model, context_dir or Path(self.adapter.root)
+            )
+            return parse_candidate(result.text, workflow="new")
+        except Exception as exc:
+            self._debug(f"format-repair failed: {exc}")
+            return None
+
     def _build_repair_prompt(
         self,
         candidate: Candidate,
@@ -1256,9 +1304,36 @@ def _extract_repair_source(text: str) -> str:
         src = data.get("source", "")
         if isinstance(src, str) and src.strip():
             return src
-    except (json.JSONDecodeError, ValueError):
+    except json.JSONDecodeError:
+        try:
+            decoder = json.JSONDecoder()
+            data, _ = decoder.raw_decode(cleaned)
+            src = data.get("source", "")
+            if isinstance(src, str) and src.strip():
+                return src
+        except (json.JSONDecodeError, ValueError):
+            pass
+    except ValueError:
         pass
     return ""
+
+
+def _try_json_parse(text: str) -> Optional[Dict[str, Any]]:
+    """Parse JSON from text, trying raw_decode if strict parse fails."""
+    decoder = json.JSONDecoder()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    start = text.find("{")
+    if start < 0:
+        return None
+    try:
+        data, end_pos = decoder.raw_decode(text, start)
+        return data
+    except (json.JSONDecodeError, ValueError, IndexError):
+        pass
+    return None
 
 
 def parse_candidate(
@@ -1272,7 +1347,9 @@ def parse_candidate(
         start, end = cleaned.find("{"), cleaned.rfind("}")
         if start >= 0 and end > start:
             cleaned = cleaned[start : end + 1]
-    data = json.loads(cleaned)
+    data = _try_json_parse(cleaned)
+    if data is None:
+        raise json.JSONDecodeError("No valid JSON found in model output", cleaned, 0)
     source = data.get("source", "")
     if not isinstance(source, str):
         raise ValueError("Model output 'source' must be a string")

@@ -58,13 +58,35 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
 
 - `state.valid` is `True` when the terminal state satisfies all modeled
   architectural constraints (aligned accesses, defined divide inputs, modeled FP
-  domain restrictions, supported opcode encodings).
+  domain restrictions, supported opcode encodings).  When `valid` is `False`,
+  `state.invalid_reason` records the first constraint that failed as a
+  small-integer code drawn from ``InvalidReason``:
+
+| Code | Reason |
+|---|---|
+| 0 | `NONE` (valid) |
+| 1 | `UNALIGNED_ACCESS` |
+| 2 | `DIVIDE_UNDEFINED` |
+| 3 | `FP_DOMAIN_EXCLUDED` |
+| 4 | `FP_ROUNDING_MODE` |
+| 5 | `CACHE_DISABLED` |
+| 6 | `PRIVILEGED_INSTRUCTION` |
+| 7 | `PSQ_INVALID_TYPE` |
+| 8 | `PSQ_NONFINITE_INTEGER_STORE` |
+| 9 | `UNSUPPORTED_SIDE_EFFECT` |
+| 10 | `MEMORY_PROFILE_VIOLATION` |
+
 - The comparison is **definedness-preserving partial equivalence**:
   - If exactly one side is `valid`, the outputs differ.
   - If both sides are `valid`, all selected observables are compared.
-  - If both sides are `invalid`, `valid` agreement is required, but value
-    comparison is suppressed. No claim is made about the relative exception
-    class or hardware exception delivery.
+  - If both sides are `invalid`, the `invalid_reason` codes are compared.
+    A difference in reason codes is a mismatch.  When both sides agree on
+    the reason code, value comparison is suppressed.  No claim is made about
+    the relative exception class or hardware exception delivery.
+  - All `invalid_reason` values are Z3 bitvector expressions directly
+    comparable by the solver.  A reason-code mismatch is found when the
+    solver returns `sat` on the inequality; `INCONCLUSIVE_UNMODELED_EXCEPTION`
+    is reserved for future models where `invalid_reason` is opaque.
 - A proof over unsupported opcodes or unaligned memory never escapes via a side
   condition to claim vacuous equivalence. The engine fails closed.
 
@@ -165,13 +187,18 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
 | Independent per-side stack masking | `engine._private_stack_address`, `engine._memory_difference` | `test_private_stack_memory.py` | `memory_scope.private_stack.masking_semantics` |
 | Ordinary RAM range assumed | memory-profile constraints | memory profile tests (planned) | `assumptions` |
 | No unsupported loop | `semantics.execute_cfg` | control-flow tests | `unsupported`, `status=INCONCLUSIVE_UNSUPPORTED` |
+| Cache-disabled `dcbz`/`dcbz_l` → `CACHE_DISABLED` | `semantics._constrain_valid` | `test_definedness:test_dcbz_cache_disabled_sets_reason` | `state.invalid_reason` |
+| Privileged `mfmsr`/`mtmsr`/`mfsr`/`mtsr` → `PRIVILEGED_INSTRUCTION` | `semantics._constrain_valid` | `test_definedness:test_mfmsr_user_mode_sets_reason` | `state.invalid_reason` |
 | Nearest-even FP rounding | `semantics` FP operations | FP fixture corpus | `assumptions`, `floating_point_scope` |
 | Current callee certificate chain | `_re attest_certificate_tree`, `equivalence_certificate_error` | `test_targets.test_validation_rejects_stale_certificate_dependency` | `equivalence_certificate.callees` |
 | Deadline covering all phases | `deadline.Deadline`, `engine.check_with_portfolio` | `test_deadline.py` | `solver.phases` |
 | Cache includes architecture model | `_cache_key`, `_cache_get` | `test_targets` versioning tests | cache JSON |
 | Alignment constraint | `semantics` load/store `valid` predicate | `test_symbolic_relocations` alignment tests | `assumptions` |
 | No vacuous proof through impossible layout | `engine.check_equivalence` layout feasibility | layout tests | `status=INCONCLUSIVE_LAYOUT` |
-| Definedness-preserving partial equivalence | `engine._terminal_difference` | `test_checker` definedness tests | `mismatch.kind=definedness` |
+| Definedness-preserving partial equivalence | `engine._terminal_difference` | definedness tests | `mismatch.kind=definedness` |
+| Invalid-reason comparison when both invalid | `engine._terminal_difference` | definedness tests | `mismatch.name=invalid-reason` |
+| InvalidReason tracked per instruction | `semantics._constrain_valid` | definedness tests | `state.invalid_reason` |
+| INCONCLUSIVE_UNMODELED_EXCEPTION (reserved) | `result.ProofStatus` | — | `status` |
 | Exit-kind and exit-target comparison | `engine._terminal_difference` | `test_checker` control-flow tests | `mismatch.exit_kind`, `mismatch.exit_target` |
 | Private stack disabled after call | `semantics._apply_call_summary` | escape tests | `memory_scope.private_stack.candidate.disabled_reasons` |
 | Private stack disabled after r1 escape | `semantics._mark_stack_pointer_escape` | escape tests | `memory_scope.private_stack.original.disabled_reasons` |

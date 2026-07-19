@@ -169,6 +169,11 @@ class TypeContext:
     declarations: List[DeclarationEntry] = field(default_factory=list)
     total_chars: int = 0
     max_chars: int = 20000
+    owner_declaration: str = ""
+    callee_declarations: List[Dict[str, str]] = field(default_factory=list)
+    referenced_members: List[Dict[str, Any]] = field(default_factory=list)
+    globals: List[Dict[str, str]] = field(default_factory=list)
+    enums: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -832,6 +837,201 @@ def build_declaration_context(
     )
 
 
+# Phase 6: Enhanced type context extraction
+def _extract_owner_class_declaration(source_text: str, class_name: str, max_chars: int = 5000) -> str:
+    """Extract the owner class declaration with relevant members."""
+    if not class_name:
+        return ""
+    # Look for class/struct declaration
+    patterns = [
+        rf'class\s+{re.escape(class_name)}\s*\{{',
+        rf'struct\s+{re.escape(class_name)}\s*\{{',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, source_text)
+        if match:
+            start = match.start()
+            # Find matching closing brace
+            depth = 0
+            for i, ch in enumerate(source_text[start:]):
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    depth -= 1
+                    if depth == 0:
+                        end = start + i + 1
+                        decl = source_text[start:end]
+                        return decl[:max_chars]
+            break
+    return ""
+
+
+def _extract_callee_declarations(source_text: str, header_text: str, callee_symbols: List[str], max_chars: int = 8000) -> List[Dict[str, str]]:
+    """Extract declarations for callee functions."""
+    results = []
+    all_text = (header_text or "") + "\n" + (source_text or "")
+    total = 0
+    for sym in callee_symbols:
+        if total >= max_chars:
+            break
+        # Extract base name for searching
+        base = sym.split("::")[-1] if "::" in sym else sym
+        # Look for function declaration
+        patterns = [
+            rf'(?:^|\n)\s*(?:inline\s+|static\s+|virtual\s+)?[\w:\s+)?[\w\s\*\&]+\s+{re.escape(base)}\s*\(',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, all_text)
+            if match:
+                start = match.start()
+                # Find end of declaration (semicolon or opening brace)
+                end_pos = all_text.find('{', start)
+                semi = all_text.find(';', start)
+                if end_pos == -1 or (semi != -1 and semi < end_pos):
+                    end = all_text.find('\n', semi) if semi != -1 else start + 500
+                else:
+                    # Find matching brace
+                    depth = 0
+                    for i, ch in enumerate(all_text[end_pos:]):
+                        if ch == '{':
+                            depth += 1
+                        elif ch == '}':
+                            depth -= 1
+                            if depth == 0:
+                                end = end_pos + i + 1
+                                break
+                    else:
+                        end = end_pos + 500
+                decl = all_text[start:min(end, start + 2000)]
+                results.append({"symbol": sym, "declaration": decl.strip()})
+                total += len(decl)
+                break
+    return results
+
+
+def _extract_referenced_members(source_text: str, function_bytes: FunctionBytes, max_chars: int = 5000) -> List[Dict[str, Any]]:
+    """Extract member variables referenced by the function (via offsets)."""
+    results = []
+    # Parse relocations for data access
+    for reloc in function_bytes.relocations:
+        if reloc.relocation_type in ('ADDR16_HA', 'ADDR16_LO', 'ADDR16_HI'):
+            # Likely a global or member access
+            sym = reloc.symbol
+            if '::' in sym:
+                # Member access via class symbol
+                parts = sym.split('::')
+                if len(parts) == 2:
+                    results.append({
+                        "class": parts[0],
+                        "member": parts[1],
+                        "offset": reloc.addend,
+                        "type": "inferred",
+                    })
+    return results[:10]  # Cap at 10
+
+
+def _extract_globals(source_text: str, header_text: str, function_bytes: FunctionBytes, max_chars: int = 3000) -> List[Dict[str, str]]:
+    """Extract global variable declarations referenced by the function."""
+    results = []
+    all_text = (header_text or "") + "\n" + (source_text or "")
+    # Look for relocations to data sections
+    for reloc in function_bytes.relocations:
+        sym = reloc.symbol
+        if sym.startswith('lbl_eu_'):
+            # Likely a global data symbol
+            # Search for its declaration
+            pattern = rf'(?:^|\n)\s*(?:extern\s+)?[\w\s\*\&]+\s+{re.escape(sym)}\s*[\[;]'
+            match = re.search(pattern, all_text)
+            if match:
+                start = match.start()
+                end = all_text.find('\n', start)
+                if end == -1:
+                    end = start + 300
+                results.append({"symbol": sym, "declaration": all_text[start:end].strip()})
+    return results[:5]
+
+
+def _extract_enums(source_text: str, header_text: str, max_chars: int = 2000) -> List[Dict[str, Any]]:
+    """Extract enum definitions."""
+    results = []
+    all_text = (header_text or "") + "\n" + (source_text or "")
+    pattern = r'enum\s+(?:class\s+)?(\w+)\s*\{([^}]+)\}'
+    for match in re.finditer(pattern, all_text):
+        name = match.group(1)
+        body = match.group(2)
+        values = [v.strip() for v in body.split(',') if v.strip()]
+        results.append({"name": name, "values": values})
+    return results[:5]
+
+
+def _extract_selected_siblings(source_text: str, target_id: str, accepted_targets: List[Dict[str, str]], max_chars: int = 15000) -> List[Dict[str, Any]]:
+    """Extract bodies of accepted functions in the same unit."""
+    results = []
+    total = 0
+    for sibling in accepted_targets[:3]:  # Cap at 3 siblings
+        if total >= max_chars:
+            break
+        # Find function in source
+        func_name = sibling.get("function", "")
+        if not func_name:
+            continue
+        # Look for function definition
+        pattern = re.escape(func_name.split("::")[-1] if "::" in func_name else func_name)
+        pattern = rf'(?:^|\n)\s*[\w\s\*\&]+\s+{pattern}\s*\('
+        match = re.search(pattern, source_text)
+        if match:
+            start = match.start()
+            # Find matching brace
+            brace_start = source_text.find('{', start)
+            if brace_start != -1:
+                depth = 0
+                for i, ch in enumerate(source_text[brace_start:]):
+                    if ch == '{':
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            end = brace_start + i + 1
+                            body = source_text[start:end]
+                            results.append({
+                                "id": sibling.get("id", ""),
+                                "function": func_name,
+                                "status": sibling.get("status", ""),
+                                "body": body[:max_chars // 3],
+                            })
+                            total += len(body)
+                            break
+    return results
+
+
+def _extract_callers(source_text: str, header_text: str, target_symbol: str, max_chars: int = 10000) -> List[Dict[str, Any]]:
+    """Extract caller excerpts that call the target function."""
+    results = []
+    all_text = (header_text or "") + "\n" + (source_text or "")
+    target_base = target_symbol.split("::")[-1] if "::" in target_symbol else target_symbol
+    # Search for calls to the target
+    pattern = rf'\b{re.escape(target_base)}\s*\('
+    total = 0
+    for match in re.finditer(pattern, all_text):
+        if total >= max_chars:
+            break
+        # Get context around the call (500 chars before, 500 after)
+        start = max(0, match.start() - 500)
+        end = min(len(all_text), match.end() + 500)
+        context = all_text[start:end]
+        # Try to find the containing function
+        # Look backwards for function signature
+        func_start = context.rfind('{')
+        if func_start != -1:
+            # Find the function signature before this
+            sig_start = context.rfind('\n', 0, func_start)
+            if sig_start != -1:
+                snippet = context[sig_start:end]
+                results.append({"caller_snippet": snippet[:1000]})
+                total += len(snippet)
+    return results[:3]
+
+
 # ---------------------------------------------------------------------------
 # 9.12 — Dossier validation
 # ---------------------------------------------------------------------------
@@ -1090,6 +1290,11 @@ def build_target_dossier(
         max_chars=constraints.max_declaration_chars,
     )
 
+    # Phase 6: Enhanced type context
+    cls = _find_class_name(demangled) or ""
+    owner_decl = _extract_owner_class_declaration(source_text, cls)
+    callee_decls = _extract_callee_declarations(source_text, header_text, callee_symbols or [])
+
     symbols = SymbolInventory(
         functions=[
             SymbolFunction(name=name, declaration=name)
@@ -1108,6 +1313,9 @@ def build_target_dossier(
         symbols=symbols,
         constraints=constraints,
     )
+    # Add enhanced type context as attributes
+    dossier.types.owner_declaration = owner_decl
+    dossier.types.callee_declarations = callee_decls
 
     return dossier
 

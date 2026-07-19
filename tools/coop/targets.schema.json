@@ -58,10 +58,16 @@
             "CLAIMED",
             "ACTIVE",
             "ACCEPTED",
+            "REVALIDATION_REQUIRED",
             "BLOCKED",
             "NOT_REQUIRED"
           ]
         },
+        "equivalence_confidence": {
+          "type": "string",
+          "enum": ["A", "B", "C"]
+        },
+        "equivalence_policy": { "type": "string" },
         "status": {
           "enum": [
             "NOT_STARTED",

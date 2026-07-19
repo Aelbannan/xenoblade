@@ -32,12 +32,14 @@ WORKFLOW_STATUSES = {
     "CLAIMED",
     "ACTIVE",
     "ACCEPTED",
+    "REVALIDATION_REQUIRED",
     "BLOCKED",
     "NOT_REQUIRED",
 }
 
 ACCEPTED_MATCH_STATUSES = {"EQUIVALENT_MATCH", "FULL_MATCH"}
 EQUIVALENCE_CERTIFICATE_VERSION = 2
+EQUIVALENCE_PROMOTION_POLICY = "auto-promotion-v2"
 
 
 def equivalence_certificate_hash(certificate: Dict[str, Any]) -> str:
@@ -177,6 +179,8 @@ def update_target_result(
     equivalence_status: Optional[str] = None,
     equivalence_certificate: Optional[Dict[str, Any]] = None,
     certificate_checked: bool = False,
+    equivalence_confidence: Optional[str] = None,
+    equivalence_policy: Optional[str] = None,
 ) -> Path:
     """Persist the latest result so the registry remains current state."""
     data = load_targets_document(config)
@@ -193,6 +197,14 @@ def update_target_result(
                 row.pop("equivalence_certificate", None)
             else:
                 row["equivalence_certificate"] = equivalence_certificate
+        if status == "EQUIVALENT_MATCH":
+            if equivalence_confidence is not None:
+                row["equivalence_confidence"] = equivalence_confidence
+            if equivalence_policy is not None:
+                row["equivalence_policy"] = equivalence_policy
+        else:
+            row.pop("equivalence_confidence", None)
+            row.pop("equivalence_policy", None)
         if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
             row["workflow_status"] = "ACCEPTED"
         elif row.get("workflow_status") in {None, "BACKLOG", "QUEUED", "CLAIMED"}:
@@ -467,11 +479,166 @@ def validate_targets(config: CoopConfig) -> List[str]:
         for called_id in called:
             if called_id not in known_ids:
                 errors.append(f"targets[{index}] calls unknown target id {called_id!r}")
-        if "equivalence_certificate" in row:
+        # Certificates are acceptance evidence only for EQUIVALENT_MATCH.
+        # FULL_MATCH / downgraded rows may retain historical certificates.
+        if row.get("status") == "EQUIVALENT_MATCH" and "equivalence_certificate" in row:
             error = equivalence_certificate_error(row, rows_by_id)
             if error:
                 errors.append(f"targets[{index}].equivalence_certificate: {error}")
     return errors
+
+
+def audit_promotion_registry(
+    config: CoopConfig,
+    *,
+    apply: bool = False,
+) -> Dict[str, Any]:
+    """Audit EQUIVALENT_MATCH rows; optionally mark stale proofs for revalidation.
+
+    Does not downgrade FULL_MATCH. Idempotent: already-downgraded rows are skipped.
+    Historical evidence is preserved in the append-only attempt log on apply.
+    """
+    from tools.coop.lib.attempts import AttemptRecord, append_attempt
+    from tools.coop.lib.equivalence_policy import (
+        PromotionPolicy,
+        ValidationLedger,
+        classify_for_promotion,
+        proof_result_from_certificate,
+    )
+    from tools.ppc_equivalence.result import ProofStatus
+
+    data = load_targets_document(config)
+    rows: List[Dict[str, Any]] = list(data.get("targets", []))
+    rows_by_id = {
+        str(row["id"]): row
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    policy = PromotionPolicy.from_config(config)
+    ledger = ValidationLedger.load(None)
+    affected: List[Dict[str, Any]] = []
+    valid_count = 0
+    skipped_full_match = 0
+
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        status = row.get("status", "NOT_STARTED")
+        if status == "FULL_MATCH":
+            skipped_full_match += 1
+            continue
+        if status != "EQUIVALENT_MATCH":
+            continue
+
+        target_id = str(row["id"])
+        cert_error = equivalence_certificate_error(row, rows_by_id)
+        blockers: tuple[str, ...] = ()
+        confidence: Optional[str] = None
+        action = "require-revalidation"
+
+        if cert_error:
+            reason = cert_error
+        else:
+            certificate = row.get("equivalence_certificate")
+            proof = proof_result_from_certificate(
+                ProofStatus.EQUIVALENT,
+                certificate if isinstance(certificate, dict) else None,
+            )
+            decision = classify_for_promotion(proof, policy, ledger)
+            confidence = decision.confidence_tier
+            if decision.allowed:
+                valid_count += 1
+                continue
+            blockers = decision.blockers
+            reason = ",".join(blockers) if blockers else "promotion-policy-rejected"
+
+        affected.append(
+            {
+                "id": target_id,
+                "status": status,
+                "workflow_status": row.get("workflow_status", "unknown"),
+                "certificate_error": reason,
+                "blockers": list(blockers),
+                "confidence_tier": confidence,
+                "action": action,
+                "instruction_match": row.get("instruction_match"),
+            }
+        )
+
+    applied: List[Dict[str, Any]] = []
+    if apply and affected:
+        attempt_log = config.resolve(config.attempt_log)
+        for entry in affected:
+            row = rows_by_id[entry["id"]]
+            prior_status = row.get("status")
+            prior_workflow = row.get("workflow_status")
+            prior_cert = row.get("equivalence_certificate")
+            cert_hash = None
+            if isinstance(prior_cert, dict):
+                cert_hash = prior_cert.get("certificate_sha256")
+
+            append_attempt(
+                attempt_log,
+                AttemptRecord(
+                    target_id=entry["id"],
+                    function=str(row.get("function") or row.get("symbol") or entry["id"]),
+                    region=str(row.get("region") or config.region),
+                    unit=str(row.get("unit") or ""),
+                    symbol=row.get("symbol"),
+                    status="CODE_MATCH",
+                    instruction_match=(
+                        float(row["instruction_match"])
+                        if row.get("instruction_match") is not None
+                        else None
+                    ),
+                    relocation_match=None,
+                    code_match_percent=None,
+                    data_match_percent=None,
+                    hypothesis=(
+                        "audit-promotion: revalidation required — "
+                        + str(entry["certificate_error"])
+                    ),
+                    next_change="Re-prove under current architecture model and promotion policy",
+                    equivalence_status=row.get("equivalence_status"),
+                    equivalence_detail=(
+                        f"prior_status={prior_status}; prior_workflow={prior_workflow}; "
+                        f"certificate_sha256={cert_hash}"
+                    ),
+                    equivalence_confidence=row.get("equivalence_confidence"),
+                    equivalence_policy=row.get("equivalence_policy"),
+                ),
+            )
+            row["status"] = "CODE_MATCH"
+            row["workflow_status"] = "REVALIDATION_REQUIRED"
+            row.pop("equivalence_confidence", None)
+            row.pop("equivalence_policy", None)
+            applied.append(
+                {
+                    "id": entry["id"],
+                    "from_status": prior_status,
+                    "to_status": "CODE_MATCH",
+                    "from_workflow": prior_workflow,
+                    "to_workflow": "REVALIDATION_REQUIRED",
+                    "reason": entry["certificate_error"],
+                }
+            )
+        write_targets_document(config, data)
+
+    return {
+        "architecture_model": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
+        "equivalence_policy": EQUIVALENCE_PROMOTION_POLICY,
+        "reject_architecture_models": list(config.reject_architecture_models),
+        "automatic_promotion": config.automatic_promotion,
+        "allowed_confidence_tiers": sorted(config.allowed_confidence_tiers),
+        "valid_count": valid_count,
+        "affected_count": len(affected),
+        "skipped_full_match": skipped_full_match,
+        "applied": apply,
+        "applied_count": len(applied),
+        "affected": affected,
+        "mutations": applied,
+    }
 
 
 @dataclass(frozen=True)

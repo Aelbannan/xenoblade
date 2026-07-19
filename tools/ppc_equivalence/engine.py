@@ -569,6 +569,110 @@ def check_with_portfolio(
     return default_solver, default_answer, "default", phases
 
 
+def _populate_solver_diagnostics(
+    result: ProofResult,
+    *,
+    layout_constraints: list[Any],
+    original_exits: list[Any],
+    candidate_exits: list[Any],
+    relocation_bindings: dict[str, int],
+    phases: list[SolverPhase],
+    answer: Any,
+    winning_solver: Any,
+    build_solver: Any,
+    diagnostics_out: str | None,
+    source_hash: str,
+    memory_constraint_count: int = 0,
+) -> None:
+    """Fill ``result.solver_diagnostics`` when diagnostics are requested.
+
+    Diagnostics are DISABLED by default: ``diagnostics_out`` must be given or
+    the ``PPC_EQUIV_DIAGNOSTICS`` env var set.  No diagnostics means no extra
+    solver work and no cache-key impact.
+    """
+    import os
+
+    if diagnostics_out is None and os.environ.get("PPC_EQUIV_DIAGNOSTICS") != "1":
+        return
+
+    from .diagnostics import categorize_assertions, count_z3_symbols
+
+    try:
+        import z3 as _z3
+    except Exception:
+        _z3 = None
+
+    memory_touches: set[Any] = set()
+    for terminal in original_exits + candidate_exits:
+        memory_touches.update(terminal.state.memory_touches)
+
+    path_pair_count = len(original_exits) * len(candidate_exits)
+    smt2_dump_path = diagnostics_out
+    if smt2_dump_path is None and source_hash:
+        smt2_dump_path = f"diag-{source_hash[:16]}.smt2"
+
+    unknown_reason = None
+    if result.status in (ProofStatus.INCONCLUSIVE_UNKNOWN, ProofStatus.INCONCLUSIVE_TIMEOUT):
+        unknown_reason = list(result.warnings)
+
+    assertions_by_category = categorize_assertions(
+        layout_constraint_count=len(layout_constraints),
+        memory_constraint_count=memory_constraint_count,
+        relocation_binding_count=len(relocation_bindings),
+        path_pair_count=path_pair_count,
+    )
+    # path_pairs_covered is informational; assertion_count excludes it.
+    assertion_count = sum(
+        count
+        for key, count in assertions_by_category.items()
+        if key != "path_pairs_covered"
+    )
+
+    diagnostics: dict[str, Any] = {
+        "smt2_dump_path": smt2_dump_path,
+        "assertion_count": assertion_count,
+        "assertions_by_category": assertions_by_category,
+        "bv_symbols": 0,
+        "array_symbols": 0,
+        "func_symbols": 0,
+        "path_pair_count": path_pair_count,
+        "memory_touch_count": len(memory_touches),
+        "relocation_constraint_count": len(relocation_bindings),
+        "layout_constraint_count": len(layout_constraints),
+        "solver_statistics": None,
+        "phase_timings": [p.to_dict() for p in phases],
+        "unknown_reason": unknown_reason,
+        "solver_result": str(answer),
+    }
+
+    solver_for_symbols = None
+    if smt2_dump_path:
+        try:
+            solver_for_symbols = build_solver()
+            Path(smt2_dump_path).write_text(solver_for_symbols.to_smt2(), encoding="utf-8")
+        except Exception:
+            solver_for_symbols = None
+
+    if _z3 is not None:
+        try:
+            if solver_for_symbols is None:
+                solver_for_symbols = build_solver()
+            symbol_counts = count_z3_symbols(list(solver_for_symbols.assertions()))
+            diagnostics.update(symbol_counts)
+            # Prefer real assertion cardinality when available.
+            diagnostics["assertion_count"] = len(list(solver_for_symbols.assertions()))
+        except Exception:
+            pass
+        try:
+            diagnostics["solver_statistics"] = {
+                str(name): value for name, value in winning_solver.statistics().items()
+            }
+        except Exception:
+            pass
+
+    result.solver_diagnostics = diagnostics
+
+
 def check_equivalence(
     original: list[Instruction],
     candidate: list[Instruction],
@@ -586,6 +690,7 @@ def check_equivalence(
     memory_environment: MemoryEnvironment | None = None,
     source_hash: str = "",
     floating_point_domain: FloatingPointDomain | None = None,
+    diagnostics_out: str | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -709,12 +814,29 @@ def check_equivalence(
         result.floating_point_domain = floating_point_domain
     elif any(insn.opcode in SUPPORTED_FP_OPCODES for insn in all_insns):
         result.floating_point_domain = FloatingPointDomain()
+    def _emit_diagnostics(*, memory_constraint_count: int = len(memory_constraints)) -> None:
+        _populate_solver_diagnostics(
+            result,
+            layout_constraints=layout_constraints,
+            original_exits=original_exits,
+            candidate_exits=candidate_exits,
+            relocation_bindings=relocation_bindings or {},
+            phases=phases,
+            answer=answer,
+            winning_solver=winning_solver,
+            build_solver=_build_solver,
+            diagnostics_out=diagnostics_out,
+            source_hash=source_hash,
+            memory_constraint_count=memory_constraint_count,
+        )
+
     feasibility = z3.Solver()
     try:
         layout_deadline = deadline.require_time("layout-feasibility")
     except ProofDeadlineExceeded:
         result.status = ProofStatus.INCONCLUSIVE_TIMEOUT
         result.warnings.append("layout-feasibility deadline exceeded")
+        _emit_diagnostics()
         return result
     feasibility.set(timeout=layout_deadline)
     feasibility.add(*layout_constraints)
@@ -726,14 +848,17 @@ def check_equivalence(
             "no feasible linker layout satisfies the relocation field ranges"
             if feasibility_answer == z3.unsat else feasibility.reason_unknown()
         )
+        _emit_diagnostics()
         return result
     if answer == z3.unsat:
         result.status = ProofStatus.EQUIVALENT
+        _emit_diagnostics()
         return result
     if answer == z3.unknown:
         reason = winning_solver.reason_unknown()
         result.status = ProofStatus.INCONCLUSIVE_TIMEOUT if "timeout" in reason.lower() else ProofStatus.INCONCLUSIVE_UNKNOWN
         result.warnings.append(reason)
+        _emit_diagnostics()
         return result
 
     if callees_used:
@@ -856,4 +981,68 @@ def check_equivalence(
             "observables": [item.name for item in contract.observables], "initial_state": initial_state,
             "expected_mismatch": result.mismatch["name"] if result.mismatch else (mismatch_observable.name if mismatch_observable else None),
         }
+
+    first_divergence = None
+    original_trace = None
+    candidate_trace = None
+    if result.status == ProofStatus.NOT_EQUIVALENT:
+        if result.replay is None:
+            # Known limitation: symbolic relocations / opaque callees block
+            # ConcreteOps replay. Keep NOT_EQUIVALENT but record the gap.
+            first_divergence = {
+                "error": "symbolic-relocations-prevent-concrete-replay",
+            }
+        else:
+            from .diagnostics import replay_counterexample
+            replay_info = replay_counterexample(
+                original, candidate, initial_state, contract,
+            )
+            first_divergence = replay_info["first_divergence"]
+            original_trace = replay_info.get("original_trace")
+            candidate_trace = replay_info.get("candidate_trace")
+            if not replay_info.get("reproduced"):
+                error = replay_info.get("error") or ""
+                # Only escalate when ConcreteOps completed but failed to
+                # reproduce the SAT witness. Execution/construction failures
+                # are recorded in first_divergence without changing status.
+                if error == "sat-witness-not-reproduced-under-concrete-ops" or (
+                    isinstance(first_divergence, dict)
+                    and first_divergence.get("error")
+                    == "sat-witness-not-reproduced-under-concrete-ops"
+                ):
+                    result.status = ProofStatus.INTERNAL_ERROR
+                    result.warnings.append(
+                        error or "SAT witness could not be reproduced under ConcreteOps"
+                    )
+
+    memory_dict = (
+        result.environment.to_dict() if isinstance(result.environment, MemoryEnvironment)
+        else None
+    )
+    bundle: dict[str, Any] = {
+        "proof_request": {
+            "original_hex": original_hex,
+            "candidate_hex": candidate_hex,
+            "base_original": original[0].address,
+            "base_candidate": candidate[0].address,
+            "contract": contract.name,
+            "observables": [item.name for item in contract.observables],
+            "memory_environment": memory_dict,
+        },
+        "model_values": initial_state,
+        "original_bin": original_hex,
+        "candidate_bin": candidate_hex,
+        "relocations": relocation_values,
+        "contract": {
+            "name": contract.name,
+            "resolution": contract.resolution_dict(),
+        },
+        "replay_command": "python -m tools.ppc_equivalence replay <bundle_path> --json",
+        "original_trace": original_trace,
+        "candidate_trace": candidate_trace,
+        "first_divergence": first_divergence,
+    }
+    result.counterexample_bundle = bundle
+
+    _emit_diagnostics()
     return result

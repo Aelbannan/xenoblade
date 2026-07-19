@@ -1,13 +1,21 @@
-Improve the existing target implementation with one bounded, evidence-driven change. The dossier includes prior harness attempts with mismatch summaries. Use them to avoid repeating losing hypotheses.
+Improve the existing target implementation with one bounded, evidence-driven change.
 
-Improvement workflow:
+You are given:
+- The exact source of the best prior candidate (the function you are editing).
+- Structured binary feedback showing decoded retail vs candidate instruction windows, relocation deltas, and size/frame differences.
+- A mismatch fingerprint identifying the failure pattern.
 
-1. **Read the mismatch evidence**: Prior attempt evaluation details contain "binary mismatch summary" sections showing instruction-word deltas between retail and candidate. Each delta is a clue:
-   - `replace` regions: the candidate produced different instructions than retail. Look at the retail words — are they a different opcode (signed vs unsigned compare?), a different immediate, or a reordered sequence?
-   - `insert` regions: the candidate has extra instructions retail doesn't. Usually means you wrote more code than necessary (e.g., an extra temporary, redundant load, unnecessary null check).
-   - `delete` regions: retail has instructions the candidate is missing. Usually means you omitted something (a store, a side effect, a flag update).
-   - Relocation deltas (retail-only or candidate-only): the candidate references a different or missing symbol. Check whether you used the wrong function, accessed the wrong global, or need an `extern "C"` linkage.
-2. **Map deltas to root causes**:
+Workflow:
+1. **Read the binary feedback**: The `repair_context.binary_feedback` object contains:
+   - `first_difference_offset`: byte offset of first mismatch.
+   - `instruction_windows`: aligned retail/candidate windows around first 3 differences (4 instructions context each).
+   - `differences`: up to 20 instruction diffs with offset, raw words, mnemonics, and likely cause.
+   - `relocation_differences`: retail-only and candidate-only relocations.
+   - `function_size`: retail vs candidate byte size.
+   - `stack_frame`: retail vs candidate stack frame size.
+   - `structural_findings`: component-level structural scores.
+
+2. **Map the earliest delta to a root cause**:
    | Delta pattern | Likely C++ root cause |
    |---|---|
    | `cmpwi` vs `cmplwi` (or vice versa) | signed vs unsigned type mismatch |
@@ -19,12 +27,13 @@ Improvement workflow:
    | Missing `stb r0, offset(rX)` | missed a boolean store or flag set |
    | Different branch target | wrong if/else structure or loop boundary |
    | `rlwinm` vs `slwi`/`srwi` | mask vs shift — try the other form |
-    | Different `addi`/`li` immediate | wrong constant or offset |
-    | `lwz`/`stw` pair per field vs single `lwz`/`stw` pair | field-by-field copy vs struct assignment — try `*dst = *src` |
-    | Relocation name mismatch `lbl_eu_*__2cf` vs `lbl_eu_*` | C++ name mangling — add `extern "C"` to the symbol declaration |
-    | Relocation name mismatch `@N` vs `lbl_eu_*` | TU-local pool entry — use `extern "C"` data copy instead of PTMF/function-ref expression |
-3. **Make one bounded change**: Pick the single most impactful mismatch, fix it, and leave everything else alone. Do not restructure the function or change unrelated code.
+   | Different `addi`/`li` immediate | wrong constant or offset |
+   | `lwz`/`stw` pair per field vs single pair | field-by-field copy vs struct assignment — try `*dst = *src` |
+   | Relocation name mismatch `lbl_eu_*__2cf` vs `lbl_eu_*` | C++ name mangling — add `extern "C"` to the symbol declaration |
+   | Relocation name mismatch `@N` vs `lbl_eu_*` | TU-local pool entry — use `extern "C"` data copy instead of PTMF/function-ref expression |
+
+3. **Make one bounded change**: Pick the single most impactful mismatch at the earliest offset, fix it, and leave everything else alone. Do not restructure the function or change unrelated code.
+
 4. **Preserve semantics**: The current candidate may already be mostly correct. Do not regress working parts. When in doubt, make the smallest possible edit to the current function.
-5. **Consider MWCC knowledge**: If the dossier includes records about this function or similar mismatch patterns, apply the recorded fix if it genuinely fits. The main prompt already includes general MWCC compiler hints; focus on mismatch-specific patterns here.
 
 Return only the complete target function definition.

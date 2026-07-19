@@ -26,6 +26,8 @@ class AttemptRecord:
     timestamp: str = ""
     equivalence_status: Optional[str] = None
     equivalence_detail: str = ""
+    equivalence_confidence: Optional[str] = None
+    equivalence_policy: Optional[str] = None
     add_to_kb: str = ""
 
     def to_json(self) -> Dict[str, Any]:

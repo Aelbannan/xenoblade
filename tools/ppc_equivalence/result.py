@@ -32,6 +32,19 @@ class FloatingPointDomain:
             "fused_input_domain": self.fused_input_domain,
         }
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> FloatingPointDomain:
+        rounding = d.get("rounding_modes", ("nearest-even",))
+        return cls(
+            rounding_modes=tuple(rounding),
+            require_ni_zero=d.get("ni", "required-zero") == "required-zero",
+            traps_enabled=d.get("traps") == "enabled",
+            exclude_finite_overflow=d.get("finite_overflow", "excluded") == "excluded",
+            fused_input_domain=str(
+                d.get("fused_input_domain", "exact-expanded-binary32")
+            ),
+        )
+
 ARCHITECTURE_MODEL = "broadway-ppc32-be-v19"
 RESULT_FORMAT = 8
 
@@ -102,6 +115,35 @@ class MemoryScope:
             d["private_stack"]["candidate"] = self.candidate.to_dict()
         return d
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> MemoryScope:
+        private = d.get("private_stack") if isinstance(d.get("private_stack"), dict) else {}
+        masking = private.get(
+            "masking_semantics",
+            d.get("masking_semantics", MASKING_SEMANTICS),
+        )
+
+        def _side(key: str) -> PrivateStackInfo | None:
+            raw = private.get(key)
+            if not isinstance(raw, dict):
+                return None
+            return PrivateStackInfo(
+                enabled_on_all_terminal_paths=bool(
+                    raw.get("enabled_on_all_terminal_paths", True)
+                ),
+                disabled_reasons=list(raw.get("disabled_reasons", [])),
+                frame_relation=str(
+                    raw.get("frame_relation", "symbolic-below-entry-sp")
+                ),
+            )
+
+        return cls(
+            comparison=str(d.get("comparison", "touched-byte-extensional")),
+            masking_semantics=str(masking),
+            original=_side("original"),
+            candidate=_side("candidate"),
+        )
+
 
 class ProofStatus(str, Enum):
     EQUIVALENT = "equivalent"
@@ -171,6 +213,8 @@ class ProofResult:
     z3_version: str = ""
     capstone_version: str = ""
     floating_point_domain: FloatingPointDomain | None = None
+    counterexample_bundle: dict[str, Any] | None = None
+    solver_diagnostics: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)

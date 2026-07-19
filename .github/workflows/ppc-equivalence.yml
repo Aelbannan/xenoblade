@@ -1,11 +1,17 @@
 # PPC equivalence CI pipeline
 #
 # Two levels:
-#   1. Fast PR gate — runs on every push/PR touching tools/ppc_equivalence/**
+#   1. Fast PR gate — runs on every push/PR touching ppc_equivalence paths
 #   2. Full weekly run — same as PR gate PLUS Dolphin validation
 #
 # Dolphin binary is pinned externally (coop.json or DOLPHIN env / PATH).
 # The --dolphin step is conditional on availability and never blocks PRs.
+#
+# Dependency locking (P1-10):
+#   tools/ppc_equivalence/requirements.lock is a multi-platform hash lock
+#   (uv pip compile --generate-hashes for manylinux x86_64 / Python 3.12).
+#   CI installs with --require-hashes. The previous single-hash lock was
+#   macOS arm64 / cp313-only and could not install on ubuntu-latest.
 
 name: PPC Equivalence
 
@@ -13,9 +19,13 @@ on:
   push:
     paths:
       - "tools/ppc_equivalence/**"
+      - "README.md"
+      - ".github/workflows/ppc-equivalence.yml"
   pull_request:
     paths:
       - "tools/ppc_equivalence/**"
+      - "README.md"
+      - ".github/workflows/ppc-equivalence.yml"
   schedule:
     - cron: "0 6 * * 0"   # weekly Sunday 06:00 UTC
   workflow_dispatch:
@@ -30,10 +40,46 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: tools/ppc_equivalence/requirements.txt
+          cache-dependency-path: tools/ppc_equivalence/requirements.lock
+
+      - name: Verify lock freshness
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          req = Path("tools/ppc_equivalence/requirements.txt").read_text()
+          lock = Path("tools/ppc_equivalence/requirements.lock").read_text().lower()
+          pins = re.findall(r"^([A-Za-z0-9_.-]+)==([^\s#]+)", req, re.M)
+          if not pins:
+              print("no pins found in requirements.txt", file=sys.stderr)
+              sys.exit(1)
+          missing = []
+          for name, ver in pins:
+              needle = f"{name.lower()}=={ver.lower()}"
+              if needle not in lock:
+                  missing.append(needle)
+          if missing:
+              print("requirements.lock missing pins:", ", ".join(missing), file=sys.stderr)
+              print(
+                  "Regenerate with: uv pip compile tools/ppc_equivalence/requirements.txt "
+                  "-o tools/ppc_equivalence/requirements.lock "
+                  "--python-version 3.12 --generate-hashes "
+                  "--python-platform x86_64-manylinux_2_28 --refresh",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+          print("lock freshness OK:", ", ".join(f"{n}=={v}" for n, v in pins))
+          PY
 
       - name: Install dependencies
-        run: pip install -r tools/ppc_equivalence/requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r tools/ppc_equivalence/requirements.lock
+
+      - name: Docs sync check
+        run: python -m tools.ppc_equivalence.docs_sync --check
 
       - name: Fixture freshness check
         run: python tools/ppc_equivalence/gen_fixture_blob.py --check

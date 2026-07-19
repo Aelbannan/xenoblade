@@ -5,60 +5,92 @@
     "coop_config": "coop.json",
     "prompt_dir": "tools/llm_harness/prompts",
     "max_source_chars": 120000,
-    "mwcc_knowledge_enabled": true,
-    "mwcc_knowledge_limit": 8,
-    "mwcc_knowledge_body_chars": 5000,
     "context_similar_limit": 4,
     "tu_context_chars": 300,
     "tu_section_byte_limit": 16384
   },
   "providers": {
-    "reasonix": {
-      "binary": "reasonix",
+    "opencode": {
+      "binary": "opencode",
       "timeout_seconds": 900,
       "pure": true
+    },
+    "deepseek-raw": {
+      "binary": "deepseek-raw",
+      "timeout_seconds": 300,
+      "pure": true
+    },
+    "lmstudio": {
+      "base_url": "http://localhost:1234/v1",
+      "timeout_seconds": 900,
+      "temperature": 0.1,
+      "max_tokens": 8192,
+      "json_object": true
     }
   },
   "execution": {
     "max_parallel": 1,
-    "max_target_parallel": 1,
+    "max_target_parallel": 10,
     "batch_model_parallel": 1,
-    "pipelines": {
-      "new": {
-        "max_parallel": 2,
-        "max_target_parallel": 2,
-        "batch_model_parallel": 1
-      },
-      "tu-complete": {
-        "max_parallel": 1,
-        "max_target_parallel": 1,
-        "batch_model_parallel": 1
-      }
-    },
     "max_retries": 1,
     "isolation": {
-      "mode": "none",
+      "mode": "git-worktree",
       "copy_dirty": true
+    },
+    "pipelines": {
+      "new": {
+        "max_parallel": 3,
+        "max_target_parallel": 30,
+        "batch_model_parallel": 1
+      },
+      "improve": {
+        "max_parallel": 1,
+        "max_target_parallel": 10,
+        "batch_model_parallel": 1
+      }
     }
   },
   "models": {
-    "default": [
+    "default": [],
+    "new": [
       {
-        "id": "model-a",
-        "provider": "reasonix",
-        "model": "deepseek-flash",
-        "agent": "plan",
-        "runs": 3
+        "id": "deepseek-flash",
+        "provider": "opencode",
+        "model": "opencode/deepseek-v4-flash-free",
+        "runs": 10
+      }
+    ],
+    "improve": [
+      {
+        "id": "deepseek-pro",
+        "provider": "deepseek-raw",
+        "model": "deepseek-pro",
+        "runs": 10
       }
     ],
     "tu-complete": [
       {
-        "id": "model-b",
-        "provider": "reasonix",
+        "id": "deepseek-pro",
+        "provider": "deepseek-raw",
         "model": "deepseek-pro",
-        "agent": "plan",
-        "runs": 3
+        "runs": 10
       }
     ]
+  },
+  "solve": {
+    "initial_candidates": 3,
+    "compile_repairs": 2,
+    "match_repairs": 4,
+    "max_repeated_fingerprint": 2,
+    "stop_on_full_match": true,
+    "stop_on_equivalent_match": true
+  },
+  "prompt": {
+    "max_chars": 60000,
+    "max_decoded_instructions": 400,
+    "max_declaration_chars": 12000,
+    "max_callers": 3,
+    "max_sibling_bodies": 3,
+    "include_raw_hex": false
   }
 }

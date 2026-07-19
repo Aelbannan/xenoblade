@@ -29,6 +29,7 @@ from tools.ppc_equivalence.elf_symbols import (
 from tools.ppc_equivalence.engine import check_equivalence, validate_callee_contract
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
+from tools.ppc_equivalence.provenance import canonical_json_sha256
 from tools.ppc_equivalence.semantics import (
     CalleeContract,
     ConcreteOps,
@@ -52,6 +53,7 @@ class EquivalenceProbe:
     status: ProofStatus
     detail: str = ""
     certificate: dict | None = None
+    proof: object | None = None
 
 
 @dataclass(frozen=True)
@@ -545,6 +547,7 @@ def _build_equivalence_certificate(
     max_instructions: int,
     max_paths: int,
     memory_scope: dict | None = None,
+    proof: object | None = None,
 ) -> tuple[dict | None, str]:
     """Derive and validate a normal-return semantic effect summary."""
     declared = CalleeContract.opaque_eabi()
@@ -593,6 +596,28 @@ def _build_equivalence_certificate(
     }
     if memory_scope is not None:
         certificate["memory_scope"] = memory_scope
+    if proof is not None:
+        engine_hash = getattr(proof, "engine_hash", "") or ""
+        source_hash = getattr(proof, "source_hash", "") or ""
+        git_commit = getattr(proof, "git_commit", "") or ""
+        if engine_hash:
+            certificate["engine_hash"] = engine_hash
+        if source_hash:
+            certificate["source_hash"] = source_hash
+        if git_commit:
+            certificate["git_commit"] = git_commit
+        environment = getattr(proof, "environment", None)
+        if environment is not None and hasattr(environment, "to_dict"):
+            certificate["environment"] = environment.to_dict()
+        fp_domain = getattr(proof, "floating_point_domain", None)
+        if fp_domain is not None and hasattr(fp_domain, "to_dict"):
+            certificate["floating_point_domain"] = fp_domain.to_dict()
+        observables = getattr(proof, "observables", None)
+        if observables:
+            certificate["observables"] = list(observables)
+        assumed = getattr(proof, "assumed_callees", None)
+        if assumed:
+            certificate["assumed_callees"] = list(assumed)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 
@@ -709,7 +734,10 @@ def _prove_bytes(
     if cached is not None:
         if fallback_note and cached.detail and fallback_note not in cached.detail:
             cached = EquivalenceProbe(
-                cached.status, f"{fallback_note}; {cached.detail}", cached.certificate,
+                cached.status,
+                f"{fallback_note}; {cached.detail}",
+                cached.certificate,
+                proof=cached.proof,
             )
         return cached
 
@@ -730,6 +758,16 @@ def _prove_bytes(
     if memory_environment:
         from tools.ppc_equivalence.memory_profile import MemoryEnvironment
         mem_env = MemoryEnvironment.from_dict(memory_environment)
+    source_hash = canonical_json_sha256({
+        "original_hex": orig_hex,
+        "candidate_hex": cand_hex,
+        "contract": resolved_contract.name,
+        "timeout_ms": timeout_ms,
+        "max_instructions": max_instructions,
+        "max_paths": max_paths,
+        "memory_environment": memory_environment,
+        "certificate_target_id": certificate_target_id,
+    })
     result = check_equivalence(
         original,
         candidate,
@@ -742,6 +780,7 @@ def _prove_bytes(
         assumed_callees_used=callees_used,
         callee_contracts=callee_contracts,
         memory_environment=mem_env,
+        source_hash=source_hash,
     )
     detail = ""
     if result.contract_resolution:
@@ -800,10 +839,11 @@ def _prove_bytes(
             max_instructions=max_instructions,
             max_paths=max_paths,
             memory_scope=mem_scope_dict,
+            proof=result,
         )
         if certificate_error:
             detail = f"{detail} | {certificate_error}" if detail else certificate_error
-    probe = EquivalenceProbe(result.status, detail, certificate)
+    probe = EquivalenceProbe(result.status, detail, certificate, proof=result)
     if result.status == ProofStatus.EQUIVALENT and cache_d is not None:
         _cache_put(key, probe, cache_d, callees_used)
 

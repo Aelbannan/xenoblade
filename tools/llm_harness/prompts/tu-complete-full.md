@@ -22,13 +22,8 @@ Hard constraints:
 
 - Return readable high-level C or C++ only; no whole-function assembly, register bindings, fake stack buffers, or retail assembly transcription.
 - Unit acceptance requires 100% code and data plus split-size fit. Function-level equivalence is not a unit-wide proof.
-- Use retrieved MWCC knowledge IDs only when their symptoms fit, and name selected stable IDs in `hypothesis`.
 - This prompt is self-contained. Do not read, edit, or search files and do not run shell commands.
 - `source` must contain the complete replacement translation-unit source without Markdown fences.
-
-The frozen MWCC knowledge base below is byte-identical across every prompt in this campaign: every reference and attempt record is inlined once so its body lives in the cacheable prompt prefix. Reference entries by their stable IDs only; do not echo bodies back.
-
-{{FROZEN_KB}}
 
 Return exactly one JSON object. No preamble, no commentary, no Markdown fences:
 

@@ -14,9 +14,10 @@ from tools.coop.lib.equivalence_check import (
     prove_unit_symbol,
     should_probe_equivalence,
 )
-from tools.coop.lib.equivalence_policy import classify_for_promotion
+from tools.coop.lib.equivalence_policy import classify_for_promotion_legacy
 from tools.coop.lib.project import ObjdiffUnit, Project
-from tools.ppc_equivalence.result import ProofStatus
+from tools.coop.lib.targets import EQUIVALENCE_PROMOTION_POLICY
+from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 
 @dataclass
@@ -62,6 +63,7 @@ def meets_required_level(
     equivalence: Optional[ProofStatus] = None,
     policy: Optional[CoopConfig] = None,
     certificate: Optional[dict] = None,
+    proof: Optional[ProofResult] = None,
 ) -> bool:
     if required_level == "FULL_MATCH":
         if symbol:
@@ -80,9 +82,12 @@ def meets_required_level(
             ):
                 if policy is None:
                     return True
-                decision = classify_for_promotion(
-                    equivalence, function_match, policy,
+                decision = classify_for_promotion_legacy(
+                    equivalence,
+                    function_match,
+                    policy,
                     certificate=certificate,
+                    proof=proof,
                 )
                 return decision.allowed
             return False
@@ -114,6 +119,7 @@ def classify_status(
     equivalence: Optional[ProofStatus] = None,
     policy: Optional[CoopConfig] = None,
     certificate: Optional[dict] = None,
+    proof: Optional[ProofResult] = None,
 ) -> str:
     if symbol:
         if function_match is None:
@@ -127,9 +133,12 @@ def classify_status(
         if can_equivalent:
             if policy is None:
                 return "EQUIVALENT_MATCH"
-            decision = classify_for_promotion(
-                equivalence, function_match, policy,
+            decision = classify_for_promotion_legacy(
+                equivalence,
+                function_match,
+                policy,
                 certificate=certificate,
+                proof=proof,
             )
             if decision.allowed:
                 return "EQUIVALENT_MATCH"
@@ -160,6 +169,9 @@ class MatchEvaluation:
     equivalence_detail: str = ""
     equivalence_certificate: dict | None = None
     certificate_checked: bool = False
+    proof: Optional[ProofResult] = None
+    equivalence_confidence: Optional[str] = None
+    equivalence_policy: Optional[str] = None
 
 
 def evaluate_unit_match(
@@ -177,6 +189,7 @@ def evaluate_unit_match(
     equivalence: Optional[ProofStatus] = None
     detail = ""
     certificate = None
+    proof: Optional[ProofResult] = None
     certificate_checked = bool(target_id and symbol and fn_match and run_equivalence)
     pct = fn_match.match_percent if fn_match else None
     if run_equivalence and symbol and fn_match and should_probe_equivalence(pct):
@@ -186,6 +199,7 @@ def evaluate_unit_match(
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate
+        proof = probe.proof
     elif (
         run_equivalence
         and certify_full_match
@@ -199,10 +213,28 @@ def evaluate_unit_match(
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate
+        proof = probe.proof
     status = classify_status(
-        pct, unit_report, symbol=symbol, equivalence=equivalence,
-        policy=project.config, certificate=certificate,
+        pct,
+        unit_report,
+        symbol=symbol,
+        equivalence=equivalence,
+        policy=project.config,
+        certificate=certificate,
+        proof=proof,
     )
+    confidence: Optional[str] = None
+    policy_id: Optional[str] = None
+    if status == "EQUIVALENT_MATCH":
+        decision = classify_for_promotion_legacy(
+            equivalence,
+            pct,
+            project.config,
+            certificate=certificate,
+            proof=proof,
+        )
+        confidence = decision.confidence_tier
+        policy_id = EQUIVALENCE_PROMOTION_POLICY
     return MatchEvaluation(
         unit_report=unit_report,
         fn_match=fn_match,
@@ -211,6 +243,9 @@ def evaluate_unit_match(
         equivalence_detail=detail,
         equivalence_certificate=certificate,
         certificate_checked=certificate_checked,
+        proof=proof,
+        equivalence_confidence=confidence,
+        equivalence_policy=policy_id,
     )
 
 

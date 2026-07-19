@@ -393,6 +393,204 @@ def _int_or_none(value: Any) -> Optional[int]:
         return None
 
 
+class LMStudioProvider:
+    """Local LM Studio OpenAI-compatible chat completions provider.
+
+    Calls POST {base_url}/chat/completions (default http://localhost:1234/v1).
+    Start the local server in LM Studio's Developer tab and load a model first.
+    Model IDs are those reported by GET /v1/models (or the LM Studio UI).
+
+    No cloud API key is required; an optional Bearer token satisfies clients that
+    expect one (LM Studio ignores it on localhost by default).
+    """
+
+    DEFAULT_BASE_URL = "http://localhost:1234/v1"
+    API_KEY_ENV = "LMSTUDIO_API_KEY"
+
+    def __init__(
+        self,
+        base_url: str = DEFAULT_BASE_URL,
+        api_key: str = "lm-studio",
+        timeout_seconds: int = 900,
+        temperature: float = 0.1,
+        max_tokens: int = 8192,
+        json_object: bool = True,
+        pure: bool = True,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
+        self.timeout_seconds = timeout_seconds
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.json_object = json_object
+        self.pure = pure
+        _load_env_vars(Path(".env"))
+
+    def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
+        started = time.monotonic()
+        api_key = os.environ.get(self.API_KEY_ENV) or self.api_key
+
+        body: Dict[str, Any] = {
+            "model": model.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+        if self.json_object:
+            body["response_format"] = {"type": "json_object"}
+
+        request_body = json.dumps(body)
+        url = f"{self.base_url}/chat/completions"
+        cmd = [
+            "curl", "-s", "-w", "\n%{http_code}",
+            "-X", "POST", url,
+            "-H", "Content-Type: application/json",
+            "-H", f"Authorization: Bearer {api_key}",
+            "-d", request_body,
+        ]
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=self.timeout_seconds,
+        )
+        stdout = completed.stdout.strip()
+        lines = stdout.rsplit("\n", 1)
+        if len(lines) != 2:
+            detail = (completed.stderr.strip() or stdout)[:2000]
+            raise RuntimeError(f"LM Studio API: unexpected curl output: {detail}")
+        response_body, http_code = lines[0].strip(), lines[1]
+
+        if completed.returncode or not http_code.startswith("2"):
+            detail = (completed.stderr.strip() or response_body)[:2000]
+            raise RuntimeError(
+                f"LM Studio API error (HTTP {http_code}): {detail}"
+            )
+
+        result = json.loads(response_body)
+        choices = result.get("choices", [])
+        if not choices:
+            raise RuntimeError(
+                f"LM Studio API: no choices in response: {response_body[:500]}"
+            )
+
+        text = choices[0].get("message", {}).get("content", "").strip()
+        usage = result.get("usage", {}) or {}
+
+        return ProviderResult(
+            text=text,
+            duration_seconds=time.monotonic() - started,
+            input_tokens=_int_or_none(usage.get("prompt_tokens")),
+            output_tokens=_int_or_none(usage.get("completion_tokens")),
+            cache_read_tokens=None,
+            cache_write_tokens=None,
+            cost=None,
+            raw_events=[result],
+        )
+
+
+class OpenRouterProvider:
+    """Direct OpenRouter API provider — supports multiple model providers via OpenRouter gateway.
+
+    Calls https://openrouter.ai/api/v1/chat/completions with the specified model.
+    Supports provider routing via the "provider" field in the request body or model config variant.
+    """
+
+    API_URL = "https://openrouter.ai/api/v1/chat/completions"
+    API_KEY_ENV = "OPENROUTER_API_KEY"
+
+    def __init__(
+        self, timeout_seconds: int = 300, pure: bool = True
+    ) -> None:
+        self.timeout_seconds = timeout_seconds
+        self.pure = pure
+        _load_env_vars(Path(".env"))
+        _load_env_vars(Path.home() / ".openrouter" / ".env")
+
+    def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
+        import time
+        import subprocess
+        import json
+        import os
+
+        started = time.monotonic()
+        api_key = os.environ.get(self.API_KEY_ENV)
+        if not api_key:
+            raise RuntimeError(
+                f"OpenRouter API key not found in ${self.API_KEY_ENV} — "
+                f"set it in ~/.openrouter/.env or your shell profile"
+            )
+
+        # OpenRouter supports provider routing via the "provider" field
+        # Use model.variant if set (e.g., "anthropic", "openai", "google"), otherwise let OpenRouter choose
+        provider_routing = {}
+        if model.variant:
+            provider_routing["provider"] = {"order": [model.variant], "allow_fallbacks": False}
+
+        request_body = json.dumps({
+            "model": model.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.1,
+            "max_tokens": 8192,
+            "response_format": {"type": "json_object"},
+            **provider_routing,
+        })
+
+        cmd = [
+            "curl", "-s", "-w", "\n%{http_code}",
+            "-X", "POST", self.API_URL,
+            "-H", "Content-Type: application/json",
+            "-H", f"Authorization: Bearer {api_key}",
+            "-H", "HTTP-Referer: https://github.com/xenoblade-coop/xenoblade",
+            "-H", "X-Title: Xenoblade Co-op Decompilation",
+            "-d", request_body,
+        ]
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=self.timeout_seconds,
+        )
+        stdout = completed.stdout.strip()
+        lines = stdout.rsplit("\n", 1)
+        if len(lines) != 2:
+            detail = (completed.stderr.strip() or stdout)[:2000]
+            raise RuntimeError(f"OpenRouter API: unexpected curl output: {detail}")
+        response_body, http_code = lines[0].strip(), lines[1]
+
+        if completed.returncode or not http_code.startswith("2"):
+            detail = (completed.stderr.strip() or response_body)[:2000]
+            raise RuntimeError(
+                f"OpenRouter API error (HTTP {http_code}): {detail}"
+            )
+
+        result = json.loads(response_body)
+        choices = result.get("choices", [])
+        if not choices:
+            raise RuntimeError(
+                f"OpenRouter API: no choices in response: {response_body[:500]}"
+            )
+
+        text = choices[0].get("message", {}).get("content", "").strip()
+        usage = result.get("usage", {}) or {}
+
+        return ProviderResult(
+            text=text,
+            duration_seconds=time.monotonic() - started,
+            input_tokens=_int_or_none(usage.get("prompt_tokens")),
+            output_tokens=_int_or_none(usage.get("completion_tokens")),
+            cache_read_tokens=_int_or_none(
+                usage.get("prompt_cache_hit_tokens")
+                or (usage.get("prompt_tokens_details") or {}).get("cached_tokens")
+            ),
+            cache_write_tokens=_int_or_none(
+                usage.get("prompt_cache_miss_tokens")
+            ),
+            cost=_float_or_none(usage.get("cost")),
+            raw_events=[result],
+        )
+
+
 def _float_or_none(value: Any) -> Optional[float]:
     try:
         return float(value) if value is not None else None

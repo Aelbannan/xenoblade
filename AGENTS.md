@@ -23,6 +23,8 @@ python3 tools/coop/run.py targets brief <target-id>
 python3 tools/coop/run.py targets sync-calls
 python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
 python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
+python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog
+python3 tools/coop/run.py atlas serve             # http://127.0.0.1:8765
 ```
 
 ## CI commands
@@ -32,6 +34,12 @@ python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..
 python tools/ppc_equivalence/gen_fixture_blob.py --check
 python -m unittest discover -s tools/ppc_equivalence/tests -p "test_*.py"
 python -m tools.ppc_equivalence differential
+```
+
+```bash
+# Documentation sync
+python -m tools.ppc_equivalence.docs_sync --write
+python -m tools.ppc_equivalence.docs_sync --check
 ```
 
 ## Do not

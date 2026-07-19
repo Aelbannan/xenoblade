@@ -11,14 +11,39 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.llm_harness.core import Harness
-from tools.llm_harness.pipeline import PipelineRunner, parse_config
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Check for --show-config early without requiring a command
+    show_config = False
+    config_path = Path("llm-harness.json")
+    if argv:
+        for i, arg in enumerate(argv):
+            if arg == "--config" and i + 1 < len(argv):
+                config_path = Path(argv[i + 1])
+            elif arg == "--show-config":
+                show_config = True
+    
+    if show_config:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        effective = {
+            "project_adapter": config.get("project_adapter"),
+            "output_dir": config.get("output_dir", "build/llm-harness"),
+            "project": config.get("project", {}),
+            "providers": config.get("providers", {}),
+            "execution": config.get("execution", {}),
+            "models": config.get("models", {}),
+            "solve": config.get("solve", {}),
+            "prompt": config.get("prompt", {}),
+        }
+        print(json.dumps(effective, indent=2))
+        return 0
+    
+    # Normal command parsing
     parser = argparse.ArgumentParser(description="Generic project-adapted LLM experiment harness")
     parser.add_argument("--config", type=Path, default=Path("llm-harness.json"))
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("new", "improve", "tu-complete"):
+    for name in ("new", "improve", "tu-complete", "solve"):
         command = sub.add_parser(name)
         command.add_argument(
             "target_id",
@@ -69,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     batch = sub.add_parser(
         "batch", help="Run a workflow for multiple functions or TUs concurrently"
     )
-    batch.add_argument("workflow", choices=("new", "improve", "tu-complete"))
+    batch.add_argument("workflow", choices=("new", "improve", "tu-complete", "solve"))
     batch.add_argument("target_ids", nargs="*")
     batch.add_argument(
         "--tu",
@@ -113,6 +138,7 @@ def main(argv: list[str] | None = None) -> int:
     promote = sub.add_parser("promote", help="Preview or apply an experiment's best candidate")
     promote.add_argument("experiment", type=Path)
     promote.add_argument("--write", action="store_true")
+    promote.add_argument("--owner", help="Owner/claimant required for --write")
     rescore = sub.add_parser("rescore", help="Re-evaluate saved candidates without new model calls")
     rescore.add_argument("experiment", type=Path)
     rescore.add_argument("--max-parallel", type=int)
@@ -120,12 +146,10 @@ def main(argv: list[str] | None = None) -> int:
     repair.add_argument("experiment", type=Path)
     repair.add_argument("--budget", type=int, default=3, help="Max repair iterations")
     repair.add_argument("--dry-run", action="store_true")
-    pipeline_cmd = sub.add_parser("pipeline", help="Run full pipeline for a single target")
-    pipeline_cmd.add_argument("target_id")
-    pipeline_cmd.add_argument("--resume", type=Path, help="Resume from a previous pipeline experiment directory")
-    pipeline_cmd.add_argument("--max-parallel", type=int, help="Override parallel model calls")
+    # pipeline command removed - use solve instead
     sub.add_parser("stats")
     args = parser.parse_args(argv)
+    
     harness = Harness(args.config)
     if args.command == "stats":
         print(json.dumps(harness.stats(), indent=2))
@@ -183,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         ))
         return 0
     if args.command == "promote":
-        print(harness.promote(args.experiment, write=args.write))
+        print(harness.promote(args.experiment, write=args.write, owner=args.owner))
         return 0
     if args.command == "rescore":
         print(harness.rescore(args.experiment, max_parallel=args.max_parallel))
@@ -210,7 +234,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(experiment.to_json(), indent=2))
         return 0
-    if args.command in {"new", "improve", "tu-complete"} and args.number is not None:
+    if args.command in {"new", "improve", "tu-complete", "solve"} and args.number is not None:
         if args.target_id is not None:
             parser.error(f"{args.command} accepts either target_id or --number, not both")
         if args.number < 1:
@@ -222,6 +246,13 @@ def main(argv: list[str] | None = None) -> int:
             )
         try:
             if args.command == "new":
+                target_ids = harness.select_new_targets(
+                    args.number,
+                    ignore_called_functions=args.ignore_called_functions,
+                    certified_funcs=getattr(args, "certified_funcs", False),
+                    tu=getattr(args, "tu", None),
+                )
+            elif args.command == "solve":
                 target_ids = harness.select_new_targets(
                     args.number,
                     ignore_called_functions=args.ignore_called_functions,

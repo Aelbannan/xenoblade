@@ -31,6 +31,11 @@ FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
     "fp-exception-trap-delivery",
 )
 
+# P1-11 coverage query labels (additive; no result-format bump).
+FP_COVERAGE_STATUS_NONE = "none"
+FP_COVERAGE_STATUS_PROVEN = "proven"
+FP_COVERAGE_STATUS_ASSUMED = "assumed"
+
 SUPPORTED_FP_ROUNDING_MODES: frozenset[str] = frozenset({"nearest-even"})
 SUPPORTED_FUSED_INPUT_DOMAINS: frozenset[str] = frozenset({
     "exact-expanded-binary32",
@@ -93,7 +98,7 @@ class FloatingPointDomain:
                 "unsupported floating-point domain: " + "; ".join(reasons)
             )
 
-    def coverage_dict(self) -> dict[str, list[str]]:
+    def coverage_dict(self) -> dict[str, Any]:
         proven = list(FP_COVERAGE_PROVEN)
         assumed = list(FP_COVERAGE_ASSUMED)
         if not self.exclude_finite_overflow:
@@ -109,11 +114,21 @@ class FloatingPointDomain:
             proven = [*proven, "nan-excluded"]
         if not self.allow_infinity:
             proven = [*proven, "infinity-excluded"]
+        status = (
+            FP_COVERAGE_STATUS_ASSUMED
+            if assumed
+            else FP_COVERAGE_STATUS_PROVEN
+        )
         return {
+            "status": status,
             "proven": proven,
             "assumed": assumed,
             "unsupported": list(FP_COVERAGE_UNSUPPORTED),
         }
+
+    def coverage_status(self) -> str:
+        """Return ``proven`` or ``assumed`` for this active domain."""
+        return self.coverage_dict()["status"]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -394,3 +409,26 @@ class ProofResult:
         if self.indirect_targets is None:
             value.pop("indirect_targets", None)
         return value
+
+
+def fp_coverage_status(
+    domain: FloatingPointDomain | None,
+    *,
+    used_fp: bool = False,
+) -> str:
+    """Classify FP domain coverage for tiering (P1-11).
+
+    Returns one of ``none``, ``proven``, or ``assumed``. ``unsupported`` FP
+    behavior is handled separately via ``ProofStatus.INCONCLUSIVE_UNSUPPORTED``.
+    """
+    if domain is None:
+        return FP_COVERAGE_STATUS_ASSUMED if used_fp else FP_COVERAGE_STATUS_NONE
+    return domain.coverage_status()
+
+
+def proof_fp_coverage_status(result: ProofResult) -> str:
+    """Coverage query for a finished proof result."""
+    return fp_coverage_status(
+        result.floating_point_domain,
+        used_fp=result.floating_point_domain is not None,
+    )

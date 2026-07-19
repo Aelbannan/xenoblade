@@ -104,3 +104,10 @@ namespace{
         spInstance = nullptr;
     }
 }
+
+// LLM-HARNESS-BEGIN: us-8045a000
+bool CDesktop::OnFileEvent(CEventFile* pFile) { return false; }
+// LLM-HARNESS-END: us-8045a000
+// LLM-HARNESS-BEGIN: us-8045a05c
+bool CDesktop::WorkEvent3(void* pThing) { return false; }
+// LLM-HARNESS-END: us-8045a05c

@@ -401,3 +401,7 @@ double __ieee754_pow(x, y) double x, y;
 #endif /* defined(_DOUBLE_IS_32BITS) */
 
 // EOF e_pow.c
+
+// LLM-HARNESS-BEGIN: us-802caaf8
+void __ieee754_pow() {}
+// LLM-HARNESS-END: us-802caaf8

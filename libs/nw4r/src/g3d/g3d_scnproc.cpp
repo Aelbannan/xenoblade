@@ -70,3 +70,13 @@ void ScnProc::G3dProc(u32 task, u32 param, void* pInfo) {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803ff3a8
+extern "C" void IsDerivedFrom__Q34nw4r3g3d7ScnProcCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+// LLM-HARNESS-END: us-803ff3a8
+// LLM-HARNESS-BEGIN: us-803ff410
+extern "C" void GetTypeName__Q34nw4r3g3d7ScnProcCFv() {}
+// LLM-HARNESS-END: us-803ff410
+// LLM-HARNESS-BEGIN: us-803ff440
+extern "C" void GetTypeObj__Q34nw4r3g3d7ScnProcCFv() {}
+// LLM-HARNESS-END: us-803ff440

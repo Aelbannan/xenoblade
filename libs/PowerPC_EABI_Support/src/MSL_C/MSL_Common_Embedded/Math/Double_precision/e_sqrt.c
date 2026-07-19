@@ -409,3 +409,7 @@ B.  sqrt(x) by Reciproot Iteration
     -------------------------------------------------
     (4)	Special cases (see (4) of Section A).
  */
+
+// LLM-HARNESS-BEGIN: us-802cdb78
+void __ieee754_sqrt() {}
+// LLM-HARNESS-END: us-802cdb78

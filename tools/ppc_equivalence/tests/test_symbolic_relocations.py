@@ -198,8 +198,12 @@ class MatchedCalleeSummaryTests(unittest.TestCase):
 
     def test_unknown_callee_fails_closed(self) -> None:
         caller = decode("38630001 48000001 38630003 4e800020", self._CALL)
-        with self.assertRaisesRegex(ExecutionInconclusive, "no matched-callee lemma"):
-            prove(caller, caller)
+        result = prove(caller, caller)
+        self.assertEqual(result.status.value, "inconclusive_unsupported")
+        self.assertTrue(
+            any("no matched-callee lemma" in item for item in result.unsupported),
+            result.unsupported,
+        )
 
     def test_relocated_tail_call_uses_the_same_callee_lemma(self) -> None:
         tail = decode("38630001 48000000", (R(4, 10, "leaf", 0),))
@@ -207,8 +211,12 @@ class MatchedCalleeSummaryTests(unittest.TestCase):
         self.assertEqual(result.status.value, "equivalent")
         self.assertEqual(result.callee_contracts["leaf"]["source"], "opaque-eabi")
         self.assertEqual(result.assumed_callees, ["leaf"])
-        with self.assertRaisesRegex(ExecutionInconclusive, "tail-call target"):
-            prove(tail, tail)
+        closed = prove(tail, tail)
+        self.assertEqual(closed.status.value, "inconclusive_unsupported")
+        self.assertTrue(
+            any("tail-call target" in item for item in closed.unsupported),
+            closed.unsupported,
+        )
 
     def test_read_sensitive_contract_ignores_irrelevant_input(self) -> None:
         left = decode("38800001 48000001 4e800020", self._CALL)
@@ -437,6 +445,36 @@ class PrivateStackMemoryTests(unittest.TestCase):
         regs = decode("7c6000a6 4e800020")  # mfmsr r3; blr
         reasons = _infer_invalid_reasons(regs)
         self.assertIn(InvalidReason.PRIVILEGED_INSTRUCTION.value, reasons)
+
+    def test_infer_invalid_reasons_fadds_detects_fp_domain(self) -> None:
+        from tools.ppc_equivalence.ir import Instruction, Opcode
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = [
+            Instruction(0, 0, Opcode.FADDS, (1, 1, 2)),
+            Instruction(4, 0x4E800020, Opcode.BCLR, (20, 0, 0)),
+        ]
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.FP_DOMAIN_EXCLUDED.value, reasons)
+
+    def test_infer_invalid_reasons_mfspr_hid0_detects_privileged(self) -> None:
+        from tools.ppc_equivalence.ir import Instruction, Opcode
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = [
+            Instruction(0, 0, Opcode.MFSPR, (3, 1008)),
+            Instruction(4, 0x4E800020, Opcode.BCLR, (20, 0, 0)),
+        ]
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.PRIVILEGED_INSTRUCTION.value, reasons)
+
+    def test_infer_invalid_reasons_mflr_not_privileged(self) -> None:
+        from tools.ppc_equivalence.ir import Instruction, Opcode
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = [
+            Instruction(0, 0, Opcode.MFSPR, (0, 8)),  # mflr r0
+            Instruction(4, 0x4E800020, Opcode.BCLR, (20, 0, 0)),
+        ]
+        reasons = _infer_invalid_reasons(regs)
+        self.assertNotIn(InvalidReason.PRIVILEGED_INSTRUCTION.value, reasons)
 
     def test_infer_callee_contract_leaf_with_no_domain_exceptions(self) -> None:
         insns = decode("38630004 4e800020")  # addi r3,r3,4; blr

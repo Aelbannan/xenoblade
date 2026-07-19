@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, ProofStatus
 from tools.ppc_equivalence.docs_sync import (
     TABLE_BEGIN,
     TABLE_END,
@@ -15,7 +16,6 @@ from tools.ppc_equivalence.docs_sync import (
     generate_version_block,
     replace_section,
 )
-from tools.ppc_equivalence.result import ProofStatus
 
 
 class TestDocsSync(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestDocsSync(unittest.TestCase):
         block = generate_version_block()
         self.assertIn(VERSION_BEGIN, block)
         self.assertIn(VERSION_END, block)
-        self.assertIn("broadway-ppc32-be-v19", block)
+        self.assertIn(ARCHITECTURE_MODEL, block)
         self.assertIn("`8`", block)
         self.assertIn("`2`", block)
 
@@ -46,7 +46,7 @@ class TestDocsSync(unittest.TestCase):
             self.assertIn(VERSION_END, written)
             self.assertIn(TABLE_BEGIN, written)
             self.assertIn(TABLE_END, written)
-            self.assertIn("broadway-ppc32-be-v19", written)
+            self.assertIn(ARCHITECTURE_MODEL, written)
             self.assertIn("EQUIVALENT", written)
             self.assertEqual(_run(False, True, tmp), 0)
             tmp.write_text("# Stale\n\n## Section\n\nstale\n", encoding="utf-8")

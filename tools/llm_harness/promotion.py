@@ -566,7 +566,7 @@ class PromotionManager:
             if workflow == "tu-complete" and candidate_source
             else [],
         )
-        promote_fn(workflow, target_id, candidate, write=True)
+        promote_fn(workflow, target_id, candidate, write=True, owner=owner)
 
         steps.append(ValidationStepResult(
             name="apply_candidate",

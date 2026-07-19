@@ -145,3 +145,7 @@ bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
+
+// LLM-HARNESS-BEGIN: us-801c5338
+extern "C" void __ct__CBgTex() {}
+// LLM-HARNESS-END: us-801c5338

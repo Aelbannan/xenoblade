@@ -6958,8 +6958,8 @@
       "size": "0x14",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -6967,7 +6967,51 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-19T18:23:59.789904+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 2,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v21",
+        "result_format": 8,
+        "target_id": "us-80040da0",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "edd190e37f1704db2fe135825cb539121c345ac8f06b795c159087d32c67eef5",
+        "candidate_sha256": "338923fcf2590fa334f9ee62ca1cae0c875868164a91812e0dcce70a2c0c10a3",
+        "summary": {
+          "reads": [
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "fpscr",
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "memory",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "certificate_sha256": "64388cf1517ecfbf08b7b091f96ca9c4e69fcf1a280d4c28da4edaab3e69c58b"
+      }
     },
     {
       "id": "us-80040db4",

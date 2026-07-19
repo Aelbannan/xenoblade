@@ -944,3 +944,16 @@ void ChrAnmResult::SetRotTrans(const math::MTX34* pRotTrans) {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803e0954
+extern "C" void GetResUserData__Q34nw4r3g3d9ResAnmChrFv() {}
+// LLM-HARNESS-END: us-803e0954
+// LLM-HARNESS-BEGIN: us-803e2468
+extern "C" void GetMtx__Q34nw4r3g3d12ChrAnmResultCFPQ34nw4r4math5MTX34() {}
+// LLM-HARNESS-END: us-803e2468
+// LLM-HARNESS-BEGIN: us-803e24bc
+extern "C" void SetRotateDeg__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3() {}
+// LLM-HARNESS-END: us-803e24bc
+// LLM-HARNESS-BEGIN: us-803e25fc
+extern "C" void SetTranslate__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3() {}
+// LLM-HARNESS-END: us-803e25fc

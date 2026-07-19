@@ -101,6 +101,38 @@ class CandidateTests(unittest.TestCase):
         )
         self.assertEqual(candidate.source, "int complete_tu;")
 
+    def test_salvages_truncated_source_json(self) -> None:
+        raw = (
+            '{"source": "extern \\"C\\" void func_800407C8(float *out) {\\n'
+            "\\tout[0] = f1;\\n\\tout[1] = f2;\\n}"
+        )
+        candidate = parse_candidate(raw)
+        self.assertIn("func_800407C8", candidate.source)
+        self.assertIn("out[0]", candidate.source)
+
+    def test_salvages_unterminated_source_with_commentary(self) -> None:
+        raw = (
+            '{"source": "void func_800407C8() {\\n'
+            "    // lots of commentary without closing quote\\n"
+            "    void func_800407C8() { }"
+        )
+        candidate = parse_candidate(raw)
+        self.assertIn("func_800407C8", candidate.source)
+
+    def test_rejects_bare_symbol_source(self) -> None:
+        with self.assertRaisesRegex(ValueError, "complete function definition"):
+            parse_candidate(
+                '{"source":"func_800407C8","hypothesis":"name only","notes":[]}'
+            )
+
+    def test_rejects_dossier_echo_without_definition(self) -> None:
+        with self.assertRaisesRegex(ValueError, "non-empty string 'source'"):
+            parse_candidate(
+                '{"declaration":"func_800407C8","authoritative":true,'
+                '"implicit_this":null,"parameters":[],'
+                '"return_info":{"type":"void","register":""}}'
+            )
+
 
 class OpenCodeOutputTests(unittest.TestCase):
     def test_parses_text_events_and_usage(self) -> None:
@@ -169,14 +201,11 @@ class LMStudioProviderTests(unittest.TestCase):
         self.assertEqual(result.text, '{"source":"int f(){return 1;}"}')
         self.assertEqual(result.input_tokens, 100)
         self.assertEqual(result.output_tokens, 20)
-        cmd = run.call_args.args[0]
-        self.assertIn("http://localhost:1234/v1/chat/completions", cmd)
-        body = json.loads(cmd[cmd.index("-d") + 1])
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
         self.assertEqual(body["model"], "qwen2.5-coder")
         self.assertEqual(body["response_format"]["type"], "json_schema")
-        self.assertEqual(
-            body["response_format"]["json_schema"]["name"], "decomp_candidate"
-        )
+        self.assertFalse(body["enable_thinking"])
+        self.assertEqual([m["role"] for m in body["messages"]], ["user"])
 
     def test_json_object_can_be_disabled(self) -> None:
         response = {
@@ -193,6 +222,51 @@ class LMStudioProviderTests(unittest.TestCase):
             provider.invoke("{}", ModelConfig(id="local", provider="lmstudio", model="m"), Path("."))
         body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
         self.assertNotIn("response_format", body)
+
+    def test_thinking_flags_are_passthrough_single_shot(self) -> None:
+        response = {
+            "choices": [{"message": {"content": "{}"}}],
+            "usage": {},
+        }
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(response) + "\n200",
+            stderr="",
+        )
+        provider = LMStudioProvider(
+            enable_thinking=True,
+            reasoning_effort="medium",
+            thinking_budget=512,
+        )
+        with unittest.mock.patch(
+            "tools.llm_harness.providers.subprocess.run", return_value=completed
+        ) as run:
+            provider.invoke(
+                "{}",
+                ModelConfig(
+                    id="local",
+                    provider="lmstudio",
+                    model="m",
+                    reasoning_effort="low",
+                    thinking_budget=200,
+                ),
+                Path("."),
+            )
+        self.assertEqual(run.call_count, 1)
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
+        self.assertTrue(body["enable_thinking"])
+        self.assertEqual(body["reasoning_effort"], "low")
+        self.assertEqual(body["thinking_budget"], 200)
+        self.assertEqual(body["max_tokens"], 4096)
+        self.assertEqual([m["role"] for m in body["messages"]], ["user"])
+
+    def test_strips_think_blocks_from_content(self) -> None:
+        from tools.llm_harness.providers import _strip_think_blocks
+
+        open_tag = "<" + "think" + ">"
+        close_tag = "</" + "think" + ">"
+        raw = f'{open_tag}\nwait...\n{close_tag}\n{{"source":"x"}}'
+        self.assertEqual(_strip_think_blocks(raw).strip(), '{"source":"x"}')
 
 
 class ReasonixOutputTests(unittest.TestCase):

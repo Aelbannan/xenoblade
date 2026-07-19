@@ -196,3 +196,28 @@ void MemorySoundArchive::MemoryFileStream::Seek(s32 offset, u32 origin) {
 
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80419880
+extern "C" bool GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-80419880
+// LLM-HARNESS-BEGIN: us-80419888
+extern "C" bool GetSize__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-80419888
+// LLM-HARNESS-BEGIN: us-80419890
+extern "C" bool Tell__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-80419890
+// LLM-HARNESS-BEGIN: us-80419898
+extern "C" bool CanWrite__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-80419898
+// LLM-HARNESS-BEGIN: us-804198a0
+extern "C" bool CanRead__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-804198a0
+// LLM-HARNESS-BEGIN: us-804198a8
+extern "C" bool CanAsync__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-804198a8
+// LLM-HARNESS-BEGIN: us-804198b0
+extern "C" bool CanCancel__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-804198b0
+// LLM-HARNESS-BEGIN: us-804198b8
+extern "C" bool CanSeek__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+// LLM-HARNESS-END: us-804198b8

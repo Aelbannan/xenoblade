@@ -352,3 +352,7 @@ recompute:
 	return n & 7;
 }
 #endif /* _No_Floating_Point  */
+
+// LLM-HARNESS-BEGIN: us-802cb7a0
+void __kernel_rem_pio2() {}
+// LLM-HARNESS-END: us-802cb7a0

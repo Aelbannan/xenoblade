@@ -77,8 +77,12 @@ class Harness:
         self._promotion_lock = threading.Lock()
         self._log_lock = threading.Lock()
         self._debug_lock = threading.Lock()
-        # Phase 0: promotion is now explicit-only; ignore execution.promotion config
         self.promotion_manager = PromotionManager(self.root, policy=PromotionPolicy())
+        # Auto-promote FULL_MATCH / EQUIVALENT_MATCH winners into canonical source.
+        self.auto_promote = bool(execution.get("auto_promote", True))
+        self.auto_promote_owner = str(
+            execution.get("auto_promote_owner") or "llm-harness"
+        )
         isolation = execution.get("isolation", {})
         self.isolation_mode = isolation.get("mode", "none")
         self.workspace_manager = (
@@ -104,6 +108,8 @@ class Harness:
                     pure=bool(cfg.get("pure", True)),
                 )
             elif name == "lmstudio":
+                budget_raw = cfg.get("thinking_budget")
+                effort_raw = cfg.get("reasoning_effort")
                 self.providers[name] = cls(
                     base_url=str(cfg.get("base_url", LMStudioProvider.DEFAULT_BASE_URL)),
                     api_key=str(cfg.get("api_key", "lm-studio")),
@@ -111,6 +117,9 @@ class Harness:
                     temperature=float(cfg.get("temperature", 0.1)),
                     max_tokens=int(cfg.get("max_tokens", 4096)),
                     json_object=bool(cfg.get("json_object", True)),
+                    enable_thinking=bool(cfg.get("enable_thinking", False)),
+                    thinking_budget=int(budget_raw) if budget_raw is not None else None,
+                    reasoning_effort=str(effort_raw) if effort_raw is not None else None,
                     pure=bool(cfg.get("pure", True)),
                 )
             elif name == "deepseek-raw":
@@ -137,12 +146,12 @@ class Harness:
                 f"llm-harness.json: removed top-level keys found: {', '.join(found_removed)}. "
                 f"These are no longer used by the harness. See implementation plan for migration."
             )
-        # Check execution.promotion (deprecated - promotion is now explicit-only)
         execution = self.config.get("execution", {})
         if "promotion" in execution:
             raise ValueError(
                 "llm-harness.json: execution.promotion is no longer read; "
-                "promotion is explicit-only via 'promote --write --owner'"
+                "use execution.auto_promote / execution.auto_promote_owner, "
+                "or explicit 'promote --write --owner'"
             )
         # Check project.mwcc_knowledge_* (removed in Phase 1)
         project = self.config.get("project", {})
@@ -183,6 +192,7 @@ class Harness:
         known_exec = {
             "max_parallel", "max_target_parallel", "batch_model_parallel",
             "initial_parallel", "target_parallel", "max_retries", "isolation", "pipelines",
+            "auto_promote", "auto_promote_owner",
         }
         execution = self.config.get("execution", {})
         unknown_exec = set(execution.keys()) - known_exec
@@ -240,6 +250,8 @@ class Harness:
         execution.setdefault("max_retries", 1)
         execution.setdefault("isolation", {"mode": "none"})
         execution.setdefault("pipelines", {})
+        execution.setdefault("auto_promote", True)
+        execution.setdefault("auto_promote_owner", "llm-harness")
         
         solve = config.setdefault("solve", {})
         solve.setdefault("initial_candidates", 3)
@@ -624,6 +636,7 @@ class Harness:
             state["logged_keys"] = sorted(logged_keys)
             state["logged"] = True
             self._write_state(experiment_dir, state)
+            self._maybe_auto_promote(experiment_dir)
         finally:
             self.adapter.finalize()
         self._debug(
@@ -1397,6 +1410,7 @@ class Harness:
             state["logged_keys"] = sorted(logged)
             state["logged"] = True
         self._write_state(experiment_dir, state)
+        self._maybe_auto_promote(experiment_dir)
         self._debug(
             f"solve completed target={state.get('target_id')} "
             f"experiment={state.get('experiment_id')} "
@@ -1524,6 +1538,152 @@ class Harness:
         return promote_fn(
             state["workflow"], state["target_id"], candidate, write=write, owner=owner
         )
+
+    def _maybe_auto_promote(self, experiment_dir: Path) -> Optional[str]:
+        """Write FULL_MATCH / EQUIVALENT_MATCH winners into canonical source."""
+        if not self.auto_promote:
+            return None
+        directory = experiment_dir.resolve()
+        best_path = directory / "best.json"
+        state_path = directory / "state.json"
+        if not best_path.is_file() or not state_path.is_file():
+            return None
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            best = json.loads(best_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            self._debug(f"auto-promote skipped: cannot read experiment ({exc})")
+            return None
+        evaluation = best.get("evaluation") or {}
+        if not self._record_is_symbol_accepted({"evaluation": evaluation, "error": None}):
+            return None
+        if not isinstance(best.get("candidate"), dict):
+            return None
+        target_id = str(state.get("target_id") or "")
+        workflow = str(state.get("workflow") or "new")
+        if not target_id:
+            return None
+        promote_fn = getattr(self.adapter, "promote", None)
+        if promote_fn is None:
+            self._debug(f"auto-promote skipped target={target_id}: adapter has no promote")
+            return None
+        owner = self.auto_promote_owner
+        candidate = Candidate(**best["candidate"])
+        try:
+            with self._promotion_lock:
+                ensure = getattr(self.adapter, "ensure_auto_promote_claim", None)
+                if ensure is not None:
+                    ensure(target_id, owner)
+                # solve uses the function promote path (same as new/improve).
+                promote_workflow = "new" if workflow == "solve" else workflow
+                result = promote_fn(
+                    promote_workflow,
+                    target_id,
+                    candidate,
+                    write=True,
+                    owner=owner,
+                )
+                record = getattr(self.adapter, "record_auto_promotion", None)
+                if record is not None:
+                    record(target_id, evaluation)
+                cycle = getattr(self.adapter, "run_auto_promote_cycle", None)
+                if cycle is not None:
+                    cycle(target_id, evaluation)
+            state["auto_promoted"] = True
+            state["auto_promote_owner"] = owner
+            self._write_state(directory, state)
+            self._debug(
+                f"auto-promoted target={target_id} status={evaluation.get('status')} "
+                f"owner={owner}"
+            )
+            return str(result)
+        except Exception as exc:
+            self._debug(
+                f"auto-promote failed target={target_id}: "
+                f"{type(exc).__name__}: {exc}"
+            )
+            state["auto_promoted"] = False
+            state["auto_promote_error"] = f"{type(exc).__name__}: {exc}"
+            try:
+                self._write_state(directory, state)
+            except OSError:
+                pass
+            return None
+
+    def promote_accepted(self, *, dry_run: bool = False) -> List[Dict[str, Any]]:
+        """Promote every saved FULL_MATCH / EQUIVALENT_MATCH winner not yet in registry."""
+        rows = self.records()
+        winners: Dict[str, Dict[str, Any]] = {}
+        for row in rows:
+            if not row.get("winner"):
+                continue
+            if not self._record_is_symbol_accepted(row):
+                continue
+            target_id = str(row.get("target_id") or "")
+            if not target_id:
+                continue
+            prev = winners.get(target_id)
+            if prev is None or str(row.get("timestamp") or "") >= str(prev.get("timestamp") or ""):
+                winners[target_id] = row
+
+        already_accepted = set()
+        status_fn = getattr(self.adapter, "accepted_target_ids", None)
+        if status_fn is not None:
+            already_accepted = set(status_fn())
+
+        results: List[Dict[str, Any]] = []
+        previous = self.auto_promote
+        try:
+            # Force promote path even if config disabled it for this backfill command.
+            self.auto_promote = True
+            for target_id, row in sorted(winners.items()):
+                artifact = str(row.get("artifact") or "")
+                if artifact:
+                    experiment_dir = (self.root / artifact).resolve().parent
+                else:
+                    experiment_dir = (
+                        self.output_dir / target_id / str(row.get("experiment_id") or "")
+                    ).resolve()
+                status = str((row.get("evaluation") or {}).get("status") or "")
+                entry: Dict[str, Any] = {
+                    "target_id": target_id,
+                    "experiment_dir": str(experiment_dir),
+                    "status": status,
+                }
+                try:
+                    entry["experiment_dir"] = str(experiment_dir.relative_to(self.root))
+                except ValueError:
+                    pass
+                if target_id in already_accepted:
+                    entry["action"] = "skipped_already_accepted"
+                    results.append(entry)
+                    continue
+                if not (experiment_dir / "best.json").is_file():
+                    entry["action"] = "skipped_missing_best"
+                    results.append(entry)
+                    continue
+                if dry_run:
+                    entry["action"] = "would_promote"
+                    results.append(entry)
+                    continue
+                promoted = self._maybe_auto_promote(experiment_dir)
+                entry["action"] = "promoted" if promoted is not None else "failed"
+                if promoted is not None:
+                    entry["detail"] = promoted[:500]
+                    already_accepted.add(target_id)
+                else:
+                    state_path = experiment_dir / "state.json"
+                    if state_path.is_file():
+                        try:
+                            state = json.loads(state_path.read_text(encoding="utf-8"))
+                            if state.get("auto_promote_error"):
+                                entry["error"] = state["auto_promote_error"]
+                        except (OSError, json.JSONDecodeError):
+                            pass
+                results.append(entry)
+        finally:
+            self.auto_promote = previous
+        return results
 
     def rescore(self, experiment_dir: Path, *, max_parallel: Optional[int] = None) -> Path:
         directory = experiment_dir.resolve()
@@ -1826,8 +1986,21 @@ class Harness:
             "{{ERROR_MESSAGE}}", error_message
         )
         try:
+            # Format repair must not burn tokens on thinking loops.
+            repair_model = ModelConfig(
+                id=model.id,
+                provider=model.provider,
+                model=model.model,
+                runs=1,
+                agent=model.agent,
+                variant=model.variant,
+                max_tokens=model.max_tokens,
+                enable_thinking=False,
+                thinking_budget=0,
+                reasoning_effort="none",
+            )
             result = provider.invoke(
-                prompt_text, model, context_dir or Path(self.adapter.root)
+                prompt_text, repair_model, context_dir or Path(self.adapter.root)
             )
             return parse_candidate(result.text, workflow="new")
         except Exception as exc:
@@ -1928,7 +2101,96 @@ def _try_json_parse(text: str) -> Optional[Dict[str, Any]]:
         return data
     except (json.JSONDecodeError, ValueError, IndexError):
         pass
-    return None
+    return _salvage_candidate_dict(text)
+
+
+def _unescape_json_string(value: str) -> str:
+    """Best-effort unescape for a JSON string body (may include raw newlines)."""
+    out: list[str] = []
+    i = 0
+    while i < len(value):
+        ch = value[i]
+        if ch == "\\" and i + 1 < len(value):
+            nxt = value[i + 1]
+            mapping = {"n": "\n", "r": "\r", "t": "\t", '"': '"', "\\": "\\", "/": "/"}
+            if nxt in mapping:
+                out.append(mapping[nxt])
+                i += 2
+                continue
+            if nxt == "u" and i + 5 < len(value):
+                hex_digits = value[i + 2 : i + 6]
+                try:
+                    out.append(chr(int(hex_digits, 16)))
+                    i += 6
+                    continue
+                except ValueError:
+                    pass
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def _extract_json_string_field(text: str, field: str) -> Optional[str]:
+    """Extract a JSON string field even when the value has raw newlines / truncation."""
+    match = re.search(rf'"{re.escape(field)}"\s*:\s*"', text)
+    if not match:
+        return None
+    i = match.end()
+    raw_chars: list[str] = []
+    while i < len(text):
+        ch = text[i]
+        if ch == "\\" and i + 1 < len(text):
+            raw_chars.append(ch)
+            raw_chars.append(text[i + 1])
+            i += 2
+            continue
+        if ch == '"':
+            # End of string if followed by JSON punctuation or EOF-ish noise.
+            rest = text[i + 1 :].lstrip()
+            if not rest or rest[0] in ",}":
+                return _unescape_json_string("".join(raw_chars))
+            # Otherwise treat as a literal quote inside a broken string.
+        raw_chars.append(ch)
+        i += 1
+    # Truncated: accept whatever we captured.
+    salvaged = _unescape_json_string("".join(raw_chars)).rstrip()
+    if salvaged.endswith(",") or salvaged.endswith("{"):
+        salvaged = salvaged.rstrip(",{ \t")
+    return salvaged or None
+
+
+def _salvage_candidate_dict(text: str) -> Optional[Dict[str, Any]]:
+    """Recover candidate fields from broken/truncated model JSON."""
+    source = _extract_json_string_field(text, "source")
+    if source is None or not source.strip():
+        return None
+    data: Dict[str, Any] = {"source": source}
+    for field in ("hypothesis", "next_change", "change"):
+        value = _extract_json_string_field(text, field)
+        if value is not None:
+            data[field] = value
+    notes_match = re.search(r'"notes"\s*:\s*(\[[^\]]*\])', text, re.DOTALL)
+    if notes_match:
+        try:
+            notes = json.loads(notes_match.group(1))
+            if isinstance(notes, list):
+                data["notes"] = [str(item) for item in notes if isinstance(item, str)]
+        except json.JSONDecodeError:
+            pass
+    return data
+
+
+def _looks_like_function_definition(source: str) -> bool:
+    """True when source looks like a C/C++ function definition, not a bare name."""
+    text = source.strip()
+    if not text or "(" not in text or "{" not in text:
+        return False
+    # Reject pure declarations / dossier fragments.
+    if re.fullmatch(r"[A-Za-z_][\w:<>\s*&]*", text):
+        return False
+    if '"declaration"' in text or text.lstrip().startswith("{"):
+        return False
+    return True
 
 
 def parse_candidate(
@@ -1942,12 +2204,24 @@ def parse_candidate(
         start, end = cleaned.find("{"), cleaned.rfind("}")
         if start >= 0 and end > start:
             cleaned = cleaned[start : end + 1]
+        elif start >= 0:
+            # Truncated object with no closing brace — keep from first '{'.
+            cleaned = cleaned[start:]
     data = _try_json_parse(cleaned)
+    if data is None and cleaned != text.strip():
+        data = _try_json_parse(text.strip())
     if data is None:
         raise json.JSONDecodeError("No valid JSON found in model output", cleaned, 0)
     source = data.get("source", "")
     if not isinstance(source, str):
         raise ValueError("Model output 'source' must be a string")
+    # Reject dossier echoes / bare symbol names that are not definitions.
+    if source.strip() and workflow != "tu-complete":
+        if not _looks_like_function_definition(source):
+            raise ValueError(
+                "Model output 'source' must be a complete function definition "
+                f"(got {source.strip()[:80]!r})"
+            )
     patches_data = data.get("patches", [])
     if not isinstance(patches_data, list):
         raise ValueError("Model output 'patches' must be a list")

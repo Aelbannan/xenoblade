@@ -1269,3 +1269,85 @@ Size GetTextureSize(Material* pMaterial, u8 idx) {
 } // namespace detail
 } // namespace lyt
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80407af0
+extern "C" void __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2() {}
+// LLM-HARNESS-END: us-80407af0
+// LLM-HARNESS-BEGIN: us-8040827c
+extern "C" void __as__Q34nw4r2ut5ColorFRC8_GXColor() {}
+// LLM-HARNESS-END: us-8040827c
+// LLM-HARNESS-BEGIN: us-80408288
+extern "C" void GetTexMapNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-80408288
+// LLM-HARNESS-BEGIN: us-80408294
+extern "C" void GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-80408294
+// LLM-HARNESS-BEGIN: us-804082a0
+extern "C" void GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082a0
+// LLM-HARNESS-BEGIN: us-804082ac
+extern "C" void GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082ac
+// LLM-HARNESS-BEGIN: us-804082b8
+extern "C" void GetMatColNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082b8
+// LLM-HARNESS-BEGIN: us-804082c4
+extern "C" void HasTevSwapTable__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082c4
+// LLM-HARNESS-BEGIN: us-804082d0
+extern "C" void HasAlphaCompare__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082d0
+// LLM-HARNESS-BEGIN: us-804082dc
+extern "C" void HasBlendMode__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082dc
+// LLM-HARNESS-BEGIN: us-804082e8
+extern "C" void GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082e8
+// LLM-HARNESS-BEGIN: us-804082f4
+extern "C" void GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-804082f4
+// LLM-HARNESS-BEGIN: us-80408300
+extern "C" void GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+// LLM-HARNESS-END: us-80408300
+// LLM-HARNESS-BEGIN: us-8040830c
+extern "C" void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode() {}
+// LLM-HARNESS-END: us-8040830c
+// LLM-HARNESS-BEGIN: us-80408320
+extern "C" void GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv() {}
+// LLM-HARNESS-END: us-80408320
+// LLM-HARNESS-BEGIN: us-8040832c
+extern "C" void GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv() {}
+// LLM-HARNESS-END: us-8040832c
+// LLM-HARNESS-BEGIN: us-80408338
+extern "C" void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter() {}
+// LLM-HARNESS-END: us-80408338
+// LLM-HARNESS-BEGIN: us-8040834c
+extern "C" void GetMinFilter__Q44nw4r3lyt3res6TexMapCFv() {}
+// LLM-HARNESS-END: us-8040834c
+// LLM-HARNESS-BEGIN: us-80408360
+extern "C" void GetMagFilter__Q44nw4r3lyt3res6TexMapCFv() {}
+// LLM-HARNESS-END: us-80408360
+// LLM-HARNESS-BEGIN: us-80408374
+extern "C" void __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen() {}
+// LLM-HARNESS-END: us-80408374
+// LLM-HARNESS-BEGIN: us-80408398
+extern "C" void __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl() {}
+// LLM-HARNESS-END: us-80408398
+// LLM-HARNESS-BEGIN: us-804083bc
+extern "C" void __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode() {}
+// LLM-HARNESS-END: us-804083bc
+// LLM-HARNESS-BEGIN: us-804083c8
+extern "C" void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT() {}
+// LLM-HARNESS-END: us-804083c8
+// LLM-HARNESS-BEGIN: us-804083f4
+extern "C" void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage() {}
+// LLM-HARNESS-END: us-804083f4
+// LLM-HARNESS-BEGIN: us-80408418
+extern "C" void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage() {}
+// LLM-HARNESS-END: us-80408418
+// LLM-HARNESS-BEGIN: us-804084c4
+extern "C" void __as__Q34nw4r3lyt12AlphaCompareFRCQ34nw4r3lyt12AlphaCompare() {}
+// LLM-HARNESS-END: us-804084c4
+// LLM-HARNESS-BEGIN: us-804084e8
+extern "C" void __as__Q34nw4r3lyt9BlendModeFRCQ34nw4r3lyt9BlendMode() {}
+// LLM-HARNESS-END: us-804084e8

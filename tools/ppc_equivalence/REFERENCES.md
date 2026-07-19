@@ -51,8 +51,10 @@ PowerPC architecture, checked against a mature Wii implementation.
   decoder annotations.
 - Architecturally undefined divide quotients are excluded from the defined
   input domain. A proof cannot use a made-up quotient value.
-- Branches are explored only through an acyclic supplied block. A back-edge,
-  path bound, instruction bound, or unknown continuation is inconclusive.
+- Branches are explored through the supplied block with a per-PC visit bound
+  (`max_loop_iterations`). Exhausting that bound, the path bound, the
+  instruction bound, or meeting an unknown continuation is inconclusive; the
+  checker never silently truncates a loop.
 - External direct/indirect calls are terminal exits. Both sides must agree on
   exit kind and target; no unsound “call is a no-op” summary is used.
 - `fmuls` applies Broadway's `Force25Bit` rounding to `frC` before the

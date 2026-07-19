@@ -51,3 +51,13 @@ BasicSound* ExternalSoundPlayer::GetLowestPrioritySound() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80417ac4
+extern "C" void AppendSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
+// LLM-HARNESS-END: us-80417ac4
+// LLM-HARNESS-BEGIN: us-80417c64
+extern "C" void RemoveSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
+// LLM-HARNESS-END: us-80417c64
+// LLM-HARNESS-BEGIN: us-80417cac
+extern "C" void detail_CanPlaySound__Q44nw4r3snd6detail19ExternalSoundPlayerFi(int) {}
+// LLM-HARNESS-END: us-80417cac

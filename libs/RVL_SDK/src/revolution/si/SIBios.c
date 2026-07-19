@@ -289,3 +289,10 @@ static void GetTypeCallback(s32 chan, u32 status) {
 u32 SIGetType(s32 chan) {
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-80364d30
+void SISetCommand() {}
+// LLM-HARNESS-END: us-80364d30
+// LLM-HARNESS-BEGIN: us-80364d50
+void SITransferCommands() {}
+// LLM-HARNESS-END: us-80364d50

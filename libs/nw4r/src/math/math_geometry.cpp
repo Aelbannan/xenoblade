@@ -275,3 +275,13 @@ IntersectionResult FRUSTUM::IntersectAABB_Ex(const AABB* pBox) const {
 
 } // namespace math
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8040e1dc
+extern "C" void DistSqSegment3ToSegment3__Q24nw4r4mathFPCQ34nw4r4math8SEGMENT3PCQ34nw4r4math8SEGMENT3PfPf() {}
+// LLM-HARNESS-END: us-8040e1dc
+// LLM-HARNESS-BEGIN: us-8040e468
+extern "C" void IntersectionCapsule__Q24nw4r4mathFPCQ34nw4r4math7CAPSULEPCQ34nw4r4math7CAPSULE() {}
+// LLM-HARNESS-END: us-8040e468
+// LLM-HARNESS-BEGIN: us-8040e4c0
+extern "C" void IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE() {}
+// LLM-HARNESS-END: us-8040e4c0

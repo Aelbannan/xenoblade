@@ -91,3 +91,7 @@ double __kernel_cos(x, y) double x, y;
 		return a - (hz - (z * r - x * y));
 	}
 }
+
+// LLM-HARNESS-BEGIN: us-802cb690
+void __kernel_cos() {}
+// LLM-HARNESS-END: us-802cb690

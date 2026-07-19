@@ -1594,3 +1594,22 @@ void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803de1e8
+extern "C" void GetLyrRate__Q34nw4r3g3d9ResMatFurCFUl(unsigned long) {}
+// LLM-HARNESS-END: us-803de1e8
+// LLM-HARNESS-BEGIN: us-803de358
+extern "C" void GXGetBlendMode__Q34nw4r3g3d9ResMatPixCFP12_GXBlendModeP14_GXBlendFactorP14_GXBlendFactorP10_GXLogicOp() {}
+// LLM-HARNESS-END: us-803de358
+// LLM-HARNESS-BEGIN: us-803dee54
+extern "C" void GXGetChanCtrl__Q34nw4r3g3d10ResMatChanCF12_GXChannelIDPUcP11_GXColorSrcP11_GXColorSrcP10_GXLightIDP12_GXDiffuseFnP9_GXAttnFn() {}
+// LLM-HARNESS-END: us-803dee54
+// LLM-HARNESS-BEGIN: us-803df1fc
+extern "C" void GetResMatFur__Q34nw4r3g3d6ResMatFv() {}
+// LLM-HARNESS-END: us-803df1fc
+// LLM-HARNESS-BEGIN: us-803df21c
+extern "C" void GetResUserData__Q34nw4r3g3d6ResMatFv() {}
+// LLM-HARNESS-END: us-803df21c
+// LLM-HARNESS-BEGIN: us-803df518
+extern "C" void GetResTex__Q34nw4r3g3d14ResTexPlttInfoCFv() {}
+// LLM-HARNESS-END: us-803df518

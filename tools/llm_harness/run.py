@@ -136,6 +136,15 @@ def main(argv: list[str] | None = None) -> int:
     promote.add_argument("experiment", type=Path)
     promote.add_argument("--write", action="store_true")
     promote.add_argument("--owner", help="Owner/claimant required for --write")
+    promote_accepted = sub.add_parser(
+        "promote-accepted",
+        help="Promote all saved FULL_MATCH / EQUIVALENT_MATCH winners into canonical source",
+    )
+    promote_accepted.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="List accepted winners that would be promoted without writing",
+    )
     rescore = sub.add_parser("rescore", help="Re-evaluate saved candidates without new model calls")
     rescore.add_argument("experiment", type=Path)
     rescore.add_argument("--max-parallel", type=int)
@@ -246,6 +255,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "promote":
         print(harness.promote(args.experiment, write=args.write, owner=args.owner))
+        return 0
+    if args.command == "promote-accepted":
+        results = harness.promote_accepted(dry_run=args.dry_run)
+        print(json.dumps({"count": len(results), "results": results}, indent=2))
+        if any(row.get("action") == "failed" for row in results):
+            return 1
         return 0
     if args.command == "rescore":
         print(harness.rescore(args.experiment, max_parallel=args.max_parallel))

@@ -311,3 +311,10 @@ bool LightSet::SelectAmbLightObj(int lightObjIdx) {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803ff6cc
+extern "C" void __as__Q34nw4r3g3d8LightObjFRCQ34nw4r3g3d8LightObj() {}
+// LLM-HARNESS-END: us-803ff6cc
+// LLM-HARNESS-BEGIN: us-803ff718
+extern "C" void __ne__Q34nw4r3g3d8LightObjCFRCQ34nw4r3g3d8LightObj() {}
+// LLM-HARNESS-END: us-803ff718

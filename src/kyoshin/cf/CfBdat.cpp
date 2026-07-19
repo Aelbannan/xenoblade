@@ -309,3 +309,37 @@ const char* CfBdat::func_801424A8(u16 index) {
     }
 
 }
+
+// LLM-HARNESS-BEGIN: us-80142558
+extern "C" void func_80141B54() {}
+// LLM-HARNESS-END: us-80142558
+// LLM-HARNESS-BEGIN: us-801425a4
+extern "C" void func_80141BA0() {}
+// LLM-HARNESS-END: us-801425a4
+// LLM-HARNESS-BEGIN: us-80142670
+extern "C" void func_80141C6C() {}
+// LLM-HARNESS-END: us-80142670
+// LLM-HARNESS-BEGIN: us-8014274c
+extern "C" void func_80141D48() {}
+// LLM-HARNESS-END: us-8014274c
+// LLM-HARNESS-BEGIN: us-801427c8
+extern "C" void func_80141DC4() {}
+// LLM-HARNESS-END: us-801427c8
+// LLM-HARNESS-BEGIN: us-80142894
+extern "C" void func_80141E90() {}
+// LLM-HARNESS-END: us-80142894
+// LLM-HARNESS-BEGIN: us-801429e4
+extern "C" void func_80141FE0() {}
+// LLM-HARNESS-END: us-801429e4
+// LLM-HARNESS-BEGIN: us-80142a78
+extern "C" void func_80142074() {}
+// LLM-HARNESS-END: us-80142a78
+// LLM-HARNESS-BEGIN: us-80142b58
+extern "C" void func_80142154() {}
+// LLM-HARNESS-END: us-80142b58
+// LLM-HARNESS-BEGIN: us-80142d60
+extern "C" void func_8014235C() {}
+// LLM-HARNESS-END: us-80142d60
+// LLM-HARNESS-BEGIN: us-80142e2c
+extern "C" void func_80142428() {}
+// LLM-HARNESS-END: us-80142e2c

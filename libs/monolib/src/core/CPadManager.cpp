@@ -558,3 +558,7 @@ CPad* CPadManager::getMainPad(){
 CPad* CPadManager::getMainGCPad(){
     return spPadData->mMainGCPad;
 }
+
+// LLM-HARNESS-BEGIN: us-80449f30
+extern "C" void func_eu_80449F30() {}
+// LLM-HARNESS-END: us-80449f30

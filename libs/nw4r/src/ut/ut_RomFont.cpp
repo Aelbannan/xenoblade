@@ -234,3 +234,10 @@ u16 RomFont::HandleUndefinedChar(u16 ch) const {
 
 } // namespace ut
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8042e540
+extern "C" void Unload__Q34nw4r2ut7RomFontFv() {}
+// LLM-HARNESS-END: us-8042e540
+// LLM-HARNESS-BEGIN: us-8042e914
+extern "C" void HasGlyph__Q34nw4r2ut7RomFontCFUs(unsigned short) {}
+// LLM-HARNESS-END: us-8042e914

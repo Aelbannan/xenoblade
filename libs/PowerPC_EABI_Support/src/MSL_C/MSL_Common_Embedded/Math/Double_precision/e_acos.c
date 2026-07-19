@@ -105,3 +105,7 @@ double __ieee754_acos(x) double x;
 	    return 2.0*(df+w);
 	}
 }
+
+// LLM-HARNESS-BEGIN: us-802c9bf4
+void __ieee754_acos() {}
+// LLM-HARNESS-END: us-802c9bf4

@@ -47,7 +47,7 @@
       "equivalence_certificate": {
         "version": 2,
         "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v19",
+        "architecture": "broadway-ppc32-be-v22",
         "result_format": 8,
         "target_id": "demo-accepted",
         "retail_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

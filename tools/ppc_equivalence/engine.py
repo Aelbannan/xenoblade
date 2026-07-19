@@ -11,7 +11,7 @@ from typing import Any
 
 from .contract import EquivalenceContract, Observable
 from .deadline import Deadline, ProofDeadlineExceeded, SolverPhase
-from .ir import Instruction, Opcode, SUPPORTED_FP_OPCODES
+from .ir import ExecutionInconclusive, Instruction, Opcode, SUPPORTED_FP_OPCODES
 from .memory_profile import (
     MemoryEnvironment,
     MemoryProfile,
@@ -25,10 +25,10 @@ from .result import (
 from .semantics import (
     CalleeContract,
     ConcreteOps,
+    DEFAULT_MAX_LOOP_ITERATIONS,
     SymbolicOps,
     Terminal,
     _infer_invalid_reasons,
-    execute_block,
     execute_cfg,
     execute_instruction,
     read_gprs,
@@ -116,6 +116,7 @@ def validate_callee_contract(
     *,
     max_instructions: int = 2048,
     max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     assumed_callees: frozenset[int | str] = frozenset(),
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     require_normal_return: bool = False,
@@ -133,6 +134,7 @@ def validate_callee_contract(
         terminals = execute_cfg(
             initial, instructions, ops,
             max_instructions=max_instructions, max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
             assumed_callees=assumed_callees,
             callee_contracts=callee_contracts,
         )
@@ -434,25 +436,29 @@ def _memory_entries(model: Any, memory: Any, touches: tuple[Any, ...], z3: Any) 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
-_RANDOM_CHECK_SAMPLES = 5
 
-
-def _random_concrete_check(
-    original: list[Instruction],
-    candidate: list[Instruction],
-    contract: EquivalenceContract,
-) -> bool:
-    ops = ConcreteOps()
-    for _ in range(_RANDOM_CHECK_SAMPLES):
-        rng = random.Random()
-        initial = MachineState(
+def _make_concrete_initial(
+    *,
+    gpr_fill: int | None = None,
+    fpr_fill: int | None = None,
+    rng: random.Random | None = None,
+) -> MachineState:
+    """Build a ConcreteOps-ready initial state (zeros, fill, or random)."""
+    spr_count = len(AUX_SPR_OBSERVABLES)
+    if rng is not None:
+        return MachineState(
             tuple(rng.getrandbits(32) for _ in range(32)),
             tuple(rng.getrandbits(64) for _ in range(32)),
             tuple(rng.getrandbits(64) for _ in range(32)),
             tuple(rng.getrandbits(32) for _ in range(8)),
             rng.getrandbits(32),
-            XerState(rng.choice([True, False]), rng.choice([True, False]), rng.choice([True, False])),
-            rng.getrandbits(32),
+            XerState(
+                rng.choice([True, False]),
+                rng.choice([True, False]),
+                rng.choice([True, False]),
+            ),
+            # Keep RN=nearest-even / NI=0 so FP ConcreteOps stays defined.
+            rng.getrandbits(29),
             rng.getrandbits(32),
             rng.getrandbits(32),
             rng.getrandbits(32),
@@ -460,28 +466,355 @@ def _random_concrete_check(
             rng.getrandbits(64),
             rng.getrandbits(32),
             rng.getrandbits(32),
-            tuple(rng.getrandbits(32) for _ in range(66)),
+            tuple(rng.getrandbits(32) for _ in range(spr_count)),
             ConcreteMemory(),
             True,
         )
+    gpr_v = (gpr_fill if gpr_fill is not None else 0) & 0xFFFFFFFF
+    fpr_v = (fpr_fill if fpr_fill is not None else 0) & 0xFFFFFFFFFFFFFFFF
+    return MachineState(
+        tuple(gpr_v for _ in range(32)),
+        tuple(fpr_v for _ in range(32)),
+        tuple(fpr_v for _ in range(32)),
+        tuple(0 for _ in range(8)),
+        0,
+        XerState(False, False, False),
+        0,
+        0,
+        0,
+        0,
+        tuple(0 for _ in range(16)),
+        0,
+        0,
+        0,
+        tuple(0 for _ in range(spr_count)),
+        ConcreteMemory(),
+        True,
+    )
+
+
+def _serialize_concrete_initial(state: MachineState) -> dict[str, Any]:
+    memory = state.memory
+    memory_bytes: dict[str, str] = {}
+    default = 0
+    if isinstance(memory, ConcreteMemory):
+        default = int(memory.default) & 0xFF
+        memory_bytes = {
+            f"0x{address:08x}": f"0x{byte:02x}" for address, byte in memory.bytes
+        }
+    return {
+        "gpr": {f"r{i}": f"0x{int(state.gpr[i]) & 0xFFFFFFFF:08x}" for i in range(32)},
+        "fpr": {
+            f"f{i}": f"0x{int(state.fpr[i]) & 0xFFFFFFFFFFFFFFFF:016x}" for i in range(32)
+        },
+        "ps1": {
+            f"f{i}": f"0x{int(state.ps1[i]) & 0xFFFFFFFFFFFFFFFF:016x}" for i in range(32)
+        },
+        "gqr": {f"gqr{i}": f"0x{int(state.gqr[i]) & 0xFFFFFFFF:08x}" for i in range(8)},
+        "cr": f"0x{int(state.cr) & 0xFFFFFFFF:08x}",
+        "fpscr": f"0x{int(state.fpscr) & 0xFFFFFFFF:08x}",
+        "xer": {
+            "ca": int(bool(state.xer.ca)),
+            "ov": int(bool(state.xer.ov)),
+            "so": int(bool(state.xer.so)),
+        },
+        "lr": f"0x{int(state.lr) & 0xFFFFFFFF:08x}",
+        "ctr": f"0x{int(state.ctr) & 0xFFFFFFFF:08x}",
+        "msr": f"0x{int(state.msr) & 0xFFFFFFFF:08x}",
+        "sr": {f"sr{i}": f"0x{int(state.sr[i]) & 0xFFFFFFFF:08x}" for i in range(16)},
+        "time_base": f"0x{int(state.time_base) & 0xFFFFFFFFFFFFFFFF:016x}",
+        "srr0": f"0x{int(state.srr0) & 0xFFFFFFFF:08x}",
+        "srr1": f"0x{int(state.srr1) & 0xFFFFFFFF:08x}",
+        "spr": {
+            name: f"0x{int(state.spr[index]) & 0xFFFFFFFF:08x}"
+            for index, name in enumerate(AUX_SPR_OBSERVABLES)
+        },
+        "memory": {"default": f"0x{default:02x}", "bytes": memory_bytes},
+    }
+
+
+def _format_concrete_observable(value: object, observable: Observable) -> object:
+    if observable.kind == "memory":
+        if isinstance(value, ConcreteMemory):
+            return {
+                "default": f"0x{int(value.default) & 0xFF:02x}",
+                "bytes": {
+                    f"0x{address:08x}": f"0x{byte:02x}" for address, byte in value.bytes
+                },
+            }
+        return str(value)
+    if observable.kind == "xer":
+        return int(bool(value))
+    if observable.kind in ("fpr", "ps1", "time_base"):
+        return f"0x{int(value) & 0xFFFFFFFFFFFFFFFF:016x}"
+    if observable.kind == "cr_field":
+        return f"0x{int(value) & 0xF:x}"
+    return f"0x{int(value) & 0xFFFFFFFF:08x}"
+
+
+def _concrete_terminal_mismatches(
+    left: Terminal,
+    right: Terminal,
+    observables: tuple[Observable, ...],
+) -> list[dict[str, object]]:
+    """Compare two ConcreteOps terminals under the contract observables."""
+    mismatches: list[dict[str, object]] = []
+    if left.exit_kind != right.exit_kind:
+        mismatches.append({
+            "name": "exit.kind",
+            "original": left.exit_kind,
+            "candidate": right.exit_kind,
+        })
+        return mismatches
+    if left.exit_kind != "fallthrough" and left.exit_target != right.exit_target:
+        def _target(value: object) -> object:
+            return f"0x{int(value) & 0xFFFFFFFF:08x}" if value is not None else None
+        mismatches.append({
+            "name": "exit.target",
+            "original": _target(left.exit_target),
+            "candidate": _target(right.exit_target),
+        })
+        return mismatches
+    if bool(left.state.valid) != bool(right.state.valid):
+        mismatches.append({
+            "name": "defined-domain",
+            "original": int(bool(left.state.valid)),
+            "candidate": int(bool(right.state.valid)),
+        })
+        return mismatches
+    if not bool(left.state.valid):
+        left_reason = int(left.state.invalid_reason)
+        right_reason = int(right.state.invalid_reason)
+        if left_reason != right_reason:
+            mismatches.append({
+                "name": "invalid-reason",
+                "original": left_reason,
+                "candidate": right_reason,
+            })
+        return mismatches
+    for observable in observables:
         try:
-            orig_state = execute_block(initial, original, ops, max_instructions=len(original) + 256)
-            cand_state = execute_block(initial, candidate, ops, max_instructions=len(candidate) + 256)
+            o_val = _observable_concrete(left.state, observable)
+            c_val = _observable_concrete(right.state, observable)
         except Exception:
             continue
-        if not bool(orig_state.valid) and not bool(cand_state.valid):
+        if o_val != c_val:
+            mismatches.append({
+                "name": observable.name,
+                "original": _format_concrete_observable(o_val, observable),
+                "candidate": _format_concrete_observable(c_val, observable),
+            })
+            return mismatches
+    return mismatches
+
+
+def run_concrete_sampling(
+    original: list[Instruction],
+    candidate: list[Instruction],
+    contract: EquivalenceContract,
+    *,
+    sample_count: int,
+    seed: int = 0,
+    max_instructions: int = 2048,
+    max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
+    assumed_callees: frozenset[int | str] = frozenset(),
+    callee_contracts: dict[int | str, CalleeContract] | None = None,
+    floating_point_domain: FloatingPointDomain | None = None,
+) -> dict[str, Any]:
+    """Sample concrete initial states through both CFGs and compare observables.
+
+    This is a **secondary defense**: a mismatch is a ConcreteOps inequivalence
+    witness, not an SMT certificate. Agreement (no mismatch) never proves
+    equivalence.
+    """
+    if sample_count < 0:
+        raise ValueError("concrete sample_count must be >= 0")
+    report: dict[str, Any] = {
+        "role": "secondary_defense",
+        "certificate": False,
+        "samples_requested": sample_count,
+        "samples_run": 0,
+        "samples_skipped": 0,
+        "interesting_samples": 0,
+        "random_samples": 0,
+        "mismatch_found": False,
+        "seed": seed,
+        "mismatch": None,
+        "initial_state": None,
+        "sample_label": None,
+    }
+    if sample_count == 0:
+        return report
+
+    interesting: list[tuple[str, MachineState]] = [
+        ("zeros", _make_concrete_initial()),
+        ("ones", _make_concrete_initial(gpr_fill=0xFFFFFFFF, fpr_fill=0xFFFFFFFFFFFFFFFF)),
+        ("incremental", MachineState(
+            tuple(i & 0xFFFFFFFF for i in range(32)),
+            tuple((i * 0x0101010101010101) & 0xFFFFFFFFFFFFFFFF for i in range(32)),
+            tuple((i * 0x0101010101010101) & 0xFFFFFFFFFFFFFFFF for i in range(32)),
+            tuple(i & 0xFFFFFFFF for i in range(8)),
+            0x01234567,
+            XerState(False, False, False),
+            0,
+            0x80000000,
+            1,
+            0,
+            tuple(0 for _ in range(16)),
+            0,
+            0,
+            0,
+            tuple(0 for _ in range(len(AUX_SPR_OBSERVABLES))),
+            ConcreteMemory(),
+            True,
+        )),
+    ]
+    rng = random.Random(seed)
+    planned: list[tuple[str, MachineState]] = []
+    for label, state in interesting:
+        if len(planned) >= sample_count:
+            break
+        planned.append((label, state))
+    while len(planned) < sample_count:
+        planned.append((f"random-{len(planned)}", _make_concrete_initial(rng=rng)))
+
+    ops = ConcreteOps()
+    for label, initial in planned:
+        try:
+            original_exits = [
+                item for item in execute_cfg(
+                    initial, original, ops,
+                    max_instructions=max_instructions,
+                    max_paths=max_paths,
+                    max_loop_iterations=max_loop_iterations,
+                    assumed_callees=assumed_callees,
+                    callee_contracts=callee_contracts,
+                    floating_point_domain=floating_point_domain,
+                )
+                if item.condition
+            ]
+            candidate_exits = [
+                item for item in execute_cfg(
+                    initial, candidate, ops,
+                    max_instructions=max_instructions,
+                    max_paths=max_paths,
+                    max_loop_iterations=max_loop_iterations,
+                    assumed_callees=assumed_callees,
+                    callee_contracts=callee_contracts,
+                    floating_point_domain=floating_point_domain,
+                )
+                if item.condition
+            ]
+        except Exception:
+            report["samples_skipped"] += 1
             continue
-        if bool(orig_state.valid) != bool(cand_state.valid):
-            return True
-        for observable in contract.observables:
-            try:
-                o_val = _observable_concrete(orig_state, observable)
-                c_val = _observable_concrete(cand_state, observable)
-            except Exception:
-                continue
-            if o_val != c_val:
-                return True
-    return False
+        if len(original_exits) != 1 or len(candidate_exits) != 1:
+            report["samples_skipped"] += 1
+            continue
+        report["samples_run"] += 1
+        if label.startswith("random-"):
+            report["random_samples"] += 1
+        else:
+            report["interesting_samples"] += 1
+        mismatches = _concrete_terminal_mismatches(
+            original_exits[0], candidate_exits[0], contract.observables,
+        )
+        if mismatches:
+            first = mismatches[0]
+            report["mismatch_found"] = True
+            report["mismatch"] = {
+                "kind": "concrete_sampling",
+                "name": first["name"],
+                "original": first["original"],
+                "candidate": first["candidate"],
+            }
+            report["initial_state"] = _serialize_concrete_initial(initial)
+            report["sample_label"] = label
+            return report
+    return report
+
+
+def _apply_concrete_sampling_defense(
+    result: ProofResult,
+    original: list[Instruction],
+    candidate: list[Instruction],
+    contract: EquivalenceContract,
+    *,
+    concrete_samples: int,
+    concrete_sample_seed: int,
+    max_instructions: int,
+    max_paths: int,
+    max_loop_iterations: int,
+    assumed_callees: frozenset[int | str],
+    callee_contracts: dict[int | str, CalleeContract] | None,
+    floating_point_domain: FloatingPointDomain | None,
+    original_hex: str,
+    candidate_hex: str,
+) -> ProofResult:
+    """Attach sampling report; demote EQUIVALENT/inconclusive on concrete mismatch.
+
+    Never promotes to EQUIVALENT. SMT ``unsat`` remains the only equivalence
+    certificate path; sampling can only add evidence of inequivalence.
+    """
+    if concrete_samples <= 0:
+        return result
+    sampling = run_concrete_sampling(
+        original,
+        candidate,
+        contract,
+        sample_count=concrete_samples,
+        seed=concrete_sample_seed,
+        max_instructions=max_instructions,
+        max_paths=max_paths,
+        max_loop_iterations=max_loop_iterations,
+        assumed_callees=assumed_callees,
+        callee_contracts=callee_contracts,
+        floating_point_domain=floating_point_domain,
+    )
+    result.concrete_sampling = sampling
+    if not sampling.get("mismatch_found"):
+        return result
+
+    prior = result.status
+    result.warnings.append(
+        "concrete sampling found a mismatch (secondary defense; "
+        "not an SMT inequivalence certificate)"
+    )
+    if prior is ProofStatus.EQUIVALENT:
+        result.warnings.append(
+            "SMT reported equivalent but concrete sampling diverged; "
+            "failing closed by demoting to not_equivalent"
+        )
+    if prior is not ProofStatus.NOT_EQUIVALENT:
+        result.status = ProofStatus.NOT_EQUIVALENT
+        result.counterexample_kind = "concrete_sampling"
+        if result.mismatch is None and sampling.get("mismatch"):
+            result.mismatch = dict(sampling["mismatch"])
+        if result.counterexample is None and sampling.get("initial_state"):
+            result.counterexample = {
+                "initial_state": sampling["initial_state"],
+                "relocations": {},
+                "source": "concrete_sampling",
+            }
+        if result.replay is None and sampling.get("initial_state"):
+            result.replay = {
+                "format": RESULT_FORMAT,
+                "architecture": ARCHITECTURE_MODEL,
+                "contract": contract.name,
+                "contract_resolution": contract.resolution_dict(),
+                "original_hex": original_hex,
+                "candidate_hex": candidate_hex,
+                "base_original": original[0].address if original else 0,
+                "base_candidate": candidate[0].address if candidate else 0,
+                "observables": [item.name for item in contract.observables],
+                "initial_state": sampling["initial_state"],
+                "expected_mismatch": (
+                    sampling["mismatch"]["name"] if sampling.get("mismatch") else None
+                ),
+                "source": "concrete_sampling",
+            }
+    return result
 
 
 def _instruction_level_diff(
@@ -538,12 +871,17 @@ def check_with_portfolio(
     """
     phases: list[SolverPhase] = []
 
-    default_solver = build_solver()
-    default_solver.set(timeout=deadline.require_time("default-solver"))
-    started = time.monotonic_ns()
-    default_answer = default_solver.check()
-    default_elapsed = round((time.monotonic_ns() - started) / 1_000_000, 3)
-    phases.append(SolverPhase("default", str(default_answer), default_elapsed))
+    try:
+        default_solver = build_solver()
+        default_solver.set(timeout=deadline.require_time("default-solver"))
+        started = time.monotonic_ns()
+        default_answer = default_solver.check()
+        default_elapsed = round((time.monotonic_ns() - started) / 1_000_000, 3)
+        phases.append(SolverPhase("default", str(default_answer), default_elapsed))
+    except ProofDeadlineExceeded:
+        phases.append(SolverPhase("default", "deadline-exceeded", 0))
+        phases.append(SolverPhase("bitblast", "deadline-exceeded", 0))
+        return build_solver(), z3_module.unknown, "default", phases
 
     if default_answer in (z3_module.sat, z3_module.unsat):
         return default_solver, default_answer, "default", phases
@@ -553,8 +891,10 @@ def check_with_portfolio(
         remaining = deadline.require_time("bitblast-fallback")
         fallback_solver = build_solver()
         t = z3_module.Then("simplify", "bit-blast", "sat")
-        fallback_solver.set(timeout=remaining)
-        bit_solver = t(fallback_solver)
+        bit_solver = t.solver()
+        bit_solver.set(timeout=remaining)
+        for assertion in fallback_solver.assertions():
+            bit_solver.add(assertion)
         bit_answer = bit_solver.check()
         bit_elapsed = round((time.monotonic_ns() - t_start) / 1_000_000, 3)
         phases.append(SolverPhase("bitblast", str(bit_answer), bit_elapsed))
@@ -683,6 +1023,7 @@ def check_equivalence(
     smt_output: str | None = None,
     max_instructions: int = 2048,
     max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     assumed_callees: frozenset[int | str] = frozenset(),
     assumed_callees_used: set[int | str] | None = None,
     callee_contracts: dict[int | str, CalleeContract] | None = None,
@@ -691,23 +1032,63 @@ def check_equivalence(
     source_hash: str = "",
     floating_point_domain: FloatingPointDomain | None = None,
     diagnostics_out: str | None = None,
+    concrete_samples: int = 0,
+    concrete_sample_seed: int = 0,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
     initial = _symbolic_initial(ops)
     callees_used: set[int | str] = set()
-    original_exits = execute_cfg(
-        initial, original, ops,
-        max_instructions=max_instructions, max_paths=max_paths,
-        assumed_callees=assumed_callees, assumed_callees_used=callees_used,
-        callee_contracts=callee_contracts,
-    )
-    candidate_exits = execute_cfg(
-        initial, candidate, ops,
-        max_instructions=max_instructions, max_paths=max_paths,
-        assumed_callees=assumed_callees, assumed_callees_used=callees_used,
-        callee_contracts=callee_contracts,
-    )
+    domain = floating_point_domain if floating_point_domain is not None else FloatingPointDomain()
+    try:
+        domain.validate()
+    except ValueError as exc:
+        return ProofResult(
+            status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            contract=contract.name,
+            contract_resolution=contract.resolution_dict(),
+            observables=[item.name for item in contract.observables],
+            unsupported=[str(exc)],
+            limits={
+                "max_instructions": max_instructions,
+                "max_paths": max_paths,
+                "max_loop_iterations": max_loop_iterations,
+            },
+            floating_point_domain=domain,
+            source_hash=source_hash,
+        )
+    try:
+        original_exits = execute_cfg(
+            initial, original, ops,
+            max_instructions=max_instructions, max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
+            assumed_callees=assumed_callees, assumed_callees_used=callees_used,
+            callee_contracts=callee_contracts,
+            floating_point_domain=domain,
+        )
+        candidate_exits = execute_cfg(
+            initial, candidate, ops,
+            max_instructions=max_instructions, max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
+            assumed_callees=assumed_callees, assumed_callees_used=callees_used,
+            callee_contracts=callee_contracts,
+            floating_point_domain=domain,
+        )
+    except ExecutionInconclusive as exc:
+        return ProofResult(
+            status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            contract=contract.name,
+            contract_resolution=contract.resolution_dict(),
+            observables=[item.name for item in contract.observables],
+            unsupported=[str(exc)],
+            limits={
+                "max_instructions": max_instructions,
+                "max_paths": max_paths,
+                "max_loop_iterations": max_loop_iterations,
+            },
+            floating_point_domain=domain,
+            source_hash=source_hash,
+        )
     if assumed_callees_used is not None:
         assumed_callees_used.update(callees_used)
 
@@ -730,9 +1111,14 @@ def check_equivalence(
             raise ValueError(f"relocation binding names unused symbol {name!r}")
         layout_constraints.append(ops.relocation_values[name] == ops.const(value))
 
+    # Constraints always use an effective environment (default:
+    # assumed-ordinary-ram). The result field stays None when the caller did
+    # not supply a profile so confidence-tier classification is unchanged for
+    # default proofs; certificates/CLI still record explicit profiles.
+    effective_memory_environment = memory_environment or MemoryEnvironment()
     memory_constraints = build_memory_constraints(
         original_exits, candidate_exits,
-        memory_environment or MemoryEnvironment(),
+        effective_memory_environment,
         ops,
     )
     layout_constraints.extend(memory_constraints)
@@ -768,6 +1154,11 @@ def check_equivalence(
             "elapsed_ms": elapsed_ms, "timeout_ms": contract.timeout_ms,
             "original_paths": len(original_exits), "candidate_paths": len(candidate_exits),
             "tactic": tactic, "phases": [p.to_dict() for p in phases],
+        },
+        limits={
+            "max_instructions": max_instructions,
+            "max_paths": max_paths,
+            "max_loop_iterations": max_loop_iterations,
         },
         assumed_callees=sorted(callees_used, key=str),
         callee_contracts={
@@ -812,9 +1203,9 @@ def check_equivalence(
         pass
     all_insns = original + candidate
     if floating_point_domain is not None:
-        result.floating_point_domain = floating_point_domain
+        result.floating_point_domain = domain
     elif any(insn.opcode in SUPPORTED_FP_OPCODES for insn in all_insns):
-        result.floating_point_domain = FloatingPointDomain()
+        result.floating_point_domain = domain
     def _emit_diagnostics(*, memory_constraint_count: int = len(memory_constraints)) -> None:
         _populate_solver_diagnostics(
             result,
@@ -831,6 +1222,25 @@ def check_equivalence(
             memory_constraint_count=memory_constraint_count,
         )
 
+    def _finalize(early: ProofResult) -> ProofResult:
+        _apply_concrete_sampling_defense(
+            early,
+            original,
+            candidate,
+            contract,
+            concrete_samples=concrete_samples,
+            concrete_sample_seed=concrete_sample_seed,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
+            assumed_callees=assumed_callees,
+            callee_contracts=callee_contracts,
+            floating_point_domain=domain,
+            original_hex=original_hex,
+            candidate_hex=candidate_hex,
+        )
+        return early
+
     feasibility = z3.Solver()
     try:
         layout_deadline = deadline.require_time("layout-feasibility")
@@ -838,7 +1248,7 @@ def check_equivalence(
         result.status = ProofStatus.INCONCLUSIVE_TIMEOUT
         result.warnings.append("layout-feasibility deadline exceeded")
         _emit_diagnostics()
-        return result
+        return _finalize(result)
     feasibility.set(timeout=layout_deadline)
     feasibility.add(*layout_constraints)
     feasibility_answer = feasibility.check()
@@ -850,17 +1260,17 @@ def check_equivalence(
             if feasibility_answer == z3.unsat else feasibility.reason_unknown()
         )
         _emit_diagnostics()
-        return result
+        return _finalize(result)
     if answer == z3.unsat:
         result.status = ProofStatus.EQUIVALENT
         _emit_diagnostics()
-        return result
+        return _finalize(result)
     if answer == z3.unknown:
         reason = winning_solver.reason_unknown()
         result.status = ProofStatus.INCONCLUSIVE_TIMEOUT if "timeout" in reason.lower() else ProofStatus.INCONCLUSIVE_UNKNOWN
         result.warnings.append(reason)
         _emit_diagnostics()
-        return result
+        return _finalize(result)
 
     if callees_used:
         result.status = ProofStatus.INCONCLUSIVE_ABSTRACTION
@@ -1001,6 +1411,7 @@ def check_equivalence(
             )
             replay_info = replay_counterexample(
                 original, candidate, initial_state, contract,
+                floating_point_domain=domain,
             )
             first_divergence = replay_info["first_divergence"]
             original_trace = replay_info.get("original_trace")
@@ -1027,7 +1438,7 @@ def check_equivalence(
 
     memory_dict = (
         result.environment.to_dict() if isinstance(result.environment, MemoryEnvironment)
-        else None
+        else MemoryEnvironment().to_dict()
     )
     bundle: dict[str, Any] = {
         "proof_request": {
@@ -1056,4 +1467,4 @@ def check_equivalence(
     result.counterexample_bundle = bundle
 
     _emit_diagnostics()
-    return result
+    return _finalize(result)

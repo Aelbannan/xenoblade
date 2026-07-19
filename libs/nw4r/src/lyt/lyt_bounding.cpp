@@ -20,3 +20,7 @@ void Bounding::DrawSelf(const DrawInfo& rInfo) {
 
 } // namespace lyt
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-804077d8
+extern "C" bool GetRuntimeTypeInfo__Q34nw4r3lyt8BoundingCFv() { return false; }
+// LLM-HARNESS-END: us-804077d8

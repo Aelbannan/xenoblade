@@ -16,5 +16,9 @@
   ],
   "dolphin": "/Applications/Dolphin.app/Contents/MacOS/Dolphin",
   "automatic_promotion": false,
-  "reject_architecture_models": ["broadway-ppc32-be-v18"]
+  "reject_architecture_models": ["broadway-ppc32-be-v18", "broadway-ppc32-be-v19", "broadway-ppc32-be-v20", "broadway-ppc32-be-v21"],
+  "require_bounded_ram": false,
+  "memory_profile": null,
+  "memory_ranges": [],
+  "floating_point_domain": null
 }

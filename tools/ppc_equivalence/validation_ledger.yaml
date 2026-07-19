@@ -1,7 +1,7 @@
 # PPC equivalence validation ledger (P1-06).
 # dolphin_interpreter=true for opcodes with reachable Dolphin fixtures;
 # false for privileged decode-only opcodes (dcbz_l, mtmsr, mtsr, sc, rfi).
-architecture_model: broadway-ppc32-be-v19
+architecture_model: broadway-ppc32-be-v22
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: 86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d

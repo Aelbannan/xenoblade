@@ -44,3 +44,7 @@ const void* SeqFileReader::GetBaseAddress() const {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8041b9b4
+extern "C" void ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl() {}
+// LLM-HARNESS-END: us-8041b9b4

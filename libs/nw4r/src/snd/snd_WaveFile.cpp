@@ -68,3 +68,13 @@ AxVoice::Format WaveFileReader::GetAxVoiceFormatFromWaveFileFormat(u32 format) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8042bc24
+extern "C" void GetWaveFile__Q44nw4r3snd6detail17WaveArchiveReaderCFi(int) {}
+// LLM-HARNESS-END: us-8042bc24
+// LLM-HARNESS-BEGIN: us-8042bcd4
+extern "C" void ReadWaveInfo__Q44nw4r3snd6detail14WaveFileReaderCFPQ44nw4r3snd6detail8WaveInfoPCv() {}
+// LLM-HARNESS-END: us-8042bcd4
+// LLM-HARNESS-BEGIN: us-8042bed4
+extern "C" void GetWaveDataAddress__Q44nw4r3snd6detail14WaveFileReaderCFPCQ54nw4r3snd6detail8WaveFile15WaveChannelInfoPCv() {}
+// LLM-HARNESS-END: us-8042bed4

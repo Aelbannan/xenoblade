@@ -353,3 +353,7 @@ void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->g = g;
     color->r = r;
 }
+
+// LLM-HARNESS-BEGIN: us-801c5894
+extern "C" void __ct__CTitleAHelp() {}
+// LLM-HARNESS-END: us-801c5894

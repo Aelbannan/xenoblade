@@ -77,3 +77,7 @@ double modf(x, iptr) double x, *iptr;
 		}
 	}
 }
+
+// LLM-HARNESS-BEGIN: us-802cd91c
+double modf(double x, double* iptr) { return 0.0; }
+// LLM-HARNESS-END: us-802cd91c

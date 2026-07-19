@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import unittest
 
+from dataclasses import replace
+
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block, parse_hex
 from tools.ppc_equivalence.engine import check_equivalence
@@ -119,6 +121,53 @@ class InvalidReasonConcreteTests(unittest.TestCase):
         self.assertFalse(state.valid)
         self.assertEqual(state.invalid_reason, InvalidReason.PRIVILEGED_INSTRUCTION.value)
 
+    def test_mfspr_hid0_user_mode_sets_reason(self):
+        state = execute_instruction(
+            concrete_state({"msr": 0x00004000}),
+            _insn(Opcode.MFSPR, (3, 1008)),
+            ConcreteOps(),
+        )
+        self.assertFalse(state.valid)
+        self.assertEqual(state.invalid_reason, InvalidReason.PRIVILEGED_INSTRUCTION.value)
+
+    def test_mfspr_hid0_supervisor_keeps_valid(self):
+        state = execute_instruction(
+            concrete_state({"msr": 0x00000000}),
+            _insn(Opcode.MFSPR, (3, 1008)),
+            ConcreteOps(),
+        )
+        self.assertTrue(state.valid)
+        self.assertEqual(state.invalid_reason, 0)
+
+    def test_mflr_user_mode_stays_valid(self):
+        state = execute_instruction(
+            concrete_state({"msr": 0x00004000, "lr": 0x80001000}),
+            _insn(Opcode.MFSPR, (3, 8)),
+            ConcreteOps(),
+        )
+        self.assertTrue(state.valid)
+        self.assertEqual(state.gpr[3], 0x80001000)
+
+    def test_fadds_finite_overflow_sets_fp_domain_reason(self):
+        # binary64 encodings of large finite singles that overflow when added.
+        huge = 0x47EFFFFFE0000000  # ~1.7e38 as expanded binary32
+        state = execute_instruction(
+            concrete_state({"fpr": {"f1": f"0x{huge:016x}", "f2": f"0x{huge:016x}"}}),
+            _insn(Opcode.FADDS, (1, 1, 2)),
+            ConcreteOps(),
+        )
+        self.assertFalse(state.valid)
+        self.assertEqual(state.invalid_reason, InvalidReason.FP_DOMAIN_EXCLUDED.value)
+
+    def test_frsp_nonfinite_source_sets_fp_domain_reason(self):
+        state = execute_instruction(
+            concrete_state({"fpr": {"f1": "0x7ff0000000000000"}}),  # +Inf
+            _insn(Opcode.FRSP, (1, 0, 1, 0)),
+            ConcreteOps(),
+        )
+        self.assertFalse(state.valid)
+        self.assertEqual(state.invalid_reason, InvalidReason.FP_DOMAIN_EXCLUDED.value)
+
     def test_rfi_user_mode_produces_program_exception(self):
         state = concrete_state({"msr": 0x00004000})
         insns = decode_block(parse_hex("4c000064"), 0x80000000)  # rfi
@@ -152,6 +201,58 @@ class InvalidReasonSymbolicEquivalence(unittest.TestCase):
             insns, insns, contract,
             original_hex=code.hex(),
             candidate_hex=code.hex(),
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_fp_domain_vs_privileged_spr_not_equivalent(self):
+        """FP domain exit and privileged SPR must not collapse to the same reason.
+
+        Before v20 both paths cleared ``valid`` while leaving ``invalid_reason``
+        at 0.  Distinct first-failure codes keep those exits distinguishable.
+        """
+        from tools.ppc_equivalence.engine import _symbolic_initial, _terminal_difference
+        from tools.ppc_equivalence.semantics import SymbolicOps, Terminal
+
+        ops = SymbolicOps()
+        z3 = ops.z3
+        initial = _symbolic_initial(ops)
+        left = Terminal(
+            ops.bool(True),
+            replace(
+                initial,
+                valid=ops.bool(False),
+                invalid_reason=z3.BitVecVal(InvalidReason.FP_DOMAIN_EXCLUDED.value, 8),
+                fpr=tuple(
+                    z3.BitVecVal(0x7FF0000000000000, 64) if i == 1 else r
+                    for i, r in enumerate(initial.fpr)
+                ),
+            ),
+            "fallthrough",
+            None,
+        )
+        right = Terminal(
+            ops.bool(True),
+            replace(
+                initial,
+                valid=ops.bool(False),
+                invalid_reason=z3.BitVecVal(InvalidReason.PRIVILEGED_INSTRUCTION.value, 8),
+            ),
+            "fallthrough",
+            None,
+        )
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=10000)
+        difference = _terminal_difference(left, right, contract, initial, ops)
+        solver = z3.Solver()
+        solver.add(difference)
+        self.assertEqual(solver.check(), z3.sat)
+
+    def test_identical_fadds_still_equivalent(self):
+        insns = [_insn(Opcode.FADDS, (1, 1, 2))]
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=10000)
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex="00",
+            candidate_hex="00",
         )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 

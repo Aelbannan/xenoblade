@@ -53,6 +53,33 @@ class ProvenanceHashTests(unittest.TestCase):
         b = canonical_json_sha256({"a": [2, 3], "b": 1})
         self.assertEqual(a, b)
 
+    def test_proof_request_hash_stable_and_sensitive(self):
+        from tools.ppc_equivalence.provenance import proof_request_hash
+
+        first = proof_request_hash(
+            original_hex="aa",
+            candidate_hex="bb",
+            contract="ppc-eabi",
+            assumed_callees=["leaf"],
+            callee_contract_sources={"leaf": "opaque-eabi"},
+        )
+        second = proof_request_hash(
+            original_hex="aa",
+            candidate_hex="bb",
+            contract="ppc-eabi",
+            assumed_callees=["leaf"],
+            callee_contract_sources={"leaf": "opaque-eabi"},
+        )
+        self.assertEqual(first, second)
+        changed = proof_request_hash(
+            original_hex="aa",
+            candidate_hex="bb",
+            contract="ppc-eabi",
+            assumed_callees=["leaf"],
+            callee_contract_sources={"leaf": "inferred:leaf"},
+        )
+        self.assertNotEqual(first, changed)
+
 
 if __name__ == "__main__":
     unittest.main()

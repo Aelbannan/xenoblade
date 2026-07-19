@@ -54,3 +54,19 @@ void WaveSound::DetachTempSpecialHandle() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8042c170
+extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail9WaveSoundFv() {}
+// LLM-HARNESS-END: us-8042c170
+// LLM-HARNESS-BEGIN: us-8042c270
+extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundFv() { return false; }
+// LLM-HARNESS-END: us-8042c270
+// LLM-HARNESS-BEGIN: us-8042c278
+extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundCFv() { return false; }
+// LLM-HARNESS-END: us-8042c278
+// LLM-HARNESS-BEGIN: us-8042c280
+extern "C" bool IsPrepared__Q44nw4r3snd6detail9WaveSoundCFv() { return false; }
+// LLM-HARNESS-END: us-8042c280
+// LLM-HARNESS-BEGIN: us-8042c288
+extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail9WaveSoundCFv() { return false; }
+// LLM-HARNESS-END: us-8042c288

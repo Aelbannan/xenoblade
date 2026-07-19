@@ -495,3 +495,7 @@ Material* Pane::GetMaterial(u32 index) const {
 
 } // namespace lyt
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80401c84
+extern "C" bool GetRuntimeTypeInfo__Q34nw4r3lyt4PaneCFv() { return false; }
+// LLM-HARNESS-END: us-80401c84

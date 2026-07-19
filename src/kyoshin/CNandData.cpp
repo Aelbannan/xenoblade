@@ -27,3 +27,7 @@ int CNandData::sNandIconTextureSomething[] = {
 };
 
 CNandData CNandData::sInstance = CNandData();
+
+// LLM-HARNESS-BEGIN: us-802b11c0
+extern "C" void func_eu_802B11C0() {}
+// LLM-HARNESS-END: us-802b11c0

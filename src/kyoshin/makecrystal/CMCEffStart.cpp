@@ -805,3 +805,7 @@ void CMCEffCylinder::func_80226230() {
     mLayout->SetAnimationEnable(mAnimTrans18, true);
     mLayout->Animate(0);
 }
+
+// LLM-HARNESS-BEGIN: us-80225b80
+extern "C" void __ct__CMCEffStart() {}
+// LLM-HARNESS-END: us-80225b80

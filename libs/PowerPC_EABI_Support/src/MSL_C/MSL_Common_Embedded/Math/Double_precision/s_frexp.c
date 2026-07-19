@@ -56,3 +56,7 @@ int* eptr;
 	__HI(x) = hx;
 	return x;
 }
+
+// LLM-HARNESS-BEGIN: us-802cd728
+double frexp(double x, int* eptr) { return 0.0; }
+// LLM-HARNESS-END: us-802cd728

@@ -157,3 +157,65 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
         i = i + 1;
     }
 }
+
+// LLM-HARNESS-BEGIN: us-8014b2fc
+void func_8014A8F8() {}
+// LLM-HARNESS-END: us-8014b2fc
+// LLM-HARNESS-BEGIN: us-8014b414
+extern "C" bool func_8014AA10() { return false; }
+// LLM-HARNESS-END: us-8014b414
+// LLM-HARNESS-BEGIN: us-8014b63c
+extern "C" void func_8014AC38() {}
+// LLM-HARNESS-END: us-8014b63c
+// LLM-HARNESS-BEGIN: us-8014b804
+extern "C" void func_8014AE00() {}
+// LLM-HARNESS-END: us-8014b804
+// LLM-HARNESS-BEGIN: us-8014bb24
+extern "C" void func_8014B120() {}
+// LLM-HARNESS-END: us-8014bb24
+// LLM-HARNESS-BEGIN: us-8014bce0
+extern "C" void func_8014B2DC() {}
+// LLM-HARNESS-END: us-8014bce0
+// LLM-HARNESS-BEGIN: us-8014bcf0
+extern "C" void func_8014B2EC() {}
+// LLM-HARNESS-END: us-8014bcf0
+// LLM-HARNESS-BEGIN: us-8014bd48
+extern "C" void func_8014B344() {}
+// LLM-HARNESS-END: us-8014bd48
+// LLM-HARNESS-BEGIN: us-8014c208
+extern "C" void func_8014B804() {}
+// LLM-HARNESS-END: us-8014c208
+// LLM-HARNESS-BEGIN: us-80154224
+extern "C" void func_801537E0() {}
+// LLM-HARNESS-END: us-80154224
+
+// LLM-HARNESS-BEGIN: us-8014b270
+void func_8014A86C(void*) {}
+// LLM-HARNESS-END: us-8014b270
+// LLM-HARNESS-BEGIN: us-8014c1b4
+extern "C" void func_8014B7B0() {}
+// LLM-HARNESS-END: us-8014c1b4
+// LLM-HARNESS-BEGIN: us-8014c2c0
+extern "C" void func_8014B8BC() {}
+// LLM-HARNESS-END: us-8014c2c0
+// LLM-HARNESS-BEGIN: us-8014d87c
+extern "C" void func_8014CE78() {}
+// LLM-HARNESS-END: us-8014d87c
+// LLM-HARNESS-BEGIN: us-8014eb68
+extern "C" void func_8014E164() {}
+// LLM-HARNESS-END: us-8014eb68
+// LLM-HARNESS-BEGIN: us-8015105c
+extern "C" void func_80150618() {}
+// LLM-HARNESS-END: us-8015105c
+// LLM-HARNESS-BEGIN: us-8015126c
+extern "C" void func_80150828() {}
+// LLM-HARNESS-END: us-8015126c
+// LLM-HARNESS-BEGIN: us-80152d08
+extern "C" void func_801522C4() {}
+// LLM-HARNESS-END: us-80152d08
+// LLM-HARNESS-BEGIN: us-80154234
+extern "C" void func_801537F0() {}
+// LLM-HARNESS-END: us-80154234
+// LLM-HARNESS-BEGIN: us-801543b0
+extern "C" void func_8015396C() {}
+// LLM-HARNESS-END: us-801543b0

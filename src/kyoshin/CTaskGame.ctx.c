@@ -233938,3 +233938,118 @@ CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int r5){
     taskGame->Regist(gameProcess, false);
     return taskGame;
 }
+
+// LLM-HARNESS-BEGIN: us-80040da0
+extern "C" void func_800407C8(float* r3, float a, float b, float c, float d) { r3[0] = a; r3[1] = b; r3[2] = c; r3[3] = d; }
+// LLM-HARNESS-END: us-80040da0
+// LLM-HARNESS-BEGIN: us-800410cc
+extern "C" void func_80040AF4() {}
+// LLM-HARNESS-END: us-800410cc
+// LLM-HARNESS-BEGIN: us-80041f80
+extern "C" void func_800419BC() {}
+// LLM-HARNESS-END: us-80041f80
+// LLM-HARNESS-BEGIN: us-80042078
+extern "C" void func_80041AFC() {}
+// LLM-HARNESS-END: us-80042078
+// LLM-HARNESS-BEGIN: us-80042c1c
+extern "C" void func_800426A4() {}
+// LLM-HARNESS-END: us-80042c1c
+// LLM-HARNESS-BEGIN: us-80042c68
+bool CTaskGame::func_800426F0() { return false; }
+// LLM-HARNESS-END: us-80042c68
+// LLM-HARNESS-BEGIN: us-80042c88
+void CTaskGame::func_80042710() {}
+// LLM-HARNESS-END: us-80042c88
+// LLM-HARNESS-BEGIN: us-80042ddc
+extern "C" void func_80042864() {}
+// LLM-HARNESS-END: us-80042ddc
+// LLM-HARNESS-BEGIN: us-80043534
+extern "C" void func_80042FBC() {}
+// LLM-HARNESS-END: us-80043534
+// LLM-HARNESS-BEGIN: us-8004359c
+extern "C" bool func_80043024() { return false; }
+// LLM-HARNESS-END: us-8004359c
+// LLM-HARNESS-BEGIN: us-80043888
+extern "C" void func_80043310() {}
+// LLM-HARNESS-END: us-80043888
+// LLM-HARNESS-BEGIN: us-800438d4
+extern "C" void func_8004335C() {}
+// LLM-HARNESS-END: us-800438d4
+// LLM-HARNESS-BEGIN: us-80043920
+extern "C" bool func_800433A8() { return false; }
+// LLM-HARNESS-END: us-80043920
+// LLM-HARNESS-BEGIN: us-80043928
+extern "C" void func_800433B0() {}
+// LLM-HARNESS-END: us-80043928
+// LLM-HARNESS-BEGIN: us-80043988
+extern "C" void func_80043410() {}
+// LLM-HARNESS-END: us-80043988
+// LLM-HARNESS-BEGIN: us-800439f4
+extern "C" void func_8004347C() {}
+// LLM-HARNESS-END: us-800439f4
+// LLM-HARNESS-BEGIN: us-80043a24
+extern "C" void func_800434AC() {}
+// LLM-HARNESS-END: us-80043a24
+// LLM-HARNESS-BEGIN: us-80043a54
+extern "C" void func_800434DC() {}
+// LLM-HARNESS-END: us-80043a54
+// LLM-HARNESS-BEGIN: us-80043a84
+extern "C" void func_8004350C() {}
+// LLM-HARNESS-END: us-80043a84
+// LLM-HARNESS-BEGIN: us-80043ab0
+extern "C" void func_80043538() {}
+// LLM-HARNESS-END: us-80043ab0
+// LLM-HARNESS-BEGIN: us-80043adc
+extern "C" void func_80043564() {}
+// LLM-HARNESS-END: us-80043adc
+// LLM-HARNESS-BEGIN: us-80043ba0
+extern "C" void func_80043628() {}
+// LLM-HARNESS-END: us-80043ba0
+// LLM-HARNESS-BEGIN: us-80043c08
+bool CTaskGame::func_8004368C() { return false; }
+// LLM-HARNESS-END: us-80043c08
+// LLM-HARNESS-BEGIN: us-80043c70
+extern "C" void func_800436F4() {}
+// LLM-HARNESS-END: us-80043c70
+// LLM-HARNESS-BEGIN: us-80043cac
+extern "C" bool func_80043730() { return false; }
+// LLM-HARNESS-END: us-80043cac
+// LLM-HARNESS-BEGIN: us-80044140
+extern "C" void func_80043BA4() {}
+// LLM-HARNESS-END: us-80044140
+// LLM-HARNESS-BEGIN: us-80044304
+extern "C" void func_80043D68() {}
+// LLM-HARNESS-END: us-80044304
+// LLM-HARNESS-BEGIN: us-800444b4
+extern "C" bool func_80043F18() { return false; }
+// LLM-HARNESS-END: us-800444b4
+// LLM-HARNESS-BEGIN: us-800444bc
+void CProcess::Tail() {}
+// LLM-HARNESS-END: us-800444bc
+// LLM-HARNESS-BEGIN: us-800446bc
+extern "C" bool func_80044120() { return false; }
+// LLM-HARNESS-END: us-800446bc
+// LLM-HARNESS-BEGIN: us-800446c4
+extern "C" bool func_80044128() { return false; }
+// LLM-HARNESS-END: us-800446c4
+// LLM-HARNESS-BEGIN: us-800446cc
+extern "C" bool func_80044130() { return false; }
+// LLM-HARNESS-END: us-800446cc
+// LLM-HARNESS-BEGIN: us-800446d4
+extern "C" bool func_80044138() { return false; }
+// LLM-HARNESS-END: us-800446d4
+// LLM-HARNESS-BEGIN: us-800446dc
+extern "C" bool func_80044140() { return false; }
+// LLM-HARNESS-END: us-800446dc
+// LLM-HARNESS-BEGIN: us-800446e4
+extern "C" bool func_80044148() { return false; }
+// LLM-HARNESS-END: us-800446e4
+// LLM-HARNESS-BEGIN: us-800446ec
+extern "C" bool func_80044150() { return false; }
+// LLM-HARNESS-END: us-800446ec
+// LLM-HARNESS-BEGIN: us-800446f4
+extern "C" bool func_80044158() { return false; }
+// LLM-HARNESS-END: us-800446f4
+// LLM-HARNESS-BEGIN: us-800446fc
+extern "C" bool func_80044160() { return false; }
+// LLM-HARNESS-END: us-800446fc

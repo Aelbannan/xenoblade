@@ -105,8 +105,11 @@ class PortfolioSolverTests(unittest.TestCase):
 
     @staticmethod
     def _mock_solver(z3, results: list):
-        """Create a z3.Solver whose .check() yields results in order."""
-        import itertools
+        """Create a z3.Solver whose .check() yields results in order.
+
+        Assertions are deliberately unsatisfiable so a real tactic/solver
+        fallback (which ignores the mock) still returns ``unsat``.
+        """
         it = iter(results)
         def mock_check(*_a):
             try:
@@ -114,7 +117,8 @@ class PortfolioSolverTests(unittest.TestCase):
             except StopIteration:
                 return z3.unknown
         s = z3.Solver()
-        s.add(z3.BitVec("x", 32) == z3.BitVec("x", 32))
+        x = z3.BitVec("x", 32)
+        s.add(x != x)
         s.check = mock_check
         return s
 

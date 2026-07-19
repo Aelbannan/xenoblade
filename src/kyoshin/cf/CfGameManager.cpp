@@ -97,3 +97,52 @@ extern "C" cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObject
     return &slots[index];
 }
 #pragma dont_inline off
+
+// LLM-HARNESS-BEGIN: us-8007eb50
+bool cf::CfGameManager::func_8007E1B4() { return false; }
+// LLM-HARNESS-END: us-8007eb50
+// LLM-HARNESS-BEGIN: us-8007ebb4
+void cf::CfGameManager::func_8007E218() {}
+// LLM-HARNESS-END: us-8007ebb4
+// LLM-HARNESS-BEGIN: us-800802cc
+extern "C" void func_8007F930__Q22cf13CfGameManagerFv(bool arg1) {}
+// LLM-HARNESS-END: us-800802cc
+// LLM-HARNESS-BEGIN: us-80083c1c
+UNKTYPE* cf::CfGameManager::func_80083298() { return 0; }
+// LLM-HARNESS-END: us-80083c1c
+// LLM-HARNESS-BEGIN: us-800874cc
+extern "C" void func_eu_800874CC() {}
+// LLM-HARNESS-END: us-800874cc
+// LLM-HARNESS-BEGIN: us-800874d0
+extern "C" void func_eu_800874D0() {}
+// LLM-HARNESS-END: us-800874d0
+// LLM-HARNESS-BEGIN: us-800874d4
+extern "C" void func_eu_800874D4() {}
+// LLM-HARNESS-END: us-800874d4
+// LLM-HARNESS-BEGIN: us-800874d8
+extern "C" void func_eu_800874D8() {}
+// LLM-HARNESS-END: us-800874d8
+// LLM-HARNESS-BEGIN: us-80087534
+extern "C" void func_80086B5C__Q22cf13CfGameManagerFv(int arg1, int arg2, int arg3) {}
+// LLM-HARNESS-END: us-80087534
+// LLM-HARNESS-BEGIN: us-80087798
+void cf::CfGameManager::enablePadFlags(u32 enableFlags, bool enable) {}
+// LLM-HARNESS-END: us-80087798
+// LLM-HARNESS-BEGIN: us-8008791c
+u32 cf::CfGameManager::getEnabledInputFlags() { return 0; }
+// LLM-HARNESS-END: us-8008791c
+// LLM-HARNESS-BEGIN: us-80087974
+extern "C" bool func_80086F9C__Q22cf13CfGameManagerFv(s16) { return false; }
+// LLM-HARNESS-END: us-80087974
+// LLM-HARNESS-BEGIN: us-80087988
+CPad* cf::CfGameManager::getPad(int r3) { return 0; }
+// LLM-HARNESS-END: us-80087988
+// LLM-HARNESS-BEGIN: us-800879a0
+extern "C" void setPad__Q22cf13CfGameManagerFv(int r3, CPad* pPad, u32 r5) {}
+// LLM-HARNESS-END: us-800879a0
+// LLM-HARNESS-BEGIN: us-80087be8
+void cf::CfGameManager::setCurrentPadPtr(const CPad* pPad, u32 r4) {}
+// LLM-HARNESS-END: us-80087be8
+// LLM-HARNESS-BEGIN: us-80087f60
+extern "C" void func_80087588() {}
+// LLM-HARNESS-END: us-80087f60

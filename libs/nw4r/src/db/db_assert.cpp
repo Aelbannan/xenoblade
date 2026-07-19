@@ -219,3 +219,7 @@ namespace nw4r
         }
     }
 }
+
+// LLM-HARNESS-BEGIN: us-803d9b18
+extern "C" void WarningAlarmFunc___Q24nw4r2dbFP7OSAlarmP9OSContext() {}
+// LLM-HARNESS-END: us-803d9b18

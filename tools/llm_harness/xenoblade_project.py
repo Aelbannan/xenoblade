@@ -25,6 +25,7 @@ from tools.coop.lib.project import Project
 from tools.coop.lib.targets import (
     ACCEPTED_MATCH_STATUSES,
     Target,
+    claim_target,
     equivalence_certificate_error,
     get_target,
     harness_targets,
@@ -198,7 +199,11 @@ class XenobladeAdapter:
         attempted = {
             str(row.get("target_id"))
             for row in history
-            if row.get("workflow") in {"new", "improve"} and row.get("target_id")
+            if row.get("target_id")
+            and (
+                row.get("workflow") in {"new", "improve", "solve"}
+                or _history_row_symbol_accepted(row)
+            )
         }
         selection = "pending" if ignore_called_functions else "ready"
         raw_targets = load_targets(self.config)
@@ -338,6 +343,78 @@ class XenobladeAdapter:
             instruction_match=float(evaluation.match_percent or 0.0),
             equivalence_status=evaluation.equivalence_status,
         )
+
+    def accepted_target_ids(self) -> List[str]:
+        """Return target ids already at FULL_MATCH / EQUIVALENT_MATCH in the registry."""
+        return [
+            target.id
+            for target in load_targets(self.config)
+            if target.status in ACCEPTED_MATCH_STATUSES
+        ]
+
+    def ensure_auto_promote_claim(self, target_id: str, owner: str) -> None:
+        """Claim target for auto-promote when unclaimed; error if owned by someone else."""
+        target = self._any_target(target_id)
+        current = _claim_owner(target.extra.get("claim"))
+        if current is None:
+            paths: List[str] = []
+            if target.source is not None:
+                try:
+                    paths = [str(target.source.relative_to(self.root))]
+                except ValueError:
+                    paths = [str(target.source)]
+            claim_target(
+                self.config,
+                target_id,
+                owner=owner,
+                allowed_paths=paths,
+                note="llm-harness auto-promote",
+            )
+            return
+        if current != owner:
+            raise ValueError(
+                f"target {target_id} claimed by {current!r}, not {owner!r}"
+            )
+
+    def record_auto_promotion(self, target_id: str, evaluation: Dict[str, Any]) -> None:
+        """Update targets.json after a successful auto-promote write."""
+        status = str(evaluation.get("status") or "").upper()
+        if status not in ACCEPTED_MATCH_STATUSES:
+            match = float(evaluation.get("match_percent") or 0.0)
+            status = "FULL_MATCH" if match >= 100.0 else "EQUIVALENT_MATCH"
+        update_target_result(
+            self.config,
+            target_id,
+            status=status,
+            instruction_match=float(evaluation.get("match_percent") or 0.0),
+            equivalence_status=evaluation.get("equivalence"),
+        )
+
+    def run_auto_promote_cycle(
+        self, target_id: str, evaluation: Dict[str, Any]
+    ) -> None:
+        """Best-effort coop cycle after auto-promote; does not roll back the write."""
+        status = str(evaluation.get("status") or "FULL_MATCH")
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    "tools/coop/run.py",
+                    "cycle",
+                    target_id,
+                    "--hypothesis",
+                    f"llm-harness auto-promote {status}",
+                    "--next-change",
+                    "None",
+                ],
+                cwd=self.root,
+                text=True,
+                capture_output=True,
+                timeout=600,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            pass
 
     def select_targets(
         self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False,
@@ -1046,7 +1123,7 @@ class XenobladeAdapter:
             )
             mismatch_detail = (
                 format_objdiff_feedback_text(binary_feedback)
-                if match_percent < 100.0
+                if match_percent < 100.0 and binary_feedback is not None
                 else ""
             )
             meets_bar = meets_required_level(
@@ -1551,21 +1628,21 @@ class XenobladeAdapter:
     def verify_claim(self, target_id: str, owner: str) -> tuple[bool, str]:
         """Verify that the owner matches the canonical claim for the target."""
         target = self._any_target(target_id)
-        claim = target.extra.get("claim")
-        if not claim:
+        current = _claim_owner(target.extra.get("claim"))
+        if not current:
             return False, f"target {target_id} has no claim"
-        if claim != owner:
-            return False, f"target {target_id} claimed by {claim!r}, not {owner!r}"
+        if current != owner:
+            return False, f"target {target_id} claimed by {current!r}, not {owner!r}"
         return True, "claim verified"
 
     def _require_claim(self, target: Target, owner: str) -> None:
         if not owner:
             raise ValueError("owner required for promotion write")
-        claim = target.extra.get("claim")
-        if not claim:
+        current = _claim_owner(target.extra.get("claim"))
+        if not current:
             raise ValueError(f"target {target.id} has no claim; cannot promote without owner")
-        if claim != owner:
-            raise ValueError(f"target {target.id} claimed by {claim!r}, not {owner!r}")
+        if current != owner:
+            raise ValueError(f"target {target.id} claimed by {current!r}, not {owner!r}")
 
     def _require_unit_claims(self, unit_name: str, owner: str) -> None:
         if not owner:
@@ -1574,9 +1651,12 @@ class XenobladeAdapter:
         raw_targets = load_targets(self.config)
         for target in raw_targets:
             if target.unit and self.project.resolve_unit(target.unit).name == unit_name:
-                claim = target.extra.get("claim")
-                if claim and claim != owner:
-                    raise ValueError(f"unit {unit_name} has function {target.id} claimed by {claim!r}, not {owner!r}")
+                current = _claim_owner(target.extra.get("claim"))
+                if current and current != owner:
+                    raise ValueError(
+                        f"unit {unit_name} has function {target.id} claimed by "
+                        f"{current!r}, not {owner!r}"
+                    )
 
     def finalize(self) -> None:
         # Each candidate evaluation restores both source and its prior object bytes.
@@ -2003,6 +2083,32 @@ class XenobladeAdapter:
 
 def create_adapter(root: Path, settings: Dict[str, Any]) -> XenobladeAdapter:
     return XenobladeAdapter(root, settings)
+
+
+def _claim_owner(claim: Any) -> Optional[str]:
+    """Extract owner from a claim dict or legacy string claim."""
+    if isinstance(claim, dict):
+        owner = claim.get("owner")
+        return str(owner) if owner else None
+    if isinstance(claim, str) and claim:
+        return claim
+    return None
+
+
+def _history_row_symbol_accepted(row: Dict[str, Any]) -> bool:
+    """True when an experiments.jsonl row already reached symbol acceptance."""
+    evaluation = row.get("evaluation") or {}
+    if row.get("error"):
+        return False
+    if evaluation.get("symbol_accepted"):
+        return True
+    metrics = evaluation.get("metrics") or {}
+    if metrics.get("symbol_accepted"):
+        return True
+    status = str(evaluation.get("status") or "").upper()
+    if status in {"FULL_MATCH", "EQUIVALENT_MATCH"} and bool(evaluation.get("accepted")):
+        return True
+    return False
 
 
 def _attempt_sort_key(row: Dict[str, Any]) -> str:

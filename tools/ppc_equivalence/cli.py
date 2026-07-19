@@ -24,9 +24,10 @@ from .memory_profile import (
     parse_ranges,
 )
 from .model import MachineState, concrete_state
-from .provenance import canonical_json_sha256
+from .provenance import proof_request_hash
 from .result import FloatingPointDomain, ProofResult, ProofStatus
-from .semantics import ConcreteOps, automatic_live_out, execute_cfg
+from .semantics import CalleeContract, ConcreteOps, automatic_live_out, execute_cfg
+from .callee_inference import infer_matched_callee_contracts
 
 
 def _parse_int(value: str) -> int:
@@ -164,6 +165,15 @@ def _print_result(result: ProofResult) -> None:
         print(f"warning: {warning}")
     for item in result.unsupported:
         print(f"unsupported: {item}")
+    if result.concrete_sampling:
+        sampling = result.concrete_sampling
+        print(
+            "concrete sampling: "
+            f"run={sampling.get('samples_run', 0)}/"
+            f"{sampling.get('samples_requested', 0)} "
+            f"skipped={sampling.get('samples_skipped', 0)} "
+            f"mismatch={bool(sampling.get('mismatch_found'))}"
+        )
 
 
 def _exit_for_status(status: ProofStatus) -> int:
@@ -218,6 +228,31 @@ def _emit(
     return _exit_for_status(result.status)
 
 
+def _relocated_call_symbols(*instruction_lists: list[Any]) -> frozenset[str]:
+    return frozenset(
+        insn.relocation.canonical_symbol
+        for instructions in instruction_lists
+        for insn in instructions
+        if insn.opcode in (Opcode.B, Opcode.BC) and insn.relocation is not None
+    )
+
+
+def _load_callee_contracts_file(path: Path) -> dict[str, CalleeContract]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("callee-contracts file must be a JSON object")
+    contracts: dict[str, CalleeContract] = {}
+    for name, entry in payload.items():
+        if not isinstance(entry, dict):
+            raise ValueError(f"callee contract {name!r} must be an object")
+        reads = frozenset(str(item) for item in entry.get("reads", ()))
+        writes = frozenset(str(item) for item in entry.get("writes", ()))
+        source = str(entry.get("source", f"file:{path.name}"))
+        reasons = frozenset(int(item) for item in entry.get("invalid_reasons", ()))
+        contracts[str(name)] = CalleeContract(reads, writes, source, invalid_reasons=reasons)
+    return contracts
+
+
 def _run_check(
     args: argparse.Namespace,
     original_code: bytes,
@@ -229,6 +264,8 @@ def _run_check(
     candidate_relocations: tuple[Any, ...] = (),
     original_symbol: str | None = None,
     candidate_symbol: str | None = None,
+    original_object: Path | None = None,
+    candidate_object: Path | None = None,
 ) -> int:
     original_hex = _format_hex(original_code)
     candidate_hex = _format_hex(candidate_code)
@@ -258,11 +295,45 @@ def _run_check(
             relocations=candidate_relocations,
             local_symbol=candidate_symbol,
         )
-        assumed_callees = frozenset(
-            insn.relocation.canonical_symbol
-            for insn in (*original, *candidate)
-            if insn.opcode in (Opcode.B, Opcode.BC) and insn.relocation is not None
-        )
+        assumed_callees: frozenset[int | str] = frozenset()
+        callee_contracts: dict[int | str, CalleeContract] = {}
+        relocated = _relocated_call_symbols(original, candidate)
+
+        contracts_path = getattr(args, "callee_contracts", None)
+        if contracts_path is not None:
+            callee_contracts.update(_load_callee_contracts_file(Path(contracts_path)))
+
+        infer_matched = getattr(args, "infer_matched_callees", None)
+        if infer_matched is None:
+            infer_matched = original_object is not None and candidate_object is not None
+        if infer_matched and original_object is not None and candidate_object is not None:
+            inferred = infer_matched_callee_contracts(
+                relocated, original_object, candidate_object,
+            )
+            for name, contract in inferred.items():
+                callee_contracts.setdefault(name, contract)
+
+        covered = frozenset(callee_contracts)
+        remaining = relocated - covered
+        assume_relocated = bool(getattr(args, "assume_relocated_callees", False))
+        if remaining and assume_relocated:
+            print(
+                "warning: assuming opaque EABI for relocated callees without "
+                f"contracts: {', '.join(sorted(str(item) for item in remaining))}",
+                file=sys.stderr,
+            )
+            assumed_callees = covered | remaining
+        elif remaining and not assume_relocated:
+            print(
+                "warning: relocated callees without contracts will be inconclusive "
+                f"(pass --assume-relocated-callees for opaque EABI): "
+                f"{', '.join(sorted(str(item) for item in remaining))}",
+                file=sys.stderr,
+            )
+            assumed_callees = covered
+        else:
+            assumed_callees = covered
+
         original_live_out = automatic_live_out(original)
         candidate_live_out = automatic_live_out(candidate)
         live_out = None
@@ -276,20 +347,27 @@ def _run_check(
             original_live_out=original_live_out,
             candidate_live_out=candidate_live_out,
         )
-        source_hash = canonical_json_sha256({
-            "original_hex": original_hex,
-            "candidate_hex": candidate_hex,
-            "contract": requested_contract or "manual",
-            "observe": sorted(args.observe) if args.observe else [],
-            "timeout_ms": timeout_ms,
-            "max_instructions": args.max_instructions,
-            "max_paths": args.max_paths,
-            "memory_profile": getattr(args, "memory_profile", None),
-            "memory_ranges": sorted(getattr(args, "memory_ranges", []) or []),
-        })
         fp_domain: FloatingPointDomain | None = None
         if hasattr(args, "fp_domain") and args.fp_domain is not None:
-            fp_domain = FloatingPointDomain(**json.loads(args.fp_domain))
+            fp_domain = FloatingPointDomain.parse(args.fp_domain)
+        source_hash = proof_request_hash(
+            original_hex=original_hex,
+            candidate_hex=candidate_hex,
+            contract=requested_contract or "manual",
+            observe=list(args.observe) if args.observe else [],
+            timeout_ms=timeout_ms,
+            max_instructions=args.max_instructions,
+            max_paths=args.max_paths,
+            max_loop_iterations=args.max_loop_iterations,
+            memory_profile=getattr(args, "memory_profile", None),
+            memory_ranges=list(getattr(args, "memory_ranges", []) or []),
+            floating_point_domain=fp_domain.to_dict() if fp_domain is not None else None,
+            assumed_callees=[str(item) for item in assumed_callees],
+            callee_contract_sources={
+                str(name): contract.source
+                for name, contract in callee_contracts.items()
+            },
+        )
         result = check_equivalence(
             original,
             candidate,
@@ -299,13 +377,17 @@ def _run_check(
             smt_output=str(args.smt_out) if args.smt_out else None,
             max_instructions=args.max_instructions,
             max_paths=args.max_paths,
+            max_loop_iterations=args.max_loop_iterations,
             assumed_callees=assumed_callees,
+            callee_contracts=callee_contracts or None,
             memory_environment=memory_env,
             source_hash=source_hash,
             floating_point_domain=fp_domain,
             diagnostics_out=str(args.diagnostics_out) if args.diagnostics_out else None,
+            concrete_samples=int(getattr(args, "concrete_samples", 0) or 0),
+            concrete_sample_seed=int(getattr(args, "concrete_sample_seed", 0) or 0),
         )
-    except (UnsupportedInstruction, ExecutionInconclusive) as exc:
+    except (UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         contract_name = requested_contract or "manual"
         observable_names = (
             [item.name for item in contract.observables]
@@ -411,6 +493,12 @@ def _add_check_options(
     parser.add_argument("--timeout-ms", type=int, default=0, help="solver timeout in ms (0 = auto-scale: 20ms/insn, floor 5s, ceiling 120s)")
     parser.add_argument("--max-instructions", type=int, default=2048, help="per-path execution bound")
     parser.add_argument("--max-paths", type=int, default=256, help="symbolic path bound")
+    parser.add_argument(
+        "--max-loop-iterations",
+        type=int,
+        default=256,
+        help="per-PC visit bound for back-edges; exhaust → inconclusive",
+    )
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--result", type=Path, help="write the complete JSON proof result")
     parser.add_argument("--replay-out", type=Path, help="write a replayable counterexample when inequivalent")
@@ -423,6 +511,22 @@ def _add_check_options(
         "--diagnostics-out",
         type=Path,
         help="write solver diagnostics (assertion counts, timings, SMT dump) when set",
+    )
+    parser.add_argument(
+        "--concrete-samples",
+        type=int,
+        default=0,
+        help=(
+            "secondary defense: run N ConcreteOps samples (interesting + random) "
+            "after SMT; mismatches demote equivalent/inconclusive to not_equivalent "
+            "but never promote to equivalent (default: 0 = off)"
+        ),
+    )
+    parser.add_argument(
+        "--concrete-sample-seed",
+        type=int,
+        default=0,
+        help="RNG seed for --concrete-samples random states (default: 0)",
     )
     parser.add_argument("--smt-out", type=Path, help="write the generated SMT-LIB query")
     parser.add_argument(
@@ -442,6 +546,29 @@ def _add_check_options(
         type=str,
         default=None,
         help='JSON string for FloatingPointDomain overrides, e.g. \'{"rounding_modes": ["nearest-even"]}\'',
+    )
+    parser.add_argument(
+        "--callee-contracts",
+        type=Path,
+        default=None,
+        help="JSON file of named callee effect contracts (reads/writes/source)",
+    )
+    parser.add_argument(
+        "--assume-relocated-callees",
+        action="store_true",
+        help=(
+            "treat relocated B/BC targets without contracts as opaque EABI "
+            "premises (opt-in; default fails closed)"
+        ),
+    )
+    parser.add_argument(
+        "--infer-matched-callees",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "infer same-object matched-callee summaries when both object paths "
+            "are available (default: on for check-objects, off otherwise)"
+        ),
     )
 
 
@@ -529,6 +656,8 @@ def cmd_check_objects(args: argparse.Namespace) -> int:
         candidate_relocations=right.relocations,
         original_symbol=left.name,
         candidate_symbol=right.name,
+        original_object=Path(args.original),
+        candidate_object=Path(args.candidate),
     )
 
 

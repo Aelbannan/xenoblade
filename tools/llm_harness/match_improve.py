@@ -167,7 +167,9 @@ def normalize_objdiff_feedback(
     }
 
 
-def format_objdiff_feedback_text(feedback: dict[str, Any]) -> str:
+def format_objdiff_feedback_text(feedback: dict[str, Any] | None) -> str:
+    if not feedback:
+        return ""
     lines: list[str] = ["## Objdiff feedback"]
     diff_count = feedback.get("num_differences", 0)
     lines.append(f"First meaningful difference at offset +0x{feedback.get('first_difference_offset', 0):X}" if feedback.get("first_difference_offset") is not None else "No instruction differences detected.")

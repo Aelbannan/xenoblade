@@ -381,3 +381,22 @@ u32 TextBox::MakeDrawFlag() const {
 
 } // namespace lyt
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80403ce4
+extern "C" return GetTextColor__Q34nw4r3lyt7TextBoxCFUl(idx / TEXTCOLOR_MAX) { return 0; }
+// LLM-HARNESS-END: us-80403ce4
+// LLM-HARNESS-BEGIN: us-80403d60
+extern "C" void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color() {}
+// LLM-HARNESS-END: us-80403d60
+// LLM-HARNESS-BEGIN: us-80404324
+extern "C" void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color() {}
+// LLM-HARNESS-END: us-80404324
+// LLM-HARNESS-BEGIN: us-80404748
+extern "C" void GetCharStrmReader__Q34nw4r2ut4FontCFv() {}
+// LLM-HARNESS-END: us-80404748
+// LLM-HARNESS-BEGIN: us-80404b9c
+extern "C" void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo() {}
+// LLM-HARNESS-END: us-80404b9c
+// LLM-HARNESS-BEGIN: us-80405178
+extern "C" bool GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv() { return false; }
+// LLM-HARNESS-END: us-80405178

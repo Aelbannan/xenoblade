@@ -111,3 +111,10 @@ s32 ResDic::GetIndex(const ResName name) const {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803d9e70
+extern "C" void __vc__Q34nw4r3g3d6ResDicCFPCc() {}
+// LLM-HARNESS-END: us-803d9e70
+// LLM-HARNESS-BEGIN: us-803d9eec
+extern "C" void __vc__Q34nw4r3g3d6ResDicCFQ34nw4r3g3d7ResName() {}
+// LLM-HARNESS-END: us-803d9eec

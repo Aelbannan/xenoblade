@@ -221,3 +221,7 @@ void ResFontBase::GetGlyphFromIndex(Glyph* pGlyph, u16 index) const {
 } // namespace detail
 } // namespace ut
 } // namespace nw4hbm
+
+// LLM-HARNESS-BEGIN: us-8033bad0
+extern "C" return FindGlyphIndex__Q46nw4hbm2ut6detail11ResFontBaseCFPCQ36nw4hbm2ut11FontCodeMapUs(pIt, ch) { return 0; }
+// LLM-HARNESS-END: us-8033bad0

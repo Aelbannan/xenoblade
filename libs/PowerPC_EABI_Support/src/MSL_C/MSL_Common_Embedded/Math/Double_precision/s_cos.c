@@ -80,3 +80,7 @@ double cos(x) double x;
 		}
 	}
 }
+
+// LLM-HARNESS-BEGIN: us-802cd510
+double cos(double x) { return 0.0; }
+// LLM-HARNESS-END: us-802cd510

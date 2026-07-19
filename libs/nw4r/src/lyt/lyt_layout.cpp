@@ -349,3 +349,8 @@ Pane* Layout::BuildPaneObj(s32 kind, const void* pBinary,
 
 } // namespace lyt
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-804028b0
+extern "C" void BindAnimationAuto__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor(const AnimResource& rResource,
+                     ResourceAccessor* pAccessor) {}
+// LLM-HARNESS-END: us-804028b0

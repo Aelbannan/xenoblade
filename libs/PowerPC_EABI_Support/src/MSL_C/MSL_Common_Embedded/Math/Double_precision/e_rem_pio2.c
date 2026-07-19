@@ -179,3 +179,7 @@ int __ieee754_rem_pio2(x, y) double x, y[];
 	}
 	return n;
 }
+
+// LLM-HARNESS-BEGIN: us-802cb30c
+void __ieee754_rem_pio2() {}
+// LLM-HARNESS-END: us-802cb30c

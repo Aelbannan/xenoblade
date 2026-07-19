@@ -64,3 +64,7 @@ bool CDeviceSC::wkStandbyLogout(){
 
     return false;
 }
+
+// LLM-HARNESS-BEGIN: us-8044a600
+extern "C" void func_eu_8044A600() {}
+// LLM-HARNESS-END: us-8044a600

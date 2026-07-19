@@ -16,20 +16,17 @@ class MemoryProfile(str, Enum):
 
 PROFILE_CHOICES = [p.value for p in MemoryProfile]
 
-# Profiles that must not silently degrade to unconstrained RAM.
-# Empty ranges → fail closed (see build_memory_constraints).
-PROFILES_REQUIRING_RANGES = frozenset({
-    MemoryProfile.STACK_AND_KNOWN_GLOBALS,
-    MemoryProfile.HARDWARE_AWARE,
-})
-
-# Constrained profiles use the same range-builder as bounded-ordinary-ram
-# once nonempty ranges are supplied (documented in SOUNDNESS.md).
+# Constrained profiles use the same range-builder once nonempty ranges are
+# supplied (documented in SOUNDNESS.md). Claiming any of these without
+# explicit ranges fail-closes — never silently degrades to unconstrained RAM.
 PROFILES_RANGE_CONSTRAINED = frozenset({
     MemoryProfile.BOUNDED_ORDINARY_RAM,
     MemoryProfile.STACK_AND_KNOWN_GLOBALS,
     MemoryProfile.HARDWARE_AWARE,
 })
+
+# Alias: every range-constrained profile requires nonempty ranges.
+PROFILES_REQUIRING_RANGES = PROFILES_RANGE_CONSTRAINED
 
 MEMORY_PROFILE_VIOLATION = InvalidReason.MEMORY_PROFILE_VIOLATION
 
@@ -129,6 +126,17 @@ def access_within_any_range(addr: Any, width_bytes: int, ranges: list[tuple[int,
     ])
 
 
+def is_bounded_with_ranges(environment: MemoryEnvironment | None) -> bool:
+    """True when *environment* is a range-constrained profile with nonempty ranges."""
+    if environment is None:
+        return False
+    return (
+        environment.profile in PROFILES_RANGE_CONSTRAINED
+        and bool(environment.ranges)
+        and not environment.is_fail_closed_empty()
+    )
+
+
 def build_memory_constraints(
     original_exits: list[Any],
     candidate_exits: list[Any],
@@ -139,14 +147,14 @@ def build_memory_constraints(
 
     Profile policy:
     - ``assumed-ordinary-ram``: no range constraints (external assumption).
-    - ``bounded-ordinary-ram``: constrain touches when ranges are supplied;
-      empty ranges remain unconstrained (caller declared a soft bound).
-    - ``stack-and-known-globals`` / ``hardware-aware``: require nonempty
-      ranges. With ranges, uses the same access-within-range builder as
-      bounded. Without ranges, fail closed via an unsat domain constraint
-      (engine reports ``INCONCLUSIVE_LAYOUT``). Out-of-profile accesses are
-      excluded from the quantified domain; ``MEMORY_PROFILE_VIOLATION`` is
-      the reserved InvalidReason code for future per-access validity tagging.
+    - ``bounded-ordinary-ram``, ``stack-and-known-globals``, ``hardware-aware``:
+      require nonempty explicit ranges. With ranges, every touched byte address
+      on a feasible path must lie in a configured range (no wraparound). Without
+      ranges, fail closed via an unsat domain constraint (engine reports
+      ``INCONCLUSIVE_LAYOUT``) and never silently degrade to unconstrained RAM.
+      Out-of-range accesses are excluded from the quantified domain;
+      ``MEMORY_PROFILE_VIOLATION`` is the reserved InvalidReason code for
+      per-access validity tagging.
     """
     z3 = ops.z3
 
@@ -157,15 +165,10 @@ def build_memory_constraints(
         return []
 
     if not environment.ranges:
-        if environment.profile in PROFILES_REQUIRING_RANGES:
-            # Fail closed: do not silently treat as unconstrained RAM.
-            # Force layout/domain infeasibility so the engine cannot claim
-            # EQUIVALENT under an incomplete profile configuration.
-            # Out-of-profile access tagging uses InvalidReason code
-            # MEMORY_PROFILE_VIOLATION (see MEMORY_PROFILE_VIOLATION constant).
-            return [z3.BoolVal(False)]
-        # bounded-ordinary-ram with empty ranges: unconstrained (legacy soft).
-        return []
+        # Fail closed: do not silently treat as unconstrained RAM.
+        # Force layout/domain infeasibility so the engine cannot claim
+        # EQUIVALENT under an incomplete profile configuration.
+        return [z3.BoolVal(False)]
 
     constraints: list[Any] = []
     seen: set[int] = set()
@@ -175,6 +178,7 @@ def build_memory_constraints(
             if h in seen:
                 continue
             seen.add(h)
+            # memory_touches are already per-byte; width=1 is correct.
             constraints.append(
                 z3.Implies(
                     terminal.condition,

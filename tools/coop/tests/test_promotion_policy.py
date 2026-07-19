@@ -131,6 +131,48 @@ class ClassifyForPromotionTests(unittest.TestCase):
         self.assertEqual(decision.confidence_tier, "C")
         self.assertIn("confidence-tier-C-not-allowed", decision.blockers)
 
+    def test_require_bounded_ram_blocks_assumed_and_empty(self) -> None:
+        ledger = ValidationLedger(frozenset())
+        policy = PromotionPolicy(automatic_promotion=True, require_bounded_ram=True)
+
+        missing = classify_for_promotion(_equivalent_proof(), policy, ledger)
+        self.assertFalse(missing.allowed)
+        self.assertIn("unconstrained-symbolic-memory-domain", missing.blockers)
+
+        assumed = classify_for_promotion(
+            _equivalent_proof(environment=MemoryEnvironment()),
+            policy,
+            ledger,
+        )
+        self.assertFalse(assumed.allowed)
+        self.assertIn("unconstrained-symbolic-memory-domain", assumed.blockers)
+
+        empty_bounded = classify_for_promotion(
+            _equivalent_proof(
+                environment=MemoryEnvironment(
+                    profile=MemoryProfile.BOUNDED_ORDINARY_RAM, ranges=[],
+                ),
+            ),
+            policy,
+            ledger,
+        )
+        self.assertFalse(empty_bounded.allowed)
+        self.assertIn(
+            "unconstrained-symbolic-memory-domain", empty_bounded.blockers,
+        )
+
+        bounded = classify_for_promotion(
+            _equivalent_proof(
+                environment=MemoryEnvironment(
+                    profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
+                    ranges=[(0x80000000, 0x817FFFFF)],
+                ),
+            ),
+            policy,
+            ledger,
+        )
+        self.assertTrue(bounded.allowed)
+
     def test_legacy_wrapper_accepts_old_objdiff_signature(self) -> None:
         config = _config(automatic_promotion=False)
         decision = classify_for_promotion_legacy(
@@ -215,6 +257,28 @@ class ClassifyStatusPolicyTests(unittest.TestCase):
         )
 
 
+class MemoryConfigHelpersTests(unittest.TestCase):
+    def test_memory_environment_from_config(self) -> None:
+        from tools.coop.lib.config import memory_environment_from_config
+
+        self.assertIsNone(memory_environment_from_config(_config()))
+        bounded = memory_environment_from_config(
+            _config(
+                memory_profile="bounded-ordinary-ram",
+                memory_ranges=["0x80000000,0x817fffff"],
+            )
+        )
+        assert bounded is not None
+        env = MemoryEnvironment.from_dict(bounded)
+        self.assertEqual(env.profile, MemoryProfile.BOUNDED_ORDINARY_RAM)
+        self.assertEqual(env.ranges, [(0x80000000, 0x817FFFFF)])
+        empty = memory_environment_from_config(
+            _config(memory_profile="bounded-ordinary-ram", memory_ranges=[]),
+        )
+        assert empty is not None
+        self.assertTrue(MemoryEnvironment.from_dict(empty).is_fail_closed_empty())
+
+
 class CertificateReconstructionTests(unittest.TestCase):
     def test_proof_result_from_certificate_round_trip(self) -> None:
         scope = MemoryScope(
@@ -228,6 +292,12 @@ class CertificateReconstructionTests(unittest.TestCase):
             "engine_hash": "a" * 64,
             "source_hash": "b" * 64,
             "git_commit": "c" * 40,
+            "contract": "ppc-eabi",
+            "assumptions": ["assumption-one"],
+            "callee_contracts": {
+                "leaf": {"source": "certified:abc", "reads": ["r3"], "writes": ["r3"]},
+            },
+            "limits": {"max_instructions": 64, "max_paths": 8, "max_loop_iterations": 4},
             "memory_scope": scope.to_dict(),
             "environment": MemoryEnvironment(
                 profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
@@ -240,6 +310,10 @@ class CertificateReconstructionTests(unittest.TestCase):
         result = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
         self.assertEqual(result.architecture_model, ARCHITECTURE_MODEL)
         self.assertEqual(result.engine_hash, "a" * 64)
+        self.assertEqual(result.contract, "ppc-eabi")
+        self.assertEqual(result.assumptions, ["assumption-one"])
+        self.assertEqual(result.callee_contracts["leaf"]["source"], "certified:abc")
+        self.assertEqual(result.limits["max_loop_iterations"], 4)
         self.assertIsNotNone(result.memory_scope)
         assert result.memory_scope is not None
         self.assertEqual(result.memory_scope.masking_semantics, MASKING_SEMANTICS)

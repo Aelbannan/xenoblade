@@ -1168,3 +1168,13 @@ void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-804296a0
+extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(int, float) {}
+// LLM-HARNESS-END: us-804296a0
+// LLM-HARNESS-BEGIN: us-80429920
+extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam() {}
+// LLM-HARNESS-END: us-80429920
+// LLM-HARNESS-BEGIN: us-8042afb8
+extern "C" void InvalidateData__Q44nw4r3snd6detail5VoiceFPCvPCv() {}
+// LLM-HARNESS-END: us-8042afb8

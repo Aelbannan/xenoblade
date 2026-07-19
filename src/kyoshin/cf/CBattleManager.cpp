@@ -149,3 +149,167 @@ CBattleManager* CBattleManager::getInstance() {
     }
 
 }
+
+// LLM-HARNESS-BEGIN: us-800dab54
+extern "C" void func_800DA06C() {}
+// LLM-HARNESS-END: us-800dab54
+// LLM-HARNESS-BEGIN: us-800e306c
+extern "C" void func_800E2584() {}
+// LLM-HARNESS-END: us-800e306c
+// LLM-HARNESS-BEGIN: us-800eae6c
+extern "C" void func_800EA384() {}
+// LLM-HARNESS-END: us-800eae6c
+// LLM-HARNESS-BEGIN: us-800eae94
+extern "C" void func_800EA3AC() {}
+// LLM-HARNESS-END: us-800eae94
+// LLM-HARNESS-BEGIN: us-800eaef8
+extern "C" void func_800EA410() {}
+// LLM-HARNESS-END: us-800eaef8
+// LLM-HARNESS-BEGIN: us-800eaf08
+extern "C" void func_800EA420() {}
+// LLM-HARNESS-END: us-800eaf08
+// LLM-HARNESS-BEGIN: us-800eaf2c
+extern "C" void func_800EA444() {}
+// LLM-HARNESS-END: us-800eaf2c
+// LLM-HARNESS-BEGIN: us-800eaf48
+extern "C" void func_800EA460() {}
+// LLM-HARNESS-END: us-800eaf48
+// LLM-HARNESS-BEGIN: us-800eaf58
+extern "C" void func_800EA470() {}
+// LLM-HARNESS-END: us-800eaf58
+// LLM-HARNESS-BEGIN: us-800eb480
+extern "C" void func_800EA998() {}
+// LLM-HARNESS-END: us-800eb480
+// LLM-HARNESS-BEGIN: us-800ed3e4
+extern "C" void func_800EC8FC() {}
+// LLM-HARNESS-END: us-800ed3e4
+// LLM-HARNESS-BEGIN: us-800f4440
+extern "C" void func_800F3958() {}
+// LLM-HARNESS-END: us-800f4440
+// LLM-HARNESS-BEGIN: us-800f48b0
+extern "C" void func_800F3DC8() {}
+// LLM-HARNESS-END: us-800f48b0
+// LLM-HARNESS-BEGIN: us-800f4aec
+extern "C" void func_800F4004() {}
+// LLM-HARNESS-END: us-800f4aec
+// LLM-HARNESS-BEGIN: us-800f4d88
+extern "C" void func_800F42A0() {}
+// LLM-HARNESS-END: us-800f4d88
+
+// LLM-HARNESS-BEGIN: us-800d880c
+extern "C" void func_800D7D24() {}
+// LLM-HARNESS-END: us-800d880c
+// LLM-HARNESS-BEGIN: us-800d8988
+extern "C" void func_800D7EA0() {}
+// LLM-HARNESS-END: us-800d8988
+// LLM-HARNESS-BEGIN: us-800d8c90
+extern "C" void func_800D81A8() {}
+// LLM-HARNESS-END: us-800d8c90
+// LLM-HARNESS-BEGIN: us-800d9e3c
+extern "C" void func_800D9354() {}
+// LLM-HARNESS-END: us-800d9e3c
+// LLM-HARNESS-BEGIN: us-800da460
+extern "C" void func_800D9978() {}
+// LLM-HARNESS-END: us-800da460
+// LLM-HARNESS-BEGIN: us-800da788
+extern "C" void func_800D9CA0() {}
+// LLM-HARNESS-END: us-800da788
+// LLM-HARNESS-BEGIN: us-800dab8c
+extern "C" void func_800DA0A4() {}
+// LLM-HARNESS-END: us-800dab8c
+// LLM-HARNESS-BEGIN: us-800dbbe4
+extern "C" void func_800DB0FC() {}
+// LLM-HARNESS-END: us-800dbbe4
+// LLM-HARNESS-BEGIN: us-800dbfe4
+extern "C" void func_800DB4FC() {}
+// LLM-HARNESS-END: us-800dbfe4
+// LLM-HARNESS-BEGIN: us-800dc2e0
+extern "C" void func_800DB7F8() {}
+// LLM-HARNESS-END: us-800dc2e0
+// LLM-HARNESS-BEGIN: us-800dc514
+extern "C" void func_800DBA2C() {}
+// LLM-HARNESS-END: us-800dc514
+// LLM-HARNESS-BEGIN: us-800dc5b4
+extern "C" void func_800DBACC() {}
+// LLM-HARNESS-END: us-800dc5b4
+// LLM-HARNESS-BEGIN: us-800dd63c
+extern "C" void func_800DCB54() {}
+// LLM-HARNESS-END: us-800dd63c
+// LLM-HARNESS-BEGIN: us-800e13d0
+extern "C" void func_800E08E8() {}
+// LLM-HARNESS-END: us-800e13d0
+// LLM-HARNESS-BEGIN: us-800e2644
+extern "C" void func_800E1B5C() {}
+// LLM-HARNESS-END: us-800e2644
+// LLM-HARNESS-BEGIN: us-800e307c
+extern "C" void func_800E2594() {}
+// LLM-HARNESS-END: us-800e307c
+// LLM-HARNESS-BEGIN: us-800e3584
+extern "C" void func_800E2A9C() {}
+// LLM-HARNESS-END: us-800e3584
+// LLM-HARNESS-BEGIN: us-800e6fb4
+extern "C" void func_800E64CC() {}
+// LLM-HARNESS-END: us-800e6fb4
+// LLM-HARNESS-BEGIN: us-800e90d8
+extern "C" void func_800E85F0() {}
+// LLM-HARNESS-END: us-800e90d8
+// LLM-HARNESS-BEGIN: us-800e965c
+extern "C" void CBattleManager_preCalcTotalDamage() {}
+// LLM-HARNESS-END: us-800e965c
+// LLM-HARNESS-BEGIN: us-800e9d04
+extern "C" void func_800E921C() {}
+// LLM-HARNESS-END: us-800e9d04
+// LLM-HARNESS-BEGIN: us-800ea63c
+extern "C" void func_800E9B54() {}
+// LLM-HARNESS-END: us-800ea63c
+// LLM-HARNESS-BEGIN: us-800eaacc
+extern "C" void func_800E9FE4() {}
+// LLM-HARNESS-END: us-800eaacc
+// LLM-HARNESS-BEGIN: us-800ead8c
+extern "C" void func_800EA2A4() {}
+// LLM-HARNESS-END: us-800ead8c
+// LLM-HARNESS-BEGIN: us-800eaf6c
+extern "C" void func_800EA484() {}
+// LLM-HARNESS-END: us-800eaf6c
+// LLM-HARNESS-BEGIN: us-800eb490
+extern "C" void func_800EA9A8() {}
+// LLM-HARNESS-END: us-800eb490
+// LLM-HARNESS-BEGIN: us-800eb514
+extern "C" void func_800EAA2C() {}
+// LLM-HARNESS-END: us-800eb514
+// LLM-HARNESS-BEGIN: us-800ed400
+extern "C" void func_800EC918() {}
+// LLM-HARNESS-END: us-800ed400
+// LLM-HARNESS-BEGIN: us-800f421c
+extern "C" void func_800F3734() {}
+// LLM-HARNESS-END: us-800f421c
+// LLM-HARNESS-BEGIN: us-800f42e0
+extern "C" void func_800F37F8() {}
+// LLM-HARNESS-END: us-800f42e0
+// LLM-HARNESS-BEGIN: us-800f43c8
+extern "C" void func_800F38E0() {}
+// LLM-HARNESS-END: us-800f43c8
+// LLM-HARNESS-BEGIN: us-800f4458
+extern "C" void func_800F3970() {}
+// LLM-HARNESS-END: us-800f4458
+// LLM-HARNESS-BEGIN: us-800f46f0
+extern "C" void func_800F3C08() {}
+// LLM-HARNESS-END: us-800f46f0
+// LLM-HARNESS-BEGIN: us-800f4754
+extern "C" void func_800F3C6C() {}
+// LLM-HARNESS-END: us-800f4754
+// LLM-HARNESS-BEGIN: us-800f4974
+extern "C" void func_800F3E8C() {}
+// LLM-HARNESS-END: us-800f4974
+// LLM-HARNESS-BEGIN: us-800f4a74
+extern "C" void func_800F3F8C() {}
+// LLM-HARNESS-END: us-800f4a74
+// LLM-HARNESS-BEGIN: us-800f4ab0
+extern "C" void func_800F3FC8() {}
+// LLM-HARNESS-END: us-800f4ab0
+// LLM-HARNESS-BEGIN: us-800f4b1c
+extern "C" void func_800F4034() {}
+// LLM-HARNESS-END: us-800f4b1c
+// LLM-HARNESS-BEGIN: us-800f4c88
+extern "C" void func_800F41A0() {}
+// LLM-HARNESS-END: us-800f4c88

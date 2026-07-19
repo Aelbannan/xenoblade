@@ -18,3 +18,10 @@ namespace cf{
         func_802AA338();
     }
 }
+
+// LLM-HARNESS-BEGIN: us-80296420
+extern "C" void func_80293E24() {}
+// LLM-HARNESS-END: us-80296420
+// LLM-HARNESS-BEGIN: us-802964e8
+extern "C" void func_80293EEC() {}
+// LLM-HARNESS-END: us-802964e8

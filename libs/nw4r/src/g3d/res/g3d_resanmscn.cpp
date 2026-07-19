@@ -194,3 +194,22 @@ bool ResAnmScn::Bind(const ResAnmScn scene) {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803e33a0
+extern "C" void GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
+// LLM-HARNESS-END: us-803e33a0
+// LLM-HARNESS-BEGIN: us-803e3554
+extern "C" void GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
+// LLM-HARNESS-END: us-803e3554
+// LLM-HARNESS-BEGIN: us-803e35d4
+extern "C" void GetResAnmFog__Q34nw4r3g3d9ResAnmScnCFUl(unsigned long) {}
+// LLM-HARNESS-END: us-803e35d4
+// LLM-HARNESS-BEGIN: us-803e3680
+extern "C" void GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
+// LLM-HARNESS-END: us-803e3680
+// LLM-HARNESS-BEGIN: us-803e3700
+extern "C" void GetResAnmCamera__Q34nw4r3g3d9ResAnmScnCFUl(unsigned long) {}
+// LLM-HARNESS-END: us-803e3700
+// LLM-HARNESS-BEGIN: us-803e37ac
+extern "C" void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
+// LLM-HARNESS-END: us-803e37ac

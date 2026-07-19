@@ -751,3 +751,80 @@ after_bit21:
 done:
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-8010f7f4
+extern "C" void func_8010ED18() {}
+// LLM-HARNESS-END: us-8010f7f4
+// LLM-HARNESS-BEGIN: us-8010f814
+extern "C" void func_8010ED38() {}
+// LLM-HARNESS-END: us-8010f814
+// LLM-HARNESS-BEGIN: us-8010f8b0
+extern "C" bool func_8010EDD4() { return false; }
+// LLM-HARNESS-END: us-8010f8b0
+// LLM-HARNESS-BEGIN: us-8010f8b8
+extern "C" bool func_8010EDDC() { return false; }
+// LLM-HARNESS-END: us-8010f8b8
+// LLM-HARNESS-BEGIN: us-8011154c
+extern "C" bool func_80110A70() { return false; }
+// LLM-HARNESS-END: us-8011154c
+// LLM-HARNESS-BEGIN: us-80111b50
+extern "C" void func_80111074() {}
+// LLM-HARNESS-END: us-80111b50
+// LLM-HARNESS-BEGIN: us-80113fc4
+extern "C" void sinit_801134E8() {}
+// LLM-HARNESS-END: us-80113fc4
+// LLM-HARNESS-BEGIN: us-801140a4
+extern "C" bool func_801135C8() { return false; }
+// LLM-HARNESS-END: us-801140a4
+// LLM-HARNESS-BEGIN: us-801140ac
+extern "C" bool func_801135D0() { return false; }
+// LLM-HARNESS-END: us-801140ac
+// LLM-HARNESS-BEGIN: us-801140b4
+extern "C" bool func_801135D8() { return false; }
+// LLM-HARNESS-END: us-801140b4
+
+// LLM-HARNESS-BEGIN: us-8010f620
+extern "C" void func_8010EB44() {}
+// LLM-HARNESS-END: us-8010f620
+// LLM-HARNESS-BEGIN: us-8010f834
+extern "C" void func_8010ED58() {}
+// LLM-HARNESS-END: us-8010f834
+// LLM-HARNESS-BEGIN: us-8010f8c0
+extern "C" void func_8010EDE4() {}
+// LLM-HARNESS-END: us-8010f8c0
+// LLM-HARNESS-BEGIN: us-8010f91c
+extern "C" void func_8010EE40(void* self) {}
+// LLM-HARNESS-END: us-8010f91c
+// LLM-HARNESS-BEGIN: us-801114b4
+extern "C" void func_801109D8() {}
+// LLM-HARNESS-END: us-801114b4
+// LLM-HARNESS-BEGIN: us-80111554
+extern "C" void func_80110A78() {}
+// LLM-HARNESS-END: us-80111554
+// LLM-HARNESS-BEGIN: us-80111b5c
+extern "C" void func_80111080(CMenuEnemyState* self, u8* panelData, void* posA, void* posB) {}
+// LLM-HARNESS-END: us-80111b5c
+// LLM-HARNESS-BEGIN: us-801120c4
+extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {}
+// LLM-HARNESS-END: us-801120c4
+// LLM-HARNESS-BEGIN: us-801125e4
+extern "C" void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {}
+// LLM-HARNESS-END: us-801125e4
+// LLM-HARNESS-BEGIN: us-8011272c
+extern "C" void func_80111C50() {}
+// LLM-HARNESS-END: us-8011272c
+// LLM-HARNESS-BEGIN: us-8011294c
+extern "C" void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {}
+// LLM-HARNESS-END: us-8011294c
+// LLM-HARNESS-BEGIN: us-80112c4c
+extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {}
+// LLM-HARNESS-END: us-80112c4c
+// LLM-HARNESS-BEGIN: us-80112fa4
+extern "C" void func_801124C8() {}
+// LLM-HARNESS-END: us-80112fa4
+// LLM-HARNESS-BEGIN: us-8011328c
+extern "C" void func_801127B0(CMenuEnemyState* self) {}
+// LLM-HARNESS-END: us-8011328c
+// LLM-HARNESS-BEGIN: us-80113d84
+extern "C" void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor) {}
+// LLM-HARNESS-END: us-80113d84

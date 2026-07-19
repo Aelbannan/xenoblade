@@ -154,5 +154,5 @@ int EnvGenerator::CalcDecibelSquare(int scale) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-80417964
-extern "C" void SetHold__Q44nw4r3snd6detail12EnvGeneratorFi(int) {}
+extern "C" void SetHold_Q44nw4r3snd6detail12EnvGeneratorFi() {}
 // LLM-HARNESS-END: us-80417964

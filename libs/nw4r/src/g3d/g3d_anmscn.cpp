@@ -69,13 +69,13 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-803e8620
-extern "C" void GetLightSet__Q34nw4r3g3d12LightSettingFi(int) {}
+extern "C" void GetLightSet_Q34nw4r3g3d12LightSettingFi() {}
 // LLM-HARNESS-END: us-803e8620
 // LLM-HARNESS-BEGIN: us-803e869c
 extern "C" bool Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes() { return false; }
 // LLM-HARNESS-END: us-803e869c
 // LLM-HARNESS-BEGIN: us-803e86a4
-extern "C" bool Detach__Q34nw4r3g3d6AnmScnFi(int) { return false; }
+extern "C" bool Detach_Q34nw4r3g3d6AnmScnFi() { return false; }
 // LLM-HARNESS-END: us-803e86a4
 // LLM-HARNESS-BEGIN: us-803e86e8
 extern "C" bool GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv() { return false; }
@@ -114,13 +114,13 @@ extern "C" void GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv() {}
 extern "C" void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb() {}
 // LLM-HARNESS-END: us-803e8758
 // LLM-HARNESS-BEGIN: us-803e8a38
-extern "C" void SetFrame__Q34nw4r3g3d9AnmScnResFf(float) {}
+extern "C" void SetFrame_Q34nw4r3g3d9AnmScnResFf() {}
 // LLM-HARNESS-END: us-803e8a38
 // LLM-HARNESS-BEGIN: us-803e8a90
 extern "C" bool GetFrame__Q34nw4r3g3d9AnmScnResCFv() { return false; }
 // LLM-HARNESS-END: us-803e8a90
 // LLM-HARNESS-BEGIN: us-803e8a98
-extern "C" void SetUpdateRate__Q34nw4r3g3d9AnmScnResFf(float) {}
+extern "C" void SetUpdateRate_Q34nw4r3g3d9AnmScnResFf() {}
 // LLM-HARNESS-END: us-803e8a98
 // LLM-HARNESS-BEGIN: us-803e8abc
 extern "C" bool GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv() { return false; }
@@ -135,7 +135,7 @@ extern "C" void G3dProc__Q34nw4r3g3d9AnmScnResFUlUlPv() {}
 extern "C" void GetLightSet__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d8LightSetUl() {}
 // LLM-HARNESS-END: us-803e8b90
 // LLM-HARNESS-BEGIN: us-803e8cc8
-extern "C" void GetAmbLightColor__Q34nw4r3g3d9AnmScnResFUl(unsigned long) {}
+extern "C" void* GetAmbLightColor_Q34nw4r3g3d9AnmScnResFUl() { return 0; }
 // LLM-HARNESS-END: us-803e8cc8
 // LLM-HARNESS-BEGIN: us-803e8d30
 extern "C" void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl() {}
@@ -159,10 +159,10 @@ extern "C" void GetFogResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d12FogAnmResultUl
 extern "C" void GetCameraResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d15CameraAnmResultUl() {}
 // LLM-HARNESS-END: us-803e927c
 // LLM-HARNESS-BEGIN: us-803e9308
-extern "C" void GetSpecularLightID__Q34nw4r3g3d9AnmScnResCFUl(unsigned long) {}
+extern "C" void GetSpecularLightID_Q34nw4r3g3d9AnmScnResCFUl() {}
 // LLM-HARNESS-END: us-803e9308
 // LLM-HARNESS-BEGIN: us-803e9340
-extern "C" void HasSpecularLight__Q34nw4r3g3d9AnmScnResCFUl(unsigned long) {}
+extern "C" void HasSpecularLight_Q34nw4r3g3d9AnmScnResCFUl() {}
 // LLM-HARNESS-END: us-803e9340
 // LLM-HARNESS-BEGIN: us-803e9384
 extern "C" void UpdateCache__Q34nw4r3g3d9AnmScnResFv() {}

@@ -211,7 +211,7 @@ bool BankFileReader::ReadWaveParam(WaveData* pData, int waveIndex,
 extern "C" void GetInstParam__Q44nw4r3snd6detail14BankFileReaderCFiii() {}
 // LLM-HARNESS-END: us-80413de4
 // LLM-HARNESS-BEGIN: us-80414094
-extern "C" void GetReferenceToSubRegion__Q44nw4r3snd6detail14BankFileReaderCFPCQ54nw4r3snd6detail4Util128DataRef<v,Q54nw4r3snd6detail8BankFile9InstParam,Q54nw4r3snd6detail8BankFile10RangeTable,Q54nw4r3snd6detail8BankFile10IndexTable>i() {}
+extern "C" void GetReferenceToSubRegion__Q44nw4r3snd6detail14BankFileReaderCFPCQ54nw4r3snd6detail4Util128DataRef() {}
 // LLM-HARNESS-END: us-80414094
 // LLM-HARNESS-BEGIN: us-804141bc
 extern "C" void ReadWaveInfo__Q44nw4r3snd6detail14BankFileReaderCFPQ44nw4r3snd6detail8WaveInfoRCQ54nw4r3snd6detail8InstInfo16WaveDataLocationPCvPPCQ44nw4r3snd6detail8WaveInfo() {}

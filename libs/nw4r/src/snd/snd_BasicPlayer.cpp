@@ -67,8 +67,8 @@ f32 BasicPlayer::GetRemoteFxSend(int remote) const {
 extern "C" void Init__Q44nw4r3snd6detail14PlayerParamSetFv() {}
 // LLM-HARNESS-END: us-80414410
 // LLM-HARNESS-BEGIN: us-80414770
-extern "C" void SetBiquadFilter__Q44nw4r3snd6detail11BasicPlayerFif(int, float) {}
+extern "C" void SetBiquadFilter_Q44nw4r3snd6detail11BasicPlayerFif() {}
 // LLM-HARNESS-END: us-80414770
 // LLM-HARNESS-BEGIN: us-8041477c
-extern "C" bool SetRemoteFilter__Q44nw4r3snd6detail11BasicPlayerFi(int) { return false; }
+extern "C" bool SetRemoteFilter_Q44nw4r3snd6detail11BasicPlayerFi() { return false; }
 // LLM-HARNESS-END: us-8041477c

@@ -362,16 +362,16 @@ bool PaneComponent::isVisible() {
 extern "C" void drawLine___Q210homebutton3guiFfffffUcR8_GXColor() {}
 // LLM-HARNESS-END: us-80321b20
 // LLM-HARNESS-BEGIN: us-803221e0
-extern "C" void delComponent__Q310homebutton3gui7ManagerFPQ310homebutton3gui9Component(Component* pComponent) {}
+extern "C" void delComponent__Q310homebutton3gui7ManagerFPQ310homebutton3gui9Component() {}
 // LLM-HARNESS-END: us-803221e0
 // LLM-HARNESS-BEGIN: us-80322840
-extern "C" void addLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout(const nw4hbm::lyt::Layout& rLayout) {}
+extern "C" void addLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout() {}
 // LLM-HARNESS-END: us-80322840
 // LLM-HARNESS-BEGIN: us-80322b10
 extern "C" void GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv() {}
 // LLM-HARNESS-END: us-80322b10
 // LLM-HARNESS-BEGIN: us-80322b20
-extern "C" void delLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout(const nw4hbm::lyt::Layout& rLayout) {}
+extern "C" void delLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout() {}
 // LLM-HARNESS-END: us-80322b20
 // LLM-HARNESS-BEGIN: us-80323180
 extern "C" void IsVisible__Q36nw4hbm3lyt4PaneCFv() {}

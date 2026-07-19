@@ -241,14 +241,14 @@ void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu) {
 }
 
 // LLM-HARNESS-BEGIN: us-8035d060
-void OSRestart() {}
+void OSRestart(u32 resetCode) {}
 // LLM-HARNESS-END: us-8035d060
 // LLM-HARNESS-BEGIN: us-8035d140
-void __OSReturnToMenu() {}
+void __OSReturnToMenu(void) {}
 // LLM-HARNESS-END: us-8035d140
 // LLM-HARNESS-BEGIN: us-8035d410
-void __OSReturnToMenuForError() {}
+void __OSReturnToMenuForError(void) {}
 // LLM-HARNESS-END: us-8035d410
 // LLM-HARNESS-BEGIN: us-8035d4c0
-void __OSHotResetForError() {}
+void __OSHotResetForError(void) {}
 // LLM-HARNESS-END: us-8035d4c0

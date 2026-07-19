@@ -807,5 +807,5 @@ void CMCEffCylinder::func_80226230() {
 }
 
 // LLM-HARNESS-BEGIN: us-80225b80
-extern "C" void __ct__CMCEffStart() {}
+extern "C" void ct_CMCEffStart() {}
 // LLM-HARNESS-END: us-80225b80

@@ -619,7 +619,7 @@ extern "C" bool func_8012FF6C() { return false; }
 // LLM-HARNESS-END: us-80130a40
 
 // LLM-HARNESS-BEGIN: us-8012ea60
-extern "C" void __ct__CUIBattleManager() {}
+extern "C" void ct_CUIBattleManager() {}
 // LLM-HARNESS-END: us-8012ea60
 // LLM-HARNESS-BEGIN: us-8012f104
 extern "C" void func_8012E630() {}
@@ -631,7 +631,7 @@ extern "C" void func_8012F2C0() {}
 extern "C" void func_8012F558() {}
 // LLM-HARNESS-END: us-8013002c
 // LLM-HARNESS-BEGIN: us-801300cc
-extern "C" void func_8012F5F8() {}
+extern "C" void harness_stub_us_801300cc() {}
 // LLM-HARNESS-END: us-801300cc
 // LLM-HARNESS-BEGIN: us-80130224
 extern "C" void func_8012F750() {}
@@ -649,5 +649,5 @@ extern "C" void func_8012FD04() {}
 extern "C" void func_8012FD60() {}
 // LLM-HARNESS-END: us-80130834
 // LLM-HARNESS-BEGIN: us-801309dc
-extern "C" void __dt__Q216CUIBattleManager5CTestFv() {}
+extern "C" void dt_Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801309dc

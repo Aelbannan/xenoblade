@@ -793,7 +793,7 @@ extern "C" void func_8010ED58() {}
 extern "C" void func_8010EDE4() {}
 // LLM-HARNESS-END: us-8010f8c0
 // LLM-HARNESS-BEGIN: us-8010f91c
-extern "C" void func_8010EE40(void* self) {}
+extern "C" void harness_stub_us_8010f91c() {}
 // LLM-HARNESS-END: us-8010f91c
 // LLM-HARNESS-BEGIN: us-801114b4
 extern "C" void func_801109D8() {}
@@ -802,29 +802,29 @@ extern "C" void func_801109D8() {}
 extern "C" void func_80110A78() {}
 // LLM-HARNESS-END: us-80111554
 // LLM-HARNESS-BEGIN: us-80111b5c
-extern "C" void func_80111080(CMenuEnemyState* self, u8* panelData, void* posA, void* posB) {}
+extern "C" void harness_stub_us_80111b5c() {}
 // LLM-HARNESS-END: us-80111b5c
 // LLM-HARNESS-BEGIN: us-801120c4
-extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {}
+extern "C" void harness_stub_us_801120c4() {}
 // LLM-HARNESS-END: us-801120c4
 // LLM-HARNESS-BEGIN: us-801125e4
-extern "C" void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {}
+extern "C" void harness_stub_us_801125e4() {}
 // LLM-HARNESS-END: us-801125e4
 // LLM-HARNESS-BEGIN: us-8011272c
 extern "C" void func_80111C50() {}
 // LLM-HARNESS-END: us-8011272c
 // LLM-HARNESS-BEGIN: us-8011294c
-extern "C" void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {}
+extern "C" void harness_stub_us_8011294c() {}
 // LLM-HARNESS-END: us-8011294c
 // LLM-HARNESS-BEGIN: us-80112c4c
-extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {}
+extern "C" void harness_stub_us_80112c4c() {}
 // LLM-HARNESS-END: us-80112c4c
 // LLM-HARNESS-BEGIN: us-80112fa4
 extern "C" void func_801124C8() {}
 // LLM-HARNESS-END: us-80112fa4
 // LLM-HARNESS-BEGIN: us-8011328c
-extern "C" void func_801127B0(CMenuEnemyState* self) {}
+extern "C" void harness_stub_us_8011328c() {}
 // LLM-HARNESS-END: us-8011328c
 // LLM-HARNESS-BEGIN: us-80113d84
-extern "C" void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor) {}
+extern "C" void harness_stub_us_80113d84() {}
 // LLM-HARNESS-END: us-80113d84

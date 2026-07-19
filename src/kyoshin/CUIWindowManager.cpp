@@ -179,10 +179,10 @@ extern "C" void func_801413DC() {}
 // LLM-HARNESS-END: us-80141de0
 
 // LLM-HARNESS-BEGIN: us-8013ca58
-extern "C" void __ct__CUIWindowManager() {}
+extern "C" void ct_CUIWindowManager() {}
 // LLM-HARNESS-END: us-8013ca58
 // LLM-HARNESS-BEGIN: us-8013cc2c
-extern "C" void __dt__CTTask_CUIWindowManager() {}
+extern "C" void dt_CTTask_CUIWindowManager() {}
 // LLM-HARNESS-END: us-8013cc2c
 // LLM-HARNESS-BEGIN: us-8013d5a4
 extern "C" void func_8013CBB4() {}
@@ -272,7 +272,7 @@ extern "C" void func_8013EAB0() {}
 extern "C" void func_8013EB90() {}
 // LLM-HARNESS-END: us-8013f594
 // LLM-HARNESS-BEGIN: us-8013fbdc
-extern "C" void __dt__Q216CUIWindowManager5CTestFv() {}
+extern "C" void dt_Q216CUIWindowManager5CTestFv() {}
 // LLM-HARNESS-END: us-8013fbdc
 // LLM-HARNESS-BEGIN: us-8013fc48
 extern "C" void func_8013F244() {}

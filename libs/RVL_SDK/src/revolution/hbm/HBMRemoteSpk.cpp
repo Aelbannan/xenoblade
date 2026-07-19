@@ -289,8 +289,8 @@ bool RemoteSpk::isPlayReady(s32 chan) const {
 extern "C" void DelaySpeakerOffCallback__Q210homebutton9RemoteSpkFP7OSAlarmP9OSContext() {}
 // LLM-HARNESS-END: us-803245e0
 // LLM-HARNESS-BEGIN: us-80324610
-extern "C" void SpeakerOffCallback__Q210homebutton9RemoteSpkFll(long, long) {}
+extern "C" void SpeakerOffCallback_Q210homebutton9RemoteSpkFll() {}
 // LLM-HARNESS-END: us-80324610
 // LLM-HARNESS-BEGIN: us-80324700
-extern "C" void Disconnect__Q210homebutton9RemoteSpkFl(long) {}
+extern "C" void Disconnect_Q210homebutton9RemoteSpkFl() {}
 // LLM-HARNESS-END: us-80324700

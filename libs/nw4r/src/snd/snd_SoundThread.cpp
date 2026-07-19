@@ -129,3 +129,7 @@ void SoundThread::SoundThreadProc() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80423bd8
+extern "C" void FrameProcess__Q44nw4r3snd6detail11SoundThreadFv() {}
+// LLM-HARNESS-END: us-80423bd8

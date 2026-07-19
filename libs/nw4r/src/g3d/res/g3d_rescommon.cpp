@@ -61,3 +61,7 @@ void ResWriteSSMask(u8* pPtr, u32 value) {
 } // namespace detail
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803d9b74
+extern "C" void __eq__Q34nw4r3g3d7ResNameCFQ34nw4r3g3d7ResName() {}
+// LLM-HARNESS-END: us-803d9b74

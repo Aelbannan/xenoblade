@@ -1066,3 +1066,16 @@ void operator delete[](void* p) {
 }
 
 #pragma ecplusplus off
+
+// LLM-HARNESS-BEGIN: us-80435c98
+extern "C" void __dt__Q33mtl10MemManager9MemRegionFv() {}
+// LLM-HARNESS-END: us-80435c98
+// LLM-HARNESS-BEGIN: us-804375bc
+extern "C" bool __nw__FUl(unsigned long) { return false; }
+// LLM-HARNESS-END: us-804375bc
+// LLM-HARNESS-BEGIN: us-804375c4
+extern "C" void __dl__FPv() {}
+// LLM-HARNESS-END: us-804375c4
+// LLM-HARNESS-BEGIN: us-80437778
+extern "C" void __dla__FPv() {}
+// LLM-HARNESS-END: us-80437778

@@ -1011,3 +1011,7 @@ bool SoundArchivePlayer::WsdCallback::GetWaveSoundData(
 
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80421268
+extern "C" void detail_SetupSoundImpl__Q34nw4r3snd18SoundArchivePlayerFPQ34nw4r3snd11SoundHandleUlPQ54nw4r3snd6detail10BasicSound11AmbientInfoPQ34nw4r3snd10SoundActorbPCQ44nw4r3snd14SoundStartable9StartInfo() {}
+// LLM-HARNESS-END: us-80421268

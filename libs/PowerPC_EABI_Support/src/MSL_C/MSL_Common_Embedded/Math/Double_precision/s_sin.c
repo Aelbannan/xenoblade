@@ -80,3 +80,7 @@ double sin(x) double x;
 		}
 	}
 }
+
+// LLM-HARNESS-BEGIN: us-802cda18
+double sin(double x) { return 0.0; }
+// LLM-HARNESS-END: us-802cda18

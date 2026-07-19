@@ -28,8 +28,12 @@ documented per-implementation private-storage abstraction.
 
 - A path is feasible when the conjunction of path conditions (branch predicates,
   relocation/layout constraints, alignment constraints) is `sat`.
-- CFG construction enumerates all acyclic paths. Loops and back-edges are
-  unsupported: any backward branch terminates the path as inconclusive.
+- CFG construction enumerates feasible paths. Back-edges are allowed up to
+  `max_loop_iterations` visits per PC on a path (default 256). Exceeding the
+  bound yields `INCONCLUSIVE_UNSUPPORTED` and never silently truncates the
+  exploration. Constant-trip loops (for example `li`/`mtctr`/`bdnz` with a
+  concrete count at or below the bound) complete normally when the exit
+  condition becomes concrete.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
 - Path count and instruction count are bounded by `max_paths` (default 256) and
   `max_instructions` (default 2048). Exceeding either produces
@@ -37,22 +41,26 @@ documented per-implementation private-storage abstraction.
 
 ### Terminal behavior
 
-A terminal is a triple `(condition, state, exit_kind, exit_target)`:
+A terminal is a triple `(condition, state, exit_kind, exit_target)`. Exit-kind
+strings below are the exact values emitted by `semantics.execute_cfg`:
 
 | Exit kind | Meaning | Target compared |
 |---|---|---|
-| `return` | `bclr` with LK=0 | None |
-| `branch` | `b`/`bc`/`bcctr` with LK=0 | Exit address |
-| `fallthrough` | End of block | None |
-| `call` | `bl`/`bcl` with recorded callee summary | Next instruction |
-| `trap` | `twi` predicate satisfied | Exception vector |
-| `sc` | `sc` instruction | Exception vector |
-| `rfi` | `rfi` instruction | Return address |
+| `return` | `bclr` LK=0, or summarized matched call returning | LR / none |
+| `direct-branch` | `b`/`bc`/`bcctr` with LK=0 and a concrete target | Exit address |
+| `indirect-branch` | `bcctr` (or similar) without a call summary | Exit address |
+| `fallthrough` | End of decoded block | None |
+| `call` | Linked branch recorded before summary application | Next instruction |
+| `call-indirect` | Linked indirect call without a resolved summary | Exit address |
+| `program-exception` | `twi` trap taken | Exception vector (`0x700`) |
+| `system-call` | `sc` | Exception vector (`0xC00`) |
+| `return-from-interrupt` | `rfi` | Restored SRR0 |
 
 - Exit-kind mismatch is always a difference.
-- Exit-target mismatch is compared when both sides have a non-`None` target.
-- `call` terminals are produced only when a matched-callee summary is available;
-  otherwise the path is inconclusive.
+- Exit-target mismatch is compared when both sides have a non-`None` target and
+  neither side is `fallthrough`.
+- Matched-callee summaries replace a `call` continuation with a summarized
+  `return`; without a recorded summary the call path is inconclusive.
 
 ### `valid` and partial-domain equivalence
 
@@ -98,20 +106,32 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
 - **Per-implementation independent private-stack masking**: each side's own
   private stack interval `[stack_low, entry_sp)` is masked independently.
   An address private to one implementation does not hide a write by the other
-  implementation. Masking is disabled when a call executes or an r1-derived
-  value is stored to memory.
+  implementation. Masking is disabled when a call executes (including fixed
+  EABI `_savegpr_*`/`_restgpr_*`/`_savefpr_*`/`_restfpr_*` helpers) or when an
+  r1-derived value is stored to memory (direct `r1`, register aliases such as
+  `mr`/`ori`, computed pointers such as `addi rD,r1,imm`, or `stmw` ranges that
+  include `r1`). Escape detection is a free-variable check for `input.gpr.r1`
+  in the stored expression (fail-closed; not a full taint lattice).
+- Stack layout feasibility also rejects frames deeper than
+  `MAX_PRIVATE_STACK_DEPTH` (16 MiB). That bound fail-closes SP wraparound
+  through address zero, which would otherwise collapse `stack_low` near 0 and
+  privatize almost all memory.
 - Alignment: aligned loads/stores are required for multi-byte accesses.
 - Memory-environment profiles (`assumed-ordinary-ram`, `bounded-ordinary-ram`,
-  `stack-and-known-globals`, `hardware-aware`) are recorded on every result.
+  `stack-and-known-globals`, `hardware-aware`) are recorded on every result
+  when an explicit profile is supplied (CLI `--memory-profile` / coop
+  `memory_profile`). Unspecified callers leave `environment` unset so
+  confidence-tier classification stays tier-neutral for default proofs; the
+  engine still applies `assumed-ordinary-ram` constraints internally.
   - `assumed-ordinary-ram`: accesses are unconstrained ordinary RAM (external
-    assumption; default).
-  - `bounded-ordinary-ram`: when ranges are supplied, every touched address must
-    lie in a configured range (no wraparound). Empty ranges remain a soft /
-    unconstrained bound for compatibility.
-  - `stack-and-known-globals` and `hardware-aware`: **require nonempty ranges**.
-    With ranges, they use the same access-within-range constraint builder as
-    bounded. Without ranges they **fail closed** (unsat domain →
-    `INCONCLUSIVE_LAYOUT`) and never silently degrade to unconstrained RAM.
+    assumption; default). Private-stack masking still applies independently.
+  - `bounded-ordinary-ram`, `stack-and-known-globals`, and `hardware-aware`:
+    **require nonempty explicit ranges**. With ranges, every touched byte
+    address on a feasible path must lie in a configured range (no wraparound).
+    Empty ranges **fail closed** (unsat domain → `INCONCLUSIVE_LAYOUT`) and
+    never silently degrade to unconstrained RAM. Range constraints compose with
+    private-stack masking: stack-private bytes are still compared via masking,
+    but touches must also fall inside the declared RAM ranges.
     `InvalidReason.MEMORY_PROFILE_VIOLATION` (code 10) is the reserved reason
     code for out-of-profile access tagging.
 - 32-bit address wraparound is rejected through the layout-feasibility check.
@@ -137,8 +157,25 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
 ### Calls
 
 - Direct calls (`bl`/`bcl`) with a recorded matched-callee summary are modeled
-  as deterministic opaque ABI transitions: inputs are preserved read set,
-  outputs reflect write set, and the nonvolatile EABI state is preserved.
+  as deterministic ABI transitions: inputs are the preserved read set,
+  outputs reflect the write set, and nonvolatile EABI state is preserved.
+  Summaries may be opaque EABI or precise body-inferred effect sets.
+- Same-object inference composes nested precise summaries when every nested
+  relocated callee has a non-opaque contract; otherwise it stays
+  `nested-call-opaque-eabi`. Validation failures widen required effects rather
+  than collapsing to full opaque EABI.
+- **Standalone vs co-op callee policy:**
+  - Standalone raw-block CLI never silently assumes relocated callees: missing
+    premises stay inconclusive (or warn). Opt in with
+    `--assume-relocated-callees` (opaque EABI) or `--callee-contracts`.
+  - Standalone `check-objects` infers matched-callee contracts from both object
+    bodies by default (`callee_inference`); disable with
+    `--no-infer-matched-callees`.
+  - Co-op `cycle` / certificate issuance requires a current
+    `equivalence_certificate` for every direct callee (or MWCC save/restore
+    helper). Certificates are re-attested from current object bytes before use;
+    stale or missing callee certificates yield
+    `INCONCLUSIVE_UNVALIDATED_CALLEE`.
 - Without a recorded summary, the call is inconclusive.
 - A SAT model that involves an opaque summary is `INCONCLUSIVE_ABSTRACTION`,
   not `NOT_EQUIVALENT`.
@@ -146,22 +183,37 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
   EABI r11-relative register load/store ranges.
 - Matched callees are assumed to be location-independent EABI functions: the
   absolute link-register return address is not a semantic input.
+- Proof JSON and certificates record each used premise under
+  `callee_contracts.<name>.source` (for example `opaque-eabi`,
+  `inferred:…`, `certified:<sha256>`).
 
 ### Floating point
 
-- Rounding mode: nearest-even (`RN=00`).
-- `FPSCR.NI=0` (non-IEEE mode disabled).
-- Traps: disabled for all FP exceptions.
-- Finite-input overflow is excluded.
+- Rounding mode: nearest-even (`RN=00`), enforced via `FloatingPointDomain`
+  (`require_ni_zero` + `rounding_modes`) constraining `FPSCR[0:2]`.
+- `FPSCR.NI=0` (non-IEEE mode disabled); configs with `require_ni_zero=false`
+  fail closed as `INCONCLUSIVE_UNSUPPORTED`.
+- Traps: disabled for all FP exceptions (assumed; trap delivery is not
+  modeled). `traps_enabled=true` fails closed.
+- Finite-input overflow is excluded when `exclude_finite_overflow=true`
+  (default) via `_constrain_fp_defined_result` → `FP_DOMAIN_EXCLUDED`.
 - Invalid-operation (`VX`) and divide-by-zero (`ZX`) causes are tracked.
-- Underflow, inexact, overflow flags are not modeled.
+- Underflow, inexact, overflow flags are not modeled; requesting
+  `model_underflow_flag` / `model_inexact_flag` fails closed.
 - Fused-single and paired-fused proofs require finite operands to be exact
-  binary32 values expanded in FPRs.
+  binary32 values expanded in FPRs when
+  `fused_input_domain=exact-expanded-binary32` (default). Use
+  `unrestricted` to skip that origin constraint; other values fail closed.
+- Optional operand exclusions: `allow_nan`, `allow_infinity`, and
+  `allow_subnormal` (defaults true) clear `valid` with `FP_DOMAIN_EXCLUDED`
+  when false.
 - Paired-single uses independent binary32 lanes with Force25 multiplication,
   accumulated lane exceptions, and unconditional paired writeback under enabled
   exceptions.
 - `fsqrt`/`fsqrts` encodings (later PowerPC revisions) are reserved on
   Broadway and rejected by the decoder.
+- CLI `--fp-domain` / coop `floating_point_domain` pass through to the engine;
+  unsupported overrides never silently ignore the requested domain.
 
 ### Relocations
 
@@ -196,13 +248,20 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
 | Soundness claim | Implementation | Tests | Result field |
 |---|---|---|---|
 | Independent per-side stack masking | `engine._private_stack_address`, `engine._memory_difference` | `test_private_stack_memory.py` | `memory_scope.private_stack.masking_semantics` |
+| Stack wrap / oversized frame rejected | `semantics.MAX_PRIVATE_STACK_DEPTH`, `execute_cfg` layout update | `test_upward_stack_*` | `status=INCONCLUSIVE_LAYOUT` |
 | Ordinary RAM range assumed | memory-profile constraints | `test_memory_profile.py` | `environment.memory_profile` |
-| Fail-closed stack/hardware profiles without ranges | `memory_profile.build_memory_constraints` | `test_memory_profile` fail-closed cases | `environment.fail_closed_empty_ranges`, `INCONCLUSIVE_LAYOUT` |
-| No unsupported loop | `semantics.execute_cfg` | control-flow tests | `unsupported`, `status=INCONCLUSIVE_UNSUPPORTED` |
+| Fail-closed constrained profiles without ranges | `memory_profile.build_memory_constraints` | `test_memory_profile` fail-closed cases | `environment.fail_closed_empty_ranges`, `INCONCLUSIVE_LAYOUT` |
+| No silently truncated loop | `semantics.execute_cfg` visit bound | loop-support tests | `unsupported`, `status=INCONCLUSIVE_UNSUPPORTED`, `limits.max_loop_iterations` |
+| Bounded constant-trip loops | `semantics.execute_cfg` | loop-support tests | `status=EQUIVALENT` / `NOT_EQUIVALENT` |
 | Cache-disabled `dcbz`/`dcbz_l` → `CACHE_DISABLED` | `semantics._constrain_valid` | `test_definedness:test_dcbz_cache_disabled_sets_reason` | `state.invalid_reason` |
 | Privileged `mfmsr`/`mtmsr`/`mfsr`/`mtsr` → `PRIVILEGED_INSTRUCTION` | `semantics._constrain_valid` | `test_definedness:test_mfmsr_user_mode_sets_reason` | `state.invalid_reason` |
-| Nearest-even FP rounding | `semantics` FP operations | FP fixture corpus | `assumptions`, `floating_point_scope` |
+| Privileged `mfspr`/`mtspr` (SRR*/aux/TB) → `PRIVILEGED_INSTRUCTION` | `semantics._constrain_valid` | `test_definedness:test_mfspr_hid0_user_mode_sets_reason` | `state.invalid_reason` |
+| FP domain exclusion → `FP_DOMAIN_EXCLUDED` | `semantics._constrain_fp_defined_result` / `_constrain_fp_value_domain` | `test_definedness:test_fadds_finite_overflow_sets_fp_domain_reason`, `test_fp_domain` | `state.invalid_reason`, `floating_point_domain` |
+| Nearest-even FP rounding | `semantics` FP operations + domain validate | FP fixture corpus, `test_fp_domain` | `assumptions`, `floating_point_domain` |
+| Unsupported FP domain fails closed | `FloatingPointDomain.validate`, `engine.check_equivalence` | `test_fp_domain` | `status=INCONCLUSIVE_UNSUPPORTED` |
 | Current callee certificate chain | `_re attest_certificate_tree`, `equivalence_certificate_error` | `test_targets.test_validation_rejects_stale_certificate_dependency` | `equivalence_certificate.callees` |
+| Precise composed callee summaries | `callee_inference.infer_matched_callee_contracts` | `test_callee_composition.py` | `callee_contracts.*.source` |
+| CLI no silent relocated assume | `cli._run_check` | `test_callee_composition.py` | stderr warning / inconclusive |
 | Deadline covering all phases | `deadline.Deadline`, `engine.check_with_portfolio` | `test_deadline.py` | `solver.phases` |
 | Cache includes architecture model | `_cache_key`, `_cache_get` | `test_targets` versioning tests | cache JSON |
 | Alignment constraint | `semantics` load/store `valid` predicate | `test_symbolic_relocations` alignment tests | `assumptions` |
@@ -212,27 +271,40 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
 | InvalidReason tracked per instruction | `semantics._constrain_valid` | definedness tests | `state.invalid_reason` |
 | INCONCLUSIVE_UNMODELED_EXCEPTION (reserved) | `result.ProofStatus` | — | `status` |
 | Exit-kind and exit-target comparison | `engine._terminal_difference` | `test_checker` control-flow tests | `mismatch.exit_kind`, `mismatch.exit_target` |
-| Private stack disabled after call | `semantics._apply_call_summary` | escape tests | `memory_scope.private_stack.candidate.disabled_reasons` |
-| Private stack disabled after r1 escape | `semantics._mark_stack_pointer_escape` | escape tests | `memory_scope.private_stack.original.disabled_reasons` |
+| Private stack disabled after call | `semantics._apply_call_summary` (opaque and fixed helpers) | `test_call_disables_*`, `test_savegpr_*` | `memory_scope.private_stack.*.disabled_reasons` |
+| Private stack disabled after r1 escape | `semantics._mark_stack_pointer_escape` | escape / alias / stmw tests | `memory_scope.private_stack.*.disabled_reasons` |
 | Architecture model versioned | `result.ARCHITECTURE_MODEL` | `test_targets.test_old_architecture_model_certificate_rejected` | Certificate `architecture` |
 | Result format versioned | `result.RESULT_FORMAT` | `test_targets.test_old_result_format_certificate_rejected` | Certificate `result_format` |
 | Certificate version accepted | `targets.EQUIVALENCE_CERTIFICATE_VERSION` | `test_targets.test_wrong_certificate_version_rejected` | Certificate `version` |
 | Promotion policy gated | `coop.lib.equivalence_policy.classify_for_promotion` | policy tests | `PromotionDecision.blockers` |
+| Concrete sampling secondary defense | `engine.run_concrete_sampling`, `--concrete-samples` | `test_concrete_sampling.py` | `concrete_sampling` (never a certificate) |
 
 ## Result fields
 
 | field | type | meaning |
 |---|---|---|
-| `status` | string | One of eight `ProofStatus` values |
+| `status` | string | One of the `ProofStatus` values |
 | `architecture_model` | string | Canonical model identifier |
-| `format` | int | Result schema version |
+| `format` | int | Result schema version (`RESULT_FORMAT`) |
 | `contract` | string | Contract preset or `manual` |
+| `contract_resolution` | object | Auto-contract added observables (when applicable) |
 | `observables` | string[] | Compared state components |
 | `assumptions` | string[] | Declared environmental and domain restrictions |
 | `solver.result` | string | `sat` / `unsat` / `unknown` |
 | `solver.phases` | object[] | Per-phase name, result, elapsed ms |
+| `limits` | object | `max_instructions`, `max_paths`, `max_loop_iterations` |
+| `environment` | object | Memory profile, ranges, fail-closed flags |
 | `memory_scope` | object | Private-stack masking status per implementation |
+| `floating_point_domain` | object | FP domain + proven/assumed/unsupported coverage |
 | `mismatch` | object | First observed difference (kind, name, values) |
 | `counterexample` | object | Concrete SAT witness (initial state + relocations) |
+| `repair_hint` | object | First concrete divergence hint on `not_equivalent` |
+| `concrete_sampling` | object | Optional ConcreteOps secondary-defense report (`--concrete-samples`); never an equivalence certificate |
 | `assumed_callees` | string[] | Callee premises actually used in the proof |
+| `callee_contracts` | object | Per-callee `source` / `reads` / `writes` |
 | `abstractions` | string[] | Reasons for `INCONCLUSIVE_ABSTRACTION` |
+| `opcodes_used` | string[] | Opcodes enumerated for ledger confidence tiering |
+| `engine_hash` | string | SHA-256 of declared engine trust-boundary tree |
+| `source_hash` | string | Canonical hash of proof-request inputs |
+| `git_commit` / `git_dirty` | string / bool | Repository identity at proof time |
+| `platform` / `python_version` / `z3_version` / `capstone_version` | string | Runtime identity |

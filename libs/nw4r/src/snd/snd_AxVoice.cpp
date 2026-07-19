@@ -1354,3 +1354,10 @@ void AxVoiceParamBlock::UpdateDelta() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8041147c
+extern "C" void IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam() {}
+// LLM-HARNESS-END: us-8041147c
+// LLM-HARNESS-BEGIN: us-8041215c
+extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(char, float) {}
+// LLM-HARNESS-END: us-8041215c

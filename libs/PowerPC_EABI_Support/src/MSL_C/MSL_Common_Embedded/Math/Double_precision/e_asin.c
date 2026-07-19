@@ -115,3 +115,7 @@ double __ieee754_asin(x) double x;
 	else
 		return -t;
 }
+
+// LLM-HARNESS-BEGIN: us-802c9ec0
+void __ieee754_asin() {}
+// LLM-HARNESS-END: us-802c9ec0

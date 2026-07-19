@@ -438,3 +438,46 @@ void BasicSound::SetId(u32 id) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-804154f4
+extern "C" void UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv() {}
+// LLM-HARNESS-END: us-804154f4
+// LLM-HARNESS-BEGIN: us-80415528
+extern "C" void UpdateParam__Q44nw4r3snd6detail10BasicSoundFv() {}
+// LLM-HARNESS-END: us-80415528
+// LLM-HARNESS-BEGIN: us-80415a70
+extern "C" bool AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap() { return false; }
+// LLM-HARNESS-END: us-80415a70
+// LLM-HARNESS-BEGIN: us-80415a78
+extern "C" void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap() {}
+// LLM-HARNESS-END: us-80415a78
+// LLM-HARNESS-BEGIN: us-80415a84
+extern "C" bool AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer() { return false; }
+// LLM-HARNESS-END: us-80415a84
+// LLM-HARNESS-BEGIN: us-80415a8c
+extern "C" void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer() {}
+// LLM-HARNESS-END: us-80415a8c
+// LLM-HARNESS-BEGIN: us-80415a98
+extern "C" bool AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor() { return false; }
+// LLM-HARNESS-END: us-80415a98
+// LLM-HARNESS-BEGIN: us-80415aa0
+extern "C" bool AttachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer() { return false; }
+// LLM-HARNESS-END: us-80415aa0
+// LLM-HARNESS-BEGIN: us-80415aa8
+extern "C" void DetachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer() {}
+// LLM-HARNESS-END: us-80415aa8
+// LLM-HARNESS-BEGIN: us-80415ab4
+extern "C" bool GetVoiceOutCount__Q44nw4r3snd6detail10BasicSoundCFv() { return false; }
+// LLM-HARNESS-END: us-80415ab4
+// LLM-HARNESS-BEGIN: us-80415b14
+extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail10BasicSoundFv() {}
+// LLM-HARNESS-END: us-80415b14
+// LLM-HARNESS-BEGIN: us-80415ca8
+extern "C" void SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo() {}
+// LLM-HARNESS-END: us-80415ca8
+// LLM-HARNESS-BEGIN: us-80415d74
+extern "C" void GetAmbientPriority__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfoUl() {}
+// LLM-HARNESS-END: us-80415d74
+// LLM-HARNESS-BEGIN: us-80415e64
+extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv() { return false; }
+// LLM-HARNESS-END: us-80415e64

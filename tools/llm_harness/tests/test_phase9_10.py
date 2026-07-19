@@ -228,7 +228,7 @@ def _harness(root: Path, responses: List[str], scores: List[float]) -> tuple[Har
             "new": [{"id": "new", "provider": "fake", "model": "m", "runs": 1}],
         },
         "providers": {"fake": {}},
-        "execution": {"isolation": {"mode": "none"}, "max_retries": 0},
+        "execution": {"isolation": {"mode": "none"}, "max_retries": 0, "auto_promote": False},
         "solve": {
             "initial_candidates": 2,
             "compile_repairs": 1,
@@ -306,7 +306,7 @@ class TestSolveVsSampleBenchmark(unittest.TestCase):
 
 
 class TestMutationSafety(unittest.TestCase):
-    def test_ordinary_solve_never_calls_promote(self) -> None:
+    def test_ordinary_solve_never_calls_promote_when_disabled(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             harness, _, adapter = _harness(
@@ -316,6 +316,19 @@ class TestMutationSafety(unittest.TestCase):
             )
             harness.solve("demo")
             self.assertEqual(adapter.source_writes, 0)
+
+    def test_auto_promote_calls_promote_on_full_match(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            harness, _, adapter = _harness(
+                root,
+                [_cand("void target() { /* full */ }")],
+                [100.0],
+            )
+            harness.auto_promote = True
+            harness.auto_promote_owner = "llm-harness"
+            harness.solve("demo")
+            self.assertEqual(adapter.source_writes, 1)
 
     def test_metrics_mark_zero_auto_mutations(self) -> None:
         state = {
@@ -345,6 +358,7 @@ class TestDocumentationCommands(unittest.TestCase):
             ["solve", "--help"],
             ["sample", "--help"],
             ["promote", "--help"],
+            ["promote-accepted", "--help"],
             ["--show-config"],
         ):
             # --show-config needs a real config; skip content check there when missing adapter

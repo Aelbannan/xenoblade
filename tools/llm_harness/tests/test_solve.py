@@ -153,7 +153,7 @@ def _write_harness(root: Path, responses: List[str]) -> tuple[Harness, FakeProvi
             "repair": [{"id": "repair", "provider": "fake", "model": "repair-model", "runs": 1}],
         },
         "providers": {"fake": {}},
-        "execution": {"isolation": {"mode": "none"}, "max_retries": 0},
+        "execution": {"isolation": {"mode": "none"}, "max_retries": 0, "auto_promote": False},
         "solve": {
             "initial_candidates": 2,
             "compile_repairs": 1,

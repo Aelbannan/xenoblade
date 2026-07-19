@@ -15,3 +15,40 @@ CLight::CLight(){
     unk3C = 10000;
     unk30 = r0;
 }
+
+// LLM-HARNESS-BEGIN: us-804c4440
+extern "C" void func_804C02E4() {}
+// LLM-HARNESS-END: us-804c4440
+// LLM-HARNESS-BEGIN: us-804c44f4
+extern "C" bool func_804C0398() { return false; }
+// LLM-HARNESS-END: us-804c44f4
+// LLM-HARNESS-BEGIN: us-804c44fc
+extern "C" void func_804C03A0() {}
+// LLM-HARNESS-END: us-804c44fc
+// LLM-HARNESS-BEGIN: us-804c45b0
+extern "C" void func_804C0454() {}
+// LLM-HARNESS-END: us-804c45b0
+// LLM-HARNESS-BEGIN: us-804c45e0
+extern "C" void func_804C0484() {}
+// LLM-HARNESS-END: us-804c45e0
+// LLM-HARNESS-BEGIN: us-804c46cc
+extern "C" void func_804C0570() {}
+// LLM-HARNESS-END: us-804c46cc
+// LLM-HARNESS-BEGIN: us-804c494c
+extern "C" void func_804C07F0() {}
+// LLM-HARNESS-END: us-804c494c
+// LLM-HARNESS-BEGIN: us-804c4a24
+extern "C" void func_804C08C8() {}
+// LLM-HARNESS-END: us-804c4a24
+// LLM-HARNESS-BEGIN: us-804c4a7c
+extern "C" bool func_804C0920() { return false; }
+// LLM-HARNESS-END: us-804c4a7c
+// LLM-HARNESS-BEGIN: us-804c4a84
+extern "C" void func_804C0928() {}
+// LLM-HARNESS-END: us-804c4a84
+// LLM-HARNESS-BEGIN: us-804c4b3c
+extern "C" bool func_804C09E0() { return false; }
+// LLM-HARNESS-END: us-804c4b3c
+// LLM-HARNESS-BEGIN: us-804c4b44
+extern "C" void func_804C09E8() {}
+// LLM-HARNESS-END: us-804c4b44

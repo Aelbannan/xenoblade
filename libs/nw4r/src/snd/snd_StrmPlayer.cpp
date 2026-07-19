@@ -910,3 +910,34 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80425d38
+extern "C" void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int) {}
+// LLM-HARNESS-END: us-80425d38
+// LLM-HARNESS-BEGIN: us-80425fd8
+extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack() {}
+// LLM-HARNESS-END: us-80425fd8
+// LLM-HARNESS-BEGIN: us-80426ee8
+extern "C" void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(long, float) {}
+// LLM-HARNESS-END: us-80426ee8
+// LLM-HARNESS-BEGIN: us-80426f68
+extern "C" void GetPlayerTrack__Q44nw4r3snd6detail10StrmPlayerFi(int) {}
+// LLM-HARNESS-END: us-80426f68
+// LLM-HARNESS-BEGIN: us-804272d0
+extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
+// LLM-HARNESS-END: us-804272d0
+// LLM-HARNESS-BEGIN: us-804272d4
+extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
+// LLM-HARNESS-END: us-804272d4
+// LLM-HARNESS-BEGIN: us-804272d8
+extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
+// LLM-HARNESS-END: us-804272d8
+// LLM-HARNESS-BEGIN: us-804272e8
+extern "C" bool IsPause__Q44nw4r3snd6detail10StrmPlayerCFv() { return false; }
+// LLM-HARNESS-END: us-804272e8
+// LLM-HARNESS-BEGIN: us-804272f0
+extern "C" bool IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv() { return false; }
+// LLM-HARNESS-END: us-804272f0
+// LLM-HARNESS-BEGIN: us-804272f8
+extern "C" bool IsActive__Q44nw4r3snd6detail10StrmPlayerCFv() { return false; }
+// LLM-HARNESS-END: us-804272f8

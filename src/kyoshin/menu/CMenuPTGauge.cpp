@@ -279,3 +279,47 @@ after_bit21:
 done:
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-80188b98
+extern "C" bool func_80187710() { return false; }
+// LLM-HARNESS-END: us-80188b98
+// LLM-HARNESS-BEGIN: us-801894b0
+extern "C" bool func_80187EFC() { return false; }
+// LLM-HARNESS-END: us-801894b0
+// LLM-HARNESS-BEGIN: us-801894b8
+extern "C" bool func_80187F04() { return false; }
+// LLM-HARNESS-END: us-801894b8
+// LLM-HARNESS-BEGIN: us-801894c0
+extern "C" bool func_80187F0C() { return false; }
+// LLM-HARNESS-END: us-801894c0
+
+// LLM-HARNESS-BEGIN: us-80188388
+extern "C" void __ct__CMenuPTGauge() {}
+// LLM-HARNESS-END: us-80188388
+// LLM-HARNESS-BEGIN: us-80188b1c
+extern "C" void func_80187694() {}
+// LLM-HARNESS-END: us-80188b1c
+// LLM-HARNESS-BEGIN: us-80188ba0
+extern "C" void func_80187718() {}
+// LLM-HARNESS-END: us-80188ba0
+// LLM-HARNESS-BEGIN: us-80188c00
+extern "C" void func_80187778() {}
+// LLM-HARNESS-END: us-80188c00
+// LLM-HARNESS-BEGIN: us-80188ce0
+extern "C" void func_80187858() {}
+// LLM-HARNESS-END: us-80188ce0
+// LLM-HARNESS-BEGIN: us-80188de0
+extern "C" void func_80187958() {}
+// LLM-HARNESS-END: us-80188de0
+// LLM-HARNESS-BEGIN: us-8018903c
+extern "C" void func_80187A88() {}
+// LLM-HARNESS-END: us-8018903c
+// LLM-HARNESS-BEGIN: us-80189124
+extern "C" void func_80187B70() {}
+// LLM-HARNESS-END: us-80189124
+// LLM-HARNESS-BEGIN: us-80189244
+extern "C" void func_80187C90() {}
+// LLM-HARNESS-END: us-80189244
+// LLM-HARNESS-BEGIN: us-801893dc
+extern "C" void func_80187E28() {}
+// LLM-HARNESS-END: us-801893dc

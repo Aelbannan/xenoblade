@@ -1,6 +1,6 @@
 # LLM decompilation harness
 
-This harness runs evidence-driven function-decompilation experiments against MWCC builds, objdiff scoring, and PPC equivalence. Ordinary runs never mutate canonical source — only explicit `promote --write --owner` can.
+This harness runs evidence-driven function-decompilation experiments against MWCC builds, objdiff scoring, and PPC equivalence. By default, `FULL_MATCH` / `EQUIVALENT_MATCH` winners are auto-promoted into canonical source (`execution.auto_promote`).
 
 ## Recommended workflow
 
@@ -16,9 +16,13 @@ python3 tools/llm_harness/run.py sample new <target-id> --runs 10
 python3 tools/llm_harness/run.py promote build/llm-harness/<target>/<experiment>
 python3 tools/llm_harness/run.py promote build/llm-harness/<target>/<experiment> \
   --write --owner <agent>
+
+# Backfill: promote every saved accepted winner not yet in the registry
+python3 tools/llm_harness/run.py promote-accepted --dry-run
+python3 tools/llm_harness/run.py promote-accepted
 ```
 
-`solve` generates a few diverse initial candidates, then spends remaining budget on compile repair or binary-diff repair against the best saved candidate. It stops on `FULL_MATCH` / `EQUIVALENT_MATCH`, repeated mismatch fingerprints, or exhausted repair budgets.
+`solve` generates a few diverse initial candidates, then spends remaining budget on compile repair or binary-diff repair against the best saved candidate. It stops on `FULL_MATCH` / `EQUIVALENT_MATCH`, repeated mismatch fingerprints, or exhausted repair budgets. Accepted wins are written into source and `targets.json` automatically unless `execution.auto_promote` is false.
 
 ## Requirements
 
@@ -51,14 +55,15 @@ python3 tools/llm_harness/run.py stats
 | `project_ready` | Symbol accepted **and** containing object/TU split-size/regression checks (set at promotion/TU) |
 | `blocked_reason` | e.g. `unvalidated_callee` for unresolved-callee `CODE_MATCH` |
 
-`CODE_MATCH` is never `symbol_accepted`. Per-function size delta is diagnostic only; split-object `.text` budget is enforced by canonical `coop cycle` during explicit promotion.
+`CODE_MATCH` is never `symbol_accepted`. Per-function size delta is diagnostic only; split-object `.text` budget is enforced by canonical `coop cycle` during promotion.
 
 ## Safety contract
 
-- Ordinary `new` / `improve` / `solve` / `tu-complete` only write under `build/llm-harness/`.
+- Non-accepted `new` / `improve` / `solve` / `tu-complete` candidates only write under `build/llm-harness/`.
 - Candidates are evaluated in git-worktree isolation when configured.
-- `promote --write` requires `--owner` and rejects stale/non-accepted experiments.
-- Killing a normal run cannot leave canonical source modified.
+- Accepted `FULL_MATCH` / `EQUIVALENT_MATCH` winners are auto-promoted (`execution.auto_promote`, owner `execution.auto_promote_owner`, default `llm-harness`).
+- Explicit `promote --write` still requires `--owner`.
+- Set `execution.auto_promote` to `false` to keep the old experiment-only behavior.
 
 ## Configuration
 

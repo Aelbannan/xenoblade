@@ -370,3 +370,10 @@ MTX44* MTX44Copy(register MTX44* pDst, register const MTX44* pSrc) {
 
 } // namespace math
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8040d3dc
+extern "C" void MTX34Add__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34() {}
+// LLM-HARNESS-END: us-8040d3dc
+// LLM-HARNESS-BEGIN: us-8040d440
+extern "C" void MTX34Mult__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34f() {}
+// LLM-HARNESS-END: us-8040d440

@@ -201,3 +201,22 @@ void SeqSound::SeqLoadTask::OnCancel() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8041d3ec
+extern "C" bool SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv() { return false; }
+// LLM-HARNESS-END: us-8041d3ec
+// LLM-HARNESS-BEGIN: us-8041d3f4
+extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv() {}
+// LLM-HARNESS-END: us-8041d3f4
+// LLM-HARNESS-BEGIN: us-8041d63c
+extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv() { return false; }
+// LLM-HARNESS-END: us-8041d63c
+// LLM-HARNESS-BEGIN: us-8041d644
+extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv() { return false; }
+// LLM-HARNESS-END: us-8041d644
+// LLM-HARNESS-BEGIN: us-8041d64c
+extern "C" bool IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv() { return false; }
+// LLM-HARNESS-END: us-8041d64c
+// LLM-HARNESS-BEGIN: us-8041d654
+extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail8SeqSoundCFv() { return false; }
+// LLM-HARNESS-END: us-8041d654

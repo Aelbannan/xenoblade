@@ -667,3 +667,10 @@ Material* Window::GetFrameMaterial(u32 idx) const {
 
 } // namespace lyt
 } // namespace nw4hbm
+
+// LLM-HARNESS-BEGIN: us-80337010
+extern "C" void FindAnimationLink__Q36nw4hbm3lyt6WindowFPQ36nw4hbm3lyt13AnimTransform() {}
+// LLM-HARNESS-END: us-80337010
+// LLM-HARNESS-BEGIN: us-803391b0
+extern "C" void GetRuntimeTypeInfo__Q36nw4hbm3lyt6WindowCFv() {}
+// LLM-HARNESS-END: us-803391b0

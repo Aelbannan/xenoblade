@@ -116,10 +116,15 @@ class TestMemoryEnvironment(unittest.TestCase):
         ops = SymbolicOps()
         self.assertEqual(build_memory_constraints([], [], env, ops), [])
 
-    def test_bounded_no_ranges_no_constraints(self):
+    def test_bounded_no_ranges_fail_closed(self):
         env = MemoryEnvironment(profile=MemoryProfile.BOUNDED_ORDINARY_RAM, ranges=[])
         ops = SymbolicOps()
-        self.assertEqual(build_memory_constraints([], [], env, ops), [])
+        constraints = build_memory_constraints([], [], env, ops)
+        self.assertEqual(len(constraints), 1)
+        self.assertTrue(env.is_fail_closed_empty())
+        s = ops.z3.Solver()
+        s.add(*constraints)
+        self.assertEqual(s.check(), ops.z3.unsat)
 
     def test_stack_and_known_globals_empty_ranges_fail_closed(self):
         env = MemoryEnvironment(
@@ -169,6 +174,12 @@ class TestMemoryEnvironment(unittest.TestCase):
         self.assertTrue(d["fail_closed_empty_ranges"])
         self.assertEqual(d["invalid_reason_code"], 10)
 
+    def test_to_dict_bounded_empty(self):
+        env = MemoryEnvironment(profile=MemoryProfile.BOUNDED_ORDINARY_RAM, ranges=[])
+        d = env.to_dict()
+        self.assertEqual(d["mmio"], "fail-closed-no-ranges")
+        self.assertTrue(d["fail_closed_empty_ranges"])
+
     def test_to_dict_bounded(self):
         env = MemoryEnvironment(
             profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
@@ -177,6 +188,8 @@ class TestMemoryEnvironment(unittest.TestCase):
         d = env.to_dict()
         self.assertEqual(d["memory_profile"], "bounded-ordinary-ram")
         self.assertEqual(len(d["ranges"]), 1)
+        self.assertEqual(d["mmio"], "excluded-by-range")
+        self.assertFalse(d["fail_closed_empty_ranges"])
 
     def test_from_dict_roundtrip(self):
         env = MemoryEnvironment(
@@ -281,6 +294,82 @@ class TestBoundedEquivalence(unittest.TestCase):
         )
         self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_LAYOUT)
         self.assertNotEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_bounded_empty_ranges_inconclusive(self):
+        code = bytes.fromhex("38630004")
+        from tools.ppc_equivalence.decoder import decode_block
+        insns = decode_block(code, 0x80000000)
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=10000)
+        env = MemoryEnvironment(profile=MemoryProfile.BOUNDED_ORDINARY_RAM, ranges=[])
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            memory_environment=env,
+        )
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_LAYOUT)
+        self.assertTrue(result.environment.is_fail_closed_empty())
+
+    def test_store_outside_range_inconclusive(self):
+        """Concrete store to address 0 is outside MEM1-style ranges → layout unsat."""
+        # li r3, 0 ; stw r4, 0(r3)
+        code = bytes.fromhex("3860000090830000")
+        from tools.ppc_equivalence.decoder import decode_block
+        insns = decode_block(code, 0x80000000)
+        contract = make_contract(preset=None, observe=["memory"], timeout_ms=10000)
+        env = MemoryEnvironment(
+            profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
+            ranges=[(0x80000000, 0x8FFFFFFF)],
+        )
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            memory_environment=env,
+        )
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_LAYOUT)
+
+    def test_default_environment_omitted_when_unspecified(self):
+        """Unspecified profile keeps result.environment None (tier-neutral)."""
+        code = bytes.fromhex("38630004")
+        from tools.ppc_equivalence.decoder import decode_block
+        insns = decode_block(code, 0x80000000)
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=10000)
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+        )
+        self.assertIsNone(result.environment)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_private_stack_composes_with_bounded_ranges(self):
+        """Stack allocation + store under MEM1 bounds stays equivalent.
+
+        Private-stack masking and RAM-range constraints both apply: the
+        frame store must land in the declared range, and private bytes are
+        still masked independently per implementation.
+        """
+        # stwu r1, -16(r1) ; stw r3, 8(r1) ; addi r1, r1, 16 ; blr
+        code = bytes.fromhex("9421fff090610008382100104e800020")
+        from tools.ppc_equivalence.decoder import decode_block
+        insns = decode_block(code, 0x80000000, validate_with_capstone=False)
+        contract = make_contract(preset=None, observe=["memory", "r1"], timeout_ms=10000)
+        env = MemoryEnvironment(
+            profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
+            ranges=[(0x80000000, 0x817FFFFF)],
+        )
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            memory_environment=env,
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+        self.assertIsNotNone(result.memory_scope)
+        self.assertEqual(
+            result.environment.profile, MemoryProfile.BOUNDED_ORDINARY_RAM,
+        )
 
     def test_stack_and_known_globals_with_ranges_equivalent(self):
         code = bytes.fromhex("38630004")

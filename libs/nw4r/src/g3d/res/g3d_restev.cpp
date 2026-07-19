@@ -219,3 +219,25 @@ void ResTev::DCStore(bool sync) {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803dd3b8
+extern "C" void GXSetTevAlphaIn__Q34nw4r3g3d6ResTevF13_GXTevStageID14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg() {}
+// LLM-HARNESS-END: us-803dd3b8
+// LLM-HARNESS-BEGIN: us-803dd448
+extern "C" void GXSetTevAlphaOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID() {}
+// LLM-HARNESS-END: us-803dd448
+// LLM-HARNESS-BEGIN: us-803dd4f0
+extern "C" void GXSetTevKColorSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKColorSel() {}
+// LLM-HARNESS-END: us-803dd4f0
+// LLM-HARNESS-BEGIN: us-803dd57c
+extern "C" void GXSetTevKAlphaSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKAlphaSel() {}
+// LLM-HARNESS-END: us-803dd57c
+// LLM-HARNESS-BEGIN: us-803dd6d4
+extern "C" void GXSetTevOrder__Q34nw4r3g3d6ResTevF13_GXTevStageID13_GXTexCoordID11_GXTexMapID12_GXChannelID() {}
+// LLM-HARNESS-END: us-803dd6d4
+// LLM-HARNESS-BEGIN: us-803dd87c
+extern "C" void GXSetTevColorOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID() {}
+// LLM-HARNESS-END: us-803dd87c
+// LLM-HARNESS-BEGIN: us-803dd924
+extern "C" void SetNumTevStages__Q34nw4r3g3d6ResTevFUc(unsigned char) {}
+// LLM-HARNESS-END: us-803dd924

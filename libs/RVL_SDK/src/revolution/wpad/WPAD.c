@@ -2678,3 +2678,115 @@ void WPADRecalibrate(s32 chan) {
 
     OSRestoreInterrupts(enable);
 }
+
+// LLM-HARNESS-BEGIN: us-8036bae0
+int __wpadNoAlloc() { return 0; }
+// LLM-HARNESS-END: us-8036bae0
+// LLM-HARNESS-BEGIN: us-8036baf0
+int __wpadNoFree() { return 0; }
+// LLM-HARNESS-END: us-8036baf0
+// LLM-HARNESS-BEGIN: us-8036bb00
+int WPADIsEnabledVSM() { return 0; }
+// LLM-HARNESS-END: us-8036bb00
+// LLM-HARNESS-BEGIN: us-8036bb10
+int WPADIsEnabledTRN() { return 0; }
+// LLM-HARNESS-END: us-8036bb10
+// LLM-HARNESS-BEGIN: us-8036bb20
+int WPADIsEnabledGTR() { return 0; }
+// LLM-HARNESS-END: us-8036bb20
+// LLM-HARNESS-BEGIN: us-8036bb30
+int WPADIsEnabledDRM() { return 0; }
+// LLM-HARNESS-END: us-8036bb30
+// LLM-HARNESS-BEGIN: us-8036bb40
+int WBCSetupCalibration() { return 0; }
+// LLM-HARNESS-END: us-8036bb40
+// LLM-HARNESS-BEGIN: us-8036bb50
+int WBCGetCalibrationStatus() { return 0; }
+// LLM-HARNESS-END: us-8036bb50
+// LLM-HARNESS-BEGIN: us-8036bb60
+int WBCGetBatteryLevel() { return 0; }
+// LLM-HARNESS-END: us-8036bb60
+// LLM-HARNESS-BEGIN: us-8036bb70
+void WBCReadDummy() {}
+// LLM-HARNESS-END: us-8036bb70
+// LLM-HARNESS-BEGIN: us-8036bba0
+void WBCSetZEROPointDummy() {}
+// LLM-HARNESS-END: us-8036bba0
+// LLM-HARNESS-BEGIN: us-8036bbd0
+void WBCGetTGCWeightDummy() {}
+// LLM-HARNESS-END: us-8036bbd0
+// LLM-HARNESS-BEGIN: us-8036bdd0
+void __wpadSendDataSub() {}
+// LLM-HARNESS-END: us-8036bdd0
+// LLM-HARNESS-BEGIN: us-8036bfb0
+void __wpadCalcRadioQuality() {}
+// LLM-HARNESS-END: us-8036bfb0
+// LLM-HARNESS-BEGIN: us-8036c0c0
+void __wpadIsControllerDataChanged() {}
+// LLM-HARNESS-END: us-8036c0c0
+// LLM-HARNESS-BEGIN: us-8036c9c0
+void __wpadCalcRecalibration() {}
+// LLM-HARNESS-END: us-8036c9c0
+// LLM-HARNESS-BEGIN: us-8036ca80
+void __wpadCalcControllerData() {}
+// LLM-HARNESS-END: us-8036ca80
+// LLM-HARNESS-BEGIN: us-8036cc20
+void __wpadManageHandler() {}
+// LLM-HARNESS-END: us-8036cc20
+// LLM-HARNESS-BEGIN: us-8036d600
+void __wpadManageHandler0() {}
+// LLM-HARNESS-END: us-8036d600
+// LLM-HARNESS-BEGIN: us-8036d620
+void __wpadClearControlBlock() {}
+// LLM-HARNESS-END: us-8036d620
+// LLM-HARNESS-BEGIN: us-8036d8a0
+void __wpadInitSub() {}
+// LLM-HARNESS-END: us-8036d8a0
+// LLM-HARNESS-BEGIN: us-8036dbc0
+void WPADGetRadioSensitivity() {}
+// LLM-HARNESS-END: us-8036dbc0
+// LLM-HARNESS-BEGIN: us-8036dc50
+void __wpadSetupConnectionCallback() {}
+// LLM-HARNESS-END: us-8036dc50
+// LLM-HARNESS-BEGIN: us-8036dd20
+void __wpadAbortConnectionCallback() {}
+// LLM-HARNESS-END: us-8036dd20
+// LLM-HARNESS-BEGIN: us-8036de10
+void __wpadInitConnectionCallback() {}
+// LLM-HARNESS-END: us-8036de10
+// LLM-HARNESS-BEGIN: us-8036e710
+void __wpadRetrieveChannel() {}
+// LLM-HARNESS-END: us-8036e710
+// LLM-HARNESS-BEGIN: us-8036e830
+void __wpadConnectionCallback() {}
+// LLM-HARNESS-END: us-8036e830
+// LLM-HARNESS-BEGIN: us-8036ecf0
+void __wpadReceiveCallback() {}
+// LLM-HARNESS-END: us-8036ecf0
+// LLM-HARNESS-BEGIN: us-8036ee20
+void __wpadDisconnectCallback() {}
+// LLM-HARNESS-END: us-8036ee20
+// LLM-HARNESS-BEGIN: us-8036ef10
+void WPADSetAutoSleepTime(int min) {}
+// LLM-HARNESS-END: us-8036ef10
+// LLM-HARNESS-BEGIN: us-8036f270
+void __wpadInfoCallback() {}
+// LLM-HARNESS-END: us-8036f270
+// LLM-HARNESS-BEGIN: us-803714c0
+void __wpadIsBusyStream() {}
+// LLM-HARNESS-END: us-803714c0
+// LLM-HARNESS-BEGIN: us-80371930
+void WPADGetDpdFormat() {}
+// LLM-HARNESS-END: us-80371930
+// LLM-HARNESS-BEGIN: us-80371990
+void __wpadDpdCallback() {}
+// LLM-HARNESS-END: us-80371990
+// LLM-HARNESS-BEGIN: us-80372a50
+void WPADControlBLC() {}
+// LLM-HARNESS-END: us-80372a50
+// LLM-HARNESS-BEGIN: us-80373460
+int WPADIsUsedCallbackByKPAD() { return 0; }
+// LLM-HARNESS-END: us-80373460
+// LLM-HARNESS-BEGIN: us-80373470
+int WPADSetCallbackByKPAD() { return 0; }
+// LLM-HARNESS-END: us-80373470

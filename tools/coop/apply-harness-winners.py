@@ -69,10 +69,10 @@ def get_experiment_dir(entry: dict) -> Path:
     return ROOT / Path(artifact).parent
 
 
-def promote_target(target_id: str, exp_dir: Path) -> str:
+def promote_target(target_id: str, exp_dir: Path, owner: str) -> str:
     result = run(
         sys.executable, "tools/llm_harness/run.py", "promote",
-        str(exp_dir), "--write",
+        str(exp_dir), "--write", "--owner", owner,
     )
     out = (result.stdout or "").strip() + (result.stderr or "").strip()
     return out or f"promoted {target_id}"
@@ -104,6 +104,11 @@ def main() -> int:
     parser.add_argument("--min-status", choices=["COMPILES", "CODE_MATCH", "FULL_MATCH"],
                         default="COMPILES",
                         help="Minimum evaluation status to apply (default: COMPILES)")
+    parser.add_argument(
+        "--owner",
+        default="llm-harness",
+        help="Claim owner used for promote --write (default: llm-harness)",
+    )
     args = parser.parse_args()
 
     winners = load_winners(args.min_status)
@@ -140,7 +145,7 @@ def main() -> int:
         print(f"  [1/2] Promoting ...", end=" ")
         sys.stdout.flush()
         try:
-            promote_out = promote_target(target_id, exp_dir)
+            promote_out = promote_target(target_id, exp_dir, args.owner)
             print()
             for ln in promote_out.split("\n"):
                 print(f"         {ln}")

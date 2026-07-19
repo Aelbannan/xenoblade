@@ -239,3 +239,16 @@ void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu) {
     OS_ERROR("OSResetSystem() is obsoleted. It doesn't work any longer.\n");
     // clang-format on
 }
+
+// LLM-HARNESS-BEGIN: us-8035d060
+void OSRestart() {}
+// LLM-HARNESS-END: us-8035d060
+// LLM-HARNESS-BEGIN: us-8035d140
+void __OSReturnToMenu() {}
+// LLM-HARNESS-END: us-8035d140
+// LLM-HARNESS-BEGIN: us-8035d410
+void __OSReturnToMenuForError() {}
+// LLM-HARNESS-END: us-8035d410
+// LLM-HARNESS-BEGIN: us-8035d4c0
+void __OSHotResetForError() {}
+// LLM-HARNESS-END: us-8035d4c0

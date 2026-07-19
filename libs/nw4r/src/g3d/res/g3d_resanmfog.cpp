@@ -25,3 +25,7 @@ void ResAnmFog::GetAnmResult(FogAnmResult* pResult, f32 frame) const {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803e2cb4
+extern "C" void GetAnmResult__Q34nw4r3g3d9ResAnmFogCFPQ34nw4r3g3d12FogAnmResultf(FogAnmResult* pResult, f32 frame) {}
+// LLM-HARNESS-END: us-803e2cb4

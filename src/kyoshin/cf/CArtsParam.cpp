@@ -32,3 +32,35 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
     return unk2A;
 }
 }
+
+// LLM-HARNESS-BEGIN: us-80154a80
+extern "C" void func_8015403C() {}
+// LLM-HARNESS-END: us-80154a80
+// LLM-HARNESS-BEGIN: us-80154a9c
+extern "C" void func_80154058() {}
+// LLM-HARNESS-END: us-80154a9c
+// LLM-HARNESS-BEGIN: us-80154ad0
+extern "C" void func_8015408C() {}
+// LLM-HARNESS-END: us-80154ad0
+// LLM-HARNESS-BEGIN: us-80154b78
+extern "C" void func_80154134() {}
+// LLM-HARNESS-END: us-80154b78
+// LLM-HARNESS-BEGIN: us-80154bac
+extern "C" void func_80154168() {}
+// LLM-HARNESS-END: us-80154bac
+// LLM-HARNESS-BEGIN: us-80154be0
+extern "C" void func_8015419C() {}
+// LLM-HARNESS-END: us-80154be0
+
+// LLM-HARNESS-BEGIN: us-80154b04
+extern "C" void func_801540C0() {}
+// LLM-HARNESS-END: us-80154b04
+// LLM-HARNESS-BEGIN: us-80154bf4
+extern "C" void func_801541B0() {}
+// LLM-HARNESS-END: us-80154bf4
+// LLM-HARNESS-BEGIN: us-80154cc4
+extern "C" void func_80154280() {}
+// LLM-HARNESS-END: us-80154cc4
+// LLM-HARNESS-BEGIN: us-80155fa8
+extern "C" void func_801554DC() {}
+// LLM-HARNESS-END: us-80155fa8

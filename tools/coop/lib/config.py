@@ -21,10 +21,18 @@ class CoopConfig:
     report_cache: Path = Path("build/coop-last-report.json")
     objdiff_report_args: List[str] = field(default_factory=list)
     automatic_promotion: bool = False
-    reject_architecture_models: tuple[str, ...] = ("broadway-ppc32-be-v18",)
+    reject_architecture_models: tuple[str, ...] = (
+        "broadway-ppc32-be-v18",
+        "broadway-ppc32-be-v19",
+        "broadway-ppc32-be-v20",
+        "broadway-ppc32-be-v21",
+    )
     allowed_confidence_tiers: frozenset[str] = frozenset({"A", "B"})
     allowed_engine_sha256: str | None = None
     require_bounded_ram: bool = False
+    memory_profile: str | None = None
+    memory_ranges: list[str] = field(default_factory=list)
+    floating_point_domain: dict[str, Any] | None = None
 
     @property
     def build_dir(self) -> Path:
@@ -91,7 +99,12 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
     if isinstance(raw_reject, list):
         reject_models = tuple(str(m) for m in raw_reject)
     else:
-        reject_models = ("broadway-ppc32-be-v18",)
+        reject_models = (
+            "broadway-ppc32-be-v18",
+            "broadway-ppc32-be-v19",
+            "broadway-ppc32-be-v20",
+            "broadway-ppc32-be-v21",
+        )
 
     raw_tiers = data.get("allowed_confidence_tiers")
     if isinstance(raw_tiers, list):
@@ -117,7 +130,42 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
         allowed_confidence_tiers=allowed_tiers,
         allowed_engine_sha256=data.get("allowed_engine_sha256"),
         require_bounded_ram=bool(data.get("require_bounded_ram", False)),
+        memory_profile=(
+            str(data["memory_profile"])
+            if data.get("memory_profile") is not None
+            else None
+        ),
+        memory_ranges=[str(item) for item in data.get("memory_ranges", []) or []],
+        floating_point_domain=(
+            dict(data["floating_point_domain"])
+            if isinstance(data.get("floating_point_domain"), dict)
+            else None
+        ),
     )
+
+
+def memory_environment_from_config(config: CoopConfig) -> dict[str, Any] | None:
+    """Build a ``MemoryEnvironment.to_dict()`` payload from coop config knobs.
+
+    Returns ``None`` when no profile is configured (engine default:
+    ``assumed-ordinary-ram``). Bounded / hardware profiles with empty ranges
+    are still returned so the engine can fail closed rather than silently
+    degrading.
+    """
+    if config.memory_profile is None:
+        return None
+    from tools.ppc_equivalence.memory_profile import (
+        MemoryEnvironment,
+        MemoryProfile,
+        parse_ranges,
+    )
+
+    ranges = parse_ranges(list(config.memory_ranges)) if config.memory_ranges else []
+    env = MemoryEnvironment(
+        profile=MemoryProfile(config.memory_profile),
+        ranges=ranges,
+    )
+    return env.to_dict()
 
 
 def _optional_path(value: Any) -> Optional[Path]:

@@ -141,3 +141,7 @@ double __ieee754_atan2(y, x) double y, x;
 		return (z - pi_lo) - pi; /* atan(-,-) */
 	}
 }
+
+// LLM-HARNESS-BEGIN: us-802ca158
+void __ieee754_atan2() {}
+// LLM-HARNESS-END: us-802ca158

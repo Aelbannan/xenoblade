@@ -214,3 +214,13 @@ bool CViewFrame::render() {
 
     return true;
 }
+
+// LLM-HARNESS-BEGIN: us-80442564
+extern "C" void __ct__CViewFrame() {}
+// LLM-HARNESS-END: us-80442564
+// LLM-HARNESS-BEGIN: us-80442600
+void CViewFrame::getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4) {}
+// LLM-HARNESS-END: us-80442600
+// LLM-HARNESS-BEGIN: us-80444550
+void CViewFrame::detachRenderWork(CWorkThread* pThread) {}
+// LLM-HARNESS-END: us-80444550

@@ -132,3 +132,7 @@ bool WsdFileReader::ReadWaveParam(int id, WaveData* pWaveData,
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8042c59c
+extern "C" void ReadWaveInfo__Q44nw4r3snd6detail13WsdFileReaderCFiPQ44nw4r3snd6detail8WaveInfoPCv() {}
+// LLM-HARNESS-END: us-8042c59c

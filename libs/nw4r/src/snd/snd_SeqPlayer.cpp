@@ -431,3 +431,16 @@ Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8041ba6c
+extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {}
+// LLM-HARNESS-END: us-8041ba6c
+// LLM-HARNESS-BEGIN: us-8041c4d0
+extern "C" void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv() {}
+// LLM-HARNESS-END: us-8041c4d0
+// LLM-HARNESS-BEGIN: us-8041c4dc
+extern "C" void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack() {}
+// LLM-HARNESS-END: us-8041c4dc
+// LLM-HARNESS-BEGIN: us-8041cf0c
+extern "C" void ChannelCallback__Q44nw4r3snd6detail9SeqPlayerFPQ44nw4r3snd6detail7Channel() {}
+// LLM-HARNESS-END: us-8041cf0c

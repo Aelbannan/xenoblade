@@ -984,3 +984,50 @@ after_bit21:
 done:
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-8010be00
+extern "C" void func_8010B324(CMenuBattlePlayerStateSlot*) {}
+// LLM-HARNESS-END: us-8010be00
+// LLM-HARNESS-BEGIN: us-8010d924
+extern "C" bool func_8010CE48() { return false; }
+// LLM-HARNESS-END: us-8010d924
+// LLM-HARNESS-BEGIN: us-8010da38
+extern "C" void func_8010CF5C() {}
+// LLM-HARNESS-END: us-8010da38
+// LLM-HARNESS-BEGIN: us-8010f4d4
+extern "C" void sinit_8010E9F8() {}
+// LLM-HARNESS-END: us-8010f4d4
+// LLM-HARNESS-BEGIN: us-8010f528
+extern "C" bool func_8010EA4C() { return false; }
+// LLM-HARNESS-END: us-8010f528
+// LLM-HARNESS-BEGIN: us-8010f530
+extern "C" bool func_8010EA54() { return false; }
+// LLM-HARNESS-END: us-8010f530
+// LLM-HARNESS-BEGIN: us-8010f538
+extern "C" bool func_8010EA5C() { return false; }
+// LLM-HARNESS-END: us-8010f538
+
+// LLM-HARNESS-BEGIN: us-8010d8a8
+extern "C" void func_8010CDCC() {}
+// LLM-HARNESS-END: us-8010d8a8
+// LLM-HARNESS-BEGIN: us-8010d92c
+extern "C" void func_8010CE50() {}
+// LLM-HARNESS-END: us-8010d92c
+// LLM-HARNESS-BEGIN: us-8010da44
+extern "C" void func_8010CF68() {}
+// LLM-HARNESS-END: us-8010da44
+// LLM-HARNESS-BEGIN: us-8010dbb0
+extern "C" void func_8010D0D4() {}
+// LLM-HARNESS-END: us-8010dbb0
+// LLM-HARNESS-BEGIN: us-8010dc90
+extern "C" void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
+                   CMenuBattlePlayerStateSlot* slot) {}
+// LLM-HARNESS-END: us-8010dc90
+// LLM-HARNESS-BEGIN: us-8010df8c
+extern "C" void func_8010D4B0(CMenuBattlePlayerState* self,
+                   CMenuBattlePlayerStateSlot* slot, u32 index) {}
+// LLM-HARNESS-END: us-8010df8c
+// LLM-HARNESS-BEGIN: us-8010e3b0
+extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
+                   CMenuBattlePlayerStateSlot* slot) {}
+// LLM-HARNESS-END: us-8010e3b0

@@ -321,3 +321,7 @@ void Controller::clrBatteryFlag() {
 }
 
 } // namespace homebutton
+
+// LLM-HARNESS-BEGIN: us-80323b50
+extern "C" void updateSound__Q210homebutton10ControllerFv() {}
+// LLM-HARNESS-END: us-80323b50

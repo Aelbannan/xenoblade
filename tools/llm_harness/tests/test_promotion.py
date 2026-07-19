@@ -424,7 +424,7 @@ def _make_fake_adapter(root: Path, source_path: Path, *,
             return _path
 
         def promote(self, workflow: str, target_id: str,
-                     candidate: Any, *, write: bool = False) -> str:
+                     candidate: Any, *, write: bool = False, owner: str = "") -> str:
             if hasattr(candidate, "source") and candidate.source:
                 _path.write_text(candidate.source)
                 self.last_candidate_source = candidate.source

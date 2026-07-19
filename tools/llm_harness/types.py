@@ -458,6 +458,9 @@ class ModelConfig:
     agent: Optional[str] = None
     variant: Optional[str] = None
     max_tokens: Optional[int] = None
+    enable_thinking: Optional[bool] = None
+    thinking_budget: Optional[int] = None
+    reasoning_effort: Optional[str] = None
 
 
 @dataclass

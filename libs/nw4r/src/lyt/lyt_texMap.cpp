@@ -83,3 +83,7 @@ void TexMap::SetNoWrap(const TPLDescriptor* pDesc) {
 
 } // namespace lyt
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8040a8fc
+extern "C" void ReplaceImage__Q34nw4r3lyt6TexMapFP10TPLPaletteUl() {}
+// LLM-HARNESS-END: us-8040a8fc

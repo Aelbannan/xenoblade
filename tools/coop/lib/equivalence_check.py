@@ -8,7 +8,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from tools.coop.lib.project import ObjdiffUnit, Project
 from tools.coop.lib.targets import (
@@ -26,16 +26,17 @@ from tools.ppc_equivalence.elf_symbols import (
     extract_function,
     extract_function_pair,
 )
+from tools.ppc_equivalence.callee_inference import infer_matched_callee_contracts
 from tools.ppc_equivalence.engine import check_equivalence, validate_callee_contract
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
-from tools.ppc_equivalence.provenance import canonical_json_sha256
+from tools.ppc_equivalence.provenance import proof_request_hash
 from tools.ppc_equivalence.semantics import (
     CalleeContract,
     ConcreteOps,
+    DEFAULT_MAX_LOOP_ITERATIONS,
     automatic_live_out,
     execute_cfg,
-    infer_callee_contract,
 )
 
 
@@ -319,12 +320,62 @@ def _cache_get(key: str, cache_dir: Path | None) -> EquivalenceProbe | None:
             return None
         status = ProofStatus(data["status"])
         certificate = data.get("certificate")
+        proof = data.get("proof_audit")
         return EquivalenceProbe(
             status, data.get("detail", ""),
             certificate if isinstance(certificate, dict) else None,
+            proof=proof if isinstance(proof, dict) else None,
         )
     except (KeyError, ValueError, json.JSONDecodeError):
         return None
+
+
+def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
+    """Compact durable audit subset for cache entries (not a full ProofResult)."""
+    if proof is None:
+        return None
+    if isinstance(proof, dict):
+        return proof
+    audit: dict[str, Any] = {}
+    for name in (
+        "architecture_model",
+        "format",
+        "contract",
+        "observables",
+        "assumptions",
+        "assumed_callees",
+        "callee_contracts",
+        "limits",
+        "opcodes_used",
+        "engine_hash",
+        "source_hash",
+        "git_commit",
+        "git_dirty",
+        "repair_hint",
+        "unsupported",
+        "warnings",
+        "abstractions",
+    ):
+        value = getattr(proof, name, None)
+        if value not in (None, "", [], {}, ()):
+            if hasattr(value, "to_dict"):
+                audit[name] = value.to_dict()
+            elif isinstance(value, dict):
+                audit[name] = dict(value)
+            elif isinstance(value, (list, tuple)):
+                audit[name] = list(value)
+            else:
+                audit[name] = value
+    environment = getattr(proof, "environment", None)
+    if environment is not None and hasattr(environment, "to_dict"):
+        audit["environment"] = environment.to_dict()
+    memory_scope = getattr(proof, "memory_scope", None)
+    if memory_scope is not None and hasattr(memory_scope, "to_dict"):
+        audit["memory_scope"] = memory_scope.to_dict()
+    fp_domain = getattr(proof, "floating_point_domain", None)
+    if fp_domain is not None and hasattr(fp_domain, "to_dict"):
+        audit["floating_point_domain"] = fp_domain.to_dict()
+    return audit or None
 
 
 def _cache_put(
@@ -335,19 +386,20 @@ def _cache_put(
         return
     cache_dir.mkdir(parents=True, exist_ok=True)
     entry_path = cache_dir / f"{key}.json"
+    entry: dict[str, Any] = {
+        "architecture": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
+        "status": probe.status.value,
+        "detail": probe.detail,
+        "certificate": probe.certificate,
+        "assumed_callees": sorted(assumed_callees, key=str),
+        "created_at": time.time(),
+    }
+    proof_audit = _proof_audit_dict(probe.proof)
+    if proof_audit is not None:
+        entry["proof_audit"] = proof_audit
     entry_path.write_text(
-        json.dumps(
-            {
-                "architecture": ARCHITECTURE_MODEL,
-                "result_format": RESULT_FORMAT,
-                "status": probe.status.value,
-                "detail": probe.detail,
-                "certificate": probe.certificate,
-                "assumed_callees": sorted(assumed_callees, key=str),
-                "created_at": time.time(),
-            },
-            sort_keys=True,
-        ),
+        json.dumps(entry, sort_keys=True),
         encoding="utf-8",
     )
 
@@ -485,51 +537,9 @@ def _infer_matched_callee_contracts(
     candidate_object: Path | None,
 ) -> dict[int | str, CalleeContract]:
     """Generate paired effect contracts for named callees in the same objects."""
-    if original_object is None or candidate_object is None:
-        return {}
-    contracts: dict[int | str, CalleeContract] = {}
-    for target in call_targets:
-        if not isinstance(target, str):
-            continue
-        try:
-            left = extract_function(original_object, target)
-            right = extract_function(candidate_object, target)
-            left_instructions = decode_block(
-                left.code, left.base, validate_with_capstone=False,
-                relocations=left.relocations, local_symbol=left.name,
-            )
-            right_instructions = decode_block(
-                right.code, right.base, validate_with_capstone=False,
-                relocations=right.relocations, local_symbol=right.name,
-            )
-            left_contract = infer_callee_contract(left_instructions)
-            right_contract = infer_callee_contract(right_instructions)
-        except (ElfSymbolError, DecodeError, UnsupportedInstruction, ValueError):
-            continue
-        contracts[target] = CalleeContract(
-            left_contract.reads | right_contract.reads,
-            left_contract.writes | right_contract.writes,
-            "matched-pair-body-effects",
-        )
-        merged = contracts[target]
-        if (
-            left_contract.source == "matched-body-effects"
-            and right_contract.source == "matched-body-effects"
-        ):
-            left_validation = validate_callee_contract(left_instructions, merged)
-            right_validation = validate_callee_contract(right_instructions, merged)
-            if left_validation.valid and right_validation.valid:
-                contracts[target] = CalleeContract(
-                    left_validation.required_reads | right_validation.required_reads,
-                    left_validation.required_writes | right_validation.required_writes,
-                    "validated-matched-pair-semantic-effects",
-                )
-            else:
-                opaque = CalleeContract.opaque_eabi()
-                contracts[target] = CalleeContract(
-                    opaque.reads, opaque.writes, "validation-fallback-opaque-eabi",
-                )
-    return contracts
+    return infer_matched_callee_contracts(
+        call_targets, original_object, candidate_object,
+    )
 
 
 def _build_equivalence_certificate(
@@ -546,6 +556,7 @@ def _build_equivalence_certificate(
     evidence: str,
     max_instructions: int,
     max_paths: int,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     memory_scope: dict | None = None,
     proof: object | None = None,
 ) -> tuple[dict | None, str]:
@@ -557,6 +568,7 @@ def _build_equivalence_certificate(
             declared,
             max_instructions=max_instructions,
             max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
             assumed_callees=call_targets,
             callee_contracts=callee_contracts,
             require_normal_return=True,
@@ -621,6 +633,24 @@ def _build_equivalence_certificate(
         opcodes_used = getattr(proof, "opcodes_used", None)
         if opcodes_used:
             certificate["opcodes_used"] = list(opcodes_used)
+        limits = getattr(proof, "limits", None)
+        if limits:
+            certificate["limits"] = dict(limits)
+        contract_name = getattr(proof, "contract", None)
+        if contract_name:
+            certificate["contract"] = str(contract_name)
+        assumptions = getattr(proof, "assumptions", None)
+        if assumptions:
+            certificate["assumptions"] = list(assumptions)
+        proof_callee_contracts = getattr(proof, "callee_contracts", None)
+        if proof_callee_contracts:
+            certificate["callee_contracts"] = {
+                str(name): dict(entry) if isinstance(entry, dict) else entry
+                for name, entry in proof_callee_contracts.items()
+            }
+        repair_hint = getattr(proof, "repair_hint", None)
+        if repair_hint:
+            certificate["repair_hint"] = dict(repair_hint)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 
@@ -637,6 +667,7 @@ def _prove_bytes(
     timeout_ms: int,
     max_instructions: int,
     max_paths: int,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     fallback_note: str = "",
     original_relocations: tuple = (),
     candidate_relocations: tuple = (),
@@ -650,6 +681,7 @@ def _prove_bytes(
     certified_context: CertifiedCalleeContext | None = None,
     certificate_evidence: str = "symbolic-equivalence",
     memory_environment: dict[str, Any] | None = None,
+    floating_point_domain: dict[str, Any] | None = None,
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
 
@@ -758,19 +790,51 @@ def _prove_bytes(
 
     callees_used: set[int | str] = set()
     mem_env = None
+    if memory_environment is None and project is not None:
+        from tools.coop.lib.config import memory_environment_from_config
+
+        memory_environment = memory_environment_from_config(project.config)
     if memory_environment:
         from tools.ppc_equivalence.memory_profile import MemoryEnvironment
         mem_env = MemoryEnvironment.from_dict(memory_environment)
-    source_hash = canonical_json_sha256({
-        "original_hex": orig_hex,
-        "candidate_hex": cand_hex,
-        "contract": resolved_contract.name,
-        "timeout_ms": timeout_ms,
-        "max_instructions": max_instructions,
-        "max_paths": max_paths,
-        "memory_environment": memory_environment,
-        "certificate_target_id": certificate_target_id,
-    })
+    fp_domain = None
+    raw_fp = floating_point_domain
+    if raw_fp is None and project is not None:
+        raw_fp = getattr(project.config, "floating_point_domain", None)
+    if raw_fp is not None:
+        from tools.ppc_equivalence.result import FloatingPointDomain
+        fp_domain = FloatingPointDomain.parse(raw_fp)
+
+    def _reloc_tuples(items: tuple) -> list[tuple]:
+        return [
+            (item.offset, item.relocation_type, item.symbol, item.addend)
+            for item in items
+        ]
+
+    source_hash = proof_request_hash(
+        original_hex=orig_hex,
+        candidate_hex=cand_hex,
+        contract=resolved_contract.name,
+        timeout_ms=timeout_ms,
+        max_instructions=max_instructions,
+        max_paths=max_paths,
+        max_loop_iterations=max_loop_iterations,
+        observe=[item.name for item in resolved_contract.observables],
+        memory_environment=memory_environment,
+        floating_point_domain=(
+            fp_domain.to_dict() if fp_domain is not None else None
+        ),
+        assumed_callees=[str(item) for item in assumed_callees],
+        callee_contract_sources={
+            str(name): contract.source
+            for name, contract in (callee_contracts or {}).items()
+        },
+        original_base=orig_base,
+        candidate_base=cand_base,
+        original_relocations=_reloc_tuples(original_relocations),
+        candidate_relocations=_reloc_tuples(candidate_relocations),
+        certificate_target_id=certificate_target_id,
+    )
     result = check_equivalence(
         original,
         candidate,
@@ -779,11 +843,13 @@ def _prove_bytes(
         candidate_hex=cand_hex,
         max_instructions=max_instructions,
         max_paths=max_paths,
+        max_loop_iterations=max_loop_iterations,
         assumed_callees=assumed_callees,
         assumed_callees_used=callees_used,
         callee_contracts=callee_contracts,
         memory_environment=mem_env,
         source_hash=source_hash,
+        floating_point_domain=fp_domain,
     )
     detail = ""
     if result.contract_resolution:
@@ -841,6 +907,7 @@ def _prove_bytes(
             evidence=certificate_evidence,
             max_instructions=max_instructions,
             max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
             memory_scope=mem_scope_dict,
             proof=result,
         )
@@ -862,6 +929,7 @@ def prove_unit_symbol(
     timeout_ms: int = 0,
     max_instructions: int = 2048,
     max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     candidate_symbol: str | None = None,
     linked: bool = False,
     target_id: str | None = None,
@@ -892,6 +960,7 @@ def prove_unit_symbol(
                 timeout_ms=timeout_ms,
                 max_instructions=max_instructions,
                 max_paths=max_paths,
+                max_loop_iterations=max_loop_iterations,
                 original_relocations=left.relocations,
                 candidate_relocations=right.relocations,
                 original_local_symbol=left.name,
@@ -910,6 +979,7 @@ def prove_unit_symbol(
             return _run_linked_fallback(
                 project, symbol, candidate_symbol, contract,
                 timeout_ms, max_instructions, max_paths,
+                max_loop_iterations=max_loop_iterations,
                 target_id=target_id,
                 certified_context=certified_context,
                 memory_environment=memory_environment,
@@ -930,6 +1000,7 @@ def certify_unit_symbol(
     evidence: str = "full-instruction-match",
     max_instructions: int = 2048,
     max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
 ) -> EquivalenceProbe:
     """Issue a current semantic effect certificate for an already-equal pair."""
     if unit.target_path is None or unit.base_path is None:
@@ -966,6 +1037,7 @@ def certify_unit_symbol(
             evidence=evidence,
             max_instructions=max_instructions,
             max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
         )
         return EquivalenceProbe(
             ProofStatus.EQUIVALENT if certificate else ProofStatus.INCONCLUSIVE_UNSUPPORTED,
@@ -987,6 +1059,7 @@ def _run_linked_fallback(
     max_instructions: int,
     max_paths: int,
     *,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     target_id: str | None = None,
     certified_context: CertifiedCalleeContext | None = None,
     memory_environment: dict[str, Any] | None = None,
@@ -1048,6 +1121,7 @@ def _run_linked_fallback(
             timeout_ms=timeout_ms,
             max_instructions=max_instructions,
             max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
             fallback_note=note,
             certificate_target_id=target_id,
             certified_context=certified_context,

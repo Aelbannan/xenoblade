@@ -318,3 +318,22 @@ void WsdPlayer::ChannelCallbackFunc(Channel* pDropChannel,
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8042d664
+extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
+// LLM-HARNESS-END: us-8042d664
+// LLM-HARNESS-BEGIN: us-8042d668
+extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
+// LLM-HARNESS-END: us-8042d668
+// LLM-HARNESS-BEGIN: us-8042d678
+extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9WsdPlayerFPCvPCv() {}
+// LLM-HARNESS-END: us-8042d678
+// LLM-HARNESS-BEGIN: us-8042d67c
+extern "C" void IsPause__Q44nw4r3snd6detail9WsdPlayerCFv() {}
+// LLM-HARNESS-END: us-8042d67c
+// LLM-HARNESS-BEGIN: us-8042d690
+extern "C" void IsStarted__Q44nw4r3snd6detail9WsdPlayerCFv() {}
+// LLM-HARNESS-END: us-8042d690
+// LLM-HARNESS-BEGIN: us-8042d6a4
+extern "C" void IsActive__Q44nw4r3snd6detail9WsdPlayerCFv() {}
+// LLM-HARNESS-END: us-8042d6a4

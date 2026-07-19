@@ -322,14 +322,38 @@ def proof_result_from_certificate(
     if isinstance(raw_opcodes, list):
         opcodes_used = [str(op) for op in raw_opcodes]
 
-    return ProofResult(
+    limits: dict[str, int] = {}
+    raw_limits = certificate.get("limits")
+    if isinstance(raw_limits, dict):
+        limits = {str(k): int(v) for k, v in raw_limits.items()}
+
+    assumptions: list[str] | None = None
+    raw_assumptions = certificate.get("assumptions")
+    if isinstance(raw_assumptions, list):
+        assumptions = [str(item) for item in raw_assumptions]
+
+    callee_contracts: dict[str, dict[str, Any]] = {}
+    raw_callee_contracts = certificate.get("callee_contracts")
+    if isinstance(raw_callee_contracts, dict):
+        callee_contracts = {
+            str(name): dict(entry) if isinstance(entry, dict) else {"source": str(entry)}
+            for name, entry in raw_callee_contracts.items()
+        }
+
+    repair_hint = certificate.get("repair_hint")
+    if repair_hint is not None and not isinstance(repair_hint, dict):
+        repair_hint = None
+
+    result = ProofResult(
         status=status,
         architecture_model=str(
             certificate.get("architecture", ARCHITECTURE_MODEL)
         ),
         format=int(certificate.get("result_format", RESULT_FORMAT)),
+        contract=str(certificate.get("contract", "manual")),
         observables=list(observables),
         assumed_callees=assumed_callees,
+        callee_contracts=callee_contracts,
         environment=environment,
         memory_scope=memory_scope,
         engine_hash=str(certificate.get("engine_hash", "")),
@@ -338,7 +362,12 @@ def proof_result_from_certificate(
         floating_point_domain=floating_point_domain,
         counterexample_kind=certificate.get("counterexample_kind"),
         opcodes_used=opcodes_used,
+        limits=limits,
+        repair_hint=repair_hint,
     )
+    if assumptions is not None:
+        result.assumptions = assumptions
+    return result
 
 
 def classify_for_promotion(
@@ -373,12 +402,12 @@ def classify_for_promotion(
 
     if (
         policy.require_bounded_ram
-        and result.environment is not None
-        and result.environment.profile.value
-        == MemoryProfile.ASSUMED_ORDINARY_RAM.value
         and result.counterexample_kind != "definedness"
     ):
-        blockers.append("unconstrained-symbolic-memory-domain")
+        from tools.ppc_equivalence.memory_profile import is_bounded_with_ranges
+
+        if not is_bounded_with_ranges(result.environment):
+            blockers.append("unconstrained-symbolic-memory-domain")
 
     if ledger.dolphin_validated_opcodes and result.opcodes_used:
         for opcode in ledger.missing_dolphin_opcodes(result.opcodes_used):
@@ -423,7 +452,12 @@ def classify_for_promotion_legacy(
 class PromotionPolicy:
     automatic_promotion: bool = True
     reject_architecture_models: frozenset[str] = frozenset(
-        {"broadway-ppc32-be-v18"}
+        {
+            "broadway-ppc32-be-v18",
+            "broadway-ppc32-be-v19",
+            "broadway-ppc32-be-v20",
+            "broadway-ppc32-be-v21",
+        }
     )
     minimum_result_format: int = RESULT_FORMAT
     allowed_confidence_tiers: frozenset[str] = field(

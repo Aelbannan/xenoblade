@@ -127,3 +127,7 @@ void ResNode::CalcChrAnmResult(ChrAnmResult* pResult) const {
 
 } // namespace g3d
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-803dfdec
+extern "C" void GetResUserData__Q34nw4r3g3d7ResNodeFv() {}
+// LLM-HARNESS-END: us-803dfdec

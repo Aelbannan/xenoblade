@@ -152,3 +152,19 @@ bool StrmFileLoader::ReadAdpcBlockData(u16* pYN1, u16* pYN2, int block,
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80423f5c
+extern "C" void ReadStrmInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo() {}
+// LLM-HARNESS-END: us-80423f5c
+// LLM-HARNESS-BEGIN: us-80424070
+extern "C" void ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileReaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi() {}
+// LLM-HARNESS-END: us-80424070
+// LLM-HARNESS-BEGIN: us-804244f8
+extern "C" void GetChannelCount__Q44nw4r3snd6detail14StrmFileLoaderCFv() {}
+// LLM-HARNESS-END: us-804244f8
+// LLM-HARNESS-BEGIN: us-80424540
+extern "C" void ReadStrmInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader8StrmInfo() {}
+// LLM-HARNESS-END: us-80424540
+// LLM-HARNESS-BEGIN: us-8042457c
+extern "C" void ReadStrmTrackInfo__Q44nw4r3snd6detail14StrmFileLoaderCFPQ54nw4r3snd6detail14StrmFileReader13StrmTrackInfoi() {}
+// LLM-HARNESS-END: us-8042457c

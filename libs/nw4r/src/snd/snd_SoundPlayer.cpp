@@ -411,3 +411,19 @@ void SoundPlayer::detail_FreePlayerHeap(detail::BasicSound* pSound) {
 
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80422af8
+extern "C" void SetFxSend__Q34nw4r3snd11SoundPlayerFQ34nw4r3snd6AuxBusf() {}
+// LLM-HARNESS-END: us-80422af8
+// LLM-HARNESS-BEGIN: us-80422d84
+extern "C" void __arraydtor$4226() {}
+// LLM-HARNESS-END: us-80422d84
+// LLM-HARNESS-BEGIN: us-80422da0
+extern "C" void detail_AppendSound__Q34nw4r3snd11SoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
+// LLM-HARNESS-END: us-80422da0
+// LLM-HARNESS-BEGIN: us-80422f78
+extern "C" void detail_RemoveSound__Q34nw4r3snd11SoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
+// LLM-HARNESS-END: us-80422f78
+// LLM-HARNESS-BEGIN: us-80423098
+extern "C" void detail_CanPlaySound__Q34nw4r3snd11SoundPlayerFi(int) {}
+// LLM-HARNESS-END: us-80423098

@@ -52,3 +52,31 @@ void StrmSound::DetachTempSpecialHandle() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8042751c
+extern "C" void InitParam__Q44nw4r3snd6detail9StrmSoundFv() {}
+// LLM-HARNESS-END: us-8042751c
+// LLM-HARNESS-BEGIN: us-80427650
+extern "C" void Setup__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail14StrmBufferPooliUs() {}
+// LLM-HARNESS-END: us-80427650
+// LLM-HARNESS-BEGIN: us-8042772c
+extern "C" void UpdateMoveValue__Q44nw4r3snd6detail9StrmSoundFv() {}
+// LLM-HARNESS-END: us-8042772c
+// LLM-HARNESS-BEGIN: us-804277ac
+extern "C" void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv() {}
+// LLM-HARNESS-END: us-804277ac
+// LLM-HARNESS-BEGIN: us-80427984
+extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv() {}
+// LLM-HARNESS-END: us-80427984
+// LLM-HARNESS-BEGIN: us-80427a84
+extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail9StrmSoundFv() { return false; }
+// LLM-HARNESS-END: us-80427a84
+// LLM-HARNESS-BEGIN: us-80427a8c
+extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail9StrmSoundCFv() { return false; }
+// LLM-HARNESS-END: us-80427a8c
+// LLM-HARNESS-BEGIN: us-80427a94
+extern "C" bool IsPrepared__Q44nw4r3snd6detail9StrmSoundCFv() { return false; }
+// LLM-HARNESS-END: us-80427a94
+// LLM-HARNESS-BEGIN: us-80427a9c
+extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail9StrmSoundCFv() { return false; }
+// LLM-HARNESS-END: us-80427a9c

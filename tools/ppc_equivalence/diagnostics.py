@@ -190,6 +190,8 @@ def replay_counterexample(
     candidate_insns: list[Any],
     initial_state_dict: dict[str, Any],
     contract: Any,
+    *,
+    floating_point_domain: Any | None = None,
 ) -> dict[str, Any]:
     """Concretely replay both sides; return traces, divergence, and reproduce status.
 
@@ -219,6 +221,10 @@ def replay_counterexample(
         }
 
     ops = ConcreteOps()
+    domain_kw = (
+        {"floating_point_domain": floating_point_domain}
+        if floating_point_domain is not None else {}
+    )
     original_state = initial
     candidate_state = initial
     original_trace: list[dict[str, Any]] = []
@@ -229,10 +235,10 @@ def replay_counterexample(
     for step in range(min_len):
         try:
             original_state = execute_instruction(
-                original_state, original_insns[step], ops
+                original_state, original_insns[step], ops, **domain_kw
             )
             candidate_state = execute_instruction(
-                candidate_state, candidate_insns[step], ops
+                candidate_state, candidate_insns[step], ops, **domain_kw
             )
         except Exception as exc:
             return {
@@ -263,7 +269,7 @@ def replay_counterexample(
     for step in range(min_len, len(original_insns)):
         try:
             original_state = execute_instruction(
-                original_state, original_insns[step], ops
+                original_state, original_insns[step], ops, **domain_kw
             )
         except Exception as exc:
             return {
@@ -283,7 +289,7 @@ def replay_counterexample(
     for step in range(min_len, len(candidate_insns)):
         try:
             candidate_state = execute_instruction(
-                candidate_state, candidate_insns[step], ops
+                candidate_state, candidate_insns[step], ops, **domain_kw
             )
         except Exception as exc:
             return {

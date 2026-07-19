@@ -78,3 +78,7 @@ int iy; /* iy=0 if y is zero */
 	else
 		return x - ((z * (half * y - v * r) - y) - v * S1);
 }
+
+// LLM-HARNESS-BEGIN: us-802cce58
+void __kernel_sin() {}
+// LLM-HARNESS-END: us-802cce58

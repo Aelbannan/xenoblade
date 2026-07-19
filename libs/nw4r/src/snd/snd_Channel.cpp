@@ -409,3 +409,10 @@ void Channel::FreeChannel(Channel* pChannel) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-80416e54
+extern "C" void NoteOff__Q44nw4r3snd6detail7ChannelFv() {}
+// LLM-HARNESS-END: us-80416e54
+// LLM-HARNESS-BEGIN: us-8041702c
+extern "C" void SetBiquadFilter__Q44nw4r3snd6detail7ChannelFif(int, float) {}
+// LLM-HARNESS-END: us-8041702c

@@ -36,3 +36,17 @@ void CMenuBattleMode::Init() {
     unk70->addRenderCB(cb, 7, 0);
     unk60.func_8045F810();
 }
+
+// LLM-HARNESS-BEGIN: us-801a1ba8
+extern "C" bool func_801A048C() { return false; }
+// LLM-HARNESS-END: us-801a1ba8
+// LLM-HARNESS-BEGIN: us-801a1bb0
+extern "C" bool func_801A0494() { return false; }
+// LLM-HARNESS-END: us-801a1bb0
+// LLM-HARNESS-BEGIN: us-801a1bb8
+extern "C" bool func_801A049C() { return false; }
+// LLM-HARNESS-END: us-801a1bb8
+
+// LLM-HARNESS-BEGIN: us-801a1a90
+extern "C" void __ct__CMenuBattleMode() {}
+// LLM-HARNESS-END: us-801a1a90

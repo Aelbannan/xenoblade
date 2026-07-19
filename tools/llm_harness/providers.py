@@ -404,8 +404,9 @@ class LMStudioProvider:
     When json_object is enabled, LM Studio receives response_format type
     json_schema (not OpenAI's json_object — LM Studio rejects that type).
 
-    No cloud API key is required; an optional Bearer token satisfies clients that
-    expect one (LM Studio ignores it on localhost by default).
+    Optional thinking knobs are passed through as request fields only:
+    enable_thinking, thinking_budget, reasoning_effort. No assistant prefills
+    or multi-phase workarounds.
     """
 
     DEFAULT_BASE_URL = "http://localhost:1234/v1"
@@ -455,7 +456,11 @@ class LMStudioProvider:
         temperature: float = 0.1,
         max_tokens: int = 4096,
         json_object: bool = True,
+        enable_thinking: bool = False,
+        thinking_budget: Optional[int] = None,
+        reasoning_effort: Optional[str] = None,
         pure: bool = True,
+        **_ignored: Any,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -463,13 +468,42 @@ class LMStudioProvider:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.json_object = json_object
+        self.enable_thinking = enable_thinking
+        self.thinking_budget = thinking_budget
+        self.reasoning_effort = reasoning_effort
         self.pure = pure
         _load_env_vars(Path(".env"))
+
+    @staticmethod
+    def _effort_to_budget(effort: str) -> Optional[int]:
+        mapping = {
+            "none": 0,
+            "minimal": 128,
+            "low": 256,
+            "medium": 1024,
+            "high": 4096,
+            "xhigh": 8192,
+        }
+        return mapping.get(effort.strip().lower())
 
     def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
         started = time.monotonic()
         api_key = os.environ.get(self.API_KEY_ENV) or self.api_key
         max_tokens = int(model.max_tokens) if model.max_tokens else self.max_tokens
+        enable_thinking = (
+            bool(model.enable_thinking)
+            if model.enable_thinking is not None
+            else self.enable_thinking
+        )
+        reasoning_effort = model.reasoning_effort or self.reasoning_effort
+        thinking_budget = model.thinking_budget
+        if thinking_budget is None:
+            thinking_budget = self.thinking_budget
+        if thinking_budget is None and reasoning_effort:
+            thinking_budget = self._effort_to_budget(reasoning_effort)
+        if reasoning_effort and str(reasoning_effort).strip().lower() == "none":
+            enable_thinking = False
+            thinking_budget = 0
 
         body: Dict[str, Any] = {
             "model": model.model,
@@ -478,11 +512,17 @@ class LMStudioProvider:
             "max_tokens": max_tokens,
         }
         if self.json_object:
-            # LM Studio accepts json_schema | text, not OpenAI's json_object.
             body["response_format"] = {
                 "type": "json_schema",
                 "json_schema": self.CANDIDATE_JSON_SCHEMA,
             }
+        if reasoning_effort:
+            body["reasoning_effort"] = str(reasoning_effort).strip().lower()
+        if thinking_budget is not None:
+            body["thinking_budget"] = int(thinking_budget)
+        body["chat_template_kwargs"] = {"enable_thinking": bool(enable_thinking)}
+        body["enable_thinking"] = bool(enable_thinking)
+        body["enableThinking"] = bool(enable_thinking)
 
         request_body = json.dumps(body)
         url = f"{self.base_url}/chat/completions"
@@ -505,7 +545,6 @@ class LMStudioProvider:
             detail = (completed.stderr.strip() or stdout)[:2000]
             raise RuntimeError(f"LM Studio API: unexpected curl output: {detail}")
         response_body, http_code = lines[0].strip(), lines[1]
-
         if completed.returncode or not http_code.startswith("2"):
             detail = (completed.stderr.strip() or response_body)[:2000]
             raise RuntimeError(
@@ -519,9 +558,20 @@ class LMStudioProvider:
                 f"LM Studio API: no choices in response: {response_body[:500]}"
             )
 
-        text = choices[0].get("message", {}).get("content", "").strip()
-        usage = result.get("usage", {}) or {}
+        message = choices[0].get("message", {}) or {}
+        content = _strip_think_blocks(str(message.get("content") or "")).strip()
+        reasoning = str(
+            message.get("reasoning_content") or message.get("reasoning") or ""
+        ).strip()
+        text = _coerce_json_text(content) or _coerce_json_text(reasoning) or content
+        if not text and reasoning:
+            raise RuntimeError(
+                "LM Studio returned empty content with reasoning_content — "
+                "thinking consumed the token budget. Disable thinking in the "
+                "LM Studio UI / model template, or raise max_tokens."
+            )
 
+        usage = result.get("usage", {}) or {}
         return ProviderResult(
             text=text,
             duration_seconds=time.monotonic() - started,
@@ -532,6 +582,35 @@ class LMStudioProvider:
             cost=None,
             raw_events=[result],
         )
+
+
+def _strip_think_blocks(text: str) -> str:
+    """Remove Qwen-style think blocks that may prefix the real answer."""
+    open_tag = "<" + "think" + ">"
+    close_tag = "</" + "think" + ">"
+    while True:
+        start = text.find(open_tag)
+        if start < 0:
+            break
+        end = text.find(close_tag, start)
+        if end < 0:
+            text = text[:start]
+            break
+        text = text[:start] + text[end + len(close_tag) :]
+    return text
+
+
+def _coerce_json_text(text: str) -> str:
+    """Return a JSON-looking payload from model text, or empty string."""
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return ""
+    if cleaned.startswith("{") and cleaned.endswith("}"):
+        return cleaned
+    start, end = cleaned.find("{"), cleaned.rfind("}")
+    if start >= 0 and end > start:
+        return cleaned[start : end + 1]
+    return ""
 
 
 class OpenRouterProvider:

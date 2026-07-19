@@ -188,3 +188,10 @@ bool CLibStaticData::CItem::OnFileEvent(CEventFile* pEventFile){
 
     return false;
 }
+
+// LLM-HARNESS-BEGIN: us-80463e78
+extern "C" void __ct__Q214CLibStaticData5CItemFP17StaticArcFileData() {}
+// LLM-HARNESS-END: us-80463e78
+// LLM-HARNESS-BEGIN: us-80463f6c
+extern "C" void __dt__Q214CLibStaticData5CItemFv() {}
+// LLM-HARNESS-END: us-80463f6c

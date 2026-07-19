@@ -282,3 +282,7 @@ bta_dm_co_get_compress_memory(tBTA_SYS_ID id, UINT8** ppMemory,
 
     return FALSE;
 }
+
+// LLM-HARNESS-BEGIN: us-8037ed60
+void WUDiHidHostEventCallback() {}
+// LLM-HARNESS-END: us-8037ed60

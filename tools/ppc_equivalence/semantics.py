@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
@@ -18,6 +19,7 @@ from .ir import (
     UnsupportedInstruction,
 )
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState
+from .result import FloatingPointDomain
 from .spr import (
     AUX_SPR_INDEX,
     AUX_SPR_NAMES,
@@ -29,6 +31,16 @@ from .spr import (
 )
 
 MASK32 = 0xFFFFFFFF
+
+# Active proof-domain for FP ops. Defaults match FloatingPointDomain().
+_FP_DOMAIN: ContextVar[FloatingPointDomain] = ContextVar(
+    "ppc_equivalence_fp_domain",
+    default=FloatingPointDomain(),
+)
+
+
+def active_fp_domain() -> FloatingPointDomain:
+    return _FP_DOMAIN.get()
 
 
 def _constrain_valid(
@@ -51,6 +63,44 @@ def _constrain_valid(
         else:
             new_reason = state.invalid_reason
     return replace(state, valid=new_valid, invalid_reason=new_reason)
+
+
+def _constrain_fp_value_domain(
+    state: MachineState, value: Any, ops: WordOps,
+) -> MachineState:
+    """Apply allow_nan / allow_infinity / allow_subnormal domain predicates."""
+    domain = active_fp_domain()
+    ok = ops.bool(True)
+    if not domain.allow_nan:
+        ok = ops.land(ok, ops.lnot(ops.fp_is_nan(value)))
+    if not domain.allow_infinity:
+        ok = ops.land(ok, ops.lnot(ops.fp_is_inf(value)))
+    if not domain.allow_subnormal:
+        ok = ops.land(ok, ops.lnot(ops.fp_is_subnormal(value)))
+    if domain.allow_nan and domain.allow_infinity and domain.allow_subnormal:
+        return state
+    return _constrain_valid(state, ok, InvalidReason.FP_DOMAIN_EXCLUDED, ops)
+
+
+def _constrain_fp_defined_result(
+    state: MachineState, defined_result: Any, ops: WordOps,
+) -> MachineState:
+    """Exclude finite-input overflow when the active domain requests it."""
+    if not active_fp_domain().exclude_finite_overflow:
+        return state
+    return _constrain_valid(
+        state, defined_result, InvalidReason.FP_DOMAIN_EXCLUDED, ops,
+    )
+
+
+def _constrain_fused_exact_binary32(
+    state: MachineState, single_origin: Any, ops: WordOps,
+) -> MachineState:
+    if active_fp_domain().fused_input_domain != "exact-expanded-binary32":
+        return state
+    return _constrain_valid(
+        state, single_origin, InvalidReason.FP_DOMAIN_EXCLUDED, ops,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -209,6 +259,7 @@ class WordOps(Protocol):
     def fp_is_eq(self, a: Any, b: Any) -> Any: ...
     def fp_is_nan(self, a: Any) -> Any: ...
     def fp_is_inf(self, a: Any) -> Any: ...
+    def fp_is_subnormal(self, a: Any) -> Any: ...
     def fp_is_ge_zero(self, a: Any) -> Any: ...
     def fp_const_f32(self, value: float) -> Any: ...
     def fp_double_to_f32_bits(self, rm: Any, value: Any) -> Any: ...
@@ -475,6 +526,11 @@ class ConcreteOps:
     def fp_is_inf(self, a: float) -> bool:
         import math
         return math.isinf(a)
+    def fp_is_subnormal(self, a: float) -> bool:
+        import math
+        if not math.isfinite(a) or a == 0.0:
+            return False
+        return abs(a) < 2.2250738585072014e-308  # binary64 min normal
     def fp_is_ge_zero(self, a: float) -> bool: return a >= 0.0
     def fp_const_f32(self, value: float) -> float: return value
     def fp_double_to_f32_bits(self, rm: str, value: float) -> int:
@@ -797,6 +853,7 @@ class SymbolicOps:
     def fp_is_eq(self, a: Any, b: Any) -> Any: return self.z3.fpEQ(a, b)
     def fp_is_nan(self, a: Any) -> Any: return self.z3.fpIsNaN(a)
     def fp_is_inf(self, a: Any) -> Any: return self.z3.fpIsInf(a)
+    def fp_is_subnormal(self, a: Any) -> Any: return self.z3.fpIsSubnormal(a)
     def fp_is_ge_zero(self, a: Any) -> Any:
         return self.z3.And(
             self.z3.Not(self.fp_is_nan(a)),
@@ -1441,6 +1498,8 @@ def _execute_ps_basic_lane(
 ) -> tuple[MachineState, Any]:
     left = ops.fp_bits_to_double(left_bits)
     right = ops.fp_bits_to_double(right_bits)
+    state = _constrain_fp_value_domain(state, left, ops)
+    state = _constrain_fp_value_domain(state, right, ops)
     rm = ops.fp_rm_rne()
     if opcode == Opcode.PS_ADD:
         value = ops.fp_add(rm, left, right)
@@ -1523,7 +1582,8 @@ def _execute_ps_basic_lane(
     defined_result = ops.lor(
         ops.land(finite_inputs, finite(rounded)), handled_nonfinite,
     )
-    return replace(state, valid=ops.land(state.valid, defined_result)), result_bits
+    state = _constrain_fp_defined_result(state, defined_result, ops)
+    return state, result_bits
 
 
 def _execute_ps_div_lane(
@@ -1532,6 +1592,8 @@ def _execute_ps_div_lane(
 ) -> tuple[MachineState, Any]:
     numerator = ops.fp_bits_to_double(numerator_bits)
     denominator = ops.fp_bits_to_double(denominator_bits)
+    state = _constrain_fp_value_domain(state, numerator, ops)
+    state = _constrain_fp_value_domain(state, denominator, ops)
     rm = ops.fp_rm_rne()
     value = ops.fp_div(rm, numerator, denominator)
 
@@ -1579,13 +1641,11 @@ def _execute_ps_div_lane(
     handled_nonfinite = ops.lor(
         any_nan, ops.lor(invalid, ops.lor(zx, ops.lor(inf_a, inf_b))),
     )
-    state = replace(state, valid=ops.land(
-        state.valid,
-        ops.lor(
-            ops.land(ops.land(finite(numerator), finite(denominator)), finite(rounded)),
-            handled_nonfinite,
-        ),
-    ))
+    defined_result = ops.lor(
+        ops.land(ops.land(finite(numerator), finite(denominator)), finite(rounded)),
+        handled_nonfinite,
+    )
+    state = _constrain_fp_defined_result(state, defined_result, ops)
     return state, result_bits
 
 
@@ -1598,6 +1658,9 @@ def _execute_ps_fused_lane(
     b = ops.fp_bits_to_double(b_bits)
     c_forced_bits = ops.fp_force_25bit(c_bits)
     c = ops.fp_bits_to_double(c_forced_bits)
+    state = _constrain_fp_value_domain(state, a, ops)
+    state = _constrain_fp_value_domain(state, b, ops)
+    state = _constrain_fp_value_domain(state, ops.fp_bits_to_double(c_bits), ops)
     subtract = opcode in _FP_PS_FUSED_SUBTRACT
     addend = ops.fp_neg(b) if subtract else b
     rm = ops.fp_rm_rne()
@@ -1670,9 +1733,9 @@ def _execute_ps_fused_lane(
 
     finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
     handled_nonfinite = ops.lor(any_nan, ops.lor(invalid, any_inf))
-    state = replace(state, valid=ops.land(
-        state.valid, ops.lor(finite(precise), handled_nonfinite),
-    ))
+    state = _constrain_fp_defined_result(
+        state, ops.lor(finite(precise), handled_nonfinite), ops,
+    )
     if isinstance(ops, SymbolicOps):
         # Z3 computes the exact binary32 FMA directly.  Keep proofs on the
         # common paired-single domain where finite lane values originated as
@@ -1688,7 +1751,7 @@ def _execute_ps_fused_lane(
                 ),
             ),
         )
-        state = replace(state, valid=ops.land(state.valid, single_origin))
+        state = _constrain_fused_exact_binary32(state, single_origin, ops)
     return state, result_bits
 
 
@@ -1756,7 +1819,25 @@ def _fp_convert_to_integer(
     return state
 
 
-def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) -> MachineState:
+def execute_instruction(
+    state: MachineState,
+    insn: Instruction,
+    ops: WordOps,
+    *,
+    floating_point_domain: FloatingPointDomain | None = None,
+) -> MachineState:
+    token = None
+    if floating_point_domain is not None:
+        floating_point_domain.validate()
+        token = _FP_DOMAIN.set(floating_point_domain)
+    try:
+        return _execute_instruction_body(state, insn, ops)
+    finally:
+        if token is not None:
+            _FP_DOMAIN.reset(token)
+
+
+def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordOps) -> MachineState:
     op, a = insn.opcode, insn.operands
 
     # Defense in depth for callers that construct Instruction objects without
@@ -1765,10 +1846,19 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         raise UnsupportedInstruction(insn.address, insn.raw, f"semantics are unsupported for {op.value}")
     if op in _FP_ROUNDING_SENSITIVE:
         # ConcreteOps is validated against Broadway with RN=nearest-even and
-        # NI disabled.  Keep the symbolic proof on that same explicit domain.
-        standard_fp_mode = ops.eq(ops.band(state.fpscr, ops.const(7)), ops.const(0))
+        # NI disabled.  Keep the symbolic proof on that same explicit domain
+        # unless FloatingPointDomain validation rejected a different config.
+        domain = active_fp_domain()
+        # RN occupies FPSCR[0:1]; NI is bit 2. Default domain requires both 0.
+        mode_mask = 7 if domain.require_ni_zero else 3
+        standard_fp_mode = ops.eq(
+            ops.band(state.fpscr, ops.const(mode_mask)), ops.const(0),
+        )
         if isinstance(ops, ConcreteOps) and not standard_fp_mode:
-            raise ExecutionInconclusive("FP ConcreteOps requires FPSCR.RN=nearest-even and NI=0")
+            raise ExecutionInconclusive(
+                "FP ConcreteOps requires FPSCR.RN=nearest-even"
+                + (" and NI=0" if domain.require_ni_zero else "")
+            )
         state = _constrain_valid(state, standard_fp_mode, InvalidReason.FP_ROUNDING_MODE, ops)
     result: Any | None = None
     destination: int | None = None
@@ -2013,7 +2103,9 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         reg, spr = a
         if spr in (26, 27) or spr in AUX_SPR_INDEX or spr in TIME_BASE_WRITE_SPRS:
             supervisor = ops.eq(ops.band(state.msr, ops.const(0x00004000)), ops.const(0))
-            state = replace(state, valid=ops.land(state.valid, supervisor))
+            state = _constrain_valid(
+                state, supervisor, InvalidReason.PRIVILEGED_INSTRUCTION, ops,
+            )
         if spr == 1:
             packed = ops.bor(ops.ite(state.xer.so, ops.const(1 << 31), ops.const(0)), ops.bor(ops.ite(state.xer.ov, ops.const(1 << 30), ops.const(0)), ops.ite(state.xer.ca, ops.const(1 << 29), ops.const(0))))
             if op == Opcode.MFSPR: destination, result = reg, packed
@@ -2341,6 +2433,15 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
         op_fc = ops.fp_bits_to_double(fc_bits)
         fused_single = None
 
+        # Optional NaN / Inf / subnormal exclusions from FloatingPointDomain.
+        if op not in _FP_PSQ_OPS:
+            state = _constrain_fp_value_domain(state, op_fa, ops)
+            state = _constrain_fp_value_domain(state, op_fb, ops)
+            if op in ({Opcode.FMULS, Opcode.FMUL} | _FP_FUSED | {Opcode.FSEL}):
+                state = _constrain_fp_value_domain(
+                    state, ops.fp_bits_to_double(fc_source_bits), ops,
+                )
+
         if op == Opcode.FSEL:
             result_bits = ops.ite(ops.fp_is_ge_zero(op_fa), state.fpr[fc], state.fpr[fb])
             state = state.with_fpr(fd, result_bits)
@@ -2593,9 +2694,9 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
 
             finite = lambda value: ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
             handled_nonfinite = ops.lor(any_nan, ops.lor(invalid, any_inf))
-            state = replace(state, valid=ops.land(
-                state.valid, ops.lor(finite(d), handled_nonfinite),
-            ))
+            state = _constrain_fp_defined_result(
+                state, ops.lor(finite(d), handled_nonfinite), ops,
+            )
             if isinstance(ops, SymbolicOps) and op in _FP_FUSED_SINGLE:
                 # Keep fused-single proofs in decidable FP theory. This is the common
                 # compiler case: inputs are binary32 values expanded in FPRs.
@@ -2609,7 +2710,7 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
                         ),
                     ),
                 )
-                state = replace(state, valid=ops.land(state.valid, single_origin))
+                state = _constrain_fused_exact_binary32(state, single_origin, ops)
             if insn.record:
                 state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
             return state
@@ -2710,9 +2811,9 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
                 any_nan,
                 ops.lor(invalid, ops.lor(zx, ops.lor(inf_a, inf_b))),
             )
-            state = replace(state, valid=ops.land(
-                state.valid, ops.lor(finite(d), handled_nonfinite),
-            ))
+            state = _constrain_fp_defined_result(
+                state, ops.lor(finite(d), handled_nonfinite), ops,
+            )
             if insn.record:
                 state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
             return state
@@ -2725,7 +2826,9 @@ def execute_instruction(state: MachineState, insn: Instruction, ops: WordOps) ->
                 inputs_finite = ops.land(finite(op_fa), finite(op_fc))
             else:
                 inputs_finite = finite(op_fb)
-            state = replace(state, valid=ops.land(state.valid, ops.land(inputs_finite, finite(d))))
+            state = _constrain_fp_defined_result(
+                state, ops.land(inputs_finite, finite(d)), ops,
+            )
         d_bits = ops.fp_double_to_bits(d)
         state = _fpscr_set_fprf(state.with_fpr(fd, d_bits), d_bits, ops)
         if is_single:
@@ -2836,11 +2939,14 @@ def _apply_call_summary(
             result = _touch_memory(result, address, width, ops)
             if is_save:
                 value = state.fpr[index] if is_fpr else state.gpr[index]
+                if not is_fpr:
+                    result = _mark_stack_pointer_escape(result, value, ops)
                 result = replace(result, memory=_store(result.memory, address, value, width, ops))
             else:
                 value = _load(result.memory, address, width, ops)
                 result = result.with_fpr(index, value) if is_fpr else result.with_gpr(index, value)
-        return result
+        # Helpers are calls: disable private-stack masking per the memory model.
+        return replace(result, stack_private=ops.bool(False))
     callee = str(call_id)
     token = ops.call_token(callee, state, contract)
 
@@ -2912,6 +3018,26 @@ def _cfg_branch_target(insn: Instruction, ops: WordOps) -> tuple[Any, int | str]
     return target, target
 
 
+DEFAULT_MAX_LOOP_ITERATIONS = 256
+
+# Maximum private-frame depth accepted by stack-layout feasibility.
+# Frames deeper than this (including SP wraparound that collapses stack_low
+# near address zero) are rejected as impossible layouts. 16 MiB is far above
+# any legitimate Broadway/Wii frame and fail-closes the wraparound hole where
+# upward addi through 0xFFFFFFFF would otherwise privatize almost all memory.
+MAX_PRIVATE_STACK_DEPTH = 0x01000000
+
+
+def _path_condition_feasible(condition: Any, ops: WordOps) -> bool:
+    """Return False only when the path condition is concretely unsatisfiable."""
+    if isinstance(ops, ConcreteOps):
+        return bool(condition)
+    if isinstance(ops, SymbolicOps):
+        simplified = ops.z3.simplify(condition)
+        return not ops.z3.is_false(simplified)
+    return True
+
+
 def execute_cfg(
     state: MachineState,
     instructions: list[Instruction],
@@ -2919,12 +3045,47 @@ def execute_cfg(
     *,
     max_instructions: int = 2048,
     max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     assumed_callees: frozenset[int | str] = frozenset(),
     assumed_callees_used: set[int | str] | None = None,
     callee_contracts: dict[int | str, CalleeContract] | None = None,
+    floating_point_domain: FloatingPointDomain | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
+    if max_loop_iterations < 1:
+        raise ValueError("max_loop_iterations must be >= 1")
+    domain = floating_point_domain or FloatingPointDomain()
+    domain.validate()
+    domain_token = _FP_DOMAIN.set(domain)
+    try:
+        return _execute_cfg_body(
+            state,
+            instructions,
+            ops,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
+            assumed_callees=assumed_callees,
+            assumed_callees_used=assumed_callees_used,
+            callee_contracts=callee_contracts,
+        )
+    finally:
+        _FP_DOMAIN.reset(domain_token)
+
+
+def _execute_cfg_body(
+    state: MachineState,
+    instructions: list[Instruction],
+    ops: WordOps,
+    *,
+    max_instructions: int,
+    max_paths: int,
+    max_loop_iterations: int,
+    assumed_callees: frozenset[int | str],
+    assumed_callees_used: set[int | str] | None,
+    callee_contracts: dict[int | str, CalleeContract] | None,
+) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
             state, stack_low=state.gpr[1], stack_layout_valid=ops.bool(True),
@@ -2935,46 +3096,82 @@ def execute_cfg(
     by_address = {item.address: item for item in instructions}
     start = instructions[0].address
     end = instructions[-1].address + 4
-    work: list[tuple[int, MachineState, Any, frozenset[int], int]] = [(start, state, ops.bool(True), frozenset(), 0)]
+    # visit_counts[pc] = times this path has already entered ``pc``.
+    # A back-edge that would make the count reach max_loop_iterations fails closed.
+    work: list[tuple[int, MachineState, Any, dict[int, int], int]] = [
+        (start, state, ops.bool(True), {}, 0),
+    ]
     terminals: list[Terminal] = []
+
+    def enqueue(
+        next_pc: int,
+        next_state: MachineState,
+        next_condition: Any,
+        next_visits: dict[int, int],
+        next_steps: int,
+    ) -> None:
+        if not _path_condition_feasible(next_condition, ops):
+            return
+        work.append((next_pc, next_state, next_condition, next_visits, next_steps))
+        if len(work) + len(terminals) > max_paths:
+            raise ExecutionInconclusive(f"path limit exceeded ({max_paths})")
+
+    def record_terminal(
+        term_condition: Any,
+        term_state: MachineState,
+        exit_kind: str,
+        exit_target: Any = None,
+    ) -> None:
+        if not _path_condition_feasible(term_condition, ops):
+            return
+        if exit_target is None:
+            terminals.append(Terminal(term_condition, term_state, exit_kind))
+        else:
+            terminals.append(Terminal(term_condition, term_state, exit_kind, exit_target))
+        if len(work) + len(terminals) > max_paths:
+            raise ExecutionInconclusive(f"path limit exceeded ({max_paths})")
+
     while work:
-        pc, current, condition, visited, steps = work.pop()
+        pc, current, condition, visit_counts, steps = work.pop()
         if steps >= max_instructions:
             raise ExecutionInconclusive(f"instruction limit exceeded ({max_instructions})")
         if pc == end:
-            terminals.append(Terminal(condition, current, "fallthrough"))
+            record_terminal(condition, current, "fallthrough")
             continue
         insn = by_address.get(pc)
         if insn is None:
-            terminals.append(Terminal(condition, current, "direct-branch", ops.const(pc)))
+            record_terminal(condition, current, "direct-branch", ops.const(pc))
             continue
-        if pc in visited:
-            raise ExecutionInconclusive(f"loop/back-edge encountered at 0x{pc:08x}")
-        new_visited = visited | {pc}
+        prior_visits = visit_counts.get(pc, 0)
+        if prior_visits >= max_loop_iterations:
+            raise ExecutionInconclusive(
+                f"loop iteration limit exceeded ({max_loop_iterations}) at 0x{pc:08x}"
+            )
+        new_visits = {**visit_counts, pc: prior_visits + 1}
         if insn.opcode == Opcode.TWI:
             trap = _trap_condition(current, *insn.operands, ops)
             trapped = _exception_entry(current, pc, 0x00020000, ops)
-            terminals.append(Terminal(
+            record_terminal(
                 ops.land(condition, trap), trapped, "program-exception", ops.const(0x700),
-            ))
-            work.append((
+            )
+            enqueue(
                 pc + 4, current, ops.land(condition, ops.lnot(trap)),
-                new_visited, steps + 1,
-            ))
+                new_visits, steps + 1,
+            )
             continue
         if insn.opcode == Opcode.SC:
             entered = _exception_entry(current, pc + 4, 0, ops)
-            terminals.append(Terminal(condition, entered, "system-call", ops.const(0xC00)))
+            record_terminal(condition, entered, "system-call", ops.const(0xC00))
             continue
         if insn.opcode == Opcode.RFI:
             privileged = ops.lnot(ops.eq(
                 ops.band(current.msr, ops.const(0x00004000)), ops.const(0),
             ))
             exception_state = _exception_entry(current, pc, 0x00040000, ops)
-            terminals.append(Terminal(
+            record_terminal(
                 ops.land(condition, privileged), exception_state,
                 "program-exception", ops.const(0x700),
-            ))
+            )
             mask = ops.const(0x87C0FFFF)
             restored_msr = ops.band(
                 ops.bor(
@@ -2984,27 +3181,40 @@ def execute_cfg(
                 ops.const(0xFFFBFFFF),
             )
             restored = replace(current, msr=restored_msr)
-            terminals.append(Terminal(
+            record_terminal(
                 ops.land(condition, ops.lnot(privileged)), restored,
                 "return-from-interrupt", current.srr0,
-            ))
+            )
             continue
         if insn.opcode not in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
             next_state = execute_instruction(current, insn, ops)
             assert current.stack_low is not None
+            next_stack_low = ops.ite(
+                ops.unsigned_lt(next_state.gpr[1], current.stack_low),
+                next_state.gpr[1],
+                current.stack_low,
+            )
+            # Reject r1 above entry SP, and reject wraparound that would make
+            # stack_low near zero with a multi-megabyte "private" interval.
+            not_above_entry = ops.lnot(
+                ops.unsigned_lt(caller_frame_top, next_state.gpr[1]),
+            )
+            stack_low_ordered = ops.lnot(
+                ops.unsigned_lt(caller_frame_top, next_stack_low),
+            )
+            frame_depth = ops.sub(caller_frame_top, next_stack_low)
+            depth_ok = ops.lnot(
+                ops.unsigned_lt(ops.const(MAX_PRIVATE_STACK_DEPTH), frame_depth),
+            )
             next_state = replace(
                 next_state,
-                stack_low=ops.ite(
-                    ops.unsigned_lt(next_state.gpr[1], current.stack_low),
-                    next_state.gpr[1],
-                    current.stack_low,
-                ),
+                stack_low=next_stack_low,
                 stack_layout_valid=ops.land(
                     current.stack_layout_valid,
-                    ops.lnot(ops.unsigned_lt(caller_frame_top, next_state.gpr[1])),
+                    ops.land(not_above_entry, ops.land(stack_low_ordered, depth_ok)),
                 ),
             )
-            work.append((pc + 4, next_state, condition, new_visited, steps + 1))
+            enqueue(pc + 4, next_state, condition, new_visits, steps + 1)
             continue
 
         old_lr, old_ctr = current.lr, current.ctr
@@ -3012,7 +3222,7 @@ def execute_cfg(
         if insn.opcode == Opcode.B:
             target, target_key = _cfg_branch_target(insn, ops)
             if isinstance(target, int) and (target in by_address or target == end):
-                work.append((target, linked, condition, new_visited, steps + 1))
+                enqueue(target, linked, condition, new_visits, steps + 1)
             elif insn.link and target_key in assumed_callees:
                 if assumed_callees_used is not None:
                     assumed_callees_used.add(target_key)
@@ -3020,7 +3230,7 @@ def execute_cfg(
                     linked, ops, target_key,
                     callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
                 )
-                work.append((pc + 4, summarized, condition, new_visited, steps + 1))
+                enqueue(pc + 4, summarized, condition, new_visits, steps + 1)
             elif not insn.link and target_key in assumed_callees:
                 if assumed_callees_used is not None:
                     assumed_callees_used.add(target_key)
@@ -3028,10 +3238,10 @@ def execute_cfg(
                     linked, ops, target_key,
                     callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
                 )
-                terminals.append(Terminal(
+                record_terminal(
                     condition, summarized, "return",
                     ops.band(current.lr, ops.const(0xFFFFFFFC)),
-                ))
+                )
             elif insn.link and isinstance(ops, SymbolicOps):
                 raise ExecutionInconclusive(
                     f"call target {target_key!r} has no matched-callee lemma"
@@ -3041,10 +3251,10 @@ def execute_cfg(
                     f"tail-call target {target_key!r} has no matched-callee lemma"
                 )
             else:
-                terminals.append(Terminal(
+                record_terminal(
                     condition, linked, "call" if insn.link else "direct-branch",
                     ops.const(target) if isinstance(target, int) else target,
-                ))
+                )
             continue
 
         bo, bi = insn.operands[:2]
@@ -3063,7 +3273,7 @@ def execute_cfg(
             kind = "call-indirect" if insn.link else "indirect-branch"
 
         if isinstance(target, int) and (target in by_address or target == end):
-            work.append((target, branched_state, taken_condition, new_visited, steps + 1))
+            enqueue(target, branched_state, taken_condition, new_visits, steps + 1)
         elif insn.link and kind == "call" and target_key is not None and target_key in assumed_callees:
             if assumed_callees_used is not None:
                 assumed_callees_used.add(target_key)
@@ -3071,7 +3281,7 @@ def execute_cfg(
                 branched_state, ops, target_key,
                 callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
             )
-            work.append((pc + 4, summarized, taken_condition, new_visited, steps + 1))
+            enqueue(pc + 4, summarized, taken_condition, new_visits, steps + 1)
         elif not insn.link and target_key is not None and target_key in assumed_callees:
             if assumed_callees_used is not None:
                 assumed_callees_used.add(target_key)
@@ -3079,10 +3289,10 @@ def execute_cfg(
                 branched_state, ops, target_key,
                 callee_contracts.get(target_key, CalleeContract.opaque_eabi()),
             )
-            terminals.append(Terminal(
+            record_terminal(
                 taken_condition, summarized, "return",
                 ops.band(old_lr, ops.const(0xFFFFFFFC)),
-            ))
+            )
         elif insn.link and isinstance(ops, SymbolicOps):
             raise ExecutionInconclusive(
                 f"call target {target_key!r} has no matched-callee lemma"
@@ -3092,10 +3302,11 @@ def execute_cfg(
                 f"tail-call target {target_key!r} has no matched-callee lemma"
             )
         else:
-            terminals.append(Terminal(taken_condition, branched_state, kind, ops.const(target) if isinstance(target, int) else target))
-        work.append((pc + 4, branched_state, fall_condition, new_visited, steps + 1))
-        if len(work) + len(terminals) > max_paths:
-            raise ExecutionInconclusive(f"path limit exceeded ({max_paths})")
+            record_terminal(
+                taken_condition, branched_state, kind,
+                ops.const(target) if isinstance(target, int) else target,
+            )
+        enqueue(pc + 4, branched_state, fall_condition, new_visits, steps + 1)
     return terminals
 
 
@@ -3332,12 +3543,25 @@ def _infer_invalid_reasons(instructions: list[Instruction]) -> set[int]:
     ROUNDING_OPS = {Opcode.FCTIW, Opcode.FCTIWZ}
     if opcodes & ROUNDING_OPS:
         reasons.add(InvalidReason.FP_ROUNDING_MODE.value)
+    FP_DOMAIN_OPS = (
+        _FP_EXCEPTION_ARITH | _FP_VALUE_ARITH | _FP_FUSED
+        | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV
+    )
+    if opcodes & FP_DOMAIN_OPS:
+        reasons.add(InvalidReason.FP_DOMAIN_EXCLUDED.value)
     CACHE_OPS = {Opcode.DCBZ, Opcode.DCBZ_L}
     if opcodes & CACHE_OPS:
         reasons.add(InvalidReason.CACHE_DISABLED.value)
     PRIVILEGED_OPS = {Opcode.MFMSR, Opcode.MTMSR, Opcode.MFSR, Opcode.MTSR}
     if opcodes & PRIVILEGED_OPS:
         reasons.add(InvalidReason.PRIVILEGED_INSTRUCTION.value)
+    for insn in instructions:
+        if insn.opcode not in (Opcode.MFSPR, Opcode.MTSPR):
+            continue
+        spr = insn.operands[1]
+        if spr in (26, 27) or spr in AUX_SPR_INDEX or spr in TIME_BASE_WRITE_SPRS:
+            reasons.add(InvalidReason.PRIVILEGED_INSTRUCTION.value)
+            break
     if opcodes & _FP_PSQ_OPS:
         reasons.add(InvalidReason.PSQ_INVALID_TYPE.value)
         if opcodes & {Opcode.PSQ_ST, Opcode.PSQ_STU, Opcode.PSQ_STX, Opcode.PSQ_STUX}:
@@ -3345,16 +3569,25 @@ def _infer_invalid_reasons(instructions: list[Instruction]) -> set[int]:
     return reasons
 
 
-def infer_callee_contract(instructions: list[Instruction]) -> CalleeContract:
+def infer_callee_contract(
+    instructions: list[Instruction],
+    *,
+    nested_contracts: dict[int | str, CalleeContract] | None = None,
+) -> CalleeContract:
     """Infer a conservative EABI exit contract from a matched function body.
 
     Reads are a conservative union of instruction dependencies. Writes are
     limited to ABI-volatile architectural state, so temporary saves/restores of
     nonvolatile registers do not become false exit effects.
+
+    When the body contains direct calls, pass ``nested_contracts`` covering every
+    callee to compose precise summaries. Missing or opaque nested contracts keep
+    the historical fail-closed ``nested-call-opaque-eabi`` result.
     """
     reads: set[str] = {"valid"}
     observed_writes: set[str] = set()
-    has_nested_call = False
+    nested_targets: set[int | str] = set()
+    has_indirect_call = False
     for insn in instructions:
         insn_reads, insn_writes = register_effects(insn)
         if (
@@ -3367,13 +3600,16 @@ def infer_callee_contract(instructions: list[Instruction]) -> CalleeContract:
             insn_reads -= {"lr", "cr", "ctr"}
         reads.update(name for name in insn_reads if name)
         observed_writes.update(name for name in insn_writes if name)
-        has_nested_call |= (
-            insn.opcode in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR)
-            and (insn.link or insn.relocation is not None)
+        is_callish = insn.opcode in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR) and (
+            insn.link or insn.relocation is not None
         )
-    if has_nested_call:
-        opaque = CalleeContract.opaque_eabi()
-        return CalleeContract(opaque.reads, opaque.writes, "nested-call-opaque-eabi")
+        if not is_callish:
+            continue
+        if insn.relocation is not None:
+            nested_targets.add(insn.relocation.canonical_symbol)
+        else:
+            # Linked branch without a relocation (bctrl / blrl / absolute bl).
+            has_indirect_call = True
 
     volatile = {
         *(f"r{i}" for i in (0, *range(3, 13))),
@@ -3382,6 +3618,25 @@ def infer_callee_contract(instructions: list[Instruction]) -> CalleeContract:
         "cr", "cr0", "cr1", "cr5", "cr6", "cr7",
         "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr", "memory",
     }
+
+    if has_indirect_call or nested_targets:
+        provided = nested_contracts or {}
+        if has_indirect_call or any(target not in provided for target in nested_targets):
+            opaque = CalleeContract.opaque_eabi()
+            return CalleeContract(opaque.reads, opaque.writes, "nested-call-opaque-eabi")
+        if any(
+            "*" in provided[target].reads or "*" in provided[target].writes
+            for target in nested_targets
+        ):
+            opaque = CalleeContract.opaque_eabi()
+            return CalleeContract(opaque.reads, opaque.writes, "nested-call-opaque-eabi")
+        for target in nested_targets:
+            contract = provided[target]
+            reads.update(contract.reads)
+            observed_writes.update(contract.writes)
+            if contract.invalid_reasons:
+                observed_writes.add("invalid_reason")
+
     writes = observed_writes & volatile
     if "memory" in writes:
         reads.add("memory")
@@ -3389,10 +3644,18 @@ def infer_callee_contract(instructions: list[Instruction]) -> CalleeContract:
         reads.add("cr")
     writes.add("valid")
     invalid_reasons = _infer_invalid_reasons(instructions)
+    if nested_targets and nested_contracts:
+        for target in nested_targets:
+            invalid_reasons |= set(nested_contracts[target].invalid_reasons)
     if invalid_reasons:
         writes.add("invalid_reason")
+    source = (
+        "matched-body-effects-composed"
+        if nested_targets else
+        "matched-body-effects"
+    )
     return CalleeContract(
-        frozenset(reads), frozenset(writes), "matched-body-effects",
+        frozenset(reads), frozenset(writes), source,
         invalid_reasons=frozenset(invalid_reasons),
     )
 

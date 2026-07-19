@@ -159,10 +159,16 @@ decomp function whose only difference is link layout can be reported
 relocation in the function.
 
 Direct relocated calls compose modularly. Each named callee is an explicit
-matched-callee premise, modeled as one deterministic opaque ABI transition,
-and execution continues through the remainder of the caller. For same-object
-matched callees, standalone checks can derive read/write sets from both bodies.
-The target workflow is stricter: `cycle` issues a semantic certificate in
+matched-callee premise. Same-object matched callees can receive precise
+read/write summaries inferred from both bodies (including a second pass that
+composes nested precise summaries). Missing or opaque nested callees stay
+fail-closed as `nested-call-opaque-eabi`. Validation failures widen to the
+union of declared and required effects instead of collapsing to full opaque
+EABI. Standalone `check-objects` infers these summaries by default; raw block
+checks do not silently assume relocated callees — pass
+`--assume-relocated-callees` for opaque EABI or `--callee-contracts` for
+explicit summaries. The target workflow is stricter: `cycle` issues a semantic
+certificate in
 `tools/coop/targets.json` only after both bodies validate against the summary
 and have only normal returns. The certificate binds the architecture/result
 model, function-local bytes and relocations, summary, and the hashes of every
@@ -250,9 +256,16 @@ resolved contract metadata, observables, assumptions, instruction counts,
 solver/version/timing, and—when applicable—the first mismatch and
 replayable input state.
 
+Optional `--concrete-samples N` runs a **secondary defense** after SMT:
+interesting plus seeded-random ConcreteOps initial states through both CFGs.
+A concrete mismatch demotes `equivalent` / inconclusive statuses to
+`not_equivalent` (fail-closed), but sampling never promotes to `equivalent`
+and is never treated as an SMT certificate. Coop `EQUIVALENT_MATCH` promotion
+remains SMT-gated.
+
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v19` model supports:
+The current `broadway-ppc32-be-v22` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;
@@ -280,6 +293,10 @@ The current `broadway-ppc32-be-v19` model supports:
   exception vectors, SRR0/SRR1 saves, and Broadway MSR entry/restore masks;
 - `b`, `bc`, `bclr`, and `bcctr`, including AA/LK, CR tests, CTR decrement/test,
   LR updates, indirect aligned targets, acyclic CFG paths, and exit comparison;
+  back-edges are explored with a per-PC visit bound (`max_loop_iterations`,
+  default 256)—constant-trip loops whose exit becomes concrete within the bound
+  are supported; exhausting the bound is inconclusive and never silently
+  truncated;
 - scalar FP D-form/indexed loads and stores (`lfs*`, `lfd*`, `stfs*`, `stfd*`,
   `stfiwx`) with big-endian memory and binary32/binary64 conversion;
 - scalar `fadd[s]`, `fsub[s]`, `fmuls`, `fdiv[s]`, double `fmul`, `frsp`,
@@ -346,7 +363,8 @@ but decrementer/performance-counter progression and the behavioral effects of
 BAT/SDR1 translation, HID/L2/cache locking, DMA, and debug registers are
 explicitly outside the bounded value-semantics model. VMX,
 atomics/reservations, detailed cache locking/coherency, asynchronous interrupts,
-MMIO behavior, address translation effects, loops/back-edges, indirect calls,
+MMIO behavior, address translation effects, unbounded/symbolic loops that exceed
+the visit bound, indirect calls,
 and memory/protection/alignment exceptions return inconclusive
 or are outside the declared model. Division outputs are compared only where
 the ISA defines the result. A direct call is summarized only under a recorded

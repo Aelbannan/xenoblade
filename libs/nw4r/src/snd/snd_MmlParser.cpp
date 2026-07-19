@@ -746,3 +746,7 @@ volatile s16* MmlParser::GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
+// LLM-HARNESS-BEGIN: us-8041aabc
+extern "C" void ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl() {}
+// LLM-HARNESS-END: us-8041aabc

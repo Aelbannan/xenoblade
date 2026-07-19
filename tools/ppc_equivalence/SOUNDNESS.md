@@ -279,6 +279,11 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   Broadway and rejected by the decoder.
 - CLI `--fp-domain` / coop `floating_point_domain` pass through to the engine;
   unsupported overrides never silently ignore the requested domain.
+- **Promotion:** all FP proofs remain confidence **Tier C** under current policy.
+  `floating_point_domain.coverage.status` distinguishes ``proven`` SMT-encoded
+  restrictions from ``assumed`` ones (for example trap exclusion); neither tier
+  is eligible for automatic `EQUIVALENT_MATCH` promotion until a future gate
+  explicitly reopens FP to Tier A/B.
 
 ### Relocations
 

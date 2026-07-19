@@ -15,10 +15,14 @@ from tools.ppc_equivalence.result import (
     ARCHITECTURE_MODEL,
     MASKING_SEMANTICS,
     RESULT_FORMAT,
+    FP_COVERAGE_STATUS_ASSUMED,
+    FP_COVERAGE_STATUS_NONE,
     FloatingPointDomain,
     MemoryScope,
     ProofResult,
     ProofStatus,
+    fp_coverage_status,
+    proof_fp_coverage_status,
 )
 
 
@@ -195,8 +199,11 @@ def compute_confidence_tier_proofresult(
     if result.status is not ProofStatus.EQUIVALENT:
         return None
 
-    # Presence of a floating-point domain means FP was used in the proof.
-    has_fp = result.floating_point_domain is not None
+    # P1-11: any FP proof or merely-assumed FP restriction stays Tier C until
+    # promotion policy explicitly allows stronger tiers for proven domains.
+    fp_coverage = proof_fp_coverage_status(result)
+    has_fp = fp_coverage != FP_COVERAGE_STATUS_NONE
+    has_assumed_fp = fp_coverage == FP_COVERAGE_STATUS_ASSUMED
 
     has_callees = bool(result.assumed_callees)
 
@@ -250,6 +257,7 @@ def compute_confidence_tier_proofresult(
 
     if (
         has_fp
+        or has_assumed_fp
         or has_domain_exceptions
         or has_assumed_ram
         or not has_complete_provenance
@@ -279,6 +287,13 @@ def compute_confidence_tier_from_certificate(
         w.startswith("f") and (w[1:].isdigit() or w in ("fpscr",))
         for w in writes + reads
     )
+    raw_fp = certificate.get("floating_point_domain")
+    fp_coverage = FP_COVERAGE_STATUS_NONE
+    if isinstance(raw_fp, FloatingPointDomain):
+        fp_coverage = raw_fp.coverage_status()
+    elif isinstance(raw_fp, dict):
+        fp_coverage = fp_coverage_status(FloatingPointDomain.from_dict(raw_fp))
+    has_assumed_fp = fp_coverage == FP_COVERAGE_STATUS_ASSUMED
     has_callee_calls = bool(certificate.get("callees"))
     invalid_reasons: list[int] = summary.get("invalid_reasons", [])
     has_domain_exception = bool(invalid_reasons)
@@ -288,9 +303,10 @@ def compute_confidence_tier_from_certificate(
         and not has_fp_access
         and not has_callee_calls
         and not has_domain_exception
+        and not has_assumed_fp
     ):
         return "A"
-    if has_fp_access or has_domain_exception:
+    if has_fp_access or has_assumed_fp or has_domain_exception:
         return "C"
     return "B"
 

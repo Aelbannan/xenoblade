@@ -10,9 +10,13 @@ from tools.ppc_equivalence.model import InvalidReason, concrete_state
 from tools.ppc_equivalence.result import (
     FP_COVERAGE_ASSUMED,
     FP_COVERAGE_PROVEN,
+    FP_COVERAGE_STATUS_ASSUMED,
+    FP_COVERAGE_STATUS_NONE,
     FP_COVERAGE_UNSUPPORTED,
     FloatingPointDomain,
     ProofStatus,
+    fp_coverage_status,
+    proof_fp_coverage_status,
 )
 from tools.ppc_equivalence.semantics import ConcreteOps, execute_instruction
 
@@ -29,7 +33,20 @@ class FloatingPointDomainCoverageTests(unittest.TestCase):
         self.assertEqual(d["coverage"]["proven"], list(FP_COVERAGE_PROVEN))
         self.assertEqual(d["coverage"]["assumed"], list(FP_COVERAGE_ASSUMED))
         self.assertEqual(d["coverage"]["unsupported"], list(FP_COVERAGE_UNSUPPORTED))
+        self.assertEqual(d["coverage"]["status"], FP_COVERAGE_STATUS_ASSUMED)
         self.assertTrue(d["allow_subnormal"])
+
+    def test_default_domain_coverage_status_is_assumed(self):
+        domain = FloatingPointDomain()
+        self.assertEqual(domain.coverage_status(), FP_COVERAGE_STATUS_ASSUMED)
+        self.assertIn("traps-disabled", domain.coverage_dict()["assumed"])
+
+    def test_fp_coverage_status_none_without_domain(self):
+        self.assertEqual(fp_coverage_status(None), FP_COVERAGE_STATUS_NONE)
+        self.assertEqual(
+            fp_coverage_status(None, used_fp=True),
+            FP_COVERAGE_STATUS_ASSUMED,
+        )
 
     def test_from_dict_roundtrip_core_fields(self):
         original = FloatingPointDomain(allow_subnormal=False, allow_nan=False)
@@ -96,6 +113,18 @@ class FloatingPointDomainConstraintTests(unittest.TestCase):
         self.assertFalse(state.valid)
         self.assertEqual(state.invalid_reason, InvalidReason.FP_DOMAIN_EXCLUDED.value)
 
+    def test_allow_infinity_false_excludes_infinity_operand(self):
+        domain = FloatingPointDomain(allow_infinity=False)
+        state = execute_instruction(
+            concrete_state({"fpr": {"f1": "0x7ff0000000000000", "f2": "0x3ff0000000000000"}}),
+            _insn(Opcode.FADDS, (1, 1, 2)),
+            ConcreteOps(),
+            floating_point_domain=domain,
+        )
+        self.assertFalse(state.valid)
+        self.assertEqual(state.invalid_reason, InvalidReason.FP_DOMAIN_EXCLUDED.value)
+        self.assertIn("infinity-excluded", domain.coverage_dict()["proven"])
+
     def test_exclude_finite_overflow_false_keeps_overflow_valid(self):
         huge = 0x47EFFFFFE0000000
         domain = FloatingPointDomain(exclude_finite_overflow=False)
@@ -147,6 +176,33 @@ class FloatingPointDomainConstraintTests(unittest.TestCase):
         assert result.floating_point_domain is not None
         self.assertFalse(result.floating_point_domain.allow_subnormal)
         self.assertIn("subnormals-excluded", result.floating_point_domain.coverage_dict()["proven"])
+
+
+class FloatingPointTierClassificationTests(unittest.TestCase):
+    def test_assumed_fp_domain_is_tier_c(self):
+        from tools.coop.lib.equivalence_policy import compute_confidence_tier
+        from tools.coop.tests.test_promotion_policy import _equivalent_proof, _open_ledger
+
+        proof = _equivalent_proof(floating_point_domain=FloatingPointDomain())
+        self.assertEqual(proof_fp_coverage_status(proof), FP_COVERAGE_STATUS_ASSUMED)
+        self.assertEqual(compute_confidence_tier(proof, _open_ledger()), "C")
+
+    def test_register_only_proof_without_fp_stays_tier_a(self):
+        from tools.coop.lib.equivalence_policy import compute_confidence_tier
+        from tools.coop.tests.test_promotion_policy import _equivalent_proof, _open_ledger
+
+        proof = _equivalent_proof()
+        self.assertIsNone(proof.floating_point_domain)
+        self.assertEqual(compute_confidence_tier(proof, _open_ledger()), "A")
+
+    def test_certificate_with_fp_domain_coverage_is_tier_c(self):
+        from tools.coop.lib.equivalence_policy import compute_confidence_tier
+
+        certificate = {
+            "summary": {"reads": ["r3"], "writes": ["r3"], "invalid_reasons": []},
+            "floating_point_domain": FloatingPointDomain().to_dict(),
+        }
+        self.assertEqual(compute_confidence_tier(certificate), "C")
 
 
 if __name__ == "__main__":

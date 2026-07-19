@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, ProofStatus
+from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
 from tools.ppc_equivalence.docs_sync import (
     TABLE_BEGIN,
     TABLE_END,
@@ -24,7 +24,7 @@ class TestDocsSync(unittest.TestCase):
         self.assertIn(VERSION_BEGIN, block)
         self.assertIn(VERSION_END, block)
         self.assertIn(ARCHITECTURE_MODEL, block)
-        self.assertIn("`8`", block)
+        self.assertIn(f"`{RESULT_FORMAT}`", block)
         self.assertIn("`2`", block)
 
     def test_status_table_contains_all_statuses(self) -> None:

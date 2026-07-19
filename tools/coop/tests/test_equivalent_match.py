@@ -186,42 +186,88 @@ class ProbeGateTests(unittest.TestCase):
 class CacheInvalidationTests(unittest.TestCase):
     """P0-04: proof cache entries with stale version are not returned."""
 
-    def _make_cache_entry(self, cache_dir: Path, key: str, *,
-                          architecture: str, result_format: int) -> Path:
-        entry = cache_dir / f"{key}.json"
-        entry.write_text(json.dumps({
+    def _make_cache_entry(
+        self,
+        cache_dir: Path,
+        key: str,
+        *,
+        architecture: str,
+        result_format: int,
+        engine_hash: str | None = ...,
+    ) -> Path:
+        from tools.coop.lib.equivalence_check import _current_engine_hash
+
+        payload: dict = {
             "architecture": architecture,
             "result_format": result_format,
             "status": "equivalent",
             "detail": "",
-        }))
+        }
+        if engine_hash is ...:
+            payload["engine_hash"] = _current_engine_hash()
+        elif engine_hash is not None:
+            payload["engine_hash"] = engine_hash
+        entry = cache_dir / f"{key}.json"
+        entry.write_text(json.dumps(payload))
         return entry
 
     def test_cache_rejects_old_architecture_model(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cache_dir = Path(tmp)
             key = hashlib.sha256(b"stale-arch").hexdigest()
-            self._make_cache_entry(cache_dir, key,
-                                   architecture="broadway-ppc32-be-v18",
-                                   result_format=RESULT_FORMAT)
+            self._make_cache_entry(
+                cache_dir, key,
+                architecture="broadway-ppc32-be-v18",
+                result_format=RESULT_FORMAT,
+                engine_hash="a" * 64,
+            )
             self.assertIsNone(_cache_get(key, cache_dir))
 
     def test_cache_rejects_old_result_format(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cache_dir = Path(tmp)
             key = hashlib.sha256(b"stale-format").hexdigest()
-            self._make_cache_entry(cache_dir, key,
-                                   architecture=ARCHITECTURE_MODEL,
-                                   result_format=7)
+            self._make_cache_entry(
+                cache_dir, key,
+                architecture=ARCHITECTURE_MODEL,
+                result_format=7,
+                engine_hash="a" * 64,
+            )
+            self.assertIsNone(_cache_get(key, cache_dir))
+
+    def test_cache_rejects_missing_engine_hash(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            key = hashlib.sha256(b"missing-engine").hexdigest()
+            self._make_cache_entry(
+                cache_dir, key,
+                architecture=ARCHITECTURE_MODEL,
+                result_format=RESULT_FORMAT,
+                engine_hash=None,
+            )
+            self.assertIsNone(_cache_get(key, cache_dir))
+
+    def test_cache_rejects_stale_engine_hash(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            key = hashlib.sha256(b"stale-engine").hexdigest()
+            self._make_cache_entry(
+                cache_dir, key,
+                architecture=ARCHITECTURE_MODEL,
+                result_format=RESULT_FORMAT,
+                engine_hash="a" * 64,
+            )
             self.assertIsNone(_cache_get(key, cache_dir))
 
     def test_cache_returns_current_entry(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cache_dir = Path(tmp)
             key = hashlib.sha256(b"current").hexdigest()
-            self._make_cache_entry(cache_dir, key,
-                                   architecture=ARCHITECTURE_MODEL,
-                                   result_format=RESULT_FORMAT)
+            self._make_cache_entry(
+                cache_dir, key,
+                architecture=ARCHITECTURE_MODEL,
+                result_format=RESULT_FORMAT,
+            )
             result = _cache_get(key, cache_dir)
             self.assertIsNotNone(result)
             self.assertEqual(result.status, ProofStatus.EQUIVALENT)

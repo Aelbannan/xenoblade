@@ -4,11 +4,43 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .contract import make_contract
 from .decoder import decode_block
 from .elf_symbols import ElfSymbolError, extract_function
-from .engine import validate_callee_contract
-from .ir import DecodeError, UnsupportedInstruction
-from .semantics import CalleeContract, infer_callee_contract
+from .engine import check_equivalence, validate_callee_contract
+from .ir import DecodeError, Instruction, UnsupportedInstruction
+from .result import ProofStatus
+from .semantics import CalleeContract, automatic_live_out, infer_callee_contract
+
+# Bound SMT time spent proving each matched callee body pair.
+_CALLEE_PROOF_TIMEOUT_MS = 5_000
+
+
+def _bodies_functionally_equivalent(
+    left_instructions: list[Instruction],
+    right_instructions: list[Instruction],
+    nested: dict[int | str, CalleeContract],
+    *,
+    timeout_ms: int = _CALLEE_PROOF_TIMEOUT_MS,
+) -> bool:
+    """Return True when original/candidate bodies prove EQUIVALENT under auto."""
+    contract = make_contract(
+        preset="auto",
+        observe=None,
+        timeout_ms=timeout_ms,
+        original_live_out=automatic_live_out(left_instructions),
+        candidate_live_out=automatic_live_out(right_instructions),
+    )
+    result = check_equivalence(
+        left_instructions,
+        right_instructions,
+        contract,
+        original_hex="",
+        candidate_hex="",
+        assumed_callees=frozenset(nested),
+        callee_contracts=nested or None,
+    )
+    return result.status == ProofStatus.EQUIVALENT
 
 
 def infer_matched_callee_contracts(
@@ -22,10 +54,15 @@ def infer_matched_callee_contracts(
     bodies whose nested callees now have precise (non-opaque) summaries.
     Validation failures widen to the union of declared and required effects
     instead of collapsing to full opaque EABI.
+
+    A matched summary is authorized for composition only when the original and
+    candidate callee bodies are proven ``EQUIVALENT`` under effect-aware
+    ``auto``. Effect footprints may still be computed for that proof path, but
+    unproven or divergent pairs are omitted (fail-closed).
     """
     if original_object is None or candidate_object is None:
         return {}
-    decoded: dict[str, tuple[list, list]] = {}
+    decoded: dict[str, tuple[list[Instruction], list[Instruction]]] = {}
     for target in call_targets:
         if not isinstance(target, str):
             continue
@@ -60,8 +97,11 @@ def infer_matched_callee_contracts(
             left_contract.source == "nested-call-opaque-eabi"
             or right_contract.source == "nested-call-opaque-eabi"
         ):
-            opaque = CalleeContract.opaque_eabi()
-            return CalleeContract(opaque.reads, opaque.writes, "nested-call-opaque-eabi")
+            # Nested callees unresolved: do not authorize opaque EABI here.
+            # Callers stay fail-closed unless --assume-relocated-callees.
+            return None
+        # Effect footprints are diagnostic inputs to the summary shape; they do
+        # not alone authorize composition.
         merged = CalleeContract(
             left_contract.reads | right_contract.reads,
             left_contract.writes | right_contract.writes,
@@ -70,6 +110,10 @@ def infer_matched_callee_contracts(
                 left_contract.invalid_reasons | right_contract.invalid_reasons
             ),
         )
+        if not _bodies_functionally_equivalent(
+            left_instructions, right_instructions, nested,
+        ):
+            return None
         composed = left_contract.source.endswith("composed") or right_contract.source.endswith(
             "composed"
         )
@@ -125,15 +169,18 @@ def infer_matched_callee_contracts(
         if contract is not None:
             contracts[target] = contract
 
-    # Pass 2: recompose bodies whose callees now have precise summaries.
+    # Pass 2: recompose bodies whose callees now have proven precise summaries.
+    precise = {
+        name: contract for name, contract in contracts.items()
+        if "*" not in contract.reads and "*" not in contract.writes
+    }
     for target in decoded:
-        current = contracts.get(target)
-        if current is None or current.source != "nested-call-opaque-eabi":
+        if target in contracts:
             continue
-        recomposed = _infer_pair(target, {
-            name: contract for name, contract in contracts.items()
-            if name != target and "*" not in contract.reads and "*" not in contract.writes
-        })
-        if recomposed is not None and recomposed.source != "nested-call-opaque-eabi":
+        nested = {name: contract for name, contract in precise.items() if name != target}
+        if not nested:
+            continue
+        recomposed = _infer_pair(target, nested)
+        if recomposed is not None:
             contracts[target] = recomposed
     return contracts

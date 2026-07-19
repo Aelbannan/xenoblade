@@ -265,7 +265,7 @@ remains SMT-gated.
 
 ## Supported model (phases 1–3)
 
-The current `broadway-ppc32-be-v22` model supports:
+The current `broadway-ppc32-be-v23` model supports:
 
 - integer add/subtract families, carry, `OE`, sticky `XER.SO`, multiply-high,
   multiply-low, signed/unsigned divide, negate, sign extension, and count-zero;

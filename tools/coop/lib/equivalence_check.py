@@ -30,7 +30,7 @@ from tools.ppc_equivalence.callee_inference import infer_matched_callee_contract
 from tools.ppc_equivalence.engine import check_equivalence, validate_callee_contract
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
-from tools.ppc_equivalence.provenance import proof_request_hash
+from tools.ppc_equivalence.provenance import hash_engine_tree, proof_request_hash
 from tools.ppc_equivalence.semantics import (
     CalleeContract,
     ConcreteOps,
@@ -47,6 +47,12 @@ EQUIVALENT_MATCH_MIN_PERCENT = 50.0
 _TIMEOUT_MS_MIN = 5_000
 _TIMEOUT_MS_MAX = 120_000
 _TIMEOUT_MS_PER_INSN = 20
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _current_engine_hash() -> str:
+    return hash_engine_tree(_REPO_ROOT)
 
 
 @dataclass(frozen=True)
@@ -269,16 +275,27 @@ def _cache_key(
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     certificate_target_id: str | None = None,
     memory_environment: dict[str, Any] | None = None,
+    floating_point_domain: dict[str, Any] | None = None,
+    limits: dict[str, int] | None = None,
+    engine_hash: str | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
             (item.offset, item.relocation_type, item.symbol, item.addend)
             for item in items
         ]
+
+    fp_domain = floating_point_domain
+    if fp_domain is None and isinstance(memory_environment, dict):
+        nested = memory_environment.get("floating_point_domain")
+        if nested is not None:
+            fp_domain = nested
+
     payload = json.dumps(
         {
             "architecture": ARCHITECTURE_MODEL,
             "result_format": RESULT_FORMAT,
+            "engine_hash": engine_hash if engine_hash is not None else _current_engine_hash(),
             "contract": contract_name,
             "observables": sorted(observables),
             "original_hex": original_hex,
@@ -295,18 +312,31 @@ def _cache_key(
                     "reads": sorted(contract.reads),
                     "writes": sorted(contract.writes),
                     "source": contract.source,
+                    "invalid_reasons": sorted(contract.invalid_reasons),
                 }
-                for name, contract in sorted((callee_contracts or {}).items(), key=lambda item: str(item[0]))
+                for name, contract in sorted(
+                    (callee_contracts or {}).items(), key=lambda item: str(item[0])
+                )
             },
             "certificate_target_id": certificate_target_id,
             "memory_environment": memory_environment,
+            "floating_point_domain": fp_domain,
+            "limits": {
+                str(key): int(value)
+                for key, value in sorted((limits or {}).items())
+            },
         },
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def _cache_get(key: str, cache_dir: Path | None) -> EquivalenceProbe | None:
+def _cache_get(
+    key: str,
+    cache_dir: Path | None,
+    *,
+    engine_hash: str | None = None,
+) -> EquivalenceProbe | None:
     if cache_dir is None:
         return None
     entry_path = cache_dir / f"{key}.json"
@@ -317,6 +347,13 @@ def _cache_get(key: str, cache_dir: Path | None) -> EquivalenceProbe | None:
         if data.get("architecture") != ARCHITECTURE_MODEL:
             return None
         if data.get("result_format") != RESULT_FORMAT:
+            return None
+        expected_engine = (
+            engine_hash if engine_hash is not None else _current_engine_hash()
+        )
+        stored_engine = data.get("engine_hash")
+        # Reject missing engine_hash (pre-binding entries) and mismatches.
+        if not isinstance(stored_engine, str) or stored_engine != expected_engine:
             return None
         status = ProofStatus(data["status"])
         certificate = data.get("certificate")
@@ -381,6 +418,8 @@ def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
 def _cache_put(
     key: str, probe: EquivalenceProbe, cache_dir: Path | None,
     assumed_callees: set[int | str] | frozenset[int | str] = frozenset(),
+    *,
+    engine_hash: str | None = None,
 ) -> None:
     if cache_dir is None:
         return
@@ -389,6 +428,7 @@ def _cache_put(
     entry: dict[str, Any] = {
         "architecture": ARCHITECTURE_MODEL,
         "result_format": RESULT_FORMAT,
+        "engine_hash": engine_hash if engine_hash is not None else _current_engine_hash(),
         "status": probe.status.value,
         "detail": probe.detail,
         "certificate": probe.certificate,
@@ -742,15 +782,36 @@ def _prove_bytes(
         }
     else:
         known_addresses = _load_known_equivalent_targets(project)
-        # Standalone CLI compatibility: infer same-object summaries. Registry
-        # workflows use only durable, re-attested certificates above.
-        assumed_callees = frozenset(
-            target for target in call_targets
-            if isinstance(target, str) or target in known_addresses
+        # Standalone CLI compatibility: infer same-object summaries only when
+        # original/candidate bodies prove EQUIVALENT. Registry workflows use
+        # durable, re-attested certificates above. Unproven named callees are
+        # omitted so CFG execution fails closed (no silent opaque EABI).
+        inference_targets = frozenset(
+            target for target in call_targets if isinstance(target, str)
         )
         callee_contracts = _infer_matched_callee_contracts(
-            assumed_callees, original_object, candidate_object,
+            inference_targets, original_object, candidate_object,
         )
+        assumed_callees = frozenset(callee_contracts) | frozenset(
+            target for target in call_targets
+            if isinstance(target, int) and target in known_addresses
+        )
+
+    if memory_environment is None and project is not None:
+        from tools.coop.lib.config import memory_environment_from_config
+
+        memory_environment = memory_environment_from_config(project.config)
+    raw_fp = floating_point_domain
+    if raw_fp is None and project is not None:
+        raw_fp = getattr(project.config, "floating_point_domain", None)
+    fp_domain_dict: dict[str, Any] | None = None
+    if isinstance(raw_fp, dict):
+        fp_domain_dict = raw_fp
+    elif raw_fp is not None:
+        from tools.ppc_equivalence.result import FloatingPointDomain
+
+        fp_domain_dict = FloatingPointDomain.parse(raw_fp).to_dict()
+
     key = _cache_key(
         resolved_contract.name, observables, orig_hex, cand_hex,
         orig_base, cand_base,
@@ -762,6 +823,12 @@ def _prove_bytes(
         callee_contracts=callee_contracts,
         certificate_target_id=certificate_target_id,
         memory_environment=memory_environment,
+        floating_point_domain=fp_domain_dict,
+        limits={
+            "max_instructions": max_instructions,
+            "max_paths": max_paths,
+            "max_loop_iterations": max_loop_iterations,
+        },
     )
 
     cache_d = _cache_dir(project)
@@ -790,17 +857,10 @@ def _prove_bytes(
 
     callees_used: set[int | str] = set()
     mem_env = None
-    if memory_environment is None and project is not None:
-        from tools.coop.lib.config import memory_environment_from_config
-
-        memory_environment = memory_environment_from_config(project.config)
     if memory_environment:
         from tools.ppc_equivalence.memory_profile import MemoryEnvironment
         mem_env = MemoryEnvironment.from_dict(memory_environment)
     fp_domain = None
-    raw_fp = floating_point_domain
-    if raw_fp is None and project is not None:
-        raw_fp = getattr(project.config, "floating_point_domain", None)
     if raw_fp is not None:
         from tools.ppc_equivalence.result import FloatingPointDomain
         fp_domain = FloatingPointDomain.parse(raw_fp)

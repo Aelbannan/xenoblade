@@ -68,6 +68,55 @@ class MatchedPairInferenceTests(unittest.TestCase):
             "validated-matched-pair-semantic-effects",
         )
 
+    def test_divergent_leaf_bodies_not_authorized(self) -> None:
+        """Effect-summary merge must not authorize functionally different leaves.
+
+        Retail leaf: addi r3,r3,1; blr. Candidate: addi r3,r3,2; blr.
+        Callers are both bl leaf; blr. Composition must not report equivalent.
+        """
+        leaf_retail = bytes.fromhex("38630001 4e800020")
+        leaf_candidate = bytes.fromhex("38630002 4e800020")
+        caller_bytes = bytes.fromhex("48000001 4e800020")
+        retail_elf = build_reloc_elf(
+            {"leaf": leaf_retail, "f": caller_bytes},
+            relocations=((len(leaf_retail), "leaf", 10, 0),),
+        )
+        candidate_elf = build_reloc_elf(
+            {"leaf": leaf_candidate, "f": caller_bytes},
+            relocations=((len(leaf_candidate), "leaf", 10, 0),),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            left = Path(tmp) / "retail.o"
+            right = Path(tmp) / "candidate.o"
+            left.write_bytes(retail_elf)
+            right.write_bytes(candidate_elf)
+            contracts = infer_matched_callee_contracts(
+                frozenset({"leaf"}), left, right,
+            )
+            self.assertNotIn(
+                "leaf",
+                contracts,
+                "divergent leaves must not enter assumed_callees via effect merge",
+            )
+            out = io.StringIO()
+            err = io.StringIO()
+            with redirect_stdout(out), redirect_stderr(err):
+                exit_code = cli.main([
+                    "check-objects",
+                    "--original", str(left),
+                    "--candidate", str(right),
+                    "--symbol", "f",
+                    "--json",
+                ])
+            payload = json.loads(out.getvalue())
+        self.assertNotEqual(payload["status"], "equivalent")
+        self.assertNotEqual(exit_code, 0)
+        self.assertEqual(payload.get("assumed_callees") or [], [])
+        self.assertIn(
+            payload["status"],
+            {"inconclusive_unsupported", "inconclusive_unvalidated_callee"},
+        )
+
     def test_nested_caller_recomposes_after_leaf(self) -> None:
         leaf_bytes = bytes.fromhex("38630001 4e800020")
         # bl leaf ; blr

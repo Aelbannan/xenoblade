@@ -177,8 +177,8 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v22"
-RESULT_FORMAT = 8
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v23"
+RESULT_FORMAT = 9
 
 
 MASKING_SEMANTICS = "per-implementation-independent-v1"
@@ -357,6 +357,9 @@ class ProofResult:
     opcodes_used: list[str] = field(default_factory=list)
     # CFG exploration bounds recorded on every proof (including inconclusive).
     limits: dict[str, int] = field(default_factory=dict)
+    # Domain-exception codes from callee summaries / certificates (InvalidReason).
+    # Non-empty forces Tier C so promotion cannot ignore definedness gaps.
+    invalid_reasons: list[int] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -377,4 +380,6 @@ class ProofResult:
             value.pop("concrete_sampling", None)
         if not self.limits:
             value.pop("limits", None)
+        if not self.invalid_reasons:
+            value.pop("invalid_reasons", None)
         return value

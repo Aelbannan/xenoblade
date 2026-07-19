@@ -115,5 +115,51 @@ class LedgerPromotionTests(unittest.TestCase):
         self.assertIn("opcode-rfi-not-dolphin-validated", decision.blockers)
 
 
+class EmptyLedgerFailClosedTests(unittest.TestCase):
+    def test_absent_ledger_skips_gating(self) -> None:
+        ledger = ValidationLedger(frozenset())
+        self.assertFalse(ledger.intentionally_loaded)
+        self.assertEqual(ledger.missing_dolphin_opcodes(["add", "lwz"]), [])
+        proof = _equivalent_proof(opcodes_used=["add"])
+        self.assertEqual(compute_confidence_tier(proof, ledger), "A")
+
+    def test_loaded_empty_dolphin_set_fails_closed(self) -> None:
+        ledger = ValidationLedger(
+            frozenset(),
+            intentionally_loaded=True,
+            architecture_model=ARCHITECTURE_MODEL,
+        )
+        self.assertEqual(
+            ledger.missing_dolphin_opcodes(["add", "lwz"]),
+            ["add", "lwz"],
+        )
+        proof = _equivalent_proof(opcodes_used=["add"])
+        self.assertEqual(compute_confidence_tier(proof, ledger), "C")
+
+    def test_architecture_mismatch_fails_closed(self) -> None:
+        ledger = ValidationLedger(
+            frozenset({"add"}),
+            intentionally_loaded=True,
+            architecture_model="broadway-ppc32-be-v18",
+        )
+        self.assertTrue(ledger.promotion_metadata_invalid())
+        proof = _equivalent_proof(opcodes_used=["add"])
+        self.assertEqual(compute_confidence_tier(proof, ledger), "C")
+        decision = classify_for_promotion(proof, PromotionPolicy(), ledger)
+        self.assertFalse(decision.allowed)
+        self.assertTrue(
+            any("ledger-architecture-model-" in item for item in decision.blockers)
+        )
+
+    def test_load_empty_file_is_intentionally_loaded(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "empty.json"
+            path.write_text("{}", encoding="utf-8")
+            ledger = ValidationLedger.load(path)
+            self.assertTrue(ledger.intentionally_loaded)
+            self.assertEqual(ledger.dolphin_validated_opcodes, frozenset())
+            self.assertEqual(ledger.missing_dolphin_opcodes(["addi"]), ["addi"])
+
+
 if __name__ == "__main__":
     unittest.main()

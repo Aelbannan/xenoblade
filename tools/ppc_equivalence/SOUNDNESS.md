@@ -177,6 +177,10 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
     stale or missing callee certificates yield
     `INCONCLUSIVE_UNVALIDATED_CALLEE`.
 - Without a recorded summary, the call is inconclusive.
+- Opaque / effect summaries are **definedness-monotonic**: `call_token` always
+  depends on entry `valid` and `invalid_reason`, and `_apply_call_summary`
+  preserves the caller's first invalid reason (a callee cannot resurrect
+  validity or replace an earlier reason with an unconstrained UF result).
 - A SAT model that involves an opaque summary is `INCONCLUSIVE_ABSTRACTION`,
   not `NOT_EQUIVALENT`.
 - MWCC `_savegpr_*`/`_restgpr_*`/`_savefpr_*`/`_restfpr_*` helpers use fixed
@@ -269,6 +273,7 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 | Definedness-preserving partial equivalence | `engine._terminal_difference` | definedness tests | `mismatch.kind=definedness` |
 | Invalid-reason comparison when both invalid | `engine._terminal_difference` | definedness tests | `mismatch.name=invalid-reason` |
 | InvalidReason tracked per instruction | `semantics._constrain_valid` | definedness tests | `state.invalid_reason` |
+| Call summary preserves first invalid reason | `semantics.call_token`, `_apply_call_summary` | `test_definedness.CalleeSummaryDefinednessTests` | `state.invalid_reason` |
 | INCONCLUSIVE_UNMODELED_EXCEPTION (reserved) | `result.ProofStatus` | — | `status` |
 | Exit-kind and exit-target comparison | `engine._terminal_difference` | `test_checker` control-flow tests | `mismatch.exit_kind`, `mismatch.exit_target` |
 | Private stack disabled after call | `semantics._apply_call_summary` (opaque and fixed helpers) | `test_call_disables_*`, `test_savegpr_*` | `memory_scope.private_stack.*.disabled_reasons` |

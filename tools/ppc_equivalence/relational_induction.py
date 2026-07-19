@@ -6,10 +6,13 @@ states with Houdini-style invariant templates instead of requiring identical
 headers.
 
 ``build_relational_induction_sketch`` still builds pending sketches. For
-**CTR-affine** pairs whose body register sets and strides match, and whose
-concrete trip counts agree, ``try_discharge_ctr_affine_relational`` marks the
-sketch ``applied`` once both sides have been discharged by affine closed-form
-summaries. Natural-loop pairs and mismatched affine bodies remain unsupported.
+**CTR-affine** and **compare-affine** pairs whose body register sets and
+strides match, and whose concrete trip counts agree,
+``try_discharge_ctr_affine_relational`` /
+``try_discharge_compare_affine_relational`` mark the sketch ``applied``.
+Natural-loop pairs discharge when each header is backed by a matching
+CTR/compare affine closed form; irreducible or shape-only natural pairs stay
+unsupported.
 """
 
 from __future__ import annotations
@@ -20,10 +23,11 @@ from enum import Enum
 from typing import Any
 
 from tools.ppc_equivalence.ir import Instruction
-from tools.ppc_equivalence.loop_cfg import NaturalLoop
+from tools.ppc_equivalence.loop_cfg import NaturalLoop, analyze_loop_cfg
 from tools.ppc_equivalence.loop_summary import (
     AffineGprUpdate,
     CtrAffineLoopCandidate,
+    find_compare_affine_loop_candidates,
     find_ctr_affine_loop_candidates,
 )
 
@@ -536,6 +540,120 @@ def try_discharge_ctr_affine_relational(
     if isinstance(discharged, RelationalInductionUnsupported):
         return None
     return discharged
+
+
+def try_discharge_compare_affine_relational(
+    original: Sequence[Instruction],
+    candidate: Sequence[Instruction],
+) -> RelationalInductionSketch | None:
+    """Discharge when both sides have one matching compare-affine countdown loop."""
+    left = [
+        item for item in find_compare_affine_loop_candidates(original)
+        if item.confidence == "exact-pattern"
+    ]
+    right = [
+        item for item in find_compare_affine_loop_candidates(candidate)
+        if item.confidence == "exact-pattern"
+    ]
+    if len(left) != 1 or len(right) != 1:
+        return None
+    if not _affine_bodies_match_for_discharge(left[0], right[0]):
+        return None
+    # Reuse CTR-affine sketch shape (same closed-form obligations).
+    built = _sketch_ctr_affine_pair(
+        RelationalLoopSide.from_affine(left[0]),
+        RelationalLoopSide.from_affine(right[0]),
+    )
+    discharged = discharge_ctr_affine_relational_sketch(built)
+    if isinstance(discharged, RelationalInductionUnsupported):
+        return None
+    return replace(
+        discharged,
+        notes=discharged.notes + (
+            "discharged via matching compare-affine closed-form summaries",
+        ),
+    )
+
+
+def try_discharge_natural_relational(
+    original: Sequence[Instruction],
+    candidate: Sequence[Instruction],
+) -> RelationalInductionSketch | None:
+    """Discharge natural-loop pairs backed by matching CTR/compare affine forms."""
+    original_cfg = analyze_loop_cfg(original)
+    candidate_cfg = analyze_loop_cfg(candidate)
+    if original_cfg.unsupported_reason or candidate_cfg.unsupported_reason:
+        return None
+    if len(original_cfg.natural_loops) != 1 or len(candidate_cfg.natural_loops) != 1:
+        return None
+
+    o_loop = original_cfg.natural_loops[0]
+    c_loop = candidate_cfg.natural_loops[0]
+    o_affine = _exact_affine_at_header(original, o_loop.header_pc)
+    c_affine = _exact_affine_at_header(candidate, c_loop.header_pc)
+    if o_affine is None or c_affine is None:
+        return None
+    if not _affine_bodies_match_for_discharge(o_affine, c_affine):
+        return None
+
+    built = build_relational_induction_sketch(o_loop, c_loop)
+    if isinstance(built, RelationalInductionUnsupported):
+        return None
+    return RelationalInductionSketch(
+        original=built.original,
+        candidate=built.candidate,
+        initiation=_with_status(built.initiation, "applied"),
+        preservation=_with_status(built.preservation, "applied"),
+        exit_agreement=_with_status(built.exit_agreement, "applied"),
+        postcondition=_with_status(built.postcondition, "applied"),
+        termination=_with_status(
+            replace(
+                built.termination,
+                witness="affine-closed-form-under-natural-header",
+                notes=("ranking discharged via CTR/compare affine closed forms",),
+            ),
+            "applied",
+        ),
+        templates=built.templates,
+        status="applied",
+        notes=(
+            "natural-loop relational sketch",
+            "discharged via matching affine closed-form summaries under natural headers",
+        ),
+    )
+
+
+def try_discharge_relational(
+    original: Sequence[Instruction],
+    candidate: Sequence[Instruction],
+) -> RelationalInductionSketch | None:
+    """Try CTR-affine, compare-affine, then natural-loop relational discharge."""
+    for prover in (
+        try_discharge_ctr_affine_relational,
+        try_discharge_compare_affine_relational,
+        try_discharge_natural_relational,
+    ):
+        result = prover(original, candidate)
+        if result is not None and result.status == "applied":
+            return result
+    return None
+
+
+def _exact_affine_at_header(
+    instructions: Sequence[Instruction],
+    header_pc: int,
+) -> CtrAffineLoopCandidate | None:
+    matches = [
+        item
+        for item in (
+            *find_ctr_affine_loop_candidates(instructions),
+            *find_compare_affine_loop_candidates(instructions),
+        )
+        if item.confidence == "exact-pattern" and item.header_pc == header_pc
+    ]
+    if len(matches) != 1:
+        return None
+    return matches[0]
 
 
 def validate_relational_induction_obligation(data: dict[str, Any]) -> str | None:

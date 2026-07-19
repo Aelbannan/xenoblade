@@ -152,6 +152,18 @@ class RelationalInductionSketchTests(unittest.TestCase):
         self.assertEqual(side.header_pc, loop.header_pc)
         self.assertEqual(side.natural, loop)
 
+    def test_natural_loop_discharges_when_affine_backed(self) -> None:
+        from tools.ppc_equivalence.relational_induction import (
+            try_discharge_natural_relational,
+        )
+
+        program = _ctr_counted_loop(count=3)
+        sketch = try_discharge_natural_relational(program, program)
+        self.assertIsNotNone(sketch)
+        assert sketch is not None
+        self.assertEqual(sketch.status, "applied")
+        self.assertIn("natural-loop", " ".join(sketch.notes))
+
 
 class RelationalInductionFeatureGateTests(unittest.TestCase):
     def test_feature_is_supported(self) -> None:

@@ -35,7 +35,7 @@ from .memory_loop import (
     build_memory_loop_obligation,
     build_memory_loop_summary_map,
 )
-from .relational_induction import try_discharge_ctr_affine_relational
+from .relational_induction import try_discharge_relational
 from .provenance import canonical_json_sha256, hash_engine_tree
 from .result import (
     ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
@@ -1385,7 +1385,7 @@ def check_equivalence(
             early.loop_summary = build_loop_summary_obligation(
                 summary, coverage="applied",
             )
-            relational = try_discharge_ctr_affine_relational(original, candidate)
+            relational = try_discharge_relational(original, candidate)
             if relational is not None and relational.status == "applied":
                 if "relational-induction" not in features:
                     features.append("relational-induction")

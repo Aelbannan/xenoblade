@@ -157,22 +157,121 @@ def summarize_ctr_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary 
     )
 
 
+def find_compare_affine_loop_candidates(
+    instructions: Sequence[Instruction],
+) -> list[CtrAffineLoopCandidate]:
+    """Scan for ``li`` / affine body / ``addi -1`` / ``cmpwi`` / ``bne`` counted loops.
+
+    Reuses ``CtrAffineLoopCandidate`` with ``notes`` marking compare-affine shape.
+    CTR is not used; ``trip_count_reg`` is the GPR countdown register.
+    """
+    if not instructions:
+        return []
+
+    by_address = {insn.address: index for index, insn in enumerate(instructions)}
+    candidates: list[CtrAffineLoopCandidate] = []
+
+    for index, insn in enumerate(instructions):
+        if not _is_bne_cr0_eq(insn):
+            continue
+        target = int(insn.operands[2]) & 0xFFFFFFFC
+        header_index = by_address.get(target)
+        if header_index is None or header_index >= index:
+            continue
+
+        body = list(instructions[header_index:index])
+        parsed, body_notes = _parse_compare_affine_body(body)
+        if parsed is None:
+            continue
+        counter_reg, updates = parsed
+
+        if header_index < 1:
+            continue
+        trip_count, trip_notes = _concrete_li_trip_count(
+            instructions[header_index - 1],
+            counter_reg,
+        )
+        notes = list(body_notes)
+        notes.extend(trip_notes)
+        notes.append("compare-affine: addi -1 / cmpwi / bne countdown")
+        confidence = (
+            "exact-pattern"
+            if trip_count is not None and trip_count >= 1
+            else "partial"
+        )
+        candidates.append(
+            CtrAffineLoopCandidate(
+                mtctr_pc=instructions[header_index - 1].address,
+                header_pc=instructions[header_index].address,
+                latch_pc=insn.address,
+                exit_pc=insn.address + 4,
+                trip_count=trip_count,
+                trip_count_reg=counter_reg,
+                body_updates=tuple(updates),
+                instruction_indexes=tuple(range(header_index - 1, index + 1)),
+                confidence=confidence,
+                notes=tuple(notes),
+            ),
+        )
+    return candidates
+
+
+def summarize_compare_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary | None:
+    """Closed form for a compare-affine countdown loop (positive concrete trip)."""
+    if candidate.trip_count is None or candidate.trip_count < 1:
+        return None
+    if "compare-affine" not in " ".join(candidate.notes):
+        return None
+
+    collapsed: dict[int, tuple[int, int]] = {}
+    for update in candidate.body_updates:
+        _entry, stride = collapsed.get(update.reg, (update.reg, 0))
+        collapsed[update.reg] = (update.reg, stride + update.addend)
+    # Countdown register: entry N, stride -1 → exit 0.
+    assert candidate.trip_count_reg is not None
+    collapsed[candidate.trip_count_reg] = (candidate.trip_count_reg, -1)
+
+    return LoopSummary(
+        header_pc=candidate.header_pc,
+        latch_pc=candidate.latch_pc,
+        exit_pc=candidate.exit_pc,
+        trip_count=candidate.trip_count,
+        final_gpr=collapsed,
+        final_ctr=0,  # unused; apply preserves CTR for compare-affine
+        ranking="counter-descending",
+        proof_kind="compare-affine-closed-form",
+        invariant_notes=tuple(candidate.notes),
+        entry_condition=f"r{candidate.trip_count_reg} == {candidate.trip_count}",
+        exit_condition=f"r{candidate.trip_count_reg} == 0 after bne exhaust",
+    )
+
+
 def build_affine_summary_map(
     instructions: Sequence[Instruction],
 ) -> dict[int, LoopSummary]:
-    """Map loop header PC → closed-form summary for exact-pattern CTR affine loops."""
+    """Map loop header PC → closed-form CTR or compare-affine summaries."""
     mapping: dict[int, LoopSummary] = {}
+
+    def _insert(summary: LoopSummary) -> None:
+        if summary.header_pc in mapping:
+            del mapping[summary.header_pc]
+            return
+        mapping[summary.header_pc] = summary
+
     for candidate in find_ctr_affine_loop_candidates(instructions):
         if candidate.confidence != "exact-pattern":
             continue
         summary = summarize_ctr_affine_loop(candidate)
-        if summary is None:
+        if summary is not None:
+            _insert(summary)
+
+    for candidate in find_compare_affine_loop_candidates(instructions):
+        if candidate.confidence != "exact-pattern":
             continue
-        # One summary per header; overlapping headers are fail-closed (skip).
-        if summary.header_pc in mapping:
-            del mapping[summary.header_pc]
-            continue
-        mapping[summary.header_pc] = summary
+        summary = summarize_compare_affine_loop(candidate)
+        if summary is not None:
+            _insert(summary)
+
     return mapping
 
 
@@ -184,8 +283,10 @@ def apply_affine_loop_summary(state: Any, summary: LoopSummary, ops: Any) -> Any
     for reg, (entry_reg, stride) in summary.final_gpr.items():
         delta = (int(summary.trip_count) * int(stride)) & 0xFFFFFFFF
         gprs[reg] = ops.add(state.gpr[entry_reg], ops.const(delta))
+    if summary.proof_kind == "compare-affine-closed-form":
+        # Compare-counted loops do not update CTR.
+        return replace(state, gpr=tuple(gprs))
     return replace(state, gpr=tuple(gprs), ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF))
-
 
 def closed_form_gpr_value(entry_value: int, stride: int, trip_count: int) -> int:
     """Evaluate ``entry + trip_count * stride`` in 32-bit two's complement."""
@@ -305,11 +406,23 @@ def _validate_final_gpr(final_gpr: Any) -> str | None:
     return "loop_summary.final_gpr must be a list or object keyed by reg string"
 
 
+_BNE_BO = 4  # branch if condition false
+_CR0_EQ_BI = 2  # CR0 EQ bit
+
+
 def _is_bdnz(insn: Instruction) -> bool:
     if insn.opcode != Opcode.BC or insn.link:
         return False
     bo, _bi, _target, _aa = insn.operands
     return int(bo) == _BDNZ_BO
+
+
+def _is_bne_cr0_eq(insn: Instruction) -> bool:
+    """True for ``bne`` against CR0 EQ (typical after ``cmpwi rT, 0``)."""
+    if insn.opcode != Opcode.BC or insn.link:
+        return False
+    bo, bi, _target, aa = insn.operands
+    return int(bo) == _BNE_BO and int(bi) == _CR0_EQ_BI and int(aa) == 0
 
 
 def _is_mtctr(insn: Instruction) -> bool:
@@ -339,6 +452,58 @@ def _parse_affine_body(
     return updates, notes
 
 
+def _parse_compare_affine_body(
+    body: Sequence[Instruction],
+) -> tuple[tuple[int, list[AffineGprUpdate]] | None, list[str]]:
+    """Parse ``[addi…]; addi rT,rT,-1; cmpwi rT,0`` body (latch excluded)."""
+    if len(body) < 2:
+        return None, ["compare-affine body too short"]
+
+    cmp_insn = body[-1]
+    dec_insn = body[-2]
+    if cmp_insn.opcode != Opcode.CMPWI:
+        return None, ["compare-affine latch prelude is not cmpwi"]
+    field, cmp_ra, cmp_imm = (int(v) for v in cmp_insn.operands)
+    if field != 0 or cmp_imm != 0:
+        return None, ["compare-affine requires cmpwi cr0, rT, 0"]
+
+    if dec_insn.opcode != Opcode.ADDI:
+        return None, ["compare-affine missing addi -1 before cmpwi"]
+    rt, ra, imm = (int(v) for v in dec_insn.operands)
+    if rt != ra:
+        return None, ["compare-affine decrement is not addi rT, rT, -1"]
+    if imm != -1 and imm != 0xFFFFFFFF:
+        return None, [f"compare-affine decrement imm {imm} is not -1"]
+    if rt != cmp_ra:
+        return None, ["compare-affine cmpwi register mismatch"]
+    if rt == 0:
+        return None, ["compare-affine counter cannot be r0"]
+
+    rest = body[:-2]
+    updates, notes = _parse_affine_body(rest)
+    if updates is None:
+        return None, notes
+    for update in updates:
+        if update.reg == rt:
+            return None, ["compare-affine body updates the counter register"]
+    return (rt, updates), notes
+
+
+def _concrete_li_trip_count(
+    insn: Instruction,
+    trip_reg: int,
+) -> tuple[int | None, list[str]]:
+    """Recover ``N`` from a single ``addi rT, 0, N`` instruction."""
+    if insn.opcode != Opcode.ADDI:
+        return None, ["counter materialization is not a concrete addi/li"]
+    rt, ra, imm = insn.operands
+    if int(rt) != trip_reg:
+        return None, [f"addi destination r{rt} != counter r{trip_reg}"]
+    if int(ra) != 0:
+        return None, ["counter materialization is not an immediate li-form addi"]
+    return int(imm) & 0xFFFFFFFF, []
+
+
 def _concrete_trip_count(
     instructions: Sequence[Instruction],
     mtctr_index: int,
@@ -347,12 +512,4 @@ def _concrete_trip_count(
     """Recover ``N`` from ``li``/``addi rT, 0, N`` immediately before ``mtctr``."""
     if mtctr_index < 1:
         return None, ["missing CTR materialization before mtctr"]
-    prev = instructions[mtctr_index - 1]
-    if prev.opcode != Opcode.ADDI:
-        return None, ["CTR source is not a concrete addi/li"]
-    rt, ra, imm = prev.operands
-    if int(rt) != trip_reg:
-        return None, [f"addi destination r{rt} != mtctr source r{trip_reg}"]
-    if int(ra) != 0:
-        return None, ["CTR materialization is not an immediate li-form addi"]
-    return int(imm) & 0xFFFFFFFF, []
+    return _concrete_li_trip_count(instructions[mtctr_index - 1], trip_reg)

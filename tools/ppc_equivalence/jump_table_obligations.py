@@ -11,11 +11,14 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
 
 from tools.ppc_equivalence.address_space import Region, RegionKind, rom_image_region
 from tools.ppc_equivalence.ir import Instruction
 from tools.ppc_equivalence.jump_table import JumpTableCandidate, find_jump_table_candidates
+
+if TYPE_CHECKING:
+    from tools.ppc_equivalence.jump_table_pairing import JumpTablePairing
 
 
 @dataclass(frozen=True)
@@ -25,20 +28,63 @@ class JumpTableProofContext:
     ``branch_pc`` is the ``bctr`` address. Optional ``candidate_branch_pc``
     covers differently-based candidate images. ``table_base_reg`` / ``index_reg``
     are constrained as proof premises (base VA and unsigned index ``< len(words)``).
+
+    When ``candidate_table`` is set, CFG expansion and obligations use per-side
+    target lists and ROM images. ``pairing`` binds logical case identities when
+    retail and candidate tables live at different linked VAs.
     """
 
     table: JumpTableWords
     branch_pc: int
     candidate_branch_pc: int | None = None
+    candidate_table: JumpTableWords | None = None
+    pairing: JumpTablePairing | None = None
     table_base_reg: int = 3
+    candidate_table_base_reg: int | None = None
     index_reg: int = 0
 
-    def expansion_map(self) -> dict[int, tuple[int, ...]]:
+    def candidate_table_words(self) -> JumpTableWords:
+        return self.candidate_table if self.candidate_table is not None else self.table
+
+    def original_expansion_map(self) -> dict[int, tuple[int, ...]]:
         targets = tuple(word & 0xFFFFFFFC for word in self.table.words)
-        mapping = {self.branch_pc: targets}
-        if self.candidate_branch_pc is not None:
-            mapping[self.candidate_branch_pc] = targets
-        return mapping
+        return {self.branch_pc: targets}
+
+    def candidate_expansion_map(self) -> dict[int, tuple[int, ...]]:
+        targets = tuple(
+            word & 0xFFFFFFFC for word in self.candidate_table_words().words
+        )
+        branch = (
+            self.candidate_branch_pc
+            if self.candidate_branch_pc is not None
+            else self.branch_pc
+        )
+        return {branch: targets}
+
+    def expansion_map(self) -> dict[int, tuple[int, ...]]:
+        """Merge per-side maps; safe only when branch PCs differ."""
+        original = self.original_expansion_map()
+        candidate = self.candidate_expansion_map()
+        if original == candidate:
+            return original
+        merged = dict(original)
+        merged.update(candidate)
+        return merged
+
+    def readonly_tables(self) -> tuple[JumpTableWords, ...]:
+        """Distinct ROM images pinned during proof (deduped by base + digest)."""
+        cand = self.candidate_table_words()
+        if cand.base == self.table.base and cand.image_sha256 == self.table.image_sha256:
+            return (self.table,)
+        if cand.base == self.table.base:
+            raise ValueError(
+                "jump-table words disagree at the same base; "
+                "cannot bind two images at one VA"
+            )
+        return (self.table, cand)
+
+    def dual_base(self) -> bool:
+        return self.candidate_table_words().base != self.table.base
 
 
 REQUIRED_ADDRESS_SPACE_KEYS = frozenset({
@@ -107,6 +153,116 @@ def build_readonly_image_obligation(
     algorithm: str = "rom-image-v1",
 ) -> dict[str, Any]:
     """Obligation block for ``proof_features: [\"readonly-image\"]``."""
+    return _readonly_image_obligation_body(
+        table,
+        no_write_status=no_write_status,
+        algorithm=algorithm,
+    )
+
+
+def build_dual_readonly_image_obligation(
+    original: JumpTableWords,
+    candidate: JumpTableWords | None = None,
+    *,
+    no_write_status: str = "pending",
+    algorithm: str = "rom-image-v1",
+) -> dict[str, Any]:
+    """Primary readonly-image obligation with optional candidate companion."""
+    obligation = _readonly_image_obligation_body(
+        original,
+        no_write_status=no_write_status,
+        algorithm=algorithm,
+    )
+    if candidate is not None and (
+        candidate.base != original.base
+        or candidate.image_sha256 != original.image_sha256
+    ):
+        obligation["candidate"] = _readonly_image_obligation_body(
+            candidate,
+            no_write_status=no_write_status,
+            algorithm=algorithm,
+        )
+    return obligation
+
+
+def build_jump_table_obligations(
+    context: JumpTableProofContext,
+    *,
+    no_write_status: str = "unsat",
+    coverage: str = "unsat-remainder",
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build ``address_space`` and ``indirect_targets`` for a proof context."""
+    cand_table = context.candidate_table_words()
+    address_space = build_dual_readonly_image_obligation(
+        context.table,
+        cand_table,
+        no_write_status=no_write_status,
+    )
+    artifact_hashes = tuple(
+        dict.fromkeys(table.image_sha256 for table in context.readonly_tables())
+    )
+    if context.pairing is not None:
+        from tools.ppc_equivalence.jump_table_pairing import (
+            indirect_targets_obligations_for_pairing,
+        )
+
+        original_ob, candidate_ob = indirect_targets_obligations_for_pairing(
+            context.pairing,
+            branch_pc_original=context.branch_pc,
+            branch_pc_candidate=(
+                context.candidate_branch_pc
+                if context.candidate_branch_pc is not None
+                else context.branch_pc
+            ),
+            source_original=context.table.source,
+            source_candidate=cand_table.source,
+            artifact_hashes=artifact_hashes,
+            coverage=coverage,
+        )
+        indirect_targets = original_ob
+        if candidate_ob["targets"] != original_ob["targets"]:
+            indirect_targets = {**original_ob, "candidate": candidate_ob}
+        return address_space, indirect_targets
+
+    indirect_targets = build_indirect_targets_obligation(
+        branch_pc=context.branch_pc,
+        targets=tuple(
+            (f"case-{index}", word & 0xFFFFFFFC)
+            for index, word in enumerate(context.table.words)
+        ),
+        source=context.table.source,
+        artifact_hashes=artifact_hashes,
+        coverage=coverage,
+    )
+    if (
+        context.candidate_branch_pc is not None
+        or cand_table.words != context.table.words
+    ):
+        candidate_targets = build_indirect_targets_obligation(
+            branch_pc=(
+                context.candidate_branch_pc
+                if context.candidate_branch_pc is not None
+                else context.branch_pc
+            ),
+            targets=tuple(
+                (f"case-{index}", word & 0xFFFFFFFC)
+                for index, word in enumerate(cand_table.words)
+            ),
+            source=cand_table.source,
+            artifact_hashes=artifact_hashes,
+            coverage=coverage,
+        )
+        if candidate_targets["targets"] != indirect_targets["targets"]:
+            indirect_targets = {**indirect_targets, "candidate": candidate_targets}
+    return address_space, indirect_targets
+
+
+def _readonly_image_obligation_body(
+    table: JumpTableWords,
+    *,
+    no_write_status: str,
+    algorithm: str,
+) -> dict[str, Any]:
     return {
         "kind": RegionKind.ROM_IMAGE.value,
         "base": table.base,

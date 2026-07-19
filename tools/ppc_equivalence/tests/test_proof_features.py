@@ -67,7 +67,10 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         )
         gated = enforce_equivalent_proof_features(result)
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
-        self.assertEqual(UNSUPPORTED_FOR_EQUIVALENT, frozenset())
+        self.assertEqual(
+            UNSUPPORTED_FOR_EQUIVALENT,
+            frozenset({"relational-induction"}),
+        )
 
     def test_affine_loop_summary_with_obligation_stays_equivalent(self) -> None:
         from tools.ppc_equivalence.loop_summary import (
@@ -115,6 +118,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("readonly-image", KNOWN_PROOF_FEATURES)
         self.assertIn("indirect-target-closure", KNOWN_PROOF_FEATURES)
         self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
+        self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
 
 
 if __name__ == "__main__":

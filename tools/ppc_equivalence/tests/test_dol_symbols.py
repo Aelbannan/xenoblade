@@ -11,7 +11,9 @@ from tools.ppc_equivalence.dol_symbols import (
     DolSlice,
     DolSymbolError,
     DolTextSection,
+    data_sections,
     extract_by_address,
+    extract_data_by_address,
     text_sections,
 )
 
@@ -47,9 +49,9 @@ def _build_dol(
     struct.pack_into(">7I", header, 0x00, *text_off)
     struct.pack_into(">11I", header, 0x1C, *data_off)
     struct.pack_into(">7I", header, 0x48, *text_addr)
-    struct.pack_into(">11I", header, 0x6C, *data_addr)
+    struct.pack_into(">11I", header, 0x64, *data_addr)
     struct.pack_into(">7I", header, 0x90, *text_size)
-    struct.pack_into(">11I", header, 0xB8, *data_size)
+    struct.pack_into(">11I", header, 0xAC, *data_size)
     struct.pack_into(">I", header, 0xE0, 0x80004000)  # entry point
 
     payload = bytearray()
@@ -176,6 +178,39 @@ class ExtractByAddressTests(unittest.TestCase):
     def test_extract_rejects_missing_file(self) -> None:
         with self.assertRaises((FileNotFoundError, DolSymbolError)):
             extract_by_address(Path("/nonexistent/main.dol"), 0x80004000, 4)
+
+    def test_data_sections_skips_zero_file_offset_slots(self) -> None:
+        # Retail DOL headers may leave garbage size/addr with file offset zero.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "main.dol"
+            data_off = 0x100 + len(_INIT)
+            blob = _build_dol(
+                [(0x80004000, 0x100, _INIT)],
+                data_sections=[(0x804FA1E0, data_off, b"\x00" * 16)],
+            )
+            # Poison slot 8: off=0 but nonzero size (must not be listed).
+            header = bytearray(blob[:0x100])
+            struct.pack_into(">I", header, 0x1C + 8 * 4, 0)
+            struct.pack_into(">I", header, 0x6C + 8 * 4, 0x80500000)
+            struct.pack_into(">I", header, 0xB8 + 8 * 4, 0x1000)
+            path.write_bytes(bytes(header) + blob[0x100:])
+            sections = data_sections(path)
+            self.assertEqual(len(sections), 1)
+            self.assertEqual(sections[0].address, 0x804FA1E0)
+
+    def test_extract_data_by_address_reads_data_section(self) -> None:
+        payload = b"\x80\x0d\x30\x84\x80\x0d\x30\xa4"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "main.dol"
+            data_off = 0x100 + len(_INIT)
+            blob = _build_dol(
+                [(0x80004000, 0x100, _INIT)],
+                data_sections=[(0x8052B1BC, data_off, payload)],
+            )
+            path.write_bytes(blob)
+            slice_ = extract_data_by_address(path, 0x8052B1BC, 8)
+        self.assertEqual(slice_.base, 0x8052B1BC)
+        self.assertEqual(slice_.code, payload)
 
 
 if __name__ == "__main__":

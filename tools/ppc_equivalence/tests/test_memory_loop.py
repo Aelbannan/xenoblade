@@ -1,4 +1,4 @@
-"""Constant-stride store loop recognition tests (scaffold only)."""
+"""Constant-stride store loop recognition and discharge tests."""
 
 from __future__ import annotations
 
@@ -7,13 +7,17 @@ import unittest
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.memory_loop import (
     ConstantStrideStoreLoop,
+    build_memory_loop_obligation,
     find_constant_stride_store_loops,
+    summarize_constant_stride_store_loop,
 )
+from tools.ppc_equivalence.model import concrete_state
 from tools.ppc_equivalence.proof_features import (
     KNOWN_PROOF_FEATURES,
     UNSUPPORTED_FOR_EQUIVALENT,
     validate_proof_features,
 )
+from tools.ppc_equivalence.semantics import ConcreteOps, execute_cfg
 
 
 def _insn(
@@ -152,12 +156,83 @@ class ConstantStrideStoreLoopRecognitionTests(unittest.TestCase):
         )
 
 
+class MemoryLoopDischargeTests(unittest.TestCase):
+    def test_summary_matches_concrete_stw_addi(self) -> None:
+        program = _store_loop(
+            count=3,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        loop = find_constant_stride_store_loops(program)[0]
+        summary = summarize_constant_stride_store_loop(loop)
+        self.assertIsNotNone(summary)
+        assert summary is not None
+
+        base = 0x1000
+        value = 0x11223344
+        terminals = [
+            t
+            for t in execute_cfg(
+                concrete_state({
+                    "gpr": {"r3": value, "r4": base},
+                    "lr": 0x80001000,
+                }),
+                program,
+                ConcreteOps(),
+                memory_loop_summaries={summary.header_pc: summary},
+                max_loop_iterations=2,
+            )
+            if t.condition
+        ]
+        self.assertEqual(len(terminals), 1)
+        state = terminals[0].state
+        self.assertEqual(state.gpr[4], base + 12)
+        self.assertEqual(state.ctr, 0)
+        for index in range(3):
+            addr = base + index * 4
+            word = 0
+            for offset in range(4):
+                word = (word << 8) | state.memory.read(addr + offset)
+            self.assertEqual(word, value)
+
+    def test_summary_matches_concrete_stwu(self) -> None:
+        program = _store_loop(count=2, store=(Opcode.STWU, (5, 6, 4)))
+        loop = find_constant_stride_store_loops(program)[0]
+        summary = summarize_constant_stride_store_loop(loop)
+        assert summary is not None
+        base = 0x2000
+        value = 0xAABBCCDD
+        terminals = [
+            t
+            for t in execute_cfg(
+                concrete_state({
+                    "gpr": {"r5": value, "r6": base},
+                    "lr": 0x80001000,
+                }),
+                program,
+                ConcreteOps(),
+                memory_loop_summaries={summary.header_pc: summary},
+                max_loop_iterations=2,
+            )
+            if t.condition
+        ]
+        self.assertEqual(len(terminals), 1)
+        state = terminals[0].state
+        self.assertEqual(state.gpr[6], base + 8)
+        for index in range(2):
+            addr = base + (index + 1) * 4
+            word = 0
+            for offset in range(4):
+                word = (word << 8) | state.memory.read(addr + offset)
+            self.assertEqual(word, value)
+
+
 class MemoryLoopFeatureGateTests(unittest.TestCase):
-    def test_feature_reserved_unsupported(self) -> None:
-        self.assertIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+    def test_feature_is_supported(self) -> None:
+        self.assertNotIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
 
-    def test_memory_loop_summary_demotes_equivalent(self) -> None:
+    def test_malformed_obligation_rejected(self) -> None:
         reason = validate_proof_features(
             {
                 "proof_features": ["memory-loop-summary"],
@@ -167,17 +242,52 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
         )
         self.assertIsNotNone(reason)
         assert reason is not None
-        self.assertIn("not yet supported", reason)
+        self.assertIn("memory_loop missing", reason)
 
     def test_obligation_validates_structurally(self) -> None:
+        program = _store_loop(
+            count=4,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        summary = summarize_constant_stride_store_loop(
+            find_constant_stride_store_loops(program)[0],
+        )
+        assert summary is not None
+        obligation = build_memory_loop_obligation(summary, coverage="applied")
         self.assertIsNone(
             validate_proof_features(
                 {
                     "proof_features": ["memory-loop-summary"],
-                    "memory_loop": {"proof_kind": "constant-stride-store"},
+                    "memory_loop": obligation,
                 },
             ),
         )
+
+    def test_summary_proves_under_tight_iteration_bound(self) -> None:
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        program = _store_loop(
+            count=20,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        contract = EquivalenceContract(
+            parse_observables(["r4", "memory"]),
+            timeout_ms=15_000,
+        )
+        result = check_equivalence(
+            program, program, contract,
+            original_hex="00", candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertIn("memory-loop-summary", result.proof_features)
+        self.assertIsNotNone(result.memory_loop)
+        self.assertEqual(result.memory_loop["trip_count"], 20)
+        self.assertEqual(result.memory_loop["coverage"], "applied")
 
 
 if __name__ == "__main__":

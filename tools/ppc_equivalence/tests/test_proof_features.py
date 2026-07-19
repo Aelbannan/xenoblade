@@ -67,10 +67,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         )
         gated = enforce_equivalent_proof_features(result)
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
-        self.assertEqual(
-            UNSUPPORTED_FOR_EQUIVALENT,
-            frozenset({"memory-loop-summary"}),
-        )
+        self.assertEqual(UNSUPPORTED_FOR_EQUIVALENT, frozenset())
 
     def test_affine_loop_summary_with_obligation_stays_equivalent(self) -> None:
         from tools.ppc_equivalence.loop_summary import (

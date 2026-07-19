@@ -1,4 +1,4 @@
-"""Constant-stride store loop recognition (scaffold only).
+"""Constant-stride store loop recognition and closed-form discharge.
 
 Typical MWCC counted-loop shapes::
 
@@ -14,19 +14,24 @@ Typical MWCC counted-loop shapes::
 and equal the memory stride. Indexed stores and multi-store bodies are
 rejected (prefer false negatives).
 
-Not wired into ``execute_cfg`` / ``check_equivalence``; ``memory-loop-summary``
-stays in ``UNSUPPORTED_FOR_EQUIVALENT`` until closed-form discharge exists.
+When ``execute_cfg`` is given a summary map (or the engine auto-builds one),
+matching headers with a positive concrete trip count are discharged by
+applying the N stores in closed form and advancing the base/CTR.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import Any
 
 from tools.ppc_equivalence.ir import Instruction, Opcode
 
 _CTR_SPR = 9
 _BDNZ_BO = 16  # decrement CTR; branch if CTR != 0 after decrement
+
+# Fail closed above this trip count: closed-form applies N explicit stores.
+MAX_MEMORY_LOOP_TRIPS = 4096
 
 _STORE_WIDTH: dict[Opcode, int] = {
     Opcode.STB: 1,
@@ -49,10 +54,30 @@ class ConstantStrideStoreLoop:
     stride: int
     store_width: int
     source_reg: int
+    store_kind: str  # "stwu" | "d-form-addi"
     trip_count: int | None
     trip_count_reg: int | None
     confidence: str
     notes: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class MemoryLoopSummary:
+    """Closed-form summary for a constant-stride CTR store loop."""
+
+    header_pc: int
+    latch_pc: int
+    exit_pc: int
+    trip_count: int
+    base_reg: int
+    source_reg: int
+    stride: int
+    store_width: int
+    store_kind: str
+    final_ctr: int
+    ranking: str
+    proof_kind: str
+    invariant_notes: tuple[str, ...]
 
 
 def find_constant_stride_store_loops(
@@ -108,6 +133,7 @@ def find_constant_stride_store_loops(
                 stride=parsed.stride,
                 store_width=parsed.store_width,
                 source_reg=parsed.source_reg,
+                store_kind=parsed.store_kind,
                 trip_count=trip_count,
                 trip_count_reg=trip_reg,
                 confidence=confidence,
@@ -117,6 +143,169 @@ def find_constant_stride_store_loops(
     return loops
 
 
+def summarize_constant_stride_store_loop(
+    loop: ConstantStrideStoreLoop,
+) -> MemoryLoopSummary | None:
+    """Build a closed-form summary when the trip count is a positive constant."""
+    if loop.confidence != "exact-pattern":
+        return None
+    if loop.trip_count is None or loop.trip_count < 1:
+        return None
+    if loop.trip_count > MAX_MEMORY_LOOP_TRIPS:
+        return None
+    span = int(loop.trip_count) * int(loop.stride)
+    if span > 0xFFFFFFFF:
+        return None
+    if loop.store_kind not in ("stwu", "d-form-addi"):
+        return None
+
+    return MemoryLoopSummary(
+        header_pc=loop.header_pc,
+        latch_pc=loop.latch_pc,
+        exit_pc=loop.exit_pc,
+        trip_count=int(loop.trip_count),
+        base_reg=loop.base_reg,
+        source_reg=loop.source_reg,
+        stride=loop.stride,
+        store_width=loop.store_width,
+        store_kind=loop.store_kind,
+        final_ctr=0,
+        ranking="ctr-descending",
+        proof_kind="constant-stride-store",
+        invariant_notes=tuple(loop.notes),
+    )
+
+
+def build_memory_loop_summary_map(
+    instructions: Sequence[Instruction],
+) -> dict[int, MemoryLoopSummary]:
+    """Map loop header PC → closed-form memory-loop summary."""
+    mapping: dict[int, MemoryLoopSummary] = {}
+    for loop in find_constant_stride_store_loops(instructions):
+        summary = summarize_constant_stride_store_loop(loop)
+        if summary is None:
+            continue
+        if summary.header_pc in mapping:
+            del mapping[summary.header_pc]
+            continue
+        mapping[summary.header_pc] = summary
+    return mapping
+
+
+def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) -> Any:
+    """Return a post-loop state under the closed-form store summary."""
+    if summary.trip_count < 1:
+        raise ValueError("memory-loop summary requires a positive concrete trip count")
+
+    memory = state.memory
+    base = state.gpr[summary.base_reg]
+    value = state.gpr[summary.source_reg]
+    width = int(summary.store_width)
+    stride = int(summary.stride)
+
+    for index in range(summary.trip_count):
+        if summary.store_kind == "stwu":
+            # First store at base+stride; subsequent at base+2*stride, ...
+            offset = (index + 1) * stride
+        else:
+            # d-form store at disp 0 then addi: stores at base, base+stride, ...
+            offset = index * stride
+        address = ops.add(base, ops.const(offset & 0xFFFFFFFF))
+        memory = _store_bytes(memory, address, value, width, ops)
+
+    gprs = list(state.gpr)
+    delta = (int(summary.trip_count) * stride) & 0xFFFFFFFF
+    gprs[summary.base_reg] = ops.add(base, ops.const(delta))
+    return replace(
+        state,
+        gpr=tuple(gprs),
+        memory=memory,
+        ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF),
+    )
+
+
+REQUIRED_MEMORY_LOOP_KEYS = frozenset({
+    "proof_kind",
+    "header_pc",
+    "latch_pc",
+    "exit_pc",
+    "trip_count",
+    "base_reg",
+    "source_reg",
+    "stride",
+    "store_width",
+    "store_kind",
+    "final_ctr",
+    "ranking",
+})
+
+
+def build_memory_loop_obligation(
+    summary: MemoryLoopSummary,
+    *,
+    coverage: str = "pending",
+) -> dict[str, Any]:
+    """Obligation block for ``proof_features: [\"memory-loop-summary\"]``."""
+    return {
+        "proof_kind": summary.proof_kind,
+        "header_pc": summary.header_pc,
+        "latch_pc": summary.latch_pc,
+        "exit_pc": summary.exit_pc,
+        "trip_count": summary.trip_count,
+        "base_reg": summary.base_reg,
+        "source_reg": summary.source_reg,
+        "stride": summary.stride,
+        "store_width": summary.store_width,
+        "store_kind": summary.store_kind,
+        "final_ctr": summary.final_ctr,
+        "ranking": summary.ranking,
+        "coverage": coverage,
+    }
+
+
+def validate_memory_loop_obligation(obligation: dict[str, Any]) -> str | None:
+    """Return None when a memory-loop obligation is structurally well-formed."""
+    missing = sorted(REQUIRED_MEMORY_LOOP_KEYS - obligation.keys())
+    if missing:
+        return "memory_loop missing " + ", ".join(missing)
+
+    proof_kind = obligation.get("proof_kind")
+    if not isinstance(proof_kind, str) or not proof_kind:
+        return "memory_loop.proof_kind must be a nonempty string"
+
+    for key in ("header_pc", "latch_pc", "exit_pc", "final_ctr"):
+        value = obligation.get(key)
+        if not isinstance(value, int) or value < 0 or value > 0xFFFFFFFF:
+            return f"memory_loop.{key} must be a u32 int"
+
+    trip_count = obligation.get("trip_count")
+    if not isinstance(trip_count, int) or trip_count < 1 or trip_count > 0xFFFFFFFF:
+        return "memory_loop.trip_count must be a positive u32 int"
+
+    for key in ("base_reg", "source_reg"):
+        value = obligation.get(key)
+        if not isinstance(value, int) or value < 0 or value > 31:
+            return f"memory_loop.{key} must be a GPR index 0..31"
+
+    stride = obligation.get("stride")
+    if not isinstance(stride, int) or stride < 1 or stride > 0xFFFFFFFF:
+        return "memory_loop.stride must be a positive u32 int"
+
+    store_width = obligation.get("store_width")
+    if store_width not in (1, 2, 4):
+        return "memory_loop.store_width must be 1, 2, or 4"
+
+    store_kind = obligation.get("store_kind")
+    if store_kind not in ("stwu", "d-form-addi"):
+        return "memory_loop.store_kind must be 'stwu' or 'd-form-addi'"
+
+    ranking = obligation.get("ranking")
+    if not isinstance(ranking, str) or not ranking:
+        return "memory_loop.ranking must be a nonempty string"
+
+    return None
+
+
 @dataclass(frozen=True)
 class _ParsedStoreBody:
     base_reg: int
@@ -124,6 +313,7 @@ class _ParsedStoreBody:
     stride: int
     store_width: int
     source_reg: int
+    store_kind: str
 
 
 def _parse_constant_stride_store_body(
@@ -175,6 +365,7 @@ def _parse_constant_stride_store_body(
                 stride=stride,
                 store_width=width,
                 source_reg=source_reg,
+                store_kind="stwu",
             ),
             notes,
         )
@@ -202,9 +393,19 @@ def _parse_constant_stride_store_body(
             stride=stride,
             store_width=width,
             source_reg=source_reg,
+            store_kind="d-form-addi",
         ),
         notes,
     )
+
+
+def _store_bytes(memory: Any, address: Any, value: Any, width: int, ops: Any) -> Any:
+    result = memory
+    for offset in range(width):
+        shift = (width - 1 - offset) * 8
+        byte = ops.band(ops.lshr(value, ops.const(shift)), ops.const(0xFF))
+        result = ops.store_byte(result, ops.add(address, ops.const(offset)), byte)
+    return result
 
 
 def _is_bdnz(insn: Instruction) -> bool:

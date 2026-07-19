@@ -20,6 +20,7 @@ from .ir import (
     UnsupportedInstruction,
 )
 from .loop_summary import LoopSummary, apply_affine_loop_summary, build_affine_summary_map
+from .memory_loop import MemoryLoopSummary, apply_memory_loop_summary
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState
 from .result import FloatingPointDomain
 from .spr import (
@@ -3083,6 +3084,8 @@ def execute_cfg(
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
     affine_loop_summaries: dict[int, LoopSummary] | None = None,
     affine_summaries_used: list[LoopSummary] | None = None,
+    memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
+    memory_summaries_used: list[MemoryLoopSummary] | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
@@ -3106,6 +3109,8 @@ def execute_cfg(
             jump_table_targets=jump_table_targets,
             affine_loop_summaries=affine_loop_summaries,
             affine_summaries_used=affine_summaries_used,
+            memory_loop_summaries=memory_loop_summaries,
+            memory_summaries_used=memory_summaries_used,
         )
     finally:
         _FP_DOMAIN.reset(domain_token)
@@ -3126,6 +3131,8 @@ def _execute_cfg_body(
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
     affine_loop_summaries: dict[int, LoopSummary] | None = None,
     affine_summaries_used: list[LoopSummary] | None = None,
+    memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
+    memory_summaries_used: list[MemoryLoopSummary] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -3139,6 +3146,8 @@ def _execute_cfg_body(
     end = instructions[-1].address + 4
     if affine_loop_summaries is None:
         affine_loop_summaries = {}
+    if memory_loop_summaries is None:
+        memory_loop_summaries = {}
     # visit_counts[pc] = times this path has already entered ``pc``.
     # A back-edge that would make the count reach max_loop_iterations fails closed.
     work: list[tuple[int, MachineState, Any, dict[int, int], int]] = [
@@ -3196,6 +3205,19 @@ def _execute_cfg_body(
                 affine_summaries_used.append(summary)
             enqueue(
                 summary.exit_pc,
+                summarized,
+                condition,
+                {**visit_counts, pc: 1},
+                steps + 1,
+            )
+            continue
+        memory_summary = memory_loop_summaries.get(pc)
+        if memory_summary is not None and prior_visits == 0:
+            summarized = apply_memory_loop_summary(current, memory_summary, ops)
+            if memory_summaries_used is not None:
+                memory_summaries_used.append(memory_summary)
+            enqueue(
+                memory_summary.exit_pc,
                 summarized,
                 condition,
                 {**visit_counts, pc: 1},

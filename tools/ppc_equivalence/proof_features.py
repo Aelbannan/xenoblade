@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from tools.ppc_equivalence.loop_summary import validate_loop_summary_obligation
+from tools.ppc_equivalence.memory_loop import validate_memory_loop_obligation
 from tools.ppc_equivalence.relational_induction import (
     validate_relational_induction_obligation,
 )
@@ -10,10 +11,7 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-# Memory-loop summaries are recognition-only until CFG discharge lands.
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
-    "memory-loop-summary",
-})
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
 
 # Canonical proof-feature names and their required top-level obligation keys.
 FEATURE_OBLIGATION_KEYS: dict[str, str] = {
@@ -21,7 +19,6 @@ FEATURE_OBLIGATION_KEYS: dict[str, str] = {
     "indirect-target-closure": "indirect_targets",
     "affine-loop-summary": "loop_summary",
     "relational-induction": "relational_induction",
-    # Obligation payload shape TBD when memory-loop summaries are engine-wired.
     "memory-loop-summary": "memory_loop",
 }
 
@@ -43,6 +40,8 @@ def _extract_payload(payload: dict[str, Any] | ProofResult) -> dict[str, Any]:
             data["loop_summary"] = payload.loop_summary
         if getattr(payload, "relational_induction", None) is not None:
             data["relational_induction"] = payload.relational_induction
+        if getattr(payload, "memory_loop", None) is not None:
+            data["memory_loop"] = payload.memory_loop
         return data
     return payload
 
@@ -111,6 +110,10 @@ def validate_proof_features(
                 return reason
         if feature == "relational-induction":
             reason = validate_relational_induction_obligation(obligation)
+            if reason is not None:
+                return reason
+        if feature == "memory-loop-summary":
+            reason = validate_memory_loop_obligation(obligation)
             if reason is not None:
                 return reason
 

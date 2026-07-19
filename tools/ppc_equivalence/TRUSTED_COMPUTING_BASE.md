@@ -124,8 +124,11 @@ Architecture model: see `result.ARCHITECTURE_MODEL`.
 
 - **Modules:** `provenance.py`, certificate fields in
   `tools/coop/lib/equivalence_check.py`
-- Engine-tree SHA-256, canonical request `source_hash`, git commit/dirty,
+- Engine-tree SHA-256 (`engine_hash`), coop certifier/policy SHA-256
+  (`certifier_hash` over `equivalence_check.py`, `equivalence_policy.py`,
+  `targets.py`), canonical request `source_hash`, git commit/dirty,
   architecture model, result format, callee contract sources, limits, memory
   profile, and FP domain on durable certificates.
 - Trust risk: incomplete request hashing allowing silent reuse across changed
-  premises.
+  premises; stale certificates after certifier/policy edits when
+  `certifier_hash` is not checked.

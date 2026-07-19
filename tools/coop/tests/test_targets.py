@@ -21,7 +21,7 @@ from tools.coop.lib.targets import (
     validate_targets,
     equivalence_certificate_hash,
 )
-from tools.ppc_equivalence.provenance import hash_engine_tree
+from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -29,6 +29,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 def _live_engine_hash() -> str:
     return hash_engine_tree(_REPO_ROOT)
+
+
+def _live_certifier_hash() -> str:
+    return hash_certifier_tree(_REPO_ROOT)
 
 
 def _certificate(target_id: str, callees: list[dict[str, str]] | None = None) -> dict:
@@ -45,6 +49,7 @@ def _certificate(target_id: str, callees: list[dict[str, str]] | None = None) ->
         "callees": callees or [],
         "helpers": [],
         "engine_hash": _live_engine_hash(),
+        "certifier_hash": _live_certifier_hash(),
     }
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate
@@ -321,6 +326,24 @@ class TargetRegistryTests(unittest.TestCase):
         err = equivalence_certificate_error(row, self._rows_by_id([row]))
         self.assertIsNotNone(err)
         self.assertIn("engine_hash", err or "")
+
+    def test_missing_certifier_hash_rejected(self) -> None:
+        cert = _certificate("x")
+        del cert["certifier_hash"]
+        cert["certificate_sha256"] = equivalence_certificate_hash(cert)
+        row = self._make_row("x", cert)
+        err = equivalence_certificate_error(row, self._rows_by_id([row]))
+        self.assertIsNotNone(err)
+        self.assertIn("certifier_hash", err or "")
+
+    def test_wrong_certifier_hash_rejected(self) -> None:
+        cert = _certificate("x")
+        cert["certifier_hash"] = "b" * 64
+        cert["certificate_sha256"] = equivalence_certificate_hash(cert)
+        row = self._make_row("x", cert)
+        err = equivalence_certificate_error(row, self._rows_by_id([row]))
+        self.assertIsNotNone(err)
+        self.assertIn("certifier_hash", err or "")
 
     def test_transitive_callee_old_model_rejected(self) -> None:
         callee_cert = _certificate("callee")

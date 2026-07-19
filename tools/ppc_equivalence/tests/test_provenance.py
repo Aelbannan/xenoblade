@@ -5,9 +5,12 @@ import unittest
 from pathlib import Path
 
 from tools.ppc_equivalence.provenance import (
+    CERTIFIER_SOURCE_PATHS,
     ENGINE_SOURCE_PATTERNS,
+    _collect_certifier_paths,
     _collect_engine_paths,
     canonical_json_sha256,
+    hash_certifier_tree,
     hash_engine_tree,
 )
 
@@ -47,6 +50,30 @@ class ProvenanceHashTests(unittest.TestCase):
             digest = hash_engine_tree(root)
             (base / "validation_ledger.yaml").write_text("version: 2\n", encoding="utf-8")
             self.assertNotEqual(digest, hash_engine_tree(root))
+
+    def test_certifier_tree_hash_deterministic(self):
+        repo = Path(__file__).resolve().parents[3]
+        first = hash_certifier_tree(repo)
+        second = hash_certifier_tree(repo)
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 64)
+
+    def test_collect_certifier_paths_cover_trust_boundary(self):
+        repo = Path(__file__).resolve().parents[3]
+        paths = _collect_certifier_paths(repo)
+        rels = [p.relative_to(repo).as_posix() for p in paths]
+        self.assertEqual(rels, sorted(CERTIFIER_SOURCE_PATHS))
+
+    def test_certifier_hash_changes_when_policy_edited(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for relative in CERTIFIER_SOURCE_PATHS:
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("# stub\n", encoding="utf-8")
+            digest = hash_certifier_tree(root)
+            (root / CERTIFIER_SOURCE_PATHS[1]).write_text("# changed\n", encoding="utf-8")
+            self.assertNotEqual(digest, hash_certifier_tree(root))
 
     def test_canonical_json_sha256_stable(self):
         a = canonical_json_sha256({"b": 1, "a": [2, 3]})

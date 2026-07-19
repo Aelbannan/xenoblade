@@ -193,6 +193,13 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   Symbolic accesses that may span regions are intended to path-split or fail
   inconclusive. Not yet proof-producing: no `EQUIVALENT` path binds AddressSpace
   obligations into the solver or promotion gate.
+- **MMIO device models (scaffold):** `device_model.py` defines opt-in
+  ``DeviceModel`` implementations (``RegisterBankDevice``, ``GxFifoStreamDevice``
+  stub) and ``address_space.mmio_region`` / ``attach_mmio_region`` attach MMIO
+  spans with optional ``device_id`` labels. Tier **C** only: not wired into
+  ``execute_cfg`` / ``check_equivalence``; unknown or partial device behavior
+  must fail closed (``AccessOutcome.UNSUPPORTED``) and yield inconclusive
+  proofs rather than ordinary RAM.
 - **ELF data sections:** `list_allocatable_sections` / `extract_allocatable_section`
   expose SHF_ALLOC PROGBITS/NOBITS (including `.rodata` / `.data`) and attach
   REL/RELA entries (notably `R_PPC_ADDR32`) for jump-table census and later

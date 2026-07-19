@@ -4,19 +4,25 @@ from typing import Any
 
 from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
-# Canonical proof-feature names and their required top-level obligation keys.
-FEATURE_OBLIGATION_KEYS: dict[str, str] = {
-    "readonly-image": "address_space",
-    "indirect-target-closure": "indirect_targets",
-}
-
-KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)
-
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
 # Jump-table features are supported once JumpTableProofContext discharges
 # readonly-image + indirect-target-closure (see engine.check_equivalence).
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
+# Affine/CTR closed-form summaries are recognized in ``loop_summary.py`` but
+# are not yet applied inside ``execute_cfg``.
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
+    "affine-loop-summary",
+})
+
+# Canonical proof-feature names and their required top-level obligation keys.
+FEATURE_OBLIGATION_KEYS: dict[str, str] = {
+    "readonly-image": "address_space",
+    "indirect-target-closure": "indirect_targets",
+    # Obligation payload shape TBD when summaries are engine-wired.
+    "affine-loop-summary": "loop_summary",
+}
+
+KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)
 
 _OBLIGATION_KEYS: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS.values())
 

@@ -10,7 +10,10 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
+# Memory-loop summaries are recognition-only until CFG discharge lands.
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
+    "memory-loop-summary",
+})
 
 # Canonical proof-feature names and their required top-level obligation keys.
 FEATURE_OBLIGATION_KEYS: dict[str, str] = {
@@ -18,6 +21,8 @@ FEATURE_OBLIGATION_KEYS: dict[str, str] = {
     "indirect-target-closure": "indirect_targets",
     "affine-loop-summary": "loop_summary",
     "relational-induction": "relational_induction",
+    # Obligation payload shape TBD when memory-loop summaries are engine-wired.
+    "memory-loop-summary": "memory_loop",
 }
 
 KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)

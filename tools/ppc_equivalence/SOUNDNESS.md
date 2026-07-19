@@ -66,6 +66,9 @@ documented per-implementation private-storage abstraction.
   strides, and trip counts is discharged alongside affine closed forms
   (`relational_induction.try_discharge_ctr_affine_relational`); natural-loop
   and mismatched-body sketches remain unsupported for `EQUIVALENT`.
+  Constant-stride store loops (`memory_loop.find_constant_stride_store_loops`)
+  are recognized descriptively only; `memory-loop-summary` stays in
+  `UNSUPPORTED_FOR_EQUIVALENT` until summaries are applied in CFG exploration.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`

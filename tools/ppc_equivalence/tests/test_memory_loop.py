@@ -1,0 +1,184 @@
+"""Constant-stride store loop recognition tests (scaffold only)."""
+
+from __future__ import annotations
+
+import unittest
+
+from tools.ppc_equivalence.ir import Instruction, Opcode
+from tools.ppc_equivalence.memory_loop import (
+    ConstantStrideStoreLoop,
+    find_constant_stride_store_loops,
+)
+from tools.ppc_equivalence.proof_features import (
+    KNOWN_PROOF_FEATURES,
+    UNSUPPORTED_FOR_EQUIVALENT,
+    validate_proof_features,
+)
+
+
+def _insn(
+    opcode: Opcode,
+    operands: tuple[int, ...],
+    *,
+    address: int = 0,
+    link: bool = False,
+) -> Instruction:
+    return Instruction(address, 0, opcode, operands, link=link)
+
+
+def _store_loop(
+    *,
+    count: int,
+    store: tuple[Opcode, tuple[int, ...]],
+    pointer_addi: tuple[int, int] | None = None,
+    base_address: int = 0,
+) -> list[Instruction]:
+    """li r0,count; mtctr r0; loop: [store] [addi]; bdnz loop; blr"""
+    body: list[Instruction] = [
+        _insn(store[0], store[1], address=base_address + 8),
+    ]
+    next_pc = base_address + 12
+    if pointer_addi is not None:
+        reg, imm = pointer_addi
+        body.append(_insn(Opcode.ADDI, (reg, reg, imm), address=next_pc))
+        next_pc += 4
+    return [
+        _insn(Opcode.ADDI, (0, 0, count), address=base_address),
+        _insn(Opcode.MTSPR, (0, 9), address=base_address + 4),
+        *body,
+        _insn(Opcode.BC, (16, 0, base_address + 8, 0), address=next_pc),
+        _insn(Opcode.BCLR, (20, 0, 0), address=next_pc + 4),
+    ]
+
+
+class ConstantStrideStoreLoopRecognitionTests(unittest.TestCase):
+    def test_recognizes_stw_addi_loop(self) -> None:
+        program = _store_loop(
+            count=8,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        loop = loops[0]
+        self.assertIsInstance(loop, ConstantStrideStoreLoop)
+        self.assertEqual(loop.confidence, "exact-pattern")
+        self.assertEqual(loop.trip_count, 8)
+        self.assertEqual(loop.base_reg, 4)
+        self.assertIsNone(loop.index_reg)
+        self.assertEqual(loop.stride, 4)
+        self.assertEqual(loop.store_width, 4)
+        self.assertEqual(loop.source_reg, 3)
+        self.assertEqual(loop.header_pc, 8)
+        self.assertEqual(loop.latch_pc, 16)
+
+    def test_recognizes_stwu_loop(self) -> None:
+        program = _store_loop(count=4, store=(Opcode.STWU, (5, 6, 4)))
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        loop = loops[0]
+        self.assertEqual(loop.base_reg, 6)
+        self.assertEqual(loop.stride, 4)
+        self.assertEqual(loop.store_width, 4)
+        self.assertEqual(loop.source_reg, 5)
+
+    def test_recognizes_stb_and_sth(self) -> None:
+        for opcode, width in ((Opcode.STB, 1), (Opcode.STH, 2)):
+            with self.subTest(opcode=opcode.value, width=width):
+                program = _store_loop(
+                    count=2,
+                    store=(opcode, (7, 8, 0)),
+                    pointer_addi=(8, width),
+                )
+                loops = find_constant_stride_store_loops(program)
+                self.assertEqual(len(loops), 1)
+                self.assertEqual(loops[0].store_width, width)
+                self.assertEqual(loops[0].stride, width)
+
+    def test_empty_on_affine_only_body(self) -> None:
+        program = [
+            _insn(Opcode.ADDI, (0, 0, 4), address=0),
+            _insn(Opcode.MTSPR, (0, 9), address=4),
+            _insn(Opcode.ADDI, (3, 3, 1), address=8),
+            _insn(Opcode.BC, (16, 0, 8, 0), address=12),
+        ]
+        self.assertEqual(find_constant_stride_store_loops(program), [])
+
+    def test_empty_on_mismatched_stride(self) -> None:
+        program = _store_loop(
+            count=2,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 8),
+        )
+        self.assertEqual(find_constant_stride_store_loops(program), [])
+
+    def test_empty_on_multiple_stores(self) -> None:
+        program = [
+            _insn(Opcode.ADDI, (0, 0, 2), address=0),
+            _insn(Opcode.MTSPR, (0, 9), address=4),
+            _insn(Opcode.STW, (3, 4, 0), address=8),
+            _insn(Opcode.STW, (3, 4, 4), address=12),
+            _insn(Opcode.BC, (16, 0, 8, 0), address=16),
+        ]
+        self.assertEqual(find_constant_stride_store_loops(program), [])
+
+    def test_empty_on_nonzero_store_disp_without_stwu(self) -> None:
+        program = _store_loop(
+            count=2,
+            store=(Opcode.STW, (3, 4, 4)),
+            pointer_addi=(4, 4),
+        )
+        self.assertEqual(find_constant_stride_store_loops(program), [])
+
+    def test_partial_when_trip_unknown(self) -> None:
+        program = [
+            _insn(Opcode.MTSPR, (3, 9), address=0),
+            _insn(Opcode.STW, (5, 4, 0), address=4),
+            _insn(Opcode.ADDI, (4, 4, 4), address=8),
+            _insn(Opcode.BC, (16, 0, 4, 0), address=12),
+        ]
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        self.assertEqual(loops[0].confidence, "partial")
+        self.assertIsNone(loops[0].trip_count)
+
+    def test_never_raises_on_empty_or_unrelated(self) -> None:
+        self.assertEqual(find_constant_stride_store_loops([]), [])
+        self.assertEqual(
+            find_constant_stride_store_loops(
+                [_insn(Opcode.BCLR, (20, 0, 0), address=0)],
+            ),
+            [],
+        )
+
+
+class MemoryLoopFeatureGateTests(unittest.TestCase):
+    def test_feature_reserved_unsupported(self) -> None:
+        self.assertIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
+
+    def test_memory_loop_summary_demotes_equivalent(self) -> None:
+        reason = validate_proof_features(
+            {
+                "proof_features": ["memory-loop-summary"],
+                "memory_loop": {"proof_kind": "constant-stride-store"},
+            },
+            require_equivalent_ready=True,
+        )
+        self.assertIsNotNone(reason)
+        assert reason is not None
+        self.assertIn("not yet supported", reason)
+
+    def test_obligation_validates_structurally(self) -> None:
+        self.assertIsNone(
+            validate_proof_features(
+                {
+                    "proof_features": ["memory-loop-summary"],
+                    "memory_loop": {"proof_kind": "constant-stride-store"},
+                },
+            ),
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -69,7 +69,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
-            frozenset(),
+            frozenset({"memory-loop-summary"}),
         )
 
     def test_affine_loop_summary_with_obligation_stays_equivalent(self) -> None:
@@ -119,6 +119,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("indirect-target-closure", KNOWN_PROOF_FEATURES)
         self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
         self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
+        self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
 
 
 if __name__ == "__main__":

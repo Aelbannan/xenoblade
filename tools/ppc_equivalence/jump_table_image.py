@@ -112,18 +112,39 @@ def hydrate_jump_table(
 
 
 def readonly_image_obligation(image: JumpTableImage) -> dict[str, object]:
-    """Build an ``address_space`` obligation fragment for ``readonly-image`` proofs."""
+    """Build an ``address_space`` obligation fragment for ``readonly-image`` proofs.
+
+    Shape matches ``jump_table_obligations.validate_readonly_image_obligation``.
+    """
     end = image.base + image.entry_count * image.entry_size - 1
+    byte_count = image.entry_count * image.entry_size
     return {
+        "kind": "rom-image",
         "base": image.base,
         "end": end,
-        "sha256": image.image_sha256,
+        "image_sha256": image.image_sha256,
+        "byte_count": byte_count,
         "entry_count": image.entry_count,
         "entry_size": image.entry_size,
         "source": image.source,
         "artifact_path": image.artifact_path,
         "words": list(image.words),
+        "no_write": "pending",
+        "algorithm": "rom-image-v1",
     }
+
+
+def jump_table_words_from_image(image: JumpTableImage):
+    """Adapt a hydrated image into ``JumpTableWords`` for SMT obligation helpers."""
+    from tools.ppc_equivalence.jump_table_obligations import JumpTableWords
+
+    return JumpTableWords(
+        base=image.base,
+        words=image.words,
+        source=image.source,
+        artifact_path=image.artifact_path,
+        entry_size=image.entry_size,
+    )
 
 
 def _hydrate_from_elf(

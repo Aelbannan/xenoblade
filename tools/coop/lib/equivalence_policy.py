@@ -7,6 +7,10 @@ from typing import Any
 
 from tools.coop.lib.config import CoopConfig
 from tools.ppc_equivalence.memory_profile import MemoryEnvironment, MemoryProfile
+from tools.ppc_equivalence.proof_features import (
+    enforce_equivalent_proof_features,
+    proof_features_from_dict,
+)
 from tools.ppc_equivalence.result import (
     ARCHITECTURE_MODEL,
     MASKING_SEMANTICS,
@@ -413,6 +417,10 @@ def proof_result_from_certificate(
     if invalid_reasons and not counterexample_kind:
         counterexample_kind = "definedness"
 
+    proof_features, address_space, indirect_targets = proof_features_from_dict(
+        certificate,
+    )
+
     result = ProofResult(
         status=status,
         architecture_model=str(
@@ -434,6 +442,9 @@ def proof_result_from_certificate(
         limits=limits,
         repair_hint=repair_hint,
         invalid_reasons=invalid_reasons,
+        proof_features=proof_features,
+        address_space=address_space,
+        indirect_targets=indirect_targets,
     )
     if assumptions is not None:
         result.assumptions = list(assumptions)
@@ -441,7 +452,7 @@ def proof_result_from_certificate(
         result.assumptions = list(result.assumptions) + [
             f"domain-exception:{code}" for code in invalid_reasons
         ]
-    return result
+    return enforce_equivalent_proof_features(result)
 
 
 def classify_for_promotion(

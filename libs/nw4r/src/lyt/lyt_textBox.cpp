@@ -379,15 +379,21 @@ u32 TextBox::MakeDrawFlag() const {
     return flag;
 }
 
+// LLM-HARNESS-BEGIN: us-80403ce4
+ut::Color TextBox::GetTextColor(u32 idx) const {
+    return mTextColors[idx];
+}
+// LLM-HARNESS-END: us-80403ce4
+
+// LLM-HARNESS-BEGIN: us-80403d60
+void TextBox::SetTextColor(u32 idx, ut::Color color) {
+    mTextColors[idx] = color;
+}
+// LLM-HARNESS-END: us-80403d60
+
 } // namespace lyt
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-80403ce4
-extern "C" return GetTextColor__Q34nw4r3lyt7TextBoxCFUl(idx / TEXTCOLOR_MAX) { return 0; }
-// LLM-HARNESS-END: us-80403ce4
-// LLM-HARNESS-BEGIN: us-80403d60
-extern "C" void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color() {}
-// LLM-HARNESS-END: us-80403d60
 // LLM-HARNESS-BEGIN: us-80404324
 extern "C" void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color() {}
 // LLM-HARNESS-END: us-80404324

@@ -791,6 +791,47 @@ def _prove_bytes(
         relocations=candidate_relocations,
         local_symbol=candidate_local_symbol,
     )
+
+    jump_table_context = None
+    if proof_features is None and address_space is None and indirect_targets is None:
+        from tools.ppc_equivalence.jump_table_auto import try_auto_jump_table_context
+        from tools.ppc_equivalence.jump_table_obligations import (
+            build_indirect_targets_obligation,
+            build_readonly_image_obligation,
+        )
+
+        dol_path = None
+        elf_path = None
+        if project is not None:
+            configured_dol = getattr(project.config, "main_dol", None)
+            if configured_dol is not None and Path(configured_dol).is_file():
+                dol_path = Path(configured_dol)
+            linked_elf = getattr(project, "linked_elf_path", None)
+            if linked_elf is not None and Path(linked_elf).is_file():
+                elf_path = Path(linked_elf)
+        jump_table_context = try_auto_jump_table_context(
+            original,
+            candidate,
+            dol_path=dol_path,
+            elf_path=elf_path,
+        )
+        if jump_table_context is not None:
+            proof_features = ["readonly-image", "indirect-target-closure"]
+            address_space = build_readonly_image_obligation(
+                jump_table_context.table,
+                no_write_status="pending",
+            )
+            indirect_targets = build_indirect_targets_obligation(
+                branch_pc=jump_table_context.branch_pc,
+                targets=tuple(
+                    (f"case-{index}", word & 0xFFFFFFFC)
+                    for index, word in enumerate(jump_table_context.table.words)
+                ),
+                source=jump_table_context.table.source,
+                artifact_hashes=(jump_table_context.table.image_sha256,),
+                coverage="pending",
+            )
+
     original_live_out = automatic_live_out(original)
     candidate_live_out = automatic_live_out(candidate)
     live_out = None
@@ -967,6 +1008,7 @@ def _prove_bytes(
         memory_environment=mem_env,
         source_hash=source_hash,
         floating_point_domain=fp_domain,
+        jump_table=jump_table_context,
     )
     detail = ""
     if result.contract_resolution:

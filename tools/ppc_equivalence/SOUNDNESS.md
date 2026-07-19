@@ -64,11 +64,14 @@ documented per-implementation private-storage abstraction.
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`
   shape does not prove equivalence. Without a `JumpTableProofContext`, the
   engine fail-closes otherwise-matching jump-table functions to
-  `INCONCLUSIVE_UNSUPPORTED`. With a context, CFG expands each enumerated CTR
-  target, ROM bytes are pinned with alias-safe no-write constraints, and
-  `readonly-image` / `indirect-target-closure` obligations are attached
+  `INCONCLUSIVE_UNSUPPORTED`. With a context (explicit or auto-built by
+  `jump_table_auto.try_auto_jump_table_context` from `lis`/`addi` + linked
+  DOL/ELF hydration), CFG expands each enumerated CTR target, ROM bytes are
+  pinned with alias-safe no-write constraints, and `readonly-image` /
+  `indirect-target-closure` obligations are attached
   (`jump_table_obligations.py`). Retail/candidate handlers are paired by
   logical case index (`jump_table_pairing.py`), not absolute address equality.
+  Coop `_prove_bytes` attempts auto-context when a linked image is available.
 - Path count and instruction count are bounded by `max_paths` (default 256) and
   `max_instructions` (default 2048). Exceeding either produces
   `INCONCLUSIVE_UNSUPPORTED`.

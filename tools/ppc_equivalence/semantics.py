@@ -19,6 +19,7 @@ from .ir import (
     SUPPORTED_OPCODES,
     UnsupportedInstruction,
 )
+from .loop_summary import LoopSummary, apply_affine_loop_summary, build_affine_summary_map
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState
 from .result import FloatingPointDomain
 from .spr import (
@@ -3080,6 +3081,8 @@ def execute_cfg(
     floating_point_domain: FloatingPointDomain | None = None,
     deadline: Deadline | None = None,
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
+    affine_loop_summaries: dict[int, LoopSummary] | None = None,
+    affine_summaries_used: list[LoopSummary] | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
@@ -3101,6 +3104,8 @@ def execute_cfg(
             callee_contracts=callee_contracts,
             deadline=deadline,
             jump_table_targets=jump_table_targets,
+            affine_loop_summaries=affine_loop_summaries,
+            affine_summaries_used=affine_summaries_used,
         )
     finally:
         _FP_DOMAIN.reset(domain_token)
@@ -3119,6 +3124,8 @@ def _execute_cfg_body(
     callee_contracts: dict[int | str, CalleeContract] | None,
     deadline: Deadline | None = None,
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
+    affine_loop_summaries: dict[int, LoopSummary] | None = None,
+    affine_summaries_used: list[LoopSummary] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -3130,6 +3137,8 @@ def _execute_cfg_body(
     by_address = {item.address: item for item in instructions}
     start = instructions[0].address
     end = instructions[-1].address + 4
+    if affine_loop_summaries is None:
+        affine_loop_summaries = {}
     # visit_counts[pc] = times this path has already entered ``pc``.
     # A back-edge that would make the count reach max_loop_iterations fails closed.
     work: list[tuple[int, MachineState, Any, dict[int, int], int]] = [
@@ -3179,6 +3188,20 @@ def _execute_cfg_body(
             record_terminal(condition, current, "direct-branch", ops.const(pc))
             continue
         prior_visits = visit_counts.get(pc, 0)
+        summary = affine_loop_summaries.get(pc)
+        if summary is not None and prior_visits == 0:
+            # Closed-form discharge: skip unrolling when the header is first entered.
+            summarized = apply_affine_loop_summary(current, summary, ops)
+            if affine_summaries_used is not None:
+                affine_summaries_used.append(summary)
+            enqueue(
+                summary.exit_pc,
+                summarized,
+                condition,
+                {**visit_counts, pc: 1},
+                steps + 1,
+            )
+            continue
         if prior_visits >= max_loop_iterations:
             raise ExecutionInconclusive(
                 f"loop iteration limit exceeded ({max_loop_iterations}) at 0x{pc:08x}"

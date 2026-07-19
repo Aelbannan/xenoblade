@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xenoblade.local/decomp-atlas/atlas.schema.json",
+  "title": "Decomp Atlas functions row",
+  "description": "Documented shape of one row in the Atlas functions table / FunctionSummary API object. Target ID is the sole stable key; never conflate with mangled symbol or display name.",
+  "type": "object",
+  "required": ["target_id", "display_name", "status", "workflow_status", "readiness"],
+  "properties": {
+    "target_id": {
+      "type": "string",
+      "description": "Stable registry id (e.g. us-804415c4). Primary key for DB, URLs, and jobs."
+    },
+    "region": { "type": ["string", "null"], "description": "Build region (usually us)." },
+    "kind": { "type": ["string", "null"], "description": "Usually function." },
+    "display_name": {
+      "type": "string",
+      "description": "Human demangled-ish name (e.g. CView::renderView)."
+    },
+    "symbol": {
+      "type": ["string", "null"],
+      "description": "MWCC mangled symbol (e.g. renderView__5CViewFv)."
+    },
+    "address": { "type": ["string", "null"], "description": "Retail address hex string when known." },
+    "size": { "type": ["integer", "null"], "description": "Retail function size in bytes." },
+    "source": { "type": ["string", "null"], "description": "Repo-relative C/C++ source path." },
+    "unit": { "type": ["string", "null"], "description": "Objdiff / split unit name." },
+    "target_object": { "type": ["string", "null"], "description": "Repo-relative retail object path." },
+    "base_object": { "type": ["string", "null"], "description": "Repo-relative decomp object path." },
+    "tier": { "type": ["string", "null"], "description": "Priority tier P0–P9." },
+    "milestone": { "type": ["string", "null"] },
+    "capabilities": { "type": ["string", "null"], "description": "Optional JSON/text capability tags." },
+    "required_level": { "type": ["string", "null"] },
+    "workflow_status": {
+      "type": "string",
+      "description": "BACKLOG / CLAIMED / ACTIVE / ACCEPTED / …"
+    },
+    "status": {
+      "type": "string",
+      "description": "Match status NOT_STARTED … EQUIVALENT_MATCH / FULL_MATCH."
+    },
+    "instruction_percent": { "type": ["number", "null"] },
+    "buildable": { "type": "boolean" },
+    "owner": { "type": ["string", "null"], "description": "Claim owner when claimed." },
+    "claimed_at": { "type": ["string", "null"] },
+    "origin": { "type": ["string", "null"], "description": "e.g. symbols.txt catalog import." },
+    "notes": { "type": ["string", "null"] },
+    "direct_call_count": { "type": "integer" },
+    "unresolved_call_count": { "type": "integer" },
+    "has_indirect_calls": { "type": "boolean" },
+    "instruction_count": { "type": ["integer", "null"] },
+    "branch_count": { "type": ["integer", "null"] },
+    "relocation_count": { "type": ["integer", "null"] },
+    "stack_frame": { "type": ["integer", "null"] },
+    "readiness": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "safe_leaf",
+        "callees_accepted",
+        "blocked_unresolved",
+        "blocked_indirect",
+        "claimed",
+        "not_buildable",
+        "active_unclaimed",
+        "backlog"
+      ]
+    },
+    "difficulty": {
+      "type": ["number", "null"],
+      "description": "Advisory 0–100 difficulty score (not priority)."
+    },
+    "artifact_fresh": { "type": "boolean" },
+    "callgraph_status": { "type": ["string", "null"] }
+  }
+}

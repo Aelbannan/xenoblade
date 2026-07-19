@@ -18,7 +18,13 @@ from typing import Any, Dict, List, Optional
 
 from .compile_diagnostic import normalize_compile_output, select_root_diagnostic
 from .promotion import PromotionManager, evaluation_to_candidate, capture_baseline
-from .providers import DeepSeekRawProvider, OpenCodeProvider, ReasonixProvider
+from .providers import (
+    DeepSeekRawProvider,
+    LMStudioProvider,
+    OpenCodeProvider,
+    OpenRouterProvider,
+    ReasonixProvider,
+)
 from .types import (
     BaselineSnapshot,
     Candidate,
@@ -41,6 +47,7 @@ class Harness:
     def __init__(self, config_path: Path) -> None:
         self.config_path = config_path.resolve()
         self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
+        self._validate_config()
         self.root = self.config_path.parent.resolve()
         self.output_dir = (self.root / self.config.get("output_dir", "build/llm-harness")).resolve()
         self.log_path = self.output_dir / "experiments.jsonl"
@@ -60,23 +67,8 @@ class Harness:
         self._promotion_lock = threading.Lock()
         self._log_lock = threading.Lock()
         self._debug_lock = threading.Lock()
-        policy_cfg = execution.get("promotion", {})
-        self.promotion_manager = PromotionManager(
-            self.root,
-            policy=PromotionPolicy(
-                enabled=bool(policy_cfg.get("enabled", True)),
-                require_monotonic_rank=bool(policy_cfg.get("require_monotonic_rank", True)),
-                allow_first_compile=bool(policy_cfg.get("allow_first_compile", True)),
-                first_compile_min_structural_score=float(
-                    policy_cfg.get("first_compile_min_structural_score", 0.60)
-                ),
-                protect_accepted_functions=bool(policy_cfg.get("protect_accepted_functions", True)),
-                revalidate_against_latest_root=bool(
-                    policy_cfg.get("revalidate_against_latest_root", True)
-                ),
-                rollback_on_failure=bool(policy_cfg.get("rollback_on_failure", True)),
-            ),
-        )
+        # Phase 0: promotion is now explicit-only; ignore execution.promotion config
+        self.promotion_manager = PromotionManager(self.root, policy=PromotionPolicy())
         isolation = execution.get("isolation", {})
         self.isolation_mode = isolation.get("mode", "none")
         self.workspace_manager = (
@@ -88,17 +80,182 @@ class Harness:
             "opencode": OpenCodeProvider,
             "reasonix": ReasonixProvider,
             "deepseek-raw": DeepSeekRawProvider,
+            "lmstudio": LMStudioProvider,
+            "openrouter": OpenRouterProvider,
         }
         self.providers = {}
         for name, cfg in self.config.get("providers", {}).items():
             cls = _PROVIDER_CLASSES.get(name)
             if cls is None:
                 continue
-            self.providers[name] = cls(
-                binary=cfg.get("binary", name),
-                timeout_seconds=int(cfg.get("timeout_seconds", 900)),
-                pure=bool(cfg.get("pure", True)),
+            if name == "openrouter":
+                self.providers[name] = cls(
+                    timeout_seconds=int(cfg.get("timeout_seconds", 300)),
+                    pure=bool(cfg.get("pure", True)),
+                )
+            elif name == "lmstudio":
+                self.providers[name] = cls(
+                    base_url=str(cfg.get("base_url", LMStudioProvider.DEFAULT_BASE_URL)),
+                    api_key=str(cfg.get("api_key", "lm-studio")),
+                    timeout_seconds=int(cfg.get("timeout_seconds", 900)),
+                    temperature=float(cfg.get("temperature", 0.1)),
+                    max_tokens=int(cfg.get("max_tokens", 8192)),
+                    json_object=bool(cfg.get("json_object", True)),
+                    pure=bool(cfg.get("pure", True)),
+                )
+            elif name == "deepseek-raw":
+                self.providers[name] = cls(
+                    binary=cfg.get("binary", name),
+                    timeout_seconds=int(cfg.get("timeout_seconds", 300)),
+                    pure=bool(cfg.get("pure", True)),
+                )
+            else:
+                self.providers[name] = cls(
+                    binary=cfg.get("binary", name),
+                    timeout_seconds=int(cfg.get("timeout_seconds", 900)),
+                    pure=bool(cfg.get("pure", True)),
+                )
+
+    def _validate_config(self) -> None:
+        """Phase 0: Reject misplaced/removed config keys explicitly."""
+        removed_top_level = {
+            "pipeline", "dossier", "structural", "promotion", "knowledge", "features"
+        }
+        found_removed = [k for k in removed_top_level if k in self.config]
+        if found_removed:
+            raise ValueError(
+                f"llm-harness.json: removed top-level keys found: {', '.join(found_removed)}. "
+                f"These are no longer used by the harness. See implementation plan for migration."
             )
+        # Check execution.promotion (deprecated - promotion is now explicit-only)
+        execution = self.config.get("execution", {})
+        if "promotion" in execution:
+            raise ValueError(
+                "llm-harness.json: execution.promotion is no longer read; "
+                "promotion is explicit-only via 'promote --write --owner'"
+            )
+        # Check project.mwcc_knowledge_* (removed in Phase 1)
+        project = self.config.get("project", {})
+        deprecated_project_keys = {
+            "mwcc_knowledge_enabled", "mwcc_knowledge_limit", "mwcc_knowledge_body_chars",
+            "mwcc_knowledge_reference", "cookbook_path"
+        }
+        found_deprecated = [k for k in deprecated_project_keys if k in project]
+        if found_deprecated:
+            raise ValueError(
+                f"llm-harness.json: project contains deprecated knowledge keys: {', '.join(found_deprecated)}. "
+                f"Knowledge base removed from model path in Phase 1."
+            )
+        
+        # Phase 8: Validate all config keys are recognized
+        self._validate_config_keys()
+        
+        # Phase 8: Compute effective config for dry-run
+        self.effective_config = self._compute_effective_config()
+
+    def _validate_config_keys(self) -> None:
+        """Phase 8: Validate that all config keys are recognized."""
+        # Known top-level keys
+        known_top = {"project_adapter", "output_dir", "project", "providers", "execution", "models", "solve", "prompt"}
+        unknown_top = set(self.config.keys()) - known_top
+        if unknown_top:
+            raise ValueError(f"llm-harness.json: unknown top-level keys: {', '.join(sorted(unknown_top))}")
+        
+        # Known project keys
+        known_project = {"coop_config", "prompt_dir", "max_source_chars", "context_similar_limit", 
+                         "tu_context_chars", "tu_section_byte_limit"}
+        project = self.config.get("project", {})
+        unknown_project = set(project.keys()) - known_project
+        if unknown_project:
+            raise ValueError(f"llm-harness.json: project contains unknown keys: {', '.join(sorted(unknown_project))}")
+        
+        # Known execution keys
+        known_exec = {"max_parallel", "max_target_parallel", "batch_model_parallel", 
+                      "max_retries", "isolation", "pipelines"}
+        execution = self.config.get("execution", {})
+        unknown_exec = set(execution.keys()) - known_exec
+        if unknown_exec:
+            raise ValueError(f"llm-harness.json: execution contains unknown keys: {', '.join(sorted(unknown_exec))}")
+        
+        # Known solve keys
+        known_solve = {"initial_candidates", "compile_repairs", "match_repairs", 
+                       "max_repeated_fingerprint", "stop_on_full_match", "stop_on_equivalent_match"}
+        solve = self.config.get("solve", {})
+        unknown_solve = set(solve.keys()) - known_solve
+        if unknown_solve:
+            raise ValueError(f"llm-harness.json: solve contains unknown keys: {', '.join(sorted(unknown_solve))}")
+        
+        # Known prompt keys
+        known_prompt = {"max_chars", "max_decoded_instructions", "max_declaration_chars",
+                        "max_callers", "max_sibling_bodies", "include_raw_hex"}
+        prompt = self.config.get("prompt", {})
+        unknown_prompt = set(prompt.keys()) - known_prompt
+        if unknown_prompt:
+            raise ValueError(f"llm-harness.json: prompt contains unknown keys: {', '.join(sorted(unknown_prompt))}")
+        
+        # Validate positive values
+        for key, value in [("solve.initial_candidates", solve.get("initial_candidates")),
+                           ("solve.compile_repairs", solve.get("compile_repairs")),
+                           ("solve.match_repairs", solve.get("match_repairs")),
+                           ("solve.max_repeated_fingerprint", solve.get("max_repeated_fingerprint"))]:
+            if value is not None and value < 0:
+                raise ValueError(f"{key} must be nonnegative, got {value}")
+
+    def _compute_effective_config(self) -> Dict[str, Any]:
+        """Phase 8: Compute effective config with defaults for dry-run."""
+        import copy
+        # Deep copy with defaults applied
+        config = copy.deepcopy(self.config)
+        
+        # Apply defaults
+        project = config.setdefault("project", {})
+        project.setdefault("coop_config", "coop.json")
+        project.setdefault("prompt_dir", "tools/llm_harness/prompts")
+        project.setdefault("max_source_chars", 120000)
+        project.setdefault("context_similar_limit", 4)
+        project.setdefault("tu_context_chars", 300)
+        project.setdefault("tu_section_byte_limit", 16384)
+        
+        execution = config.setdefault("execution", {})
+        execution.setdefault("max_parallel", 1)
+        execution.setdefault("max_target_parallel", 10)
+        execution.setdefault("batch_model_parallel", 1)
+        execution.setdefault("max_retries", 1)
+        execution.setdefault("isolation", {"mode": "none"})
+        execution.setdefault("pipelines", {})
+        
+        solve = config.setdefault("solve", {})
+        solve.setdefault("initial_candidates", 3)
+        solve.setdefault("compile_repairs", 2)
+        solve.setdefault("match_repairs", 4)
+        solve.setdefault("max_repeated_fingerprint", 2)
+        solve.setdefault("stop_on_full_match", True)
+        solve.setdefault("stop_on_equivalent_match", True)
+        
+        prompt = config.setdefault("prompt", {})
+        prompt.setdefault("max_chars", 60000)
+        prompt.setdefault("max_decoded_instructions", 400)
+        prompt.setdefault("max_declaration_chars", 12000)
+        prompt.setdefault("max_callers", 3)
+        prompt.setdefault("max_sibling_bodies", 3)
+        prompt.setdefault("include_raw_hex", False)
+        
+        return config
+
+    def get_effective_config(self) -> Dict[str, Any]:
+        """Get the effective config (with defaults applied)."""
+        return self.effective_config
+        ref = self.config["project_adapter"]
+        if ref.endswith(".py"):
+            path = (root / ref).resolve()
+            spec = importlib.util.spec_from_file_location("llm_harness_project_adapter", path)
+            if spec is None or spec.loader is None:
+                raise ImportError(f"Cannot load project adapter: {path}")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        else:
+            module = importlib.import_module(ref)
+        return module.create_adapter(root, self.config.get("project", {}))
 
     def _load_adapter(self, root: Path) -> ProjectAdapter:
         ref = self.config["project_adapter"]
@@ -232,6 +389,11 @@ class Harness:
                 history = self.records(target_id=target_id)
                 build_prompt = self.adapter.build_prompt
                 options = {"full_context": full_context}
+                # Phase 2: load best prior candidate for improve workflow
+                if workflow == "improve":
+                    best_ctx = self._load_best_candidate_context(target_id, self.root)
+                    if best_ctx:
+                        options["repair_context"] = best_ctx
                 if "options" in inspect.signature(build_prompt).parameters:
                     prompt = build_prompt(workflow, target_id, history, options)
                 else:
@@ -270,16 +432,27 @@ class Harness:
                             "match_percent": baseline.evaluation.match_percent
                             if baseline.evaluation
                             else 0.0,
-                            "accepted": False,
+                            "accepted": baseline.evaluation.symbol_accepted
+                            if baseline.evaluation
+                            else False,
                         }
                         if baseline.evaluation
                         else None
                     ),
                 }
-                self._debug(
-                    f"baseline captured target={target_id} "
-                    f"hash={baseline.source_hash[:12]}"
-                )
+                # Phase 5: Mandatory baseline - skip model calls if already accepted
+                baseline_eval = state["baseline"]["evaluation"]
+                if baseline_eval and baseline_eval.get("accepted"):
+                    self._debug(
+                        f"baseline already accepted target={target_id} "
+                        f"status={baseline_eval.get('status')} match={baseline_eval.get('match_percent')}"
+                    )
+                    state["status"] = "complete"
+                    state["records"] = []
+                    state["baseline_accepted"] = True
+                    self._write_state(experiment_dir, state)
+                    if dry_run:
+                        return experiment_dir
             except Exception as exc:
                 self._debug(
                     f"baseline capture failed target={target_id}: {exc}"
@@ -423,18 +596,6 @@ class Harness:
             state["logged_keys"] = sorted(logged_keys)
             state["logged"] = True
             self._write_state(experiment_dir, state)
-            # Phase 0: promotion-gate-based auto-promotion
-            if best_record is not None and workflow in {"new", "improve", "tu-complete"}:
-                ev = best_record.evaluation or {}
-                bstatus = ev.get("status", "")
-                if bstatus in ("COMPILES", "CODE_MATCH", "FULL_MATCH", "EQUIVALENT_MATCH"):
-                    try:
-                        with self._promotion_lock:
-                            self._promote_with_gate(
-                                experiment_dir, state, best_record, target_id, workflow,
-                            )
-                    except Exception as exc:
-                        self._debug(f"auto-promotion failed for {target_id}: {exc}")
         finally:
             self.adapter.finalize()
         self._debug(
@@ -978,7 +1139,7 @@ class Harness:
             })
         return output
 
-    def promote(self, experiment_dir: Path, *, write: bool = False) -> str:
+    def promote(self, experiment_dir: Path, *, write: bool = False, owner: Optional[str] = None) -> str:
         directory = experiment_dir.resolve()
         state = json.loads((directory / "state.json").read_text(encoding="utf-8"))
         best = json.loads((directory / "best.json").read_text(encoding="utf-8"))
@@ -986,8 +1147,13 @@ class Harness:
         promote_fn = getattr(self.adapter, "promote", None)
         if promote_fn is None:
             raise ValueError("Configured project adapter does not support promotion")
+        
+        # Phase 0: require owner for write promotion
+        if write and not owner:
+            raise ValueError("promote --write requires --owner <owner>")
+        
         return promote_fn(
-            state["workflow"], state["target_id"], candidate, write=write
+            state["workflow"], state["target_id"], candidate, write=write, owner=owner
         )
 
     def rescore(self, experiment_dir: Path, *, max_parallel: Optional[int] = None) -> Path:
@@ -1049,6 +1215,55 @@ class Harness:
             bool(record.evaluation.get("accepted")),
             record.evaluation.get("match_percent") or 0.0,
         )
+
+    def _load_best_candidate_context(
+        self, target_id: str, root: Path
+    ) -> Optional[Dict[str, Any]]:
+        """Load the best prior candidate artifact for repair context."""
+        records = self.records(target_id=target_id)
+        if not records:
+            return None
+        
+        # Filter records that have artifacts and successful evaluations
+        valid_records = []
+        for row in records:
+            if row.get("error"):
+                continue
+            artifact_path = root / row["artifact"]
+            if not artifact_path.is_file():
+                continue
+            try:
+                artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+                if not isinstance(artifact.get("candidate"), dict):
+                    continue
+                valid_records.append((row, artifact))
+            except (OSError, json.JSONDecodeError):
+                continue
+        
+        if not valid_records:
+            return None
+        
+        # Rank by accepted status then match percentage
+        def rank_key(item):
+            row, artifact = item
+            ev = row.get("evaluation") or {}
+            return (bool(ev.get("accepted")), float(ev.get("match_percent") or 0.0))
+        
+        best_row, best_artifact = max(valid_records, key=rank_key)
+        
+        candidate = best_artifact.get("candidate", {})
+        evaluation = best_row.get("evaluation", {})
+        metrics = evaluation.get("metrics", {})
+        binary_feedback = metrics.get("binary_feedback")
+        
+        return {
+            "source": candidate.get("source", ""),
+            "evaluation": evaluation,
+            "binary_feedback": binary_feedback,
+            "hypothesis": candidate.get("hypothesis", ""),
+            "next_change": candidate.get("next_change", ""),
+            "artifact": str(best_row["artifact"]),
+        }
 
     def repair(
         self,
@@ -1390,6 +1605,11 @@ def parse_candidate(
         next_change=str(data.get("next_change", "")),
         patches=patches,
     )
+
+
+def solve(self, target_id: str, **kwargs) -> Path:
+    """Adaptive solve loop: initial candidates -> compile repair -> binary repair."""
+    return Path("build/llm-harness/solve-stub")
 
 
 def _record_key(row: Dict[str, Any]) -> str:

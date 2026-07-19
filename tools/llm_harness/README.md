@@ -29,6 +29,29 @@ The checked-in `llm-harness.json` runs these five models through OpenCode:
 
 Each model defaults to one sample. `--runs N` means **N calls per model**; with this configuration, `--runs 3` makes 15 calls.
 
+### Providers
+
+| Provider key | Backend |
+| --- | --- |
+| `opencode` | OpenCode CLI (`opencode run`) |
+| `reasonix` | Reasonix CLI |
+| `deepseek-raw` | Direct DeepSeek chat-completions API |
+| `openrouter` | OpenRouter chat-completions API |
+| `lmstudio` | Local [LM Studio](https://lmstudio.ai/) OpenAI-compatible server (`http://localhost:1234/v1` by default) |
+
+To use a local LM Studio model, start the Developer server, load a model, then point a workflow entry at `provider: "lmstudio"` with the model ID from `GET /v1/models`:
+
+```json
+{
+  "id": "local-qwen",
+  "provider": "lmstudio",
+  "model": "qwen2.5-coder-32b-instruct",
+  "runs": 1
+}
+```
+
+Optional `providers.lmstudio` knobs: `base_url`, `timeout_seconds`, `temperature`, `max_tokens`, `api_key`, and `json_object` (default `true`; sends `response_format: json_object`).
+
 ## Quick start
 
 Use a canonical target ID from `tools/coop/targets.json`:

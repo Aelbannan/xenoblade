@@ -24,6 +24,30 @@ The coop runner defaults to **US**. Use another region via `coop.json` or `confi
 
 ---
 
+<!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
+
+- Architecture model: `broadway-ppc32-be-v19`
+- Result format: `8`
+- Certificate format: `2`
+
+<!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
+<!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
+
+| Status | Value |
+|---|---|
+| `EQUIVALENT` | `equivalent` |
+| `NOT_EQUIVALENT` | `not_equivalent` |
+| `INCONCLUSIVE_TIMEOUT` | `inconclusive_timeout` |
+| `INCONCLUSIVE_UNKNOWN` | `inconclusive_unknown` |
+| `INCONCLUSIVE_UNSUPPORTED` | `inconclusive_unsupported` |
+| `INCONCLUSIVE_ABSTRACTION` | `inconclusive_abstraction` |
+| `INCONCLUSIVE_LAYOUT` | `inconclusive_layout` |
+| `INCONCLUSIVE_UNVALIDATED_CALLEE` | `inconclusive_unvalidated_callee` |
+| `INCONCLUSIVE_UNMODELED_EXCEPTION` | `inconclusive_unmodeled_exception` |
+| `INVALID_INPUT` | `invalid_input` |
+| `INTERNAL_ERROR` | `internal_error` |
+
+<!-- END GENERATED PROOF_STATUS_TABLE -->
 ## Policy (this fork)
 
 - Match bar: **`FULL_MATCH`** (100% instruction + reloc when a symbol is set).

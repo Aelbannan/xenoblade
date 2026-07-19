@@ -5,12 +5,17 @@ import subprocess
 import tempfile
 import threading
 import unittest
+import unittest.mock
 from pathlib import Path
 from types import SimpleNamespace
 
 from tools.llm_harness.core import Harness, parse_candidate
-from tools.llm_harness.providers import parse_opencode_output, parse_reasonix_output
-from tools.llm_harness.types import Candidate, ProviderResult, SourcePatch
+from tools.llm_harness.providers import (
+    LMStudioProvider,
+    parse_opencode_output,
+    parse_reasonix_output,
+)
+from tools.llm_harness.types import Candidate, ModelConfig, ProviderResult, SourcePatch
 from tools.llm_harness.workspace import GitWorktreeManager
 from tools.llm_harness.dossier import (
     DataFlowSummary,
@@ -37,13 +42,10 @@ from tools.llm_harness.xenoblade_project import (
     _begin_marker,
     _end_marker,
     _apply_tu_patches,
-    _assembly_function_block,
     _binary_mismatch_summary,
     _find_function_region,
     _find_tu_slots,
     _function_size_comparison,
-    _knowledge_queries,
-    _knowledge_record,
     _insert_marker_slot,
     _insert_empty_tu_slot,
     _replace_function_source,
@@ -146,6 +148,50 @@ class OpenCodeOutputTests(unittest.TestCase):
         self.assertAlmostEqual(usage["cost"], 0.07)
 
 
+class LMStudioProviderTests(unittest.TestCase):
+    def test_invoke_parses_openai_compatible_response(self) -> None:
+        response = {
+            "choices": [{"message": {"content": '{"source":"int f(){return 1;}"}'}}],
+            "usage": {"prompt_tokens": 100, "completion_tokens": 20},
+        }
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(response) + "\n200",
+            stderr="",
+        )
+        provider = LMStudioProvider(timeout_seconds=30)
+        with unittest.mock.patch("tools.llm_harness.providers.subprocess.run", return_value=completed) as run:
+            result = provider.invoke(
+                '{"task":"decompile"}',
+                ModelConfig(id="local", provider="lmstudio", model="qwen2.5-coder"),
+                Path("."),
+            )
+        self.assertEqual(result.text, '{"source":"int f(){return 1;}"}')
+        self.assertEqual(result.input_tokens, 100)
+        self.assertEqual(result.output_tokens, 20)
+        cmd = run.call_args.args[0]
+        self.assertIn("http://localhost:1234/v1/chat/completions", cmd)
+        body = json.loads(cmd[cmd.index("-d") + 1])
+        self.assertEqual(body["model"], "qwen2.5-coder")
+        self.assertEqual(body["response_format"], {"type": "json_object"})
+
+    def test_json_object_can_be_disabled(self) -> None:
+        response = {
+            "choices": [{"message": {"content": "{}"}}],
+            "usage": {},
+        }
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(response) + "\n200",
+            stderr="",
+        )
+        provider = LMStudioProvider(json_object=False)
+        with unittest.mock.patch("tools.llm_harness.providers.subprocess.run", return_value=completed) as run:
+            provider.invoke("{}", ModelConfig(id="local", provider="lmstudio", model="m"), Path("."))
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
+        self.assertNotIn("response_format", body)
+
+
 class ReasonixOutputTests(unittest.TestCase):
     def test_parses_result_and_usage(self) -> None:
         output = json.dumps({
@@ -200,43 +246,6 @@ class ReasonixOutputTests(unittest.TestCase):
         self.assertEqual(events, [{"type": "result", "subtype": "error", "is_error": True, "result": ""}])
         self.assertIsNone(usage["input"])
         self.assertIsNone(usage["cost"])
-
-
-class KnowledgeDossierTests(unittest.TestCase):
-    def test_queries_identity_and_prior_mismatch_tags(self) -> None:
-        target = SimpleNamespace(function="CThing::Move", symbol="Move__6CThingFv")
-        history = [{"candidate_summary": {"notes": ["SDA relocation and stack frame spill"]}}]
-        queries = _knowledge_queries(target, history)
-        self.assertEqual(queries[0]["query"], "CThing::Move")
-        self.assertEqual(queries[1]["query"], "Move__6CThingFv")
-        self.assertIn("relocation", {row.get("tag") for row in queries})
-        self.assertIn("stack_frame", {row.get("tag") for row in queries})
-
-    def test_full_record_is_capped_and_keeps_stable_id(self) -> None:
-        row = {
-            "id": "ref:abc",
-            "source_kind": "reference",
-            "title": "Pattern",
-            "body": "abcdefghij",
-            "status": "FULL_MATCH",
-            "match_percent": 100.0,
-            "target_id": "",
-            "symbol": "",
-            "tags": "relocation abi",
-            "source_path": "docs/MWCC_REFERENCE.md",
-            "line_start": 10,
-        }
-        record = _knowledge_record(row, 5)
-        self.assertEqual(record["id"], "ref:abc")
-        self.assertTrue(record["truncated"])
-        self.assertEqual(record["tags"], ["relocation", "abi"])
-
-    def test_extracts_only_named_retail_assembly_block(self) -> None:
-        source = ".fn first, global\na\n.endfn first\n.fn second, global\nb\n.endfn second\n"
-        self.assertEqual(
-            _assembly_function_block(source, "second"),
-            ".fn second, global\nb\n.endfn second\n",
-        )
 
 
 class FunctionRegionTests(unittest.TestCase):

@@ -50,12 +50,10 @@ from tools.coop.lib.objdiff_report import (
 )
 from tools.coop.lib.object_size import ObjectSizeCheck, check_object_size, format_size_check
 from tools.coop.lib.project import ObjdiffUnit, Project
-from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
 from tools.coop.lib.targets import (
-    ACCEPTED_MATCH_STATUSES,
+    audit_promotion_registry,
     claim_target,
-    equivalence_certificate_error,
     get_target,
     harness_targets,
     import_symbols,
@@ -407,6 +405,8 @@ def cmd_cycle(
         git_commit=_git_head(project),
         equivalence_status=evaluation.equivalence.value if evaluation.equivalence else None,
         equivalence_detail=evaluation.equivalence_detail,
+        equivalence_confidence=evaluation.equivalence_confidence,
+        equivalence_policy=evaluation.equivalence_policy,
         add_to_kb=add_to_kb,
     )
     log_path = append_attempt(config.resolve(config.attempt_log), record)
@@ -424,6 +424,8 @@ def cmd_cycle(
         equivalence_status=record.equivalence_status,
         equivalence_certificate=evaluation.equivalence_certificate,
         certificate_checked=evaluation.certificate_checked,
+        equivalence_confidence=evaluation.equivalence_confidence,
+        equivalence_policy=evaluation.equivalence_policy,
     )
     print(f"target registry updated: {target.id}")
 
@@ -861,66 +863,37 @@ def _render_target_brief(config: CoopConfig, target_id: str) -> str:
 
 
 def cmd_targets_audit_promotion(
-    config: CoopConfig, *, dry_run: bool, write_report: Optional[Path],
+    config: CoopConfig,
+    *,
+    apply: bool,
+    write_report: Optional[Path],
 ) -> int:
-    from tools.coop.lib.targets import load_targets_document
-    data = load_targets_document(config)
-    rows = data.get("targets", [])
-    rows_by_id = {row["id"]: row for row in rows}
-    affected: list[dict[str, Any]] = []
-    valid_count = 0
-    for row in rows:
-        status = row.get("status", "NOT_STARTED")
-        if status not in ACCEPTED_MATCH_STATUSES:
-            continue
-        if status == "FULL_MATCH":
-            valid_count += 1
-            continue
-        cert_error = equivalence_certificate_error(row, rows_by_id)
-        if cert_error:
-            affected.append({
-                "id": row["id"],
-                "status": status,
-                "workflow_status": row.get("workflow_status", "unknown"),
-                "certificate_error": cert_error,
-                "action": "downgrade-to-code_match",
-            })
-        else:
-            cert = row.get("equivalence_certificate", {})
-            arch = cert.get("architecture", "unknown")
-            if arch in config.reject_architecture_models:
-                affected.append({
-                    "id": row["id"],
-                    "status": status,
-                    "workflow_status": row.get("workflow_status", "unknown"),
-                    "certificate_error": f"architecture {arch} in reject_architecture_models",
-                    "action": "require-reproof",
-                })
-            else:
-                valid_count += 1
-
-    print(f"Audit complete: {valid_count} valid, {len(affected)} affected")
-    for entry in affected:
+    report = audit_promotion_registry(config, apply=apply)
+    mode = "apply" if apply else "dry-run"
+    print(
+        f"Audit complete ({mode}): {report['valid_count']} valid, "
+        f"{report['affected_count']} affected, "
+        f"{report['skipped_full_match']} FULL_MATCH skipped"
+    )
+    for entry in report["affected"]:
         print(f"  [{entry['action']}] {entry['id']}: {entry['certificate_error']}")
+    if apply and report["mutations"]:
+        print(f"Applied {report['applied_count']} revalidation marking(s)")
+        for mutation in report["mutations"]:
+            print(
+                f"  {mutation['id']}: {mutation['from_status']}/{mutation['from_workflow']} "
+                f"-> {mutation['to_status']}/{mutation['to_workflow']}"
+            )
+    elif not apply and report["affected_count"]:
+        print("Dry-run only. Re-run with --apply to mark targets for revalidation.")
 
     if write_report:
-        report = {
-            "architecture_model": ARCHITECTURE_MODEL,
-            "result_format": RESULT_FORMAT,
-            "reject_architecture_models": list(config.reject_architecture_models),
-            "valid_count": valid_count,
-            "affected_count": len(affected),
-            "affected": affected,
-        }
         path = write_report if write_report.is_absolute() else config.project_root / write_report
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"Report written to {path}")
 
-    if not dry_run and affected:
-        print("WARNING: --dry-run not set; this command does not modify the registry.")
-        print("Use tools/coop/run.py targets audit-promotion --dry-run to preview changes.")
-    return 1 if affected else 0
+    return 1 if report["affected_count"] else 0
 
 
 def cmd_targets_brief(
@@ -1125,6 +1098,25 @@ def _run_check_unit_linked(
 def cmd_equivalence(project: Project, config: CoopConfig, equivalence_args: list[str]) -> int:
     if equivalence_args and equivalence_args[0] == "--":
         equivalence_args = equivalence_args[1:]
+    if equivalence_args and equivalence_args[0] == "audit-registry":
+        parser = argparse.ArgumentParser(prog="equivalence audit-registry")
+        parser.add_argument(
+            "--apply",
+            action="store_true",
+            help="Mark affected EQUIVALENT_MATCH rows for revalidation",
+        )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Report only (default when --apply is omitted)",
+        )
+        parser.add_argument("--write-report", type=Path)
+        parsed = parser.parse_args(equivalence_args[1:])
+        return cmd_targets_audit_promotion(
+            config,
+            apply=bool(parsed.apply) and not parsed.dry_run,
+            write_report=parsed.write_report,
+        )
     if equivalence_args and equivalence_args[0] == "check-unit":
         return _cmd_equivalence_check_unit(project, config, equivalence_args[1:])
     equivalence_args = _equivalence_args_with_default_contract(equivalence_args)
@@ -1140,6 +1132,14 @@ def cmd_opcodes(opcodes_args: list[str], config: CoopConfig) -> int:
     if not opcodes_args or opcodes_args[0].startswith("-"):
         opcodes_args = [str(config.main_dol), *opcodes_args]
     cmd = [sys.executable, "-m", "tools.dol_opcodes", *opcodes_args]
+    return subprocess.run(cmd, cwd=ROOT, check=False).returncode
+
+
+def cmd_atlas(atlas_args: list[str]) -> int:
+    if atlas_args and atlas_args[0] == "--":
+        atlas_args = atlas_args[1:]
+    script = ROOT / "tools" / "decomp_atlas" / "run.py"
+    cmd = [sys.executable, str(script), *atlas_args]
     return subprocess.run(cmd, cwd=ROOT, check=False).returncode
 
 
@@ -1286,7 +1286,16 @@ def main() -> int:
         "audit-promotion",
         help="Audit EQUIVALENT_MATCH targets for promotion eligibility",
     )
-    p_targets_audit.add_argument("--dry-run", action="store_true")
+    p_targets_audit.add_argument(
+        "--apply",
+        action="store_true",
+        help="Mark affected rows as CODE_MATCH / REVALIDATION_REQUIRED",
+    )
+    p_targets_audit.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report only (default when --apply is omitted)",
+    )
     p_targets_audit.add_argument(
         "--write-report", type=Path,
         help="Write audit JSON report to path",
@@ -1350,6 +1359,16 @@ def main() -> int:
         "opcodes_args",
         nargs=argparse.REMAINDER,
         help="optional DOL path and flags (e.g. --sort count, --names-only, --json)",
+    )
+
+    p_atlas = sub.add_parser(
+        "atlas",
+        help="Decomp Atlas index/serve (wraps tools/decomp_atlas/run.py)",
+    )
+    p_atlas.add_argument(
+        "atlas_args",
+        nargs=argparse.REMAINDER,
+        help="atlas subcommand (status, index [--full] [--vectors], serve [--enable-jobs])",
     )
 
     args = parser.parse_args()
@@ -1446,7 +1465,9 @@ def main() -> int:
         return cmd_targets_release(config, args.target_id, owner=args.owner)
     if args.command == "targets" and args.targets_cmd == "audit-promotion":
         return cmd_targets_audit_promotion(
-            config, dry_run=args.dry_run, write_report=args.write_report,
+            config,
+            apply=bool(args.apply) and not args.dry_run,
+            write_report=args.write_report,
         )
     if args.command == "targets" and args.targets_cmd == "brief":
         return cmd_targets_brief(config, args.target_id, output=args.output)
@@ -1464,6 +1485,8 @@ def main() -> int:
         return cmd_equivalence(project, config, args.equivalence_args)
     if args.command == "opcodes":
         return cmd_opcodes(args.opcodes_args, config)
+    if args.command == "atlas":
+        return cmd_atlas(args.atlas_args)
 
     parser.error(f"unknown command: {args.command}")
     return 2

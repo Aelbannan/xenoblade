@@ -1,0 +1,170 @@
+"""Lazy per-function artifact extraction for Atlas (never aborts the index)."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from tools.decomp_atlas.lib.database import file_sha256
+from tools.llm_harness.source_regions import find_function_region
+
+
+@dataclass
+class _TargetProxy:
+    id: str
+    function: str
+
+
+def _format_instructions(instructions: List[Any]) -> str:
+    lines: List[str] = []
+    for insn in instructions:
+        mnemonic = getattr(insn, "display_mnemonic", None) or getattr(
+            getattr(insn, "opcode", None), "value", "?"
+        )
+        operands = getattr(insn, "operands", ())
+        ops = ", ".join(str(op) for op in operands) if operands else ""
+        addr = getattr(insn, "address", 0)
+        reloc = getattr(insn, "relocation", None)
+        reloc_note = ""
+        if reloc is not None:
+            sym = getattr(reloc, "symbol", "") or getattr(reloc, "canonical_symbol", "")
+            reloc_note = f"  ; reloc {sym}"
+        lines.append(f"0x{addr:08x}:  {mnemonic} {ops}".rstrip() + reloc_note)
+    return "\n".join(lines)
+
+
+def _extract_asm(object_path: Optional[Path], symbol: Optional[str], warnings: List[str]) -> tuple[str, list, list]:
+    if not object_path or not symbol:
+        return "", [], []
+    if not object_path.is_file():
+        warnings.append(f"object missing: {object_path}")
+        return "", [], []
+    try:
+        from tools.ppc_equivalence.decoder import decode_block
+        from tools.ppc_equivalence.elf_symbols import extract_function
+    except Exception as exc:  # pragma: no cover - import environment
+        warnings.append(f"ppc modules unavailable: {exc}")
+        return "", [], []
+    try:
+        function = extract_function(object_path, symbol)
+    except Exception as exc:
+        warnings.append(f"extract_function failed for {symbol}: {exc}")
+        return "", [], []
+    relocs = [
+        {
+            "offset": r.offset,
+            "type": r.relocation_type,
+            "symbol": r.symbol,
+            "addend": r.addend,
+        }
+        for r in (function.relocations or ())
+    ]
+    try:
+        instructions = decode_block(
+            function.code,
+            base=int(getattr(function, "address", 0) or 0),
+            validate_with_capstone=False,
+            relocations=function.relocations or (),
+            local_symbol=symbol,
+        )
+    except Exception as exc:
+        warnings.append(f"decode_block failed for {symbol}: {exc}")
+        return "", relocs, []
+    return _format_instructions(instructions), relocs, instructions
+
+
+def extract_artifacts(
+    *,
+    root: Path,
+    record: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Extract C++ / asm artifacts for one target. Always returns a dict with warnings."""
+    warnings: List[str] = []
+    target_id = str(record.get("target_id") or "")
+    display_name = str(record.get("display_name") or "")
+    symbol = record.get("symbol")
+    source_rel = record.get("source")
+    target_object_rel = record.get("target_object")
+    base_object_rel = record.get("base_object")
+
+    source_path = root / source_rel if source_rel else None
+    target_object = root / target_object_rel if target_object_rel else None
+    base_object = root / base_object_rel if base_object_rel else None
+
+    cpp_source = ""
+    if source_path is not None and source_path.is_file():
+        try:
+            text = source_path.read_text(encoding="utf-8")
+            region = find_function_region(text, _TargetProxy(id=target_id, function=display_name))
+            cpp_source = text[region.content_start : region.content_end].strip()
+        except Exception as exc:
+            warnings.append(f"source extraction failed: {exc}")
+    elif source_rel:
+        warnings.append(f"source missing: {source_rel}")
+
+    # Retail object is typically target_path (original); candidate is base_path (decomp).
+    retail_asm, retail_relocs, retail_insns = _extract_asm(target_object, symbol, warnings)
+    candidate_asm, candidate_relocs, candidate_insns = _extract_asm(base_object, symbol, warnings)
+
+    instruction_count = len(retail_insns) or None
+    branch_count = None
+    stack_frame = None
+    if retail_insns:
+        branch_opcodes = {"b", "bc", "bclr", "bcctr"}
+        branch_count = sum(
+            1
+            for insn in retail_insns
+            if (getattr(getattr(insn, "opcode", None), "value", "") in branch_opcodes)
+        )
+        # Heuristic: first stwu r1, -N(r1) immediate.
+        for insn in retail_insns[:8]:
+            op = getattr(getattr(insn, "opcode", None), "value", "")
+            operands = getattr(insn, "operands", ())
+            if op == "stwu" and len(operands) >= 3 and operands[0] == 1 and operands[1] == 1:
+                stack_frame = abs(int(operands[2]))
+                break
+
+    return {
+        "target_id": target_id,
+        "retail_object_hash": file_sha256(target_object) if target_object else None,
+        "candidate_object_hash": file_sha256(base_object) if base_object else None,
+        "source_hash": file_sha256(source_path) if source_path else None,
+        "cpp_source": cpp_source,
+        "retail_asm": retail_asm,
+        "candidate_asm": candidate_asm,
+        "relocations": retail_relocs or candidate_relocs,
+        "decoded": [
+            {
+                "address": getattr(insn, "address", 0),
+                "opcode": getattr(getattr(insn, "opcode", None), "value", None),
+                "operands": list(getattr(insn, "operands", ()) or ()),
+            }
+            for insn in retail_insns
+        ],
+        "warnings": warnings,
+        "instruction_count": instruction_count,
+        "branch_count": branch_count,
+        "relocation_count": len(retail_relocs) if retail_relocs else None,
+        "stack_frame": stack_frame,
+        "instructions": retail_insns,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def artifact_row_for_db(artifact: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "target_id": artifact["target_id"],
+        "retail_object_hash": artifact.get("retail_object_hash"),
+        "candidate_object_hash": artifact.get("candidate_object_hash"),
+        "source_hash": artifact.get("source_hash"),
+        "cpp_source": artifact.get("cpp_source") or "",
+        "retail_asm": artifact.get("retail_asm") or "",
+        "candidate_asm": artifact.get("candidate_asm") or "",
+        "relocations_json": json.dumps(artifact.get("relocations") or []),
+        "decoded_json": json.dumps(artifact.get("decoded") or []),
+        "warnings_json": json.dumps(artifact.get("warnings") or []),
+        "updated_at": artifact.get("updated_at"),
+    }

@@ -234,6 +234,7 @@ class TargetRegistryTests(unittest.TestCase):
     def test_validation_rejects_stale_certificate_dependency(self) -> None:
         callee = {
             "id": "callee", "symbol": "callee", "address": "0x1",
+            "status": "EQUIVALENT_MATCH",
             "equivalence_certificate": _certificate("callee"),
         }
         caller_certificate = _certificate("caller", [{
@@ -244,6 +245,7 @@ class TargetRegistryTests(unittest.TestCase):
             callee,
             {
                 "id": "caller", "symbol": "caller", "address": "0x2",
+                "status": "EQUIVALENT_MATCH",
                 "called_functions": ["callee"],
                 "equivalence_certificate": caller_certificate,
             },
@@ -310,11 +312,14 @@ class TargetRegistryTests(unittest.TestCase):
         self.assertIn("architecture", err or "")
 
     def test_full_match_not_invalidated_by_stale_certificate(self) -> None:
+        stale = _certificate("full")
+        stale["architecture"] = "broadway-ppc32-be-v18"
+        stale["certificate_sha256"] = equivalence_certificate_hash(stale)
         rows = [
             {
                 "id": "full", "symbol": "f", "address": "0x1",
                 "status": "FULL_MATCH",
-                "equivalence_certificate": _certificate("full"),
+                "equivalence_certificate": stale,
             },
         ]
         (self.root / "tools/coop/targets.json").write_text(

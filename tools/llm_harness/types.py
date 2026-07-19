@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Literal, Optional, Protocol, Union
 
 
 class PipelineStage(str, Enum):
@@ -32,6 +33,12 @@ class CandidateStatus(str, Enum):
     CODE_MATCH = "code_match"
     EQUIVALENT_MATCH = "equivalent_match"
     FULL_MATCH = "full_match"
+    PRECHECK_ERROR = "precheck_error"
+    BUILD_ERROR = "build_error"
+    SYMBOL_EXTRACTION_ERROR = "symbol_extraction_error"
+    MATCH_EVALUATION_ERROR = "match_evaluation_error"
+    EQUIVALENCE_ERROR = "equivalence_error"
+    RESTORE_ERROR = "restore_error"
 
 
 class BlockedReason(str, Enum):
@@ -43,6 +50,104 @@ class BlockedReason(str, Enum):
     REPEATED_DIAGNOSTIC = "repeated_diagnostic"
     UNSUPPORTED_INSTRUCTION = "unsupported_instruction"
     BUDGET_EXHAUSTED = "budget_exhausted"
+
+
+@dataclass(frozen=True)
+class CandidateId:
+    experiment_id: str
+    branch_id: str
+    iteration: int
+
+
+@dataclass(frozen=True)
+class InstructionWindow:
+    start_offset: int
+    retail: List[str]
+    candidate: List[str]
+
+
+@dataclass(frozen=True)
+class InstructionDifference:
+    offset: int
+    retail_raw: str
+    candidate_raw: str
+    retail_mnemonic: str
+    candidate_mnemonic: str
+    likely_cause: str = ""
+
+
+@dataclass(frozen=True)
+class SizeComparison:
+    retail: int
+    candidate: int
+
+
+@dataclass(frozen=True)
+class StackFrameComparison:
+    retail: int
+    candidate: int
+
+
+@dataclass(frozen=True)
+class ComponentFinding:
+    score: float
+    matched: int
+    expected: int
+    details: List[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class BinaryDiffFeedback:
+    kind: Literal["compile", "binary_diff", "accepted", "evaluation_error"]
+    first_difference_offset: Optional[int] = None
+    instruction_windows: List[InstructionWindow] = field(default_factory=list)
+    differences: List[InstructionDifference] = field(default_factory=list)
+    relocation_differences: Dict[str, List[str]] = field(default_factory=dict)
+    function_size: Optional[SizeComparison] = None
+    stack_frame: Optional[StackFrameComparison] = None
+    structural_findings: Dict[str, ComponentFinding] = field(default_factory=dict)
+    fingerprint: str = ""
+
+
+def fingerprint_binary_feedback(feedback: Union[BinaryDiffFeedback, Dict[str, Any]]) -> str:
+    """Build a stable mismatch fingerprint from binary diff feedback."""
+    # Handle both BinaryDiffFeedback object and dict
+    if isinstance(feedback, BinaryDiffFeedback):
+        differences = feedback.differences
+        relocation_differences = feedback.relocation_differences
+        function_size = feedback.function_size
+    else:
+        differences = feedback.get("differences", [])
+        relocation_differences = feedback.get("relocation_differences", {})
+        function_size = feedback.get("function_size", {})
+    
+    payload = {
+        "instruction_pairs": [
+            (d.offset, d.retail_raw, d.candidate_raw) if hasattr(d, 'offset') else (d.get("offset", 0), d.get("retail", ""), d.get("candidate", ""))
+            for d in differences[:20]
+        ],
+        "relocations": relocation_differences,
+        "size_delta": (
+            function_size.candidate - function_size.retail
+            if function_size and hasattr(function_size, 'candidate') and hasattr(function_size, 'retail')
+            else (function_size.get("candidate", 0) - function_size.get("retail", 0) if isinstance(function_size, dict) else 0)
+        ),
+    }
+    canonical = json.dumps(payload, separators=(",", ":"), sort_keys=True)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+
+
+@dataclass
+class CandidateArtifact:
+    candidate_id: CandidateId
+    parent_id: Optional[CandidateId]
+    strategy: str
+    source: str
+    hypothesis: str
+    notes: List[str]
+    next_change: str
+    evaluation: Optional[Dict[str, Any]] = None
+    feedback: Optional[BinaryDiffFeedback] = None
 
 
 @dataclass(frozen=True)

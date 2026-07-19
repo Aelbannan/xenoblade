@@ -186,7 +186,13 @@ def _exit_for_status(status: ProofStatus) -> int:
     return 4
 
 
-def _emit(result: ProofResult, json_output: bool, result_file: Path | None, replay_file: Path | None) -> int:
+def _emit(
+    result: ProofResult,
+    json_output: bool,
+    result_file: Path | None,
+    replay_file: Path | None,
+    counterexample_bundle_file: Path | None = None,
+) -> int:
     payload = result.to_dict()
     if result_file:
         result_file.parent.mkdir(parents=True, exist_ok=True)
@@ -194,12 +200,21 @@ def _emit(result: ProofResult, json_output: bool, result_file: Path | None, repl
     if replay_file and result.replay:
         replay_file.parent.mkdir(parents=True, exist_ok=True)
         replay_file.write_text(json.dumps(result.replay, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if counterexample_bundle_file and result.counterexample_bundle:
+        bundle_path = Path(counterexample_bundle_file)
+        bundle_path.parent.mkdir(parents=True, exist_ok=True)
+        bundle_path.write_text(
+            json.dumps(result.counterexample_bundle, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     if json_output:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         _print_result(result)
         if replay_file and result.replay:
             print(f"replay: {replay_file}")
+        if counterexample_bundle_file and result.counterexample_bundle:
+            print(f"counterexample-bundle: {counterexample_bundle_file}")
     return _exit_for_status(result.status)
 
 
@@ -288,6 +303,7 @@ def _run_check(
             memory_environment=memory_env,
             source_hash=source_hash,
             floating_point_domain=fp_domain,
+            diagnostics_out=str(args.diagnostics_out) if args.diagnostics_out else None,
         )
     except (UnsupportedInstruction, ExecutionInconclusive) as exc:
         contract_name = requested_contract or "manual"
@@ -302,7 +318,7 @@ def _run_check(
             observables=observable_names,
             unsupported=[str(exc)],
         )
-    return _emit(result, args.json, args.result, args.replay_out)
+    return _emit(result, args.json, args.result, args.replay_out, args.counterexample_bundle_out)
 
 
 def cmd_decode(args: argparse.Namespace) -> int:
@@ -398,6 +414,16 @@ def _add_check_options(
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--result", type=Path, help="write the complete JSON proof result")
     parser.add_argument("--replay-out", type=Path, help="write a replayable counterexample when inequivalent")
+    parser.add_argument(
+        "--counterexample-bundle-out",
+        type=Path,
+        help="write a self-contained counterexample reproduction bundle when inequivalent",
+    )
+    parser.add_argument(
+        "--diagnostics-out",
+        type=Path,
+        help="write solver diagnostics (assertion counts, timings, SMT dump) when set",
+    )
     parser.add_argument("--smt-out", type=Path, help="write the generated SMT-LIB query")
     parser.add_argument(
         "--memory-profile",
@@ -579,6 +605,49 @@ def cmd_differential(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_generate(args: argparse.Namespace) -> int:
+    from .generators import differential_check, generate_program
+
+    count = max(1, args.count)
+    programs: list[dict[str, Any]] = []
+    diff_failures: list[dict[str, Any]] = []
+    for offset in range(count):
+        seed = args.seed + offset
+        program = generate_program(seed, max_instructions=args.max_instructions)
+        if args.differential:
+            result = differential_check(seed, max_instructions=args.max_instructions)
+            if not result["match"]:
+                diff_failures.append({"seed": seed, "result": result})
+        programs.append(program)
+
+    payload = {
+        "format": 1,
+        "generator": "ppc-random-v1",
+        "seed": args.seed,
+        "count": count,
+        "programs": programs,
+    }
+    if args.differential:
+        payload["differential_failed"] = len(diff_failures)
+        payload["differential_failures"] = diff_failures
+
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        for offset, program in enumerate(programs):
+            print(f"# seed {args.seed + offset} family={program['family']}")
+            print(program["program_hex"])
+
+    # Exit nonzero only on genuine differential mismatch (Dolphin SKIP is tolerated).
+    if args.differential and diff_failures:
+        if args.json:
+            print(json.dumps({"status": "mismatch", "count": len(diff_failures)}), file=sys.stderr)
+        else:
+            print(f"differential mismatch: {len(diff_failures)}/{count} seeds failed", file=sys.stderr)
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Xenoblade Wii Broadway PPC32 equivalence checker")
     parser.add_argument("--version", action="version", version=__version__)
@@ -642,6 +711,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="also build/run the ppc-equivalence-fixtures Dolphin DOL",
     )
     differential.add_argument("--json", action="store_true")
+
+    generate = sub.add_parser(
+        "generate",
+        aliases=["random-gen"],
+        help="generate deterministic seeded PPC32 programs via the random generator",
+    )
+    generate.add_argument("--seed", type=_parse_int, required=True, help="base seed")
+    generate.add_argument("--count", type=int, default=1, help="number of programs (seeds seed..seed+count-1)")
+    generate.add_argument("--max-instructions", type=int, default=12)
+    generate.add_argument("--differential", action="store_true", help="also run the symbolic + optional Dolphin differential check")
+    generate.add_argument("--json", action="store_true")
     return parser
 
 
@@ -663,6 +743,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_replay(args)
         if args.command == "differential":
             return cmd_differential(args)
+        if args.command in ("generate", "random-gen"):
+            return cmd_generate(args)
     except (DecodeError, ElfSymbolError, ValueError, OSError, json.JSONDecodeError) as exc:
         if getattr(args, "json", False):
             print(json.dumps({"format": 1, "status": "invalid_input", "error": str(exc)}))

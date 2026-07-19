@@ -20,11 +20,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .ranking import (
-    ProofSimilarity,
-    extract_proof_similarity,
-    rank_candidate as rank_candidate_proof_aware,
-)
 from .types import (
     BaselineSnapshot,
     CandidateEvaluation,
@@ -38,10 +33,21 @@ from .types import (
 )
 
 
-# §14.5 — Proof-aware ranking delegates to ranking module
+# §14.5 — Local proof-aware ranking
 def rank_candidate(evaluation: CandidateEvaluation) -> tuple:
     """Lexicographic ranking: hard priorities, then proof-aware tiers."""
-    return rank_candidate_proof_aware(evaluation)
+    # Simple ranking: symbol_accepted > match_percent > structural_score > equivalence > size delta
+    symbol_accepted = (
+        evaluation.status == CandidateStatus.FULL_MATCH or
+        (evaluation.status == CandidateStatus.EQUIVALENT_MATCH and evaluation.equivalence_status)
+    )
+    match_pct = evaluation.match_percent or 0.0
+    structural_score = evaluation.structural_report.total_score if evaluation.structural_report else 0.0
+    equiv = 1 if evaluation.equivalence_status == "EQUIVALENT" else 0
+    size_delta = 0
+    if evaluation.function_size is not None and evaluation.retail_size is not None:
+        size_delta = -abs(min(evaluation.function_size - evaluation.retail_size, 0))
+    return (1 if symbol_accepted else 0, match_pct, structural_score, equiv, size_delta)
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +98,13 @@ def passes_promotion_gate(
     # Monotonic rank gate
     if policy.require_monotonic_rank and candidate_rank <= baseline_rank:
         return False, "candidate does not improve canonical rank"
+
+    # Structural regression gate - reject if structural score drops significantly
+    baseline_structural = _structural_score(baseline)
+    candidate_structural = _structural_score(candidate)
+    max_regression = getattr(policy, 'max_structural_regression', 0.02)
+    if candidate_structural + max_regression < baseline_structural:
+        return False, f"candidate structural regression: {baseline_structural:.3f} -> {candidate_structural:.3f}"
 
     return True, "candidate improves canonical rank"
 
@@ -382,6 +395,7 @@ class PromotionManager:
         experiment_dir: Path,
         *,
         write: bool = False,
+        owner: Optional[str] = None,
     ) -> PromotionResult:
         if not write:
             return PromotionResult(
@@ -391,9 +405,18 @@ class PromotionManager:
                 target_id=target_id,
             )
 
+        # Phase 0: require owner for write promotion
+        if not owner:
+            return PromotionResult(
+                promoted=False,
+                rolled_back=False,
+                reason="promotion write requires --owner",
+                target_id=target_id,
+            )
+
         with self._lock:
             return self._promote_safe(
-                adapter, workflow, target_id, candidate_source, experiment_dir
+                adapter, workflow, target_id, candidate_source, experiment_dir, owner
             )
 
     def _promote_safe(
@@ -403,6 +426,7 @@ class PromotionManager:
         target_id: str,
         candidate_source: str,
         experiment_dir: Path,
+        owner: str,
     ) -> PromotionResult:
         steps: List[ValidationStepResult] = []
         read_source = getattr(adapter, "read_target_source", None)
@@ -438,6 +462,64 @@ class PromotionManager:
             detail=f"source hash: {source_hash_before[:12]}",
             artifact_paths=[str(source_path)] if source_path else [],
         ))
+
+        # Phase 0: verify owner claim
+        verify_claim = getattr(adapter, "verify_claim", None)
+        if verify_claim is not None:
+            try:
+                claim_ok, claim_detail = verify_claim(target_id, owner)
+                if not claim_ok:
+                    return PromotionResult(
+                        promoted=False,
+                        rolled_back=False,
+                        reason=f"owner claim verification failed: {claim_detail}",
+                        target_id=target_id,
+                        source_hash_before=source_hash_before,
+                        validation_steps=steps,
+                    )
+            except Exception as exc:
+                return PromotionResult(
+                    promoted=False,
+                    rolled_back=False,
+                    reason=f"owner claim verification error: {type(exc).__name__}: {exc}",
+                    target_id=target_id,
+                    source_hash_before=source_hash_before,
+                    validation_steps=steps,
+                )
+        else:
+            # If adapter doesn't support verify_claim, require _require_claim method
+            require_claim = getattr(adapter, "_require_claim", None)
+            if require_claim is not None:
+                try:
+                    require_claim(target_id, owner)
+                except Exception as exc:
+                    return PromotionResult(
+                        promoted=False,
+                        rolled_back=False,
+                        reason=f"owner claim required: {type(exc).__name__}: {exc}",
+                        target_id=target_id,
+                        source_hash_before=source_hash_before,
+                        validation_steps=steps,
+                    )
+
+        # Phase 0: revalidate baseline source hash (reject stale experiments)
+        state_path = experiment_dir / "state.json"
+        baseline_source_hash = ""
+        if state_path.is_file():
+            try:
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+                baseline_source_hash = state.get("baseline", {}).get("source_hash", "")
+            except (OSError, json.JSONDecodeError):
+                pass
+        if baseline_source_hash and baseline_source_hash != source_hash_before:
+            return PromotionResult(
+                promoted=False,
+                rolled_back=False,
+                reason=f"experiment baseline is stale (source hash changed since experiment start); re-evaluate candidate against current root",
+                target_id=target_id,
+                source_hash_before=source_hash_before,
+                validation_steps=steps,
+            )
 
         # Save original bytes for rollback
         original_bytes = source_path.read_bytes() if source_path and source_path.is_file() else None
@@ -503,18 +585,42 @@ class PromotionManager:
         ))
 
         # 4. Re-evaluate target
-        from .types import Candidate as EvalCandidate
+        from .types import Candidate as EvalCandidate, CandidateStatus
 
         eval_candidate = EvalCandidate(source=candidate_source, hypothesis="")
         evaluation = evaluate_fn(workflow, target_id, eval_candidate)
+        eval_status = str(getattr(evaluation, "status", ""))
         eval_accepted = bool(getattr(evaluation, "accepted", False))
         eval_detail = str(getattr(evaluation, "detail", ""))[:1000]
 
+        # Phase 0: require symbol acceptance (FULL_MATCH or EQUIVALENT_MATCH with proof)
+        symbol_accepted = (
+            eval_status == "FULL_MATCH" or
+            (eval_status == "EQUIVALENT_MATCH" and getattr(evaluation, "equivalence", None))
+        )
+        if not symbol_accepted:
+            self._rollback(source_path, original_bytes, original_mode)
+            steps.append(ValidationStepResult(
+                name="evaluate_target",
+                succeeded=False,
+                exit_code=-1,
+                detail=f"symbol not accepted: status={eval_status} accepted={eval_accepted}",
+                artifact_paths=[],
+            ))
+            return PromotionResult(
+                promoted=False,
+                rolled_back=True,
+                reason=f"candidate not symbol-accepted (status={eval_status})",
+                target_id=target_id,
+                source_hash_before=source_hash_before,
+                validation_steps=steps,
+            )
+
         steps.append(ValidationStepResult(
             name="evaluate_target",
-            succeeded=eval_accepted,
-            exit_code=0 if eval_accepted else -1,
-            detail=f"accepted={eval_accepted} {eval_detail}",
+            succeeded=True,
+            exit_code=0,
+            detail=f"symbol accepted status={eval_status}",
             artifact_paths=[],
         ))
 

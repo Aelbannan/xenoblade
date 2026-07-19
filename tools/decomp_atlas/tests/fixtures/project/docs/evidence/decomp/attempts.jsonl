@@ -1,0 +1,3 @@
+{"target_id":"demo-leaf","function":"Demo::leaf","symbol":"leaf__4DemoFv","status":"NOT_STARTED","instruction_match":0.0,"hypothesis":"start leaf","next_change":"write body","region":"us","timestamp":"2026-01-01T00:00:00+00:00"}
+{"target_id":"demo-callees-ready","function":"Demo::ready","symbol":"ready__4DemoFv","status":"COMPILES","instruction_match":40.0,"hypothesis":"call accepted","next_change":"improve match","region":"us","timestamp":"2026-01-02T00:00:00+00:00"}
+{"target_id":"demo-callees-ready","function":"Demo::ready","symbol":"ready__4DemoFv","status":"COMPILES","instruction_match":40.0,"hypothesis":"no improvement","next_change":"try again","region":"us","timestamp":"2026-01-03T00:00:00+00:00"}

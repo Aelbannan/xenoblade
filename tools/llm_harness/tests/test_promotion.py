@@ -219,7 +219,7 @@ class TestPromotionManagerTransactional(unittest.TestCase):
         result = self.manager.promote(
             adapter, "function", "test_func",
             "int f() { return broken; }",
-            self.experiment_dir, write=True,
+            self.experiment_dir, write=True, owner="tester",
         )
         self.assertFalse(result.promoted)
         self.assertTrue(result.rolled_back)
@@ -231,7 +231,7 @@ class TestPromotionManagerTransactional(unittest.TestCase):
         result = self.manager.promote(
             self.adapter, "function", "test_func",
             "int f() { return 1; }",
-            self.experiment_dir, write=True,
+            self.experiment_dir, write=True, owner="tester",
         )
         journal_dir = self.tmp / "build" / "llm-harness" / "promotions"
         self.assertTrue(journal_dir.is_dir())
@@ -256,7 +256,7 @@ class TestPromotionManagerTransactional(unittest.TestCase):
                 self.manager.promote(
                     self.adapter, "function", f"func_{name}",
                     f"int f_{name}() {{ return 1; }}",
-                    self.experiment_dir, write=True,
+                    self.experiment_dir, write=True, owner="tester",
                 )
             except Exception as exc:
                 errors.append(f"{name}: {exc}")
@@ -283,7 +283,7 @@ class TestPromotionManagerTransactional(unittest.TestCase):
         result = self.manager.promote(
             adapter, "function", "test_func",
             "int f() { return broken; }",
-            self.experiment_dir, write=True,
+            self.experiment_dir, write=True, owner="tester",
         )
         self.assertTrue(result.rolled_back)
         self.assertEqual(self.source_file.read_bytes(), original_bytes)
@@ -372,7 +372,7 @@ class TestCandidateSourcePreserved(unittest.TestCase):
             result = manager.promote(
                 adapter, "function", "test_func",
                 "int f() { return rejected_source; }",
-                exp_dir, write=True,
+                exp_dir, write=True, owner="tester",
             )
             # Source should still be accessible via the adapter's record
             self.assertIn("f()", adapter.last_candidate_source)
@@ -438,8 +438,8 @@ def _make_fake_adapter(root: Path, source_path: Path, *,
         def evaluate(self, workflow: str, target_id: str,
                      candidate: Any) -> Evaluation:
             return Evaluation(
-                status="COMPILES",
-                match_percent=75.0,
+                status="FULL_MATCH",
+                match_percent=100.0,
                 accepted=True,
                 detail="ok",
             )

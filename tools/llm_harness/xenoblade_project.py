@@ -14,18 +14,11 @@ import shutil
 import struct
 import sys
 import difflib
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from tools.coop.lib.config import load_config
 from tools.coop.lib.equivalence_check import prove_unit_symbol
-from tools.coop.lib.mwcc_knowledge import (
-    KnowledgeEntry,
-    infer_tags,
-    parse_attempts,
-    parse_reference,
-)
 from tools.coop.lib.objdiff_report import evaluate_unit_match, meets_required_level, report_unit
 from tools.coop.lib.object_size import check_object_size
 from tools.coop.lib.project import Project
@@ -46,12 +39,11 @@ from tools.llm_harness.dossier import (
     build_target_dossier,
     dossier_to_dict,
 )
-from tools.llm_harness.knowledge_retrieval import (
-    KnowledgeIndex,
-    retrieve_for_target,
-    cluster_attempts,
+from tools.llm_harness.match_improve import (
+    normalize_objdiff_feedback,
+    format_objdiff_feedback_text,
 )
-from tools.llm_harness.structural import compare_structural
+from tools.llm_harness.match_improve import normalize_objdiff_feedback
 from tools.llm_harness.types import (
     Candidate,
     CandidateEvaluation,
@@ -61,6 +53,7 @@ from tools.llm_harness.types import (
     SourcePatch,
     StructuralReport,
     ValidationStepResult,
+    fingerprint_binary_feedback,
 )
 from tools.ppc_equivalence.elf_symbols import (
     ET_REL,
@@ -74,40 +67,19 @@ from tools.ppc_equivalence.elf_symbols import (
     list_text_functions,
 )
 from tools.ppc_equivalence.result import ProofStatus
-
-
-@dataclass(frozen=True)
-class SourceRegion:
-    start: int
-    end: int
-    content_start: int
-    content_end: int
-    marked: bool
-
-
-@dataclass(frozen=True)
-class TuSlot:
-    slot_id: str
-    kind: str
-    start: int
-    end: int
-    content_start: int
-    content_end: int
-
-
-def _frozen_kb_cache_key(sources: list[Path]) -> str:
-    """Content-hash of KB source files for content-addressable frozen-KB cache.
-
-    Uses SHA-256 of each source file's full content, so identical source
-    material always produces the same cache key regardless of mtime or
-    inode.  Returns a hex digest suitable as a filename.
-    """
-    h = hashlib.sha256()
-    for path in sorted(sources):  # deterministic order regardless of caller
-        h.update(path.name.encode("utf-8"))
-        if path.is_file():
-            h.update(path.read_bytes())
-    return h.hexdigest()[:32]
+from tools.llm_harness.source_regions import (
+    SourceRegion,
+    TuSlot,
+    begin_marker as _begin_marker,
+    end_marker as _end_marker,
+    find_function_region as _find_function_region,
+    find_tu_slots as _find_tu_slots,
+    matching_brace as _matching_brace,
+    replace_function_source as _replace_function_source,
+    signature_open_brace as _signature_open_brace,
+    tu_begin_marker as _tu_begin_marker,
+    tu_end_marker as _tu_end_marker,
+)
 
 
 def _unit_matches(unit: Optional[str], tu: str) -> bool:
@@ -131,113 +103,9 @@ class XenobladeAdapter:
         self.project = Project(self.config)
         self.prompt_dir = self.root / settings.get("prompt_dir", "tools/llm_harness/prompts")
         self.max_source_chars = int(settings.get("max_source_chars", 120000))
-        self.knowledge_enabled = bool(settings.get("mwcc_knowledge_enabled", True))
-        self.knowledge_reference = self.root / settings.get(
-            "mwcc_knowledge_reference", "docs/MWCC_REFERENCE.md"
-        )
         self.context_similar_limit = int(settings.get("context_similar_limit", 4))
         self.tu_context_chars = int(settings.get("tu_context_chars", 300))
         self.tu_section_byte_limit = int(settings.get("tu_section_byte_limit", 16384))
-        self.cookbook_path = self.root / settings.get(
-            "cookbook_path", "tools/llm_harness/prompts/cookbook.md"
-        )
-        # Phase 7 — Knowledge retrieval index. Built after frozen KB so both
-        # share the same entry parsing.
-        self._knowledge_index: Optional[KnowledgeIndex] = None
-        # Frozen corpus-wide knowledge prefix. Computed once per adapter (i.e. once
-        # per harness process) so every prompt in a campaign shares a byte-identical
-        # cacheable prefix regardless of workflow or target. The KB is snapshotted at
-        # this moment; subsequent attempt-log appends during the campaign do not
-        # perturb the frozen bytes — only the next harness invocation refreshes it.
-        self._frozen_kb_prefix = ""
-        self._frozen_kb_sha = ""
-        self._frozen_kb_error: Optional[str] = None
-        self._frozen_kb_ready = False
-        self._build_frozen_knowledge()
-
-    # ------------------------------------------------------------------
-    # Frozen knowledge base
-    # ------------------------------------------------------------------
-
-    def _build_frozen_knowledge(self) -> None:
-        """Snapshot every reference, cookbook, and attempt record as a compact markdown block.
-
-        The block is byte-stable for the lifetime of this adapter and is spliced
-        into every prompt via the `{{FROZEN_KB}}` placeholder, so its bytes land
-        in DeepSeek's cacheable prefix rather than in the per-target dossier.
-
-        Also builds the Phase 7 KnowledgeIndex for target-specific retrieval.
-        """
-        if not self.knowledge_enabled:
-            self._frozen_kb_ready = True
-            return
-        try:
-            attempts_path = self.config.resolve(self.config.attempt_log)
-            sources = [self.knowledge_reference, self.cookbook_path, attempts_path]
-
-            # Content-addressable cache: hash source contents so the same KB
-            # source produces the same bytes across every harness invocation.
-            # This keeps DeepSeek's prompt prefix cache valid across runs.
-            cache_key = _frozen_kb_cache_key(sources)
-            cache_dir = self.root / "build" / "mwcc-knowledge-frozen-cache"
-            cache_path = cache_dir / f"{cache_key}.txt"
-            if cache_path.is_file():
-                cached = cache_path.read_text(encoding="utf-8")
-                self._frozen_kb_prefix = cached
-                self._frozen_kb_sha = hashlib.sha1(cached.encode("utf-8")).hexdigest()[:12]
-                self._frozen_kb_ready = True
-                return
-
-            # Parse source files directly — no SQLite database.
-            entries: list[KnowledgeEntry] = []
-            if self.knowledge_reference.is_file():
-                entries.extend(parse_reference(self.knowledge_reference))
-            if self.cookbook_path.is_file():
-                entries.extend(parse_reference(self.cookbook_path))
-            if attempts_path.is_file():
-                entries.extend(parse_attempts(attempts_path))
-
-            # Sort stable: references before attempts, then by id, then line_start.
-            entries.sort(key=lambda e: (e.source_kind, e.id, e.line_start))
-
-            lines: list[str] = [
-                f"Frozen MWCC knowledge base ({len(entries)} entries). "
-                "Reference any entry below by its stable ID in `hypothesis` or "
-                "`notes`; do not quote bodies back."
-            ]
-            for entry in entries:
-                lines.append("")
-                lines.append(f"### {entry.id}")
-                if entry.title:
-                    lines.append(entry.title)
-                if entry.body:
-                    lines.append(entry.body)
-            prefix = "\n".join(lines)
-            self._frozen_kb_prefix = prefix
-            self._frozen_kb_sha = hashlib.sha1(prefix.encode("utf-8")).hexdigest()[:12]
-            self._frozen_kb_ready = True
-
-            # Build Phase 7 KnowledgeIndex for target-specific retrieval
-            self._knowledge_index = KnowledgeIndex().build(entries)
-
-            # Persist to cache so subsequent harness runs reuse the same bytes.
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            cache_path.write_text(prefix, encoding="utf-8")
-        except (FileNotFoundError, OSError, ValueError) as exc:
-            # The campaign can still run; the dossier's hints carry the model.
-            self._frozen_kb_error = f"{type(exc).__name__}: {exc}"
-
-    def _frozen_kb_block(self) -> str:
-        if not self.knowledge_enabled or not self._frozen_kb_ready:
-            return ""
-        if self._frozen_kb_prefix:
-            sha_line = f"snapshot_sha={self._frozen_kb_sha}"
-            if self._frozen_kb_error:
-                sha_line += f" error={self._frozen_kb_error}"
-            return f"{sha_line}\n\n{self._frozen_kb_prefix}"
-        if self._frozen_kb_error:
-            return f"snapshot_error={self._frozen_kb_error}"
-        return ""
 
     def _target(self, target_id: str) -> Target:
         target = self._any_target(target_id)
@@ -555,7 +423,7 @@ class XenobladeAdapter:
         return "\n\n".join(blocks) + ("\n" if blocks else "")
 
     def _build_function_prompt(
-        self, workflow: str, target_id: str, history: List[Dict[str, Any]]
+        self, workflow: str, target_id: str, history: List[Dict[str, Any]], options: Optional[Dict[str, Any]] = None
     ) -> str:
         target = self._target(target_id)
         assert target.source is not None and target.unit is not None and target.symbol is not None
@@ -575,6 +443,11 @@ class XenobladeAdapter:
             if workflow == "improve"
             else []
         )
+
+        # Phase 2: Add repair context for improve workflow
+        repair_context = None
+        if workflow == "improve" and options and "repair_context" in options:
+            repair_context = options["repair_context"]
         # Sort the per-unit accepted-sibling list deterministically; a mid-batch
         # target insertion must not perturb the order of this cacheable block.
         same_unit = sorted(
@@ -634,33 +507,112 @@ class XenobladeAdapter:
         dossier_dict["workflow"] = workflow
         dossier_dict["accepted_functions_in_same_unit"] = same_unit
         dossier_dict["prior_harness_attempts"] = prior_attempts
-        dossier_dict["knowledge_hints"] = _knowledge_hints(target, chronological[-12:])
 
-        # §15.2 — Target-specific knowledge retrieval
-        target_knowledge: List[Dict[str, Any]] = []
-        if self._knowledge_index is not None:
-            retrieved = retrieve_for_target(
-                self._knowledge_index,
-                target.id,
-                top_k=10,
-                query_tags=set(dossier_dict.get("knowledge_hints", [])),
-            )
-            target_knowledge = [{
-                "id": r.id,
-                "title": r.title,
-                "body": r.body,
-                "score": round(r.score, 2),
-            } for r in retrieved]
-        dossier_dict["target_knowledge"] = target_knowledge
+        # Phase 2: Add repair context for improve workflow
+        if workflow == "improve" and prior_attempts:
+            # Find the best prior candidate (highest match_percent among successful)
+            successful = [a for a in prior_attempts if a.get("match") is not None]
+            if successful:
+                best = max(successful, key=lambda a: a.get("match", 0.0))
+                # Load the artifact to get the source and binary_feedback
+                experiment_dir = self.output_dir / target.id / best.get("m", "")
+                # We don't have the experiment dir easily here, so pass what we have
+                dossier_dict["repair_context"] = {
+                    "candidate_source": "",  # Will be populated from artifact if available
+                    "candidate_status": best.get("status", ""),
+                    "candidate_match_percent": best.get("match", 0.0),
+                    "candidate_hypothesis": best.get("h", ""),
+                    "binary_feedback": best.get("binary_feedback"),
+                    "rejected_fingerprints": [a.get("mismatch_fingerprint") for a in prior_attempts if a.get("mismatch_fingerprint")],
+                }
 
         common = (self.prompt_dir / "common.md").read_text(encoding="utf-8")
         workflow_prompt = (self.prompt_dir / f"{workflow}.md").read_text(encoding="utf-8")
-        return (
+
+        # Phase 6: Add enhanced type context to dossier
+        if hasattr(dossier, 'types') and dossier.types:
+            if getattr(dossier.types, 'owner_declaration', None):
+                dossier_dict["owner_declaration"] = dossier.types.owner_declaration
+            if getattr(dossier.types, 'callee_declarations', None):
+                dossier_dict["callee_declarations"] = dossier.types.callee_declarations
+
+        # Phase 6: Add accepted sibling bodies
+        sibling_bodies = []
+        if same_unit:
+            for sibling in same_unit[:3]:  # max 3 siblings
+                sibling_target = self._any_target(sibling["id"])
+                if sibling_target.source and sibling_target.source.is_file():
+                    try:
+                        sib_source = sibling_target.source.read_text(encoding="utf-8")
+                        sib_region = _find_function_region(sib_source, sibling_target)
+                        sib_body = sib_source[sib_region.content_start:sib_region.content_end].strip()
+                        sibling_bodies.append({
+                            "id": sibling["id"],
+                            "function": sibling["function"],
+                            "status": sibling["status"],
+                            "body": sib_body
+                        })
+                    except (OSError, ValueError):
+                        pass
+        if sibling_bodies:
+            dossier_dict["sibling_bodies"] = sibling_bodies
+
+        # Phase 6: Add caller excerpts (if available from extra data)
+        callers = target.extra.get("caller_functions", [])
+        caller_excerpts = []
+        if callers:
+            for caller_id in callers[:3]:
+                caller_target = self._any_target(caller_id)
+                if caller_target.source and caller_target.source.is_file():
+                    try:
+                        caller_source = caller_target.source.read_text(encoding="utf-8")
+                        caller_region = _find_function_region(caller_source, caller_target)
+                        caller_body = caller_source[caller_region.content_start:caller_region.content_end].strip()
+                        caller_excerpts.append({
+                            "id": caller_id,
+                            "excerpt": caller_body[:3000]
+                        })
+                    except (OSError, ValueError):
+                        pass
+        if caller_excerpts:
+            dossier_dict["caller_excerpts"] = caller_excerpts
+
+        # Phase 6: Prompt budget enforcement
+        prompt_budget = self.config.get("prompt", {})
+        max_chars = prompt_budget.get("max_chars", 60000)
+        max_decl_chars = prompt_budget.get("max_declaration_chars", 12000)
+
+        # Build prompt and enforce budget
+        prompt = (
             common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
-            .replace("{{FROZEN_KB}}", self._frozen_kb_block())
             .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
             .replace("{{CURRENT_FUNCTION}}", current_function)
         )
+
+        # Truncate if over budget (keep target identity, source, feedback)
+        if len(prompt) > max_chars:
+            # Remove raw hex if present
+            if "bytecode_hex" in dossier_dict.get("retail", {}):
+                dossier_dict["retail"].pop("bytecode_hex", None)
+                prompt = (
+                    common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
+                    .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
+                    .replace("{{CURRENT_FUNCTION}}", current_function)
+                )
+            # Truncate declarations if still over budget
+            if len(prompt) > max_chars and "types" in dossier_dict:
+                if "declarations" in dossier_dict["types"]:
+                    # Keep only first few
+                    decls = dossier_dict["types"]["declarations"]
+                    if len(decls) > 5:
+                        dossier_dict["types"]["declarations"] = decls[:5]
+                        prompt = (
+                            common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
+                            .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
+                            .replace("{{CURRENT_FUNCTION}}", current_function)
+                        )
+
+        return prompt
 
     def _build_tu_prompt(
         self, unit_hint: str, history: List[Dict[str, Any]], *, full_context: bool = False
@@ -681,10 +633,9 @@ class XenobladeAdapter:
         if full_context:
             template = (self.prompt_dir / "tu-complete-full.md").read_text(encoding="utf-8")
             dossier = self._tu_dossier(unit, report, recent)
-            _append_tu_volatile_tail(dossier, recent, _tu_knowledge_hints(unit.name, recent))
+            _append_tu_volatile_tail(dossier, recent, [])
             return (
-                template.replace("{{FROZEN_KB}}", self._frozen_kb_block())
-                .replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
+                template.replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
                 .replace("{{CURRENT_SOURCE}}", source)
             )
 
@@ -739,11 +690,9 @@ class XenobladeAdapter:
                 "retail": _text_layout_evidence(unit.target_path, self.tu_section_byte_limit),
                 "candidate": _text_layout_evidence(unit.base_path, self.tu_section_byte_limit),
             }
-        _append_tu_volatile_tail(dossier, recent, _tu_knowledge_hints(unit.name, recent))
+        _append_tu_volatile_tail(dossier, recent, [])
         template = (self.prompt_dir / "tu-complete.md").read_text(encoding="utf-8")
         return template.replace(
-            "{{FROZEN_KB}}", self._frozen_kb_block()
-        ).replace(
             "{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":"))
         )
 
@@ -879,10 +828,19 @@ class XenobladeAdapter:
                 )
 
             structural_report = None
+            binary_feedback = None
+            mismatch_fingerprint = ""
             try:
                 structural_report = compare_structural(
                     retail_function, candidate_function,
                 )
+                # Phase 2: persist structured binary feedback
+                binary_feedback = normalize_objdiff_feedback(
+                    retail_function,
+                    candidate_function,
+                    max_window=4,
+                )
+                mismatch_fingerprint = fingerprint_binary_feedback(binary_feedback)
             except Exception as exc:
                 pass
 
@@ -890,7 +848,7 @@ class XenobladeAdapter:
                 retail_function.size, candidate_function.size
             )
             mismatch_detail = (
-                _binary_mismatch_summary(retail_function, candidate_function)
+                format_objdiff_feedback_text(binary_feedback)
                 if match_percent < 100.0
                 else ""
             )
@@ -909,7 +867,20 @@ class XenobladeAdapter:
                 evaluation.status == "CODE_MATCH"
                 and evaluation.equivalence == ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE
             )
-            accepted = size_ok and (meets_bar or callee_pending)
+            # Phase 4: Fix acceptance semantics
+            # - FULL_MATCH: 100% static match = accepted
+            # - EQUIVALENT_MATCH: fuzzy >= 50% + proved equivalence = accepted  
+            # - CODE_MATCH: NOT accepted (unresolved callees)
+            # - Local function size delta does NOT reject symbol match; final object fit checked at promotion
+            symbol_accepted = (
+                evaluation.status == "FULL_MATCH" or
+                (evaluation.status == "EQUIVALENT_MATCH" and evaluation.equivalence and 
+                 evaluation.equivalence != ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE.value)
+            )
+            # Project readiness requires symbol acceptance AND containing object split fit (checked at TU level)
+            project_ready = None  # Determined at TU completion, not function level
+            # size_ok is recorded but does not gate symbol acceptance
+            accepted = symbol_accepted
             return Evaluation(
                 status=evaluation.status,
                 match_percent=match_percent,
@@ -929,6 +900,10 @@ class XenobladeAdapter:
                     "retail_function_size": retail_function.size,
                     "candidate_function_size": candidate_function.size,
                     "function_size_delta": candidate_function.size - retail_function.size,
+                    "binary_feedback": binary_feedback,
+                    "mismatch_fingerprint": mismatch_fingerprint,
+                    "symbol_accepted": symbol_accepted,
+                    "project_ready": project_ready,
                     "structural": (
                         {
                             "total_score": structural_report.total_score,
@@ -1163,7 +1138,18 @@ class XenobladeAdapter:
 
     def rank_candidate(self, workflow: str, evaluation: Dict[str, Any]) -> tuple[Any, ...]:
         if workflow != "tu-complete":
-            return (bool(evaluation.get("accepted")), evaluation.get("match_percent") or 0.0)
+            # Phase 4: Separate symbol acceptance from project readiness
+            symbol_accepted = bool(evaluation.get("symbol_accepted", False))
+            project_ready = evaluation.get("project_ready")
+            match_pct = float(evaluation.get("match_percent") or 0.0)
+            equiv = evaluation.get("equivalence") == "EQUIVALENT"
+            # Ranking: symbol_accepted > match_pct > equivalence > size delta
+            return (
+                1 if symbol_accepted else 0,
+                match_pct,
+                1 if equiv else 0,
+                -abs(min(evaluation.get("metrics", {}).get("function_size_delta", 0), 0)),
+            )
         metrics = evaluation.get("metrics") or {}
         return (
             bool(evaluation.get("accepted")),
@@ -1328,6 +1314,7 @@ class XenobladeAdapter:
         candidate: Candidate,
         *,
         write: bool = False,
+        owner: str = "",
     ) -> str:
         if workflow == "tu-complete":
             unit = self.project.resolve_unit(target_id)
@@ -1336,6 +1323,7 @@ class XenobladeAdapter:
             source = unit.source_path.read_text(encoding="utf-8")
             updated = self._tu_candidate_source(source, candidate, unit)
             if write:
+                self._require_unit_claims(unit.name, owner)
                 unit.source_path.write_text(updated, encoding="utf-8")
             return _source_diff(unit.source_path, source, updated)
         target = self._target(target_id)
@@ -1344,16 +1332,39 @@ class XenobladeAdapter:
         region = _find_function_region(source, target)
         updated = _replace_function_source(source, region, candidate.source)
         if write:
+            self._require_claim(target, owner)
             target.source.write_text(updated, encoding="utf-8")
         return _source_diff(target.source, source, updated)
 
-    @staticmethod
-    def _require_claim(target: Target, owner: str) -> None:
-        pass
+    def verify_claim(self, target_id: str, owner: str) -> tuple[bool, str]:
+        """Verify that the owner matches the canonical claim for the target."""
+        target = self._any_target(target_id)
+        claim = target.extra.get("claim")
+        if not claim:
+            return False, f"target {target_id} has no claim"
+        if claim != owner:
+            return False, f"target {target_id} claimed by {claim!r}, not {owner!r}"
+        return True, "claim verified"
 
-    @staticmethod
-    def _require_unit_claims(unit_name: str, owner: str) -> None:
-        pass
+    def _require_claim(self, target: Target, owner: str) -> None:
+        if not owner:
+            raise ValueError("owner required for promotion write")
+        claim = target.extra.get("claim")
+        if not claim:
+            raise ValueError(f"target {target.id} has no claim; cannot promote without owner")
+        if claim != owner:
+            raise ValueError(f"target {target.id} claimed by {claim!r}, not {owner!r}")
+
+    def _require_unit_claims(self, unit_name: str, owner: str) -> None:
+        if not owner:
+            raise ValueError("owner required for TU promotion write")
+        # For TU completion, check all function claims in the unit
+        raw_targets = load_targets(self.config)
+        for target in raw_targets:
+            if target.unit and self.project.resolve_unit(target.unit).name == unit_name:
+                claim = target.extra.get("claim")
+                if claim and claim != owner:
+                    raise ValueError(f"unit {unit_name} has function {target.id} claimed by {claim!r}, not {owner!r}")
 
     def finalize(self) -> None:
         # Each candidate evaluation restores both source and its prior object bytes.
@@ -1778,81 +1789,6 @@ def create_adapter(root: Path, settings: Dict[str, Any]) -> XenobladeAdapter:
     return XenobladeAdapter(root, settings)
 
 
-def _knowledge_queries(target: Target, history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Build small, auditable KB queries following docs/MWCC_KNOWLEDGE_BASE.md."""
-    queries: List[Dict[str, Any]] = []
-    for value in (target.function, target.symbol or ""):
-        value = value.strip()
-        if value and value not in {row["query"] for row in queries}:
-            queries.append({"query": value, "mode": "all", "reason": "target identity"})
-
-    history_text = json.dumps(history, ensure_ascii=False)
-    for tag in infer_tags(history_text):
-        queries.append(
-            {
-                "query": tag,
-                "tag": tag,
-                "mode": "all",
-                "reason": "prior attempt mismatch category",
-            }
-        )
-    return queries[:6]
-
-
-def _assembly_function_block(source: str, symbol: str) -> str:
-    start_pattern = re.compile(rf'^\.fn\s+"?{re.escape(symbol)}"?\s*,.*$', re.MULTILINE)
-    start = start_pattern.search(source)
-    if start is None:
-        return ""
-    end_pattern = re.compile(rf'^\.endfn\s+"?{re.escape(symbol)}"?\s*$', re.MULTILINE)
-    end = end_pattern.search(source, start.end())
-    if end is None:
-        return ""
-    line_end = source.find("\n", end.end())
-    return source[start.start() : (line_end + 1 if line_end >= 0 else end.end())]
-
-
-def _knowledge_record(row: Any, body_limit: int) -> Dict[str, Any]:
-    body = str(row["body"] or "")
-    truncated = len(body) > body_limit
-    if truncated:
-        body = body[:body_limit].rstrip() + "\n[truncated]"
-    return {
-        "id": row["id"],
-        "kind": row["source_kind"],
-        "title": row["title"],
-        "body": body,
-        "status": row["status"] or None,
-        "match_percent": row["match_percent"],
-        "target_id": row["target_id"] or None,
-        "symbol": row["symbol"] or None,
-        "tags": str(row["tags"] or "").split(),
-        "source": f"{row['source_path']}:{row['line_start']}",
-        "truncated": truncated,
-    }
-
-
-def _tu_knowledge_queries(unit_name: str, history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    queries: List[Dict[str, Any]] = [
-        {"query": unit_name, "mode": "all", "reason": "translation-unit identity"},
-        {
-            "query": "relocation literal_pool vtable size",
-            "mode": "any",
-            "reason": "whole-unit closure categories",
-        },
-    ]
-    for tag in infer_tags(json.dumps(history, ensure_ascii=False)):
-        queries.append(
-            {
-                "query": tag,
-                "tag": tag,
-                "mode": "all",
-                "reason": "prior TU attempt mismatch category",
-            }
-        )
-    return queries[:6]
-
-
 def _attempt_sort_key(row: Dict[str, Any]) -> str:
     """Oldest→newest ordering key for prior attempts.
 
@@ -1863,53 +1799,6 @@ def _attempt_sort_key(row: Dict[str, Any]) -> str:
     the trailing newly-appended entry perturbs DeepSeek's prefix cache.
     """
     return str(row.get("timestamp") or "")
-
-
-def _knowledge_hints(target: Target, history: List[Dict[str, Any]]) -> List[str]:
-    """Short symptom strings the model uses to pick frozen-KB entries by ID.
-
-    Replaces per-experiment SQLite retrieval. The bodies of every KB entry are
-    already inlined in the prompt's frozen prefix, so the dossier only needs to
-    flag which entries are likely relevant (target identity + tags inferred
-    from prior attempt notes). Order is deterministic: identity tokens first,
-    then sorted inferred tags.
-    """
-    raw: List[str] = []
-    seen: set[str] = set()
-    for value in (target.function, target.symbol or ""):
-        value = value.strip()
-        if value and value not in seen:
-            seen.add(value)
-            raw.append(value)
-    if history:
-        history_text = json.dumps(history, ensure_ascii=False)
-        for tag in sorted(infer_tags(history_text)):
-            if tag not in seen:
-                seen.add(tag)
-                raw.append(tag)
-    return raw[:12]
-
-
-def _tu_knowledge_hints(unit_name: str, history: List[Dict[str, Any]]) -> List[str]:
-    """Same as `_knowledge_hints` but for the TU workflow."""
-    raw: List[str] = []
-    seen: set[str] = set()
-    name = unit_name.strip()
-    if name:
-        raw.append(name)
-        seen.add(name)
-    raw.append("relocation")
-    raw.append("literal_pool")
-    raw.append("vtable")
-    raw.append("size")
-    seen.update(raw)
-    if history:
-        history_text = json.dumps(history, ensure_ascii=False)
-        for tag in sorted(infer_tags(history_text)):
-            if tag not in seen:
-                seen.add(tag)
-                raw.append(tag)
-    return raw[:16]
 
 
 def _compact_prior_attempt(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -1953,70 +1842,6 @@ def _append_tu_volatile_tail(
     """
     dossier["prior_harness_attempts"] = [_compact_prior_attempt(row) for row in recent_history]
     dossier["knowledge_hints"] = knowledge_hints
-
-
-def _begin_marker(target_id: str) -> str:
-    return f"// LLM-HARNESS-BEGIN: {target_id}"
-
-
-def _end_marker(target_id: str) -> str:
-    return f"// LLM-HARNESS-END: {target_id}"
-
-
-def _tu_begin_marker(slot_id: str) -> str:
-    return f"// LLM-HARNESS-TU-BEGIN: {slot_id}"
-
-
-def _tu_end_marker(slot_id: str) -> str:
-    return f"// LLM-HARNESS-TU-END: {slot_id}"
-
-
-def _find_tu_slots(source: str) -> Dict[str, TuSlot]:
-    begin_pattern = re.compile(
-        r"(?m)^[ \t]*// LLM-HARNESS-TU-BEGIN: ([A-Za-z0-9][A-Za-z0-9._-]*)[ \t]*$"
-    )
-    end_pattern = re.compile(
-        r"(?m)^[ \t]*// LLM-HARNESS-TU-END: ([A-Za-z0-9][A-Za-z0-9._-]*)[ \t]*$"
-    )
-    begins = list(begin_pattern.finditer(source))
-    ends = list(end_pattern.finditer(source))
-    slots: Dict[str, TuSlot] = {}
-    used_ends: set[int] = set()
-    for begin in begins:
-        slot_id = begin.group(1)
-        if slot_id in slots:
-            raise ValueError(f"Duplicate TU begin marker for {slot_id!r}")
-        matching = [
-            (index, end)
-            for index, end in enumerate(ends)
-            if index not in used_ends and end.group(1) == slot_id and end.start() > begin.end()
-        ]
-        if len(matching) != 1:
-            raise ValueError(f"TU slot {slot_id!r} must have exactly one following end marker")
-        end_index, end = matching[0]
-        nested = next(
-            (other.group(1) for other in begins if begin.end() < other.start() < end.start()),
-            None,
-        )
-        if nested is not None:
-            raise ValueError(f"TU slots may not nest ({slot_id!r} contains {nested!r})")
-        content_start = source.find("\n", begin.end())
-        if content_start < 0:
-            raise ValueError(f"TU begin marker for {slot_id!r} has no following source")
-        content_start += 1
-        slots[slot_id] = TuSlot(
-            slot_id=slot_id,
-            kind="tu",
-            start=begin.start(),
-            end=end.end(),
-            content_start=content_start,
-            content_end=end.start(),
-        )
-        used_ends.add(end_index)
-    if len(used_ends) != len(ends):
-        stray = next(end.group(1) for index, end in enumerate(ends) if index not in used_ends)
-        raise ValueError(f"Stray TU end marker for {stray!r}")
-    return slots
 
 
 def _apply_tu_patches(
@@ -2273,55 +2098,6 @@ def _elf_section_evidence(
     return evidence
 
 
-def _find_function_region(source: str, target: Target) -> SourceRegion:
-    begin = _begin_marker(target.id)
-    end = _end_marker(target.id)
-    begin_pos = source.find(begin)
-    end_pos = source.find(end)
-    if begin_pos >= 0 or end_pos >= 0:
-        if begin_pos < 0 or end_pos < 0 or end_pos <= begin_pos:
-            raise ValueError(f"Malformed harness markers for {target.id}")
-        content_start = source.find("\n", begin_pos)
-        if content_start < 0:
-            raise ValueError(f"Begin marker for {target.id} has no following source")
-        content_start += 1
-        return SourceRegion(
-            start=begin_pos,
-            end=end_pos + len(end),
-            content_start=content_start,
-            content_end=end_pos,
-            marked=True,
-        )
-
-    function_identity = target.function.split("(", 1)[0].strip()
-    parts = function_identity.split("::")
-    qualified = "::".join(parts[-2:]) if len(parts) >= 2 else function_identity
-    pattern = re.compile(re.escape(qualified) + r"\s*\(")
-    for match in pattern.finditer(source):
-        brace = _signature_open_brace(source, match.end() - 1)
-        if brace is None:
-            continue
-        close = _matching_brace(source, brace)
-        line_start = source.rfind("\n", 0, match.start()) + 1
-        return SourceRegion(
-            start=line_start,
-            end=close + 1,
-            content_start=line_start,
-            content_end=close + 1,
-            marked=False,
-        )
-    raise ValueError(
-        f"Could not locate {target.function} in {target.source}; add stable harness markers first"
-    )
-
-
-def _replace_function_source(source: str, region: SourceRegion, replacement: str) -> str:
-    value = replacement.strip()
-    if region.marked:
-        value += "\n"
-    return source[: region.content_start] + value + source[region.content_end :]
-
-
 def _require_tu_completion_ready(report: Any) -> None:
     untouched = [fn.name for fn in report.functions if fn.match_percent <= 0.0]
     if not report.functions or untouched:
@@ -2372,7 +2148,7 @@ def _function_size_comparison(retail_size: int, candidate_size: int) -> tuple[bo
     if delta > 0:
         return False, (
             f"candidate function size 0x{candidate_size:X} exceeds retail "
-            f"0x{retail_size:X} by 0x{delta:X} ({delta} bytes)"
+            f"0x{retail_size:X} by 0x{delta:X} ({delta} bytes) -- recorded but not gating"
         )
     spare = -delta
     return True, (
@@ -2517,82 +2293,3 @@ def _insert_marker_slot(
     )
     return source[:position] + block + source[position:]
 
-
-def _signature_open_brace(source: str, opening_paren: int) -> int | None:
-    depth = 0
-    state = "code"
-    index = opening_paren
-    while index < len(source):
-        char = source[index]
-        nxt = source[index + 1] if index + 1 < len(source) else ""
-        if state == "line":
-            if char == "\n":
-                state = "code"
-        elif state == "block":
-            if char == "*" and nxt == "/":
-                state = "code"
-                index += 1
-        elif state in {"string", "char"}:
-            if char == "\\":
-                index += 1
-            elif (state == "string" and char == '"') or (state == "char" and char == "'"):
-                state = "code"
-        elif char == "/" and nxt == "/":
-            state = "line"
-            index += 1
-        elif char == "/" and nxt == "*":
-            state = "block"
-            index += 1
-        elif char == '"':
-            state = "string"
-        elif char == "'":
-            state = "char"
-        elif char == "(":
-            depth += 1
-        elif char == ")":
-            depth -= 1
-        elif depth == 0 and char == "{":
-            return index
-        elif depth == 0 and char == ";":
-            return None
-        index += 1
-    return None
-
-
-def _matching_brace(source: str, opening_brace: int) -> int:
-    depth = 0
-    state = "code"
-    index = opening_brace
-    while index < len(source):
-        char = source[index]
-        nxt = source[index + 1] if index + 1 < len(source) else ""
-        if state == "line":
-            if char == "\n":
-                state = "code"
-        elif state == "block":
-            if char == "*" and nxt == "/":
-                state = "code"
-                index += 1
-        elif state in {"string", "char"}:
-            if char == "\\":
-                index += 1
-            elif (state == "string" and char == '"') or (state == "char" and char == "'"):
-                state = "code"
-        elif char == "/" and nxt == "/":
-            state = "line"
-            index += 1
-        elif char == "/" and nxt == "*":
-            state = "block"
-            index += 1
-        elif char == '"':
-            state = "string"
-        elif char == "'":
-            state = "char"
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return index
-        index += 1
-    raise ValueError("Unbalanced braces while locating function")

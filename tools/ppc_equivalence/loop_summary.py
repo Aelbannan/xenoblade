@@ -1,4 +1,4 @@
-"""Affine / CTR closed-form loop summaries (descriptors + formulas; not yet engine-wired).
+"""Affine / CTR closed-form loop summaries.
 
 Target shape (MWCC / EABI counted loops)::
 
@@ -14,16 +14,16 @@ PPC corners encoded in the summary notes:
 - Loading CTR with ``0`` makes ``bdnz`` wrap to ``0xffffffff`` (not a zero-trip loop).
 - Closed forms assume no unsigned wrap of the affine accumulators over ``N`` steps.
 
-``find_ctr_affine_loop_candidates`` / ``summarize_ctr_affine_loop`` are descriptive
-only. Applying a summary inside ``execute_cfg`` / claiming ``EQUIVALENT`` via
-``proof_features: [\"affine-loop-summary\"]`` requires a later engine discharge
-step (feature remains in ``UNSUPPORTED_FOR_EQUIVALENT`` until then).
+When ``execute_cfg`` is given a summary map (or auto-builds one), matching
+headers are discharged in closed form and ``affine-loop-summary`` may authorize
+``EQUIVALENT``.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import Any
 
 from tools.ppc_equivalence.ir import Instruction, Opcode
 
@@ -137,11 +137,6 @@ def summarize_ctr_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary 
     if candidate.trip_count is None or candidate.trip_count < 1:
         return None
 
-    final_gpr = {
-        update.reg: (update.reg, update.addend)
-        for update in candidate.body_updates
-    }
-    # Collapse multiple updates to the same register (sum strides).
     collapsed: dict[int, tuple[int, int]] = {}
     for update in candidate.body_updates:
         _entry, stride = collapsed.get(update.reg, (update.reg, 0))
@@ -160,6 +155,97 @@ def summarize_ctr_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary 
         entry_condition=f"CTR == {candidate.trip_count}",
         exit_condition="CTR == 0 after bdnz exhaust",
     )
+
+
+def build_affine_summary_map(
+    instructions: Sequence[Instruction],
+) -> dict[int, LoopSummary]:
+    """Map loop header PC → closed-form summary for exact-pattern CTR affine loops."""
+    mapping: dict[int, LoopSummary] = {}
+    for candidate in find_ctr_affine_loop_candidates(instructions):
+        if candidate.confidence != "exact-pattern":
+            continue
+        summary = summarize_ctr_affine_loop(candidate)
+        if summary is None:
+            continue
+        # One summary per header; overlapping headers are fail-closed (skip).
+        if summary.header_pc in mapping:
+            del mapping[summary.header_pc]
+            continue
+        mapping[summary.header_pc] = summary
+    return mapping
+
+
+def apply_affine_loop_summary(state: Any, summary: LoopSummary, ops: Any) -> Any:
+    """Return a post-loop state under the closed-form summary (concrete trip count)."""
+    if summary.trip_count is None or summary.trip_count < 1:
+        raise ValueError("affine summary requires a positive concrete trip count")
+    gprs = list(state.gpr)
+    for reg, (entry_reg, stride) in summary.final_gpr.items():
+        delta = (int(summary.trip_count) * int(stride)) & 0xFFFFFFFF
+        gprs[reg] = ops.add(state.gpr[entry_reg], ops.const(delta))
+    return replace(state, gpr=tuple(gprs), ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF))
+
+
+def build_loop_summary_obligation(
+    summary: LoopSummary,
+    *,
+    coverage: str = "pending",
+) -> dict[str, Any]:
+    """Obligation block for ``proof_features: [\"affine-loop-summary\"]``."""
+    return {
+        "proof_kind": summary.proof_kind,
+        "header_pc": summary.header_pc,
+        "latch_pc": summary.latch_pc,
+        "exit_pc": summary.exit_pc,
+        "trip_count": summary.trip_count,
+        "final_ctr": summary.final_ctr,
+        "ranking": summary.ranking,
+        "entry_condition": summary.entry_condition,
+        "exit_condition": summary.exit_condition,
+        "final_gpr": [
+            {"reg": reg, "entry_reg": entry_reg, "stride": stride}
+            for reg, (entry_reg, stride) in sorted(summary.final_gpr.items())
+        ],
+        "coverage": coverage,
+        "algorithm": "ctr-affine-v1",
+    }
+
+
+def validate_loop_summary_obligation(data: dict[str, Any]) -> str | None:
+    """Return None when a ``loop_summary`` obligation object is well-formed."""
+    required = (
+        "proof_kind",
+        "header_pc",
+        "latch_pc",
+        "exit_pc",
+        "trip_count",
+        "final_ctr",
+        "ranking",
+        "final_gpr",
+    )
+    for key in required:
+        if key not in data:
+            return f"loop_summary missing {key!r}"
+    if not isinstance(data["proof_kind"], str) or not data["proof_kind"]:
+        return "loop_summary.proof_kind must be a non-empty string"
+    for key in ("header_pc", "latch_pc", "exit_pc", "final_ctr"):
+        if not isinstance(data[key], int):
+            return f"loop_summary.{key} must be an int"
+    if data["trip_count"] is not None and not isinstance(data["trip_count"], int):
+        return "loop_summary.trip_count must be an int or null"
+    if not isinstance(data["ranking"], str) or not data["ranking"]:
+        return "loop_summary.ranking must be a non-empty string"
+    raw_gpr = data["final_gpr"]
+    if not isinstance(raw_gpr, list):
+        return "loop_summary.final_gpr must be a list"
+    for index, item in enumerate(raw_gpr):
+        if not isinstance(item, dict):
+            return f"loop_summary.final_gpr[{index}] must be an object"
+        for field in ("reg", "entry_reg", "stride"):
+            if field not in item or not isinstance(item[field], int):
+                return f"loop_summary.final_gpr[{index}].{field} must be an int"
+    return None
 
 
 def closed_form_gpr_value(entry_value: int, stride: int, trip_count: int) -> int:

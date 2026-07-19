@@ -67,21 +67,31 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         )
         gated = enforce_equivalent_proof_features(result)
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
-        self.assertEqual(
-            UNSUPPORTED_FOR_EQUIVALENT,
-            frozenset({"affine-loop-summary"}),
-        )
+        self.assertEqual(UNSUPPORTED_FOR_EQUIVALENT, frozenset())
 
-    def test_affine_loop_summary_demotes_equivalent(self) -> None:
-        reason = validate_proof_features(
-            {
-                "proof_features": ["affine-loop-summary"],
-                "loop_summary": {"proof_kind": "affine-closed-form"},
-            },
-            require_equivalent_ready=True,
+    def test_affine_loop_summary_with_obligation_stays_equivalent(self) -> None:
+        from tools.ppc_equivalence.loop_summary import (
+            build_loop_summary_obligation,
+            summarize_ctr_affine_loop,
+            find_ctr_affine_loop_candidates,
         )
-        self.assertIsNotNone(reason)
-        self.assertIn("not yet supported", reason)
+        from tools.ppc_equivalence.ir import Instruction, Opcode
+
+        program = [
+            Instruction(0, 0, Opcode.ADDI, (0, 0, 4)),
+            Instruction(4, 0, Opcode.MTSPR, (0, 9)),
+            Instruction(8, 0, Opcode.ADDI, (3, 3, 1)),
+            Instruction(12, 0, Opcode.BC, (16, 0, 8, 0)),
+        ]
+        summary = summarize_ctr_affine_loop(find_ctr_affine_loop_candidates(program)[0])
+        assert summary is not None
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            proof_features=["affine-loop-summary"],
+            loop_summary=build_loop_summary_obligation(summary, coverage="applied"),
+        )
+        gated = enforce_equivalent_proof_features(result)
+        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
 
     def test_non_equivalent_status_is_not_demoted(self) -> None:
         result = ProofResult(

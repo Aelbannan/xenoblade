@@ -28,6 +28,10 @@ from .jump_table_obligations import (
     rom_image_byte_constraints,
     rom_image_no_write_constraints,
 )
+from .loop_summary import (
+    build_affine_summary_map,
+    build_loop_summary_obligation,
+)
 from .provenance import canonical_json_sha256, hash_engine_tree
 from .result import (
     ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
@@ -1058,6 +1062,9 @@ def check_equivalence(
     # well as solving, so path explosion cannot run past the user timeout.
     deadline = Deadline.after_ms(contract.timeout_ms)
     jump_targets = None if jump_table is None else jump_table.expansion_map()
+    original_affine = build_affine_summary_map(original)
+    candidate_affine = build_affine_summary_map(candidate)
+    affine_used: list = []
 
     def _early_timeout(phase: str) -> ProofResult:
         return ProofResult(
@@ -1111,6 +1118,8 @@ def check_equivalence(
             floating_point_domain=domain,
             deadline=deadline,
             jump_table_targets=jump_targets,
+            affine_loop_summaries=original_affine,
+            affine_summaries_used=affine_used,
         )
         candidate_exits = execute_cfg(
             initial, candidate, ops,
@@ -1121,6 +1130,8 @@ def check_equivalence(
             floating_point_domain=domain,
             deadline=deadline,
             jump_table_targets=jump_targets,
+            affine_loop_summaries=candidate_affine,
+            affine_summaries_used=affine_used,
         )
     except ProofDeadlineExceeded as exc:
         return _early_timeout(exc.phase)
@@ -1344,6 +1355,17 @@ def check_equivalence(
                 source=jump_table.table.source,
                 artifact_hashes=(jump_table.table.image_sha256,),
                 coverage="unsat-remainder",
+            )
+        if affine_used:
+            # Prefer the original-side summary when both sides applied (identical
+            # trip counts); obligation identity still binds trip_count/strides.
+            summary = affine_used[0]
+            features = list(early.proof_features)
+            if "affine-loop-summary" not in features:
+                features.append("affine-loop-summary")
+            early.proof_features = features
+            early.loop_summary = build_loop_summary_obligation(
+                summary, coverage="applied",
             )
         gated = enforce_equivalent_proof_features(early)
         # Shared unconstrained memory can make identical jump-table functions

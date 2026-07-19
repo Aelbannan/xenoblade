@@ -106,10 +106,31 @@ class CtrAffineRecognitionTests(unittest.TestCase):
 
 
 class AffineFeatureGateTests(unittest.TestCase):
-    def test_affine_feature_reserved_unsupported(self) -> None:
-        from tools.ppc_equivalence.proof_features import UNSUPPORTED_FOR_EQUIVALENT
+    def test_affine_feature_is_supported(self) -> None:
+        from tools.ppc_equivalence.proof_features import (
+            KNOWN_PROOF_FEATURES,
+            UNSUPPORTED_FOR_EQUIVALENT,
+        )
 
-        self.assertIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
+        self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+
+    def test_summary_proves_under_tight_iteration_bound(self) -> None:
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        program = _ctr_counted_loop(count=20, addend=3)
+        contract = EquivalenceContract(parse_observables(["r3"]), timeout_ms=15_000)
+        result = check_equivalence(
+            program, program, contract,
+            original_hex="00", candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertIn("affine-loop-summary", result.proof_features)
+        self.assertIsNotNone(result.loop_summary)
+        self.assertEqual(result.loop_summary["trip_count"], 20)
 
 
 if __name__ == "__main__":

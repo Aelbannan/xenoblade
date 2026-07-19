@@ -28,6 +28,7 @@ class CoopConfig:
         "broadway-ppc32-be-v21",
         "broadway-ppc32-be-v22",
         "broadway-ppc32-be-v23",
+        "broadway-ppc32-be-v24",
     )
     allowed_confidence_tiers: frozenset[str] = frozenset({"A", "B"})
     allowed_engine_sha256: str | None = None
@@ -108,6 +109,7 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             "broadway-ppc32-be-v21",
             "broadway-ppc32-be-v22",
             "broadway-ppc32-be-v23",
+            "broadway-ppc32-be-v24",
         )
 
     raw_tiers = data.get("allowed_confidence_tiers")

@@ -739,6 +739,9 @@ def _build_equivalence_certificate(
         indirect_targets = getattr(proof, "indirect_targets", None)
         if indirect_targets is not None:
             certificate["indirect_targets"] = dict(indirect_targets)
+        loop_summary = getattr(proof, "loop_summary", None) if proof is not None else None
+        if loop_summary is not None:
+            certificate["loop_summary"] = dict(loop_summary)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 

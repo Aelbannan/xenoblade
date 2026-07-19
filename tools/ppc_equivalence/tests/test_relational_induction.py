@@ -156,7 +156,7 @@ class RelationalInductionSketchTests(unittest.TestCase):
 class RelationalInductionFeatureGateTests(unittest.TestCase):
     def test_feature_reserved_unsupported(self) -> None:
         self.assertIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
-        self.assertIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
 
     def test_relational_induction_demotes_equivalent(self) -> None:

@@ -203,6 +203,14 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   ``execute_cfg`` / ``check_equivalence``; unknown or partial device behavior
   must fail closed (``AccessOutcome.UNSUPPORTED``) and yield inconclusive
   proofs rather than ordinary RAM.
+- **Memory bus (scaffold):** `memory_bus.py` routes concrete 1/2/4-byte
+  loads/stores through ``AddressSpace`` regions to RAM backing
+  (``ConcreteMemory``), immutable ROM images, or MMIO ``DeviceModel`` instances
+  keyed by ``device_id``. Multi-region spans, unmapped addresses, unsupported
+  widths, missing devices, and ROM writes fail closed (``BusOutcome``). Tier
+  **C** only: not wired into ``execute_cfg`` / ``check_equivalence`` or
+  symbolic ``WordOps``; future engine integration must preserve fail-closed
+  routing rather than silently degrading to unconstrained RAM.
 - **ELF data sections:** `list_allocatable_sections` / `extract_allocatable_section`
   expose SHF_ALLOC PROGBITS/NOBITS (including `.rodata` / `.data`) and attach
   REL/RELA entries (notably `R_PPC_ADDR32`) for jump-table census and later

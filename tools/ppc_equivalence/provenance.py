@@ -96,6 +96,29 @@ def canonical_json_sha256(value: object) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def canonical_obligation_dict(value: dict) -> dict:
+    """Deep-canonicalize jump-table obligation payloads for stable identity."""
+    result: dict = {}
+    for key in sorted(value.keys()):
+        item = value[key]
+        if key == "targets" and isinstance(item, list):
+            entries = [
+                canonical_obligation_dict(entry)
+                for entry in item
+                if isinstance(entry, dict)
+            ]
+            result[key] = sorted(entries, key=lambda entry: str(entry.get("identity", "")))
+        elif key == "artifact_hashes" and isinstance(item, list):
+            result[key] = sorted(str(entry) for entry in item)
+        elif isinstance(item, dict):
+            result[key] = canonical_obligation_dict(item)
+        elif isinstance(item, list):
+            result[key] = list(item)
+        else:
+            result[key] = item
+    return result
+
+
 def proof_request_identity(
     *,
     original_hex: str,
@@ -117,6 +140,9 @@ def proof_request_identity(
     original_relocations: list | None = None,
     candidate_relocations: list | None = None,
     certificate_target_id: str | None = None,
+    proof_features: list[str] | None = None,
+    address_space: dict | None = None,
+    indirect_targets: dict | None = None,
 ) -> dict:
     """Canonical proof-request fields hashed into ``ProofResult.source_hash``.
 
@@ -166,6 +192,12 @@ def proof_request_identity(
         payload["candidate_relocations"] = candidate_relocations
     if certificate_target_id is not None:
         payload["certificate_target_id"] = certificate_target_id
+    if proof_features is not None:
+        payload["proof_features"] = sorted(proof_features)
+    if address_space is not None:
+        payload["address_space"] = canonical_obligation_dict(address_space)
+    if indirect_targets is not None:
+        payload["indirect_targets"] = canonical_obligation_dict(indirect_targets)
     return payload
 
 

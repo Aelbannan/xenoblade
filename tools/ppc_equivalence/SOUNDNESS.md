@@ -326,6 +326,7 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 | CLI no silent relocated assume | `cli._run_check` | `test_callee_composition.py` | stderr warning / inconclusive |
 | Deadline covering CFG, constraints, and solve | `deadline.Deadline`, `semantics.execute_cfg`, `engine.check_equivalence` | `test_deadline.py` | `status=INCONCLUSIVE_TIMEOUT`, `solver.phases` |
 | Cache includes architecture model | `_cache_key`, `_cache_get` | `test_targets` versioning tests | cache JSON |
+| Jump-table obligation payloads bind cache/cert identity | `proof_request_identity`, `_cache_key`, `equivalence_certificate_hash` | `test_jump_table_identity.py` | `source_hash`, `proof_features`, obligation blocks |
 | Alignment constraint | `semantics` load/store `valid` predicate | `test_symbolic_relocations` alignment tests | `assumptions` |
 | No vacuous proof through impossible layout | `engine.check_equivalence` layout feasibility | layout tests | `status=INCONCLUSIVE_LAYOUT` |
 | Definedness-preserving partial equivalence | `engine._terminal_difference` | definedness tests | `mismatch.kind=definedness` |
@@ -403,3 +404,26 @@ Rules (enforced by `tools.ppc_equivalence.proof_features`):
 - When no features are declared and no obligation blocks are present, legacy
   proofs and certificates remain valid (result format and architecture model are
   unchanged until a feature can actually return `EQUIVALENT`).
+
+### Cache and certificate identity
+
+Once jump-table proof features are declared, their obligation payloads are part
+of durable identity:
+
+- **`source_hash`** — `proof_request_hash` / `proof_request_identity` include
+  sorted `proof_features` and canonical `address_space` / `indirect_targets`
+  blocks when present. Changing `image_sha256`, target sets, `algorithm`
+  versions, or other obligation fields changes the hash; omitting all three
+  leaves legacy `source_hash` unchanged.
+- **Coop proof cache** — `_cache_key` binds the same optional fields plus
+  `engine_hash` and `certifier_hash`, so cached `EQUIVALENT` results cannot be
+  reused across different table images or target closures.
+- **Semantic certificates** — when a proof result carries these fields,
+  `_build_equivalence_certificate` serializes them into the signed payload
+  before `certificate_sha256` is computed.
+
+These bindings apply to declared obligations only. Features remain in
+`UNSUPPORTED_FOR_EQUIVALENT` until Lane A implements sound CFG discharge and
+the architecture / certificate schema version bump; identity is wired ahead of
+that acceptance path so stale cache entries and certificates fail closed once
+obligations are attached.

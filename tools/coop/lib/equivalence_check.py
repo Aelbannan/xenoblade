@@ -31,6 +31,7 @@ from tools.ppc_equivalence.engine import check_equivalence, validate_callee_cont
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
 from tools.ppc_equivalence.provenance import (
+    canonical_obligation_dict,
     hash_certifier_tree,
     hash_engine_tree,
     proof_request_hash,
@@ -287,6 +288,9 @@ def _cache_key(
     limits: dict[str, int] | None = None,
     engine_hash: str | None = None,
     certifier_hash: str | None = None,
+    proof_features: list[str] | None = None,
+    address_space: dict[str, Any] | None = None,
+    indirect_targets: dict[str, Any] | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -300,47 +304,52 @@ def _cache_key(
         if nested is not None:
             fp_domain = nested
 
-    payload = json.dumps(
-        {
-            "architecture": ARCHITECTURE_MODEL,
-            "result_format": RESULT_FORMAT,
-            "engine_hash": engine_hash if engine_hash is not None else _current_engine_hash(),
-            "certifier_hash": (
-                certifier_hash if certifier_hash is not None else _current_certifier_hash()
-            ),
-            "contract": contract_name,
-            "observables": sorted(observables),
-            "original_hex": original_hex,
-            "candidate_hex": candidate_hex,
-            "original_base": original_base,
-            "candidate_base": candidate_base,
-            "original_relocations": relocations(original_relocations),
-            "candidate_relocations": relocations(candidate_relocations),
-            "original_local_symbol": original_local_symbol,
-            "candidate_local_symbol": candidate_local_symbol,
-            "assumed_callees": sorted(assumed_callees, key=str),
-            "callee_contracts": {
-                str(name): {
-                    "reads": sorted(contract.reads),
-                    "writes": sorted(contract.writes),
-                    "source": contract.source,
-                    "invalid_reasons": sorted(contract.invalid_reasons),
-                }
-                for name, contract in sorted(
-                    (callee_contracts or {}).items(), key=lambda item: str(item[0])
-                )
-            },
-            "certificate_target_id": certificate_target_id,
-            "memory_environment": memory_environment,
-            "floating_point_domain": fp_domain,
-            "limits": {
-                str(key): int(value)
-                for key, value in sorted((limits or {}).items())
-            },
+    payload = {
+        "architecture": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
+        "engine_hash": engine_hash if engine_hash is not None else _current_engine_hash(),
+        "certifier_hash": (
+            certifier_hash if certifier_hash is not None else _current_certifier_hash()
+        ),
+        "contract": contract_name,
+        "observables": sorted(observables),
+        "original_hex": original_hex,
+        "candidate_hex": candidate_hex,
+        "original_base": original_base,
+        "candidate_base": candidate_base,
+        "original_relocations": relocations(original_relocations),
+        "candidate_relocations": relocations(candidate_relocations),
+        "original_local_symbol": original_local_symbol,
+        "candidate_local_symbol": candidate_local_symbol,
+        "assumed_callees": sorted(assumed_callees, key=str),
+        "callee_contracts": {
+            str(name): {
+                "reads": sorted(contract.reads),
+                "writes": sorted(contract.writes),
+                "source": contract.source,
+                "invalid_reasons": sorted(contract.invalid_reasons),
+            }
+            for name, contract in sorted(
+                (callee_contracts or {}).items(), key=lambda item: str(item[0])
+            )
         },
-        sort_keys=True,
-    )
-    return hashlib.sha256(payload.encode()).hexdigest()
+        "certificate_target_id": certificate_target_id,
+        "memory_environment": memory_environment,
+        "floating_point_domain": fp_domain,
+        "limits": {
+            str(key): int(value)
+            for key, value in sorted((limits or {}).items())
+        },
+    }
+    if proof_features is not None:
+        payload["proof_features"] = sorted(proof_features)
+    if address_space is not None:
+        payload["address_space"] = canonical_obligation_dict(address_space)
+    if indirect_targets is not None:
+        payload["indirect_targets"] = canonical_obligation_dict(indirect_targets)
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True).encode(),
+    ).hexdigest()
 
 
 def _cache_get(
@@ -411,6 +420,9 @@ def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
         "unsupported",
         "warnings",
         "abstractions",
+        "proof_features",
+        "address_space",
+        "indirect_targets",
     ):
         value = getattr(proof, name, None)
         if value not in (None, "", [], {}, ()):
@@ -758,6 +770,9 @@ def _prove_bytes(
     certificate_evidence: str = "symbolic-equivalence",
     memory_environment: dict[str, Any] | None = None,
     floating_point_domain: dict[str, Any] | None = None,
+    proof_features: list[str] | None = None,
+    address_space: dict[str, Any] | None = None,
+    indirect_targets: dict[str, Any] | None = None,
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
 
@@ -865,6 +880,9 @@ def _prove_bytes(
             "max_paths": max_paths,
             "max_loop_iterations": max_loop_iterations,
         },
+        proof_features=proof_features,
+        address_space=address_space,
+        indirect_targets=indirect_targets,
     )
 
     cache_d = _cache_dir(project)
@@ -930,6 +948,9 @@ def _prove_bytes(
         original_relocations=_reloc_tuples(original_relocations),
         candidate_relocations=_reloc_tuples(candidate_relocations),
         certificate_target_id=certificate_target_id,
+        proof_features=proof_features,
+        address_space=address_space,
+        indirect_targets=indirect_targets,
     )
     result = check_equivalence(
         original,

@@ -19,6 +19,7 @@ from .memory_profile import (
 )
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concrete_state
 from .proof_features import enforce_equivalent_proof_features
+from .jump_table_obligations import jump_table_gate_reason
 from .provenance import canonical_json_sha256, hash_engine_tree
 from .result import (
     ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
@@ -1284,7 +1285,18 @@ def check_equivalence(
             original_hex=original_hex,
             candidate_hex=candidate_hex,
         )
-        return enforce_equivalent_proof_features(early)
+        gated = enforce_equivalent_proof_features(early)
+        # Shared unconstrained memory can make identical jump-table functions
+        # look EQUIVALENT without an immutable table image or target closure.
+        # Fail closed until those obligations are discharged.
+        if gated.status is ProofStatus.EQUIVALENT:
+            reason = jump_table_gate_reason(original, candidate)
+            if reason is not None:
+                gated.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                gated.unsupported.append(reason)
+                gated.warnings.append(reason)
+                gated.abstractions.append("jump-table-unproven")
+        return gated
 
     feasibility = z3.Solver()
     try:

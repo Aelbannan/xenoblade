@@ -62,9 +62,13 @@ documented per-implementation private-storage abstraction.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`
-  shape does not prove equivalence. Proving switch dispatch still requires
-  readonly-image binding for the table region and indirect-target closure for
-  every loaded entry before an `EQUIVALENT` promotion may use the table.
+  shape does not prove equivalence. The engine fail-closes otherwise-matching
+  jump-table functions to `INCONCLUSIVE_UNSUPPORTED` until readonly-image
+  binding and indirect-target closure are discharged
+  (`jump_table_obligations.py`: ROM byte pinning, alias-safe no-write
+  preservation, enumerated CTR target membership). Proving switch dispatch
+  still requires those obligations before an `EQUIVALENT` promotion may use
+  the table.
 - Path count and instruction count are bounded by `max_paths` (default 256) and
   `max_instructions` (default 2048). Exceeding either produces
   `INCONCLUSIVE_UNSUPPORTED`.

@@ -62,13 +62,13 @@ documented per-implementation private-storage abstraction.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`
-  shape does not prove equivalence. The engine fail-closes otherwise-matching
-  jump-table functions to `INCONCLUSIVE_UNSUPPORTED` until readonly-image
-  binding and indirect-target closure are discharged
-  (`jump_table_obligations.py`: ROM byte pinning, alias-safe no-write
-  preservation, enumerated CTR target membership). Proving switch dispatch
-  still requires those obligations before an `EQUIVALENT` promotion may use
-  the table.
+  shape does not prove equivalence. Without a `JumpTableProofContext`, the
+  engine fail-closes otherwise-matching jump-table functions to
+  `INCONCLUSIVE_UNSUPPORTED`. With a context, CFG expands each enumerated CTR
+  target, ROM bytes are pinned with alias-safe no-write constraints, and
+  `readonly-image` / `indirect-target-closure` obligations are attached
+  (`jump_table_obligations.py`). Retail/candidate handlers are paired by
+  logical case index (`jump_table_pairing.py`), not absolute address equality.
 - Path count and instruction count are bounded by `max_paths` (default 256) and
   `max_instructions` (default 2048). Exceeding either produces
   `INCONCLUSIVE_UNSUPPORTED`.
@@ -422,8 +422,8 @@ of durable identity:
   `_build_equivalence_certificate` serializes them into the signed payload
   before `certificate_sha256` is computed.
 
-These bindings apply to declared obligations only. Features remain in
-`UNSUPPORTED_FOR_EQUIVALENT` until Lane A implements sound CFG discharge and
-the architecture / certificate schema version bump; identity is wired ahead of
-that acceptance path so stale cache entries and certificates fail closed once
-obligations are attached.
+These bindings apply whenever the fields are declared. Jump-table features are
+accepted for `EQUIVALENT` under `JumpTableProofContext` on architecture model
+`broadway-ppc32-be-v24` (certificate schema v3, result format 10); identity
+wiring ensures stale cache entries and certificates fail closed when obligation
+payloads change.

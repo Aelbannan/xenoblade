@@ -718,6 +718,15 @@ def _build_equivalence_certificate(
         repair_hint = getattr(proof, "repair_hint", None)
         if repair_hint:
             certificate["repair_hint"] = dict(repair_hint)
+        proof_features = getattr(proof, "proof_features", None)
+        if proof_features:
+            certificate["proof_features"] = list(proof_features)
+        address_space = getattr(proof, "address_space", None)
+        if address_space is not None:
+            certificate["address_space"] = dict(address_space)
+        indirect_targets = getattr(proof, "indirect_targets", None)
+        if indirect_targets is not None:
+            certificate["indirect_targets"] = dict(indirect_targets)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 

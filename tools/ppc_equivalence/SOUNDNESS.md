@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v24`
-- Result format: `10`
-- Certificate format: `3`
+- Architecture model: `broadway-ppc32-be-v25`
+- Result format: `11`
+- Certificate format: `4`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -58,10 +58,15 @@ documented per-implementation private-storage abstraction.
   bound yields `INCONCLUSIVE_UNSUPPORTED` and never silently truncates the
   exploration. Constant-trip loops (for example `li`/`mtctr`/`bdnz` with a
   concrete count at or below the bound) complete normally when the exit
-  condition becomes concrete. Affine CTR pattern recognition
-  (`loop_summary.find_ctr_affine_loop_candidates`) yields closed-form
-  descriptors only; `affine-loop-summary` stays in
-  `UNSUPPORTED_FOR_EQUIVALENT` until summaries are applied in CFG exploration.
+  condition becomes concrete. Affine CTR closed-form summaries
+  (`loop_summary` / `affine-loop-summary`) are applied at recognized
+  `li`/`mtctr`/`addi`/`bdnz` headers inside `execute_cfg` when the engine
+  supplies a summary map; trip count must be a positive constant.
+  Relational induction for differently shaped retail/candidate loops
+  (`relational_induction.build_relational_induction_sketch`) records
+  initiation/preservation/exit/postcondition/termination obligation shapes and
+  Houdini-style template names only; `relational-induction` stays in
+  `UNSUPPORTED_FOR_EQUIVALENT` until sketches are discharged in CFG exploration.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`

@@ -2,24 +2,23 @@ from __future__ import annotations
 
 from typing import Any
 
+from tools.ppc_equivalence.loop_summary import validate_loop_summary_obligation
 from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-# Jump-table features are supported once JumpTableProofContext discharges
-# readonly-image + indirect-target-closure (see engine.check_equivalence).
-# Affine/CTR closed-form summaries are recognized in ``loop_summary.py`` but
-# are not yet applied inside ``execute_cfg``.
+# Relational induction is scaffold-only (``relational_induction.py``).
 UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
-    "affine-loop-summary",
+    "relational-induction",
 })
 
 # Canonical proof-feature names and their required top-level obligation keys.
 FEATURE_OBLIGATION_KEYS: dict[str, str] = {
     "readonly-image": "address_space",
     "indirect-target-closure": "indirect_targets",
-    # Obligation payload shape TBD when summaries are engine-wired.
     "affine-loop-summary": "loop_summary",
+    # Obligation payload shape TBD when relational sketches are engine-wired.
+    "relational-induction": "relational_induction",
 }
 
 KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)
@@ -36,6 +35,8 @@ def _extract_payload(payload: dict[str, Any] | ProofResult) -> dict[str, Any]:
             data["address_space"] = payload.address_space
         if payload.indirect_targets is not None:
             data["indirect_targets"] = payload.indirect_targets
+        if payload.loop_summary is not None:
+            data["loop_summary"] = payload.loop_summary
         return data
     return payload
 
@@ -98,6 +99,10 @@ def validate_proof_features(
         obligation = data[obligation_key]
         if not isinstance(obligation, dict):
             return f"{obligation_key} must be an object"
+        if feature == "affine-loop-summary":
+            reason = validate_loop_summary_obligation(obligation)
+            if reason is not None:
+                return reason
 
     for obligation_key, obligation in obligations_present.items():
         if not isinstance(obligation, dict):
@@ -112,6 +117,11 @@ def validate_proof_features(
                 f"obligation block {obligation_key!r} present without a "
                 "matching proof_features entry"
             )
+
+    if "affine-loop-summary" in seen:
+        reason = validate_loop_summary_obligation(data["loop_summary"])
+        if reason is not None:
+            return reason
 
     if require_equivalent_ready:
         for feature in features:

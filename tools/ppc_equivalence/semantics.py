@@ -20,6 +20,7 @@ from .ir import (
     UnsupportedInstruction,
 )
 from .loop_summary import LoopSummary, apply_affine_loop_summary, build_affine_summary_map
+from .memory_bus import BusOutcome, MemoryBus
 from .memory_loop import MemoryLoopSummary, apply_memory_loop_summary
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState
 from .result import FloatingPointDomain
@@ -41,9 +42,19 @@ _FP_DOMAIN: ContextVar[FloatingPointDomain] = ContextVar(
     default=FloatingPointDomain(),
 )
 
+# Opt-in Tier C memory bus for concrete CFG execution only.
+_MEMORY_BUS: ContextVar[MemoryBus | None] = ContextVar(
+    "ppc_equivalence_memory_bus",
+    default=None,
+)
+
 
 def active_fp_domain() -> FloatingPointDomain:
     return _FP_DOMAIN.get()
+
+
+def active_memory_bus() -> MemoryBus | None:
+    return _MEMORY_BUS.get()
 
 
 def _constrain_valid(
@@ -319,9 +330,18 @@ class ConcreteOps:
         signed = lambda value: value - 0x100000000 if value & 0x80000000 else value
         total = signed(left) - signed(right) - borrow
         return total < -0x80000000 or total > 0x7FFFFFFF
-    def load_byte(self, memory: ConcreteMemory, address: int) -> int: return memory.read(address)
+    def load_byte(self, memory: ConcreteMemory, address: int) -> int:
+        bus = active_memory_bus()
+        if bus is None:
+            return memory.read(address)
+        value, _ = _bus_concrete_load(memory, address & MASK32, 1)
+        return value & 0xFF
+
     def store_byte(self, memory: ConcreteMemory, address: int, value: int) -> ConcreteMemory:
-        return memory.write(address, value)
+        bus = active_memory_bus()
+        if bus is None:
+            return memory.write(address, value)
+        return _bus_concrete_store(memory, address & MASK32, 1, value & 0xFF)
 
     def fp_const64(self, value: int) -> int: return value & 0xFFFFFFFFFFFFFFFF
     def fp_low_word(self, bits: int) -> int: return bits & MASK32
@@ -1137,7 +1157,50 @@ def _apply_oe(state: MachineState, overflow: Any, enabled: bool, ops: WordOps) -
     return state.with_xer(ov=overflow, so=ops.lor(state.xer.so, overflow))
 
 
+def _raise_bus_failure(operation: str, outcome: BusOutcome) -> None:
+    raise ExecutionInconclusive(f"memory bus {operation}: {outcome.value}")
+
+
+def _reverse_byte_order(value: int, width: int) -> int:
+    result = 0
+    for index in range(width):
+        result = (result << 8) | ((value >> (8 * index)) & 0xFF)
+    return result & MASK32
+
+
+def _bus_concrete_load(
+    memory: ConcreteMemory, address: int, width: int,
+) -> tuple[int, ConcreteMemory]:
+    bus = active_memory_bus()
+    if bus is None:
+        raise AssertionError("memory bus routing requested without an active bus")
+    bus.ram = memory
+    result = bus.load(address, width)
+    if result.outcome is not BusOutcome.OK:
+        _raise_bus_failure("load", result.outcome)
+    assert result.value is not None
+    return result.value & MASK32, bus.ram
+
+
+def _bus_concrete_store(
+    memory: ConcreteMemory, address: int, width: int, value: int,
+) -> ConcreteMemory:
+    bus = active_memory_bus()
+    if bus is None:
+        raise AssertionError("memory bus routing requested without an active bus")
+    bus.ram = memory
+    write = bus.store(address, width, value & MASK32)
+    if write.outcome is not BusOutcome.OK:
+        _raise_bus_failure("store", write.outcome)
+    return bus.ram
+
+
 def _load(memory: Any, address: Any, width: int, ops: WordOps, *, reverse: bool = False) -> Any:
+    if isinstance(ops, ConcreteOps) and active_memory_bus() is not None:
+        value, _ = _bus_concrete_load(memory, address, width)
+        if reverse:
+            value = _reverse_byte_order(value, width)
+        return value
     result = ops.const(0)
     order = list(range(width))
     if reverse:
@@ -1148,6 +1211,9 @@ def _load(memory: Any, address: Any, width: int, ops: WordOps, *, reverse: bool 
 
 
 def _store(memory: Any, address: Any, value: Any, width: int, ops: WordOps, *, reverse: bool = False) -> Any:
+    if isinstance(ops, ConcreteOps) and active_memory_bus() is not None:
+        stored = _reverse_byte_order(value, width) if reverse else value
+        return _bus_concrete_store(memory, address, width, stored)
     result = memory
     for offset in range(width):
         shift = offset * 8 if reverse else (width - 1 - offset) * 8
@@ -3158,6 +3224,7 @@ def execute_cfg(
     assumed_callees_used: set[int | str] | None = None,
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     floating_point_domain: FloatingPointDomain | None = None,
+    memory_bus: MemoryBus | None = None,
     deadline: Deadline | None = None,
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
     affine_loop_summaries: dict[int, LoopSummary] | None = None,
@@ -3169,10 +3236,17 @@ def execute_cfg(
         raise ValueError("cannot execute an empty block")
     if max_loop_iterations < 1:
         raise ValueError("max_loop_iterations must be >= 1")
+    if memory_bus is not None and not isinstance(ops, ConcreteOps):
+        raise ExecutionInconclusive(
+            "memory bus routing is supported for ConcreteOps only",
+        )
     domain = floating_point_domain or FloatingPointDomain()
     domain.validate()
     domain_token = _FP_DOMAIN.set(domain)
+    bus_token = _MEMORY_BUS.set(memory_bus)
     try:
+        if memory_bus is not None:
+            memory_bus.ram = state.memory
         return _execute_cfg_body(
             state,
             instructions,
@@ -3191,6 +3265,7 @@ def execute_cfg(
             memory_summaries_used=memory_summaries_used,
         )
     finally:
+        _MEMORY_BUS.reset(bus_token)
         _FP_DOMAIN.reset(domain_token)
 
 

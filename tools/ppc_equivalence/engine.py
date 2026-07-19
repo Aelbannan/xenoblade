@@ -1153,10 +1153,9 @@ def check_equivalence(
             raise ValueError(f"relocation binding names unused symbol {name!r}")
         layout_constraints.append(ops.relocation_values[name] == ops.const(value))
 
-    # Constraints always use an effective environment (default:
-    # assumed-ordinary-ram). The result field stays None when the caller did
-    # not supply a profile so confidence-tier classification is unchanged for
-    # default proofs; certificates/CLI still record explicit profiles.
+    # Always apply and record an effective environment (default:
+    # assumed-ordinary-ram). Omitting the field previously hid assumed-RAM from
+    # tiering/promotion while the solver still used unconstrained memory.
     effective_memory_environment = memory_environment or MemoryEnvironment()
     memory_constraints = build_memory_constraints(
         original_exits, candidate_exits,
@@ -1187,7 +1186,7 @@ def check_equivalence(
 
     result = ProofResult(
         status=ProofStatus.INCONCLUSIVE_UNKNOWN,
-        environment=memory_environment,
+        environment=effective_memory_environment,
         memory_scope=memory_scope,
         contract=contract.name,
         contract_resolution=contract.resolution_dict(),

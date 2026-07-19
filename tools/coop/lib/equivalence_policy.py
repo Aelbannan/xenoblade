@@ -55,9 +55,9 @@ class ValidationLedger:
     """Ledger of independently validated opcodes (via Dolphin corpus).
 
     ``intentionally_loaded`` distinguishes "no ledger in use" from "a ledger
-    file/mapping was parsed". Callers that construct a ledger only to skip
-    gating should leave it False with an empty opcode set; ``load`` / 
-    ``from_mapping`` set it True.
+    file/mapping was parsed". ``load`` / ``from_mapping`` set it True.
+    Absent ledgers (``is_absent``) fail closed for promotion and opcode
+    completeness — they never authorize skipping Gate 2/3.
     """
 
     dolphin_validated_opcodes: frozenset[str]
@@ -69,7 +69,7 @@ class ValidationLedger:
 
     @classmethod
     def load(cls, path: Path | None) -> "ValidationLedger":
-        # Missing path / file → absent ledger (skip gating), not an empty set.
+        # Missing path / file → absent ledger (fail closed for promotion).
         if path is None or not path.is_file():
             return cls(frozenset(), intentionally_loaded=False)
         suffix = path.suffix.lower()
@@ -116,6 +116,14 @@ class ValidationLedger:
             intentionally_loaded=True,
         )
 
+    def is_absent(self) -> bool:
+        """True when no ledger file/mapping was loaded and no opcode set was supplied.
+
+        Absent ledgers must not authorize promotion: opcode gating would otherwise
+        be skipped under ``automatic_promotion: true``.
+        """
+        return not self.intentionally_loaded and not self.dolphin_validated_opcodes
+
     def validate_opcode(self, opcode: str) -> bool:
         return opcode in self.dolphin_validated_opcodes
 
@@ -137,17 +145,17 @@ class ValidationLedger:
     def missing_dolphin_opcodes(self, opcodes_used: list[str] | frozenset[str]) -> list[str]:
         """Return opcodes that lack dolphin_interpreter evidence, sorted.
 
-        Choice: ledger absent (``intentionally_loaded=False`` and empty dolphin
-        set) skips gating — return []. A ledger that was intentionally loaded
-        but has an empty dolphin set fails closed: every opcode in
-        ``opcodes_used`` is reported missing. Architecture / corpus mismatches
-        on a loaded ledger also fail closed for all used opcodes.
+        Absent ledgers (``is_absent``) fail closed: every used opcode is reported
+        missing so tiering and promotion cannot treat "no ledger" as validated.
+        A ledger that was intentionally loaded but has an empty dolphin set also
+        fails closed for all used opcodes. Architecture / corpus mismatches on a
+        loaded ledger likewise fail closed for all used opcodes.
         """
         used = {str(op) for op in opcodes_used}
         if not used:
             return []
-        if not self.intentionally_loaded and not self.dolphin_validated_opcodes:
-            return []
+        if self.is_absent():
+            return sorted(used)
         if self.promotion_metadata_invalid() or not self.dolphin_validated_opcodes:
             return sorted(used)
         return sorted(op for op in used if not self.validate_opcode(op))
@@ -203,8 +211,12 @@ def compute_confidence_tier_proofresult(
         )
     )
 
+    # Assumed ordinary RAM is Tier C only when memory is an observable; the
+    # engine always records an effective environment (default assumed-RAM), so
+    # register-only proofs must not be demoted solely for that recording.
     has_assumed_ram = (
-        result.environment is not None
+        has_memory_access
+        and result.environment is not None
         and result.environment.profile.value == MemoryProfile.ASSUMED_ORDINARY_RAM.value
     )
 
@@ -212,12 +224,12 @@ def compute_confidence_tier_proofresult(
         result.engine_hash and result.source_hash and result.git_commit
     )
 
-    # P1-06: when the ledger is active and the proof enumerates opcodes_used,
+    # P1-06: absent or incomplete ledgers demote; when opcodes_used is present,
     # every opcode must carry dolphin_interpreter evidence for Tier A/B.
     # Loaded ledgers with wrong architecture_model / corpus_hash also demote.
     ledger_incomplete = False
     if ledger is not None:
-        if ledger.promotion_metadata_invalid():
+        if ledger.is_absent() or ledger.promotion_metadata_invalid():
             ledger_incomplete = True
         elif result.opcodes_used:
             ledger_incomplete = bool(ledger.missing_dolphin_opcodes(result.opcodes_used))
@@ -494,7 +506,9 @@ def classify_for_promotion(
         if not is_bounded_with_ranges(result.environment):
             blockers.append("unconstrained-symbolic-memory-domain")
 
-    if ledger.intentionally_loaded or ledger.dolphin_validated_opcodes:
+    if ledger.is_absent():
+        blockers.append("validation-ledger-absent")
+    elif ledger.intentionally_loaded or ledger.dolphin_validated_opcodes:
         if ledger.promotion_metadata_invalid():
             if (
                 ledger.architecture_model is not None

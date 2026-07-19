@@ -116,12 +116,19 @@ class LedgerPromotionTests(unittest.TestCase):
 
 
 class EmptyLedgerFailClosedTests(unittest.TestCase):
-    def test_absent_ledger_skips_gating(self) -> None:
+    def test_absent_ledger_fails_closed(self) -> None:
         ledger = ValidationLedger(frozenset())
+        self.assertTrue(ledger.is_absent())
         self.assertFalse(ledger.intentionally_loaded)
-        self.assertEqual(ledger.missing_dolphin_opcodes(["add", "lwz"]), [])
+        self.assertEqual(
+            ledger.missing_dolphin_opcodes(["add", "lwz"]),
+            ["add", "lwz"],
+        )
         proof = _equivalent_proof(opcodes_used=["add"])
-        self.assertEqual(compute_confidence_tier(proof, ledger), "A")
+        self.assertEqual(compute_confidence_tier(proof, ledger), "C")
+        decision = classify_for_promotion(proof, PromotionPolicy(), ledger)
+        self.assertFalse(decision.allowed)
+        self.assertIn("validation-ledger-absent", decision.blockers)
 
     def test_loaded_empty_dolphin_set_fails_closed(self) -> None:
         ledger = ValidationLedger(

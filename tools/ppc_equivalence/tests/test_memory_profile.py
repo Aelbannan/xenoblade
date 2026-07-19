@@ -329,8 +329,8 @@ class TestBoundedEquivalence(unittest.TestCase):
         )
         self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_LAYOUT)
 
-    def test_default_environment_omitted_when_unspecified(self):
-        """Unspecified profile keeps result.environment None (tier-neutral)."""
+    def test_default_environment_recorded_when_unspecified(self):
+        """Unspecified profile still records effective assumed-ordinary-ram."""
         code = bytes.fromhex("38630004")
         from tools.ppc_equivalence.decoder import decode_block
         insns = decode_block(code, 0x80000000)
@@ -340,7 +340,10 @@ class TestBoundedEquivalence(unittest.TestCase):
             original_hex=code.hex(),
             candidate_hex=code.hex(),
         )
-        self.assertIsNone(result.environment)
+        self.assertIsNotNone(result.environment)
+        self.assertEqual(
+            result.environment.profile, MemoryProfile.ASSUMED_ORDINARY_RAM,
+        )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 
     def test_private_stack_composes_with_bounded_ranges(self):

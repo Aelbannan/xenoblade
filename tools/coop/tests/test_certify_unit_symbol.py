@@ -12,7 +12,7 @@ from tools.coop.lib.config import CoopConfig
 from tools.coop.lib.equivalence_check import certify_unit_symbol
 from tools.coop.lib.project import ObjdiffUnit, Project
 from tools.coop.lib.targets import equivalence_certificate_error
-from tools.ppc_equivalence.provenance import hash_engine_tree
+from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.tests.test_elf_symbols import _EQ_LEFT, build_reloc_elf
 
@@ -103,6 +103,12 @@ class CertifyUnitSymbolTests(unittest.TestCase):
         assert isinstance(engine_hash, str)
         self.assertRegex(engine_hash, r"^[0-9a-f]{64}$")
         self.assertEqual(engine_hash, hash_engine_tree(_REPO_ROOT))
+
+        certifier_hash = certificate.get("certifier_hash")
+        self.assertIsInstance(certifier_hash, str)
+        assert isinstance(certifier_hash, str)
+        self.assertRegex(certifier_hash, r"^[0-9a-f]{64}$")
+        self.assertEqual(certifier_hash, hash_certifier_tree(_REPO_ROOT))
 
         row = {
             "id": _TARGET_ID,

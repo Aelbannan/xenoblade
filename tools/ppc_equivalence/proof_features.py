@@ -118,6 +118,11 @@ def validate_proof_features(
                 "matching proof_features entry"
             )
 
+    if "affine-loop-summary" in seen:
+        reason = validate_loop_summary_obligation(data["loop_summary"])
+        if reason is not None:
+            return reason
+
     if require_equivalent_ready:
         for feature in features:
             if feature in UNSUPPORTED_FOR_EQUIVALENT:

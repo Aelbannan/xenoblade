@@ -208,9 +208,9 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   (``ConcreteMemory``), immutable ROM images, or MMIO ``DeviceModel`` instances
   keyed by ``device_id``. Multi-region spans, unmapped addresses, unsupported
   widths, missing devices, and ROM writes fail closed (``BusOutcome``). Tier
-  **C** only: not wired into ``execute_cfg`` / ``check_equivalence`` or
-  symbolic ``WordOps``; future engine integration must preserve fail-closed
-  routing rather than silently degrading to unconstrained RAM.
+  **C** opt-in: pass ``memory_bus=`` to ``execute_cfg`` with ``ConcreteOps``
+  only; ``check_equivalence`` and symbolic ``WordOps`` remain unwired unless
+  callers explicitly opt in. Default proofs keep unconstrained ``ConcreteMemory``.
 - **ELF data sections:** `list_allocatable_sections` / `extract_allocatable_section`
   expose SHF_ALLOC PROGBITS/NOBITS (including `.rodata` / `.data`) and attach
   REL/RELA entries (notably `R_PPC_ADDR32`) for jump-table census and later

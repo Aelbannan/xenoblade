@@ -1,8 +1,9 @@
 """Fail-closed memory bus routing loads/stores through AddressSpace regions.
 
 Routes byte accesses to RAM backing, immutable ROM images, or MMIO device
-models. Not wired into ``execute_cfg`` or ``check_equivalence``; Tier C
-scaffold only.
+models. Opt-in Tier C integration: pass ``memory_bus=`` to ``execute_cfg`` with
+``ConcreteOps`` only. Default proofs and ``check_equivalence`` remain on
+unconstrained ``ConcreteMemory`` unless callers explicitly opt in.
 """
 
 from __future__ import annotations

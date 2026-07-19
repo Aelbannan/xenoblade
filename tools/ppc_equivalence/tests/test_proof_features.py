@@ -69,7 +69,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
-            frozenset({"relational-induction"}),
+            frozenset(),
         )
 
     def test_affine_loop_summary_with_obligation_stays_equivalent(self) -> None:

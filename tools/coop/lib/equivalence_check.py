@@ -742,6 +742,11 @@ def _build_equivalence_certificate(
         loop_summary = getattr(proof, "loop_summary", None) if proof is not None else None
         if loop_summary is not None:
             certificate["loop_summary"] = dict(loop_summary)
+        relational_induction = (
+            getattr(proof, "relational_induction", None) if proof is not None else None
+        )
+        if relational_induction is not None:
+            certificate["relational_induction"] = dict(relational_induction)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 

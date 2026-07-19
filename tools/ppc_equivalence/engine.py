@@ -32,6 +32,7 @@ from .loop_summary import (
     build_affine_summary_map,
     build_loop_summary_obligation,
 )
+from .relational_induction import try_discharge_ctr_affine_relational
 from .provenance import canonical_json_sha256, hash_engine_tree
 from .result import (
     ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
@@ -1367,6 +1368,12 @@ def check_equivalence(
             early.loop_summary = build_loop_summary_obligation(
                 summary, coverage="applied",
             )
+            relational = try_discharge_ctr_affine_relational(original, candidate)
+            if relational is not None and relational.status == "applied":
+                if "relational-induction" not in features:
+                    features.append("relational-induction")
+                early.proof_features = features
+                early.relational_induction = relational.to_obligation_dict()
         gated = enforce_equivalent_proof_features(early)
         # Shared unconstrained memory can make identical jump-table functions
         # look EQUIVALENT without an immutable table image or target closure.

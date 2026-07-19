@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v25`
-- Result format: `11`
-- Certificate format: `4`
+- Architecture model: `broadway-ppc32-be-v26`
+- Result format: `12`
+- Certificate format: `5`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -62,11 +62,10 @@ documented per-implementation private-storage abstraction.
   (`loop_summary` / `affine-loop-summary`) are applied at recognized
   `li`/`mtctr`/`addi`/`bdnz` headers inside `execute_cfg` when the engine
   supplies a summary map; trip count must be a positive constant.
-  Relational induction for differently shaped retail/candidate loops
-  (`relational_induction.build_relational_induction_sketch`) records
-  initiation/preservation/exit/postcondition/termination obligation shapes and
-  Houdini-style template names only; `relational-induction` stays in
-  `UNSUPPORTED_FOR_EQUIVALENT` until sketches are discharged in CFG exploration.
+  Relational induction for CTR-affine pairs with matching body registers,
+  strides, and trip counts is discharged alongside affine closed forms
+  (`relational_induction.try_discharge_ctr_affine_relational`); natural-loop
+  and mismatched-body sketches remain unsupported for `EQUIVALENT`.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`

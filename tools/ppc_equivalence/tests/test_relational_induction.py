@@ -154,12 +154,11 @@ class RelationalInductionSketchTests(unittest.TestCase):
 
 
 class RelationalInductionFeatureGateTests(unittest.TestCase):
-    def test_feature_reserved_unsupported(self) -> None:
-        self.assertIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
-        self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+    def test_feature_is_supported(self) -> None:
         self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
+        self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
 
-    def test_relational_induction_demotes_equivalent(self) -> None:
+    def test_incomplete_obligation_fails_validation(self) -> None:
         reason = validate_proof_features(
             {
                 "proof_features": ["relational-induction"],
@@ -169,23 +168,46 @@ class RelationalInductionFeatureGateTests(unittest.TestCase):
         )
         self.assertIsNotNone(reason)
         assert reason is not None
-        self.assertIn("not yet supported", reason)
+        self.assertIn("missing", reason)
+
+    def test_discharged_sketch_stays_equivalent(self) -> None:
+        from tools.ppc_equivalence.proof_features import enforce_equivalent_proof_features
+        from tools.ppc_equivalence.relational_induction import (
+            try_discharge_ctr_affine_relational,
+        )
+        from tools.ppc_equivalence.result import ProofResult, ProofStatus
+
+        program = _ctr_counted_loop(count=4)
+        sketch = try_discharge_ctr_affine_relational(program, program)
+        self.assertIsNotNone(sketch)
+        assert sketch is not None
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            proof_features=["relational-induction"],
+            relational_induction=sketch.to_obligation_dict(),
+        )
+        gated = enforce_equivalent_proof_features(result)
+        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
 
     def test_obligation_validates_structurally(self) -> None:
+        from tools.ppc_equivalence.relational_induction import (
+            discharge_ctr_affine_relational_sketch,
+        )
+
         original = find_ctr_affine_loop_candidates(_ctr_counted_loop(count=1))[0]
         candidate = find_ctr_affine_loop_candidates(
             _ctr_counted_loop(count=1, base_address=0x80),
         )[0]
         sketch = build_relational_induction_sketch(original, candidate)
         assert isinstance(sketch, RelationalInductionSketch)
+        discharged = discharge_ctr_affine_relational_sketch(sketch)
+        assert isinstance(discharged, RelationalInductionSketch)
         payload = {
             "proof_features": ["relational-induction"],
-            "relational_induction": sketch.to_obligation_dict(),
+            "relational_induction": discharged.to_obligation_dict(),
         }
-        self.assertIsNone(validate_proof_features(payload))
-        self.assertIsNotNone(
-            validate_proof_features(payload, require_equivalent_ready=True),
-        )
+        self.assertIsNone(validate_proof_features(payload, require_equivalent_ready=True))
+
 
 
 if __name__ == "__main__":

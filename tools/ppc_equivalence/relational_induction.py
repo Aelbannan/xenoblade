@@ -3,21 +3,29 @@
 When retail and candidate loops differ in register allocation, stride layout, or
 body shape but share a counted or natural-loop skeleton, a proof may relate
 states with Houdini-style invariant templates instead of requiring identical
-headers. This module records obligation *shapes* only; it does not discharge
-them in ``execute_cfg`` / ``check_equivalence`` and must not justify
-``EQUIVALENT`` until engine wiring exists (``relational-induction`` stays in
-``UNSUPPORTED_FOR_EQUIVALENT``).
+headers.
+
+``build_relational_induction_sketch`` still builds pending sketches. For
+**CTR-affine** pairs whose body register sets and strides match, and whose
+concrete trip counts agree, ``try_discharge_ctr_affine_relational`` marks the
+sketch ``applied`` once both sides have been discharged by affine closed-form
+summaries. Natural-loop pairs and mismatched affine bodies remain unsupported.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any
 
+from tools.ppc_equivalence.ir import Instruction
 from tools.ppc_equivalence.loop_cfg import NaturalLoop
-from tools.ppc_equivalence.loop_summary import AffineGprUpdate, CtrAffineLoopCandidate
+from tools.ppc_equivalence.loop_summary import (
+    AffineGprUpdate,
+    CtrAffineLoopCandidate,
+    find_ctr_affine_loop_candidates,
+)
 
 
 class HoudiniTemplateName(str, Enum):
@@ -345,7 +353,7 @@ def _sketch_ctr_affine_pair(
         postcondition,
     )
     notes = (
-        "ctr-affine relational sketch; engine discharge not implemented",
+        "ctr-affine relational sketch",
         f"shared body registers: {shared_regs or 'none'}",
     )
     return RelationalInductionSketch(
@@ -452,3 +460,121 @@ def _obligation_block(
             for item in obligation.invariants
         ],
     }
+
+
+def _affine_bodies_match_for_discharge(
+    original: CtrAffineLoopCandidate,
+    candidate: CtrAffineLoopCandidate,
+) -> bool:
+    """True when closed-form discharge relates the two CTR-affine bodies."""
+    if original.confidence != "exact-pattern" or candidate.confidence != "exact-pattern":
+        return False
+    if original.trip_count is None or candidate.trip_count is None:
+        return False
+    if original.trip_count != candidate.trip_count or original.trip_count < 1:
+        return False
+    orig = {item.reg: item.addend for item in original.body_updates}
+    cand = {item.reg: item.addend for item in candidate.body_updates}
+    return orig == cand
+
+
+def _with_status(obligation: Any, status: str) -> Any:
+    return replace(obligation, status=status)
+
+
+def discharge_ctr_affine_relational_sketch(
+    sketch: RelationalInductionSketch,
+) -> RelationalInductionSketch | RelationalInductionUnsupported:
+    """Mark a CTR-affine sketch applied when bodies/trip counts match for discharge."""
+    if sketch.original.header_kind is not LoopHeaderKind.CTR_AFFINE:
+        return RelationalInductionUnsupported(
+            "only CTR-affine relational sketches can be discharged today"
+        )
+    assert sketch.original.affine is not None and sketch.candidate.affine is not None
+    if not _affine_bodies_match_for_discharge(sketch.original.affine, sketch.candidate.affine):
+        return RelationalInductionUnsupported(
+            "CTR-affine bodies or trip counts do not match for closed-form discharge"
+        )
+    return RelationalInductionSketch(
+        original=sketch.original,
+        candidate=sketch.candidate,
+        initiation=_with_status(sketch.initiation, "applied"),
+        preservation=_with_status(sketch.preservation, "applied"),
+        exit_agreement=_with_status(sketch.exit_agreement, "applied"),
+        postcondition=_with_status(sketch.postcondition, "applied"),
+        termination=_with_status(sketch.termination, "applied"),
+        templates=sketch.templates,
+        status="applied",
+        notes=tuple(
+            note for note in sketch.notes
+            if "not implemented" not in note
+        ) + (
+            "discharged via matching CTR-affine closed-form summaries on both sides",
+        ),
+    )
+
+
+def try_discharge_ctr_affine_relational(
+    original: Sequence[Instruction],
+    candidate: Sequence[Instruction],
+) -> RelationalInductionSketch | None:
+    """Build and discharge a CTR-affine relational sketch, or return None."""
+    left = [
+        item for item in find_ctr_affine_loop_candidates(original)
+        if item.confidence == "exact-pattern"
+    ]
+    right = [
+        item for item in find_ctr_affine_loop_candidates(candidate)
+        if item.confidence == "exact-pattern"
+    ]
+    if len(left) != 1 or len(right) != 1:
+        return None
+    built = build_relational_induction_sketch(left[0], right[0])
+    if isinstance(built, RelationalInductionUnsupported):
+        return None
+    discharged = discharge_ctr_affine_relational_sketch(built)
+    if isinstance(discharged, RelationalInductionUnsupported):
+        return None
+    return discharged
+
+
+def validate_relational_induction_obligation(data: dict[str, Any]) -> str | None:
+    """Return None when a ``relational_induction`` obligation object is well-formed."""
+    required = (
+        "status",
+        "proof_kind",
+        "original_header_pc",
+        "candidate_header_pc",
+        "templates",
+        "initiation",
+        "preservation",
+        "exit_agreement",
+        "postcondition",
+        "termination",
+    )
+    for key in required:
+        if key not in data:
+            return f"relational_induction missing {key!r}"
+    if data.get("proof_kind") != "relational-induction":
+        return "relational_induction.proof_kind must be 'relational-induction'"
+    if not isinstance(data.get("status"), str) or not data["status"]:
+        return "relational_induction.status must be a non-empty string"
+    for key in ("original_header_pc", "candidate_header_pc"):
+        if not isinstance(data[key], int):
+            return f"relational_induction.{key} must be an int"
+    if not isinstance(data.get("templates"), list):
+        return "relational_induction.templates must be a list"
+    for block_name in ("initiation", "preservation", "exit_agreement", "postcondition"):
+        block = data[block_name]
+        if not isinstance(block, dict):
+            return f"relational_induction.{block_name} must be an object"
+        if "status" not in block or "invariants" not in block:
+            return f"relational_induction.{block_name} needs status and invariants"
+        if not isinstance(block["invariants"], list):
+            return f"relational_induction.{block_name}.invariants must be a list"
+    termination = data["termination"]
+    if not isinstance(termination, dict):
+        return "relational_induction.termination must be an object"
+    if "witness" not in termination or "status" not in termination:
+        return "relational_induction.termination needs witness and status"
+    return None

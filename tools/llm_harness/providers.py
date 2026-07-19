@@ -210,11 +210,12 @@ class DeepSeekRawProvider:
             )
 
         deepseek_model = self.MODEL_MAP.get(model.model, model.model)
+        max_tokens = int(model.max_tokens) if model.max_tokens else 4096
         request_body = json.dumps({
             "model": deepseek_model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.1,
-            "max_tokens": 8192,
+            "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
         })
 
@@ -400,12 +401,51 @@ class LMStudioProvider:
     Start the local server in LM Studio's Developer tab and load a model first.
     Model IDs are those reported by GET /v1/models (or the LM Studio UI).
 
+    When json_object is enabled, LM Studio receives response_format type
+    json_schema (not OpenAI's json_object — LM Studio rejects that type).
+
     No cloud API key is required; an optional Bearer token satisfies clients that
     expect one (LM Studio ignores it on localhost by default).
     """
 
     DEFAULT_BASE_URL = "http://localhost:1234/v1"
     API_KEY_ENV = "LMSTUDIO_API_KEY"
+    CANDIDATE_JSON_SCHEMA: Dict[str, Any] = {
+        "name": "decomp_candidate",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "source": {
+                    "type": "string",
+                    "description": "Complete replacement high-level C/C++ function definition only",
+                },
+                "hypothesis": {
+                    "type": "string",
+                    "maxLength": 160,
+                    "description": "One short hypothesis (<=160 chars)",
+                },
+                "notes": {
+                    "type": "array",
+                    "maxItems": 3,
+                    "items": {"type": "string", "maxLength": 120},
+                    "description": "Up to 3 short notes (<=120 chars each)",
+                },
+                "next_change": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "description": "One short follow-up (<=120 chars); empty if none",
+                },
+                "change": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "description": "One short change summary (<=120 chars); empty for first candidates",
+                },
+            },
+            "required": ["source", "hypothesis", "notes", "next_change", "change"],
+            "additionalProperties": False,
+        },
+    }
 
     def __init__(
         self,
@@ -413,7 +453,7 @@ class LMStudioProvider:
         api_key: str = "lm-studio",
         timeout_seconds: int = 900,
         temperature: float = 0.1,
-        max_tokens: int = 8192,
+        max_tokens: int = 4096,
         json_object: bool = True,
         pure: bool = True,
     ) -> None:
@@ -429,15 +469,20 @@ class LMStudioProvider:
     def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
         started = time.monotonic()
         api_key = os.environ.get(self.API_KEY_ENV) or self.api_key
+        max_tokens = int(model.max_tokens) if model.max_tokens else self.max_tokens
 
         body: Dict[str, Any] = {
             "model": model.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
+            "max_tokens": max_tokens,
         }
         if self.json_object:
-            body["response_format"] = {"type": "json_object"}
+            # LM Studio accepts json_schema | text, not OpenAI's json_object.
+            body["response_format"] = {
+                "type": "json_schema",
+                "json_schema": self.CANDIDATE_JSON_SCHEMA,
+            }
 
         request_body = json.dumps(body)
         url = f"{self.base_url}/chat/completions"
@@ -531,7 +576,7 @@ class OpenRouterProvider:
             "model": model.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.1,
-            "max_tokens": 8192,
+            "max_tokens": int(model.max_tokens) if model.max_tokens else 4096,
             "response_format": {"type": "json_object"},
             **provider_routing,
         })

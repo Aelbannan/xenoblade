@@ -2,16 +2,13 @@
 #
 # Two levels:
 #   1. Fast PR gate — runs on every push/PR touching ppc_equivalence paths
-#   2. Full weekly run — same as PR gate PLUS Dolphin validation
+#   2. Full weekly run — same as PR gate PLUS Dolphin validation (hard fail
+#      when Dolphin is present) and a small seeded generate --differential sweep
 #
 # Dolphin binary is pinned externally (coop.json or DOLPHIN env / PATH).
-# The --dolphin step is conditional on availability and never blocks PRs.
-#
-# Dependency locking (P1-10):
-#   tools/ppc_equivalence/requirements.lock is a multi-platform hash lock
-#   (uv pip compile --generate-hashes for manylinux x86_64 / Python 3.12).
-#   CI installs with --require-hashes. The previous single-hash lock was
-#   macOS arm64 / cp313-only and could not install on ubuntu-latest.
+# Dolphin is never required on ordinary PRs. On schedule/workflow_dispatch,
+# if Dolphin is available the differential must pass (no continue-on-error);
+# if unavailable, the step is skipped with a clear notice.
 
 name: PPC Equivalence
 
@@ -87,6 +84,9 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tools/ppc_equivalence/tests -p "test_*.py"
 
+      - name: Soundness suite discovery
+        run: python -m unittest discover -s tools/ppc_equivalence/tests/soundness -p "test_*.py"
+
       - name: ConcreteOps differential
         run: python -m tools.ppc_equivalence differential
 
@@ -94,19 +94,32 @@ jobs:
 
       - name: Check Dolphin availability
         id: check-dolphin
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
-          if command -v dolphin-emu &>/dev/null || [ -n "$DOLPHIN" ]; then
+          if command -v dolphin-emu &>/dev/null || [ -n "${DOLPHIN:-}" ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Dolphin is available — differential is required and will fail the job on error."
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Dolphin not found on PATH and DOLPHIN unset — skipping Dolphin differential."
           fi
 
       - name: Run Dolphin differential
         if: |
-          steps.check-dolphin.outputs.available == 'true'
-          && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-        continue-on-error: true
+          (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && steps.check-dolphin.outputs.available == 'true'
         run: python -m tools.ppc_equivalence differential --dolphin --json > dolphin_results.json
+
+      - name: Skip Dolphin differential (unavailable)
+        if: |
+          (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+          && steps.check-dolphin.outputs.available != 'true'
+        run: |
+          echo "::notice::Dolphin unavailable; skipping Dolphin differential (not required on PR)."
+
+      - name: Nightly seeded generate differential
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python -m tools.ppc_equivalence generate --seed 1 --count 16 --differential --json
 
       - name: Upload validation summary
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

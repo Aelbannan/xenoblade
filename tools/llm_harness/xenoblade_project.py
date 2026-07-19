@@ -30,6 +30,7 @@ from tools.coop.lib.targets import (
     harness_targets,
     load_targets,
     load_targets_document,
+    update_target_result,
     write_targets_document,
 )
 from tools.llm_harness.dossier import (
@@ -67,6 +68,13 @@ from tools.ppc_equivalence.elf_symbols import (
     list_text_functions,
 )
 from tools.ppc_equivalence.result import ProofStatus
+from tools.llm_harness.asm_listings import (
+    assembly_function_block as _assembly_function_block,
+    compact_type_snippets,
+    format_instruction_listing,
+    select_similar_siblings,
+    strip_listing_bytecode_comments,
+)
 from tools.llm_harness.source_regions import (
     SourceRegion,
     TuSlot,
@@ -104,8 +112,17 @@ class XenobladeAdapter:
         self.prompt_dir = self.root / settings.get("prompt_dir", "tools/llm_harness/prompts")
         self.max_source_chars = int(settings.get("max_source_chars", 120000))
         self.context_similar_limit = int(settings.get("context_similar_limit", 4))
-        self.tu_context_chars = int(settings.get("tu_context_chars", 300))
+        self.tu_context_chars = int(settings.get("tu_context_chars", 1500))
         self.tu_section_byte_limit = int(settings.get("tu_section_byte_limit", 16384))
+        self.prompt_budget = {
+            "max_chars": 60000,
+            "max_decoded_instructions": 400,
+            "max_declaration_chars": 12000,
+            "max_callers": 3,
+            "max_sibling_bodies": 3,
+            "include_raw_hex": False,
+        }
+        self.prompt_budget.update(dict(settings.get("prompt") or {}))
 
     def _target(self, target_id: str) -> Target:
         target = self._any_target(target_id)
@@ -177,7 +194,7 @@ class XenobladeAdapter:
         certified_funcs: bool = False,
         tu: Optional[str] = None,
     ) -> List[str]:
-        """Return fresh functions from the call-graph-safe catalog frontier, optionally filtered to a TU."""
+        """Return placeholder/empty functions from the call-graph-safe catalog frontier."""
         attempted = {
             str(row.get("target_id"))
             for row in history
@@ -199,8 +216,12 @@ class XenobladeAdapter:
         ]
         if certified_funcs:
             candidates = self._filter_certified_funcs(raw_targets, candidates)
+        from .promotion import PlaceholderDetector
+
+        detector = PlaceholderDetector()
         selected: List[str] = []
         source_cache: Dict[Path, str] = {}
+        decomp_symbol_cache: Dict[Path, set[str]] = {}
         for target in candidates:
             assert (
                 target.source is not None
@@ -212,18 +233,110 @@ class XenobladeAdapter:
                 source = target.source.read_text(encoding="utf-8")
                 source_cache[target.source] = source
             try:
-                _find_function_region(source, target)
+                region = _find_function_region(source, target)
+                body = source[region.content_start : region.content_end].strip()
+                # `new` is for empty/placeholder slots; real bodies belong to improve
+                # (and already-matching NOT_STARTED work should not consume a pick).
+                if body and not detector.is_placeholder(body):
+                    continue
                 unit = self.project.resolve_unit(target.unit)
                 if unit.target_path is None or not unit.target_path.is_file():
                     continue
-                extract_function(unit.target_path, target.symbol)
+                retail = extract_function(unit.target_path, target.symbol)
+                # Skip stubs that already byte-match the built decomp object.
+                if unit.base_path is not None and unit.base_path.is_file():
+                    try:
+                        decomp = extract_function(unit.base_path, target.symbol)
+                    except ValueError:
+                        decomp = None
+                    if decomp is not None and decomp.code == retail.code:
+                        continue
+                    # Unmarked overloads can resolve to the wrong body (e.g. two
+                    # cancel() methods). Skip when that body already produces a
+                    # different symbol present in the decomp object.
+                    if (
+                        decomp is None
+                        and not region.marked
+                        and self._region_owned_by_other_decomp_symbol(
+                            target,
+                            region,
+                            source,
+                            raw_targets,
+                            unit.base_path,
+                            decomp_symbol_cache,
+                            source_cache,
+                        )
+                    ):
+                        continue
             except (OSError, ValueError):
                 continue
             selected.append(target.id)
             if len(selected) == number:
                 return selected
         raise ValueError(
-            f"Only {len(selected)} unattempted, ready functions are available; requested {number}"
+            f"Only {len(selected)} unattempted, ready placeholder functions are available; "
+            f"requested {number}"
+        )
+
+    @staticmethod
+    def _region_owned_by_other_decomp_symbol(
+        target: Target,
+        region: SourceRegion,
+        source: str,
+        raw_targets: List[Target],
+        decomp_object: Path,
+        decomp_symbol_cache: Dict[Path, set[str]],
+        source_cache: Dict[Path, str],
+    ) -> bool:
+        """True when an unmarked region is already claimed by another decomp symbol."""
+        symbols = decomp_symbol_cache.get(decomp_object)
+        if symbols is None:
+            symbols = {fn.name for fn in list_text_functions(decomp_object)}
+            decomp_symbol_cache[decomp_object] = symbols
+        if target.symbol in symbols:
+            return False
+        for other in raw_targets:
+            if (
+                other.id == target.id
+                or other.source != target.source
+                or not other.symbol
+                or other.symbol not in symbols
+            ):
+                continue
+            other_source = source_cache.get(other.source) if other.source else None
+            if other_source is None:
+                if other.source is None or not other.source.is_file():
+                    continue
+                other_source = other.source.read_text(encoding="utf-8")
+                source_cache[other.source] = other_source
+            try:
+                other_region = _find_function_region(other_source, other)
+            except (OSError, ValueError):
+                continue
+            if (
+                other_region.content_start == region.content_start
+                and other_region.content_end == region.content_end
+            ):
+                return True
+        return False
+
+    def record_baseline_accepted(
+        self, target_id: str, evaluation: CandidateEvaluation
+    ) -> None:
+        """Persist an already-accepted baseline into the target registry."""
+        status = evaluation.status.value.upper()
+        if status not in ACCEPTED_MATCH_STATUSES:
+            status = (
+                "FULL_MATCH"
+                if float(evaluation.match_percent or 0.0) >= 100.0
+                else "EQUIVALENT_MATCH"
+            )
+        update_target_result(
+            self.config,
+            target_id,
+            status=status,
+            instruction_match=float(evaluation.match_percent or 0.0),
+            equivalence_status=evaluation.equivalence_status,
         )
 
     def select_targets(
@@ -299,11 +412,22 @@ class XenobladeAdapter:
                     continue
                 if unit.target_path is None or not unit.target_path.is_file():
                     continue
+                if unit.base_path is None or not unit.base_path.is_file():
+                    # Need a built decomp object to know the function still mismatches.
+                    continue
                 symbols = retail_symbols.get(unit.target_path)
                 if symbols is None:
                     symbols = {fn.name for fn in list_text_functions(unit.target_path)}
                     retail_symbols[unit.target_path] = symbols
                 if target.symbol not in symbols:
+                    continue
+                retail = extract_function(unit.target_path, target.symbol)
+                try:
+                    decomp = extract_function(unit.base_path, target.symbol)
+                except ValueError:
+                    # Symbol missing from decomp — still worth improving/reconstructing.
+                    decomp = None
+                if decomp is not None and decomp.code == retail.code:
                     continue
             except (OSError, ValueError):
                 continue
@@ -366,7 +490,7 @@ class XenobladeAdapter:
                 history,
                 full_context=bool((options or {}).get("full_context")),
             )
-        return self._build_function_prompt(workflow, target_id, history)
+        return self._build_function_prompt(workflow, target_id, history, options)
 
     def build_context_files(
         self,
@@ -396,8 +520,23 @@ class XenobladeAdapter:
                 continue
             block = _assembly_function_block(path.read_text(encoding="utf-8"), target.symbol)
             if block:
-                return block
+                return strip_listing_bytecode_comments(block)
         return ""
+
+    def suggest_max_output_tokens(self, target_id: str) -> int:
+        """Heuristic generation budget from retail function size.
+
+        Stub/blr functions should not be allowed to emit multi-thousand-token
+        essays. Larger bodies need room for `source`, but metadata must stay tiny.
+        """
+        target = self._target(target_id)
+        assert target.unit is not None and target.symbol is not None
+        unit = self.project.resolve_unit(target.unit)
+        if unit.target_path is None or not unit.target_path.is_file():
+            return 2048
+        function = extract_function(unit.target_path, target.symbol)
+        # ~8 tokens/byte covers dense C++ plus JSON escaping; +512 for schema fields.
+        return max(768, min(8192, int(function.size) * 8 + 512))
 
     def _accepted_function_context(self, target: Target) -> str:
         assert target.unit is not None
@@ -444,10 +583,11 @@ class XenobladeAdapter:
             else []
         )
 
-        # Phase 2: Add repair context for improve workflow
-        repair_context = None
-        if workflow == "improve" and options and "repair_context" in options:
-            repair_context = options["repair_context"]
+        # Phase 2: prefer exact best-candidate repair context from the harness.
+        repair_context = (options or {}).get("repair_context") if options else None
+        if isinstance(repair_context, dict) and repair_context.get("source"):
+            current_function = str(repair_context["source"]).strip() or current_function
+
         # Sort the per-unit accepted-sibling list deterministically; a mid-batch
         # target insertion must not perturb the order of this cacheable block.
         same_unit = sorted(
@@ -475,14 +615,8 @@ class XenobladeAdapter:
                     except OSError:
                         pass
                     break
-        # Build the Phase 1 typed target dossier
-        constraints = PromptConstraints(
-            max_decoded_instructions=int(
-                self.tu_section_byte_limit / 4
-            ),
-            max_declaration_chars=self.tu_context_chars * 10,
-            max_accepted_siblings=self.context_similar_limit,
-        )
+        # Prompt budgets come from harness `prompt` (passed via create_adapter).
+        constraints = PromptConstraints.from_prompt_config(self.prompt_budget)
         dossier = build_target_dossier(
             target_id=target.id,
             mangled=target.symbol,
@@ -500,117 +634,174 @@ class XenobladeAdapter:
             callee_symbols=list(target.extra.get("called_functions", [])),
             constraints=constraints,
         )
-        # Convert to plain dict and add workflow-specific fields
+        # Convert to plain dict and reshape for the model prompt: retail ASM
+        # listing instead of the verbose decoded-instruction JSON array.
         dossier_dict = dossier_to_dict(dossier)
         dossier_dict["schema_version"] = 3
         dossier_dict["repository"] = "xenoblade-wii-us"
         dossier_dict["workflow"] = workflow
-        dossier_dict["accepted_functions_in_same_unit"] = same_unit
         dossier_dict["prior_harness_attempts"] = prior_attempts
 
-        # Phase 2: Add repair context for improve workflow
-        if workflow == "improve" and prior_attempts:
-            # Find the best prior candidate (highest match_percent among successful)
-            successful = [a for a in prior_attempts if a.get("match") is not None]
-            if successful:
-                best = max(successful, key=lambda a: a.get("match", 0.0))
-                # Load the artifact to get the source and binary_feedback
-                experiment_dir = self.output_dir / target.id / best.get("m", "")
-                # We don't have the experiment dir easily here, so pass what we have
-                dossier_dict["repair_context"] = {
-                    "candidate_source": "",  # Will be populated from artifact if available
-                    "candidate_status": best.get("status", ""),
-                    "candidate_match_percent": best.get("match", 0.0),
-                    "candidate_hypothesis": best.get("h", ""),
-                    "binary_feedback": best.get("binary_feedback"),
-                    "rejected_fingerprints": [a.get("mismatch_fingerprint") for a in prior_attempts if a.get("mismatch_fingerprint")],
-                }
+        retail_asm = self._retail_assembly(target)
+        if not retail_asm and dossier.retail and dossier.retail.instructions:
+            retail_asm = format_instruction_listing(
+                dossier.retail.instructions,
+                max_instructions=constraints.max_decoded_instructions,
+            )
+        dossier_dict["retail_asm"] = retail_asm
+        dossier_dict["retail"] = {
+            "base": f"0x{function.base:08X}",
+            "size": function.size,
+            "truncated": bool(
+                constraints.max_decoded_instructions > 0
+                and (function.size // 4) > constraints.max_decoded_instructions
+            ),
+        }
+
+        reloc_symbols = sorted(
+            {
+                str(rel.symbol)
+                for rel in (function.relocations or [])
+                if getattr(rel, "symbol", None)
+            }
+        )
+        type_snippets = compact_type_snippets(
+            header_text=header_text,
+            source_text=source,
+            demangled=target.function,
+            reloc_symbols=reloc_symbols,
+            max_chars=min(int(self.prompt_budget.get("max_declaration_chars", 12000)), 3000),
+        )
+        dossier_dict["types"] = {
+            "snippets": type_snippets,
+            "total_chars": sum(len(s) + 1 for s in type_snippets),
+        }
+
+        # Drop empty / tooling-only fields from the model-facing dossier.
+        for noise_key in (
+            "accepted_examples",
+            "prior_attempt_summary",
+            "constraints",
+            "warnings",
+            "symbols",
+            "calls",
+            "accepted_functions_in_same_unit",
+            "owner_declaration",
+            "callee_declarations",
+        ):
+            dossier_dict.pop(noise_key, None)
+        if not dossier_dict.get("prior_harness_attempts"):
+            dossier_dict.pop("prior_harness_attempts", None)
+
+        # Structured repair context for improve/solve repair turns.
+        # Omit candidate_source when it matches the editable footer — avoid
+        # shipping the same function body twice.
+        if isinstance(repair_context, dict) and repair_context:
+            evaluation = repair_context.get("evaluation") or {}
+            repair_payload: Dict[str, Any] = {
+                "candidate_status": evaluation.get("status", ""),
+                "candidate_match_percent": evaluation.get("match_percent", 0.0),
+                "candidate_hypothesis": repair_context.get("hypothesis", ""),
+                "binary_feedback": repair_context.get("binary_feedback"),
+                "rejected_fingerprints": repair_context.get("rejected_fingerprints") or [],
+            }
+            rc_source = str(repair_context.get("source") or "").strip()
+            if rc_source and rc_source != current_function:
+                repair_payload["candidate_source"] = rc_source
+            dossier_dict["repair_context"] = repair_payload
+            baseline_source = source[region.content_start : region.content_end].strip()
+            if baseline_source != current_function:
+                dossier_dict["baseline_source"] = baseline_source
 
         common = (self.prompt_dir / "common.md").read_text(encoding="utf-8")
-        workflow_prompt = (self.prompt_dir / f"{workflow}.md").read_text(encoding="utf-8")
+        prompt_workflow = "improve" if workflow == "solve" else workflow
+        workflow_file = self.prompt_dir / f"{prompt_workflow}.md"
+        if not workflow_file.is_file():
+            workflow_file = self.prompt_dir / "new.md"
+        workflow_prompt = workflow_file.read_text(encoding="utf-8")
 
-        # Phase 6: Add enhanced type context to dossier
-        if hasattr(dossier, 'types') and dossier.types:
-            if getattr(dossier.types, 'owner_declaration', None):
-                dossier_dict["owner_declaration"] = dossier.types.owner_declaration
-            if getattr(dossier.types, 'callee_declarations', None):
-                dossier_dict["callee_declarations"] = dossier.types.callee_declarations
-
-        # Phase 6: Add accepted sibling bodies
-        sibling_bodies = []
-        if same_unit:
-            for sibling in same_unit[:3]:  # max 3 siblings
+        max_sibling_bodies = int(self.prompt_budget.get("max_sibling_bodies", 3))
+        sibling_candidates = []
+        if same_unit and max_sibling_bodies > 0:
+            for sibling in same_unit:
                 sibling_target = self._any_target(sibling["id"])
                 if sibling_target.source and sibling_target.source.is_file():
                     try:
                         sib_source = sibling_target.source.read_text(encoding="utf-8")
                         sib_region = _find_function_region(sib_source, sibling_target)
-                        sib_body = sib_source[sib_region.content_start:sib_region.content_end].strip()
-                        sibling_bodies.append({
+                        sib_body = sib_source[
+                            sib_region.content_start : sib_region.content_end
+                        ].strip()
+                        sibling_candidates.append({
                             "id": sibling["id"],
                             "function": sibling["function"],
                             "status": sibling["status"],
-                            "body": sib_body
+                            "body": sib_body,
                         })
                     except (OSError, ValueError):
                         pass
+        sibling_bodies = select_similar_siblings(
+            sibling_candidates,
+            demangled=target.function,
+            max_bodies=max_sibling_bodies,
+            # Style exemplars only — large unrelated methods are noise.
+            max_chars_each=min(constraints.max_accepted_chars_each, 400),
+        )
         if sibling_bodies:
             dossier_dict["sibling_bodies"] = sibling_bodies
 
-        # Phase 6: Add caller excerpts (if available from extra data)
+        max_callers = constraints.max_callers
         callers = target.extra.get("caller_functions", [])
         caller_excerpts = []
-        if callers:
-            for caller_id in callers[:3]:
+        if callers and max_callers > 0:
+            for caller_id in callers[:max_callers]:
                 caller_target = self._any_target(caller_id)
                 if caller_target.source and caller_target.source.is_file():
                     try:
                         caller_source = caller_target.source.read_text(encoding="utf-8")
                         caller_region = _find_function_region(caller_source, caller_target)
-                        caller_body = caller_source[caller_region.content_start:caller_region.content_end].strip()
+                        caller_body = caller_source[
+                            caller_region.content_start : caller_region.content_end
+                        ].strip()
                         caller_excerpts.append({
                             "id": caller_id,
-                            "excerpt": caller_body[:3000]
+                            "excerpt": caller_body[: constraints.max_caller_chars_each],
                         })
                     except (OSError, ValueError):
                         pass
         if caller_excerpts:
             dossier_dict["caller_excerpts"] = caller_excerpts
 
-        # Phase 6: Prompt budget enforcement
-        prompt_budget = self.config.get("prompt", {})
-        max_chars = prompt_budget.get("max_chars", 60000)
-        max_decl_chars = prompt_budget.get("max_declaration_chars", 12000)
+        max_chars = int(self.prompt_budget.get("max_chars", 60000))
 
-        # Build prompt and enforce budget
-        prompt = (
-            common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
-            .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
-            .replace("{{CURRENT_FUNCTION}}", current_function)
-        )
+        def _render() -> str:
+            return (
+                common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
+                .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
+                .replace("{{CURRENT_FUNCTION}}", current_function)
+            )
 
-        # Truncate if over budget (keep target identity, source, feedback)
+        prompt = _render()
+
+        # Truncate bulky dossier fields until under budget (keep identity + feedback).
         if len(prompt) > max_chars:
-            # Remove raw hex if present
-            if "bytecode_hex" in dossier_dict.get("retail", {}):
-                dossier_dict["retail"].pop("bytecode_hex", None)
-                prompt = (
-                    common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
-                    .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
-                    .replace("{{CURRENT_FUNCTION}}", current_function)
-                )
-            # Truncate declarations if still over budget
-            if len(prompt) > max_chars and "types" in dossier_dict:
-                if "declarations" in dossier_dict["types"]:
-                    # Keep only first few
-                    decls = dossier_dict["types"]["declarations"]
-                    if len(decls) > 5:
-                        dossier_dict["types"]["declarations"] = decls[:5]
-                        prompt = (
-                            common.replace("{{WORKFLOW_PROMPT}}", workflow_prompt)
-                            .replace("{{DOSSIER_JSON}}", json.dumps(dossier_dict, separators=(",", ":")))
-                            .replace("{{CURRENT_FUNCTION}}", current_function)
-                        )
+            asm = str(dossier_dict.get("retail_asm") or "")
+            if len(asm) > 8000:
+                dossier_dict["retail_asm"] = asm[:8000] + "\n... truncated"
+                if isinstance(dossier_dict.get("retail"), dict):
+                    dossier_dict["retail"]["truncated"] = True
+            dossier_dict.pop("sibling_bodies", None)
+            dossier_dict.pop("caller_excerpts", None)
+            prompt = _render()
+
+        if len(prompt) > max_chars:
+            types = dossier_dict.get("types")
+            if isinstance(types, dict):
+                snippets = types.get("snippets")
+                if isinstance(snippets, list) and len(snippets) > 8:
+                    types["snippets"] = snippets[:8]
+                    types["total_chars"] = sum(len(s) + 1 for s in types["snippets"])
+            prompt = _render()
 
         return prompt
 
@@ -630,12 +821,17 @@ class XenobladeAdapter:
             )
         chronological = sorted(history, key=_attempt_sort_key)
         recent = chronological[-12:]
+        shared = ""
+        shared_path = self.prompt_dir / "tu-shared.md"
+        if shared_path.is_file():
+            shared = shared_path.read_text(encoding="utf-8")
         if full_context:
             template = (self.prompt_dir / "tu-complete-full.md").read_text(encoding="utf-8")
             dossier = self._tu_dossier(unit, report, recent)
-            _append_tu_volatile_tail(dossier, recent, [])
+            _append_tu_volatile_tail(dossier, recent)
             return (
-                template.replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
+                template.replace("{{TU_SHARED}}", shared)
+                .replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
                 .replace("{{CURRENT_SOURCE}}", source)
             )
 
@@ -690,10 +886,11 @@ class XenobladeAdapter:
                 "retail": _text_layout_evidence(unit.target_path, self.tu_section_byte_limit),
                 "candidate": _text_layout_evidence(unit.base_path, self.tu_section_byte_limit),
             }
-        _append_tu_volatile_tail(dossier, recent, [])
+        _append_tu_volatile_tail(dossier, recent)
         template = (self.prompt_dir / "tu-complete.md").read_text(encoding="utf-8")
-        return template.replace(
-            "{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":"))
+        return (
+            template.replace("{{TU_SHARED}}", shared)
+            .replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
         )
 
     def _function_tu_slots(
@@ -737,7 +934,7 @@ class XenobladeAdapter:
     def _tu_dossier(
         self, unit: Any, report: Any, history: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        # Leave the volatile tail (`prior_harness_attempts`, `knowledge_hints`)
+        # Leave the volatile tail (`prior_harness_attempts`)
         # to the caller: per-build fields like residual_sections and source_slots
         # are more stable than prior attempts (they only change when the build
         # changes, not on every experiment) and must come before them so the
@@ -821,7 +1018,7 @@ class XenobladeAdapter:
                 candidate_function = extract_function(unit.base_path, target.symbol)
             except (FileNotFoundError, ValueError) as exc:
                 return Evaluation(
-                    status="EVALUATION_ERROR",
+                    status="SYMBOL_EXTRACTION_ERROR",
                     match_percent=match_percent,
                     accepted=False,
                     detail=f"function-size extraction failed: {exc}",
@@ -881,6 +1078,12 @@ class XenobladeAdapter:
             project_ready = None  # Determined at TU completion, not function level
             # size_ok is recorded but does not gate symbol acceptance
             accepted = symbol_accepted
+            promising = (
+                not symbol_accepted
+                and evaluation.status not in {"COMPILE_ERROR", "EVALUATION_ERROR"}
+                and match_percent > 0.0
+            )
+            blocked_reason = "unvalidated_callee" if callee_pending else None
             return Evaluation(
                 status=evaluation.status,
                 match_percent=match_percent,
@@ -896,6 +1099,10 @@ class XenobladeAdapter:
                     )
                     if value
                 ),
+                symbol_accepted=symbol_accepted,
+                project_ready=project_ready,
+                promising=promising,
+                blocked_reason=blocked_reason,
                 metrics={
                     "retail_function_size": retail_function.size,
                     "candidate_function_size": candidate_function.size,
@@ -904,6 +1111,8 @@ class XenobladeAdapter:
                     "mismatch_fingerprint": mismatch_fingerprint,
                     "symbol_accepted": symbol_accepted,
                     "project_ready": project_ready,
+                    "promising": promising,
+                    "blocked_reason": blocked_reason,
                     "structural": (
                         {
                             "total_score": structural_report.total_score,
@@ -1138,17 +1347,20 @@ class XenobladeAdapter:
 
     def rank_candidate(self, workflow: str, evaluation: Dict[str, Any]) -> tuple[Any, ...]:
         if workflow != "tu-complete":
-            # Phase 4: Separate symbol acceptance from project readiness
-            symbol_accepted = bool(evaluation.get("symbol_accepted", False))
-            project_ready = evaluation.get("project_ready")
+            metrics = evaluation.get("metrics") or {}
+            symbol_accepted = bool(
+                evaluation.get("symbol_accepted", metrics.get("symbol_accepted", False))
+            )
             match_pct = float(evaluation.get("match_percent") or 0.0)
             equiv = evaluation.get("equivalence") == "EQUIVALENT"
+            size_delta = metrics.get("function_size_delta", 0) or 0
             # Ranking: symbol_accepted > match_pct > equivalence > size delta
+            # Do not use weighted structural totals as the primary rank key.
             return (
                 1 if symbol_accepted else 0,
                 match_pct,
                 1 if equiv else 0,
-                -abs(min(evaluation.get("metrics", {}).get("function_size_delta", 0), 0)),
+                -abs(min(size_delta, 0)),
             )
         metrics = evaluation.get("metrics") or {}
         return (
@@ -1392,6 +1604,10 @@ class XenobladeAdapter:
 
     def evaluate_canon(self, target_id: str, artifact_dir: Path) -> CandidateEvaluation:
         """Evaluate the canonical (current) source for a baseline snapshot."""
+        from dataclasses import asdict
+
+        from .promotion import evaluation_to_candidate
+
         target = self._target(target_id)
         assert target.source is not None and target.unit is not None
         source = target.source.read_text(encoding="utf-8")
@@ -1832,16 +2048,14 @@ def _compact_prior_attempt(row: Dict[str, Any]) -> Dict[str, Any]:
 def _append_tu_volatile_tail(
     dossier: Dict[str, Any],
     recent_history: List[Dict[str, Any]],
-    knowledge_hints: List[str],
 ) -> None:
-    """Attach the TU dossier volatile tail (oldest→newest attempts, hints last).
+    """Attach the TU dossier volatile tail (oldest→newest attempts).
 
     Called after all per-build residual evidence has been written into the
-    dossier, so these two fields land as the final keys — matching the
+    dossier, so this field lands as the final key — matching the
     function-workflow ordering convention of stable-before-volatile.
     """
     dossier["prior_harness_attempts"] = [_compact_prior_attempt(row) for row in recent_history]
-    dossier["knowledge_hints"] = knowledge_hints
 
 
 def _apply_tu_patches(

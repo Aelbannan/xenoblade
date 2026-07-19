@@ -227,9 +227,6 @@ class TestPromptBudgeting(unittest.TestCase):
             "models": {
                 "default": [{"id": "test", "provider": "opencode", "model": "test", "runs": 1}]
             },
-            "models": {
-                "default": [{"id": "test", "provider": "opencode", "model": "test", "runs": 1}]
-            },
             "prompt": {
                 "max_chars": 100,
                 "max_decoded_instructions": 10,
@@ -251,6 +248,80 @@ class TestPromptBudgeting(unittest.TestCase):
                 self.assertEqual(harness.config["prompt"]["max_decoded_instructions"], 10)
         finally:
             Path(config_path).unlink()
+
+    def test_prompt_constraints_from_config(self) -> None:
+        from tools.llm_harness.dossier import PromptConstraints
+
+        cons = PromptConstraints.from_prompt_config({
+            "max_decoded_instructions": 12,
+            "max_declaration_chars": 800,
+            "max_callers": 2,
+            "max_sibling_bodies": 1,
+            "include_raw_hex": True,
+        })
+        self.assertEqual(cons.max_decoded_instructions, 12)
+        self.assertEqual(cons.max_declaration_chars, 800)
+        self.assertEqual(cons.max_callers, 2)
+        self.assertEqual(cons.max_accepted_siblings, 1)
+        self.assertTrue(cons.include_raw_hex)
+
+    def test_compile_repair_prompt_has_no_unsubstituted_placeholders(self) -> None:
+        from tools.llm_harness.types import Candidate
+
+        class FakeAdapter:
+            root = Path(".")
+            prompt_dir = Path("tools/llm_harness/prompts")
+
+        config = {
+            "project_adapter": "test.adapter",
+            "project": {"prompt_dir": "tools/llm_harness/prompts"},
+            "models": {
+                "default": [{"id": "test", "provider": "opencode", "model": "test", "runs": 1}]
+            },
+        }
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(config, f)
+            config_path = f.name
+        try:
+            with patch("tools.llm_harness.core.Harness._load_adapter", return_value=FakeAdapter()):
+                harness = Harness(Path(config_path))
+            candidate = Candidate(
+                source="int foo() { return 0; }",
+                hypothesis="test",
+                notes=[],
+                next_change="",
+            )
+            prompt = harness._build_repair_prompt(
+                candidate,
+                "error: undeclared identifier",
+                [],
+                {},
+                budget=2,
+                repair_index=0,
+            )
+            self.assertNotIn("{{WORKFLOW_PROMPT}}", prompt)
+            self.assertNotIn("{{DOSSIER_JSON}}", prompt)
+            self.assertNotIn("{{CURRENT_FUNCTION}}", prompt)
+            self.assertIn("int foo()", prompt)
+            self.assertIn('"source"', prompt)
+        finally:
+            Path(config_path).unlink()
+
+    def test_parse_candidate_clamps_metadata(self) -> None:
+        from tools.llm_harness.core import parse_candidate
+
+        payload = {
+            "source": "int f() { return 1; }",
+            "hypothesis": "h" * 400,
+            "notes": ["n" * 200, "second", "third", "fourth"],
+            "next_change": "x" * 200,
+            "change": "y" * 200,
+        }
+        candidate = parse_candidate(json.dumps(payload))
+        self.assertEqual(len(candidate.hypothesis), 160)
+        self.assertEqual(len(candidate.notes), 3)
+        self.assertEqual(len(candidate.notes[0]), 120)
+        self.assertEqual(len(candidate.next_change), 120)
 
 
 class TestEnhancedTypeContext(unittest.TestCase):
@@ -356,29 +427,32 @@ class TestConfigValidation(unittest.TestCase):
     def test_show_config_works(self) -> None:
         """Test that --show-config prints effective config."""
         config = {
-            "project_adapter": "test.adapter",
+            "project_adapter": "adapter.py",
             "models": {
                 "default": [{"id": "test", "provider": "opencode", "model": "test", "runs": 1}]
             },
             "output_dir": "build/custom",
             "project": {"coop_config": "coop.json"},
         }
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump(config, f)
-            config_path = f.name
-        
-        try:
-            with patch("tools.llm_harness.run.Harness") as mock_harness:
-                mock_harness.return_value = Mock()
-                with redirect_stdout(io.StringIO()) as out:
-                    result = main(["--config", config_path, "--show-config"])
-                self.assertEqual(result, 0)
-                output = out.getvalue()
-                self.assertIn("project_adapter", output)
-                self.assertIn("test.adapter", output)
-        finally:
-            Path(config_path).unlink()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "adapter.py").write_text(
+                "class A:\n"
+                " def __init__(self, root): self.root=root\n"
+                " def finalize(self): pass\n"
+                "def create_adapter(root, settings): return A(root)\n",
+                encoding="utf-8",
+            )
+            config_path = root / "config.json"
+            config_path.write_text(json.dumps(config), encoding="utf-8")
+            with redirect_stdout(io.StringIO()) as out:
+                result = main(["--config", str(config_path), "--show-config"])
+            self.assertEqual(result, 0)
+            output = out.getvalue()
+            self.assertIn("project_adapter", output)
+            self.assertIn("adapter.py", output)
+            self.assertIn("build/custom", output)
 
 
 class TestDryRunAndCompilation(unittest.TestCase):

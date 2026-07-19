@@ -11,7 +11,7 @@ import threading
 import time
 import uuid
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -56,8 +56,18 @@ class Harness:
         )
         self.adapter = self._load_adapter(self.root)
         execution = self.config.get("execution", {})
-        self.max_parallel = int(execution.get("max_parallel", 1))
-        self.max_target_parallel = int(execution.get("max_target_parallel", 1))
+        self.max_parallel = int(
+            execution.get(
+                "max_parallel",
+                execution.get("initial_parallel", 1),
+            )
+        )
+        self.max_target_parallel = int(
+            execution.get(
+                "max_target_parallel",
+                execution.get("target_parallel", 1),
+            )
+        )
         self.batch_model_parallel = int(execution.get("batch_model_parallel", 1))
         self.workflow_execution = self._load_execution_pipelines(
             execution.get("pipelines", {})
@@ -99,7 +109,7 @@ class Harness:
                     api_key=str(cfg.get("api_key", "lm-studio")),
                     timeout_seconds=int(cfg.get("timeout_seconds", 900)),
                     temperature=float(cfg.get("temperature", 0.1)),
-                    max_tokens=int(cfg.get("max_tokens", 8192)),
+                    max_tokens=int(cfg.get("max_tokens", 4096)),
                     json_object=bool(cfg.get("json_object", True)),
                     pure=bool(cfg.get("pure", True)),
                 )
@@ -170,8 +180,10 @@ class Harness:
             raise ValueError(f"llm-harness.json: project contains unknown keys: {', '.join(sorted(unknown_project))}")
         
         # Known execution keys
-        known_exec = {"max_parallel", "max_target_parallel", "batch_model_parallel", 
-                      "max_retries", "isolation", "pipelines"}
+        known_exec = {
+            "max_parallel", "max_target_parallel", "batch_model_parallel",
+            "initial_parallel", "target_parallel", "max_retries", "isolation", "pipelines",
+        }
         execution = self.config.get("execution", {})
         unknown_exec = set(execution.keys()) - known_exec
         if unknown_exec:
@@ -187,7 +199,8 @@ class Harness:
         
         # Known prompt keys
         known_prompt = {"max_chars", "max_decoded_instructions", "max_declaration_chars",
-                        "max_callers", "max_sibling_bodies", "include_raw_hex"}
+                        "max_callers", "max_sibling_bodies", "include_raw_hex",
+                        "max_output_tokens"}
         prompt = self.config.get("prompt", {})
         unknown_prompt = set(prompt.keys()) - known_prompt
         if unknown_prompt:
@@ -213,10 +226,14 @@ class Harness:
         project.setdefault("prompt_dir", "tools/llm_harness/prompts")
         project.setdefault("max_source_chars", 120000)
         project.setdefault("context_similar_limit", 4)
-        project.setdefault("tu_context_chars", 300)
+        project.setdefault("tu_context_chars", 1500)
         project.setdefault("tu_section_byte_limit", 16384)
         
         execution = config.setdefault("execution", {})
+        if "initial_parallel" in execution and "max_parallel" not in execution:
+            execution["max_parallel"] = execution["initial_parallel"]
+        if "target_parallel" in execution and "max_target_parallel" not in execution:
+            execution["max_target_parallel"] = execution["target_parallel"]
         execution.setdefault("max_parallel", 1)
         execution.setdefault("max_target_parallel", 10)
         execution.setdefault("batch_model_parallel", 1)
@@ -239,23 +256,13 @@ class Harness:
         prompt.setdefault("max_callers", 3)
         prompt.setdefault("max_sibling_bodies", 3)
         prompt.setdefault("include_raw_hex", False)
+        prompt.setdefault("max_output_tokens", 4096)
         
         return config
 
     def get_effective_config(self) -> Dict[str, Any]:
         """Get the effective config (with defaults applied)."""
         return self.effective_config
-        ref = self.config["project_adapter"]
-        if ref.endswith(".py"):
-            path = (root / ref).resolve()
-            spec = importlib.util.spec_from_file_location("llm_harness_project_adapter", path)
-            if spec is None or spec.loader is None:
-                raise ImportError(f"Cannot load project adapter: {path}")
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-        else:
-            module = importlib.import_module(ref)
-        return module.create_adapter(root, self.config.get("project", {}))
 
     def _load_adapter(self, root: Path) -> ProjectAdapter:
         ref = self.config["project_adapter"]
@@ -268,7 +275,11 @@ class Harness:
             spec.loader.exec_module(module)
         else:
             module = importlib.import_module(ref)
-        return module.create_adapter(root, self.config.get("project", {}))
+        settings = dict(self.config.get("project", {}) or {})
+        # Prompt budgets live at harness top-level; the adapter needs them for
+        # dossier truncation and sibling/caller context limits.
+        settings["prompt"] = dict(self.config.get("prompt", {}) or {})
+        return module.create_adapter(root, settings)
 
     @staticmethod
     def _load_models(
@@ -282,7 +293,10 @@ class Harness:
         if not isinstance(configured, dict):
             raise ValueError("Harness config 'models' must be a list or object")
 
-        allowed = {"default", "new", "improve", "tu-complete"}
+        allowed = {
+            "default", "new", "improve", "tu-complete",
+            "initial", "repair", "tu", "sample",
+        }
         unknown = sorted(set(configured) - allowed)
         if unknown:
             raise ValueError(f"Unknown models pipeline(s): {', '.join(unknown)}")
@@ -296,12 +310,26 @@ class Harness:
         return pipelines.get("default", []), pipelines
 
     def models_for_workflow(self, workflow: str) -> List[ModelConfig]:
-        models = self.workflow_models.get(workflow, self.models)
-        if not models:
-            raise ValueError(
-                f"Harness config must define models.{workflow} or models.default"
-            )
-        return models
+        """Resolve models for a workflow or role, with legacy/role aliases."""
+        aliases = {
+            "solve": ("initial", "new", "default"),
+            "initial": ("initial", "new", "default"),
+            "repair": ("repair", "improve", "default"),
+            "new": ("new", "initial", "default"),
+            "improve": ("improve", "repair", "default"),
+            "tu-complete": ("tu-complete", "tu", "default"),
+            "tu": ("tu", "tu-complete", "default"),
+            "sample": ("sample", "new", "initial", "default"),
+        }
+        for key in aliases.get(workflow, (workflow, "default")):
+            models = self.workflow_models.get(key)
+            if models:
+                return models
+        if self.models:
+            return self.models
+        raise ValueError(
+            f"Harness config must define models.{workflow} or models.default"
+        )
 
     @staticmethod
     def _load_execution_pipelines(configured: Any) -> Dict[str, Dict[str, int]]:
@@ -418,45 +446,45 @@ class Harness:
                 "context_dir": str(context_dir.relative_to(self.root)),
                 "context_mode": context_mode,
             }
-            # Phase 0: capture baseline before any model call
-            try:
+            # Phase 0/5: mandatory baseline before any model call when supported
+            evaluate_canon = getattr(self.adapter, "evaluate_canon", None)
+            if evaluate_canon is not None:
                 baseline = capture_baseline(self.adapter, target_id, experiment_dir)
+                if baseline.evaluation is None:
+                    raise ValueError(
+                        f"baseline evaluation failed for {target_id!r}; "
+                        "fix the evaluator before making model calls"
+                    )
+                baseline_accepted = bool(
+                    getattr(baseline.evaluation, "symbol_accepted", False)
+                )
                 state["baseline"] = {
                     "source_hash": baseline.source_hash,
                     "source_text": baseline.source_text,
-                    "evaluation": (
-                        {
-                            "status": baseline.evaluation.status.value
-                            if baseline.evaluation
-                            else "UNKNOWN",
-                            "match_percent": baseline.evaluation.match_percent
-                            if baseline.evaluation
-                            else 0.0,
-                            "accepted": baseline.evaluation.symbol_accepted
-                            if baseline.evaluation
-                            else False,
-                        }
-                        if baseline.evaluation
-                        else None
-                    ),
+                    "evaluation": {
+                        "status": baseline.evaluation.status.value,
+                        "match_percent": baseline.evaluation.match_percent,
+                        "accepted": baseline_accepted,
+                        "symbol_accepted": baseline_accepted,
+                    },
                 }
-                # Phase 5: Mandatory baseline - skip model calls if already accepted
-                baseline_eval = state["baseline"]["evaluation"]
-                if baseline_eval and baseline_eval.get("accepted"):
+                if baseline_accepted:
                     self._debug(
                         f"baseline already accepted target={target_id} "
-                        f"status={baseline_eval.get('status')} match={baseline_eval.get('match_percent')}"
+                        f"status={baseline.evaluation.status.value} "
+                        f"match={baseline.evaluation.match_percent}"
                     )
+                    record = getattr(self.adapter, "record_baseline_accepted", None)
+                    if record is not None:
+                        with self._adapter_lock:
+                            record(target_id, baseline.evaluation)
                     state["status"] = "complete"
+                    state["reason"] = "baseline_already_accepted"
                     state["records"] = []
                     state["baseline_accepted"] = True
+                    state["model_calls"] = 0
                     self._write_state(experiment_dir, state)
-                    if dry_run:
-                        return experiment_dir
-            except Exception as exc:
-                self._debug(
-                    f"baseline capture failed target={target_id}: {exc}"
-                )
+                    return experiment_dir
             self._write_state(experiment_dir, state)
         self._debug(
             "function decompile started "
@@ -775,6 +803,24 @@ class Harness:
             destination.write_text(content, encoding="utf-8")
         return context_dir
 
+    def _model_with_output_budget(
+        self, model: ModelConfig, target_id: str, workflow: str
+    ) -> ModelConfig:
+        """Clamp generation length so stub functions cannot emit 8k-token essays."""
+        if model.max_tokens is not None:
+            return model
+        prompt_cfg = self.config.get("prompt", {}) or {}
+        configured_cap = int(prompt_cfg.get("max_output_tokens", 4096))
+        suggested = configured_cap
+        suggest = getattr(self.adapter, "suggest_max_output_tokens", None)
+        if callable(suggest) and workflow != "tu-complete":
+            try:
+                suggested = int(suggest(target_id))
+            except Exception:
+                suggested = configured_cap
+        effective = max(512, min(configured_cap, suggested))
+        return replace(model, max_tokens=effective)
+
     @staticmethod
     def _write_batch_manifest(batch_dir: Path, manifest: Dict[str, Any]) -> None:
         path = batch_dir / "batch.json"
@@ -812,12 +858,13 @@ class Harness:
             f"run={index}"
         )
         format_repair_attempted = False
+        call_model = self._model_with_output_budget(model, target_id, workflow)
         try:
             while True:
                 provider_attempts += 1
                 try:
                     result = provider.invoke(
-                        prompt, model, context_dir or Path(self.adapter.root)
+                        prompt, call_model, context_dir or Path(self.adapter.root)
                     )
                     break
                 except Exception:
@@ -839,7 +886,7 @@ class Harness:
                     f"run={index} error={_debug_value(error_msg)}"
                 )
                 repair_result = self._attempt_format_repair(
-                    result.text, error_msg, model, provider, context_dir,
+                    result.text, error_msg, call_model, provider, context_dir,
                 )
                 if repair_result is not None:
                     candidate = repair_result
@@ -965,74 +1012,396 @@ class Harness:
             max_tokens is not None and tokens >= max_tokens
         )
 
-    def _promote_with_gate(
+
+    def solve(
+        self,
+        target_id: str,
+        *,
+        dry_run: bool = False,
+        resume: Optional[Path] = None,
+        max_parallel: Optional[int] = None,
+    ) -> Path:
+        """Adaptive closed loop: initial candidates -> compile/binary repair."""
+        solve_cfg = self.config.get("solve", {})
+        initial_n = int(solve_cfg.get("initial_candidates", 3))
+        compile_budget = int(solve_cfg.get("compile_repairs", 2))
+        match_budget = int(solve_cfg.get("match_repairs", 4))
+        max_repeated = int(solve_cfg.get("max_repeated_fingerprint", 2))
+        stop_on_full = bool(solve_cfg.get("stop_on_full_match", True))
+        stop_on_equiv = bool(solve_cfg.get("stop_on_equivalent_match", True))
+        strategies = ["literal", "typed", "alternate_cfg"][: max(1, initial_n)]
+
+        if resume:
+            experiment_dir = resume.resolve()
+            state = json.loads((experiment_dir / "state.json").read_text(encoding="utf-8"))
+            if state.get("workflow") != "solve" or state.get("target_id") != target_id:
+                raise ValueError("Resume state workflow/target does not match solve command")
+            experiment_id = state["experiment_id"]
+        else:
+            experiment_id = (
+                f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-"
+                f"{uuid.uuid4().hex[:8]}"
+            )
+            experiment_dir = self.output_dir / target_id / experiment_id
+            experiment_dir.mkdir(parents=True, exist_ok=True)
+            with self._adapter_lock:
+                history = self.records(target_id=target_id)
+                prompt = self.adapter.build_prompt("new", target_id, history, {})
+            (experiment_dir / "prompt.md").write_text(prompt, encoding="utf-8")
+            state = {
+                "schema_version": 3,
+                "experiment_id": experiment_id,
+                "workflow": "solve",
+                "target_id": target_id,
+                "status": "running",
+                "logged": False,
+                "logged_keys": [],
+                "records": [],
+                "branches": [],
+                "baseline": None,
+                "solve": {
+                    "initial_candidates": initial_n,
+                    "compile_repairs": compile_budget,
+                    "match_repairs": match_budget,
+                    "max_repeated_fingerprint": max_repeated,
+                    "strategies": strategies,
+                },
+                "model_calls": 0,
+            }
+            baseline = capture_baseline(self.adapter, target_id, experiment_dir)
+            if baseline.evaluation is None:
+                raise ValueError(
+                    f"baseline evaluation failed for {target_id!r}; "
+                    "fix the evaluator before making model calls"
+                )
+            baseline_accepted = bool(getattr(baseline.evaluation, "symbol_accepted", False))
+            state["baseline"] = {
+                "source_hash": baseline.source_hash,
+                "source_text": baseline.source_text,
+                "evaluation": {
+                    "status": baseline.evaluation.status.value,
+                    "match_percent": baseline.evaluation.match_percent,
+                    "accepted": baseline_accepted,
+                    "symbol_accepted": baseline_accepted,
+                },
+            }
+            if baseline_accepted:
+                self._debug(
+                    f"baseline already accepted target={target_id} "
+                    f"status={baseline.evaluation.status.value} "
+                    f"match={baseline.evaluation.match_percent}"
+                )
+                record = getattr(self.adapter, "record_baseline_accepted", None)
+                if record is not None:
+                    with self._adapter_lock:
+                        record(target_id, baseline.evaluation)
+                state["status"] = "complete"
+                state["reason"] = "baseline_already_accepted"
+                state["model_calls"] = 0
+                self._write_state(experiment_dir, state)
+                return experiment_dir
+            self._write_state(experiment_dir, state)
+            if dry_run:
+                (experiment_dir / "effective-config.json").write_text(
+                    json.dumps(self.effective_config, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                return experiment_dir
+
+        if dry_run:
+            return experiment_dir
+
+        initial_models = self.models_for_workflow("initial")
+        repair_models = self.models_for_workflow("repair")
+        initial_model = initial_models[0]
+        repair_model = repair_models[0]
+        run_index = len(state.get("records", []))
+        branches: List[Dict[str, Any]] = list(state.get("branches", []))
+        fingerprint_counts: Dict[str, int] = {}
+        compile_used = 0
+        match_used = 0
+
+        def persist() -> None:
+            state["records"] = [
+                r.to_json() if isinstance(r, ExperimentRecord) else r
+                for r in state["records"]
+            ]
+            state["branches"] = branches
+            state["model_calls"] = len(state["records"])
+            self._write_state(experiment_dir, state)
+
+        # --- initial diverse candidates ---
+        if not any(b.get("phase") == "initial" for b in branches):
+            with self._adapter_lock:
+                history = self.records(target_id=target_id)
+                base_prompt = self.adapter.build_prompt("new", target_id, history, {})
+            for strategy in strategies:
+                run_index += 1
+                prompt = (
+                    f"{base_prompt}\n\n"
+                    f"## Initial strategy: {strategy}\n"
+                    f"- literal: preserve decoded control flow and memory ops directly\n"
+                    f"- typed: prioritize declarations, signedness, and class/member APIs\n"
+                    f"- alternate_cfg: use a different evidence-supported high-level branch shape\n"
+                    f"Apply the `{strategy}` strategy for this candidate.\n"
+                )
+                parent_id = None
+                record = self._run_one(
+                    "new",
+                    target_id,
+                    prompt,
+                    experiment_id,
+                    experiment_dir,
+                    initial_model,
+                    run_index,
+                )
+                record.candidate_summary = {
+                    **(record.candidate_summary or {}),
+                    "strategy": strategy,
+                    "parent_id": parent_id,
+                    "branch_id": f"init-{strategy}",
+                    "iteration": 0,
+                }
+                state["records"].append(record.to_json())
+                branches.append({
+                    "branch_id": f"init-{strategy}",
+                    "parent_id": parent_id,
+                    "phase": "initial",
+                    "strategy": strategy,
+                    "artifact": record.artifact,
+                    "run_index": run_index,
+                    "status": (record.evaluation or {}).get("status"),
+                    "match_percent": (record.evaluation or {}).get("match_percent"),
+                    "fingerprint": ((record.evaluation or {}).get("metrics") or {}).get(
+                        "mismatch_fingerprint", ""
+                    ),
+                })
+                persist()
+                if self._record_is_symbol_accepted(record.to_json()):
+                    if (
+                        (stop_on_full and (record.evaluation or {}).get("status") == "FULL_MATCH")
+                        or (
+                            stop_on_equiv
+                            and (record.evaluation or {}).get("status") == "EQUIVALENT_MATCH"
+                        )
+                        or self._record_is_symbol_accepted(record.to_json())
+                    ):
+                        break
+
+        best = self._best_solve_record(state["records"])
+        if best and self._record_is_symbol_accepted(best):
+            self._finalize_solve(experiment_dir, state, branches, best)
+            return experiment_dir
+
+        # --- adaptive repair loop ---
+        while True:
+            best = self._best_solve_record(state["records"])
+            if best is None:
+                state["status"] = "complete"
+                state["reason"] = "no_viable_candidates"
+                persist()
+                return experiment_dir
+            if self._record_is_symbol_accepted(best):
+                break
+
+            evaluation = best.get("evaluation") or {}
+            status = str(evaluation.get("status", "")).upper()
+            metrics = evaluation.get("metrics") or {}
+            fingerprint = str(metrics.get("mismatch_fingerprint") or "")
+
+            if status == "COMPILE_ERROR":
+                if compile_used >= compile_budget:
+                    state["reason"] = "compile_repair_budget_exhausted"
+                    break
+                phase = "compile_repair"
+                compile_used += 1
+            else:
+                if match_used >= match_budget:
+                    state["reason"] = "match_repair_budget_exhausted"
+                    break
+                phase = "match_repair"
+                match_used += 1
+
+            parent_artifact = self.root / best["artifact"]
+            parent_payload = json.loads(parent_artifact.read_text(encoding="utf-8"))
+            parent_candidate = Candidate(**parent_payload["candidate"])
+            parent_branch = next(
+                (b for b in branches if b.get("artifact") == best.get("artifact")),
+                {"branch_id": f"parent-{best.get('run_index')}"},
+            )
+            branch_id = f"{phase}-{run_index + 1}"
+            iteration = int(parent_branch.get("iteration", 0)) + 1
+
+            repair_context = {
+                "source": parent_candidate.source,
+                "evaluation": evaluation,
+                "binary_feedback": metrics.get("binary_feedback"),
+                "hypothesis": parent_candidate.hypothesis,
+                "next_change": parent_candidate.next_change,
+                "artifact": best.get("artifact"),
+                "rejected_fingerprints": [
+                    b.get("fingerprint")
+                    for b in branches
+                    if b.get("fingerprint") and b.get("fingerprint") != fingerprint
+                ][-8:],
+            }
+
+            if phase == "compile_repair":
+                diagnostics = normalize_compile_output(str(evaluation.get("detail", "")))
+                prompt = self._build_repair_prompt(
+                    parent_candidate,
+                    str(evaluation.get("detail", "")),
+                    diagnostics,
+                    state,
+                    budget=compile_budget,
+                    repair_index=compile_used - 1,
+                    seen_fingerprints=list(fingerprint_counts),
+                )
+            else:
+                with self._adapter_lock:
+                    history = self.records(target_id=target_id)
+                    prompt = self.adapter.build_prompt(
+                        "improve",
+                        target_id,
+                        history,
+                        {"repair_context": repair_context},
+                    )
+
+            run_index += 1
+            record = self._run_one(
+                "improve" if phase == "match_repair" else "new",
+                target_id,
+                prompt,
+                experiment_id,
+                experiment_dir,
+                repair_model,
+                run_index,
+            )
+            child_fp = ((record.evaluation or {}).get("metrics") or {}).get(
+                "mismatch_fingerprint", ""
+            )
+            record.candidate_summary = {
+                **(record.candidate_summary or {}),
+                "strategy": phase,
+                "parent_id": parent_branch.get("branch_id"),
+                "branch_id": branch_id,
+                "iteration": iteration,
+            }
+            state["records"].append(record.to_json())
+            branches.append({
+                "branch_id": branch_id,
+                "parent_id": parent_branch.get("branch_id"),
+                "phase": phase,
+                "strategy": phase,
+                "artifact": record.artifact,
+                "run_index": run_index,
+                "status": (record.evaluation or {}).get("status"),
+                "match_percent": (record.evaluation or {}).get("match_percent"),
+                "fingerprint": child_fp,
+                "iteration": iteration,
+            })
+
+            # Best-so-far is preserved via ranking; stop on repeated mismatch state.
+            if child_fp and child_fp == fingerprint:
+                fingerprint_counts[child_fp] = fingerprint_counts.get(child_fp, 0) + 1
+                if fingerprint_counts[child_fp] >= max_repeated:
+                    state["reason"] = "repeated_fingerprint"
+                    persist()
+                    break
+
+            persist()
+            if self._record_is_symbol_accepted(record.to_json()):
+                best = record.to_json()
+                break
+
+        best = self._best_solve_record(state["records"])
+        self._finalize_solve(experiment_dir, state, branches, best)
+        return experiment_dir
+
+    @staticmethod
+    def _record_is_symbol_accepted(record: Dict[str, Any]) -> bool:
+        evaluation = record.get("evaluation") or {}
+        if record.get("error"):
+            return False
+        if evaluation.get("symbol_accepted"):
+            return True
+        metrics = evaluation.get("metrics") or {}
+        if metrics.get("symbol_accepted"):
+            return True
+        status = str(evaluation.get("status", "")).upper()
+        if status == "FULL_MATCH" and bool(evaluation.get("accepted")):
+            return True
+        if status == "EQUIVALENT_MATCH" and bool(evaluation.get("accepted")):
+            return True
+        return False
+
+    def _best_solve_record(
+        self, records: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        successful = [row for row in records if not row.get("error") and row.get("evaluation")]
+        if not successful:
+            return None
+        return max(successful, key=lambda row: self._rank_record("solve", row))
+
+    def _finalize_solve(
         self,
         experiment_dir: Path,
         state: Dict[str, Any],
-        best_record: ExperimentRecord,
-        target_id: str,
-        workflow: str,
+        branches: List[Dict[str, Any]],
+        best: Optional[Dict[str, Any]],
     ) -> None:
-        """Phase 0: gated transactional promotion with rollback journal."""
-        candidate_eval = evaluation_to_candidate(best_record.evaluation or {})
-        baseline_data = state.get("baseline")
-        baseline_eval: Optional[CandidateEvaluation] = None
-        baseline_source = ""
-        if baseline_data and baseline_data.get("evaluation"):
-            baseline_eval = evaluation_to_candidate(baseline_data["evaluation"])
-            baseline_source = baseline_data.get("source_text", "")
-
-        # Use baseline if available, otherwise treat as first (no gate needed)
-        if baseline_eval is not None:
-            passed, reason = self.promotion_manager.compare_for_promotion(
-                baseline_eval, candidate_eval,
-                baseline_source=baseline_source,
-            )
-            if not passed:
-                self._debug(
-                    f"promotion gate blocked target={target_id} reason={reason}"
+        state["branches"] = branches
+        state["model_calls"] = len(state.get("records", []))
+        state["status"] = "complete"
+        if best is not None:
+            best = dict(best)
+            updated = []
+            for row in state.get("records", []):
+                copy = dict(row)
+                copy["winner"] = copy.get("artifact") == best.get("artifact")
+                updated.append(copy)
+            state["records"] = updated
+            artifact_path = self.root / best["artifact"]
+            if artifact_path.is_file():
+                (experiment_dir / "best.json").write_text(
+                    artifact_path.read_text(encoding="utf-8"), encoding="utf-8"
                 )
-                return
-
-        # Extract candidate source
-        candidate_source = ""
-        candidate_artifact_path = self.root / best_record.artifact
-        if candidate_artifact_path.is_file():
-            try:
-                artifact = json.loads(
-                    candidate_artifact_path.read_text(encoding="utf-8")
-                )
-                candidate_source = (
-                    artifact.get("candidate", {}).get("source")
-                    or artifact.get("candidate", {}).get("patches", [{}])[0].get("source")
-                    or ""
-                )
-            except (OSError, json.JSONDecodeError, IndexError):
-                pass
-
-        # Promote via PromotionManager (transactional, with validation)
-        result = self.promotion_manager.promote(
-            self.adapter,
-            workflow,
-            target_id,
-            candidate_source,
-            experiment_dir,
-            write=True,
+            logged = set(state.get("logged_keys", []))
+            for row in updated:
+                key = _record_key(row)
+                if key in logged:
+                    continue
+                payload = {
+                    "schema_version": int(row.get("schema_version", 4)),
+                    "experiment_id": row.get("experiment_id", state["experiment_id"]),
+                    "timestamp": row.get(
+                        "timestamp", datetime.now(timezone.utc).isoformat()
+                    ),
+                    "workflow": "solve",
+                    "target_id": state["target_id"],
+                    "model_id": row.get("model_id", ""),
+                    "model": row.get("model", ""),
+                    "run_index": int(row.get("run_index", 0)),
+                    "duration_seconds": float(row.get("duration_seconds") or 0.0),
+                    "input_tokens": row.get("input_tokens"),
+                    "output_tokens": row.get("output_tokens"),
+                    "cost": row.get("cost"),
+                    "evaluation": row.get("evaluation") or {},
+                    "artifact": row.get("artifact", ""),
+                    "candidate_summary": row.get("candidate_summary") or {},
+                    "winner": bool(row.get("winner")),
+                    "error": row.get("error"),
+                }
+                self._append_record(ExperimentRecord(**payload))
+                logged.add(key)
+            state["logged_keys"] = sorted(logged)
+            state["logged"] = True
+        self._write_state(experiment_dir, state)
+        self._debug(
+            f"solve completed target={state.get('target_id')} "
+            f"experiment={state.get('experiment_id')} "
+            f"calls={state.get('model_calls')} reason={state.get('reason', 'done')}"
         )
-
-        if result.promoted:
-            self._debug(
-                f"promoted target={target_id} reason={result.reason} "
-                f"steps={len(result.validation_steps)}"
-            )
-        elif result.rolled_back:
-            self._debug(
-                f"promotion rolled back target={target_id} reason={result.reason}"
-            )
-        else:
-            self._debug(
-                f"promotion skipped target={target_id} reason={result.reason}"
-            )
 
     def records(self, target_id: Optional[str] = None) -> List[Dict[str, Any]]:
         if not self.log_path.is_file():
@@ -1207,13 +1576,19 @@ class Harness:
             self._append_record(record)
         return directory
 
-    def _rank_record(self, workflow: str, record: ExperimentRecord) -> tuple[Any, ...]:
+    def _rank_record(self, workflow: str, record: Any) -> tuple[Any, ...]:
+        if isinstance(record, ExperimentRecord):
+            evaluation = record.evaluation or {}
+            as_dict = record.to_json()
+        else:
+            evaluation = (record or {}).get("evaluation") or {}
+            as_dict = record or {}
         rank_fn = getattr(self.adapter, "rank_candidate", None)
         if rank_fn is not None:
-            return tuple(rank_fn(workflow, record.evaluation))
+            return tuple(rank_fn(workflow, evaluation))
         return (
-            bool(record.evaluation.get("accepted")),
-            record.evaluation.get("match_percent") or 0.0,
+            1 if self._record_is_symbol_accepted(as_dict) else 0,
+            float(evaluation.get("match_percent") or 0.0),
         )
 
     def _load_best_candidate_context(
@@ -1422,6 +1797,13 @@ class Harness:
         )
         return directory
 
+    def _prompt_dir(self) -> Path:
+        adapter_dir = getattr(self.adapter, "prompt_dir", None)
+        if isinstance(adapter_dir, Path):
+            return adapter_dir
+        project = self.config.get("project", {}) or {}
+        return self.root / project.get("prompt_dir", "tools/llm_harness/prompts")
+
     def _attempt_format_repair(
         self,
         raw_output: str,
@@ -1430,8 +1812,7 @@ class Harness:
         provider: Any,
         context_dir: Optional[Path],
     ) -> Optional[Candidate]:
-        prompt_dir = self.root / self.config.get("prompt_dir", "tools/llm_harness/prompts")
-        repair_path = prompt_dir / "format_repair.md"
+        repair_path = self._prompt_dir() / "format_repair.md"
         if not repair_path.is_file():
             self._debug(f"format-repair skipped: {repair_path} not found")
             return None
@@ -1464,20 +1845,19 @@ class Harness:
         repair_index: int = 0,
         seen_fingerprints: list[str] | None = None,
     ) -> str:
-        prompt_dir = self.root / self.config.get("prompt_dir", "tools/llm_harness/prompts")
-        common_path = prompt_dir / "common.md"
-        repair_path = prompt_dir / "compile_repair.md"
-        common = common_path.read_text(encoding="utf-8") if common_path.is_file() else ""
-        repair_instruction = repair_path.read_text(encoding="utf-8") if repair_path.is_file() else ""
+        repair_path = self._prompt_dir() / "compile_repair.md"
+        repair_instruction = (
+            repair_path.read_text(encoding="utf-8") if repair_path.is_file() else ""
+        )
 
+        # compile_repair.md is self-contained (same JSON schema as common.md).
+        # Do not paste common.md here — its {{WORKFLOW_PROMPT}} placeholders
+        # would ship unsubstituted and waste context.
         lines: list[str] = [
-            common,
-            "",
-            "---",
-            "",
             repair_instruction,
             "",
             "---",
+            "",
             "## Current candidate source",
             candidate.source,
             "",
@@ -1598,18 +1978,15 @@ def parse_candidate(
         notes = [notes]
     if not isinstance(notes, list) or not all(isinstance(v, str) for v in notes):
         raise ValueError("Model output 'notes' must be a list of strings")
+    # Clamp metadata so verbose models cannot dominate the candidate record.
+    notes = [str(note)[:120] for note in notes[:3]]
     return Candidate(
         source=source,
-        hypothesis=str(data.get("hypothesis", "")),
+        hypothesis=str(data.get("hypothesis", ""))[:160],
         notes=notes,
-        next_change=str(data.get("next_change", "")),
+        next_change=str(data.get("next_change", ""))[:120],
         patches=patches,
     )
-
-
-def solve(self, target_id: str, **kwargs) -> Path:
-    """Adaptive solve loop: initial candidates -> compile repair -> binary repair."""
-    return Path("build/llm-harness/solve-stub")
 
 
 def _record_key(row: Dict[str, Any]) -> str:

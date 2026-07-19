@@ -9,7 +9,7 @@ if str(ROOT) not in sys.path:
 
 from tools.llm_harness.dossier import (
     TargetDossier, RetailProgramContext, SourceContext, CallContext,
-    TypeContext, SymbolInventory, PromptConstraints, KnowledgeRecord,
+    TypeContext, SymbolInventory, PromptConstraints,
     AttemptCluster, TargetIdentity, SignatureContext, SignatureParameter,
     SignatureReturn, ImplicitThis, DecodedInstruction, CFGBlock,
     ControlFlowGraph, CFGTerminator, DataFlowSummary, MemoryAccess,
@@ -112,9 +112,16 @@ class TestCallersAndSiblings(unittest.TestCase):
         cons = PromptConstraints(max_callers=5)
         self.assertEqual(cons.max_callers, 5)
 
-    def test_max_accepted_siblings_constraint(self):
-        cons = PromptConstraints(max_accepted_siblings=2)
+    def test_from_prompt_config(self):
+        cons = PromptConstraints.from_prompt_config({
+            "max_decoded_instructions": 9,
+            "max_sibling_bodies": 2,
+        })
+        self.assertEqual(cons.max_decoded_instructions, 9)
         self.assertEqual(cons.max_accepted_siblings, 2)
+        defaults = PromptConstraints.from_prompt_config({})
+        self.assertEqual(defaults.max_decoded_instructions, 400)
+        self.assertEqual(defaults.max_declaration_chars, 12000)
 
     def test_accepted_examples_included(self):
         dossier = TargetDossier(

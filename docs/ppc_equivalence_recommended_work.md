@@ -2190,7 +2190,7 @@ Before any further auto-acceptance:
 - [ ] Soundness traceability table is complete.
 - [ ] Memory and FP profiles are machine-readable.
 - [ ] Deadline tests enforce end-to-end bounds.
-- [ ] Counterexamples replay concretely.
+- [x] Counterexamples replay concretely.
 
 ---
 
@@ -2326,7 +2326,7 @@ The hardening project is complete only when all statements below are true:
 - [ ] Adversarial soundness suite is required in CI.
 - [ ] Generated randomized failures are reproducible by seed.
 - [ ] Critical mutation set is killed or explicitly reviewed.
-- [ ] Counterexamples replay under ConcreteOps.
+- [x] Counterexamples replay under ConcreteOps.
 
 ### Independent validation
 

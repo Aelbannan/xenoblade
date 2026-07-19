@@ -101,9 +101,9 @@ class TestAccessWithinRange(unittest.TestCase):
         self.assertTrue(self._unsat(self.z3.And(c, self.addr == 0x2500)))
 
     def test_any_range_empty(self):
+        # Empty ranges fail closed at the helper (not a universal accept).
         c = access_within_any_range(self.addr, 1, [])
-        self.assertFalse(self._sat(self.z3.Not(c)))
-        self.assertTrue(self._sat(c))
+        self.assertTrue(self._unsat(c))
 
     def test_width_bytes_invalid(self):
         with self.assertRaises(ValueError):
@@ -121,6 +121,38 @@ class TestMemoryEnvironment(unittest.TestCase):
         ops = SymbolicOps()
         self.assertEqual(build_memory_constraints([], [], env, ops), [])
 
+    def test_stack_and_known_globals_empty_ranges_fail_closed(self):
+        env = MemoryEnvironment(
+            profile=MemoryProfile.STACK_AND_KNOWN_GLOBALS, ranges=[],
+        )
+        ops = SymbolicOps()
+        constraints = build_memory_constraints([], [], env, ops)
+        self.assertEqual(len(constraints), 1)
+        self.assertTrue(env.is_fail_closed_empty())
+        s = ops.z3.Solver()
+        s.add(*constraints)
+        self.assertEqual(s.check(), ops.z3.unsat)
+
+    def test_hardware_aware_empty_ranges_fail_closed(self):
+        env = MemoryEnvironment(profile=MemoryProfile.HARDWARE_AWARE, ranges=[])
+        ops = SymbolicOps()
+        constraints = build_memory_constraints([], [], env, ops)
+        self.assertEqual(len(constraints), 1)
+        self.assertTrue(env.is_fail_closed_empty())
+        s = ops.z3.Solver()
+        s.add(*constraints)
+        self.assertEqual(s.check(), ops.z3.unsat)
+
+    def test_stack_and_known_globals_with_ranges_constrains(self):
+        env = MemoryEnvironment(
+            profile=MemoryProfile.STACK_AND_KNOWN_GLOBALS,
+            ranges=[(0x80000000, 0x8FFFFFFF)],
+        )
+        ops = SymbolicOps()
+        # No memory touches → no per-access constraints, but not fail-closed.
+        self.assertEqual(build_memory_constraints([], [], env, ops), [])
+        self.assertFalse(env.is_fail_closed_empty())
+
     def test_to_dict_assumed(self):
         env = MemoryEnvironment()
         d = env.to_dict()
@@ -128,6 +160,14 @@ class TestMemoryEnvironment(unittest.TestCase):
         self.assertEqual(d["ranges"], [])
         self.assertEqual(d["mmio"], "unrestricted")
         self.assertEqual(d["address_wraparound"], "rejected")
+        self.assertFalse(d["fail_closed_empty_ranges"])
+
+    def test_to_dict_hardware_aware_empty(self):
+        env = MemoryEnvironment(profile=MemoryProfile.HARDWARE_AWARE)
+        d = env.to_dict()
+        self.assertEqual(d["mmio"], "fail-closed-no-ranges")
+        self.assertTrue(d["fail_closed_empty_ranges"])
+        self.assertEqual(d["invalid_reason_code"], 10)
 
     def test_to_dict_bounded(self):
         env = MemoryEnvironment(
@@ -226,6 +266,38 @@ class TestBoundedEquivalence(unittest.TestCase):
         d = result.to_dict()
         self.assertIn("environment", d)
         self.assertEqual(d["environment"]["memory_profile"], "bounded-ordinary-ram")
+
+    def test_hardware_aware_empty_ranges_inconclusive(self):
+        code = bytes.fromhex("38630004")  # addi r3, r3, 4
+        from tools.ppc_equivalence.decoder import decode_block
+        insns = decode_block(code, 0x80000000)
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=10000)
+        env = MemoryEnvironment(profile=MemoryProfile.HARDWARE_AWARE, ranges=[])
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            memory_environment=env,
+        )
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_LAYOUT)
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_stack_and_known_globals_with_ranges_equivalent(self):
+        code = bytes.fromhex("38630004")
+        from tools.ppc_equivalence.decoder import decode_block
+        insns = decode_block(code, 0x80000000)
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=10000)
+        env = MemoryEnvironment(
+            profile=MemoryProfile.STACK_AND_KNOWN_GLOBALS,
+            ranges=[(0x80000000, 0x8FFFFFFF)],
+        )
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            memory_environment=env,
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 
 
 if __name__ == "__main__":

@@ -249,8 +249,16 @@ def evaluate_unit_match(
     )
 
 
-def report_unit(project: Project, unit: ObjdiffUnit) -> UnitReport:
+def report_unit(project: Project, unit: ObjdiffUnit, *, isolated: bool = True) -> UnitReport:
+    """Generate an objdiff unit report.
+
+    When *isolated* is True (default), run against a temporary single-unit
+    objdiff.json so missing unrelated objects cannot make the target unscorable.
+    """
     config = project.config
+    if isolated:
+        return _report_unit_isolated(project, unit)
+
     report_path = config.resolve(config.report_cache)
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -267,12 +275,74 @@ def report_unit(project: Project, unit: ObjdiffUnit) -> UnitReport:
     ]
     cmd.extend(config.objdiff_report_args)
     subprocess.run(cmd, cwd=project.root, check=True)
+    return _parse_unit_report(report_path, unit.name)
 
+
+def _report_unit_isolated(project: Project, unit: ObjdiffUnit) -> UnitReport:
+    """Option B: temporary objdiff project containing only the owning unit."""
+    import tempfile
+
+    root_config = project.root / "objdiff.json"
+    if not root_config.is_file():
+        raise FileNotFoundError(f"objdiff.json missing at {root_config}")
+    data = json.loads(root_config.read_text(encoding="utf-8"))
+    matching = [entry for entry in data.get("units", []) if entry.get("name") == unit.name]
+    if not matching:
+        raise ValueError(f"Unit '{unit.name}' not present in objdiff.json")
+
+    def _absolutize(entry: dict) -> dict:
+        out = dict(entry)
+        for key in ("target_path", "base_path"):
+            value = out.get(key)
+            if isinstance(value, str) and value and not Path(value).is_absolute():
+                out[key] = str((project.root / value).resolve())
+        scratch = out.get("scratch")
+        if isinstance(scratch, dict):
+            scratch = dict(scratch)
+            ctx = scratch.get("ctx_path")
+            if isinstance(ctx, str) and ctx and not Path(ctx).is_absolute():
+                scratch["ctx_path"] = str((project.root / ctx).resolve())
+            out["scratch"] = scratch
+        metadata = out.get("metadata")
+        if isinstance(metadata, dict):
+            metadata = dict(metadata)
+            src = metadata.get("source_path")
+            if isinstance(src, str) and src and not Path(src).is_absolute():
+                metadata["source_path"] = str((project.root / src).resolve())
+            out["metadata"] = metadata
+        return out
+
+    single = {key: value for key, value in data.items() if key != "units"}
+    single["units"] = [_absolutize(matching[0])]
+
+    with tempfile.TemporaryDirectory(prefix="objdiff-unit-") as tmp:
+        tmp_path = Path(tmp)
+        (tmp_path / "objdiff.json").write_text(
+            json.dumps(single, indent=2) + "\n", encoding="utf-8"
+        )
+        report_path = tmp_path / "report.json"
+        cmd = [
+            project.objdiff_bin(),
+            "report",
+            "generate",
+            "-p",
+            str(tmp_path),
+            "-o",
+            str(report_path),
+            "-f",
+            "json-pretty",
+        ]
+        cmd.extend(project.config.objdiff_report_args)
+        subprocess.run(cmd, cwd=project.root, check=True)
+        return _parse_unit_report(report_path, unit.name)
+
+
+def _parse_unit_report(report_path: Path, unit_name: str) -> UnitReport:
     with report_path.open(encoding="utf-8") as f:
         report = json.load(f)
 
     for entry in report.get("units", []):
-        if entry.get("name") != unit.name:
+        if entry.get("name") != unit_name:
             continue
         measures = entry.get("measures") or {}
         functions = []
@@ -287,7 +357,7 @@ def report_unit(project: Project, unit: ObjdiffUnit) -> UnitReport:
                 )
             )
         return UnitReport(
-            unit_name=unit.name,
+            unit_name=unit_name,
             code_match_percent=_percent(measures.get("matched_code"), measures.get("total_code")),
             data_match_percent=_percent(measures.get("matched_data"), measures.get("total_data")),
             fuzzy_match_percent=float(measures.get("fuzzy_match_percent", 0.0)),
@@ -296,7 +366,7 @@ def report_unit(project: Project, unit: ObjdiffUnit) -> UnitReport:
             functions=functions,
         )
 
-    raise ValueError(f"Unit '{unit.name}' not present in objdiff report")
+    raise ValueError(f"Unit '{unit_name}' not present in objdiff report")
 
 
 def find_function_match(unit_report: UnitReport, symbol: Optional[str]) -> Optional[FunctionMatch]:

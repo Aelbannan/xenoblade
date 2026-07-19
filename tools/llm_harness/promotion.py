@@ -35,19 +35,23 @@ from .types import (
 
 # §14.5 — Local proof-aware ranking
 def rank_candidate(evaluation: CandidateEvaluation) -> tuple:
-    """Lexicographic ranking: hard priorities, then proof-aware tiers."""
-    # Simple ranking: symbol_accepted > match_percent > structural_score > equivalence > size delta
-    symbol_accepted = (
-        evaluation.status == CandidateStatus.FULL_MATCH or
-        (evaluation.status == CandidateStatus.EQUIVALENT_MATCH and evaluation.equivalence_status)
+    """Lexicographic ranking: symbol acceptance, then match %, then equivalence/size."""
+    symbol_accepted = bool(
+        getattr(evaluation, "symbol_accepted", False)
+        or evaluation.status == CandidateStatus.FULL_MATCH
+        or (
+            evaluation.status == CandidateStatus.EQUIVALENT_MATCH
+            and evaluation.equivalence_status
+        )
     )
     match_pct = evaluation.match_percent or 0.0
-    structural_score = evaluation.structural_report.total_score if evaluation.structural_report else 0.0
     equiv = 1 if evaluation.equivalence_status == "EQUIVALENT" else 0
     size_delta = 0
     if evaluation.function_size is not None and evaluation.retail_size is not None:
         size_delta = -abs(min(evaluation.function_size - evaluation.retail_size, 0))
-    return (1 if symbol_accepted else 0, match_pct, structural_score, equiv, size_delta)
+    elif evaluation.function_size_delta is not None:
+        size_delta = -abs(min(evaluation.function_size_delta, 0))
+    return (1 if symbol_accepted else 0, match_pct, equiv, size_delta)
 
 
 # ---------------------------------------------------------------------------
@@ -260,8 +264,29 @@ def evaluation_to_candidate(ev: Dict[str, Any]) -> CandidateEvaluation:
     except ValueError:
         cstatus = CandidateStatus.COMPILES if ev.get("accepted") else CandidateStatus.BLOCKED
 
-    compile_ok = status_str not in ("COMPILE_ERROR", "EVALUATION_ERROR", "MODEL_ERROR")
+    compile_ok = status_str not in (
+        "COMPILE_ERROR", "EVALUATION_ERROR", "MODEL_ERROR",
+        "PRECHECK_ERROR", "BUILD_ERROR", "SYMBOL_EXTRACTION_ERROR",
+        "MATCH_EVALUATION_ERROR", "EQUIVALENCE_ERROR", "RESTORE_ERROR",
+    )
     metrics = ev.get("metrics") or {}
+    symbol_accepted = bool(
+        ev.get("symbol_accepted", metrics.get("symbol_accepted", False))
+        or (
+            status_str == "FULL_MATCH"
+            or (
+                status_str == "EQUIVALENT_MATCH"
+                and ev.get("equivalence") not in (None, "", "INCONCLUSIVE_UNVALIDATED_CALLEE")
+            )
+        )
+    )
+    promising = bool(
+        ev.get("promising", metrics.get("promising", False))
+        or (compile_ok and not symbol_accepted and float(ev.get("match_percent") or 0.0) > 0.0)
+    )
+    blocked = ev.get("blocked_reason") or metrics.get("blocked_reason")
+    if status_str == "CODE_MATCH" and not symbol_accepted and not blocked:
+        blocked = "unvalidated_callee"
 
     return CandidateEvaluation(
         status=cstatus,
@@ -274,6 +299,12 @@ def evaluation_to_candidate(ev: Dict[str, Any]) -> CandidateEvaluation:
         retail_size=metrics.get("retail_function_size"),
         object_regressions=metrics.get("object_regressions", []),
         accepted_function_regressions=metrics.get("accepted_function_regressions", []),
+        symbol_accepted=symbol_accepted,
+        project_ready=ev.get("project_ready", metrics.get("project_ready")),
+        promising=promising,
+        blocked_reason=blocked,
+        function_size_delta=metrics.get("function_size_delta"),
+        equivalence_status=ev.get("equivalence"),
     )
 
 
@@ -292,23 +323,23 @@ def capture_baseline(
 
     source = ""
     if read_source is not None:
-        try:
-            source = read_source(target_id)
-        except Exception:
-            pass
+        source = read_source(target_id)
 
     source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
 
     evaluation: Optional[CandidateEvaluation] = None
     if evaluate_canon is not None:
-        try:
-            result = evaluate_canon(target_id, experiment_dir / "baseline")
-            if isinstance(result, CandidateEvaluation):
-                evaluation = result
-            elif isinstance(result, Evaluation):
-                evaluation = evaluation_to_candidate(asdict(result) if hasattr(result, "__dataclass_fields__") else {})
-        except Exception:
-            pass
+        result = evaluate_canon(target_id, experiment_dir / "baseline")
+        if isinstance(result, CandidateEvaluation):
+            evaluation = result
+        elif isinstance(result, Evaluation):
+            evaluation = evaluation_to_candidate(asdict(result))
+        elif isinstance(result, dict):
+            evaluation = evaluation_to_candidate(result)
+        else:
+            raise TypeError(
+                f"evaluate_canon returned unsupported type {type(result).__name__}"
+            )
 
     return BaselineSnapshot(
         target_id=target_id,

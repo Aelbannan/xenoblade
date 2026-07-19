@@ -23,6 +23,8 @@ python3 tools/coop/run.py targets brief <target-id>
 python3 tools/coop/run.py targets sync-calls
 python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
 python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
+python3 tools/llm_harness/run.py solve <target-id> --dry-run
+python3 tools/llm_harness/run.py solve <target-id>
 python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog
 python3 tools/coop/run.py atlas serve             # http://127.0.0.1:8765
 ```

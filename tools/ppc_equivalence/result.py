@@ -7,6 +7,29 @@ from typing import Any
 from tools.ppc_equivalence.memory_profile import MemoryEnvironment
 
 
+# Static coverage labels drawn from SOUNDNESS.md FP limits (P1-11).
+# Machine-readable companion to FloatingPointDomain presence/tiering.
+FP_COVERAGE_PROVEN: tuple[str, ...] = (
+    "nearest-even-rounding",
+    "ni-required-zero",
+    "vx-zx-exception-causes",
+    "paired-single-independent-binary32-lanes",
+)
+FP_COVERAGE_ASSUMED: tuple[str, ...] = (
+    "traps-disabled",
+    "finite-input-overflow-excluded",
+    "fused-operands-exact-expanded-binary32",
+    "subnormals-excluded-unless-allowed",
+)
+FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
+    "underflow-flag",
+    "inexact-flag",
+    "overflow-flag",
+    "fsqrt-fsqrts-broadway-reserved",
+    "full-fpscr-status-modeling",
+)
+
+
 @dataclass(slots=True, frozen=True)
 class FloatingPointDomain:
     rounding_modes: tuple[str, ...] = ("nearest-even",)
@@ -30,6 +53,14 @@ class FloatingPointDomain:
             "underflow_flag": "not-fully-modeled",
             "inexact_flag": "not-fully-modeled",
             "fused_input_domain": self.fused_input_domain,
+            "allow_nan": self.allow_nan,
+            "allow_infinity": self.allow_infinity,
+            "allow_subnormal": self.allow_subnormal,
+            "coverage": {
+                "proven": list(FP_COVERAGE_PROVEN),
+                "assumed": list(FP_COVERAGE_ASSUMED),
+                "unsupported": list(FP_COVERAGE_UNSUPPORTED),
+            },
         }
 
     @classmethod
@@ -39,6 +70,9 @@ class FloatingPointDomain:
             rounding_modes=tuple(rounding),
             require_ni_zero=d.get("ni", "required-zero") == "required-zero",
             traps_enabled=d.get("traps") == "enabled",
+            allow_nan=bool(d.get("allow_nan", True)),
+            allow_infinity=bool(d.get("allow_infinity", True)),
+            allow_subnormal=bool(d.get("allow_subnormal", False)),
             exclude_finite_overflow=d.get("finite_overflow", "excluded") == "excluded",
             fused_input_domain=str(
                 d.get("fused_input_domain", "exact-expanded-binary32")
@@ -215,6 +249,9 @@ class ProofResult:
     floating_point_domain: FloatingPointDomain | None = None
     counterexample_bundle: dict[str, Any] | None = None
     solver_diagnostics: dict[str, Any] | None = None
+    # Opcodes appearing in original+candidate; used with ValidationLedger for
+    # Tier A/B confidence (P1-06). Empty means not enumerated (legacy certs).
+    opcodes_used: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)

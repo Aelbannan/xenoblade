@@ -36,9 +36,25 @@ const TABS: { id: DetailTab; label: string }[] = [
   { id: "prompt", label: "Prompt" },
 ];
 
-function CodePane({ text, empty }: { text?: string | null; empty: string }) {
-  if (!text) return <div className="empty-state">{empty}</div>;
-  return <pre className="code-block">{text}</pre>;
+function CodePane({
+  text,
+  empty,
+  warnings,
+}: {
+  text?: string | null;
+  empty: string;
+  warnings?: string[];
+}) {
+  return (
+    <div style={{ display: "grid", gap: "0.75rem" }}>
+      {warnings && warnings.length > 0 ? (
+        <div className="error-text" style={{ fontSize: "0.85rem" }}>
+          {warnings.join(" · ")}
+        </div>
+      ) : null}
+      {!text ? <div className="empty-state">{empty}</div> : <pre className="code-block">{text}</pre>}
+    </div>
+  );
 }
 
 function Pill({
@@ -83,6 +99,8 @@ export function FunctionDetails({
   useEffect(() => {
     setTab("overview");
     setArtifacts(null);
+    setArtifactsError(null);
+    setArtifactsLoading(false);
     setCallers([]);
     setCallees([]);
     setNeighbors([]);
@@ -90,9 +108,9 @@ export function FunctionDetails({
   }, [functionId]);
 
   useEffect(() => {
-    let cancelled = false;
     setLoading(true);
     setError(null);
+    let cancelled = false;
     getFunction(functionId)
       .then((row) => {
         if (!cancelled) setFn(row);
@@ -113,7 +131,7 @@ export function FunctionDetails({
 
   useEffect(() => {
     if (tab !== "source" && tab !== "retail" && tab !== "candidate") return;
-    if (artifacts || artifactsLoading) return;
+    if (artifacts !== null) return;
     let cancelled = false;
     setArtifactsLoading(true);
     setArtifactsError(null);
@@ -122,7 +140,10 @@ export function FunctionDetails({
         if (!cancelled) setArtifacts(row);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setArtifactsError(err instanceof Error ? err.message : String(err));
+        if (!cancelled) {
+          setArtifacts(null);
+          setArtifactsError(err instanceof Error ? err.message : String(err));
+        }
       })
       .finally(() => {
         if (!cancelled) setArtifactsLoading(false);
@@ -130,7 +151,7 @@ export function FunctionDetails({
     return () => {
       cancelled = true;
     };
-  }, [tab, functionId, artifacts, artifactsLoading]);
+  }, [tab, functionId, artifacts]);
 
   useEffect(() => {
     if (tab !== "graph") return;
@@ -313,7 +334,11 @@ export function FunctionDetails({
           ) : artifactsError ? (
             <div className="error-text">{artifactsError}</div>
           ) : (
-            <CodePane text={artifacts?.source_cpp} empty="No C++ source extracted for this target." />
+            <CodePane
+              text={artifacts?.source_cpp}
+              empty="No C++ source extracted for this target."
+              warnings={artifacts?.warnings}
+            />
           )
         ) : null}
 
@@ -323,7 +348,11 @@ export function FunctionDetails({
           ) : artifactsError ? (
             <div className="error-text">{artifactsError}</div>
           ) : (
-            <CodePane text={artifacts?.retail_ppc} empty="No retail PPC available." />
+            <CodePane
+              text={artifacts?.retail_ppc}
+              empty="No retail PPC available."
+              warnings={artifacts?.warnings}
+            />
           )
         ) : null}
 
@@ -333,7 +362,11 @@ export function FunctionDetails({
           ) : artifactsError ? (
             <div className="error-text">{artifactsError}</div>
           ) : (
-            <CodePane text={artifacts?.candidate_ppc} empty="No candidate PPC available." />
+            <CodePane
+              text={artifacts?.candidate_ppc}
+              empty="No candidate PPC available (decomp object may be missing — build the unit first)."
+              warnings={artifacts?.warnings}
+            />
           )
         ) : null}
 

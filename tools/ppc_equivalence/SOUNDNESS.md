@@ -101,8 +101,19 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
   implementation. Masking is disabled when a call executes or an r1-derived
   value is stored to memory.
 - Alignment: aligned loads/stores are required for multi-byte accesses.
-- All accessed addresses are assumed to be mapped ordinary RAM with no MMIO,
-  protection faults, or address-translation side effects.
+- Memory-environment profiles (`assumed-ordinary-ram`, `bounded-ordinary-ram`,
+  `stack-and-known-globals`, `hardware-aware`) are recorded on every result.
+  - `assumed-ordinary-ram`: accesses are unconstrained ordinary RAM (external
+    assumption; default).
+  - `bounded-ordinary-ram`: when ranges are supplied, every touched address must
+    lie in a configured range (no wraparound). Empty ranges remain a soft /
+    unconstrained bound for compatibility.
+  - `stack-and-known-globals` and `hardware-aware`: **require nonempty ranges**.
+    With ranges, they use the same access-within-range constraint builder as
+    bounded. Without ranges they **fail closed** (unsat domain →
+    `INCONCLUSIVE_LAYOUT`) and never silently degrade to unconstrained RAM.
+    `InvalidReason.MEMORY_PROFILE_VIOLATION` (code 10) is the reserved reason
+    code for out-of-profile access tagging.
 - 32-bit address wraparound is rejected through the layout-feasibility check.
 - The initial memory array is shared between both implementations. Private-stack
   bytes are replaced with the common initial byte on each side independently.
@@ -185,7 +196,8 @@ A terminal is a triple `(condition, state, exit_kind, exit_target)`:
 | Soundness claim | Implementation | Tests | Result field |
 |---|---|---|---|
 | Independent per-side stack masking | `engine._private_stack_address`, `engine._memory_difference` | `test_private_stack_memory.py` | `memory_scope.private_stack.masking_semantics` |
-| Ordinary RAM range assumed | memory-profile constraints | memory profile tests (planned) | `assumptions` |
+| Ordinary RAM range assumed | memory-profile constraints | `test_memory_profile.py` | `environment.memory_profile` |
+| Fail-closed stack/hardware profiles without ranges | `memory_profile.build_memory_constraints` | `test_memory_profile` fail-closed cases | `environment.fail_closed_empty_ranges`, `INCONCLUSIVE_LAYOUT` |
 | No unsupported loop | `semantics.execute_cfg` | control-flow tests | `unsupported`, `status=INCONCLUSIVE_UNSUPPORTED` |
 | Cache-disabled `dcbz`/`dcbz_l` → `CACHE_DISABLED` | `semantics._constrain_valid` | `test_definedness:test_dcbz_cache_disabled_sets_reason` | `state.invalid_reason` |
 | Privileged `mfmsr`/`mtmsr`/`mfsr`/`mtsr` → `PRIVILEGED_INSTRUCTION` | `semantics._constrain_valid` | `test_definedness:test_mfmsr_user_mode_sets_reason` | `state.invalid_reason` |

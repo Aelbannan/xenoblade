@@ -762,6 +762,7 @@ def check_equivalence(
         observables=[item.name for item in contract.observables],
         original_instruction_count=len(original),
         candidate_instruction_count=len(candidate),
+        opcodes_used=sorted({insn.opcode.value for insn in original + candidate}),
         solver={
             "name": "z3", "version": z3.get_version_string(), "result": str(answer),
             "elapsed_ms": elapsed_ms, "timeout_ms": contract.timeout_ms,
@@ -985,6 +986,7 @@ def check_equivalence(
     first_divergence = None
     original_trace = None
     candidate_trace = None
+    minimized_model_values = None
     if result.status == ProofStatus.NOT_EQUIVALENT:
         if result.replay is None:
             # Known limitation: symbolic relocations / opaque callees block
@@ -993,7 +995,10 @@ def check_equivalence(
                 "error": "symbolic-relocations-prevent-concrete-replay",
             }
         else:
-            from .diagnostics import replay_counterexample
+            from .diagnostics import (
+                minimize_counterexample_model,
+                replay_counterexample,
+            )
             replay_info = replay_counterexample(
                 original, candidate, initial_state, contract,
             )
@@ -1014,6 +1019,11 @@ def check_equivalence(
                     result.warnings.append(
                         error or "SAT witness could not be reproduced under ConcreteOps"
                     )
+            else:
+                # Preserve the SAT model; attach a ConcreteOps-verified shrink.
+                minimized_model_values = minimize_counterexample_model(
+                    original, candidate, initial_state, contract,
+                )
 
     memory_dict = (
         result.environment.to_dict() if isinstance(result.environment, MemoryEnvironment)
@@ -1030,6 +1040,7 @@ def check_equivalence(
             "memory_environment": memory_dict,
         },
         "model_values": initial_state,
+        "minimized_model_values": minimized_model_values,
         "original_bin": original_hex,
         "candidate_bin": candidate_hex,
         "relocations": relocation_values,

@@ -14,34 +14,28 @@ from tools.llm_harness.core import Harness
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
     # Check for --show-config early without requiring a command
     show_config = False
     config_path = Path("llm-harness.json")
-    if argv:
-        for i, arg in enumerate(argv):
-            if arg == "--config" and i + 1 < len(argv):
-                config_path = Path(argv[i + 1])
-            elif arg == "--show-config":
-                show_config = True
-    
+    for i, arg in enumerate(argv):
+        if arg == "--config" and i + 1 < len(argv):
+            config_path = Path(argv[i + 1])
+        elif arg == "--show-config":
+            show_config = True
+
     if show_config:
-        config = json.loads(config_path.read_text(encoding="utf-8"))
-        effective = {
-            "project_adapter": config.get("project_adapter"),
-            "output_dir": config.get("output_dir", "build/llm-harness"),
-            "project": config.get("project", {}),
-            "providers": config.get("providers", {}),
-            "execution": config.get("execution", {}),
-            "models": config.get("models", {}),
-            "solve": config.get("solve", {}),
-            "prompt": config.get("prompt", {}),
-        }
-        print(json.dumps(effective, indent=2))
+        harness = Harness(config_path)
+        print(json.dumps(harness.effective_config, indent=2))
         return 0
-    
-    # Normal command parsing
+
     parser = argparse.ArgumentParser(description="Generic project-adapted LLM experiment harness")
     parser.add_argument("--config", type=Path, default=Path("llm-harness.json"))
+    parser.add_argument(
+        "--show-config",
+        action="store_true",
+        help="Print effective configuration and exit",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     for name in ("new", "improve", "tu-complete", "solve"):
         command = sub.add_parser(name)
@@ -50,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
             nargs="?",
             help="Target ID, or unit name for tu-complete",
         )
-        if name in {"new", "improve", "tu-complete"}:
+        if name in {"new", "improve", "tu-complete", "solve"}:
             command.add_argument(
                 "--number",
                 type=int,
@@ -62,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
                 action="store_true",
                 help="Shuffle eligible targets before applying --number",
             )
-        if name in {"new", "improve"}:
+        if name in {"new", "improve", "solve"}:
             command.add_argument(
                 "--certified-funcs",
                 action="store_true",
@@ -78,19 +72,30 @@ def main(argv: list[str] | None = None) -> int:
                 action="store_true",
                 help="Allow automatic selection of functions before their callees are matched",
             )
-        command.add_argument("--runs", type=int)
+        if name != "solve":
+            command.add_argument("--runs", type=int)
         command.add_argument("--dry-run", action="store_true")
         command.add_argument("--resume", type=Path, help="Resume an experiment directory")
-        command.add_argument("--max-cost", type=float, help="Stop before the next call after this recorded cost")
-        command.add_argument("--max-tokens", type=int, help="Stop before the next call after this token total")
+        if name != "solve":
+            command.add_argument("--max-cost", type=float, help="Stop before the next call after this recorded cost")
+            command.add_argument("--max-tokens", type=int, help="Stop before the next call after this token total")
+            command.add_argument("--retry-errors", action="store_true", help="On resume, rerun model/run records with errors")
         command.add_argument("--max-parallel", type=int, help="Override configured parallel candidate count")
-        command.add_argument("--retry-errors", action="store_true", help="On resume, rerun model/run records with errors")
         if name == "tu-complete":
             command.add_argument(
                 "--full-context",
                 action="store_true",
                 help="Opt in to complete-TU input/output instead of bounded TU slots",
             )
+    sample = sub.add_parser(
+        "sample",
+        help="Blind identical-prompt sampling for model research (not the default decompilation path)",
+    )
+    sample.add_argument("workflow", choices=("new", "improve", "tu-complete"))
+    sample.add_argument("target_id")
+    sample.add_argument("--runs", type=int, required=True)
+    sample.add_argument("--dry-run", action="store_true")
+    sample.add_argument("--max-parallel", type=int)
     batch = sub.add_parser(
         "batch", help="Run a workflow for multiple functions or TUs concurrently"
     )
@@ -98,44 +103,36 @@ def main(argv: list[str] | None = None) -> int:
     batch.add_argument("target_ids", nargs="*")
     batch.add_argument(
         "--tu",
-        help="Run on all eligible functions in a translation unit (alternative to positional target_ids)",
+        help="Expand to eligible targets in a translation unit",
     )
     batch.add_argument("--runs", type=int)
     batch.add_argument("--dry-run", action="store_true")
+    batch.add_argument("--max-target-parallel", type=int)
+    batch.add_argument("--model-parallel", type=int)
     batch.add_argument("--full-context", action="store_true")
-    batch.add_argument(
-        "--max-target-parallel",
-        type=int,
-        help="Maximum functions active at once",
-    )
-    batch.add_argument(
-        "--model-parallel",
-        type=int,
-        help="Maximum model/run calls active within each function",
-    )
-    prepare = sub.add_parser("prepare", help="Preview or add markers around an existing target function")
+    prepare = sub.add_parser("prepare", help="Add function markers around an existing definition")
     prepare.add_argument("target_id")
     prepare.add_argument("--write", action="store_true")
-    slot = sub.add_parser("slot", help="Preview or insert an empty marker slot at an exact anchor")
+    slot = sub.add_parser("slot", help="Create a function marker slot")
     slot.add_argument("target_id")
-    slot.add_argument("--file", type=Path, required=True)
-    anchor = slot.add_mutually_exclusive_group(required=True)
-    anchor.add_argument("--before")
-    anchor.add_argument("--after")
-    slot.add_argument("--unit", default="", help="Objdiff unit; required for unassigned targets")
+    slot.add_argument("file", type=Path)
+    slot.add_argument("--before", default="")
+    slot.add_argument("--after", default="")
+    slot.add_argument("--unit", default="")
     slot.add_argument("--write", action="store_true")
-    tu_slot = sub.add_parser(
-        "tu-slot", help="Preview or add a bounded source slot for TU completion"
-    )
+    tu_slot = sub.add_parser("tu-slot", help="Create a TU marker slot")
     tu_slot.add_argument("unit")
     tu_slot.add_argument("slot_id")
-    tu_slot.add_argument("--file", type=Path, required=True)
-    tu_slot.add_argument("--before", help="Insert an empty slot before this exact anchor")
-    tu_slot.add_argument("--after", help="Insert an empty slot after this exact anchor")
-    tu_slot.add_argument("--start", help="Wrap a region beginning at this exact anchor")
-    tu_slot.add_argument("--end", help="Wrap a region ending with this exact anchor")
+    tu_slot.add_argument("file", type=Path)
+    tu_slot.add_argument("--before", default="")
+    tu_slot.add_argument("--after", default="")
+    tu_slot.add_argument("--start", default="")
+    tu_slot.add_argument("--end", default="")
     tu_slot.add_argument("--write", action="store_true")
-    promote = sub.add_parser("promote", help="Preview or apply an experiment's best candidate")
+    promote = sub.add_parser(
+        "promote",
+        help="Explicitly promote a saved experiment candidate into canonical source",
+    )
     promote.add_argument("experiment", type=Path)
     promote.add_argument("--write", action="store_true")
     promote.add_argument("--owner", help="Owner/claimant required for --write")
@@ -146,13 +143,50 @@ def main(argv: list[str] | None = None) -> int:
     repair.add_argument("experiment", type=Path)
     repair.add_argument("--budget", type=int, default=3, help="Max repair iterations")
     repair.add_argument("--dry-run", action="store_true")
-    # pipeline command removed - use solve instead
+    benchmark = sub.add_parser(
+        "benchmark",
+        help="Aggregate solve-vs-sample metrics from saved experiment dirs or emit corpus summary",
+    )
+    benchmark.add_argument(
+        "--corpus",
+        type=Path,
+        default=Path("tools/llm_harness/tests/benchmark/golden_corpus.json"),
+        help="Golden corpus JSON",
+    )
+    benchmark.add_argument(
+        "--solve-experiment",
+        type=Path,
+        action="append",
+        default=[],
+        help="solve experiment directory (repeatable)",
+    )
+    benchmark.add_argument(
+        "--sample-experiment",
+        type=Path,
+        action="append",
+        default=[],
+        help="sample/new experiment directory (repeatable)",
+    )
+    benchmark.add_argument(
+        "--output",
+        type=Path,
+        help="Write comparison JSON report",
+    )
     sub.add_parser("stats")
     args = parser.parse_args(argv)
-    
+
     harness = Harness(args.config)
     if args.command == "stats":
         print(json.dumps(harness.stats(), indent=2))
+        return 0
+    if args.command == "sample":
+        print(harness.run(
+            args.workflow,
+            args.target_id,
+            runs=args.runs,
+            dry_run=args.dry_run,
+            max_parallel=args.max_parallel,
+        ))
         return 0
     if args.command == "batch":
         target_ids = args.target_ids
@@ -162,6 +196,10 @@ def main(argv: list[str] | None = None) -> int:
             target_ids = harness.target_ids_for_unit(args.tu, args.workflow)
         if not target_ids:
             parser.error("batch requires target_ids or --tu")
+        if args.workflow == "solve":
+            for target_id in target_ids:
+                print(harness.solve(target_id, dry_run=args.dry_run, max_parallel=args.model_parallel))
+            return 0
         print(harness.run_batch(
             args.workflow,
             target_ids,
@@ -217,24 +255,106 @@ def main(argv: list[str] | None = None) -> int:
             args.experiment, budget=args.budget, dry_run=args.dry_run
         ))
         return 0
-    if args.command == "pipeline":
-        pipeline_config = parse_config(harness.config)
-        runner = PipelineRunner(
-            adapter=harness.adapter,
-            models=harness.models_for_workflow("new"),
-            providers=harness.providers,
-            promotion_manager=harness.promotion_manager,
-            config=pipeline_config,
-            output_dir=harness.output_dir,
-            max_parallel=args.max_parallel or harness.max_parallel,
+    if args.command == "benchmark":
+        from tools.llm_harness.benchmark import (
+            BenchmarkReport,
+            check_rollout_gates,
+            compare_workflows,
+            load_corpus,
+            metrics_from_experiment_state,
         )
-        experiment = runner.run(
-            args.target_id,
-            experiment_dir=args.resume,
-        )
-        print(json.dumps(experiment.to_json(), indent=2))
+
+        corpus = load_corpus(args.corpus) if args.corpus.is_file() else []
+        by_id = {e.target_id: e for e in corpus}
+        solve_report = BenchmarkReport(name="solve", workflow="solve")
+        sample_report = BenchmarkReport(name="sample", workflow="sample")
+
+        def _ingest(paths: list, report: BenchmarkReport, workflow: str) -> None:
+            for path in paths:
+                state = json.loads((path / "state.json").read_text(encoding="utf-8"))
+                target_id = str(state.get("target_id", ""))
+                entry = by_id.get(target_id)
+                prompt_path = path / "prompt.md"
+                prompt_chars = (
+                    len(prompt_path.read_text(encoding="utf-8"))
+                    if prompt_path.is_file()
+                    else 0
+                )
+                baseline = ((state.get("baseline") or {}).get("evaluation") or {})
+                report.add(
+                    metrics_from_experiment_state(
+                        state,
+                        workflow=workflow,
+                        category=entry.category if entry else "",
+                        size_bucket=entry.size_bucket if entry else "",
+                        baseline_match_percent=float(baseline.get("match_percent") or 0.0),
+                        prompt_chars=prompt_chars,
+                    )
+                )
+
+        _ingest(args.solve_experiment, solve_report, "solve")
+        _ingest(args.sample_experiment, sample_report, "sample")
+
+        payload: dict = {
+            "corpus_summary": {
+                "entries": len(corpus),
+                "categories": sorted({e.category for e in corpus}),
+                "size_buckets": sorted({e.size_bucket for e in corpus}),
+            }
+        }
+        if solve_report.targets or sample_report.targets:
+            comparison = compare_workflows(solve_report, sample_report)
+            payload["comparison"] = comparison
+            payload["gates"] = check_rollout_gates(comparison)
+            payload["solve"] = solve_report.to_dict()
+            payload["sample"] = sample_report.to_dict()
+        print(json.dumps(payload, indent=2))
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         return 0
-    if args.command in {"new", "improve", "tu-complete", "solve"} and args.number is not None:
+    if args.command == "solve":
+        if getattr(args, "number", None) is not None:
+            if args.target_id is not None:
+                parser.error("solve accepts either target_id or --number, not both")
+            target_ids = harness.select_new_targets(
+                args.number,
+                ignore_called_functions=False,
+                certified_funcs=getattr(args, "certified_funcs", False),
+                tu=getattr(args, "tu", None),
+            )
+            for target_id in target_ids:
+                print(harness.solve(
+                    target_id,
+                    dry_run=args.dry_run,
+                    resume=args.resume,
+                    max_parallel=args.max_parallel,
+                ))
+            return 0
+        tu = getattr(args, "tu", None)
+        if tu:
+            if args.target_id is not None:
+                parser.error("solve accepts either target_id or --tu, not both")
+            target_ids = harness.target_ids_for_unit(tu, "new")
+            if not target_ids:
+                parser.error(f"No eligible solve targets found in unit {tu!r}")
+            for target_id in target_ids:
+                print(harness.solve(
+                    target_id,
+                    dry_run=args.dry_run,
+                    max_parallel=args.max_parallel,
+                ))
+            return 0
+        if args.target_id is None:
+            parser.error("solve requires target_id, --number, or --tu")
+        print(harness.solve(
+            args.target_id,
+            dry_run=args.dry_run,
+            resume=args.resume,
+            max_parallel=args.max_parallel,
+        ))
+        return 0
+    if args.command in {"new", "improve", "tu-complete"} and args.number is not None:
         if args.target_id is not None:
             parser.error(f"{args.command} accepts either target_id or --number, not both")
         if args.number < 1:
@@ -246,13 +366,6 @@ def main(argv: list[str] | None = None) -> int:
             )
         try:
             if args.command == "new":
-                target_ids = harness.select_new_targets(
-                    args.number,
-                    ignore_called_functions=args.ignore_called_functions,
-                    certified_funcs=getattr(args, "certified_funcs", False),
-                    tu=getattr(args, "tu", None),
-                )
-            elif args.command == "solve":
                 target_ids = harness.select_new_targets(
                     args.number,
                     ignore_called_functions=args.ignore_called_functions,

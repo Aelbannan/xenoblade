@@ -213,14 +213,6 @@ class SymbolInventory:
 
 
 @dataclass
-class KnowledgeRecord:
-    id: str
-    title: str = ""
-    body: str = ""
-    match_percent: float = 0.0
-
-
-@dataclass
 class AttemptCluster:
     status: str
     match_percent: float = 0.0
@@ -232,14 +224,25 @@ class AttemptCluster:
 @dataclass
 class PromptConstraints:
     max_decoded_instructions: int = 400
-    max_declaration_chars: int = 20000
+    max_declaration_chars: int = 12000
     max_callers: int = 3
     max_caller_chars_each: int = 3000
-    max_accepted_siblings: int = 4
+    max_accepted_siblings: int = 3
     max_accepted_chars_each: int = 5000
-    max_knowledge_records: int = 10
     max_attempt_clusters: int = 8
-    include_raw_hex: bool = True
+    include_raw_hex: bool = False
+
+    @classmethod
+    def from_prompt_config(cls, prompt: Optional[Dict[str, Any]] = None) -> "PromptConstraints":
+        """Build constraints from harness `prompt` section (with defaults)."""
+        cfg = prompt or {}
+        return cls(
+            max_decoded_instructions=int(cfg.get("max_decoded_instructions", 400)),
+            max_declaration_chars=int(cfg.get("max_declaration_chars", 12000)),
+            max_callers=int(cfg.get("max_callers", 3)),
+            max_accepted_siblings=int(cfg.get("max_sibling_bodies", 3)),
+            include_raw_hex=bool(cfg.get("include_raw_hex", False)),
+        )
 
 
 @dataclass
@@ -253,7 +256,6 @@ class TargetDossier:
     types: Optional[TypeContext] = None
     symbols: Optional[SymbolInventory] = None
     accepted_examples: List[Any] = field(default_factory=list)
-    knowledge: List[KnowledgeRecord] = field(default_factory=list)
     prior_attempt_summary: List[AttemptCluster] = field(default_factory=list)
     constraints: Optional[PromptConstraints] = None
     warnings: List[str] = field(default_factory=list)

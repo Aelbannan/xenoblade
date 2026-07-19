@@ -268,27 +268,72 @@ class AtlasAPI:
     def get_artifacts(self, target_id: str) -> Dict[str, Any]:
         with self.db() as conn:
             row = conn.execute("SELECT * FROM artifacts WHERE target_id = ?", (target_id,)).fetchone()
-        if row is None:
-            return {
+            fn = conn.execute(
+                "SELECT target_id, region, kind, display_name, symbol, address, size, source, unit, "
+                "target_object, base_object, status, workflow_status "
+                "FROM functions WHERE target_id = ?",
+                (target_id,),
+            ).fetchone()
+
+        data = row_to_dict(row) if row is not None else None
+        needs_extract = data is None or (
+            not (data.get("retail_asm") or "").strip()
+            and not (data.get("candidate_asm") or "").strip()
+            and not (data.get("cpp_source") or "").strip()
+        )
+        # Also refresh when retail is empty but we have a function record (e.g. .s fallback).
+        if data is not None and not (data.get("retail_asm") or "").strip() and fn is not None:
+            needs_extract = True
+
+        if needs_extract and fn is not None:
+            from tools.decomp_atlas.lib import artifacts as artifacts_mod
+
+            record = row_to_dict(fn) or {}
+            artifact = artifacts_mod.extract_artifacts(root=self.root, record=record)
+            try:
+                with self.db(readonly=False) as conn:
+                    artifacts_mod.upsert_artifact(conn, artifact)
+                    conn.commit()
+            except Exception:
+                # Still return the live extraction even if cache write fails.
+                pass
+            data = {
+                "target_id": target_id,
+                "cpp_source": artifact.get("cpp_source") or "",
+                "retail_asm": artifact.get("retail_asm") or "",
+                "candidate_asm": artifact.get("candidate_asm") or "",
+                "retail_object_hash": artifact.get("retail_object_hash"),
+                "candidate_object_hash": artifact.get("candidate_object_hash"),
+                "source_hash": artifact.get("source_hash"),
+                "updated_at": artifact.get("updated_at"),
+                "relocations": artifact.get("relocations") or [],
+                "decoded": artifact.get("decoded") or [],
+                "warnings": artifact.get("warnings") or [],
+            }
+        elif data is None:
+            data = {
                 "target_id": target_id,
                 "cpp_source": "",
                 "retail_asm": "",
                 "candidate_asm": "",
                 "relocations": [],
                 "decoded": [],
-                "warnings": ["artifacts not indexed; run: index --full"],
+                "warnings": [
+                    "function not in Atlas index; run: python3 tools/decomp_atlas/run.py index"
+                ],
             }
-        data = row_to_dict(row) or {}
-        for key, field in (
-            ("relocations", "relocations_json"),
-            ("decoded", "decoded_json"),
-            ("warnings", "warnings_json"),
-        ):
-            raw = data.pop(field, "[]")
-            try:
-                data[key] = json.loads(raw or "[]")
-            except json.JSONDecodeError:
-                data[key] = []
+        else:
+            for key, field in (
+                ("relocations", "relocations_json"),
+                ("decoded", "decoded_json"),
+                ("warnings", "warnings_json"),
+            ):
+                raw = data.pop(field, "[]")
+                try:
+                    data[key] = json.loads(raw or "[]")
+                except json.JSONDecodeError:
+                    data[key] = []
+
         # Frontend-friendly aliases
         data["source_cpp"] = data.get("cpp_source") or ""
         data["retail_ppc"] = data.get("retail_asm") or ""

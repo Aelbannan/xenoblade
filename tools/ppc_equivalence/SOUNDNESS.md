@@ -1,5 +1,30 @@
 # Soundness specification
 
+<!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
+
+- Architecture model: `broadway-ppc32-be-v23`
+- Result format: `9`
+- Certificate format: `2`
+
+<!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
+<!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
+
+| Status | Value |
+|---|---|
+| `EQUIVALENT` | `equivalent` |
+| `NOT_EQUIVALENT` | `not_equivalent` |
+| `INCONCLUSIVE_TIMEOUT` | `inconclusive_timeout` |
+| `INCONCLUSIVE_UNKNOWN` | `inconclusive_unknown` |
+| `INCONCLUSIVE_UNSUPPORTED` | `inconclusive_unsupported` |
+| `INCONCLUSIVE_ABSTRACTION` | `inconclusive_abstraction` |
+| `INCONCLUSIVE_LAYOUT` | `inconclusive_layout` |
+| `INCONCLUSIVE_UNVALIDATED_CALLEE` | `inconclusive_unvalidated_callee` |
+| `INCONCLUSIVE_UNMODELED_EXCEPTION` | `inconclusive_unmodeled_exception` |
+| `INVALID_INPUT` | `invalid_input` |
+| `INTERNAL_ERROR` | `internal_error` |
+
+<!-- END GENERATED PROOF_STATUS_TABLE -->
+
 ## Theorem
 
 For all shared initial machine states satisfying the selected contract
@@ -266,7 +291,7 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 | Current callee certificate chain | `_re attest_certificate_tree`, `equivalence_certificate_error` | `test_targets.test_validation_rejects_stale_certificate_dependency` | `equivalence_certificate.callees` |
 | Precise composed callee summaries | `callee_inference.infer_matched_callee_contracts` | `test_callee_composition.py` | `callee_contracts.*.source` |
 | CLI no silent relocated assume | `cli._run_check` | `test_callee_composition.py` | stderr warning / inconclusive |
-| Deadline covering all phases | `deadline.Deadline`, `engine.check_with_portfolio` | `test_deadline.py` | `solver.phases` |
+| Deadline covering CFG, constraints, and solve | `deadline.Deadline`, `semantics.execute_cfg`, `engine.check_equivalence` | `test_deadline.py` | `status=INCONCLUSIVE_TIMEOUT`, `solver.phases` |
 | Cache includes architecture model | `_cache_key`, `_cache_get` | `test_targets` versioning tests | cache JSON |
 | Alignment constraint | `semantics` load/store `valid` predicate | `test_symbolic_relocations` alignment tests | `assumptions` |
 | No vacuous proof through impossible layout | `engine.check_equivalence` layout feasibility | layout tests | `status=INCONCLUSIVE_LAYOUT` |

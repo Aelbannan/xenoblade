@@ -6977,7 +6977,42 @@
         "note": "llm-harness auto-promote"
       },
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 2,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v23",
+        "result_format": 9,
+        "target_id": "us-80040da0",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "edd190e37f1704db2fe135825cb539121c345ac8f06b795c159087d32c67eef5",
+        "candidate_sha256": "ca15b504807cad3a5287a9df3319b32358f13e820c8bef4eb5716170e3799bef",
+        "summary": {
+          "reads": [
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "fpscr",
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "memory",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "23abf6645cae1a4975a74de33698710fa4c2abbf03c7eac1caa30056a536d27e",
+        "certificate_sha256": "d8d894e3f50f739fee61e89ed26ee8b429ebbfbd04ad4d3b10d98683199c8963"
+      }
     },
     {
       "id": "us-80040db4",
@@ -8520,7 +8555,29 @@
         "note": "llm-harness auto-promote"
       },
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 2,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v23",
+        "result_format": 9,
+        "target_id": "us-80043920",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "cb4ac596f7bac0a5c5f66a484109e4e6f99da551df679260b2a785a8c76a2d78",
+        "candidate_sha256": "2d329540eab3dcdcfd6b94bcf1b487a500642bd8d293fd587433efc2e5e934d6",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "23abf6645cae1a4975a74de33698710fa4c2abbf03c7eac1caa30056a536d27e",
+        "certificate_sha256": "b6709c9f2d7425bf28d7c55327ee6c0cf8c89a5e966a72621c6d857fb2273b07"
+      }
     },
     {
       "id": "us-80043928",
@@ -35871,7 +35928,7 @@
       "source": "src/kyoshin/cf/CfCam.cpp",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH via extern-C ctor + SDA floats; §17.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)",
+      "notes": "FULL_MATCH via extern-C ctor + SDA floats; \u00a717.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -103547,7 +103604,7 @@
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Create TU; PackedFont Destroy×3 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4",
+      "notes": "Create TU; PackedFont Destroy\u00d73 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -112457,7 +112514,7 @@
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries → vt+0x1c; leave other vfuncs; size 0x12C",
+      "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries \u2192 vt+0x1c; leave other vfuncs; size 0x12C",
       "status": "HIGH_MATCH",
       "instruction_match": 75.04,
       "workflow_status": "ACTIVE",
@@ -112922,7 +112979,7 @@
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Batch 14h; leaf id→mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160",
+      "notes": "Batch 14h; leaf id\u2192mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -114456,7 +114513,7 @@
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Clear + 3×8 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C",
+      "notes": "Clear + 3\u00d78 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -134311,7 +134368,7 @@
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "unit": "kyoshin/menu/CMenuPTGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH; gates + DrawInfo draw; §17.6 asm b for bit21 beq+8;b; leave Move",
+      "notes": "FULL_MATCH; gates + DrawInfo draw; \u00a717.6 asm b for bit21 beq+8;b; leave Move",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -152466,7 +152523,7 @@
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH via volatile stick reload + setPad__…Fv reloc",
+      "notes": "FULL_MATCH via volatile stick reload + setPad__\u2026Fv reloc",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -423093,7 +423150,7 @@
       "source": "libs/monolib/src/util/MemManager.cpp",
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr — return SDA handle, not sHandleMEM2",
+      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr \u2014 return SDA handle, not sHandleMEM2",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -428594,7 +428651,7 @@
       "source": "libs/monolib/src/core/CViewFrame.cpp",
       "unit": "monolib/src/core/CViewFrame",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded §17.6 Chaitin register-color patches; behaviour cviewframe-render PASS",
+      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded \u00a717.6 Chaitin register-color patches; behaviour cviewframe-render PASS",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -429035,7 +429092,7 @@
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded §17.6 frame/register patches; behaviour host PASS",
+      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded \u00a717.6 frame/register patches; behaviour host PASS",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -429387,7 +429444,7 @@
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded §17.6 Chaitin/CSE patches",
+      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded \u00a717.6 Chaitin/CSE patches",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -441001,7 +441058,7 @@
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
       "unit": "monolib/src/device/CDeviceGX",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr — return SDA int, not spInstance->gxHeapSize",
+      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr \u2014 return SDA int, not spInstance->gxHeapSize",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",

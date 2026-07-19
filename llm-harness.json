@@ -26,9 +26,9 @@
       "temperature": 0.1,
       "max_tokens": 4096,
       "json_object": true,
-      "enable_thinking": true,
-      "reasoning_effort": "low",
-      "thinking_budget": 1024
+      "enable_thinking": false,
+      "reasoning_effort": "none",
+      "thinking_budget": 0
     }
   },
   "models": {
@@ -36,7 +36,7 @@
       {
         "id": "lmstudio-local",
         "provider": "lmstudio",
-        "model": "google/gemma-4-26b-a4b",
+        "model": "qwen/qwen3.6-27b",
         "runs": 1
       }
     ],
@@ -44,7 +44,7 @@
       {
         "id": "lmstudio-local",
         "provider": "lmstudio",
-        "model": "google/gemma-4-26b-a4b",
+        "model": "qwen/qwen3.6-27b",
         "runs": 1
       }
     ],
@@ -52,7 +52,7 @@
       {
         "id": "lmstudio-local",
         "provider": "lmstudio",
-        "model": "google/gemma-4-26b-a4b",
+        "model": "qwen/qwen3.6-27b",
         "runs": 1
       }
     ],
@@ -60,7 +60,7 @@
       {
         "id": "lmstudio-local",
         "provider": "lmstudio",
-        "model": "google/gemma-4-26b-a4b",
+        "model": "qwen/qwen3.6-27b",
         "runs": 1
       }
     ]

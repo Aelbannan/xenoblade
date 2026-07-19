@@ -18,6 +18,31 @@ An `equivalent` result is scoped to the listed observables and assumptions. An
 unsupported instruction, timeout, or solver `unknown` is always
 `inconclusive`; the check never treats unsupported behavior as a no-op.
 
+<!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
+
+- Architecture model: `broadway-ppc32-be-v23`
+- Result format: `9`
+- Certificate format: `2`
+
+<!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
+<!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
+
+| Status | Value |
+|---|---|
+| `EQUIVALENT` | `equivalent` |
+| `NOT_EQUIVALENT` | `not_equivalent` |
+| `INCONCLUSIVE_TIMEOUT` | `inconclusive_timeout` |
+| `INCONCLUSIVE_UNKNOWN` | `inconclusive_unknown` |
+| `INCONCLUSIVE_UNSUPPORTED` | `inconclusive_unsupported` |
+| `INCONCLUSIVE_ABSTRACTION` | `inconclusive_abstraction` |
+| `INCONCLUSIVE_LAYOUT` | `inconclusive_layout` |
+| `INCONCLUSIVE_UNVALIDATED_CALLEE` | `inconclusive_unvalidated_callee` |
+| `INCONCLUSIVE_UNMODELED_EXCEPTION` | `inconclusive_unmodeled_exception` |
+| `INVALID_INPUT` | `invalid_input` |
+| `INTERNAL_ERROR` | `internal_error` |
+
+<!-- END GENERATED PROOF_STATUS_TABLE -->
+
 ## Install
 
 From the repository root:

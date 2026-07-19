@@ -15,6 +15,8 @@ from tools.coop.lib.targets import (
     import_symbols,
     load_split_ranges,
     parse_asm_calls,
+    plan_recertify_bottom_up,
+    recertify_ready_wave,
     release_target,
     validate_targets,
     equivalence_certificate_hash,
@@ -357,6 +359,120 @@ class TargetRegistryTests(unittest.TestCase):
             len(full_match_errors), 0,
             f"FULL_MATCH should not be flagged: {full_match_errors}",
         )
+
+    def test_recertify_bottom_up_orders_leaves_before_callers(self) -> None:
+        def target(
+            target_id: str,
+            status: str,
+            *,
+            workflow_status: str = "ACCEPTED",
+            **extra,
+        ) -> Target:
+            return Target(
+                id=target_id,
+                tier="P9",
+                milestone="unassigned",
+                function=target_id,
+                symbol=target_id,
+                address="0x1",
+                source=self.root / "src/foo/Bar.cpp",
+                unit="foo/Bar",
+                required_level="EQUIVALENT_MATCH",
+                status=status,
+                workflow_status=workflow_status,
+                extra=extra,
+            )
+
+        leaf = target(
+            "leaf",
+            "FULL_MATCH",
+            callgraph_status="complete",
+            called_functions=[],
+        )
+        mid = target(
+            "mid",
+            "FULL_MATCH",
+            callgraph_status="complete",
+            called_functions=["leaf"],
+        )
+        root = target(
+            "root",
+            "EQUIVALENT_MATCH",
+            callgraph_status="complete",
+            called_functions=["mid"],
+            equivalence_certificate=_certificate("root", [{
+                "target_id": "mid",
+                "certificate_sha256": "f" * 64,
+            }]),
+        )
+        already = target(
+            "already",
+            "FULL_MATCH",
+            callgraph_status="complete",
+            called_functions=[],
+            equivalence_certificate=_certificate("already"),
+        )
+        blocked = target(
+            "blocked",
+            "FULL_MATCH",
+            callgraph_status="complete",
+            called_functions=["missing"],
+        )
+        indirect = target(
+            "indirect",
+            "FULL_MATCH",
+            callgraph_status="complete",
+            called_functions=[],
+            has_indirect_calls=True,
+        )
+        pending = target(
+            "pending",
+            "NOT_STARTED",
+            workflow_status="QUEUED",
+            callgraph_status="complete",
+            called_functions=[],
+        )
+        rows = [root, mid, leaf, already, blocked, indirect, pending]
+        plan = plan_recertify_bottom_up(rows)
+        self.assertEqual([item.id for item in plan.ordered], ["leaf", "mid", "root"])
+        self.assertEqual(plan.reasons["leaf"], "missing equivalence_certificate")
+        self.assertIn("callee certificate changed", plan.reasons["root"])
+        self.assertEqual(
+            {item.id for item in plan.blocked},
+            {"blocked", "indirect"},
+        )
+        self.assertIn("uncertified callees", plan.block_reasons["blocked"])
+        self.assertIn("indirect", plan.block_reasons["indirect"])
+
+        wave = recertify_ready_wave(rows)
+        self.assertEqual([item.id for item in wave], ["leaf"])
+
+        leaf_certified = target(
+            "leaf",
+            "FULL_MATCH",
+            callgraph_status="complete",
+            called_functions=[],
+            equivalence_certificate=_certificate("leaf"),
+        )
+        rows_after_leaf = [root, mid, leaf_certified, already, blocked, indirect, pending]
+        self.assertEqual(
+            [item.id for item in recertify_ready_wave(rows_after_leaf)],
+            ["mid"],
+        )
+
+        caller = target(
+            "caller",
+            "NOT_STARTED",
+            workflow_status="QUEUED",
+            callgraph_status="complete",
+            called_functions=["leaf"],
+        )
+        frontier = harness_targets(
+            [leaf_certified, caller],
+            selection="callees-accepted",
+            include_catalog=True,
+        )
+        self.assertEqual([item.id for item in frontier], ["caller"])
 
 
 if __name__ == "__main__":

@@ -13,5 +13,6 @@
   "objdiff_report_args": [
     "--config",
     "functionRelocDiffs=data_value"
-  ]
+  ],
+  "automatic_promotion": true
 }

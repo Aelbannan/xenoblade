@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronise version metadata and ProofStatus docs in the project README.
+"""Synchronise version metadata and ProofStatus docs across project manuals.
 
 Usage:
     python -m tools.ppc_equivalence.docs_sync --write
@@ -19,7 +19,13 @@ if str(ROOT) not in sys.path:
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
 from tools.coop.lib.targets import EQUIVALENCE_CERTIFICATE_VERSION
 
+PACKAGE = Path(__file__).resolve().parent
 README = ROOT / "README.md"
+PACKAGE_README = PACKAGE / "README.md"
+SOUNDNESS = PACKAGE / "SOUNDNESS.md"
+
+# Root README plus package manuals that carry generated version/status blocks.
+DOC_PATHS: tuple[Path, ...] = (README, PACKAGE_README, SOUNDNESS)
 
 VERSION_BEGIN = "<!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->"
 VERSION_END = "<!-- END GENERATED PPC_EQUIVALENCE_VERSION -->"
@@ -80,25 +86,48 @@ def replace_section(text: str, begin: str, end: str, replacement: str) -> str:
     return "".join(lines)
 
 
-def generate_readme(readme_path: Path) -> str:
-    text = readme_path.read_text(encoding="utf-8")
+def generate_document(path: Path) -> str:
+    """Refresh generated version/status sections in a single markdown file."""
+    text = path.read_text(encoding="utf-8")
     text = replace_section(text, VERSION_BEGIN, VERSION_END, generate_version_block())
     text = replace_section(text, TABLE_BEGIN, TABLE_END, generate_status_table())
     return text
 
 
-def _run(write: bool, check: bool, readme: Path) -> int:
+def generate_readme(readme_path: Path) -> str:
+    """Backward-compatible alias for :func:`generate_document`."""
+    return generate_document(readme_path)
+
+
+def _normalize_paths(paths: Path | list[Path] | tuple[Path, ...]) -> list[Path]:
+    if isinstance(paths, Path):
+        return [paths]
+    return list(paths)
+
+
+def _run(
+    write: bool,
+    check: bool,
+    paths: Path | list[Path] | tuple[Path, ...] = DOC_PATHS,
+) -> int:
+    targets = _normalize_paths(paths)
     if write:
-        updated = generate_readme(readme)
-        readme.write_text(updated, encoding="utf-8")
-        print(f"wrote {readme}")
+        for path in targets:
+            updated = generate_document(path)
+            path.write_text(updated, encoding="utf-8")
+            print(f"wrote {path}")
         return 0
     if check:
-        current = readme.read_text(encoding="utf-8")
-        expected = generate_readme(readme)
-        if current == expected:
+        stale: list[Path] = []
+        for path in targets:
+            current = path.read_text(encoding="utf-8")
+            expected = generate_document(path)
+            if current != expected:
+                stale.append(path)
+        if not stale:
             return 0
-        print("README.md is stale; run docs_sync.py --write", file=sys.stderr)
+        for path in stale:
+            print(f"{path} is stale; run docs_sync.py --write", file=sys.stderr)
         return 1
     return 0
 
@@ -106,10 +135,18 @@ def _run(write: bool, check: bool, readme: Path) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--write", action="store_true", help="write generated content to README.md")
-    group.add_argument("--check", action="store_true", help="verify README.md is up to date")
+    group.add_argument(
+        "--write",
+        action="store_true",
+        help="write generated content to tracked manuals",
+    )
+    group.add_argument(
+        "--check",
+        action="store_true",
+        help="verify tracked manuals are up to date",
+    )
     args = parser.parse_args()
-    return _run(args.write, args.check, README)
+    return _run(args.write, args.check, DOC_PATHS)
 
 
 if __name__ == "__main__":

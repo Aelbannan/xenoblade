@@ -11,6 +11,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from tools.coop.lib.config import CoopConfig, _load_yaml
 from tools.symbolrecover.lib.mwcc import demangle_symbol
 from tools.symbolrecover.lib.parser import SymbolEntry, load_symbols
+from tools.ppc_equivalence.proof_features import validate_proof_features
 from tools.ppc_equivalence.provenance import hash_engine_tree
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
@@ -103,6 +104,13 @@ def equivalence_certificate_error(
         return "certificate does not guarantee normal return"
     if certificate.get("certificate_sha256") != equivalence_certificate_hash(certificate):
         return "certificate_sha256 does not match certificate payload"
+
+    proof_features_error = validate_proof_features(
+        certificate,
+        require_equivalent_ready=row.get("status") == "EQUIVALENT_MATCH",
+    )
+    if proof_features_error is not None:
+        return f"certificate proof_features invalid: {proof_features_error}"
 
     dependencies = certificate.get("callees")
     if not isinstance(dependencies, list):

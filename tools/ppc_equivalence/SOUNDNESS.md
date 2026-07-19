@@ -336,5 +336,36 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 | `opcodes_used` | string[] | Opcodes enumerated for ledger confidence tiering |
 | `engine_hash` | string | SHA-256 of declared engine trust-boundary tree |
 | `source_hash` | string | Canonical hash of proof-request inputs |
+| `proof_features` | string[] | Declared proof features used by this result (optional) |
+| `address_space` | object | Obligation block for `readonly-image` (optional) |
+| `indirect_targets` | object | Obligation block for `indirect-target-closure` (optional) |
 | `git_commit` / `git_dirty` | string / bool | Repository identity at proof time |
 | `platform` / `python_version` / `z3_version` / `capstone_version` | string | Runtime identity |
+
+## Proof features and obligations
+
+Future soundness extensions (readonly image regions, indirect-target closure,
+and similar) must declare which features were used and attach a matching
+obligation block. The schema is:
+
+```json
+{
+  "proof_features": ["readonly-image", "indirect-target-closure"],
+  "address_space": {},
+  "indirect_targets": {}
+}
+```
+
+Rules (enforced by `tools.ppc_equivalence.proof_features`):
+
+- `proof_features` is mandatory whenever a proof relies on a feature.
+- Each listed feature requires its obligation key: `readonly-image` →
+  `address_space`, `indirect-target-closure` → `indirect_targets`.
+- Obligation blocks without a matching `proof_features` entry are rejected
+  (optional sub-fields alone cannot forge completeness).
+- Unknown features, malformed types, missing obligation blocks, or reserved
+  features that are not yet implemented fail closed: an `EQUIVALENT` result is
+  demoted to `INCONCLUSIVE_UNSUPPORTED` and stored certificates are rejected.
+- When no features are declared and no obligation blocks are present, legacy
+  proofs and certificates remain valid (result format and architecture model are
+  unchanged until a feature can actually return `EQUIVALENT`).

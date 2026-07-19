@@ -360,6 +360,11 @@ class ProofResult:
     # Domain-exception codes from callee summaries / certificates (InvalidReason).
     # Non-empty forces Tier C so promotion cannot ignore definedness gaps.
     invalid_reasons: list[int] = field(default_factory=list)
+    # Optional proof-feature declarations and obligation blocks. Omitted when
+    # empty for backward compatibility with pre-feature certificates.
+    proof_features: list[str] = field(default_factory=list)
+    address_space: dict[str, Any] | None = None
+    indirect_targets: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -382,4 +387,10 @@ class ProofResult:
             value.pop("limits", None)
         if not self.invalid_reasons:
             value.pop("invalid_reasons", None)
+        if not self.proof_features:
+            value.pop("proof_features", None)
+        if self.address_space is None:
+            value.pop("address_space", None)
+        if self.indirect_targets is None:
+            value.pop("indirect_targets", None)
         return value

@@ -7,9 +7,10 @@ here matches retail ``main.dol`` for every Xenoblade region:
 - ``0x00`` — 7 ``u32`` text-section file offsets
 - ``0x1C`` — 11 ``u32`` data-section file offsets
 - ``0x48`` — 7 ``u32`` text-section virtual addresses
-- ``0x6C`` — 11 ``u32`` data-section virtual addresses
+- ``0x64`` — 11 ``u32`` data-section virtual addresses
 - ``0x90`` — 7 ``u32`` text-section sizes
-- ``0xB8`` — 11 ``u32`` data-section sizes
+- ``0xAC`` — 11 ``u32`` data-section sizes
+- ``0xD8`` — BSS address / size (``u32`` each)
 - ``0xE0`` — entry-point ``u32``
 
 The SMT equivalence checker accepts raw big-endian instruction bytes plus a
@@ -28,13 +29,16 @@ import struct
 from dataclasses import dataclass
 from pathlib import Path
 
-# DOL header positions, in bytes, all big-endian u32.
+# DOL header positions, in bytes, all big-endian u32 (standard broadway DOL).
 _TEXT_OFFSETS = slice(0x00, 0x1C)
 _DATA_OFFSETS = slice(0x1C, 0x48)
 _TEXT_ADDRS = slice(0x48, 0x64)
-_DATA_ADDRS = slice(0x6C, 0x98)
+_DATA_ADDRS = slice(0x64, 0x90)
 _TEXT_SIZES = slice(0x90, 0xAC)
-_DATA_SIZES = slice(0xB8, 0xE4)
+_DATA_SIZES = slice(0xAC, 0xD8)
+_BSS_ADDR = 0xD8
+_BSS_SIZE = 0xDC
+_ENTRY = 0xE0
 _HEADER_SIZE = 0x100
 
 
@@ -94,7 +98,11 @@ def _list_sections(
     for index, (off, addr, size) in enumerate(zip(offsets, addrs, sizes)):
         if off == 0 and size == 0:
             continue
-        if addr == 0:
+        if off == 0:
+            # Unused DOL slots often leave a nonzero size with file offset zero
+            # (which would point at the header, not section payload).
+            continue
+        if addr == 0 or size == 0:
             continue
         end = off + size
         if end > len(data):

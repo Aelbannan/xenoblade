@@ -162,6 +162,13 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 - 32-bit address wraparound is rejected through the layout-feasibility check.
 - The initial memory array is shared between both implementations. Private-stack
   bytes are replaced with the common initial byte on each side independently.
+- **AddressSpace router (scaffold):** `address_space.py` models ordered,
+  non-overlapping regions (`ram`, `rom-image`, `mmio`, `unmapped`) and provides
+  concrete `classify` / `classify_range` helpers for future `bus_load` /
+  `bus_store` routing. Symbolic accesses that may span regions are intended to
+  path-split or fail inconclusive; this module is **not yet wired into the
+  solver or proof promotion path** and does not produce `EQUIVALENT` claims on
+  its own.
 
 ### Contracts
 

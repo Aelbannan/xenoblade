@@ -59,6 +59,7 @@ static double
 
 static double zero = 0.0;
 
+// LLM-HARNESS-BEGIN: us-802ca9e4
 #ifdef __STDC__
 double __ieee754_log10(double x)
 #else
@@ -96,7 +97,5 @@ double __ieee754_log10(x) double x;
 	z       = y * log10_2lo + ivln10 * __ieee754_log(x);
 	return z + y * log10_2hi;
 }
-
-// LLM-HARNESS-BEGIN: us-802ca9e4
-void __ieee754_log10() {}
 // LLM-HARNESS-END: us-802ca9e4
+

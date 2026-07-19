@@ -55,6 +55,7 @@ static double
     S5 = -2.50507602534068634195e-08, /* 0xBE5AE5E6, 0x8A2B9CEB */
     S6 = 1.58969099521155010221e-10;  /* 0x3DE5D93A, 0x5ACFD57C */
 
+// LLM-HARNESS-BEGIN: us-802cce58
 #ifdef __STDC__
 double __kernel_sin(double x, double y, int iy)
 #else
@@ -78,7 +79,5 @@ int iy; /* iy=0 if y is zero */
 	else
 		return x - ((z * (half * y - v * r) - y) - v * S1);
 }
-
-// LLM-HARNESS-BEGIN: us-802cce58
-void __kernel_sin() {}
 // LLM-HARNESS-END: us-802cce58
+

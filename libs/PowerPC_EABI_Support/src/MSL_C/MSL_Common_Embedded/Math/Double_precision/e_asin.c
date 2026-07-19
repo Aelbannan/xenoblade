@@ -65,6 +65,7 @@ static double
     qS3 = -6.88283971605453293030e-01,                       /* 0xBFE6066C, 0x1B8D0159 */
     qS4 = 7.70381505559019352791e-02;                        /* 0x3FB3B8C5, 0xB12E9282 */
 
+// LLM-HARNESS-BEGIN: us-802c9ec0
 #ifdef __STDC__
 double __ieee754_asin(double x)
 #else
@@ -115,7 +116,5 @@ double __ieee754_asin(x) double x;
 	else
 		return -t;
 }
-
-// LLM-HARNESS-BEGIN: us-802c9ec0
-void __ieee754_asin() {}
 // LLM-HARNESS-END: us-802c9ec0
+

@@ -58,25 +58,16 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         }
         self.assertIsNone(validate_proof_features(payload))
 
-    def test_unsupported_feature_cannot_stay_equivalent(self) -> None:
+    def test_supported_features_can_stay_equivalent(self) -> None:
         result = ProofResult(
             status=ProofStatus.EQUIVALENT,
-            proof_features=["readonly-image"],
+            proof_features=["readonly-image", "indirect-target-closure"],
             address_space={},
-        )
-        gated = enforce_equivalent_proof_features(result)
-        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
-        self.assertTrue(gated.warnings)
-        self.assertIn("readonly-image", gated.warnings[0])
-
-    def test_unsupported_indirect_targets_cannot_stay_equivalent(self) -> None:
-        result = ProofResult(
-            status=ProofStatus.EQUIVALENT,
-            proof_features=["indirect-target-closure"],
             indirect_targets={},
         )
         gated = enforce_equivalent_proof_features(result)
-        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
+        self.assertEqual(UNSUPPORTED_FOR_EQUIVALENT, frozenset())
 
     def test_non_equivalent_status_is_not_demoted(self) -> None:
         result = ProofResult(
@@ -96,10 +87,9 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertEqual(payload["proof_features"], ["readonly-image"])
         self.assertEqual(payload["address_space"], {"regions": []})
 
-    def test_registry_lists_reserved_features(self) -> None:
+    def test_registry_lists_known_features(self) -> None:
         self.assertIn("readonly-image", KNOWN_PROOF_FEATURES)
         self.assertIn("indirect-target-closure", KNOWN_PROOF_FEATURES)
-        self.assertEqual(KNOWN_PROOF_FEATURES, UNSUPPORTED_FOR_EQUIVALENT)
 
 
 if __name__ == "__main__":

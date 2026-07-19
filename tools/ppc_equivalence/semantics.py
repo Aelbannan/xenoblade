@@ -3079,6 +3079,7 @@ def execute_cfg(
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     floating_point_domain: FloatingPointDomain | None = None,
     deadline: Deadline | None = None,
+    jump_table_targets: dict[int, tuple[int, ...]] | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
@@ -3099,6 +3100,7 @@ def execute_cfg(
             assumed_callees_used=assumed_callees_used,
             callee_contracts=callee_contracts,
             deadline=deadline,
+            jump_table_targets=jump_table_targets,
         )
     finally:
         _FP_DOMAIN.reset(domain_token)
@@ -3116,6 +3118,7 @@ def _execute_cfg_body(
     assumed_callees_used: set[int | str] | None,
     callee_contracts: dict[int | str, CalleeContract] | None,
     deadline: Deadline | None = None,
+    jump_table_targets: dict[int, tuple[int, ...]] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -3304,6 +3307,33 @@ def _execute_cfg_body(
         else:
             target = ops.band(old_ctr, ops.const(0xFFFFFFFC))
             kind = "call-indirect" if insn.link else "indirect-branch"
+
+        # Proven jump-table closure: split the taken edge into one path per
+        # enumerated CTR target (plan: enqueue under taken ∧ CTR == addr).
+        closed_targets = None if jump_table_targets is None else jump_table_targets.get(pc)
+        if (
+            closed_targets is not None
+            and insn.opcode == Opcode.BCCTR
+            and not insn.link
+            and kind == "indirect-branch"
+        ):
+            aligned_ctr = ops.band(old_ctr, ops.const(0xFFFFFFFC))
+            for target_pc in closed_targets:
+                aligned = target_pc & 0xFFFFFFFC
+                case_condition = ops.land(
+                    taken_condition,
+                    ops.eq(aligned_ctr, ops.const(aligned)),
+                )
+                if aligned in by_address or aligned == end:
+                    enqueue(
+                        aligned, branched_state, case_condition, new_visits, steps + 1,
+                    )
+                else:
+                    record_terminal(
+                        case_condition, branched_state, "direct-branch", ops.const(aligned),
+                    )
+            enqueue(pc + 4, branched_state, fall_condition, new_visits, steps + 1)
+            continue
 
         if isinstance(target, int) and (target in by_address or target == end):
             enqueue(target, branched_state, taken_condition, new_visits, steps + 1)

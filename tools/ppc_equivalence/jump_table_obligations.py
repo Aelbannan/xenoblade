@@ -18,6 +18,29 @@ from tools.ppc_equivalence.ir import Instruction
 from tools.ppc_equivalence.jump_table import JumpTableCandidate, find_jump_table_candidates
 
 
+@dataclass(frozen=True)
+class JumpTableProofContext:
+    """Premises for a jump-table EQUIVALENT attempt.
+
+    ``branch_pc`` is the ``bctr`` address. Optional ``candidate_branch_pc``
+    covers differently-based candidate images. ``table_base_reg`` / ``index_reg``
+    are constrained as proof premises (base VA and unsigned index ``< len(words)``).
+    """
+
+    table: JumpTableWords
+    branch_pc: int
+    candidate_branch_pc: int | None = None
+    table_base_reg: int = 3
+    index_reg: int = 0
+
+    def expansion_map(self) -> dict[int, tuple[int, ...]]:
+        targets = tuple(word & 0xFFFFFFFC for word in self.table.words)
+        mapping = {self.branch_pc: targets}
+        if self.candidate_branch_pc is not None:
+            mapping[self.candidate_branch_pc] = targets
+        return mapping
+
+
 REQUIRED_ADDRESS_SPACE_KEYS = frozenset({
     "kind",
     "base",

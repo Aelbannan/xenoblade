@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.coop.lib.targets import EQUIVALENCE_CERTIFICATE_VERSION
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
 from tools.ppc_equivalence.docs_sync import (
     DOC_PATHS,
@@ -29,7 +30,7 @@ class TestDocsSync(unittest.TestCase):
         self.assertIn(VERSION_END, block)
         self.assertIn(ARCHITECTURE_MODEL, block)
         self.assertIn(f"`{RESULT_FORMAT}`", block)
-        self.assertIn("`2`", block)
+        self.assertIn(f"`{EQUIVALENCE_CERTIFICATE_VERSION}`", block)
 
     def test_status_table_contains_all_statuses(self) -> None:
         block = generate_status_table()

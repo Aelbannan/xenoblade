@@ -19,7 +19,15 @@ from .memory_profile import (
 )
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concrete_state
 from .proof_features import enforce_equivalent_proof_features
-from .jump_table_obligations import jump_table_gate_reason
+from .jump_table_obligations import (
+    JumpTableProofContext,
+    build_indirect_targets_obligation,
+    build_readonly_image_obligation,
+    indirect_target_closure_constraints,
+    jump_table_gate_reason,
+    rom_image_byte_constraints,
+    rom_image_no_write_constraints,
+)
 from .provenance import canonical_json_sha256, hash_engine_tree
 from .result import (
     ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
@@ -1039,6 +1047,7 @@ def check_equivalence(
     diagnostics_out: str | None = None,
     concrete_samples: int = 0,
     concrete_sample_seed: int = 0,
+    jump_table: JumpTableProofContext | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -1048,6 +1057,7 @@ def check_equivalence(
     # Wall-clock budget covers CFG exploration and constraint construction as
     # well as solving, so path explosion cannot run past the user timeout.
     deadline = Deadline.after_ms(contract.timeout_ms)
+    jump_targets = None if jump_table is None else jump_table.expansion_map()
 
     def _early_timeout(phase: str) -> ProofResult:
         return ProofResult(
@@ -1100,6 +1110,7 @@ def check_equivalence(
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
             deadline=deadline,
+            jump_table_targets=jump_targets,
         )
         candidate_exits = execute_cfg(
             initial, candidate, ops,
@@ -1109,6 +1120,7 @@ def check_equivalence(
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
             deadline=deadline,
+            jump_table_targets=jump_targets,
         )
     except ProofDeadlineExceeded as exc:
         return _early_timeout(exc.phase)
@@ -1164,6 +1176,39 @@ def check_equivalence(
         ops,
     )
     layout_constraints.extend(memory_constraints)
+
+    if jump_table is not None:
+        base_reg = jump_table.table_base_reg
+        index_reg = jump_table.index_reg
+        if not (0 <= base_reg <= 31 and 0 <= index_reg <= 31):
+            raise ValueError("jump table base/index registers must be GPRs 0..31")
+        layout_constraints.append(
+            ops.eq(initial.gpr[base_reg], ops.const(jump_table.table.base)),
+        )
+        layout_constraints.append(
+            ops.unsigned_lt(
+                initial.gpr[index_reg],
+                ops.const(len(jump_table.table.words)),
+            ),
+        )
+        layout_constraints.extend(
+            rom_image_byte_constraints(initial.memory, jump_table.table, ops)
+        )
+        layout_constraints.extend(
+            rom_image_no_write_constraints(
+                original_exits + candidate_exits,
+                initial.memory,
+                jump_table.table,
+                ops,
+            )
+        )
+        layout_constraints.extend(
+            indirect_target_closure_constraints(
+                original_exits + candidate_exits,
+                target_pcs=jump_table.table.words,
+                ops=ops,
+            )
+        )
 
     try:
         deadline.require_time("solve")
@@ -1285,11 +1330,26 @@ def check_equivalence(
             original_hex=original_hex,
             candidate_hex=candidate_hex,
         )
+        if jump_table is not None:
+            early.proof_features = ["readonly-image", "indirect-target-closure"]
+            early.address_space = build_readonly_image_obligation(
+                jump_table.table, no_write_status="unsat",
+            )
+            early.indirect_targets = build_indirect_targets_obligation(
+                branch_pc=jump_table.branch_pc,
+                targets=tuple(
+                    (f"case-{index}", word & 0xFFFFFFFC)
+                    for index, word in enumerate(jump_table.table.words)
+                ),
+                source=jump_table.table.source,
+                artifact_hashes=(jump_table.table.image_sha256,),
+                coverage="unsat-remainder",
+            )
         gated = enforce_equivalent_proof_features(early)
         # Shared unconstrained memory can make identical jump-table functions
         # look EQUIVALENT without an immutable table image or target closure.
-        # Fail closed until those obligations are discharged.
-        if gated.status is ProofStatus.EQUIVALENT:
+        # Fail closed unless a JumpTableProofContext discharged the obligations.
+        if gated.status is ProofStatus.EQUIVALENT and jump_table is None:
             reason = jump_table_gate_reason(original, candidate)
             if reason is not None:
                 gated.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED

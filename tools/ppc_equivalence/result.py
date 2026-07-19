@@ -177,8 +177,8 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v23"
-RESULT_FORMAT = 9
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v24"
+RESULT_FORMAT = 10
 
 
 MASKING_SEMANTICS = "per-implementation-independent-v1"

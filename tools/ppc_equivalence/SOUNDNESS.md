@@ -62,6 +62,11 @@ documented per-implementation private-storage abstraction.
   (`loop_summary.find_ctr_affine_loop_candidates`) yields closed-form
   descriptors only; `affine-loop-summary` stays in
   `UNSUPPORTED_FOR_EQUIVALENT` until summaries are applied in CFG exploration.
+  Relational induction for differently shaped retail/candidate loops
+  (`relational_induction.build_relational_induction_sketch`) records
+  initiation/preservation/exit/postcondition/termination obligation shapes and
+  Houdini-style template names only; `relational-induction` stays in
+  `UNSUPPORTED_FOR_EQUIVALENT` until sketches are discharged in CFG exploration.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`

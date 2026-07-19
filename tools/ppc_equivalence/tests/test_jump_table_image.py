@@ -168,13 +168,19 @@ class JumpTableImageTests(unittest.TestCase):
                 elf_path=path,
             )
             obligation = readonly_image_obligation(image)
+        self.assertEqual(obligation["kind"], "rom-image")
         self.assertEqual(obligation["base"], _TABLE_BASE)
         self.assertEqual(obligation["end"], _TABLE_BASE + 15)
-        self.assertEqual(obligation["sha256"], image.image_sha256)
+        self.assertEqual(obligation["image_sha256"], image.image_sha256)
+        self.assertEqual(obligation["byte_count"], 16)
         self.assertEqual(obligation["entry_count"], 4)
         self.assertEqual(obligation["source"], "linked-elf")
         self.assertEqual(obligation["artifact_path"], str(path.resolve()))
         self.assertEqual(obligation["words"], list(_TARGETS))
+        from tools.ppc_equivalence.jump_table_obligations import (
+            validate_readonly_image_obligation,
+        )
+        self.assertIsNone(validate_readonly_image_obligation(obligation))
 
     def test_obligation_bytes_match_rom_image_region(self) -> None:
         rodata = _table_bytes()

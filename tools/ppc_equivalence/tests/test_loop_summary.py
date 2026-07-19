@@ -129,8 +129,11 @@ class AffineFeatureGateTests(unittest.TestCase):
         )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIn("affine-loop-summary", result.proof_features)
+        self.assertIn("relational-induction", result.proof_features)
         self.assertIsNotNone(result.loop_summary)
+        self.assertIsNotNone(result.relational_induction)
         self.assertEqual(result.loop_summary["trip_count"], 20)
+        self.assertEqual(result.relational_induction["status"], "applied")
 
 
 if __name__ == "__main__":

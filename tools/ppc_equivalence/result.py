@@ -192,8 +192,8 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v25"
-RESULT_FORMAT = 11
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v26"
+RESULT_FORMAT = 12
 
 
 MASKING_SEMANTICS = "per-implementation-independent-v1"
@@ -381,6 +381,7 @@ class ProofResult:
     address_space: dict[str, Any] | None = None
     indirect_targets: dict[str, Any] | None = None
     loop_summary: dict[str, Any] | None = None
+    relational_induction: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -411,6 +412,8 @@ class ProofResult:
             value.pop("indirect_targets", None)
         if self.loop_summary is None:
             value.pop("loop_summary", None)
+        if self.relational_induction is None:
+            value.pop("relational_induction", None)
         return value
 
 

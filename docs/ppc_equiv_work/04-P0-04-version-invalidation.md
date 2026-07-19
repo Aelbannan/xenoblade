@@ -72,5 +72,10 @@ Changing memory comparison changes `X`. Reusing an old result under a new model 
 
 ### Known gaps (deferred)
 
-- **Migration report**: No command or test to enumerate affected accepted equivalence rows. Deferred because zero `EQUIVALENT_MATCH` targets with certificates exist in the registry.
-- **No live certificates affected**: Audit confirms 435 valid, 0 affected.
+- ~~**Migration report**: No command or test to enumerate affected accepted equivalence rows.~~ Implemented as `targets migrate-report` (2026-07-20).
+
+### Migration report (2026-07-20)
+
+- `equivalence_certificate_migration_report()` in `tools/coop/lib/targets.py`
+- CLI: `python3 tools/coop/run.py targets migrate-report [--json] [--write-report PATH]`
+- Tests: `tools/coop/tests/test_migrate_report.py`

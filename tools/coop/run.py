@@ -56,6 +56,7 @@ from tools.coop.lib.targets import (
     audit_promotion_registry,
     claim_target,
     equivalence_certificate_error,
+    equivalence_certificate_migration_report,
     get_target,
     harness_targets,
     import_symbols,
@@ -1047,6 +1048,43 @@ def cmd_targets_recertify(
     return 1 if failed else 0
 
 
+def cmd_targets_migrate_report(
+    config: CoopConfig,
+    *,
+    write_report: Optional[Path],
+    json_stdout: bool,
+) -> int:
+    report = equivalence_certificate_migration_report(config)
+    if json_stdout:
+        print(json.dumps(report, indent=2))
+    else:
+        print(
+            "Migration report: "
+            f"{report['valid_count']} valid, "
+            f"{report['stale_count']} stale, "
+            f"{report['no_certificate_count']} no-certificate, "
+            f"{report['skipped_full_match_count']} FULL_MATCH skipped"
+        )
+        if report["skipped_full_match_stale_cert_count"]:
+            print(
+                f"  ({report['skipped_full_match_stale_cert_count']} FULL_MATCH "
+                "retain stale historical certificates)"
+            )
+        for entry in report["no_certificate"]:
+            print(f"  [no-certificate] {entry['id']}")
+        for entry in report["stale"]:
+            print(f"  [stale] {entry['id']}: {entry['certificate_error']}")
+
+    if write_report:
+        path = write_report if write_report.is_absolute() else config.project_root / write_report
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        if not json_stdout:
+            print(f"Report written to {path}")
+
+    return 1 if report["affected_count"] else 0
+
+
 def cmd_targets_audit_promotion(
     config: CoopConfig,
     *,
@@ -1485,6 +1523,24 @@ def main() -> int:
         "--write-report", type=Path,
         help="Write audit JSON report to path",
     )
+    p_targets_migrate = p_targets_sub.add_parser(
+        "migrate-report",
+        help=(
+            "Enumerate EQUIVALENT_MATCH rows whose equivalence_certificate is "
+            "stale relative to live architecture/result-format/certificate version "
+            "or rejected architecture models (read-only; does not mutate registry)"
+        ),
+    )
+    p_targets_migrate.add_argument(
+        "--write-report",
+        type=Path,
+        help="Write migration JSON report to path",
+    )
+    p_targets_migrate.add_argument(
+        "--json",
+        action="store_true",
+        help="Print machine-readable JSON summary to stdout",
+    )
     p_targets_recertify = p_targets_sub.add_parser(
         "recertify",
         help=(
@@ -1688,6 +1744,12 @@ def main() -> int:
             config,
             apply=bool(args.apply) and not args.dry_run,
             write_report=args.write_report,
+        )
+    if args.command == "targets" and args.targets_cmd == "migrate-report":
+        return cmd_targets_migrate_report(
+            config,
+            write_report=args.write_report,
+            json_stdout=bool(args.json),
         )
     if args.command == "targets" and args.targets_cmd == "recertify":
         return cmd_targets_recertify(

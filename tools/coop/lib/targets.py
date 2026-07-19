@@ -660,6 +660,113 @@ def validate_targets(config: CoopConfig) -> List[str]:
     return errors
 
 
+def equivalence_certificate_staleness_error(
+    row: Dict[str, Any],
+    rows_by_id: Dict[str, Dict[str, Any]],
+    *,
+    reject_architecture_models: Iterable[str] = (),
+) -> Optional[str]:
+    """Return why an equivalence certificate is stale relative to live constants."""
+    certificate = row.get("equivalence_certificate")
+    if not isinstance(certificate, dict):
+        return "missing equivalence_certificate"
+    error = equivalence_certificate_error(row, rows_by_id)
+    if error:
+        return error
+    architecture = certificate.get("architecture")
+    if isinstance(architecture, str) and architecture in reject_architecture_models:
+        return f"architecture model {architecture!r} is rejected"
+    return None
+
+
+def equivalence_certificate_migration_report(
+    config: CoopConfig,
+) -> Dict[str, Any]:
+    """Enumerate EQUIVALENT_MATCH rows with stale or missing equivalence certificates.
+
+    FULL_MATCH rows are counted separately and never listed as affected.
+    """
+    data = load_targets_document(config)
+    rows: List[Dict[str, Any]] = list(data.get("targets", []))
+    rows_by_id = {
+        str(row["id"]): row
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    reject_models = set(config.reject_architecture_models)
+
+    valid: List[Dict[str, Any]] = []
+    stale: List[Dict[str, Any]] = []
+    no_certificate: List[Dict[str, Any]] = []
+    skipped_full_match = 0
+    skipped_full_match_stale_cert = 0
+
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        status = row.get("status", "NOT_STARTED")
+        target_id = str(row.get("id", ""))
+
+        if status == "FULL_MATCH":
+            skipped_full_match += 1
+            certificate = row.get("equivalence_certificate")
+            if isinstance(certificate, dict):
+                reason = equivalence_certificate_staleness_error(
+                    row, rows_by_id, reject_architecture_models=reject_models
+                )
+                if reason:
+                    skipped_full_match_stale_cert += 1
+            continue
+
+        if status != "EQUIVALENT_MATCH":
+            continue
+
+        certificate = row.get("equivalence_certificate")
+        if not isinstance(certificate, dict):
+            no_certificate.append(
+                {
+                    "id": target_id,
+                    "status": status,
+                    "workflow_status": row.get("workflow_status", "unknown"),
+                    "certificate_error": "missing equivalence_certificate",
+                }
+            )
+            continue
+
+        reason = equivalence_certificate_staleness_error(
+            row, rows_by_id, reject_architecture_models=reject_models
+        )
+        entry = {
+            "id": target_id,
+            "status": status,
+            "workflow_status": row.get("workflow_status", "unknown"),
+            "certificate_error": reason,
+            "architecture": certificate.get("architecture"),
+            "result_format": certificate.get("result_format"),
+            "certificate_version": certificate.get("version"),
+        }
+        if reason:
+            stale.append(entry)
+        else:
+            valid.append(entry)
+
+    return {
+        "architecture_model": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
+        "equivalence_certificate_version": EQUIVALENCE_CERTIFICATE_VERSION,
+        "reject_architecture_models": sorted(reject_models),
+        "valid_count": len(valid),
+        "stale_count": len(stale),
+        "no_certificate_count": len(no_certificate),
+        "skipped_full_match_count": skipped_full_match,
+        "skipped_full_match_stale_cert_count": skipped_full_match_stale_cert,
+        "affected_count": len(stale) + len(no_certificate),
+        "valid": valid,
+        "stale": stale,
+        "no_certificate": no_certificate,
+    }
+
+
 def audit_promotion_registry(
     config: CoopConfig,
     *,

@@ -67,6 +67,11 @@ documented per-implementation private-storage abstraction.
   initiation/preservation/exit/postcondition/termination obligation shapes and
   Houdini-style template names only; `relational-induction` stays in
   `UNSUPPORTED_FOR_EQUIVALENT` until sketches are discharged in CFG exploration.
+  Constant-stride store loop recognition
+  (`memory_loop.find_constant_stride_store_loops`) is scaffold-only: it
+  conservatively detects typical MWCC `mtctr`/`stw`/`stwu`/`stb`/`sth` counted
+  loops but does not discharge them in CFG exploration; `memory-loop-summary`
+  stays in `UNSUPPORTED_FOR_EQUIVALENT` until closed-form memory summaries exist.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`

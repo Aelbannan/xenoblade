@@ -10,6 +10,7 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 # Relational induction is scaffold-only (``relational_induction.py``).
 UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
     "relational-induction",
+    "memory-loop-summary",
 })
 
 # Canonical proof-feature names and their required top-level obligation keys.
@@ -19,6 +20,8 @@ FEATURE_OBLIGATION_KEYS: dict[str, str] = {
     "affine-loop-summary": "loop_summary",
     # Obligation payload shape TBD when relational sketches are engine-wired.
     "relational-induction": "relational_induction",
+    # Obligation payload shape TBD when memory-loop summaries are engine-wired.
+    "memory-loop-summary": "memory_loop",
 }
 
 KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)

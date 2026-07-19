@@ -35,6 +35,9 @@ class FloatingPointDomainCoverageTests(unittest.TestCase):
         self.assertEqual(d["coverage"]["unsupported"], list(FP_COVERAGE_UNSUPPORTED))
         self.assertEqual(d["coverage"]["status"], FP_COVERAGE_STATUS_ASSUMED)
         self.assertTrue(d["allow_subnormal"])
+        self.assertIn("fpscr_flags", d)
+        self.assertIn("modeled", d["fpscr_flags"])
+        self.assertIn("rounding_mode_modeling", d)
 
     def test_default_domain_coverage_status_is_assumed(self):
         domain = FloatingPointDomain()

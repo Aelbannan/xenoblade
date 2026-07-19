@@ -315,10 +315,13 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   explicitly reopens FP to Tier A/B.
 - **SoftFloat oracle scaffold:** `tools/ppc_equivalence/fp_oracle.py` holds a
   bit-level, host-float-free oracle for a small scalar-op subset (`fadd`/`fadds`/
-  `fmul`/`fmuls`). It is **not** wired into `ConcreteOps`, `execute_cfg`, or
-  `check_equivalence`; it does **not** model full FPSCR sticky updates (OX/UX/XX/
+  `fmul`/`fmuls`). **ConcreteOps** routes those four scalar opcodes through the
+  oracle (fail-closed on NaN/subnormal/unsupported domains via
+  `ExecutionInconclusive`); concrete sampling and differential checks inherit this
+  path. SymbolicOps, paired-single lanes, and all other FP ops still use host
+  float or Z3. The oracle does **not** model full FPSCR sticky updates (OX/UX/XX/
   FI/FR/FPRF remain assumed or unsupported per `floating_point_domain.fpscr_flags`).
-  The scaffold is prep work only and is **not** a promotion path out of Tier C.
+  This remains **Tier C** only and is **not** a promotion path to Tier A/B.
 
 ### Relocations
 

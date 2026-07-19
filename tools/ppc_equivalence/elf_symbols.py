@@ -32,6 +32,19 @@ class FunctionRelocation:
 
 
 @dataclass(frozen=True)
+class SectionRelocation:
+    """One relocation entry applied to a non-relocation ELF section."""
+
+    target_section_index: int
+    target_section_name: str
+    relocation_section_name: str
+    offset: int
+    relocation_type: int
+    symbol: str
+    addend: int | None
+
+
+@dataclass(frozen=True)
 class FunctionBytes:
     """A contiguous instruction span taken from a relocatable (or linked) object."""
 
@@ -146,6 +159,69 @@ def _symbol_name(data: bytes, str_off: int, str_size: int, st_name: int) -> str:
     if end < 0:
         raise ElfSymbolError("unterminated symbol name")
     return data[start:end].decode("ascii", errors="replace")
+
+
+def list_section_relocations(path: Path | str) -> list[SectionRelocation]:
+    """Return every relocation entry grouped by its target section (``sh_info``)."""
+    obj = Path(path)
+    data = obj.read_bytes()
+    _require_elf32_be(data, obj)
+    sections, _by_name = _section_table(data)
+
+    sym_idx = _by_name.get(".symtab")
+    if sym_idx is None:
+        return []
+
+    symtab = sections[sym_idx]
+    str_idx = int(symtab["link"])
+    if str_idx >= len(sections):
+        raise ElfSymbolError(f"symtab link out of range: {obj}")
+    strtab = sections[str_idx]
+    str_off = int(strtab["offset"])
+    str_size = int(strtab["size"])
+    entsize = int(symtab["entsize"]) or 16
+    if entsize < 16:
+        raise ElfSymbolError(f"unsupported symtab entsize {entsize}: {obj}")
+
+    results: list[SectionRelocation] = []
+    for relocation_section in sections:
+        section_type = int(relocation_section["type"])
+        if section_type not in (SHT_REL, SHT_RELA):
+            continue
+        target_idx = int(relocation_section["info"])
+        if target_idx >= len(sections):
+            raise ElfSymbolError(
+                f"{relocation_section['name']} target section index out of range: {obj}"
+            )
+        if int(relocation_section["link"]) != sym_idx:
+            continue
+        target = sections[target_idx]
+        relocation_size = 12 if section_type == SHT_RELA else 8
+        relocation_entsize = int(relocation_section["entsize"]) or relocation_size
+        if relocation_entsize < relocation_size or int(relocation_section["size"]) % relocation_entsize:
+            raise ElfSymbolError(f"invalid relocation entry size in {relocation_section['name']}: {obj}")
+        for index in range(int(relocation_section["size"]) // relocation_entsize):
+            entry_offset = int(relocation_section["offset"]) + index * relocation_entsize
+            r_offset, r_info = struct.unpack_from(">II", data, entry_offset)
+            addend = struct.unpack_from(">i", data, entry_offset + 8)[0] if section_type == SHT_RELA else None
+            symbol_index = r_info >> 8
+            symbol_entry = int(symtab["offset"]) + symbol_index * entsize
+            if symbol_index >= int(symtab["size"]) // entsize or symbol_entry + 16 > len(data):
+                raise ElfSymbolError(f"relocation symbol index out of range in {relocation_section['name']}: {obj}")
+            symbol_name_offset = struct.unpack_from(">I", data, symbol_entry)[0]
+            symbol_name = _symbol_name(data, str_off, str_size, symbol_name_offset)
+            results.append(
+                SectionRelocation(
+                    target_section_index=target_idx,
+                    target_section_name=str(target["name"]),
+                    relocation_section_name=str(relocation_section["name"]),
+                    offset=r_offset,
+                    relocation_type=r_info & 0xFF,
+                    symbol=symbol_name,
+                    addend=addend,
+                )
+            )
+    return results
 
 
 def list_text_functions(path: Path | str) -> list[FunctionBytes]:

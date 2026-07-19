@@ -124,6 +124,7 @@ u16 ResFontBase::FindGlyphIndex(u16 ch) const {
     return GLYPH_INDEX_NOT_FOUND;
 }
 
+// LLM-HARNESS-BEGIN: us-8033bad0
 u16 ResFontBase::FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const {
     u16 index = GLYPH_INDEX_NOT_FOUND;
 
@@ -172,6 +173,8 @@ u16 ResFontBase::FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const {
 
     return index;
 }
+// LLM-HARNESS-END: us-8033bad0
+
 
 const CharWidths& ResFontBase::GetCharWidthsFromIndex(u16 index) const {
     for (const FontWidth* pIt = mFontInfo->pWidth; pIt != NULL;
@@ -222,6 +225,3 @@ void ResFontBase::GetGlyphFromIndex(Glyph* pGlyph, u16 index) const {
 } // namespace ut
 } // namespace nw4hbm
 
-// LLM-HARNESS-BEGIN: us-8033bad0
-extern "C" return FindGlyphIndex__Q46nw4hbm2ut6detail11ResFontBaseCFPCQ36nw4hbm2ut11FontCodeMapUs(pIt, ch) { return 0; }
-// LLM-HARNESS-END: us-8033bad0

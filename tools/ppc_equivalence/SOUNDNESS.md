@@ -190,6 +190,11 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   required for most Xenoblade jump tables. Object-file hydration is allowed
   only when the slice has no unresolved ADDR32 relocs; otherwise the helper
   fails closed. Not yet wired into the equivalence engine.
+- **Jump-table case pairing:** `jump_table_pairing.pair_jump_table_cases` aligns
+  original and candidate table words by **logical case index** (`case-0`,
+  `case-1`, …), not by absolute target-address equality. Entry-count mismatch
+  fails closed. Obligation builders map each paired case to side-specific
+  indirect-target payloads for readonly-image + closure proofs.
 
 ### Contracts
 

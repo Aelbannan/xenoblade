@@ -73,10 +73,22 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         )
 
     def test_affine_loop_summary_demotes_equivalent(self) -> None:
+        from tools.ppc_equivalence.loop_summary import (
+            build_loop_summary_obligation,
+            find_ctr_affine_loop_candidates,
+            summarize_ctr_affine_loop,
+        )
+        from tools.ppc_equivalence.tests.test_loop_summary import _ctr_counted_loop
+
+        summary = summarize_ctr_affine_loop(
+            find_ctr_affine_loop_candidates(_ctr_counted_loop(count=2, addend=1))[0],
+        )
+        self.assertIsNotNone(summary)
+        assert summary is not None
         reason = validate_proof_features(
             {
                 "proof_features": ["affine-loop-summary"],
-                "loop_summary": {"proof_kind": "affine-closed-form"},
+                "loop_summary": build_loop_summary_obligation(summary),
             },
             require_equivalent_ready=True,
         )

@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 
 from tools.ppc_equivalence.ir import Instruction, Opcode
 
@@ -165,6 +166,119 @@ def summarize_ctr_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary 
 def closed_form_gpr_value(entry_value: int, stride: int, trip_count: int) -> int:
     """Evaluate ``entry + trip_count * stride`` in 32-bit two's complement."""
     return (entry_value + trip_count * stride) & 0xFFFFFFFF
+
+
+REQUIRED_LOOP_SUMMARY_KEYS = frozenset({
+    "proof_kind",
+    "header_pc",
+    "latch_pc",
+    "exit_pc",
+    "trip_count",
+    "final_ctr",
+    "ranking",
+    "final_gpr",
+})
+
+
+def build_loop_summary_obligation(
+    summary: LoopSummary,
+    *,
+    coverage: str = "pending",
+) -> dict[str, Any]:
+    """Obligation block for ``proof_features: [\"affine-loop-summary\"]``."""
+    final_gpr = [
+        {
+            "reg": reg,
+            "entry_reg": entry_reg,
+            "stride": stride,
+        }
+        for reg, (entry_reg, stride) in sorted(summary.final_gpr.items())
+    ]
+    return {
+        "proof_kind": summary.proof_kind,
+        "header_pc": summary.header_pc,
+        "latch_pc": summary.latch_pc,
+        "exit_pc": summary.exit_pc,
+        "trip_count": summary.trip_count,
+        "final_ctr": summary.final_ctr,
+        "ranking": summary.ranking,
+        "final_gpr": final_gpr,
+        "coverage": coverage,
+    }
+
+
+def validate_loop_summary_obligation(obligation: dict[str, Any]) -> str | None:
+    """Return None when a loop-summary obligation is structurally well-formed."""
+    missing = sorted(REQUIRED_LOOP_SUMMARY_KEYS - obligation.keys())
+    if missing:
+        return "loop_summary missing " + ", ".join(missing)
+
+    proof_kind = obligation.get("proof_kind")
+    if not isinstance(proof_kind, str) or not proof_kind:
+        return "loop_summary.proof_kind must be a nonempty string"
+
+    for key in ("header_pc", "latch_pc", "exit_pc", "final_ctr"):
+        value = obligation.get(key)
+        if not isinstance(value, int) or value < 0 or value > 0xFFFFFFFF:
+            return f"loop_summary.{key} must be a u32 int"
+
+    trip_count = obligation.get("trip_count")
+    if not isinstance(trip_count, int) or trip_count < 1 or trip_count > 0xFFFFFFFF:
+        return "loop_summary.trip_count must be a positive u32 int"
+
+    ranking = obligation.get("ranking")
+    if not isinstance(ranking, str) or not ranking:
+        return "loop_summary.ranking must be a nonempty string"
+
+    return _validate_final_gpr(obligation.get("final_gpr"))
+
+
+def _validate_final_gpr(final_gpr: Any) -> str | None:
+    if isinstance(final_gpr, list):
+        seen: set[int] = set()
+        for index, entry in enumerate(final_gpr):
+            if not isinstance(entry, dict):
+                return f"loop_summary.final_gpr[{index}] must be an object"
+            reg = entry.get("reg")
+            entry_reg = entry.get("entry_reg")
+            stride = entry.get("stride")
+            if not isinstance(reg, int) or reg < 0 or reg > 31:
+                return f"loop_summary.final_gpr[{index}].reg must be a GPR index 0..31"
+            if not isinstance(entry_reg, int) or entry_reg < 0 or entry_reg > 31:
+                return (
+                    f"loop_summary.final_gpr[{index}].entry_reg must be a GPR index 0..31"
+                )
+            if not isinstance(stride, int):
+                return f"loop_summary.final_gpr[{index}].stride must be an int"
+            if reg in seen:
+                return f"duplicate loop_summary.final_gpr reg r{reg}"
+            seen.add(reg)
+        return None
+
+    if isinstance(final_gpr, dict):
+        seen_regs: set[int] = set()
+        for reg_key, entry in final_gpr.items():
+            if not isinstance(reg_key, str) or not reg_key.isdigit():
+                return "loop_summary.final_gpr dict keys must be decimal reg strings"
+            reg = int(reg_key)
+            if reg < 0 or reg > 31:
+                return f"loop_summary.final_gpr[{reg_key!r}] reg out of range 0..31"
+            if reg in seen_regs:
+                return f"duplicate loop_summary.final_gpr reg r{reg}"
+            seen_regs.add(reg)
+            if not isinstance(entry, dict):
+                return f"loop_summary.final_gpr[{reg_key!r}] must be an object"
+            entry_reg = entry.get("entry_reg")
+            stride = entry.get("stride")
+            if not isinstance(entry_reg, int) or entry_reg < 0 or entry_reg > 31:
+                return (
+                    f"loop_summary.final_gpr[{reg_key!r}].entry_reg must be a GPR index 0..31"
+                )
+            if not isinstance(stride, int):
+                return f"loop_summary.final_gpr[{reg_key!r}].stride must be an int"
+        return None
+
+    return "loop_summary.final_gpr must be a list or object keyed by reg string"
 
 
 def _is_bdnz(insn: Instruction) -> bool:

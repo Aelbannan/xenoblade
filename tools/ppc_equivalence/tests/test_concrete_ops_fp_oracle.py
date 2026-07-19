@@ -5,8 +5,12 @@ import unittest
 from tools.ppc_equivalence.fp_oracle import (
     fadd_binary64_rne,
     fadds_fpr_rne,
+    fdiv_binary64_rne,
+    fdivs_fpr_rne,
     fmul_binary64_rne,
     fmuls_fpr_rne,
+    fsub_binary64_rne,
+    fsubs_fpr_rne,
 )
 from tools.ppc_equivalence.ir import ExecutionInconclusive, Instruction, Opcode
 from tools.ppc_equivalence.model import concrete_state
@@ -39,6 +43,22 @@ class ConcreteOpsFpOracleMethodTests(unittest.TestCase):
         expected = fmuls_fpr_rne(_F15, _F4).bits64
         self.assertEqual(self.ops.fp_fmuls_fpr_bits("rne", _F15, _F4), expected)
 
+    def test_fsub_bits_match_oracle(self) -> None:
+        expected = fsub_binary64_rne(_F15, _F2).bits64
+        self.assertEqual(self.ops.fp_fsub_rne_bits(_F15, _F2), expected)
+
+    def test_fdiv_bits_match_oracle(self) -> None:
+        expected = fdiv_binary64_rne(_F15, _F2).bits64
+        self.assertEqual(self.ops.fp_fdiv_rne_bits(_F15, _F2), expected)
+
+    def test_fsubs_fpr_bits_match_oracle(self) -> None:
+        expected = fsubs_fpr_rne(_F15, _F2).bits64
+        self.assertEqual(self.ops.fp_fsubs_fpr_bits("rne", _F15, _F2), expected)
+
+    def test_fdivs_fpr_bits_match_oracle(self) -> None:
+        expected = fdivs_fpr_rne(_F15, _F2).bits64
+        self.assertEqual(self.ops.fp_fdivs_fpr_bits("rne", _F15, _F2), expected)
+
     def test_non_rne_rounding_fail_closed(self) -> None:
         with self.assertRaises(ExecutionInconclusive):
             self.ops.fp_fadds_fpr_bits("rtz", _F15, _F2)
@@ -46,6 +66,10 @@ class ConcreteOpsFpOracleMethodTests(unittest.TestCase):
     def test_nan_operand_fail_closed(self) -> None:
         with self.assertRaises(ExecutionInconclusive):
             self.ops.fp_fadd_rne_bits(_QNAN, _F2)
+
+    def test_divide_by_zero_fail_closed(self) -> None:
+        with self.assertRaises(ExecutionInconclusive):
+            self.ops.fp_fdiv_rne_bits(_F2, 0)
 
 
 class ConcreteOpsFpOracleInstructionTests(unittest.TestCase):
@@ -87,6 +111,32 @@ class ConcreteOpsFpOracleInstructionTests(unittest.TestCase):
         )
         expected = fadd_binary64_rne(_F15, _F2).bits64
         self.assertEqual(final.fpr[3], expected)
+
+    def test_fsub_instruction_uses_oracle_bits(self) -> None:
+        state = concrete_state({
+            "fpr": {"f1": _F15, "f2": _F2, "f7": 0},
+            "fpscr": 0,
+        })
+        final = execute_instruction(
+            state,
+            Instruction(0, 0, Opcode.FSUB, (7, 1, 2)),
+            ConcreteOps(),
+        )
+        expected = fsub_binary64_rne(_F15, _F2).bits64
+        self.assertEqual(final.fpr[7], expected)
+
+    def test_fdivs_instruction_uses_oracle_bits(self) -> None:
+        state = concrete_state({
+            "fpr": {"f1": _F15, "f2": _F2, "f7": 0},
+            "fpscr": 0,
+        })
+        final = execute_instruction(
+            state,
+            Instruction(0, 0, Opcode.FDIVS, (7, 1, 2)),
+            ConcreteOps(),
+        )
+        expected = fdivs_fpr_rne(_F15, _F2).bits64
+        self.assertEqual(final.fpr[7], expected)
 
 
 if __name__ == "__main__":

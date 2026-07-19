@@ -9,9 +9,13 @@ from tools.ppc_equivalence.fp_oracle import (
     dispatch_oracle,
     fadd_binary64_rne,
     fadds_fpr_rne,
+    fdiv_binary64_rne,
+    fdivs_fpr_rne,
     fmul_binary64_rne,
     fmuls_fpr_rne,
     fprf_from_binary64,
+    fsub_binary64_rne,
+    fsubs_fpr_rne,
     mask64,
 )
 from tools.ppc_equivalence.result import (
@@ -63,6 +67,22 @@ class FpOracleArithmeticTests(unittest.TestCase):
         result = fmuls_fpr_rne(inputs["f1"], inputs["f3"])
         self.assertEqual(result.bits64, 0x4018000000000000)
 
+    def test_fsub_binary64_corpus_inputs(self):
+        result = fsub_binary64_rne(_F15, _F2)
+        self.assertEqual(result.bits64, 0xBFE0000000000000)
+
+    def test_fdiv_binary64_corpus_inputs(self):
+        result = fdiv_binary64_rne(_F15, _F2)
+        self.assertEqual(result.bits64, 0x3FE8000000000000)
+
+    def test_fsubs_fpr_corpus_inputs(self):
+        result = fsubs_fpr_rne(_F15, _F2)
+        self.assertEqual(result.bits64, 0xBFE0000000000000)
+
+    def test_fdivs_fpr_corpus_inputs(self):
+        result = fdivs_fpr_rne(_F15, _F2)
+        self.assertEqual(result.bits64, 0x3FE8000000000000)
+
     def test_dispatch_supported_ops(self):
         self.assertEqual(
             dispatch_oracle("fadd", _F15, _F2).bits64,
@@ -72,10 +92,22 @@ class FpOracleArithmeticTests(unittest.TestCase):
             dispatch_oracle("fmuls", _F15, _F4).bits64,
             0x4018000000000000,
         )
+        self.assertEqual(
+            dispatch_oracle("fsub", _F15, _F2).bits64,
+            0xBFE0000000000000,
+        )
+        self.assertEqual(
+            dispatch_oracle("fdivs", _F15, _F2).bits64,
+            0x3FE8000000000000,
+        )
 
     def test_dispatch_rejects_unknown_op(self):
         with self.assertRaises(OracleUnimplementedError):
-            dispatch_oracle("fdiv", _F2, _F1)
+            dispatch_oracle("fsqrt", _F2, _F1)
+
+    def test_divide_by_zero_fail_closed(self):
+        with self.assertRaises(OracleUnimplementedError):
+            fdiv_binary64_rne(_F2, 0)
 
     def test_nan_operand_fail_closed(self):
         with self.assertRaises(OracleUnimplementedError):
@@ -83,7 +115,9 @@ class FpOracleArithmeticTests(unittest.TestCase):
 
     def test_supported_ops_registry(self):
         self.assertIn("fadds", ORACLE_SUPPORTED_OPS)
-        self.assertNotIn("fdiv", ORACLE_SUPPORTED_OPS)
+        self.assertIn("fsub", ORACLE_SUPPORTED_OPS)
+        self.assertIn("fdivs", ORACLE_SUPPORTED_OPS)
+        self.assertNotIn("fsqrt", ORACLE_SUPPORTED_OPS)
 
 
 class FloatingPointDomainFlagMetadataTests(unittest.TestCase):

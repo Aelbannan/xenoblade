@@ -9,9 +9,10 @@ checkable bit patterns.
 and most FPSCR sticky-flag updates remain partial or unimplemented. Unhandled
 cases fail closed via :class:`OracleUnimplementedError`.
 
-**Partially wired:** ``ConcreteOps`` routes ``fadd``/``fadds``/``fmul``/``fmuls``
-through this oracle (fail-closed elsewhere). SymbolicOps and other FP paths still
-use host float or Z3. Nothing here promotes FP proofs out of Tier C.
+**Partially wired:** ``ConcreteOps`` routes ``fadd``/``fadds``/``fmul``/``fmuls``/
+``fsub``/``fsubs``/``fdiv``/``fdivs`` through this oracle (fail-closed elsewhere).
+SymbolicOps and other FP paths still use host float or Z3. Nothing here promotes FP
+proofs out of Tier C.
 """
 
 from __future__ import annotations
@@ -62,6 +63,10 @@ ORACLE_SUPPORTED_OPS: frozenset[str] = frozenset({
     "fadds",
     "fmul",
     "fmuls",
+    "fsub",
+    "fsubs",
+    "fdiv",
+    "fdivs",
 })
 
 
@@ -326,6 +331,63 @@ def fmul_binary64_rne(a: int, b: int) -> FpOracleResult:
     return FpOracleResult(bits, flags, fprf_from_binary64(bits))
 
 
+def fsub_binary64_rne(a: int, b: int) -> FpOracleResult:
+    """Subtract two binary64 operands with round-nearest-even."""
+    b_neg = mask64(b ^ (1 << _B64_SIGN_SHIFT))
+    return fadd_binary64_rne(a, b_neg)
+
+
+def fdiv_binary64_rne(a: int, b: int) -> FpOracleResult:
+    """Divide two binary64 operands with round-nearest-even."""
+    _require_finite_normal_or_zero(a, b)
+    a_sign, a_exp, a_frac = decode_binary64(a)
+    b_sign, b_exp, b_frac = decode_binary64(b)
+    if b_exp == 0 and b_frac == 0:
+        raise _fail_unimplemented("division by zero is not modeled yet")
+    if a_exp == 0 and a_frac == 0:
+        sign = a_sign ^ b_sign
+        bits = encode_binary64(sign, 0, 0)
+        return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+
+    a_sig = _significand64(a_exp, a_frac)
+    b_sig = _significand64(b_exp, b_frac)
+    sign = a_sign ^ b_sign
+    a_unbiased = (a_exp - _B64_EXP_BIAS) if a_exp else (1 - _B64_EXP_BIAS)
+    b_unbiased = (b_exp - _B64_EXP_BIAS) if b_exp else (1 - _B64_EXP_BIAS)
+    exp_unbiased = a_unbiased - b_unbiased
+    shift = _B64_FRAC_BITS + 2
+    quot, rem = divmod(a_sig << shift, b_sig)
+    sig_shift = shift - (_B64_FRAC_BITS + 1) - exp_unbiased
+    flags = FpOracleFlags()
+    if sig_shift <= 0:
+        sig = quot << -sig_shift
+    else:
+        lost = quot & ((1 << sig_shift) - 1)
+        sig = quot >> sig_shift
+        sticky = rem != 0 or (lost & ((1 << max(sig_shift - 1, 0)) - 1)) != 0
+        if lost or rem:
+            flags = FpOracleFlags(inexact=True)
+            half = 1 << (sig_shift - 1) if sig_shift else 0
+            if lost > half or (lost == half and (sig & 1 or sticky)):
+                sig += 1
+    bits, round_flags = _round_rne(
+        sign,
+        exp_unbiased,
+        sig,
+        exp_bits=_B64_EXP_BITS,
+        exp_bias=_B64_EXP_BIAS,
+    )
+    if round_flags.inexact:
+        flags = FpOracleFlags(
+            invalid=flags.invalid,
+            divide_by_zero=flags.divide_by_zero,
+            inexact=True,
+            overflow=flags.overflow or round_flags.overflow,
+            underflow=flags.underflow or round_flags.underflow,
+        )
+    return FpOracleResult(bits, flags, fprf_from_binary64(bits))
+
+
 def _round_binary64_to_binary32_rne(bits64: int) -> tuple[int, FpOracleFlags]:
     sign, exp, frac = decode_binary64(bits64)
     if exp == _B64_EXP_MAX:
@@ -402,6 +464,36 @@ def fmuls_fpr_rne(a_fpr: int, c_fpr: int) -> FpOracleResult:
     return FpOracleResult(bits64, merged_flags, fprf_from_binary64(bits64))
 
 
+def fsubs_fpr_rne(a_fpr: int, b_fpr: int) -> FpOracleResult:
+    """``fsubs`` on FPR-encoded operands (single-precision result in FPR)."""
+    wide = fsub_binary64_rne(a_fpr, b_fpr)
+    bits32, flags = _round_binary64_to_binary32_rne(wide.bits64)
+    merged_flags = FpOracleFlags(
+        invalid=wide.flags.invalid,
+        divide_by_zero=wide.flags.divide_by_zero,
+        inexact=wide.flags.inexact or flags.inexact,
+        overflow=wide.flags.overflow or flags.overflow,
+        underflow=wide.flags.underflow or flags.underflow,
+    )
+    bits64 = _single_to_fpr_bits(bits32)
+    return FpOracleResult(bits64, merged_flags, fprf_from_binary64(bits64))
+
+
+def fdivs_fpr_rne(a_fpr: int, b_fpr: int) -> FpOracleResult:
+    """``fdivs`` on FPR-encoded operands (single-precision result in FPR)."""
+    wide = fdiv_binary64_rne(a_fpr, b_fpr)
+    bits32, flags = _round_binary64_to_binary32_rne(wide.bits64)
+    merged_flags = FpOracleFlags(
+        invalid=wide.flags.invalid,
+        divide_by_zero=wide.flags.divide_by_zero,
+        inexact=wide.flags.inexact or flags.inexact,
+        overflow=wide.flags.overflow or flags.overflow,
+        underflow=wide.flags.underflow or flags.underflow,
+    )
+    bits64 = _single_to_fpr_bits(bits32)
+    return FpOracleResult(bits64, merged_flags, fprf_from_binary64(bits64))
+
+
 def dispatch_oracle(op: str, *operands: int) -> FpOracleResult:
     """Fail-closed dispatch table for supported scalar ops."""
     if op not in ORACLE_SUPPORTED_OPS:
@@ -422,4 +514,20 @@ def dispatch_oracle(op: str, *operands: int) -> FpOracleResult:
         if len(operands) != 2:
             raise ValueError("fmuls expects two operands")
         return fmuls_fpr_rne(operands[0], operands[1])
+    if op == "fsub":
+        if len(operands) != 2:
+            raise ValueError("fsub expects two operands")
+        return fsub_binary64_rne(operands[0], operands[1])
+    if op == "fdiv":
+        if len(operands) != 2:
+            raise ValueError("fdiv expects two operands")
+        return fdiv_binary64_rne(operands[0], operands[1])
+    if op == "fsubs":
+        if len(operands) != 2:
+            raise ValueError("fsubs expects two operands")
+        return fsubs_fpr_rne(operands[0], operands[1])
+    if op == "fdivs":
+        if len(operands) != 2:
+            raise ValueError("fdivs expects two operands")
+        return fdivs_fpr_rne(operands[0], operands[1])
     raise _fail_unimplemented(f"unsupported op {op!r}")

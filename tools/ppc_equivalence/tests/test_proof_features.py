@@ -69,7 +69,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
-            frozenset({"affine-loop-summary"}),
+            frozenset({"affine-loop-summary", "relational-induction"}),
         )
 
     def test_affine_loop_summary_demotes_equivalent(self) -> None:
@@ -105,6 +105,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("readonly-image", KNOWN_PROOF_FEATURES)
         self.assertIn("indirect-target-closure", KNOWN_PROOF_FEATURES)
         self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
+        self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
 
 
 if __name__ == "__main__":

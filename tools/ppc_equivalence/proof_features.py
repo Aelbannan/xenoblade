@@ -12,6 +12,7 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 # are not yet applied inside ``execute_cfg``.
 UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
     "affine-loop-summary",
+    "relational-induction",
 })
 
 # Canonical proof-feature names and their required top-level obligation keys.
@@ -20,6 +21,8 @@ FEATURE_OBLIGATION_KEYS: dict[str, str] = {
     "indirect-target-closure": "indirect_targets",
     # Obligation payload shape TBD when summaries are engine-wired.
     "affine-loop-summary": "loop_summary",
+    # Obligation payload shape TBD when relational sketches are engine-wired.
+    "relational-induction": "relational_induction",
 }
 
 KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)

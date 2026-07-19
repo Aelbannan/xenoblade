@@ -9,6 +9,7 @@ from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.jump_table_obligations import (
+    JumpTableProofContext,
     JumpTableWords,
     build_indirect_targets_obligation,
     build_readonly_image_obligation,
@@ -116,6 +117,40 @@ class JumpTableEngineGateTests(unittest.TestCase):
             any("jump-table" in item for item in result.unsupported),
             result.unsupported,
         )
+
+    def test_proven_jump_table_context_can_be_equivalent(self) -> None:
+        # cmplwi r0,1; slwi r0,r0,2; lwzx r3,r3,r0; mtctr r3; bctr
+        code = bytes.fromhex("28000001 5400103a 7c63002e 7c6903a6 4e800420")
+        base = 0x80001000
+        insns = decode_block(code, base, validate_with_capstone=False)
+        table = JumpTableWords(
+            base=0x80010000,
+            words=(0x80020000, 0x80020010),
+            source="test-fixture",
+        )
+        context = JumpTableProofContext(
+            table=table,
+            branch_pc=base + 16,
+            table_base_reg=3,
+            index_reg=0,
+        )
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=15_000)
+        result = check_equivalence(
+            insns,
+            insns,
+            contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            jump_table=context,
+            max_paths=64,
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported or result.warnings)
+        self.assertEqual(
+            result.proof_features,
+            ["readonly-image", "indirect-target-closure"],
+        )
+        self.assertIsNotNone(result.address_space)
+        self.assertIsNotNone(result.indirect_targets)
 
 
 if __name__ == "__main__":

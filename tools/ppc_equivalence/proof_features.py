@@ -14,7 +14,9 @@ KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset(KNOWN_PROOF_FEATURES)
+# Jump-table features are supported once JumpTableProofContext discharges
+# readonly-image + indirect-target-closure (see engine.check_equivalence).
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
 
 _OBLIGATION_KEYS: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS.values())
 

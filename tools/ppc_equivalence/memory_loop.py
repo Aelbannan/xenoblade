@@ -2,8 +2,8 @@
 
 Typical MWCC counted-loop shapes::
 
-    li / addi  rT, _, N
-    mtctr      rT
+    li / addi / addis+ori  rT, _, N
+    mtctr                  rT
   header:
     stw / stwu / stb / sth  rS, disp(rB)   # D-form store
     addi       rB, rB, K                     # optional when not stwu
@@ -25,6 +25,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from typing import Any
 
+from tools.ppc_equivalence.ctr_materialization import recover_gpr_constant
 from tools.ppc_equivalence.ir import Instruction, Opcode
 
 _CTR_SPR = 9
@@ -427,16 +428,18 @@ def _concrete_trip_count(
     instructions: Sequence[Instruction],
     mtctr_index: int,
     trip_reg: int,
+    *,
+    readonly_words: dict[int, int] | None = None,
 ) -> tuple[int | None, list[str]]:
-    """Recover ``N`` from ``li``/``addi rT, 0, N`` immediately before ``mtctr``."""
-    if mtctr_index < 1:
-        return None, ["missing CTR materialization before mtctr"]
-    prev = instructions[mtctr_index - 1]
-    if prev.opcode != Opcode.ADDI:
-        return None, ["CTR source is not a concrete addi/li"]
-    rt, ra, imm = prev.operands
-    if int(rt) != trip_reg:
-        return None, [f"addi destination r{rt} != mtctr source r{trip_reg}"]
-    if int(ra) != 0:
-        return None, ["CTR materialization is not an immediate li-form addi"]
-    return int(imm) & 0xFFFFFFFF, []
+    """Recover ``N`` from bounded straight-line materialization before ``mtctr``."""
+    value, notes = recover_gpr_constant(
+        instructions,
+        mtctr_index,
+        trip_reg,
+        readonly_words=readonly_words,
+    )
+    if value is None:
+        if not notes:
+            notes = ["CTR source is not a concrete constant"]
+        return None, notes
+    return value, notes

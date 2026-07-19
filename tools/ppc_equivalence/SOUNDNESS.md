@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v28`
-- Result format: `14`
-- Certificate format: `7`
+- Architecture model: `broadway-ppc32-be-v29`
+- Result format: `15`
+- Certificate format: `8`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -71,8 +71,13 @@ documented per-implementation private-storage abstraction.
   and mismatched bodies remain unsupported for `EQUIVALENT`.
   Constant-stride store loops (`memory_loop` / `memory-loop-summary`) with a
   positive concrete trip count are discharged in closed form inside
-  `execute_cfg` (apply N width-matched stores, advance base/CTR); trip counts
-  above `MAX_MEMORY_LOOP_TRIPS` or spanning past 32-bit remain unsupported.
+  `execute_cfg` (apply N width-matched stores, advance base/CTR). Trip count
+  must be recovered from bounded straight-line GPR materialization immediately
+  before `mtctr` (`addi`/`addis`/`ori`/`oris`, self-`addi`, `or` register
+  copies, or `lwz` only when the effective address and loaded word are proven
+  from a supplied readonly image); symbolic or relocated sources remain
+  partial. Trip counts above `MAX_MEMORY_LOOP_TRIPS` or spanning past 32-bit
+  remain unsupported.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`

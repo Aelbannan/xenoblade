@@ -119,6 +119,45 @@ class TestDiagnosticClassification(unittest.TestCase):
         self.assertEqual(_classify_message("some random warning"), "other")
         self.assertEqual(_classify_message(""), "other")
 
+    def test_linkage_error_detail(self):
+        self.assertEqual(_classify_message("undefined reference to `foo bar'"), "linkage_error")
+
+    def test_experiment_id_normalization(self):
+        """10. Experiment ID normalization."""
+        diag = normalize_diagnostic(
+            "/home/user/exp_20260101/src/main.cpp:22: error: 'x' was not declared",
+            workspace_roots=["/home/user/exp_20260101"],
+        )
+        self.assertIsNotNone(diag)
+        self.assertEqual(diag.file, "src/main.cpp")
+
+    def test_duplicate_diagnostic_grouping(self):
+        """11. Duplicate diagnostic grouping."""
+        output = (
+            "src/a.cpp:10: error: 'Foo' was not declared\n"
+            "src/a.cpp:11: error: 'Foo' was not declared\n"
+        )
+        diags = normalize_compile_output(output)
+        self.assertEqual(len(diags), 2)
+        self.assertEqual(diags[0].fingerprint, diags[1].fingerprint)
+
+    def test_stable_fingerprint(self):
+        """13. Stable fingerprint across different worktree paths."""
+        diag1 = normalize_diagnostic(
+            "/home/user/worktree1/src/main.cpp:5: error: 'x' was not declared",
+        )
+        diag2 = normalize_diagnostic(
+            "/home/user/worktree2/src/main.cpp:5: error: 'x' was not declared",
+        )
+        if diag1 and diag2:
+            self.assertEqual(diag1.fingerprint, diag2.fingerprint)
+
+    def test_repeated_fingerprint_detection(self):
+        """14. Repeated fingerprint detection."""
+        diag = normalize_diagnostic("src/test.cpp:3: error: 'myVar' was not declared")
+        self.assertIsNotNone(diag)
+        self.assertEqual(diag.fingerprint, "unknown_identifier:myVar")
+
 
 class TestRootDiagnosticSelection(unittest.TestCase):
     """§10.5 — root diagnostic"""

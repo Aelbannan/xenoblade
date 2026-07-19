@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.llm_harness.core import Harness
+from tools.llm_harness.pipeline import PipelineRunner, parse_config
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -119,6 +120,10 @@ def main(argv: list[str] | None = None) -> int:
     repair.add_argument("experiment", type=Path)
     repair.add_argument("--budget", type=int, default=3, help="Max repair iterations")
     repair.add_argument("--dry-run", action="store_true")
+    pipeline_cmd = sub.add_parser("pipeline", help="Run full pipeline for a single target")
+    pipeline_cmd.add_argument("target_id")
+    pipeline_cmd.add_argument("--resume", type=Path, help="Resume from a previous pipeline experiment directory")
+    pipeline_cmd.add_argument("--max-parallel", type=int, help="Override parallel model calls")
     sub.add_parser("stats")
     args = parser.parse_args(argv)
     harness = Harness(args.config)
@@ -188,6 +193,23 @@ def main(argv: list[str] | None = None) -> int:
             args.experiment, budget=args.budget, dry_run=args.dry_run
         ))
         return 0
+    if args.command == "pipeline":
+        pipeline_config = parse_config(harness.config)
+        runner = PipelineRunner(
+            adapter=harness.adapter,
+            models=harness.models_for_workflow("new"),
+            providers=harness.providers,
+            promotion_manager=harness.promotion_manager,
+            config=pipeline_config,
+            output_dir=harness.output_dir,
+            max_parallel=args.max_parallel or harness.max_parallel,
+        )
+        experiment = runner.run(
+            args.target_id,
+            experiment_dir=args.resume,
+        )
+        print(json.dumps(experiment.to_json(), indent=2))
+        return 0
     if args.command in {"new", "improve", "tu-complete"} and args.number is not None:
         if args.target_id is not None:
             parser.error(f"{args.command} accepts either target_id or --number, not both")
@@ -203,14 +225,14 @@ def main(argv: list[str] | None = None) -> int:
                 target_ids = harness.select_new_targets(
                     args.number,
                     ignore_called_functions=args.ignore_called_functions,
-                    certified_funcs=args.certified_funcs,
+                    certified_funcs=getattr(args, "certified_funcs", False),
                     tu=getattr(args, "tu", None),
                 )
             else:
                 target_ids = harness.select_targets(
                     args.command, args.number,
                     randomize=args.random,
-                    certified_funcs=args.certified_funcs,
+                    certified_funcs=getattr(args, "certified_funcs", False),
                     tu=getattr(args, "tu", None),
                 )
         except (TypeError, ValueError) as exc:

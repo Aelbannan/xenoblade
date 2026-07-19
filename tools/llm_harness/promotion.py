@@ -15,7 +15,7 @@ import subprocess
 import sys
 import threading
 from contextlib import contextmanager
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -137,6 +137,102 @@ class PlaceholderDetector:
             end = normalized.index("*/", start + 2)
             normalized = normalized[:start] + normalized[end + 2:]
         return " ".join(normalized.split())
+
+
+# ---------------------------------------------------------------------------
+# §25 — Security: source patch validation
+# ---------------------------------------------------------------------------
+
+class InvalidPatch(ValueError):
+    """Raised when a candidate patch fails security validation."""
+    pass
+
+
+@dataclass
+class TargetMetadata:
+    """Metadata describing a target function for patch validation."""
+    target_id: str
+    source_file: str
+    function_start: int = 0
+    function_end: int = 0
+    signature: str = ""
+
+
+def validate_patch(patch: SourcePatch, target: TargetMetadata) -> None:
+    """Validate a candidate patch against security requirements (§25).
+
+    Raises InvalidPatch if any check fails.
+    """
+    # Reject path traversal
+    if ".." in patch.slot_id or patch.slot_id.startswith("/"):
+        raise InvalidPatch(
+            f"path traversal detected in slot_id: {patch.slot_id!r}"
+        )
+
+    # Reject preprocessor directives in the replacement source
+    if _contains_preprocessor_directive(patch.source):
+        raise InvalidPatch("preprocessor edits are not permitted")
+
+    # Reject shell commands
+    if _contains_shell_command(patch.source):
+        raise InvalidPatch("shell commands are not permitted")
+
+    # Reject signature changes (authoritative)
+    if target.signature and not _signature_matches(patch.source, target.signature):
+        raise InvalidPatch(
+            f"candidate changes the authoritative signature of {target.target_id}"
+        )
+
+
+def _contains_preprocessor_directive(source: str) -> bool:
+    """Check if source contains #include, #define, #if, etc."""
+    for line in source.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("#") and not stripped.startswith("# "):
+            # Allow #pragma once? No — keep strict.
+            # Allow #error? No.
+            return True
+    return False
+
+
+def _contains_shell_command(source: str) -> bool:
+    """Check for shell metacharacters that suggest command injection."""
+    dangerous = ("`", "$(", "${", "|", "&&", "||")
+    for line in source.split("\n"):
+        stripped = line.strip()
+        if any(d in stripped for d in dangerous):
+            in_string = False
+            in_char = False
+            for ch in stripped:
+                if ch == '"' and not in_char:
+                    in_string = not in_string
+                elif ch == "'":
+                    in_char = not in_char
+                elif ch in "`$|&" and not in_string and not in_char:
+                    if ch == "$":
+                        continue
+                    return True
+    return False
+
+
+def _signature_matches(source: str, expected_signature: str) -> bool:
+    """Check that the function signature in source matches expected.
+
+    Simple check: the expected signature should appear in the source
+    (possibly with whitespace variations).
+    """
+    normalized_source = " ".join(source.split())
+    normalized_sig = " ".join(expected_signature.split())
+    return normalized_sig in normalized_source
+
+
+def validate_candidate_patches(
+    patches: List[SourcePatch],
+    target: TargetMetadata,
+) -> None:
+    """Validate all patches in a candidate."""
+    for patch in patches:
+        validate_patch(patch, target)
 
 
 # ---------------------------------------------------------------------------

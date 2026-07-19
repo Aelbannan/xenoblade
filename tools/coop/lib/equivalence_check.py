@@ -83,6 +83,7 @@ def _certificate_contract(certificate: dict) -> CalleeContract:
         frozenset(summary["reads"]),
         frozenset(summary["writes"]),
         f"certified:{certificate['certificate_sha256']}",
+        invalid_reasons=frozenset(summary.get("invalid_reasons", [])),
     )
 
 
@@ -568,6 +569,10 @@ def _build_equivalence_certificate(
             return None, f"{side} certificate validation failed: {detail}"
     reads = sorted(validations[0].required_reads | validations[1].required_reads)
     writes = sorted(validations[0].required_writes | validations[1].required_writes)
+    invalid_reasons = sorted(
+        set(validations[0].required_invalid_reasons)
+        | set(validations[1].required_invalid_reasons)
+    )
     certificate = {
         "version": EQUIVALENCE_CERTIFICATE_VERSION,
         "status": "SEMANTIC_CERTIFIED",
@@ -580,6 +585,7 @@ def _build_equivalence_certificate(
         "summary": {
             "reads": reads,
             "writes": writes,
+            "invalid_reasons": invalid_reasons,
             "return_behavior": "normal",
         },
         "callees": list(dependencies),

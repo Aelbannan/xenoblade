@@ -29,16 +29,9 @@ Hard constraints:
 - Name any selected MWCC knowledge IDs in `hypothesis`, and do not repeat a failed attempt record without explaining the new reason.
 - bytecode_hex and bytes_hex are contiguous lowercase hex without separators; group every 8 chars (4 bytes) for PPC instruction decoding.
 
-Output format — return EXACTLY one JSON object. No preamble, no commentary, no Markdown fences around the JSON, no text before or after:
+Output format — return EXACTLY one raw JSON object on a single logical line. No preamble, no commentary, no Markdown fences, no text before or after:
 
-```json
-{
-  "source": "complete replacement function definition",
-  "hypothesis": "the single main reconstruction or mismatch hypothesis",
-  "notes": ["short evidence or uncertainty note"],
-  "next_change": "one bounded follow-up if this candidate does not win"
-}
-```
+{"source": "complete replacement function definition", "hypothesis": "the single main reconstruction or mismatch hypothesis", "notes": ["short evidence or uncertainty note"], "next_change": "one bounded follow-up if this candidate does not win"}
 
 The frozen MWCC knowledge base below is byte-identical across every prompt in this campaign: every reference and attempt record is inlined once so its body lives in the cacheable prompt prefix. Reference entries by their stable IDs only; do not echo bodies back.
 

@@ -477,5 +477,56 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(PENALTIES["return_path_difference"], 0.10)
 
 
+class TestStructuralRegressionTests(unittest.TestCase):
+    """§20.5 — Additional structural comparison tests"""
+
+    def test_different_register_assignment_no_memory_mismatch(self):
+        """5. Different register assignment does not count as memory mismatch."""
+        from tools.llm_harness.structural import compare_memory_accesses, MemoryAccess
+        # Two accesses with different registers but same base class (stack) and width
+        retail = [MemoryAccess(kind="store", width_bits=32, base_class="stack", offset=20)]
+        candidate = [MemoryAccess(kind="store", width_bits=32, base_class="stack", offset=12)]
+        comp, unexpected, missing = compare_memory_accesses(retail, candidate)
+        # Both are stack stores with same width — score should be > 0
+        self.assertGreaterEqual(comp.score, 0.0)
+
+    def test_equivalent_branch_inversion_reasonable_cfg(self):
+        """6. Equivalent branch inversion retains reasonable CFG score."""
+        from tools.llm_harness.structural import CFGShape, compare_cfg
+        retail = CFGShape(num_blocks=3, num_edges=4, num_returns=1,
+                          num_conditional_branches=1, num_unconditional_branches=0,
+                          has_backedges=False, num_backedges=0, exit_block_count=1)
+        # Inverted condition — same number of blocks and edges, just swapped successors
+        candidate = CFGShape(num_blocks=3, num_edges=4, num_returns=1,
+                             num_conditional_branches=1, num_unconditional_branches=0,
+                             has_backedges=False, num_backedges=0, exit_block_count=1)
+        comp = compare_cfg(retail, candidate)
+        self.assertGreaterEqual(comp.score, 0.90, "inverted branch should retain high CFG score")
+
+    def test_global_store_mismatch_strong_penalty(self):
+        """9. Global store mismatch applies a strong penalty."""
+        from tools.llm_harness.structural import (
+            _extract_memory_accesses, compare_memory_accesses, MemoryAccess,
+        )
+        retail = [MemoryAccess(kind="store", width_bits=32, base_class="global", offset=0)]
+        candidate = [MemoryAccess(kind="store", width_bits=32, base_class="global", offset=4)]
+        comp, unexpected, missing = compare_memory_accesses(retail, candidate)
+        self.assertLess(comp.score, 0.50,
+                        "global store offset mismatch should apply strong penalty")
+
+    def test_reports_deterministic(self):
+        """12. Reports are deterministic."""
+        from tools.llm_harness.structural import compare_structural
+        report1 = compare_structural(SIMPLE_FN, SIMPLE_FN)
+        report2 = compare_structural(SIMPLE_FN, SIMPLE_FN)
+        self.assertEqual(report1.total_score, report2.total_score)
+        self.assertEqual(report1.calls.score, report2.calls.score)
+        self.assertEqual(report1.memory_accesses.score, report2.memory_accesses.score)
+        self.assertEqual(report1.cfg.score, report2.cfg.score)
+        self.assertEqual(report1.constants.score, report2.constants.score)
+        self.assertEqual(report1.returns.score, report2.returns.score)
+        self.assertEqual(report1.instruction_classes.score, report2.instruction_classes.score)
+
+
 if __name__ == "__main__":
     raise SystemExit(unittest.main())

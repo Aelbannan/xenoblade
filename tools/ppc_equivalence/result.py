@@ -6,6 +6,32 @@ from typing import Any
 
 from tools.ppc_equivalence.memory_profile import MemoryEnvironment
 
+
+@dataclass(slots=True, frozen=True)
+class FloatingPointDomain:
+    rounding_modes: tuple[str, ...] = ("nearest-even",)
+    require_ni_zero: bool = True
+    traps_enabled: bool = False
+    allow_nan: bool = True
+    allow_infinity: bool = True
+    allow_subnormal: bool = False
+    exclude_finite_overflow: bool = True
+    model_underflow_flag: bool = False
+    model_inexact_flag: bool = False
+    fused_input_domain: str = "exact-expanded-binary32"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "used": True,
+            "rounding_modes": list(self.rounding_modes),
+            "ni": "required-zero" if self.require_ni_zero else "not-required",
+            "traps": "excluded" if not self.traps_enabled else "enabled",
+            "finite_overflow": "excluded" if self.exclude_finite_overflow else "allowed",
+            "underflow_flag": "not-fully-modeled",
+            "inexact_flag": "not-fully-modeled",
+            "fused_input_domain": self.fused_input_domain,
+        }
+
 ARCHITECTURE_MODEL = "broadway-ppc32-be-v19"
 RESULT_FORMAT = 8
 
@@ -86,6 +112,7 @@ class ProofStatus(str, Enum):
     INCONCLUSIVE_ABSTRACTION = "inconclusive_abstraction"
     INCONCLUSIVE_LAYOUT = "inconclusive_layout"
     INCONCLUSIVE_UNVALIDATED_CALLEE = "inconclusive_unvalidated_callee"
+    INCONCLUSIVE_UNMODELED_EXCEPTION = "inconclusive_unmodeled_exception"
     INVALID_INPUT = "invalid_input"
     INTERNAL_ERROR = "internal_error"
 
@@ -135,6 +162,15 @@ class ProofResult:
     counterexample_kind: str | None = None
     unsupported: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    git_commit: str = ""
+    git_dirty: bool = False
+    engine_hash: str = ""
+    source_hash: str = ""
+    platform: str = ""
+    python_version: str = ""
+    z3_version: str = ""
+    capstone_version: str = ""
+    floating_point_domain: FloatingPointDomain | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -147,4 +183,8 @@ class ProofResult:
             value["environment"] = self.environment.to_dict()
         else:
             value.pop("environment", None)
+        if self.floating_point_domain is not None:
+            value["floating_point_domain"] = self.floating_point_domain.to_dict()
+        else:
+            value.pop("floating_point_domain", None)
         return value

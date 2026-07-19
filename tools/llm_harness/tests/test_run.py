@@ -24,7 +24,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         harness.select_new_targets.assert_called_once_with(
-            2, ignore_called_functions=True
+            2, ignore_called_functions=True, certified_funcs=False, tu=None
         )
         harness.run_batch.assert_called_once_with(
             "new",
@@ -57,7 +57,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
                 result = main(["improve", "--number", "2", "--random", "--dry-run"])
 
         self.assertEqual(result, 0)
-        harness.select_targets.assert_called_once_with("improve", 2, randomize=True)
+        harness.select_targets.assert_called_once_with("improve", 2, randomize=True, certified_funcs=False, tu=None)
         harness.run_batch.assert_called_once_with(
             "improve", ["one", "two"], runs=None, dry_run=True,
             model_parallel=None, full_context=False,
@@ -77,7 +77,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         harness.select_targets.assert_called_once_with(
-            "tu-complete", 2, randomize=True
+            "tu-complete", 2, randomize=True, certified_funcs=False, tu=None
         )
         harness.run_batch.assert_called_once_with(
             "tu-complete", ["unit-a", "unit-b"], runs=None, dry_run=True,

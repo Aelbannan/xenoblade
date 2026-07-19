@@ -19,8 +19,10 @@ Improvement workflow:
    | Missing `stb r0, offset(rX)` | missed a boolean store or flag set |
    | Different branch target | wrong if/else structure or loop boundary |
    | `rlwinm` vs `slwi`/`srwi` | mask vs shift — try the other form |
-   | Different `addi`/`li` immediate | wrong constant or offset |
-   | `lwz`/`stw` pair per field vs single `lwz`/`stw` pair | field-by-field copy vs struct assignment — try `*dst = *src` |
+    | Different `addi`/`li` immediate | wrong constant or offset |
+    | `lwz`/`stw` pair per field vs single `lwz`/`stw` pair | field-by-field copy vs struct assignment — try `*dst = *src` |
+    | Relocation name mismatch `lbl_eu_*__2cf` vs `lbl_eu_*` | C++ name mangling — add `extern "C"` to the symbol declaration |
+    | Relocation name mismatch `@N` vs `lbl_eu_*` | TU-local pool entry — use `extern "C"` data copy instead of PTMF/function-ref expression |
 3. **Make one bounded change**: Pick the single most impactful mismatch, fix it, and leave everything else alone. Do not restructure the function or change unrelated code.
 4. **Preserve semantics**: The current candidate may already be mostly correct. Do not regress working parts. When in doubt, make the smallest possible edit to the current function.
 5. **Consider MWCC knowledge**: If the dossier includes records about this function or similar mismatch patterns, apply the recorded fix if it genuinely fits. The main prompt already includes general MWCC compiler hints; focus on mismatch-specific patterns here.

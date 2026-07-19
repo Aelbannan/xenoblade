@@ -1,0 +1,10 @@
+# requirements.lock — generated from requirements.txt
+# Regenerate: pip install --dry-run --ignore-installed --report - ... | extract hashes
+# or: uv pip compile tools/ppc_equivalence/requirements.txt -o tools/ppc_equivalence/requirements.lock
+#
+# Platform: macOS 11+ arm64 (cp313), Python 3.13
+# To regenerate for your platform, re-download wheels and replace hashes.
+
+capstone==5.0.6 --hash=sha256:e0b87b283905e4fc43635ca04cf26f4a5d9e8375852e5464d38938f3a28c207a
+z3-solver==4.15.3.0 --hash=sha256:65335aab295ded7c0ce27c85556067087a87052389ff160777d1a1d48ef0d74f
+PyYAML==6.0.3 --hash=sha256:2283a07e2c21a2aa78d9c4442724ec1eb15f5e42a723b99cb3d822d48f5f7ad1

@@ -19,6 +19,7 @@ from tools.ppc_equivalence.ir import (
     R_PPC_EMB_SDA21,
     R_PPC_REL24,
 )
+from tools.ppc_equivalence.model import InvalidReason
 from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.semantics import CalleeContract, infer_callee_contract
 
@@ -378,6 +379,151 @@ class PrivateStackMemoryTests(unittest.TestCase):
             original_hex="", candidate_hex="",
         )
         self.assertEqual(result.status.value, "not_equivalent")
+
+
+    # ── P1-05: call-certificate invalid_reason tracking ────────────────────
+
+    def test_invalid_reasons_default_is_empty(self) -> None:
+        c = CalleeContract(frozenset(), frozenset(), "test")
+        self.assertEqual(c.invalid_reasons, frozenset())
+
+    def test_opaque_eabi_contract_covers_all_reasons(self) -> None:
+        opaque = CalleeContract.opaque_eabi()
+        self.assertIn("invalid_reason", opaque.writes)
+        self.assertEqual(
+            opaque.invalid_reasons,
+            frozenset({r.value for r in InvalidReason}),
+        )
+
+    def test_infer_invalid_reasons_addi_has_none(self) -> None:
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        insns = decode("38630004 4e800020")
+        reasons = _infer_invalid_reasons(insns)
+        self.assertEqual(reasons, set())
+
+    def test_infer_invalid_reasons_load_detects_unaligned(self) -> None:
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = decode("80030000 4e800020")  # lwz r0,0(r3); blr
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.UNALIGNED_ACCESS.value, reasons)
+
+    def test_infer_invalid_reasons_divide_detected(self) -> None:
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = decode("7c641bd6 4e800020")  # divw r3,r4,r3; blr
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.DIVIDE_UNDEFINED.value, reasons)
+
+    def test_infer_invalid_reasons_fctiw_detects_rounding(self) -> None:
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = decode("fc00001c 4e800020")  # fctiw f0,f0; blr
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.FP_ROUNDING_MODE.value, reasons)
+
+    def test_infer_invalid_reasons_psq_st_detects_psq(self) -> None:
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = decode("f0030000 4e800020")  # psq_st f0,0(r3),0,0; blr
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.PSQ_INVALID_TYPE.value, reasons)
+        self.assertIn(InvalidReason.PSQ_NONFINITE_INTEGER_STORE.value, reasons)
+
+    def test_infer_invalid_reasons_dcbz_detects_cache_disabled(self) -> None:
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = decode("7c001fec 4e800020")  # dcbz r0,r3; blr
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.CACHE_DISABLED.value, reasons)
+
+    def test_infer_invalid_reasons_mfmsr_detects_privileged(self) -> None:
+        from tools.ppc_equivalence.semantics import _infer_invalid_reasons
+        regs = decode("7c6000a6 4e800020")  # mfmsr r3; blr
+        reasons = _infer_invalid_reasons(regs)
+        self.assertIn(InvalidReason.PRIVILEGED_INSTRUCTION.value, reasons)
+
+    def test_infer_callee_contract_leaf_with_no_domain_exceptions(self) -> None:
+        insns = decode("38630004 4e800020")  # addi r3,r3,4; blr
+        contract = infer_callee_contract(insns)
+        self.assertFalse(contract.invalid_reasons)
+        self.assertNotIn("invalid_reason", contract.writes)
+
+    def test_infer_callee_contract_memory_op_adds_domain_exception(self) -> None:
+        insns = decode("80030000 4e800020")  # lwz r0,0(r3); blr
+        contract = infer_callee_contract(insns)
+        self.assertTrue(contract.invalid_reasons)
+        self.assertIn("invalid_reason", contract.writes)
+        self.assertIn(InvalidReason.UNALIGNED_ACCESS.value, contract.invalid_reasons)
+
+    def test_infer_callee_contract_divide_adds_domain_exception(self) -> None:
+        insns = decode("7c641bd6 4e800020")  # divw r3,r4,r3; blr
+        contract = infer_callee_contract(insns)
+        self.assertIn("invalid_reason", contract.writes)
+        self.assertIn(InvalidReason.DIVIDE_UNDEFINED.value, contract.invalid_reasons)
+
+    def test_infer_callee_contract_dcbz_adds_cache_exception(self) -> None:
+        insns = decode("7c001fec 4e800020")  # dcbz r0,r3; blr
+        contract = infer_callee_contract(insns)
+        self.assertIn("invalid_reason", contract.writes)
+        self.assertIn(InvalidReason.CACHE_DISABLED.value, contract.invalid_reasons)
+
+    def test_infer_callee_contract_mfmsr_adds_privileged_exception(self) -> None:
+        insns = decode("7c6000a6 4e800020")  # mfmsr r3; blr
+        contract = infer_callee_contract(insns)
+        self.assertIn("invalid_reason", contract.writes)
+        self.assertIn(InvalidReason.PRIVILEGED_INSTRUCTION.value, contract.invalid_reasons)
+
+    def test_validation_rejects_undeclared_domain_exception(self) -> None:
+        insns = decode("80030000 4e800020")  # lwz r0,0(r3); blr
+        declared = CalleeContract(
+            frozenset({"r3", "valid", "memory"}),
+            frozenset({"r0", "r3", "valid", "memory"}),
+            "test-declared",
+            invalid_reasons=frozenset(),  # claims no domain exceptions
+        )
+        validation = validate_callee_contract(insns, declared)
+        self.assertFalse(validation.valid)
+        self.assertIn(InvalidReason.UNALIGNED_ACCESS.value, validation.missing_invalid_reasons)
+
+    def test_validation_accepts_declared_domain_exception(self) -> None:
+        insns = decode("80030000 4e800020")  # lwz r0,0(r3); blr
+        declared = CalleeContract(
+            frozenset({"r3", "valid", "memory"}),
+            frozenset({"r0", "r3", "valid", "memory", "invalid_reason"}),
+            "test-declared",
+            invalid_reasons=frozenset({InvalidReason.UNALIGNED_ACCESS.value}),
+        )
+        validation = validate_callee_contract(insns, declared)
+        self.assertTrue(validation.valid, str(validation.missing_writes))
+
+    def test_validation_missing_write_invalid_reason_fails(self) -> None:
+        """Contract must write 'invalid_reason' when body can raise domain exceptions."""
+        insns = decode("80030000 4e800020")  # lwz r0,0(r3); blr
+        declared = CalleeContract(
+            frozenset({"r3", "valid", "memory"}),
+            frozenset({"r0", "r3", "valid", "memory"}),  # missing invalid_reason
+            "test",
+            invalid_reasons=frozenset({InvalidReason.UNALIGNED_ACCESS.value}),
+        )
+        validation = validate_callee_contract(insns, declared)
+        self.assertFalse(validation.valid)
+        self.assertIn("invalid_reason", validation.missing_writes)
+
+    def test_confidence_tier_A_when_no_domain_exceptions(self) -> None:
+        """Tier A when certificate has no memory, FP, callees, or domain exceptions."""
+        from tools.coop.lib.equivalence_policy import compute_confidence_tier
+        cert = {
+            "summary": {"reads": ["r3"], "writes": ["r3"], "invalid_reasons": []},
+        }
+        self.assertEqual(compute_confidence_tier(cert), "A")
+
+    def test_confidence_tier_C_when_domain_exceptions(self) -> None:
+        """Tier C when certificate has domain exceptions."""
+        from tools.coop.lib.equivalence_policy import compute_confidence_tier
+        cert = {
+            "summary": {
+                "reads": ["r3", "valid"],
+                "writes": ["r3", "valid", "invalid_reason"],
+                "invalid_reasons": [InvalidReason.UNALIGNED_ACCESS.value],
+            },
+        }
+        self.assertEqual(compute_confidence_tier(cert), "C")
 
 
 if __name__ == "__main__":

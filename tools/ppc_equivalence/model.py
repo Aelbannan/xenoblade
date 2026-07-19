@@ -1,9 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from enum import Enum
 from typing import Any
 
 from .spr import AUX_SPR_OBSERVABLES
+
+
+class InvalidReason(Enum):
+    NONE = 0
+    UNALIGNED_ACCESS = 1
+    DIVIDE_UNDEFINED = 2
+    FP_DOMAIN_EXCLUDED = 3
+    FP_ROUNDING_MODE = 4
+    CACHE_DISABLED = 5
+    PRIVILEGED_INSTRUCTION = 6
+    PSQ_INVALID_TYPE = 7
+    PSQ_NONFINITE_INTEGER_STORE = 8
+    UNSUPPORTED_SIDE_EFFECT = 9
+    MEMORY_PROFILE_VIOLATION = 10
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +66,7 @@ class MachineState:
     spr: tuple[Any, ...]
     memory: Any
     valid: Any
+    invalid_reason: Any = 0
     memory_touches: tuple[Any, ...] = ()
     stack_low: Any | None = None
     memory_effects: tuple[Any, ...] = ()
@@ -211,4 +227,5 @@ def concrete_state(values: dict[str, object] | None = None) -> MachineState:
         spr,
         memory,
         True,
+        0,
     )

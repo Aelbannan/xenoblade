@@ -52,7 +52,16 @@ from tools.llm_harness.knowledge_retrieval import (
     cluster_attempts,
 )
 from tools.llm_harness.structural import compare_structural
-from tools.llm_harness.types import Candidate, Evaluation, SourcePatch, StructuralReport
+from tools.llm_harness.types import (
+    Candidate,
+    CandidateEvaluation,
+    CandidateStatus,
+    CompileReport,
+    Evaluation,
+    SourcePatch,
+    StructuralReport,
+    ValidationStepResult,
+)
 from tools.ppc_equivalence.elf_symbols import (
     ET_REL,
     SHT_NOBITS,
@@ -1356,6 +1365,31 @@ class XenobladeAdapter:
         assert target.source is not None
         return target.source.read_text(encoding="utf-8")
 
+    def build_dossier(
+        self,
+        target_id: str,
+        history: List[Dict[str, Any]],
+        options: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Build a dossier dict for pipeline target."""
+        return self._build_function_prompt("new", target_id, history)
+
+    def detect_placeholder(self, target_id: str, source: str) -> bool:
+        """Check if a target's source is a recognizable placeholder."""
+        from .promotion import PlaceholderDetector
+        return PlaceholderDetector().is_placeholder(source)
+
+    def evaluate_canon(self, target_id: str, artifact_dir: Path) -> CandidateEvaluation:
+        """Evaluate the canonical (current) source for a baseline snapshot."""
+        target = self._target(target_id)
+        assert target.source is not None and target.unit is not None
+        source = target.source.read_text(encoding="utf-8")
+        region = _find_function_region(source, target)
+        current = source[region.content_start : region.content_end].strip()
+        candidate = Candidate(source=current, hypothesis="canonical evaluation")
+        evaluation = self._evaluate_function(target_id, candidate)
+        return evaluation_to_candidate(asdict(evaluation))
+
     def target_source_path(self, target_id: str) -> Path:
         """Return the source file path for a target."""
         target = self._target(target_id)
@@ -1432,6 +1466,312 @@ class XenobladeAdapter:
                     sys.stdout.write(line)
         if result.stderr:
             sys.stderr.write(result.stderr)
+
+
+    # ------------------------------------------------------------------
+    # §18 — Pipeline adapter methods (worktree-based evaluation)
+    # ------------------------------------------------------------------
+
+    def apply_candidate(self, root: Path, target_id: str, candidate: Candidate) -> SourcePatch:
+        target = self._any_target(target_id)
+        if target.source is None:
+            raise ValueError(f"Target {target_id!r} has no source path")
+        source_path = root / target.source.relative_to(self.root)
+        source = source_path.read_text(encoding="utf-8")
+        region = _find_function_region(source, target)
+        self._validate_source(source[region.content_start : region.content_end], candidate.source)
+        updated = _replace_function_source(source, region, candidate.source)
+        source_path.write_text(updated, encoding="utf-8")
+        return SourcePatch(slot_id=target_id, source=candidate.source)
+
+    def evaluate_candidate(
+        self, root: Path, target_id: str, candidate: Candidate, artifact_dir: Path,
+    ) -> CandidateEvaluation:
+        target = self._any_target(target_id)
+        if target.source is None or target.unit is None or target.symbol is None:
+            raise ValueError(f"Target {target_id!r} must have source, unit, and symbol")
+
+        source_path = root / target.source.relative_to(self.root)
+        original = source_path.read_text(encoding="utf-8")
+        region = _find_function_region(original, target)
+        self._validate_source(original[region.content_start : region.content_end], candidate.source)
+        candidate_file = _replace_function_source(original, region, candidate.source)
+
+        unit = self.project.resolve_unit(target.unit)
+
+        def _ws(p: Optional[Path]) -> Optional[Path]:
+            if p is None:
+                return None
+            try:
+                return root / p.relative_to(self.root)
+            except ValueError:
+                return p
+
+        ws_source = _ws(unit.source_path)
+        ws_base = _ws(unit.base_path)
+        ws_target = _ws(unit.target_path)
+
+        original_object = ws_base.read_bytes() if ws_base and ws_base.is_file() else None
+
+        try:
+            source_path.write_text(candidate_file, encoding="utf-8")
+            if ws_base is None:
+                raise ValueError(f"Unit {unit.name!r} has no candidate object path")
+            ws_base.unlink(missing_ok=True)
+
+            build_error = self._build_object_at(root, ws_base)
+            if build_error:
+                return CandidateEvaluation(
+                    status=CandidateStatus.COMPILE_ERROR,
+                    compile_report=CompileReport(succeeded=False, exit_code=-1),
+                    match_percent=0.0,
+                )
+
+            report_path = artifact_dir / "objdiff-report.json"
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            objdiff_result = subprocess.run(
+                [
+                    self.project.objdiff_bin(),
+                    "report", "generate",
+                    "-p", str(root),
+                    "-o", str(report_path),
+                    "-f", "json-pretty",
+                ],
+                cwd=root, capture_output=True, text=True,
+            )
+            match_percent = 0.0
+            if objdiff_result.returncode == 0 and report_path.is_file():
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+                for entry in report.get("units", []):
+                    if entry.get("name") == unit.name:
+                        for fn in entry.get("functions", []):
+                            if fn.get("name") == target.symbol:
+                                match_percent = float(fn.get("match_percent", 0.0) or 0.0)
+                                break
+
+            if ws_target is None or not ws_target.is_file():
+                return CandidateEvaluation(
+                    status=CandidateStatus.INVALID_RESPONSE,
+                    compile_report=CompileReport(succeeded=True),
+                    match_percent=match_percent,
+                    warnings=["retail object not found in workspace"],
+                )
+            if ws_base is None or not ws_base.is_file():
+                return CandidateEvaluation(
+                    status=CandidateStatus.INVALID_RESPONSE,
+                    compile_report=CompileReport(succeeded=True),
+                    match_percent=match_percent,
+                    warnings=["candidate object not found after build"],
+                )
+
+            retail_function = extract_function(ws_target, target.symbol)
+            candidate_function = extract_function(ws_base, target.symbol)
+
+            structural_report = None
+            try:
+                structural_report = compare_structural(retail_function, candidate_function)
+            except Exception:
+                pass
+
+            size_ok, size_detail = _function_size_comparison(
+                retail_function.size, candidate_function.size
+            )
+
+            cstatus = CandidateStatus.COMPILES
+            if match_percent >= 100.0:
+                cstatus = CandidateStatus.FULL_MATCH
+            elif match_percent > 0.0:
+                cstatus = CandidateStatus.CODE_MATCH
+            if structural_report is not None and structural_report.total_score >= 0.75 and cstatus == CandidateStatus.COMPILES:
+                cstatus = CandidateStatus.STRUCTURALLY_ALIGNED
+
+            return CandidateEvaluation(
+                status=cstatus,
+                compile_report=CompileReport(succeeded=True),
+                match_percent=match_percent,
+                structural_report=structural_report,
+                function_size=candidate_function.size,
+                retail_size=retail_function.size,
+            )
+        finally:
+            source_path.write_text(original, encoding="utf-8")
+            if ws_base:
+                if original_object is None:
+                    ws_base.unlink(missing_ok=True)
+                else:
+                    ws_base.write_bytes(original_object)
+
+    def decode_function(self, root: Path, target_id: str, side: str) -> Any:
+        target = self._any_target(target_id)
+        if target.unit is None or target.symbol is None:
+            raise ValueError(f"Target {target_id!r} must have unit and symbol")
+        unit = self.project.resolve_unit(target.unit)
+        if side == "retail":
+            obj_path = unit.target_path
+        elif side == "candidate":
+            obj_path = unit.base_path
+        else:
+            raise ValueError(f"Unknown side: {side!r}, expected 'retail' or 'candidate'")
+        if obj_path is None:
+            raise ValueError(f"Unit {unit.name!r} has no {side} object path")
+        try:
+            ws_path = root / obj_path.relative_to(self.root)
+        except ValueError:
+            ws_path = obj_path
+        if not ws_path.is_file():
+            raise FileNotFoundError(f"{side} object not found: {ws_path}")
+        return extract_function(ws_path, target.symbol)
+
+    def protected_functions(self, target_id: str) -> List[str]:
+        target = self._any_target(target_id)
+        if target.unit is None:
+            return []
+        result: List[str] = []
+        for item in load_targets(self.config):
+            if (
+                item.id == target_id
+                or item.unit != target.unit
+                or item.status not in {"FULL_MATCH", "EQUIVALENT_MATCH"}
+            ):
+                continue
+            result.append(item.id)
+        return result
+
+    def run_promotion_validation(self, target_id: str, artifact_dir: Path) -> List[ValidationStepResult]:
+        steps: List[ValidationStepResult] = []
+        target = self._any_target(target_id)
+
+        try:
+            unit = self.project.resolve_unit(target.unit) if target.unit else None
+        except ValueError:
+            unit = None
+
+        # Step 1 — Object size check
+        if unit and unit.target_path and unit.base_path:
+            try:
+                size_result = check_object_size(
+                    project_root=self.root,
+                    region=self.config.region,
+                    unit_hint=unit.name,
+                    retail_object=unit.target_path,
+                    decomp_object=unit.base_path,
+                )
+                steps.append(ValidationStepResult(
+                    name="object_size_check",
+                    succeeded=size_result.ok,
+                    exit_code=0 if size_result.ok else -1,
+                    detail=size_result.notes,
+                ))
+            except Exception as exc:
+                steps.append(ValidationStepResult(
+                    name="object_size_check",
+                    succeeded=False,
+                    exit_code=-1,
+                    detail=f"size check raised {type(exc).__name__}: {exc}",
+                ))
+        else:
+            steps.append(ValidationStepResult(
+                name="object_size_check",
+                succeeded=False,
+                exit_code=-1,
+                detail="unresolvable unit or missing object paths",
+            ))
+
+        # Step 2 — Protected function regression check
+        if unit and target.unit:
+            protected_ids = self.protected_functions(target_id)
+            if protected_ids:
+                try:
+                    unit_report = report_unit(self.project, unit)
+                    functions = {fn.name: fn for fn in unit_report.functions}
+                    regressions: List[str] = []
+                    for tid in protected_ids:
+                        protected = self._any_target(tid)
+                        if protected.symbol:
+                            fn = functions.get(protected.symbol)
+                            percent = fn.match_percent if fn else 0.0
+                            if percent < 100.0:
+                                regressions.append(
+                                    f"{tid} ({protected.status}): {percent:.3f}%"
+                                )
+                    ok = not regressions
+                    steps.append(ValidationStepResult(
+                        name="protected_function_regression_check",
+                        succeeded=ok,
+                        exit_code=0 if ok else -1,
+                        detail="; ".join(regressions) if regressions else "no regressions",
+                    ))
+                except Exception as exc:
+                    steps.append(ValidationStepResult(
+                        name="protected_function_regression_check",
+                        succeeded=False,
+                        exit_code=-1,
+                        detail=f"regression check raised {type(exc).__name__}: {exc}",
+                    ))
+            else:
+                steps.append(ValidationStepResult(
+                    name="protected_function_regression_check",
+                    succeeded=True,
+                    exit_code=0,
+                    detail="no protected functions in this unit",
+                ))
+        else:
+            steps.append(ValidationStepResult(
+                name="protected_function_regression_check",
+                succeeded=True,
+                exit_code=0,
+                detail="no unit — skipping protected function check",
+            ))
+
+        # Step 3 — Coop cycle integration
+        try:
+            cycle_result = subprocess.run(
+                [sys.executable, "tools/coop/run.py", "cycle", target_id,
+                 "--hypothesis", "promotion validation",
+                 "--next-change", "None"],
+                cwd=self.root,
+                text=True, capture_output=True, timeout=600,
+            )
+            cycle_ok = cycle_result.returncode == 0
+            cycle_lines = cycle_result.stdout.strip().split("\n")[-5:] if cycle_result.stdout else []
+            cycle_detail = " ".join(l.strip() for l in cycle_lines if l.strip())[:500]
+            steps.append(ValidationStepResult(
+                name="coop_cycle",
+                succeeded=cycle_ok,
+                exit_code=cycle_result.returncode,
+                detail=cycle_detail or ("passed" if cycle_ok else cycle_result.stderr.strip()[:500]),
+            ))
+        except subprocess.TimeoutExpired:
+            steps.append(ValidationStepResult(
+                name="coop_cycle",
+                succeeded=False,
+                exit_code=-1,
+                detail="coop cycle timed out (600 s)",
+            ))
+        except Exception as exc:
+            steps.append(ValidationStepResult(
+                name="coop_cycle",
+                succeeded=False,
+                exit_code=-1,
+                detail=f"coop cycle raised {type(exc).__name__}: {exc}",
+            ))
+
+        return steps
+
+    def _build_object_at(self, root: Path, object_path: Path) -> str:
+        completed = subprocess.run(
+            [self.project.ninja_bin(), str(object_path.relative_to(root))],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode == 0:
+            return ""
+        detail = "\n".join(
+            value.strip() for value in (completed.stdout, completed.stderr) if value.strip()
+        )
+        return f"build exited {completed.returncode}: {detail[-4000:]}"
 
 
 def create_adapter(root: Path, settings: Dict[str, Any]) -> XenobladeAdapter:

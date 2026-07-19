@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v27`
-- Result format: `13`
-- Certificate format: `6`
+- Architecture model: `broadway-ppc32-be-v28`
+- Result format: `14`
+- Certificate format: `7`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -62,10 +62,13 @@ documented per-implementation private-storage abstraction.
   (`loop_summary` / `affine-loop-summary`) are applied at recognized
   `li`/`mtctr`/`addi`/`bdnz` headers inside `execute_cfg` when the engine
   supplies a summary map; trip count must be a positive constant.
-  Relational induction for CTR-affine pairs with matching body registers,
-  strides, and trip counts is discharged alongside affine closed forms
-  (`relational_induction.try_discharge_ctr_affine_relational`); natural-loop
-  and mismatched-body sketches remain unsupported for `EQUIVALENT`.
+  Compare-affine countdown loops (`li` / affine body / `addi -1` / `cmpwi` /
+  `bne`) use the same summary map with `proof_kind=compare-affine-closed-form`
+  and leave CTR unmodified.
+  Relational induction discharges matching CTR-affine or compare-affine pairs
+  and natural-loop pairs whose headers are backed by those closed forms
+  (`relational_induction.try_discharge_relational`); shape-only natural sketches
+  and mismatched bodies remain unsupported for `EQUIVALENT`.
   Constant-stride store loops (`memory_loop` / `memory-loop-summary`) with a
   positive concrete trip count are discharged in closed form inside
   `execute_cfg` (apply N width-matched stores, advance base/CTR); trip counts

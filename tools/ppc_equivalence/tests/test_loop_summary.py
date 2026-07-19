@@ -7,7 +7,9 @@ import unittest
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.loop_summary import (
     closed_form_gpr_value,
+    find_compare_affine_loop_candidates,
     find_ctr_affine_loop_candidates,
+    summarize_compare_affine_loop,
     summarize_ctr_affine_loop,
 )
 from tools.ppc_equivalence.model import concrete_state
@@ -105,6 +107,56 @@ class CtrAffineRecognitionTests(unittest.TestCase):
         self.assertEqual(find_ctr_affine_loop_candidates(program), [])
 
 
+def _compare_counted_loop(*, count: int, addend: int = 1) -> list[Instruction]:
+    """li r4,count; loop: addi r3,r3,addend; addi r4,r4,-1; cmpwi r4,0; bne loop; blr"""
+    return [
+        _insn(Opcode.ADDI, (4, 0, count), address=0),
+        _insn(Opcode.ADDI, (3, 3, addend), address=4),
+        _insn(Opcode.ADDI, (4, 4, -1), address=8),
+        _insn(Opcode.CMPWI, (0, 4, 0), address=12),
+        _insn(Opcode.BC, (4, 2, 4, 0), address=16),
+        _insn(Opcode.BCLR, (20, 0, 0), address=20),
+    ]
+
+
+class CompareAffineRecognitionTests(unittest.TestCase):
+    def test_recognizes_compare_affine_loop(self) -> None:
+        program = _compare_counted_loop(count=5, addend=2)
+        candidates = find_compare_affine_loop_candidates(program)
+        self.assertEqual(len(candidates), 1)
+        candidate = candidates[0]
+        self.assertEqual(candidate.confidence, "exact-pattern")
+        self.assertEqual(candidate.trip_count, 5)
+        self.assertEqual(candidate.trip_count_reg, 4)
+        self.assertEqual(candidate.body_updates[0].reg, 3)
+        self.assertEqual(candidate.body_updates[0].addend, 2)
+
+    def test_summary_matches_concrete_execution(self) -> None:
+        program = _compare_counted_loop(count=4, addend=3)
+        candidate = find_compare_affine_loop_candidates(program)[0]
+        summary = summarize_compare_affine_loop(candidate)
+        self.assertIsNotNone(summary)
+        assert summary is not None
+        self.assertEqual(summary.proof_kind, "compare-affine-closed-form")
+        entry = 10
+        predicted = closed_form_gpr_value(entry, 3, 4)
+        terminals = [
+            t
+            for t in execute_cfg(
+                concrete_state({"gpr": {"r3": entry, "r4": 0}, "lr": 0x80001000, "ctr": 7}),
+                program,
+                ConcreteOps(),
+                affine_loop_summaries={summary.header_pc: summary},
+                max_loop_iterations=2,
+            )
+            if t.condition
+        ]
+        self.assertEqual(len(terminals), 1)
+        self.assertEqual(terminals[0].state.gpr[3], predicted)
+        self.assertEqual(terminals[0].state.gpr[4], 0)
+        self.assertEqual(terminals[0].state.ctr, 7)
+
+
 class AffineFeatureGateTests(unittest.TestCase):
     def test_affine_feature_is_supported(self) -> None:
         from tools.ppc_equivalence.proof_features import (
@@ -133,6 +185,24 @@ class AffineFeatureGateTests(unittest.TestCase):
         self.assertIsNotNone(result.loop_summary)
         self.assertIsNotNone(result.relational_induction)
         self.assertEqual(result.loop_summary["trip_count"], 20)
+        self.assertEqual(result.relational_induction["status"], "applied")
+
+    def test_compare_affine_proves_under_tight_iteration_bound(self) -> None:
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        program = _compare_counted_loop(count=20, addend=3)
+        contract = EquivalenceContract(parse_observables(["r3", "r4"]), timeout_ms=15_000)
+        result = check_equivalence(
+            program, program, contract,
+            original_hex="00", candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertIn("affine-loop-summary", result.proof_features)
+        self.assertIn("relational-induction", result.proof_features)
+        self.assertEqual(result.loop_summary["proof_kind"], "compare-affine-closed-form")
         self.assertEqual(result.relational_induction["status"], "applied")
 
 

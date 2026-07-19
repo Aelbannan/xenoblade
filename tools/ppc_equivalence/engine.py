@@ -21,8 +21,7 @@ from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concre
 from .proof_features import enforce_equivalent_proof_features
 from .jump_table_obligations import (
     JumpTableProofContext,
-    build_indirect_targets_obligation,
-    build_readonly_image_obligation,
+    build_jump_table_obligations,
     indirect_target_closure_constraints,
     jump_table_gate_reason,
     rom_image_byte_constraints,
@@ -1061,7 +1060,12 @@ def check_equivalence(
     # Wall-clock budget covers CFG exploration and constraint construction as
     # well as solving, so path explosion cannot run past the user timeout.
     deadline = Deadline.after_ms(contract.timeout_ms)
-    jump_targets = None if jump_table is None else jump_table.expansion_map()
+    original_jump_targets = (
+        None if jump_table is None else jump_table.original_expansion_map()
+    )
+    candidate_jump_targets = (
+        None if jump_table is None else jump_table.candidate_expansion_map()
+    )
     original_affine = build_affine_summary_map(original)
     candidate_affine = build_affine_summary_map(candidate)
     affine_used: list = []
@@ -1117,7 +1121,7 @@ def check_equivalence(
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
             deadline=deadline,
-            jump_table_targets=jump_targets,
+            jump_table_targets=original_jump_targets,
             affine_loop_summaries=original_affine,
             affine_summaries_used=affine_used,
         )
@@ -1129,7 +1133,7 @@ def check_equivalence(
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
             deadline=deadline,
-            jump_table_targets=jump_targets,
+            jump_table_targets=candidate_jump_targets,
             affine_loop_summaries=candidate_affine,
             affine_summaries_used=affine_used,
         )
@@ -1193,30 +1197,40 @@ def check_equivalence(
         index_reg = jump_table.index_reg
         if not (0 <= base_reg <= 31 and 0 <= index_reg <= 31):
             raise ValueError("jump table base/index registers must be GPRs 0..31")
-        layout_constraints.append(
-            ops.eq(initial.gpr[base_reg], ops.const(jump_table.table.base)),
-        )
+        cand_table = jump_table.candidate_table_words()
+        if not jump_table.dual_base():
+            layout_constraints.append(
+                ops.eq(initial.gpr[base_reg], ops.const(jump_table.table.base)),
+            )
         layout_constraints.append(
             ops.unsigned_lt(
                 initial.gpr[index_reg],
                 ops.const(len(jump_table.table.words)),
             ),
         )
+        for table in jump_table.readonly_tables():
+            layout_constraints.extend(
+                rom_image_byte_constraints(initial.memory, table, ops)
+            )
+            layout_constraints.extend(
+                rom_image_no_write_constraints(
+                    original_exits + candidate_exits,
+                    initial.memory,
+                    table,
+                    ops,
+                )
+            )
         layout_constraints.extend(
-            rom_image_byte_constraints(initial.memory, jump_table.table, ops)
-        )
-        layout_constraints.extend(
-            rom_image_no_write_constraints(
-                original_exits + candidate_exits,
-                initial.memory,
-                jump_table.table,
-                ops,
+            indirect_target_closure_constraints(
+                original_exits,
+                target_pcs=jump_table.table.words,
+                ops=ops,
             )
         )
         layout_constraints.extend(
             indirect_target_closure_constraints(
-                original_exits + candidate_exits,
-                target_pcs=jump_table.table.words,
+                candidate_exits,
+                target_pcs=cand_table.words,
                 ops=ops,
             )
         )
@@ -1343,17 +1357,9 @@ def check_equivalence(
         )
         if jump_table is not None:
             early.proof_features = ["readonly-image", "indirect-target-closure"]
-            early.address_space = build_readonly_image_obligation(
-                jump_table.table, no_write_status="unsat",
-            )
-            early.indirect_targets = build_indirect_targets_obligation(
-                branch_pc=jump_table.branch_pc,
-                targets=tuple(
-                    (f"case-{index}", word & 0xFFFFFFFC)
-                    for index, word in enumerate(jump_table.table.words)
-                ),
-                source=jump_table.table.source,
-                artifact_hashes=(jump_table.table.image_sha256,),
+            early.address_space, early.indirect_targets = build_jump_table_obligations(
+                jump_table,
+                no_write_status="unsat",
                 coverage="unsat-remainder",
             )
         if affine_used:

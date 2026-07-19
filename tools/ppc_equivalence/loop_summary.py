@@ -187,67 +187,6 @@ def apply_affine_loop_summary(state: Any, summary: LoopSummary, ops: Any) -> Any
     return replace(state, gpr=tuple(gprs), ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF))
 
 
-def build_loop_summary_obligation(
-    summary: LoopSummary,
-    *,
-    coverage: str = "pending",
-) -> dict[str, Any]:
-    """Obligation block for ``proof_features: [\"affine-loop-summary\"]``."""
-    return {
-        "proof_kind": summary.proof_kind,
-        "header_pc": summary.header_pc,
-        "latch_pc": summary.latch_pc,
-        "exit_pc": summary.exit_pc,
-        "trip_count": summary.trip_count,
-        "final_ctr": summary.final_ctr,
-        "ranking": summary.ranking,
-        "entry_condition": summary.entry_condition,
-        "exit_condition": summary.exit_condition,
-        "final_gpr": [
-            {"reg": reg, "entry_reg": entry_reg, "stride": stride}
-            for reg, (entry_reg, stride) in sorted(summary.final_gpr.items())
-        ],
-        "coverage": coverage,
-        "algorithm": "ctr-affine-v1",
-    }
-
-
-def validate_loop_summary_obligation(data: dict[str, Any]) -> str | None:
-    """Return None when a ``loop_summary`` obligation object is well-formed."""
-    required = (
-        "proof_kind",
-        "header_pc",
-        "latch_pc",
-        "exit_pc",
-        "trip_count",
-        "final_ctr",
-        "ranking",
-        "final_gpr",
-    )
-    for key in required:
-        if key not in data:
-            return f"loop_summary missing {key!r}"
-    if not isinstance(data["proof_kind"], str) or not data["proof_kind"]:
-        return "loop_summary.proof_kind must be a non-empty string"
-    for key in ("header_pc", "latch_pc", "exit_pc", "final_ctr"):
-        if not isinstance(data[key], int):
-            return f"loop_summary.{key} must be an int"
-    if data["trip_count"] is not None and not isinstance(data["trip_count"], int):
-        return "loop_summary.trip_count must be an int or null"
-    if not isinstance(data["ranking"], str) or not data["ranking"]:
-        return "loop_summary.ranking must be a non-empty string"
-    raw_gpr = data["final_gpr"]
-    if not isinstance(raw_gpr, list):
-        return "loop_summary.final_gpr must be a list"
-    for index, item in enumerate(raw_gpr):
-        if not isinstance(item, dict):
-            return f"loop_summary.final_gpr[{index}] must be an object"
-        for field in ("reg", "entry_reg", "stride"):
-            if field not in item or not isinstance(item[field], int):
-                return f"loop_summary.final_gpr[{index}].{field} must be an int"
-    return None
-
-
 def closed_form_gpr_value(entry_value: int, stride: int, trip_count: int) -> int:
     """Evaluate ``entry + trip_count * stride`` in 32-bit two's complement."""
     return (entry_value + trip_count * stride) & 0xFFFFFFFF

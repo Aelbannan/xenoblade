@@ -39,6 +39,7 @@ from tools.llm_harness.dossier import (
     TargetDossier,
     build_data_flow_summary,
     build_target_dossier,
+    compact_model_facing_dossier,
     dossier_to_dict,
 )
 from tools.llm_harness.match_improve import (
@@ -849,6 +850,8 @@ class XenobladeAdapter:
         if caller_excerpts:
             dossier_dict["caller_excerpts"] = caller_excerpts
 
+        dossier_dict = compact_model_facing_dossier(dossier_dict)
+
         max_chars = int(self.prompt_budget.get("max_chars", 60000))
 
         def _render() -> str:
@@ -877,7 +880,6 @@ class XenobladeAdapter:
                 snippets = types.get("snippets")
                 if isinstance(snippets, list) and len(snippets) > 8:
                     types["snippets"] = snippets[:8]
-                    types["total_chars"] = sum(len(s) + 1 for s in types["snippets"])
             prompt = _render()
 
         return prompt

@@ -1332,3 +1332,84 @@ def dossier_to_dict(d: TargetDossier) -> Dict[str, Any]:
         return obj
 
     return _convert(d)
+
+
+def demangled_has_explicit_return(demangled: str) -> bool:
+    """True when *demangled* itself carries a return type (not a void default).
+
+    Mirrors ``parse_signature``'s split so prompt compaction can drop
+    parser-inferred ``return_info`` while keeping genuinely recovered types.
+    """
+    paren = demangled.find("(")
+    sig_base = demangled[:paren].strip() if paren >= 0 else demangled.strip()
+    sig_base = re.sub(r"\s+const\s*$", "", sig_base).strip()
+    if "::" in sig_base:
+        last_scope = sig_base.rfind("::")
+        before_method = sig_base[:last_scope].strip()
+        chain_match = re.search(r"((?:\w+::)*\w+)$", before_method)
+        if not chain_match:
+            return False
+        return bool(before_method[: chain_match.start()].strip())
+    return len(sig_base.rsplit(None, 1)) >= 2
+
+
+def compact_model_facing_dossier(dossier: Dict[str, Any]) -> Dict[str, Any]:
+    """Strip tooling-only / default-inferred fields from a prompt dossier.
+
+    Keeps mangled and demangled names when they differ; drops one duplicate when
+    identical. Keeps signature return/parameter fields only when recovered from
+    the demangled declaration (not void/empty parser defaults). Prefers
+    ``retail.base``/``size``/``truncated`` over duplicated target retail fields.
+    """
+    out = dict(dossier)
+    for key in ("schema_version", "repository", "workflow"):
+        out.pop(key, None)
+
+    target = out.get("target")
+    if isinstance(target, dict):
+        target = dict(target)
+        for key in ("object_file", "translation_unit", "retail_address", "retail_size"):
+            target.pop(key, None)
+        mangled = target.get("mangled_name")
+        demangled = target.get("demangled_name")
+        if (
+            mangled is not None
+            and demangled is not None
+            and mangled == demangled
+        ):
+            target.pop("mangled_name", None)
+        out["target"] = target
+
+    signature = out.get("signature")
+    if isinstance(signature, dict):
+        signature = dict(signature)
+        signature.pop("authoritative", None)
+        declaration = str(signature.get("declaration") or "")
+        if not signature.get("parameters"):
+            signature.pop("parameters", None)
+        ret = signature.get("return_info")
+        if isinstance(ret, dict) and demangled_has_explicit_return(declaration):
+            cleaned = {k: v for k, v in ret.items() if v not in ("", None)}
+            if cleaned:
+                signature["return_info"] = cleaned
+            else:
+                signature.pop("return_info", None)
+        else:
+            signature.pop("return_info", None)
+        if signature.get("implicit_this") is None:
+            signature.pop("implicit_this", None)
+        out["signature"] = signature
+
+    # Markers / empty current_source / path duplicate target.source_file.
+    out.pop("source", None)
+
+    types = out.get("types")
+    if isinstance(types, dict):
+        types = dict(types)
+        types.pop("total_chars", None)
+        if not types.get("snippets"):
+            out.pop("types", None)
+        else:
+            out["types"] = types
+
+    return out

@@ -15,10 +15,10 @@ Selected fixture (exact-pattern, moderate entry count):
 | Bound imm | ``13`` (cases ``0..13``, 14 entries) |
 | Base reg | ``r3`` via ``addis r23,-32685`` + ``addi r3,r23,-20036`` |
 
-Table base is recovered manually from the ``addi`` immediately preceding the
-``slwi`` (``0x800e0d7c: addi r3,r23,-20036`` after ``0x800e0d34: addis r23,r0,-32685``).
-Automatic lis/addi recovery is tracked separately; this fixture hardcodes the
-linked VA until that lands.
+Table base recovers via ``jump_table_auto.resolve_table_base_va`` when the
+decode window includes ``0x800e0d34: addis r23,r0,-32685`` and
+``0x800e0d7c: addi r3,r23,-20036``. The constants below remain as golden
+values for tests that hydrate without re-deriving the VA.
 """
 
 from __future__ import annotations

@@ -7,6 +7,8 @@ from tools.ppc_equivalence.address_space import (
     AddressSpace,
     Region,
     RegionKind,
+    attach_mmio_region,
+    mmio_region,
     rom_image_region,
 )
 
@@ -82,6 +84,36 @@ class TestEmptyAddressSpace(unittest.TestCase):
         result = space.classify_range(0x80000000, 1)
         self.assertIsNone(result.region)
         self.assertFalse(result.spans_multiple_regions)
+
+
+class TestMmioRegion(unittest.TestCase):
+    def test_classify_mmio(self):
+        mmio = mmio_region(0xCC008000, 0xCC008FFF, device_id="pi", label="PI")
+        space = AddressSpace((mmio,))
+
+        self.assertIs(space.classify(0xCC008000), mmio)
+        self.assertIs(space.classify(0xCC008FFF), mmio)
+        self.assertEqual(mmio.kind, RegionKind.MMIO)
+        self.assertEqual(mmio.device_id, "pi")
+        self.assertEqual(mmio.label, "PI")
+        self.assertIsNone(space.classify(0xCC007FFF))
+
+    def test_attach_mmio_region(self):
+        ram = Region(0x80000000, 0x801FFFFF, RegionKind.RAM)
+        space = attach_mmio_region(
+            AddressSpace((ram,)),
+            0xCC008000,
+            0xCC008FFF,
+            device_id="gxfifo",
+        )
+        mmio = space.classify(0xCC008100)
+        self.assertIsNotNone(mmio)
+        self.assertEqual(mmio.kind, RegionKind.MMIO)
+        self.assertEqual(mmio.device_id, "gxfifo")
+
+    def test_device_id_rejected_for_non_mmio(self):
+        with self.assertRaisesRegex(ValueError, "device_id is only valid"):
+            Region(0x1000, 0x2000, RegionKind.RAM, device_id="bad")
 
 
 if __name__ == "__main__":

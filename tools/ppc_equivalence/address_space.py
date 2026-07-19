@@ -20,6 +20,7 @@ class Region:
     image_bytes: bytes | None = None
     image_sha256: str | None = None
     label: str | None = None
+    device_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.start < 0 or self.end < 0 or self.start > 0xFFFFFFFF or self.end > 0xFFFFFFFF:
@@ -44,6 +45,8 @@ class Region:
                     "image_sha256",
                     hashlib.sha256(self.image_bytes).hexdigest(),
                 )
+        if self.device_id is not None and self.kind is not RegionKind.MMIO:
+            raise ValueError("device_id is only valid for MMIO regions")
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,3 +133,32 @@ def rom_image_region(
         image_sha256=hashlib.sha256(image_bytes).hexdigest(),
         label=label,
     )
+
+
+def mmio_region(
+    start: int,
+    end: int,
+    *,
+    device_id: str | None = None,
+    label: str | None = None,
+) -> Region:
+    """Build an MMIO region descriptor (device bus wiring is future work)."""
+    return Region(
+        start=start,
+        end=end,
+        kind=RegionKind.MMIO,
+        label=label,
+        device_id=device_id,
+    )
+
+
+def attach_mmio_region(
+    space: AddressSpace,
+    start: int,
+    end: int,
+    *,
+    device_id: str | None = None,
+    label: str | None = None,
+) -> AddressSpace:
+    """Return a new ``AddressSpace`` with an additional MMIO region appended."""
+    return AddressSpace(space.regions + (mmio_region(start, end, device_id=device_id, label=label),))

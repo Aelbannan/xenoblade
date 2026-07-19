@@ -957,7 +957,13 @@ class SymbolicOps:
         return constraints
 
     def call_token(self, callee: str, state: MachineState, contract: CalleeContract) -> Any:
-        """A deterministic opaque transition key for an already-proved callee."""
+        """A deterministic opaque transition key for an already-proved callee.
+
+        ``valid`` and ``invalid_reason`` are always part of the token, even when
+        omitted from ``contract.reads``. Otherwise two callers that differ only
+        in first-invalid reason can collapse to the same UF transition and
+        falsely prove equivalence after the summary rewrites definedness.
+        """
         import hashlib
         components: dict[str, Any] = {
             **{f"r{i}": state.gpr[i] for i in range(32)},
@@ -973,14 +979,15 @@ class SymbolicOps:
             "xer.so": state.xer.so, "fpscr": state.fpscr, "ctr": state.ctr,
             "lr": state.lr, "msr": state.msr, "time_base": state.time_base, "srr0": state.srr0,
             "srr1": state.srr1, "memory": state.memory, "valid": state.valid,
+            "invalid_reason": state.invalid_reason,
         }
         for field in range(8):
             shift = (7 - field) * 4
             components[f"cr{field}"] = self.z3.Extract(shift + 3, shift, state.cr)
-        names = (
-            sorted(name for name in components if name != "lr")
-            if "*" in contract.reads else sorted(contract.reads)
-        )
+        if "*" in contract.reads:
+            names = sorted(name for name in components if name != "lr")
+        else:
+            names = sorted(set(contract.reads) | {"valid", "invalid_reason"})
         arguments = tuple(components[name] for name in names if name in components) + (
             self._relocation_world,
         )
@@ -2981,6 +2988,26 @@ def _apply_call_summary(
         result("memory", state.memory.sort())
         if "memory" in contract.writes else state.memory
     )
+    # Definedness is monotonic across opaque summaries: a caller that is already
+    # invalid keeps its first invalid_reason, and the callee cannot resurrect
+    # validity. When the caller is still valid, the summary may introduce a new
+    # reason through the UF transition (keyed by entry definedness above).
+    z3 = ops.z3
+    if "valid" in contract.writes:
+        callee_valid = result("valid", state.valid.sort())
+        fresh_valid = z3.And(state.valid, callee_valid)
+    else:
+        callee_valid = state.valid
+        fresh_valid = state.valid
+    if "invalid_reason" in contract.writes:
+        callee_reason = result("invalid_reason", z3.BitVecSort(8))
+        fresh_reason = z3.If(
+            z3.Not(state.valid),
+            state.invalid_reason,
+            z3.If(z3.Not(callee_valid), callee_reason, state.invalid_reason),
+        )
+    else:
+        fresh_reason = state.invalid_reason
     return MachineState(
         tuple(fresh_gprs),
         tuple(fresh_fprs),
@@ -2998,8 +3025,8 @@ def _apply_call_summary(
         state.srr1,
         state.spr,
         memory,
-        result("valid", state.valid.sort()) if "valid" in contract.writes else state.valid,
-        result("invalid_reason", ops.z3.BitVecSort(8)) if "invalid_reason" in contract.writes else state.invalid_reason,
+        fresh_valid,
+        fresh_reason,
         state.memory_touches,
         state.stack_low,
         state.memory_effects + ((token,) if "memory" in contract.writes else ()),

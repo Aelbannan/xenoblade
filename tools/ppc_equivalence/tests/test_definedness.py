@@ -298,6 +298,67 @@ class DefinednessSymmetricTests(unittest.TestCase):
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 
 
+@unittest.skipUnless(__import__("importlib").util.find_spec("z3"), "z3-solver is not installed")
+class CalleeSummaryDefinednessTests(unittest.TestCase):
+    """Opaque call summaries must not erase distinct first-invalid reasons."""
+
+    def test_summary_preserves_distinct_invalid_reasons(self) -> None:
+        # Original: always DIVIDE_UNDEFINED, normalize, bl leaf, blr
+        # Candidate: always UNALIGNED_ACCESS, normalize, bl leaf, blr
+        # With an empty-read summary that rewrites valid/invalid_reason, a buggy
+        # token that omitted invalid_reason produced a false EQUIVALENT.
+        from tools.ppc_equivalence.elf_symbols import FunctionRelocation
+        from tools.ppc_equivalence.ir import R_PPC_REL24
+        from tools.ppc_equivalence.semantics import CalleeContract
+
+        R = FunctionRelocation
+        orig = "38a00000 7c6413d6 38600000 48000001 4e800020"
+        cand = "38600001 80830000 38600000 48000001 4e800020"
+        rel = (R(12, R_PPC_REL24, "leaf", 0),)
+        left = decode_block(parse_hex(orig), relocations=rel, validate_with_capstone=False)
+        right = decode_block(parse_hex(cand), relocations=rel, validate_with_capstone=False)
+        contract = CalleeContract(
+            reads=frozenset(),
+            writes=frozenset({"valid", "invalid_reason", "r3"}),
+            source="empty-reads",
+            invalid_reasons=frozenset(r.value for r in InvalidReason),
+        )
+        result = check_equivalence(
+            left, right,
+            make_contract(preset=None, observe=("r3",), timeout_ms=30_000),
+            original_hex="", candidate_hex="",
+            assumed_callees=frozenset({"leaf"}),
+            callee_contracts={"leaf": contract},
+        )
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT)
+        self.assertIn(
+            result.status,
+            {
+                ProofStatus.NOT_EQUIVALENT,
+                ProofStatus.INCONCLUSIVE_ABSTRACTION,
+            },
+        )
+
+    def test_opaque_summary_cannot_equate_distinct_entry_reasons(self) -> None:
+        from tools.ppc_equivalence.engine import _symbolic_initial
+        from tools.ppc_equivalence.semantics import (
+            CalleeContract, SymbolicOps, _apply_call_summary, _constrain_valid,
+        )
+
+        ops = SymbolicOps()
+        z3 = ops.z3
+        base = _symbolic_initial(ops)
+        left = _constrain_valid(base, ops.bool(False), InvalidReason.DIVIDE_UNDEFINED, ops)
+        right = _constrain_valid(base, ops.bool(False), InvalidReason.UNALIGNED_ACCESS, ops)
+        out_l = _apply_call_summary(left, ops, "leaf", CalleeContract.opaque_eabi())
+        out_r = _apply_call_summary(right, ops, "leaf", CalleeContract.opaque_eabi())
+        solver = z3.Solver()
+        solver.add(z3.Not(out_l.valid))
+        solver.add(z3.Not(out_r.valid))
+        solver.add(out_l.invalid_reason != out_r.invalid_reason)
+        self.assertEqual(solver.check(), z3.sat)
+
+
 class InvalidReasonEnums(unittest.TestCase):
     def test_enum_values(self):
         self.assertEqual(InvalidReason.NONE.value, 0)

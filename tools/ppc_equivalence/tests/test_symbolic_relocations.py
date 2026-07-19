@@ -103,6 +103,49 @@ class SymbolicRelocationTests(unittest.TestCase):
             assumed_callees=frozenset({"leaf"}),
             callee_contracts={"leaf": contract},
         ))
+        with_reasons = CalleeContract(
+            frozenset({"r3"}), frozenset({"r3"}), "test",
+            invalid_reasons=frozenset({1}),
+        )
+        without_reasons = CalleeContract(
+            frozenset({"r3"}), frozenset({"r3"}), "test",
+        )
+        self.assertNotEqual(
+            _cache_key(
+                *common, 0, 0, relocation, relocation,
+                assumed_callees=frozenset({"leaf"}),
+                callee_contracts={"leaf": with_reasons},
+            ),
+            _cache_key(
+                *common, 0, 0, relocation, relocation,
+                assumed_callees=frozenset({"leaf"}),
+                callee_contracts={"leaf": without_reasons},
+            ),
+        )
+        self.assertNotEqual(
+            baseline,
+            _cache_key(
+                *common, 0, 0, relocation, relocation,
+                assumed_callees=frozenset({"leaf"}),
+                limits={"max_instructions": 64},
+            ),
+        )
+        self.assertNotEqual(
+            baseline,
+            _cache_key(
+                *common, 0, 0, relocation, relocation,
+                assumed_callees=frozenset({"leaf"}),
+                floating_point_domain={"rounding_modes": ["nearest-even"]},
+            ),
+        )
+        self.assertNotEqual(
+            baseline,
+            _cache_key(
+                *common, 0, 0, relocation, relocation,
+                assumed_callees=frozenset({"leaf"}),
+                engine_hash="a" * 64,
+            ),
+        )
 
     def test_all_built_source_object_relocations_attach(self) -> None:
         root = Path("build/us/src")
@@ -266,6 +309,38 @@ class MatchedCalleeSummaryTests(unittest.TestCase):
         validation = validate_callee_contract(
             fallthrough, CalleeContract.opaque_eabi(), require_normal_return=True,
         )
+        self.assertFalse(validation.valid)
+        self.assertIn("normal returns", validation.reason)
+
+    def test_normal_return_unknown_feasibility_fails_closed(self) -> None:
+        """Solver ``unknown`` on an abnormal exit must reject (not accept)."""
+        from unittest import mock
+
+        from tools.ppc_equivalence.semantics import SymbolicOps
+
+        fallthrough = decode("38630001")
+        ops = SymbolicOps()
+        z3 = ops.z3
+        real_solver = z3.Solver
+
+        def _unknown_solver(*args, **kwargs):
+            solver = real_solver(*args, **kwargs)
+
+            def _check(*_a, **_k):
+                return z3.unknown
+
+            solver.check = _check  # type: ignore[method-assign]
+            return solver
+
+        with mock.patch(
+            "tools.ppc_equivalence.engine.SymbolicOps", return_value=ops,
+        ):
+            with mock.patch.object(z3, "Solver", side_effect=_unknown_solver):
+                validation = validate_callee_contract(
+                    fallthrough,
+                    CalleeContract.opaque_eabi(),
+                    require_normal_return=True,
+                )
         self.assertFalse(validation.valid)
         self.assertIn("normal returns", validation.reason)
 

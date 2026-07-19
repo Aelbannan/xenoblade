@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -26,25 +27,47 @@ DEFAULT_VALIDATION_LEDGER = (
     / "validation_ledger.yaml"
 )
 
+_DEFAULT_CORPUS_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "ppc_equivalence"
+    / "fixtures"
+    / "broadway.jsonl"
+)
+
 
 def default_validation_ledger_path() -> Path:
     return DEFAULT_VALIDATION_LEDGER
 
 
+def _expected_corpus_hash() -> str | None:
+    """Cheap SHA-256 of the default Dolphin corpus when present on disk."""
+    if not _DEFAULT_CORPUS_PATH.is_file():
+        return None
+    return hashlib.sha256(_DEFAULT_CORPUS_PATH.read_bytes()).hexdigest()
+
+
 @dataclass(frozen=True)
 class ValidationLedger:
-    """Ledger of independently validated opcodes (via Dolphin corpus)."""
+    """Ledger of independently validated opcodes (via Dolphin corpus).
+
+    ``intentionally_loaded`` distinguishes "no ledger in use" from "a ledger
+    file/mapping was parsed". Callers that construct a ledger only to skip
+    gating should leave it False with an empty opcode set; ``load`` / 
+    ``from_mapping`` set it True.
+    """
 
     dolphin_validated_opcodes: frozenset[str]
     dolphin_version: str | None = None
     corpus_hash: str | None = None
     architecture_model: str | None = None
     corpus_version: int | None = None
+    intentionally_loaded: bool = False
 
     @classmethod
     def load(cls, path: Path | None) -> "ValidationLedger":
+        # Missing path / file → absent ledger (skip gating), not an empty set.
         if path is None or not path.is_file():
-            return cls(frozenset())
+            return cls(frozenset(), intentionally_loaded=False)
         suffix = path.suffix.lower()
         if suffix in {".yaml", ".yml"}:
             data = _load_mapping(path, yaml=True)
@@ -86,18 +109,44 @@ class ValidationLedger:
                 else None
             ),
             corpus_version=int(corpus_version) if corpus_version is not None else None,
+            intentionally_loaded=True,
         )
 
     def validate_opcode(self, opcode: str) -> bool:
         return opcode in self.dolphin_validated_opcodes
 
+    def promotion_metadata_invalid(self) -> bool:
+        """True when a loaded ledger's provenance mismatches the live engine."""
+        if not self.intentionally_loaded:
+            return False
+        if (
+            self.architecture_model is not None
+            and self.architecture_model != ARCHITECTURE_MODEL
+        ):
+            return True
+        if self.corpus_hash is not None:
+            expected = _expected_corpus_hash()
+            if expected is not None and self.corpus_hash != expected:
+                return True
+        return False
+
     def missing_dolphin_opcodes(self, opcodes_used: list[str] | frozenset[str]) -> list[str]:
-        """Return opcodes that lack dolphin_interpreter evidence, sorted."""
-        if not self.dolphin_validated_opcodes:
+        """Return opcodes that lack dolphin_interpreter evidence, sorted.
+
+        Choice: ledger absent (``intentionally_loaded=False`` and empty dolphin
+        set) skips gating — return []. A ledger that was intentionally loaded
+        but has an empty dolphin set fails closed: every opcode in
+        ``opcodes_used`` is reported missing. Architecture / corpus mismatches
+        on a loaded ledger also fail closed for all used opcodes.
+        """
+        used = {str(op) for op in opcodes_used}
+        if not used:
             return []
-        return sorted(
-            {str(op) for op in opcodes_used if not self.validate_opcode(str(op))}
-        )
+        if not self.intentionally_loaded and not self.dolphin_validated_opcodes:
+            return []
+        if self.promotion_metadata_invalid() or not self.dolphin_validated_opcodes:
+            return sorted(used)
+        return sorted(op for op in used if not self.validate_opcode(op))
 
 
 def _load_mapping(path: Path, *, yaml: bool) -> dict[str, Any]:
@@ -141,7 +190,14 @@ def compute_confidence_tier_proofresult(
 
     has_memory_access = "memory" in result.observables
 
-    has_domain_exceptions = result.counterexample_kind == "definedness"
+    has_domain_exceptions = (
+        result.counterexample_kind == "definedness"
+        or bool(result.invalid_reasons)
+        or any(
+            str(item).startswith("domain-exception:")
+            for item in (result.assumptions or [])
+        )
+    )
 
     has_assumed_ram = (
         result.environment is not None
@@ -154,13 +210,13 @@ def compute_confidence_tier_proofresult(
 
     # P1-06: when the ledger is active and the proof enumerates opcodes_used,
     # every opcode must carry dolphin_interpreter evidence for Tier A/B.
+    # Loaded ledgers with wrong architecture_model / corpus_hash also demote.
     ledger_incomplete = False
-    if (
-        ledger is not None
-        and ledger.dolphin_validated_opcodes
-        and result.opcodes_used
-    ):
-        ledger_incomplete = bool(ledger.missing_dolphin_opcodes(result.opcodes_used))
+    if ledger is not None:
+        if ledger.promotion_metadata_invalid():
+            ledger_incomplete = True
+        elif result.opcodes_used:
+            ledger_incomplete = bool(ledger.missing_dolphin_opcodes(result.opcodes_used))
 
     if (
         not has_fp
@@ -344,6 +400,19 @@ def proof_result_from_certificate(
     if repair_hint is not None and not isinstance(repair_hint, dict):
         repair_hint = None
 
+    invalid_reasons: list[int] = []
+    summary = certificate.get("summary")
+    if isinstance(summary, dict):
+        raw_reasons = summary.get("invalid_reasons", [])
+        if isinstance(raw_reasons, list):
+            invalid_reasons = [int(item) for item in raw_reasons]
+
+    # Surface domain exceptions into tier classification even when the
+    # certificate omits counterexample_kind.
+    counterexample_kind = certificate.get("counterexample_kind")
+    if invalid_reasons and not counterexample_kind:
+        counterexample_kind = "definedness"
+
     result = ProofResult(
         status=status,
         architecture_model=str(
@@ -360,13 +429,18 @@ def proof_result_from_certificate(
         source_hash=str(certificate.get("source_hash", "")),
         git_commit=str(certificate.get("git_commit", "")),
         floating_point_domain=floating_point_domain,
-        counterexample_kind=certificate.get("counterexample_kind"),
+        counterexample_kind=counterexample_kind,
         opcodes_used=opcodes_used,
         limits=limits,
         repair_hint=repair_hint,
+        invalid_reasons=invalid_reasons,
     )
     if assumptions is not None:
-        result.assumptions = assumptions
+        result.assumptions = list(assumptions)
+    elif invalid_reasons:
+        result.assumptions = list(result.assumptions) + [
+            f"domain-exception:{code}" for code in invalid_reasons
+        ]
     return result
 
 
@@ -409,7 +483,18 @@ def classify_for_promotion(
         if not is_bounded_with_ranges(result.environment):
             blockers.append("unconstrained-symbolic-memory-domain")
 
-    if ledger.dolphin_validated_opcodes and result.opcodes_used:
+    if ledger.intentionally_loaded or ledger.dolphin_validated_opcodes:
+        if ledger.promotion_metadata_invalid():
+            if (
+                ledger.architecture_model is not None
+                and ledger.architecture_model != ARCHITECTURE_MODEL
+            ):
+                blockers.append(
+                    f"ledger-architecture-model-{ledger.architecture_model}"
+                    f"!=live-{ARCHITECTURE_MODEL}"
+                )
+            else:
+                blockers.append("ledger-corpus-hash-mismatch")
         for opcode in ledger.missing_dolphin_opcodes(result.opcodes_used):
             blockers.append(f"opcode-{opcode}-not-dolphin-validated")
 
@@ -457,6 +542,7 @@ class PromotionPolicy:
             "broadway-ppc32-be-v19",
             "broadway-ppc32-be-v20",
             "broadway-ppc32-be-v21",
+            "broadway-ppc32-be-v22",
         }
     )
     minimum_result_format: int = RESULT_FORMAT

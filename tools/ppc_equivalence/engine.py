@@ -153,7 +153,10 @@ def validate_callee_contract(
             feasibility.add(terminal.condition)
             if terminal.state.stack_layout_valid is not None:
                 feasibility.add(terminal.state.stack_layout_valid)
-            if feasibility.check() == z3.sat:
+            # Fail closed: sat *or* unknown means we cannot prove the abnormal
+            # exit is infeasible, so reject the normal-return contract.
+            answer = feasibility.check()
+            if answer != z3.unsat:
                 abnormal.add(terminal.exit_kind)
         abnormal = sorted(abnormal)
         if abnormal:

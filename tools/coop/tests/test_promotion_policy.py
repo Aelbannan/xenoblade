@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from tools.coop.lib.config import CoopConfig
@@ -321,8 +322,35 @@ class CertificateReconstructionTests(unittest.TestCase):
         self.assertEqual(result.environment.profile, MemoryProfile.BOUNDED_ORDINARY_RAM)
         self.assertEqual(compute_confidence_tier(result), "C")
 
+    def test_invalid_reasons_reconstruct_as_tier_c(self) -> None:
+        certificate = {
+            "architecture": ARCHITECTURE_MODEL,
+            "result_format": RESULT_FORMAT,
+            "engine_hash": "a" * 64,
+            "source_hash": "b" * 64,
+            "git_commit": "c" * 40,
+            "contract": "ppc-eabi",
+            "observables": ["r3"],
+            "memory_scope": MemoryScope(
+                masking_semantics=MASKING_SEMANTICS,
+                original=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+                candidate=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+            ).to_dict(),
+            "summary": {
+                "reads": ["r3"],
+                "writes": ["r3"],
+                "invalid_reasons": [1],
+            },
+        }
+        result = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+        self.assertEqual(result.invalid_reasons, [1])
+        self.assertEqual(result.counterexample_kind, "definedness")
+        self.assertEqual(compute_confidence_tier(result), "C")
+
 
 def _registry_certificate(target_id: str, callees: list[dict[str, str]] | None = None) -> dict:
+    from tools.ppc_equivalence.provenance import hash_engine_tree
+
     certificate = {
         "version": EQUIVALENCE_CERTIFICATE_VERSION,
         "status": "SEMANTIC_CERTIFIED",
@@ -339,6 +367,7 @@ def _registry_certificate(target_id: str, callees: list[dict[str, str]] | None =
         },
         "callees": callees or [],
         "helpers": [],
+        "engine_hash": hash_engine_tree(Path(__file__).resolve().parents[3]),
     }
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate

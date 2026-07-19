@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from tools.ppc_equivalence.loop_summary import validate_loop_summary_obligation
 from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
@@ -112,6 +113,11 @@ def validate_proof_features(
                 f"obligation block {obligation_key!r} present without a "
                 "matching proof_features entry"
             )
+
+    if "affine-loop-summary" in seen:
+        reason = validate_loop_summary_obligation(data["loop_summary"])
+        if reason is not None:
+            return reason
 
     if require_equivalent_ready:
         for feature in features:

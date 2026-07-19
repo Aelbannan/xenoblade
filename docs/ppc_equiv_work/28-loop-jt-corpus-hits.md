@@ -121,6 +121,37 @@ SDA-based table materialization (`addi`/`lwz` off `r2`/`r13` with `R_PPC_EMB_SDA
 
 ---
 
+## Coop auto-context productization
+
+Retail exact-pattern tails are recognized in asm, but coop equivalence only builds
+`JumpTableProofContext` when **all** of the following succeed:
+
+1. **Linked images** — retail `orig/<region>/sys/main.dol` for original-side table
+   bytes; linked `build/<region>/main.elf` for candidate-side bytes when VAs differ.
+2. **Extended text decode** — `jump_table_auto.expand_jump_table_instructions`
+   re-decodes up to 512 bytes of linked text ending at the `bctr` PC so
+   `addis`/`addi` chains outside the function slice still reach
+   `resolve_table_base_va`.
+3. **Hydration + pairing** — `hydrate_jump_table` loads aligned ADDR32 words;
+   `pair_jump_table_cases` matches logical case indices.
+
+**Probe helper** (requires DOL in environment; skips cleanly in CI when absent):
+
+```bash
+python -m tools.ppc_equivalence.jump_table_corpus_probe --documented
+python -m tools.ppc_equivalence.jump_table_corpus_probe --dol orig/us/sys/main.dol --json
+python -m tools.ppc_equivalence.jump_table_corpus_probe --branch-pc 0x8022c8b8
+```
+
+Offline regression: `tools/ppc_equivalence/tests/test_jump_table_corpus_probe.py`
+(embeds the `CQstLogInfo` switch snippet without `main.dol`).
+
+**Known gaps:** coop does not yet supply `sda_bases` / `symbol_addresses` for
+SDA21 table materialization; `lwz rN, disp(r2/r13)` pointer-chase remains
+fail-closed per `jump_table_auto.py`.
+
+---
+
 ## Takeaways
 
 1. **Compare-affine** is engine-ready but **absent from retail asm**; counted work uses **`mtctr`/`bdnz`** (`ctr-affine` / memory-loop tracks).

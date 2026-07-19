@@ -205,6 +205,13 @@ class CandidateEvaluation:
     object_regressions: List[str] = field(default_factory=list)
     accepted_function_regressions: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    # Phase 4 — explicit acceptance semantics (do not overload accepted)
+    symbol_accepted: bool = False
+    project_ready: bool | None = None
+    promising: bool = False
+    blocked_reason: str | None = None
+    function_size_delta: int | None = None
+    object_split_fit: bool | None = None
 
 
 @dataclass
@@ -450,6 +457,7 @@ class ModelConfig:
     runs: int = 1
     agent: Optional[str] = None
     variant: Optional[str] = None
+    max_tokens: Optional[int] = None
 
 
 @dataclass
@@ -482,10 +490,14 @@ class Evaluation:
     equivalence: Optional[str] = None
     detail: str = ""
     metrics: Dict[str, Any] = field(default_factory=dict)
+    symbol_accepted: bool = False
+    project_ready: Optional[bool] = None
+    promising: bool = False
+    blocked_reason: Optional[str] = None
 
     def rank(self) -> tuple[int, float]:
         # Project policy decides acceptance. Match percentage is only a tie-breaker.
-        return (1 if self.accepted else 0, self.match_percent or 0.0)
+        return (1 if self.symbol_accepted or self.accepted else 0, self.match_percent or 0.0)
 
 
 @dataclass

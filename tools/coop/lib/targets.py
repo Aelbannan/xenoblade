@@ -503,6 +503,7 @@ def audit_promotion_registry(
         PromotionPolicy,
         ValidationLedger,
         classify_for_promotion,
+        default_validation_ledger_path,
         proof_result_from_certificate,
     )
     from tools.ppc_equivalence.result import ProofStatus
@@ -515,7 +516,7 @@ def audit_promotion_registry(
         if isinstance(row, dict) and isinstance(row.get("id"), str)
     }
     policy = PromotionPolicy.from_config(config)
-    ledger = ValidationLedger.load(None)
+    ledger = ValidationLedger.load(default_validation_ledger_path())
     affected: List[Dict[str, Any]] = []
     valid_count = 0
     skipped_full_match = 0

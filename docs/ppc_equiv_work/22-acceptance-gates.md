@@ -20,26 +20,32 @@ Before any further auto-acceptance:
 
 ## Gate 2 — Safe promotion restoration
 
-- [ ] Promotion uses `PromotionDecision`, not status alone.
-- [ ] Allowed confidence tiers are configured explicitly.
-- [ ] Registry migration completed.
-- [ ] All affected accepted targets re-proved or downgraded.
-- [ ] Workflow state transitions tested.
-- [ ] Proof provenance complete enough for revalidation.
+- [x] Promotion uses `PromotionDecision`, not status alone.
+- [x] Allowed confidence tiers are configured explicitly.
+- [x] Registry migration completed (`targets audit-promotion` /
+      `equivalence audit-registry`; currently zero live `EQUIVALENT_MATCH` rows).
+- [x] All affected accepted targets re-proved or downgraded (vacuous: none).
+- [x] Workflow state transitions tested (`test_audit_promotion`).
+- [x] Proof provenance complete enough for revalidation (engine tree covers
+      package + generators + fixtures/*.py + optional validation ledger).
 
 ## Gate 3 — Public validation
 
 - [ ] Required CI checks have public successful runs.
 - [ ] Dolphin generated-DOL corpus passes for current model.
-- [ ] Validation ledger is current and hashed.
-- [ ] Documentation versions match code.
-- [ ] Dependency lock is reproducible.
+- [x] Validation ledger is current and hashed.
+- [x] Documentation versions match code (`docs_sync --check` in CI).
+- [x] Dependency lock is reproducible (multi-platform `--require-hashes` lock).
+- [x] Schedule/workflow_dispatch Dolphin step fails hard when Dolphin is present;
+      skips clearly when unavailable (not required on every PR).
 
 ## Gate 4 — High-confidence maintenance
 
-- [ ] Random differential corpus runs on schedule.
-- [ ] Critical mutation suite has no unexplained survivors.
-- [ ] Soundness traceability table is complete.
-- [ ] Memory and FP profiles are machine-readable.
-- [ ] Deadline tests enforce end-to-end bounds.
-- [ ] Counterexamples replay concretely.
+- [x] Random differential corpus runs on schedule
+      (`generate --seed 1 --count 16 --differential` on schedule/dispatch).
+- [x] Critical mutation suite has no unexplained survivors (19 targeted kills).
+- [ ] Soundness traceability table is complete (CI-enforced row↔impl links).
+- [x] Memory and FP profiles are machine-readable (`environment`,
+      `floating_point_domain.coverage`).
+- [x] Deadline tests enforce end-to-end bounds.
+- [x] Counterexamples replay concretely (traces + minimization).

@@ -615,7 +615,11 @@ def cmd_generate(args: argparse.Namespace) -> int:
         seed = args.seed + offset
         program = generate_program(seed, max_instructions=args.max_instructions)
         if args.differential:
-            result = differential_check(seed, max_instructions=args.max_instructions)
+            result = differential_check(
+                seed,
+                max_instructions=args.max_instructions,
+                shrink_on_failure=bool(getattr(args, "shrink", False)),
+            )
             if not result["match"]:
                 diff_failures.append({"seed": seed, "result": result})
         programs.append(program)
@@ -720,7 +724,16 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--seed", type=_parse_int, required=True, help="base seed")
     generate.add_argument("--count", type=int, default=1, help="number of programs (seeds seed..seed+count-1)")
     generate.add_argument("--max-instructions", type=int, default=12)
-    generate.add_argument("--differential", action="store_true", help="also run the symbolic + optional Dolphin differential check")
+    generate.add_argument(
+        "--differential",
+        action="store_true",
+        help="run ConcreteOps↔symbolic bit-exact differential (Dolphin optional/skipped)",
+    )
+    generate.add_argument(
+        "--shrink",
+        action="store_true",
+        help="on differential mismatch, greedily shrink while preserving the failure",
+    )
     generate.add_argument("--json", action="store_true")
     return parser
 

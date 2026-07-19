@@ -19,6 +19,17 @@ from tools.ppc_equivalence.result import (
 
 SUPPORTED_CONFIDENCE_TIERS = frozenset({"A", "B", "C"})
 
+# tools/coop/lib/equivalence_policy.py → tools/ppc_equivalence/validation_ledger.yaml
+DEFAULT_VALIDATION_LEDGER = (
+    Path(__file__).resolve().parents[2]
+    / "ppc_equivalence"
+    / "validation_ledger.yaml"
+)
+
+
+def default_validation_ledger_path() -> Path:
+    return DEFAULT_VALIDATION_LEDGER
+
 
 @dataclass(frozen=True)
 class ValidationLedger:
@@ -27,24 +38,85 @@ class ValidationLedger:
     dolphin_validated_opcodes: frozenset[str]
     dolphin_version: str | None = None
     corpus_hash: str | None = None
+    architecture_model: str | None = None
+    corpus_version: int | None = None
 
     @classmethod
     def load(cls, path: Path | None) -> "ValidationLedger":
         if path is None or not path.is_file():
             return cls(frozenset())
-        import json
+        suffix = path.suffix.lower()
+        if suffix in {".yaml", ".yml"}:
+            data = _load_mapping(path, yaml=True)
+        else:
+            data = _load_mapping(path, yaml=False)
+        return cls.from_mapping(data)
 
-        data = json.loads(path.read_text(encoding="utf-8"))
+    @classmethod
+    def from_mapping(cls, data: dict[str, Any]) -> "ValidationLedger":
+        dolphin: set[str] = set()
+        raw_list = data.get("dolphin_validated_opcodes")
+        if isinstance(raw_list, list):
+            dolphin.update(str(item) for item in raw_list)
+
+        opcodes = data.get("opcodes")
+        if isinstance(opcodes, dict):
+            for name, meta in opcodes.items():
+                if not isinstance(meta, dict):
+                    continue
+                if bool(meta.get("dolphin_interpreter")):
+                    dolphin.add(str(name))
+
+        corpus_version = data.get("corpus_version")
         return cls(
-            dolphin_validated_opcodes=frozenset(
-                data.get("dolphin_validated_opcodes", [])
+            dolphin_validated_opcodes=frozenset(dolphin),
+            dolphin_version=(
+                str(data["dolphin_version"])
+                if data.get("dolphin_version") is not None
+                else None
             ),
-            dolphin_version=data.get("dolphin_version"),
-            corpus_hash=data.get("corpus_hash"),
+            corpus_hash=(
+                str(data["corpus_hash"])
+                if data.get("corpus_hash") is not None
+                else None
+            ),
+            architecture_model=(
+                str(data["architecture_model"])
+                if data.get("architecture_model") is not None
+                else None
+            ),
+            corpus_version=int(corpus_version) if corpus_version is not None else None,
         )
 
     def validate_opcode(self, opcode: str) -> bool:
         return opcode in self.dolphin_validated_opcodes
+
+    def missing_dolphin_opcodes(self, opcodes_used: list[str] | frozenset[str]) -> list[str]:
+        """Return opcodes that lack dolphin_interpreter evidence, sorted."""
+        if not self.dolphin_validated_opcodes:
+            return []
+        return sorted(
+            {str(op) for op in opcodes_used if not self.validate_opcode(str(op))}
+        )
+
+
+def _load_mapping(path: Path, *, yaml: bool) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    if yaml:
+        try:
+            import yaml as pyyaml
+        except ImportError as exc:  # pragma: no cover
+            raise RuntimeError(
+                f"PyYAML is required to read {path}. Install with: pip install pyyaml"
+            ) from exc
+        data = pyyaml.safe_load(text) or {}
+    else:
+        import json
+
+        data = json.loads(text)
+    if not isinstance(data, dict):
+        raise ValueError(f"validation ledger {path} must be a mapping")
+    return data
 
 
 def compute_confidence_tier_proofresult(
@@ -80,11 +152,15 @@ def compute_confidence_tier_proofresult(
         result.engine_hash and result.source_hash and result.git_commit
     )
 
+    # P1-06: when the ledger is active and the proof enumerates opcodes_used,
+    # every opcode must carry dolphin_interpreter evidence for Tier A/B.
     ledger_incomplete = False
-    if ledger is not None and ledger.dolphin_validated_opcodes:
-        # Without a machine-readable opcode list on ProofResult, an active ledger
-        # means we cannot yet claim Tier A/B independent validation.
-        ledger_incomplete = True
+    if (
+        ledger is not None
+        and ledger.dolphin_validated_opcodes
+        and result.opcodes_used
+    ):
+        ledger_incomplete = bool(ledger.missing_dolphin_opcodes(result.opcodes_used))
 
     if (
         not has_fp
@@ -241,6 +317,11 @@ def proof_result_from_certificate(
         else:
             observables = []
 
+    opcodes_used: list[str] = []
+    raw_opcodes = certificate.get("opcodes_used")
+    if isinstance(raw_opcodes, list):
+        opcodes_used = [str(op) for op in raw_opcodes]
+
     return ProofResult(
         status=status,
         architecture_model=str(
@@ -256,6 +337,7 @@ def proof_result_from_certificate(
         git_commit=str(certificate.get("git_commit", "")),
         floating_point_domain=floating_point_domain,
         counterexample_kind=certificate.get("counterexample_kind"),
+        opcodes_used=opcodes_used,
     )
 
 
@@ -298,12 +380,13 @@ def classify_for_promotion(
     ):
         blockers.append("unconstrained-symbolic-memory-domain")
 
+    if ledger.dolphin_validated_opcodes and result.opcodes_used:
+        for opcode in ledger.missing_dolphin_opcodes(result.opcodes_used):
+            blockers.append(f"opcode-{opcode}-not-dolphin-validated")
+
     tier = compute_confidence_tier_proofresult(result, ledger)
     _check_tier_allowed(tier, policy.allowed_confidence_tiers, blockers)
     _check_engine_provenance(result, policy.allowed_engine_sha256, blockers)
-
-    if ledger.dolphin_validated_opcodes and tier in {"A", "B"}:
-        warnings.append("validation-ledger-present-but-opcodes-not-enumerated")
 
     return PromotionDecision(
         allowed=not blockers,
@@ -320,11 +403,13 @@ def classify_for_promotion_legacy(
     *,
     certificate: dict[str, Any] | None = None,
     proof: ProofResult | None = None,
+    ledger_path: Path | None = None,
 ) -> PromotionDecision:
     """Adapter for objdiff_report: status + certificate/proof → decision."""
     del match_percent  # fuzzy floor is enforced by the caller
     policy = PromotionPolicy.from_config(config)
-    ledger = ValidationLedger.load(None)
+    path = ledger_path if ledger_path is not None else default_validation_ledger_path()
+    ledger = ValidationLedger.load(path)
     if proof is not None:
         return classify_for_promotion(proof, policy, ledger)
     result = proof_result_from_certificate(

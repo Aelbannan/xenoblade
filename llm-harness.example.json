@@ -5,8 +5,8 @@
     "coop_config": "coop.json",
     "prompt_dir": "tools/llm_harness/prompts",
     "max_source_chars": 120000,
-    "context_similar_limit": 4,
-    "tu_context_chars": 300,
+    "context_similar_limit": 3,
+    "tu_context_chars": 1500,
     "tu_section_byte_limit": 16384
   },
   "providers": {
@@ -15,67 +15,72 @@
       "timeout_seconds": 900,
       "pure": true
     },
+    "reasonix": {
+      "binary": "reasonix",
+      "timeout_seconds": 900,
+      "pure": true
+    },
     "deepseek-raw": {
       "binary": "deepseek-raw",
       "timeout_seconds": 300,
       "pure": true
     },
+    "openrouter": {
+      "timeout_seconds": 300,
+      "pure": true
+    },
     "lmstudio": {
       "base_url": "http://localhost:1234/v1",
+      "api_key": "lm-studio",
       "timeout_seconds": 900,
       "temperature": 0.1,
-      "max_tokens": 8192,
+      "max_tokens": 4096,
       "json_object": true
     }
   },
+  "models": {
+    "initial": [
+      {
+        "id": "opencode-deepseek-flash",
+        "provider": "opencode",
+        "model": "opencode/deepseek-v4-flash-free",
+        "runs": 1
+      }
+    ],
+    "repair": [
+      {
+        "id": "deepseek-pro",
+        "provider": "deepseek-raw",
+        "model": "deepseek-pro",
+        "runs": 1
+      }
+    ],
+    "tu": [
+      {
+        "id": "openrouter-deepseek",
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-chat",
+        "variant": "deepseek",
+        "runs": 1
+      }
+    ],
+    "sample": [
+      {
+        "id": "lmstudio-local",
+        "provider": "lmstudio",
+        "model": "qwen2.5-coder-32b-instruct",
+        "runs": 1
+      }
+    ]
+  },
   "execution": {
-    "max_parallel": 1,
-    "max_target_parallel": 10,
-    "batch_model_parallel": 1,
+    "initial_parallel": 3,
+    "target_parallel": 2,
     "max_retries": 1,
     "isolation": {
       "mode": "git-worktree",
       "copy_dirty": true
-    },
-    "pipelines": {
-      "new": {
-        "max_parallel": 3,
-        "max_target_parallel": 30,
-        "batch_model_parallel": 1
-      },
-      "improve": {
-        "max_parallel": 1,
-        "max_target_parallel": 10,
-        "batch_model_parallel": 1
-      }
     }
-  },
-  "models": {
-    "default": [],
-    "new": [
-      {
-        "id": "deepseek-flash",
-        "provider": "opencode",
-        "model": "opencode/deepseek-v4-flash-free",
-        "runs": 10
-      }
-    ],
-    "improve": [
-      {
-        "id": "deepseek-pro",
-        "provider": "deepseek-raw",
-        "model": "deepseek-pro",
-        "runs": 10
-      }
-    ],
-    "tu-complete": [
-      {
-        "id": "deepseek-pro",
-        "provider": "deepseek-raw",
-        "model": "deepseek-pro",
-        "runs": 10
-      }
-    ]
   },
   "solve": {
     "initial_candidates": 3,
@@ -91,6 +96,7 @@
     "max_declaration_chars": 12000,
     "max_callers": 3,
     "max_sibling_bodies": 3,
-    "include_raw_hex": false
+    "include_raw_hex": false,
+    "max_output_tokens": 4096
   }
 }

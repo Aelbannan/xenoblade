@@ -1,0 +1,206 @@
+[
+  {
+    "category": "trivial getter/setter",
+    "target_id": "padmgr-get-current-pad-channel",
+    "function": "CfGameManager::getCurrentPadChannel",
+    "unit": "kyoshin/cf/CfGameManager",
+    "source": "src/kyoshin/cf/CfGameManager.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 8,
+    "approx_insns": 2,
+    "shape": {
+      "leaf": true,
+      "has_relocations": true,
+      "branch_heavy": false,
+      "member_access": false,
+      "typed_context": true
+    },
+    "why": "Pure SDA global return; minimal hidden-source smoke."
+  },
+  {
+    "category": "trivial getter/setter",
+    "target_id": "worksysmem-get-handle",
+    "function": "CWorkSystemMem::getHandle",
+    "unit": "monolib/src/work/CWorkSystemMem",
+    "source": "libs/monolib/src/work/CWorkSystemMem.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 12,
+    "approx_insns": 3,
+    "shape": {
+      "leaf": true,
+      "has_relocations": true,
+      "branch_heavy": false,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Singleton member load getter."
+  },
+  {
+    "category": "struct/member copy",
+    "target_id": "cam-dir-set-pos",
+    "function": "CfCamDirectionIntf::setPos",
+    "unit": "kyoshin/cf/CfCamDirectionIntf",
+    "source": "src/kyoshin/cf/CfCamDirectionIntf.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 40,
+    "approx_insns": 10,
+    "shape": {
+      "leaf": true,
+      "has_relocations": false,
+      "branch_heavy": false,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Two CVec3 member assignments."
+  },
+  {
+    "category": "small float/constant function",
+    "target_id": "us-801c3558",
+    "function": "cf::CfPadTask::func_801C1B94(float)",
+    "unit": "kyoshin/cf/CfPadTask",
+    "source": "src/kyoshin/cf/CfPadTask.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 44,
+    "approx_insns": 11,
+    "shape": {
+      "leaf": false,
+      "has_relocations": true,
+      "branch_heavy": true,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Float compares against sdata2 constant."
+  },
+  {
+    "category": "call/relocation-sensitive function",
+    "target_id": "cam-dir-set-dir",
+    "function": "CfCamDirectionIntf::setDir",
+    "unit": "kyoshin/cf/CfCamDirectionIntf",
+    "source": "src/kyoshin/cf/CfCamDirectionIntf.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 116,
+    "approx_insns": 29,
+    "shape": {
+      "leaf": false,
+      "has_relocations": true,
+      "branch_heavy": false,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Helper bl plus CVec3 stores."
+  },
+  {
+    "category": "boolean/signedness-sensitive",
+    "target_id": "scn-add-render-cb",
+    "function": "CScn::addRenderCB",
+    "unit": "monolib/src/scn/CScn",
+    "source": "libs/monolib/src/scn/CScn.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 156,
+    "approx_insns": 39,
+    "shape": {
+      "leaf": false,
+      "has_relocations": false,
+      "branch_heavy": true,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Insertion-sort loop with explicit s32 priority compares."
+  },
+  {
+    "category": "struct/member copy",
+    "target_id": "pad-copy-input-flag",
+    "function": "CfPadTask::copyInputFlag",
+    "unit": "kyoshin/cf/CfPadTask",
+    "source": "src/kyoshin/cf/CfPadTask.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 196,
+    "approx_insns": 49,
+    "shape": {
+      "leaf": true,
+      "has_relocations": false,
+      "branch_heavy": false,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Repeated member bitfield copy pattern."
+  },
+  {
+    "category": "call/relocation-sensitive function",
+    "target_id": "padmgr-get-instance",
+    "function": "CfGameManager::getInstance",
+    "unit": "kyoshin/cf/CfGameManager",
+    "source": "src/kyoshin/cf/CfGameManager.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 100,
+    "approx_insns": 25,
+    "shape": {
+      "leaf": false,
+      "has_relocations": true,
+      "branch_heavy": true,
+      "member_access": false,
+      "typed_context": true
+    },
+    "why": "Lazy init with ctor bl and __register_global_object."
+  },
+  {
+    "category": "branch-heavy function",
+    "target_id": "game-on-pause-trigger",
+    "function": "CGame::OnPauseTrigger",
+    "unit": "kyoshin/CGame",
+    "source": "src/kyoshin/CGame.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 256,
+    "approx_insns": 64,
+    "shape": {
+      "leaf": false,
+      "has_relocations": true,
+      "branch_heavy": true,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Nested bool/counter branches with external calls."
+  },
+  {
+    "category": "branch-heavy function",
+    "target_id": "battlestate-vfunc31",
+    "function": "CBattleState::CBattleState_UnkVirtualFunc31",
+    "unit": "kyoshin/cf/object/CBattleState",
+    "source": "src/kyoshin/cf/object/CBattleState.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 352,
+    "approx_insns": 88,
+    "shape": {
+      "leaf": true,
+      "has_relocations": false,
+      "branch_heavy": true,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Large id-to-mask switch with boolify."
+  },
+  {
+    "category": "member-function-pointer/PTMF case",
+    "target_id": "menu-enemy-ctor",
+    "function": "CMenuEnemyState::CMenuEnemyState",
+    "unit": "kyoshin/menu/CMenuEnemyState",
+    "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
+    "status": "FULL_MATCH",
+    "size_bytes": 592,
+    "approx_insns": 148,
+    "shape": {
+      "leaf": false,
+      "has_relocations": true,
+      "branch_heavy": false,
+      "member_access": true,
+      "typed_context": true
+    },
+    "why": "Copies __ptmf_null 3-word PTMF blocks into callbacks."
+  },
+  {
+    "category": "EQUIVALENT_MATCH (fuzzy < 100%)",
+    "target_id": null,
+    "status": null,
+    "notes": "No EQUIVALENT_MATCH targets in registry yet; slot reserved for future corpus growth."
+  }
+]

@@ -618,6 +618,9 @@ def _build_equivalence_certificate(
         assumed = getattr(proof, "assumed_callees", None)
         if assumed:
             certificate["assumed_callees"] = list(assumed)
+        opcodes_used = getattr(proof, "opcodes_used", None)
+        if opcodes_used:
+            certificate["opcodes_used"] = list(opcodes_used)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 

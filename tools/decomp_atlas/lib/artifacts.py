@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from tools.decomp_atlas.lib.database import file_sha256
+from tools.llm_harness.asm_listings import assembly_function_block
 from tools.llm_harness.source_regions import find_function_region
 
 
@@ -32,11 +33,13 @@ def _format_instructions(instructions: List[Any]) -> str:
         if reloc is not None:
             sym = getattr(reloc, "symbol", "") or getattr(reloc, "canonical_symbol", "")
             reloc_note = f"  ; reloc {sym}"
-        lines.append(f"0x{addr:08x}:  {mnemonic} {ops}".rstrip() + reloc_note)
+        lines.append(f"0x{int(addr):08x}:  {mnemonic} {ops}".rstrip() + reloc_note)
     return "\n".join(lines)
 
 
-def _extract_asm(object_path: Optional[Path], symbol: Optional[str], warnings: List[str]) -> tuple[str, list, list]:
+def _extract_asm_from_object(
+    object_path: Optional[Path], symbol: Optional[str], warnings: List[str]
+) -> tuple[str, list, list]:
     if not object_path or not symbol:
         return "", [], []
     if not object_path.is_file():
@@ -62,10 +65,11 @@ def _extract_asm(object_path: Optional[Path], symbol: Optional[str], warnings: L
         }
         for r in (function.relocations or ())
     ]
+    base = int(getattr(function, "base", 0) or getattr(function, "value", 0) or 0)
     try:
         instructions = decode_block(
             function.code,
-            base=int(getattr(function, "address", 0) or 0),
+            base=base,
             validate_with_capstone=False,
             relocations=function.relocations or (),
             local_symbol=symbol,
@@ -74,6 +78,35 @@ def _extract_asm(object_path: Optional[Path], symbol: Optional[str], warnings: L
         warnings.append(f"decode_block failed for {symbol}: {exc}")
         return "", relocs, []
     return _format_instructions(instructions), relocs, instructions
+
+
+def _retail_asm_from_listing(
+    root: Path,
+    region: str,
+    unit: Optional[str],
+    symbol: Optional[str],
+    warnings: List[str],
+) -> str:
+    """Fall back to objdiff-generated ``build/<region>/asm/*.s`` like the harness."""
+    if not unit or not symbol:
+        return ""
+    relative = unit.removeprefix("main/")
+    candidates = [
+        root / "build" / region / "asm" / f"{relative}.s",
+        root / "build" / region / "asm" / f"{unit}.s",
+    ]
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            block = assembly_function_block(path.read_text(encoding="utf-8"), symbol)
+        except Exception as exc:
+            warnings.append(f"asm listing read failed ({path}): {exc}")
+            continue
+        if block:
+            return block
+        warnings.append(f"symbol {symbol!r} not found in {path}")
+    return ""
 
 
 def extract_artifacts(
@@ -89,6 +122,8 @@ def extract_artifacts(
     source_rel = record.get("source")
     target_object_rel = record.get("target_object")
     base_object_rel = record.get("base_object")
+    unit = record.get("unit")
+    region = str(record.get("region") or "us")
 
     source_path = root / source_rel if source_rel else None
     target_object = root / target_object_rel if target_object_rel else None
@@ -98,16 +133,31 @@ def extract_artifacts(
     if source_path is not None and source_path.is_file():
         try:
             text = source_path.read_text(encoding="utf-8")
-            region = find_function_region(text, _TargetProxy(id=target_id, function=display_name))
-            cpp_source = text[region.content_start : region.content_end].strip()
+            region_obj = find_function_region(text, _TargetProxy(id=target_id, function=display_name))
+            cpp_source = text[region_obj.content_start : region_obj.content_end].strip()
         except Exception as exc:
             warnings.append(f"source extraction failed: {exc}")
     elif source_rel:
         warnings.append(f"source missing: {source_rel}")
 
     # Retail object is typically target_path (original); candidate is base_path (decomp).
-    retail_asm, retail_relocs, retail_insns = _extract_asm(target_object, symbol, warnings)
-    candidate_asm, candidate_relocs, candidate_insns = _extract_asm(base_object, symbol, warnings)
+    retail_asm, retail_relocs, retail_insns = _extract_asm_from_object(
+        target_object, symbol, warnings
+    )
+    if not retail_asm:
+        listing = _retail_asm_from_listing(root, region, unit, symbol, warnings)
+        if listing:
+            retail_asm = listing
+            # Drop object-missing noise when listing succeeded.
+            warnings = [
+                w
+                for w in warnings
+                if "extract_function failed" not in w and "object missing" not in w
+            ]
+
+    candidate_asm, candidate_relocs, candidate_insns = _extract_asm_from_object(
+        base_object, symbol, warnings
+    )
 
     instruction_count = len(retail_insns) or None
     branch_count = None
@@ -119,7 +169,6 @@ def extract_artifacts(
             for insn in retail_insns
             if (getattr(getattr(insn, "opcode", None), "value", "") in branch_opcodes)
         )
-        # Heuristic: first stwu r1, -N(r1) immediate.
         for insn in retail_insns[:8]:
             op = getattr(getattr(insn, "opcode", None), "value", "")
             operands = getattr(insn, "operands", ())
@@ -168,3 +217,40 @@ def artifact_row_for_db(artifact: Dict[str, Any]) -> Dict[str, Any]:
         "warnings_json": json.dumps(artifact.get("warnings") or []),
         "updated_at": artifact.get("updated_at"),
     }
+
+
+def upsert_artifact(conn: Any, artifact: Dict[str, Any]) -> None:
+    row = artifact_row_for_db(artifact)
+    conn.execute(
+        """
+        INSERT INTO artifacts(
+            target_id, retail_object_hash, candidate_object_hash, source_hash,
+            cpp_source, retail_asm, candidate_asm, relocations_json,
+            decoded_json, warnings_json, updated_at
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(target_id) DO UPDATE SET
+            retail_object_hash=excluded.retail_object_hash,
+            candidate_object_hash=excluded.candidate_object_hash,
+            source_hash=excluded.source_hash,
+            cpp_source=excluded.cpp_source,
+            retail_asm=excluded.retail_asm,
+            candidate_asm=excluded.candidate_asm,
+            relocations_json=excluded.relocations_json,
+            decoded_json=excluded.decoded_json,
+            warnings_json=excluded.warnings_json,
+            updated_at=excluded.updated_at
+        """,
+        (
+            row["target_id"],
+            row["retail_object_hash"],
+            row["candidate_object_hash"],
+            row["source_hash"],
+            row["cpp_source"],
+            row["retail_asm"],
+            row["candidate_asm"],
+            row["relocations_json"],
+            row["decoded_json"],
+            row["warnings_json"],
+            row["updated_at"],
+        ),
+    )

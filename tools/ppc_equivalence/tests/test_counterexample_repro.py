@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import tempfile
 import unittest
@@ -12,6 +13,7 @@ from tools.ppc_equivalence.decoder import decode_block, parse_hex
 from tools.ppc_equivalence.diagnostics import (
     compute_first_divergence,
     differential_query_check,
+    minimize_counterexample_model,
     replay_counterexample,
 )
 from tools.ppc_equivalence.engine import check_equivalence
@@ -47,6 +49,8 @@ class CounterexampleReproTests(unittest.TestCase):
         self.assertEqual(bundle["candidate_bin"], "38630002")
         self.assertIn("proof_request", bundle)
         self.assertIn("model_values", bundle)
+        self.assertIn("minimized_model_values", bundle)
+        self.assertIsNotNone(bundle["minimized_model_values"])
         self.assertIn("relocations", bundle)
         self.assertIn("contract", bundle)
         self.assertIn("first_divergence", bundle)
@@ -92,6 +96,7 @@ class CounterexampleReproTests(unittest.TestCase):
             self.assertEqual(loaded["original_bin"], "38630001")
             self.assertEqual(loaded["first_divergence"]["component"], R3)
             self.assertIsInstance(loaded["original_trace"], list)
+            self.assertIn("minimized_model_values", loaded)
 
     def test_symbolic_relocations_record_limitation(self) -> None:
         from tools.ppc_equivalence.elf_symbols import FunctionRelocation
@@ -124,6 +129,7 @@ class CounterexampleReproTests(unittest.TestCase):
         self.assertIn("error", div)
         self.assertEqual(div["error"], "symbolic-relocations-prevent-concrete-replay")
         self.assertIsNone(result.counterexample_bundle["original_trace"])
+        self.assertIsNone(result.counterexample_bundle["minimized_model_values"])
 
     def test_replay_helper_compares_states_across_sides(self) -> None:
         original = decode("38630001")
@@ -179,6 +185,7 @@ class CounterexampleReproTests(unittest.TestCase):
             "sat-witness-not-reproduced-under-concrete-ops",
         )
         self.assertIsNotNone(result.counterexample_bundle["original_trace"])
+        self.assertIsNone(result.counterexample_bundle["minimized_model_values"])
 
     def test_differential_query_checker_detects_disagreement(self) -> None:
         original = decode("38630001")
@@ -195,6 +202,84 @@ class CounterexampleReproTests(unittest.TestCase):
         self.assertTrue(check["applicable"])
         self.assertTrue(check["agreed"])
         self.assertEqual(check["disagreement_count"], 0)
+
+    def test_minimized_model_still_diverges_and_preserves_original(self) -> None:
+        original = decode("38630001")
+        candidate = decode("38630002")
+        contract = make_contract(preset=None, observe=(R3,), timeout_ms=10_000)
+        inflated = {
+            "gpr": {
+                "r3": "0x00000010",
+                "r5": "0xdeadbeef",
+                "r7": "0x12345678",
+            },
+            "memory": {
+                "default": "0x00",
+                "bytes": {
+                    "0x00001000": "0xaa",
+                    "0x00002000": "0xbb",
+                },
+            },
+        }
+        original_snapshot = copy.deepcopy(inflated)
+        minimized = minimize_counterexample_model(
+            original, candidate, inflated, contract
+        )
+        # Caller-facing original model is never mutated.
+        self.assertEqual(inflated, original_snapshot)
+        # Junk GPRs zeroed; irrelevant memory bytes dropped.
+        self.assertEqual(minimized["gpr"]["r5"], "0x00000000")
+        self.assertEqual(minimized["gpr"]["r7"], "0x00000000")
+        self.assertEqual(minimized["memory"]["bytes"], {})
+        # Witness still reproduces under ConcreteOps.
+        replay = replay_counterexample(original, candidate, minimized, contract)
+        self.assertTrue(replay["reproduced"])
+        self.assertEqual(replay["first_divergence"]["component"], R3)
+
+    def test_minimization_noop_when_already_minimal(self) -> None:
+        result = prove("38630001", "38630002")
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        bundle = result.counterexample_bundle
+        original_model = bundle["model_values"]
+        minimized = bundle["minimized_model_values"]
+        self.assertIsNotNone(minimized)
+        # Solver model for this case is already sparse/zero-heavy; shrink is a
+        # no-op (or at most equal) and the original bundle field is untouched.
+        self.assertEqual(original_model, result.counterexample["initial_state"])
+        replay = replay_counterexample(
+            decode("38630001"),
+            decode("38630002"),
+            minimized,
+            make_contract(preset=None, observe=(R3,), timeout_ms=10_000),
+        )
+        self.assertTrue(replay["reproduced"])
+
+    def test_minimization_keeps_necessary_memory_byte(self) -> None:
+        # lwz r3,0(r4) vs lwz r3,4(r4) — byte at EA+3 drives the divergence.
+        original = decode("80640000")
+        candidate = decode("80640004")
+        contract = make_contract(preset=None, observe=(R3,), timeout_ms=10_000)
+        model = {
+            "gpr": {"r4": "0x00000000", "r9": "0xcafebabe"},
+            "memory": {
+                "default": "0x00",
+                "bytes": {
+                    "0x00000003": "0xff",
+                    "0x00001000": "0xaa",
+                },
+            },
+        }
+        original_snapshot = copy.deepcopy(model)
+        minimized = minimize_counterexample_model(
+            original, candidate, model, contract
+        )
+        self.assertEqual(model, original_snapshot)
+        self.assertEqual(minimized["gpr"]["r9"], "0x00000000")
+        self.assertIn("0x00000003", minimized["memory"]["bytes"])
+        self.assertNotIn("0x00001000", minimized["memory"]["bytes"])
+        replay = replay_counterexample(original, candidate, minimized, contract)
+        self.assertTrue(replay["reproduced"])
+        self.assertEqual(replay["first_divergence"]["component"], R3)
 
 
 if __name__ == "__main__":

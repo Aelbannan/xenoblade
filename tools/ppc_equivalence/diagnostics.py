@@ -9,6 +9,7 @@ lightweight symbol / query introspection.
 
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 from .contract import Observable
@@ -352,6 +353,88 @@ def compute_first_divergence(
         original_insns, candidate_insns, initial_state_dict, contract
     )
     return result["first_divergence"]
+
+
+def _model_still_reproduces(
+    original_insns: list[Any],
+    candidate_insns: list[Any],
+    model_values: dict[str, Any],
+    contract: Any,
+) -> bool:
+    replay = replay_counterexample(
+        original_insns, candidate_insns, model_values, contract
+    )
+    return bool(replay.get("reproduced"))
+
+
+def _gpr_is_zero(value: Any) -> bool:
+    try:
+        return (int(value, 0) if isinstance(value, str) else int(value)) & 0xFFFFFFFF == 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _memory_bytes_map(model_values: dict[str, Any]) -> dict[str, Any] | None:
+    memory = model_values.get("memory")
+    if not isinstance(memory, dict):
+        return None
+    if "bytes" in memory or "default" in memory:
+        bytes_map = memory.get("bytes", {})
+        return bytes_map if isinstance(bytes_map, dict) else None
+    return memory
+
+
+def minimize_counterexample_model(
+    original_insns: list[Any],
+    candidate_insns: list[Any],
+    model_values: dict[str, Any],
+    contract: Any,
+) -> dict[str, Any]:
+    """Shrink a reproduced ConcreteOps witness without changing the proof domain.
+
+    Safe greedy minimization (P2-03):
+
+    1. zero each non-zero GPR independently when the divergence still reproduces;
+    2. drop each memory byte independently when the divergence still reproduces.
+
+    Returns a deep copy.  Does not mutate ``model_values``.  If the input model
+    does not reproduce under ConcreteOps, returns an unmodified deep copy.
+    """
+    minimized = copy.deepcopy(model_values)
+    if not _model_still_reproduces(
+        original_insns, candidate_insns, minimized, contract
+    ):
+        return minimized
+
+    gpr = minimized.get("gpr")
+    if isinstance(gpr, dict):
+        for name in sorted(gpr.keys()):
+            if _gpr_is_zero(gpr.get(name)):
+                continue
+            candidate = copy.deepcopy(minimized)
+            candidate_gpr = candidate.get("gpr")
+            assert isinstance(candidate_gpr, dict)
+            candidate_gpr[name] = "0x00000000"
+            if _model_still_reproduces(
+                original_insns, candidate_insns, candidate, contract
+            ):
+                minimized = candidate
+
+    bytes_map = _memory_bytes_map(minimized)
+    if bytes_map:
+        # Snapshot keys so removals during iteration stay deterministic.
+        for address in sorted(bytes_map.keys()):
+            candidate = copy.deepcopy(minimized)
+            candidate_bytes = _memory_bytes_map(candidate)
+            if candidate_bytes is None or address not in candidate_bytes:
+                continue
+            del candidate_bytes[address]
+            if _model_still_reproduces(
+                original_insns, candidate_insns, candidate, contract
+            ):
+                minimized = candidate
+
+    return minimized
 
 
 def count_z3_symbols(expr_or_assertions: Any) -> dict[str, int]:

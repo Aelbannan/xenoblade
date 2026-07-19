@@ -173,7 +173,10 @@ class LMStudioProviderTests(unittest.TestCase):
         self.assertIn("http://localhost:1234/v1/chat/completions", cmd)
         body = json.loads(cmd[cmd.index("-d") + 1])
         self.assertEqual(body["model"], "qwen2.5-coder")
-        self.assertEqual(body["response_format"], {"type": "json_object"})
+        self.assertEqual(body["response_format"]["type"], "json_schema")
+        self.assertEqual(
+            body["response_format"]["json_schema"]["name"], "decomp_candidate"
+        )
 
     def test_json_object_can_be_disabled(self) -> None:
         response = {

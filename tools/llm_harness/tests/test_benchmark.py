@@ -87,7 +87,7 @@ class TestAblations(unittest.TestCase):
     """§21.3 — Ablation configurations"""
 
     def test_ablations_defined(self):
-        self.assertGreaterEqual(len(ABLATIONS), 8)
+        self.assertGreaterEqual(len(ABLATIONS), 4)
 
     def test_each_ablation_has_name(self):
         for a in ABLATIONS:
@@ -97,10 +97,13 @@ class TestAblations(unittest.TestCase):
         for a in ABLATIONS:
             self.assertTrue(len(a.description) > 0)
 
-    def test_raw_hex_ablation_disables_knowledge(self):
-        raw = [a for a in ABLATIONS if a.name == "raw_hex_independent"]
+    def test_solve_and_sample_ablations_exist(self):
+        names = {a.name for a in ABLATIONS}
+        self.assertIn("solve_default", names)
+        self.assertIn("sample_new_10", names)
+        raw = [a for a in ABLATIONS if a.name == "solve_no_raw_hex"]
         self.assertEqual(len(raw), 1)
-        self.assertEqual(raw[0].overrides.get("knowledge.mode"), "none")
+        self.assertEqual(raw[0].overrides.get("prompt.include_raw_hex"), False)
 
 
 class TestBenchmarkMetrics(unittest.TestCase):

@@ -67,7 +67,21 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         )
         gated = enforce_equivalent_proof_features(result)
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
-        self.assertEqual(UNSUPPORTED_FOR_EQUIVALENT, frozenset())
+        self.assertEqual(
+            UNSUPPORTED_FOR_EQUIVALENT,
+            frozenset({"affine-loop-summary"}),
+        )
+
+    def test_affine_loop_summary_demotes_equivalent(self) -> None:
+        reason = validate_proof_features(
+            {
+                "proof_features": ["affine-loop-summary"],
+                "loop_summary": {"proof_kind": "affine-closed-form"},
+            },
+            require_equivalent_ready=True,
+        )
+        self.assertIsNotNone(reason)
+        self.assertIn("not yet supported", reason)
 
     def test_non_equivalent_status_is_not_demoted(self) -> None:
         result = ProofResult(
@@ -90,6 +104,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
     def test_registry_lists_known_features(self) -> None:
         self.assertIn("readonly-image", KNOWN_PROOF_FEATURES)
         self.assertIn("indirect-target-closure", KNOWN_PROOF_FEATURES)
+        self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
 
 
 if __name__ == "__main__":

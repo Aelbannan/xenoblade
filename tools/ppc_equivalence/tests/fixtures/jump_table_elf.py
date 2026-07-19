@@ -125,3 +125,69 @@ def mismatched_entry_count_fixtures() -> tuple[bytes, bytes, int, int]:
         table_targets=sequential_case_targets(entry_count=3),
     )
     return four, three, 4, 3
+
+
+def _switch_with_table_base(table_base: int, *, entry_count: int = 4) -> bytes:
+    ha = (table_base + 0x8000) >> 16
+    lo = table_base & 0xFFFF
+    if lo >= 0x8000:
+        lo -= 0x10000
+    return b"".join(
+        [
+            struct.pack(">I", (15 << 26) | (3 << 21) | (0 << 16) | (ha & 0xFFFF)),
+            struct.pack(">I", (14 << 26) | (3 << 21) | (3 << 16) | (lo & 0xFFFF)),
+            bytes.fromhex(cmplwi_bound_hex(entry_count)),
+        ]
+    )
+
+
+def dual_base_table_fixture(
+    *,
+    entry_count: int = 4,
+    original_table_base: int = DEFAULT_TABLE_BASE,
+    candidate_table_base: int = 0x80300000,
+    candidate_case_base: int = 0x80111000,
+) -> tuple[bytes, bytes, tuple[int, ...], tuple[int, ...], int, int]:
+    """Two linked ELFs: same dispatch shape, tables at different linked VAs."""
+    original_targets = sequential_case_targets(entry_count=entry_count)
+    candidate_targets = sequential_case_targets(
+        entry_count=entry_count,
+        case_base=candidate_case_base,
+    )
+    original_elf = build_linked_jump_table_elf(
+        table_targets=original_targets,
+        switch_body=_switch_with_table_base(original_table_base),
+        table_base=original_table_base,
+    )
+    candidate_elf = build_linked_jump_table_elf(
+        table_targets=candidate_targets,
+        switch_body=_switch_with_table_base(candidate_table_base),
+        table_base=candidate_table_base,
+    )
+    return (
+        original_elf,
+        candidate_elf,
+        original_targets,
+        candidate_targets,
+        original_table_base,
+        candidate_table_base,
+    )
+
+
+def sda_addi_switch_body(
+    *,
+    entry_count: int,
+    sda_reg: int,
+    displacement: int,
+) -> bytes:
+    """Switch body using ``addi r3, r13/r2, disp`` instead of ``lis``/``addi``."""
+    if sda_reg not in (2, 13):
+        raise ValueError("sda_reg must be r2 or r13")
+    disp = displacement & 0xFFFF
+    addi = (14 << 26) | (3 << 21) | (sda_reg << 16) | disp
+    return b"".join(
+        [
+            struct.pack(">I", addi),
+            bytes.fromhex(cmplwi_bound_hex(entry_count)),
+        ]
+    )

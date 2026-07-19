@@ -72,6 +72,17 @@ class SectionRelocation:
     addend: int | None
     target_section: str
     relocation_section: str
+    target_section_index: int = -1
+
+    @property
+    def target_section_name(self) -> str:
+        """Alias used by the ELF reloc census."""
+        return self.target_section
+
+    @property
+    def relocation_section_name(self) -> str:
+        """Alias used by the ELF reloc census."""
+        return self.relocation_section
 
 
 @dataclass(frozen=True)
@@ -293,9 +304,37 @@ def _iter_section_relocations(
                     addend=addend,
                     target_section=str(target["name"]),
                     relocation_section=str(relocation_section["name"]),
+                    target_section_index=target_idx,
                 )
             )
     return results
+
+
+def list_section_relocations(path: Path | str) -> list[SectionRelocation]:
+    """Return every REL/RELA entry for all target sections in an ELF object.
+
+    Missing ``.symtab`` yields an empty list (census-friendly) rather than error.
+    """
+    obj = Path(path)
+    data = obj.read_bytes()
+    e_type = _require_elf32_be(data, obj)
+    sections, by_name = _section_table(data)
+    if ".symtab" not in by_name:
+        return []
+    symtab, sym_idx, str_off, str_size, entsize = _symtab_context(
+        data, obj, sections, by_name,
+    )
+    return _iter_section_relocations(
+        data,
+        obj,
+        e_type=e_type,
+        sections=sections,
+        symtab=symtab,
+        sym_idx=sym_idx,
+        str_off=str_off,
+        str_size=str_size,
+        entsize=entsize,
+    )
 
 
 def list_allocatable_sections(path: Path | str) -> list[AllocatableSection]:

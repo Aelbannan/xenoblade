@@ -183,6 +183,13 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   expose SHF_ALLOC PROGBITS/NOBITS (including `.rodata` / `.data`) and attach
   REL/RELA entries (notably `R_PPC_ADDR32`) for jump-table census and later
   closure proofs. Text extraction behavior is unchanged.
+- **Jump-table image hydration:** `jump_table_image.hydrate_jump_table` reads
+  concrete ADDR32 table words from linked ELF (preferred) or DOL data sections.
+  Per-TU `.o` files usually retain unresolved ADDR32 slots (see
+  `docs/ppc_equiv_work/27-elf-data-reloc-census.md`), so linked hydration is
+  required for most Xenoblade jump tables. Object-file hydration is allowed
+  only when the slice has no unresolved ADDR32 relocs; otherwise the helper
+  fails closed. Not yet wired into the equivalence engine.
 
 ### Contracts
 

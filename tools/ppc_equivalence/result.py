@@ -31,6 +31,33 @@ FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
     "fp-exception-trap-delivery",
 )
 
+# FPSCR sticky/status bit labels (Gekko UReg_FPSCR). Companion to the oracle
+# scaffold; does not claim these bits are SMT-modeled today.
+FP_FLAG_MODELED: tuple[str, ...] = (
+    "VX-causes",
+    "ZX-cause",
+)
+FP_FLAG_ASSUMED: tuple[str, ...] = (
+    "OX",
+    "UX",
+    "XX",
+    "FI",
+    "FR",
+    "FPRF",
+    "trap-enable-bits",
+)
+FP_FLAG_UNSUPPORTED: tuple[str, ...] = (
+    "full-sticky-latching",
+    "exception-suppression-VE",
+    "record-form-cr1-shadow",
+)
+FP_RN_MODES_MODELED: tuple[str, ...] = ("nearest-even",)
+FP_RN_MODES_UNSUPPORTED: tuple[str, ...] = (
+    "toward-zero",
+    "toward-plus-infinity",
+    "toward-minus-infinity",
+)
+
 # P1-11 coverage query labels (additive; no result-format bump).
 FP_COVERAGE_STATUS_NONE = "none"
 FP_COVERAGE_STATUS_PROVEN = "proven"
@@ -130,6 +157,43 @@ class FloatingPointDomain:
         """Return ``proven`` or ``assumed`` for this active domain."""
         return self.coverage_dict()["status"]
 
+    def fpscr_flag_modeling(self) -> dict[str, list[str]]:
+        """Machine-readable FPSCR bit modeling status for certificates."""
+        modeled = list(FP_FLAG_MODELED)
+        assumed = list(FP_FLAG_ASSUMED)
+        unsupported = list(FP_FLAG_UNSUPPORTED)
+        if self.model_underflow_flag or self.model_inexact_flag:
+            unsupported = [
+                *unsupported,
+                "requested-flag-modeling-rejected",
+            ]
+        return {
+            "modeled": modeled,
+            "assumed": assumed,
+            "unsupported": unsupported,
+        }
+
+    def rounding_mode_modeling(self) -> dict[str, list[str]]:
+        """RN-mode coverage relative to FPSCR[0:2]."""
+        modeled = [
+            mode for mode in self.rounding_modes
+            if mode in FP_RN_MODES_MODELED
+        ]
+        unsupported = [
+            mode for mode in self.rounding_modes
+            if mode not in FP_RN_MODES_MODELED
+        ]
+        return {
+            "modeled": modeled,
+            "unsupported": [
+                *unsupported,
+                *[
+                    mode for mode in FP_RN_MODES_UNSUPPORTED
+                    if mode not in self.rounding_modes
+                ],
+            ],
+        }
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "used": True,
@@ -144,6 +208,8 @@ class FloatingPointDomain:
             "allow_infinity": self.allow_infinity,
             "allow_subnormal": self.allow_subnormal,
             "coverage": self.coverage_dict(),
+            "fpscr_flags": self.fpscr_flag_modeling(),
+            "rounding_mode_modeling": self.rounding_mode_modeling(),
         }
 
     @classmethod

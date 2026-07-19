@@ -55,10 +55,14 @@ Prefer `P0` / `P1` tiers unless the user names a specific function. Skip targets
 
 For bottom-up matching across the complete symbol catalog, use the retail call
 graph. `leaf` requires no direct, unresolved, or indirect calls;
-`callees-accepted` requires at least one direct callee and every callee at
-`EQUIVALENT_MATCH` or stronger; `ready` is their union:
+`callees-accepted` requires at least one direct callee and every callee
+accepted (`EQUIVALENT_MATCH` / `FULL_MATCH`) with a current semantic
+certificate; `ready` is their union. When accepted targets lack certificates,
+refresh them leaves-first before expecting a `callees-accepted` frontier:
 
 ```bash
+python3 tools/coop/run.py targets recertify --bottom-up --dry-run
+python3 tools/coop/run.py targets recertify --bottom-up
 python3 tools/coop/run.py harness --selection leaf --include-catalog --dry-run
 python3 tools/coop/run.py harness --selection callees-accepted --include-catalog --dry-run
 python3 tools/coop/run.py harness --selection ready --include-catalog --limit 20

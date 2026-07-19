@@ -648,6 +648,8 @@ def _build_equivalence_certificate(
     }
     if memory_scope is not None:
         certificate["memory_scope"] = memory_scope
+    # Always bind the live engine tree so certificates fail closed after semantic edits.
+    certificate["engine_hash"] = _current_engine_hash()
     if proof is not None:
         engine_hash = getattr(proof, "engine_hash", "") or ""
         source_hash = getattr(proof, "source_hash", "") or ""

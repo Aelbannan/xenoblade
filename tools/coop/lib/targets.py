@@ -371,6 +371,162 @@ def pending_targets(targets: List[Target], tier: Optional[str] = None) -> List[T
     return result
 
 
+def _target_registry_rows(targets: List[Target]) -> Dict[str, Dict[str, Any]]:
+    """Build certificate-validation rows from loaded Target objects."""
+    return {
+        target.id: {
+            "id": target.id,
+            "status": target.status,
+            "symbol": target.symbol,
+            "unit": target.unit,
+            "address": target.address,
+            **target.extra,
+        }
+        for target in targets
+    }
+
+
+def _certified_target_ids(
+    targets: List[Target],
+    rows_by_id: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> set[str]:
+    rows = rows_by_id if rows_by_id is not None else _target_registry_rows(targets)
+    return {
+        target.id
+        for target in targets
+        if target.status in ACCEPTED_MATCH_STATUSES
+        and equivalence_certificate_error(rows[target.id], rows) is None
+    }
+
+
+def _callgraph_blocks_certification(target: Target) -> Optional[str]:
+    """Return why a target cannot safely receive a compositional certificate."""
+    if target.extra.get("callgraph_status") != "complete":
+        return "call graph incomplete"
+    if target.extra.get("has_indirect_calls"):
+        return "has unresolved indirect calls"
+    unresolved = target.extra.get("unresolved_called_functions", [])
+    if unresolved:
+        return "has unresolved callees: " + ", ".join(str(item) for item in unresolved)
+    called = target.extra.get("called_functions", [])
+    if not isinstance(called, list) or not all(isinstance(item, str) for item in called):
+        return "called_functions is not an array of target ids"
+    return None
+
+
+@dataclass(frozen=True)
+class RecertifyPlan:
+    """Bottom-up certificate refresh plan for accepted targets."""
+
+    ordered: List[Target]
+    blocked: List[Target]
+    reasons: Dict[str, str]
+    block_reasons: Dict[str, str]
+
+
+def plan_recertify_bottom_up(
+    targets: List[Target],
+    *,
+    include_catalog: bool = False,
+) -> RecertifyPlan:
+    """Order accepted targets that lack a current semantic certificate.
+
+    Leaves and targets whose direct callees are already certified come first.
+    When projecting the dry-run order, each queued target is treated as becoming
+    certified so dependents can appear later in the same plan. Targets that
+    remain blocked (incomplete call graph, uncertified callees outside the
+    queue, cycles) are returned separately.
+    """
+    rows_by_id = _target_registry_rows(targets)
+    certified_ids = _certified_target_ids(targets, rows_by_id)
+    reasons: Dict[str, str] = {}
+    need: Dict[str, Target] = {}
+    for target in targets:
+        if target.status not in ACCEPTED_MATCH_STATUSES:
+            continue
+        if not target.buildable:
+            continue
+        if not include_catalog and target.extra.get("origin") == "symbols.txt":
+            continue
+        cert_error = equivalence_certificate_error(rows_by_id[target.id], rows_by_id)
+        if cert_error is None:
+            continue
+        need[target.id] = target
+        reasons[target.id] = cert_error
+
+    ordered: List[Target] = []
+    remaining = dict(need)
+    projected_certified = set(certified_ids)
+    while remaining:
+        wave = []
+        for target in remaining.values():
+            block = _callgraph_blocks_certification(target)
+            if block:
+                continue
+            called = target.extra.get("called_functions", [])
+            if all(callee_id in projected_certified for callee_id in called):
+                wave.append(target)
+        if not wave:
+            break
+        wave.sort(key=lambda item: item.id)
+        for target in wave:
+            ordered.append(target)
+            del remaining[target.id]
+            projected_certified.add(target.id)
+
+    blocked: List[Target] = []
+    block_reasons: Dict[str, str] = {}
+    for target in sorted(remaining.values(), key=lambda item: item.id):
+        block = _callgraph_blocks_certification(target)
+        if block is None:
+            called = target.extra.get("called_functions", [])
+            missing = [
+                callee_id for callee_id in called if callee_id not in projected_certified
+            ]
+            if missing:
+                block = "waiting on uncertified callees: " + ", ".join(missing)
+            else:
+                block = "dependency cycle or ordering stuck"
+        blocked.append(target)
+        block_reasons[target.id] = block
+
+    return RecertifyPlan(
+        ordered=ordered,
+        blocked=blocked,
+        reasons=reasons,
+        block_reasons=block_reasons,
+    )
+
+
+def recertify_ready_wave(
+    targets: List[Target],
+    *,
+    include_catalog: bool = False,
+    skip_ids: Optional[set[str]] = None,
+) -> List[Target]:
+    """Return accepted targets that can be certified with the current registry."""
+    skip = skip_ids or set()
+    rows_by_id = _target_registry_rows(targets)
+    certified_ids = _certified_target_ids(targets, rows_by_id)
+    wave: List[Target] = []
+    for target in targets:
+        if target.id in skip:
+            continue
+        if target.status not in ACCEPTED_MATCH_STATUSES or not target.buildable:
+            continue
+        if not include_catalog and target.extra.get("origin") == "symbols.txt":
+            continue
+        if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:
+            continue
+        if _callgraph_blocks_certification(target) is not None:
+            continue
+        called = target.extra.get("called_functions", [])
+        if all(callee_id in certified_ids for callee_id in called):
+            wave.append(target)
+    wave.sort(key=lambda item: item.id)
+    return wave
+
+
 def harness_targets(
     targets: List[Target],
     *,
@@ -379,15 +535,8 @@ def harness_targets(
     include_catalog: bool = False,
 ) -> List[Target]:
     """Select a safe bottom-up call-graph frontier for the cycle harness."""
-    rows_by_id = {
-        target.id: {"id": target.id, **target.extra} for target in targets
-    }
-    certified_ids = {
-        target.id
-        for target in targets
-        if target.status in ACCEPTED_MATCH_STATUSES
-        and equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None
-    }
+    rows_by_id = _target_registry_rows(targets)
+    certified_ids = _certified_target_ids(targets, rows_by_id)
     candidates = [
         target
         for target in targets

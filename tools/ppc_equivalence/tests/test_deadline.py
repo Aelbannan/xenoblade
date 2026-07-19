@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import time
 import unittest
+from unittest import mock
 
 from tools.ppc_equivalence.deadline import Deadline, ProofDeadlineExceeded, SolverPhase
 
@@ -51,6 +52,125 @@ class DeadlineUnitTests(unittest.TestCase):
         self.assertEqual(d["name"], "default")
         self.assertEqual(d["result"], "unsat")
         self.assertEqual(d["elapsed_ms"], 12.345)
+
+
+@unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")
+class CfgDeadlineTests(unittest.TestCase):
+    def test_execute_cfg_raises_when_deadline_already_expired(self) -> None:
+        from tools.ppc_equivalence.decoder import decode_block, parse_hex
+        from tools.ppc_equivalence.semantics import SymbolicOps, execute_cfg
+        from tools.ppc_equivalence.engine import _symbolic_initial
+
+        ops = SymbolicOps()
+        insns = decode_block(parse_hex("4e800020"), validate_with_capstone=False)
+        deadline = Deadline(time.monotonic_ns() - 1)
+        with self.assertRaises(ProofDeadlineExceeded) as ctx:
+            execute_cfg(
+                _symbolic_initial(ops),
+                insns,
+                ops,
+                deadline=deadline,
+            )
+        self.assertEqual(ctx.exception.phase, "cfg-exploration")
+
+    def test_check_equivalence_cfg_timeout_is_inconclusive(self) -> None:
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.decoder import decode_block, parse_hex
+        from tools.ppc_equivalence.engine import check_equivalence
+
+        original_hex = "4e800020"
+        deadline = Deadline(time.monotonic_ns() - 1)
+        with mock.patch(
+            "tools.ppc_equivalence.engine.Deadline.after_ms",
+            return_value=deadline,
+        ):
+            result = check_equivalence(
+                decode_block(parse_hex(original_hex), validate_with_capstone=False),
+                decode_block(parse_hex(original_hex), validate_with_capstone=False),
+                EquivalenceContract(parse_observables(["r3"]), timeout_ms=10_000),
+                original_hex=original_hex,
+                candidate_hex=original_hex,
+            )
+        self.assertEqual(result.status.value, "inconclusive_timeout")
+        self.assertTrue(
+            any("cfg-exploration" in warning for warning in result.warnings),
+            result.warnings,
+        )
+        self.assertEqual(result.solver.get("timeout_ms"), 10_000)
+
+    def test_deadline_is_created_before_cfg_and_threaded_through(self) -> None:
+        from tools.ppc_equivalence import semantics as semantics_mod
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.decoder import decode_block, parse_hex
+        from tools.ppc_equivalence.engine import check_equivalence
+
+        original_hex = "4e800020"
+        seen: dict[str, object] = {"cfg_calls": 0}
+        real_after_ms = Deadline.after_ms
+        real_execute_cfg = semantics_mod.execute_cfg
+
+        def tracking_after_ms(timeout_ms: int) -> Deadline:
+            deadline = real_after_ms(timeout_ms)
+            seen["deadline"] = deadline
+            return deadline
+
+        def tracking_execute_cfg(*args, **kwargs):
+            self.assertIs(kwargs.get("deadline"), seen["deadline"])
+            seen["cfg_calls"] = int(seen["cfg_calls"]) + 1
+            return real_execute_cfg(*args, **kwargs)
+
+        with mock.patch(
+            "tools.ppc_equivalence.engine.Deadline.after_ms",
+            side_effect=tracking_after_ms,
+        ), mock.patch(
+            "tools.ppc_equivalence.engine.execute_cfg",
+            side_effect=tracking_execute_cfg,
+        ):
+            result = check_equivalence(
+                decode_block(parse_hex(original_hex), validate_with_capstone=False),
+                decode_block(parse_hex(original_hex), validate_with_capstone=False),
+                EquivalenceContract(parse_observables(["r3"]), timeout_ms=10_000),
+                original_hex=original_hex,
+                candidate_hex=original_hex,
+            )
+
+        self.assertEqual(seen["cfg_calls"], 2)
+        self.assertEqual(result.status.value, "equivalent")
+
+    def test_check_equivalence_timeout_after_cfg_before_solve(self) -> None:
+        from tools.ppc_equivalence import semantics as semantics_mod
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.decoder import decode_block, parse_hex
+        from tools.ppc_equivalence.engine import check_equivalence
+
+        original_hex = "4e800020"
+        expired = Deadline(time.monotonic_ns() - 1)
+        real_execute_cfg = semantics_mod.execute_cfg
+
+        def execute_cfg_ignore_deadline(*args, **kwargs):
+            kwargs = {**kwargs, "deadline": None}
+            return real_execute_cfg(*args, **kwargs)
+
+        with mock.patch(
+            "tools.ppc_equivalence.engine.Deadline.after_ms",
+            return_value=expired,
+        ), mock.patch(
+            "tools.ppc_equivalence.engine.execute_cfg",
+            side_effect=execute_cfg_ignore_deadline,
+        ):
+            result = check_equivalence(
+                decode_block(parse_hex(original_hex), validate_with_capstone=False),
+                decode_block(parse_hex(original_hex), validate_with_capstone=False),
+                EquivalenceContract(parse_observables(["r3"]), timeout_ms=10_000),
+                original_hex=original_hex,
+                candidate_hex=original_hex,
+            )
+
+        self.assertEqual(result.status.value, "inconclusive_timeout")
+        self.assertTrue(
+            any("constraint-build" in warning for warning in result.warnings),
+            result.warnings,
+        )
 
 
 @unittest.skipUnless(importlib.util.find_spec("z3"), "z3-solver is not installed")

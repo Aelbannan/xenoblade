@@ -15,6 +15,7 @@ Usage (from repository root):
   python3 tools/coop/run.py cycle pad-copy-input-flag
   python3 tools/coop/run.py queue --tier P1
   python3 tools/coop/run.py targets list
+  python3 tools/coop/run.py targets recertify --bottom-up --dry-run
   python3 tools/coop/run.py log --tail 20
   python3 tools/coop/run.py symbols list
   python3 tools/coop/run.py behaviour audit
@@ -54,11 +55,15 @@ from tools.coop.lib.project import ObjdiffUnit, Project
 from tools.coop.lib.targets import (
     audit_promotion_registry,
     claim_target,
+    equivalence_certificate_error,
     get_target,
     harness_targets,
     import_symbols,
     load_targets,
+    load_targets_document,
     pending_targets,
+    plan_recertify_bottom_up,
+    recertify_ready_wave,
     release_target,
     sync_results_from_attempts,
     sync_called_functions,
@@ -66,6 +71,7 @@ from tools.coop.lib.targets import (
     validate_targets,
     write_targets_document,
 )
+from tools.ppc_equivalence.result import ProofStatus
 
 
 def _git_head(project: Project) -> Optional[str]:
@@ -862,6 +868,185 @@ def _render_target_brief(config: CoopConfig, target_id: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def cmd_targets_recertify(
+    project: Project,
+    config: CoopConfig,
+    *,
+    bottom_up: bool,
+    dry_run: bool,
+    limit: Optional[int],
+    include_catalog: bool,
+    linked: bool = False,
+) -> int:
+    """Issue/refresh semantic certificates for accepted targets, leaves first."""
+    if not bottom_up:
+        print("ERROR: targets recertify requires --bottom-up", file=sys.stderr)
+        return 2
+
+    targets = load_targets(config)
+    plan = plan_recertify_bottom_up(targets, include_catalog=include_catalog)
+    queue = plan.ordered if limit is None else plan.ordered[:limit]
+    mode = "dry-run" if dry_run else "apply"
+    print(
+        f"Recertify ({mode}, bottom-up): {len(queue)} queued"
+        + (f" (of {len(plan.ordered)} ordered)" if limit is not None else "")
+        + f", {len(plan.blocked)} blocked"
+    )
+    for target in queue:
+        print(f"  [queue] {target.id}: {plan.reasons.get(target.id, 'needs certificate')}")
+    blocked_cap = 20 if limit is None else limit
+    blocked_view = plan.blocked[:blocked_cap]
+    for target in blocked_view:
+        print(
+            f"  [blocked] {target.id}: {plan.block_reasons.get(target.id, 'blocked')}"
+            f" ({plan.reasons.get(target.id, 'needs certificate')})"
+        )
+    if len(plan.blocked) > len(blocked_view):
+        print(f"  ... {len(plan.blocked) - len(blocked_view)} more blocked")
+    if dry_run:
+        if queue:
+            print("Dry-run only. Re-run without --dry-run to issue/refresh certificates.")
+        return 0
+
+    succeeded = 0
+    failed = 0
+    attempted = 0
+    failed_ids: set[str] = set()
+    while limit is None or attempted < limit:
+        live_targets = load_targets(config)
+        wave = recertify_ready_wave(
+            live_targets,
+            include_catalog=include_catalog,
+            skip_ids=failed_ids,
+        )
+        if not wave:
+            break
+        remaining_budget = None if limit is None else max(0, limit - attempted)
+        if remaining_budget is not None:
+            wave = wave[:remaining_budget]
+        for target in wave:
+            assert target.unit is not None
+            assert target.symbol is not None
+            attempted += 1
+            print(f"recertify: {target.id} ({target.status})")
+            try:
+                unit = project.resolve_unit(target.unit)
+                if unit.base_path:
+                    project.ninja_build(str(unit.base_path.relative_to(project.root)))
+                    _postprocess_mtrand_object(project, unit.base_path)
+                evaluation = evaluate_unit_match(
+                    project,
+                    unit,
+                    target.symbol,
+                    linked=linked,
+                    target_id=target.id,
+                )
+            except (FileNotFoundError, ValueError, subprocess.CalledProcessError) as exc:
+                print(f"  FAIL: {exc}", file=sys.stderr)
+                failed_ids.add(target.id)
+                failed += 1
+                continue
+
+            certificate = evaluation.equivalence_certificate
+            if evaluation.equivalence != ProofStatus.EQUIVALENT or not certificate:
+                detail = evaluation.equivalence_detail or "no certificate issued"
+                status = (
+                    evaluation.equivalence.value
+                    if evaluation.equivalence is not None
+                    else "n/a"
+                )
+                print(f"  FAIL: {status} ({detail})", file=sys.stderr)
+                append_attempt(
+                    config.resolve(config.attempt_log),
+                    AttemptRecord(
+                        target_id=target.id,
+                        function=target.function,
+                        region=config.region,
+                        unit=target.unit,
+                        symbol=target.symbol,
+                        status=target.status,
+                        instruction_match=(
+                            evaluation.fn_match.match_percent
+                            if evaluation.fn_match
+                            else None
+                        ),
+                        relocation_match=None,
+                        code_match_percent=evaluation.unit_report.code_match_percent,
+                        data_match_percent=evaluation.unit_report.data_match_percent,
+                        hypothesis="recertify: bottom-up certificate refresh failed",
+                        next_change=(
+                            "Inspect inconclusive certification blockers, then retry"
+                        ),
+                        equivalence_status=status if status != "n/a" else None,
+                        equivalence_detail=detail,
+                        git_commit=_git_head(project),
+                    ),
+                )
+                failed_ids.add(target.id)
+                failed += 1
+                continue
+
+            document = load_targets_document(config)
+            rows_by_id = {
+                str(row["id"]): row
+                for row in document.get("targets", [])
+                if isinstance(row, dict) and isinstance(row.get("id"), str)
+            }
+            trial = dict(rows_by_id.get(target.id, {"id": target.id}))
+            trial["status"] = target.status
+            trial["equivalence_certificate"] = certificate
+            rows_by_id[target.id] = trial
+            cert_error = equivalence_certificate_error(trial, rows_by_id)
+            if cert_error:
+                print(f"  FAIL: certificate rejected ({cert_error})", file=sys.stderr)
+                failed_ids.add(target.id)
+                failed += 1
+                continue
+
+            update_target_result(
+                config,
+                target.id,
+                status=target.status,
+                instruction_match=(
+                    evaluation.fn_match.match_percent if evaluation.fn_match else None
+                ),
+                equivalence_status=evaluation.equivalence.value,
+                equivalence_certificate=certificate,
+                certificate_checked=True,
+                equivalence_confidence=evaluation.equivalence_confidence,
+                equivalence_policy=evaluation.equivalence_policy,
+            )
+            append_attempt(
+                config.resolve(config.attempt_log),
+                AttemptRecord(
+                    target_id=target.id,
+                    function=target.function,
+                    region=config.region,
+                    unit=target.unit,
+                    symbol=target.symbol,
+                    status=target.status,
+                    instruction_match=(
+                        evaluation.fn_match.match_percent if evaluation.fn_match else None
+                    ),
+                    relocation_match=None,
+                    code_match_percent=evaluation.unit_report.code_match_percent,
+                    data_match_percent=evaluation.unit_report.data_match_percent,
+                    hypothesis="recertify: bottom-up certificate refresh",
+                    next_change="",
+                    equivalence_status=evaluation.equivalence.value,
+                    equivalence_detail="certificate refreshed",
+                    equivalence_confidence=evaluation.equivalence_confidence,
+                    equivalence_policy=evaluation.equivalence_policy,
+                    git_commit=_git_head(project),
+                ),
+            )
+            print(f"  OK: certificate {certificate['certificate_sha256']}")
+            succeeded += 1
+
+    print(f"Recertify complete: {succeeded} certified, {failed} failed")
+    return 1 if failed else 0
+
+
 def cmd_targets_audit_promotion(
     config: CoopConfig,
     *,
@@ -1216,8 +1401,8 @@ def main() -> int:
             default="pending",
             help=(
                 "pending=normal queue; leaf=no direct/indirect/unresolved calls; "
-                "callees-accepted=non-leaf with every known callee at least EQUIVALENT_MATCH; "
-                "ready=union of leaf and callees-accepted"
+                "callees-accepted=non-leaf with every known callee accepted and "
+                "semantically certified; ready=union of leaf and callees-accepted"
             ),
         )
         command_parser.add_argument(
@@ -1299,6 +1484,41 @@ def main() -> int:
     p_targets_audit.add_argument(
         "--write-report", type=Path,
         help="Write audit JSON report to path",
+    )
+    p_targets_recertify = p_targets_sub.add_parser(
+        "recertify",
+        help=(
+            "Issue or refresh semantic certificates for accepted targets "
+            "in bottom-up call-graph order"
+        ),
+    )
+    p_targets_recertify.add_argument(
+        "--bottom-up",
+        action="store_true",
+        help="Process leaves and certified-callee frontiers before dependents (required)",
+    )
+    p_targets_recertify.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the bottom-up queue without building or certifying",
+    )
+    p_targets_recertify.add_argument(
+        "--limit",
+        type=int,
+        help="Maximum number of targets to certify (apply) or list (dry-run)",
+    )
+    p_targets_recertify.add_argument(
+        "--include-catalog",
+        action="store_true",
+        help="Include buildable P9 functions imported from symbols.txt",
+    )
+    p_targets_recertify.add_argument(
+        "--linked",
+        action="store_true",
+        help=(
+            "Allow SMT prove fallback to linked DOL/ELF bytes when unlinked "
+            "objects are inconclusive due to relocations"
+        ),
     )
     p_targets_brief = p_targets_sub.add_parser(
         "brief", help="Generate a synchronized worker prompt for one target"
@@ -1468,6 +1688,16 @@ def main() -> int:
             config,
             apply=bool(args.apply) and not args.dry_run,
             write_report=args.write_report,
+        )
+    if args.command == "targets" and args.targets_cmd == "recertify":
+        return cmd_targets_recertify(
+            project,
+            config,
+            bottom_up=bool(args.bottom_up),
+            dry_run=bool(args.dry_run),
+            limit=args.limit,
+            include_catalog=bool(args.include_catalog),
+            linked=bool(args.linked),
         )
     if args.command == "targets" and args.targets_cmd == "brief":
         return cmd_targets_brief(config, args.target_id, output=args.output)

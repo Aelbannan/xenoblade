@@ -4,6 +4,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
+from .deadline import Deadline, ProofDeadlineExceeded
 from .ir import (
     ExecutionInconclusive,
     Instruction,
@@ -3077,6 +3078,7 @@ def execute_cfg(
     assumed_callees_used: set[int | str] | None = None,
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     floating_point_domain: FloatingPointDomain | None = None,
+    deadline: Deadline | None = None,
 ) -> list[Terminal]:
     if not instructions:
         raise ValueError("cannot execute an empty block")
@@ -3096,6 +3098,7 @@ def execute_cfg(
             assumed_callees=assumed_callees,
             assumed_callees_used=assumed_callees_used,
             callee_contracts=callee_contracts,
+            deadline=deadline,
         )
     finally:
         _FP_DOMAIN.reset(domain_token)
@@ -3112,6 +3115,7 @@ def _execute_cfg_body(
     assumed_callees: frozenset[int | str],
     assumed_callees_used: set[int | str] | None,
     callee_contracts: dict[int | str, CalleeContract] | None,
+    deadline: Deadline | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -3159,6 +3163,8 @@ def _execute_cfg_body(
             raise ExecutionInconclusive(f"path limit exceeded ({max_paths})")
 
     while work:
+        if deadline is not None and deadline.expired():
+            raise ProofDeadlineExceeded("cfg-exploration")
         pc, current, condition, visit_counts, steps = work.pop()
         if steps >= max_instructions:
             raise ExecutionInconclusive(f"instruction limit exceeded ({max_instructions})")

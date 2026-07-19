@@ -1043,6 +1043,35 @@ def check_equivalence(
     initial = _symbolic_initial(ops)
     callees_used: set[int | str] = set()
     domain = floating_point_domain if floating_point_domain is not None else FloatingPointDomain()
+    # Wall-clock budget covers CFG exploration and constraint construction as
+    # well as solving, so path explosion cannot run past the user timeout.
+    deadline = Deadline.after_ms(contract.timeout_ms)
+
+    def _early_timeout(phase: str) -> ProofResult:
+        return ProofResult(
+            status=ProofStatus.INCONCLUSIVE_TIMEOUT,
+            contract=contract.name,
+            contract_resolution=contract.resolution_dict(),
+            observables=[item.name for item in contract.observables],
+            warnings=[f"proof deadline exceeded during {phase}"],
+            limits={
+                "max_instructions": max_instructions,
+                "max_paths": max_paths,
+                "max_loop_iterations": max_loop_iterations,
+            },
+            floating_point_domain=domain,
+            source_hash=source_hash,
+            solver={
+                "name": "z3",
+                "version": z3.get_version_string(),
+                "result": "unknown",
+                "elapsed_ms": 0,
+                "timeout_ms": contract.timeout_ms,
+                "tactic": phase,
+                "phases": [],
+            },
+        )
+
     try:
         domain.validate()
     except ValueError as exc:
@@ -1068,6 +1097,7 @@ def check_equivalence(
             assumed_callees=assumed_callees, assumed_callees_used=callees_used,
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
+            deadline=deadline,
         )
         candidate_exits = execute_cfg(
             initial, candidate, ops,
@@ -1076,7 +1106,10 @@ def check_equivalence(
             assumed_callees=assumed_callees, assumed_callees_used=callees_used,
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
+            deadline=deadline,
         )
+    except ProofDeadlineExceeded as exc:
+        return _early_timeout(exc.phase)
     except ExecutionInconclusive as exc:
         return ProofResult(
             status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
@@ -1094,6 +1127,11 @@ def check_equivalence(
         )
     if assumed_callees_used is not None:
         assumed_callees_used.update(callees_used)
+
+    try:
+        deadline.require_time("constraint-build")
+    except ProofDeadlineExceeded as exc:
+        return _early_timeout(exc.phase)
 
     pair_differences = [
         _terminal_difference(left, right, contract, initial, ops)
@@ -1126,13 +1164,17 @@ def check_equivalence(
     )
     layout_constraints.extend(memory_constraints)
 
+    try:
+        deadline.require_time("solve")
+    except ProofDeadlineExceeded as exc:
+        return _early_timeout(exc.phase)
+
     def _build_solver() -> Any:
         s = z3.Solver()
         s.add(*layout_constraints)
         s.add(z3.Or(*pair_differences))
         return s
 
-    deadline = Deadline.after_ms(contract.timeout_ms)
     if smt_output is not None:
         s = _build_solver()
         Path(smt_output).write_text(s.to_smt2(), encoding="utf-8")

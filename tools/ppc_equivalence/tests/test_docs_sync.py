@@ -6,11 +6,15 @@ from pathlib import Path
 
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
 from tools.ppc_equivalence.docs_sync import (
+    DOC_PATHS,
+    PACKAGE_README,
+    SOUNDNESS,
     TABLE_BEGIN,
     TABLE_END,
     VERSION_BEGIN,
     VERSION_END,
     _run,
+    generate_document,
     generate_readme,
     generate_status_table,
     generate_version_block,
@@ -34,6 +38,11 @@ class TestDocsSync(unittest.TestCase):
         for member in ProofStatus:
             self.assertIn(member.name, block)
             self.assertIn(member.value, block)
+
+    def test_doc_paths_cover_package_manuals(self) -> None:
+        self.assertIn(PACKAGE_README, DOC_PATHS)
+        self.assertIn(SOUNDNESS, DOC_PATHS)
+        self.assertEqual(len(DOC_PATHS), 3)
 
     def test_write_updates_content_and_check_passes(self) -> None:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
@@ -67,6 +76,27 @@ class TestDocsSync(unittest.TestCase):
         try:
             self.assertEqual(_run(True, False, tmp), 0)
             self.assertEqual(_run(False, True, tmp), 0)
+        finally:
+            tmp.unlink()
+
+    def test_check_reports_each_stale_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            fresh = root / "fresh.md"
+            stale = root / "stale.md"
+            fresh.write_text("# Fresh\n\n## Section\n\n", encoding="utf-8")
+            stale.write_text("# Stale\n\n## Section\n\n", encoding="utf-8")
+            self.assertEqual(_run(True, False, [fresh, stale]), 0)
+            stale.write_text("# Drifted\n\n## Section\n\n", encoding="utf-8")
+            self.assertNotEqual(_run(False, True, [fresh, stale]), 0)
+            self.assertEqual(_run(False, True, [fresh]), 0)
+
+    def test_generate_document_matches_generate_readme(self) -> None:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("# Title\n\n## Section\n\nbody\n")
+            tmp = Path(f.name)
+        try:
+            self.assertEqual(generate_document(tmp), generate_readme(tmp))
         finally:
             tmp.unlink()
 

@@ -21,6 +21,7 @@ python3 tools/coop/run.py targets status
 python3 tools/coop/run.py targets show <target-id>
 python3 tools/coop/run.py targets brief <target-id>
 python3 tools/coop/run.py targets sync-calls
+python3 tools/coop/run.py targets recertify --bottom-up --dry-run
 python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
 python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
 python3 tools/llm_harness/run.py solve <target-id> --dry-run

@@ -1,10 +1,19 @@
 # PPC equivalence validation ledger (P1-06).
-# dolphin_interpreter=true for opcodes with reachable Dolphin fixtures;
-# false for privileged decode-only opcodes (dcbz_l, mtmsr, mtsr, sc, rfi).
+# dolphin_interpreter=true only when the opcode is *executed* by a reachable
+# (non decode-only) Dolphin / ConcreteOps fixture in broadway.jsonl.
+#
+# Permanently dolphin_interpreter=false (PRIVILEGED_DECODE_ONLY):
+#   dcbz_l, mtmsr, mtsr, sc, rfi
+# These appear in the corpus only behind an unconditional `b` that skips the
+# word so the decoder stays covered; the generic DOL harness never returns
+# through their side effects (locked-cache zero, MSR/SR writes, system call,
+# or interrupt return). Promotion Gate 2/3 therefore treats them as missing
+# dolphin evidence (`opcode-*-not-dolphin-validated`) — do not flip to true
+# without a real harness-executable fixture.
 architecture_model: broadway-ppc32-be-v23
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
-corpus_hash: 86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d
+corpus_hash: d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce
 opcodes:
   add:
     decoder_unit: true
@@ -12,1442 +21,1458 @@ opcodes:
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   addc:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   adde:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   addi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   addic:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   addic.:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   addis:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   addme:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   addze:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   and:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   andc:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   andi.:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   andis.:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   b:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   bc:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   bcctr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   bclr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   cmplw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   cmplwi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   cmpw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   cmpwi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   cntlzw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   crand:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   crandc:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   creqv:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   crnand:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   crnor:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   cror:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   crorc:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   crxor:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   dcbf:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   dcbi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   dcbst:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   dcbt:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   dcbz:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   dcbz_l:
     decoder_unit: true
     concrete_symbolic_differential: true
+    # false: corpus fixture is decode-only (branched over). Locked-cache
+    # dcbz_l needs HID0.DCE+HID2.LCE and is unsafe in the generic DOL harness.
     dolphin_interpreter: false
     boundary_vectors: partial
     restrictions:
-      - "privileged/decode-only; not executed in Dolphin harness"
+      - "decode-only corpus word; never reached by Dolphin harness execution"
+      - "requires HID0.DCE and HID2.LCE; locked-cache side effects not harness-safe"
+      - "promotion must keep opcode-dcbz_l-not-dolphin-validated"
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   divw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   divwu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   eqv:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   extsb:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   extsh:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fabs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fadd:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fadds:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fcmpo:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fcmpu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fctiw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fctiwz:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fdiv:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fdivs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fmadd:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fmadds:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fmr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fmsub:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fmsubs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fmul:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fmuls:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fnabs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fneg:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fnmadd:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fnmadds:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fnmsub:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fnmsubs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fres:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   frsp:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   frsqrte:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fsel:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fsub:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   fsubs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   icbi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   isync:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lbz:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lbzu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lbzux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lbzx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfd:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfdu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfdux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfdx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfsu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfsux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lfsx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lha:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhau:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhaux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhax:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhbrx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhz:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhzu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhzux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lhzx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lmw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lwbrx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lwz:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lwzu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lwzux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   lwzx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mcrfs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mfcr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mffs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mfmsr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mfspr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mfsr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mftb:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtcrf:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtfsb0:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtfsb1:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtfsf:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtfsfi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtmsr:
     decoder_unit: true
     concrete_symbolic_differential: true
+    # false: privileged MSR write; corpus only covers decode via branch-over.
     dolphin_interpreter: false
     boundary_vectors: partial
     restrictions:
-      - "privileged/decode-only; not executed in Dolphin harness"
+      - "privileged; decode-only corpus word skipped by unconditional branch"
+      - "MSR writes are not observable/safe in the generic Dolphin DOL harness"
+      - "promotion must keep opcode-mtmsr-not-dolphin-validated"
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtspr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mtsr:
     decoder_unit: true
     concrete_symbolic_differential: true
+    # false: privileged segment-register write; decode-only in corpus.
     dolphin_interpreter: false
     boundary_vectors: partial
     restrictions:
-      - "privileged/decode-only; not executed in Dolphin harness"
+      - "privileged; decode-only corpus word skipped by unconditional branch"
+      - "segment-register writes are not harness-safe / not Dolphin-validated here"
+      - "promotion must keep opcode-mtsr-not-dolphin-validated"
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mulhw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mulhwu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mulli:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   mullw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   nand:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   neg:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   nor:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   or:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   orc:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ori:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   oris:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_abs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_add:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_cmpo0:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_cmpo1:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_cmpu0:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_cmpu1:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_div:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_madd:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_madds0:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_madds1:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_merge00:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_merge01:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_merge10:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_merge11:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_mr:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_msub:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_mul:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_muls0:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_muls1:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_nabs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_neg:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_nmadd:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_nmsub:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_res:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_rsqrte:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_sel:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_sub:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_sum0:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   ps_sum1:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_l:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_lu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_lux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_lx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_st:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_stu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_stux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   psq_stx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   rfi:
     decoder_unit: true
     concrete_symbolic_differential: true
+    # false: exception return; corpus decode-only — never returns to harness.
     dolphin_interpreter: false
     boundary_vectors: partial
     restrictions:
-      - "privileged/decode-only; not executed in Dolphin harness"
+      - "exception-return; decode-only corpus word skipped by unconditional branch"
+      - "cannot safely resume the generic DOL harness after rfi"
+      - "promotion must keep opcode-rfi-not-dolphin-validated"
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   rlwimi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   rlwinm:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   rlwnm:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sc:
     decoder_unit: true
     concrete_symbolic_differential: true
+    # false: system-call exception; corpus decode-only — never returns to harness.
     dolphin_interpreter: false
     boundary_vectors: partial
     restrictions:
-      - "privileged/decode-only; not executed in Dolphin harness"
+      - "system-call; decode-only corpus word skipped by unconditional branch"
+      - "cannot safely resume the generic DOL harness after sc"
+      - "promotion must keep opcode-sc-not-dolphin-validated"
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   slw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sraw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   srawi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   srw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stb:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stbu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stbux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stbx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfd:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfdu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfdux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfdx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfiwx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfs:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfsu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfsux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stfsx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sth:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sthbrx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sthu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sthux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sthx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stmw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stw:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stwbrx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stwu:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stwux:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   stwx:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   subf:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   subfc:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   subfe:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   subfic:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   subfme:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   subfze:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   sync:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   twi:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   xor:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   xori:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"
   xoris:
     decoder_unit: true
     concrete_symbolic_differential: true
     dolphin_interpreter: true
     boundary_vectors: true
     reviewer: corpus-fixtures
-    evidence_sha256: "86c3ef47498055d573a9f5afa2db17d47b9792a29008827ce7302c9cd2bb901d"
+    evidence_sha256: "d6e018f04f25e76d14d2e76321c5231ca137a2e30d1bd783e6bffc995a7e90ce"

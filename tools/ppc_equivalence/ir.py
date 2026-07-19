@@ -5,6 +5,7 @@ from enum import Enum
 
 
 # ELF32 PowerPC relocation types used by the Xenoblade retail/decomp objects.
+R_PPC_ADDR32 = 1
 R_PPC_ADDR16_LO = 4
 R_PPC_ADDR16_HI = 5
 R_PPC_ADDR16_HA = 6
@@ -19,6 +20,11 @@ SUPPORTED_TEXT_RELOCATIONS = frozenset({
     R_PPC_REL24,
     R_PPC_REL14,
     R_PPC_EMB_SDA21,
+})
+
+# Data-section types observed for jump tables / vtables (not yet applied to text decode).
+KNOWN_DATA_RELOCATION_TYPES = frozenset({
+    R_PPC_ADDR32,
 })
 
 

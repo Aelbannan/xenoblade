@@ -8,17 +8,24 @@ from pathlib import Path
 
 
 STT_NOTYPE = 0
+STT_OBJECT = 1
 STT_FUNC = 2
 ET_REL = 1
 ET_EXEC = 2
 ET_DYN = 3
 EM_PPC = 20
+SHT_PROGBITS = 1
+SHT_SYMTAB = 2
+SHT_STRTAB = 3
+SHT_RELA = 4
 SHT_NOBITS = 8
 SHT_REL = 9
-SHT_RELA = 4
 SHN_UNDEF = 0
 SHN_ABS = 0xFFF1
 SHN_COMMON = 0xFFF2
+SHF_WRITE = 0x1
+SHF_ALLOC = 0x2
+SHF_EXECINSTR = 0x4
 
 
 @dataclass(frozen=True)
@@ -51,6 +58,49 @@ class FunctionBytes:
     section_name: str
     symbol_type: int
     relocations: tuple[FunctionRelocation, ...] = ()
+
+
+@dataclass(frozen=True)
+class SectionRelocation:
+    """One relocation that patches an allocatable (often data) section."""
+
+    offset: int
+    """Byte offset within the target section (not a linked VA)."""
+
+    relocation_type: int
+    symbol: str
+    addend: int | None
+    target_section: str
+    relocation_section: str
+
+
+@dataclass(frozen=True)
+class AllocatableSection:
+    """One SHF_ALLOC PROGBITS/NOBITS section with optional attached relocations."""
+
+    name: str
+    path: Path
+    index: int
+    addr: int
+    size: int
+    flags: int
+    sh_type: int
+    data: bytes
+    """Raw section bytes; empty for SHT_NOBITS."""
+
+    relocations: tuple[SectionRelocation, ...] = ()
+
+    @property
+    def writable(self) -> bool:
+        return bool(self.flags & SHF_WRITE)
+
+    @property
+    def executable(self) -> bool:
+        return bool(self.flags & SHF_EXECINSTR)
+
+    @property
+    def is_nobits(self) -> bool:
+        return self.sh_type == SHT_NOBITS
 
 
 class ElfSymbolError(ValueError):
@@ -148,6 +198,179 @@ def _symbol_name(data: bytes, str_off: int, str_size: int, st_name: int) -> str:
     return data[start:end].decode("ascii", errors="replace")
 
 
+def _symtab_context(
+    data: bytes,
+    path: Path,
+    sections: list[dict[str, int | str]],
+    by_name: dict[str, int],
+) -> tuple[dict[str, int | str], int, int, int, int]:
+    sym_idx = by_name.get(".symtab")
+    if sym_idx is None:
+        raise ElfSymbolError(f"missing .symtab: {path}")
+    symtab = sections[sym_idx]
+    str_idx = int(symtab["link"])
+    if str_idx >= len(sections):
+        raise ElfSymbolError(f"symtab link out of range: {path}")
+    strtab = sections[str_idx]
+    str_off = int(strtab["offset"])
+    str_size = int(strtab["size"])
+    entsize = int(symtab["entsize"]) or 16
+    if entsize < 16:
+        raise ElfSymbolError(f"unsupported symtab entsize {entsize}: {path}")
+    return symtab, sym_idx, str_off, str_size, entsize
+
+
+def _iter_section_relocations(
+    data: bytes,
+    path: Path,
+    *,
+    e_type: int,
+    sections: list[dict[str, int | str]],
+    symtab: dict[str, int | str],
+    sym_idx: int,
+    str_off: int,
+    str_size: int,
+    entsize: int,
+    target_section_index: int | None = None,
+) -> list[SectionRelocation]:
+    """Parse REL/RELA entries targeting allocatable (or selected) sections."""
+    results: list[SectionRelocation] = []
+    for relocation_section in sections:
+        section_type = int(relocation_section["type"])
+        if section_type not in (SHT_REL, SHT_RELA):
+            continue
+        target_idx = int(relocation_section["info"])
+        if target_section_index is not None and target_idx != target_section_index:
+            continue
+        if target_idx < 0 or target_idx >= len(sections):
+            raise ElfSymbolError(
+                f"{relocation_section['name']} target section index out of range: {path}"
+            )
+        target = sections[target_idx]
+        if int(relocation_section["link"]) != sym_idx:
+            raise ElfSymbolError(
+                f"{relocation_section['name']} does not link to .symtab: {path}"
+            )
+        target_addr = int(target["addr"])
+        target_size = int(target["size"])
+        relocation_size = 12 if section_type == SHT_RELA else 8
+        relocation_entsize = int(relocation_section["entsize"]) or relocation_size
+        if relocation_entsize < relocation_size or int(relocation_section["size"]) % relocation_entsize:
+            raise ElfSymbolError(
+                f"invalid relocation entry size in {relocation_section['name']}: {path}"
+            )
+        for index in range(int(relocation_section["size"]) // relocation_entsize):
+            entry_offset = int(relocation_section["offset"]) + index * relocation_entsize
+            r_offset, r_info = struct.unpack_from(">II", data, entry_offset)
+            addend = (
+                struct.unpack_from(">i", data, entry_offset + 8)[0]
+                if section_type == SHT_RELA
+                else None
+            )
+            symbol_index = r_info >> 8
+            symbol_entry = int(symtab["offset"]) + symbol_index * entsize
+            if symbol_index >= int(symtab["size"]) // entsize or symbol_entry + 16 > len(data):
+                raise ElfSymbolError(
+                    f"relocation symbol index out of range in {relocation_section['name']}: {path}"
+                )
+            symbol_name_offset = struct.unpack_from(">I", data, symbol_entry)[0]
+            symbol_name = _symbol_name(data, str_off, str_size, symbol_name_offset)
+            section_offset = r_offset if e_type == ET_REL else r_offset - target_addr
+            if target_size == 0:
+                continue
+            if not (0 <= section_offset < target_size):
+                if e_type == ET_REL:
+                    raise ElfSymbolError(
+                        f"relocation offset 0x{r_offset:x} outside "
+                        f"{target['name']} in {relocation_section['name']}: {path}"
+                    )
+                continue
+            results.append(
+                SectionRelocation(
+                    offset=section_offset,
+                    relocation_type=r_info & 0xFF,
+                    symbol=symbol_name,
+                    addend=addend,
+                    target_section=str(target["name"]),
+                    relocation_section=str(relocation_section["name"]),
+                )
+            )
+    return results
+
+
+def list_allocatable_sections(path: Path | str) -> list[AllocatableSection]:
+    """Return every SHF_ALLOC PROGBITS/NOBITS section with attached relocations.
+
+    Includes ``.text``, ``.rodata``, ``.data``, and related allocatable sections.
+    Jump-table work should filter to non-executable read-only images as needed.
+    """
+    obj = Path(path)
+    data = obj.read_bytes()
+    e_type = _require_elf32_be(data, obj)
+    sections, by_name = _section_table(data)
+    symtab, sym_idx, str_off, str_size, entsize = _symtab_context(
+        data, obj, sections, by_name,
+    )
+    all_relocs = _iter_section_relocations(
+        data,
+        obj,
+        e_type=e_type,
+        sections=sections,
+        symtab=symtab,
+        sym_idx=sym_idx,
+        str_off=str_off,
+        str_size=str_size,
+        entsize=entsize,
+    )
+    by_target: dict[str, list[SectionRelocation]] = {}
+    for reloc in all_relocs:
+        by_target.setdefault(reloc.target_section, []).append(reloc)
+
+    results: list[AllocatableSection] = []
+    for section in sections:
+        flags = int(section["flags"])
+        sh_type = int(section["type"])
+        if not (flags & SHF_ALLOC):
+            continue
+        if sh_type not in (SHT_PROGBITS, SHT_NOBITS):
+            continue
+        name = str(section["name"])
+        if not name:
+            continue
+        size = int(section["size"])
+        if sh_type == SHT_NOBITS:
+            payload = b""
+        else:
+            off = int(section["offset"])
+            payload = data[off : off + size]
+        results.append(
+            AllocatableSection(
+                name=name,
+                path=obj,
+                index=int(section["index"]),
+                addr=int(section["addr"]),
+                size=size,
+                flags=flags,
+                sh_type=sh_type,
+                data=payload,
+                relocations=tuple(by_target.get(name, ())),
+            )
+        )
+    return results
+
+
+def extract_allocatable_section(path: Path | str, section_name: str) -> AllocatableSection:
+    """Load one named allocatable section (e.g. ``.rodata``) from an ELF object."""
+    if not section_name:
+        raise ElfSymbolError("section name must be non-empty")
+    matches = [item for item in list_allocatable_sections(path) if item.name == section_name]
+    if not matches:
+        raise ElfSymbolError(f"allocatable section {section_name!r} not found in {path}")
+    if len(matches) > 1:
+        raise ElfSymbolError(f"duplicate allocatable section {section_name!r} in {path}")
+    return matches[0]
+
+
 def list_text_functions(path: Path | str) -> list[FunctionBytes]:
     """Return every sized .text symbol (FUNC or NOTYPE) from an ELF32 BE object."""
     obj = Path(path)
@@ -159,48 +382,29 @@ def list_text_functions(path: Path | str) -> list[FunctionBytes]:
     if text_idx is None:
         raise ElfSymbolError(f"missing .text section: {obj}")
     text = sections[text_idx]
-
-    sym_idx = by_name.get(".symtab")
-    if sym_idx is None:
-        raise ElfSymbolError(f"missing .symtab: {obj}")
-    symtab = sections[sym_idx]
-    str_idx = int(symtab["link"])
-    if str_idx >= len(sections):
-        raise ElfSymbolError(f"symtab link out of range: {obj}")
-    strtab = sections[str_idx]
-    str_off = int(strtab["offset"])
-    str_size = int(strtab["size"])
-    entsize = int(symtab["entsize"]) or 16
-    if entsize < 16:
-        raise ElfSymbolError(f"unsupported symtab entsize {entsize}: {obj}")
+    symtab, sym_idx, str_off, str_size, entsize = _symtab_context(
+        data, obj, sections, by_name,
+    )
 
     text_off = int(text["offset"])
     text_size = int(text["size"])
     text_addr = int(text["addr"])
-    text_relocations: list[tuple[int, int, str, int | None]] = []
-    for relocation_section in sections:
-        section_type = int(relocation_section["type"])
-        if section_type not in (SHT_REL, SHT_RELA) or int(relocation_section["info"]) != text_idx:
-            continue
-        if int(relocation_section["link"]) != sym_idx:
-            raise ElfSymbolError(f"{relocation_section['name']} does not link to .symtab: {obj}")
-        relocation_size = 12 if section_type == SHT_RELA else 8
-        relocation_entsize = int(relocation_section["entsize"]) or relocation_size
-        if relocation_entsize < relocation_size or int(relocation_section["size"]) % relocation_entsize:
-            raise ElfSymbolError(f"invalid relocation entry size in {relocation_section['name']}: {obj}")
-        for index in range(int(relocation_section["size"]) // relocation_entsize):
-            entry_offset = int(relocation_section["offset"]) + index * relocation_entsize
-            r_offset, r_info = struct.unpack_from(">II", data, entry_offset)
-            addend = struct.unpack_from(">i", data, entry_offset + 8)[0] if section_type == SHT_RELA else None
-            symbol_index = r_info >> 8
-            symbol_entry = int(symtab["offset"]) + symbol_index * entsize
-            if symbol_index >= int(symtab["size"]) // entsize or symbol_entry + 16 > len(data):
-                raise ElfSymbolError(f"relocation symbol index out of range in {relocation_section['name']}: {obj}")
-            symbol_name_offset = struct.unpack_from(">I", data, symbol_entry)[0]
-            symbol_name = _symbol_name(data, str_off, str_size, symbol_name_offset)
-            section_offset = r_offset if e_type == ET_REL else r_offset - text_addr
-            if 0 <= section_offset < text_size:
-                text_relocations.append((section_offset, r_info & 0xFF, symbol_name, addend))
+    text_section_relocs = _iter_section_relocations(
+        data,
+        obj,
+        e_type=e_type,
+        sections=sections,
+        symtab=symtab,
+        sym_idx=sym_idx,
+        str_off=str_off,
+        str_size=str_size,
+        entsize=entsize,
+        target_section_index=text_idx,
+    )
+    text_relocations = [
+        (item.offset, item.relocation_type, item.symbol, item.addend)
+        for item in text_section_relocs
+    ]
     results: list[FunctionBytes] = []
 
     for index in range(int(symtab["size"]) // entsize):
@@ -312,3 +516,31 @@ def extract_function_pair(
     left = extract_function(original, symbol)
     right = extract_function(candidate, candidate_symbol or symbol)
     return left, right
+
+
+def rom_image_from_allocatable_section(
+    section: AllocatableSection,
+    *,
+    base: int | None = None,
+    label: str | None = None,
+):
+    """Build an AddressSpace ROM_IMAGE region from a non-empty PROGBITS section.
+
+    ``base`` defaults to the section's ``addr`` (0 for typical ET_REL objects);
+    callers proving against linked images should pass the linked VA.
+    """
+    from tools.ppc_equivalence.address_space import rom_image_region
+
+    if section.is_nobits or not section.data:
+        raise ElfSymbolError(
+            f"section {section.name!r} has no image bytes for a ROM binding"
+        )
+    if section.executable:
+        raise ElfSymbolError(
+            f"refusing ROM_IMAGE binding for executable section {section.name!r}"
+        )
+    return rom_image_region(
+        base if base is not None else section.addr,
+        section.data,
+        label=label if label is not None else section.name,
+    )

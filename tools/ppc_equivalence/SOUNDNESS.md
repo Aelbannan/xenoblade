@@ -164,12 +164,16 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 - The initial memory array is shared between both implementations. Private-stack
   bytes are replaced with the common initial byte on each side independently.
 - **AddressSpace router (scaffold):** `address_space.py` models ordered,
-  non-overlapping regions (`ram`, `rom-image`, `mmio`, `unmapped`) and provides
-  concrete `classify` / `classify_range` helpers for future `bus_load` /
-  `bus_store` routing. Symbolic accesses that may span regions are intended to
-  path-split or fail inconclusive; this module is **not yet wired into the
-  solver or proof promotion path** and does not produce `EQUIVALENT` claims on
-  its own.
+  non-overlapping regions (`ram` / `rom-image` / `mmio` / `unmapped`) with
+  concrete `classify` / `classify_range`. ROM images can be built from ELF
+  allocatable PROGBITS via `elf_symbols.rom_image_from_allocatable_section`.
+  Symbolic accesses that may span regions are intended to path-split or fail
+  inconclusive. Not yet proof-producing: no `EQUIVALENT` path binds AddressSpace
+  obligations into the solver or promotion gate.
+- **ELF data sections:** `list_allocatable_sections` / `extract_allocatable_section`
+  expose SHF_ALLOC PROGBITS/NOBITS (including `.rodata` / `.data`) and attach
+  REL/RELA entries (notably `R_PPC_ADDR32`) for jump-table census and later
+  closure proofs. Text extraction behavior is unchanged.
 
 ### Contracts
 

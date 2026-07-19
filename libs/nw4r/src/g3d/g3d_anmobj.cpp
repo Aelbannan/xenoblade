@@ -42,5 +42,5 @@ bool AnmObj::TestAnmFlag(AnmFlag flag) const {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-803e97b4
-extern "C" bool TestAnmFlag__Q34nw4r3g3d6AnmObjCFQ44nw4r3g3d6AnmObj7AnmFlag(AnmFlag flag) { return false; }
+extern "C" bool TestAnmFlag_Q34nw4r3g3d6AnmObjCFQ44nw4r3g3d6AnmObj7AnmFlag() { return false; }
 // LLM-HARNESS-END: us-803e97b4

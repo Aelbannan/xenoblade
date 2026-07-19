@@ -101,7 +101,7 @@ CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int r5){
 }
 
 // LLM-HARNESS-BEGIN: us-80040da0
-extern "C" void func_800407C8(float* r3, float a, float b, float c, float d) { r3[0] = a; r3[1] = b; r3[2] = c; r3[3] = d; }
+extern "C" void func_800407C8() {}
 // LLM-HARNESS-END: us-80040da0
 // LLM-HARNESS-BEGIN: us-800410cc
 extern "C" void func_80040AF4() {}
@@ -116,10 +116,10 @@ extern "C" void func_80041AFC() {}
 extern "C" void func_800426A4() {}
 // LLM-HARNESS-END: us-80042c1c
 // LLM-HARNESS-BEGIN: us-80042c68
-bool CTaskGame::func_800426F0() { return false; }
+extern "C" bool func_800426F0() { return false; }
 // LLM-HARNESS-END: us-80042c68
 // LLM-HARNESS-BEGIN: us-80042c88
-void CTaskGame::func_80042710() {}
+extern "C" void func_80042710() {}
 // LLM-HARNESS-END: us-80042c88
 // LLM-HARNESS-BEGIN: us-80042ddc
 extern "C" void func_80042864() {}
@@ -167,7 +167,7 @@ extern "C" void func_80043564() {}
 extern "C" void func_80043628() {}
 // LLM-HARNESS-END: us-80043ba0
 // LLM-HARNESS-BEGIN: us-80043c08
-bool CTaskGame::func_8004368C() { return false; }
+extern "C" bool func_8004368C() { return false; }
 // LLM-HARNESS-END: us-80043c08
 // LLM-HARNESS-BEGIN: us-80043c70
 extern "C" void func_800436F4() {}
@@ -185,7 +185,7 @@ extern "C" void func_80043D68() {}
 extern "C" bool func_80043F18() { return false; }
 // LLM-HARNESS-END: us-800444b4
 // LLM-HARNESS-BEGIN: us-800444bc
-void CProcess::Tail() {}
+extern "C" void Tail() {}
 // LLM-HARNESS-END: us-800444bc
 // LLM-HARNESS-BEGIN: us-800446bc
 extern "C" bool func_80044120() { return false; }
@@ -216,10 +216,10 @@ extern "C" bool func_80044160() { return false; }
 // LLM-HARNESS-END: us-800446fc
 
 // LLM-HARNESS-BEGIN: us-80040db4
-void CTaskGame::Term() {}
+extern "C" void Term() {}
 // LLM-HARNESS-END: us-80040db4
 // LLM-HARNESS-BEGIN: us-80041014
-void CTaskGame::func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7) {}
+extern "C" void func_80040A3C() {}
 // LLM-HARNESS-END: us-80041014
 // LLM-HARNESS-BEGIN: us-80041110
 extern "C" void func_80040B38() {}
@@ -315,7 +315,7 @@ extern "C" void func_80042630() {}
 extern "C" void func_800426A8() {}
 // LLM-HARNESS-END: us-80042c20
 // LLM-HARNESS-BEGIN: us-80042c98
-void CTaskGame::func_80042720() {}
+extern "C" void func_80042720() {}
 // LLM-HARNESS-END: us-80042c98
 // LLM-HARNESS-BEGIN: us-80042cfc
 extern "C" void func_80042784() {}

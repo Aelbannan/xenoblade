@@ -239,5 +239,5 @@ extern "C" void GXSetTevOrder__Q34nw4r3g3d6ResTevF13_GXTevStageID13_GXTexCoordID
 extern "C" void GXSetTevColorOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID() {}
 // LLM-HARNESS-END: us-803dd87c
 // LLM-HARNESS-BEGIN: us-803dd924
-extern "C" void SetNumTevStages__Q34nw4r3g3d6ResTevFUc(unsigned char) {}
+extern "C" void SetNumTevStages_Q34nw4r3g3d6ResTevFUc() {}
 // LLM-HARNESS-END: us-803dd924

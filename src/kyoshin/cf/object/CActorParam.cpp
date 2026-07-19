@@ -67,67 +67,67 @@ namespace cf {
 }
 
 // LLM-HARNESS-BEGIN: us-8017798c
-void cf::CActorParam::CActorParam_UnkVirtualFunc1() {}
+extern "C" void CActorParam_UnkVirtualFunc1() {}
 // LLM-HARNESS-END: us-8017798c
 // LLM-HARNESS-BEGIN: us-80177ee4
-void cf::CActorParam::CActorParam_UnkVirtualFunc2() {}
+extern "C" void CActorParam_UnkVirtualFunc2() {}
 // LLM-HARNESS-END: us-80177ee4
 // LLM-HARNESS-BEGIN: us-80179e28
-void cf::CActorParam::CActorParam_UnkVirtualFunc35() {}
+extern "C" void CActorParam_UnkVirtualFunc35() {}
 // LLM-HARNESS-END: us-80179e28
 // LLM-HARNESS-BEGIN: us-8017e404
-void cf::CActorParam::CActorParam_UnkVirtualFunc54() {}
+extern "C" void CActorParam_UnkVirtualFunc54() {}
 // LLM-HARNESS-END: us-8017e404
 // LLM-HARNESS-BEGIN: us-8017e43c
-void cf::CActorParam::CActorParam_UnkVirtualFunc60() {}
+extern "C" void CActorParam_UnkVirtualFunc60() {}
 // LLM-HARNESS-END: us-8017e43c
 // LLM-HARNESS-BEGIN: us-8017e998
-void cf::CActorParam::CActorParam_UnkVirtualFunc40() {}
+extern "C" void CActorParam_UnkVirtualFunc40() {}
 // LLM-HARNESS-END: us-8017e998
 // LLM-HARNESS-BEGIN: us-8017e9ac
-void cf::CActorParam::CActorParam_UnkVirtualFunc46() {}
+extern "C" void CActorParam_UnkVirtualFunc46() {}
 // LLM-HARNESS-END: us-8017e9ac
 // LLM-HARNESS-BEGIN: us-8017e9c0
-void cf::CActorParam::CActorParam_UnkVirtualFunc52() {}
+extern "C" void CActorParam_UnkVirtualFunc52() {}
 // LLM-HARNESS-END: us-8017e9c0
 // LLM-HARNESS-BEGIN: us-8017ea9c
-void cf::CActorParam::CActorParam_UnkVirtualFunc58() {}
+extern "C" void CActorParam_UnkVirtualFunc58() {}
 // LLM-HARNESS-END: us-8017ea9c
 // LLM-HARNESS-BEGIN: us-8017eaa8
-void cf::CActorParam::CActorParam_UnkVirtualFunc64() {}
+extern "C" void CActorParam_UnkVirtualFunc64() {}
 // LLM-HARNESS-END: us-8017eaa8
 // LLM-HARNESS-BEGIN: us-8017f098
-void cf::CActorParam::CActorParam_UnkVirtualFunc141() {}
+extern "C" void CActorParam_UnkVirtualFunc141() {}
 // LLM-HARNESS-END: us-8017f098
 // LLM-HARNESS-BEGIN: us-8017f0dc
-void cf::CActorParam::CActorParam_UnkVirtualFunc142() {}
+extern "C" void CActorParam_UnkVirtualFunc142() {}
 // LLM-HARNESS-END: us-8017f0dc
 // LLM-HARNESS-BEGIN: us-8017f188
-void cf::CActorParam::CActorParam_UnkVirtualFunc143() {}
+extern "C" void CActorParam_UnkVirtualFunc143() {}
 // LLM-HARNESS-END: us-8017f188
 // LLM-HARNESS-BEGIN: us-8017f1d0
-void cf::CActorParam::CActorParam_UnkVirtualFunc144() {}
+extern "C" void CActorParam_UnkVirtualFunc144() {}
 // LLM-HARNESS-END: us-8017f1d0
 // LLM-HARNESS-BEGIN: us-8017f258
-void cf::CActorParam::CActorParam_UnkVirtualFunc149() {}
+extern "C" void CActorParam_UnkVirtualFunc149() {}
 // LLM-HARNESS-END: us-8017f258
 // LLM-HARNESS-BEGIN: us-8017f334
-void cf::CActorParam::CActorParam_UnkVirtualFunc150() {}
+extern "C" void CActorParam_UnkVirtualFunc150() {}
 // LLM-HARNESS-END: us-8017f334
 // LLM-HARNESS-BEGIN: us-8017f674
-void cf::CActorParam::CActorParam_UnkVirtualFunc155() {}
+extern "C" void CActorParam_UnkVirtualFunc155() {}
 // LLM-HARNESS-END: us-8017f674
 // LLM-HARNESS-BEGIN: us-8017f850
-void cf::CActorParam::CActorParam_UnkVirtualFunc157() {}
+extern "C" void CActorParam_UnkVirtualFunc157() {}
 // LLM-HARNESS-END: us-8017f850
 // LLM-HARNESS-BEGIN: us-8017fb40
-void cf::CActorParam::CActorParam_UnkVirtualFunc160() {}
+extern "C" void CActorParam_UnkVirtualFunc160() {}
 // LLM-HARNESS-END: us-8017fb40
 // LLM-HARNESS-BEGIN: us-80180158
-void cf::CActorParam::CActorParam_UnkVirtualFunc23() {}
+extern "C" void CActorParam_UnkVirtualFunc23() {}
 // LLM-HARNESS-END: us-80180158
 // LLM-HARNESS-BEGIN: us-80180160
-void cf::CActorParam::CActorParam_UnkVirtualFunc21() {}
+extern "C" void CActorParam_UnkVirtualFunc21() {}
 // LLM-HARNESS-END: us-80180160
 
 // LLM-HARNESS-BEGIN: us-80176e4c
@@ -137,95 +137,95 @@ extern "C" void func_80175A50() {}
 extern "C" void func_801765A4() {}
 // LLM-HARNESS-END: us-801779a0
 // LLM-HARNESS-BEGIN: us-80177eec
-void cf::CActorParam::CActorParam_UnkVirtualFunc177() {}
+extern "C" void CActorParam_UnkVirtualFunc177() {}
 // LLM-HARNESS-END: us-80177eec
 // LLM-HARNESS-BEGIN: us-80179e38
-void cf::CActorParam::CActorParam_UnkVirtualFunc4() {}
+extern "C" void CActorParam_UnkVirtualFunc4() {}
 // LLM-HARNESS-END: us-80179e38
 // LLM-HARNESS-BEGIN: us-8017c700
-void cf::CActorParam::CActorParam_UnkVirtualFunc174() {}
+extern "C" void CActorParam_UnkVirtualFunc174() {}
 // LLM-HARNESS-END: us-8017c700
 // LLM-HARNESS-BEGIN: us-8017cdb0
-void cf::CActorParam::CActorParam_UnkVirtualFunc175() {}
+extern "C" void CActorParam_UnkVirtualFunc175() {}
 // LLM-HARNESS-END: us-8017cdb0
 // LLM-HARNESS-BEGIN: us-8017cf48
-void cf::CActorParam::CActorParam_UnkVirtualFunc176() {}
+extern "C" void CActorParam_UnkVirtualFunc176() {}
 // LLM-HARNESS-END: us-8017cf48
 // LLM-HARNESS-BEGIN: us-8017d594
-void cf::CActorParam::CActorParam_UnkVirtualFunc10() {}
+extern "C" void CActorParam_UnkVirtualFunc10() {}
 // LLM-HARNESS-END: us-8017d594
 // LLM-HARNESS-BEGIN: us-8017d83c
-void cf::CActorParam::CActorParam_UnkVirtualFunc11() {}
+extern "C" void CActorParam_UnkVirtualFunc11() {}
 // LLM-HARNESS-END: us-8017d83c
 // LLM-HARNESS-BEGIN: us-8017d9a0
-void cf::CActorParam::CActorParam_UnkVirtualFunc12() {}
+extern "C" void CActorParam_UnkVirtualFunc12() {}
 // LLM-HARNESS-END: us-8017d9a0
 // LLM-HARNESS-BEGIN: us-8017e2fc
-void cf::CActorParam::CActorParam_UnkVirtualFunc13() {}
+extern "C" void CActorParam_UnkVirtualFunc13() {}
 // LLM-HARNESS-END: us-8017e2fc
 // LLM-HARNESS-BEGIN: us-8017e370
-void cf::CActorParam::CActorParam_UnkVirtualFunc179() {}
+extern "C" void CActorParam_UnkVirtualFunc179() {}
 // LLM-HARNESS-END: us-8017e370
 // LLM-HARNESS-BEGIN: us-8017e474
-void cf::CActorParam::CActorParam_UnkVirtualFunc180() {}
+extern "C" void CActorParam_UnkVirtualFunc180() {}
 // LLM-HARNESS-END: us-8017e474
 // LLM-HARNESS-BEGIN: us-8017e5b8
-void cf::CActorParam::CActorParam_UnkVirtualFunc5() {}
+extern "C" void CActorParam_UnkVirtualFunc5() {}
 // LLM-HARNESS-END: us-8017e5b8
 // LLM-HARNESS-BEGIN: us-8017e644
-void cf::CActorParam::CActorParam_UnkVirtualFunc6() {}
+extern "C" void CActorParam_UnkVirtualFunc6() {}
 // LLM-HARNESS-END: us-8017e644
 // LLM-HARNESS-BEGIN: us-8017e6b8
-void cf::CActorParam::CActorParam_UnkVirtualFunc9() {}
+extern "C" void CActorParam_UnkVirtualFunc9() {}
 // LLM-HARNESS-END: us-8017e6b8
 // LLM-HARNESS-BEGIN: us-8017e9d4
-void cf::CActorParam::CActorParam_UnkVirtualFunc48() {}
+extern "C" void CActorParam_UnkVirtualFunc48() {}
 // LLM-HARNESS-END: us-8017e9d4
 // LLM-HARNESS-BEGIN: us-8017eab4
-void cf::CActorParam::CActorParam_UnkVirtualFunc67() {}
+extern "C" void CActorParam_UnkVirtualFunc67() {}
 // LLM-HARNESS-END: us-8017eab4
 // LLM-HARNESS-BEGIN: us-8017eaec
-void cf::CActorParam::CActorParam_UnkVirtualFunc70() {}
+extern "C" void CActorParam_UnkVirtualFunc70() {}
 // LLM-HARNESS-END: us-8017eaec
 // LLM-HARNESS-BEGIN: us-8017eb24
-void cf::CActorParam::CActorParam_UnkVirtualFunc7() {}
+extern "C" void CActorParam_UnkVirtualFunc7() {}
 // LLM-HARNESS-END: us-8017eb24
 // LLM-HARNESS-BEGIN: us-8017ebdc
-void cf::CActorParam::CActorParam_UnkVirtualFunc8() {}
+extern "C" void CActorParam_UnkVirtualFunc8() {}
 // LLM-HARNESS-END: us-8017ebdc
 // LLM-HARNESS-BEGIN: us-8017ec94
-bool cf::CActorParam::CActorParam_UnkVirtualFunc138() { return false; }
+extern "C" bool CActorParam_UnkVirtualFunc138() { return false; }
 // LLM-HARNESS-END: us-8017ec94
 // LLM-HARNESS-BEGIN: us-8017ed30
-void cf::CActorParam::CActorParam_UnkVirtualFunc140() {}
+extern "C" void CActorParam_UnkVirtualFunc140() {}
 // LLM-HARNESS-END: us-8017ed30
 // LLM-HARNESS-BEGIN: us-8017f410
-void cf::CActorParam::CActorParam_UnkVirtualFunc153() {}
+extern "C" void CActorParam_UnkVirtualFunc153() {}
 // LLM-HARNESS-END: us-8017f410
 // LLM-HARNESS-BEGIN: us-8017f5f0
-void cf::CActorParam::CActorParam_UnkVirtualFunc154() {}
+extern "C" void CActorParam_UnkVirtualFunc154() {}
 // LLM-HARNESS-END: us-8017f5f0
 // LLM-HARNESS-BEGIN: us-8017f67c
-void cf::CActorParam::CActorParam_UnkVirtualFunc156() {}
+extern "C" void CActorParam_UnkVirtualFunc156() {}
 // LLM-HARNESS-END: us-8017f67c
 // LLM-HARNESS-BEGIN: us-8017f858
-void cf::CActorParam::CActorParam_UnkVirtualFunc158() {}
+extern "C" void CActorParam_UnkVirtualFunc158() {}
 // LLM-HARNESS-END: us-8017f858
 // LLM-HARNESS-BEGIN: us-8017f8fc
-void cf::CActorParam::CActorParam_UnkVirtualFunc159() {}
+extern "C" void CActorParam_UnkVirtualFunc159() {}
 // LLM-HARNESS-END: us-8017f8fc
 // LLM-HARNESS-BEGIN: us-8017fb94
-void cf::CActorParam::CActorParam_UnkVirtualFunc86() {}
+extern "C" void CActorParam_UnkVirtualFunc86() {}
 // LLM-HARNESS-END: us-8017fb94
 // LLM-HARNESS-BEGIN: us-8017fbf0
-void cf::CActorParam::CActorParam_UnkVirtualFunc87() {}
+extern "C" void CActorParam_UnkVirtualFunc87() {}
 // LLM-HARNESS-END: us-8017fbf0
 // LLM-HARNESS-BEGIN: us-8017fc50
-void cf::CActorParam::CActorParam_UnkVirtualFunc135() {}
+extern "C" void CActorParam_UnkVirtualFunc135() {}
 // LLM-HARNESS-END: us-8017fc50
 // LLM-HARNESS-BEGIN: us-8017fd2c
-void cf::CActorParam::CActorParam_UnkVirtualFunc136() {}
+extern "C" void CActorParam_UnkVirtualFunc136() {}
 // LLM-HARNESS-END: us-8017fd2c
 // LLM-HARNESS-BEGIN: us-8017fe00
-void cf::CActorParam::CActorParam_UnkVirtualFunc137() {}
+extern "C" void CActorParam_UnkVirtualFunc137() {}
 // LLM-HARNESS-END: us-8017fe00

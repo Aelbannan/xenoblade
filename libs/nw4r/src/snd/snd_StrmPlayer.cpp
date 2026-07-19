@@ -912,16 +912,16 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-80425d38
-extern "C" void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int) {}
+extern "C" void AllocVoices_Q44nw4r3snd6detail10StrmPlayerFi() {}
 // LLM-HARNESS-END: us-80425d38
 // LLM-HARNESS-BEGIN: us-80425fd8
 extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack() {}
 // LLM-HARNESS-END: us-80425fd8
 // LLM-HARNESS-BEGIN: us-80426ee8
-extern "C" void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(long, float) {}
+extern "C" void SetTrackVolume_Q44nw4r3snd6detail10StrmPlayerFUlf() {}
 // LLM-HARNESS-END: us-80426ee8
 // LLM-HARNESS-BEGIN: us-80426f68
-extern "C" void GetPlayerTrack__Q44nw4r3snd6detail10StrmPlayerFi(int) {}
+extern "C" void GetPlayerTrack_Q44nw4r3snd6detail10StrmPlayerFi() {}
 // LLM-HARNESS-END: us-80426f68
 // LLM-HARNESS-BEGIN: us-804272d0
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}

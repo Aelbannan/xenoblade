@@ -49,7 +49,7 @@ extern "C" bool func_802A3740() { return false; }
 // LLM-HARNESS-END: us-802a5e74
 
 // LLM-HARNESS-BEGIN: us-802a3af0
-extern "C" void __ct__CCharVoiceMan() {}
+extern "C" void ct_CCharVoiceMan() {}
 // LLM-HARNESS-END: us-802a3af0
 // LLM-HARNESS-BEGIN: us-802a3bec
 extern "C" void func_802A14B8() {}

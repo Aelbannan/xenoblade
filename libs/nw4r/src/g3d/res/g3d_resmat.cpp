@@ -1596,7 +1596,7 @@ void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-803de1e8
-extern "C" void GetLyrRate__Q34nw4r3g3d9ResMatFurCFUl(unsigned long) {}
+extern "C" void GetLyrRate_Q34nw4r3g3d9ResMatFurCFUl() {}
 // LLM-HARNESS-END: us-803de1e8
 // LLM-HARNESS-BEGIN: us-803de358
 extern "C" void GXGetBlendMode__Q34nw4r3g3d9ResMatPixCFP12_GXBlendModeP14_GXBlendFactorP14_GXBlendFactorP10_GXLogicOp() {}

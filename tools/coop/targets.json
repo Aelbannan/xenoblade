@@ -6977,41 +6977,7 @@
         "note": "llm-harness auto-promote"
       },
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
-      "equivalence_certificate": {
-        "version": 2,
-        "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v21",
-        "result_format": 8,
-        "target_id": "us-80040da0",
-        "evidence": "full-instruction-match",
-        "retail_sha256": "edd190e37f1704db2fe135825cb539121c345ac8f06b795c159087d32c67eef5",
-        "candidate_sha256": "338923fcf2590fa334f9ee62ca1cae0c875868164a91812e0dcce70a2c0c10a3",
-        "summary": {
-          "reads": [
-            "f1",
-            "f2",
-            "f3",
-            "f4",
-            "fpscr",
-            "memory",
-            "r3",
-            "valid"
-          ],
-          "writes": [
-            "invalid_reason",
-            "memory",
-            "valid"
-          ],
-          "invalid_reasons": [
-            1
-          ],
-          "return_behavior": "normal"
-        },
-        "callees": [],
-        "helpers": [],
-        "certificate_sha256": "64388cf1517ecfbf08b7b091f96ca9c4e69fcf1a280d4c28da4edaab3e69c58b"
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80040db4",
@@ -8554,28 +8520,7 @@
         "note": "llm-harness auto-promote"
       },
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
-      "equivalence_certificate": {
-        "version": 2,
-        "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v22",
-        "result_format": 8,
-        "target_id": "us-80043920",
-        "evidence": "full-instruction-match",
-        "retail_sha256": "cb4ac596f7bac0a5c5f66a484109e4e6f99da551df679260b2a785a8c76a2d78",
-        "candidate_sha256": "9cdff2c02902fd5d6d6cfc13cb00a2702af9c29a6d5ddfc2e39558baecea9d9c",
-        "summary": {
-          "reads": [],
-          "writes": [
-            "r3"
-          ],
-          "invalid_reasons": [],
-          "return_behavior": "normal"
-        },
-        "callees": [],
-        "helpers": [],
-        "certificate_sha256": "117140b2f88b5839c8892bb8ecaf75b577ca733dfad38469e805c1ffccc4e398"
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80043928",

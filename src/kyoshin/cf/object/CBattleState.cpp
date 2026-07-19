@@ -1872,31 +1872,31 @@ extern "C" void func_80146148() {}
 extern "C" void func_80146384() {}
 // LLM-HARNESS-END: us-80146d88
 // LLM-HARNESS-BEGIN: us-80146da8
-void cf::CBattleState::CBattleState_UnkVirtualFunc19() {}
+extern "C" void CBattleState_UnkVirtualFunc19() {}
 // LLM-HARNESS-END: us-80146da8
 // LLM-HARNESS-BEGIN: us-80148188
-void cf::CBattleState::CBattleState_UnkVirtualFunc1() {}
+extern "C" void CBattleState_UnkVirtualFunc1() {}
 // LLM-HARNESS-END: us-80148188
 // LLM-HARNESS-BEGIN: us-80148190
-void cf::CBattleState::CBattleState_UnkVirtualFunc17() {}
+extern "C" void CBattleState_UnkVirtualFunc17() {}
 // LLM-HARNESS-END: us-80148190
 // LLM-HARNESS-BEGIN: us-80148a14
-void cf::CBattleState::CBattleState_UnkVirtualFunc18() {}
+extern "C" void CBattleState_UnkVirtualFunc18() {}
 // LLM-HARNESS-END: us-80148a14
 // LLM-HARNESS-BEGIN: us-80148f88
-void cf::CBattleState::CBattleState_UnkVirtualFunc12() {}
+extern "C" void CBattleState_UnkVirtualFunc12() {}
 // LLM-HARNESS-END: us-80148f88
 // LLM-HARNESS-BEGIN: us-8014913c
-void cf::CBattleState::CBattleState_UnkVirtualFunc13() {}
+extern "C" void CBattleState_UnkVirtualFunc13() {}
 // LLM-HARNESS-END: us-8014913c
 // LLM-HARNESS-BEGIN: us-8014914c
-void cf::CBattleState::CBattleState_UnkVirtualFunc14() {}
+extern "C" void CBattleState_UnkVirtualFunc14() {}
 // LLM-HARNESS-END: us-8014914c
 // LLM-HARNESS-BEGIN: us-8014915c
-void cf::CBattleState::CBattleState_UnkVirtualFunc15() {}
+extern "C" void CBattleState_UnkVirtualFunc15() {}
 // LLM-HARNESS-END: us-8014915c
 // LLM-HARNESS-BEGIN: us-8014916c
-void cf::CBattleState::CBattleState_UnkVirtualFunc16() {}
+extern "C" void CBattleState_UnkVirtualFunc16() {}
 // LLM-HARNESS-END: us-8014916c
 // LLM-HARNESS-BEGIN: us-80149aa4
 extern "C" void func_801490A0() {}
@@ -1914,16 +1914,16 @@ extern "C" void func_801491F4() {}
 extern "C" void func_80149330() {}
 // LLM-HARNESS-END: us-80149d34
 // LLM-HARNESS-BEGIN: us-80149e94
-void cf::CBattleState::CBattleState_UnkVirtualFunc30() {}
+extern "C" void CBattleState_UnkVirtualFunc30() {}
 // LLM-HARNESS-END: us-80149e94
 // LLM-HARNESS-BEGIN: us-8014a004
-void cf::CBattleState::CBattleState_UnkVirtualFunc32() {}
+extern "C" void CBattleState_UnkVirtualFunc32() {}
 // LLM-HARNESS-END: us-8014a004
 // LLM-HARNESS-BEGIN: us-8014a174
-void cf::CBattleState::CBattleState_UnkVirtualFunc3() {}
+extern "C" void CBattleState_UnkVirtualFunc3() {}
 // LLM-HARNESS-END: us-8014a174
 // LLM-HARNESS-BEGIN: us-8014a17c
-void cf::CBattleState::CBattleState_UnkVirtualFunc2() {}
+extern "C" void CBattleState_UnkVirtualFunc2() {}
 // LLM-HARNESS-END: us-8014a17c
 
 // LLM-HARNESS-BEGIN: us-801465c8
@@ -1933,16 +1933,16 @@ extern "C" void func_80145BC4() {}
 extern "C" void func_80146300() {}
 // LLM-HARNESS-END: us-80146d04
 // LLM-HARNESS-BEGIN: us-80146dac
-void cf::CBattleState::CBattleState_UnkVirtualFunc5() {}
+extern "C" void CBattleState_UnkVirtualFunc5() {}
 // LLM-HARNESS-END: us-80146dac
 // LLM-HARNESS-BEGIN: us-80148194
-void cf::CBattleState::CBattleState_UnkVirtualFunc4() {}
+extern "C" void CBattleState_UnkVirtualFunc4() {}
 // LLM-HARNESS-END: us-80148194
 // LLM-HARNESS-BEGIN: us-80148e5c
-void cf::CBattleState::CBattleState_UnkVirtualFunc9() {}
+extern "C" void CBattleState_UnkVirtualFunc9() {}
 // LLM-HARNESS-END: us-80148e5c
 // LLM-HARNESS-BEGIN: us-80148efc
-void cf::CBattleState::CBattleState_UnkVirtualFunc7() {}
+extern "C" void CBattleState_UnkVirtualFunc7() {}
 // LLM-HARNESS-END: us-80148efc
 // LLM-HARNESS-BEGIN: us-8014917c
 extern "C" void func_80148778() {}

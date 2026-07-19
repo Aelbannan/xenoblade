@@ -674,5 +674,5 @@ extern "C" void ReadFilePos__Q44nw4r3snd6detail22SoundArchiveFileReaderCFUlUlPQ4
 extern "C" void ConvertLabelStringToId__Q44nw4r3snd6detail22SoundArchiveFileReaderCFPCQ54nw4r3snd6detail16SoundArchiveFile10StringTreePCc() {}
 // LLM-HARNESS-END: us-8041fca0
 // LLM-HARNESS-BEGIN: us-8041fde8
-extern "C" void impl_GetSoundInfoOffset__Q44nw4r3snd6detail22SoundArchiveFileReaderCFUlPQ54nw4r3snd6detail4Util165DataRef<v,Q54nw4r3snd6detail16SoundArchiveFile12SeqSoundInfo,Q54nw4r3snd6detail16SoundArchiveFile13StrmSoundInfo,Q54nw4r3snd6detail16SoundArchiveFile13WaveSoundInfo>() {}
+extern "C" void impl_GetSoundInfoOffset__Q44nw4r3snd6detail22SoundArchiveFileReaderCFUlPQ54nw4r3snd6detail4Util165DataRef() {}
 // LLM-HARNESS-END: us-8041fde8

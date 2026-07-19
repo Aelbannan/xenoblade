@@ -294,7 +294,7 @@ extern "C" bool func_80187F0C() { return false; }
 // LLM-HARNESS-END: us-801894c0
 
 // LLM-HARNESS-BEGIN: us-80188388
-extern "C" void __ct__CMenuPTGauge() {}
+extern "C" void ct_CMenuPTGauge() {}
 // LLM-HARNESS-END: us-80188388
 // LLM-HARNESS-BEGIN: us-80188b1c
 extern "C" void func_80187694() {}

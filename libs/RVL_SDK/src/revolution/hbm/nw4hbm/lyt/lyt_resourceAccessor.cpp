@@ -83,5 +83,5 @@ Group* GroupContainer::FindGroupByName(const char* pName) {
 } // namespace nw4hbm
 
 // LLM-HARNESS-BEGIN: us-80335750
-extern "C" ut::Font* GetFont__Q36nw4hbm3lyt16ResourceAccessorFPCc(const char* pName) { return 0; }
+extern "C" void* GetFont__Q36nw4hbm3lyt16ResourceAccessorFPCc() { return 0; }
 // LLM-HARNESS-END: us-80335750

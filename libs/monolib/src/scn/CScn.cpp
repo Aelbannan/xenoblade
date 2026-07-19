@@ -96,7 +96,7 @@ void CScn::Draw() {
 
 
 // LLM-HARNESS-BEGIN: us-80499ca0
-extern "C" void __ct__CScn() {}
+extern "C" void ct_CScn() {}
 // LLM-HARNESS-END: us-80499ca0
 // LLM-HARNESS-BEGIN: us-80499ed8
 extern "C" void func_80495E60() {}

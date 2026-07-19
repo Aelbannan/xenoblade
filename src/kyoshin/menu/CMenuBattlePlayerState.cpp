@@ -986,7 +986,7 @@ done:
 }
 
 // LLM-HARNESS-BEGIN: us-8010be00
-extern "C" void func_8010B324(CMenuBattlePlayerStateSlot*) {}
+extern "C" void harness_stub_us_8010be00() {}
 // LLM-HARNESS-END: us-8010be00
 // LLM-HARNESS-BEGIN: us-8010d924
 extern "C" bool func_8010CE48() { return false; }
@@ -1020,14 +1020,11 @@ extern "C" void func_8010CF68() {}
 extern "C" void func_8010D0D4() {}
 // LLM-HARNESS-END: us-8010dbb0
 // LLM-HARNESS-BEGIN: us-8010dc90
-extern "C" void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
-                   CMenuBattlePlayerStateSlot* slot) {}
+extern "C" void harness_stub_us_8010dc90() {}
 // LLM-HARNESS-END: us-8010dc90
 // LLM-HARNESS-BEGIN: us-8010df8c
-extern "C" void func_8010D4B0(CMenuBattlePlayerState* self,
-                   CMenuBattlePlayerStateSlot* slot, u32 index) {}
+extern "C" void harness_stub_us_8010df8c() {}
 // LLM-HARNESS-END: us-8010df8c
 // LLM-HARNESS-BEGIN: us-8010e3b0
-extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
-                   CMenuBattlePlayerStateSlot* slot) {}
+extern "C" void harness_stub_us_8010e3b0() {}
 // LLM-HARNESS-END: us-8010e3b0

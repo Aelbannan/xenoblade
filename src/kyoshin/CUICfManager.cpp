@@ -1110,7 +1110,7 @@ extern "C" void func_801355BC() {}
 extern "C" void func_801355D8() {}
 // LLM-HARNESS-END: us-801360ac
 // LLM-HARNESS-BEGIN: us-801360c8
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4() { return 0; }
+extern "C" void* func_801355F4() { return 0; }
 // LLM-HARNESS-END: us-801360c8
 // LLM-HARNESS-BEGIN: us-801360e4
 extern "C" void func_80135610() {}
@@ -1141,7 +1141,7 @@ extern "C" void Draw__Q212CUICfManager5CTestFv() {}
 // LLM-HARNESS-END: us-80136904
 
 // LLM-HARNESS-BEGIN: us-80130a88
-extern "C" void func_8012FFB4(void*) {}
+extern "C" void harness_stub_us_80130a88() {}
 // LLM-HARNESS-END: us-80130a88
 // LLM-HARNESS-BEGIN: us-80130d18
 extern "C" void func_80130244() {}
@@ -1171,16 +1171,16 @@ extern "C" void func_801311B8() {}
 extern "C" void func_80131820() {}
 // LLM-HARNESS-END: us-801322f4
 // LLM-HARNESS-BEGIN: us-8013297c
-extern "C" void __ct__CUICfManager() {}
+extern "C" void ct_CUICfManager() {}
 // LLM-HARNESS-END: us-8013297c
 // LLM-HARNESS-BEGIN: us-801341b8
 extern "C" void func_801336E4() {}
 // LLM-HARNESS-END: us-801341b8
 // LLM-HARNESS-BEGIN: us-80134244
-extern "C" void func_80133770() {}
+extern "C" void harness_stub_us_80134244() {}
 // LLM-HARNESS-END: us-80134244
 // LLM-HARNESS-BEGIN: us-8013439c
-extern "C" void func_801338C8(CUICfManager*) {}
+extern "C" void harness_stub_us_8013439c() {}
 // LLM-HARNESS-END: us-8013439c
 // LLM-HARNESS-BEGIN: us-801344dc
 extern "C" void func_80133A08() {}
@@ -1282,5 +1282,5 @@ extern "C" void func_801359AC() {}
 extern "C" void func_80135D04() {}
 // LLM-HARNESS-END: us-801367d8
 // LLM-HARNESS-BEGIN: us-80136a34
-extern "C" void __dt__Q212CUICfManager5CTestFv() {}
+extern "C" void dt_Q212CUICfManager5CTestFv() {}
 // LLM-HARNESS-END: us-80136a34

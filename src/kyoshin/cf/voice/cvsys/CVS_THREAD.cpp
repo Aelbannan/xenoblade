@@ -33,7 +33,7 @@ extern "C" void func_802A3E74() {}
 // LLM-HARNESS-END: us-802a65a8
 
 // LLM-HARNESS-BEGIN: us-802a61b4
-extern "C" void __ct__cf_CVS_THREAD() {}
+extern "C" void ct_cf_CVS_THREAD() {}
 // LLM-HARNESS-END: us-802a61b4
 // LLM-HARNESS-BEGIN: us-802a65bc
 extern "C" void func_802A3E88() {}

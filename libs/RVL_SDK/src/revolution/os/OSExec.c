@@ -177,11 +177,11 @@ void Callback() {}
 int callback() { return 0; }
 // LLM-HARNESS-END: us-803586b0
 // LLM-HARNESS-BEGIN: us-803586c0
-void __OSLaunchNextFirmware() {}
+void __OSLaunchNextFirmware(void) {}
 // LLM-HARNESS-END: us-803586c0
 // LLM-HARNESS-BEGIN: us-80358e20
-void __OSBootDolSimple() {}
+void __OSBootDolSimple(u32, u32*, u32*) {}
 // LLM-HARNESS-END: us-80358e20
 // LLM-HARNESS-BEGIN: us-80359580
-void __OSBootDol() {}
+void __OSBootDol(u32, u32, u32*) {}
 // LLM-HARNESS-END: us-80359580

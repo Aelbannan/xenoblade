@@ -143,11 +143,12 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   privatize almost all memory.
 - Alignment: aligned loads/stores are required for multi-byte accesses.
 - Memory-environment profiles (`assumed-ordinary-ram`, `bounded-ordinary-ram`,
-  `stack-and-known-globals`, `hardware-aware`) are recorded on every result
-  when an explicit profile is supplied (CLI `--memory-profile` / coop
-  `memory_profile`). Unspecified callers leave `environment` unset so
-  confidence-tier classification stays tier-neutral for default proofs; the
-  engine still applies `assumed-ordinary-ram` constraints internally.
+  `stack-and-known-globals`, `hardware-aware`) are always recorded on
+  `ProofResult.environment` as the effective solver environment (default
+  `assumed-ordinary-ram` when the caller omits a profile). Tiering treats
+  assumed-RAM as Tier C only when `memory` is among the contract observables,
+  so register-only proofs stay eligible for Tier A. Promotion may still require
+  bounded ranges via `require_bounded_ram`.
   - `assumed-ordinary-ram`: accesses are unconstrained ordinary RAM (external
     assumption; default). Private-stack masking still applies independently.
   - `bounded-ordinary-ram`, `stack-and-known-globals`, and `hardware-aware`:

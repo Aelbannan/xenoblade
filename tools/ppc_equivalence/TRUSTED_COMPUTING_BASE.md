@@ -116,7 +116,9 @@ Architecture model: see `result.ARCHITECTURE_MODEL`.
 - `PromotionDecision` from status + architecture + provenance + confidence tier
   + **validation ledger** (`opcodes_used` ⊆ dolphin-validated set).
 - Ledger file: `validation_ledger.yaml` (hashed into `engine_hash` via
-  `provenance.hash_engine_tree`).
+  `provenance.hash_engine_tree`). **Absent** ledger (missing file / not loaded)
+  fails closed for promotion (`validation-ledger-absent`) and demotes
+  confidence tier; it does not skip opcode gating.
 - Common-mode note: ConcreteOps + symbolic agreement alone never upgrades an
   opcode to `dolphin_interpreter: true`.
 

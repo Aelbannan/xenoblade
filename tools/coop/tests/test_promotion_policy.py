@@ -36,6 +36,11 @@ from tools.ppc_equivalence.result import (
 )
 
 
+def _open_ledger(*opcodes: str) -> ValidationLedger:
+    """Construct a non-absent ledger for promotion tests."""
+    return ValidationLedger(frozenset(opcodes), intentionally_loaded=True)
+
+
 def _unit(**kwargs) -> UnitReport:
     defaults = dict(
         unit_name="u",
@@ -89,7 +94,7 @@ class ClassifyForPromotionTests(unittest.TestCase):
         decision = classify_for_promotion(
             proof,
             PromotionPolicy(),
-            ValidationLedger(frozenset()),
+            _open_ledger(),
         )
         self.assertFalse(decision.allowed)
         self.assertTrue(
@@ -106,7 +111,7 @@ class ClassifyForPromotionTests(unittest.TestCase):
         decision = classify_for_promotion(
             proof,
             PromotionPolicy(automatic_promotion=False),
-            ValidationLedger(frozenset()),
+            _open_ledger(),
         )
         self.assertFalse(decision.allowed)
         self.assertIn("automatic-promotion-disabled-by-config", decision.blockers)
@@ -116,24 +121,55 @@ class ClassifyForPromotionTests(unittest.TestCase):
         decision = classify_for_promotion(
             proof,
             PromotionPolicy(automatic_promotion=True),
-            ValidationLedger(frozenset()),
+            _open_ledger(),
         )
         self.assertTrue(decision.allowed)
         self.assertEqual(decision.confidence_tier, "A")
 
-    def test_tier_c_fp_not_allowed_by_default(self) -> None:
-        proof = _equivalent_proof(floating_point_domain=FloatingPointDomain())
+    def test_absent_ledger_blocks_promotion(self) -> None:
+        proof = _equivalent_proof(opcodes_used=["add"])
         decision = classify_for_promotion(
             proof,
             PromotionPolicy(automatic_promotion=True),
             ValidationLedger(frozenset()),
         )
         self.assertFalse(decision.allowed)
+        self.assertIn("validation-ledger-absent", decision.blockers)
+        self.assertEqual(decision.confidence_tier, "C")
+
+    def test_tier_c_fp_not_allowed_by_default(self) -> None:
+        proof = _equivalent_proof(floating_point_domain=FloatingPointDomain())
+        decision = classify_for_promotion(
+            proof,
+            PromotionPolicy(automatic_promotion=True),
+            _open_ledger(),
+        )
+        self.assertFalse(decision.allowed)
         self.assertEqual(decision.confidence_tier, "C")
         self.assertIn("confidence-tier-C-not-allowed", decision.blockers)
 
+    def test_assumed_ram_with_memory_observable_is_tier_c(self) -> None:
+        proof = _equivalent_proof(
+            observables=["memory"],
+            environment=MemoryEnvironment(),
+        )
+        self.assertEqual(
+            compute_confidence_tier(proof, _open_ledger()),
+            "C",
+        )
+
+    def test_assumed_ram_register_only_stays_tier_a(self) -> None:
+        proof = _equivalent_proof(
+            observables=["r3"],
+            environment=MemoryEnvironment(),
+        )
+        self.assertEqual(
+            compute_confidence_tier(proof, _open_ledger()),
+            "A",
+        )
+
     def test_require_bounded_ram_blocks_assumed_and_empty(self) -> None:
-        ledger = ValidationLedger(frozenset())
+        ledger = _open_ledger()
         policy = PromotionPolicy(automatic_promotion=True, require_bounded_ram=True)
 
         missing = classify_for_promotion(_equivalent_proof(), policy, ledger)
@@ -423,7 +459,7 @@ class MutationKillTests(unittest.TestCase):
             memory_scope=MemoryScope(masking_semantics="union-mask-legacy"),
         )
         policy = PromotionPolicy()
-        ledger = ValidationLedger(frozenset())
+        ledger = _open_ledger()
 
         base = classify_for_promotion(proof, policy, ledger)
         self.assertFalse(base.allowed)

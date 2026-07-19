@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v26`
-- Result format: `12`
-- Certificate format: `5`
+- Architecture model: `broadway-ppc32-be-v27`
+- Result format: `13`
+- Certificate format: `6`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -66,9 +66,10 @@ documented per-implementation private-storage abstraction.
   strides, and trip counts is discharged alongside affine closed forms
   (`relational_induction.try_discharge_ctr_affine_relational`); natural-loop
   and mismatched-body sketches remain unsupported for `EQUIVALENT`.
-  Constant-stride store loops (`memory_loop.find_constant_stride_store_loops`)
-  are recognized descriptively only; `memory-loop-summary` stays in
-  `UNSUPPORTED_FOR_EQUIVALENT` until summaries are applied in CFG exploration.
+  Constant-stride store loops (`memory_loop` / `memory-loop-summary`) with a
+  positive concrete trip count are discharged in closed form inside
+  `execute_cfg` (apply N width-matched stores, advance base/CTR); trip counts
+  above `MAX_MEMORY_LOOP_TRIPS` or spanning past 32-bit remain unsupported.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`

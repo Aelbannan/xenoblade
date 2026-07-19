@@ -31,6 +31,10 @@ from .loop_summary import (
     build_affine_summary_map,
     build_loop_summary_obligation,
 )
+from .memory_loop import (
+    build_memory_loop_obligation,
+    build_memory_loop_summary_map,
+)
 from .relational_induction import try_discharge_ctr_affine_relational
 from .provenance import canonical_json_sha256, hash_engine_tree
 from .result import (
@@ -1070,6 +1074,9 @@ def check_equivalence(
     original_affine = build_affine_summary_map(original)
     candidate_affine = build_affine_summary_map(candidate)
     affine_used: list = []
+    original_memory = build_memory_loop_summary_map(original)
+    candidate_memory = build_memory_loop_summary_map(candidate)
+    memory_used: list = []
 
     def _early_timeout(phase: str) -> ProofResult:
         return ProofResult(
@@ -1125,6 +1132,8 @@ def check_equivalence(
             jump_table_targets=original_jump_targets,
             affine_loop_summaries=original_affine,
             affine_summaries_used=affine_used,
+            memory_loop_summaries=original_memory,
+            memory_summaries_used=memory_used,
         )
         candidate_exits = execute_cfg(
             initial, candidate, ops,
@@ -1137,6 +1146,8 @@ def check_equivalence(
             jump_table_targets=candidate_jump_targets,
             affine_loop_summaries=candidate_affine,
             affine_summaries_used=affine_used,
+            memory_loop_summaries=candidate_memory,
+            memory_summaries_used=memory_used,
         )
     except ProofDeadlineExceeded as exc:
         return _early_timeout(exc.phase)
@@ -1380,6 +1391,15 @@ def check_equivalence(
                     features.append("relational-induction")
                 early.proof_features = features
                 early.relational_induction = relational.to_obligation_dict()
+        if memory_used:
+            mem_summary = memory_used[0]
+            features = list(early.proof_features)
+            if "memory-loop-summary" not in features:
+                features.append("memory-loop-summary")
+            early.proof_features = features
+            early.memory_loop = build_memory_loop_obligation(
+                mem_summary, coverage="applied",
+            )
         gated = enforce_equivalent_proof_features(early)
         # Shared unconstrained memory can make identical jump-table functions
         # look EQUIVALENT without an immutable table image or target closure.

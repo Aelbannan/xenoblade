@@ -9,9 +9,9 @@ checkable bit patterns.
 and most FPSCR sticky-flag updates remain partial or unimplemented. Unhandled
 cases fail closed via :class:`OracleUnimplementedError`.
 
-**Not wired:** ``ConcreteOps`` and ``execute_cfg`` still use host float today.
-Replacing those call sites with this oracle is explicit future work; nothing here
-promotes FP proofs out of Tier C.
+**Partially wired:** ``ConcreteOps`` routes ``fadd``/``fadds``/``fmul``/``fmuls``
+through this oracle (fail-closed elsewhere). SymbolicOps and other FP paths still
+use host float or Z3. Nothing here promotes FP proofs out of Tier C.
 """
 
 from __future__ import annotations
@@ -120,7 +120,7 @@ def classify_binary64(bits: int) -> FpClass:
             return FpClass.QNAN
         return FpClass.SNAN
     if exponent == 0:
-        return FpClass.ZERO if fraction == 0 else FpClass.SNORMAL
+        return FpClass.ZERO if fraction == 0 else FpClass.SUBNORMAL
     return FpClass.NORMAL
 
 

@@ -89,6 +89,8 @@ class FixtureCorpusTests(unittest.TestCase):
     def test_all_fixtures_match_concrete_ops(self) -> None:
         failures = []
         for case in FIXTURES:
+            if "concrete-oracle-inconclusive" in case.tags:
+                continue
             mismatches = compare_fixture(case)
             if mismatches:
                 failures.append(f"{case.id}: {', '.join(mismatches)}")

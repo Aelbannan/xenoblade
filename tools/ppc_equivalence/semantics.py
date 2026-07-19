@@ -453,6 +453,65 @@ class ConcreteOps:
         except OverflowError:
             return math.copysign(float("inf"), value)
 
+    def _fp_oracle_require_rne(self, rm: str) -> None:
+        if rm != "rne":
+            raise ExecutionInconclusive(
+                "fp oracle scaffold only models RN=nearest-even",
+            )
+
+    def _fp_oracle_fail_closed(self, exc: Exception) -> None:
+        from .fp_oracle import OracleUnimplementedError
+
+        if isinstance(exc, OracleUnimplementedError):
+            raise ExecutionInconclusive(str(exc)) from exc
+        raise exc
+
+    def fp_fadd_rne_bits(self, a_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fadd_binary64_rne
+
+        try:
+            return fadd_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fmul_rne_bits(self, a_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fmul_binary64_rne
+
+        try:
+            return fmul_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fadds_fpr_bits(self, rm: str, a_fpr: int, b_fpr: int) -> int:
+        from .fp_oracle import fadds_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fadds_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF, b_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fmuls_fpr_bits(self, rm: str, a_fpr: int, c_fpr: int) -> int:
+        from .fp_oracle import fmuls_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fmuls_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF, c_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
     def fp_add(self, rm: str, a: float, b: float) -> float: return a + b
     def fp_sub(self, rm: str, a: float, b: float) -> float: return a - b
     def fp_mul(self, rm: str, a: float, b: float) -> float: return a * b
@@ -2442,6 +2501,7 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         fc_bits = ops.fp_force_25bit(fc_source_bits) if op in ({Opcode.FMULS} | _FP_FUSED_SINGLE) else fc_source_bits
         op_fc = ops.fp_bits_to_double(fc_bits)
         fused_single = None
+        oracle_scalar_bits: int | None = None
 
         # Optional NaN / Inf / subnormal exclusions from FloatingPointDomain.
         if op not in _FP_PSQ_OPS:
@@ -2460,7 +2520,21 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 state = _set_cr_field(state, 1, cr1, ops)
             return state
 
-        if op in (Opcode.FADDS, Opcode.FADD):
+        if isinstance(ops, ConcreteOps) and op == Opcode.FADD:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fadd_rne_bits(fa_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FADDS:
+            oracle_scalar_bits = ops.fp_fadds_fpr_bits(rm, fa_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FMUL:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fmul_rne_bits(fa_bits, fc_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FMULS:
+            oracle_scalar_bits = ops.fp_fmuls_fpr_bits(rm, fa_bits, fc_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif op in (Opcode.FADDS, Opcode.FADD):
             d = ops.fp_add(rm, op_fa, op_fb)
         elif op in (Opcode.FSUBS, Opcode.FSUB):
             d = ops.fp_sub(rm, op_fa, op_fb)
@@ -2610,7 +2684,11 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
 
         if op in _FP_FUSED_SINGLE:
             assert fused_single is not None
-        elif is_single and op not in (Opcode.FRSP, Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
+        elif (
+            is_single
+            and op not in (Opcode.FRSP, Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR)
+            and oracle_scalar_bits is None
+        ):
             d = ops.fp_round_to_single(rm, d)
         if op in _FP_FUSED:
             nan_a = ops.fp_is_nan(op_fa)

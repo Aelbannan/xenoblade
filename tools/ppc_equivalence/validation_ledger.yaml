@@ -10,7 +10,7 @@
 # or interrupt return). Promotion Gate 2/3 therefore treats them as missing
 # dolphin evidence (`opcode-*-not-dolphin-validated`) — do not flip to true
 # without a real harness-executable fixture.
-architecture_model: broadway-ppc32-be-v28
+architecture_model: broadway-ppc32-be-v29
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: 93e961cced67df7f0224d36098b2c42206faeabb775241fecd97324f0d45bb0d

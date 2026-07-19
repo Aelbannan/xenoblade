@@ -146,6 +146,46 @@ class ConstantStrideStoreLoopRecognitionTests(unittest.TestCase):
         self.assertEqual(loops[0].confidence, "partial")
         self.assertIsNone(loops[0].trip_count)
 
+    def test_exact_with_addis_addi_trip_count(self) -> None:
+        program = [
+            _insn(Opcode.ADDIS, (0, 0, 0), address=0),
+            _insn(Opcode.ADDI, (0, 0, 6), address=4),
+            _insn(Opcode.MTSPR, (0, 9), address=8),
+            _insn(Opcode.STW, (3, 4, 0), address=12),
+            _insn(Opcode.ADDI, (4, 4, 4), address=16),
+            _insn(Opcode.BC, (16, 0, 12, 0), address=20),
+        ]
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        self.assertEqual(loops[0].confidence, "exact-pattern")
+        self.assertEqual(loops[0].trip_count, 6)
+
+    def test_exact_with_register_copy_trip_count(self) -> None:
+        program = [
+            _insn(Opcode.ADDI, (7, 0, 10), address=0),
+            _insn(Opcode.OR, (0, 7, 7), address=4),
+            _insn(Opcode.MTSPR, (0, 9), address=8),
+            _insn(Opcode.STWU, (5, 6, 4), address=12),
+            _insn(Opcode.BC, (16, 0, 12, 0), address=16),
+        ]
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        self.assertEqual(loops[0].confidence, "exact-pattern")
+        self.assertEqual(loops[0].trip_count, 10)
+
+    def test_partial_when_addi_base_unknown(self) -> None:
+        program = [
+            _insn(Opcode.ADDI, (3, 31, 8), address=0),
+            _insn(Opcode.MTSPR, (3, 9), address=4),
+            _insn(Opcode.STW, (5, 4, 0), address=8),
+            _insn(Opcode.ADDI, (4, 4, 4), address=12),
+            _insn(Opcode.BC, (16, 0, 8, 0), address=16),
+        ]
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        self.assertEqual(loops[0].confidence, "partial")
+        self.assertIsNone(loops[0].trip_count)
+
     def test_never_raises_on_empty_or_unrelated(self) -> None:
         self.assertEqual(find_constant_stride_store_loops([]), [])
         self.assertEqual(

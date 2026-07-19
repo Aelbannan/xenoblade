@@ -822,6 +822,8 @@ def _prove_bytes(
             candidate,
             dol_path=dol_path,
             elf_path=elf_path,
+            original_dol_path=dol_path,
+            candidate_elf_path=elf_path,
         )
         if jump_table_context is not None:
             proof_features = ["readonly-image", "indirect-target-closure"]

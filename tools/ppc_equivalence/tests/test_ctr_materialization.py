@@ -63,6 +63,35 @@ class RecoverGprConstantTests(unittest.TestCase):
         value, _ = recover_gpr_constant(program, 2, 8)
         self.assertEqual(value, 16)
 
+    def test_andi_dot_remainder_mask(self) -> None:
+        program = [
+            _insn(Opcode.ADDI, (6, 0, 0x2B), address=0),
+            _insn(Opcode.ANDI_DOT, (6, 6, 7), address=4),
+            _insn(Opcode.MTSPR, (6, 9), address=8),
+        ]
+        value, notes = recover_gpr_constant(program, 2, 6)
+        self.assertEqual(value, 0x2B & 7)
+        self.assertEqual(notes, [])
+
+    def test_andis_dot_high_mask(self) -> None:
+        program = [
+            _insn(Opcode.ADDIS, (4, 0, 0x8020), address=0),
+            _insn(Opcode.ORI, (4, 4, 0x1234), address=4),
+            _insn(Opcode.ANDIS_DOT, (5, 4, 0xFFFF), address=8),
+            _insn(Opcode.MTSPR, (5, 9), address=12),
+        ]
+        value, _ = recover_gpr_constant(program, 3, 5)
+        self.assertEqual(value, 0x80201234 & 0xFFFF0000)
+
+    def test_rejects_andi_dot_with_unknown_source(self) -> None:
+        program = [
+            _insn(Opcode.ANDI_DOT, (6, 31, 7), address=0),
+            _insn(Opcode.MTSPR, (6, 9), address=4),
+        ]
+        value, notes = recover_gpr_constant(program, 1, 6)
+        self.assertIsNone(value)
+        self.assertTrue(notes)
+
     def test_addi_from_nonzero_base(self) -> None:
         program = [
             _insn(Opcode.ADDI, (0, 0, 0), address=0),

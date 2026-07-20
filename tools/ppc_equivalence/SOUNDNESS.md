@@ -2,7 +2,7 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v30`
+- Architecture model: `broadway-ppc32-be-v31`
 - Result format: `15`
 - Certificate format: `8`
 
@@ -73,12 +73,12 @@ documented per-implementation private-storage abstraction.
   positive concrete trip count are discharged in closed form inside
   `execute_cfg` (apply N width-matched stores, advance base/CTR). Trip count
   must be recovered from bounded straight-line GPR materialization immediately
-  before `mtctr` (`addi`/`addis`/`ori`/`oris`, self-`addi`, `or` register
-  copies, or `lwz` only when the effective address and loaded word are proven
-  from a supplied readonly image — either an explicit `readonly_words` map or
-  linked DOL/ELF hydration via `memory_loop_image.try_build_memory_loop_readonly_words`
-  in coop `_prove_bytes`); symbolic or relocated sources remain
-  partial. Trip counts above `MAX_MEMORY_LOOP_TRIPS` or spanning past 32-bit
+  before `mtctr` (`addi`/`addis`/`ori`/`oris`, `andi.`/`andis.` remainder masks,
+  self-`addi`, `or` register copies, or `lwz` only when the effective address
+  and loaded word are proven from a supplied readonly image — either an
+  explicit `readonly_words` map or linked DOL/ELF hydration via
+  `memory_loop_image.try_build_memory_loop_readonly_words` in coop
+  `_prove_bytes`); symbolic or relocated sources remain partial. Trip counts above `MAX_MEMORY_LOOP_TRIPS` or spanning past 32-bit
   remain unsupported.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is

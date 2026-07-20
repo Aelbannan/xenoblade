@@ -2,7 +2,8 @@
 
 Recognizes only straight-line materialization in a small lookback window
 immediately before ``mtctr``. Prefer false negatives: symbolic or relocated
-sources stay unknown.
+sources stay unknown. Includes ``andi.``/``andis.`` remainder masks when the
+source register is already concrete.
 """
 
 from __future__ import annotations
@@ -109,6 +110,30 @@ def _eval_defining_insn(
             return None, notes or [f"oris r{rt}, r{ra}, {imm} base not concrete"]
         return (base | ((int(imm) & 0xFFFF) << 16)) & 0xFFFFFFFF, notes
 
+    if opcode == Opcode.ANDI_DOT:
+        rt, ra, imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return None, [f"andi. defines r{rt}, expected r{reg}"]
+        base, notes = _gpr_value_before(
+            instructions, index, ra, max_lookback=max_lookback,
+            readonly_words=readonly_words, depth=depth + 1,
+        )
+        if base is None:
+            return None, notes or [f"andi. r{rt}, r{ra}, {imm} base not concrete"]
+        return (base & (int(imm) & 0xFFFF)) & 0xFFFFFFFF, notes
+
+    if opcode == Opcode.ANDIS_DOT:
+        rt, ra, imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return None, [f"andis. defines r{rt}, expected r{reg}"]
+        base, notes = _gpr_value_before(
+            instructions, index, ra, max_lookback=max_lookback,
+            readonly_words=readonly_words, depth=depth + 1,
+        )
+        if base is None:
+            return None, notes or [f"andis. r{rt}, r{ra}, {imm} base not concrete"]
+        return (base & ((int(imm) & 0xFFFF) << 16)) & 0xFFFFFFFF, notes
+
     if opcode == Opcode.OR:
         rt, ra, rb = (int(v) for v in insn.operands)
         if rt != reg:
@@ -176,6 +201,8 @@ def _defines_gpr(insn: Instruction, reg: int) -> bool:
         Opcode.ADDIS,
         Opcode.ORI,
         Opcode.ORIS,
+        Opcode.ANDI_DOT,
+        Opcode.ANDIS_DOT,
         Opcode.LWZ,
         Opcode.LWZU,
     ):
@@ -249,6 +276,22 @@ def _collect_lwz_from_defining_insn(
         )
 
     if opcode == Opcode.ORIS:
+        rt, ra, _imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.ANDI_DOT:
+        rt, ra, _imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.ANDIS_DOT:
         rt, ra, _imm = (int(v) for v in insn.operands)
         if rt != reg:
             return frozenset()

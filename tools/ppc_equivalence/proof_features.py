@@ -20,15 +20,12 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 # (cache revalidation, per-side coverage, digest recompute; see
 # validate_memory_bus_obligation_strict). Jump-table readonly-image +
 # indirect-target-closure are discharged independently (PR3). Relational-
-# induction is discharged via five independent UNSAT queries (PR7). Affine
-# summaries authorize EQUIVALENT only when obligations validate with
-# status=discharged and matching digests. Temporary safety gate: keep
-# ``memory-loop-summary`` frozen until the v2/v3 refinement discharge
-# (instructions ≡ summary per side) is validated end-to-end; recognition /
-# coverage=applied / v1 self-referential discharge must not authorize.
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
-    "memory-loop-summary",
-})
+# induction is discharged via five independent UNSAT queries (PR7). Affine +
+# memory-loop summaries authorize EQUIVALENT only when obligations validate
+# with status=discharged under schema v2 / set algorithm v3 (per-side
+# instructions≡summary refinement); coverage=applied / recognition alone
+# never authorizes.
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
 
 # Canonical proof-feature names and their required top-level obligation keys.
 FEATURE_OBLIGATION_KEYS: dict[str, str] = {

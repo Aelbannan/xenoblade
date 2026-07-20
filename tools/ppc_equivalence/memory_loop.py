@@ -123,6 +123,7 @@ class MemoryLoopWitness:
     latch_pc: int
     exit_pc: int
     code_sha256: str
+    recognized_trip_count: int
 
 
 @dataclass(frozen=True)
@@ -473,6 +474,7 @@ def build_memory_loop_plan_map(
             latch_pc=summary.latch_pc,
             exit_pc=summary.exit_pc,
             code_sha256=compute_witness_code_sha256(body, latch, mtctr),
+            recognized_trip_count=int(summary.trip_count),
         )
         mapping[summary.header_pc] = MemoryLoopPlan(summary=summary, witness=witness)
     return mapping

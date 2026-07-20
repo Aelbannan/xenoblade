@@ -2,7 +2,7 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v32`
+- Architecture model: `broadway-ppc32-be-v33`
 - Result format: `15`
 - Certificate format: `8`
 
@@ -467,6 +467,13 @@ obligation block. The schema is:
 
 Rules (enforced by `tools.ppc_equivalence.proof_features`):
 
+- **PR0 safety freeze:** every known expanded feature is currently listed in
+  `UNSUPPORTED_FOR_EQUIVALENT` (`readonly-image`, `indirect-target-closure`,
+  `affine-loop-summary`, `relational-induction`, `memory-loop-summary`,
+  `memory-bus`). Feature-bearing `EQUIVALENT` results are demoted until each
+  feature's foundation repairs land. Automatic promotion is disabled in
+  `coop.json` / `coop.example.json`. Certificates under architecture model
+  `broadway-ppc32-be-v32` (and earlier rejected models) are stale.
 - `proof_features` is mandatory whenever a proof relies on a feature.
 - Each listed feature requires its obligation key: `readonly-image` →
   `address_space`, `indirect-target-closure` → `indirect_targets`.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any
 
 from tools.ppc_equivalence.loop_summary import validate_loop_summary_obligation
@@ -12,7 +13,16 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
+# PR0 safety freeze: every expanded feature stays unsupported until its
+# foundation repairs land with negative tests + obligation round-trips.
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
+    "readonly-image",
+    "indirect-target-closure",
+    "affine-loop-summary",
+    "relational-induction",
+    "memory-loop-summary",
+    "memory-bus",
+})
 
 # Canonical proof-feature names and their required top-level obligation keys.
 FEATURE_OBLIGATION_KEYS: dict[str, str] = {
@@ -26,7 +36,70 @@ FEATURE_OBLIGATION_KEYS: dict[str, str] = {
 
 KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)
 
+# Stable top-level obligation field order for result/certificate copy helpers.
+PROOF_OBLIGATION_FIELDS: tuple[str, ...] = (
+    "address_space",
+    "indirect_targets",
+    "loop_summary",
+    "relational_induction",
+    "memory_loop",
+    "memory_bus",
+)
+
 _OBLIGATION_KEYS: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS.values())
+
+
+@dataclass(frozen=True)
+class ParsedProofFeatures:
+    features: tuple[str, ...]
+    obligations: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+def proof_obligations_from_result(result: ProofResult) -> dict[str, dict[str, Any]]:
+    """Collect present obligation blocks from a ``ProofResult``."""
+    obligations: dict[str, dict[str, Any]] = {}
+    for key in PROOF_OBLIGATION_FIELDS:
+        value = getattr(result, key, None)
+        if isinstance(value, dict):
+            obligations[key] = value
+    return obligations
+
+
+def apply_proof_obligations(
+    result: ProofResult,
+    data: dict[str, dict[str, Any]],
+) -> None:
+    """Copy obligation blocks from ``data`` onto ``result`` (in-place)."""
+    for key in PROOF_OBLIGATION_FIELDS:
+        if key not in data:
+            continue
+        value = data[key]
+        if value is None:
+            setattr(result, key, None)
+        elif isinstance(value, dict):
+            setattr(result, key, value)
+
+
+def proof_obligations_from_dict(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Collect well-typed obligation blocks from a certificate/result dict."""
+    obligations: dict[str, dict[str, Any]] = {}
+    for key in PROOF_OBLIGATION_FIELDS:
+        value = data.get(key)
+        if isinstance(value, dict):
+            obligations[key] = value
+    return obligations
+
+
+def parse_proof_features(data: dict[str, Any]) -> ParsedProofFeatures:
+    """Parse proof-feature names and all known obligation blocks."""
+    raw_features = data.get("proof_features")
+    features: list[str] = []
+    if isinstance(raw_features, list):
+        features = [str(item) for item in raw_features if item]
+    return ParsedProofFeatures(
+        features=tuple(features),
+        obligations=proof_obligations_from_dict(data),
+    )
 
 
 def _extract_payload(payload: dict[str, Any] | ProofResult) -> dict[str, Any]:
@@ -34,18 +107,7 @@ def _extract_payload(payload: dict[str, Any] | ProofResult) -> dict[str, Any]:
         data: dict[str, Any] = {}
         if payload.proof_features:
             data["proof_features"] = list(payload.proof_features)
-        if payload.address_space is not None:
-            data["address_space"] = payload.address_space
-        if payload.indirect_targets is not None:
-            data["indirect_targets"] = payload.indirect_targets
-        if payload.loop_summary is not None:
-            data["loop_summary"] = payload.loop_summary
-        if getattr(payload, "relational_induction", None) is not None:
-            data["relational_induction"] = payload.relational_induction
-        if getattr(payload, "memory_loop", None) is not None:
-            data["memory_loop"] = payload.memory_loop
-        if getattr(payload, "memory_bus", None) is not None:
-            data["memory_bus"] = payload.memory_bus
+        data.update(proof_obligations_from_result(payload))
         return data
     return payload
 

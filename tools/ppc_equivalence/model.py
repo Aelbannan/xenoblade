@@ -68,6 +68,8 @@ class MachineState:
     valid: Any
     invalid_reason: Any = 0
     memory_touches: tuple[Any, ...] = ()
+    memory_reads: tuple[Any, ...] = ()
+    memory_writes: tuple[Any, ...] = ()
     stack_low: Any | None = None
     memory_effects: tuple[Any, ...] = ()
     stack_layout_valid: Any | None = None

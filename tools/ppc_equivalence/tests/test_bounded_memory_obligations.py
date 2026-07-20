@@ -12,13 +12,16 @@ import z3
 from tools.ppc_equivalence.bounded_memory_obligations import (
     BOUNDED_MEMORY_ATTESTATION_ALGORITHM,
     BOUNDED_MEMORY_MODEL_VERSION,
+    PLATFORM_PROFILE_PROOF_REQUEST_FIELD,
     MemoryAccessObligation,
     SOURCE_AD_HOC,
+    SOURCE_INCOMPLETE,
     SOURCE_PLATFORM_PROFILE,
     access_outside_all_ranges,
     access_wraps_32bit,
     build_bounded_memory_attestation,
     build_bounded_memory_obligation,
+    build_bounded_memory_obligation_from_terminals,
     load_platform_profile,
     obligation_is_promotion_grade,
     recompute_bounded_memory_attestation_status,
@@ -405,6 +408,191 @@ class TerminalLiftTests(unittest.TestCase):
         self.assertEqual(len(accesses), 1)
         self.assertEqual(accesses[0].width, 1)
         self.assertFalse(accesses[0].is_write)
+
+
+class Stage3AProductionIntegrationTests(unittest.TestCase):
+    """Stage 3A: from_terminals + reviewed profile + fail-closed grades."""
+
+    def _lwz_terminal(self, *, in_range: bool = True) -> Any:
+        # Model lwz as a 4-byte load; path constrains base into MEM1 when in_range.
+        addr = z3.BitVec("lwz_addr", 32)
+        if in_range:
+            # Width-4 last valid start is MEM1[1]-3.
+            path = z3.And(
+                z3.UGE(addr, MEM1[0]),
+                z3.ULE(addr, MEM1[1] - 3),
+            )
+        else:
+            path = z3.BoolVal(True)
+        # Per-byte touches for the word load.
+        touches = tuple(addr + z3.BitVecVal(i, 32) for i in range(4))
+        return SimpleNamespace(
+            condition=path,
+            state=SimpleNamespace(memory_touches=touches, memory_writes=()),
+        )
+
+    def test_lwz_under_reviewed_profile_address_coverage_unsat(self) -> None:
+        profile = load_platform_profile("xenoblade-us-retail-v1")
+        terminal = self._lwz_terminal(in_range=True)
+        obligation = build_bounded_memory_obligation_from_terminals(
+            [terminal],
+            [terminal],
+            platform_profile=profile,
+            deadline=_deadline(),
+            z3=z3,
+        )
+        self.assertEqual(obligation["source"], SOURCE_PLATFORM_PROFILE)
+        self.assertEqual(obligation["original"]["address_coverage"]["result"], "unsat")
+        self.assertEqual(obligation["candidate"]["address_coverage"]["result"], "unsat")
+        self.assertEqual(obligation["original"]["wraparound"]["result"], "unsat")
+        self.assertTrue(obligation_is_promotion_grade(obligation))
+        self.assertIsNone(validate_bounded_memory_obligation(obligation))
+
+    def test_missing_profile_is_incomplete(self) -> None:
+        terminal = self._lwz_terminal(in_range=True)
+        obligation = build_bounded_memory_obligation_from_terminals(
+            [terminal],
+            [terminal],
+            platform_profile=None,
+            deadline=_deadline(),
+            z3=z3,
+        )
+        self.assertEqual(obligation["source"], SOURCE_INCOMPLETE)
+        self.assertEqual(obligation["status"], "incomplete")
+        self.assertFalse(obligation_is_promotion_grade(obligation))
+
+        missing = build_bounded_memory_obligation_from_terminals(
+            [terminal],
+            [terminal],
+            platform_profile="does-not-exist-profile-v0",
+            deadline=_deadline(),
+            z3=z3,
+        )
+        self.assertEqual(missing["status"], "incomplete")
+        self.assertFalse(obligation_is_promotion_grade(missing))
+
+    def test_mutation_dropping_coverage_not_promotion_grade(self) -> None:
+        profile = load_platform_profile("xenoblade-us-retail-v1")
+        terminal = self._lwz_terminal(in_range=True)
+        obligation = build_bounded_memory_obligation_from_terminals(
+            [terminal],
+            [terminal],
+            platform_profile=profile,
+            deadline=_deadline(),
+            z3=z3,
+        )
+        self.assertTrue(obligation_is_promotion_grade(obligation))
+        mutated = copy.deepcopy(obligation)
+        terminals = mutated["original"]["address_coverage"]["terminals"]
+        self.assertGreaterEqual(len(terminals), 1)
+        terminals.pop()
+        self.assertIsNotNone(validate_bounded_memory_obligation(mutated))
+        self.assertFalse(obligation_is_promotion_grade(mutated))
+
+    def test_ad_hoc_ranges_not_promotion_grade(self) -> None:
+        terminal = self._lwz_terminal(in_range=True)
+        env = MemoryEnvironment(
+            profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
+            ranges=[MEM1],
+        )
+        obligation = build_bounded_memory_obligation_from_terminals(
+            [terminal],
+            [terminal],
+            platform_profile=None,
+            environment=env,
+            deadline=_deadline(),
+            z3=z3,
+        )
+        self.assertEqual(obligation["source"], SOURCE_AD_HOC)
+        self.assertNotEqual(obligation["status"], "promotion-grade")
+        self.assertFalse(obligation_is_promotion_grade(obligation))
+        status = recompute_bounded_memory_attestation_status(
+            {"bounded_memory": obligation},
+            model_version=BOUNDED_MEMORY_MODEL_VERSION,
+            allowed_versions=(BOUNDED_MEMORY_MODEL_VERSION,),
+        )
+        self.assertIn(status, (STATUS_SCOPED_ASSUMPTION, STATUS_INCOMPLETE))
+
+    def test_include_memory_constraints_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            build_bounded_memory_obligation_from_terminals(
+                [],
+                [],
+                platform_profile="xenoblade-us-retail-v1",
+                include_equivalence_memory_constraints=True,
+            )
+
+    def test_draft_consumes_terminals_and_requirements(self) -> None:
+        from tools.ppc_equivalence.capability_assurance import (
+            draft_bounded_memory_assurance,
+        )
+
+        profile = load_platform_profile("xenoblade-us-retail-v1")
+        terminal = self._lwz_terminal(in_range=True)
+        proof = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            architecture_model=ARCHITECTURE_MODEL,
+            format=RESULT_FORMAT,
+            observables=["memory"],
+            engine_hash="a" * 64,
+            source_hash="b" * 64,
+            git_commit="c" * 40,
+            opcodes_used=["lwz", "blr"],
+            memory_scope=MemoryScope(
+                masking_semantics=MASKING_SEMANTICS,
+                original=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+                candidate=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+            ),
+            environment=MemoryEnvironment(
+                profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
+                ranges=[MEM1],
+            ),
+        )
+        requirements = {
+            "schema_version": 1,
+            "requirements_sha256": "d" * 64,
+            "requirements": [
+                {
+                    "capability": "bounded-memory",
+                    "requirement_sha256": "e" * 64,
+                    "required_subjects": ["xenoblade-us-retail-v1"],
+                }
+            ],
+        }
+        assurance = draft_bounded_memory_assurance(
+            proof,
+            requirements=requirements,
+            original_terminals=[terminal],
+            candidate_terminals=[terminal],
+            platform_profile=profile,
+            deadline=_deadline(),
+            z3=z3,
+        )
+        self.assertIsNotNone(assurance)
+        assert assurance is not None
+        names = {item.capability for item in assurance.capabilities}
+        self.assertIn("bounded-memory", names)
+        bm = next(c for c in assurance.capabilities if c.capability == "bounded-memory")
+        self.assertEqual(bm.evidence.get("requirement_sha256"), "e" * 64)
+        self.assertEqual(bm.evidence.get("requirements_sha256"), "d" * 64)
+
+    def test_proof_request_field_name(self) -> None:
+        self.assertEqual(
+            PLATFORM_PROFILE_PROOF_REQUEST_FIELD,
+            "platform_profile_sha256",
+        )
+        from tools.ppc_equivalence.provenance import proof_request_hash
+
+        base = dict(
+            original_hex="00",
+            candidate_hex="00",
+            contract="ppc-eabi",
+        )
+        without = proof_request_hash(**base)
+        with_digest = proof_request_hash(
+            **base, platform_profile_sha256="a" * 64
+        )
+        self.assertNotEqual(without, with_digest)
 
 
 if __name__ == "__main__":

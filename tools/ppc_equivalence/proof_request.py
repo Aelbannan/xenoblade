@@ -38,6 +38,9 @@ class ProofRequest:
     relocations: dict[str, list[dict[str, Any]]]
     proof_features: tuple[str, ...] = ()
     obligations: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # Reviewed platform profile digest (Stage 3A). Same field name as
+    # provenance.proof_request_identity / coop _cache_key.
+    platform_profile_sha256: str | None = None
 
 
 def _canonical_nested(value: Any) -> Any:
@@ -64,7 +67,7 @@ def canonical_request_dict(request: ProofRequest) -> dict[str, Any]:
         ]
         for side, entries in sorted(request.relocations.items(), key=lambda pair: str(pair[0]))
     }
-    return {
+    payload = {
         "original_hex": request.original_hex,
         "candidate_hex": request.candidate_hex,
         "original_base": int(request.original_base),
@@ -92,6 +95,9 @@ def canonical_request_dict(request: ProofRequest) -> dict[str, Any]:
         "proof_features": sorted(request.proof_features),
         "obligations": obligations,
     }
+    if request.platform_profile_sha256 is not None:
+        payload["platform_profile_sha256"] = request.platform_profile_sha256
+    return payload
 
 
 def proof_request_hash(request: ProofRequest) -> str:

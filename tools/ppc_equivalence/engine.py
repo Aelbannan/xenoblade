@@ -1162,11 +1162,17 @@ def check_equivalence(
     memory_bus: MemoryBus | None = None,
     readonly_words: dict[int, int] | None = None,
     memory_loop_readonly: MemoryLoopReadonlyContext | None = None,
+    platform_profile: object | None = None,
 ) -> ProofResult:
     """Prove original/candidate observational equivalence under ``contract``.
 
     Threaded callers are dispatched to :mod:`process_pool` so Z3 never shares
     a context across threads (see ``PPC_EQUIV_PROCESS_POOL``).
+
+    ``platform_profile`` (Stage 3A): optional reviewed platform profile name,
+    path, or mapping. When set, bounded-memory coverage is discharged from CFG
+    terminals without folding ``build_memory_constraints`` into the coverage
+    query. Assurance failure preserves EQUIVALENT but blocks Tier A.
     """
     from tools.ppc_equivalence.process_pool import run_check_equivalence, should_isolate
 
@@ -1190,6 +1196,7 @@ def check_equivalence(
         memory_bus=memory_bus,
         readonly_words=readonly_words,
         memory_loop_readonly=memory_loop_readonly,
+        platform_profile=platform_profile,
     )
     if should_isolate():
         return run_check_equivalence(
@@ -1239,6 +1246,7 @@ def _check_equivalence_impl(
     memory_bus: MemoryBus | None = None,
     readonly_words: dict[int, int] | None = None,
     memory_loop_readonly: MemoryLoopReadonlyContext | None = None,
+    platform_profile: object | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -2019,6 +2027,26 @@ def _check_equivalence_impl(
                 gated.unsupported.append(reason)
                 gated.warnings.append(reason)
                 gated.abstractions.append("virtual-call-unproven")
+        # Stage 1 + 4: derive capability requirements and attach drafts.
+        # Failure preserves EQUIVALENT; Tier A is blocked by incomplete assurance.
+        if gated.status is ProofStatus.EQUIVALENT:
+            from tools.ppc_equivalence.capability_assurance import (
+                build_capability_assurance,
+            )
+
+            build_capability_assurance(
+                gated,
+                terminals_meta={
+                    "original": original_exits,
+                    "candidate": candidate_exits,
+                },
+                original_terminals=original_exits,
+                candidate_terminals=candidate_exits,
+                platform_profile=platform_profile,
+                environment=effective_memory_environment,
+                deadline=deadline,
+                z3=z3,
+            )
         return gated
 
     feasibility = z3.Solver()

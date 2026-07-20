@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v40`
-- Result format: `20`
-- Certificate format: `15`
+- Architecture model: `broadway-ppc32-be-v41`
+- Result format: `21`
+- Certificate format: `16`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -254,7 +254,12 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   `assumed-ordinary-ram` when the caller omits a profile). Tiering treats
   assumed-RAM as Tier C only when `memory` is among the contract observables,
   so register-only proofs stay eligible for Tier A. Promotion may still require
-  bounded ranges via `require_bounded_ram`.
+  bounded ranges via `require_bounded_ram`. Stage 3A binds a separately
+  configured reviewed platform profile via coop `platform_profile` (name or
+  path); its digest enters proof-request / cache identity as
+  **`platform_profile_sha256`**. Address-coverage obligations use terminal path
+  conditions only and must not fold `build_memory_constraints()` into the
+  coverage query (`bounded_memory_obligations.build_bounded_memory_obligation_from_terminals`).
 
 ### Capability assurance (Wave 1–5)
 

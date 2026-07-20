@@ -132,6 +132,7 @@ def proof_request_identity(
     memory_profile: str | None = None,
     memory_ranges: list[str] | None = None,
     memory_environment: object | None = None,
+    platform_profile_sha256: str | None = None,
     floating_point_domain: object | None = None,
     assumed_callees: list[str] | None = None,
     callee_contract_sources: dict[str, str] | None = None,
@@ -180,6 +181,10 @@ def proof_request_identity(
         payload["memory_ranges"] = sorted(memory_ranges)
     if memory_environment is not None:
         payload["memory_environment"] = memory_environment
+    # Stage 3A: reviewed platform-profile digest (bounded-memory promotion).
+    # Field name must stay ``platform_profile_sha256`` for cache / cert identity.
+    if platform_profile_sha256 is not None:
+        payload["platform_profile_sha256"] = platform_profile_sha256
     if floating_point_domain is not None:
         payload["floating_point_domain"] = floating_point_domain
     if assumed_callees is not None:

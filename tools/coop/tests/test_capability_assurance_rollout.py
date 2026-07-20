@@ -72,6 +72,8 @@ def _equivalent(**kwargs) -> ProofResult:
 
 def _provenance(**evidence_overrides) -> object:
     evidence = {
+        "architecture_model": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
         "engine_hash": "a" * 64,
         "certifier_hash": "d" * 64,
         "source_hash": "b" * 64,

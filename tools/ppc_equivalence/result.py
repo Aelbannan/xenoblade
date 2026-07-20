@@ -305,8 +305,8 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v40"
-RESULT_FORMAT = 20
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v41"
+RESULT_FORMAT = 21
 
 
 MASKING_SEMANTICS = "per-implementation-independent-v1"
@@ -506,6 +506,9 @@ class ProofResult:
     # Optional capability-assurance block (Wave 1). Dict or CapabilityAssurance;
     # omitted when absent for backward compatibility with pre-v37 certificates.
     capability_assurance: dict[str, Any] | Any | None = None
+    # Authoritative capability-requirements record (Stages 1–2). Dict or
+    # CapabilityRequirements; omitted when absent for pre-derivation certs.
+    capability_requirements: dict[str, Any] | Any | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -548,6 +551,10 @@ class ProofResult:
             value.pop("capability_assurance", None)
         elif hasattr(self.capability_assurance, "to_dict"):
             value["capability_assurance"] = self.capability_assurance.to_dict()
+        if self.capability_requirements is None:
+            value.pop("capability_requirements", None)
+        elif hasattr(self.capability_requirements, "to_dict"):
+            value["capability_requirements"] = self.capability_requirements.to_dict()
         return value
 
 

@@ -77,6 +77,8 @@ class ValidationLedger:
 
     ``capabilities`` holds capability-specific coverage (Wave 2+), e.g.
     ``fp-bitwise`` opcode semantic dimensions beyond dolphin_interpreter.
+    ``content_sha256`` is the SHA-256 of the loaded ledger file bytes (or of
+    the canonical mapping JSON when constructed from_mapping without a path).
     """
 
     dolphin_validated_opcodes: frozenset[str]
@@ -86,18 +88,31 @@ class ValidationLedger:
     corpus_version: int | None = None
     intentionally_loaded: bool = False
     capabilities: dict[str, Any] = field(default_factory=dict)
+    content_sha256: str | None = None
 
     @classmethod
     def load(cls, path: Path | None) -> "ValidationLedger":
         # Missing path / file → absent ledger (fail closed for promotion).
         if path is None or not path.is_file():
             return cls(frozenset(), intentionally_loaded=False)
+        raw_bytes = path.read_bytes()
+        content_sha256 = hashlib.sha256(raw_bytes).hexdigest()
         suffix = path.suffix.lower()
         if suffix in {".yaml", ".yml"}:
             data = _load_mapping(path, yaml=True)
         else:
             data = _load_mapping(path, yaml=False)
-        return cls.from_mapping(data)
+        ledger = cls.from_mapping(data)
+        return cls(
+            dolphin_validated_opcodes=ledger.dolphin_validated_opcodes,
+            dolphin_version=ledger.dolphin_version,
+            corpus_hash=ledger.corpus_hash,
+            architecture_model=ledger.architecture_model,
+            corpus_version=ledger.corpus_version,
+            intentionally_loaded=ledger.intentionally_loaded,
+            capabilities=dict(ledger.capabilities),
+            content_sha256=content_sha256,
+        )
 
     @classmethod
     def from_mapping(cls, data: dict[str, Any]) -> "ValidationLedger":
@@ -731,6 +746,13 @@ def proof_result_from_certificate(
     elif isinstance(raw_assurance, dict):
         capability_assurance = dict(raw_assurance)
 
+    capability_requirements = None
+    raw_requirements = certificate.get("capability_requirements")
+    if raw_requirements is not None and hasattr(raw_requirements, "to_dict"):
+        capability_requirements = raw_requirements.to_dict()
+    elif isinstance(raw_requirements, dict):
+        capability_requirements = dict(raw_requirements)
+
     result = ProofResult(
         status=status,
         architecture_model=str(
@@ -758,6 +780,7 @@ def proof_result_from_certificate(
         invalid_reasons=invalid_reasons,
         proof_features=list(parsed.features),
         capability_assurance=capability_assurance,
+        capability_requirements=capability_requirements,
     )
     raw_oracle = certificate.get("fp_oracle_version")
     if raw_oracle:
@@ -937,6 +960,7 @@ class PromotionPolicy:
             "broadway-ppc32-be-v37",
             "broadway-ppc32-be-v38",
             "broadway-ppc32-be-v39",
+            "broadway-ppc32-be-v40",
         }
     )
     minimum_result_format: int = RESULT_FORMAT

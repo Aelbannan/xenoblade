@@ -26,11 +26,10 @@ from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concre
 from .proof_features import enforce_equivalent_proof_features
 from .jump_table_obligations import (
     JumpTableProofContext,
-    build_jump_table_obligations,
-    indirect_target_closure_constraints,
+    discharge_jump_table_obligations,
     jump_table_gate_reason,
+    obligations_from_discharge,
     rom_image_byte_constraints,
-    rom_image_no_write_constraints,
 )
 from .loop_summary import (
     build_affine_summary_map,
@@ -39,6 +38,11 @@ from .loop_summary import (
 from .memory_loop import (
     build_memory_loop_obligation,
     build_memory_loop_summary_map,
+)
+from .memory_loop_readonly import (
+    MemoryLoopReadonlyContext,
+    build_memory_loop_readonly_context,
+    readonly_word_byte_constraints,
 )
 from .relational_induction import try_discharge_relational
 from .provenance import canonical_json_sha256, hash_engine_tree
@@ -1106,6 +1110,7 @@ def check_equivalence(
     jump_table: JumpTableProofContext | None = None,
     memory_bus: MemoryBus | None = None,
     readonly_words: dict[int, int] | None = None,
+    memory_loop_readonly: MemoryLoopReadonlyContext | None = None,
 ) -> ProofResult:
     """Prove original/candidate observational equivalence under ``contract``.
 
@@ -1131,6 +1136,7 @@ def check_equivalence(
         jump_table=jump_table,
         memory_bus=memory_bus,
         readonly_words=readonly_words,
+        memory_loop_readonly=memory_loop_readonly,
     )
     if should_isolate():
         return run_check_equivalence(
@@ -1177,6 +1183,7 @@ def _check_equivalence_impl(
     jump_table: JumpTableProofContext | None = None,
     memory_bus: MemoryBus | None = None,
     readonly_words: dict[int, int] | None = None,
+    memory_loop_readonly: MemoryLoopReadonlyContext | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -1195,13 +1202,36 @@ def _check_equivalence_impl(
     original_affine = build_affine_summary_map(original)
     candidate_affine = build_affine_summary_map(candidate)
     affine_used: list = []
+
+    readonly_ctx = memory_loop_readonly
+    if readonly_ctx is None and readonly_words:
+        readonly_ctx = build_memory_loop_readonly_context(shared_words=readonly_words)
+    if readonly_ctx is not None:
+        conflict = readonly_ctx.conflict_reason()
+        if conflict is not None:
+            return ProofResult(
+                status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+                contract=contract.name,
+                contract_resolution=contract.resolution_dict(),
+                observables=[item.name for item in contract.observables],
+                unsupported=[conflict],
+                limits={
+                    "max_instructions": max_instructions,
+                    "max_paths": max_paths,
+                    "max_loop_iterations": max_loop_iterations,
+                },
+                floating_point_domain=domain,
+                source_hash=source_hash,
+            )
+    original_readonly = None if readonly_ctx is None else readonly_ctx.words_for("original")
+    candidate_readonly = None if readonly_ctx is None else readonly_ctx.words_for("candidate")
     original_memory = build_memory_loop_summary_map(
         original,
-        readonly_words=readonly_words,
+        readonly_words=original_readonly,
     )
     candidate_memory = build_memory_loop_summary_map(
         candidate,
-        readonly_words=readonly_words,
+        readonly_words=candidate_readonly,
     )
     memory_used: list = []
 
@@ -1342,46 +1372,37 @@ def _check_equivalence_impl(
         )
 
     if jump_table is not None:
-        base_reg = jump_table.table_base_reg
-        index_reg = jump_table.index_reg
-        if not (0 <= base_reg <= 31 and 0 <= index_reg <= 31):
-            raise ValueError("jump table base/index registers must be GPRs 0..31")
-        cand_table = jump_table.candidate_table_words()
-        if not jump_table.dual_base():
-            layout_constraints.append(
-                ops.eq(initial.gpr[base_reg], ops.const(jump_table.table.base)),
-            )
-        layout_constraints.append(
-            ops.unsigned_lt(
-                initial.gpr[index_reg],
-                ops.const(len(jump_table.table.words)),
-            ),
-        )
+        # Pin initial ROM image bytes only. Do NOT auto-constrain
+        # gpr[base]==table.base or index < entry_count — those must come from
+        # executed code (or an explicit future Tier-C contract precondition).
+        # Coverage / no-write are independent UNSAT discharges, not mismatch
+        # formulas and not final-memory-value inspection alone.
         for table in jump_table.readonly_tables():
             layout_constraints.extend(
                 rom_image_byte_constraints(initial.memory, table, ops)
             )
-            layout_constraints.extend(
-                rom_image_no_write_constraints(
-                    original_exits + candidate_exits,
-                    initial.memory,
-                    table,
-                    ops,
-                )
-            )
-        layout_constraints.extend(
-            indirect_target_closure_constraints(
-                original_exits,
-                target_pcs=jump_table.table.words,
+
+    jump_table_bundle = None
+    if jump_table is not None:
+        try:
+            jump_table_bundle = discharge_jump_table_obligations(
+                jump_table,
+                original_terminals=original_exits,
+                candidate_terminals=candidate_exits,
+                premises=layout_constraints,
                 ops=ops,
+                deadline=deadline,
             )
-        )
+        except ProofDeadlineExceeded as exc:
+            return _early_timeout(exc.phase)
+
+    if readonly_ctx is not None:
         layout_constraints.extend(
-            indirect_target_closure_constraints(
-                candidate_exits,
-                target_pcs=cand_table.words,
-                ops=ops,
-            )
+            readonly_word_byte_constraints(
+                initial.memory,
+                readonly_ctx.all_evidence(),
+                ops,
+            ),
         )
 
     try:
@@ -1513,11 +1534,28 @@ def _check_equivalence_impl(
             early.memory_bus = build_memory_bus_obligation(memory_bus)
         if jump_table is not None:
             early.proof_features = ["readonly-image", "indirect-target-closure"]
-            early.address_space, early.indirect_targets = build_jump_table_obligations(
-                jump_table,
-                no_write_status="unsat",
-                coverage="unsat-remainder",
-            )
+            if jump_table_bundle is not None:
+                early.address_space, early.indirect_targets = obligations_from_discharge(
+                    jump_table, jump_table_bundle,
+                )
+                if not jump_table_bundle.all_unsat():
+                    reason = jump_table_bundle.failure_reason() or (
+                        "jump-table coverage/no-write discharge failed"
+                    )
+                    if early.status is ProofStatus.EQUIVALENT:
+                        early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                    early.unsupported.append(reason)
+                    early.warnings.append(reason)
+                    early.abstractions.append("jump-table-discharge-failed")
+            else:
+                from .jump_table_obligations import build_jump_table_obligations
+
+                early.address_space, early.indirect_targets = build_jump_table_obligations(
+                    jump_table,
+                    no_write_status="pending",
+                    coverage="pending",
+                    status="pending",
+                )
         if affine_used:
             # Prefer the original-side summary when both sides applied (identical
             # trip counts); obligation identity still binds trip_count/strides.

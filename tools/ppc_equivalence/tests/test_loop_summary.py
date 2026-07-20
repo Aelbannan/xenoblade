@@ -155,6 +155,8 @@ class CompareAffineRecognitionTests(unittest.TestCase):
         self.assertEqual(terminals[0].state.gpr[3], predicted)
         self.assertEqual(terminals[0].state.gpr[4], 0)
         self.assertEqual(terminals[0].state.ctr, 7)
+        # Final cmpwi r4,0 after countdown leaves CR0.EQ set (and SO from XER).
+        self.assertEqual((terminals[0].state.cr >> 28) & 0xF, 0x2)
 
 
 class AffineFeatureGateTests(unittest.TestCase):
@@ -208,8 +210,7 @@ class AffineFeatureGateTests(unittest.TestCase):
     def test_compare_affine_vs_straight_line_cr_never_equivalent(self) -> None:
         """False-eq regression: loop exits with CR0.EQ=1; candidate leaves entry CR.
 
-        Soft for PR0: must not be EQUIVALENT when CR is observed.
-        Strengthen to NOT_EQUIVALENT after final-CR repair (PR 5).
+        After FinalCompare repair, observing cr0 must yield NOT_EQUIVALENT.
         """
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
         from tools.ppc_equivalence.engine import check_equivalence
@@ -232,7 +233,7 @@ class AffineFeatureGateTests(unittest.TestCase):
             candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT, result.unsupported)
 
 
 if __name__ == "__main__":

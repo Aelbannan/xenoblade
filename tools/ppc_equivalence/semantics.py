@@ -3740,6 +3740,8 @@ def _execute_cfg_body(
 
         # Proven jump-table closure: split the taken edge into one path per
         # enumerated CTR target (plan: enqueue under taken ∧ CTR == addr).
+        # Always retain an unknown-remainder terminal so incomplete closed
+        # sets stay observable; discharge proves that remainder UNSAT.
         closed_targets = None if jump_table_targets is None else jump_table_targets.get(pc)
         if (
             closed_targets is not None
@@ -3748,12 +3750,12 @@ def _execute_cfg_body(
             and kind == "indirect-branch"
         ):
             aligned_ctr = ops.band(old_ctr, ops.const(0xFFFFFFFC))
+            in_closed_set = ops.bool(False)
             for target_pc in closed_targets:
                 aligned = target_pc & 0xFFFFFFFC
-                case_condition = ops.land(
-                    taken_condition,
-                    ops.eq(aligned_ctr, ops.const(aligned)),
-                )
+                member = ops.eq(aligned_ctr, ops.const(aligned))
+                in_closed_set = ops.lor(in_closed_set, member)
+                case_condition = ops.land(taken_condition, member)
                 if aligned in by_address or aligned == end:
                     enqueue(
                         aligned, branched_state, case_condition, new_visits, steps + 1,
@@ -3762,6 +3764,13 @@ def _execute_cfg_body(
                     record_terminal(
                         case_condition, branched_state, "direct-branch", ops.const(aligned),
                     )
+            remainder_condition = ops.land(
+                taken_condition,
+                ops.lnot(in_closed_set),
+            )
+            record_terminal(
+                remainder_condition, branched_state, "indirect-branch", aligned_ctr,
+            )
             enqueue(pc + 4, branched_state, fall_condition, new_visits, steps + 1)
             continue
 

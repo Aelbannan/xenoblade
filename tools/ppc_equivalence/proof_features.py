@@ -13,11 +13,11 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-# PR0 safety freeze: every expanded feature stays unsupported until its
-# foundation repairs land with negative tests + obligation round-trips.
+# PR0 safety freeze: loop/memory-bus features stay unsupported until their
+# foundation repairs land. Jump-table readonly-image + indirect-target-closure
+# are discharged independently (PR3) and may authorize EQUIVALENT when
+# obligations validate.
 UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
-    "readonly-image",
-    "indirect-target-closure",
     "affine-loop-summary",
     "relational-induction",
     "memory-loop-summary",
@@ -184,6 +184,22 @@ def validate_proof_features(
                 return reason
         if feature == "memory-bus":
             reason = validate_memory_bus_obligation(obligation)
+            if reason is not None:
+                return reason
+        if feature == "readonly-image":
+            from tools.ppc_equivalence.jump_table_obligations import (
+                validate_readonly_image_obligation,
+            )
+
+            reason = validate_readonly_image_obligation(obligation)
+            if reason is not None:
+                return reason
+        if feature == "indirect-target-closure":
+            from tools.ppc_equivalence.jump_table_obligations import (
+                validate_indirect_targets_obligation,
+            )
+
+            reason = validate_indirect_targets_obligation(obligation)
             if reason is not None:
                 return reason
 

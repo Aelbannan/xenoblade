@@ -64,23 +64,31 @@ documented per-implementation private-storage abstraction.
   supplies a summary map; trip count must be a positive constant.
   Compare-affine countdown loops (`li` / affine body / `addi -1` / `cmpwi` /
   `bne`) use the same summary map with `proof_kind=compare-affine-closed-form`
-  and leave CTR unmodified.
+  and leave CTR unmodified. A `FinalCompare` is applied after closed-form GPRs
+  so CR (including XER.SO) matches the last `cmpwi`.
   Relational induction discharges matching CTR-affine or compare-affine pairs
   and natural-loop pairs whose headers are backed by those closed forms
   (`relational_induction.try_discharge_relational`); shape-only natural sketches
   and mismatched bodies remain unsupported for `EQUIVALENT`.
   Constant-stride store loops (`memory_loop` / `memory-loop-summary`) with a
   positive concrete trip count are discharged in closed form inside
-  `execute_cfg` (apply N width-matched stores, advance base/CTR). Trip count
+  `execute_cfg` via typed `StoreEffect` / `apply_store_effect` (recording
+  `memory_writes` + `memory_touches`, not memory alone). Recognizer accepts
+  exact `store; addi` or lone `stwu` bodies only (rejects reversed order,
+  multi-store, calls, source==base). `mtctr 0` is unsupported (bdnz wrap)
+  unless a proven skip guard is present. Trip count
   must be recovered from bounded straight-line GPR materialization immediately
   before `mtctr` (`addi`/`addis`/`ori`/`oris`, `andi.`/`andis.` remainder masks,
   exact `srwi`-equivalent `rlwinm` forms (`rlwinm rA,rS,32-n,n,31` for
   `n` in `1..31`), self-`addi`, `or` register copies, or `lwz` only when the
-  effective address and loaded word are proven from a supplied readonly image
-  — either an explicit `readonly_words` map or linked DOL/ELF hydration via
+  effective address and loaded word are proven from a per-side
+  `MemoryLoopReadonlyContext` (never cross-side `dict.update`) — either an
+  explicit `readonly_words` map or linked DOL/ELF hydration via
   `memory_loop_image.try_build_memory_loop_readonly_words` in coop
-  `_prove_bytes`); symbolic or relocated sources remain partial. Trip counts above `MAX_MEMORY_LOOP_TRIPS` or spanning past 32-bit
-  remain unsupported.
+  `_prove_bytes`, with `Select(initial_memory, addr+i)==byte` premises.
+  Same VA with disagreeing side values rejects. Symbolic or relocated sources
+  remain partial. Trip counts above `MAX_MEMORY_LOOP_TRIPS` or spanning past
+  32-bit remain unsupported.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
   Jump-table pattern recognition (`jump_table.find_jump_table_candidates`) is
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`
@@ -88,14 +96,19 @@ documented per-implementation private-storage abstraction.
   engine fail-closes otherwise-matching jump-table functions to
   `INCONCLUSIVE_UNSUPPORTED`. With a context (explicit or auto-built by
   `jump_table_auto.try_auto_jump_table_context` from `lis`/`addi` + linked
-  DOL/ELF hydration), CFG expands each enumerated CTR target, ROM bytes are
-  pinned with alias-safe no-write constraints, and `readonly-image` /
-  `indirect-target-closure` obligations are attached
-  (`jump_table_obligations.py`). Retail/candidate handlers are paired by
+  DOL/ELF hydration), CFG expands each enumerated CTR target and retains an
+  unknown-remainder ``indirect-branch`` terminal. Initial ROM bytes are pinned;
+  coverage and no-write are independent UNSAT discharges over remainder
+  conditions and ``memory_writes`` hit-table queries (`discharge.py`), not
+  final-memory-value inspection alone. `readonly-image` /
+  `indirect-target-closure` obligations (schema v2) carry discharge digests
+  (`jump_table_obligations.py`). Invisible ``gpr[base]==table.base`` /
+  ``index < entry_count`` premises are not synthesized. Retail/candidate
+  handlers are paired by
   logical case index (`jump_table_pairing.py`), not absolute address equality.
   Coop `_prove_bytes` attempts auto-context when a linked image is available:
-  it passes retail ``main.dol`` for the original side and linked ``main.elf`` for
-  the candidate side, re-decoding a 768-byte text window around the dispatch tail
+  it passes per-side ``JumpTableArtifacts`` (retail ``main.dol`` + linked
+  ``main.elf``), re-decoding a 768-byte text window around the dispatch tail
   so distant ``addis``/``addi`` table-base materialization is visible to
   ``resolve_table_base_va`` (up to 256 instructions back from the feeding
   ``addi``). Without resolvable base VAs or complete ADDR32 table
@@ -219,10 +232,17 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   (register-bank R/W; GX FIFO records writes and rejects reads). Missing
   devices, unsupported widths/alignments, and ``AccessOutcome.UNSUPPORTED``
   fail closed (``BusOutcome`` / ``ExecutionInconclusive``) with no silent RAM
-  fallback. Tier **C** only: symbolic ``check_equivalence`` still excludes MMIO
+  fallback.   Tier **C** only: symbolic ``check_equivalence`` still excludes MMIO
   from feasible address ranges (``memory_bus`` obligation ``mmio: fail-closed``);
   device semantics are not SMT-modeled and do not expand ``EQUIVALENT``
   authorization beyond the existing memory-bus feature.
+- **Symbolic register-bank scaffold (toward PR 14):** ``symbolic_bus.py``
+  sketches extensional per-register bitvectors, nested
+  ``addr == base + offset`` routing, write / W1C / read-clear formulas, and a
+  *separate* unsupported-access query (``path ∧ ¬supported``). SAT on that
+  query means inconclusive; ``supported`` must not be assumed into the
+  equivalence query. Not engine-wired; ``memory-bus`` remains in
+  ``UNSUPPORTED_FOR_EQUIVALENT``.
 - **Memory bus (opt-in Tier C):** `memory_bus.py` routes concrete 1/2/4-byte
   loads/stores through ``AddressSpace`` regions to RAM backing
   (``ConcreteMemory``), immutable ROM images, or live MMIO ``DeviceModel``
@@ -339,26 +359,31 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   bit-level, host-float-free oracle for a small scalar-op subset (`fadd`/`fadds`/
   `fmul`/`fmuls`/`fsub`/`fsubs`/`fdiv`/`fdivs`/`fmadd`/`fmadds`/`fmsub`/`fmsubs`/
   `fnmadd`/`fnmadds`/`fnmsub`/`fnmsubs`). **ConcreteOps** routes those sixteen
-  scalar opcodes through the oracle (fail-closed on NaN/subnormal/unsupported
-  domains and on single-fused Broadway midpoint-tie residues with a nonzero
-  addend via `ExecutionInconclusive`); concrete sampling and differential checks
-  inherit this path. Force25 for single fused forms is applied by semantics
-  before the oracle. Negative fused forms negate the positive fused result after
-  rounding (NaNs fail closed before negation). SymbolicOps, paired-single lanes,
-  and all other FP ops still use host float or Z3. The oracle computes
-  partial sticky indicators (`XX` inexact, `FPRF` class nibble) in
-  `FpOracleResult` but does **not** latch them into FPSCR
-  (`floating_point_domain.fpscr_flags` marks oracle-scaffold vs assumed bits).
-  This remains **Tier C** only and is **not** a promotion path to Tier A/B.
+  scalar opcodes through the oracle. The integer-significand path models finite
+  normals/zeros, subnormal operands/results, ±Inf arithmetic, quiet/signaling
+  NaN propagation, division by zero (±Inf), and overflow (±Inf). Default
+  `exclude_finite_overflow` domain exclusions continue to mark overflowed
+  finite→Inf results via `FP_DOMAIN_EXCLUDED`. Force25 for single fused forms is
+  applied by semantics before the oracle. Negative fused forms negate finite
+  results only (NaN payloads are never sign-flipped). **Still fail-closed**
+  (`OracleUnimplementedError` → `ExecutionInconclusive`): Broadway single-FMA
+  midpoint-tie residues with a nonzero addend, and fused near-cancellation with
+  sticky residue. SymbolicOps, paired-single lanes, and all other FP ops still
+  use host float or Z3. The oracle computes partial sticky indicators (`XX`
+  inexact, `ZX`/`OX`/`VX` hints, `FPRF` class nibble) in `FpOracleResult` but
+  does **not** latch them into FPSCR (`floating_point_domain.fpscr_flags` marks
+  oracle-scaffold vs assumed bits); architectural FPSCR sticky bits for the
+  sixteen routed opcodes still come from the semantics exception path. This
+  remains **Tier C** only and is **not** a promotion path to Tier A/B.
 - **Unified `FPOutcome` scaffold (Track C):** `tools/ppc_equivalence/fp_outcome.py`
   defines `FPExceptionFlags` / `FPOutcome` plus SoftFloat and bits-API adapters
   (`outcome_from_oracle`, `oracle_from_outcome`, `outcome_from_result_bits`).
-  Existing SoftFloat / ConcreteOps / SymbolicOps call sites are unchanged;
-  Infinity/NaN/div0 behavior that currently works via host float + semantics
-  FPSCR paths is preserved. **Deferred:** Fraction/rational exact oracle for
-  SoftFloat fail-closed domains, Broadway single-FMA midpoint residual with
-  nonzero addend, native SymbolicOps/`FPOutcome` producers, and FPSCR latch /
-  trap delivery from outcome fields.
+  Existing SoftFloat / ConcreteOps / SymbolicOps call sites are unchanged.
+  SoftFloat now covers the Inf/NaN/div0/subnormal/overflow domains that host
+  float previously modeled for ConcreteOps scalar paths. **Deferred:** Fraction
+  / rational exact cross-check oracle, Broadway single-FMA midpoint residual
+  with nonzero addend, native SymbolicOps/`FPOutcome` producers, and FPSCR latch
+  / trap delivery from outcome fields.
 
 ### Relocations
 
@@ -476,12 +501,15 @@ obligation block. The schema is:
 
 Rules (enforced by `tools.ppc_equivalence.proof_features`):
 
-- **PR0 safety freeze:** every known expanded feature is currently listed in
-  `UNSUPPORTED_FOR_EQUIVALENT` (`readonly-image`, `indirect-target-closure`,
-  `affine-loop-summary`, `relational-induction`, `memory-loop-summary`,
-  `memory-bus`). Feature-bearing `EQUIVALENT` results are demoted until each
-  feature's foundation repairs land. Automatic promotion is disabled in
-  `coop.json` / `coop.example.json`. Certificates under architecture model
+- **PR0 safety freeze:** expanded features remain listed in
+  `UNSUPPORTED_FOR_EQUIVALENT` until each feature's foundation repairs land with
+  negative tests. Jump-table coverage and no-write now use independent UNSAT
+  discharge (`discharge.py`) with remainder terminals retained on BCCTR
+  expansion; obligation schema v2 carries coverage/no_write digests.
+  Architecture model stays `broadway-ppc32-be-v33` (no bump for obligation
+  schema alone). Automatic promotion remains disabled in
+  `coop.json` / `coop.example.json` until enablement gates clear.
+  Certificates under architecture model
   `broadway-ppc32-be-v32` (and earlier rejected models) are stale.
 - `proof_features` is mandatory whenever a proof relies on a feature.
 - Each listed feature requires its obligation key: `readonly-image` →

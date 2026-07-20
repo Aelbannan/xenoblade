@@ -1,4 +1,10 @@
-"""SMT obligations and proof metadata for opt-in ``MemoryBus`` routing."""
+"""SMT obligations and proof metadata for opt-in ``MemoryBus`` routing.
+
+MMIO remains fail-closed in the equivalence solver. Extensional symbolic
+register-bank formulas are scaffolded in ``symbolic_bus`` (separate
+unsupported-access queries; do not assume ``supported`` into equivalence).
+They are not yet discharged here or authorized for ``EQUIVALENT``.
+"""
 
 from __future__ import annotations
 
@@ -102,6 +108,16 @@ def build_memory_bus_obligation(memory_bus: MemoryBus) -> dict[str, Any]:
         "mmio": "fail-closed",
         "unmapped": "fail-closed",
     }
+
+
+def symbolic_mmio_still_fail_closed() -> bool:
+    """Hook marker: symbolic MMIO theory is scaffolded but not solver-bound.
+
+    ``build_memory_bus_constraints`` continues to exclude MMIO from feasible
+    ranges. When PR 14 wires ``symbolic_bus`` into the engine, this returns
+    ``False`` and obligations gain ``register-bank-extensional-v1`` status.
+    """
+    return True
 
 
 def validate_memory_bus_obligation(obligation: dict[str, Any]) -> str | None:

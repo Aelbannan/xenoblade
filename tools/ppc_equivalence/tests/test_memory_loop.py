@@ -134,6 +134,40 @@ class ConstantStrideStoreLoopRecognitionTests(unittest.TestCase):
         )
         self.assertEqual(find_constant_stride_store_loops(program), [])
 
+    def test_empty_on_reversed_addi_then_store(self) -> None:
+        program = [
+            _insn(Opcode.ADDI, (0, 0, 2), address=0),
+            _insn(Opcode.MTSPR, (0, 9), address=4),
+            _insn(Opcode.ADDI, (4, 4, 4), address=8),
+            _insn(Opcode.STW, (3, 4, 0), address=12),
+            _insn(Opcode.BC, (16, 0, 8, 0), address=16),
+        ]
+        self.assertEqual(find_constant_stride_store_loops(program), [])
+
+    def test_empty_on_source_equals_base(self) -> None:
+        program = _store_loop(
+            count=2,
+            store=(Opcode.STW, (4, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        self.assertEqual(find_constant_stride_store_loops(program), [])
+
+    def test_mtctr_zero_is_unsupported_not_summarized(self) -> None:
+        program = _store_loop(
+            count=0,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        self.assertEqual(loops[0].confidence, "unsupported")
+        self.assertEqual(loops[0].trip_count, 0)
+        self.assertIsNone(summarize_constant_stride_store_loop(loops[0]))
+        self.assertTrue(
+            any("wrap" in note or "unsupported" in note for note in loops[0].notes),
+            loops[0].notes,
+        )
+
     def test_partial_when_trip_unknown(self) -> None:
         program = [
             _insn(Opcode.MTSPR, (3, 9), address=0),
@@ -250,6 +284,8 @@ class MemoryLoopDischargeTests(unittest.TestCase):
         state = terminals[0].state
         self.assertEqual(state.gpr[4], base + 12)
         self.assertEqual(state.ctr, 0)
+        self.assertEqual(len(state.memory_writes), 12)  # 3 stores × 4 bytes
+        self.assertEqual(state.memory_touches, state.memory_writes)
         for index in range(3):
             addr = base + index * 4
             word = 0
@@ -459,9 +495,8 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
     def test_different_store_source_regs_never_equivalent(self) -> None:
         """False-eq regression: original stores r3, candidate stores r5.
 
-        Soft for PR0: must not be EQUIVALENT when memory is observed.
-        Without the freeze the engine currently returns EQUIVALENT under the
-        memory-loop summary; strengthen to NOT_EQUIVALENT after repair.
+        After memory-write tracking repair, observing memory must yield
+        NOT_EQUIVALENT (different source GPRs write different values).
         """
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
         from tools.ppc_equivalence.engine import check_equivalence
@@ -489,16 +524,20 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT, result.unsupported)
 
     def test_readonly_trip_artifact_vs_memory_mismatch_never_equivalent(self) -> None:
-        """False-eq regression: artifact trip=2 but symbolic memory word=3.
+        """False-eq regression: conflicting per-side readonly words at one VA.
 
-        Soft for PR0: must not be EQUIVALENT. Artifact bytes must constrain
-        initial memory or the proof must stay inconclusive.
+        Sides must not ``dict.update`` across each other; disagreeing values
+        fail closed.
         """
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
         from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.memory_loop_readonly import (
+            MemoryLoopReadonlyContext,
+            ReadonlyWordEvidence,
+        )
         from tools.ppc_equivalence.result import ProofStatus
 
         table_addr = 0x80201000
@@ -516,8 +555,10 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             parse_observables(["r4", "memory"]),
             timeout_ms=15_000,
         )
-        # Recognizer/artifact claims trip 2 via readonly_words, while a separate
-        # symbolic path could see a different word. Soft gate: never EQUIVALENT.
+        conflict_ctx = MemoryLoopReadonlyContext(
+            original=(ReadonlyWordEvidence(table_addr, 2),),
+            candidate=(ReadonlyWordEvidence(table_addr, 3),),
+        )
         result = check_equivalence(
             program,
             program,
@@ -525,11 +566,13 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             original_hex="00",
             candidate_hex="00",
             max_loop_iterations=2,
-            readonly_words={table_addr: 2},
+            memory_loop_readonly=conflict_ctx,
         )
-        # Even with a consistent map, freeze demotes; after repair, a mismatched
-        # memory/artifact case must remain non-EQUIVALENT.
-        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        self.assertTrue(
+            any("conflict" in item for item in result.unsupported),
+            result.unsupported,
+        )
 
 
 if __name__ == "__main__":

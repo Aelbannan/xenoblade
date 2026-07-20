@@ -3,22 +3,51 @@
 Pattern recognition (``jump_table.find_jump_table_candidates``) is not a proof.
 These helpers build the obligation payloads and SMT constraints required before
 ``readonly-image`` / ``indirect-target-closure`` may authorize ``EQUIVALENT``.
-Until the engine discharges them end-to-end, both features remain in
-``UNSUPPORTED_FOR_EQUIVALENT``.
+
+Independent UNSAT discharge (see ``discharge.py``) proves coverage and no-write;
+the main equivalence solver must not treat those as mismatch constraints alone.
 """
 
 from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal, Sequence
 
 from tools.ppc_equivalence.address_space import Region, RegionKind, rom_image_region
+from tools.ppc_equivalence.discharge import UnsatDischarge
 from tools.ppc_equivalence.ir import Instruction
 from tools.ppc_equivalence.jump_table import JumpTableCandidate, find_jump_table_candidates
 
 if TYPE_CHECKING:
+    from tools.ppc_equivalence.deadline import Deadline
     from tools.ppc_equivalence.jump_table_pairing import JumpTablePairing
+
+
+@dataclass(frozen=True)
+class SideArtifact:
+    """Per-implementation linked image used to hydrate jump-table words."""
+
+    kind: Literal["dol", "elf"]
+    path: Path
+    sha256: str
+
+    def __post_init__(self) -> None:
+        if self.kind not in ("dol", "elf"):
+            raise ValueError(f"unsupported artifact kind {self.kind!r}")
+        if not isinstance(self.path, Path):
+            object.__setattr__(self, "path", Path(self.path))
+        if not isinstance(self.sha256, str) or len(self.sha256) != 64:
+            raise ValueError("artifact sha256 must be a 64-hex digest")
+
+
+@dataclass(frozen=True)
+class JumpTableArtifacts:
+    """Fail-closed per-side artifacts; no shared dol/elf fallback."""
+
+    original: SideArtifact
+    candidate: SideArtifact
 
 
 @dataclass(frozen=True)
@@ -26,8 +55,11 @@ class JumpTableProofContext:
     """Premises for a jump-table EQUIVALENT attempt.
 
     ``branch_pc`` is the ``bctr`` address. Optional ``candidate_branch_pc``
-    covers differently-based candidate images. ``table_base_reg`` / ``index_reg``
-    are constrained as proof premises (base VA and unsigned index ``< len(words)``).
+    covers differently-based candidate images.
+
+    ``table_base_reg`` / ``index_reg`` are descriptive only — they must not be
+    auto-pinned as solver premises. Base and index bounds come from executed
+    code path conditions (or an explicit future Tier-C contract precondition).
 
     When ``candidate_table`` is set, CFG expansion and obligations use per-side
     target lists and ROM images. ``pairing`` binds logical case identities when
@@ -42,6 +74,7 @@ class JumpTableProofContext:
     table_base_reg: int = 3
     candidate_table_base_reg: int | None = None
     index_reg: int = 0
+    artifacts: JumpTableArtifacts | None = None
 
     def candidate_table_words(self) -> JumpTableWords:
         return self.candidate_table if self.candidate_table is not None else self.table
@@ -87,8 +120,7 @@ class JumpTableProofContext:
         return self.candidate_table_words().base != self.table.base
 
 
-REQUIRED_ADDRESS_SPACE_KEYS = frozenset({
-    "kind",
+REQUIRED_SIDE_ROM_KEYS = frozenset({
     "base",
     "end",
     "image_sha256",
@@ -96,7 +128,7 @@ REQUIRED_ADDRESS_SPACE_KEYS = frozenset({
     "source",
 })
 
-REQUIRED_INDIRECT_TARGETS_KEYS = frozenset({
+REQUIRED_SIDE_TARGETS_KEYS = frozenset({
     "branch_pc",
     "targets",
     "coverage",
@@ -146,125 +178,19 @@ class JumpTableWords:
         return rom_image_region(self.base, self.image_bytes, label=label)
 
 
-def build_readonly_image_obligation(
+def _discharge_status_payload(
+    no_write: str | dict[str, Any],
+) -> str | dict[str, Any]:
+    return no_write
+
+
+def _side_rom_body(
     table: JumpTableWords,
     *,
-    no_write_status: str = "pending",
-    algorithm: str = "rom-image-v1",
+    no_write: str | dict[str, Any] = "pending",
+    artifact_sha256: str | None = None,
 ) -> dict[str, Any]:
-    """Obligation block for ``proof_features: [\"readonly-image\"]``."""
-    return _readonly_image_obligation_body(
-        table,
-        no_write_status=no_write_status,
-        algorithm=algorithm,
-    )
-
-
-def build_dual_readonly_image_obligation(
-    original: JumpTableWords,
-    candidate: JumpTableWords | None = None,
-    *,
-    no_write_status: str = "pending",
-    algorithm: str = "rom-image-v1",
-) -> dict[str, Any]:
-    """Primary readonly-image obligation with optional candidate companion."""
-    obligation = _readonly_image_obligation_body(
-        original,
-        no_write_status=no_write_status,
-        algorithm=algorithm,
-    )
-    if candidate is not None and (
-        candidate.base != original.base
-        or candidate.image_sha256 != original.image_sha256
-    ):
-        obligation["candidate"] = _readonly_image_obligation_body(
-            candidate,
-            no_write_status=no_write_status,
-            algorithm=algorithm,
-        )
-    return obligation
-
-
-def build_jump_table_obligations(
-    context: JumpTableProofContext,
-    *,
-    no_write_status: str = "unsat",
-    coverage: str = "unsat-remainder",
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Build ``address_space`` and ``indirect_targets`` for a proof context."""
-    cand_table = context.candidate_table_words()
-    address_space = build_dual_readonly_image_obligation(
-        context.table,
-        cand_table,
-        no_write_status=no_write_status,
-    )
-    artifact_hashes = tuple(
-        dict.fromkeys(table.image_sha256 for table in context.readonly_tables())
-    )
-    if context.pairing is not None:
-        from tools.ppc_equivalence.jump_table_pairing import (
-            indirect_targets_obligations_for_pairing,
-        )
-
-        original_ob, candidate_ob = indirect_targets_obligations_for_pairing(
-            context.pairing,
-            branch_pc_original=context.branch_pc,
-            branch_pc_candidate=(
-                context.candidate_branch_pc
-                if context.candidate_branch_pc is not None
-                else context.branch_pc
-            ),
-            source_original=context.table.source,
-            source_candidate=cand_table.source,
-            artifact_hashes=artifact_hashes,
-            coverage=coverage,
-        )
-        indirect_targets = original_ob
-        if candidate_ob["targets"] != original_ob["targets"]:
-            indirect_targets = {**original_ob, "candidate": candidate_ob}
-        return address_space, indirect_targets
-
-    indirect_targets = build_indirect_targets_obligation(
-        branch_pc=context.branch_pc,
-        targets=tuple(
-            (f"case-{index}", word & 0xFFFFFFFC)
-            for index, word in enumerate(context.table.words)
-        ),
-        source=context.table.source,
-        artifact_hashes=artifact_hashes,
-        coverage=coverage,
-    )
-    if (
-        context.candidate_branch_pc is not None
-        or cand_table.words != context.table.words
-    ):
-        candidate_targets = build_indirect_targets_obligation(
-            branch_pc=(
-                context.candidate_branch_pc
-                if context.candidate_branch_pc is not None
-                else context.branch_pc
-            ),
-            targets=tuple(
-                (f"case-{index}", word & 0xFFFFFFFC)
-                for index, word in enumerate(cand_table.words)
-            ),
-            source=cand_table.source,
-            artifact_hashes=artifact_hashes,
-            coverage=coverage,
-        )
-        if candidate_targets["targets"] != indirect_targets["targets"]:
-            indirect_targets = {**indirect_targets, "candidate": candidate_targets}
-    return address_space, indirect_targets
-
-
-def _readonly_image_obligation_body(
-    table: JumpTableWords,
-    *,
-    no_write_status: str,
-    algorithm: str,
-) -> dict[str, Any]:
-    return {
-        "kind": RegionKind.ROM_IMAGE.value,
+    body: dict[str, Any] = {
         "base": table.base,
         "end": table.end,
         "image_sha256": table.image_sha256,
@@ -273,9 +199,76 @@ def _readonly_image_obligation_body(
         "entry_size": table.entry_size,
         "source": table.source,
         "artifact_path": table.artifact_path,
-        "no_write": no_write_status,
-        "algorithm": algorithm,
+        "no_write": _discharge_status_payload(no_write),
     }
+    if artifact_sha256 is not None:
+        body["artifact_sha256"] = artifact_sha256
+    return body
+
+
+def build_readonly_image_obligation(
+    table: JumpTableWords,
+    *,
+    no_write_status: str | dict[str, Any] = "pending",
+    algorithm: str = "rom-image-v2",
+    artifact_sha256: str | None = None,
+    status: str = "pending",
+) -> dict[str, Any]:
+    """Obligation block for ``proof_features: [\"readonly-image\"]`` (schema v2)."""
+    return {
+        "schema_version": 2,
+        "algorithm": algorithm,
+        "status": status,
+        "kind": RegionKind.ROM_IMAGE.value,
+        "original": _side_rom_body(
+            table,
+            no_write=no_write_status,
+            artifact_sha256=artifact_sha256,
+        ),
+        # Flat mirrors for identity/cache consumers that still read top-level keys.
+        "base": table.base,
+        "end": table.end,
+        "image_sha256": table.image_sha256,
+        "byte_count": table.byte_count,
+        "source": table.source,
+        "no_write": no_write_status if isinstance(no_write_status, str) else no_write_status.get("result", "pending"),
+    }
+
+
+def build_dual_readonly_image_obligation(
+    original: JumpTableWords,
+    candidate: JumpTableWords | None = None,
+    *,
+    no_write_status: str | dict[str, Any] = "pending",
+    candidate_no_write_status: str | dict[str, Any] | None = None,
+    algorithm: str = "rom-image-v2",
+    original_artifact_sha256: str | None = None,
+    candidate_artifact_sha256: str | None = None,
+    status: str = "pending",
+) -> dict[str, Any]:
+    """Primary readonly-image obligation with per-side original/candidate bodies."""
+    cand_no_write = (
+        no_write_status if candidate_no_write_status is None else candidate_no_write_status
+    )
+    obligation = build_readonly_image_obligation(
+        original,
+        no_write_status=no_write_status,
+        algorithm=algorithm,
+        artifact_sha256=original_artifact_sha256,
+        status=status,
+    )
+    if candidate is not None and (
+        candidate.base != original.base
+        or candidate.image_sha256 != original.image_sha256
+    ):
+        obligation["candidate"] = _side_rom_body(
+            candidate,
+            no_write=cand_no_write,
+            artifact_sha256=candidate_artifact_sha256,
+        )
+    else:
+        obligation["candidate"] = obligation["original"]
+    return obligation
 
 
 def build_indirect_targets_obligation(
@@ -284,8 +277,9 @@ def build_indirect_targets_obligation(
     targets: Sequence[tuple[str, int]],
     source: str,
     artifact_hashes: Sequence[str],
-    coverage: str = "pending",
-    algorithm: str = "enumerated-addr32-v1",
+    coverage: str | dict[str, Any] = "pending",
+    algorithm: str = "enumerated-addr32-v2",
+    status: str = "pending",
 ) -> dict[str, Any]:
     """Obligation block for ``proof_features: [\"indirect-target-closure\"]``.
 
@@ -302,18 +296,233 @@ def build_indirect_targets_obligation(
         if pc & 3:
             raise ValueError(f"target pc {pc:#x} is not word-aligned")
         resolved.append({"identity": identity, "pc": pc})
-    return {
+    side = {
         "branch_pc": branch_pc,
         "targets": resolved,
         "coverage": coverage,
         "source": source,
         "artifact_hashes": list(artifact_hashes),
+    }
+    coverage_flat = coverage if isinstance(coverage, str) else coverage.get("result", "pending")
+    return {
+        "schema_version": 2,
         "algorithm": algorithm,
+        "status": status,
+        "original": side,
+        # Flat mirrors for identity/cache consumers.
+        "branch_pc": branch_pc,
+        "targets": resolved,
+        "coverage": coverage_flat,
+        "source": source,
+        "artifact_hashes": list(artifact_hashes),
     }
 
 
+def build_jump_table_obligations(
+    context: JumpTableProofContext,
+    *,
+    no_write_status: str | dict[str, Any] = "pending",
+    candidate_no_write_status: str | dict[str, Any] | None = None,
+    coverage: str | dict[str, Any] = "pending",
+    candidate_coverage: str | dict[str, Any] | None = None,
+    status: str = "pending",
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build ``address_space`` and ``indirect_targets`` for a proof context."""
+    cand_table = context.candidate_table_words()
+    orig_art = None
+    cand_art = None
+    if context.artifacts is not None:
+        orig_art = context.artifacts.original.sha256
+        cand_art = context.artifacts.candidate.sha256
+    address_space = build_dual_readonly_image_obligation(
+        context.table,
+        cand_table,
+        no_write_status=no_write_status,
+        candidate_no_write_status=candidate_no_write_status,
+        original_artifact_sha256=orig_art,
+        candidate_artifact_sha256=cand_art,
+        status=status,
+    )
+    artifact_hashes = tuple(
+        dict.fromkeys(table.image_sha256 for table in context.readonly_tables())
+    )
+    cand_cov = coverage if candidate_coverage is None else candidate_coverage
+    branch_candidate = (
+        context.candidate_branch_pc
+        if context.candidate_branch_pc is not None
+        else context.branch_pc
+    )
+    if context.pairing is not None:
+        from tools.ppc_equivalence.jump_table_pairing import (
+            indirect_targets_obligations_for_pairing,
+        )
+
+        original_ob, candidate_ob = indirect_targets_obligations_for_pairing(
+            context.pairing,
+            branch_pc_original=context.branch_pc,
+            branch_pc_candidate=branch_candidate,
+            source_original=context.table.source,
+            source_candidate=cand_table.source,
+            artifact_hashes=artifact_hashes,
+            coverage=coverage if isinstance(coverage, str) else "pending",
+        )
+        # Lift into schema v2 wrapper with discharge digests when provided.
+        indirect_targets = build_indirect_targets_obligation(
+            branch_pc=context.branch_pc,
+            targets=tuple(
+                (entry["identity"], entry["pc"]) for entry in original_ob["targets"]
+            ),
+            source=context.table.source,
+            artifact_hashes=artifact_hashes,
+            coverage=coverage,
+            status=status,
+        )
+        candidate_side = build_indirect_targets_obligation(
+            branch_pc=branch_candidate,
+            targets=tuple(
+                (entry["identity"], entry["pc"]) for entry in candidate_ob["targets"]
+            ),
+            source=cand_table.source,
+            artifact_hashes=artifact_hashes,
+            coverage=cand_cov,
+            status=status,
+        )
+        indirect_targets["candidate"] = candidate_side["original"]
+        return address_space, indirect_targets
+
+    indirect_targets = build_indirect_targets_obligation(
+        branch_pc=context.branch_pc,
+        targets=tuple(
+            (f"case-{index}", word & 0xFFFFFFFC)
+            for index, word in enumerate(context.table.words)
+        ),
+        source=context.table.source,
+        artifact_hashes=artifact_hashes,
+        coverage=coverage,
+        status=status,
+    )
+    if (
+        context.candidate_branch_pc is not None
+        or cand_table.words != context.table.words
+    ):
+        candidate_targets = build_indirect_targets_obligation(
+            branch_pc=branch_candidate,
+            targets=tuple(
+                (f"case-{index}", word & 0xFFFFFFFC)
+                for index, word in enumerate(cand_table.words)
+            ),
+            source=cand_table.source,
+            artifact_hashes=artifact_hashes,
+            coverage=cand_cov,
+            status=status,
+        )
+        indirect_targets["candidate"] = candidate_targets["original"]
+    else:
+        indirect_targets["candidate"] = indirect_targets["original"]
+    return address_space, indirect_targets
+
+
+def _validate_side_rom(side: Any, *, label: str) -> str | None:
+    if not isinstance(side, dict):
+        return f"{label} must be an object"
+    missing = sorted(REQUIRED_SIDE_ROM_KEYS - side.keys())
+    if missing:
+        return f"{label} missing " + ", ".join(missing)
+    for key in ("base", "end", "byte_count"):
+        value = side.get(key)
+        if not isinstance(value, int) or value < 0:
+            return f"{label}.{key} must be a non-negative int"
+    digest = side.get("image_sha256")
+    if not isinstance(digest, str) or len(digest) != 64:
+        return f"{label}.image_sha256 must be a 64-hex digest"
+    if side["end"] < side["base"]:
+        return f"{label}.end < base"
+    if side["byte_count"] != side["end"] - side["base"] + 1:
+        return f"{label}.byte_count does not match [base, end]"
+    no_write = side.get("no_write")
+    if no_write is None:
+        return f"{label}.no_write is required"
+    if isinstance(no_write, str):
+        if not no_write:
+            return f"{label}.no_write must be a nonempty string"
+    elif isinstance(no_write, dict):
+        result = no_write.get("result")
+        query = no_write.get("query_sha256")
+        if not isinstance(result, str) or not result:
+            return f"{label}.no_write.result must be a nonempty string"
+        if not isinstance(query, str) or len(query) != 64:
+            return f"{label}.no_write.query_sha256 must be a 64-hex digest"
+    else:
+        return f"{label}.no_write must be a string or discharge object"
+    return None
+
+
+def _validate_side_targets(side: Any, *, label: str) -> str | None:
+    if not isinstance(side, dict):
+        return f"{label} must be an object"
+    missing = sorted(REQUIRED_SIDE_TARGETS_KEYS - side.keys())
+    if missing:
+        return f"{label} missing " + ", ".join(missing)
+    targets = side.get("targets")
+    if not isinstance(targets, list) or not targets:
+        return f"{label}.targets must be a nonempty list"
+    seen: set[str] = set()
+    for index, entry in enumerate(targets):
+        if not isinstance(entry, dict):
+            return f"{label}.targets[{index}] must be an object"
+        identity = entry.get("identity")
+        pc = entry.get("pc")
+        if not isinstance(identity, str) or not identity:
+            return f"{label}.targets[{index}].identity must be a nonempty string"
+        if identity in seen:
+            return f"duplicate logical case identity {identity!r}"
+        seen.add(identity)
+        if not isinstance(pc, int) or pc < 0 or pc > 0xFFFFFFFF or (pc & 3):
+            return f"{label}.targets[{index}].pc must be a word-aligned u32"
+    hashes = side.get("artifact_hashes")
+    if not isinstance(hashes, list) or not all(isinstance(item, str) and item for item in hashes):
+        return f"{label}.artifact_hashes must be a nonempty string list"
+    if not hashes:
+        return f"{label}.artifact_hashes must be a nonempty string list"
+    coverage = side.get("coverage")
+    if isinstance(coverage, str):
+        if not coverage:
+            return f"{label}.coverage must be a nonempty string"
+    elif isinstance(coverage, dict):
+        result = coverage.get("result")
+        query = coverage.get("query_sha256")
+        if not isinstance(result, str) or not result:
+            return f"{label}.coverage.result must be a nonempty string"
+        if not isinstance(query, str) or len(query) != 64:
+            return f"{label}.coverage.query_sha256 must be a 64-hex digest"
+    else:
+        return f"{label}.coverage must be a string or discharge object"
+    return None
+
+
 def validate_readonly_image_obligation(obligation: dict[str, Any]) -> str | None:
-    missing = sorted(REQUIRED_ADDRESS_SPACE_KEYS - obligation.keys())
+    schema = obligation.get("schema_version", 1)
+    if schema == 2:
+        if obligation.get("kind") != RegionKind.ROM_IMAGE.value:
+            return "address_space.kind must be rom-image"
+        original = obligation.get("original")
+        reason = _validate_side_rom(original, label="address_space.original")
+        if reason is not None:
+            return reason
+        if "candidate" in obligation:
+            reason = _validate_side_rom(
+                obligation["candidate"], label="address_space.candidate",
+            )
+            if reason is not None:
+                return reason
+        return None
+    # Legacy flat schema (v1).
+    missing = sorted(
+        frozenset({
+            "kind", "base", "end", "image_sha256", "byte_count", "source",
+        })
+        - obligation.keys()
+    )
     if missing:
         return "address_space missing " + ", ".join(missing)
     if obligation.get("kind") != RegionKind.ROM_IMAGE.value:
@@ -333,34 +542,29 @@ def validate_readonly_image_obligation(obligation: dict[str, Any]) -> str | None
 
 
 def validate_indirect_targets_obligation(obligation: dict[str, Any]) -> str | None:
-    missing = sorted(REQUIRED_INDIRECT_TARGETS_KEYS - obligation.keys())
+    schema = obligation.get("schema_version", 1)
+    if schema == 2:
+        original = obligation.get("original")
+        reason = _validate_side_targets(original, label="indirect_targets.original")
+        if reason is not None:
+            return reason
+        if "candidate" in obligation:
+            reason = _validate_side_targets(
+                obligation["candidate"], label="indirect_targets.candidate",
+            )
+            if reason is not None:
+                return reason
+        return None
+    # Legacy flat schema (v1).
+    missing = sorted(
+        frozenset({
+            "branch_pc", "targets", "coverage", "source", "artifact_hashes",
+        })
+        - obligation.keys()
+    )
     if missing:
         return "indirect_targets missing " + ", ".join(missing)
-    targets = obligation.get("targets")
-    if not isinstance(targets, list) or not targets:
-        return "indirect_targets.targets must be a nonempty list"
-    seen: set[str] = set()
-    for index, entry in enumerate(targets):
-        if not isinstance(entry, dict):
-            return f"indirect_targets.targets[{index}] must be an object"
-        identity = entry.get("identity")
-        pc = entry.get("pc")
-        if not isinstance(identity, str) or not identity:
-            return f"indirect_targets.targets[{index}].identity must be a nonempty string"
-        if identity in seen:
-            return f"duplicate logical case identity {identity!r}"
-        seen.add(identity)
-        if not isinstance(pc, int) or pc < 0 or pc > 0xFFFFFFFF or (pc & 3):
-            return f"indirect_targets.targets[{index}].pc must be a word-aligned u32"
-    hashes = obligation.get("artifact_hashes")
-    if not isinstance(hashes, list) or not all(isinstance(item, str) and item for item in hashes):
-        return "indirect_targets.artifact_hashes must be a nonempty string list"
-    if not hashes:
-        return "indirect_targets.artifact_hashes must be a nonempty string list"
-    coverage = obligation.get("coverage")
-    if not isinstance(coverage, str) or not coverage:
-        return "indirect_targets.coverage must be a nonempty string"
-    return None
+    return _validate_side_targets(obligation, label="indirect_targets")
 
 
 def rom_image_byte_constraints(initial_memory: Any, table: JumpTableWords, ops: Any) -> list[Any]:
@@ -381,7 +585,11 @@ def rom_image_no_write_constraints(
     table: JumpTableWords,
     ops: Any,
 ) -> list[Any]:
-    """Require every terminal memory to preserve ROM image bytes (alias-safe)."""
+    """Legacy final-value preservation constraints (alias-safe).
+
+    Prefer :func:`write_hits_table_conditions` + independent discharge for
+    sound no-write proofs; final-value equality alone misses store-same-value.
+    """
     z3 = ops.z3
     constraints: list[Any] = []
     image = table.image_bytes
@@ -396,13 +604,49 @@ def rom_image_no_write_constraints(
     return constraints
 
 
+def write_hits_table_conditions(
+    terminals: Sequence[Any],
+    table: JumpTableWords,
+    ops: Any,
+) -> list[Any]:
+    """Conditions where a recorded symbolic write byte address hits the table.
+
+    Uses ``memory_writes`` tracking — not final memory values — so store-same-
+    value and store-restore into ROM remain detectable.
+    """
+    base = ops.const(table.base & 0xFFFFFFFF)
+    end = ops.const(table.end & 0xFFFFFFFF)
+    bad: list[Any] = []
+    for terminal in terminals:
+        writes = getattr(terminal.state, "memory_writes", ()) or ()
+        for write_addr in writes:
+            hits = ops.land(
+                ops.lnot(ops.unsigned_lt(write_addr, base)),
+                ops.lnot(ops.unsigned_lt(end, write_addr)),
+            )
+            bad.append(ops.land(terminal.condition, hits))
+    return bad
+
+
+def remainder_closure_conditions(terminals: Sequence[Any]) -> list[Any]:
+    """Collect path conditions for explicit ``indirect-branch`` remainder exits."""
+    return [
+        terminal.condition
+        for terminal in terminals
+        if getattr(terminal, "exit_kind", None) == "indirect-branch"
+    ]
+
+
 def indirect_target_closure_constraints(
     terminals: Sequence[Any],
     *,
     target_pcs: Sequence[int],
     ops: Any,
 ) -> list[Any]:
-    """Under indirect-branch exits, require exit_target ∈ enumerated PCs."""
+    """Legacy membership constraints under indirect-branch exits.
+
+    Prefer remainder retention + :func:`remainder_closure_conditions` discharge.
+    """
     if not target_pcs:
         raise ValueError("target_pcs must be nonempty")
     z3 = ops.z3
@@ -416,6 +660,109 @@ def indirect_target_closure_constraints(
         membership = z3.Or(*[ops.eq(terminal.exit_target, member) for member in members])
         constraints.append(z3.Implies(terminal.condition, membership))
     return constraints
+
+
+@dataclass(frozen=True)
+class JumpTableDischargeBundle:
+    """Per-side closure + no-write discharge results for obligation digests."""
+
+    coverage_original: UnsatDischarge
+    coverage_candidate: UnsatDischarge
+    no_write_original: UnsatDischarge
+    no_write_candidate: UnsatDischarge
+
+    def all_unsat(self) -> bool:
+        return all(
+            item.status == "unsat"
+            for item in (
+                self.coverage_original,
+                self.coverage_candidate,
+                self.no_write_original,
+                self.no_write_candidate,
+            )
+        )
+
+    def failure_reason(self) -> str | None:
+        mapping = (
+            ("original coverage", self.coverage_original),
+            ("candidate coverage", self.coverage_candidate),
+            ("original no-write", self.no_write_original),
+            ("candidate no-write", self.no_write_candidate),
+        )
+        for label, item in mapping:
+            if item.status != "unsat":
+                return f"jump-table {label} discharge {item.status}"
+        return None
+
+
+def discharge_jump_table_obligations(
+    context: JumpTableProofContext,
+    *,
+    original_terminals: Sequence[Any],
+    candidate_terminals: Sequence[Any],
+    premises: Sequence[Any],
+    ops: Any,
+    deadline: Deadline,
+) -> JumpTableDischargeBundle:
+    """Independent coverage + no-write UNSAT queries (no mismatch formula)."""
+    from tools.ppc_equivalence.discharge import discharge_bad_conditions
+
+    z3 = ops.z3
+    coverage_original = discharge_bad_conditions(
+        premises=premises,
+        bad_conditions=remainder_closure_conditions(original_terminals),
+        deadline=deadline,
+        algorithm="indirect-target-closure-v2",
+        z3_module=z3,
+    )
+    coverage_candidate = discharge_bad_conditions(
+        premises=premises,
+        bad_conditions=remainder_closure_conditions(candidate_terminals),
+        deadline=deadline,
+        algorithm="indirect-target-closure-v2",
+        z3_module=z3,
+    )
+    no_write_original = discharge_bad_conditions(
+        premises=premises,
+        bad_conditions=write_hits_table_conditions(
+            original_terminals, context.table, ops,
+        ),
+        deadline=deadline,
+        algorithm="rom-image-no-write-v2",
+        z3_module=z3,
+    )
+    cand_table = context.candidate_table_words()
+    no_write_candidate = discharge_bad_conditions(
+        premises=premises,
+        bad_conditions=write_hits_table_conditions(
+            candidate_terminals, cand_table, ops,
+        ),
+        deadline=deadline,
+        algorithm="rom-image-no-write-v2",
+        z3_module=z3,
+    )
+    return JumpTableDischargeBundle(
+        coverage_original=coverage_original,
+        coverage_candidate=coverage_candidate,
+        no_write_original=no_write_original,
+        no_write_candidate=no_write_candidate,
+    )
+
+
+def obligations_from_discharge(
+    context: JumpTableProofContext,
+    bundle: JumpTableDischargeBundle,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build schema-v2 obligations carrying discharge digests."""
+    status = "discharged" if bundle.all_unsat() else "failed"
+    return build_jump_table_obligations(
+        context,
+        no_write_status=bundle.no_write_original.to_obligation_digest(),
+        candidate_no_write_status=bundle.no_write_candidate.to_obligation_digest(),
+        coverage=bundle.coverage_original.to_obligation_digest(),
+        candidate_coverage=bundle.coverage_candidate.to_obligation_digest(),
+        status=status,
+    )
 
 
 def jump_table_gate_reason(
@@ -449,3 +796,18 @@ def summarize_candidates(candidates: Sequence[JumpTableCandidate]) -> list[dict[
         }
         for item in candidates
     ]
+
+
+def side_artifact_from_path(path: Path | str, *, kind: Literal["dol", "elf"] | None = None) -> SideArtifact:
+    """Build a ``SideArtifact`` by hashing file bytes."""
+    resolved = Path(path)
+    data = resolved.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    inferred: Literal["dol", "elf"]
+    if kind is not None:
+        inferred = kind
+    elif resolved.suffix.lower() == ".dol":
+        inferred = "dol"
+    else:
+        inferred = "elf"
+    return SideArtifact(kind=inferred, path=resolved, sha256=digest)

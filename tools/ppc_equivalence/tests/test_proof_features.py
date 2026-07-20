@@ -51,36 +51,73 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("object", reason)
 
     def test_supported_obligations_validate_structurally(self) -> None:
+        from tools.ppc_equivalence.jump_table_obligations import (
+            JumpTableWords,
+            build_indirect_targets_obligation,
+            build_readonly_image_obligation,
+        )
+
+        table = JumpTableWords(
+            base=0x80010000,
+            words=(0x80020000,),
+            source="test",
+        )
+        address_space = build_readonly_image_obligation(table, no_write_status="pending")
+        indirect_targets = build_indirect_targets_obligation(
+            branch_pc=0x80001000,
+            targets=(("case-0", 0x80020000),),
+            source="test",
+            artifact_hashes=(table.image_sha256,),
+            coverage="pending",
+        )
         payload = {
             "proof_features": ["readonly-image", "indirect-target-closure"],
-            "address_space": {},
-            "indirect_targets": {},
+            "address_space": address_space,
+            "indirect_targets": indirect_targets,
         }
         self.assertIsNone(validate_proof_features(payload))
 
-    def test_unsupported_for_equivalent_is_six_feature_freeze(self) -> None:
+    def test_unsupported_for_equivalent_is_four_feature_freeze(self) -> None:
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
             frozenset({
-                "readonly-image",
-                "indirect-target-closure",
                 "affine-loop-summary",
                 "relational-induction",
                 "memory-loop-summary",
                 "memory-bus",
             }),
         )
+        self.assertNotIn("readonly-image", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("indirect-target-closure", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_supported_features_can_stay_equivalent(self) -> None:
-        # PR0 freeze: expanded features demote EQUIVALENT → INCONCLUSIVE_UNSUPPORTED.
+        # PR3: jump-table features may authorize EQUIVALENT when obligations
+        # validate (coverage/no-write digests optional as string status).
+        from tools.ppc_equivalence.jump_table_obligations import (
+            JumpTableWords,
+            build_indirect_targets_obligation,
+            build_readonly_image_obligation,
+        )
+
+        table = JumpTableWords(
+            base=0x80010000,
+            words=(0x80020000,),
+            source="test",
+        )
         result = ProofResult(
             status=ProofStatus.EQUIVALENT,
             proof_features=["readonly-image", "indirect-target-closure"],
-            address_space={},
-            indirect_targets={},
+            address_space=build_readonly_image_obligation(table, no_write_status="unsat"),
+            indirect_targets=build_indirect_targets_obligation(
+                branch_pc=0x80001000,
+                targets=(("case-0", 0x80020000),),
+                source="test",
+                artifact_hashes=(table.image_sha256,),
+                coverage="unsat",
+            ),
         )
         gated = enforce_equivalent_proof_features(result)
-        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
         self.assertEqual(
             list(gated.proof_features),
             ["readonly-image", "indirect-target-closure"],
@@ -137,11 +174,18 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
         self.assertIn("memory-bus", KNOWN_PROOF_FEATURES)
 
-    def test_pr0_freeze_blocks_all_expanded_features(self) -> None:
-        """PR0: no expanded feature may authorize EQUIVALENT."""
+    def test_pr0_freeze_blocks_remaining_expanded_features(self) -> None:
+        """PR0: loop/memory-bus features remain blocked; jump-table cleared in PR3."""
+        self.assertTrue(UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertTrue(UNSUPPORTED_FOR_EQUIVALENT.issubset(KNOWN_PROOF_FEATURES))
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
-            frozenset(KNOWN_PROOF_FEATURES),
+            frozenset({
+                "affine-loop-summary",
+                "relational-induction",
+                "memory-loop-summary",
+                "memory-bus",
+            }),
         )
 
 

@@ -673,7 +673,13 @@ def cmd_differential(args: argparse.Namespace) -> int:
             raise ValueError(f"no fixtures matched id {args.id!r}")
 
     failures: list[dict[str, Any]] = []
+    skipped = 0
     for case in cases:
+        # SoftFloat still fail-closes on Broadway single-FMA midpoint residues;
+        # those fixtures keep the tag and are exercised by unit tests instead.
+        if "concrete-oracle-inconclusive" in case.tags:
+            skipped += 1
+            continue
         mismatches = compare_fixture(case)
         if mismatches:
             failures.append({"id": case.id, "mismatches": mismatches})
@@ -681,7 +687,8 @@ def cmd_differential(args: argparse.Namespace) -> int:
     header_stale = DEFAULT_HEADER.read_text(encoding="utf-8") != generate_header() if DEFAULT_HEADER.is_file() else True
     payload = {
         "format": 1,
-        "checked": len(cases),
+        "checked": len(cases) - skipped,
+        "skipped_oracle_inconclusive": skipped,
         "failed": len(failures),
         "failures": failures,
         "header_stale": header_stale,
@@ -715,7 +722,8 @@ def cmd_differential(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
-        print(f"concrete fixtures: {len(cases) - len(failures)}/{len(cases)} passed")
+        print(f"concrete fixtures: {len(cases) - skipped - len(failures)}/{len(cases) - skipped} passed"
+              + (f" ({skipped} oracle-inconclusive skipped)" if skipped else ""))
         for failure in failures:
             print(f"  FAIL {failure['id']}: {', '.join(failure['mismatches'])}")
         if header_stale:

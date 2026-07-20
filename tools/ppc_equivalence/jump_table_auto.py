@@ -33,7 +33,12 @@ from tools.ppc_equivalence.jump_table_image import (
     hydrate_jump_table,
     jump_table_words_from_image,
 )
-from tools.ppc_equivalence.jump_table_obligations import JumpTableProofContext
+from tools.ppc_equivalence.jump_table_obligations import (
+    JumpTableArtifacts,
+    JumpTableProofContext,
+    SideArtifact,
+    side_artifact_from_path,
+)
 from tools.ppc_equivalence.jump_table_pairing import JumpTablePairingError, pair_jump_table_cases
 
 _DEFAULT_BASE_LOOKBACK_INSNS = 256
@@ -354,6 +359,9 @@ def try_auto_jump_table_context(
     original: Sequence[Instruction],
     candidate: Sequence[Instruction],
     *,
+    artifacts: JumpTableArtifacts | None = None,
+    original_artifact: SideArtifact | None = None,
+    candidate_artifact: SideArtifact | None = None,
     dol_path: Path | str | None = None,
     elf_path: Path | str | None = None,
     original_dol_path: Path | str | None = None,
@@ -365,20 +373,53 @@ def try_auto_jump_table_context(
 ) -> JumpTableProofContext | None:
     """Build a proof context when both sides match and table images hydrate.
 
+    Prefer ``artifacts`` / per-side ``original_artifact`` + ``candidate_artifact``.
+    Legacy ``dol_path`` / ``elf_path`` kwargs remain for unit tests but must not
+    be used as a shared production fallback when distinct side images exist.
+
     Fail-closed: returns ``None`` rather than raising on incomplete evidence.
     """
-    left_dol = Path(original_dol_path) if original_dol_path is not None else (
-        Path(dol_path) if dol_path is not None else None
-    )
-    left_elf = Path(original_elf_path) if original_elf_path is not None else (
-        Path(elf_path) if elf_path is not None else None
-    )
-    right_dol = Path(candidate_dol_path) if candidate_dol_path is not None else (
-        Path(dol_path) if dol_path is not None else None
-    )
-    right_elf = Path(candidate_elf_path) if candidate_elf_path is not None else (
-        Path(elf_path) if elf_path is not None else None
-    )
+    resolved_artifacts = artifacts
+    if resolved_artifacts is None and original_artifact is not None and candidate_artifact is not None:
+        resolved_artifacts = JumpTableArtifacts(
+            original=original_artifact,
+            candidate=candidate_artifact,
+        )
+
+    if resolved_artifacts is not None:
+        left_dol = (
+            resolved_artifacts.original.path
+            if resolved_artifacts.original.kind == "dol"
+            else None
+        )
+        left_elf = (
+            resolved_artifacts.original.path
+            if resolved_artifacts.original.kind == "elf"
+            else None
+        )
+        right_dol = (
+            resolved_artifacts.candidate.path
+            if resolved_artifacts.candidate.kind == "dol"
+            else None
+        )
+        right_elf = (
+            resolved_artifacts.candidate.path
+            if resolved_artifacts.candidate.kind == "elf"
+            else None
+        )
+    else:
+        left_dol = Path(original_dol_path) if original_dol_path is not None else (
+            Path(dol_path) if dol_path is not None else None
+        )
+        left_elf = Path(original_elf_path) if original_elf_path is not None else (
+            Path(elf_path) if elf_path is not None else None
+        )
+        right_dol = Path(candidate_dol_path) if candidate_dol_path is not None else (
+            Path(dol_path) if dol_path is not None else None
+        )
+        right_elf = Path(candidate_elf_path) if candidate_elf_path is not None else (
+            Path(elf_path) if elf_path is not None else None
+        )
     if (
         left_dol is None and left_elf is None
         and right_dol is None and right_elf is None
@@ -471,6 +512,29 @@ def try_auto_jump_table_context(
         if base_va == cand_va and orig_image.words == cand_image.words
         else jump_table_words_from_image(cand_image)
     )
+    if resolved_artifacts is None:
+        # Materialize per-side artifacts when callers still pass path kwargs.
+        try:
+            if left_elf is not None:
+                left_side = side_artifact_from_path(left_elf, kind="elf")
+            elif left_dol is not None:
+                left_side = side_artifact_from_path(left_dol, kind="dol")
+            else:
+                left_side = None
+            if right_elf is not None:
+                right_side = side_artifact_from_path(right_elf, kind="elf")
+            elif right_dol is not None:
+                right_side = side_artifact_from_path(right_dol, kind="dol")
+            else:
+                right_side = None
+            if left_side is not None and right_side is not None:
+                resolved_artifacts = JumpTableArtifacts(
+                    original=left_side,
+                    candidate=right_side,
+                )
+        except OSError:
+            resolved_artifacts = None
+
     return JumpTableProofContext(
         table=orig_table,
         candidate_table=None if cand_table is orig_table else cand_table,
@@ -484,4 +548,5 @@ def try_auto_jump_table_context(
             right_base_reg if right_base_reg is not None and right_base_reg != base_reg else None
         ),
         index_reg=left_c.index_reg,
+        artifacts=resolved_artifacts,
     )

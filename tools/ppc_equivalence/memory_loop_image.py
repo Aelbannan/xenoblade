@@ -73,18 +73,13 @@ def try_build_memory_loop_readonly_words(
 def merge_memory_loop_readonly_words(
     *maps: Mapping[int, int] | None,
 ) -> dict[int, int] | None:
-    """Merge side-specific readonly maps; return ``None`` when all inputs are empty."""
-    merged: dict[int, int] = {}
-    for mapping in maps:
-        if not mapping:
-            continue
-        merged.update(
-            {
-                int(key) & 0xFFFFFFFF: int(value) & 0xFFFFFFFF
-                for key, value in mapping.items()
-            },
-        )
-    return merged or None
+    """Merge maps for one side only; conflicting VAs raise ``ValueError``.
+
+    Cross-side merges are forbidden — use ``MemoryLoopReadonlyContext`` instead.
+    """
+    from tools.ppc_equivalence.memory_loop_readonly import merge_side_readonly_words
+
+    return merge_side_readonly_words(*maps)
 
 
 def _load_u32_word(

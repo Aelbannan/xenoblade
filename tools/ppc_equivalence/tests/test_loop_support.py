@@ -83,7 +83,15 @@ class BoundedLoopSymbolicTests(unittest.TestCase):
             program, program, contract,
             original_hex="00", candidate_hex="00",
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+        # PR0 freeze: closed-form affine discharge attaches affine-loop-summary
+        # and demotes EQUIVALENT until that feature is re-enabled.
+        from tools.ppc_equivalence.proof_features import UNSUPPORTED_FOR_EQUIVALENT
+
+        if "affine-loop-summary" in UNSUPPORTED_FOR_EQUIVALENT:
+            self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+            self.assertIn("affine-loop-summary", result.proof_features)
+        else:
+            self.assertEqual(result.status, ProofStatus.EQUIVALENT)
         self.assertEqual(result.limits.get("max_loop_iterations"), 256)
 
     def test_different_loop_bodies_not_equivalent(self) -> None:

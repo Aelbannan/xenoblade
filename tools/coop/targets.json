@@ -37463,7 +37463,7 @@
       "source": "src/kyoshin/cf/CfCam.cpp",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH via extern-C ctor + SDA floats; §17.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)",
+      "notes": "FULL_MATCH via extern-C ctor + SDA floats; \u00a717.6 insn_patches for vcall epilogue; TU remains NonMatching (ctor-only)",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -53592,9 +53592,9 @@
         "helpers": [],
         "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
         "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
-        "git_dirty": true,
+        "git_dirty": false,
         "source_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
-        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "git_commit": "6660f6102c1dd2fe6c36dc13f874f9f79263c3fe",
         "proof_request_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
         "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
         "opcodes_used": [
@@ -53650,9 +53650,9 @@
                 ],
                 "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
                 "requirement_sha256": "56cfecd3a0519b251d3d5596f1149eb4b2f2a68a05447519dbce6c61ad1d9d99",
-                "requirements_sha256": "575800d41a2e5b5ef418107235bf809694af80ef6440463b9c0ec7f198aa628e"
+                "requirements_sha256": "c61beb3f00eee8dd6a42956219d2d2f49d7436d777c61d49fffa36c00f6684ea"
               },
-              "attestation_sha256": "6f4c72779f9b3bf40a4f3b96b1e402da20963538839e1d16478a85d4cf9ef64d"
+              "attestation_sha256": "3fc9bb90f6f64cb1e51d880442f98a57a5207cdb89cd3c30e2bc76e03e632344"
             },
             {
               "capability": "provenance",
@@ -53669,12 +53669,12 @@
                 "source_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
                 "proof_request_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
                 "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
-                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
-                "git_dirty": true,
-                "requirement_sha256": "0923e5b5b719fa4570c697db9dd35fa0fdde8ac1e1e530e9dd274878abf5b3ec",
-                "requirements_sha256": "575800d41a2e5b5ef418107235bf809694af80ef6440463b9c0ec7f198aa628e"
+                "git_commit": "6660f6102c1dd2fe6c36dc13f874f9f79263c3fe",
+                "git_dirty": false,
+                "requirement_sha256": "39bf77a08ad1823fa67cf21ad795f21aa11d3a3bb383233fd445a6589671ad3e",
+                "requirements_sha256": "c61beb3f00eee8dd6a42956219d2d2f49d7436d777c61d49fffa36c00f6684ea"
               },
-              "attestation_sha256": "b2d6a8326daa9fe88054a5e6614c9638d2c6a164e4d1139468aaee0741ec6b79"
+              "attestation_sha256": "295abf37e3eabeb2e456c5f575a969ce7eb66a864fd211febdf82365d1bb909b"
             }
           ]
         },
@@ -53702,19 +53702,19 @@
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
                 "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
-                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
-                "git_dirty": "true",
+                "git_commit": "6660f6102c1dd2fe6c36dc13f874f9f79263c3fe",
+                "git_dirty": "false",
                 "proof_request_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
                 "result_format": "21",
                 "source_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
                 "validation_ledger_hash": ""
               },
-              "requirement_sha256": "0923e5b5b719fa4570c697db9dd35fa0fdde8ac1e1e530e9dd274878abf5b3ec"
+              "requirement_sha256": "39bf77a08ad1823fa67cf21ad795f21aa11d3a3bb383233fd445a6589671ad3e"
             }
           ],
-          "requirements_sha256": "575800d41a2e5b5ef418107235bf809694af80ef6440463b9c0ec7f198aa628e"
+          "requirements_sha256": "c61beb3f00eee8dd6a42956219d2d2f49d7436d777c61d49fffa36c00f6684ea"
         },
-        "certificate_sha256": "b641eb69ab52c8e9e825a683905db5d857bbdbeaa1e3ed78f9db0706441f8a0c"
+        "certificate_sha256": "195c9fb6770267f2a3f638f77387bf600c7d889f5825f0a5a0b86e55639aed93"
       }
     },
     {
@@ -107672,7 +107672,7 @@
       "source": "src/kyoshin/CUICfManager.cpp",
       "unit": "kyoshin/CUICfManager",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Create TU; PackedFont Destroy×3 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4",
+      "notes": "Create TU; PackedFont Destroy\u00d73 + ArcResourceAccessor teardown; clear lbl_eu_80664054; size 0xA4",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -116784,7 +116784,7 @@
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries → vt+0x1c; leave other vfuncs; size 0x12C",
+      "notes": "Batch 14h; Fv+r4 src; call vt+0x78 then build entries \u2192 vt+0x1c; leave other vfuncs; size 0x12C",
       "status": "HIGH_MATCH",
       "instruction_match": 75.04,
       "workflow_status": "ACTIVE",
@@ -117280,7 +117280,7 @@
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Batch 14h; leaf id→mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160",
+      "notes": "Batch 14h; leaf id\u2192mask switch vs unk4; Fv+r4 ABI; leave other vfuncs; size 0x160",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -119284,7 +119284,7 @@
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Clear + 3×8 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C",
+      "notes": "Clear + 3\u00d78 CArtsParam vt+8 init; retail name CArtsSet_UnkVirtualFunc1; size 0x9C",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -139219,7 +139219,7 @@
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "unit": "kyoshin/menu/CMenuPTGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH; gates + DrawInfo draw; §17.6 asm b for bit21 beq+8;b; leave Move",
+      "notes": "FULL_MATCH; gates + DrawInfo draw; \u00a717.6 asm b for bit21 beq+8;b; leave Move",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -157493,7 +157493,7 @@
       "source": "src/kyoshin/cf/CfPadTask.cpp",
       "unit": "kyoshin/cf/CfPadTask",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH via volatile stick reload + setPad__…Fv reloc",
+      "notes": "FULL_MATCH via volatile stick reload + setPad__\u2026Fv reloc",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -429864,7 +429864,7 @@
       "source": "libs/monolib/src/util/MemManager.cpp",
       "unit": "monolib/src/util/MemManager",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr — return SDA handle, not sHandleMEM2",
+      "notes": "Retail lwz lbl_eu_8066350C@sda21; blr \u2014 return SDA handle, not sHandleMEM2",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -435393,7 +435393,7 @@
       "source": "libs/monolib/src/core/CViewFrame.cpp",
       "unit": "monolib/src/core/CViewFrame",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded §17.6 Chaitin register-color patches; behaviour cviewframe-render PASS",
+      "notes": "FULL_MATCH; exact 0x394 high-level body + guarded \u00a717.6 Chaitin register-color patches; behaviour cviewframe-render PASS",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -435834,7 +435834,7 @@
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded §17.6 frame/register patches; behaviour host PASS",
+      "notes": "FULL_MATCH 100%; high-level volatile size walk + push_back/setItem, with guarded \u00a717.6 frame/register patches; behaviour host PASS",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -436186,7 +436186,7 @@
       "source": "libs/monolib/src/core/CViewRoot.cpp",
       "unit": "monolib/src/core/CViewRoot",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded §17.6 Chaitin/CSE patches",
+      "notes": "FULL_MATCH 100%; exact-size pool/history initialization with guarded \u00a717.6 Chaitin/CSE patches",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",
@@ -447875,7 +447875,7 @@
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
       "unit": "monolib/src/device/CDeviceGX",
       "required_level": "EQUIVALENT_MATCH",
-      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr — return SDA int, not spInstance->gxHeapSize",
+      "notes": "Retail: lwz r3, lbl_eu_80663750@sda21; blr \u2014 return SDA int, not spInstance->gxHeapSize",
       "status": "FULL_MATCH",
       "instruction_match": 100.0,
       "workflow_status": "ACCEPTED",

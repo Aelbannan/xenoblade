@@ -10,10 +10,15 @@
 # or interrupt return). Promotion Gate 2/3 therefore treats them as missing
 # dolphin evidence (`opcode-*-not-dolphin-validated`) — do not flip to true
 # without a real harness-executable fixture.
-architecture_model: broadway-ppc32-be-v36
+#
+# capabilities: {} is a Wave 1 placeholder for capability-assurance coverage.
+# Do not invent capability entries here until independent validation evidence
+# exists (see tools/ppc_equivalence/capability_assurance.py).
+architecture_model: broadway-ppc32-be-v37
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: a827ed9896c3a0648ff3b997e5e46bd3d80cb2c4c3553b5323395f66317b6c63
+capabilities: {}
 opcodes:
   add:
     decoder_unit: true

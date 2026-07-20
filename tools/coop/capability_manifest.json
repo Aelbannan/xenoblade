@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "policy": "capability-assurance-v1",
+  "allowed_tier_a_capabilities": {
+    "integer-core": ["integer-core-v1"],
+    "bounded-memory": [],
+    "certified-calls": [],
+    "fp-bitwise": [],
+    "fp-scalar-arithmetic": [],
+    "mmio-register-bank": [],
+    "gx-fifo": []
+  },
+  "shadow_mode": true,
+  "require_capability_assurance": false
+}

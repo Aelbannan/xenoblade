@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v36`
-- Result format: `16`
-- Certificate format: `11`
+- Architecture model: `broadway-ppc32-be-v37`
+- Result format: `17`
+- Certificate format: `12`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -255,6 +255,27 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   assumed-RAM as Tier C only when `memory` is among the contract observables,
   so register-only proofs stay eligible for Tier A. Promotion may still require
   bounded ranges via `require_bounded_ram`.
+
+### Capability assurance (Wave 1)
+
+Tier classification is being migrated from effect-type hard-gates
+(`has_fp → C`, `has_memory_bus → C`, …) to **capability-assurance-v1**:
+
+- Schema: `ProofResult.capability_assurance` /
+  `tools/ppc_equivalence/capability_assurance.py`
+  (`CapabilityAttestation` / `CapabilityAssurance`, schema version `1`).
+- Promotion allowlist: `tools/coop/capability_manifest.json`
+  (`allowed_tier_a_capabilities`, `shadow_mode`, `require_capability_assurance`).
+- **Shadow mode (default):** `evaluate_capability_assurance` always runs and
+  records `capability-assurance-shadow-tier-*` warnings, but authoritative
+  `compute_confidence_tier` still uses legacy effect gates. FP / MMIO /
+  assumed-RAM are **not** promoted in Wave 1.
+- Caller-supplied `status=promotion-grade` is ignored for trust; validators
+  recompute grades from evidence + ledger + manifest.
+- Legacy certificates without a `capability_assurance` field do not invent
+  attestations (assurance path is unproven → would be Tier C).
+- `allowed_engine_sha256` is required for promotion once assurance is
+  authoritative; it remains optional while `shadow_mode` is true.
   - `assumed-ordinary-ram`: accesses are unconstrained ordinary RAM (external
     assumption; default). Private-stack masking still applies independently.
   - `bounded-ordinary-ram`, `stack-and-known-globals`, and `hardware-aware`:
@@ -690,8 +711,9 @@ Rules (enforced by `tools.ppc_equivalence.proof_features`):
   discharge (`discharge.py`) with remainder terminals retained on BCCTR
   expansion; obligation schema v2 carries coverage/no_write digests.
   Architecture / result / certificate for the memory-loop refinement shape:
-  `broadway-ppc32-be-v36` / format `16` / certificate `11`. Certificates under
-  `broadway-ppc32-be-v35` (and earlier rejected models) are stale.
+  `broadway-ppc32-be-v37` / format `17` / certificate `12` (capability-assurance
+  schema Wave 1). Certificates under `broadway-ppc32-be-v36` (and earlier
+  rejected models) are stale.
 - **Wave 5 Track B blockers kept documented (not freeze-worthy for closed-form):**
   bounded-remainder expansions stay `applied` (not discharged). Bulk+remainder
   without a shared constant-value `RangeWrite` stays `pending`.

@@ -6,6 +6,15 @@ from pathlib import Path
 from typing import Any
 
 from tools.coop.lib.config import CoopConfig
+from tools.ppc_equivalence.capability_assurance import (
+    CapabilityAssurance,
+    CapabilityAssuranceResult,
+    CapabilityManifest,
+    compute_confidence_tier_from_assurance,
+    default_capability_manifest_path,
+    evaluate_capability_assurance,
+    load_capability_manifest,
+)
 from tools.ppc_equivalence.memory_profile import MemoryEnvironment, MemoryProfile
 from tools.ppc_equivalence.proof_features import (
     PROOF_OBLIGATION_FIELDS,
@@ -186,11 +195,11 @@ def _load_mapping(path: Path, *, yaml: bool) -> dict[str, Any]:
     return data
 
 
-def compute_confidence_tier_proofresult(
+def _compute_confidence_tier_legacy(
     result: ProofResult,
     ledger: ValidationLedger | None = None,
 ) -> str | None:
-    """Classify a proof into tier A/B/C based on result evidence.
+    """Legacy effect-type tiering (authoritative while shadow_mode is true).
 
     Tier A — narrow, strongest modeled proofs.
     Tier B — ordinary compiler-generated memory/function proofs.
@@ -276,6 +285,81 @@ def compute_confidence_tier_proofresult(
     return "B"
 
 
+def resolve_capability_manifest(
+    manifest: CapabilityManifest | dict[str, Any] | Path | None = None,
+    *,
+    config: CoopConfig | None = None,
+) -> CapabilityManifest:
+    """Resolve a capability manifest from an object, mapping, path, or coop config."""
+    if isinstance(manifest, CapabilityManifest):
+        return manifest
+    if isinstance(manifest, dict):
+        return CapabilityManifest.from_dict(manifest)
+    if isinstance(manifest, Path):
+        return load_capability_manifest(manifest)
+    if config is not None:
+        path = config.resolve(config.capability_manifest_path)
+        loaded = load_capability_manifest(path)
+        # CoopConfig knobs override file defaults when set explicitly.
+        allowed = dict(config.allowed_tier_a_capabilities) or dict(
+            loaded.allowed_tier_a_capabilities
+        )
+        return CapabilityManifest(
+            schema_version=loaded.schema_version,
+            policy=loaded.policy,
+            allowed_tier_a_capabilities=allowed,
+            shadow_mode=bool(config.capability_assurance_shadow_mode),
+            require_capability_assurance=bool(config.require_capability_assurance),
+        )
+    return load_capability_manifest(default_capability_manifest_path())
+
+
+def _attach_shadow_warning(result: ProofResult, assurance_tier: str | None) -> None:
+    if assurance_tier is None:
+        return
+    warning = f"capability-assurance-shadow-tier-{assurance_tier}"
+    current = list(result.warnings or [])
+    if warning not in current:
+        current.append(warning)
+        result.warnings = current
+
+
+def compute_confidence_tier_proofresult(
+    result: ProofResult,
+    ledger: ValidationLedger | None = None,
+    *,
+    manifest: CapabilityManifest | dict[str, Any] | Path | None = None,
+    config: CoopConfig | None = None,
+    assurance_out: list[CapabilityAssuranceResult] | None = None,
+) -> str | None:
+    """Classify a proof into tier A/B/C.
+
+    Always evaluates capability assurance when possible. While
+    ``shadow_mode`` is true (Wave 1 default), the authoritative return value
+    remains the legacy effect-type tier; the assurance tier is attached as a
+    ``capability-assurance-shadow-tier-*`` warning.
+    """
+    resolved = resolve_capability_manifest(manifest, config=config)
+    legacy = _compute_confidence_tier_legacy(result, ledger)
+    assurance = evaluate_capability_assurance(
+        result,
+        ledger,
+        resolved,
+        shadow_legacy_tier=legacy,
+    )
+    if assurance_out is not None:
+        assurance_out.append(assurance)
+    assurance_tier = (
+        compute_confidence_tier_from_assurance(assurance)
+        if result.status is ProofStatus.EQUIVALENT
+        else None
+    )
+    if resolved.shadow_mode:
+        _attach_shadow_warning(result, assurance_tier)
+        return legacy
+    return assurance_tier
+
+
 def compute_confidence_tier_from_certificate(
     certificate: dict[str, Any] | None,
 ) -> str | None:
@@ -322,11 +406,48 @@ def compute_confidence_tier_from_certificate(
 def compute_confidence_tier(
     result_or_certificate: ProofResult | dict[str, Any] | None,
     ledger: ValidationLedger | None = None,
+    *,
+    manifest: CapabilityManifest | dict[str, Any] | Path | None = None,
+    config: CoopConfig | None = None,
+    assurance_out: list[CapabilityAssuranceResult] | None = None,
 ) -> str | None:
     """Dispatch tier classification for ProofResult or certificate dict."""
     if isinstance(result_or_certificate, ProofResult):
-        return compute_confidence_tier_proofresult(result_or_certificate, ledger)
-    return compute_confidence_tier_from_certificate(result_or_certificate)
+        return compute_confidence_tier_proofresult(
+            result_or_certificate,
+            ledger,
+            manifest=manifest,
+            config=config,
+            assurance_out=assurance_out,
+        )
+    if isinstance(result_or_certificate, dict):
+        resolved = resolve_capability_manifest(manifest, config=config)
+        legacy = compute_confidence_tier_from_certificate(result_or_certificate)
+        status_raw = result_or_certificate.get("status")
+        try:
+            if status_raw in {None, "SEMANTIC_CERTIFIED", "equivalent"}:
+                status = ProofStatus.EQUIVALENT
+            else:
+                status = ProofStatus(str(status_raw))
+        except ValueError:
+            status = ProofStatus.EQUIVALENT
+        # Rebuild for assurance evaluation only. Legacy certificates without
+        # capability_assurance must not invent attestations (→ assurance C).
+        proof = proof_result_from_certificate(status, result_or_certificate)
+        assurance = evaluate_capability_assurance(
+            proof,
+            ledger,
+            resolved,
+            shadow_legacy_tier=legacy,
+        )
+        if assurance_out is not None:
+            assurance_out.append(assurance)
+        if resolved.shadow_mode:
+            return legacy
+        if status is not ProofStatus.EQUIVALENT and legacy is None:
+            return None
+        return compute_confidence_tier_from_assurance(assurance)
+    return None
 
 
 @dataclass(frozen=True)
@@ -455,6 +576,13 @@ def proof_result_from_certificate(
 
     parsed = parse_proof_features(certificate)
 
+    capability_assurance = None
+    raw_assurance = certificate.get("capability_assurance")
+    if isinstance(raw_assurance, CapabilityAssurance):
+        capability_assurance = raw_assurance.to_dict()
+    elif isinstance(raw_assurance, dict):
+        capability_assurance = dict(raw_assurance)
+
     result = ProofResult(
         status=status,
         architecture_model=str(
@@ -477,6 +605,7 @@ def proof_result_from_certificate(
         repair_hint=repair_hint,
         invalid_reasons=invalid_reasons,
         proof_features=list(parsed.features),
+        capability_assurance=capability_assurance,
     )
     raw_oracle = certificate.get("fp_oracle_version")
     if raw_oracle:
@@ -547,15 +676,45 @@ def classify_for_promotion(
         for opcode in ledger.missing_dolphin_opcodes(result.opcodes_used):
             blockers.append(f"opcode-{opcode}-not-dolphin-validated")
 
-    tier = compute_confidence_tier_proofresult(result, ledger)
+    manifest = CapabilityManifest(
+        allowed_tier_a_capabilities=dict(policy.allowed_tier_a_capabilities),
+        shadow_mode=policy.capability_assurance_shadow_mode,
+        require_capability_assurance=policy.require_capability_assurance,
+    )
+    assurance_box: list[CapabilityAssuranceResult] = []
+    tier = compute_confidence_tier_proofresult(
+        result,
+        ledger,
+        manifest=manifest,
+        assurance_out=assurance_box,
+    )
     _check_tier_allowed(tier, policy.allowed_confidence_tiers, blockers)
     _check_engine_provenance(result, policy.allowed_engine_sha256, blockers)
+
+    assurance = assurance_box[0] if assurance_box else None
+    if not policy.capability_assurance_shadow_mode:
+        if policy.require_capability_assurance and result.capability_assurance is None:
+            blockers.append("capability-assurance-required")
+        if assurance is not None and assurance.has_unmodeled_or_unproven_capability:
+            blockers.append("capability-assurance-unmodeled-or-unproven")
+        if (
+            policy.require_capability_assurance
+            and policy.allowed_engine_sha256 is None
+        ):
+            blockers.append("allowed-engine-sha256-required-for-assurance-promotion")
+        for warning in result.warnings or []:
+            if str(warning).startswith("capability-assurance-shadow-tier-"):
+                warnings.append(str(warning))
+    else:
+        for warning in result.warnings or []:
+            if str(warning).startswith("capability-assurance-shadow-tier-"):
+                warnings.append(str(warning))
 
     return PromotionDecision(
         allowed=not blockers,
         confidence_tier=tier,
         blockers=tuple(blockers),
-        warnings=tuple(warnings),
+        warnings=tuple(sorted(set(warnings))),
     )
 
 
@@ -611,14 +770,23 @@ class PromotionPolicy:
             "broadway-ppc32-be-v32",
             "broadway-ppc32-be-v33",
             "broadway-ppc32-be-v34",
+            "broadway-ppc32-be-v35",
+            "broadway-ppc32-be-v36",
         }
     )
     minimum_result_format: int = RESULT_FORMAT
     allowed_confidence_tiers: frozenset[str] = field(
         default_factory=lambda: frozenset({"A", "B"})
     )
+    # Required when capability assurance is authoritative; optional in Wave 1
+    # shadow mode.
     allowed_engine_sha256: str | None = None
     require_bounded_ram: bool = False
+    allowed_tier_a_capabilities: dict[str, tuple[str, ...]] = field(
+        default_factory=dict
+    )
+    capability_assurance_shadow_mode: bool = True
+    require_capability_assurance: bool = False
 
     @classmethod
     def from_config(cls, config: CoopConfig) -> "PromotionPolicy":
@@ -630,5 +798,14 @@ class PromotionPolicy:
             allowed_engine_sha256=config.allowed_engine_sha256,
             require_bounded_ram=bool(
                 getattr(config, "require_bounded_ram", False)
+            ),
+            allowed_tier_a_capabilities=dict(
+                getattr(config, "allowed_tier_a_capabilities", {}) or {}
+            ),
+            capability_assurance_shadow_mode=bool(
+                getattr(config, "capability_assurance_shadow_mode", True)
+            ),
+            require_capability_assurance=bool(
+                getattr(config, "require_capability_assurance", False)
             ),
         )

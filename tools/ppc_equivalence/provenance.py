@@ -149,6 +149,7 @@ def proof_request_identity(
     memory_bus: dict | None = None,
     memory_loop_readonly: dict | None = None,
     obligations: dict | None = None,
+    capability_assurance: dict | None = None,
 ) -> dict:
     """Canonical proof-request fields hashed into ``ProofResult.source_hash``.
 
@@ -222,6 +223,8 @@ def proof_request_identity(
         block = merged.get(key)
         if isinstance(block, dict):
             payload[key] = canonical_obligation_dict(block)
+    if capability_assurance is not None:
+        payload["capability_assurance"] = capability_assurance
     return payload
 
 

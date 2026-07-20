@@ -305,8 +305,8 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v36"
-RESULT_FORMAT = 16
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v37"
+RESULT_FORMAT = 17
 
 
 MASKING_SEMANTICS = "per-implementation-independent-v1"
@@ -500,6 +500,9 @@ class ProofResult:
     memory_bus: dict[str, Any] | None = None
     # SoftFloat / paired-single oracle identity (Tier C). Omitted when unused.
     fp_oracle_version: str | None = None
+    # Optional capability-assurance block (Wave 1). Dict or CapabilityAssurance;
+    # omitted when absent for backward compatibility with pre-v37 certificates.
+    capability_assurance: dict[str, Any] | Any | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -538,6 +541,10 @@ class ProofResult:
             value.pop("memory_bus", None)
         if self.fp_oracle_version is None:
             value.pop("fp_oracle_version", None)
+        if self.capability_assurance is None:
+            value.pop("capability_assurance", None)
+        elif hasattr(self.capability_assurance, "to_dict"):
+            value["capability_assurance"] = self.capability_assurance.to_dict()
         return value
 
 

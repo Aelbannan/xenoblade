@@ -6,6 +6,10 @@ pass ``memory_bus=`` to ``execute_cfg`` with ``ConcreteOps`` only, or to
 ``check_equivalence`` to bind ROM/RAM symbolic constraints and route concrete
 sampling (MMIO remains fail-closed in SMT). Default proofs remain on
 unconstrained ``ConcreteMemory`` unless callers explicitly opt in.
+
+PR 9: ``MemoryBus`` is a lightweight router over an immutable
+``BusSpecification`` plus mutable ``BusState``. Concrete sampling clones
+state before original and candidate so device mutations never leak.
 """
 
 from __future__ import annotations
@@ -14,6 +18,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from tools.ppc_equivalence.address_space import AddressSpace, Region, RegionKind
+from tools.ppc_equivalence.bus_spec import (
+    BusSpecification,
+    BusState,
+    build_bus_specification,
+    materialize_devices,
+    snapshot_bus_state,
+)
 from tools.ppc_equivalence.device_model import (
     AccessOutcome,
     DeviceModel,
@@ -95,11 +106,41 @@ def _device_outcome_to_bus(outcome: AccessOutcome) -> BusOutcome:
 
 @dataclass
 class MemoryBus:
-    """Route concrete-width loads/stores through an ``AddressSpace``."""
+    """Route concrete-width loads/stores through an ``AddressSpace``.
+
+    Holds an immutable ``specification`` (identity) and mutable ``devices`` /
+    ``ram`` (state). Prefer ``snapshot_state`` / ``with_state`` / ``clone`` when
+    running isolated original vs candidate sampling.
+    """
 
     address_space: AddressSpace
     devices: dict[str, DeviceModel] = field(default_factory=dict)
     ram: ConcreteMemory = field(default_factory=ConcreteMemory)
+    specification: BusSpecification | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        if self.specification is None:
+            self.specification = build_bus_specification(
+                self.address_space,
+                self.devices,
+            )
+
+    def snapshot_state(self) -> BusState:
+        """Capture current RAM + device mutable state."""
+        return snapshot_bus_state(self.ram, self.devices)
+
+    def with_state(self, state: BusState) -> MemoryBus:
+        """Return a new bus sharing the immutable specification with ``state``."""
+        return MemoryBus(
+            address_space=self.address_space,
+            devices=materialize_devices(self.devices, state),
+            ram=state.ram,
+            specification=self.specification,
+        )
+
+    def clone(self) -> MemoryBus:
+        """Deep-clone mutable state for an isolated CFG execution."""
+        return self.with_state(self.snapshot_state().clone())
 
     def load(self, addr: int, width: int) -> BusReadResult:
         width_err = _validate_width(width)
@@ -210,8 +251,10 @@ def build_memory_bus(
     ram: ConcreteMemory | None = None,
 ) -> MemoryBus:
     """Construct a ``MemoryBus`` from an address space and optional device map."""
+    device_map = dict(devices or {})
     return MemoryBus(
         address_space=address_space,
-        devices=dict(devices or {}),
+        devices=device_map,
         ram=ram if ram is not None else ConcreteMemory(),
+        specification=build_bus_specification(address_space, device_map),
     )

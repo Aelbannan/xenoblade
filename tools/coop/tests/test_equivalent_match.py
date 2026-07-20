@@ -12,6 +12,7 @@ from tools.coop.lib.config import CoopConfig
 from tools.coop.lib.equivalence_check import (
     CertifiedCalleeContext,
     EQUIVALENT_MATCH_MIN_PERCENT,
+    EquivalenceProbe,
     _cache_get,
     _prove_bytes,
     should_probe_equivalence,
@@ -307,6 +308,86 @@ class CacheInvalidationTests(unittest.TestCase):
             result = _cache_get(key, cache_dir)
             self.assertIsNotNone(result)
             self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+    def test_cache_restores_proofresult_not_dict(self) -> None:
+        from tools.coop.lib.equivalence_check import (
+            _cache_put,
+            _current_certifier_hash,
+            _current_engine_hash,
+        )
+        from tools.ppc_equivalence.result import ProofResult
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            key = hashlib.sha256(b"restore-proof").hexdigest()
+            proof = ProofResult(
+                status=ProofStatus.EQUIVALENT,
+                engine_hash=_current_engine_hash(),
+                source_hash="a" * 64,
+                proof_features=["memory-bus"],
+                memory_bus={
+                    "schema_version": 1,
+                    "algorithm": "memory-bus-v1",
+                    "status": "discharged",
+                },
+            )
+            probe = EquivalenceProbe(
+                ProofStatus.EQUIVALENT,
+                "ok",
+                certificate={
+                    "architecture": ARCHITECTURE_MODEL,
+                    "result_format": RESULT_FORMAT,
+                    "engine_hash": _current_engine_hash(),
+                    "proof_features": ["memory-bus"],
+                    "memory_bus": proof.memory_bus,
+                },
+                proof=proof,
+            )
+            _cache_put(
+                key,
+                probe,
+                cache_dir,
+                engine_hash=_current_engine_hash(),
+                certifier_hash=_current_certifier_hash(),
+            )
+            restored = _cache_get(key, cache_dir)
+            self.assertIsNotNone(restored)
+            assert restored is not None
+            self.assertIsInstance(restored.proof, ProofResult)
+            assert isinstance(restored.proof, ProofResult)
+            # Probe status is the cached equivalence status; ProofResult is
+            # reconstructed and freeze-gated (memory-bus still unsupported).
+            self.assertEqual(restored.status, ProofStatus.EQUIVALENT)
+            self.assertEqual(
+                restored.proof.status,
+                ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            )
+            self.assertIn("memory-bus", restored.proof.proof_features)
+            self.assertIsNotNone(restored.proof.memory_bus)
+            # Attribute access must not crash (legacy dict bug).
+            _ = restored.proof.engine_hash
+
+    def test_cache_key_changes_when_memory_bus_obligation_mutates(self) -> None:
+        from tools.coop.lib.equivalence_check import _cache_key
+
+        common = dict(
+            contract_name="auto",
+            observables=("r3",),
+            original_hex="38600001",
+            candidate_hex="38600001",
+            original_base=0x80000000,
+            candidate_base=0x80000000,
+            proof_features=["memory-bus"],
+        )
+        left = _cache_key(
+            **common,
+            memory_bus={"schema_version": 1, "algorithm": "a", "status": "discharged"},
+        )
+        right = _cache_key(
+            **common,
+            memory_bus={"schema_version": 1, "algorithm": "b", "status": "discharged"},
+        )
+        self.assertNotEqual(left, right)
 
 
 if __name__ == "__main__":

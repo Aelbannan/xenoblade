@@ -23,7 +23,7 @@ host float or Z3. Nothing here promotes FP proofs out of Tier C.
 SoftFloat return type. Prefer :mod:`tools.ppc_equivalence.fp_outcome` adapters
 (``outcome_from_oracle`` / ``oracle_from_outcome``) when lifting into the
 shared ``FPOutcome`` container — existing ``.bits64`` call sites stay valid.
-""")
+"""
 
 from __future__ import annotations
 

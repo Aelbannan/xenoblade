@@ -56,6 +56,10 @@ class DeviceModel(ABC):
     def visible_state(self) -> dict[str, Any]:
         """Return a JSON-serializable snapshot of observable device state."""
 
+    @abstractmethod
+    def clone(self) -> DeviceModel:
+        """Deep-copy mutable device state for isolated bus executions."""
+
 
 @dataclass(frozen=True, slots=True)
 class RegisterSpec:
@@ -168,6 +172,15 @@ class RegisterBankDevice(DeviceModel):
             },
         }
 
+    def clone(self) -> RegisterBankDevice:
+        copy = RegisterBankDevice(
+            base=self.base,
+            reg_width=self.reg_width,
+            registers=self.registers,
+        )
+        copy._values = dict(self._values)
+        return copy
+
 
 @dataclass
 class GxFifoStreamDevice(DeviceModel):
@@ -221,3 +234,10 @@ class GxFifoStreamDevice(DeviceModel):
             "span": hex(self.span),
             "write_events": list(self.write_events),
         }
+
+    def clone(self) -> GxFifoStreamDevice:
+        return GxFifoStreamDevice(
+            base=self.base,
+            span=self.span,
+            write_events=[dict(event) for event in self.write_events],
+        )

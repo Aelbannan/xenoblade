@@ -350,6 +350,15 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   `FpOracleResult` but does **not** latch them into FPSCR
   (`floating_point_domain.fpscr_flags` marks oracle-scaffold vs assumed bits).
   This remains **Tier C** only and is **not** a promotion path to Tier A/B.
+- **Unified `FPOutcome` scaffold (Track C):** `tools/ppc_equivalence/fp_outcome.py`
+  defines `FPExceptionFlags` / `FPOutcome` plus SoftFloat and bits-API adapters
+  (`outcome_from_oracle`, `oracle_from_outcome`, `outcome_from_result_bits`).
+  Existing SoftFloat / ConcreteOps / SymbolicOps call sites are unchanged;
+  Infinity/NaN/div0 behavior that currently works via host float + semantics
+  FPSCR paths is preserved. **Deferred:** Fraction/rational exact oracle for
+  SoftFloat fail-closed domains, Broadway single-FMA midpoint residual with
+  nonzero addend, native SymbolicOps/`FPOutcome` producers, and FPSCR latch /
+  trap delivery from outcome fields.
 
 ### Relocations
 

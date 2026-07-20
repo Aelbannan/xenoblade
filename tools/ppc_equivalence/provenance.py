@@ -143,6 +143,11 @@ def proof_request_identity(
     proof_features: list[str] | None = None,
     address_space: dict | None = None,
     indirect_targets: dict | None = None,
+    loop_summary: dict | None = None,
+    relational_induction: dict | None = None,
+    memory_loop: dict | None = None,
+    memory_bus: dict | None = None,
+    obligations: dict | None = None,
 ) -> dict:
     """Canonical proof-request fields hashed into ``ProofResult.source_hash``.
 
@@ -150,6 +155,8 @@ def proof_request_identity(
     fields that are not part of the request (leave them ``None`` so they are
     dropped rather than hashed as null).
     """
+    from tools.ppc_equivalence.proof_features import PROOF_OBLIGATION_FIELDS
+
     payload: dict = {
         "original_hex": original_hex,
         "candidate_hex": candidate_hex,
@@ -194,10 +201,22 @@ def proof_request_identity(
         payload["certificate_target_id"] = certificate_target_id
     if proof_features is not None:
         payload["proof_features"] = sorted(proof_features)
-    if address_space is not None:
-        payload["address_space"] = canonical_obligation_dict(address_space)
-    if indirect_targets is not None:
-        payload["indirect_targets"] = canonical_obligation_dict(indirect_targets)
+
+    merged: dict = dict(obligations or {})
+    for key, value in (
+        ("address_space", address_space),
+        ("indirect_targets", indirect_targets),
+        ("loop_summary", loop_summary),
+        ("relational_induction", relational_induction),
+        ("memory_loop", memory_loop),
+        ("memory_bus", memory_bus),
+    ):
+        if value is not None:
+            merged[key] = value
+    for key in PROOF_OBLIGATION_FIELDS:
+        block = merged.get(key)
+        if isinstance(block, dict):
+            payload[key] = canonical_obligation_dict(block)
     return payload
 
 

@@ -238,18 +238,16 @@ def proof_features_from_dict(data: dict[str, Any]) -> tuple[
     dict[str, Any] | None,
     dict[str, Any] | None,
 ]:
-    """Parse optional proof-feature fields from a certificate or result dict."""
-    raw_features = data.get("proof_features")
-    features: list[str] = []
-    if isinstance(raw_features, list):
-        features = [str(item) for item in raw_features if item]
+    """Back-compat wrapper over :func:`parse_proof_features`.
 
-    address_space = data.get("address_space")
-    if address_space is not None and not isinstance(address_space, dict):
-        address_space = None
-
-    indirect_targets = data.get("indirect_targets")
-    if indirect_targets is not None and not isinstance(indirect_targets, dict):
-        indirect_targets = None
-
-    return features, address_space, indirect_targets
+    Returns ``(features, address_space, indirect_targets)`` only. Prefer
+    :class:`ParsedProofFeatures` / :func:`proof_obligations_from_dict` for
+    full obligation coverage (loop_summary, relational_induction, memory_loop,
+    memory_bus).
+    """
+    parsed = parse_proof_features(data)
+    return (
+        list(parsed.features),
+        parsed.obligations.get("address_space"),
+        parsed.obligations.get("indirect_targets"),
+    )

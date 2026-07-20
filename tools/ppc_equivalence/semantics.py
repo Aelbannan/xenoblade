@@ -2461,14 +2461,14 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             address = _dform_address(state, insn, ra, third, ops)
         if op in LOADS:
             width, signed, update, reverse_bytes = LOADS[op]
-            state = _touch_memory(state, address, width, ops)
+            state = _touch_memory(state, address, width, ops, "read")
             result = _load(state.memory, address, width, ops, reverse=reverse_bytes)
             if signed: result = _sign_extend(result, width * 8, ops)
             state = state.with_gpr(reg, result)
             if update: state = state.with_gpr(ra, address)
             return state
         width, update, reverse_bytes = STORES[op]
-        state = _touch_memory(state, address, width, ops)
+        state = _touch_memory(state, address, width, ops, "write")
         state = _mark_stack_pointer_escape(state, state.gpr[reg], ops)
         state = replace(state, memory=_store(state.memory, address, state.gpr[reg], width, ops, reverse=reverse_bytes))
         if update: state = state.with_gpr(ra, address)
@@ -2487,12 +2487,12 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         if op == Opcode.STFIWX:
             fpr_bits = state.fpr[rt]
             value32 = ops.fp_low_word(fpr_bits)
-            state = _touch_memory(state, address, 4, ops)
+            state = _touch_memory(state, address, 4, ops, "write")
             state = replace(state, memory=_store(state.memory, address, value32, 4, ops))
             return state
         if is_load:
             update = op in (Opcode.LFSU, Opcode.LFDU, Opcode.LFSUX, Opcode.LFDUX)
-            state = _touch_memory(state, address, width, ops)
+            state = _touch_memory(state, address, width, ops, "read")
             if width == 4:
                 raw = _load(state.memory, address, 4, ops)
                 result = ops.fp_double_to_bits(ops.fp_bits32_to_double(raw))
@@ -2507,7 +2507,7 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             return state
         else:
             update = op in (Opcode.STFSU, Opcode.STFDU, Opcode.STFSUX, Opcode.STFDUX)
-            state = _touch_memory(state, address, width, ops)
+            state = _touch_memory(state, address, width, ops, "write")
             fpr_bits = state.fpr[rt]
             if width == 4:
                 rm = ops.fp_rm_from_rn(ops.band(state.fpscr, ops.const(3)))
@@ -2942,13 +2942,13 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             if is_psq_load:
                 qtype = ops.band(ops.lshr(gqr, ops.const(16)), ops.const(7))
                 scale = ops.band(ops.lshr(gqr, ops.const(24)), ops.const(0x3F))
-                state = _psq_domain(state, address, w, qtype, ops)
+                state = _psq_domain(state, address, w, qtype, ops, "read")
                 ps0_bits, ps1_bits = _psq_load_pair(state.memory, address, w, qtype, scale, ops)
                 state = state.with_fpr(rs, ps0_bits).with_ps1(rs, ps1_bits)
             else:
                 qtype = ops.band(gqr, ops.const(7))
                 scale = ops.band(ops.lshr(gqr, ops.const(8)), ops.const(0x3F))
-                state = _psq_domain(state, address, w, qtype, ops)
+                state = _psq_domain(state, address, w, qtype, ops, "write")
                 source0 = ops.fp_bits_to_double(state.fpr[rs])
                 source1 = ops.fp_bits_to_double(state.ps1[rs])
                 finite0 = ops.lnot(ops.lor(ops.fp_is_nan(source0), ops.fp_is_inf(source0)))
@@ -3226,10 +3226,11 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         reg, ra, displacement = a
         address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(displacement))
         for index in range(reg, 32):
-            state = _touch_memory(state, address, 4, ops)
             if op == Opcode.LMW:
+                state = _touch_memory(state, address, 4, ops, "read")
                 state = state.with_gpr(index, _load(state.memory, address, 4, ops))
             else:
+                state = _touch_memory(state, address, 4, ops, "write")
                 state = _mark_stack_pointer_escape(state, state.gpr[index], ops)
                 state = replace(state, memory=_store(state.memory, address, state.gpr[index], 4, ops))
             address = ops.add(address, ops.const(4))
@@ -3318,13 +3319,14 @@ def _apply_call_summary(
         result = state
         for index in range(first, 32):
             address = ops.add(state.gpr[11], ops.const(-width * (32 - index)))
-            result = _touch_memory(result, address, width, ops)
             if is_save:
+                result = _touch_memory(result, address, width, ops, "write")
                 value = state.fpr[index] if is_fpr else state.gpr[index]
                 if not is_fpr:
                     result = _mark_stack_pointer_escape(result, value, ops)
                 result = replace(result, memory=_store(result.memory, address, value, width, ops))
             else:
+                result = _touch_memory(result, address, width, ops, "read")
                 value = _load(result.memory, address, width, ops)
                 result = result.with_fpr(index, value) if is_fpr else result.with_gpr(index, value)
         # Helpers are calls: disable private-stack masking per the memory model.
@@ -3403,6 +3405,8 @@ def _apply_call_summary(
         fresh_valid,
         fresh_reason,
         state.memory_touches,
+        state.memory_reads,
+        state.memory_writes,
         state.stack_low,
         state.memory_effects + ((token,) if "memory" in contract.writes else ()),
         state.stack_layout_valid,

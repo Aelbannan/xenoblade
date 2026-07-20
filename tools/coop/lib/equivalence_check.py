@@ -29,12 +29,16 @@ from tools.ppc_equivalence.elf_symbols import (
 from tools.ppc_equivalence.callee_inference import infer_matched_callee_contracts
 from tools.ppc_equivalence.engine import check_equivalence, validate_callee_contract
 from tools.ppc_equivalence.ir import DecodeError, ExecutionInconclusive, Opcode, UnsupportedInstruction
-from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofStatus
+from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT, ProofResult, ProofStatus
 from tools.ppc_equivalence.provenance import (
     canonical_obligation_dict,
     hash_certifier_tree,
     hash_engine_tree,
     proof_request_hash,
+)
+from tools.ppc_equivalence.proof_features import (
+    PROOF_OBLIGATION_FIELDS,
+    proof_obligations_from_result,
 )
 from tools.ppc_equivalence.semantics import (
     CalleeContract,
@@ -291,6 +295,11 @@ def _cache_key(
     proof_features: list[str] | None = None,
     address_space: dict[str, Any] | None = None,
     indirect_targets: dict[str, Any] | None = None,
+    loop_summary: dict[str, Any] | None = None,
+    relational_induction: dict[str, Any] | None = None,
+    memory_loop: dict[str, Any] | None = None,
+    memory_bus: dict[str, Any] | None = None,
+    obligations: dict[str, Any] | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -343,13 +352,45 @@ def _cache_key(
     }
     if proof_features is not None:
         payload["proof_features"] = sorted(proof_features)
-    if address_space is not None:
-        payload["address_space"] = canonical_obligation_dict(address_space)
-    if indirect_targets is not None:
-        payload["indirect_targets"] = canonical_obligation_dict(indirect_targets)
+
+    merged: dict[str, Any] = dict(obligations or {})
+    for key, value in (
+        ("address_space", address_space),
+        ("indirect_targets", indirect_targets),
+        ("loop_summary", loop_summary),
+        ("relational_induction", relational_induction),
+        ("memory_loop", memory_loop),
+        ("memory_bus", memory_bus),
+    ):
+        if value is not None:
+            merged[key] = value
+    for key in PROOF_OBLIGATION_FIELDS:
+        block = merged.get(key)
+        if isinstance(block, dict):
+            payload[key] = canonical_obligation_dict(block)
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True).encode(),
     ).hexdigest()
+
+
+def _proof_from_cache_payload(
+    status: ProofStatus,
+    *,
+    certificate: dict[str, Any] | None,
+    proof_audit: dict[str, Any] | None,
+) -> ProofResult | None:
+    """Rebuild a ``ProofResult`` from cached certificate and/or audit dict."""
+    if not isinstance(certificate, dict) and not isinstance(proof_audit, dict):
+        return None
+    merged: dict[str, Any] = {}
+    if isinstance(certificate, dict):
+        merged.update(certificate)
+    if isinstance(proof_audit, dict):
+        merged.update(proof_audit)
+    # Lazy import avoids import cycles with promotion helpers.
+    from tools.coop.lib.equivalence_policy import proof_result_from_certificate
+
+    return proof_result_from_certificate(status, merged)
 
 
 def _cache_get(
@@ -385,13 +426,20 @@ def _cache_get(
             return None
         status = ProofStatus(data["status"])
         certificate = data.get("certificate")
-        proof = data.get("proof_audit")
+        proof_audit = data.get("proof_audit")
+        certificate_dict = certificate if isinstance(certificate, dict) else None
+        audit_dict = proof_audit if isinstance(proof_audit, dict) else None
+        proof = _proof_from_cache_payload(
+            status,
+            certificate=certificate_dict,
+            proof_audit=audit_dict,
+        )
         return EquivalenceProbe(
             status, data.get("detail", ""),
-            certificate if isinstance(certificate, dict) else None,
-            proof=proof if isinstance(proof, dict) else None,
+            certificate_dict,
+            proof=proof,
         )
-    except (KeyError, ValueError, json.JSONDecodeError):
+    except (KeyError, ValueError, json.JSONDecodeError, TypeError):
         return None
 
 
@@ -421,8 +469,7 @@ def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
         "warnings",
         "abstractions",
         "proof_features",
-        "address_space",
-        "indirect_targets",
+        *PROOF_OBLIGATION_FIELDS,
     ):
         value = getattr(proof, name, None)
         if value not in (None, "", [], {}, ()):
@@ -733,20 +780,14 @@ def _build_equivalence_certificate(
         proof_features = getattr(proof, "proof_features", None)
         if proof_features:
             certificate["proof_features"] = list(proof_features)
-        address_space = getattr(proof, "address_space", None)
-        if address_space is not None:
-            certificate["address_space"] = dict(address_space)
-        indirect_targets = getattr(proof, "indirect_targets", None)
-        if indirect_targets is not None:
-            certificate["indirect_targets"] = dict(indirect_targets)
-        loop_summary = getattr(proof, "loop_summary", None) if proof is not None else None
-        if loop_summary is not None:
-            certificate["loop_summary"] = dict(loop_summary)
-        relational_induction = (
-            getattr(proof, "relational_induction", None) if proof is not None else None
-        )
-        if relational_induction is not None:
-            certificate["relational_induction"] = dict(relational_induction)
+        if isinstance(proof, ProofResult):
+            for key, block in proof_obligations_from_result(proof).items():
+                certificate[key] = dict(block)
+        else:
+            for key in PROOF_OBLIGATION_FIELDS:
+                block = getattr(proof, key, None)
+                if isinstance(block, dict):
+                    certificate[key] = dict(block)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 

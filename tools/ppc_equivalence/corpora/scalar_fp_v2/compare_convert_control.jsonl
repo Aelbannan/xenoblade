@@ -1,4 +1,4 @@
-{"capability":"fp-compare","corpus_id":"compare_convert_control","notes":"Compare / convert from fixtures/broadway.jsonl","schema_version":1,"type":"scalar_fp_v2_corpus"}
+{"capability":"fp-compare","corpus_id":"compare_convert_control","notes":"Compare / convert; Broadway harvest + exact_kernel_v2 NI=1 / non-RNE frsp supplements","schema_version":1,"type":"scalar_fp_v2_corpus"}
 {"expected_fpcr_nibble":"0x8","id":"bb-fcmpo","opcode":"fcmpo","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl"}
 {"expected_fpcr_nibble":"0x1","id":"bb-fcmpo-qnan","opcode":"fcmpo","operands":{"a":"0x7ff8000012345678","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl"}
 {"expected_fpcr_nibble":"0x1","id":"bb-fcmpo-qnan-ve","opcode":"fcmpo","operands":{"a":"0x7ff8000012345678","b":"0x4000000000000000"},"pre_fpscr":"0x00000080","provenance":"fixtures-broadway-jsonl"}
@@ -7,15 +7,15 @@
 {"expected_fpcr_nibble":"0x8","id":"bb-fcmpu","opcode":"fcmpu","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl"}
 {"expected_fpcr_nibble":"0x1","id":"bb-fcmpu-snan","opcode":"fcmpu","operands":{"a":"0x7ff0000012345678","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl"}
 {"expected_bits":"0x3ff8000000000000","id":"bb-frsp","opcode":"frsp","operands":{"a":"0x3ff8000000000000"},"provenance":"fixtures-broadway-jsonl"}
-{"expected_fpcr_nibble":"0x2","id":"exact-fcmpu-eq","opcode":"fcmpu","operands":{"a":"0x3ff0000000000000","b":"0x3ff0000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_fpcr_nibble":"0x8","id":"exact-fcmpu-lt","opcode":"fcmpu","operands":{"a":"0x3ff0000000000000","b":"0x4000000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x4010000000000000","id":"exact-frsp-four","opcode":"frsp","operands":{"a":"0x4010000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x7ff0000000000000","id":"exact-frsp-inf","opcode":"frsp","operands":{"a":"0x7ff0000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0xfff0000000000000","id":"exact-frsp-neg-inf","opcode":"frsp","operands":{"a":"0xfff0000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x8000000000000000","id":"exact-frsp-neg-zero","opcode":"frsp","operands":{"a":"0x8000000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x3ff0000000000000","id":"exact-frsp-one","opcode":"frsp","operands":{"a":"0x3ff0000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x3ff8000000000000","id":"exact-frsp-one-point-five","opcode":"frsp","operands":{"a":"0x3ff8000000000000"},"provenance":"exact_kernel_v2"}
 {"expected_bits":"0x400921fb60000000","id":"exact-frsp-pi-double","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"provenance":"exact_kernel_v2"}
 {"expected_bits":"0x7ff8000000000000","id":"exact-frsp-qnan","opcode":"frsp","operands":{"a":"0x7ff8000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x7ff8000012345678","id":"exact-frsp-snan","opcode":"frsp","operands":{"a":"0x7ff0000012345678"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x0000000000000000","id":"exact-frsp-subnormal","opcode":"frsp","operands":{"a":"0x0000000000000001"},"provenance":"exact_kernel_v2"}
+{"expected_fpcr_nibble":"0x2","id":"exact-ni1-fcmpu-subnorm-vs-zero","ni":1,"opcode":"fcmpu","operands":{"a":"0x0000000000000001","b":"0x0000000000000000"},"provenance":"exact_kernel_v2"}
+{"expected_bits":"0x0000000000000000","id":"exact-ni1-frsp-denorm-flush","ni":1,"opcode":"frsp","operands":{"a":"0x0000000002000001"},"provenance":"exact_kernel_v2"}
+{"expected_bits":"0x3ff0000000000000","id":"exact-ni1-frsp-rn-tie","ni":1,"opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"provenance":"exact_kernel_v2"}
+{"expected_bits":"0x3810000000000000","id":"exact-ni1-frsp-smallest-normal-flush","ni":1,"opcode":"frsp","operands":{"a":"0x3810000000000000"},"provenance":"exact_kernel_v2"}
+{"expected_bits":"0x0000000000000000","id":"exact-ni1-frsp-subnormal-flush","ni":1,"opcode":"frsp","operands":{"a":"0x0000000000000001"},"provenance":"exact_kernel_v2"}
+{"expected_bits":"0x3ff0000000000000","id":"exact-rim-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000003","provenance":"exact_kernel_v2","rn":"toward-minus-infinity"}
+{"expected_bits":"0x400921fb60000000","id":"exact-rip-frsp-pi","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"pre_fpscr":"0x00000002","provenance":"exact_kernel_v2","rn":"toward-plus-infinity"}
+{"expected_bits":"0x3ff0000020000000","id":"exact-rip-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000002","provenance":"exact_kernel_v2","rn":"toward-plus-infinity"}
+{"expected_bits":"0x400921fb40000000","id":"exact-rtz-frsp-pi","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"pre_fpscr":"0x00000001","provenance":"exact_kernel_v2","rn":"toward-zero"}
+{"expected_bits":"0x3ff0000000000000","id":"exact-rtz-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000001","provenance":"exact_kernel_v2","rn":"toward-zero"}

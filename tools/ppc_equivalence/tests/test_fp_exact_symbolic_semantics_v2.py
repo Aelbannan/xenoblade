@@ -19,6 +19,7 @@ from tools.ppc_equivalence.fp_exact_symbolic import (
     try_concrete_bv64,
     try_dispatch_exact_scalar_v2,
 )
+from tools.ppc_equivalence.fp_exact_symbolic_arith import verify_exact_arith_bv_concrete
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.model import concrete_state
 from tools.ppc_equivalence.result import ProofStatus
@@ -38,6 +39,98 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
 
     def tearDown(self) -> None:
         set_scalar_fp_exact_v2_module_flag(None)
+
+    def test_payload_symbolic_fadd_matches_exact_at_one_plus_two(self) -> None:
+        ops = SymbolicOps()
+        f1 = z3.BitVec("f1", 64)
+        f2 = z3.BitVec("f2", 64)
+        dispatch = try_dispatch_exact_scalar_v2(
+            opcode="fadd",
+            a_bits=f1,
+            b_bits=f2,
+            c_bits=ops.fp_const64(0),
+            fpscr=ops.const(0),
+            msr=ops.const(0),
+            ops=ops,
+            scalar_outcome_from_fused=lambda *a, **k: None,  # type: ignore[return-value]
+        )
+        self.assertIsNotNone(dispatch)
+        assert dispatch is not None
+        solver = z3.Solver()
+        out = z3.BitVec("out", 64)
+        solver.add(f1 == _ONE)
+        solver.add(f2 == _TWO)
+        solver.add(out == dispatch.result_bits)
+        self.assertEqual(solver.check(), z3.sat)
+        model = solver.model()
+        expected = exact_fadd(_ONE, _TWO, fpscr=0).result_bits
+        self.assertEqual(int(model.eval(out).as_long()), expected)
+
+    def test_payload_symbolic_fmul_matches_exact_corpus(self) -> None:
+        pairs = [
+            (_ONE, _TWO),
+            (_TWO, _TWO),
+        ]
+        for a, b in pairs:
+            with self.subTest(a=a, b=b):
+                self.assertTrue(verify_exact_arith_bv_concrete("fmul", a, b))
+
+    def test_symbolic_neighbor_fadd_can_differ(self) -> None:
+        ops = SymbolicOps()
+        f1 = z3.BitVec("f1", 64)
+        f2 = z3.BitVec("f2", 64)
+        same = try_dispatch_exact_scalar_v2(
+            opcode="fadd",
+            a_bits=f1,
+            b_bits=f2,
+            c_bits=ops.fp_const64(0),
+            fpscr=ops.const(0),
+            msr=ops.const(0),
+            ops=ops,
+            scalar_outcome_from_fused=lambda *a, **k: None,  # type: ignore[return-value]
+        )
+        flipped = try_dispatch_exact_scalar_v2(
+            opcode="fadd",
+            a_bits=f1,
+            b_bits=f2 ^ ops.fp_const64(1),
+            c_bits=ops.fp_const64(0),
+            fpscr=ops.const(0),
+            msr=ops.const(0),
+            ops=ops,
+            scalar_outcome_from_fused=lambda *a, **k: None,  # type: ignore[return-value]
+        )
+        assert same is not None and flipped is not None
+        solver = z3.Solver()
+        solver.set("timeout", 10000)
+        solver.add(f1 == _ONE)
+        solver.add(f2 == _TWO)
+        solver.add(same.result_bits != flipped.result_bits)
+        self.assertEqual(solver.check(), z3.sat)
+
+    def test_identical_fmul_equivalent_with_flag_on(self) -> None:
+        insns = [_insn(Opcode.FMUL, (1, 1, 0, 2))]
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=15000)
+        result = check_equivalence(
+            insns,
+            insns,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+
+    def test_different_addend_fadd_not_equivalent(self) -> None:
+        original = [_insn(Opcode.FADD, (1, 1, 2))]
+        candidate = [_insn(Opcode.FADD, (1, 1, 3))]
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=15000)
+        result = check_equivalence(
+            original,
+            candidate,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT, result.unsupported)
 
     def test_fixed_input_symbolic_fadd_matches_concrete_exact(self) -> None:
         ops = SymbolicOps()

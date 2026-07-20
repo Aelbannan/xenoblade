@@ -35189,11 +35189,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -35263,9 +35263,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "35f2c7adb850c0871db42f747b7107c42de2b7368348987c131476a89ab936d2",
-                "requirements_sha256": "22327b53a285637933dc7adb722c54e721672ddaa22caad84821ee809547bdb4"
+                "requirements_sha256": "8d20c43f69c43a2128a094989666483e48636a62072bc8bcf316f24f0d4e98e8"
               },
-              "attestation_sha256": "e319d97d0d6ffc17cc6206a8bc197c8e3044431f2a7b66c82e66ab075237527f"
+              "attestation_sha256": "0ab39fe421d4677ea8070cd9f5977041cff5ee39f713c6dcd4d217b945823001"
             },
             {
               "capability": "provenance",
@@ -35277,17 +35277,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
                 "proof_request_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "c7543973f36d10895c2813e685d3e1128c1e8dc11eef6bb2242d26588c903ab5",
-                "requirements_sha256": "22327b53a285637933dc7adb722c54e721672ddaa22caad84821ee809547bdb4"
+                "requirement_sha256": "fc33f034407f6be35b77487fe425df30e63502732ba151aad89258d973dc8cad",
+                "requirements_sha256": "8d20c43f69c43a2128a094989666483e48636a62072bc8bcf316f24f0d4e98e8"
               },
-              "attestation_sha256": "ab13265add70b114b1a2fd18b566db347a90924874c1e313914da28e27a55237"
+              "attestation_sha256": "b84093b8c1852db50f8cf802f6cb7026d1d7972edd83b079e1ac78a7926713bb"
             }
           ]
         },
@@ -35331,20 +35331,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
                 "result_format": "21",
                 "source_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "c7543973f36d10895c2813e685d3e1128c1e8dc11eef6bb2242d26588c903ab5"
+              "requirement_sha256": "fc33f034407f6be35b77487fe425df30e63502732ba151aad89258d973dc8cad"
             }
           ],
-          "requirements_sha256": "22327b53a285637933dc7adb722c54e721672ddaa22caad84821ee809547bdb4"
+          "requirements_sha256": "8d20c43f69c43a2128a094989666483e48636a62072bc8bcf316f24f0d4e98e8"
         },
-        "certificate_sha256": "7918c7fb75e87e2c4037d1b07fb0446ffd08937fd0dc065715a1ae3ccfafb45e"
+        "certificate_sha256": "f5e45126f550e49bbbf5e851de1e9d1ba237e8339d5fcd0ab28d6193b1522687"
       }
     },
     {
@@ -35838,11 +35838,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -35898,9 +35898,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
-                "requirements_sha256": "b99f043537123b78be7ed310480b44d4f62efcd141e1ec732bc92c870d960501"
+                "requirements_sha256": "3a68a92bc83ec02daa5d83abcd31d7cfd9543c09fc25d0764851d7ab63e55641"
               },
-              "attestation_sha256": "42515ec0b1c31957b0d86edd45cae83c2c8dffe2dcfa9a5837fe7618e61e31ce"
+              "attestation_sha256": "032c6446b862f908988952bab3897c748da73e2baafc23dbfd6c811e4b659855"
             },
             {
               "capability": "provenance",
@@ -35912,17 +35912,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
                 "proof_request_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "88a910798670b9d88d2de5c716ffe0da9d24c1cd5c62985eee0139e6f89e6902",
-                "requirements_sha256": "b99f043537123b78be7ed310480b44d4f62efcd141e1ec732bc92c870d960501"
+                "requirement_sha256": "a52ee1728640c5f9107051c8f9615d3e19985afe3fe82093f2adee2abe51e040",
+                "requirements_sha256": "3a68a92bc83ec02daa5d83abcd31d7cfd9543c09fc25d0764851d7ab63e55641"
               },
-              "attestation_sha256": "d2bb20c0edc2b09357177e1697c3542e19116fdd22a3c743e5715050ecb776d2"
+              "attestation_sha256": "8b5f353361fe42146827d3c2898a42ece178ee3099b41209ac6edc64b88618c7"
             }
           ]
         },
@@ -35959,20 +35959,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
                 "result_format": "21",
                 "source_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "88a910798670b9d88d2de5c716ffe0da9d24c1cd5c62985eee0139e6f89e6902"
+              "requirement_sha256": "a52ee1728640c5f9107051c8f9615d3e19985afe3fe82093f2adee2abe51e040"
             }
           ],
-          "requirements_sha256": "b99f043537123b78be7ed310480b44d4f62efcd141e1ec732bc92c870d960501"
+          "requirements_sha256": "3a68a92bc83ec02daa5d83abcd31d7cfd9543c09fc25d0764851d7ab63e55641"
         },
-        "certificate_sha256": "a7966cd49e05855dfe755d0fd1e776c5b4da6352f18d2cc87d1e8eca52eb4060"
+        "certificate_sha256": "f767baa5d75c785393bec0415551203897d160e49c0864fb98fd3c4a0bec9b07"
       }
     },
     {
@@ -36109,11 +36109,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -36183,9 +36183,9 @@
                   "status": "incomplete"
                 },
                 "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930",
-                "requirements_sha256": "41bb98ca3d5fcc99a81ba13c5f3b42cfdac75b4fdc94526fadc2a8c31c0e594a"
+                "requirements_sha256": "22523d14088c01dcf300cfcaaa0f74bcfa089fac292c7b8551e5ee506cff0e3b"
               },
-              "attestation_sha256": "5d33cdd0cc26c44aa8eb77ab2de40dd76597ec768180571b3fb471851d0688b7"
+              "attestation_sha256": "65796bd5637843a396ec1d4d4e7251204116a8100b4f2bb7a12ba6aab5b60e1c"
             },
             {
               "capability": "integer-core",
@@ -36202,9 +36202,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
-                "requirements_sha256": "41bb98ca3d5fcc99a81ba13c5f3b42cfdac75b4fdc94526fadc2a8c31c0e594a"
+                "requirements_sha256": "22523d14088c01dcf300cfcaaa0f74bcfa089fac292c7b8551e5ee506cff0e3b"
               },
-              "attestation_sha256": "14241c491995e4121ffe39ed8b08f5521cbc8bdf5dac4102d97fa76e8b60cfde"
+              "attestation_sha256": "c5a96f57595d728a54ed5ed05cdf344da28c244747f347480f657378358bde53"
             },
             {
               "capability": "provenance",
@@ -36216,17 +36216,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
                 "proof_request_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "e1344be7d79039f9772df87999b51566d390cd2078557b3f6fb5c824c065cea0",
-                "requirements_sha256": "41bb98ca3d5fcc99a81ba13c5f3b42cfdac75b4fdc94526fadc2a8c31c0e594a"
+                "requirement_sha256": "fa50efb9c65571163b5e7f375270eca67ea4e263674b7028b9c70aaf23cba9a2",
+                "requirements_sha256": "22523d14088c01dcf300cfcaaa0f74bcfa089fac292c7b8551e5ee506cff0e3b"
               },
-              "attestation_sha256": "f854daff7f7c64378333794e2080f180c19eab983fb581f51d4cf72f99dd1962"
+              "attestation_sha256": "235886f34988e481e3b4c72602e976060c17833042407dfcb4376b6dcb1efd8d"
             }
           ]
         },
@@ -36274,20 +36274,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
                 "result_format": "21",
                 "source_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "e1344be7d79039f9772df87999b51566d390cd2078557b3f6fb5c824c065cea0"
+              "requirement_sha256": "fa50efb9c65571163b5e7f375270eca67ea4e263674b7028b9c70aaf23cba9a2"
             }
           ],
-          "requirements_sha256": "41bb98ca3d5fcc99a81ba13c5f3b42cfdac75b4fdc94526fadc2a8c31c0e594a"
+          "requirements_sha256": "22523d14088c01dcf300cfcaaa0f74bcfa089fac292c7b8551e5ee506cff0e3b"
         },
-        "certificate_sha256": "120ba2454261a5268a1c918185a6ba2fe69ed9f2beaa25a2f2c946dc67862a58"
+        "certificate_sha256": "3d42c40a939fca2501042971806c27d94ef8200b710782898af484a15a651c71"
       }
     },
     {
@@ -36430,11 +36430,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -36504,9 +36504,9 @@
                   "status": "incomplete"
                 },
                 "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930",
-                "requirements_sha256": "929df102438ba0a2fb259ece422f3f66652ef44c8f9d80013af257e821e600e7"
+                "requirements_sha256": "b8ee65d32a0b0818a37f9ae8d4708004fe94af5eddf8ee6f8a8ca2bf2e964c65"
               },
-              "attestation_sha256": "a64d3996d34dd7e29cb8a2171046d1871ad918a28009e72209ccdcc04a5ce9e9"
+              "attestation_sha256": "4b3a621831d0facc9bf9683f6be7abb54f41937fe1757421ba94c0a467d8beae"
             },
             {
               "capability": "integer-core",
@@ -36523,9 +36523,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
-                "requirements_sha256": "929df102438ba0a2fb259ece422f3f66652ef44c8f9d80013af257e821e600e7"
+                "requirements_sha256": "b8ee65d32a0b0818a37f9ae8d4708004fe94af5eddf8ee6f8a8ca2bf2e964c65"
               },
-              "attestation_sha256": "cb1ca732d38a7aab916ebed4b09daff65160e97cc4d842298f0864199f3f229f"
+              "attestation_sha256": "b598a8a86074cac7f8067b03c033440eaf13b21e1f5e902f2de95e4822a1b94e"
             },
             {
               "capability": "provenance",
@@ -36537,17 +36537,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
                 "proof_request_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "9063cee04881721626d853422f7cfde913b547140d1fdb2efea921325b19d4e8",
-                "requirements_sha256": "929df102438ba0a2fb259ece422f3f66652ef44c8f9d80013af257e821e600e7"
+                "requirement_sha256": "2305ec08d3b21661c1f112141f93540a04d58e914dd88a9de4b06a97818ce88e",
+                "requirements_sha256": "b8ee65d32a0b0818a37f9ae8d4708004fe94af5eddf8ee6f8a8ca2bf2e964c65"
               },
-              "attestation_sha256": "93791ce04854cdedf8bdac0c02f28c9824c9edf39a5a8adef24fffda2f03147d"
+              "attestation_sha256": "f761d4f06d4c2845e024bd1ddc212949e419cd36e07c6a17a9f7756c8feadada"
             }
           ]
         },
@@ -36595,20 +36595,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
                 "result_format": "21",
                 "source_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "9063cee04881721626d853422f7cfde913b547140d1fdb2efea921325b19d4e8"
+              "requirement_sha256": "2305ec08d3b21661c1f112141f93540a04d58e914dd88a9de4b06a97818ce88e"
             }
           ],
-          "requirements_sha256": "929df102438ba0a2fb259ece422f3f66652ef44c8f9d80013af257e821e600e7"
+          "requirements_sha256": "b8ee65d32a0b0818a37f9ae8d4708004fe94af5eddf8ee6f8a8ca2bf2e964c65"
         },
-        "certificate_sha256": "1287326d7b009048bea7299ba580d9e566a4280a882668a490b955e40d3d90e4"
+        "certificate_sha256": "feec008e340d16f2c487683c7c0557c5eb9ee704c1fcdbeb07b3e48f0cf7bb4f"
       }
     },
     {
@@ -36689,11 +36689,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -36763,9 +36763,9 @@
                   "status": "incomplete"
                 },
                 "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930",
-                "requirements_sha256": "26cf749e6b1b1b6c2d7c3dd01783af7e70322b11c72164d4e8dab82d8418859a"
+                "requirements_sha256": "4a23416396344d4f92fdc7bae1474239a9d7110da46075f84fe882c6178f37a5"
               },
-              "attestation_sha256": "86eb495a9a4069054b760da5ced0e8cf7bb4dc979545c420095f94f07b424a5d"
+              "attestation_sha256": "7595fda7c25b74f6068db4d4194cded6f14e43f4e2205986384bbbe7953cd67d"
             },
             {
               "capability": "integer-core",
@@ -36782,9 +36782,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
-                "requirements_sha256": "26cf749e6b1b1b6c2d7c3dd01783af7e70322b11c72164d4e8dab82d8418859a"
+                "requirements_sha256": "4a23416396344d4f92fdc7bae1474239a9d7110da46075f84fe882c6178f37a5"
               },
-              "attestation_sha256": "2c2f86eb39ca98b89e6d646221c3a47bcf437b897072496b5ea654e6f1fb4291"
+              "attestation_sha256": "a370fe271472bfe32db422ad6eb0e45e2e8920cc253376eb75b434ddc81e47f9"
             },
             {
               "capability": "provenance",
@@ -36796,17 +36796,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
                 "proof_request_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "a71c7dcc78e48784fb7ac318d9ac2eac34363f22d7426d8e2ba6a8327069bd3a",
-                "requirements_sha256": "26cf749e6b1b1b6c2d7c3dd01783af7e70322b11c72164d4e8dab82d8418859a"
+                "requirement_sha256": "a21dfee273b36e3fee8f28ca6b36082b30b806c387363b35dc5f48f45d2da79c",
+                "requirements_sha256": "4a23416396344d4f92fdc7bae1474239a9d7110da46075f84fe882c6178f37a5"
               },
-              "attestation_sha256": "b63e64809d0f79dfe42bb0802a9aa4df9c6780bf48ad74e25f2afec220e8a721"
+              "attestation_sha256": "3b944db6632750af3af1ae6361a329576282157f84a6faa534ef45f9284cae5f"
             }
           ]
         },
@@ -36854,20 +36854,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
                 "result_format": "21",
                 "source_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "a71c7dcc78e48784fb7ac318d9ac2eac34363f22d7426d8e2ba6a8327069bd3a"
+              "requirement_sha256": "a21dfee273b36e3fee8f28ca6b36082b30b806c387363b35dc5f48f45d2da79c"
             }
           ],
-          "requirements_sha256": "26cf749e6b1b1b6c2d7c3dd01783af7e70322b11c72164d4e8dab82d8418859a"
+          "requirements_sha256": "4a23416396344d4f92fdc7bae1474239a9d7110da46075f84fe882c6178f37a5"
         },
-        "certificate_sha256": "9e5042eccdf9735b04bce89ed50d30a87cae77432df2d4a1e1ec3284e6776eca"
+        "certificate_sha256": "5411db4a826e3b8c88c6ad81febbb7c5b1477209b10a057a6ebd88b9ae257227"
       }
     },
     {
@@ -54212,11 +54212,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "69b22fab5625a6655bfe3f29c7baf6de73048ba3c27ab79a3b959aff6dd3e33e",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "69b22fab5625a6655bfe3f29c7baf6de73048ba3c27ab79a3b959aff6dd3e33e",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -54286,9 +54286,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "af71a04deca36d22e440492c4a3f946647e203e65b4970f915d624bf9ca663ac",
-                "requirements_sha256": "2cd8adcfc9aff2f8454c1b721da00ad257b6f8f2faa3d4fcbf978d253a033171"
+                "requirements_sha256": "7766be1f4b85618c6dfd68a14b7070cefcccbfacce24b26e57ba2b85abe5d19c"
               },
-              "attestation_sha256": "39b420aeb00c1dbf1a94154353e008982b21be6d77237605f5a21222e39eadf2"
+              "attestation_sha256": "384c16a7b3ccf8676343f2751e20d8d832fcaebbed86a84d4bad00bbd3b04baa"
             },
             {
               "capability": "provenance",
@@ -54300,17 +54300,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "69b22fab5625a6655bfe3f29c7baf6de73048ba3c27ab79a3b959aff6dd3e33e",
                 "proof_request_hash": "69b22fab5625a6655bfe3f29c7baf6de73048ba3c27ab79a3b959aff6dd3e33e",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "8fd0349a358120ad15648174f62cdac080303a584d8b2442c184c5e1bbe9df81",
-                "requirements_sha256": "2cd8adcfc9aff2f8454c1b721da00ad257b6f8f2faa3d4fcbf978d253a033171"
+                "requirement_sha256": "805463ac0b9d7c1103f687d824c99012925d77ab3b4e303d6f8ffb45ec82e185",
+                "requirements_sha256": "7766be1f4b85618c6dfd68a14b7070cefcccbfacce24b26e57ba2b85abe5d19c"
               },
-              "attestation_sha256": "5dd1fe73a4f37b76d3a5860aada6ab99280feef398c2bb193b566997b9b4618c"
+              "attestation_sha256": "993e229b45267ef3a2547842077580255e3fa2e6b0d1eca29810940229513a2f"
             }
           ]
         },
@@ -54354,20 +54354,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "69b22fab5625a6655bfe3f29c7baf6de73048ba3c27ab79a3b959aff6dd3e33e",
                 "result_format": "21",
                 "source_hash": "69b22fab5625a6655bfe3f29c7baf6de73048ba3c27ab79a3b959aff6dd3e33e",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "8fd0349a358120ad15648174f62cdac080303a584d8b2442c184c5e1bbe9df81"
+              "requirement_sha256": "805463ac0b9d7c1103f687d824c99012925d77ab3b4e303d6f8ffb45ec82e185"
             }
           ],
-          "requirements_sha256": "2cd8adcfc9aff2f8454c1b721da00ad257b6f8f2faa3d4fcbf978d253a033171"
+          "requirements_sha256": "7766be1f4b85618c6dfd68a14b7070cefcccbfacce24b26e57ba2b85abe5d19c"
         },
-        "certificate_sha256": "fa66126e7c709f944f196899d2765a0c9fc762c61f092a4a2b386bf7d223a317"
+        "certificate_sha256": "c44ead9efb97f0ee7fabdf4e0b232cc8f93633bcb634fae7f5f9f44d798b82fe"
       }
     },
     {
@@ -54414,11 +54414,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "c87d58969a1044c8dfb971348dde27654b3adf5c1ffad91dfd9917c96d626cf0",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "c87d58969a1044c8dfb971348dde27654b3adf5c1ffad91dfd9917c96d626cf0",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -54472,9 +54472,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "c694165736eddd78adef139f508e6a5055cf66312b6ca65d351d34b6cc281860",
-                "requirements_sha256": "c35e56a377ce337403d27d96b180cc46d6f99ef721756445f883093a308ad73c"
+                "requirements_sha256": "77d63f0a26cacf7d1f5a639ed3ab900236a34519bab07766abbbdc16769f0008"
               },
-              "attestation_sha256": "50293783a0fc8417e4a79fd60e07d2c260a79bfa103f87603a94612f0b3a4fad"
+              "attestation_sha256": "7b7d60615d89c0fe1ad46c9aa737736caacaa9ab39952ed73746cf4d34d5d767"
             },
             {
               "capability": "provenance",
@@ -54486,17 +54486,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "c87d58969a1044c8dfb971348dde27654b3adf5c1ffad91dfd9917c96d626cf0",
                 "proof_request_hash": "c87d58969a1044c8dfb971348dde27654b3adf5c1ffad91dfd9917c96d626cf0",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "8428cc0622b33bda102571578a7bef61c28d4f088ca7f0a56592dcdab16c893d",
-                "requirements_sha256": "c35e56a377ce337403d27d96b180cc46d6f99ef721756445f883093a308ad73c"
+                "requirement_sha256": "7adc71e8b2f9baa6c99fc32e1ebcbd113a1be50bf30b01033d0282f3b96c997f",
+                "requirements_sha256": "77d63f0a26cacf7d1f5a639ed3ab900236a34519bab07766abbbdc16769f0008"
               },
-              "attestation_sha256": "06f2565893c2ff59a253057736d3d1e9aed65d8d857716d5c4e2fbad9de5adf6"
+              "attestation_sha256": "7c21cf01497d200c79111bca3b64056573677cc5cf1965d0fa973bd6588271dd"
             }
           ]
         },
@@ -54532,20 +54532,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "c87d58969a1044c8dfb971348dde27654b3adf5c1ffad91dfd9917c96d626cf0",
                 "result_format": "21",
                 "source_hash": "c87d58969a1044c8dfb971348dde27654b3adf5c1ffad91dfd9917c96d626cf0",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "8428cc0622b33bda102571578a7bef61c28d4f088ca7f0a56592dcdab16c893d"
+              "requirement_sha256": "7adc71e8b2f9baa6c99fc32e1ebcbd113a1be50bf30b01033d0282f3b96c997f"
             }
           ],
-          "requirements_sha256": "c35e56a377ce337403d27d96b180cc46d6f99ef721756445f883093a308ad73c"
+          "requirements_sha256": "77d63f0a26cacf7d1f5a639ed3ab900236a34519bab07766abbbdc16769f0008"
         },
-        "certificate_sha256": "88d51e84317351920e582e5ebc06e608cbc65ccd1a3d19568aceeb765b65cd40"
+        "certificate_sha256": "5a1eb5fc9cc2ba2aa4aada720a6fa86b81b7aec6cf5730ff6882cead318808bd"
       }
     },
     {
@@ -108489,8 +108489,8 @@
       "size": "0x8",
       "unit": "kyoshin/CUIBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUIBattleManager.cpp",
       "called_functions": [],
@@ -108498,7 +108498,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CUIBattleManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T21:53:22.537892+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CUIBattleManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-80130a48",
@@ -118863,11 +118873,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -118941,9 +118951,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "619ce289265f5204701a4abfd5413465dccf56fcce7e75b568521dae43e1e6d0",
-                "requirements_sha256": "bf725320147540a23a88ec867818131fbf4bca4c002a4a219a148f7e09c9af65"
+                "requirements_sha256": "12e23c4e9a2c57ad507a9519f57fcdf854fb802f86df4601ec67b148348dd784"
               },
-              "attestation_sha256": "8f647dd0903a0b9486efe9a87e18b58e298006ec6b4024b7d0b42ae6694f41a3"
+              "attestation_sha256": "a49099fd6f5e880baf12fdd99ffceb6f4694bcc3c7df2050afef02986839c46f"
             },
             {
               "capability": "provenance",
@@ -118955,17 +118965,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "proof_request_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "74e058be68706ad8527e39f3cd19e596bd14d47ebfb2148dd58e8fdbd9fe454f",
-                "requirements_sha256": "bf725320147540a23a88ec867818131fbf4bca4c002a4a219a148f7e09c9af65"
+                "requirement_sha256": "bc768d259813f0edde89c6d0831b054cdb3ebe22a9f554e2e71bcaaaeefdc3f4",
+                "requirements_sha256": "12e23c4e9a2c57ad507a9519f57fcdf854fb802f86df4601ec67b148348dd784"
               },
-              "attestation_sha256": "d1614392147336fcc363afa9cbe55dde1b0ba35258f7b88dd19db146ef3d2f3c"
+              "attestation_sha256": "87f0ab2b7dde56a6046811066b3eba151fbfba8be0f79003dedbc01e8efd2286"
             }
           ]
         },
@@ -119011,20 +119021,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "result_format": "21",
                 "source_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "74e058be68706ad8527e39f3cd19e596bd14d47ebfb2148dd58e8fdbd9fe454f"
+              "requirement_sha256": "bc768d259813f0edde89c6d0831b054cdb3ebe22a9f554e2e71bcaaaeefdc3f4"
             }
           ],
-          "requirements_sha256": "bf725320147540a23a88ec867818131fbf4bca4c002a4a219a148f7e09c9af65"
+          "requirements_sha256": "12e23c4e9a2c57ad507a9519f57fcdf854fb802f86df4601ec67b148348dd784"
         },
-        "certificate_sha256": "051d6a673c46f0730cefeb01f07fd0a67c99af1dc2da86c03a011a38696311a7"
+        "certificate_sha256": "5dd6be03a031a3d56ac35216b894fd83ea23f5ccb6b340ff81b254562c0cadab"
       }
     },
     {
@@ -119101,11 +119111,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -119179,9 +119189,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "619ce289265f5204701a4abfd5413465dccf56fcce7e75b568521dae43e1e6d0",
-                "requirements_sha256": "ffdfbd8129ffed0a5c8dd19b1b2a4ab0a898f52701da73565df7aa60b5b896ae"
+                "requirements_sha256": "c92291d388f4b58060337a807db8419137901c1f4f29160983180202b1c00378"
               },
-              "attestation_sha256": "06efa8597514af8595b0414f969222fd62062a95caf69e9aa03fee35ae930e1b"
+              "attestation_sha256": "d2706e663803f80dcc0612be17a7d5943a0d60e216000d2d37c865d98aa71848"
             },
             {
               "capability": "provenance",
@@ -119193,17 +119203,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "proof_request_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "6025281a27896fcf84993766c94e9b50e669c5429ff013a9ad16b5fa3752034d",
-                "requirements_sha256": "ffdfbd8129ffed0a5c8dd19b1b2a4ab0a898f52701da73565df7aa60b5b896ae"
+                "requirement_sha256": "402fb16d4af75e3e2c2e000aad9f3c7d8bc83706e639b24c17862d674d271fde",
+                "requirements_sha256": "c92291d388f4b58060337a807db8419137901c1f4f29160983180202b1c00378"
               },
-              "attestation_sha256": "47a7db3352f786f95d0476aae5aca149c54079a5c459f3c4b0ff7589b4d1a583"
+              "attestation_sha256": "de991f5edcbf852a0d013d0ec1958113a5952a95754f3426471cdf62b8f7c740"
             }
           ]
         },
@@ -119249,20 +119259,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "result_format": "21",
                 "source_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "6025281a27896fcf84993766c94e9b50e669c5429ff013a9ad16b5fa3752034d"
+              "requirement_sha256": "402fb16d4af75e3e2c2e000aad9f3c7d8bc83706e639b24c17862d674d271fde"
             }
           ],
-          "requirements_sha256": "ffdfbd8129ffed0a5c8dd19b1b2a4ab0a898f52701da73565df7aa60b5b896ae"
+          "requirements_sha256": "c92291d388f4b58060337a807db8419137901c1f4f29160983180202b1c00378"
         },
-        "certificate_sha256": "ee7056ec73be2d825274ef03d1790fc0d34fe0a9aae3ce4c67876e8961763e03"
+        "certificate_sha256": "c6a95d70d0e1d66b29f5c82fefd8d53ea5936e2d71077920a5bb0815773dfa1d"
       }
     },
     {
@@ -141480,8 +141490,8 @@
       "size": "0x8",
       "unit": "kyoshin/menu/CMenuPTGauge",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuPTGauge.cpp",
       "called_functions": [],
@@ -141489,7 +141499,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuPTGauge.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T22:00:27.042915+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuPTGauge.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-801894c8",
@@ -159381,11 +159401,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "14db82e403c826e39e46045c24c5f95b1a40bfc8b193e9fcaa9bdd6ccb826908",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "14db82e403c826e39e46045c24c5f95b1a40bfc8b193e9fcaa9bdd6ccb826908",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -159451,9 +159471,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "2cf1f9767ba7a0fe7ff9cbf13c9fd75cd2222302f5554f603134c0d885d518cf",
-                "requirements_sha256": "505ce0374e3b1ce0f191088f3bf741d525ac3656997f2e7b2fa86bad686dcb17"
+                "requirements_sha256": "a94e77eb146017e606afbaa248736a29335fbfb9c8516190e4c0b5c00659631c"
               },
-              "attestation_sha256": "14ac909fb30a80a2eaa95280c247200ea18933824d30a66cb5899c3ac44b56f0"
+              "attestation_sha256": "86d58265fe794bd721a472fbc47033ff3d084689d2cea3522d175987eaadb841"
             },
             {
               "capability": "provenance",
@@ -159465,17 +159485,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "14db82e403c826e39e46045c24c5f95b1a40bfc8b193e9fcaa9bdd6ccb826908",
                 "proof_request_hash": "14db82e403c826e39e46045c24c5f95b1a40bfc8b193e9fcaa9bdd6ccb826908",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "07656a1eaa395731dbb093dad6a64bfc280efb5b1cba82f80079285263ca0e63",
-                "requirements_sha256": "505ce0374e3b1ce0f191088f3bf741d525ac3656997f2e7b2fa86bad686dcb17"
+                "requirement_sha256": "ddff97ca4fe68b65e76af0635d7cc0c17e2b0f6c73e3e7d146ecc617f2bae3f2",
+                "requirements_sha256": "a94e77eb146017e606afbaa248736a29335fbfb9c8516190e4c0b5c00659631c"
               },
-              "attestation_sha256": "27f5d35a8100f47a48c36606c4f716e3c63438efd01213ef05d4021d2f851ffe"
+              "attestation_sha256": "e319d9ef3e507c59a5a4088a7ba76b6d730b8da7d4075007614e4591d813a8d7"
             }
           ]
         },
@@ -159517,20 +159537,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "14db82e403c826e39e46045c24c5f95b1a40bfc8b193e9fcaa9bdd6ccb826908",
                 "result_format": "21",
                 "source_hash": "14db82e403c826e39e46045c24c5f95b1a40bfc8b193e9fcaa9bdd6ccb826908",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "07656a1eaa395731dbb093dad6a64bfc280efb5b1cba82f80079285263ca0e63"
+              "requirement_sha256": "ddff97ca4fe68b65e76af0635d7cc0c17e2b0f6c73e3e7d146ecc617f2bae3f2"
             }
           ],
-          "requirements_sha256": "505ce0374e3b1ce0f191088f3bf741d525ac3656997f2e7b2fa86bad686dcb17"
+          "requirements_sha256": "a94e77eb146017e606afbaa248736a29335fbfb9c8516190e4c0b5c00659631c"
         },
-        "certificate_sha256": "751240d96e06fac83d385ecabcde91d3a4f7e30822545beb9284bb5a1b1a571b"
+        "certificate_sha256": "dc64f9f6374a183cd7d24d951d9e9323ac425bef50dd9217768725a2a62f93b7"
       }
     },
     {
@@ -433167,11 +433187,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "985ee187e9e594ba33753e61e10a3a2094fecf423665b7cad94df5f88135e546",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "985ee187e9e594ba33753e61e10a3a2094fecf423665b7cad94df5f88135e546",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -433225,9 +433245,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "c694165736eddd78adef139f508e6a5055cf66312b6ca65d351d34b6cc281860",
-                "requirements_sha256": "b5980d2cfdf64d9f180b127acea389ef3c1fa6f5b5c9cfcf4e7f003879e6bac1"
+                "requirements_sha256": "3e765f6e62740e4cf9501e50382fdd27b4ad07a946d0f6c162eca3e94a19c292"
               },
-              "attestation_sha256": "511f15bf4823653dd2341a6de697f08affb627a22075e4df1a1e8843871be0fc"
+              "attestation_sha256": "66bfd0852cdd7945bb4401ee47f9af61f72742851c4baf3851c8eb68c48ac03b"
             },
             {
               "capability": "provenance",
@@ -433239,17 +433259,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "985ee187e9e594ba33753e61e10a3a2094fecf423665b7cad94df5f88135e546",
                 "proof_request_hash": "985ee187e9e594ba33753e61e10a3a2094fecf423665b7cad94df5f88135e546",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "682fb908bdd18c1f0e090c9ca965b8d7d4dbb374c84db968ac1aa0f0eb7639a7",
-                "requirements_sha256": "b5980d2cfdf64d9f180b127acea389ef3c1fa6f5b5c9cfcf4e7f003879e6bac1"
+                "requirement_sha256": "fe4e3ff0b76eeb2bdbfa3b529962d7947def028db5939b8d9e10b026302c1dda",
+                "requirements_sha256": "3e765f6e62740e4cf9501e50382fdd27b4ad07a946d0f6c162eca3e94a19c292"
               },
-              "attestation_sha256": "dd38525751b9148d24cde09b18337febabe476a75c2a174c776f009b62096b53"
+              "attestation_sha256": "5c5de739f3d7e635c9b6f50a7d279343ff1c770161bf576cfae08daf88601535"
             }
           ]
         },
@@ -433285,20 +433305,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "985ee187e9e594ba33753e61e10a3a2094fecf423665b7cad94df5f88135e546",
                 "result_format": "21",
                 "source_hash": "985ee187e9e594ba33753e61e10a3a2094fecf423665b7cad94df5f88135e546",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "682fb908bdd18c1f0e090c9ca965b8d7d4dbb374c84db968ac1aa0f0eb7639a7"
+              "requirement_sha256": "fe4e3ff0b76eeb2bdbfa3b529962d7947def028db5939b8d9e10b026302c1dda"
             }
           ],
-          "requirements_sha256": "b5980d2cfdf64d9f180b127acea389ef3c1fa6f5b5c9cfcf4e7f003879e6bac1"
+          "requirements_sha256": "3e765f6e62740e4cf9501e50382fdd27b4ad07a946d0f6c162eca3e94a19c292"
         },
-        "certificate_sha256": "6345a343bdb1c0cdd37d8bdb36bf9ad1930669446017bf0f63a9ad68708972c7"
+        "certificate_sha256": "de98b4aaa803df5350f1a0c01e7b7df2a2239d645e3acb7fa02039028813b4e6"
       }
     },
     {
@@ -451439,11 +451459,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+        "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
         "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
         "git_dirty": true,
         "source_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
-        "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+        "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
         "proof_request_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
         "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
         "opcodes_used": [
@@ -451497,9 +451517,9 @@
                 ],
                 "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
                 "requirement_sha256": "c694165736eddd78adef139f508e6a5055cf66312b6ca65d351d34b6cc281860",
-                "requirements_sha256": "3eda1e3ea2aa532564ceff36ad6fd9d933ac47e32fb61bb583ff2996e5236e91"
+                "requirements_sha256": "1fd3272fc5d54d5df266760a929d3a0a0f5b4f60c9a5ddf2b4a64e543d0b4484"
               },
-              "attestation_sha256": "27e70f369a2412e19229c0e4f543653dc18e80e0d839b76947ce44ba9ff4e4d7"
+              "attestation_sha256": "09ab28a97d72c012b753862a7c6e8290d5294c95595318e4339e3b86b7fee8a6"
             },
             {
               "capability": "provenance",
@@ -451511,17 +451531,17 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
                 "source_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
                 "proof_request_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": true,
-                "requirement_sha256": "72106563c701435abd7f103e452509d8ef85fb201c4aa950d69d2c3294435039",
-                "requirements_sha256": "3eda1e3ea2aa532564ceff36ad6fd9d933ac47e32fb61bb583ff2996e5236e91"
+                "requirement_sha256": "db572b50ced43a3b70fc952dbf338a9a9f6324f1253752a3b014d4c4fec45a52",
+                "requirements_sha256": "1fd3272fc5d54d5df266760a929d3a0a0f5b4f60c9a5ddf2b4a64e543d0b4484"
               },
-              "attestation_sha256": "6f7bc525c031fd2bafe38126e46e25fdde642795955364525124079669f1a819"
+              "attestation_sha256": "804f0ac4fc6caf4129f66c9be547961df4b29f28f74ee642dd60abab211ac9f1"
             }
           ]
         },
@@ -451557,20 +451577,20 @@
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
-                "engine_hash": "7ef2159eaa3838646dbd9719b3b2d1663d0ad9df3ce9b8c9f2ff5517840ccd85",
-                "git_commit": "7370c5daa0793b1d2aa9644ecebe7b329d85597c",
+                "engine_hash": "4526e3d8dbccb0e7730816e7bf26efd3e618569ad3e30ee6a1557c04e2c8560a",
+                "git_commit": "9da75aae30f074bc9a8f88536ca5a9e1f38a3da1",
                 "git_dirty": "true",
                 "proof_request_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
                 "result_format": "21",
                 "source_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
                 "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
               },
-              "requirement_sha256": "72106563c701435abd7f103e452509d8ef85fb201c4aa950d69d2c3294435039"
+              "requirement_sha256": "db572b50ced43a3b70fc952dbf338a9a9f6324f1253752a3b014d4c4fec45a52"
             }
           ],
-          "requirements_sha256": "3eda1e3ea2aa532564ceff36ad6fd9d933ac47e32fb61bb583ff2996e5236e91"
+          "requirements_sha256": "1fd3272fc5d54d5df266760a929d3a0a0f5b4f60c9a5ddf2b4a64e543d0b4484"
         },
-        "certificate_sha256": "6a5a9d158f197543dba8247723270a5d7b7ee2d9d23d629d53fcd8bf8bb0dd7d"
+        "certificate_sha256": "d54b7e1442048e0c82dba4150bdb164b846b2a0f1176ae98601a41396410f903"
       }
     },
     {

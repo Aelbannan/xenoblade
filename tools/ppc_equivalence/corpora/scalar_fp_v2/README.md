@@ -7,7 +7,7 @@ promotion time when claiming Dolphin/Broadway provenance; interim
 
 Replay grader: `python -m tools.ppc_equivalence.scalar_fp_v2_corpus --check`
 
-Regenerate from Broadway fixtures:
+Regenerate from Broadway fixtures + exact-kernel supplements:
 
 ```bash
 python3 -m tools.ppc_equivalence.scalar_fp_v2_harvest --inventory
@@ -22,42 +22,75 @@ python3 -m tools.ppc_equivalence.scalar_fp_v2_harvest --write
 | Broadway JSONL export | `tools/ppc_equivalence/fixtures/broadway.jsonl` | Same cases; used by `gen_fixture_blob` / behaviour PPC |
 | Differential fixtures | `tools/ppc_equivalence/fixtures/broadway.jsonl` + `validation_ledger.yaml` | Per-opcode `dolphin_interpreter: true` rows |
 | Harvest tool | `tools/ppc_equivalence/scalar_fp_v2_harvest.py` | Maps fixtures → corpus rows; filters replay-passing |
+| Exact kernel supplements | `fp_exact.py`, `fp_exact_convert.py`, … | Gap fill for NI=1 and non-RNE when fixtures lack coverage |
 
-Live Dolphin re-capture is **not** required for this pass — expected bits are
-copied from the existing Broadway fixture oracle. Rows that disagree with the
-exact-v2 replay kernel are dropped; gaps are filled with honestly marked
-`exact_kernel_v2` supplements.
+Live Dolphin re-capture is **not** required for this pass — Broadway rows copy
+fixture-oracle bits; gaps (NI=1, RTZ/RIP/RIM) use honestly marked
+`exact_kernel_v2` expected values from the exact rounding kernel.
 
 ## Files
 
-| File | Purpose |
-|---|---|
-| `scalar_rn.jsonl` | Non-fused scalar result bits (RN nearest-even) |
-| `fpscr.jsonl` | FPSCR transition vectors |
-| `ni.jsonl` | NI=0/1 operand/result flush |
-| `compare_convert_control.jsonl` | Compare, convert, FPSCR control ops |
-| `traps_fe.jsonl` | FE0/FE1 trap delivery |
-| `fused_residual.jsonl` | Fused midpoint + sticky-residue cases |
+| File | Purpose | Rows (current) |
+|---|---|---|
+| `scalar_rn.jsonl` | Non-fused scalar result bits (RNE + RTZ/RIP/RIM + NI=1) | 37 |
+| `fpscr.jsonl` | FPSCR transition vectors (RNE + non-RNE) | 34 |
+| `ni.jsonl` | NI=0 Broadway harvest + NI=1 exact supplements | 33 |
+| `compare_convert_control.jsonl` | Compare, convert, NI=1 / non-RNE `frsp` | 20 |
+| `traps_fe.jsonl` | FE0/FE1 trap delivery | 20 |
+| `fused_residual.jsonl` | Fused midpoint + sticky-residue cases | 20 |
 
 Each file begins with a JSON schema header (`type: scalar_fp_v2_corpus`).
+
+**Total replay rows:** 164 (all pass `--check` as of last harvest).
 
 ## Provenance policy
 
 | Value | Meaning |
 |---|---|
 | `fixtures-broadway-jsonl` | Expected bits/FPSCR/CR from Broadway fixture oracle |
-| `exact_kernel_v2` | Expected values from exact-v2 kernel (gap fill or NI=1) |
+| `exact_kernel_v2` | Expected values from exact-v2 kernel (gap fill or NI=1 / non-RNE) |
 | `oracle_rne_interim` | Legacy interim RNE placeholders |
 | `dolphin-capture` | Reserved for future live Dolphin JSONL capture rows |
 
+## Coverage (current)
+
+### NI=1 (`exact_kernel_v2` — no live Dolphin NI fixtures)
+
+| Corpus | NI=1 rows | Themes |
+|---|---|---|
+| `ni.jsonl` | 15 | invalid/NaN, subnormal flush, VE sticky flags |
+| `scalar_rn.jsonl` | 4 | subnormal add/mul, signed-zero |
+| `compare_convert_control.jsonl` | 5 | `frsp` flush-to-zero, subnormal `fcmpu` |
+
+### Non-RNE rounding (`exact_kernel_v2` — Broadway fixtures are RNE-only)
+
+| Mode | `scalar_rn.jsonl` | `fpscr.jsonl` | `compare_convert_control.jsonl` |
+|---|---|---|---|
+| RTZ (toward-zero) | 5 | 5 | 2 (`frsp` tie + pi) |
+| RIP (toward +∞) | 5 | 5 | 2 |
+| RIM (toward −∞) | 5 | 5 | 1 |
+
+Themes include directed overflow (RTZ saturates to max finite vs RNE → ∞),
+subnormal underflow (RIP), signed-zero / neg-zero edges, and RN-dependent
+`frsp` tie cases (`0x3ff0000000400000`).
+
 ## Coverage gaps (honest)
 
-- **RN modes:** Broadway fixtures use default RN only; no RTP/RTN/RTZ corpus rows yet.
-- **NI=1:** No Broadway fixtures set FPSCR.NI; NI=1 rows use `exact_kernel_v2`.
-- **Fused residual:** `fmadds-single-rounding` and invalid-operand fused cases fail exact-v2 replay and are excluded until kernel parity.
-- **Trap FE:** Imprecise FE0/FE0+FE1 writeback rows derived via trap planner, not live MSR harness capture.
-- **Convert:** `fctiw` / `fctiwz` not in compare_convert schema (only `frsp` + compares).
-- **Record form:** Scalar `fcmp*` record CR1 shadowing not harvested (fixtures use BF>0 without record).
+- **Live Dolphin NI=1:** No Broadway fixture sets FPSCR.NI; all NI=1 rows are
+  `exact_kernel_v2`. Re-capture via behaviour PPC + `mtfsfi` NI bit still open.
+- **Live Dolphin non-RNE:** RTZ/RIP/RIM rows use exact kernel expected bits;
+  no independent Dolphin JSONL oracle yet.
+- **Fused residual:** `fmadds-single-rounding` and invalid-operand fused cases
+  fail exact-v2 replay and are excluded until kernel parity.
+- **Trap FE:** Imprecise FE0/FE0+FE1 writeback rows derived via trap planner,
+  not live MSR harness capture.
+- **Convert:** `fctiw` / `fctiwz` not in compare_convert schema (only `frsp` +
+  compares).
+- **Record form:** Scalar `fcmp*` record CR1 shadowing not harvested (fixtures
+  use BF>0 without record).
+- **Ledger dimensions:** `validation_ledger.yaml` `rounding_modes` /
+  `subnormals` remain `false` until live Dolphin attestation — corpus replay
+  alone does not flip promotion dimensions.
 
 ## Mutation killers
 

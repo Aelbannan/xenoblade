@@ -142,7 +142,7 @@ def mmio_region(
     device_id: str | None = None,
     label: str | None = None,
 ) -> Region:
-    """Build an MMIO region descriptor (device bus wiring is future work)."""
+    """Build an MMIO region; ``device_id`` keys ``MemoryBus.devices`` when set."""
     return Region(
         start=start,
         end=end,

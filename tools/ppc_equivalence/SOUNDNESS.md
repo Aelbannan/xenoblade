@@ -210,20 +210,25 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   Symbolic accesses that may span regions are intended to path-split or fail
   inconclusive. Not yet proof-producing: no `EQUIVALENT` path binds AddressSpace
   obligations into the solver or promotion gate.
-- **MMIO device models (scaffold):** `device_model.py` defines opt-in
-  ``DeviceModel`` implementations (``RegisterBankDevice``, ``GxFifoStreamDevice``
-  stub) and ``address_space.mmio_region`` / ``attach_mmio_region`` attach MMIO
-  spans with optional ``device_id`` labels. Tier **C** only: MMIO access under
-  ``memory_bus=`` fails closed in concrete execution and is excluded from
-  symbolic feasible paths when ``check_equivalence`` binds a bus; unknown or
-  partial device behavior must fail closed (``AccessOutcome.UNSUPPORTED``) and
-  yield inconclusive proofs rather than ordinary RAM.
-- **Memory bus (scaffold):** `memory_bus.py` routes concrete 1/2/4-byte
+- **MMIO device models (live on opt-in bus):** `device_model.py` defines
+  ``DeviceModel`` implementations (``RegisterBankDevice``, write-only
+  ``GxFifoStreamDevice``) and ``address_space.mmio_region`` /
+  ``attach_mmio_region`` attach MMIO spans with optional ``device_id`` labels.
+  Under ``build_memory_bus(..., devices=)`` + ``execute_cfg(..., memory_bus=)``
+  with ``ConcreteOps``, matching ``device_id`` loads/stores hit the device
+  (register-bank R/W; GX FIFO records writes and rejects reads). Missing
+  devices, unsupported widths/alignments, and ``AccessOutcome.UNSUPPORTED``
+  fail closed (``BusOutcome`` / ``ExecutionInconclusive``) with no silent RAM
+  fallback. Tier **C** only: symbolic ``check_equivalence`` still excludes MMIO
+  from feasible address ranges (``memory_bus`` obligation ``mmio: fail-closed``);
+  device semantics are not SMT-modeled and do not expand ``EQUIVALENT``
+  authorization beyond the existing memory-bus feature.
+- **Memory bus (opt-in Tier C):** `memory_bus.py` routes concrete 1/2/4-byte
   loads/stores through ``AddressSpace`` regions to RAM backing
-  (``ConcreteMemory``), immutable ROM images, or MMIO ``DeviceModel`` instances
-  keyed by ``device_id``. Multi-region spans, unmapped addresses, unsupported
-  widths, missing devices, and ROM writes fail closed (``BusOutcome``). Tier
-  **C** opt-in: pass ``memory_bus=`` to ``execute_cfg`` with ``ConcreteOps``
+  (``ConcreteMemory``), immutable ROM images, or live MMIO ``DeviceModel``
+  instances keyed by ``device_id``. Multi-region spans, unmapped addresses,
+  unsupported widths, missing devices, and ROM writes fail closed
+  (``BusOutcome``). Pass ``memory_bus=`` to ``execute_cfg`` with ``ConcreteOps``
   only, or to ``check_equivalence`` to bind ROM/RAM address-space constraints
   into the solver and route concrete sampling; symbolic ``WordOps`` CFG
   execution does not take ``memory_bus=`` (fail closed if passed). Default

@@ -1,9 +1,12 @@
-"""MMIO device models (scaffold only).
+"""MMIO device models for the opt-in MemoryBus path.
 
-Provides abstract ``DeviceModel`` implementations for register banks and
-optional GX FIFO write-stream recording. Not wired into ``execute_cfg``,
-``check_equivalence``, or promotion; unknown or partial device behavior must
-fail closed (``AccessOutcome.UNSUPPORTED``) rather than degrade to RAM.
+Provides ``DeviceModel`` implementations for register banks and GX FIFO
+write-stream recording. Live under Tier **C** when attached via
+``build_memory_bus(..., devices=)`` and a matching MMIO ``device_id``:
+concrete loads/stores through ``execute_cfg(..., memory_bus=)`` hit the device.
+Symbolic ``check_equivalence`` still treats MMIO as fail-closed (no device
+semantics in SMT). Unknown widths, alignments, or ``AccessOutcome.UNSUPPORTED``
+must fail closed rather than degrade to RAM.
 """
 
 from __future__ import annotations
@@ -35,7 +38,7 @@ class DeviceWriteResult:
 
 
 class DeviceModel(ABC):
-    """Abstract MMIO device surface for future engine wiring."""
+    """Abstract MMIO device surface serviced by ``MemoryBus`` MMIO regions."""
 
     @abstractmethod
     def validate_access(self, addr: int, width: int, *, is_write: bool) -> AccessOutcome:

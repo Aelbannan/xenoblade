@@ -1,10 +1,11 @@
 """Fail-closed memory bus routing loads/stores through AddressSpace regions.
 
-Routes byte accesses to RAM backing, immutable ROM images, or MMIO device
-models. Opt-in Tier C integration: pass ``memory_bus=`` to ``execute_cfg`` with
-``ConcreteOps`` only, or to ``check_equivalence`` to bind symbolic constraints
-and route concrete sampling. Default proofs remain on unconstrained
-``ConcreteMemory`` unless callers explicitly opt in.
+Routes byte accesses to RAM backing, immutable ROM images, or live MMIO
+``DeviceModel`` instances keyed by region ``device_id``. Opt-in Tier C:
+pass ``memory_bus=`` to ``execute_cfg`` with ``ConcreteOps`` only, or to
+``check_equivalence`` to bind ROM/RAM symbolic constraints and route concrete
+sampling (MMIO remains fail-closed in SMT). Default proofs remain on
+unconstrained ``ConcreteMemory`` unless callers explicitly opt in.
 """
 
 from __future__ import annotations

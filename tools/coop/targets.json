@@ -116363,11 +116363,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "ef53fa40b6aedb0d110d46ff112e2a0c2f90fe7f4781f2f615da261f4c02af88",
-        "certifier_hash": "b055ecb8b4b89be01d300fe0181db9bb98a878b8ff75bec218bb716ecbe186c2",
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
         "git_dirty": true,
         "source_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
-        "git_commit": "b191a6ebc573ac9595e9475554de15c7a72d9f1c",
+        "git_commit": "7fe7e5416d24bb8fe3b6cde0eeca0a9f0fb5e792",
         "proof_request_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
         "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
         "opcodes_used": [
@@ -116441,9 +116441,9 @@
                 ],
                 "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
                 "requirement_sha256": "619ce289265f5204701a4abfd5413465dccf56fcce7e75b568521dae43e1e6d0",
-                "requirements_sha256": "8f31448448d915da9c71d69e99e820191e6dbcd88b26a829e2051aed3a483ae4"
+                "requirements_sha256": "cdb29b1ebb9c3a9dc44b6550487802cbd2b36ef32b39fb4a08432dc782bb3557"
               },
-              "attestation_sha256": "3bf83614d07ba7f931dc9cb673aa4b2a7e97082bb2a474b01ef8fca1cf79fd1a"
+              "attestation_sha256": "6edce02c2649648e35fa6210ecabd3d9313218e4b49d4b7f75e0eb716766b549"
             },
             {
               "capability": "provenance",
@@ -116455,23 +116455,33 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "ef53fa40b6aedb0d110d46ff112e2a0c2f90fe7f4781f2f615da261f4c02af88",
-                "certifier_hash": "b055ecb8b4b89be01d300fe0181db9bb98a878b8ff75bec218bb716ecbe186c2",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
                 "source_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "proof_request_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
-                "git_commit": "b191a6ebc573ac9595e9475554de15c7a72d9f1c",
+                "git_commit": "7fe7e5416d24bb8fe3b6cde0eeca0a9f0fb5e792",
                 "git_dirty": true,
-                "requirement_sha256": "aba51aba8d655ae1cd04c32872e66f4061ba2b3369df43fea0fad30a2bc1ae33",
-                "requirements_sha256": "8f31448448d915da9c71d69e99e820191e6dbcd88b26a829e2051aed3a483ae4"
+                "requirement_sha256": "58ea7c581dc89bb50e16a59fdd82018bd64fd8a9b2875901a03de50b30802d04",
+                "requirements_sha256": "cdb29b1ebb9c3a9dc44b6550487802cbd2b36ef32b39fb4a08432dc782bb3557"
               },
-              "attestation_sha256": "bbd6d99e7c3766da260a76e1709a700f45ee9d04d3a46f0d30d707337082b479"
+              "attestation_sha256": "ecb5b313185723c483a0d4e32ea21a85c3ccad7f1003abbec2eb7abd370250e9"
             }
           ]
         },
         "capability_requirements": {
           "schema_version": 1,
           "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
             {
               "capability": "integer-core",
               "required_opcodes": [
@@ -116500,21 +116510,21 @@
               "proof_features": [],
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
-                "certifier_hash": "b055ecb8b4b89be01d300fe0181db9bb98a878b8ff75bec218bb716ecbe186c2",
-                "engine_hash": "ef53fa40b6aedb0d110d46ff112e2a0c2f90fe7f4781f2f615da261f4c02af88",
-                "git_commit": "b191a6ebc573ac9595e9475554de15c7a72d9f1c",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "7fe7e5416d24bb8fe3b6cde0eeca0a9f0fb5e792",
                 "git_dirty": "true",
                 "proof_request_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "result_format": "21",
                 "source_hash": "9eebc7a3568caeece6e1a87d9902c50ddd95214b0cb0c08865375586e093d002",
                 "validation_ledger_hash": ""
               },
-              "requirement_sha256": "aba51aba8d655ae1cd04c32872e66f4061ba2b3369df43fea0fad30a2bc1ae33"
+              "requirement_sha256": "58ea7c581dc89bb50e16a59fdd82018bd64fd8a9b2875901a03de50b30802d04"
             }
           ],
-          "requirements_sha256": "8f31448448d915da9c71d69e99e820191e6dbcd88b26a829e2051aed3a483ae4"
+          "requirements_sha256": "cdb29b1ebb9c3a9dc44b6550487802cbd2b36ef32b39fb4a08432dc782bb3557"
         },
-        "certificate_sha256": "5db64d0ee4f7b19f4081c3749b099397224df389f5d3636a94547ce5ec68debe"
+        "certificate_sha256": "928b5379f90661f72ea593f9cd3af8971a3c795678224a38e011a3af6894c2d7"
       }
     },
     {

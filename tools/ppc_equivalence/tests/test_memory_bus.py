@@ -9,7 +9,11 @@ from tools.ppc_equivalence.address_space import (
     mmio_region,
     rom_image_region,
 )
-from tools.ppc_equivalence.device_model import RegisterBankDevice, RegisterSpec
+from tools.ppc_equivalence.device_model import (
+    GxFifoStreamDevice,
+    RegisterBankDevice,
+    RegisterSpec,
+)
 from tools.ppc_equivalence.memory_bus import (
     BusOutcome,
     MemoryBus,
@@ -71,6 +75,29 @@ class TestMemoryBusMmio(unittest.TestCase):
         bus = build_memory_bus(AddressSpace((mmio,)), devices={})
         self.assertEqual(bus.load(0xCD000000, 4).outcome, BusOutcome.UNSUPPORTED)
         self.assertEqual(bus.store(0xCD000000, 4, 0).outcome, BusOutcome.UNSUPPORTED)
+
+    def test_mmio_unsupported_width_no_ram_fallback(self) -> None:
+        result = self.bus.load(0xCC008000, 2)
+        self.assertEqual(result.outcome, BusOutcome.UNSUPPORTED)
+
+
+class TestMemoryBusGxFifo(unittest.TestCase):
+    def setUp(self) -> None:
+        self.device = GxFifoStreamDevice(base=0xCC008000, span=0x100)
+        mmio = mmio_region(0xCC008000, 0xCC0080FF, device_id="gx-fifo")
+        self.bus = build_memory_bus(
+            AddressSpace((mmio,)),
+            devices={"gx-fifo": self.device},
+        )
+
+    def test_gx_fifo_write_via_bus(self) -> None:
+        write = self.bus.store(0xCC008000, 4, 0xAABBCCDD)
+        self.assertEqual(write.outcome, BusOutcome.OK)
+        self.assertEqual(len(self.device.write_events), 1)
+        self.assertEqual(self.device.write_events[0]["value"], hex(0xAABBCCDD))
+
+    def test_gx_fifo_read_fail_closed(self) -> None:
+        self.assertEqual(self.bus.load(0xCC008000, 4).outcome, BusOutcome.UNSUPPORTED)
 
 
 class TestMemoryBusUnmapped(unittest.TestCase):

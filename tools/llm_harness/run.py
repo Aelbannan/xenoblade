@@ -154,6 +154,27 @@ def main(argv: list[str] | None = None) -> int:
     prepare = sub.add_parser("prepare", help="Add function markers around an existing definition")
     prepare.add_argument("target_id")
     prepare.add_argument("--write", action="store_true")
+    strip_externs = sub.add_parser(
+        "strip-redundant-externs",
+        help=(
+            "Remove duplicate extern object decls from FULL_MATCH / "
+            "EQUIVALENT_MATCH function slots (keeps the earliest decl)"
+        ),
+    )
+    strip_externs.add_argument(
+        "target_id",
+        nargs="?",
+        help="Optional single accepted target (default: all accepted targets)",
+    )
+    strip_externs.add_argument(
+        "--tu",
+        help="Limit to accepted targets in a translation unit",
+    )
+    strip_externs.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report slots that would change without writing",
+    )
     slot = sub.add_parser("slot", help="Create a function marker slot")
     slot.add_argument("target_id")
     slot.add_argument("file", type=Path)
@@ -261,6 +282,37 @@ def main(argv: list[str] | None = None) -> int:
         if prepare_fn is None:
             parser.error("Configured project adapter does not support prepare")
         print(prepare_fn(args.target_id, write=args.write))
+        return 0
+    if args.command == "strip-redundant-externs":
+        strip_fn = getattr(harness.adapter, "strip_accepted_redundant_externs", None)
+        if strip_fn is None:
+            parser.error(
+                "Configured project adapter does not support strip-redundant-externs"
+            )
+        try:
+            results = strip_fn(
+                dry_run=args.dry_run,
+                tu=args.tu or "",
+                target_id=args.target_id or "",
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        changed = [
+            row
+            for row in results
+            if row.get("action") in {"stripped", "would_strip"}
+        ]
+        print(
+            json.dumps(
+                {
+                    "dry_run": bool(args.dry_run),
+                    "count": len(results),
+                    "changed": len(changed),
+                    "results": results,
+                },
+                indent=2,
+            )
+        )
         return 0
     if args.command == "slot":
         slot_fn = getattr(harness.adapter, "create_slot", None)

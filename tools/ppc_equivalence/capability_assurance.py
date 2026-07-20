@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
+from tools.ppc_equivalence.capability_requirements import KNOWN_CAPABILITIES
 from tools.ppc_equivalence.provenance import canonical_json_sha256
 
 CAPABILITY_ASSURANCE_SCHEMA_VERSION = 1
@@ -56,40 +57,8 @@ _STATUS_RANK = {
     STATUS_PROMOTION_GRADE: 3,
 }
 
-KNOWN_CAPABILITIES = frozenset(
-    {
-        "integer-core",
-        "bounded-memory",
-        "assumed-ordinary-ram",
-        "certified-calls",
-        "precondition-closure",
-        "fp-bitwise",
-        "fp-load-store",
-        "fp-compare",
-        "fp-convert",
-        "fp-scalar-arithmetic",
-        "fp-fused-arithmetic",
-        "fp-paired-single",
-        "fp-psq",
-        "fp-traps",
-        "mmio-register-bank",
-        "mmio-read-side-effects",
-        "mmio-external-input",
-        "gx-fifo-write-trace",
-        "gx-fifo-read",
-        "mmio-loop-emission",
-        "mixed-address-space-routing",
-        "dma-interrupt-effects",
-        "domain-exception",
-        "provenance",
-        # Advanced proof-feature capabilities (empty allowlists → fail closed).
-        "memory-loop-summary",
-        "immutable-address-space",
-        "indirect-target-closure",
-        "affine-loop-summary",
-        "relational-loop-induction",
-    }
-)
+# Re-exported from capability_requirements (single source of truth).
+__all_capability_names__ = KNOWN_CAPABILITIES  # noqa: F841 — keep import bound
 
 KNOWN_ATTESTATION_ALGORITHMS = frozenset(
     {
@@ -435,6 +404,7 @@ class CapabilityAssuranceResult:
     weakest_status: str
     shadow_legacy_tier: str | None
     recomputed_statuses: dict[str, str]
+    blockers: tuple[str, ...] = ()
 
     def capabilities_used(self) -> tuple[str, ...]:
         return tuple(sorted(self.recomputed_statuses))

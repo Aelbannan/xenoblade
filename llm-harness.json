@@ -33,42 +33,18 @@
     }
   },
   "models": {
-    "initial": [
+    "default": [
       {
-        "id": "lmstudio-local",
-        "provider": "lmstudio",
-        "model": "qwen/qwen3.6-27b",
-        "runs": 1
-      }
-    ],
-    "repair": [
-      {
-        "id": "lmstudio-local",
-        "provider": "lmstudio",
-        "model": "qwen/qwen3.6-27b",
-        "runs": 1
-      }
-    ],
-    "tu": [
-      {
-        "id": "lmstudio-local",
-        "provider": "lmstudio",
-        "model": "qwen/qwen3.6-27b",
-        "runs": 1
-      }
-    ],
-    "sample": [
-      {
-        "id": "lmstudio-local",
-        "provider": "lmstudio",
-        "model": "qwen/qwen3.6-27b",
+        "id": "opencode-deepseek-flash",
+        "provider": "opencode",
+        "model": "opencode-go/deepseek-v4-flash",
         "runs": 1
       }
     ]
   },
   "execution": {
     "initial_parallel": 3,
-    "target_parallel": 2,
+    "target_parallel": 10,
     "max_retries": 1,
     "auto_promote": true,
     "auto_promote_owner": "llm-harness",

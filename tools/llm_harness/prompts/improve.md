@@ -19,6 +19,8 @@ Map the earliest delta, then change only that cause:
 | `lbl_eu_*__2cf` vs `lbl_eu_*` | add `extern "C"` |
 | `@N` vs `lbl_eu_*` | TU-local pool — copy `extern "C"` data, not PTMF/ref expression |
 
+If the candidate still uses a stub signature that contradicts `retail_asm` (void/no-params vs return/`this`/args in the listing), fix that ABI first before chasing later instruction deltas.
+
 Do not restructure unrelated code. Preserve already-correct semantics.
 
 Return only the complete target function definition.

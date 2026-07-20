@@ -8,6 +8,7 @@ import unittest
 import unittest.mock
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 from tools.llm_harness.core import Harness, parse_candidate
 from tools.llm_harness.providers import (
@@ -299,6 +300,67 @@ class OpenCodeProviderTests(unittest.TestCase):
                     model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
                     cwd=Path(tmp),
                 )
+
+    def test_invoke_passes_optional_variant(self) -> None:
+        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096", timeout_seconds=30)
+        seen: dict[str, Any] = {}
+
+        def fake_request(method: str, path: str, body=None, query=None):
+            if method == "GET" and path == "/global/health":
+                return {"healthy": True, "version": "1.18.2"}
+            if method == "POST" and path == "/session":
+                return {"id": "ses_variant"}
+            if method == "POST" and path.endswith("/message"):
+                seen["body"] = body
+                return {
+                    "info": {"cost": 0, "tokens": {"input": 1, "output": 1, "cache": {}}},
+                    "parts": [{"type": "text", "text": "{}"}],
+                }
+            if method == "DELETE":
+                return True
+            raise AssertionError(f"unexpected {method} {path}")
+
+        provider._request = fake_request  # type: ignore[method-assign]
+        with tempfile.TemporaryDirectory() as tmp:
+            provider.invoke(
+                prompt="hi",
+                model=ModelConfig(
+                    id="x",
+                    provider="opencode",
+                    model="opencode/m",
+                    variant="high",
+                ),
+                cwd=Path(tmp),
+            )
+        self.assertEqual(seen["body"]["variant"], "high")
+
+    def test_invoke_omits_variant_when_unset(self) -> None:
+        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096", timeout_seconds=30)
+        seen: dict[str, Any] = {}
+
+        def fake_request(method: str, path: str, body=None, query=None):
+            if method == "GET" and path == "/global/health":
+                return {"healthy": True, "version": "1.18.2"}
+            if method == "POST" and path == "/session":
+                return {"id": "ses_novar"}
+            if method == "POST" and path.endswith("/message"):
+                seen["body"] = body
+                return {
+                    "info": {"cost": 0, "tokens": {"input": 1, "output": 1, "cache": {}}},
+                    "parts": [{"type": "text", "text": "{}"}],
+                }
+            if method == "DELETE":
+                return True
+            raise AssertionError(f"unexpected {method} {path}")
+
+        provider._request = fake_request  # type: ignore[method-assign]
+        with tempfile.TemporaryDirectory() as tmp:
+            provider.invoke(
+                prompt="hi",
+                model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
+                cwd=Path(tmp),
+            )
+        self.assertNotIn("variant", seen["body"])
 
 
 class LMStudioProviderTests(unittest.TestCase):

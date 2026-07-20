@@ -121,8 +121,10 @@ class OpenCodeProvider:
             }
             if model.agent:
                 message_body["agent"] = model.agent
-            if model.variant:
-                message_body["variant"] = model.variant
+            # Optional reasoning preset: prefer explicit variant, else reasoning_effort.
+            variant = (model.variant or model.reasoning_effort or "").strip()
+            if variant:
+                message_body["variant"] = variant
 
             response = self._request(
                 "POST",
@@ -223,9 +225,24 @@ class OpenCodeProvider:
                 return json.loads(raw)
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
+            hint = ""
+            try:
+                payload = json.loads(detail)
+                message = (
+                    (payload.get("data") or {}).get("message")
+                    if isinstance(payload, dict)
+                    else None
+                )
+                if isinstance(message, str) and "Check server logs" in message:
+                    hint = (
+                        " (see ~/.local/share/opencode/log/opencode.log — "
+                        "often a bad model id, e.g. use opencode/deepseek-v4-flash-free)"
+                    )
+            except Exception:
+                pass
             raise RuntimeError(
                 f"OpenCode server {method} {path} failed "
-                f"(HTTP {exc.code}): {detail[-2000:]}"
+                f"(HTTP {exc.code}): {detail[-2000:]}{hint}"
             ) from exc
         except urllib.error.URLError as exc:
             raise RuntimeError(

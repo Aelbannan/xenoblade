@@ -47,7 +47,8 @@
       {
         "id": "opencode-deepseek-flash",
         "provider": "opencode",
-        "model": "opencode/deepseek-v4-flash-free",
+        "model": "opencode-go/deepseek-v4-flash",
+        "variant": "high",
         "runs": 1
       }
     ],

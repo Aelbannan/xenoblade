@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import unittest
 
+from tools.ppc_equivalence.address_space import AddressSpace, mmio_region
 from tools.ppc_equivalence.bus_spec import DeviceSpecification, lift_symbolic_register_banks
+from tools.ppc_equivalence.deadline import Deadline
 from tools.ppc_equivalence.device_model import RegisterSpec
-from tools.ppc_equivalence.memory_bus_obligations import symbolic_mmio_still_fail_closed
+from tools.ppc_equivalence.memory_bus import build_memory_bus
+from tools.ppc_equivalence.memory_bus_obligations import (
+    enrich_memory_bus_obligation_with_symbolic_mmio,
+    symbolic_mmio_still_fail_closed,
+)
 from tools.ppc_equivalence.proof_features import UNSUPPORTED_FOR_EQUIVALENT
 from tools.ppc_equivalence.symbolic_bus import (
     ALGORITHM,
@@ -15,12 +21,15 @@ from tools.ppc_equivalence.symbolic_bus import (
     access_supported,
     apply_register_write,
     build_register_bank_extensional_obligation,
+    collect_mmio_touches_from_terminals,
+    discharge_unsupported_access,
     initial_symbolic_register_bank,
     normal_write_next,
     query_unsupported_access,
     read_clear_next,
     read_returned_value,
     register_masks,
+    route_symbolic_mmio_access,
     symbolic_bank_from_device_spec,
     symbolic_read,
     symbolic_write,
@@ -250,6 +259,58 @@ class UnsupportedAccessObligationTests(unittest.TestCase):
         self.assertEqual(obligation["schema_version"], 1)
         self.assertEqual(obligation["devices"][0]["theory"], THEORY)
         self.assertEqual(obligation["unsupported_access"]["original"]["result"], "sat")
+
+
+    def test_discharge_unsupported_access_matches_query(self) -> None:
+        addr = self.z3.BitVec("mmio.addr", 32)
+        path = addr == self.z3.BitVecVal(0xCC008000, 32)
+        supported = access_supported(addr, self.bank, self.z3, width=4)
+        query = discharge_unsupported_access(
+            path_condition=path,
+            supported=supported,
+            deadline=Deadline.after_ms(5_000),
+            z3=self.z3,
+        )
+        self.assertEqual(query.status, UnsupportedAccessStatus.UNSAT)
+        self.assertFalse(query.inconclusive)
+
+    def test_route_symbolic_mmio_access_write(self) -> None:
+        addr = self.z3.BitVecVal(0xCC008000, 32)
+        value = self.z3.BitVecVal(0x0000_00AB, 32)
+        result = route_symbolic_mmio_access(
+            addr=addr,
+            width=4,
+            bank=self.bank,
+            z3=self.z3,
+            value=value,
+            is_write=True,
+        )
+        self.assertEqual(self.z3.simplify(result.supported), self.z3.BoolVal(True))
+
+
+class MmioObservabilityTests(unittest.TestCase):
+    def test_enrich_obligation_attaches_scaffold_blocks(self) -> None:
+        from tools.ppc_equivalence.device_model import RegisterBankDevice
+
+        device = RegisterBankDevice(
+            base=0xCC008000,
+            reg_width=4,
+            registers=(RegisterSpec(offset=0x00, initial=0xAB),),
+        )
+        mmio = mmio_region(0xCC008000, 0xCC008FFF, device_id="test-bank")
+        bus = build_memory_bus(AddressSpace((mmio,)), devices={"test-bank": device})
+        base_obligation = {"algorithm": "memory-bus-v1", "mmio": "fail-closed"}
+        enriched = enrich_memory_bus_obligation_with_symbolic_mmio(
+            base_obligation,
+            bus,
+        )
+        self.assertEqual(enriched["symbolic_mmio"], "scaffolded")
+        self.assertIn("register_bank_extensional", enriched)
+        self.assertEqual(
+            enriched["register_bank_extensional"]["algorithm"],
+            ALGORITHM,
+        )
+        self.assertIn("observability", enriched)
 
 
 class FreezeGuardTests(unittest.TestCase):

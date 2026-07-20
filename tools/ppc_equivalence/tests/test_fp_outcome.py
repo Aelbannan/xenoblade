@@ -14,6 +14,7 @@ from tools.ppc_equivalence.fp_outcome import (
     FPExceptionFlags,
     FPOutcome,
     clear_exception_flags,
+    combine_paired_outcomes,
     exception_flags,
     flags_from_oracle,
     flags_to_oracle,
@@ -136,6 +137,18 @@ class SoftFloatAdapterRoundTripTests(unittest.TestCase):
         outcome = outcome_from_result_bits(1, 2, fprf=0)
         with self.assertRaises(ValueError):
             oracle_from_outcome(outcome)
+
+    def test_combine_paired_outcomes_two_lanes(self) -> None:
+        from tools.ppc_equivalence.fp_oracle import fadds_fpr_rne
+
+        combined = combine_paired_outcomes(
+            outcome_from_oracle(fadds_fpr_rne(_F15, _F2)),
+            outcome_from_oracle(fadds_fpr_rne(_F15, _F2)),
+        )
+        self.assertEqual(len(combined.result_bits), 2)
+        self.assertTrue(combined.writeback)
+        with self.assertRaises(ValueError):
+            oracle_from_outcome(combined)
 
     def test_oracle_from_symbolic_bits_rejected(self) -> None:
         outcome = FPOutcome(

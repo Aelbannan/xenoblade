@@ -1,23 +1,27 @@
-"""Extensional symbolic register-bank theory scaffold (Track D / toward PR 14).
+"""Extensional symbolic register-bank theory (Track C / PR 14).
 
 Models a finite MMIO register bank as per-register bitvectors with nested
 ``addr == base + offset`` routing. Reachable ``Not(supported)`` is a *separate*
 unsupported-access obligation (query ``path ∧ ¬supported``); it must **not** be
 assumed into the equivalence query.
 
-Scaffolding only: ``memory-bus`` remains in ``UNSUPPORTED_FOR_EQUIVALENT``.
-Symbolic MMIO is not yet bound into ``check_equivalence`` / ``WordOps`` CFG
-execution. Concrete ``MemoryBus`` routing is unchanged.
+Wired into the obligation/evidence path via ``memory_bus_obligations`` and
+``route_symbolic_mmio_access``. Full ``WordOps`` CFG + terminal MMIO compare
+remain deferred; ``memory-bus`` stays in ``UNSUPPORTED_FOR_EQUIVALENT``.
+Concrete ``MemoryBus`` routing is unchanged.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping, Sequence
 
+from tools.ppc_equivalence.address_space import AddressSpace, RegionKind
 from tools.ppc_equivalence.bus_spec import DeviceSpecification
+from tools.ppc_equivalence.deadline import Deadline
 from tools.ppc_equivalence.device_model import RegisterSpec
+from tools.ppc_equivalence.discharge import discharge_bad_conditions
 from tools.ppc_equivalence.provenance import canonical_json_sha256
 
 ALGORITHM = "register-bank-extensional-v1"
@@ -45,6 +49,12 @@ __all__ = [
     "symbolic_read",
     "symbolic_write",
     "query_unsupported_access",
+    "discharge_unsupported_access",
+    "MmioTouchEvidence",
+    "RegisterBankObservability",
+    "route_symbolic_mmio_access",
+    "collect_mmio_touches_from_terminals",
+    "register_bank_observability_from_state",
     "build_register_bank_extensional_obligation",
 ]
 
@@ -330,6 +340,181 @@ def symbolic_write(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class MmioTouchEvidence:
+    """One MMIO touch extracted from a terminal path (obligation/evidence)."""
+
+    device_id: str
+    theory: str
+    access: Literal["read", "write"]
+    width: int
+    addr: Any
+    register_offset: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class RegisterBankObservability:
+    """Observable register-bank snapshot for one device."""
+
+    device_id: str
+    base: int
+    reg_width: int
+    registers: dict[str, str]
+    touches: tuple[MmioTouchEvidence, ...] = ()
+
+
+def register_bank_observability_from_state(
+    *,
+    device_id: str,
+    bank: SymbolicRegisterBankState,
+    touches: Sequence[MmioTouchEvidence] = (),
+) -> RegisterBankObservability:
+    """Serialize symbolic or concrete register values for obligation evidence."""
+    registers = {
+        hex(offset): str(bank.values[offset])
+        for offset in sorted(bank.values)
+    }
+    return RegisterBankObservability(
+        device_id=device_id,
+        base=bank.base,
+        reg_width=bank.reg_width,
+        registers=registers,
+        touches=tuple(touches),
+    )
+
+
+def _mmio_region_for_addr(
+    address_space: AddressSpace,
+    addr: int,
+    width: int,
+) -> tuple[Any, int | None]:
+    """Return ``(region, concrete_addr)`` when ``addr`` is a concrete u32."""
+    addr &= 0xFFFFFFFF
+    classification = address_space.classify_range(addr, width)
+    if classification.spans_multiple_regions or classification.region is None:
+        return None, addr
+    region = classification.region
+    if region.kind is not RegionKind.MMIO or region.device_id is None:
+        return None, addr
+    return region, addr
+
+
+def collect_mmio_touches_from_terminals(
+    terminals: Sequence[Any],
+    address_space: AddressSpace,
+    *,
+    side: str,
+    device_theories: Mapping[str, str] | None = None,
+) -> tuple[MmioTouchEvidence, ...]:
+    """Collect MMIO ``memory_touches`` / ``memory_writes`` from CFG terminals."""
+    theories = device_theories or {}
+    seen: set[tuple[str, str, int, int]] = set()
+    evidence: list[MmioTouchEvidence] = []
+
+    for terminal in terminals:
+        state = terminal.state
+        read_addrs = set(getattr(state, "memory_reads", ()))
+        for addr in state.memory_touches:
+            addr_int: int | None
+            try:
+                if hasattr(addr, "as_long"):
+                    addr_int = int(addr.as_long()) & 0xFFFFFFFF
+                elif isinstance(addr, int):
+                    addr_int = addr & 0xFFFFFFFF
+                else:
+                    continue
+            except Exception:
+                continue
+
+            region, concrete_addr = _mmio_region_for_addr(address_space, addr_int, 1)
+            if region is None or concrete_addr is None:
+                continue
+            device_id = region.device_id
+            assert device_id is not None
+            access: Literal["read", "write"] = (
+                "read" if addr in read_addrs else "write"
+            )
+            key = (device_id, access, concrete_addr, 1)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            theory = theories.get(device_id, "mmio")
+            register_offset: int | None = None
+            if theory == "register-bank":
+                register_offset = concrete_addr - region.start
+            evidence.append(
+                MmioTouchEvidence(
+                    device_id=device_id,
+                    theory=theory,
+                    access=access,
+                    width=1,
+                    addr=hex(concrete_addr),
+                    register_offset=register_offset,
+                )
+            )
+    del side
+    return tuple(evidence)
+
+
+def route_symbolic_mmio_access(
+    *,
+    addr: Any,
+    width: int,
+    bank: SymbolicRegisterBankState,
+    z3: Any,
+    value: Any | None = None,
+    is_write: bool = False,
+) -> SymbolicAccessResult:
+    """Route one symbolic MMIO access through the register-bank formulas."""
+    if is_write:
+        if value is None:
+            raise ValueError("symbolic MMIO write requires value")
+        return symbolic_write(addr, width, value, bank, z3)
+    return symbolic_read(addr, width, bank, z3)
+
+
+def discharge_unsupported_access(
+    *,
+    path_condition: Any,
+    supported: Any,
+    deadline: Deadline,
+    z3: Any,
+    extra_constraints: Sequence[Any] | None = None,
+) -> UnsupportedAccessQuery:
+    """Discharge ``path ∧ ¬supported`` via the independent discharge helper."""
+    premises = [path_condition]
+    if extra_constraints:
+        premises.extend(extra_constraints)
+    discharge = discharge_bad_conditions(
+        premises=premises,
+        bad_conditions=[z3.Not(supported)],
+        deadline=deadline,
+        algorithm=ALGORITHM,
+        z3_module=z3,
+    )
+    if discharge.status == "unsat":
+        status = UnsupportedAccessStatus.UNSAT
+        inconclusive = False
+    elif discharge.status == "sat":
+        status = UnsupportedAccessStatus.SAT
+        inconclusive = True
+    else:
+        status = UnsupportedAccessStatus.UNKNOWN
+        inconclusive = True
+    payload = {
+        "algorithm": ALGORITHM,
+        "kind": "unsupported-access",
+        "schema_version": 1,
+        "discharge_query_sha256": discharge.query_sha256,
+    }
+    return UnsupportedAccessQuery(
+        status=status,
+        query_sha256=canonical_json_sha256(payload),
+        inconclusive=inconclusive,
+    )
+
+
 def query_unsupported_access(
     path_condition: Any,
     supported: Any,
@@ -376,10 +561,11 @@ def build_register_bank_extensional_obligation(
     bus_spec_sha256: str,
     devices: list[dict[str, Any]],
     unsupported_access: dict[str, Any] | None = None,
+    observability: dict[str, Any] | None = None,
     status: str = "scaffolded",
 ) -> dict[str, Any]:
     """Build the PR-14 obligation block shape (not yet promotion-discharged)."""
-    return {
+    block: dict[str, Any] = {
         "schema_version": 1,
         "algorithm": ALGORITHM,
         "status": status,
@@ -392,3 +578,6 @@ def build_register_bank_extensional_obligation(
             "candidate": {"result": "not-queried", "query_sha256": None},
         },
     }
+    if observability is not None:
+        block["observability"] = observability
+    return block

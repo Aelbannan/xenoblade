@@ -25,7 +25,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from tools.ppc_equivalence.bounded_remainder_loop import (
+    BoundedRemainderTrip,
+    apply_bounded_remainder_memory_loop,
+    recover_bounded_remainder_trip,
+)
 from tools.ppc_equivalence.ctr_materialization import collect_lwz_readonly_addresses, recover_gpr_constant
+from tools.ppc_equivalence.trip_expression import canonical_dict, recognize_trip_expr
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.memory_semantics import (
     apply_memory_loop_transition,
@@ -63,6 +69,9 @@ class ConstantStrideStoreLoop:
     store_kind: str  # "stwu" | "d-form-addi"
     trip_count: int | None
     trip_count_reg: int | None
+    trip_expr: dict[str, Any] | None
+    trip_upper_bound: int | None
+    zero_guard: str | None
     confidence: str
     notes: tuple[str, ...]
 
@@ -84,6 +93,10 @@ class MemoryLoopSummary:
     ranking: str
     proof_kind: str
     invariant_notes: tuple[str, ...]
+    trip_expr: dict[str, Any] | None = None
+    trip_upper_bound: int | None = None
+    zero_guard: str | None = None
+    expansion: str = "closed-form"
 
 
 def find_constant_stride_store_loops(
@@ -124,15 +137,50 @@ def find_constant_stride_store_loops(
             trip_reg,
             readonly_words=readonly_words,
         )
+        trip_expr_dict: dict[str, Any] | None = None
+        trip_upper_bound: int | None = None
+        zero_guard: str | None = None
+        bounded_trip: BoundedRemainderTrip | None = None
+        expr, expr_notes = recognize_trip_expr(
+            instructions,
+            mtctr_index,
+            trip_reg,
+            readonly_words=readonly_words,
+        )
+        if expr is not None:
+            trip_expr_dict = canonical_dict(expr)
+            from tools.ppc_equivalence.trip_expression import remainder_upper_bound
+
+            bound = remainder_upper_bound(expr)
+            if bound is not None:
+                trip_upper_bound = bound
+            bounded_trip = recover_bounded_remainder_trip(
+                instructions,
+                mtctr_index,
+                trip_reg,
+                header_pc=instructions[header_index].address,
+                readonly_words=readonly_words,
+            )
+            if bounded_trip is not None:
+                trip_upper_bound = bounded_trip.upper_bound
+                zero_guard = bounded_trip.zero_guard.kind
+                if trip_count is None and bounded_trip.concrete_trip is not None:
+                    trip_count = bounded_trip.concrete_trip
 
         notes = list(body_notes)
         notes.extend(trip_notes)
+        notes.extend(expr_notes)
+        if bounded_trip is not None:
+            notes.extend(bounded_trip.notes)
+            notes.extend(bounded_trip.zero_guard.notes)
         if trip_count == 0:
             # mtctr 0 + bdnz wraps to 0xffffffff — never summarize as a store loop.
             notes.append("CTR load of 0 wraps under bdnz (unsupported without skip guard)")
             confidence = "unsupported"
         elif trip_count is not None and trip_count >= 1:
             confidence = "exact-pattern"
+        elif bounded_trip is not None and zero_guard in ("concrete-nonzero", "skip-branch"):
+            confidence = "bounded-remainder"
         else:
             confidence = "partial"
 
@@ -150,6 +198,9 @@ def find_constant_stride_store_loops(
                 store_kind=parsed.store_kind,
                 trip_count=trip_count,
                 trip_count_reg=trip_reg,
+                trip_expr=trip_expr_dict,
+                trip_upper_bound=trip_upper_bound,
+                zero_guard=zero_guard,
                 confidence=confidence,
                 notes=tuple(notes),
             ),
@@ -159,11 +210,16 @@ def find_constant_stride_store_loops(
 
 def summarize_constant_stride_store_loop(
     loop: ConstantStrideStoreLoop,
+    *,
+    bounded_trip: BoundedRemainderTrip | None = None,
 ) -> MemoryLoopSummary | None:
     """Build a closed-form summary when the trip count is a positive constant."""
-    if loop.confidence != "exact-pattern":
+    if loop.confidence not in ("exact-pattern", "bounded-remainder"):
         return None
     if loop.trip_count is None or loop.trip_count < 1:
+        if loop.confidence == "bounded-remainder" and loop.trip_upper_bound is not None:
+            # Symbolic remainder without concrete trip stays unsupported for summary.
+            return None
         return None
     if loop.trip_count > MAX_MEMORY_LOOP_TRIPS:
         return None
@@ -176,6 +232,10 @@ def summarize_constant_stride_store_loop(
         store_kind=loop.store_kind,
     ):
         return None
+
+    expansion = "closed-form"
+    if loop.confidence == "bounded-remainder" and loop.trip_expr is not None:
+        expansion = "bounded-remainder"
 
     return MemoryLoopSummary(
         header_pc=loop.header_pc,
@@ -191,6 +251,10 @@ def summarize_constant_stride_store_loop(
         ranking="ctr-descending",
         proof_kind="constant-stride-store",
         invariant_notes=tuple(loop.notes),
+        trip_expr=loop.trip_expr,
+        trip_upper_bound=loop.trip_upper_bound,
+        zero_guard=loop.zero_guard,
+        expansion=expansion,
     )
 
 
@@ -253,6 +317,51 @@ def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) 
     Stores go through ``memory_semantics.apply_store_effect`` so
     ``memory_writes`` / ``memory_touches`` match ordinary store execution.
     """
+    if summary.expansion == "bounded-remainder" and summary.trip_expr is not None:
+        from tools.ppc_equivalence.trip_expression import (
+            TripAnd,
+            TripConstant,
+            TripEntryReg,
+            TripLshr,
+            TripAdd,
+        )
+
+        def _expr_from_dict(data: dict[str, Any]) -> Any:
+            kind = data.get("kind")
+            if kind == "const":
+                return TripConstant(int(data["value"]))
+            if kind == "entry":
+                return TripEntryReg(int(data["reg"]))
+            if kind == "and":
+                return TripAnd(_expr_from_dict(data["left"]), _expr_from_dict(data["right"]))
+            if kind == "lshr":
+                return TripLshr(_expr_from_dict(data["left"]), int(data["shift"]))
+            if kind == "add":
+                return TripAdd(_expr_from_dict(data["left"]), _expr_from_dict(data["right"]))
+            raise ValueError(f"unknown trip_expr kind {kind!r}")
+
+        from tools.ppc_equivalence.bounded_remainder_loop import ZeroTripGuard
+
+        bounded = BoundedRemainderTrip(
+            expr=_expr_from_dict(summary.trip_expr),
+            expr_canonical=summary.trip_expr,
+            upper_bound=int(summary.trip_upper_bound or summary.trip_count),
+            concrete_trip=int(summary.trip_count),
+            zero_guard=ZeroTripGuard(summary.zero_guard or "concrete-nonzero"),
+            notes=summary.invariant_notes,
+        )
+        return apply_bounded_remainder_memory_loop(
+            state,
+            trip=bounded,
+            base_reg=summary.base_reg,
+            source_reg=summary.source_reg,
+            stride=int(summary.stride),
+            store_width=int(summary.store_width),
+            store_kind=summary.store_kind,
+            final_ctr=int(summary.final_ctr),
+            ops=ops,
+        )
+
     if summary.trip_count < 1:
         raise ValueError("memory-loop summary requires a positive concrete trip count")
     transition = build_memory_loop_transition(
@@ -291,7 +400,7 @@ def build_memory_loop_obligation(
     coverage: str = "pending",
 ) -> dict[str, Any]:
     """Obligation block for ``proof_features: [\"memory-loop-summary\"]``."""
-    return {
+    payload: dict[str, Any] = {
         "proof_kind": summary.proof_kind,
         "header_pc": summary.header_pc,
         "latch_pc": summary.latch_pc,
@@ -306,6 +415,15 @@ def build_memory_loop_obligation(
         "ranking": summary.ranking,
         "coverage": coverage,
     }
+    if summary.trip_expr is not None:
+        payload["trip_expr"] = dict(summary.trip_expr)
+    if summary.trip_upper_bound is not None:
+        payload["trip_upper_bound"] = int(summary.trip_upper_bound)
+    if summary.zero_guard is not None:
+        payload["zero_guard"] = summary.zero_guard
+    if summary.expansion != "closed-form":
+        payload["expansion"] = summary.expansion
+    return payload
 
 
 def validate_memory_loop_obligation(obligation: dict[str, Any]) -> str | None:

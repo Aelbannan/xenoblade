@@ -21,6 +21,7 @@ from .memory_bus import MemoryBus
 from .memory_bus_obligations import (
     build_memory_bus_constraints,
     build_memory_bus_obligation,
+    enrich_memory_bus_obligation_with_symbolic_mmio,
 )
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concrete_state
 from .proof_features import enforce_equivalent_proof_features
@@ -1531,7 +1532,13 @@ def _check_equivalence_impl(
             if "memory-bus" not in features:
                 features.append("memory-bus")
             early.proof_features = features
-            early.memory_bus = build_memory_bus_obligation(memory_bus)
+            obligation = build_memory_bus_obligation(memory_bus)
+            early.memory_bus = enrich_memory_bus_obligation_with_symbolic_mmio(
+                obligation,
+                memory_bus,
+                original_terminals=original_exits,
+                candidate_terminals=candidate_exits,
+            )
         if jump_table is not None:
             early.proof_features = ["readonly-image", "indirect-target-closure"]
             if jump_table_bundle is not None:

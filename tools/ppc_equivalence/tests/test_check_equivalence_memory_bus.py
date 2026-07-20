@@ -162,6 +162,8 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
         self.assertIn("memory-bus", result.proof_features)
         assert result.memory_bus is not None
         self.assertEqual(result.memory_bus.get("mmio"), "fail-closed")
+        self.assertEqual(result.memory_bus.get("symbolic_mmio"), "scaffolded")
+        self.assertIn("register_bank_extensional", result.memory_bus)
 
 
 if __name__ == "__main__":

@@ -375,6 +375,12 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   oracle-scaffold vs assumed bits); architectural FPSCR sticky bits for the
   sixteen routed opcodes still come from the semantics exception path. This
   remains **Tier C** only and is **not** a promotion path to Tier A/B.
+- **Paired-single oracle (Wave 3 Track B, ConcreteOps):** ``ps_add``/``ps_sub``,
+  ``ps_mul``, and ``ps_madd``/``ps_msub``/``ps_nmadd``/``ps_nmsub`` execute two
+  scalar single-lane oracle outcomes merged by ``combine_paired_outcomes`` in
+  ``fp_outcome.py`` (PS0 FPRF, accumulated VX subcauses, unconditional lane
+  writeback, record-form CR1). Other paired families stay on the legacy
+  semantics path; ``SymbolicOps`` is unchanged. Still **Tier C** only.
 - **Unified `FPOutcome` scaffold (Track C):** `tools/ppc_equivalence/fp_outcome.py`
   defines `FPExceptionFlags` / `FPOutcome` plus SoftFloat and bits-API adapters
   (`outcome_from_oracle`, `oracle_from_outcome`, `outcome_from_result_bits`).

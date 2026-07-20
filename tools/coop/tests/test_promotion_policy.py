@@ -383,6 +383,32 @@ class CertificateReconstructionTests(unittest.TestCase):
         self.assertEqual(result.counterexample_kind, "definedness")
         self.assertEqual(compute_confidence_tier(result), "C")
 
+    def test_fp_oracle_version_round_trips(self) -> None:
+        from tools.ppc_equivalence.fp_outcome import FP_ORACLE_VERSION
+
+        certificate = {
+            "architecture": ARCHITECTURE_MODEL,
+            "result_format": RESULT_FORMAT,
+            "engine_hash": "a" * 64,
+            "source_hash": "b" * 64,
+            "git_commit": "c" * 40,
+            "contract": "ppc-eabi",
+            "observables": ["f1"],
+            "fp_oracle_version": FP_ORACLE_VERSION,
+            "memory_scope": MemoryScope(
+                masking_semantics=MASKING_SEMANTICS,
+                original=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+                candidate=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+            ).to_dict(),
+            "summary": {"reads": ["f1"], "writes": ["f1"], "invalid_reasons": []},
+        }
+        result = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+        self.assertEqual(result.fp_oracle_version, FP_ORACLE_VERSION)
+        # A certificate without the field must not fabricate one.
+        certificate.pop("fp_oracle_version")
+        bare = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+        self.assertIsNone(bare.fp_oracle_version)
+
 
 def _registry_certificate(target_id: str, callees: list[dict[str, str]] | None = None) -> dict:
     from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree

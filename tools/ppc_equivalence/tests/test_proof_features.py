@@ -88,12 +88,15 @@ class ProofFeaturesTests(unittest.TestCase):
         self.assertNotIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_supported_features_can_stay_equivalent(self) -> None:
-        # PR3: jump-table features may authorize EQUIVALENT when obligations
-        # validate (coverage/no-write digests optional as string status).
+        # Jump-table features may authorize EQUIVALENT only with a fully
+        # discharged schema-v2 obligation: per-side dict-form coverage / no-write
+        # UNSAT digests and a top-level status=discharged (strict validation).
+        import hashlib
+
         from tools.ppc_equivalence.jump_table_obligations import (
             JumpTableWords,
+            build_dual_readonly_image_obligation,
             build_indirect_targets_obligation,
-            build_readonly_image_obligation,
         )
 
         table = JumpTableWords(
@@ -101,17 +104,34 @@ class ProofFeaturesTests(unittest.TestCase):
             words=(0x80020000,),
             source="test",
         )
+        no_write = {
+            "result": "unsat",
+            "query_sha256": hashlib.sha256(b"no-write").hexdigest(),
+            "algorithm": "rom-image-no-write-v2",
+        }
+        coverage = {
+            "result": "unsat",
+            "query_sha256": hashlib.sha256(b"coverage").hexdigest(),
+            "algorithm": "indirect-target-closure-v2",
+        }
+        indirect_targets = build_indirect_targets_obligation(
+            branch_pc=0x80001000,
+            targets=(("case-0", 0x80020000),),
+            source="test",
+            artifact_hashes=(table.image_sha256,),
+            coverage=coverage,
+            status="discharged",
+        )
+        indirect_targets["candidate"] = indirect_targets["original"]
         result = ProofResult(
             status=ProofStatus.EQUIVALENT,
             proof_features=["readonly-image", "indirect-target-closure"],
-            address_space=build_readonly_image_obligation(table, no_write_status="unsat"),
-            indirect_targets=build_indirect_targets_obligation(
-                branch_pc=0x80001000,
-                targets=(("case-0", 0x80020000),),
-                source="test",
-                artifact_hashes=(table.image_sha256,),
-                coverage="unsat",
+            address_space=build_dual_readonly_image_obligation(
+                table,
+                no_write_status=no_write,
+                status="discharged",
             ),
+            indirect_targets=indirect_targets,
         )
         gated = enforce_equivalent_proof_features(result)
         self.assertEqual(gated.status, ProofStatus.EQUIVALENT)

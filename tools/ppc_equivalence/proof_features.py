@@ -20,11 +20,15 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 # (cache revalidation, per-side coverage, digest recompute; see
 # validate_memory_bus_obligation_strict). Jump-table readonly-image +
 # indirect-target-closure are discharged independently (PR3). Relational-
-# induction is discharged via five independent UNSAT queries (PR7). Affine +
-# memory-loop summaries authorize EQUIVALENT only when obligations validate
-# with status=discharged and matching digests (Wave 5 Track B); coverage=applied
-# / recognition alone never authorizes.
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
+# induction is discharged via five independent UNSAT queries (PR7). Affine
+# summaries authorize EQUIVALENT only when obligations validate with
+# status=discharged and matching digests. Temporary safety gate: keep
+# ``memory-loop-summary`` frozen until the v2/v3 refinement discharge
+# (instructions ≡ summary per side) is validated end-to-end; recognition /
+# coverage=applied / v1 self-referential discharge must not authorize.
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
+    "memory-loop-summary",
+})
 
 # Canonical proof-feature names and their required top-level obligation keys.
 FEATURE_OBLIGATION_KEYS: dict[str, str] = {
@@ -226,17 +230,29 @@ def validate_proof_features(
         if feature == "readonly-image":
             from tools.ppc_equivalence.jump_table_obligations import (
                 validate_readonly_image_obligation,
+                validate_readonly_image_obligation_strict,
             )
 
-            reason = validate_readonly_image_obligation(obligation)
+            if require_equivalent_ready:
+                reason = validate_readonly_image_obligation_strict(
+                    obligation, require_discharged=True,
+                )
+            else:
+                reason = validate_readonly_image_obligation(obligation)
             if reason is not None:
                 return reason
         if feature == "indirect-target-closure":
             from tools.ppc_equivalence.jump_table_obligations import (
                 validate_indirect_targets_obligation,
+                validate_indirect_targets_obligation_strict,
             )
 
-            reason = validate_indirect_targets_obligation(obligation)
+            if require_equivalent_ready:
+                reason = validate_indirect_targets_obligation_strict(
+                    obligation, require_discharged=True,
+                )
+            else:
+                reason = validate_indirect_targets_obligation(obligation)
             if reason is not None:
                 return reason
 

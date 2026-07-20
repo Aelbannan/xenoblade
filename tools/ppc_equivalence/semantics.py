@@ -39,6 +39,7 @@ from .memory_bus import BusOutcome, MemoryBus
 from .memory_loop import MemoryLoopSummary, apply_memory_loop_summary
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState
 from .result import FloatingPointDomain
+from .stack_escape import mark_stack_pointer_escape as _shared_mark_stack_pointer_escape
 from .spr import (
     AUX_SPR_INDEX,
     AUX_SPR_NAMES,
@@ -1710,14 +1711,8 @@ def _touch_memory(
 def _mark_stack_pointer_escape(
     state: MachineState, stored_value: Any, ops: WordOps,
 ) -> MachineState:
-    if not isinstance(ops, SymbolicOps):
-        return state
-    if any(
-        str(variable.decl().name()) == "input.gpr.r1"
-        for variable in ops.z3.z3util.get_vars(stored_value)
-    ):
-        return replace(state, stack_private=ops.bool(False))
-    return state
+    """Thin wrapper over the shared :func:`stack_escape.mark_stack_pointer_escape`."""
+    return _shared_mark_stack_pointer_escape(state, stored_value, ops)
 
 
 _PSQ_INTEGER_TYPES = {

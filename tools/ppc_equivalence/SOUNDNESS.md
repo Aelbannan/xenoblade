@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v34`
+- Architecture model: `broadway-ppc32-be-v35`
 - Result format: `16`
-- Certificate format: `9`
+- Certificate format: `10`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -82,27 +82,51 @@ documented per-implementation private-storage abstraction.
   share a constant-value contiguous `RangeWrite` and the bitvector identity
   `N = (1<<k)*(N>>k)+(N&mask)` with `remainder < (1<<k)` is UNSAT-proven;
   otherwise the sketch stays `pending`.
-  Constant-stride store loops (`memory_loop` / `memory-loop-summary`) with a
+  Constant-stride store loops (`memory_loop` / `memory-loop-summary`,
+  algorithm `constant-stride-store-v2`) with a
   positive concrete trip count are applied in closed form inside
   `execute_cfg` via typed `StoreEffect` / `apply_store_effect` (recording
-  `memory_writes` + `memory_touches`, not memory alone). Obligations carry
-  `status=discharged` only for `expansion=closed-form` with `effects=typed-store`,
-  `footprint=ok`, and matching `summary_sha256`; recognition /
-  `coverage=applied` alone never authorizes. Bounded-remainder expansions stay
-  `applied`. Recognizer accepts
+  `memory_writes` + `memory_touches`, not memory alone). Closed-form
+  recognition alone **never** discharges: the engine calls
+  `memory_loop_discharge.discharge_memory_loop_summary`, which runs five
+  independent UNSAT queries — `body_step`, `postcondition`, `stack_escape`,
+  `termination`, `footprint` — and only reports `status=discharged` when *all*
+  are UNSAT. Obligations then carry `status=discharged` only for
+  `expansion=closed-form` with `effects=typed-store`, `footprint=ok`, matching
+  `summary_sha256`, **and** a `transition_equivalence` block recording every
+  required query `result=unsat` with a lowercase SHA-256 query digest and a
+  known discharge algorithm; recognition / `coverage=applied` alone never
+  authorizes. A summarized store of an `r1`-derived value clears
+  `stack_private` (via `stack_escape.mark_stack_pointer_escape`) exactly as an
+  ordinary D-form store would, so publishing the stack pointer through a
+  summarized loop cannot hide divergent private-frame bytes. Bounded-remainder
+  expansions stay `applied` (never discharged). Recognizer accepts
   exact `store; addi` or lone `stwu` bodies only (rejects reversed order,
-  multi-store, calls, source==base). `mtctr 0` is unsupported (bdnz wrap)
-  unless a proven skip guard is present. Trip count
+  multi-store, calls, source==base). `mtctr 0` is unsupported (bdnz wrap). The
+  heuristic `skip-branch` zero-trip guard is **disabled** for soundness: only a
+  `concrete-nonzero` trip authorizes bounded-remainder expansion; symbolic
+  remainders whose zero-trip case is only guarded by a nearby branch stay
+  unsupported. Trip count
   must be recovered from bounded straight-line GPR materialization immediately
   before `mtctr` (`addi`/`addis`/`ori`/`oris`, `andi.`/`andis.` remainder masks,
   exact `srwi`-equivalent `rlwinm` forms (`rlwinm rA,rS,32-n,n,31` for
   `n` in `1..31`), self-`addi`, `or` register copies, or `lwz` only when the
   effective address and loaded word are proven from a per-side
   `MemoryLoopReadonlyContext` (never cross-side `dict.update`) — either an
-  explicit `readonly_words` map or linked DOL/ELF hydration via
+  explicit `readonly_words` map or linked per-side image hydration via
   `memory_loop_image.try_build_memory_loop_readonly_words` in coop
-  `_prove_bytes`, with `Select(initial_memory, addr+i)==byte` premises.
-  Same VA with disagreeing side values rejects. Symbolic or relocated sources
+  `_prove_bytes`, with `Select(initial_memory, addr+i)==byte` premises. The
+  original side is hydrated from the retail **DOL only** (`elf_path=None`) and
+  the candidate side from the linked **ELF only** (`dol_path=None`), so the two
+  images are never conflated; `ReadonlyWordEvidence` records optional
+  `artifact_sha256` / `image_kind` (`dol`|`elf`) / `section` provenance. The
+  resulting `memory_loop_readonly` identity premise (`per-word-image-v1`,
+  `build_memory_loop_readonly_obligation`) is built *before* the cache lookup
+  and folded into both `_cache_key` and `proof_request_hash`, so cache reuse and
+  the request hash bind the exact hydrated words. When CTR `lwz` addresses exist
+  but evidence is missing on either side, the summary is disabled on **both**
+  sides (ordinary execution proceeds). Same VA with disagreeing side values
+  fails closed (`INCONCLUSIVE_UNSUPPORTED`). Symbolic or relocated sources
   remain partial. Trip counts above `MAX_MEMORY_LOOP_TRIPS` or spanning past
   32-bit remain unsupported.
 - Indirect branches (`bclr`/`bcctr` without a known target) are unsupported.
@@ -118,7 +142,16 @@ documented per-implementation private-storage abstraction.
   conditions and ``memory_writes`` hit-table queries (`discharge.py`), not
   final-memory-value inspection alone. `readonly-image` /
   `indirect-target-closure` obligations (schema v2) carry discharge digests
-  (`jump_table_obligations.py`). Invisible ``gpr[base]==table.base`` /
+  (`jump_table_obligations.py`). On the EQUIVALENT-ready path
+  (`validate_proof_features(require_equivalent_ready=True)`) the strict
+  validators (`validate_readonly_image_obligation_strict`,
+  `validate_indirect_targets_obligation_strict`) require `schema_version`
+  exactly `2`, a known algorithm, top-level `status=discharged`, dict-form
+  `coverage.result` / `no_write.result == "unsat"`, lowercase 64-hex SHA-256
+  digests, both `original` and `candidate` sides, validated artifact hashes, and
+  reject inconsistent flat mirrors — anything forged (failed/SAT/pending or
+  legacy schema) fails closed and cannot authorize `EQUIVALENT`. Invisible
+  ``gpr[base]==table.base`` /
   ``index < entry_count`` premises are not synthesized. Retail/candidate
   handlers are paired by
   logical case index (`jump_table_pairing.py`), not absolute address equality.
@@ -278,8 +311,8 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   Loop-summary × FIFO hard-rejects; bounded summarized emission unsupported.
   Before authorization: every memory-access family routes or produces an
   explicit unsupported predicate. Architecture / result / certificate versions
-  for the schema-v2 obligation shape are ``broadway-ppc32-be-v34`` / result
-  format ``16`` / certificate ``9`` (v33 and earlier rejected). P1 cache
+  for the schema-v2 obligation shape are ``broadway-ppc32-be-v35`` / result
+  format ``16`` / certificate ``10`` (v34 and earlier rejected). P1 cache
   revalidation, per-side coverage, and digest recomputation are required
   gates; ``memory-bus`` is cleared from ``UNSUPPORTED_FOR_EQUIVALENT``.
 - **Memory-bus discharged obligation (Track A):** `status=discharged` requires
@@ -638,21 +671,29 @@ Rules (enforced by `tools.ppc_equivalence.proof_features`):
     `relational-induction` feature also discharged. CTR or compare-affine
     closed-form application (`coverage=applied`) alone never authorizes.
   - `memory-loop-summary`: `status=discharged` with matching
-    `summary_sha256`, `effects=typed-store`, `footprint=ok`, and
-    `expansion=closed-form`. Bounded-remainder expansions stay `applied`.
-    Recognition / `coverage=applied` alone never authorizes.
+    `summary_sha256`, `effects=typed-store`, `footprint=ok`,
+    `expansion=closed-form`, **and** a `transition_equivalence` block whose
+    required queries (`body_step`, `postcondition`, `stack_escape`,
+    `termination`, `footprint`) all carry `result=unsat` with lowercase
+    SHA-256 digests and known algorithms (`memory_loop_discharge.py`).
+    Closed-form recognition / `coverage=applied` alone never authorizes; the
+    engine never sets `discharged` from closed-form expansion by itself.
+    Bounded-remainder expansions stay `applied`.
   Jump-table coverage and no-write use independent UNSAT
   discharge (`discharge.py`) with remainder terminals retained on BCCTR
   expansion; obligation schema v2 carries coverage/no_write digests.
   Architecture / result / certificate for the memory-bus schema-v2 shape:
-  `broadway-ppc32-be-v34` / format `16` / certificate `9`. Certificates under
-  `broadway-ppc32-be-v33` (and earlier rejected models) are stale.
+  `broadway-ppc32-be-v35` / format `16` / certificate `10`. Certificates under
+  `broadway-ppc32-be-v34` (and earlier rejected models) are stale.
 - **Wave 5 Track B blockers kept documented (not freeze-worthy for closed-form):**
   bounded-remainder expansions stay `applied` (not discharged). Bulk+remainder
   without a shared constant-value `RangeWrite` stays `pending`.
-  ReadonlyWordEvidence still omits full DOL/ELF
-  artifact digests from the PR6 plan; closed-form `li`/`mtctr` paths and
-  explicit `readonly_words_sha256` binding cover current discharge.
+  `ReadonlyWordEvidence` now records optional per-side `artifact_sha256` /
+  `image_kind` / `section` provenance (DOL for original, ELF for candidate,
+  never conflated), folded into the `memory_loop_readonly` identity premise
+  (`per-word-image-v1`) that binds `_cache_key` and `proof_request_hash`;
+  closed-form `li`/`mtctr` paths and explicit `readonly_words_sha256` binding
+  cover current discharge.
 - `proof_features` is mandatory whenever a proof relies on a feature.
 - Each listed feature requires its obligation key: `readonly-image` →
   `address_space`, `indirect-target-closure` → `indirect_targets`.

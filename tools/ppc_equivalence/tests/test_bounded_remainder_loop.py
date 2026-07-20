@@ -55,7 +55,10 @@ class BoundedRemainderTripTests(unittest.TestCase):
         trip = recover_bounded_remainder_trip(program, 1, 6, header_pc=12)
         self.assertIsNone(trip)
 
-    def test_symbolic_remainder_with_skip_guard(self) -> None:
+    def test_symbolic_remainder_with_skip_guard_is_unsupported(self) -> None:
+        # The heuristic ``skip-branch`` zero-guard recognizer is disabled for
+        # soundness: a symbolic remainder whose zero-trip case is only guarded
+        # by a nearby branch is no longer summarized as bounded-remainder.
         program = [
             _insn(Opcode.ANDI_DOT, (6, 6, 7), address=0),
             _insn(Opcode.BC, (12, 0, 24, 0), address=4),
@@ -66,10 +69,7 @@ class BoundedRemainderTripTests(unittest.TestCase):
             _insn(Opcode.BCLR, (20, 0, 0), address=24),
         ]
         trip = recover_bounded_remainder_trip(program, 2, 6, header_pc=12)
-        self.assertIsNotNone(trip)
-        assert trip is not None
-        self.assertEqual(trip.zero_guard.kind, "skip-branch")
-        self.assertIsNone(trip.concrete_trip)
+        self.assertIsNone(trip)
 
     def test_zero_trip_without_guard_unsupported(self) -> None:
         program = _remainder_store_loop(
@@ -143,7 +143,10 @@ class BoundedRemainderTripTests(unittest.TestCase):
         self.assertEqual(summary.trip_count, 0x2B & 7)
         self.assertEqual(summary.trip_upper_bound, 0x2B & 7)
 
-    def test_summarize_bounded_remainder_with_skip_guard(self) -> None:
+    def test_summarize_bounded_remainder_with_skip_guard_not_summarized(self) -> None:
+        # With the skip-branch heuristic disabled, a symbolic remainder guarded
+        # only by a branch is no longer recognized as a bounded-remainder loop:
+        # it degrades to partial confidence and yields no summary.
         program = [
             _insn(Opcode.ANDI_DOT, (6, 6, 7), address=0),
             _insn(Opcode.BC, (12, 0, 24, 0), address=4),
@@ -156,15 +159,9 @@ class BoundedRemainderTripTests(unittest.TestCase):
         loops = find_constant_stride_store_loops(program)
         self.assertEqual(len(loops), 1)
         loop = loops[0]
-        self.assertEqual(loop.confidence, "bounded-remainder")
-        self.assertEqual(loop.zero_guard, "skip-branch")
+        self.assertEqual(loop.confidence, "partial")
         summary = summarize_constant_stride_store_loop(loop)
-        self.assertIsNotNone(summary)
-        assert summary is not None
-        self.assertEqual(summary.expansion, "bounded-remainder")
-        self.assertEqual(summary.trip_upper_bound, 7)
-        self.assertEqual(summary.trip_count, 7)
-        self.assertEqual(summary.zero_guard, "skip-branch")
+        self.assertIsNone(summary)
 
 
 if __name__ == "__main__":

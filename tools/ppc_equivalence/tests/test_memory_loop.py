@@ -11,6 +11,9 @@ from tools.ppc_equivalence.memory_loop import (
     find_constant_stride_store_loops,
     summarize_constant_stride_store_loop,
 )
+from tools.ppc_equivalence.memory_loop_discharge import (
+    transition_equivalence_for_summary,
+)
 from tools.ppc_equivalence.model import concrete_state
 from tools.ppc_equivalence.proof_features import (
     KNOWN_PROOF_FEATURES,
@@ -353,8 +356,13 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             find_constant_stride_store_loops(program)[0],
         )
         assert summary is not None
+        transition = transition_equivalence_for_summary(summary)
+        self.assertIsNotNone(transition)
         obligation = build_memory_loop_obligation(
-            summary, coverage="applied", status="discharged",
+            summary,
+            coverage="applied",
+            status="discharged",
+            transition_equivalence=transition,
         )
         self.assertIsNone(
             validate_proof_features(
@@ -426,7 +434,10 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
         )
         assert summary is not None
         obligation = build_memory_loop_obligation(
-            summary, coverage="applied", status="discharged",
+            summary,
+            coverage="applied",
+            status="discharged",
+            transition_equivalence=transition_equivalence_for_summary(summary),
         )
         self.assertIsNone(validate_memory_loop_obligation(obligation))
         mutated = copy.deepcopy(obligation)
@@ -674,6 +685,50 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             any("conflict" in item for item in result.unsupported),
             result.unsupported,
         )
+
+    def test_summarized_store_of_r1_escapes_private_stack(self) -> None:
+        """Adversarial: publishing r1 through a summarized store loop escapes the
+        private stack, so differing private-frame bytes must be observable and
+        the pair must NEVER prove EQUIVALENT.
+
+        Both sides allocate a 64-byte frame and write a *different* byte into the
+        private frame, then leak r1 to public memory (r5) via a constant-stride
+        store loop. Without stack-escape wiring on summarized stores this would
+        spuriously prove EQUIVALENT (the private byte stays masked).
+        """
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        def _program(private_value: int) -> list[Instruction]:
+            return [
+                _insn(Opcode.ADDI, (3, 0, private_value), address=0),  # li r3,val
+                _insn(Opcode.ADDI, (1, 1, -64), address=4),            # frame
+                _insn(Opcode.STB, (3, 1, 8), address=8),               # private byte
+                _insn(Opcode.ADDI, (0, 0, 4), address=12),             # li r0,4
+                _insn(Opcode.MTSPR, (0, 9), address=16),               # mtctr r0
+                _insn(Opcode.STW, (1, 5, 0), address=20),              # stw r1,0(r5)
+                _insn(Opcode.ADDI, (5, 5, 4), address=24),             # addi r5,r5,4
+                _insn(Opcode.BC, (16, 0, 20, 0), address=28),          # bdnz -> 20
+                _insn(Opcode.ADDI, (1, 1, 64), address=32),            # restore
+                _insn(Opcode.BCLR, (20, 0, 0), address=36),            # blr
+            ]
+
+        contract = EquivalenceContract(
+            parse_observables(["memory"]),
+            timeout_ms=15_000,
+        )
+        result = check_equivalence(
+            _program(1),
+            _program(2),
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT, result.unsupported)
+        self.assertIsNotNone(result.counterexample)
 
 
 if __name__ == "__main__":

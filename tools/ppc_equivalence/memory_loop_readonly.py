@@ -11,24 +11,52 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from tools.ppc_equivalence.provenance import canonical_json_sha256
+
+# Algorithm tag for the per-side readonly-word identity premise.
+MEMORY_LOOP_READONLY_ALGORITHM = "per-word-image-v1"
+
 
 @dataclass(frozen=True)
 class ReadonlyWordEvidence:
-    """One big-endian u32 word proven from a linked image or explicit map."""
+    """One big-endian u32 word proven from a linked image or explicit map.
+
+    The optional provenance fields bind *which* per-side artifact the word came
+    from so the original (DOL) and candidate (ELF) images are never conflated.
+    """
 
     address: int
     value: int
     source: str = "explicit"
+    artifact_sha256: str | None = None
+    image_kind: str | None = None  # "dol" | "elf"
+    section: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "address", int(self.address) & 0xFFFFFFFF)
         object.__setattr__(self, "value", int(self.value) & 0xFFFFFFFF)
+        if self.image_kind is not None and self.image_kind not in ("dol", "elf"):
+            raise ValueError(f"unsupported image_kind {self.image_kind!r}")
 
     def as_map_entry(self) -> tuple[int, int]:
         return self.address, self.value
 
     def image_bytes(self) -> bytes:
         return int(self.value).to_bytes(4, "big")
+
+    def identity_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "address": self.address,
+            "value": self.value,
+            "source": self.source,
+        }
+        if self.artifact_sha256 is not None:
+            payload["artifact_sha256"] = self.artifact_sha256
+        if self.image_kind is not None:
+            payload["image_kind"] = self.image_kind
+        if self.section is not None:
+            payload["section"] = self.section
+        return payload
 
 
 @dataclass(frozen=True)
@@ -151,3 +179,35 @@ def readonly_word_byte_constraints(
                 ops.eq(ops.load_byte(initial_memory, address), ops.const(byte)),
             )
     return constraints
+
+
+def memory_loop_readonly_identity_payload(
+    context: MemoryLoopReadonlyContext,
+) -> dict[str, Any]:
+    """Canonical per-side readonly identity premise (excludes any status)."""
+    return {
+        "algorithm": MEMORY_LOOP_READONLY_ALGORITHM,
+        "original": [item.identity_dict() for item in context.original],
+        "candidate": [item.identity_dict() for item in context.candidate],
+    }
+
+
+def compute_memory_loop_readonly_sha256(
+    context: MemoryLoopReadonlyContext,
+) -> str:
+    """SHA-256 over the canonical readonly identity payload."""
+    return canonical_json_sha256(memory_loop_readonly_identity_payload(context))
+
+
+def build_memory_loop_readonly_obligation(
+    context: MemoryLoopReadonlyContext,
+) -> dict[str, Any]:
+    """Top-level ``memory_loop_readonly`` identity premise for cache/request binding.
+
+    This is *not* a proof feature: it records which per-side image words hydrated
+    the CTR ``lwz`` trip counts so cache reuse and the proof-request hash bind the
+    exact evidence used. Conflicting values are rejected upstream (fail closed).
+    """
+    payload = memory_loop_readonly_identity_payload(context)
+    payload["sha256"] = compute_memory_loop_readonly_sha256(context)
+    return payload

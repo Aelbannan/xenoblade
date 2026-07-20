@@ -88,6 +88,14 @@ def _load_u32_word(
     dol_path: Path | None,
     elf_path: Path | None,
 ) -> int:
+    """Load one big-endian u32 word at ``address`` from a single linked image.
+
+    Side routing is the caller's responsibility: the original (retail) side must
+    pass ``dol_path`` with ``elf_path=None`` and the candidate (decomp) side must
+    pass ``elf_path`` with ``dol_path=None``. When both are supplied the ELF is
+    preferred, but production call sites always pass exactly one so the retail DOL
+    and candidate ELF images are never conflated across sides.
+    """
     if address & (_WORD_SIZE - 1):
         raise MemoryLoopImageError(f"readonly address 0x{address:08X} is not word-aligned")
 

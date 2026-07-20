@@ -210,25 +210,29 @@ def _classify_zero_guard(
   *,
   concrete_trip: int | None,
 ) -> ZeroTripGuard:
+  # Heuristic ``skip-branch`` recognition is DISABLED for soundness: a
+  # conditional branch before the header is not proof that it skips the loop
+  # exactly when the trip count is zero. Only concrete-nonzero trips are
+  # authorized; every other zero-trip hazard fails closed as ``unsupported``
+  # until a canonical skip guard is modeled.
+  del header_pc  # skip-guard heuristic disabled; retained for signature parity
+  _ = instructions, mtctr_index
   if concrete_trip is not None:
     if concrete_trip == 0:
-      if _has_skip_guard_before_header(instructions, mtctr_index, header_pc):
-        return ZeroTripGuard("skip-branch", ("zero concrete trip with skip guard",))
       return ZeroTripGuard("unsupported", ("CTR load of 0 wraps under bdnz",))
     return ZeroTripGuard("concrete-nonzero", ())
 
   if isinstance(expr, TripAnd) and isinstance(expr.left, TripEntryReg):
-    if _has_skip_guard_before_header(instructions, mtctr_index, header_pc):
-      return ZeroTripGuard("skip-branch", ("symbolic remainder with skip guard",))
     return ZeroTripGuard(
       "unsupported",
-      ("symbolic remainder may be zero under bdnz without skip guard",),
+      (
+        "symbolic remainder may be zero under bdnz; heuristic skip-branch "
+        "recognition disabled (non-canonical)",
+      ),
     )
 
   if isinstance(expr, TripConstant):
     if int(expr.value) == 0:
-      if _has_skip_guard_before_header(instructions, mtctr_index, header_pc):
-        return ZeroTripGuard("skip-branch", ())
       return ZeroTripGuard("unsupported", ("constant zero trip",))
     return ZeroTripGuard("concrete-nonzero", ())
 

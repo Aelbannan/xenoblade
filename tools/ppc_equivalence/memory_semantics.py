@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from tools.ppc_equivalence.model import InvalidReason
+from tools.ppc_equivalence.stack_escape import mark_stack_pointer_escape
 
 
 @dataclass(frozen=True)
@@ -71,12 +72,15 @@ def apply_store_effect(state: Any, effect: StoreEffect, ops: Any) -> Any:
         memory = ops.store_byte(memory, addr, byte)
         addrs.append(addr)
     addrs_t = tuple(addrs)
-    return replace(
+    current = replace(
         current,
         memory=memory,
         memory_writes=current.memory_writes + addrs_t,
         memory_touches=current.memory_touches + addrs_t,
     )
+    # Publishing an r1-derived pointer through a summarized store escapes the
+    # private stack exactly as an ordinary D-form store would.
+    return mark_stack_pointer_escape(current, effect.value, ops)
 
 
 def apply_memory_loop_transition(state: Any, transition: MemoryLoopTransition, ops: Any) -> Any:

@@ -738,6 +738,15 @@ def run_concrete_sampling(
     ops = ConcreteOps()
     for label, initial in planned:
         try:
+            # Isolate mutable MMIO/RAM bus state: never share the state mutated
+            # by original with candidate (or the caller's bus).
+            if memory_bus is not None:
+                initial_bus_state = memory_bus.snapshot_state().clone()
+                original_bus = memory_bus.with_state(initial_bus_state.clone())
+                candidate_bus = memory_bus.with_state(initial_bus_state.clone())
+            else:
+                original_bus = None
+                candidate_bus = None
             original_exits = [
                 item for item in execute_cfg(
                     initial, original, ops,
@@ -747,7 +756,7 @@ def run_concrete_sampling(
                     assumed_callees=assumed_callees,
                     callee_contracts=callee_contracts,
                     floating_point_domain=floating_point_domain,
-                    memory_bus=memory_bus,
+                    memory_bus=original_bus,
                 )
                 if item.condition
             ]
@@ -760,7 +769,7 @@ def run_concrete_sampling(
                     assumed_callees=assumed_callees,
                     callee_contracts=callee_contracts,
                     floating_point_domain=floating_point_domain,
-                    memory_bus=memory_bus,
+                    memory_bus=candidate_bus,
                 )
                 if item.condition
             ]

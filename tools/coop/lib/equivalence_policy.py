@@ -8,8 +8,10 @@ from typing import Any
 from tools.coop.lib.config import CoopConfig
 from tools.ppc_equivalence.memory_profile import MemoryEnvironment, MemoryProfile
 from tools.ppc_equivalence.proof_features import (
+    PROOF_OBLIGATION_FIELDS,
     enforce_equivalent_proof_features,
-    proof_features_from_dict,
+    parse_proof_features,
+    apply_proof_obligations,
 )
 from tools.ppc_equivalence.result import (
     ARCHITECTURE_MODEL,
@@ -209,6 +211,11 @@ def compute_confidence_tier_proofresult(
 
     has_memory_access = "memory" in result.observables
 
+    has_memory_bus = (
+        "memory-bus" in (result.proof_features or [])
+        or getattr(result, "memory_bus", None) is not None
+    )
+
     has_domain_exceptions = (
         result.counterexample_kind == "definedness"
         or bool(result.invalid_reasons)
@@ -260,6 +267,7 @@ def compute_confidence_tier_proofresult(
         or has_assumed_fp
         or has_domain_exceptions
         or has_assumed_ram
+        or has_memory_bus
         or not has_complete_provenance
         or ledger_incomplete
     ):
@@ -445,9 +453,7 @@ def proof_result_from_certificate(
     if invalid_reasons and not counterexample_kind:
         counterexample_kind = "definedness"
 
-    proof_features, address_space, indirect_targets = proof_features_from_dict(
-        certificate,
-    )
+    parsed = parse_proof_features(certificate)
 
     result = ProofResult(
         status=status,
@@ -470,10 +476,9 @@ def proof_result_from_certificate(
         limits=limits,
         repair_hint=repair_hint,
         invalid_reasons=invalid_reasons,
-        proof_features=proof_features,
-        address_space=address_space,
-        indirect_targets=indirect_targets,
+        proof_features=list(parsed.features),
     )
+    apply_proof_obligations(result, parsed.obligations)
     if assumptions is not None:
         result.assumptions = list(assumptions)
     elif invalid_reasons:
@@ -557,7 +562,7 @@ def classify_for_promotion_legacy(
     config: CoopConfig,
     *,
     certificate: dict[str, Any] | None = None,
-    proof: ProofResult | None = None,
+    proof: ProofResult | dict[str, Any] | None = None,
     ledger_path: Path | None = None,
 ) -> PromotionDecision:
     """Adapter for objdiff_report: status + certificate/proof → decision."""
@@ -566,6 +571,13 @@ def classify_for_promotion_legacy(
     path = ledger_path if ledger_path is not None else default_validation_ledger_path()
     ledger = ValidationLedger.load(path)
     if proof is not None:
+        if isinstance(proof, dict):
+            merged: dict[str, Any] = dict(certificate or {})
+            merged.update(proof)
+            proof = proof_result_from_certificate(
+                equivalence or ProofStatus.INVALID_INPUT,
+                merged,
+            )
         return classify_for_promotion(proof, policy, ledger)
     result = proof_result_from_certificate(
         equivalence or ProofStatus.INVALID_INPUT,

@@ -1,24 +1,14 @@
-"""Canonical ProofRequest identity for PPC equivalence proofs (Track A scaffold).
+"""Canonical ProofRequest identity for PPC equivalence proofs.
 
-PR1 scaffolding only — not yet the sole input to ``_prove_bytes``.
+Obligation identity and copy helpers live in ``proof_features``;
+``ProofRequest`` / ``cache_key`` / ``proof_request_hash`` provide the
+canonical request bundle. Coop wiring uses these via:
 
-Obligation-copy call sites still needing centralization onto
-``proof_obligations_from_result`` / ``apply_proof_obligations`` /
-``canonical_request_dict`` (integration owner):
-
-- ``tools/coop/lib/equivalence_check.py``
-  ``_cache_key`` (binds only address_space/indirect_targets today),
-  ``_build_equivalence_certificate`` (manual copies; omits memory_loop /
-  memory_bus), and ``_prove_bytes`` premise plumbing.
-- ``tools/coop/lib/equivalence_policy.py``
-  ``proof_result_from_certificate`` via ``proof_features_from_dict``
-  (address_space/indirect_targets only).
-- ``tools/ppc_equivalence/provenance.py``
-  ``proof_request_identity`` (address_space/indirect_targets only).
-- ``tools/ppc_equivalence/result.py``
-  ``ProofResult.to_dict`` per-field obligation omit logic.
-- ``tools/ppc_equivalence/engine.py``
-  ``_finalize`` attaches obligation blocks field-by-field.
+- ``equivalence_check._cache_key`` / ``_proof_audit_dict`` /
+  ``_build_equivalence_certificate`` / ``_cache_get`` (ProofResult restore)
+- ``equivalence_policy.proof_result_from_certificate`` /
+  ``classify_for_promotion_legacy`` (dict → ProofResult)
+- ``provenance.proof_request_identity`` (all ``PROOF_OBLIGATION_FIELDS``)
 """
 
 from __future__ import annotations

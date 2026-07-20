@@ -20,6 +20,9 @@
 # Wave 4 advanced FP/MMIO stubs: fused midpoint/sticky-residue and FE0/FE1
 # remain incomplete (never promotion-grade); gx-fifo loop refinement and
 # read-side-effect / DMA stubs stay incomplete until Dolphin harness.
+# Phase 11+: independent scalar_fp_v2 corpora under
+# tools/ppc_equivalence/corpora/scalar_fp_v2/ bind via schema-v2 obligations
+# (corpus_sha256 + validation_ledger_hash); see fp_scalar_obligations_v2.py.
 architecture_model: broadway-ppc32-be-v41
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
@@ -112,8 +115,8 @@ capabilities:
   fp-traps:
     model_version: broadway-fp-traps-v1
     status: incomplete
-    # Wave 4: FE0/FE1 precise vs imprecise modes unfinished → never
-    # promotion-grade for trap-enabled proofs.
+    # Wave 4 / production: FE0/FE1 modeled only when SCALAR_FP_EXACT_V2=1
+    # (see fp_traps.traps_v2_ledger_dimensions); stays false here until Phase 12.
     dimensions:
       ve_ze_oe_ue_xe: false
       destination_suppression: false

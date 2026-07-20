@@ -30,6 +30,7 @@ Each document is self-contained for a single agent/implementation step.
 | [15](15-P1-09-docs-sync.md) | P1-09 — Synchronize versioned documentation automatically | P1 | README, CI |
 | [16](16-P1-10-dependency-lock.md) | P1-10 — Lock dependencies and execution environment by hash | P1/P2 | packaging, CI |
 | [17](17-P1-11-floating-point-domains.md) | P1-11 — Make floating-point proof domains machine-readable | P1/P2 | FP semantics, schema |
+| — | [Scalar FP architecture-model release (v2)](../../tools/ppc_equivalence/SCALAR_FP_V2.md) | release | Exact Broadway scalar FP core → Tier A |
 
 ## Independent validation / randomized testing (P2)
 

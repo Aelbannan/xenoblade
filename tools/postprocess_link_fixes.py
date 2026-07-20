@@ -147,6 +147,21 @@ for obj_path, symbols in _sinit_targets.items():
         globalize_symbols(obj_path, symbols)
 
 # ---------------------------------------------------------------------------
+# 4b. MWCC C++ linkage: __unregister_fragment is defined with unsigned int
+#     in Gecko_ExceptionPPC.cp while NMWException.h declares extern "C" int;
+#     the definition gets a mangled export (__unregister_fragment__FUi) that
+#     __init_cpp_exceptions.o cannot resolve.
+# ---------------------------------------------------------------------------
+
+_gecko_exception = SRC_DIR / "PowerPC_EABI_Support" / "src" / "Runtime" / "Gecko_ExceptionPPC.o"
+if _gecko_exception.exists():
+    rename_symbol(
+        _gecko_exception,
+        "__unregister_fragment__FUi",
+        "__unregister_fragment",
+    )
+
+# ---------------------------------------------------------------------------
 # 5. Additional localize / globalize rules discovered during linking.
 #    Extend as needed when new multiply-defined or undefined errors appear.
 #    Each entry should eventually be solved at the source/splits level.

@@ -1,0 +1,76 @@
+# Phase 6 per-opcode ledger — fp-load-store (SCALAR_FP_V2).
+# Bit transforms wired via _exact_v2_fp_bits_convert when SCALAR_FP_EXACT_V2=1;
+# memory addressing / bus routing remain on the existing semantics path.
+schema_version: 1
+capability: fp-load-store
+model_version: broadway-fp-load-store-v2
+status: incomplete
+dimensions:
+  bit_expansion_lfs: true
+  preserve_lfd: true
+  stfs_rounding: true
+  stfiwx_raw: true
+  all_rn_modes_stfs: true
+  bounded_memory: false
+  symbolic_backend: false
+  traps: false
+opcodes:
+  lfs:
+    binary32_to_fpr: true
+    memory_bus: false
+  lfsu:
+    binary32_to_fpr: true
+    memory_bus: false
+    ea_update: false
+  lfsx:
+    binary32_to_fpr: true
+    memory_bus: false
+  lfsux:
+    binary32_to_fpr: true
+    memory_bus: false
+    ea_update: false
+  lfd:
+    preserve_bits: true
+    memory_bus: false
+  lfdu:
+    preserve_bits: true
+    memory_bus: false
+    ea_update: false
+  lfdx:
+    preserve_bits: true
+    memory_bus: false
+  lfdux:
+    preserve_bits: true
+    memory_bus: false
+    ea_update: false
+  stfs:
+    fpr_to_binary32: true
+    memory_bus: false
+  stfsu:
+    fpr_to_binary32: true
+    memory_bus: false
+    ea_update: false
+  stfsx:
+    fpr_to_binary32: true
+    memory_bus: false
+  stfsux:
+    fpr_to_binary32: true
+    memory_bus: false
+    ea_update: false
+  stfd:
+    preserve_bits: true
+    memory_bus: false
+  stfdu:
+    preserve_bits: true
+    memory_bus: false
+    ea_update: false
+  stfdx:
+    preserve_bits: true
+    memory_bus: false
+  stfdux:
+    preserve_bits: true
+    memory_bus: false
+    ea_update: false
+  stfiwx:
+    low_word_store: true
+    memory_bus: false

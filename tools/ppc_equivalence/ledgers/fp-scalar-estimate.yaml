@@ -1,0 +1,26 @@
+# Phase 6 estimate/select ledger stub (non-fused fp-scalar-arithmetic subset).
+schema_version: 1
+capability: fp-scalar-arithmetic
+model_version: broadway-fp-scalar-v3
+status: incomplete
+subset: estimate-select
+dimensions:
+  fres_table: false
+  frsqrte_table: false
+  fsel_bit_preserving: false
+  vxsqrt: false
+  ni_operand: false
+  symbolic_backend: false
+opcodes:
+  fres:
+    table_rows: false
+    subnormal_normalize: false
+    inf_nan: false
+  frsqrte:
+    table_rows: false
+    subnormal_normalize: false
+    negative_vxsqrt: false
+  fsel:
+    ge_zero_select: false
+    bit_preserving: false
+    nan_path: false

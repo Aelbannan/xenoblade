@@ -3,6 +3,12 @@
 **Priority:** P1/P2  
 **Primary owner areas:** FP semantics, result schema, promotion policy, tests
 
+> **Superseding promotion bar:** Tier A full scalar FP is now tracked as the
+> architecture-model release in
+> [`tools/ppc_equivalence/SCALAR_FP_V2.md`](../../tools/ppc_equivalence/SCALAR_FP_V2.md).
+> This document remains useful for structured domain metadata; Phases 1 and 10
+> of that release absorb the machine-readable domain / obligation work.
+
 ---
 
 ## Problem statement

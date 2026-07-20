@@ -270,17 +270,8 @@ def _validate_callee_contract_impl(
             changed = not z3.eq(final_value, initial_value)
             if not changed:
                 continue
-            # Structural inequality is enough when the contract already permits
-            # this write. SMT refinement on every diamond path otherwise times
-            # out on modest load-modify-store functions (e.g. copyInputFlag).
-            if _contract_covers(name, contract.writes):
-                required_writes.add(name)
-                # Skip feeding final values into get_vars for covered writes when
-                # reads are wildcarded: the expressions can be huge ITE/memory
-                # cones and hang certificate validation.
-                if not _contract_covers("*", contract.reads) and name != "memory":
-                    dependency_expressions.append(final_value)
-                continue
+            # Memory always needs private-stack-aware refinement: structural
+            # inequality alone treats private-frame stores as observable writes.
             if name == "memory":
                 memory_solver = z3.Solver()
                 memory_solver.set(timeout=2_000)
@@ -290,6 +281,21 @@ def _validate_callee_contract_impl(
                     _memory_difference(terminal.state, initial, initial, ops),
                 )
                 changed = memory_solver.check() != z3.unsat
+                if not changed:
+                    continue
+                required_writes.add(name)
+                continue
+            # Structural inequality is enough when the contract already permits
+            # this write. SMT refinement on every diamond path otherwise times
+            # out on modest load-modify-store functions (e.g. copyInputFlag).
+            if _contract_covers(name, contract.writes):
+                required_writes.add(name)
+                # Skip feeding final values into get_vars for covered writes when
+                # reads are wildcarded: the expressions can be huge ITE/memory
+                # cones and hang certificate validation.
+                if not _contract_covers("*", contract.reads):
+                    dependency_expressions.append(final_value)
+                continue
             else:
                 value_solver = z3.Solver()
                 value_solver.set(timeout=2_000)
@@ -1378,14 +1384,15 @@ def _check_equivalence_impl(
     # PR17: when NI may be set, every NI-affected opcode in the block must be
     # in the NI-supported set — otherwise fail closed (no silent IEEE widening).
     if not domain.require_ni_zero:
-        from .fp_outcome import NI_SUPPORTED_OPS
+        from .fp_ni import effective_ni_supported_ops
         from .semantics import _FP_ROUNDING_SENSITIVE
 
+        ni_supported = effective_ni_supported_ops()
         ni_unsupported = sorted({
             insn.opcode.value
             for insn in original + candidate
             if insn.opcode in _FP_ROUNDING_SENSITIVE
-            and insn.opcode.value not in NI_SUPPORTED_OPS
+            and insn.opcode.value not in ni_supported
         })
         if ni_unsupported:
             return ProofResult(

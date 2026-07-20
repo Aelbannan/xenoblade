@@ -370,6 +370,10 @@ def build_ppc_test(test: BehaviourTest) -> PpcBuildResult:
     else:
         objects.extend([retail_prefixed, decomp_prefixed])
 
+    link_fixes = root / "tools" / "postprocess_link_fixes.py"
+    if link_fixes.is_file():
+        subprocess.run([sys.executable, str(link_fixes)], cwd=root, check=False)
+
     runtime_dir = root / "build" / test.region / "src" / "PowerPC_EABI_Support" / "src" / "Runtime"
     runtime_objects = sorted(runtime_dir.glob("*.o")) if runtime_dir.is_dir() else []
     runtime_objects.append(

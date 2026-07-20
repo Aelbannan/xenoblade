@@ -124,17 +124,12 @@ def evaluate_precondition_closure_status(
 def ni_modeling_status(*, opcode: str, ni_may_be_set: bool) -> str:
     """Report NI modeling completeness for an opcode.
 
-    When NI may be set and the opcode is outside ``NI_SUPPORTED_OPS``, the
-    capability is incomplete / non-promotable.
+    When NI may be set and the opcode is outside the effective NI-supported set,
+    the capability is incomplete / non-promotable.
     """
-    from tools.ppc_equivalence.fp_outcome import NI_SUPPORTED_OPS
+    from tools.ppc_equivalence.fp_ni import ni_modeling_status_for_opcode
 
-    if not ni_may_be_set:
-        return STATUS_PROMOTION_GRADE  # NI fixed to 0 — no NI modeling needed
-    if str(opcode) in NI_SUPPORTED_OPS:
-        # SoftFloat NI flush is modeled, but sticky / trap coupling incomplete.
-        return STATUS_INCOMPLETE
-    return STATUS_INCOMPLETE
+    return ni_modeling_status_for_opcode(opcode, ni_may_be_set=ni_may_be_set)
 
 
 def fpscr_sticky_modeling_status() -> dict[str, bool]:

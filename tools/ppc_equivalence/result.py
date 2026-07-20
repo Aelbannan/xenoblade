@@ -179,9 +179,9 @@ class FloatingPointDomain:
 
     def ni_supported_opcodes(self) -> list[str]:
         """Opcode names with FPSCR.NI flush modeling (result identity)."""
-        from tools.ppc_equivalence.fp_outcome import NI_SUPPORTED_OPS
+        from tools.ppc_equivalence.fp_ni import effective_ni_supported_ops
 
-        return sorted(NI_SUPPORTED_OPS)
+        return sorted(effective_ni_supported_ops())
 
     def trap_delivery_supported_opcodes(self) -> list[str]:
         """Opcode names with trap-delivery support (result identity)."""

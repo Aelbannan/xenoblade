@@ -38,7 +38,10 @@ void CMenuBattleMode::Init() {
 }
 
 // LLM-HARNESS-BEGIN: us-801a1ba8
-extern "C" bool func_801A048C() { return false; }
+extern "C" void func_801A048C(CMenuBattleMode* param_1) {
+    extern void __dt__15CMenuBattleModeFv(CMenuBattleMode*);
+    return __dt__15CMenuBattleModeFv((CMenuBattleMode*)((char*)param_1 - 0x58));
+}
 // LLM-HARNESS-END: us-801a1ba8
 // LLM-HARNESS-BEGIN: us-801a1bb0
 extern "C" bool func_801A0494() { return false; }

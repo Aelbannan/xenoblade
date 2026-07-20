@@ -281,7 +281,11 @@ done:
 }
 
 // LLM-HARNESS-BEGIN: us-80188b98
-extern "C" bool func_80187710() { return false; }
+extern "C" int lbl_eu_806642D8;
+
+extern "C" int func_80187710() {
+    return lbl_eu_806642D8;
+}
 // LLM-HARNESS-END: us-80188b98
 // LLM-HARNESS-BEGIN: us-801894b0
 extern "C" bool func_80187EFC() { return false; }

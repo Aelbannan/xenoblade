@@ -759,13 +759,17 @@ extern "C" void func_8010ED18() {}
 extern "C" void func_8010ED38() {}
 // LLM-HARNESS-END: us-8010f814
 // LLM-HARNESS-BEGIN: us-8010f8b0
-extern "C" bool func_8010EDD4() { return false; }
+extern "C" unsigned char func_8010EDD4(const void* self) { return ((const unsigned char*)self)[0x40]; }
 // LLM-HARNESS-END: us-8010f8b0
 // LLM-HARNESS-BEGIN: us-8010f8b8
-extern "C" bool func_8010EDDC() { return false; }
+extern "C" void func_8010EDDC(void *self, unsigned char val) {
+    *(unsigned char *)((char *)self + 0x41) = val;
+    func_8010EE40(self);
+}
 // LLM-HARNESS-END: us-8010f8b8
 // LLM-HARNESS-BEGIN: us-8011154c
-extern "C" bool func_80110A70() { return false; }
+extern u32 lbl_eu_80663F50;
+extern "C" u32 func_80110A70() { return lbl_eu_80663F50; }
 // LLM-HARNESS-END: us-8011154c
 // LLM-HARNESS-BEGIN: us-80111b50
 extern "C" void func_80111074() {}
@@ -774,10 +778,16 @@ extern "C" void func_80111074() {}
 extern "C" void sinit_801134E8() {}
 // LLM-HARNESS-END: us-80113fc4
 // LLM-HARNESS-BEGIN: us-801140a4
-extern "C" bool func_801135C8() { return false; }
+extern "C" void __dt__15CMenuEnemyStateFv(void*);
+
+extern "C" void func_801135C8(void* arg) {
+    __dt__15CMenuEnemyStateFv(static_cast<char*>(arg) - 0x58);
+}
 // LLM-HARNESS-END: us-801140a4
 // LLM-HARNESS-BEGIN: us-801140ac
-extern "C" bool func_801135D0() { return false; }
+extern "C" void func_801135D0(void* obj) {
+    reinterpret_cast<CMenuEnemyState*>(static_cast<char*>(obj) - 0x5c)->cbRenderBefore();
+}
 // LLM-HARNESS-END: us-801140ac
 // LLM-HARNESS-BEGIN: us-801140b4
 extern "C" bool func_801135D8() { return false; }

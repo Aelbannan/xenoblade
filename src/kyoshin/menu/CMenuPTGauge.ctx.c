@@ -22617,12 +22617,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -26780,7 +26776,15 @@ private:
 struct CMsgParamEntry{
     u32 command; //0x0
     WORK_ID wid; //0x4
-    u8 unk8[0x24 - 0x8];
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
 };
 
 template <int N>
@@ -26816,8 +26820,39 @@ public:
         return mArrayPtr[mFront % mCapacity];
     }
 
-    //TODO(kiwi) Emitted at 804380b4
-    void enqueue(u32 msg){}
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
 
     void pop(){
         mSize--;
@@ -27784,20 +27819,20 @@ public:
 
     // 0x00: base / unknown
     u8 unk00[0x60];
-    CScn* mScn; // 0x60 — owning scene; addRenderCB target in Init
-    UnkClass_8045F564 unk64; // 0x64 — layout memory region (Init createRegion)
-    nw4r::lyt::Layout* unk74; // 0x74 — layout draw target
+    CScn* mScn; // 0x60 -- owning scene; addRenderCB target in Init
+    UnkClass_8045F564 unk64; // 0x64 -- layout memory region (Init createRegion)
+    nw4r::lyt::Layout* unk74; // 0x74 -- layout draw target
     nw4r::lyt::AnimTransform* unk78; // 0x78
     nw4r::lyt::AnimTransform* unk7C; // 0x7C
     nw4r::lyt::AnimTransform* unk80; // 0x80
     nw4r::lyt::AnimTransform* unk84; // 0x84
     nw4r::lyt::AnimTransform* unk88; // 0x88
-    s32 unk8C; // 0x8C — render/move state
-    s32 unk90; // 0x90 — PTMF / substate index
+    s32 unk8C; // 0x8C -- render/move state
+    s32 unk90; // 0x90 -- PTMF / substate index
     s32 unk94; // 0x94
     s32 unk98; // 0x98
     s32 unk9C; // 0x9C
-    s32 unkA0; // 0xA0 — gauge value latch
+    s32 unkA0; // 0xA0 -- gauge value latch
 };
 /* end "kyoshin/menu/CMenuPTGauge.hpp" */
 
@@ -27866,7 +27901,6 @@ struct CProc_UnkStruct1 {
     void* unk8;
     void* unkC;
 };
-
 //size: 0x1ec
 class CProc : public CWorkThread {
 public:
@@ -247545,12 +247579,12 @@ extern const f32 lbl_eu_806679EC; // 1.0f
 // Unmangled retail names (distinct from C++-mangled decls in code_80135FDC.hpp).
 int func_8013BE50();
 u32 func_80137510(void* anim, float frame);
-// Retail links this unmangled (not CUICfManager::func_801355F4) — see
+// Retail links this unmangled (not CUICfManager::func_801355F4) -- see
 // MWCC_REFERENCE.md 8c19.
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 // Retail links this unmangled (not the FPQ34nw4r3lyt4PaneUl-mangled decl in
 // code_80135FDC.hpp); void* param (same overload trick as func_80137510
-// above) selects this bare-name overload — cast the Pane* arg at call sites.
+// above) selects this bare-name overload -- cast the Pane* arg at call sites.
 void func_8013676C(void* pane, u32 val);
 }
 
@@ -247584,13 +247618,16 @@ void CMenuPTGauge::Init() {
     accessor = func_801355F4();
     func_80136F08(unk74, &unk88, accessor, lbl_eu_805039C8 + 0xb7);
 
-    // Retail: CDeviceFont::func_80452C10(1, layout) returns an object whose
-    // vt+0x24 (no explicit args) yields the u32 passed to func_8013676C.
+    // Retail: layout+0x10 is the root pane (GetRootPane inlines to this load).
+    // CDeviceFont::func_80452C10(1, layout) returns an object whose vt+0x24
+    // (no explicit args) yields the u32 passed to func_8013676C. Pass void*
+    // so the call binds the unmangled reloc (not Pane*-mangled from
+    // code_80135FDC.hpp).
     nw4r::lyt::Pane* rootPane = unk74->GetRootPane();
     void* fontObj = CDeviceFont::func_80452C10(1, unk74);
     typedef u32 (*FontVFn)(void*);
     u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
-    func_8013676C(rootPane, fontResult);
+    func_8013676C(static_cast<void*>(rootPane), fontResult);
 
     unk74->Animate(0);
     unk74->UnbindAllAnimation();
@@ -247613,8 +247650,8 @@ void CMenuPTGauge::Move() {
     if (CTaskGame::func_800426F0()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if→goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md §17.6 single-insn carve-out).
+    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
+    // via fallthrough asm b (PLAN.md section 17.6 single-insn carve-out).
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -247768,8 +247805,8 @@ void CMenuPTGauge::cbRenderBefore() {
     if (CTaskGame::func_800426F0()) {
         goto done;
     }
-    // Retail: rlwinm.; beq +8; b done. MWCC collapses if→goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md §17.6 single-insn carve-out).
+    // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
+    // via fallthrough asm b (PLAN.md section 17.6 single-insn carve-out).
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -247798,3 +247835,51 @@ after_bit21:
 done:
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-80188b98
+extern "C" int lbl_eu_806642D8;
+
+extern "C" int func_80187710() {
+    return lbl_eu_806642D8;
+}
+// LLM-HARNESS-END: us-80188b98
+// LLM-HARNESS-BEGIN: us-801894b0
+extern "C" bool func_80187EFC() { return false; }
+// LLM-HARNESS-END: us-801894b0
+// LLM-HARNESS-BEGIN: us-801894b8
+extern "C" bool func_80187F04() { return false; }
+// LLM-HARNESS-END: us-801894b8
+// LLM-HARNESS-BEGIN: us-801894c0
+extern "C" bool func_80187F0C() { return false; }
+// LLM-HARNESS-END: us-801894c0
+
+// LLM-HARNESS-BEGIN: us-80188388
+extern "C" void ct_CMenuPTGauge() {}
+// LLM-HARNESS-END: us-80188388
+// LLM-HARNESS-BEGIN: us-80188b1c
+extern "C" void func_80187694() {}
+// LLM-HARNESS-END: us-80188b1c
+// LLM-HARNESS-BEGIN: us-80188ba0
+extern "C" void func_80187718() {}
+// LLM-HARNESS-END: us-80188ba0
+// LLM-HARNESS-BEGIN: us-80188c00
+extern "C" void func_80187778() {}
+// LLM-HARNESS-END: us-80188c00
+// LLM-HARNESS-BEGIN: us-80188ce0
+extern "C" void func_80187858() {}
+// LLM-HARNESS-END: us-80188ce0
+// LLM-HARNESS-BEGIN: us-80188de0
+extern "C" void func_80187958() {}
+// LLM-HARNESS-END: us-80188de0
+// LLM-HARNESS-BEGIN: us-8018903c
+extern "C" void func_80187A88() {}
+// LLM-HARNESS-END: us-8018903c
+// LLM-HARNESS-BEGIN: us-80189124
+extern "C" void func_80187B70() {}
+// LLM-HARNESS-END: us-80189124
+// LLM-HARNESS-BEGIN: us-80189244
+extern "C" void func_80187C90() {}
+// LLM-HARNESS-END: us-80189244
+// LLM-HARNESS-BEGIN: us-801893dc
+extern "C" void func_80187E28() {}
+// LLM-HARNESS-END: us-801893dc

@@ -12208,7 +12208,15 @@ public:
 struct CMsgParamEntry{
     u32 command; //0x0
     WORK_ID wid; //0x4
-    u8 unk8[0x24 - 0x8];
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
 };
 
 template <int N>
@@ -12244,8 +12252,39 @@ public:
         return mArrayPtr[mFront % mCapacity];
     }
 
-    //TODO(kiwi) Emitted at 804380b4
-    void enqueue(u32 msg){}
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
 
     void pop(){
         mSize--;
@@ -13272,7 +13311,6 @@ struct CProc_UnkStruct1 {
     void* unk8;
     void* unkC;
 };
-
 //size: 0x1ec
 class CProc : public CWorkThread {
 public:
@@ -233937,6 +233975,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
@@ -234430,6 +234469,11 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
 // ABI as UnkVirtualFunc6 above).
 extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* entry);
+
+// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
+// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
+extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
+    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
 #pragma once
@@ -235904,3 +235948,77 @@ mark_remove:
     framePad[0] = pendingCount;
 done:;
 }
+
+// LLM-HARNESS-BEGIN: us-8012f1b0
+extern "C" void func_8012E6DC() {}
+// LLM-HARNESS-END: us-8012f1b0
+// LLM-HARNESS-BEGIN: us-8012fd70
+extern "C" void func_8012F29C() {}
+// LLM-HARNESS-END: us-8012fd70
+// LLM-HARNESS-BEGIN: us-8012fd90
+extern "C" void func_8012F2BC() {}
+// LLM-HARNESS-END: us-8012fd90
+// LLM-HARNESS-BEGIN: us-80130334
+extern "C" void func_8012F860() {}
+// LLM-HARNESS-END: us-80130334
+// LLM-HARNESS-BEGIN: us-80130350
+extern "C" void func_8012F87C() {}
+// LLM-HARNESS-END: us-80130350
+// LLM-HARNESS-BEGIN: us-80130530
+extern "C" void func_8012FA5C() {}
+// LLM-HARNESS-END: us-80130530
+// LLM-HARNESS-BEGIN: us-8013054c
+extern "C" void func_8012FA78() {}
+// LLM-HARNESS-END: us-8013054c
+// LLM-HARNESS-BEGIN: us-80130890
+extern "C" void func_8012FDBC() {}
+// LLM-HARNESS-END: us-80130890
+// LLM-HARNESS-BEGIN: us-801308ac
+extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}
+// LLM-HARNESS-END: us-801308ac
+// LLM-HARNESS-BEGIN: us-801308b0
+extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
+// LLM-HARNESS-END: us-801308b0
+// LLM-HARNESS-BEGIN: us-801308b4
+extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
+// LLM-HARNESS-END: us-801308b4
+// LLM-HARNESS-BEGIN: us-801308b8
+extern "C" void Init__Q216CUIBattleManager5CTestFv() {}
+// LLM-HARNESS-END: us-801308b8
+// LLM-HARNESS-BEGIN: us-80130a40
+extern "C" bool func_8012FF6C() { return false; }
+// LLM-HARNESS-END: us-80130a40
+
+// LLM-HARNESS-BEGIN: us-8012ea60
+extern "C" void ct_CUIBattleManager() {}
+// LLM-HARNESS-END: us-8012ea60
+// LLM-HARNESS-BEGIN: us-8012f104
+extern "C" void func_8012E630() {}
+// LLM-HARNESS-END: us-8012f104
+// LLM-HARNESS-BEGIN: us-8012fd94
+extern "C" void func_8012F2C0() {}
+// LLM-HARNESS-END: us-8012fd94
+// LLM-HARNESS-BEGIN: us-8013002c
+extern "C" void func_8012F558() {}
+// LLM-HARNESS-END: us-8013002c
+// LLM-HARNESS-BEGIN: us-801300cc
+extern "C" void harness_stub_us_801300cc() {}
+// LLM-HARNESS-END: us-801300cc
+// LLM-HARNESS-BEGIN: us-80130224
+extern "C" void func_8012F750() {}
+// LLM-HARNESS-END: us-80130224
+// LLM-HARNESS-BEGIN: us-8013057c
+extern "C" void func_8012FAA8() {}
+// LLM-HARNESS-END: us-8013057c
+// LLM-HARNESS-BEGIN: us-80130748
+extern "C" void func_8012FC74() {}
+// LLM-HARNESS-END: us-80130748
+// LLM-HARNESS-BEGIN: us-801307d8
+extern "C" void func_8012FD04() {}
+// LLM-HARNESS-END: us-801307d8
+// LLM-HARNESS-BEGIN: us-80130834
+extern "C" void func_8012FD60() {}
+// LLM-HARNESS-END: us-80130834
+// LLM-HARNESS-BEGIN: us-801309dc
+extern "C" void dt_Q216CUIBattleManager5CTestFv() {}
+// LLM-HARNESS-END: us-801309dc

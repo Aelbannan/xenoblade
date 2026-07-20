@@ -22617,12 +22617,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -246994,6 +246990,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
@@ -248390,3 +248387,90 @@ after_bit21:
 done:
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-8010f7f4
+extern "C" void func_8010ED18() {}
+// LLM-HARNESS-END: us-8010f7f4
+// LLM-HARNESS-BEGIN: us-8010f814
+extern "C" void func_8010ED38() {}
+// LLM-HARNESS-END: us-8010f814
+// LLM-HARNESS-BEGIN: us-8010f8b0
+extern "C" unsigned char func_8010EDD4(const void* self) { return ((const unsigned char*)self)[0x40]; }
+// LLM-HARNESS-END: us-8010f8b0
+// LLM-HARNESS-BEGIN: us-8010f8b8
+extern "C" void func_8010EDDC(void *self, unsigned char val) {
+    *(unsigned char *)((char *)self + 0x41) = val;
+    func_8010EE40(self);
+}
+// LLM-HARNESS-END: us-8010f8b8
+// LLM-HARNESS-BEGIN: us-8011154c
+extern u32 lbl_eu_80663F50;
+extern "C" u32 func_80110A70() { return lbl_eu_80663F50; }
+// LLM-HARNESS-END: us-8011154c
+// LLM-HARNESS-BEGIN: us-80111b50
+extern "C" void func_80111074() {}
+// LLM-HARNESS-END: us-80111b50
+// LLM-HARNESS-BEGIN: us-80113fc4
+extern "C" void sinit_801134E8() {}
+// LLM-HARNESS-END: us-80113fc4
+// LLM-HARNESS-BEGIN: us-801140a4
+extern "C" void __dt__15CMenuEnemyStateFv(void*);
+
+extern "C" void func_801135C8(void* arg) {
+    __dt__15CMenuEnemyStateFv(static_cast<char*>(arg) - 0x58);
+}
+// LLM-HARNESS-END: us-801140a4
+// LLM-HARNESS-BEGIN: us-801140ac
+extern "C" void func_801135D0(void* obj) {
+    reinterpret_cast<CMenuEnemyState*>(static_cast<char*>(obj) - 0x5c)->cbRenderBefore();
+}
+// LLM-HARNESS-END: us-801140ac
+// LLM-HARNESS-BEGIN: us-801140b4
+extern "C" bool func_801135D8() { return false; }
+// LLM-HARNESS-END: us-801140b4
+
+// LLM-HARNESS-BEGIN: us-8010f620
+extern "C" void func_8010EB44() {}
+// LLM-HARNESS-END: us-8010f620
+// LLM-HARNESS-BEGIN: us-8010f834
+extern "C" void func_8010ED58() {}
+// LLM-HARNESS-END: us-8010f834
+// LLM-HARNESS-BEGIN: us-8010f8c0
+extern "C" void func_8010EDE4() {}
+// LLM-HARNESS-END: us-8010f8c0
+// LLM-HARNESS-BEGIN: us-8010f91c
+extern "C" void harness_stub_us_8010f91c() {}
+// LLM-HARNESS-END: us-8010f91c
+// LLM-HARNESS-BEGIN: us-801114b4
+extern "C" void func_801109D8() {}
+// LLM-HARNESS-END: us-801114b4
+// LLM-HARNESS-BEGIN: us-80111554
+extern "C" void func_80110A78() {}
+// LLM-HARNESS-END: us-80111554
+// LLM-HARNESS-BEGIN: us-80111b5c
+extern "C" void harness_stub_us_80111b5c() {}
+// LLM-HARNESS-END: us-80111b5c
+// LLM-HARNESS-BEGIN: us-801120c4
+extern "C" void harness_stub_us_801120c4() {}
+// LLM-HARNESS-END: us-801120c4
+// LLM-HARNESS-BEGIN: us-801125e4
+extern "C" void harness_stub_us_801125e4() {}
+// LLM-HARNESS-END: us-801125e4
+// LLM-HARNESS-BEGIN: us-8011272c
+extern "C" void func_80111C50() {}
+// LLM-HARNESS-END: us-8011272c
+// LLM-HARNESS-BEGIN: us-8011294c
+extern "C" void harness_stub_us_8011294c() {}
+// LLM-HARNESS-END: us-8011294c
+// LLM-HARNESS-BEGIN: us-80112c4c
+extern "C" void harness_stub_us_80112c4c() {}
+// LLM-HARNESS-END: us-80112c4c
+// LLM-HARNESS-BEGIN: us-80112fa4
+extern "C" void func_801124C8() {}
+// LLM-HARNESS-END: us-80112fa4
+// LLM-HARNESS-BEGIN: us-8011328c
+extern "C" void harness_stub_us_8011328c() {}
+// LLM-HARNESS-END: us-8011328c
+// LLM-HARNESS-BEGIN: us-80113d84
+extern "C" void harness_stub_us_80113d84() {}
+// LLM-HARNESS-END: us-80113d84

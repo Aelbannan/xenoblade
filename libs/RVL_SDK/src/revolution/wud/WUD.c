@@ -2990,7 +2990,7 @@ DECOMP_FORCEACTIVE(WUD_c_2,
                    "dev number = %d\n");
 
 // LLM-HARNESS-BEGIN: us-80378960
-int WUDIsLinkedWBC() { return 0; }
+int WUDIsLinkedWBC() { extern int _linkedWBC; return _linkedWBC; }
 // LLM-HARNESS-END: us-80378960
 // LLM-HARNESS-BEGIN: us-80378a10
 void __wudSyncFlushCallback() {}

@@ -174,7 +174,10 @@ void Run() {}
 void Callback() {}
 // LLM-HARNESS-END: us-80358670
 // LLM-HARNESS-BEGIN: us-803586b0
-int callback() { return 0; }
+extern unsigned long DVDLowIntType;
+void callback(unsigned long type) {
+    DVDLowIntType = type;
+}
 // LLM-HARNESS-END: us-803586b0
 // LLM-HARNESS-BEGIN: us-803586c0
 void __OSLaunchNextFirmware(void) {}

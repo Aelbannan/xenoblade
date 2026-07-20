@@ -145,13 +145,18 @@ void CUIWindowManager::Move() {
 }
 
 // LLM-HARNESS-BEGIN: us-8013cf3c
-extern "C" bool func_8013C54C() { return false; }
+extern "C" u32 func_8013C54C() {
+    return (u32)lbl_eu_80664088;
+}
 // LLM-HARNESS-END: us-8013cf3c
 // LLM-HARNESS-BEGIN: us-8013dc5c
 extern "C" void func_8013D26C() {}
 // LLM-HARNESS-END: us-8013dc5c
 // LLM-HARNESS-BEGIN: us-8013f65c
-extern "C" bool func_8013EC58() { return false; }
+extern "C" unsigned short func_8013EC58()
+{
+    return lbl_eu_8066408C;
+}
 // LLM-HARNESS-END: us-8013f65c
 // LLM-HARNESS-BEGIN: us-8013f664
 extern "C" void func_8013EC60() {}
@@ -166,10 +171,16 @@ extern "C" void Draw__Q216CUIWindowManager5CTestFv() {}
 extern "C" void Init__Q216CUIWindowManager5CTestFv() {}
 // LLM-HARNESS-END: us-8013fab8
 // LLM-HARNESS-BEGIN: us-8013fc38
-extern "C" bool func_8013F234() { return false; }
+extern "C" void* func_8013F234(void* self) {
+    extern void* func_8013CBB4(void*);
+    return func_8013CBB4((char*)self - 0x54);
+}
 // LLM-HARNESS-END: us-8013fc38
 // LLM-HARNESS-BEGIN: us-8013fc40
-extern "C" bool func_8013F23C() { return false; }
+extern "C" void __dt__16CUIWindowManagerFv(CUIWindowManager*);
+extern "C" void func_8013F23C(CUIWindowManager* p) {
+    __dt__16CUIWindowManagerFv((CUIWindowManager*)((char*)p - 0x54));
+}
 // LLM-HARNESS-END: us-8013fc40
 // LLM-HARNESS-BEGIN: us-8013fdf0
 extern "C" void func_8013F3EC() {}

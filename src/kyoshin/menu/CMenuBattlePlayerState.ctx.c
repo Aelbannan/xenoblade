@@ -26143,12 +26143,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -247353,6 +247349,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
@@ -248014,10 +248011,13 @@ extern const f32 lbl_eu_80666FC0; // 100.0f
 extern const f32 lbl_eu_80666FC4; // 360.0f
 }
 
-extern void func_80138078(u32);
+extern "C" {
 extern void* func_8012FDBC();
 extern u32 func_801355BC();
 extern u32 func_801355D8();
+}
+
+extern void func_80138078(u32);
 extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
 
 extern "C" {
@@ -248406,33 +248406,23 @@ void CMenuBattlePlayerState::Init() {
 
         {
             UnkClass_8045F564 temp;
-            u32* tp = reinterpret_cast<u32*>(&temp);
-            u32 z32 = 0;
-            temp.unk0 = z32;
-            temp.unk4 = z32;
-            temp.unk8 = z32;
-            temp.unkC = z32;
-            tp[4] = z32;
-            tp[5] = z32;
-            tp[6] = z32;
-            tp[7] = z32;
-            tp[8] = z32;
-            *reinterpret_cast<u8*>(&tp[9]) = 1;
-            tp[10] = z32;
-
+            temp.unk0 = 0;
+            temp.unk4 = 0;
+            temp.unk8 = 0;
+            temp.unkC = 0;
             unk7D0.unk0 = temp.unk0;
             unk7D0.unk4 = temp.unk4;
             unk7D0.unk8 = temp.unk8;
             unk7D0.unkC = temp.unkC;
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7E0)) = tp[4];
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7E4)) = tp[5];
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7E8)) = tp[6];
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7EC)) = tp[7];
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7F0)) = tp[8];
-            *reinterpret_cast<u8*>(reinterpret_cast<u8*>(&unk7F4)) =
-                *reinterpret_cast<u8*>(&tp[9]);
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&unk7F8)) = tp[10];
         }
+        unk7E0 = NULL;
+        unk7E4 = NULL;
+        unk7E8 = NULL;
+        unk7EC = NULL;
+        unk7F0 = NULL;
+        unk7F4 = 1;
+        unk7F5 = 0;
+        unk7F8 = 0;
 
         accessor = CUICfManager::func_801355F4();
         unk7E0 = accessor;
@@ -248600,7 +248590,7 @@ after_bit21:
         int* party = func_8009ECB0();
         u8 fi = 0;
         while (fi < 3) {
-            // Retail: clrlslwi fi; add party; lwz 4(r3); … stwx actors,same shift.
+            // Retail: clrlslwi fi; add party; lwz 4(r3); ... stwx actors,same shift.
             int* p = party + fi;
             void* actor = func_800B8B94(p[1]);
             actors[fi] = actor;
@@ -248611,7 +248601,7 @@ after_bit21:
         }
 
         // Gauge/bias NVs intentionally not hoisted as named locals: retail loads
-        // int→float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
+        // int->float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
 
         typedef s16* (*GetS16PairFn)(void*);
 
@@ -248637,7 +248627,7 @@ after_bit21:
             hp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x128)(actor));
             maxHp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x12C)(actor));
 
-            // Retail: lfs f26, zero pool — not fmr from a zero NV.
+            // Retail: lfs f26, zero pool -- not fmr from a zero NV.
             hpRatio = lbl_eu_80666F94;
             if (hp == 0) {
                 goto skip_ratio;
@@ -248943,3 +248933,50 @@ after_bit21:
 done:
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-8010be00
+extern "C" void harness_stub_us_8010be00() {}
+// LLM-HARNESS-END: us-8010be00
+// LLM-HARNESS-BEGIN: us-8010d924
+extern "C" bool func_8010CE48() { return false; }
+// LLM-HARNESS-END: us-8010d924
+// LLM-HARNESS-BEGIN: us-8010da38
+extern "C" void func_8010CF5C() {}
+// LLM-HARNESS-END: us-8010da38
+// LLM-HARNESS-BEGIN: us-8010f4d4
+extern "C" void sinit_8010E9F8() {}
+// LLM-HARNESS-END: us-8010f4d4
+// LLM-HARNESS-BEGIN: us-8010f528
+extern "C" bool func_8010EA4C() { return false; }
+// LLM-HARNESS-END: us-8010f528
+// LLM-HARNESS-BEGIN: us-8010f530
+extern "C" bool func_8010EA54() { return false; }
+// LLM-HARNESS-END: us-8010f530
+// LLM-HARNESS-BEGIN: us-8010f538
+extern "C" void func_8010EA5C(void* self) {
+    extern void __dt__22CMenuBattlePlayerStateFv(void*);
+    __dt__22CMenuBattlePlayerStateFv((void*)((char*)self - 0x5c));
+}
+// LLM-HARNESS-END: us-8010f538
+
+// LLM-HARNESS-BEGIN: us-8010d8a8
+extern "C" void func_8010CDCC() {}
+// LLM-HARNESS-END: us-8010d8a8
+// LLM-HARNESS-BEGIN: us-8010d92c
+extern "C" void func_8010CE50() {}
+// LLM-HARNESS-END: us-8010d92c
+// LLM-HARNESS-BEGIN: us-8010da44
+extern "C" void func_8010CF68() {}
+// LLM-HARNESS-END: us-8010da44
+// LLM-HARNESS-BEGIN: us-8010dbb0
+extern "C" void func_8010D0D4() {}
+// LLM-HARNESS-END: us-8010dbb0
+// LLM-HARNESS-BEGIN: us-8010dc90
+extern "C" void harness_stub_us_8010dc90() {}
+// LLM-HARNESS-END: us-8010dc90
+// LLM-HARNESS-BEGIN: us-8010df8c
+extern "C" void harness_stub_us_8010df8c() {}
+// LLM-HARNESS-END: us-8010df8c
+// LLM-HARNESS-BEGIN: us-8010e3b0
+extern "C" void harness_stub_us_8010e3b0() {}
+// LLM-HARNESS-END: us-8010e3b0

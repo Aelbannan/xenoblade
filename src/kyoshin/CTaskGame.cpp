@@ -194,10 +194,15 @@ extern "C" u32 func_80043F18(void *ptr) { return *(u32 *)ptr; }
 void CProcess::Tail() {}
 // LLM-HARNESS-END: us-800444bc
 // LLM-HARNESS-BEGIN: us-800446bc
-extern "C" bool func_80044120() { return false; }
+extern "C" void __dt__9CTaskGameFv(CTaskGame*);
+
+extern "C" void func_80044120(void *self) {
+    __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>((char*)self - 0x54));
+}
 // LLM-HARNESS-END: us-800446bc
 // LLM-HARNESS-BEGIN: us-800446c4
-extern "C" bool func_80044128() { return false; }
+extern "C" void cbRenderBefore__9CTaskGameFv(void*);
+extern "C" void func_80044128(void* self) { cbRenderBefore__9CTaskGameFv((void*)((char*)self - 0x58)); }
 // LLM-HARNESS-END: us-800446c4
 // LLM-HARNESS-BEGIN: us-800446cc
 extern "C" bool func_80044130() { return false; }
@@ -209,7 +214,7 @@ extern "C" bool func_80044138(void* ptr) { return ((bool(*)(char*))func_800433A8
 extern "C" bool func_80044140() { return false; }
 // LLM-HARNESS-END: us-800446dc
 // LLM-HARNESS-BEGIN: us-800446e4
-extern "C" bool func_80044148() { return false; }
+extern "C" bool func_80044148(void* obj) { return ((bool (*)(void*))func_800436F4)((void*)((char*)obj - 0x60)); }
 // LLM-HARNESS-END: us-800446e4
 // LLM-HARNESS-BEGIN: us-800446ec
 extern "C" bool func_80044150() { return false; }

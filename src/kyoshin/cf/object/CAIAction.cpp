@@ -162,7 +162,9 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 void func_8014A8F8() {}
 // LLM-HARNESS-END: us-8014b2fc
 // LLM-HARNESS-BEGIN: us-8014b414
-extern "C" bool func_8014AA10() { return false; }
+extern "C" void func_8014AA10(void* obj, unsigned int value) {
+    *(unsigned int*)((unsigned char*)obj + 0xB14) = value;
+}
 // LLM-HARNESS-END: us-8014b414
 // LLM-HARNESS-BEGIN: us-8014b63c
 extern "C" void func_8014AC38() {}

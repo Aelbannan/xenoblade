@@ -1004,7 +1004,10 @@ extern "C" bool func_8010EA4C() { return false; }
 extern "C" bool func_8010EA54() { return false; }
 // LLM-HARNESS-END: us-8010f530
 // LLM-HARNESS-BEGIN: us-8010f538
-extern "C" bool func_8010EA5C() { return false; }
+extern "C" void func_8010EA5C(void* self) {
+    extern void __dt__22CMenuBattlePlayerStateFv(void*);
+    __dt__22CMenuBattlePlayerStateFv((void*)((char*)self - 0x5c));
+}
 // LLM-HARNESS-END: us-8010f538
 
 // LLM-HARNESS-BEGIN: us-8010d8a8

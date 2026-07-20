@@ -2,8 +2,9 @@
 
 Routes byte accesses to RAM backing, immutable ROM images, or MMIO device
 models. Opt-in Tier C integration: pass ``memory_bus=`` to ``execute_cfg`` with
-``ConcreteOps`` only. Default proofs and ``check_equivalence`` remain on
-unconstrained ``ConcreteMemory`` unless callers explicitly opt in.
+``ConcreteOps`` only, or to ``check_equivalence`` to bind symbolic constraints
+and route concrete sampling. Default proofs remain on unconstrained
+``ConcreteMemory`` unless callers explicitly opt in.
 """
 
 from __future__ import annotations

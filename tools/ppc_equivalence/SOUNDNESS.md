@@ -210,18 +210,21 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 - **MMIO device models (scaffold):** `device_model.py` defines opt-in
   ``DeviceModel`` implementations (``RegisterBankDevice``, ``GxFifoStreamDevice``
   stub) and ``address_space.mmio_region`` / ``attach_mmio_region`` attach MMIO
-  spans with optional ``device_id`` labels. Tier **C** only: not wired into
-  ``execute_cfg`` / ``check_equivalence``; unknown or partial device behavior
-  must fail closed (``AccessOutcome.UNSUPPORTED``) and yield inconclusive
-  proofs rather than ordinary RAM.
+  spans with optional ``device_id`` labels. Tier **C** only: MMIO access under
+  ``memory_bus=`` fails closed in concrete execution and is excluded from
+  symbolic feasible paths when ``check_equivalence`` binds a bus; unknown or
+  partial device behavior must fail closed (``AccessOutcome.UNSUPPORTED``) and
+  yield inconclusive proofs rather than ordinary RAM.
 - **Memory bus (scaffold):** `memory_bus.py` routes concrete 1/2/4-byte
   loads/stores through ``AddressSpace`` regions to RAM backing
   (``ConcreteMemory``), immutable ROM images, or MMIO ``DeviceModel`` instances
   keyed by ``device_id``. Multi-region spans, unmapped addresses, unsupported
   widths, missing devices, and ROM writes fail closed (``BusOutcome``). Tier
   **C** opt-in: pass ``memory_bus=`` to ``execute_cfg`` with ``ConcreteOps``
-  only; ``check_equivalence`` and symbolic ``WordOps`` remain unwired unless
-  callers explicitly opt in. Default proofs keep unconstrained ``ConcreteMemory``.
+  only, or to ``check_equivalence`` to bind ROM/RAM address-space constraints
+  into the solver and route concrete sampling; symbolic ``WordOps`` CFG
+  execution does not take ``memory_bus=`` (fail closed if passed). Default
+  proofs keep unconstrained ``ConcreteMemory``.
 - **ELF data sections:** `list_allocatable_sections` / `extract_allocatable_section`
   expose SHF_ALLOC PROGBITS/NOBITS (including `.rodata` / `.data`) and attach
   REL/RELA entries (notably `R_PPC_ADDR32`) for jump-table census and later

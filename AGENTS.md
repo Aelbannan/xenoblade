@@ -4,7 +4,7 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 
 ## Required reading order
 
-1. **`.claude/skills/xenoblade-decomp/SKILL.md`** — operational workflow and acceptance policy. Follow it unless the user explicitly asks for something else.
+1. **`.codex/skills/xenoblade-decomp/SKILL.md`** (also `.cursor/skills/` and `.claude/skills/`) — operational workflow and acceptance policy. Follow it unless the user explicitly asks for something else.
 2. **`tools/coop/targets.json`** — sole source of truth for function identity and current target state; use `targets show/status`, not hand-maintained checklists.
 3. **`PLAN.md` §§2, 3, 17** — legal boundaries, architecture invariants, and matching policy. Read other sections only when the task touches that subsystem.
 4. **`COOP_IMPLEMENTATION_MAP.md`** — capability graph and feature handoffs; read for co-op architecture work.

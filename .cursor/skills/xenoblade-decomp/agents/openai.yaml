@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenoblade Decomp"
+  short_description: "Xenoblade co-op decomp workflow"
+  default_prompt: "Use $xenoblade-decomp to work on this Xenoblade co-op decompilation fork."

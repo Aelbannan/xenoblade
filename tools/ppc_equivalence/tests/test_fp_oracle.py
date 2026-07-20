@@ -11,6 +11,10 @@ from tools.ppc_equivalence.fp_oracle import (
     fadds_fpr_rne,
     fdiv_binary64_rne,
     fdivs_fpr_rne,
+    fmadd_binary64_rne,
+    fmadds_fpr_rne,
+    fmsub_binary64_rne,
+    fmsubs_fpr_rne,
     fmul_binary64_rne,
     fmuls_fpr_rne,
     fprf_from_binary64,
@@ -83,6 +87,31 @@ class FpOracleArithmeticTests(unittest.TestCase):
         result = fdivs_fpr_rne(_F15, _F2)
         self.assertEqual(result.bits64, 0x3FE8000000000000)
 
+
+    def test_fmadd_binary64_corpus_inputs(self):
+        result = fmadd_binary64_rne(_F15, _F4, _F2)
+        self.assertEqual(result.bits64, 0x4020000000000000)
+
+    def test_fmsub_binary64_corpus_inputs(self):
+        result = fmsub_binary64_rne(_F15, _F4, _F2)
+        self.assertEqual(result.bits64, _F4)
+
+    def test_fmadds_fpr_corpus_inputs(self):
+        result = fmadds_fpr_rne(_F15, _F2, _F4)
+        self.assertEqual(result.bits64, 0x4020000000000000)
+
+    def test_fmsubs_fpr_corpus_inputs(self):
+        result = fmsubs_fpr_rne(_F15, _F2, _F4)
+        self.assertEqual(result.bits64, _F4)
+
+    def test_fmadds_midpoint_nonzero_addend_fail_closed(self):
+        with self.assertRaises(OracleUnimplementedError):
+            fmadds_fpr_rne(
+                0x4049000000000000,
+                0x3B638E5400000000,
+                0xBF91198700000000,
+            )
+
     def test_dispatch_supported_ops(self):
         self.assertEqual(
             dispatch_oracle("fadd", _F15, _F2).bits64,
@@ -99,6 +128,14 @@ class FpOracleArithmeticTests(unittest.TestCase):
         self.assertEqual(
             dispatch_oracle("fdivs", _F15, _F2).bits64,
             0x3FE8000000000000,
+        )
+        self.assertEqual(
+            dispatch_oracle("fmadd", _F15, _F4, _F2).bits64,
+            0x4020000000000000,
+        )
+        self.assertEqual(
+            dispatch_oracle("fmsubs", _F15, _F2, _F4).bits64,
+            _F4,
         )
 
     def test_dispatch_rejects_unknown_op(self):
@@ -117,7 +154,12 @@ class FpOracleArithmeticTests(unittest.TestCase):
         self.assertIn("fadds", ORACLE_SUPPORTED_OPS)
         self.assertIn("fsub", ORACLE_SUPPORTED_OPS)
         self.assertIn("fdivs", ORACLE_SUPPORTED_OPS)
+        self.assertIn("fmadd", ORACLE_SUPPORTED_OPS)
+        self.assertIn("fmadds", ORACLE_SUPPORTED_OPS)
+        self.assertIn("fmsub", ORACLE_SUPPORTED_OPS)
+        self.assertIn("fmsubs", ORACLE_SUPPORTED_OPS)
         self.assertNotIn("fsqrt", ORACLE_SUPPORTED_OPS)
+        self.assertNotIn("fnmadd", ORACLE_SUPPORTED_OPS)
 
 
 class FloatingPointDomainFlagMetadataTests(unittest.TestCase):

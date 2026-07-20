@@ -81,6 +81,7 @@ from tools.llm_harness.asm_listings import (
 from tools.llm_harness.source_regions import (
     SourceRegion,
     TuSlot,
+    apply_strip_redundant_externs_to_regions,
     begin_marker as _begin_marker,
     end_marker as _end_marker,
     find_function_region as _find_function_region,
@@ -1148,7 +1149,14 @@ class XenobladeAdapter:
         original = target.source.read_text(encoding="utf-8")
         region = _find_function_region(original, target)
         self._validate_source(original[region.content_start : region.content_end], candidate.source)
-        candidate_file = _replace_function_source(original, region, candidate.source)
+        candidate_file = _replace_function_source(
+            original,
+            region,
+            candidate.source,
+            target_function=target.function or "",
+            target_symbol=target.symbol or "",
+            source_path=target.source,
+        )
         unit = self.project.resolve_unit(target.unit)
         original_object = unit.base_path.read_bytes() if unit.base_path and unit.base_path.is_file() else None
         try:
@@ -1579,6 +1587,109 @@ class XenobladeAdapter:
         )
         return f"build exited {completed.returncode}: {detail[-4000:]}"
 
+    def strip_accepted_redundant_externs(
+        self,
+        *,
+        dry_run: bool = False,
+        tu: str = "",
+        target_id: str = "",
+    ) -> List[Dict[str, Any]]:
+        """Strip duplicate ``extern`` object decls from accepted function slots.
+
+        Only ``FULL_MATCH`` / ``EQUIVALENT_MATCH`` targets are considered. Within
+        each file the earliest declaration of a symbol is kept; later accepted
+        slots lose their redundant ``extern`` lines. Dry-run reports planned
+        edits without writing.
+        """
+        if target_id and tu:
+            raise ValueError("Specify at most one of target_id or tu")
+
+        selected: List[Target] = []
+        for target in load_targets(self.config):
+            if target.status not in ACCEPTED_MATCH_STATUSES:
+                continue
+            if not target.buildable or target.source is None or not target.symbol:
+                continue
+            if not target.source.is_file():
+                continue
+            if target_id and target.id != target_id:
+                continue
+            if tu and not _unit_matches(target.unit, tu):
+                continue
+            selected.append(target)
+
+        if target_id and not selected:
+            raise ValueError(
+                f"Target {target_id!r} is not an accepted FULL/EQUIVALENT_MATCH "
+                "buildable function with source"
+            )
+
+        by_path: Dict[Path, List[Target]] = {}
+        for target in selected:
+            assert target.source is not None
+            by_path.setdefault(target.source.resolve(), []).append(target)
+
+        results: List[Dict[str, Any]] = []
+        for path, targets in sorted(by_path.items(), key=lambda item: str(item[0])):
+            source = path.read_text(encoding="utf-8")
+            try:
+                rel = str(path.relative_to(self.root))
+            except ValueError:
+                rel = str(path)
+
+            regions: List[tuple[str, SourceRegion, str, str]] = []
+            for target in sorted(targets, key=lambda item: item.id):
+                try:
+                    region = _find_function_region(source, target)
+                except ValueError as exc:
+                    results.append(
+                        {
+                            "target_id": target.id,
+                            "source": rel,
+                            "status": target.status,
+                            "action": "skipped_no_region",
+                            "error": str(exc),
+                            "removed_externs": [],
+                        }
+                    )
+                    continue
+                regions.append(
+                    (
+                        target.id,
+                        region,
+                        target.function or "",
+                        target.symbol or "",
+                    )
+                )
+
+            if not regions:
+                continue
+
+            updated, rows = apply_strip_redundant_externs_to_regions(
+                source,
+                regions,
+                earlier_only=True,
+                source_path=path,
+            )
+            status_by_id = {target.id: target.status for target in targets}
+            for row in rows:
+                entry = {
+                    "target_id": row["target_id"],
+                    "source": rel,
+                    "status": status_by_id.get(row["target_id"], ""),
+                    "action": row["action"],
+                    "removed_externs": list(row.get("removed_externs") or []),
+                }
+                if entry["action"] == "stripped" and dry_run:
+                    entry["action"] = "would_strip"
+                results.append(entry)
+
+            if not dry_run and updated != source:
+                path.write_text(updated, encoding="utf-8")
+
+        results.sort(key=lambda row: (str(row.get("source") or ""), str(row.get("target_id") or "")))
+        return results
+
     def prepare(self, target_id: str, *, write: bool = False) -> str:
         """Add stable comments around an existing definition for future replacements."""
         target = self._target(target_id)
@@ -1724,7 +1835,14 @@ class XenobladeAdapter:
         assert target.source is not None
         source = target.source.read_text(encoding="utf-8")
         region = _find_function_region(source, target)
-        updated = _replace_function_source(source, region, candidate.source)
+        updated = _replace_function_source(
+            source,
+            region,
+            candidate.source,
+            target_function=target.function or "",
+            target_symbol=target.symbol or "",
+            source_path=target.source,
+        )
         if write:
             self._require_claim(target, owner)
             target.source.write_text(updated, encoding="utf-8")
@@ -1929,7 +2047,14 @@ class XenobladeAdapter:
         source = source_path.read_text(encoding="utf-8")
         region = _find_function_region(source, target)
         self._validate_source(source[region.content_start : region.content_end], candidate.source)
-        updated = _replace_function_source(source, region, candidate.source)
+        updated = _replace_function_source(
+            source,
+            region,
+            candidate.source,
+            target_function=target.function or "",
+            target_symbol=target.symbol or "",
+            source_path=target.source,
+        )
         source_path.write_text(updated, encoding="utf-8")
         return SourcePatch(slot_id=target_id, source=candidate.source)
 
@@ -1944,7 +2069,14 @@ class XenobladeAdapter:
         original = source_path.read_text(encoding="utf-8")
         region = _find_function_region(original, target)
         self._validate_source(original[region.content_start : region.content_end], candidate.source)
-        candidate_file = _replace_function_source(original, region, candidate.source)
+        candidate_file = _replace_function_source(
+            original,
+            region,
+            candidate.source,
+            target_function=target.function or "",
+            target_symbol=target.symbol or "",
+            source_path=target.source,
+        )
 
         unit = self.project.resolve_unit(target.unit)
 

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import io
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from tools.llm_harness.run import main
+from tools.llm_harness.source_regions import begin_marker, end_marker
+from tools.llm_harness.xenoblade_project import XenobladeAdapter
 
 
 class AutomaticNewTargetTests(unittest.TestCase):
@@ -180,6 +184,115 @@ class AutomaticNewTargetTests(unittest.TestCase):
             "tu-complete", ["unit-a", "unit-b"], runs=None, dry_run=True,
             model_parallel=None, full_context=True,
         )
+
+    def test_strip_redundant_externs_dry_run(self) -> None:
+        harness = Mock()
+        harness.adapter.strip_accepted_redundant_externs.return_value = [
+            {
+                "target_id": "us-80373470",
+                "source": "libs/RVL_SDK/src/revolution/wpad/WPAD.c",
+                "status": "FULL_MATCH",
+                "action": "would_strip",
+                "removed_externs": ["extern void (*_wpadUsedCallback)(void);"],
+            }
+        ]
+
+        with patch("tools.llm_harness.run.Harness", return_value=harness):
+            with redirect_stdout(io.StringIO()) as out:
+                result = main([
+                    "strip-redundant-externs", "--tu", "WPAD", "--dry-run",
+                ])
+
+        self.assertEqual(result, 0)
+        harness.adapter.strip_accepted_redundant_externs.assert_called_once_with(
+            dry_run=True, tu="WPAD", target_id=""
+        )
+        payload = out.getvalue()
+        self.assertIn('"dry_run": true', payload)
+        self.assertIn('"changed": 1', payload)
+        self.assertIn("would_strip", payload)
+
+    def test_strip_redundant_externs_rejects_bad_target(self) -> None:
+        harness = Mock()
+        harness.adapter.strip_accepted_redundant_externs.side_effect = ValueError(
+            "Target 'nope' is not an accepted FULL/EQUIVALENT_MATCH "
+            "buildable function with source"
+        )
+
+        with patch("tools.llm_harness.run.Harness", return_value=harness):
+            with self.assertRaises(SystemExit):
+                main(["strip-redundant-externs", "nope", "--dry-run"])
+
+
+class StripAcceptedRedundantExternAdapterTests(unittest.TestCase):
+    def test_dry_run_then_write_keeps_earliest_extern(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            src = root / "WPAD.c"
+            original = (
+                begin_marker("us-80373460")
+                + "\n"
+                + "extern void *_wpadUsedCallback;\n"
+                + "void* WPADIsUsedCallbackByKPAD() { return _wpadUsedCallback; }\n"
+                + end_marker("us-80373460")
+                + "\n"
+                + begin_marker("us-80373470")
+                + "\n"
+                + "extern void (*_wpadUsedCallback)(void);\n"
+                + "void WPADSetCallbackByKPAD(void (*callback)(void)) {\n"
+                + "    _wpadUsedCallback = callback;\n"
+                + "}\n"
+                + end_marker("us-80373470")
+                + "\n"
+            )
+            src.write_text(original, encoding="utf-8")
+
+            def make_target(tid: str, fn: str, status: str) -> SimpleNamespace:
+                return SimpleNamespace(
+                    id=tid,
+                    function=fn,
+                    status=status,
+                    buildable=True,
+                    source=src,
+                    symbol=fn,
+                    unit="WPAD",
+                )
+
+            targets = [
+                make_target("us-80373460", "WPADIsUsedCallbackByKPAD", "FULL_MATCH"),
+                make_target("us-80373470", "WPADSetCallbackByKPAD", "EQUIVALENT_MATCH"),
+                make_target("ignored", "Ignored", "HIGH_MATCH"),
+            ]
+            adapter = object.__new__(XenobladeAdapter)
+            adapter.root = root
+            adapter.config = object()
+
+            with patch(
+                "tools.llm_harness.xenoblade_project.load_targets",
+                return_value=targets,
+            ):
+                dry = adapter.strip_accepted_redundant_externs(dry_run=True)
+                self.assertEqual(src.read_text(encoding="utf-8"), original)
+                self.assertEqual(
+                    {row["target_id"]: row["action"] for row in dry},
+                    {
+                        "us-80373460": "unchanged",
+                        "us-80373470": "would_strip",
+                    },
+                )
+
+                written = adapter.strip_accepted_redundant_externs(dry_run=False)
+                self.assertEqual(
+                    {row["target_id"]: row["action"] for row in written},
+                    {
+                        "us-80373460": "unchanged",
+                        "us-80373470": "stripped",
+                    },
+                )
+                updated = src.read_text(encoding="utf-8")
+                self.assertIn("extern void *_wpadUsedCallback;", updated)
+                self.assertNotIn("extern void (*_wpadUsedCallback)", updated)
+                self.assertIn("_wpadUsedCallback = callback", updated)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,17 @@
-"""Capability-assurance schema and evaluation (Wave 1–2).
+"""Capability-assurance schema and evaluation (Wave 1–3).
 
 Tier A is redefined around promotion-grade attestations for every capability
 a proof uses, rather than hard-coding effect-type demotions. Wave 1 lands the
 schema, validators, and shadow-mode tier path. Wave 2 adds ``fp-bitwise``
 (fmr/fabs/fneg/fnabs) promotion-grade attestation under
-``fp-bitwise-ledger-v1``; scalar/compare/convert/trap/fused FP remain
-non-promotable.
+``fp-bitwise-ledger-v1``. Wave 3 splits remaining FP into distinct
+sub-capabilities (load/store, compare, convert, scalar, fused, paired, psq,
+traps) with fail-closed stubs; ``fp-scalar-oracle-v1`` /
+``fp-outcome-unify-v1`` / ``precondition-closure-v1`` never promote until
+evidence is complete. Scalar allowlist stays empty. Wave 3 also lands MMIO
+capability split + hardware-profile-bound obligations
+(``mmio-register-bank-v2``, ``gx-fifo-trace-v1``); FIFO reads / DMA / loop
+emission stay incomplete and the MMIO allowlist remains empty until canary.
 """
 
 from __future__ import annotations
@@ -80,6 +86,21 @@ KNOWN_ATTESTATION_ALGORITHMS = frozenset(
         "certified-calls-refinement-v1",
         # Wave 2: independent address-coverage / wraparound UNSAT digests.
         "bounded-memory-coverage-v2",
+        # Wave 3 FP foundations — incomplete until oracle / RN / NI land.
+        "fp-scalar-oracle-v1",
+        "fp-outcome-unify-v1",
+        # Wave 3: RN/NI/trap entry-precondition closure (UNSAT required).
+        "precondition-closure-v1",
+        # Wave 3 MMIO foundations (promotion-grade only with hardware profile
+        # + complete obligations + allowlist; default allowlist empty).
+        "mmio-register-bank-v2",
+        "gx-fifo-trace-v1",
+        "gx-fifo-read-incomplete-v0",
+        "mmio-read-side-effects-incomplete-v0",
+        "mmio-external-input-incomplete-v0",
+        "mmio-loop-emission-incomplete-v0",
+        "mixed-address-space-incomplete-v0",
+        "dma-interrupt-incomplete-v0",
         # Shadow / incomplete only — never promotion-grade.
         "legacy-effect-gate-v1",
     }
@@ -406,8 +427,14 @@ def _proof_effect_flags(result: Any) -> dict[str, bool]:
 
 
 def infer_used_capabilities(result: Any) -> frozenset[str]:
-    """Capabilities implied by proof effects (Wave 1–2 inference)."""
-    from tools.ppc_equivalence.fp_bitwise import classify_fp_capabilities
+    """Capabilities implied by proof effects (Wave 1–3 inference)."""
+    from tools.ppc_equivalence.fp_capabilities import (
+        classify_fp_capabilities,
+        traps_enabled_from_result,
+    )
+    from tools.ppc_equivalence.mmio_capability_obligations import (
+        infer_mmio_capabilities_from_memory_bus,
+    )
 
     flags = _proof_effect_flags(result)
     used: set[str] = {"integer-core", "provenance"}
@@ -418,11 +445,24 @@ def infer_used_capabilities(result: Any) -> frozenset[str]:
     if flags["has_callees"]:
         used.add("certified-calls")
     if flags["has_memory_bus"]:
-        # Coarse MMIO demand — Wave 1 fails closed without a matching attestation.
-        used.add("mmio-register-bank")
+        # Wave 3: split MMIO demands from memory_bus / proof_features.
+        proof_features = getattr(result, "proof_features", None) or []
+        memory_bus = getattr(result, "memory_bus", None)
+        if isinstance(memory_bus, dict) or "memory-bus" in proof_features:
+            used.update(
+                infer_mmio_capabilities_from_memory_bus(
+                    memory_bus if isinstance(memory_bus, dict) else None,
+                    proof_features=tuple(str(item) for item in proof_features),
+                )
+            )
+        else:
+            used.add("mmio-register-bank")
     if flags["has_fp"]:
         opcodes = getattr(result, "opcodes_used", None) or []
-        fp_caps = classify_fp_capabilities(opcodes)
+        fp_caps = classify_fp_capabilities(
+            opcodes,
+            traps_enabled=traps_enabled_from_result(result),
+        )
         if fp_caps:
             used.update(fp_caps)
         else:
@@ -540,6 +580,72 @@ def _recompute_attestation_status(
             assumptions=attestation.assumptions,
             unsupported=attestation.unsupported,
             model_version=attestation.model_version,
+            allowed_versions=manifest.allowed_versions(attestation.capability),
+        )
+
+    if attestation.algorithm == "precondition-closure-v1":
+        if attestation.capability != "precondition-closure":
+            return STATUS_INCOMPLETE
+        allowed = manifest.allowed_versions(attestation.capability)
+        if attestation.model_version not in allowed:
+            return STATUS_INCOMPLETE
+        from tools.ppc_equivalence.fp_rounding import (
+            evaluate_precondition_closure_status,
+        )
+
+        return evaluate_precondition_closure_status(
+            attestation.evidence,
+            assumptions=attestation.assumptions,
+            unsupported=attestation.unsupported,
+        )
+
+    if attestation.algorithm in {"fp-scalar-oracle-v1", "fp-outcome-unify-v1"}:
+        # Wave 3 foundations: never promotion-grade. Host float → incomplete.
+        if attestation.capability != "fp-scalar-arithmetic":
+            return STATUS_INCOMPLETE
+        if attestation.evidence.get("host_float") is True:
+            return STATUS_INCOMPLETE
+        allowed = manifest.allowed_versions(attestation.capability)
+        # Empty allowlist (current policy) → incomplete even with perfect evidence.
+        if attestation.model_version not in allowed:
+            return STATUS_INCOMPLETE
+        if attestation.algorithm == "fp-scalar-oracle-v1":
+            from tools.ppc_equivalence.fp_scalar_obligations import (
+                evaluate_fp_scalar_obligation_status,
+            )
+
+            obligation = attestation.evidence.get("obligation")
+            return evaluate_fp_scalar_obligation_status(
+                obligation if isinstance(obligation, dict) else None,
+                host_float=attestation.evidence.get("host_float"),
+            )
+        # fp-outcome-unify-v1 records type unification only.
+        return STATUS_INCOMPLETE
+
+    if attestation.algorithm in {
+        "mmio-register-bank-v2",
+        "gx-fifo-trace-v1",
+        "gx-fifo-read-incomplete-v0",
+        "mmio-read-side-effects-incomplete-v0",
+        "mmio-external-input-incomplete-v0",
+        "mmio-loop-emission-incomplete-v0",
+        "mixed-address-space-incomplete-v0",
+        "dma-interrupt-incomplete-v0",
+    }:
+        from tools.ppc_equivalence.mmio_capability_obligations import (
+            MMIO_ATTESTATION_ALGORITHMS,
+            recompute_mmio_attestation_status,
+        )
+
+        if attestation.algorithm not in MMIO_ATTESTATION_ALGORITHMS:
+            return STATUS_INCOMPLETE
+        return recompute_mmio_attestation_status(
+            attestation.evidence,
+            capability=attestation.capability,
+            algorithm=attestation.algorithm,
+            model_version=attestation.model_version,
+            assumptions=attestation.assumptions,
+            unsupported=attestation.unsupported,
             allowed_versions=manifest.allowed_versions(attestation.capability),
         )
 

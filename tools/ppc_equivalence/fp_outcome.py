@@ -31,9 +31,18 @@ may be set. Still **Tier C** only.
   nonzero addend; near-cancellation sticky residues)
 - SymbolicOps native ``FPOutcome`` paired lane producers
 - SymbolicOps OX/UX/XX sticky / OE/UE/XE trap predicates
+- Full symbolic scalar arithmetic (``fadd``/…) — Wave 3 lands type
+  unification + ``symbolic_fp_outcome`` builder; status stays incomplete
 - NI for estimates (``fres``/``frsqrte``/``ps_res``/``ps_rsqrte``), ``frsp``,
   converts, compares, stores, and non-oracle paired families
 - Trap delivery for estimates, compares, conversions; MSR FE0/FE1 modes
+- Complete FPSCR FX/FEX sticky re-raise (SoftFloat latches OX/UX/ZX/XX/VX
+  indicators; FX/FEX remain incomplete — see ``fp_rounding``)
+
+**Wave 3 symbolic unification:** ``symbolic_fp_outcome`` / bitwise helpers
+build the shared ``FPOutcome`` container from Z3 bitvectors/booleans (no
+host float). Scalar arithmetic helpers return ``supported=False`` until a
+bit-exact symbolic oracle lands.
 
 **PR18 trap delivery:** ``fp_traps.resolve_fp_trap_policy`` / CFG forking under
 ``FloatingPointDomain.traps_enabled`` deliver VE/ZE/OE/UE/XE program exceptions
@@ -53,6 +62,17 @@ from .fp_oracle import (
     fprf_from_binary64,
     mask64,
 )
+
+# Bitwise ops with native Z3 BitVec producers (Tier A path when attested).
+SYMBOLIC_BITWISE_OPS: frozenset[str] = frozenset(
+    {"fmr", "fabs", "fneg", "fnabs"}
+)
+# Marked subset of scalar ops that *may* eventually produce symbolic
+# FPOutcome; Wave 3 keeps them incomplete (no full symbolic fadd).
+SYMBOLIC_SCALAR_SUBSET_OPS: frozenset[str] = frozenset(
+    {"fadd", "fadds", "fsub", "fsubs", "fmul", "fmuls"}
+)
+SYMBOLIC_SCALAR_ARITHMETIC_STATUS = "incomplete"
 
 # Broadway FPSCR VX subcause bits (Gekko layout; mirror semantics.py).
 FPSCR_VXSNAN = 1 << 24
@@ -331,6 +351,141 @@ def merge_invalid_cause(left: Any, right: Any) -> int:
 def cr1_from_fpscr(fpscr: int) -> int:
     """CR1 nibble copied from FPSCR for record-form FP ops."""
     return (fpscr >> 28) & 0xF
+
+
+def symbolic_fp_outcome(
+    *bits: Any,
+    flags: FPExceptionFlags | None = None,
+    invalid_cause: Any = 0,
+    fprf: Any = 0,
+    writeback: Any = True,
+    trap: Any = False,
+    supported: Any = True,
+    unsupported_reason: str | None = None,
+    host_float_participated: bool = False,
+) -> FPOutcome:
+    """Build an ``FPOutcome`` for SymbolicOps / Tier-A bitvector paths.
+
+    Result bits and flag fields must be concrete ints/bools **or** Z3
+    BitVec/Bool expressions. When ``host_float_participated`` is true the
+    outcome is forced unsupported — host float may not participate in a
+    Tier A path.
+    """
+    if not bits:
+        raise ValueError("symbolic_fp_outcome requires at least one lane")
+    if host_float_participated:
+        return unsupported_outcome(
+            "host float participated in symbolic FPOutcome path",
+            result_bits=tuple(bits),
+        )
+    return FPOutcome(
+        result_bits=tuple(bits),
+        flags=flags if flags is not None else clear_exception_flags(),
+        invalid_cause=invalid_cause,
+        fprf=fprf,
+        writeback=writeback,
+        trap=trap,
+        supported=supported,
+        unsupported_reason=unsupported_reason,
+    )
+
+
+def _bitwise_result_bits(op: str, source_bits: Any, *, z3: Any | None) -> Any:
+    """Pure sign-bit transform; no host float / SoftFloat."""
+    name = str(op)
+    if name not in SYMBOLIC_BITWISE_OPS:
+        raise ValueError(f"not a symbolic bitwise op: {name!r}")
+    if name == "fmr":
+        return source_bits
+    if z3 is not None:
+        sign = z3.BitVecVal(1 << 63, 64)
+        if name == "fabs":
+            return source_bits & z3.BitVecVal((1 << 63) - 1, 64)
+        if name == "fneg":
+            return source_bits ^ sign
+        # fnabs
+        return source_bits | sign
+    # Concrete int path (parity / ConcreteOps).
+    bits = int(source_bits) & 0xFFFFFFFFFFFFFFFF
+    if name == "fabs":
+        return bits & ~(1 << 63)
+    if name == "fneg":
+        return bits ^ (1 << 63)
+    return bits | (1 << 63)
+
+
+def symbolic_bitwise_outcome(
+    op: str,
+    source_bits: Any,
+    *,
+    z3: Any | None = None,
+    fprf: Any | None = None,
+    writeback: Any = True,
+    trap: Any = False,
+    host_float_participated: bool = False,
+) -> FPOutcome:
+    """Produce ``FPOutcome`` for ``fmr``/``fabs``/``fneg``/``fnabs``.
+
+    Uses only integer / Z3 BitVec sign-bit ops. Pass a ``z3`` module (or
+    ``SymbolicOps.z3``) when ``source_bits`` is symbolic.
+    """
+    if host_float_participated:
+        return unsupported_outcome(
+            "host float participated in symbolic bitwise path",
+            result_bits=(source_bits,),
+        )
+    name = str(op)
+    if name not in SYMBOLIC_BITWISE_OPS:
+        return unsupported_outcome(
+            f"symbolic_bitwise_outcome: unsupported op {name!r}",
+            result_bits=(source_bits,),
+        )
+    result = _bitwise_result_bits(name, source_bits, z3=z3)
+    resolved_fprf: Any = 0 if fprf is None else fprf
+    if fprf is None and z3 is None and isinstance(result, int):
+        resolved_fprf = fprf_from_binary64(result)
+    return symbolic_fp_outcome(
+        result,
+        flags=clear_exception_flags(),
+        invalid_cause=0,
+        fprf=resolved_fprf,
+        writeback=writeback,
+        trap=trap,
+        supported=True,
+        host_float_participated=False,
+    )
+
+
+def symbolic_scalar_arithmetic_outcome(
+    op: str,
+    *operand_bits: Any,
+    z3: Any | None = None,
+    host_float_participated: bool = False,
+) -> FPOutcome:
+    """Wave 3 stub for the marked scalar subset (``fadd``/…).
+
+    Full symbolic fadd is not ready: always returns an incomplete /
+    unsupported ``FPOutcome``. The builder API and type unification are
+    intentional; status must stay non-promotable.
+    """
+    del z3  # reserved for a future bit-exact symbolic oracle
+    name = str(op)
+    lanes = operand_bits if operand_bits else (0,)
+    if host_float_participated:
+        return unsupported_outcome(
+            "host float participated in symbolic scalar path",
+            result_bits=lanes[:1],
+        )
+    if name not in SYMBOLIC_SCALAR_SUBSET_OPS:
+        return unsupported_outcome(
+            f"symbolic scalar subset does not include {name!r}",
+            result_bits=lanes[:1],
+        )
+    return unsupported_outcome(
+        f"symbolic scalar arithmetic incomplete for {name} "
+        f"(status={SYMBOLIC_SCALAR_ARITHMETIC_STATUS})",
+        result_bits=lanes[:1],
+    )
 
 
 def combine_paired_outcomes(

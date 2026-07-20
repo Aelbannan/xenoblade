@@ -14,7 +14,10 @@
 # Capability-assurance coverage (Wave 2+). Independent of per-opcode dolphin
 # rows below; fp-bitwise claims result-bit / no-host-float evidence for the
 # sign-bit move subset only (see tools/ppc_equivalence/fp_bitwise.py).
-architecture_model: broadway-ppc32-be-v38
+# Wave 3 fp-scalar-arithmetic skeleton: dimensions declared incomplete until
+# SoftFloat + symbolic RN/NI/FPSCR foundations promote.
+# Wave 3 mmio-register-bank skeleton: incomplete until hardware-profile canary.
+architecture_model: broadway-ppc32-be-v39
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: a827ed9896c3a0648ff3b997e5e46bd3d80cb2c4c3553b5323395f66317b6c63
@@ -46,6 +49,59 @@ capabilities:
         host_float: false
         concrete_symbolic_differential: true
         boundary_vectors: true
+  fp-scalar-arithmetic:
+    model_version: broadway-fp-scalar-v2
+    status: incomplete
+    # Tier A requires all four RN modes OR precondition-closure UNSAT;
+    # default nearest-even config alone is not proof.
+    rounding_modes_required: [nearest-even, toward-zero, toward-plus-infinity, toward-minus-infinity]
+    rounding_modes_modeled: [nearest-even]
+    ni_modes_required: [0, 1]
+    dimensions:
+      result_bits: false
+      nan_payloads: false
+      subnormals: false
+      rounding_modes: false
+      fpscr_flags: false
+      traps: false
+    opcodes: {}
+  fp-load-store:
+    model_version: broadway-fp-load-store-v1
+    status: incomplete
+    opcodes: {}
+  fp-compare:
+    model_version: broadway-fp-compare-v1
+    status: incomplete
+    opcodes: {}
+  fp-convert:
+    model_version: broadway-fp-convert-v1
+    status: incomplete
+    opcodes: {}
+  fp-fused-arithmetic:
+    model_version: broadway-fp-fused-v1
+    status: incomplete
+    opcodes: {}
+  fp-paired-single:
+    model_version: broadway-fp-paired-v1
+    status: incomplete
+    opcodes: {}
+  fp-psq:
+    model_version: broadway-fp-psq-v1
+    status: incomplete
+    opcodes: {}
+  fp-traps:
+    model_version: broadway-fp-traps-v1
+    status: incomplete
+    opcodes: {}
+  mmio-register-bank:
+    model_version: wii-mmio-bank-v2
+    hardware_profile: wii-broadway-xenoblade-us-v1
+    status: incomplete
+    notes: >
+      Wave 3 foundations skeleton. Promotion-grade path requires reviewed
+      hardware_profile_sha256 match, complete schema-v2+ side UNSAT digests,
+      and a canary allowlist entry. Ad-hoc bus maps remain non-promotable.
+      GX FIFO reads and DMA stay incomplete.
 opcodes:
   add:
     decoder_unit: true

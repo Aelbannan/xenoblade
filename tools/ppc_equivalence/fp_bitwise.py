@@ -55,20 +55,19 @@ def is_fp_bitwise_only(opcodes: Iterable[str]) -> bool:
     return bool(fp_ops) and fp_ops <= FP_BITWISE_OPS
 
 
-def classify_fp_capabilities(opcodes: Iterable[str]) -> frozenset[str]:
+def classify_fp_capabilities(
+    opcodes: Iterable[str],
+    *,
+    traps_enabled: bool = False,
+) -> frozenset[str]:
     """Map used FP opcodes to capability-assurance demand names.
 
-    * Bitwise-only → ``fp-bitwise``
-    * Any non-bitwise FP → ``fp-scalar-arithmetic`` (coarse Wave 2; finer FP
-      caps remain empty in the allowlist)
-    * Mixed bitwise + non-bitwise → both
+    Wave 3 delegates to :mod:`tools.ppc_equivalence.fp_capabilities` for the
+    fine split (load/store, compare, convert, scalar, fused, paired, psq,
+    traps). Bitwise-only proofs still demand only ``fp-bitwise``.
     """
-    fp_ops = fp_opcodes_among(opcodes)
-    if not fp_ops:
-        return frozenset()
-    caps: set[str] = set()
-    if fp_ops & FP_BITWISE_OPS:
-        caps.add("fp-bitwise")
-    if fp_ops - FP_BITWISE_OPS:
-        caps.add("fp-scalar-arithmetic")
-    return frozenset(caps)
+    from tools.ppc_equivalence.fp_capabilities import (
+        classify_fp_capabilities as _classify,
+    )
+
+    return _classify(opcodes, traps_enabled=traps_enabled)

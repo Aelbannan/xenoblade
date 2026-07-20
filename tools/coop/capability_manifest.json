@@ -7,9 +7,18 @@
     "bounded-memory": ["bounded-memory-v2"],
     "certified-calls": ["certified-calls-v2"],
     "fp-bitwise": ["fp-bitwise-v1"],
+    "fp-load-store": [],
+    "fp-compare": [],
+    "fp-convert": [],
     "fp-scalar-arithmetic": [],
+    "fp-fused-arithmetic": [],
+    "fp-paired-single": [],
+    "fp-psq": [],
+    "fp-traps": [],
+    "precondition-closure": [],
     "mmio-register-bank": [],
-    "gx-fifo": []
+    "gx-fifo-write-trace": [],
+    "gx-fifo-read": []
   },
   "shadow_mode": true,
   "require_capability_assurance": false

@@ -25,7 +25,6 @@
     "mixed-address-space-routing": [],
     "dma-interrupt-effects": []
   },
-  "shadow_mode": true,
-  "require_capability_assurance": false,
-  "_wave5_note": "Default stays shadow for safety. Wave 5 authoritative canary: tools/coop/capability_manifest.authoritative.json (shadow_mode=false, require_capability_assurance=true). See SOUNDNESS.md capability-assurance Wave 5."
+  "shadow_mode": false,
+  "require_capability_assurance": true
 }

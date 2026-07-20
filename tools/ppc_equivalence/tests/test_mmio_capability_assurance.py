@@ -450,8 +450,8 @@ class ReadOracleTests(unittest.TestCase):
 
 class ArchitectureFreezeTests(unittest.TestCase):
     def test_architecture_tracks_live_model(self) -> None:
-        # Wave 3 tracks froze at v38; parent bump lands v39/cert14 afterward.
-        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v39")
+        # Live architecture tracks parent bumps (currently v40 / cert15).
+        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v40")
         self.assertTrue(ARCHITECTURE_MODEL.startswith("broadway-ppc32-be-v"))
 
 

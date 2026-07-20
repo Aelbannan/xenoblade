@@ -1,4 +1,4 @@
-"""Capability-assurance schema and evaluation (Wave 1–3).
+"""Capability-assurance schema and evaluation (Wave 1–5).
 
 Tier A is redefined around promotion-grade attestations for every capability
 a proof uses, rather than hard-coding effect-type demotions. Wave 1 lands the
@@ -12,6 +12,14 @@ evidence is complete. Scalar allowlist stays empty. Wave 3 also lands MMIO
 capability split + hardware-profile-bound obligations
 (``mmio-register-bank-v2``, ``gx-fifo-trace-v1``); FIFO reads / DMA / loop
 emission stay incomplete and the MMIO allowlist remains empty until canary.
+Wave 4 advanced stubs: fused/paired/psq/traps obligations
+(``fp-*-incomplete-v0``) never promotion-grade while midpoint/sticky-residue
+and FE0/FE1 remain incomplete; ``gx-fifo-loop-refinement-v1`` structural
+schema for ordinary-N ≡ summarized-N FIFO traces; read-side-effects /
+external-input / DMA attestations always incomplete until Dolphin harness.
+Wave 5 ships an optional authoritative manifest
+(``tools/coop/capability_manifest.authoritative.json``) with
+``shadow_mode=false``; the default manifest stays shadow for safety.
 """
 
 from __future__ import annotations
@@ -95,12 +103,18 @@ KNOWN_ATTESTATION_ALGORITHMS = frozenset(
         # + complete obligations + allowlist; default allowlist empty).
         "mmio-register-bank-v2",
         "gx-fifo-trace-v1",
+        "gx-fifo-loop-refinement-v1",
         "gx-fifo-read-incomplete-v0",
         "mmio-read-side-effects-incomplete-v0",
         "mmio-external-input-incomplete-v0",
         "mmio-loop-emission-incomplete-v0",
         "mixed-address-space-incomplete-v0",
         "dma-interrupt-incomplete-v0",
+        # Wave 4 FP advanced — never promotion-grade (midpoint / FE0/FE1).
+        "fp-fused-incomplete-v0",
+        "fp-paired-incomplete-v0",
+        "fp-psq-incomplete-v0",
+        "fp-traps-incomplete-v0",
         # Shadow / incomplete only — never promotion-grade.
         "legacy-effect-gate-v1",
     }
@@ -331,6 +345,15 @@ def default_capability_manifest_path() -> Path:
     )
 
 
+def authoritative_capability_manifest_path() -> Path:
+    """Optional Wave 5 canary: ``shadow_mode=false`` + require assurance."""
+    return (
+        Path(__file__).resolve().parents[1]
+        / "coop"
+        / "capability_manifest.authoritative.json"
+    )
+
+
 def load_capability_manifest(path: Path | None = None) -> CapabilityManifest:
     target = path if path is not None else default_capability_manifest_path()
     if target is None or not target.is_file():
@@ -351,6 +374,9 @@ class CapabilityAssuranceResult:
     shadow_legacy_tier: str | None
     recomputed_statuses: dict[str, str]
 
+    def capabilities_used(self) -> tuple[str, ...]:
+        return tuple(sorted(self.recomputed_statuses))
+
 
 def compute_confidence_tier_from_assurance(
     assurance_result: CapabilityAssuranceResult,
@@ -363,6 +389,40 @@ def compute_confidence_tier_from_assurance(
     if assurance_result.all_used_capabilities_promotion_grade:
         return "A"
     return "C"
+
+
+def build_capability_assurance_audit(
+    assurance: CapabilityAssuranceResult | None,
+    *,
+    shadow_mode: bool,
+    authoritative_tier: str | None,
+    shadow_legacy_tier: str | None = None,
+) -> dict[str, Any]:
+    """Compact audit dict for promotion / equivalence decision records."""
+    if assurance is None:
+        return {
+            "capabilities_used": [],
+            "weakest_status": STATUS_UNMODELED,
+            "shadow_mode": shadow_mode,
+            "authoritative_tier": authoritative_tier,
+            "shadow_legacy_tier": shadow_legacy_tier,
+            "assurance_tier": None,
+        }
+    assurance_tier = compute_confidence_tier_from_assurance(assurance)
+    legacy = (
+        shadow_legacy_tier
+        if shadow_legacy_tier is not None
+        else assurance.shadow_legacy_tier
+    )
+    return {
+        "capabilities_used": list(assurance.capabilities_used()),
+        "weakest_status": assurance.weakest_status,
+        "recomputed_statuses": dict(sorted(assurance.recomputed_statuses.items())),
+        "shadow_mode": shadow_mode,
+        "authoritative_tier": authoritative_tier,
+        "shadow_legacy_tier": legacy,
+        "assurance_tier": assurance_tier,
+    }
 
 
 def _normalize_assurance(
@@ -427,11 +487,13 @@ def _proof_effect_flags(result: Any) -> dict[str, bool]:
 
 
 def infer_used_capabilities(result: Any) -> frozenset[str]:
-    """Capabilities implied by proof effects (Wave 1–3 inference)."""
+    """Capabilities implied by proof effects (Wave 1–4 inference)."""
     from tools.ppc_equivalence.fp_capabilities import (
         classify_fp_capabilities,
         traps_enabled_from_result,
     )
+    from tools.ppc_equivalence.fp_outcome import capability_tags_for_opcodes
+    from tools.ppc_equivalence.fp_traps import capability_tags_for_trap_domain
     from tools.ppc_equivalence.mmio_capability_obligations import (
         infer_mmio_capabilities_from_memory_bus,
     )
@@ -459,10 +521,16 @@ def infer_used_capabilities(result: Any) -> frozenset[str]:
             used.add("mmio-register-bank")
     if flags["has_fp"]:
         opcodes = getattr(result, "opcodes_used", None) or []
-        fp_caps = classify_fp_capabilities(
-            opcodes,
-            traps_enabled=traps_enabled_from_result(result),
+        traps_enabled = traps_enabled_from_result(result)
+        fp_caps = set(
+            classify_fp_capabilities(
+                opcodes,
+                traps_enabled=traps_enabled,
+            )
         )
+        # Wave 4 tagging hooks (paired/psq opcodes + trap domain).
+        fp_caps |= set(capability_tags_for_opcodes(opcodes))
+        fp_caps |= set(capability_tags_for_trap_domain(traps_enabled=traps_enabled))
         if fp_caps:
             used.update(fp_caps)
         else:
@@ -623,8 +691,32 @@ def _recompute_attestation_status(
         return STATUS_INCOMPLETE
 
     if attestation.algorithm in {
+        "fp-fused-incomplete-v0",
+        "fp-paired-incomplete-v0",
+        "fp-psq-incomplete-v0",
+        "fp-traps-incomplete-v0",
+    }:
+        from tools.ppc_equivalence.fp_advanced_obligations import (
+            FP_ADVANCED_ALGORITHMS,
+            recompute_fp_advanced_attestation_status,
+        )
+
+        if attestation.algorithm not in FP_ADVANCED_ALGORITHMS:
+            return STATUS_INCOMPLETE
+        return recompute_fp_advanced_attestation_status(
+            attestation.evidence,
+            capability=attestation.capability,
+            algorithm=attestation.algorithm,
+            model_version=attestation.model_version,
+            assumptions=attestation.assumptions,
+            unsupported=attestation.unsupported,
+            allowed_versions=manifest.allowed_versions(attestation.capability),
+        )
+
+    if attestation.algorithm in {
         "mmio-register-bank-v2",
         "gx-fifo-trace-v1",
+        "gx-fifo-loop-refinement-v1",
         "gx-fifo-read-incomplete-v0",
         "mmio-read-side-effects-incomplete-v0",
         "mmio-external-input-incomplete-v0",

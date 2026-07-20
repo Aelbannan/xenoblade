@@ -43,6 +43,7 @@ class CoopConfig:
         "broadway-ppc32-be-v36",
         "broadway-ppc32-be-v37",
         "broadway-ppc32-be-v38",
+        "broadway-ppc32-be-v39",
     )
     allowed_confidence_tiers: frozenset[str] = frozenset({"A", "B"})
     # Required for promotion when capability assurance is authoritative
@@ -145,6 +146,7 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             "broadway-ppc32-be-v36",
             "broadway-ppc32-be-v37",
             "broadway-ppc32-be-v38",
+            "broadway-ppc32-be-v39",
         )
 
     raw_tiers = data.get("allowed_confidence_tiers")

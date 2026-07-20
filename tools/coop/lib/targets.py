@@ -40,7 +40,7 @@ WORKFLOW_STATUSES = {
 }
 
 ACCEPTED_MATCH_STATUSES = {"EQUIVALENT_MATCH", "FULL_MATCH"}
-EQUIVALENCE_CERTIFICATE_VERSION = 11
+EQUIVALENCE_CERTIFICATE_VERSION = 12
 EQUIVALENCE_PROMOTION_POLICY = "auto-promotion-v2"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -117,6 +117,15 @@ def equivalence_certificate_error(
     )
     if proof_features_error is not None:
         return f"certificate proof_features invalid: {proof_features_error}"
+
+    raw_assurance = certificate.get("capability_assurance")
+    if raw_assurance is not None:
+        try:
+            from tools.ppc_equivalence.capability_assurance import CapabilityAssurance
+
+            CapabilityAssurance.from_dict(raw_assurance).validate_structure()
+        except (TypeError, ValueError, KeyError) as exc:
+            return f"certificate capability_assurance invalid: {exc}"
 
     dependencies = certificate.get("callees")
     if not isinstance(dependencies, list):

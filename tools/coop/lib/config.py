@@ -39,13 +39,22 @@ class CoopConfig:
         "broadway-ppc32-be-v32",
         "broadway-ppc32-be-v33",
         "broadway-ppc32-be-v34",
+        "broadway-ppc32-be-v35",
+        "broadway-ppc32-be-v36",
     )
     allowed_confidence_tiers: frozenset[str] = frozenset({"A", "B"})
+    # Required for promotion when capability assurance is authoritative
+    # (shadow_mode=false / require_capability_assurance=true). Optional in
+    # Wave 1 while shadow_mode remains the default.
     allowed_engine_sha256: str | None = None
     require_bounded_ram: bool = False
     memory_profile: str | None = None
     memory_ranges: list[str] = field(default_factory=list)
     floating_point_domain: dict[str, Any] | None = None
+    capability_manifest_path: Path = Path("tools/coop/capability_manifest.json")
+    allowed_tier_a_capabilities: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    capability_assurance_shadow_mode: bool = True
+    require_capability_assurance: bool = False
 
     @property
     def build_dir(self) -> Path:
@@ -130,6 +139,8 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             "broadway-ppc32-be-v32",
             "broadway-ppc32-be-v33",
             "broadway-ppc32-be-v34",
+            "broadway-ppc32-be-v35",
+            "broadway-ppc32-be-v36",
         )
 
     raw_tiers = data.get("allowed_confidence_tiers")
@@ -137,6 +148,38 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
         allowed_tiers = frozenset(str(t) for t in raw_tiers)
     else:
         allowed_tiers = frozenset({"A", "B"})
+
+    capability_manifest_path = Path(
+        data.get("capability_manifest_path", "tools/coop/capability_manifest.json")
+    )
+    allowed_tier_a: dict[str, tuple[str, ...]] = {}
+    raw_allowed = data.get("allowed_tier_a_capabilities")
+    if isinstance(raw_allowed, dict):
+        for key, values in raw_allowed.items():
+            if isinstance(values, list):
+                allowed_tier_a[str(key)] = tuple(str(item) for item in values)
+
+    # Prefer explicit coop.json knobs; otherwise load from the capability manifest.
+    shadow_mode = data.get("capability_assurance_shadow_mode")
+    require_assurance = data.get("require_capability_assurance")
+    if not allowed_tier_a or shadow_mode is None or require_assurance is None:
+        try:
+            from tools.ppc_equivalence.capability_assurance import (
+                load_capability_manifest,
+            )
+
+            manifest = load_capability_manifest(root / capability_manifest_path)
+            if not allowed_tier_a:
+                allowed_tier_a = dict(manifest.allowed_tier_a_capabilities)
+            if shadow_mode is None:
+                shadow_mode = manifest.shadow_mode
+            if require_assurance is None:
+                require_assurance = manifest.require_capability_assurance
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            if shadow_mode is None:
+                shadow_mode = True
+            if require_assurance is None:
+                require_assurance = False
 
     return CoopConfig(
         project_root=root,
@@ -167,6 +210,10 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             if isinstance(data.get("floating_point_domain"), dict)
             else None
         ),
+        capability_manifest_path=capability_manifest_path,
+        allowed_tier_a_capabilities=allowed_tier_a,
+        capability_assurance_shadow_mode=bool(shadow_mode),
+        require_capability_assurance=bool(require_assurance),
     )
 
 

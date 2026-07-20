@@ -301,6 +301,7 @@ def _cache_key(
     memory_bus: dict[str, Any] | None = None,
     memory_loop_readonly: dict[str, Any] | None = None,
     obligations: dict[str, Any] | None = None,
+    capability_assurance: dict[str, Any] | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -373,6 +374,8 @@ def _cache_key(
         block = merged.get(key)
         if isinstance(block, dict):
             payload[key] = canonical_obligation_dict(block)
+    if capability_assurance is not None:
+        payload["capability_assurance"] = capability_assurance
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True).encode(),
     ).hexdigest()
@@ -498,6 +501,7 @@ def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
         "warnings",
         "abstractions",
         "proof_features",
+        "capability_assurance",
         *PROOF_OBLIGATION_FIELDS,
     ):
         value = getattr(proof, name, None)
@@ -812,6 +816,12 @@ def _build_equivalence_certificate(
         fp_oracle_version = getattr(proof, "fp_oracle_version", None)
         if fp_oracle_version:
             certificate["fp_oracle_version"] = str(fp_oracle_version)
+        capability_assurance = getattr(proof, "capability_assurance", None)
+        if capability_assurance is not None:
+            if hasattr(capability_assurance, "to_dict"):
+                certificate["capability_assurance"] = capability_assurance.to_dict()
+            elif isinstance(capability_assurance, dict):
+                certificate["capability_assurance"] = dict(capability_assurance)
         if isinstance(proof, ProofResult):
             for key, block in proof_obligations_from_result(proof).items():
                 certificate[key] = dict(block)
@@ -1188,6 +1198,28 @@ def _prove_bytes(
         virtual_call=virtual_call_context,
         memory_loop_readonly=memory_loop_readonly_words,
     )
+    # Wave 1: optional non-authoritative integer-core attestation draft (shadow).
+    try:
+        from tools.ppc_equivalence.capability_assurance import (
+            maybe_attach_integer_core_draft,
+        )
+        from tools.coop.lib.equivalence_policy import (
+            ValidationLedger,
+            default_validation_ledger_path,
+        )
+
+        ledger_path = default_validation_ledger_path()
+        ledger = ValidationLedger.load(ledger_path)
+        ledger_sha = None
+        if ledger_path.is_file():
+            import hashlib as _hashlib
+
+            ledger_sha = _hashlib.sha256(ledger_path.read_bytes()).hexdigest()
+        maybe_attach_integer_core_draft(
+            result, ledger=ledger, ledger_sha256=ledger_sha
+        )
+    except Exception:
+        pass
     detail = ""
     if result.contract_resolution:
         added = result.contract_resolution.get("added", [])

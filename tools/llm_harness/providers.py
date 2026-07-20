@@ -11,7 +11,69 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
+from .candidate_schema import CANDIDATE_JSON_SCHEMA as SHARED_CANDIDATE_JSON_SCHEMA
 from .types import ModelConfig, ProviderResult
+
+__all__ = [
+    "CANDIDATE_JSON_SCHEMA",
+    "DeepSeekRawProvider",
+    "LMStudioProvider",
+    "OpenCodeCircuitBreaker",
+    "OpenCodeEmptyResponse",
+    "OpenCodeProvider",
+    "OpenRouterProvider",
+    "ReasonixProvider",
+    "parse_opencode_message",
+    "parse_opencode_output",
+    "parse_reasonix_output",
+]
+
+# Re-export shared schema for `from tools.llm_harness.providers import CANDIDATE_JSON_SCHEMA`.
+CANDIDATE_JSON_SCHEMA = SHARED_CANDIDATE_JSON_SCHEMA
+
+
+class OpenCodeEmptyResponse(RuntimeError):
+    """OpenCode returned an empty assistant payload.
+
+    Non-retryable by default: the HTTP round-trip already completed with zero
+    useful text (often zero tokens). Callers such as core.py should not apply
+    ordinary max_retries to this exception — treat empty-assistant retries as 0
+    unless deliberately overridden.
+    """
+
+
+class OpenCodeCircuitBreaker:
+    """Track consecutive OpenCode empty/failure responses and open after N.
+
+    Intended for core.py to gate further invoke() attempts after repeated
+    empty-assistant or provider failures. Default threshold is 3.
+    """
+
+    def __init__(self, threshold: int = 3) -> None:
+        if threshold < 1:
+            raise ValueError("threshold must be >= 1")
+        self.threshold = threshold
+        self.consecutive_failures = 0
+        self._open = False
+
+    def record_success(self) -> None:
+        self.consecutive_failures = 0
+        self._open = False
+
+    def record_failure(self) -> None:
+        self.consecutive_failures += 1
+        if self.consecutive_failures >= self.threshold:
+            self._open = True
+
+    def allow(self) -> bool:
+        return not self._open
+
+    def raise_if_open(self) -> None:
+        if self._open:
+            raise RuntimeError(
+                f"OpenCode circuit open after {self.consecutive_failures} "
+                f"consecutive empty/failure responses (threshold={self.threshold})"
+            )
 
 
 def _load_env_vars(path: Path) -> None:
@@ -88,15 +150,19 @@ class OpenCodeProvider:
         started = time.monotonic()
         self._ensure_healthy()
         directory = str(cwd.resolve())
-        has_context_files = any(cwd.iterdir())
-        guardrail = (
-            "Read the attached dossier and the curated files in the current context directory. "
-            "Use read/search tools only when helpful, stay inside this context, do not edit files "
-            "or run shell commands, and return only the requested JSON object."
-            if has_context_files
-            else "Read the attached self-contained dossier. Do not use tools or inspect files. "
-            "Return only the requested JSON object."
-        )
+        # Pure/inline mode never enables tools — even if cwd has TASK.md / dossier files.
+        has_context_files = (not self.pure) and any(cwd.iterdir())
+        if self.pure or not has_context_files:
+            guardrail = (
+                "Read the attached self-contained dossier. Do not use tools or inspect files. "
+                "Return only the requested JSON object."
+            )
+        else:
+            guardrail = (
+                "Read the attached dossier and the curated files in the current context directory. "
+                "Use read/search tools only when helpful, stay inside this context, do not edit files "
+                "or run shell commands, and return only the requested JSON object."
+            )
         full_prompt = f"{guardrail}\n\n{prompt}"
         provider_id, model_id = _split_opencode_model(model.model)
         session_id: Optional[str] = None
@@ -121,10 +187,29 @@ class OpenCodeProvider:
             }
             if model.agent:
                 message_body["agent"] = model.agent
-            # Optional reasoning preset: prefer explicit variant, else reasoning_effort.
+
+            # Reasoning / thinking: prefer explicit ModelConfig fields; in pure
+            # mode default variant/reasoning to "none" when unset.
             variant = (model.variant or model.reasoning_effort or "").strip()
+            if not variant and self.pure:
+                variant = "none"
             if variant:
                 message_body["variant"] = variant
+            if model.reasoning_effort is not None:
+                message_body["reasoning_effort"] = str(model.reasoning_effort).strip().lower()
+            elif self.pure and not (model.variant or "").strip():
+                message_body["reasoning_effort"] = "none"
+            if model.enable_thinking is not None:
+                message_body["enable_thinking"] = bool(model.enable_thinking)
+            elif self.pure:
+                message_body["enable_thinking"] = False
+
+            if self.pure:
+                message_body["format"] = {
+                    "type": "json_schema",
+                    "schema": SHARED_CANDIDATE_JSON_SCHEMA,
+                    "retryCount": 2,
+                }
 
             response = self._request(
                 "POST",
@@ -132,10 +217,15 @@ class OpenCodeProvider:
                 body=message_body,
                 query={"directory": directory},
             )
-            text, events, usage = parse_opencode_message(response)
+            try:
+                text, events, usage = parse_opencode_message(response)
+            except RuntimeError as exc:
+                detail = _opencode_response_debug(response)
+                raise RuntimeError(f"{exc}; response_debug={detail}") from exc
             if not text:
-                raise RuntimeError(
-                    "OpenCode server: empty assistant text in message response"
+                raise OpenCodeEmptyResponse(
+                    "OpenCode server: empty assistant text in message response; "
+                    f"response_debug={_opencode_response_debug(response)}"
                 )
             return ProviderResult(
                 text=text,
@@ -174,14 +264,16 @@ class OpenCodeProvider:
     def _tools_map(self, has_context_files: bool) -> Dict[str, bool]:
         tools = {name: False for name in self._DENIED_TOOLS}
         for name in self._READ_TOOLS:
-            tools[name] = bool(has_context_files)
+            # Pure mode always leaves has_context_files False at the call site.
+            tools[name] = bool(has_context_files) and not self.pure
         return tools
 
     def _permission_ruleset(self, has_context_files: bool) -> list[Dict[str, str]]:
         rules: list[Dict[str, str]] = []
         for name in self._DENIED_TOOLS:
             rules.append({"permission": name, "pattern": "*", "action": "deny"})
-        read_action = "allow" if has_context_files else "deny"
+        allow_read = bool(has_context_files) and not self.pure
+        read_action = "allow" if allow_read else "deny"
         for name in self._READ_TOOLS:
             rules.append({"permission": name, "pattern": "*", "action": read_action})
         return rules
@@ -260,10 +352,44 @@ def _split_opencode_model(model: str) -> tuple[str, str]:
     return provider_id, model_id
 
 
+def _opencode_response_debug(response: Any, limit: int = 800) -> str:
+    """Short dump of part types / info keys for empty or error responses."""
+    if not isinstance(response, dict):
+        return repr(response)[:limit]
+    info = response.get("info") if isinstance(response.get("info"), dict) else {}
+    parts = response.get("parts") or []
+    part_types: list[Any] = []
+    for part in parts:
+        if isinstance(part, dict):
+            part_types.append(part.get("type"))
+        else:
+            part_types.append(type(part).__name__)
+    tokens = info.get("tokens") if isinstance(info.get("tokens"), dict) else {}
+    summary = {
+        "info_keys": sorted(info.keys()),
+        "part_types": part_types,
+        "tokens": {
+            "input": tokens.get("input"),
+            "output": tokens.get("output"),
+        },
+        "has_structured_output": "structured_output" in info,
+        "error": info.get("error"),
+    }
+    try:
+        return json.dumps(summary, default=str)[:limit]
+    except Exception:
+        return repr(summary)[:limit]
+
+
 def parse_opencode_message(
     response: Any,
 ) -> tuple[str, list[Dict[str, Any]], Dict[str, Any]]:
-    """Parse POST /session/:id/message JSON into text, events, and usage."""
+    """Parse POST /session/:id/message JSON into text, events, and usage.
+
+    Prefers ``info.structured_output`` when text parts are empty (json_schema
+    format responses). Empty text with zero/missing tokens is left for the
+    caller to raise :class:`OpenCodeEmptyResponse` immediately (non-retryable).
+    """
     if not isinstance(response, dict):
         return "", [], {}
     events = [response]
@@ -272,7 +398,10 @@ def parse_opencode_message(
         err = info["error"]
         message = err.get("data", {}).get("message") if isinstance(err.get("data"), dict) else None
         message = message or err.get("name") or str(err)
-        raise RuntimeError(f"OpenCode server message error: {message}")
+        raise RuntimeError(
+            f"OpenCode server message error: {message}; "
+            f"response_debug={_opencode_response_debug(response)}"
+        )
 
     chunks: list[str] = []
     for part in response.get("parts") or []:
@@ -290,10 +419,12 @@ def parse_opencode_message(
         "cache_write": cache.get("write"),
         "cost": info.get("cost"),
     }
+    # Prefer structured_output from json_schema format when text parts are empty.
     structured = info.get("structured_output")
-    if structured is not None and not chunks:
+    if structured is not None and not "".join(chunks).strip():
         return json.dumps(structured), events, usage
-    return "".join(chunks).strip(), events, usage
+    text = "".join(chunks).strip()
+    return text, events, usage
 
 
 class ReasonixProvider:
@@ -594,42 +725,7 @@ class LMStudioProvider:
 
     DEFAULT_BASE_URL = "http://localhost:1234/v1"
     API_KEY_ENV = "LMSTUDIO_API_KEY"
-    CANDIDATE_JSON_SCHEMA: Dict[str, Any] = {
-        "name": "decomp_candidate",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "source": {
-                    "type": "string",
-                    "description": "Complete replacement high-level C/C++ function definition only",
-                },
-                "hypothesis": {
-                    "type": "string",
-                    "maxLength": 160,
-                    "description": "One short hypothesis (<=160 chars)",
-                },
-                "notes": {
-                    "type": "array",
-                    "maxItems": 3,
-                    "items": {"type": "string", "maxLength": 120},
-                    "description": "Up to 3 short notes (<=120 chars each)",
-                },
-                "next_change": {
-                    "type": "string",
-                    "maxLength": 120,
-                    "description": "One short follow-up (<=120 chars); empty if none",
-                },
-                "change": {
-                    "type": "string",
-                    "maxLength": 120,
-                    "description": "One short change summary (<=120 chars); empty for first candidates",
-                },
-            },
-            "required": ["source", "hypothesis", "notes", "next_change", "change"],
-            "additionalProperties": False,
-        },
-    }
+    CANDIDATE_JSON_SCHEMA: Dict[str, Any] = SHARED_CANDIDATE_JSON_SCHEMA
 
     def __init__(
         self,

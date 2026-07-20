@@ -17,10 +17,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .compile_diagnostic import normalize_compile_output, select_root_diagnostic
+from .metrics import TimingRecorder, timings_from_records
 from .promotion import PromotionManager, evaluation_to_candidate, capture_baseline
 from .providers import (
     DeepSeekRawProvider,
     LMStudioProvider,
+    OpenCodeCircuitBreaker,
+    OpenCodeEmptyResponse,
     OpenCodeProvider,
     OpenRouterProvider,
     ReasonixProvider,
@@ -74,14 +77,26 @@ class Harness:
         )
         self.max_retries = int(execution.get("max_retries", 1))
         self._adapter_lock = threading.RLock()
-        self._promotion_lock = threading.Lock()
+        # Serializes auto-promote into canonical source / targets.json.
+        self._promote_lock = threading.Lock()
+        self._promotion_lock = self._promote_lock  # alias for older call sites
+        # Serializes evaluate() when a solve reuses one worktree across threads.
+        self._workspace_eval_lock = threading.Lock()
         self._log_lock = threading.Lock()
         self._debug_lock = threading.Lock()
+        # METRICS: per-harness phase accumulator; solve/finalize snapshots into state.json
+        self.timings = TimingRecorder()
+        # Pause OpenCode after consecutive empty/provider failures (batch-wide).
+        self._opencode_breaker = OpenCodeCircuitBreaker(threshold=3)
         self.promotion_manager = PromotionManager(self.root, policy=PromotionPolicy())
         # Auto-promote FULL_MATCH / EQUIVALENT_MATCH winners into canonical source.
         self.auto_promote = bool(execution.get("auto_promote", True))
         self.auto_promote_owner = str(
             execution.get("auto_promote_owner") or "llm-harness"
+        )
+        # When true, parallel solve batches defer promote until all targets finish.
+        self.auto_promote_deferred = bool(
+            execution.get("auto_promote_deferred", False)
         )
         isolation = execution.get("isolation", {})
         self.isolation_mode = isolation.get("mode", "none")
@@ -204,7 +219,7 @@ class Harness:
         known_exec = {
             "max_parallel", "max_target_parallel", "batch_model_parallel",
             "initial_parallel", "target_parallel", "max_retries", "isolation", "pipelines",
-            "auto_promote", "auto_promote_owner",
+            "auto_promote", "auto_promote_owner", "auto_promote_deferred",
         }
         execution = self.config.get("execution", {})
         unknown_exec = set(execution.keys()) - known_exec
@@ -259,16 +274,17 @@ class Harness:
         execution.setdefault("max_parallel", 1)
         execution.setdefault("max_target_parallel", 10)
         execution.setdefault("batch_model_parallel", 1)
-        execution.setdefault("max_retries", 1)
+        execution.setdefault("max_retries", 0)
         execution.setdefault("isolation", {"mode": "none"})
         execution.setdefault("pipelines", {})
         execution.setdefault("auto_promote", True)
         execution.setdefault("auto_promote_owner", "llm-harness")
+        execution.setdefault("auto_promote_deferred", False)
         
         solve = config.setdefault("solve", {})
-        solve.setdefault("initial_candidates", 3)
-        solve.setdefault("compile_repairs", 2)
-        solve.setdefault("match_repairs", 4)
+        solve.setdefault("initial_candidates", 2)
+        solve.setdefault("compile_repairs", 1)
+        solve.setdefault("match_repairs", 3)
         solve.setdefault("max_repeated_fingerprint", 2)
         solve.setdefault("stop_on_full_match", True)
         solve.setdefault("stop_on_equivalent_match", True)
@@ -668,8 +684,8 @@ class Harness:
         model_parallel: Optional[int] = None,
         full_context: bool = False,
     ) -> Path:
-        if workflow not in {"new", "improve", "tu-complete"}:
-            raise ValueError("Batch mode supports new, improve, or tu-complete")
+        if workflow not in {"new", "improve", "tu-complete", "solve"}:
+            raise ValueError("Batch mode supports new, improve, tu-complete, or solve")
         targets = list(dict.fromkeys(target_ids))
         if not targets:
             raise ValueError("Batch mode requires at least one target")
@@ -689,6 +705,11 @@ class Harness:
             raise ValueError(
                 "Parallel target evaluation requires execution.isolation.mode=git-worktree"
             )
+        # Defer auto-promote until the batch ends so concurrent solves do not
+        # contend on canonical source; lock still serializes if deferred=false.
+        defer_promote = bool(
+            workflow == "solve" and self.auto_promote_deferred and not dry_run
+        )
         batch_id = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
         batch_dir = self.output_dir / "batches" / batch_id
         batch_dir.mkdir(parents=True, exist_ok=True)
@@ -704,20 +725,29 @@ class Harness:
             "status": "running",
             "max_target_parallel": target_parallel,
             "model_parallel": per_target_parallel,
+            "auto_promote_deferred": defer_promote,
             "targets": {},
         }
         self._write_batch_manifest(batch_dir, manifest)
 
         def run_target(target_id: str) -> tuple[str, str, Optional[str]]:
             try:
-                output = self.run(
-                    workflow,
-                    target_id,
-                    runs=runs,
-                    dry_run=dry_run,
-                    max_parallel=per_target_parallel,
-                    full_context=full_context,
-                )
+                if workflow == "solve":
+                    output = self.solve(
+                        target_id,
+                        dry_run=dry_run,
+                        max_parallel=per_target_parallel,
+                        skip_auto_promote=defer_promote,
+                    )
+                else:
+                    output = self.run(
+                        workflow,
+                        target_id,
+                        runs=runs,
+                        dry_run=dry_run,
+                        max_parallel=per_target_parallel,
+                        full_context=full_context,
+                    )
                 return target_id, str(output.relative_to(self.root)), None
             except Exception as exc:
                 return target_id, "", f"{type(exc).__name__}: {exc}"
@@ -736,6 +766,22 @@ class Harness:
                     + (f" detail={_debug_value(error)}" if error else "")
                 )
                 self._write_batch_manifest(batch_dir, manifest)
+
+        if defer_promote:
+            for target_id, row in manifest["targets"].items():
+                experiment_rel = row.get("experiment")
+                if row.get("error") or not experiment_rel:
+                    continue
+                experiment_dir = (self.root / experiment_rel).resolve()
+                try:
+                    self._maybe_auto_promote(experiment_dir)
+                except Exception as exc:
+                    row["promote_error"] = f"{type(exc).__name__}: {exc}"
+                    self._debug(
+                        f"batch deferred promote failed batch={batch_id} "
+                        f"target={target_id} detail={_debug_value(row['promote_error'])}"
+                    )
+
         manifest["status"] = (
             "complete"
             if all(not row["error"] for row in manifest["targets"].values())
@@ -744,6 +790,23 @@ class Harness:
         self._write_batch_manifest(batch_dir, manifest)
         self._debug(f"batch completed batch={batch_id} status={manifest['status']}")
         return batch_dir
+
+    def solve_batch(
+        self,
+        target_ids: List[str],
+        *,
+        dry_run: bool = False,
+        max_target_parallel: Optional[int] = None,
+        model_parallel: Optional[int] = None,
+    ) -> Path:
+        """Parallel solve wrapper; same path as ``run_batch(..., workflow='solve')``."""
+        return self.run_batch(
+            "solve",
+            target_ids,
+            dry_run=dry_run,
+            max_target_parallel=max_target_parallel,
+            model_parallel=model_parallel,
+        )
 
     def select_new_targets(
         self, number: int, *, ignore_called_functions: bool = False, certified_funcs: bool = False,
@@ -772,8 +835,14 @@ class Harness:
         return target_ids
 
     def select_targets(
-        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False,
+        self,
+        workflow: str,
+        number: int,
+        *,
+        randomize: bool = False,
+        certified_funcs: bool = False,
         tu: Optional[str] = None,
+        selection: Optional[str] = None,
     ) -> List[str]:
         """Ask the project adapter for an automatic workflow target selection, optionally filtered to a TU."""
         if workflow not in {"improve", "solve", "tu-complete"}:
@@ -783,10 +852,20 @@ class Harness:
         select = getattr(self.adapter, "select_targets", None)
         if select is None:
             raise ValueError("Configured project adapter does not support automatic target selection")
+        kwargs: Dict[str, Any] = {
+            "randomize": randomize,
+            "certified_funcs": certified_funcs,
+            "tu": tu,
+        }
+        if selection is not None:
+            kwargs["selection"] = selection
         with self._adapter_lock:
-            target_ids = list(
-                select(workflow, number, randomize=randomize, certified_funcs=certified_funcs, tu=tu)
-            )
+            try:
+                target_ids = list(select(workflow, number, **kwargs))
+            except TypeError:
+                # Older adapters without selection= kwarg.
+                kwargs.pop("selection", None)
+                target_ids = list(select(workflow, number, **kwargs))
         if len(target_ids) != number:
             raise ValueError(
                 f"Project adapter returned {len(target_ids)} targets; expected {number}"
@@ -864,6 +943,7 @@ class Harness:
         index: int,
         full_context: bool = False,
         context_dir: Optional[Path] = None,
+        workspace: Optional[Path] = None,
     ) -> ExperimentRecord:
         provider = self.providers.get(model.provider)
         if provider is None:
@@ -888,11 +968,22 @@ class Harness:
             while True:
                 provider_attempts += 1
                 try:
-                    result = provider.invoke(
-                        prompt, call_model, context_dir or Path(self.adapter.root)
-                    )
+                    if isinstance(provider, OpenCodeProvider):
+                        self._opencode_breaker.raise_if_open()
+                    # METRICS: llm = provider wall time (including retries of this attempt)
+                    with self.timings.measure("llm"):
+                        result = provider.invoke(
+                            prompt, call_model, context_dir or Path(self.adapter.root)
+                        )
+                    if isinstance(provider, OpenCodeProvider):
+                        self._opencode_breaker.record_success()
                     break
-                except Exception:
+                except Exception as invoke_exc:
+                    if isinstance(provider, OpenCodeProvider):
+                        self._opencode_breaker.record_failure()
+                    # Empty responses are terminal: do not burn retries on them.
+                    if self._is_empty_provider_exception(invoke_exc):
+                        raise
                     if provider_attempts > self.max_retries:
                         raise
                     self._debug(
@@ -910,9 +1001,11 @@ class Harness:
                     f"agent format-repair target={target_id} agent={agent} model={model.model} "
                     f"run={index} error={_debug_value(error_msg)}"
                 )
-                repair_result = self._attempt_format_repair(
-                    result.text, error_msg, call_model, provider, context_dir,
-                )
+                # METRICS: format-repair is a second LLM call
+                with self.timings.measure("llm"):
+                    repair_result = self._attempt_format_repair(
+                        result.text, error_msg, call_model, provider, context_dir,
+                    )
                 if repair_result is not None:
                     candidate = repair_result
                     format_repair_attempted = True
@@ -926,7 +1019,11 @@ class Harness:
                 "patch_ids": [patch.slot_id for patch in candidate.patches],
             }
             evaluation_obj = self._evaluate_candidate(
-                workflow, target_id, candidate, f"{model.id}-{index}"
+                workflow,
+                target_id,
+                candidate,
+                f"{model.id}-{index}",
+                workspace=workspace,
             )
             evaluation = asdict(evaluation_obj)
             artifact.write_text(
@@ -945,6 +1042,8 @@ class Harness:
             if candidate is not None:
                 payload["candidate"] = asdict(candidate)
             payload["format_repair_attempted"] = format_repair_attempted
+            if self._is_empty_provider_error(error):
+                payload["empty_provider_response"] = True
             artifact.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         else:
             self._debug(
@@ -980,23 +1079,102 @@ class Harness:
         return record
 
     def _evaluate_candidate(
-        self, workflow: str, target_id: str, candidate: Candidate, label: str
+        self,
+        workflow: str,
+        target_id: str,
+        candidate: Candidate,
+        label: str,
+        *,
+        workspace: Optional[Path] = None,
     ) -> Any:
         if self.workspace_manager is None:
+            self._bind_adapter_timings(self.adapter)
             return self.adapter.evaluate(workflow, target_id, candidate)
-        workspace = self.workspace_manager.create(label)
+        # Reuse a caller-owned worktree (solve scoped) without create/remove.
+        # Serial max_target_parallel==1 still prefers reuse over in-place evaluate
+        # so canonical source stays untouched (safer for accidental mutation).
+        if workspace is not None:
+            with self._workspace_eval_lock:
+                return self._evaluate_in_workspace(workspace, workflow, target_id, candidate)
+        # Legacy per-call isolation for non-solve workflows / parallel initial strategies.
+        with self.timings.measure("worktree_create"):
+            created = self.workspace_manager.create(label)
         try:
             prepare = getattr(self.adapter, "prepare_workspace", None)
             if prepare is None:
                 raise ValueError("Project adapter does not support isolated workspaces")
-            prepare(workspace)
-            adapter = self._load_adapter(workspace)
-            try:
-                return adapter.evaluate(workflow, target_id, candidate)
-            finally:
-                adapter.finalize()
+            with self.timings.measure("configure"):
+                prepare(created)
+            return self._evaluate_in_workspace(created, workflow, target_id, candidate)
         finally:
+            self.workspace_manager.remove(created)
+
+    def _bind_adapter_timings(self, adapter: Any) -> None:
+        """Point the adapter at this harness's TimingRecorder (ninja/objdiff/smt)."""
+        if hasattr(adapter, "timings"):
+            adapter.timings = self.timings
+
+    def _evaluate_in_workspace(
+        self,
+        workspace: Path,
+        workflow: str,
+        target_id: str,
+        candidate: Candidate,
+    ) -> Any:
+        adapter = self._load_adapter(workspace)
+        self._bind_adapter_timings(adapter)
+        try:
+            return adapter.evaluate(workflow, target_id, candidate)
+        finally:
+            adapter.finalize()
+
+    @staticmethod
+    def _is_empty_provider_exception(exc: BaseException) -> bool:
+        if isinstance(exc, OpenCodeEmptyResponse):
+            return True
+        return "empty assistant text" in str(exc).lower()
+
+    @classmethod
+    def _is_empty_provider_error(cls, error: Optional[str]) -> bool:
+        if not error:
+            return False
+        return (
+            "OpenCodeEmptyResponse" in error
+            or "empty assistant text" in error.lower()
+        )
+
+    def _write_solve_context(
+        self,
+        experiment_dir: Path,
+        prompt: str,
+        *,
+        suffix: Optional[str] = None,
+    ) -> Path:
+        """Create/update experiment context dir and write TASK.md for the prompt."""
+        context_dir = (
+            experiment_dir / "context" / suffix
+            if suffix
+            else experiment_dir / "context"
+        )
+        context_dir.mkdir(parents=True, exist_ok=True)
+        context_mode_fn = getattr(self.adapter, "model_context_mode", None)
+        context_mode = context_mode_fn("solve") if context_mode_fn else "files"
+        if context_mode != "inline":
+            (context_dir / "TASK.md").write_text(prompt, encoding="utf-8")
+        return context_dir
+
+    def _prepare_solve_workspace(self, experiment_id: str) -> Optional[Path]:
+        """Create one reusable worktree for a solve experiment when isolation is on."""
+        if self.workspace_manager is None:
+            return None
+        workspace = self.workspace_manager.create(f"solve-{experiment_id}")
+        prepare = getattr(self.adapter, "prepare_workspace", None)
+        if prepare is None:
             self.workspace_manager.remove(workspace)
+            raise ValueError("Project adapter does not support isolated workspaces")
+        with self.timings.measure("configure"):
+            prepare(workspace)
+        return workspace
 
     def _write_state(self, experiment_dir: Path, state: Dict[str, Any]) -> None:
         path = experiment_dir / "state.json"
@@ -1045,8 +1223,16 @@ class Harness:
         dry_run: bool = False,
         resume: Optional[Path] = None,
         max_parallel: Optional[int] = None,
+        skip_auto_promote: bool = False,
     ) -> Path:
-        """Adaptive closed loop: initial candidates -> compile/binary repair."""
+        """Adaptive closed loop: initial candidates -> compile/binary repair.
+
+        When isolation.mode=git-worktree, one worktree is created for the
+        experiment and reused across serial evaluations (including when
+        max_target_parallel==1). Parallel initial strategies share that
+        worktree under ``_workspace_eval_lock`` so provider calls overlap
+        while evaluate stays serialized.
+        """
         solve_cfg = self.config.get("solve", {})
         initial_n = int(solve_cfg.get("initial_candidates", 3))
         compile_budget = int(solve_cfg.get("compile_repairs", 2))
@@ -1062,6 +1248,8 @@ class Harness:
             if state.get("workflow") != "solve" or state.get("target_id") != target_id:
                 raise ValueError("Resume state workflow/target does not match solve command")
             experiment_id = state["experiment_id"]
+            prompt = (experiment_dir / "prompt.md").read_text(encoding="utf-8")
+            context_dir = self._write_solve_context(experiment_dir, prompt)
         else:
             experiment_id = (
                 f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-"
@@ -1073,6 +1261,9 @@ class Harness:
                 history = self.records(target_id=target_id)
                 prompt = self.adapter.build_prompt("new", target_id, history, {})
             (experiment_dir / "prompt.md").write_text(prompt, encoding="utf-8")
+            context_dir = self._write_solve_context(experiment_dir, prompt)
+            context_mode_fn = getattr(self.adapter, "model_context_mode", None)
+            context_mode = context_mode_fn("solve") if context_mode_fn else "files"
             state = {
                 "schema_version": 3,
                 "experiment_id": experiment_id,
@@ -1084,6 +1275,8 @@ class Harness:
                 "records": [],
                 "branches": [],
                 "baseline": None,
+                "context_dir": str(context_dir.relative_to(self.root)),
+                "context_mode": context_mode,
                 "solve": {
                     "initial_candidates": initial_n,
                     "compile_repairs": compile_budget,
@@ -1145,6 +1338,7 @@ class Harness:
         fingerprint_counts: Dict[str, int] = {}
         compile_used = 0
         match_used = 0
+        solve_workspace: Optional[Path] = None
 
         def persist() -> None:
             state["records"] = [
@@ -1155,193 +1349,296 @@ class Harness:
             state["model_calls"] = len(state["records"])
             self._write_state(experiment_dir, state)
 
-        # --- initial diverse candidates ---
-        if not any(b.get("phase") == "initial" for b in branches):
-            with self._adapter_lock:
-                history = self.records(target_id=target_id)
-                base_prompt = self.adapter.build_prompt("new", target_id, history, {})
-            for strategy in strategies:
-                run_index += 1
-                prompt = (
-                    f"{base_prompt}\n\n"
-                    f"## Initial strategy: {strategy}\n"
-                    f"- literal: preserve decoded control flow and memory ops directly\n"
-                    f"- typed: prioritize declarations, signedness, and class/member APIs\n"
-                    f"- alternate_cfg: use a different evidence-supported high-level branch shape\n"
-                    f"Apply the `{strategy}` strategy for this candidate.\n"
+        try:
+            # Prefer one reusable worktree for the whole solve (serial or parallel
+            # target batches each own their own solve() call / worktree).
+            if not dry_run:
+                with self.timings.measure("worktree_create"):
+                    solve_workspace = self._prepare_solve_workspace(experiment_id)
+
+            # --- initial diverse candidates ---
+            if not any(b.get("phase") == "initial" for b in branches):
+                with self._adapter_lock:
+                    history = self.records(target_id=target_id)
+                    base_prompt = self.adapter.build_prompt("new", target_id, history, {})
+
+                def _initial_prompt(strategy: str) -> str:
+                    return (
+                        f"{base_prompt}\n\n"
+                        f"## Initial strategy: {strategy}\n"
+                        f"- literal: preserve decoded control flow and memory ops directly\n"
+                        f"- typed: prioritize declarations, signedness, and class/member APIs\n"
+                        f"- alternate_cfg: use a different evidence-supported high-level branch shape\n"
+                        f"Apply the `{strategy}` strategy for this candidate.\n"
+                    )
+
+                def _run_initial(strategy: str, index: int) -> tuple[str, int, ExperimentRecord]:
+                    prompt_text = _initial_prompt(strategy)
+                    # Per-run context so parallel initials do not race on TASK.md.
+                    run_context = self._write_solve_context(
+                        experiment_dir, prompt_text, suffix=f"run-{index}"
+                    )
+                    record = self._run_one(
+                        "new",
+                        target_id,
+                        prompt_text,
+                        experiment_id,
+                        experiment_dir,
+                        initial_model,
+                        index,
+                        context_dir=run_context,
+                        workspace=solve_workspace,
+                    )
+                    return strategy, index, record
+
+                initial_results: List[tuple[str, int, ExperimentRecord]] = []
+                parallel_initial = (
+                    self.workspace_manager is not None and len(strategies) > 1
                 )
-                parent_id = None
+                if parallel_initial:
+                    indexed = [
+                        (strategy, run_index + offset + 1)
+                        for offset, strategy in enumerate(strategies)
+                    ]
+                    run_index += len(strategies)
+                    workers = min(len(strategies), 3)
+                    with ThreadPoolExecutor(max_workers=workers) as executor:
+                        futures = [
+                            executor.submit(_run_initial, strategy, index)
+                            for strategy, index in indexed
+                        ]
+                        initial_results = [future.result() for future in as_completed(futures)]
+                    initial_results.sort(key=lambda row: row[1])
+                else:
+                    # Serial path: stop early on accepted FULL/EQUIVALENT when configured.
+                    for strategy in strategies:
+                        run_index += 1
+                        strategy, index, record = _run_initial(strategy, run_index)
+                        initial_results.append((strategy, index, record))
+                        if self._record_is_symbol_accepted(record.to_json()):
+                            status = str((record.evaluation or {}).get("status", "")).upper()
+                            if (
+                                (stop_on_full and status == "FULL_MATCH")
+                                or (stop_on_equiv and status == "EQUIVALENT_MATCH")
+                                or self._record_is_symbol_accepted(record.to_json())
+                            ):
+                                break
+
+                for strategy, index, record in initial_results:
+                    record.candidate_summary = {
+                        **(record.candidate_summary or {}),
+                        "strategy": strategy,
+                        "parent_id": None,
+                        "branch_id": f"init-{strategy}",
+                        "iteration": 0,
+                    }
+                    state["records"].append(record.to_json())
+                    branches.append({
+                        "branch_id": f"init-{strategy}",
+                        "parent_id": None,
+                        "phase": "initial",
+                        "strategy": strategy,
+                        "artifact": record.artifact,
+                        "run_index": index,
+                        "status": (record.evaluation or {}).get("status"),
+                        "match_percent": (record.evaluation or {}).get("match_percent"),
+                        "fingerprint": ((record.evaluation or {}).get("metrics") or {}).get(
+                            "mismatch_fingerprint", ""
+                        ),
+                        "error": record.error,
+                    })
+                persist()
+
+            best = self._best_solve_record(state["records"])
+            if best and self._record_is_symbol_accepted(best):
+                self._finalize_solve(
+                    experiment_dir,
+                    state,
+                    branches,
+                    best,
+                    skip_auto_promote=skip_auto_promote,
+                )
+                return experiment_dir
+
+            # --- adaptive repair loop ---
+            while True:
+                best = self._best_solve_record(state["records"])
+                if best is None:
+                    state["status"] = "complete"
+                    state["reason"] = "no_viable_candidates"
+                    persist()
+                    return experiment_dir
+                if self._record_is_symbol_accepted(best):
+                    break
+
+                evaluation = best.get("evaluation") or {}
+                status = str(evaluation.get("status", "")).upper()
+                metrics = evaluation.get("metrics") or {}
+                fingerprint = str(metrics.get("mismatch_fingerprint") or "")
+
+                if status == "COMPILE_ERROR":
+                    if compile_used >= compile_budget:
+                        state["reason"] = "compile_repair_budget_exhausted"
+                        break
+                    phase = "compile_repair"
+                    compile_used += 1
+                else:
+                    # Do not burn match_repairs when blocked on unvalidated callees.
+                    if self._blocked_unvalidated_callee(evaluation):
+                        state["reason"] = "blocked_unvalidated_callee"
+                        break
+                    if match_used >= match_budget:
+                        state["reason"] = "match_repair_budget_exhausted"
+                        break
+                    phase = "match_repair"
+                    match_used += 1
+
+                parent_artifact = self.root / best["artifact"]
+                parent_payload = json.loads(parent_artifact.read_text(encoding="utf-8"))
+                parent_candidate = Candidate(**parent_payload["candidate"])
+                parent_branch = next(
+                    (b for b in branches if b.get("artifact") == best.get("artifact")),
+                    {"branch_id": f"parent-{best.get('run_index')}"},
+                )
+                branch_id = f"{phase}-{run_index + 1}"
+                iteration = int(parent_branch.get("iteration", 0)) + 1
+
+                repair_context = {
+                    "source": parent_candidate.source,
+                    "evaluation": evaluation,
+                    "binary_feedback": metrics.get("binary_feedback"),
+                    "hypothesis": parent_candidate.hypothesis,
+                    "next_change": parent_candidate.next_change,
+                    "artifact": best.get("artifact"),
+                    "rejected_fingerprints": [
+                        b.get("fingerprint")
+                        for b in branches
+                        if b.get("fingerprint") and b.get("fingerprint") != fingerprint
+                    ][-8:],
+                }
+
+                if phase == "compile_repair":
+                    diagnostics = normalize_compile_output(str(evaluation.get("detail", "")))
+                    retail_asm = ""
+                    getter = getattr(self.adapter, "get_retail_asm", None)
+                    if callable(getter):
+                        try:
+                            with self._adapter_lock:
+                                retail_asm = str(getter(target_id) or "")
+                        except Exception:
+                            retail_asm = ""
+                    prompt = self._build_repair_prompt(
+                        parent_candidate,
+                        str(evaluation.get("detail", "")),
+                        diagnostics,
+                        state,
+                        budget=compile_budget,
+                        repair_index=compile_used - 1,
+                        seen_fingerprints=list(fingerprint_counts),
+                        retail_asm=retail_asm,
+                    )
+                else:
+                    with self._adapter_lock:
+                        history = self.records(target_id=target_id)
+                        prompt = self.adapter.build_prompt(
+                            "improve",
+                            target_id,
+                            history,
+                            {"repair_context": repair_context},
+                        )
+
+                run_index += 1
+                run_context = self._write_solve_context(
+                    experiment_dir, prompt, suffix=f"run-{run_index}"
+                )
                 record = self._run_one(
-                    "new",
+                    "improve" if phase == "match_repair" else "new",
                     target_id,
                     prompt,
                     experiment_id,
                     experiment_dir,
-                    initial_model,
+                    repair_model,
                     run_index,
+                    context_dir=run_context,
+                    workspace=solve_workspace,
+                )
+                # Empty/error provider responses still count as model_calls but must
+                # not consume repair budget or become the best candidate.
+                if self._is_empty_provider_error(record.error):
+                    if phase == "compile_repair":
+                        compile_used = max(0, compile_used - 1)
+                    else:
+                        match_used = max(0, match_used - 1)
+                child_fp = ((record.evaluation or {}).get("metrics") or {}).get(
+                    "mismatch_fingerprint", ""
                 )
                 record.candidate_summary = {
                     **(record.candidate_summary or {}),
-                    "strategy": strategy,
-                    "parent_id": parent_id,
-                    "branch_id": f"init-{strategy}",
-                    "iteration": 0,
+                    "strategy": phase,
+                    "parent_id": parent_branch.get("branch_id"),
+                    "branch_id": branch_id,
+                    "iteration": iteration,
                 }
                 state["records"].append(record.to_json())
                 branches.append({
-                    "branch_id": f"init-{strategy}",
-                    "parent_id": parent_id,
-                    "phase": "initial",
-                    "strategy": strategy,
+                    "branch_id": branch_id,
+                    "parent_id": parent_branch.get("branch_id"),
+                    "phase": phase,
+                    "strategy": phase,
                     "artifact": record.artifact,
                     "run_index": run_index,
                     "status": (record.evaluation or {}).get("status"),
                     "match_percent": (record.evaluation or {}).get("match_percent"),
-                    "fingerprint": ((record.evaluation or {}).get("metrics") or {}).get(
-                        "mismatch_fingerprint", ""
-                    ),
+                    "fingerprint": child_fp,
+                    "iteration": iteration,
+                    "error": record.error,
                 })
-                persist()
-                if self._record_is_symbol_accepted(record.to_json()):
-                    if (
-                        (stop_on_full and (record.evaluation or {}).get("status") == "FULL_MATCH")
-                        or (
-                            stop_on_equiv
-                            and (record.evaluation or {}).get("status") == "EQUIVALENT_MATCH"
-                        )
-                        or self._record_is_symbol_accepted(record.to_json())
-                    ):
+
+                # Best-so-far is preserved via ranking; stop on repeated mismatch state.
+                if (
+                    not record.error
+                    and child_fp
+                    and child_fp == fingerprint
+                ):
+                    fingerprint_counts[child_fp] = fingerprint_counts.get(child_fp, 0) + 1
+                    if fingerprint_counts[child_fp] >= max_repeated:
+                        state["reason"] = "repeated_fingerprint"
+                        persist()
                         break
 
-        best = self._best_solve_record(state["records"])
-        if best and self._record_is_symbol_accepted(best):
-            self._finalize_solve(experiment_dir, state, branches, best)
-            return experiment_dir
-
-        # --- adaptive repair loop ---
-        while True:
-            best = self._best_solve_record(state["records"])
-            if best is None:
-                state["status"] = "complete"
-                state["reason"] = "no_viable_candidates"
                 persist()
-                return experiment_dir
-            if self._record_is_symbol_accepted(best):
-                break
-
-            evaluation = best.get("evaluation") or {}
-            status = str(evaluation.get("status", "")).upper()
-            metrics = evaluation.get("metrics") or {}
-            fingerprint = str(metrics.get("mismatch_fingerprint") or "")
-
-            if status == "COMPILE_ERROR":
-                if compile_used >= compile_budget:
-                    state["reason"] = "compile_repair_budget_exhausted"
+                if self._record_is_symbol_accepted(record.to_json()):
+                    best = record.to_json()
                     break
-                phase = "compile_repair"
-                compile_used += 1
-            else:
-                if match_used >= match_budget:
-                    state["reason"] = "match_repair_budget_exhausted"
-                    break
-                phase = "match_repair"
-                match_used += 1
 
-            parent_artifact = self.root / best["artifact"]
-            parent_payload = json.loads(parent_artifact.read_text(encoding="utf-8"))
-            parent_candidate = Candidate(**parent_payload["candidate"])
-            parent_branch = next(
-                (b for b in branches if b.get("artifact") == best.get("artifact")),
-                {"branch_id": f"parent-{best.get('run_index')}"},
-            )
-            branch_id = f"{phase}-{run_index + 1}"
-            iteration = int(parent_branch.get("iteration", 0)) + 1
-
-            repair_context = {
-                "source": parent_candidate.source,
-                "evaluation": evaluation,
-                "binary_feedback": metrics.get("binary_feedback"),
-                "hypothesis": parent_candidate.hypothesis,
-                "next_change": parent_candidate.next_change,
-                "artifact": best.get("artifact"),
-                "rejected_fingerprints": [
-                    b.get("fingerprint")
-                    for b in branches
-                    if b.get("fingerprint") and b.get("fingerprint") != fingerprint
-                ][-8:],
-            }
-
-            if phase == "compile_repair":
-                diagnostics = normalize_compile_output(str(evaluation.get("detail", "")))
-                prompt = self._build_repair_prompt(
-                    parent_candidate,
-                    str(evaluation.get("detail", "")),
-                    diagnostics,
-                    state,
-                    budget=compile_budget,
-                    repair_index=compile_used - 1,
-                    seen_fingerprints=list(fingerprint_counts),
-                )
-            else:
-                with self._adapter_lock:
-                    history = self.records(target_id=target_id)
-                    prompt = self.adapter.build_prompt(
-                        "improve",
-                        target_id,
-                        history,
-                        {"repair_context": repair_context},
-                    )
-
-            run_index += 1
-            record = self._run_one(
-                "improve" if phase == "match_repair" else "new",
-                target_id,
-                prompt,
-                experiment_id,
+            best = self._best_solve_record(state["records"])
+            self._finalize_solve(
                 experiment_dir,
-                repair_model,
-                run_index,
+                state,
+                branches,
+                best,
+                skip_auto_promote=skip_auto_promote,
             )
-            child_fp = ((record.evaluation or {}).get("metrics") or {}).get(
-                "mismatch_fingerprint", ""
-            )
-            record.candidate_summary = {
-                **(record.candidate_summary or {}),
-                "strategy": phase,
-                "parent_id": parent_branch.get("branch_id"),
-                "branch_id": branch_id,
-                "iteration": iteration,
-            }
-            state["records"].append(record.to_json())
-            branches.append({
-                "branch_id": branch_id,
-                "parent_id": parent_branch.get("branch_id"),
-                "phase": phase,
-                "strategy": phase,
-                "artifact": record.artifact,
-                "run_index": run_index,
-                "status": (record.evaluation or {}).get("status"),
-                "match_percent": (record.evaluation or {}).get("match_percent"),
-                "fingerprint": child_fp,
-                "iteration": iteration,
-            })
+            return experiment_dir
+        finally:
+            if solve_workspace is not None and self.workspace_manager is not None:
+                self.workspace_manager.remove(solve_workspace)
 
-            # Best-so-far is preserved via ranking; stop on repeated mismatch state.
-            if child_fp and child_fp == fingerprint:
-                fingerprint_counts[child_fp] = fingerprint_counts.get(child_fp, 0) + 1
-                if fingerprint_counts[child_fp] >= max_repeated:
-                    state["reason"] = "repeated_fingerprint"
-                    persist()
-                    break
-
-            persist()
-            if self._record_is_symbol_accepted(record.to_json()):
-                best = record.to_json()
-                break
-
-        best = self._best_solve_record(state["records"])
-        self._finalize_solve(experiment_dir, state, branches, best)
-        return experiment_dir
+    @staticmethod
+    def _blocked_unvalidated_callee(evaluation: Dict[str, Any]) -> bool:
+        """True when match repair cannot proceed due to unvalidated callees."""
+        blocked = evaluation.get("blocked_reason")
+        if not blocked:
+            metrics = evaluation.get("metrics") or {}
+            blocked = metrics.get("blocked_reason")
+        if blocked == "unvalidated_callee":
+            return True
+        equiv = str(
+            evaluation.get("equivalence")
+            or evaluation.get("equivalence_status")
+            or ""
+        ).upper()
+        return "INCONCLUSIVE_UNVALIDATED_CALLEE" in equiv
 
     @staticmethod
     def _record_is_symbol_accepted(record: Dict[str, Any]) -> bool:
@@ -1374,12 +1671,21 @@ class Harness:
         state: Dict[str, Any],
         branches: List[Dict[str, Any]],
         best: Optional[Dict[str, Any]],
+        *,
+        skip_auto_promote: bool = False,
     ) -> None:
         state["branches"] = branches
         state["model_calls"] = len(state.get("records", []))
         state["status"] = "complete"
+        blocked_reason: Optional[str] = None
         if best is not None:
             best = dict(best)
+            evaluation = best.get("evaluation") or {}
+            blocked_reason = evaluation.get("blocked_reason")
+            if not blocked_reason:
+                blocked_reason = (evaluation.get("metrics") or {}).get("blocked_reason")
+            if not state.get("reason") and self._blocked_unvalidated_callee(evaluation):
+                state["reason"] = "blocked_unvalidated_callee"
             updated = []
             for row in state.get("records", []):
                 copy = dict(row)
@@ -1421,12 +1727,23 @@ class Harness:
                 logged.add(key)
             state["logged_keys"] = sorted(logged)
             state["logged"] = True
+        if blocked_reason:
+            state["blocked_reason"] = blocked_reason
+        # METRICS: prefer live phase hooks; fall back to record duration_seconds as llm
+        live = self.timings.summary()
+        if live.get("total_seconds", 0) > 0:
+            state["timings"] = live
+        else:
+            state["timings"] = timings_from_records(list(state.get("records") or []))
         self._write_state(experiment_dir, state)
-        self._maybe_auto_promote(experiment_dir)
+        if not skip_auto_promote:
+            self._maybe_auto_promote(experiment_dir)
+        reason = state.get("reason", "done")
+        blocked_part = f" blocked_reason={blocked_reason}" if blocked_reason else ""
         self._debug(
             f"solve completed target={state.get('target_id')} "
             f"experiment={state.get('experiment_id')} "
-            f"calls={state.get('model_calls')} reason={state.get('reason', 'done')}"
+            f"calls={state.get('model_calls')} reason={reason}{blocked_part}"
         )
 
     def records(self, target_id: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -1582,7 +1899,7 @@ class Harness:
         owner = self.auto_promote_owner
         candidate = Candidate(**best["candidate"])
         try:
-            with self._promotion_lock:
+            with self._promote_lock:
                 ensure = getattr(self.adapter, "ensure_auto_promote_claim", None)
                 if ensure is not None:
                     ensure(target_id, owner)
@@ -2029,6 +2346,7 @@ class Harness:
         budget: int = 3,
         repair_index: int = 0,
         seen_fingerprints: list[str] | None = None,
+        retail_asm: str = "",
     ) -> str:
         repair_path = self._prompt_dir() / "compile_repair.md"
         repair_instruction = (
@@ -2064,6 +2382,14 @@ class Harness:
             lines.append("## Previously attempted repairs (fingerprints already seen)")
             for fp in seen_fingerprints:
                 lines.append(f"  - {fp}")
+
+        asm = (retail_asm or "").strip()
+        if asm:
+            # Keep ABI/signature check cheap — full dossiers belong on match repair.
+            excerpt = asm if len(asm) <= 4000 else asm[:4000] + "\n... (truncated)"
+            lines.append("")
+            lines.append("## Retail ASM (signature/ABI check)")
+            lines.append(excerpt)
 
         lines.append("")
         lines.append(f"## Repair iteration {repair_index + 1} of {budget}")

@@ -304,6 +304,19 @@ class TestPromptBudgeting(unittest.TestCase):
             self.assertNotIn("{{CURRENT_FUNCTION}}", prompt)
             self.assertIn("int foo()", prompt)
             self.assertIn('"source"', prompt)
+            # Template may mention the section name; a real section is a markdown heading.
+            self.assertNotIn("\n## Retail ASM (signature/ABI check)\n", prompt)
+
+            with_asm = harness._build_repair_prompt(
+                candidate,
+                "error: undeclared identifier",
+                [],
+                {},
+                budget=2,
+                repair_index=0,
+                retail_asm="blr\n",
+            )
+            self.assertIn("\n## Retail ASM (signature/ABI check)\nblr", with_asm)
         finally:
             Path(config_path).unlink()
 
@@ -488,9 +501,9 @@ class TestDryRunAndCompilation(unittest.TestCase):
             with patch("tools.llm_harness.core.Harness._load_adapter", return_value=Mock()):
                 harness = Harness(Path(config_path))
                 eff = harness.get_effective_config()
-                self.assertEqual(eff["solve"]["initial_candidates"], 3)
-                self.assertEqual(eff["solve"]["compile_repairs"], 2)
-                self.assertEqual(eff["solve"]["match_repairs"], 4)
+                self.assertEqual(eff["solve"]["initial_candidates"], 2)
+                self.assertEqual(eff["solve"]["compile_repairs"], 1)
+                self.assertEqual(eff["solve"]["match_repairs"], 3)
         finally:
             Path(config_path).unlink()
 

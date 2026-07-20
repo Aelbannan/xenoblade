@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import json
 import subprocess
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
+
+PhaseTimer = Callable[[str], AbstractContextManager[Any]]
 
 from tools.coop.lib.config import CoopConfig
 from tools.coop.lib.equivalence_check import (
@@ -183,9 +186,17 @@ def evaluate_unit_match(
     certify_full_match: bool = True,
     linked: bool = False,
     target_id: str | None = None,
+    phase_timer: Optional[PhaseTimer] = None,
 ) -> MatchEvaluation:
-    unit_report = report_unit(project, unit)
-    fn_match = find_function_match(unit_report, symbol)
+    """Score a unit (and optionally SMT-prove one symbol).
+
+    ``phase_timer`` is an optional ``lambda phase: contextmanager`` used by the
+    LLM harness to attribute wall time to ``objdiff`` vs ``smt``.
+    """
+    timer = phase_timer or (lambda _phase: nullcontext())
+    with timer("objdiff"):
+        unit_report = report_unit(project, unit)
+        fn_match = find_function_match(unit_report, symbol)
     equivalence: Optional[ProofStatus] = None
     detail = ""
     certificate = None
@@ -193,9 +204,10 @@ def evaluate_unit_match(
     certificate_checked = bool(target_id and symbol and fn_match and run_equivalence)
     pct = fn_match.match_percent if fn_match else None
     if run_equivalence and symbol and fn_match and should_probe_equivalence(pct):
-        probe: EquivalenceProbe = prove_unit_symbol(
-            project, unit, fn_match.name, linked=linked, target_id=target_id,
-        )
+        with timer("smt"):
+            probe: EquivalenceProbe = prove_unit_symbol(
+                project, unit, fn_match.name, linked=linked, target_id=target_id,
+            )
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate
@@ -209,7 +221,8 @@ def evaluate_unit_match(
         and pct is not None
         and pct >= 100.0
     ):
-        probe = certify_unit_symbol(project, unit, fn_match.name, target_id)
+        with timer("smt"):
+            probe = certify_unit_symbol(project, unit, fn_match.name, target_id)
         equivalence = probe.status
         detail = probe.detail
         certificate = probe.certificate

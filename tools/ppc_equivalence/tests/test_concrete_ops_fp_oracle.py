@@ -104,17 +104,20 @@ class ConcreteOpsFpOracleMethodTests(unittest.TestCase):
         with self.assertRaises(ExecutionInconclusive):
             self.ops.fp_fadds_fpr_bits("rtz", _F15, _F2)
 
-    def test_nan_operand_fail_closed(self) -> None:
-        with self.assertRaises(ExecutionInconclusive):
-            self.ops.fp_fadd_rne_bits(_QNAN, _F2)
+    def test_nan_operand_propagates_quiet_nan(self) -> None:
+        self.assertEqual(
+            self.ops.fp_fadd_rne_bits(_QNAN, _F2),
+            0x7FF8000012345678,
+        )
 
-    def test_fnmadd_nan_operand_fail_closed(self) -> None:
-        with self.assertRaises(ExecutionInconclusive):
-            self.ops.fp_fnmadd_rne_bits(_QNAN, _F4, _F2)
+    def test_fnmadd_nan_operand_propagates_without_negation(self) -> None:
+        self.assertEqual(
+            self.ops.fp_fnmadd_rne_bits(_QNAN, _F4, _F2),
+            0x7FF8000012345678,
+        )
 
-    def test_divide_by_zero_fail_closed(self) -> None:
-        with self.assertRaises(ExecutionInconclusive):
-            self.ops.fp_fdiv_rne_bits(_F2, 0)
+    def test_divide_by_zero_produces_infinity(self) -> None:
+        self.assertEqual(self.ops.fp_fdiv_rne_bits(_F2, 0), 0x7FF0000000000000)
 
 
 class ConcreteOpsFpOracleInstructionTests(unittest.TestCase):

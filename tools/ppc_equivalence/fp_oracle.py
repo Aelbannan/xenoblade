@@ -5,19 +5,22 @@ scalar ops. It deliberately avoids host ``float`` / ``struct.pack`` on
 proof-critical paths so a future migration can treat results as independently
 checkable bit patterns.
 
-**Not production-complete:** exception propagation, Force25, paired-single lanes,
-and most FPSCR sticky-flag updates remain partial or unimplemented. Unhandled
-cases fail closed via :class:`OracleUnimplementedError`.
+**Not production-complete:** exception propagation into FPSCR sticky latch,
+Force25 (applied by semantics before the oracle), paired-single lanes, and
+Broadway single-FMA midpoint residuals remain partial or unimplemented.
+Unhandled cases fail closed via :class:`OracleUnimplementedError`.
 
 **Partially wired:** ``ConcreteOps`` routes ``fadd``/``fadds``/``fmul``/``fmuls``/
 ``fsub``/``fsubs``/``fdiv``/``fdivs``/``fmadd``/``fmadds``/``fmsub``/``fmsubs``/
-``fnmadd``/``fnmadds``/``fnmsub``/``fnmsubs`` through this oracle (fail-closed
-elsewhere). Force25 for single fused forms is applied by the semantics layer
-before the oracle sees ``frC``. Negative fused forms negate the positive fused
-result (NaNs never reach negation — the oracle fails closed on non-finite inputs).
-Single fused forms fail closed on Dolphin/Broadway midpoint-tie residues with a
-nonzero addend. SymbolicOps, paired-single lanes, and other FP paths still use
-host float or Z3. Nothing here promotes FP proofs out of Tier C.
+``fnmadd``/``fnmadds``/``fnmsub``/``fnmsubs`` through this oracle. The integer
+significand path models finite normals/zeros, subnormals, ±Inf, quiet/signaling
+NaN propagation, division by zero (±Inf + ZX), and overflow (±Inf + OX). Force25
+for single fused forms is applied by the semantics layer before the oracle sees
+``frC``. Negative fused forms negate finite results only (NaN payloads are never
+sign-flipped). Single fused forms still fail closed on Dolphin/Broadway
+midpoint-tie residues with a nonzero addend, and on near-cancellation sticky
+residues. SymbolicOps, paired-single lanes, and other FP paths still use host
+float or Z3. Nothing here promotes FP proofs out of Tier C.
 
 **Unified outcome (Track C scaffold):** :class:`FpOracleResult` remains the
 SoftFloat return type. Prefer :mod:`tools.ppc_equivalence.fp_outcome` adapters
@@ -219,19 +222,75 @@ def _fail_unimplemented(reason: str) -> OracleUnimplementedError:
     return OracleUnimplementedError(f"fp oracle scaffold: {reason}")
 
 
-def _require_finite_normal_or_zero(*values: int) -> None:
-    for bits in values:
+_B64_CANONICAL_NAN: Final[int] = 0x7FF8000000000000
+
+
+def _oracle_result(bits: int, flags: FpOracleFlags | None = None) -> FpOracleResult:
+    bits = mask64(bits)
+    return FpOracleResult(bits, flags or FpOracleFlags(), fprf_from_binary64(bits))
+
+
+def _make_inf64(sign: bool, *, overflow: bool = False, divide_by_zero: bool = False) -> FpOracleResult:
+    flags = FpOracleFlags(
+        overflow=overflow,
+        inexact=overflow,
+        divide_by_zero=divide_by_zero,
+    )
+    return _oracle_result(encode_binary64(sign, _B64_EXP_MAX, 0), flags)
+
+
+def _quiet_nan64(bits: int) -> int:
+    return mask64(bits | _B64_QUIET_NAN)
+
+
+def _is_nan_class(kind: FpClass) -> bool:
+    return kind in (FpClass.QNAN, FpClass.SNAN)
+
+
+def _is_zero64(exp: int, frac: int) -> bool:
+    return exp == 0 and frac == 0
+
+
+def _propagate_nan64(*operands: int) -> FpOracleResult:
+    """Quiet the first NaN operand; set invalid when any operand is sNaN."""
+    invalid = False
+    chosen: int | None = None
+    for bits in operands:
         kind = classify_binary64(bits)
-        if kind in (FpClass.SNAN, FpClass.QNAN, FpClass.INFINITY):
-            raise _fail_unimplemented(f"non-finite operand class {kind.value}")
-        if kind is FpClass.SUBNORMAL:
-            raise _fail_unimplemented("subnormal operands are not modeled yet")
+        if kind is FpClass.SNAN:
+            invalid = True
+            if chosen is None:
+                chosen = _quiet_nan64(bits)
+        elif kind is FpClass.QNAN and chosen is None:
+            chosen = mask64(bits)
+    if chosen is None:
+        chosen = _B64_CANONICAL_NAN
+        invalid = True
+    return _oracle_result(chosen, FpOracleFlags(invalid=invalid))
+
+
+def _canonical_invalid_nan() -> FpOracleResult:
+    return _oracle_result(_B64_CANONICAL_NAN, FpOracleFlags(invalid=True))
 
 
 def _significand64(exponent: int, fraction: int) -> int:
     if exponent == 0:
         return fraction
     return (1 << _B64_FRAC_BITS) | fraction
+
+
+def _rne_round_bits(sig: int, shift: int) -> tuple[int, bool]:
+    """Right-shift ``sig`` by ``shift`` with round-nearest-even; return (sig, inexact)."""
+    if shift <= 0:
+        return sig << (-shift), False
+    lost = sig & ((1 << shift) - 1)
+    sig >>= shift
+    if not lost:
+        return sig, False
+    half = 1 << (shift - 1)
+    if lost > half or (lost == half and (sig & 1)):
+        sig += 1
+    return sig, True
 
 
 def _round_rne(
@@ -248,33 +307,46 @@ def _round_rne(
         return encode_binary64(sign, 0, 0), flags
 
     top_bit = sig.bit_length() - 1
-    if top_bit > _B64_FRAC_BITS + 1:
-        shift = top_bit - (_B64_FRAC_BITS + 1)
-        lost = sig & ((1 << shift) - 1)
-        sig >>= shift
+    if top_bit > _B64_FRAC_BITS:
+        shift = top_bit - _B64_FRAC_BITS
+        sig, inexact = _rne_round_bits(sig, shift)
         exp_unbiased += shift
-        if lost:
+        if inexact:
             flags = FpOracleFlags(inexact=True)
-            if lost > (1 << (shift - 1)) or (
-                lost == (1 << (shift - 1)) and (sig & 1)
-            ):
-                sig += 1
-                flags = FpOracleFlags(inexact=True)
     elif top_bit < _B64_FRAC_BITS:
         shift = _B64_FRAC_BITS - top_bit
         exp_unbiased -= shift
         sig <<= shift
 
+    # Carry from rounding can bump the significand into the next binade.
+    if sig >= (1 << (_B64_FRAC_BITS + 1)):
+        sig >>= 1
+        exp_unbiased += 1
+
     exp_max_unbiased = (1 << exp_bits) - 2 - exp_bias
     exp_min_unbiased = 1 - exp_bias
     if exp_unbiased > exp_max_unbiased:
-        raise _fail_unimplemented("finite overflow is excluded by default domain")
-    if exp_unbiased < exp_min_unbiased:
-        raise _fail_unimplemented("subnormal/underflow result is not modeled yet")
+        return encode_binary64(sign, _B64_EXP_MAX, 0), FpOracleFlags(
+            overflow=True, inexact=True,
+        )
 
-    while sig >= (1 << (_B64_FRAC_BITS + 1)):
-        sig >>= 1
-        exp_unbiased += 1
+    if exp_unbiased < exp_min_unbiased:
+        # Shift into the subnormal window (or flush to zero).
+        shift = exp_min_unbiased - exp_unbiased
+        # ``sig`` still has the implicit bit at position FRAC_BITS.
+        sig, inexact = _rne_round_bits(sig, shift)
+        if inexact:
+            flags = FpOracleFlags(inexact=True, underflow=True)
+        if sig == 0:
+            return encode_binary64(sign, 0, 0), flags if flags.inexact else FpOracleFlags(
+                underflow=True, inexact=True,
+            )
+        if sig >= (1 << _B64_FRAC_BITS):
+            # Rounded up to the smallest normal.
+            return encode_binary64(sign, 1, 0), flags
+        return encode_binary64(sign, 0, sig & _B64_FRAC_MASK), (
+            flags if flags.inexact else FpOracleFlags(underflow=True, inexact=bool(sig))
+        )
 
     encoded_frac = sig & _B64_FRAC_MASK
     encoded_exp = exp_unbiased + exp_bias
@@ -283,15 +355,32 @@ def _round_rne(
 
 def fadd_binary64_rne(a: int, b: int) -> FpOracleResult:
     """Add two binary64 operands with round-nearest-even."""
-    _require_finite_normal_or_zero(a, b)
+    a_kind = classify_binary64(a)
+    b_kind = classify_binary64(b)
+    if _is_nan_class(a_kind) or _is_nan_class(b_kind):
+        return _propagate_nan64(a, b)
+
     a_sign, a_exp, a_frac = decode_binary64(a)
     b_sign, b_exp, b_frac = decode_binary64(b)
-    if a_exp == 0 and a_frac == 0:
-        bits = mask64(b)
-        return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
-    if b_exp == 0 and b_frac == 0:
-        bits = mask64(a)
-        return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+    a_inf = a_kind is FpClass.INFINITY
+    b_inf = b_kind is FpClass.INFINITY
+    if a_inf and b_inf:
+        if a_sign != b_sign:
+            return _canonical_invalid_nan()
+        return _make_inf64(a_sign)
+    if a_inf:
+        return _make_inf64(a_sign)
+    if b_inf:
+        return _make_inf64(b_sign)
+
+    if _is_zero64(a_exp, a_frac):
+        if _is_zero64(b_exp, b_frac):
+            # (+0)+(+0)=+0; (-0)+(-0)=-0; mixed → +0 under RNE.
+            bits = encode_binary64(a_sign and b_sign, 0, 0)
+            return _oracle_result(bits)
+        return _oracle_result(b)
+    if _is_zero64(b_exp, b_frac):
+        return _oracle_result(a)
 
     a_sig = _significand64(a_exp, a_frac)
     b_sig = _significand64(b_exp, b_frac)
@@ -302,13 +391,16 @@ def fadd_binary64_rne(a: int, b: int) -> FpOracleResult:
         a_sign, b_sign = b_sign, a_sign
         a_sig, b_sig = b_sig, a_sig
         a_unbiased, b_unbiased = b_unbiased, a_unbiased
+        a_exp, a_frac = b_exp, b_frac
 
     shift = a_unbiased - b_unbiased
-    if shift >= _B64_FRAC_BITS + 2:
-        bits = encode_binary64(a_sign, a_exp, a_frac)
-        return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+    if shift >= _B64_FRAC_BITS + 3:
+        return _oracle_result(encode_binary64(a_sign, a_exp, a_frac))
 
-    b_sig >>= shift
+    sticky = 0
+    if shift > 0:
+        sticky = 1 if (b_sig & ((1 << shift) - 1)) else 0
+        b_sig >>= shift
     if a_sign == b_sign:
         sig = a_sig + b_sig
         sign = a_sign
@@ -317,6 +409,11 @@ def fadd_binary64_rne(a: int, b: int) -> FpOracleResult:
         sig = a_sig - b_sig
         sign = a_sign
         exp_unbiased = a_unbiased
+        if sig == 0:
+            if sticky:
+                # Tiny residue after cancellation — treat as +0 under RNE.
+                return _oracle_result(encode_binary64(False, 0, 0))
+            return _oracle_result(encode_binary64(False, 0, 0))
 
     bits, flags = _round_rne(
         sign,
@@ -325,34 +422,51 @@ def fadd_binary64_rne(a: int, b: int) -> FpOracleResult:
         exp_bits=_B64_EXP_BITS,
         exp_bias=_B64_EXP_BIAS,
     )
-    return FpOracleResult(bits, flags, fprf_from_binary64(bits))
+    if sticky and not flags.inexact:
+        flags = FpOracleFlags(
+            invalid=flags.invalid,
+            divide_by_zero=flags.divide_by_zero,
+            inexact=True,
+            overflow=flags.overflow,
+            underflow=flags.underflow,
+        )
+    return _oracle_result(bits, flags)
 
 
 def fmul_binary64_rne(a: int, b: int) -> FpOracleResult:
     """Multiply two binary64 operands with round-nearest-even."""
-    _require_finite_normal_or_zero(a, b)
+    a_kind = classify_binary64(a)
+    b_kind = classify_binary64(b)
+    if _is_nan_class(a_kind) or _is_nan_class(b_kind):
+        return _propagate_nan64(a, b)
+
     a_sign, a_exp, a_frac = decode_binary64(a)
     b_sign, b_exp, b_frac = decode_binary64(b)
-    if (a_exp == 0 and a_frac == 0) or (b_exp == 0 and b_frac == 0):
-        sign = a_sign ^ b_sign
-        bits = encode_binary64(sign, 0, 0)
-        return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+    sign = a_sign ^ b_sign
+    a_inf = a_kind is FpClass.INFINITY
+    b_inf = b_kind is FpClass.INFINITY
+    a_zero = _is_zero64(a_exp, a_frac)
+    b_zero = _is_zero64(b_exp, b_frac)
+    if (a_inf and b_zero) or (b_inf and a_zero):
+        return _canonical_invalid_nan()
+    if a_inf or b_inf:
+        return _make_inf64(sign)
+    if a_zero or b_zero:
+        return _oracle_result(encode_binary64(sign, 0, 0))
 
     a_sig = _significand64(a_exp, a_frac)
     b_sig = _significand64(b_exp, b_frac)
-    sign = a_sign ^ b_sign
     a_unbiased = (a_exp - _B64_EXP_BIAS) if a_exp else (1 - _B64_EXP_BIAS)
     b_unbiased = (b_exp - _B64_EXP_BIAS) if b_exp else (1 - _B64_EXP_BIAS)
-    sig = (a_sig * b_sig) >> _B64_FRAC_BITS
-    exp_unbiased = a_unbiased + b_unbiased
+    product = a_sig * b_sig
     bits, flags = _round_rne(
         sign,
-        exp_unbiased,
-        sig,
+        a_unbiased + b_unbiased - _B64_FRAC_BITS,
+        product,
         exp_bits=_B64_EXP_BITS,
         exp_bias=_B64_EXP_BIAS,
     )
-    return FpOracleResult(bits, flags, fprf_from_binary64(bits))
+    return _oracle_result(bits, flags)
 
 
 def fsub_binary64_rne(a: int, b: int) -> FpOracleResult:
@@ -363,59 +477,73 @@ def fsub_binary64_rne(a: int, b: int) -> FpOracleResult:
 
 def fdiv_binary64_rne(a: int, b: int) -> FpOracleResult:
     """Divide two binary64 operands with round-nearest-even."""
-    _require_finite_normal_or_zero(a, b)
+    a_kind = classify_binary64(a)
+    b_kind = classify_binary64(b)
+    if _is_nan_class(a_kind) or _is_nan_class(b_kind):
+        return _propagate_nan64(a, b)
+
     a_sign, a_exp, a_frac = decode_binary64(a)
     b_sign, b_exp, b_frac = decode_binary64(b)
-    if b_exp == 0 and b_frac == 0:
-        raise _fail_unimplemented("division by zero is not modeled yet")
-    if a_exp == 0 and a_frac == 0:
-        sign = a_sign ^ b_sign
-        bits = encode_binary64(sign, 0, 0)
-        return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+    sign = a_sign ^ b_sign
+    a_inf = a_kind is FpClass.INFINITY
+    b_inf = b_kind is FpClass.INFINITY
+    a_zero = _is_zero64(a_exp, a_frac)
+    b_zero = _is_zero64(b_exp, b_frac)
+    if a_inf and b_inf:
+        return _canonical_invalid_nan()
+    if a_zero and b_zero:
+        return _canonical_invalid_nan()
+    if a_inf:
+        return _make_inf64(sign)
+    if b_inf:
+        return _oracle_result(encode_binary64(sign, 0, 0))
+    if b_zero:
+        if a_zero:
+            return _canonical_invalid_nan()
+        return _make_inf64(sign, divide_by_zero=True)
+    if a_zero:
+        return _oracle_result(encode_binary64(sign, 0, 0))
 
     a_sig = _significand64(a_exp, a_frac)
     b_sig = _significand64(b_exp, b_frac)
-    sign = a_sign ^ b_sign
     a_unbiased = (a_exp - _B64_EXP_BIAS) if a_exp else (1 - _B64_EXP_BIAS)
     b_unbiased = (b_exp - _B64_EXP_BIAS) if b_exp else (1 - _B64_EXP_BIAS)
-    exp_unbiased = a_unbiased - b_unbiased
-    shift = _B64_FRAC_BITS + 2
+    # Quotient significand with extra guard bits for RNE.
+    shift = _B64_FRAC_BITS + 3
     quot, rem = divmod(a_sig << shift, b_sig)
-    sig_shift = shift - (_B64_FRAC_BITS + 1) - exp_unbiased
-    flags = FpOracleFlags()
-    if sig_shift <= 0:
-        sig = quot << -sig_shift
-    else:
-        lost = quot & ((1 << sig_shift) - 1)
-        sig = quot >> sig_shift
-        sticky = rem != 0 or (lost & ((1 << max(sig_shift - 1, 0)) - 1)) != 0
-        if lost or rem:
-            flags = FpOracleFlags(inexact=True)
-            half = 1 << (sig_shift - 1) if sig_shift else 0
-            if lost > half or (lost == half and (sig & 1 or sticky)):
-                sig += 1
-    bits, round_flags = _round_rne(
+    bits, flags = _round_rne(
         sign,
-        exp_unbiased,
-        sig,
+        a_unbiased - b_unbiased - shift + _B64_FRAC_BITS,
+        quot,
         exp_bits=_B64_EXP_BITS,
         exp_bias=_B64_EXP_BIAS,
     )
-    if round_flags.inexact:
+    if rem and not flags.inexact:
         flags = FpOracleFlags(
             invalid=flags.invalid,
             divide_by_zero=flags.divide_by_zero,
             inexact=True,
-            overflow=flags.overflow or round_flags.overflow,
-            underflow=flags.underflow or round_flags.underflow,
+            overflow=flags.overflow,
+            underflow=flags.underflow,
         )
-    return FpOracleResult(bits, flags, fprf_from_binary64(bits))
+    return _oracle_result(bits, flags)
 
 
 def _round_binary64_to_binary32_rne(bits64: int) -> tuple[int, FpOracleFlags]:
     sign, exp, frac = decode_binary64(bits64)
-    if exp == _B64_EXP_MAX:
-        raise _fail_unimplemented("non-finite to-single conversion")
+    kind = classify_binary64(bits64)
+    if kind is FpClass.INFINITY:
+        return encode_binary32(sign, _B32_EXP_MASK, 0), FpOracleFlags()
+    if _is_nan_class(kind):
+        # Truncate the quieted payload into the binary32 NaN fraction.
+        quieted = _quiet_nan64(bits64)
+        _qs, _qe, qfrac = decode_binary64(quieted)
+        frac32 = (qfrac >> (_B64_FRAC_BITS - _B32_FRAC_BITS)) & _B32_FRAC_MASK
+        if frac32 == 0:
+            frac32 = _B32_QUIET_NAN
+        return encode_binary32(sign, _B32_EXP_MASK, frac32), FpOracleFlags(
+            invalid=(kind is FpClass.SNAN),
+        )
     if exp == 0 and frac == 0:
         return encode_binary32(sign, 0, 0), FpOracleFlags()
 
@@ -424,24 +552,34 @@ def _round_binary64_to_binary32_rne(bits64: int) -> tuple[int, FpOracleFlags]:
     flags = FpOracleFlags()
 
     shift = _B64_FRAC_BITS - _B32_FRAC_BITS
-    lost = sig & ((1 << shift) - 1)
-    sig >>= shift
-    if lost:
+    sig, inexact = _rne_round_bits(sig, shift)
+    if inexact:
         flags = FpOracleFlags(inexact=True)
-        if lost > (1 << (shift - 1)) or (
-            lost == (1 << (shift - 1)) and (sig & 1)
-        ):
-            sig += 1
-            flags = FpOracleFlags(inexact=True)
 
-    while sig >= (1 << (_B32_FRAC_BITS + 1)):
+    if sig >= (1 << (_B32_FRAC_BITS + 1)):
         sig >>= 1
         unbiased += 1
 
-    if unbiased > (1 << _B32_EXP_BITS) - 2 - _B32_EXP_BIAS:
-        raise _fail_unimplemented("single-precision overflow is not modeled yet")
-    if unbiased < 1 - _B32_EXP_BIAS:
-        raise _fail_unimplemented("single-precision subnormal result is not modeled yet")
+    exp_max_unbiased = (1 << _B32_EXP_BITS) - 2 - _B32_EXP_BIAS
+    exp_min_unbiased = 1 - _B32_EXP_BIAS
+    if unbiased > exp_max_unbiased:
+        return encode_binary32(sign, _B32_EXP_MASK, 0), FpOracleFlags(
+            overflow=True, inexact=True,
+        )
+    if unbiased < exp_min_unbiased:
+        sub_shift = exp_min_unbiased - unbiased
+        sig, sub_inexact = _rne_round_bits(sig, sub_shift)
+        if sub_inexact:
+            flags = FpOracleFlags(inexact=True, underflow=True)
+        if sig == 0:
+            return encode_binary32(sign, 0, 0), flags if flags.inexact else FpOracleFlags(
+                underflow=True, inexact=True,
+            )
+        if sig >= (1 << _B32_FRAC_BITS):
+            return encode_binary32(sign, 1, 0), flags
+        return encode_binary32(sign, 0, sig & _B32_FRAC_MASK), (
+            flags if flags.inexact else FpOracleFlags(underflow=True, inexact=True)
+        )
 
     encoded_frac = sig & _B32_FRAC_MASK
     encoded_exp = unbiased + _B32_EXP_BIAS
@@ -454,8 +592,29 @@ def _single_to_fpr_bits(bits32: int) -> int:
     if exp == 0 and frac == 0:
         return encode_binary64(sign, 0, 0)
     if exp == _B32_EXP_MASK:
-        raise _fail_unimplemented("non-finite single expansion")
-    return encode_binary64(sign, exp - _B32_EXP_BIAS + _B64_EXP_BIAS, frac << (_B64_FRAC_BITS - _B32_FRAC_BITS))
+        if frac == 0:
+            return encode_binary64(sign, _B64_EXP_MAX, 0)
+        # Quiet NaN payload truncated to binary32 then re-expanded.
+        return encode_binary64(
+            sign,
+            _B64_EXP_MAX,
+            (frac | _B32_QUIET_NAN) << (_B64_FRAC_BITS - _B32_FRAC_BITS),
+        )
+    if exp == 0:
+        # Normalize binary32 subnormal into binary64.
+        shift = _B32_FRAC_BITS - frac.bit_length()
+        frac <<= shift + 1
+        unbiased = (1 - _B32_EXP_BIAS) - (shift + 1)
+        return encode_binary64(
+            sign,
+            unbiased + _B64_EXP_BIAS,
+            (frac << (_B64_FRAC_BITS - _B32_FRAC_BITS)) & _B64_FRAC_MASK,
+        )
+    return encode_binary64(
+        sign,
+        exp - _B32_EXP_BIAS + _B64_EXP_BIAS,
+        frac << (_B64_FRAC_BITS - _B32_FRAC_BITS),
+    )
 
 
 def fadds_fpr_rne(a_fpr: int, b_fpr: int) -> FpOracleResult:
@@ -524,22 +683,41 @@ def fmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
 
     Operand order matches PowerPC ``fmadd`` (``frA * frC + frB``).
     """
-    _require_finite_normal_or_zero(a, c, b)
+    a_kind = classify_binary64(a)
+    c_kind = classify_binary64(c)
+    b_kind = classify_binary64(b)
+    if _is_nan_class(a_kind) or _is_nan_class(c_kind) or _is_nan_class(b_kind):
+        return _propagate_nan64(a, c, b)
+
     a_sign, a_exp, a_frac = decode_binary64(a)
     c_sign, c_exp, c_frac = decode_binary64(c)
     b_sign, b_exp, b_frac = decode_binary64(b)
     product_sign = a_sign ^ c_sign
-    a_zero = a_exp == 0 and a_frac == 0
-    c_zero = c_exp == 0 and c_frac == 0
-    b_zero = b_exp == 0 and b_frac == 0
+    a_zero = _is_zero64(a_exp, a_frac)
+    c_zero = _is_zero64(c_exp, c_frac)
+    b_zero = _is_zero64(b_exp, b_frac)
+    a_inf = a_kind is FpClass.INFINITY
+    c_inf = c_kind is FpClass.INFINITY
+    b_inf = b_kind is FpClass.INFINITY
+
+    # Invalid: Inf * 0 (either way).
+    if (a_inf and c_zero) or (c_inf and a_zero):
+        return _canonical_invalid_nan()
+
+    product_inf = (a_inf and not c_zero) or (c_inf and not a_zero)
+    if product_inf and b_inf and product_sign != b_sign:
+        return _canonical_invalid_nan()
+    if product_inf:
+        return _make_inf64(product_sign)
+    if b_inf:
+        return _make_inf64(b_sign)
 
     if a_zero or c_zero:
         if b_zero:
             # IEEE-754 RNE: exact zero from 0*x+0 is -0 only when both are -0.
             bits = encode_binary64(product_sign and b_sign, 0, 0)
-            return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
-        bits = mask64(b)
-        return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+            return _oracle_result(bits)
+        return _oracle_result(b)
 
     a_sig = _significand64(a_exp, a_frac)
     c_sig = _significand64(c_exp, c_frac)
@@ -557,7 +735,7 @@ def fmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
             exp_bits=_B64_EXP_BITS,
             exp_bias=_B64_EXP_BIAS,
         )
-        return FpOracleResult(bits, flags, fprf_from_binary64(bits))
+        return _oracle_result(bits, flags)
 
     b_sig = _significand64(b_exp, b_frac)
     b_unbiased = (b_exp - _B64_EXP_BIAS) if b_exp else (1 - _B64_EXP_BIAS)
@@ -574,7 +752,7 @@ def fmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
                 exp_bits=_B64_EXP_BITS,
                 exp_bias=_B64_EXP_BIAS,
             )
-            return FpOracleResult(bits, flags, fprf_from_binary64(bits))
+            return _oracle_result(bits, flags)
         if shift > 0:
             sticky = 1 if (b_ext & ((1 << shift) - 1)) else 0
             b_aligned = b_ext >> shift
@@ -586,8 +764,7 @@ def fmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
     else:
         shift = b_unbiased - product_scale
         if shift >= (_B64_FRAC_BITS * 3 + 8):
-            bits = mask64(b)
-            return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+            return _oracle_result(b)
         if shift > 0:
             sticky = 1 if (product & ((1 << shift) - 1)) else 0
             product_aligned = product >> shift
@@ -608,8 +785,7 @@ def fmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
         sign = right_sign
     else:
         if sticky == 0:
-            bits = encode_binary64(False, 0, 0)
-            return FpOracleResult(bits, FpOracleFlags(), fprf_from_binary64(bits))
+            return _oracle_result(encode_binary64(False, 0, 0))
         raise _fail_unimplemented(
             "fused near-cancellation with sticky residue is not modeled yet",
         )
@@ -621,7 +797,15 @@ def fmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
         exp_bits=_B64_EXP_BITS,
         exp_bias=_B64_EXP_BIAS,
     )
-    return FpOracleResult(bits, flags, fprf_from_binary64(bits))
+    if sticky and not flags.inexact:
+        flags = FpOracleFlags(
+            invalid=flags.invalid,
+            divide_by_zero=flags.divide_by_zero,
+            inexact=True,
+            overflow=flags.overflow,
+            underflow=flags.underflow,
+        )
+    return _oracle_result(bits, flags)
 
 
 def fmsub_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
@@ -686,11 +870,13 @@ def fmsubs_fpr_rne(a_fpr: int, b_fpr: int, c_fpr: int) -> FpOracleResult:
 def _negate_finite_oracle_result(result: FpOracleResult) -> FpOracleResult:
     """Flip the sign bit of a finite fused result (``fn*`` forms).
 
-    Callers must only pass results from positive fused helpers, which already
-    fail closed on NaN/Inf/subnormal — so this never negates a NaN payload.
+    NaN payloads must never be sign-flipped; Inf/zero/finite results negate.
     """
+    kind = classify_binary64(result.bits64)
+    if _is_nan_class(kind):
+        return result
     bits = mask64(result.bits64 ^ (1 << _B64_SIGN_SHIFT))
-    return FpOracleResult(bits, result.flags, fprf_from_binary64(bits))
+    return _oracle_result(bits, result.flags)
 
 
 def fnmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:

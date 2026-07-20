@@ -18,6 +18,7 @@ from tools.ppc_equivalence.jump_table_obligations import (
     rom_image_no_write_constraints,
     validate_indirect_targets_obligation,
     validate_readonly_image_obligation,
+    write_hits_table_conditions,
 )
 from tools.ppc_equivalence.result import ProofStatus
 from tools.ppc_equivalence.semantics import SymbolicOps
@@ -41,7 +42,8 @@ class JumpTableObligationTests(unittest.TestCase):
         )
         obligation = build_readonly_image_obligation(table, no_write_status="unsat")
         self.assertIsNone(validate_readonly_image_obligation(obligation))
-        self.assertEqual(obligation["byte_count"], 8)
+        self.assertEqual(obligation["schema_version"], 2)
+        self.assertEqual(obligation["original"]["byte_count"], 8)
         self.assertEqual(obligation["image_sha256"], table.image_sha256)
 
     def test_builds_and_validates_indirect_targets(self) -> None:
@@ -53,6 +55,8 @@ class JumpTableObligationTests(unittest.TestCase):
             coverage="unsat-remainder",
         )
         self.assertIsNone(validate_indirect_targets_obligation(obligation))
+        self.assertEqual(obligation["schema_version"], 2)
+        self.assertEqual(obligation["original"]["coverage"], "unsat-remainder")
 
     def test_rejects_incomplete_obligations(self) -> None:
         self.assertIsNotNone(validate_readonly_image_obligation({"kind": "rom-image"}))
@@ -88,15 +92,60 @@ class JumpTableObligationTests(unittest.TestCase):
         written = ops.store_byte(initial, ops.const(0x1000), ops.const(0xFF))
 
         class _Terminal:
-            def __init__(self, condition, memory):
+            def __init__(self, condition, memory, writes=()):
                 self.condition = condition
-                self.state = type("S", (), {"memory": memory})()
+                self.state = type("S", (), {"memory": memory, "memory_writes": writes})()
 
-        terminals = [_Terminal(z3.BoolVal(True), written)]
+        terminals = [_Terminal(z3.BoolVal(True), written, writes=(ops.const(0x1000),))]
         solver = z3.Solver()
         solver.add(*rom_image_byte_constraints(initial, table, ops))
         solver.add(*rom_image_no_write_constraints(terminals, initial, table, ops))
         self.assertEqual(solver.check(), z3.unsat)
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_write_hits_detects_store_same_value(self) -> None:
+        """Final memory matches ROM, but memory_writes still hits the table."""
+        ops = SymbolicOps()
+        z3 = ops.z3
+        table = JumpTableWords(base=0x1000, words=(0x11223344,), source="test")
+        # Same value as image byte 0 (0x11).
+        write_addr = ops.const(0x1000)
+
+        class _Terminal:
+            def __init__(self):
+                self.condition = z3.BoolVal(True)
+                self.state = type(
+                    "S",
+                    (),
+                    {
+                        "memory_writes": (write_addr,),
+                        "memory": None,
+                    },
+                )()
+
+        bad = write_hits_table_conditions([_Terminal()], table, ops)
+        self.assertEqual(len(bad), 1)
+        solver = z3.Solver()
+        solver.add(z3.Or(*bad))
+        self.assertEqual(solver.check(), z3.sat)
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_write_hits_detects_store_restore(self) -> None:
+        ops = SymbolicOps()
+        z3 = ops.z3
+        table = JumpTableWords(base=0x1000, words=(0x11223344,), source="test")
+        writes = (ops.const(0x1000), ops.const(0x1000))
+
+        class _Terminal:
+            def __init__(self):
+                self.condition = z3.BoolVal(True)
+                self.state = type("S", (), {"memory_writes": writes, "memory": None})()
+
+        bad = write_hits_table_conditions([_Terminal()], table, ops)
+        self.assertEqual(len(bad), 2)
+        solver = z3.Solver()
+        solver.add(z3.Or(*bad))
+        self.assertEqual(solver.check(), z3.sat)
 
 
 @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
@@ -118,10 +167,13 @@ class JumpTableEngineGateTests(unittest.TestCase):
             result.unsupported,
         )
 
-    def test_proven_jump_table_context_can_be_equivalent(self) -> None:
-        # cmplwi r0,1; slwi r0,r0,2; lwzx r3,r3,r0; mtctr r3; bctr
-        # PR0 freeze: jump-table features demote EQUIVALENT → INCONCLUSIVE_UNSUPPORTED.
-        code = bytes.fromhex("28000001 5400103a 7c63002e 7c6903a6 4e800420")
+    def test_proven_jump_table_context_attaches_discharged_obligations(self) -> None:
+        # cmplwi r0,1; slwi r0,r0,2; lwzx r3,r3,r0; mtctr r3; bctr with lis/addi.
+        # Without a bound branch, coverage may stay open; never claim soft EQUIVALENT
+        # via invisible index premises. Obligations must still be schema v2.
+        code = bytes.fromhex(
+            "3c608001 38630000 28000001 5400103a 7c63002e 7c6903a6 4e800420"
+        )
         base = 0x80001000
         insns = decode_block(code, base, validate_with_capstone=False)
         table = JumpTableWords(
@@ -131,7 +183,7 @@ class JumpTableEngineGateTests(unittest.TestCase):
         )
         context = JumpTableProofContext(
             table=table,
-            branch_pc=base + 16,
+            branch_pc=base + 24,
             table_base_reg=3,
             index_reg=0,
         )
@@ -145,23 +197,21 @@ class JumpTableEngineGateTests(unittest.TestCase):
             jump_table=context,
             max_paths=64,
         )
-        self.assertEqual(
-            result.status,
-            ProofStatus.INCONCLUSIVE_UNSUPPORTED,
-            result.unsupported or result.warnings,
-        )
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT)
         self.assertEqual(
             result.proof_features,
             ["readonly-image", "indirect-target-closure"],
         )
         self.assertIsNotNone(result.address_space)
         self.assertIsNotNone(result.indirect_targets)
+        self.assertEqual(result.address_space["schema_version"], 2)
+        self.assertEqual(result.indirect_targets["schema_version"], 2)
 
     def test_closed_set_excluding_true_targets_never_equivalent(self) -> None:
         """False-eq regression: original→A, candidate→B, closed set {C,D}.
 
-        Soft for PR0: must not be promotion-eligible / EQUIVALENT. Without the
-        freeze the engine currently returns EQUIVALENT by expanding only C/D.
+        Remainder retention + coverage discharge must refuse EQUIVALENT.
+        Exact status is inconclusive (coverage sat) or not-equivalent.
         """
         from tools.ppc_equivalence.ir import Instruction, Opcode
 
@@ -228,8 +278,108 @@ class JumpTableEngineGateTests(unittest.TestCase):
             jump_table=context,
             max_paths=64,
         )
-        # Soft: never EQUIVALENT (strengthen to inconclusive/not-equivalent later).
         self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertIn(
+            result.status,
+            {
+                ProofStatus.NOT_EQUIVALENT,
+                ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            },
+            result.unsupported or result.warnings,
+        )
+        # Coverage discharge must report a non-unsat remainder.
+        coverage = result.indirect_targets["original"]["coverage"]
+        if isinstance(coverage, dict):
+            self.assertNotEqual(coverage["result"], "unsat")
+        self.assertTrue(
+            any("coverage" in item or "discharge" in item for item in result.unsupported)
+            or result.status is ProofStatus.NOT_EQUIVALENT,
+            result.unsupported,
+        )
+
+    def test_store_same_value_into_rom_fails_no_write_discharge(self) -> None:
+        """stb of the existing ROM byte must still fail no-write discharge."""
+        from tools.ppc_equivalence.ir import Instruction, Opcode
+
+        table_base = 0x80010000
+        # Image first byte is 0x80 (from 0x80020000 BE).
+        words = (0x80020000, 0x80020010)
+        table = JumpTableWords(base=table_base, words=words, source="rom-store")
+
+        def _program() -> list[Instruction]:
+            # li r4, 0x80; lis/addi r3,table_base; stb r4,0(r3); blr
+            return [
+                Instruction(0, 0, Opcode.ADDI, (4, 0, 0x80)),
+                Instruction(4, 0, Opcode.ADDIS, (3, 0, (table_base >> 16) & 0xFFFF)),
+                Instruction(8, 0, Opcode.ORI, (3, 3, table_base & 0xFFFF)),
+                Instruction(12, 0, Opcode.STB, (4, 3, 0)),
+                Instruction(16, 0, Opcode.BCLR, (20, 0, 0)),
+            ]
+
+        context = JumpTableProofContext(
+            table=table,
+            branch_pc=0xFFFFFFFC,  # unused; no bctr expansion
+            table_base_reg=3,
+            index_reg=0,
+        )
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=15_000)
+        result = check_equivalence(
+            _program(),
+            _program(),
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            jump_table=context,
+            max_paths=64,
+        )
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT)
+        no_write = result.address_space["original"]["no_write"]
+        self.assertIsInstance(no_write, dict)
+        self.assertEqual(no_write["result"], "sat")
+        self.assertTrue(
+            any("no-write" in item for item in result.unsupported),
+            result.unsupported,
+        )
+
+    def test_store_restore_into_rom_fails_no_write_discharge(self) -> None:
+        from tools.ppc_equivalence.ir import Instruction, Opcode
+
+        table_base = 0x80010000
+        words = (0x80020000, 0x80020010)
+        table = JumpTableWords(base=table_base, words=words, source="rom-restore")
+
+        def _program() -> list[Instruction]:
+            # Write 0xFF then restore 0x80 into table[0].
+            return [
+                Instruction(0, 0, Opcode.ADDIS, (3, 0, (table_base >> 16) & 0xFFFF)),
+                Instruction(4, 0, Opcode.ORI, (3, 3, table_base & 0xFFFF)),
+                Instruction(8, 0, Opcode.ADDI, (4, 0, 0xFF)),
+                Instruction(12, 0, Opcode.STB, (4, 3, 0)),
+                Instruction(16, 0, Opcode.ADDI, (4, 0, 0x80)),
+                Instruction(20, 0, Opcode.STB, (4, 3, 0)),
+                Instruction(24, 0, Opcode.BCLR, (20, 0, 0)),
+            ]
+
+        context = JumpTableProofContext(
+            table=table,
+            branch_pc=0xFFFFFFFC,
+            table_base_reg=3,
+            index_reg=0,
+        )
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=15_000)
+        result = check_equivalence(
+            _program(),
+            _program(),
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            jump_table=context,
+            max_paths=64,
+        )
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT)
+        no_write = result.address_space["original"]["no_write"]
+        self.assertIsInstance(no_write, dict)
+        self.assertEqual(no_write["result"], "sat")
 
 
 if __name__ == "__main__":

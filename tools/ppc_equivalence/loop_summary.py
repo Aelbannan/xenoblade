@@ -14,6 +14,9 @@ PPC corners encoded in the summary notes:
 - Loading CTR with ``0`` makes ``bdnz`` wrap to ``0xffffffff`` (not a zero-trip loop).
 - Closed forms assume no unsigned wrap of the affine accumulators over ``N`` steps.
 
+Compare-affine countdown loops also record a ``FinalCompare`` so CR (including
+XER.SO) matches the last ``cmpwi`` after the closed-form GPR updates.
+
 When ``execute_cfg`` is given a summary map (or auto-builds one), matching
 headers are discharged in closed form and ``affine-loop-summary`` may authorize
 ``EQUIVALENT``.
@@ -40,6 +43,21 @@ class AffineGprUpdate:
 
 
 @dataclass(frozen=True)
+class FinalCompare:
+    """Final CR-field compare applied after closed-form GPR updates.
+
+    Models the last ``cmpwi`` / ``cmpw`` (signed) or ``cmplwi`` / ``cmplw``
+    (unsigned) that executes on loop exit before the failing branch.
+    """
+
+    field: int
+    left_reg: int
+    right_imm: int | None
+    right_reg: int | None
+    signed: bool
+
+
+@dataclass(frozen=True)
 class CtrAffineLoopCandidate:
     """Recognized ``mtctr`` / body / ``bdnz`` counted loop (pattern only)."""
 
@@ -53,6 +71,7 @@ class CtrAffineLoopCandidate:
     instruction_indexes: tuple[int, ...]
     confidence: str
     notes: tuple[str, ...]
+    final_compare: FinalCompare | None = None
 
 
 @dataclass(frozen=True)
@@ -62,6 +81,7 @@ class LoopSummary:
     ``final_gpr[reg] = (entry_reg, stride)`` means
     ``GPR[reg]_exit = GPR[entry_reg]_entry + trip_count * stride`` when
     ``trip_count`` is concrete and wrap-free. ``final_ctr`` is the CTR after exit.
+    ``final_compare`` (when set) is applied to CR after the GPR updates.
     """
 
     header_pc: int
@@ -75,6 +95,45 @@ class LoopSummary:
     invariant_notes: tuple[str, ...]
     entry_condition: str
     exit_condition: str
+    final_compare: FinalCompare | None = None
+
+
+def apply_compare_to_cr(
+    state: Any,
+    compare: FinalCompare,
+    ops: Any,
+) -> Any:
+    """Apply a PPC integer compare into ``CR[field]``, including XER.SO in bit 0."""
+    left = state.gpr[compare.left_reg]
+    if compare.right_imm is not None:
+        right = ops.const(int(compare.right_imm) & 0xFFFFFFFF)
+    elif compare.right_reg is not None:
+        right = state.gpr[compare.right_reg]
+    else:
+        raise ValueError("FinalCompare requires right_imm or right_reg")
+
+    if compare.signed:
+        lt = ops.signed_lt(left, right)
+        gt = ops.signed_lt(right, left)
+    else:
+        lt = ops.unsigned_lt(left, right)
+        gt = ops.unsigned_lt(right, left)
+    nibble = ops.bor(
+        ops.bor(
+            ops.ite(lt, ops.const(8), ops.const(0)),
+            ops.ite(gt, ops.const(4), ops.const(0)),
+        ),
+        ops.bor(
+            ops.ite(ops.eq(left, right), ops.const(2), ops.const(0)),
+            ops.ite(state.xer.so, ops.const(1), ops.const(0)),
+        ),
+    )
+    field = int(compare.field)
+    shift = (7 - field) * 4
+    mask = ops.const(0xF << shift)
+    return state.with_cr(
+        ops.bor(ops.band(state.cr, ops.bnot(mask)), ops.shl(nibble, ops.const(shift))),
+    )
 
 
 def find_ctr_affine_loop_candidates(
@@ -154,6 +213,7 @@ def summarize_ctr_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary 
         invariant_notes=tuple(candidate.notes),
         entry_condition=f"CTR == {candidate.trip_count}",
         exit_condition="CTR == 0 after bdnz exhaust",
+        final_compare=candidate.final_compare,
     )
 
 
@@ -199,6 +259,13 @@ def find_compare_affine_loop_candidates(
             if trip_count is not None and trip_count >= 1
             else "partial"
         )
+        final_compare = FinalCompare(
+            field=0,
+            left_reg=counter_reg,
+            right_imm=0,
+            right_reg=None,
+            signed=True,
+        )
         candidates.append(
             CtrAffineLoopCandidate(
                 mtctr_pc=instructions[header_index - 1].address,
@@ -211,6 +278,7 @@ def find_compare_affine_loop_candidates(
                 instruction_indexes=tuple(range(header_index - 1, index + 1)),
                 confidence=confidence,
                 notes=tuple(notes),
+                final_compare=final_compare,
             ),
         )
     return candidates
@@ -243,6 +311,7 @@ def summarize_compare_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSumm
         invariant_notes=tuple(candidate.notes),
         entry_condition=f"r{candidate.trip_count_reg} == {candidate.trip_count}",
         exit_condition=f"r{candidate.trip_count_reg} == 0 after bne exhaust",
+        final_compare=candidate.final_compare,
     )
 
 
@@ -285,8 +354,16 @@ def apply_affine_loop_summary(state: Any, summary: LoopSummary, ops: Any) -> Any
         gprs[reg] = ops.add(state.gpr[entry_reg], ops.const(delta))
     if summary.proof_kind == "compare-affine-closed-form":
         # Compare-counted loops do not update CTR.
-        return replace(state, gpr=tuple(gprs))
-    return replace(state, gpr=tuple(gprs), ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF))
+        result = replace(state, gpr=tuple(gprs))
+    else:
+        result = replace(
+            state,
+            gpr=tuple(gprs),
+            ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF),
+        )
+    if summary.final_compare is not None:
+        result = apply_compare_to_cr(result, summary.final_compare, ops)
+    return result
 
 def closed_form_gpr_value(entry_value: int, stride: int, trip_count: int) -> int:
     """Evaluate ``entry + trip_count * stride`` in 32-bit two's complement."""

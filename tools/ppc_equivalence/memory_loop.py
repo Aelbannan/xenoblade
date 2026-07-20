@@ -22,11 +22,16 @@ applying the N stores in closed form and advancing the base/CTR.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Any
 
 from tools.ppc_equivalence.ctr_materialization import collect_lwz_readonly_addresses, recover_gpr_constant
 from tools.ppc_equivalence.ir import Instruction, Opcode
+from tools.ppc_equivalence.memory_semantics import (
+    apply_memory_loop_transition,
+    build_memory_loop_transition,
+    footprint_ok_for_summary,
+)
 
 _CTR_SPR = 9
 _BDNZ_BO = 16  # decrement CTR; branch if CTR != 0 after decrement
@@ -123,12 +128,13 @@ def find_constant_stride_store_loops(
         notes = list(body_notes)
         notes.extend(trip_notes)
         if trip_count == 0:
-            notes.append("CTR load of 0 wraps under bdnz (not a zero-trip loop)")
-        confidence = (
-            "exact-pattern"
-            if trip_count is not None and trip_count >= 1
-            else "partial"
-        )
+            # mtctr 0 + bdnz wraps to 0xffffffff — never summarize as a store loop.
+            notes.append("CTR load of 0 wraps under bdnz (unsupported without skip guard)")
+            confidence = "unsupported"
+        elif trip_count is not None and trip_count >= 1:
+            confidence = "exact-pattern"
+        else:
+            confidence = "partial"
 
         loops.append(
             ConstantStrideStoreLoop(
@@ -161,10 +167,14 @@ def summarize_constant_stride_store_loop(
         return None
     if loop.trip_count > MAX_MEMORY_LOOP_TRIPS:
         return None
-    span = int(loop.trip_count) * int(loop.stride)
-    if span > 0xFFFFFFFF:
-        return None
     if loop.store_kind not in ("stwu", "d-form-addi"):
+        return None
+    if not footprint_ok_for_summary(
+        trip_count=int(loop.trip_count),
+        stride=int(loop.stride),
+        store_width=int(loop.store_width),
+        store_kind=loop.store_kind,
+    ):
         return None
 
     return MemoryLoopSummary(
@@ -238,35 +248,25 @@ def collect_memory_loop_ctr_lwz_addresses(
 
 
 def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) -> Any:
-    """Return a post-loop state under the closed-form store summary."""
+    """Return a post-loop state under the closed-form store summary.
+
+    Stores go through ``memory_semantics.apply_store_effect`` so
+    ``memory_writes`` / ``memory_touches`` match ordinary store execution.
+    """
     if summary.trip_count < 1:
         raise ValueError("memory-loop summary requires a positive concrete trip count")
-
-    memory = state.memory
-    base = state.gpr[summary.base_reg]
-    value = state.gpr[summary.source_reg]
-    width = int(summary.store_width)
-    stride = int(summary.stride)
-
-    for index in range(summary.trip_count):
-        if summary.store_kind == "stwu":
-            # First store at base+stride; subsequent at base+2*stride, ...
-            offset = (index + 1) * stride
-        else:
-            # d-form store at disp 0 then addi: stores at base, base+stride, ...
-            offset = index * stride
-        address = ops.add(base, ops.const(offset & 0xFFFFFFFF))
-        memory = _store_bytes(memory, address, value, width, ops)
-
-    gprs = list(state.gpr)
-    delta = (int(summary.trip_count) * stride) & 0xFFFFFFFF
-    gprs[summary.base_reg] = ops.add(base, ops.const(delta))
-    return replace(
+    transition = build_memory_loop_transition(
         state,
-        gpr=tuple(gprs),
-        memory=memory,
-        ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF),
+        trip_count=int(summary.trip_count),
+        base_reg=summary.base_reg,
+        source_reg=summary.source_reg,
+        stride=int(summary.stride),
+        store_width=int(summary.store_width),
+        store_kind=summary.store_kind,
+        final_ctr=int(summary.final_ctr),
+        ops=ops,
     )
+    return apply_memory_loop_transition(state, transition, ops)
 
 
 REQUIRED_MEMORY_LOOP_KEYS = frozenset({
@@ -364,40 +364,21 @@ class _ParsedStoreBody:
 def _parse_constant_stride_store_body(
     body: Sequence[Instruction],
 ) -> tuple[_ParsedStoreBody | None, list[str]]:
+    """Accept only exact ``stwu`` or ``store; addi`` bodies (order-sensitive)."""
     if not body:
         return None, ["empty loop body"]
 
-    store_insn: Instruction | None = None
-    pointer_addi: tuple[int, int] | None = None
     notes: list[str] = []
 
-    for insn in body:
-        if insn.opcode in _STORE_WIDTH:
-            if store_insn is not None:
-                return None, ["multiple stores in loop body"]
-            store_insn = insn
-            continue
-        if insn.opcode == Opcode.ADDI:
-            rt, ra, imm = insn.operands
-            if int(rt) != int(ra):
-                return None, [f"non-pointer addi r{rt}, r{ra}, {imm}"]
-            if pointer_addi is not None:
-                return None, ["multiple pointer addi in loop body"]
-            pointer_addi = (int(rt), int(imm))
-            continue
-        return None, [f"unsupported body opcode {insn.opcode.value}"]
-
-    if store_insn is None:
-        return None, ["no store in loop body"]
-
-    width = _STORE_WIDTH[store_insn.opcode]
-    source_reg, base_reg, disp = (int(v) for v in store_insn.operands)
-    if base_reg == 0:
-        return None, ["store uses r0 as base"]
-
-    if store_insn.opcode == Opcode.STWU:
-        if pointer_addi is not None:
-            return None, ["stwu body must not include separate addi"]
+    # stwu alone: single instruction, no trailing addi.
+    if len(body) == 1 and body[0].opcode == Opcode.STWU:
+        store_insn = body[0]
+        width = _STORE_WIDTH[store_insn.opcode]
+        source_reg, base_reg, disp = (int(v) for v in store_insn.operands)
+        if base_reg == 0:
+            return None, ["store uses r0 as base"]
+        if source_reg == base_reg:
+            return None, ["store source equals base register"]
         stride = int(disp)
         if stride <= 0:
             return None, [f"stwu disp {stride} not positive"]
@@ -415,17 +396,32 @@ def _parse_constant_stride_store_body(
             notes,
         )
 
+    # Exact store-then-addi (reject reversed order, multi-store, calls, etc.).
+    if len(body) != 2:
+        return None, ["body must be stwu or exact store-then-addi"]
+
+    store_insn, addi_insn = body[0], body[1]
+    if store_insn.opcode not in _STORE_WIDTH or store_insn.opcode == Opcode.STWU:
+        return None, ["first body insn must be stb/sth/stw (not stwu)"]
+    if addi_insn.opcode != Opcode.ADDI:
+        return None, ["second body insn must be pointer addi"]
+
+    width = _STORE_WIDTH[store_insn.opcode]
+    source_reg, base_reg, disp = (int(v) for v in store_insn.operands)
+    if base_reg == 0:
+        return None, ["store uses r0 as base"]
+    if source_reg == base_reg:
+        return None, ["store source equals base register"]
     if disp != 0:
         return None, [f"store disp {disp} != 0 without indexed addressing"]
 
-    if pointer_addi is None:
-        return None, ["store without pointer advance"]
+    rt, ra, imm = (int(v) for v in addi_insn.operands)
+    if rt != ra:
+        return None, [f"non-pointer addi r{rt}, r{ra}, {imm}"]
+    if rt != base_reg:
+        return None, [f"addi r{rt} does not match store base r{base_reg}"]
 
-    addi_reg, addi_imm = pointer_addi
-    if addi_reg != base_reg:
-        return None, [f"addi r{addi_reg} does not match store base r{base_reg}"]
-
-    stride = int(addi_imm)
+    stride = int(imm)
     if stride <= 0:
         return None, [f"stride {stride} not positive"]
     if stride != width:
@@ -442,15 +438,6 @@ def _parse_constant_stride_store_body(
         ),
         notes,
     )
-
-
-def _store_bytes(memory: Any, address: Any, value: Any, width: int, ops: Any) -> Any:
-    result = memory
-    for offset in range(width):
-        shift = (width - 1 - offset) * 8
-        byte = ops.band(ops.lshr(value, ops.const(shift)), ops.const(0xFF))
-        result = ops.store_byte(result, ops.add(address, ops.const(offset)), byte)
-    return result
 
 
 def _is_bdnz(insn: Instruction) -> bool:

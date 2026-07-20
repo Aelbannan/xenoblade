@@ -6,14 +6,14 @@ supportedness. This PR only scaffolds the data model and adapters; it does
 **not** replace host-float or Z3 call sites, latch FPSCR, or enable new
 oracle domains.
 
-**SoftFloat already covers (exact finite RNE bits):** scalar
+**SoftFloat already covers (exact integer-significand RNE bits):** scalar
 ``fadd``/``fadds``/``fmul``/``fmuls``/``fsub``/``fsubs``/``fdiv``/``fdivs`` and
 fused ``fmadd``/``fmadds``/``fmsub``/``fmsubs``/``fnmadd``/``fnmadds``/
-``fnmsub``/``fnmsubs`` for finite normal/zero operands (see ``fp_oracle``).
+``fnmsub``/``fnmsubs`` for finite normals/zeros, subnormals, ±Inf, quiet /
+signaling NaN propagation, division by zero, and overflow (see ``fp_oracle``).
 
-**Deferred (Fraction oracle / FMA single-round Track C follow-ups):**
-- Fraction / rational exact oracle for domains SoftFloat fails closed on
-  (NaN/Inf/subnormal/div0 sticky latch, VX* invalid causes)
+**Deferred (Fraction oracle / FMA residual Track C follow-ups):**
+- Fraction / rational exact cross-check oracle for finite values
 - Full single-round FMA residual modeling (Broadway midpoint-tie with
   nonzero addend; near-cancellation sticky residues)
 - SymbolicOps / paired-single lane producers emitting ``FPOutcome`` natively

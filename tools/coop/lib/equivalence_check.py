@@ -846,58 +846,65 @@ def _prove_bytes(
     if proof_features is None and address_space is None and indirect_targets is None:
         from tools.ppc_equivalence.jump_table_auto import try_auto_jump_table_context
         from tools.ppc_equivalence.jump_table_obligations import (
-            build_indirect_targets_obligation,
-            build_readonly_image_obligation,
+            JumpTableArtifacts,
+            build_jump_table_obligations,
+            side_artifact_from_path,
         )
         from tools.ppc_equivalence.memory_loop_image import (
-            merge_memory_loop_readonly_words,
             try_build_memory_loop_readonly_words,
         )
+        from tools.ppc_equivalence.memory_loop_readonly import (
+            build_memory_loop_readonly_context,
+        )
 
+        original_artifact = None
+        candidate_artifact = None
         dol_path = None
         elf_path = None
         if project is not None:
             configured_dol = getattr(project.config, "main_dol", None)
             if configured_dol is not None and Path(configured_dol).is_file():
                 dol_path = Path(configured_dol)
+                original_artifact = side_artifact_from_path(dol_path, kind="dol")
             linked_elf = getattr(project, "linked_elf_path", None)
             if linked_elf is not None and Path(linked_elf).is_file():
                 elf_path = Path(linked_elf)
+                candidate_artifact = side_artifact_from_path(elf_path, kind="elf")
+        artifacts = None
+        if original_artifact is not None and candidate_artifact is not None:
+            artifacts = JumpTableArtifacts(
+                original=original_artifact,
+                candidate=candidate_artifact,
+            )
         jump_table_context = try_auto_jump_table_context(
             original,
             candidate,
-            dol_path=dol_path,
-            elf_path=elf_path,
-            original_dol_path=dol_path,
-            candidate_elf_path=elf_path,
+            artifacts=artifacts,
+            # Per-side only — no shared dol_path/elf_path production fallback.
+            original_dol_path=dol_path if artifacts is None else None,
+            candidate_elf_path=elf_path if artifacts is None else None,
         )
-        memory_loop_readonly_words = merge_memory_loop_readonly_words(
-            try_build_memory_loop_readonly_words(
+        memory_loop_readonly_words = build_memory_loop_readonly_context(
+            original_words=try_build_memory_loop_readonly_words(
                 original,
                 dol_path=dol_path,
                 elf_path=elf_path,
             ),
-            try_build_memory_loop_readonly_words(
+            candidate_words=try_build_memory_loop_readonly_words(
                 candidate,
                 dol_path=dol_path,
                 elf_path=elf_path,
             ),
+            original_source="image",
+            candidate_source="image",
         )
         if jump_table_context is not None:
             proof_features = ["readonly-image", "indirect-target-closure"]
-            address_space = build_readonly_image_obligation(
-                jump_table_context.table,
+            address_space, indirect_targets = build_jump_table_obligations(
+                jump_table_context,
                 no_write_status="pending",
-            )
-            indirect_targets = build_indirect_targets_obligation(
-                branch_pc=jump_table_context.branch_pc,
-                targets=tuple(
-                    (f"case-{index}", word & 0xFFFFFFFC)
-                    for index, word in enumerate(jump_table_context.table.words)
-                ),
-                source=jump_table_context.table.source,
-                artifact_hashes=(jump_table_context.table.image_sha256,),
                 coverage="pending",
+                status="pending",
             )
 
     original_live_out = automatic_live_out(original)
@@ -1077,7 +1084,7 @@ def _prove_bytes(
         source_hash=source_hash,
         floating_point_domain=fp_domain,
         jump_table=jump_table_context,
-        readonly_words=memory_loop_readonly_words,
+        memory_loop_readonly=memory_loop_readonly_words,
     )
     detail = ""
     if result.contract_resolution:

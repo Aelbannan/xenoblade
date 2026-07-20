@@ -178,17 +178,29 @@ class FpOracleArithmeticTests(unittest.TestCase):
         with self.assertRaises(OracleUnimplementedError):
             dispatch_oracle("fsqrt", _F2, _F1)
 
-    def test_divide_by_zero_fail_closed(self):
-        with self.assertRaises(OracleUnimplementedError):
-            fdiv_binary64_rne(_F2, 0)
+    def test_divide_by_zero_produces_infinity(self):
+        result = fdiv_binary64_rne(_F2, 0)
+        self.assertEqual(result.bits64, 0x7FF0000000000000)
+        self.assertTrue(result.flags.divide_by_zero)
 
-    def test_nan_operand_fail_closed(self):
-        with self.assertRaises(OracleUnimplementedError):
-            fadd_binary64_rne(0x7FF8000012345678, _F2)
+    def test_nan_operand_propagates_quiet_nan(self):
+        result = fadd_binary64_rne(0x7FF8000012345678, _F2)
+        self.assertEqual(result.bits64, 0x7FF8000012345678)
+        self.assertFalse(result.flags.invalid)
 
-    def test_fnmadd_nan_operand_fail_closed(self):
-        with self.assertRaises(OracleUnimplementedError):
-            fnmadd_binary64_rne(0x7FF8000012345678, _F4, _F2)
+    def test_fnmadd_nan_operand_propagates_without_negation(self):
+        result = fnmadd_binary64_rne(0x7FF8000012345678, _F4, _F2)
+        self.assertEqual(result.bits64, 0x7FF8000012345678)
+
+    def test_infinity_add_finite(self):
+        result = fadd_binary64_rne(0x7FF0000000000000, _F2)
+        self.assertEqual(result.bits64, 0x7FF0000000000000)
+
+    def test_single_overflow_to_infinity(self):
+        huge = 0x47EFFFFFE0000000
+        result = fadds_fpr_rne(huge, huge)
+        self.assertEqual(result.bits64, 0x7FF0000000000000)
+        self.assertTrue(result.flags.overflow)
 
     def test_supported_ops_registry(self):
         self.assertIn("fadds", ORACLE_SUPPORTED_OPS)

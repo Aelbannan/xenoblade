@@ -4,6 +4,11 @@ PR 9 scaffolding (Track D): separate the static bus identity (regions + device
 theories + register flags) from mutable concrete state (RAM + device values +
 event logs). Concrete sampling must clone ``BusState`` before original and
 candidate execution so MMIO side effects never leak across sides.
+
+Symbolic register-bank theory (toward PR 14) lives in ``symbolic_bus`` and
+lifts from ``DeviceSpecification`` via ``symbolic_bank_from_device_spec``.
+It is not bound into ``check_equivalence`` yet; ``memory-bus`` stays
+unsupported for ``EQUIVALENT``.
 """
 
 from __future__ import annotations
@@ -31,6 +36,7 @@ __all__ = [
     "build_bus_specification",
     "snapshot_bus_state",
     "materialize_devices",
+    "lift_symbolic_register_banks",
 ]
 
 
@@ -192,3 +198,30 @@ def materialize_devices(
                 cloned.write_events = [dict(event) for event in events]
         materialized[device_id] = cloned
     return materialized
+
+
+def lift_symbolic_register_banks(
+    specification: BusSpecification,
+    z3: Any,
+    *,
+    prefix: str = "mmio",
+) -> dict[str, Any]:
+    """Hook: lift register-bank ``DeviceSpecification`` entries to symbolic state.
+
+    Does not alter concrete ``MemoryBus`` routing or equivalence constraints.
+    Returns ``device_id → SymbolicRegisterBankState`` for register-bank
+    theories only; other theories are skipped.
+    """
+    # Local import keeps concrete bus tests free of z3/symbolic_bus coupling.
+    from tools.ppc_equivalence.symbolic_bus import symbolic_bank_from_device_spec
+
+    banks: dict[str, Any] = {}
+    for device in specification.devices:
+        if device.theory != "register-bank":
+            continue
+        banks[device.device_id] = symbolic_bank_from_device_spec(
+            device,
+            z3,
+            prefix=f"{prefix}.{device.device_id}",
+        )
+    return banks

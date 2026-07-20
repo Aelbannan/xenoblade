@@ -80,6 +80,22 @@ class ValidationLedgerLoadTests(unittest.TestCase):
             self.assertEqual(ledger.dolphin_validated_opcodes, frozenset({"add"}))
             self.assertEqual(ledger.architecture_model, ARCHITECTURE_MODEL)
 
+    def test_default_ledger_fp_bitwise_capability(self) -> None:
+        ledger = ValidationLedger.load(default_validation_ledger_path())
+        cap = ledger.capabilities.get("fp-bitwise")
+        self.assertIsInstance(cap, dict)
+        self.assertEqual(cap.get("model_version"), "fp-bitwise-v1")
+        for op in ("fmr", "fabs", "fneg", "fnabs"):
+            meta = cap["opcodes"][op]
+            self.assertTrue(meta.get("result_bits"))
+            self.assertTrue(meta.get("dolphin_interpreter"))
+            self.assertIs(meta.get("host_float"), False)
+        self.assertEqual(ledger.missing_fp_bitwise_opcodes(["fmr", "fabs"]), [])
+        self.assertEqual(
+            ledger.missing_fp_bitwise_opcodes(["fmr", "fadd"]),
+            ["fadd"],
+        )
+
 
 class LedgerPromotionTests(unittest.TestCase):
     def test_missing_opcode_demotes_tier(self) -> None:

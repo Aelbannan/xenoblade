@@ -11,14 +11,41 @@
 # dolphin evidence (`opcode-*-not-dolphin-validated`) — do not flip to true
 # without a real harness-executable fixture.
 #
-# capabilities: {} is a Wave 1 placeholder for capability-assurance coverage.
-# Do not invent capability entries here until independent validation evidence
-# exists (see tools/ppc_equivalence/capability_assurance.py).
-architecture_model: broadway-ppc32-be-v37
+# Capability-assurance coverage (Wave 2+). Independent of per-opcode dolphin
+# rows below; fp-bitwise claims result-bit / no-host-float evidence for the
+# sign-bit move subset only (see tools/ppc_equivalence/fp_bitwise.py).
+architecture_model: broadway-ppc32-be-v38
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: a827ed9896c3a0648ff3b997e5e46bd3d80cb2c4c3553b5323395f66317b6c63
-capabilities: {}
+capabilities:
+  fp-bitwise:
+    model_version: fp-bitwise-v1
+    opcodes:
+      fmr:
+        result_bits: true
+        dolphin_interpreter: true
+        host_float: false
+        concrete_symbolic_differential: true
+        boundary_vectors: true
+      fabs:
+        result_bits: true
+        dolphin_interpreter: true
+        host_float: false
+        concrete_symbolic_differential: true
+        boundary_vectors: true
+      fneg:
+        result_bits: true
+        dolphin_interpreter: true
+        host_float: false
+        concrete_symbolic_differential: true
+        boundary_vectors: true
+      fnabs:
+        result_bits: true
+        dolphin_interpreter: true
+        host_float: false
+        concrete_symbolic_differential: true
+        boundary_vectors: true
 opcodes:
   add:
     decoder_unit: true

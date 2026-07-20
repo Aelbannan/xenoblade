@@ -73,8 +73,12 @@ def _equivalent_proof(**kwargs) -> ProofResult:
         format=RESULT_FORMAT,
         observables=["r3"],
         engine_hash="a" * 64,
+        certifier_hash="d" * 64,
         source_hash="b" * 64,
+        proof_request_hash="b" * 64,
+        validation_ledger_hash="e" * 64,
         git_commit="c" * 40,
+        git_dirty=False,
         memory_scope=MemoryScope(
             masking_semantics=MASKING_SEMANTICS,
             original=PrivateStackInfo(enabled_on_all_terminal_paths=True),
@@ -120,11 +124,105 @@ class ClassifyForPromotionTests(unittest.TestCase):
         proof = _equivalent_proof()
         decision = classify_for_promotion(
             proof,
-            PromotionPolicy(automatic_promotion=True),
+            PromotionPolicy(
+                automatic_promotion=True,
+                allowed_engine_sha256=proof.engine_hash,
+            ),
             _open_ledger(),
         )
         self.assertTrue(decision.allowed)
         self.assertEqual(decision.confidence_tier, "A")
+
+    def test_missing_provenance_fields_block_promotion(self) -> None:
+        proof = _equivalent_proof(
+            engine_hash="",
+            certifier_hash="",
+            source_hash="",
+            git_commit="",
+        )
+        decision = classify_for_promotion(
+            proof,
+            PromotionPolicy(automatic_promotion=False),
+            _open_ledger(),
+        )
+        self.assertFalse(decision.allowed)
+        self.assertIn("missing-engine-provenance", decision.blockers)
+        self.assertIn("missing-certifier-hash", decision.blockers)
+        self.assertIn("missing-source-hash", decision.blockers)
+        self.assertIn("missing-git-commit", decision.blockers)
+        self.assertNotIn("missing-allowed-engine-sha256", decision.blockers)
+
+    def test_git_dirty_blocks_promotion(self) -> None:
+        proof = _equivalent_proof(git_dirty=True)
+        decision = classify_for_promotion(
+            proof,
+            PromotionPolicy(automatic_promotion=False),
+            _open_ledger(),
+        )
+        self.assertFalse(decision.allowed)
+        self.assertIn("git-dirty", decision.blockers)
+
+    def test_stale_architecture_or_format_blocks_promotion(self) -> None:
+        stale_arch = classify_for_promotion(
+            _equivalent_proof(architecture_model="broadway-ppc32-be-v36"),
+            PromotionPolicy(automatic_promotion=False),
+            _open_ledger(),
+        )
+        self.assertFalse(stale_arch.allowed)
+        self.assertTrue(
+            any(
+                item.startswith("architecture-model-broadway-ppc32-be-v36!=live-")
+                for item in stale_arch.blockers
+            )
+        )
+
+        stale_format = classify_for_promotion(
+            _equivalent_proof(format=RESULT_FORMAT - 1),
+            PromotionPolicy(automatic_promotion=False),
+            _open_ledger(),
+        )
+        self.assertFalse(stale_format.allowed)
+        self.assertTrue(
+            any(
+                item.startswith(f"result-format-{RESULT_FORMAT - 1}!=live-")
+                for item in stale_format.blockers
+            )
+        )
+
+    def test_automatic_promotion_requires_allowed_engine_sha256(self) -> None:
+        proof = _equivalent_proof()
+        decision = classify_for_promotion(
+            proof,
+            PromotionPolicy(automatic_promotion=True, allowed_engine_sha256=None),
+            _open_ledger(),
+        )
+        self.assertFalse(decision.allowed)
+        self.assertIn("missing-allowed-engine-sha256", decision.blockers)
+
+    def test_certificate_provenance_hash_round_trip(self) -> None:
+        certificate = {
+            "architecture": ARCHITECTURE_MODEL,
+            "result_format": RESULT_FORMAT,
+            "engine_hash": "a" * 64,
+            "certifier_hash": "d" * 64,
+            "source_hash": "b" * 64,
+            "proof_request_hash": "b" * 64,
+            "validation_ledger_hash": "e" * 64,
+            "git_commit": "c" * 40,
+            "git_dirty": False,
+            "observables": ["r3"],
+            "memory_scope": MemoryScope(
+                masking_semantics=MASKING_SEMANTICS,
+                original=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+                candidate=PrivateStackInfo(enabled_on_all_terminal_paths=True),
+            ).to_dict(),
+            "summary": {"reads": ["r3"], "writes": ["r3"], "invalid_reasons": []},
+        }
+        result = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+        self.assertEqual(result.certifier_hash, "d" * 64)
+        self.assertEqual(result.proof_request_hash, "b" * 64)
+        self.assertEqual(result.validation_ledger_hash, "e" * 64)
+        self.assertFalse(result.git_dirty)
 
     def test_absent_ledger_blocks_promotion(self) -> None:
         proof = _equivalent_proof(opcodes_used=["add"])
@@ -170,14 +268,21 @@ class ClassifyForPromotionTests(unittest.TestCase):
 
     def test_require_bounded_ram_blocks_assumed_and_empty(self) -> None:
         ledger = _open_ledger()
-        policy = PromotionPolicy(automatic_promotion=True, require_bounded_ram=True)
+        engine = "a" * 64
+        policy = PromotionPolicy(
+            automatic_promotion=True,
+            require_bounded_ram=True,
+            allowed_engine_sha256=engine,
+        )
 
-        missing = classify_for_promotion(_equivalent_proof(), policy, ledger)
+        missing = classify_for_promotion(
+            _equivalent_proof(engine_hash=engine), policy, ledger
+        )
         self.assertFalse(missing.allowed)
         self.assertIn("unconstrained-symbolic-memory-domain", missing.blockers)
 
         assumed = classify_for_promotion(
-            _equivalent_proof(environment=MemoryEnvironment()),
+            _equivalent_proof(engine_hash=engine, environment=MemoryEnvironment()),
             policy,
             ledger,
         )
@@ -186,6 +291,7 @@ class ClassifyForPromotionTests(unittest.TestCase):
 
         empty_bounded = classify_for_promotion(
             _equivalent_proof(
+                engine_hash=engine,
                 environment=MemoryEnvironment(
                     profile=MemoryProfile.BOUNDED_ORDINARY_RAM, ranges=[],
                 ),
@@ -200,6 +306,7 @@ class ClassifyForPromotionTests(unittest.TestCase):
 
         bounded = classify_for_promotion(
             _equivalent_proof(
+                engine_hash=engine,
                 environment=MemoryEnvironment(
                     profile=MemoryProfile.BOUNDED_ORDINARY_RAM,
                     ranges=[(0x80000000, 0x817FFFFF)],
@@ -222,8 +329,11 @@ class ClassifyForPromotionTests(unittest.TestCase):
         self.assertIn("automatic-promotion-disabled-by-config", decision.blockers)
 
     def test_legacy_wrapper_uses_live_proof(self) -> None:
-        config = _config(automatic_promotion=True)
         proof = _equivalent_proof()
+        config = _config(
+            automatic_promotion=True,
+            allowed_engine_sha256=proof.engine_hash,
+        )
         decision = classify_for_promotion_legacy(
             ProofStatus.EQUIVALENT,
             85.0,
@@ -256,18 +366,23 @@ class ClassifyStatusPolicyTests(unittest.TestCase):
         self.assertEqual(status, "HIGH_MATCH")
 
     def test_policy_allows_equivalent_match_when_promotion_enabled(self) -> None:
+        proof = _equivalent_proof()
         status = classify_status(
             85.0,
             _unit(),
             symbol="f",
             equivalence=ProofStatus.EQUIVALENT,
-            policy=_config(automatic_promotion=True),
-            proof=_equivalent_proof(),
+            policy=_config(
+                automatic_promotion=True,
+                allowed_engine_sha256=proof.engine_hash,
+            ),
+            proof=proof,
         )
         self.assertEqual(status, "EQUIVALENT_MATCH")
 
     def test_meets_required_level_uses_promotion_decision(self) -> None:
         unit = _unit()
+        proof = _equivalent_proof()
         self.assertFalse(
             meets_required_level(
                 "EQUIVALENT_MATCH",
@@ -277,7 +392,7 @@ class ClassifyStatusPolicyTests(unittest.TestCase):
                 symbol="f",
                 equivalence=ProofStatus.EQUIVALENT,
                 policy=_config(automatic_promotion=False),
-                proof=_equivalent_proof(),
+                proof=proof,
             )
         )
         self.assertTrue(
@@ -288,8 +403,11 @@ class ClassifyStatusPolicyTests(unittest.TestCase):
                 unit=unit,
                 symbol="f",
                 equivalence=ProofStatus.EQUIVALENT,
-                policy=_config(automatic_promotion=True),
-                proof=_equivalent_proof(),
+                policy=_config(
+                    automatic_promotion=True,
+                    allowed_engine_sha256=proof.engine_hash,
+                ),
+                proof=proof,
             )
         )
 

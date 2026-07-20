@@ -1,9 +1,11 @@
-"""Capability-assurance schema and evaluation (Wave 1).
+"""Capability-assurance schema and evaluation (Wave 1–2).
 
 Tier A is redefined around promotion-grade attestations for every capability
 a proof uses, rather than hard-coding effect-type demotions. Wave 1 lands the
-schema, validators, and shadow-mode tier path; FP / MMIO / assumed-RAM are not
-promoted yet.
+schema, validators, and shadow-mode tier path. Wave 2 adds ``fp-bitwise``
+(fmr/fabs/fneg/fnabs) promotion-grade attestation under
+``fp-bitwise-ledger-v1``; scalar/compare/convert/trap/fused FP remain
+non-promotable.
 """
 
 from __future__ import annotations
@@ -72,9 +74,22 @@ KNOWN_CAPABILITIES = frozenset(
 KNOWN_ATTESTATION_ALGORITHMS = frozenset(
     {
         "opcode-ledger-v2",
+        "provenance-binding-v1",
+        "fp-bitwise-ledger-v1",
+        # Wave 2 certified-calls refinement; promotion-grade only with real UNSAT.
+        "certified-calls-refinement-v1",
+        # Wave 2: independent address-coverage / wraparound UNSAT digests.
+        "bounded-memory-coverage-v2",
         # Shadow / incomplete only — never promotion-grade.
         "legacy-effect-gate-v1",
     }
+)
+
+PROVENANCE_REQUIRED_EVIDENCE_FIELDS = (
+    "engine_hash",
+    "certifier_hash",
+    "source_hash",
+    "git_commit",
 )
 
 
@@ -374,8 +389,10 @@ def _proof_effect_flags(result: Any) -> dict[str, bool]:
     )
     has_complete_provenance = bool(
         getattr(result, "engine_hash", None)
+        and getattr(result, "certifier_hash", None)
         and getattr(result, "source_hash", None)
         and getattr(result, "git_commit", None)
+        and not bool(getattr(result, "git_dirty", False))
     )
     return {
         "has_fp": has_fp or has_assumed_fp,
@@ -389,11 +406,11 @@ def _proof_effect_flags(result: Any) -> dict[str, bool]:
 
 
 def infer_used_capabilities(result: Any) -> frozenset[str]:
-    """Capabilities implied by proof effects (Wave 1 coarse inference)."""
+    """Capabilities implied by proof effects (Wave 1–2 inference)."""
+    from tools.ppc_equivalence.fp_bitwise import classify_fp_capabilities
+
     flags = _proof_effect_flags(result)
-    used: set[str] = {"integer-core"}
-    if not flags["has_complete_provenance"]:
-        used.add("provenance")
+    used: set[str] = {"integer-core", "provenance"}
     if flags["has_domain_exceptions"]:
         used.add("domain-exception")
     if flags["has_assumed_ram"]:
@@ -404,8 +421,13 @@ def infer_used_capabilities(result: Any) -> frozenset[str]:
         # Coarse MMIO demand — Wave 1 fails closed without a matching attestation.
         used.add("mmio-register-bank")
     if flags["has_fp"]:
-        # Coarse FP demand until opcode classification lands in later waves.
-        used.add("fp-scalar-arithmetic")
+        opcodes = getattr(result, "opcodes_used", None) or []
+        fp_caps = classify_fp_capabilities(opcodes)
+        if fp_caps:
+            used.update(fp_caps)
+        else:
+            # FP domain / coverage present but opcodes not classifiable — fail closed.
+            used.add("fp-scalar-arithmetic")
     elif flags["has_memory_access"] and not flags["has_assumed_ram"]:
         used.add("bounded-memory")
     return frozenset(used)
@@ -457,8 +479,130 @@ def _recompute_attestation_status(
             return STATUS_SCOPED_ASSUMPTION
         return STATUS_PROMOTION_GRADE
 
+    if attestation.algorithm == "provenance-binding-v1":
+        if attestation.capability != "provenance":
+            return STATUS_INCOMPLETE
+        evidence = attestation.evidence
+        for field_name in PROVENANCE_REQUIRED_EVIDENCE_FIELDS:
+            value = evidence.get(field_name)
+            if not isinstance(value, str) or not value:
+                return STATUS_INCOMPLETE
+        if bool(evidence.get("git_dirty")):
+            return STATUS_INCOMPLETE
+        allowed_engine = evidence.get("allowed_engine_sha256")
+        if isinstance(allowed_engine, str) and allowed_engine:
+            if evidence.get("engine_hash") != allowed_engine:
+                return STATUS_INCOMPLETE
+        allowed = manifest.allowed_versions(attestation.capability)
+        if attestation.model_version not in allowed:
+            return STATUS_INCOMPLETE
+        if attestation.unsupported:
+            return STATUS_INCOMPLETE
+        if attestation.assumptions:
+            return STATUS_SCOPED_ASSUMPTION
+        return STATUS_PROMOTION_GRADE
+
+    if attestation.algorithm == "fp-bitwise-ledger-v1":
+        return _recompute_fp_bitwise_status(
+            attestation, ledger=ledger, manifest=manifest
+        )
+
+    if attestation.algorithm == "certified-calls-refinement-v1":
+        if attestation.capability != "certified-calls":
+            return STATUS_INCOMPLETE
+        allowed = manifest.allowed_versions(attestation.capability)
+        if attestation.model_version not in allowed:
+            return STATUS_INCOMPLETE
+        from tools.ppc_equivalence.certified_calls_obligations import (
+            evaluate_certified_calls_status,
+        )
+
+        obligation = attestation.evidence.get("obligation")
+        rejection_reasons = attestation.evidence.get("rejection_reasons") or ()
+        if not isinstance(rejection_reasons, (list, tuple)):
+            return STATUS_INCOMPLETE
+        # Opaque EABI / incomplete refinements never promote, even if allowlisted.
+        return evaluate_certified_calls_status(
+            obligation if isinstance(obligation, dict) else None,
+            rejection_reasons=tuple(str(item) for item in rejection_reasons),
+            assumptions=attestation.assumptions,
+        )
+
+    if attestation.algorithm == "bounded-memory-coverage-v2":
+        if attestation.capability != "bounded-memory":
+            return STATUS_INCOMPLETE
+        from tools.ppc_equivalence.bounded_memory_obligations import (
+            recompute_bounded_memory_attestation_status,
+        )
+
+        return recompute_bounded_memory_attestation_status(
+            attestation.evidence,
+            assumptions=attestation.assumptions,
+            unsupported=attestation.unsupported,
+            model_version=attestation.model_version,
+            allowed_versions=manifest.allowed_versions(attestation.capability),
+        )
+
     # Unknown algorithms are rejected by validate_structure; treat as incomplete.
     return STATUS_INCOMPLETE
+
+
+def _recompute_fp_bitwise_status(
+    attestation: CapabilityAttestation,
+    *,
+    ledger: Any | None,
+    manifest: CapabilityManifest,
+) -> str:
+    """Grade ``fp-bitwise`` from evidence + ledger; never trust caller status."""
+    from tools.ppc_equivalence.fp_bitwise import (
+        FP_BITWISE_MODEL_VERSION,
+        FP_BITWISE_OPS,
+    )
+
+    if attestation.capability != "fp-bitwise":
+        return STATUS_INCOMPLETE
+    if attestation.model_version != FP_BITWISE_MODEL_VERSION:
+        # Allowlist check below also gates; mismatch vs known model is incomplete.
+        pass
+    opcodes = attestation.evidence.get("opcodes")
+    if not isinstance(opcodes, list) or not opcodes:
+        return STATUS_INCOMPLETE
+    opcode_list = [str(op) for op in opcodes]
+    if any(op not in FP_BITWISE_OPS for op in opcode_list):
+        return STATUS_INCOMPLETE
+    # Explicit no-host-float claim required for promotion-grade bitwise.
+    if attestation.evidence.get("host_float") is not False:
+        return STATUS_INCOMPLETE
+    ledger_sha = attestation.evidence.get("ledger_sha256")
+    if not isinstance(ledger_sha, str) or not ledger_sha:
+        return STATUS_INCOMPLETE
+    if ledger is None:
+        return STATUS_INCOMPLETE
+    if hasattr(ledger, "is_absent") and ledger.is_absent():
+        return STATUS_INCOMPLETE
+    if hasattr(ledger, "promotion_metadata_invalid") and ledger.promotion_metadata_invalid():
+        return STATUS_INCOMPLETE
+    missing: list[str] = []
+    if hasattr(ledger, "missing_fp_bitwise_opcodes"):
+        missing = list(ledger.missing_fp_bitwise_opcodes(opcode_list))
+    elif hasattr(ledger, "missing_dolphin_opcodes"):
+        missing = list(ledger.missing_dolphin_opcodes(opcode_list))
+    elif hasattr(ledger, "dolphin_validated_opcodes"):
+        validated = set(ledger.dolphin_validated_opcodes)
+        missing = sorted(op for op in opcode_list if op not in validated)
+    else:
+        return STATUS_INCOMPLETE
+    if missing:
+        return STATUS_INCOMPLETE
+    allowed = manifest.allowed_versions(attestation.capability)
+    if attestation.model_version not in allowed:
+        return STATUS_INCOMPLETE
+    # Unsupported remainder must be empty (UNSAT / none).
+    if attestation.unsupported:
+        return STATUS_INCOMPLETE
+    if attestation.assumptions:
+        return STATUS_SCOPED_ASSUMPTION
+    return STATUS_PROMOTION_GRADE
 
 
 def _weakest(statuses: list[str]) -> str:
@@ -577,41 +721,164 @@ def draft_integer_core_assurance(
     ledger: Any | None = None,
     ledger_sha256: str | None = None,
 ) -> CapabilityAssurance | None:
-    """Optional non-authoritative integer-core draft for EQUIVALENT integer-only proofs.
+    """Optional non-authoritative draft for EQUIVALENT integer / fp-bitwise proofs.
 
     Status is advisory; ``evaluate_capability_assurance`` recomputes the grade.
-    Returns ``None`` when FP / memory-bus effects are present or opcodes missing.
+    Returns ``None`` when non-bitwise FP / memory-bus effects are present or
+    opcodes missing. When only ``fmr``/``fabs``/``fneg``/``fnabs`` FP ops appear,
+    emits ``integer-core`` plus ``fp-bitwise`` attestations.
+    """
+    from tools.ppc_equivalence.fp_bitwise import (
+        FP_BITWISE_ALGORITHM,
+        FP_BITWISE_MODEL_VERSION,
+        FP_BITWISE_OPS,
+        is_fp_bitwise_only,
+        non_bitwise_fp_opcodes,
+    )
+    from tools.ppc_equivalence.result import ProofStatus
+
+    if getattr(result, "status", None) is not ProofStatus.EQUIVALENT:
+        return None
+    flags = _proof_effect_flags(result)
+    if flags["has_memory_bus"]:
+        return None
+    opcodes = [str(op) for op in (getattr(result, "opcodes_used", None) or [])]
+    if not opcodes:
+        return None
+
+    if flags["has_fp"]:
+        if non_bitwise_fp_opcodes(opcodes) or not is_fp_bitwise_only(opcodes):
+            return None
+
+    # Do not replace an existing integer-core / fp-bitwise attestation block;
+    # callers merge via maybe_attach_integer_core_draft.
+    existing = getattr(result, "capability_assurance", None)
+    if existing is not None:
+        try:
+            prior = _normalize_assurance(existing)
+            names = {item.capability for item in prior.capabilities}
+            if "integer-core" in names or "fp-bitwise" in names:
+                return None
+        except (TypeError, ValueError, KeyError):
+            pass
+
+    resolved_ledger_sha = ledger_sha256
+    if not resolved_ledger_sha and ledger is not None:
+        if hasattr(ledger, "dolphin_validated_opcodes"):
+            resolved_ledger_sha = canonical_json_sha256(
+                sorted(str(op) for op in ledger.dolphin_validated_opcodes)
+            )
+
+    integer_opcodes = sorted(op for op in opcodes if op not in FP_BITWISE_OPS)
+    if not integer_opcodes:
+        integer_opcodes = sorted(opcodes)
+
+    integer_evidence: dict[str, Any] = {"opcodes": integer_opcodes}
+    if resolved_ledger_sha:
+        integer_evidence["ledger_sha256"] = resolved_ledger_sha
+    attestations = [
+        build_attestation(
+            capability="integer-core",
+            model_version="integer-core-v1",
+            algorithm="opcode-ledger-v2",
+            status=STATUS_INCOMPLETE,
+            evidence=integer_evidence,
+        )
+    ]
+
+    if flags["has_fp"] and is_fp_bitwise_only(opcodes):
+        bitwise_ops = sorted(op for op in opcodes if op in FP_BITWISE_OPS)
+        fp_evidence: dict[str, Any] = {
+            "opcodes": bitwise_ops,
+            "host_float": False,
+        }
+        if resolved_ledger_sha:
+            fp_evidence["ledger_sha256"] = resolved_ledger_sha
+        attestations.append(
+            build_attestation(
+                capability="fp-bitwise",
+                model_version=FP_BITWISE_MODEL_VERSION,
+                algorithm=FP_BITWISE_ALGORITHM,
+                status=STATUS_INCOMPLETE,
+                evidence=fp_evidence,
+            )
+        )
+
+    return CapabilityAssurance(
+        schema_version=CAPABILITY_ASSURANCE_SCHEMA_VERSION,
+        policy=CAPABILITY_ASSURANCE_POLICY,
+        capabilities=tuple(attestations),
+    )
+
+
+def draft_provenance_attestation(
+    result: Any,
+    *,
+    allowed_engine_sha256: str | None = None,
+    ledger_sha256: str | None = None,
+) -> CapabilityAttestation | None:
+    """Draft a provenance-binding attestation from proof hash fields.
+
+    Status is advisory; ``evaluate_capability_assurance`` recomputes the grade.
     """
     from tools.ppc_equivalence.result import ProofStatus
 
     if getattr(result, "status", None) is not ProofStatus.EQUIVALENT:
         return None
-    if getattr(result, "capability_assurance", None) is not None:
-        return None
-    flags = _proof_effect_flags(result)
-    if flags["has_fp"] or flags["has_memory_bus"]:
-        return None
-    opcodes = [str(op) for op in (getattr(result, "opcodes_used", None) or [])]
-    if not opcodes:
-        return None
-    evidence: dict[str, Any] = {"opcodes": sorted(opcodes)}
-    if ledger_sha256:
-        evidence["ledger_sha256"] = ledger_sha256
-    elif ledger is not None and hasattr(ledger, "dolphin_validated_opcodes"):
-        evidence["ledger_sha256"] = canonical_json_sha256(
-            sorted(str(op) for op in ledger.dolphin_validated_opcodes)
-        )
-    attestation = build_attestation(
-        capability="integer-core",
-        model_version="integer-core-v1",
-        algorithm="opcode-ledger-v2",
+
+    engine_hash = str(getattr(result, "engine_hash", "") or "")
+    certifier_hash = str(getattr(result, "certifier_hash", "") or "")
+    source_hash = str(getattr(result, "source_hash", "") or "")
+    proof_request = str(getattr(result, "proof_request_hash", "") or "") or source_hash
+    ledger_hash = str(
+        getattr(result, "validation_ledger_hash", "") or ledger_sha256 or ""
+    )
+    git_commit = str(getattr(result, "git_commit", "") or "")
+    git_dirty = bool(getattr(result, "git_dirty", False))
+
+    evidence: dict[str, Any] = {
+        "engine_hash": engine_hash,
+        "certifier_hash": certifier_hash,
+        "source_hash": source_hash,
+        "proof_request_hash": proof_request,
+        "validation_ledger_hash": ledger_hash,
+        "git_commit": git_commit,
+        "git_dirty": git_dirty,
+    }
+    if allowed_engine_sha256:
+        evidence["allowed_engine_sha256"] = allowed_engine_sha256
+
+    return build_attestation(
+        capability="provenance",
+        model_version="provenance-v1",
+        algorithm="provenance-binding-v1",
         status=STATUS_INCOMPLETE,
         evidence=evidence,
     )
+
+
+def _merge_assurance_attestation(
+    existing: Any | None,
+    attestation: CapabilityAttestation,
+) -> CapabilityAssurance:
+    """Replace any prior attestation for the same capability and keep the rest."""
+    capabilities: list[CapabilityAttestation] = []
+    if existing is not None:
+        assurance = (
+            existing
+            if isinstance(existing, CapabilityAssurance)
+            else CapabilityAssurance.from_dict(existing)
+        )
+        capabilities = [
+            item
+            for item in assurance.capabilities
+            if item.capability != attestation.capability
+        ]
+    capabilities.append(attestation)
     return CapabilityAssurance(
         schema_version=CAPABILITY_ASSURANCE_SCHEMA_VERSION,
         policy=CAPABILITY_ASSURANCE_POLICY,
-        capabilities=(attestation,),
+        capabilities=tuple(capabilities),
     )
 
 
@@ -621,11 +888,93 @@ def maybe_attach_integer_core_draft(
     ledger: Any | None = None,
     ledger_sha256: str | None = None,
 ) -> Any:
-    """Attach a draft integer-core assurance block when applicable (mutates result)."""
+    """Attach a draft integer-core / fp-bitwise assurance block when applicable."""
     draft = draft_integer_core_assurance(
         result, ledger=ledger, ledger_sha256=ledger_sha256
     )
     if draft is None:
         return result
-    result.capability_assurance = draft.to_dict()
+    # Merge with any prior attestations (e.g. provenance) rather than replace.
+    existing = getattr(result, "capability_assurance", None)
+    merged = draft
+    if existing is not None:
+        try:
+            prior = _normalize_assurance(existing)
+            by_name = {item.capability: item for item in prior.capabilities}
+            for item in draft.capabilities:
+                by_name[item.capability] = item
+            merged = CapabilityAssurance(
+                schema_version=CAPABILITY_ASSURANCE_SCHEMA_VERSION,
+                policy=CAPABILITY_ASSURANCE_POLICY,
+                capabilities=tuple(by_name[name] for name in sorted(by_name)),
+            )
+        except (TypeError, ValueError, KeyError):
+            merged = draft
+    result.capability_assurance = merged.to_dict()
+    return result
+
+
+def draft_bounded_memory_assurance(
+    result: Any,
+    *,
+    obligation: Mapping[str, Any] | None = None,
+) -> CapabilityAssurance | None:
+    """Optional bounded-memory attestation when a v2 obligation is available.
+
+    Status is advisory; ``evaluate_capability_assurance`` recomputes the grade.
+    Assumed-ordinary-ram proofs never receive a promotion-grade bounded-memory
+    attestation from this helper.
+    """
+    from tools.ppc_equivalence.bounded_memory_obligations import (
+        SOURCE_ASSUMED,
+        build_bounded_memory_attestation,
+        classify_range_source,
+    )
+    from tools.ppc_equivalence.memory_profile import MemoryProfile
+    from tools.ppc_equivalence.result import ProofStatus
+
+    if getattr(result, "status", None) is not ProofStatus.EQUIVALENT:
+        return None
+    environment = getattr(result, "environment", None)
+    if environment is not None and getattr(environment, "profile", None) is not None:
+        if environment.profile == MemoryProfile.ASSUMED_ORDINARY_RAM:
+            return None
+    if obligation is None:
+        return None
+    if obligation.get("source") == SOURCE_ASSUMED:
+        return None
+    # Prefer explicit classify when environment present.
+    if environment is not None and classify_range_source(environment=environment) == SOURCE_ASSUMED:
+        return None
+    attestation = build_bounded_memory_attestation(obligation)
+    return _merge_assurance_attestation(
+        getattr(result, "capability_assurance", None),
+        attestation,
+    )
+
+
+def maybe_attach_provenance_draft(
+    result: Any,
+    *,
+    allowed_engine_sha256: str | None = None,
+    ledger_sha256: str | None = None,
+) -> Any:
+    """Attach or merge a provenance attestation on EQUIVALENT proofs (mutates result)."""
+    if ledger_sha256 and not getattr(result, "validation_ledger_hash", ""):
+        result.validation_ledger_hash = ledger_sha256
+    if not getattr(result, "proof_request_hash", "") and getattr(result, "source_hash", ""):
+        result.proof_request_hash = str(result.source_hash)
+
+    attestation = draft_provenance_attestation(
+        result,
+        allowed_engine_sha256=allowed_engine_sha256,
+        ledger_sha256=ledger_sha256,
+    )
+    if attestation is None:
+        return result
+    merged = _merge_assurance_attestation(
+        getattr(result, "capability_assurance", None),
+        attestation,
+    )
+    result.capability_assurance = merged.to_dict()
     return result

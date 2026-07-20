@@ -35,7 +35,8 @@
     "broadway-ppc32-be-v33",
     "broadway-ppc32-be-v34",
     "broadway-ppc32-be-v35",
-    "broadway-ppc32-be-v36"
+    "broadway-ppc32-be-v36",
+    "broadway-ppc32-be-v37"
   ],
   "capability_manifest_path": "tools/coop/capability_manifest.json",
   "capability_assurance_shadow_mode": true,

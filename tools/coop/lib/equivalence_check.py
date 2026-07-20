@@ -493,7 +493,10 @@ def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
         "opcodes_used",
         "fp_oracle_version",
         "engine_hash",
+        "certifier_hash",
         "source_hash",
+        "proof_request_hash",
+        "validation_ledger_hash",
         "git_commit",
         "git_dirty",
         "repair_hint",
@@ -771,12 +774,23 @@ def _build_equivalence_certificate(
         engine_hash = getattr(proof, "engine_hash", "") or ""
         source_hash = getattr(proof, "source_hash", "") or ""
         git_commit = getattr(proof, "git_commit", "") or ""
+        certifier_hash = getattr(proof, "certifier_hash", "") or ""
+        proof_request_hash_value = getattr(proof, "proof_request_hash", "") or ""
+        validation_ledger_hash = getattr(proof, "validation_ledger_hash", "") or ""
         if engine_hash:
             certificate["engine_hash"] = engine_hash
         if source_hash:
             certificate["source_hash"] = source_hash
         if git_commit:
             certificate["git_commit"] = git_commit
+        if certifier_hash:
+            certificate["certifier_hash"] = certifier_hash
+        if proof_request_hash_value:
+            certificate["proof_request_hash"] = proof_request_hash_value
+        if validation_ledger_hash:
+            certificate["validation_ledger_hash"] = validation_ledger_hash
+        if getattr(proof, "git_dirty", False):
+            certificate["git_dirty"] = True
         environment = getattr(proof, "environment", None)
         if environment is not None and hasattr(environment, "to_dict"):
             certificate["environment"] = environment.to_dict()
@@ -1198,10 +1212,14 @@ def _prove_bytes(
         virtual_call=virtual_call_context,
         memory_loop_readonly=memory_loop_readonly_words,
     )
-    # Wave 1: optional non-authoritative integer-core attestation draft (shadow).
+    # Wave 1/2: optional non-authoritative capability attestation drafts (shadow).
     try:
         from tools.ppc_equivalence.capability_assurance import (
             maybe_attach_integer_core_draft,
+            maybe_attach_provenance_draft,
+        )
+        from tools.ppc_equivalence.certified_calls_obligations import (
+            maybe_attach_certified_calls_draft,
         )
         from tools.coop.lib.equivalence_policy import (
             ValidationLedger,
@@ -1218,6 +1236,8 @@ def _prove_bytes(
         maybe_attach_integer_core_draft(
             result, ledger=ledger, ledger_sha256=ledger_sha
         )
+        maybe_attach_provenance_draft(result, ledger_sha256=ledger_sha)
+        maybe_attach_certified_calls_draft(result)
     except Exception:
         pass
     detail = ""

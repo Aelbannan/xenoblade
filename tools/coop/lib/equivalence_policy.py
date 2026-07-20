@@ -73,6 +73,9 @@ class ValidationLedger:
     file/mapping was parsed". ``load`` / ``from_mapping`` set it True.
     Absent ledgers (``is_absent``) fail closed for promotion and opcode
     completeness — they never authorize skipping Gate 2/3.
+
+    ``capabilities`` holds capability-specific coverage (Wave 2+), e.g.
+    ``fp-bitwise`` opcode semantic dimensions beyond dolphin_interpreter.
     """
 
     dolphin_validated_opcodes: frozenset[str]
@@ -81,6 +84,7 @@ class ValidationLedger:
     architecture_model: str | None = None
     corpus_version: int | None = None
     intentionally_loaded: bool = False
+    capabilities: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def load(cls, path: Path | None) -> "ValidationLedger":
@@ -109,6 +113,11 @@ class ValidationLedger:
                 if bool(meta.get("dolphin_interpreter")):
                     dolphin.add(str(name))
 
+        raw_caps = data.get("capabilities") or {}
+        capabilities: dict[str, Any] = (
+            dict(raw_caps) if isinstance(raw_caps, dict) else {}
+        )
+
         corpus_version = data.get("corpus_version")
         return cls(
             dolphin_validated_opcodes=frozenset(dolphin),
@@ -129,6 +138,7 @@ class ValidationLedger:
             ),
             corpus_version=int(corpus_version) if corpus_version is not None else None,
             intentionally_loaded=True,
+            capabilities=capabilities,
         )
 
     def is_absent(self) -> bool:
@@ -174,6 +184,40 @@ class ValidationLedger:
         if self.promotion_metadata_invalid() or not self.dolphin_validated_opcodes:
             return sorted(used)
         return sorted(op for op in used if not self.validate_opcode(op))
+
+    def missing_fp_bitwise_opcodes(
+        self, opcodes_used: list[str] | frozenset[str]
+    ) -> list[str]:
+        """Opcodes lacking fp-bitwise capability ledger coverage.
+
+        When ``capabilities.fp-bitwise`` is present, each opcode must list
+        ``result_bits: true``, ``dolphin_interpreter: true``, and
+        ``host_float: false``. When the capability section is absent, fall
+        back to dolphin_interpreter evidence alone (unit-test ledgers).
+        """
+        used = sorted({str(op) for op in opcodes_used})
+        if not used:
+            return []
+        dolphin_missing = set(self.missing_dolphin_opcodes(used))
+        cap = self.capabilities.get("fp-bitwise") if self.capabilities else None
+        if not isinstance(cap, dict) or not cap:
+            return sorted(dolphin_missing)
+        op_meta = cap.get("opcodes")
+        if not isinstance(op_meta, dict):
+            return used
+        missing: set[str] = set(dolphin_missing)
+        for op in used:
+            meta = op_meta.get(op)
+            if not isinstance(meta, dict):
+                missing.add(op)
+                continue
+            if not bool(meta.get("result_bits")):
+                missing.add(op)
+            if not bool(meta.get("dolphin_interpreter")):
+                missing.add(op)
+            if meta.get("host_float") is not False:
+                missing.add(op)
+        return sorted(missing)
 
 
 def _load_mapping(path: Path, *, yaml: bool) -> dict[str, Any]:
@@ -244,7 +288,11 @@ def _compute_confidence_tier_legacy(
     )
 
     has_complete_provenance = bool(
-        result.engine_hash and result.source_hash and result.git_commit
+        result.engine_hash
+        and result.certifier_hash
+        and result.source_hash
+        and result.git_commit
+        and not result.git_dirty
     )
 
     # P1-06: absent or incomplete ledgers demote; when opcodes_used is present,
@@ -485,6 +533,50 @@ def _check_engine_provenance(
         )
 
 
+def _certifier_hash_from_result_or_certificate(
+    result: ProofResult,
+    certificate: dict[str, Any] | None = None,
+) -> str:
+    value = str(getattr(result, "certifier_hash", "") or "")
+    if value:
+        return value
+    if isinstance(certificate, dict):
+        return str(certificate.get("certifier_hash", "") or "")
+    return ""
+
+
+def _check_promotion_provenance(
+    result: ProofResult,
+    policy: "PromotionPolicy",
+    blockers: list[str],
+    *,
+    certificate: dict[str, Any] | None = None,
+) -> None:
+    """Hard-block promotion on incomplete or stale provenance bindings."""
+    if not result.engine_hash:
+        blockers.append("missing-engine-provenance")
+    if not result.source_hash:
+        blockers.append("missing-source-hash")
+    if not result.git_commit:
+        blockers.append("missing-git-commit")
+    certifier_hash = _certifier_hash_from_result_or_certificate(result, certificate)
+    if not certifier_hash:
+        blockers.append("missing-certifier-hash")
+    if result.git_dirty:
+        blockers.append("git-dirty")
+    if result.architecture_model != ARCHITECTURE_MODEL:
+        blockers.append(
+            f"architecture-model-{result.architecture_model}"
+            f"!=live-{ARCHITECTURE_MODEL}"
+        )
+    if result.format != RESULT_FORMAT:
+        blockers.append(
+            f"result-format-{result.format}!=live-{RESULT_FORMAT}"
+        )
+    if policy.automatic_promotion and policy.allowed_engine_sha256 is None:
+        blockers.append("missing-allowed-engine-sha256")
+
+
 def proof_result_from_certificate(
     status: ProofStatus,
     certificate: dict[str, Any] | None,
@@ -596,8 +688,12 @@ def proof_result_from_certificate(
         environment=environment,
         memory_scope=memory_scope,
         engine_hash=str(certificate.get("engine_hash", "")),
+        certifier_hash=str(certificate.get("certifier_hash", "")),
         source_hash=str(certificate.get("source_hash", "")),
+        proof_request_hash=str(certificate.get("proof_request_hash", "")),
+        validation_ledger_hash=str(certificate.get("validation_ledger_hash", "")),
         git_commit=str(certificate.get("git_commit", "")),
+        git_dirty=bool(certificate.get("git_dirty", False)),
         floating_point_domain=floating_point_domain,
         counterexample_kind=counterexample_kind,
         opcodes_used=opcodes_used,
@@ -624,6 +720,8 @@ def classify_for_promotion(
     result: ProofResult,
     policy: "PromotionPolicy",
     ledger: ValidationLedger,
+    *,
+    certificate: dict[str, Any] | None = None,
 ) -> PromotionDecision:
     blockers: list[str] = []
     warnings: list[str] = []
@@ -640,8 +738,9 @@ def classify_for_promotion(
     if result.format < policy.minimum_result_format:
         blockers.append(f"result-format-{result.format}-too-old")
 
-    if not result.engine_hash:
-        blockers.append("missing-engine-provenance")
+    _check_promotion_provenance(
+        result, policy, blockers, certificate=certificate
+    )
 
     if result.memory_scope is not None:
         masking = result.memory_scope.masking_semantics
@@ -740,12 +839,12 @@ def classify_for_promotion_legacy(
                 equivalence or ProofStatus.INVALID_INPUT,
                 merged,
             )
-        return classify_for_promotion(proof, policy, ledger)
+        return classify_for_promotion(proof, policy, ledger, certificate=certificate)
     result = proof_result_from_certificate(
         equivalence or ProofStatus.INVALID_INPUT,
         certificate,
     )
-    return classify_for_promotion(result, policy, ledger)
+    return classify_for_promotion(result, policy, ledger, certificate=certificate)
 
 
 @dataclass(frozen=True)
@@ -772,6 +871,7 @@ class PromotionPolicy:
             "broadway-ppc32-be-v34",
             "broadway-ppc32-be-v35",
             "broadway-ppc32-be-v36",
+            "broadway-ppc32-be-v37",
         }
     )
     minimum_result_format: int = RESULT_FORMAT

@@ -305,8 +305,8 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v37"
-RESULT_FORMAT = 17
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v38"
+RESULT_FORMAT = 18
 
 
 MASKING_SEMANTICS = "per-implementation-independent-v1"
@@ -470,7 +470,10 @@ class ProofResult:
     git_commit: str = ""
     git_dirty: bool = False
     engine_hash: str = ""
+    certifier_hash: str = ""
     source_hash: str = ""
+    proof_request_hash: str = ""
+    validation_ledger_hash: str = ""
     platform: str = ""
     python_version: str = ""
     z3_version: str = ""

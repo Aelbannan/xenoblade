@@ -377,7 +377,9 @@ def merge_invalid_cause(left: Any, right: Any) -> int:
 
 def cr1_from_fpscr(fpscr: int) -> int:
     """CR1 nibble copied from FPSCR for record-form FP ops."""
-    return (fpscr >> 28) & 0xF
+    from .fp_fpscr import cr1_from_fpscr as _cr1_from_fpscr
+
+    return _cr1_from_fpscr(fpscr)
 
 
 def symbolic_fp_outcome(

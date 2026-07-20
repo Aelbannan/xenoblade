@@ -1,17 +1,39 @@
-"""PR18 floating-point exception trap delivery (Wave 5 Track D).
+"""PR18 floating-point exception trap delivery (Wave 5 Track D / Phase 8).
 
 Pipeline for arithmetic ops that already produce :class:`FPOutcome` / SoftFloat
 sticky updates:
 
 ```text
 outcome / sticky raise → update sticky/cause → inspect enable bits
-  → if enabled exception: suppress destination (scalar) + program-exception
+  → if enabled exception: suppress destination (scalar precise) + program-exception
+    OR defer to pending FP state (imprecise / reserved FE0/FE1 under exact-v2)
   → else: continue
 ```
 
 Reuses the existing exception exit vocabulary (``program-exception``, vector
-``0x700``, ``_exception_entry`` SRR0/SRR1/MSR). Equivalence already compares
-trap versus continue via terminal ``exit_kind`` / ``exit_target``.
+``0x700``, ``_exception_entry`` SRR0/SRR1/MSR). Equivalence compares trap
+versus continue via terminal ``exit_kind`` / ``exit_target``; imprecise delivery
+also records ``MachineState.fp_pending_*`` for observability.
+
+Broadway MSR FE0/FE1 trap-delivery modes (Book I; FE0=MSR[25], FE1=MSR[24],
+Python LSB bit indices 6/7):
+
++------------------+------------------+------------------------------------------+
+| FE0 | FE1        | Mode             | Modeled behavior (``SCALAR_FP_EXACT_V2``)|
++-----+------------+------------------+------------------------------------------+
+|  0  |  0         | imprecise nonrec | Pending FP exception; writeback allowed; |
+|     |            |                  | ``recoverability=False``                 |
+|  0  |  1         | imprecise recov  | Pending FP exception; writeback allowed; |
+|     |            |                  | ``recoverability=True``                  |
+|  1  |  0         | precise          | Immediate program interrupt; scalar dest |
+|     |            |                  | suppressed when enable matches           |
+|  1  |  1         | reserved         | Pinned: deferred pending record (same as |
+|     |            |                  | imprecise for delivery/writeback;        |
+|     |            |                  | ``delivery_class=DEFERRED``)             |
++------------------+------------------+------------------------------------------+
+
+Production (``SCALAR_FP_EXACT_V2=0``): ``traps_enabled`` keeps the legacy
+precise-delivery assumption; ledger ``fe0_fe1`` stays false (fail-closed).
 
 **Supported under ``traps_enabled`` (Tier C):**
 
@@ -33,11 +55,8 @@ trap versus continue via terminal ``exit_kind`` / ``exit_target``.
 
 - Estimates, compares, conversions (``frsp`` / ``fctiw*``), non-oracle paired.
 - SymbolicOps: OE/UE/XE must stay clear (OX/UX/XX not SMT-modeled).
-- MSR FE0/FE1 precise vs imprecise modes: deferred; ``traps_enabled`` assumes
-  precise delivery when an enabled exception occurs on the instruction.
-  Wave 4 ``fp-traps`` capability attestation stays incomplete /
-  never promotion-grade until FE0/FE1 is modeled (``fe0_fe1: false`` in
-  the validation ledger).
+- Production ``SCALAR_FP_EXACT_V2=0``: MSR FE0/FE1 not consulted; precise
+  delivery assumed when ``traps_enabled`` (ledger ``fe0_fe1: false``).
 
 Still **Tier C** only; does not enable automatic promotion.
 """
@@ -46,8 +65,10 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
+from enum import Enum
 from typing import Any
 
+from .fp_capabilities import scalar_fp_exact_v2_enabled
 from .fp_outcome import FPExceptionFlags, FPOutcome
 from .ir import ExecutionInconclusive, Opcode
 
@@ -80,6 +101,57 @@ FPSCR_VX_SUBCAUSES = (
 FPSCR_STICKY_TRAP_MASK = (
     FPSCR_OX | FPSCR_UX | FPSCR_ZX | FPSCR_XX | FPSCR_VX_SUBCAUSES
 )
+
+# Delivery-class tags stored on ``MachineState.fp_pending_delivery``.
+FP_PENDING_NONE = 0
+FP_PENDING_IMPRECIS = 1
+FP_PENDING_DEFERRED = 2
+
+# Broadway MSR FE0/FE1 (Book I: FE0=MSR[25], FE1=MSR[24], LSB bit indices 6/7).
+MSR_FE0 = 1 << 6
+MSR_FE1 = 1 << 7
+
+
+class FE0Fe1Mode(str, Enum):
+    """All four MSR FE0/FE1 trap-delivery modes (Phase 8 foundation)."""
+
+    IMPRECISE_NONRECOVERABLE = "imprecise-nonrecoverable"  # FE0=0 FE1=0
+    IMPRECISE_RECOVERABLE = "imprecise-recoverable"        # FE0=0 FE1=1
+    PRECISE = "precise"                                     # FE0=1 FE1=0
+    RESERVED = "reserved"                                   # FE0=1 FE1=1
+
+
+class FPDeliveryClass(str, Enum):
+    """Whether an enabled FP exception is delivered or deferred."""
+
+    DELIVERED = "delivered"
+    PENDING = "pending"
+    DEFERRED = "deferred"
+
+
+@dataclass(frozen=True, slots=True)
+class PendingFPException:
+    """Deferred FP program-interrupt state (Phase 8)."""
+
+    cause_mask: int
+    fault_pc: int
+    recoverability: bool
+    delivery_class: FPDeliveryClass
+
+
+@dataclass(frozen=True, slots=True)
+class FPTrapDeliveryPlan:
+    """Concrete vs imprecise trap delivery under live FPSCR + MSR."""
+
+    trap: bool
+    writeback: bool
+    enabled_exception: bool
+    pending: PendingFPException | None = None
+    incomplete_reason: str | None = None
+
+    @property
+    def supported(self) -> bool:
+        return self.incomplete_reason is None
 
 # Scalar ops with modeled sticky + destination suppression (SoftFloat /
 # FPOutcome family on ConcreteOps; host/Z3 path shares VE/ZE raise logic).
@@ -133,6 +205,281 @@ class FPTrapDecision:
     @property
     def supported(self) -> bool:
         return self.incomplete_reason is None
+
+
+def msr_fe0_set(msr: int) -> bool:
+    return bool(int(msr) & MSR_FE0)
+
+
+def msr_fe1_set(msr: int) -> bool:
+    return bool(int(msr) & MSR_FE1)
+
+
+def classify_fe0_fe1_mode(msr: int) -> FE0Fe1Mode:
+    """Classify MSR FE0/FE1 into one of the four Broadway delivery modes."""
+    fe0 = msr_fe0_set(msr)
+    fe1 = msr_fe1_set(msr)
+    if fe0 and fe1:
+        return FE0Fe1Mode.RESERVED
+    if fe0:
+        return FE0Fe1Mode.PRECISE
+    if fe1:
+        return FE0Fe1Mode.IMPRECISE_RECOVERABLE
+    return FE0Fe1Mode.IMPRECISE_NONRECOVERABLE
+
+
+def fpscr_trap_enables_set(fpscr: int) -> bool:
+    """True when any VE/ZE/OE/UE/XE enable is set in ``fpscr``."""
+    return bool(int(fpscr) & FPSCR_ANY_ENABLE)
+
+
+def effective_traps_enabled(
+    *,
+    domain_traps_enabled: bool,
+    fpscr: int,
+    msr: int = 0,
+) -> bool:
+    """Derive whether trap delivery is active for this instruction.
+
+    Production (``SCALAR_FP_EXACT_V2=0``): honor the external
+    ``FloatingPointDomain.traps_enabled`` approximation unchanged.
+
+    Exact-v2: additionally require live FPSCR enables; MSR FE0/FE1 selects
+    precise delivery vs pending-event stubs via :func:`plan_fp_trap_delivery`.
+    """
+    if not domain_traps_enabled:
+        return False
+    if not scalar_fp_exact_v2_enabled():
+        return True
+    del msr  # mode consulted in plan_fp_trap_delivery
+    return fpscr_trap_enables_set(fpscr)
+
+
+def pending_fp_exception_from_causes(
+    cause_mask: int,
+    fault_pc: int,
+    *,
+    mode: FE0Fe1Mode,
+) -> PendingFPException:
+    """Build a pending FP exception record for imprecise / reserved modes."""
+    recoverable = mode is FE0Fe1Mode.IMPRECISE_RECOVERABLE
+    delivery = (
+        FPDeliveryClass.DEFERRED
+        if mode is FE0Fe1Mode.RESERVED
+        else FPDeliveryClass.PENDING
+    )
+    return PendingFPException(
+        cause_mask=int(cause_mask),
+        fault_pc=int(fault_pc),
+        recoverability=recoverable,
+        delivery_class=delivery,
+    )
+
+
+def plan_fp_trap_delivery(
+    outcome: FPOutcome,
+    fpscr: int,
+    *,
+    msr: int = 0,
+    fault_pc: int = 0,
+    domain_traps_enabled: bool = False,
+    paired: bool = False,
+) -> FPTrapDeliveryPlan:
+    """Resolve trap delivery using FPSCR enables and MSR FE0/FE1 when exact-v2.
+
+    When ``SCALAR_FP_EXACT_V2=0``, this reduces to
+    :func:`resolve_fp_trap_policy` (precise per-instruction delivery assumed).
+    """
+    if not effective_traps_enabled(
+        domain_traps_enabled=domain_traps_enabled,
+        fpscr=fpscr,
+        msr=msr,
+    ):
+        decision = resolve_fp_trap_policy(outcome, fpscr, paired=paired)
+        return FPTrapDeliveryPlan(
+            trap=False,
+            writeback=decision.writeback,
+            enabled_exception=decision.enabled_exception,
+            incomplete_reason=decision.incomplete_reason,
+        )
+
+    decision = resolve_fp_trap_policy(outcome, fpscr, paired=paired)
+    if decision.incomplete_reason is not None:
+        return FPTrapDeliveryPlan(
+            trap=decision.trap,
+            writeback=decision.writeback,
+            enabled_exception=decision.enabled_exception,
+            incomplete_reason=decision.incomplete_reason,
+        )
+
+    if not decision.enabled_exception:
+        return FPTrapDeliveryPlan(
+            trap=False,
+            writeback=decision.writeback,
+            enabled_exception=False,
+        )
+
+    if not scalar_fp_exact_v2_enabled():
+        return FPTrapDeliveryPlan(
+            trap=decision.trap,
+            writeback=decision.writeback,
+            enabled_exception=True,
+        )
+
+    mode = classify_fe0_fe1_mode(msr)
+    cause_mask = sticky_mask_from_outcome(outcome)
+    if mode is FE0Fe1Mode.PRECISE:
+        return FPTrapDeliveryPlan(
+            trap=True,
+            writeback=decision.writeback,
+            enabled_exception=True,
+        )
+
+    pending = pending_fp_exception_from_causes(
+        cause_mask,
+        fault_pc,
+        mode=mode,
+    )
+    return FPTrapDeliveryPlan(
+        trap=False,
+        writeback=decision.writeback if paired else True,
+        enabled_exception=True,
+        pending=pending,
+    )
+
+
+def precise_trap_delivery_for_msr(msr: Any, ops: Any) -> Any:
+    """Symbolic/concrete condition: FE0=1 FE1=0 → immediate trap delivery."""
+    fe0 = ops.lnot(ops.eq(ops.band(msr, ops.const(MSR_FE0)), ops.const(0)))
+    fe1 = ops.lnot(ops.eq(ops.band(msr, ops.const(MSR_FE1)), ops.const(0)))
+    return ops.land(fe0, ops.lnot(fe1))
+
+
+def imprecise_writeback_allowed(msr: Any, ops: Any) -> Any:
+    """True when scalar destination writeback is allowed despite enables (exact-v2)."""
+    return ops.lnot(precise_trap_delivery_for_msr(msr, ops))
+
+
+def sticky_cause_mask_from_fpscr_transition(pre_fpscr: Any, post_fpscr: Any, ops: Any) -> Any:
+    """Newly latched sticky / VX subcause bits from an instruction FPSCR update."""
+    sticky = ops.const(FPSCR_STICKY_TRAP_MASK)
+    pre_s = ops.band(pre_fpscr, sticky)
+    post_s = ops.band(post_fpscr, sticky)
+    return ops.band(post_s, ops.bnot(pre_s))
+
+
+def fp_outcome_from_fpscr_transition(
+    pre_fpscr: int,
+    post_fpscr: int,
+    *,
+    paired: bool = False,
+) -> FPOutcome:
+    """Build a minimal ``FPOutcome`` from a concrete FPSCR edge (CFG replay)."""
+    from .fp_outcome import exception_flags, outcome_from_result_bits
+
+    newly = int(post_fpscr) & FPSCR_STICKY_TRAP_MASK
+    newly &= ~int(pre_fpscr) & FPSCR_STICKY_TRAP_MASK
+    flags = exception_flags(
+        invalid=bool(newly & FPSCR_VX_SUBCAUSES),
+        divide_by_zero=bool(newly & FPSCR_ZX),
+        overflow=bool(newly & FPSCR_OX),
+        underflow=bool(newly & FPSCR_UX),
+        inexact=bool(newly & FPSCR_XX),
+    )
+    outcome = outcome_from_result_bits(
+        0,
+        flags=flags,
+        invalid_cause=newly & FPSCR_VX_SUBCAUSES,
+    )
+    decision = resolve_fp_trap_policy(outcome, int(post_fpscr), paired=paired)
+    return replace(outcome, trap=decision.trap, writeback=decision.writeback)
+
+
+def pending_fp_exception_for_mode(
+    cause_mask: Any,
+    fault_pc: Any,
+    msr: Any,
+    ops: Any,
+) -> tuple[Any, Any, Any, Any]:
+    """Return ``(cause, fault_pc, recoverable, delivery)`` for ``MachineState``."""
+    if isinstance(cause_mask, int) and isinstance(msr, int):
+        pending = pending_fp_exception_from_causes(
+            int(cause_mask),
+            int(fault_pc),
+            mode=classify_fe0_fe1_mode(msr),
+        )
+        delivery_tag = (
+            FP_PENDING_DEFERRED
+            if pending.delivery_class is FPDeliveryClass.DEFERRED
+            else FP_PENDING_IMPRECIS
+        )
+        return (
+            ops.const(pending.cause_mask),
+            ops.const(pending.fault_pc),
+            ops.bool(pending.recoverability),
+            ops.const(delivery_tag),
+        )
+
+    fe0 = ops.lnot(ops.eq(ops.band(msr, ops.const(MSR_FE0)), ops.const(0)))
+    fe1 = ops.lnot(ops.eq(ops.band(msr, ops.const(MSR_FE1)), ops.const(0)))
+    recoverable = ops.land(ops.lnot(fe0), fe1)
+    reserved = ops.land(fe0, fe1)
+    delivery = ops.ite(
+        reserved,
+        ops.const(FP_PENDING_DEFERRED),
+        ops.const(FP_PENDING_IMPRECIS),
+    )
+    return cause_mask, fault_pc, recoverable, delivery
+
+
+def apply_fp_pending_to_state(
+    state: Any,
+    *,
+    cause_mask: Any,
+    fault_pc: Any,
+    msr: Any,
+    ops: Any,
+    active: Any,
+) -> Any:
+    """Set or clear ``MachineState`` pending FP fields when ``active`` holds."""
+    cause, pc, recoverable, delivery = pending_fp_exception_for_mode(
+        cause_mask, fault_pc, msr, ops,
+    )
+    return replace(
+        state,
+        fp_pending_cause=ops.ite(active, cause, ops.const(0)),
+        fp_pending_fault_pc=ops.ite(active, pc, ops.const(0)),
+        fp_pending_recoverable=ops.ite(active, recoverable, ops.bool(False)),
+        fp_pending_delivery=ops.ite(active, delivery, ops.const(FP_PENDING_NONE)),
+    )
+
+
+def cfg_fp_trap_branches(
+    state: Any,
+    pre_fpscr: Any,
+    post_fpscr: Any,
+    fault_pc: int,
+    ops: Any,
+    *,
+    domain_traps_enabled: bool,
+    msr: Any,
+    paired: bool = False,
+) -> tuple[Any, Any, Any]:
+    """CFG trap path: ``(enabled, trap_now, pending_active)`` conditions."""
+    enabled = fp_trap_pending_from_fex_transition(pre_fpscr, post_fpscr, ops)
+    if not scalar_fp_exact_v2_enabled():
+        return enabled, enabled, ops.bool(False)
+    if not effective_traps_enabled(
+        domain_traps_enabled=domain_traps_enabled,
+        fpscr=post_fpscr if isinstance(post_fpscr, int) else 0,
+        msr=msr if isinstance(msr, int) else 0,
+    ):
+        return enabled, ops.bool(False), ops.bool(False)
+
+    precise = precise_trap_delivery_for_msr(msr, ops)
+    trap_now = ops.land(enabled, precise)
+    pending_active = ops.land(enabled, ops.lnot(precise))
+    return enabled, trap_now, pending_active
 
 
 def trap_delivery_supported(opcode: Opcode) -> bool:
@@ -357,8 +704,9 @@ def fp_trap_pending_from_fex_transition(
     2. ConcreteOps re-raise note when the same sticky was already set (FPSCR
        edge may be empty) — see ``note_fp_enabled_exception_reraise``.
 
-    MSR FE0/FE1 imprecise modes remain deferred; ``traps_enabled`` assumes
-    precise per-instruction delivery.
+    MSR FE0/FE1 imprecise/reserved modes defer delivery; precise mode traps
+    immediately. Legacy path (``SCALAR_FP_EXACT_V2=0``) treats every enabled
+    exception as precise.
     """
     newly = _newly_enabled_sticky_trap(pre_fpscr, post_fpscr, ops)
     reraise = ops.bool(consume_fp_enabled_exception_reraise())
@@ -402,11 +750,42 @@ def capability_tags_for_trap_domain(*, traps_enabled: bool = False) -> frozenset
     return frozenset()
 
 
-def fe0_fe1_modeling_status() -> dict[str, bool]:
-    """Document FE0/FE1 incompleteness for capability-assurance ledgers."""
+def fe0_fe1_modeling_status() -> dict[str, bool | str]:
+    """Document FE0/FE1 progress for capability-assurance ledgers.
+
+    Production (``SCALAR_FP_EXACT_V2`` off) remains fail-closed: ``fe0`` /
+    ``fe1`` stay false and precise delivery is still assumed under
+    ``traps_enabled``. Experimental v2 wires live FPSCR enables, all four
+    MSR modes, CFG trap/pending branching, and imprecise writeback when the
+    module flag / env is enabled.
+    """
+    v2 = scalar_fp_exact_v2_enabled()
+    imprecise_wired = v2
     return {
-        "fe0": False,
-        "fe1": False,
-        "precise_delivery_assumed_under_traps_enabled": True,
-        "imprecise_modes_modeled": False,
+        # Ledger completeness bits: true only on the experimental exact-v2 path.
+        "fe0": v2,
+        "fe1": v2,
+        "modes_documented": True,
+        "imprecise_modes_modeled": imprecise_wired,
+        "precise_mode_delivered": v2,
+        "imprecise_nonrecoverable_pending_stub": False,
+        "imprecise_recoverable_pending_stub": False,
+        "reserved_mode_pending_stub": False,
+        "precise_delivery_assumed_under_traps_enabled": not v2,
+        "live_fpscr_enables_when_exact_v2": v2,
+        "delivery_class": "fe0-fe1-v2" if v2 else "legacy-precise-assumption",
+    }
+
+
+def traps_v2_ledger_dimensions() -> dict[str, bool]:
+    """Honest ``fp-traps`` ledger dimensions for the active modeling tier."""
+    status = fe0_fe1_modeling_status()
+    v2 = bool(status["fe0"])
+    return {
+        "ve_ze_oe_ue_xe": False,
+        "destination_suppression": False,
+        "srr0_srr1": False,
+        "fex_reraise": False,
+        "fe0_fe1": v2 and bool(status["imprecise_modes_modeled"]),
+        "traps": v2 and bool(status["precise_mode_delivered"]),
     }

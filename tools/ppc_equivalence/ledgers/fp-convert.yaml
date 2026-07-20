@@ -1,0 +1,37 @@
+# Phase 6 per-opcode ledger — fp-convert (SCALAR_FP_V2).
+# Semantics wires exact_frsp/exact_fctiw/exact_fctiwz when SCALAR_FP_EXACT_V2=1.
+schema_version: 1
+capability: fp-convert
+model_version: broadway-fp-convert-v2
+status: incomplete
+dimensions:
+  all_rn_modes: true
+  fi_fr_xx: true
+  vxcvi: true
+  writeback_suppression: true
+  ni_result_flush: true
+  record_form_cr1: false
+  traps: false
+  symbolic_backend: false
+opcodes:
+  frsp:
+    rn_modes: true
+    nan_inf: true
+    ox_ux_xx: true
+    ni_result: true
+    fi_fr: true
+    fprf: true
+  fctiw:
+    rn_modes: true
+    integer_range: true
+    negative_zero: true
+    fi_fr: true
+    vxcvi: true
+    writeback_suppression: true
+  fctiwz:
+    rtz_only: true
+    integer_range: true
+    negative_zero: true
+    fi_fr: true
+    vxcvi: true
+    writeback_suppression: true

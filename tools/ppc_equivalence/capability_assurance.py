@@ -879,6 +879,25 @@ def _recompute_attestation_status(
         # fp-outcome-unify-v1 records type unification only.
         return STATUS_INCOMPLETE
 
+    if attestation.algorithm == "fp-fused-exact-v2":
+        if attestation.capability != "fp-fused-arithmetic":
+            return STATUS_INCOMPLETE
+        from tools.ppc_equivalence.fp_fused_obligations import (
+            recompute_fp_fused_attestation_status,
+        )
+
+        return recompute_fp_fused_attestation_status(
+            attestation.evidence,
+            capability=attestation.capability,
+            algorithm=attestation.algorithm,
+            model_version=attestation.model_version,
+            unsupported=attestation.unsupported,
+            allowed_versions=manifest.allowed_versions(attestation.capability),
+            live_validation_ledger_hash=str(
+                getattr(result, "validation_ledger_hash", "") or ""
+            ),
+        )
+
     if attestation.algorithm in {
         "fp-fused-incomplete-v0",
         "fp-paired-incomplete-v0",
@@ -1314,7 +1333,8 @@ def evaluate_capability_assurance(
     for capability in sorted(attested_by_name):
         if capability not in used:
             blockers.append(f"capability-attestation-extra:{capability}")
-            recomputed[capability] = STATUS_INCOMPLETE
+            # Keep the honest per-attestation grade in recomputed_statuses;
+            # extras block Tier A via blockers without rewriting the grade.
 
     # Requirements set mismatches demote affected capabilities.
     for capability in sorted(used):

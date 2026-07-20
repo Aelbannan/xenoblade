@@ -9,6 +9,7 @@ midpoint/sticky-residue and FE0/FE1 remain unfinished.
 
 from __future__ import annotations
 
+import os
 from typing import Any, Iterable
 
 from tools.ppc_equivalence.fp_bitwise import FP_BITWISE_OPS, fp_opcodes_among
@@ -22,6 +23,30 @@ FP_FUSED_MODEL_VERSION = "broadway-fp-fused-v1"
 FP_PAIRED_MODEL_VERSION = "broadway-fp-paired-v1"
 FP_PSQ_MODEL_VERSION = "broadway-fp-psq-v1"
 FP_TRAPS_MODEL_VERSION = "broadway-fp-traps-v1"
+
+# Experimental scalar-FP v2 identities (Phase 1 — SCALAR_FP_V2.md). Not used by
+# production Tier A until Phase 12; gated by SCALAR_FP_EXACT_V2 (default off).
+FP_LOAD_STORE_MODEL_VERSION_V2 = "broadway-fp-load-store-v2"
+FP_COMPARE_MODEL_VERSION_V2 = "broadway-fp-compare-v2"
+FP_CONVERT_MODEL_VERSION_V2 = "broadway-fp-convert-v2"
+FP_SCALAR_MODEL_VERSION_V3 = "broadway-fp-scalar-v3"
+FP_FUSED_MODEL_VERSION_V2 = "broadway-fp-fused-v2"
+FP_TRAPS_MODEL_VERSION_V2 = "broadway-fp-traps-v2"
+FP_FPSCR_CONTROL_MODEL_VERSION_V1 = "broadway-fp-fpscr-control-v1"
+
+SCALAR_FP_EXACT_V2_ENV = "SCALAR_FP_EXACT_V2"
+_SCALAR_FP_EXACT_V2_MODULE_FLAG: bool | None = None
+
+FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS: dict[str, str] = {
+    "fp-load-store": FP_LOAD_STORE_MODEL_VERSION_V2,
+    "fp-compare": FP_COMPARE_MODEL_VERSION_V2,
+    "fp-convert": FP_CONVERT_MODEL_VERSION_V2,
+    "fp-scalar-arithmetic": FP_SCALAR_MODEL_VERSION_V3,
+    "fp-fused-arithmetic": FP_FUSED_MODEL_VERSION_V2,
+    "fp-traps": FP_TRAPS_MODEL_VERSION_V2,
+    "fp-fpscr-control": FP_FPSCR_CONTROL_MODEL_VERSION_V1,
+    # fp-bitwise, fp-paired-single, fp-psq: no v2 experimental bump in Phase 1.
+}
 
 FP_SCALAR_ORACLE_ALGORITHM = "fp-scalar-oracle-v1"
 FP_OUTCOME_UNIFY_ALGORITHM = "fp-outcome-unify-v1"
@@ -189,9 +214,33 @@ def classify_fp_capabilities(
     return frozenset(caps)
 
 
+def set_scalar_fp_exact_v2_module_flag(enabled: bool | None) -> None:
+    """Override ``SCALAR_FP_EXACT_V2`` for tests; ``None`` restores env-only."""
+    global _SCALAR_FP_EXACT_V2_MODULE_FLAG
+    _SCALAR_FP_EXACT_V2_MODULE_FLAG = enabled
+
+
+def scalar_fp_exact_v2_enabled() -> bool:
+    """True when the experimental scalar-FP v2 path is enabled (default off)."""
+    if _SCALAR_FP_EXACT_V2_MODULE_FLAG is not None:
+        return _SCALAR_FP_EXACT_V2_MODULE_FLAG
+    raw = os.environ.get(SCALAR_FP_EXACT_V2_ENV, "0")
+    return raw not in ("", "0", "false", "False", "no", "NO", "off", "OFF")
+
+
 def model_version_for_capability(capability: str) -> str | None:
     """Return the Wave-3 model-version stub for an FP capability, if known."""
     return FP_SUBCAPABILITY_MODEL_VERSIONS.get(capability)
+
+
+def experimental_model_version_for_capability(capability: str) -> str | None:
+    """Return the Phase 1 experimental model identity when v2 is enabled."""
+    if not scalar_fp_exact_v2_enabled():
+        return model_version_for_capability(capability)
+    return FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS.get(
+        capability,
+        FP_SUBCAPABILITY_MODEL_VERSIONS.get(capability),
+    )
 
 
 def traps_enabled_from_result(result: Any) -> bool:

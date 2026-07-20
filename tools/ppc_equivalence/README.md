@@ -446,6 +446,15 @@ Before advertising a newly supported opcode or semantic change:
 6. Update `REFERENCES.md` / README supported-model notes if the contract or
    assumptions changed.
 
+### Scalar FP architecture-model release (v2)
+
+Full scalar FP Tier A is tracked as a **new architecture-model release**, not an
+incremental relaxation of the current FP gate. See
+[`SCALAR_FP_V2.md`](SCALAR_FP_V2.md) for the shared exact-core architecture,
+capability split (including proposed `fp-fpscr-control`), phased delivery
+(Phases 0–12), and final definition of done. Production models remain on
+`broadway-fp-*-v1` / `broadway-fp-scalar-v2` until Phase 12.
+
 ### Capability-assurance rollout / recertification (Wave 5)
 
 Default `tools/coop/capability_manifest.json` stays **`shadow_mode=true`**.

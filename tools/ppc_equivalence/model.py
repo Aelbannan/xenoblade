@@ -76,6 +76,13 @@ class MachineState:
     stack_private: Any | None = None
     # Optional SymbolicOps MMIO/FIFO path state (``SymbolicBusState``).
     symbolic_bus: Any | None = None
+    # Phase 8: deferred FP program-interrupt (imprecise / reserved FE0/FE1).
+    # ``fp_pending_cause == 0`` means no pending event.
+    fp_pending_cause: Any = 0
+    fp_pending_fault_pc: Any = 0
+    fp_pending_recoverable: Any = False
+    # 0=none, 1=pending (imprecise), 2=deferred (reserved FE0=1 FE1=1).
+    fp_pending_delivery: Any = 0
 
     def with_gpr(self, index: int, value: Any) -> "MachineState":
         registers = list(self.gpr)
@@ -115,6 +122,25 @@ class MachineState:
         registers = list(self.spr)
         registers[index] = value
         return replace(self, spr=tuple(registers))
+
+    def with_fp_pending(
+        self,
+        *,
+        cause: Any = 0,
+        fault_pc: Any = 0,
+        recoverable: Any = False,
+        delivery: Any = 0,
+    ) -> "MachineState":
+        return replace(
+            self,
+            fp_pending_cause=cause,
+            fp_pending_fault_pc=fault_pc,
+            fp_pending_recoverable=recoverable,
+            fp_pending_delivery=delivery,
+        )
+
+    def clear_fp_pending(self) -> "MachineState":
+        return self.with_fp_pending()
 
 
 def _parse(value: object) -> int:

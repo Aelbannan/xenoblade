@@ -1,0 +1,889 @@
+schema_version: 1
+contract_id: scalar-fp-contract-v2
+description: Phase 1 architectural contract for non-paired, non-PSQ Broadway scalar FP. See SCALAR_FP_V2.md
+  and SOUNDNESS.md. Production Tier A remains on v1/v2 model identities until Phase 12; experimental v2/v3
+  identities require SCALAR_FP_EXACT_V2=1.
+capabilities:
+  fp-fpscr-control:
+    proposed: true
+    experimental_model_version: broadway-fp-fpscr-control-v1
+    production_attachment: fp-scalar-arithmetic
+    migration_from: fp-scalar-arithmetic
+    migration_note: Wave 3 production classify_fp_capabilities() still maps mffs/mtfsf/mtfsfi/mtfsb0/mtfsb1/mcrfs
+      through FP_SCALAR_ARITH_OPS. Phase 1 contract assigns fp-fpscr-control as the v2 capability owner;
+      production attachment and allowlists remain unchanged until Phase 12.
+    opcodes:
+    - mcrfs
+    - mffs
+    - mtfsb0
+    - mtfsb1
+    - mtfsf
+    - mtfsfi
+opcodes:
+  lfd:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 64-bit memory doubleword from EA
+    result_precision_fpr: writes binary64 full FPR to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  lfdu:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 64-bit memory doubleword from EA
+    result_precision_fpr: writes binary64 full FPR to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  lfdux:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 64-bit memory doubleword from EA
+    result_precision_fpr: writes binary64 full FPR to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  lfdx:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 64-bit memory doubleword from EA
+    result_precision_fpr: writes binary64 full FPR to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  lfs:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 32-bit memory word from EA
+    result_precision_fpr: writes binary32 in FPR low 32; upper 32 undefined on load to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  lfsu:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 32-bit memory word from EA
+    result_precision_fpr: writes binary32 in FPR low 32; upper 32 undefined on load to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  lfsux:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 32-bit memory word from EA
+    result_precision_fpr: writes binary32 in FPR low 32; upper 32 undefined on load to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  lfsx:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: loads 32-bit memory word from EA
+    result_precision_fpr: writes binary32 in FPR low 32; upper 32 undefined on load to frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: preserve loaded NaN payload and quiet bit
+    signed_zero: preserve loaded signed zero
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD on defined domain
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfd:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary64 full FPR from frS
+    result_precision_fpr: stores 64-bit memory doubleword to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfdu:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary64 full FPR from frS
+    result_precision_fpr: stores 64-bit memory doubleword to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfdux:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary64 full FPR from frS
+    result_precision_fpr: stores 64-bit memory doubleword to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfdx:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary64 full FPR from frS
+    result_precision_fpr: stores 64-bit memory doubleword to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfiwx:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: frS low 32 bits as integer pattern
+    result_precision_fpr: stores low 32 bits of frS to EA as word
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: raw bit pattern; no FP interpretation
+    signed_zero: raw bits preserved
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfs:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary32 in FPR low 32; upper 32 undefined on load from frS
+    result_precision_fpr: stores 32-bit memory word to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfsu:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary32 in FPR low 32; upper 32 undefined on load from frS
+    result_precision_fpr: stores 32-bit memory word to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfsux:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary32 in FPR low 32; upper 32 undefined on load from frS
+    result_precision_fpr: stores 32-bit memory word to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  stfsx:
+    capability_owner: fp-load-store
+    experimental_model_version: broadway-fp-load-store-v2
+    corpus_coverage_status: pending
+    operand_precision_order: FPR binary32 in FPR low 32; upper 32 undefined on load from frS
+    result_precision_fpr: stores 32-bit memory word to EA; no FPR result
+    rn_sensitive: false
+    ni_operand: flush subnormal source to signed zero before store when NI=1
+    ni_result: none
+    nan_selection_quieting: preserve NaN payload bits on store
+    signed_zero: preserve sign on store; NI may flush subnormal source to +0
+    invalid_subcause: none (storage exceptions outside scalar-FP contract domain)
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: never writes FPR destination
+    record_form_cr1: n/a
+    fe0_fe1_delivery: none
+  fcmpo:
+    capability_owner: fp-compare
+    experimental_model_version: broadway-fp-compare-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB (original FPR bits for SNAN test)
+    result_precision_fpr: none (updates CR field and FPSCR FPCC)
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: classify from original binary64 bits; no pre-quieting
+    signed_zero: +0 and -0 compare equal unordered/ordered per ISA
+    invalid_subcause: VXSNAN; VXVC additionally when ordered and unordered
+    ox_ux_zx_xx: none
+    fi_fr_fprf: FPCC/FPRF updated unconditionally; CR field from compare
+    destination_suppression: never writes FPR
+    record_form_cr1: n/a
+    fe0_fe1_delivery: VE may trap; compare trap delivery per FE0/FE1 (Phase 8)
+  fcmpu:
+    capability_owner: fp-compare
+    experimental_model_version: broadway-fp-compare-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB (original FPR bits for SNAN test)
+    result_precision_fpr: none (updates CR field and FPSCR FPCC)
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: classify from original binary64 bits; no pre-quieting
+    signed_zero: +0 and -0 compare equal unordered/ordered per ISA
+    invalid_subcause: VXSNAN; VXVC additionally when ordered and unordered
+    ox_ux_zx_xx: none
+    fi_fr_fprf: FPCC/FPRF updated unconditionally; CR field from compare
+    destination_suppression: never writes FPR
+    record_form_cr1: n/a
+    fe0_fe1_delivery: VE may trap; compare trap delivery per FE0/FE1 (Phase 8)
+  fctiw:
+    capability_owner: fp-convert
+    experimental_model_version: broadway-fp-convert-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frB
+    result_precision_fpr: signed 32-bit integer in 0xFFF80000xxxxxxxx FPR format
+    rn_sensitive: true
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: VXSNAN on signaling NaN source
+    signed_zero: negative rounded-to-zero sets marker bit in FPR format
+    invalid_subcause: VXSNAN, VXCVI when out of range after RN
+    ox_ux_zx_xx: XX when inexact; no OX/UX for integer range
+    fi_fr_fprf: FI/FR from rounding before range check
+    destination_suppression: suppress frD when VE and invalid
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX]'
+    fe0_fe1_delivery: enabled FP exceptions per MSR FE0/FE1
+  fctiwz:
+    capability_owner: fp-convert
+    experimental_model_version: broadway-fp-convert-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frB
+    result_precision_fpr: signed 32-bit integer in 0xFFF80000xxxxxxxx FPR format
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: VXSNAN on signaling NaN source
+    signed_zero: negative rounded-to-zero sets marker bit in FPR format
+    invalid_subcause: VXSNAN, VXCVI when out of range after RN
+    ox_ux_zx_xx: XX when inexact; no OX/UX for integer range
+    fi_fr_fprf: FI/FR from rounding before range check
+    destination_suppression: suppress frD when VE and invalid
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX]'
+    fe0_fe1_delivery: enabled FP exceptions per MSR FE0/FE1
+  frsp:
+    capability_owner: fp-convert
+    experimental_model_version: broadway-fp-convert-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frB
+    result_precision_fpr: binary32 rounded result in frD low 32
+    rn_sensitive: true
+    ni_operand: none
+    ni_result: flush subnormal binary32 result when NI=1
+    nan_selection_quieting: propagate/quiet source NaN per convert rules
+    signed_zero: preserve rounded signed zero
+    invalid_subcause: VXSNAN
+    ox_ux_zx_xx: OX/UX/XX per RN when rounding
+    fi_fr_fprf: FI/FR from rounding; FPRF classifies result
+    destination_suppression: suppress frD when VE and invalid
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX]'
+    fe0_fe1_delivery: enabled FP exceptions per MSR FE0/FE1
+  fadd:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC unused
+    result_precision_fpr: binary64 in frD; full 64-bit FPR
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fadds:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC unused
+    result_precision_fpr: binary32 in frD; low 32 active
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fdiv:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC unused
+    result_precision_fpr: binary64 in frD; full 64-bit FPR
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fdivs:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC unused
+    result_precision_fpr: binary32 in frD; low 32 active
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fmul:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC unused
+    result_precision_fpr: binary64 in frD; full 64-bit FPR
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fmuls:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC (Force25-rounded)
+    result_precision_fpr: binary32 in frD; low 32 active
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fres:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC unused
+    result_precision_fpr: binary32 in frD; low 32 active
+    rn_sensitive: false
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN only
+    ox_ux_zx_xx: estimate does not raise OX/UX/XX
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  frsqrte:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC unused
+    result_precision_fpr: binary64 in frD; full 64-bit FPR
+    rn_sensitive: false
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN only
+    ox_ux_zx_xx: estimate does not raise OX/UX/XX
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fsel:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA (condition), frB, frC (selection operands)
+    result_precision_fpr: binary64 in frD; full 64-bit FPR
+    rn_sensitive: false
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN when any operand is signaling NaN
+    ox_ux_zx_xx: none
+    fi_fr_fprf: FPRF from selected value; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fsub:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC unused
+    result_precision_fpr: binary64 in frD; full 64-bit FPR
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fsubs:
+    capability_owner: fp-scalar-arithmetic
+    experimental_model_version: broadway-fp-scalar-v3
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC unused
+    result_precision_fpr: binary32 in frD; low 32 active
+    rn_sensitive: true
+    ni_operand: flush subnormal operands to signed zero before op when NI=1
+    ni_result: flush subnormal result to signed zero when NI=1
+    nan_selection_quieting: first NaN in operand order; quiet signaling NaNs on input
+    signed_zero: preserve except NI flush maps subnormal to +0
+    invalid_subcause: VXSNAN, VXISI, VXIMZ, VXZDZ, VXIDI per Dolphin NI_* precedence
+    ox_ux_zx_xx: OX/UX/XX latch sticky per RN; ZX on nonzero/0 divide
+    fi_fr_fprf: FI/FR from rounding when applicable; FPRF classifies result; Rc copies FPCC to CR1
+    destination_suppression: suppress frD when VE enabled and invalid exception raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] shadow from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  mcrfs:
+    capability_owner: fp-fpscr-control
+    experimental_model_version: broadway-fp-fpscr-control-v1
+    corpus_coverage_status: pending
+    operand_precision_order: FPSCR field bf source, CR field bfa destination
+    result_precision_fpr: none (CR and FPSCR field update)
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none
+    signed_zero: n/a
+    invalid_subcause: none
+    ox_ux_zx_xx: clear exception bits in source FPSCR field only
+    fi_fr_fprf: copy FPSCR field to CR; recompute summaries
+    destination_suppression: never writes FPR
+    record_form_cr1: n/a (non-record form)
+    fe0_fe1_delivery: none
+  mffs:
+    capability_owner: fp-fpscr-control
+    experimental_model_version: broadway-fp-fpscr-control-v1
+    corpus_coverage_status: pending
+    operand_precision_order: none (reads FPSCR register state)
+    result_precision_fpr: binary64 frD with 0xFFF80000 prefix OR-ing FPSCR low 32 bits
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none
+    signed_zero: n/a
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: none
+    destination_suppression: always writes frD
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: none
+  mtfsb0:
+    capability_owner: fp-fpscr-control
+    experimental_model_version: broadway-fp-fpscr-control-v1
+    corpus_coverage_status: pending
+    operand_precision_order: bit index b in FPSCR
+    result_precision_fpr: none
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none
+    signed_zero: n/a
+    invalid_subcause: none
+    ox_ux_zx_xx: clear selected exception bit; recompute summaries
+    fi_fr_fprf: recompute VX/FEX summaries
+    destination_suppression: never writes FPR
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: none
+  mtfsb1:
+    capability_owner: fp-fpscr-control
+    experimental_model_version: broadway-fp-fpscr-control-v1
+    corpus_coverage_status: pending
+    operand_precision_order: bit index b in FPSCR
+    result_precision_fpr: none
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none
+    signed_zero: n/a
+    invalid_subcause: none
+    ox_ux_zx_xx: set selected exception bit; recompute summaries
+    fi_fr_fprf: recompute VX/FEX summaries
+    destination_suppression: never writes FPR
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: none
+  mtfsf:
+    capability_owner: fp-fpscr-control
+    experimental_model_version: broadway-fp-fpscr-control-v1
+    corpus_coverage_status: pending
+    operand_precision_order: frB low 32 bits as FPSCR write mask source
+    result_precision_fpr: none (FPSCR write only)
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none
+    signed_zero: n/a
+    invalid_subcause: none
+    ox_ux_zx_xx: direct field writes per FM mask; sticky FX preserved where required
+    fi_fr_fprf: recompute VX/FEX summaries after masked write
+    destination_suppression: never writes FPR
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: none
+  mtfsfi:
+    capability_owner: fp-fpscr-control
+    experimental_model_version: broadway-fp-fpscr-control-v1
+    corpus_coverage_status: pending
+    operand_precision_order: 4-bit immediate IMM in selected FPSCR field bf
+    result_precision_fpr: none (FPSCR field write)
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none
+    signed_zero: n/a
+    invalid_subcause: none
+    ox_ux_zx_xx: field replace; recompute summaries
+    fi_fr_fprf: recompute VX/FEX summaries
+    destination_suppression: never writes FPR
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: none
+  fmadd:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC
+    result_precision_fpr: binary64 fused multiply-add in frD; one binary64 fused op
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules)
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fmadds:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC (frC Force25-rounded when single)
+    result_precision_fpr: binary32 fused multiply-add in frD; single-round binary32
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules)
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fmsub:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC
+    result_precision_fpr: binary64 fused multiply-add in frD; one binary64 fused op
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules)
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fmsubs:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC (frC Force25-rounded when single)
+    result_precision_fpr: binary32 fused multiply-add in frD; single-round binary32
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules)
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fnmadd:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC
+    result_precision_fpr: binary64 fused multiply-add in frD; one binary64 fused op
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules)
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fnmadds:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC (frC Force25-rounded when single)
+    result_precision_fpr: binary32 fused multiply-add in frD; single-round binary32
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules)
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fnmsub:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frA, frB, frC
+    result_precision_fpr: binary64 fused multiply-add in frD; one binary64 fused op
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules); subtract reverses infinity sign for VXISI
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fnmsubs:
+    capability_owner: fp-fused-arithmetic
+    experimental_model_version: broadway-fp-fused-v2
+    corpus_coverage_status: pending
+    operand_precision_order: binary32 frA, frB, frC (frC Force25-rounded when single)
+    result_precision_fpr: binary32 fused multiply-add in frD; single-round binary32
+    rn_sensitive: true
+    ni_operand: flush subnormal operands before fused eval when NI=1
+    ni_result: flush subnormal result when NI=1
+    nan_selection_quieting: frA then frB then frC; quiet signaling NaNs
+    signed_zero: preserve except NI flush; negated forms never negate NaN
+    invalid_subcause: VXSNAN, VXIMZ, VXISI (add/sub sign rules); subtract reverses infinity sign for VXISI
+    ox_ux_zx_xx: OX/UX/XX sticky; midpoint tie correction (single fmadd)
+    fi_fr_fprf: fmadd(s) sets FI/FR on finite writeback; fmsub/fnmsub variants preserve per Dolphin
+    destination_suppression: suppress frD when VE enabled and invalid raised
+    record_form_cr1: 'Rc=1: CR1[FX:FEX:VX:OX] from post-instruction FPSCR'
+    fe0_fe1_delivery: enabled FP exceptions deliver per MSR FE0/FE1 and FPSCR enables
+  fabs:
+    capability_owner: fp-bitwise
+    experimental_model_version: fp-bitwise-v1
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frB (source FPR bits)
+    result_precision_fpr: binary64 bit-identical/sign-bit transform in frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none (pure bitwise)
+    signed_zero: sign bit only; payload preserved
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: 'optional Rc: FPCC shadow only; no arithmetic FPRF'
+    destination_suppression: always writes frD
+    record_form_cr1: 'Rc=1: CR1 from existing FPSCR FPCC shadow'
+    fe0_fe1_delivery: none
+  fmr:
+    capability_owner: fp-bitwise
+    experimental_model_version: fp-bitwise-v1
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frB (source FPR bits)
+    result_precision_fpr: binary64 bit-identical/sign-bit transform in frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none (pure bitwise)
+    signed_zero: sign bit only; payload preserved
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: 'optional Rc: FPCC shadow only; no arithmetic FPRF'
+    destination_suppression: always writes frD
+    record_form_cr1: 'Rc=1: CR1 from existing FPSCR FPCC shadow'
+    fe0_fe1_delivery: none
+  fnabs:
+    capability_owner: fp-bitwise
+    experimental_model_version: fp-bitwise-v1
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frB (source FPR bits)
+    result_precision_fpr: binary64 bit-identical/sign-bit transform in frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none (pure bitwise)
+    signed_zero: sign bit only; payload preserved
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: 'optional Rc: FPCC shadow only; no arithmetic FPRF'
+    destination_suppression: always writes frD
+    record_form_cr1: 'Rc=1: CR1 from existing FPSCR FPCC shadow'
+    fe0_fe1_delivery: none
+  fneg:
+    capability_owner: fp-bitwise
+    experimental_model_version: fp-bitwise-v1
+    corpus_coverage_status: pending
+    operand_precision_order: binary64 frB (source FPR bits)
+    result_precision_fpr: binary64 bit-identical/sign-bit transform in frD
+    rn_sensitive: false
+    ni_operand: none
+    ni_result: none
+    nan_selection_quieting: none (pure bitwise)
+    signed_zero: sign bit only; payload preserved
+    invalid_subcause: none
+    ox_ux_zx_xx: none
+    fi_fr_fprf: 'optional Rc: FPCC shadow only; no arithmetic FPRF'
+    destination_suppression: always writes frD
+    record_form_cr1: 'Rc=1: CR1 from existing FPSCR FPCC shadow'
+    fe0_fe1_delivery: none

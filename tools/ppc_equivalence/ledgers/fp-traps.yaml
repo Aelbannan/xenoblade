@@ -1,0 +1,18 @@
+# Phase 8 per-opcode ledger — fp-traps (SCALAR_FP_V2 experimental).
+# Production validation_ledger.yaml stays fail-closed (fe0_fe1: false) until Phase 12.
+# When SCALAR_FP_EXACT_V2=1, see fp_traps.traps_v2_ledger_dimensions() for live bits.
+schema_version: 1
+capability: fp-traps
+model_version: broadway-fp-traps-v2
+status: incomplete
+dimensions:
+  ve_ze_oe_ue_xe: false
+  destination_suppression: false
+  srr0_srr1: false
+  fex_reraise: false
+  fe0_fe1: false
+  traps: false
+notes: >
+  Exact-v2 wires FE0/FE1 precise vs imprecise/reserved pending delivery and
+  imprecise scalar writeback when SCALAR_FP_EXACT_V2=1. Tier A still requires
+  full trap-family coverage, symbolic backend, and independent corpora.

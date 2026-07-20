@@ -733,6 +733,17 @@ def derive_capability_requirements(
             )
         )
 
+    from tools.ppc_equivalence.capability_attachment import (
+        domain_restrictions_present,
+    )
+
+    if domain_restrictions_present(result):
+        requirements.append(
+            build_requirement(
+                capability="precondition-closure",
+            )
+        )
+
     if callees:
         requirements.append(
             build_requirement(

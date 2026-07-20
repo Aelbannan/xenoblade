@@ -74,6 +74,158 @@ def _consume_softfloat_oracle_flags() -> Any:
     _SOFTFLOAT_ORACLE_FLAGS.set(None)
     return flags
 
+# Exact scalar-FP v2 outcome from the most recent ConcreteOps arithmetic call
+# (Phase 3 — SCALAR_FP_EXACT_V2).
+_EXACT_SCALAR_OUTCOME: ContextVar[Any] = ContextVar(
+    "exact_scalar_outcome", default=None,
+)
+
+
+def _record_exact_scalar_outcome(outcome: Any) -> None:
+    _EXACT_SCALAR_OUTCOME.set(outcome)
+
+
+def _consume_exact_scalar_outcome() -> Any:
+    outcome = _EXACT_SCALAR_OUTCOME.get()
+    _EXACT_SCALAR_OUTCOME.set(None)
+    return outcome
+
+
+def _scalar_outcome_from_exact_fused(
+    fused: Any,
+    *,
+    fpscr: int,
+    msr: int,
+    a_bits: int,
+    c_bits: int,
+    b_bits: int,
+) -> Any:
+    """Lift ``ExactFusedOutcome`` into ``ScalarFPOutcome`` for semantics dispatch."""
+    from dataclasses import replace
+
+    from .fp_bits import FpClass, classify_binary64, decode_binary64
+    from .fp_exact_outcome import FiFrPolicy, scalar_outcome_from_oracle
+    from .fp_fpscr import FPSCR_VE, FPSCR_VXIMZ, FPSCR_VXISI, FPSCR_VXSNAN, FPSCR_VX_ANY
+
+    invalid_cause = 0
+    if fused.flags.invalid:
+        for bits in (a_bits, c_bits, b_bits):
+            if classify_binary64(bits) is FpClass.SNAN:
+                invalid_cause |= FPSCR_VXSNAN
+                break
+        if invalid_cause == 0:
+            a_kind = classify_binary64(a_bits)
+            c_kind = classify_binary64(c_bits)
+            b_kind = classify_binary64(b_bits)
+            if not any(
+                classify_binary64(bits) in (FpClass.QNAN, FpClass.SNAN)
+                for bits in (a_bits, c_bits, b_bits)
+            ):
+                a_sign, a_exp, a_frac = decode_binary64(a_bits)
+                c_sign, c_exp, c_frac = decode_binary64(c_bits)
+                b_sign, b_exp, b_frac = decode_binary64(b_bits)
+                a_inf = a_kind is FpClass.INFINITY
+                c_inf = c_kind is FpClass.INFINITY
+                b_inf = b_kind is FpClass.INFINITY
+                a_zero = a_exp == 0 and a_frac == 0
+                c_zero = c_exp == 0 and c_frac == 0
+                if (a_inf and c_zero) or (c_inf and a_zero):
+                    invalid_cause |= FPSCR_VXIMZ
+                else:
+                    product_sign = a_sign ^ c_sign
+                    product_inf = (a_inf and not c_zero) or (c_inf and not a_zero)
+                    if product_inf and b_inf and product_sign != b_sign:
+                        invalid_cause |= FPSCR_VXISI
+
+    outcome = scalar_outcome_from_oracle(
+        fused.to_oracle_result(),
+        invalid_cause=invalid_cause,
+        fi_fr_policy=FiFrPolicy.CLEAR,
+        fi=bool(fused.flags.inexact),
+    )
+    from .fp_capabilities import scalar_fp_exact_v2_enabled
+    from .fp_exact_outcome import fp_outcome_from_scalar_outcome
+    from .fp_traps import plan_fp_trap_delivery
+
+    domain = active_fp_domain()
+    if domain.traps_enabled and scalar_fp_exact_v2_enabled():
+        plan = plan_fp_trap_delivery(
+            fp_outcome_from_scalar_outcome(outcome),
+            fpscr,
+            msr=msr,
+            domain_traps_enabled=True,
+        )
+        writeback = bool(plan.writeback)
+    else:
+        ve = bool(int(fpscr) & FPSCR_VE)
+        writeback = not (bool(invalid_cause & FPSCR_VX_ANY) and ve)
+    return replace(outcome, writeback=writeback)
+
+
+def _finalize_exact_scalar_v2(
+    state: MachineState,
+    insn: Instruction,
+    fd: int,
+    op: Opcode,
+    ops: WordOps,
+    *,
+    is_single: bool,
+) -> MachineState | None:
+    """Apply a recorded exact-v2 outcome via ``apply_fpscr_transition``."""
+    exact_outcome = _consume_exact_scalar_outcome()
+    if exact_outcome is None:
+        return None
+    from .fp_capabilities import scalar_fp_exact_v2_enabled
+    from .fp_exact_outcome import fp_outcome_from_scalar_outcome
+    from .fp_exact_symbolic import try_concrete_bv32, try_concrete_bv64
+    from .fp_fpscr import apply_fpscr_transition
+    from .fp_traps import plan_fp_trap_delivery
+
+    domain = active_fp_domain()
+    writeback = bool(exact_outcome.writeback)
+    fpscr_i = try_concrete_bv32(state.fpscr)
+    msr_i = try_concrete_bv32(state.msr)
+    if domain.traps_enabled and scalar_fp_exact_v2_enabled() and fpscr_i is not None:
+        plan = plan_fp_trap_delivery(
+            fp_outcome_from_scalar_outcome(exact_outcome),
+            fpscr_i,
+            msr=msr_i if msr_i is not None else 0,
+            domain_traps_enabled=True,
+        )
+        writeback = bool(plan.writeback)
+
+    result_bits = exact_outcome.result_bits
+    if isinstance(result_bits, int):
+        result_bits = ops.fp_const64(result_bits)
+    if fpscr_i is not None:
+        post_fpscr = apply_fpscr_transition(fpscr_i, op.value, exact_outcome)
+        state = state.with_fpscr(post_fpscr)
+    else:
+        from .fp_exact_symbolic import apply_fpscr_transition_expr
+
+        state = state.with_fpscr(
+            apply_fpscr_transition_expr(state.fpscr, op.value, exact_outcome, ops),
+        )
+    state = _fp_write_result_if(
+        state,
+        fd,
+        result_bits,
+        ops.bool(writeback) if isinstance(writeback, bool) else writeback,
+        ops,
+    )
+    if is_single:
+        state = state.with_ps1(
+            fd,
+            ops.ite(
+                ops.bool(exact_outcome.writeback) if isinstance(exact_outcome.writeback, bool) else exact_outcome.writeback,
+                result_bits,
+                state.ps1[fd],
+            ),
+        )
+    if insn.record:
+        state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+    return state
+
 # Opt-in Tier C memory bus: ConcreteOps full routing; SymbolicOps MMIO/FIFO
 # via ``SymbolicBusState`` on ``MachineState``.
 _MEMORY_BUS: ContextVar[MemoryBus | None] = ContextVar(
@@ -1980,6 +2132,18 @@ _FP_NI_SUPPORTED = {
     Opcode.FMADD, Opcode.FMADDS, Opcode.FMSUB, Opcode.FMSUBS,
     Opcode.FNMADD, Opcode.FNMADDS, Opcode.FNMSUB, Opcode.FNMSUBS,
 } | _FP_PS_ORACLE_BASIC | _FP_PS_ORACLE_FUSED
+
+
+def _fp_ni_supported_for_gate() -> set[Opcode]:
+    """Opcodes allowed when FPSCR.NI may be set (exact-v2 expands the gate set)."""
+    from .fp_capabilities import scalar_fp_exact_v2_enabled
+    from .fp_ni import effective_ni_supported_ops
+
+    if not scalar_fp_exact_v2_enabled():
+        return _FP_NI_SUPPORTED
+    return {Opcode(name) for name in effective_ni_supported_ops()}
+
+
 _FP_PS_SUM = {Opcode.PS_SUM0, Opcode.PS_SUM1}
 _FP_PS_SELECT = {Opcode.PS_SEL}
 _FP_PS_CMP = {
@@ -2011,6 +2175,7 @@ _FP_FUSED = _FP_FUSED_SINGLE | _FP_FUSED_DOUBLE
 _FP_FUSED_SUBTRACT = {Opcode.FMSUBS, Opcode.FNMSUBS, Opcode.FMSUB, Opcode.FNMSUB}
 _FP_FUSED_NEGATE = {Opcode.FNMADDS, Opcode.FNMSUBS, Opcode.FNMADD, Opcode.FNMSUB}
 _FP_ESTIMATE = {Opcode.FRES, Opcode.FRSQRTE}
+_FP_EXACT_V2_DISPATCH = _FP_EXCEPTION_ARITH | _FP_FUSED | {Opcode.FSEL}
 _FP_ROUNDING_SENSITIVE = _FP_VALUE_ARITH | {
     Opcode.STFS, Opcode.STFSU, Opcode.STFSX, Opcode.STFSUX,
 } | _FP_FUSED | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | {
@@ -2187,7 +2352,7 @@ def _enabled_exception_suppress(
     inexact_enabled = ops.lnot(ops.eq(
         ops.band(state.fpscr, ops.const(FPSCR_XE)), ops.const(0),
     ))
-    return ops.lor(
+    suppress = ops.lor(
         ops.land(invalid, invalid_enabled),
         ops.lor(
             ops.land(zx, zero_enabled),
@@ -2200,12 +2365,208 @@ def _enabled_exception_suppress(
             ),
         ),
     )
+    domain = active_fp_domain()
+    if domain.traps_enabled:
+        from .fp_capabilities import scalar_fp_exact_v2_enabled
+        from .fp_traps import imprecise_writeback_allowed
+
+        if scalar_fp_exact_v2_enabled():
+            suppress = ops.land(
+                suppress,
+                ops.lnot(imprecise_writeback_allowed(state.msr, ops)),
+            )
+    return suppress
+
+
+def _exact_v2_fp_bits_convert(
+    kind: str,
+    *,
+    memory_word: int | None = None,
+    fpr_bits: int | None = None,
+    fpscr: int = 0,
+) -> int | None:
+    """Bit-exact load/store transforms when ``SCALAR_FP_EXACT_V2`` is on.
+
+    Returns converted FPR or memory word bits, or ``None`` to keep the legacy
+    host-float conversion path.
+    """
+    from .fp_capabilities import scalar_fp_exact_v2_enabled
+
+    if not scalar_fp_exact_v2_enabled():
+        return None
+    from .fp_exact_loadstore import (
+        exact_lfd_bits,
+        exact_lfs_bits,
+        exact_stfd_bits,
+        exact_stfs_bits,
+        exact_stfiwx_bits,
+    )
+
+    name = str(kind).lower()
+    if name == "lfs":
+        outcome = exact_lfs_bits(int(memory_word or 0) & 0xFFFFFFFF)
+        if not outcome.scalar.supported:
+            return None
+        return int(outcome.scalar.result_bits)
+    if name == "lfd":
+        outcome = exact_lfd_bits(int(memory_word or 0) & 0xFFFFFFFFFFFFFFFF)
+        if not outcome.scalar.supported:
+            return None
+        return int(outcome.scalar.result_bits)
+    if name == "stfs":
+        outcome = exact_stfs_bits(
+            int(fpr_bits or 0) & 0xFFFFFFFFFFFFFFFF,
+            fpscr=int(fpscr) & 0xFFFFFFFF,
+        )
+        if not outcome.scalar.supported or outcome.memory_word is None:
+            return None
+        return int(outcome.memory_word) & 0xFFFFFFFF
+    if name == "stfd":
+        outcome = exact_stfd_bits(int(fpr_bits or 0) & 0xFFFFFFFFFFFFFFFF)
+        if not outcome.scalar.supported or outcome.memory_word is None:
+            return None
+        return int(outcome.memory_word) & 0xFFFFFFFFFFFFFFFF
+    if name == "stfiwx":
+        outcome = exact_stfiwx_bits(int(fpr_bits or 0) & 0xFFFFFFFFFFFFFFFF)
+        if not outcome.scalar.supported or outcome.memory_word is None:
+            return None
+        return int(outcome.memory_word) & 0xFFFFFFFF
+    return None
+
+
+def _execute_exact_v2_convert(
+    state: MachineState,
+    op: Opcode,
+    fd: int,
+    source_bits: Any,
+    ops: WordOps,
+    *,
+    record: bool,
+) -> MachineState | None:
+    """Exact-v2 ``frsp`` / ``fctiw`` / ``fctiwz`` when enabled; else ``None``."""
+    from .fp_capabilities import scalar_fp_exact_v2_enabled
+    from .fp_exact_symbolic import try_concrete_bv32, try_concrete_bv64
+
+    if not scalar_fp_exact_v2_enabled():
+        return None
+    fpscr_i = try_concrete_bv32(state.fpscr)
+    src_i = try_concrete_bv64(source_bits)
+    if fpscr_i is None or src_i is None:
+        return None
+    from .fp_exact_convert import exact_fctiw, exact_fctiwz, exact_frsp
+    from .fp_fpscr import apply_fpscr_transition
+
+    if op == Opcode.FRSP:
+        outcome = exact_frsp(src_i, fpscr=fpscr_i)
+    elif op == Opcode.FCTIW:
+        outcome = exact_fctiw(src_i, fpscr=fpscr_i)
+    elif op == Opcode.FCTIWZ:
+        outcome = exact_fctiwz(src_i, fpscr=fpscr_i)
+    else:
+        return None
+    if not outcome.supported:
+        return None
+    post_fpscr = apply_fpscr_transition(fpscr_i, op.value, outcome)
+    state = state.with_fpscr(post_fpscr)
+    state = _fp_write_result_if(
+        state,
+        fd,
+        ops.fp_const64(outcome.result_bits),
+        ops.bool(outcome.writeback),
+        ops,
+    )
+    if record:
+        state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+    return state
+
+
+def _execute_exact_v2_estimate(
+    state: MachineState,
+    op: Opcode,
+    fd: int,
+    source_bits: Any,
+    ops: WordOps,
+    *,
+    record: bool,
+) -> MachineState | None:
+    """Exact-v2 ``fres`` / ``frsqrte`` when enabled; else ``None``."""
+    from .fp_capabilities import scalar_fp_exact_v2_enabled
+    from .fp_exact_symbolic import try_concrete_bv32, try_concrete_bv64
+
+    if not scalar_fp_exact_v2_enabled():
+        return None
+    src_i = try_concrete_bv64(source_bits)
+    fpscr_i = try_concrete_bv32(state.fpscr)
+    if src_i is None or fpscr_i is None:
+        return None
+    from .fp_exact_estimate import exact_fres, exact_frsqrte
+    from .fp_fpscr import apply_fpscr_transition
+
+    if op == Opcode.FRES:
+        outcome = exact_fres(src_i)
+    elif op == Opcode.FRSQRTE:
+        outcome = exact_frsqrte(src_i)
+    else:
+        return None
+    if not outcome.supported:
+        return None
+    post_fpscr = apply_fpscr_transition(fpscr_i, op.value, outcome)
+    state = state.with_fpscr(post_fpscr)
+    state = _fp_write_result_if(
+        state,
+        fd,
+        ops.fp_const64(outcome.result_bits),
+        ops.bool(outcome.writeback),
+        ops,
+    )
+    if op == Opcode.FRES:
+        state = state.with_ps1(
+            fd,
+            ops.ite(
+                ops.bool(outcome.writeback),
+                ops.fp_const64(outcome.result_bits),
+                state.ps1[fd],
+            ),
+        )
+    if record:
+        state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+    return state
 
 
 def _execute_fp_compare(
     state: MachineState, bf: int, left_bits: Any, right_bits: Any,
     ordered: bool, ops: WordOps,
 ) -> MachineState:
+    from .fp_capabilities import scalar_fp_exact_v2_enabled
+    from .fp_exact_symbolic import try_concrete_bv32, try_concrete_bv64
+
+    if scalar_fp_exact_v2_enabled():
+        from .fp_exact_compare import exact_fcmpo, exact_fcmpu
+        from .fp_fpscr import apply_fpscr_transition
+
+        left_i = try_concrete_bv64(left_bits)
+        right_i = try_concrete_bv64(right_bits)
+        fpscr_i = try_concrete_bv32(state.fpscr)
+        if left_i is not None and right_i is not None and fpscr_i is not None:
+            if ordered:
+                compare_outcome = exact_fcmpo(
+                    left_i, right_i, fpscr=fpscr_i, cr_bf=bf,
+                )
+                opcode_name = "fcmpo"
+            else:
+                compare_outcome = exact_fcmpu(
+                    left_i, right_i, fpscr=fpscr_i, cr_bf=bf,
+                )
+                opcode_name = "fcmpu"
+            if compare_outcome.scalar.supported:
+                post_fpscr = apply_fpscr_transition(
+                    fpscr_i,
+                    opcode_name,
+                    compare_outcome.scalar,
+                )
+                state = state.with_fpscr(post_fpscr)
+                return _set_cr_field(state, bf, compare_outcome.cr_field, ops)
+
     left = ops.fp_bits_to_double(left_bits)
     right = ops.fp_bits_to_double(right_bits)
     cr_nibble = _fp_compare_nibble(left, right, ops)
@@ -2825,9 +3186,10 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                     "FP ConcreteOps requires FPSCR.NI=0 under require_ni_zero",
                 )
             state = _constrain_valid(state, ni_ok, InvalidReason.FP_ROUNDING_MODE, ops)
-        elif op not in _FP_NI_SUPPORTED:
+        elif op not in _fp_ni_supported_for_gate():
             # NI may be set; unsupported opcodes must not silently use IEEE.
             ni_clear = ops.eq(ops.band(state.fpscr, ops.const(FPSCR_NI)), ops.const(0))
+            supported = _fp_ni_supported_for_gate()
             if isinstance(ops, ConcreteOps):
                 if not ni_clear:
                     raise ExecutionInconclusive(
@@ -2836,7 +3198,7 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             else:
                 raise ExecutionInconclusive(
                     f"FPSCR.NI may be set but {op.value} has no NI flush model "
-                    f"(supported: {sorted(o.value for o in _FP_NI_SUPPORTED)})",
+                    f"(supported: {sorted(o.value for o in supported)})",
                 )
 
         if domain.traps_enabled:
@@ -3184,7 +3546,15 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             width = FP_D_STORES[op][0] if op in FP_D_STORES else FP_X_STORES[op]
         if op == Opcode.STFIWX:
             fpr_bits = state.fpr[rt]
-            value32 = ops.fp_low_word(fpr_bits)
+            if isinstance(ops, ConcreteOps):
+                exact_word = _exact_v2_fp_bits_convert("stfiwx", fpr_bits=int(fpr_bits))
+                value32 = (
+                    ops.const(exact_word)
+                    if exact_word is not None
+                    else ops.fp_low_word(fpr_bits)
+                )
+            else:
+                value32 = ops.fp_low_word(fpr_bits)
             state = _touch_memory(state, address, 4, ops, "write")
             state = _bus_mem_store(
                 state, address, value32, 4, ops,
@@ -3198,12 +3568,26 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 raw, state = _bus_mem_load(
                     state, address, 4, ops, family=BUS_ACCESS_FAMILY_SCALAR_FP,
                 )
-                result = ops.fp_double_to_bits(ops.fp_bits32_to_double(raw))
+                if isinstance(ops, ConcreteOps):
+                    exact_bits = _exact_v2_fp_bits_convert("lfs", memory_word=int(raw))
+                    result = (
+                        exact_bits
+                        if exact_bits is not None
+                        else ops.fp_double_to_bits(ops.fp_bits32_to_double(raw))
+                    )
+                else:
+                    result = ops.fp_double_to_bits(ops.fp_bits32_to_double(raw))
             else:
                 # 64-bit FP: two ordered BE 32-bit bus transactions (not atomic-64 MMIO).
                 result, state = _bus_mem_load64(
                     state, address, ops, family=BUS_ACCESS_FAMILY_SCALAR_FP,
                 )
+                if isinstance(ops, ConcreteOps):
+                    exact_bits = _exact_v2_fp_bits_convert(
+                        "lfd", memory_word=int(result),
+                    )
+                    if exact_bits is not None:
+                        result = exact_bits
             state = state.with_fpr(rt, result)
             if width == 4:
                 state = state.with_ps1(rt, result)
@@ -3214,15 +3598,38 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             state = _touch_memory(state, address, width, ops, "write")
             fpr_bits = state.fpr[rt]
             if width == 4:
-                rm = ops.fp_rm_from_rn(ops.band(state.fpscr, ops.const(3)))
-                bits32 = ops.fp_double_to_f32_bits(rm, ops.fp_bits_to_double(fpr_bits))
+                if isinstance(ops, ConcreteOps):
+                    exact_word = _exact_v2_fp_bits_convert(
+                        "stfs",
+                        fpr_bits=int(fpr_bits),
+                        fpscr=int(state.fpscr) & 0xFFFFFFFF,
+                    )
+                    if exact_word is not None:
+                        bits32 = ops.const(exact_word)
+                    else:
+                        rm = ops.fp_rm_from_rn(ops.band(state.fpscr, ops.const(3)))
+                        bits32 = ops.fp_double_to_f32_bits(
+                            rm, ops.fp_bits_to_double(fpr_bits),
+                        )
+                else:
+                    rm = ops.fp_rm_from_rn(ops.band(state.fpscr, ops.const(3)))
+                    bits32 = ops.fp_double_to_f32_bits(
+                        rm, ops.fp_bits_to_double(fpr_bits),
+                    )
                 state = _bus_mem_store(
                     state, address, bits32, 4, ops,
                     family=BUS_ACCESS_FAMILY_SCALAR_FP,
                 )
             else:
+                if isinstance(ops, ConcreteOps):
+                    exact_word = _exact_v2_fp_bits_convert(
+                        "stfd", fpr_bits=int(fpr_bits),
+                    )
+                    store_bits = exact_word if exact_word is not None else fpr_bits
+                else:
+                    store_bits = fpr_bits
                 state = _bus_mem_store64(
-                    state, address, fpr_bits, ops,
+                    state, address, store_bits, ops,
                     family=BUS_ACCESS_FAMILY_SCALAR_FP,
                 )
             if update: state = state.with_gpr(ra, address)
@@ -3355,6 +3762,11 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
     elif op in _FP_ESTIMATE:
         fd, _, fb, _ = a
         source_bits = state.fpr[fb]
+        exact_state = _execute_exact_v2_estimate(
+            state, op, fd, source_bits, ops, record=insn.record,
+        )
+        if exact_state is not None:
+            return exact_state
         source = ops.fp_bits_to_double(source_bits)
         zero_value = ops.fp_bits_to_double(ops.fp_const64(0))
         is_zero = ops.fp_is_eq(source, zero_value)
@@ -3457,6 +3869,38 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         op_fc = ops.fp_bits_to_double(fc_bits)
         fused_single = None
         oracle_scalar_bits: int | None = None
+        exact_scalar_used = False
+
+        if op in _FP_EXACT_V2_DISPATCH:
+            from .fp_capabilities import scalar_fp_exact_v2_enabled
+            from .fp_exact_symbolic import try_dispatch_exact_scalar_v2
+
+            if scalar_fp_exact_v2_enabled():
+                dispatch = try_dispatch_exact_scalar_v2(
+                    opcode=op.value,
+                    a_bits=fa_bits,
+                    b_bits=fb_bits,
+                    c_bits=fc_source_bits,
+                    fpscr=state.fpscr,
+                    msr=state.msr,
+                    ops=ops,
+                    scalar_outcome_from_fused=_scalar_outcome_from_exact_fused,
+                )
+                if dispatch is not None and dispatch.outcome.supported:
+                    # Use module-level ``replace`` — a local import here would
+                    # make ``replace`` function-local and break earlier MTSPR paths.
+                    exact_outcome = dispatch.outcome
+                    if dispatch.symbolic:
+                        exact_outcome = replace(
+                            exact_outcome,
+                            result_bits=dispatch.result_bits,
+                        )
+                    else:
+                        oracle_scalar_bits = int(exact_outcome.result_bits)
+                        if isinstance(ops, ConcreteOps):
+                            d = ops.fp_bits_to_double(oracle_scalar_bits)
+                    _record_exact_scalar_outcome(exact_outcome)
+                    exact_scalar_used = True
 
         # Optional NaN / Inf / subnormal exclusions from FloatingPointDomain.
         if op not in _FP_PSQ_OPS:
@@ -3468,6 +3912,12 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 )
 
         if op == Opcode.FSEL:
+            if exact_scalar_used:
+                finalized = _finalize_exact_scalar_v2(
+                    state, insn, fd, op, ops, is_single=False,
+                )
+                if finalized is not None:
+                    return finalized
             result_bits = ops.ite(ops.fp_is_ge_zero(op_fa), state.fpr[fc], state.fpr[fb])
             state = state.with_fpr(fd, result_bits)
             if insn.record:
@@ -3475,7 +3925,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 state = _set_cr_field(state, 1, cr1, ops)
             return state
 
-        if isinstance(ops, ConcreteOps) and op == Opcode.FADD:
+        if exact_scalar_used:
+            pass
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FADD:
             ops._fp_oracle_require_rne(rm)
             oracle_scalar_bits = ops.fp_fadd_rne_bits(fa_bits, fb_bits)
             d = ops.fp_bits_to_double(oracle_scalar_bits)
@@ -3541,24 +3993,41 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             d = ops.fp_bits_to_double(precise_bits)
             fused_single = ops.fp_bits_to_double(oracle_scalar_bits)
         elif op in (Opcode.FADDS, Opcode.FADD):
-            d = ops.fp_add(rm, op_fa, op_fb)
+            from .fp_capabilities import scalar_fp_exact_v2_enabled
+
+            if not scalar_fp_exact_v2_enabled():
+                d = ops.fp_add(rm, op_fa, op_fb)
         elif op in (Opcode.FSUBS, Opcode.FSUB):
-            d = ops.fp_sub(rm, op_fa, op_fb)
+            from .fp_capabilities import scalar_fp_exact_v2_enabled
+
+            if not scalar_fp_exact_v2_enabled():
+                d = ops.fp_sub(rm, op_fa, op_fb)
         elif op in (Opcode.FMULS, Opcode.FMUL):
-            d = ops.fp_mul(rm, op_fa, op_fc)
+            from .fp_capabilities import scalar_fp_exact_v2_enabled
+
+            if not scalar_fp_exact_v2_enabled():
+                d = ops.fp_mul(rm, op_fa, op_fc)
         elif op in (Opcode.FDIVS, Opcode.FDIV):
-            d = ops.fp_div(rm, op_fa, op_fb)
+            from .fp_capabilities import scalar_fp_exact_v2_enabled
+
+            if not scalar_fp_exact_v2_enabled():
+                d = ops.fp_div(rm, op_fa, op_fb)
         elif op == Opcode.FRES:
             d = ops.fp_div(rm, ops.fp_round_to_single(rm, ops.fp_bits_to_double(ops.fp_const64(0x3FF0000000000000))), op_fb)
         elif op == Opcode.FRSQRTE:
             d = ops.fp_div(rm, ops.fp_bits_to_double(ops.fp_const64(0x3FF0000000000000)), ops.fp_sqrt(rm, op_fb))
         elif op in _FP_FUSED:
-            addend = ops.fp_neg(op_fb) if op in _FP_FUSED_SUBTRACT else op_fb
-            if op in _FP_FUSED_SINGLE:
-                d = ops.fp_fma_single_precise(rm, op_fa, op_fc, addend)
-                fused_single = ops.fp_fma_to_single_exact(rm, op_fa, op_fc, addend, d)
-            else:
-                d = ops.fp_fma(rm, op_fa, op_fc, addend)
+            from .fp_capabilities import scalar_fp_exact_v2_enabled
+
+            if not scalar_fp_exact_v2_enabled():
+                addend = ops.fp_neg(op_fb) if op in _FP_FUSED_SUBTRACT else op_fb
+                if op in _FP_FUSED_SINGLE:
+                    d = ops.fp_fma_single_precise(rm, op_fa, op_fc, addend)
+                    fused_single = ops.fp_fma_to_single_exact(rm, op_fa, op_fc, addend, d)
+                else:
+                    d = ops.fp_fma(rm, op_fa, op_fc, addend)
+            elif not exact_scalar_used:
+                raise ExecutionInconclusive("scalar-fp-exact-v2:fused-symbolic-unsupported")
         elif op in (Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
             # Wave 3: shared FPOutcome producers live in fp_outcome
             # (symbolic_bitwise_outcome); execute keeps the bit ops inline so
@@ -3578,13 +4047,28 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 state = _set_cr_field(state, 1, cr1, ops)
             return state
         elif op == Opcode.FRSP:
+            exact_state = _execute_exact_v2_convert(
+                state, op, fd, fb_bits, ops, record=insn.record,
+            )
+            if exact_state is not None:
+                return exact_state
             d = ops.fp_round_to_single(rm, op_fb)
         elif op == Opcode.FCTIW:
+            exact_state = _execute_exact_v2_convert(
+                state, op, fd, fb_bits, ops, record=insn.record,
+            )
+            if exact_state is not None:
+                return exact_state
             state = _fp_convert_to_integer(state, fd, fb_bits, rm, ops)
             if insn.record:
                 state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
             return state
         elif op == Opcode.FCTIWZ:
+            exact_state = _execute_exact_v2_convert(
+                state, op, fd, fb_bits, ops, record=insn.record,
+            )
+            if exact_state is not None:
+                return exact_state
             state = _fp_convert_to_integer(state, fd, fb_bits, ops.fp_rm_rtz(), ops)
             if insn.record:
                 state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
@@ -3701,6 +4185,13 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             return state
         else:
             raise UnsupportedInstruction(insn.address, insn.raw, f"semantics not implemented for {op.value}")
+
+        if exact_scalar_used and op in (_FP_EXACT_V2_DISPATCH - {Opcode.FSEL}):
+            finalized = _finalize_exact_scalar_v2(
+                state, insn, fd, op, ops, is_single=is_single,
+            )
+            if finalized is not None:
+                return finalized
 
         if op in _FP_FUSED_SINGLE:
             assert fused_single is not None
@@ -3831,6 +4322,25 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
             return state
         if op in _FP_EXCEPTION_ARITH:
+            finalized = _finalize_exact_scalar_v2(
+                state, insn, fd, op, ops, is_single=is_single,
+            )
+            if finalized is not None:
+                finite = lambda value: ops.lnot(
+                    ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)),
+                )
+                if op in (Opcode.FADDS, Opcode.FSUBS, Opcode.FDIVS, Opcode.FADD, Opcode.FSUB, Opcode.FDIV):
+                    inputs_finite = ops.land(finite(op_fa), finite(op_fb))
+                elif op in (Opcode.FMULS, Opcode.FMUL):
+                    inputs_finite = ops.land(finite(op_fa), finite(op_fc))
+                else:
+                    inputs_finite = ops.bool(True)
+                return _constrain_fp_defined_result(
+                    finalized,
+                    ops.lor(inputs_finite, ops.bool(True)),
+                    ops,
+                )
+
             right_bits = fc_bits if op in (Opcode.FMULS, Opcode.FMUL) else fb_bits
             right_value = op_fc if op in (Opcode.FMULS, Opcode.FMUL) else op_fb
             nan_a = ops.fp_is_nan(op_fa)
@@ -4209,6 +4719,10 @@ def _apply_call_summary(
         state.stack_layout_valid,
         ops.bool(False),
         state.symbolic_bus,
+        state.fp_pending_cause,
+        state.fp_pending_fault_pc,
+        state.fp_pending_recoverable,
+        state.fp_pending_delivery,
     )
 
 
@@ -4527,7 +5041,6 @@ def _execute_cfg_body(
                     clear_fp_enabled_exception_reraise,
                     deliver_fp_program_exception,
                     ensure_fp_trap_delivery_supported,
-                    fp_trap_pending_from_fex_transition,
                     is_fp_trap_cfg_opcode,
                     trap_delivery_incomplete,
                     trap_delivery_supported,
@@ -4575,8 +5088,35 @@ def _execute_cfg_body(
                 ),
             )
             if trap_cfg:
-                trap = fp_trap_pending_from_fex_transition(
+                from .fp_traps import (
+                    apply_fp_pending_to_state,
+                    cfg_fp_trap_branches,
+                    deliver_fp_program_exception,
+                    sticky_cause_mask_from_fpscr_transition,
+                    trap_delivery_paired,
+                )
+
+                paired = trap_delivery_paired(insn.opcode)
+                _, trap, pending_active = cfg_fp_trap_branches(
+                    next_state,
+                    pre_fpscr,
+                    next_state.fpscr,
+                    pc,
+                    ops,
+                    domain_traps_enabled=domain.traps_enabled,
+                    msr=current.msr,
+                    paired=paired,
+                )
+                cause_mask = sticky_cause_mask_from_fpscr_transition(
                     pre_fpscr, next_state.fpscr, ops,
+                )
+                continue_state = apply_fp_pending_to_state(
+                    next_state,
+                    cause_mask=cause_mask,
+                    fault_pc=ops.const(pc),
+                    msr=current.msr,
+                    ops=ops,
+                    active=pending_active,
                 )
                 trapped = deliver_fp_program_exception(
                     next_state, pc, ops, exception_entry=_exception_entry,
@@ -4589,7 +5129,7 @@ def _execute_cfg_body(
                 )
                 enqueue(
                     pc + 4,
-                    next_state,
+                    continue_state,
                     ops.land(condition, ops.lnot(trap)),
                     new_visits,
                     steps + 1,

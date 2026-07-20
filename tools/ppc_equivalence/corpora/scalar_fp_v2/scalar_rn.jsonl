@@ -1,0 +1,21 @@
+{"capability":"fp-scalar-arithmetic","corpus_id":"scalar_rn","notes":"Non-fused scalar result bits (RN nearest-even); Broadway fixture harvest","schema_version":1,"type":"scalar_fp_v2_corpus"}
+{"expected_bits":"0x400c000000000000","id":"bb-fadd","opcode":"fadd","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000012345678","id":"bb-fadd-qnan","opcode":"fadd","operands":{"a":"0x7ff8000012345678","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000000000000","id":"bb-fadd-vxisi","opcode":"fadd","operands":{"a":"0x7ff0000000000000","b":"0xfff0000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x400c000000000000","id":"bb-fadds","opcode":"fadds","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"pre_fpscr":"0x80000000","provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0xfff8000000000000","id":"bb-fadds-snan","opcode":"fadds","operands":{"a":"0xfff0000012345678","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x3fe8000000000000","id":"bb-fdiv","opcode":"fdiv","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000000000000","id":"bb-fdiv-vxidi","opcode":"fdiv","operands":{"a":"0x7ff0000000000000","b":"0xfff0000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000000000000","id":"bb-fdiv-vxzdz","opcode":"fdiv","operands":{"a":"0x0000000000000000","b":"0x8000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0xfff0000000000000","id":"bb-fdiv-zx","opcode":"fdiv","operands":{"a":"0x4000000000000000","b":"0x8000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x3fe8000000000000","id":"bb-fdivs","opcode":"fdivs","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0xfff0000000000000","id":"bb-fdivs-zx","opcode":"fdivs","operands":{"a":"0x4000000000000000","b":"0x8000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x4018000000000000","id":"bb-fmul","opcode":"fmul","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000","c":"0x4010000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000000000000","id":"bb-fmul-vximz","opcode":"fmul","operands":{"a":"0x0000000000000000","b":"0x0000000000000000","c":"0x7ff0000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x4018000000000000","id":"bb-fmuls","opcode":"fmuls","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000","c":"0x4010000000000000"},"pre_fpscr":"0x80060000","provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000000000000","id":"bb-fmuls-vximz","opcode":"fmuls","operands":{"a":"0x0000000000000000","b":"0x0000000000000000","c":"0x7ff0000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0xbfe0000000000000","id":"bb-fsub","opcode":"fsub","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000000000000","id":"bb-fsub-vxisi","opcode":"fsub","operands":{"a":"0x7ff0000000000000","b":"0x7ff0000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0xbfe0000000000000","id":"bb-fsubs","opcode":"fsubs","operands":{"a":"0x3ff8000000000000","b":"0x4000000000000000"},"provenance":"fixtures-broadway-jsonl","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000012345678","id":"exact-supplement-scalar_rn-fadd-qnan","opcode":"fadd","operands":{"a":"0x7ff8000012345678","b":"0x4000000000000000"},"provenance":"exact_kernel_v2","rn":"nearest-even"}
+{"expected_bits":"0x7ff8000000000000","id":"exact-supplement-scalar_rn-fadd-vxisi","opcode":"fadd","operands":{"a":"0x7ff0000000000000","b":"0xfff0000000000000"},"provenance":"exact_kernel_v2","rn":"nearest-even"}

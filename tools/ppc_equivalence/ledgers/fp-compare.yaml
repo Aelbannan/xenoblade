@@ -1,0 +1,29 @@
+# Phase 6 per-opcode ledger — fp-compare (SCALAR_FP_V2).
+# Semantics wires exact_fcmpu/exact_fcmpo when SCALAR_FP_EXACT_V2=1 (default off).
+schema_version: 1
+capability: fp-compare
+model_version: broadway-fp-compare-v2
+status: incomplete
+dimensions:
+  fpcc_cr: true
+  vxsnan: true
+  vxvc_ordered: true
+  ni_operand_flush: true
+  record_form_cr1: false
+  traps: false
+  symbolic_backend: false
+  bounded_memory: false
+opcodes:
+  fcmpu:
+    ordered: false
+    snan_qnan: true
+    fpcc: true
+    cr_field: true
+    ni_operand_flush: true
+  fcmpo:
+    ordered: true
+    snan_qnan: true
+    fpcc: true
+    cr_field: true
+    vxvc: true
+    ni_operand_flush: true

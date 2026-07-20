@@ -1629,6 +1629,12 @@ _FP_PS_FUSED = {
 }
 _FP_PS_FUSED_SUBTRACT = {Opcode.PS_MSUB, Opcode.PS_NMSUB}
 _FP_PS_FUSED_NEGATE = {Opcode.PS_NMADD, Opcode.PS_NMSUB}
+_FP_PS_ORACLE_BASIC = {
+    Opcode.PS_ADD, Opcode.PS_SUB, Opcode.PS_MUL,
+}
+_FP_PS_ORACLE_FUSED = {
+    Opcode.PS_MADD, Opcode.PS_MSUB, Opcode.PS_NMADD, Opcode.PS_NMSUB,
+}
 _FP_PS_SUM = {Opcode.PS_SUM0, Opcode.PS_SUM1}
 _FP_PS_SELECT = {Opcode.PS_SEL}
 _FP_PS_CMP = {
@@ -2061,6 +2067,165 @@ def _execute_ps_fused_lane(
         )
         state = _constrain_fused_exact_binary32(state, single_origin, ops)
     return state, result_bits
+
+
+def _paired_oracle_lane_clears_fifr(
+    op: Opcode,
+    a_bits: int,
+    b_bits: int,
+    result_bits: int,
+    *,
+    c_bits: int | None = None,
+) -> bool:
+    """Return whether one paired lane should clear FPSCR FI/FR (ConcreteOps oracle)."""
+    from .fp_oracle import FpClass, classify_binary64, _is_nan_class
+
+    a_kind = classify_binary64(a_bits)
+    b_kind = classify_binary64(b_bits)
+    result_kind = classify_binary64(result_bits)
+    any_nan = (
+        _is_nan_class(a_kind)
+        or _is_nan_class(b_kind)
+        or _is_nan_class(result_kind)
+    )
+    if c_bits is not None:
+        c_kind = classify_binary64(c_bits)
+        any_nan = any_nan or _is_nan_class(c_kind)
+        any_inf = (
+            a_kind is FpClass.INFINITY
+            or b_kind is FpClass.INFINITY
+            or c_kind is FpClass.INFINITY
+        )
+        return any_nan or any_inf
+    invalid = _is_nan_class(result_kind)
+    if op in (Opcode.PS_ADD, Opcode.PS_SUB):
+        any_inf = a_kind is FpClass.INFINITY or b_kind is FpClass.INFINITY
+        return invalid or any_inf
+    return invalid
+
+
+def _apply_paired_combined_outcome(
+    state: MachineState,
+    fd: int,
+    combined: "FPOutcome",
+    ops: WordOps,
+    *,
+    record: bool,
+    clear_fifr: bool,
+) -> MachineState:
+    """Write a paired ``FPOutcome`` to FPR lanes and FPSCR (ConcreteOps oracle)."""
+    from .fp_outcome import FPOutcome
+    from .ir import ExecutionInconclusive
+
+    if not isinstance(combined, FPOutcome) or not combined.supported:
+        reason = getattr(combined, "unsupported_reason", None) or "unsupported paired FP outcome"
+        raise ExecutionInconclusive(reason)
+    if len(combined.result_bits) != 2:
+        raise ExecutionInconclusive("paired FP outcome missing ps0/ps1 lanes")
+
+    ps0, ps1 = combined.result_bits
+    invalid_cause = int(combined.invalid_cause or 0)
+    for mask in (FPSCR_VXSNAN, FPSCR_VXISI, FPSCR_VXIMZ):
+        if invalid_cause & mask:
+            state = _fpscr_raise(state, mask, ops)
+
+    if clear_fifr:
+        cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
+        state = state.with_fpscr(cleared)
+
+    fprf_shifted = ops.shl(ops.const(int(combined.fprf) & 0x1F), ops.const(12))
+    state = state.with_fpscr(
+        _fpscr_replace_mask(state.fpscr, FPSCR_FPRF_MASK, fprf_shifted, ops),
+    )
+    state = state.with_fpr(fd, ps0).with_ps1(fd, ps1)
+    if record:
+        state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
+    return state
+
+
+def _execute_ps_oracle_basic(
+    state: MachineState,
+    insn: Instruction,
+    op: Opcode,
+    fd: int,
+    fa: int,
+    source: int,
+    ops: WordOps,
+) -> MachineState:
+    from .fp_oracle import ps_lane_outcome
+    from .fp_outcome import combine_paired_outcomes
+
+    left0, left1 = state.fpr[fa], state.ps1[fa]
+    right0, right1 = state.fpr[source], state.ps1[source]
+    if op == Opcode.PS_MUL:
+        right0 = ops.fp_force_25bit(right0)
+        right1 = ops.fp_force_25bit(right1)
+
+    for value in (left0, left1, right0, right1):
+        state = _constrain_fp_value_domain(
+            state, ops.fp_bits_to_double(value), ops,
+        )
+
+    op_name = op.value
+    lane0 = ps_lane_outcome(op_name, left0, right0)
+    lane1 = ps_lane_outcome(op_name, left1, right1)
+    combined = combine_paired_outcomes(lane0, lane1)
+    clear_fifr = (
+        _paired_oracle_lane_clears_fifr(op, left0, right0, lane0.primary_bits())
+        or _paired_oracle_lane_clears_fifr(op, left1, right1, lane1.primary_bits())
+    )
+    state = _apply_paired_combined_outcome(
+        state, fd, combined, ops, record=insn.record, clear_fifr=clear_fifr,
+    )
+
+    for lane_bits in combined.result_bits:
+        value = ops.fp_bits_to_double(lane_bits)
+        finite = ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
+        state = _constrain_fp_defined_result(state, ops.lor(finite, ops.bool(True)), ops)
+    return state
+
+
+def _execute_ps_oracle_fused(
+    state: MachineState,
+    insn: Instruction,
+    op: Opcode,
+    fd: int,
+    fa: int,
+    fb: int,
+    fc: int,
+    ops: WordOps,
+) -> MachineState:
+    from .fp_oracle import ps_lane_outcome
+    from .fp_outcome import combine_paired_outcomes
+
+    a0, a1 = state.fpr[fa], state.ps1[fa]
+    b0, b1 = state.fpr[fb], state.ps1[fb]
+    c0, c1 = state.fpr[fc], state.ps1[fc]
+    c0 = ops.fp_force_25bit(c0)
+    c1 = ops.fp_force_25bit(c1)
+
+    for value in (a0, a1, b0, b1, state.fpr[fc], state.ps1[fc]):
+        state = _constrain_fp_value_domain(
+            state, ops.fp_bits_to_double(value), ops,
+        )
+
+    op_name = op.value
+    lane0 = ps_lane_outcome(op_name, a0, b0, c0)
+    lane1 = ps_lane_outcome(op_name, a1, b1, c1)
+    combined = combine_paired_outcomes(lane0, lane1)
+    clear_fifr = (
+        _paired_oracle_lane_clears_fifr(op, a0, b0, lane0.primary_bits(), c_bits=c0)
+        or _paired_oracle_lane_clears_fifr(op, a1, b1, lane1.primary_bits(), c_bits=c1)
+    )
+    state = _apply_paired_combined_outcome(
+        state, fd, combined, ops, record=insn.record, clear_fifr=clear_fifr,
+    )
+
+    for lane_bits in combined.result_bits:
+        value = ops.fp_bits_to_double(lane_bits)
+        finite = ops.lnot(ops.lor(ops.fp_is_nan(value), ops.fp_is_inf(value)))
+        state = _constrain_fp_defined_result(state, ops.lor(finite, ops.bool(True)), ops)
+    return state
 
 
 def _force_ps_single_bits(bits: Any, ops: WordOps) -> Any:
@@ -2524,6 +2689,8 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
     # -- Floating-point arithmetic (scalar single, double, paired-single, FPSCR) --
     elif op in _FP_PS_BASIC:
         fd, fa, source = a
+        if isinstance(ops, ConcreteOps) and op in _FP_PS_ORACLE_BASIC:
+            return _execute_ps_oracle_basic(state, insn, op, fd, fa, source, ops)
         left0, left1 = state.fpr[fa], state.ps1[fa]
         right0, right1 = state.fpr[source], state.ps1[source]
         if op in (Opcode.PS_MUL, Opcode.PS_MULS0, Opcode.PS_MULS1):
@@ -2593,6 +2760,8 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
 
     elif op in _FP_PS_FUSED:
         fd, fa, fb, fc = a
+        if isinstance(ops, ConcreteOps) and op in _FP_PS_ORACLE_FUSED:
+            return _execute_ps_oracle_fused(state, insn, op, fd, fa, fb, fc, ops)
         a0, a1 = state.fpr[fa], state.ps1[fa]
         b0, b1 = state.fpr[fb], state.ps1[fb]
         c0, c1 = state.fpr[fc], state.ps1[fc]

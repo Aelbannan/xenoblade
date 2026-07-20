@@ -2,9 +2,10 @@
 
 ``FPOutcome`` is the shared container for SoftFloat / ConcreteOps /
 SymbolicOps result bits, exception flags, FPRF, writeback/trap policy, and
-supportedness. This PR only scaffolds the data model and adapters; it does
-**not** replace host-float or Z3 call sites, latch FPSCR, or enable new
-oracle domains.
+supportedness. Wave 3 Track B adds paired-single lane producers and
+``combine_paired_outcomes`` for ConcreteOps oracle paths; SymbolicOps still
+uses host-float / Z3 lane execution. Nothing here promotes FP proofs out of
+Tier C.
 
 **SoftFloat already covers (exact integer-significand RNE bits):** scalar
 ``fadd``/``fadds``/``fmul``/``fmuls``/``fsub``/``fsubs``/``fdiv``/``fdivs`` and
@@ -12,12 +13,19 @@ fused ``fmadd``/``fmadds``/``fmsub``/``fmsubs``/``fnmadd``/``fnmadds``/
 ``fnmsub``/``fnmsubs`` for finite normals/zeros, subnormals, ±Inf, quiet /
 signaling NaN propagation, division by zero, and overflow (see ``fp_oracle``).
 
+**Paired-single (Wave 3 Track B, ConcreteOps):** ``ps_add``/``ps_sub``,
+``ps_mul``, and ``ps_madd``/``ps_msub``/``ps_nmadd``/``ps_nmsub`` run two scalar
+single-lane oracle outcomes and merge via ``combine_paired_outcomes`` (PS0
+FPRF, accumulated VX subcauses, unconditional lane writeback). Other paired
+families remain on the legacy semantics path or fail closed with explicit
+reasons.
+
 **Deferred (Fraction oracle / FMA residual Track C follow-ups):**
 - Fraction / rational exact cross-check oracle for finite values
 - Full single-round FMA residual modeling (Broadway midpoint-tie with
   nonzero addend; near-cancellation sticky residues)
-- SymbolicOps / paired-single lane producers emitting ``FPOutcome`` natively
-- FPSCR sticky latch and architectural trap delivery from outcome fields
+- SymbolicOps native ``FPOutcome`` paired lane producers
+- FPSCR sticky latch and architectural trap delivery from outcome fields alone
 """
 
 from __future__ import annotations
@@ -26,6 +34,28 @@ from dataclasses import dataclass
 from typing import Any
 
 from .fp_oracle import FpOracleFlags, FpOracleResult, fprf_from_binary64, mask64
+
+# Broadway FPSCR VX subcause bits (Gekko layout; mirror semantics.py).
+FPSCR_VXSNAN = 1 << 24
+FPSCR_VXISI = 1 << 23
+FPSCR_VXIMZ = 1 << 20
+FPSCR_FI = 1 << 17
+FPSCR_FR = 1 << 18
+FPSCR_FPRF_MASK = 0x1F << 12
+
+# Wave 3 Track B: initial paired-single oracle family (Tier C only).
+PAIRED_ORACLE_BASIC_OPS: frozenset[str] = frozenset({
+    "ps_add",
+    "ps_sub",
+    "ps_mul",
+})
+PAIRED_ORACLE_FUSED_OPS: frozenset[str] = frozenset({
+    "ps_madd",
+    "ps_msub",
+    "ps_nmadd",
+    "ps_nmsub",
+})
+PAIRED_ORACLE_OPS: frozenset[str] = PAIRED_ORACLE_BASIC_OPS | PAIRED_ORACLE_FUSED_OPS
 
 
 @dataclass(frozen=True)
@@ -250,4 +280,66 @@ def outcome_with_computed_fprf(bits64: int, **kwargs: Any) -> FPOutcome:
         bits,
         fprf=fprf_from_binary64(bits),
         **kwargs,
+    )
+
+
+def merge_exception_flags(
+    left: FPExceptionFlags,
+    right: FPExceptionFlags,
+) -> FPExceptionFlags:
+    """Bitwise OR of sticky flags across paired lanes (concrete bools)."""
+    return FPExceptionFlags(
+        invalid=bool(left.invalid) or bool(right.invalid),
+        overflow=bool(left.overflow) or bool(right.overflow),
+        underflow=bool(left.underflow) or bool(right.underflow),
+        divide_by_zero=bool(left.divide_by_zero) or bool(right.divide_by_zero),
+        inexact=bool(left.inexact) or bool(right.inexact),
+    )
+
+
+def merge_invalid_cause(left: Any, right: Any) -> int:
+    """OR Broadway VX subcause masks from two lanes."""
+    return int(left or 0) | int(right or 0)
+
+
+def cr1_from_fpscr(fpscr: int) -> int:
+    """CR1 nibble copied from FPSCR for record-form FP ops."""
+    return (fpscr >> 28) & 0xF
+
+
+def combine_paired_outcomes(
+    lane0: FPOutcome,
+    lane1: FPOutcome,
+    *,
+    fprf_lane: int = 0,
+) -> FPOutcome:
+    """Merge two scalar lane outcomes into one paired-single container.
+
+    - ``result_bits`` becomes ``(ps0, ps1)`` destination lane writeback values.
+    - Exception flags and ``invalid_cause`` VX submasks accumulate across lanes.
+    - ``fprf`` is taken from ``fprf_lane`` (Broadway uses PS0 / FPR high lane).
+    - Paired arithmetic always sets ``writeback=True`` (Broadway unconditional
+      destination update under enabled exceptions).
+    """
+    if not lane0.supported:
+        reason = lane0.unsupported_reason or "unsupported paired lane0"
+        return unsupported_outcome(reason, result_bits=(0, 0))
+    if not lane1.supported:
+        reason = lane1.unsupported_reason or "unsupported paired lane1"
+        return unsupported_outcome(reason, result_bits=(0, 0))
+    if len(lane0.result_bits) != 1 or len(lane1.result_bits) != 1:
+        return unsupported_outcome(
+            "combine_paired_outcomes expects single-lane scalar outcomes",
+            result_bits=(0, 0),
+        )
+    fprf = lane0.fprf if fprf_lane == 0 else lane1.fprf
+    return FPOutcome(
+        result_bits=(lane0.result_bits[0], lane1.result_bits[0]),
+        flags=merge_exception_flags(lane0.flags, lane1.flags),
+        invalid_cause=merge_invalid_cause(lane0.invalid_cause, lane1.invalid_cause),
+        fprf=fprf,
+        writeback=True,
+        trap=False,
+        supported=True,
+        unsupported_reason=None,
     )

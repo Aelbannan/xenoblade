@@ -12,7 +12,9 @@ Unhandled cases fail closed via :class:`OracleUnimplementedError`.
 
 **Partially wired:** ``ConcreteOps`` routes ``fadd``/``fadds``/``fmul``/``fmuls``/
 ``fsub``/``fsubs``/``fdiv``/``fdivs``/``fmadd``/``fmadds``/``fmsub``/``fmsubs``/
-``fnmadd``/``fnmadds``/``fnmsub``/``fnmsubs`` through this oracle. The integer
+``fnmadd``/``fnmadds``/``fnmsub``/``fnmsubs`` through this oracle, and Wave 3
+Track B routes ``ps_add``/``ps_sub``/``ps_mul``/``ps_m*`` paired lanes through
+``ps_lane_outcome`` + ``combine_paired_outcomes`` (ConcreteOps only).
 significand path models finite normals/zeros, subnormals, ±Inf, quiet/signaling
 NaN propagation, division by zero (±Inf + ZX), and overflow (±Inf + OX). Force25
 for single fused forms is applied by the semantics layer before the oracle sees
@@ -968,3 +970,160 @@ def dispatch_oracle(op: str, *operands: int) -> FpOracleResult:
             raise ValueError("fnmsubs expects three operands (a, b, c)")
         return fnmsubs_fpr_rne(operands[0], operands[1], operands[2])
     raise _fail_unimplemented(f"unsupported op {op!r}")
+
+
+def _signs_equal_bits(a: int, b: int) -> bool:
+    return (((a ^ b) >> 63) & 1) == 0
+
+
+def _is_zero_bits(bits: int) -> bool:
+    _sign, exp, frac = decode_binary64(bits)
+    return exp == 0 and frac == 0
+
+
+def ps_lane_invalid_cause_add(a: int, b: int) -> int:
+    """VX subcause mask for one ``ps_add`` lane."""
+    from .fp_outcome import FPSCR_VXSNAN, FPSCR_VXISI
+
+    cause = 0
+    a_kind = classify_binary64(a)
+    b_kind = classify_binary64(b)
+    if a_kind is FpClass.SNAN or b_kind is FpClass.SNAN:
+        cause |= FPSCR_VXSNAN
+    if not _is_nan_class(a_kind) and not _is_nan_class(b_kind):
+        if a_kind is FpClass.INFINITY and b_kind is FpClass.INFINITY:
+            if not _signs_equal_bits(a, b):
+                cause |= FPSCR_VXISI
+    return cause
+
+
+def ps_lane_invalid_cause_sub(a: int, b: int) -> int:
+    """VX subcause mask for one ``ps_sub`` lane."""
+    from .fp_outcome import FPSCR_VXSNAN, FPSCR_VXISI
+
+    cause = 0
+    a_kind = classify_binary64(a)
+    b_kind = classify_binary64(b)
+    if a_kind is FpClass.SNAN or b_kind is FpClass.SNAN:
+        cause |= FPSCR_VXSNAN
+    if not _is_nan_class(a_kind) and not _is_nan_class(b_kind):
+        if a_kind is FpClass.INFINITY and b_kind is FpClass.INFINITY:
+            if _signs_equal_bits(a, b):
+                cause |= FPSCR_VXISI
+    return cause
+
+
+def ps_lane_invalid_cause_mul(a: int, b: int) -> int:
+    """VX subcause mask for one ``ps_mul`` lane."""
+    from .fp_outcome import FPSCR_VXIMZ, FPSCR_VXSNAN
+
+    cause = 0
+    a_kind = classify_binary64(a)
+    b_kind = classify_binary64(b)
+    if a_kind is FpClass.SNAN or b_kind is FpClass.SNAN:
+        cause |= FPSCR_VXSNAN
+    if not _is_nan_class(a_kind) and not _is_nan_class(b_kind):
+        a_inf = a_kind is FpClass.INFINITY
+        b_inf = b_kind is FpClass.INFINITY
+        a_zero = _is_zero_bits(a)
+        b_zero = _is_zero_bits(b)
+        if (a_inf and b_zero) or (a_zero and b_inf):
+            cause |= FPSCR_VXIMZ
+    return cause
+
+
+def ps_lane_invalid_cause_fused(
+    a: int,
+    b: int,
+    c: int,
+    *,
+    subtract: bool,
+) -> int:
+    """VX subcause mask for one paired fused lane (``ps_m*`` family)."""
+    from .fp_outcome import FPSCR_VXIMZ, FPSCR_VXISI, FPSCR_VXSNAN
+
+    cause = 0
+    a_kind = classify_binary64(a)
+    b_kind = classify_binary64(b)
+    c_kind = classify_binary64(c)
+    if (
+        a_kind is FpClass.SNAN
+        or b_kind is FpClass.SNAN
+        or c_kind is FpClass.SNAN
+    ):
+        cause |= FPSCR_VXSNAN
+    if _is_nan_class(a_kind) or _is_nan_class(b_kind) or _is_nan_class(c_kind):
+        return cause
+
+    a_inf = a_kind is FpClass.INFINITY
+    b_inf = b_kind is FpClass.INFINITY
+    c_inf = c_kind is FpClass.INFINITY
+    a_zero = _is_zero_bits(a)
+    c_zero = _is_zero_bits(c)
+    vximz = (a_inf and c_zero) or (a_zero and c_inf)
+    if vximz:
+        cause |= FPSCR_VXIMZ
+        return cause
+
+    product_infinite = (a_inf and not c_zero) or (c_inf and not a_zero)
+    product_positive = _signs_equal_bits(a, c)
+    b_positive = _signs_equal_bits(b, 0)
+    product_matches_b = product_positive == b_positive
+    invalid_signs = product_matches_b if subtract else not product_matches_b
+    if product_infinite and b_inf and invalid_signs:
+        cause |= FPSCR_VXISI
+    return cause
+
+
+def ps_lane_outcome(
+    op: str,
+    a_fpr: int,
+    b_fpr: int,
+    c_fpr: int | None = None,
+) -> "FPOutcome":
+    """Run one paired-single lane through the scalar single oracle.
+
+    ``invalid_cause`` carries Broadway VX subcause bits; result bits follow
+    NaN priority ``frA`` then ``frB`` then ``frC`` (fused) via the oracle.
+    """
+    from .fp_outcome import (
+        PAIRED_ORACLE_OPS,
+        outcome_from_oracle,
+        unsupported_outcome,
+    )
+
+    a_fpr = mask64(a_fpr)
+    b_fpr = mask64(b_fpr)
+    if op not in PAIRED_ORACLE_OPS:
+        return unsupported_outcome(
+            f"paired-single oracle scaffold does not model {op!r}",
+        )
+    try:
+        if op == "ps_add":
+            result = fadds_fpr_rne(a_fpr, b_fpr)
+            invalid_cause = ps_lane_invalid_cause_add(a_fpr, b_fpr)
+        elif op == "ps_sub":
+            result = fsubs_fpr_rne(a_fpr, b_fpr)
+            invalid_cause = ps_lane_invalid_cause_sub(a_fpr, b_fpr)
+        elif op == "ps_mul":
+            result = fmuls_fpr_rne(a_fpr, b_fpr)
+            invalid_cause = ps_lane_invalid_cause_mul(a_fpr, b_fpr)
+        else:
+            if c_fpr is None:
+                raise ValueError(f"{op} requires three operands")
+            c_fpr = mask64(c_fpr)
+            subtract = op in ("ps_msub", "ps_nmsub")
+            if op == "ps_madd":
+                result = fmadds_fpr_rne(a_fpr, b_fpr, c_fpr)
+            elif op == "ps_msub":
+                result = fmsubs_fpr_rne(a_fpr, b_fpr, c_fpr)
+            elif op == "ps_nmadd":
+                result = fnmadds_fpr_rne(a_fpr, b_fpr, c_fpr)
+            else:
+                result = fnmsubs_fpr_rne(a_fpr, b_fpr, c_fpr)
+            invalid_cause = ps_lane_invalid_cause_fused(
+                a_fpr, b_fpr, c_fpr, subtract=subtract,
+            )
+    except OracleUnimplementedError as exc:
+        return unsupported_outcome(str(exc))
+    return outcome_from_oracle(result, invalid_cause=invalid_cause)

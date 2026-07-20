@@ -1,9 +1,10 @@
 """SMT obligations and proof metadata for opt-in ``MemoryBus`` routing.
 
 MMIO remains fail-closed in the equivalence solver. Extensional symbolic
-register-bank formulas are scaffolded in ``symbolic_bus`` (separate
-unsupported-access queries; do not assume ``supported`` into equivalence).
-They are not yet discharged here or authorized for ``EQUIVALENT``.
+register-bank formulas live in ``symbolic_bus`` (separate unsupported-access
+queries; do not assume ``supported`` into equivalence). Obligation/evidence
+hooks attach scaffold blocks and MMIO touch observability without authorizing
+``EQUIVALENT``.
 """
 
 from __future__ import annotations
@@ -114,10 +115,130 @@ def symbolic_mmio_still_fail_closed() -> bool:
     """Hook marker: symbolic MMIO theory is scaffolded but not solver-bound.
 
     ``build_memory_bus_constraints`` continues to exclude MMIO from feasible
-    ranges. When PR 14 wires ``symbolic_bus`` into the engine, this returns
-    ``False`` and obligations gain ``register-bank-extensional-v1`` status.
+    ranges. When PR 14 fully wires ``symbolic_bus`` into terminal compare and
+    discharges obligations, this returns ``False``.
     """
     return True
+
+
+def _device_theory_map(memory_bus: MemoryBus) -> dict[str, str]:
+    spec = memory_bus.specification
+    if spec is None:
+        return {}
+    return {device.device_id: device.theory for device in spec.devices}
+
+
+def _serialize_mmio_touch(touch: Any) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "device_id": touch.device_id,
+        "theory": touch.theory,
+        "access": touch.access,
+        "width": touch.width,
+        "addr": touch.addr,
+    }
+    if touch.register_offset is not None:
+        payload["register_offset"] = hex(touch.register_offset)
+    return payload
+
+
+def collect_bus_mmio_observability(
+    memory_bus: MemoryBus,
+    *,
+    original_terminals: Sequence[Any] | None = None,
+    candidate_terminals: Sequence[Any] | None = None,
+) -> dict[str, Any]:
+    """Collect touched MMIO evidence and live device snapshots for obligations."""
+    from tools.ppc_equivalence.symbolic_bus import collect_mmio_touches_from_terminals
+
+    theories = _device_theory_map(memory_bus)
+    observability: dict[str, Any] = {
+        "register_banks": {},
+        "fifo_traces": {},
+        "touches": {"original": [], "candidate": []},
+    }
+
+    if original_terminals is not None:
+        for touch in collect_mmio_touches_from_terminals(
+            original_terminals,
+            memory_bus.address_space,
+            side="original",
+            device_theories=theories,
+        ):
+            observability["touches"]["original"].append(_serialize_mmio_touch(touch))
+    if candidate_terminals is not None:
+        for touch in collect_mmio_touches_from_terminals(
+            candidate_terminals,
+            memory_bus.address_space,
+            side="candidate",
+            device_theories=theories,
+        ):
+            observability["touches"]["candidate"].append(_serialize_mmio_touch(touch))
+
+    state = memory_bus.snapshot_state()
+    for device_id, values in state.device_values.items():
+        observability["register_banks"][device_id] = {
+            hex(offset): hex(value) for offset, value in sorted(values.items())
+        }
+    for device_id, events in state.event_logs.items():
+        observability["fifo_traces"][device_id] = list(events)
+    return observability
+
+
+def enrich_memory_bus_obligation_with_symbolic_mmio(
+    obligation: dict[str, Any],
+    memory_bus: MemoryBus,
+    *,
+    original_terminals: Sequence[Any] | None = None,
+    candidate_terminals: Sequence[Any] | None = None,
+) -> dict[str, Any]:
+    """Attach PR-14/15 scaffold blocks and MMIO observability (fail-closed)."""
+    from tools.ppc_equivalence.symbolic_bus import build_register_bank_extensional_obligation
+    from tools.ppc_equivalence.symbolic_event_trace import build_gxfifo_trace_obligation
+
+    spec = memory_bus.specification
+    if spec is None:
+        return obligation
+
+    enriched = dict(obligation)
+    enriched["symbolic_mmio"] = "scaffolded"
+    enriched["observability"] = collect_bus_mmio_observability(
+        memory_bus,
+        original_terminals=original_terminals,
+        candidate_terminals=candidate_terminals,
+    )
+
+    register_devices: list[dict[str, Any]] = []
+    fifo_devices: list[dict[str, Any]] = []
+    for device in spec.devices:
+        for region in spec.address_space.regions:
+            if (
+                region.kind is RegionKind.MMIO
+                and region.device_id == device.device_id
+            ):
+                entry = {
+                    "device_id": device.device_id,
+                    "theory": device.theory,
+                    "region": {"start": region.start, "end": region.end},
+                }
+                if device.theory == "register-bank":
+                    register_devices.append(entry)
+                elif device.theory == "gxfifo-stream":
+                    fifo_devices.append(entry)
+
+    if register_devices:
+        enriched["register_bank_extensional"] = build_register_bank_extensional_obligation(
+            bus_spec_sha256=spec.sha256(),
+            devices=register_devices,
+            observability=enriched["observability"],
+            status="scaffolded",
+        )
+    if fifo_devices:
+        enriched["gxfifo_trace"] = build_gxfifo_trace_obligation(
+            bus_spec_sha256=spec.sha256(),
+            devices=fifo_devices,
+            status="scaffolded",
+        )
+    return enriched
 
 
 def validate_memory_bus_obligation(obligation: dict[str, Any]) -> str | None:

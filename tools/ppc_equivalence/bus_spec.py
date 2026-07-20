@@ -37,6 +37,7 @@ __all__ = [
     "snapshot_bus_state",
     "materialize_devices",
     "lift_symbolic_register_banks",
+    "lift_symbolic_fifo_traces",
 ]
 
 
@@ -225,3 +226,29 @@ def lift_symbolic_register_banks(
             prefix=f"{prefix}.{device.device_id}",
         )
     return banks
+
+
+def lift_symbolic_fifo_traces(
+    specification: BusSpecification,
+    *,
+    max_events: int | None = None,
+) -> dict[str, Any]:
+    """Hook: lift ``gxfifo-stream`` devices to bounded ``SymbolicEventTrace``.
+
+    Does not alter concrete ``MemoryBus`` routing or equivalence constraints.
+    """
+    from tools.ppc_equivalence.symbolic_event_trace import (
+        DEFAULT_MAX_FIFO_EVENTS,
+        symbolic_trace_from_device_spec,
+    )
+
+    bound = DEFAULT_MAX_FIFO_EVENTS if max_events is None else max_events
+    traces: dict[str, Any] = {}
+    for device in specification.devices:
+        if device.theory != "gxfifo-stream":
+            continue
+        traces[device.device_id] = symbolic_trace_from_device_spec(
+            device,
+            max_events=bound,
+        )
+    return traces

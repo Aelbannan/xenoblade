@@ -92,9 +92,10 @@ documented per-implementation private-storage abstraction.
   logical case index (`jump_table_pairing.py`), not absolute address equality.
   Coop `_prove_bytes` attempts auto-context when a linked image is available:
   it passes retail ``main.dol`` for the original side and linked ``main.elf`` for
-  the candidate side, re-decoding a 512-byte text window around the dispatch tail
+  the candidate side, re-decoding a 768-byte text window around the dispatch tail
   so distant ``addis``/``addi`` table-base materialization is visible to
-  ``resolve_table_base_va``. Without resolvable base VAs or complete ADDR32 table
+  ``resolve_table_base_va`` (up to 256 instructions back from the feeding
+  ``addi``). Without resolvable base VAs or complete ADDR32 table
   hydration, auto-context returns ``None`` and the proof stays fail-closed.
 - Path count and instruction count are bounded by `max_paths` (default 256) and
   `max_instructions` (default 2048). Exceeding either produces

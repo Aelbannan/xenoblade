@@ -108,16 +108,23 @@ class JumpTableCorpusProbeTests(unittest.TestCase):
         self.assertGreaterEqual(len(recognized), 6)
         self.assertTrue(all(item.auto_context for item in recognized))
 
+    def test_distant_addis_tail_hydrates_when_dol_present(self) -> None:
+        if not DEFAULT_RETAIL_DOL.is_file():
+            self.skipTest(f"retail DOL missing: {DEFAULT_RETAIL_DOL}")
+        branch_pc = 0x801B6528
+        result = probe_branch_pc(branch_pc, DEFAULT_RETAIL_DOL)
+        self.assertEqual(result.confidence, "exact-pattern")
+        self.assertEqual(result.bound_imm, 13)
+        self.assertEqual(result.table_base_va, 0x80533860)
+        self.assertTrue(result.auto_context, result.detail)
+
     def test_full_retail_scan_reports_exact_count(self) -> None:
         if not DEFAULT_RETAIL_DOL.is_file():
             self.skipTest(f"retail DOL missing: {DEFAULT_RETAIL_DOL}")
         results = probe_retail_exact_patterns(DEFAULT_RETAIL_DOL)
         summary = summarize_probe_results(results)
         self.assertGreaterEqual(summary["exact_pattern"], 20)
-        self.assertGreaterEqual(
-            summary["auto_context_ok"],
-            int(summary["exact_pattern"] * 0.8),
-        )
+        self.assertEqual(summary["auto_context_ok"], summary["exact_pattern"])
 
 
 if __name__ == "__main__":

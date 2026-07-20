@@ -109,6 +109,19 @@ class ResolveTableBaseTests(unittest.TestCase):
             )
         )
 
+    def test_resolves_addis_far_before_addi_on_mid_reg(self) -> None:
+        # Retail @ 0x801b6528: addis r27,-32685 then ~169 insns later addi r3,r27,14432.
+        table_base = 0x80533860
+        addis = pack(">I", (15 << 26) | (27 << 21) | (0 << 16) | 0x8053)
+        addi = pack(">I", (14 << 26) | (3 << 21) | (27 << 16) | 0x3860)
+        padding = pack(">I", 0x60000000) * 170
+        tail = bytes.fromhex("2800000d 5400103a 7c63002e 7c6903a6 4e800420")
+        code = addis + padding + addi + tail
+        insns = decode_block(code, 0x80100000, validate_with_capstone=False)
+        candidates = find_jump_table_candidates(insns)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(resolve_table_base_va(insns, candidates[0]), table_base)
+
     def test_resolves_retail_fixture_with_lis_in_window(self) -> None:
         if not DEFAULT_RETAIL_DOL.is_file():
             self.skipTest(f"retail DOL missing: {DEFAULT_RETAIL_DOL}")

@@ -13,6 +13,29 @@ if str(ROOT) not in sys.path:
 from tools.llm_harness.core import Harness
 
 
+def _print_selected_frontier(harness: Harness, target_ids: list[str], selection: str) -> None:
+    """Print selected target IDs (and leaf/ready kind when available) for --number runs."""
+    describe = getattr(getattr(harness, "adapter", None), "describe_frontier", None)
+    rows = None
+    if callable(describe):
+        try:
+            candidate = describe(target_ids)
+            if isinstance(candidate, list):
+                rows = candidate
+        except Exception:
+            rows = None
+    print(f"selected frontier selection={selection} count={len(target_ids)}")
+    if rows:
+        for row in rows:
+            if isinstance(row, dict):
+                print(f"  {row.get('id')} ({row.get('kind', 'unknown')})")
+            else:
+                print(f"  {row}")
+    else:
+        for target_id in target_ids:
+            print(f"  {target_id}")
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     # Check for --show-config early without requiring a command
@@ -51,8 +74,10 @@ def main(argv: list[str] | None = None) -> int:
                 help=(
                     "Automatically select this many fresh placeholder targets"
                     if name == "new"
+                    else "Automatically select this many ready-frontier mismatching targets"
+                    if name == "solve"
                     else "Automatically select this many non-accepted (not FULL/EQUIVALENT) targets"
-                    if name in {"improve", "solve"}
+                    if name == "improve"
                     else f"Automatically select this many {name} targets"
                 ),
             )
@@ -71,6 +96,16 @@ def main(argv: list[str] | None = None) -> int:
             command.add_argument(
                 "--tu",
                 help="Filter to functions in a specific translation unit (e.g. kyoshin/cf/CfPadTask)",
+            )
+        if name in {"improve", "solve"}:
+            command.add_argument(
+                "--selection",
+                choices=("leaf", "ready", "callees-accepted", "pending"),
+                default="ready" if name == "solve" else "pending",
+                help=(
+                    "Call-graph frontier for automatic --number selection "
+                    "(solve default: ready; improve default: pending)"
+                ),
             )
         if name == "new":
             command.add_argument(
@@ -211,10 +246,6 @@ def main(argv: list[str] | None = None) -> int:
             target_ids = harness.target_ids_for_unit(args.tu, args.workflow)
         if not target_ids:
             parser.error("batch requires target_ids or --tu")
-        if args.workflow == "solve":
-            for target_id in target_ids:
-                print(harness.solve(target_id, dry_run=args.dry_run, max_parallel=args.model_parallel))
-            return 0
         print(harness.run_batch(
             args.workflow,
             target_ids,
@@ -340,23 +371,27 @@ def main(argv: list[str] | None = None) -> int:
                 parser.error("solve accepts either target_id or --number, not both")
             if args.number < 1:
                 parser.error("--number must be positive")
+            if args.resume:
+                parser.error("solve --number does not support --resume")
+            selection = getattr(args, "selection", "ready")
             try:
-                # Same pool as improve: any non-FULL/EQUIVALENT mismatching function.
                 target_ids = harness.select_targets(
                     "solve",
                     args.number,
                     certified_funcs=getattr(args, "certified_funcs", False),
                     tu=getattr(args, "tu", None),
+                    selection=selection,
                 )
             except (TypeError, ValueError) as exc:
                 parser.error(str(exc))
-            for target_id in target_ids:
-                print(harness.solve(
-                    target_id,
-                    dry_run=args.dry_run,
-                    resume=args.resume,
-                    max_parallel=args.max_parallel,
-                ))
+            if args.dry_run:
+                _print_selected_frontier(harness, target_ids, selection)
+            print(harness.run_batch(
+                "solve",
+                target_ids,
+                dry_run=args.dry_run,
+                model_parallel=args.max_parallel,
+            ))
             return 0
         tu = getattr(args, "tu", None)
         if tu:
@@ -365,12 +400,12 @@ def main(argv: list[str] | None = None) -> int:
             target_ids = harness.target_ids_for_unit(tu, "solve")
             if not target_ids:
                 parser.error(f"No eligible solve targets found in unit {tu!r}")
-            for target_id in target_ids:
-                print(harness.solve(
-                    target_id,
-                    dry_run=args.dry_run,
-                    max_parallel=args.max_parallel,
-                ))
+            print(harness.run_batch(
+                "solve",
+                target_ids,
+                dry_run=args.dry_run,
+                model_parallel=args.max_parallel,
+            ))
             return 0
         if args.target_id is None:
             parser.error("solve requires target_id, --number, or --tu")
@@ -399,13 +434,26 @@ def main(argv: list[str] | None = None) -> int:
                     certified_funcs=getattr(args, "certified_funcs", False),
                     tu=getattr(args, "tu", None),
                 )
+                if args.dry_run:
+                    _print_selected_frontier(harness, target_ids, "ready")
             else:
+                selection = getattr(args, "selection", "pending")
+                select_kwargs = {
+                    "randomize": args.random,
+                    "certified_funcs": getattr(args, "certified_funcs", False),
+                    "tu": getattr(args, "tu", None),
+                }
+                if args.command == "improve":
+                    select_kwargs["selection"] = selection
                 target_ids = harness.select_targets(
-                    args.command, args.number,
-                    randomize=args.random,
-                    certified_funcs=getattr(args, "certified_funcs", False),
-                    tu=getattr(args, "tu", None),
+                    args.command, args.number, **select_kwargs
                 )
+                if args.dry_run:
+                    _print_selected_frontier(
+                        harness,
+                        target_ids,
+                        selection if args.command == "improve" else "pending",
+                    )
         except (TypeError, ValueError) as exc:
             parser.error(str(exc))
         print(harness.run_batch(

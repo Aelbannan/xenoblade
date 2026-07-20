@@ -11,6 +11,7 @@ Do not:
 If a required declaration is unavailable, keep the candidate source unchanged and explain the blocker in `hypothesis` / `notes`.
 
 Input: current candidate source, compiler diagnostics, and any prior repair fingerprints below.
+When present, a short "## Retail ASM (signature/ABI check)" excerpt is for calling-convention / return-width sanity only — not for instruction matching.
 
 For each diagnostic, fix the root cause (first real error, not cascades).
 

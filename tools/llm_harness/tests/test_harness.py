@@ -334,8 +334,10 @@ class OpenCodeProviderTests(unittest.TestCase):
             )
         self.assertEqual(seen["body"]["variant"], "high")
 
-    def test_invoke_omits_variant_when_unset(self) -> None:
-        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096", timeout_seconds=30)
+    def test_invoke_sets_none_variant_when_pure(self) -> None:
+        provider = OpenCodeProvider(
+            base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=True
+        )
         seen: dict[str, Any] = {}
 
         def fake_request(method: str, path: str, body=None, query=None):
@@ -360,7 +362,9 @@ class OpenCodeProviderTests(unittest.TestCase):
                 model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
                 cwd=Path(tmp),
             )
-        self.assertNotIn("variant", seen["body"])
+        self.assertEqual(seen["body"]["variant"], "none")
+        self.assertEqual(seen["body"]["reasoning_effort"], "none")
+        self.assertFalse(seen["body"]["enable_thinking"])
 
 
 class LMStudioProviderTests(unittest.TestCase):
@@ -1242,6 +1246,94 @@ class BatchTests(unittest.TestCase):
                 context = root / row["experiment"] / "context"
                 self.assertTrue((context / "TASK.md").is_file())
 
+    def test_run_batch_supports_solve_dry_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "adapter.py").write_text(
+                "class A:\n"
+                " def __init__(self, root): self.root=root\n"
+                " def build_prompt(self, workflow, target, history, options=None):\n"
+                "  return 'prompt '+target\n"
+                " def evaluate_canon(self, target, artifact_dir):\n"
+                "  from tools.llm_harness.types import CandidateEvaluation, CandidateStatus, CompileReport\n"
+                "  return CandidateEvaluation(status=CandidateStatus.COMPILES,\n"
+                "    compile_report=CompileReport(succeeded=True), match_percent=10.0,\n"
+                "    symbol_accepted=False, promising=True)\n"
+                " def read_target_source(self, target): return 'void t() {}'\n"
+                " def evaluate(self, workflow, target, candidate): raise AssertionError()\n"
+                " def finalize(self): pass\n"
+                "def create_adapter(root, settings): return A(root)\n",
+                encoding="utf-8",
+            )
+            (root / "config.json").write_text(json.dumps({
+                "project_adapter": "adapter.py",
+                "output_dir": "out",
+                "execution": {
+                    "max_target_parallel": 2,
+                    "isolation": {"mode": "none"},
+                    "auto_promote": False,
+                },
+                "models": {
+                    "initial": [{"id": "a", "provider": "opencode", "model": "p/a"}],
+                    "repair": [{"id": "b", "provider": "opencode", "model": "p/b"}],
+                },
+                "solve": {"initial_candidates": 1},
+            }), encoding="utf-8")
+            harness = Harness(root / "config.json")
+            batch = harness.run_batch("solve", ["one", "two"], dry_run=True)
+            manifest = json.loads((batch / "batch.json").read_text())
+            self.assertEqual(manifest["workflow"], "solve")
+            self.assertEqual(manifest["status"], "complete")
+            self.assertEqual(set(manifest["targets"]), {"one", "two"})
+            for row in manifest["targets"].values():
+                self.assertIsNone(row["error"])
+                experiment = root / row["experiment"]
+                self.assertTrue((experiment / "context" / "TASK.md").is_file())
+                self.assertTrue((experiment / "state.json").is_file())
+
+    def test_reusable_workspace_skips_create_remove_per_evaluate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "adapter.py").write_text(
+                "class A:\n"
+                " def __init__(self, root): self.root=root\n"
+                " def build_prompt(self, workflow, target, history): return 'prompt'\n"
+                " def evaluate(self, workflow, target, candidate):\n"
+                "  from tools.llm_harness.types import Evaluation\n"
+                "  return Evaluation(status='HIGH_MATCH', match_percent=50.0, accepted=False)\n"
+                " def finalize(self): pass\n"
+                " def prepare_workspace(self, workspace): pass\n"
+                "def create_adapter(root, settings): return A(root)\n",
+                encoding="utf-8",
+            )
+            (root / "config.json").write_text(json.dumps({
+                "project_adapter": "adapter.py",
+                "output_dir": "out",
+                "execution": {"isolation": {"mode": "git-worktree"}},
+                "models": [{"id": "a", "provider": "opencode", "model": "p/a"}],
+            }), encoding="utf-8")
+            harness = Harness(root / "config.json")
+            manager = unittest.mock.Mock()
+            workspace = root / "ws"
+            workspace.mkdir()
+            manager.create.return_value = workspace
+            harness.workspace_manager = manager
+            candidate = Candidate(source="void f() {}", hypothesis="h")
+            with unittest.mock.patch.object(
+                harness, "_load_adapter", return_value=harness.adapter
+            ):
+                harness._evaluate_candidate(
+                    "new", "t", candidate, "label-1", workspace=workspace
+                )
+                harness._evaluate_candidate(
+                    "new", "t", candidate, "label-2", workspace=workspace
+                )
+                manager.create.assert_not_called()
+                manager.remove.assert_not_called()
+                # Without reuse, create/remove still happen.
+                harness._evaluate_candidate("new", "t", candidate, "label-3")
+                manager.create.assert_called_once_with("label-3")
+                manager.remove.assert_called_once_with(workspace)
     def test_inline_context_omits_duplicate_task(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

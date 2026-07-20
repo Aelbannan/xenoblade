@@ -14,6 +14,7 @@ import shutil
 import struct
 import sys
 import difflib
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -125,6 +126,20 @@ class XenobladeAdapter:
             "include_raw_hex": False,
         }
         self.prompt_budget.update(dict(settings.get("prompt") or {}))
+        # Set by Harness before evaluate() so ninja/objdiff/smt wall time aggregates.
+        self.timings: Any = None
+
+    def _phase(self, name: str) -> AbstractContextManager[Any]:
+        """Record ``name`` into ``self.timings`` when the harness attached a recorder."""
+        if self.timings is None:
+            return nullcontext()
+        measure = getattr(self.timings, "measure", None)
+        if callable(measure):
+            return measure(name)
+        return nullcontext()
+
+    def _phase_timer(self):
+        return lambda phase: self._phase(phase)
 
     def _target(self, target_id: str) -> Target:
         target = self._any_target(target_id)
@@ -420,12 +435,22 @@ class XenobladeAdapter:
             pass
 
     def select_targets(
-        self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False,
+        self,
+        workflow: str,
+        number: int,
+        *,
+        randomize: bool = False,
+        certified_funcs: bool = False,
         tu: Optional[str] = None,
+        selection: Optional[str] = None,
     ) -> List[str]:
         if workflow in {"improve", "solve"}:
-            # Both pick non-accepted (not FULL/EQUIVALENT) mismatching functions.
-            candidates = self._non_accepted_candidates(certified_funcs=certified_funcs, tu=tu)
+            # solve defaults to the ready call-graph frontier; improve keeps all non-accepted.
+            if selection is None:
+                selection = "ready" if workflow == "solve" else "pending"
+            candidates = self._non_accepted_candidates(
+                certified_funcs=certified_funcs, tu=tu, selection=selection
+            )
         elif workflow == "tu-complete":
             candidates = self._tu_completion_candidates()
         else:
@@ -438,6 +463,30 @@ class XenobladeAdapter:
                 f"requested {number}"
             )
         return candidates[:number]
+
+    def describe_frontier(self, target_ids: List[str]) -> List[Dict[str, str]]:
+        """Return leaf/ready annotations for dry-run frontier printing."""
+        by_id = {target.id: target for target in load_targets(self.config)}
+        rows: List[Dict[str, str]] = []
+        for target_id in target_ids:
+            target = by_id.get(target_id)
+            kind = "unknown"
+            if target is not None:
+                kind = self._frontier_kind(target)
+            rows.append({"id": target_id, "kind": kind})
+        return rows
+
+    @staticmethod
+    def _frontier_kind(target: Target) -> str:
+        called = target.extra.get("called_functions", []) or []
+        unresolved = target.extra.get("unresolved_called_functions", []) or []
+        indirect = bool(target.extra.get("has_indirect_calls", False))
+        complete = target.extra.get("callgraph_status") == "complete"
+        if complete and not called and not unresolved and not indirect:
+            return "leaf"
+        if complete and called and not unresolved and not indirect:
+            return "callees-accepted"
+        return "pending"
 
     @staticmethod
     def _filter_certified_funcs(
@@ -460,10 +509,19 @@ class XenobladeAdapter:
         ]
 
     def _non_accepted_candidates(
-        self, *, certified_funcs: bool = False, tu: Optional[str] = None
+        self,
+        *,
+        certified_funcs: bool = False,
+        tu: Optional[str] = None,
+        selection: str = "pending",
     ) -> List[str]:
-        """Targets that are not FULL_MATCH/EQUIVALENT_MATCH and still mismatch retail."""
-        selected: List[str] = []
+        """Mismatching buildable targets from a call-graph frontier selection.
+
+        Starts from ``harness_targets(..., include_catalog=True)`` (tier-sorted),
+        then applies the same retail/decomp mismatch checks as before. Within a
+        tier, leaves are preferred over callees-accepted, then smaller retail
+        size when available.
+        """
         source_cache: Dict[Path, str] = {}
         units = self.project.load_objdiff_units()
         unit_by_hint = {
@@ -472,12 +530,15 @@ class XenobladeAdapter:
             for hint in {unit.name, unit.name.removeprefix("main/")}
         }
         retail_symbols: Dict[Path, set[str]] = {}
+        retail_sizes: Dict[str, int] = {}
         raw_targets = load_targets(self.config)
+        frontier = harness_targets(
+            raw_targets, selection=selection, include_catalog=True
+        )
         candidates: List[Target] = []
-        for target in raw_targets:
+        for target in frontier:
             if (
-                target.status in ACCEPTED_MATCH_STATUSES
-                or not target.buildable
+                not target.buildable
                 or not target.symbol
                 or target.source is None
                 or not target.source.is_file()
@@ -507,6 +568,7 @@ class XenobladeAdapter:
                 if target.symbol not in symbols:
                     continue
                 retail = extract_function(unit.target_path, target.symbol)
+                retail_sizes[target.id] = int(getattr(retail, "size", 0) or 0)
                 try:
                     decomp = extract_function(unit.base_path, target.symbol)
                 except ValueError:
@@ -519,11 +581,34 @@ class XenobladeAdapter:
             candidates.append(target)
         if certified_funcs:
             candidates = self._filter_certified_funcs(raw_targets, candidates)
+        tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P9": 9}
+
+        def sort_key(target: Target) -> tuple:
+            kind = self._frontier_kind(target)
+            leaf_rank = 0 if kind == "leaf" else 1
+            size = retail_sizes.get(target.id)
+            size_rank = size if size is not None and size > 0 else 10**9
+            return (
+                tier_order.get(target.tier, 99),
+                leaf_rank,
+                size_rank,
+                target.id,
+            )
+
+        candidates.sort(key=sort_key)
         return [target.id for target in candidates]
 
-    def _improve_candidates(self, *, certified_funcs: bool = False, tu: Optional[str] = None) -> List[str]:
+    def _improve_candidates(
+        self,
+        *,
+        certified_funcs: bool = False,
+        tu: Optional[str] = None,
+        selection: str = "pending",
+    ) -> List[str]:
         """Alias kept for callers/tests; prefer `_non_accepted_candidates`."""
-        return self._non_accepted_candidates(certified_funcs=certified_funcs, tu=tu)
+        return self._non_accepted_candidates(
+            certified_funcs=certified_funcs, tu=tu, selection=selection
+        )
 
     def _tu_completion_candidates(self) -> List[str]:
         report_path = self.config.resolve(self.config.report_cache)
@@ -608,6 +693,10 @@ class XenobladeAdapter:
             if block:
                 return strip_listing_bytecode_comments(block)
         return ""
+
+    def get_retail_asm(self, target_id: str) -> str:
+        """Retail assembly excerpt for compile-repair ABI/signature checks."""
+        return self._retail_assembly(self._target(target_id))
 
     def suggest_max_output_tokens(self, target_id: str) -> int:
         """Heuristic generation budget from retail function size.
@@ -1082,6 +1171,7 @@ class XenobladeAdapter:
                     target.symbol,
                     target_id=target.id,
                     certify_full_match=False,
+                    phase_timer=self._phase_timer(),
                 )
             except (subprocess.CalledProcessError, FileNotFoundError, ValueError) as exc:
                 return Evaluation(
@@ -1281,7 +1371,9 @@ class XenobladeAdapter:
                     accepted=False,
                     detail=build_error,
                 )
-            evaluation = evaluate_unit_match(self.project, unit, None)
+            evaluation = evaluate_unit_match(
+                self.project, unit, None, phase_timer=self._phase_timer()
+            )
             candidate_fingerprints = _object_function_fingerprints(unit.base_path)
             guard = self._tu_regression_guard(
                 unit.name,
@@ -1416,7 +1508,9 @@ class XenobladeAdapter:
             if unchanged:
                 preserved_equivalent += 1
                 continue
-            probe = prove_unit_symbol(self.project, unit, target.symbol)
+            probe = None
+            with self._phase("smt"):
+                probe = prove_unit_symbol(self.project, unit, target.symbol)
             proofs.append({"target_id": target.id, "status": probe.status.value})
             if probe.status == ProofStatus.EQUIVALENT:
                 preserved_equivalent += 1
@@ -1470,13 +1564,14 @@ class XenobladeAdapter:
             raise ValueError(f"Candidate adds forbidden low-level source patterns: {', '.join(added)}")
 
     def _build_object(self, object_path: Path) -> str:
-        completed = subprocess.run(
-            [self.project.ninja_bin(), str(object_path.relative_to(self.root))],
-            cwd=self.root,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+        with self._phase("ninja"):
+            completed = subprocess.run(
+                [self.project.ninja_bin(), str(object_path.relative_to(self.root))],
+                cwd=self.root,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
         if completed.returncode == 0:
             return ""
         detail = "\n".join(
@@ -1692,17 +1787,50 @@ class XenobladeAdapter:
         from .promotion import PlaceholderDetector
         return PlaceholderDetector().is_placeholder(source)
 
-    def evaluate_canon(self, target_id: str, artifact_dir: Path) -> CandidateEvaluation:
-        """Evaluate the canonical (current) source for a baseline snapshot."""
+    def evaluate_canon(
+        self,
+        target_id: str,
+        artifact_dir: Path,
+        *,
+        light: Optional[bool] = None,
+    ) -> CandidateEvaluation:
+        """Evaluate the canonical (current) source for a baseline snapshot.
+
+        When ``light=True``, or when auto-detected as safe (placeholder body or
+        known ``instruction_match`` of 0), skip the full MWCC build/equivalence
+        path and return a COMPILES-style snapshot. Pass ``light=False`` to force
+        a full evaluation.
+        """
         from dataclasses import asdict
 
-        from .promotion import evaluation_to_candidate
+        from .promotion import PlaceholderDetector, evaluation_to_candidate
 
         target = self._target(target_id)
         assert target.source is not None and target.unit is not None
         source = target.source.read_text(encoding="utf-8")
         region = _find_function_region(source, target)
         current = source[region.content_start : region.content_end].strip()
+        known_match = target.extra.get("instruction_match")
+        is_placeholder = PlaceholderDetector().is_placeholder(current)
+        if light is None:
+            light = is_placeholder or (
+                known_match is not None and float(known_match) <= 0.0
+            )
+        if light:
+            match_percent = (
+                0.0 if is_placeholder else float(known_match if known_match is not None else 0.0)
+            )
+            return CandidateEvaluation(
+                status=CandidateStatus.COMPILES,
+                compile_report=CompileReport(succeeded=True),
+                match_percent=match_percent,
+                symbol_accepted=False,
+                promising=False,
+                warnings=[
+                    "light_baseline: skipped full MWCC evaluate_canon "
+                    f"(placeholder={is_placeholder}, instruction_match={known_match!r})"
+                ],
+            )
         candidate = Candidate(source=current, hypothesis="canonical evaluation")
         evaluation = self._evaluate_function(target_id, candidate)
         return evaluation_to_candidate(asdict(evaluation))
@@ -1783,6 +1911,10 @@ class XenobladeAdapter:
                     sys.stdout.write(line)
         if result.stderr:
             sys.stderr.write(result.stderr)
+        # Avoid ninja re-running dtk SPLIT through a shared config.json symlink.
+        from tools.llm_harness.eval_cache import stamp_split_config
+
+        stamp_split_config(workspace, self.config.region)
 
 
     # ------------------------------------------------------------------
@@ -1846,25 +1978,26 @@ class XenobladeAdapter:
 
             report_path = artifact_dir / "objdiff-report.json"
             report_path.parent.mkdir(parents=True, exist_ok=True)
-            objdiff_result = subprocess.run(
-                [
-                    self.project.objdiff_bin(),
-                    "report", "generate",
-                    "-p", str(root),
-                    "-o", str(report_path),
-                    "-f", "json-pretty",
-                ],
-                cwd=root, capture_output=True, text=True,
-            )
-            match_percent = 0.0
-            if objdiff_result.returncode == 0 and report_path.is_file():
-                report = json.loads(report_path.read_text(encoding="utf-8"))
-                for entry in report.get("units", []):
-                    if entry.get("name") == unit.name:
-                        for fn in entry.get("functions", []):
-                            if fn.get("name") == target.symbol:
-                                match_percent = float(fn.get("match_percent", 0.0) or 0.0)
-                                break
+            with self._phase("objdiff"):
+                objdiff_result = subprocess.run(
+                    [
+                        self.project.objdiff_bin(),
+                        "report", "generate",
+                        "-p", str(root),
+                        "-o", str(report_path),
+                        "-f", "json-pretty",
+                    ],
+                    cwd=root, capture_output=True, text=True,
+                )
+                match_percent = 0.0
+                if objdiff_result.returncode == 0 and report_path.is_file():
+                    report = json.loads(report_path.read_text(encoding="utf-8"))
+                    for entry in report.get("units", []):
+                        if entry.get("name") == unit.name:
+                            for fn in entry.get("functions", []):
+                                if fn.get("name") == target.symbol:
+                                    match_percent = float(fn.get("match_percent", 0.0) or 0.0)
+                                    break
 
             if ws_target is None or not ws_target.is_file():
                 return CandidateEvaluation(
@@ -2076,13 +2209,14 @@ class XenobladeAdapter:
         return steps
 
     def _build_object_at(self, root: Path, object_path: Path) -> str:
-        completed = subprocess.run(
-            [self.project.ninja_bin(), str(object_path.relative_to(root))],
-            cwd=root,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+        with self._phase("ninja"):
+            completed = subprocess.run(
+                [self.project.ninja_bin(), str(object_path.relative_to(root))],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
         if completed.returncode == 0:
             return ""
         detail = "\n".join(

@@ -2,6 +2,37 @@
 
 This harness runs evidence-driven function-decompilation experiments against MWCC builds, objdiff scoring, and PPC equivalence. By default, `FULL_MATCH` / `EQUIVALENT_MATCH` winners are auto-promoted into canonical source (`execution.auto_promote`).
 
+## Recommended fast path
+
+Use this configuration when matching many small/medium functions:
+
+```bash
+# Prefer leaf / callees-accepted / ready frontiers (coop harness selection)
+python3 tools/coop/run.py harness --selection ready --include-catalog --limit 20
+
+# Or let solve auto-pick non-accepted targets with certified callees only
+python3 tools/llm_harness/run.py solve --number 10 --certified-funcs
+
+# Explicit target
+python3 tools/llm_harness/run.py solve <target-id>
+```
+
+**Throughput knobs** (`llm-harness.json`):
+
+| Setting | Role |
+| --- | --- |
+| `execution.initial_parallel` | Parallel initial candidates inside one `solve` |
+| `execution.target_parallel` | Parallel targets in `batch` / `--number` |
+| `execution.isolation.mode=git-worktree` | Isolate each candidate evaluation |
+| `providers.opencode.pure=true` | Inline dossier; tools disabled; JSON schema enforced |
+| `providers.opencode.delete_session=true` | Drop OpenCode sessions after each call |
+
+OpenCode with `pure: true` + JSON schema + tools disabled is the default high-volume path. `deepseek-raw` remains an optional alternative provider (same candidate schema); keep it configured if you want a second model/role, but you do not need to switch for the default loop.
+
+**Worktree reuse / SPLIT:** each isolated evaluation currently creates a fresh git worktree, runs `configure.py`, then ninja-builds one object. `prepare_workspace` already symlinks shared `build/<region>/{obj,include,asm}` and stamps `config.json` via `eval_cache.stamp_split_config` so ninja should skip expensive `dtk dol split`. A persistent worktree pool (reuse configured trees across candidates) is a follow-up if configure still dominates wall time — see `tools/llm_harness/eval_cache.py`.
+
+**Early stop on unvalidated callees:** `solve` stops match-repair when the best candidate is blocked with `blocked_reason=unvalidated_callee` (`CODE_MATCH` + `INCONCLUSIVE_UNVALIDATED_CALLEE`) instead of burning `match_repairs`. Prefer `--certified-funcs` / `--selection ready` so those targets are not selected until callees are accepted.
+
 ## Recommended workflow
 
 ```bash
@@ -22,7 +53,7 @@ python3 tools/llm_harness/run.py promote-accepted --dry-run
 python3 tools/llm_harness/run.py promote-accepted
 ```
 
-`solve` generates a few diverse initial candidates, then spends remaining budget on compile repair or binary-diff repair against the best saved candidate. It stops on `FULL_MATCH` / `EQUIVALENT_MATCH`, repeated mismatch fingerprints, or exhausted repair budgets. Accepted wins are written into source and `targets.json` automatically unless `execution.auto_promote` is false.
+`solve` generates a few diverse initial candidates, then spends remaining budget on compile repair or binary-diff repair against the best saved candidate. It stops on `FULL_MATCH` / `EQUIVALENT_MATCH`, repeated mismatch fingerprints, unvalidated-callee blocks, or exhausted repair budgets. Accepted wins are written into source and `targets.json` automatically unless `execution.auto_promote` is false.
 
 ## Requirements
 
@@ -86,6 +117,18 @@ Checked-in schema uses model roles:
   "prompt": {
     "max_chars": 60000,
     "include_raw_hex": false
+  },
+  "execution": {
+    "initial_parallel": 3,
+    "target_parallel": 10,
+    "isolation": {"mode": "git-worktree", "copy_dirty": true}
+  },
+  "providers": {
+    "opencode": {
+      "base_url": "http://127.0.0.1:4096",
+      "pure": true,
+      "delete_session": true
+    }
   }
 }
 ```
@@ -101,17 +144,48 @@ python3 tools/llm_harness/run.py --show-config
 ## Prompt evidence
 
 Prompts contain no frozen/retrieved MWCC knowledge corpus. Function prompts assemble
-`common.md` + workflow (`new` / `improve`) + a truncated target dossier that prefers a
-retail ASM listing (`retail_asm`) over a decoded-instruction JSON array, plus compact
-type snippets (not whole headers). Same-class sibling bodies are included only when
-small enough to be useful style exemplars. Repair turns also receive the best prior
-candidate, structured binary feedback, and rejected mismatch fingerprints.
+`common.md` + workflow (`new` / `improve`) + a **compacted** target dossier
+(`compact_model_facing_dossier`) that prefers a retail ASM listing (`retail_asm`)
+over a decoded-instruction JSON array, plus compact type snippets (not whole headers).
+Same-class sibling bodies are included only when small enough to be useful style
+exemplars. Repair turns also receive the best prior candidate, structured binary
+feedback, and rejected mismatch fingerprints.
+
+Compile-repair prompts are intentionally slim: candidate source + diagnostics, with an
+optional short `## Retail ASM (signature/ABI check)` section when
+`XenobladeAdapter.get_retail_asm` is available (wired from `solve`).
 
 Outputs are capped: metadata fields have hard length limits, and `max_tokens` is chosen
 from retail function size (see `prompt.max_output_tokens`, default 4096). Harness
 `prompt.*` caps are applied by the adapter when building dossiers.
 
-Human references such as `docs/MWCC_REFERENCE.md` remain available outside the model path.
+Human references such as `docs/MWCC_REFERENCE.md` remain available outside the model path
+and must never appear in solve prompts.
+
+## Metrics dashboard
+
+`tools/llm_harness/metrics.py` provides `TimingRecorder` for phases:
+
+`llm`, `configure`, `ninja`, `objdiff`, `smt`, `worktree_create`
+
+`solve` resets the recorder per experiment and writes `state["timings"]` in
+`_finalize_solve`. Core records `llm`, `configure` (prepare_workspace), and
+`worktree_create`. The Xenoblade adapter (with harness-bound `timings`) records
+`ninja` (`_build_object`), `objdiff` (`report_unit` / isolated report generate),
+and `smt` (equivalence / certify probes via `evaluate_unit_match(..., phase_timer=)`).
+If no live phases were recorded, finalize falls back to summing each record's
+`duration_seconds` under `llm`.
+
+## Worktree SPLIT skip
+
+See `tools/llm_harness/eval_cache.py`. Root cause: worktree `build.ninja` still lists
+`config.json` as a `split` output even when that path is a symlink into the main tree.
+Safe mitigation (already wired in `prepare_workspace`): after configure, materialize a
+private `config.json` copy and bump its mtime so ninja skips SPLIT. Retail `obj` /
+`asm` / `include` stay symlinked.
+
+Follow-ups if SPLIT still appears in `-d explain` output: persistent worktree pool,
+or `ninja -t restat` after stamp.
 
 ## Benchmarking (Phases 9–10)
 

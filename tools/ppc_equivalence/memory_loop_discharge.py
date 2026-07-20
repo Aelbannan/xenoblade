@@ -95,6 +95,7 @@ def refinement_for_plan(
     z3_module: Any | None = None,
     entry_guard_premises: Sequence[Any] = (),
     entry_violation_conditions: Sequence[Any] = (),
+    require_entry_violations: bool = True,
 ) -> dict[str, Any] | None:
     """Discharge ``plan`` and return the attachable side-entry payload pieces."""
     result = discharge_memory_loop_plan(
@@ -103,6 +104,7 @@ def refinement_for_plan(
         z3_module=z3_module,
         entry_guard_premises=entry_guard_premises,
         entry_violation_conditions=entry_violation_conditions,
+        require_entry_violations=require_entry_violations,
     )
     if not result.all_unsat():
         return None
@@ -167,8 +169,14 @@ def discharge_memory_loop_plan(
     z3_module: Any | None = None,
     entry_guard_premises: Sequence[Any] = (),
     entry_violation_conditions: Sequence[Any] = (),
+    require_entry_violations: bool = True,
 ) -> MemoryLoopDischargeResult:
-    """Prove entry-guard + refinement queries for one closed-form plan."""
+    """Prove entry-guard + refinement queries for one closed-form plan.
+
+    ``require_entry_violations`` defaults True so engine authorization cannot
+    discharge via a vacuous/synthesized CTR equality. Unit tests that exercise
+    refinement without a CFG may pass ``require_entry_violations=False``.
+    """
     summary = plan.summary
     if summary.expansion != "closed-form":
         return MemoryLoopDischargeResult(
@@ -202,8 +210,6 @@ def discharge_memory_loop_plan(
             f"unsupported store kind {summary.store_kind!r}",
             "INCONCLUSIVE_UNSUPPORTED",
         )
-    if any(getattr(state, "symbolic_bus", None) is not None for state in ()):
-        pass  # placeholder; bus rejection handled during refinement
 
     try:
         _validate_witness_shape(plan)
@@ -231,6 +237,16 @@ def discharge_memory_loop_plan(
             "INCONCLUSIVE_UNSUPPORTED",
         )
 
+    if require_entry_violations and not entry_violation_conditions:
+        return MemoryLoopDischargeResult(
+            "applied",
+            {},
+            {},
+            "memory-loop entry violation conditions required; "
+            "refusing vacuous entry_guard discharge",
+            "INCONCLUSIVE_UNSUPPORTED",
+        )
+
     entry_guard = _discharge_entry_guard(
         initial,
         ops,
@@ -239,6 +255,7 @@ def discharge_memory_loop_plan(
         z3_module,
         premises=list(entry_guard_premises),
         violation_conditions=list(entry_violation_conditions),
+        allow_standalone_assumption=not require_entry_violations,
     )
     entry_guard_payload = {
         "algorithm": ENTRY_GUARD_ALGORITHM,
@@ -396,16 +413,26 @@ def _discharge_entry_guard(
     *,
     premises: list[Any],
     violation_conditions: list[Any],
+    allow_standalone_assumption: bool = False,
 ) -> UnsatDischarge:
-    """Prove CTR != trip is unreachable under the supplied path premises."""
+    """Prove CTR != trip is unreachable under the supplied path premises.
+
+    Empty ``violation_conditions`` is refused unless
+    ``allow_standalone_assumption`` is set (unit tests only). The standalone
+    path assumes recognizer trip equals entry CTR; that must never authorize
+    engine EQUIVALENT on its own.
+    """
     trip = int(plan.summary.trip_count) & 0xFFFFFFFF
     if violation_conditions:
         bad = list(violation_conditions)
-    else:
-        # Standalone discharge: assume recognizer trip equals entry CTR, then
-        # the negation is unsat. Engine callers should pass CFG violation paths.
+    elif allow_standalone_assumption:
         premises = list(premises) + [ops.eq(initial.ctr, ops.const(trip))]
         bad = [ops.lnot(ops.eq(initial.ctr, ops.const(trip)))]
+    else:
+        raise ValueError(
+            "memory-loop entry violation conditions required; "
+            "refusing vacuous entry_guard discharge"
+        )
     return discharge_bad_conditions(
         premises=premises,
         bad_conditions=bad,

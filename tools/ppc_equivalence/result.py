@@ -258,7 +258,7 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v30"
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v31"
 RESULT_FORMAT = 15
 
 

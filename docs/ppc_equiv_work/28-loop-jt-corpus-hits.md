@@ -68,7 +68,7 @@ The engine path remains covered by synthetic fixtures (`test_loop_summary.py`). 
 
 ## Memory-loop (4 partial, 686 heuristic windows)
 
-Engine recognition finds constant-stride store bodies but rejects discharge without a concrete trip count before `mtctr`. The four documented partial hits load CTR from **register arithmetic** (`srwi` / `andi` remainder tails), not `lwz` of a linked constant — **0/4 become exact** with DOL/ELF readonly hydration alone. Linked-image hydration (`memory_loop_image`) enables exact-pattern discharge when CTR materialization is `addis`/`addi`/`lwz` of a proven `.data`/`.rodata` word (covered by synthetic tests; retail `lwz` CTR loops are follow-up census targets).
+Engine recognition finds constant-stride store bodies but rejects discharge without a concrete trip count before `mtctr`. The four documented partial hits load CTR from **register arithmetic** (`srwi` / `andi.` remainder tails), not `lwz` of a linked constant — **0/4 become exact** with DOL/ELF readonly hydration alone, and still fail when the remainder source is a live parameter (not a lookback-concrete GPR). `andi.`/`andis.` materialization (v31) discharges remainder CTR when the masked source is concrete (synthetic `li`/`andi.`/`mtctr` fixtures). Linked-image hydration (`memory_loop_image`) covers `addis`/`addi`/`lwz` of proven `.data`/`.rodata` words.
 
 | Unit | Symbol | Address | Notes |
 |---|---|---|---|

@@ -351,6 +351,37 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
         self.assertEqual(result.memory_loop["trip_count"], 20)
         self.assertEqual(result.memory_loop["coverage"], "applied")
 
+    def test_andi_remainder_proves_under_tight_iteration_bound(self) -> None:
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        # li r6, 0x2B; andi. r6, r6, 7; mtctr r6; stw/addi/bdnz; blr
+        program = [
+            _insn(Opcode.ADDI, (6, 0, 0x2B), address=0),
+            _insn(Opcode.ANDI_DOT, (6, 6, 7), address=4),
+            _insn(Opcode.MTSPR, (6, 9), address=8),
+            _insn(Opcode.STW, (3, 4, 0), address=12),
+            _insn(Opcode.ADDI, (4, 4, 4), address=16),
+            _insn(Opcode.BC, (16, 0, 12, 0), address=20),
+            _insn(Opcode.BCLR, (20, 0, 0), address=24),
+        ]
+        contract = EquivalenceContract(
+            parse_observables(["r4", "memory"]),
+            timeout_ms=15_000,
+        )
+        result = check_equivalence(
+            program,
+            program,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertIn("memory-loop-summary", result.proof_features)
+        self.assertEqual(result.memory_loop["trip_count"], 0x2B & 7)
+
     def test_lwz_readonly_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
         from tools.ppc_equivalence.engine import check_equivalence

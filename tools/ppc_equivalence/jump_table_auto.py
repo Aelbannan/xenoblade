@@ -36,10 +36,10 @@ from tools.ppc_equivalence.jump_table_image import (
 from tools.ppc_equivalence.jump_table_obligations import JumpTableProofContext
 from tools.ppc_equivalence.jump_table_pairing import JumpTablePairingError, pair_jump_table_cases
 
-_DEFAULT_BASE_LOOKBACK_INSNS = 128
-"""Instruction slots searched backward from ``lwzx`` for table-base materialization."""
+_DEFAULT_BASE_LOOKBACK_INSNS = 256
+"""Instruction slots searched backward from ``addi``/``lwzx`` for table-base materialization."""
 
-_LINKED_TEXT_LOOKBACK_BYTES = 512
+_LINKED_TEXT_LOOKBACK_BYTES = 768
 """Linked-image text bytes re-decoded before ``lwzx`` when hydrating coop proofs."""
 
 _SDA_BASE_REGS = frozenset({2, 13})
@@ -315,13 +315,15 @@ def resolve_table_base_va(
             addi_index = index
             break
 
-    if lo_imm is None or mid_reg is None:
+    if lo_imm is None or mid_reg is None or addi_index is None:
         return None
     if mid_reg == 0:
         return lo_imm & 0xFFFFFFFF
 
-    search_end = addi_index if addi_index is not None else load_index
-    for index in range(search_end - 1, lower - 1, -1):
+    # ``addis`` on ``mid_reg`` may sit much earlier than the ``addi``/``lwzx`` pair
+    # (retail max ~169 insns in US DOL exact-pattern corpus).
+    addis_lower = max(0, addi_index - max_lookback)
+    for index in range(addi_index - 1, addis_lower - 1, -1):
         insn = instructions[index]
         if insn.relocation is not None:
             continue

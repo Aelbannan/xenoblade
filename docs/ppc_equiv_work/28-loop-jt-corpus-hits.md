@@ -129,9 +129,9 @@ Retail exact-pattern tails are recognized in asm, but coop equivalence only buil
 1. **Linked images** — retail `orig/<region>/sys/main.dol` for original-side table
    bytes; linked `build/<region>/main.elf` for candidate-side bytes when VAs differ.
 2. **Extended text decode** — `jump_table_auto.expand_jump_table_instructions`
-   re-decodes up to 512 bytes of linked text ending at the `bctr` PC so
+   re-decodes up to 768 bytes of linked text ending at the `bctr` PC so
    `addis`/`addi` chains outside the function slice still reach
-   `resolve_table_base_va`.
+   `resolve_table_base_va` (256-instruction lookback from the feeding `addi`).
 3. **Hydration + pairing** — `hydrate_jump_table` loads aligned ADDR32 words;
    `pair_jump_table_cases` matches logical case indices.
 
@@ -145,6 +145,11 @@ python -m tools.ppc_equivalence.jump_table_corpus_probe --branch-pc 0x8022c8b8
 
 Offline regression: `tools/ppc_equivalence/tests/test_jump_table_corpus_probe.py`
 (embeds the `CQstLogInfo` switch snippet without `main.dol`).
+
+**Probe score (2026-07-20):** full DOL exact-pattern scan **25/25** auto-context
+ok after widening linked-text lookback and fixing `addis`-on-`mid_reg` search to
+anchor on the feeding `addi` (retail tail @ `0x801b6528` was the sole miss:
+`addis r27,-32685` ~169 instructions before `addi r3,r27,14432`).
 
 **Known gaps:** coop does not yet supply `sda_bases` / `symbol_addresses` for
 SDA21 table materialization; `lwz rN, disp(r2/r13)` pointer-chase remains

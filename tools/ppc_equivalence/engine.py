@@ -17,6 +17,11 @@ from .memory_profile import (
     MemoryProfile,
     build_memory_constraints,
 )
+from .memory_bus import MemoryBus
+from .memory_bus_obligations import (
+    build_memory_bus_constraints,
+    build_memory_bus_obligation,
+)
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concrete_state
 from .proof_features import enforce_equivalent_proof_features
 from .jump_table_obligations import (
@@ -642,6 +647,7 @@ def run_concrete_sampling(
     assumed_callees: frozenset[int | str] = frozenset(),
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     floating_point_domain: FloatingPointDomain | None = None,
+    memory_bus: MemoryBus | None = None,
 ) -> dict[str, Any]:
     """Sample concrete initial states through both CFGs and compare observables.
 
@@ -712,6 +718,7 @@ def run_concrete_sampling(
                     assumed_callees=assumed_callees,
                     callee_contracts=callee_contracts,
                     floating_point_domain=floating_point_domain,
+                    memory_bus=memory_bus,
                 )
                 if item.condition
             ]
@@ -724,6 +731,7 @@ def run_concrete_sampling(
                     assumed_callees=assumed_callees,
                     callee_contracts=callee_contracts,
                     floating_point_domain=floating_point_domain,
+                    memory_bus=memory_bus,
                 )
                 if item.condition
             ]
@@ -770,6 +778,7 @@ def _apply_concrete_sampling_defense(
     assumed_callees: frozenset[int | str],
     callee_contracts: dict[int | str, CalleeContract] | None,
     floating_point_domain: FloatingPointDomain | None,
+    memory_bus: MemoryBus | None,
     original_hex: str,
     candidate_hex: str,
 ) -> ProofResult:
@@ -792,6 +801,7 @@ def _apply_concrete_sampling_defense(
         assumed_callees=assumed_callees,
         callee_contracts=callee_contracts,
         floating_point_domain=floating_point_domain,
+        memory_bus=memory_bus,
     )
     result.concrete_sampling = sampling
     if not sampling.get("mismatch_found"):
@@ -1056,6 +1066,7 @@ def check_equivalence(
     concrete_samples: int = 0,
     concrete_sample_seed: int = 0,
     jump_table: JumpTableProofContext | None = None,
+    memory_bus: MemoryBus | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -1203,6 +1214,16 @@ def check_equivalence(
         ops,
     )
     layout_constraints.extend(memory_constraints)
+
+    if memory_bus is not None:
+        layout_constraints.extend(
+            build_memory_bus_constraints(
+                memory_bus,
+                initial.memory,
+                original_exits + candidate_exits,
+                ops,
+            )
+        )
 
     if jump_table is not None:
         base_reg = jump_table.table_base_reg
@@ -1364,9 +1385,16 @@ def check_equivalence(
             assumed_callees=assumed_callees,
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
+            memory_bus=memory_bus,
             original_hex=original_hex,
             candidate_hex=candidate_hex,
         )
+        if memory_bus is not None:
+            features = list(early.proof_features)
+            if "memory-bus" not in features:
+                features.append("memory-bus")
+            early.proof_features = features
+            early.memory_bus = build_memory_bus_obligation(memory_bus)
         if jump_table is not None:
             early.proof_features = ["readonly-image", "indirect-target-closure"]
             early.address_space, early.indirect_targets = build_jump_table_obligations(

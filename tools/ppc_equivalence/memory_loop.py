@@ -25,7 +25,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from typing import Any
 
-from tools.ppc_equivalence.ctr_materialization import recover_gpr_constant
+from tools.ppc_equivalence.ctr_materialization import collect_lwz_readonly_addresses, recover_gpr_constant
 from tools.ppc_equivalence.ir import Instruction, Opcode
 
 _CTR_SPR = 9
@@ -83,6 +83,8 @@ class MemoryLoopSummary:
 
 def find_constant_stride_store_loops(
     instructions: Sequence[Instruction],
+    *,
+    readonly_words: dict[int, int] | None = None,
 ) -> list[ConstantStrideStoreLoop]:
     """Scan for ``mtctr`` / store body / ``bdnz`` constant-stride store loops."""
     if not instructions:
@@ -111,7 +113,12 @@ def find_constant_stride_store_loops(
         if not _is_mtctr(mtctr):
             continue
         trip_reg = int(mtctr.operands[0])
-        trip_count, trip_notes = _concrete_trip_count(instructions, mtctr_index, trip_reg)
+        trip_count, trip_notes = _concrete_trip_count(
+            instructions,
+            mtctr_index,
+            trip_reg,
+            readonly_words=readonly_words,
+        )
 
         notes = list(body_notes)
         notes.extend(trip_notes)
@@ -179,10 +186,15 @@ def summarize_constant_stride_store_loop(
 
 def build_memory_loop_summary_map(
     instructions: Sequence[Instruction],
+    *,
+    readonly_words: dict[int, int] | None = None,
 ) -> dict[int, MemoryLoopSummary]:
     """Map loop header PC → closed-form memory-loop summary."""
     mapping: dict[int, MemoryLoopSummary] = {}
-    for loop in find_constant_stride_store_loops(instructions):
+    for loop in find_constant_stride_store_loops(
+        instructions,
+        readonly_words=readonly_words,
+    ):
         summary = summarize_constant_stride_store_loop(loop)
         if summary is None:
             continue
@@ -191,6 +203,38 @@ def build_memory_loop_summary_map(
             continue
         mapping[summary.header_pc] = summary
     return mapping
+
+
+def collect_memory_loop_ctr_lwz_addresses(
+    instructions: Sequence[Instruction],
+) -> frozenset[int]:
+    """Collect linked VAs of readonly words referenced by CTR ``lwz`` before ``mtctr``."""
+    if not instructions:
+        return frozenset()
+
+    by_address = {insn.address: index for index, insn in enumerate(instructions)}
+    addresses: set[int] = set()
+
+    for index, insn in enumerate(instructions):
+        if not _is_bdnz(insn):
+            continue
+        target = int(insn.operands[2]) & 0xFFFFFFFC
+        header_index = by_address.get(target)
+        if header_index is None or header_index >= index:
+            continue
+
+        mtctr_index = header_index - 1
+        if mtctr_index < 0:
+            continue
+        mtctr = instructions[mtctr_index]
+        if not _is_mtctr(mtctr):
+            continue
+        trip_reg = int(mtctr.operands[0])
+        addresses.update(
+            collect_lwz_readonly_addresses(instructions, mtctr_index, trip_reg),
+        )
+
+    return frozenset(addresses)
 
 
 def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) -> Any:

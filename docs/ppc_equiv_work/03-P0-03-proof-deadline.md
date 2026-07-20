@@ -104,9 +104,17 @@ def check_with_portfolio(
 
 Do not assume every tactic solver honors timeout perfectly. For a strict hard wall-clock guarantee, run the proof worker in a subprocess and terminate it when the parent deadline expires.
 
-## Hard-limit subprocess design (future enhancement)
+## Hard-limit subprocess design
 
-Not implemented in this P0. The current approach relies on Z3's internal timeout (`solver.set(timeout=...)`), which is honored by all tactic solvers used. For a strict hard wall-clock guarantee in automation, a future subprocess architecture should follow:
+Thread-safe process isolation for Z3 entry points is implemented in
+`tools/ppc_equivalence/process_pool.py` (``spawn`` pool; ``PPC_EQUIV_PROCESS_POOL``
+defaults to ``auto``, which isolates when the caller is not the main thread).
+That prevents libz3 segfaults under harness ``ThreadPoolExecutor`` concurrency.
+
+Strict hard wall-clock kill of an in-flight Z3 ``check()`` remains best-effort:
+a wait timeout restarts the whole pool. The primary deadline path still relies
+on Z3's internal timeout (`solver.set(timeout=...)`) plus engine ``Deadline``.
+A dedicated process-group killer (below) would tighten that further:
 
 ```text
 parent process

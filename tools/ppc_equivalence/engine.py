@@ -149,7 +149,36 @@ def validate_callee_contract(
     This validation is intentionally conservative: syntactic dependencies in
     the semantic expressions count as reads even when later simplification
     could prove them irrelevant.
+
+    Threaded callers are dispatched to :mod:`process_pool` so Z3 never shares
+    a context across threads.
     """
+    from tools.ppc_equivalence.process_pool import run_validate_callee_contract, should_isolate
+
+    kwargs = dict(
+        max_instructions=max_instructions,
+        max_paths=max_paths,
+        max_loop_iterations=max_loop_iterations,
+        assumed_callees=assumed_callees,
+        callee_contracts=callee_contracts,
+        require_normal_return=require_normal_return,
+    )
+    if should_isolate():
+        return run_validate_callee_contract(instructions, contract, **kwargs)
+    return _validate_callee_contract_impl(instructions, contract, **kwargs)
+
+
+def _validate_callee_contract_impl(
+    instructions: list[Instruction],
+    contract: CalleeContract,
+    *,
+    max_instructions: int = 2048,
+    max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
+    assumed_callees: frozenset[int | str] = frozenset(),
+    callee_contracts: dict[int | str, CalleeContract] | None = None,
+    require_normal_return: bool = False,
+) -> CalleeContractValidation:
     ops = SymbolicOps()
     z3 = ops.z3
     initial = replace(_symbolic_initial(ops), valid=z3.Bool("input.valid"))
@@ -1045,6 +1074,77 @@ def _populate_solver_diagnostics(
 
 
 def check_equivalence(
+    original: list[Instruction],
+    candidate: list[Instruction],
+    contract: EquivalenceContract,
+    *,
+    original_hex: str,
+    candidate_hex: str,
+    smt_output: str | None = None,
+    max_instructions: int = 2048,
+    max_paths: int = 256,
+    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
+    assumed_callees: frozenset[int | str] = frozenset(),
+    assumed_callees_used: set[int | str] | None = None,
+    callee_contracts: dict[int | str, CalleeContract] | None = None,
+    relocation_bindings: dict[str, int] | None = None,
+    memory_environment: MemoryEnvironment | None = None,
+    source_hash: str = "",
+    floating_point_domain: FloatingPointDomain | None = None,
+    diagnostics_out: str | None = None,
+    concrete_samples: int = 0,
+    concrete_sample_seed: int = 0,
+    jump_table: JumpTableProofContext | None = None,
+    memory_bus: MemoryBus | None = None,
+    readonly_words: dict[int, int] | None = None,
+) -> ProofResult:
+    """Prove original/candidate observational equivalence under ``contract``.
+
+    Threaded callers are dispatched to :mod:`process_pool` so Z3 never shares
+    a context across threads (see ``PPC_EQUIV_PROCESS_POOL``).
+    """
+    from tools.ppc_equivalence.process_pool import run_check_equivalence, should_isolate
+
+    kwargs = dict(
+        smt_output=smt_output,
+        max_instructions=max_instructions,
+        max_paths=max_paths,
+        max_loop_iterations=max_loop_iterations,
+        assumed_callees=assumed_callees,
+        callee_contracts=callee_contracts,
+        relocation_bindings=relocation_bindings,
+        memory_environment=memory_environment,
+        source_hash=source_hash,
+        floating_point_domain=floating_point_domain,
+        diagnostics_out=diagnostics_out,
+        concrete_samples=concrete_samples,
+        concrete_sample_seed=concrete_sample_seed,
+        jump_table=jump_table,
+        memory_bus=memory_bus,
+        readonly_words=readonly_words,
+    )
+    if should_isolate():
+        return run_check_equivalence(
+            original,
+            candidate,
+            contract,
+            original_hex=original_hex,
+            candidate_hex=candidate_hex,
+            assumed_callees_used=assumed_callees_used,
+            **kwargs,
+        )
+    return _check_equivalence_impl(
+        original,
+        candidate,
+        contract,
+        original_hex=original_hex,
+        candidate_hex=candidate_hex,
+        assumed_callees_used=assumed_callees_used,
+        **kwargs,
+    )
+
+
+def _check_equivalence_impl(
     original: list[Instruction],
     candidate: list[Instruction],
     contract: EquivalenceContract,

@@ -612,13 +612,13 @@ extern "C" void func_8012FDBC() {}
 extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308ac
 // LLM-HARNESS-BEGIN: us-801308b0
-extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
+void Move__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308b0
 // LLM-HARNESS-BEGIN: us-801308b4
 extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308b4
 // LLM-HARNESS-BEGIN: us-801308b8
-extern "C" void Init__Q216CUIBattleManager5CTestFv() {}
+void Init__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308b8
 // LLM-HARNESS-BEGIN: us-80130a40
 extern "C" bool func_8012FF6C() { return false; }

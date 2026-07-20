@@ -24192,49 +24192,78 @@ Size GetTextureSize(Material* pMaterial, u8 idx) {
 extern "C" void __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2() {}
 // LLM-HARNESS-END: us-80407af0
 // LLM-HARNESS-BEGIN: us-8040827c
-extern "C" void __as__Q34nw4r2ut5ColorFRC8_GXColor() {}
+extern "C" nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const GXColor* other) {
+    *(u32*)self = *(const u32*)other;
+    return self;
+}
 // LLM-HARNESS-END: us-8040827c
 // LLM-HARNESS-BEGIN: us-80408288
-extern "C" void GetTexMapNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+unsigned int GetTexMapNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* p) {
+    return *(const unsigned int*)p & 0xF;
+}
 // LLM-HARNESS-END: us-80408288
 // LLM-HARNESS-BEGIN: us-80408294
-extern "C" void GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+extern "C" u32 GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+    return ((*(const u32*)_this) >> 4) & 0xF;
+}
 // LLM-HARNESS-END: us-80408294
 // LLM-HARNESS-BEGIN: us-804082a0
-extern "C" void GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+extern "C" int GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+    return (*(const unsigned int*)self >> 8) & 0x0F;
+}
 // LLM-HARNESS-END: us-804082a0
 // LLM-HARNESS-BEGIN: us-804082ac
-extern "C" void GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+extern "C" int GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+    return (*(const u32*)self >> 25) & 1;
+}
 // LLM-HARNESS-END: us-804082ac
 // LLM-HARNESS-BEGIN: us-804082b8
-extern "C" void GetMatColNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+u32 GetMatColNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+    return (*(const u32*)_this >> 27) & 1;
+}
 // LLM-HARNESS-END: us-804082b8
 // LLM-HARNESS-BEGIN: us-804082c4
-extern "C" void HasTevSwapTable__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+bool HasTevSwapTable__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+    return (*(const u32*)self & 0x1000) != 0;
+}
 // LLM-HARNESS-END: us-804082c4
 // LLM-HARNESS-BEGIN: us-804082d0
-extern "C" void HasAlphaCompare__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+int HasAlphaCompare__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+    return (*(const unsigned int*)_this >> 23) & 1;
+}
 // LLM-HARNESS-END: us-804082d0
 // LLM-HARNESS-BEGIN: us-804082dc
-extern "C" void HasBlendMode__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+bool HasBlendMode__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+    return (*(const u32*)self >> 24) & 1;
+}
 // LLM-HARNESS-END: us-804082dc
 // LLM-HARNESS-BEGIN: us-804082e8
-extern "C" void GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+extern "C" int GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+    return (*(const u32*)_this >> 13) & 3;
+}
 // LLM-HARNESS-END: us-804082e8
 // LLM-HARNESS-BEGIN: us-804082f4
-extern "C" void GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+extern "C" unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+    return (*(const unsigned int*)self >> 15) & 7;
+}
 // LLM-HARNESS-END: us-804082f4
 // LLM-HARNESS-BEGIN: us-80408300
-extern "C" void GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv() {}
+unsigned int GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+    return (*(const unsigned int*)self >> 18) & 0x1F;
+}
 // LLM-HARNESS-END: us-80408300
 // LLM-HARNESS-BEGIN: us-8040830c
 extern "C" void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode() {}
 // LLM-HARNESS-END: us-8040830c
 // LLM-HARNESS-BEGIN: us-80408320
-extern "C" void GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv() {}
+int GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
+    return (*(const unsigned char*)((const unsigned char*)this_ + 2)) & 3;
+}
 // LLM-HARNESS-END: us-80408320
 // LLM-HARNESS-BEGIN: us-8040832c
-extern "C" void GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv() {}
+unsigned int GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv(const void* p_this) {
+    return ((const unsigned char*)p_this)[3] & 3;
+}
 // LLM-HARNESS-END: us-8040832c
 // LLM-HARNESS-BEGIN: us-80408338
 extern "C" void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter() {}
@@ -24252,7 +24281,10 @@ extern "C" void __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen() {}
 extern "C" void __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl() {}
 // LLM-HARNESS-END: us-80408398
 // LLM-HARNESS-BEGIN: us-804083bc
-extern "C" void __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode() {}
+void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(void* self, const void* other) {
+    *(unsigned char*)self = *(const unsigned char*)other;
+    return self;
+}
 // LLM-HARNESS-END: us-804083bc
 // LLM-HARNESS-BEGIN: us-804083c8
 extern "C" void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT() {}

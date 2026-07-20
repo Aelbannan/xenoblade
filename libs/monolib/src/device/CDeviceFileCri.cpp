@@ -20,7 +20,10 @@ void CDeviceFileCri::func_80450B24(const wchar_t* pData){
 extern "C" void ct_CDeviceFileCri() {}
 // LLM-HARNESS-END: us-80452260
 // LLM-HARNESS-BEGIN: us-80452610
-extern "C" void* getInstance() { return 0; }
+extern "C" CDeviceFileCri* lbl_eu_80665668;
+CDeviceFileCri* CDeviceFileCri::getInstance() {
+    return lbl_eu_80665668;
+}
 // LLM-HARNESS-END: us-80452610
 // LLM-HARNESS-BEGIN: us-80452618
 extern "C" void func_8044F964() {}
@@ -35,7 +38,11 @@ extern "C" void sinit_80450B2C() {}
 extern "C" bool func_80450B44() { return false; }
 // LLM-HARNESS-END: us-80453858
 // LLM-HARNESS-BEGIN: us-80453860
-extern "C" bool func_80450B4C() { return false; }
+extern "C" void __dt__14CDeviceFileCriFv(void*);
+
+extern "C" void func_80450B4C(void* self) {
+    __dt__14CDeviceFileCriFv((char*)self - 0x1c4);
+}
 // LLM-HARNESS-END: us-80453860
 
 // LLM-HARNESS-BEGIN: us-8045233c

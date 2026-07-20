@@ -772,7 +772,9 @@ extern u32 lbl_eu_80663F50;
 extern "C" u32 func_80110A70() { return lbl_eu_80663F50; }
 // LLM-HARNESS-END: us-8011154c
 // LLM-HARNESS-BEGIN: us-80111b50
-extern "C" void func_80111074() {}
+extern "C" void func_80111074(void* _this) {
+    *(u8*)((u8*)_this + 0x54) = 1;
+}
 // LLM-HARNESS-END: us-80111b50
 // LLM-HARNESS-BEGIN: us-80113fc4
 extern "C" void sinit_801134E8() {}
@@ -790,7 +792,9 @@ extern "C" void func_801135D0(void* obj) {
 }
 // LLM-HARNESS-END: us-801140ac
 // LLM-HARNESS-BEGIN: us-801140b4
-extern "C" bool func_801135D8() { return false; }
+extern "C" void func_801135D8(void* p) {
+    __dt__15CMenuEnemyStateFv((CMenuEnemyState*)((char*)p - 0x5c));
+}
 // LLM-HARNESS-END: us-801140b4
 
 // LLM-HARNESS-BEGIN: us-8010f620

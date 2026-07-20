@@ -1034,7 +1034,11 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 }
 
 // LLM-HARNESS-BEGIN: us-8014b2fc
-void func_8014A8F8() {}
+extern "C" int lbl_eu_806641B0;
+
+void func_8014A8F8() {
+    lbl_eu_806641B0 = 0;
+}
 // LLM-HARNESS-END: us-8014b2fc
 // LLM-HARNESS-BEGIN: us-8014b414
 extern "C" void func_8014AA10(void* obj, unsigned int value) {
@@ -1051,7 +1055,9 @@ extern "C" void func_8014AE00() {}
 extern "C" void func_8014B120() {}
 // LLM-HARNESS-END: us-8014bb24
 // LLM-HARNESS-BEGIN: us-8014bce0
-extern "C" void func_8014B2DC() {}
+extern "C" void* func_8014B2DC(void* p) {
+    return memset((char*)p + 0xADC, 0, 0x20);
+}
 // LLM-HARNESS-END: us-8014bce0
 // LLM-HARNESS-BEGIN: us-8014bcf0
 extern "C" void func_8014B2EC() {}
@@ -1063,7 +1069,9 @@ extern "C" void func_8014B344() {}
 extern "C" void func_8014B804() {}
 // LLM-HARNESS-END: us-8014c208
 // LLM-HARNESS-BEGIN: us-80154224
-extern "C" void func_801537E0() {}
+extern "C" void func_801537E0(void* self) {
+    *(u16*)((u8*)self + 8) &= ~0x0006;
+}
 // LLM-HARNESS-END: us-80154224
 
 // LLM-HARNESS-BEGIN: us-8014b270

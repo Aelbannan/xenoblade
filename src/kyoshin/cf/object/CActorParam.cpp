@@ -91,10 +91,14 @@ extern "C" void CActorParam_UnkVirtualFunc46() {}
 extern "C" void CActorParam_UnkVirtualFunc52() {}
 // LLM-HARNESS-END: us-8017e9c0
 // LLM-HARNESS-BEGIN: us-8017ea9c
-extern "C" void CActorParam_UnkVirtualFunc58() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc58() {
+    *(unsigned short*)((u8*)this + 0x160c) = 0;
+}
 // LLM-HARNESS-END: us-8017ea9c
 // LLM-HARNESS-BEGIN: us-8017eaa8
-extern "C" void CActorParam_UnkVirtualFunc64() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc64() {
+    *(u16*)((u8*)this + 0x1614) = 0;
+}
 // LLM-HARNESS-END: us-8017eaa8
 // LLM-HARNESS-BEGIN: us-8017f098
 extern "C" void CActorParam_UnkVirtualFunc141() {}

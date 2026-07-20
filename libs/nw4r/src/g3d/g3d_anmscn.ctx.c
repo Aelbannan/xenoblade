@@ -31924,26 +31924,38 @@ extern "C" void GetLightSet_Q34nw4r3g3d12LightSettingFi() {}
 extern "C" bool Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes() { return false; }
 // LLM-HARNESS-END: us-803e869c
 // LLM-HARNESS-BEGIN: us-803e86a4
-extern "C" bool Detach_Q34nw4r3g3d6AnmScnFi() { return false; }
+int Detach__Q34nw4r3g3d6AnmScnFi(int) {
+    return 0;
+}
 // LLM-HARNESS-END: us-803e86a4
 // LLM-HARNESS-BEGIN: us-803e86e8
-extern "C" bool GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv() { return false; }
+extern "C" unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
+
+unsigned int GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
+    return GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const char*)this_ptr + 0x20);
+}
 // LLM-HARNESS-END: us-803e86e8
 // LLM-HARNESS-BEGIN: us-803e86f0
-extern "C" bool GetNumAmbLight__Q34nw4r3g3d9AnmScnResCFv() { return false; }
+extern "C" int GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
+
+int GetNumAmbLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* ths) {
+    return GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const char*)ths + 0x20);
+}
 // LLM-HARNESS-END: us-803e86f0
 // LLM-HARNESS-BEGIN: us-803e86f8
 extern "C" u32 GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void *);
 
-extern "C" u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const void *self) {
+u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const void *self) {
     return GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const void *)((const char *)self + 0x20));
 }
 // LLM-HARNESS-END: us-803e86f8
 // LLM-HARNESS-BEGIN: us-803e8700
-extern "C" void GetNumSpecularLight__Q34nw4r3g3d9AnmScnResCFv() {}
+unsigned short GetNumSpecularLight__Q34nw4r3g3d9AnmScnResCFv(const void* __this) {
+    return *(const unsigned short*)(*(const unsigned char**)((const unsigned char*)__this + 0x20) + 0x36);
+}
 // LLM-HARNESS-END: us-803e8700
 // LLM-HARNESS-BEGIN: us-803e870c
-extern "C" int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
+int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
     extern int GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
     return GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(reinterpret_cast<const char*>(this_) + 0x20);
 }
@@ -31952,19 +31964,30 @@ extern "C" int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
 extern "C" bool GetNumCamera__Q34nw4r3g3d9AnmScnResCFv() { return false; }
 // LLM-HARNESS-END: us-803e8714
 // LLM-HARNESS-BEGIN: us-803e871c
-extern "C" void GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv() {}
+extern "C" u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* _this) {
+    return *reinterpret_cast<const u16*>(*reinterpret_cast<const u8* const*>(reinterpret_cast<const u8*>(_this) + 0x20) + 0x3c);
+}
 // LLM-HARNESS-END: us-803e871c
 // LLM-HARNESS-BEGIN: us-803e8728
-extern "C" void GetAmbLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv() {}
+unsigned short GetAmbLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* self) {
+    const unsigned char* res = *(const unsigned char* const*)((const unsigned char*)self + 0x20);
+    return *(const unsigned short*)(res + 0x3e);
+}
 // LLM-HARNESS-END: us-803e8728
 // LLM-HARNESS-BEGIN: us-803e8734
-extern "C" void GetDiffuseLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv() {}
+int GetDiffuseLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* p) {
+    return *(const unsigned short*)(*(const char* const*)((const char*)p + 0x20) + 0x40);
+}
 // LLM-HARNESS-END: us-803e8734
 // LLM-HARNESS-BEGIN: us-803e8740
-extern "C" void GetFogMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv() {}
+unsigned short GetFogMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
+    return *(const unsigned short*)(*(const char* const*)((const char*)this_ + 0x20) + 0x42);
+}
 // LLM-HARNESS-END: us-803e8740
 // LLM-HARNESS-BEGIN: us-803e874c
-extern "C" void GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv() {}
+u16 GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* pThis) {
+    return *(const u16*)((const u8*)(*(const u32*)((const u8*)pThis + 0x20)) + 0x44);
+}
 // LLM-HARNESS-END: us-803e874c
 // LLM-HARNESS-BEGIN: us-803e8758
 extern "C" void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb() {}
@@ -31973,13 +31996,15 @@ extern "C" void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9R
 extern "C" void SetFrame_Q34nw4r3g3d9AnmScnResFf() {}
 // LLM-HARNESS-END: us-803e8a38
 // LLM-HARNESS-BEGIN: us-803e8a90
-extern "C" bool GetFrame__Q34nw4r3g3d9AnmScnResCFv() { return false; }
+float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
+    return *(const float*)((const unsigned char*)this_ptr + 0xC);
+}
 // LLM-HARNESS-END: us-803e8a90
 // LLM-HARNESS-BEGIN: us-803e8a98
 extern "C" void SetUpdateRate_Q34nw4r3g3d9AnmScnResFf() {}
 // LLM-HARNESS-END: us-803e8a98
 // LLM-HARNESS-BEGIN: us-803e8abc
-extern "C" float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) { return *(const float*)((const char*)this_ + 0x10); }
+float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) { return *(const float*)((const char*)this_ + 0x10); }
 // LLM-HARNESS-END: us-803e8abc
 // LLM-HARNESS-BEGIN: us-803e8ac4
 extern "C" void UpdateFrame__Q34nw4r3g3d9AnmScnResFv() {}
@@ -32033,7 +32058,11 @@ extern "C" void IsDerivedFrom__Q34nw4r3g3d6AnmScnCFQ44nw4r3g3d6G3dObj7TypeObj() 
 extern "C" void GetTypeName__Q34nw4r3g3d9AnmScnResCFv() {}
 // LLM-HARNESS-END: us-803e9580
 // LLM-HARNESS-BEGIN: us-803e95b0
-extern "C" void GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {}
+extern "C" const char lbl_eu_8051D630[];
+
+const void* GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {
+    return lbl_eu_8051D630;
+}
 // LLM-HARNESS-END: us-803e95b0
 // LLM-HARNESS-BEGIN: us-803e95bc
 extern "C" void GetTypeName__Q34nw4r3g3d6AnmScnCFv() {}

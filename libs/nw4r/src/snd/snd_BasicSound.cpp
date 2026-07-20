@@ -446,7 +446,7 @@ extern "C" void UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv() {}
 extern "C" void UpdateParam__Q44nw4r3snd6detail10BasicSoundFv() {}
 // LLM-HARNESS-END: us-80415528
 // LLM-HARNESS-BEGIN: us-80415a70
-extern "C" void AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(
+void AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(
     nw4r::snd::detail::BasicSound* self,
     nw4r::snd::detail::PlayerHeap* playerHeap)
 {
@@ -454,31 +454,35 @@ extern "C" void AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6de
 }
 // LLM-HARNESS-END: us-80415a70
 // LLM-HARNESS-BEGIN: us-80415a78
-extern "C" void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap() {}
+void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(void* _this, void* pHeap) {
+    *(int*)((char*)_this + 4) = 0;
+}
 // LLM-HARNESS-END: us-80415a78
 // LLM-HARNESS-BEGIN: us-80415a84
-extern "C" void AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(nw4r::snd::detail::BasicSound* _this, nw4r::snd::SoundPlayer* player)
+void AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(nw4r::snd::detail::BasicSound* _this, nw4r::snd::SoundPlayer* player)
 {
     *(void**)((char*)_this + 0x10) = player;
 }
 // LLM-HARNESS-END: us-80415a84
 // LLM-HARNESS-BEGIN: us-80415a8c
-extern "C" void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer() {}
+void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(void* self, void* player) {
+    *(int*)((char*)self + 0x10) = 0;
+}
 // LLM-HARNESS-END: us-80415a8c
 // LLM-HARNESS-BEGIN: us-80415a98
-extern "C" void AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(void* pThis, void* pActor)
+void AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(void* pThis, void* pActor)
 {
     *(void**)((int)pThis + 0x14) = pActor;
 }
 // LLM-HARNESS-END: us-80415a98
 // LLM-HARNESS-BEGIN: us-80415aa0
-extern "C" void AttachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer(nw4r::snd::detail::BasicSound* pThis, nw4r::snd::detail::ExternalSoundPlayer* pPlayer) { *(nw4r::snd::detail::ExternalSoundPlayer**)((char*)pThis + 0x18) = pPlayer; }
+void AttachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer(nw4r::snd::detail::BasicSound* pThis, nw4r::snd::detail::ExternalSoundPlayer* pPlayer) { *(nw4r::snd::detail::ExternalSoundPlayer**)((char*)pThis + 0x18) = pPlayer; }
 // LLM-HARNESS-END: us-80415aa0
 // LLM-HARNESS-BEGIN: us-80415aa8
 extern "C" void DetachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer() {}
 // LLM-HARNESS-END: us-80415aa8
 // LLM-HARNESS-BEGIN: us-80415ab4
-extern "C" u8 GetVoiceOutCount__Q44nw4r3snd6detail10BasicSoundCFv(const void* _this) {
+u8 GetVoiceOutCount__Q44nw4r3snd6detail10BasicSoundCFv(const void* _this) {
     return ((const u8*)_this)[0x95];
 }
 // LLM-HARNESS-END: us-80415ab4

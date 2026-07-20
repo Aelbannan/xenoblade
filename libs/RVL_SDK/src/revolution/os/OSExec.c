@@ -171,7 +171,10 @@ void PackInstallerArgs() {}
 void Run() {}
 // LLM-HARNESS-END: us-80358630
 // LLM-HARNESS-BEGIN: us-80358670
-void Callback() {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-80358670
 // LLM-HARNESS-BEGIN: us-803586b0
 extern unsigned long DVDLowIntType;

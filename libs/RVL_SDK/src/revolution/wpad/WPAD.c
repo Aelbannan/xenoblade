@@ -2798,8 +2798,6 @@ void* WPADIsUsedCallbackByKPAD() {
 }
 // LLM-HARNESS-END: us-80373460
 // LLM-HARNESS-BEGIN: us-80373470
-extern void (*_wpadUsedCallback)(void);
-
 void WPADSetCallbackByKPAD(void (*callback)(void))
 {
     _wpadUsedCallback = callback;

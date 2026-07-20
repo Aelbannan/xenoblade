@@ -558,7 +558,7 @@ extern "C" void IsDescendingBind__Q34nw4r3lyt12AnimResourceCFv() {}
 extern "C" void GetAnimationShareInfoNum__Q34nw4r3lyt12AnimResourceCFv() {}
 // LLM-HARNESS-END: us-8040b8c0
 // LLM-HARNESS-BEGIN: us-8040b8dc
-extern "C" void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
+void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
     void* ptr = *(void**)((char*)_this + 0xc);
     if (!ptr) return 0;
     return (void*)((char*)ptr + *(int32_t*)((char*)ptr + 0x8));

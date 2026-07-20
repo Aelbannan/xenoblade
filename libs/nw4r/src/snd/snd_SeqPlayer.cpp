@@ -436,7 +436,12 @@ Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {
 extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {}
 // LLM-HARNESS-END: us-8041ba6c
 // LLM-HARNESS-BEGIN: us-8041c4d0
-extern "C" void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv() {}
+void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
+    void* _this, void* callback, void* arg)
+{
+    *(u32*)((u8*)_this + 0x118) = (u32)callback;
+    *(u32*)((u8*)_this + 0x11C) = (u32)arg;
+}
 // LLM-HARNESS-END: us-8041c4d0
 // LLM-HARNESS-BEGIN: us-8041c4dc
 extern "C" void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack() {}

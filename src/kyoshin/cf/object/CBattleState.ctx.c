@@ -2703,7 +2703,9 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc18() {}
 extern "C" void CBattleState_UnkVirtualFunc12() {}
 // LLM-HARNESS-END: us-80148f88
 // LLM-HARNESS-BEGIN: us-8014913c
-extern "C" void CBattleState_UnkVirtualFunc13() {}
+extern "C" void* CBattleState_UnkVirtualFunc13__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
+    return (char*)self + index * 0x34 + 0x8;
+}
 // LLM-HARNESS-END: us-8014913c
 // LLM-HARNESS-BEGIN: us-8014914c
 extern "C" void CBattleState_UnkVirtualFunc14() {}

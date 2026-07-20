@@ -1611,5 +1611,7 @@ extern "C" void GetResMatFur__Q34nw4r3g3d6ResMatFv() {}
 extern "C" void GetResUserData__Q34nw4r3g3d6ResMatFv() {}
 // LLM-HARNESS-END: us-803df21c
 // LLM-HARNESS-BEGIN: us-803df518
-extern "C" void GetResTex__Q34nw4r3g3d14ResTexPlttInfoCFv() {}
+const void* GetResTex__Q34nw4r3g3d14ResTexPlttInfoCFv(const void* p) {
+    return *(const void**)((const char*)*(const void**)p + 8);
+}
 // LLM-HARNESS-END: us-803df518

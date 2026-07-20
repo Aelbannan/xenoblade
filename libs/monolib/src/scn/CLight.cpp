@@ -58,7 +58,11 @@ extern "C" void func_804C08C8(void* self, int param) {
 }
 // LLM-HARNESS-END: us-804c4a24
 // LLM-HARNESS-BEGIN: us-804c4a7c
-extern "C" bool func_804C0920() { return false; }
+namespace nw4r { namespace g3d { class LightObj { public: void InitLightSpot(float, _GXSpotFn); }; } }
+
+extern "C" void func_804C0920(CLight* _this, float f, _GXSpotFn spotFn) {
+    (*(nw4r::g3d::LightObj**)((char*)_this + 0x2c))->InitLightSpot(f, spotFn);
+}
 // LLM-HARNESS-END: us-804c4a7c
 // LLM-HARNESS-BEGIN: us-804c4a84
 extern "C" void func_804C0928() {}

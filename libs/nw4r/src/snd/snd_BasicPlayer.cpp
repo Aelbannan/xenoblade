@@ -67,8 +67,13 @@ f32 BasicPlayer::GetRemoteFxSend(int remote) const {
 extern "C" void Init__Q44nw4r3snd6detail14PlayerParamSetFv() {}
 // LLM-HARNESS-END: us-80414410
 // LLM-HARNESS-BEGIN: us-80414770
-extern "C" void SetBiquadFilter_Q44nw4r3snd6detail11BasicPlayerFif() {}
+void SetBiquadFilter__Q44nw4r3snd6detail11BasicPlayerFif(void* _this, int type, float value) {
+    *(unsigned char*)((char*)_this + 0x1c) = (unsigned char)type;
+    *(float*)((char*)_this + 0x18) = value;
+}
 // LLM-HARNESS-END: us-80414770
 // LLM-HARNESS-BEGIN: us-8041477c
-extern "C" bool SetRemoteFilter_Q44nw4r3snd6detail11BasicPlayerFi() { return false; }
+void SetRemoteFilter__Q44nw4r3snd6detail11BasicPlayerFi(void* this_, int param) {
+    reinterpret_cast<unsigned char*>(this_)[0x1d] = static_cast<unsigned char>(param);
+}
 // LLM-HARNESS-END: us-8041477c

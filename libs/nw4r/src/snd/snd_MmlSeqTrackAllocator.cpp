@@ -20,8 +20,10 @@ void MmlSeqTrackAllocator::FreeTrack(SeqTrack* pTrack) {
     mTrackPool.Free(static_cast<MmlSeqTrack*>(pTrack));
 }
 
+extern "C" u32 CreateImpl__Q44nw4r3snd6detail8PoolImplFPvUlUl(void*, void*, u32, u32);
+
 u32 MmlSeqTrackAllocator::Create(void* pBuffer, u32 size) {
-    return mTrackPool.Create(pBuffer, size);
+    return CreateImpl__Q44nw4r3snd6detail8PoolImplFPvUlUl(reinterpret_cast<u8*>(this) + 8, pBuffer, size, 0xCC);
 }
 
 void MmlSeqTrackAllocator::Destroy(void* pBuffer, u32 size) {

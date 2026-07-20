@@ -58,7 +58,7 @@ extern "C" void func_80153E3C() {}
 extern "C" void func_80153E54() {}
 // LLM-HARNESS-END: us-80154898
 // LLM-HARNESS-BEGIN: us-80154934
-extern "C" void func_80153EF0() {}
+extern "C" void* func_80153EF0(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }
 // LLM-HARNESS-END: us-80154934
 
 // LLM-HARNESS-BEGIN: us-801548cc

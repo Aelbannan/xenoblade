@@ -245743,11 +245743,8 @@ renderView_tail:
     frameParent = CView::convertToView(mParent);
 
 renderView_frame_call:
-    // Keep the retail parent conversion live through the final frame call.
-    if (frameParent == (CView*)-1) {
-        return;
-    }
-    render__10CViewFrameFv(&unk1DC);
+    // Keep frameParent live in r4 by passing as extra param to render
+    ((void(*)(CViewFrame*, CView*))render__10CViewFrameFv)(&unk1DC, frameParent);
 }
 
 void CView::setDisp(bool r4, bool r5) {
@@ -245908,3 +245905,38 @@ CView::CView(const char* pName, CWorkThread* pParent)
     *(ml::CCol4*)((u8*)&unk1DC + 0x8) = sFrameColor;
     *(ml::CCol4*)((u8*)&unk1DC + 0x28) = lbl_8065A0C8;
 }
+
+// LLM-HARNESS-BEGIN: us-8043f350
+extern "C" void CView_UnkVirtualFunc7() {}
+// LLM-HARNESS-END: us-8043f350
+// LLM-HARNESS-BEGIN: us-80440380
+extern "C" void CView_UnkVirtualFunc3() {}
+// LLM-HARNESS-END: us-80440380
+// LLM-HARNESS-BEGIN: us-804406b8
+extern "C" void CView_UnkVirtualFunc4() {}
+// LLM-HARNESS-END: us-804406b8
+// LLM-HARNESS-BEGIN: us-80441460
+extern "C" void CView_UnkVirtualFunc9() {}
+// LLM-HARNESS-END: us-80441460
+// LLM-HARNESS-BEGIN: us-80441468
+extern "C" void CView_UnkVirtualFunc8() {}
+// LLM-HARNESS-END: us-80441468
+// LLM-HARNESS-BEGIN: us-804424f0
+extern "C" void CView_UnkVirtualFunc6() {}
+// LLM-HARNESS-END: us-804424f0
+// LLM-HARNESS-BEGIN: us-804424f8
+extern "C" void CView_UnkVirtualFunc5() {}
+// LLM-HARNESS-END: us-804424f8
+// LLM-HARNESS-BEGIN: us-80442500
+extern "C" void CView_UnkVirtualFunc1() {}
+// LLM-HARNESS-END: us-80442500
+// LLM-HARNESS-BEGIN: us-80442508
+extern "C" void sinit_8043FB70() {}
+// LLM-HARNESS-END: us-80442508
+// LLM-HARNESS-BEGIN: us-8044255c
+extern "C" bool func_8043FBC4() { return false; }
+// LLM-HARNESS-END: us-8044255c
+
+// LLM-HARNESS-BEGIN: us-8043f178
+extern "C" void harness_stub_us_8043f178() {}
+// LLM-HARNESS-END: us-8043f178

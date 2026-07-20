@@ -1,4 +1,4 @@
-/* "libs/nw4r/src/snd/snd_SeqPlayer.cpp" line 0 "nw4r/snd.h" */
+/* "libs/nw4r/src/snd/snd_SoundPlayer.cpp" line 0 "nw4r/snd.h" */
 #ifndef NW4R_PUBLIC_SND_H
 #define NW4R_PUBLIC_SND_H
 
@@ -246943,454 +246943,460 @@ s16 DecodeDspAdpcm(AXPBADPCM* pAdpcm, u8 bits);
 
 #endif
 /* end "nw4r/snd.h" */
-/* "libs/nw4r/src/snd/snd_SeqPlayer.cpp" line 1 "nw4r/ut.h" */
+/* "libs/nw4r/src/snd/snd_SoundPlayer.cpp" line 1 "nw4r/ut.h" */
 /* end "nw4r/ut.h" */
+
+/* "libs/nw4r/src/snd/snd_SoundPlayer.cpp" line 3 "cstring" */
+#ifndef MSL_CPP_CSTRING_H
+#define MSL_CPP_CSTRING_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+/* end "string.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::__memrchr;
+using ::memchr;
+using ::memcmp;
+using ::memcpy;
+using ::memmove;
+using ::memset;
+using ::strcat;
+using ::strchr;
+using ::strcmp;
+using ::strcpy;
+using ::stricmp;
+using ::strlen;
+using ::strncat;
+using ::strncmp;
+using ::strncpy;
+using ::strstr;
+} // namespace std
+
+#endif
+#endif
+/* end "cstring" */
 
 namespace nw4r {
 namespace snd {
-namespace detail {
 
-volatile s16 SeqPlayer::mGlobalVariable[GLOBAL_VARIABLE_NUM];
-bool SeqPlayer::mGobalVariableInitialized = false;
+SoundPlayer::SoundPlayer()
+    : mPlayableCount(1), mPlayableLimit(1), mUsePlayerHeap(false) {
+    InitParam();
+}
 
-SeqPlayer::SeqPlayer() {
-    mActiveFlag = false;
-    mStartedFlag = false;
-    mPauseFlag = false;
-    mReleasePriorityFixFlag = false;
+SoundPlayer::~SoundPlayer() {
+    StopAllSound(0);
+}
 
-    mTempoRatio = 1.0f;
-    mTickFraction = 0.0f;
-    mSkipTickCounter = 0;
-    mSkipTimeCounter = 0.0f;
-    mPanRange = 1.0f;
-    mTickCounter = 0;
-    mVoiceOutCount = 0;
+void SoundPlayer::InitParam() {
+    OSInitMutex(&mMutex);
 
-    mParserParam.tempo = DEFAULT_TEMPO;
-    mParserParam.timebase = DEFAULT_TIMEBASE;
-    mParserParam.volume = 127;
-    mParserParam.priority = DEFAULT_PRIORITY;
-    mParserParam.callback = NULL;
+    mOutputLineFlag = OUTPUT_LINE_MAIN;
+    mVolume = 1.0f;
+    mOutputLineFlagEnable = false;
 
-    for (int i = 0; i < LOCAL_VARIABLE_NUM; i++) {
-        mLocalVariable[i] = DEFAULT_VARIABLE_VALUE;
-    }
-    for (int i = 0; i < TRACK_NUM; i++) {
-        mTracks[i] = NULL;
+    mMainOutVolume = 1.0f;
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        mRemoteOutVolume[i] = 1.0f;
     }
 }
 
-SeqPlayer::~SeqPlayer() {
-    SeqPlayer::Stop();
+void SoundPlayer::Update() {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mSoundList, { it->Update(); })
+
+    detail_SortPriorityList();
 }
 
-void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
-    BasicPlayer::InitParam();
+void SoundPlayer::StopAllSound(int frames) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
 
-    mStartedFlag = false;
-    mPauseFlag = false;
-    mTempoRatio = 1.0f;
-    mSkipTickCounter = 0;
-    mSkipTimeCounter = 0.0f;
-    mPanRange = 1.0f;
-    mTickCounter = 0;
-    mVoiceOutCount = voices;
+    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mSoundList, { it->Stop(frames); })
+}
 
-    mParserParam.tempo = DEFAULT_TEMPO;
-    mParserParam.timebase = DEFAULT_TIMEBASE;
-    mParserParam.volume = 127;
-    mParserParam.priority = 64;
-    mParserParam.callback = pCallback;
+void SoundPlayer::PauseAllSound(bool flag, int frames) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
 
-    mTickFraction = 0.0f;
+    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mSoundList,
+                                   { it->Pause(flag, frames); })
+}
 
-    for (int i = 0; i < LOCAL_VARIABLE_NUM; i++) {
-        mLocalVariable[i] = DEFAULT_VARIABLE_VALUE;
+void SoundPlayer::SetVolume(f32 volume) {
+    mVolume = ut::Clamp(volume, 0.0f, 1.0f);
+}
+
+int SoundPlayer::detail_GetOutputLine() const {
+    return mOutputLineFlag;
+}
+
+bool SoundPlayer::detail_IsEnabledOutputLine() const {
+    return mOutputLineFlagEnable;
+}
+
+f32 SoundPlayer::detail_GetRemoteOutVolume(int idx) const {
+    return mRemoteOutVolume[idx];
+}
+
+void SoundPlayer::detail_InsertSoundList(detail::BasicSound* pSound) {
+    mSoundList.PushBack(pSound);
+    pSound->SetSoundPlayer(this);
+}
+
+void SoundPlayer::detail_RemoveSoundList(detail::BasicSound* pSound) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    mSoundList.Erase(pSound);
+    pSound->SetSoundPlayer(NULL);
+}
+
+void SoundPlayer::detail_InsertPriorityList(detail::BasicSound* pSound) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    detail::BasicSoundPlayerPrioList::Iterator it =
+        mPriorityList.GetBeginIter();
+
+    for (; it != mPriorityList.GetEndIter(); ++it) {
+        if (pSound->CalcCurrentPlayerPriority() <
+            it->CalcCurrentPlayerPriority()) {
+            break;
+        }
     }
-    for (int i = 0; i < TRACK_NUM; i++) {
-        mTracks[i] = NULL;
+
+    mPriorityList.Insert(it, pSound);
+}
+
+void SoundPlayer::detail_RemovePriorityList(detail::BasicSound* pSound) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+    mPriorityList.Erase(pSound);
+}
+
+void SoundPlayer::detail_SortPriorityList() {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    detail::BasicSoundPlayerPrioList
+        listsByPrio[detail::BasicSound::PRIORITY_MAX + 1];
+
+    while (!mPriorityList.IsEmpty()) {
+        detail::BasicSound& rSound = mPriorityList.GetFront();
+        mPriorityList.PopFront();
+        listsByPrio[rSound.CalcCurrentPlayerPriority()].PushBack(&rSound);
+    }
+
+    for (int i = 0; i < detail::BasicSound::PRIORITY_MAX + 1; i++) {
+        while (!listsByPrio[i].IsEmpty()) {
+            detail::BasicSound& rSound = listsByPrio[i].GetFront();
+            listsByPrio[i].PopFront();
+            mPriorityList.PushBack(&rSound);
+        }
     }
 }
 
-SeqPlayer::SetupResult SeqPlayer::Setup(SeqTrackAllocator* pAllocator,
-                                        u32 allocTrackFlags, int voices,
-                                        NoteOnCallback* pCallback) {
-    SoundThread::AutoLock lock;
+detail::SeqSound* SoundPlayer::detail_AllocSeqSound(
+    int priority, int startPriority,
+    detail::BasicSound::AmbientArgInfo* pArgInfo,
+    detail::ExternalSoundPlayer* pExtPlayer, u32 id,
+    detail::SoundInstanceManager<detail::SeqSound>* pManager) {
 
-    SeqPlayer::Stop();
-    InitParam(voices, pCallback);
-    {
-        ut::AutoInterruptLock lock;
-        int tracks = 0;
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
 
-        {
-            u32 trackFlags = allocTrackFlags;
+    if (pManager == NULL) {
+        return NULL;
+    }
 
-            for (; trackFlags != 0; trackFlags >>= 1) {
-                if (trackFlags & 1) {
-                    tracks++;
-                }
+    int priorityReduction = CalcPriorityReduction(pArgInfo, id);
+
+    startPriority = ut::Clamp(startPriority + priorityReduction, 0,
+                              detail::BasicSound::PRIORITY_MAX);
+
+    if (!CheckPlayableSoundCount(startPriority, pExtPlayer)) {
+        return NULL;
+    }
+
+    detail::SeqSound* pSound = pManager->Alloc(startPriority);
+    if (pSound == NULL) {
+        return NULL;
+    }
+
+    detail_AllocPlayerHeap(pSound);
+
+    if (pArgInfo != NULL) {
+        InitAmbientArg(pSound, pArgInfo);
+    }
+
+    pSound->SetPriority(priority);
+    pSound->GetAmbientParam().priority = priorityReduction;
+
+    detail_InsertSoundList(pSound);
+
+    if (pExtPlayer != NULL) {
+        pExtPlayer->InsertSoundList(pSound);
+    }
+
+    detail_InsertPriorityList(pSound);
+
+    return pSound;
+}
+
+detail::StrmSound* SoundPlayer::detail_AllocStrmSound(
+    int priority, int startPriority,
+    detail::BasicSound::AmbientArgInfo* pArgInfo,
+    detail::ExternalSoundPlayer* pExtPlayer, u32 id,
+    detail::SoundInstanceManager<detail::StrmSound>* pManager) {
+
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    if (pManager == NULL) {
+        return NULL;
+    }
+
+    int priorityReduction = CalcPriorityReduction(pArgInfo, id);
+
+    startPriority = ut::Clamp(startPriority + priorityReduction, 0,
+                              detail::BasicSound::PRIORITY_MAX);
+
+    if (!CheckPlayableSoundCount(startPriority, pExtPlayer)) {
+        return NULL;
+    }
+
+    detail::StrmSound* pSound = pManager->Alloc(startPriority);
+    if (pSound == NULL) {
+        return NULL;
+    }
+
+    detail_AllocPlayerHeap(pSound);
+
+    if (pArgInfo != NULL) {
+        InitAmbientArg(pSound, pArgInfo);
+    }
+
+    pSound->SetPriority(priority);
+    pSound->GetAmbientParam().priority = priorityReduction;
+
+    detail_InsertSoundList(pSound);
+
+    if (pExtPlayer != NULL) {
+        pExtPlayer->InsertSoundList(pSound);
+    }
+
+    detail_InsertPriorityList(pSound);
+
+    return pSound;
+}
+
+detail::WaveSound* SoundPlayer::detail_AllocWaveSound(
+    int priority, int startPriority,
+    detail::BasicSound::AmbientArgInfo* pArgInfo,
+    detail::ExternalSoundPlayer* pExtPlayer, u32 id,
+    detail::SoundInstanceManager<detail::WaveSound>* pManager) {
+
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    if (pManager == NULL) {
+        return NULL;
+    }
+
+    int priorityReduction = CalcPriorityReduction(pArgInfo, id);
+
+    startPriority = ut::Clamp(startPriority + priorityReduction, 0,
+                              detail::BasicSound::PRIORITY_MAX);
+
+    if (!CheckPlayableSoundCount(startPriority, pExtPlayer)) {
+        return NULL;
+    }
+
+    detail::WaveSound* pSound = pManager->Alloc(startPriority);
+    if (pSound == NULL) {
+        return NULL;
+    }
+
+    detail_AllocPlayerHeap(pSound);
+
+    if (pArgInfo != NULL) {
+        InitAmbientArg(pSound, pArgInfo);
+    }
+
+    pSound->SetPriority(priority);
+    pSound->GetAmbientParam().priority = priorityReduction;
+
+    detail_InsertSoundList(pSound);
+
+    if (pExtPlayer != NULL) {
+        pExtPlayer->InsertSoundList(pSound);
+    }
+
+    detail_InsertPriorityList(pSound);
+
+    return pSound;
+}
+
+int SoundPlayer::CalcPriorityReduction(
+    detail::BasicSound::AmbientArgInfo* pArgInfo, u32 id) {
+
+    int priority = 0;
+
+    if (pArgInfo != NULL) {
+        SoundParam param;
+
+        pArgInfo->paramUpdateCallback->detail_Update(
+            &param, id, NULL, pArgInfo->arg,
+            detail::BasicSound::AmbientParamUpdateCallback::
+                PARAM_UPDATE_PRIORITY);
+
+        priority = param.priority;
+    }
+
+    return priority;
+}
+
+void SoundPlayer::InitAmbientArg(detail::BasicSound* pSound,
+                                 detail::BasicSound::AmbientArgInfo* pArgInfo) {
+
+    if (pArgInfo == NULL) {
+        return;
+    }
+
+    void* pExtArg = pArgInfo->argAllocaterCallback->detail_AllocAmbientArg(
+        pArgInfo->argSize);
+
+    if (pExtArg == NULL) {
+        return;
+    }
+
+    std::memcpy(pExtArg, pArgInfo->arg, pArgInfo->argSize);
+
+    pSound->SetAmbientParamCallback(pArgInfo->paramUpdateCallback,
+                                    pArgInfo->argUpdateCallback,
+                                    pArgInfo->argAllocaterCallback, pExtArg);
+}
+
+void SoundPlayer::SetPlayableSoundCount(int count) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    mPlayableCount = count;
+
+    if (mUsePlayerHeap) {
+        count = ut::Clamp<u16>(count, 0, mPlayableLimit);
+        mPlayableCount = count;
+    }
+
+    while (GetPlayingSoundCount() > GetPlayableSoundCount()) {
+        detail::BasicSound* pDropSound = detail_GetLowestPrioritySound();
+        pDropSound->Shutdown();
+    }
+}
+
+void nw4r::snd::SoundPlayer::detail_SetPlayableSoundLimit(int limit) {
+    *(int*)((char*)this + 0x28) = limit;
+}
+
+bool SoundPlayer::CheckPlayableSoundCount(
+    int startPriority, detail::ExternalSoundPlayer* pExtPlayer) {
+
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
+
+    if (GetPlayableSoundCount() == 0) {
+        return false;
+    }
+
+    while (GetPlayingSoundCount() >= GetPlayableSoundCount()) {
+        detail::BasicSound* pDropSound = detail_GetLowestPrioritySound();
+
+        if (pDropSound == NULL) {
+            return false;
+        }
+
+        if (startPriority < pDropSound->CalcCurrentPlayerPriority()) {
+            return false;
+        }
+
+        pDropSound->Shutdown();
+    }
+
+    if (pExtPlayer != NULL) {
+        if (pExtPlayer->GetPlayableSoundCount() == 0) {
+            return false;
+        }
+
+        while (pExtPlayer->GetPlayingSoundCount() >=
+               pExtPlayer->GetPlayableSoundCount()) {
+
+            detail::BasicSound* pDropSound =
+                pExtPlayer->GetLowestPrioritySound();
+
+            if (pDropSound == NULL) {
+                return false;
             }
-        }
 
-        if (tracks > pAllocator->GetAllocatableTrackCount()) {
-            return SETUP_ERR_CANNOT_ALLOCATE_TRACK;
-        }
-
-        {
-            u32 trackFlags = allocTrackFlags;
-
-            for (int i = 0; trackFlags != 0; trackFlags >>= 1, i++) {
-                if (trackFlags & 1) {
-                    SeqTrack* pTrack = pAllocator->AllocTrack(this);
-                    SetPlayerTrack(i, pTrack);
-                }
+            if (startPriority < pDropSound->CalcCurrentPlayerPriority()) {
+                return false;
             }
+
+            pDropSound->Shutdown();
         }
     }
-    DisposeCallbackManager::GetInstance().RegisterDisposeCallback(this);
-
-    mSeqTrackAllocator = pAllocator;
-    mActiveFlag = true;
-
-    return SETUP_SUCCESS;
-}
-
-void SeqPlayer::SetSeqData(const void* pBase, s32 offset) {
-    SoundThread::AutoLock lock;
-
-    SeqTrack* pTrack = GetPlayerTrack(0);
-
-    if (pBase != NULL) {
-        pTrack->SetSeqData(pBase, offset);
-        pTrack->Open();
-    }
-}
-
-bool SeqPlayer::Start() {
-    SoundThread::AutoLock lock;
-
-    SoundThread::GetInstance().RegisterPlayerCallback(this);
-    mStartedFlag = true;
 
     return true;
 }
 
-void SeqPlayer::Stop() {
-    SoundThread::AutoLock lock;
+void SoundPlayer::detail_AppendPlayerHeap(detail::PlayerHeap* pHeap) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
 
-    FinishPlayer();
+    pHeap->SetSoundPlayer(this);
+    mHeapList.PushBack(pHeap);
+
+    mUsePlayerHeap = true;
 }
 
-void SeqPlayer::Pause(bool flag) {
-    SoundThread::AutoLock lock;
+detail::PlayerHeap*
+SoundPlayer::detail_AllocPlayerHeap(detail::BasicSound* pSound) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
 
-    mPauseFlag = flag;
-
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
-
-        if (pTrack != NULL) {
-            pTrack->PauseAllChannel(flag);
-        }
-    }
-}
-
-void SeqPlayer::Skip(OffsetType type, int offset) {
-    SoundThread::AutoLock lock;
-
-    if (!mActiveFlag) {
-        return;
-    }
-
-    switch (type) {
-    case OFFSET_TYPE_TICK: {
-        mSkipTickCounter += offset;
-        break;
-    }
-
-    case OFFSET_TYPE_MILLISEC: {
-        mSkipTimeCounter += offset;
-        break;
-    }
-    }
-}
-
-void SeqPlayer::SetTempoRatio(f32 tempo) {
-    mTempoRatio = tempo;
-}
-
-void SeqPlayer::SetChannelPriority(int priority) {
-    *(u8*)((char*)this + 0x109) = priority;
-}
-
-void SeqPlayer::SetReleasePriorityFix(bool flag) {
-    mReleasePriorityFixFlag = flag;
-}
-
-void SeqPlayer::SetLocalVariable(int idx, s16 value) {
-    mLocalVariable[idx] = value;
-}
-
-void SeqPlayer::SetGlobalVariable(int idx, s16 value) {
-    if (!mGobalVariableInitialized) {
-        InitGlobalVariable();
-    }
-
-    mGlobalVariable[idx] = value;
-}
-
-void SeqPlayer::SetTrackVolume(u32 trackFlags, f32 volume) {
-    SetTrackParam<f32>(trackFlags, &SeqTrack::SetVolume, volume);
-}
-
-void SeqPlayer::SetTrackPitch(u32 trackFlags, f32 pitch) {
-    SetTrackParam<f32>(trackFlags, &SeqTrack::SetPitch, pitch);
-}
-
-void SeqPlayer::InvalidateData(const void* pStart, const void* pEnd) {
-    SoundThread::AutoLock lock;
-
-    if (mActiveFlag) {
-        for (int i = 0; i < TRACK_NUM; i++) {
-            SeqTrack* pTrack = GetPlayerTrack(i);
-            if (pTrack == NULL) {
-                continue;
-            }
-
-            const u8* pBase = pTrack->GetParserTrackParam().baseAddr;
-            if (pStart <= pBase && pBase <= pEnd) {
-                SeqPlayer::Stop();
-                break;
-            }
-        }
-    }
-}
-
-SeqTrack* SeqPlayer::GetPlayerTrack(int idx) {
-    if (idx > TRACK_NUM - 1) {
+    if (mHeapList.IsEmpty()) {
         return NULL;
     }
 
-    return mTracks[idx];
+    detail::PlayerHeap& rHeap = mHeapList.GetFront();
+    mHeapList.PopFront();
+
+    rHeap.SetSound(pSound);
+    pSound->SetPlayerHeap(&rHeap);
+    rHeap.Clear();
+
+    return &rHeap;
 }
 
-void SeqPlayer::CloseTrack(int idx) {
-    SoundThread::AutoLock lock;
+void SoundPlayer::detail_FreePlayerHeap(detail::BasicSound* pSound) {
+    ut::detail::AutoLock<OSMutex> lock(mMutex);
 
-    SeqTrack* pTrack = GetPlayerTrack(idx);
-    if (pTrack == NULL) {
-        return;
+    detail::PlayerHeap* pHeap = pSound->GetPlayerHeap();
+
+    if (pHeap != NULL) {
+        mHeapList.PushBack(pHeap);
     }
 
-    pTrack->Close();
+    if (pHeap != NULL) {
+        pHeap->SetSound(NULL);
+    }
 
-    mSeqTrackAllocator->FreeTrack(mTracks[idx]);
-    mTracks[idx] = NULL;
+    pSound->SetPlayerHeap(NULL);
 }
 
-void SeqPlayer::SetPlayerTrack(int idx, SeqTrack* pTrack) {
-    SoundThread::AutoLock lock;
-
-    if (idx > TRACK_NUM - 1) {
-        return;
-    }
-
-    mTracks[idx] = pTrack;
-    pTrack->SetPlayerTrackNo(idx);
-}
-
-void SeqPlayer::FinishPlayer() {
-    SoundThread::AutoLock lock;
-
-    if (mStartedFlag) {
-        SoundThread::GetInstance().UnregisterPlayerCallback(this);
-        mStartedFlag = false;
-    }
-
-    if (mActiveFlag) {
-        DisposeCallbackManager::GetInstance().UnregisterDisposeCallback(this);
-        mActiveFlag = false;
-    }
-
-    for (int i = 0; i < TRACK_NUM; i++) {
-        CloseTrack(i);
-    }
-}
-
-void SeqPlayer::UpdateChannelParam() {
-    SoundThread::AutoLock lock;
-
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
-
-        if (pTrack != NULL) {
-            pTrack->UpdateChannelParam();
-        }
-    }
-}
-
-int SeqPlayer::ParseNextTick(bool doNoteOn) {
-    SoundThread::AutoLock lock;
-
-    bool active = false;
-
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
-        if (pTrack == NULL) {
-            continue;
-        }
-
-        pTrack->UpdateChannelLength();
-
-        if (pTrack->ParseNextTick(doNoteOn) < 0) {
-            CloseTrack(i);
-        }
-
-        if (pTrack->IsOpened()) {
-            active = true;
-        }
-    }
-
-    if (!active) {
-        return 1;
-    }
-
-    return 0;
-}
-
-volatile s16* SeqPlayer::GetVariablePtr(int idx) {
-    if (idx < LOCAL_VARIABLE_NUM) {
-        return &mLocalVariable[idx];
-    }
-
-    if (idx < VARIABLE_NUM) {
-        return &mGlobalVariable[idx - LOCAL_VARIABLE_NUM];
-    }
-
-    return NULL;
-}
-
-void SeqPlayer::Update() {
-    SoundThread::AutoLock lock;
-
-    if (!mActiveFlag) {
-        return;
-    }
-
-    if (!mStartedFlag) {
-        return;
-    }
-
-    if (mSkipTickCounter != 0 || mSkipTimeCounter > 0.0f) {
-        SkipTick();
-
-    } else if (!mPauseFlag) {
-        UpdateTick(3);
-    }
-
-    UpdateChannelParam();
-}
-
-void SeqPlayer::UpdateTick(int msec) {
-    f32 tickPerMsec = GetBaseTempo();
-    if (tickPerMsec == 0.0f) {
-        return;
-    }
-
-    f32 restMsec = static_cast<f32>(msec);
-    f32 nextMsec = mTickFraction / tickPerMsec;
-
-    while (nextMsec < restMsec) {
-        restMsec -= nextMsec;
-
-        if (ParseNextTick(true) != 0) {
-            FinishPlayer();
-            return;
-        }
-
-        mTickCounter++;
-
-        tickPerMsec = GetBaseTempo();
-        if (tickPerMsec == 0.0f) {
-            return;
-        }
-
-        nextMsec = 1.0f / tickPerMsec;
-    }
-
-    nextMsec -= restMsec;
-    mTickFraction = nextMsec * tickPerMsec;
-}
-
-void SeqPlayer::SkipTick() {
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
-
-        if (pTrack != NULL) {
-            pTrack->ReleaseAllChannel(127);
-            pTrack->FreeAllChannel();
-        }
-    }
-
-    int skipCount = 0;
-    while (mSkipTickCounter != 0 || mSkipTimeCounter * GetBaseTempo() >= 1.0f) {
-        if (skipCount >= MAX_SKIP_TICK_PER_FRAME) {
-            return;
-        }
-
-        if (mSkipTickCounter != 0) {
-            mSkipTickCounter--;
-        } else {
-            f32 tickPerMsec = GetBaseTempo();
-            f32 msecPerTick = 1.0f / tickPerMsec;
-
-            mSkipTimeCounter -= msecPerTick;
-        }
-
-        if (ParseNextTick(false) != 0) {
-            FinishPlayer();
-            return;
-        }
-
-        skipCount++;
-        mTickCounter++;
-    }
-
-    mSkipTimeCounter = 0.0f;
-}
-
-void SeqPlayer::InitGlobalVariable() {
-    for (int i = 0; i < GLOBAL_VARIABLE_NUM; i++) {
-        mGlobalVariable[i] = DEFAULT_VARIABLE_VALUE;
-    }
-
-    mGobalVariableInitialized = true;
-}
-
-Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {
-    return mParserParam.callback->NoteOn(this, bankNo, rInfo);
-}
-
-} // namespace detail
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8041ba6c
-extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {}
-// LLM-HARNESS-END: us-8041ba6c
-// LLM-HARNESS-BEGIN: us-8041c4d0
-extern "C" void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
-    void* _this, void* callback, void* arg)
-{
-    *(u32*)((u8*)_this + 0x118) = (u32)callback;
-    *(u32*)((u8*)_this + 0x11C) = (u32)arg;
-}
-// LLM-HARNESS-END: us-8041c4d0
-// LLM-HARNESS-BEGIN: us-8041c4dc
-extern "C" void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack() {}
-// LLM-HARNESS-END: us-8041c4dc
-// LLM-HARNESS-BEGIN: us-8041cf0c
-extern "C" void ChannelCallback__Q44nw4r3snd6detail9SeqPlayerFPQ44nw4r3snd6detail7Channel() {}
-// LLM-HARNESS-END: us-8041cf0c
+// LLM-HARNESS-BEGIN: us-80422af8
+extern "C" void SetFxSend__Q34nw4r3snd11SoundPlayerFQ34nw4r3snd6AuxBusf() {}
+// LLM-HARNESS-END: us-80422af8
+// LLM-HARNESS-BEGIN: us-80422d84
+extern "C" void harness_stub_us_80422d84() {}
+// LLM-HARNESS-END: us-80422d84
+// LLM-HARNESS-BEGIN: us-80422da0
+extern "C" void detail_AppendSound__Q34nw4r3snd11SoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
+// LLM-HARNESS-END: us-80422da0
+// LLM-HARNESS-BEGIN: us-80422f78
+extern "C" void detail_RemoveSound__Q34nw4r3snd11SoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
+// LLM-HARNESS-END: us-80422f78
+// LLM-HARNESS-BEGIN: us-80423098
+extern "C" void detail_CanPlaySound_Q34nw4r3snd11SoundPlayerFi() {}
+// LLM-HARNESS-END: us-80423098

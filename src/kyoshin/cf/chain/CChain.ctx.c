@@ -12448,13 +12448,18 @@ extern "C" bool func_8027968C(void* self) {
 extern "C" void func_80279768() {}
 // LLM-HARNESS-END: us-8027bbec
 // LLM-HARNESS-BEGIN: us-8027bbf0
-extern "C" void func_8027976C() {}
+extern "C" u16 func_8027976C(void** arg0) {
+    return *(u16*)((char*)*arg0 + 0x3f28);
+}
 // LLM-HARNESS-END: us-8027bbf0
 // LLM-HARNESS-BEGIN: us-8027bd34
 extern "C" void func_802798B0() {}
 // LLM-HARNESS-END: us-8027bd34
 // LLM-HARNESS-BEGIN: us-8027bfa8
-extern "C" void func_80279B24() {}
+extern "C" void func_80279B24(void* _this, int val) {
+    *(int*)_this = val;
+    *(unsigned short*)((char*)_this + 0x6C) = 0;
+}
 // LLM-HARNESS-END: us-8027bfa8
 // LLM-HARNESS-BEGIN: us-8027c7a8
 extern "C" void func_8027A324() {}

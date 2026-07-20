@@ -1,7 +1,18 @@
-/* "libs/monolib/src/scn/CLight.cpp" line 0 "monolib/scn/CLight.hpp" */
-#pragma once
+/* "libs/RVL_SDK/src/revolution/si/SIBios.c" line 0 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
 
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+#ifndef RVL_SDK_OS_H
+#define RVL_SDK_OS_H
+/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -708,378 +719,6 @@ enum { FALSE, TRUE };
 typedef int BOOL;
 
 #endif
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math.hpp" line 2 "monolib/math/CAttrTransform.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 3 "monolib/math/CVec3.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 2 "monolib/math/Utility.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/Utility.hpp" line 2 "nw4r/math.h" */
-#ifndef NW4R_PUBLIC_MATH_H
-#define NW4R_PUBLIC_MATH_H
-
-/* "libs/nw4r/include/nw4r/math.h" line 3 "nw4r/math/math_arithmetic.h" */
-#ifndef NW4R_MATH_ARITHMETIC_H
-#define NW4R_MATH_ARITHMETIC_H
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 2 "nw4r/types_nw4r.h" */
-#ifndef NW4R_TYPES_H
-#define NW4R_TYPES_H
-/* "libs/nw4r/include/nw4r/types_nw4r.h" line 2 "types.h" */
-/* end "types.h" */
-
-#define NW4R_BYTEORDER_BIG 0xFEFF
-#define NW4R_BYTEORDER_LITTLE 0xFFFE
-
-#if defined(NW4R_LITTLE_ENDIAN)
-#define NW4R_BYTEORDER_NATIVE NW4R_BYTEORDER_LITTLE
-#else
-#define NW4R_BYTEORDER_NATIVE NW4R_BYTEORDER_BIG
-#endif
-
-#define NW4R_VERSION(major, minor) ((major & 0xFF) << 8 | minor & 0xFF)
-
-#define NW4R_LIB_VERSION(NAME, ORIGINAL_DATE, ORIGINAL_TIME, ORIGINAL_CWCC)    \
-    const char* NW4R_##NAME##_Version_ =                                       \
-        "<< NW4R    - " #NAME " \tfinal   build: " ORIGINAL_DATE               \
-        " " ORIGINAL_TIME " (" ORIGINAL_CWCC ") >>"
-
-#endif
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 4 "nw4r/db/db_assert.h" */
-#ifndef NW4R_DB_ASSERT_H
-#define NW4R_DB_ASSERT_H
-
-/* "libs/nw4r/include/nw4r/db/db_assert.h" line 3 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-namespace nw4r
-{
-    namespace db
-    {
-        // Forward declarations
-        namespace detail {
-            class ConsoleHead;
-        }
-
-        #define NW4R_WARNING(...) nw4r::db::Warning(__FILE__, __LINE__, __VA_ARGS__)
-        #define NW4R_PANIC(...) nw4r::db::Panic(__FILE__, __LINE__, __VA_ARGS__)
-        #define NW4R_DB_ASSERT(exp, ...) \
-            if(!(exp))                \
-            nw4r::db::Panic(__FILE__, __LINE__, __VA_ARGS__)
-
-        #define NW4R_DB_ASSERT_WARN(exp, ...) \
-            if(!(exp))                \
-            nw4r::db::Warning(__FILE__, __LINE__, __VA_ARGS__)
-
-        /* DECL_WEAK */ void VPanic(const char* file, int line, const char* fmt, std::va_list vlist, bool halt);
-        /* DECL_WEAK */ void Panic(const char* file, int line, const char* fmt, ...);
-        /* DECL_WEAK */ void VWarning(const char* file, int line, const char* fmt, std::va_list vlist);
-        /* DECL_WEAK */ void Warning(const char* file, int line, const char* msg, ...);
-        
-        namespace detail
-        {
-            void Log(const char* fmt, ...);
-        }
-        
-        detail::ConsoleHead* Assertion_SetConsole(detail::ConsoleHead* console);
-        detail::ConsoleHead* Assertion_GetConsole();
-        void Assertion_ShowConsole(u32 time);
-        void Assertion_HideConsole();
-        void Assertion_SetWarningTime(u32 time);
-        bool Assertion_SetAutoWarning(bool enable);
-    }
-}
-
-#endif
-/* end "nw4r/db/db_assert.h" */
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 5 "nw4r/math/math_constant.h" */
-#ifndef NW4R_MATH_CONSTANT_H
-#define NW4R_MATH_CONSTANT_H
-/* "libs/nw4r/include/nw4r/math/math_constant.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_constant.h" line 4 "cmath" */
-#ifndef MSL_CPP_CMATH_H
-#define MSL_CPP_CMATH_H
-/* "libs/PowerPC_EABI_Support/include/stl/cmath" line 2 "math.h" */
-#ifndef MSL_MATH_H
-#define MSL_MATH_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" */
-#ifndef MSL_MATH_DOUBLE_H
-#define MSL_MATH_DOUBLE_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-double atan(double x);
-double ceil(double x);
-double copysign(double x, double y);
-double cos(double x);
-double floor(double x);
-double frexp(double x, int* eptr);
-double ldexp(double value, int exp);
-double modf(double x, double* iptr);
-double sin(double x);
-double tan(double x);
-double acos(double x);
-double asin(double x);
-double atan2(double y, double x);
-double fmod(double x, double y);
-double pow(double x, double y);
-double sqrt(double x);
-double log(double x);
-
-inline float acosf(float x) {
-    return acos(x);
-}
-inline float ceilf(float x) {
-    return ceil(x);
-}
-inline float cosf(float x) {
-    return cos(x);
-}
-inline float sinf(float x) {
-    return sin(x);
-}
-
-float sqrtf(float x);
-
-inline float tanf(float x) {
-    return tan(x);
-}
-inline float floorf(float x) {
-    return floor(x);
-}
-inline float fmodf(float x, float y) {
-    return fmod(x, y);
-}
-
-inline float modff(float x, float* iptr) {
-    float frac;
-    double intg;
-
-    x = (double)x;
-    frac = modf(x, &intg);
-    *iptr = intg;
-
-    return frac;
-}
-
-float fabsf(float);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" */
-#ifndef _MSL_MATH_API_H
-#define _MSL_MATH_API_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" line 3 "types.h" */
-/* end "types.h" */
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-
-#if defined(i386) || defined(i486) || defined(intel) || defined(x86) || defined(i86pc) || defined(__alpha) || defined(__osf__)
-#define __LITTLE_ENDIAN
-#endif
-
-#ifdef __LITTLE_ENDIAN
-#define __HI(x)  *(1 + (int*)&x)
-#define __LO(x)  *(int*)&x
-#define __HIp(x) *(1 + (int*)x)
-#define __LOp(x) *(int*)x
-#else
-#define __HI(x)  *(int*)&x
-#define __LO(x)  *(1 + (int*)&x)
-#define __HIp(x) *(int*)x
-#define __LOp(x) *(1 + (int*)x)
-#endif
-
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" */
-
-extern int __float_nan[];
-extern int __float_huge[];
-extern int __double_huge[];
-
-#define INFINITY (*(float*) __float_huge)
-#define NAN (*(float*) __float_nan)
-#define HUGE_VAL (*(double*) __double_huge)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL
-
-#define M_PI    3.1415927f
-#define M_SQRT3 1.73205f
-
-int __signbitf(float);
-int __fpclassifyf(float);
-int __signbitd(double);
-int __fpclassifyd(double);
-
-#define fpclassify(x) ((sizeof(x) == sizeof(float)) ? __fpclassifyf((float)(x)) : __fpclassifyd((double)(x)))
-#define signbit(x) ((sizeof(x) == sizeof(float)) ? __signbitf((float)(x)) : __signbitd((double)(x)))
-
-#define isfinite(x) ((fpclassify(x) > FP_INFINITE))
-#define isnan(x) (fpclassify(x) == FP_NAN)
-#define isnormal(x) (fpclassify(x) == FP_NORMAL)
-
-inline long double fabsl(long double x) {
-    return __fabs((double)x);
-}
-
-double __ieee754_acos(double);
-double __ieee754_fmod(double, double);
-double __ieee754_log(double);
-double __ieee754_log10(double);
-double __ieee754_pow(double, double);
-double __ieee754_sqrt(double);
-double __ieee754_atan2(double, double);
-double __ieee754_asin(double);
-
-double copysign(double, double);
-double scalbn(double, int);
-
-double __kernel_sin(double, double, int);
-double __kernel_cos(double, double);
-double __kernel_tan(double, double, int);
-
-int __ieee754_rem_pio2(double, double *);
-
-double nan(const char* arg);
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "math.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::acos;
-using ::acosf;
-using ::asin;
-using ::atan;
-using ::atan2;
-using ::ceil;
-using ::ceilf;
-using ::copysign;
-using ::cos;
-using ::cosf;
-using ::fabsf;
-using ::floor;
-using ::floorf;
-using ::fmod;
-using ::fmodf;
-using ::frexp;
-using ::ldexp;
-using ::modf;
-using ::modff;
-using ::nan;
-using ::pow;
-using ::scalbn;
-using ::sin;
-using ::sinf;
-using ::sqrt;
-using ::sqrtf;
-using ::tan;
-using ::tanf;
-} // namespace std
-
-#endif
-#endif
-/* end "cmath" */
-
-/******************************************************************************
- *
- * Mathematical constants
- *
- ******************************************************************************/
-// Pi mathematical constant
-#define NW4R_MATH_PI M_PI
-
-// ln(2)
-#define NW4R_MATH_LN_2 0.69314718056f
-
-// 1 / sqrt(3)
-#define NW4R_MATH_INVSQRT3 0.577350258f
-
-/******************************************************************************
- *
- * Not-a-number (NaN) types
- *
- ******************************************************************************/
-// Quiet NaN (0x7FC00000)
-#define NW4R_MATH_QNAN (-(0.0f / 0.0f))
-
-/******************************************************************************
- *
- * Float limits
- *
- ******************************************************************************/
-// Smallest finite floating-point value
-#define NW4R_MATH_FLT_MIN 1.175494350e-38f
-
-// Largest finite floating-point value
-#define NW4R_MATH_FLT_MAX 3.402823466e+38f
-
-// Difference between 1.0 and the next representable value
-#define NW4R_MATH_FLT_EPSILON 1.192092895e-7f
-
-#endif
-/* end "nw4r/math/math_constant.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 7 "revolution/OS.h" */
-/**
- * References: YAGCD, WiiBrew, Dolphin Emulator
- */
-
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-#ifndef RVL_SDK_OS_H
-#define RVL_SDK_OS_H
-/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 2 "types.h" */
 /* end "types.h" */
 
 /* "libs/RVL_SDK/include/revolution/OS/OS.h" line 4 "revolution/OS/OSContext.h" */
@@ -4145,2575 +3784,473 @@ DECL_SECTION(".init") extern const ExtabIndexInfo _eti_init_info[];
 #endif
 #endif
 /* end "revolution/OS.h" */
+/* "libs/RVL_SDK/src/revolution/si/SIBios.c" line 1 "revolution/SI.h" */
+/**
+ * References: YAGCD, publicly available patents
+ */
 
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 9 "cmath" */
-/* end "cmath" */
-
-namespace nw4r {
-namespace math {
-
-/******************************************************************************
- *
- * Implementation details
- *
- ******************************************************************************/
-namespace detail {
-
-f32 FExp(f32 x);
-f32 FLog(f32 x);
-
-} // namespace detail
-
-/******************************************************************************
- *
- * Arithmetic functions
- *
- ******************************************************************************/
-f32 FrSqrt(f32 x);
-
-inline f32 FAbs(register f32 x) {
-    register f32 ax;
-
-    ASM (
-        fabs ax, x
-    )
-
-    return ax;
-}
-
-inline f32 FCeil(f32 x) {
-    return std::ceilf(x);
-}
-
-inline f32 FExp(f32 x) {
-    return detail::FExp(x);
-}
-
-inline f32 FFloor(f32 x) {
-    return std::floorf(x);
-}
-
-inline f32 FInv(register f32 x) {
-    register f32 work0, work1, work2, work3;
-
-    ASM (
-        fmr  work1, x     // x
-        fres work0, work1 // 1/x
-
-        // Refine estimate
-        ps_add   work2, work0, work0        // 2/x
-        ps_mul   work3, work0, work0        // 1/x^2
-        ps_nmsub work0, work1, work3, work2 // -(x * 1/x^2 - 2/x)
-    )
-
-    return work0;
-}
-
-inline f32 FMod(f32 x, f32 y) {
-    return std::fmodf(x, y);
-}
-
-inline f32 FModf(f32 x, f32* pY) {
-    return std::modff(x, pY);
-}
-
-inline f32 FSqrt(f32 x) {
-#line 627
-    NW4R_DB_ASSERT_WARN(x >= 0.0f, "FSqrt: Input is out of the domain.");
-
-    return x <= 0.0f ? 0.0f : x * FrSqrt(x);
-}
-
-inline f32 FLog(f32 x) {
-    if (x > 0.0f) {
-        return detail::FLog(x);
-    }
-
-    return NW4R_MATH_QNAN;
-}
-
-inline f32 FSelect(register f32 value, register f32 ge_zero,
-                   register f32 lt_zero) {
-    register f32 ret;
-
-    ASM (
-        fsel ret, value, ge_zero, lt_zero
-    )
-
-    return ret;
-}
-
-/******************************************************************************
- *
- * Fastcast functions
- *
- ******************************************************************************/
-inline f32 U16ToF32(u16 arg) {
-    f32 ret;
-    OSu16tof32(&arg, &ret);
-    return ret;
-}
-inline u16 F32ToU16(f32 arg) {
-    u16 ret;
-    OSf32tou16(&arg, &ret);
-    return ret;
-}
-
-inline f32 S16ToF32(s16 arg) {
-    f32 ret;
-    OSs16tof32(&arg, &ret);
-    return ret;
-}
-inline s16 F32ToS16(f32 arg) {
-    s16 ret;
-    OSf32tos16(&arg, &ret);
-    return ret;
-}
-
-inline u32 F32AsU32(f32 arg) {
-    return *reinterpret_cast<u32*>(&arg);
-}
-inline f32 U32AsF32(u32 arg) {
-    return *reinterpret_cast<f32*>(&arg);
-}
-
-inline s32 FGetExpPart(f32 x) {
-    s32 s = F32AsU32(x);
-    return ((s >> 23) & 0xFF) - 127;
-}
-inline f32 FGetMantPart(f32 x) {
-    u32 u = F32AsU32(x);
-    return U32AsF32((u & 0x807FFFFF) | 0x3F800000);
-}
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_arithmetic.h" */
-/* "libs/nw4r/include/nw4r/math.h" line 4 "nw4r/math/math_geometry.h" */
-#ifndef NW4R_MATH_GEOMETRY_H
-#define NW4R_MATH_GEOMETRY_H
-/* "libs/nw4r/include/nw4r/math/math_geometry.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_geometry.h" line 4 "nw4r/math/math_types.h" */
-#ifndef NW4R_MATH_TYPES_H
-#define NW4R_MATH_TYPES_H
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 4 "nw4r/math/math_arithmetic.h" */
-/* end "nw4r/math/math_arithmetic.h" */
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 5 "nw4r/math/math_triangular.h" */
-#ifndef NW4R_MATH_TRIANGULAR_H
-#define NW4R_MATH_TRIANGULAR_H
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 4 "nw4r/db/db_assert.h" */
-/* end "nw4r/db/db_assert.h" */
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 5 "nw4r/math/math_arithmetic.h" */
-/* end "nw4r/math/math_arithmetic.h" */
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 6 "nw4r/math/math_constant.h" */
-/* end "nw4r/math/math_constant.h" */
-
-/******************************************************************************
- *
- * Macros to convert between units
- *
- ******************************************************************************/
-// [0, 65535] -> [0.0, 256.0f]
-#define NW4R_MATH_IDX_TO_FIDX(x) ((x) * (1.0f / 256.0f))
-
-// Convert degrees <-> lookup-table index
-#define NW4R_MATH_DEG_TO_FIDX(x) ((x) * (256.0f / 360.0f))
-#define NW4R_MATH_FIDX_TO_DEG(x) ((x) * (360.0f / 256.0f))
-
-// Convert radians <-> lookup-table index
-#define NW4R_MATH_RAD_TO_FIDX(x) ((x) * (128.0f / NW4R_MATH_PI))
-#define NW4R_MATH_FIDX_TO_RAD(x) ((x) * (NW4R_MATH_PI / 128.0f))
-
-// Convert degrees <-> radians
-#define NW4R_MATH_DEG_TO_RAD(x) ((x) * (NW4R_MATH_PI / 180.0f))
-#define NW4R_MATH_RAD_TO_DEG(x) ((x) * (180.0f / NW4R_MATH_PI))
-
-namespace nw4r {
-namespace math {
-
-/******************************************************************************
- *
- * Sin functions
- *
- ******************************************************************************/
-f32 SinFIdx(f32 fidx);
-
-inline f32 SinIdx(u16 idx) {
-    return SinFIdx(NW4R_MATH_IDX_TO_FIDX(U16ToF32(idx)));
-}
-inline f32 SinDeg(f32 deg) {
-    return SinFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline f32 SinRad(f32 rad) {
-    return SinFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Cosine functions
- *
- ******************************************************************************/
-f32 CosFIdx(f32 fidx);
-
-inline f32 CosDeg(f32 deg) {
-    return CosFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline f32 CosRad(f32 rad) {
-    return CosFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Tangent functions
- *
- ******************************************************************************/
-inline f32 TanFIdx(f32 fidx) {
-    return std::tanf(NW4R_MATH_FIDX_TO_RAD(fidx));
-}
-inline f32 TanDeg(f32 deg) {
-    return TanFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline f32 TanRad(f32 rad) {
-    return TanFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Sin & cosine functions
- *
- ******************************************************************************/
-void SinCosFIdx(f32* pSin, f32* pCos, f32 fidx);
-
-inline void SinCosDeg(f32* pSin, f32* pCos, f32 deg) {
-    return SinCosFIdx(pSin, pCos, NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline void SinCosRad(f32* pSin, f32* pCos, f32 rad) {
-    return SinCosFIdx(pSin, pCos, NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Arc-sine functions
- *
- ******************************************************************************/
-
- inline f32 AsinRad(f32 x){
-    bool inRange = x <= 1.0f && x >= -1.0f;
-
-#line 228
-    NW4R_DB_ASSERT_WARN(inRange, "AsinRad: Input is out of the domain.");
-
-    return std::asin(x);
-}
-
-/******************************************************************************
- *
- * Arc-cosine functions
- *
- ******************************************************************************/
-
- inline f32 AcosRad(f32 x){
-    bool inRange = x <= 1.0f && x >= -1.0f;
-
-#line 239
-    NW4R_DB_ASSERT_WARN(inRange, "AcosRad: Input is out of the domain.");
-
-    return std::acos(x);
-}
-
-/******************************************************************************
- *
- * Arc-tangent functions
- *
- ******************************************************************************/
-f32 AtanFIdx(f32 x);
-
-inline f32 AtanDeg(f32 x) {
-    return NW4R_MATH_FIDX_TO_DEG(AtanFIdx(x));
-}
-inline f32 AtanRad(f32 x) {
-    return NW4R_MATH_FIDX_TO_RAD(AtanFIdx(x));
-}
-
-/******************************************************************************
- *
- * Arc-tangent (2-argument) functions
- *
- ******************************************************************************/
-f32 Atan2FIdx(f32 y, f32 x);
-
-inline f32 Atan2Deg(f32 y, f32 x) {
-    return NW4R_MATH_FIDX_TO_DEG(Atan2FIdx(y, x));
-}
-inline f32 Atan2Rad(f32 y, f32 x) {
-    return NW4R_MATH_FIDX_TO_RAD(Atan2FIdx(y, x));
-}
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_triangular.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 7 "revolution/MTX.h" */
-#ifndef RVL_SDK_PUBLIC_MTX_H
-#define RVL_SDK_PUBLIC_MTX_H
+#ifndef RVL_SDK_PUBLIC_SI_H
+#define RVL_SDK_PUBLIC_SI_H
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 6 "revolution/MTX/mtx.h" */
-#ifndef RVL_SDK_MTX_MTX_H
-#define RVL_SDK_MTX_MTX_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtx.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/mtx.h" line 4 "revolution/MTX/mtxtypes.h" */
-#ifndef RVL_SDK_MTX_TYPES_H
-#define RVL_SDK_MTX_TYPES_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtxtypes.h" line 2 "types.h" */
+/* "libs/RVL_SDK/include/revolution/SI.h" line 10 "revolution/SI/SIBios.h" */
+#ifndef RVL_SDK_SI_SIBIOS_H
+#define RVL_SDK_SI_SIBIOS_H
+/* "libs/RVL_SDK/include/revolution/SI/SIBios.h" line 2 "types.h" */
 /* end "types.h" */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef f32 Mtx[3][4];
-typedef f32 Mtx44[4][4];
+typedef enum {
+    SI_CHAN_0,
+    SI_CHAN_1,
+    SI_CHAN_2,
+    SI_CHAN_3,
 
-typedef struct Vec {
-    f32 x, y, z;
-} Vec;
+    SI_MAX_CHAN,
+    SI_CHAN_NONE = -1,
+} SIChannel;
 
-typedef struct Vec2 {
-    f32 x, y;
-} Vec2;
+typedef enum {
+    SI_TYPE_0,
+    SI_TYPE_1,
+    SI_TYPE_2,
+    SI_TYPE_3,
 
-typedef struct Quaternion {
-    f32 x, y, z, w;
-} Quaternion;
+    SI_MAX_TYPE
+} SIType;
 
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef void (*SICallback)(s32 chan, u32 status);
 
-// TODO(kiwi) Create macros for PS/C_ functions
-void PSMTXIdentity(Mtx);
-void PSMTXCopy(const Mtx, Mtx);
-void PSMTXConcat(const Mtx, const Mtx, Mtx);
-void PSMTXConcatArray(const Mtx, const Mtx, Mtx, u32);
-void PSMTXTranspose(const Mtx, Mtx);
-u32 PSMTXInverse(const Mtx, Mtx);
-u32 PSMTXInvXpose(const Mtx, Mtx);
-void PSMTXRotRad(Mtx, char, f32);
-void PSMTXRotTrig(Mtx, f32, f32, char);
-void PSMTXRotAxisRad(Mtx, const Vec*, f32);
-void PSMTXTrans(Mtx, f32, f32, f32);
-void PSMTXTransApply(const Mtx, Mtx, f32, f32, f32);
-void PSMTXScale(Mtx, f32, f32, f32);
-void PSMTXScaleApply(const Mtx, Mtx, f32, f32, f32);
-void PSMTXQuat(Mtx, const Quaternion*);
-
-void C_MTXLookAt(Mtx, const Vec*, const Vec*, const Vec*);
-void C_MTXLightFrustum(Mtx, f32, f32, f32, f32, f32, f32, f32, f32, f32);
-void C_MTXLightPerspective(Mtx, f32, f32, f32, f32, f32, f32);
-void C_MTXLightOrtho(Mtx, f32, f32, f32, f32, f32, f32, f32, f32);
+void SIInit(void);
+u32 SISetXY(u32 lines, u32 times);
+BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
+                SICallback callback, s64 wait);
+u32 SIGetType(s32 chan);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-/* end "revolution/MTX/mtx.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 7 "revolution/MTX/mtx44.h" */
-#ifndef RVL_SDK_MTX_MTX44_H
-#define RVL_SDK_MTX_MTX44_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtx44.h" line 2 "types.h" */
+/* end "revolution/SI/SIBios.h" */
+/* "libs/RVL_SDK/include/revolution/SI.h" line 11 "revolution/SI/SIHardware.h" */
+#ifndef RVL_SDK_SI_HARDWARE_H
+#define RVL_SDK_SI_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/SI/SIHardware.h" line 2 "types.h" */
 /* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/mtx44.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void PSMTX44Copy(Mtx44, Mtx44);
-void C_MTXFrustum(Mtx44 mtx, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);
-void C_MTXPerspective(Mtx44 mtx, f32 fovy, f32 aspect, f32 n, f32 f);
-void C_MTXOrtho(Mtx44 mtx, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);
+/**
+ * SI hardware registers
+ */
+volatile u32 DECL_HW_REGS(SI) DECL_ADDRESS(0xCD006400);
+
+/**
+ * Hardware register indexes
+ */
+typedef enum {
+    SI_SIC0OUTBUF, //!< 0xCD006400
+    SI_SIC0INBUFH, //!< 0xCD006404
+    SI_SIC0INBUFL, //!< 0xCD006408
+    SI_SIC1OUTBUF, //!< 0xCD00640C
+    SI_SIC1INBUFH, //!< 0xCD006410
+    SI_SIC1INBUFL, //!< 0xCD006414
+    SI_SIC2OUTBUF, //!< 0xCD006418
+    SI_SIC2INBUFH, //!< 0xCD00641C
+    SI_SIC2INBUFL, //!< 0xCD006420
+    SI_SIC3OUTBUF, //!< 0xCD006424
+    SI_SIC3INBUFH, //!< 0xCD006428
+    SI_SIC3INBUFL, //!< 0xCD00642C
+    SI_SIPOLL,     //!< 0xCD006430
+    SI_SICOMSCR,   //!< 0xCD006434
+    SI_SISR,       //!< 0xCD006438
+    SI_SIEXILK,    //!< 0xCD00643C
+
+    // SI communication RAM
+    SI_RAM_BASE = (0xCD006480 - 0xCD006400) / sizeof(u32) //!< 0xCD006480
+} SIHwReg;
+
+// SIPOLL - SI Poll Register
+#define SI_SIPOLL_X (0b1111111111 << 16)
+#define SI_SIPOLL_Y (0b11111111 << 8)
+
+// SICOMCSR - SI Communication Control Status Register
+#define SI_SICOMCSR_TCINT (1 << 31)
+#define SI_SICOMCSR_TCINTMSK (1 << 30)
+#define SI_SICOMCSR_COMERR (1 << 29)
+#define SI_SICOMCSR_RDSTINT (1 << 28)
+#define SI_SICOMCSR_RDSTINTMSK (1 << 27)
+#define SI_SICOMCSR_OUTLNGTH (0b1111111 << 16)
+#define SI_SICOMCSR_INLNGTH (0b1111111 << 8)
+#define SI_SICOMCSR_CHANNEL (0b11 << 1)
+#define SI_SICOMCSR_TSTART (1 << 0)
+
+// SISR - SI Status Register
+#define SI_SISR_WR (1 << 31)
+#define SI_SISR_RDST0 (1 << 29)
+#define SI_SISR_WRST0 (1 << 28)
+#define SI_SISR_NOREP0 (1 << 27)
+#define SI_SISR_COLL0 (1 << 26)
+#define SI_SISR_OVRUN0 (1 << 25)
+#define SI_SISR_UNRUN0 (1 << 24)
+#define SI_SISR_RDST1 (1 << 21)
+#define SI_SISR_WRST1 (1 << 20)
+#define SI_SISR_NOREP1 (1 << 19)
+#define SI_SISR_COLL1 (1 << 18)
+#define SI_SISR_OVRUN1 (1 << 17)
+#define SI_SISR_UNRUN1 (1 << 16)
+#define SI_SISR_RDST2 (1 << 13)
+#define SI_SISR_WRST2 (1 << 12)
+#define SI_SISR_NOREP2 (1 << 11)
+#define SI_SISR_COLL2 (1 << 10)
+#define SI_SISR_OVRUN2 (1 << 9)
+#define SI_SISR_UNRUN2 (1 << 8)
+#define SI_SISR_RDST3 (1 << 5)
+#define SI_SISR_WRST3 (1 << 4)
+#define SI_SISR_NOREP3 (1 << 3)
+#define SI_SISR_COLL3 (1 << 2)
+#define SI_SISR_OVRUN3 (1 << 1)
+#define SI_SISR_UNRUN3 (1 << 0)
+
+// SISR flags by channel
+// Ex: (SISR >> ((SI_MAX_CHAN-1) - chan) * 8)
+#define SI_RDST SI_SISR_RDST3
+#define SI_WRST SI_SISR_WRST3
+#define SI_NOREP SI_SISR_NOREP3
+#define SI_COLL SI_SISR_COLL3
+#define SI_OVRUN SI_SISR_OVRUN3
+#define SI_UNRUN SI_SISR_UNRUN3
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-/* end "revolution/MTX/mtx44.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 8 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 9 "revolution/MTX/mtxvec.h" */
-#ifndef RVL_SDK_MTX_MTXVEC_H
-#define RVL_SDK_MTX_MTXVEC_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtxvec.h" line 2 "types.h" */
+/* end "revolution/SI/SIHardware.h" */
+/* "libs/RVL_SDK/include/revolution/SI.h" line 12 "revolution/SI/SISamplingRate.h" */
+#ifndef RVL_SDK_SI_SISAMPLINGRATE_H
+#define RVL_SDK_SI_SISAMPLINGRATE_H
+/* "libs/RVL_SDK/include/revolution/SI/SISamplingRate.h" line 2 "types.h" */
 /* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/mtxvec.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void PSMTXMultVec(const Mtx mtx, const Vec* vec, Vec* out);
-void PSMTXMultVecSR(const Mtx, const Vec*, Vec*);
-void PSMTXMultVecArraySR();
+#define SI_MAX_SAMPLE_RATE 11
+
+void SISetSamplingRate(u32 msec);
+void SIRefreshSamplingRate(void);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-/* end "revolution/MTX/mtxvec.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 10 "revolution/MTX/quat.h" */
-#ifndef RVL_SDK_MTX_QUAT_H
-#define RVL_SDK_MTX_QUAT_H
-/* "libs/RVL_SDK/include/revolution/MTX/quat.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/quat.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-void PSQUATAdd(const Quaternion* a, const Quaternion* b, Quaternion* sum);
-void PSQUATMultiply(const Quaternion* a, const Quaternion* b, Quaternion* prod);
-void PSQUATScale(const Quaternion* in, Quaternion* out, f32 scale);
-f32 PSQUATDotProduct(const Quaternion* a, const Quaternion* b);
-void PSQUATNormalize(const Quaternion* in, Quaternion* out);
-void PSQUATInverse(const Quaternion* in, Quaternion* out);
-void C_QUATMtx(Quaternion* quat, const Mtx mtx);
-void C_QUATLerp(const Quaternion* a, const Quaternion* b, Quaternion* out,
-                f32 t);
-void C_QUATSlerp(const Quaternion* a, const Quaternion* b, Quaternion* out,
-                 f32 t);
+/* end "revolution/SI/SISamplingRate.h" */
 
 #ifdef __cplusplus
 }
 #endif
 #endif
-/* end "revolution/MTX/quat.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 11 "revolution/MTX/vec.h" */
-#ifndef RVL_SDK_MTX_VEC_H
-#define RVL_SDK_MTX_VEC_H
-/* "libs/RVL_SDK/include/revolution/MTX/vec.h" line 2 "types.h" */
-/* end "types.h" */
+/* end "revolution/SI.h" */
 
-/* "libs/RVL_SDK/include/revolution/MTX/vec.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef enum {
+    SI_ERROR_NOREP = (1 << 3),
+    SI_ERROR_BUSY = (1 << 7),
+    SI_WIRELESS_LITE = (1 << 18),
+    SI_WIRELESS_CONT = (1 << 19),
+} SIStatus;
 
-void PSVECAdd(const Vec* a, const Vec* b, Vec* sum);
-void PSVECScale(const Vec* in, Vec* out, f32 scale);
-void PSVECNormalize(const Vec* in, Vec* out);
-f32 PSVECMag(const Vec* v);
-f32 PSVECDotProduct(const Vec* a, const Vec* b);
-void PSVECCrossProduct(const Vec* a, const Vec* b, Vec* prod);
-f32 PSVECSquareDistance(const Vec* a, const Vec* b);
-void C_VECHalfAngle(const Vec* a, const Vec* b, Vec* half);
+typedef struct SIMain {
+    s32 chan;            // at 0x0
+    u32 poll;            // at 0x4
+    u32 inSize;          // at 0x8
+    void* inAddr;        // at 0xC
+    SICallback callback; // at 0x10
+} SIMain;
 
-#ifdef __cplusplus
+typedef struct SIPacket {
+    s32 chan;            // at 0x0
+    void* outAddr;       // at 0x4
+    u32 outSize;         // at 0x8
+    void* inAddr;        // at 0xC
+    u32 inSize;          // at 0x10
+    SICallback callback; // at 0x14
+    s64 fire;            // at 0x18
+} SIPacket;
+
+const char* __SIVersion =
+    "<< RVL_SDK - SI \trelease build: Nov 30 2006 03:31:44 (0x4199_60831) >>";
+
+static SIMain Si = {SI_CHAN_NONE};
+static u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
+                                SI_ERROR_NOREP};
+
+static SIPacket Packet[SI_MAX_CHAN];
+static s64 XferTime[SI_MAX_CHAN];
+static s64 TypeTime[SI_MAX_CHAN];
+static SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
+static BOOL InputBufferValid[SI_MAX_CHAN];
+static u32 InputBuffer[SI_MAX_CHAN][2];
+static OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
+static u32 InputBufferVcount[SI_MAX_CHAN];
+static OSAlarm Alarm[SI_MAX_CHAN];
+
+static void SIClearTCInterrupt(void) {
+    u32 csr = SI_HW_REGS[SI_SICOMSCR];
+
+    csr |= SI_SICOMCSR_TCINT;
+    csr &= ~SI_SICOMCSR_TSTART;
+
+    SI_HW_REGS[SI_SICOMSCR] = csr;
 }
-#endif
-#endif
-/* end "revolution/MTX/vec.h" */
 
-#ifdef __cplusplus
+static u32 CompleteTransfer(void) {
+    u32 i;
+    u32 sr;
+    u8* dst;
+    u32 size;
+    u32 imm;
+
+    sr = SI_HW_REGS[SI_SISR];
+    SIClearTCInterrupt();
+
+    if (Si.chan != SI_CHAN_NONE) {
+        XferTime[Si.chan] = __OSGetSystemTime();
+
+        dst = (u8*)Si.inAddr;
+
+        size = Si.inSize / sizeof(u32);
+        for (i = 0; i < size; dst += sizeof(u32), i++) {
+            *(u32*)dst = SI_HW_REGS[SI_RAM_BASE + i];
+        }
+
+        size = Si.inSize % sizeof(u32);
+        if (size > 0) {
+            imm = SI_HW_REGS[SI_RAM_BASE + i];
+
+            for (i = 0; i < size; dst++, i++) {
+                *dst = imm >> (3 - i) * 8;
+            }
+        }
+
+        if (SI_HW_REGS[SI_SICOMSCR] & SI_SICOMCSR_COMERR) {
+            // Flags relative to channel ID
+            sr >>= ((SI_MAX_CHAN - 1) - Si.chan) * 8;
+            sr &= (SI_UNRUN | SI_OVRUN | SI_COLL | SI_NOREP);
+
+            if ((sr & SI_NOREP) && (Type[Si.chan] & SI_ERROR_BUSY) == 0) {
+                Type[Si.chan] = SI_ERROR_NOREP;
+            }
+
+            if (sr == 0) {
+                sr = SI_COLL;
+            }
+        } else {
+            TypeTime[Si.chan] = __OSGetSystemTime();
+            sr = 0;
+        }
+
+        Si.chan = SI_CHAN_NONE;
+    }
+
+    return sr;
 }
-#endif
-#endif
-/* end "revolution/MTX.h" */
 
-namespace nw4r {
-namespace math {
+// TODO
+static void SIInterruptHandler(s32 intr, OSContext* ctx) {
+    ;
+}
 
-/******************************************************************************
- *
- * VEC2 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _VEC2 {
-    f32 x, y;
-};
+void SIInit(void) {
+    static BOOL Initialized = FALSE;
 
-struct VEC2 : _VEC2 {
-    VEC2() {}
-    VEC2(f32 fx, f32 fy) {
-        x = fx;
-        y = fy;
+    if (Initialized) {
+        return;
     }
 
-    operator f32*() {
-        return reinterpret_cast<f32*>(this);
-    }
-    operator const f32*() const {
-        return reinterpret_cast<const f32*>(this);
+    OSRegisterVersion(__SIVersion);
+
+    Packet[SI_CHAN_0].chan = Packet[SI_CHAN_1].chan = Packet[SI_CHAN_2].chan =
+        Packet[SI_CHAN_3].chan = SI_CHAN_NONE;
+
+    Si.poll = 0;
+    SISetSamplingRate(0);
+
+    while (SI_HW_REGS[SI_SICOMSCR] & SI_SICOMCSR_TSTART) {
+        ;
     }
 
-    VEC2 operator+(const VEC2& rRhs) const {
-        return VEC2(x + rRhs.x, y + rRhs.y);
-    }
-    VEC2 operator-(const VEC2& rRhs) const {
-        return VEC2(x - rRhs.x, y - rRhs.y);
-    }
+    SI_HW_REGS[SI_SICOMSCR] = SI_SICOMCSR_TCINT;
 
-    VEC2& operator+=(const VEC2& rRhs) {
-        x += rRhs.x;
-        y += rRhs.y;
-        return *this;
-    }
-    VEC2& operator-=(const VEC2& rRhs) {
-        x -= rRhs.x;
-        y -= rRhs.y;
-        return *this;
-    }
+    __OSSetInterruptHandler(OS_INTR_PI_SI, SIInterruptHandler);
+    __OSUnmaskInterrupts(OS_INTR_MASK(OS_INTR_PI_SI));
 
-    bool operator==(const VEC2& rRhs) const {
-        return x == rRhs.x && y == rRhs.y;
-    }
-    bool operator!=(const VEC2& rRhs) const {
-        return x != rRhs.x || y != rRhs.y;
-    }
-};
+    SIGetType(SI_CHAN_0);
+    SIGetType(SI_CHAN_1);
+    SIGetType(SI_CHAN_2);
+    SIGetType(SI_CHAN_3);
 
-/******************************************************************************
- *
- * VEC3 structure
- *
- ******************************************************************************/
-// Forward declarations
-struct VEC3;
-VEC3* VEC3Add(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3Sub(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3Scale(VEC3* pOut, const VEC3* pIn, f32 scale);
+    Initialized = TRUE;
+}
 
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _VEC3 {
-    f32 x, y, z;
-};
+static BOOL __SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr,
+                         u32 inSize, SICallback callback) {
+    BOOL enabled;
+    u32 sr;
+    u32 alignSize;
+    u32 i;
 
-struct VEC3 : _VEC3 {
-    VEC3() {}
-    VEC3(f32 fx, f32 fy, f32 fz) {
-        x = fx;
-        y = fy;
-        z = fz;
-    }
-    VEC3(const _VEC3& rVec) {
-        x = rVec.x;
-        y = rVec.y;
-        z = rVec.z;
-    }
-    VEC3(const Vec& rVec) {
-        x = rVec.x;
-        y = rVec.y;
-        z = rVec.z;
-    }
-    VEC3(const f32* pData) {
-        x = pData[0];
-        y = pData[1];
-        z = pData[2];
-    }
-
-    operator Vec*() {
-        return reinterpret_cast<Vec*>(this);
-    }
-    operator const Vec*() const {
-        return reinterpret_cast<const Vec*>(this);
-    }
-
-    f32 LenSq() const {
-        return x * x + y * y + z * z;
-    }
-
-    VEC3 operator-() const {
-        return VEC3(-x, -y, -z);
-    }
-
-    VEC3 operator+(const VEC3& rRhs) const {
-        VEC3 out;
-        VEC3Add(&out, this, &rRhs);
-        return out;
-    }
-    VEC3 operator-(const VEC3& rRhs) const {
-        VEC3 out;
-        VEC3Sub(&out, this, &rRhs);
-        return out;
-    }
-    VEC3 operator*(f32 x) const {
-        VEC3 out;
-        VEC3Scale(&out, this, x);
-        return out;
-    }
-    VEC3 operator/(f32 x) const {
-        f32 r = 1 / x;
-        return *this * r;
-    }
-
-    VEC3& operator+=(const VEC3& rRhs) {
-        VEC3Add(this, this, &rRhs);
-        return *this;
-    }
-    VEC3& operator-=(const VEC3& rRhs) {
-        VEC3Sub(this, this, &rRhs);
-        return *this;
-    }
-    VEC3& operator*=(f32 x) {
-        VEC3Scale(this, this, x);
-        return *this;
-    }
-    VEC3& operator/=(f32 x) {
-        return *this *= (1 / x);
-    }
-
-    bool operator==(const VEC3& rRhs) const {
-        return x == rRhs.x && y == rRhs.y && z == rRhs.z;
-    }
-    bool operator!=(const VEC3& rRhs) const {
-        return x != rRhs.x || y != rRhs.y || z != rRhs.z;
-    }
-};
-
-/******************************************************************************
- *
- * MTX33 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _MTX33 {
     union {
         struct {
-            f32 _00, _01, _02;
-            f32 _10, _11, _12;
-            f32 _20, _21, _22;
+            u32 TCINT : 1;
+            u32 TCINTMSK : 1;
+            u32 COMERR : 1;
+            u32 RDSTINT : 1;
+            u32 RDSTINTMSK : 1;
+            u32 reserved2 : 4;
+            u32 OUTLNGTH : 7;
+            u32 reserved1 : 1;
+            u32 INLNGTH : 7;
+            u32 reserved0 : 5;
+            u32 CHANNEL : 2;
+            u32 TSTART : 1;
         };
 
-        f32 m[3][3];
-        f32 a[3 * 3];
-    };
-};
+        u32 reg;
+    } comscr;
 
-struct MTX33 : _MTX33 {
-    MTX33() {}
-};
+    enabled = OSDisableInterrupts();
 
-/******************************************************************************
- *
- * MTX34 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _MTX34 {
-    union {
-        struct {
-            f32 _00, _01, _02, _03;
-            f32 _10, _11, _12, _13;
-            f32 _20, _21, _22, _23;
-        };
-
-        f32 m[3][4];
-        f32 a[3 * 4];
-        Mtx mtx;
-    };
-};
-
-struct MTX34 : _MTX34 {
-    typedef f32 (*MtxRef)[4];
-    typedef const f32 (*MtxRefConst)[4];
-
-    MTX34() {}
-
-    // clang-format off
-    MTX34(f32 f00, f32 f01, f32 f02, f32 f03,
-          f32 f10, f32 f11, f32 f12, f32 f13,
-          f32 f20, f32 f21, f32 f22, f32 f23) {
-        _00 = f00; _01 = f01; _02 = f02; _03 = f03;
-        _10 = f10; _11 = f11; _12 = f12; _13 = f13;
-        _20 = f20; _21 = f21; _22 = f22; _23 = f23;
-    }
-    // clang-format on
-
-    operator MtxRef() {
-        return mtx;
-    }
-    operator MtxRefConst() const {
-        return mtx;
-    }
-};
-
-/******************************************************************************
- *
- * MTX44 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _MTX44 {
-    union {
-        struct {
-            f32 _00, _01, _02, _03;
-            f32 _10, _11, _12, _13;
-            f32 _20, _21, _22, _23;
-            f32 _30, _31, _32, _33;
-        };
-
-        f32 m[4][4];
-        f32 a[4 * 4];
-        Mtx44 mtx;
-    };
-};
-
-struct MTX44 : _MTX44 {
-    typedef f32 (*Mtx44Ref)[4];
-    typedef const f32 (*Mtx44RefConst)[4];
-
-    MTX44() {}
-
-    operator Mtx44Ref() {
-        return mtx;
-    }
-    operator Mtx44RefConst() const {
-        return mtx;
-    }
-};
-
-/******************************************************************************
- *
- * QUAT structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _QUAT {
-    f32 x, y, z, w;
-};
-
-struct QUAT : _QUAT {
-    QUAT() {}
-    QUAT(f32 fx, f32 fy, f32 fz, f32 fw) {
-        x = fx;
-        y = fy;
-        z = fz;
-        w = fw;
+    if (Si.chan != SI_CHAN_NONE) {
+        OSRestoreInterrupts(enabled);
+        return FALSE;
     }
 
-    // TODO(kiwi) These are not real AFAIK. Do they really manually cast the
-    // QUAT?
-    operator Quaternion*() {
-        return reinterpret_cast<Quaternion*>(this);
-    }
-    operator const Quaternion*() const {
-        return reinterpret_cast<const Quaternion*>(this);
-    }
-};
+    sr = SI_HW_REGS[SI_SISR];
+    sr &= (SI_SISR_UNRUN0 | SI_SISR_OVRUN0 | SI_SISR_COLL0 | SI_SISR_NOREP0) >>
+          (chan * 8);
+    SI_HW_REGS[SI_SISR] = sr;
 
-/******************************************************************************
- *
- * VEC2 functions
- *
- ******************************************************************************/
-inline f32 VEC2Len(const VEC2* pVec) {
-    return FSqrt(pVec->x * pVec->x + pVec->y * pVec->y);
-}
+    Si.chan = chan;
+    Si.callback = callback;
+    Si.inSize = inSize;
+    Si.inAddr = inAddr;
 
-/******************************************************************************
- *
- * VEC3 functions
- *
- ******************************************************************************/
-VEC3* VEC3Maximize(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3Minimize(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3TransformNormal(VEC3* pOut, const MTX34* pMtx, const VEC3* pVec);
-
-inline VEC3* VEC3Add(register VEC3* pOut, register const VEC3* pA,
-                     register const VEC3* pB) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // Add XY
-        psq_l  work0, VEC3.x(pA),   0, 0
-        psq_l  work1, VEC3.x(pB),   0, 0
-        ps_add work2, work0, work1
-        psq_st work2, VEC3.x(pOut), 0, 0
-        
-        // Add Z
-        psq_l  work0, VEC3.z(pA),   1, 0
-        psq_l  work1, VEC3.z(pB),   1, 0
-        ps_add work2, work0, work1
-        psq_st work2, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline f32 VEC3Dot(register const VEC3* pA, register const VEC3* pB) {
-    register f32 dot;
-    register f32 work0, work1, work2, work3;
-
-    ASM (
-        // YZ product
-        psq_l  work0, VEC3.y(pA), 0, 0
-        psq_l  work1, VEC3.y(pB), 0, 0
-        ps_mul work0, work0, work1
-        
-        // X product + YZ product
-        psq_l   work3, VEC3.x(pA), 1, 0
-        psq_l   work2, VEC3.x(pB), 1, 0
-        ps_madd work1, work3, work2, work0
-        
-        // Dot product
-        ps_sum0 dot, work1, work0, work0
-    )
-
-    return dot;
-}
-
-inline f32 VEC3LenSq(register const VEC3* pVec) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // Square XY
-        psq_l  work0, VEC3.x(pVec), 0, 0
-        ps_mul work0, work0, work0
-
-        // Square Z
-        lfs     work1, VEC3.z(pVec)
-        ps_madd work2, work1, work1, work0
-
-        // Sum products
-        ps_sum0 work2, work2, work0, work0
-    )
-
-    return work2;
-}
-
-inline VEC3* VEC3Lerp(register VEC3* pOut, register const VEC3* pVec1,
-                      register const VEC3* pVec2, register f32 t) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // X/Y delta
-        psq_l  work0, VEC3.x(pVec1), 0, 0
-        psq_l  work1, VEC3.x(pVec2), 0, 0
-        ps_sub work2, work1, work0
-        // Scale with time and add to v0
-        ps_madds0 work2, work2, t, work0
-        psq_st    work2, VEC3.x(pOut), 0, 0
-        
-        // Z delta
-        psq_l  work0, VEC3.z(pVec1), 1, 0
-        psq_l  work1, VEC3.z(pVec2), 1, 0
-        ps_sub work2, work1, work0
-        // Scale with time and add to v0
-        ps_madds0 work2, work2, t, work0
-        psq_st    work2, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline VEC3* VEC3Scale(register VEC3* pOut, register const VEC3* pIn,
-                       register f32 scale) {
-    register f32 work0, work1;
-
-    ASM (
-        // Scale XY
-        psq_l    work0, VEC3.x(pIn),  0, 0
-        ps_muls0 work1, work0, scale
-        psq_st   work1, VEC3.x(pOut), 0, 0
-
-        // Scale Z
-        psq_l    work0, VEC3.z(pIn),  1, 0
-        ps_muls0 work1, work0, scale
-        psq_st   work1, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline VEC3* VEC3Sub(register VEC3* pOut, register const VEC3* pA,
-                     register const VEC3* pB) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // Sub XY
-        psq_l  work0, VEC3.x(pA),   0, 0
-        psq_l  work1, VEC3.x(pB),   0, 0
-        ps_sub work2, work0, work1
-        psq_st work2, VEC3.x(pOut), 0, 0
-        
-        // Sub Z
-        psq_l  work0, VEC3.z(pA),   1, 0
-        psq_l  work1, VEC3.z(pB),   1, 0
-        ps_sub work2, work0, work1
-        psq_st work2, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline VEC3* VEC3Cross(VEC3* pOut, const VEC3* pA, const VEC3* pB) {
-    PSVECCrossProduct(*pA, *pB, *pOut);
-    return pOut;
-}
-
-inline f32 VEC3DistSq(const VEC3* pA, const VEC3* pB) {
-    return PSVECSquareDistance(*pA, *pB);
-}
-
-inline f32 VEC3Len(const VEC3* pVec) {
-    return PSVECMag(*pVec);
-}
-
-inline VEC3* VEC3Normalize(VEC3* pOut, const VEC3* pIn) {
-    PSVECNormalize(*pIn, *pOut);
-    return pOut;
-}
-
-inline VEC3* VEC3Transform(VEC3* pOut, const MTX34* pMtx, const VEC3* pVec) {
-    PSMTXMultVec(*pMtx, *pVec, *pOut);
-    return pOut;
-}
-
-inline VEC3* VEC3TransformCoord(VEC3* pOut, const MTX34* pMtx,
-                                const VEC3* pVec) {
-    PSMTXMultVec(*pMtx, *pVec, *pOut);
-    return pOut;
-}
-
-/******************************************************************************
- *
- * MTX33 functions
- *
- ******************************************************************************/
-MTX33* MTX33Identity(MTX33* pMtx);
-
-/******************************************************************************
- *
- * MTX34 functions
- *
- ******************************************************************************/
-MTX33* MTX34ToMTX33(MTX33* pOut, const MTX34* pIn);
-u32 MTX34InvTranspose(MTX33* pOut, const MTX34* pIn);
-MTX34* MTX34Zero(MTX34* pMtx);
-MTX34* MTX34Scale(MTX34* pOut, const MTX34* pIn, const VEC3* pScale);
-MTX34* MTX34Trans(MTX34* pOut, const MTX34* pIn, const VEC3* pTrans);
-MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx);
-MTX34* MTX34RotXYZFIdx(MTX34* pMtx, f32 fx, f32 fy, f32 fz);
-
-inline MTX34* MTX34Copy(MTX34* pOut, const MTX34* pIn) {
-    PSMTXCopy(*pIn, *pOut);
-    return pOut;
-}
-
-inline MTX34* MTX34Identity(MTX34* pMtx) {
-    PSMTXIdentity(*pMtx);
-    return pMtx;
-}
-
-inline u32 MTX34Inv(MTX34* pOut, const MTX34* pIn) {
-    return PSMTXInverse(*pIn, *pOut);
-}
-
-inline u32 MTX34InvTranspose(MTX34* pOut, const MTX34* pIn) {
-    return PSMTXInvXpose(*pIn, *pOut);
-}
-
-inline MTX34* MTX34LookAt(MTX34* pMtx, const VEC3* pPos, const VEC3* pUp,
-                          const VEC3* pTarget) {
-    C_MTXLookAt(*pMtx, *pPos, *pUp, *pTarget);
-    return pMtx;
-}
-
-inline MTX34* MTX34Mult(MTX34* pOut, const MTX34* pA, const MTX34* pB) {
-    PSMTXConcat(*pA, *pB, *pOut);
-    return pOut;
-}
-
-inline MTX34* MTX34MultArray(MTX34* pOut, const MTX34* p1, const MTX34* pSrc,
-                             u32 len) {
-    PSMTXConcatArray(*p1, *pSrc, *pOut, len);
-    return pOut;
-}
-
-inline MTX34* MTX34RotAxisRad(MTX34* pOut, const VEC3* pAxis, f32 frad) {
-    return MTX34RotAxisFIdx(pOut, pAxis, NW4R_MATH_RAD_TO_FIDX(frad));
-}
-
-inline MTX34* MTX34RotXYZDeg(MTX34* pMtx, f32 dx, f32 dy, f32 dz) {
-    return MTX34RotXYZFIdx(pMtx, NW4R_MATH_DEG_TO_FIDX(dx),
-                           NW4R_MATH_DEG_TO_FIDX(dy),
-                           NW4R_MATH_DEG_TO_FIDX(dz));
-}
-
-inline MTX34* MTX34RotXYZRad(MTX34* pMtx, f32 rx, f32 ry, f32 rz) {
-    return MTX34RotXYZFIdx(pMtx, NW4R_MATH_RAD_TO_FIDX(rx),
-                           NW4R_MATH_RAD_TO_FIDX(ry),
-                           NW4R_MATH_RAD_TO_FIDX(rz));
-}
-
-inline MTX34* MTX34Scale(MTX34* pOut, const VEC3* pScale, const MTX34* pIn) {
-    PSMTXScaleApply(*pIn, *pOut, pScale->x, pScale->y, pScale->z);
-    return pOut;
-}
-
-inline QUAT* MTX34ToQUAT(QUAT* pQuat, const MTX34* pMtx) {
-    C_QUATMtx(*pQuat, *pMtx);
-    return pQuat;
-}
-
-inline MTX34* MTX34Trans(MTX34* pOut, const VEC3* pTrans, const MTX34* pIn) {
-    PSMTXTransApply(*pIn, *pOut, pTrans->x, pTrans->y, pTrans->z);
-    return pOut;
-}
-
-/******************************************************************************
- *
- * MTX44 functions
- *
- ******************************************************************************/
-MTX44* MTX44Identity(MTX44* pMtx);
-MTX44* MTX44Copy(MTX44* pDst, const MTX44* pSrc);
-
-/******************************************************************************
- *
- * QUAT functions
- *
- ******************************************************************************/
-inline MTX34* QUATToMTX34(MTX34* pMtx, const QUAT* pQuat) {
-    PSMTXQuat(*pMtx, *pQuat);
-    return pMtx;
-}
-
-// @bug QUATSlerp macro changes this function name!
-inline QUAT* C_QUATSlerp(QUAT* pOut, const QUAT* p1, const QUAT* p2, f32 t) {
-    ::C_QUATSlerp(*p1, *p2, *pOut, t);
-    return pOut;
-}
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_types.h" */
-
-namespace nw4r {
-namespace math {
-
-// Forward declarations
-struct AABB;
-
-enum IntersectionResult {
-    INTERSECTION_NONE,
-    INTERSECTION_1,
-    INTERSECTION_2,
-
-    INTERSECTION_LINE3_ON_PLANE = INTERSECTION_2,
-    INTERSECTION_RAY3_ON_PLANE = INTERSECTION_2,
-    INTERSECTION_SEGMENT3_ON_PLANE = INTERSECTION_2,
-
-    INTERSECTION_OUTSIDE = 0,
-    INTERSECTION_INSIDE,
-    INTERSECTION_INTERSECT
-};
-
-bool IntersectionAABB(const AABB* pA, const AABB* pB);
-
-/******************************************************************************
- *
- * Plane
- *
- ******************************************************************************/
-struct PLANE {
-    PLANE() {}
-
-    f32 Test(const VEC3& rPoint) const {
-        return d + VEC3Dot(&n, &rPoint);
+    alignSize = (outSize + 3) / 4;
+    for (i = 0; i < alignSize; i++) {
+        SI_HW_REGS[SI_RAM_BASE + i] = ((u32*)outAddr)[i];
     }
 
-    void Set(const VEC3* p0, const VEC3* p1, const VEC3* p2);
-
-    VEC3 n; // at 0x0
-    f32 d;  // at 0xC
-};
-
-/******************************************************************************
- *
- * Axis-aligned bounding box
- *
- ******************************************************************************/
-struct AABB {
-    AABB() {}
-
-    void Set(const VEC3* pPoints, unsigned int num);
-    void Set(const AABB* pBox, const MTX34* pMtx);
-
-    VEC3 min; // at 0x0
-    VEC3 max; // at 0xC
-};
-
-/******************************************************************************
- *
- * Frustum
- *
- ******************************************************************************/
-class FRUSTUM {
-private:
-    enum Point {
-        POINT_NEAR_TL,
-        POINT_NEAR_TR,
-        POINT_NEAR_BR,
-        POINT_NEAR_BL,
-
-        POINT_FAR_TL,
-        POINT_FAR_TR,
-        POINT_FAR_BR,
-        POINT_FAR_BL,
-
-        POINT_MAX
-    };
-
-    enum Plane {
-        PLANE_L,
-        PLANE_R,
-        PLANE_N,
-        PLANE_F,
-        PLANE_T,
-        PLANE_B,
-
-        PLANE_MAX
-    };
-
-public:
-    void Set(f32 fovy, f32 aspect, f32 n, f32 f, const MTX34& rCamMtx);
-    void Set(f32 t, f32 b, f32 l, f32 r, f32 n, f32 f, const MTX34& rCamMtx);
-
-    IntersectionResult IntersectAABB_Ex(const AABB* pBox) const;
-
-private:
-    MTX34 mCamMtx;            // at 0x0
-    PLANE mPlaneL;            // at 0x30
-    PLANE mPlaneR;            // at 0x40
-    PLANE mPlaneT;            // at 0x50
-    PLANE mPlaneB;            // at 0x60
-    f32 mNearZ;               // at 0x70
-    f32 mFarZ;                // at 0x74
-    AABB mBox;                // at 0x78
-    PLANE mPlanes[PLANE_MAX]; // at 0x90
-};
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_geometry.h" */
-/* "libs/nw4r/include/nw4r/math.h" line 5 "nw4r/math/math_triangular.h" */
-/* end "nw4r/math/math_triangular.h" */
-/* "libs/nw4r/include/nw4r/math.h" line 6 "nw4r/math/math_types.h" */
-/* end "nw4r/math/math_types.h" */
-
-#endif
-/* end "nw4r/math.h" */
-
-#define PI 3.14159265f
-#define DEG2RAD(x) ((x)*(PI/180.0f))
-
-//Utility math functions
-namespace ml{
-    namespace math{
-
-    inline float abs(float x){
-        return (double)nw4r::math::FAbs(x);
-    }
-
-    inline float sqrt(float x){
-        return nw4r::math::FSqrt(x);
-    }
-
-    inline float clamp(float x, float min, float max) {
-        if (x < min) x = min;
-        else if(x > max) x = max;
-        return x;
-    }
-
-    inline float sin(float x){
-        return nw4r::math::SinRad(x);
-    }
-
-    inline float cos(float x){
-        return nw4r::math::CosRad(x);
-    }
-
-    inline void sincos(float x, float& sinX, float& cosX){
-        sinX = sin(x);
-        cosX = cos(x);
-    }
-
-    inline float asin(float x){
-        x = clamp(x, -1.0f, 1.0f);
-        return nw4r::math::AsinRad(x);
-    }
-
-    inline float acos(float x){
-        x = clamp(x, -1.0f, 1.0f);
-        return nw4r::math::AcosRad(x);
-    }
-
-    inline float atan2(float y, float x){
-        return nw4r::math::Atan2FIdx(y, x);
-    }
-
-    inline float atan2Deg(float y, float x){
-        return nw4r::math::Atan2Deg(y, x);
-    }
-
-    inline float atan2Rad(float y, float x){
-        return nw4r::math::Atan2Rad(y, x);
-    }
-
-    inline float dot(const float* vec){
-        return vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
-    }
-
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 3 "monolib/math/MathConstants.hpp" */
-#pragma once
-
-namespace ml{
-    //General math constants
-    extern const float pi;
-    extern const float tau;
-    extern const float halfpi;
-    extern const float quarterpi;
-    extern const float epsilon;
-    extern const float rad2deg;
-    extern const float deg2rad;
-    extern const float huge;
-    extern const float hugeminus;
-} //namespace ml
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    //Possibly inherits from nw4r VEC3?
-    struct CVec3 {
-        static CVec3 zero;
-        static CVec3 unitX;
-        static CVec3 unitY;
-        static CVec3 unitZ;
-        static CVec3 unit;
-
-        CVec3(){}
-
-        CVec3(float x, float y, float z){
-            set(x, y, z);
-        }
-
-        CVec3(const CVec3& vec){
-            set(vec.x, vec.y, vec.z);
-        }
-
-        //Conversion functions for converting to the SDK/NW4R vector types.
-        operator Vec*(){
-            return reinterpret_cast<Vec*>(this);
-        }
-
-        operator const Vec*() const {
-            return reinterpret_cast<const Vec*>(this);
-        }
-
-        operator nw4r::math::VEC3*(){
-            return reinterpret_cast<nw4r::math::VEC3*>(this);
-        }
-
-        operator const nw4r::math::VEC3*() const {
-            return reinterpret_cast<const nw4r::math::VEC3*>(this);
-        }
-
-        void set(float x, float y, float z){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-        }
-
-        void set(const CVec3& vec){
-            x = vec.x;
-            y = vec.y;
-            z = vec.z;
-        }
-
-        void setZero(){
-            *this = zero;
-        }
-        
-        CVec3 operator-() const {
-            return CVec3(-x, -y, -z);
-        }
-
-        CVec3 operator+(const CVec3& rhs) const {
-            CVec3 out;
-            //add(out, *this, rhs);
-            nw4r::math::VEC3Add(out, *this, rhs);
-            return out;
-        }
-        CVec3 operator-(const CVec3& rhs) const {
-            CVec3 out;
-            sub(out, *this, rhs);
-            //nw4r::math::VEC3Sub(out, *this, rhs);
-            return out;
-        }
-        CVec3 operator*(float x) const {
-            CVec3 out;
-            scale(out, *this, x);
-            return out;
-        }
-        CVec3 operator/(float x) const {
-            float r = 1/x;
-            return *this * r;
-        }
-
-        CVec3& operator+=(const CVec3& rhs) {
-            add(*this, *this, rhs);
-            return *this;
-        }
-        CVec3& operator-=(const CVec3& rhs) {
-            sub(*this, *this, rhs);
-            return *this;
-        }
-        CVec3& operator*=(float x) {
-            scale(*this, *this, x);
-            return *this;
-        }
-        CVec3& operator/=(float x) {
-            return *this *= (1/x);
-        }
-
-        bool operator==(const CVec3& vec) const {
-            return x == vec.x && y == vec.y && z == vec.z;
-        }
-
-        bool operator!=(const CVec3& vec) const {
-            return x != vec.x || y != vec.y || z != vec.z;
-        }
-
-        void normalize(){
-            if(!isZero()) {
-                normalizeSub();
-            }else{
-                set(0,0,1);
-            }
-        }
-
-        //Unofficial
-        void normalizeSub(){
-            if(x*x + y*y + z*z == 0.0f){
-                setZero();
-            }else {
-                PSVECNormalize(*this,*this);
-            }
-        }
-        
-        //Unofficial
-        float magnitude() const {
-            return x*x + y*y + z*z;
-        }
-
-        float getLength() const {
-            return math::sqrt(magnitude());
-        }
-
-        bool isZero() const {
-            //TODO: this can't be it, right???
-            bool result = false;
-            bool temp = false;
-            if(math::abs(x) <= epsilon && math::abs(y) <= epsilon){
-                temp = true;
-            }
-            if(temp && math::abs(z) <= epsilon) result = true;
-            return result;
-        }
-
-        bool isErr() const;
-
-        //TODO: properly figure out these asm inlines
-
-        static float dot(const CVec3& lhs, const CVec3& rhs) {
-            return nw4r::math::VEC3Dot(lhs, rhs);
-        }
-        
-        static void add(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Add(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-
-        static void sub(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Sub(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-
-        static void scale(CVec3& outVec, const CVec3& vec, float scale){
-            CVec3 temp;
-            nw4r::math::VEC3Scale(temp, vec, scale);
-            outVec.set(temp);
-        }
-
-        static void cross(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Cross(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-        
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-            float z;
-        };
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 4 "monolib/math/CMat34.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 3 "monolib/math/CQuat.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 3 "monolib/math/MathConstants.hpp" */
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 4 "monolib/math/Utility.hpp" */
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 5 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CQuat{
-        CQuat(){}
-
-        CQuat(float x, float y, float z, float w){
-            set(x,y,z,w);
-        }
-
-        operator Quaternion*(){
-            return reinterpret_cast<Quaternion*>(this);
-        }
-
-        operator const Quaternion*() const{
-            return reinterpret_cast<const Quaternion*>(this);
-        }
-
-        CQuat& operator*=(const CQuat& other){
-            PSQUATMultiply(*this, other, *this);
-            return *this;
-        }
-
-        inline void set(float x, float y, float z, float w){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            this->w = w;
-        }
-
-        inline void setIdentity(){
-            set(0,0,0,1);
-        }
-  
-        //Sets the quaternion from the given euler angle, following the 3-2-1 conversion.
-        inline void setRotXYZ(const CVec3* angle){
-            float x = angle->x * 0.5f;
-            float y = angle->y * 0.5f;
-            float z = angle->z * 0.5f;
-            float sinX = math::sin(x);
-            float cosX = math::cos(x);
-            float sinY = math::sin(y);
-            float cosY = math::cos(y);
-            float sinZ = math::sin(z);
-            float cosZ = math::cos(z);
-
-            this->x = cosZ*(sinX*cosY) - sinZ*(cosX*sinY);
-            this->y = cosZ*(cosX*sinY) + sinZ*(sinX*cosY);
-            this->z = sinZ*(cosX*cosY) - cosZ*(sinX*sinY);
-            this->w = cosZ*(cosX*cosY) + sinZ*(sinX*sinY);
-        }
-
-        //Converts this quaternion to euler angles, storing the result in the given vector.
-        inline void getRotXYZ(CVec3* result) const {
-            //So many variables :p
-            float twoX = x + x;
-            float twoY = y + y;
-            float twoZ = z + z;
-
-            float twoXZ = x * twoZ;
-            float twoYW = w * twoY;
-
-            //NOTE: Unnecessary clamp
-            float input = -(twoXZ - twoYW);
-            if(input >= 1) input = 1;
-            else if(input <= -1) input = -1;
-            //y = asin(-(2xz - 2yw))
-            float angle = math::asin(input);
-            result->y = angle;
-
-            float twoX2 = x * twoX;
-            float twoXY = x * twoY;
-            float twoZ2 = z * twoZ;
-            float twoZW = w * twoZ;
-                    
-            if (angle < halfpi) {
-                if (angle > -halfpi) {
-                    //-pi/2 < angle < pi/2
-                    float twoY2 = y * twoY;
-                    float twoYZ = y * twoZ;
-                    float twoXW = w * twoX;
-                    //x = atan2(2yz + 2xw, 1 - (2x^2 + 2y^2))
-                    result->x = math::atan2Rad(twoYZ + twoXW, 1.0f - (twoX2 + twoY2));
-                    //z = atan2(2xy + 2zw, 1 - (2y^2 + 2z^2))
-                    result->z = math::atan2Rad(twoXY + twoZW, 1.0f - (twoY2 + twoZ2));
-                }else{
-                    //angle > pi/2
-                    //x = -atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
-                    result->x = -math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
-                    result->z = 0;
-                }
-            }else{
-                //angle < -pi/2
-                //x = atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
-                result->x = math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
-                result->z = 0;
-            }
-        }
-
-        static void slerp(CQuat& outQuat, const CQuat& a, const CQuat& b, float t);
-        void setRotZXY(const CVec3* angle);
-        void getRotZXY(CVec3* result) const;
-
-
-        struct{
-        float x;
-        float y;
-        float z;
-        float w;
-        };
-
-        static CQuat zero;
-        static CQuat identity;
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CQuat.hpp" */
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat34{
-        CMat34(){}
-
-        CMat34(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23){
-            set(
-                m00,m01,m02,m03,
-                m10,m11,m12,m13,
-                m20,m21,m22,m23
-            );
-        }
-
-        void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[0][3] = m03;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[1][3] = m13;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-            m[2][3] = m23;
-        }
-
-        operator nw4r::math::MTX34*(){
-            return reinterpret_cast<nw4r::math::MTX34*>(this);
-        }
-
-        operator const nw4r::math::MTX34*() const {
-            return reinterpret_cast<const nw4r::math::MTX34*>(this);
-        }
-
-        //TODO: can this be included without interfering with the above operators?
-        /*
-        operator Mtx*(){
-            return &m;
-        }
-
-        operator const Mtx*() const {
-            return &m;
-        }
-        */
-
-        CMat34 operator*(CMat34& rhs) const {
-            CMat34 mat;
-            mul(mat, *this, rhs);
-            return mat;
-        }
-
-        void mul(CVec3& outVec, const CVec3& vec) const {
-            PSMTXMultVec(mtx, vec, outVec);
-        }
-
-
-        static void mul(CMat34& outMat, const CMat34& mat1, const CMat34& mat2){
-            PSMTXConcat(mat2.mtx, mat1.mtx, outMat.mtx);
-        }
-
-        void setUnit(){
-            PSMTXIdentity(mtx);
-        }
-
-        void setScale(float x, float y, float z){
-            set(
-                x, 0, 0, 0,
-                0, y, 0, 0,
-                0, 0, z, 0
-            );
-        }
-
-        void setScale(const CVec3& scale){
-            setScale(scale.x, scale.y, scale.z);
-        }
-
-        void setRotX(float x){
-            float sinX, cosX;
-            math::sincos(x, sinX, cosX);
-
-            set(
-            1, 0,    0,     0,
-            0, cosX, -sinX, 0,
-            0, sinX, cosX,  0
-            );
-        }
-
-        void setRotY(float y){
-            float sinY, cosY;
-            math::sincos(y, sinY, cosY);
-
-            set(
-            cosY,  0, sinY, 0,
-            0,     1, 0,    0,
-            -sinY, 0, cosY, 0
-            );
-        }
-
-        void setRotZ(float z){
-            float sinZ, cosZ;
-            math::sincos(z, sinZ, cosZ);
-
-            set(
-            cosZ, -sinZ, 0, 0,
-            sinZ, cosZ,  0, 0,
-            0,    0,     1, 0
-            );
-        }
-
-        void addRotX(float x){
-            CMat34 mat;
-            mat.setRotX(x);
-            mul(*this, *this, mat);
-        }
-
-        void addRotY(float y){
-            CMat34 mat;
-            mat.setRotY(y);
-            mul(*this, *this, mat);
-        }
-
-        void addRotZ(float z){
-            CMat34 mat;
-            mat.setRotZ(z);
-            mul(*this, *this, mat);
-        }
-
-        void getRotQuat(CQuat& quat) const{
-            CQuat temp;
-            C_QUATMtx(temp, mtx);
-            quat = temp;
-        }
-
-        void setRotQuat(const CQuat& quat){
-            PSMTXQuat(mtx, quat);
-        }
-
-        void setRotXYZ(const CVec3& angle){
-            nw4r::math::MTX34RotXYZRad(*this, angle.x, angle.y, angle.z);
-        }
-
-        void setRotZXY(const CVec3& angle){
-            setRotZ(angle.z);
-            addRotX(angle.x);
-            addRotY(angle.y);
-        }
-
-        void invert(CMat34* outMat){
-            PSMTXInverse(mtx, outMat->mtx);
-        }
-
-        CVec3 getTranslation(){
-            return CVec3(m[0][3], m[1][3], m[2][3]);
-        }
-
-        void addTranslation(const CVec3& vec){
-            m[0][3] += vec.x;
-            m[1][3] += vec.y;
-            m[2][3] += vec.z;
-        }
-
-
-        void replaceTranslation(const CVec3& vec){
-            m[0][3] = vec.x;
-            m[1][3] = vec.y;
-            m[2][3] = vec.z;
-        }
-
-        void getRotAxis(CVec3& vec, float* outAngle) const;
-        bool getRotXYZ(CVec3& vec) const;
-        bool getRotZXY(CVec3& vec) const;
-        bool getRotZYX(CVec3& vec) const;
-
-        union {
-            float m[3][4];
-            Mtx mtx;
-        };
-
-        static CMat34 zero;
-        static CMat34 identity;
-    };
-} //namespace ml
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 5 "monolib/math/CQuat.hpp" */
-/* end "monolib/math/CQuat.hpp" */
-
-namespace ml{
-    struct CAttrTransform{
-        enum Flags{
-            FLAG_0 = 1 << 0,
-            FLAG_1 = 1 << 1,
-            FLAG_2 = 1 << 2,
-            FLAG_USE_ZXY = 1 << 3
-        };
-
-        CAttrTransform(){
-            clear();
-        }
-
-        void clear();
-        void update();
-
-        CVec3 mPos; //0x0
-        CVec3 mRot; //0xC
-        CMat34 mMtx1; //0x18
-        CMat34 mLocalMat; //0x48
-        CMat34 mLocalMatInv; //0x78
-        CQuat unkA8;
-        CVec3 mPrevPos; //0xB8
-        CVec3 mPrevRot; //0xC4
-        CQuat mLocalQuat; //0xD0
-        u32 mFlags; //0xE0
-    };
-} //namespace ml
-/* end "monolib/math/CAttrTransform.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 3 "monolib/math/CCamUtil.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CCamUtil.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-
-namespace ml {
-    struct CCamUtil {
-        static void getXYZ2ZXY(CVec3& outVec, const CVec3& vec);
-    };
-} //namespace ml
-/* end "monolib/math/CCamUtil.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 4 "monolib/math/CCol3.hpp" */
-#pragma once
-
-namespace ml {
-    struct CCol3{
-        CCol3(){}
-        CCol3(float r, float g, float b){
-            set(r, g, b);
-        }
-
-        void set(float r, float g, float b){
-            this->r = r;
-            this->g = g;
-            this->b = b;
-        }
-
-        void clamp(float min, float max){
-            if(r > max) r = max;
-            else if(r < min) r = min;
-            if(g > max) g = max;
-            else if(g < min) g = min;
-            if(b > max) b = max;
-            else if(b < min) b = min;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float r;
-            float g;
-            float b;
-        };
-
-        static CCol3 white;
-        static CCol3 gray;
-        static CCol3 black;
-        static CCol3 red;
-        static CCol3 green;
-        static CCol3 blue;
-        static CCol3 yellow;
-        static CCol3 cyan;
-        static CCol3 magenta;
-        static CCol3 salmon;
-        static CCol3 orange;
-    };
-} //namespace ml
-/* end "monolib/math/CCol3.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 5 "monolib/math/CCol4.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CCol4.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-
-#define COLOR_TO_U32(r, g, b, a) (((u8)(255 * r) << 24) | ((u8)(255 * g) << 16) | ((u8)(255 * b) << 8) | (u8)(255 * a))
-
-namespace ml {
-    
-    struct CCol4{
-        CCol4(){}
-        CCol4(float r, float g, float b, float a){
-            set(r,g,b,a);
-        }
-
-        void set(float r, float g, float b, float a){
-            this->r = r;
-            this->g = g;
-            this->b = b;
-            this->a = a;
-        }
-
-        void clamp(float min, float max){
-            if(r > max) r = max;
-            else if(r < min) r = min;
-            if(g > max) g = max;
-            else if(g < min) g = min;
-            if(b > max) b = max;
-            else if(b < min) b = min;
-            if(a > max) a = max;
-            else if(a < min) a = min;
-        }
-
-        u32 toU32() const {
-            return COLOR_TO_U32(r, g, b, a);
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float r;
-            float g;
-            float b;
-            float a;
-        };
-
-        static CCol4 white;
-        static CCol4 gray;
-        static CCol4 black;
-        static CCol4 red;
-        static CCol4 green;
-        static CCol4 blue;
-        static CCol4 yellow;
-        static CCol4 cyan;
-        static CCol4 magenta;
-        static CCol4 salmon;
-        static CCol4 orange;
-        static CCol4 zero;
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CCol4.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 6 "monolib/math/CFrustum.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 3 "monolib/math/CMat34.hpp" */
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 4 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 5 "monolib/math/CPlane.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CPlane.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-
-namespace ml {
-    struct CPlane {
-        CPlane(){
-        }
-        CPlane(const CVec3& pos, const CVec3& p1, const CVec3& p2){
-            set(pos, p1, p2);
-        }
-
-        CPlane* set(const CVec3& pos, const CVec3& p1, const CVec3& p2);
-        static void getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir);
-
-        void normalize(){
-            mNormal.normalizeSub();
-        }
-
-        CVec3 convertRayToNormal(const CVec3& rayStartPos, const CVec3& rayEndPos) const {
-            CVec3 normal = rayEndPos - rayStartPos;
-            normal.normalizeSub();
-            return normal;
-        }
-
-        //Sets this plane from the given ray start/end position.
-        void set(const CVec3& rayStartPos, const CVec3& rayEndPos){
-            mNormal = convertRayToNormal(rayStartPos, rayEndPos);
-            mDist = -CVec3::dot(rayStartPos, mNormal);
-        }
-
-        float getPointDistance(const CVec3& pos) const {
-            return CVec3::dot(pos, mNormal) + mDist;
-        }
-        
-        bool isWithinDistance(const CVec3& vec, float distance) const {
-            if(getPointDistance(vec) < distance) return true;
-            else return false;
-        }
-
-        bool isOnNegativeSide(const CVec3& vec) const {
-            if(getPointDistance(vec) < 0) return true;
-            else return false;
-        }
-
-        bool isOnPositiveSide(const CVec3& vec) const {
-            if(getPointDistance(vec) >= 0) return true;
-            else return false;
-        }
-
-        //Determines if the points are on different sides of the plane.
-        bool isDifferentSide(const CVec3& vec1, const CVec3& vec2) const {
-            float f0 = getPointDistance(vec2);
-            float f1 = getPointDistance(vec1);
-            
-            bool r3 = f1 >= 0;
-            bool r0 = f0 >= 0;
-            //TODO: is this some weird inline for calculating if only one of two conditions are true?
-            return r3 ^ r0;
-        }
-
-        CVec3 mNormal; //0x0
-        float mDist; //0x4
-    };
-
-} //namespace ml
-/* end "monolib/math/CPlane.hpp" */
-
-//TODO: idk if this belongs here in monolib or in the scene code. There's no evidence of it in XCX
-namespace ml{
-
-    struct CFrustum{
-        u8 unk0[0xCC];
-        ml::CMat34 unkCC;
-        u8 unkFC[0x10];
-        ml::CVec3 unk10C;
-        u8 unk118[0x258 - 0x118];
-        ml::CPlane unk248[6];
-    };
-
-} //namespace ml
-/* end "monolib/math/CFrustum.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 7 "monolib/math/CMat33.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 3 "monolib/math/Utility.hpp" */
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat33{
-        CMat33(){}
-
-        CMat33(float m00, float m01, float m02,
-        float m10, float m11, float m12,
-        float m20, float m21, float m22){
-            set(m00, m01, m02, m10, m11, m12, m20, m21, m22);
-        }
-
-        void set(float m00, float m01, float m02,
-        float m10, float m11, float m12,
-        float m20, float m21, float m22){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-        }
-
-        void setRotXYZ(const CVec3& angle){
-            float sinX = math::sin(angle.x);
-            float cosX = math::cos(angle.x);
-            float sinY = math::sin(angle.y);
-            float cosY = math::cos(angle.y);
-            float sinZ = math::sin(angle.z);
-            float cosZ = math::cos(angle.z);
-
-            set(
-            cosY*cosZ, sinX*sinY*cosZ - cosX*sinZ, cosX*sinY*cosZ + sinX*sinZ,
-            cosY*sinZ, sinX*sinY*sinZ + cosX*cosZ, cosX*sinY*sinZ - sinX*cosZ,
-            -sinY,     sinX*cosY,                  cosX*cosY
-            );
-        }
-
-        void getRotZXY(CVec3& outVec){
-            float angle = math::asin(-m[1][2]);
-            outVec.x = angle;
-
-            if(angle < halfpi){
-                if(angle > -halfpi){
-                    //-pi/2 < angle < pi/2
-                    outVec.z = math::atan2Rad(m[1][0], m[1][1]);
-                    outVec.y = math::atan2Rad(m[0][2], m[2][2]);
-                }else{
-                    //angle < -pi/2
-                    outVec.z = -math::atan2Rad(m[2][0], m[0][0]);
-                    outVec.y = 0;
-                }
-            }else{
-                //angle > pi/2
-                outVec.z = math::atan2Rad(m[2][0], m[0][0]);
-                outVec.y = 0;
-            }
-        }
-
-        float m[3][3];
-    };
-} //namespace ml
-/* end "monolib/math/CMat33.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 8 "monolib/math/CMat34.hpp" */
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 9 "monolib/math/CMat44.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat44.hpp" line 2 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat44{
-        CMat44(){}
-
-        CMat44(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[0][3] = m03;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[1][3] = m13;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-            m[2][3] = m23;
-            m[3][0] = m30;
-            m[3][1] = m31;
-            m[3][2] = m32;
-            m[3][3] = m33;
-        }
-
-        union {
-            float m[4][4];
-            Mtx44 mtx;
-        };
-    
-        static CMat44 zero;
-        static CMat44 identity;
-    };
-} //namespace ml
-/* end "monolib/math/CMat44.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 10 "monolib/math/CPlane.hpp" */
-/* end "monolib/math/CPlane.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 11 "monolib/math/CPnt16.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CPnt16.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace ml {
-    struct CPnt16{
-        CPnt16(){}
-
-        CPnt16(s16 x, s16 y){
-            set(x,y);
-        }
-
-        void set(s16 x, s16 y){
-            this->x = x;
-            this->y = y;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lhz/sth. */
-        struct{
-            s16 x;
-            s16 y;
-        };
-    };
-} //namespace ml
-/* end "monolib/math/CPnt16.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 12 "monolib/math/CQuat.hpp" */
-/* end "monolib/math/CQuat.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 13 "monolib/math/CRect16.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CRect16.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CRect16.hpp" line 3 "monolib/math/CPnt16.hpp" */
-/* end "monolib/math/CPnt16.hpp" */
-
-namespace ml {
-    struct CRect16 {
-        CRect16(){
-        }
-    
-        CRect16(s16 x, s16 y, s16 width, s16 height){
-            set(x, y, width, height);
-        }
-
-        CRect16(const CPnt16& pos, const CPnt16& size){
-            set(pos, size);
-        }
-
-        void set(s16 x, s16 y, s16 width, s16 height){
-            mPos.x = x;
-            mPos.y = y;
-            mSize.x = width;
-            mSize.y = height;
-        }
-
-        void set(const CPnt16& pos, const CPnt16& size){
-            mPos.x = pos.x;
-            mPos.y = pos.y;
-            mSize.x = size.x;
-            mSize.y = size.y;
-        }
-    
-        bool isInside(const CPnt16& point) const;
-
-        CPnt16 mPos; //0x0
-        CPnt16 mSize; //0x4
-    };
-} //namespace ml
-/* end "monolib/math/CRect16.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 14 "monolib/math/CVec2.hpp" */
-#pragma once
-
-/* Not known to be used yet, but it's here anyways just in case they did end up using it (it exists
-in XCX, so it probably at least existed). It also doesn't hurt to have anyway for modding and stuff. */
-namespace ml {
-    struct CVec2 {
-
-        CVec2(){}
-
-        CVec2(float x, float y){
-            set(x, y);
-        }
-
-        CVec2(const CVec2& vec){
-            set(vec.x, vec.y);
-        }
-
-        void set(float x, float y){
-            this->x = x;
-            this->y = y;
-        }
-
-        void set(const CVec2& vec){
-            x = vec.x;
-            y = vec.y;
-        }
-
-        bool operator==(const CVec2& vec) const {
-            return x == vec.x && y == vec.y;
-        }
-
-        bool operator!=(const CVec2& vec) const {
-            return x != vec.x || y != vec.y;
-        }
-        
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-        };
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CVec2.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 15 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 16 "monolib/math/CVec4.hpp" */
-#pragma once
-
-namespace ml {
-    struct CVec4{
-        static CVec4 zero;
-        static CVec4 unitX;
-        static CVec4 unitY;
-        static CVec4 unitZ;
-        static CVec4 unit;
-
-        CVec4() {}
-
-        CVec4(float x, float y, float z, float w){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            this->w = w;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-            float z;
-            float w;
-        };
-
-    };
-} //namespace ml
-/* end "monolib/math/CVec4.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 17 "monolib/math/Main.hpp" */
-#pragma once
-
-namespace ml{
-    namespace math{
-        void initialize();
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Main.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 18 "monolib/math/FloatUtils.hpp" */
-#pragma once
-
-#define FLOAT_LARGE 1e14f
-#define FLOAT_SMALL -1e14f
-#define FLOAT_MAX_HEX 0xD3D3D3D3
-#define FLOAT_MAX_HEX_NEG 0xF3F3F3F3
-#define FLOAT_NAN 0xFFFFFFFF
-#define FLOAT_TO_HEX(f) (*(u32*)&f)
-
-namespace ml{
-    namespace math{
-        bool isErrFloat(float f);
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/FloatUtils.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 19 "monolib/math/MathConstants.hpp" */
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 20 "monolib/math/MTRand.hpp" */
-//Original copyright comments:
-
-// Mersenne Twister random number generator -- a C++ class MTRand
-// Based on code by Makoto Matsumoto, Takuji Nishimura, and Shawn Cokus
-// Richard J. Wagner  v1.1  28 September 2009  wagnerr@umich.edu
-
-// The Mersenne Twister is an algorithm for generating random numbers.  It
-// was designed with consideration of the flaws in various other generators.
-// The period, 2^19937-1, and the order of equidistribution, 623 dimensions,
-// are far greater.  The generator is also fast; it avoids multiplication and
-// division, and it benefits from caches and pipelines.  For more information
-// see the inventors' web page at
-// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
-
-// Reference
-// M. Matsumoto and T. Nishimura, "Mersenne Twister: A 623-Dimensionally
-// Equidistributed Uniform Pseudo-Random Number Generator", ACM Transactions on
-// Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
-
-// Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
-// Copyright (C) 2000 - 2009, Richard J. Wagner
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 
-//   1. Redistributions of source code must retain the above copyright
-//      notice, this list of conditions and the following disclaimer.
-//
-//   2. Redistributions in binary form must reproduce the above copyright
-//      notice, this list of conditions and the following disclaimer in the
-//      documentation and/or other materials provided with the distribution.
-//
-//   3. The names of its contributors may not be used to endorse or promote 
-//      products derived from this software without specific prior written 
-//      permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-
-// The original code included the following notice:
-// 
-//     When you use this, send an email to: m-mat@math.sci.hiroshima-u.ac.jp
-//     with an appropriate reference to your work.
-// 
-// It would be nice to CC: wagnerr@umich.edu and Cokus@math.washington.edu
-// when you write.
-
-
-/* Monolithsoft made slight modifications from the most commonly found version,
-most notably changing function names.
-This might be the version this is based on: https://gist.github.com/yuikns/10017640 */
-
-#pragma once
-
-/* "libs/monolib/include/monolib/math/MTRand.hpp" line 65 "types.h" */
-/* end "types.h" */
-
-namespace ml{
-
-//Probably uses a singleton template
-
-class MTRand{
-protected:
-    static const int N = 624; //length
-    static const int M = 397; //period
-    u32 state[N]; //twister
-    int left; //0x9C0
-    BOOL initialized; //0x9C4
-    u32* pNext; //0x9C8
-    u32 unk9D0;
-
-public:
-    static MTRand* getInstance();
-    void srand(u32);
-    void nextMt();
-    u32 rand32();
-    u32 rand31();
-    float randFloat();
-    float randFloat1();
-
-    inline u32 rand(){
-        return rand31();
-    }
-
-    inline u32 rand(int max){
-        if(max != 0){
-            int randVal = rand();
-            return randVal % max;
-        }else{
-            return 0;
-        }
-    }
-
-    inline u32 rand(int min, int max){
-        int range = max - min;
-        int result = 0;
-
-        if(range != 0){
-            int randVal = rand();
-            result = (randVal % range);
-        }else{
-            result = 0;
-        }
-
-        return min + result; //wtf? why not just add it before?
-    }
-
-protected:
-    inline u32 hiBit(u32 u) { return u & 0x80000000; }
-    inline u32 loBit(u32 u) { return u & 0x00000001; }
-    inline u32 loBits(u32 u) { return u & 0x7fffffff; }
-    inline u32 mixBits(u32 u, u32 v) { return hiBit(u) | loBits(v); }
-    inline u32 magic(u32 u) { return loBit(u) ? 0x9908b0dfUL : 0x0UL; }
-    inline u32 twist(u32 m, u32 s0, u32 s1) {
-        const u32 y = mixBits(s0, s1);
-        const u32 mask = magic(s1);
-        return m ^ (mask ^ (y >> 1));
-    }
-};
-
-} //namespace ml
-/* end "monolib/math/MTRand.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 21 "monolib/math/Random.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace ml{
-    namespace math{
-        void mtInit(u32 seed);
-        int mtRand();
-        int mtRand(int max);
-        int mtRand(int min,int max);
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Random.hpp" */
-/* end "monolib/math.hpp" */
-
-class CLight{
-public:
-    CLight();
-    virtual ~CLight(){}
-
-    ml::CVec3 unk4;
-    ml::CVec3 unk10;
-    ml::CVec3 unk1C;
-    float unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    float unk38;
-    float unk3C;
-};
-/* end "monolib/scn/CLight.hpp" */
-
-using namespace ml;
-
-CLight::CLight(){
-    u32 r4 = 0;
-    u32 r0 = r4 & 0xF;
-    unk4 = CVec3(0,0,0);
-    unk10 = CVec3(0.5f,0.5f,0.5f);
-    unk1C = CVec3(1,0,0);
-    unk28 = 1;
-    unk2C = 0;
-    unk34 = 0;
-    unk38 = 1;
-    unk3C = 10000;
-    unk30 = r0;
+    comscr.reg = SI_HW_REGS[SI_SICOMSCR];
+
+    comscr.TCINT = TRUE;
+    comscr.TCINTMSK = callback != NULL;
+    // Minimum transfer is 1 byte. 0x00 will transfer 128 bytes
+    comscr.OUTLNGTH = outSize == 128 ? 0 : outSize;
+    comscr.INLNGTH = inSize == 128 ? 0 : inSize;
+    comscr.CHANNEL = chan;
+    comscr.TSTART = TRUE;
+
+    SI_HW_REGS[SI_SICOMSCR] = comscr.reg;
+
+    OSRestoreInterrupts(enabled);
+    return TRUE;
 }
 
-// LLM-HARNESS-BEGIN: us-804c4440
-extern "C" void func_804C02E4() {}
-// LLM-HARNESS-END: us-804c4440
-// LLM-HARNESS-BEGIN: us-804c44f4
-extern "C" void func_804C0398(void* self, int value) {
-    *(int*)((char*)self + 0x2c) = value;
-}
-// LLM-HARNESS-END: us-804c44f4
-// LLM-HARNESS-BEGIN: us-804c44fc
-extern "C" void func_804C03A0() {}
-// LLM-HARNESS-END: us-804c44fc
-// LLM-HARNESS-BEGIN: us-804c45b0
-extern "C" void func_804C0454() {}
-// LLM-HARNESS-END: us-804c45b0
-// LLM-HARNESS-BEGIN: us-804c45e0
-extern "C" void func_804C0484() {}
-// LLM-HARNESS-END: us-804c45e0
-// LLM-HARNESS-BEGIN: us-804c46cc
-extern "C" void func_804C0570() {}
-// LLM-HARNESS-END: us-804c46cc
-// LLM-HARNESS-BEGIN: us-804c494c
-extern "C" void func_804C07F0() {}
-// LLM-HARNESS-END: us-804c494c
-// LLM-HARNESS-BEGIN: us-804c4a24
-extern "C" void func_804C08C8(void* self, int param) {
-    struct Obj {
-        char pad[0x2c];
-        uint32_t* ptr;
-        uint32_t flags;
-    };
-    Obj* obj = (Obj*)self;
-    if (param)
-        obj->flags |= 0x10000;
-    else
-        obj->flags &= ~0x10000;
-    if (obj->flags & 0x10000)
-        *obj->ptr |= 0x4;
-    else
-        *obj->ptr &= ~0x4;
-}
-// LLM-HARNESS-END: us-804c4a24
-// LLM-HARNESS-BEGIN: us-804c4a7c
-namespace nw4r { namespace g3d { class LightObj { public: void InitLightSpot(float, _GXSpotFn); }; } }
+u32 SISetXY(u32 lines, u32 times) {
+    BOOL enabled;
+    u32 poll;
 
-extern "C" void func_804C0920(CLight* _this, float f, _GXSpotFn spotFn) {
-    (*(nw4r::g3d::LightObj**)((char*)_this + 0x2c))->InitLightSpot(f, spotFn);
+    poll = lines << 16;
+    poll |= times << 8;
+
+    enabled = OSDisableInterrupts();
+
+    Si.poll &= ~(SI_SIPOLL_X | SI_SIPOLL_Y);
+    Si.poll |= poll;
+
+    poll = Si.poll;
+    SI_HW_REGS[SI_SIPOLL] = poll;
+
+    OSRestoreInterrupts(enabled);
+    return poll;
 }
-// LLM-HARNESS-END: us-804c4a7c
-// LLM-HARNESS-BEGIN: us-804c4a84
-extern "C" void func_804C0928() {}
-// LLM-HARNESS-END: us-804c4a84
-// LLM-HARNESS-BEGIN: us-804c4b3c
-extern "C" bool func_804C09E0() { return false; }
-// LLM-HARNESS-END: us-804c4b3c
-// LLM-HARNESS-BEGIN: us-804c4b44
-extern "C" void func_804C09E8() {}
-// LLM-HARNESS-END: us-804c4b44
+
+static void AlarmHandler(OSAlarm* alarm, OSContext* ctx) {
+    s32 chan;
+    SIPacket* packet;
+
+    chan = alarm - Alarm;
+    packet = &Packet[chan];
+
+    if (packet->chan != SI_CHAN_NONE) {
+        if (__SITransfer(packet->chan, packet->outAddr, packet->outSize,
+                         packet->inAddr, packet->inSize, packet->callback)) {
+            packet->chan = SI_CHAN_NONE;
+        }
+    }
+}
+
+BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
+                SICallback callback, s64 wait) {
+    SIPacket* packet;
+    BOOL enabled;
+    s64 start;
+    s64 fire;
+
+    packet = &Packet[chan];
+    enabled = OSDisableInterrupts();
+
+    if (packet->chan != SI_CHAN_NONE || Si.chan == packet->chan) {
+        OSRestoreInterrupts(enabled);
+        return FALSE;
+    }
+
+    start = __OSGetSystemTime();
+    fire = wait == 0 ? start : wait + XferTime[chan];
+
+    if (start < fire) {
+        OSSetAlarm(&Alarm[chan], fire - start, AlarmHandler);
+    } else if (__SITransfer(chan, outAddr, outSize, inAddr, inSize, callback)) {
+        OSRestoreInterrupts(enabled);
+        return TRUE;
+    }
+
+    packet->chan = chan;
+    packet->outAddr = outAddr;
+    packet->outSize = outSize;
+    packet->inAddr = inAddr;
+    packet->inSize = inSize;
+    packet->callback = callback;
+    packet->fire = fire;
+
+    OSRestoreInterrupts(enabled);
+    return TRUE;
+}
+
+// TODO
+static void GetTypeCallback(s32 chan, u32 status) {
+    // static u32 cmdFixDevice[SI_MAX_CHAN];
+
+    // Type[chan] &= ~SI_ERROR_BUSY;
+    // Type[chan] |= status;
+    // TypeTime[chan] = __OSGetSystemTime();
+}
+
+// TODO
+u32 SIGetType(s32 chan) {
+    ;
+}
+
+// LLM-HARNESS-BEGIN: us-80364d30
+void SISetCommand() {}
+// LLM-HARNESS-END: us-80364d30
+// LLM-HARNESS-BEGIN: us-80364d50
+void SITransferCommands() {
+    *(volatile u32*)0xCD006438 = 0x80000000;
+}
+// LLM-HARNESS-END: us-80364d50

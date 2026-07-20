@@ -1163,7 +1163,7 @@ done:
 }
 
 // LLM-HARNESS-BEGIN: us-80102eb8
-extern "C" void func_801023D0() {}
+extern "C" void func_801023D0() { lbl_eu_80663F24 = 0; }
 // LLM-HARNESS-END: us-80102eb8
 // LLM-HARNESS-BEGIN: us-80104cdc
 extern "C" void func_801041F4() {}
@@ -1201,13 +1201,15 @@ extern "C" void func_80108C38(void* self) {
 }
 // LLM-HARNESS-END: us-80109720
 // LLM-HARNESS-BEGIN: us-80109728
-extern "C" bool func_80108C40() { return false; }
+extern "C" void func_80108C40(void* p) {
+    extern void __dt__15CMenuArtsSelectFv(void*);
+    __dt__15CMenuArtsSelectFv((u8*)p - 0x5c);
+}
 // LLM-HARNESS-END: us-80109728
 // LLM-HARNESS-BEGIN: us-80109730
 extern "C" void func_80108C48(void* ptr) { ((void (*)(char*))func_801041F4)((char*)ptr - 0x60); }
 // LLM-HARNESS-END: us-80109730
 // LLM-HARNESS-BEGIN: us-80109738
-extern "C" void __dt__15CMenuArtsSelectFv(CMenuArtsSelect*);
 extern "C" void func_80108C50(CMenuArtsSelect* self) {
     __dt__15CMenuArtsSelectFv((CMenuArtsSelect*)((char*)self - 0x60));
 }

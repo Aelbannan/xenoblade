@@ -154,7 +154,9 @@ CBattleManager* CBattleManager::getInstance() {
 extern "C" void func_800DA06C() {}
 // LLM-HARNESS-END: us-800dab54
 // LLM-HARNESS-BEGIN: us-800e306c
-extern "C" void func_800E2584() {}
+extern "C" void func_800E2584(void* p, u32 mask) {
+    *(u32*)((u8*)p + 0x84) &= ~mask;
+}
 // LLM-HARNESS-END: us-800e306c
 // LLM-HARNESS-BEGIN: us-800eae6c
 extern "C" void func_800EA384() {}
@@ -193,7 +195,9 @@ extern "C" void func_800F3DC8() {}
 extern "C" void func_800F4004() {}
 // LLM-HARNESS-END: us-800f4aec
 // LLM-HARNESS-BEGIN: us-800f4d88
-extern "C" void func_800F42A0() {}
+extern "C" void func_800F42A0(void* _this) {
+    *(int*)((char*)_this + 0x84) = 0;
+}
 // LLM-HARNESS-END: us-800f4d88
 
 // LLM-HARNESS-BEGIN: us-800d880c

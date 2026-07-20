@@ -989,23 +989,29 @@ done:
 extern "C" void harness_stub_us_8010be00() {}
 // LLM-HARNESS-END: us-8010be00
 // LLM-HARNESS-BEGIN: us-8010d924
-extern "C" bool func_8010CE48() { return false; }
+extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
 // LLM-HARNESS-END: us-8010d924
 // LLM-HARNESS-BEGIN: us-8010da38
-extern "C" void func_8010CF5C() {}
+extern "C" void func_8010CF5C(void* p) {
+    ((u8*)p)[0x7c9] = 1;
+}
 // LLM-HARNESS-END: us-8010da38
 // LLM-HARNESS-BEGIN: us-8010f4d4
 extern "C" void sinit_8010E9F8() {}
 // LLM-HARNESS-END: us-8010f4d4
 // LLM-HARNESS-BEGIN: us-8010f528
-extern "C" bool func_8010EA4C() { return false; }
+extern "C" {
+void __dt__22CMenuBattlePlayerStateFv(void*);
+void func_8010EA4C(void* _this) {
+    __dt__22CMenuBattlePlayerStateFv((char*)_this - 0x58);
+}
+}
 // LLM-HARNESS-END: us-8010f528
 // LLM-HARNESS-BEGIN: us-8010f530
 extern "C" bool func_8010EA54() { return false; }
 // LLM-HARNESS-END: us-8010f530
 // LLM-HARNESS-BEGIN: us-8010f538
 extern "C" void func_8010EA5C(void* self) {
-    extern void __dt__22CMenuBattlePlayerStateFv(void*);
     __dt__22CMenuBattlePlayerStateFv((void*)((char*)self - 0x5c));
 }
 // LLM-HARNESS-END: us-8010f538

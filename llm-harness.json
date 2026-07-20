@@ -35,16 +35,16 @@
   "models": {
     "default": [
       {
-        "id": "opencode-deepseek-flash",
+        "id": "opencode-deepseek-pro",
         "provider": "opencode",
-        "model": "opencode-go/deepseek-v4-flash",
+        "model": "opencode-go/deepseek-v4-pro",
         "runs": 1
       }
     ]
   },
   "execution": {
     "initial_parallel": 3,
-    "target_parallel": 10,
+    "target_parallel": 5,
     "max_retries": 0,
     "auto_promote": true,
     "auto_promote_owner": "llm-harness",

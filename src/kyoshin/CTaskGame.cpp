@@ -119,10 +119,16 @@ extern "C" void func_800426A4() {}
 extern "C" bool func_800426F0() { return false; }
 // LLM-HARNESS-END: us-80042c68
 // LLM-HARNESS-BEGIN: us-80042c88
-extern "C" void func_80042710() {}
+void CTaskGame::func_80042710() {
+    *(u32*)((u8*)this + 0x68) |= 1;
+}
 // LLM-HARNESS-END: us-80042c88
 // LLM-HARNESS-BEGIN: us-80042ddc
-extern "C" void func_80042864() {}
+extern "C" int lbl_eu_80663D1C;
+
+extern "C" int func_80042864() {
+    return lbl_eu_80663D1C != 0;
+}
 // LLM-HARNESS-END: us-80042ddc
 // LLM-HARNESS-BEGIN: us-80043534
 extern "C" void func_80042FBC() {}
@@ -205,25 +211,36 @@ extern "C" void cbRenderBefore__9CTaskGameFv(void*);
 extern "C" void func_80044128(void* self) { cbRenderBefore__9CTaskGameFv((void*)((char*)self - 0x58)); }
 // LLM-HARNESS-END: us-800446c4
 // LLM-HARNESS-BEGIN: us-800446cc
-extern "C" bool func_80044130() { return false; }
+extern "C" void func_80044130(void* p) {
+    p = (char*)p - 0x58;
+    __dt__9CTaskGameFv((CTaskGame*)p);
+}
 // LLM-HARNESS-END: us-800446cc
 // LLM-HARNESS-BEGIN: us-800446d4
 extern "C" bool func_80044138(void* ptr) { return ((bool(*)(char*))func_800433A8)((char*)ptr - 0x5c); }
 // LLM-HARNESS-END: us-800446d4
 // LLM-HARNESS-BEGIN: us-800446dc
-extern "C" bool func_80044140() { return false; }
+extern "C" void func_80044140(void* p) {
+    __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x5c));
+}
 // LLM-HARNESS-END: us-800446dc
 // LLM-HARNESS-BEGIN: us-800446e4
 extern "C" bool func_80044148(void* obj) { return ((bool (*)(void*))func_800436F4)((void*)((char*)obj - 0x60)); }
 // LLM-HARNESS-END: us-800446e4
 // LLM-HARNESS-BEGIN: us-800446ec
-extern "C" bool func_80044150() { return false; }
+extern "C" void func_80044150(void* p) {
+    return __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x60));
+}
 // LLM-HARNESS-END: us-800446ec
 // LLM-HARNESS-BEGIN: us-800446f4
-extern "C" bool func_80044158() { return false; }
+extern "C" bool func_80044158(void* p) {
+    return ((bool(*)(char*))func_80043730)((char*)p - 0x64);
+}
 // LLM-HARNESS-END: us-800446f4
 // LLM-HARNESS-BEGIN: us-800446fc
-extern "C" bool func_80044160() { return false; }
+extern "C" void func_80044160(void* p) {
+    __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x64));
+}
 // LLM-HARNESS-END: us-800446fc
 
 // LLM-HARNESS-BEGIN: us-80040db4

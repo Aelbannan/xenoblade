@@ -313,8 +313,8 @@ void SoundPlayer::SetPlayableSoundCount(int count) {
     }
 }
 
-void SoundPlayer::detail_SetPlayableSoundLimit(int limit) {
-    mPlayableLimit = limit;
+void nw4r::snd::SoundPlayer::detail_SetPlayableSoundLimit(int limit) {
+    *(int*)((char*)this + 0x28) = limit;
 }
 
 bool SoundPlayer::CheckPlayableSoundCount(

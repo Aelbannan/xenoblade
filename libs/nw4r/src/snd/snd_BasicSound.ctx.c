@@ -247399,7 +247399,9 @@ extern "C" void AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6de
 }
 // LLM-HARNESS-END: us-80415a70
 // LLM-HARNESS-BEGIN: us-80415a78
-extern "C" void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap() {}
+extern "C" void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(void* _this, void* pHeap) {
+    *(int*)((char*)_this + 4) = 0;
+}
 // LLM-HARNESS-END: us-80415a78
 // LLM-HARNESS-BEGIN: us-80415a84
 extern "C" void AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(nw4r::snd::detail::BasicSound* _this, nw4r::snd::SoundPlayer* player)
@@ -247408,7 +247410,9 @@ extern "C" void AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11
 }
 // LLM-HARNESS-END: us-80415a84
 // LLM-HARNESS-BEGIN: us-80415a8c
-extern "C" void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer() {}
+extern "C" void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(void* self, void* player) {
+    *(int*)((char*)self + 0x10) = 0;
+}
 // LLM-HARNESS-END: us-80415a8c
 // LLM-HARNESS-BEGIN: us-80415a98
 extern "C" void AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(void* pThis, void* pActor)

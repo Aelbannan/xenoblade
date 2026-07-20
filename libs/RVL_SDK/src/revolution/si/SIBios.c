@@ -294,5 +294,7 @@ u32 SIGetType(s32 chan) {
 void SISetCommand() {}
 // LLM-HARNESS-END: us-80364d30
 // LLM-HARNESS-BEGIN: us-80364d50
-void SITransferCommands() {}
+void SITransferCommands() {
+    *(volatile u32*)0xCD006438 = 0x80000000;
+}
 // LLM-HARNESS-END: us-80364d50

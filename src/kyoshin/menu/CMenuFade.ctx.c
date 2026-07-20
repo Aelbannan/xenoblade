@@ -16292,7 +16292,9 @@ extern "C" u8 func_80113E24(void* pthis) {
 }
 // LLM-HARNESS-END: us-80114900
 // LLM-HARNESS-BEGIN: us-80114908
-extern "C" void func_80113E2C() {}
+extern "C" void func_80113E2C(CMenuFade* self) {
+    *(u8*)((char*)self + 0x54) = 1;
+}
 // LLM-HARNESS-END: us-80114908
 // LLM-HARNESS-BEGIN: us-80114914
 extern "C" void __dt__9CMenuFadeFv(CMenuFade*);

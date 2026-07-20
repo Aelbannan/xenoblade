@@ -368,7 +368,10 @@ extern "C" void delComponent__Q310homebutton3gui7ManagerFPQ310homebutton3gui9Com
 extern "C" void addLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout() {}
 // LLM-HARNESS-END: us-80322840
 // LLM-HARNESS-BEGIN: us-80322b10
-extern "C" void GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv() {}
+const void* GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv() {
+    extern const char typeInfo__Q36nw4hbm3lyt4Pane[];
+    return typeInfo__Q36nw4hbm3lyt4Pane;
+}
 // LLM-HARNESS-END: us-80322b10
 // LLM-HARNESS-BEGIN: us-80322b20
 extern "C" void delLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout() {}

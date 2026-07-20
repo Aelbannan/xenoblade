@@ -205,7 +205,7 @@ void SeqSound::SeqLoadTask::OnCancel() {
 // LLM-HARNESS-BEGIN: us-8041d3ec
 extern "C" void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* self, void (*callback)(unsigned short, void*, void*), void* arg);
 
-extern "C" void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* thisPtr, void (*callback)(unsigned short, void*, void*), void* arg) { return SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv((void*)((char*)thisPtr + 0x10c), callback, arg); }
+void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* thisPtr, void (*callback)(unsigned short, void*, void*), void* arg) { return SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv((void*)((char*)thisPtr + 0x10c), callback, arg); }
 // LLM-HARNESS-END: us-8041d3ec
 // LLM-HARNESS-BEGIN: us-8041d3f4
 extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv() {}

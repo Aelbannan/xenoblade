@@ -12457,7 +12457,9 @@ extern "C" unsigned short func_8013EC58()
 }
 // LLM-HARNESS-END: us-8013f65c
 // LLM-HARNESS-BEGIN: us-8013f664
-extern "C" void func_8013EC60() {}
+extern "C" void func_8013EC60() {
+    lbl_eu_8066408C = 0;
+}
 // LLM-HARNESS-END: us-8013f664
 // LLM-HARNESS-BEGIN: us-8013f670
 extern "C" void func_8013EC6C() {}

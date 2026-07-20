@@ -467,5 +467,15 @@ After an architecture-model bump:
 
 Keep `automatic_promotion=false` until operators deliberately open the gate.
 
+Optional canary pin: set `allowed_engine_sha256` in `coop.json` to the live
+engine hash:
+
+```bash
+python3 -c "from pathlib import Path; from tools.ppc_equivalence.provenance import hash_engine_tree; print(hash_engine_tree(Path('.')))"
+```
+
+Provenance `git_dirty` is scoped to the engine/certifier trust boundary, so
+unrelated decomp working-tree edits do not block Tier A canaries.
+
 Real-game regression cases must not commit proprietary binaries; store legal
 small fixtures or hashes/extraction instructions instead.

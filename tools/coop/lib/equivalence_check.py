@@ -34,6 +34,7 @@ from tools.ppc_equivalence.provenance import (
     canonical_obligation_dict,
     hash_certifier_tree,
     hash_engine_tree,
+    live_git_identity,
     proof_request_hash,
 )
 from tools.ppc_equivalence.proof_features import (
@@ -69,25 +70,13 @@ def _current_certifier_hash() -> str:
 
 
 def _live_git_identity() -> tuple[str, bool]:
-    """Return ``(git_commit, git_dirty)`` for the repo root."""
-    import subprocess
+    """Return ``(git_commit, trust_boundary_dirty)`` for provenance fields.
 
+    ``git_dirty`` is true only when engine/certifier trust-boundary sources
+    differ from HEAD — unrelated decomp edits do not block Tier A canaries.
+    """
     try:
-        commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            cwd=_REPO_ROOT,
-            check=False,
-        ).stdout.strip()
-        dirty_out = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True,
-            text=True,
-            cwd=_REPO_ROOT,
-            check=False,
-        ).stdout.strip()
-        return commit, bool(dirty_out)
+        return live_git_identity(_REPO_ROOT)
     except Exception:
         return "", False
 

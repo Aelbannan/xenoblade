@@ -35137,10 +35137,10 @@
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
       "equivalence_certificate": {
-        "version": 15,
+        "version": 16,
         "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v40",
-        "result_format": 20,
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
         "target_id": "cam-init-intf",
         "evidence": "full-instruction-match",
         "retail_sha256": "68aadfb6f9e3b0862c3ed57a146c01dd3d5f8b3ee864a14da4d63693915f729c",
@@ -35169,9 +35169,162 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "0ddcf23fca4a84e801d2790eacc28971e8ce9b667a8413c98969dc291b854fa8",
-        "certifier_hash": "726ed3fb691380048f5b3fbac962127a949c5fe47040f3eb1da7f6f456387df8",
-        "certificate_sha256": "273e87ef41b8820cc12c1b350dce771b218ae7697e91f7d4dfa263c07a0fcb92"
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+        "git_dirty": true,
+        "source_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "addi",
+          "addis",
+          "bc",
+          "bclr",
+          "cmpwi",
+          "extsb",
+          "lbz",
+          "lwz",
+          "stb",
+          "stw"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "addi",
+                  "addis",
+                  "bc",
+                  "bclr",
+                  "cmpwi",
+                  "extsb",
+                  "lbz",
+                  "lwz",
+                  "stb",
+                  "stw"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "35f2c7adb850c0871db42f747b7107c42de2b7368348987c131476a89ab936d2",
+                "requirements_sha256": "3002fc5d6b80dfaa26e13bbd10cb8e72547cfc02da680258fb27a858a23873ab"
+              },
+              "attestation_sha256": "0faf7d520890f6dd42b785333dc68640613d304b32791474c364544f1e9eb416"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "source_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
+                "proof_request_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "09e65d995062481defea22ef73ebe6d37cde2864cce34c112f338b775ea12542",
+                "requirements_sha256": "3002fc5d6b80dfaa26e13bbd10cb8e72547cfc02da680258fb27a858a23873ab"
+              },
+              "attestation_sha256": "dbe8108c0d74142e8d4da11ed0a1a7c04565d3ab12219c12f166f1d9b30cb9f3"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "addi",
+                "addis",
+                "bc",
+                "bclr",
+                "cmpwi",
+                "extsb",
+                "lbz",
+                "lwz",
+                "stb",
+                "stw"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "35f2c7adb850c0871db42f747b7107c42de2b7368348987c131476a89ab936d2"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
+                "result_format": "21",
+                "source_hash": "fab1d7d8c31d57f9e3bca925c1e6717bc1669638c4bb3347f90ae749500c0606",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "09e65d995062481defea22ef73ebe6d37cde2864cce34c112f338b775ea12542"
+            }
+          ],
+          "requirements_sha256": "3002fc5d6b80dfaa26e13bbd10cb8e72547cfc02da680258fb27a858a23873ab"
+        },
+        "certificate_sha256": "3964b9a387529a6c790ef94e842c544132aedafd03bbe683bb355808513008c2"
       }
     },
     {
@@ -35638,10 +35791,10 @@
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
       "equivalence_certificate": {
-        "version": 15,
+        "version": 16,
         "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v40",
-        "result_format": 20,
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
         "target_id": "cam-dir-set-pos",
         "evidence": "full-instruction-match",
         "retail_sha256": "257886e0318a0cc45931815eae9079fd4d86ae44d4661489e47d3e14a4b1cd55",
@@ -35665,9 +35818,141 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "0ddcf23fca4a84e801d2790eacc28971e8ce9b667a8413c98969dc291b854fa8",
-        "certifier_hash": "726ed3fb691380048f5b3fbac962127a949c5fe47040f3eb1da7f6f456387df8",
-        "certificate_sha256": "82489f30ddcb742eaa9831f7b2bcbad4d6ee2a87d0e0874680ee073a480d413e"
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+        "git_dirty": true,
+        "source_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "bclr",
+          "lwz",
+          "stw"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "bclr",
+                  "lwz",
+                  "stw"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
+                "requirements_sha256": "13e266d27cff4f5cb097f80b530012f8aae3e6ed0c18fe0bc1b7ff8bfa661707"
+              },
+              "attestation_sha256": "5c33b1918e2f903ccdf47d78be3efffeb55ad4b10ea9153e98dcd26f68f095cd"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "source_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
+                "proof_request_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "338ee5ecd174f3fa1b887c09f050eb772ed820545ff5bc53e04d76d14a132480",
+                "requirements_sha256": "13e266d27cff4f5cb097f80b530012f8aae3e6ed0c18fe0bc1b7ff8bfa661707"
+              },
+              "attestation_sha256": "701c55b94ecec32150ce262cb465c5d8a7a7838ee1862f5ab1ea03b409267b41"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "bclr",
+                "lwz",
+                "stw"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
+                "result_format": "21",
+                "source_hash": "e44d9d493ea317001245de67841fc2aedfb6ee24781044c3590de10a3f90c11e",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "338ee5ecd174f3fa1b887c09f050eb772ed820545ff5bc53e04d76d14a132480"
+            }
+          ],
+          "requirements_sha256": "13e266d27cff4f5cb097f80b530012f8aae3e6ed0c18fe0bc1b7ff8bfa661707"
+        },
+        "certificate_sha256": "addb20a581d36de3f6b7ec2f08058cfe917b71402bb7061e0d3f4928d2b8375c"
       }
     },
     {
@@ -35775,10 +36060,10 @@
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
       "equivalence_certificate": {
-        "version": 15,
+        "version": 16,
         "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v40",
-        "result_format": 20,
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
         "target_id": "cam-lookat-set-pos",
         "evidence": "full-instruction-match",
         "retail_sha256": "3d5b3c3fa8af26beb95b20dc20dc229bbd09be8ee47090e360cfc3f4c7e5c061",
@@ -35804,9 +36089,185 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "0ddcf23fca4a84e801d2790eacc28971e8ce9b667a8413c98969dc291b854fa8",
-        "certifier_hash": "726ed3fb691380048f5b3fbac962127a949c5fe47040f3eb1da7f6f456387df8",
-        "certificate_sha256": "2049b4a286c743e2014c158cdcd9a0f08809dd549d909c2ffdb2ef6cd7342747"
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+        "git_dirty": true,
+        "source_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "bclr",
+          "lfs",
+          "lwz",
+          "stfs",
+          "stw"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "fp-load-store",
+              "model_version": "broadway-fp-load-store-v1",
+              "algorithm": "fp-load-store-incomplete-v0",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [
+                "fp-load-store-incomplete"
+              ],
+              "evidence": {
+                "opcodes": [
+                  "lfs",
+                  "stfs"
+                ],
+                "host_float": false,
+                "never_promotion_grade": true,
+                "obligation": {
+                  "capability": "fp-load-store",
+                  "model_version": "broadway-fp-load-store-v1",
+                  "algorithm": "fp-load-store-incomplete-v0",
+                  "opcodes": [
+                    "lfs",
+                    "stfs"
+                  ],
+                  "status": "incomplete"
+                },
+                "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930",
+                "requirements_sha256": "0e62a27012d646c635959b2be997ace7fb0df63a4a73c3cfd39ccfa0c4c9b35c"
+              },
+              "attestation_sha256": "a7e4256ffdbcdf832833a0d7af052d3efffb0cfad9f7a18b6840b0eef8e53d34"
+            },
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "bclr",
+                  "lwz",
+                  "stw"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
+                "requirements_sha256": "0e62a27012d646c635959b2be997ace7fb0df63a4a73c3cfd39ccfa0c4c9b35c"
+              },
+              "attestation_sha256": "9978fa3f75307fbe28b03e7874e35bd5525ad7dcc9651e06101622226c4960b9"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "source_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
+                "proof_request_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "7add40e82ff7c355159bc3dec16875452256e80662a0f785249cc5f0de7ee054",
+                "requirements_sha256": "0e62a27012d646c635959b2be997ace7fb0df63a4a73c3cfd39ccfa0c4c9b35c"
+              },
+              "attestation_sha256": "a3b4654d42d0d5c1f8f7bdb158ee8ee7d1dfc64641365ca2dca4c5544e82c07b"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "fp-load-store",
+              "required_opcodes": [
+                "lfs",
+                "stfs"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "bclr",
+                "lwz",
+                "stw"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
+                "result_format": "21",
+                "source_hash": "c4664315b6f6dd0475abfad2ed66da59cd42d4ac7d4941367d1193d94b7dc960",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "7add40e82ff7c355159bc3dec16875452256e80662a0f785249cc5f0de7ee054"
+            }
+          ],
+          "requirements_sha256": "0e62a27012d646c635959b2be997ace7fb0df63a4a73c3cfd39ccfa0c4c9b35c"
+        },
+        "certificate_sha256": "2968b04dc340b07b32d6030602176109d1e02fec9d4d47f7dab4f760b4a14440"
       }
     },
     {
@@ -35920,10 +36381,10 @@
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
       "equivalence_certificate": {
-        "version": 10,
+        "version": 16,
         "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v35",
-        "result_format": 16,
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
         "target_id": "cam-tgt-set-pos",
         "evidence": "full-instruction-match",
         "retail_sha256": "aa3a67971711178a111a328a78715520f39fa1ee3272d8bac2bc6d6a026d8874",
@@ -35949,9 +36410,185 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "deac1377c2ca5d166aca27a3e9a7158d4c6db1658759713fffcd23c9a2ad79ab",
-        "certifier_hash": "f3d36da3d01fd30323b63641fe21a14c83933d4024f95bd84ae46c36ee21072c",
-        "certificate_sha256": "4965d2daa7a2dd3e2f0428246abf8fa78e48c52b6e4ea836a80442b6161ef45c"
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+        "git_dirty": true,
+        "source_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "bclr",
+          "lfs",
+          "lwz",
+          "stfs",
+          "stw"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "fp-load-store",
+              "model_version": "broadway-fp-load-store-v1",
+              "algorithm": "fp-load-store-incomplete-v0",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [
+                "fp-load-store-incomplete"
+              ],
+              "evidence": {
+                "opcodes": [
+                  "lfs",
+                  "stfs"
+                ],
+                "host_float": false,
+                "never_promotion_grade": true,
+                "obligation": {
+                  "capability": "fp-load-store",
+                  "model_version": "broadway-fp-load-store-v1",
+                  "algorithm": "fp-load-store-incomplete-v0",
+                  "opcodes": [
+                    "lfs",
+                    "stfs"
+                  ],
+                  "status": "incomplete"
+                },
+                "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930",
+                "requirements_sha256": "9f12ae6c9be0391f896e09fe8a951bf4c2739ff7959f5e87944924634c5b920e"
+              },
+              "attestation_sha256": "474abc9a3fd086f5588562cebf64fe2cf6fa26adce4e3b4fe1f7d9a7b1bf1caf"
+            },
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "bclr",
+                  "lwz",
+                  "stw"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
+                "requirements_sha256": "9f12ae6c9be0391f896e09fe8a951bf4c2739ff7959f5e87944924634c5b920e"
+              },
+              "attestation_sha256": "8aee9f897789fe2296010d6a0591946eb507980210956a93dd336aa8f13f510c"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "source_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
+                "proof_request_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "cfbe8f1d115c6326e07ece46374b09f19ab44220a02e55316bbcb88d6bbad031",
+                "requirements_sha256": "9f12ae6c9be0391f896e09fe8a951bf4c2739ff7959f5e87944924634c5b920e"
+              },
+              "attestation_sha256": "449ba1385956cce4506ed46bcd5299718ffcff05bec39b8154cf2916866b48b5"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "fp-load-store",
+              "required_opcodes": [
+                "lfs",
+                "stfs"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "bclr",
+                "lwz",
+                "stw"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
+                "result_format": "21",
+                "source_hash": "e7470892bcc99e2086995d5ca436945d6119033239ac0936178136e6197e3f10",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "cfbe8f1d115c6326e07ece46374b09f19ab44220a02e55316bbcb88d6bbad031"
+            }
+          ],
+          "requirements_sha256": "9f12ae6c9be0391f896e09fe8a951bf4c2739ff7959f5e87944924634c5b920e"
+        },
+        "certificate_sha256": "940eaf3c30e5ad548d72e35f0a0e4a0f1e2f7e339570ce974a97a6178d1e2aae"
       }
     },
     {
@@ -36003,10 +36640,10 @@
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
       "equivalence_certificate": {
-        "version": 10,
+        "version": 16,
         "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v35",
-        "result_format": 16,
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
         "target_id": "cam-tgt-set-lookat",
         "evidence": "full-instruction-match",
         "retail_sha256": "3ff9e011ac94013af3187cd8e0b35ec3f147317e9fc797b002b8245dc2fb8248",
@@ -36032,9 +36669,185 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "deac1377c2ca5d166aca27a3e9a7158d4c6db1658759713fffcd23c9a2ad79ab",
-        "certifier_hash": "f3d36da3d01fd30323b63641fe21a14c83933d4024f95bd84ae46c36ee21072c",
-        "certificate_sha256": "cdd91894b04f7d86495e5166b0dd1574dd996fca21ecc9055759693de83e00ad"
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+        "git_dirty": true,
+        "source_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "bclr",
+          "lfs",
+          "lwz",
+          "stfs",
+          "stw"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "fp-load-store",
+              "model_version": "broadway-fp-load-store-v1",
+              "algorithm": "fp-load-store-incomplete-v0",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [
+                "fp-load-store-incomplete"
+              ],
+              "evidence": {
+                "opcodes": [
+                  "lfs",
+                  "stfs"
+                ],
+                "host_float": false,
+                "never_promotion_grade": true,
+                "obligation": {
+                  "capability": "fp-load-store",
+                  "model_version": "broadway-fp-load-store-v1",
+                  "algorithm": "fp-load-store-incomplete-v0",
+                  "opcodes": [
+                    "lfs",
+                    "stfs"
+                  ],
+                  "status": "incomplete"
+                },
+                "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930",
+                "requirements_sha256": "f80f7ab0cba6da217a7855eabbefb2ce58d278044869b50aad3ab2c34dd56228"
+              },
+              "attestation_sha256": "1b383ffb5966fefa5dfba2c4e1734ae085e7de428c05922130bc5c0c991f05f7"
+            },
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "bclr",
+                  "lwz",
+                  "stw"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993",
+                "requirements_sha256": "f80f7ab0cba6da217a7855eabbefb2ce58d278044869b50aad3ab2c34dd56228"
+              },
+              "attestation_sha256": "b08b2d8f545fbc96ee2d1f20d901ffd30205e6e4c640ea67ea6ad0f991d1e505"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "source_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
+                "proof_request_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "2362750187a6bf0a14f3c57607f961e903e874bd975a91dc71dbd954e5f40881",
+                "requirements_sha256": "f80f7ab0cba6da217a7855eabbefb2ce58d278044869b50aad3ab2c34dd56228"
+              },
+              "attestation_sha256": "e484a1b9c149fb3201e7eb4b9867cfe71681905fb997e40ffedcdd727e221d5c"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "fp-load-store",
+              "required_opcodes": [
+                "lfs",
+                "stfs"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "1e934cfb9dafc3f16f57ef821b75e69920b3a47acefd3d75aca085bf73895930"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "bclr",
+                "lwz",
+                "stw"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "7fc39813aa79820fd15b67ff906e81a0ff6e15b99592226c7a2751f6224ad993"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
+                "result_format": "21",
+                "source_hash": "002fc20b706c2bea467fb48bc91312e93d0fbf461974cd2128d0ede1340b853a",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "2362750187a6bf0a14f3c57607f961e903e874bd975a91dc71dbd954e5f40881"
+            }
+          ],
+          "requirements_sha256": "f80f7ab0cba6da217a7855eabbefb2ce58d278044869b50aad3ab2c34dd56228"
+        },
+        "certificate_sha256": "63eb77437bd2aaad8ac0a74c35a68d6beb87027317fb602b7787c39fcc331643"
       }
     },
     {
@@ -52757,7 +53570,152 @@
         "note": "Harness auto-promotion"
       },
       "instruction_match": 100.0,
-      "equivalence_status": "internal_error"
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-80087c10",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "cc475ad9dbc9a4e0614a9af1cee6cfbbe87f4042a7778d65d12355cfcdd26099",
+        "candidate_sha256": "6b40cbc2b4db349d4dcf1a8793cef71d9fcb4e4d42e1281dbd4f67b56bad5ee2",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+        "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+        "git_dirty": true,
+        "source_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "addi",
+          "addis",
+          "bclr"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "addi",
+                  "addis",
+                  "bclr"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "56cfecd3a0519b251d3d5596f1149eb4b2f2a68a05447519dbce6c61ad1d9d99",
+                "requirements_sha256": "575800d41a2e5b5ef418107235bf809694af80ef6440463b9c0ec7f198aa628e"
+              },
+              "attestation_sha256": "6f4c72779f9b3bf40a4f3b96b1e402da20963538839e1d16478a85d4cf9ef64d"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+                "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+                "source_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
+                "proof_request_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "0923e5b5b719fa4570c697db9dd35fa0fdde8ac1e1e530e9dd274878abf5b3ec",
+                "requirements_sha256": "575800d41a2e5b5ef418107235bf809694af80ef6440463b9c0ec7f198aa628e"
+              },
+              "attestation_sha256": "b2d6a8326daa9fe88054a5e6614c9638d2c6a164e4d1139468aaee0741ec6b79"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "addi",
+                "addis",
+                "bclr"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "56cfecd3a0519b251d3d5596f1149eb4b2f2a68a05447519dbce6c61ad1d9d99"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+                "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
+                "result_format": "21",
+                "source_hash": "257130cee408e9c70438b60a5ecc99242d69eea91afc9ad2816684c4bb7e4a05",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "0923e5b5b719fa4570c697db9dd35fa0fdde8ac1e1e530e9dd274878abf5b3ec"
+            }
+          ],
+          "requirements_sha256": "575800d41a2e5b5ef418107235bf809694af80ef6440463b9c0ec7f198aa628e"
+        },
+        "certificate_sha256": "b641eb69ab52c8e9e825a683905db5d857bbdbeaa1e3ed78f9db0706441f8a0c"
+      }
     },
     {
       "id": "us-80087c1c",
@@ -116601,11 +117559,11 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "ef53fa40b6aedb0d110d46ff112e2a0c2f90fe7f4781f2f615da261f4c02af88",
-        "certifier_hash": "b055ecb8b4b89be01d300fe0181db9bb98a878b8ff75bec218bb716ecbe186c2",
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
         "git_dirty": true,
         "source_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
-        "git_commit": "b191a6ebc573ac9595e9475554de15c7a72d9f1c",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
         "proof_request_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
         "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
         "opcodes_used": [
@@ -116679,9 +117637,9 @@
                 ],
                 "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
                 "requirement_sha256": "619ce289265f5204701a4abfd5413465dccf56fcce7e75b568521dae43e1e6d0",
-                "requirements_sha256": "2b5a522d1b5e1a2054190524f3688d9fbe2d37553955c1888fcd21bd8bfb771d"
+                "requirements_sha256": "efc36a2eab8c2b867ae290d58506151676d52454e9dce6eb040f651d16f5dcce"
               },
-              "attestation_sha256": "3d1ec8900521ee91200b4c2a0346e3f4739f50f96f0c4ef92000c518b8489652"
+              "attestation_sha256": "17fff3d8598f6c7a4ab77895f89bd53da3501ebb113a4141eab5ee5f1ea23481"
             },
             {
               "capability": "provenance",
@@ -116693,23 +117651,33 @@
               "evidence": {
                 "architecture_model": "broadway-ppc32-be-v41",
                 "result_format": 21,
-                "engine_hash": "ef53fa40b6aedb0d110d46ff112e2a0c2f90fe7f4781f2f615da261f4c02af88",
-                "certifier_hash": "b055ecb8b4b89be01d300fe0181db9bb98a878b8ff75bec218bb716ecbe186c2",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
                 "source_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "proof_request_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
-                "git_commit": "b191a6ebc573ac9595e9475554de15c7a72d9f1c",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
                 "git_dirty": true,
-                "requirement_sha256": "d0fb818b9baff7f32c1000687df97c43e4b2ab4921d1230f8c61b377c4e5948b",
-                "requirements_sha256": "2b5a522d1b5e1a2054190524f3688d9fbe2d37553955c1888fcd21bd8bfb771d"
+                "requirement_sha256": "105753a6e8988697113dbd743b406c5451092a5dedf52c013dbd4e6bcd3b7e70",
+                "requirements_sha256": "efc36a2eab8c2b867ae290d58506151676d52454e9dce6eb040f651d16f5dcce"
               },
-              "attestation_sha256": "21f5151133656964a397de299f77eb555862de4a2c52a0bcfef98afcf8c787d6"
+              "attestation_sha256": "7ea87c4d996a6d7e3632d9da6e4f40159504928ff4c0b2126bdafe7b37828801"
             }
           ]
         },
         "capability_requirements": {
           "schema_version": 1,
           "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
             {
               "capability": "integer-core",
               "required_opcodes": [
@@ -116738,21 +117706,21 @@
               "proof_features": [],
               "evidence_identity": {
                 "architecture_model": "broadway-ppc32-be-v41",
-                "certifier_hash": "b055ecb8b4b89be01d300fe0181db9bb98a878b8ff75bec218bb716ecbe186c2",
-                "engine_hash": "ef53fa40b6aedb0d110d46ff112e2a0c2f90fe7f4781f2f615da261f4c02af88",
-                "git_commit": "b191a6ebc573ac9595e9475554de15c7a72d9f1c",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
                 "git_dirty": "true",
                 "proof_request_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "result_format": "21",
                 "source_hash": "ea6eadadb816ef4e915bafed9132048d3406214360737c40fc7559ca89fdd333",
                 "validation_ledger_hash": ""
               },
-              "requirement_sha256": "d0fb818b9baff7f32c1000687df97c43e4b2ab4921d1230f8c61b377c4e5948b"
+              "requirement_sha256": "105753a6e8988697113dbd743b406c5451092a5dedf52c013dbd4e6bcd3b7e70"
             }
           ],
-          "requirements_sha256": "2b5a522d1b5e1a2054190524f3688d9fbe2d37553955c1888fcd21bd8bfb771d"
+          "requirements_sha256": "efc36a2eab8c2b867ae290d58506151676d52454e9dce6eb040f651d16f5dcce"
         },
-        "certificate_sha256": "78160ace4c5b33c8a75ac47bc38ed084e7f5c601973e87564d9de1260f0669f1"
+        "certificate_sha256": "5d8d519455376635b18553664a58c51b87d53d728968949279c5786310578acb"
       }
     },
     {
@@ -239498,7 +240466,152 @@
       "callgraph_source": "build/us/asm/kyoshin/code_80296898.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "internal_error"
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-802990f8",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "7e47fd8ded5934d93e3e786304e391dc37f82e769cf6a790daa6256303e35ad8",
+        "candidate_sha256": "a9ef128b8e5c958691bcbf139c5db8190027c6055ba5a82b2cac6c704c4d2c48",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+        "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+        "git_dirty": true,
+        "source_hash": "69ff93a3eacff17f00ea1d8ac759c6d126a7384e4cc36cce355b295d31a04166",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "69ff93a3eacff17f00ea1d8ac759c6d126a7384e4cc36cce355b295d31a04166",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "addi",
+          "addis",
+          "bclr"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "addi",
+                  "addis",
+                  "bclr"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "56cfecd3a0519b251d3d5596f1149eb4b2f2a68a05447519dbce6c61ad1d9d99",
+                "requirements_sha256": "f6a0841bba23ead0a92c5b564d985451650c9374651461cd23bd2332a368dacb"
+              },
+              "attestation_sha256": "6f6eecb761190082cd6d8fd995af550f349ffd0501d506d665036d73f655f224"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+                "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+                "source_hash": "69ff93a3eacff17f00ea1d8ac759c6d126a7384e4cc36cce355b295d31a04166",
+                "proof_request_hash": "69ff93a3eacff17f00ea1d8ac759c6d126a7384e4cc36cce355b295d31a04166",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "9b337ee8952891bee3c9c41abc17586ee5390c867ed237f513825a6d9230933e",
+                "requirements_sha256": "f6a0841bba23ead0a92c5b564d985451650c9374651461cd23bd2332a368dacb"
+              },
+              "attestation_sha256": "d62141c9a8669808b826d5af8982ab7ece45fdbd9143ee80de624b9c214ef9e4"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "addi",
+                "addis",
+                "bclr"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "56cfecd3a0519b251d3d5596f1149eb4b2f2a68a05447519dbce6c61ad1d9d99"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+                "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "69ff93a3eacff17f00ea1d8ac759c6d126a7384e4cc36cce355b295d31a04166",
+                "result_format": "21",
+                "source_hash": "69ff93a3eacff17f00ea1d8ac759c6d126a7384e4cc36cce355b295d31a04166",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "9b337ee8952891bee3c9c41abc17586ee5390c867ed237f513825a6d9230933e"
+            }
+          ],
+          "requirements_sha256": "f6a0841bba23ead0a92c5b564d985451650c9374651461cd23bd2332a368dacb"
+        },
+        "certificate_sha256": "352c7a929f1461a9cda177f0334cf5fa499e11f6214b300dece6c20789280b95"
+      }
     },
     {
       "id": "us-80299104",
@@ -422828,7 +423941,167 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_Util.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-8042bb8c",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "75baddacbe75d8265252c3cd612641a64acbef8b391993f155ddd336c2ea5548",
+        "candidate_sha256": "e909df072222982e6b1bc45e943342f1bd092ee0422c0d148ed6114132d8962b",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "cr0",
+            "cr1",
+            "cr5",
+            "cr6",
+            "cr7",
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+        "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+        "git_dirty": true,
+        "source_hash": "b9cf548ec1385102b7e491e959abcc1557b113564fc06caefb2fe51d6f439c9b",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "b9cf548ec1385102b7e491e959abcc1557b113564fc06caefb2fe51d6f439c9b",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "add",
+          "addi",
+          "bc",
+          "bclr",
+          "cmpwi",
+          "or"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "add",
+                  "addi",
+                  "bc",
+                  "bclr",
+                  "cmpwi",
+                  "or"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "74ba7248946bd9d980d9316b431843ed208bb625898b1734ca4e39bb7619552c",
+                "requirements_sha256": "fd3036f5995e81d803b291d3d277eddb0a1d855b95346e0cd81a5f7c9caf8f9d"
+              },
+              "attestation_sha256": "d83b52cc08965f14f818749d19ee5916f6c6d2e033295dc82dc76ca46c9dc622"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+                "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+                "source_hash": "b9cf548ec1385102b7e491e959abcc1557b113564fc06caefb2fe51d6f439c9b",
+                "proof_request_hash": "b9cf548ec1385102b7e491e959abcc1557b113564fc06caefb2fe51d6f439c9b",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "bbc110f4b1c4188aa0975c057b2147ff7204789efd66e1cda549626c44beb47a",
+                "requirements_sha256": "fd3036f5995e81d803b291d3d277eddb0a1d855b95346e0cd81a5f7c9caf8f9d"
+              },
+              "attestation_sha256": "f98810e40e86de6fdb2bf89410c90bc378725dbffaab4448fdb3501fa4077680"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "add",
+                "addi",
+                "bc",
+                "bclr",
+                "cmpwi",
+                "or"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "74ba7248946bd9d980d9316b431843ed208bb625898b1734ca4e39bb7619552c"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "df3fd2c6fb03af38f48d0d50096098ba2103f144a25746ee0ba42f2d9cf0a359",
+                "engine_hash": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "b9cf548ec1385102b7e491e959abcc1557b113564fc06caefb2fe51d6f439c9b",
+                "result_format": "21",
+                "source_hash": "b9cf548ec1385102b7e491e959abcc1557b113564fc06caefb2fe51d6f439c9b",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "bbc110f4b1c4188aa0975c057b2147ff7204789efd66e1cda549626c44beb47a"
+            }
+          ],
+          "requirements_sha256": "fd3036f5995e81d803b291d3d277eddb0a1d855b95346e0cd81a5f7c9caf8f9d"
+        },
+        "certificate_sha256": "f2c6a04e5edeb09f8f9c75a13ed03513631975c7671ee270501f1eecd193247d"
+      }
     },
     {
       "id": "us-8042bbb0",
@@ -446614,10 +447887,10 @@
       "abi_helper_calls": [],
       "equivalence_status": "equivalent",
       "equivalence_certificate": {
-        "version": 10,
+        "version": 16,
         "status": "SEMANTIC_CERTIFIED",
-        "architecture": "broadway-ppc32-be-v35",
-        "result_format": 16,
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
         "target_id": "device-gx-get-heap-size",
         "evidence": "full-instruction-match",
         "retail_sha256": "750781c3cc4aee304d61895d5c641aebaa77de1fd79e8aba58562ed520dc92a9",
@@ -446636,9 +447909,138 @@
         },
         "callees": [],
         "helpers": [],
-        "engine_hash": "deac1377c2ca5d166aca27a3e9a7158d4c6db1658759713fffcd23c9a2ad79ab",
-        "certifier_hash": "f3d36da3d01fd30323b63641fe21a14c83933d4024f95bd84ae46c36ee21072c",
-        "certificate_sha256": "051ce03198992b4faf74465520fe323b0f093b3a62f78a1eed6d2ac8924c6e2a"
+        "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+        "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+        "git_dirty": true,
+        "source_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
+        "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+        "proof_request_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
+        "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+        "opcodes_used": [
+          "bclr",
+          "lwz"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "bclr",
+                  "lwz"
+                ],
+                "ledger_sha256": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "requirement_sha256": "c694165736eddd78adef139f508e6a5055cf66312b6ca65d351d34b6cc281860",
+                "requirements_sha256": "c9373ea08f0d792044449bb8cdb77899e44236286a3388d616f1fedee43bce16"
+              },
+              "attestation_sha256": "254e5a5b9488bb83a610d0e48b13e80d11e83884a83bfa6e43daa1209ebec9cd"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "source_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
+                "proof_request_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
+                "validation_ledger_hash": "053665cacaa42e36da7e732c737e52b7aeb7368dba0be9276629deb748115609",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": true,
+                "requirement_sha256": "1570ff66b29a4cbee42bf5e15cf5750b2166f69611f98cadffea275222d322c9",
+                "requirements_sha256": "c9373ea08f0d792044449bb8cdb77899e44236286a3388d616f1fedee43bce16"
+              },
+              "attestation_sha256": "4bc0565dfeac54745e84a08bff50f10565aa1e5ee5dedddf12f58700c8db147e"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "bclr",
+                "lwz"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "c694165736eddd78adef139f508e6a5055cf66312b6ca65d351d34b6cc281860"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "80d77919e024ace48a7413c68902011f3b14848cece44aaef43ee971d9bef591",
+                "engine_hash": "246cfb69c709d5de65df32d2795f332fe0e4973f0b11353a1dc244f257f51b49",
+                "git_commit": "2ba75c7ab3e0de2bd7f02ecb46a7b5fa39d83be5",
+                "git_dirty": "true",
+                "proof_request_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
+                "result_format": "21",
+                "source_hash": "29d3abdf773162418f2dce1421b5cdea6db248ddafdadcdf5fa16e12815b8d16",
+                "validation_ledger_hash": ""
+              },
+              "requirement_sha256": "1570ff66b29a4cbee42bf5e15cf5750b2166f69611f98cadffea275222d322c9"
+            }
+          ],
+          "requirements_sha256": "c9373ea08f0d792044449bb8cdb77899e44236286a3388d616f1fedee43bce16"
+        },
+        "certificate_sha256": "d0e6a96ce12b450c1268cc6364982a73c1e5268b15ad36cb7ce45be34d83b1c5"
       }
     },
     {

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 
@@ -21,6 +22,9 @@ CERTIFIER_SOURCE_PATHS = [
     "tools/coop/lib/equivalence_policy.py",
     "tools/coop/lib/targets.py",
 ]
+
+# Print live engine hash (for coop.json allowed_engine_sha256 canary pins):
+#   python3 -c "from pathlib import Path; from tools.ppc_equivalence.provenance import hash_engine_tree; print(hash_engine_tree(Path('.')))"
 
 
 def _collect_engine_paths(repo_root: Path) -> list[Path]:
@@ -87,6 +91,105 @@ def hash_engine_tree(repo_root: Path) -> str:
 def hash_certifier_tree(repo_root: Path) -> str:
     """Deterministic SHA-256 over coop certifier/policy trust-boundary sources."""
     return _hash_source_tree(repo_root, _collect_certifier_paths(repo_root))
+
+
+def is_trust_boundary_relative_path(relative: str) -> bool:
+    """True if *relative* (repo-root posix path) is engine or certifier TCB.
+
+    Inclusion mirrors :func:`_collect_engine_paths` /
+    :func:`_collect_certifier_paths` (not whole-repo dirt).
+    """
+    normalized = relative.replace("\\", "/").lstrip("./")
+    if normalized in CERTIFIER_SOURCE_PATHS:
+        return True
+    prefix = "tools/ppc_equivalence/"
+    if not normalized.startswith(prefix):
+        return False
+    rest = normalized[len(prefix) :]
+    if rest in (
+        "requirements.lock",
+        "validation_ledger.yaml",
+        "validation_ledger.json",
+    ):
+        return True
+    if "/" not in rest and rest.endswith(".py"):
+        # tools/ppc_equivalence/*.py
+        return True
+    if rest.startswith("generators/") and rest.endswith(".py"):
+        # tools/ppc_equivalence/generators/**/*.py
+        return True
+    if rest.startswith("fixtures/") and rest.endswith(".py"):
+        # tools/ppc_equivalence/fixtures/*.py (no nested dirs hashed)
+        fixture_name = rest[len("fixtures/") :]
+        return "/" not in fixture_name
+    return False
+
+
+def _unquote_git_path(path: str) -> str:
+    path = path.strip()
+    if len(path) >= 2 and path[0] == '"' and path[-1] == '"':
+        return bytes(path[1:-1], "utf-8").decode("unicode_escape")
+    return path
+
+
+def _iter_porcelain_paths(porcelain: str) -> list[str]:
+    """Extract repo-relative paths from ``git status --porcelain`` output."""
+    paths: list[str] = []
+    for raw_line in porcelain.splitlines():
+        line = raw_line.rstrip("\r")
+        if len(line) < 4:
+            continue
+        # Porcelain v1: XY<space>PATH  or  XY<space>ORIG -> PATH
+        entry = line[3:]
+        if " -> " in entry:
+            left, right = entry.split(" -> ", 1)
+            paths.append(_unquote_git_path(left))
+            paths.append(_unquote_git_path(right))
+        else:
+            paths.append(_unquote_git_path(entry))
+    return paths
+
+
+def git_trust_boundary_dirty(repo_root: Path) -> bool:
+    """True when engine/certifier trust-boundary sources differ from HEAD.
+
+    Unrelated working-tree edits (decomp ``src/**``, docs, harness churn, …)
+    do **not** count as dirty for promotion / provenance canaries.
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            cwd=repo_root,
+            check=False,
+        )
+    except OSError:
+        return False
+    if completed.returncode != 0:
+        return False
+    for relative in _iter_porcelain_paths(completed.stdout):
+        if is_trust_boundary_relative_path(relative):
+            return True
+    return False
+
+
+def live_git_identity(repo_root: Path) -> tuple[str, bool]:
+    """Return ``(git_commit, trust_boundary_dirty)`` for provenance fields."""
+    commit = ""
+    try:
+        completed = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=repo_root,
+            check=False,
+        )
+        if completed.returncode == 0:
+            commit = completed.stdout.strip()
+    except OSError:
+        pass
+    return commit, git_trust_boundary_dirty(repo_root)
 
 
 def canonical_json_sha256(value: object) -> str:

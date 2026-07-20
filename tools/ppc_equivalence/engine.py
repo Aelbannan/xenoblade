@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -56,7 +55,12 @@ from .memory_loop_readonly import (
     readonly_word_byte_constraints,
 )
 from .relational_induction import try_discharge_relational
-from .provenance import canonical_json_sha256, hash_certifier_tree, hash_engine_tree
+from .provenance import (
+    canonical_json_sha256,
+    hash_certifier_tree,
+    hash_engine_tree,
+    live_git_identity,
+)
 from .result import (
     ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
 )
@@ -1634,15 +1638,10 @@ def _check_equivalence_impl(
     )
     result.source_hash = source_hash
     try:
-        result.git_commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
-            cwd=_REPO_ROOT, check=False,
-        ).stdout.strip()
-        dirty_out = subprocess.run(
-            ["git", "status", "--porcelain"], capture_output=True, text=True,
-            cwd=_REPO_ROOT, check=False,
-        ).stdout.strip()
-        result.git_dirty = bool(dirty_out)
+        commit, dirty = live_git_identity(_REPO_ROOT)
+        if commit:
+            result.git_commit = commit
+        result.git_dirty = dirty
     except Exception:
         pass
     try:

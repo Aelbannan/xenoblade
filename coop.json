@@ -15,6 +15,7 @@
     "functionRelocDiffs=data_value"
   ],
   "automatic_promotion": false,
+  "allowed_engine_sha256": "7ccc503faa2bb7bad6052706c0a6b6c75d153fecefa1c0b986abab1e78666f76",
   "capability_manifest_path": "tools/coop/capability_manifest.authoritative.json",
   "capability_assurance_shadow_mode": false,
   "require_capability_assurance": true,

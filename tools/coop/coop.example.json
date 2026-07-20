@@ -16,6 +16,7 @@
   ],
   "dolphin": "/Applications/Dolphin.app/Contents/MacOS/Dolphin",
   "automatic_promotion": false,
+  "allowed_engine_sha256": null,
   "reject_architecture_models": [
     "broadway-ppc32-be-v18",
     "broadway-ppc32-be-v19",
@@ -45,10 +46,11 @@
   "capability_assurance_shadow_mode": true,
   "require_capability_assurance": false,
   "_capability_assurance_wave5_canary": {
-    "description": "Optional Wave 5 authoritative canary. Keep automatic_promotion false. Point capability_manifest_path at the authoritative file and set shadow_mode false / require true (coop.json knobs override the file when present). Safe allowlist only: integer-core, provenance, fp-bitwise, bounded-memory, certified-calls — never bulk-enable scalar FP or MMIO/gx-fifo.",
+    "description": "Optional Wave 5 authoritative canary. Keep automatic_promotion false. Point capability_manifest_path at the authoritative file and set shadow_mode false / require true (coop.json knobs override the file when present). Safe allowlist only: integer-core, provenance, fp-bitwise, bounded-memory, certified-calls — never bulk-enable scalar FP or MMIO/gx-fifo. Pin allowed_engine_sha256 to the live engine hash (optional until promotion opens): python3 -c \"from pathlib import Path; from tools.ppc_equivalence.provenance import hash_engine_tree; print(hash_engine_tree(Path('.')))\"",
     "capability_manifest_path": "tools/coop/capability_manifest.authoritative.json",
     "capability_assurance_shadow_mode": false,
-    "require_capability_assurance": true
+    "require_capability_assurance": true,
+    "allowed_engine_sha256": "<hash_engine_tree output>"
   },
   "require_bounded_ram": false,
   "memory_profile": null,

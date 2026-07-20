@@ -15,6 +15,8 @@ from tools.ppc_equivalence.capability_assurance import (
     CapabilityAssurance,
     CapabilityManifest,
     STATUS_INCOMPLETE,
+    STATUS_PROMOTION_GRADE,
+    _recompute_attestation_status,
     authoritative_capability_manifest_path,
     build_attestation,
     build_capability_assurance_audit,
@@ -270,6 +272,38 @@ class ShadowStillAuthoritativeLegacyTests(unittest.TestCase):
 
 
 class ProvenanceAndPromotionTests(unittest.TestCase):
+    def test_unrelated_dirty_does_not_force_provenance_incomplete(self) -> None:
+        """Scoped git_dirty=False keeps provenance promotion-grade.
+
+        Whole-repo dirt outside the engine/certifier trust boundary must not
+        force incomplete provenance when evidence and result both report
+        git_dirty=False (as live_git_identity / git_trust_boundary_dirty do).
+        """
+        from tools.ppc_equivalence.provenance import is_trust_boundary_relative_path
+
+        self.assertFalse(is_trust_boundary_relative_path("src/kyoshin/CTaskGame.cpp"))
+        proof = _equivalent(
+            git_dirty=False,
+            capability_assurance=CapabilityAssurance(
+                capabilities=(_integer("addi", "blr"), _provenance(git_dirty=False)),
+            ).to_dict(),
+        )
+        status = _recompute_attestation_status(
+            _provenance(git_dirty=False),
+            result=proof,
+            ledger=_open_ledger("addi", "blr"),
+            manifest=_authoritative_manifest(),
+        )
+        self.assertEqual(status, STATUS_PROMOTION_GRADE)
+        self.assertEqual(
+            compute_confidence_tier(
+                proof,
+                _open_ledger("addi", "blr"),
+                manifest=_authoritative_manifest(),
+            ),
+            "A",
+        )
+
     def test_missing_provenance_fields_block_promotion(self) -> None:
         proof = _equivalent(
             engine_hash="",

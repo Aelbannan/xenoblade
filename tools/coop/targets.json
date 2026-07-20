@@ -8905,8 +8905,8 @@
       "size": "0x8",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -8914,7 +8914,49 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:29:45.422266+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-80043cac",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "a6984d1f65924c786264da3046d6d528f2824c63f98503ebf1894bed41cac0ab",
+        "candidate_sha256": "8cc806fac0ac259b5e2b4f20d1def73708b63a52dc88228323199cd053587428",
+        "summary": {
+          "reads": [
+            "memory",
+            "r3",
+            "r4",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "memory",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "789f264434cac3f4cdc347a6097b6c5f42a68d006ea9138059e600c36cfa93d4",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "c03a243cf3f29f6c4107ab4082b3ef2147bc87c2e7c8484bd5eda7f9828b0fa6"
+      }
     },
     {
       "id": "us-80043cb4",
@@ -9265,8 +9307,8 @@
       "size": "0x8",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -9274,7 +9316,48 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:29:37.902937+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-800444b4",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "2f14e052bc7cea79290a6c789ca4d1966733e06c4170a52a9acf160f731f8f72",
+        "candidate_sha256": "e702533cac85570a451ae2966efe2d83afd4b3ddbe973d19997b5a30ba3df0db",
+        "summary": {
+          "reads": [
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "f3b38fd78c9656551921e250bb5be758bcaa689478a51f36bc8391aaa5f4978f",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "90764f88b39844531cdf1f7712efa633c8485db0cba5ebb13bb5e654fcd4aa1d"
+      }
     },
     {
       "id": "us-800444bc",
@@ -9588,8 +9671,8 @@
       "size": "0x8",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -9597,7 +9680,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:31:50.801832+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-800446dc",
@@ -35117,8 +35210,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CfCamEvent",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCamEvent.cpp",
       "called_functions": [],
@@ -35126,7 +35219,50 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCamEvent.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:32:56.031368+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCamEvent.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-8006b708",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "3020db8ce856fab31a10f5ba856a35c07d5d1123ad991c9b1e70852a18e3166f",
+        "candidate_sha256": "9c47bcf668aba80a884b667823fe31c5d550b577e9fe22a98ac659e077f43343",
+        "summary": {
+          "reads": [
+            "f1",
+            "fpscr",
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "memory",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b71c546c604157a46d742fe64224f5f3a052e78a7da2860d704627e66ed4d5c3",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "06f4ad5b0b7275362f24cea074182aea7d4ce22ca7697c65c6b122c972a79f55"
+      }
     },
     {
       "id": "us-8006b710",
@@ -35140,8 +35276,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CfCamEvent",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCamEvent.cpp",
       "called_functions": [],
@@ -35149,7 +35285,49 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCamEvent.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:32:50.137611+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCamEvent.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-8006b710",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "1ea3b355fe9d1bcba8f80d9daea1191a17d1dffcee46fb1c13095a62c2da0d52",
+        "candidate_sha256": "368c216aedded740e2a2983c77b3650354b9951af976e1f0a626c7c5ede0505e",
+        "summary": {
+          "reads": [
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "f1",
+            "f1.ps1",
+            "invalid_reason",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b71c546c604157a46d742fe64224f5f3a052e78a7da2860d704627e66ed4d5c3",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "45f0881e8da92ff211d01d2598dfa739b21310e720a8f35e96ed44b1c0545693"
+      }
     },
     {
       "id": "us-8006b718",
@@ -35556,8 +35734,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -35565,7 +35743,42 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:32:44.096598+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-8006c0f8",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "5fed6ac4d35061377c4e3ecb98909f8df926d1285606268d5c28dce4469bdfb2",
+        "candidate_sha256": "c89638842f7cc43a95b5f51c16543c61718d9424420f1b1b27752d11338a2f04",
+        "summary": {
+          "reads": [
+            "r3"
+          ],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "189b19ed20c557ac4ca60df96b63d36bece5445e73be7ea5dfdeea72de142839",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "d310f297a900f989e09bbb7ae89222eaa3379e3291b0c441e452bf71cc14abcf"
+      }
     },
     {
       "id": "us-8006c100",
@@ -35579,8 +35792,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -35588,7 +35801,48 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:37:33.454704+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-8006c100",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "1837ce00f6c873e3f82a33e05ac0fa4e1947fae9822257697fc2944061c078d7",
+        "candidate_sha256": "938c36eb1931e953af7ae4d7b9025f8efef98475e07daea40e7a49042279b32a",
+        "summary": {
+          "reads": [
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "41f91976901c5a730367c296881279505105479ce44d378708d287885bcf7b61",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "62f389fc5d20c2eef5e3d1948ae4ca882be6a6947b951e869b14260ce42a1d0b"
+      }
     },
     {
       "id": "us-8006c108",
@@ -35602,8 +35856,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -35611,7 +35865,42 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:34:51.746856+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-8006c108",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "5a7a339f52fde1925dc56171e61b8be8311975283ac163d7f494c9bf2cc125f9",
+        "candidate_sha256": "d2ae87c8a04c83f98acf3695254f1314f25c29184a6a88f70b3f1f574005d5ec",
+        "summary": {
+          "reads": [
+            "r3"
+          ],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b71c546c604157a46d742fe64224f5f3a052e78a7da2860d704627e66ed4d5c3",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "c259f0167e19833b767290bc0ba20a4a874149ecdf892f0b5fc18d6abf442fd2"
+      }
     },
     {
       "id": "us-8006c110",
@@ -35625,8 +35914,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -35634,7 +35923,42 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:35:45.932739+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 9,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v34",
+        "result_format": 16,
+        "target_id": "us-8006c110",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "0c3e5d05f8648d28a23fc38056009dbaf6d2fbc0696a4d963dd9650ceda0bf50",
+        "candidate_sha256": "e33107677bd325e61c0913d1bee950a92f036f6634d10cd0d00cf6677c919df0",
+        "summary": {
+          "reads": [
+            "r3"
+          ],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "8935abc6b163beb35444a7df9f1aa176d4ea820d439d186525b8637fc650f198",
+        "certifier_hash": "556a450e85237cbf6b9cb10fda8a94e7eb0db53ba9a9735846eb68c05b66361c",
+        "certificate_sha256": "71e4e1c81644d804c316e9e57fcdbcae6a61057042955a3e79ad381b7cfac77e"
+      }
     },
     {
       "id": "us-8006c118",
@@ -227208,8 +227532,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/chain/CChainActorPc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChainActorPc.cpp",
       "called_functions": [],
@@ -227217,7 +227541,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorPc.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:28:30.607105+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/chain/CChainActorPc.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-80284914",
@@ -469151,8 +469485,8 @@
       "size": "0x4",
       "unit": "monolib/src/scn/CScn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/scn/CScn.cpp",
       "called_functions": [],
@@ -469160,7 +469494,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScn.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T11:28:22.531009+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScn.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "scn-add-render-cb",

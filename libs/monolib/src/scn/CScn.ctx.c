@@ -16483,7 +16483,10 @@ extern "C" void func_80495EAC() {
 }
 // LLM-HARNESS-END: us-80499f24
 // LLM-HARNESS-BEGIN: us-80499f28
-extern "C" void func_80495EB0() {}
+extern "C" void __ct__804820F8();
+extern "C" void func_80495EB0() {
+    __ct__804820F8();
+}
 // LLM-HARNESS-END: us-80499f28
 // LLM-HARNESS-BEGIN: us-8049a040
 extern "C" void func_80495FC8() {}

@@ -102,16 +102,16 @@ extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* ar
 }
 
 // LLM-HARNESS-BEGIN: us-8006c0f8
-extern "C" bool func_8006B6A0() { return false; }
+extern "C" void* func_8006B6A0(void* self) { return (char*)self + 0x10; }
 // LLM-HARNESS-END: us-8006c0f8
 // LLM-HARNESS-BEGIN: us-8006c100
-extern "C" bool func_8006B6A8() { return false; }
+extern "C" u32 func_8006B6A8(const void* self) { return *(const u32*)((const char*)self + 0x164); }
 // LLM-HARNESS-END: us-8006c100
 // LLM-HARNESS-BEGIN: us-8006c108
-extern "C" bool func_8006B6B0() { return false; }
+extern "C" void* func_8006B6B0(void* ptr) { return static_cast<char*>(ptr) + 0x40; }
 // LLM-HARNESS-END: us-8006c108
 // LLM-HARNESS-BEGIN: us-8006c110
-extern "C" bool func_8006B6B8() { return false; }
+extern "C" void* func_8006B6B8(void* self) { return (char*)self + 0x1c; }
 // LLM-HARNESS-END: us-8006c110
 // LLM-HARNESS-BEGIN: us-8006c118
 extern "C" bool func_8006B6C0() { return true; }

@@ -42,10 +42,14 @@ extern "C" char** CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self) {
 }
 
 // LLM-HARNESS-BEGIN: us-8006b708
-extern "C" bool func_8006ACB0() { return false; }
+extern "C" void func_8006ACB0(void* self, float value) {
+    *(float*)((uintptr_t)self + 0x280) = value;
+}
 // LLM-HARNESS-END: us-8006b708
 // LLM-HARNESS-BEGIN: us-8006b710
-extern "C" bool func_8006ACB8() { return false; }
+extern "C" float func_8006ACB8(void* self) {
+    return *(float*)((char*)self + 0x280);
+}
 // LLM-HARNESS-END: us-8006b710
 
 // LLM-HARNESS-BEGIN: us-8006b284

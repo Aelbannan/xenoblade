@@ -14,7 +14,7 @@
     "--config",
     "functionRelocDiffs=data_value"
   ],
-  "automatic_promotion": true,
+  "automatic_promotion": false,
   "reject_architecture_models": [
     "broadway-ppc32-be-v18",
     "broadway-ppc32-be-v19",

@@ -68,14 +68,14 @@ The engine path remains covered by synthetic fixtures (`test_loop_summary.py`). 
 
 ## Memory-loop (4 partial, 686 heuristic windows)
 
-Engine recognition finds constant-stride store bodies but rejects discharge without a concrete `li`/`addi` trip count before `mtctr`:
+Engine recognition finds constant-stride store bodies but rejects discharge without a concrete trip count before `mtctr`. The four documented partial hits load CTR from **register arithmetic** (`srwi` / `andi` remainder tails), not `lwz` of a linked constant — **0/4 become exact** with DOL/ELF readonly hydration alone. Linked-image hydration (`memory_loop_image`) enables exact-pattern discharge when CTR materialization is `addis`/`addi`/`lwz` of a proven `.data`/`.rodata` word (covered by synthetic tests; retail `lwz` CTR loops are follow-up census targets).
 
 | Unit | Symbol | Address | Notes |
 |---|---|---|---|
-| `RVL_SDK` | `__AXVPBInitCommon` | `0x802D7A38` | CTR not concrete `addi/li` |
-| `RVL_SDK` | `OSExceptionInit` | `0x80355690` | same |
-| `RVL_SDK` | `btsnd_hcic_pin_code_req_reply` | `0x802F1AF8` | same |
-| `RVL_SDK` | (second slot in `AXVPB.s`) | `0x802D7A98` | same |
+| `RVL_SDK` | `__AXVPBInitCommon` | `0x802D7A38` | CTR = `mtctr r6` after `andi.` remainder |
+| `RVL_SDK` | `OSExceptionInit` | `0x80355690` | CTR = `mtctr r3` after `andi.` remainder |
+| `RVL_SDK` | `btsnd_hcic_pin_code_req_reply` | `0x802F1AF8` | not a store/`bdnz` loop (doc mis-tag) |
+| `RVL_SDK` | (second slot in `AXVPB.s`) | `0x802D7A98` | CTR = `mtctr r5` after `andi.` remainder |
 
 **Heuristic hot spots** (text `mtctr`/store/`bdnz`, not yet exact engine matches):
 

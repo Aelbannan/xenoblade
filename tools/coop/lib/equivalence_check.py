@@ -801,11 +801,16 @@ def _prove_bytes(
     )
 
     jump_table_context = None
+    memory_loop_readonly_words = None
     if proof_features is None and address_space is None and indirect_targets is None:
         from tools.ppc_equivalence.jump_table_auto import try_auto_jump_table_context
         from tools.ppc_equivalence.jump_table_obligations import (
             build_indirect_targets_obligation,
             build_readonly_image_obligation,
+        )
+        from tools.ppc_equivalence.memory_loop_image import (
+            merge_memory_loop_readonly_words,
+            try_build_memory_loop_readonly_words,
         )
 
         dol_path = None
@@ -824,6 +829,18 @@ def _prove_bytes(
             elf_path=elf_path,
             original_dol_path=dol_path,
             candidate_elf_path=elf_path,
+        )
+        memory_loop_readonly_words = merge_memory_loop_readonly_words(
+            try_build_memory_loop_readonly_words(
+                original,
+                dol_path=dol_path,
+                elf_path=elf_path,
+            ),
+            try_build_memory_loop_readonly_words(
+                candidate,
+                dol_path=dol_path,
+                elf_path=elf_path,
+            ),
         )
         if jump_table_context is not None:
             proof_features = ["readonly-image", "indirect-target-closure"]
@@ -1019,6 +1036,7 @@ def _prove_bytes(
         source_hash=source_hash,
         floating_point_domain=fp_domain,
         jump_table=jump_table_context,
+        readonly_words=memory_loop_readonly_words,
     )
     detail = ""
     if result.contract_resolution:

@@ -185,6 +185,132 @@ def _defines_gpr(insn: Instruction, reg: int) -> bool:
     return False
 
 
+def collect_lwz_readonly_addresses(
+    instructions: Sequence[Instruction],
+    use_index: int,
+    reg: int,
+    *,
+    max_lookback: int = _DEFAULT_LOOKBACK,
+) -> frozenset[int]:
+    """Return effective ``lwz`` addresses needed to concretize ``reg`` before ``use_index``."""
+    if use_index <= 0 or max_lookback < 1:
+        return frozenset()
+    lower = max(0, use_index - max_lookback)
+    for index in range(use_index - 1, lower - 1, -1):
+        insn = instructions[index]
+        if not _defines_gpr(insn, reg):
+            continue
+        return _collect_lwz_from_defining_insn(
+            instructions,
+            index,
+            insn,
+            reg,
+            max_lookback=max_lookback,
+            depth=0,
+        )
+    return frozenset()
+
+
+def _collect_lwz_from_defining_insn(
+    instructions: Sequence[Instruction],
+    index: int,
+    insn: Instruction,
+    reg: int,
+    *,
+    max_lookback: int,
+    depth: int,
+) -> frozenset[int]:
+    if depth >= max_lookback or insn.relocation is not None:
+        return frozenset()
+
+    opcode = insn.opcode
+    if opcode == Opcode.ADDI:
+        rt, ra, _imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.ADDIS:
+        rt, ra, _imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.ORI:
+        rt, ra, _imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.ORIS:
+        rt, ra, _imm = (int(v) for v in insn.operands)
+        if rt != reg:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.OR:
+        rt, ra, rb = (int(v) for v in insn.operands)
+        if rt != reg or ra != rb:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.XOR:
+        rt, ra, rb = (int(v) for v in insn.operands)
+        if rt == reg and ra == rb:
+            return frozenset()
+        return frozenset()
+
+    if opcode == Opcode.LWZ:
+        rt, ra, disp = (int(v) for v in insn.operands)
+        if rt != reg:
+            return frozenset()
+        nested = _collect_lwz_before(
+            instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+        if ra == 0:
+            address = _sign_extend_16(disp) & 0xFFFFFFFF
+            return frozenset({address}) | nested
+        base, _notes = recover_gpr_constant(
+            instructions, index, ra, max_lookback=max_lookback,
+        )
+        if base is None:
+            return nested
+        address = (base + _sign_extend_16(disp)) & 0xFFFFFFFF
+        return frozenset({address}) | nested
+
+    return frozenset()
+
+
+def _collect_lwz_before(
+    instructions: Sequence[Instruction],
+    use_index: int,
+    reg: int,
+    *,
+    max_lookback: int,
+    depth: int,
+) -> frozenset[int]:
+    if reg == 0:
+        return frozenset()
+    if depth >= max_lookback:
+        return frozenset()
+    return collect_lwz_readonly_addresses(
+        instructions,
+        use_index,
+        reg,
+        max_lookback=max_lookback,
+    )
+
+
 def _sign_extend_16(value: int) -> int:
     word = int(value) & 0xFFFF
     if word >= 0x8000:

@@ -1067,6 +1067,7 @@ def check_equivalence(
     concrete_sample_seed: int = 0,
     jump_table: JumpTableProofContext | None = None,
     memory_bus: MemoryBus | None = None,
+    readonly_words: dict[int, int] | None = None,
 ) -> ProofResult:
     ops = SymbolicOps()
     z3 = ops.z3
@@ -1085,8 +1086,14 @@ def check_equivalence(
     original_affine = build_affine_summary_map(original)
     candidate_affine = build_affine_summary_map(candidate)
     affine_used: list = []
-    original_memory = build_memory_loop_summary_map(original)
-    candidate_memory = build_memory_loop_summary_map(candidate)
+    original_memory = build_memory_loop_summary_map(
+        original,
+        readonly_words=readonly_words,
+    )
+    candidate_memory = build_memory_loop_summary_map(
+        candidate,
+        readonly_words=readonly_words,
+    )
     memory_used: list = []
 
     def _early_timeout(phase: str) -> ProofResult:

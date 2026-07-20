@@ -590,6 +590,7 @@ class PromotionPolicy:
             "broadway-ppc32-be-v26",
             "broadway-ppc32-be-v27",
             "broadway-ppc32-be-v28",
+            "broadway-ppc32-be-v29",
         }
     )
     minimum_result_format: int = RESULT_FORMAT

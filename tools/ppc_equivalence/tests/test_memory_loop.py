@@ -186,6 +186,28 @@ class ConstantStrideStoreLoopRecognitionTests(unittest.TestCase):
         self.assertEqual(loops[0].confidence, "partial")
         self.assertIsNone(loops[0].trip_count)
 
+    def test_exact_with_lwz_readonly_trip_count(self) -> None:
+        table_addr = 0x80201000
+        program = [
+            _insn(Opcode.ADDIS, (5, 0, 0x8020), address=0),
+            _insn(Opcode.ORI, (5, 5, 0x1000), address=4),
+            _insn(Opcode.LWZ, (0, 5, 0), address=8),
+            _insn(Opcode.MTSPR, (0, 9), address=12),
+            _insn(Opcode.STW, (3, 4, 0), address=16),
+            _insn(Opcode.ADDI, (4, 4, 4), address=20),
+            _insn(Opcode.BC, (16, 0, 16, 0), address=24),
+        ]
+        partial = find_constant_stride_store_loops(program)
+        self.assertEqual(len(partial), 1)
+        self.assertEqual(partial[0].confidence, "partial")
+        exact = find_constant_stride_store_loops(
+            program,
+            readonly_words={table_addr: 5},
+        )
+        self.assertEqual(len(exact), 1)
+        self.assertEqual(exact[0].confidence, "exact-pattern")
+        self.assertEqual(exact[0].trip_count, 5)
+
     def test_never_raises_on_empty_or_unrelated(self) -> None:
         self.assertEqual(find_constant_stride_store_loops([]), [])
         self.assertEqual(
@@ -328,6 +350,49 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
         self.assertIsNotNone(result.memory_loop)
         self.assertEqual(result.memory_loop["trip_count"], 20)
         self.assertEqual(result.memory_loop["coverage"], "applied")
+
+    def test_lwz_readonly_proves_under_tight_iteration_bound(self) -> None:
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        table_addr = 0x80201000
+        program = [
+            _insn(Opcode.ADDIS, (5, 0, 0x8020), address=0),
+            _insn(Opcode.ORI, (5, 5, 0x1000), address=4),
+            _insn(Opcode.LWZ, (0, 5, 0), address=8),
+            _insn(Opcode.MTSPR, (0, 9), address=12),
+            _insn(Opcode.STW, (3, 4, 0), address=16),
+            _insn(Opcode.ADDI, (4, 4, 4), address=20),
+            _insn(Opcode.BC, (16, 0, 16, 0), address=24),
+            _insn(Opcode.BCLR, (20, 0, 0), address=28),
+        ]
+        contract = EquivalenceContract(
+            parse_observables(["r4", "memory"]),
+            timeout_ms=15_000,
+        )
+        without_map = check_equivalence(
+            program,
+            program,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertNotEqual(without_map.status, ProofStatus.EQUIVALENT)
+
+        with_map = check_equivalence(
+            program,
+            program,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            max_loop_iterations=2,
+            readonly_words={table_addr: 4},
+        )
+        self.assertEqual(with_map.status, ProofStatus.EQUIVALENT, with_map.unsupported)
+        self.assertIn("memory-loop-summary", with_map.proof_features)
+        self.assertEqual(with_map.memory_loop["trip_count"], 4)
 
 
 if __name__ == "__main__":

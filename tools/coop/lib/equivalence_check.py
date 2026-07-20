@@ -299,6 +299,7 @@ def _cache_key(
     relational_induction: dict[str, Any] | None = None,
     memory_loop: dict[str, Any] | None = None,
     memory_bus: dict[str, Any] | None = None,
+    memory_loop_readonly: dict[str, Any] | None = None,
     obligations: dict[str, Any] | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
@@ -352,6 +353,10 @@ def _cache_key(
     }
     if proof_features is not None:
         payload["proof_features"] = sorted(proof_features)
+    # Top-level identity premise (not a proof feature): binds the exact per-side
+    # readonly-image words used to hydrate CTR lwz trip counts.
+    if memory_loop_readonly is not None:
+        payload["memory_loop_readonly"] = memory_loop_readonly
 
     merged: dict[str, Any] = dict(obligations or {})
     for key, value in (
@@ -434,6 +439,13 @@ def _cache_get(
             certificate=certificate_dict,
             proof_audit=audit_dict,
         )
+        # EQUIVALENT (and any entry that claimed a certificate) requires a
+        # reconstructable ProofResult. Evidence-free EQUIVALENT status-only
+        # entries are incomplete/fabricated and must miss.
+        if proof is None and (
+            status is ProofStatus.EQUIVALENT or certificate_dict is not None
+        ):
+            return None
         detail = data.get("detail", "")
         # Revalidation may demote a stored EQUIVALENT (unsupported features,
         # forged/weak obligations). Outer probe fields must match the re-gated
@@ -871,6 +883,9 @@ def _prove_bytes(
             build_jump_table_obligations,
             side_artifact_from_path,
         )
+        from tools.ppc_equivalence.memory_loop import (
+            collect_memory_loop_ctr_lwz_addresses,
+        )
         from tools.ppc_equivalence.memory_loop_image import (
             try_build_memory_loop_readonly_words,
         )
@@ -912,20 +927,39 @@ def _prove_bytes(
         # Virtual-call try_auto: returns None without slot/certificate premises
         # (fail-closed). Pattern presence alone is gated inside check_equivalence.
         virtual_call_context = try_auto_virtual_call_context(original, candidate)
-        memory_loop_readonly_words = build_memory_loop_readonly_context(
-            original_words=try_build_memory_loop_readonly_words(
-                original,
-                dol_path=dol_path,
-                elf_path=elf_path,
-            ),
-            candidate_words=try_build_memory_loop_readonly_words(
-                candidate,
-                dol_path=dol_path,
-                elf_path=elf_path,
-            ),
-            original_source="image",
-            candidate_source="image",
+        # Per-side provenance: the original (retail) side is hydrated ONLY from
+        # the DOL image and the candidate (decomp) side ONLY from the linked
+        # ELF. Never let the ELF shadow the retail DOL (or vice versa).
+        original_words = try_build_memory_loop_readonly_words(
+            original,
+            dol_path=dol_path,
+            elf_path=None,
         )
+        candidate_words = try_build_memory_loop_readonly_words(
+            candidate,
+            dol_path=None,
+            elf_path=elf_path,
+        )
+        original_needs_words = bool(
+            collect_memory_loop_ctr_lwz_addresses(original)
+        )
+        candidate_needs_words = bool(
+            collect_memory_loop_ctr_lwz_addresses(candidate)
+        )
+        # If either side needs CTR-lwz hydration but its image evidence is
+        # missing, disable the summary on BOTH sides and fall back to ordinary
+        # execution — never summarize one side with evidence the other lacks.
+        if (original_needs_words and original_words is None) or (
+            candidate_needs_words and candidate_words is None
+        ):
+            memory_loop_readonly_words = None
+        else:
+            memory_loop_readonly_words = build_memory_loop_readonly_context(
+                original_words=original_words,
+                candidate_words=candidate_words,
+                original_source="image",
+                candidate_source="image",
+            )
         if jump_table_context is not None:
             proof_features = ["readonly-image", "indirect-target-closure"]
             address_space, indirect_targets = build_jump_table_obligations(
@@ -1032,6 +1066,16 @@ def _prove_bytes(
         fp_domain_dict = dict(fp_domain_dict)
         fp_domain_dict.setdefault("fp_oracle_version", FP_ORACLE_VERSION)
 
+    memory_loop_readonly_identity = None
+    if memory_loop_readonly_words is not None:
+        from tools.ppc_equivalence.memory_loop_readonly import (
+            build_memory_loop_readonly_obligation,
+        )
+
+        memory_loop_readonly_identity = build_memory_loop_readonly_obligation(
+            memory_loop_readonly_words,
+        )
+
     key = _cache_key(
         resolved_contract.name, observables, orig_hex, cand_hex,
         orig_base, cand_base,
@@ -1052,6 +1096,7 @@ def _prove_bytes(
         proof_features=proof_features,
         address_space=address_space,
         indirect_targets=indirect_targets,
+        memory_loop_readonly=memory_loop_readonly_identity,
     )
 
     cache_d = _cache_dir(project)
@@ -1122,6 +1167,7 @@ def _prove_bytes(
         proof_features=proof_features,
         address_space=address_space,
         indirect_targets=indirect_targets,
+        memory_loop_readonly=memory_loop_readonly_identity,
     )
     result = check_equivalence(
         original,

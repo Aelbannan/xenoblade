@@ -284,13 +284,19 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   gates; ``memory-bus`` is cleared from ``UNSUPPORTED_FOR_EQUIVALENT``.
 - **Memory-bus discharged obligation (Track A):** `status=discharged` requires
   schema v2 attestations — `bus_spec_sha256`, per-side unsupported-access
-  (`result=unsat` + `query_sha256` + solver metadata, **or** vacuous
-  `status=vacuously-discharged` / `reason=no-unsupported-predicates` with
-  `cfg_trace_sha256` + `access_coverage_sha256`), register-bank / FIFO theory
-  blocks (or explicit `none`), `device_state_in_compare`, and
-  `access_coverage.attested`. Empty CFG predicates must **not** be silently
-  rewritten as UNSAT; vacuous discharge is valid only with coverage
-  attestation. `require_equivalent_ready` demands `status=discharged` and
+  (`result=unsat` + `query_sha256` + solver metadata over a nonempty
+  `terminals` list where every child is `result=unsat` /
+  `inconclusive=false` with valid solver metadata (aggregate binds complete
+  terminal records), **or** vacuous `status=vacuously-discharged` /
+  `reason=no-unsupported-predicates` with `cfg_trace_sha256` +
+  `access_coverage_sha256`), register-bank / FIFO theory blocks (or explicit
+  `none`) with exact MMIO `device_id` coverage and no register/FIFO overlap,
+  `device_state_in_compare`, and per-side `access_coverage.status=complete`
+  (``observed`` is not sufficient for discharge). Empty CFG predicates must
+  **not** be silently rewritten as UNSAT; vacuous discharge is valid only with
+  coverage attestation. Optional `bus_spec_canonical` lets JSON-only
+  validators recompute `bus_spec_sha256` without a live bus.
+  `require_equivalent_ready` demands `status=discharged` and
   validator pass. Weak / forged algorithm-regions-only JSON fails closed;
   discharged status is engine-generated via `build` + `enrich`, never trusted
   from caller JSON alone for the live proof path.

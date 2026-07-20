@@ -518,11 +518,21 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         }
 
     def _unsat_side(self, query_sha: str) -> dict:
-        return {
+        from tools.ppc_equivalence.symbolic_bus import (
+            aggregate_unsupported_access_query_sha256,
+        )
+
+        terminal = {
             "result": "unsat",
             "query_sha256": query_sha,
+            "inconclusive": False,
             "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 1.0},
-            "terminals": [],
+        }
+        return {
+            "result": "unsat",
+            "query_sha256": aggregate_unsupported_access_query_sha256([terminal]),
+            "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 1.0},
+            "terminals": [terminal],
         }
 
     def test_positive_discharged_vacuous_shape(self) -> None:
@@ -538,7 +548,7 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         bus = self._mmio_bus()
         coverage = build_access_coverage_attestation(
             attested=True,
-            status="observed",
+            status="complete",
             opcode_families=["integer-load-store"],
         )
         cfg_sha = canonical_json_sha256({"kind": "cfg-trace", "terminals": []})
@@ -599,20 +609,27 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         bus = build_memory_bus(AddressSpace((ram,)))
         coverage = build_access_coverage_attestation(
             attested=True,
-            status="observed",
+            status="complete",
             opcode_families=["integer-load-store"],
         )
-        term_a = "a" * 64
-        term_b = "b" * 64
+        term_a = {
+            "result": "unsat",
+            "query_sha256": "a" * 64,
+            "inconclusive": False,
+            "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 0.5},
+        }
+        term_b = {
+            "result": "unsat",
+            "query_sha256": "b" * 64,
+            "inconclusive": False,
+            "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 0.5},
+        }
         aggregate = aggregate_unsupported_access_query_sha256([term_a, term_b])
         unsat = {
             "result": "unsat",
             "query_sha256": aggregate,
             "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 1.0},
-            "terminals": [
-                {"query_sha256": term_a, "result": "unsat"},
-                {"query_sha256": term_b, "result": "unsat"},
-            ],
+            "terminals": [term_a, term_b],
         }
         obligation = build_memory_bus_obligation(bus)
         obligation.update(
@@ -734,7 +751,13 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         self.assertIn("attested", reason or "")
 
     def test_cfg_vacuous_path_via_discharge(self) -> None:
+        from tools.ppc_equivalence.bus_access import (
+            BUS_ACCESS_FAMILY_INTEGER,
+            clear_side_bus_access_coverage,
+            store_side_bus_access_coverage,
+        )
         from tools.ppc_equivalence.deadline import Deadline
+        from tools.ppc_equivalence.ir import Instruction, Opcode
         from tools.ppc_equivalence.memory_bus_obligations import (
             enrich_memory_bus_obligation_with_symbolic_mmio,
         )
@@ -769,6 +792,20 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
                 )()
                 self.condition = z3.BoolVal(True)
 
+        instructions = [
+            Instruction(0, 0, Opcode.LWZ, (3, 0, 0)),
+            Instruction(4, 0, Opcode.BCLR, (20, 0, 0)),
+        ]
+        clear_side_bus_access_coverage()
+        dyn = {
+            "families": [BUS_ACCESS_FAMILY_INTEGER],
+            "opcode_families": [BUS_ACCESS_FAMILY_INTEGER],
+            "rejections": [],
+            "source": "dynamic",
+        }
+        store_side_bus_access_coverage("original", dyn)
+        store_side_bus_access_coverage("candidate", dyn)
+
         enriched = enrich_memory_bus_obligation_with_symbolic_mmio(
             {"algorithm": "memory-bus-v1", "regions": [
                 {"kind": "mmio", "start": 0xCC008000, "end": 0xCC008FFF,
@@ -777,6 +814,8 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
             bus,
             original_terminals=[_Term()],
             candidate_terminals=[_Term()],
+            original_instructions=instructions,
+            candidate_instructions=instructions,
             ops=SymbolicOps(),
             deadline=Deadline.after_ms(5_000),
         )
@@ -788,6 +827,7 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
             enriched["access_coverage"]["original"]["sha256"],
         )
         self.assertEqual(enriched["status"], "discharged")
+        self.assertEqual(enriched["access_coverage"]["status"], "complete")
         from tools.ppc_equivalence.memory_bus_obligations import (
             validate_memory_bus_obligation,
         )
@@ -820,7 +860,7 @@ class StrictMemoryBusValidatorTests(unittest.TestCase):
 
         coverage = build_access_coverage_attestation(
             attested=True,
-            status="observed",
+            status="complete",
             opcode_families=["integer-load-store"],
         )
         cfg_sha = canonical_json_sha256({"kind": "cfg-trace", "terminals": []})
@@ -964,18 +1004,29 @@ class StrictMemoryBusValidatorTests(unittest.TestCase):
         ram = Region(0x80000000, 0x801FFFFF, RegionKind.RAM)
         bus = build_memory_bus(AddressSpace((ram,)))
         coverage = build_access_coverage_attestation(
-            attested=True, status="observed",
+            attested=True, status="complete",
         )
         digests = ["1" * 64, "2" * 64]
-        aggregate = aggregate_unsupported_access_query_sha256(digests)
+        terminals = [
+            {
+                "result": "unsat",
+                "query_sha256": digests[0],
+                "inconclusive": False,
+                "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 0.5},
+            },
+            {
+                "result": "unsat",
+                "query_sha256": digests[1],
+                "inconclusive": False,
+                "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 0.5},
+            },
+        ]
+        aggregate = aggregate_unsupported_access_query_sha256(terminals)
         side = {
             "result": "unsat",
             "query_sha256": aggregate,
             "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 1.0},
-            "terminals": [
-                {"query_sha256": digests[0], "result": "unsat"},
-                {"query_sha256": digests[1], "result": "unsat"},
-            ],
+            "terminals": terminals,
         }
         obligation = build_memory_bus_obligation(bus)
         obligation.update(
@@ -1006,7 +1057,13 @@ class StrictMemoryBusValidatorTests(unittest.TestCase):
         self.assertIn("aggregate", reason or "")
 
     def test_engine_built_valid_discharged_still_passes(self) -> None:
+        from tools.ppc_equivalence.bus_access import (
+            BUS_ACCESS_FAMILY_INTEGER,
+            clear_side_bus_access_coverage,
+            store_side_bus_access_coverage,
+        )
         from tools.ppc_equivalence.deadline import Deadline
+        from tools.ppc_equivalence.ir import Instruction, Opcode
         from tools.ppc_equivalence.memory_bus_obligations import (
             enrich_memory_bus_obligation_with_symbolic_mmio,
             validate_memory_bus_obligation,
@@ -1042,16 +1099,32 @@ class StrictMemoryBusValidatorTests(unittest.TestCase):
                 )()
                 self.condition = z3.BoolVal(True)
 
+        instructions = [
+            Instruction(0, 0, Opcode.LWZ, (3, 0, 0)),
+            Instruction(4, 0, Opcode.BCLR, (20, 0, 0)),
+        ]
+        clear_side_bus_access_coverage()
+        dyn = {
+            "families": [BUS_ACCESS_FAMILY_INTEGER],
+            "opcode_families": [BUS_ACCESS_FAMILY_INTEGER],
+            "rejections": [],
+            "source": "dynamic",
+        }
+        store_side_bus_access_coverage("original", dyn)
+        store_side_bus_access_coverage("candidate", dyn)
+
         enriched = enrich_memory_bus_obligation_with_symbolic_mmio(
             build_memory_bus_obligation(bus),
             bus,
             original_terminals=[_Term()],
             candidate_terminals=[_Term()],
+            original_instructions=instructions,
+            candidate_instructions=instructions,
             ops=SymbolicOps(),
             deadline=Deadline.after_ms(5_000),
         )
         self.assertEqual(enriched["status"], "discharged")
-        self.assertEqual(enriched["access_coverage"]["status"], "observed")
+        self.assertEqual(enriched["access_coverage"]["status"], "complete")
         self.assertIsNone(validate_memory_bus_obligation(enriched, bus=bus))
         self.assertIsNone(
             validate_memory_bus_obligation_strict(
@@ -1061,6 +1134,245 @@ class StrictMemoryBusValidatorTests(unittest.TestCase):
                 candidate_terminals=[_Term()],
             )
         )
+
+    def test_incomplete_device_theory_coverage_rejected_and_demotes(self) -> None:
+        """Finding 1: dropping an MMIO device from theory fails closed."""
+        from tools.ppc_equivalence.address_space import AddressSpace, mmio_region
+        from tools.ppc_equivalence.device_model import RegisterBankDevice
+        from tools.ppc_equivalence.memory_bus import build_memory_bus
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+            build_access_coverage_attestation,
+            build_device_state_in_compare_attestation,
+            build_memory_bus_obligation,
+            validate_memory_bus_obligation,
+        )
+        from tools.ppc_equivalence.proof_features import enforce_equivalent_proof_features
+        from tools.ppc_equivalence.provenance import canonical_json_sha256
+        from tools.ppc_equivalence.result import ProofResult, ProofStatus
+
+        bank_a = RegisterBankDevice(
+            base=0xCC008000,
+            reg_width=4,
+            registers=(RegisterSpec(offset=0x00, initial=0xAB),),
+        )
+        bank_b = RegisterBankDevice(
+            base=0xCC009000,
+            reg_width=4,
+            registers=(RegisterSpec(offset=0x00, initial=0xCD),),
+        )
+        mmio_a = mmio_region(0xCC008000, 0xCC008FFF, device_id="bank-a")
+        mmio_b = mmio_region(0xCC009000, 0xCC009FFF, device_id="bank-b")
+        bus = build_memory_bus(
+            AddressSpace((mmio_a, mmio_b)),
+            devices={"bank-a": bank_a, "bank-b": bank_b},
+        )
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            status="complete",
+            opcode_families=["integer-load-store"],
+        )
+        cfg_sha = canonical_json_sha256({"kind": "cfg-trace", "terminals": []})
+        observability = {
+            "register_banks": {
+                "bank-a": {"0x0": "0xab"},
+                "bank-b": {"0x0": "0xcd"},
+            },
+            "fifo_traces": {},
+            "touches": {"original": [], "candidate": []},
+            "symbolic": {
+                "original": {"register_banks": {}, "fifo_traces": {}},
+                "candidate": {"register_banks": {}, "fifo_traces": {}},
+            },
+        }
+        vacuous = {
+            "status": "vacuously-discharged",
+            "reason": "no-unsupported-predicates",
+            "cfg_trace_sha256": cfg_sha,
+            "access_coverage_sha256": coverage["original"]["sha256"],
+        }
+        obligation = build_memory_bus_obligation(bus)
+        obligation.update(
+            {
+                "status": "discharged",
+                "schema_version": MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+                "access_coverage": coverage,
+                "unsupported_access": {
+                    "original": vacuous,
+                    "candidate": {
+                        **vacuous,
+                        "access_coverage_sha256": coverage["candidate"]["sha256"],
+                    },
+                },
+                # Incomplete: bank-b omitted from theory (JSON-only gap).
+                "register_bank_theory": {
+                    "status": "present",
+                    "devices": [
+                        {"device_id": "bank-a", "theory": "register-bank"},
+                    ],
+                },
+                "fifo_theory": {"status": "none", "devices": []},
+                "observability": observability,
+                "device_state_in_compare": build_device_state_in_compare_attestation(
+                    included=True,
+                    observability=observability,
+                ),
+                "cfg_rejection_reasons": [],
+                "loop_fifo_reject_markers": [],
+            }
+        )
+        # No live bus: certificate/cache path.
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertTrue(
+            "exactly" in (reason or "") or "missing" in (reason or ""),
+            reason,
+        )
+
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            proof_features=["memory-bus"],
+            memory_bus=obligation,
+        )
+        gated = enforce_equivalent_proof_features(result)
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+
+    def test_unsat_parent_with_sat_child_rejected(self) -> None:
+        """Finding 2: parent unsat cannot hide SAT/inconclusive terminals."""
+        from tools.ppc_equivalence.address_space import AddressSpace, Region, RegionKind
+        from tools.ppc_equivalence.memory_bus import build_memory_bus
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+            build_access_coverage_attestation,
+            build_memory_bus_obligation,
+            validate_memory_bus_obligation,
+        )
+        from tools.ppc_equivalence.provenance import canonical_json_sha256
+        from tools.ppc_equivalence.symbolic_bus import (
+            aggregate_unsupported_access_query_sha256,
+        )
+
+        ram = Region(0x80000000, 0x801FFFFF, RegionKind.RAM)
+        bus = build_memory_bus(AddressSpace((ram,)))
+        coverage = build_access_coverage_attestation(
+            attested=True, status="complete",
+        )
+        digests = ["1" * 64, "2" * 64]
+        # Old-style aggregate over digests alone (pre-fix forgery vector).
+        legacy_aggregate = canonical_json_sha256(
+            {
+                "kind": "unsupported-access-aggregate",
+                "schema_version": 1,
+                "query_sha256s": digests,
+            }
+        )
+        terminals = [
+            {
+                "result": "unsat",
+                "query_sha256": digests[0],
+                "inconclusive": False,
+                "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 0.5},
+            },
+            {
+                "result": "sat",
+                "query_sha256": digests[1],
+                "inconclusive": True,
+                "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 0.5},
+            },
+        ]
+        # Even a correctly recomputed full-record aggregate must reject SAT child.
+        full_aggregate = aggregate_unsupported_access_query_sha256(terminals)
+        side = {
+            "result": "unsat",
+            "query_sha256": full_aggregate,
+            "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 1.0},
+            "terminals": terminals,
+        }
+        obligation = build_memory_bus_obligation(bus)
+        obligation.update(
+            {
+                "status": "discharged",
+                "schema_version": MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+                "access_coverage": coverage,
+                "unsupported_access": {"original": side, "candidate": side},
+                "register_bank_theory": {"status": "none", "devices": []},
+                "fifo_theory": {"status": "none", "devices": []},
+                "device_state_in_compare": {"included": False, "digest_sha256": None},
+                "cfg_rejection_reasons": [],
+                "loop_fifo_reject_markers": [],
+            }
+        )
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertIn("sat", (reason or "").lower())
+
+        # Digest-only aggregate also fails (wrong aggregate shape + SAT child).
+        forged = dict(obligation)
+        forged_side = dict(side)
+        forged_side["query_sha256"] = legacy_aggregate
+        forged["unsupported_access"] = {
+            "original": forged_side,
+            "candidate": forged_side,
+        }
+        reason2 = validate_memory_bus_obligation(forged)
+        self.assertIsNotNone(reason2)
+
+    def test_observed_coverage_rejected_complete_passes(self) -> None:
+        """Finding 4: discharged requires complete; observed-only fails."""
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            build_access_coverage_attestation,
+            validate_memory_bus_obligation,
+        )
+
+        bus = self._mmio_bus()
+        obligation = self._base_discharged(bus)
+        self.assertIsNone(validate_memory_bus_obligation(obligation))
+
+        observed = build_access_coverage_attestation(
+            attested=True,
+            status="observed",
+            opcode_families=["integer-load-store"],
+        )
+        obligation["access_coverage"] = observed
+        for side in ("original", "candidate"):
+            obligation["unsupported_access"][side] = dict(
+                obligation["unsupported_access"][side]
+            )
+            obligation["unsupported_access"][side]["access_coverage_sha256"] = (
+                observed[side]["sha256"]
+            )
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertIn("complete", reason or "")
+
+    def test_theory_overlap_and_missing_device_id_rejected(self) -> None:
+        """Finding 1: overlap register/fifo IDs; MMIO without device_id."""
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            validate_memory_bus_obligation,
+        )
+
+        bus = self._mmio_bus()
+        obligation = self._base_discharged(bus)
+        obligation["fifo_theory"] = {
+            "status": "present",
+            "devices": [{"device_id": "test-bank", "theory": "gxfifo-stream"}],
+        }
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertTrue(
+            "share" in (reason or "") or "overlap" in (reason or ""),
+            reason,
+        )
+
+        obligation2 = self._base_discharged(bus)
+        regions = [dict(r) for r in obligation2["regions"]]
+        for region in regions:
+            if region.get("kind") == "mmio":
+                region.pop("device_id", None)
+        obligation2["regions"] = regions
+        reason2 = validate_memory_bus_obligation(obligation2)
+        self.assertIsNotNone(reason2)
+        self.assertIn("device_id", reason2 or "")
 
 
 class FreezeGuardTests(unittest.TestCase):
@@ -1152,7 +1464,7 @@ class LoopFifoAndMixedSpaceCoverageTests(unittest.TestCase):
 
         coverage = build_access_coverage_attestation(
             attested=True,
-            status="observed",
+            status="complete",
             opcode_families=["integer-load-store"],
         )
         forged["access_coverage"] = coverage

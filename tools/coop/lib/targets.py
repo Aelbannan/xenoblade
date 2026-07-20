@@ -127,6 +127,86 @@ def equivalence_certificate_error(
         except (TypeError, ValueError, KeyError) as exc:
             return f"certificate capability_assurance invalid: {exc}"
 
+    raw_requirements = certificate.get("capability_requirements")
+    if raw_requirements is not None:
+        try:
+            from tools.ppc_equivalence.capability_requirements import (
+                validate_capability_requirements_dict,
+            )
+
+            validate_capability_requirements_dict(raw_requirements)
+        except (TypeError, ValueError, KeyError) as exc:
+            return f"certificate capability_requirements invalid: {exc}"
+
+    if row.get("status") == "EQUIVALENT_MATCH":
+        if raw_requirements is None:
+            return "certificate capability_requirements missing"
+        try:
+            from tools.coop.lib.equivalence_policy import proof_result_from_certificate
+            from tools.ppc_equivalence.capability_requirements import (
+                CapabilityRequirements,
+                derive_capability_requirements,
+            )
+            from tools.ppc_equivalence.result import ProofStatus
+
+            proof = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+            expected = derive_capability_requirements(proof)
+            declared = CapabilityRequirements.from_dict(raw_requirements)
+            declared.validate_structure()
+            expected_map = expected.by_capability()
+            declared_map = declared.by_capability()
+            if set(declared_map) != set(expected_map):
+                missing = sorted(set(expected_map) - set(declared_map))
+                extra = sorted(set(declared_map) - set(expected_map))
+                detail = []
+                if missing:
+                    detail.append("missing=" + ",".join(missing))
+                if extra:
+                    detail.append("extra=" + ",".join(extra))
+                return (
+                    "certificate capability_requirements set mismatch: "
+                    + "; ".join(detail)
+                )
+            for name, expected_req in expected_map.items():
+                if declared_map[name].without_hash() != expected_req.without_hash():
+                    return (
+                        f"certificate capability_requirements mismatch for {name!r}"
+                    )
+            raw_assurance_block = certificate.get("capability_assurance")
+            if not isinstance(raw_assurance_block, dict):
+                return "certificate capability_assurance missing"
+            from tools.ppc_equivalence.capability_assurance import CapabilityAssurance
+
+            assurance = CapabilityAssurance.from_dict(raw_assurance_block)
+            attested = {item.capability: item for item in assurance.capabilities}
+            if set(attested) != set(expected_map):
+                missing = sorted(set(expected_map) - set(attested))
+                extra = sorted(set(attested) - set(expected_map))
+                detail = []
+                if missing:
+                    detail.append("missing=" + ",".join(missing))
+                if extra:
+                    detail.append("extra=" + ",".join(extra))
+                return (
+                    "certificate capability_assurance set mismatch: "
+                    + "; ".join(detail)
+                )
+            block_sha = declared.requirements_sha256
+            for name, expected_req in expected_map.items():
+                evidence = attested[name].evidence
+                if evidence.get("requirement_sha256") != expected_req.requirement_sha256:
+                    return (
+                        "certificate capability attestation requirement binding "
+                        f"mismatch for {name!r}"
+                    )
+                if evidence.get("requirements_sha256") != block_sha:
+                    return (
+                        "certificate capability attestation aggregate binding "
+                        f"mismatch for {name!r}"
+                    )
+        except (TypeError, ValueError, KeyError) as exc:
+            return f"certificate capability_requirements invalid: {exc}"
+
     dependencies = certificate.get("callees")
     if not isinstance(dependencies, list):
         return "certificate callees is not an array"

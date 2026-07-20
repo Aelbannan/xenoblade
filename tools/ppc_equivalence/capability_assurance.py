@@ -57,9 +57,6 @@ _STATUS_RANK = {
     STATUS_PROMOTION_GRADE: 3,
 }
 
-# Re-exported from capability_requirements (single source of truth).
-__all_capability_names__ = KNOWN_CAPABILITIES  # noqa: F841 — keep import bound
-
 KNOWN_ATTESTATION_ALGORITHMS = frozenset(
     {
         "opcode-ledger-v2",
@@ -1090,12 +1087,30 @@ def evaluate_capability_assurance(
     *,
     shadow_legacy_tier: str | None = None,
 ) -> CapabilityAssuranceResult:
-    """Evaluate attestations against used capabilities; recompute all statuses."""
+    """Evaluate attestations against used capabilities; recompute all statuses.
+
+    The used-capability set is always derived from the proof (never from a
+    caller-supplied ``capability_requirements`` block). Authoritative mode
+    additionally requires a matching, hash-valid requirements block and
+    one-to-one attestation bindings.
+    """
+    from tools.ppc_equivalence.capability_requirements import (
+        CapabilityRequirements,
+        derive_capability_requirements,
+        validate_capability_requirements_dict,
+    )
+
     if isinstance(manifest, CapabilityManifest) or manifest is None:
         resolved_manifest = manifest or CapabilityManifest()
     else:
         resolved_manifest = CapabilityManifest.from_dict(manifest)
 
+    authoritative = (
+        (not resolved_manifest.shadow_mode)
+        or resolved_manifest.require_capability_assurance
+    )
+
+    blockers: list[str] = []
     raw = getattr(result, "capability_assurance", None)
     assurance: CapabilityAssurance | None = None
     structural_error = False
@@ -1107,55 +1122,166 @@ def evaluate_capability_assurance(
             structural_error = True
             assurance = None
 
-    requirements_block = None
+    expected_requirements: CapabilityRequirements | None = None
     try:
-        requirements_block = _normalize_requirements_block(
-            getattr(result, "capability_requirements", None)
-        )
-    except (TypeError, ValueError, KeyError):
-        requirements_block = None
+        expected_requirements = derive_capability_requirements(result)
+    except Exception:
+        blockers.append("capability-requirements-underivable")
 
-    if requirements_block is not None:
-        req_by_name = {
-            item.capability: item for item in requirements_block.requirements
-        }
-        used = frozenset(req_by_name)
-    else:
-        req_by_name = {}
+    expected_map: dict[str, Any] = (
+        expected_requirements.by_capability() if expected_requirements is not None else {}
+    )
+    expected_used = frozenset(expected_map)
+    # Authoritative used-set always comes from proof derivation (or empty when
+    # underivable). Never trust the requirements block for ``used``.
+    used = expected_used if expected_requirements is not None else frozenset()
+    if not used and expected_requirements is None:
+        # Fall back so legacy shadow evaluation still surfaces integer/provenance.
         used = infer_used_capabilities(result)
+
+    raw_requirements = getattr(result, "capability_requirements", None)
+    requirements_block: CapabilityRequirements | None = None
+    requirements_invalid = False
+    requirements_missing = raw_requirements is None
+
+    if requirements_missing:
+        if authoritative:
+            blockers.append("capability-requirements-missing")
+    else:
+        try:
+            if isinstance(raw_requirements, CapabilityRequirements):
+                raw_requirements.validate_structure()
+                requirements_block = raw_requirements
+            elif isinstance(raw_requirements, Mapping):
+                validate_capability_requirements_dict(raw_requirements)
+                requirements_block = CapabilityRequirements.from_dict(raw_requirements)
+                requirements_block.validate_structure()
+            else:
+                raise ValueError("capability_requirements must be a mapping")
+        except (TypeError, ValueError, KeyError):
+            requirements_invalid = True
+            requirements_block = None
+            blockers.append("capability-requirements-invalid-hash")
+
+    declared_map: dict[str, Any] = {}
+    if requirements_block is not None and expected_requirements is not None:
+        declared_map = requirements_block.by_capability()
+        declared = frozenset(declared_map)
+        for capability in sorted(expected_used - declared):
+            blockers.append(f"capability-requirements-incomplete:{capability}")
+        for capability in sorted(declared - expected_used):
+            blockers.append(f"capability-requirements-extra:{capability}")
+        for capability in sorted(expected_used & declared):
+            if (
+                declared_map[capability].without_hash()
+                != expected_map[capability].without_hash()
+            ):
+                blockers.append(f"capability-requirements-mismatch:{capability}")
+
+    # Binding lookups use declared requirements when the block is valid; content
+    # must already match expected (checked above) under authoritative policy.
+    req_by_name = declared_map if requirements_block is not None else {}
+    block_sha = (
+        str(getattr(requirements_block, "requirements_sha256", "") or "")
+        if requirements_block is not None
+        else ""
+    )
 
     recomputed: dict[str, str] = {}
     recomputed_attestations: list[CapabilityAttestation] = []
 
+    def _finish(
+        *,
+        attestations: tuple[CapabilityAttestation, ...] = (),
+        has_unmodeled: bool,
+        has_scoped: bool = False,
+        all_promotion: bool = False,
+        weakest: str,
+        statuses: dict[str, str],
+    ) -> CapabilityAssuranceResult:
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for item in blockers:
+            if item not in seen:
+                seen.add(item)
+                ordered.append(item)
+        return CapabilityAssuranceResult(
+            attestations=attestations,
+            has_unmodeled_or_unproven_capability=has_unmodeled,
+            has_explicit_scoped_assumptions=has_scoped and not has_unmodeled,
+            all_used_capabilities_promotion_grade=all_promotion,
+            weakest_status=weakest,
+            shadow_legacy_tier=shadow_legacy_tier,
+            recomputed_statuses=statuses,
+            blockers=tuple(ordered),
+        )
+
     if structural_error:
         for capability in sorted(used):
             recomputed[capability] = STATUS_UNMODELED
-        return CapabilityAssuranceResult(
-            attestations=(),
-            has_unmodeled_or_unproven_capability=True,
-            has_explicit_scoped_assumptions=False,
-            all_used_capabilities_promotion_grade=False,
-            weakest_status=STATUS_UNMODELED,
-            shadow_legacy_tier=shadow_legacy_tier,
-            recomputed_statuses=recomputed,
+        return _finish(
+            has_unmodeled=True,
+            weakest=STATUS_UNMODELED,
+            statuses=recomputed,
+        )
+
+    if authoritative and (
+        requirements_missing
+        or requirements_invalid
+        or expected_requirements is None
+    ):
+        for capability in sorted(used):
+            recomputed[capability] = STATUS_UNMODELED
+        return _finish(
+            has_unmodeled=True,
+            weakest=STATUS_UNMODELED,
+            statuses=recomputed,
         )
 
     attested_by_name: dict[str, CapabilityAttestation] = {}
     if assurance is not None:
         for item in assurance.capabilities:
             requirement = req_by_name.get(item.capability)
-            # When authoritative requirements are present, attestations without
-            # a matching requirement are incomplete (stale / unexplained).
-            if requirements_block is not None and requirement is None:
+            if requirements_block is not None and item.capability not in expected_used:
+                status = STATUS_INCOMPLETE
+            elif (
+                requirements_block is not None
+                and requirement is None
+                and item.capability in expected_used
+            ):
                 status = STATUS_INCOMPLETE
             else:
+                bind_req = None
+                if requirements_block is not None:
+                    bind_req = declared_map.get(item.capability) or expected_map.get(
+                        item.capability
+                    )
                 status = _recompute_attestation_status(
                     item,
-                    requirement=requirement,
+                    requirement=bind_req,
                     result=result,
                     ledger=ledger,
                     manifest=resolved_manifest,
                 )
+            if requirements_block is not None and item.capability in expected_used:
+                evidence = item.evidence
+                expected_req = expected_map.get(item.capability) or requirement
+                if expected_req is not None:
+                    got_req = evidence.get("requirement_sha256")
+                    if (
+                        not isinstance(got_req, str)
+                        or got_req != expected_req.requirement_sha256
+                    ):
+                        blockers.append(
+                            "capability-attestation-requirement-binding-mismatch"
+                        )
+                        status = STATUS_INCOMPLETE
+                got_block = evidence.get("requirements_sha256")
+                if not isinstance(got_block, str) or got_block != block_sha:
+                    blockers.append(
+                        "capability-attestation-aggregate-binding-mismatch"
+                    )
+                    status = STATUS_INCOMPLETE
             recomputed[item.capability] = status
             recomputed_attestations.append(
                 CapabilityAttestation(
@@ -1175,46 +1301,60 @@ def evaluate_capability_assurance(
     if assurance is None:
         for capability in sorted(used):
             recomputed[capability] = STATUS_UNMODELED
-        return CapabilityAssuranceResult(
-            attestations=(),
-            has_unmodeled_or_unproven_capability=True,
-            has_explicit_scoped_assumptions=False,
-            all_used_capabilities_promotion_grade=False,
-            weakest_status=STATUS_UNMODELED,
-            shadow_legacy_tier=shadow_legacy_tier,
-            recomputed_statuses=recomputed,
+        return _finish(
+            has_unmodeled=True,
+            weakest=STATUS_UNMODELED,
+            statuses=recomputed,
         )
 
-    for capability in used:
+    for capability in sorted(used):
         if capability not in attested_by_name:
             recomputed[capability] = STATUS_UNMODELED
+            blockers.append(f"capability-attestation-missing:{capability}")
+    for capability in sorted(attested_by_name):
+        if capability not in used:
+            blockers.append(f"capability-attestation-extra:{capability}")
+            recomputed[capability] = STATUS_INCOMPLETE
 
+    # Requirements set mismatches demote affected capabilities.
+    for capability in sorted(used):
+        if f"capability-requirements-incomplete:{capability}" in blockers:
+            recomputed[capability] = STATUS_UNMODELED
+        elif f"capability-requirements-mismatch:{capability}" in blockers:
+            recomputed[capability] = STATUS_INCOMPLETE
+
+    for name in used:
+        recomputed.setdefault(name, STATUS_UNMODELED)
     used_statuses = [recomputed[name] for name in used]
     weakest = _weakest(used_statuses)
     has_unmodeled = any(
         recomputed.get(name) in {STATUS_UNMODELED, STATUS_INCOMPLETE}
         for name in used
     )
-    # Extra attestations outside the requirement set also count as incomplete.
-    if requirements_block is not None:
-        for name, status in recomputed.items():
-            if name not in used and status == STATUS_INCOMPLETE:
-                has_unmodeled = True
+    if any(
+        item.startswith("capability-requirements-")
+        or item.startswith("capability-attestation-")
+        for item in blockers
+    ):
+        # Semantic / binding failures are unproven under assurance policy.
+        if authoritative or requirements_block is not None:
+            has_unmodeled = True
     has_scoped = any(
         recomputed.get(name) == STATUS_SCOPED_ASSUMPTION for name in used
     )
-    all_promotion = bool(used) and all(
-        recomputed.get(name) == STATUS_PROMOTION_GRADE for name in used
+    all_promotion = (
+        bool(used)
+        and all(recomputed.get(name) == STATUS_PROMOTION_GRADE for name in used)
+        and not has_unmodeled
     )
 
-    return CapabilityAssuranceResult(
+    return _finish(
         attestations=tuple(recomputed_attestations),
-        has_unmodeled_or_unproven_capability=has_unmodeled,
-        has_explicit_scoped_assumptions=has_scoped and not has_unmodeled,
-        all_used_capabilities_promotion_grade=all_promotion,
-        weakest_status=weakest,
-        shadow_legacy_tier=shadow_legacy_tier,
-        recomputed_statuses=recomputed,
+        has_unmodeled=has_unmodeled,
+        has_scoped=has_scoped,
+        all_promotion=all_promotion,
+        weakest=weakest,
+        statuses=recomputed,
     )
 
 
@@ -1792,6 +1932,28 @@ def build_capability_assurance(
         original_terminals=original_terminals,
         candidate_terminals=candidate_terminals,
     )
+
+    # Stamp ledger identity before deriving requirements so provenance
+    # evidence_identity matches strict re-derive at evaluation time.
+    resolved_ledger_sha = ledger_sha256
+    if not resolved_ledger_sha and ledger is not None:
+        resolved_ledger_sha = getattr(ledger, "content_sha256", None) or None
+    if not resolved_ledger_sha:
+        try:
+            from tools.coop.lib.equivalence_policy import (
+                ValidationLedger,
+                default_validation_ledger_path,
+            )
+
+            loaded = ValidationLedger.load(default_validation_ledger_path())
+            resolved_ledger_sha = getattr(loaded, "content_sha256", None) or None
+            if ledger is None:
+                ledger = loaded
+        except Exception:
+            resolved_ledger_sha = None
+    if resolved_ledger_sha and not getattr(result, "validation_ledger_hash", ""):
+        result.validation_ledger_hash = str(resolved_ledger_sha)
+    ledger_sha256 = resolved_ledger_sha
 
     resolved_requirements = _normalize_requirements_block(
         requirements

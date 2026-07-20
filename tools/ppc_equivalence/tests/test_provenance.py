@@ -9,9 +9,12 @@ from tools.ppc_equivalence.provenance import (
     ENGINE_SOURCE_PATTERNS,
     _collect_certifier_paths,
     _collect_engine_paths,
+    _iter_porcelain_paths,
     canonical_json_sha256,
+    git_trust_boundary_dirty,
     hash_certifier_tree,
     hash_engine_tree,
+    is_trust_boundary_relative_path,
 )
 
 
@@ -79,6 +82,81 @@ class ProvenanceHashTests(unittest.TestCase):
         a = canonical_json_sha256({"b": 1, "a": [2, 3]})
         b = canonical_json_sha256({"a": [2, 3], "b": 1})
         self.assertEqual(a, b)
+
+    def test_trust_boundary_path_matcher(self):
+        self.assertTrue(is_trust_boundary_relative_path("tools/ppc_equivalence/engine.py"))
+        self.assertTrue(
+            is_trust_boundary_relative_path("tools/ppc_equivalence/generators/foo/bar.py")
+        )
+        self.assertTrue(
+            is_trust_boundary_relative_path("tools/ppc_equivalence/fixtures/helper.py")
+        )
+        self.assertTrue(
+            is_trust_boundary_relative_path("tools/ppc_equivalence/validation_ledger.yaml")
+        )
+        self.assertTrue(is_trust_boundary_relative_path(CERTIFIER_SOURCE_PATHS[0]))
+        self.assertFalse(
+            is_trust_boundary_relative_path("tools/ppc_equivalence/tests/test_engine.py")
+        )
+        self.assertFalse(
+            is_trust_boundary_relative_path("tools/ppc_equivalence/fixtures/nested/x.py")
+        )
+        self.assertFalse(is_trust_boundary_relative_path("src/kyoshin/CTaskGame.cpp"))
+        self.assertFalse(is_trust_boundary_relative_path("docs/evidence/decomp/attempts.jsonl"))
+
+    def test_porcelain_path_iter_handles_rename(self):
+        paths = _iter_porcelain_paths(
+            " M tools/ppc_equivalence/engine.py\n"
+            "R  tools/coop/lib/old.py -> tools/coop/lib/equivalence_policy.py\n"
+        )
+        self.assertEqual(
+            paths,
+            [
+                "tools/ppc_equivalence/engine.py",
+                "tools/coop/lib/old.py",
+                "tools/coop/lib/equivalence_policy.py",
+            ],
+        )
+
+    def test_unrelated_dirty_file_does_not_set_trust_boundary_dirty(self):
+        import subprocess
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for relative in CERTIFIER_SOURCE_PATHS:
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("# stub\n", encoding="utf-8")
+            engine = root / "tools" / "ppc_equivalence"
+            engine.mkdir(parents=True, exist_ok=True)
+            (engine / "engine_stub.py").write_text("# stub\n", encoding="utf-8")
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "test"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(["git", "add", "-A"], cwd=root, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "commit", "-m", "init"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+            )
+            unrelated = root / "src" / "kyoshin" / "CTaskGame.cpp"
+            unrelated.parent.mkdir(parents=True, exist_ok=True)
+            unrelated.write_text("// dirty decomp edit\n", encoding="utf-8")
+            self.assertFalse(git_trust_boundary_dirty(root))
+
+            (engine / "engine_stub.py").write_text("# changed engine\n", encoding="utf-8")
+            self.assertTrue(git_trust_boundary_dirty(root))
 
     def test_proof_request_hash_stable_and_sensitive(self):
         from tools.ppc_equivalence.provenance import proof_request_hash

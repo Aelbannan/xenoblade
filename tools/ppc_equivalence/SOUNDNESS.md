@@ -351,7 +351,10 @@ Tier classification is being migrated from effect-type hard-gates
 - Legacy certificates without a `capability_assurance` field do not invent
   attestations (assurance path is unproven → would be Tier C).
 - `allowed_engine_sha256` is required for promotion once assurance is
-  authoritative; it remains optional while `shadow_mode` is true.
+  authoritative; it remains optional while `shadow_mode` is true. Pin with:
+  `python3 -c "from pathlib import Path; from tools.ppc_equivalence.provenance import hash_engine_tree; print(hash_engine_tree(Path('.')))"`.
+  Provenance `git_dirty` is scoped to the engine/certifier trust boundary
+  (not whole-repo dirt).
 
 #### Wave 5 recertification notes
 
@@ -747,7 +750,7 @@ architecture or enable `automatic_promotion`):
 | `proof_features` | string[] | Declared proof features used by this result (optional) |
 | `address_space` | object | Obligation block for `readonly-image` (optional) |
 | `indirect_targets` | object | Obligation block for `indirect-target-closure` (optional) |
-| `git_commit` / `git_dirty` | string / bool | Repository identity at proof time |
+| `git_commit` / `git_dirty` | string / bool | Commit identity at proof time; `git_dirty` is **trust-boundary scoped** (engine `ENGINE_SOURCE_PATTERNS` + certifier `CERTIFIER_SOURCE_PATHS` only — unrelated decomp dirt does not set dirty) |
 | `platform` / `python_version` / `z3_version` / `capstone_version` | string | Runtime identity |
 
 ## Proof features and obligations

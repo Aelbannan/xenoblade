@@ -37,6 +37,7 @@ class CoopConfig:
         "broadway-ppc32-be-v30",
         "broadway-ppc32-be-v31",
         "broadway-ppc32-be-v32",
+        "broadway-ppc32-be-v33",
     )
     allowed_confidence_tiers: frozenset[str] = frozenset({"A", "B"})
     allowed_engine_sha256: str | None = None

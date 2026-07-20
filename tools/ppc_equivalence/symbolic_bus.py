@@ -64,6 +64,7 @@ __all__ = [
     "apply_symbolic_bus_access",
     "symbolic_bus_difference",
     "discharge_cfg_unsupported_accesses",
+    "aggregate_unsupported_access_query_sha256",
     "cfg_trace_sha256",
     "vacuous_unsupported_access_block",
     "concrete_u32",
@@ -982,6 +983,23 @@ def vacuous_unsupported_access_block(
     }
 
 
+def aggregate_unsupported_access_query_sha256(
+    terminal_query_sha256s: Sequence[str],
+) -> str:
+    """Aggregate digest over every terminal unsupported-access query.
+
+    Top-level ``unsupported_access.*.query_sha256`` must bind *all* terminal
+    digests, not only the last query.
+    """
+    return canonical_json_sha256(
+        {
+            "kind": "unsupported-access-aggregate",
+            "schema_version": 1,
+            "query_sha256s": list(terminal_query_sha256s),
+        }
+    )
+
+
 def discharge_cfg_unsupported_accesses(
     terminals: Sequence[Any],
     *,
@@ -1002,7 +1020,7 @@ def discharge_cfg_unsupported_accesses(
 
     terminal_results: list[dict[str, Any]] = []
     worst = "unsat"
-    last_hash: str | None = None
+    query_hashes: list[str] = []
     total_elapsed_ms = 0.0
     had_symbolic_bus = False
     for terminal in terminals:
@@ -1040,7 +1058,7 @@ def discharge_cfg_unsupported_accesses(
                 "terminal_index": index,
             }
             query_hash = canonical_json_sha256(payload)
-            last_hash = query_hash
+            query_hashes.append(query_hash)
             terminal_results.append(
                 {
                     "result": status,
@@ -1074,7 +1092,7 @@ def discharge_cfg_unsupported_accesses(
         return {"result": "not-queried", "query_sha256": None, "terminals": []}
     return {
         "result": worst,
-        "query_sha256": last_hash,
+        "query_sha256": aggregate_unsupported_access_query_sha256(query_hashes),
         "solver": {
             "name": "z3",
             "version": z3.get_version_string(),

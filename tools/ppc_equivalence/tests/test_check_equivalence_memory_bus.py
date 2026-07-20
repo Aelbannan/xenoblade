@@ -12,7 +12,11 @@ from tools.ppc_equivalence.address_space import (
     rom_image_region,
 )
 from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
-from tools.ppc_equivalence.device_model import RegisterBankDevice, RegisterSpec
+from tools.ppc_equivalence.device_model import (
+    GxFifoStreamDevice,
+    RegisterBankDevice,
+    RegisterSpec,
+)
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.memory_bus import build_memory_bus
@@ -64,6 +68,11 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
         assert result.memory_bus is not None
         self.assertEqual(result.memory_bus.get("status"), "discharged")
         self.assertEqual(result.memory_bus.get("mmio"), "cfg-routed")
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            validate_memory_bus_obligation,
+        )
+
+        self.assertIsNone(validate_memory_bus_obligation(result.memory_bus))
 
     def test_rom_write_inconclusive_with_memory_bus(self) -> None:
         bus, _ = _rom_bus()
@@ -241,6 +250,62 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
             any("unsupported-access" in item for item in result.unsupported)
             or any("unsupported-access" in item for item in result.abstractions)
         )
+
+    def test_register_bank_write_mismatch_not_equivalent(self) -> None:
+        """End-to-end negative: differing MMIO register-bank stores."""
+        bus = _mmio_bank_bus()
+        original = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.ADDI, (4, 0, 0x1111), address=4),
+            _insn(Opcode.STW, (4, 3, 0), address=8),
+            _insn(Opcode.BCLR, (20, 0, 0), address=12),
+        ]
+        candidate = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.ADDI, (4, 0, 0x2222), address=4),
+            _insn(Opcode.STW, (4, 3, 0), address=8),
+            _insn(Opcode.BCLR, (20, 0, 0), address=12),
+        ]
+        contract = EquivalenceContract(parse_observables(["r4"]), timeout_ms=15_000)
+        result = check_equivalence(
+            original,
+            candidate,
+            contract,
+            original_hex="00",
+            candidate_hex="01",
+            memory_bus=bus,
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT, result.unsupported)
+        self.assertIn("memory-bus", result.proof_features)
+
+    def test_fifo_write_mismatch_not_equivalent(self) -> None:
+        """End-to-end negative: differing GX FIFO write streams."""
+        device = GxFifoStreamDevice(base=0xCC008100, span=0x20)
+        mmio = mmio_region(0xCC008100, 0xCC00811F, device_id="gx-fifo")
+        bus = build_memory_bus(AddressSpace((mmio,)), devices={"gx-fifo": device})
+        original = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008100), address=0),
+            _insn(Opcode.ADDI, (4, 0, 0xAAAA), address=4),
+            _insn(Opcode.STW, (4, 3, 0), address=8),
+            _insn(Opcode.BCLR, (20, 0, 0), address=12),
+        ]
+        candidate = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008100), address=0),
+            _insn(Opcode.ADDI, (4, 0, 0xBBBB), address=4),
+            _insn(Opcode.STW, (4, 3, 0), address=8),
+            _insn(Opcode.BCLR, (20, 0, 0), address=12),
+        ]
+        contract = EquivalenceContract(parse_observables(["r4"]), timeout_ms=15_000)
+        result = check_equivalence(
+            original,
+            candidate,
+            contract,
+            original_hex="00",
+            candidate_hex="01",
+            memory_bus=bus,
+        )
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT, result.unsupported)
+        self.assertIn("memory-bus", result.proof_features)
 
 
 if __name__ == "__main__":

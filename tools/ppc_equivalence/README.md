@@ -20,9 +20,9 @@ unsupported instruction, timeout, or solver `unknown` is always
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v33`
-- Result format: `15`
-- Certificate format: `8`
+- Architecture model: `broadway-ppc32-be-v34`
+- Result format: `16`
+- Certificate format: `9`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->

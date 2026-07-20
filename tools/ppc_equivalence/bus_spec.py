@@ -7,7 +7,9 @@ candidate execution so MMIO side effects never leak across sides.
 
 Symbolic register-bank theory (PR 14) lives in ``symbolic_bus`` and lifts from
 ``DeviceSpecification`` via ``symbolic_bank_from_device_spec``. SymbolicOps CFG
-routing is live; ``memory-bus`` stays unsupported for ``EQUIVALENT``.
+routing is live. ``memory-bus`` may authorize ``EQUIVALENT`` only when the
+engine attaches ``status=discharged`` with schema v2 attestations (see
+``memory_bus_obligations`` / ``require_equivalent_ready``).
 """
 
 from __future__ import annotations

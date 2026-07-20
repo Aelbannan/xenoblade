@@ -4226,6 +4226,7 @@ def execute_cfg(
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     floating_point_domain: FloatingPointDomain | None = None,
     memory_bus: MemoryBus | None = None,
+    bus_access_side: Literal["original", "candidate"] | None = None,
     deadline: Deadline | None = None,
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
     affine_loop_summaries: dict[int, LoopSummary] | None = None,
@@ -4284,10 +4285,10 @@ def execute_cfg(
         )
     finally:
         if coverage_armed:
-            # Snapshot retained on ContextVar until next begin; callers that need
-            # the digest should call end_bus_access_coverage() / observed_* APIs.
-            # Closing here resets so nested runs do not leak families.
-            end_bus_access_coverage()
+            # Snapshot retained on ContextVar until next begin. When
+            # ``bus_access_side`` is set, also store under that side so a later
+            # candidate/sampling run cannot erase original coverage.
+            end_bus_access_coverage(side=bus_access_side)
         _MEMORY_BUS.reset(bus_token)
         _FP_DOMAIN.reset(domain_token)
 

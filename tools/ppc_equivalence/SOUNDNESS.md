@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v33`
-- Result format: `15`
-- Certificate format: `8`
+- Architecture model: `broadway-ppc32-be-v34`
+- Result format: `16`
+- Certificate format: `9`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -232,13 +232,16 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 - 32-bit address wraparound is rejected through the layout-feasibility check.
 - The initial memory array is shared between both implementations. Private-stack
   bytes are replaced with the common initial byte on each side independently.
-- **AddressSpace router (scaffold):** `address_space.py` models ordered,
-  non-overlapping regions (`ram` / `rom-image` / `mmio` / `unmapped`) with
-  concrete `classify` / `classify_range`. ROM images can be built from ELF
-  allocatable PROGBITS via `elf_symbols.rom_image_from_allocatable_section`.
-  Symbolic accesses that may span regions are intended to path-split or fail
-  inconclusive. Not yet proof-producing: no `EQUIVALENT` path binds AddressSpace
-  obligations into the solver or promotion gate.
+- **AddressSpace router:** `address_space.py` models ordered, non-overlapping
+  regions (`ram` / `rom-image` / `mmio` / `unmapped`) with concrete `classify` /
+  `classify_range`. ROM images can be built from ELF allocatable PROGBITS via
+  `elf_symbols.rom_image_from_allocatable_section`. Symbolic accesses that may
+  span regions path-split or fail closed. Under opt-in ``MemoryBus`` +
+  ``proof_features: ["memory-bus"]``, AddressSpace classification binds into
+  engine-generated ``memory_bus`` obligations; ``EQUIVALENT`` requires
+  ``status=discharged`` with schema v2 attestations (see Memory-bus sections
+  below). Without the memory-bus feature, default proofs keep unconstrained
+  RAM and do not promote on AddressSpace alone.
 - **MMIO device models (live on opt-in bus):** `device_model.py` defines
   ``DeviceModel`` implementations (``RegisterBankDevice``, write-only
   ``GxFifoStreamDevice``) and ``address_space.mmio_region`` /
@@ -248,10 +251,9 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   (register-bank R/W; GX FIFO records writes and rejects reads). Missing
   devices, unsupported widths/alignments, and ``AccessOutcome.UNSUPPORTED``
   fail closed (``BusOutcome`` / ``ExecutionInconclusive``) with no silent RAM
-  fallback.   Tier **C** only: symbolic ``check_equivalence`` still excludes MMIO
-  from feasible address ranges (``memory_bus`` obligation ``mmio: fail-closed``);
-  device semantics are not SMT-modeled and do not expand ``EQUIVALENT``
-  authorization beyond the existing memory-bus feature.
+  fallback. Symbolic pure-MMIO routing (register-bank / bounded FIFO) is live
+  under discharged ``memory-bus`` obligations; mixed RAM/ROM/MMIO symbolic
+  addresses and loop-summary × FIFO remain fail-closed and cannot discharge.
 - **Symbolic register-bank / FIFO CFG routing (PR 14/15 progress):**
   ``symbolic_bus.py`` models extensional per-register bitvectors, nested
   ``addr == base + offset`` routing, write / W1C / read-clear formulas, and a
@@ -268,15 +270,18 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   ``mixed_space_symbolic_mmio=fail-closed``, ``cfg_rejection_reasons``) and
   cannot coexist with ``status=discharged``. Final touched device state is an
   automatic observable.
-- **Memory-bus (Track D unfreeze):** memory-bus was frozen because runtime
-  routing was ahead of proof-authorization. Pure-MMIO symbolic routing exists;
-  mixed RAM/ROM/MMIO symbolic addresses remain fail-closed. Loop-summary ×
-  FIFO hard-rejects; bounded summarized emission unsupported. Before/after
-  unfreeze: every memory-access family routes or produces an explicit
-  unsupported predicate; ``require_equivalent_ready`` requires
-  engine-generated ``memory_bus.status=discharged``. Architecture model stays
-  ``broadway-ppc32-be-v33`` (same discharged-gate pattern as Wave 5 affine /
-  memory-loop unfreeze — no bump solely for clearing the freeze list).
+- **Memory-bus (Track D authorization):** ``memory-bus`` authorizes
+  ``EQUIVALENT`` only with engine-generated ``memory_bus.status=discharged``
+  under ``require_equivalent_ready`` and the strict validator (recomputed
+  digests, per-side access coverage, theory/spec binding). Pure-MMIO symbolic
+  routing exists; mixed RAM/ROM/MMIO symbolic addresses remain fail-closed.
+  Loop-summary × FIFO hard-rejects; bounded summarized emission unsupported.
+  Before authorization: every memory-access family routes or produces an
+  explicit unsupported predicate. Architecture / result / certificate versions
+  for the schema-v2 obligation shape are ``broadway-ppc32-be-v34`` / result
+  format ``16`` / certificate ``9`` (v33 and earlier rejected). P1 cache
+  revalidation, per-side coverage, and digest recomputation are required
+  gates; ``memory-bus`` is cleared from ``UNSUPPORTED_FOR_EQUIVALENT``.
 - **Memory-bus discharged obligation (Track A):** `status=discharged` requires
   schema v2 attestations — `bus_spec_sha256`, per-side unsupported-access
   (`result=unsat` + `query_sha256` + solver metadata, **or** vacuous
@@ -295,7 +300,8 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   unsupported-access reject — never a silent RAM fallback. Coverage API:
   ``bus_access.record_bus_access_family`` / ``last_bus_access_coverage``
   (families + rejections + ``access_coverage_sha256``) feeds Track A
-  ``access_coverage`` attestations.
+  ``access_coverage`` attestations. P1 requires **per-side** coverage
+  (original vs candidate), not a single last-execution global snapshot.
 
   | Family | Policy |
   |---|---|
@@ -606,12 +612,14 @@ obligation block. The schema is:
 
 Rules (enforced by `tools.ppc_equivalence.proof_features`):
 
-- **PR0 safety freeze cleared (Track D):** `memory-bus` is removed from
+- **PR0 / Track D memory-bus gate cleared:** `memory-bus` is removed from
   `UNSUPPORTED_FOR_EQUIVALENT`. EQUIVALENT requires engine-generated
   `memory_bus.status=discharged` with schema v2 attestations under
-  `require_equivalent_ready` (vacuous unsupported-access with coverage
-  digests; forged algorithm/regions-only JSON fails closed). **PR7 / Wave 5
-  Track B:** `relational-induction`, `affine-loop-summary`, and
+  `require_equivalent_ready` and `validate_memory_bus_obligation_strict`
+  (recomputed digests, per-side coverage, theory/spec binding; vacuous
+  unsupported-access with coverage digests; forged algorithm/regions-only
+  JSON fails closed). Cache probes return the re-gated proof status after
+  demotion. **PR7 / Wave 5 Track B:** `relational-induction`, `affine-loop-summary`, and
   `memory-loop-summary` may authorize `EQUIVALENT` only under strict
   discharged obligations:
   - `relational-induction`: all five blocks carry independent UNSAT digests
@@ -630,11 +638,9 @@ Rules (enforced by `tools.ppc_equivalence.proof_features`):
   Jump-table coverage and no-write use independent UNSAT
   discharge (`discharge.py`) with remainder terminals retained on BCCTR
   expansion; obligation schema v2 carries coverage/no_write digests.
-  Architecture model stays `broadway-ppc32-be-v33` (no bump for obligation
-  schema alone). Automatic promotion remains disabled in
-  `coop.json` / `coop.example.json` until enablement gates clear.
-  Certificates under architecture model
-  `broadway-ppc32-be-v32` (and earlier rejected models) are stale.
+  Architecture / result / certificate for the memory-bus schema-v2 shape:
+  `broadway-ppc32-be-v34` / format `16` / certificate `9`. Certificates under
+  `broadway-ppc32-be-v33` (and earlier rejected models) are stale.
 - **Wave 5 Track B blockers kept documented (not freeze-worthy for closed-form):**
   bounded-remainder expansions stay `applied` (not discharged). Bulk+remainder
   without a shared constant-value `RangeWrite` stays `pending`.

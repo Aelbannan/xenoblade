@@ -11,9 +11,10 @@
   },
   "providers": {
     "opencode": {
-      "binary": "opencode",
+      "base_url": "http://127.0.0.1:4096",
       "timeout_seconds": 900,
-      "pure": true
+      "pure": true,
+      "delete_session": true
     },
     "reasonix": {
       "binary": "reasonix",

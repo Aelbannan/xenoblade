@@ -1872,16 +1872,16 @@ extern "C" void func_80146148() {}
 extern "C" void func_80146384() {}
 // LLM-HARNESS-END: us-80146d88
 // LLM-HARNESS-BEGIN: us-80146da8
-extern "C" void CBattleState_UnkVirtualFunc19() {}
+void cf::CBattleState::CBattleState_UnkVirtualFunc19() {}
 // LLM-HARNESS-END: us-80146da8
 // LLM-HARNESS-BEGIN: us-80148188
 extern "C" void CBattleState_UnkVirtualFunc1() {}
 // LLM-HARNESS-END: us-80148188
 // LLM-HARNESS-BEGIN: us-80148190
-extern "C" void CBattleState_UnkVirtualFunc17() {}
+void cf::CBattleState::CBattleState_UnkVirtualFunc17() {}
 // LLM-HARNESS-END: us-80148190
 // LLM-HARNESS-BEGIN: us-80148a14
-extern "C" void CBattleState_UnkVirtualFunc18() {}
+void cf::CBattleState::CBattleState_UnkVirtualFunc18() {}
 // LLM-HARNESS-END: us-80148a14
 // LLM-HARNESS-BEGIN: us-80148f88
 extern "C" void CBattleState_UnkVirtualFunc12() {}

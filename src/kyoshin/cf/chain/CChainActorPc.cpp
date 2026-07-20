@@ -13,7 +13,7 @@ extern "C" void func_80282174() {}
 extern "C" bool func_8028245C() { return false; }
 // LLM-HARNESS-END: us-802848e0
 // LLM-HARNESS-BEGIN: us-802848e8
-extern "C" bool func_80282464() { return false; }
+extern "C" bool func_80282464() { return true; }
 // LLM-HARNESS-END: us-802848e8
 // LLM-HARNESS-BEGIN: us-802848f0
 extern "C" void func_8028246C() {}

@@ -374,8 +374,8 @@ extern "C" void GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv() {}
 extern "C" void delLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout() {}
 // LLM-HARNESS-END: us-80322b20
 // LLM-HARNESS-BEGIN: us-80323180
-extern "C" void IsVisible__Q36nw4hbm3lyt4PaneCFv() {}
+void IsVisible__Q36nw4hbm3lyt4PaneCFv() { *(u8*)0xcf = 0; }
 // LLM-HARNESS-END: us-80323180
 // LLM-HARNESS-BEGIN: us-80323190
-extern "C" bool GetParent__Q36nw4hbm3lyt4PaneCFv() { return false; }
+inline void GetParent__Q36nw4hbm3lyt4PaneCFv() { }
 // LLM-HARNESS-END: us-80323190

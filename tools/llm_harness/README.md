@@ -27,7 +27,8 @@ python3 tools/llm_harness/run.py promote-accepted
 ## Requirements
 
 - A working `coop.json`, retail split objects, MWCC toolchain, Ninja, and objdiff.
-- Provider binaries configured in `llm-harness.json` (`opencode`, `deepseek-raw`, optional `lmstudio`).
+- Providers configured in `llm-harness.json` (`opencode` via `opencode serve` HTTP API, `deepseek-raw`, optional `lmstudio`).
+- For OpenCode: run `opencode serve --port 4096` (optional basic auth via `OPENCODE_SERVER_PASSWORD`) and set `providers.opencode.base_url`.
 
 ```bash
 python3 tools/coop/run.py baseline

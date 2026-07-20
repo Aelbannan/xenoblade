@@ -32,6 +32,14 @@ from .jump_table_obligations import (
     obligations_from_discharge,
     rom_image_byte_constraints,
 )
+from .vtable_obligations import (
+    VirtualCallProofContext,
+    discharge_virtual_call_obligations,
+    obligations_from_virtual_call_discharge,
+    virtual_call_gate_reason,
+    virtual_call_scc_status,
+)
+from .bulk_remainder_relational import try_build_bulk_remainder_relational_sketch
 from .loop_summary import (
     build_affine_summary_map,
     build_loop_summary_obligation,
@@ -1109,6 +1117,8 @@ def check_equivalence(
     concrete_samples: int = 0,
     concrete_sample_seed: int = 0,
     jump_table: JumpTableProofContext | None = None,
+    virtual_call: VirtualCallProofContext | None = None,
+    callee_edges: dict[str, frozenset[str]] | None = None,
     memory_bus: MemoryBus | None = None,
     readonly_words: dict[int, int] | None = None,
     memory_loop_readonly: MemoryLoopReadonlyContext | None = None,
@@ -1135,6 +1145,8 @@ def check_equivalence(
         concrete_samples=concrete_samples,
         concrete_sample_seed=concrete_sample_seed,
         jump_table=jump_table,
+        virtual_call=virtual_call,
+        callee_edges=callee_edges,
         memory_bus=memory_bus,
         readonly_words=readonly_words,
         memory_loop_readonly=memory_loop_readonly,
@@ -1182,6 +1194,8 @@ def _check_equivalence_impl(
     concrete_samples: int = 0,
     concrete_sample_seed: int = 0,
     jump_table: JumpTableProofContext | None = None,
+    virtual_call: VirtualCallProofContext | None = None,
+    callee_edges: dict[str, frozenset[str]] | None = None,
     memory_bus: MemoryBus | None = None,
     readonly_words: dict[int, int] | None = None,
     memory_loop_readonly: MemoryLoopReadonlyContext | None = None,
@@ -1194,12 +1208,41 @@ def _check_equivalence_impl(
     # Wall-clock budget covers CFG exploration and constraint construction as
     # well as solving, so path explosion cannot run past the user timeout.
     deadline = Deadline.after_ms(contract.timeout_ms)
+
+    if virtual_call is not None and callee_edges is not None and virtual_call.pairing.cases:
+        scc_status = virtual_call_scc_status(
+            callee_edges,
+            root=virtual_call.pairing.cases[0].identity,
+        )
+        if scc_status is not None:
+            return ProofResult(
+                status=scc_status,
+                contract=contract.name,
+                contract_resolution=contract.resolution_dict(),
+                observables=[item.name for item in contract.observables],
+                unsupported=[
+                    "virtual-call callee SCC cannot be certified bottom-up"
+                ],
+                limits={
+                    "max_instructions": max_instructions,
+                    "max_paths": max_paths,
+                    "max_loop_iterations": max_loop_iterations,
+                },
+                floating_point_domain=domain,
+                source_hash=source_hash,
+            )
+
     original_jump_targets = (
         None if jump_table is None else jump_table.original_expansion_map()
     )
     candidate_jump_targets = (
         None if jump_table is None else jump_table.candidate_expansion_map()
     )
+    if virtual_call is not None:
+        vc_original = virtual_call.original_expansion_map()
+        vc_candidate = virtual_call.candidate_expansion_map()
+        original_jump_targets = {**(original_jump_targets or {}), **vc_original}
+        candidate_jump_targets = {**(candidate_jump_targets or {}), **vc_candidate}
     original_affine = build_affine_summary_map(original)
     candidate_affine = build_affine_summary_map(candidate)
     affine_used: list = []
@@ -1278,6 +1321,40 @@ def _check_equivalence_impl(
             floating_point_domain=domain,
             source_hash=source_hash,
         )
+
+    # PR17: when NI may be set, every NI-affected opcode in the block must be
+    # in the NI-supported set — otherwise fail closed (no silent IEEE widening).
+    if not domain.require_ni_zero:
+        from .fp_outcome import NI_SUPPORTED_OPS
+        from .semantics import _FP_ROUNDING_SENSITIVE
+
+        ni_unsupported = sorted({
+            insn.opcode.value
+            for insn in original + candidate
+            if insn.opcode in _FP_ROUNDING_SENSITIVE
+            and insn.opcode.value not in NI_SUPPORTED_OPS
+        })
+        if ni_unsupported:
+            return ProofResult(
+                status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+                contract=contract.name,
+                contract_resolution=contract.resolution_dict(),
+                observables=[item.name for item in contract.observables],
+                unsupported=[
+                    "FPSCR.NI may be set but the following opcodes have no NI "
+                    f"flush model: {ni_unsupported}"
+                ],
+                limits={
+                    "max_instructions": max_instructions,
+                    "max_paths": max_paths,
+                    "max_loop_iterations": max_loop_iterations,
+                },
+                floating_point_domain=domain,
+                source_hash=source_hash,
+                opcodes_used=sorted({
+                    insn.opcode.value for insn in original + candidate
+                }),
+            )
     try:
         original_exits = execute_cfg(
             initial, original, ops,
@@ -1383,11 +1460,31 @@ def _check_equivalence_impl(
                 rom_image_byte_constraints(initial.memory, table, ops)
             )
 
+    if virtual_call is not None:
+        for table in virtual_call.readonly_tables():
+            layout_constraints.extend(
+                rom_image_byte_constraints(initial.memory, table, ops)
+            )
+
     jump_table_bundle = None
     if jump_table is not None:
         try:
             jump_table_bundle = discharge_jump_table_obligations(
                 jump_table,
+                original_terminals=original_exits,
+                candidate_terminals=candidate_exits,
+                premises=layout_constraints,
+                ops=ops,
+                deadline=deadline,
+            )
+        except ProofDeadlineExceeded as exc:
+            return _early_timeout(exc.phase)
+
+    virtual_call_bundle = None
+    if virtual_call is not None:
+        try:
+            virtual_call_bundle = discharge_virtual_call_obligations(
+                virtual_call,
                 original_terminals=original_exits,
                 candidate_terminals=candidate_exits,
                 premises=layout_constraints,
@@ -1527,6 +1624,14 @@ def _check_equivalence_impl(
             original_hex=original_hex,
             candidate_hex=candidate_hex,
         )
+        # Paired-single SoftFloat oracle identity (PR13) — bind into result when used.
+        from .fp_outcome import FP_ORACLE_VERSION, PAIRED_ORACLE_OPS
+
+        used_opcodes = set(early.opcodes_used) or {
+            insn.opcode.value for insn in original + candidate
+        }
+        if used_opcodes & PAIRED_ORACLE_OPS:
+            early.fp_oracle_version = FP_ORACLE_VERSION
         if memory_bus is not None:
             features = list(early.proof_features)
             if "memory-bus" not in features:
@@ -1538,7 +1643,23 @@ def _check_equivalence_impl(
                 memory_bus,
                 original_terminals=original_exits,
                 candidate_terminals=candidate_exits,
+                ops=ops,
+                deadline=deadline,
             )
+            unsupported = (early.memory_bus or {}).get("unsupported_access") or {}
+            for side in ("original", "candidate"):
+                side_block = unsupported.get(side) or {}
+                if side_block.get("result") in ("sat", "unknown"):
+                    reason = (
+                        f"symbolic MMIO unsupported-access query {side_block['result']} "
+                        f"on {side}"
+                    )
+                    if early.status is ProofStatus.EQUIVALENT:
+                        early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                    early.unsupported.append(reason)
+                    early.warnings.append(reason)
+                    early.abstractions.append("symbolic-mmio-unsupported-access")
+                    break
         if jump_table is not None:
             early.proof_features = ["readonly-image", "indirect-target-closure"]
             if jump_table_bundle is not None:
@@ -1563,6 +1684,45 @@ def _check_equivalence_impl(
                     coverage="pending",
                     status="pending",
                 )
+        if virtual_call is not None:
+            features = list(early.proof_features)
+            for name in ("readonly-image", "indirect-target-closure"):
+                if name not in features:
+                    features.append(name)
+            early.proof_features = features
+            if virtual_call_bundle is not None:
+                address_space, indirect_targets = obligations_from_virtual_call_discharge(
+                    virtual_call, virtual_call_bundle,
+                )
+                if jump_table is None:
+                    early.address_space = address_space
+                    early.indirect_targets = indirect_targets
+                else:
+                    early.indirect_targets = {
+                        **(early.indirect_targets or {}),
+                        "virtual_call": indirect_targets,
+                    }
+                if not virtual_call_bundle.all_unsat():
+                    reason = virtual_call_bundle.failure_reason() or (
+                        "virtual-call coverage discharge failed"
+                    )
+                    if early.status is ProofStatus.EQUIVALENT:
+                        early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                    early.unsupported.append(reason)
+                    early.warnings.append(reason)
+                    early.abstractions.append("virtual-call-discharge-failed")
+            else:
+                from .vtable_obligations import build_virtual_call_obligations
+
+                address_space, indirect_targets = build_virtual_call_obligations(
+                    virtual_call,
+                    no_write_status="pending",
+                    coverage="pending",
+                    status="pending",
+                )
+                if jump_table is None:
+                    early.address_space = address_space
+                    early.indirect_targets = indirect_targets
         if affine_used:
             # Prefer the original-side summary when both sides applied (identical
             # trip counts); obligation identity still binds trip_count/strides.
@@ -1575,11 +1735,31 @@ def _check_equivalence_impl(
                 summary, coverage="applied",
             )
             relational = try_discharge_relational(original, candidate)
-            if relational is not None and relational.status == "applied":
+            if relational is not None and relational.status == "discharged":
                 if "relational-induction" not in features:
                     features.append("relational-induction")
                 early.proof_features = features
                 early.relational_induction = relational.to_obligation_dict()
+        # PR12: attach pending bulk+remainder relational sketches (scaffold).
+        if early.relational_induction is None:
+            bulk_sketch = try_build_bulk_remainder_relational_sketch(
+                original,
+                candidate,
+                readonly_words=(
+                    None
+                    if readonly_ctx is None
+                    else {
+                        item.address: item.value
+                        for item in readonly_ctx.all_evidence()
+                    }
+                ),
+            )
+            if bulk_sketch is not None:
+                features = list(early.proof_features)
+                if "relational-induction" not in features:
+                    features.append("relational-induction")
+                early.proof_features = features
+                early.relational_induction = bulk_sketch.to_obligation_dict()
         if memory_used:
             mem_summary = memory_used[0]
             features = list(early.proof_features)
@@ -1600,6 +1780,13 @@ def _check_equivalence_impl(
                 gated.unsupported.append(reason)
                 gated.warnings.append(reason)
                 gated.abstractions.append("jump-table-unproven")
+        if gated.status is ProofStatus.EQUIVALENT and virtual_call is None:
+            reason = virtual_call_gate_reason(original, candidate)
+            if reason is not None:
+                gated.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                gated.unsupported.append(reason)
+                gated.warnings.append(reason)
+                gated.abstractions.append("virtual-call-unproven")
         return gated
 
     feasibility = z3.Solver()

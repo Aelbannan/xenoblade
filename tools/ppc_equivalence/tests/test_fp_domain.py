@@ -70,11 +70,12 @@ class FloatingPointDomainCoverageTests(unittest.TestCase):
         self.assertTrue(domain.require_ni_zero)
         self.assertTrue(domain.exclude_finite_overflow)
 
-    def test_validate_rejects_traps_enabled(self):
+    def test_validate_accepts_traps_enabled_scaffold(self):
         domain = FloatingPointDomain(traps_enabled=True)
-        with self.assertRaises(ValueError) as ctx:
-            domain.validate()
-        self.assertIn("trap", str(ctx.exception).lower())
+        domain.validate()
+        coverage = domain.coverage_dict()
+        self.assertIn("fp-trap-delivery-ve-ze-scaffold", coverage["assumed"])
+        self.assertNotIn("traps-disabled", coverage["assumed"])
 
     def test_validate_rejects_non_rne_rounding(self):
         domain = FloatingPointDomain(rounding_modes=("toward-zero",))
@@ -89,7 +90,10 @@ class FloatingPointDomainCoverageTests(unittest.TestCase):
 
     def test_parse_fail_closed(self):
         with self.assertRaises(ValueError):
-            FloatingPointDomain.parse('{"traps_enabled": true}')
+            FloatingPointDomain.parse('{"model_underflow_flag": true}')
+        # traps_enabled is valid for the PR18 scaffold.
+        domain = FloatingPointDomain.parse('{"traps_enabled": true}')
+        self.assertTrue(domain.traps_enabled)
 
 
 class FloatingPointDomainConstraintTests(unittest.TestCase):
@@ -149,7 +153,7 @@ class FloatingPointDomainConstraintTests(unittest.TestCase):
         self.assertFalse(state.valid)
         self.assertEqual(state.invalid_reason, InvalidReason.FP_DOMAIN_EXCLUDED.value)
 
-    def test_engine_rejects_unsupported_domain(self):
+    def test_engine_accepts_traps_enabled_scaffold_domain(self):
         code = parse_hex("ec21102a")  # fadds f1, f1, f2
         insns = decode_block(code, 0x80000000)
         contract = make_contract(preset=None, observe=["f1"], timeout_ms=5000)
@@ -159,9 +163,10 @@ class FloatingPointDomainConstraintTests(unittest.TestCase):
             candidate_hex=code.hex(),
             floating_point_domain=FloatingPointDomain(traps_enabled=True),
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
-        self.assertTrue(any("trap" in item.lower() for item in result.unsupported))
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIsNotNone(result.floating_point_domain)
+        assert result.floating_point_domain is not None
+        self.assertTrue(result.floating_point_domain.traps_enabled)
 
     def test_engine_records_domain_on_fp_proof(self):
         code = parse_hex("ec21102a")  # fadds f1, f1, f2

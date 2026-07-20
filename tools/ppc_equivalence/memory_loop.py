@@ -213,35 +213,52 @@ def summarize_constant_stride_store_loop(
     *,
     bounded_trip: BoundedRemainderTrip | None = None,
 ) -> MemoryLoopSummary | None:
-    """Build a closed-form summary when the trip count is a positive constant."""
+    """Build a closed-form or bounded-remainder summary when premises hold.
+
+    Bounded remainder summaries are allowed when the zero-trip guard and a
+    small upper bound are proven, even without a concrete trip count. The
+    obligation ``trip_count`` then records the expansion upper bound; apply
+    uses ``concrete_trip=None`` under ``skip-branch`` guards.
+    """
+    del bounded_trip  # Recovered during recognition; loop fields are authoritative.
     if loop.confidence not in ("exact-pattern", "bounded-remainder"):
         return None
-    if loop.trip_count is None or loop.trip_count < 1:
-        if loop.confidence == "bounded-remainder" and loop.trip_upper_bound is not None:
-            # Symbolic remainder without concrete trip stays unsupported for summary.
+
+    expansion = "closed-form"
+    if loop.confidence == "bounded-remainder":
+        if loop.trip_expr is None or loop.trip_upper_bound is None:
             return None
-        return None
-    if loop.trip_count > MAX_MEMORY_LOOP_TRIPS:
+        if loop.zero_guard not in ("concrete-nonzero", "skip-branch"):
+            return None
+        expansion = "bounded-remainder"
+        # Footprint / schema use concrete trip when known, else the proven bound.
+        trip_for_schema = (
+            int(loop.trip_count)
+            if loop.trip_count is not None and loop.trip_count >= 1
+            else int(loop.trip_upper_bound)
+        )
+    else:
+        if loop.trip_count is None or loop.trip_count < 1:
+            return None
+        trip_for_schema = int(loop.trip_count)
+
+    if trip_for_schema > MAX_MEMORY_LOOP_TRIPS:
         return None
     if loop.store_kind not in ("stwu", "d-form-addi"):
         return None
     if not footprint_ok_for_summary(
-        trip_count=int(loop.trip_count),
+        trip_count=trip_for_schema,
         stride=int(loop.stride),
         store_width=int(loop.store_width),
         store_kind=loop.store_kind,
     ):
         return None
 
-    expansion = "closed-form"
-    if loop.confidence == "bounded-remainder" and loop.trip_expr is not None:
-        expansion = "bounded-remainder"
-
     return MemoryLoopSummary(
         header_pc=loop.header_pc,
         latch_pc=loop.latch_pc,
         exit_pc=loop.exit_pc,
-        trip_count=int(loop.trip_count),
+        trip_count=trip_for_schema,
         base_reg=loop.base_reg,
         source_reg=loop.source_reg,
         stride=loop.stride,
@@ -342,11 +359,25 @@ def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) 
 
         from tools.ppc_equivalence.bounded_remainder_loop import ZeroTripGuard
 
+        # Under skip-branch, trip_count may be the expansion upper bound only.
+        concrete_trip: int | None
+        if summary.zero_guard == "concrete-nonzero":
+            concrete_trip = int(summary.trip_count)
+        elif (
+            summary.zero_guard == "skip-branch"
+            and summary.trip_upper_bound is not None
+            and int(summary.trip_count) == int(summary.trip_upper_bound)
+        ):
+            concrete_trip = None
+        elif summary.trip_count is not None and int(summary.trip_count) >= 1:
+            concrete_trip = int(summary.trip_count)
+        else:
+            concrete_trip = None
         bounded = BoundedRemainderTrip(
             expr=_expr_from_dict(summary.trip_expr),
             expr_canonical=summary.trip_expr,
             upper_bound=int(summary.trip_upper_bound or summary.trip_count),
-            concrete_trip=int(summary.trip_count),
+            concrete_trip=concrete_trip,
             zero_guard=ZeroTripGuard(summary.zero_guard or "concrete-nonzero"),
             notes=summary.invariant_notes,
         )

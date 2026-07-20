@@ -1,7 +1,8 @@
-"""Relational loop induction scaffold tests (descriptors only)."""
+"""Relational loop induction scaffold tests."""
 
 from __future__ import annotations
 
+import importlib.util
 import unittest
 
 from tools.ppc_equivalence.ir import Instruction, Opcode
@@ -15,11 +16,15 @@ from tools.ppc_equivalence.proof_features import (
 from tools.ppc_equivalence.relational_induction import (
     HOUDINI_TEMPLATE_NAMES,
     HoudiniTemplateName,
+    NARROW_INVARIANT_NAMES,
     RelationalInductionSketch,
     RelationalInductionUnsupported,
     RelationalLoopSide,
     build_relational_induction_sketch,
 )
+
+
+_HAS_Z3 = importlib.util.find_spec("z3") is not None
 
 
 def _insn(
@@ -68,6 +73,7 @@ class RelationalInductionSketchTests(unittest.TestCase):
             HoudiniTemplateName.REGISTER_EQUALITY.value,
             "register-equality",
         )
+        self.assertIn("equal-ctr", NARROW_INVARIANT_NAMES)
 
     def test_sketch_differently_shaped_ctr_loops(self) -> None:
         original = find_ctr_affine_loop_candidates(
@@ -152,7 +158,8 @@ class RelationalInductionSketchTests(unittest.TestCase):
         self.assertEqual(side.header_pc, loop.header_pc)
         self.assertEqual(side.natural, loop)
 
-    def test_natural_loop_discharges_when_affine_backed(self) -> None:
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_natural_loop_discharges_when_ctr_affine_backed(self) -> None:
         from tools.ppc_equivalence.relational_induction import (
             try_discharge_natural_relational,
         )
@@ -161,14 +168,14 @@ class RelationalInductionSketchTests(unittest.TestCase):
         sketch = try_discharge_natural_relational(program, program)
         self.assertIsNotNone(sketch)
         assert sketch is not None
-        self.assertEqual(sketch.status, "applied")
+        self.assertEqual(sketch.status, "discharged")
         self.assertIn("natural-loop", " ".join(sketch.notes))
 
 
 class RelationalInductionFeatureGateTests(unittest.TestCase):
-    def test_feature_is_frozen_unsupported(self) -> None:
+    def test_feature_is_known_and_unfrozen(self) -> None:
         self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
-        self.assertIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_incomplete_obligation_fails_validation(self) -> None:
         reason = validate_proof_features(
@@ -182,7 +189,8 @@ class RelationalInductionFeatureGateTests(unittest.TestCase):
         assert reason is not None
         self.assertIn("missing", reason)
 
-    def test_discharged_sketch_demoted_during_freeze(self) -> None:
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_discharged_sketch_stays_equivalent(self) -> None:
         from tools.ppc_equivalence.proof_features import enforce_equivalent_proof_features
         from tools.ppc_equivalence.relational_induction import (
             try_discharge_ctr_affine_relational,
@@ -199,9 +207,10 @@ class RelationalInductionFeatureGateTests(unittest.TestCase):
             relational_induction=sketch.to_obligation_dict(),
         )
         gated = enforce_equivalent_proof_features(result)
-        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
 
-    def test_obligation_validates_structurally(self) -> None:
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_obligation_validates_when_discharged(self) -> None:
         from tools.ppc_equivalence.relational_induction import (
             discharge_ctr_affine_relational_sketch,
         )
@@ -214,17 +223,15 @@ class RelationalInductionFeatureGateTests(unittest.TestCase):
         assert isinstance(sketch, RelationalInductionSketch)
         discharged = discharge_ctr_affine_relational_sketch(sketch)
         assert isinstance(discharged, RelationalInductionSketch)
+        self.assertEqual(discharged.status, "discharged")
         payload = {
             "proof_features": ["relational-induction"],
             "relational_induction": discharged.to_obligation_dict(),
         }
-        # Structural validation still passes; equivalent-ready fails under freeze.
         self.assertIsNone(validate_proof_features(payload))
-        ready = validate_proof_features(payload, require_equivalent_ready=True)
-        self.assertIsNotNone(ready)
-        assert ready is not None
-        self.assertIn("not yet supported", ready)
-
+        self.assertIsNone(
+            validate_proof_features(payload, require_equivalent_ready=True),
+        )
 
 
 if __name__ == "__main__":

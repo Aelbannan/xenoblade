@@ -187,7 +187,7 @@ class AffineFeatureGateTests(unittest.TestCase):
         self.assertIsNotNone(result.loop_summary)
         self.assertIsNotNone(result.relational_induction)
         self.assertEqual(result.loop_summary["trip_count"], 20)
-        self.assertEqual(result.relational_induction["status"], "applied")
+        self.assertEqual(result.relational_induction["status"], "discharged")
 
     def test_compare_affine_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -203,9 +203,10 @@ class AffineFeatureGateTests(unittest.TestCase):
         )
         self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("affine-loop-summary", result.proof_features)
-        self.assertIn("relational-induction", result.proof_features)
+        # Compare-affine closed forms still attach affine-loop-summary; PR7
+        # relational SMT discharge is CTR-only, so no relational-induction yet.
+        self.assertNotIn("relational-induction", result.proof_features)
         self.assertEqual(result.loop_summary["proof_kind"], "compare-affine-closed-form")
-        self.assertEqual(result.relational_induction["status"], "applied")
 
     def test_compare_affine_vs_straight_line_cr_never_equivalent(self) -> None:
         """False-eq regression: loop exits with CR0.EQ=1; candidate leaves entry CR.

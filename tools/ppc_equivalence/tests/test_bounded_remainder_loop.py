@@ -143,6 +143,29 @@ class BoundedRemainderTripTests(unittest.TestCase):
         self.assertEqual(summary.trip_count, 0x2B & 7)
         self.assertEqual(summary.trip_upper_bound, 0x2B & 7)
 
+    def test_summarize_bounded_remainder_with_skip_guard(self) -> None:
+        program = [
+            _insn(Opcode.ANDI_DOT, (6, 6, 7), address=0),
+            _insn(Opcode.BC, (12, 0, 24, 0), address=4),
+            _insn(Opcode.MTSPR, (6, 9), address=8),
+            _insn(Opcode.STW, (3, 4, 0), address=12),
+            _insn(Opcode.ADDI, (4, 4, 4), address=16),
+            _insn(Opcode.BC, (16, 0, 12, 0), address=20),
+            _insn(Opcode.BCLR, (20, 0, 0), address=24),
+        ]
+        loops = find_constant_stride_store_loops(program)
+        self.assertEqual(len(loops), 1)
+        loop = loops[0]
+        self.assertEqual(loop.confidence, "bounded-remainder")
+        self.assertEqual(loop.zero_guard, "skip-branch")
+        summary = summarize_constant_stride_store_loop(loop)
+        self.assertIsNotNone(summary)
+        assert summary is not None
+        self.assertEqual(summary.expansion, "bounded-remainder")
+        self.assertEqual(summary.trip_upper_bound, 7)
+        self.assertEqual(summary.trip_count, 7)
+        self.assertEqual(summary.zero_guard, "skip-branch")
+
 
 if __name__ == "__main__":
     unittest.main()

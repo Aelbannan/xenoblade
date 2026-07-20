@@ -460,6 +460,7 @@ def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
         "callee_contracts",
         "limits",
         "opcodes_used",
+        "fp_oracle_version",
         "engine_hash",
         "source_hash",
         "git_commit",
@@ -780,6 +781,9 @@ def _build_equivalence_certificate(
         proof_features = getattr(proof, "proof_features", None)
         if proof_features:
             certificate["proof_features"] = list(proof_features)
+        fp_oracle_version = getattr(proof, "fp_oracle_version", None)
+        if fp_oracle_version:
+            certificate["fp_oracle_version"] = str(fp_oracle_version)
         if isinstance(proof, ProofResult):
             for key, block in proof_obligations_from_result(proof).items():
                 certificate[key] = dict(block)
@@ -842,6 +846,7 @@ def _prove_bytes(
     )
 
     jump_table_context = None
+    virtual_call_context = None
     memory_loop_readonly_words = None
     if proof_features is None and address_space is None and indirect_targets is None:
         from tools.ppc_equivalence.jump_table_auto import try_auto_jump_table_context
@@ -855,6 +860,10 @@ def _prove_bytes(
         )
         from tools.ppc_equivalence.memory_loop_readonly import (
             build_memory_loop_readonly_context,
+        )
+        from tools.ppc_equivalence.vtable_obligations import (
+            try_auto_virtual_call_context,
+            virtual_call_gate_reason,
         )
 
         original_artifact = None
@@ -884,6 +893,9 @@ def _prove_bytes(
             original_dol_path=dol_path if artifacts is None else None,
             candidate_elf_path=elf_path if artifacts is None else None,
         )
+        # Virtual-call try_auto: returns None without slot/certificate premises
+        # (fail-closed). Pattern presence alone is gated inside check_equivalence.
+        virtual_call_context = try_auto_virtual_call_context(original, candidate)
         memory_loop_readonly_words = build_memory_loop_readonly_context(
             original_words=try_build_memory_loop_readonly_words(
                 original,
@@ -906,6 +918,22 @@ def _prove_bytes(
                 coverage="pending",
                 status="pending",
             )
+        elif virtual_call_context is not None:
+            from tools.ppc_equivalence.vtable_obligations import (
+                build_virtual_call_obligations,
+            )
+
+            proof_features = ["readonly-image", "indirect-target-closure"]
+            address_space, indirect_targets = build_virtual_call_obligations(
+                virtual_call_context,
+                no_write_status="pending",
+                coverage="pending",
+                status="pending",
+            )
+        elif virtual_call_gate_reason(original, candidate) is not None:
+            # Pattern recognized but premises incomplete — leave features unset
+            # so the engine gate demotes EQUIVALENT.
+            pass
 
     original_live_out = automatic_live_out(original)
     candidate_live_out = automatic_live_out(candidate)
@@ -973,11 +1001,20 @@ def _prove_bytes(
         raw_fp = getattr(project.config, "floating_point_domain", None)
     fp_domain_dict: dict[str, Any] | None = None
     if isinstance(raw_fp, dict):
-        fp_domain_dict = raw_fp
+        fp_domain_dict = dict(raw_fp)
     elif raw_fp is not None:
         from tools.ppc_equivalence.result import FloatingPointDomain
 
         fp_domain_dict = FloatingPointDomain.parse(raw_fp).to_dict()
+
+    # Bind paired-single SoftFloat oracle identity into request/cache when used.
+    from tools.ppc_equivalence.fp_outcome import FP_ORACLE_VERSION, PAIRED_ORACLE_OPS
+
+    if any(insn.opcode.value in PAIRED_ORACLE_OPS for insn in (*original, *candidate)):
+        if fp_domain_dict is None:
+            fp_domain_dict = {}
+        fp_domain_dict = dict(fp_domain_dict)
+        fp_domain_dict.setdefault("fp_oracle_version", FP_ORACLE_VERSION)
 
     key = _cache_key(
         resolved_contract.name, observables, orig_hex, cand_hex,
@@ -1031,7 +1068,11 @@ def _prove_bytes(
         from tools.ppc_equivalence.memory_profile import MemoryEnvironment
         mem_env = MemoryEnvironment.from_dict(memory_environment)
     fp_domain = None
-    if raw_fp is not None:
+    if fp_domain_dict is not None:
+        from tools.ppc_equivalence.result import FloatingPointDomain
+        # Oracle version is identity-only; FloatingPointDomain ignores unknown keys.
+        fp_domain = FloatingPointDomain.parse(fp_domain_dict)
+    elif raw_fp is not None:
         from tools.ppc_equivalence.result import FloatingPointDomain
         fp_domain = FloatingPointDomain.parse(raw_fp)
 
@@ -1051,9 +1092,7 @@ def _prove_bytes(
         max_loop_iterations=max_loop_iterations,
         observe=[item.name for item in resolved_contract.observables],
         memory_environment=memory_environment,
-        floating_point_domain=(
-            fp_domain.to_dict() if fp_domain is not None else None
-        ),
+        floating_point_domain=fp_domain_dict,
         assumed_callees=[str(item) for item in assumed_callees],
         callee_contract_sources={
             str(name): contract.source
@@ -1084,6 +1123,7 @@ def _prove_bytes(
         source_hash=source_hash,
         floating_point_domain=fp_domain,
         jump_table=jump_table_context,
+        virtual_call=virtual_call_context,
         memory_loop_readonly=memory_loop_readonly_words,
     )
     detail = ""

@@ -19,8 +19,21 @@ FP_COVERAGE_PROVEN: tuple[str, ...] = (
     "vx-zx-exception-causes",
     "paired-single-independent-binary32-lanes",
 )
+# When require_ni_zero=False, NI flush-to-zero is modeled for NI_SUPPORTED_OPS.
+FP_COVERAGE_PROVEN_NI_MODELED: tuple[str, ...] = (
+    "nearest-even-rounding",
+    "ni-flush-to-zero",
+    "finite-input-overflow-excluded",
+    "fused-operands-exact-expanded-binary32",
+    "vx-zx-exception-causes",
+    "paired-single-independent-binary32-lanes",
+)
 FP_COVERAGE_ASSUMED: tuple[str, ...] = (
     "traps-disabled",
+)
+# Partial VE/ZE trap scaffold (PR18); full OX/UX/XX + paired delivery remains out.
+FP_COVERAGE_TRAP_SCAFFOLD: tuple[str, ...] = (
+    "fp-trap-delivery-ve-ze-scaffold",
 )
 FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
     "underflow-flag",
@@ -29,6 +42,7 @@ FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
     "fsqrt-fsqrts-broadway-reserved",
     "full-fpscr-status-modeling",
     "fp-exception-trap-delivery",
+    "ni-estimates-converts-stores-non-oracle-paired",
 )
 
 # FPSCR sticky/status bit labels (Gekko UReg_FPSCR). Companion to the oracle
@@ -101,12 +115,11 @@ class FloatingPointDomain:
                 "rounding_modes must be exactly ['nearest-even'] "
                 f"(got {list(modes)!r})"
             )
-        if not self.require_ni_zero:
-            reasons.append("FPSCR.NI≠0 is not modeled; require_ni_zero must be true")
-        if self.traps_enabled:
-            reasons.append(
-                "FP exception trap delivery is not modeled; traps_enabled must be false"
-            )
+        # require_ni_zero=False enables FPSCR.NI flush modeling for
+        # NI_SUPPORTED_OPS; unsupported NI-affected opcodes fail closed in
+        # the engine / ConcreteOps (PR17). Do not treat that as domain-invalid.
+        # traps_enabled is accepted for the PR18 VE/ZE scaffold; incomplete
+        # opcodes / OE|UE|XE still fail closed during CFG execution.
         if self.model_underflow_flag:
             reasons.append("underflow flag modeling is unsupported")
         if self.model_inexact_flag:
@@ -126,8 +139,11 @@ class FloatingPointDomain:
             )
 
     def coverage_dict(self) -> dict[str, Any]:
-        proven = list(FP_COVERAGE_PROVEN)
+        proven = list(
+            FP_COVERAGE_PROVEN if self.require_ni_zero else FP_COVERAGE_PROVEN_NI_MODELED
+        )
         assumed = list(FP_COVERAGE_ASSUMED)
+        unsupported = list(FP_COVERAGE_UNSUPPORTED)
         if not self.exclude_finite_overflow:
             proven = [item for item in proven if item != "finite-input-overflow-excluded"]
         if self.fused_input_domain != "exact-expanded-binary32":
@@ -141,6 +157,11 @@ class FloatingPointDomain:
             proven = [*proven, "nan-excluded"]
         if not self.allow_infinity:
             proven = [*proven, "infinity-excluded"]
+        if self.traps_enabled:
+            assumed = [item for item in assumed if item != "traps-disabled"]
+            assumed = [*assumed, *FP_COVERAGE_TRAP_SCAFFOLD]
+            # Full architectural trap delivery remains unsupported; scaffold
+            # covers VE/ZE for a scalar opcode subset only.
         status = (
             FP_COVERAGE_STATUS_ASSUMED
             if assumed
@@ -150,8 +171,20 @@ class FloatingPointDomain:
             "status": status,
             "proven": proven,
             "assumed": assumed,
-            "unsupported": list(FP_COVERAGE_UNSUPPORTED),
+            "unsupported": unsupported,
         }
+
+    def ni_supported_opcodes(self) -> list[str]:
+        """Opcode names with FPSCR.NI flush modeling (result identity)."""
+        from tools.ppc_equivalence.fp_outcome import NI_SUPPORTED_OPS
+
+        return sorted(NI_SUPPORTED_OPS)
+
+    def trap_delivery_supported_opcodes(self) -> list[str]:
+        """Opcode names with VE/ZE trap-delivery scaffold (result identity)."""
+        from tools.ppc_equivalence.fp_traps import supported_opcode_names
+
+        return list(supported_opcode_names())
 
     def coverage_status(self) -> str:
         """Return ``proven`` or ``assumed`` for this active domain."""
@@ -167,6 +200,9 @@ class FloatingPointDomain:
                 *unsupported,
                 "requested-flag-modeling-rejected",
             ]
+        if self.traps_enabled:
+            assumed = [item for item in assumed if item != "trap-enable-bits"]
+            modeled = [*modeled, "trap-enable-bits-VE-ZE"]
         return {
             "modeled": modeled,
             "assumed": assumed,
@@ -198,8 +234,12 @@ class FloatingPointDomain:
         return {
             "used": True,
             "rounding_modes": list(self.rounding_modes),
-            "ni": "required-zero" if self.require_ni_zero else "not-required",
+            "ni": "required-zero" if self.require_ni_zero else "modeled-flush-to-zero",
+            "ni_supported_opcodes": self.ni_supported_opcodes(),
             "traps": "excluded" if not self.traps_enabled else "enabled",
+            "trap_delivery_supported_opcodes": (
+                self.trap_delivery_supported_opcodes() if self.traps_enabled else []
+            ),
             "finite_overflow": "excluded" if self.exclude_finite_overflow else "allowed",
             "underflow_flag": "not-fully-modeled",
             "inexact_flag": "not-fully-modeled",
@@ -217,7 +257,8 @@ class FloatingPointDomain:
         """Accept result ``to_dict`` keys or constructor-style kwargs."""
         rounding = d.get("rounding_modes", ("nearest-even",))
         if "ni" in d:
-            require_ni_zero = d.get("ni") == "required-zero"
+            ni_label = d.get("ni")
+            require_ni_zero = ni_label == "required-zero"
         else:
             require_ni_zero = bool(d.get("require_ni_zero", True))
         if "traps" in d:
@@ -387,8 +428,9 @@ class ProofResult:
         "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
         "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
-        "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX and traps are not",
-        "FP arithmetic requires RN=nearest-even and NI=0; finite-input overflow is excluded, modeled invalid/ZX cases are included",
+        "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX are not",
+        "FP traps: optional traps_enabled scaffold delivers VE/ZE program exceptions for a scalar opcode subset; OE/UE/XE and incomplete opcodes fail closed; still Tier C",
+        "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
         "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
         "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
         "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
@@ -450,6 +492,8 @@ class ProofResult:
     relational_induction: dict[str, Any] | None = None
     memory_loop: dict[str, Any] | None = None
     memory_bus: dict[str, Any] | None = None
+    # SoftFloat / paired-single oracle identity (Tier C). Omitted when unused.
+    fp_oracle_version: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -486,6 +530,8 @@ class ProofResult:
             value.pop("memory_loop", None)
         if self.memory_bus is None:
             value.pop("memory_bus", None)
+        if self.fp_oracle_version is None:
+            value.pop("fp_oracle_version", None)
         return value
 
 

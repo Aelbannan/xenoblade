@@ -632,6 +632,60 @@ class ConcreteOps:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
 
+    def fp_fnmadd_rne_bits(self, a_bits: int, c_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fnmadd_binary64_rne
+
+        try:
+            return fnmadd_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF,
+                c_bits & 0xFFFFFFFFFFFFFFFF,
+                b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fnmsub_rne_bits(self, a_bits: int, c_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fnmsub_binary64_rne
+
+        try:
+            return fnmsub_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF,
+                c_bits & 0xFFFFFFFFFFFFFFFF,
+                b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fnmadds_fpr_bits(self, rm: str, a_fpr: int, b_fpr: int, c_fpr: int) -> int:
+        from .fp_oracle import fnmadds_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fnmadds_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF,
+                b_fpr & 0xFFFFFFFFFFFFFFFF,
+                c_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fnmsubs_fpr_bits(self, rm: str, a_fpr: int, b_fpr: int, c_fpr: int) -> int:
+        from .fp_oracle import fnmsubs_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fnmsubs_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF,
+                b_fpr & 0xFFFFFFFFFFFFFFFF,
+                c_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
     def fp_add(self, rm: str, a: float, b: float) -> float: return a + b
     def fp_sub(self, rm: str, a: float, b: float) -> float: return a - b
     def fp_mul(self, rm: str, a: float, b: float) -> float: return a * b
@@ -2733,6 +2787,24 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             oracle_scalar_bits = ops.fp_fmsubs_fpr_bits(rm, fa_bits, fb_bits, fc_bits)
             d = ops.fp_bits_to_double(precise_bits)
             fused_single = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FNMADD:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fnmadd_rne_bits(fa_bits, fc_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FNMSUB:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fnmsub_rne_bits(fa_bits, fc_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FNMADDS:
+            precise_bits = ops.fp_fnmadd_rne_bits(fa_bits, fc_bits, fb_bits)
+            oracle_scalar_bits = ops.fp_fnmadds_fpr_bits(rm, fa_bits, fb_bits, fc_bits)
+            d = ops.fp_bits_to_double(precise_bits)
+            fused_single = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FNMSUBS:
+            precise_bits = ops.fp_fnmsub_rne_bits(fa_bits, fc_bits, fb_bits)
+            oracle_scalar_bits = ops.fp_fnmsubs_fpr_bits(rm, fa_bits, fb_bits, fc_bits)
+            d = ops.fp_bits_to_double(precise_bits)
+            fused_single = ops.fp_bits_to_double(oracle_scalar_bits)
         elif op in (Opcode.FADDS, Opcode.FADD):
             d = ops.fp_add(rm, op_fa, op_fb)
         elif op in (Opcode.FSUBS, Opcode.FSUB):
@@ -2956,7 +3028,11 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             else:
                 normal_bits = ops.fp_double_to_bits(d)
             if op in _FP_FUSED_NEGATE:
-                normal_bits = ops.fp_xor_sign(normal_bits)
+                # Oracle-backed ``fn*`` paths already return the negated result;
+                # host-float / SymbolicOps still negate here. Never xor NaNs —
+                # ``nan_result`` selects ``propagated_nan`` instead.
+                if oracle_scalar_bits is None:
+                    normal_bits = ops.fp_xor_sign(normal_bits)
             result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
 
             invalid_enabled = ops.lnot(ops.eq(

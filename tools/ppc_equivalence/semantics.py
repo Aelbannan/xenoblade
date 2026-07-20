@@ -1976,18 +1976,34 @@ def _fpscr_raise_if(
 def _latch_softfloat_ox_ux_xx(
     state: MachineState, ops: WordOps,
 ) -> tuple[MachineState, Any, Any, Any]:
-    """Latch SoftFloat OX/UX/XX stickies; return (state, ox, ux, xx) conditions."""
+    """Latch SoftFloat OX/UX/XX stickies; return (state, ox, ux, xx) conditions.
+
+    SoftFloat ``inexact`` alone is not a sound Broadway ``FPSCR.XX`` source for
+    Force25 / single-mul intermediates (corpus expects XX clear). Overflow and
+    underflow imply XX only when the active FP domain authorizes those stickies
+    (``traps_enabled``, or OX when ``exclude_finite_overflow=False``). The
+    returned ``xx`` condition still includes SoftFloat inexact under
+    ``traps_enabled`` so XE enable matching can fire without polluting default
+    concrete↔symbolic differentials.
+    """
     flags = _consume_softfloat_oracle_flags()
     if flags is None or not isinstance(ops, ConcreteOps):
         false = ops.bool(False)
         return state, false, false, false
-    ox = ops.bool(bool(flags.overflow))
-    ux = ops.bool(bool(flags.underflow))
-    xx = ops.bool(bool(flags.inexact))
+    domain = active_fp_domain()
+    latch_ox = bool(flags.overflow) and (
+        domain.traps_enabled or not domain.exclude_finite_overflow
+    )
+    # model_underflow_flag remains domain-unsupported; only trap mode latches UX.
+    latch_ux = bool(flags.underflow) and domain.traps_enabled
+    xx_sticky = latch_ox or latch_ux
+    xx_enable = xx_sticky or (domain.traps_enabled and bool(flags.inexact))
+    ox = ops.bool(latch_ox)
+    ux = ops.bool(latch_ux)
     state = _fpscr_raise_if(state, ox, FPSCR_OX, ops)
     state = _fpscr_raise_if(state, ux, FPSCR_UX, ops)
-    state = _fpscr_raise_if(state, xx, FPSCR_XX, ops)
-    return state, ox, ux, xx
+    state = _fpscr_raise_if(state, ops.bool(xx_sticky), FPSCR_XX, ops)
+    return state, ox, ux, ops.bool(xx_enable)
 
 
 def _enabled_exception_suppress(
@@ -2387,11 +2403,17 @@ def _apply_paired_combined_outcome(
     flags = combined.flags
     if bool(flags.divide_by_zero):
         state = _fpscr_raise_if(state, ops.bool(True), FPSCR_ZX, ops)
-    if bool(flags.overflow):
+    domain = active_fp_domain()
+    latch_ox = bool(flags.overflow) and (
+        domain.traps_enabled or not domain.exclude_finite_overflow
+    )
+    latch_ux = bool(flags.underflow) and domain.traps_enabled
+    if latch_ox:
         state = _fpscr_raise_if(state, ops.bool(True), FPSCR_OX, ops)
-    if bool(flags.underflow):
+    if latch_ux:
         state = _fpscr_raise_if(state, ops.bool(True), FPSCR_UX, ops)
-    if bool(flags.inexact):
+    # SoftFloat inexact alone is not Broadway XX for Force25 paired muls.
+    if latch_ox or latch_ux:
         state = _fpscr_raise_if(state, ops.bool(True), FPSCR_XX, ops)
 
     if clear_fifr:

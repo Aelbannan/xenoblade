@@ -437,8 +437,13 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   with nonzero addend, native SymbolicOps/`FPOutcome` producers. **PR18 trap
   delivery:** `fp_traps.py` resolves VE/ZE/OE/UE/XE trap vs continue from
   `FPOutcome` + enable bits; CFG forks a `program-exception` terminal when
-  `traps_enabled` (scalar SoftFloat + paired-oracle sets). SoftFloat OX/UX/XX
-  sticky latch on ConcreteOps. Estimates/compares/converts and MSR FE0/FE1
+  `traps_enabled` (scalar SoftFloat + paired-oracle sets). SoftFloat OX/UX
+  sticky latch on ConcreteOps is domain-gated: OX when
+  `exclude_finite_overflow=False` or traps are enabled; UX only under
+  `traps_enabled` (`model_underflow_flag` remains unsupported). SoftFloat
+  `inexact` alone does **not** raise `FPSCR.XX` (Force25 / single-mul
+  intermediates are not Broadway XX); under `traps_enabled` it still feeds XE
+  enable matching. Estimates/compares/converts and MSR FE0/FE1
   modes remain deferred / fail-closed.
 
 ### Relocations

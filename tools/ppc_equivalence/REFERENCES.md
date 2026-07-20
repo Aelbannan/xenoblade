@@ -68,11 +68,16 @@ PowerPC architecture, checked against a mature Wii implementation.
   `NI_mul`, and `NI_div` cause precedence. The model propagates and quiets the
   first NaN operand, distinguishes `VXISI`/`VXIMZ`/`VXZDZ`/`VXIDI`, raises
   `ZX` for nonzero division by zero, and suppresses FPR/FPRF writes under
-  `VE`/`ZE`. Overflow, underflow, and inexact flags remain separate. **PR18
-  scaffold:** with `FloatingPointDomain.traps_enabled`, VE/ZE enabled
-  exceptions on the scalar arith/fused supported set fork a
-  `program-exception` terminal (`0x700`, FP-enabled SRR1 cause) via
-  `fp_traps.py`; OE/UE/XE and incomplete opcodes fail closed.
+  `VE`/`ZE`. Overflow, underflow, and inexact SoftFloat flags latch OX/UX/XX
+  on ConcreteOps scalar SoftFloat paths and suppress destinations under
+  `OE`/`UE`/`XE`. **PR18 (Wave 5):** with `FloatingPointDomain.traps_enabled`,
+  VE/ZE/OE/UE/XE enabled exceptions on the scalar SoftFloat arith/fused set and
+  Wave-3 paired-oracle ops fork a `program-exception` terminal (`0x700`,
+  FP-enabled SRR1 cause) via `fp_traps.py`. Paired writeback stays unconditional.
+  Broadway precise re-trap: an instruction that raises an enabled exception
+  delivers even when FEX was already set. MSR FE0/FE1 imprecise modes deferred.
+  Estimates/compares/converts and non-oracle paired remain fail-closed.
+  SymbolicOps still requires OE/UE/XE clear.
 - `fctiw`/`fctiwz` follow Dolphin's `ConvertToInteger`: rounding occurs before
   the signed-32-bit range check, results use the `0xFFF80000xxxxxxxx` FPR
   format, negative values rounded to zero set the marker bit, and

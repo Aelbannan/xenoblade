@@ -4,11 +4,11 @@ When retail and candidate loops differ in register allocation, stride layout, or
 body shape but share a counted or natural-loop skeleton, a proof may relate
 states with narrow invariant templates instead of requiring identical headers.
 
-``build_relational_induction_sketch`` builds pending sketches. CTR-affine pairs
-with matching bodies and trip counts are discharged only when all five
-independent UNSAT queries succeed (``relational_discharge``). Pattern match
-alone never marks ``discharged``. Compare-affine / shape-only natural pairs
-remain pending until their transition models are similarly discharged.
+``build_relational_induction_sketch`` builds pending sketches. CTR-affine and
+compare-affine pairs with matching bodies and trip counts are discharged only
+when all five independent UNSAT queries succeed (``relational_discharge``).
+Pattern match alone never marks ``discharged``. Shape-only natural pairs remain
+pending unless backed by a CTR-affine form that discharges.
 """
 
 from __future__ import annotations
@@ -517,14 +517,25 @@ def discharge_ctr_affine_relational_sketch(
     deadline: Any | None = None,
     z3_module: Any | None = None,
 ) -> RelationalInductionSketch | RelationalInductionUnsupported:
-    """Discharge a CTR-affine sketch via five independent SMT queries (PR7)."""
+    """Discharge a CTR-affine or compare-affine sketch via five SMT queries."""
     if sketch.original.header_kind is not LoopHeaderKind.CTR_AFFINE:
         return RelationalInductionUnsupported(
-            "only CTR-affine relational sketches can be SMT-discharged today"
+            "only CTR/compare-affine relational sketches can be SMT-discharged today"
         )
     assert sketch.original.affine is not None and sketch.candidate.affine is not None
-    from tools.ppc_equivalence.relational_discharge import try_smt_discharge_ctr_affine
+    from tools.ppc_equivalence.relational_discharge import (
+        _is_compare_affine_candidate,
+        try_smt_discharge_compare_affine,
+        try_smt_discharge_ctr_affine,
+    )
 
+    if _is_compare_affine_candidate(sketch.original.affine):
+        return try_smt_discharge_compare_affine(
+            sketch.original.affine,
+            sketch.candidate.affine,
+            deadline=deadline,
+            z3_module=z3_module,
+        )
     return try_smt_discharge_ctr_affine(
         sketch.original.affine,
         sketch.candidate.affine,
@@ -577,10 +588,38 @@ def try_discharge_ctr_affine_relational(
 def try_discharge_compare_affine_relational(
     original: Sequence[Instruction],
     candidate: Sequence[Instruction],
+    *,
+    deadline: Any | None = None,
+    z3_module: Any | None = None,
 ) -> RelationalInductionSketch | None:
-    """Compare-affine relational SMT discharge is not yet implemented (PR7 CTR-only)."""
-    _ = original, candidate
-    return None
+    """Build and SMT-discharge a compare-affine relational sketch, or return None."""
+    left = [
+        item for item in find_compare_affine_loop_candidates(original)
+        if item.confidence == "exact-pattern"
+    ]
+    right = [
+        item for item in find_compare_affine_loop_candidates(candidate)
+        if item.confidence == "exact-pattern"
+    ]
+    if len(left) != 1 or len(right) != 1:
+        return None
+    if not _affine_bodies_match_for_discharge(left[0], right[0]):
+        return None
+    if left[0].trip_count_reg != right[0].trip_count_reg:
+        return None
+    from tools.ppc_equivalence.relational_discharge import try_smt_discharge_compare_affine
+
+    discharged = try_smt_discharge_compare_affine(
+        left[0],
+        right[0],
+        deadline=deadline,
+        z3_module=z3_module,
+    )
+    if isinstance(discharged, RelationalInductionUnsupported):
+        return None
+    if discharged.status != "discharged":
+        return None
+    return discharged
 
 
 def try_discharge_natural_relational(
@@ -640,9 +679,10 @@ def try_discharge_relational(
     deadline: Any | None = None,
     z3_module: Any | None = None,
 ) -> RelationalInductionSketch | None:
-    """Try CTR-affine then natural-loop relational SMT discharge."""
+    """Try CTR-affine, compare-affine, then natural-loop relational SMT discharge."""
     for prover in (
         try_discharge_ctr_affine_relational,
+        try_discharge_compare_affine_relational,
         try_discharge_natural_relational,
     ):
         result = prover(
@@ -653,7 +693,6 @@ def try_discharge_relational(
         )
         if result is not None and result.status == "discharged":
             return result
-    _ = try_discharge_compare_affine_relational(original, candidate)
     return None
 
 
@@ -675,7 +714,7 @@ def _exact_affine_at_header(
     instructions: Sequence[Instruction],
     header_pc: int,
 ) -> CtrAffineLoopCandidate | None:
-    """Back-compat: CTR or compare affine at header (compare not SMT-discharged)."""
+    """CTR or compare-affine candidate at ``header_pc`` (exact-pattern only)."""
     ctr = _exact_ctr_affine_at_header(instructions, header_pc)
     if ctr is not None:
         return ctr

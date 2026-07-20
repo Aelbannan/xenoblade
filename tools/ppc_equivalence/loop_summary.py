@@ -18,8 +18,10 @@ Compare-affine countdown loops also record a ``FinalCompare`` so CR (including
 XER.SO) matches the last ``cmpwi`` after the closed-form GPR updates.
 
 When ``execute_cfg`` is given a summary map (or auto-builds one), matching
-headers are discharged in closed form and ``affine-loop-summary`` may authorize
-``EQUIVALENT``.
+headers are applied in closed form. ``affine-loop-summary`` may authorize
+``EQUIVALENT`` only when the obligation carries ``status=discharged`` with a
+matching ``summary_sha256`` (and, for CTR-affine, a discharged relational
+companion). Pattern recognition or ``coverage=applied`` alone never authorizes.
 """
 
 from __future__ import annotations
@@ -29,6 +31,7 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from tools.ppc_equivalence.ir import Instruction, Opcode
+from tools.ppc_equivalence.provenance import canonical_json_sha256
 
 _CTR_SPR = 9
 _BDNZ_BO = 16  # decrement CTR; branch if CTR != 0 after decrement
@@ -379,15 +382,67 @@ REQUIRED_LOOP_SUMMARY_KEYS = frozenset({
     "final_ctr",
     "ranking",
     "final_gpr",
+    "status",
+    "algorithm",
+    "summary_sha256",
 })
+
+_AFFINE_ALGORITHMS = frozenset({
+    "affine-closed-form-v1",
+    "compare-affine-closed-form-v1",
+})
+
+_LOOP_SUMMARY_IDENTITY_KEYS = (
+    "proof_kind",
+    "header_pc",
+    "latch_pc",
+    "exit_pc",
+    "trip_count",
+    "final_ctr",
+    "ranking",
+    "final_gpr",
+    "algorithm",
+    "relational_companion",
+)
+
+
+def _affine_algorithm_for(proof_kind: str) -> str:
+    if proof_kind == "compare-affine-closed-form":
+        return "compare-affine-closed-form-v1"
+    return "affine-closed-form-v1"
+
+
+def loop_summary_identity_payload(obligation: dict[str, Any]) -> dict[str, Any]:
+    """Canonical fields hashed into ``summary_sha256`` (excludes status/coverage)."""
+    payload: dict[str, Any] = {}
+    for key in _LOOP_SUMMARY_IDENTITY_KEYS:
+        if key not in obligation:
+            continue
+        value = obligation[key]
+        if value is None:
+            continue
+        payload[key] = value
+    return payload
+
+
+def compute_loop_summary_sha256(obligation: dict[str, Any]) -> str:
+    """SHA-256 over the canonical affine summary identity payload."""
+    return canonical_json_sha256(loop_summary_identity_payload(obligation))
 
 
 def build_loop_summary_obligation(
     summary: LoopSummary,
     *,
     coverage: str = "pending",
+    status: str = "pending",
+    relational_companion: str | None = None,
 ) -> dict[str, Any]:
-    """Obligation block for ``proof_features: [\"affine-loop-summary\"]``."""
+    """Obligation block for ``proof_features: [\"affine-loop-summary\"]``.
+
+    ``status=discharged`` is reserved for engine paths that also attach matching
+    relational-induction UNSAT evidence (CTR-affine or compare-affine).
+    Recognition or closed-form application alone must use ``pending`` / ``applied``.
+    """
     final_gpr = [
         {
             "reg": reg,
@@ -396,7 +451,8 @@ def build_loop_summary_obligation(
         }
         for reg, (entry_reg, stride) in sorted(summary.final_gpr.items())
     ]
-    return {
+    algorithm = _affine_algorithm_for(summary.proof_kind)
+    payload: dict[str, Any] = {
         "proof_kind": summary.proof_kind,
         "header_pc": summary.header_pc,
         "latch_pc": summary.latch_pc,
@@ -406,7 +462,13 @@ def build_loop_summary_obligation(
         "ranking": summary.ranking,
         "final_gpr": final_gpr,
         "coverage": coverage,
+        "status": status,
+        "algorithm": algorithm,
     }
+    if relational_companion is not None:
+        payload["relational_companion"] = relational_companion
+    payload["summary_sha256"] = compute_loop_summary_sha256(payload)
+    return payload
 
 
 def validate_loop_summary_obligation(obligation: dict[str, Any]) -> str | None:
@@ -432,7 +494,54 @@ def validate_loop_summary_obligation(obligation: dict[str, Any]) -> str | None:
     if not isinstance(ranking, str) or not ranking:
         return "loop_summary.ranking must be a nonempty string"
 
-    return _validate_final_gpr(obligation.get("final_gpr"))
+    status = obligation.get("status")
+    if not isinstance(status, str) or status not in (
+        "pending",
+        "applied",
+        "discharged",
+        "failed",
+    ):
+        return "loop_summary.status must be pending|applied|discharged|failed"
+
+    algorithm = obligation.get("algorithm")
+    if algorithm not in _AFFINE_ALGORITHMS:
+        return "loop_summary.algorithm must be a known affine closed-form id"
+
+    digest = obligation.get("summary_sha256")
+    if not isinstance(digest, str) or len(digest) != 64:
+        return "loop_summary.summary_sha256 must be a 64-hex digest"
+    try:
+        int(digest, 16)
+    except ValueError:
+        return "loop_summary.summary_sha256 must be a 64-hex digest"
+    expected = compute_loop_summary_sha256(obligation)
+    if digest != expected:
+        return "loop_summary.summary_sha256 does not match obligation identity"
+
+    companion = obligation.get("relational_companion")
+    if companion is not None and companion not in ("pending", "discharged", "failed"):
+        return "loop_summary.relational_companion must be pending|discharged|failed"
+
+    gpr_reason = _validate_final_gpr(obligation.get("final_gpr"))
+    if gpr_reason is not None:
+        return gpr_reason
+
+    if status == "discharged":
+        if proof_kind not in ("affine-closed-form", "compare-affine-closed-form"):
+            return (
+                "loop_summary.discharged requires proof_kind "
+                "affine-closed-form|compare-affine-closed-form"
+            )
+        if companion != "discharged":
+            return (
+                "loop_summary.status=discharged requires "
+                "relational_companion=discharged"
+            )
+        coverage = obligation.get("coverage")
+        if coverage not in ("applied", "discharged"):
+            return "loop_summary.status=discharged requires coverage applied|discharged"
+
+    return None
 
 
 def _validate_final_gpr(final_gpr: Any) -> str | None:

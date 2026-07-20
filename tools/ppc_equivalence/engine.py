@@ -452,13 +452,25 @@ def _terminal_difference(
         _observable_difference(left.state, right.state, item, initial, ops)
         for item in contract.observables
     ]
+    # MMIO/FIFO device state is an automatic observable once either side touches it.
+    from tools.ppc_equivalence.symbolic_bus import symbolic_bus_difference
+
+    device_difference = symbolic_bus_difference(
+        getattr(left.state, "symbolic_bus", None),
+        getattr(right.state, "symbolic_bus", None),
+        z3,
+    )
     valid_difference = left.state.valid != right.state.valid
     both_invalid = z3.And(z3.Not(left.state.valid), z3.Not(right.state.valid))
     reason_difference = z3.And(
         both_invalid,
         left.state.invalid_reason != right.state.invalid_reason,
     )
-    defined_value_difference = z3.And(left.state.valid, right.state.valid, z3.Or(*values))
+    defined_value_difference = z3.And(
+        left.state.valid,
+        right.state.valid,
+        z3.Or(*(values + [device_difference])),
+    )
     return z3.And(
         left.condition,
         right.condition,
@@ -1363,6 +1375,7 @@ def _check_equivalence_impl(
             assumed_callees=assumed_callees, assumed_callees_used=callees_used,
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
+            memory_bus=memory_bus,
             deadline=deadline,
             jump_table_targets=original_jump_targets,
             affine_loop_summaries=original_affine,
@@ -1377,6 +1390,7 @@ def _check_equivalence_impl(
             assumed_callees=assumed_callees, assumed_callees_used=callees_used,
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
+            memory_bus=memory_bus,
             deadline=deadline,
             jump_table_targets=candidate_jump_targets,
             affine_loop_summaries=candidate_affine,
@@ -1660,6 +1674,14 @@ def _check_equivalence_impl(
                     early.warnings.append(reason)
                     early.abstractions.append("symbolic-mmio-unsupported-access")
                     break
+            cfg_rejections = (early.memory_bus or {}).get("cfg_rejections") or []
+            if cfg_rejections:
+                reason = f"symbolic MMIO/FIFO CFG rejection: {cfg_rejections[0]}"
+                if early.status is ProofStatus.EQUIVALENT:
+                    early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                early.unsupported.append(reason)
+                early.warnings.append(reason)
+                early.abstractions.append("symbolic-mmio-cfg-rejection")
         if jump_table is not None:
             early.proof_features = ["readonly-image", "indirect-target-closure"]
             if jump_table_bundle is not None:
@@ -1731,16 +1753,32 @@ def _check_equivalence_impl(
             if "affine-loop-summary" not in features:
                 features.append("affine-loop-summary")
             early.proof_features = features
-            early.loop_summary = build_loop_summary_obligation(
-                summary, coverage="applied",
-            )
             relational = try_discharge_relational(original, candidate)
+            affine_status = "applied"
+            relational_companion: str | None = None
+            if (
+                relational is not None
+                and relational.status == "discharged"
+                and summary.proof_kind in (
+                    "affine-closed-form",
+                    "compare-affine-closed-form",
+                )
+            ):
+                affine_status = "discharged"
+                relational_companion = "discharged"
+            early.loop_summary = build_loop_summary_obligation(
+                summary,
+                coverage="applied",
+                status=affine_status,
+                relational_companion=relational_companion,
+            )
             if relational is not None and relational.status == "discharged":
                 if "relational-induction" not in features:
                     features.append("relational-induction")
                 early.proof_features = features
                 early.relational_induction = relational.to_obligation_dict()
-        # PR12: attach pending bulk+remainder relational sketches (scaffold).
+        # PR12: attach bulk+remainder relational sketches (discharged when
+        # identity + shared RangeWrite SMT succeed; otherwise pending).
         if early.relational_induction is None:
             bulk_sketch = try_build_bulk_remainder_relational_sketch(
                 original,
@@ -1766,8 +1804,33 @@ def _check_equivalence_impl(
             if "memory-loop-summary" not in features:
                 features.append("memory-loop-summary")
             early.proof_features = features
+            readonly_digest = None
+            if readonly_ctx is not None:
+                readonly_digest = canonical_json_sha256(
+                    {
+                        "original": [
+                            {"address": item.address, "value": item.value, "source": item.source}
+                            for item in readonly_ctx.original
+                        ],
+                        "candidate": [
+                            {"address": item.address, "value": item.value, "source": item.source}
+                            for item in readonly_ctx.candidate
+                        ],
+                    },
+                )
+            memory_status = (
+                "discharged"
+                if (
+                    mem_summary.expansion == "closed-form"
+                    and int(mem_summary.trip_count) >= 1
+                )
+                else "applied"
+            )
             early.memory_loop = build_memory_loop_obligation(
-                mem_summary, coverage="applied",
+                mem_summary,
+                coverage="applied",
+                status=memory_status,
+                readonly_words_sha256=readonly_digest,
             )
         gated = enforce_equivalent_proof_features(early)
         # Shared unconstrained memory can make identical jump-table functions

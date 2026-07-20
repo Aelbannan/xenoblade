@@ -326,9 +326,10 @@ class MemoryLoopDischargeTests(unittest.TestCase):
 
 
 class MemoryLoopFeatureGateTests(unittest.TestCase):
-    def test_feature_is_frozen_unsupported(self) -> None:
-        self.assertIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+    def test_feature_is_unfrozen_with_discharge_gate(self) -> None:
+        self.assertNotIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
+        self.assertIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_malformed_obligation_rejected(self) -> None:
         reason = validate_proof_features(
@@ -352,7 +353,9 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             find_constant_stride_store_loops(program)[0],
         )
         assert summary is not None
-        obligation = build_memory_loop_obligation(summary, coverage="applied")
+        obligation = build_memory_loop_obligation(
+            summary, coverage="applied", status="discharged",
+        )
         self.assertIsNone(
             validate_proof_features(
                 {
@@ -360,6 +363,97 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
                     "memory_loop": obligation,
                 },
             ),
+        )
+        self.assertIsNone(
+            validate_proof_features(
+                {
+                    "proof_features": ["memory-loop-summary"],
+                    "memory_loop": obligation,
+                },
+                require_equivalent_ready=True,
+            ),
+        )
+
+    def test_applied_only_cannot_authorize_equivalent(self) -> None:
+        """Negative: coverage=applied without status=discharged must demote."""
+        from tools.ppc_equivalence.proof_features import enforce_equivalent_proof_features
+        from tools.ppc_equivalence.result import ProofResult, ProofStatus
+
+        program = _store_loop(
+            count=2,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        summary = summarize_constant_stride_store_loop(
+            find_constant_stride_store_loops(program)[0],
+        )
+        assert summary is not None
+        obligation = build_memory_loop_obligation(
+            summary, coverage="applied", status="applied",
+        )
+        reason = validate_proof_features(
+            {
+                "proof_features": ["memory-loop-summary"],
+                "memory_loop": obligation,
+            },
+            require_equivalent_ready=True,
+        )
+        self.assertIsNotNone(reason)
+        assert reason is not None
+        self.assertIn("discharged", reason)
+
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            proof_features=["memory-loop-summary"],
+            memory_loop=obligation,
+        )
+        gated = enforce_equivalent_proof_features(result)
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+
+    def test_summary_digest_mutation_rejected(self) -> None:
+        import copy
+
+        from tools.ppc_equivalence.memory_loop import validate_memory_loop_obligation
+        from tools.ppc_equivalence.proof_request import ProofRequest, cache_key
+
+        program = _store_loop(
+            count=2,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        summary = summarize_constant_stride_store_loop(
+            find_constant_stride_store_loops(program)[0],
+        )
+        assert summary is not None
+        obligation = build_memory_loop_obligation(
+            summary, coverage="applied", status="discharged",
+        )
+        self.assertIsNone(validate_memory_loop_obligation(obligation))
+        mutated = copy.deepcopy(obligation)
+        mutated["summary_sha256"] = "b" * 64
+        self.assertIsNotNone(validate_memory_loop_obligation(mutated))
+
+        def _request(obl: dict) -> ProofRequest:
+            return ProofRequest(
+                original_hex="48000000",
+                candidate_hex="48000000",
+                original_base=0x80000000,
+                candidate_base=0x80000000,
+                contract="default",
+                observables=("r4", "memory"),
+                limits={"timeout_ms": 1000},
+                memory_environment={},
+                floating_point_domain=None,
+                assumed_callees=(),
+                callee_contracts={},
+                relocations={},
+                proof_features=("memory-loop-summary",),
+                obligations={"memory_loop": obl},
+            )
+
+        self.assertNotEqual(
+            cache_key(_request(obligation), "e" * 64, "c" * 64),
+            cache_key(_request(mutated), "e" * 64, "c" * 64),
         )
 
     def test_summary_proves_under_tight_iteration_bound(self) -> None:
@@ -381,11 +475,14 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             original_hex="00", candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIn("memory-loop-summary", result.proof_features)
         self.assertIsNotNone(result.memory_loop)
         self.assertEqual(result.memory_loop["trip_count"], 20)
         self.assertEqual(result.memory_loop["coverage"], "applied")
+        self.assertEqual(result.memory_loop["status"], "discharged")
+        self.assertEqual(result.memory_loop["effects"], "typed-store")
+        self.assertEqual(len(result.memory_loop["summary_sha256"]), 64)
 
     def test_andi_remainder_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -414,9 +511,10 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIn("memory-loop-summary", result.proof_features)
         self.assertEqual(result.memory_loop["trip_count"], 0x2B & 7)
+        self.assertEqual(result.memory_loop["status"], "discharged")
 
     def test_rlwinm_srwi_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -445,9 +543,10 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIn("memory-loop-summary", result.proof_features)
         self.assertEqual(result.memory_loop["trip_count"], 0x28 >> 3)
+        self.assertEqual(result.memory_loop["status"], "discharged")
 
     def test_lwz_readonly_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -488,9 +587,11 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             max_loop_iterations=2,
             readonly_words={table_addr: 4},
         )
-        self.assertEqual(with_map.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, with_map.unsupported)
+        self.assertEqual(with_map.status, ProofStatus.EQUIVALENT, with_map.unsupported)
         self.assertIn("memory-loop-summary", with_map.proof_features)
         self.assertEqual(with_map.memory_loop["trip_count"], 4)
+        self.assertEqual(with_map.memory_loop["status"], "discharged")
+        self.assertEqual(len(with_map.memory_loop["readonly_words_sha256"]), 64)
 
     def test_different_store_source_regs_never_equivalent(self) -> None:
         """False-eq regression: original stores r3, candidate stores r5.

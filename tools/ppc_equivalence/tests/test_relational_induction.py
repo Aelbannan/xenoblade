@@ -159,6 +159,29 @@ class RelationalInductionSketchTests(unittest.TestCase):
         self.assertEqual(side.natural, loop)
 
     @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_compare_affine_discharges(self) -> None:
+        from tools.ppc_equivalence.relational_induction import (
+            try_discharge_compare_affine_relational,
+        )
+
+        def _compare(*, count: int, addend: int = 1, base: int = 0) -> list[Instruction]:
+            return [
+                _insn(Opcode.ADDI, (4, 0, count), address=base),
+                _insn(Opcode.ADDI, (3, 3, addend), address=base + 4),
+                _insn(Opcode.ADDI, (4, 4, -1), address=base + 8),
+                _insn(Opcode.CMPWI, (0, 4, 0), address=base + 12),
+                _insn(Opcode.BC, (4, 2, base + 4, 0), address=base + 16),
+                _insn(Opcode.BCLR, (20, 0, 0), address=base + 20),
+            ]
+
+        program = _compare(count=3)
+        sketch = try_discharge_compare_affine_relational(program, program)
+        self.assertIsNotNone(sketch)
+        assert sketch is not None
+        self.assertEqual(sketch.status, "discharged")
+        self.assertEqual(sketch.termination.witness, "counter-descending")
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
     def test_natural_loop_discharges_when_ctr_affine_backed(self) -> None:
         from tools.ppc_equivalence.relational_induction import (
             try_discharge_natural_relational,

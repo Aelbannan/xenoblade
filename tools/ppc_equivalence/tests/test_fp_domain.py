@@ -74,7 +74,7 @@ class FloatingPointDomainCoverageTests(unittest.TestCase):
         domain = FloatingPointDomain(traps_enabled=True)
         domain.validate()
         coverage = domain.coverage_dict()
-        self.assertIn("fp-trap-delivery-ve-ze-scaffold", coverage["assumed"])
+        self.assertIn("fp-trap-delivery-ve-ze-oe-ue-xe", coverage["assumed"])
         self.assertNotIn("traps-disabled", coverage["assumed"])
 
     def test_validate_rejects_non_rne_rounding(self):

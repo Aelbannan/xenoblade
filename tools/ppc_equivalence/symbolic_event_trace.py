@@ -1,11 +1,13 @@
-"""Bounded GX FIFO symbolic event trace scaffold (PR 15 / Track C).
+"""Bounded GX FIFO symbolic event trace (PR 15 / Track C).
 
 Records a bounded sequence of MMIO writes (count / addr / width / value).
 Reads remain unsupported. Rejects unbounded symbolic-loop FIFO emission when
 the trip count is not provably within the bound.
 
-Scaffolding only: not bound into ``check_equivalence`` terminal comparison or
-``WordOps`` CFG execution. Concrete ``GxFifoStreamDevice`` routing is unchanged.
+CFG writes are emitted via ``apply_symbolic_bus_access`` (concrete FIFO
+addresses). Terminal compare uses ``SymbolicEventTrace.compare_equal``.
+Concrete ``GxFifoStreamDevice`` routing is unchanged. ``memory-bus`` remains
+frozen for ``EQUIVALENT``.
 """
 
 from __future__ import annotations

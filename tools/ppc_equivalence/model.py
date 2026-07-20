@@ -74,6 +74,8 @@ class MachineState:
     memory_effects: tuple[Any, ...] = ()
     stack_layout_valid: Any | None = None
     stack_private: Any | None = None
+    # Optional SymbolicOps MMIO/FIFO path state (``SymbolicBusState``).
+    symbolic_bus: Any | None = None
 
     def with_gpr(self, index: int, value: Any) -> "MachineState":
         registers = list(self.gpr)

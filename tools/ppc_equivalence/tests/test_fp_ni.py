@@ -265,6 +265,39 @@ class NiPairedOracleTests(unittest.TestCase):
         self.assertEqual(ni.ps1[1], 0)
 
 
+class NiTrapCompositionTests(unittest.TestCase):
+    def test_ni_and_traps_supported_op_equivalence(self) -> None:
+        # fadds under NI-modeled + traps_enabled domain must not fail closed.
+        code = parse_hex("ec21102a")
+        insns = decode_block(code, 0x80000000)
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=10000)
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            floating_point_domain=FloatingPointDomain(
+                require_ni_zero=False,
+                traps_enabled=True,
+            ),
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+
+    def test_ni_unsupported_frsp_with_traps_inconclusive(self) -> None:
+        code = parse_hex("fc200018")  # frsp f1, f1
+        insns = decode_block(code, 0x80000000)
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=5000)
+        result = check_equivalence(
+            insns, insns, contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            floating_point_domain=FloatingPointDomain(
+                require_ni_zero=False,
+                traps_enabled=True,
+            ),
+        )
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+
+
 class NiFlushOracleUnitTests(unittest.TestCase):
     def test_operand_helper_passthrough(self) -> None:
         self.assertEqual(ni_flush_operand_binary64(_SUB_D, ni=False), _SUB_D)

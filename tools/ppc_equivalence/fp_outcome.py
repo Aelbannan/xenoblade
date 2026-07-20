@@ -30,13 +30,15 @@ may be set. Still **Tier C** only.
 - Full single-round FMA residual modeling (Broadway midpoint-tie with
   nonzero addend; near-cancellation sticky residues)
 - SymbolicOps native ``FPOutcome`` paired lane producers
-- Full FPSCR sticky latch from outcome fields alone (OX/UX/XX)
+- SymbolicOps OX/UX/XX sticky / OE/UE/XE trap predicates
 - NI for estimates (``fres``/``frsqrte``/``ps_res``/``ps_rsqrte``), ``frsp``,
   converts, compares, stores, and non-oracle paired families
+- Trap delivery for estimates, compares, conversions; MSR FE0/FE1 modes
 
-**PR18 trap scaffold:** ``fp_traps.resolve_fp_trap_policy`` / CFG forking under
-``FloatingPointDomain.traps_enabled`` deliver VE/ZE program exceptions for the
-scalar supported set; incomplete opcodes fail closed. See ``fp_traps.py``.
+**PR18 trap delivery:** ``fp_traps.resolve_fp_trap_policy`` / CFG forking under
+``FloatingPointDomain.traps_enabled`` deliver VE/ZE/OE/UE/XE program exceptions
+for the scalar SoftFloat set and Wave-3 paired-oracle ops; incomplete opcodes
+fail closed. See ``fp_traps.py``.
 """
 
 from __future__ import annotations

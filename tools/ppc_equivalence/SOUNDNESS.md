@@ -66,18 +66,30 @@ documented per-implementation private-storage abstraction.
   `bne`) use the same summary map with `proof_kind=compare-affine-closed-form`
   and leave CTR unmodified. A `FinalCompare` is applied after closed-form GPRs
   so CR (including XER.SO) matches the last `cmpwi`.
-  Relational induction discharges matching CTR-affine pairs via five independent
-  UNSAT queries (`relational_discharge.try_smt_discharge_ctr_affine` /
+  Relational induction discharges matching CTR-affine and compare-affine pairs
+  via five independent UNSAT queries
+  (`relational_discharge.try_smt_discharge_ctr_affine` /
+  `try_smt_discharge_compare_affine` /
   `relational_induction.try_discharge_relational`): initiation, preservation,
-  exit agreement, postcondition, and CTR termination. Pattern match alone never
-  marks `discharged`. Narrow templates only: equal CTR, equal GPRs, constant
-  offset, equal validity, equal CR fields, equal memory. Compare-affine and
-  shape-only natural sketches remain pending; mismatched bodies stay unsupported
-  for `EQUIVALENT`.
+  exit agreement, postcondition, and ranking termination (CTR-descending or
+  compare-affine counter-descending). Pattern match alone never marks
+  `discharged`. Narrow templates only: equal CTR/counter, equal GPRs, constant
+  offset, equal validity, equal CR fields, equal memory. Affine closed-form
+  obligations (`loop_summary`) reach `status=discharged` only together with that
+  relational companion and a matching `summary_sha256`. Shape-only natural
+  sketches remain pending unless CTR-affine-backed; mismatched bodies stay
+  unsupported for `EQUIVALENT`. Bulk+remainder pairs discharge when both sides
+  share a constant-value contiguous `RangeWrite` and the bitvector identity
+  `N = (1<<k)*(N>>k)+(N&mask)` with `remainder < (1<<k)` is UNSAT-proven;
+  otherwise the sketch stays `pending`.
   Constant-stride store loops (`memory_loop` / `memory-loop-summary`) with a
-  positive concrete trip count are discharged in closed form inside
+  positive concrete trip count are applied in closed form inside
   `execute_cfg` via typed `StoreEffect` / `apply_store_effect` (recording
-  `memory_writes` + `memory_touches`, not memory alone). Recognizer accepts
+  `memory_writes` + `memory_touches`, not memory alone). Obligations carry
+  `status=discharged` only for `expansion=closed-form` with `effects=typed-store`,
+  `footprint=ok`, and matching `summary_sha256`; recognition /
+  `coverage=applied` alone never authorizes. Bounded-remainder expansions stay
+  `applied`. Recognizer accepts
   exact `store; addi` or lone `stwu` bodies only (rejects reversed order,
   multi-store, calls, source==base). `mtctr 0` is unsupported (bdnz wrap)
   unless a proven skip guard is present. Trip count
@@ -240,23 +252,25 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   from feasible address ranges (``memory_bus`` obligation ``mmio: fail-closed``);
   device semantics are not SMT-modeled and do not expand ``EQUIVALENT``
   authorization beyond the existing memory-bus feature.
-- **Symbolic register-bank scaffold (toward PR 14):** ``symbolic_bus.py``
-  sketches extensional per-register bitvectors, nested
+- **Symbolic register-bank / FIFO CFG routing (PR 14/15 progress):**
+  ``symbolic_bus.py`` models extensional per-register bitvectors, nested
   ``addr == base + offset`` routing, write / W1C / read-clear formulas, and a
   *separate* unsupported-access query (``path ∧ ¬supported``). SAT on that
   query means inconclusive; ``supported`` must not be assumed into the
-  equivalence query. Not engine-wired; ``memory-bus`` remains in
-  ``UNSUPPORTED_FOR_EQUIVALENT``.
+  equivalence query. ``SymbolicOps`` ``execute_cfg(..., memory_bus=)`` routes
+  concrete MMIO loads/stores through register banks and emits bounded GX FIFO
+  write traces; FIFO reads and symbolic-loop×FIFO remain unsupported.
+  Final touched device state is an automatic observable. ``memory-bus`` remains
+  in ``UNSUPPORTED_FOR_EQUIVALENT`` (enablement gate not cleared).
 - **Memory bus (opt-in Tier C):** `memory_bus.py` routes concrete 1/2/4-byte
   loads/stores through ``AddressSpace`` regions to RAM backing
   (``ConcreteMemory``), immutable ROM images, or live MMIO ``DeviceModel``
   instances keyed by ``device_id``. Multi-region spans, unmapped addresses,
   unsupported widths, missing devices, and ROM writes fail closed
   (``BusOutcome``). Pass ``memory_bus=`` to ``execute_cfg`` with ``ConcreteOps``
-  only, or to ``check_equivalence`` to bind ROM/RAM address-space constraints
-  into the solver and route concrete sampling; symbolic ``WordOps`` CFG
-  execution does not take ``memory_bus=`` (fail closed if passed). Default
-  proofs keep unconstrained ``ConcreteMemory``.
+  (full routing) or ``SymbolicOps`` (MMIO/FIFO via ``SymbolicBusState``; RAM/ROM
+  stay on the symbolic array + ROM constraints). Default proofs keep
+  unconstrained ``ConcreteMemory``.
 - **ELF data sections:** `list_allocatable_sections` / `extract_allocatable_section`
   expose SHF_ALLOC PROGBITS/NOBITS (including `.rodata` / `.data`) and attach
   REL/RELA entries (notably `R_PPC_ADDR32`) for jump-table census and later
@@ -342,13 +356,19 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   IEEE widening). Recorded under `floating_point_domain.ni` /
   `ni_supported_opcodes`. Still **Tier C** only.
 - Traps: default domain keeps traps disabled (`traps_enabled=false`, coverage
-  assumed `traps-disabled`). **PR18 scaffold:** `traps_enabled=true` allows
-  VE/ZE program-exception delivery for the scalar supported opcode set in
-  `fp_traps.TRAP_DELIVERY_SUPPORTED_OPS` (reuse `program-exception` / `0x700` /
-  `_exception_entry` SRR0/SRR1/MSR; destination suppression unchanged). OE/UE/XE
-  must be clear; incomplete opcodes (estimates, compares, conversions, paired)
-  and OX/UX/XX traps fail closed as `ExecutionInconclusive` /
-  `INCONCLUSIVE_UNSUPPORTED`. Still **Tier C** only.
+  assumed `traps-disabled`). **PR18 (Wave 5 Track D):** `traps_enabled=true`
+  delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar
+  `TRAP_DELIVERY_SUPPORTED_OPS` and Wave-3 paired-oracle
+  `TRAP_DELIVERY_PAIRED_OPS` (reuse `program-exception` / `0x700` /
+  `_exception_entry` SRR0/SRR1/MSR; scalar destination suppression under
+  enables; paired writeback remains unconditional). ConcreteOps latches
+  OX/UX/XX from SoftFloat outcomes. **FEX already-set re-trap:** each
+  instruction that raises an enabled exception delivers a program interrupt
+  even when FEX was already 1 (precise policy; MSR FE0/FE1 imprecise modes
+  deferred — `traps_enabled` assumes precise). Incomplete opcodes (estimates,
+  compares, conversions, non-oracle paired) fail closed as
+  `ExecutionInconclusive` / `INCONCLUSIVE_UNSUPPORTED`. SymbolicOps still
+  constrains OE/UE/XE clear (OX/UX/XX not SMT-modeled). Still **Tier C** only.
 - Finite-input overflow is excluded when `exclude_finite_overflow=true`
   (default) via `_constrain_fp_defined_result` → `FP_DOMAIN_EXCLUDED`.
 - Invalid-operation (`VX`) and divide-by-zero (`ZX`) causes are tracked.
@@ -402,7 +422,11 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 - **FPSCR.NI flush (Wave 4 Track B / PR17):** the same scalar SoftFloat +
   paired-oracle opcode set applies Broadway denormal operand/result flush when
   ``FPSCR.NI=1``. Deferred NI coverage: estimates, ``frsp``, converts, compares,
-  single stores, and non-oracle paired families.
+  single stores, and non-oracle paired families. **NI×trap (Wave 5):** when
+  ``require_ni_zero=false`` and ``traps_enabled``, flush-to-zero composes with
+  trap delivery for the intersection of NI-supported and trap-supported
+  opcodes; NI-unsupported ops with NI possibly set stay inconclusive (no IEEE
+  widening).
 - **Unified `FPOutcome` scaffold (Track C):** `tools/ppc_equivalence/fp_outcome.py`
   defines `FPExceptionFlags` / `FPOutcome` plus SoftFloat and bits-API adapters
   (`outcome_from_oracle`, `oracle_from_outcome`, `outcome_from_result_bits`).
@@ -410,11 +434,12 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   SoftFloat now covers the Inf/NaN/div0/subnormal/overflow domains that host
   float previously modeled for ConcreteOps scalar paths. **Deferred:** Fraction
   / rational exact cross-check oracle, Broadway single-FMA midpoint residual
-  with nonzero addend, native SymbolicOps/`FPOutcome` producers, and full FPSCR
-  sticky latch from outcome fields. **PR18 trap scaffold:** `fp_traps.py`
-  resolves VE/ZE trap vs continue from `FPOutcome` + enable bits; CFG forks a
-  `program-exception` terminal when `traps_enabled` (scalar supported set).
-  OX/UX/XX, paired, estimates, and re-trap-when-FEX-already-set remain blockers.
+  with nonzero addend, native SymbolicOps/`FPOutcome` producers. **PR18 trap
+  delivery:** `fp_traps.py` resolves VE/ZE/OE/UE/XE trap vs continue from
+  `FPOutcome` + enable bits; CFG forks a `program-exception` terminal when
+  `traps_enabled` (scalar SoftFloat + paired-oracle sets). SoftFloat OX/UX/XX
+  sticky latch on ConcreteOps. Estimates/compares/converts and MSR FE0/FE1
+  modes remain deferred / fail-closed.
 
 ### Relocations
 
@@ -532,12 +557,24 @@ obligation block. The schema is:
 
 Rules (enforced by `tools.ppc_equivalence.proof_features`):
 
-- **PR0 safety freeze:** `affine-loop-summary`, `memory-loop-summary`, and
-  `memory-bus` remain listed in `UNSUPPORTED_FOR_EQUIVALENT` until each
-  feature's foundation repairs land with negative tests. **PR7:**
-  `relational-induction` may authorize `EQUIVALENT` only when all five
-  obligation blocks carry independent UNSAT digests (`result=unsat`,
-  `query_sha256`, solver metadata); SAT/unknown/timeout never discharges.
+- **PR0 safety freeze (remaining):** `memory-bus` stays in
+  `UNSUPPORTED_FOR_EQUIVALENT` until Track C completes SymbolicOps MMIO CFG
+  discharge. **PR7 / Wave 5 Track B:** `relational-induction`,
+  `affine-loop-summary`, and `memory-loop-summary` may authorize `EQUIVALENT`
+  only under strict discharged obligations:
+  - `relational-induction`: all five blocks carry independent UNSAT digests
+    (`result=unsat`, `query_sha256`, solver metadata); SAT/unknown/timeout
+    never discharges. Compare-affine uses counter-descending termination.
+    Bulk+remainder attaches `discharged` only after identity + RangeWrite
+    evidence; otherwise `pending`.
+  - `affine-loop-summary`: `status=discharged` with matching `summary_sha256`,
+    `relational_companion=discharged`, and a companion
+    `relational-induction` feature also discharged. CTR or compare-affine
+    closed-form application (`coverage=applied`) alone never authorizes.
+  - `memory-loop-summary`: `status=discharged` with matching
+    `summary_sha256`, `effects=typed-store`, `footprint=ok`, and
+    `expansion=closed-form`. Bounded-remainder expansions stay `applied`.
+    Recognition / `coverage=applied` alone never authorizes.
   Jump-table coverage and no-write use independent UNSAT
   discharge (`discharge.py`) with remainder terminals retained on BCCTR
   expansion; obligation schema v2 carries coverage/no_write digests.
@@ -546,6 +583,12 @@ Rules (enforced by `tools.ppc_equivalence.proof_features`):
   `coop.json` / `coop.example.json` until enablement gates clear.
   Certificates under architecture model
   `broadway-ppc32-be-v32` (and earlier rejected models) are stale.
+- **Wave 5 Track B blockers kept documented (not freeze-worthy for closed-form):**
+  bounded-remainder expansions stay `applied` (not discharged). Bulk+remainder
+  without a shared constant-value `RangeWrite` stays `pending`.
+  ReadonlyWordEvidence still omits full DOL/ELF
+  artifact digests from the PR6 plan; closed-form `li`/`mtctr` paths and
+  explicit `readonly_words_sha256` binding cover current discharge.
 - `proof_features` is mandatory whenever a proof relies on a feature.
 - Each listed feature requires its obligation key: `readonly-image` →
   `address_space`, `indirect-target-closure` → `indirect_targets`.

@@ -31,9 +31,10 @@ FP_COVERAGE_PROVEN_NI_MODELED: tuple[str, ...] = (
 FP_COVERAGE_ASSUMED: tuple[str, ...] = (
     "traps-disabled",
 )
-# Partial VE/ZE trap scaffold (PR18); full OX/UX/XX + paired delivery remains out.
+# Partial trap delivery (PR18 Wave 5): VE/ZE/OE/UE/XE for SoftFloat scalar +
+# paired-oracle ops; estimates/compares/converts and MSR FE0/FE1 remain out.
 FP_COVERAGE_TRAP_SCAFFOLD: tuple[str, ...] = (
-    "fp-trap-delivery-ve-ze-scaffold",
+    "fp-trap-delivery-ve-ze-oe-ue-xe",
 )
 FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
     "underflow-flag",
@@ -41,7 +42,8 @@ FP_COVERAGE_UNSUPPORTED: tuple[str, ...] = (
     "overflow-flag",
     "fsqrt-fsqrts-broadway-reserved",
     "full-fpscr-status-modeling",
-    "fp-exception-trap-delivery",
+    "fp-exception-trap-delivery-estimates-compares-converts",
+    "fp-exception-trap-msr-fe0-fe1-modes",
     "ni-estimates-converts-stores-non-oracle-paired",
 )
 
@@ -118,8 +120,8 @@ class FloatingPointDomain:
         # require_ni_zero=False enables FPSCR.NI flush modeling for
         # NI_SUPPORTED_OPS; unsupported NI-affected opcodes fail closed in
         # the engine / ConcreteOps (PR17). Do not treat that as domain-invalid.
-        # traps_enabled is accepted for the PR18 VE/ZE scaffold; incomplete
-        # opcodes / OE|UE|XE still fail closed during CFG execution.
+        # traps_enabled is accepted for PR18 VE/ZE/OE/UE/XE delivery; incomplete
+        # opcodes and SymbolicOps OE|UE|XE still fail closed during CFG execution.
         if self.model_underflow_flag:
             reasons.append("underflow flag modeling is unsupported")
         if self.model_inexact_flag:
@@ -160,8 +162,9 @@ class FloatingPointDomain:
         if self.traps_enabled:
             assumed = [item for item in assumed if item != "traps-disabled"]
             assumed = [*assumed, *FP_COVERAGE_TRAP_SCAFFOLD]
-            # Full architectural trap delivery remains unsupported; scaffold
-            # covers VE/ZE for a scalar opcode subset only.
+            # Full architectural trap delivery remains unsupported for
+            # estimates/compares/converts and MSR FE0/FE1 modes; scaffold covers
+            # VE/ZE/OE/UE/XE for SoftFloat scalar + paired-oracle subsets.
         status = (
             FP_COVERAGE_STATUS_ASSUMED
             if assumed
@@ -181,10 +184,13 @@ class FloatingPointDomain:
         return sorted(NI_SUPPORTED_OPS)
 
     def trap_delivery_supported_opcodes(self) -> list[str]:
-        """Opcode names with VE/ZE trap-delivery scaffold (result identity)."""
-        from tools.ppc_equivalence.fp_traps import supported_opcode_names
+        """Opcode names with trap-delivery support (result identity)."""
+        from tools.ppc_equivalence.fp_traps import (
+            paired_opcode_names,
+            supported_opcode_names,
+        )
 
-        return list(supported_opcode_names())
+        return sorted({*supported_opcode_names(), *paired_opcode_names()})
 
     def coverage_status(self) -> str:
         """Return ``proven`` or ``assumed`` for this active domain."""
@@ -202,7 +208,7 @@ class FloatingPointDomain:
             ]
         if self.traps_enabled:
             assumed = [item for item in assumed if item != "trap-enable-bits"]
-            modeled = [*modeled, "trap-enable-bits-VE-ZE"]
+            modeled = [*modeled, "trap-enable-bits-VE-ZE-OE-UE-XE", "OX-UX-XX-softfloat-latch"]
         return {
             "modeled": modeled,
             "assumed": assumed,
@@ -428,8 +434,8 @@ class ProofResult:
         "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
         "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
         "all accessed addresses are mapped ordinary RAM and naturally aligned",
-        "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE suppression and Broadway paired-single unconditional writeback are modeled; arithmetic OX/UX/XX are not",
-        "FP traps: optional traps_enabled scaffold delivers VE/ZE program exceptions for a scalar opcode subset; OE/UE/XE and incomplete opcodes fail closed; still Tier C",
+        "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+        "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
         "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
         "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
         "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",

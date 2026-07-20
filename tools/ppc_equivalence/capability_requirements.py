@@ -8,12 +8,51 @@ sets during ``evaluate_capability_assurance``.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
 from tools.ppc_equivalence.provenance import canonical_json_sha256
 
 CAPABILITY_REQUIREMENTS_SCHEMA_VERSION = 1
+
+_SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
+
+# Shared with capability_assurance (defined here to avoid import cycles).
+KNOWN_CAPABILITIES = frozenset(
+    {
+        "integer-core",
+        "bounded-memory",
+        "assumed-ordinary-ram",
+        "certified-calls",
+        "precondition-closure",
+        "fp-bitwise",
+        "fp-load-store",
+        "fp-compare",
+        "fp-convert",
+        "fp-scalar-arithmetic",
+        "fp-fused-arithmetic",
+        "fp-paired-single",
+        "fp-psq",
+        "fp-traps",
+        "mmio-register-bank",
+        "mmio-read-side-effects",
+        "mmio-external-input",
+        "gx-fifo-write-trace",
+        "gx-fifo-read",
+        "mmio-loop-emission",
+        "mixed-address-space-routing",
+        "dma-interrupt-effects",
+        "domain-exception",
+        "provenance",
+        # Advanced proof-feature capabilities (empty allowlists → fail closed).
+        "memory-loop-summary",
+        "immutable-address-space",
+        "indirect-target-closure",
+        "affine-loop-summary",
+        "relational-loop-induction",
+    }
+)
 
 # Proof-feature name → capability-assurance demand name.
 PROOF_FEATURE_CAPABILITY_MAP: dict[str, str] = {
@@ -38,6 +77,48 @@ def normalize_opcodes(opcodes: Iterable[str]) -> tuple[str, ...]:
 
 def normalize_subjects(subjects: Iterable[str]) -> tuple[str, ...]:
     return tuple(sorted({str(item).strip() for item in subjects if str(item).strip()}))
+
+
+def normalize_proof_features(features: Iterable[str]) -> tuple[str, ...]:
+    return tuple(sorted({str(item).strip() for item in features if str(item).strip()}))
+
+
+def _is_normalized_str_tuple(values: Any) -> bool:
+    if not isinstance(values, tuple):
+        return False
+    if not all(isinstance(item, str) and item for item in values):
+        return False
+    return values == tuple(sorted(set(values)))
+
+
+def _validate_raw_str_list(field_name: str, value: Any) -> None:
+    if not isinstance(value, (list, tuple)):
+        raise ValueError(f"capability requirement {field_name} must be a list of strings")
+    for item in value:
+        if not isinstance(item, str) or not item:
+            raise ValueError(
+                f"capability requirement {field_name} entries must be nonempty strings"
+            )
+    as_tuple = tuple(value)
+    if as_tuple != tuple(sorted(set(as_tuple))):
+        raise ValueError(
+            f"capability requirement {field_name} must be sorted and duplicate-free"
+        )
+
+
+def _validate_raw_evidence_identity(value: Any) -> None:
+    if not isinstance(value, Mapping):
+        raise ValueError("capability requirement evidence_identity must be a mapping")
+    for key, item in value.items():
+        if not isinstance(key, str) or not isinstance(item, str):
+            raise ValueError(
+                "capability requirement evidence_identity must be string-to-string"
+            )
+
+
+def _validate_sha256_hex(field_name: str, value: Any) -> None:
+    if not isinstance(value, str) or _SHA256_HEX_RE.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must be a lowercase 64-char hex digest")
 
 
 @dataclass(frozen=True)
@@ -66,6 +147,54 @@ class CapabilityRequirement:
         payload.pop("requirement_sha256", None)
         return payload
 
+    def validate_structure(self) -> None:
+        """Strict checks on an already-constructed requirement (no coercion)."""
+        if not isinstance(self.capability, str) or not self.capability:
+            raise ValueError("capability requirement capability must be a nonempty string")
+        if self.capability not in KNOWN_CAPABILITIES:
+            raise ValueError(f"unknown capability {self.capability!r}")
+        if not _is_normalized_str_tuple(self.required_opcodes):
+            raise ValueError(
+                f"required_opcodes for {self.capability!r} must be a sorted unique str tuple"
+            )
+        if self.required_opcodes != normalize_opcodes(self.required_opcodes):
+            raise ValueError(
+                f"required_opcodes for {self.capability!r} must be normalized lowercase"
+            )
+        if not _is_normalized_str_tuple(self.required_subjects):
+            raise ValueError(
+                f"required_subjects for {self.capability!r} must be a sorted unique str tuple"
+            )
+        if not _is_normalized_str_tuple(self.proof_features):
+            raise ValueError(
+                f"proof_features for {self.capability!r} must be a sorted unique str tuple"
+            )
+        if not isinstance(self.evidence_identity, tuple):
+            raise ValueError(
+                f"evidence_identity for {self.capability!r} must be a tuple of pairs"
+            )
+        for pair in self.evidence_identity:
+            if (
+                not isinstance(pair, tuple)
+                or len(pair) != 2
+                or not isinstance(pair[0], str)
+                or not isinstance(pair[1], str)
+            ):
+                raise ValueError(
+                    f"evidence_identity for {self.capability!r} must be string pairs"
+                )
+        keys = tuple(key for key, _ in self.evidence_identity)
+        if keys != tuple(sorted(keys)):
+            raise ValueError(
+                f"evidence_identity for {self.capability!r} keys must be sorted"
+            )
+        _validate_sha256_hex("requirement_sha256", self.requirement_sha256)
+        expected = requirement_digest(self)
+        if self.requirement_sha256 != expected:
+            raise ValueError(
+                f"requirement_sha256 mismatch for {self.capability!r}"
+            )
+
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "CapabilityRequirement":
         if not isinstance(data, Mapping):
@@ -91,7 +220,7 @@ class CapabilityRequirement:
             capability=str(data.get("capability", "")),
             required_opcodes=normalize_opcodes(opcodes),
             required_subjects=normalize_subjects(subjects),
-            proof_features=tuple(str(item) for item in features),
+            proof_features=normalize_proof_features(features),
             evidence_identity=identity,
             requirement_sha256=str(data.get("requirement_sha256", "")),
         )
@@ -130,7 +259,7 @@ def build_requirement(
         capability=capability,
         required_opcodes=normalize_opcodes(required_opcodes),
         required_subjects=normalize_subjects(required_subjects),
-        proof_features=tuple(str(item) for item in proof_features),
+        proof_features=normalize_proof_features(proof_features),
         evidence_identity=identity,
         requirement_sha256="",
     )
@@ -169,7 +298,7 @@ class CapabilityRequirements:
         if not isinstance(data, Mapping):
             raise TypeError("capability_requirements must be a mapping")
         raw = data.get("requirements", [])
-        if not isinstance(raw, list):
+        if not isinstance(raw, (list, tuple)):
             raise TypeError("capability_requirements.requirements must be a list")
         return cls(
             schema_version=int(
@@ -181,6 +310,135 @@ class CapabilityRequirements:
 
     def by_capability(self) -> dict[str, CapabilityRequirement]:
         return {item.capability: item for item in self.requirements}
+
+    def validate_structure(self) -> None:
+        """Strict schema + digest checks; never coerce untrusted fields."""
+        if not isinstance(self.schema_version, int):
+            raise ValueError("capability_requirements schema_version must be an int")
+        if self.schema_version != CAPABILITY_REQUIREMENTS_SCHEMA_VERSION:
+            raise ValueError(
+                f"unsupported capability_requirements schema_version {self.schema_version}"
+            )
+        if not isinstance(self.requirements, tuple):
+            raise ValueError("capability_requirements.requirements must be a tuple")
+        _validate_sha256_hex("requirements_sha256", self.requirements_sha256)
+        seen: set[str] = set()
+        for item in self.requirements:
+            if not isinstance(item, CapabilityRequirement):
+                raise ValueError("capability_requirements entries must be CapabilityRequirement")
+            item.validate_structure()
+            if item.capability in seen:
+                raise ValueError(f"duplicate capability requirement {item.capability!r}")
+            seen.add(item.capability)
+        expected = requirements_digest(self)
+        if self.requirements_sha256 != expected:
+            raise ValueError("requirements_sha256 mismatch for capability_requirements block")
+
+
+def validate_capability_requirements_dict(raw: Any) -> None:
+    """Strict certificate-path validation of a raw requirements mapping.
+
+    Raises ``ValueError`` with a clear message. Does not coerce untrusted
+    field types to "fix" invalid payloads during validation.
+    """
+    if not isinstance(raw, Mapping):
+        raise ValueError("capability_requirements must be a mapping")
+    schema_version = raw.get("schema_version", CAPABILITY_REQUIREMENTS_SCHEMA_VERSION)
+    if not isinstance(schema_version, int):
+        raise ValueError("capability_requirements schema_version must be an int")
+    if schema_version != CAPABILITY_REQUIREMENTS_SCHEMA_VERSION:
+        raise ValueError(
+            f"unsupported capability_requirements schema_version {schema_version}"
+        )
+    requirements = raw.get("requirements", [])
+    if not isinstance(requirements, (list, tuple)):
+        raise ValueError("capability_requirements.requirements must be a list")
+    _validate_sha256_hex("requirements_sha256", raw.get("requirements_sha256"))
+
+    seen: set[str] = set()
+    normalized_entries: list[CapabilityRequirement] = []
+    for index, entry in enumerate(requirements):
+        if not isinstance(entry, Mapping):
+            raise ValueError(
+                f"capability_requirements.requirements[{index}] must be a mapping"
+            )
+        capability = entry.get("capability")
+        if not isinstance(capability, str) or not capability:
+            raise ValueError(
+                f"capability_requirements.requirements[{index}].capability "
+                "must be a nonempty string"
+            )
+        if capability not in KNOWN_CAPABILITIES:
+            raise ValueError(f"unknown capability {capability!r}")
+        if capability in seen:
+            raise ValueError(f"duplicate capability requirement {capability!r}")
+        seen.add(capability)
+
+        opcodes = entry.get("required_opcodes", [])
+        subjects = entry.get("required_subjects", [])
+        features = entry.get("proof_features", [])
+        if opcodes is None:
+            opcodes = []
+        if subjects is None:
+            subjects = []
+        if features is None:
+            features = []
+        _validate_raw_str_list("required_opcodes", opcodes)
+        _validate_raw_str_list("required_subjects", subjects)
+        _validate_raw_str_list("proof_features", features)
+        # Opcode tokens must already be lowercase-normalized.
+        if tuple(opcodes) != normalize_opcodes(opcodes):
+            raise ValueError(
+                f"required_opcodes for {capability!r} must be normalized lowercase"
+            )
+        identity = entry.get("evidence_identity", {})
+        if identity is None:
+            identity = {}
+        _validate_raw_evidence_identity(identity)
+        _validate_sha256_hex(
+            f"requirement_sha256 for {capability!r}",
+            entry.get("requirement_sha256"),
+        )
+
+        # Digest over the declared payload (excluding hash), not a coerced rewrite.
+        digest_payload = {
+            key: value
+            for key, value in dict(entry).items()
+            if key != "requirement_sha256"
+        }
+        expected_req = canonical_json_sha256(digest_payload)
+        if entry.get("requirement_sha256") != expected_req:
+            raise ValueError(f"requirement_sha256 mismatch for {capability!r}")
+
+        normalized_entries.append(
+            CapabilityRequirement(
+                capability=capability,
+                required_opcodes=tuple(opcodes),
+                required_subjects=tuple(subjects),
+                proof_features=tuple(features),
+                evidence_identity=tuple(
+                    (key, identity[key]) for key in sorted(identity)
+                ),
+                requirement_sha256=entry["requirement_sha256"],
+            )
+        )
+
+    block_payload = {
+        key: value
+        for key, value in dict(raw).items()
+        if key != "requirements_sha256"
+    }
+    expected_block = canonical_json_sha256(block_payload)
+    if raw.get("requirements_sha256") != expected_block:
+        raise ValueError("requirements_sha256 mismatch for capability_requirements block")
+
+    # Cross-check dataclass path remains consistent with producer digests.
+    rebuilt = CapabilityRequirements(
+        schema_version=schema_version,
+        requirements=tuple(normalized_entries),
+        requirements_sha256=raw["requirements_sha256"],
+    )
+    rebuilt.validate_structure()
 
 
 def requirements_digest(payload: CapabilityRequirements | Mapping[str, Any]) -> str:

@@ -94,11 +94,22 @@ class ShadowTierTests(unittest.TestCase):
         )
 
     def test_assurance_authoritative_when_not_shadow(self) -> None:
+        from tools.ppc_equivalence.capability_requirements import (
+            derive_capability_requirements,
+        )
+
+        proof = _equivalent()
+        requirements = derive_capability_requirements(proof)
+        by_cap = requirements.by_capability()
         attestation = build_attestation(
             capability="integer-core",
             model_version="integer-core-v1",
             algorithm="opcode-ledger-v2",
-            evidence={"opcodes": ["addi", "blr"]},
+            evidence={
+                "opcodes": ["addi", "blr"],
+                "requirement_sha256": by_cap["integer-core"].requirement_sha256,
+                "requirements_sha256": requirements.requirements_sha256,
+            },
         )
         provenance = build_attestation(
             capability="provenance",
@@ -114,13 +125,14 @@ class ShadowTierTests(unittest.TestCase):
                 "validation_ledger_hash": "e" * 64,
                 "git_commit": "c" * 40,
                 "git_dirty": False,
+                "requirement_sha256": by_cap["provenance"].requirement_sha256,
+                "requirements_sha256": requirements.requirements_sha256,
             },
         )
-        proof = _equivalent(
-            capability_assurance=CapabilityAssurance(
-                capabilities=(attestation, provenance),
-            ).to_dict(),
-        )
+        proof.capability_requirements = requirements.to_dict()
+        proof.capability_assurance = CapabilityAssurance(
+            capabilities=(attestation, provenance),
+        ).to_dict()
         tier = compute_confidence_tier(
             proof,
             _open_ledger("addi", "blr"),
@@ -130,16 +142,19 @@ class ShadowTierTests(unittest.TestCase):
                     "provenance": ("provenance-v1",),
                 },
                 shadow_mode=False,
+                require_capability_assurance=True,
             ),
         )
         self.assertEqual(tier, "A")
 
         fp_proof = _equivalent(
             floating_point_domain=FloatingPointDomain(),
-            capability_assurance=CapabilityAssurance(
-                capabilities=(attestation, provenance),
-            ).to_dict(),
         )
+        fp_requirements = derive_capability_requirements(fp_proof)
+        fp_proof.capability_requirements = fp_requirements.to_dict()
+        fp_proof.capability_assurance = CapabilityAssurance(
+            capabilities=(attestation, provenance),
+        ).to_dict()
         self.assertEqual(
             compute_confidence_tier(
                 fp_proof,
@@ -150,6 +165,7 @@ class ShadowTierTests(unittest.TestCase):
                         "provenance": ("provenance-v1",),
                     },
                     shadow_mode=False,
+                    require_capability_assurance=True,
                 ),
             ),
             "C",
@@ -283,13 +299,60 @@ class CacheAndCertificateTests(unittest.TestCase):
         )
 
     def test_certificate_round_trip(self) -> None:
-        attestation = build_attestation(
-            capability="integer-core",
-            model_version="integer-core-v1",
-            algorithm="opcode-ledger-v2",
-            evidence={"opcodes": ["addi", "blr"]},
+        from tools.ppc_equivalence.capability_requirements import (
+            derive_capability_requirements,
         )
-        assurance = CapabilityAssurance(capabilities=(attestation,)).to_dict()
+
+        draft = proof_result_from_certificate(
+            ProofStatus.EQUIVALENT,
+            {
+                "architecture": ARCHITECTURE_MODEL,
+                "result_format": RESULT_FORMAT,
+                "opcodes_used": ["addi", "blr"],
+                "observables": ["r3"],
+                "engine_hash": hash_engine_tree(_REPO),
+                "certifier_hash": hash_certifier_tree(_REPO),
+                "source_hash": "b" * 64,
+                "proof_request_hash": "b" * 64,
+                "validation_ledger_hash": "e" * 64,
+                "git_commit": "c" * 40,
+                "git_dirty": False,
+            },
+        )
+        requirements = derive_capability_requirements(draft)
+        by_cap = requirements.by_capability()
+        assurance = CapabilityAssurance(
+            capabilities=(
+                build_attestation(
+                    capability="integer-core",
+                    model_version="integer-core-v1",
+                    algorithm="opcode-ledger-v2",
+                    evidence={
+                        "opcodes": list(by_cap["integer-core"].required_opcodes),
+                        "requirement_sha256": by_cap["integer-core"].requirement_sha256,
+                        "requirements_sha256": requirements.requirements_sha256,
+                    },
+                ),
+                build_attestation(
+                    capability="provenance",
+                    model_version="provenance-v1",
+                    algorithm="provenance-binding-v1",
+                    evidence={
+                        "architecture_model": ARCHITECTURE_MODEL,
+                        "result_format": RESULT_FORMAT,
+                        "engine_hash": hash_engine_tree(_REPO),
+                        "certifier_hash": hash_certifier_tree(_REPO),
+                        "source_hash": "b" * 64,
+                        "proof_request_hash": "b" * 64,
+                        "validation_ledger_hash": "e" * 64,
+                        "git_commit": "c" * 40,
+                        "git_dirty": False,
+                        "requirement_sha256": by_cap["provenance"].requirement_sha256,
+                        "requirements_sha256": requirements.requirements_sha256,
+                    },
+                ),
+            ),
+        ).to_dict()
         certificate = {
             "version": EQUIVALENCE_CERTIFICATE_VERSION,
             "status": "SEMANTIC_CERTIFIED",
@@ -310,6 +373,7 @@ class CacheAndCertificateTests(unittest.TestCase):
             "engine_hash": hash_engine_tree(_REPO),
             "certifier_hash": hash_certifier_tree(_REPO),
             "capability_assurance": assurance,
+            "capability_requirements": requirements.to_dict(),
             "opcodes_used": ["addi", "blr"],
             "observables": ["r3"],
             "source_hash": "b" * 64,
@@ -359,27 +423,74 @@ class CacheAndCertificateTests(unittest.TestCase):
         )
 
     def test_fp_bitwise_certificate_round_trip(self) -> None:
+        from tools.ppc_equivalence.capability_requirements import (
+            derive_capability_requirements,
+        )
         from tools.ppc_equivalence.fp_bitwise import (
             FP_BITWISE_ALGORITHM,
             FP_BITWISE_MODEL_VERSION,
         )
 
+        draft = proof_result_from_certificate(
+            ProofStatus.EQUIVALENT,
+            {
+                "architecture": ARCHITECTURE_MODEL,
+                "result_format": RESULT_FORMAT,
+                "opcodes_used": ["fmr", "fabs", "blr"],
+                "observables": ["f1"],
+                "engine_hash": hash_engine_tree(_REPO),
+                "certifier_hash": hash_certifier_tree(_REPO),
+                "source_hash": "b" * 64,
+                "proof_request_hash": "b" * 64,
+                "validation_ledger_hash": "e" * 64,
+                "git_commit": "c" * 40,
+                "git_dirty": False,
+                "floating_point_domain": FloatingPointDomain().to_dict(),
+            },
+        )
+        requirements = derive_capability_requirements(draft)
+        by_cap = requirements.by_capability()
         assurance = CapabilityAssurance(
             capabilities=(
                 build_attestation(
                     capability="integer-core",
                     model_version="integer-core-v1",
                     algorithm="opcode-ledger-v2",
-                    evidence={"opcodes": ["blr"], "ledger_sha256": "e" * 64},
+                    evidence={
+                        "opcodes": list(by_cap["integer-core"].required_opcodes),
+                        "ledger_sha256": "e" * 64,
+                        "requirement_sha256": by_cap["integer-core"].requirement_sha256,
+                        "requirements_sha256": requirements.requirements_sha256,
+                    },
                 ),
                 build_attestation(
                     capability="fp-bitwise",
                     model_version=FP_BITWISE_MODEL_VERSION,
                     algorithm=FP_BITWISE_ALGORITHM,
                     evidence={
-                        "opcodes": ["fmr", "fabs"],
+                        "opcodes": list(by_cap["fp-bitwise"].required_opcodes),
                         "ledger_sha256": "e" * 64,
                         "host_float": False,
+                        "requirement_sha256": by_cap["fp-bitwise"].requirement_sha256,
+                        "requirements_sha256": requirements.requirements_sha256,
+                    },
+                ),
+                build_attestation(
+                    capability="provenance",
+                    model_version="provenance-v1",
+                    algorithm="provenance-binding-v1",
+                    evidence={
+                        "architecture_model": ARCHITECTURE_MODEL,
+                        "result_format": RESULT_FORMAT,
+                        "engine_hash": hash_engine_tree(_REPO),
+                        "certifier_hash": hash_certifier_tree(_REPO),
+                        "source_hash": "b" * 64,
+                        "proof_request_hash": "b" * 64,
+                        "validation_ledger_hash": "e" * 64,
+                        "git_commit": "c" * 40,
+                        "git_dirty": False,
+                        "requirement_sha256": by_cap["provenance"].requirement_sha256,
+                        "requirements_sha256": requirements.requirements_sha256,
                     },
                 ),
             ),
@@ -404,6 +515,7 @@ class CacheAndCertificateTests(unittest.TestCase):
             "engine_hash": hash_engine_tree(_REPO),
             "certifier_hash": hash_certifier_tree(_REPO),
             "capability_assurance": assurance,
+            "capability_requirements": requirements.to_dict(),
             "opcodes_used": ["fmr", "fabs", "blr"],
             "observables": ["f1"],
             "source_hash": "b" * 64,

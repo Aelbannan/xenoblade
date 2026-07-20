@@ -102,6 +102,38 @@ def _integer(*opcodes: str) -> object:
     )
 
 
+def _attach_requirements(proof: ProofResult, *attestations: object) -> None:
+    """Derive requirements and re-bind attestation digests for authoritative tests."""
+    from tools.ppc_equivalence.capability_requirements import (
+        derive_capability_requirements,
+    )
+
+    requirements = derive_capability_requirements(proof)
+    proof.capability_requirements = requirements.to_dict()
+    by_cap = requirements.by_capability()
+    rebound = []
+    for item in attestations:
+        evidence = dict(item.evidence)
+        req = by_cap.get(item.capability)
+        if req is not None:
+            evidence["requirement_sha256"] = req.requirement_sha256
+            evidence["requirements_sha256"] = requirements.requirements_sha256
+        rebound.append(
+            build_attestation(
+                capability=item.capability,
+                model_version=item.model_version,
+                algorithm=item.algorithm,
+                status=item.status,
+                assumptions=item.assumptions,
+                unsupported=item.unsupported,
+                evidence=evidence,
+            )
+        )
+    proof.capability_assurance = CapabilityAssurance(
+        capabilities=tuple(rebound),
+    ).to_dict()
+
+
 def _authoritative_manifest() -> CapabilityManifest:
     return load_capability_manifest(_AUTH_MANIFEST)
 
@@ -143,11 +175,8 @@ class ManifestFilesTests(unittest.TestCase):
 
 class AuthoritativeCanaryTierTests(unittest.TestCase):
     def test_integer_core_provenance_complete_ledger_is_tier_a(self) -> None:
-        proof = _equivalent(
-            capability_assurance=CapabilityAssurance(
-                capabilities=(_integer("addi", "blr"), _provenance()),
-            ).to_dict(),
-        )
+        proof = _equivalent()
+        _attach_requirements(proof, _integer("addi", "blr"), _provenance())
         audit_box: list = []
         tier = compute_confidence_tier(
             proof,
@@ -173,10 +202,8 @@ class AuthoritativeCanaryTierTests(unittest.TestCase):
             floating_point_domain=FloatingPointDomain(),
             opcodes_used=["fadd", "blr"],
             observables=["f1"],
-            capability_assurance=CapabilityAssurance(
-                capabilities=(_integer("blr"), _provenance()),
-            ).to_dict(),
         )
+        _attach_requirements(proof, _integer("blr"), _provenance())
         self.assertEqual(
             compute_confidence_tier(
                 proof,
@@ -190,10 +217,8 @@ class AuthoritativeCanaryTierTests(unittest.TestCase):
         proof = _equivalent(
             proof_features=["memory-bus"],
             memory_bus={"schema_version": 2, "status": "pending"},
-            capability_assurance=CapabilityAssurance(
-                capabilities=(_integer("addi", "blr"), _provenance()),
-            ).to_dict(),
         )
+        _attach_requirements(proof, _integer("addi", "blr"), _provenance())
         self.assertEqual(
             compute_confidence_tier(
                 proof,
@@ -282,12 +307,8 @@ class ProvenanceAndPromotionTests(unittest.TestCase):
         from tools.ppc_equivalence.provenance import is_trust_boundary_relative_path
 
         self.assertFalse(is_trust_boundary_relative_path("src/kyoshin/CTaskGame.cpp"))
-        proof = _equivalent(
-            git_dirty=False,
-            capability_assurance=CapabilityAssurance(
-                capabilities=(_integer("addi", "blr"), _provenance(git_dirty=False)),
-            ).to_dict(),
-        )
+        proof = _equivalent(git_dirty=False)
+        _attach_requirements(proof, _integer("addi", "blr"), _provenance(git_dirty=False))
         status = _recompute_attestation_status(
             _provenance(git_dirty=False),
             result=proof,
@@ -310,17 +331,16 @@ class ProvenanceAndPromotionTests(unittest.TestCase):
             certifier_hash="",
             source_hash="",
             git_commit="",
-            capability_assurance=CapabilityAssurance(
-                capabilities=(
-                    _integer("addi", "blr"),
-                    _provenance(
-                        engine_hash="",
-                        certifier_hash="",
-                        source_hash="",
-                        git_commit="",
-                    ),
-                ),
-            ).to_dict(),
+        )
+        _attach_requirements(
+            proof,
+            _integer("addi", "blr"),
+            _provenance(
+                engine_hash="",
+                certifier_hash="",
+                source_hash="",
+                git_commit="",
+            ),
         )
         auth = _authoritative_manifest()
         # Authoritative tier classification demotes on incomplete provenance.
@@ -357,11 +377,8 @@ class ProvenanceAndPromotionTests(unittest.TestCase):
         )
 
     def test_classify_records_assurance_audit(self) -> None:
-        proof = _equivalent(
-            capability_assurance=CapabilityAssurance(
-                capabilities=(_integer("addi", "blr"), _provenance()),
-            ).to_dict(),
-        )
+        proof = _equivalent()
+        _attach_requirements(proof, _integer("addi", "blr"), _provenance())
         auth = _authoritative_manifest()
         decision = classify_for_promotion(
             proof,
@@ -390,10 +407,20 @@ class ProvenanceAndPromotionTests(unittest.TestCase):
 
 class EndToEndDraftAttachTests(unittest.TestCase):
     def test_drafts_attached_evaluate_tier_a_under_authoritative(self) -> None:
+        from tools.ppc_equivalence.capability_requirements import (
+            derive_capability_requirements,
+        )
+
         proof = _equivalent()
         ledger = _open_ledger("addi", "blr")
-        maybe_attach_integer_core_draft(proof, ledger=ledger, ledger_sha256="e" * 64)
-        maybe_attach_provenance_draft(proof, ledger_sha256="e" * 64)
+        requirements = derive_capability_requirements(proof)
+        proof.capability_requirements = requirements.to_dict()
+        maybe_attach_integer_core_draft(
+            proof, ledger=ledger, ledger_sha256="e" * 64, requirements=requirements
+        )
+        maybe_attach_provenance_draft(
+            proof, ledger_sha256="e" * 64, requirements=requirements
+        )
         self.assertIsNotNone(proof.capability_assurance)
         audit_box: list = []
         tier = compute_confidence_tier(

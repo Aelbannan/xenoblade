@@ -878,6 +878,9 @@ def classify_for_promotion(
             blockers.append("capability-assurance-required")
         if assurance is not None and assurance.has_unmodeled_or_unproven_capability:
             blockers.append("capability-assurance-unmodeled-or-unproven")
+        if assurance is not None:
+            for item in assurance.blockers:
+                blockers.append(item)
         if (
             policy.require_capability_assurance
             and policy.allowed_engine_sha256 is None

@@ -3560,6 +3560,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             else:
                 d = ops.fp_fma(rm, op_fa, op_fc, addend)
         elif op in (Opcode.FNEG, Opcode.FNABS, Opcode.FABS, Opcode.FMR):
+            # Wave 3: shared FPOutcome producers live in fp_outcome
+            # (symbolic_bitwise_outcome); execute keeps the bit ops inline so
+            # ConcreteOps/SymbolicOps stay register-identical.
             source_bits = state.fpr[fb]
             if op == Opcode.FNEG:
                 result_bits = ops.fp_xor_sign(source_bits)

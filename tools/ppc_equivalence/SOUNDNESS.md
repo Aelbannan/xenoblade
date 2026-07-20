@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v38`
-- Result format: `18`
-- Certificate format: `13`
+- Architecture model: `broadway-ppc32-be-v39`
+- Result format: `19`
+- Certificate format: `14`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -256,7 +256,7 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   so register-only proofs stay eligible for Tier A. Promotion may still require
   bounded ranges via `require_bounded_ram`.
 
-### Capability assurance (Wave 1–2)
+### Capability assurance (Wave 1–3)
 
 Tier classification is being migrated from effect-type hard-gates
 (`has_fp → C`, `has_memory_bus → C`, …) to **capability-assurance-v1**:
@@ -278,6 +278,38 @@ Tier classification is being migrated from effect-type hard-gates
   empty. Any non-bitwise FP opcode demands other FP capabilities (coarse
   `fp-scalar-arithmetic` today) and cannot earn promotion-grade `fp-bitwise`.
   Ledger coverage lives under `validation_ledger.yaml` → `capabilities.fp-bitwise`.
+- **Wave 3 FP foundations (shadow):** FP opcodes demand distinct capabilities
+  (`fp-load-store`, `fp-compare`, `fp-convert`, `fp-scalar-arithmetic`,
+  `fp-fused-arithmetic`, `fp-paired-single`, `fp-psq`, `fp-traps`) via
+  `fp_capabilities.classify_fp_capabilities`. Model-version stubs exist in the
+  manifest with **empty** allowlists (except `fp-bitwise-v1`). Algorithms
+  `fp-scalar-oracle-v1` / `fp-outcome-unify-v1` stay incomplete.
+  `symbolic_fp_outcome` unifies SymbolicOps/ConcreteOps containers for bitwise
+  ops (Z3 BitVec, no host float); symbolic `fadd` remains unsupported.
+  Tier A for scalar requires all four RN modes **or** `precondition-closure-v1`
+  with violation-query UNSAT — default nearest-even config alone is not proof
+  (`fp_rounding.py`). FPSCR FX/FEX sticky behavior remains incomplete.
+  Obligation schema: `fp_scalar_obligations.py`.
+- **Wave 3 MMIO foundations:** MMIO is split into independently attested
+  capabilities (`mmio-register-bank`, `mmio-read-side-effects`,
+  `mmio-external-input`, `gx-fifo-write-trace`, `gx-fifo-read`,
+  `mmio-loop-emission`, `mixed-address-space-routing`,
+  `dma-interrupt-effects`). Reviewed hardware profiles live under
+  `platform_profiles/` (e.g. `wii-broadway-xenoblade-us-v1`) and bind via
+  `hardware_profile_sha256`. Obligation schema:
+  `tools/ppc_equivalence/mmio_capability_obligations.py` (algorithms
+  `mmio-register-bank-v2`, `gx-fifo-trace-v1`). Ad-hoc CLI bus maps are
+  source=`ad-hoc-bus-map` and never promotion-grade. Profile hash mismatch
+  and malformed obligations fail closed. **`gx-fifo-read`**, DMA, and loop
+  emission remain incomplete / Tier C. The MMIO allowlist stays empty until
+  canary (schema + incomplete grades land now).
+- **External event sharing (ReadOracle):** timer/status/input registers are
+  modeled as `ReadOracle(device_id, event_index, device_state)`
+  (`tools/ppc_equivalence/external_event.py`). The same physical external
+  event may be shared only when both sides perform the same logical read at
+  the same event index under equivalent device state; additional or reordered
+  reads consume distinct events — original and candidate must not silently
+  receive the same value after different read histories.
 - Caller-supplied `status=promotion-grade` is ignored for trust; validators
   recompute grades from evidence + ledger + manifest.
 - Legacy certificates without a `capability_assurance` field do not invent

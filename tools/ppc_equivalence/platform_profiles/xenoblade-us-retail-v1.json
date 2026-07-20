@@ -1,0 +1,12 @@
+{
+  "platform_profile": "xenoblade-us-retail-v1",
+  "regions": [
+    {
+      "kind": "ram",
+      "start": "0x80000000",
+      "end": "0x817fffff",
+      "label": "MEM1"
+    }
+  ],
+  "profile_sha256": "a27af93eb194a814e75e0ee773f771ad1ef5e21be9f20572d08f28592eb9f891"
+}

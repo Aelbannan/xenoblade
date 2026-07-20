@@ -56,7 +56,7 @@ from .memory_loop_readonly import (
     readonly_word_byte_constraints,
 )
 from .relational_induction import try_discharge_relational
-from .provenance import canonical_json_sha256, hash_engine_tree
+from .provenance import canonical_json_sha256, hash_certifier_tree, hash_engine_tree
 from .result import (
     ARCHITECTURE_MODEL, RESULT_FORMAT, FloatingPointDomain, MemoryScope, ProofResult, ProofStatus,
 )
@@ -1641,6 +1641,12 @@ def _check_equivalence_impl(
         result.engine_hash = hash_engine_tree(_REPO_ROOT)
     except Exception:
         pass
+    try:
+        result.certifier_hash = hash_certifier_tree(_REPO_ROOT)
+    except Exception:
+        pass
+    if result.source_hash and not result.proof_request_hash:
+        result.proof_request_hash = result.source_hash
     result.platform = sys.platform
     result.python_version = sys.version
     result.z3_version = z3.get_version_string()

@@ -50,8 +50,12 @@ def _equivalent(**kwargs) -> ProofResult:
         format=RESULT_FORMAT,
         observables=["r3"],
         engine_hash="a" * 64,
+        certifier_hash="d" * 64,
         source_hash="b" * 64,
+        proof_request_hash="b" * 64,
+        validation_ledger_hash="e" * 64,
         git_commit="c" * 40,
+        git_dirty=False,
         opcodes_used=["addi", "blr"],
         memory_scope=MemoryScope(
             masking_semantics=MASKING_SEMANTICS,
@@ -96,16 +100,33 @@ class ShadowTierTests(unittest.TestCase):
             algorithm="opcode-ledger-v2",
             evidence={"opcodes": ["addi", "blr"]},
         )
+        provenance = build_attestation(
+            capability="provenance",
+            model_version="provenance-v1",
+            algorithm="provenance-binding-v1",
+            evidence={
+                "engine_hash": "a" * 64,
+                "certifier_hash": "d" * 64,
+                "source_hash": "b" * 64,
+                "proof_request_hash": "b" * 64,
+                "validation_ledger_hash": "e" * 64,
+                "git_commit": "c" * 40,
+                "git_dirty": False,
+            },
+        )
         proof = _equivalent(
             capability_assurance=CapabilityAssurance(
-                capabilities=(attestation,),
+                capabilities=(attestation, provenance),
             ).to_dict(),
         )
         tier = compute_confidence_tier(
             proof,
             _open_ledger("addi", "blr"),
             manifest=CapabilityManifest(
-                allowed_tier_a_capabilities={"integer-core": ("integer-core-v1",)},
+                allowed_tier_a_capabilities={
+                    "integer-core": ("integer-core-v1",),
+                    "provenance": ("provenance-v1",),
+                },
                 shadow_mode=False,
             ),
         )
@@ -114,7 +135,7 @@ class ShadowTierTests(unittest.TestCase):
         fp_proof = _equivalent(
             floating_point_domain=FloatingPointDomain(),
             capability_assurance=CapabilityAssurance(
-                capabilities=(attestation,),
+                capabilities=(attestation, provenance),
             ).to_dict(),
         )
         self.assertEqual(
@@ -124,11 +145,95 @@ class ShadowTierTests(unittest.TestCase):
                 manifest=CapabilityManifest(
                     allowed_tier_a_capabilities={
                         "integer-core": ("integer-core-v1",),
+                        "provenance": ("provenance-v1",),
                     },
                     shadow_mode=False,
                 ),
             ),
             "C",
+        )
+
+    def test_fp_bitwise_shadow_assurance_a_legacy_c(self) -> None:
+        from tools.ppc_equivalence.fp_bitwise import (
+            FP_BITWISE_ALGORITHM,
+            FP_BITWISE_MODEL_VERSION,
+        )
+
+        assurance = CapabilityAssurance(
+            capabilities=(
+                build_attestation(
+                    capability="integer-core",
+                    model_version="integer-core-v1",
+                    algorithm="opcode-ledger-v2",
+                    evidence={"opcodes": ["blr"], "ledger_sha256": "e" * 64},
+                ),
+                build_attestation(
+                    capability="fp-bitwise",
+                    model_version=FP_BITWISE_MODEL_VERSION,
+                    algorithm=FP_BITWISE_ALGORITHM,
+                    evidence={
+                        "opcodes": ["fmr"],
+                        "ledger_sha256": "e" * 64,
+                        "host_float": False,
+                    },
+                ),
+                build_attestation(
+                    capability="provenance",
+                    model_version="provenance-v1",
+                    algorithm="provenance-binding-v1",
+                    evidence={
+                        "engine_hash": "a" * 64,
+                        "certifier_hash": "d" * 64,
+                        "source_hash": "b" * 64,
+                        "proof_request_hash": "b" * 64,
+                        "validation_ledger_hash": "e" * 64,
+                        "git_commit": "c" * 40,
+                        "git_dirty": False,
+                    },
+                ),
+            ),
+        ).to_dict()
+        proof = _equivalent(
+            floating_point_domain=FloatingPointDomain(),
+            opcodes_used=["fmr", "blr"],
+            observables=["f1"],
+            capability_assurance=assurance,
+        )
+        assurance_box: list = []
+        tier = compute_confidence_tier(
+            proof,
+            ValidationLedger(
+                frozenset({"fmr", "blr"}),
+                intentionally_loaded=True,
+                capabilities={
+                    "fp-bitwise": {
+                        "model_version": FP_BITWISE_MODEL_VERSION,
+                        "opcodes": {
+                            "fmr": {
+                                "result_bits": True,
+                                "dolphin_interpreter": True,
+                                "host_float": False,
+                            }
+                        },
+                    }
+                },
+            ),
+            manifest=CapabilityManifest(
+                allowed_tier_a_capabilities={
+                    "integer-core": ("integer-core-v1",),
+                    "fp-bitwise": (FP_BITWISE_MODEL_VERSION,),
+                    "provenance": ("provenance-v1",),
+                },
+                shadow_mode=True,
+            ),
+            assurance_out=assurance_box,
+        )
+        # Legacy effect gate still forces C for any FP under shadow mode.
+        self.assertEqual(tier, "C")
+        self.assertTrue(assurance_box)
+        self.assertEqual(
+            compute_confidence_tier_from_assurance(assurance_box[0]),
+            "A",
         )
 
 
@@ -204,7 +309,10 @@ class CacheAndCertificateTests(unittest.TestCase):
             "opcodes_used": ["addi", "blr"],
             "observables": ["r3"],
             "source_hash": "b" * 64,
+            "proof_request_hash": "b" * 64,
+            "validation_ledger_hash": "e" * 64,
             "git_commit": "c" * 40,
+            "git_dirty": False,
         }
         certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
 
@@ -212,6 +320,10 @@ class CacheAndCertificateTests(unittest.TestCase):
             ProofStatus.EQUIVALENT, certificate
         )
         self.assertEqual(restored.capability_assurance, assurance)
+        self.assertEqual(restored.certifier_hash, certificate["certifier_hash"])
+        self.assertEqual(restored.proof_request_hash, "b" * 64)
+        self.assertEqual(restored.validation_ledger_hash, "e" * 64)
+        self.assertFalse(restored.git_dirty)
 
         row = {"id": "demo", "status": "EQUIVALENT_MATCH", "equivalence_certificate": certificate}
         error = equivalence_certificate_error(row, {"demo": row})
@@ -240,6 +352,82 @@ class CacheAndCertificateTests(unittest.TestCase):
         self.assertIn(
             "capability_assurance invalid",
             equivalence_certificate_error(bad_row, {"demo": bad_row}) or "",
+        )
+
+    def test_fp_bitwise_certificate_round_trip(self) -> None:
+        from tools.ppc_equivalence.fp_bitwise import (
+            FP_BITWISE_ALGORITHM,
+            FP_BITWISE_MODEL_VERSION,
+        )
+
+        assurance = CapabilityAssurance(
+            capabilities=(
+                build_attestation(
+                    capability="integer-core",
+                    model_version="integer-core-v1",
+                    algorithm="opcode-ledger-v2",
+                    evidence={"opcodes": ["blr"], "ledger_sha256": "e" * 64},
+                ),
+                build_attestation(
+                    capability="fp-bitwise",
+                    model_version=FP_BITWISE_MODEL_VERSION,
+                    algorithm=FP_BITWISE_ALGORITHM,
+                    evidence={
+                        "opcodes": ["fmr", "fabs"],
+                        "ledger_sha256": "e" * 64,
+                        "host_float": False,
+                    },
+                ),
+            ),
+        ).to_dict()
+        certificate = {
+            "version": EQUIVALENCE_CERTIFICATE_VERSION,
+            "status": "SEMANTIC_CERTIFIED",
+            "architecture": ARCHITECTURE_MODEL,
+            "result_format": RESULT_FORMAT,
+            "target_id": "fp-bitwise-demo",
+            "evidence": "symbolic-equivalence",
+            "retail_sha256": "1" * 64,
+            "candidate_sha256": "2" * 64,
+            "summary": {
+                "reads": ["f1"],
+                "writes": ["f1"],
+                "invalid_reasons": [],
+                "return_behavior": "normal",
+            },
+            "callees": [],
+            "helpers": [],
+            "engine_hash": hash_engine_tree(_REPO),
+            "certifier_hash": hash_certifier_tree(_REPO),
+            "capability_assurance": assurance,
+            "opcodes_used": ["fmr", "fabs", "blr"],
+            "observables": ["f1"],
+            "source_hash": "b" * 64,
+            "proof_request_hash": "b" * 64,
+            "validation_ledger_hash": "e" * 64,
+            "git_commit": "c" * 40,
+            "git_dirty": False,
+            "floating_point_domain": FloatingPointDomain().to_dict(),
+        }
+        certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
+
+        restored = proof_result_from_certificate(
+            ProofStatus.EQUIVALENT, certificate
+        )
+        self.assertEqual(restored.capability_assurance, assurance)
+        caps = {
+            item["capability"]
+            for item in restored.capability_assurance["capabilities"]
+        }
+        self.assertIn("fp-bitwise", caps)
+
+        row = {
+            "id": "fp-bitwise-demo",
+            "status": "EQUIVALENT_MATCH",
+            "equivalence_certificate": certificate,
+        }
+        self.assertIsNone(
+            equivalence_certificate_error(row, {"fp-bitwise-demo": row})
         )
 
 

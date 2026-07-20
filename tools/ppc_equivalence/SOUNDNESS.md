@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v37`
-- Result format: `17`
-- Certificate format: `12`
+- Architecture model: `broadway-ppc32-be-v38`
+- Result format: `18`
+- Certificate format: `13`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -256,7 +256,7 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   so register-only proofs stay eligible for Tier A. Promotion may still require
   bounded ranges via `require_bounded_ram`.
 
-### Capability assurance (Wave 1)
+### Capability assurance (Wave 1–2)
 
 Tier classification is being migrated from effect-type hard-gates
 (`has_fp → C`, `has_memory_bus → C`, …) to **capability-assurance-v1**:
@@ -268,8 +268,16 @@ Tier classification is being migrated from effect-type hard-gates
   (`allowed_tier_a_capabilities`, `shadow_mode`, `require_capability_assurance`).
 - **Shadow mode (default):** `evaluate_capability_assurance` always runs and
   records `capability-assurance-shadow-tier-*` warnings, but authoritative
-  `compute_confidence_tier` still uses legacy effect gates. FP / MMIO /
-  assumed-RAM are **not** promoted in Wave 1.
+  `compute_confidence_tier` still uses legacy effect gates. Under shadow,
+  legacy still forces Tier C for any FP; the assurance shadow tier may still
+  report A for bitwise-only proofs.
+- **Wave 2 `fp-bitwise`:** promoteable ops are only `fmr` / `fabs` / `fneg` /
+  `fnabs` (`tools/ppc_equivalence/fp_bitwise.py`, algorithm
+  `fp-bitwise-ledger-v1`, model `fp-bitwise-v1`). Evidence requires opcodes,
+  `ledger_sha256`, and `host_float: false`; unsupported remainder must be
+  empty. Any non-bitwise FP opcode demands other FP capabilities (coarse
+  `fp-scalar-arithmetic` today) and cannot earn promotion-grade `fp-bitwise`.
+  Ledger coverage lives under `validation_ledger.yaml` → `capabilities.fp-bitwise`.
 - Caller-supplied `status=promotion-grade` is ignored for trust; validators
   recompute grades from evidence + ledger + manifest.
 - Legacy certificates without a `capability_assurance` field do not invent

@@ -20,7 +20,7 @@
 # Wave 4 advanced FP/MMIO stubs: fused midpoint/sticky-residue and FE0/FE1
 # remain incomplete (never promotion-grade); gx-fifo loop refinement and
 # read-side-effect / DMA stubs stay incomplete until Dolphin harness.
-architecture_model: broadway-ppc32-be-v40
+architecture_model: broadway-ppc32-be-v41
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: a827ed9896c3a0648ff3b997e5e46bd3d80cb2c4c3553b5323395f66317b6c63

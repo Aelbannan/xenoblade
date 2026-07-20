@@ -61,6 +61,8 @@ REJECTION_SUMMARY_MISMATCH = "summary-sha256-mismatch"
 REJECTION_BODY_MISMATCH = "body-sha256-mismatch"
 REJECTION_ENGINE_BOUND = "certificate-not-engine-bound"
 REJECTION_REFINEMENT_INCOMPLETE = "refinement-not-unsat"
+REJECTION_MISSING_CALLEE_INPUT = "missing-callee-obligation-input"
+REJECTION_ZERO_HASH_INPUT = "zero-hash-callee-input"
 
 OPAQUE_SOURCES = frozenset(
     {
@@ -531,6 +533,8 @@ def build_certified_calls_attestation(
     rejection_reasons: Sequence[str] = (),
     assumptions: Sequence[str] = (),
     status: str | None = None,
+    requirement: Any | None = None,
+    requirements_sha256: str | None = None,
 ) -> CapabilityAttestation:
     """Emit a certified-calls CapabilityAttestation wrapping the obligation."""
     error = validate_certified_calls_obligation(obligation)
@@ -553,6 +557,19 @@ def build_certified_calls_attestation(
         "obligation": dict(obligation),
         "rejection_reasons": list(rejection_reasons),
     }
+    if requirement is not None:
+        digest = getattr(requirement, "requirement_sha256", None)
+        if digest is None and isinstance(requirement, Mapping):
+            digest = requirement.get("requirement_sha256")
+        if digest:
+            evidence["requirement_sha256"] = str(digest)
+        subjects = getattr(requirement, "required_subjects", None)
+        if subjects is None and isinstance(requirement, Mapping):
+            subjects = requirement.get("required_subjects")
+        if subjects:
+            evidence["subjects"] = list(subjects)
+    if requirements_sha256:
+        evidence["requirements_sha256"] = requirements_sha256
     unsupported = tuple(
         reason for reason in rejection_reasons if reason == REJECTION_OPAQUE_EABI
     )
@@ -567,28 +584,114 @@ def build_certified_calls_attestation(
     )
 
 
+def _is_zero_hash_input(item: CalleeObligationInput) -> bool:
+    zero = "0" * _SHA256_LEN
+    return (
+        item.certificate_sha256 == zero
+        or item.retail_sha256 == zero
+        or item.candidate_sha256 == zero
+    )
+
+
+def select_used_callee_inputs(
+    callees: Sequence[CalleeObligationInput],
+    used: Sequence[int | str],
+    *,
+    address_to_target_id: Mapping[int, str] | None = None,
+) -> tuple[list[CalleeObligationInput], list[str]]:
+    """Select obligation inputs for proof-used callees; report missing keys."""
+    by_symbol = {item.symbol: item for item in callees}
+    by_id = {item.target_id: item for item in callees}
+    addr_map = dict(address_to_target_id or {})
+    selected: list[CalleeObligationInput] = []
+    missing: list[str] = []
+    seen: set[str] = set()
+    for raw in used:
+        item: CalleeObligationInput | None = None
+        if isinstance(raw, int):
+            mapped = addr_map.get(raw)
+            if mapped is not None:
+                item = by_id.get(mapped)
+            if item is None:
+                item = by_symbol.get(str(raw)) or by_id.get(str(raw))
+            display = f"0x{raw:08x}"
+        else:
+            display = str(raw)
+            item = by_symbol.get(display) or by_id.get(display)
+        if item is None:
+            missing.append(display)
+            continue
+        if item.target_id in seen:
+            continue
+        seen.add(item.target_id)
+        selected.append(item)
+    return selected, missing
+
+
+def _incomplete_certified_calls_assurance(
+    rejection_reasons: Sequence[str],
+    *,
+    missing_callees: Sequence[str] = (),
+) -> CapabilityAssurance:
+    evidence: dict[str, Any] = {
+        "obligation": None,
+        "rejection_reasons": list(rejection_reasons),
+    }
+    if missing_callees:
+        evidence["missing_callees"] = [str(item) for item in missing_callees]
+    attestation = build_attestation(
+        capability=CERTIFIED_CALLS_CAPABILITY,
+        model_version=CERTIFIED_CALLS_MODEL_VERSION,
+        algorithm=CERTIFIED_CALLS_ALGORITHM,
+        status=STATUS_INCOMPLETE,
+        evidence=evidence,
+    )
+    return CapabilityAssurance(capabilities=(attestation,))
+
+
 def draft_certified_calls_assurance(
     result: Any,
     *,
     callees: Sequence[CalleeObligationInput] = (),
     context: CertifiedCallsContext | None = None,
     live_certificates: Mapping[str, Mapping[str, Any]] | None = None,
+    missing_callees: Sequence[str] = (),
+    allow_zero_hash_placeholders: bool = False,
+    requirements: Any | None = None,
 ) -> CapabilityAssurance | None:
     """Build a certified-calls assurance block when ``assumed_callees`` is set.
 
     Status is advisory; ``evaluate_capability_assurance`` recomputes the grade.
     Opaque EABI / incomplete refinements stay non-promotion-grade.
+
+    Production (Stage 3B) passes concrete ``callees`` with
+    ``allow_zero_hash_placeholders=False``. Missing used callees become an
+    explicit incomplete rejection; zero-hash digests never reach promotion-grade.
     """
-    assumed = getattr(result, "assumed_callees", None) or []
-    if not assumed and not callees:
+    assumed = list(getattr(result, "assumed_callees", None) or [])
+    if not assumed and not callees and not missing_callees:
         return None
 
+    rejection_extras: list[str] = []
+    missing_list = [str(item) for item in missing_callees]
+    if missing_list:
+        rejection_extras.append(REJECTION_MISSING_CALLEE_INPUT)
+
     inputs = list(callees)
-    if not inputs:
-        # Minimal placeholder entries from assumed_callees alone (incomplete).
+    if (
+        not inputs
+        and assumed
+        and allow_zero_hash_placeholders
+        and not missing_list
+    ):
+        # Legacy shadow path: placeholder entries stay incomplete.
         for name in sorted(assumed, key=str):
             symbol = str(name)
-            summary = {"reads": [], "writes": [], "invalid_reasons": []}
+            summary: dict[str, Any] = {
+                "reads": [],
+                "writes": [],
+                "invalid_reasons": [],
+            }
             contracts = getattr(result, "callee_contracts", None) or {}
             contract = contracts.get(symbol) or contracts.get(name) or {}
             source = "opaque-eabi"
@@ -611,6 +714,32 @@ def draft_certified_calls_assurance(
                     contract_source=source,
                 )
             )
+        rejection_extras.append(REJECTION_ZERO_HASH_INPUT)
+    elif not inputs:
+        if assumed and REJECTION_MISSING_CALLEE_INPUT not in rejection_extras:
+            rejection_extras.append(REJECTION_MISSING_CALLEE_INPUT)
+        return _incomplete_certified_calls_assurance(
+            list(dict.fromkeys(rejection_extras)),
+            missing_callees=missing_list or [str(item) for item in assumed],
+        )
+
+    if any(_is_zero_hash_input(item) for item in inputs):
+        if REJECTION_ZERO_HASH_INPUT not in rejection_extras:
+            rejection_extras.append(REJECTION_ZERO_HASH_INPUT)
+
+    # When the caller handed a larger registry set, keep only proof-used callees.
+    if assumed and not missing_list:
+        selected, missing = select_used_callee_inputs(inputs, assumed)
+        if missing:
+            rejection_extras.append(REJECTION_MISSING_CALLEE_INPUT)
+            missing_list = missing
+            if not selected:
+                return _incomplete_certified_calls_assurance(
+                    list(dict.fromkeys(rejection_extras)),
+                    missing_callees=missing_list,
+                )
+        if selected:
+            inputs = selected
 
     refinements: dict[str, dict[str, str]] = {}
     for item in inputs:
@@ -624,11 +753,45 @@ def draft_certified_calls_assurance(
     rejection_reasons = collect_rejection_reasons(
         inputs, context=context, live_certificates=live_certificates
     )
+    for reason in rejection_extras:
+        if reason not in rejection_reasons:
+            rejection_reasons.append(reason)
+    req = None
+    req_sha = None
+    req_block = (
+        requirements
+        if requirements is not None
+        else getattr(result, "capability_requirements", None)
+    )
+    if req_block is not None:
+        from tools.ppc_equivalence.capability_assurance import (
+            _normalize_requirements_block,
+            _requirement_lookup,
+        )
+
+        normalized = _normalize_requirements_block(req_block)
+        req = _requirement_lookup(normalized, CERTIFIED_CALLS_CAPABILITY)
+        if normalized is not None:
+            req_sha = str(getattr(normalized, "requirements_sha256", "") or "")
     attestation = build_certified_calls_attestation(
         obligation,
         rejection_reasons=rejection_reasons,
         status=STATUS_INCOMPLETE,
+        requirement=req,
+        requirements_sha256=req_sha,
     )
+    if missing_list:
+        evidence = dict(attestation.evidence)
+        evidence["missing_callees"] = list(missing_list)
+        attestation = build_attestation(
+            capability=attestation.capability,
+            model_version=attestation.model_version,
+            algorithm=attestation.algorithm,
+            status=attestation.status,
+            assumptions=attestation.assumptions,
+            unsupported=attestation.unsupported,
+            evidence=evidence,
+        )
     return CapabilityAssurance(capabilities=(attestation,))
 
 
@@ -638,6 +801,9 @@ def maybe_attach_certified_calls_draft(
     callees: Sequence[CalleeObligationInput] = (),
     context: CertifiedCallsContext | None = None,
     live_certificates: Mapping[str, Mapping[str, Any]] | None = None,
+    missing_callees: Sequence[str] = (),
+    allow_zero_hash_placeholders: bool = False,
+    requirements: Any | None = None,
 ) -> Any:
     """Attach / merge a certified-calls attestation when assumed_callees present."""
     from tools.ppc_equivalence.capability_assurance import _merge_assurance_attestation
@@ -647,6 +813,9 @@ def maybe_attach_certified_calls_draft(
         callees=callees,
         context=context,
         live_certificates=live_certificates,
+        missing_callees=missing_callees,
+        allow_zero_hash_placeholders=allow_zero_hash_placeholders,
+        requirements=requirements,
     )
     if draft is None:
         return result

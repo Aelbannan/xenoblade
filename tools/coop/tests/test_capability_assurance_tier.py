@@ -105,6 +105,8 @@ class ShadowTierTests(unittest.TestCase):
             model_version="provenance-v1",
             algorithm="provenance-binding-v1",
             evidence={
+                "architecture_model": ARCHITECTURE_MODEL,
+                "result_format": RESULT_FORMAT,
                 "engine_hash": "a" * 64,
                 "certifier_hash": "d" * 64,
                 "source_hash": "b" * 64,
@@ -182,6 +184,8 @@ class ShadowTierTests(unittest.TestCase):
                     model_version="provenance-v1",
                     algorithm="provenance-binding-v1",
                     evidence={
+                        "architecture_model": ARCHITECTURE_MODEL,
+                        "result_format": RESULT_FORMAT,
                         "engine_hash": "a" * 64,
                         "certifier_hash": "d" * 64,
                         "source_hash": "b" * 64,

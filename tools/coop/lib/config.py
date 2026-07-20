@@ -44,6 +44,7 @@ class CoopConfig:
         "broadway-ppc32-be-v37",
         "broadway-ppc32-be-v38",
         "broadway-ppc32-be-v39",
+        "broadway-ppc32-be-v40",
     )
     allowed_confidence_tiers: frozenset[str] = frozenset({"A", "B"})
     # Required for promotion when capability assurance is authoritative
@@ -53,6 +54,9 @@ class CoopConfig:
     require_bounded_ram: bool = False
     memory_profile: str | None = None
     memory_ranges: list[str] = field(default_factory=list)
+    # Reviewed platform profile name or path (Stage 3A). Digest binds into the
+    # proof request / cache key as ``platform_profile_sha256``.
+    platform_profile: str | None = None
     floating_point_domain: dict[str, Any] | None = None
     capability_manifest_path: Path = Path("tools/coop/capability_manifest.json")
     allowed_tier_a_capabilities: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -147,6 +151,7 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             "broadway-ppc32-be-v37",
             "broadway-ppc32-be-v38",
             "broadway-ppc32-be-v39",
+            "broadway-ppc32-be-v40",
         )
 
     raw_tiers = data.get("allowed_confidence_tiers")
@@ -211,6 +216,11 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             else None
         ),
         memory_ranges=[str(item) for item in data.get("memory_ranges", []) or []],
+        platform_profile=(
+            str(data["platform_profile"])
+            if data.get("platform_profile") is not None
+            else None
+        ),
         floating_point_domain=(
             dict(data["floating_point_domain"])
             if isinstance(data.get("floating_point_domain"), dict)
@@ -221,6 +231,32 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
         capability_assurance_shadow_mode=bool(shadow_mode),
         require_capability_assurance=bool(require_assurance),
     )
+
+
+def platform_profile_from_config(config: CoopConfig) -> dict[str, Any] | None:
+    """Load the reviewed platform profile from coop config, if configured.
+
+    Returns ``None`` when unset or unloadable (Stage 3A fail-closed).
+    """
+    if not config.platform_profile:
+        return None
+    try:
+        from tools.ppc_equivalence.bounded_memory_obligations import (
+            load_platform_profile,
+        )
+
+        return load_platform_profile(config.platform_profile)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return None
+
+
+def platform_profile_digest_from_config(config: CoopConfig) -> str | None:
+    """Return ``profile_sha256`` for proof-request field ``platform_profile_sha256``."""
+    profile = platform_profile_from_config(config)
+    if profile is None:
+        return None
+    digest = profile.get("profile_sha256")
+    return str(digest) if isinstance(digest, str) else None
 
 
 def memory_environment_from_config(config: CoopConfig) -> dict[str, Any] | None:

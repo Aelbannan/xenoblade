@@ -23,7 +23,12 @@
     "mmio-external-input": [],
     "mmio-loop-emission": [],
     "mixed-address-space-routing": [],
-    "dma-interrupt-effects": []
+    "dma-interrupt-effects": [],
+    "memory-loop-summary": [],
+    "immutable-address-space": [],
+    "indirect-target-closure": [],
+    "affine-loop-summary": [],
+    "relational-loop-induction": []
   },
   "shadow_mode": false,
   "require_capability_assurance": true

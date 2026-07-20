@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
@@ -68,6 +68,159 @@ def _current_certifier_hash() -> str:
     return hash_certifier_tree(_REPO_ROOT)
 
 
+def _live_git_identity() -> tuple[str, bool]:
+    """Return ``(git_commit, git_dirty)`` for the repo root."""
+    import subprocess
+
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=_REPO_ROOT,
+            check=False,
+        ).stdout.strip()
+        dirty_out = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            cwd=_REPO_ROOT,
+            check=False,
+        ).stdout.strip()
+        return commit, bool(dirty_out)
+    except Exception:
+        return "", False
+
+
+def _refresh_live_provenance_fields(proof: ProofResult) -> None:
+    """Overwrite git / engine / certifier hashes with live values (cache hits)."""
+    commit, dirty = _live_git_identity()
+    if commit:
+        proof.git_commit = commit
+    proof.git_dirty = dirty
+    try:
+        proof.engine_hash = _current_engine_hash()
+    except Exception:
+        pass
+    try:
+        proof.certifier_hash = _current_certifier_hash()
+    except Exception:
+        pass
+
+
+def _load_validation_ledger_for_assurance() -> tuple[Any, str | None]:
+    """Load the default validation ledger and optional file SHA-256."""
+    from tools.coop.lib.equivalence_policy import (
+        ValidationLedger,
+        default_validation_ledger_path,
+    )
+
+    ledger_path = default_validation_ledger_path()
+    ledger = ValidationLedger.load(ledger_path)
+    ledger_sha = None
+    if ledger_path.is_file():
+        ledger_sha = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
+    return ledger, ledger_sha
+
+
+def _apply_capability_assurance(
+    result: ProofResult,
+    *,
+    certified_context: CertifiedCalleeContext | None = None,
+    platform_profile: object | None = None,
+    environment: object | None = None,
+    ledger: object | None = None,
+    ledger_sha256: str | None = None,
+) -> tuple[str, ...]:
+    """Run Stage 4 orchestrator; return generation-error codes."""
+    from tools.ppc_equivalence.capability_assurance import build_capability_assurance
+
+    if ledger is None and ledger_sha256 is None:
+        ledger, ledger_sha256 = _load_validation_ledger_for_assurance()
+    elif ledger is None:
+        ledger, _ = _load_validation_ledger_for_assurance()
+
+    build = build_capability_assurance(
+        result,
+        ledger=ledger,
+        ledger_sha256=ledger_sha256,
+        callee_context=certified_context,
+        platform_profile=platform_profile,
+        environment=environment,
+        allow_zero_hash_placeholders=False,
+    )
+    return build.errors
+
+
+def _certificate_from_refreshed_proof(
+    certificate: dict[str, Any] | None,
+    proof: ProofResult,
+) -> dict[str, Any] | None:
+    """Refresh assurance / provenance fields on a cached certificate dict."""
+    if certificate is None:
+        return None
+    updated = dict(certificate)
+    if proof.engine_hash:
+        updated["engine_hash"] = proof.engine_hash
+    if proof.certifier_hash:
+        updated["certifier_hash"] = proof.certifier_hash
+    if proof.source_hash:
+        updated["source_hash"] = proof.source_hash
+    if proof.proof_request_hash:
+        updated["proof_request_hash"] = proof.proof_request_hash
+    if proof.validation_ledger_hash:
+        updated["validation_ledger_hash"] = proof.validation_ledger_hash
+    if proof.git_commit:
+        updated["git_commit"] = proof.git_commit
+    updated["git_dirty"] = bool(proof.git_dirty)
+    if proof.opcodes_used:
+        updated["opcodes_used"] = list(proof.opcodes_used)
+    assurance = getattr(proof, "capability_assurance", None)
+    if assurance is not None:
+        updated["capability_assurance"] = (
+            assurance.to_dict() if hasattr(assurance, "to_dict") else dict(assurance)
+        )
+    requirements = getattr(proof, "capability_requirements", None)
+    if requirements is not None:
+        updated["capability_requirements"] = (
+            requirements.to_dict()
+            if hasattr(requirements, "to_dict")
+            else dict(requirements)
+        )
+    updated.pop("certificate_sha256", None)
+    updated["certificate_sha256"] = equivalence_certificate_hash(updated)
+    return updated
+
+
+def _reevaluate_cached_probe(
+    probe: EquivalenceProbe,
+    *,
+    certified_context: CertifiedCalleeContext | None = None,
+    platform_profile: object | None = None,
+    environment: object | None = None,
+) -> EquivalenceProbe:
+    """Refresh live provenance + assurance on a cache-hit probe."""
+    proof = probe.proof
+    if not isinstance(proof, ProofResult):
+        return probe
+    _refresh_live_provenance_fields(proof)
+    # Re-derive requirements so provenance identity tracks live git/engine hashes.
+    proof.capability_requirements = None
+    errors = _apply_capability_assurance(
+        proof,
+        certified_context=certified_context,
+        platform_profile=platform_profile,
+        environment=environment,
+    )
+    detail = probe.detail
+    for code in errors:
+        note = f"capability-assurance-generation-failed:{code}"
+        if note not in detail:
+            detail = f"{detail}; {note}" if detail else note
+    certificate = _certificate_from_refreshed_proof(probe.certificate, proof)
+    return EquivalenceProbe(probe.status, detail, certificate, proof=proof)
+
+
 @dataclass(frozen=True)
 class EquivalenceProbe:
     status: ProofStatus
@@ -82,6 +235,11 @@ class CertifiedCalleeContext:
     dependencies: tuple[dict[str, str], ...]
     errors: tuple[str, ...] = ()
     helpers: tuple[str, ...] = ()
+    # Stage 3B: concrete certified-calls obligation inputs + live child certs.
+    callee_inputs: tuple[Any, ...] = ()
+    live_certificates: dict[str, dict[str, Any]] = field(default_factory=dict)
+    call_context: Any | None = None
+    address_to_target_id: dict[int, str] = field(default_factory=dict)
 
 
 def _function_sha256(function: object) -> str:
@@ -158,6 +316,13 @@ def _reattest_certificate_tree(
 
 def _load_certified_callees(project: Project, target_id: str) -> CertifiedCalleeContext:
     """Load and re-attest every direct callee declared by the target registry."""
+    from tools.ppc_equivalence.certified_calls_obligations import (
+        CalleeObligationInput,
+        CertifiedCallsContext,
+        compute_summary_sha256,
+        discharge_trivial_leaf_refinement,
+    )
+
     document = load_targets_document(project.config)
     rows = [row for row in document.get("targets", []) if isinstance(row, dict)]
     by_id = {str(row.get("id")): row for row in rows if isinstance(row.get("id"), str)}
@@ -165,9 +330,11 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
     if caller is None:
         return CertifiedCalleeContext({}, (), (f"unknown target id {target_id!r}",))
     errors: list[str] = []
-    if caller.get("unresolved_called_functions"):
+    unresolved = bool(caller.get("unresolved_called_functions"))
+    has_indirect = bool(caller.get("has_indirect_calls"))
+    if unresolved:
         errors.append("registry has unresolved direct callees")
-    if caller.get("has_indirect_calls"):
+    if has_indirect:
         errors.append("registry has an unresolved indirect call")
     called_ids = caller.get("called_functions", [])
     if not isinstance(called_ids, list):
@@ -175,7 +342,11 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
 
     contracts: dict[int | str, CalleeContract] = {}
     dependencies: list[dict[str, str]] = []
+    callee_inputs: list[CalleeObligationInput] = []
+    live_certificates: dict[str, dict[str, Any]] = {}
+    address_to_target_id: dict[int, str] = {}
     attestation_memo: dict[str, str | None] = {}
+    call_graph: dict[str, frozenset[str]] = {}
     for callee_id in called_ids:
         callee = by_id.get(str(callee_id))
         if callee is None:
@@ -199,15 +370,81 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         contract = _certificate_contract(certificate)
         contracts[symbol] = contract
         address = callee.get("address")
+        parsed_address: int | None = None
         if isinstance(address, str):
             try:
-                contracts[int(address, 0)] = contract
+                parsed_address = int(address, 0)
+                contracts[parsed_address] = contract
+                address_to_target_id[parsed_address] = str(callee_id)
             except ValueError:
                 pass
         dependencies.append({
             "target_id": str(callee_id),
             "certificate_sha256": certificate["certificate_sha256"],
         })
+        summary = dict(certificate.get("summary") or {})
+        summary.setdefault("reads", [])
+        summary.setdefault("writes", [])
+        summary.setdefault("invalid_reasons", [])
+        summary.setdefault("return_behavior", "normal")
+        summary_digest = compute_summary_sha256(
+            target_id=str(callee_id),
+            symbol=symbol,
+            summary=summary,
+        )
+        refinement = certificate.get("refinement")
+        if not isinstance(refinement, dict):
+            refinement = None
+            try:
+                unit = project.resolve_unit(unit_hint)
+                if unit.target_path is not None and unit.base_path is not None:
+                    left, right = extract_function_pair(
+                        unit.target_path, unit.base_path, symbol,
+                    )
+                    refinement = discharge_trivial_leaf_refinement(
+                        target_id=str(callee_id),
+                        symbol=symbol,
+                        summary=summary,
+                        retail_hex=left.code.hex(),
+                        candidate_hex=right.code.hex(),
+                    )
+            except (ElfSymbolError, FileNotFoundError, ValueError):
+                refinement = None
+        engine_hash = str(certificate.get("engine_hash") or "")
+        obligation_input = CalleeObligationInput(
+            target_id=str(callee_id),
+            symbol=symbol,
+            certificate_sha256=str(certificate["certificate_sha256"]),
+            retail_sha256=str(certificate["retail_sha256"]),
+            candidate_sha256=str(certificate["candidate_sha256"]),
+            summary=summary,
+            contract_source=f"certified:{certificate['certificate_sha256']}",
+            engine_hash=engine_hash,
+            expected_engine_hash=_current_engine_hash(),
+            required_invalid_reasons=frozenset(),
+            refinement=refinement,
+        )
+        callee_inputs.append(obligation_input)
+        live_entry: dict[str, Any] = {
+            "certificate_sha256": certificate["certificate_sha256"],
+            "symbol": symbol,
+            "summary": summary,
+            "summary_sha256": summary_digest,
+            "retail_sha256": certificate["retail_sha256"],
+            "candidate_sha256": certificate["candidate_sha256"],
+            "engine_hash": engine_hash,
+        }
+        if parsed_address is not None:
+            live_entry["address"] = parsed_address
+        live_certificates[str(callee_id)] = live_entry
+        nested = certificate.get("callees") or []
+        nested_ids: list[str] = []
+        if isinstance(nested, list):
+            for dep in nested:
+                if isinstance(dep, dict) and isinstance(dep.get("target_id"), str):
+                    nested_ids.append(dep["target_id"])
+        call_graph[str(callee_id)] = frozenset(nested_ids)
+
     helpers = caller.get("abi_helper_calls", [])
     if not isinstance(helpers, list) or not all(isinstance(item, str) for item in helpers):
         errors.append("abi_helper_calls is not a string array")
@@ -238,11 +475,25 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         contracts[helper] = CalleeContract(
             reads, writes, f"fixed-eabi-runtime-helper:{helper}",
         )
+
+    caller_callees = frozenset(str(item) for item in called_ids)
+    call_graph[str(target_id)] = caller_callees
+    call_context = CertifiedCallsContext(
+        unresolved_direct_calls=unresolved,
+        has_indirect_calls=has_indirect,
+        indirect_target_set_closed=not has_indirect,
+        root_target_id=str(target_id),
+        call_graph=call_graph,
+    )
     return CertifiedCalleeContext(
         contracts,
         tuple(sorted(dependencies, key=lambda item: item["target_id"])),
         tuple(errors),
         tuple(sorted(helpers)),
+        tuple(sorted(callee_inputs, key=lambda item: item.target_id)),
+        live_certificates,
+        call_context,
+        address_to_target_id,
     )
 
 
@@ -302,6 +553,7 @@ def _cache_key(
     memory_loop_readonly: dict[str, Any] | None = None,
     obligations: dict[str, Any] | None = None,
     capability_assurance: dict[str, Any] | None = None,
+    platform_profile_sha256: str | None = None,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -352,6 +604,8 @@ def _cache_key(
             for key, value in sorted((limits or {}).items())
         },
     }
+    if platform_profile_sha256 is not None:
+        payload["platform_profile_sha256"] = platform_profile_sha256
     if proof_features is not None:
         payload["proof_features"] = sorted(proof_features)
     # Top-level identity premise (not a proof feature): binds the exact per-side
@@ -505,6 +759,7 @@ def _proof_audit_dict(proof: object | None) -> dict[str, Any] | None:
         "abstractions",
         "proof_features",
         "capability_assurance",
+        "capability_requirements",
         *PROOF_OBLIGATION_FIELDS,
     ):
         value = getattr(proof, name, None)
@@ -770,6 +1025,8 @@ def _build_equivalence_certificate(
     # after semantic or policy edits.
     certificate["engine_hash"] = _current_engine_hash()
     certificate["certifier_hash"] = _current_certifier_hash()
+    # Always emit git_dirty (including False) even when proof is absent.
+    certificate["git_dirty"] = False
     if proof is not None:
         engine_hash = getattr(proof, "engine_hash", "") or ""
         source_hash = getattr(proof, "source_hash", "") or ""
@@ -781,6 +1038,7 @@ def _build_equivalence_certificate(
             certificate["engine_hash"] = engine_hash
         if source_hash:
             certificate["source_hash"] = source_hash
+        certificate["git_dirty"] = bool(getattr(proof, "git_dirty", False))
         if git_commit:
             certificate["git_commit"] = git_commit
         if certifier_hash:
@@ -789,8 +1047,6 @@ def _build_equivalence_certificate(
             certificate["proof_request_hash"] = proof_request_hash_value
         if validation_ledger_hash:
             certificate["validation_ledger_hash"] = validation_ledger_hash
-        if getattr(proof, "git_dirty", False):
-            certificate["git_dirty"] = True
         environment = getattr(proof, "environment", None)
         if environment is not None and hasattr(environment, "to_dict"):
             certificate["environment"] = environment.to_dict()
@@ -836,6 +1092,12 @@ def _build_equivalence_certificate(
                 certificate["capability_assurance"] = capability_assurance.to_dict()
             elif isinstance(capability_assurance, dict):
                 certificate["capability_assurance"] = dict(capability_assurance)
+        capability_requirements = getattr(proof, "capability_requirements", None)
+        if capability_requirements is not None:
+            if hasattr(capability_requirements, "to_dict"):
+                certificate["capability_requirements"] = capability_requirements.to_dict()
+            elif isinstance(capability_requirements, dict):
+                certificate["capability_requirements"] = dict(capability_requirements)
         if isinstance(proof, ProofResult):
             for key, block in proof_obligations_from_result(proof).items():
                 certificate[key] = dict(block)
@@ -1070,6 +1332,18 @@ def _prove_bytes(
         from tools.coop.lib.config import memory_environment_from_config
 
         memory_environment = memory_environment_from_config(project.config)
+
+    platform_profile_obj = None
+    platform_profile_sha256 = None
+    if project is not None:
+        from tools.coop.lib.config import (
+            platform_profile_digest_from_config,
+            platform_profile_from_config,
+        )
+
+        platform_profile_obj = platform_profile_from_config(project.config)
+        platform_profile_sha256 = platform_profile_digest_from_config(project.config)
+
     raw_fp = floating_point_domain
     if raw_fp is None and project is not None:
         raw_fp = getattr(project.config, "floating_point_domain", None)
@@ -1121,11 +1395,23 @@ def _prove_bytes(
         address_space=address_space,
         indirect_targets=indirect_targets,
         memory_loop_readonly=memory_loop_readonly_identity,
+        platform_profile_sha256=platform_profile_sha256,
     )
 
     cache_d = _cache_dir(project)
     cached = _cache_get(key, cache_d)
+    mem_env = None
+    if memory_environment:
+        from tools.ppc_equivalence.memory_profile import MemoryEnvironment
+
+        mem_env = MemoryEnvironment.from_dict(memory_environment)
     if cached is not None:
+        cached = _reevaluate_cached_probe(
+            cached,
+            certified_context=certified_context,
+            platform_profile=platform_profile_obj,
+            environment=mem_env,
+        )
         if fallback_note and cached.detail and fallback_note not in cached.detail:
             cached = EquivalenceProbe(
                 cached.status,
@@ -1148,10 +1434,6 @@ def _prove_bytes(
             )
 
     callees_used: set[int | str] = set()
-    mem_env = None
-    if memory_environment:
-        from tools.ppc_equivalence.memory_profile import MemoryEnvironment
-        mem_env = MemoryEnvironment.from_dict(memory_environment)
     fp_domain = None
     if fp_domain_dict is not None:
         from tools.ppc_equivalence.result import FloatingPointDomain
@@ -1192,6 +1474,7 @@ def _prove_bytes(
         address_space=address_space,
         indirect_targets=indirect_targets,
         memory_loop_readonly=memory_loop_readonly_identity,
+        platform_profile_sha256=platform_profile_sha256,
     )
     result = check_equivalence(
         original,
@@ -1211,35 +1494,16 @@ def _prove_bytes(
         jump_table=jump_table_context,
         virtual_call=virtual_call_context,
         memory_loop_readonly=memory_loop_readonly_words,
+        platform_profile=platform_profile_obj,
     )
-    # Wave 1/2: optional non-authoritative capability attestation drafts (shadow).
-    try:
-        from tools.ppc_equivalence.capability_assurance import (
-            maybe_attach_integer_core_draft,
-            maybe_attach_provenance_draft,
-        )
-        from tools.ppc_equivalence.certified_calls_obligations import (
-            maybe_attach_certified_calls_draft,
-        )
-        from tools.coop.lib.equivalence_policy import (
-            ValidationLedger,
-            default_validation_ledger_path,
-        )
-
-        ledger_path = default_validation_ledger_path()
-        ledger = ValidationLedger.load(ledger_path)
-        ledger_sha = None
-        if ledger_path.is_file():
-            import hashlib as _hashlib
-
-            ledger_sha = _hashlib.sha256(ledger_path.read_bytes()).hexdigest()
-        maybe_attach_integer_core_draft(
-            result, ledger=ledger, ledger_sha256=ledger_sha
-        )
-        maybe_attach_provenance_draft(result, ledger_sha256=ledger_sha)
-        maybe_attach_certified_calls_draft(result)
-    except Exception:
-        pass
+    # Stage 4: derive requirements + attach drafts (ledger + certified callees).
+    # Engine may already have attached; orchestrator refreshes ledger binding.
+    assurance_errors = _apply_capability_assurance(
+        result,
+        certified_context=certified_context,
+        platform_profile=platform_profile_obj,
+        environment=mem_env,
+    )
     detail = ""
     if result.contract_resolution:
         added = result.contract_resolution.get("added", [])
@@ -1274,6 +1538,11 @@ def _prove_bytes(
 
     if fallback_note:
         detail = f"{fallback_note}; {detail}" if detail else fallback_note
+
+    for code in assurance_errors:
+        note = f"capability-assurance-generation-failed:{code}"
+        if note not in detail:
+            detail = f"{detail}; {note}" if detail else note
 
     certificate = None
     if (
@@ -1417,7 +1686,68 @@ def certify_unit_symbol(
                 "calls lack current certificates: " + ", ".join(str(item) for item in missing),
             )
         contracts = {item: context.contracts[item] for item in call_targets}
-        certificate, detail = _build_equivalence_certificate(
+        opcodes_used = sorted(
+            {
+                insn.opcode.value
+                for insn in (*original, *candidate)
+                if getattr(insn, "opcode", None) is not None
+            }
+        )
+        source_hash = proof_request_hash(
+            original_hex=left.code.hex(),
+            candidate_hex=right.code.hex(),
+            contract="full-instruction-match",
+            timeout_ms=0,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
+            observe=[],
+            assumed_callees=[str(item) for item in call_targets],
+            callee_contract_sources={
+                str(name): contract.source for name, contract in contracts.items()
+            },
+            original_base=left.base,
+            candidate_base=right.base,
+            certificate_target_id=target_id,
+        )
+        git_commit, git_dirty = _live_git_identity()
+        proof = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            architecture_model=ARCHITECTURE_MODEL,
+            format=RESULT_FORMAT,
+            contract="full-instruction-match",
+            observables=[],
+            opcodes_used=opcodes_used,
+            assumed_callees=sorted(call_targets, key=str),
+            callee_contracts={
+                str(name): {
+                    "source": contract.source,
+                    "reads": sorted(contract.reads),
+                    "writes": sorted(contract.writes),
+                }
+                for name, contract in contracts.items()
+            },
+            source_hash=source_hash,
+            proof_request_hash=source_hash,
+            engine_hash=_current_engine_hash(),
+            certifier_hash=_current_certifier_hash(),
+            git_commit=git_commit,
+            git_dirty=git_dirty,
+            limits={
+                "max_instructions": max_instructions,
+                "max_paths": max_paths,
+                "max_loop_iterations": max_loop_iterations,
+            },
+        )
+        assurance_errors = _apply_capability_assurance(
+            proof,
+            certified_context=context,
+        )
+        detail = ""
+        for code in assurance_errors:
+            note = f"capability-assurance-generation-failed:{code}"
+            detail = f"{detail}; {note}" if detail else note
+        certificate, cert_detail = _build_equivalence_certificate(
             target_id, left, right, original, candidate,
             call_targets=call_targets,
             callee_contracts=contracts,
@@ -1427,11 +1757,15 @@ def certify_unit_symbol(
             max_instructions=max_instructions,
             max_paths=max_paths,
             max_loop_iterations=max_loop_iterations,
+            proof=proof,
         )
+        if cert_detail:
+            detail = f"{detail}; {cert_detail}" if detail else cert_detail
         return EquivalenceProbe(
             ProofStatus.EQUIVALENT if certificate else ProofStatus.INCONCLUSIVE_UNSUPPORTED,
             detail,
             certificate,
+            proof=proof,
         )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, str(exc))

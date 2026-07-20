@@ -1,10 +1,17 @@
 """Independent address-coverage / wraparound obligations for bounded memory.
 
-Wave 2: bounded-memory may eventually reach Tier A only when every memory
-access is proven in-range by a dedicated UNSAT query (not by assuming range
-constraints into the equivalence formula). Assumed-ordinary-ram remains
+Wave 2 / Stage 3A: bounded-memory may eventually reach Tier A only when every
+memory access is proven in-range by a dedicated UNSAT query (not by assuming
+range constraints into the equivalence formula). Assumed-ordinary-ram remains
 non-promotable. CLI / ad-hoc ranges never qualify as promotion-grade; only
 hash-bound reviewed platform profiles do.
+
+Production entry point: :func:`build_bounded_memory_obligation_from_terminals`.
+Coverage queries use terminal path conditions only — they must **not** fold in
+:func:`tools.ppc_equivalence.memory_profile.build_memory_constraints` premises.
+
+Proof-request / cache-key field for the reviewed profile digest:
+``platform_profile_sha256`` (see :data:`PLATFORM_PROFILE_PROOF_REQUEST_FIELD`).
 """
 
 from __future__ import annotations
@@ -28,6 +35,9 @@ BOUNDED_MEMORY_OBLIGATION_SCHEMA_VERSION = 2
 BOUNDED_MEMORY_ALGORITHM = "bounded-memory-v2"
 BOUNDED_MEMORY_MODEL_VERSION = "bounded-memory-v2"
 BOUNDED_MEMORY_ATTESTATION_ALGORITHM = "bounded-memory-coverage-v2"
+
+# Bind this digest into proof_request_identity / _cache_key / ProofRequest.
+PLATFORM_PROFILE_PROOF_REQUEST_FIELD = "platform_profile_sha256"
 
 _SHA256_LEN = 64
 _PLATFORM_PROFILES_DIR = Path(__file__).resolve().parent / "platform_profiles"
@@ -450,6 +460,192 @@ def classify_range_source(
         if is_bounded_with_ranges(environment):
             return SOURCE_AD_HOC
     return SOURCE_INCOMPLETE
+
+
+def _not_queried_block() -> dict[str, Any]:
+    return {
+        "result": "not-queried",
+        "query_sha256": None,
+        "terminals": [],
+    }
+
+
+def incomplete_bounded_memory_obligation(
+    *,
+    reason: str,
+    source: str = SOURCE_INCOMPLETE,
+    ranges: Sequence[tuple[int, int]] = (),
+    platform_profile: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Fail-closed obligation shell (missing profile / SAT / timeout / etc.)."""
+    resolved = [(int(low), int(high)) for low, high in ranges]
+    obligation: dict[str, Any] = {
+        "schema_version": BOUNDED_MEMORY_OBLIGATION_SCHEMA_VERSION,
+        "capability": "bounded-memory",
+        "model_version": BOUNDED_MEMORY_MODEL_VERSION,
+        "algorithm": BOUNDED_MEMORY_ALGORITHM,
+        "status": "incomplete",
+        "source": source,
+        "address_space_sha256": address_space_sha256(resolved),
+        "ranges": [
+            {"start": hex(low), "end": hex(high)} for low, high in resolved
+        ],
+        "original": {
+            "address_coverage": _not_queried_block(),
+            "wraparound": _not_queried_block(),
+        },
+        "candidate": {
+            "address_coverage": _not_queried_block(),
+            "wraparound": _not_queried_block(),
+        },
+        "incomplete_reason": reason,
+    }
+    if platform_profile is not None:
+        name = platform_profile.get("platform_profile")
+        digest = platform_profile.get("profile_sha256")
+        if isinstance(name, str):
+            obligation["platform_profile"] = name
+        if isinstance(digest, str):
+            obligation["profile_sha256"] = digest
+    return obligation
+
+
+def resolve_platform_profile(
+    platform_profile: Mapping[str, Any] | str | Path | None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Load/normalize a platform profile; return ``(profile, error_reason)``."""
+    if platform_profile is None:
+        return None, "missing platform_profile"
+    if isinstance(platform_profile, (str, Path)):
+        try:
+            return load_platform_profile(platform_profile), None
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            return None, f"platform_profile load failed: {exc}"
+    if isinstance(platform_profile, Mapping):
+        profile_obj = dict(platform_profile)
+        try:
+            if "profile_sha256" not in profile_obj:
+                profile_obj["profile_sha256"] = compute_platform_profile_sha256(
+                    profile_obj
+                )
+        except (KeyError, TypeError, ValueError) as exc:
+            return None, f"platform_profile invalid: {exc}"
+        return profile_obj, None
+    return None, "platform_profile has unsupported type"
+
+
+def build_bounded_memory_obligation_from_terminals(
+    original_terminals: Sequence[Any],
+    candidate_terminals: Sequence[Any],
+    platform_profile: Mapping[str, Any] | str | Path | None = None,
+    *,
+    environment: MemoryEnvironment | None = None,
+    ranges: Sequence[tuple[int, int]] | None = None,
+    deadline: Deadline | None = None,
+    z3: Any | None = None,
+    default_width: int = 1,
+    include_equivalence_memory_constraints: bool = False,
+) -> dict[str, Any]:
+    """Stage 3A production builder: terminals → coverage / wraparound obligation.
+
+    Coverage discharge uses each terminal's path condition as the sole premise.
+    Do **not** pass :func:`~tools.ppc_equivalence.memory_profile.build_memory_constraints`
+    into the coverage query (``include_equivalence_memory_constraints`` must
+    stay ``False``). Reviewed ``platform_profile`` is required for
+    promotion-grade; ad-hoc / CLI ranges are scoped-assumption or incomplete;
+    SAT / unknown / timeout → incomplete.
+    """
+    if include_equivalence_memory_constraints:
+        raise ValueError(
+            "bounded-memory coverage must not include build_memory_constraints() "
+            "range assumptions; pass include_equivalence_memory_constraints=False"
+        )
+
+    profile_obj, profile_error = resolve_platform_profile(platform_profile)
+
+    # Ad-hoc CLI / environment ranges without a reviewed profile never promote.
+    ad_hoc_only = (
+        profile_obj is None
+        and (
+            ranges is not None
+            or (
+                environment is not None
+                and (
+                    is_bounded_with_ranges(environment)
+                    or environment.profile == MemoryProfile.ASSUMED_ORDINARY_RAM
+                )
+            )
+        )
+    )
+    if profile_obj is None and not ad_hoc_only:
+        return incomplete_bounded_memory_obligation(
+            reason=profile_error or "missing platform_profile",
+            source=SOURCE_INCOMPLETE,
+        )
+
+    if profile_obj is not None and not is_reviewed_platform_profile(profile_obj):
+        # Non-reviewed profile artifact → treat like ad-hoc (never promotion-grade).
+        obligation = build_bounded_memory_obligation(
+            original_terminals=original_terminals,
+            candidate_terminals=candidate_terminals,
+            platform_profile=None,
+            environment=environment,
+            ranges=ranges
+            if ranges is not None
+            else regions_to_ranges(profile_obj.get("regions", [])),
+            regions=list(profile_obj.get("regions", [])),
+            deadline=deadline,
+            z3=z3,
+        )
+        obligation["source"] = SOURCE_AD_HOC
+        if obligation.get("status") == "promotion-grade":
+            obligation["status"] = "scoped-assumption"
+        obligation["incomplete_reason"] = (
+            "platform_profile is not a reviewed hash-bound artifact"
+        )
+        obligation["platform_profile"] = str(
+            profile_obj.get("platform_profile", "")
+        )
+        obligation["profile_sha256"] = str(profile_obj.get("profile_sha256", ""))
+        return obligation
+
+    # Lift terminals here so default_width is honored (per-byte touches use 1).
+    orig_accesses = accesses_from_terminals(
+        original_terminals, default_width=default_width
+    )
+    cand_accesses = accesses_from_terminals(
+        candidate_terminals, default_width=default_width
+    )
+    obligation = build_bounded_memory_obligation(
+        original_accesses=orig_accesses,
+        candidate_accesses=cand_accesses,
+        platform_profile=profile_obj,
+        # When a reviewed profile is present, do not let ad-hoc environment
+        # ranges override promotion classification — profile regions win.
+        environment=None if profile_obj is not None else environment,
+        ranges=None if profile_obj is not None else ranges,
+        deadline=deadline,
+        z3=z3,
+    )
+
+    # SAT / unknown / timeout → incomplete (never promotion-grade).
+    side_results = []
+    for side in ("original", "candidate"):
+        block = obligation.get(side) or {}
+        for key in ("address_coverage", "wraparound", "rom_write"):
+            if key in block:
+                side_results.append(block[key].get("result"))
+    if any(result in ("sat", "unknown", "timeout") for result in side_results):
+        obligation["status"] = "incomplete"
+        obligation.setdefault(
+            "incomplete_reason",
+            "address-coverage or wraparound query was sat/unknown/timeout",
+        )
+    elif obligation.get("source") == SOURCE_AD_HOC:
+        # Ad-hoc CLI ranges: scoped-assumption when discharged, else incomplete.
+        if obligation.get("status") == "promotion-grade":
+            obligation["status"] = "scoped-assumption"
+    return obligation
 
 
 def build_bounded_memory_obligation(

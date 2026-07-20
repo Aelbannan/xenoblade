@@ -72,7 +72,10 @@ def _equivalent(**kwargs) -> ProofResult:
         engine_hash="a" * 64,
         certifier_hash="d" * 64,
         source_hash="b" * 64,
+        proof_request_hash="b" * 64,
+        validation_ledger_hash="e" * 64,
         git_commit="c" * 40,
+        git_dirty=False,
         opcodes_used=["addi", "blr"],
         memory_scope=MemoryScope(
             masking_semantics=MASKING_SEMANTICS,
@@ -99,9 +102,13 @@ def _manifest(**kwargs) -> CapabilityManifest:
 
 def _provenance_attestation(**overrides) -> CapabilityAttestation:
     evidence = {
+        "architecture_model": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
         "engine_hash": "a" * 64,
         "certifier_hash": "d" * 64,
         "source_hash": "b" * 64,
+        "proof_request_hash": "b" * 64,
+        "validation_ledger_hash": "e" * 64,
         "git_commit": "c" * 40,
         "git_dirty": False,
     }

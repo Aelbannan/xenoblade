@@ -433,6 +433,35 @@ class MemoryConfigHelpersTests(unittest.TestCase):
         assert empty is not None
         self.assertTrue(MemoryEnvironment.from_dict(empty).is_fail_closed_empty())
 
+    def test_platform_profile_from_config(self) -> None:
+        from tools.coop.lib.config import (
+            platform_profile_digest_from_config,
+            platform_profile_from_config,
+        )
+        from tools.ppc_equivalence.bounded_memory_obligations import (
+            PLATFORM_PROFILE_PROOF_REQUEST_FIELD,
+        )
+
+        self.assertEqual(
+            PLATFORM_PROFILE_PROOF_REQUEST_FIELD, "platform_profile_sha256"
+        )
+        self.assertIsNone(platform_profile_from_config(_config()))
+        self.assertIsNone(platform_profile_digest_from_config(_config()))
+        loaded = platform_profile_from_config(
+            _config(platform_profile="xenoblade-us-retail-v1")
+        )
+        self.assertIsNotNone(loaded)
+        assert loaded is not None
+        digest = platform_profile_digest_from_config(
+            _config(platform_profile="xenoblade-us-retail-v1")
+        )
+        self.assertEqual(digest, loaded["profile_sha256"])
+        self.assertIsNone(
+            platform_profile_from_config(
+                _config(platform_profile="missing-profile-v0")
+            )
+        )
+
 
 class CertificateReconstructionTests(unittest.TestCase):
     def test_proof_result_from_certificate_round_trip(self) -> None:

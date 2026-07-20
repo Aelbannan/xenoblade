@@ -260,8 +260,52 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   equivalence query. ``SymbolicOps`` ``execute_cfg(..., memory_bus=)`` routes
   concrete MMIO loads/stores through register banks and emits bounded GX FIFO
   write traces; FIFO reads and symbolic-loop×FIFO remain unsupported.
-  Final touched device state is an automatic observable. ``memory-bus`` remains
-  in ``UNSUPPORTED_FOR_EQUIVALENT`` (enablement gate not cleared).
+  Pure-MMIO symbolic routing exists; mixed RAM/ROM/MMIO symbolic addresses
+  remain fail-closed (``symbolic-mmio-mixed-address-space``). Loop-summary ×
+  FIFO has a hard rejection (``symbolic-loop-fifo-emission``); bounded
+  summarized emission is not supported. Both rejects are attested on the
+  ``memory_bus`` obligation (``loop_fifo_policy=hard-reject``,
+  ``mixed_space_symbolic_mmio=fail-closed``, ``cfg_rejection_reasons``) and
+  cannot coexist with ``status=discharged``. Final touched device state is an
+  automatic observable.
+- **Memory-bus (Track D unfreeze):** memory-bus was frozen because runtime
+  routing was ahead of proof-authorization. Pure-MMIO symbolic routing exists;
+  mixed RAM/ROM/MMIO symbolic addresses remain fail-closed. Loop-summary ×
+  FIFO hard-rejects; bounded summarized emission unsupported. Before/after
+  unfreeze: every memory-access family routes or produces an explicit
+  unsupported predicate; ``require_equivalent_ready`` requires
+  engine-generated ``memory_bus.status=discharged``. Architecture model stays
+  ``broadway-ppc32-be-v33`` (same discharged-gate pattern as Wave 5 affine /
+  memory-loop unfreeze — no bump solely for clearing the freeze list).
+- **Memory-bus discharged obligation (Track A):** `status=discharged` requires
+  schema v2 attestations — `bus_spec_sha256`, per-side unsupported-access
+  (`result=unsat` + `query_sha256` + solver metadata, **or** vacuous
+  `status=vacuously-discharged` / `reason=no-unsupported-predicates` with
+  `cfg_trace_sha256` + `access_coverage_sha256`), register-bank / FIFO theory
+  blocks (or explicit `none`), `device_state_in_compare`, and
+  `access_coverage.attested`. Empty CFG predicates must **not** be silently
+  rewritten as UNSAT; vacuous discharge is valid only with coverage
+  attestation. `require_equivalent_ready` demands `status=discharged` and
+  validator pass. Weak / forged algorithm-regions-only JSON fails closed;
+  discharged status is engine-generated via `build` + `enrich`, never trusted
+  from caller JSON alone for the live proof path.
+- **Memory-bus access families (Track B):** under ``memory_bus=``, every
+  memory-touching opcode family either routes through Concrete/Symbolic bus
+  helpers or raises a well-known ``ExecutionInconclusive`` /
+  unsupported-access reject — never a silent RAM fallback. Coverage API:
+  ``bus_access.record_bus_access_family`` / ``last_bus_access_coverage``
+  (families + rejections + ``access_coverage_sha256``) feeds Track A
+  ``access_coverage`` attestations.
+
+  | Family | Policy |
+  |---|---|
+  | Integer load/store | Routed (1/2/4) |
+  | Scalar FP (`lfs`/`lfd`/`stfiwx`/…) | Routed; **64-bit = two ordered BE 32-bit bus transactions** (atomic width-8 MMIO unsupported) |
+  | PSQ | **Rejected on MMIO** (`memory-bus-unsupported-access-family:psq-mmio`); RAM/ROM still execute |
+  | `lmw`/`stmw` | Routed as successive width-4 accesses |
+  | `dcbz`/`dcbz_l` | **Rejected when the 32-byte block may touch MMIO**; RAM zeroes via width-1 bus stores |
+  | Fixed EABI save/restore helpers | Routed; FPR helpers use the same split-64 policy |
+
 - **Memory bus (opt-in Tier C):** `memory_bus.py` routes concrete 1/2/4-byte
   loads/stores through ``AddressSpace`` regions to RAM backing
   (``ConcreteMemory``), immutable ROM images, or live MMIO ``DeviceModel``
@@ -562,11 +606,14 @@ obligation block. The schema is:
 
 Rules (enforced by `tools.ppc_equivalence.proof_features`):
 
-- **PR0 safety freeze (remaining):** `memory-bus` stays in
-  `UNSUPPORTED_FOR_EQUIVALENT` until Track C completes SymbolicOps MMIO CFG
-  discharge. **PR7 / Wave 5 Track B:** `relational-induction`,
-  `affine-loop-summary`, and `memory-loop-summary` may authorize `EQUIVALENT`
-  only under strict discharged obligations:
+- **PR0 safety freeze cleared (Track D):** `memory-bus` is removed from
+  `UNSUPPORTED_FOR_EQUIVALENT`. EQUIVALENT requires engine-generated
+  `memory_bus.status=discharged` with schema v2 attestations under
+  `require_equivalent_ready` (vacuous unsupported-access with coverage
+  digests; forged algorithm/regions-only JSON fails closed). **PR7 / Wave 5
+  Track B:** `relational-induction`, `affine-loop-summary`, and
+  `memory-loop-summary` may authorize `EQUIVALENT` only under strict
+  discharged obligations:
   - `relational-induction`: all five blocks carry independent UNSAT digests
     (`result=unsat`, `query_sha256`, solver metadata); SAT/unknown/timeout
     never discharges. Compare-affine uses counter-descending termination.

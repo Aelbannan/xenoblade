@@ -4,6 +4,21 @@ from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from typing import Any, Literal, Protocol
 
+from .bus_access import (
+    BUS_ACCESS_FAMILY_DCBZ,
+    BUS_ACCESS_FAMILY_EABI_HELPER,
+    BUS_ACCESS_FAMILY_INTEGER,
+    BUS_ACCESS_FAMILY_LMW,
+    BUS_ACCESS_FAMILY_PSQ,
+    BUS_ACCESS_FAMILY_SCALAR_FP,
+    REASON_PSQ_MMIO,
+    REASON_UNSUPPORTED_WIDTH_64,
+    begin_bus_access_coverage,
+    end_bus_access_coverage,
+    record_bus_access_family,
+    record_bus_access_rejection,
+    unsupported_family_reason,
+)
 from .deadline import Deadline, ProofDeadlineExceeded
 from .ir import (
     ExecutionInconclusive,
@@ -72,6 +87,127 @@ def active_fp_domain() -> FloatingPointDomain:
 
 def active_memory_bus() -> MemoryBus | None:
     return _MEMORY_BUS.get()
+
+
+def _access_may_touch_mmio(address: Any, width: int, ops: WordOps) -> bool:
+    """True when an active bus has MMIO that this access may reach.
+
+    Concrete addresses classify against ``AddressSpace``. Fully symbolic
+    addresses fail closed whenever any MMIO region is declared.
+    """
+    bus = active_memory_bus()
+    if bus is None or width <= 0:
+        return False
+    from tools.ppc_equivalence.address_space import RegionKind
+
+    mmio_regions = [r for r in bus.address_space.regions if r.kind is RegionKind.MMIO]
+    if not mmio_regions:
+        return False
+
+    concrete: int | None = None
+    if isinstance(ops, ConcreteOps):
+        concrete = int(address) & MASK32
+    elif isinstance(ops, SymbolicOps):
+        from tools.ppc_equivalence.symbolic_bus import concrete_u32
+
+        concrete = concrete_u32(address, ops.z3)
+    if concrete is None:
+        return True
+    try:
+        classification = bus.address_space.classify_range(concrete, width)
+    except ValueError:
+        return True
+    if classification.spans_multiple_regions:
+        return any(r.kind is RegionKind.MMIO for r in classification.regions)
+    region = classification.region
+    return region is not None and region.kind is RegionKind.MMIO
+
+
+def _bus_mem_load(
+    state: MachineState,
+    address: Any,
+    width: int,
+    ops: WordOps,
+    *,
+    family: str,
+    reverse: bool = False,
+) -> tuple[Any, MachineState]:
+    """Load 1/2/4 bytes through Concrete/Symbolic bus helpers when armed."""
+    if active_memory_bus() is not None:
+        record_bus_access_family(family)
+    if width not in (1, 2, 4):
+        # Atomic width-8+ MMIO is unsupported; callers must split to 32-bit words.
+        if active_memory_bus() is not None:
+            record_bus_access_rejection(REASON_UNSUPPORTED_WIDTH_64)
+            raise ExecutionInconclusive(REASON_UNSUPPORTED_WIDTH_64)
+        return _load(state.memory, address, width, ops, reverse=reverse), state
+    return _symbolic_bus_read(state, address, width, ops, reverse=reverse)
+
+
+def _bus_mem_store(
+    state: MachineState,
+    address: Any,
+    value: Any,
+    width: int,
+    ops: WordOps,
+    *,
+    family: str,
+    reverse: bool = False,
+) -> MachineState:
+    """Store 1/2/4 bytes through Concrete/Symbolic bus helpers when armed."""
+    if active_memory_bus() is not None:
+        record_bus_access_family(family)
+    if width not in (1, 2, 4):
+        if active_memory_bus() is not None:
+            record_bus_access_rejection(REASON_UNSUPPORTED_WIDTH_64)
+            raise ExecutionInconclusive(REASON_UNSUPPORTED_WIDTH_64)
+        return replace(
+            state,
+            memory=_store(state.memory, address, value, width, ops, reverse=reverse),
+        )
+    return _symbolic_bus_write(
+        state, address, value, width, ops, reverse=reverse,
+    )
+
+
+def _bus_mem_load64(
+    state: MachineState,
+    address: Any,
+    ops: WordOps,
+    *,
+    family: str,
+) -> tuple[Any, MachineState]:
+    """Load 8 bytes as two ordered big-endian 32-bit bus transactions.
+
+    Atomic 64-bit MMIO is unsupported; device effects are two width-4 accesses.
+    """
+    high, state = _bus_mem_load(state, address, 4, ops, family=family)
+    low, state = _bus_mem_load(
+        state, ops.add(address, ops.const(4)), 4, ops, family=family,
+    )
+    return ops.fp_join_words(high, low), state
+
+
+def _bus_mem_store64(
+    state: MachineState,
+    address: Any,
+    value64: Any,
+    ops: WordOps,
+    *,
+    family: str,
+) -> MachineState:
+    """Store 8 bytes as two ordered big-endian 32-bit bus transactions."""
+    state = _bus_mem_store(
+        state, address, ops.fp_high_word(value64), 4, ops, family=family,
+    )
+    return _bus_mem_store(
+        state,
+        ops.add(address, ops.const(4)),
+        ops.fp_low_word(value64),
+        4,
+        ops,
+        family=family,
+    )
 
 
 def _constrain_valid(
@@ -1664,52 +1800,76 @@ def _ni_flush_arith_result_bits64(
 
 
 def _psq_load_pair(
-    memory: Any, address: Any, w: int, qtype: Any, scale: Any, ops: WordOps,
-) -> tuple[Any, Any]:
+    state: MachineState,
+    address: Any,
+    w: int,
+    qtype: Any,
+    scale: Any,
+    ops: WordOps,
+) -> tuple[Any, Any, MachineState]:
     one_bits = ops.fp_const64(0x3FF0000000000000)
     zero_bits = ops.fp_const64(0)
     ps0, ps1 = zero_bits, one_bits
 
-    raw0 = _load(memory, address, 4, ops)
-    raw1 = _load(memory, ops.add(address, ops.const(4)), 4, ops)
+    raw0, state = _bus_mem_load(
+        state, address, 4, ops, family=BUS_ACCESS_FAMILY_PSQ,
+    )
+    raw1, state = _bus_mem_load(
+        state, ops.add(address, ops.const(4)), 4, ops, family=BUS_ACCESS_FAMILY_PSQ,
+    )
     float0 = ops.fp_double_to_bits(ops.fp_bits32_to_double(raw0))
     float1 = one_bits if w else ops.fp_double_to_bits(ops.fp_bits32_to_double(raw1))
     is_float = ops.eq(qtype, ops.const(0))
     ps0, ps1 = ops.ite(is_float, float0, ps0), ops.ite(is_float, float1, ps1)
 
     for type_code, (width, signed) in _PSQ_INTEGER_TYPES.items():
-        first = _load(memory, address, width, ops)
-        second = _load(memory, ops.add(address, ops.const(width)), width, ops)
+        first, state = _bus_mem_load(
+            state, address, width, ops, family=BUS_ACCESS_FAMILY_PSQ,
+        )
+        second, state = _bus_mem_load(
+            state, ops.add(address, ops.const(width)), width, ops,
+            family=BUS_ACCESS_FAMILY_PSQ,
+        )
         value0 = ops.fp_double_to_bits(ops.fp_dequantize_int(first, width * 8, signed, scale))
         value1 = one_bits if w else ops.fp_double_to_bits(
             ops.fp_dequantize_int(second, width * 8, signed, scale),
         )
         selected = ops.eq(qtype, ops.const(type_code))
         ps0, ps1 = ops.ite(selected, value0, ps0), ops.ite(selected, value1, ps1)
-    return ps0, ps1
+    return ps0, ps1, state
 
 
 def _psq_store_pair(
-    memory: Any, address: Any, w: int, qtype: Any, scale: Any,
-    ps0_bits: Any, ps1_bits: Any, ops: WordOps,
-) -> Any:
+    state: MachineState,
+    address: Any,
+    w: int,
+    qtype: Any,
+    scale: Any,
+    ps0_bits: Any,
+    ps1_bits: Any,
+    ops: WordOps,
+) -> MachineState:
     ps0 = ops.fp_bits_to_double(ps0_bits)
     ps1 = ops.fp_bits_to_double(ps1_bits)
     first32 = _psq_flush_single(ops.fp_double_to_f32_bits(ops.fp_rm_rne(), ps0), ops)
-    float_memory = _store(memory, address, first32, 4, ops)
+    # Quantized stores still use ite over memory snapshots. Under memory_bus= we
+    # already rejected MMIO spans; remaining RAM/ROM paths keep the prior model.
+    if active_memory_bus() is not None:
+        record_bus_access_family(BUS_ACCESS_FAMILY_PSQ)
+    float_memory = _store(state.memory, address, first32, 4, ops)
     if not w:
         second32 = _psq_flush_single(ops.fp_double_to_f32_bits(ops.fp_rm_rne(), ps1), ops)
         float_memory = _store(float_memory, ops.add(address, ops.const(4)), second32, 4, ops)
-    result = ops.ite(ops.eq(qtype, ops.const(0)), float_memory, memory)
+    result = ops.ite(ops.eq(qtype, ops.const(0)), float_memory, state.memory)
 
     for type_code, (width, signed) in _PSQ_INTEGER_TYPES.items():
         first = ops.fp_quantize_int(ps0, width * 8, signed, scale)
-        candidate = _store(memory, address, first, width, ops)
+        candidate = _store(state.memory, address, first, width, ops)
         if not w:
             second = ops.fp_quantize_int(ps1, width * 8, signed, scale)
             candidate = _store(candidate, ops.add(address, ops.const(width)), second, width, ops)
         result = ops.ite(ops.eq(qtype, ops.const(type_code)), candidate, result)
-    return result
+    return replace(state, memory=result)
 
 
 def _psq_domain(
@@ -2725,11 +2885,19 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         state = _constrain_valid(state, enabled, InvalidReason.CACHE_DISABLED, ops)
         address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
         block = ops.band(address, ops.const(0xFFFFFFE0))
+        # dcbz zeroes a 32-byte block. Under memory_bus=, route each byte through
+        # the bus (MMIO register banks typically reject width-1 → fail closed).
+        if active_memory_bus() is not None and _access_may_touch_mmio(block, 32, ops):
+            reason = unsupported_family_reason("dcbz-mmio")
+            record_bus_access_family(BUS_ACCESS_FAMILY_DCBZ)
+            record_bus_access_rejection(reason)
+            raise ExecutionInconclusive(reason)
         for offset in range(32):
             byte_address = ops.add(block, ops.const(offset))
             state = _touch_memory(state, byte_address, 1, ops, "write")
-            state = replace(
-                state, memory=ops.store_byte(state.memory, byte_address, ops.const(0)),
+            state = _bus_mem_store(
+                state, byte_address, ops.const(0), 1, ops,
+                family=BUS_ACCESS_FAMILY_DCBZ,
             )
         return state
 
@@ -2991,8 +3159,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         if op in LOADS:
             width, signed, update, reverse_bytes = LOADS[op]
             state = _touch_memory(state, address, width, ops, "read")
-            result, state = _symbolic_bus_read(
-                state, address, width, ops, reverse=reverse_bytes,
+            result, state = _bus_mem_load(
+                state, address, width, ops,
+                family=BUS_ACCESS_FAMILY_INTEGER, reverse=reverse_bytes,
             )
             if signed: result = _sign_extend(result, width * 8, ops)
             state = state.with_gpr(reg, result)
@@ -3001,8 +3170,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         width, update, reverse_bytes = STORES[op]
         state = _touch_memory(state, address, width, ops, "write")
         state = _mark_stack_pointer_escape(state, state.gpr[reg], ops)
-        state = _symbolic_bus_write(
-            state, address, state.gpr[reg], width, ops, reverse=reverse_bytes,
+        state = _bus_mem_store(
+            state, address, state.gpr[reg], width, ops,
+            family=BUS_ACCESS_FAMILY_INTEGER, reverse=reverse_bytes,
         )
         if update: state = state.with_gpr(ra, address)
         return state
@@ -3021,18 +3191,24 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             fpr_bits = state.fpr[rt]
             value32 = ops.fp_low_word(fpr_bits)
             state = _touch_memory(state, address, 4, ops, "write")
-            state = replace(state, memory=_store(state.memory, address, value32, 4, ops))
+            state = _bus_mem_store(
+                state, address, value32, 4, ops,
+                family=BUS_ACCESS_FAMILY_SCALAR_FP,
+            )
             return state
         if is_load:
             update = op in (Opcode.LFSU, Opcode.LFDU, Opcode.LFSUX, Opcode.LFDUX)
             state = _touch_memory(state, address, width, ops, "read")
             if width == 4:
-                raw = _load(state.memory, address, 4, ops)
+                raw, state = _bus_mem_load(
+                    state, address, 4, ops, family=BUS_ACCESS_FAMILY_SCALAR_FP,
+                )
                 result = ops.fp_double_to_bits(ops.fp_bits32_to_double(raw))
             else:
-                high = _load(state.memory, address, 4, ops)
-                low = _load(state.memory, ops.add(address, ops.const(4)), 4, ops)
-                result = ops.fp_join_words(high, low)
+                # 64-bit FP: two ordered BE 32-bit bus transactions (not atomic-64 MMIO).
+                result, state = _bus_mem_load64(
+                    state, address, ops, family=BUS_ACCESS_FAMILY_SCALAR_FP,
+                )
             state = state.with_fpr(rt, result)
             if width == 4:
                 state = state.with_ps1(rt, result)
@@ -3045,12 +3221,15 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             if width == 4:
                 rm = ops.fp_rm_from_rn(ops.band(state.fpscr, ops.const(3)))
                 bits32 = ops.fp_double_to_f32_bits(rm, ops.fp_bits_to_double(fpr_bits))
-                state = replace(state, memory=_store(state.memory, address, bits32, 4, ops))
+                state = _bus_mem_store(
+                    state, address, bits32, 4, ops,
+                    family=BUS_ACCESS_FAMILY_SCALAR_FP,
+                )
             else:
-                state = replace(state, memory=_store(state.memory, address, ops.fp_high_word(fpr_bits), 4, ops))
-                state = replace(state, memory=_store(
-                    state.memory, ops.add(address, ops.const(4)), ops.fp_low_word(fpr_bits), 4, ops,
-                ))
+                state = _bus_mem_store64(
+                    state, address, fpr_bits, ops,
+                    family=BUS_ACCESS_FAMILY_SCALAR_FP,
+                )
             if update: state = state.with_gpr(ra, address)
             return state
 
@@ -3481,11 +3660,22 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
             is_psq_load = op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX)
             gqr = state.gqr[i]
+            # PSQ quantizes via speculative multi-width loads/stores; MMIO side
+            # effects cannot be modeled soundly → fail closed when bus+MMIO.
+            psq_span = 4 if w else 8
+            if active_memory_bus() is not None and _access_may_touch_mmio(
+                address, psq_span, ops,
+            ):
+                record_bus_access_family(BUS_ACCESS_FAMILY_PSQ)
+                record_bus_access_rejection(REASON_PSQ_MMIO)
+                raise ExecutionInconclusive(REASON_PSQ_MMIO)
             if is_psq_load:
                 qtype = ops.band(ops.lshr(gqr, ops.const(16)), ops.const(7))
                 scale = ops.band(ops.lshr(gqr, ops.const(24)), ops.const(0x3F))
                 state = _psq_domain(state, address, w, qtype, ops, "read")
-                ps0_bits, ps1_bits = _psq_load_pair(state.memory, address, w, qtype, scale, ops)
+                ps0_bits, ps1_bits, state = _psq_load_pair(
+                    state, address, w, qtype, scale, ops,
+                )
                 state = state.with_fpr(rs, ps0_bits).with_ps1(rs, ps1_bits)
             else:
                 qtype = ops.band(gqr, ops.const(7))
@@ -3503,10 +3693,10 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                     InvalidReason.PSQ_NONFINITE_INTEGER_STORE,
                     ops,
                 )
-                state = replace(state, memory=_psq_store_pair(
-                    state.memory, address, w, qtype, scale,
+                state = _psq_store_pair(
+                    state, address, w, qtype, scale,
                     state.fpr[rs], state.ps1[rs], ops,
-                ))
+                )
             update = op in (Opcode.PSQ_LU, Opcode.PSQ_STU, Opcode.PSQ_LUX, Opcode.PSQ_STUX)
             if update:
                 state = state.with_gpr(ra, address)
@@ -3780,11 +3970,17 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         for index in range(reg, 32):
             if op == Opcode.LMW:
                 state = _touch_memory(state, address, 4, ops, "read")
-                state = state.with_gpr(index, _load(state.memory, address, 4, ops))
+                value, state = _bus_mem_load(
+                    state, address, 4, ops, family=BUS_ACCESS_FAMILY_LMW,
+                )
+                state = state.with_gpr(index, value)
             else:
                 state = _touch_memory(state, address, 4, ops, "write")
                 state = _mark_stack_pointer_escape(state, state.gpr[index], ops)
-                state = replace(state, memory=_store(state.memory, address, state.gpr[index], 4, ops))
+                state = _bus_mem_store(
+                    state, address, state.gpr[index], 4, ops,
+                    family=BUS_ACCESS_FAMILY_LMW,
+                )
             address = ops.add(address, ops.const(4))
         return state
     elif op in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
@@ -3876,11 +4072,31 @@ def _apply_call_summary(
                 value = state.fpr[index] if is_fpr else state.gpr[index]
                 if not is_fpr:
                     result = _mark_stack_pointer_escape(result, value, ops)
-                result = replace(result, memory=_store(result.memory, address, value, width, ops))
+                if is_fpr:
+                    # FPR helpers: two ordered BE 32-bit bus transactions.
+                    result = _bus_mem_store64(
+                        result, address, value, ops,
+                        family=BUS_ACCESS_FAMILY_EABI_HELPER,
+                    )
+                else:
+                    result = _bus_mem_store(
+                        result, address, value, 4, ops,
+                        family=BUS_ACCESS_FAMILY_EABI_HELPER,
+                    )
             else:
                 result = _touch_memory(result, address, width, ops, "read")
-                value = _load(result.memory, address, width, ops)
-                result = result.with_fpr(index, value) if is_fpr else result.with_gpr(index, value)
+                if is_fpr:
+                    value, result = _bus_mem_load64(
+                        result, address, ops,
+                        family=BUS_ACCESS_FAMILY_EABI_HELPER,
+                    )
+                    result = result.with_fpr(index, value)
+                else:
+                    value, result = _bus_mem_load(
+                        result, address, 4, ops,
+                        family=BUS_ACCESS_FAMILY_EABI_HELPER,
+                    )
+                    result = result.with_gpr(index, value)
         # Helpers are calls: disable private-stack masking per the memory model.
         return replace(result, stack_private=ops.bool(False))
     callee = str(call_id)
@@ -4029,6 +4245,9 @@ def execute_cfg(
     domain.validate()
     domain_token = _FP_DOMAIN.set(domain)
     bus_token = _MEMORY_BUS.set(memory_bus)
+    coverage_armed = memory_bus is not None
+    if coverage_armed:
+        begin_bus_access_coverage()
     try:
         if memory_bus is not None:
             memory_bus.ram = state.memory
@@ -4064,6 +4283,11 @@ def execute_cfg(
             memory_summaries_used=memory_summaries_used,
         )
     finally:
+        if coverage_armed:
+            # Snapshot retained on ContextVar until next begin; callers that need
+            # the digest should call end_bus_access_coverage() / observed_* APIs.
+            # Closing here resets so nested runs do not leak families.
+            end_bus_access_coverage()
         _MEMORY_BUS.reset(bus_token)
         _FP_DOMAIN.reset(domain_token)
 

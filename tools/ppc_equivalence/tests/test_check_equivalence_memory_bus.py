@@ -58,9 +58,12 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
             candidate_hex="00",
             memory_bus=bus,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIn("memory-bus", result.proof_features)
         self.assertIsNotNone(result.memory_bus)
+        assert result.memory_bus is not None
+        self.assertEqual(result.memory_bus.get("status"), "discharged")
+        self.assertEqual(result.memory_bus.get("mmio"), "cfg-routed")
 
     def test_rom_write_inconclusive_with_memory_bus(self) -> None:
         bus, _ = _rom_bus()
@@ -141,8 +144,8 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
         self.assertEqual(result.concrete_sampling["samples_requested"], 2)
         self.assertFalse(result.concrete_sampling["mismatch_found"])
 
-    def test_mmio_access_inconclusive_symbolic_fail_closed(self) -> None:
-        """MMIO CFG routing is live; feature stays frozen for EQUIVALENT."""
+    def test_mmio_access_equivalent_when_discharged(self) -> None:
+        """Track D: pure-MMIO CFG with vacuous unsupported-access → EQUIVALENT."""
         bus = _mmio_bank_bus()
         program = [
             _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
@@ -158,16 +161,60 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
             candidate_hex="00",
             memory_bus=bus,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIn("memory-bus", result.proof_features)
         assert result.memory_bus is not None
-        self.assertEqual(result.memory_bus.get("mmio"), "cfg-routed-frozen")
+        self.assertEqual(result.memory_bus.get("mmio"), "cfg-routed")
         self.assertEqual(result.memory_bus.get("symbolic_mmio"), "cfg-routed")
         self.assertIn("register_bank_extensional", result.memory_bus)
         self.assertIn("bus_spec_sha256", result.memory_bus)
         unsupported = result.memory_bus.get("unsupported_access") or {}
-        self.assertEqual(unsupported.get("original", {}).get("result"), "unsat")
-        self.assertEqual(unsupported.get("candidate", {}).get("result"), "unsat")
+        # Supported concrete register: no unsupported predicates ⇒ vacuous, not forged UNSAT.
+        for side in ("original", "candidate"):
+            side_block = unsupported.get(side) or {}
+            self.assertEqual(
+                side_block.get("status"),
+                "vacuously-discharged",
+                side_block,
+            )
+            self.assertEqual(side_block.get("reason"), "no-unsupported-predicates")
+            self.assertIsInstance(side_block.get("cfg_trace_sha256"), str)
+            self.assertEqual(len(side_block["cfg_trace_sha256"]), 64)
+            self.assertIsInstance(side_block.get("access_coverage_sha256"), str)
+            self.assertEqual(len(side_block["access_coverage_sha256"]), 64)
+        self.assertEqual(result.memory_bus.get("status"), "discharged")
+        self.assertEqual(result.memory_bus.get("schema_version"), 2)
+        self.assertIn("access_coverage", result.memory_bus)
+        self.assertTrue(result.memory_bus["access_coverage"].get("attested"))
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            validate_memory_bus_obligation,
+            symbolic_mmio_still_fail_closed,
+        )
+        from tools.ppc_equivalence.proof_features import UNSUPPORTED_FOR_EQUIVALENT
+
+        self.assertIsNone(validate_memory_bus_obligation(result.memory_bus))
+        self.assertNotIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertFalse(symbolic_mmio_still_fail_closed())
+
+    def test_forged_weak_memory_bus_obligation_demotes(self) -> None:
+        """Negative: caller-forged regions-only discharged JSON cannot authorize."""
+        from tools.ppc_equivalence.proof_features import enforce_equivalent_proof_features
+        from tools.ppc_equivalence.result import ProofResult
+
+        forged = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            proof_features=["memory-bus"],
+            memory_bus={
+                "algorithm": "memory-bus-v1",
+                "status": "discharged",
+                "regions": [{"kind": "ram", "start": 0, "end": 0xFF}],
+            },
+        )
+        gated = enforce_equivalent_proof_features(forged)
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertTrue(
+            any("memory_bus" in w or "discharged" in w for w in gated.warnings)
+        )
 
     def test_unsupported_mmio_gap_inconclusive(self) -> None:
         """Reachable access to undeclared MMIO offset ⇒ unsupported-access SAT."""

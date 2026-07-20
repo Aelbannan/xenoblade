@@ -1401,7 +1401,7 @@ def _check_equivalence_impl(
     except ProofDeadlineExceeded as exc:
         return _early_timeout(exc.phase)
     except ExecutionInconclusive as exc:
-        return ProofResult(
+        early = ProofResult(
             status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
             contract=contract.name,
             contract_resolution=contract.resolution_dict(),
@@ -1415,6 +1415,21 @@ def _check_equivalence_impl(
             floating_point_domain=domain,
             source_hash=source_hash,
         )
+        # Track C: loop×FIFO hard-reject must still attest on the obligation
+        # (CFG raises before terminals exist).
+        if memory_bus is not None:
+            early.proof_features = ["memory-bus"]
+            loop_fifo = "symbolic-loop-fifo" in str(exc)
+            obligation = build_memory_bus_obligation(memory_bus)
+            early.memory_bus = enrich_memory_bus_obligation_with_symbolic_mmio(
+                obligation,
+                memory_bus,
+                loop_summaries_active=loop_fifo or bool(
+                    original_affine or candidate_affine
+                    or original_memory or candidate_memory
+                ),
+            )
+        return early
     if assumed_callees_used is not None:
         assumed_callees_used.update(callees_used)
 
@@ -1659,6 +1674,11 @@ def _check_equivalence_impl(
                 candidate_terminals=candidate_exits,
                 ops=ops,
                 deadline=deadline,
+                loop_summaries_active=bool(
+                    affine_used or memory_used
+                    or original_affine or candidate_affine
+                    or original_memory or candidate_memory
+                ),
             )
             unsupported = (early.memory_bus or {}).get("unsupported_access") or {}
             for side in ("original", "candidate"):
@@ -1682,6 +1702,18 @@ def _check_equivalence_impl(
                 early.unsupported.append(reason)
                 early.warnings.append(reason)
                 early.abstractions.append("symbolic-mmio-cfg-rejection")
+            # Engine-built obligation only: demote when discharge incomplete.
+            bus_status = (early.memory_bus or {}).get("status")
+            if bus_status != "discharged" and early.status is ProofStatus.EQUIVALENT:
+                reason = (
+                    f"memory-bus obligation status={bus_status!r} "
+                    "(requires engine-generated discharged)"
+                )
+                early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                early.unsupported.append(reason)
+                early.warnings.append(reason)
+                early.abstractions.append("memory-bus-discharge-incomplete")
+
         if jump_table is not None:
             early.proof_features = ["readonly-image", "indirect-target-closure"]
             if jump_table_bundle is not None:

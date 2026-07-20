@@ -279,7 +279,7 @@ class RelationalSmtDischargeTests(unittest.TestCase):
     def test_relational_feature_unfrozen(self) -> None:
         self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
-        self.assertIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_failed_smt_bundle_does_not_claim_discharged(self) -> None:
         """Force a SAT initiation query and ensure status stays failed."""

@@ -329,7 +329,7 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
     def test_feature_is_unfrozen_with_discharge_gate(self) -> None:
         self.assertNotIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
-        self.assertIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_malformed_obligation_rejected(self) -> None:
         reason = validate_proof_features(

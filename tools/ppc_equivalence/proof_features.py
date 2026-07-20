@@ -13,15 +13,14 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-# PR0 safety freeze remainder: memory-bus stays unsupported (Track C).
+# Track D: memory-bus unfrozen — EQUIVALENT only when engine-built obligations
+# carry status=discharged + schema v2 attestations (see validate_memory_bus_obligation).
 # Jump-table readonly-image + indirect-target-closure are discharged
 # independently (PR3). Relational-induction is discharged via five independent
 # UNSAT queries (PR7). Affine + memory-loop summaries authorize EQUIVALENT only
 # when obligations validate with status=discharged and matching digests
 # (Wave 5 Track B); coverage=applied / recognition alone never authorizes.
-UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
-    "memory-bus",
-})
+UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
 
 # Canonical proof-feature names and their required top-level obligation keys.
 FEATURE_OBLIGATION_KEYS: dict[str, str] = {
@@ -213,6 +212,13 @@ def validate_proof_features(
             reason = validate_memory_bus_obligation(obligation)
             if reason is not None:
                 return reason
+            # Strict discharged gate: engine must have produced status=discharged
+            # with schema v2 attestations (digests / vacuous coverage / etc.).
+            if require_equivalent_ready and obligation.get("status") != "discharged":
+                return (
+                    "memory_bus.status must be 'discharged' "
+                    "for EQUIVALENT proofs"
+                )
         if feature == "readonly-image":
             from tools.ppc_equivalence.jump_table_obligations import (
                 validate_readonly_image_obligation,

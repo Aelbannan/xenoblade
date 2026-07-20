@@ -48,7 +48,13 @@ def main(argv: list[str] | None = None) -> int:
             command.add_argument(
                 "--number",
                 type=int,
-                help=f"Automatically select this many {name} targets",
+                help=(
+                    "Automatically select this many fresh placeholder targets"
+                    if name == "new"
+                    else "Automatically select this many non-accepted (not FULL/EQUIVALENT) targets"
+                    if name in {"improve", "solve"}
+                    else f"Automatically select this many {name} targets"
+                ),
             )
         if name in {"improve", "tu-complete"}:
             command.add_argument(
@@ -332,12 +338,18 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(args, "number", None) is not None:
             if args.target_id is not None:
                 parser.error("solve accepts either target_id or --number, not both")
-            target_ids = harness.select_new_targets(
-                args.number,
-                ignore_called_functions=False,
-                certified_funcs=getattr(args, "certified_funcs", False),
-                tu=getattr(args, "tu", None),
-            )
+            if args.number < 1:
+                parser.error("--number must be positive")
+            try:
+                # Same pool as improve: any non-FULL/EQUIVALENT mismatching function.
+                target_ids = harness.select_targets(
+                    "solve",
+                    args.number,
+                    certified_funcs=getattr(args, "certified_funcs", False),
+                    tu=getattr(args, "tu", None),
+                )
+            except (TypeError, ValueError) as exc:
+                parser.error(str(exc))
             for target_id in target_ids:
                 print(harness.solve(
                     target_id,
@@ -350,7 +362,7 @@ def main(argv: list[str] | None = None) -> int:
         if tu:
             if args.target_id is not None:
                 parser.error("solve accepts either target_id or --tu, not both")
-            target_ids = harness.target_ids_for_unit(tu, "new")
+            target_ids = harness.target_ids_for_unit(tu, "solve")
             if not target_ids:
                 parser.error(f"No eligible solve targets found in unit {tu!r}")
             for target_id in target_ids:

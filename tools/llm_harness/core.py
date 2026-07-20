@@ -776,8 +776,8 @@ class Harness:
         tu: Optional[str] = None,
     ) -> List[str]:
         """Ask the project adapter for an automatic workflow target selection, optionally filtered to a TU."""
-        if workflow not in {"improve", "tu-complete"}:
-            raise ValueError("Automatic selection supports improve or tu-complete")
+        if workflow not in {"improve", "solve", "tu-complete"}:
+            raise ValueError("Automatic selection supports improve, solve, or tu-complete")
         if number < 1:
             raise ValueError("number must be positive")
         select = getattr(self.adapter, "select_targets", None)

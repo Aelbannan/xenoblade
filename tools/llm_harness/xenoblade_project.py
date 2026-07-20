@@ -137,7 +137,7 @@ class XenobladeAdapter:
 
     def target_ids_for_unit(self, unit_name: str, workflow: str) -> List[str]:
         """Return all eligible target IDs in a translation unit for a given workflow."""
-        if workflow not in {"new", "improve", "tu-complete"}:
+        if workflow not in {"new", "improve", "solve", "tu-complete"}:
             raise ValueError(f"Unsupported workflow: {workflow}")
         raw_targets = load_targets(self.config)
         source_cache: Dict[Path, str] = {}
@@ -153,9 +153,11 @@ class XenobladeAdapter:
             if target.source is None or not target.source.is_file():
                 continue
             if workflow == "new":
+                # Greenfield slots only — empty/placeholder NOT_STARTED work.
                 if target.status in done or target.status != "NOT_STARTED":
                     continue
-            elif workflow == "improve":
+            elif workflow in {"improve", "solve"}:
+                # Any non-accepted function with a source region.
                 if target.status in done:
                     continue
             if workflow != "tu-complete" and target.status in done:
@@ -421,8 +423,9 @@ class XenobladeAdapter:
         self, workflow: str, number: int, *, randomize: bool = False, certified_funcs: bool = False,
         tu: Optional[str] = None,
     ) -> List[str]:
-        if workflow == "improve":
-            candidates = self._improve_candidates(certified_funcs=certified_funcs, tu=tu)
+        if workflow in {"improve", "solve"}:
+            # Both pick non-accepted (not FULL/EQUIVALENT) mismatching functions.
+            candidates = self._non_accepted_candidates(certified_funcs=certified_funcs, tu=tu)
         elif workflow == "tu-complete":
             candidates = self._tu_completion_candidates()
         else:
@@ -456,7 +459,10 @@ class XenobladeAdapter:
             or all(fid in certified_ids for fid in t.extra.get("called_functions", []))
         ]
 
-    def _improve_candidates(self, *, certified_funcs: bool = False, tu: Optional[str] = None) -> List[str]:
+    def _non_accepted_candidates(
+        self, *, certified_funcs: bool = False, tu: Optional[str] = None
+    ) -> List[str]:
+        """Targets that are not FULL_MATCH/EQUIVALENT_MATCH and still mismatch retail."""
         selected: List[str] = []
         source_cache: Dict[Path, str] = {}
         units = self.project.load_objdiff_units()
@@ -467,9 +473,10 @@ class XenobladeAdapter:
         }
         retail_symbols: Dict[Path, set[str]] = {}
         raw_targets = load_targets(self.config)
+        candidates: List[Target] = []
         for target in raw_targets:
             if (
-                target.status in {"FULL_MATCH", "EQUIVALENT_MATCH"}
+                target.status in ACCEPTED_MATCH_STATUSES
                 or not target.buildable
                 or not target.symbol
                 or target.source is None
@@ -509,13 +516,14 @@ class XenobladeAdapter:
                     continue
             except (OSError, ValueError):
                 continue
-            selected.append(target.id)
+            candidates.append(target)
         if certified_funcs:
-            selected = [
-                tid for tid in selected
-                if tid in {t.id for t in self._filter_certified_funcs(raw_targets, raw_targets)}
-            ]
-        return selected
+            candidates = self._filter_certified_funcs(raw_targets, candidates)
+        return [target.id for target in candidates]
+
+    def _improve_candidates(self, *, certified_funcs: bool = False, tu: Optional[str] = None) -> List[str]:
+        """Alias kept for callers/tests; prefer `_non_accepted_candidates`."""
+        return self._non_accepted_candidates(certified_funcs=certified_funcs, tu=tu)
 
     def _tu_completion_candidates(self) -> List[str]:
         report_path = self.config.resolve(self.config.report_cache)

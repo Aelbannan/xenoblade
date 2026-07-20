@@ -14,8 +14,9 @@
 families (ConcreteOps + SymbolicOps arith/fused) behind
 `SCALAR_FP_EXACT_V2=0` (default off). **Final Tier A definition of done is NOT
 met.** Production still uses `broadway-fp-*-v1` / `broadway-fp-scalar-v2`.
-Remaining: non-RNE/NI=1 Dolphin capture, full symbolic finite payload formulas,
-production switch / `ARCHITECTURE_MODEL` bump, and residual cert debt.
+Remaining: live Dolphin attestation for NI=1/non-RNE (exact-kernel supplements
+exist), symbolic fdiv/fused payloads, production switch /
+`ARCHITECTURE_MODEL` bump, and residual cert debt (~7 queued).
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -26,12 +27,12 @@ production switch / `ARCHITECTURE_MODEL` bump, and residual cert debt.
 | 4 | FPSCR transitions | **DONE (experimental)** — `apply_fpscr_transition` shared path |
 | 5 | NI behavior | **DONE (experimental)** — live FPSCR NI + expanded ops |
 | 6 | Remaining scalar families | **DONE (experimental)** — compare/convert/estimate/loadstore wired in semantics |
-| 7 | Symbolic backend | **Advanced** — SymbolicOps blocked from native Z3 FP for arith/fused when flag on; fixed-input parity tests; full payload-accurate symbolic finite arith still open |
+| 7 | Symbolic backend | **Advanced** — payload-accurate symbolic fadd/fmul/fsub via `fp_exact_symbolic_arith.py`; fdiv/fused still fail-closed / class-macro |
 | 8 | FE0/FE1 traps | **DONE (experimental)** — all four modes + pending state on `MachineState`; production ledger fail-closed |
 | 9 | Fused arithmetic | **DONE (experimental)** — `fp_exact_fused` + semantics + promotion-capable grader |
 | 10 | Production obligations | **DONE scaffolding** — schema v2 + forgery tests (not production-promoted) |
-| 11 | Independent corpora | **Advanced** — 129 replay rows (88 Broadway-harvested); gaps: NI=1, non-RNE, live Dolphin re-capture |
-| 12 | Production switch | **Plumbing only** — canary manifest example; production NOT switched; model NOT bumped |
+| 11 | Independent corpora | **Advanced** — 164 replay rows incl. NI=1 + RTZ/RIP/RIM exact-kernel supplements; live Dolphin re-capture still open |
+| 12 | Production switch | **Plumbing only** — readiness gate + canary manifest; production NOT switched; model NOT bumped |
 
 ### Key module map (landed)
 
@@ -49,7 +50,7 @@ production switch / `ARCHITECTURE_MODEL` bump, and residual cert debt.
 | `fp_exact_fused.py` / `fp_fused_obligations.py` | Fused exact kernel + grader (Phase 9) |
 | `fp_scalar_obligations_v2.py` | Certificate schema v2 (Phase 10) |
 | `corpora/scalar_fp_v2/` | Placeholder corpora (Phase 11) |
-| `scalar_fp_v2_rollout.py` | Phase 12 rollout plumbing + canary targets |
+| `scalar_fp_v2_rollout.py` | Phase 12 rollout plumbing, canary targets, `--readiness` gate |
 
 ## Central requirement
 
@@ -394,9 +395,53 @@ corpus/version/hash in `validation_ledger.yaml`.
 
 ### Phase 12 — production switch and rollout
 
-1. Switch production execution to the exact model.
-2. Bump `ARCHITECTURE_MODEL`, `RESULT_FORMAT` (if needed),
-   `EQUIVALENCE_CERTIFICATE_VERSION`, and FP model/oracle versions.
+**Status (2026-07-21): plumbing only.** Production execution, authoritative
+manifest allowlists, and `ARCHITECTURE_MODEL` remain unchanged. Use the readiness
+gate before any operator-driven allowlist edit:
+
+```bash
+# Use the pinned equivalence venv (z3, PyYAML required for phase_test_suite).
+EQ=tools/ppc_equivalence/.venv/bin/python
+$EQ -m tools.ppc_equivalence.scalar_fp_v2_rollout --readiness
+$EQ -m tools.ppc_equivalence.scalar_fp_v2_rollout --readiness --json
+```
+
+The gate checks (honest infrastructure probes, not a promotion claim):
+
+| Check | Meaning |
+|---|---|
+| `corpus_check` | `scalar_fp_v2_corpus --check` replay green |
+| `phase_test_suite` | Phase 0–12 unit-test modules importable |
+| `experimental_models` | `FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS` complete for allowlist order |
+| `canary_targets` | Census target ids exist in `tools/coop/targets.json` |
+| `shadow_manifest` | Canary template valid (`shadow_mode`, empty FP allowlists) |
+| `fe0_fe1_status` | `fe0_fe1_modeling_status()` wired when `SCALAR_FP_EXACT_V2=1` |
+| `unsupported_query_helper` | `scalar_fp_unsupported_query` present |
+
+`production_switch_ready` stays **false** until explicit future work completes.
+`enable_scalar_fp_exact_v2_production()` validates gates then raises
+`NotImplementedError` — do not call it expecting a live switch.
+
+#### What remains before the first allowlist entry (honest)
+
+1. **Independent corpora gaps** — NI=1 rows and non-RNE Dolphin capture are
+   still incomplete; interim `oracle_rne_interim` / fixture rows are not
+   promotion-grade evidence alone.
+2. **Symbolic payload** — full finite-domain symbolic arithmetic formulas and
+   UNSAT unsupported-remainder proofs remain open (Phase 7 exit).
+3. **Certificate / recert debt** — bottom-up recertify queue and blocked
+   targets must clear before any capability enters an authoritative manifest.
+4. **Architecture bump** — `ARCHITECTURE_MODEL`, `RESULT_FORMAT` (if needed),
+   `EQUIVALENCE_CERTIFICATE_VERSION`, and FP model/oracle versions must bump
+   in lockstep when production switches (not done yet).
+5. **Production wiring** — execution path from manifest allowlist → exact-v2
+   semantics in the certifier/engine; today only the experimental env flag
+   selects v2 behavior.
+
+#### Rollout sequence (after the above)
+
+1. Switch production execution to the exact model (one capability at a time).
+2. Bump architecture / result / certificate identities.
 3. Regenerate corpora and ledger hashes.
 4. Full CI + Dolphin validation.
 5. Bottom-up recertification before any new allowlist entry.

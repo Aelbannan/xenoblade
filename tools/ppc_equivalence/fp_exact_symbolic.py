@@ -214,6 +214,13 @@ def _exact_arith_result_bits_bv(
             return _bv64(ops, outcome.result_bits)
 
     name = str(opcode)
+    if name in ("fadd", "fadds", "fsub", "fsubs", "fmul", "fmuls"):
+        from .fp_exact_symbolic_arith import exact_arith_result_bits_bv
+
+        payload = exact_arith_result_bits_bv(name, a_bits, b_bits, c_bits, fpscr, ops)
+        if payload is not None:
+            return payload
+
     if name in ("fmul", "fmuls"):
         left, right = a_bits, c_bits
     else:

@@ -12,14 +12,23 @@ from tools.ppc_equivalence.fp_capabilities import (
     set_scalar_fp_exact_v2_module_flag,
 )
 from tools.ppc_equivalence.scalar_fp_v2_rollout import (
+    PRODUCTION_SWITCH_BLOCKERS,
     SCALAR_FP_V2_ALLOWLIST_ORDER,
     SCALAR_FP_V2_CANARY_TARGETS,
+    SCALAR_FP_V2_PHASE_TEST_MODULES,
     ScalarFPExactV2ProductionError,
+    ReadinessCheck,
+    ReadinessReport,
+    check_experimental_models_defined,
+    check_phase_test_suite_importable,
     enable_scalar_fp_exact_v2_production,
+    format_readiness_report,
     list_recommended_canary_targets,
     load_scalar_fp_v2_canary_manifest,
+    readiness_report,
     recommended_canary_target_ids,
     scalar_fp_v2_production_preconditions,
+    validate_shadow_manifest,
 )
 
 _MANIFEST = (
@@ -120,6 +129,63 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
         finally:
             tmp.unlink(missing_ok=True)
             os.environ.pop("SCALAR_FP_EXACT_V2_PRODUCTION", None)
+
+    def test_readiness_report_structure(self) -> None:
+        report = readiness_report(run_corpus_check=False)
+        self.assertIsInstance(report, ReadinessReport)
+        self.assertEqual(report.schema_version, 1)
+        self.assertFalse(report.production_switch_ready)
+        self.assertFalse(report.production_enabled)
+        self.assertGreaterEqual(len(report.checks), 7)
+        check_names = {item.name for item in report.checks}
+        self.assertTrue(
+            {
+                "corpus_check",
+                "phase_test_suite",
+                "experimental_models",
+                "canary_targets",
+                "shadow_manifest",
+                "fe0_fe1_status",
+                "unsupported_query_helper",
+            }
+            <= check_names,
+        )
+        for item in report.checks:
+            self.assertIsInstance(item, ReadinessCheck)
+            self.assertIsInstance(item.ok, bool)
+            self.assertIsInstance(item.summary, str)
+        self.assertTrue(report.blockers)
+        self.assertTrue(any("NotImplemented" in b for b in report.blockers))
+        payload = report.to_dict()
+        self.assertIn("checks", payload)
+        self.assertIn("blockers", payload)
+        self.assertFalse(payload["production_switch_ready"])
+
+    def test_readiness_report_blockers_are_honest(self) -> None:
+        self.assertIn("ARCHITECTURE_MODEL", " ".join(PRODUCTION_SWITCH_BLOCKERS))
+        self.assertIn("NI=1", " ".join(PRODUCTION_SWITCH_BLOCKERS))
+
+    def test_phase_test_modules_importable(self) -> None:
+        ok, failures = check_phase_test_suite_importable()
+        self.assertTrue(ok, msg=str(failures))
+        self.assertEqual(len(SCALAR_FP_V2_PHASE_TEST_MODULES), 12)
+
+    def test_experimental_models_cover_allowlist_order(self) -> None:
+        ok, missing = check_experimental_models_defined()
+        self.assertTrue(ok, msg=str(missing))
+        for capability in SCALAR_FP_V2_ALLOWLIST_ORDER:
+            self.assertNotIn(capability, missing)
+
+    def test_shadow_manifest_validates(self) -> None:
+        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST)
+        ok, reasons = validate_shadow_manifest(manifest)
+        self.assertTrue(ok, msg=str(reasons))
+
+    def test_format_readiness_report_includes_blockers(self) -> None:
+        report = readiness_report(run_corpus_check=False)
+        text = format_readiness_report(report)
+        self.assertIn("production_switch_ready=False", text)
+        self.assertIn("blockers", text)
 
 
 if __name__ == "__main__":

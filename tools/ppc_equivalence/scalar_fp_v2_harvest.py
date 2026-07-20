@@ -64,14 +64,14 @@ _CORPUS_HEADERS: dict[str, dict[str, Any]] = {
         "schema_version": 1,
         "corpus_id": "scalar_rn",
         "capability": "fp-scalar-arithmetic",
-        "notes": "Non-fused scalar result bits (RN nearest-even); Broadway fixture harvest",
+        "notes": "Non-fused scalar result bits; Broadway RNE harvest + exact_kernel_v2 RTZ/RIP/RIM/NI supplements",
     },
     "fpscr.jsonl": {
         "type": "scalar_fp_v2_corpus",
         "schema_version": 1,
         "corpus_id": "fpscr",
         "capability": "fp-scalar-arithmetic",
-        "notes": "FPSCR transition vectors from fixtures/broadway.jsonl",
+        "notes": "FPSCR transition vectors; Broadway RNE + exact_kernel_v2 non-RNE supplements",
     },
     "ni.jsonl": {
         "type": "scalar_fp_v2_corpus",
@@ -85,7 +85,7 @@ _CORPUS_HEADERS: dict[str, dict[str, Any]] = {
         "schema_version": 1,
         "corpus_id": "compare_convert_control",
         "capability": "fp-compare",
-        "notes": "Compare / convert from fixtures/broadway.jsonl",
+        "notes": "Compare / convert; Broadway harvest + exact_kernel_v2 NI=1 / non-RNE frsp supplements",
     },
     "traps_fe.jsonl": {
         "type": "scalar_fp_v2_corpus",
@@ -104,6 +104,95 @@ _CORPUS_HEADERS: dict[str, dict[str, Any]] = {
 }
 
 _MIN_ROWS = 20
+_MIN_NON_RNE_PER_MODE = 5
+
+# Broadway FPSCR[0:1] RN encodings (exact-v2 kernel; no live Dolphin rows yet).
+_NON_RNE_MODES: tuple[tuple[int, str, str], ...] = (
+    (1, "toward-zero", "rtz"),
+    (2, "toward-plus-infinity", "rip"),
+    (3, "toward-minus-infinity", "rim"),
+)
+
+# (opcode, a, b, c, label) — curated for directed overflow / RN-sensitive ties.
+_NON_RNE_SCALAR_VECTORS: dict[str, list[tuple[str, int, int, int, str]]] = {
+    "toward-zero": [
+        ("fadd", 0x7FEFFFFFFFFFFFFF, 0x7FE0000000000000, 0, "overflow-max-finite"),
+        ("fadd", 0x3FF0000000000000, 0x3FEFFFFFFFFFFFFF, 0, "add-truncate"),
+        ("fsub", 0x3FF0000000000000, 0x3FEFFFFFFFFFFFFF, 0, "sub-truncate"),
+        ("fdiv", 0x3FF8000000000000, 0x4000000000000000, 0, "div"),
+        ("fadds", 0x3FF0000000000000, 0x3FEFFFFF00000000, 0, "adds-truncate"),
+    ],
+    "toward-plus-infinity": [
+        ("fsub", 0x0010000000000000, 0x0008000000000000, 0, "subnormal-underflow"),
+        ("fadd", 0x3FEFFFFFFFFFFFFF, 0x0000000000000001, 0, "tiny-add"),
+        ("fdiv", 0x3FF0000000000000, 0x4000000000000000, 0, "div"),
+        ("fadd", 0x8000000000000000, 0x0000000000000000, 0, "negzero-plus-zero"),
+        ("fadds", 0x3FEFFFFF00000000, 0x0000000100000000, 0, "adds"),
+    ],
+    "toward-minus-infinity": [
+        ("fsub", 0xBFEFFFFFFFFFFFFF, 0x0000000000000001, 0, "sub"),
+        ("fadd", 0xC000000000000000, 0x3FF0000000000000, 0, "add"),
+        ("fdiv", 0xBFF0000000000000, 0x4000000000000000, 0, "div"),
+        ("fadd", 0x8000000000000000, 0x8000000000000000, 0, "negzero-add"),
+        ("fadds", 0xBFEFFFFF00000000, 0x0000000100000000, 0, "adds"),
+    ],
+}
+
+# FPSCR delta rows for non-RNE (subset with sticky OX/UX/XX transitions).
+_NON_RNE_FPSCR_VECTORS: dict[str, list[tuple[str, int, int, int, str]]] = {
+    "toward-zero": [
+        ("fadd", 0x7FEFFFFFFFFFFFFF, 0x7FE0000000000000, 0, "overflow-max-finite"),
+        ("fadd", 0x3FF0000000000000, 0x3FEFFFFFFFFFFFFF, 0, "add-truncate"),
+        ("fsub", 0x3FF0000000000000, 0x3FEFFFFFFFFFFFFF, 0, "sub-truncate"),
+        ("fadds", 0x3FF0000000000000, 0x3FEFFFFF00000000, 0, "adds-truncate"),
+        ("fdiv", 0x3FF8000000000000, 0x4000000000000000, 0, "div"),
+    ],
+    "toward-plus-infinity": [
+        ("fsub", 0x0010000000000000, 0x0008000000000000, 0, "subnormal-underflow"),
+        ("fadd", 0x3FEFFFFFFFFFFFFF, 0x0000000000000001, 0, "tiny-add"),
+        ("fadds", 0x3FEFFFFF00000000, 0x0000000100000000, 0, "adds"),
+        ("fdiv", 0x3FF0000000000000, 0x4000000000000000, 0, "div"),
+        ("fadd", 0x8000000000000000, 0x0000000000000000, 0, "negzero-plus-zero"),
+    ],
+    "toward-minus-infinity": [
+        ("fsub", 0xBFEFFFFFFFFFFFFF, 0x0000000000000001, 0, "sub"),
+        ("fadd", 0xC000000000000000, 0x3FF0000000000000, 0, "add"),
+        ("fadds", 0xBFEFFFFF00000000, 0x0000000100000000, 0, "adds"),
+        ("fdiv", 0xBFF0000000000000, 0x4000000000000000, 0, "div"),
+        ("fadd", 0x8000000000000000, 0x8000000000000000, 0, "negzero-add"),
+    ],
+}
+
+_NI1_SCALAR_VECTORS: list[tuple[str, int, int, int, str]] = [
+    ("fadd", 0x0000000000000001, 0x0000000000000001, 0, "subnormal-add"),
+    ("fmuls", 0x3810000000000000, 0x3810000000000000, 0, "subnormal-mul"),
+    ("fadd", 0x8000000000000000, 0x0000000000000000, 0, "signed-zero"),
+    ("fadds", 0x0000000000000001, 0x0000000000000001, 0, "subnormal-adds"),
+]
+
+_NI1_COMPARE_CONVERT_VECTORS: list[tuple[str, dict[str, str], str]] = [
+    ("frsp", {"a": "0x0000000000000001"}, "ni1-frsp-subnormal-flush"),
+    ("frsp", {"a": "0x3810000000000000"}, "ni1-frsp-smallest-normal-flush"),
+    ("frsp", {"a": "0x0000000002000001"}, "ni1-frsp-denorm-flush"),
+    (
+        "fcmpu",
+        {"a": "0x0000000000000001", "b": "0x0000000000000000"},
+        "ni1-fcmpu-subnorm-vs-zero",
+    ),
+    (
+        "frsp",
+        {"a": "0x3ff0000000400000"},
+        "ni1-frsp-rn-tie",
+    ),
+]
+
+_NON_RNE_FRSP_VECTORS: list[tuple[int, str, str]] = [
+    (0x3FF0000000400000, "toward-zero", "rtz-frsp-tie"),
+    (0x3FF0000000400000, "toward-plus-infinity", "rip-frsp-tie"),
+    (0x3FF0000000400000, "toward-minus-infinity", "rim-frsp-tie"),
+    (0x400921FB54442D18, "toward-zero", "rtz-frsp-pi"),
+    (0x400921FB54442D18, "toward-plus-infinity", "rip-frsp-pi"),
+]
 
 
 def _hex64(value: int) -> str:
@@ -385,6 +474,196 @@ def _exact_ni_rows(seed_cases: tuple[FixtureCase, ...]) -> list[dict[str, Any]]:
     return rows
 
 
+def _operands_from_triple(opcode: str, a: int, b: int, c: int) -> dict[str, str]:
+    if opcode in {"fmul", "fmuls"}:
+        return {"a": _hex64(a), "b": _hex64(b), "c": _hex64(c)}
+    return {"a": _hex64(a), "b": _hex64(b)}
+
+
+def _exact_scalar_row_from_vector(
+    *,
+    opcode: str,
+    a: int,
+    b: int,
+    c: int,
+    fpscr: int,
+    row_id: str,
+    rn: str | None = None,
+    ni: int | None = None,
+) -> dict[str, Any] | None:
+    outcome = exact_scalar_arith(opcode, a, b, c_bits=c, fpscr=fpscr)
+    if outcome is None or not outcome.supported:
+        return None
+    row: dict[str, Any] = {
+        "id": row_id,
+        "opcode": opcode,
+        "operands": _operands_from_triple(opcode, a, b, c),
+        "expected_bits": _hex64(outcome.result_bits),
+        "provenance": PROVENANCE_EXACT,
+    }
+    base_fpscr = fpscr & ~FPSCR_NI
+    if base_fpscr:
+        row["pre_fpscr"] = _hex32(base_fpscr)
+    if rn is not None:
+        row["rn"] = rn
+    if ni is not None:
+        row["ni"] = ni
+    return row
+
+
+def harvest_non_rne_scalar() -> list[dict[str, Any]]:
+    """RTZ / RIP / RIM scalar result rows via exact kernel (no Dolphin fixtures)."""
+    set_scalar_fp_exact_v2_module_flag(True)
+    try:
+        rows: list[dict[str, Any]] = []
+        for rn_bits, rn_name, slug in _NON_RNE_MODES:
+            for opcode, a, b, c, label in _NON_RNE_SCALAR_VECTORS[rn_name]:
+                row = _exact_scalar_row_from_vector(
+                    opcode=opcode,
+                    a=a,
+                    b=b,
+                    c=c,
+                    fpscr=rn_bits,
+                    row_id=f"exact-{slug}-{label}",
+                    rn=rn_name,
+                )
+                if row is not None:
+                    rows.append(row)
+        return rows
+    finally:
+        set_scalar_fp_exact_v2_module_flag(None)
+
+
+def harvest_non_rne_fpscr() -> list[dict[str, Any]]:
+    """Non-RNE FPSCR transition rows where post != pre."""
+    from tools.ppc_equivalence.fp_fpscr import apply_fpscr_transition
+
+    set_scalar_fp_exact_v2_module_flag(True)
+    try:
+        rows: list[dict[str, Any]] = []
+        for rn_bits, rn_name, slug in _NON_RNE_MODES:
+            count = 0
+            for opcode, a, b, c, label in _NON_RNE_FPSCR_VECTORS[rn_name]:
+                pre = rn_bits
+                outcome = exact_scalar_arith(opcode, a, b, c_bits=c, fpscr=pre)
+                if outcome is None or not outcome.supported:
+                    continue
+                post = apply_fpscr_transition(pre, opcode, outcome)
+                delta = mask32(post ^ pre)
+                if delta == 0:
+                    continue
+                rows.append(
+                    {
+                        "id": f"exact-fpscr-{slug}-{label}",
+                        "opcode": opcode,
+                        "operands": _operands_from_triple(opcode, a, b, c),
+                        "pre_fpscr": _hex32(pre),
+                        "rn": rn_name,
+                        "expected_post_fpscr": _hex32(post),
+                        "expected_fpscr_mask": _hex32(delta),
+                        "provenance": PROVENANCE_EXACT,
+                    }
+                )
+                count += 1
+                if count >= _MIN_NON_RNE_PER_MODE:
+                    break
+        return rows
+    finally:
+        set_scalar_fp_exact_v2_module_flag(None)
+
+
+def harvest_ni_scalar_extras() -> list[dict[str, Any]]:
+    """NI=1 scalar rows: flush-to-zero and signed-zero edge cases."""
+    set_scalar_fp_exact_v2_module_flag(True)
+    try:
+        rows: list[dict[str, Any]] = []
+        for opcode, a, b, c, label in _NI1_SCALAR_VECTORS:
+            row = _exact_scalar_row_from_vector(
+                opcode=opcode,
+                a=a,
+                b=b,
+                c=c,
+                fpscr=FPSCR_NI,
+                row_id=f"exact-ni1-{label}",
+                ni=1,
+            )
+            if row is not None:
+                rows.append(row)
+        return rows
+    finally:
+        set_scalar_fp_exact_v2_module_flag(None)
+
+
+def harvest_ni_compare_convert() -> list[dict[str, Any]]:
+    """NI=1 compare/convert rows (flush + RN-sensitive frsp under NI)."""
+    set_scalar_fp_exact_v2_module_flag(True)
+    try:
+        rows: list[dict[str, Any]] = []
+        for opcode, operands, label in _NI1_COMPARE_CONVERT_VECTORS:
+            a = parse_int(operands["a"])
+            b = parse_int(operands.get("b", "0"))
+            fpscr = FPSCR_NI
+            if opcode == "frsp":
+                outcome = exact_frsp(a, fpscr=fpscr)
+                if not outcome.supported:
+                    continue
+                rows.append(
+                    {
+                        "id": f"exact-{label}",
+                        "opcode": "frsp",
+                        "ni": 1,
+                        "operands": {"a": _hex64(a)},
+                        "expected_bits": _hex64(outcome.result_bits),
+                        "provenance": PROVENANCE_EXACT,
+                    }
+                )
+            elif opcode in _COMPARE:
+                fn = exact_fcmpu if opcode == "fcmpu" else exact_fcmpo
+                outcome = fn(a, b, fpscr=fpscr)
+                if not outcome.scalar.supported:
+                    continue
+                rows.append(
+                    {
+                        "id": f"exact-{label}",
+                        "opcode": opcode,
+                        "ni": 1,
+                        "operands": {"a": _hex64(a), "b": _hex64(b)},
+                        "expected_fpcr_nibble": f"0x{int(outcome.fpcc) & 0xF:x}",
+                        "provenance": PROVENANCE_EXACT,
+                    }
+                )
+        return rows
+    finally:
+        set_scalar_fp_exact_v2_module_flag(None)
+
+
+def harvest_non_rne_compare_convert() -> list[dict[str, Any]]:
+    """Non-RNE ``frsp`` rows showing RN-dependent tie / pi rounding."""
+    set_scalar_fp_exact_v2_module_flag(True)
+    try:
+        rows: list[dict[str, Any]] = []
+        rn_by_name = {name: bits for bits, name, _slug in _NON_RNE_MODES}
+        for input_bits, rn_name, label in _NON_RNE_FRSP_VECTORS:
+            rn_bits = rn_by_name[rn_name]
+            outcome = exact_frsp(input_bits, fpscr=rn_bits)
+            if not outcome.supported:
+                continue
+            rows.append(
+                {
+                    "id": f"exact-{label}",
+                    "opcode": "frsp",
+                    "operands": {"a": _hex64(input_bits)},
+                    "pre_fpscr": _hex32(rn_bits),
+                    "rn": rn_name,
+                    "expected_bits": _hex64(outcome.result_bits),
+                    "provenance": PROVENANCE_EXACT,
+                }
+            )
+        return rows
+    finally:
+        set_scalar_fp_exact_v2_module_flag(None)
+
+
 def harvest_ni(cases: tuple[FixtureCase, ...]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for case in cases:
@@ -400,6 +679,7 @@ def harvest_ni(cases: tuple[FixtureCase, ...]) -> list[dict[str, Any]]:
         row["expected_bits"] = _hex64(case.expected_fpr[7])
         rows.append(row)
     rows.extend(_exact_ni_rows(cases))
+    rows.extend(harvest_ni_scalar_extras())
     return rows
 
 
@@ -696,16 +976,26 @@ def build_all_corpora(cases: tuple[FixtureCase, ...] | None = None) -> dict[str,
     source = cases if cases is not None else FIXTURES
     return {
         "scalar_rn.jsonl": _pad_corpus(
-            harvest_scalar_rn(source), corpus_file="scalar_rn.jsonl", seed_cases=source
+            harvest_scalar_rn(source)
+            + harvest_non_rne_scalar()
+            + harvest_ni_scalar_extras(),
+            corpus_file="scalar_rn.jsonl",
+            seed_cases=source,
         ),
         "fpscr.jsonl": _pad_corpus(
-            harvest_fpscr(source), corpus_file="fpscr.jsonl", seed_cases=source
+            harvest_fpscr(source) + harvest_non_rne_fpscr(),
+            corpus_file="fpscr.jsonl",
+            seed_cases=source,
         ),
         "ni.jsonl": _pad_corpus(
-            harvest_ni(source), corpus_file="ni.jsonl", seed_cases=source
+            harvest_ni(source),
+            corpus_file="ni.jsonl",
+            seed_cases=source,
         ),
         "compare_convert_control.jsonl": _pad_corpus(
-            harvest_compare_convert(source),
+            harvest_compare_convert(source)
+            + harvest_ni_compare_convert()
+            + harvest_non_rne_compare_convert(),
             corpus_file="compare_convert_control.jsonl",
             seed_cases=source,
         ),
@@ -742,11 +1032,18 @@ def inventory(cases: tuple[FixtureCase, ...] | None = None) -> dict[str, Any]:
     fp_cases = [case for case in source if "fp" in case.tags]
     harvestable = {
         "scalar_arith": len(harvest_scalar_rn(source)),
+        "scalar_non_rne": len(harvest_non_rne_scalar()),
         "fpscr_delta": len(harvest_fpscr(source)),
+        "fpscr_non_rne": len(harvest_non_rne_fpscr()),
         "compare_convert": len(harvest_compare_convert(source)),
+        "compare_convert_ni1": len(harvest_ni_compare_convert()),
+        "compare_convert_non_rne": len(harvest_non_rne_compare_convert()),
         "fused": len(harvest_fused(source)),
         "traps_derived": len(harvest_traps(source)),
-        "ni_broadway_ni0": len([c for c in harvest_ni(source) if c.get("provenance") == PROVENANCE_BROADWAY]),
+        "ni_broadway_ni0": len(
+            [c for c in harvest_ni(source) if c.get("provenance") == PROVENANCE_BROADWAY]
+        ),
+        "ni1_exact": len([c for c in harvest_ni(source) if c.get("ni") == 1]),
     }
     return {
         "fixture_sources": [
@@ -756,10 +1053,11 @@ def inventory(cases: tuple[FixtureCase, ...] | None = None) -> dict[str, Any]:
         "fp_fixture_cases": len(fp_cases),
         "harvestable_by_family": harvestable,
         "gaps": [
-            "No Broadway fixtures with FPSCR.NI=1 — NI=1 rows use exact_kernel_v2",
-            "No non-nearest-even RN mode vectors in broadway.jsonl",
+            "No Broadway/Dolphin fixtures with FPSCR.NI=1 — NI=1 rows use exact_kernel_v2",
+            "No live Dolphin rows for RTZ/RIP/RIM — non-RNE rows use exact_kernel_v2",
             "Trap rows derive FE expectations from exact trap planner, not live Dolphin MSR capture",
             "fctiw/fctiwz convert family not in scalar_fp_v2 compare_convert corpus schema",
+            "Record-form fcmp* CR1 shadowing not harvested",
         ],
     }
 

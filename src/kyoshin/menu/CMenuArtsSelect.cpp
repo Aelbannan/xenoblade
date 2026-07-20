@@ -1196,16 +1196,21 @@ extern "C" void func_80104398() {}
 extern "C" bool func_80108C30() { return false; }
 // LLM-HARNESS-END: us-80109718
 // LLM-HARNESS-BEGIN: us-80109720
-extern "C" bool func_80108C38() { return false; }
+extern "C" void func_80108C38(void* self) {
+    ((CMenuArtsSelect*)((char*)self - 0x5c))->cbRenderBefore();
+}
 // LLM-HARNESS-END: us-80109720
 // LLM-HARNESS-BEGIN: us-80109728
 extern "C" bool func_80108C40() { return false; }
 // LLM-HARNESS-END: us-80109728
 // LLM-HARNESS-BEGIN: us-80109730
-extern "C" bool func_80108C48() { return false; }
+extern "C" void func_80108C48(void* ptr) { ((void (*)(char*))func_801041F4)((char*)ptr - 0x60); }
 // LLM-HARNESS-END: us-80109730
 // LLM-HARNESS-BEGIN: us-80109738
-extern "C" bool func_80108C50() { return false; }
+extern "C" void __dt__15CMenuArtsSelectFv(CMenuArtsSelect*);
+extern "C" void func_80108C50(CMenuArtsSelect* self) {
+    __dt__15CMenuArtsSelectFv((CMenuArtsSelect*)((char*)self - 0x60));
+}
 // LLM-HARNESS-END: us-80109738
 
 // LLM-HARNESS-BEGIN: us-80104cf8

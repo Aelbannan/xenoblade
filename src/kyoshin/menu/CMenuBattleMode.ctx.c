@@ -12159,7 +12159,15 @@ private:
 struct CMsgParamEntry{
     u32 command; //0x0
     WORK_ID wid; //0x4
-    u8 unk8[0x24 - 0x8];
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
 };
 
 template <int N>
@@ -12195,8 +12203,39 @@ public:
         return mArrayPtr[mFront % mCapacity];
     }
 
-    //TODO(kiwi) Emitted at 804380b4
-    void enqueue(u32 msg){}
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
 
     void pop(){
         mSize--;
@@ -26104,12 +26143,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -26535,3 +26570,20 @@ void CMenuBattleMode::Init() {
     unk70->addRenderCB(cb, 7, 0);
     unk60.func_8045F810();
 }
+
+// LLM-HARNESS-BEGIN: us-801a1ba8
+extern "C" void func_801A048C(CMenuBattleMode* param_1) {
+    extern void __dt__15CMenuBattleModeFv(CMenuBattleMode*);
+    return __dt__15CMenuBattleModeFv((CMenuBattleMode*)((char*)param_1 - 0x58));
+}
+// LLM-HARNESS-END: us-801a1ba8
+// LLM-HARNESS-BEGIN: us-801a1bb0
+extern "C" bool func_801A0494() { return false; }
+// LLM-HARNESS-END: us-801a1bb0
+// LLM-HARNESS-BEGIN: us-801a1bb8
+extern "C" bool func_801A049C() { return false; }
+// LLM-HARNESS-END: us-801a1bb8
+
+// LLM-HARNESS-BEGIN: us-801a1a90
+extern "C" void ct_CMenuBattleMode() {}
+// LLM-HARNESS-END: us-801a1a90

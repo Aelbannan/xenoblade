@@ -2686,16 +2686,22 @@ int __wpadNoAlloc() { return 0; }
 int __wpadNoFree() { return 0; }
 // LLM-HARNESS-END: us-8036baf0
 // LLM-HARNESS-BEGIN: us-8036bb00
-int WPADIsEnabledVSM() { return 0; }
+extern int _enabledVSM;
+int WPADIsEnabledVSM() { return _enabledVSM; }
 // LLM-HARNESS-END: us-8036bb00
 // LLM-HARNESS-BEGIN: us-8036bb10
-int WPADIsEnabledTRN() { return 0; }
+extern int _enabledTRN;
+int WPADIsEnabledTRN() { return _enabledTRN; }
 // LLM-HARNESS-END: us-8036bb10
 // LLM-HARNESS-BEGIN: us-8036bb20
-int WPADIsEnabledGTR() { return 0; }
+int WPADIsEnabledGTR() { extern int _enabledGTR; return _enabledGTR; }
 // LLM-HARNESS-END: us-8036bb20
 // LLM-HARNESS-BEGIN: us-8036bb30
-int WPADIsEnabledDRM() { return 0; }
+extern int _enabledDRM;
+
+int WPADIsEnabledDRM() {
+    return _enabledDRM;
+}
 // LLM-HARNESS-END: us-8036bb30
 // LLM-HARNESS-BEGIN: us-8036bb40
 int WBCSetupCalibration() { return 0; }
@@ -2785,8 +2791,17 @@ void __wpadDpdCallback() {}
 void WPADControlBLC() {}
 // LLM-HARNESS-END: us-80372a50
 // LLM-HARNESS-BEGIN: us-80373460
-int WPADIsUsedCallbackByKPAD() { return 0; }
+extern void *_wpadUsedCallback;
+
+void* WPADIsUsedCallbackByKPAD() {
+    return _wpadUsedCallback;
+}
 // LLM-HARNESS-END: us-80373460
 // LLM-HARNESS-BEGIN: us-80373470
-int WPADSetCallbackByKPAD() { return 0; }
+extern void (*_wpadUsedCallback)(void);
+
+void WPADSetCallbackByKPAD(void (*callback)(void))
+{
+    _wpadUsedCallback = callback;
+}
 // LLM-HARNESS-END: us-80373470

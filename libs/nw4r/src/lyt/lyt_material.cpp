@@ -1208,15 +1208,9 @@ void Material::BindAnimation(AnimTransform* pAnimTrans) {
     pAnimTrans->Bind(this);
 }
 
-void Material::UnbindAnimation(AnimTransform* pAnimTrans) {
-    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mAnimList, {
-        if (pAnimTrans != NULL && it->GetAnimTransform() != pAnimTrans) {
-            continue;
-        }
-
-        mAnimList.Erase(it);
-        it->Reset();
-    })
+void Material::UnbindAnimation(AnimTransform* pAnimTrans)
+{
+    detail::UnbindAnimationLink(&mAnimList, pAnimTrans);
 }
 
 void Material::UnbindAllAnimation() {
@@ -1238,8 +1232,8 @@ void Material::AddAnimationLink(AnimationLink* pAnimLink) {
     mAnimList.PushBack(pAnimLink);
 }
 
-AnimationLink* Material::FindAnimationLink(AnimTransform* pAnimTrans) {
-    return detail::FindAnimationLink(&mAnimList, pAnimTrans);
+AnimationLink* Material::FindAnimationLink(const AnimResource& rAnimRes) {
+    return detail::FindAnimationLink(&mAnimList, rAnimRes);
 }
 
 void Material::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable) {

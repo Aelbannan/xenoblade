@@ -177,7 +177,7 @@ void SeqPlayer::SetTempoRatio(f32 tempo) {
 }
 
 void SeqPlayer::SetChannelPriority(int priority) {
-    mParserParam.priority = priority;
+    *(u8*)((char*)this + 0x109) = priority;
 }
 
 void SeqPlayer::SetReleasePriorityFix(bool flag) {

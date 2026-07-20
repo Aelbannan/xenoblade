@@ -84,13 +84,20 @@ extern "C" bool GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv() { return false; }
 extern "C" bool GetNumAmbLight__Q34nw4r3g3d9AnmScnResCFv() { return false; }
 // LLM-HARNESS-END: us-803e86f0
 // LLM-HARNESS-BEGIN: us-803e86f8
-extern "C" bool GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv() { return false; }
+extern "C" u32 GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void *);
+
+extern "C" u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const void *self) {
+    return GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const void *)((const char *)self + 0x20));
+}
 // LLM-HARNESS-END: us-803e86f8
 // LLM-HARNESS-BEGIN: us-803e8700
 extern "C" void GetNumSpecularLight__Q34nw4r3g3d9AnmScnResCFv() {}
 // LLM-HARNESS-END: us-803e8700
 // LLM-HARNESS-BEGIN: us-803e870c
-extern "C" bool GetNumFog__Q34nw4r3g3d9AnmScnResCFv() { return false; }
+extern "C" int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
+    extern int GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
+    return GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(reinterpret_cast<const char*>(this_) + 0x20);
+}
 // LLM-HARNESS-END: us-803e870c
 // LLM-HARNESS-BEGIN: us-803e8714
 extern "C" bool GetNumCamera__Q34nw4r3g3d9AnmScnResCFv() { return false; }
@@ -123,7 +130,7 @@ extern "C" bool GetFrame__Q34nw4r3g3d9AnmScnResCFv() { return false; }
 extern "C" void SetUpdateRate_Q34nw4r3g3d9AnmScnResFf() {}
 // LLM-HARNESS-END: us-803e8a98
 // LLM-HARNESS-BEGIN: us-803e8abc
-extern "C" bool GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv() { return false; }
+extern "C" float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) { return *(const float*)((const char*)this_ + 0x10); }
 // LLM-HARNESS-END: us-803e8abc
 // LLM-HARNESS-BEGIN: us-803e8ac4
 extern "C" void UpdateFrame__Q34nw4r3g3d9AnmScnResFv() {}

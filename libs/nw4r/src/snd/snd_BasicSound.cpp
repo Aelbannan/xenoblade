@@ -446,28 +446,41 @@ extern "C" void UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv() {}
 extern "C" void UpdateParam__Q44nw4r3snd6detail10BasicSoundFv() {}
 // LLM-HARNESS-END: us-80415528
 // LLM-HARNESS-BEGIN: us-80415a70
-extern "C" bool AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap() { return false; }
+extern "C" void AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(
+    nw4r::snd::detail::BasicSound* self,
+    nw4r::snd::detail::PlayerHeap* playerHeap)
+{
+    *reinterpret_cast<nw4r::snd::detail::PlayerHeap**>(reinterpret_cast<char*>(self) + 0x4) = playerHeap;
+}
 // LLM-HARNESS-END: us-80415a70
 // LLM-HARNESS-BEGIN: us-80415a78
 extern "C" void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap() {}
 // LLM-HARNESS-END: us-80415a78
 // LLM-HARNESS-BEGIN: us-80415a84
-extern "C" bool AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer() { return false; }
+extern "C" void AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(nw4r::snd::detail::BasicSound* _this, nw4r::snd::SoundPlayer* player)
+{
+    *(void**)((char*)_this + 0x10) = player;
+}
 // LLM-HARNESS-END: us-80415a84
 // LLM-HARNESS-BEGIN: us-80415a8c
 extern "C" void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer() {}
 // LLM-HARNESS-END: us-80415a8c
 // LLM-HARNESS-BEGIN: us-80415a98
-extern "C" bool AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor() { return false; }
+extern "C" void AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(void* pThis, void* pActor)
+{
+    *(void**)((int)pThis + 0x14) = pActor;
+}
 // LLM-HARNESS-END: us-80415a98
 // LLM-HARNESS-BEGIN: us-80415aa0
-extern "C" bool AttachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer() { return false; }
+extern "C" void AttachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer(nw4r::snd::detail::BasicSound* pThis, nw4r::snd::detail::ExternalSoundPlayer* pPlayer) { *(nw4r::snd::detail::ExternalSoundPlayer**)((char*)pThis + 0x18) = pPlayer; }
 // LLM-HARNESS-END: us-80415aa0
 // LLM-HARNESS-BEGIN: us-80415aa8
 extern "C" void DetachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer() {}
 // LLM-HARNESS-END: us-80415aa8
 // LLM-HARNESS-BEGIN: us-80415ab4
-extern "C" bool GetVoiceOutCount__Q44nw4r3snd6detail10BasicSoundCFv() { return false; }
+extern "C" u8 GetVoiceOutCount__Q44nw4r3snd6detail10BasicSoundCFv(const void* _this) {
+    return ((const u8*)_this)[0x95];
+}
 // LLM-HARNESS-END: us-80415ab4
 // LLM-HARNESS-BEGIN: us-80415b14
 extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail10BasicSoundFv() {}

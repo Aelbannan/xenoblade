@@ -212,13 +212,44 @@ class SymbolicEventTraceTests(unittest.TestCase):
 
         forged = dict(enriched)
         forged["status"] = "discharged"
-        vacuous = {
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            build_access_coverage_attestation,
+            build_device_state_in_compare_attestation,
+        )
+
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            status="observed",
+            opcode_families=["integer-load-store"],
+        )
+        forged["access_coverage"] = coverage
+        observability = forged.get("observability") or {
+            "register_banks": {},
+            "fifo_traces": {},
+            "touches": {"original": [], "candidate": []},
+            "symbolic": {
+                "original": {"register_banks": {}, "fifo_traces": {}},
+                "candidate": {"register_banks": {}, "fifo_traces": {}},
+            },
+        }
+        forged["device_state_in_compare"] = build_device_state_in_compare_attestation(
+            included=True,
+            observability=observability,
+        )
+        vacuous_original = {
             "status": "vacuously-discharged",
             "reason": "no-unsupported-predicates",
             "cfg_trace_sha256": "a" * 64,
-            "access_coverage_sha256": enriched["access_coverage"]["sha256"],
+            "access_coverage_sha256": coverage["original"]["sha256"],
         }
-        forged["unsupported_access"] = {"original": vacuous, "candidate": vacuous}
+        vacuous_candidate = {
+            **vacuous_original,
+            "access_coverage_sha256": coverage["candidate"]["sha256"],
+        }
+        forged["unsupported_access"] = {
+            "original": vacuous_original,
+            "candidate": vacuous_candidate,
+        }
         reason = validate_memory_bus_obligation(forged)
         self.assertIsNotNone(reason)
         self.assertTrue(

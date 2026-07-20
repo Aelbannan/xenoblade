@@ -6,8 +6,9 @@ the trip count is not provably within the bound.
 
 CFG writes are emitted via ``apply_symbolic_bus_access`` (concrete FIFO
 addresses). Terminal compare uses ``SymbolicEventTrace.compare_equal``.
-Concrete ``GxFifoStreamDevice`` routing is unchanged. ``memory-bus`` remains
-frozen for ``EQUIVALENT``.
+Concrete ``GxFifoStreamDevice`` routing is unchanged. ``memory-bus`` may
+authorize ``EQUIVALENT`` only under engine-generated ``status=discharged``
+obligations (same gate as ``bus_spec`` / ``memory_bus_obligations``).
 """
 
 from __future__ import annotations

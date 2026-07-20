@@ -257,6 +257,166 @@ class AccessFamilyMmioTests(unittest.TestCase):
         self.assertNotIn(REASON_PSQ_MMIO, coverage["rejections"])
 
 
+class PerSideAccessCoverageTests(unittest.TestCase):
+    """Finding 2: coverage must retain both original and candidate families."""
+
+    def test_static_opcode_families_lwz_vs_lfs(self) -> None:
+        from tools.ppc_equivalence.bus_access import static_opcode_families
+
+        original = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LWZ, (4, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        candidate = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LFS, (1, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        self.assertEqual(
+            static_opcode_families(original),
+            [BUS_ACCESS_FAMILY_INTEGER],
+        )
+        self.assertEqual(
+            static_opcode_families(candidate),
+            [BUS_ACCESS_FAMILY_SCALAR_FP],
+        )
+
+    def test_per_side_dynamic_survives_second_execute_cfg(self) -> None:
+        from tools.ppc_equivalence.bus_access import (
+            clear_side_bus_access_coverage,
+            per_side_bus_access_coverage,
+            side_bus_access_coverage,
+        )
+
+        bus, _bank = _mmio_bank_bus()
+        clear_side_bus_access_coverage()
+        original = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LWZ, (4, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        candidate = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LFS, (1, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        execute_cfg(
+            concrete_state({"lr": 12}),
+            original,
+            ConcreteOps(),
+            memory_bus=bus,
+            bus_access_side="original",
+        )
+        execute_cfg(
+            concrete_state({"lr": 12}),
+            candidate,
+            ConcreteOps(),
+            memory_bus=bus,
+            bus_access_side="candidate",
+        )
+        # Sampling-style third run overwrites last, not per-side store.
+        execute_cfg(
+            concrete_state({"lr": 12}),
+            candidate,
+            ConcreteOps(),
+            memory_bus=bus,
+        )
+        sides = per_side_bus_access_coverage()
+        orig = sides["original"]
+        cand = sides["candidate"]
+        assert orig is not None and cand is not None
+        self.assertIn(BUS_ACCESS_FAMILY_INTEGER, orig["families"])
+        self.assertIn(BUS_ACCESS_FAMILY_SCALAR_FP, cand["families"])
+        stored_orig = side_bus_access_coverage("original")
+        assert stored_orig is not None
+        self.assertIn(BUS_ACCESS_FAMILY_INTEGER, stored_orig["families"])
+        # last coverage is candidate-only after the third run
+        last = last_bus_access_coverage()
+        assert last is not None
+        self.assertIn(BUS_ACCESS_FAMILY_SCALAR_FP, last["families"])
+        self.assertNotIn(BUS_ACCESS_FAMILY_INTEGER, last["families"])
+
+    def test_attestation_includes_both_families_without_observing_dests(self) -> None:
+        from tools.ppc_equivalence.bus_access import clear_side_bus_access_coverage
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            build_access_coverage_attestation,
+        )
+
+        clear_side_bus_access_coverage()
+        original = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LWZ, (4, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        candidate = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LFS, (1, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            original_instructions=original,
+            candidate_instructions=candidate,
+        )
+        self.assertIn(BUS_ACCESS_FAMILY_INTEGER, coverage["original"]["opcode_families"])
+        self.assertIn(
+            BUS_ACCESS_FAMILY_SCALAR_FP,
+            coverage["candidate"]["opcode_families"],
+        )
+        self.assertEqual(
+            coverage["sides"]["original"]["sha256"],
+            coverage["original"]["sha256"],
+        )
+        self.assertNotEqual(
+            coverage["original"]["sha256"],
+            coverage["candidate"]["sha256"],
+        )
+
+    def test_engine_lwz_vs_lfs_coverage_both_sides(self) -> None:
+        """Review reproduction: neither dest observed; both families attested."""
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        bus, _bank = _mmio_bank_bus()
+        original = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LWZ, (4, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        candidate = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
+            _insn(Opcode.LFS, (1, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        # Observe neither r4 nor f1 — previously only candidate family survived.
+        # Contract still needs ≥1 observable; use lr (untouched by either load).
+        contract = EquivalenceContract(parse_observables(["lr"]), timeout_ms=15_000)
+        result = check_equivalence(
+            original,
+            candidate,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            memory_bus=bus,
+            concrete_samples=2,
+        )
+        self.assertIn("memory-bus", result.proof_features)
+        assert result.memory_bus is not None
+        coverage = result.memory_bus["access_coverage"]
+        self.assertIn(BUS_ACCESS_FAMILY_INTEGER, coverage["original"]["opcode_families"])
+        self.assertIn(
+            BUS_ACCESS_FAMILY_SCALAR_FP,
+            coverage["candidate"]["opcode_families"],
+        )
+        # Freeze may demote EQUIVALENT; coverage shape is the Finding 2 gate.
+        self.assertIn(
+            result.status,
+            (ProofStatus.EQUIVALENT, ProofStatus.INCONCLUSIVE_UNSUPPORTED),
+        )
+
+
 class EabiHelperBusTests(unittest.TestCase):
     def test_savegpr_helper_mmio_routes_via_symbolic_bus(self) -> None:
         """Fixed ``_savegpr_31`` summary stores through SymbolicBus on MMIO."""

@@ -11,8 +11,8 @@ from tools.ppc_equivalence.proof_features import (
 from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 
-class ProofFeaturesValidationTests(unittest.TestCase):
-    def test_omit_features_is_ok(self) -> None:
+class ProofFeaturesTests(unittest.TestCase):
+    def test_empty_payload_is_ok(self) -> None:
         self.assertIsNone(validate_proof_features({}))
         self.assertIsNone(validate_proof_features(ProofResult(status=ProofStatus.EQUIVALENT)))
 
@@ -22,25 +22,25 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertNotIn("address_space", payload)
         self.assertNotIn("indirect_targets", payload)
 
-    def test_declared_feature_without_obligation_fails(self) -> None:
+    def test_unknown_feature_rejected(self) -> None:
+        reason = validate_proof_features({"proof_features": ["not-a-real-feature"]})
+        self.assertIsNotNone(reason)
+        self.assertIn("unknown", reason or "")
+
+    def test_obligation_without_feature_rejected(self) -> None:
+        reason = validate_proof_features({"address_space": {"regions": []}})
+        self.assertIsNotNone(reason)
+        self.assertIn("without proof_features", reason or "")
+
+    def test_feature_requires_matching_obligation(self) -> None:
         reason = validate_proof_features({"proof_features": ["readonly-image"]})
         self.assertIsNotNone(reason)
-        self.assertIn("address_space", reason)
-
-    def test_unknown_feature_fails(self) -> None:
-        reason = validate_proof_features({"proof_features": ["jump-table"]})
-        self.assertIsNotNone(reason)
-        self.assertIn("unknown", reason)
-
-    def test_orphan_obligation_without_features_fails(self) -> None:
-        reason = validate_proof_features({"address_space": {}})
-        self.assertIsNotNone(reason)
-        self.assertIn("without proof_features", reason)
+        self.assertIn("address_space", reason or "")
 
     def test_malformed_proof_features_type_fails(self) -> None:
         reason = validate_proof_features({"proof_features": "readonly-image"})
         self.assertIsNotNone(reason)
-        self.assertIn("list", reason)
+        self.assertIn("list", reason or "")
 
     def test_malformed_obligation_type_fails(self) -> None:
         reason = validate_proof_features({
@@ -48,9 +48,9 @@ class ProofFeaturesValidationTests(unittest.TestCase):
             "address_space": [],
         })
         self.assertIsNotNone(reason)
-        self.assertIn("object", reason)
+        self.assertIn("object", reason or "")
 
-    def test_supported_obligations_validate_structurally(self) -> None:
+    def test_jump_table_pair_validates(self) -> None:
         from tools.ppc_equivalence.jump_table_obligations import (
             JumpTableWords,
             build_indirect_targets_obligation,
@@ -62,13 +62,13 @@ class ProofFeaturesValidationTests(unittest.TestCase):
             words=(0x80020000,),
             source="test",
         )
-        address_space = build_readonly_image_obligation(table, no_write_status="pending")
+        address_space = build_readonly_image_obligation(table, no_write_status="unsat")
         indirect_targets = build_indirect_targets_obligation(
             branch_pc=0x80001000,
             targets=(("case-0", 0x80020000),),
             source="test",
             artifact_hashes=(table.image_sha256,),
-            coverage="pending",
+            coverage="unsat",
         )
         payload = {
             "proof_features": ["readonly-image", "indirect-target-closure"],
@@ -77,7 +77,8 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         }
         self.assertIsNone(validate_proof_features(payload))
 
-    def test_unsupported_for_equivalent_empty_after_memory_bus_unfreeze(self) -> None:
+    def test_unsupported_for_equivalent_keeps_other_features_clear(self) -> None:
+        # memory-bus unfrozen; freeze set must stay empty.
         self.assertEqual(UNSUPPORTED_FOR_EQUIVALENT, frozenset())
         self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
@@ -203,6 +204,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         from tools.ppc_equivalence.memory_bus import build_memory_bus
         from tools.ppc_equivalence.memory_bus_obligations import (
             build_access_coverage_attestation,
+            build_device_state_in_compare_attestation,
             build_memory_bus_obligation,
             validate_memory_bus_obligation,
         )
@@ -223,23 +225,49 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIsNotNone(reason)
         self.assertIn("discharged", reason or "")
 
-        coverage = build_access_coverage_attestation(attested=True)
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            status="observed",
+            opcode_families=["integer-load-store"],
+        )
         cfg_sha = canonical_json_sha256({"kind": "test-cfg"})
         vacuous = {
             "status": "vacuously-discharged",
             "reason": "no-unsupported-predicates",
             "cfg_trace_sha256": cfg_sha,
-            "access_coverage_sha256": coverage["sha256"],
+            "access_coverage_sha256": coverage["original"]["sha256"],
+        }
+        observability = {
+            "register_banks": {"test-bank": {"0x0": "0xab"}},
+            "fifo_traces": {},
+            "touches": {"original": [], "candidate": []},
+            "symbolic": {
+                "original": {"register_banks": {}, "fifo_traces": {}},
+                "candidate": {"register_banks": {}, "fifo_traces": {}},
+            },
         }
         discharged = dict(pending)
         discharged.update(
             {
                 "status": "discharged",
                 "access_coverage": coverage,
-                "unsupported_access": {"original": vacuous, "candidate": vacuous},
-                "register_bank_theory": {"status": "none", "devices": []},
+                "unsupported_access": {
+                    "original": vacuous,
+                    "candidate": {
+                        **vacuous,
+                        "access_coverage_sha256": coverage["candidate"]["sha256"],
+                    },
+                },
+                "register_bank_theory": {
+                    "status": "present",
+                    "devices": [{"device_id": "test-bank", "theory": "register-bank"}],
+                },
                 "fifo_theory": {"status": "none", "devices": []},
-                "device_state_in_compare": {"included": False, "digest_sha256": None},
+                "observability": observability,
+                "device_state_in_compare": build_device_state_in_compare_attestation(
+                    included=True,
+                    observability=observability,
+                ),
                 "cfg_rejection_reasons": [],
                 "loop_fifo_reject_markers": [],
             }

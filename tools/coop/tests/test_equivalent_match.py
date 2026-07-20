@@ -355,18 +355,122 @@ class CacheInvalidationTests(unittest.TestCase):
             assert restored is not None
             self.assertIsInstance(restored.proof, ProofResult)
             assert isinstance(restored.proof, ProofResult)
-            # Probe status is the cached equivalence status; ProofResult is
-            # reconstructed and re-gated. Weak memory-bus (missing digests)
-            # fails validate_memory_bus_obligation → demoted.
-            self.assertEqual(restored.status, ProofStatus.EQUIVALENT)
+            # Weak/forged memory-bus (missing digests) and/or temporary
+            # UNSUPPORTED_FOR_EQUIVALENT freeze demote on revalidation.
+            # Outer probe status must match the re-gated ProofResult.
             self.assertEqual(
                 restored.proof.status,
                 ProofStatus.INCONCLUSIVE_UNSUPPORTED,
             )
+            self.assertEqual(restored.status, restored.proof.status)
+            self.assertIsNone(restored.certificate)
             self.assertIn("memory-bus", restored.proof.proof_features)
             self.assertIsNotNone(restored.proof.memory_bus)
             # Attribute access must not crash (legacy dict bug).
             _ = restored.proof.engine_hash
+
+    def test_cache_sound_evidence_round_trip_stays_equivalent(self) -> None:
+        from tools.coop.lib.equivalence_check import (
+            _cache_put,
+            _current_certifier_hash,
+            _current_engine_hash,
+        )
+        from tools.ppc_equivalence.result import ProofResult
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            key = hashlib.sha256(b"sound-round-trip").hexdigest()
+            engine = _current_engine_hash()
+            proof = ProofResult(
+                status=ProofStatus.EQUIVALENT,
+                engine_hash=engine,
+                source_hash="b" * 64,
+                git_commit="c" * 40,
+            )
+            certificate = {
+                "architecture": ARCHITECTURE_MODEL,
+                "result_format": RESULT_FORMAT,
+                "engine_hash": engine,
+                "source_hash": proof.source_hash,
+                "git_commit": proof.git_commit,
+            }
+            probe = EquivalenceProbe(
+                ProofStatus.EQUIVALENT,
+                "ok",
+                certificate=certificate,
+                proof=proof,
+            )
+            _cache_put(
+                key,
+                probe,
+                cache_dir,
+                engine_hash=engine,
+                certifier_hash=_current_certifier_hash(),
+            )
+            restored = _cache_get(key, cache_dir)
+            self.assertIsNotNone(restored)
+            assert restored is not None
+            self.assertIsInstance(restored.proof, ProofResult)
+            assert isinstance(restored.proof, ProofResult)
+            self.assertEqual(restored.status, ProofStatus.EQUIVALENT)
+            self.assertEqual(restored.proof.status, ProofStatus.EQUIVALENT)
+            self.assertIsNotNone(restored.certificate)
+
+    def test_cache_demoted_memory_bus_never_reports_equivalent(self) -> None:
+        from tools.coop.lib.equivalence_check import (
+            _cache_put,
+            _current_certifier_hash,
+            _current_engine_hash,
+        )
+        from tools.ppc_equivalence.result import ProofResult
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            key = hashlib.sha256(b"forged-memory-bus").hexdigest()
+            # Intentionally forged/weak discharged claim (no schema v2 digests).
+            forged_bus = {
+                "schema_version": 1,
+                "algorithm": "memory-bus-v1",
+                "status": "discharged",
+                "regions": [{"kind": "mmio", "start": 0xCC000000, "end": 0xCC001000}],
+            }
+            proof = ProofResult(
+                status=ProofStatus.EQUIVALENT,
+                engine_hash=_current_engine_hash(),
+                source_hash="d" * 64,
+                proof_features=["memory-bus"],
+                memory_bus=forged_bus,
+            )
+            probe = EquivalenceProbe(
+                ProofStatus.EQUIVALENT,
+                "cached-as-equivalent",
+                certificate={
+                    "architecture": ARCHITECTURE_MODEL,
+                    "result_format": RESULT_FORMAT,
+                    "engine_hash": _current_engine_hash(),
+                    "proof_features": ["memory-bus"],
+                    "memory_bus": forged_bus,
+                },
+                proof=proof,
+            )
+            _cache_put(
+                key,
+                probe,
+                cache_dir,
+                engine_hash=_current_engine_hash(),
+                certifier_hash=_current_certifier_hash(),
+            )
+            restored = _cache_get(key, cache_dir)
+            self.assertIsNotNone(restored)
+            assert restored is not None
+            assert isinstance(restored.proof, ProofResult)
+            self.assertNotEqual(restored.status, ProofStatus.EQUIVALENT)
+            self.assertEqual(restored.status, restored.proof.status)
+            self.assertEqual(
+                restored.proof.status,
+                ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            )
+            self.assertIsNone(restored.certificate)
 
     def test_cache_key_changes_when_memory_bus_obligation_mutates(self) -> None:
         from tools.coop.lib.equivalence_check import _cache_key

@@ -434,8 +434,24 @@ def _cache_get(
             certificate=certificate_dict,
             proof_audit=audit_dict,
         )
+        detail = data.get("detail", "")
+        # Revalidation may demote a stored EQUIVALENT (unsupported features,
+        # forged/weak obligations). Outer probe fields must match the re-gated
+        # ProofResult — never return EQUIVALENT while proof is demoted.
+        if proof is not None and proof.status is not status:
+            status = proof.status
+            certificate_dict = None
+            demotion_notes = [
+                warning
+                for warning in (getattr(proof, "warnings", None) or [])
+                if isinstance(warning, str) and warning.startswith("proof_features:")
+            ]
+            if demotion_notes:
+                note = demotion_notes[0]
+                detail = f"{detail}; {note}" if detail else note
         return EquivalenceProbe(
-            status, data.get("detail", ""),
+            status,
+            detail,
             certificate_dict,
             proof=proof,
         )

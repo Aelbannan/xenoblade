@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from tools.ppc_equivalence.loop_summary import validate_loop_summary_obligation
-from tools.ppc_equivalence.memory_bus_obligations import validate_memory_bus_obligation
+from tools.ppc_equivalence.memory_bus_obligations import (
+    validate_memory_bus_obligation_strict,
+)
 from tools.ppc_equivalence.memory_loop import validate_memory_loop_obligation
 from tools.ppc_equivalence.relational_induction import (
     validate_relational_induction_obligation,
@@ -14,12 +16,14 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
 # Track D: memory-bus unfrozen — EQUIVALENT only when engine-built obligations
-# carry status=discharged + schema v2 attestations (see validate_memory_bus_obligation).
-# Jump-table readonly-image + indirect-target-closure are discharged
-# independently (PR3). Relational-induction is discharged via five independent
-# UNSAT queries (PR7). Affine + memory-loop summaries authorize EQUIVALENT only
-# when obligations validate with status=discharged and matching digests
-# (Wave 5 Track B); coverage=applied / recognition alone never authorizes.
+# carry status=discharged + schema v2 attestations under the strict validator
+# (cache revalidation, per-side coverage, digest recompute; see
+# validate_memory_bus_obligation_strict). Jump-table readonly-image +
+# indirect-target-closure are discharged independently (PR3). Relational-
+# induction is discharged via five independent UNSAT queries (PR7). Affine +
+# memory-loop summaries authorize EQUIVALENT only when obligations validate
+# with status=discharged and matching digests (Wave 5 Track B); coverage=applied
+# / recognition alone never authorizes.
 UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset()
 
 # Canonical proof-feature names and their required top-level obligation keys.
@@ -209,7 +213,7 @@ def validate_proof_features(
                     "for EQUIVALENT proofs"
                 )
         if feature == "memory-bus":
-            reason = validate_memory_bus_obligation(obligation)
+            reason = validate_memory_bus_obligation_strict(obligation)
             if reason is not None:
                 return reason
             # Strict discharged gate: engine must have produced status=discharged

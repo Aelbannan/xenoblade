@@ -11,6 +11,7 @@ from tools.ppc_equivalence.device_model import RegisterSpec
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.memory_bus import build_memory_bus
 from tools.ppc_equivalence.memory_bus_obligations import (
+    build_memory_bus_obligation,
     enrich_memory_bus_obligation_with_symbolic_mmio,
     symbolic_mmio_still_fail_closed,
 )
@@ -528,14 +529,28 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         from tools.ppc_equivalence.memory_bus_obligations import (
             MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
             build_access_coverage_attestation,
+            build_device_state_in_compare_attestation,
             build_memory_bus_obligation,
             validate_memory_bus_obligation,
         )
         from tools.ppc_equivalence.provenance import canonical_json_sha256
 
         bus = self._mmio_bus()
-        coverage = build_access_coverage_attestation(attested=True)
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            status="observed",
+            opcode_families=["integer-load-store"],
+        )
         cfg_sha = canonical_json_sha256({"kind": "cfg-trace", "terminals": []})
+        observability = {
+            "register_banks": {"test-bank": {"0x0": "0xab"}},
+            "fifo_traces": {},
+            "touches": {"original": [], "candidate": []},
+            "symbolic": {
+                "original": {"register_banks": {}, "fifo_traces": {}},
+                "candidate": {"register_banks": {}, "fifo_traces": {}},
+            },
+        }
         obligation = build_memory_bus_obligation(bus)
         obligation.update(
             {
@@ -543,15 +558,23 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
                 "schema_version": MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
                 "access_coverage": coverage,
                 "unsupported_access": {
-                    "original": self._vacuous_side(coverage["sha256"], cfg_sha),
-                    "candidate": self._vacuous_side(coverage["sha256"], cfg_sha),
+                    "original": self._vacuous_side(
+                        coverage["original"]["sha256"], cfg_sha,
+                    ),
+                    "candidate": self._vacuous_side(
+                        coverage["candidate"]["sha256"], cfg_sha,
+                    ),
                 },
                 "register_bank_theory": {
                     "status": "present",
                     "devices": [{"device_id": "test-bank", "theory": "register-bank"}],
                 },
                 "fifo_theory": {"status": "none", "devices": []},
-                "device_state_in_compare": {"included": True, "digest_sha256": cfg_sha},
+                "observability": observability,
+                "device_state_in_compare": build_device_state_in_compare_attestation(
+                    included=True,
+                    observability=observability,
+                ),
                 "cfg_rejection_reasons": [],
                 "loop_fifo_reject_markers": [],
             }
@@ -559,16 +582,38 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         self.assertIsNone(validate_memory_bus_obligation(obligation))
 
     def test_positive_discharged_unsat_shape(self) -> None:
+        from tools.ppc_equivalence.address_space import AddressSpace, Region, RegionKind
+        from tools.ppc_equivalence.memory_bus import build_memory_bus
         from tools.ppc_equivalence.memory_bus_obligations import (
             MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
             build_access_coverage_attestation,
             build_memory_bus_obligation,
             validate_memory_bus_obligation,
         )
+        from tools.ppc_equivalence.symbolic_bus import (
+            aggregate_unsupported_access_query_sha256,
+        )
 
-        bus = self._mmio_bus()
-        coverage = build_access_coverage_attestation(attested=True)
-        query = "a" * 64
+        # RAM-only: no MMIO theory / device-compare required.
+        ram = Region(0x80000000, 0x801FFFFF, RegionKind.RAM)
+        bus = build_memory_bus(AddressSpace((ram,)))
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            status="observed",
+            opcode_families=["integer-load-store"],
+        )
+        term_a = "a" * 64
+        term_b = "b" * 64
+        aggregate = aggregate_unsupported_access_query_sha256([term_a, term_b])
+        unsat = {
+            "result": "unsat",
+            "query_sha256": aggregate,
+            "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 1.0},
+            "terminals": [
+                {"query_sha256": term_a, "result": "unsat"},
+                {"query_sha256": term_b, "result": "unsat"},
+            ],
+        }
         obligation = build_memory_bus_obligation(bus)
         obligation.update(
             {
@@ -576,8 +621,8 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
                 "schema_version": MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
                 "access_coverage": coverage,
                 "unsupported_access": {
-                    "original": self._unsat_side(query),
-                    "candidate": self._unsat_side(query),
+                    "original": unsat,
+                    "candidate": unsat,
                 },
                 "register_bank_theory": {"status": "none", "devices": []},
                 "fifo_theory": {"status": "none", "devices": []},
@@ -617,7 +662,9 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         from tools.ppc_equivalence.provenance import canonical_json_sha256
 
         bus = self._mmio_bus()
-        coverage = build_access_coverage_attestation(attested=True)
+        coverage = build_access_coverage_attestation(
+            attested=True, status="observed",
+        )
         cfg_sha = canonical_json_sha256({"k": 1})
         obligation = build_memory_bus_obligation(bus)
         obligation.update(
@@ -626,8 +673,12 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
                 "schema_version": 99,
                 "access_coverage": coverage,
                 "unsupported_access": {
-                    "original": self._vacuous_side(coverage["sha256"], cfg_sha),
-                    "candidate": self._vacuous_side(coverage["sha256"], cfg_sha),
+                    "original": self._vacuous_side(
+                        coverage["original"]["sha256"], cfg_sha,
+                    ),
+                    "candidate": self._vacuous_side(
+                        coverage["candidate"]["sha256"], cfg_sha,
+                    ),
                 },
                 "register_bank_theory": {"status": "none", "devices": []},
                 "fifo_theory": {"status": "none", "devices": []},
@@ -650,7 +701,9 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         from tools.ppc_equivalence.provenance import canonical_json_sha256
 
         bus = self._mmio_bus()
-        coverage = build_access_coverage_attestation(attested=False)
+        coverage = build_access_coverage_attestation(
+            attested=False, status="observed",
+        )
         cfg_sha = canonical_json_sha256({"k": 1})
         obligation = build_memory_bus_obligation(bus)
         obligation.update(
@@ -659,12 +712,19 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
                 "schema_version": MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
                 "access_coverage": coverage,
                 "unsupported_access": {
-                    "original": self._vacuous_side(coverage["sha256"], cfg_sha),
-                    "candidate": self._vacuous_side(coverage["sha256"], cfg_sha),
+                    "original": self._vacuous_side(
+                        coverage["original"]["sha256"], cfg_sha,
+                    ),
+                    "candidate": self._vacuous_side(
+                        coverage["candidate"]["sha256"], cfg_sha,
+                    ),
                 },
-                "register_bank_theory": {"status": "none", "devices": []},
+                "register_bank_theory": {
+                    "status": "present",
+                    "devices": [{"device_id": "test-bank", "theory": "register-bank"}],
+                },
                 "fifo_theory": {"status": "none", "devices": []},
-                "device_state_in_compare": {"included": False, "digest_sha256": None},
+                "device_state_in_compare": {"included": True, "digest_sha256": None},
                 "cfg_rejection_reasons": [],
                 "loop_fifo_reject_markers": [],
             }
@@ -725,21 +785,289 @@ class MemoryBusObligationSchemaTests(unittest.TestCase):
         self.assertEqual(side["reason"], "no-unsupported-predicates")
         self.assertEqual(
             side["access_coverage_sha256"],
-            enriched["access_coverage"]["sha256"],
+            enriched["access_coverage"]["original"]["sha256"],
         )
         self.assertEqual(enriched["status"], "discharged")
         from tools.ppc_equivalence.memory_bus_obligations import (
             validate_memory_bus_obligation,
         )
 
-        self.assertIsNone(validate_memory_bus_obligation(enriched))
+        self.assertIsNone(validate_memory_bus_obligation(enriched, bus=bus))
+
+
+class StrictMemoryBusValidatorTests(unittest.TestCase):
+    """Finding 3: recompute digests + cross-check discharged obligations."""
+
+    def _mmio_bus(self):
+        from tools.ppc_equivalence.device_model import RegisterBankDevice
+
+        device = RegisterBankDevice(
+            base=0xCC008000,
+            reg_width=4,
+            registers=(RegisterSpec(offset=0x00, initial=0xAB),),
+        )
+        mmio = mmio_region(0xCC008000, 0xCC008FFF, device_id="test-bank")
+        return build_memory_bus(AddressSpace((mmio,)), devices={"test-bank": device})
+
+    def _base_discharged(self, bus):
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+            build_access_coverage_attestation,
+            build_device_state_in_compare_attestation,
+            build_memory_bus_obligation,
+        )
+        from tools.ppc_equivalence.provenance import canonical_json_sha256
+
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            status="observed",
+            opcode_families=["integer-load-store"],
+        )
+        cfg_sha = canonical_json_sha256({"kind": "cfg-trace", "terminals": []})
+        observability = {
+            "register_banks": {"test-bank": {"0x0": "0xab"}},
+            "fifo_traces": {},
+            "touches": {"original": [], "candidate": []},
+            "symbolic": {
+                "original": {"register_banks": {}, "fifo_traces": {}},
+                "candidate": {"register_banks": {}, "fifo_traces": {}},
+            },
+        }
+        vacuous_original = {
+            "status": "vacuously-discharged",
+            "reason": "no-unsupported-predicates",
+            "cfg_trace_sha256": cfg_sha,
+            "access_coverage_sha256": coverage["original"]["sha256"],
+        }
+        vacuous_candidate = {
+            **vacuous_original,
+            "access_coverage_sha256": coverage["candidate"]["sha256"],
+        }
+        obligation = build_memory_bus_obligation(bus)
+        obligation.update(
+            {
+                "status": "discharged",
+                "schema_version": MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+                "access_coverage": coverage,
+                "unsupported_access": {
+                    "original": vacuous_original,
+                    "candidate": vacuous_candidate,
+                },
+                "register_bank_theory": {
+                    "status": "present",
+                    "devices": [{"device_id": "test-bank", "theory": "register-bank"}],
+                },
+                "fifo_theory": {"status": "none", "devices": []},
+                "observability": observability,
+                "device_state_in_compare": build_device_state_in_compare_attestation(
+                    included=True,
+                    observability=observability,
+                ),
+                "cfg_rejection_reasons": [],
+                "loop_fifo_reject_markers": [],
+            }
+        )
+        return obligation
+
+    def test_fabricated_access_coverage_digest_rejected(self) -> None:
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            validate_memory_bus_obligation,
+        )
+
+        bus = self._mmio_bus()
+        obligation = self._base_discharged(bus)
+        obligation["access_coverage"] = dict(obligation["access_coverage"])
+        obligation["access_coverage"]["sha256"] = "0" * 64
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertIn("access_coverage.sha256", reason or "")
+
+    def test_stubbed_coverage_rejected_when_discharged(self) -> None:
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            build_access_coverage_attestation,
+            validate_memory_bus_obligation,
+        )
+
+        bus = self._mmio_bus()
+        obligation = self._base_discharged(bus)
+        stubbed = build_access_coverage_attestation(attested=True, status="stubbed")
+        obligation["access_coverage"] = stubbed
+        for side in ("original", "candidate"):
+            obligation["unsupported_access"][side] = dict(
+                obligation["unsupported_access"][side]
+            )
+            obligation["unsupported_access"][side]["access_coverage_sha256"] = (
+                stubbed[side]["sha256"]
+            )
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertIn("stubbed", reason or "")
+
+    def test_theory_none_on_mmio_register_bank_rejected(self) -> None:
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            validate_memory_bus_obligation,
+        )
+
+        bus = self._mmio_bus()
+        obligation = self._base_discharged(bus)
+        obligation["register_bank_theory"] = {"status": "none", "devices": []}
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertTrue(
+            "register_bank_theory" in (reason or "")
+            or "MMIO" in (reason or ""),
+            reason,
+        )
+
+    def test_theory_device_id_not_in_regions_rejected(self) -> None:
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            validate_memory_bus_obligation,
+        )
+
+        bus = self._mmio_bus()
+        obligation = self._base_discharged(bus)
+        obligation["register_bank_theory"] = {
+            "status": "present",
+            "devices": [{"device_id": "other-bank", "theory": "register-bank"}],
+        }
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertIn("device_id", reason or "")
+
+    def test_mmio_included_false_rejected(self) -> None:
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            validate_memory_bus_obligation,
+        )
+
+        bus = self._mmio_bus()
+        obligation = self._base_discharged(bus)
+        obligation["device_state_in_compare"] = {
+            "included": False,
+            "digest_sha256": None,
+        }
+        reason = validate_memory_bus_obligation(obligation)
+        self.assertIsNotNone(reason)
+        self.assertIn("device_state_in_compare.included", reason or "")
+
+    def test_aggregate_query_hash_mutation_rejected(self) -> None:
+        from tools.ppc_equivalence.address_space import Region, RegionKind
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+            build_access_coverage_attestation,
+            build_memory_bus_obligation,
+            validate_memory_bus_obligation,
+        )
+        from tools.ppc_equivalence.symbolic_bus import (
+            aggregate_unsupported_access_query_sha256,
+        )
+
+        ram = Region(0x80000000, 0x801FFFFF, RegionKind.RAM)
+        bus = build_memory_bus(AddressSpace((ram,)))
+        coverage = build_access_coverage_attestation(
+            attested=True, status="observed",
+        )
+        digests = ["1" * 64, "2" * 64]
+        aggregate = aggregate_unsupported_access_query_sha256(digests)
+        side = {
+            "result": "unsat",
+            "query_sha256": aggregate,
+            "solver": {"name": "z3", "version": "4.12.0", "elapsed_ms": 1.0},
+            "terminals": [
+                {"query_sha256": digests[0], "result": "unsat"},
+                {"query_sha256": digests[1], "result": "unsat"},
+            ],
+        }
+        obligation = build_memory_bus_obligation(bus)
+        obligation.update(
+            {
+                "status": "discharged",
+                "schema_version": MEMORY_BUS_OBLIGATION_SCHEMA_VERSION,
+                "access_coverage": coverage,
+                "unsupported_access": {"original": side, "candidate": side},
+                "register_bank_theory": {"status": "none", "devices": []},
+                "fifo_theory": {"status": "none", "devices": []},
+                "device_state_in_compare": {"included": False, "digest_sha256": None},
+                "cfg_rejection_reasons": [],
+                "loop_fifo_reject_markers": [],
+            }
+        )
+        self.assertIsNone(validate_memory_bus_obligation(obligation))
+
+        mutated = dict(obligation)
+        mutated_side = dict(side)
+        # Forged: top-level hash is only the last terminal (pre-fix bug).
+        mutated_side["query_sha256"] = digests[-1]
+        mutated["unsupported_access"] = {
+            "original": mutated_side,
+            "candidate": mutated_side,
+        }
+        reason = validate_memory_bus_obligation(mutated)
+        self.assertIsNotNone(reason)
+        self.assertIn("aggregate", reason or "")
+
+    def test_engine_built_valid_discharged_still_passes(self) -> None:
+        from tools.ppc_equivalence.deadline import Deadline
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            enrich_memory_bus_obligation_with_symbolic_mmio,
+            validate_memory_bus_obligation,
+            validate_memory_bus_obligation_strict,
+        )
+        from tools.ppc_equivalence.symbolic_bus import (
+            apply_symbolic_bus_access,
+            initial_symbolic_bus_state,
+        )
+
+        z3 = _z3()
+        bus = self._mmio_bus()
+        state = initial_symbolic_bus_state(bus, z3)
+        assert state is not None
+        outcome = apply_symbolic_bus_access(
+            state,
+            address_space=bus.address_space,
+            addr=z3.BitVecVal(0xCC008000, 32),
+            width=4,
+            z3=z3,
+            is_write=False,
+        )
+
+        class _Term:
+            def __init__(self) -> None:
+                self.state = type(
+                    "S",
+                    (),
+                    {
+                        "symbolic_bus": outcome.next_state,
+                        "memory_touches": (),
+                    },
+                )()
+                self.condition = z3.BoolVal(True)
+
+        enriched = enrich_memory_bus_obligation_with_symbolic_mmio(
+            build_memory_bus_obligation(bus),
+            bus,
+            original_terminals=[_Term()],
+            candidate_terminals=[_Term()],
+            ops=SymbolicOps(),
+            deadline=Deadline.after_ms(5_000),
+        )
+        self.assertEqual(enriched["status"], "discharged")
+        self.assertEqual(enriched["access_coverage"]["status"], "observed")
+        self.assertIsNone(validate_memory_bus_obligation(enriched, bus=bus))
+        self.assertIsNone(
+            validate_memory_bus_obligation_strict(
+                enriched,
+                bus=bus,
+                original_terminals=[_Term()],
+                candidate_terminals=[_Term()],
+            )
+        )
 
 
 class FreezeGuardTests(unittest.TestCase):
     def test_memory_bus_unfrozen_for_equivalent(self) -> None:
         self.assertNotIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
-    def test_symbolic_mmio_promotion_authorized_hook(self) -> None:
+    def test_symbolic_mmio_promotion_authorized_when_unfrozen(self) -> None:
         self.assertFalse(symbolic_mmio_still_fail_closed())
 
 
@@ -817,13 +1145,44 @@ class LoopFifoAndMixedSpaceCoverageTests(unittest.TestCase):
         forged = dict(enriched)
         forged["status"] = "discharged"
         # Satisfy Track A digest shape so the Track C reject gate is what fails.
-        vacuous = {
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            build_access_coverage_attestation,
+            build_device_state_in_compare_attestation,
+        )
+
+        coverage = build_access_coverage_attestation(
+            attested=True,
+            status="observed",
+            opcode_families=["integer-load-store"],
+        )
+        forged["access_coverage"] = coverage
+        observability = forged.get("observability") or {
+            "register_banks": {},
+            "fifo_traces": {},
+            "touches": {"original": [], "candidate": []},
+            "symbolic": {
+                "original": {"register_banks": {}, "fifo_traces": {}},
+                "candidate": {"register_banks": {}, "fifo_traces": {}},
+            },
+        }
+        forged["device_state_in_compare"] = build_device_state_in_compare_attestation(
+            included=True,
+            observability=observability,
+        )
+        vacuous_original = {
             "status": "vacuously-discharged",
             "reason": "no-unsupported-predicates",
             "cfg_trace_sha256": "a" * 64,
-            "access_coverage_sha256": enriched["access_coverage"]["sha256"],
+            "access_coverage_sha256": coverage["original"]["sha256"],
         }
-        forged["unsupported_access"] = {"original": vacuous, "candidate": vacuous}
+        vacuous_candidate = {
+            **vacuous_original,
+            "access_coverage_sha256": coverage["candidate"]["sha256"],
+        }
+        forged["unsupported_access"] = {
+            "original": vacuous_original,
+            "candidate": vacuous_candidate,
+        }
         reason = validate_memory_bus_obligation(forged)
         self.assertIsNotNone(reason)
         self.assertTrue(

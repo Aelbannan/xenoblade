@@ -23,6 +23,7 @@ from .memory_bus_obligations import (
     build_memory_bus_obligation,
     enrich_memory_bus_obligation_with_symbolic_mmio,
 )
+from .bus_access import clear_side_bus_access_coverage
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState, concrete_state
 from .proof_features import enforce_equivalent_proof_features
 from .jump_table_obligations import (
@@ -1368,6 +1369,8 @@ def _check_equivalence_impl(
                 }),
             )
     try:
+        if memory_bus is not None:
+            clear_side_bus_access_coverage()
         original_exits = execute_cfg(
             initial, original, ops,
             max_instructions=max_instructions, max_paths=max_paths,
@@ -1376,6 +1379,7 @@ def _check_equivalence_impl(
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
             memory_bus=memory_bus,
+            bus_access_side="original" if memory_bus is not None else None,
             deadline=deadline,
             jump_table_targets=original_jump_targets,
             affine_loop_summaries=original_affine,
@@ -1391,6 +1395,7 @@ def _check_equivalence_impl(
             callee_contracts=callee_contracts,
             floating_point_domain=domain,
             memory_bus=memory_bus,
+            bus_access_side="candidate" if memory_bus is not None else None,
             deadline=deadline,
             jump_table_targets=candidate_jump_targets,
             affine_loop_summaries=candidate_affine,
@@ -1428,6 +1433,8 @@ def _check_equivalence_impl(
                     original_affine or candidate_affine
                     or original_memory or candidate_memory
                 ),
+                original_instructions=original,
+                candidate_instructions=candidate,
             )
         return early
     if assumed_callees_used is not None:
@@ -1672,6 +1679,8 @@ def _check_equivalence_impl(
                 memory_bus,
                 original_terminals=original_exits,
                 candidate_terminals=candidate_exits,
+                original_instructions=original,
+                candidate_instructions=candidate,
                 ops=ops,
                 deadline=deadline,
                 loop_summaries_active=bool(

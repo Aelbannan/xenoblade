@@ -335,11 +335,16 @@ class ConcreteMutationTests(unittest.TestCase):
             "fpscr": 0,
         }
 
-        def _non_fused(self, rm, a, b, c):
-            return (a * b) + c
+        def _non_fused_bits(self, a_bits, c_bits, b_bits):
+            # Inject separate mul+add rounding via host float (mutant of oracle FMADD).
+            import struct
+            a = struct.unpack(">d", struct.pack(">Q", a_bits & 0xFFFFFFFFFFFFFFFF))[0]
+            c = struct.unpack(">d", struct.pack(">Q", c_bits & 0xFFFFFFFFFFFFFFFF))[0]
+            b = struct.unpack(">d", struct.pack(">Q", b_bits & 0xFFFFFFFFFFFFFFFF))[0]
+            return struct.unpack(">Q", struct.pack(">d", (a * c) + b))[0]
 
         base = _run_concrete(code, initial)
-        with mock.patch.object(ConcreteOps, "fp_fma", new=_non_fused):
+        with mock.patch.object(ConcreteOps, "fp_fmadd_rne_bits", new=_non_fused_bits):
             mut = _run_concrete(code, initial)
         self.assertEqual(int(base.state.fpr[7]), 0xBC90000000000000,
                          "correct fused fmadd retains the tiny product residue")

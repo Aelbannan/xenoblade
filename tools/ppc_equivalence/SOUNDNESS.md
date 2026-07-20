@@ -332,12 +332,16 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   explicitly reopens FP to Tier A/B.
 - **SoftFloat oracle scaffold:** `tools/ppc_equivalence/fp_oracle.py` holds a
   bit-level, host-float-free oracle for a small scalar-op subset (`fadd`/`fadds`/
-  `fmul`/`fmuls`/`fsub`/`fsubs`/`fdiv`/`fdivs`). **ConcreteOps** routes those
-  eight scalar opcodes through the oracle (fail-closed on NaN/subnormal/unsupported
-  domains via `ExecutionInconclusive`); concrete sampling and differential checks
-  inherit this path. SymbolicOps, paired-single lanes, and all other FP ops still
-  use host float or Z3. The oracle computes partial sticky indicators (`XX` inexact,
-  `FPRF` class nibble) in `FpOracleResult` but does **not** latch them into FPSCR
+  `fmul`/`fmuls`/`fsub`/`fsubs`/`fdiv`/`fdivs`/`fmadd`/`fmadds`/`fmsub`/`fmsubs`).
+  **ConcreteOps** routes those twelve scalar opcodes through the oracle
+  (fail-closed on NaN/subnormal/unsupported domains and on single-fused Broadway
+  midpoint-tie residues with a nonzero addend via `ExecutionInconclusive`);
+  concrete sampling and differential checks inherit this path. Force25 for
+  `fmadds`/`fmsubs` is applied by semantics before the oracle. SymbolicOps,
+  negative fused forms (`fnmadd`/`fnmsub`/`fnmadds`/`fnmsubs`), paired-single
+  lanes, and all other FP ops still use host float or Z3. The oracle computes
+  partial sticky indicators (`XX` inexact, `FPRF` class nibble) in
+  `FpOracleResult` but does **not** latch them into FPSCR
   (`floating_point_domain.fpscr_flags` marks oracle-scaffold vs assumed bits).
   This remains **Tier C** only and is **not** a promotion path to Tier A/B.
 

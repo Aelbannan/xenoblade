@@ -578,6 +578,60 @@ class ConcreteOps:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
 
+    def fp_fmadd_rne_bits(self, a_bits: int, c_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fmadd_binary64_rne
+
+        try:
+            return fmadd_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF,
+                c_bits & 0xFFFFFFFFFFFFFFFF,
+                b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fmsub_rne_bits(self, a_bits: int, c_bits: int, b_bits: int) -> int:
+        from .fp_oracle import fmsub_binary64_rne
+
+        try:
+            return fmsub_binary64_rne(
+                a_bits & 0xFFFFFFFFFFFFFFFF,
+                c_bits & 0xFFFFFFFFFFFFFFFF,
+                b_bits & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fmadds_fpr_bits(self, rm: str, a_fpr: int, b_fpr: int, c_fpr: int) -> int:
+        from .fp_oracle import fmadds_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fmadds_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF,
+                b_fpr & 0xFFFFFFFFFFFFFFFF,
+                c_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
+    def fp_fmsubs_fpr_bits(self, rm: str, a_fpr: int, b_fpr: int, c_fpr: int) -> int:
+        from .fp_oracle import fmsubs_fpr_rne
+
+        self._fp_oracle_require_rne(rm)
+        try:
+            return fmsubs_fpr_rne(
+                a_fpr & 0xFFFFFFFFFFFFFFFF,
+                b_fpr & 0xFFFFFFFFFFFFFFFF,
+                c_fpr & 0xFFFFFFFFFFFFFFFF,
+            ).bits64
+        except Exception as exc:
+            self._fp_oracle_fail_closed(exc)
+            raise AssertionError("unreachable")
+
     def fp_add(self, rm: str, a: float, b: float) -> float: return a + b
     def fp_sub(self, rm: str, a: float, b: float) -> float: return a - b
     def fp_mul(self, rm: str, a: float, b: float) -> float: return a * b
@@ -2660,6 +2714,25 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         elif isinstance(ops, ConcreteOps) and op == Opcode.FDIVS:
             oracle_scalar_bits = ops.fp_fdivs_fpr_bits(rm, fa_bits, fb_bits)
             d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FMADD:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fmadd_rne_bits(fa_bits, fc_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FMSUB:
+            ops._fp_oracle_require_rne(rm)
+            oracle_scalar_bits = ops.fp_fmsub_rne_bits(fa_bits, fc_bits, fb_bits)
+            d = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FMADDS:
+            # fc_bits already Force25-rounded by the shared scalar path above.
+            precise_bits = ops.fp_fmadd_rne_bits(fa_bits, fc_bits, fb_bits)
+            oracle_scalar_bits = ops.fp_fmadds_fpr_bits(rm, fa_bits, fb_bits, fc_bits)
+            d = ops.fp_bits_to_double(precise_bits)
+            fused_single = ops.fp_bits_to_double(oracle_scalar_bits)
+        elif isinstance(ops, ConcreteOps) and op == Opcode.FMSUBS:
+            precise_bits = ops.fp_fmsub_rne_bits(fa_bits, fc_bits, fb_bits)
+            oracle_scalar_bits = ops.fp_fmsubs_fpr_bits(rm, fa_bits, fb_bits, fc_bits)
+            d = ops.fp_bits_to_double(precise_bits)
+            fused_single = ops.fp_bits_to_double(oracle_scalar_bits)
         elif op in (Opcode.FADDS, Opcode.FADD):
             d = ops.fp_add(rm, op_fa, op_fb)
         elif op in (Opcode.FSUBS, Opcode.FSUB):

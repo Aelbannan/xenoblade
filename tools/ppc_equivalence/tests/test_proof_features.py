@@ -227,7 +227,7 @@ class ProofFeaturesTests(unittest.TestCase):
 
         coverage = build_access_coverage_attestation(
             attested=True,
-            status="observed",
+            status="complete",
             opcode_families=["integer-load-store"],
         )
         cfg_sha = canonical_json_sha256({"kind": "test-cfg"})

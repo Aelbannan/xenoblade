@@ -219,7 +219,7 @@ class SymbolicEventTraceTests(unittest.TestCase):
 
         coverage = build_access_coverage_attestation(
             attested=True,
-            status="observed",
+            status="complete",
             opcode_families=["integer-load-store"],
         )
         forged["access_coverage"] = coverage

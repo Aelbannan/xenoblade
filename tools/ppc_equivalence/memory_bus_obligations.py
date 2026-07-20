@@ -208,6 +208,9 @@ def build_memory_bus_obligation(memory_bus: MemoryBus) -> dict[str, Any]:
     spec = memory_bus.specification
     if spec is not None:
         obligation["bus_spec_sha256"] = spec.sha256()
+        # Optional rebuild payload so JSON-only validators can recompute the
+        # digest without a live MemoryBus.
+        obligation["bus_spec_canonical"] = spec.canonical_dict()
     return obligation
 
 
@@ -447,8 +450,9 @@ def _merge_side_coverage(
     if rejections is not None:
         rejection_list = list(rejections)
 
-    # Discharged validator accepts observed|complete (not stubbed). Prefer
-    # ``complete`` when both static decode and dynamic routing evidence exist.
+    # Discharged validator requires ``complete``. Prefer ``complete`` when both
+    # static decode and dynamic routing evidence exist; ``observed`` remains
+    # valid only for pending/diagnostic (non-discharged) attestations.
     if sources:
         if "static" in sources and "dynamic" in sources:
             side_status = "complete"
@@ -724,7 +728,6 @@ def discharge_observed_mmio_unsupported_accesses(
 
         terminal_results: list[dict[str, Any]] = []
         worst = "unsat"
-        query_hashes: list[str] = []
         total_elapsed_ms = 0.0
         for touch in touches:
             if touch.theory != "register-bank":
@@ -744,7 +747,6 @@ def discharge_observed_mmio_unsupported_accesses(
                 deadline=effective_deadline,
                 z3=z3,
             )
-            query_hashes.append(query.query_sha256)
             total_elapsed_ms += query.elapsed_ms
             terminal_results.append(
                 {
@@ -769,7 +771,7 @@ def discharge_observed_mmio_unsupported_accesses(
             return {"result": "not-queried", "query_sha256": None, "terminals": []}
         return {
             "result": worst,
-            "query_sha256": aggregate_unsupported_access_query_sha256(query_hashes),
+            "query_sha256": aggregate_unsupported_access_query_sha256(terminal_results),
             "solver": {
                 "name": "z3",
                 "version": z3.get_version_string(),
@@ -999,6 +1001,8 @@ def enrich_memory_bus_obligation_with_symbolic_mmio(
     enriched["unsupported_access"] = unsupported_access
     if "bus_spec_sha256" not in enriched:
         enriched["bus_spec_sha256"] = spec.sha256()
+    if "bus_spec_canonical" not in enriched:
+        enriched["bus_spec_canonical"] = spec.canonical_dict()
 
     touched = _touched_device_ids(original_terminals, candidate_terminals)
     register_devices: list[dict[str, Any]] = []
@@ -1056,14 +1060,20 @@ def enrich_memory_bus_obligation_with_symbolic_mmio(
         gxfifo["bounded_summarized_emission"] = LOOP_FIFO_EMISSION
         enriched["gxfifo_trace"] = gxfifo
 
-    # Engine-proven discharge: both sides discharged form, no CFG rejections.
+    # Engine-proven discharge: both sides discharged form, no CFG rejections,
+    # and per-side access coverage status=complete (schema v2).
     # Loop×FIFO / mixed-space rejects also block discharged (Track C).
     original_ok = _side_is_discharged_form(unsupported_access.get("original") or {})
     candidate_ok = _side_is_discharged_form(unsupported_access.get("candidate") or {})
+    coverage_complete = (
+        access_coverage.get("status") == "complete"
+        and (access_coverage.get("original") or {}).get("status") == "complete"
+        and (access_coverage.get("candidate") or {}).get("status") == "complete"
+    )
     hard_reject = bool(rejection_reasons) or bool(loop_markers) or bool(
         enriched.get("loop_fifo_rejection") or enriched.get("mixed_space_rejection")
     )
-    if original_ok and candidate_ok and not hard_reject:
+    if original_ok and candidate_ok and coverage_complete and not hard_reject:
         enriched["status"] = "discharged"
     elif hard_reject:
         enriched["status"] = "cfg-routed-rejected"
@@ -1083,10 +1093,12 @@ def _is_sha256(value: Any) -> bool:
     return True
 
 
-# Discharged access-coverage must come from real static+dynamic attestation.
+# Discharged access-coverage must be ``complete`` (static + dynamic).
+# ``observed`` remains valid only for pending/diagnostic non-discharged states.
 # Transitional shape: top-level ``status`` / ``opcode_families`` / ``sha256``.
 # Per-side (Track B final): ``sides.{original,candidate}`` each with the same
 # fields (optional top-level aggregate ``sha256``).
+_COVERAGE_DISCHARGED_STATUSES = frozenset({"complete"})
 _COVERAGE_ATTESTED_STATUSES = frozenset({"observed", "complete"})
 _COVERAGE_REJECT_STATUSES = frozenset({"stubbed", "missing", "absent", ""})
 
@@ -1131,6 +1143,70 @@ def _mmio_device_ids_from_regions(regions: Sequence[Any]) -> set[str]:
         if isinstance(device_id, str) and device_id:
             ids.add(device_id)
     return ids
+
+
+def _validate_mmio_regions_device_ids(
+    regions: Sequence[Any],
+) -> str | None:
+    """Reject MMIO regions missing device_id or with duplicate device_ids."""
+    seen: set[str] = set()
+    for index, region in enumerate(regions):
+        if not isinstance(region, dict):
+            continue
+        if region.get("kind") != "mmio":
+            continue
+        device_id = region.get("device_id")
+        if not isinstance(device_id, str) or not device_id:
+            return (
+                f"memory_bus.regions[{index}] MMIO requires nonempty device_id "
+                "for discharged obligations"
+            )
+        if device_id in seen:
+            return (
+                f"memory_bus.regions duplicate MMIO device_id {device_id!r}"
+            )
+        seen.add(device_id)
+    return None
+
+
+def _theory_device_entries(
+    block: dict[str, Any] | None,
+    *,
+    label: str,
+    expected_theory: str | None = None,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Return theory device entries or a validation error.
+
+    Detects duplicate device_ids and optional theory/type mismatches against
+    the containing block (register-bank vs gxfifo-stream).
+    """
+    if not isinstance(block, dict):
+        return [], None
+    devices = block.get("devices")
+    if not isinstance(devices, list):
+        return [], None
+    entries: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, entry in enumerate(devices):
+        if not isinstance(entry, dict):
+            return [], f"{label}.devices[{index}] must be an object"
+        device_id = entry.get("device_id")
+        if not isinstance(device_id, str) or not device_id:
+            return [], (
+                f"{label}.devices[{index}].device_id must be a nonempty string"
+            )
+        if device_id in seen:
+            return [], f"{label}.devices duplicate device_id {device_id!r}"
+        seen.add(device_id)
+        theory = entry.get("theory")
+        if expected_theory is not None:
+            if theory != expected_theory:
+                return [], (
+                    f"{label}.devices[{index}].theory must be "
+                    f"{expected_theory!r} (got {theory!r})"
+                )
+        entries.append(entry)
+    return entries, None
 
 
 def _theory_device_ids(block: dict[str, Any] | None) -> set[str]:
@@ -1236,13 +1312,13 @@ def _validate_access_coverage_attestation(
             label = f"memory_bus.access_coverage.{side_name}"
             if status in _COVERAGE_REJECT_STATUSES or status is None:
                 return (
-                    f"{label}.status must be observed|complete "
-                    "(not stubbed/missing)"
+                    f"{label}.status must be complete "
+                    "(not stubbed/missing/observed)"
                 )
-            if status not in _COVERAGE_ATTESTED_STATUSES:
+            if status not in _COVERAGE_DISCHARGED_STATUSES:
                 return (
-                    f"{label}.status must be observed|complete "
-                    f"(got {status!r})"
+                    f"{label}.status must be complete "
+                    f"(got {status!r}; observed is not sufficient for discharge)"
                 )
             if side.get("attested") is False:
                 return f"{label}.attested must not be false"
@@ -1270,6 +1346,12 @@ def _validate_access_coverage_attestation(
                     "memory_bus.access_coverage.sha256 does not match "
                     "per-side aggregate digest"
                 )
+        parent_status = access_coverage.get("status")
+        if parent_status is not None and parent_status not in _COVERAGE_DISCHARGED_STATUSES:
+            return (
+                "memory_bus.access_coverage.status must be complete "
+                f"for discharged (got {parent_status!r})"
+            )
         return None
 
     # Transitional top-level shape (flat opcode_families).
@@ -1277,12 +1359,12 @@ def _validate_access_coverage_attestation(
     if status in _COVERAGE_REJECT_STATUSES or status is None:
         return (
             "memory_bus.discharged requires access_coverage.status "
-            "observed|complete (not stubbed/missing)"
+            "complete (not stubbed/missing/observed)"
         )
-    if status not in _COVERAGE_ATTESTED_STATUSES:
+    if status not in _COVERAGE_DISCHARGED_STATUSES:
         return (
             "memory_bus.discharged requires access_coverage.status "
-            f"observed|complete (got {status!r})"
+            f"complete (got {status!r}; observed is not sufficient for discharge)"
         )
     if not _is_sha256(access_coverage.get("sha256")):
         return "memory_bus.discharged requires access_coverage.sha256"
@@ -1349,28 +1431,47 @@ def _validate_unsupported_access_side(
         if reason is not None:
             return reason
         terminals_block = side.get("terminals")
-        if isinstance(terminals_block, list) and terminals_block:
-            from tools.ppc_equivalence.symbolic_bus import (
-                aggregate_unsupported_access_query_sha256,
+        if not isinstance(terminals_block, list) or not terminals_block:
+            return (
+                f"{label}.terminals must be a nonempty list for "
+                "non-vacuous result=unsat discharge"
             )
+        from tools.ppc_equivalence.symbolic_bus import (
+            aggregate_unsupported_access_query_sha256,
+        )
 
-            digests: list[str] = []
-            for index, entry in enumerate(terminals_block):
-                if not isinstance(entry, dict):
-                    return f"{label}.terminals[{index}] must be an object"
-                digest = entry.get("query_sha256")
-                if not _is_sha256(digest):
-                    return (
-                        f"{label}.terminals[{index}].query_sha256 "
-                        "must be a 64-hex digest"
-                    )
-                digests.append(digest)
-            expected = aggregate_unsupported_access_query_sha256(digests)
-            if side.get("query_sha256") != expected:
+        for index, entry in enumerate(terminals_block):
+            if not isinstance(entry, dict):
+                return f"{label}.terminals[{index}] must be an object"
+            if entry.get("result") != "unsat":
                 return (
-                    f"{label}.query_sha256 must be the aggregate digest of "
-                    "every terminal query_sha256"
+                    f"{label}.terminals[{index}].result must be 'unsat' "
+                    f"(got {entry.get('result')!r}); SAT/unknown children "
+                    "cannot authorize a parent unsat aggregate"
                 )
+            # Prefer explicit false: absent inconclusive is rejected.
+            if entry.get("inconclusive") is not False:
+                return (
+                    f"{label}.terminals[{index}].inconclusive must be "
+                    "explicitly false for result=unsat"
+                )
+            if not _is_sha256(entry.get("query_sha256")):
+                return (
+                    f"{label}.terminals[{index}].query_sha256 "
+                    "must be a 64-hex digest"
+                )
+            child_solver = _validate_solver_metadata(
+                entry.get("solver"),
+                label=f"{label}.terminals[{index}].solver",
+            )
+            if child_solver is not None:
+                return child_solver
+        expected = aggregate_unsupported_access_query_sha256(terminals_block)
+        if side.get("query_sha256") != expected:
+            return (
+                f"{label}.query_sha256 must be the aggregate digest of "
+                "every complete terminal record"
+            )
         return None
 
     return (
@@ -1379,7 +1480,12 @@ def _validate_unsupported_access_side(
     )
 
 
-def _validate_theory_block(block: Any, *, label: str) -> str | None:
+def _validate_theory_block(
+    block: Any,
+    *,
+    label: str,
+    expected_theory: str | None = None,
+) -> str | None:
     if not isinstance(block, dict):
         return f"{label} must be an object"
     status = block.get("status")
@@ -1393,11 +1499,25 @@ def _validate_theory_block(block: Any, *, label: str) -> str | None:
     devices = block.get("devices")
     if not isinstance(devices, list) or not devices:
         return f"{label}.devices must be a nonempty list when status=present"
-    for index, entry in enumerate(devices):
-        if not isinstance(entry, dict):
-            return f"{label}.devices[{index}] must be an object"
-        if not isinstance(entry.get("device_id"), str) or not entry["device_id"]:
-            return f"{label}.devices[{index}].device_id must be a nonempty string"
+    _, err = _theory_device_entries(
+        block, label=label, expected_theory=expected_theory,
+    )
+    return err
+
+
+def _validate_bus_spec_canonical(obligation: dict[str, Any]) -> str | None:
+    """When ``bus_spec_canonical`` is present, recompute ``bus_spec_sha256``."""
+    canonical = obligation.get("bus_spec_canonical")
+    if canonical is None:
+        return None
+    if not isinstance(canonical, dict):
+        return "memory_bus.bus_spec_canonical must be an object when present"
+    recomputed = canonical_json_sha256(canonical)
+    if obligation.get("bus_spec_sha256") != recomputed:
+        return (
+            "memory_bus.bus_spec_sha256 does not match recomputation from "
+            "bus_spec_canonical"
+        )
     return None
 
 
@@ -1473,15 +1593,51 @@ def _validate_theory_region_binding(
 ) -> str | None:
     regions = obligation.get("regions")
     assert isinstance(regions, list)
+
+    mmio_err = _validate_mmio_regions_device_ids(regions)
+    if mmio_err is not None:
+        return mmio_err
+
+    canonical_err = _validate_bus_spec_canonical(obligation)
+    if canonical_err is not None:
+        return canonical_err
+
     mmio_ids = _mmio_device_ids_from_regions(regions)
     register_theory = obligation.get("register_bank_theory")
     fifo_theory = obligation.get("fifo_theory")
-    register_ids = _theory_device_ids(
-        register_theory if isinstance(register_theory, dict) else None
+
+    register_entries, register_err = _theory_device_entries(
+        register_theory if isinstance(register_theory, dict) else None,
+        label="memory_bus.register_bank_theory",
+        expected_theory="register-bank",
     )
-    fifo_ids = _theory_device_ids(
-        fifo_theory if isinstance(fifo_theory, dict) else None
+    if register_err is not None:
+        return register_err
+    fifo_entries, fifo_err = _theory_device_entries(
+        fifo_theory if isinstance(fifo_theory, dict) else None,
+        label="memory_bus.fifo_theory",
+        expected_theory="gxfifo-stream",
     )
+    if fifo_err is not None:
+        return fifo_err
+
+    register_ids = {
+        entry["device_id"]
+        for entry in register_entries
+        if isinstance(entry.get("device_id"), str)
+    }
+    fifo_ids = {
+        entry["device_id"]
+        for entry in fifo_entries
+        if isinstance(entry.get("device_id"), str)
+    }
+
+    overlap = register_ids & fifo_ids
+    if overlap:
+        return (
+            "memory_bus.register_bank_theory and fifo_theory must not share "
+            f"device_ids ({', '.join(sorted(overlap))})"
+        )
 
     if bus is not None and bus.specification is not None:
         spec = bus.specification
@@ -1533,8 +1689,14 @@ def _validate_theory_region_binding(
                 "memory_bus.fifo_theory.status=present but bus has "
                 "no gxfifo-stream devices"
             )
+        # Live bus still requires exact MMIO region coverage from theories.
+        if mmio_ids and (register_ids | fifo_ids) != mmio_ids:
+            return (
+                "memory_bus theory device_ids must exactly cover every MMIO "
+                "region device_id"
+            )
     else:
-        # JSON-only: MMIO regions require a non-none theory covering them.
+        # JSON-only: exact coverage of every MMIO region device (not subset).
         if mmio_ids:
             if (
                 isinstance(register_theory, dict)
@@ -1547,20 +1709,18 @@ def _validate_theory_region_binding(
                     "be status=none when regions include MMIO devices"
                 )
             declared = register_ids | fifo_ids
-            if declared and not declared.issubset(mmio_ids):
+            if declared != mmio_ids:
+                missing = sorted(mmio_ids - declared)
+                extra = sorted(declared - mmio_ids)
+                detail_parts: list[str] = []
+                if missing:
+                    detail_parts.append(f"missing={missing}")
+                if extra:
+                    detail_parts.append(f"extra={extra}")
+                detail = "; ".join(detail_parts) if detail_parts else "mismatch"
                 return (
-                    "memory_bus theory device_ids must be subset of region "
-                    "MMIO device_ids"
-                )
-            if register_ids and not register_ids.issubset(mmio_ids):
-                return (
-                    "memory_bus.register_bank_theory.devices must bind to "
-                    "region MMIO device_ids"
-                )
-            if fifo_ids and not fifo_ids.issubset(mmio_ids):
-                return (
-                    "memory_bus.fifo_theory.devices must bind to "
-                    "region MMIO device_ids"
+                    "memory_bus theory device_ids must exactly equal region "
+                    f"MMIO device_ids ({detail})"
                 )
 
     return None
@@ -1689,8 +1849,15 @@ def validate_memory_bus_obligation(
         if reason is not None:
             return reason
 
-    for key in ("register_bank_theory", "fifo_theory"):
-        reason = _validate_theory_block(obligation.get(key), label=f"memory_bus.{key}")
+    for key, expected_theory in (
+        ("register_bank_theory", "register-bank"),
+        ("fifo_theory", "gxfifo-stream"),
+    ):
+        reason = _validate_theory_block(
+            obligation.get(key),
+            label=f"memory_bus.{key}",
+            expected_theory=expected_theory,
+        )
         if reason is not None:
             return reason
 

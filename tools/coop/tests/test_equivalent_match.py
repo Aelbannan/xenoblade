@@ -297,17 +297,58 @@ class CacheInvalidationTests(unittest.TestCase):
             self.assertIsNone(_cache_get(key, cache_dir))
 
     def test_cache_returns_current_entry(self) -> None:
+        from tools.coop.lib.equivalence_check import (
+            _cache_put,
+            _current_certifier_hash,
+            _current_engine_hash,
+        )
+        from tools.ppc_equivalence.result import ProofResult
+
         with tempfile.TemporaryDirectory() as tmp:
             cache_dir = Path(tmp)
             key = hashlib.sha256(b"current").hexdigest()
+            engine = _current_engine_hash()
+            proof = ProofResult(
+                status=ProofStatus.EQUIVALENT,
+                engine_hash=engine,
+                source_hash="e" * 64,
+                git_commit="f" * 40,
+            )
+            certificate = {
+                "architecture": ARCHITECTURE_MODEL,
+                "result_format": RESULT_FORMAT,
+                "engine_hash": engine,
+                "source_hash": proof.source_hash,
+                "git_commit": proof.git_commit,
+            }
+            _cache_put(
+                key,
+                EquivalenceProbe(
+                    ProofStatus.EQUIVALENT,
+                    "",
+                    certificate=certificate,
+                    proof=proof,
+                ),
+                cache_dir,
+                engine_hash=engine,
+                certifier_hash=_current_certifier_hash(),
+            )
+            result = _cache_get(key, cache_dir)
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+            self.assertIsInstance(result.proof, ProofResult)
+
+    def test_cache_misses_evidence_free_equivalent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            key = hashlib.sha256(b"evidence-free").hexdigest()
             self._make_cache_entry(
                 cache_dir, key,
                 architecture=ARCHITECTURE_MODEL,
                 result_format=RESULT_FORMAT,
             )
-            result = _cache_get(key, cache_dir)
-            self.assertIsNotNone(result)
-            self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+            self.assertIsNone(_cache_get(key, cache_dir))
 
     def test_cache_restores_proofresult_not_dict(self) -> None:
         from tools.coop.lib.equivalence_check import (

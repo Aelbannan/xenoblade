@@ -68,7 +68,11 @@ PowerPC architecture, checked against a mature Wii implementation.
   `NI_mul`, and `NI_div` cause precedence. The model propagates and quiets the
   first NaN operand, distinguishes `VXISI`/`VXIMZ`/`VXZDZ`/`VXIDI`, raises
   `ZX` for nonzero division by zero, and suppresses FPR/FPRF writes under
-  `VE`/`ZE`. Overflow, underflow, inexact flags, and trap delivery are separate.
+  `VE`/`ZE`. Overflow, underflow, and inexact flags remain separate. **PR18
+  scaffold:** with `FloatingPointDomain.traps_enabled`, VE/ZE enabled
+  exceptions on the scalar arith/fused supported set fork a
+  `program-exception` terminal (`0x700`, FP-enabled SRR1 cause) via
+  `fp_traps.py`; OE/UE/XE and incomplete opcodes fail closed.
 - `fctiw`/`fctiwz` follow Dolphin's `ConvertToInteger`: rounding occurs before
   the signed-32-bit range check, results use the `0xFFF80000xxxxxxxx` FPR
   format, negative values rounded to zero set the marker bit, and

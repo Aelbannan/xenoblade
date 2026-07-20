@@ -77,16 +77,16 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         }
         self.assertIsNone(validate_proof_features(payload))
 
-    def test_unsupported_for_equivalent_is_four_feature_freeze(self) -> None:
+    def test_unsupported_for_equivalent_excludes_relational_after_pr7(self) -> None:
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
             frozenset({
                 "affine-loop-summary",
-                "relational-induction",
                 "memory-loop-summary",
                 "memory-bus",
             }),
         )
+        self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertNotIn("readonly-image", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertNotIn("indirect-target-closure", UNSUPPORTED_FOR_EQUIVALENT)
 
@@ -175,14 +175,13 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("memory-bus", KNOWN_PROOF_FEATURES)
 
     def test_pr0_freeze_blocks_remaining_expanded_features(self) -> None:
-        """PR0: loop/memory-bus features remain blocked; jump-table cleared in PR3."""
+        """PR0: affine/memory features remain blocked; relational cleared in PR7."""
         self.assertTrue(UNSUPPORTED_FOR_EQUIVALENT)
         self.assertTrue(UNSUPPORTED_FOR_EQUIVALENT.issubset(KNOWN_PROOF_FEATURES))
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
             frozenset({
                 "affine-loop-summary",
-                "relational-induction",
                 "memory-loop-summary",
                 "memory-bus",
             }),

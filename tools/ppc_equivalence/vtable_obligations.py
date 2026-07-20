@@ -338,6 +338,7 @@ def discharge_virtual_call_obligations(
     """Independent remainder UNSAT queries (no mismatch formula)."""
     from tools.ppc_equivalence.discharge import discharge_bad_conditions
 
+    del context  # Premises/terminals carry the closure; context binds identity.
     z3 = ops.z3
     coverage_original = discharge_bad_conditions(
         premises=premises,
@@ -357,6 +358,97 @@ def discharge_virtual_call_obligations(
         coverage_original=coverage_original,
         coverage_candidate=coverage_candidate,
     )
+
+
+def obligations_from_virtual_call_discharge(
+    context: VirtualCallProofContext,
+    bundle: VirtualCallDischargeBundle,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build virtual-call obligations carrying coverage discharge digests."""
+    status = "discharged" if bundle.all_unsat() else "failed"
+    return build_virtual_call_obligations(
+        context,
+        no_write_status="pending",
+        coverage=bundle.coverage_original.to_obligation_digest(),
+        candidate_coverage=bundle.coverage_candidate.to_obligation_digest(),
+        status=status,
+    )
+
+
+def try_auto_virtual_call_context(
+    original: Sequence[Instruction],
+    candidate: Sequence[Instruction],
+    *,
+    slot_word: int | None = None,
+    slot_base: int | None = None,
+    source: str = "auto",
+    artifact_path: str = "",
+    original_pc: int | None = None,
+    candidate_pc: int | None = None,
+    original_symbol: str | None = None,
+    candidate_symbol: str | None = None,
+    readonly_words: Mapping[int, int] | None = None,
+    artifacts: VirtualCallArtifacts | None = None,
+    callee_certificate: SemanticCalleeCertificate | None = None,
+    callee_edges: Mapping[str, frozenset[str]] | None = None,
+) -> VirtualCallProofContext | None:
+    """Build a virtual-call proof context when both sides match and premises exist.
+
+    Fail-closed: returns ``None`` when pattern/evidence is incomplete. Callers
+    must still apply :func:`virtual_call_gate_reason` so unproven patterns never
+    authorize ``EQUIVALENT``. When ``callee_edges`` contains an SCC for the
+    paired identity, returns ``None`` (engine maps that to
+    ``INCONCLUSIVE_UNVALIDATED_CALLEE`` via :func:`virtual_call_scc_status`).
+    """
+    left = find_virtual_call_candidates(original)
+    right = find_virtual_call_candidates(candidate)
+    if len(left) != 1 or len(right) != 1:
+        return None
+    if left[0].slot_offset != right[0].slot_offset:
+        return None
+    if (
+        slot_word is None
+        or slot_base is None
+        or original_pc is None
+        or candidate_pc is None
+        or callee_certificate is None
+    ):
+        return None
+    built = try_build_virtual_call_context(
+        original,
+        slot_word=slot_word,
+        slot_base=slot_base,
+        branch_pc=left[0].branch_pc,
+        source=source,
+        artifact_path=artifact_path,
+        original_pc=original_pc,
+        candidate_pc=candidate_pc,
+        original_symbol=original_symbol,
+        candidate_symbol=candidate_symbol,
+        readonly_words=readonly_words,
+        artifacts=artifacts,
+        callee_certificate=callee_certificate,
+    )
+    if isinstance(built, str):
+        return None
+    if callee_edges is not None and built.pairing.cases:
+        identity = built.pairing.cases[0].identity
+        if virtual_call_scc_status(callee_edges, root=identity) is not None:
+            return None
+    # Candidate-side branch PC may differ; record when the right match differs.
+    if right[0].branch_pc != left[0].branch_pc:
+        return VirtualCallProofContext(
+            candidate=built.candidate,
+            slot=built.slot,
+            pairing=built.pairing,
+            provenance=built.provenance,
+            branch_pc=built.branch_pc,
+            candidate_branch_pc=right[0].branch_pc,
+            candidate_slot=built.candidate_slot,
+            artifacts=built.artifacts,
+            callee_certificate=built.callee_certificate,
+        )
+    return built
 
 
 def try_build_virtual_call_context(

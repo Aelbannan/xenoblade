@@ -184,12 +184,119 @@ def collect_bus_mmio_observability(
     return observability
 
 
+def discharge_observed_mmio_unsupported_accesses(
+    memory_bus: MemoryBus,
+    *,
+    original_terminals: Sequence[Any] | None = None,
+    candidate_terminals: Sequence[Any] | None = None,
+    ops: Any | None = None,
+    deadline: Any | None = None,
+) -> dict[str, Any]:
+    """Per-terminal unsupported-access queries for *observed* MMIO touches.
+
+    Does not assume ``supported`` into the equivalence query. Without a full
+    SymbolicOps memory-bus CFG, only concrete MMIO touches collected from
+    terminals are discharged; missing ops/deadline leaves ``not-queried``.
+    """
+    from tools.ppc_equivalence.bus_spec import lift_symbolic_register_banks
+    from tools.ppc_equivalence.deadline import Deadline
+    from tools.ppc_equivalence.symbolic_bus import (
+        access_supported,
+        collect_mmio_touches_from_terminals,
+        discharge_unsupported_access,
+    )
+
+    empty = {
+        "original": {"result": "not-queried", "query_sha256": None, "terminals": []},
+        "candidate": {"result": "not-queried", "query_sha256": None, "terminals": []},
+    }
+    spec = memory_bus.specification
+    if spec is None or ops is None or getattr(ops, "z3", None) is None:
+        return empty
+
+    z3 = ops.z3
+    banks = lift_symbolic_register_banks(spec, z3)
+    if not banks:
+        return empty
+
+    theories = _device_theory_map(memory_bus)
+    effective_deadline = deadline if deadline is not None else Deadline.after_ms(5_000)
+
+    def _side(
+        terminals: Sequence[Any] | None,
+        *,
+        side: str,
+    ) -> dict[str, Any]:
+        if terminals is None:
+            return {"result": "not-queried", "query_sha256": None, "terminals": []}
+        touches = collect_mmio_touches_from_terminals(
+            terminals,
+            memory_bus.address_space,
+            side=side,
+            device_theories=theories,
+        )
+        if not touches:
+            return {"result": "not-queried", "query_sha256": None, "terminals": []}
+
+        terminal_results: list[dict[str, Any]] = []
+        worst = "unsat"
+        last_hash: str | None = None
+        for touch in touches:
+            if touch.theory != "register-bank":
+                continue
+            bank = banks.get(touch.device_id)
+            if bank is None:
+                continue
+            try:
+                addr_int = int(touch.addr, 0) & 0xFFFFFFFF
+            except (TypeError, ValueError):
+                continue
+            addr = z3.BitVecVal(addr_int, 32)
+            supported = access_supported(addr, bank, z3, width=max(1, int(touch.width)))
+            # Path True: the touch was already observed on a feasible terminal.
+            query = discharge_unsupported_access(
+                path_condition=z3.BoolVal(True),
+                supported=supported,
+                deadline=effective_deadline,
+                z3=z3,
+            )
+            last_hash = query.query_sha256
+            terminal_results.append(
+                {
+                    "device_id": touch.device_id,
+                    "addr": touch.addr,
+                    "width": touch.width,
+                    "result": query.result,
+                    "query_sha256": query.query_sha256,
+                    "inconclusive": query.inconclusive,
+                }
+            )
+            if query.status.value == "sat":
+                worst = "sat"
+            elif query.status.value == "unknown" and worst == "unsat":
+                worst = "unknown"
+        if not terminal_results:
+            return {"result": "not-queried", "query_sha256": None, "terminals": []}
+        return {
+            "result": worst,
+            "query_sha256": last_hash,
+            "terminals": terminal_results,
+        }
+
+    return {
+        "original": _side(original_terminals, side="original"),
+        "candidate": _side(candidate_terminals, side="candidate"),
+    }
+
+
 def enrich_memory_bus_obligation_with_symbolic_mmio(
     obligation: dict[str, Any],
     memory_bus: MemoryBus,
     *,
     original_terminals: Sequence[Any] | None = None,
     candidate_terminals: Sequence[Any] | None = None,
+    ops: Any | None = None,
+    deadline: Any | None = None,
 ) -> dict[str, Any]:
     """Attach PR-14/15 scaffold blocks and MMIO observability (fail-closed)."""
     from tools.ppc_equivalence.symbolic_bus import build_register_bank_extensional_obligation
@@ -206,6 +313,15 @@ def enrich_memory_bus_obligation_with_symbolic_mmio(
         original_terminals=original_terminals,
         candidate_terminals=candidate_terminals,
     )
+
+    unsupported_access = discharge_observed_mmio_unsupported_accesses(
+        memory_bus,
+        original_terminals=original_terminals,
+        candidate_terminals=candidate_terminals,
+        ops=ops,
+        deadline=deadline,
+    )
+    enriched["unsupported_access"] = unsupported_access
 
     register_devices: list[dict[str, Any]] = []
     fifo_devices: list[dict[str, Any]] = []
@@ -229,6 +345,7 @@ def enrich_memory_bus_obligation_with_symbolic_mmio(
         enriched["register_bank_extensional"] = build_register_bank_extensional_obligation(
             bus_spec_sha256=spec.sha256(),
             devices=register_devices,
+            unsupported_access=unsupported_access,
             observability=enriched["observability"],
             status="scaffolded",
         )

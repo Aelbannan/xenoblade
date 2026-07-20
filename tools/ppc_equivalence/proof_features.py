@@ -13,13 +13,13 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-# PR0 safety freeze: loop/memory-bus features stay unsupported until their
+# PR0 safety freeze: affine/memory-loop/memory-bus stay unsupported until their
 # foundation repairs land. Jump-table readonly-image + indirect-target-closure
-# are discharged independently (PR3) and may authorize EQUIVALENT when
-# obligations validate.
+# are discharged independently (PR3). Relational-induction is discharged via
+# five independent UNSAT queries (PR7) and may authorize EQUIVALENT when
+# obligations validate with status discharged.
 UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
     "affine-loop-summary",
-    "relational-induction",
     "memory-loop-summary",
     "memory-bus",
 })
@@ -178,6 +178,11 @@ def validate_proof_features(
             reason = validate_relational_induction_obligation(obligation)
             if reason is not None:
                 return reason
+            if require_equivalent_ready and obligation.get("status") != "discharged":
+                return (
+                    "relational_induction.status must be 'discharged' "
+                    "for EQUIVALENT proofs"
+                )
         if feature == "memory-loop-summary":
             reason = validate_memory_loop_obligation(obligation)
             if reason is not None:

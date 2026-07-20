@@ -20,12 +20,23 @@ FPRF, accumulated VX subcauses, unconditional lane writeback). Other paired
 families remain on the legacy semantics path or fail closed with explicit
 reasons.
 
+**FPSCR.NI (Wave 4 Track B / PR17):** supported opcodes apply Broadway
+flush-to-zero on denormal operands and results when ``FPSCR.NI=1`` (see
+``NI_SUPPORTED_OPS``). Unsupported NI-affected opcodes fail closed when NI
+may be set. Still **Tier C** only.
+
 **Deferred (Fraction oracle / FMA residual Track C follow-ups):**
 - Fraction / rational exact cross-check oracle for finite values
 - Full single-round FMA residual modeling (Broadway midpoint-tie with
   nonzero addend; near-cancellation sticky residues)
 - SymbolicOps native ``FPOutcome`` paired lane producers
-- FPSCR sticky latch and architectural trap delivery from outcome fields alone
+- Full FPSCR sticky latch from outcome fields alone (OX/UX/XX)
+- NI for estimates (``fres``/``frsqrte``/``ps_res``/``ps_rsqrte``), ``frsp``,
+  converts, compares, stores, and non-oracle paired families
+
+**PR18 trap scaffold:** ``fp_traps.resolve_fp_trap_policy`` / CFG forking under
+``FloatingPointDomain.traps_enabled`` deliver VE/ZE program exceptions for the
+scalar supported set; incomplete opcodes fail closed. See ``fp_traps.py``.
 """
 
 from __future__ import annotations
@@ -33,7 +44,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .fp_oracle import FpOracleFlags, FpOracleResult, fprf_from_binary64, mask64
+from .fp_oracle import (
+    FpOracleFlags,
+    FpOracleResult,
+    NI_SCALAR_SUPPORTED_OPS,
+    fprf_from_binary64,
+    mask64,
+)
 
 # Broadway FPSCR VX subcause bits (Gekko layout; mirror semantics.py).
 FPSCR_VXSNAN = 1 << 24
@@ -56,6 +73,13 @@ PAIRED_ORACLE_FUSED_OPS: frozenset[str] = frozenset({
     "ps_nmsub",
 })
 PAIRED_ORACLE_OPS: frozenset[str] = PAIRED_ORACLE_BASIC_OPS | PAIRED_ORACLE_FUSED_OPS
+
+# Identity string for certificates / cache when paired-single oracle ops appear.
+# Bump when lane combine / SoftFloat paired semantics change (PR13).
+FP_ORACLE_VERSION = "broadway-softfloat-paired-single-v1"
+
+# Wave 4 Track B: opcodes with concrete/symbolic FPSCR.NI flush modeling.
+NI_SUPPORTED_OPS: frozenset[str] = NI_SCALAR_SUPPORTED_OPS | PAIRED_ORACLE_OPS
 
 
 @dataclass(frozen=True)

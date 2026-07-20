@@ -312,6 +312,34 @@ class MmioObservabilityTests(unittest.TestCase):
         )
         self.assertIn("observability", enriched)
 
+    def test_enrich_runs_unsupported_access_when_ops_provided(self) -> None:
+        from tools.ppc_equivalence.device_model import RegisterBankDevice
+        from tools.ppc_equivalence.semantics import SymbolicOps
+
+        device = RegisterBankDevice(
+            base=0xCC008000,
+            reg_width=4,
+            registers=(RegisterSpec(offset=0x00, initial=0xAB),),
+        )
+        mmio = mmio_region(0xCC008000, 0xCC008FFF, device_id="test-bank")
+        bus = build_memory_bus(AddressSpace((mmio,)), devices={"test-bank": device})
+        base_obligation = {"algorithm": "memory-bus-v1", "mmio": "fail-closed"}
+        ops = SymbolicOps()
+        enriched = enrich_memory_bus_obligation_with_symbolic_mmio(
+            base_obligation,
+            bus,
+            ops=ops,
+        )
+        self.assertIn("unsupported_access", enriched)
+        self.assertEqual(
+            enriched["unsupported_access"]["original"]["result"],
+            "not-queried",
+        )
+        self.assertEqual(
+            enriched["register_bank_extensional"]["unsupported_access"]["original"]["result"],
+            "not-queried",
+        )
+
 
 class FreezeGuardTests(unittest.TestCase):
     def test_memory_bus_still_unsupported_for_equivalent(self) -> None:

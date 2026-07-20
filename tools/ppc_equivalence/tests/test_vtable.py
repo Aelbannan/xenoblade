@@ -267,6 +267,52 @@ class VirtualCallClosureTests(unittest.TestCase):
         leaf = _decode("38630004 4e800020")
         self.assertIsNone(virtual_call_gate_reason(leaf, leaf))
 
+    def test_try_auto_without_premises_returns_none(self) -> None:
+        from tools.ppc_equivalence.vtable_obligations import try_auto_virtual_call_context
+
+        insns = _virtual_call_program()
+        self.assertIsNone(try_auto_virtual_call_context(insns, insns))
+
+    def test_engine_gate_demotes_equivalent_without_context(self) -> None:
+        from tools.ppc_equivalence.contract import make_contract
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        # Leaf program without virtual call stays eligible for EQUIVALENT.
+        leaf = _decode("38630004 4e800020")
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=5_000)
+        leaf_result = check_equivalence(
+            leaf, leaf, contract, original_hex="00", candidate_hex="00",
+        )
+        self.assertEqual(leaf_result.status, ProofStatus.EQUIVALENT)
+
+    def test_engine_scc_returns_unvalidated_callee(self) -> None:
+        from tools.ppc_equivalence.contract import make_contract
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        context = self._context()
+        edges = {
+            "CView::wkUpdate": frozenset({"CView::wkUpdate"}),
+        }
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=5_000)
+        # Minimal leaf bodies — SCC check runs before CFG.
+        leaf = _decode("38630004 4e800020")
+        result = check_equivalence(
+            leaf,
+            leaf,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            virtual_call=context,
+            callee_edges=edges,
+        )
+        self.assertEqual(
+            result.status,
+            ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
+            result.unsupported,
+        )
+
 
 class VirtualCallSccTests(unittest.TestCase):
     def test_detects_cycle(self) -> None:

@@ -66,10 +66,14 @@ documented per-implementation private-storage abstraction.
   `bne`) use the same summary map with `proof_kind=compare-affine-closed-form`
   and leave CTR unmodified. A `FinalCompare` is applied after closed-form GPRs
   so CR (including XER.SO) matches the last `cmpwi`.
-  Relational induction discharges matching CTR-affine or compare-affine pairs
-  and natural-loop pairs whose headers are backed by those closed forms
-  (`relational_induction.try_discharge_relational`); shape-only natural sketches
-  and mismatched bodies remain unsupported for `EQUIVALENT`.
+  Relational induction discharges matching CTR-affine pairs via five independent
+  UNSAT queries (`relational_discharge.try_smt_discharge_ctr_affine` /
+  `relational_induction.try_discharge_relational`): initiation, preservation,
+  exit agreement, postcondition, and CTR termination. Pattern match alone never
+  marks `discharged`. Narrow templates only: equal CTR, equal GPRs, constant
+  offset, equal validity, equal CR fields, equal memory. Compare-affine and
+  shape-only natural sketches remain pending; mismatched bodies stay unsupported
+  for `EQUIVALENT`.
   Constant-stride store loops (`memory_loop` / `memory-loop-summary`) with a
   positive concrete trip count are discharged in closed form inside
   `execute_cfg` via typed `StoreEffect` / `apply_store_effect` (recording
@@ -326,11 +330,25 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
 ### Floating point
 
 - Rounding mode: nearest-even (`RN=00`), enforced via `FloatingPointDomain`
-  (`require_ni_zero` + `rounding_modes`) constraining `FPSCR[0:2]`.
-- `FPSCR.NI=0` (non-IEEE mode disabled); configs with `require_ni_zero=false`
-  fail closed as `INCONCLUSIVE_UNSUPPORTED`.
-- Traps: disabled for all FP exceptions (assumed; trap delivery is not
-  modeled). `traps_enabled=true` fails closed.
+  (`rounding_modes`) constraining `FPSCR[0:1]`.
+- **FPSCR.NI (PR17 / Wave 4 Track B):** NI is read from live FPSCR state
+  (bit 2). Default `require_ni_zero=true` still constrains `NI=0`. With
+  `require_ni_zero=false`, Broadway flush-to-zero is modeled for
+  `fp_outcome.NI_SUPPORTED_OPS` (scalar SoftFloat oracle ops plus Wave 3
+  paired oracle subset): denormal operands → signed zero (Table 2-24);
+  denormal / sub-single-normal results → signed zero (Table 2-25 /
+  Dolphin `ForceSingle`). Proofs that allow NI and contain an NI-affected
+  unsupported opcode fail closed as `INCONCLUSIVE_UNSUPPORTED` (no silent
+  IEEE widening). Recorded under `floating_point_domain.ni` /
+  `ni_supported_opcodes`. Still **Tier C** only.
+- Traps: default domain keeps traps disabled (`traps_enabled=false`, coverage
+  assumed `traps-disabled`). **PR18 scaffold:** `traps_enabled=true` allows
+  VE/ZE program-exception delivery for the scalar supported opcode set in
+  `fp_traps.TRAP_DELIVERY_SUPPORTED_OPS` (reuse `program-exception` / `0x700` /
+  `_exception_entry` SRR0/SRR1/MSR; destination suppression unchanged). OE/UE/XE
+  must be clear; incomplete opcodes (estimates, compares, conversions, paired)
+  and OX/UX/XX traps fail closed as `ExecutionInconclusive` /
+  `INCONCLUSIVE_UNSUPPORTED`. Still **Tier C** only.
 - Finite-input overflow is excluded when `exclude_finite_overflow=true`
   (default) via `_constrain_fp_defined_result` → `FP_DOMAIN_EXCLUDED`.
 - Invalid-operation (`VX`) and divide-by-zero (`ZX`) causes are tracked.
@@ -381,6 +399,10 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   ``fp_outcome.py`` (PS0 FPRF, accumulated VX subcauses, unconditional lane
   writeback, record-form CR1). Other paired families stay on the legacy
   semantics path; ``SymbolicOps`` is unchanged. Still **Tier C** only.
+- **FPSCR.NI flush (Wave 4 Track B / PR17):** the same scalar SoftFloat +
+  paired-oracle opcode set applies Broadway denormal operand/result flush when
+  ``FPSCR.NI=1``. Deferred NI coverage: estimates, ``frsp``, converts, compares,
+  single stores, and non-oracle paired families.
 - **Unified `FPOutcome` scaffold (Track C):** `tools/ppc_equivalence/fp_outcome.py`
   defines `FPExceptionFlags` / `FPOutcome` plus SoftFloat and bits-API adapters
   (`outcome_from_oracle`, `oracle_from_outcome`, `outcome_from_result_bits`).
@@ -388,8 +410,11 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   SoftFloat now covers the Inf/NaN/div0/subnormal/overflow domains that host
   float previously modeled for ConcreteOps scalar paths. **Deferred:** Fraction
   / rational exact cross-check oracle, Broadway single-FMA midpoint residual
-  with nonzero addend, native SymbolicOps/`FPOutcome` producers, and FPSCR latch
-  / trap delivery from outcome fields.
+  with nonzero addend, native SymbolicOps/`FPOutcome` producers, and full FPSCR
+  sticky latch from outcome fields. **PR18 trap scaffold:** `fp_traps.py`
+  resolves VE/ZE trap vs continue from `FPOutcome` + enable bits; CFG forks a
+  `program-exception` terminal when `traps_enabled` (scalar supported set).
+  OX/UX/XX, paired, estimates, and re-trap-when-FEX-already-set remain blockers.
 
 ### Relocations
 
@@ -507,9 +532,13 @@ obligation block. The schema is:
 
 Rules (enforced by `tools.ppc_equivalence.proof_features`):
 
-- **PR0 safety freeze:** expanded features remain listed in
-  `UNSUPPORTED_FOR_EQUIVALENT` until each feature's foundation repairs land with
-  negative tests. Jump-table coverage and no-write now use independent UNSAT
+- **PR0 safety freeze:** `affine-loop-summary`, `memory-loop-summary`, and
+  `memory-bus` remain listed in `UNSUPPORTED_FOR_EQUIVALENT` until each
+  feature's foundation repairs land with negative tests. **PR7:**
+  `relational-induction` may authorize `EQUIVALENT` only when all five
+  obligation blocks carry independent UNSAT digests (`result=unsat`,
+  `query_sha256`, solver metadata); SAT/unknown/timeout never discharges.
+  Jump-table coverage and no-write use independent UNSAT
   discharge (`discharge.py`) with remainder terminals retained on BCCTR
   expansion; obligation schema v2 carries coverage/no_write digests.
   Architecture model stays `broadway-ppc32-be-v33` (no bump for obligation

@@ -6,8 +6,8 @@ proof-critical paths so a future migration can treat results as independently
 checkable bit patterns.
 
 **Not production-complete:** exception propagation into FPSCR sticky latch,
-Force25 (applied by semantics before the oracle), paired-single lanes, and
-Broadway single-FMA midpoint residuals remain partial or unimplemented.
+Force25 (applied by semantics before the oracle), Broadway single-FMA midpoint
+residuals, and NI for non-oracle ops remain partial or unimplemented.
 Unhandled cases fail closed via :class:`OracleUnimplementedError`.
 
 **Partially wired:** ``ConcreteOps`` routes ``fadd``/``fadds``/``fmul``/``fmuls``/
@@ -15,14 +15,17 @@ Unhandled cases fail closed via :class:`OracleUnimplementedError`.
 ``fnmadd``/``fnmadds``/``fnmsub``/``fnmsubs`` through this oracle, and Wave 3
 Track B routes ``ps_add``/``ps_sub``/``ps_mul``/``ps_m*`` paired lanes through
 ``ps_lane_outcome`` + ``combine_paired_outcomes`` (ConcreteOps only).
-significand path models finite normals/zeros, subnormals, ±Inf, quiet/signaling
+Wave 4 Track B (PR17) adds FPSCR.NI flush helpers
+(``ni_flush_operand_binary64`` / ``ni_force_single_result_bits``) consumed by
+semantics for ``NI_SCALAR_SUPPORTED_OPS``. The integer-significand path models
+finite normals/zeros, subnormals, ±Inf, quiet/signaling
 NaN propagation, division by zero (±Inf + ZX), and overflow (±Inf + OX). Force25
 for single fused forms is applied by the semantics layer before the oracle sees
 ``frC``. Negative fused forms negate finite results only (NaN payloads are never
 sign-flipped). Single fused forms still fail closed on Dolphin/Broadway
 midpoint-tie residues with a nonzero addend, and on near-cancellation sticky
-residues. SymbolicOps, paired-single lanes, and other FP paths still use host
-float or Z3. Nothing here promotes FP proofs out of Tier C.
+residues. SymbolicOps and other FP paths still use host float or Z3. Nothing
+here promotes FP proofs out of Tier C.
 
 **Unified outcome (Track C scaffold):** :class:`FpOracleResult` remains the
 SoftFloat return type. Prefer :mod:`tools.ppc_equivalence.fp_outcome` adapters
@@ -91,6 +94,55 @@ ORACLE_SUPPORTED_OPS: frozenset[str] = frozenset({
     "fnmsub",
     "fnmsubs",
 })
+
+# Wave 4 Track B (PR17): scalar oracle ops that model FPSCR.NI flush-to-zero.
+# Paired NI coverage is listed in ``fp_outcome.NI_SUPPORTED_OPS``.
+NI_SCALAR_SUPPORTED_OPS: frozenset[str] = ORACLE_SUPPORTED_OPS
+
+# Smallest positive binary32 normal, as a binary64 magnitude (Dolphin ForceSingle).
+_SMALLEST_NORMAL_SINGLE_MAG: Final[int] = 0x3810000000000000
+
+
+def flush_denormal_binary64(bits: int) -> int:
+    """Flush a binary64 denormal/zero-exp value to signed zero (FPSCR.NI)."""
+    bits = mask64(bits)
+    if (bits & (_B64_EXP_MASK << _B64_EXP_SHIFT)) == 0:
+        return bits & (1 << _B64_SIGN_SHIFT)
+    return bits
+
+
+def ni_flush_operand_binary64(bits: int, *, ni: bool) -> int:
+    """Apply Broadway Table 2-24 operand flush when ``ni`` is set."""
+    if not ni:
+        return mask64(bits)
+    return flush_denormal_binary64(bits)
+
+
+def ni_flush_result_binary64(bits: int, *, ni: bool) -> int:
+    """Apply Broadway Table 2-25 double result flush when ``ni`` is set.
+
+    Denorm detection is post-IEEE rounding for the SoftFloat oracle path; the
+    pre-round single quirk is handled by :func:`ni_force_single_result_bits`.
+    """
+    if not ni:
+        return mask64(bits)
+    return flush_denormal_binary64(bits)
+
+
+def ni_force_single_result_bits(bits: int, *, ni: bool) -> int:
+    """Dolphin ``ForceSingle`` NI quirk on a binary64 magnitude.
+
+    When NI is set, any value whose magnitude is strictly below the smallest
+    normal binary32 (including binary64 subnormals) becomes signed zero. This
+    matches Broadway's "denorm before rounding → zero" single-precision rule.
+    """
+    bits = mask64(bits)
+    if not ni:
+        return bits
+    magnitude = bits & ~(1 << _B64_SIGN_SHIFT)
+    if magnitude < _SMALLEST_NORMAL_SINGLE_MAG:
+        return bits & (1 << _B64_SIGN_SHIFT)
+    return bits
 
 
 @dataclass(frozen=True, slots=True)

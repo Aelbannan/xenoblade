@@ -167,6 +167,8 @@ FPSCR_OE = 1 << 6
 FPSCR_UE = 1 << 5
 FPSCR_ZE = 1 << 4
 FPSCR_XE = 1 << 3
+# FPSCR.NI occupies bit 2 (PowerPC MSB numbering bit 29).
+FPSCR_NI = 1 << 2
 FPSCR_VX_ANY = (
     FPSCR_VXSNAN | FPSCR_VXISI | FPSCR_VXIDI | FPSCR_VXZDZ | FPSCR_VXIMZ
     | FPSCR_VXVC | FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI
@@ -1480,6 +1482,67 @@ def _psq_flush_single(bits: Any, ops: WordOps) -> Any:
     )
 
 
+def _fpscr_ni_set(state: MachineState, ops: WordOps) -> Any:
+    """Return a boolean predicate for FPSCR.NI=1."""
+    return ops.lnot(ops.eq(ops.band(state.fpscr, ops.const(FPSCR_NI)), ops.const(0)))
+
+
+def _flush_denormal_bits64(bits: Any, ops: WordOps) -> Any:
+    """Flush binary64 values with a zero exponent field to signed zero."""
+    if isinstance(ops, ConcreteOps):
+        bits_i = int(bits) & 0xFFFFFFFFFFFFFFFF
+        if (bits_i & 0x7FF0000000000000) == 0:
+            return bits_i & 0x8000000000000000
+        return bits_i
+    exp_mask = ops.fp_const64(0x7FF0000000000000)
+    sign_mask = ops.fp_const64(0x8000000000000000)
+    exp = ops.band(bits, exp_mask)
+    sign = ops.band(bits, sign_mask)
+    # Compare as BitVec64 — ConcreteOps.eq masks to 32 bits.
+    return ops.ite(exp == ops.fp_const64(0), sign, bits)
+
+
+def _ni_flush_operand_bits64(bits: Any, ni: Any, ops: WordOps) -> Any:
+    """Broadway Table 2-24: denormal operands become signed zero when NI=1."""
+    if isinstance(ops, ConcreteOps):
+        return _flush_denormal_bits64(bits, ops) if ni else int(bits) & 0xFFFFFFFFFFFFFFFF
+    return ops.ite(ni, _flush_denormal_bits64(bits, ops), bits)
+
+
+def _ni_flush_result_bits64(bits: Any, ni: Any, ops: WordOps) -> Any:
+    """Broadway Table 2-25 double: denormal results become signed zero when NI=1."""
+    if isinstance(ops, ConcreteOps):
+        return _flush_denormal_bits64(bits, ops) if ni else int(bits) & 0xFFFFFFFFFFFFFFFF
+    return ops.ite(ni, _flush_denormal_bits64(bits, ops), bits)
+
+
+def _ni_force_single_result_bits64(bits: Any, ni: Any, ops: WordOps) -> Any:
+    """Dolphin ForceSingle NI quirk: |x| < smallest normal single → signed zero."""
+    # Smallest positive binary32 normal as a binary64 magnitude.
+    threshold = 0x3810000000000000
+    if isinstance(ops, ConcreteOps):
+        bits_i = int(bits) & 0xFFFFFFFFFFFFFFFF
+        if not ni:
+            return bits_i
+        if (bits_i & 0x7FFFFFFFFFFFFFFF) < threshold:
+            return bits_i & 0x8000000000000000
+        return bits_i
+    # SymbolicOps: unsigned 64-bit compare (ConcreteOps.unsigned_lt is 32-bit).
+    magnitude = ops.band(bits, ops.fp_const64(0x7FFFFFFFFFFFFFFF))
+    below = ops.z3.ULT(magnitude, ops.fp_const64(threshold))
+    flushed = ops.band(bits, ops.fp_const64(0x8000000000000000))
+    return ops.ite(ni, ops.ite(below, flushed, bits), bits)
+
+
+def _ni_flush_arith_result_bits64(
+    bits: Any, ni: Any, *, is_single: bool, ops: WordOps,
+) -> Any:
+    """Apply NI result flush for scalar/paired arithmetic writeback bits."""
+    if is_single:
+        return _ni_force_single_result_bits64(bits, ni, ops)
+    return _ni_flush_result_bits64(bits, ni, ops)
+
+
 def _psq_load_pair(
     memory: Any, address: Any, w: int, qtype: Any, scale: Any, ops: WordOps,
 ) -> tuple[Any, Any]:
@@ -1635,6 +1698,13 @@ _FP_PS_ORACLE_BASIC = {
 _FP_PS_ORACLE_FUSED = {
     Opcode.PS_MADD, Opcode.PS_MSUB, Opcode.PS_NMADD, Opcode.PS_NMSUB,
 }
+# Wave 4 Track B (PR17): opcodes with FPSCR.NI flush-to-zero modeling.
+_FP_NI_SUPPORTED = {
+    Opcode.FADD, Opcode.FADDS, Opcode.FSUB, Opcode.FSUBS,
+    Opcode.FMUL, Opcode.FMULS, Opcode.FDIV, Opcode.FDIVS,
+    Opcode.FMADD, Opcode.FMADDS, Opcode.FMSUB, Opcode.FMSUBS,
+    Opcode.FNMADD, Opcode.FNMADDS, Opcode.FNMSUB, Opcode.FNMSUBS,
+} | _FP_PS_ORACLE_BASIC | _FP_PS_ORACLE_FUSED
 _FP_PS_SUM = {Opcode.PS_SUM0, Opcode.PS_SUM1}
 _FP_PS_SELECT = {Opcode.PS_SEL}
 _FP_PS_CMP = {
@@ -2152,11 +2222,18 @@ def _execute_ps_oracle_basic(
     source: int,
     ops: WordOps,
 ) -> MachineState:
+    from dataclasses import replace
+
     from .fp_oracle import ps_lane_outcome
     from .fp_outcome import combine_paired_outcomes
 
+    ni = _fpscr_ni_set(state, ops)
     left0, left1 = state.fpr[fa], state.ps1[fa]
     right0, right1 = state.fpr[source], state.ps1[source]
+    left0 = _ni_flush_operand_bits64(left0, ni, ops)
+    left1 = _ni_flush_operand_bits64(left1, ni, ops)
+    right0 = _ni_flush_operand_bits64(right0, ni, ops)
+    right1 = _ni_flush_operand_bits64(right1, ni, ops)
     if op == Opcode.PS_MUL:
         right0 = ops.fp_force_25bit(right0)
         right1 = ops.fp_force_25bit(right1)
@@ -2169,6 +2246,20 @@ def _execute_ps_oracle_basic(
     op_name = op.value
     lane0 = ps_lane_outcome(op_name, left0, right0)
     lane1 = ps_lane_outcome(op_name, left1, right1)
+    from .fp_oracle import fprf_from_binary64
+
+    flushed0 = _ni_force_single_result_bits64(lane0.primary_bits(), ni, ops)
+    flushed1 = _ni_force_single_result_bits64(lane1.primary_bits(), ni, ops)
+    lane0 = replace(
+        lane0,
+        result_bits=(flushed0,),
+        fprf=fprf_from_binary64(int(flushed0)) if isinstance(ops, ConcreteOps) else lane0.fprf,
+    )
+    lane1 = replace(
+        lane1,
+        result_bits=(flushed1,),
+        fprf=fprf_from_binary64(int(flushed1)) if isinstance(ops, ConcreteOps) else lane1.fprf,
+    )
     combined = combine_paired_outcomes(lane0, lane1)
     clear_fifr = (
         _paired_oracle_lane_clears_fifr(op, left0, right0, lane0.primary_bits())
@@ -2195,16 +2286,25 @@ def _execute_ps_oracle_fused(
     fc: int,
     ops: WordOps,
 ) -> MachineState:
+    from dataclasses import replace
+
     from .fp_oracle import ps_lane_outcome
     from .fp_outcome import combine_paired_outcomes
 
+    ni = _fpscr_ni_set(state, ops)
     a0, a1 = state.fpr[fa], state.ps1[fa]
     b0, b1 = state.fpr[fb], state.ps1[fb]
-    c0, c1 = state.fpr[fc], state.ps1[fc]
-    c0 = ops.fp_force_25bit(c0)
-    c1 = ops.fp_force_25bit(c1)
+    c0_raw, c1_raw = state.fpr[fc], state.ps1[fc]
+    a0 = _ni_flush_operand_bits64(a0, ni, ops)
+    a1 = _ni_flush_operand_bits64(a1, ni, ops)
+    b0 = _ni_flush_operand_bits64(b0, ni, ops)
+    b1 = _ni_flush_operand_bits64(b1, ni, ops)
+    c0_raw = _ni_flush_operand_bits64(c0_raw, ni, ops)
+    c1_raw = _ni_flush_operand_bits64(c1_raw, ni, ops)
+    c0 = ops.fp_force_25bit(c0_raw)
+    c1 = ops.fp_force_25bit(c1_raw)
 
-    for value in (a0, a1, b0, b1, state.fpr[fc], state.ps1[fc]):
+    for value in (a0, a1, b0, b1, c0_raw, c1_raw):
         state = _constrain_fp_value_domain(
             state, ops.fp_bits_to_double(value), ops,
         )
@@ -2212,6 +2312,20 @@ def _execute_ps_oracle_fused(
     op_name = op.value
     lane0 = ps_lane_outcome(op_name, a0, b0, c0)
     lane1 = ps_lane_outcome(op_name, a1, b1, c1)
+    from .fp_oracle import fprf_from_binary64
+
+    flushed0 = _ni_force_single_result_bits64(lane0.primary_bits(), ni, ops)
+    flushed1 = _ni_force_single_result_bits64(lane1.primary_bits(), ni, ops)
+    lane0 = replace(
+        lane0,
+        result_bits=(flushed0,),
+        fprf=fprf_from_binary64(int(flushed0)) if isinstance(ops, ConcreteOps) else lane0.fprf,
+    )
+    lane1 = replace(
+        lane1,
+        result_bits=(flushed1,),
+        fprf=fprf_from_binary64(int(flushed1)) if isinstance(ops, ConcreteOps) else lane1.fprf,
+    )
     combined = combine_paired_outcomes(lane0, lane1)
     clear_fifr = (
         _paired_oracle_lane_clears_fifr(op, a0, b0, lane0.primary_bits(), c_bits=c0)
@@ -2318,21 +2432,53 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
     if op not in SUPPORTED_OPCODES:
         raise UnsupportedInstruction(insn.address, insn.raw, f"semantics are unsupported for {op.value}")
     if op in _FP_ROUNDING_SENSITIVE:
-        # ConcreteOps is validated against Broadway with RN=nearest-even and
-        # NI disabled.  Keep the symbolic proof on that same explicit domain
-        # unless FloatingPointDomain validation rejected a different config.
+        # RN occupies FPSCR[0:1]; NI is bit 2 (FPSCR_NI).
+        # Default domain requires NI=0. When require_ni_zero=False, NI is read
+        # from live FPSCR and modeled only for _FP_NI_SUPPORTED opcodes.
         domain = active_fp_domain()
-        # RN occupies FPSCR[0:1]; NI is bit 2. Default domain requires both 0.
-        mode_mask = 7 if domain.require_ni_zero else 3
-        standard_fp_mode = ops.eq(
-            ops.band(state.fpscr, ops.const(mode_mask)), ops.const(0),
-        )
-        if isinstance(ops, ConcreteOps) and not standard_fp_mode:
+        rn_ok = ops.eq(ops.band(state.fpscr, ops.const(3)), ops.const(0))
+        if isinstance(ops, ConcreteOps) and not rn_ok:
             raise ExecutionInconclusive(
-                "FP ConcreteOps requires FPSCR.RN=nearest-even"
-                + (" and NI=0" if domain.require_ni_zero else "")
+                "FP ConcreteOps requires FPSCR.RN=nearest-even",
             )
-        state = _constrain_valid(state, standard_fp_mode, InvalidReason.FP_ROUNDING_MODE, ops)
+        state = _constrain_valid(state, rn_ok, InvalidReason.FP_ROUNDING_MODE, ops)
+
+        if domain.require_ni_zero:
+            ni_ok = ops.eq(ops.band(state.fpscr, ops.const(FPSCR_NI)), ops.const(0))
+            if isinstance(ops, ConcreteOps) and not ni_ok:
+                raise ExecutionInconclusive(
+                    "FP ConcreteOps requires FPSCR.NI=0 under require_ni_zero",
+                )
+            state = _constrain_valid(state, ni_ok, InvalidReason.FP_ROUNDING_MODE, ops)
+        elif op not in _FP_NI_SUPPORTED:
+            # NI may be set; unsupported opcodes must not silently use IEEE.
+            ni_clear = ops.eq(ops.band(state.fpscr, ops.const(FPSCR_NI)), ops.const(0))
+            if isinstance(ops, ConcreteOps):
+                if not ni_clear:
+                    raise ExecutionInconclusive(
+                        f"FPSCR.NI=1 is not modeled for opcode {op.value}",
+                    )
+            else:
+                raise ExecutionInconclusive(
+                    f"FPSCR.NI may be set but {op.value} has no NI flush model "
+                    f"(supported: {sorted(o.value for o in _FP_NI_SUPPORTED)})",
+                )
+
+        if domain.traps_enabled:
+            # PR18 scaffold: OE/UE/XE trap delivery is incomplete — force clear.
+            from .fp_traps import FPSCR_OX_UX_XX_ENABLES
+
+            no_oxuxxx = ops.eq(
+                ops.band(state.fpscr, ops.const(FPSCR_OX_UX_XX_ENABLES)),
+                ops.const(0),
+            )
+            if isinstance(ops, ConcreteOps) and not no_oxuxxx:
+                raise ExecutionInconclusive(
+                    "FP OX/UX/XX trap delivery is not modeled; OE/UE/XE must be clear",
+                )
+            state = _constrain_valid(
+                state, no_oxuxxx, InvalidReason.FP_DOMAIN_EXCLUDED, ops,
+            )
     result: Any | None = None
     destination: int | None = None
     overflow = ops.bool(False)
@@ -2897,15 +3043,20 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         rn_bits = ops.band(state.fpscr, ops.const(3))
         rm = ops.fp_rm_from_rn(rn_bits)
         is_single = op in _FP_SINGLE_ARITH
-        ni = ops.lnot(ops.eq(ops.band(state.fpscr, ops.const(4)), ops.const(0)))
+        ni = _fpscr_ni_set(state, ops)
 
         # Scalar single instructions consume the register's double value and
         # round the result to binary32; they do not pre-round every operand.
         fa_bits = state.fpr[fa]
         fb_bits = state.fpr[fb]
+        fc_source_bits = state.fpr[fc]
+        if op in _FP_NI_SUPPORTED:
+            # Broadway Table 2-24: flush denormal operands when FPSCR.NI=1.
+            fa_bits = _ni_flush_operand_bits64(fa_bits, ni, ops)
+            fb_bits = _ni_flush_operand_bits64(fb_bits, ni, ops)
+            fc_source_bits = _ni_flush_operand_bits64(fc_source_bits, ni, ops)
         op_fa = ops.fp_bits_to_double(fa_bits)
         op_fb = ops.fp_bits_to_double(fb_bits)
-        fc_source_bits = state.fpr[fc]
         fc_bits = ops.fp_force_25bit(fc_source_bits) if op in ({Opcode.FMULS} | _FP_FUSED_SINGLE) else fc_source_bits
         op_fc = ops.fp_bits_to_double(fc_bits)
         fused_single = None
@@ -3221,6 +3372,10 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 # ``nan_result`` selects ``propagated_nan`` instead.
                 if oracle_scalar_bits is None:
                     normal_bits = ops.fp_xor_sign(normal_bits)
+            if op in _FP_NI_SUPPORTED:
+                normal_bits = _ni_flush_arith_result_bits64(
+                    normal_bits, ni, is_single=op in _FP_FUSED_SINGLE, ops=ops,
+                )
             result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
 
             invalid_enabled = ops.lnot(ops.eq(
@@ -3329,7 +3484,14 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             )
             if is_single:
                 propagated_nan = ops.fp_single_nan_bits(propagated_nan)
-            normal_bits = ops.fp_double_to_bits(d)
+            if oracle_scalar_bits is not None:
+                normal_bits = oracle_scalar_bits
+            else:
+                normal_bits = ops.fp_double_to_bits(d)
+            if op in _FP_NI_SUPPORTED:
+                normal_bits = _ni_flush_arith_result_bits64(
+                    normal_bits, ni, is_single=is_single, ops=ops,
+                )
             result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
 
             invalid_enabled = ops.lnot(ops.eq(
@@ -3381,6 +3543,10 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 state, ops.land(inputs_finite, finite(d)), ops,
             )
         d_bits = ops.fp_double_to_bits(d)
+        if op in _FP_NI_SUPPORTED:
+            d_bits = _ni_flush_arith_result_bits64(
+                d_bits, ni, is_single=is_single, ops=ops,
+            )
         state = _fpscr_set_fprf(state.with_fpr(fd, d_bits), d_bits, ops)
         if is_single:
             state = state.with_ps1(fd, d_bits)
@@ -3822,6 +3988,35 @@ def _execute_cfg_body(
             )
             continue
         if insn.opcode not in (Opcode.B, Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
+            domain = active_fp_domain()
+            trap_cfg = False
+            if domain.traps_enabled:
+                from .fp_traps import (
+                    PROGRAM_EXCEPTION_VECTOR,
+                    deliver_fp_program_exception,
+                    ensure_fp_trap_delivery_supported,
+                    fp_trap_pending_from_fex_transition,
+                    is_fp_trap_cfg_opcode,
+                    trap_delivery_incomplete,
+                    trap_delivery_supported,
+                )
+
+                if is_fp_trap_cfg_opcode(insn.opcode):
+                    if trap_delivery_incomplete(insn.opcode):
+                        raise ExecutionInconclusive(
+                            f"FP trap delivery incomplete for opcode {insn.opcode.value}",
+                        )
+                    if not trap_delivery_supported(insn.opcode):
+                        raise ExecutionInconclusive(
+                            f"FP trap delivery not modeled for opcode {insn.opcode.value}",
+                        )
+                    try:
+                        ensure_fp_trap_delivery_supported(insn.opcode, current.fpscr)
+                    except TypeError:
+                        ensure_fp_trap_delivery_supported(insn.opcode)
+                    trap_cfg = True
+
+            pre_fpscr = current.fpscr
             next_state = execute_instruction(current, insn, ops)
             assert current.stack_low is not None
             next_stack_low = ops.ite(
@@ -3849,6 +4044,27 @@ def _execute_cfg_body(
                     ops.land(not_above_entry, ops.land(stack_low_ordered, depth_ok)),
                 ),
             )
+            if trap_cfg:
+                trap = fp_trap_pending_from_fex_transition(
+                    pre_fpscr, next_state.fpscr, ops,
+                )
+                trapped = deliver_fp_program_exception(
+                    next_state, pc, ops, exception_entry=_exception_entry,
+                )
+                record_terminal(
+                    ops.land(condition, trap),
+                    trapped,
+                    "program-exception",
+                    ops.const(PROGRAM_EXCEPTION_VECTOR),
+                )
+                enqueue(
+                    pc + 4,
+                    next_state,
+                    ops.land(condition, ops.lnot(trap)),
+                    new_visits,
+                    steps + 1,
+                )
+                continue
             enqueue(pc + 4, next_state, condition, new_visits, steps + 1)
             continue
 
@@ -3907,16 +4123,18 @@ def _execute_cfg_body(
             target = ops.band(old_ctr, ops.const(0xFFFFFFFC))
             kind = "call-indirect" if insn.link else "indirect-branch"
 
-        # Proven jump-table closure: split the taken edge into one path per
-        # enumerated CTR target (plan: enqueue under taken ∧ CTR == addr).
-        # Always retain an unknown-remainder terminal so incomplete closed
-        # sets stay observable; discharge proves that remainder UNSAT.
+        # Proven jump-table / virtual-call closure: split the taken edge into
+        # one path per enumerated CTR target (plan: enqueue under taken ∧
+        # CTR == addr). Always retain an unknown-remainder terminal so
+        # incomplete closed sets stay observable; discharge proves that
+        # remainder UNSAT. Jump tables use LK=0 (indirect-branch); virtual
+        # calls use LK=1 (call-indirect) and continue after bctrl via a
+        # matched-callee lemma when available.
         closed_targets = None if jump_table_targets is None else jump_table_targets.get(pc)
         if (
             closed_targets is not None
             and insn.opcode == Opcode.BCCTR
-            and not insn.link
-            and kind == "indirect-branch"
+            and kind in ("indirect-branch", "call-indirect")
         ):
             aligned_ctr = ops.band(old_ctr, ops.const(0xFFFFFFFC))
             in_closed_set = ops.bool(False)
@@ -3925,7 +4143,33 @@ def _execute_cfg_body(
                 member = ops.eq(aligned_ctr, ops.const(aligned))
                 in_closed_set = ops.lor(in_closed_set, member)
                 case_condition = ops.land(taken_condition, member)
-                if aligned in by_address or aligned == end:
+                if insn.link:
+                    # Virtual-call case: apply matched-callee lemma and resume.
+                    callee_key: int | str | None = None
+                    if assumed_callees and aligned in assumed_callees:
+                        callee_key = aligned
+                    elif assumed_callees and str(aligned) in assumed_callees:
+                        callee_key = str(aligned)
+                    if callee_key is not None:
+                        if assumed_callees_used is not None:
+                            assumed_callees_used.add(callee_key)
+                        summarized = _apply_call_summary(
+                            branched_state, ops, callee_key,
+                            callee_contracts.get(
+                                callee_key, CalleeContract.opaque_eabi(),
+                            ),
+                        )
+                        enqueue(
+                            pc + 4, summarized, case_condition, new_visits, steps + 1,
+                        )
+                    else:
+                        record_terminal(
+                            case_condition,
+                            branched_state,
+                            "call-indirect",
+                            ops.const(aligned),
+                        )
+                elif aligned in by_address or aligned == end:
                     enqueue(
                         aligned, branched_state, case_condition, new_visits, steps + 1,
                     )
@@ -3938,7 +4182,7 @@ def _execute_cfg_body(
                 ops.lnot(in_closed_set),
             )
             record_terminal(
-                remainder_condition, branched_state, "indirect-branch", aligned_ctr,
+                remainder_condition, branched_state, kind, aligned_ctr,
             )
             enqueue(pc + 4, branched_state, fall_condition, new_visits, steps + 1)
             continue

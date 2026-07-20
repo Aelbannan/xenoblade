@@ -168,5 +168,36 @@ class PairedOracleSemanticsTests(unittest.TestCase):
         )
 
 
+class PairedOracleIdentityTests(unittest.TestCase):
+    def test_fp_oracle_version_constant(self) -> None:
+        from tools.ppc_equivalence.fp_outcome import FP_ORACLE_VERSION
+
+        self.assertTrue(FP_ORACLE_VERSION.startswith("broadway-softfloat-paired-single-"))
+
+    def test_engine_records_oracle_version_for_paired_ops(self) -> None:
+        from tools.ppc_equivalence.contract import make_contract
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.fp_outcome import FP_ORACLE_VERSION
+        from tools.ppc_equivalence.result import ProofStatus
+
+        # ps_add frD, frA, frB then blr — concrete oracle path, Tier C.
+        program = [
+            Instruction(0, 0, Opcode.PS_ADD, (1, 1, 2)),
+            Instruction(4, 0, Opcode.BCLR, (20, 0, 0)),
+        ]
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=5_000)
+        result = check_equivalence(
+            program,
+            program,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+        )
+        self.assertNotEqual(result.status, ProofStatus.INTERNAL_ERROR)
+        self.assertEqual(result.fp_oracle_version, FP_ORACLE_VERSION)
+        payload = result.to_dict()
+        self.assertEqual(payload.get("fp_oracle_version"), FP_ORACLE_VERSION)
+
+
 if __name__ == "__main__":
     unittest.main()

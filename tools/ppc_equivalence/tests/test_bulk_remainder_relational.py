@@ -191,6 +191,60 @@ class BulkRemainderRelationalTests(unittest.TestCase):
         self.assertEqual(result.status, "pending")
         self.assertIn("bulk+remainder", " ".join(result.notes))
 
+    def test_engine_attaches_pending_bulk_remainder_sketch(self) -> None:
+        from unittest import mock
+
+        from tools.ppc_equivalence.contract import make_contract
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.relational_induction import (
+            ExitAgreementObligation,
+            InitiationObligation,
+            PostconditionObligation,
+            PreservationObligation,
+            RelationalInductionSketch,
+            RelationalLoopSide,
+            TerminationObligation,
+        )
+        from tools.ppc_equivalence.result import ProofStatus
+
+        sketch = RelationalInductionSketch(
+            original=RelationalLoopSide(header_pc=12, latch_pc=20, exit_pc=24),
+            candidate=RelationalLoopSide(header_pc=12, latch_pc=20, exit_pc=24),
+            initiation=InitiationObligation(()),
+            preservation=PreservationObligation(()),
+            exit_agreement=ExitAgreementObligation(()),
+            postcondition=PostconditionObligation(()),
+            termination=TerminationObligation(
+                witness="bulk-remainder-ctr-descending",
+                notes=("bulk+remainder relational scaffold",),
+            ),
+            templates=(),
+            status="pending",
+            notes=("bulk+remainder relational scaffold",),
+        )
+        leaf = [
+            _insn(Opcode.ADDI, (3, 0, 1), address=0),
+            _insn(Opcode.BCLR, (20, 0, 0), address=4),
+        ]
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=5_000)
+        with mock.patch(
+            "tools.ppc_equivalence.engine.try_build_bulk_remainder_relational_sketch",
+            return_value=sketch,
+        ):
+            result = check_equivalence(
+                leaf,
+                leaf,
+                contract,
+                original_hex="00",
+                candidate_hex="00",
+            )
+        self.assertIn("relational-induction", result.proof_features)
+        self.assertIsNotNone(result.relational_induction)
+        assert result.relational_induction is not None
+        self.assertEqual(result.relational_induction.get("status"), "pending")
+        # Pending sketches must not authorize EQUIVALENT (status must be discharged).
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT)
+
 
 if __name__ == "__main__":
     unittest.main()

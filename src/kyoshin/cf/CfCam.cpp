@@ -123,7 +123,8 @@ extern "C" void func_8006BA80() {}
 extern "C" void func_8006BAF0() {}
 // LLM-HARNESS-END: us-8006c548
 // LLM-HARNESS-BEGIN: us-8006c558
-extern "C" void func_8006BB00() {}
+extern "C" float PSVECMag(const float* v);
+extern "C" float func_8006BB00(const float* v) { return PSVECMag(v); }
 // LLM-HARNESS-END: us-8006c558
 // LLM-HARNESS-BEGIN: us-8006c55c
 extern "C" void func_8006BB04() {}

@@ -164,7 +164,11 @@ extern "C" void func_80043538() {}
 extern "C" void func_80043564() {}
 // LLM-HARNESS-END: us-80043adc
 // LLM-HARNESS-BEGIN: us-80043ba0
-extern "C" void func_80043628() {}
+extern "C" void func_80039364__5CGameFv();
+
+extern "C" void func_80043628() {
+    func_80039364__5CGameFv();
+}
 // LLM-HARNESS-END: us-80043ba0
 // LLM-HARNESS-BEGIN: us-80043c08
 extern "C" bool func_8004368C() { return false; }
@@ -185,7 +189,7 @@ extern "C" void func_80043D68() {}
 extern "C" bool func_80043F18() { return false; }
 // LLM-HARNESS-END: us-800444b4
 // LLM-HARNESS-BEGIN: us-800444bc
-extern "C" void Tail() {}
+void CProcess::Tail() {}
 // LLM-HARNESS-END: us-800444bc
 // LLM-HARNESS-BEGIN: us-800446bc
 extern "C" bool func_80044120() { return false; }

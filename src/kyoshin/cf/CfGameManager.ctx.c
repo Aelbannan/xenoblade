@@ -233752,3 +233752,67 @@ extern "C" cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObject
     return &slots[index];
 }
 #pragma dont_inline off
+
+// LLM-HARNESS-BEGIN: us-8007eb50
+extern "C" bool func_8007E1B4() { return false; }
+// LLM-HARNESS-END: us-8007eb50
+// LLM-HARNESS-BEGIN: us-8007ebb4
+extern "C" void func_8007E218() {}
+// LLM-HARNESS-END: us-8007ebb4
+// LLM-HARNESS-BEGIN: us-800802cc
+extern "C" void func_8007F930_Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800802cc
+// LLM-HARNESS-BEGIN: us-80083c1c
+extern "C" void* func_80083298() { return 0; }
+// LLM-HARNESS-END: us-80083c1c
+// LLM-HARNESS-BEGIN: us-800874cc
+extern "C" void func_800B76CC();
+extern "C" void func_eu_800874CC() { func_800B76CC(); }
+// LLM-HARNESS-END: us-800874cc
+// LLM-HARNESS-BEGIN: us-800874d0
+extern "C" void func_800B76F4();
+
+extern "C" void func_eu_800874D0()
+{
+    func_800B76F4();
+}
+// LLM-HARNESS-END: us-800874d0
+// LLM-HARNESS-BEGIN: us-800874d4
+extern "C" void func_800B781C(void);
+
+extern "C" void func_eu_800874D4(void) {
+    func_800B781C();
+}
+// LLM-HARNESS-END: us-800874d4
+// LLM-HARNESS-BEGIN: us-800874d8
+extern "C" void func_800B7854();
+
+extern "C" void func_eu_800874D8()
+{
+    func_800B7854();
+}
+// LLM-HARNESS-END: us-800874d8
+// LLM-HARNESS-BEGIN: us-80087534
+extern "C" void func_80086B5C_Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-80087534
+// LLM-HARNESS-BEGIN: us-80087798
+extern "C" void enablePadFlags() {}
+// LLM-HARNESS-END: us-80087798
+// LLM-HARNESS-BEGIN: us-8008791c
+extern "C" int getEnabledInputFlags() { return 0; }
+// LLM-HARNESS-END: us-8008791c
+// LLM-HARNESS-BEGIN: us-80087974
+extern "C" bool func_80086F9C_Q22cf13CfGameManagerFv() { return false; }
+// LLM-HARNESS-END: us-80087974
+// LLM-HARNESS-BEGIN: us-80087988
+extern "C" void* getPad() { return 0; }
+// LLM-HARNESS-END: us-80087988
+// LLM-HARNESS-BEGIN: us-800879a0
+extern "C" void setPad_Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800879a0
+// LLM-HARNESS-BEGIN: us-80087be8
+extern "C" void setCurrentPadPtr() {}
+// LLM-HARNESS-END: us-80087be8
+// LLM-HARNESS-BEGIN: us-80087f60
+extern "C" void func_80087588() {}
+// LLM-HARNESS-END: us-80087f60

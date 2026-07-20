@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import subprocess
-import tempfile
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
@@ -31,73 +34,107 @@ def _load_env_vars(path: Path) -> None:
 
 
 class OpenCodeProvider:
+    """OpenCode provider via the headless HTTP server (`opencode serve`).
+
+    Talks to POST /session and POST /session/{id}/message instead of spawning
+    `opencode run`. Start the server separately, e.g.:
+
+        opencode serve --port 4096 --hostname 127.0.0.1
+
+    Optional basic auth uses OPENCODE_SERVER_USERNAME / OPENCODE_SERVER_PASSWORD
+    (or username/password in llm-harness.json).
+    """
+
+    DEFAULT_BASE_URL = "http://127.0.0.1:4096"
+    USERNAME_ENV = "OPENCODE_SERVER_USERNAME"
+    PASSWORD_ENV = "OPENCODE_SERVER_PASSWORD"
+
+    # Mutating / interactive tools always denied for harness purity.
+    _DENIED_TOOLS = (
+        "bash",
+        "edit",
+        "write",
+        "apply_patch",
+        "task",
+        "webfetch",
+        "websearch",
+        "todowrite",
+        "question",
+        "skill",
+    )
+    _READ_TOOLS = ("read", "glob", "grep")
+
     def __init__(
-        self, binary: str = "opencode", timeout_seconds: int = 900, pure: bool = True
+        self,
+        base_url: str = DEFAULT_BASE_URL,
+        timeout_seconds: int = 900,
+        pure: bool = True,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        delete_session: bool = True,
+        binary: str = "opencode",  # accepted for config compat; unused
+        **_ignored: Any,
     ) -> None:
-        self.binary = binary
+        self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.pure = pure
+        self.username = username
+        self.password = password
+        self.delete_session = delete_session
+        self.binary = binary
+        _load_env_vars(Path(".env"))
 
     def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
         started = time.monotonic()
-        prompt_file: Optional[Path] = None
-        temporary_prompt = False
+        self._ensure_healthy()
+        directory = str(cwd.resolve())
+        has_context_files = any(cwd.iterdir())
+        guardrail = (
+            "Read the attached dossier and the curated files in the current context directory. "
+            "Use read/search tools only when helpful, stay inside this context, do not edit files "
+            "or run shell commands, and return only the requested JSON object."
+            if has_context_files
+            else "Read the attached self-contained dossier. Do not use tools or inspect files. "
+            "Return only the requested JSON object."
+        )
+        full_prompt = f"{guardrail}\n\n{prompt}"
+        provider_id, model_id = _split_opencode_model(model.model)
+        session_id: Optional[str] = None
         try:
-            stable_prompt = cwd.parent / "prompt.md"
-            if stable_prompt.is_file() and stable_prompt.read_text(encoding="utf-8") == prompt:
-                prompt_file = stable_prompt
-            else:
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".md", prefix="llm-harness-", encoding="utf-8", delete=False
-                ) as f:
-                    f.write(prompt)
-                    prompt_file = Path(f.name)
-                    temporary_prompt = True
-            cmd = [
-                self.binary,
-                "run",
-                "--model",
-                model.model,
-                "--format",
-                "json",
-                "--dir",
-                str(cwd),
-                "--file",
-                str(prompt_file),
-            ]
-            if self.pure:
-                cmd.append("--pure")
-            if model.agent:
-                cmd.extend(["--agent", model.agent])
-            if model.variant:
-                cmd.extend(["--variant", model.variant])
-            has_context_files = any(cwd.iterdir())
-            if has_context_files:
-                cmd.append(
-                    "Read the attached dossier and the curated files in the current context directory. "
-                    "Use read/search tools only when helpful, stay inside this context, do not edit files "
-                    "or run shell commands, and return only the requested JSON object."
-                )
-            else:
-                cmd.append(
-                    "Read the attached self-contained dossier. Do not use tools or inspect files. "
-                    "Return only the requested JSON object."
-                )
-            env = os.environ.copy()
-            env["OPENCODE_AUTO_SHARE"] = "false"
-            completed = subprocess.run(
-                cmd,
-                cwd=cwd,
-                env=env,
-                text=True,
-                capture_output=True,
-                timeout=self.timeout_seconds,
-                check=False,
+            session = self._request(
+                "POST",
+                "/session",
+                body={
+                    "title": f"llm-harness:{model.id}",
+                    "permission": self._permission_ruleset(has_context_files),
+                },
+                query={"directory": directory},
             )
-            if completed.returncode:
-                detail = completed.stderr.strip() or completed.stdout.strip()
-                raise RuntimeError(f"OpenCode exited {completed.returncode}: {detail[-2000:]}")
-            text, events, usage = parse_opencode_output(completed.stdout)
+            session_id = str(session.get("id") or "")
+            if not session_id:
+                raise RuntimeError(f"OpenCode server: session create missing id: {session!r}")
+
+            message_body: Dict[str, Any] = {
+                "model": {"providerID": provider_id, "modelID": model_id},
+                "parts": [{"type": "text", "text": full_prompt}],
+                "tools": self._tools_map(has_context_files),
+            }
+            if model.agent:
+                message_body["agent"] = model.agent
+            if model.variant:
+                message_body["variant"] = model.variant
+
+            response = self._request(
+                "POST",
+                f"/session/{session_id}/message",
+                body=message_body,
+                query={"directory": directory},
+            )
+            text, events, usage = parse_opencode_message(response)
+            if not text:
+                raise RuntimeError(
+                    "OpenCode server: empty assistant text in message response"
+                )
             return ProviderResult(
                 text=text,
                 duration_seconds=time.monotonic() - started,
@@ -109,8 +146,137 @@ class OpenCodeProvider:
                 raw_events=events,
             )
         finally:
-            if temporary_prompt and prompt_file is not None:
-                prompt_file.unlink(missing_ok=True)
+            if self.delete_session and session_id:
+                try:
+                    self._request(
+                        "DELETE",
+                        f"/session/{session_id}",
+                        query={"directory": directory},
+                    )
+                except Exception:
+                    pass
+
+    def _ensure_healthy(self) -> None:
+        try:
+            health = self._request("GET", "/global/health")
+        except Exception as exc:
+            raise RuntimeError(
+                f"OpenCode server unreachable at {self.base_url} "
+                f"(start with `opencode serve --port 4096`): {exc}"
+            ) from exc
+        if not (isinstance(health, dict) and health.get("healthy")):
+            raise RuntimeError(
+                f"OpenCode server unhealthy at {self.base_url}: {health!r}"
+            )
+
+    def _tools_map(self, has_context_files: bool) -> Dict[str, bool]:
+        tools = {name: False for name in self._DENIED_TOOLS}
+        for name in self._READ_TOOLS:
+            tools[name] = bool(has_context_files)
+        return tools
+
+    def _permission_ruleset(self, has_context_files: bool) -> list[Dict[str, str]]:
+        rules: list[Dict[str, str]] = []
+        for name in self._DENIED_TOOLS:
+            rules.append({"permission": name, "pattern": "*", "action": "deny"})
+        read_action = "allow" if has_context_files else "deny"
+        for name in self._READ_TOOLS:
+            rules.append({"permission": name, "pattern": "*", "action": read_action})
+        return rules
+
+    def _auth_header(self) -> Optional[str]:
+        password = self.password or os.environ.get(self.PASSWORD_ENV)
+        if not password:
+            return None
+        username = (
+            self.username
+            or os.environ.get(self.USERNAME_ENV)
+            or "opencode"
+        )
+        token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+        return f"Basic {token}"
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        body: Optional[Dict[str, Any]] = None,
+        query: Optional[Dict[str, str]] = None,
+    ) -> Any:
+        url = f"{self.base_url}{path}"
+        if query:
+            url = f"{url}?{urllib.parse.urlencode(query)}"
+        data = None
+        headers = {"Accept": "application/json"}
+        auth = self._auth_header()
+        if auth:
+            headers["Authorization"] = auth
+        if body is not None:
+            data = json.dumps(body).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(url, data=data, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
+                raw = response.read().decode("utf-8")
+                if not raw:
+                    return None
+                return json.loads(raw)
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"OpenCode server {method} {path} failed "
+                f"(HTTP {exc.code}): {detail[-2000:]}"
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(
+                f"OpenCode server {method} {path} failed: {exc.reason}"
+            ) from exc
+
+
+def _split_opencode_model(model: str) -> tuple[str, str]:
+    """Split `provider/model` into OpenCode providerID + modelID."""
+    provider_id, sep, model_id = model.partition("/")
+    if not sep or not provider_id or not model_id:
+        raise RuntimeError(
+            f"OpenCode model must be 'provider/model', got: {model!r}"
+        )
+    return provider_id, model_id
+
+
+def parse_opencode_message(
+    response: Any,
+) -> tuple[str, list[Dict[str, Any]], Dict[str, Any]]:
+    """Parse POST /session/:id/message JSON into text, events, and usage."""
+    if not isinstance(response, dict):
+        return "", [], {}
+    events = [response]
+    info = response.get("info") if isinstance(response.get("info"), dict) else {}
+    if isinstance(info.get("error"), dict):
+        err = info["error"]
+        message = err.get("data", {}).get("message") if isinstance(err.get("data"), dict) else None
+        message = message or err.get("name") or str(err)
+        raise RuntimeError(f"OpenCode server message error: {message}")
+
+    chunks: list[str] = []
+    for part in response.get("parts") or []:
+        if not isinstance(part, dict):
+            continue
+        if part.get("type") in {"text", "output_text"} and isinstance(part.get("text"), str):
+            chunks.append(part["text"])
+
+    tokens = info.get("tokens") if isinstance(info.get("tokens"), dict) else {}
+    cache = tokens.get("cache") if isinstance(tokens.get("cache"), dict) else {}
+    usage = {
+        "input": tokens.get("input"),
+        "output": tokens.get("output"),
+        "cache_read": cache.get("read"),
+        "cache_write": cache.get("write"),
+        "cost": info.get("cost"),
+    }
+    structured = info.get("structured_output")
+    if structured is not None and not chunks:
+        return json.dumps(structured), events, usage
+    return "".join(chunks).strip(), events, usage
 
 
 class ReasonixProvider:

@@ -90516,8 +90516,8 @@
       "size": "0x8",
       "unit": "kyoshin/menu/CMenuArtsSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "called_functions": [],
@@ -90525,7 +90525,47 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuArtsSelect.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-19T22:58:40.801165+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuArtsSelect.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-80104d94",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "b5b2d2200ce9a9b65be82336f4dcbfa2d6e8eeda7988d872250dabb7f7ab5f92",
+        "candidate_sha256": "29f0ce5aa6de7c37547f725ffffdec37014e3a702d6ef907f8fece3ac5104e21",
+        "summary": {
+          "reads": [
+            "memory",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "5fdbb095ae79fdee86ea1cfa7687ff7b1be9c812e8300bbedd056f1d571e3fac"
+      }
     },
     {
       "id": "us-80104d9c",
@@ -112486,8 +112526,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [],
@@ -112495,7 +112535,38 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T00:36:13.436313+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-80146da8",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "a595765d963d4645398e8d365748efd22e8e1adea2ab44c755237e53c8db9bb1",
+        "candidate_sha256": "3e308db447b65764da49e1af520628ddd6f826dc74d58cf4ead75a81320ff0a1",
+        "summary": {
+          "reads": [],
+          "writes": [],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "11c0cab9279abc015c0de15c5d5ce32e371a6e13a4f1fdd681125b0d3c423e33"
+      }
     },
     {
       "id": "us-80146dac",
@@ -112558,8 +112629,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [],
@@ -112567,7 +112638,38 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T00:37:25.045378+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-80148190",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "3c6bad4bcb570520f0431396050dfabc4bc802c1cc13f92ce4c47fa2f6dd8a57",
+        "candidate_sha256": "cdd630329f1333e1ce5d52f230cf8f8c7132c519d210b359d99e6de7dc80d2de",
+        "summary": {
+          "reads": [],
+          "writes": [],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "89d1fcb5b1294d51965aa7dae4c9c24fa4cde0200cbffd47dd9e3fc8f432b7b7"
+      }
     },
     {
       "id": "us-80148194",
@@ -112696,8 +112798,8 @@
       "size": "0x4",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [],
@@ -112705,7 +112807,38 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T00:38:03.796757+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-80148a14",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "56392a92f5345ad34186ea8bd0f24588bdf5842084fc9b69fbb8e33ee6699e5a",
+        "candidate_sha256": "b2aac71765b48830861ea43343d9b73237e9b2c58d15798c901c91f03130a0d9",
+        "summary": {
+          "reads": [],
+          "writes": [],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "f09f4ed9500b34a0c9373ebcaaaf002e5c1dbbf12a444b0a3559bc917f6dc363"
+      }
     },
     {
       "id": "battlestate-vfunc10",
@@ -226882,8 +227015,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/chain/CChainActorPc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChainActorPc.cpp",
       "called_functions": [],
@@ -226891,7 +227024,40 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorPc.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T02:49:53.509669+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/chain/CChainActorPc.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-802848e8",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "5a4b079292b12e4ac0bfeae78fb5a30683822c0241f73397ec0c7194b250f4cc",
+        "candidate_sha256": "067b2352e6962fb660e90d25c467dc72d73b5733d1b78d88616f92aabb29db35",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "9aa1c33a2fc497d136e196d65e12793f27b762b9fb5453390efcdbec4dc34462"
+      }
     },
     {
       "id": "us-802848f0",
@@ -241716,8 +241882,8 @@
       "size": "0x8",
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [],
@@ -241725,7 +241891,40 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/CCharVoiceMan.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T02:54:12.701608+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/voice/CCharVoiceMan.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-802a45d4",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "3d20e2477a966cf460e8712b25d9c5b5ee878c4914aef4f3e22863b247a1a6ab",
+        "candidate_sha256": "e1824f7dbec2d2e242e1fc518b090c5c218c4dedb34f4ab1fe979a8b42b2d5fc",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "3d6395ef32125e083b22707bbcbb7887064b0631ebdfc64275d599639ac5d872"
+      }
     },
     {
       "id": "us-802a45dc",
@@ -301020,8 +301219,8 @@
       "size": "0xC",
       "unit": "RVL_SDK/src/revolution/hbm/HBMGUIManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp",
       "called_functions": [],
@@ -301029,7 +301228,46 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/hbm/HBMGUIManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T03:04:08.982439+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-80323180",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "20bdab109eeb822f636dbd07bc974cb3048ec4a7679aa781cea2281dcba7ea7e",
+        "candidate_sha256": "35a9ffe602ebc0c1f0aedb534af9ed4b468327cafe1789cfc8d1f7b16d293945",
+        "summary": {
+          "reads": [
+            "memory",
+            "r3"
+          ],
+          "writes": [
+            "r0",
+            "r3"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "54528d316b0ded9e16d11b7080c93429a1009b7d13cfd39002ac189daecabb33"
+      }
     },
     {
       "id": "us-80323190",
@@ -301043,8 +301281,8 @@
       "size": "0x8",
       "unit": "RVL_SDK/src/revolution/hbm/HBMGUIManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp",
       "called_functions": [],
@@ -301052,7 +301290,48 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/hbm/HBMGUIManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T03:05:26.304103+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-80323190",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "5fff8fe7746993576c05b807370a1c959ce516aa67906e33df6113a083b4249f",
+        "candidate_sha256": "e812a5406e695dbf9f8a2178a08519286b963f8bb9f8a8473b130252450ab74a",
+        "summary": {
+          "reads": [
+            "memory",
+            "r3",
+            "valid"
+          ],
+          "writes": [
+            "invalid_reason",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "3151ff1d4d1ae315c2320a51f69df4cf111916cb73a163778bc0a021653a48fd"
+      }
     },
     {
       "id": "us-803231a0",
@@ -399033,8 +399312,8 @@
       "size": "0x20",
       "unit": "nw4r/src/lyt/lyt_animation",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_animation.cpp",
       "called_functions": [],
@@ -399042,7 +399321,52 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/lyt/lyt_animation.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-20T05:15:26.147544+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/lyt/lyt_animation.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 8,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v29",
+        "result_format": 15,
+        "target_id": "us-8040b8dc",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "b3fbf83a6d6824311724b28a2a429b47e60096557bb3639d3b160b04baeb0bd4",
+        "candidate_sha256": "5f34da8ad77de19c932ce225892e546f26bd9b6f751948f1f76f7e7330d73833",
+        "summary": {
+          "reads": [
+            "cr",
+            "memory",
+            "r3",
+            "valid",
+            "xer.so"
+          ],
+          "writes": [
+            "cr0",
+            "invalid_reason",
+            "r0",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "0604fd791d91e5f73cb782ad8012c36fe306ef66aebdf5509e4a804d6f6d725d",
+        "certifier_hash": "1df638558e4980789434611c208ed483f402f023454579066dff496510f46a8e",
+        "certificate_sha256": "099e8f170a0038152aca11b342a2e00fe2adb0ee5ba6f98cf941bc43d35a63da"
+      }
     },
     {
       "id": "us-8040b8fc",

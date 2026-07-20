@@ -12,6 +12,8 @@ from types import SimpleNamespace
 from tools.llm_harness.core import Harness, parse_candidate
 from tools.llm_harness.providers import (
     LMStudioProvider,
+    OpenCodeProvider,
+    parse_opencode_message,
     parse_opencode_output,
     parse_reasonix_output,
 )
@@ -178,6 +180,125 @@ class OpenCodeOutputTests(unittest.TestCase):
         self.assertEqual(usage["input"], 14)
         self.assertEqual(usage["output"], 5)
         self.assertAlmostEqual(usage["cost"], 0.07)
+
+    def test_parses_server_message_response(self) -> None:
+        response = {
+            "info": {
+                "role": "assistant",
+                "cost": 0.01,
+                "tokens": {
+                    "input": 11,
+                    "output": 5,
+                    "cache": {"read": 2, "write": 1},
+                },
+            },
+            "parts": [
+                {"type": "text", "text": '{"source":"int f(){return 1;}"}'},
+            ],
+        }
+        text, events, usage = parse_opencode_message(response)
+        self.assertEqual(text, '{"source":"int f(){return 1;}"}')
+        self.assertEqual(len(events), 1)
+        self.assertEqual(usage["input"], 11)
+        self.assertEqual(usage["output"], 5)
+        self.assertEqual(usage["cache_read"], 2)
+        self.assertEqual(usage["cache_write"], 1)
+        self.assertAlmostEqual(usage["cost"], 0.01)
+
+    def test_server_message_error_raises(self) -> None:
+        response = {
+            "info": {
+                "error": {
+                    "name": "ProviderAuthError",
+                    "data": {"providerID": "opencode", "message": "missing key"},
+                },
+            },
+            "parts": [],
+        }
+        with self.assertRaisesRegex(RuntimeError, "missing key"):
+            parse_opencode_message(response)
+
+
+class OpenCodeProviderTests(unittest.TestCase):
+    def test_invoke_uses_session_message_api(self) -> None:
+        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096", timeout_seconds=30)
+        calls: list[tuple[str, str]] = []
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+
+            def fake_request(method: str, path: str, body=None, query=None):
+                calls.append((method, path))
+                if method == "GET" and path == "/global/health":
+                    return {"healthy": True, "version": "1.18.2"}
+                if method == "POST" and path == "/session":
+                    self.assertEqual(query.get("directory"), str(cwd.resolve()))
+                    self.assertIsInstance(body.get("permission"), list)
+                    return {"id": "ses_test123"}
+                if method == "POST" and path == "/session/ses_test123/message":
+                    self.assertEqual(query.get("directory"), str(cwd.resolve()))
+                    self.assertEqual(body["model"], {
+                        "providerID": "opencode",
+                        "modelID": "deepseek-v4-flash-free",
+                    })
+                    self.assertEqual(body["parts"][0]["type"], "text")
+                    self.assertIn("Return only the requested JSON object", body["parts"][0]["text"])
+                    self.assertFalse(body["tools"]["bash"])
+                    self.assertFalse(body["tools"]["edit"])
+                    return {
+                        "info": {
+                            "cost": 0.02,
+                            "tokens": {
+                                "input": 9,
+                                "output": 3,
+                                "cache": {"read": 0, "write": 0},
+                            },
+                        },
+                        "parts": [{"type": "text", "text": '{"source":"void f(){}"}'}],
+                    }
+                if method == "DELETE" and path == "/session/ses_test123":
+                    return True
+                raise AssertionError(f"unexpected request {method} {path}")
+
+            provider._request = fake_request  # type: ignore[method-assign]
+            result = provider.invoke(
+                prompt='{"task":"decompile"}',
+                model=ModelConfig(
+                    id="opencode-flash",
+                    provider="opencode",
+                    model="opencode/deepseek-v4-flash-free",
+                ),
+                cwd=cwd,
+            )
+
+        self.assertEqual(result.text, '{"source":"void f(){}"}')
+        self.assertEqual(result.input_tokens, 9)
+        self.assertEqual(result.output_tokens, 3)
+        self.assertAlmostEqual(result.cost or 0.0, 0.02)
+        self.assertEqual(
+            calls,
+            [
+                ("GET", "/global/health"),
+                ("POST", "/session"),
+                ("POST", "/session/ses_test123/message"),
+                ("DELETE", "/session/ses_test123"),
+            ],
+        )
+
+    def test_invoke_requires_healthy_server(self) -> None:
+        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096")
+
+        def boom(*_args, **_kwargs):
+            raise RuntimeError("connection refused")
+
+        provider._request = boom  # type: ignore[method-assign]
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(RuntimeError, "unreachable"):
+                provider.invoke(
+                    prompt="hi",
+                    model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
+                    cwd=Path(tmp),
+                )
 
 
 class LMStudioProviderTests(unittest.TestCase):

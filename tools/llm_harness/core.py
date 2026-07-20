@@ -128,6 +128,18 @@ class Harness:
                     timeout_seconds=int(cfg.get("timeout_seconds", 300)),
                     pure=bool(cfg.get("pure", True)),
                 )
+            elif name == "opencode":
+                self.providers[name] = cls(
+                    base_url=str(
+                        cfg.get("base_url", OpenCodeProvider.DEFAULT_BASE_URL)
+                    ),
+                    timeout_seconds=int(cfg.get("timeout_seconds", 900)),
+                    pure=bool(cfg.get("pure", True)),
+                    username=str(cfg["username"]) if cfg.get("username") else None,
+                    password=str(cfg["password"]) if cfg.get("password") else None,
+                    delete_session=bool(cfg.get("delete_session", True)),
+                    binary=str(cfg.get("binary", "opencode")),
+                )
             else:
                 self.providers[name] = cls(
                     binary=cfg.get("binary", name),

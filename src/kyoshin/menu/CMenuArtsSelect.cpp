@@ -1175,7 +1175,7 @@ extern "C" void func_8010428C() {}
 extern "C" bool func_801042A4() { return false; }
 // LLM-HARNESS-END: us-80104d8c
 // LLM-HARNESS-BEGIN: us-80104d94
-extern "C" bool func_801042AC() { return false; }
+extern "C" CMenuArtsSelect* func_801042AC() { return lbl_eu_80663F20; }
 // LLM-HARNESS-END: us-80104d94
 // LLM-HARNESS-BEGIN: us-80104d9c
 extern "C" void func_801042B4() {}

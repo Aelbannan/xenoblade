@@ -25467,6 +25467,7 @@ struct UnkArtsSelectEntry {
 
 class CMenuArtsSelect {
 public:
+    void Init();
     void Term();
     void Move();
     void cbRenderBefore();
@@ -25494,9 +25495,10 @@ public:
     nw4r::lyt::AnimTransform* unk84; // 0x84
     nw4r::lyt::AnimTransform* unk88; // 0x88
     nw4r::lyt::Layout* unk8C; // 0x8C
-    u8 unk90[0x98 - 0x90];
+    nw4r::lyt::AnimTransform* unk90; // 0x90
+    nw4r::lyt::AnimTransform* unk94; // 0x94
     nw4r::lyt::Layout* unk98; // 0x98
-    u8 unk9C[0xA0 - 0x9C];
+    nw4r::lyt::AnimTransform* unk9C; // 0x9C
     nw4r::lyt::AnimTransform* unkA0; // 0xA0
     nw4r::lyt::Layout* unkA4[8]; // 0xA4
     nw4r::lyt::AnimTransform* unkC4[8]; // 0xC4
@@ -243147,7 +243149,9 @@ protected:
     static CTaskGame* spInstance;
 };
 /* end "kyoshin/CTaskGame.hpp" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 7 "kyoshin/cf/CBattleManager.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 7 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 8 "kyoshin/cf/CBattleManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CBattleManager.hpp" line 2 "types.h" */
@@ -244777,7 +244781,7 @@ namespace cf{
     };
 }
 /* end "kyoshin/cf/CBattleManager.hpp" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 8 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 9 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
@@ -244808,6 +244812,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
@@ -244859,7 +244864,7 @@ namespace cf{
 
 } //namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 9 "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 10 "kyoshin/code_80135FDC.hpp" */
 #pragma once
 
 /* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
@@ -245630,6 +245635,20 @@ protected:
 #endif
 /* end "nw4r/lyt/lyt_group.h" */
 /* "libs/nw4r/include/nw4r/lyt.h" line 9 "nw4r/lyt/lyt_init.h" */
+#ifndef NW4R_LYT_INIT_H
+#define NW4R_LYT_INIT_H
+/* "libs/nw4r/include/nw4r/lyt/lyt_init.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace lyt {
+
+void LytInit();
+
+} // namespace lyt
+} // namespace nw4r
+
+#endif
 /* end "nw4r/lyt/lyt_init.h" */
 /* "libs/nw4r/include/nw4r/lyt.h" line 10 "nw4r/lyt/lyt_layout.h" */
 /* end "nw4r/lyt/lyt_layout.h" */
@@ -246911,12 +246930,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -247222,7 +247237,7 @@ void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 /* end "kyoshin/code_80135FDC.hpp" */
 
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 11 "decomp.h" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 12 "decomp.h" */
 /**
  * Codewarrior tricks for matching decomp
  * (Macros generate prototypes to satisfy -requireprotos)
@@ -247388,7 +247403,7 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 
 #endif
 /* end "decomp.h" */
-/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 12 "revolution/GX.h" */
+/* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 13 "revolution/GX.h" */
 /**
  * References: YAGCD, Dolphin Emulator, publicly available patents
  */
@@ -247710,6 +247725,7 @@ u8 func_8013BEB8();
 void func_801080F8(CMenuArtsSelect* self);
 int func_8012FA5C();
 void func_80138078(u32);
+nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_80137510(void* anim, float frame);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void* func_8016FE34();
@@ -247732,6 +247748,16 @@ int func_80107970(CMenuArtsSelect* self, s32 index);
 int func_80107C54(CMenuArtsSelect* self, s32 index);
 
 extern char lbl_eu_804FD1E0[];
+extern u8 lbl_eu_804FD0D0[];
+
+// Init-only declarations
+u32 getAllocHandle__10CLibLayoutFv();
+void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+void __ct__CTagProcessor(void*);
+void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+void func_80108994(CMenuArtsSelect*);
+void func_80139198(u32);
+u32 func_801392C0();
 extern const f32 lbl_eu_80666F28; // 0.0f
 extern const f32 lbl_eu_80666F2C; // 1.0f
 extern const f32 lbl_eu_80666F40; // -80.0f
@@ -247908,6 +247934,269 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
         p->unk320 = (u8)clear;
     }
     return p;
+}
+
+void CMenuArtsSelect::Init() {
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    unk6C.createRegion(handle, 0x17a00, lbl_eu_804FD1E0, 0);
+    Class_8045F858 regionGuard(&unk6C);
+
+    mtl::MemManager::func_80434A4C(0);
+    u32 allocHandle = getAllocHandle__10CLibLayoutFv();
+    void* tagProc = allocate__Q23mtl10MemManagerFUlUl(0x858, allocHandle);
+    if (tagProc != NULL) {
+        __ct__CTagProcessor(tagProc);
+    }
+    unk294 = static_cast<nw4r::lyt::Layout*>(tagProc);
+
+    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    unk68 = reinterpret_cast<u32>(accessor);
+
+    func_80136E84(&unk80, accessor, lbl_eu_804FD1E0 + 0x10);
+    func_80136F08(unk80, &unk84, accessor, lbl_eu_804FD1E0 + 0x27);
+    func_80136F08(unk80, &unk88, accessor, lbl_eu_804FD1E0 + 0x41);
+
+    {
+        nw4r::lyt::Pane* rootPane = unk80->GetRootPane();
+        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, unk80);
+        typedef u32 (*FontVFn)(void*);
+        u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+        func_8013676C(rootPane, fontResult);
+    }
+
+    {
+        nw4r::lyt::Pane* pane = unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x5c, true);
+        if (pane != NULL) {
+            *reinterpret_cast<void**>(reinterpret_cast<u8*>(pane) + 0xF8) = unk294;
+        }
+    }
+
+    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x69, NULL, 0);
+    func_80136B4C(unk80, lbl_eu_804FD1E0 + 0x5c, NULL, reinterpret_cast<u32>(unk294));
+
+    unk80->SetAnimationEnable(unk88, false);
+    unk80->SetAnimationEnable(unk84, true);
+    unk80->Animate(0);
+
+    func_80136E84(&unk8C, accessor, lbl_eu_804FD1E0 + 0x74);
+    func_80136F08(unk8C, &unk90, accessor, lbl_eu_804FD1E0 + 0x8d);
+    func_80136F08(unk8C, &unk94, accessor, lbl_eu_804FD1E0 + 0xa9);
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        s32 idx = unk324;
+        nw4r::lyt::Pane* pane = unk8C->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0xc7, true);
+        {
+            nw4r::math::VEC3 trans = pane->GetTranslate();
+            trans.x = static_cast<f32>(posX[idx]);
+            trans.y = static_cast<f32>(posY[idx]);
+            pane->SetTranslate(trans);
+        }
+        {
+            f32 s = scale[idx];
+            pane->SetScale(nw4r::math::VEC2(s, s));
+        }
+        pane->SetVisible(false);
+    }
+
+    unk8C->SetAnimationEnable(unk90, false);
+    unk8C->SetAnimationEnable(unk94, true);
+    unk8C->Animate(0);
+
+    func_80136E84(&unk98, accessor, lbl_eu_804FD1E0 + 0xd2);
+    func_80136F08(unk98, &unk9C, accessor, lbl_eu_804FD1E0 + 0xf0);
+    func_80136F08(unk98, &unkA0, accessor, lbl_eu_804FD1E0 + 0x113);
+
+    {
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        nw4r::lyt::Pane* pane = unk98->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x139, true);
+        {
+            nw4r::math::VEC3 trans = pane->GetTranslate();
+            trans.x = 0.0f;
+            trans.y = static_cast<f32>(posY[4]);
+            pane->SetTranslate(trans);
+        }
+        {
+            f32 s = scale[4];
+            pane->SetScale(nw4r::math::VEC2(s, s));
+        }
+    }
+
+    unk98->SetAnimationEnable(unkA0, false);
+    unk98->SetAnimationEnable(unk9C, true);
+    unk9C->SetFrame(0.0f);
+    unk98->Animate(0);
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 8; i++) {
+            func_80136E84(&unkA4[i], accessor, lbl_eu_804FD1E0 + 0xd2);
+            func_80136F08(unkA4[i], &unkC4[i], accessor, lbl_eu_804FD1E0 + 0xf0);
+            func_80136F08(unkA4[i], &unkE4[i], accessor, lbl_eu_804FD1E0 + 0x113);
+
+            nw4r::lyt::Pane* pane = unkA4[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x139, true);
+
+            s32 lookupIdx = (i < 4) ? i : (i + 1);
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
+
+            unkA4[i]->SetAnimationEnable(unkE4[i], false);
+            unkA4[i]->SetAnimationEnable(unkC4[i], true);
+
+            f32 frame = static_cast<f32>(unkC4[i]->GetFrameSize()) - 1.0f;
+            unkC4[i]->SetFrame(frame);
+
+            unkA4[i]->Animate(0);
+
+            unk337[i] = 1;
+        }
+    }
+
+    unk318 = 0;
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 9; i++) {
+            func_80136E84(&unk104[i], accessor, lbl_eu_804FD1E0 + 0x142);
+            func_80136F08(unk104[i], &unk128[i], accessor, lbl_eu_804FD1E0 + 0x160);
+            func_80136F08(unk104[i], &unk14C[i], accessor, lbl_eu_804FD1E0 + 0x181);
+
+            nw4r::lyt::Pane* pane = unk104[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x1a3, true);
+
+            s32 lookupIdx;
+            if (i >= 8) {
+                lookupIdx = 4;
+            } else if (i < 4) {
+                lookupIdx = i;
+            } else {
+                lookupIdx = i + 1;
+            }
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
+
+            unk104[i]->SetAnimationEnable(unk14C[i], false);
+            unk104[i]->SetAnimationEnable(unk128[i], true);
+            unk128[i]->SetFrame(0.0f);
+            unk104[i]->Animate(0);
+        }
+    }
+
+    unk310 = 0;
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 9; i++) {
+            func_80136E84(&unk170[i], accessor, lbl_eu_804FD1E0 + 0x1ac);
+            func_80136F08(unk170[i], &unk194[i], accessor, lbl_eu_804FD1E0 + 0x1cb);
+
+            unk170[i]->SetAnimationEnable(unk194[i], true);
+            unk194[i]->SetFrame(0.0f);
+            unk170[i]->Animate(0);
+
+            nw4r::lyt::Pane* pane = unk170[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x1ed, true);
+
+            s32 lookupIdx;
+            if (i >= 8) {
+                lookupIdx = 4;
+            } else if (i < 4) {
+                lookupIdx = i;
+            } else {
+                lookupIdx = i + 1;
+            }
+            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
+            f32 s = scale[lookupIdx];
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+        }
+    }
+
+    unk314 = 0;
+
+    {
+        s16* posX = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x00);
+        s16* posY = reinterpret_cast<s16*>(lbl_eu_804FD0D0 + 0x14);
+        f32* scale = reinterpret_cast<f32*>(lbl_eu_804FD0D0 + 0x28);
+
+        for (s32 i = 0; i < 9; i++) {
+            func_80136E84(&unk1B8[i], accessor, lbl_eu_804FD1E0 + 0x1f7);
+            func_80136F08(unk1B8[i], &unk1DC[i], accessor, lbl_eu_804FD1E0 + 0x217);
+
+            nw4r::lyt::Pane* pane = unk1B8[i]->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x23e, true);
+
+            s32 lookupIdx;
+            if (i >= 8) {
+                lookupIdx = 4;
+            } else if (i < 4) {
+                lookupIdx = i;
+            } else {
+                lookupIdx = i + 1;
+            }
+            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
+            f32 s = scale[lookupIdx];
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
+            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+
+            unk1B8[i]->SetAnimationEnable(unk1DC[i], true);
+
+            f32 frame = static_cast<f32>(unk1DC[i]->GetFrameSize()) - 1.0f;
+            unk1DC[i]->SetFrame(frame);
+
+            unk1B8[i]->Animate(0);
+        }
+    }
+
+    unk30C = 0;
+    unk308 = 4;
+
+    func_80108994(this);
+    func_80139198(0);
+    unk31C = func_801392C0();
+
+    {
+        IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+        if (this != NULL) {
+            cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+        }
+        mScn->addRenderCB(cb, 0xa, 0);
+    }
+
+    unk6C.func_8045F810();
 }
 
 template <typename Fn>
@@ -248562,3 +248851,113 @@ after_bit21:
 done:
     ;
 }
+
+// LLM-HARNESS-BEGIN: us-80102eb8
+extern "C" void func_801023D0() {}
+// LLM-HARNESS-END: us-80102eb8
+// LLM-HARNESS-BEGIN: us-80104cdc
+extern "C" void func_801041F4() {}
+// LLM-HARNESS-END: us-80104cdc
+// LLM-HARNESS-BEGIN: us-80104d74
+extern "C" void func_8010428C() {}
+// LLM-HARNESS-END: us-80104d74
+// LLM-HARNESS-BEGIN: us-80104d8c
+extern "C" bool func_801042A4() { return false; }
+// LLM-HARNESS-END: us-80104d8c
+// LLM-HARNESS-BEGIN: us-80104d94
+extern "C" CMenuArtsSelect* func_801042AC() { return lbl_eu_80663F20; }
+// LLM-HARNESS-END: us-80104d94
+// LLM-HARNESS-BEGIN: us-80104d9c
+extern "C" void func_801042B4() {}
+// LLM-HARNESS-END: us-80104d9c
+// LLM-HARNESS-BEGIN: us-80104db0
+extern "C" void func_801042C8() {}
+// LLM-HARNESS-END: us-80104db0
+// LLM-HARNESS-BEGIN: us-80104dd8
+extern "C" void func_801042F0() {}
+// LLM-HARNESS-END: us-80104dd8
+// LLM-HARNESS-BEGIN: us-80104e08
+extern "C" void func_80104320() {}
+// LLM-HARNESS-END: us-80104e08
+// LLM-HARNESS-BEGIN: us-80104e80
+extern "C" void func_80104398() {}
+// LLM-HARNESS-END: us-80104e80
+// LLM-HARNESS-BEGIN: us-80109718
+extern "C" bool func_80108C30() { return false; }
+// LLM-HARNESS-END: us-80109718
+// LLM-HARNESS-BEGIN: us-80109720
+extern "C" bool func_80108C38() { return false; }
+// LLM-HARNESS-END: us-80109720
+// LLM-HARNESS-BEGIN: us-80109728
+extern "C" bool func_80108C40() { return false; }
+// LLM-HARNESS-END: us-80109728
+// LLM-HARNESS-BEGIN: us-80109730
+extern "C" bool func_80108C48() { return false; }
+// LLM-HARNESS-END: us-80109730
+// LLM-HARNESS-BEGIN: us-80109738
+extern "C" bool func_80108C50() { return false; }
+// LLM-HARNESS-END: us-80109738
+
+// LLM-HARNESS-BEGIN: us-80104cf8
+extern "C" void func_80104210() {}
+// LLM-HARNESS-END: us-80104cf8
+// LLM-HARNESS-BEGIN: us-80104e24
+extern "C" void func_8010433C() {}
+// LLM-HARNESS-END: us-80104e24
+// LLM-HARNESS-BEGIN: us-80104ea4
+extern "C" void func_801043BC() {}
+// LLM-HARNESS-END: us-80104ea4
+// LLM-HARNESS-BEGIN: us-80104f3c
+extern "C" void harness_stub_us_80104f3c() {}
+// LLM-HARNESS-END: us-80104f3c
+// LLM-HARNESS-BEGIN: us-8010651c
+extern "C" void harness_stub_us_8010651c() {}
+// LLM-HARNESS-END: us-8010651c
+// LLM-HARNESS-BEGIN: us-8010683c
+extern "C" void harness_stub_us_8010683c() {}
+// LLM-HARNESS-END: us-8010683c
+// LLM-HARNESS-BEGIN: us-80106f38
+extern "C" void harness_stub_us_80106f38() {}
+// LLM-HARNESS-END: us-80106f38
+// LLM-HARNESS-BEGIN: us-801070cc
+extern "C" void harness_stub_us_801070cc() {}
+// LLM-HARNESS-END: us-801070cc
+// LLM-HARNESS-BEGIN: us-801073e8
+extern "C" void harness_stub_us_801073e8() {}
+// LLM-HARNESS-END: us-801073e8
+// LLM-HARNESS-BEGIN: us-80107718
+extern "C" void harness_stub_us_80107718() {}
+// LLM-HARNESS-END: us-80107718
+// LLM-HARNESS-BEGIN: us-801079b0
+extern "C" void harness_stub_us_801079b0() {}
+// LLM-HARNESS-END: us-801079b0
+// LLM-HARNESS-BEGIN: us-80107ca0
+extern "C" void harness_stub_us_80107ca0() {}
+// LLM-HARNESS-END: us-80107ca0
+// LLM-HARNESS-BEGIN: us-80107dc8
+extern "C" void harness_stub_us_80107dc8() {}
+// LLM-HARNESS-END: us-80107dc8
+// LLM-HARNESS-BEGIN: us-80108068
+extern "C" void harness_stub_us_80108068() {}
+// LLM-HARNESS-END: us-80108068
+// LLM-HARNESS-BEGIN: us-80108334
+extern "C" void func_8010784C() {}
+// LLM-HARNESS-END: us-80108334
+// LLM-HARNESS-BEGIN: us-80108458
+extern "C" int harness_stub_us_80108458() { return 0; }
+// LLM-HARNESS-END: us-80108458
+// LLM-HARNESS-BEGIN: us-8010873c
+extern "C" int harness_stub_us_8010873c() { return 0; }
+// LLM-HARNESS-END: us-8010873c
+// LLM-HARNESS-BEGIN: us-80108be0
+extern "C" void harness_stub_us_80108be0() {}
+// LLM-HARNESS-END: us-80108be0
+// LLM-HARNESS-BEGIN: us-801091b8
+extern "C" void func_801086D0() {}
+// LLM-HARNESS-END: us-801091b8
+// LLM-HARNESS-BEGIN: us-801093b4
+extern "C" void func_801088CC() {}
+// LLM-HARNESS-END: us-801093b4
+// LLM-HARNESS-BEGIN: us-8010947c
+extern "C" void harness_stub_us_8010947c() {}
+// LLM-HARNESS-END: us-8010947c

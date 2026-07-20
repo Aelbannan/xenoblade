@@ -30,7 +30,7 @@ namespace cf{
 }
 
 // LLM-HARNESS-BEGIN: us-802a45d4
-extern "C" bool func_802A1EA0() { return false; }
+extern "C" bool func_802A1EA0() { return true; }
 // LLM-HARNESS-END: us-802a45d4
 // LLM-HARNESS-BEGIN: us-802a46d0
 extern "C" void func_802A1F9C() {}

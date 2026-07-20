@@ -449,6 +449,7 @@ class ProofResult:
     loop_summary: dict[str, Any] | None = None
     relational_induction: dict[str, Any] | None = None
     memory_loop: dict[str, Any] | None = None
+    memory_bus: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -483,6 +484,8 @@ class ProofResult:
             value.pop("relational_induction", None)
         if self.memory_loop is None:
             value.pop("memory_loop", None)
+        if self.memory_bus is None:
+            value.pop("memory_bus", None)
         return value
 
 

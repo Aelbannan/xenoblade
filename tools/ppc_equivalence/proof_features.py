@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from tools.ppc_equivalence.loop_summary import validate_loop_summary_obligation
+from tools.ppc_equivalence.memory_bus_obligations import validate_memory_bus_obligation
 from tools.ppc_equivalence.memory_loop import validate_memory_loop_obligation
 from tools.ppc_equivalence.relational_induction import (
     validate_relational_induction_obligation,
@@ -20,6 +21,7 @@ FEATURE_OBLIGATION_KEYS: dict[str, str] = {
     "affine-loop-summary": "loop_summary",
     "relational-induction": "relational_induction",
     "memory-loop-summary": "memory_loop",
+    "memory-bus": "memory_bus",
 }
 
 KNOWN_PROOF_FEATURES: frozenset[str] = frozenset(FEATURE_OBLIGATION_KEYS)
@@ -42,6 +44,8 @@ def _extract_payload(payload: dict[str, Any] | ProofResult) -> dict[str, Any]:
             data["relational_induction"] = payload.relational_induction
         if getattr(payload, "memory_loop", None) is not None:
             data["memory_loop"] = payload.memory_loop
+        if getattr(payload, "memory_bus", None) is not None:
+            data["memory_bus"] = payload.memory_bus
         return data
     return payload
 
@@ -114,6 +118,10 @@ def validate_proof_features(
                 return reason
         if feature == "memory-loop-summary":
             reason = validate_memory_loop_obligation(obligation)
+            if reason is not None:
+                return reason
+        if feature == "memory-bus":
+            reason = validate_memory_bus_obligation(obligation)
             if reason is not None:
                 return reason
 

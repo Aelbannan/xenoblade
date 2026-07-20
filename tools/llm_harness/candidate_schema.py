@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 # OpenAI / LM Studio style json_schema wrapper (name + strict + schema).
-# OpenCode message `format.schema` also accepts this object.
+# OpenCode pure mode does not send this (Console Go rejects json_schema).
 CANDIDATE_JSON_SCHEMA: Dict[str, Any] = {
     "name": "decomp_candidate",
     "strict": True,

@@ -104,7 +104,8 @@ class PureModeToolsTests(unittest.TestCase):
 
 
 class JsonSchemaFormatTests(unittest.TestCase):
-    def test_pure_message_includes_json_schema_format(self) -> None:
+    def test_pure_message_omits_json_schema_format(self) -> None:
+        # Console Go rejects format.json_schema; harness relies on prompt JSON.
         provider = OpenCodeProvider(
             base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=True
         )
@@ -118,11 +119,7 @@ class JsonSchemaFormatTests(unittest.TestCase):
                 cwd=Path(tmp),
             )
 
-        fmt = capture["message_body"]["format"]
-        self.assertEqual(fmt["type"], "json_schema")
-        self.assertEqual(fmt["retryCount"], 2)
-        self.assertEqual(fmt["schema"], CANDIDATE_JSON_SCHEMA)
-        self.assertEqual(fmt["schema"]["name"], "decomp_candidate")
+        self.assertNotIn("format", capture["message_body"])
 
 
 class EmptyResponseTests(unittest.TestCase):

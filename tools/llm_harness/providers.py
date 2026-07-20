@@ -204,12 +204,9 @@ class OpenCodeProvider:
             elif self.pure:
                 message_body["enable_thinking"] = False
 
-            if self.pure:
-                message_body["format"] = {
-                    "type": "json_schema",
-                    "schema": SHARED_CANDIDATE_JSON_SCHEMA,
-                    "retryCount": 2,
-                }
+            # Do not attach format.json_schema: Console Go (opencode-go) rejects it
+            # with invalid_request_error. Prompt-enforced JSON is enough; parsers
+            # still accept info.structured_output when a provider returns it.
 
             response = self._request(
                 "POST",

@@ -36,7 +36,7 @@ from .ir import (
 )
 from .loop_summary import LoopSummary, apply_affine_loop_summary, build_affine_summary_map
 from .memory_bus import BusOutcome, MemoryBus
-from .memory_loop import MemoryLoopSummary, apply_memory_loop_summary
+from .memory_loop import MemoryLoopPlan, MemoryLoopSummary, apply_memory_loop_summary
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState
 from .result import FloatingPointDomain
 from .stack_escape import mark_stack_pointer_escape as _shared_mark_stack_pointer_escape
@@ -4011,6 +4011,37 @@ def _branch_condition(state: MachineState, bo: int, bi: int, ops: WordOps, *, al
     return ops.land(ctr_ok, cond_ok), state
 
 
+def execute_bdnz_latch(
+    state: MachineState,
+    latch: Instruction,
+    ops: WordOps,
+    *,
+    header_pc: int | None = None,
+) -> tuple[MachineState, Any]:
+    """Return the decremented state and taken predicate for a ``bdnz`` latch.
+
+    Validates ``opcode == BC``, ``BO == 16``, ``LK == 0``, and (when provided)
+    that the branch target equals ``header_pc``. CTR is decremented using the
+    ordinary branch semantics.
+    """
+    if latch.opcode != Opcode.BC:
+        raise ExecutionInconclusive(
+            f"execute_bdnz_latch requires BC, got {latch.opcode.value}",
+        )
+    if latch.link:
+        raise ExecutionInconclusive("execute_bdnz_latch rejects LK=1")
+    bo, _bi, target, _aa = (int(v) for v in latch.operands)
+    if bo != 16:
+        raise ExecutionInconclusive(f"execute_bdnz_latch requires BO=16, got {bo}")
+    resolved_target = int(target) & 0xFFFFFFFC
+    if header_pc is not None and resolved_target != (int(header_pc) & 0xFFFFFFFC):
+        raise ExecutionInconclusive(
+            "execute_bdnz_latch target does not match witness header",
+        )
+    taken, decremented = _branch_condition(state, bo, 0, ops, allow_ctr=True)
+    return decremented, taken
+
+
 def _trap_condition(state: MachineState, to: int, ra: int, immediate: int, ops: WordOps) -> Any:
     left, right = state.gpr[ra], ops.const(immediate)
     condition = ops.bool(False)
@@ -4226,6 +4257,9 @@ def execute_cfg(
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
     affine_loop_summaries: dict[int, LoopSummary] | None = None,
     affine_summaries_used: list[LoopSummary] | None = None,
+    memory_loop_plans: dict[int, MemoryLoopPlan] | None = None,
+    memory_plans_used: list[MemoryLoopPlan] | None = None,
+    # Deprecated aliases kept for transitional callers / tests.
     memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
     memory_summaries_used: list[MemoryLoopSummary] | None = None,
 ) -> list[Terminal]:
@@ -4237,6 +4271,31 @@ def execute_cfg(
         raise ExecutionInconclusive(
             "memory bus routing requires ConcreteOps or SymbolicOps",
         )
+    # Prefer plans; synthesize plan-less summary maps into a thin adapter only
+    # when legacy callers still pass summaries without witnesses.
+    if memory_loop_plans is None and memory_loop_summaries:
+        from tools.ppc_equivalence.memory_loop import MemoryLoopWitness, compute_witness_code_sha256
+
+        adapted: dict[int, MemoryLoopPlan] = {}
+        for header, summary in memory_loop_summaries.items():
+            # Witness-less legacy path: refinement discharge is impossible; CFG
+            # may still apply the summary under the entry-CTR guard.
+            empty_latch = Instruction(summary.latch_pc, 0, Opcode.BC, (16, 0, summary.header_pc, 0))
+            empty_mtctr = Instruction(summary.header_pc - 4, 0, Opcode.MTSPR, (0, 9))
+            adapted[header] = MemoryLoopPlan(
+                summary=summary,
+                witness=MemoryLoopWitness(
+                    body=(),
+                    latch=empty_latch,
+                    mtctr=empty_mtctr,
+                    header_pc=summary.header_pc,
+                    latch_pc=summary.latch_pc,
+                    exit_pc=summary.exit_pc,
+                    code_sha256=compute_witness_code_sha256((), empty_latch, empty_mtctr),
+                    recognized_trip_count=int(summary.trip_count),
+                ),
+            )
+        memory_loop_plans = adapted
     domain = floating_point_domain or FloatingPointDomain()
     domain.validate()
     domain_token = _FP_DOMAIN.set(domain)
@@ -4254,7 +4313,7 @@ def execute_cfg(
                 if lifted is not None:
                     # Loop summaries × FIFO: unbounded emission risk.
                     if lifted.fifo_traces and (
-                        affine_loop_summaries or memory_loop_summaries
+                        affine_loop_summaries or memory_loop_plans
                     ):
                         raise ExecutionInconclusive(
                             "symbolic-loop-fifo-emission: loop summaries with "
@@ -4275,8 +4334,8 @@ def execute_cfg(
             jump_table_targets=jump_table_targets,
             affine_loop_summaries=affine_loop_summaries,
             affine_summaries_used=affine_summaries_used,
-            memory_loop_summaries=memory_loop_summaries,
-            memory_summaries_used=memory_summaries_used,
+            memory_loop_plans=memory_loop_plans,
+            memory_plans_used=memory_plans_used,
         )
     finally:
         if coverage_armed:
@@ -4303,8 +4362,8 @@ def _execute_cfg_body(
     jump_table_targets: dict[int, tuple[int, ...]] | None = None,
     affine_loop_summaries: dict[int, LoopSummary] | None = None,
     affine_summaries_used: list[LoopSummary] | None = None,
-    memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
-    memory_summaries_used: list[MemoryLoopSummary] | None = None,
+    memory_loop_plans: dict[int, MemoryLoopPlan] | None = None,
+    memory_plans_used: list[MemoryLoopPlan] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -4318,8 +4377,8 @@ def _execute_cfg_body(
     end = instructions[-1].address + 4
     if affine_loop_summaries is None:
         affine_loop_summaries = {}
-    if memory_loop_summaries is None:
-        memory_loop_summaries = {}
+    if memory_loop_plans is None:
+        memory_loop_plans = {}
     # visit_counts[pc] = times this path has already entered ``pc``.
     # A back-edge that would make the count reach max_loop_iterations fails closed.
     work: list[tuple[int, MachineState, Any, dict[int, int], int]] = [
@@ -4345,8 +4404,12 @@ def _execute_cfg_body(
         term_state: MachineState,
         exit_kind: str,
         exit_target: Any = None,
+        *,
+        force: bool = False,
     ) -> None:
-        if not _path_condition_feasible(term_condition, ops):
+        # Premise-violation paths must survive until the full solver context can
+        # prove them unreachable; do not prune with local simplification alone.
+        if not force and not _path_condition_feasible(term_condition, ops):
             return
         if exit_target is None:
             terminals.append(Terminal(term_condition, term_state, exit_kind))
@@ -4383,15 +4446,28 @@ def _execute_cfg_body(
                 steps + 1,
             )
             continue
-        memory_summary = memory_loop_summaries.get(pc)
-        if memory_summary is not None and prior_visits == 0:
-            summarized = apply_memory_loop_summary(current, memory_summary, ops)
-            if memory_summaries_used is not None:
-                memory_summaries_used.append(memory_summary)
+        memory_plan = memory_loop_plans.get(pc)
+        if memory_plan is not None and prior_visits == 0:
+            entry_guard = ops.eq(
+                current.ctr,
+                ops.const(int(memory_plan.summary.trip_count) & 0xFFFFFFFF),
+            )
+            # Keep the premise-violation path until the complete solver context
+            # can prove it unreachable (do not prune via local simplify alone).
+            record_terminal(
+                ops.land(condition, ops.lnot(entry_guard)),
+                current,
+                "memory-loop-entry-premise",
+                ops.const(memory_plan.summary.header_pc),
+                force=True,
+            )
+            summarized = apply_memory_loop_summary(current, memory_plan.summary, ops)
+            if memory_plans_used is not None:
+                memory_plans_used.append(memory_plan)
             enqueue(
-                memory_summary.exit_pc,
+                memory_plan.summary.exit_pc,
                 summarized,
-                condition,
+                ops.land(condition, entry_guard),
                 {**visit_counts, pc: 1},
                 steps + 1,
             )

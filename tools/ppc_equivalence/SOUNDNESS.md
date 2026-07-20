@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v35`
+- Architecture model: `broadway-ppc32-be-v36`
 - Result format: `16`
-- Certificate format: `10`
+- Certificate format: `11`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -82,21 +82,25 @@ documented per-implementation private-storage abstraction.
   share a constant-value contiguous `RangeWrite` and the bitvector identity
   `N = (1<<k)*(N>>k)+(N&mask)` with `remainder < (1<<k)` is UNSAT-proven;
   otherwise the sketch stays `pending`.
-  Constant-stride store loops (`memory_loop` / `memory-loop-summary`,
-  algorithm `constant-stride-store-v2`) with a
+  Constant-stride store loops (`memory_loop` / `memory-loop-summary`, set
+  algorithm `constant-stride-store-set-v3`, schema version `2`) with a
   positive concrete trip count are applied in closed form inside
   `execute_cfg` via typed `StoreEffect` / `apply_store_effect` (recording
-  `memory_writes` + `memory_touches`, not memory alone). Closed-form
-  recognition alone **never** discharges: the engine calls
-  `memory_loop_discharge.discharge_memory_loop_summary`, which runs five
-  independent UNSAT queries — `body_step`, `postcondition`, `stack_escape`,
-  `termination`, `footprint` — and only reports `status=discharged` when *all*
-  are UNSAT. Obligations then carry `status=discharged` only for
-  `expansion=closed-form` with `effects=typed-store`, `footprint=ok`, matching
-  `summary_sha256`, **and** a `transition_equivalence` block recording every
-  required query `result=unsat` with a lowercase SHA-256 query digest and a
-  known discharge algorithm; recognition / `coverage=applied` alone never
-  authorizes. A summarized store of an `r1`-derived value clears
+  `memory_writes` + `memory_touches`, not memory alone), gated by an
+  explicit entry-CTR premise (`CTR == summarized trip count`). Closed-form
+  recognition alone **never** discharges: the engine builds a
+  `MemoryLoopPlan` (summary + exact instruction witness) per side and calls
+  `memory_loop_discharge.discharge_memory_loop_plan`, which proves
+  `instructions ≡ summary` via `entry_guard` plus refinement queries
+  (`body_step`, `postcondition`, `stack_escape`, `termination`, `footprint`)
+  that execute the recognized witness with ordinary `execute_instruction` /
+  `execute_bdnz_latch` semantics. Original and candidate plans are discharged
+  independently — structural summary equality and equal header PCs are **not**
+  required. Obligations then carry `status=discharged` only when every used
+  side entry is discharged; recognition / `coverage=applied` / legacy v1
+  self-referential transition-equivalence never authorizes. Refinement SAT is
+  `INTERNAL_ERROR` (summary disagrees with instruction semantics), not
+  `NOT_EQUIVALENT`. A summarized store of an `r1`-derived value clears
   `stack_private` (via `stack_escape.mark_stack_pointer_escape`) exactly as an
   ordinary D-form store would, so publishing the stack pointer through a
   summarized loop cannot hide divergent private-frame bytes. Bounded-remainder
@@ -311,8 +315,8 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   Loop-summary × FIFO hard-rejects; bounded summarized emission unsupported.
   Before authorization: every memory-access family routes or produces an
   explicit unsupported predicate. Architecture / result / certificate versions
-  for the schema-v2 obligation shape are ``broadway-ppc32-be-v35`` / result
-  format ``16`` / certificate ``10`` (v34 and earlier rejected). P1 cache
+  for the schema-v2 obligation shape are ``broadway-ppc32-be-v36`` / result
+  format ``16`` / certificate ``11`` (v35 and earlier rejected). P1 cache
   revalidation, per-side coverage, and digest recomputation are required
   gates; ``memory-bus`` is cleared from ``UNSUPPORTED_FOR_EQUIVALENT``.
 - **Memory-bus discharged obligation (Track A):** `status=discharged` requires
@@ -670,21 +674,24 @@ Rules (enforced by `tools.ppc_equivalence.proof_features`):
     `relational_companion=discharged`, and a companion
     `relational-induction` feature also discharged. CTR or compare-affine
     closed-form application (`coverage=applied`) alone never authorizes.
-  - `memory-loop-summary`: `status=discharged` with matching
-    `summary_sha256`, `effects=typed-store`, `footprint=ok`,
-    `expansion=closed-form`, **and** a `transition_equivalence` block whose
-    required queries (`body_step`, `postcondition`, `stack_escape`,
-    `termination`, `footprint`) all carry `result=unsat` with lowercase
-    SHA-256 digests and known algorithms (`memory_loop_discharge.py`).
-    Closed-form recognition / `coverage=applied` alone never authorizes; the
-    engine never sets `discharged` from closed-form expansion by itself.
+  - `memory-loop-summary`: schema version exactly `2`, algorithm
+    `constant-stride-store-set-v3`, both `original` and `candidate` arrays
+    present, no legacy flat mirrors / v1 transition-equivalence algorithms,
+    and `status=discharged` only when every side entry carries
+    `entry_guard.result=unsat` plus
+    `refinement.status=discharged` with required blocks (`body_step`,
+    `postcondition`, `stack_escape`, `termination`, `footprint`) all
+    `result=unsat` under known v2 algorithms (`memory_loop_discharge.py`).
+    Each side proves `instructions ≡ summary` independently; structural
+    summary equality across sides is not required. Closed-form recognition /
+    `applied` alone never authorizes; refinement SAT is `INTERNAL_ERROR`.
     Bounded-remainder expansions stay `applied`.
   Jump-table coverage and no-write use independent UNSAT
   discharge (`discharge.py`) with remainder terminals retained on BCCTR
   expansion; obligation schema v2 carries coverage/no_write digests.
-  Architecture / result / certificate for the memory-bus schema-v2 shape:
-  `broadway-ppc32-be-v35` / format `16` / certificate `10`. Certificates under
-  `broadway-ppc32-be-v34` (and earlier rejected models) are stale.
+  Architecture / result / certificate for the memory-loop refinement shape:
+  `broadway-ppc32-be-v36` / format `16` / certificate `11`. Certificates under
+  `broadway-ppc32-be-v35` (and earlier rejected models) are stale.
 - **Wave 5 Track B blockers kept documented (not freeze-worthy for closed-form):**
   bounded-remainder expansions stay `applied` (not discharged). Bulk+remainder
   without a shared constant-value `RangeWrite` stays `pending`.

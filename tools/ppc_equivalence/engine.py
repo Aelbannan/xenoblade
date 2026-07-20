@@ -47,7 +47,8 @@ from .loop_summary import (
 )
 from .memory_loop import (
     build_memory_loop_obligation,
-    build_memory_loop_summary_map,
+    build_memory_loop_plan_map,
+    build_memory_loop_side_entry,
 )
 from .memory_loop_readonly import (
     MemoryLoopReadonlyContext,
@@ -1308,15 +1309,16 @@ def _check_equivalence_impl(
             )
     original_readonly = None if readonly_ctx is None else readonly_ctx.words_for("original")
     candidate_readonly = None if readonly_ctx is None else readonly_ctx.words_for("candidate")
-    original_memory = build_memory_loop_summary_map(
+    original_memory = build_memory_loop_plan_map(
         original,
         readonly_words=original_readonly,
     )
-    candidate_memory = build_memory_loop_summary_map(
+    candidate_memory = build_memory_loop_plan_map(
         candidate,
         readonly_words=candidate_readonly,
     )
-    memory_used: list = []
+    original_memory_used: list = []
+    candidate_memory_used: list = []
 
     def _early_timeout(phase: str) -> ProofResult:
         return ProofResult(
@@ -1410,8 +1412,8 @@ def _check_equivalence_impl(
             jump_table_targets=original_jump_targets,
             affine_loop_summaries=original_affine,
             affine_summaries_used=affine_used,
-            memory_loop_summaries=original_memory,
-            memory_summaries_used=memory_used,
+            memory_loop_plans=original_memory,
+            memory_plans_used=original_memory_used,
         )
         candidate_exits = execute_cfg(
             initial, candidate, ops,
@@ -1426,8 +1428,8 @@ def _check_equivalence_impl(
             jump_table_targets=candidate_jump_targets,
             affine_loop_summaries=candidate_affine,
             affine_summaries_used=affine_used,
-            memory_loop_summaries=candidate_memory,
-            memory_summaries_used=memory_used,
+            memory_loop_plans=candidate_memory,
+            memory_plans_used=candidate_memory_used,
         )
     except ProofDeadlineExceeded as exc:
         return _early_timeout(exc.phase)
@@ -1710,7 +1712,8 @@ def _check_equivalence_impl(
                 ops=ops,
                 deadline=deadline,
                 loop_summaries_active=bool(
-                    affine_used or memory_used
+                    affine_used
+                    or original_memory_used or candidate_memory_used
                     or original_affine or candidate_affine
                     or original_memory or candidate_memory
                 ),
@@ -1865,8 +1868,7 @@ def _check_equivalence_impl(
                     features.append("relational-induction")
                 early.proof_features = features
                 early.relational_induction = bulk_sketch.to_obligation_dict()
-        if memory_used:
-            mem_summary = memory_used[0]
+        if original_memory_used or candidate_memory_used:
             features = list(early.proof_features)
             if "memory-loop-summary" not in features:
                 features.append("memory-loop-summary")
@@ -1885,46 +1887,113 @@ def _check_equivalence_impl(
                         ],
                     },
                 )
-            # NEVER discharge from closed-form recognition alone. Run the
-            # independent transition-equivalence queries; only an all-UNSAT
-            # discharge authorizes status=discharged. Otherwise the summary may
-            # still execute (status=applied) but must not authorize EQUIVALENT.
-            from .memory_loop_discharge import discharge_memory_loop_summary
+            # Per-side refinement: each used plan proves instructions ≡ summary.
+            # Never pair loops by equal addresses or require structural summary match.
+            from .memory_loop_discharge import (
+                canonical_unique_plans,
+                discharge_memory_loop_plan,
+            )
 
-            orig_summary = original_memory.get(mem_summary.header_pc, mem_summary)
-            cand_summary = candidate_memory.get(mem_summary.header_pc, mem_summary)
-            memory_status = "applied"
-            transition_equivalence = None
-            if (
-                mem_summary.expansion == "closed-form"
-                and int(mem_summary.trip_count) >= 1
-            ):
-                discharge_result = discharge_memory_loop_summary(
-                    orig_summary,
-                    cand_summary,
-                    deadline=deadline,
-                    z3_module=z3,
-                )
-                memory_status = discharge_result.status
-                if memory_status == "discharged":
-                    transition_equivalence = discharge_result.transition_equivalence()
-                elif memory_status == "failed":
+            entry_premises: list[Any] = list(layout_constraints)
+
+            def _header_from_target(target: Any) -> int | None:
+                if target is None:
+                    return None
+                if hasattr(target, "as_long"):
+                    try:
+                        return int(target.as_long()) & 0xFFFFFFFF
+                    except Exception:
+                        pass
+                try:
+                    simplified = ops.z3.simplify(target)
+                    if hasattr(simplified, "as_long"):
+                        return int(simplified.as_long()) & 0xFFFFFFFF
+                except Exception:
+                    pass
+                return None
+
+            def _side_entries(
+                plans: list,
+                exits: list[Terminal],
+            ) -> tuple[list[dict], str]:
+                side_status = "discharged"
+                entries: list[dict] = []
+                for plan in canonical_unique_plans(plans):
+                    header = int(plan.summary.header_pc) & 0xFFFFFFFF
+                    matched_violations: list[Any] = []
+                    for term in exits:
+                        if term.exit_kind != "memory-loop-entry-premise":
+                            continue
+                        term_header = _header_from_target(term.exit_target)
+                        if term_header is None or term_header == header:
+                            matched_violations.append(term.condition)
+
+                    if plan.summary.expansion != "closed-form" or int(plan.summary.trip_count) < 1:
+                        entries.append(build_memory_loop_side_entry(plan))
+                        side_status = "applied"
+                        continue
+
+                    discharge_result = discharge_memory_loop_plan(
+                        plan,
+                        deadline=deadline,
+                        z3_module=z3,
+                        entry_guard_premises=entry_premises,
+                        entry_violation_conditions=matched_violations,
+                    )
+                    entries.append(
+                        build_memory_loop_side_entry(
+                            plan,
+                            entry_guard=discharge_result.entry_guard,
+                            refinement=discharge_result.refinement,
+                        ),
+                    )
+                    if discharge_result.status == "discharged":
+                        continue
+                    if discharge_result.status == "internal_error":
+                        reason = discharge_result.reason or (
+                            "memory-loop refinement SAT (INTERNAL_ERROR)"
+                        )
+                        early.status = ProofStatus.INTERNAL_ERROR
+                        early.unsupported.append(reason)
+                        early.warnings.append(reason)
+                        early.abstractions.append("memory-loop-refinement-sat")
+                        side_status = "failed"
+                        continue
                     reason = discharge_result.reason or (
-                        "memory-loop transition-equivalence discharge failed"
+                        "memory-loop refinement discharge incomplete"
                     )
                     if early.status is ProofStatus.EQUIVALENT:
-                        early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                        if discharge_result.proof_status_hint == "INCONCLUSIVE_TIMEOUT":
+                            early.status = ProofStatus.INCONCLUSIVE_TIMEOUT
+                        elif discharge_result.proof_status_hint == "INCONCLUSIVE_UNKNOWN":
+                            early.status = ProofStatus.INCONCLUSIVE_UNKNOWN
+                        else:
+                            early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
                     early.unsupported.append(reason)
                     early.warnings.append(reason)
-                    early.abstractions.append("memory-loop-discharge-failed")
-                    # Persist an applied obligation (no transition_equivalence).
-                    memory_status = "applied"
+                    early.abstractions.append("memory-loop-discharge-incomplete")
+                    side_status = "applied"
+                if not plans:
+                    return entries, "discharged"
+                return entries, side_status
+
+            original_entries, original_status = _side_entries(
+                original_memory_used, original_exits,
+            )
+            candidate_entries, candidate_status = _side_entries(
+                candidate_memory_used, candidate_exits,
+            )
+            if original_status == "discharged" and candidate_status == "discharged":
+                memory_status = "discharged"
+            elif original_status == "failed" or candidate_status == "failed":
+                memory_status = "failed"
+            else:
+                memory_status = "applied"
             early.memory_loop = build_memory_loop_obligation(
-                mem_summary,
-                coverage="applied",
+                original=original_entries,
+                candidate=candidate_entries,
                 status=memory_status,
                 readonly_words_sha256=readonly_digest,
-                transition_equivalence=transition_equivalence,
             )
         gated = enforce_equivalent_proof_features(early)
         # Shared unconstrained memory can make identical jump-table functions

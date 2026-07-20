@@ -1340,11 +1340,13 @@ def generate_build_ninja(
             command=f"$python {configure_script} $configure_args progress",
             description="PROGRESS",
         )
+        # Progress is driven by objdiff report.json (compiled objects), not by
+        # a successful link/hash check — so `ninja progress` still works when
+        # the linker is broken.
         n.build(
             outputs="progress",
             rule="progress",
             implicit=[
-                ok_path,
                 configure_script,
                 python_lib,
                 report_path,

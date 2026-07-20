@@ -114,7 +114,10 @@ extern "C" void func_80495E94() {}
 extern "C" bool func_80495EA4() { return false; }
 // LLM-HARNESS-END: us-80499f1c
 // LLM-HARNESS-BEGIN: us-80499f24
-extern "C" void func_80495EAC() {}
+extern "C" void __ct__8049E710();
+extern "C" void func_80495EAC() {
+    __ct__8049E710();
+}
 // LLM-HARNESS-END: us-80499f24
 // LLM-HARNESS-BEGIN: us-80499f28
 extern "C" void func_80495EB0() {}

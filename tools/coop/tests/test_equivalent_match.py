@@ -356,7 +356,8 @@ class CacheInvalidationTests(unittest.TestCase):
             self.assertIsInstance(restored.proof, ProofResult)
             assert isinstance(restored.proof, ProofResult)
             # Probe status is the cached equivalence status; ProofResult is
-            # reconstructed and freeze-gated (memory-bus still unsupported).
+            # reconstructed and re-gated. Weak memory-bus (missing digests)
+            # fails validate_memory_bus_obligation → demoted.
             self.assertEqual(restored.status, ProofStatus.EQUIVALENT)
             self.assertEqual(
                 restored.proof.status,

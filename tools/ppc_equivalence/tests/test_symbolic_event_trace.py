@@ -152,6 +152,8 @@ class SymbolicEventTraceTests(unittest.TestCase):
         from tools.ppc_equivalence.device_model import GxFifoStreamDevice
         from tools.ppc_equivalence.memory_bus import build_memory_bus
         from tools.ppc_equivalence.memory_bus_obligations import (
+            LOOP_FIFO_EMISSION,
+            LOOP_FIFO_POLICY,
             enrich_memory_bus_obligation_with_symbolic_mmio,
         )
 
@@ -166,6 +168,67 @@ class SymbolicEventTraceTests(unittest.TestCase):
         self.assertEqual(enriched["gxfifo_trace"]["algorithm"], ALGORITHM)
         self.assertEqual(enriched["gxfifo_trace"]["reads"], "unsupported")
         self.assertEqual(enriched["gxfifo_trace"]["status"], "cfg-routed")
+        self.assertEqual(enriched["loop_fifo_policy"], LOOP_FIFO_POLICY)
+        self.assertEqual(enriched["loop_fifo_emission"], LOOP_FIFO_EMISSION)
+        self.assertEqual(
+            enriched["gxfifo_trace"]["bounded_summarized_emission"],
+            LOOP_FIFO_EMISSION,
+        )
+
+    def test_loop_summary_with_fifo_attests_hard_reject(self) -> None:
+        from tools.ppc_equivalence.address_space import AddressSpace, mmio_region
+        from tools.ppc_equivalence.device_model import GxFifoStreamDevice
+        from tools.ppc_equivalence.memory_bus import build_memory_bus
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            LOOP_FIFO_EMISSION,
+            LOOP_FIFO_POLICY,
+            LOOP_FIFO_REJECTION_REASON,
+            build_memory_bus_obligation,
+            enrich_memory_bus_obligation_with_symbolic_mmio,
+            validate_memory_bus_obligation,
+        )
+
+        device = GxFifoStreamDevice(base=0xCC008100, span=0x100)
+        mmio = mmio_region(0xCC008100, 0xCC0081FF, device_id="gx-fifo")
+        bus = build_memory_bus(AddressSpace((mmio,)), devices={"gx-fifo": device})
+        enriched = enrich_memory_bus_obligation_with_symbolic_mmio(
+            build_memory_bus_obligation(bus),
+            bus,
+            loop_summaries_active=True,
+        )
+        self.assertEqual(enriched["symbolic_mmio"], "cfg-routed-rejected")
+        self.assertIn(LOOP_FIFO_REJECTION_REASON, enriched["cfg_rejections"])
+        self.assertIn(LOOP_FIFO_REJECTION_REASON, enriched["cfg_rejection_reasons"])
+        self.assertEqual(enriched["loop_fifo_policy"], LOOP_FIFO_POLICY)
+        self.assertEqual(enriched["loop_fifo_emission"], LOOP_FIFO_EMISSION)
+        self.assertIn(LOOP_FIFO_REJECTION_REASON, enriched["loop_fifo_reject_markers"])
+        self.assertEqual(enriched["status"], "cfg-routed-rejected")
+        self.assertEqual(
+            enriched["loop_fifo_rejection"]["reason"],
+            LOOP_FIFO_REJECTION_REASON,
+        )
+        self.assertEqual(enriched["coverage"]["loop_fifo"], "hard-rejected")
+        self.assertIsNone(validate_memory_bus_obligation(enriched))
+
+        forged = dict(enriched)
+        forged["status"] = "discharged"
+        vacuous = {
+            "status": "vacuously-discharged",
+            "reason": "no-unsupported-predicates",
+            "cfg_trace_sha256": "a" * 64,
+            "access_coverage_sha256": enriched["access_coverage"]["sha256"],
+        }
+        forged["unsupported_access"] = {"original": vacuous, "candidate": vacuous}
+        reason = validate_memory_bus_obligation(forged)
+        self.assertIsNotNone(reason)
+        self.assertTrue(
+            "FIFO" in (reason or "")
+            or "loop" in (reason or "")
+            or "cfg_rejection" in (reason or "")
+            or "loop_fifo" in (reason or "")
+            or "×" in (reason or ""),
+            reason,
+        )
 
 
 if __name__ == "__main__":

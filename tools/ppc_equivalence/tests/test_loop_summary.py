@@ -168,7 +168,7 @@ class AffineFeatureGateTests(unittest.TestCase):
 
         self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
         self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
-        self.assertIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_summary_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -215,7 +215,7 @@ class AffineFeatureGateTests(unittest.TestCase):
         self.assertEqual(result.loop_summary["status"], "discharged")
         self.assertEqual(result.relational_induction["status"], "discharged")
         self.assertEqual(result.relational_induction["termination"]["witness"], "counter-descending")
-        # Frozen memory-bus is irrelevant; with affine+relational discharged the
+        # With affine+relational discharged the proof may authorize EQUIVALENT.
         # self-equivalence under a tight bound should be EQUIVALENT (Track B).
         self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
 

@@ -8,8 +8,8 @@ assumed into the equivalence query.
 CFG routing: ``SymbolicBusState`` + ``apply_symbolic_bus_access`` hook into
 ``SymbolicOps`` loads/stores when ``memory_bus=`` is active. Final device
 compare via ``symbolic_bus_difference``. Obligation/evidence path lives in
-``memory_bus_obligations``. ``memory-bus`` stays in
-``UNSUPPORTED_FOR_EQUIVALENT`` until the enablement gate is met.
+``memory_bus_obligations``. ``memory-bus`` authorizes ``EQUIVALENT`` only with
+engine-generated ``status=discharged`` (Track D).
 Concrete ``MemoryBus`` routing is unchanged.
 """
 
@@ -64,6 +64,8 @@ __all__ = [
     "apply_symbolic_bus_access",
     "symbolic_bus_difference",
     "discharge_cfg_unsupported_accesses",
+    "cfg_trace_sha256",
+    "vacuous_unsupported_access_block",
     "concrete_u32",
 ]
 
@@ -129,6 +131,7 @@ class UnsupportedAccessQuery:
     status: UnsupportedAccessStatus
     query_sha256: str
     inconclusive: bool
+    elapsed_ms: float = 0.0
 
     @property
     def result(self) -> str:
@@ -527,6 +530,7 @@ def discharge_unsupported_access(
         status=status,
         query_sha256=canonical_json_sha256(payload),
         inconclusive=inconclusive,
+        elapsed_ms=discharge.elapsed_ms,
     )
 
 
@@ -940,14 +944,58 @@ def symbolic_bus_difference(
     return z3.Or(*diffs) if diffs else z3.BoolVal(False)
 
 
+def cfg_trace_sha256(terminals: Sequence[Any]) -> str:
+    """Stable digest of CFG symbolic-bus instrumentation across terminals."""
+    entries: list[dict[str, Any]] = []
+    for index, terminal in enumerate(terminals):
+        bus = getattr(terminal.state, "symbolic_bus", None)
+        if bus is None:
+            continue
+        entries.append(
+            {
+                "terminal": index,
+                "touched_devices": sorted(bus.touched_devices),
+                "unsupported_count": len(bus.unsupported_predicates),
+                "rejections": list(bus.rejections),
+            }
+        )
+    return canonical_json_sha256(
+        {"kind": "memory-bus-cfg-trace", "schema_version": 1, "terminals": entries}
+    )
+
+
+def vacuous_unsupported_access_block(
+    *,
+    cfg_trace_sha256: str,
+    access_coverage_sha256: str,
+) -> dict[str, Any]:
+    """Vacuous discharge when CFG collected no unsupported predicates.
+
+    Must not be silently rewritten as ``result=unsat``. Valid only when
+    access-instrumentation completeness is attested (coverage digest bound).
+    """
+    return {
+        "status": "vacuously-discharged",
+        "reason": "no-unsupported-predicates",
+        "cfg_trace_sha256": cfg_trace_sha256,
+        "access_coverage_sha256": access_coverage_sha256,
+    }
+
+
 def discharge_cfg_unsupported_accesses(
     terminals: Sequence[Any],
     *,
     side: str,
     deadline: Deadline,
     z3: Any,
+    access_coverage_sha256: str | None = None,
 ) -> dict[str, Any]:
-    """Per-side digest of CFG-collected ``path ∧ unsupported`` obligations."""
+    """Per-side digest of CFG-collected ``path ∧ unsupported`` obligations.
+
+    When a symbolic bus is present but no unsupported predicates were
+    collected, emit a vacuous block (not a forged UNSAT). Vacuous requires
+    ``access_coverage_sha256`` attesting instrumentation completeness.
+    """
     del side
     if not terminals:
         return {"result": "not-queried", "query_sha256": None, "terminals": []}
@@ -955,9 +1003,14 @@ def discharge_cfg_unsupported_accesses(
     terminal_results: list[dict[str, Any]] = []
     worst = "unsat"
     last_hash: str | None = None
+    total_elapsed_ms = 0.0
+    had_symbolic_bus = False
     for terminal in terminals:
         bus = getattr(terminal.state, "symbolic_bus", None)
-        if bus is None or not bus.unsupported_predicates:
+        if bus is None:
+            continue
+        had_symbolic_bus = True
+        if not bus.unsupported_predicates:
             continue
         path = terminal.condition
         for index, predicate in enumerate(bus.unsupported_predicates):
@@ -969,6 +1022,7 @@ def discharge_cfg_unsupported_accesses(
                 algorithm=ALGORITHM,
                 z3_module=z3,
             )
+            total_elapsed_ms += discharge.elapsed_ms
             if discharge.status == "unsat":
                 status = "unsat"
                 inconclusive = False
@@ -992,6 +1046,11 @@ def discharge_cfg_unsupported_accesses(
                     "result": status,
                     "query_sha256": query_hash,
                     "inconclusive": inconclusive,
+                    "solver": {
+                        "name": "z3",
+                        "version": z3.get_version_string(),
+                        "elapsed_ms": discharge.elapsed_ms,
+                    },
                 }
             )
             if status == "sat":
@@ -1000,9 +1059,26 @@ def discharge_cfg_unsupported_accesses(
                 worst = "unknown"
 
     if not terminal_results:
+        if had_symbolic_bus:
+            if not isinstance(access_coverage_sha256, str) or len(access_coverage_sha256) != 64:
+                return {
+                    "result": "not-queried",
+                    "query_sha256": None,
+                    "terminals": [],
+                    "note": "vacuous-requires-access-coverage-attestation",
+                }
+            return vacuous_unsupported_access_block(
+                cfg_trace_sha256=cfg_trace_sha256(terminals),
+                access_coverage_sha256=access_coverage_sha256,
+            )
         return {"result": "not-queried", "query_sha256": None, "terminals": []}
     return {
         "result": worst,
         "query_sha256": last_hash,
+        "solver": {
+            "name": "z3",
+            "version": z3.get_version_string(),
+            "elapsed_ms": total_elapsed_ms,
+        },
         "terminals": terminal_results,
     }

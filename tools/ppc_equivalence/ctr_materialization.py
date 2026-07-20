@@ -2,8 +2,9 @@
 
 Recognizes only straight-line materialization in a small lookback window
 immediately before ``mtctr``. Prefer false negatives: symbolic or relocated
-sources stay unknown. Includes ``andi.``/``andis.`` remainder masks when the
-source register is already concrete.
+sources stay unknown. Includes ``andi.``/``andis.`` remainder masks and
+exact ``srwi``-equivalent ``rlwinm`` forms when the source register is
+already concrete.
 """
 
 from __future__ import annotations
@@ -13,6 +14,21 @@ from collections.abc import Mapping, Sequence
 from tools.ppc_equivalence.ir import Instruction, Opcode
 
 _DEFAULT_LOOKBACK = 12
+
+
+def _srwi_shift_amount(sh: int, mb: int, me: int) -> int | None:
+    """Return ``n`` when ``rlwinm`` SH/MB/ME is exactly ``srwi`` by ``n``.
+
+    PowerPC encodes ``srwi rA, rS, n`` as ``rlwinm rA, rS, 32-n, n, 31`` for
+    ``n`` in ``1..31``. Ambiguous or non-shift masks return ``None``.
+    """
+    if me != 31:
+        return None
+    if not 1 <= mb <= 31:
+        return None
+    if sh != ((32 - mb) & 31):
+        return None
+    return mb
 
 
 def recover_gpr_constant(
@@ -134,6 +150,24 @@ def _eval_defining_insn(
             return None, notes or [f"andis. r{rt}, r{ra}, {imm} base not concrete"]
         return (base & ((int(imm) & 0xFFFF) << 16)) & 0xFFFFFFFF, notes
 
+    if opcode == Opcode.RLWINM:
+        # Operands are (RA dest, RS source, SH, MB, ME) — see decoder.
+        ra, rs, sh, mb, me = (int(v) for v in insn.operands)
+        if ra != reg:
+            return None, [f"rlwinm defines r{ra}, expected r{reg}"]
+        shift = _srwi_shift_amount(sh, mb, me)
+        if shift is None:
+            return None, ["rlwinm CTR materialization is not an srwi form"]
+        base, notes = _gpr_value_before(
+            instructions, index, rs, max_lookback=max_lookback,
+            readonly_words=readonly_words, depth=depth + 1,
+        )
+        if base is None:
+            return None, notes or [
+                f"rlwinm r{ra}, r{rs}, {sh}, {mb}, {me} source not concrete"
+            ]
+        return (int(base) >> shift) & 0xFFFFFFFF, notes
+
     if opcode == Opcode.OR:
         rt, ra, rb = (int(v) for v in insn.operands)
         if rt != reg:
@@ -203,6 +237,7 @@ def _defines_gpr(insn: Instruction, reg: int) -> bool:
         Opcode.ORIS,
         Opcode.ANDI_DOT,
         Opcode.ANDIS_DOT,
+        Opcode.RLWINM,
         Opcode.LWZ,
         Opcode.LWZU,
     ):
@@ -297,6 +332,14 @@ def _collect_lwz_from_defining_insn(
             return frozenset()
         return _collect_lwz_before(
             instructions, index, ra, max_lookback=max_lookback, depth=depth + 1,
+        )
+
+    if opcode == Opcode.RLWINM:
+        ra, rs, sh, mb, me = (int(v) for v in insn.operands)
+        if ra != reg or _srwi_shift_amount(sh, mb, me) is None:
+            return frozenset()
+        return _collect_lwz_before(
+            instructions, index, rs, max_lookback=max_lookback, depth=depth + 1,
         )
 
     if opcode == Opcode.OR:

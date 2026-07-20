@@ -258,6 +258,24 @@ class ConstantStrideStoreLoopRecognitionTests(unittest.TestCase):
 
 
 class MemoryLoopDischargeTests(unittest.TestCase):
+    def test_empty_entry_violations_refuse_discharge(self) -> None:
+        """Engine default: missing CFG violation conditions must not discharge."""
+        program = _store_loop(
+            count=2,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        plan = build_memory_loop_plan_map(program)[8]
+        refused = discharge_memory_loop_plan(plan)
+        self.assertFalse(refused.all_unsat())
+        self.assertEqual(refused.status, "applied")
+        self.assertIn("entry violation", refused.reason or "")
+
+        allowed = discharge_memory_loop_plan(
+            plan, require_entry_violations=False,
+        )
+        self.assertTrue(allowed.all_unsat(), allowed.reason)
+
     def test_summary_matches_concrete_stw_addi(self) -> None:
         program = _store_loop(
             count=3,
@@ -353,7 +371,7 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             pointer_addi=(4, 4),
         )
         plan = build_memory_loop_plan_map(program)[8]
-        result = discharge_memory_loop_plan(plan)
+        result = discharge_memory_loop_plan(plan, require_entry_violations=False)
         self.assertTrue(result.all_unsat(), result.reason)
         side = build_memory_loop_side_entry(
             plan,
@@ -423,7 +441,9 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             pointer_addi=(4, 4),
         )
         plan = build_memory_loop_plan_map(program)[8]
-        discharged = discharge_memory_loop_plan(plan)
+        discharged = discharge_memory_loop_plan(
+            plan, require_entry_violations=False,
+        )
         side = build_memory_loop_side_entry(
             plan,
             entry_guard=discharged.entry_guard,
@@ -720,7 +740,9 @@ class MemoryLoopRefinementRegressionTests(unittest.TestCase):
             pointer_addi=(4, 4),
         )
         plan = build_memory_loop_plan_map(program)[8]
-        self.assertTrue(discharge_memory_loop_plan(plan).all_unsat())
+        self.assertTrue(
+            discharge_memory_loop_plan(plan, require_entry_violations=False).all_unsat()
+        )
 
         cases = [
             ("source_reg", 5),
@@ -742,7 +764,9 @@ class MemoryLoopRefinementRegressionTests(unittest.TestCase):
                     summary=replace(plan.summary, **kwargs),
                     witness=plan.witness,
                 )
-                result = discharge_memory_loop_plan(mutated)
+                result = discharge_memory_loop_plan(
+                    mutated, require_entry_violations=False,
+                )
                 self.assertFalse(
                     result.all_unsat(),
                     f"{field} mutation incorrectly discharged",
@@ -827,8 +851,16 @@ class MemoryLoopRefinementRegressionTests(unittest.TestCase):
         orig_plan = build_memory_loop_plan_map(original)[8]
         cand_plan = build_memory_loop_plan_map(candidate)[12]
         self.assertNotEqual(orig_plan.summary.store_kind, cand_plan.summary.store_kind)
-        self.assertTrue(discharge_memory_loop_plan(orig_plan).all_unsat())
-        self.assertTrue(discharge_memory_loop_plan(cand_plan).all_unsat())
+        self.assertTrue(
+            discharge_memory_loop_plan(
+                orig_plan, require_entry_violations=False,
+            ).all_unsat()
+        )
+        self.assertTrue(
+            discharge_memory_loop_plan(
+                cand_plan, require_entry_violations=False,
+            ).all_unsat()
+        )
 
     def test_multiple_loops_require_both_discharges(self) -> None:
         import copy

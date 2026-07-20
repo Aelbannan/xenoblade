@@ -14,20 +14,21 @@ Typical MWCC counted-loop shapes::
 and equal the memory stride. Indexed stores and multi-store bodies are
 rejected (prefer false negatives).
 
-When ``execute_cfg`` is given a summary map (or the engine auto-builds one),
+When ``execute_cfg`` is given a plan map (or the engine auto-builds one),
 matching headers with a positive concrete trip count are applied by
 recording typed ``StoreEffect`` writes (not memory alone) and advancing
-base/CTR. ``memory-loop-summary`` may authorize ``EQUIVALENT`` only when the
-obligation carries ``status=discharged`` with a matching ``summary_sha256``,
-typed-effect + footprint evidence, and a concrete closed-form expansion.
-Recognition or ``coverage=applied`` alone never authorizes. Bounded-remainder
-expansions stay ``applied`` until paired relational discharge lands.
+base/CTR — but only under an explicit entry-CTR guard. Authorization of
+``EQUIVALENT`` requires a schema-v2 side-specific obligation whose every
+used plan discharges ``instructions ≡ summary`` refinement (see
+``memory_loop_discharge``). Recognition, ``coverage=applied``, or v1
+self-referential transition-equivalence never authorizes. Bounded-remainder
+expansions stay ``applied`` until relational discharge lands.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from tools.ppc_equivalence.bounded_remainder_loop import (
@@ -50,6 +51,12 @@ _BDNZ_BO = 16  # decrement CTR; branch if CTR != 0 after decrement
 
 # Fail closed above this trip count: closed-form applies N explicit stores.
 MAX_MEMORY_LOOP_TRIPS = 4096
+
+# Per-side summary identity algorithm (embedded in summary_sha256).
+_MEMORY_LOOP_SIDE_ALGORITHM = "constant-stride-store-v2"
+# Top-level side-set obligation algorithm (schema v2).
+_MEMORY_LOOP_SET_ALGORITHM = "constant-stride-store-set-v3"
+_MEMORY_LOOP_SCHEMA_VERSION = 2
 
 _STORE_WIDTH: dict[Opcode, int] = {
     Opcode.STB: 1,
@@ -103,6 +110,124 @@ class MemoryLoopSummary:
     trip_upper_bound: int | None = None
     zero_guard: str | None = None
     expansion: str = "closed-form"
+
+
+@dataclass(frozen=True)
+class MemoryLoopWitness:
+    """Exact recognized instructions for a constant-stride store loop."""
+
+    body: tuple[Instruction, ...]
+    latch: Instruction
+    mtctr: Instruction
+    header_pc: int
+    latch_pc: int
+    exit_pc: int
+    code_sha256: str
+
+
+@dataclass(frozen=True)
+class MemoryLoopPlan:
+    """Paired summary + witness so refinement cannot drift from recognition."""
+
+    summary: MemoryLoopSummary
+    witness: MemoryLoopWitness
+
+    @property
+    def header_pc(self) -> int:
+        return self.summary.header_pc
+
+    @property
+    def latch_pc(self) -> int:
+        return self.summary.latch_pc
+
+    @property
+    def exit_pc(self) -> int:
+        return self.summary.exit_pc
+
+    @property
+    def expansion(self) -> str:
+        return self.summary.expansion
+
+    @property
+    def trip_count(self) -> int:
+        return self.summary.trip_count
+
+
+def instruction_semantic_identity(insn: Instruction) -> dict[str, Any]:
+    """Canonical semantic identity for one decoded instruction."""
+    payload: dict[str, Any] = {
+        "address": int(insn.address) & 0xFFFFFFFF,
+        "raw": int(insn.raw) & 0xFFFFFFFF,
+        "opcode": insn.opcode.value,
+        "operands": [int(v) for v in insn.operands],
+        "record": bool(insn.record),
+        "overflow": bool(insn.overflow),
+        "link": bool(insn.link),
+    }
+    relocation = insn.relocation
+    if relocation is not None:
+        payload["relocation"] = {
+            "offset": int(relocation.offset),
+            "type": int(relocation.relocation_type),
+            "symbol": relocation.symbol,
+            "canonical_symbol": relocation.canonical_symbol,
+            "addend": int(relocation.addend),
+        }
+    return payload
+
+
+def compute_witness_code_sha256(
+    body: Sequence[Instruction],
+    latch: Instruction,
+    mtctr: Instruction,
+) -> str:
+    """SHA-256 over the exact semantic instruction identity of a witness."""
+    return canonical_json_sha256(
+        {
+            "mtctr": instruction_semantic_identity(mtctr),
+            "body": [instruction_semantic_identity(insn) for insn in body],
+            "latch": instruction_semantic_identity(latch),
+        },
+    )
+
+
+def compute_summary_identity_sha256(summary: MemoryLoopSummary) -> str:
+    """SHA-256 over the closed-form summary identity (not the witness)."""
+    payload: dict[str, Any] = {
+        "proof_kind": summary.proof_kind,
+        "header_pc": summary.header_pc,
+        "latch_pc": summary.latch_pc,
+        "exit_pc": summary.exit_pc,
+        "trip_count": summary.trip_count,
+        "base_reg": summary.base_reg,
+        "source_reg": summary.source_reg,
+        "stride": summary.stride,
+        "store_width": summary.store_width,
+        "store_kind": summary.store_kind,
+        "final_ctr": summary.final_ctr,
+        "ranking": summary.ranking,
+        "algorithm": _MEMORY_LOOP_SIDE_ALGORITHM,
+        "effects": "typed-store",
+        "footprint": "ok",
+        "expansion": summary.expansion,
+    }
+    if summary.trip_expr is not None:
+        payload["trip_expr"] = dict(summary.trip_expr)
+    if summary.trip_upper_bound is not None:
+        payload["trip_upper_bound"] = int(summary.trip_upper_bound)
+    if summary.zero_guard is not None:
+        payload["zero_guard"] = summary.zero_guard
+    return canonical_json_sha256(payload)
+
+
+def plan_identity_key(plan: MemoryLoopPlan) -> tuple[int, int, str, str]:
+    """Canonical unique key for a used plan on one CFG side."""
+    return (
+        int(plan.summary.header_pc) & 0xFFFFFFFF,
+        int(plan.summary.latch_pc) & 0xFFFFFFFF,
+        compute_summary_identity_sha256(plan.summary),
+        plan.witness.code_sha256,
+    )
 
 
 def find_constant_stride_store_loops(
@@ -286,8 +411,32 @@ def build_memory_loop_summary_map(
     *,
     readonly_words: dict[int, int] | None = None,
 ) -> dict[int, MemoryLoopSummary]:
-    """Map loop header PC → closed-form memory-loop summary."""
-    mapping: dict[int, MemoryLoopSummary] = {}
+    """Map loop header PC → closed-form memory-loop summary.
+
+    Descriptive callers may use this map; the engine consumes
+    ``build_memory_loop_plan_map`` so the witness cannot drift from the summary.
+    """
+    return {
+        header: plan.summary
+        for header, plan in build_memory_loop_plan_map(
+            instructions,
+            readonly_words=readonly_words,
+        ).items()
+    }
+
+
+def build_memory_loop_plan_map(
+    instructions: Sequence[Instruction],
+    *,
+    readonly_words: dict[int, int] | None = None,
+) -> dict[int, MemoryLoopPlan]:
+    """Map loop header PC → paired summary + exact instruction witness."""
+    if not instructions:
+        return {}
+
+    by_address = {insn.address: index for index, insn in enumerate(instructions)}
+    mapping: dict[int, MemoryLoopPlan] = {}
+
     for loop in find_constant_stride_store_loops(
         instructions,
         readonly_words=readonly_words,
@@ -298,7 +447,34 @@ def build_memory_loop_summary_map(
         if summary.header_pc in mapping:
             del mapping[summary.header_pc]
             continue
-        mapping[summary.header_pc] = summary
+
+        header_index = by_address.get(summary.header_pc)
+        latch_index = by_address.get(summary.latch_pc)
+        mtctr_index = by_address.get(loop.mtctr_pc)
+        if header_index is None or latch_index is None or mtctr_index is None:
+            continue
+        if header_index >= latch_index or mtctr_index != header_index - 1:
+            continue
+
+        body = tuple(instructions[header_index:latch_index])
+        latch = instructions[latch_index]
+        mtctr = instructions[mtctr_index]
+        if not _is_bdnz(latch) or not _is_mtctr(mtctr):
+            continue
+        parsed, _notes = _parse_constant_stride_store_body(body)
+        if parsed is None:
+            continue
+
+        witness = MemoryLoopWitness(
+            body=body,
+            latch=latch,
+            mtctr=mtctr,
+            header_pc=summary.header_pc,
+            latch_pc=summary.latch_pc,
+            exit_pc=summary.exit_pc,
+            code_sha256=compute_witness_code_sha256(body, latch, mtctr),
+        )
+        mapping[summary.header_pc] = MemoryLoopPlan(summary=summary, witness=witness)
     return mapping
 
 
@@ -415,7 +591,46 @@ def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) 
     return apply_memory_loop_transition(state, transition, ops)
 
 
+def apply_memory_loop_iteration_summary(
+    state: Any,
+    summary: MemoryLoopSummary,
+    ops: Any,
+) -> Any:
+    """Apply exactly one summarized store iteration without collapsing CTR to zero.
+
+    Advances the base by one stride, performs one typed store, and sets
+    ``CTR = entry.ctr - 1``. Used by body-step refinement discharge.
+    """
+    if summary.store_kind not in ("stwu", "d-form-addi"):
+        raise ValueError(f"unsupported store_kind {summary.store_kind!r}")
+    entry_ctr = state.ctr
+    stepped = apply_memory_loop_transition(
+        state,
+        build_memory_loop_transition(
+            state,
+            trip_count=1,
+            base_reg=summary.base_reg,
+            source_reg=summary.source_reg,
+            stride=int(summary.stride),
+            store_width=int(summary.store_width),
+            store_kind=summary.store_kind,
+            final_ctr=0,  # overwritten below
+            ops=ops,
+        ),
+        ops,
+    )
+    return replace(stepped, ctr=ops.sub(entry_ctr, ops.const(1)))
+
+
 REQUIRED_MEMORY_LOOP_KEYS = frozenset({
+    "schema_version",
+    "algorithm",
+    "status",
+    "original",
+    "candidate",
+})
+
+_LEGACY_FLAT_MIRROR_KEYS = frozenset({
     "proof_kind",
     "header_pc",
     "latch_pc",
@@ -428,144 +643,139 @@ REQUIRED_MEMORY_LOOP_KEYS = frozenset({
     "store_kind",
     "final_ctr",
     "ranking",
-    "status",
-    "algorithm",
     "summary_sha256",
     "effects",
     "footprint",
+    "transition_equivalence",
+    "coverage",
 })
-
-_MEMORY_LOOP_ALGORITHM = "constant-stride-store-v1"
-
-_MEMORY_LOOP_IDENTITY_KEYS = (
-    "proof_kind",
-    "header_pc",
-    "latch_pc",
-    "exit_pc",
-    "trip_count",
-    "base_reg",
-    "source_reg",
-    "stride",
-    "store_width",
-    "store_kind",
-    "final_ctr",
-    "ranking",
-    "algorithm",
-    "effects",
-    "footprint",
-    "trip_expr",
-    "trip_upper_bound",
-    "zero_guard",
-    "expansion",
-    "readonly_words_sha256",
-)
 
 
 def memory_loop_identity_payload(obligation: dict[str, Any]) -> dict[str, Any]:
-    """Canonical fields hashed into ``summary_sha256`` (excludes status/coverage)."""
-    payload: dict[str, Any] = {}
-    for key in _MEMORY_LOOP_IDENTITY_KEYS:
-        if key not in obligation:
-            continue
-        value = obligation[key]
-        if value is None:
-            continue
-        payload[key] = value
+    """Canonical fields hashed into set-level digests (excludes status)."""
+    payload: dict[str, Any] = {
+        "schema_version": obligation.get("schema_version"),
+        "algorithm": obligation.get("algorithm"),
+    }
+    for side in ("original", "candidate"):
+        entries = obligation.get(side)
+        if isinstance(entries, list):
+            payload[side] = [
+                {
+                    "header_pc": item.get("header_pc"),
+                    "latch_pc": item.get("latch_pc"),
+                    "summary_sha256": item.get("summary_sha256"),
+                    "code_sha256": item.get("code_sha256"),
+                }
+                for item in entries
+                if isinstance(item, dict)
+            ]
+    if "readonly_words_sha256" in obligation:
+        payload["readonly_words_sha256"] = obligation["readonly_words_sha256"]
     return payload
 
 
 def compute_memory_loop_sha256(obligation: dict[str, Any]) -> str:
-    """SHA-256 over the canonical memory-loop summary identity payload."""
+    """SHA-256 over the canonical memory-loop set identity payload."""
     return canonical_json_sha256(memory_loop_identity_payload(obligation))
 
 
+def build_memory_loop_side_entry(
+    plan: MemoryLoopPlan,
+    *,
+    entry_guard: dict[str, Any] | None = None,
+    refinement: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """One per-side discharge entry for the schema-v2 obligation set."""
+    return {
+        "header_pc": int(plan.summary.header_pc) & 0xFFFFFFFF,
+        "latch_pc": int(plan.summary.latch_pc) & 0xFFFFFFFF,
+        "summary_sha256": compute_summary_identity_sha256(plan.summary),
+        "code_sha256": plan.witness.code_sha256,
+        "entry_guard": entry_guard or {},
+        "refinement": refinement or {},
+    }
+
+
 def build_memory_loop_obligation(
+    *,
+    original: Sequence[dict[str, Any]] = (),
+    candidate: Sequence[dict[str, Any]] = (),
+    status: str = "pending",
+    readonly_words_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Schema-v2 obligation block for ``proof_features: [\"memory-loop-summary\"]``.
+
+    ``status=discharged`` requires every side entry to carry a discharged
+    refinement block and an UNSAT entry-guard discharge. Side arrays may differ
+    in length; structural summary equality across sides is not required.
+    """
+    payload: dict[str, Any] = {
+        "schema_version": _MEMORY_LOOP_SCHEMA_VERSION,
+        "algorithm": _MEMORY_LOOP_SET_ALGORITHM,
+        "status": status,
+        "original": [dict(item) for item in original],
+        "candidate": [dict(item) for item in candidate],
+    }
+    if readonly_words_sha256 is not None:
+        payload["readonly_words_sha256"] = readonly_words_sha256
+    return payload
+
+
+# Back-compat alias used by older call sites that still pass a single summary.
+def build_memory_loop_obligation_from_summary(
     summary: MemoryLoopSummary,
     *,
     coverage: str = "pending",
     status: str = "pending",
     readonly_words_sha256: str | None = None,
+    transition_equivalence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Obligation block for ``proof_features: [\"memory-loop-summary\"]``.
+    """Deprecated flat builder retained only for transitional tests.
 
-    ``status=discharged`` requires a concrete closed-form expansion with typed
-    store effects and a footprint gate. Bounded-remainder / recognition-only
-    paths must remain ``pending`` / ``applied``.
+    Always emits schema v2 with a single original entry and empty candidate.
+    Flat v1 transition-equivalence payloads are rejected by validation.
     """
-    payload: dict[str, Any] = {
-        "proof_kind": summary.proof_kind,
+    del coverage, transition_equivalence
+    side = {
         "header_pc": summary.header_pc,
         "latch_pc": summary.latch_pc,
-        "exit_pc": summary.exit_pc,
-        "trip_count": summary.trip_count,
-        "base_reg": summary.base_reg,
-        "source_reg": summary.source_reg,
-        "stride": summary.stride,
-        "store_width": summary.store_width,
-        "store_kind": summary.store_kind,
-        "final_ctr": summary.final_ctr,
-        "ranking": summary.ranking,
-        "coverage": coverage,
-        "status": status,
-        "algorithm": _MEMORY_LOOP_ALGORITHM,
-        "effects": "typed-store",
-        "footprint": "ok",
+        "summary_sha256": compute_summary_identity_sha256(summary),
+        "code_sha256": "0" * 64,
+        "entry_guard": {},
+        "refinement": {},
     }
-    if summary.trip_expr is not None:
-        payload["trip_expr"] = dict(summary.trip_expr)
-    if summary.trip_upper_bound is not None:
-        payload["trip_upper_bound"] = int(summary.trip_upper_bound)
-    if summary.zero_guard is not None:
-        payload["zero_guard"] = summary.zero_guard
-    if summary.expansion != "closed-form":
-        payload["expansion"] = summary.expansion
-    else:
-        payload["expansion"] = "closed-form"
-    if readonly_words_sha256 is not None:
-        payload["readonly_words_sha256"] = readonly_words_sha256
-    payload["summary_sha256"] = compute_memory_loop_sha256(payload)
-    return payload
+    return build_memory_loop_obligation(
+        original=[side],
+        candidate=[],
+        status=status if status != "discharged" else "applied",
+        readonly_words_sha256=readonly_words_sha256,
+    )
 
 
 def validate_memory_loop_obligation(obligation: dict[str, Any]) -> str | None:
     """Return None when a memory-loop obligation is structurally well-formed."""
+    if not isinstance(obligation, dict):
+        return "memory_loop must be an object"
+
+    legacy = sorted(_LEGACY_FLAT_MIRROR_KEYS & obligation.keys())
+    if legacy:
+        return (
+            "memory_loop must not carry legacy flat mirrors: "
+            + ", ".join(legacy)
+        )
+
     missing = sorted(REQUIRED_MEMORY_LOOP_KEYS - obligation.keys())
     if missing:
         return "memory_loop missing " + ", ".join(missing)
 
-    proof_kind = obligation.get("proof_kind")
-    if not isinstance(proof_kind, str) or not proof_kind:
-        return "memory_loop.proof_kind must be a nonempty string"
+    if obligation.get("schema_version") != _MEMORY_LOOP_SCHEMA_VERSION:
+        return (
+            f"memory_loop.schema_version must be {_MEMORY_LOOP_SCHEMA_VERSION}"
+        )
 
-    for key in ("header_pc", "latch_pc", "exit_pc", "final_ctr"):
-        value = obligation.get(key)
-        if not isinstance(value, int) or value < 0 or value > 0xFFFFFFFF:
-            return f"memory_loop.{key} must be a u32 int"
-
-    trip_count = obligation.get("trip_count")
-    if not isinstance(trip_count, int) or trip_count < 1 or trip_count > 0xFFFFFFFF:
-        return "memory_loop.trip_count must be a positive u32 int"
-
-    for key in ("base_reg", "source_reg"):
-        value = obligation.get(key)
-        if not isinstance(value, int) or value < 0 or value > 31:
-            return f"memory_loop.{key} must be a GPR index 0..31"
-
-    stride = obligation.get("stride")
-    if not isinstance(stride, int) or stride < 1 or stride > 0xFFFFFFFF:
-        return "memory_loop.stride must be a positive u32 int"
-
-    store_width = obligation.get("store_width")
-    if store_width not in (1, 2, 4):
-        return "memory_loop.store_width must be 1, 2, or 4"
-
-    store_kind = obligation.get("store_kind")
-    if store_kind not in ("stwu", "d-form-addi"):
-        return "memory_loop.store_kind must be 'stwu' or 'd-form-addi'"
-
-    ranking = obligation.get("ranking")
-    if not isinstance(ranking, str) or not ranking:
-        return "memory_loop.ranking must be a nonempty string"
+    if obligation.get("algorithm") != _MEMORY_LOOP_SET_ALGORITHM:
+        return f"memory_loop.algorithm must be {_MEMORY_LOOP_SET_ALGORITHM!r}"
 
     status = obligation.get("status")
     if not isinstance(status, str) or status not in (
@@ -576,26 +786,6 @@ def validate_memory_loop_obligation(obligation: dict[str, Any]) -> str | None:
     ):
         return "memory_loop.status must be pending|applied|discharged|failed"
 
-    if obligation.get("algorithm") != _MEMORY_LOOP_ALGORITHM:
-        return f"memory_loop.algorithm must be {_MEMORY_LOOP_ALGORITHM!r}"
-
-    if obligation.get("effects") != "typed-store":
-        return "memory_loop.effects must be 'typed-store'"
-
-    if obligation.get("footprint") != "ok":
-        return "memory_loop.footprint must be 'ok'"
-
-    digest = obligation.get("summary_sha256")
-    if not isinstance(digest, str) or len(digest) != 64:
-        return "memory_loop.summary_sha256 must be a 64-hex digest"
-    try:
-        int(digest, 16)
-    except ValueError:
-        return "memory_loop.summary_sha256 must be a 64-hex digest"
-    expected = compute_memory_loop_sha256(obligation)
-    if digest != expected:
-        return "memory_loop.summary_sha256 does not match obligation identity"
-
     readonly_digest = obligation.get("readonly_words_sha256")
     if readonly_digest is not None:
         if not isinstance(readonly_digest, str) or len(readonly_digest) != 64:
@@ -605,27 +795,224 @@ def validate_memory_loop_obligation(obligation: dict[str, Any]) -> str | None:
         except ValueError:
             return "memory_loop.readonly_words_sha256 must be a 64-hex digest"
 
-    expansion = obligation.get("expansion", "closed-form")
-    if not isinstance(expansion, str) or not expansion:
-        return "memory_loop.expansion must be a nonempty string"
+    for side in ("original", "candidate"):
+        entries = obligation.get(side)
+        if not isinstance(entries, list):
+            return f"memory_loop.{side} must be an array"
+        reason = _validate_side_entries(side, entries, require_discharged=(status == "discharged"))
+        if reason is not None:
+            return reason
 
     if status == "discharged":
-        if expansion != "closed-form":
-            return (
-                "memory_loop.status=discharged requires expansion=closed-form "
-                "(bounded-remainder stays applied until relational discharge)"
-            )
-        coverage = obligation.get("coverage")
-        if coverage not in ("applied", "discharged"):
-            return "memory_loop.status=discharged requires coverage applied|discharged"
-        if not footprint_ok_for_summary(
-            trip_count=int(trip_count),
-            stride=int(stride),
-            store_width=int(store_width),
-            store_kind=str(store_kind),
-        ):
-            return "memory_loop.status=discharged requires a sound footprint"
+        for side in ("original", "candidate"):
+            for entry in obligation[side]:
+                if not isinstance(entry, dict):
+                    continue
+                refinement = entry.get("refinement")
+                if not isinstance(refinement, dict) or refinement.get("status") != "discharged":
+                    return (
+                        f"memory_loop.status=discharged requires every "
+                        f"{side} entry refinement.status=discharged"
+                    )
+                guard = entry.get("entry_guard")
+                if not isinstance(guard, dict) or guard.get("result") != "unsat":
+                    return (
+                        f"memory_loop.status=discharged requires every "
+                        f"{side} entry entry_guard.result=unsat"
+                    )
 
+    return None
+
+
+def _validate_side_entries(
+    side: str,
+    entries: list[Any],
+    *,
+    require_discharged: bool,
+) -> str | None:
+    seen: set[tuple[Any, ...]] = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            return f"memory_loop.{side}[{index}] must be an object"
+        for key in ("header_pc", "latch_pc", "summary_sha256", "code_sha256"):
+            if key not in entry:
+                return f"memory_loop.{side}[{index}] missing {key}"
+        for key in ("header_pc", "latch_pc"):
+            value = entry.get(key)
+            if not isinstance(value, int) or value < 0 or value > 0xFFFFFFFF:
+                return f"memory_loop.{side}[{index}].{key} must be a u32 int"
+        for key in ("summary_sha256", "code_sha256"):
+            digest = entry.get(key)
+            if not isinstance(digest, str) or len(digest) != 64:
+                return f"memory_loop.{side}[{index}].{key} must be a 64-hex digest"
+            if digest != digest.lower():
+                return (
+                    f"memory_loop.{side}[{index}].{key} must be a lowercase "
+                    "64-hex digest"
+                )
+            try:
+                int(digest, 16)
+            except ValueError:
+                return f"memory_loop.{side}[{index}].{key} must be a 64-hex digest"
+
+        identity = (
+            entry.get("header_pc"),
+            entry.get("latch_pc"),
+            entry.get("summary_sha256"),
+            entry.get("code_sha256"),
+        )
+        if identity in seen:
+            return f"memory_loop.{side} has duplicate plan identity"
+        seen.add(identity)
+
+        guard = entry.get("entry_guard")
+        if guard is None:
+            guard = {}
+        if not isinstance(guard, dict):
+            return f"memory_loop.{side}[{index}].entry_guard must be an object"
+        reason = _validate_entry_guard(side, index, guard, require_discharged=require_discharged)
+        if reason is not None:
+            return reason
+
+        refinement = entry.get("refinement")
+        if refinement is None:
+            refinement = {}
+        if not isinstance(refinement, dict):
+            return f"memory_loop.{side}[{index}].refinement must be an object"
+        reason = _validate_refinement(side, index, refinement, require_discharged=require_discharged)
+        if reason is not None:
+            return reason
+    return None
+
+
+def _validate_query_digest(label: str, digest: Any) -> str | None:
+    if not isinstance(digest, str) or len(digest) != 64 or digest != digest.lower():
+        return f"{label} must be a lowercase 64-hex digest"
+    try:
+        int(digest, 16)
+    except ValueError:
+        return f"{label} must be a lowercase 64-hex digest"
+    return None
+
+
+def _validate_entry_guard(
+    side: str,
+    index: int,
+    guard: dict[str, Any],
+    *,
+    require_discharged: bool,
+) -> str | None:
+    # Lazy import avoids a memory_loop <-> memory_loop_discharge import cycle.
+    from tools.ppc_equivalence.memory_loop_discharge import (
+        ENTRY_GUARD_ALGORITHM,
+        KNOWN_REFINEMENT_ALGORITHMS,
+    )
+
+    if not guard:
+        if require_discharged:
+            return (
+                f"memory_loop.{side}[{index}].entry_guard is required when "
+                "status=discharged"
+            )
+        return None
+    algorithm = guard.get("algorithm")
+    if algorithm not in {ENTRY_GUARD_ALGORITHM} | KNOWN_REFINEMENT_ALGORITHMS:
+        # entry guard has its own algorithm; reject unknown / v1 names
+        if algorithm != ENTRY_GUARD_ALGORITHM:
+            return (
+                f"memory_loop.{side}[{index}].entry_guard.algorithm "
+                f"{algorithm!r} is not a known entry-guard algorithm"
+            )
+    if require_discharged and guard.get("result") != "unsat":
+        return f"memory_loop.{side}[{index}].entry_guard.result must be 'unsat'"
+    if "query_sha256" in guard or require_discharged:
+        reason = _validate_query_digest(
+            f"memory_loop.{side}[{index}].entry_guard.query_sha256",
+            guard.get("query_sha256"),
+        )
+        if reason is not None:
+            return reason
+    return None
+
+
+def _validate_refinement(
+    side: str,
+    index: int,
+    refinement: dict[str, Any],
+    *,
+    require_discharged: bool,
+) -> str | None:
+    from tools.ppc_equivalence.memory_loop_discharge import (
+        KNOWN_REFINEMENT_ALGORITHMS,
+        REFINEMENT_ALGORITHM,
+        REQUIRED_REFINEMENT_BLOCKS,
+    )
+
+    if not refinement:
+        if require_discharged:
+            return (
+                f"memory_loop.{side}[{index}].refinement is required when "
+                "status=discharged"
+            )
+        return None
+
+    algorithm = refinement.get("algorithm")
+    if algorithm != REFINEMENT_ALGORITHM:
+        return (
+            f"memory_loop.{side}[{index}].refinement.algorithm must be "
+            f"{REFINEMENT_ALGORITHM!r}"
+        )
+    # Reject any legacy v1 transition-equivalence block names nested here.
+    if "transition_equivalence" in refinement:
+        return (
+            f"memory_loop.{side}[{index}].refinement must not carry legacy "
+            "transition_equivalence"
+        )
+
+    status = refinement.get("status")
+    if status not in ("discharged", "applied", "failed", "unsupported"):
+        return (
+            f"memory_loop.{side}[{index}].refinement.status must be "
+            "discharged|applied|failed|unsupported"
+        )
+    if require_discharged and status != "discharged":
+        return (
+            f"memory_loop.{side}[{index}].refinement.status must be "
+            "'discharged'"
+        )
+
+    for name in REQUIRED_REFINEMENT_BLOCKS:
+        block = refinement.get(name)
+        if not isinstance(block, dict):
+            if require_discharged:
+                return (
+                    f"memory_loop.{side}[{index}].refinement.{name} block "
+                    "is required"
+                )
+            continue
+        if require_discharged and block.get("result") != "unsat":
+            return (
+                f"memory_loop.{side}[{index}].refinement.{name}.result "
+                "must be 'unsat'"
+            )
+        if "query_sha256" in block or require_discharged:
+            reason = _validate_query_digest(
+                f"memory_loop.{side}[{index}].refinement.{name}.query_sha256",
+                block.get("query_sha256"),
+            )
+            if reason is not None:
+                return reason
+        block_algorithm = block.get("algorithm")
+        if block_algorithm not in KNOWN_REFINEMENT_ALGORITHMS:
+            return (
+                f"memory_loop.{side}[{index}].refinement.{name}.algorithm "
+                f"{block_algorithm!r} is not a known refinement algorithm"
+            )
+        if isinstance(block_algorithm, str) and block_algorithm.endswith("-v1"):
+            return (
+                f"memory_loop.{side}[{index}].refinement.{name}.algorithm "
+                "must not be a legacy v1 transition algorithm"
+            )
     return None
 
 

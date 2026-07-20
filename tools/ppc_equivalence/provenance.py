@@ -147,6 +147,7 @@ def proof_request_identity(
     relational_induction: dict | None = None,
     memory_loop: dict | None = None,
     memory_bus: dict | None = None,
+    memory_loop_readonly: dict | None = None,
     obligations: dict | None = None,
 ) -> dict:
     """Canonical proof-request fields hashed into ``ProofResult.source_hash``.
@@ -201,6 +202,10 @@ def proof_request_identity(
         payload["certificate_target_id"] = certificate_target_id
     if proof_features is not None:
         payload["proof_features"] = sorted(proof_features)
+    # Identity-only readonly-image premise (not a proof feature); binds the
+    # exact per-side words used to hydrate CTR lwz trip counts.
+    if memory_loop_readonly is not None:
+        payload["memory_loop_readonly"] = memory_loop_readonly
 
     merged: dict = dict(obligations or {})
     for key, value in (

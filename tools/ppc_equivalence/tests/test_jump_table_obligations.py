@@ -382,5 +382,176 @@ class JumpTableEngineGateTests(unittest.TestCase):
         self.assertEqual(no_write["result"], "sat")
 
 
+class JumpTableStrictValidationTests(unittest.TestCase):
+    """Forged jump-table obligations must never authorize EQUIVALENT."""
+
+    def _discharged_readonly(self) -> dict:
+        import hashlib
+
+        from tools.ppc_equivalence.jump_table_obligations import (
+            build_dual_readonly_image_obligation,
+        )
+
+        table = JumpTableWords(base=0x80010000, words=(0x80020000,), source="test")
+        return build_dual_readonly_image_obligation(
+            table,
+            no_write_status={
+                "result": "unsat",
+                "query_sha256": hashlib.sha256(b"nw").hexdigest(),
+                "algorithm": "rom-image-no-write-v2",
+            },
+            status="discharged",
+        )
+
+    def _discharged_targets(self) -> dict:
+        import hashlib
+
+        obligation = build_indirect_targets_obligation(
+            branch_pc=0x80001000,
+            targets=(("case-0", 0x80020000),),
+            source="test",
+            artifact_hashes=(
+                JumpTableWords(
+                    base=0x80010000, words=(0x80020000,), source="test",
+                ).image_sha256,
+            ),
+            coverage={
+                "result": "unsat",
+                "query_sha256": hashlib.sha256(b"cov").hexdigest(),
+                "algorithm": "indirect-target-closure-v2",
+            },
+            status="discharged",
+        )
+        obligation["candidate"] = obligation["original"]
+        return obligation
+
+    def test_discharged_obligations_validate_strict(self) -> None:
+        from tools.ppc_equivalence.jump_table_obligations import (
+            validate_indirect_targets_obligation_strict,
+            validate_readonly_image_obligation_strict,
+        )
+
+        self.assertIsNone(
+            validate_readonly_image_obligation_strict(
+                self._discharged_readonly(), require_discharged=True,
+            ),
+        )
+        self.assertIsNone(
+            validate_indirect_targets_obligation_strict(
+                self._discharged_targets(), require_discharged=True,
+            ),
+        )
+
+    def test_forged_no_write_sat_rejected(self) -> None:
+        from tools.ppc_equivalence.jump_table_obligations import (
+            validate_readonly_image_obligation_strict,
+        )
+
+        forged = self._discharged_readonly()
+        forged["original"]["no_write"]["result"] = "sat"
+        forged["candidate"] = forged["original"]
+        self.assertIsNotNone(
+            validate_readonly_image_obligation_strict(forged, require_discharged=True),
+        )
+
+    def test_forged_pending_status_rejected(self) -> None:
+        from tools.ppc_equivalence.jump_table_obligations import (
+            validate_readonly_image_obligation_strict,
+        )
+
+        forged = self._discharged_readonly()
+        forged["status"] = "pending"
+        self.assertIsNotNone(
+            validate_readonly_image_obligation_strict(forged, require_discharged=True),
+        )
+
+    def test_forged_legacy_schema_rejected(self) -> None:
+        from tools.ppc_equivalence.jump_table_obligations import (
+            validate_readonly_image_obligation_strict,
+        )
+
+        forged = self._discharged_readonly()
+        forged["schema_version"] = 1
+        self.assertIsNotNone(
+            validate_readonly_image_obligation_strict(forged, require_discharged=True),
+        )
+
+    def test_forged_uppercase_digest_rejected(self) -> None:
+        from tools.ppc_equivalence.jump_table_obligations import (
+            validate_indirect_targets_obligation_strict,
+        )
+
+        forged = self._discharged_targets()
+        forged["original"]["coverage"]["query_sha256"] = (
+            forged["original"]["coverage"]["query_sha256"].upper()
+        )
+        forged["candidate"] = forged["original"]
+        self.assertIsNotNone(
+            validate_indirect_targets_obligation_strict(
+                forged, require_discharged=True,
+            ),
+        )
+
+    def test_forged_missing_candidate_rejected(self) -> None:
+        from tools.ppc_equivalence.jump_table_obligations import (
+            validate_readonly_image_obligation_strict,
+        )
+
+        forged = self._discharged_readonly()
+        forged.pop("candidate", None)
+        self.assertIsNotNone(
+            validate_readonly_image_obligation_strict(forged, require_discharged=True),
+        )
+
+    def test_forged_coverage_pending_demotes_equivalent(self) -> None:
+        from tools.ppc_equivalence.proof_features import (
+            enforce_equivalent_proof_features,
+            validate_proof_features,
+        )
+        from tools.ppc_equivalence.result import ProofResult
+
+        targets = self._discharged_targets()
+        # Forge the coverage back to an undischarged string status.
+        targets["original"]["coverage"] = "pending"
+        targets["candidate"] = targets["original"]
+        payload = {
+            "proof_features": ["readonly-image", "indirect-target-closure"],
+            "address_space": self._discharged_readonly(),
+            "indirect_targets": targets,
+        }
+        reason = validate_proof_features(payload, require_equivalent_ready=True)
+        self.assertIsNotNone(reason)
+
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            proof_features=["readonly-image", "indirect-target-closure"],
+            address_space=payload["address_space"],
+            indirect_targets=targets,
+        )
+        gated = enforce_equivalent_proof_features(result)
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+
+    def test_lenient_path_still_accepts_string_status(self) -> None:
+        # Without require_equivalent_ready the lenient validators accept
+        # pending/string obligations (they simply do not authorize EQUIVALENT).
+        from tools.ppc_equivalence.proof_features import validate_proof_features
+
+        payload = {
+            "proof_features": ["readonly-image", "indirect-target-closure"],
+            "address_space": build_readonly_image_obligation(
+                JumpTableWords(base=0x80010000, words=(0x80020000,), source="t"),
+                no_write_status="pending",
+            ),
+            "indirect_targets": build_indirect_targets_obligation(
+                branch_pc=0x80001000,
+                targets=(("case-0", 0x80020000),),
+                source="t",
+                artifact_hashes=("a" * 64,),
+                coverage="pending",
+            ),
+        }
+        self.assertIsNone(validate_proof_features(payload))
+
+
 if __name__ == "__main__":
     unittest.main()

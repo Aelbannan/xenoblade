@@ -478,6 +478,9 @@ def proof_result_from_certificate(
         invalid_reasons=invalid_reasons,
         proof_features=list(parsed.features),
     )
+    raw_oracle = certificate.get("fp_oracle_version")
+    if raw_oracle:
+        result.fp_oracle_version = str(raw_oracle)
     apply_proof_obligations(result, parsed.obligations)
     if assumptions is not None:
         result.assumptions = list(assumptions)
@@ -607,6 +610,7 @@ class PromotionPolicy:
             "broadway-ppc32-be-v31",
             "broadway-ppc32-be-v32",
             "broadway-ppc32-be-v33",
+            "broadway-ppc32-be-v34",
         }
     )
     minimum_result_format: int = RESULT_FORMAT

@@ -263,16 +263,31 @@ def _validate_callee_contract_impl(
         for name, initial_value in initial_components.items():
             final_value = final_components[name]
             changed = not z3.eq(final_value, initial_value)
-            if name == "memory" and changed:
+            if not changed:
+                continue
+            # Structural inequality is enough when the contract already permits
+            # this write. SMT refinement on every diamond path otherwise times
+            # out on modest load-modify-store functions (e.g. copyInputFlag).
+            if _contract_covers(name, contract.writes):
+                required_writes.add(name)
+                # Skip feeding final values into get_vars for covered writes when
+                # reads are wildcarded: the expressions can be huge ITE/memory
+                # cones and hang certificate validation.
+                if not _contract_covers("*", contract.reads) and name != "memory":
+                    dependency_expressions.append(final_value)
+                continue
+            if name == "memory":
                 memory_solver = z3.Solver()
+                memory_solver.set(timeout=2_000)
                 memory_solver.add(
                     terminal.condition,
                     terminal.state.stack_layout_valid,
                     _memory_difference(terminal.state, initial, initial, ops),
                 )
                 changed = memory_solver.check() != z3.unsat
-            elif changed:
+            else:
                 value_solver = z3.Solver()
+                value_solver.set(timeout=2_000)
                 value_solver.add(
                     terminal.condition,
                     terminal.state.stack_layout_valid,
@@ -281,14 +296,25 @@ def _validate_callee_contract_impl(
                 changed = value_solver.check() != z3.unsat
             if changed:
                 required_writes.add(name)
+                # Never feed Array-valued memory terms into get_vars: Store/Select
+                # spines from load-modify-store functions are huge and hang
+                # certificate validation. Memory reads are implied by a memory write.
+                if name == "memory":
+                    continue
                 dependency_expressions.append(final_value)
 
     required_reads: set[str] = set()
-    for expression in dependency_expressions:
-        for variable in z3.z3util.get_vars(expression):
-            component = input_names.get(str(variable.decl().name()))
-            if component is not None:
-                required_reads.add(component)
+    if "memory" in required_writes:
+        required_reads.add("memory")
+    if _contract_covers("*", contract.reads):
+        # Wildcard reads: skip get_vars entirely (opaque EABI certificates).
+        pass
+    else:
+        for expression in dependency_expressions:
+            for variable in z3.z3util.get_vars(expression):
+                component = input_names.get(str(variable.decl().name()))
+                if component is not None:
+                    required_reads.add(component)
 
     missing_reads = frozenset(
         name for name in required_reads if not _contract_covers(name, contract.reads)
@@ -1859,19 +1885,46 @@ def _check_equivalence_impl(
                         ],
                     },
                 )
-            memory_status = (
-                "discharged"
-                if (
-                    mem_summary.expansion == "closed-form"
-                    and int(mem_summary.trip_count) >= 1
+            # NEVER discharge from closed-form recognition alone. Run the
+            # independent transition-equivalence queries; only an all-UNSAT
+            # discharge authorizes status=discharged. Otherwise the summary may
+            # still execute (status=applied) but must not authorize EQUIVALENT.
+            from .memory_loop_discharge import discharge_memory_loop_summary
+
+            orig_summary = original_memory.get(mem_summary.header_pc, mem_summary)
+            cand_summary = candidate_memory.get(mem_summary.header_pc, mem_summary)
+            memory_status = "applied"
+            transition_equivalence = None
+            if (
+                mem_summary.expansion == "closed-form"
+                and int(mem_summary.trip_count) >= 1
+            ):
+                discharge_result = discharge_memory_loop_summary(
+                    orig_summary,
+                    cand_summary,
+                    deadline=deadline,
+                    z3_module=z3,
                 )
-                else "applied"
-            )
+                memory_status = discharge_result.status
+                if memory_status == "discharged":
+                    transition_equivalence = discharge_result.transition_equivalence()
+                elif memory_status == "failed":
+                    reason = discharge_result.reason or (
+                        "memory-loop transition-equivalence discharge failed"
+                    )
+                    if early.status is ProofStatus.EQUIVALENT:
+                        early.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                    early.unsupported.append(reason)
+                    early.warnings.append(reason)
+                    early.abstractions.append("memory-loop-discharge-failed")
+                    # Persist an applied obligation (no transition_equivalence).
+                    memory_status = "applied"
             early.memory_loop = build_memory_loop_obligation(
                 mem_summary,
                 coverage="applied",
                 status=memory_status,
                 readonly_words_sha256=readonly_digest,
+                transition_equivalence=transition_equivalence,
             )
         gated = enforce_equivalent_proof_features(early)
         # Shared unconstrained memory can make identical jump-table functions

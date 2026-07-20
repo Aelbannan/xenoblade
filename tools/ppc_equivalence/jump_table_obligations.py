@@ -11,6 +11,7 @@ the main equivalence solver must not treat those as mismatch constraints alone.
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Sequence
@@ -538,6 +539,157 @@ def validate_readonly_image_obligation(obligation: dict[str, Any]) -> str | None
         return "address_space.end < base"
     if obligation["byte_count"] != obligation["end"] - obligation["base"] + 1:
         return "address_space.byte_count does not match [base, end]"
+    return None
+
+
+# Strict validators for the EQUIVALENT-ready path (no legacy schema fallback).
+_SHA256_LOWER_RE = re.compile(r"^[0-9a-f]{64}$")
+
+# rom-image-v2 / enumerated-addr32-v2 are the jump-table algorithms; the
+# virtual-call variants share the readonly-image / indirect-target-closure
+# feature names and must also be accepted by the strict validators.
+KNOWN_READONLY_IMAGE_ALGORITHMS = frozenset({
+    "rom-image-v2",
+    "virtual-call-rom-image-v1",
+})
+KNOWN_INDIRECT_TARGET_ALGORITHMS = frozenset({
+    "enumerated-addr32-v2",
+    "virtual-call-enumerated-v1",
+})
+
+
+def _is_sha256_lower(value: Any) -> bool:
+    return isinstance(value, str) and _SHA256_LOWER_RE.fullmatch(value) is not None
+
+
+def _discharge_result(value: Any) -> str | None:
+    """Return the discharge result string from a str or discharge-dict form."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        result = value.get("result")
+        return result if isinstance(result, str) else None
+    return None
+
+
+def _validate_side_rom_strict(
+    side: Any, *, label: str, require_discharged: bool,
+) -> str | None:
+    reason = _validate_side_rom(side, label=label)
+    if reason is not None:
+        return reason
+    digest = side.get("image_sha256")
+    if not _is_sha256_lower(digest):
+        return f"{label}.image_sha256 must be a lowercase 64-hex digest"
+    artifact = side.get("artifact_sha256")
+    if artifact is not None and not _is_sha256_lower(artifact):
+        return f"{label}.artifact_sha256 must be a lowercase 64-hex digest"
+    if require_discharged:
+        no_write = side.get("no_write")
+        if not isinstance(no_write, dict):
+            return f"{label}.no_write must be a discharge object for discharged proofs"
+        if not _is_sha256_lower(no_write.get("query_sha256")):
+            return f"{label}.no_write.query_sha256 must be a lowercase 64-hex digest"
+        if no_write.get("result") != "unsat":
+            return f"{label}.no_write.result must be 'unsat' for discharged proofs"
+    return None
+
+
+def _validate_side_targets_strict(
+    side: Any, *, label: str, require_discharged: bool,
+) -> str | None:
+    reason = _validate_side_targets(side, label=label)
+    if reason is not None:
+        return reason
+    for index, digest in enumerate(side.get("artifact_hashes", [])):
+        if not _is_sha256_lower(digest):
+            return f"{label}.artifact_hashes[{index}] must be a lowercase 64-hex digest"
+    if require_discharged:
+        coverage = side.get("coverage")
+        if not isinstance(coverage, dict):
+            return f"{label}.coverage must be a discharge object for discharged proofs"
+        if not _is_sha256_lower(coverage.get("query_sha256")):
+            return f"{label}.coverage.query_sha256 must be a lowercase 64-hex digest"
+        if coverage.get("result") != "unsat":
+            return f"{label}.coverage.result must be 'unsat' for discharged proofs"
+    return None
+
+
+def validate_readonly_image_obligation_strict(
+    obligation: dict[str, Any], *, require_discharged: bool = False,
+) -> str | None:
+    """Strict schema-v2 readonly-image validation for the EQUIVALENT path."""
+    if not isinstance(obligation, dict):
+        return "address_space must be an object"
+    if obligation.get("schema_version") != 2:
+        return "address_space.schema_version must be exactly 2 for EQUIVALENT proofs"
+    if obligation.get("kind") != RegionKind.ROM_IMAGE.value:
+        return "address_space.kind must be rom-image"
+    algorithm = obligation.get("algorithm")
+    if algorithm not in KNOWN_READONLY_IMAGE_ALGORITHMS:
+        return (
+            f"address_space.algorithm {algorithm!r} is not a known "
+            "readonly-image algorithm"
+        )
+    for label in ("original", "candidate"):
+        side = obligation.get(label)
+        if not isinstance(side, dict):
+            return f"address_space.{label} is required (both sides)"
+        reason = _validate_side_rom_strict(
+            side, label=f"address_space.{label}", require_discharged=require_discharged,
+        )
+        if reason is not None:
+            return reason
+    original = obligation["original"]
+    for key in ("base", "end", "image_sha256", "byte_count", "source"):
+        if key in obligation and obligation[key] != original.get(key):
+            return f"address_space.{key} flat mirror disagrees with original side"
+    if "no_write" in obligation:
+        flat = _discharge_result(obligation["no_write"])
+        side_result = _discharge_result(original.get("no_write"))
+        if flat != side_result:
+            return "address_space.no_write flat mirror disagrees with original side"
+    if require_discharged and obligation.get("status") != "discharged":
+        return "address_space.status must be 'discharged' for EQUIVALENT proofs"
+    return None
+
+
+def validate_indirect_targets_obligation_strict(
+    obligation: dict[str, Any], *, require_discharged: bool = False,
+) -> str | None:
+    """Strict schema-v2 indirect-target-closure validation for EQUIVALENT."""
+    if not isinstance(obligation, dict):
+        return "indirect_targets must be an object"
+    if obligation.get("schema_version") != 2:
+        return "indirect_targets.schema_version must be exactly 2 for EQUIVALENT proofs"
+    algorithm = obligation.get("algorithm")
+    if algorithm not in KNOWN_INDIRECT_TARGET_ALGORITHMS:
+        return (
+            f"indirect_targets.algorithm {algorithm!r} is not a known "
+            "indirect-target-closure algorithm"
+        )
+    for label in ("original", "candidate"):
+        side = obligation.get(label)
+        if not isinstance(side, dict):
+            return f"indirect_targets.{label} is required (both sides)"
+        reason = _validate_side_targets_strict(
+            side,
+            label=f"indirect_targets.{label}",
+            require_discharged=require_discharged,
+        )
+        if reason is not None:
+            return reason
+    original = obligation["original"]
+    for key in ("branch_pc", "source"):
+        if key in obligation and obligation[key] != original.get(key):
+            return f"indirect_targets.{key} flat mirror disagrees with original side"
+    if "coverage" in obligation:
+        flat = _discharge_result(obligation["coverage"])
+        side_result = _discharge_result(original.get("coverage"))
+        if flat != side_result:
+            return "indirect_targets.coverage flat mirror disagrees with original side"
+    if require_discharged and obligation.get("status") != "discharged":
+        return "indirect_targets.status must be 'discharged' for EQUIVALENT proofs"
     return None
 
 

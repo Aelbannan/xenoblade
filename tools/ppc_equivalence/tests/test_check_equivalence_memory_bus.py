@@ -58,7 +58,7 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
             candidate_hex="00",
             memory_bus=bus,
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("memory-bus", result.proof_features)
         self.assertIsNotNone(result.memory_bus)
 

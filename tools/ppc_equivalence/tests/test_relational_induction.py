@@ -166,9 +166,9 @@ class RelationalInductionSketchTests(unittest.TestCase):
 
 
 class RelationalInductionFeatureGateTests(unittest.TestCase):
-    def test_feature_is_supported(self) -> None:
+    def test_feature_is_frozen_unsupported(self) -> None:
         self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
-        self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_incomplete_obligation_fails_validation(self) -> None:
         reason = validate_proof_features(
@@ -182,7 +182,7 @@ class RelationalInductionFeatureGateTests(unittest.TestCase):
         assert reason is not None
         self.assertIn("missing", reason)
 
-    def test_discharged_sketch_stays_equivalent(self) -> None:
+    def test_discharged_sketch_demoted_during_freeze(self) -> None:
         from tools.ppc_equivalence.proof_features import enforce_equivalent_proof_features
         from tools.ppc_equivalence.relational_induction import (
             try_discharge_ctr_affine_relational,
@@ -199,7 +199,7 @@ class RelationalInductionFeatureGateTests(unittest.TestCase):
             relational_induction=sketch.to_obligation_dict(),
         )
         gated = enforce_equivalent_proof_features(result)
-        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
 
     def test_obligation_validates_structurally(self) -> None:
         from tools.ppc_equivalence.relational_induction import (
@@ -218,7 +218,12 @@ class RelationalInductionFeatureGateTests(unittest.TestCase):
             "proof_features": ["relational-induction"],
             "relational_induction": discharged.to_obligation_dict(),
         }
-        self.assertIsNone(validate_proof_features(payload, require_equivalent_ready=True))
+        # Structural validation still passes; equivalent-ready fails under freeze.
+        self.assertIsNone(validate_proof_features(payload))
+        ready = validate_proof_features(payload, require_equivalent_ready=True)
+        self.assertIsNotNone(ready)
+        assert ready is not None
+        self.assertIn("not yet supported", ready)
 
 
 

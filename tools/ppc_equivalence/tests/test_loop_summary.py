@@ -158,14 +158,14 @@ class CompareAffineRecognitionTests(unittest.TestCase):
 
 
 class AffineFeatureGateTests(unittest.TestCase):
-    def test_affine_feature_is_supported(self) -> None:
+    def test_affine_feature_is_frozen_unsupported(self) -> None:
         from tools.ppc_equivalence.proof_features import (
             KNOWN_PROOF_FEATURES,
             UNSUPPORTED_FOR_EQUIVALENT,
         )
 
         self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
-        self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_summary_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -179,7 +179,7 @@ class AffineFeatureGateTests(unittest.TestCase):
             original_hex="00", candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("affine-loop-summary", result.proof_features)
         self.assertIn("relational-induction", result.proof_features)
         self.assertIsNotNone(result.loop_summary)
@@ -199,11 +199,40 @@ class AffineFeatureGateTests(unittest.TestCase):
             original_hex="00", candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("affine-loop-summary", result.proof_features)
         self.assertIn("relational-induction", result.proof_features)
         self.assertEqual(result.loop_summary["proof_kind"], "compare-affine-closed-form")
         self.assertEqual(result.relational_induction["status"], "applied")
+
+    def test_compare_affine_vs_straight_line_cr_never_equivalent(self) -> None:
+        """False-eq regression: loop exits with CR0.EQ=1; candidate leaves entry CR.
+
+        Soft for PR0: must not be EQUIVALENT when CR is observed.
+        Strengthen to NOT_EQUIVALENT after final-CR repair (PR 5).
+        """
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        loop = _compare_counted_loop(count=1, addend=0)
+        straight = [
+            _insn(Opcode.ADDI, (4, 0, 0), address=0),
+            _insn(Opcode.BCLR, (20, 0, 0), address=4),
+        ]
+        contract = EquivalenceContract(
+            parse_observables(["r3", "r4", "cr0"]),
+            timeout_ms=15_000,
+        )
+        result = check_equivalence(
+            loop,
+            straight,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
 
 
 if __name__ == "__main__":

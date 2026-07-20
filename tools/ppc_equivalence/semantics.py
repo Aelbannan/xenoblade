@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from .deadline import Deadline, ProofDeadlineExceeded
 from .ir import (
@@ -1432,12 +1432,21 @@ def _dform_address(
     return ops.add(base, _immediate_operand(insn, displacement, ops, signed=True))
 
 
-def _touch_memory(state: MachineState, address: Any, width: int, ops: WordOps) -> MachineState:
+def _touch_memory(
+    state: MachineState,
+    address: Any,
+    width: int,
+    ops: WordOps,
+    access: Literal["read", "write"],
+) -> MachineState:
     if width > 1:
         aligned = ops.eq(ops.band(address, ops.const(width - 1)), ops.const(0))
         state = _constrain_valid(state, aligned, InvalidReason.UNALIGNED_ACCESS, ops)
-    touches = state.memory_touches + tuple(ops.add(address, ops.const(offset)) for offset in range(width))
-    return replace(state, memory_touches=touches)
+    addrs = tuple(ops.add(address, ops.const(offset)) for offset in range(width))
+    touches = state.memory_touches + addrs
+    if access == "read":
+        return replace(state, memory_reads=state.memory_reads + addrs, memory_touches=touches)
+    return replace(state, memory_writes=state.memory_writes + addrs, memory_touches=touches)
 
 
 def _mark_stack_pointer_escape(
@@ -1520,7 +1529,14 @@ def _psq_store_pair(
     return result
 
 
-def _psq_domain(state: MachineState, address: Any, w: int, qtype: Any, ops: WordOps) -> MachineState:
+def _psq_domain(
+    state: MachineState,
+    address: Any,
+    w: int,
+    qtype: Any,
+    ops: WordOps,
+    access: Literal["read", "write"],
+) -> MachineState:
     valid_type = ops.eq(qtype, ops.const(0))
     for type_code in _PSQ_INTEGER_TYPES:
         valid_type = ops.lor(valid_type, ops.eq(qtype, ops.const(type_code)))
@@ -1536,10 +1552,13 @@ def _psq_domain(state: MachineState, address: Any, w: int, qtype: Any, ops: Word
         ),
     )
     state = _constrain_valid(state, ops.land(valid_type, aligned), InvalidReason.PSQ_INVALID_TYPE, ops)
-    touches = state.memory_touches + tuple(
-        ops.add(address, ops.const(offset)) for offset in range(4 if w else 8)
-    )
-    return replace(state, memory_touches=touches)
+    # PSQ alignment is type-dependent; record access without _touch_memory's
+    # width-based alignment check.
+    addrs = tuple(ops.add(address, ops.const(offset)) for offset in range(4 if w else 8))
+    touches = state.memory_touches + addrs
+    if access == "read":
+        return replace(state, memory_reads=state.memory_reads + addrs, memory_touches=touches)
+    return replace(state, memory_writes=state.memory_writes + addrs, memory_touches=touches)
 
 
 LOADS = {
@@ -2179,7 +2198,7 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         block = ops.band(address, ops.const(0xFFFFFFE0))
         for offset in range(32):
             byte_address = ops.add(block, ops.const(offset))
-            state = _touch_memory(state, byte_address, 1, ops)
+            state = _touch_memory(state, byte_address, 1, ops, "write")
             state = replace(
                 state, memory=ops.store_byte(state.memory, byte_address, ops.const(0)),
             )

@@ -18,7 +18,12 @@ result (NaNs never reach negation — the oracle fails closed on non-finite inpu
 Single fused forms fail closed on Dolphin/Broadway midpoint-tie residues with a
 nonzero addend. SymbolicOps, paired-single lanes, and other FP paths still use
 host float or Z3. Nothing here promotes FP proofs out of Tier C.
-"""
+
+**Unified outcome (Track C scaffold):** :class:`FpOracleResult` remains the
+SoftFloat return type. Prefer :mod:`tools.ppc_equivalence.fp_outcome` adapters
+(``outcome_from_oracle`` / ``oracle_from_outcome``) when lifting into the
+shared ``FPOutcome`` container — existing ``.bits64`` call sites stay valid.
+""")
 
 from __future__ import annotations
 
@@ -117,6 +122,12 @@ class FpOracleResult:
             "flags": self.flags.to_dict(),
             "fprf": self.fprf,
         }
+
+    def to_outcome(self):
+        """Lift into the unified :class:`~.fp_outcome.FPOutcome` scaffold."""
+        from .fp_outcome import outcome_from_oracle
+
+        return outcome_from_oracle(self)
 
 
 def mask32(value: int) -> int:

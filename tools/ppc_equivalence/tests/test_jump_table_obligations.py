@@ -120,6 +120,7 @@ class JumpTableEngineGateTests(unittest.TestCase):
 
     def test_proven_jump_table_context_can_be_equivalent(self) -> None:
         # cmplwi r0,1; slwi r0,r0,2; lwzx r3,r3,r0; mtctr r3; bctr
+        # PR0 freeze: jump-table features demote EQUIVALENT → INCONCLUSIVE_UNSUPPORTED.
         code = bytes.fromhex("28000001 5400103a 7c63002e 7c6903a6 4e800420")
         base = 0x80001000
         insns = decode_block(code, base, validate_with_capstone=False)
@@ -144,13 +145,91 @@ class JumpTableEngineGateTests(unittest.TestCase):
             jump_table=context,
             max_paths=64,
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported or result.warnings)
+        self.assertEqual(
+            result.status,
+            ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            result.unsupported or result.warnings,
+        )
         self.assertEqual(
             result.proof_features,
             ["readonly-image", "indirect-target-closure"],
         )
         self.assertIsNotNone(result.address_space)
         self.assertIsNotNone(result.indirect_targets)
+
+    def test_closed_set_excluding_true_targets_never_equivalent(self) -> None:
+        """False-eq regression: original→A, candidate→B, closed set {C,D}.
+
+        Soft for PR0: must not be promotion-eligible / EQUIVALENT. Without the
+        freeze the engine currently returns EQUIVALENT by expanding only C/D.
+        """
+        from tools.ppc_equivalence.ir import Instruction, Opcode
+
+        target_a = 0x80020000
+        target_b = 0x80020040
+        target_c = 0x80020080
+        target_d = 0x800200C0
+
+        def _insn(
+            opcode: Opcode,
+            operands: tuple[int, ...],
+            *,
+            address: int = 0,
+        ) -> Instruction:
+            return Instruction(address, 0, opcode, operands)
+
+        def _stub(pc: int, imm: int) -> list[Instruction]:
+            return [
+                _insn(Opcode.ADDI, (3, 0, imm), address=pc),
+                _insn(Opcode.BCLR, (20, 0, 0), address=pc + 4),
+            ]
+
+        def _materialize_bctr(target: int) -> list[Instruction]:
+            hi = (target >> 16) & 0xFFFF
+            lo = target & 0xFFFF
+            return [
+                _insn(Opcode.ADDIS, (3, 0, hi), address=0),
+                _insn(Opcode.ORI, (3, 3, lo), address=4),
+                _insn(Opcode.MTSPR, (3, 9), address=8),
+                _insn(Opcode.BCCTR, (20, 0, 0), address=12),
+            ]
+
+        handlers = {
+            target_a: _stub(target_a, 1),
+            target_b: _stub(target_b, 2),
+            target_c: _stub(target_c, 3),
+            target_d: _stub(target_d, 4),
+        }
+
+        def _assemble(target: int) -> list[Instruction]:
+            out = _materialize_bctr(target)
+            for pc in sorted(handlers):
+                out.extend(handlers[pc])
+            return out
+
+        # Closed set excludes true targets A and B.
+        context = JumpTableProofContext(
+            table=JumpTableWords(
+                base=0x80010000,
+                words=(target_c, target_d),
+                source="incomplete-closure",
+            ),
+            branch_pc=12,
+            table_base_reg=4,  # do not pin r3 (materialized target)
+            index_reg=0,
+        )
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=15_000)
+        result = check_equivalence(
+            _assemble(target_a),
+            _assemble(target_b),
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            jump_table=context,
+            max_paths=64,
+        )
+        # Soft: never EQUIVALENT (strengthen to inconclusive/not-equivalent later).
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
 
 
 if __name__ == "__main__":

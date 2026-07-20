@@ -14,5 +14,22 @@
     "--config",
     "functionRelocDiffs=data_value"
   ],
-  "automatic_promotion": true
+  "automatic_promotion": false,
+  "reject_architecture_models": [
+    "broadway-ppc32-be-v18",
+    "broadway-ppc32-be-v19",
+    "broadway-ppc32-be-v20",
+    "broadway-ppc32-be-v21",
+    "broadway-ppc32-be-v22",
+    "broadway-ppc32-be-v23",
+    "broadway-ppc32-be-v24",
+    "broadway-ppc32-be-v25",
+    "broadway-ppc32-be-v26",
+    "broadway-ppc32-be-v27",
+    "broadway-ppc32-be-v28",
+    "broadway-ppc32-be-v29",
+    "broadway-ppc32-be-v30",
+    "broadway-ppc32-be-v31",
+    "broadway-ppc32-be-v32"
+  ]
 }

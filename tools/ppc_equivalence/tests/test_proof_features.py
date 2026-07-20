@@ -58,7 +58,21 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         }
         self.assertIsNone(validate_proof_features(payload))
 
+    def test_unsupported_for_equivalent_is_six_feature_freeze(self) -> None:
+        self.assertEqual(
+            UNSUPPORTED_FOR_EQUIVALENT,
+            frozenset({
+                "readonly-image",
+                "indirect-target-closure",
+                "affine-loop-summary",
+                "relational-induction",
+                "memory-loop-summary",
+                "memory-bus",
+            }),
+        )
+
     def test_supported_features_can_stay_equivalent(self) -> None:
+        # PR0 freeze: expanded features demote EQUIVALENT → INCONCLUSIVE_UNSUPPORTED.
         result = ProofResult(
             status=ProofStatus.EQUIVALENT,
             proof_features=["readonly-image", "indirect-target-closure"],
@@ -66,8 +80,11 @@ class ProofFeaturesValidationTests(unittest.TestCase):
             indirect_targets={},
         )
         gated = enforce_equivalent_proof_features(result)
-        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
-        self.assertEqual(UNSUPPORTED_FOR_EQUIVALENT, frozenset())
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertEqual(
+            list(gated.proof_features),
+            ["readonly-image", "indirect-target-closure"],
+        )
 
     def test_affine_loop_summary_with_obligation_stays_equivalent(self) -> None:
         from tools.ppc_equivalence.loop_summary import (
@@ -91,7 +108,8 @@ class ProofFeaturesValidationTests(unittest.TestCase):
             loop_summary=build_loop_summary_obligation(summary, coverage="applied"),
         )
         gated = enforce_equivalent_proof_features(result)
-        self.assertEqual(gated.status, ProofStatus.EQUIVALENT)
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertIn("affine-loop-summary", gated.proof_features)
 
     def test_non_equivalent_status_is_not_demoted(self) -> None:
         result = ProofResult(
@@ -117,6 +135,14 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
         self.assertIn("relational-induction", KNOWN_PROOF_FEATURES)
         self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
+        self.assertIn("memory-bus", KNOWN_PROOF_FEATURES)
+
+    def test_pr0_freeze_blocks_all_expanded_features(self) -> None:
+        """PR0: no expanded feature may authorize EQUIVALENT."""
+        self.assertEqual(
+            UNSUPPORTED_FOR_EQUIVALENT,
+            frozenset(KNOWN_PROOF_FEATURES),
+        )
 
 
 if __name__ == "__main__":

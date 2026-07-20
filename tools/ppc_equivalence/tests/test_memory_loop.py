@@ -290,8 +290,8 @@ class MemoryLoopDischargeTests(unittest.TestCase):
 
 
 class MemoryLoopFeatureGateTests(unittest.TestCase):
-    def test_feature_is_supported(self) -> None:
-        self.assertNotIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+    def test_feature_is_frozen_unsupported(self) -> None:
+        self.assertIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertIn("memory-loop-summary", KNOWN_PROOF_FEATURES)
 
     def test_malformed_obligation_rejected(self) -> None:
@@ -345,7 +345,7 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             original_hex="00", candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("memory-loop-summary", result.proof_features)
         self.assertIsNotNone(result.memory_loop)
         self.assertEqual(result.memory_loop["trip_count"], 20)
@@ -378,7 +378,7 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("memory-loop-summary", result.proof_features)
         self.assertEqual(result.memory_loop["trip_count"], 0x2B & 7)
 
@@ -409,7 +409,7 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("memory-loop-summary", result.proof_features)
         self.assertEqual(result.memory_loop["trip_count"], 0x28 >> 3)
 
@@ -452,9 +452,84 @@ class MemoryLoopFeatureGateTests(unittest.TestCase):
             max_loop_iterations=2,
             readonly_words={table_addr: 4},
         )
-        self.assertEqual(with_map.status, ProofStatus.EQUIVALENT, with_map.unsupported)
+        self.assertEqual(with_map.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, with_map.unsupported)
         self.assertIn("memory-loop-summary", with_map.proof_features)
         self.assertEqual(with_map.memory_loop["trip_count"], 4)
+
+    def test_different_store_source_regs_never_equivalent(self) -> None:
+        """False-eq regression: original stores r3, candidate stores r5.
+
+        Soft for PR0: must not be EQUIVALENT when memory is observed.
+        Without the freeze the engine currently returns EQUIVALENT under the
+        memory-loop summary; strengthen to NOT_EQUIVALENT after repair.
+        """
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        original = _store_loop(
+            count=4,
+            store=(Opcode.STW, (3, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        candidate = _store_loop(
+            count=4,
+            store=(Opcode.STW, (5, 4, 0)),
+            pointer_addi=(4, 4),
+        )
+        contract = EquivalenceContract(
+            parse_observables(["r4", "memory"]),
+            timeout_ms=15_000,
+        )
+        result = check_equivalence(
+            original,
+            candidate,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            max_loop_iterations=2,
+        )
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+
+    def test_readonly_trip_artifact_vs_memory_mismatch_never_equivalent(self) -> None:
+        """False-eq regression: artifact trip=2 but symbolic memory word=3.
+
+        Soft for PR0: must not be EQUIVALENT. Artifact bytes must constrain
+        initial memory or the proof must stay inconclusive.
+        """
+        from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
+        from tools.ppc_equivalence.engine import check_equivalence
+        from tools.ppc_equivalence.result import ProofStatus
+
+        table_addr = 0x80201000
+        program = [
+            _insn(Opcode.ADDIS, (5, 0, 0x8020), address=0),
+            _insn(Opcode.ORI, (5, 5, 0x1000), address=4),
+            _insn(Opcode.LWZ, (0, 5, 0), address=8),
+            _insn(Opcode.MTSPR, (0, 9), address=12),
+            _insn(Opcode.STW, (3, 4, 0), address=16),
+            _insn(Opcode.ADDI, (4, 4, 4), address=20),
+            _insn(Opcode.BC, (16, 0, 16, 0), address=24),
+            _insn(Opcode.BCLR, (20, 0, 0), address=28),
+        ]
+        contract = EquivalenceContract(
+            parse_observables(["r4", "memory"]),
+            timeout_ms=15_000,
+        )
+        # Recognizer/artifact claims trip 2 via readonly_words, while a separate
+        # symbolic path could see a different word. Soft gate: never EQUIVALENT.
+        result = check_equivalence(
+            program,
+            program,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            max_loop_iterations=2,
+            readonly_words={table_addr: 2},
+        )
+        # Even with a consistent map, freeze demotes; after repair, a mismatched
+        # memory/artifact case must remain non-EQUIVALENT.
+        self.assertNotEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
 
 
 if __name__ == "__main__":

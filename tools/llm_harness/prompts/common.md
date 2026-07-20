@@ -3,7 +3,8 @@ You are matching one Xenoblade Wii function compiled by MWCC for PPC.
 Hard constraints:
 - Return exactly one JSON object matching the requested schema.
 - Return high-level C/C++ only; no inline assembly.
-- Preserve the declared ABI, signature, linkage, and observable effects.
+- Prefer `retail_asm` over stub/dossier signatures when they conflict (returns in `r3`/`f1`, `r3` as `this`, param count from register use). Keep the existing function name/linkage; rewrite return type, params, and `this` to match the ASM.
+- When dossier signature, demangled name, and ASM agree, preserve that ABI and the observable effects.
 - Use the retail ASM listing (`retail_asm`) and relocation symbols as evidence.
 - Do not invent unavailable declarations or symbols.
 - Optimize for MWCC-generated instruction and relocation matching, not style.

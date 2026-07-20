@@ -1003,15 +1003,11 @@ class FloatingPointConcreteTests(unittest.TestCase):
         nan_state = concrete_state({
             "fpr": {"f1": "0xfff8000012345678", "f2": 2.0, "f3": 4.0},
         })
-        # fmsubs is SoftFloat-oracle-wired and fails closed on NaN; fnmsubs remains
-        # on the host-float ConcreteOps path.
-        with self.subTest(encoded="ece110f8", case="nan"):
-            with self.assertRaises(ExecutionInconclusive):
-                execute_block(nan_state, decode("ece110f8"), ConcreteOps())
-        with self.subTest(encoded="ece110fc", case="nan"):
-            final = execute_block(nan_state, decode("ece110fc"), ConcreteOps())
-            self.assertEqual(final.fpr[7], 0xFFF8000000000000)
-            self.assertEqual(final.fpscr, 0x11000)
+        # fmsubs/fnmsubs SoftFloat oracle fails closed on NaN/Inf.
+        for encoded in ("ece110f8", "ece110fc"):
+            with self.subTest(encoded=encoded, case="nan"):
+                with self.assertRaises(ExecutionInconclusive):
+                    execute_block(nan_state, decode(encoded), ConcreteOps())
 
         invalid_state = concrete_state({
             "fpr": {
@@ -1020,13 +1016,10 @@ class FloatingPointConcreteTests(unittest.TestCase):
                 "f3": 1.0,
             },
         })
-        with self.subTest(encoded="ece110f8", case="vxisi"):
-            with self.assertRaises(ExecutionInconclusive):
-                execute_block(invalid_state, decode("ece110f8"), ConcreteOps())
-        with self.subTest(encoded="ece110fc", case="vxisi"):
-            final = execute_block(invalid_state, decode("ece110fc"), ConcreteOps())
-            self.assertEqual(final.fpr[7], 0x7FF8000000000000)
-            self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXISI | 0x11000)
+        for encoded in ("ece110f8", "ece110fc"):
+            with self.subTest(encoded=encoded, case="vxisi"):
+                with self.assertRaises(ExecutionInconclusive):
+                    execute_block(invalid_state, decode(encoded), ConcreteOps())
 
     def test_complete_fused_family_results_flags_and_signed_zero(self) -> None:
         cases = {
@@ -1070,68 +1063,38 @@ class FloatingPointConcreteTests(unittest.TestCase):
                 self.assertEqual(final.fpr[7], expected)
 
     def test_complete_fused_family_preserves_nan_payload_and_never_negates_nan(self) -> None:
-        # fmadd/fmsub SoftFloat oracle fails closed on NaN; negative forms still
-        # use the host-float ConcreteOps path and preserve payloads.
-        for encoded in ("fce110fa", "fce110f8"):
+        # SoftFloat oracle fails closed on NaN for the full scalar fused family.
+        for encoded in ("fce110fa", "fce110f8", "fce110fe", "fce110fc", "ece110fe"):
             with self.subTest(encoded=encoded):
                 state = concrete_state({
                     "fpr": {"f1": "0xfff8000012345678", "f2": 2.0, "f3": 4.0},
                 })
                 with self.assertRaises(ExecutionInconclusive):
                     execute_block(state, decode(encoded), ConcreteOps())
-        for encoded in ("fce110fe", "fce110fc"):
-            with self.subTest(encoded=encoded):
-                state = concrete_state({
-                    "fpr": {"f1": "0xfff8000012345678", "f2": 2.0, "f3": 4.0},
-                })
-                final = execute_block(state, decode(encoded), ConcreteOps())
-                self.assertEqual(final.fpr[7], 0xFFF8000012345678)
-                self.assertEqual(final.fpscr, 0x11000)
-
-        single = execute_block(concrete_state({
-            "fpr": {"f1": "0xfff8000012345678", "f2": 2.0, "f3": 4.0},
-        }), decode("ece110fe"), ConcreteOps())
-        self.assertEqual(single.fpr[7], 0xFFF8000000000000)
-        self.assertEqual(single.fpscr, 0x11000)
 
     def test_double_fused_invalid_signs_and_enabled_suppression(self) -> None:
         positive_inf = "0x7ff0000000000000"
         negative_inf = "0xfff0000000000000"
-        oracle_cases = (
+        cases = (
             ("fce110fa", negative_inf),
             ("fce110f8", positive_inf),
-        )
-        host_cases = (
             ("fce110fe", negative_inf),
             ("fce110fc", positive_inf),
         )
-        for encoded, addend in oracle_cases:
+        for encoded, addend in cases:
             with self.subTest(encoded=encoded):
                 state = concrete_state({
                     "fpr": {"f1": positive_inf, "f2": addend, "f3": 1.0},
                 })
                 with self.assertRaises(ExecutionInconclusive):
                     execute_block(state, decode(encoded), ConcreteOps())
-        for encoded, addend in host_cases:
-            with self.subTest(encoded=encoded):
-                state = concrete_state({
-                    "fpr": {"f1": positive_inf, "f2": addend, "f3": 1.0},
-                })
-                final = execute_block(state, decode(encoded), ConcreteOps())
-                self.assertEqual(final.fpr[7], 0x7FF8000000000000)
-                self.assertEqual(final.fpscr, FPSCR_FX | FPSCR_VX | FPSCR_VXISI | 0x11000)
 
         original = 0x4000000000000000
-        suppressed = execute_block(concrete_state({
-            "fpr": {"f1": positive_inf, "f2": negative_inf, "f3": 1.0, "f7": original},
-            "fpscr": FPSCR_VE,
-        }), decode("fce110ff"), ConcreteOps())
-        self.assertEqual(suppressed.fpr[7], original)
-        self.assertEqual(
-            suppressed.fpscr,
-            FPSCR_FX | FPSCR_FEX | FPSCR_VX | FPSCR_VXISI | FPSCR_VE,
-        )
-        self.assertEqual(suppressed.cr, 0x0E000000)
+        with self.assertRaises(ExecutionInconclusive):
+            execute_block(concrete_state({
+                "fpr": {"f1": positive_inf, "f2": negative_inf, "f3": 1.0, "f7": original},
+                "fpscr": FPSCR_VE,
+            }), decode("fce110ff"), ConcreteOps())
 
     def test_fpscr_access_and_summary_recomputation(self) -> None:
         mffs = execute_block(

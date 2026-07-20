@@ -10,12 +10,14 @@ and most FPSCR sticky-flag updates remain partial or unimplemented. Unhandled
 cases fail closed via :class:`OracleUnimplementedError`.
 
 **Partially wired:** ``ConcreteOps`` routes ``fadd``/``fadds``/``fmul``/``fmuls``/
-``fsub``/``fsubs``/``fdiv``/``fdivs``/``fmadd``/``fmadds``/``fmsub``/``fmsubs``
-through this oracle (fail-closed elsewhere). Force25 for ``fmadds``/``fmsubs`` is
-applied by the semantics layer before the oracle sees ``frC``. Single fused forms
-fail closed on Dolphin/Broadway midpoint-tie residues with a nonzero addend.
-SymbolicOps, negative fused forms (``fn*``), and other FP paths still use host
-float or Z3. Nothing here promotes FP proofs out of Tier C.
+``fsub``/``fsubs``/``fdiv``/``fdivs``/``fmadd``/``fmadds``/``fmsub``/``fmsubs``/
+``fnmadd``/``fnmadds``/``fnmsub``/``fnmsubs`` through this oracle (fail-closed
+elsewhere). Force25 for single fused forms is applied by the semantics layer
+before the oracle sees ``frC``. Negative fused forms negate the positive fused
+result (NaNs never reach negation — the oracle fails closed on non-finite inputs).
+Single fused forms fail closed on Dolphin/Broadway midpoint-tie residues with a
+nonzero addend. SymbolicOps, paired-single lanes, and other FP paths still use
+host float or Z3. Nothing here promotes FP proofs out of Tier C.
 """
 
 from __future__ import annotations
@@ -74,6 +76,10 @@ ORACLE_SUPPORTED_OPS: frozenset[str] = frozenset({
     "fmadds",
     "fmsub",
     "fmsubs",
+    "fnmadd",
+    "fnmadds",
+    "fnmsub",
+    "fnmsubs",
 })
 
 
@@ -666,6 +672,36 @@ def fmsubs_fpr_rne(a_fpr: int, b_fpr: int, c_fpr: int) -> FpOracleResult:
     return FpOracleResult(bits64, merged_flags, fprf_from_binary64(bits64))
 
 
+def _negate_finite_oracle_result(result: FpOracleResult) -> FpOracleResult:
+    """Flip the sign bit of a finite fused result (``fn*`` forms).
+
+    Callers must only pass results from positive fused helpers, which already
+    fail closed on NaN/Inf/subnormal — so this never negates a NaN payload.
+    """
+    bits = mask64(result.bits64 ^ (1 << _B64_SIGN_SHIFT))
+    return FpOracleResult(bits, result.flags, fprf_from_binary64(bits))
+
+
+def fnmadd_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
+    """Negative fused multiply-add ``-(a * c + b)`` (``fnmadd``)."""
+    return _negate_finite_oracle_result(fmadd_binary64_rne(a, c, b))
+
+
+def fnmsub_binary64_rne(a: int, c: int, b: int) -> FpOracleResult:
+    """Negative fused multiply-sub ``-(a * c - b)`` (``fnmsub``)."""
+    return _negate_finite_oracle_result(fmsub_binary64_rne(a, c, b))
+
+
+def fnmadds_fpr_rne(a_fpr: int, b_fpr: int, c_fpr: int) -> FpOracleResult:
+    """``fnmadds`` on FPR-encoded operands (``-(frA * frC + frB)`` → single)."""
+    return _negate_finite_oracle_result(fmadds_fpr_rne(a_fpr, b_fpr, c_fpr))
+
+
+def fnmsubs_fpr_rne(a_fpr: int, b_fpr: int, c_fpr: int) -> FpOracleResult:
+    """``fnmsubs`` on FPR-encoded operands (``-(frA * frC - frB)`` → single)."""
+    return _negate_finite_oracle_result(fmsubs_fpr_rne(a_fpr, b_fpr, c_fpr))
+
+
 def dispatch_oracle(op: str, *operands: int) -> FpOracleResult:
     """Fail-closed dispatch table for supported scalar ops."""
     if op not in ORACLE_SUPPORTED_OPS:
@@ -718,4 +754,20 @@ def dispatch_oracle(op: str, *operands: int) -> FpOracleResult:
         if len(operands) != 3:
             raise ValueError("fmsubs expects three operands (a, b, c)")
         return fmsubs_fpr_rne(operands[0], operands[1], operands[2])
+    if op == "fnmadd":
+        if len(operands) != 3:
+            raise ValueError("fnmadd expects three operands (a, c, b)")
+        return fnmadd_binary64_rne(operands[0], operands[1], operands[2])
+    if op == "fnmsub":
+        if len(operands) != 3:
+            raise ValueError("fnmsub expects three operands (a, c, b)")
+        return fnmsub_binary64_rne(operands[0], operands[1], operands[2])
+    if op == "fnmadds":
+        if len(operands) != 3:
+            raise ValueError("fnmadds expects three operands (a, b, c)")
+        return fnmadds_fpr_rne(operands[0], operands[1], operands[2])
+    if op == "fnmsubs":
+        if len(operands) != 3:
+            raise ValueError("fnmsubs expects three operands (a, b, c)")
+        return fnmsubs_fpr_rne(operands[0], operands[1], operands[2])
     raise _fail_unimplemented(f"unsupported op {op!r}")

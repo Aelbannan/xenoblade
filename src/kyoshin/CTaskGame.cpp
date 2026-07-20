@@ -177,7 +177,9 @@ extern "C" bool func_8004368C() { return false; }
 extern "C" void func_800436F4() {}
 // LLM-HARNESS-END: us-80043c70
 // LLM-HARNESS-BEGIN: us-80043cac
-extern "C" bool func_80043730() { return false; }
+extern "C" void func_80043730(void* obj, int val) {
+    *(int*)((char*)obj + 0xf8) = val;
+}
 // LLM-HARNESS-END: us-80043cac
 // LLM-HARNESS-BEGIN: us-80044140
 extern "C" void func_80043BA4() {}
@@ -186,7 +188,7 @@ extern "C" void func_80043BA4() {}
 extern "C" void func_80043D68() {}
 // LLM-HARNESS-END: us-80044304
 // LLM-HARNESS-BEGIN: us-800444b4
-extern "C" bool func_80043F18() { return false; }
+extern "C" u32 func_80043F18(void *ptr) { return *(u32 *)ptr; }
 // LLM-HARNESS-END: us-800444b4
 // LLM-HARNESS-BEGIN: us-800444bc
 void CProcess::Tail() {}
@@ -201,7 +203,7 @@ extern "C" bool func_80044128() { return false; }
 extern "C" bool func_80044130() { return false; }
 // LLM-HARNESS-END: us-800446cc
 // LLM-HARNESS-BEGIN: us-800446d4
-extern "C" bool func_80044138() { return false; }
+extern "C" bool func_80044138(void* ptr) { return ((bool(*)(char*))func_800433A8)((char*)ptr - 0x5c); }
 // LLM-HARNESS-END: us-800446d4
 // LLM-HARNESS-BEGIN: us-800446dc
 extern "C" bool func_80044140() { return false; }

@@ -15,8 +15,13 @@ and equal the memory stride. Indexed stores and multi-store bodies are
 rejected (prefer false negatives).
 
 When ``execute_cfg`` is given a summary map (or the engine auto-builds one),
-matching headers with a positive concrete trip count are discharged by
-applying the N stores in closed form and advancing the base/CTR.
+matching headers with a positive concrete trip count are applied by
+recording typed ``StoreEffect`` writes (not memory alone) and advancing
+base/CTR. ``memory-loop-summary`` may authorize ``EQUIVALENT`` only when the
+obligation carries ``status=discharged`` with a matching ``summary_sha256``,
+typed-effect + footprint evidence, and a concrete closed-form expansion.
+Recognition or ``coverage=applied`` alone never authorizes. Bounded-remainder
+expansions stay ``applied`` until paired relational discharge lands.
 """
 
 from __future__ import annotations
@@ -38,6 +43,7 @@ from tools.ppc_equivalence.memory_semantics import (
     build_memory_loop_transition,
     footprint_ok_for_summary,
 )
+from tools.ppc_equivalence.provenance import canonical_json_sha256
 
 _CTR_SPR = 9
 _BDNZ_BO = 16  # decrement CTR; branch if CTR != 0 after decrement
@@ -422,15 +428,70 @@ REQUIRED_MEMORY_LOOP_KEYS = frozenset({
     "store_kind",
     "final_ctr",
     "ranking",
+    "status",
+    "algorithm",
+    "summary_sha256",
+    "effects",
+    "footprint",
 })
+
+_MEMORY_LOOP_ALGORITHM = "constant-stride-store-v1"
+
+_MEMORY_LOOP_IDENTITY_KEYS = (
+    "proof_kind",
+    "header_pc",
+    "latch_pc",
+    "exit_pc",
+    "trip_count",
+    "base_reg",
+    "source_reg",
+    "stride",
+    "store_width",
+    "store_kind",
+    "final_ctr",
+    "ranking",
+    "algorithm",
+    "effects",
+    "footprint",
+    "trip_expr",
+    "trip_upper_bound",
+    "zero_guard",
+    "expansion",
+    "readonly_words_sha256",
+)
+
+
+def memory_loop_identity_payload(obligation: dict[str, Any]) -> dict[str, Any]:
+    """Canonical fields hashed into ``summary_sha256`` (excludes status/coverage)."""
+    payload: dict[str, Any] = {}
+    for key in _MEMORY_LOOP_IDENTITY_KEYS:
+        if key not in obligation:
+            continue
+        value = obligation[key]
+        if value is None:
+            continue
+        payload[key] = value
+    return payload
+
+
+def compute_memory_loop_sha256(obligation: dict[str, Any]) -> str:
+    """SHA-256 over the canonical memory-loop summary identity payload."""
+    return canonical_json_sha256(memory_loop_identity_payload(obligation))
 
 
 def build_memory_loop_obligation(
     summary: MemoryLoopSummary,
     *,
     coverage: str = "pending",
+    status: str = "pending",
+    readonly_words_sha256: str | None = None,
 ) -> dict[str, Any]:
-    """Obligation block for ``proof_features: [\"memory-loop-summary\"]``."""
+    """Obligation block for ``proof_features: [\"memory-loop-summary\"]``.
+
+    ``status=discharged`` requires a concrete closed-form expansion with typed
+    store effects and a footprint gate. Bounded-remainder / recognition-only
+    paths must remain ``pending`` / ``applied``.
+    """
     payload: dict[str, Any] = {
         "proof_kind": summary.proof_kind,
         "header_pc": summary.header_pc,
@@ -445,6 +506,10 @@ def build_memory_loop_obligation(
         "final_ctr": summary.final_ctr,
         "ranking": summary.ranking,
         "coverage": coverage,
+        "status": status,
+        "algorithm": _MEMORY_LOOP_ALGORITHM,
+        "effects": "typed-store",
+        "footprint": "ok",
     }
     if summary.trip_expr is not None:
         payload["trip_expr"] = dict(summary.trip_expr)
@@ -454,6 +519,11 @@ def build_memory_loop_obligation(
         payload["zero_guard"] = summary.zero_guard
     if summary.expansion != "closed-form":
         payload["expansion"] = summary.expansion
+    else:
+        payload["expansion"] = "closed-form"
+    if readonly_words_sha256 is not None:
+        payload["readonly_words_sha256"] = readonly_words_sha256
+    payload["summary_sha256"] = compute_memory_loop_sha256(payload)
     return payload
 
 
@@ -496,6 +566,65 @@ def validate_memory_loop_obligation(obligation: dict[str, Any]) -> str | None:
     ranking = obligation.get("ranking")
     if not isinstance(ranking, str) or not ranking:
         return "memory_loop.ranking must be a nonempty string"
+
+    status = obligation.get("status")
+    if not isinstance(status, str) or status not in (
+        "pending",
+        "applied",
+        "discharged",
+        "failed",
+    ):
+        return "memory_loop.status must be pending|applied|discharged|failed"
+
+    if obligation.get("algorithm") != _MEMORY_LOOP_ALGORITHM:
+        return f"memory_loop.algorithm must be {_MEMORY_LOOP_ALGORITHM!r}"
+
+    if obligation.get("effects") != "typed-store":
+        return "memory_loop.effects must be 'typed-store'"
+
+    if obligation.get("footprint") != "ok":
+        return "memory_loop.footprint must be 'ok'"
+
+    digest = obligation.get("summary_sha256")
+    if not isinstance(digest, str) or len(digest) != 64:
+        return "memory_loop.summary_sha256 must be a 64-hex digest"
+    try:
+        int(digest, 16)
+    except ValueError:
+        return "memory_loop.summary_sha256 must be a 64-hex digest"
+    expected = compute_memory_loop_sha256(obligation)
+    if digest != expected:
+        return "memory_loop.summary_sha256 does not match obligation identity"
+
+    readonly_digest = obligation.get("readonly_words_sha256")
+    if readonly_digest is not None:
+        if not isinstance(readonly_digest, str) or len(readonly_digest) != 64:
+            return "memory_loop.readonly_words_sha256 must be a 64-hex digest"
+        try:
+            int(readonly_digest, 16)
+        except ValueError:
+            return "memory_loop.readonly_words_sha256 must be a 64-hex digest"
+
+    expansion = obligation.get("expansion", "closed-form")
+    if not isinstance(expansion, str) or not expansion:
+        return "memory_loop.expansion must be a nonempty string"
+
+    if status == "discharged":
+        if expansion != "closed-form":
+            return (
+                "memory_loop.status=discharged requires expansion=closed-form "
+                "(bounded-remainder stays applied until relational discharge)"
+            )
+        coverage = obligation.get("coverage")
+        if coverage not in ("applied", "discharged"):
+            return "memory_loop.status=discharged requires coverage applied|discharged"
+        if not footprint_ok_for_summary(
+            trip_count=int(trip_count),
+            stride=int(stride),
+            store_width=int(store_width),
+            store_kind=str(store_kind),
+        ):
+            return "memory_loop.status=discharged requires a sound footprint"
 
     return None
 

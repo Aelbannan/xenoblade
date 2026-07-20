@@ -32,6 +32,8 @@ class LoopSummaryObligationTests(unittest.TestCase):
         )
 
     def test_dict_keyed_final_gpr_validates(self) -> None:
+        from tools.ppc_equivalence.loop_summary import compute_loop_summary_sha256
+
         obligation = {
             "proof_kind": "affine-closed-form",
             "header_pc": 8,
@@ -43,7 +45,11 @@ class LoopSummaryObligationTests(unittest.TestCase):
             "final_gpr": {
                 "3": {"entry_reg": 3, "stride": 1},
             },
+            "status": "applied",
+            "algorithm": "affine-closed-form-v1",
+            "coverage": "applied",
         }
+        obligation["summary_sha256"] = compute_loop_summary_sha256(obligation)
         self.assertIsNone(validate_loop_summary_obligation(obligation))
 
     def test_missing_required_key_fails(self) -> None:
@@ -75,6 +81,23 @@ class LoopSummaryObligationTests(unittest.TestCase):
             },
         )
         self.assertIsNone(reason)
+
+    def test_discharged_requires_relational_companion(self) -> None:
+        program = _ctr_counted_loop(count=2, addend=1)
+        summary = summarize_ctr_affine_loop(find_ctr_affine_loop_candidates(program)[0])
+        assert summary is not None
+        bad = build_loop_summary_obligation(
+            summary, coverage="applied", status="discharged",
+        )
+        self.assertIsNotNone(validate_loop_summary_obligation(bad))
+        good = build_loop_summary_obligation(
+            summary,
+            coverage="applied",
+            status="discharged",
+            relational_companion="discharged",
+        )
+        self.assertIsNone(validate_loop_summary_obligation(good))
+        self.assertEqual(len(good["summary_sha256"]), 64)
 
 
 if __name__ == "__main__":

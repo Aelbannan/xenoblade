@@ -160,14 +160,15 @@ class CompareAffineRecognitionTests(unittest.TestCase):
 
 
 class AffineFeatureGateTests(unittest.TestCase):
-    def test_affine_feature_is_frozen_unsupported(self) -> None:
+    def test_affine_feature_is_unfrozen_with_discharge_gate(self) -> None:
         from tools.ppc_equivalence.proof_features import (
             KNOWN_PROOF_FEATURES,
             UNSUPPORTED_FOR_EQUIVALENT,
         )
 
         self.assertIn("affine-loop-summary", KNOWN_PROOF_FEATURES)
-        self.assertIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_summary_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -181,13 +182,15 @@ class AffineFeatureGateTests(unittest.TestCase):
             original_hex="00", candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         self.assertIn("affine-loop-summary", result.proof_features)
         self.assertIn("relational-induction", result.proof_features)
         self.assertIsNotNone(result.loop_summary)
         self.assertIsNotNone(result.relational_induction)
         self.assertEqual(result.loop_summary["trip_count"], 20)
+        self.assertEqual(result.loop_summary["status"], "discharged")
         self.assertEqual(result.relational_induction["status"], "discharged")
+        self.assertEqual(len(result.loop_summary["summary_sha256"]), 64)
 
     def test_compare_affine_proves_under_tight_iteration_bound(self) -> None:
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
@@ -201,12 +204,108 @@ class AffineFeatureGateTests(unittest.TestCase):
             original_hex="00", candidate_hex="00",
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
+        # Compare-affine now gets relational SMT discharge (counter-descending).
+        # Affine-loop-summary remains in the result; with Track B unfreeze it may
+        # authorize only when both obligations are discharged — under a tight
+        # iteration bound the CFG still needed the closed form, so status is
+        # EQUIVALENT when features validate, else INCONCLUSIVE from other gates.
         self.assertIn("affine-loop-summary", result.proof_features)
-        # Compare-affine closed forms still attach affine-loop-summary; PR7
-        # relational SMT discharge is CTR-only, so no relational-induction yet.
-        self.assertNotIn("relational-induction", result.proof_features)
+        self.assertIn("relational-induction", result.proof_features)
         self.assertEqual(result.loop_summary["proof_kind"], "compare-affine-closed-form")
+        self.assertEqual(result.loop_summary["status"], "discharged")
+        self.assertEqual(result.relational_induction["status"], "discharged")
+        self.assertEqual(result.relational_induction["termination"]["witness"], "counter-descending")
+        # Frozen memory-bus is irrelevant; with affine+relational discharged the
+        # self-equivalence under a tight bound should be EQUIVALENT (Track B).
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+
+    def test_applied_only_affine_cannot_authorize_equivalent(self) -> None:
+        """Negative: coverage=applied without discharged status must demote."""
+        from tools.ppc_equivalence.loop_summary import (
+            build_loop_summary_obligation,
+            find_ctr_affine_loop_candidates,
+            summarize_ctr_affine_loop,
+        )
+        from tools.ppc_equivalence.proof_features import (
+            enforce_equivalent_proof_features,
+            validate_proof_features,
+        )
+        from tools.ppc_equivalence.result import ProofResult, ProofStatus
+
+        summary = summarize_ctr_affine_loop(
+            find_ctr_affine_loop_candidates(_ctr_counted_loop(count=2))[0],
+        )
+        assert summary is not None
+        obligation = build_loop_summary_obligation(
+            summary, coverage="applied", status="applied",
+        )
+        reason = validate_proof_features(
+            {
+                "proof_features": ["affine-loop-summary"],
+                "loop_summary": obligation,
+            },
+            require_equivalent_ready=True,
+        )
+        self.assertIsNotNone(reason)
+        assert reason is not None
+        self.assertIn("discharged", reason)
+
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            proof_features=["affine-loop-summary"],
+            loop_summary=obligation,
+        )
+        gated = enforce_equivalent_proof_features(result)
+        self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+
+    def test_summary_digest_mutation_rejected(self) -> None:
+        import copy
+
+        from tools.ppc_equivalence.loop_summary import (
+            build_loop_summary_obligation,
+            find_ctr_affine_loop_candidates,
+            summarize_ctr_affine_loop,
+            validate_loop_summary_obligation,
+        )
+        from tools.ppc_equivalence.proof_request import ProofRequest, cache_key
+
+        summary = summarize_ctr_affine_loop(
+            find_ctr_affine_loop_candidates(_ctr_counted_loop(count=2))[0],
+        )
+        assert summary is not None
+        obligation = build_loop_summary_obligation(
+            summary,
+            coverage="applied",
+            status="discharged",
+            relational_companion="discharged",
+        )
+        self.assertIsNone(validate_loop_summary_obligation(obligation))
+        mutated = copy.deepcopy(obligation)
+        mutated["summary_sha256"] = "a" * 64
+        self.assertIsNotNone(validate_loop_summary_obligation(mutated))
+
+        def _request(obl: dict) -> ProofRequest:
+            return ProofRequest(
+                original_hex="48000000",
+                candidate_hex="48000000",
+                original_base=0x80000000,
+                candidate_base=0x80000000,
+                contract="default",
+                observables=("r3",),
+                limits={"timeout_ms": 1000},
+                memory_environment={},
+                floating_point_domain=None,
+                assumed_callees=(),
+                callee_contracts={},
+                relocations={},
+                proof_features=("affine-loop-summary",),
+                obligations={"loop_summary": obl},
+            )
+
+        self.assertNotEqual(
+            cache_key(_request(obligation), "e" * 64, "c" * 64),
+            cache_key(_request(mutated), "e" * 64, "c" * 64),
+        )
 
     def test_compare_affine_vs_straight_line_cr_never_equivalent(self) -> None:
         """False-eq regression: loop exits with CR0.EQ=1; candidate leaves entry CR.

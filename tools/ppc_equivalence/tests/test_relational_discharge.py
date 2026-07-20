@@ -19,6 +19,7 @@ from tools.ppc_equivalence.relational_induction import (
     NARROW_INVARIANT_NAMES,
     RelationalInductionSketch,
     build_relational_induction_sketch,
+    try_discharge_compare_affine_relational,
     try_discharge_ctr_affine_relational,
     try_discharge_relational,
     validate_relational_induction_obligation,
@@ -51,6 +52,23 @@ def _ctr_counted_loop(
         _insn(Opcode.ADDI, (body_reg, body_reg, addend), address=base_address + 8),
         _insn(Opcode.BC, (16, 0, base_address + 8, 0), address=base_address + 12),
         _insn(Opcode.BCLR, (20, 0, 0), address=base_address + 16),
+    ]
+
+
+def _compare_counted_loop(
+    *,
+    count: int,
+    addend: int = 1,
+    base_address: int = 0,
+) -> list[Instruction]:
+    """li r4,count; loop: addi r3,r3,addend; addi r4,r4,-1; cmpwi r4,0; bne loop; blr"""
+    return [
+        _insn(Opcode.ADDI, (4, 0, count), address=base_address),
+        _insn(Opcode.ADDI, (3, 3, addend), address=base_address + 4),
+        _insn(Opcode.ADDI, (4, 4, -1), address=base_address + 8),
+        _insn(Opcode.CMPWI, (0, 4, 0), address=base_address + 12),
+        _insn(Opcode.BC, (4, 2, base_address + 4, 0), address=base_address + 16),
+        _insn(Opcode.BCLR, (20, 0, 0), address=base_address + 20),
     ]
 
 
@@ -109,6 +127,51 @@ class RelationalSmtDischargeTests(unittest.TestCase):
                 require_equivalent_ready=True,
             ),
         )
+
+    def test_positive_paired_compare_affine_discharges_all_five(self) -> None:
+        program = _compare_counted_loop(count=3)
+        sketch = try_discharge_compare_affine_relational(program, program)
+        self.assertIsNotNone(sketch)
+        assert sketch is not None
+        self.assertEqual(sketch.status, "discharged")
+        obligation = sketch.to_obligation_dict()
+        self.assertEqual(obligation["status"], "discharged")
+        self.assertEqual(obligation["termination"]["witness"], "counter-descending")
+        for block_name in (
+            "initiation",
+            "preservation",
+            "exit_agreement",
+            "postcondition",
+            "termination",
+        ):
+            block = obligation[block_name]
+            self.assertEqual(block["status"], "discharged", block_name)
+            self.assertEqual(block["result"], "unsat", block_name)
+            self.assertEqual(len(block["query_sha256"]), 64, block_name)
+            self.assertEqual(block["solver"]["name"], "z3", block_name)
+        self.assertTrue(set(obligation["templates"]) <= NARROW_INVARIANT_NAMES)
+        self.assertIsNone(validate_relational_induction_obligation(obligation))
+        self.assertEqual(
+            obligation["termination"]["algorithm"],
+            "compare-counter-termination-v1",
+        )
+
+    def test_compare_affine_sat_block_demotes(self) -> None:
+        program = _compare_counted_loop(count=2)
+        sketch = try_discharge_compare_affine_relational(program, program)
+        self.assertIsNotNone(sketch)
+        assert sketch is not None
+        obligation = sketch.to_obligation_dict()
+        bad = copy.deepcopy(obligation)
+        bad["preservation"]["result"] = "sat"
+        bad["preservation"]["status"] = "failed"
+        self.assertIsNotNone(validate_relational_induction_obligation(bad))
+
+    def test_compare_affine_mismatched_bodies_do_not_discharge(self) -> None:
+        left = _compare_counted_loop(count=4, addend=1)
+        right = _compare_counted_loop(count=4, addend=2)
+        self.assertIsNone(try_discharge_compare_affine_relational(left, right))
+        self.assertIsNone(try_discharge_relational(left, right))
 
     def test_sat_or_unknown_block_is_not_discharged(self) -> None:
         """Negative: mutating a digests to SAT must fail equivalent-ready validation."""
@@ -215,7 +278,8 @@ class RelationalSmtDischargeTests(unittest.TestCase):
 
     def test_relational_feature_unfrozen(self) -> None:
         self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
-        self.assertIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertIn("memory-bus", UNSUPPORTED_FOR_EQUIVALENT)
 
     def test_failed_smt_bundle_does_not_claim_discharged(self) -> None:
         """Force a SAT initiation query and ensure status stays failed."""

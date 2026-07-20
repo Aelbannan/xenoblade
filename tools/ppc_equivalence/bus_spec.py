@@ -5,10 +5,9 @@ theories + register flags) from mutable concrete state (RAM + device values +
 event logs). Concrete sampling must clone ``BusState`` before original and
 candidate execution so MMIO side effects never leak across sides.
 
-Symbolic register-bank theory (toward PR 14) lives in ``symbolic_bus`` and
-lifts from ``DeviceSpecification`` via ``symbolic_bank_from_device_spec``.
-It is not bound into ``check_equivalence`` yet; ``memory-bus`` stays
-unsupported for ``EQUIVALENT``.
+Symbolic register-bank theory (PR 14) lives in ``symbolic_bus`` and lifts from
+``DeviceSpecification`` via ``symbolic_bank_from_device_spec``. SymbolicOps CFG
+routing is live; ``memory-bus`` stays unsupported for ``EQUIVALENT``.
 """
 
 from __future__ import annotations

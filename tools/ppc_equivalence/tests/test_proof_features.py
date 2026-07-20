@@ -81,12 +81,12 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
             frozenset({
-                "affine-loop-summary",
-                "memory-loop-summary",
                 "memory-bus",
             }),
         )
         self.assertNotIn("relational-induction", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("affine-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
+        self.assertNotIn("memory-loop-summary", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertNotIn("readonly-image", UNSUPPORTED_FOR_EQUIVALENT)
         self.assertNotIn("indirect-target-closure", UNSUPPORTED_FOR_EQUIVALENT)
 
@@ -123,7 +123,7 @@ class ProofFeaturesValidationTests(unittest.TestCase):
             ["readonly-image", "indirect-target-closure"],
         )
 
-    def test_affine_loop_summary_with_obligation_stays_equivalent(self) -> None:
+    def test_affine_loop_summary_requires_discharged_relational_companion(self) -> None:
         from tools.ppc_equivalence.loop_summary import (
             build_loop_summary_obligation,
             summarize_ctr_affine_loop,
@@ -139,14 +139,35 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         ]
         summary = summarize_ctr_affine_loop(find_ctr_affine_loop_candidates(program)[0])
         assert summary is not None
-        result = ProofResult(
+        # Applied-only (no relational companion) must demote.
+        applied = ProofResult(
             status=ProofStatus.EQUIVALENT,
             proof_features=["affine-loop-summary"],
-            loop_summary=build_loop_summary_obligation(summary, coverage="applied"),
+            loop_summary=build_loop_summary_obligation(
+                summary, coverage="applied", status="applied",
+            ),
         )
-        gated = enforce_equivalent_proof_features(result)
+        gated = enforce_equivalent_proof_features(applied)
         self.assertEqual(gated.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
         self.assertIn("affine-loop-summary", gated.proof_features)
+
+        # Forged discharged without relational companion must fail validation.
+        forged = build_loop_summary_obligation(
+            summary,
+            coverage="applied",
+            status="discharged",
+            relational_companion="discharged",
+        )
+        reason = validate_proof_features(
+            {
+                "proof_features": ["affine-loop-summary"],
+                "loop_summary": forged,
+            },
+            require_equivalent_ready=True,
+        )
+        self.assertIsNotNone(reason)
+        assert reason is not None
+        self.assertIn("relational-induction", reason)
 
     def test_non_equivalent_status_is_not_demoted(self) -> None:
         result = ProofResult(
@@ -175,14 +196,12 @@ class ProofFeaturesValidationTests(unittest.TestCase):
         self.assertIn("memory-bus", KNOWN_PROOF_FEATURES)
 
     def test_pr0_freeze_blocks_remaining_expanded_features(self) -> None:
-        """PR0: affine/memory features remain blocked; relational cleared in PR7."""
+        """Wave 5: affine/memory-loop unfrozen; memory-bus remains blocked."""
         self.assertTrue(UNSUPPORTED_FOR_EQUIVALENT)
         self.assertTrue(UNSUPPORTED_FOR_EQUIVALENT.issubset(KNOWN_PROOF_FEATURES))
         self.assertEqual(
             UNSUPPORTED_FOR_EQUIVALENT,
             frozenset({
-                "affine-loop-summary",
-                "memory-loop-summary",
                 "memory-bus",
             }),
         )

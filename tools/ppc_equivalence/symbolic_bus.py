@@ -5,9 +5,11 @@ Models a finite MMIO register bank as per-register bitvectors with nested
 unsupported-access obligation (query ``path ∧ ¬supported``); it must **not** be
 assumed into the equivalence query.
 
-Wired into the obligation/evidence path via ``memory_bus_obligations`` and
-``route_symbolic_mmio_access``. Full ``WordOps`` CFG + terminal MMIO compare
-remain deferred; ``memory-bus`` stays in ``UNSUPPORTED_FOR_EQUIVALENT``.
+CFG routing: ``SymbolicBusState`` + ``apply_symbolic_bus_access`` hook into
+``SymbolicOps`` loads/stores when ``memory_bus=`` is active. Final device
+compare via ``symbolic_bus_difference``. Obligation/evidence path lives in
+``memory_bus_obligations``. ``memory-bus`` stays in
+``UNSUPPORTED_FOR_EQUIVALENT`` until the enablement gate is met.
 Concrete ``MemoryBus`` routing is unchanged.
 """
 
@@ -17,7 +19,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Literal, Mapping, Sequence
 
-from tools.ppc_equivalence.address_space import AddressSpace, RegionKind
+from tools.ppc_equivalence.address_space import AddressSpace, Region, RegionKind
 from tools.ppc_equivalence.bus_spec import DeviceSpecification
 from tools.ppc_equivalence.deadline import Deadline
 from tools.ppc_equivalence.device_model import RegisterSpec
@@ -35,6 +37,8 @@ __all__ = [
     "SymbolicAccessResult",
     "UnsupportedAccessStatus",
     "UnsupportedAccessQuery",
+    "SymbolicBusState",
+    "SymbolicBusAccessOutcome",
     "register_masks",
     "width_mask",
     "initial_symbolic_register_bank",
@@ -56,6 +60,11 @@ __all__ = [
     "collect_mmio_touches_from_terminals",
     "register_bank_observability_from_state",
     "build_register_bank_extensional_obligation",
+    "initial_symbolic_bus_state",
+    "apply_symbolic_bus_access",
+    "symbolic_bus_difference",
+    "discharge_cfg_unsupported_accesses",
+    "concrete_u32",
 ]
 
 
@@ -405,9 +414,11 @@ def collect_mmio_touches_from_terminals(
     *,
     side: str,
     device_theories: Mapping[str, str] | None = None,
+    device_widths: Mapping[str, int] | None = None,
 ) -> tuple[MmioTouchEvidence, ...]:
     """Collect MMIO ``memory_touches`` / ``memory_writes`` from CFG terminals."""
     theories = device_theories or {}
+    widths = device_widths or {}
     seen: set[tuple[str, str, int, int]] = set()
     evidence: list[MmioTouchEvidence] = []
 
@@ -434,7 +445,11 @@ def collect_mmio_touches_from_terminals(
             access: Literal["read", "write"] = (
                 "read" if addr in read_addrs else "write"
             )
-            key = (device_id, access, concrete_addr, 1)
+            access_width = max(1, int(widths.get(device_id, 4)))
+            # Prefer word-aligned base for register-bank native width.
+            if access_width > 1:
+                concrete_addr = concrete_addr - (concrete_addr % access_width)
+            key = (device_id, access, concrete_addr, access_width)
             if key in seen:
                 continue
             seen.add(key)
@@ -448,7 +463,7 @@ def collect_mmio_touches_from_terminals(
                     device_id=device_id,
                     theory=theory,
                     access=access,
-                    width=1,
+                    width=access_width,
                     addr=hex(concrete_addr),
                     register_offset=register_offset,
                 )
@@ -581,3 +596,413 @@ def build_register_bank_extensional_obligation(
     if observability is not None:
         block["observability"] = observability
     return block
+
+
+@dataclass(frozen=True, slots=True)
+class SymbolicBusState:
+    """Per-path symbolic MMIO device state carried on ``MachineState``."""
+
+    banks: Mapping[str, SymbolicRegisterBankState]
+    fifo_traces: Mapping[str, Any]
+    touched_devices: frozenset[str] = frozenset()
+    unsupported_predicates: tuple[Any, ...] = ()
+    rejections: tuple[str, ...] = ()
+
+    def with_bank(self, device_id: str, bank: SymbolicRegisterBankState) -> SymbolicBusState:
+        banks = dict(self.banks)
+        banks[device_id] = bank
+        return SymbolicBusState(
+            banks=banks,
+            fifo_traces=dict(self.fifo_traces),
+            touched_devices=self.touched_devices | {device_id},
+            unsupported_predicates=self.unsupported_predicates,
+            rejections=self.rejections,
+        )
+
+    def with_fifo(self, device_id: str, trace: Any) -> SymbolicBusState:
+        traces = dict(self.fifo_traces)
+        traces[device_id] = trace
+        return SymbolicBusState(
+            banks=dict(self.banks),
+            fifo_traces=traces,
+            touched_devices=self.touched_devices | {device_id},
+            unsupported_predicates=self.unsupported_predicates,
+            rejections=self.rejections,
+        )
+
+    def with_unsupported(self, predicate: Any) -> SymbolicBusState:
+        return SymbolicBusState(
+            banks=dict(self.banks),
+            fifo_traces=dict(self.fifo_traces),
+            touched_devices=self.touched_devices,
+            unsupported_predicates=self.unsupported_predicates + (predicate,),
+            rejections=self.rejections,
+        )
+
+    def with_rejection(self, reason: str) -> SymbolicBusState:
+        return SymbolicBusState(
+            banks=dict(self.banks),
+            fifo_traces=dict(self.fifo_traces),
+            touched_devices=self.touched_devices,
+            unsupported_predicates=self.unsupported_predicates,
+            rejections=self.rejections + (reason,),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SymbolicBusAccessOutcome:
+    """Result of one SymbolicOps MMIO/FIFO access attempt."""
+
+    handled: bool
+    value: Any
+    next_state: SymbolicBusState
+    reason: str | None = None
+
+
+def concrete_u32(addr: Any, z3: Any) -> int | None:
+    """Return a concrete u32 when ``addr`` simplifies to a bitvector constant."""
+    try:
+        simplified = z3.simplify(addr)
+    except Exception:
+        return None
+    if hasattr(simplified, "as_long"):
+        try:
+            return int(simplified.as_long()) & 0xFFFFFFFF
+        except Exception:
+            return None
+    if isinstance(addr, int):
+        return addr & 0xFFFFFFFF
+    return None
+
+
+def initial_symbolic_bus_state(
+    memory_bus: Any,
+    z3: Any,
+    *,
+    prefix: str = "mmio",
+) -> SymbolicBusState | None:
+    """Lift declared bus devices into a fresh symbolic CFG state.
+
+    Returns ``None`` when the bus has no register-bank / FIFO devices (RAM/ROM
+    only) — callers keep ordinary array routing.
+    """
+    from tools.ppc_equivalence.bus_spec import (
+        lift_symbolic_fifo_traces,
+        lift_symbolic_register_banks,
+    )
+
+    spec = getattr(memory_bus, "specification", None)
+    if spec is None:
+        return None
+    banks = lift_symbolic_register_banks(spec, z3, prefix=prefix)
+    traces = lift_symbolic_fifo_traces(spec)
+    if not banks and not traces:
+        return None
+    return SymbolicBusState(banks=banks, fifo_traces=traces)
+
+
+def _mmio_regions(address_space: AddressSpace) -> tuple[Region, ...]:
+    return tuple(r for r in address_space.regions if r.kind is RegionKind.MMIO)
+
+
+def _region_contains_concrete(region: Region, addr: int, width: int) -> bool:
+    last = (addr + width - 1) & 0xFFFFFFFF
+    if last < addr:
+        return False
+    return region.start <= addr and last <= region.end
+
+
+def apply_symbolic_bus_access(
+    bus: SymbolicBusState,
+    *,
+    address_space: AddressSpace,
+    addr: Any,
+    width: int,
+    z3: Any,
+    value: Any | None = None,
+    is_write: bool = False,
+) -> SymbolicBusAccessOutcome:
+    """Route one SymbolicOps load/store through declared MMIO devices.
+
+    Concrete addresses outside MMIO return ``handled=False`` (use RAM/ROM array).
+    Unsupported addresses inside an MMIO region record a separate unsupported
+    predicate and do **not** silently assume support into equivalence.
+    """
+    if width not in (1, 2, 4):
+        return SymbolicBusAccessOutcome(
+            handled=True,
+            value=value if value is not None else _bv(z3, 0, 32),
+            next_state=bus.with_rejection(f"unsupported-access-width-{width}"),
+            reason="unsupported-width",
+        )
+
+    concrete = concrete_u32(addr, z3)
+    mmio_regions = _mmio_regions(address_space)
+
+    if concrete is not None:
+        hit_region: Region | None = None
+        for region in mmio_regions:
+            if _region_contains_concrete(region, concrete, width):
+                hit_region = region
+                break
+        if hit_region is None:
+            return SymbolicBusAccessOutcome(
+                handled=False,
+                value=value if value is not None else _bv(z3, 0, 32),
+                next_state=bus,
+            )
+        device_id = hit_region.device_id
+        if device_id is None:
+            return SymbolicBusAccessOutcome(
+                handled=True,
+                value=value if value is not None else _bv(z3, 0, 32),
+                next_state=bus.with_unsupported(z3.BoolVal(True)).with_rejection(
+                    "mmio-missing-device-id"
+                ),
+                reason="mmio-missing-device-id",
+            )
+
+        bank = bus.banks.get(device_id)
+        if bank is not None:
+            access = route_symbolic_mmio_access(
+                addr=addr,
+                width=width,
+                bank=bank,
+                z3=z3,
+                value=value,
+                is_write=is_write,
+            )
+            next_bus = bus.with_bank(device_id, access.next_state)
+            # Concrete addr in MMIO: if not a declared register/width, unsupported.
+            if z3.is_false(z3.simplify(access.supported)):
+                next_bus = next_bus.with_unsupported(z3.BoolVal(True))
+                return SymbolicBusAccessOutcome(
+                    handled=True,
+                    value=access.value,
+                    next_state=next_bus,
+                    reason="unsupported-register-access",
+                )
+            return SymbolicBusAccessOutcome(
+                handled=True,
+                value=access.value,
+                next_state=next_bus,
+            )
+
+        trace = bus.fifo_traces.get(device_id)
+        if trace is not None:
+            if not is_write:
+                return SymbolicBusAccessOutcome(
+                    handled=True,
+                    value=_bv(z3, 0, 32),
+                    next_state=bus.with_unsupported(z3.BoolVal(True)).with_rejection(
+                        "gxfifo-read-unsupported"
+                    ),
+                    reason="gxfifo-read-unsupported",
+                )
+            if value is None:
+                raise ValueError("FIFO write requires value")
+            next_trace, reject = trace.append_write(addr, width, value)
+            if next_trace is None:
+                return SymbolicBusAccessOutcome(
+                    handled=True,
+                    value=value,
+                    next_state=bus.with_rejection(reject or "gxfifo-append-failed"),
+                    reason=reject,
+                )
+            return SymbolicBusAccessOutcome(
+                handled=True,
+                value=value,
+                next_state=bus.with_fifo(device_id, next_trace),
+            )
+
+        return SymbolicBusAccessOutcome(
+            handled=True,
+            value=value if value is not None else _bv(z3, 0, 32),
+            next_state=bus.with_unsupported(z3.BoolVal(True)).with_rejection(
+                f"mmio-unknown-device:{device_id}"
+            ),
+            reason="mmio-unknown-device",
+        )
+
+    # Symbolic address with MMIO present: route through register-bank formulas
+    # using nested addr==reg conditions. Unsupported = in_mmio ∧ ¬supported is
+    # recorded separately and never assumed into equivalence.
+    if not mmio_regions:
+        return SymbolicBusAccessOutcome(
+            handled=False,
+            value=value if value is not None else _bv(z3, 0, 32),
+            next_state=bus,
+        )
+
+    # Only MMIO (no RAM/ROM): fully route. Mixed spaces with symbolic addresses
+    # stay fail-closed — region path-splitting is deferred.
+    non_mmio = [r for r in address_space.regions if r.kind is not RegionKind.MMIO]
+    if non_mmio:
+        return SymbolicBusAccessOutcome(
+            handled=True,
+            value=value if value is not None else _bv(z3, 0, 32),
+            next_state=bus.with_unsupported(z3.BoolVal(True)).with_rejection(
+                "symbolic-mmio-mixed-address-space"
+            ),
+            reason="symbolic-mmio-mixed-address-space",
+        )
+
+    next_bus = bus
+    default_value = value if value is not None else _bv(z3, 0, 32)
+    routed_value = default_value
+    any_supported = z3.BoolVal(False)
+
+    for region in mmio_regions:
+        device_id = region.device_id
+        if device_id is None:
+            continue
+        bank = next_bus.banks.get(device_id)
+        if bank is not None:
+            access = route_symbolic_mmio_access(
+                addr=addr,
+                width=width,
+                bank=bank,
+                z3=z3,
+                value=value,
+                is_write=is_write,
+            )
+            any_supported = z3.Or(any_supported, access.supported)
+            next_bus = next_bus.with_bank(device_id, access.next_state)
+            routed_value = z3.If(access.supported, access.value, routed_value)
+            continue
+
+        trace = next_bus.fifo_traces.get(device_id)
+        if trace is not None:
+            if not is_write:
+                next_bus = next_bus.with_rejection("gxfifo-read-unsupported")
+                continue
+            if value is None:
+                raise ValueError("FIFO write requires value")
+            # Symbolic-address FIFO writes are unsupported (unbounded emission risk).
+            next_bus = next_bus.with_rejection("symbolic-fifo-emission")
+            continue
+
+    next_bus = next_bus.with_unsupported(z3.Not(any_supported))
+    return SymbolicBusAccessOutcome(
+        handled=True,
+        value=routed_value,
+        next_state=next_bus,
+    )
+
+
+def symbolic_bus_difference(
+    left: SymbolicBusState | None,
+    right: SymbolicBusState | None,
+    z3: Any,
+) -> Any:
+    """Boolean: visible MMIO/FIFO observables differ (automatic once touched)."""
+    if left is None and right is None:
+        return z3.BoolVal(False)
+    if left is None or right is None:
+        return z3.BoolVal(True)
+
+    touched = left.touched_devices | right.touched_devices
+    if not touched:
+        return z3.BoolVal(False)
+
+    diffs: list[Any] = []
+    for device_id in sorted(touched):
+        left_bank = left.banks.get(device_id)
+        right_bank = right.banks.get(device_id)
+        if left_bank is not None or right_bank is not None:
+            if left_bank is None or right_bank is None:
+                diffs.append(z3.BoolVal(True))
+                continue
+            offsets = sorted(set(left_bank.values) | set(right_bank.values))
+            for offset in offsets:
+                lv = left_bank.values.get(offset)
+                rv = right_bank.values.get(offset)
+                if lv is None or rv is None:
+                    diffs.append(z3.BoolVal(True))
+                else:
+                    diffs.append(lv != rv)
+
+        left_fifo = left.fifo_traces.get(device_id)
+        right_fifo = right.fifo_traces.get(device_id)
+        if left_fifo is not None or right_fifo is not None:
+            if left_fifo is None or right_fifo is None:
+                diffs.append(z3.BoolVal(True))
+                continue
+            compare = left_fifo.compare_equal(right_fifo, z3)
+            if not compare.supported:
+                diffs.append(z3.BoolVal(True))
+            else:
+                diffs.append(z3.Not(compare.equal))
+
+    if left.rejections != right.rejections:
+        diffs.append(z3.BoolVal(True))
+
+    return z3.Or(*diffs) if diffs else z3.BoolVal(False)
+
+
+def discharge_cfg_unsupported_accesses(
+    terminals: Sequence[Any],
+    *,
+    side: str,
+    deadline: Deadline,
+    z3: Any,
+) -> dict[str, Any]:
+    """Per-side digest of CFG-collected ``path ∧ unsupported`` obligations."""
+    del side
+    if not terminals:
+        return {"result": "not-queried", "query_sha256": None, "terminals": []}
+
+    terminal_results: list[dict[str, Any]] = []
+    worst = "unsat"
+    last_hash: str | None = None
+    for terminal in terminals:
+        bus = getattr(terminal.state, "symbolic_bus", None)
+        if bus is None or not bus.unsupported_predicates:
+            continue
+        path = terminal.condition
+        for index, predicate in enumerate(bus.unsupported_predicates):
+            # Query path ∧ unsupported_predicate (already ¬supported shaped).
+            discharge = discharge_bad_conditions(
+                premises=[path],
+                bad_conditions=[predicate],
+                deadline=deadline,
+                algorithm=ALGORITHM,
+                z3_module=z3,
+            )
+            if discharge.status == "unsat":
+                status = "unsat"
+                inconclusive = False
+            elif discharge.status == "sat":
+                status = "sat"
+                inconclusive = True
+            else:
+                status = "unknown"
+                inconclusive = True
+            payload = {
+                "algorithm": ALGORITHM,
+                "kind": "unsupported-access",
+                "schema_version": 1,
+                "discharge_query_sha256": discharge.query_sha256,
+                "terminal_index": index,
+            }
+            query_hash = canonical_json_sha256(payload)
+            last_hash = query_hash
+            terminal_results.append(
+                {
+                    "result": status,
+                    "query_sha256": query_hash,
+                    "inconclusive": inconclusive,
+                }
+            )
+            if status == "sat":
+                worst = "sat"
+            elif status == "unknown" and worst == "unsat":
+                worst = "unknown"
+
+    if not terminal_results:
+        return {"result": "not-queried", "query_sha256": None, "terminals": []}
+    return {
+        "result": worst,
+        "query_sha256": last_hash,
+        "terminals": terminal_results,
+    }

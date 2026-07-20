@@ -42,7 +42,24 @@ _FP_DOMAIN: ContextVar[FloatingPointDomain] = ContextVar(
     default=FloatingPointDomain(),
 )
 
-# Opt-in Tier C memory bus for concrete CFG execution only.
+# SoftFloat oracle flags from the most recent ConcreteOps scalar/fused call
+# (ConcreteOps is a frozen dataclass, so flags cannot live on the ops object).
+_SOFTFLOAT_ORACLE_FLAGS: ContextVar[Any] = ContextVar(
+    "softfloat_oracle_flags", default=None,
+)
+
+
+def _record_softfloat_oracle_flags(flags: Any) -> None:
+    _SOFTFLOAT_ORACLE_FLAGS.set(flags)
+
+
+def _consume_softfloat_oracle_flags() -> Any:
+    flags = _SOFTFLOAT_ORACLE_FLAGS.get()
+    _SOFTFLOAT_ORACLE_FLAGS.set(None)
+    return flags
+
+# Opt-in Tier C memory bus: ConcreteOps full routing; SymbolicOps MMIO/FIFO
+# via ``SymbolicBusState`` on ``MachineState``.
 _MEMORY_BUS: ContextVar[MemoryBus | None] = ContextVar(
     "ppc_equivalence_memory_bus",
     default=None,
@@ -488,13 +505,19 @@ class ConcreteOps:
             raise ExecutionInconclusive(str(exc)) from exc
         raise exc
 
+    def _fp_oracle_take_bits(self, result: Any) -> int:
+        # ConcreteOps is frozen; stash SoftFloat flags in a ContextVar for
+        # OX/UX/XX sticky latch after the scalar/fused exception path.
+        _record_softfloat_oracle_flags(result.flags)
+        return int(result.bits64)
+
     def fp_fadd_rne_bits(self, a_bits: int, b_bits: int) -> int:
         from .fp_oracle import fadd_binary64_rne
 
         try:
-            return fadd_binary64_rne(
+            return self._fp_oracle_take_bits(fadd_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -503,9 +526,9 @@ class ConcreteOps:
         from .fp_oracle import fmul_binary64_rne
 
         try:
-            return fmul_binary64_rne(
+            return self._fp_oracle_take_bits(fmul_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -515,9 +538,9 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fadds_fpr_rne(
+            return self._fp_oracle_take_bits(fadds_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF, b_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -527,9 +550,9 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fmuls_fpr_rne(
+            return self._fp_oracle_take_bits(fmuls_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF, c_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -538,9 +561,9 @@ class ConcreteOps:
         from .fp_oracle import fsub_binary64_rne
 
         try:
-            return fsub_binary64_rne(
+            return self._fp_oracle_take_bits(fsub_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -549,9 +572,9 @@ class ConcreteOps:
         from .fp_oracle import fdiv_binary64_rne
 
         try:
-            return fdiv_binary64_rne(
+            return self._fp_oracle_take_bits(fdiv_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF, b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -561,9 +584,9 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fsubs_fpr_rne(
+            return self._fp_oracle_take_bits(fsubs_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF, b_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -573,9 +596,9 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fdivs_fpr_rne(
+            return self._fp_oracle_take_bits(fdivs_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF, b_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -584,11 +607,11 @@ class ConcreteOps:
         from .fp_oracle import fmadd_binary64_rne
 
         try:
-            return fmadd_binary64_rne(
+            return self._fp_oracle_take_bits(fmadd_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF,
                 c_bits & 0xFFFFFFFFFFFFFFFF,
                 b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -597,11 +620,11 @@ class ConcreteOps:
         from .fp_oracle import fmsub_binary64_rne
 
         try:
-            return fmsub_binary64_rne(
+            return self._fp_oracle_take_bits(fmsub_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF,
                 c_bits & 0xFFFFFFFFFFFFFFFF,
                 b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -611,11 +634,11 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fmadds_fpr_rne(
+            return self._fp_oracle_take_bits(fmadds_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF,
                 b_fpr & 0xFFFFFFFFFFFFFFFF,
                 c_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -625,11 +648,11 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fmsubs_fpr_rne(
+            return self._fp_oracle_take_bits(fmsubs_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF,
                 b_fpr & 0xFFFFFFFFFFFFFFFF,
                 c_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -638,11 +661,11 @@ class ConcreteOps:
         from .fp_oracle import fnmadd_binary64_rne
 
         try:
-            return fnmadd_binary64_rne(
+            return self._fp_oracle_take_bits(fnmadd_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF,
                 c_bits & 0xFFFFFFFFFFFFFFFF,
                 b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -651,11 +674,11 @@ class ConcreteOps:
         from .fp_oracle import fnmsub_binary64_rne
 
         try:
-            return fnmsub_binary64_rne(
+            return self._fp_oracle_take_bits(fnmsub_binary64_rne(
                 a_bits & 0xFFFFFFFFFFFFFFFF,
                 c_bits & 0xFFFFFFFFFFFFFFFF,
                 b_bits & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -665,11 +688,11 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fnmadds_fpr_rne(
+            return self._fp_oracle_take_bits(fnmadds_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF,
                 b_fpr & 0xFFFFFFFFFFFFFFFF,
                 c_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -679,11 +702,11 @@ class ConcreteOps:
 
         self._fp_oracle_require_rne(rm)
         try:
-            return fnmsubs_fpr_rne(
+            return self._fp_oracle_take_bits(fnmsubs_fpr_rne(
                 a_fpr & 0xFFFFFFFFFFFFFFFF,
                 b_fpr & 0xFFFFFFFFFFFFFFFF,
                 c_fpr & 0xFFFFFFFFFFFFFFFF,
-            ).bits64
+            ))
         except Exception as exc:
             self._fp_oracle_fail_closed(exc)
             raise AssertionError("unreachable")
@@ -1378,6 +1401,103 @@ def _store(memory: Any, address: Any, value: Any, width: int, ops: WordOps, *, r
     return result
 
 
+def _symbolic_bus_read(
+    state: MachineState,
+    address: Any,
+    width: int,
+    ops: WordOps,
+    *,
+    reverse: bool = False,
+) -> tuple[Any, MachineState]:
+    """Load through SymbolicOps MMIO routing when a symbolic bus is active."""
+    bus_state = state.symbolic_bus
+    memory_bus = active_memory_bus()
+    if (
+        bus_state is None
+        or memory_bus is None
+        or not isinstance(ops, SymbolicOps)
+    ):
+        return _load(state.memory, address, width, ops, reverse=reverse), state
+
+    from tools.ppc_equivalence.symbolic_bus import apply_symbolic_bus_access
+
+    outcome = apply_symbolic_bus_access(
+        bus_state,
+        address_space=memory_bus.address_space,
+        addr=address,
+        width=width,
+        z3=ops.z3,
+        is_write=False,
+    )
+    state = replace(state, symbolic_bus=outcome.next_state)
+    if not outcome.handled:
+        return _load(state.memory, address, width, ops, reverse=reverse), state
+    value = outcome.value
+    if reverse and width > 1:
+        # Byte-reverse a width-sized value in the low bits.
+        parts = []
+        for offset in range(width):
+            shift = (width - 1 - offset) * 8
+            parts.append(ops.band(ops.lshr(value, ops.const(shift)), ops.const(0xFF)))
+        value = ops.const(0)
+        for part in reversed(parts):
+            value = ops.bor(ops.shl(value, ops.const(8)), part)
+    return value, state
+
+
+def _symbolic_bus_write(
+    state: MachineState,
+    address: Any,
+    value: Any,
+    width: int,
+    ops: WordOps,
+    *,
+    reverse: bool = False,
+) -> MachineState:
+    """Store through SymbolicOps MMIO/FIFO routing when a symbolic bus is active."""
+    bus_state = state.symbolic_bus
+    memory_bus = active_memory_bus()
+    if (
+        bus_state is None
+        or memory_bus is None
+        or not isinstance(ops, SymbolicOps)
+    ):
+        return replace(
+            state,
+            memory=_store(state.memory, address, value, width, ops, reverse=reverse),
+        )
+
+    from tools.ppc_equivalence.symbolic_bus import apply_symbolic_bus_access
+
+    stored = value
+    if reverse and width > 1:
+        parts = []
+        for offset in range(width):
+            shift = (width - 1 - offset) * 8
+            parts.append(ops.band(ops.lshr(value, ops.const(shift)), ops.const(0xFF)))
+        stored = ops.const(0)
+        for part in reversed(parts):
+            stored = ops.bor(ops.shl(stored, ops.const(8)), part)
+
+    outcome = apply_symbolic_bus_access(
+        bus_state,
+        address_space=memory_bus.address_space,
+        addr=address,
+        width=width,
+        z3=ops.z3,
+        value=stored,
+        is_write=True,
+    )
+    state = replace(state, symbolic_bus=outcome.next_state)
+    if not outcome.handled:
+        return replace(
+            state,
+            memory=_store(state.memory, address, value, width, ops, reverse=reverse),
+        )
+    # MMIO/FIFO handled: do not also mutate the RAM array.
+    return state
+
+
 def _sign_extend(value: Any, bits: int, ops: WordOps) -> Any:
     low_mask = (1 << bits) - 1
     low = ops.band(value, ops.const(low_mask))
@@ -1841,8 +1961,74 @@ def _fpscr_normalize(value: Any, ops: WordOps) -> Any:
 def _fpscr_raise_if(
     state: MachineState, condition: Any, exception_mask: int, ops: WordOps,
 ) -> MachineState:
+    from .fp_traps import enable_bit_for_exception_mask, note_fp_enabled_exception_reraise
+
+    # ConcreteOps: note enabled-exception occurrence even when sticky was already
+    # set (FPSCR may be unchanged → CFG edge detection alone would miss re-trap).
+    if isinstance(ops, ConcreteOps) and bool(condition):
+        enable = enable_bit_for_exception_mask(exception_mask)
+        if enable and (int(state.fpscr) & enable):
+            note_fp_enabled_exception_reraise()
     raised = _fpscr_raise(state, exception_mask, ops)
     return state.with_fpscr(ops.ite(condition, raised.fpscr, state.fpscr))
+
+
+def _latch_softfloat_ox_ux_xx(
+    state: MachineState, ops: WordOps,
+) -> tuple[MachineState, Any, Any, Any]:
+    """Latch SoftFloat OX/UX/XX stickies; return (state, ox, ux, xx) conditions."""
+    flags = _consume_softfloat_oracle_flags()
+    if flags is None or not isinstance(ops, ConcreteOps):
+        false = ops.bool(False)
+        return state, false, false, false
+    ox = ops.bool(bool(flags.overflow))
+    ux = ops.bool(bool(flags.underflow))
+    xx = ops.bool(bool(flags.inexact))
+    state = _fpscr_raise_if(state, ox, FPSCR_OX, ops)
+    state = _fpscr_raise_if(state, ux, FPSCR_UX, ops)
+    state = _fpscr_raise_if(state, xx, FPSCR_XX, ops)
+    return state, ox, ux, xx
+
+
+def _enabled_exception_suppress(
+    state: MachineState,
+    ops: WordOps,
+    *,
+    invalid: Any = False,
+    zx: Any = False,
+    ox: Any = False,
+    ux: Any = False,
+    xx: Any = False,
+) -> Any:
+    """Scalar destination suppression when any enabled exception matches."""
+    invalid_enabled = ops.lnot(ops.eq(
+        ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+    ))
+    zero_enabled = ops.lnot(ops.eq(
+        ops.band(state.fpscr, ops.const(FPSCR_ZE)), ops.const(0),
+    ))
+    overflow_enabled = ops.lnot(ops.eq(
+        ops.band(state.fpscr, ops.const(FPSCR_OE)), ops.const(0),
+    ))
+    underflow_enabled = ops.lnot(ops.eq(
+        ops.band(state.fpscr, ops.const(FPSCR_UE)), ops.const(0),
+    ))
+    inexact_enabled = ops.lnot(ops.eq(
+        ops.band(state.fpscr, ops.const(FPSCR_XE)), ops.const(0),
+    ))
+    return ops.lor(
+        ops.land(invalid, invalid_enabled),
+        ops.lor(
+            ops.land(zx, zero_enabled),
+            ops.lor(
+                ops.land(ox, overflow_enabled),
+                ops.lor(
+                    ops.land(ux, underflow_enabled),
+                    ops.land(xx, inexact_enabled),
+                ),
+            ),
+        ),
+    )
 
 
 def _execute_fp_compare(
@@ -2197,7 +2383,16 @@ def _apply_paired_combined_outcome(
     invalid_cause = int(combined.invalid_cause or 0)
     for mask in (FPSCR_VXSNAN, FPSCR_VXISI, FPSCR_VXIMZ):
         if invalid_cause & mask:
-            state = _fpscr_raise(state, mask, ops)
+            state = _fpscr_raise_if(state, ops.bool(True), mask, ops)
+    flags = combined.flags
+    if bool(flags.divide_by_zero):
+        state = _fpscr_raise_if(state, ops.bool(True), FPSCR_ZX, ops)
+    if bool(flags.overflow):
+        state = _fpscr_raise_if(state, ops.bool(True), FPSCR_OX, ops)
+    if bool(flags.underflow):
+        state = _fpscr_raise_if(state, ops.bool(True), FPSCR_UX, ops)
+    if bool(flags.inexact):
+        state = _fpscr_raise_if(state, ops.bool(True), FPSCR_XX, ops)
 
     if clear_fifr:
         cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
@@ -2207,6 +2402,7 @@ def _apply_paired_combined_outcome(
     state = state.with_fpscr(
         _fpscr_replace_mask(state.fpscr, FPSCR_FPRF_MASK, fprf_shifted, ops),
     )
+    # Broadway paired: unconditional lane writeback even under enabled exceptions.
     state = state.with_fpr(fd, ps0).with_ps1(fd, ps1)
     if record:
         state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
@@ -2432,6 +2628,8 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
     if op not in SUPPORTED_OPCODES:
         raise UnsupportedInstruction(insn.address, insn.raw, f"semantics are unsupported for {op.value}")
     if op in _FP_ROUNDING_SENSITIVE:
+        # Avoid stale SoftFloat flags leaking across instructions.
+        _SOFTFLOAT_ORACLE_FLAGS.set(None)
         # RN occupies FPSCR[0:1]; NI is bit 2 (FPSCR_NI).
         # Default domain requires NI=0. When require_ni_zero=False, NI is read
         # from live FPSCR and modeled only for _FP_NI_SUPPORTED opcodes.
@@ -2465,20 +2663,18 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 )
 
         if domain.traps_enabled:
-            # PR18 scaffold: OE/UE/XE trap delivery is incomplete — force clear.
-            from .fp_traps import FPSCR_OX_UX_XX_ENABLES
+            # SoftFloat ConcreteOps models OE/UE/XE + OX/UX/XX. SymbolicOps
+            # still lacks OX/UX/XX SMT predicates — keep those enables clear.
+            if isinstance(ops, SymbolicOps):
+                from .fp_traps import FPSCR_OX_UX_XX_ENABLES
 
-            no_oxuxxx = ops.eq(
-                ops.band(state.fpscr, ops.const(FPSCR_OX_UX_XX_ENABLES)),
-                ops.const(0),
-            )
-            if isinstance(ops, ConcreteOps) and not no_oxuxxx:
-                raise ExecutionInconclusive(
-                    "FP OX/UX/XX trap delivery is not modeled; OE/UE/XE must be clear",
+                no_oxuxxx = ops.eq(
+                    ops.band(state.fpscr, ops.const(FPSCR_OX_UX_XX_ENABLES)),
+                    ops.const(0),
                 )
-            state = _constrain_valid(
-                state, no_oxuxxx, InvalidReason.FP_DOMAIN_EXCLUDED, ops,
-            )
+                state = _constrain_valid(
+                    state, no_oxuxxx, InvalidReason.FP_DOMAIN_EXCLUDED, ops,
+                )
     result: Any | None = None
     destination: int | None = None
     overflow = ops.bool(False)
@@ -2773,7 +2969,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         if op in LOADS:
             width, signed, update, reverse_bytes = LOADS[op]
             state = _touch_memory(state, address, width, ops, "read")
-            result = _load(state.memory, address, width, ops, reverse=reverse_bytes)
+            result, state = _symbolic_bus_read(
+                state, address, width, ops, reverse=reverse_bytes,
+            )
             if signed: result = _sign_extend(result, width * 8, ops)
             state = state.with_gpr(reg, result)
             if update: state = state.with_gpr(ra, address)
@@ -2781,7 +2979,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
         width, update, reverse_bytes = STORES[op]
         state = _touch_memory(state, address, width, ops, "write")
         state = _mark_stack_pointer_escape(state, state.gpr[reg], ops)
-        state = replace(state, memory=_store(state.memory, address, state.gpr[reg], width, ops, reverse=reverse_bytes))
+        state = _symbolic_bus_write(
+            state, address, state.gpr[reg], width, ops, reverse=reverse_bytes,
+        )
         if update: state = state.with_gpr(ra, address)
         return state
     elif op in FP_D_MEM or op in FP_X_MEM:
@@ -3346,6 +3546,7 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             state = _fpscr_raise_if(state, any_snan, FPSCR_VXSNAN, ops)
             state = _fpscr_raise_if(state, vximz, FPSCR_VXIMZ, ops)
             state = _fpscr_raise_if(state, vxisi, FPSCR_VXISI, ops)
+            state, ox, ux, xx = _latch_softfloat_ox_ux_xx(state, ops)
 
             propagated_nan = ops.ite(
                 nan_a,
@@ -3378,10 +3579,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 )
             result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
 
-            invalid_enabled = ops.lnot(ops.eq(
-                ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
+            write_result = ops.lnot(_enabled_exception_suppress(
+                state, ops, invalid=invalid, ox=ox, ux=ux, xx=xx,
             ))
-            write_result = ops.lnot(ops.land(invalid, invalid_enabled))
             any_inf = ops.lor(inf_a, ops.lor(inf_b, inf_c))
             clear_fifr = ops.lor(nan_result, any_inf)
             cleared = ops.band(state.fpscr, ops.bnot(ops.const(FPSCR_FI | FPSCR_FR)))
@@ -3465,6 +3665,7 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             state = _fpscr_raise_if(state, vxzdz, FPSCR_VXZDZ, ops)
             state = _fpscr_raise_if(state, vxidi, FPSCR_VXIDI, ops)
             state = _fpscr_raise_if(state, zx, FPSCR_ZX, ops)
+            state, ox, ux, xx = _latch_softfloat_ox_ux_xx(state, ops)
 
             invalid = ops.lor(
                 any_snan,
@@ -3494,14 +3695,8 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 )
             result_bits = ops.ite(nan_result, propagated_nan, normal_bits)
 
-            invalid_enabled = ops.lnot(ops.eq(
-                ops.band(state.fpscr, ops.const(FPSCR_VE)), ops.const(0),
-            ))
-            zero_enabled = ops.lnot(ops.eq(
-                ops.band(state.fpscr, ops.const(FPSCR_ZE)), ops.const(0),
-            ))
-            suppress = ops.lor(
-                ops.land(invalid, invalid_enabled), ops.land(zx, zero_enabled),
+            suppress = _enabled_exception_suppress(
+                state, ops, invalid=invalid, zx=zx, ox=ox, ux=ux, xx=xx,
             )
 
             clear_fifr = nan_result
@@ -3746,6 +3941,7 @@ def _apply_call_summary(
         state.memory_effects + ((token,) if "memory" in contract.writes else ()),
         state.stack_layout_valid,
         ops.bool(False),
+        state.symbolic_bus,
     )
 
 
@@ -3803,9 +3999,9 @@ def execute_cfg(
         raise ValueError("cannot execute an empty block")
     if max_loop_iterations < 1:
         raise ValueError("max_loop_iterations must be >= 1")
-    if memory_bus is not None and not isinstance(ops, ConcreteOps):
+    if memory_bus is not None and not isinstance(ops, (ConcreteOps, SymbolicOps)):
         raise ExecutionInconclusive(
-            "memory bus routing is supported for ConcreteOps only",
+            "memory bus routing requires ConcreteOps or SymbolicOps",
         )
     domain = floating_point_domain or FloatingPointDomain()
     domain.validate()
@@ -3814,6 +4010,20 @@ def execute_cfg(
     try:
         if memory_bus is not None:
             memory_bus.ram = state.memory
+            if isinstance(ops, SymbolicOps) and state.symbolic_bus is None:
+                from tools.ppc_equivalence.symbolic_bus import initial_symbolic_bus_state
+
+                lifted = initial_symbolic_bus_state(memory_bus, ops.z3)
+                if lifted is not None:
+                    # Loop summaries × FIFO: unbounded emission risk.
+                    if lifted.fifo_traces and (
+                        affine_loop_summaries or memory_loop_summaries
+                    ):
+                        raise ExecutionInconclusive(
+                            "symbolic-loop-fifo-emission: loop summaries with "
+                            "GX FIFO devices are unsupported"
+                        )
+                    state = replace(state, symbolic_bus=lifted)
         return _execute_cfg_body(
             state,
             instructions,
@@ -3993,6 +4203,7 @@ def _execute_cfg_body(
             if domain.traps_enabled:
                 from .fp_traps import (
                     PROGRAM_EXCEPTION_VECTOR,
+                    clear_fp_enabled_exception_reraise,
                     deliver_fp_program_exception,
                     ensure_fp_trap_delivery_supported,
                     fp_trap_pending_from_fex_transition,
@@ -4010,11 +4221,9 @@ def _execute_cfg_body(
                         raise ExecutionInconclusive(
                             f"FP trap delivery not modeled for opcode {insn.opcode.value}",
                         )
-                    try:
-                        ensure_fp_trap_delivery_supported(insn.opcode, current.fpscr)
-                    except TypeError:
-                        ensure_fp_trap_delivery_supported(insn.opcode)
+                    ensure_fp_trap_delivery_supported(insn.opcode, current.fpscr)
                     trap_cfg = True
+                    clear_fp_enabled_exception_reraise()
 
             pre_fpscr = current.fpscr
             next_state = execute_instruction(current, insn, ops)

@@ -13,14 +13,13 @@ from tools.ppc_equivalence.result import ProofResult, ProofStatus
 
 # Reserved features that may appear in certificates but cannot yet justify
 # EQUIVALENT until the engine implements them soundly.
-# PR0 safety freeze: affine/memory-loop/memory-bus stay unsupported until their
-# foundation repairs land. Jump-table readonly-image + indirect-target-closure
-# are discharged independently (PR3). Relational-induction is discharged via
-# five independent UNSAT queries (PR7) and may authorize EQUIVALENT when
-# obligations validate with status discharged.
+# PR0 safety freeze remainder: memory-bus stays unsupported (Track C).
+# Jump-table readonly-image + indirect-target-closure are discharged
+# independently (PR3). Relational-induction is discharged via five independent
+# UNSAT queries (PR7). Affine + memory-loop summaries authorize EQUIVALENT only
+# when obligations validate with status=discharged and matching digests
+# (Wave 5 Track B); coverage=applied / recognition alone never authorizes.
 UNSUPPORTED_FOR_EQUIVALENT: frozenset[str] = frozenset({
-    "affine-loop-summary",
-    "memory-loop-summary",
     "memory-bus",
 })
 
@@ -174,6 +173,24 @@ def validate_proof_features(
             reason = validate_loop_summary_obligation(obligation)
             if reason is not None:
                 return reason
+            if require_equivalent_ready and obligation.get("status") != "discharged":
+                return (
+                    "loop_summary.status must be 'discharged' "
+                    "for EQUIVALENT proofs"
+                )
+            if require_equivalent_ready:
+                # CTR-affine discharge always pairs with relational-induction.
+                if "relational-induction" not in features:
+                    return (
+                        "affine-loop-summary EQUIVALENT proofs require "
+                        "relational-induction"
+                    )
+                relational = data.get("relational_induction")
+                if not isinstance(relational, dict) or relational.get("status") != "discharged":
+                    return (
+                        "affine-loop-summary EQUIVALENT proofs require "
+                        "relational_induction.status=discharged"
+                    )
         if feature == "relational-induction":
             reason = validate_relational_induction_obligation(obligation)
             if reason is not None:
@@ -187,6 +204,11 @@ def validate_proof_features(
             reason = validate_memory_loop_obligation(obligation)
             if reason is not None:
                 return reason
+            if require_equivalent_ready and obligation.get("status") != "discharged":
+                return (
+                    "memory_loop.status must be 'discharged' "
+                    "for EQUIVALENT proofs"
+                )
         if feature == "memory-bus":
             reason = validate_memory_bus_obligation(obligation)
             if reason is not None:
@@ -221,11 +243,6 @@ def validate_proof_features(
                 f"obligation block {obligation_key!r} present without a "
                 "matching proof_features entry"
             )
-
-    if "affine-loop-summary" in seen:
-        reason = validate_loop_summary_obligation(data["loop_summary"])
-        if reason is not None:
-            return reason
 
     if require_equivalent_ready:
         for feature in features:

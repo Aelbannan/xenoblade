@@ -142,7 +142,7 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
         self.assertFalse(result.concrete_sampling["mismatch_found"])
 
     def test_mmio_access_inconclusive_symbolic_fail_closed(self) -> None:
-        """MMIO devices are live in concrete CFG; SMT still excludes MMIO."""
+        """MMIO CFG routing is live; feature stays frozen for EQUIVALENT."""
         bus = _mmio_bank_bus()
         program = [
             _insn(Opcode.ADDI, (3, 0, 0xCC008000), address=0),
@@ -158,12 +158,42 @@ class CheckEquivalenceMemoryBusTests(unittest.TestCase):
             candidate_hex="00",
             memory_bus=bus,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_LAYOUT)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED, result.unsupported)
         self.assertIn("memory-bus", result.proof_features)
         assert result.memory_bus is not None
-        self.assertEqual(result.memory_bus.get("mmio"), "fail-closed")
-        self.assertEqual(result.memory_bus.get("symbolic_mmio"), "scaffolded")
+        self.assertEqual(result.memory_bus.get("mmio"), "cfg-routed-frozen")
+        self.assertEqual(result.memory_bus.get("symbolic_mmio"), "cfg-routed")
         self.assertIn("register_bank_extensional", result.memory_bus)
+        self.assertIn("bus_spec_sha256", result.memory_bus)
+        unsupported = result.memory_bus.get("unsupported_access") or {}
+        self.assertEqual(unsupported.get("original", {}).get("result"), "unsat")
+        self.assertEqual(unsupported.get("candidate", {}).get("result"), "unsat")
+
+    def test_unsupported_mmio_gap_inconclusive(self) -> None:
+        """Reachable access to undeclared MMIO offset ⇒ unsupported-access SAT."""
+        bus = _mmio_bank_bus()
+        program = [
+            _insn(Opcode.ADDI, (3, 0, 0xCC008010), address=0),
+            _insn(Opcode.LWZ, (4, 3, 0), address=4),
+            _insn(Opcode.BCLR, (20, 0, 0), address=8),
+        ]
+        contract = EquivalenceContract(parse_observables(["r4"]), timeout_ms=15_000)
+        result = check_equivalence(
+            program,
+            program,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+            memory_bus=bus,
+        )
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        assert result.memory_bus is not None
+        unsupported = result.memory_bus.get("unsupported_access") or {}
+        self.assertEqual(unsupported.get("original", {}).get("result"), "sat")
+        self.assertTrue(
+            any("unsupported-access" in item for item in result.unsupported)
+            or any("unsupported-access" in item for item in result.abstractions)
+        )
 
 
 if __name__ == "__main__":

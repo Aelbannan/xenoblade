@@ -1,4 +1,4 @@
-"""PR18 FP trap delivery scaffold tests (Wave 4 Track D)."""
+"""PR18 FP trap delivery tests (Wave 5 Track D)."""
 
 from __future__ import annotations
 
@@ -7,11 +7,12 @@ import unittest
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block, parse_hex
 from tools.ppc_equivalence.engine import check_equivalence
-from tools.ppc_equivalence.fp_oracle import fadd_binary64_rne, fdiv_binary64_rne
+from tools.ppc_equivalence.fp_oracle import fadd_binary64_rne, fadds_fpr_rne, fdiv_binary64_rne
 from tools.ppc_equivalence.fp_outcome import outcome_from_oracle
 from tools.ppc_equivalence.fp_traps import (
     PROGRAM_EXCEPTION_VECTOR,
     SRR1_FP_ENABLED_EXCEPTION,
+    TRAP_DELIVERY_PAIRED_OPS,
     TRAP_DELIVERY_SUPPORTED_OPS,
     ensure_fp_trap_delivery_supported,
     outcome_with_trap_policy,
@@ -29,15 +30,22 @@ from tools.ppc_equivalence.semantics import (
     ConcreteOps,
     FPSCR_FEX,
     FPSCR_FX,
+    FPSCR_NI,
     FPSCR_OE,
+    FPSCR_OX,
+    FPSCR_UE,
+    FPSCR_UX,
     FPSCR_VE,
     FPSCR_VX,
     FPSCR_VXISI,
     FPSCR_VXSNAN,
+    FPSCR_XE,
+    FPSCR_XX,
     FPSCR_ZE,
     FPSCR_ZX,
     _exception_entry,
     execute_cfg,
+    execute_instruction,
 )
 
 # Signaling NaN and ±Inf bit patterns for exception edges.
@@ -46,6 +54,7 @@ _PINF = 0x7FF0000000000000
 _NINF = 0xFFF0000000000000
 _ONE = 0x3FF0000000000000
 _ZERO = 0x0000000000000000
+_HUGE_S = 0x47EFFFFFE0000000  # ~1.7e38 expanded binary32
 
 
 def _fadd_insns() -> list[Instruction]:
@@ -58,9 +67,19 @@ def _fdiv_insns() -> list[Instruction]:
     return decode_block(parse_hex("fc611024"), validate_with_capstone=False)
 
 
+def _fadds_insns() -> list[Instruction]:
+    # fadds f3, f1, f2
+    return decode_block(parse_hex("ec61102a"), validate_with_capstone=False)
+
+
 def _fres_insns() -> list[Instruction]:
     # fres f7, f2
     return decode_block(parse_hex("ece01030"), validate_with_capstone=False)
+
+
+def _ps_add_insns() -> list[Instruction]:
+    # ps_add f3, f1, f2
+    return decode_block(parse_hex("1061102a"), validate_with_capstone=False)
 
 
 class FPTrapPolicyUnitTests(unittest.TestCase):
@@ -72,6 +91,7 @@ class FPTrapPolicyUnitTests(unittest.TestCase):
         self.assertNotIn("fres", names)
         self.assertNotIn("ps_add", names)
         self.assertEqual(len(TRAP_DELIVERY_SUPPORTED_OPS), 16)
+        self.assertIn(Opcode.PS_ADD, TRAP_DELIVERY_PAIRED_OPS)
 
     def test_outcome_policy_enabled_vs_disabled(self) -> None:
         snan_add = outcome_from_oracle(fadd_binary64_rne(_SNAN, _ONE))
@@ -95,25 +115,37 @@ class FPTrapPolicyUnitTests(unittest.TestCase):
         self.assertTrue(resolve_fp_trap_policy(div0, FPSCR_ZE).trap)
         self.assertFalse(resolve_fp_trap_policy(div0, 0).trap)
 
-    def test_oe_enable_is_incomplete(self) -> None:
-        normal = outcome_from_oracle(fadd_binary64_rne(_ONE, _ONE))
-        decision = resolve_fp_trap_policy(normal, FPSCR_OE)
-        self.assertIsNotNone(decision.incomplete_reason)
-        self.assertIn("OX/UX/XX", decision.incomplete_reason or "")
+    def test_oe_overflow_policy(self) -> None:
+        overflow = outcome_from_oracle(fadds_fpr_rne(_HUGE_S, _HUGE_S))
+        self.assertTrue(overflow.flags.overflow)
+        decision = resolve_fp_trap_policy(overflow, FPSCR_OE)
+        self.assertTrue(decision.trap)
+        self.assertFalse(decision.writeback)
+        self.assertIsNone(decision.incomplete_reason)
 
-    def test_paired_policy_incomplete(self) -> None:
-        lane = outcome_from_oracle(fadd_binary64_rne(_ONE, _ONE))
+    def test_xe_inexact_policy(self) -> None:
+        # 1.0 / 3.0 is inexact under SoftFloat RNE.
+        inexact = outcome_from_oracle(
+            fdiv_binary64_rne(_ONE, 0x4008000000000000),
+        )
+        self.assertTrue(inexact.flags.inexact)
+        self.assertTrue(resolve_fp_trap_policy(inexact, FPSCR_XE).trap)
+        self.assertFalse(resolve_fp_trap_policy(inexact, 0).trap)
+
+    def test_paired_policy_traps_with_unconditional_writeback(self) -> None:
+        lane = outcome_from_oracle(fadd_binary64_rne(_SNAN, _ONE))
         decision = resolve_fp_trap_policy(lane, FPSCR_VE, paired=True)
-        self.assertIsNotNone(decision.incomplete_reason)
+        self.assertTrue(decision.trap)
+        self.assertTrue(decision.writeback)
+        self.assertIsNone(decision.incomplete_reason)
 
     def test_ensure_incomplete_opcode_fail_closed(self) -> None:
         with self.assertRaises(ExecutionInconclusive) as ctx:
             ensure_fp_trap_delivery_supported(Opcode.FRES, 0)
         self.assertIn("incomplete", str(ctx.exception).lower())
 
-        with self.assertRaises(ExecutionInconclusive) as ctx:
-            ensure_fp_trap_delivery_supported(Opcode.FADD, FPSCR_OE)
-        self.assertIn("OE/UE/XE", str(ctx.exception))
+        # OE is modeled for scalar SoftFloat family.
+        ensure_fp_trap_delivery_supported(Opcode.FADD, FPSCR_OE)
 
 
 class FPTrapCfgConcreteTests(unittest.TestCase):
@@ -195,6 +227,129 @@ class FPTrapCfgConcreteTests(unittest.TestCase):
         self.assertEqual(traps[0].exit_target, PROGRAM_EXCEPTION_VECTOR)
         self.assertEqual(traps[0].state.fpr[3], _ONE)
 
+    def test_enabled_oe_overflow_traps_and_suppresses(self) -> None:
+        state = concrete_state({
+            "fpr": {
+                "f1": f"0x{_HUGE_S:016x}",
+                "f2": f"0x{_HUGE_S:016x}",
+                "f3": _ONE,
+            },
+            "fpscr": FPSCR_OE,
+            "msr": 0x00010001,
+        })
+        domain = FloatingPointDomain(
+            traps_enabled=True,
+            exclude_finite_overflow=False,
+        )
+        terms = [
+            t for t in execute_cfg(
+                state, _fadds_insns(), ConcreteOps(),
+                floating_point_domain=domain,
+            )
+            if t.condition
+        ]
+        traps = [t for t in terms if t.exit_kind == "program-exception"]
+        self.assertEqual(len(traps), 1)
+        self.assertEqual(traps[0].state.fpr[3], _ONE)
+        self.assertTrue(traps[0].state.fpscr & FPSCR_OX)
+        self.assertTrue(traps[0].state.fpscr & FPSCR_FEX)
+
+    def test_oe_overflow_continues_with_sticky_when_traps_disabled(self) -> None:
+        state = concrete_state({
+            "fpr": {
+                "f1": f"0x{_HUGE_S:016x}",
+                "f2": f"0x{_HUGE_S:016x}",
+                "f3": _ONE,
+            },
+            "fpscr": FPSCR_OE,
+        })
+        domain = FloatingPointDomain(
+            traps_enabled=False,
+            exclude_finite_overflow=False,
+        )
+        terms = [
+            t for t in execute_cfg(
+                state, _fadds_insns(), ConcreteOps(),
+                floating_point_domain=domain,
+            )
+            if t.condition
+        ]
+        self.assertEqual(terms[0].exit_kind, "fallthrough")
+        self.assertTrue(terms[0].state.fpscr & FPSCR_OX)
+        self.assertTrue(terms[0].state.fpscr & FPSCR_FEX)
+        # OE suppresses destination even without trap delivery.
+        self.assertEqual(terms[0].state.fpr[3], _ONE)
+
+    def test_fex_already_set_retraps_on_new_enabled_exception(self) -> None:
+        # FEX already set from prior OX|OE; another VE invalid must re-trap.
+        state = concrete_state({
+            "fpr": {
+                "f1": f"0x{_PINF:016x}",
+                "f2": f"0x{_NINF:016x}",
+                "f3": _ONE,
+            },
+            "fpscr": FPSCR_OE | FPSCR_OX | FPSCR_FX | FPSCR_FEX | FPSCR_VE,
+            "msr": 0x00010001,
+        })
+        terms = [
+            t for t in execute_cfg(
+                state, _fadd_insns(), ConcreteOps(),
+                floating_point_domain=FloatingPointDomain(traps_enabled=True),
+            )
+            if t.condition
+        ]
+        traps = [t for t in terms if t.exit_kind == "program-exception"]
+        self.assertEqual(len(traps), 1)
+        self.assertEqual(traps[0].exit_target, PROGRAM_EXCEPTION_VECTOR)
+
+    def test_fex_already_set_no_trap_without_new_enabled_exception(self) -> None:
+        state = concrete_state({
+            "fpr": {
+                "f1": f"0x{_ONE:016x}",
+                "f2": f"0x{_ONE:016x}",
+                "f3": 0,
+            },
+            "fpscr": FPSCR_OE | FPSCR_OX | FPSCR_FX | FPSCR_FEX,
+            "msr": 0x00010001,
+        })
+        terms = [
+            t for t in execute_cfg(
+                state, _fadd_insns(), ConcreteOps(),
+                floating_point_domain=FloatingPointDomain(traps_enabled=True),
+            )
+            if t.condition
+        ]
+        self.assertEqual(len(terms), 1)
+        self.assertEqual(terms[0].exit_kind, "fallthrough")
+        self.assertEqual(terms[0].state.fpr[3], 0x4000000000000000)
+
+    def test_paired_ve_traps_with_unconditional_writeback(self) -> None:
+        state = concrete_state({
+            "fpr": {
+                "f1": f"0x{_SNAN:016x}",
+                "f2": f"0x{_ONE:016x}",
+                "f3": 0,
+            },
+            "ps1": {
+                "f1": f"0x{_ONE:016x}",
+                "f2": f"0x{_ONE:016x}",
+                "f3": 0,
+            },
+            "fpscr": FPSCR_VE,
+            "msr": 0x00010001,
+        })
+        terms = [
+            t for t in execute_cfg(
+                state, _ps_add_insns(), ConcreteOps(),
+                floating_point_domain=FloatingPointDomain(traps_enabled=True),
+            )
+            if t.condition
+        ]
+        traps = [t for t in terms if t.exit_kind == "program-exception"]
+        self.assertEqual(len(traps), 1)
+        # Paired writeback is unconditional under VE.
+        self.assertNotEqual(traps[0].state.fpr[3], 0)
+
     def test_incomplete_opcode_fail_closed_under_traps_enabled(self) -> None:
         state = concrete_state({
             "fpr": {"f2": 0.0},
@@ -207,23 +362,55 @@ class FPTrapCfgConcreteTests(unittest.TestCase):
             )
         self.assertIn("incomplete", str(ctx.exception).lower())
 
-    def test_oe_set_fail_closed_under_traps_enabled(self) -> None:
-        state = concrete_state({
-            "fpr": {"f1": f"0x{_ONE:016x}", "f2": f"0x{_ONE:016x}"},
-            "fpscr": FPSCR_OE,
-        })
-        with self.assertRaises(ExecutionInconclusive) as ctx:
-            execute_cfg(
-                state, _fadd_insns(), ConcreteOps(),
-                floating_point_domain=FloatingPointDomain(traps_enabled=True),
-            )
-        self.assertIn("OE/UE/XE", str(ctx.exception))
-
     def test_exception_entry_vocabulary_matches_twi(self) -> None:
         state = concrete_state({"msr": 0x00010001, "fpscr": FPSCR_VE | FPSCR_FEX})
         entered = _exception_entry(state, 0x20, SRR1_FP_ENABLED_EXCEPTION, ConcreteOps())
         self.assertEqual(entered.srr0, 0x20)
         self.assertEqual(entered.srr1, (state.msr & 0x87C0FFFF) | SRR1_FP_ENABLED_EXCEPTION)
+
+
+class FPTrapNiInteractionTests(unittest.TestCase):
+    def test_ni_flush_then_ve_trap_on_supported_op(self) -> None:
+        # Subnormal + Inf under NI: operand flush yields 0+Inf (no invalid);
+        # use SNaN so VE still traps after NI flush (SNaN is not a denormal).
+        state = concrete_state({
+            "fpr": {
+                "f1": f"0x{_SNAN:016x}",
+                "f2": f"0x{_ONE:016x}",
+                "f3": _ONE,
+            },
+            "fpscr": FPSCR_NI | FPSCR_VE,
+            "msr": 0x00010001,
+        })
+        terms = [
+            t for t in execute_cfg(
+                state, _fadd_insns(), ConcreteOps(),
+                floating_point_domain=FloatingPointDomain(
+                    traps_enabled=True,
+                    require_ni_zero=False,
+                ),
+            )
+            if t.condition
+        ]
+        traps = [t for t in terms if t.exit_kind == "program-exception"]
+        self.assertEqual(len(traps), 1)
+        self.assertEqual(traps[0].state.fpr[3], _ONE)
+
+    def test_ni_unsupported_with_traps_stays_inconclusive(self) -> None:
+        state = concrete_state({
+            "fpr": {"f2": f"0x{_ONE:016x}"},
+            "fpscr": FPSCR_NI | FPSCR_ZE,
+        })
+        with self.assertRaises(ExecutionInconclusive) as ctx:
+            execute_cfg(
+                state, _fres_insns(), ConcreteOps(),
+                floating_point_domain=FloatingPointDomain(
+                    traps_enabled=True,
+                    require_ni_zero=False,
+                ),
+            )
+        message = str(ctx.exception).lower()
+        self.assertTrue("ni" in message or "incomplete" in message)
 
 
 class FPTrapDomainAndEquivalenceTests(unittest.TestCase):
@@ -233,8 +420,14 @@ class FPTrapDomainAndEquivalenceTests(unittest.TestCase):
         coverage = domain.coverage_dict()
         self.assertNotIn("traps-disabled", coverage["assumed"])
         self.assertIn(FP_COVERAGE_TRAP_SCAFFOLD[0], coverage["assumed"])
-        self.assertIn("fp-exception-trap-delivery", coverage["unsupported"])
+        self.assertIn(
+            "fp-exception-trap-delivery-estimates-compares-converts",
+            coverage["unsupported"],
+        )
         self.assertEqual(coverage["status"], "assumed")
+        names = domain.trap_delivery_supported_opcodes()
+        self.assertIn("fadd", names)
+        self.assertIn("ps_add", names)
 
     def test_enabled_vs_disabled_exit_kinds_differ_observably(self) -> None:
         """Control behavior differs: trap terminal vs fallthrough."""
@@ -276,6 +469,21 @@ class FPTrapDomainAndEquivalenceTests(unittest.TestCase):
         self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
         assert result.floating_point_domain is not None
         self.assertTrue(result.floating_point_domain.traps_enabled)
+
+    def test_softfloat_latches_ox_on_overflow(self) -> None:
+        state = execute_instruction(
+            concrete_state({
+                "fpr": {
+                    "f1": f"0x{_HUGE_S:016x}",
+                    "f2": f"0x{_HUGE_S:016x}",
+                },
+            }),
+            Instruction(0, 0, Opcode.FADDS, (1, 1, 2)),
+            ConcreteOps(),
+            floating_point_domain=FloatingPointDomain(exclude_finite_overflow=False),
+        )
+        self.assertTrue(state.fpscr & FPSCR_OX)
+        self.assertTrue(state.fpscr & FPSCR_XX)
 
 
 if __name__ == "__main__":

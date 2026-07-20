@@ -147,6 +147,26 @@ class SymbolicEventTraceTests(unittest.TestCase):
         self.assertEqual(trace.span, 0x100)
         self.assertEqual(ALGORITHM, "gxfifo-stream-trace-v1")
 
+    def test_enrich_attaches_gxfifo_trace_block(self) -> None:
+        from tools.ppc_equivalence.address_space import AddressSpace, mmio_region
+        from tools.ppc_equivalence.device_model import GxFifoStreamDevice
+        from tools.ppc_equivalence.memory_bus import build_memory_bus
+        from tools.ppc_equivalence.memory_bus_obligations import (
+            enrich_memory_bus_obligation_with_symbolic_mmio,
+        )
+
+        device = GxFifoStreamDevice(base=0xCC008100, span=0x100)
+        mmio = mmio_region(0xCC008100, 0xCC0081FF, device_id="gx-fifo")
+        bus = build_memory_bus(AddressSpace((mmio,)), devices={"gx-fifo": device})
+        enriched = enrich_memory_bus_obligation_with_symbolic_mmio(
+            {"algorithm": "memory-bus-v1"},
+            bus,
+        )
+        self.assertIn("gxfifo_trace", enriched)
+        self.assertEqual(enriched["gxfifo_trace"]["algorithm"], ALGORITHM)
+        self.assertEqual(enriched["gxfifo_trace"]["reads"], "unsupported")
+        self.assertEqual(enriched["gxfifo_trace"]["status"], "cfg-routed")
+
 
 if __name__ == "__main__":
     unittest.main()

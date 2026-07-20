@@ -27,6 +27,11 @@ from tools.ppc_equivalence.relational_induction import (
 
 PAIRED_TRANSITION_ALGORITHM = "paired-transition-v1"
 TERMINATION_ALGORITHM = "ctr-termination-v1"
+COMPARE_TERMINATION_ALGORITHM = "compare-counter-termination-v1"
+
+
+def _is_compare_affine_candidate(candidate: CtrAffineLoopCandidate) -> bool:
+    return "compare-affine" in " ".join(candidate.notes)
 
 
 @dataclass(frozen=True)
@@ -134,6 +139,10 @@ def try_smt_discharge_ctr_affine(
     z3_module: Any | None = None,
 ) -> RelationalInductionSketch | RelationalInductionUnsupported:
     """Build narrow invariants and discharge all five CTR-affine blocks via SMT."""
+    if _is_compare_affine_candidate(original) or _is_compare_affine_candidate(candidate):
+        return RelationalInductionUnsupported(
+            "CTR-affine discharge does not apply to compare-affine candidates"
+        )
     if not _affine_bodies_match_for_discharge(original, candidate):
         return RelationalInductionUnsupported(
             "CTR-affine bodies or trip counts do not match for SMT discharge"
@@ -483,5 +492,351 @@ def _discharge_ctr_termination(
         bad_conditions=bad,
         deadline=deadline,
         algorithm=TERMINATION_ALGORITHM,
+        z3_module=z3,
+    )
+
+
+def try_smt_discharge_compare_affine(
+    original: CtrAffineLoopCandidate,
+    candidate: CtrAffineLoopCandidate,
+    *,
+    deadline: Deadline | None = None,
+    z3_module: Any | None = None,
+) -> RelationalInductionSketch | RelationalInductionUnsupported:
+    """Discharge compare-affine closed-form pairs via five independent UNSAT queries.
+
+    Ranking uses the GPR countdown register (``addi -1`` / ``cmpwi`` / ``bne``),
+    not CTR. CTR is treated as an unmodified equal component.
+    """
+    if not _is_compare_affine_candidate(original) or not _is_compare_affine_candidate(
+        candidate,
+    ):
+        return RelationalInductionUnsupported(
+            "compare-affine SMT discharge requires compare-affine candidates"
+        )
+    if not _affine_bodies_match_for_discharge(original, candidate):
+        return RelationalInductionUnsupported(
+            "compare-affine bodies or trip counts do not match for SMT discharge"
+        )
+    if original.trip_count_reg is None or candidate.trip_count_reg is None:
+        return RelationalInductionUnsupported(
+            "compare-affine countdown register missing"
+        )
+    if original.trip_count_reg != candidate.trip_count_reg:
+        return RelationalInductionUnsupported(
+            "compare-affine countdown registers differ between sides"
+        )
+    if z3_module is None:
+        import z3 as z3_module  # type: ignore[no-redef]
+
+    if deadline is None:
+        deadline = Deadline.after_ms(15_000)
+
+    counter_reg = original.trip_count_reg
+    body_regs = sorted({item.reg for item in original.body_updates})
+    # Counter participates in the invariant even when absent from body_updates.
+    shared_regs = sorted(set(body_regs) | {counter_reg})
+    templates = _narrow_templates_for_compare_pair(
+        original, candidate, shared_regs, counter_reg=counter_reg,
+    )
+    left0 = _fresh_side(z3_module, "L0", shared_regs, cr_fields=(0,))
+    right0 = _fresh_side(z3_module, "R0", shared_regs, cr_fields=(0,))
+    inv0 = _invariant(z3_module, left0, right0, shared_regs)
+
+    trip = original.trip_count
+    assert trip is not None and trip >= 1
+    entry_premises = list(_equal_side_premises(z3_module, left0, right0, shared_regs))
+    entry_premises.append(
+        left0.gpr[counter_reg] == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32),
+    )
+    entry_premises.append(
+        right0.gpr[counter_reg] == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32),
+    )
+    entry_premises.append(left0.valid == z3_module.BoolVal(True))
+    entry_premises.append(right0.valid == z3_module.BoolVal(True))
+
+    initiation = discharge_bad_conditions(
+        premises=entry_premises,
+        bad_conditions=[z3_module.Not(inv0)],
+        deadline=deadline,
+        algorithm=f"{PAIRED_TRANSITION_ALGORITHM}:initiation",
+        z3_module=z3_module,
+    )
+
+    left1, left_continue, left_exit, left_step_ok = _compare_affine_step(
+        z3_module, left0, original.body_updates, counter_reg=counter_reg,
+    )
+    right1, right_continue, right_exit, right_step_ok = _compare_affine_step(
+        z3_module, right0, candidate.body_updates, counter_reg=counter_reg,
+    )
+    inv1 = _invariant(z3_module, left1, right1, shared_regs)
+    both_continue = z3_module.And(left_continue, right_continue)
+    both_exit = z3_module.And(left_exit, right_exit)
+    xor_exits = z3_module.Xor(left_exit, right_exit)
+
+    preservation = discharge_bad_conditions(
+        premises=[inv0, both_continue, left_step_ok, right_step_ok],
+        bad_conditions=[z3_module.Not(inv1)],
+        deadline=deadline,
+        algorithm=f"{PAIRED_TRANSITION_ALGORITHM}:preservation",
+        z3_module=z3_module,
+    )
+
+    exit_agreement = discharge_bad_conditions(
+        premises=[inv0, left_step_ok, right_step_ok],
+        bad_conditions=[xor_exits],
+        deadline=deadline,
+        algorithm=f"{PAIRED_TRANSITION_ALGORITHM}:exit-agreement",
+        z3_module=z3_module,
+    )
+
+    observables_equal = _invariant(z3_module, left1, right1, shared_regs)
+    postcondition = discharge_bad_conditions(
+        premises=[inv0, both_exit, left_step_ok, right_step_ok],
+        bad_conditions=[z3_module.Not(observables_equal)],
+        deadline=deadline,
+        algorithm=f"{PAIRED_TRANSITION_ALGORITHM}:postcondition",
+        z3_module=z3_module,
+    )
+
+    termination = _discharge_compare_termination(
+        z3_module,
+        left0,
+        right0,
+        original.body_updates,
+        candidate.body_updates,
+        counter_reg=counter_reg,
+        trip=trip,
+        deadline=deadline,
+    )
+
+    bundle = RelationalDischargeBundle(
+        initiation=initiation,
+        preservation=preservation,
+        exit_agreement=exit_agreement,
+        postcondition=postcondition,
+        termination=termination,
+    )
+
+    invariant_payload = [
+        {"name": item.name, "params": dict(item.params)} for item in templates
+    ]
+    initiation_block = discharge_block_payload(
+        initiation, invariants=invariant_payload, z3_module=z3_module,
+    )
+    preservation_block = discharge_block_payload(
+        preservation, invariants=invariant_payload, z3_module=z3_module,
+    )
+    exit_block = discharge_block_payload(
+        exit_agreement, invariants=invariant_payload, z3_module=z3_module,
+    )
+    post_block = discharge_block_payload(
+        postcondition, invariants=invariant_payload, z3_module=z3_module,
+    )
+    term_notes = (
+        "nonzero entry countdown GPR",
+        "one counter decrement per paired step",
+        "no countdown rewrite in affine body",
+        "exit at counter zero",
+        "no 32-bit counter wrap on continue/exit",
+        "CTR unmodified (compare-affine)",
+    )
+    termination_block = termination_block_payload(
+        termination,
+        witness="counter-descending",
+        notes=term_notes,
+        z3_module=z3_module,
+    )
+
+    status = "discharged" if bundle.all_unsat() else "failed"
+    notes = (
+        "compare-affine relational SMT discharge",
+        f"countdown r{counter_reg}",
+        f"shared body registers: {body_regs or 'none'}",
+    )
+    if not bundle.all_unsat():
+        reason = bundle.failure_reason() or "relational discharge incomplete"
+        notes = notes + (reason,)
+
+    return RelationalInductionSketch(
+        original=RelationalLoopSide.from_affine(original),
+        candidate=RelationalLoopSide.from_affine(candidate),
+        initiation=InitiationObligation(
+            tuple(templates),
+            status=initiation_block["status"],
+        ),
+        preservation=PreservationObligation(
+            tuple(templates),
+            status=preservation_block["status"],
+        ),
+        exit_agreement=ExitAgreementObligation(
+            tuple(templates),
+            status=exit_block["status"],
+        ),
+        postcondition=PostconditionObligation(
+            tuple(templates),
+            status=post_block["status"],
+        ),
+        termination=TerminationObligation(
+            witness="counter-descending",
+            status=termination_block["status"],
+            notes=term_notes,
+        ),
+        templates=tuple(item.name for item in templates),
+        status=status,
+        notes=notes,
+        block_evidence={
+            "initiation": initiation_block,
+            "preservation": preservation_block,
+            "exit_agreement": exit_block,
+            "postcondition": post_block,
+            "termination": termination_block,
+        },
+    )
+
+
+def _narrow_templates_for_compare_pair(
+    original: CtrAffineLoopCandidate,
+    candidate: CtrAffineLoopCandidate,
+    shared_regs: list[int],
+    *,
+    counter_reg: int,
+) -> tuple[InvariantTemplateRef, ...]:
+    templates: list[InvariantTemplateRef] = [
+        InvariantTemplateRef(
+            "equal-gpr",
+            {
+                "register": counter_reg,
+                "side": "both",
+                "role": "countdown",
+                "trip_count": original.trip_count,
+            },
+        ),
+        InvariantTemplateRef("equal-ctr", {"mode": "unmodified"}),
+        InvariantTemplateRef("equal-validity", {"side": "both"}),
+        InvariantTemplateRef("equal-cr-field", {"field": 0}),
+        InvariantTemplateRef("equal-memory", {"mode": "canonical-equal"}),
+    ]
+    for reg in shared_regs:
+        if reg == counter_reg:
+            continue
+        templates.append(
+            InvariantTemplateRef("equal-gpr", {"register": reg, "side": "both"}),
+        )
+    _ = candidate
+    return tuple(templates)
+
+
+def _compare_affine_step(
+    z3: Any,
+    state: _SideSym,
+    updates: tuple[AffineGprUpdate, ...],
+    *,
+    counter_reg: int,
+) -> tuple[_SideSym, Any, Any, Any]:
+    """One body + addi -1 / cmpwi / bne step.
+
+    Continue iff counter' != 0; exit iff counter' == 0. ``step_ok`` rules out
+    wrap from counter==0 (would set counter to 0xffffffff).
+    """
+    zero = z3.BitVecVal(0, 32)
+    one = z3.BitVecVal(1, 32)
+    counter = state.gpr[counter_reg]
+    no_wrap = counter != zero
+    counter_next = counter - one
+    gpr_next = dict(state.gpr)
+    for update in updates:
+        if update.reg in gpr_next and update.reg != counter_reg:
+            gpr_next[update.reg] = gpr_next[update.reg] + z3.BitVecVal(
+                update.addend & 0xFFFFFFFF, 32,
+            )
+    gpr_next[counter_reg] = counter_next
+    # cmpwi cr0, counter', 0 — EQ set iff counter' == 0.
+    cr0_next = z3.If(
+        counter_next == zero,
+        z3.BitVecVal(0x2, 4),  # EQ
+        z3.If(
+            # Signed LT vs 0: MSB set (Track A helper; z3 has no SLT alias).
+            z3.Extract(31, 31, counter_next) == z3.BitVecVal(1, 1),
+            z3.BitVecVal(0x8, 4),  # LT
+            z3.BitVecVal(0x4, 4),  # GT
+        ),
+    )
+    cr_next = dict(state.cr_fields)
+    if 0 in cr_next:
+        cr_next[0] = cr0_next
+    nxt = replace(
+        state,
+        gpr=gpr_next,
+        cr_fields=cr_next,
+        # CTR unmodified for compare-affine.
+    )
+    continue_cond = z3.And(no_wrap, counter_next != zero)
+    exit_cond = z3.And(no_wrap, counter_next == zero)
+    return nxt, continue_cond, exit_cond, no_wrap
+
+
+def _discharge_compare_termination(
+    z3: Any,
+    left: _SideSym,
+    right: _SideSym,
+    left_updates: tuple[AffineGprUpdate, ...],
+    right_updates: tuple[AffineGprUpdate, ...],
+    *,
+    counter_reg: int,
+    trip: int,
+    deadline: Deadline,
+) -> UnsatDischarge:
+    """Termination via countdown-GPR ranking (not CTR)."""
+    zero = z3.BitVecVal(0, 32)
+    one = z3.BitVecVal(1, 32)
+    trip_val = z3.BitVecVal(trip & 0xFFFFFFFF, 32)
+
+    left1, left_continue, left_exit, left_ok = _compare_affine_step(
+        z3, left, left_updates, counter_reg=counter_reg,
+    )
+    right1, right_continue, right_exit, right_ok = _compare_affine_step(
+        z3, right, right_updates, counter_reg=counter_reg,
+    )
+
+    premises = [
+        left.gpr[counter_reg] == trip_val,
+        right.gpr[counter_reg] == trip_val,
+        left.ctr == right.ctr,  # CTR equal and unmodified across the step
+        left1.ctr == left.ctr,
+        right1.ctr == right.ctr,
+        left_ok,
+        right_ok,
+        left1.gpr[counter_reg] == left.gpr[counter_reg] - one,
+        right1.gpr[counter_reg] == right.gpr[counter_reg] - one,
+    ]
+
+    bad = [
+        left.gpr[counter_reg] == zero,
+        right.gpr[counter_reg] == zero,
+        z3.And(
+            left_continue,
+            z3.Not(z3.ULT(left1.gpr[counter_reg], left.gpr[counter_reg])),
+        ),
+        z3.And(
+            right_continue,
+            z3.Not(z3.ULT(right1.gpr[counter_reg], right.gpr[counter_reg])),
+        ),
+        z3.And(left_exit, left1.gpr[counter_reg] != zero),
+        z3.And(right_exit, right1.gpr[counter_reg] != zero),
+        z3.And(
+            left.gpr[counter_reg] == zero,
+            z3.Or(left_continue, left_exit),
+        ),
+        z3.And(
+            right.gpr[counter_reg] == zero,
+            z3.Or(right_continue, right_exit),
+        ),
+    ]
+    return discharge_bad_conditions(
+        premises=premises,
+        bad_conditions=bad,
+        deadline=deadline,
+        algorithm=COMPARE_TERMINATION_ALGORITHM,
         z3_module=z3,
     )

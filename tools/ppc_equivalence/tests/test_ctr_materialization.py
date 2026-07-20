@@ -73,6 +73,68 @@ class RecoverGprConstantTests(unittest.TestCase):
         self.assertEqual(value, 0x2B & 7)
         self.assertEqual(notes, [])
 
+    def test_rlwinm_srwi_by_3(self) -> None:
+        # srwi r0, r6, 3  ==  rlwinm r0, r6, 29, 3, 31
+        program = [
+            _insn(Opcode.ADDI, (6, 0, 0x28), address=0),
+            _insn(Opcode.RLWINM, (0, 6, 29, 3, 31), address=4),
+            _insn(Opcode.MTSPR, (0, 9), address=8),
+        ]
+        value, notes = recover_gpr_constant(program, 2, 0)
+        self.assertEqual(value, 0x28 >> 3)
+        self.assertEqual(notes, [])
+
+    def test_rlwinm_srwi_by_1_and_by_31(self) -> None:
+        # srwi r5, r4, 1
+        program_n1 = [
+            _insn(Opcode.ADDI, (4, 0, 0xABC), address=0),
+            _insn(Opcode.RLWINM, (5, 4, 31, 1, 31), address=4),
+            _insn(Opcode.MTSPR, (5, 9), address=8),
+        ]
+        value, _ = recover_gpr_constant(program_n1, 2, 5)
+        self.assertEqual(value, 0xABC >> 1)
+
+        # lis/ori → 0x80000001; srwi r5, r4, 31
+        program_n31 = [
+            _insn(Opcode.ADDIS, (4, 0, 0x8000), address=0),
+            _insn(Opcode.ORI, (4, 4, 1), address=4),
+            _insn(Opcode.RLWINM, (5, 4, 1, 31, 31), address=8),
+            _insn(Opcode.MTSPR, (5, 9), address=12),
+        ]
+        value, _ = recover_gpr_constant(program_n31, 3, 5)
+        self.assertEqual(value, 0x80000001 >> 31)
+
+    def test_rejects_rlwinm_non_srwi_mask(self) -> None:
+        # Left-shift form: rlwinm rA, rS, 2, 0, 29  (== slwi by 2)
+        program = [
+            _insn(Opcode.ADDI, (6, 0, 0x10), address=0),
+            _insn(Opcode.RLWINM, (0, 6, 2, 0, 29), address=4),
+            _insn(Opcode.MTSPR, (0, 9), address=8),
+        ]
+        value, notes = recover_gpr_constant(program, 2, 0)
+        self.assertIsNone(value)
+        self.assertTrue(any("srwi" in note for note in notes))
+
+    def test_rejects_rlwinm_truncated_me(self) -> None:
+        # SH/MB look like >>3 but ME clears the LSB — not pure srwi.
+        program = [
+            _insn(Opcode.ADDI, (6, 0, 0x28), address=0),
+            _insn(Opcode.RLWINM, (0, 6, 29, 3, 30), address=4),
+            _insn(Opcode.MTSPR, (0, 9), address=8),
+        ]
+        value, notes = recover_gpr_constant(program, 2, 0)
+        self.assertIsNone(value)
+        self.assertTrue(notes)
+
+    def test_rejects_rlwinm_with_unknown_source(self) -> None:
+        program = [
+            _insn(Opcode.RLWINM, (0, 31, 29, 3, 31), address=0),
+            _insn(Opcode.MTSPR, (0, 9), address=4),
+        ]
+        value, notes = recover_gpr_constant(program, 1, 0)
+        self.assertIsNone(value)
+        self.assertTrue(notes)
+
     def test_andis_dot_high_mask(self) -> None:
         program = [
             _insn(Opcode.ADDIS, (4, 0, 0x8020), address=0),

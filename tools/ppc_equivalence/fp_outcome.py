@@ -36,6 +36,9 @@ may be set. Still **Tier C** only.
 - NI for estimates (``fres``/``frsqrte``/``ps_res``/``ps_rsqrte``), ``frsp``,
   converts, compares, stores, and non-oracle paired families
 - Trap delivery for estimates, compares, conversions; MSR FE0/FE1 modes
+  (Wave 4 ``fp-traps`` capability stays incomplete / never promotion-grade)
+- Full single-round FMA residual modeling remains incomplete → Wave 4
+  ``fp-fused-arithmetic`` never promotion-grade (midpoint + sticky residue)
 - Complete FPSCR FX/FEX sticky re-raise (SoftFloat latches OX/UX/ZX/XX/VX
   indicators; FX/FEX remain incomplete — see ``fp_rounding``)
 
@@ -53,7 +56,7 @@ fail closed. See ``fp_traps.py``.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable
 
 from .fp_oracle import (
     FpOracleFlags,
@@ -102,6 +105,30 @@ FP_ORACLE_VERSION = "broadway-softfloat-paired-single-v1"
 
 # Wave 4 Track B: opcodes with concrete/symbolic FPSCR.NI flush modeling.
 NI_SUPPORTED_OPS: frozenset[str] = NI_SCALAR_SUPPORTED_OPS | PAIRED_ORACLE_OPS
+
+
+def capability_tags_for_opcodes(opcodes: Iterable[str] | None) -> frozenset[str]:
+    """Wave 4 capability tags for paired / PSQ / fused opcode appearance.
+
+    Complements ``fp_capabilities.classify_fp_capabilities`` so callers that
+    only consult outcome helpers still demand the advanced caps. Tags never
+    imply promotion-grade readiness.
+    """
+    from tools.ppc_equivalence.fp_capabilities import (
+        FP_FUSED_ARITH_OPS,
+        FP_PAIRED_SINGLE_OPS,
+        FP_PSQ_OPS,
+    )
+
+    names = {str(op) for op in (opcodes or ())}
+    caps: set[str] = set()
+    if names & FP_FUSED_ARITH_OPS:
+        caps.add("fp-fused-arithmetic")
+    if names & FP_PAIRED_SINGLE_OPS:
+        caps.add("fp-paired-single")
+    if names & FP_PSQ_OPS:
+        caps.add("fp-psq")
+    return frozenset(caps)
 
 
 @dataclass(frozen=True)

@@ -1,8 +1,10 @@
-"""FP sub-capability classification (Wave 3 capability assurance).
+"""FP sub-capability classification (Wave 3–4 capability assurance).
 
 A proof demands every FP sub-capability its opcodes (and trap domain) use.
 Only ``fp-bitwise`` is currently allowlisted for promotion-grade; all other
 FP capabilities remain empty in the Tier-A allowlist and fail closed.
+Wave 4 advanced stubs (fused / paired / PSQ / traps) stay incomplete while
+midpoint/sticky-residue and FE0/FE1 remain unfinished.
 """
 
 from __future__ import annotations

@@ -1,10 +1,16 @@
-"""MMIO capability obligations for capability-assurance Wave 3.
+"""MMIO capability obligations for capability-assurance Wave 3–4.
 
 Extends schema-v2 memory-bus discharge evidence into per-capability
 attestations (``mmio-register-bank``, ``gx-fifo-write-trace``, …). Promotion
 grade requires a reviewed ``hardware_profile_sha256`` match, complete per-side
 UNSAT digests, and an allowlisted model version. Ad-hoc bus maps and
 ``gx-fifo-read`` / DMA remain incomplete.
+
+Wave 4 advanced stubs: ``gx-fifo-write-trace`` loop-emission refinement
+(ordinary N FIFO writes ≡ summarized N-event trace), plus always-incomplete
+attestations for ``mmio-read-side-effects``, ``mmio-external-input``, and
+``dma-interrupt-effects`` until a Dolphin hardware harness exists.
+``gx-fifo-read`` stays explicitly non-promotable.
 """
 
 from __future__ import annotations
@@ -33,16 +39,29 @@ MMIO_REGISTER_BANK_ALGORITHM = "mmio-register-bank-v2"
 GX_FIFO_WRITE_TRACE_CAPABILITY = "gx-fifo-write-trace"
 GX_FIFO_TRACE_MODEL_VERSION = "gx-fifo-trace-v1"
 GX_FIFO_TRACE_ALGORITHM = "gx-fifo-trace-v1"
+GX_FIFO_LOOP_REFINEMENT_ALGORITHM = "gx-fifo-loop-refinement-v1"
+GX_FIFO_LOOP_REFINEMENT_SCHEMA_VERSION = 1
+GX_FIFO_LOOP_REFINEMENT_CLAIM = (
+    "ordinary-n-fifo-writes-equiv-summarized-n-event-trace"
+)
 
 GX_FIFO_READ_CAPABILITY = "gx-fifo-read"
 GX_FIFO_READ_MODEL_VERSION = "gx-fifo-read-v0"
 GX_FIFO_READ_ALGORITHM = "gx-fifo-read-incomplete-v0"
 
 MMIO_READ_SIDE_EFFECTS_CAPABILITY = "mmio-read-side-effects"
+MMIO_READ_SIDE_EFFECTS_MODEL_VERSION = "mmio-read-side-effects-v0"
+MMIO_READ_SIDE_EFFECTS_ALGORITHM = "mmio-read-side-effects-incomplete-v0"
+
 MMIO_EXTERNAL_INPUT_CAPABILITY = "mmio-external-input"
+MMIO_EXTERNAL_INPUT_MODEL_VERSION = "mmio-external-input-v0"
+MMIO_EXTERNAL_INPUT_ALGORITHM = "mmio-external-input-incomplete-v0"
+
 MMIO_LOOP_EMISSION_CAPABILITY = "mmio-loop-emission"
 MIXED_ADDRESS_SPACE_CAPABILITY = "mixed-address-space-routing"
 DMA_INTERRUPT_CAPABILITY = "dma-interrupt-effects"
+DMA_INTERRUPT_MODEL_VERSION = "dma-interrupt-v0"
+DMA_INTERRUPT_ALGORITHM = "dma-interrupt-incomplete-v0"
 
 # Algorithms known to capability_assurance (promotion-grade path only for
 # register-bank / fifo-write when fully discharged + allowlisted).
@@ -50,22 +69,44 @@ MMIO_ATTESTATION_ALGORITHMS = frozenset(
     {
         MMIO_REGISTER_BANK_ALGORITHM,
         GX_FIFO_TRACE_ALGORITHM,
+        GX_FIFO_LOOP_REFINEMENT_ALGORITHM,
         GX_FIFO_READ_ALGORITHM,
-        "mmio-read-side-effects-incomplete-v0",
-        "mmio-external-input-incomplete-v0",
+        MMIO_READ_SIDE_EFFECTS_ALGORITHM,
+        MMIO_EXTERNAL_INPUT_ALGORITHM,
         "mmio-loop-emission-incomplete-v0",
         "mixed-address-space-incomplete-v0",
-        "dma-interrupt-incomplete-v0",
+        DMA_INTERRUPT_ALGORITHM,
     }
 )
 
-# Never promotion-grade under Wave 3 foundations.
+# Never promotion-grade under Wave 3–4 foundations (Dolphin harness pending
+# for read-side-effects / external-input / DMA; FIFO reads stay C).
 ALWAYS_INCOMPLETE_MMIO_CAPABILITIES = frozenset(
     {
         GX_FIFO_READ_CAPABILITY,
+        MMIO_READ_SIDE_EFFECTS_CAPABILITY,
+        MMIO_EXTERNAL_INPUT_CAPABILITY,
         MMIO_LOOP_EMISSION_CAPABILITY,
         DMA_INTERRUPT_CAPABILITY,
     }
+)
+
+_LOOP_REFINEMENT_KEYS = frozenset(
+    {
+        "schema_version",
+        "capability",
+        "model_version",
+        "algorithm",
+        "claim",
+        "original",
+        "candidate",
+        "status",
+        "notes",
+    }
+)
+_LOOP_SIDE_KEYS = frozenset({"result", "query_sha256"})
+_LOOP_SIDE_RESULTS = frozenset(
+    {"unsat", "pending", "sat", "unknown", "incomplete", "vacuous"}
 )
 
 _SIDE_QUERY_KEYS = (
@@ -407,6 +448,30 @@ def recompute_mmio_attestation_status(
     if algorithm.endswith("-incomplete-v0"):
         return STATUS_INCOMPLETE
 
+    # Wave 4: loop-emission refinement for gx-fifo-write-trace — incomplete
+    # unless both sides carry real UNSAT digests AND the model is allowlisted.
+    if algorithm == GX_FIFO_LOOP_REFINEMENT_ALGORITHM:
+        if capability != GX_FIFO_WRITE_TRACE_CAPABILITY:
+            return STATUS_INCOMPLETE
+        if model_version not in tuple(allowed_versions):
+            return STATUS_INCOMPLETE
+        obligation = (
+            evidence.get("loop_refinement")
+            or evidence.get("obligation")
+            or evidence.get("mmio")
+        )
+        if not isinstance(obligation, dict):
+            return STATUS_INCOMPLETE
+        if validate_gx_fifo_loop_refinement_obligation(obligation) is not None:
+            return STATUS_INCOMPLETE
+        if not loop_refinement_has_real_unsat(obligation):
+            return STATUS_INCOMPLETE
+        if assumptions:
+            return STATUS_SCOPED_ASSUMPTION
+        # Allowlist empty today → never reaches here for Tier A; structural
+        # path exists for a future canary once real UNSAT digests land.
+        return STATUS_PROMOTION_GRADE
+
     # Empty allowlist fail-closes (Wave 3 default until canary).
     if model_version not in tuple(allowed_versions):
         return STATUS_INCOMPLETE
@@ -433,6 +498,243 @@ def recompute_mmio_attestation_status(
             return STATUS_SCOPED_ASSUMPTION
         return STATUS_PROMOTION_GRADE
     return STATUS_INCOMPLETE
+
+
+def _loop_side_block(
+    *,
+    result: str = "incomplete",
+    query_sha256: str | None = None,
+) -> dict[str, Any]:
+    block: dict[str, Any] = {"result": result}
+    if query_sha256 is not None:
+        block["query_sha256"] = query_sha256
+    elif result == "incomplete":
+        block["query_sha256"] = "0" * 64
+    return block
+
+
+def build_gx_fifo_loop_refinement_obligation(
+    *,
+    original: Mapping[str, Any] | None = None,
+    candidate: Mapping[str, Any] | None = None,
+    status: str = "incomplete",
+    notes: str | None = None,
+) -> dict[str, Any]:
+    """Structural stub: ordinary N FIFO writes ≡ summarized N-event trace.
+
+    Incomplete unless both sides report ``result=unsat`` with real digests.
+    """
+    return {
+        "schema_version": GX_FIFO_LOOP_REFINEMENT_SCHEMA_VERSION,
+        "capability": GX_FIFO_WRITE_TRACE_CAPABILITY,
+        "model_version": GX_FIFO_TRACE_MODEL_VERSION,
+        "algorithm": GX_FIFO_LOOP_REFINEMENT_ALGORITHM,
+        "claim": GX_FIFO_LOOP_REFINEMENT_CLAIM,
+        "original": dict(original) if original is not None else _loop_side_block(),
+        "candidate": (
+            dict(candidate) if candidate is not None else _loop_side_block()
+        ),
+        "status": status,
+        "notes": notes
+        or (
+            "Wave 4 stub: prove ordinary N FIFO writes ≡ summarized N-event "
+            "trace via per-side refinement UNSAT; incomplete without digests."
+        ),
+    }
+
+
+def validate_gx_fifo_loop_refinement_obligation(
+    obligation: Mapping[str, Any] | None,
+) -> str | None:
+    """Fail closed on malformed loop-emission refinement obligations."""
+    if obligation is None:
+        return "gx-fifo loop refinement obligation is missing"
+    if not isinstance(obligation, Mapping):
+        return "gx-fifo loop refinement obligation must be an object"
+    unknown = sorted(set(obligation.keys()) - _LOOP_REFINEMENT_KEYS)
+    if unknown:
+        return f"gx-fifo loop refinement unknown fields: {', '.join(unknown)}"
+    required = {
+        "schema_version",
+        "capability",
+        "model_version",
+        "algorithm",
+        "claim",
+        "original",
+        "candidate",
+    }
+    missing = sorted(required - set(obligation.keys()))
+    if missing:
+        return f"gx-fifo loop refinement missing fields: {', '.join(missing)}"
+    if obligation.get("schema_version") != GX_FIFO_LOOP_REFINEMENT_SCHEMA_VERSION:
+        return (
+            "gx-fifo loop refinement schema_version must be "
+            f"{GX_FIFO_LOOP_REFINEMENT_SCHEMA_VERSION}"
+        )
+    if obligation.get("capability") != GX_FIFO_WRITE_TRACE_CAPABILITY:
+        return (
+            "gx-fifo loop refinement.capability must be "
+            f"{GX_FIFO_WRITE_TRACE_CAPABILITY!r}"
+        )
+    if obligation.get("model_version") != GX_FIFO_TRACE_MODEL_VERSION:
+        return (
+            "gx-fifo loop refinement.model_version must be "
+            f"{GX_FIFO_TRACE_MODEL_VERSION!r}"
+        )
+    if obligation.get("algorithm") != GX_FIFO_LOOP_REFINEMENT_ALGORITHM:
+        return (
+            "gx-fifo loop refinement.algorithm must be "
+            f"{GX_FIFO_LOOP_REFINEMENT_ALGORITHM!r}"
+        )
+    if obligation.get("claim") != GX_FIFO_LOOP_REFINEMENT_CLAIM:
+        return (
+            "gx-fifo loop refinement.claim must be "
+            f"{GX_FIFO_LOOP_REFINEMENT_CLAIM!r}"
+        )
+    for side_name in ("original", "candidate"):
+        side = obligation.get(side_name)
+        if not isinstance(side, Mapping):
+            return f"gx-fifo loop refinement.{side_name} must be an object"
+        unknown_side = sorted(set(side.keys()) - _LOOP_SIDE_KEYS)
+        if unknown_side:
+            return (
+                f"gx-fifo loop refinement.{side_name} unknown fields: "
+                f"{', '.join(unknown_side)}"
+            )
+        if "result" not in side:
+            return f"gx-fifo loop refinement.{side_name} missing result"
+        result = side.get("result")
+        if result not in _LOOP_SIDE_RESULTS:
+            return (
+                f"gx-fifo loop refinement.{side_name}.result "
+                f"unsupported ({result!r})"
+            )
+        if "query_sha256" in side and not _is_sha256(side.get("query_sha256")):
+            return (
+                f"gx-fifo loop refinement.{side_name}.query_sha256 "
+                "must be a 64-hex digest"
+            )
+        if result == "unsat" and not _is_sha256(side.get("query_sha256")):
+            return (
+                f"gx-fifo loop refinement.{side_name}.query_sha256 "
+                "required for unsat"
+            )
+    return None
+
+
+def loop_refinement_has_real_unsat(obligation: Mapping[str, Any]) -> bool:
+    """True when both sides carry unsat with non-placeholder digests."""
+    for side_name in ("original", "candidate"):
+        side = obligation.get(side_name)
+        if not isinstance(side, Mapping):
+            return False
+        if side.get("result") != "unsat":
+            return False
+        digest = side.get("query_sha256")
+        if not _is_sha256(digest):
+            return False
+        # Placeholder all-zero digests are scaffolding, not real UNSAT.
+        if digest == "0" * 64:
+            return False
+    return True
+
+
+def build_always_incomplete_mmio_attestation(
+    capability: str,
+    *,
+    assumptions: Sequence[str] = (),
+    unsupported: Sequence[str] = (),
+    extra_evidence: Mapping[str, Any] | None = None,
+) -> Any:
+    """Emit an always-incomplete Wave 4 MMIO advanced attestation stub."""
+    from tools.ppc_equivalence.capability_assurance import (
+        STATUS_INCOMPLETE,
+        build_attestation,
+    )
+
+    meta = {
+        MMIO_READ_SIDE_EFFECTS_CAPABILITY: (
+            MMIO_READ_SIDE_EFFECTS_MODEL_VERSION,
+            MMIO_READ_SIDE_EFFECTS_ALGORITHM,
+            ("dolphin-harness-pending", "read-side-effects-incomplete"),
+        ),
+        MMIO_EXTERNAL_INPUT_CAPABILITY: (
+            MMIO_EXTERNAL_INPUT_MODEL_VERSION,
+            MMIO_EXTERNAL_INPUT_ALGORITHM,
+            ("dolphin-harness-pending", "external-input-incomplete"),
+        ),
+        DMA_INTERRUPT_CAPABILITY: (
+            DMA_INTERRUPT_MODEL_VERSION,
+            DMA_INTERRUPT_ALGORITHM,
+            ("dolphin-harness-pending", "dma-interrupt-incomplete"),
+        ),
+        GX_FIFO_READ_CAPABILITY: (
+            GX_FIFO_READ_MODEL_VERSION,
+            GX_FIFO_READ_ALGORITHM,
+            ("gx-fifo-read-non-promotable",),
+        ),
+    }
+    if capability not in meta:
+        raise ValueError(f"no always-incomplete stub for {capability!r}")
+    model_version, algorithm, default_unsupported = meta[capability]
+    evidence: dict[str, Any] = {
+        "never_promotion_grade": True,
+        "dolphin_harness": False,
+        "capability": capability,
+    }
+    if extra_evidence:
+        evidence.update(dict(extra_evidence))
+    return build_attestation(
+        capability=capability,
+        model_version=model_version,
+        algorithm=algorithm,
+        status=STATUS_INCOMPLETE,
+        assumptions=tuple(assumptions),
+        unsupported=tuple(unsupported) if unsupported else default_unsupported,
+        evidence=evidence,
+    )
+
+
+def build_gx_fifo_loop_refinement_attestation(
+    obligation: Mapping[str, Any] | None = None,
+    *,
+    assumptions: Sequence[str] = (),
+    unsupported: Sequence[str] = (),
+) -> Any:
+    """Draft gx-fifo-write-trace attestation wrapping a loop-refinement stub."""
+    from tools.ppc_equivalence.capability_assurance import (
+        STATUS_INCOMPLETE,
+        build_attestation,
+    )
+
+    obl = (
+        dict(obligation)
+        if obligation is not None
+        else build_gx_fifo_loop_refinement_obligation()
+    )
+    error = validate_gx_fifo_loop_refinement_obligation(obl)
+    evidence: dict[str, Any] = {
+        "loop_refinement": obl,
+        "obligation_sha256": canonical_json_sha256(obl),
+        "never_promotion_grade_without_unsat": True,
+    }
+    if error is not None:
+        evidence["schema_error"] = error
+    return build_attestation(
+        capability=GX_FIFO_WRITE_TRACE_CAPABILITY,
+        model_version=GX_FIFO_TRACE_MODEL_VERSION,
+        algorithm=GX_FIFO_LOOP_REFINEMENT_ALGORITHM,
+        status=STATUS_INCOMPLETE,
+        assumptions=tuple(assumptions),
+        unsupported=tuple(unsupported)
+        if unsupported
+        else (
+            ("schema-invalid",)
+            if error
+            else ("gx-fifo-loop-refinement-incomplete",)
+        ),
+        evidence=evidence,
+    )
 
 
 def build_mmio_attestation(

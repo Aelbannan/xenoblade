@@ -20,9 +20,9 @@ unsupported instruction, timeout, or solver `unknown` is always
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v39`
-- Result format: `19`
-- Certificate format: `14`
+- Architecture model: `broadway-ppc32-be-v40`
+- Result format: `20`
+- Certificate format: `15`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -445,6 +445,27 @@ Before advertising a newly supported opcode or semantic change:
    (Dolphin interpreter; required locally when Dolphin is available).
 6. Update `REFERENCES.md` / README supported-model notes if the contract or
    assumptions changed.
+
+### Capability-assurance rollout / recertification (Wave 5)
+
+Default `tools/coop/capability_manifest.json` stays **`shadow_mode=true`**.
+Authoritative canary uses
+`tools/coop/capability_manifest.authoritative.json`
+(`shadow_mode=false`, `require_capability_assurance=true`) — see
+`coop.example.json` → `_capability_assurance_wave5_canary`.
+
+After an architecture-model bump:
+
+1. Run bottom-up recertification before expecting a `callees-accepted` frontier:
+   `python3 tools/coop/run.py targets recertify --bottom-up --dry-run`
+   then `... targets recertify --bottom-up`.
+2. Expand `allowed_tier_a_capabilities` **one capability / model version at a
+   time**; recertify leaves first after each allowlist change.
+3. Never enable “all FP” or “all MMIO” in a single bump — keep scalar FP,
+   MMIO register-bank, and gx-fifo allowlists empty until each capability has
+   promotion-grade evidence and a dedicated canary.
+
+Keep `automatic_promotion=false` until operators deliberately open the gate.
 
 Real-game regression cases must not commit proprietary binaries; store legal
 small fixtures or hashes/extraction instructions instead.

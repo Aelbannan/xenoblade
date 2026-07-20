@@ -17,7 +17,10 @@
 # Wave 3 fp-scalar-arithmetic skeleton: dimensions declared incomplete until
 # SoftFloat + symbolic RN/NI/FPSCR foundations promote.
 # Wave 3 mmio-register-bank skeleton: incomplete until hardware-profile canary.
-architecture_model: broadway-ppc32-be-v39
+# Wave 4 advanced FP/MMIO stubs: fused midpoint/sticky-residue and FE0/FE1
+# remain incomplete (never promotion-grade); gx-fifo loop refinement and
+# read-side-effect / DMA stubs stay incomplete until Dolphin harness.
+architecture_model: broadway-ppc32-be-v40
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: a827ed9896c3a0648ff3b997e5e46bd3d80cb2c4c3553b5323395f66317b6c63
@@ -80,18 +83,44 @@ capabilities:
   fp-fused-arithmetic:
     model_version: broadway-fp-fused-v1
     status: incomplete
+    # Wave 4: midpoint-tie + sticky-residue remain unfinished → never
+    # promotion-grade even if the allowlist later gains an entry.
+    dimensions:
+      midpoint_residual: false
+      sticky_residue: false
+      result_bits: false
+      nan_payloads: false
+      traps: false
     opcodes: {}
   fp-paired-single:
     model_version: broadway-fp-paired-v1
     status: incomplete
+    dimensions:
+      lane_aggregation: false
+      symbolic_outcome: false
+      traps: false
     opcodes: {}
   fp-psq:
     model_version: broadway-fp-psq-v1
     status: incomplete
+    dimensions:
+      quantize: false
+      dequantize: false
+      gqr: false
+      traps: false
     opcodes: {}
   fp-traps:
     model_version: broadway-fp-traps-v1
     status: incomplete
+    # Wave 4: FE0/FE1 precise vs imprecise modes unfinished → never
+    # promotion-grade for trap-enabled proofs.
+    dimensions:
+      ve_ze_oe_ue_xe: false
+      destination_suppression: false
+      srr0_srr1: false
+      fex_reraise: false
+      fe0_fe1: false
+      traps: false
     opcodes: {}
   mmio-register-bank:
     model_version: wii-mmio-bank-v2
@@ -102,6 +131,29 @@ capabilities:
       hardware_profile_sha256 match, complete schema-v2+ side UNSAT digests,
       and a canary allowlist entry. Ad-hoc bus maps remain non-promotable.
       GX FIFO reads and DMA stay incomplete.
+  gx-fifo-write-trace:
+    model_version: gx-fifo-trace-v1
+    status: incomplete
+    notes: >
+      Wave 4 loop-emission refinement stub
+      (ordinary N FIFO writes ≡ summarized N-event trace) stays incomplete
+      unless both sides carry real UNSAT digests. Allowlist empty.
+  gx-fifo-read:
+    model_version: gx-fifo-read-v0
+    status: incomplete
+    notes: Explicitly non-promotable until FIFO reads are modeled.
+  mmio-read-side-effects:
+    model_version: mmio-read-side-effects-v0
+    status: incomplete
+    notes: Always incomplete until Dolphin hardware harness exists.
+  mmio-external-input:
+    model_version: mmio-external-input-v0
+    status: incomplete
+    notes: Always incomplete until Dolphin hardware harness exists.
+  dma-interrupt-effects:
+    model_version: dma-interrupt-v0
+    status: incomplete
+    notes: Always incomplete until Dolphin hardware harness exists.
 opcodes:
   add:
     decoder_unit: true

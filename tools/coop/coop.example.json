@@ -37,11 +37,18 @@
     "broadway-ppc32-be-v35",
     "broadway-ppc32-be-v36",
     "broadway-ppc32-be-v37",
-    "broadway-ppc32-be-v38"
+    "broadway-ppc32-be-v38",
+    "broadway-ppc32-be-v39"
   ],
   "capability_manifest_path": "tools/coop/capability_manifest.json",
   "capability_assurance_shadow_mode": true,
   "require_capability_assurance": false,
+  "_capability_assurance_wave5_canary": {
+    "description": "Optional Wave 5 authoritative canary. Keep automatic_promotion false. Point capability_manifest_path at the authoritative file and set shadow_mode false / require true (coop.json knobs override the file when present). Safe allowlist only: integer-core, provenance, fp-bitwise, bounded-memory, certified-calls — never bulk-enable scalar FP or MMIO/gx-fifo.",
+    "capability_manifest_path": "tools/coop/capability_manifest.authoritative.json",
+    "capability_assurance_shadow_mode": false,
+    "require_capability_assurance": true
+  },
   "require_bounded_ram": false,
   "memory_profile": null,
   "memory_ranges": [],

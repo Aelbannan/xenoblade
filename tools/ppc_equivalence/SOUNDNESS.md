@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v39`
-- Result format: `19`
-- Certificate format: `14`
+- Architecture model: `broadway-ppc32-be-v40`
+- Result format: `20`
+- Certificate format: `15`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -256,7 +256,7 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   so register-only proofs stay eligible for Tier A. Promotion may still require
   bounded ranges via `require_bounded_ram`.
 
-### Capability assurance (Wave 1–3)
+### Capability assurance (Wave 1–5)
 
 Tier classification is being migrated from effect-type hard-gates
 (`has_fp → C`, `has_memory_bus → C`, …) to **capability-assurance-v1**:
@@ -270,7 +270,20 @@ Tier classification is being migrated from effect-type hard-gates
   records `capability-assurance-shadow-tier-*` warnings, but authoritative
   `compute_confidence_tier` still uses legacy effect gates. Under shadow,
   legacy still forces Tier C for any FP; the assurance shadow tier may still
-  report A for bitwise-only proofs.
+  report A for bitwise-only proofs. Default manifest keeps
+  `shadow_mode=true` for safety.
+- **Wave 5 authoritative canary:** optional file
+  `tools/coop/capability_manifest.authoritative.json` sets
+  `shadow_mode=false` and `require_capability_assurance=true` with the same
+  safe allowlist (integer-core, provenance, fp-bitwise, bounded-memory,
+  certified-calls — **not** scalar FP, MMIO, or gx-fifo). Point
+  `capability_manifest_path` at that file and set
+  `capability_assurance_shadow_mode=false` /
+  `require_capability_assurance=true` in `coop.json` (knobs override the
+  file when present). Keep `automatic_promotion=false`. Decision records
+  include a `capability-assurance-audit:` warning plus
+  `PromotionDecision.assurance_audit` (capabilities used, weakest status,
+  shadow vs authoritative tier).
 - **Wave 2 `fp-bitwise`:** promoteable ops are only `fmr` / `fabs` / `fneg` /
   `fnabs` (`tools/ppc_equivalence/fp_bitwise.py`, algorithm
   `fp-bitwise-ledger-v1`, model `fp-bitwise-v1`). Evidence requires opcodes,
@@ -290,6 +303,17 @@ Tier classification is being migrated from effect-type hard-gates
   with violation-query UNSAT — default nearest-even config alone is not proof
   (`fp_rounding.py`). FPSCR FX/FEX sticky behavior remains incomplete.
   Obligation schema: `fp_scalar_obligations.py`.
+- **Wave 4 FP advanced (shadow, never promotion-grade):** obligation /
+  attestation stubs in `fp_advanced_obligations.py` for
+  `fp-fused-arithmetic`, `fp-paired-single`, `fp-psq`, and `fp-traps`
+  (algorithms `fp-*-incomplete-v0`). Fused midpoint-tie residues and
+  near-cancellation sticky residues remain incomplete; MSR FE0/FE1 precise
+  vs imprecise trap modes remain incomplete (`fp_traps.fe0_fe1_modeling_status`,
+  ledger `dimensions.fe0_fe1: false`). Even forged `status=promotion-grade`
+  or a non-empty allowlist cannot promote these stubs. Tagging hooks in
+  `fp_outcome.capability_tags_for_opcodes` /
+  `fp_traps.capability_tags_for_trap_domain` demand the caps when fused /
+  paired / PSQ opcodes or `traps_enabled` appear. Allowlists stay **empty**.
 - **Wave 3 MMIO foundations:** MMIO is split into independently attested
   capabilities (`mmio-register-bank`, `mmio-read-side-effects`,
   `mmio-external-input`, `gx-fifo-write-trace`, `gx-fifo-read`,
@@ -303,6 +327,13 @@ Tier classification is being migrated from effect-type hard-gates
   and malformed obligations fail closed. **`gx-fifo-read`**, DMA, and loop
   emission remain incomplete / Tier C. The MMIO allowlist stays empty until
   canary (schema + incomplete grades land now).
+- **Wave 4 MMIO advanced (shadow):** `gx-fifo-loop-refinement-v1` structural
+  obligation proves ordinary N FIFO writes ≡ summarized N-event trace;
+  incomplete unless both sides carry real (non-placeholder) UNSAT digests.
+  `mmio-read-side-effects`, `mmio-external-input`, and
+  `dma-interrupt-effects` attestation stubs are always incomplete / Tier C
+  until a Dolphin hardware harness exists. **`gx-fifo-read`** remains
+  explicitly non-promotable. Wave 4 advanced allowlists stay **empty**.
 - **External event sharing (ReadOracle):** timer/status/input registers are
   modeled as `ReadOracle(device_id, event_index, device_state)`
   (`tools/ppc_equivalence/external_event.py`). The same physical external
@@ -316,6 +347,19 @@ Tier classification is being migrated from effect-type hard-gates
   attestations (assurance path is unproven → would be Tier C).
 - `allowed_engine_sha256` is required for promotion once assurance is
   authoritative; it remains optional while `shadow_mode` is true.
+
+#### Wave 5 recertification notes
+
+After an architecture bump (parent-owned; this wave does **not** bump
+architecture or enable `automatic_promotion`):
+
+1. Run bottom-up `targets recertify` (`--dry-run` first) before expecting a
+   `callees-accepted` frontier.
+2. Expand `allowed_tier_a_capabilities` one capability / model version at a
+   time; recertify leaves first after each change.
+3. Never enable “all FP” or “all MMIO” in one bump — keep scalar FP and
+   MMIO/gx-fifo allowlists empty until each has promotion-grade evidence.
+
   - `assumed-ordinary-ram`: accesses are unconstrained ordinary RAM (external
     assumption; default). Private-stack masking still applies independently.
   - `bounded-ordinary-ram`, `stack-and-known-globals`, and `hardware-aware`:
@@ -664,6 +708,7 @@ Tier classification is being migrated from effect-type hard-gates
 | Result format versioned | `result.RESULT_FORMAT` | `test_targets.test_old_result_format_certificate_rejected` | Certificate `result_format` |
 | Certificate version accepted | `targets.EQUIVALENCE_CERTIFICATE_VERSION` | `test_targets.test_wrong_certificate_version_rejected` | Certificate `version` |
 | Promotion policy gated | `coop.lib.equivalence_policy.classify_for_promotion` | policy tests | `PromotionDecision.blockers` |
+| Capability-assurance Wave 5 canary | `capability_manifest.authoritative.json`, `build_capability_assurance_audit` | `tools/coop/tests/test_capability_assurance_rollout.py` | `PromotionDecision.assurance_audit`, `capability-assurance-audit:` warnings |
 | Concrete sampling secondary defense | `engine.run_concrete_sampling`, `--concrete-samples` | `test_concrete_sampling.py` | `concrete_sampling` (never a certificate) |
 
 ## Result fields

@@ -10,6 +10,7 @@ from tools.ppc_equivalence.capability_assurance import (
     CapabilityAssurance,
     CapabilityAssuranceResult,
     CapabilityManifest,
+    build_capability_assurance_audit,
     compute_confidence_tier_from_assurance,
     default_capability_manifest_path,
     evaluate_capability_assurance,
@@ -372,6 +373,33 @@ def _attach_shadow_warning(result: ProofResult, assurance_tier: str | None) -> N
         result.warnings = current
 
 
+def _attach_assurance_audit_warning(
+    result: ProofResult,
+    audit: dict[str, Any],
+) -> None:
+    """Record a compact assurance summary on the proof for equivalence logs."""
+    caps = ",".join(str(item) for item in audit.get("capabilities_used") or [])
+    weakest = audit.get("weakest_status", "unmodeled")
+    mode = "shadow" if audit.get("shadow_mode") else "authoritative"
+    auth = audit.get("authoritative_tier")
+    legacy = audit.get("shadow_legacy_tier")
+    warning = (
+        f"capability-assurance-audit:"
+        f"mode={mode};weakest={weakest};caps={caps or '-'};"
+        f"assurance_tier={audit.get('assurance_tier')};"
+        f"authoritative_tier={auth};legacy_tier={legacy}"
+    )
+    current = list(result.warnings or [])
+    # Replace any prior audit warning so retries stay single-valued.
+    current = [
+        item
+        for item in current
+        if not str(item).startswith("capability-assurance-audit:")
+    ]
+    current.append(warning)
+    result.warnings = current
+
+
 def compute_confidence_tier_proofresult(
     result: ProofResult,
     ledger: ValidationLedger | None = None,
@@ -379,13 +407,16 @@ def compute_confidence_tier_proofresult(
     manifest: CapabilityManifest | dict[str, Any] | Path | None = None,
     config: CoopConfig | None = None,
     assurance_out: list[CapabilityAssuranceResult] | None = None,
+    audit_out: list[dict[str, Any]] | None = None,
 ) -> str | None:
     """Classify a proof into tier A/B/C.
 
     Always evaluates capability assurance when possible. While
-    ``shadow_mode`` is true (Wave 1 default), the authoritative return value
-    remains the legacy effect-type tier; the assurance tier is attached as a
-    ``capability-assurance-shadow-tier-*`` warning.
+    ``shadow_mode`` is true (Wave 1 default / Wave 5 safe default), the
+    authoritative return value remains the legacy effect-type tier; the
+    assurance tier is attached as a ``capability-assurance-shadow-tier-*``
+    warning. When ``shadow_mode`` is false (Wave 5 authoritative canary),
+    the assurance tier is authoritative.
     """
     resolved = resolve_capability_manifest(manifest, config=config)
     legacy = _compute_confidence_tier_legacy(result, ledger)
@@ -404,8 +435,19 @@ def compute_confidence_tier_proofresult(
     )
     if resolved.shadow_mode:
         _attach_shadow_warning(result, assurance_tier)
-        return legacy
-    return assurance_tier
+        authoritative_tier = legacy
+    else:
+        authoritative_tier = assurance_tier
+    audit = build_capability_assurance_audit(
+        assurance,
+        shadow_mode=resolved.shadow_mode,
+        authoritative_tier=authoritative_tier,
+        shadow_legacy_tier=legacy,
+    )
+    _attach_assurance_audit_warning(result, audit)
+    if audit_out is not None:
+        audit_out.append(audit)
+    return authoritative_tier
 
 
 def compute_confidence_tier_from_certificate(
@@ -458,6 +500,7 @@ def compute_confidence_tier(
     manifest: CapabilityManifest | dict[str, Any] | Path | None = None,
     config: CoopConfig | None = None,
     assurance_out: list[CapabilityAssuranceResult] | None = None,
+    audit_out: list[dict[str, Any]] | None = None,
 ) -> str | None:
     """Dispatch tier classification for ProofResult or certificate dict."""
     if isinstance(result_or_certificate, ProofResult):
@@ -467,6 +510,7 @@ def compute_confidence_tier(
             manifest=manifest,
             config=config,
             assurance_out=assurance_out,
+            audit_out=audit_out,
         )
     if isinstance(result_or_certificate, dict):
         resolved = resolve_capability_manifest(manifest, config=config)
@@ -491,10 +535,20 @@ def compute_confidence_tier(
         if assurance_out is not None:
             assurance_out.append(assurance)
         if resolved.shadow_mode:
-            return legacy
-        if status is not ProofStatus.EQUIVALENT and legacy is None:
-            return None
-        return compute_confidence_tier_from_assurance(assurance)
+            authoritative_tier = legacy
+        elif status is not ProofStatus.EQUIVALENT and legacy is None:
+            authoritative_tier = None
+        else:
+            authoritative_tier = compute_confidence_tier_from_assurance(assurance)
+        audit = build_capability_assurance_audit(
+            assurance,
+            shadow_mode=resolved.shadow_mode,
+            authoritative_tier=authoritative_tier,
+            shadow_legacy_tier=legacy,
+        )
+        if audit_out is not None:
+            audit_out.append(audit)
+        return authoritative_tier
     return None
 
 
@@ -504,6 +558,8 @@ class PromotionDecision:
     confidence_tier: str | None = None
     blockers: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    # Wave 5: compact capability-assurance audit for decision records.
+    assurance_audit: dict[str, Any] | None = None
 
 
 def _check_tier_allowed(
@@ -781,16 +837,19 @@ def classify_for_promotion(
         require_capability_assurance=policy.require_capability_assurance,
     )
     assurance_box: list[CapabilityAssuranceResult] = []
+    audit_box: list[dict[str, Any]] = []
     tier = compute_confidence_tier_proofresult(
         result,
         ledger,
         manifest=manifest,
         assurance_out=assurance_box,
+        audit_out=audit_box,
     )
     _check_tier_allowed(tier, policy.allowed_confidence_tiers, blockers)
     _check_engine_provenance(result, policy.allowed_engine_sha256, blockers)
 
     assurance = assurance_box[0] if assurance_box else None
+    assurance_audit = audit_box[0] if audit_box else None
     if not policy.capability_assurance_shadow_mode:
         if policy.require_capability_assurance and result.capability_assurance is None:
             blockers.append("capability-assurance-required")
@@ -808,12 +867,16 @@ def classify_for_promotion(
         for warning in result.warnings or []:
             if str(warning).startswith("capability-assurance-shadow-tier-"):
                 warnings.append(str(warning))
+    for warning in result.warnings or []:
+        if str(warning).startswith("capability-assurance-audit:"):
+            warnings.append(str(warning))
 
     return PromotionDecision(
         allowed=not blockers,
         confidence_tier=tier,
         blockers=tuple(blockers),
         warnings=tuple(sorted(set(warnings))),
+        assurance_audit=assurance_audit,
     )
 
 
@@ -873,6 +936,7 @@ class PromotionPolicy:
             "broadway-ppc32-be-v36",
             "broadway-ppc32-be-v37",
             "broadway-ppc32-be-v38",
+            "broadway-ppc32-be-v39",
         }
     )
     minimum_result_format: int = RESULT_FORMAT

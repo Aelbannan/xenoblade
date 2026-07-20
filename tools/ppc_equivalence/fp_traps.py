@@ -35,6 +35,9 @@ trap versus continue via terminal ``exit_kind`` / ``exit_target``.
 - SymbolicOps: OE/UE/XE must stay clear (OX/UX/XX not SMT-modeled).
 - MSR FE0/FE1 precise vs imprecise modes: deferred; ``traps_enabled`` assumes
   precise delivery when an enabled exception occurs on the instruction.
+  Wave 4 ``fp-traps`` capability attestation stays incomplete /
+  never promotion-grade until FE0/FE1 is modeled (``fe0_fe1: false`` in
+  the validation ledger).
 
 Still **Tier C** only; does not enable automatic promotion.
 """
@@ -387,3 +390,23 @@ def paired_opcode_names() -> tuple[str, ...]:
 
 def incomplete_opcode_names() -> tuple[str, ...]:
     return tuple(sorted(op.value for op in TRAP_DELIVERY_INCOMPLETE_OPS))
+
+
+def capability_tags_for_trap_domain(*, traps_enabled: bool = False) -> frozenset[str]:
+    """Wave 4: demand ``fp-traps`` when the proof domain enables traps.
+
+    Does not claim FE0/FE1 completeness — attestation remains incomplete.
+    """
+    if traps_enabled:
+        return frozenset({"fp-traps"})
+    return frozenset()
+
+
+def fe0_fe1_modeling_status() -> dict[str, bool]:
+    """Document FE0/FE1 incompleteness for capability-assurance ledgers."""
+    return {
+        "fe0": False,
+        "fe1": False,
+        "precise_delivery_assumed_under_traps_enabled": True,
+        "imprecise_modes_modeled": False,
+    }

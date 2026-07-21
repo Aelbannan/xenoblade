@@ -294,7 +294,11 @@ extern "C" bool func_80187EFC() { return false; }
 extern "C" bool func_80187F04() { return false; }
 // LLM-HARNESS-END: us-801894b8
 // LLM-HARNESS-BEGIN: us-801894c0
-extern "C" bool func_80187F0C() { return false; }
+extern "C" void __dt__12CMenuPTGaugeFv(void*);
+
+extern "C" void func_80187F0C(void* p) {
+    __dt__12CMenuPTGaugeFv((char*)p - 0x5c);
+}
 // LLM-HARNESS-END: us-801894c0
 
 // LLM-HARNESS-BEGIN: us-80188388

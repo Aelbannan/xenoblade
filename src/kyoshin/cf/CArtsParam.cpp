@@ -49,7 +49,9 @@ extern "C" void func_80154134() {}
 extern "C" void func_80154168() {}
 // LLM-HARNESS-END: us-80154bac
 // LLM-HARNESS-BEGIN: us-80154be0
-extern "C" void func_8015419C() {}
+extern "C" bool func_8015419C(void* self) {
+    return *(unsigned short*)((char*)self + 0x5C) == 11;
+}
 // LLM-HARNESS-END: us-80154be0
 
 // LLM-HARNESS-BEGIN: us-80154b04

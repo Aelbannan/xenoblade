@@ -1134,7 +1134,12 @@ extern "C" void func_801356E0() {}
 extern "C" void func_80135898() {}
 // LLM-HARNESS-END: us-8013636c
 // LLM-HARNESS-BEGIN: us-8013646c
-extern "C" void func_80135998() {}
+extern "C" void func_80135998(u8 value) {
+    u8 *obj = (u8 *)lbl_eu_80664054;
+    if (obj == NULL)
+        return;
+    obj[0xc8c] = value;
+}
 // LLM-HARNESS-END: us-8013646c
 // LLM-HARNESS-BEGIN: us-80136904
 extern "C" void Draw__Q212CUICfManager5CTestFv() {}

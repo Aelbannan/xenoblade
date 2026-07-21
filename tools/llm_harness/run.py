@@ -60,14 +60,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Print effective configuration and exit",
     )
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("new", "improve", "tu-complete", "solve"):
+    for name in ("new", "improve", "tu-complete", "solve", "tu-solve"):
         command = sub.add_parser(name)
         command.add_argument(
             "target_id",
             nargs="?",
             help="Target ID, or unit name for tu-complete",
         )
-        if name in {"new", "improve", "tu-complete", "solve"}:
+        if name in {"new", "improve", "tu-complete", "solve", "tu-solve"}:
             command.add_argument(
                 "--number",
                 type=int,
@@ -81,13 +81,13 @@ def main(argv: list[str] | None = None) -> int:
                     else f"Automatically select this many {name} targets"
                 ),
             )
-        if name in {"improve", "tu-complete"}:
+        if name in {"improve", "tu-complete", "solve", "tu-solve"}:
             command.add_argument(
                 "--random",
                 action="store_true",
                 help="Shuffle eligible targets before applying --number",
             )
-        if name in {"new", "improve", "solve"}:
+        if name in {"new", "improve", "solve", "tu-solve"}:
             command.add_argument(
                 "--certified-funcs",
                 action="store_true",
@@ -97,11 +97,11 @@ def main(argv: list[str] | None = None) -> int:
                 "--tu",
                 help="Filter to functions in a specific translation unit (e.g. kyoshin/cf/CfPadTask)",
             )
-        if name in {"improve", "solve"}:
+        if name in {"improve", "solve", "tu-solve"}:
             command.add_argument(
                 "--selection",
                 choices=("leaf", "ready", "callees-accepted", "pending"),
-                default="ready" if name == "solve" else "pending",
+                default="ready" if name in ("solve", "tu-solve") else "pending",
                 help=(
                     "Call-graph frontier for automatic --number selection "
                     "(solve default: ready; improve default: pending)"
@@ -113,16 +113,16 @@ def main(argv: list[str] | None = None) -> int:
                 action="store_true",
                 help="Allow automatic selection of functions before their callees are matched",
             )
-        if name != "solve":
+        if name not in ("solve", "tu-solve"):
             command.add_argument("--runs", type=int)
         command.add_argument("--dry-run", action="store_true")
         command.add_argument("--resume", type=Path, help="Resume an experiment directory")
-        if name != "solve":
+        if name not in ("solve", "tu-solve"):
             command.add_argument("--max-cost", type=float, help="Stop before the next call after this recorded cost")
             command.add_argument("--max-tokens", type=int, help="Stop before the next call after this token total")
             command.add_argument("--retry-errors", action="store_true", help="On resume, rerun model/run records with errors")
         command.add_argument("--max-parallel", type=int, help="Override configured parallel candidate count")
-        if name == "tu-complete":
+        if name == "tu-complete" or name == "tu-solve":
             command.add_argument(
                 "--full-context",
                 action="store_true",
@@ -132,15 +132,84 @@ def main(argv: list[str] | None = None) -> int:
         "sample",
         help="Blind identical-prompt sampling for model research (not the default decompilation path)",
     )
-    sample.add_argument("workflow", choices=("new", "improve", "tu-complete"))
+    sample.add_argument("workflow", choices=("new", "improve", "tu-complete", "tu-decomp"))
     sample.add_argument("target_id")
     sample.add_argument("--runs", type=int, required=True)
     sample.add_argument("--dry-run", action="store_true")
     sample.add_argument("--max-parallel", type=int)
+    probe = sub.add_parser(
+        "probe",
+        help=(
+            "Run ppc_equivalence on compiling targets that lack FULL_MATCH "
+            "or EQUIVALENT_MATCH with a current certificate (no LLM)"
+        ),
+    )
+    probe.add_argument(
+        "target_ids",
+        nargs="*",
+        help="Explicit target IDs (optional when using --number / --tu)",
+    )
+    probe.add_argument(
+        "--number",
+        type=int,
+        help="Automatically select this many probe-eligible compiling targets",
+    )
+    probe.add_argument(
+        "--tu",
+        help="Filter to / expand targets in a translation unit",
+    )
+    probe.add_argument(
+        "--selection",
+        choices=("leaf", "ready", "callees-accepted", "pending"),
+        default="ready",
+        help="Call-graph frontier for automatic --number selection (default: ready)",
+    )
+    probe.add_argument(
+        "--certified-funcs",
+        action="store_true",
+        default=True,
+        help="Only select functions whose callees are FULL_MATCH or EQUIVALENT+certified (default)",
+    )
+    probe.add_argument(
+        "--no-certified-funcs",
+        action="store_false",
+        dest="certified_funcs",
+        help="Allow probe selection even when callees lack current certificates",
+    )
+    probe.add_argument(
+        "--min-fuzzy",
+        type=float,
+        default=50.0,
+        help="Skip targets with known instruction_match below this (default: 50)",
+    )
+    probe.add_argument(
+        "--write",
+        action="store_true",
+        help="Persist FULL_MATCH / EQUIVALENT_MATCH (+ certificate) into targets.json",
+    )
+    probe.add_argument(
+        "--linked",
+        action="store_true",
+        help="Pass linked mode through to ppc_equivalence",
+    )
+    probe.add_argument(
+        "--no-rebuild",
+        action="store_true",
+        help="Skip ninja rebuild; use existing decomp objects",
+    )
+    probe.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Run objdiff + ppc_equivalence and write results under "
+            "build/llm-harness/probe/, but do not update targets.json "
+            "(overrides --write)"
+        ),
+    )
     batch = sub.add_parser(
         "batch", help="Run a workflow for multiple functions or TUs concurrently"
     )
-    batch.add_argument("workflow", choices=("new", "improve", "tu-complete", "solve"))
+    batch.add_argument("workflow", choices=("new", "improve", "tu-complete", "solve", "tu-decomp"))
     batch.add_argument("target_ids", nargs="*")
     batch.add_argument(
         "--tu",
@@ -258,6 +327,50 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             max_parallel=args.max_parallel,
         ))
+        return 0
+    if args.command == "probe":
+        target_ids = list(args.target_ids or [])
+        if args.number and target_ids:
+            parser.error("probe accepts either target_ids or --number, not both")
+        if args.tu and target_ids and not args.number:
+            # Explicit IDs already provided; --tu is ignored for expansion.
+            pass
+        if args.number:
+            try:
+                target_ids = harness.select_targets(
+                    "probe",
+                    args.number,
+                    certified_funcs=bool(args.certified_funcs),
+                    tu=args.tu,
+                    selection=args.selection,
+                    min_fuzzy=float(args.min_fuzzy),
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+            _print_selected_frontier(harness, target_ids, args.selection)
+        elif args.tu and not target_ids:
+            try:
+                target_ids = harness.target_ids_for_unit(args.tu, "probe")
+            except ValueError as exc:
+                parser.error(str(exc))
+        if not target_ids:
+            parser.error("probe requires target_ids, --number, or --tu")
+        batch_dir = harness.run_probe(
+            target_ids,
+            dry_run=args.dry_run,
+            write=args.write,
+            linked=args.linked,
+            rebuild=not args.no_rebuild,
+        )
+        print(batch_dir)
+        summary_path = batch_dir / "summary.json"
+        if summary_path.is_file():
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            print(
+                f"probe summary: count={summary.get('count')} "
+                f"accepted={summary.get('accepted')} errors={summary.get('errors')} "
+                f"write={summary.get('write')} dry_run={summary.get('dry_run')}"
+            )
         return 0
     if args.command == "batch":
         target_ids = args.target_ids
@@ -430,6 +543,7 @@ def main(argv: list[str] | None = None) -> int:
                 target_ids = harness.select_targets(
                     "solve",
                     args.number,
+                    randomize=args.random,
                     certified_funcs=getattr(args, "certified_funcs", False),
                     tu=getattr(args, "tu", None),
                     selection=selection,
@@ -445,6 +559,8 @@ def main(argv: list[str] | None = None) -> int:
                 model_parallel=args.max_parallel,
             ))
             return 0
+        if args.random:
+            parser.error("--random requires --number")
         tu = getattr(args, "tu", None)
         if tu:
             if args.target_id is not None:
@@ -466,6 +582,64 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             resume=args.resume,
             max_parallel=args.max_parallel,
+        ))
+        return 0
+    if args.command == "tu-solve":
+        if getattr(args, "number", None) is not None:
+            if args.target_id is not None:
+                parser.error("tu-solve accepts either target_id or --number, not both")
+            if args.number < 1:
+                parser.error("--number must be positive")
+            if args.resume:
+                parser.error("tu-solve --number does not support --resume")
+            selection = getattr(args, "selection", "ready")
+            try:
+                target_ids = harness.select_targets(
+                    "tu-decomp",
+                    args.number,
+                    randomize=args.random,
+                    certified_funcs=getattr(args, "certified_funcs", False),
+                    tu=getattr(args, "tu", None),
+                    selection=selection,
+                )
+            except (TypeError, ValueError) as exc:
+                parser.error(str(exc))
+            if args.dry_run:
+                _print_selected_frontier(harness, target_ids, selection)
+            print(harness.run_batch(
+                "tu-decomp",
+                target_ids,
+                dry_run=args.dry_run,
+                model_parallel=args.max_parallel,
+                full_context=args.full_context,
+            ))
+            return 0
+        if args.random:
+            parser.error("--random requires --number")
+        tu = getattr(args, "tu", None)
+        if tu:
+            if args.target_id is not None:
+                parser.error("tu-solve accepts either target_id or --tu, not both")
+            target_ids = harness.target_ids_for_unit(tu, "tu-decomp")
+            if not target_ids:
+                parser.error(f"No eligible tu-solve targets found in unit {tu!r}")
+            print(harness.run_batch(
+                "tu-decomp",
+                target_ids,
+                dry_run=args.dry_run,
+                model_parallel=args.max_parallel,
+                full_context=args.full_context,
+            ))
+            return 0
+        if args.target_id is None:
+            parser.error("tu-solve requires target_id, --number, or --tu")
+        print(harness.run(
+            "tu-decomp",
+            args.target_id,
+            dry_run=args.dry_run,
+            resume=args.resume,
+            max_parallel=args.max_parallel,
+            full_context=args.full_context,
         ))
         return 0
     if args.command in {"new", "improve", "tu-complete"} and args.number is not None:

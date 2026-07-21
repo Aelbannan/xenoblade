@@ -428,7 +428,7 @@ class Harness:
         retry_errors: bool = False,
         full_context: bool = False,
     ) -> Path:
-        if workflow not in {"new", "improve", "tu-complete"}:
+        if workflow not in {"new", "improve", "tu-complete", "tu-decomp"}:
             raise ValueError(f"Unknown workflow: {workflow}")
         if resume:
             experiment_dir = resume.resolve()
@@ -489,42 +489,44 @@ class Harness:
             # Phase 0/5: mandatory baseline before any model call when supported
             evaluate_canon = getattr(self.adapter, "evaluate_canon", None)
             if evaluate_canon is not None:
-                baseline = capture_baseline(self.adapter, target_id, experiment_dir)
-                if baseline.evaluation is None:
-                    raise ValueError(
-                        f"baseline evaluation failed for {target_id!r}; "
-                        "fix the evaluator before making model calls"
+                # TU-level workflows don't have a single function target for baseline
+                if workflow not in {"tu-complete", "tu-decomp"}:
+                    baseline = capture_baseline(self.adapter, target_id, experiment_dir)
+                    if baseline.evaluation is None:
+                        raise ValueError(
+                            f"baseline evaluation failed for {target_id!r}; "
+                            "fix the evaluator before making model calls"
+                        )
+                    baseline_accepted = bool(
+                        getattr(baseline.evaluation, "symbol_accepted", False)
                     )
-                baseline_accepted = bool(
-                    getattr(baseline.evaluation, "symbol_accepted", False)
-                )
-                state["baseline"] = {
-                    "source_hash": baseline.source_hash,
-                    "source_text": baseline.source_text,
-                    "evaluation": {
-                        "status": baseline.evaluation.status.value,
-                        "match_percent": baseline.evaluation.match_percent,
-                        "accepted": baseline_accepted,
-                        "symbol_accepted": baseline_accepted,
-                    },
-                }
-                if baseline_accepted:
-                    self._debug(
-                        f"baseline already accepted target={target_id} "
-                        f"status={baseline.evaluation.status.value} "
-                        f"match={baseline.evaluation.match_percent}"
-                    )
-                    record = getattr(self.adapter, "record_baseline_accepted", None)
-                    if record is not None:
-                        with self._adapter_lock:
-                            record(target_id, baseline.evaluation)
-                    state["status"] = "complete"
-                    state["reason"] = "baseline_already_accepted"
-                    state["records"] = []
-                    state["baseline_accepted"] = True
-                    state["model_calls"] = 0
-                    self._write_state(experiment_dir, state)
-                    return experiment_dir
+                    state["baseline"] = {
+                        "source_hash": baseline.source_hash,
+                        "source_text": baseline.source_text,
+                        "evaluation": {
+                            "status": baseline.evaluation.status.value,
+                            "match_percent": baseline.evaluation.match_percent,
+                            "accepted": baseline_accepted,
+                            "symbol_accepted": baseline_accepted,
+                        },
+                    }
+                    if baseline_accepted:
+                        self._debug(
+                            f"baseline already accepted target={target_id} "
+                            f"status={baseline.evaluation.status.value} "
+                            f"match={baseline.evaluation.match_percent}"
+                        )
+                        record = getattr(self.adapter, "record_baseline_accepted", None)
+                        if record is not None:
+                            with self._adapter_lock:
+                                record(target_id, baseline.evaluation)
+                        state["status"] = "complete"
+                        state["reason"] = "baseline_already_accepted"
+                        state["records"] = []
+                        state["baseline_accepted"] = True
+                        state["model_calls"] = 0
+                        self._write_state(experiment_dir, state)
+                        return experiment_dir
             self._write_state(experiment_dir, state)
         self._debug(
             "function decompile started "
@@ -843,10 +845,11 @@ class Harness:
         certified_funcs: bool = False,
         tu: Optional[str] = None,
         selection: Optional[str] = None,
+        min_fuzzy: Optional[float] = None,
     ) -> List[str]:
         """Ask the project adapter for an automatic workflow target selection, optionally filtered to a TU."""
-        if workflow not in {"improve", "solve", "tu-complete"}:
-            raise ValueError("Automatic selection supports improve, solve, or tu-complete")
+        if workflow not in {"improve", "solve", "tu-complete", "probe"}:
+            raise ValueError("Automatic selection supports improve, solve, tu-complete, or probe")
         if number < 1:
             raise ValueError("number must be positive")
         select = getattr(self.adapter, "select_targets", None)
@@ -859,18 +862,112 @@ class Harness:
         }
         if selection is not None:
             kwargs["selection"] = selection
+        if min_fuzzy is not None:
+            kwargs["min_fuzzy"] = min_fuzzy
         with self._adapter_lock:
             try:
                 target_ids = list(select(workflow, number, **kwargs))
             except TypeError:
-                # Older adapters without selection= kwarg.
+                # Older adapters without selection=/min_fuzzy kwargs.
                 kwargs.pop("selection", None)
+                kwargs.pop("min_fuzzy", None)
                 target_ids = list(select(workflow, number, **kwargs))
         if len(target_ids) != number:
             raise ValueError(
                 f"Project adapter returned {len(target_ids)} targets; expected {number}"
             )
         return target_ids
+
+    def run_probe(
+        self,
+        target_ids: List[str],
+        *,
+        dry_run: bool = False,
+        write: bool = False,
+        linked: bool = False,
+        rebuild: bool = True,
+    ) -> Path:
+        """Run ppc_equivalence probes on compiling non-accepted targets (no LLM).
+
+        ``dry_run`` still runs objdiff + SMT; it only suppresses ``targets.json``
+        updates (forces ``write=False``). Pass ``write=True`` without ``dry_run``
+        to persist accepted FULL/EQUIVALENT matches.
+        """
+        if not target_ids:
+            raise ValueError("probe requires at least one target id")
+        probe_fn = getattr(self.adapter, "probe_target", None)
+        if probe_fn is None:
+            raise ValueError("Configured project adapter does not support probe")
+
+        # dry_run = probe for real, but never mutate the registry.
+        persist = bool(write) and not dry_run
+
+        batch_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        batch_dir = self.output_dir / "probe" / batch_id
+        batch_dir.mkdir(parents=True, exist_ok=True)
+        results_path = batch_dir / "results.jsonl"
+        summary_path = batch_dir / "summary.json"
+
+        self._debug(
+            f"probe started batch={batch_id} targets={len(target_ids)} "
+            f"dry_run={dry_run} write={persist}"
+        )
+
+        results: List[Dict[str, Any]] = []
+        accepted = 0
+        errors = 0
+        with results_path.open("w", encoding="utf-8") as out:
+            for target_id in target_ids:
+                self._debug(f"probe target={target_id}")
+                try:
+                    with self._adapter_lock:
+                        row = dict(
+                            probe_fn(
+                                target_id,
+                                write=persist,
+                                linked=linked,
+                                rebuild=rebuild,
+                            )
+                        )
+                except Exception as exc:
+                    row = {
+                        "target_id": target_id,
+                        "status": "PROBE_ERROR",
+                        "accepted": False,
+                        "detail": f"{type(exc).__name__}: {exc}",
+                        "written": False,
+                    }
+                    errors += 1
+                if row.get("accepted"):
+                    accepted += 1
+                elif str(row.get("status") or "").endswith("ERROR"):
+                    errors += 1
+                results.append(row)
+                out.write(json.dumps(row, separators=(",", ":")) + "\n")
+                out.flush()
+                self._debug(
+                    f"probe done target={target_id} status={row.get('status')} "
+                    f"match={row.get('match_percent')} equiv={row.get('equivalence')} "
+                    f"written={row.get('written')}"
+                )
+
+        summary = {
+            "workflow": "probe",
+            "batch_id": batch_id,
+            "dry_run": dry_run,
+            "write": persist,
+            "linked": linked,
+            "rebuild": rebuild,
+            "count": len(target_ids),
+            "accepted": accepted,
+            "errors": errors,
+            "results": results,
+        }
+        summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+        self._debug(
+            f"probe complete batch={batch_id} accepted={accepted} errors={errors}"
+        )
+        return batch_dir
 
     def target_ids_for_unit(self, unit_name: str, workflow: str) -> List[str]:
         """Ask the project adapter for all eligible target IDs in a translation unit."""
@@ -1812,6 +1909,10 @@ class Harness:
             measured = [r for r in completed if not r.get("timed_out")]
             matches = [r["evaluation"].get("match_percent") for r in measured]
             matches = [float(v) for v in matches if v is not None]
+            by_status: Dict[str, int] = {}
+            for row in rows:
+                status = _stats_status(row)
+                by_status[status] = by_status.get(status, 0) + 1
             output.append({
                 "model_id": model_id,
                 "attempts": len(rows),
@@ -1822,6 +1923,7 @@ class Harness:
                     for r in rows
                 ),
                 "accepted": sum(bool(r.get("evaluation", {}).get("accepted")) for r in completed),
+                "by_status": dict(sorted(by_status.items())),
                 "average_match_percent": sum(matches) / len(matches) if matches else None,
                 "average_seconds": (
                     sum(float(r.get("duration_seconds", 0)) for r in measured) / len(measured)
@@ -2603,3 +2705,16 @@ def parse_candidate(
 
 def _record_key(row: Dict[str, Any]) -> str:
     return f"{row.get('model_id')}:{int(row.get('run_index', 0))}"
+
+
+def _stats_status(row: Dict[str, Any]) -> str:
+    """Normalize an experiment row into a stats status bucket."""
+    evaluation = row.get("evaluation") or {}
+    status = evaluation.get("status")
+    if status:
+        return str(status)
+    if row.get("timed_out") or "TimeoutExpired" in str(row.get("error") or ""):
+        return "TIMEOUT"
+    if row.get("error"):
+        return "ERROR"
+    return "NONE"

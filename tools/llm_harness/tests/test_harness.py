@@ -1505,9 +1505,11 @@ class StatsTests(unittest.TestCase):
             rows = [
                 {"model_id": "a", "duration_seconds": 2, "input_tokens": 10, "output_tokens": 4,
                  "cache_read_tokens": 8, "cache_write_tokens": 3,
-                 "cost": 0.1, "winner": True, "evaluation": {"accepted": True, "match_percent": 100}},
+                 "cost": 0.1, "winner": True,
+                 "evaluation": {"accepted": True, "match_percent": 100, "status": "FULL_MATCH"}},
                 {"model_id": "a", "duration_seconds": 4, "input_tokens": 20, "output_tokens": 6,
-                 "cost": 0.2, "winner": False, "evaluation": {"accepted": False, "match_percent": 80}},
+                 "cost": 0.2, "winner": False,
+                 "evaluation": {"accepted": False, "match_percent": 80, "status": "HIGH_MATCH"}},
                 {"model_id": "a", "duration_seconds": 180, "input_tokens": 0, "output_tokens": 0,
                  "cost": None, "winner": False, "timed_out": True,
                  "error": "TimeoutExpired: model exceeded 180 seconds", "evaluation": {}},
@@ -1519,6 +1521,11 @@ class StatsTests(unittest.TestCase):
             self.assertEqual(stats["wins"], 1)
             self.assertEqual(stats["accepted_wins"], 1)
             self.assertEqual(stats["accepted"], 1)
+            self.assertEqual(stats["by_status"], {
+                "FULL_MATCH": 1,
+                "HIGH_MATCH": 1,
+                "TIMEOUT": 1,
+            })
             self.assertEqual(stats["average_match_percent"], 90)
             self.assertEqual(stats["average_seconds"], 3)
             self.assertEqual(stats["timeouts"], 1)

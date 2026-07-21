@@ -3152,11 +3152,17 @@ void WUDUpdateSCSetting() {}
 void WUDiSetDevAddrForHandle() {}
 // LLM-HARNESS-END: us-8037ece0
 // LLM-HARNESS-BEGIN: us-8037ed00
-void WUDiGetDevAddrForHandle() {}
+void* WUDiGetDevAddrForHandle(u8 handle) {
+    return (void*)_dev_handle_to_bda[handle & 0xFF];
+}
 // LLM-HARNESS-END: us-8037ed00
 // LLM-HARNESS-BEGIN: us-8037ed20
-void WUDiSetQueueSizeForHandle() {}
+void WUDiSetQueueSizeForHandle(u8 handle, u16 size) {
+    _dev_handle_queue_size[handle] = size;
+}
 // LLM-HARNESS-END: us-8037ed20
 // LLM-HARNESS-BEGIN: us-8037ed40
-void WUDiSetNotAckNumForHandle() {}
+void WUDiSetNotAckNumForHandle(u8 handle, u16 notAckNum) {
+    _dev_handle_notack_num[handle] = notAckNum;
+}
 // LLM-HARNESS-END: us-8037ed40

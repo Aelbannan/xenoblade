@@ -26096,12 +26096,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -26793,7 +26789,7 @@ public:
 #endif
 /* end "decomp.h" */
 
-// §17.6 whole-function asm: packed tail copy + -0x1A0/stmw frame not recoverable
+// section 17.6 whole-function asm: packed tail copy + -0x1A0/stmw frame not recoverable
 // in high-level C++ (60% STRUCTURAL). User-approved "Fix it".
 
 extern "C" {
@@ -27061,7 +27057,7 @@ void func_8013B428(u32);
 
 void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
     // Decl order: savedRet@0x8, gap, setItem stw-r1 home, idTable@0x28 (retail frame).
-    int savedRet;
+    volatile int savedRet;
     int pad0C;
     int pad10;
     int pad14;
@@ -27175,8 +27171,9 @@ range_312c_31f3: {
 
     CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
     if (inst != NULL) {
-        savedRet = func_8014A1D4(inst->unk144, inst->unk11C, codePersist, 1);
-        if (savedRet != 0) {
+        int tempRet = (int)func_8014A1D4(inst->unk144, inst->unk11C, codePersist, 1);
+        savedRet = tempRet;
+        if (tempRet != 0) {
             inst = (CUICfManager*)lbl_eu_80664054;
 
             _reslist_node<u32>* startNode = (_reslist_node<u32>*)inst->unk128;
@@ -27307,12 +27304,12 @@ end:
 // ---------------------------------------------------------------------------
 // CUICfManager::Move
 //
-// Early r4 is NOT a fake-Fv arg — retail does `lhz r4, 0xc90(r3)` (mFlags).
+// Early r4 is NOT a fake-Fv arg -- retail does `lhz r4, 0xc90(r3)` (mFlags).
 // Bitflag-driven create/teardown against lbl_eu_80664054, then optional
 // enum-list proximity spawn, then mark/clear walks of the menu queue.
 // ---------------------------------------------------------------------------
 
-/* "src/kyoshin/CUICfManager.cpp" line 525 "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 526 "monolib/device/CDeviceVI.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 2 "types.h" */
@@ -29128,7 +29125,7 @@ static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
 /* end "monolib/device/CDeviceVI.hpp" */
-/* "src/kyoshin/CUICfManager.cpp" line 526 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 527 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
@@ -29159,6 +29156,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
@@ -29236,8 +29234,8 @@ void __dt__80043E88(CUICfEnumListHolder*, s16);
 void func_800F4A98(void* list, int type, int);
 void* __ct__800FB044(void* list, f32, void* obj, int);
 void* func_80496264(void* obj, int index);
-void* func_800F6EC0(void* list, int index); // &slot → has +0x4 object ptr
-void* func_800F6E98(void* list, int index); // *slot → object*
+void* func_800F6EC0(void* list, int index); // &slot -> has +0x4 object ptr
+void* func_800F6E98(void* list, int index); // *slot -> object*
 int func_800B8920(void*);
 int func_8013A4B4(void* a, void* b, void* c);
 void func_8012FFB4(void*); // &mInitSlots[0].unk04
@@ -29246,8 +29244,6 @@ void func_8012FFB4(void*); // &mInitSlots[0].unk04
 typedef void* (*CUICfVPtrFn)(void*);
 
 void CUICfManager::Move() {
-    // Retail: -0x120 / manual stw r31..r28 / mr r31,r1. Per-create volatile
-    // homes at 0x18/0x14/0x10/0x0C/0x08 (§8c19 battle-mgr pattern); holder@0x20.
     void* savedRet18;
     void* savedRet14;
     void* savedRet10;
@@ -29263,7 +29259,6 @@ void CUICfManager::Move() {
     f32 posB[3];
     f32 posC[3];
     _reslist_node<CUICfMenuItem*>* pending[18];
-    u16 flags;
     CUICfManager* inst;
     int i;
     int byteOff;
@@ -29291,13 +29286,12 @@ void CUICfManager::Move() {
     int nextCount;
     int idx;
 
-    // Address-take every home so they cannot share one stack slot.
     home18 = (volatile void**)&savedRet18;
     home14 = (volatile void**)&savedRet14;
     home10 = (volatile void**)&savedRet10;
     home0C = (volatile void**)&savedRet0C;
     home08 = (volatile void**)&savedRet08;
-    flags = mFlags;
+    u16 flags = mFlags;
 
     if ((flags & 0x2) != 0) {
         {
@@ -29310,7 +29304,7 @@ void CUICfManager::Move() {
     if ((flags & 0x1) != 0) {
         {
             volatile u16* fp = &mFlags;
-            *fp = (u16)(*fp & ~0x1); // rlwinm …,16,30
+            *fp = (u16)(*fp & ~0x1); // rlwinm ...,16,30
         }
         func_80133770();
         goto after_flags;
@@ -29772,3 +29766,208 @@ unlink_done:
         unk120 = 0;
     }
 }
+
+// LLM-HARNESS-BEGIN: us-80133c20
+extern "C" void func_8013314C() {}
+// LLM-HARNESS-END: us-80133c20
+// LLM-HARNESS-BEGIN: us-80133c4c
+extern "C" void func_80133178() {}
+// LLM-HARNESS-END: us-80133c4c
+// LLM-HARNESS-BEGIN: us-801345bc
+extern "C" void func_80133AE8() {}
+// LLM-HARNESS-END: us-801345bc
+// LLM-HARNESS-BEGIN: us-80136024
+extern "C" void func_80135550() {}
+// LLM-HARNESS-END: us-80136024
+// LLM-HARNESS-BEGIN: us-8013603c
+extern "C" void func_80135568() {}
+// LLM-HARNESS-END: us-8013603c
+// LLM-HARNESS-BEGIN: us-80136074
+void func_801355A0() {}
+// LLM-HARNESS-END: us-80136074
+// LLM-HARNESS-BEGIN: us-80136090
+extern "C" void func_801355BC() {}
+// LLM-HARNESS-END: us-80136090
+// LLM-HARNESS-BEGIN: us-801360ac
+extern "C" void func_801355D8() {}
+// LLM-HARNESS-END: us-801360ac
+// LLM-HARNESS-BEGIN: us-801360c8
+extern "C" void* func_801355F4() { return 0; }
+// LLM-HARNESS-END: us-801360c8
+// LLM-HARNESS-BEGIN: us-801360e4
+extern "C" void func_80135610() {}
+// LLM-HARNESS-END: us-801360e4
+// LLM-HARNESS-BEGIN: us-80136104
+extern "C" void func_80135630() {}
+// LLM-HARNESS-END: us-80136104
+// LLM-HARNESS-BEGIN: us-80136128
+extern "C" void func_80135654() {}
+// LLM-HARNESS-END: us-80136128
+// LLM-HARNESS-BEGIN: us-80136168
+extern "C" void func_80135694() {}
+// LLM-HARNESS-END: us-80136168
+// LLM-HARNESS-BEGIN: us-80136190
+extern "C" void func_801356BC() {}
+// LLM-HARNESS-END: us-80136190
+// LLM-HARNESS-BEGIN: us-801361b4
+extern "C" void func_801356E0() {}
+// LLM-HARNESS-END: us-801361b4
+// LLM-HARNESS-BEGIN: us-8013636c
+extern "C" void func_80135898() {}
+// LLM-HARNESS-END: us-8013636c
+// LLM-HARNESS-BEGIN: us-8013646c
+extern "C" void func_80135998(u8 value) {
+    u8 *obj = (u8 *)lbl_eu_80664054;
+    if (obj == NULL)
+        return;
+    obj[0xc8c] = value;
+}
+// LLM-HARNESS-END: us-8013646c
+// LLM-HARNESS-BEGIN: us-80136904
+extern "C" void Draw__Q212CUICfManager5CTestFv() {}
+// LLM-HARNESS-END: us-80136904
+
+// LLM-HARNESS-BEGIN: us-80130a88
+extern "C" void harness_stub_us_80130a88() {}
+// LLM-HARNESS-END: us-80130a88
+// LLM-HARNESS-BEGIN: us-80130d18
+extern "C" void func_80130244() {}
+// LLM-HARNESS-END: us-80130d18
+// LLM-HARNESS-BEGIN: us-80130f00
+extern "C" void func_8013042C() {}
+// LLM-HARNESS-END: us-80130f00
+// LLM-HARNESS-BEGIN: us-801311f4
+extern "C" void func_80130720() {}
+// LLM-HARNESS-END: us-801311f4
+// LLM-HARNESS-BEGIN: us-80131434
+extern "C" void func_80130960() {}
+// LLM-HARNESS-END: us-80131434
+// LLM-HARNESS-BEGIN: us-80131648
+extern "C" void func_80130B74() {}
+// LLM-HARNESS-END: us-80131648
+// LLM-HARNESS-BEGIN: us-80131854
+extern "C" void func_80130D80() {}
+// LLM-HARNESS-END: us-80131854
+// LLM-HARNESS-BEGIN: us-80131a6c
+extern "C" void func_80130F98() {}
+// LLM-HARNESS-END: us-80131a6c
+// LLM-HARNESS-BEGIN: us-80131c8c
+extern "C" void func_801311B8() {}
+// LLM-HARNESS-END: us-80131c8c
+// LLM-HARNESS-BEGIN: us-801322f4
+extern "C" void func_80131820() {}
+// LLM-HARNESS-END: us-801322f4
+// LLM-HARNESS-BEGIN: us-8013297c
+extern "C" void ct_CUICfManager() {}
+// LLM-HARNESS-END: us-8013297c
+// LLM-HARNESS-BEGIN: us-801341b8
+extern "C" void func_801336E4() {}
+// LLM-HARNESS-END: us-801341b8
+// LLM-HARNESS-BEGIN: us-80134244
+extern "C" void harness_stub_us_80134244() {}
+// LLM-HARNESS-END: us-80134244
+// LLM-HARNESS-BEGIN: us-8013439c
+extern "C" void harness_stub_us_8013439c() {}
+// LLM-HARNESS-END: us-8013439c
+// LLM-HARNESS-BEGIN: us-801344dc
+extern "C" void func_80133A08() {}
+// LLM-HARNESS-END: us-801344dc
+// LLM-HARNESS-BEGIN: us-80134654
+extern "C" void func_80133B80() {}
+// LLM-HARNESS-END: us-80134654
+// LLM-HARNESS-BEGIN: us-80134774
+extern "C" void func_80133CA0() {}
+// LLM-HARNESS-END: us-80134774
+// LLM-HARNESS-BEGIN: us-8013484c
+extern "C" void func_80133D78() {}
+// LLM-HARNESS-END: us-8013484c
+// LLM-HARNESS-BEGIN: us-8013492c
+extern "C" void func_80133E58() {}
+// LLM-HARNESS-END: us-8013492c
+// LLM-HARNESS-BEGIN: us-80134a1c
+extern "C" void func_80133F48() {}
+// LLM-HARNESS-END: us-80134a1c
+// LLM-HARNESS-BEGIN: us-80134af8
+extern "C" void func_80134024() {}
+// LLM-HARNESS-END: us-80134af8
+// LLM-HARNESS-BEGIN: us-80134bd4
+extern "C" void func_80134100() {}
+// LLM-HARNESS-END: us-80134bd4
+// LLM-HARNESS-BEGIN: us-80134cac
+extern "C" void func_801341D8() {}
+// LLM-HARNESS-END: us-80134cac
+// LLM-HARNESS-BEGIN: us-80134d84
+extern "C" void func_801342B0() {}
+// LLM-HARNESS-END: us-80134d84
+// LLM-HARNESS-BEGIN: us-80134e5c
+extern "C" void func_80134388() {}
+// LLM-HARNESS-END: us-80134e5c
+// LLM-HARNESS-BEGIN: us-80134f34
+extern "C" void func_80134460() {}
+// LLM-HARNESS-END: us-80134f34
+// LLM-HARNESS-BEGIN: us-8013500c
+extern "C" void func_80134538() {}
+// LLM-HARNESS-END: us-8013500c
+// LLM-HARNESS-BEGIN: us-801350fc
+extern "C" void func_80134628() {}
+// LLM-HARNESS-END: us-801350fc
+// LLM-HARNESS-BEGIN: us-801351e8
+extern "C" void func_80134714() {}
+// LLM-HARNESS-END: us-801351e8
+// LLM-HARNESS-BEGIN: us-801352c0
+extern "C" void func_801347EC() {}
+// LLM-HARNESS-END: us-801352c0
+// LLM-HARNESS-BEGIN: us-8013539c
+extern "C" void func_801348C8() {}
+// LLM-HARNESS-END: us-8013539c
+// LLM-HARNESS-BEGIN: us-80135474
+extern "C" void func_801349A0() {}
+// LLM-HARNESS-END: us-80135474
+// LLM-HARNESS-BEGIN: us-8013554c
+extern "C" void func_80134A78() {}
+// LLM-HARNESS-END: us-8013554c
+// LLM-HARNESS-BEGIN: us-80135624
+extern "C" void func_80134B50() {}
+// LLM-HARNESS-END: us-80135624
+// LLM-HARNESS-BEGIN: us-80135708
+extern "C" void func_80134C34() {}
+// LLM-HARNESS-END: us-80135708
+// LLM-HARNESS-BEGIN: us-801357ec
+extern "C" void func_80134D18() {}
+// LLM-HARNESS-END: us-801357ec
+// LLM-HARNESS-BEGIN: us-80135924
+extern "C" void func_80134E50() {}
+// LLM-HARNESS-END: us-80135924
+// LLM-HARNESS-BEGIN: us-80135a00
+extern "C" void func_80134F2C() {}
+// LLM-HARNESS-END: us-80135a00
+// LLM-HARNESS-BEGIN: us-80135ae0
+extern "C" void func_8013500C() {}
+// LLM-HARNESS-END: us-80135ae0
+// LLM-HARNESS-BEGIN: us-80135bb8
+extern "C" void func_801350E4() {}
+// LLM-HARNESS-END: us-80135bb8
+// LLM-HARNESS-BEGIN: us-80135c98
+extern "C" void func_801351C4() {}
+// LLM-HARNESS-END: us-80135c98
+// LLM-HARNESS-BEGIN: us-80135d78
+extern "C" void func_801352A4() {}
+// LLM-HARNESS-END: us-80135d78
+// LLM-HARNESS-BEGIN: us-80135e54
+extern "C" void func_80135380() {}
+// LLM-HARNESS-END: us-80135e54
+// LLM-HARNESS-BEGIN: us-80135f38
+extern "C" void func_80135464() {}
+// LLM-HARNESS-END: us-80135f38
+// LLM-HARNESS-BEGIN: us-801361dc
+extern "C" void func_80135708() {}
+// LLM-HARNESS-END: us-801361dc
+// LLM-HARNESS-BEGIN: us-80136480
+extern "C" void func_801359AC() {}
+// LLM-HARNESS-END: us-80136480
+// LLM-HARNESS-BEGIN: us-801367d8
+extern "C" void func_80135D04() {}
+// LLM-HARNESS-END: us-801367d8
+// LLM-HARNESS-BEGIN: us-80136a34
+extern "C" void dt_Q212CUICfManager5CTestFv() {}
+// LLM-HARNESS-END: us-80136a34

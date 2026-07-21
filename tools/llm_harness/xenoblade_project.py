@@ -18,8 +18,12 @@ from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from tools.coop.lib.attempts import AttemptRecord, append_attempt
 from tools.coop.lib.config import load_config
-from tools.coop.lib.equivalence_check import prove_unit_symbol
+from tools.coop.lib.equivalence_check import (
+    EQUIVALENT_MATCH_MIN_PERCENT,
+    prove_unit_symbol,
+)
 from tools.coop.lib.objdiff_report import evaluate_unit_match, meets_required_level, report_unit
 from tools.coop.lib.object_size import check_object_size
 from tools.coop.lib.project import Project
@@ -93,6 +97,14 @@ from tools.llm_harness.source_regions import (
     tu_end_marker as _tu_end_marker,
 )
 
+# Already-compiling registry statuses worth SMT-probing (not accepted yet).
+PROBE_COMPILE_STATUSES = {
+    "COMPILES",
+    "STRUCTURAL",
+    "HIGH_MATCH",
+    "CODE_MATCH",
+}
+
 
 def _unit_matches(unit: Optional[str], tu: str) -> bool:
     """Check if a target's unit hint matches a given TU name.
@@ -153,9 +165,12 @@ class XenobladeAdapter:
 
     def target_ids_for_unit(self, unit_name: str, workflow: str) -> List[str]:
         """Return all eligible target IDs in a translation unit for a given workflow."""
-        if workflow not in {"new", "improve", "solve", "tu-complete"}:
+        if workflow not in {"new", "improve", "solve", "tu-complete", "tu-decomp", "probe"}:
             raise ValueError(f"Unsupported workflow: {workflow}")
         raw_targets = load_targets(self.config)
+        rows_by_id = {
+            target.id: {"id": target.id, **target.extra} for target in raw_targets
+        }
         source_cache: Dict[Path, str] = {}
         done = {"FULL_MATCH", "EQUIVALENT_MATCH"}
         result: List[str] = []
@@ -176,7 +191,17 @@ class XenobladeAdapter:
                 # Any non-accepted function with a source region.
                 if target.status in done:
                     continue
-            if workflow != "tu-complete" and target.status in done:
+            elif workflow == "probe":
+                if target.status == "FULL_MATCH":
+                    continue
+                if target.status == "EQUIVALENT_MATCH":
+                    if equivalence_certificate_error(
+                        rows_by_id[target.id], rows_by_id
+                    ) is None:
+                        continue
+                elif target.status not in PROBE_COMPILE_STATUSES:
+                    continue
+            if workflow != "tu-complete" and target.status in done and workflow != "probe":
                 continue
             try:
                 source = source_cache.get(target.source)
@@ -444,6 +469,7 @@ class XenobladeAdapter:
         certified_funcs: bool = False,
         tu: Optional[str] = None,
         selection: Optional[str] = None,
+        min_fuzzy: Optional[float] = None,
     ) -> List[str]:
         if workflow in {"improve", "solve"}:
             # solve defaults to the ready call-graph frontier; improve keeps all non-accepted.
@@ -454,6 +480,17 @@ class XenobladeAdapter:
             )
         elif workflow == "tu-complete":
             candidates = self._tu_completion_candidates()
+        elif workflow == "probe":
+            if selection is None:
+                selection = "ready"
+            if min_fuzzy is None:
+                min_fuzzy = EQUIVALENT_MATCH_MIN_PERCENT
+            candidates = self.select_probe_targets(
+                certified_funcs=certified_funcs,
+                tu=tu,
+                selection=selection,
+                min_fuzzy=min_fuzzy,
+            )
         else:
             raise ValueError(f"Unsupported automatic workflow selection: {workflow}")
         if randomize:
@@ -464,6 +501,298 @@ class XenobladeAdapter:
                 f"requested {number}"
             )
         return candidates[:number]
+
+    def select_probe_targets(
+        self,
+        *,
+        certified_funcs: bool = True,
+        tu: Optional[str] = None,
+        selection: str = "ready",
+        min_fuzzy: float = EQUIVALENT_MATCH_MIN_PERCENT,
+    ) -> List[str]:
+        """Compiling targets that lack FULL_MATCH / current EQUIVALENT_MATCH cert.
+
+        Requires a built decomp object that still exports the symbol. Prefers
+        known fuzzy scores in ``[min_fuzzy, 100)`` (SMT can still promote), then
+        unknown scores, then the call-graph frontier order.
+        """
+        raw_targets = load_targets(self.config)
+        rows_by_id = {
+            target.id: {"id": target.id, **target.extra} for target in raw_targets
+        }
+        frontier = harness_targets(
+            raw_targets, selection=selection, include_catalog=True
+        )
+        # Stale EQUIVALENT_MATCH is excluded from harness_targets; append those.
+        stale_equiv: List[Target] = []
+        for target in raw_targets:
+            if target.status != "EQUIVALENT_MATCH" or not target.buildable:
+                continue
+            if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:
+                continue
+            if tu is not None and not _unit_matches(target.unit, tu):
+                continue
+            stale_equiv.append(target)
+
+        units = self.project.load_objdiff_units()
+        unit_by_hint = {
+            hint: unit
+            for unit in units
+            for hint in {unit.name, unit.name.removeprefix("main/")}
+        }
+        decomp_symbols: Dict[Path, set[str]] = {}
+        retail_sizes: Dict[str, int] = {}
+        source_cache: Dict[Path, str] = {}
+        scored: List[tuple[float, Target]] = []
+
+        def consider(target: Target) -> None:
+            if (
+                not target.buildable
+                or not target.symbol
+                or target.source is None
+                or not target.source.is_file()
+                or not target.unit
+            ):
+                return
+            if tu is not None and not _unit_matches(target.unit, tu):
+                return
+            if target.status == "FULL_MATCH":
+                return
+            if target.status == "EQUIVALENT_MATCH":
+                if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:
+                    return
+            elif target.status not in PROBE_COMPILE_STATUSES:
+                return
+            source = source_cache.get(target.source)
+            if source is None:
+                source = target.source.read_text(encoding="utf-8")
+                source_cache[target.source] = source
+            try:
+                _find_function_region(source, target)
+            except (OSError, ValueError):
+                return
+            unit = unit_by_hint.get(target.unit)
+            if unit is None or unit.base_path is None or not unit.base_path.is_file():
+                return
+            if unit.target_path is None or not unit.target_path.is_file():
+                return
+            symbols = decomp_symbols.get(unit.base_path)
+            if symbols is None:
+                try:
+                    symbols = {fn.name for fn in list_text_functions(unit.base_path)}
+                except (OSError, ValueError):
+                    return
+                decomp_symbols[unit.base_path] = symbols
+            if target.symbol not in symbols:
+                return
+            known = target.extra.get("instruction_match")
+            fuzzy = float(known) if known is not None else -1.0
+            if fuzzy >= 0.0 and fuzzy < float(min_fuzzy):
+                return
+            if fuzzy >= 100.0 and target.status != "EQUIVALENT_MATCH":
+                # Byte-identical but not yet FULL_MATCH — still worth probing/certifying.
+                pass
+            try:
+                retail = extract_function(unit.target_path, target.symbol)
+                retail_sizes[target.id] = int(getattr(retail, "size", 0) or 0)
+            except (OSError, ValueError):
+                retail_sizes[target.id] = 0
+            scored.append((fuzzy, target))
+
+        for target in frontier:
+            consider(target)
+        seen = {target.id for _, target in scored}
+        for target in stale_equiv:
+            if target.id not in seen:
+                consider(target)
+
+        if certified_funcs:
+            filtered = self._filter_certified_funcs(
+                raw_targets, [target for _, target in scored]
+            )
+            allowed = {target.id for target in filtered}
+            scored = [(fuzzy, target) for fuzzy, target in scored if target.id in allowed]
+
+        tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P9": 9}
+
+        def sort_key(item: tuple[float, Target]) -> tuple:
+            fuzzy, target = item
+            kind = self._frontier_kind(target)
+            leaf_rank = 0 if kind == "leaf" else 1
+            # Prefer known in-range fuzzy, then unknown (-1), then everything else.
+            if fuzzy >= float(min_fuzzy):
+                fuzzy_rank = 0
+                fuzzy_sort = -fuzzy  # higher first
+            elif fuzzy < 0.0:
+                fuzzy_rank = 1
+                fuzzy_sort = 0.0
+            else:
+                fuzzy_rank = 2
+                fuzzy_sort = fuzzy
+            size = retail_sizes.get(target.id) or 10**9
+            return (
+                tier_order.get(target.tier, 99),
+                fuzzy_rank,
+                fuzzy_sort,
+                leaf_rank,
+                size,
+                target.id,
+            )
+
+        scored.sort(key=sort_key)
+        return [target.id for _, target in scored]
+
+    def probe_target(
+        self,
+        target_id: str,
+        *,
+        write: bool = False,
+        linked: bool = False,
+        rebuild: bool = True,
+    ) -> Dict[str, Any]:
+        """Build + objdiff + ppc_equivalence for one compiling non-accepted target.
+
+        When ``write`` is true and the probe reaches ``FULL_MATCH`` /
+        ``EQUIVALENT_MATCH`` with a certificate (for equivalent), update
+        ``targets.json`` and append an attempt log row. Does not call an LLM.
+        """
+        target = self._any_target(target_id)
+        if target.unit is None or target.symbol is None:
+            raise ValueError(f"Target {target_id!r} needs unit and symbol")
+        unit = self.project.resolve_unit(target.unit)
+        if unit.base_path is None:
+            raise ValueError(f"Unit {unit.name!r} has no decomp object path")
+
+        build_error = ""
+        if rebuild:
+            build_error = self._build_object(unit.base_path)
+        if build_error:
+            return {
+                "target_id": target_id,
+                "status": "COMPILE_ERROR",
+                "match_percent": 0.0,
+                "accepted": False,
+                "equivalence": None,
+                "detail": build_error,
+                "written": False,
+            }
+        if not unit.base_path.is_file():
+            return {
+                "target_id": target_id,
+                "status": "COMPILE_ERROR",
+                "match_percent": 0.0,
+                "accepted": False,
+                "equivalence": None,
+                "detail": f"missing decomp object {unit.base_path}",
+                "written": False,
+            }
+
+        try:
+            evaluation = evaluate_unit_match(
+                self.project,
+                unit,
+                target.symbol,
+                target_id=target.id,
+                certify_full_match=True,
+                linked=linked,
+                phase_timer=self._phase_timer(),
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError, ValueError) as exc:
+            return {
+                "target_id": target_id,
+                "status": "EVALUATION_ERROR",
+                "match_percent": 0.0,
+                "accepted": False,
+                "equivalence": None,
+                "detail": str(exc),
+                "written": False,
+            }
+
+        match_percent = (
+            evaluation.fn_match.match_percent
+            if evaluation.fn_match
+            else evaluation.unit_report.fuzzy_match_percent
+        )
+        equiv = evaluation.equivalence.value if evaluation.equivalence else None
+        certificate = evaluation.equivalence_certificate
+        symbol_accepted = evaluation.status in ACCEPTED_MATCH_STATUSES and (
+            evaluation.status == "FULL_MATCH"
+            or (
+                evaluation.status == "EQUIVALENT_MATCH"
+                and evaluation.equivalence == ProofStatus.EQUIVALENT
+                and certificate is not None
+            )
+        )
+        result: Dict[str, Any] = {
+            "target_id": target_id,
+            "status": evaluation.status,
+            "match_percent": match_percent,
+            "accepted": symbol_accepted,
+            "equivalence": equiv,
+            "detail": evaluation.equivalence_detail or "",
+            "equivalence_confidence": evaluation.equivalence_confidence,
+            "equivalence_policy": evaluation.equivalence_policy,
+            "certificate_sha256": (
+                certificate.get("certificate_sha256") if certificate else None
+            ),
+            "written": False,
+        }
+
+        if not write or not symbol_accepted:
+            return result
+
+        # Validate certificate chain before persisting EQUIVALENT_MATCH.
+        if evaluation.status == "EQUIVALENT_MATCH":
+            document = load_targets_document(self.config)
+            rows_by_id = {
+                str(row["id"]): row
+                for row in document.get("targets", [])
+                if isinstance(row, dict) and isinstance(row.get("id"), str)
+            }
+            trial = dict(rows_by_id.get(target.id, {"id": target.id}))
+            trial["status"] = "EQUIVALENT_MATCH"
+            trial["equivalence_certificate"] = certificate
+            rows_by_id[target.id] = trial
+            cert_error = equivalence_certificate_error(trial, rows_by_id)
+            if cert_error:
+                result["accepted"] = False
+                result["detail"] = f"certificate rejected: {cert_error}"
+                return result
+
+        update_target_result(
+            self.config,
+            target.id,
+            status=evaluation.status,
+            instruction_match=match_percent,
+            equivalence_status=equiv,
+            equivalence_certificate=certificate if evaluation.status == "EQUIVALENT_MATCH" else None,
+            certificate_checked=evaluation.status == "EQUIVALENT_MATCH",
+            equivalence_confidence=evaluation.equivalence_confidence,
+            equivalence_policy=evaluation.equivalence_policy,
+        )
+        append_attempt(
+            self.config.resolve(self.config.attempt_log),
+            AttemptRecord(
+                target_id=target.id,
+                function=target.function,
+                region=self.config.region,
+                unit=target.unit or "",
+                symbol=target.symbol,
+                status=evaluation.status,
+                instruction_match=match_percent,
+                relocation_match=None,
+                code_match_percent=evaluation.unit_report.code_match_percent,
+                data_match_percent=evaluation.unit_report.data_match_percent,
+                hypothesis="llm-harness probe: ppc_equivalence on compiling target",
+                next_change="",
+                equivalence_status=equiv,
+                equivalence_detail=evaluation.equivalence_detail or "",
+                equivalence_confidence=evaluation.equivalence_confidence,
+                equivalence_policy=evaluation.equivalence_policy,
+            ),
+        )
+        result["written"] = True
+        return result
 
     def describe_frontier(self, target_ids: List[str]) -> List[Dict[str, str]]:
         """Return leaf/ready annotations for dry-run frontier printing."""
@@ -661,6 +990,12 @@ class XenobladeAdapter:
                 target_id,
                 history,
                 full_context=bool((options or {}).get("full_context")),
+            )
+        if workflow == "tu-decomp":
+            return self._build_tu_decomp_prompt(
+                target_id,
+                history,
+                options,
             )
         return self._build_function_prompt(workflow, target_id, history, options)
 
@@ -1070,6 +1405,46 @@ class XenobladeAdapter:
             .replace("{{DOSSIER_JSON}}", json.dumps(dossier, separators=(",", ":")))
         )
 
+    def _build_tu_decomp_prompt(
+        self, unit_hint: str, history: List[Dict[str, Any]], options: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """Build a full-TU decompilation prompt using the tu_context gatherer.
+
+        This is the 'tu-decomp' workflow: the model gets ALL functions in a TU
+        with retail ASM, current stubs, header, matched siblings, callee summaries,
+        and struct context. The model produces a two-phase output:
+          Phase 1: improved header (.hpp)
+          Phase 2: complete .cpp with all function bodies filled.
+        """
+        unit = self.project.resolve_unit(unit_hint)
+        if unit.source_path is None:
+            raise ValueError(f"Unit {unit.name!r} has no source file")
+
+        # Gather TU context
+        from tools.llm_harness.tu_context import gather_tu_context, format_tu_prompt, render_tu_prompt
+
+        prompt_budget = dict(self.prompt_budget)
+        if options:
+            prompt_budget.update(dict(options.get("prompt", {})))
+        context = gather_tu_context(
+            root=self.root,
+            unit_hint=unit_hint,
+            config_path=None,
+            prompt_budget=prompt_budget,
+        )
+
+        # Format the dossier JSON
+        dossier_json = format_tu_prompt(context)
+
+        # Render the final prompt from templates
+        prompt = render_tu_prompt(dossier_json, self.prompt_dir)
+
+        # Truncate if needed
+        max_chars = int(self.prompt_budget.get("max_chars", 60000))
+        if len(prompt) > max_chars:
+            prompt = prompt[:max_chars] + "\n... truncated"
+        return prompt
+
     def _function_tu_slots(
         self,
         unit: Any,
@@ -1141,6 +1516,8 @@ class XenobladeAdapter:
     def evaluate(self, workflow: str, target_id: str, candidate: Candidate) -> Evaluation:
         if workflow == "tu-complete":
             return self._evaluate_tu(target_id, candidate)
+        if workflow == "tu-decomp":
+            return self._evaluate_tu_decomp(target_id, candidate)
         return self._evaluate_function(target_id, candidate)
 
     def _evaluate_function(self, target_id: str, candidate: Candidate) -> Evaluation:
@@ -1433,6 +1810,59 @@ class XenobladeAdapter:
             else:
                 unit.base_path.write_bytes(original_object)
 
+    def _evaluate_tu_decomp(self, unit_hint: str, candidate: Candidate) -> Evaluation:
+        """Evaluate a TU-decomp candidate (two-phase header + cpp).
+
+        Handles the two-phase response format (phase1_header + phase2_cpp)
+        from the model. If the candidate already has per-function
+        SourcePatches (pre-parsed by the harness), they are used directly.
+        Otherwise the raw JSON response in candidate.source is parsed
+        using the tu_eval module's ``parse_tu_response`` / ``build_tu_candidate``
+        pipeline to create proper patches, then delegates to ``_evaluate_tu``
+        for the build / objdiff / regression-guard pipeline.
+
+        The improved header (phase1_header) is persisted in the evaluation
+        metrics so the harness can optionally promote it alongside function
+        patches.
+        """
+        from tools.llm_harness.tu_eval import (
+            build_tu_candidate,
+            extract_tu_slots_and_targets,
+            parse_tu_response,
+        )
+
+        # If candidate already has patches (pre-parsed by harness), use directly.
+        if candidate.patches:
+            return self._evaluate_tu(unit_hint, candidate)
+
+        # Otherwise parse the raw two-phase JSON from candidate.source.
+        unit = self.project.resolve_unit(unit_hint)
+        if unit.source_path is None:
+            raise ValueError(f"Unit {unit.name!r} has no source file")
+        original_source = unit.source_path.read_text(encoding="utf-8")
+
+        # Extract TU slots and build the target map.
+        slots, target_map = extract_tu_slots_and_targets(self, unit_hint)
+        if not slots:
+            raise ValueError(f"No TU slots found for unit {unit_hint!r}")
+
+        text = candidate.source.strip()
+        # Detect a raw two-phase response (phase1_header + phase2_cpp).
+        if text.startswith("{\"phase1_header\"") or text.startswith("{\"phase2_cpp"):
+            tu_response = parse_tu_response(text)
+            parsed_candidate = build_tu_candidate(
+                tu_response,
+                original_source,
+                slots,
+                target_map,
+            )
+            # Evaluate using the same TU-level build/objdiff/guard pipeline.
+            return self._evaluate_tu(unit_hint, parsed_candidate)
+
+        # Fallback: treat candidate.source as a complete .cpp replacement
+        # (full-context mode or already-spliced source).
+        return self._evaluate_tu(unit_hint, candidate)
+
     def _tu_candidate_source(self, original: str, candidate: Candidate, unit: Any) -> str:
         if candidate.patches:
             if candidate.source.strip():
@@ -1535,7 +1965,7 @@ class XenobladeAdapter:
         }
 
     def rank_candidate(self, workflow: str, evaluation: Dict[str, Any]) -> tuple[Any, ...]:
-        if workflow != "tu-complete":
+        if workflow not in {"tu-complete", "tu-decomp"}:
             metrics = evaluation.get("metrics") or {}
             symbol_accepted = bool(
                 evaluation.get("symbol_accepted", metrics.get("symbol_accepted", False))

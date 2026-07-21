@@ -94,7 +94,7 @@ void SeqSound::SetTempoRatio(f32 tempo) {
 }
 
 void SeqSound::SetChannelPriority(int priority) {
-    mSeqPlayer.SetChannelPriority(priority);
+    (reinterpret_cast<nw4r::snd::detail::SeqPlayer*>(reinterpret_cast<u8*>(this) + 0x10C))->SetChannelPriority(priority);
 }
 
 void SeqSound::SetReleasePriorityFix(bool flag) {

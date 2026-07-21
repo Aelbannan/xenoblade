@@ -220,6 +220,11 @@ def set_scalar_fp_exact_v2_module_flag(enabled: bool | None) -> None:
     _SCALAR_FP_EXACT_V2_MODULE_FLAG = enabled
 
 
+def scalar_fp_exact_v2_module_flag_override() -> bool | None:
+    """Return the test override, or ``None`` when env-only."""
+    return _SCALAR_FP_EXACT_V2_MODULE_FLAG
+
+
 def scalar_fp_exact_v2_enabled() -> bool:
     """True when the experimental scalar-FP v2 path is enabled (default off)."""
     if _SCALAR_FP_EXACT_V2_MODULE_FLAG is not None:

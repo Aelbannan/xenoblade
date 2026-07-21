@@ -19,6 +19,7 @@ from tools.ppc_equivalence.scalar_fp_v2_rollout import (
     ScalarFPExactV2ProductionError,
     ReadinessCheck,
     ReadinessReport,
+    build_production_switch_checklist,
     check_experimental_models_defined,
     check_phase_test_suite_importable,
     enable_scalar_fp_exact_v2_production,
@@ -28,6 +29,7 @@ from tools.ppc_equivalence.scalar_fp_v2_rollout import (
     readiness_report,
     recommended_canary_target_ids,
     scalar_fp_v2_production_preconditions,
+    validate_canary_manifest_targets,
     validate_shadow_manifest,
 )
 
@@ -124,11 +126,27 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
         tmp = Path(__file__).resolve().parent / "_tmp_canary_manifest.json"
         tmp.write_text(json.dumps(manifest), encoding="utf-8")
         try:
-            with self.assertRaises(NotImplementedError):
-                enable_scalar_fp_exact_v2_production(manifest_path=tmp)
+            with self.assertRaises(NotImplementedError) as ctx:
+                enable_scalar_fp_exact_v2_production(
+                    manifest_path=tmp,
+                    run_corpus_check=False,
+                )
+            self.assertIn("production_switch_ready", str(ctx.exception))
+            self.assertIn("gates", str(ctx.exception))
         finally:
             tmp.unlink(missing_ok=True)
             os.environ.pop("SCALAR_FP_EXACT_V2_PRODUCTION", None)
+
+    def test_build_production_switch_checklist_structure(self) -> None:
+        checklist = build_production_switch_checklist(run_corpus_check=False)
+        self.assertFalse(checklist.production_switch_ready)
+        self.assertFalse(checklist.all_gates_pass)
+        gate_names = {item.name for item in checklist.gates}
+        self.assertIn("infrastructure_readiness", gate_names)
+        self.assertIn("architecture_model_bump", gate_names)
+        payload = checklist.to_dict()
+        self.assertEqual(payload["planned"]["architecture_model"], "broadway-ppc32-be-v42")
+        self.assertEqual(payload["live"]["architecture_model"], "broadway-ppc32-be-v41")
 
     def test_readiness_report_structure(self) -> None:
         report = readiness_report(run_corpus_check=False)
@@ -136,7 +154,7 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
         self.assertEqual(report.schema_version, 1)
         self.assertFalse(report.production_switch_ready)
         self.assertFalse(report.production_enabled)
-        self.assertGreaterEqual(len(report.checks), 7)
+        self.assertGreaterEqual(len(report.checks), 8)
         check_names = {item.name for item in report.checks}
         self.assertTrue(
             {
@@ -145,6 +163,7 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
                 "experimental_models",
                 "canary_targets",
                 "shadow_manifest",
+                "canary_manifest_targets",
                 "fe0_fe1_status",
                 "unsupported_query_helper",
             }
@@ -155,15 +174,22 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
             self.assertIsInstance(item.ok, bool)
             self.assertIsInstance(item.summary, str)
         self.assertTrue(report.blockers)
-        self.assertTrue(any("NotImplemented" in b for b in report.blockers))
         payload = report.to_dict()
         self.assertIn("checks", payload)
         self.assertIn("blockers", payload)
         self.assertFalse(payload["production_switch_ready"])
 
     def test_readiness_report_blockers_are_honest(self) -> None:
-        self.assertIn("ARCHITECTURE_MODEL", " ".join(PRODUCTION_SWITCH_BLOCKERS))
-        self.assertIn("NI=1", " ".join(PRODUCTION_SWITCH_BLOCKERS))
+        text = " ".join(PRODUCTION_SWITCH_BLOCKERS)
+        self.assertIn("ARCHITECTURE_MODEL", text)
+        self.assertIn("dolphin-capture", text)
+        self.assertIn("fdiv", text)
+        self.assertIn("NotImplemented", text)
+
+    def test_canary_manifest_targets_dry_run(self) -> None:
+        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST)
+        ok, reasons = validate_canary_manifest_targets(manifest)
+        self.assertTrue(ok, msg=str(reasons))
 
     def test_phase_test_modules_importable(self) -> None:
         ok, failures = check_phase_test_suite_importable()

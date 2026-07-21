@@ -1,8 +1,9 @@
-"""Payload-accurate symbolic binary64 fadd/fmul (SCALAR_FP_V2 Phase 7).
+"""Payload-accurate symbolic binary64 scalar FP (SCALAR_FP_V2 Phase 7).
 
-Builds Z3 bitvector formulas for finite and special-case scalar add/mul without
-native Z3 FloatingPoint or host float. Rounding follows the integer kernel in
-:mod:`fp_round` for all four Broadway RN modes selected from live FPSCR[0:1].
+Builds Z3 bitvector formulas for finite and special-case scalar add/mul/div and
+binary64 fused multiply-add without native Z3 FloatingPoint or host float.
+Rounding follows the integer kernel in :mod:`fp_round` for all four Broadway RN
+modes selected from live FPSCR[0:1].
 """
 
 from __future__ import annotations
@@ -22,6 +23,8 @@ _EXP_MIN_UNBIASED = 1 - _B64_EXP_BIAS
 _EXP_MAX_UNBIASED = _B64_EXP_MAX - 1 - _B64_EXP_BIAS
 _SIG_WIDTH = 128
 _IDX_WIDTH = 8
+_DIV_EXTRA_SHIFT = BINARY64_FRAC_BITS + 3
+_FMA_FAR_SHIFT = BINARY64_FRAC_BITS * 3 + 8
 
 
 def _fp_const64(ops: Any, value: int) -> Any:
@@ -562,6 +565,310 @@ def _exact_mul_special_bv(ops: Any, a_bits: Any, b_bits: Any, fpscr: Any) -> Any
     return ops.ite(any_nan, nan_result, result)
 
 
+def _negate_finite_bits_bv(ops: Any, bits: Any) -> Any:
+    non_finite = ops.lor(_is_nan_bv(ops, bits), _is_inf_bv(ops, bits))
+    return ops.ite(
+        non_finite,
+        bits,
+        ops.bxor(bits, _fp_const64(ops, 1 << _B64_SIGN_SHIFT)),
+    )
+
+
+def _exact_finite_div_bv(
+    ops: Any,
+    a_bits: Any,
+    b_bits: Any,
+    fpscr: Any,
+) -> Any:
+    z3 = ops.z3
+    a_sign, a_exp, a_frac = _decode_binary64_bv(ops, a_bits)
+    b_sign, b_exp, b_frac = _decode_binary64_bv(ops, b_bits)
+    sign = ops.bxor(a_sign, b_sign)
+    a_sig = _significand64_bv(ops, a_exp, a_frac)
+    b_sig = _significand64_bv(ops, b_exp, b_frac)
+    a_unbiased = _unbiased_exp64_bv(ops, a_exp)
+    b_unbiased = _unbiased_exp64_bv(ops, b_exp)
+    dividend = z3.ZeroExt(64, a_sig) << _DIV_EXTRA_SHIFT
+    divisor = z3.ZeroExt(64, b_sig)
+    quot = z3.UDiv(dividend, divisor)
+    exp_unbiased = (
+        a_unbiased
+        - b_unbiased
+        - _bv(ops, _DIV_EXTRA_SHIFT, 32)
+        + _bv(ops, BINARY64_FRAC_BITS, 32)
+    )
+    return _round_binary64_bv(ops, sign, exp_unbiased, quot, fpscr)
+
+
+def _exact_div_special_bv(
+    ops: Any,
+    a_bits: Any,
+    b_bits: Any,
+    fpscr: Any,
+) -> Any:
+    any_nan = ops.lor(_is_nan_bv(ops, a_bits), _is_nan_bv(ops, b_bits))
+    nan_result = _propagate_nan_bv(ops, a_bits, b_bits)
+
+    a_inf = _is_inf_bv(ops, a_bits)
+    b_inf = _is_inf_bv(ops, b_bits)
+    both_inf = ops.land(a_inf, b_inf)
+    a_zero = _is_zero_bv(ops, a_bits)
+    b_zero = _is_zero_bv(ops, b_bits)
+    both_zero = ops.land(a_zero, b_zero)
+
+    a_sign, _, _ = _decode_binary64_bv(ops, a_bits)
+    b_sign, _, _ = _decode_binary64_bv(ops, b_bits)
+    sign = ops.bxor(a_sign, b_sign)
+
+    finite = _exact_finite_div_bv(ops, a_bits, b_bits, fpscr)
+
+    result = finite
+    result = ops.ite(
+        b_zero,
+        ops.ite(
+            a_zero,
+            _fp_const64(ops, _B64_CANONICAL_NAN),
+            _infinity_bits_bv(ops, sign),
+        ),
+        result,
+    )
+    result = ops.ite(a_zero, _signed_zero_bv(ops, sign), result)
+    result = ops.ite(
+        b_inf,
+        _signed_zero_bv(ops, sign),
+        result,
+    )
+    result = ops.ite(
+        a_inf,
+        _infinity_bits_bv(ops, sign),
+        result,
+    )
+    result = ops.ite(
+        both_inf,
+        _fp_const64(ops, _B64_CANONICAL_NAN),
+        result,
+    )
+    result = ops.ite(
+        both_zero,
+        _fp_const64(ops, _B64_CANONICAL_NAN),
+        result,
+    )
+    return ops.ite(any_nan, nan_result, result)
+
+
+def _bv_uge(ops: Any, left: Any, right: Any) -> Any:
+    return ops.z3.UGE(left, right)
+
+
+def _bv_ugt(ops: Any, left: Any, right: Any) -> Any:
+    return ops.z3.UGT(left, right)
+
+
+def _shift_right_sticky_bv(
+    ops: Any,
+    sig: Any,
+    shift: Any,
+    width: int,
+) -> tuple[Any, Any]:
+    """Right-shift ``sig`` by symbolic ``shift`` (8-bit), returning (shifted, sticky)."""
+    shifted = sig
+    sticky = ops.bool(False)
+    for shift_amt in range(min(width, _FMA_FAR_SHIFT + 1)):
+        next_shifted, guard, round_bit, tail_sticky = _shift_right_sticky_int(
+            ops,
+            sig,
+            shift_amt,
+            width,
+        )
+        match = shift == _bv(ops, shift_amt, _IDX_WIDTH)
+        shifted = ops.ite(match, next_shifted, shifted)
+        lost = ops.lor(guard, ops.lor(round_bit, tail_sticky))
+        sticky = ops.ite(match, lost, sticky)
+    return shifted, sticky
+
+
+def _exact_finite_fmadd_bv(
+    ops: Any,
+    a_bits: Any,
+    c_bits: Any,
+    b_bits: Any,
+    fpscr: Any,
+    *,
+    subtract_b: bool = False,
+) -> Any:
+    """Finite ``a * c +/- b`` with one binary64 round (mirrors ``fp_oracle.fmadd``)."""
+    if subtract_b:
+        b_bits = ops.bxor(b_bits, _fp_const64(ops, 1 << _B64_SIGN_SHIFT))
+
+    z3 = ops.z3
+    a_sign, a_exp, a_frac = _decode_binary64_bv(ops, a_bits)
+    c_sign, c_exp, c_frac = _decode_binary64_bv(ops, c_bits)
+    b_sign, b_exp, b_frac = _decode_binary64_bv(ops, b_bits)
+
+    product_sign = ops.bxor(a_sign, c_sign)
+    a_sig = _significand64_bv(ops, a_exp, a_frac)
+    c_sig = _significand64_bv(ops, c_exp, c_frac)
+    a_unbiased = _unbiased_exp64_bv(ops, a_exp)
+    c_unbiased = _unbiased_exp64_bv(ops, c_exp)
+    product = z3.ZeroExt(64, a_sig) * z3.ZeroExt(64, c_sig)
+    product_scale = a_unbiased + c_unbiased
+
+    b_zero = _is_zero_bv(ops, b_bits)
+    b_sig = _significand64_bv(ops, b_exp, b_frac)
+    b_unbiased = _unbiased_exp64_bv(ops, b_exp)
+    b_ext = z3.ZeroExt(64, b_sig) << BINARY64_FRAC_BITS
+
+    product_round_exp = product_scale - _bv(ops, BINARY64_FRAC_BITS, 32)
+    product_only = _round_binary64_bv(ops, product_sign, product_round_exp, product, fpscr)
+
+    prod_ge_b = product_scale >= b_unbiased
+    shift_pb = z3.Extract(7, 0, product_scale - b_unbiased)
+    shift_bp = z3.Extract(7, 0, b_unbiased - product_scale)
+    far_pb = _bv_uge(ops, shift_pb, _bv(ops, _FMA_FAR_SHIFT, _IDX_WIDTH))
+    far_bp = _bv_uge(ops, shift_bp, _bv(ops, _FMA_FAR_SHIFT, _IDX_WIDTH))
+
+    b_aligned, sticky_pb = _shift_right_sticky_bv(ops, b_ext, shift_pb, _SIG_WIDTH)
+    product_aligned, sticky_bp = _shift_right_sticky_bv(ops, product, shift_bp, _SIG_WIDTH)
+
+    left_sign = product_sign
+    left = ops.ite(prod_ge_b, product, product_aligned)
+    right_sign = b_sign
+    right = ops.ite(prod_ge_b, b_aligned, b_ext)
+    common = ops.ite(prod_ge_b, product_scale, b_unbiased)
+    sticky = ops.ite(prod_ge_b, sticky_pb, sticky_bp)
+
+    same_sign = left_sign == right_sign
+    left_gt_right = _bv_ugt(ops, left, right)
+    sum_sig = ops.ite(
+        same_sign,
+        left + right,
+        ops.ite(left_gt_right, left - right, right - left),
+    )
+    result_sign = ops.ite(
+        same_sign,
+        left_sign,
+        ops.ite(left_gt_right, left_sign, right_sign),
+    )
+    cancel_zero = ops.land(ops.lnot(same_sign), sum_sig == _bv(ops, 0, _SIG_WIDTH))
+    rounded = _round_binary64_bv(
+        ops,
+        result_sign,
+        common - _bv(ops, BINARY64_FRAC_BITS, 32),
+        sum_sig,
+        fpscr,
+    )
+
+    fused = ops.ite(cancel_zero, _signed_zero_bv(ops, _bv(ops, 0, 1)), rounded)
+    fused = ops.ite(ops.land(prod_ge_b, far_pb), product_only, fused)
+    fused = ops.ite(ops.land(ops.lnot(prod_ge_b), far_bp), b_bits, fused)
+    fused = ops.ite(b_zero, product_only, fused)
+    _ = sticky  # sticky forces inexact in concrete kernel; result bits unchanged here
+    return fused
+
+
+def _exact_fmadd_special_bv(
+    ops: Any,
+    a_bits: Any,
+    c_bits: Any,
+    b_bits: Any,
+    fpscr: Any,
+    *,
+    subtract_b: bool = False,
+) -> Any:
+    if subtract_b:
+        b_bits = ops.bxor(b_bits, _fp_const64(ops, 1 << _B64_SIGN_SHIFT))
+
+    any_nan = ops.lor(
+        _is_nan_bv(ops, a_bits),
+        ops.lor(_is_nan_bv(ops, c_bits), _is_nan_bv(ops, b_bits)),
+    )
+    nan_result = _propagate_nan_bv(ops, a_bits, c_bits, b_bits)
+
+    a_sign, a_exp, a_frac = _decode_binary64_bv(ops, a_bits)
+    c_sign, c_exp, c_frac = _decode_binary64_bv(ops, c_bits)
+    b_sign, b_exp, b_frac = _decode_binary64_bv(ops, b_bits)
+
+    a_inf = _is_inf_bv(ops, a_bits)
+    c_inf = _is_inf_bv(ops, c_bits)
+    b_inf = _is_inf_bv(ops, b_bits)
+    a_zero = _is_zero_bv(ops, a_bits)
+    c_zero = _is_zero_bv(ops, c_bits)
+    b_zero = _is_zero_bv(ops, b_bits)
+
+    product_sign = ops.bxor(a_sign, c_sign)
+    invalid_imz = ops.lor(ops.land(a_inf, c_zero), ops.land(c_inf, a_zero))
+    product_inf = ops.lor(
+        ops.land(a_inf, ops.lnot(c_zero)),
+        ops.land(c_inf, ops.lnot(a_zero)),
+    )
+    inf_conflict = ops.land(
+        ops.land(product_inf, b_inf),
+        ops.lnot(product_sign == b_sign),
+    )
+
+    finite = _exact_finite_fmadd_bv(
+        ops,
+        a_bits,
+        c_bits,
+        b_bits,
+        fpscr,
+        subtract_b=False,
+    )
+
+    result = finite
+    result = ops.ite(
+        ops.lor(a_zero, c_zero),
+        ops.ite(
+            b_zero,
+            _signed_zero_bv(ops, ops.band(product_sign, b_sign)),
+            b_bits,
+        ),
+        result,
+    )
+    result = ops.ite(b_inf, _infinity_bits_bv(ops, b_sign), result)
+    result = ops.ite(product_inf, _infinity_bits_bv(ops, product_sign), result)
+    result = ops.ite(inf_conflict, _fp_const64(ops, _B64_CANONICAL_NAN), result)
+    result = ops.ite(invalid_imz, _fp_const64(ops, _B64_CANONICAL_NAN), result)
+    return ops.ite(any_nan, nan_result, result)
+
+
+def exact_fused_result_bits_bv(
+    opcode: str,
+    a_bits: Any,
+    c_bits: Any,
+    b_bits: Any,
+    fpscr: Any,
+    ops: Any,
+) -> Any | None:
+    """Return payload-accurate binary64 fused result bits when supported."""
+    name = str(opcode)
+    if name == "fmadd":
+        return _exact_fmadd_special_bv(ops, a_bits, c_bits, b_bits, fpscr)
+    if name == "fmsub":
+        return _exact_fmadd_special_bv(
+            ops,
+            a_bits,
+            c_bits,
+            b_bits,
+            fpscr,
+            subtract_b=True,
+        )
+    if name == "fnmadd":
+        inner = _exact_fmadd_special_bv(ops, a_bits, c_bits, b_bits, fpscr)
+        return _negate_finite_bits_bv(ops, inner)
+    if name == "fnmsub":
+        inner = _exact_fmadd_special_bv(
+            ops,
+            a_bits,
+            c_bits,
+            b_bits,
+            fpscr,
+            subtract_b=True,
+        )
+        return _negate_finite_bits_bv(ops, inner)
+    return None
+
+
 def exact_arith_result_bits_bv(
     opcode: str,
     a_bits: Any,
@@ -583,6 +890,8 @@ def exact_arith_result_bits_bv(
         return _exact_add_special_bv(ops, left, right, fpscr, subtract=True)
     if name in ("fmul", "fmuls"):
         return _exact_mul_special_bv(ops, left, right, fpscr)
+    if name in ("fdiv",):
+        return _exact_div_special_bv(ops, left, right, fpscr)
     return None
 
 
@@ -624,7 +933,47 @@ def verify_exact_arith_bv_concrete(
     return got == (expected.result_bits & 0xFFFFFFFFFFFFFFFF)
 
 
+def verify_exact_fused_bv_concrete(
+    opcode: str,
+    a: int,
+    c: int,
+    b: int,
+    *,
+    fpscr: int = 0,
+) -> bool:
+    """Evaluate a symbolic fused formula at concrete inputs and compare to exact kernel."""
+    from .fp_exact_fused import dispatch_exact_fused
+    from .semantics import SymbolicOps
+
+    ops = SymbolicOps()
+    z3 = ops.z3
+    a_bv = z3.BitVec("a", 64)
+    c_bv = z3.BitVec("c", 64)
+    b_bv = z3.BitVec("b", 64)
+    fpscr_bv = z3.BitVec("fpscr", 32)
+    expr = exact_fused_result_bits_bv(opcode, a_bv, c_bv, b_bv, fpscr_bv, ops)
+    if expr is None:
+        return False
+    expected = dispatch_exact_fused(opcode, a, c, b)
+    if not expected.supported:
+        return False
+    solver = z3.Solver()
+    solver.set("timeout", 30000)
+    out = z3.BitVec("out", 64)
+    solver.add(a_bv == z3.BitVecVal(a & 0xFFFFFFFFFFFFFFFF, 64))
+    solver.add(c_bv == z3.BitVecVal(c & 0xFFFFFFFFFFFFFFFF, 64))
+    solver.add(b_bv == z3.BitVecVal(b & 0xFFFFFFFFFFFFFFFF, 64))
+    solver.add(fpscr_bv == z3.BitVecVal(fpscr & 0xFFFFFFFF, 32))
+    solver.add(out == expr)
+    if solver.check() != z3.sat:
+        return False
+    got = int(solver.model()[out].as_long()) & 0xFFFFFFFFFFFFFFFF
+    return got == (expected.bits64 & 0xFFFFFFFFFFFFFFFF)
+
+
 __all__ = [
     "exact_arith_result_bits_bv",
+    "exact_fused_result_bits_bv",
     "verify_exact_arith_bv_concrete",
+    "verify_exact_fused_bv_concrete",
 ]

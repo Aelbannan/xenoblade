@@ -24,9 +24,13 @@ python3 -m tools.ppc_equivalence.scalar_fp_v2_harvest --write
 | Harvest tool | `tools/ppc_equivalence/scalar_fp_v2_harvest.py` | Maps fixtures → corpus rows; filters replay-passing |
 | Exact kernel supplements | `fp_exact.py`, `fp_exact_convert.py`, … | Gap fill for NI=1 and non-RNE when fixtures lack coverage |
 
-Live Dolphin re-capture is **not** required for this pass — Broadway rows copy
-fixture-oracle bits; gaps (NI=1, RTZ/RIP/RIM) use honestly marked
-`exact_kernel_v2` expected values from the exact rounding kernel.
+Live Dolphin re-capture for NI=1 / non-RNE rows:
+
+```bash
+python3 -m tools.ppc_equivalence.scalar_fp_v2_capture --gen --capture --apply --write-plan
+```
+
+See [`dolphin_capture_plan.md`](dolphin_capture_plan.md) for remaining gaps.
 
 ## Files
 
@@ -50,7 +54,7 @@ Each file begins with a JSON schema header (`type: scalar_fp_v2_corpus`).
 | `fixtures-broadway-jsonl` | Expected bits/FPSCR/CR from Broadway fixture oracle |
 | `exact_kernel_v2` | Expected values from exact-v2 kernel (gap fill or NI=1 / non-RNE) |
 | `oracle_rne_interim` | Legacy interim RNE placeholders |
-| `dolphin-capture` | Reserved for future live Dolphin JSONL capture rows |
+| `dolphin-capture` | Live Dolphin interpreter capture via ``scalar_fp_v2_capture`` harness |
 
 ## Coverage (current)
 

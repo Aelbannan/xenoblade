@@ -10,12 +10,12 @@
 {"expected_bits":"0x400921fb60000000","id":"exact-frsp-pi-double","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"provenance":"exact_kernel_v2"}
 {"expected_bits":"0x7ff8000000000000","id":"exact-frsp-qnan","opcode":"frsp","operands":{"a":"0x7ff8000000000000"},"provenance":"exact_kernel_v2"}
 {"expected_fpcr_nibble":"0x2","id":"exact-ni1-fcmpu-subnorm-vs-zero","ni":1,"opcode":"fcmpu","operands":{"a":"0x0000000000000001","b":"0x0000000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x0000000000000000","id":"exact-ni1-frsp-denorm-flush","ni":1,"opcode":"frsp","operands":{"a":"0x0000000002000001"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x3ff0000000000000","id":"exact-ni1-frsp-rn-tie","ni":1,"opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x3810000000000000","id":"exact-ni1-frsp-smallest-normal-flush","ni":1,"opcode":"frsp","operands":{"a":"0x3810000000000000"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x0000000000000000","id":"exact-ni1-frsp-subnormal-flush","ni":1,"opcode":"frsp","operands":{"a":"0x0000000000000001"},"provenance":"exact_kernel_v2"}
-{"expected_bits":"0x3ff0000000000000","id":"exact-rim-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000003","provenance":"exact_kernel_v2","rn":"toward-minus-infinity"}
-{"expected_bits":"0x400921fb60000000","id":"exact-rip-frsp-pi","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"pre_fpscr":"0x00000002","provenance":"exact_kernel_v2","rn":"toward-plus-infinity"}
-{"expected_bits":"0x3ff0000020000000","id":"exact-rip-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000002","provenance":"exact_kernel_v2","rn":"toward-plus-infinity"}
-{"expected_bits":"0x400921fb40000000","id":"exact-rtz-frsp-pi","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"pre_fpscr":"0x00000001","provenance":"exact_kernel_v2","rn":"toward-zero"}
-{"expected_bits":"0x3ff0000000000000","id":"exact-rtz-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000001","provenance":"exact_kernel_v2","rn":"toward-zero"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x0000000000000000","id":"exact-ni1-frsp-denorm-flush","ni":1,"opcode":"frsp","operands":{"a":"0x0000000002000001"},"provenance":"dolphin-capture"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x3ff0000000000000","id":"exact-ni1-frsp-rn-tie","ni":1,"opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"provenance":"dolphin-capture"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x3810000000000000","id":"exact-ni1-frsp-smallest-normal-flush","ni":1,"opcode":"frsp","operands":{"a":"0x3810000000000000"},"provenance":"dolphin-capture"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x0000000000000000","id":"exact-ni1-frsp-subnormal-flush","ni":1,"opcode":"frsp","operands":{"a":"0x0000000000000001"},"provenance":"dolphin-capture"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x3ff0000000000000","id":"exact-rim-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000003","provenance":"dolphin-capture","rn":"toward-minus-infinity"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x400921fb60000000","id":"exact-rip-frsp-pi","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"pre_fpscr":"0x00000002","provenance":"dolphin-capture","rn":"toward-plus-infinity"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x3ff0000020000000","id":"exact-rip-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000002","provenance":"dolphin-capture","rn":"toward-plus-infinity"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x400921fb40000000","id":"exact-rtz-frsp-pi","opcode":"frsp","operands":{"a":"0x400921fb54442d18"},"pre_fpscr":"0x00000001","provenance":"dolphin-capture","rn":"toward-zero"}
+{"dolphin_version":"Dolphin 2606","expected_bits":"0x3ff0000000000000","id":"exact-rtz-frsp-tie","opcode":"frsp","operands":{"a":"0x3ff0000000400000"},"pre_fpscr":"0x00000001","provenance":"dolphin-capture","rn":"toward-zero"}

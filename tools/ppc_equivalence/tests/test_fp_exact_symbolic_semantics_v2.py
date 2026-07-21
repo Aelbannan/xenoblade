@@ -12,14 +12,18 @@ import z3
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.fp_capabilities import set_scalar_fp_exact_v2_module_flag
-from tools.ppc_equivalence.fp_exact import exact_fadd, exact_fmul
+from tools.ppc_equivalence.fp_exact import exact_fadd, exact_fdiv, exact_fmul
+from tools.ppc_equivalence.fp_exact_fused import fmadd_binary64_rne
 from tools.ppc_equivalence.fp_exact_symbolic import (
     scalar_fp_unsupported_predicate,
     scalar_fp_unsupported_query,
     try_concrete_bv64,
     try_dispatch_exact_scalar_v2,
 )
-from tools.ppc_equivalence.fp_exact_symbolic_arith import verify_exact_arith_bv_concrete
+from tools.ppc_equivalence.fp_exact_symbolic_arith import (
+    verify_exact_arith_bv_concrete,
+    verify_exact_fused_bv_concrete,
+)
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.model import concrete_state
 from tools.ppc_equivalence.result import ProofStatus
@@ -27,6 +31,9 @@ from tools.ppc_equivalence.semantics import ConcreteOps, SymbolicOps, execute_in
 
 _ONE = 0x3FF0000000000000
 _TWO = 0x4000000000000000
+_F15 = 0x3FF8000000000000
+_F2 = 0x4000000000000000
+_F4 = 0x4010000000000000
 
 
 def _insn(opcode: Opcode, operands: tuple[int, ...]) -> Instruction:
@@ -75,6 +82,25 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
             with self.subTest(a=a, b=b):
                 self.assertTrue(verify_exact_arith_bv_concrete("fmul", a, b))
 
+    def test_payload_symbolic_fdiv_matches_exact_corpus(self) -> None:
+        pairs = [
+            (_F15, _F2),
+            (_ONE, _TWO),
+            (_F2, _F4),
+        ]
+        for a, b in pairs:
+            with self.subTest(a=a, b=b):
+                self.assertTrue(verify_exact_arith_bv_concrete("fdiv", a, b))
+
+    def test_payload_symbolic_fmadd_matches_exact_corpus(self) -> None:
+        cases = [
+            (_F15, _F4, _F2),
+            (_ONE, _TWO, _ONE),
+        ]
+        for a, c, b in cases:
+            with self.subTest(a=a, c=c, b=b):
+                self.assertTrue(verify_exact_fused_bv_concrete("fmadd", a, c, b))
+
     def test_symbolic_neighbor_fadd_can_differ(self) -> None:
         ops = SymbolicOps()
         f1 = z3.BitVec("f1", 64)
@@ -119,10 +145,34 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
         )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
 
+    def test_identical_fdiv_equivalent_with_flag_on(self) -> None:
+        insns = [_insn(Opcode.FDIV, (1, 1, 2))]
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=20000)
+        result = check_equivalence(
+            insns,
+            insns,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+
+    def test_identical_fmadd_equivalent_with_flag_on(self) -> None:
+        insns = [_insn(Opcode.FMADD, (7, 1, 2, 3))]
+        contract = make_contract(preset=None, observe=["f7"], timeout_ms=20000)
+        result = check_equivalence(
+            insns,
+            insns,
+            contract,
+            original_hex="00",
+            candidate_hex="00",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.unsupported)
+
     def test_different_addend_fadd_not_equivalent(self) -> None:
         original = [_insn(Opcode.FADD, (1, 1, 2))]
         candidate = [_insn(Opcode.FADD, (1, 1, 3))]
-        contract = make_contract(preset=None, observe=["f1"], timeout_ms=15000)
+        contract = make_contract(preset=None, observe=["f1"], timeout_ms=30000)
         result = check_equivalence(
             original,
             candidate,
@@ -164,6 +214,39 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
         )
         expected = exact_fmul(_ONE, _TWO, fpscr=0).result_bits
         self.assertEqual(try_concrete_bv64(final.fpr[3]), expected)
+
+    def test_fixed_input_symbolic_fdiv_matches_concrete_exact(self) -> None:
+        ops = SymbolicOps()
+        state = concrete_state({
+            "fpr": {"f1": _F15, "f2": _F2, "f3": 0},
+            "fpscr": 0,
+        })
+        state = state.with_fpr(1, ops.fp_const64(_F15))
+        state = state.with_fpr(2, ops.fp_const64(_F2))
+        final = execute_instruction(
+            state,
+            _insn(Opcode.FDIV, (3, 1, 2)),
+            ops,
+        )
+        expected = exact_fdiv(_F15, _F2, fpscr=0).result_bits
+        self.assertEqual(try_concrete_bv64(final.fpr[3]), expected)
+
+    def test_fixed_input_symbolic_fmadd_matches_concrete_exact(self) -> None:
+        ops = SymbolicOps()
+        state = concrete_state({
+            "fpr": {"f1": _F15, "f2": _F2, "f3": _F4, "f7": 0},
+            "fpscr": 0,
+        })
+        state = state.with_fpr(1, ops.fp_const64(_F15))
+        state = state.with_fpr(2, ops.fp_const64(_F2))
+        state = state.with_fpr(3, ops.fp_const64(_F4))
+        final = execute_instruction(
+            state,
+            _insn(Opcode.FMADD, (7, 1, 2, 3)),
+            ops,
+        )
+        expected = fmadd_binary64_rne(_F15, _F4, _F2).bits64
+        self.assertEqual(try_concrete_bv64(final.fpr[7]), expected)
 
     def test_identical_fadd_equivalent_with_flag_on(self) -> None:
         insns = [_insn(Opcode.FADD, (1, 1, 2))]

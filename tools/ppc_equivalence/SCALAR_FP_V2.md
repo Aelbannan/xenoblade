@@ -32,7 +32,7 @@ exist), symbolic fdiv/fused payloads, production switch /
 | 9 | Fused arithmetic | **DONE (experimental)** — `fp_exact_fused` + semantics + promotion-capable grader |
 | 10 | Production obligations | **DONE scaffolding** — schema v2 + forgery tests (not production-promoted) |
 | 11 | Independent corpora | **Advanced** — 164 replay rows incl. NI=1 + RTZ/RIP/RIM exact-kernel supplements; live Dolphin re-capture still open |
-| 12 | Production switch | **Plumbing only** — readiness gate + canary manifest; production NOT switched; model NOT bumped |
+| 12 | Production switch | **Plumbing only** — readiness gate, canary manifest dry-run, version bump plan drafted; production NOT switched; model NOT bumped |
 
 ### Key module map (landed)
 
@@ -415,25 +415,75 @@ The gate checks (honest infrastructure probes, not a promotion claim):
 | `experimental_models` | `FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS` complete for allowlist order |
 | `canary_targets` | Census target ids exist in `tools/coop/targets.json` |
 | `shadow_manifest` | Canary template valid (`shadow_mode`, empty FP allowlists) |
+| `canary_manifest_targets` | Manifest `recommended_canary_targets` dry-run vs registry + census |
 | `fe0_fe1_status` | `fe0_fe1_modeling_status()` wired when `SCALAR_FP_EXACT_V2=1` |
 | `unsupported_query_helper` | `scalar_fp_unsupported_query` present |
 
 `production_switch_ready` stays **false** until explicit future work completes.
-`enable_scalar_fp_exact_v2_production()` validates gates then raises
-`NotImplementedError` — do not call it expecting a live switch.
+`build_production_switch_checklist()` / `enable_scalar_fp_exact_v2_production()`
+evaluate gates then raise — do not call expecting a live switch.
+
+#### Version bump plan (draft — not applied)
+
+Lockstep identity bump when the first FP v2 capability enters an authoritative
+allowlist. **Live values today** remain in `result.py` and
+`tools/coop/lib/targets.py`; do not change until the operator-driven switch.
+
+| Identity | Live (production) | Planned (Phase 12 switch) | Location |
+|---|---|---|---|
+| `ARCHITECTURE_MODEL` | `broadway-ppc32-be-v41` | `broadway-ppc32-be-v42` | `tools/ppc_equivalence/result.py` |
+| `RESULT_FORMAT` | `21` | `22` | `tools/ppc_equivalence/result.py` |
+| `EQUIVALENCE_CERTIFICATE_VERSION` | `16` | `17` | `tools/coop/lib/targets.py` |
+| `validation_ledger.yaml` `architecture_model` | `broadway-ppc32-be-v41` | `broadway-ppc32-be-v42` | `tools/ppc_equivalence/validation_ledger.yaml` |
+
+**FP model versions** (experimental → production on switch; from
+`fp_capabilities.py` / `FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS`):
+
+| Capability | Production today | Planned production |
+|---|---|---|
+| `fp-load-store` | `broadway-fp-load-store-v1` | `broadway-fp-load-store-v2` |
+| `fp-compare` | `broadway-fp-compare-v1` | `broadway-fp-compare-v2` |
+| `fp-convert` | `broadway-fp-convert-v1` | `broadway-fp-convert-v2` |
+| `fp-scalar-arithmetic` | `broadway-fp-scalar-v2` | `broadway-fp-scalar-v3` |
+| `fp-fused-arithmetic` | `broadway-fp-fused-v1` | `broadway-fp-fused-v2` |
+| `fp-traps` | `broadway-fp-traps-v1` | `broadway-fp-traps-v2` |
+| `fp-fpscr-control` | *(bundled in scalar)* | `broadway-fp-fpscr-control-v1` |
+
+**FP obligation / algorithm identities** (schema v2 — `fp_scalar_obligations_v2.py`):
+
+| Role | Live (interim) | Planned (exact v2) |
+|---|---|---|
+| Non-fused scalar exact kernel | `fp-scalar-oracle-v1` | `broadway-exact-fp-v2` |
+| Fused exact kernel | `fp-fused-incomplete-v0` (grader) | `fp-fused-exact-v2` |
+| Outcome unification | `fp-outcome-unify-v1` | retained until superseded |
+| Obligation schema | `schema_version: 2` | unchanged |
+
+**Operator checklist before first allowlist entry:**
+
+1. Run `--readiness` and `build_production_switch_checklist()` — all infra gates green.
+2. Re-capture Dolphin corpora for NI=1 and non-RNE rows (supplements alone insufficient).
+3. Land symbolic fdiv + fused payload formulas (fadd/fmul/fsub already landed).
+4. Clear bottom-up recertify debt (~7 queued).
+5. Apply identity bump table above in one commit; regenerate corpora / ledger hashes.
+6. Run model-release Dolphin CI job (required before `ARCHITECTURE_MODEL` change).
+7. Bottom-up recertification; add **one** capability to canary manifest allowlist.
+
+Constants mirrored in code: `scalar_fp_v2_rollout.PLANNED_ARCHITECTURE_MODEL`,
+`PLANNED_RESULT_FORMAT`, `PLANNED_EQUIVALENCE_CERTIFICATE_VERSION`.
 
 #### What remains before the first allowlist entry (honest)
 
-1. **Independent corpora gaps** — NI=1 rows and non-RNE Dolphin capture are
-   still incomplete; interim `oracle_rne_interim` / fixture rows are not
-   promotion-grade evidence alone.
-2. **Symbolic payload** — full finite-domain symbolic arithmetic formulas and
-   UNSAT unsupported-remainder proofs remain open (Phase 7 exit).
-3. **Certificate / recert debt** — bottom-up recertify queue and blocked
-   targets must clear before any capability enters an authoritative manifest.
-4. **Architecture bump** — `ARCHITECTURE_MODEL`, `RESULT_FORMAT` (if needed),
-   `EQUIVALENCE_CERTIFICATE_VERSION`, and FP model/oracle versions must bump
-   in lockstep when production switches (not done yet).
+1. **Independent corpora gaps** — NI=1 and non-RNE rows exist as
+   `exact_kernel_v2` supplements; live Dolphin attestation still missing
+   (Phase 11).
+2. **Symbolic payload** — fadd/fmul/fsub landed (`fp_exact_symbolic_arith.py`);
+   fdiv and fused finite-domain formulas + UNSAT unsupported-remainder proofs
+   remain open (Phase 7 exit).
+3. **Certificate / recert debt** — bottom-up recertify queue (~7 queued) must
+   clear before any capability enters an authoritative manifest.
+4. **Architecture bump** — planned identities drafted above; live
+   `ARCHITECTURE_MODEL`, `RESULT_FORMAT`, and
+   `EQUIVALENCE_CERTIFICATE_VERSION` unchanged.
 5. **Production wiring** — execution path from manifest allowlist → exact-v2
    semantics in the certifier/engine; today only the experimental env flag
    selects v2 behavior.

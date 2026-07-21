@@ -305,7 +305,11 @@ class FloatingPointDomain:
         domain.validate()
         return domain
 
+# TODO(Phase 12 — tools/ppc_equivalence/SCALAR_FP_V2.md § production switch):
+# bump ARCHITECTURE_MODEL to broadway-ppc32-be-v42 when scalar FP exact v2 lands.
 ARCHITECTURE_MODEL = "broadway-ppc32-be-v41"
+# TODO(Phase 12): bump RESULT_FORMAT to 22 in lockstep with the architecture bump
+# if certificate / ProofResult payload fields change on switch (see Phase 12 plan).
 RESULT_FORMAT = 21
 
 

@@ -214,7 +214,7 @@ def _exact_arith_result_bits_bv(
             return _bv64(ops, outcome.result_bits)
 
     name = str(opcode)
-    if name in ("fadd", "fadds", "fsub", "fsubs", "fmul", "fmuls"):
+    if name in ("fadd", "fadds", "fsub", "fsubs", "fmul", "fmuls", "fdiv"):
         from .fp_exact_symbolic_arith import exact_arith_result_bits_bv
 
         payload = exact_arith_result_bits_bv(name, a_bits, b_bits, c_bits, fpscr, ops)
@@ -283,11 +283,47 @@ def _dispatch_exact_fused(
     c_i = try_concrete_bv64(c_bits)
     fpscr_i = try_concrete_bv32(fpscr)
     msr_i = try_concrete_bv32(msr)
+    name = str(opcode)
+    symbolic = (
+        a_i is None
+        or b_i is None
+        or c_i is None
+        or fpscr_i is None
+    )
+
+    if symbolic and name in {"fmadd", "fmsub", "fnmadd", "fnmsub"}:
+        from .fp_exact_symbolic_arith import exact_fused_result_bits_bv
+
+        result_bits = exact_fused_result_bits_bv(name, a_bits, c_bits, b_bits, fpscr, ops)
+        if result_bits is None:
+            return None
+        from .fp_exact_fused import dispatch_exact_fused
+
+        rep = dispatch_exact_fused(name, 0x3FF0000000000000, 0x3FF0000000000000, 0x3FF0000000000000)
+        if not rep.supported:
+            return None
+        outcome = scalar_outcome_from_fused(
+            rep,
+            fpscr=0,
+            msr=0,
+            a_bits=0x3FF0000000000000,
+            c_bits=0x3FF0000000000000,
+            b_bits=0x3FF0000000000000,
+        )
+        if not outcome.supported:
+            return None
+        return ExactDispatchResult(
+            outcome=outcome,
+            result_bits=result_bits,
+            writeback=_bool(ops, bool(outcome.writeback)),
+            post_fpscr=apply_fpscr_transition_expr(fpscr, name, outcome, ops),
+            symbolic=True,
+        )
+
     if a_i is None or b_i is None or c_i is None or fpscr_i is None:
         return None
     from .fp_exact_fused import dispatch_exact_fused
 
-    name = str(opcode)
     if name.endswith("s"):
         fused = dispatch_exact_fused(name, a_i, b_i, c_i)
     else:

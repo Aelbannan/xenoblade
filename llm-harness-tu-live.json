@@ -23,38 +23,21 @@
     },
     "lmstudio": {
       "base_url": "http://localhost:1234/v1",
-      "timeout_seconds": 900,
+      "timeout_seconds": 1800,
       "temperature": 0.1,
-      "max_tokens": 4096,
+      "max_tokens": 32768,
       "json_object": true,
       "enable_thinking": true,
       "reasoning_effort": "none",
       "thinking_budget": 0
-    },
-    "codex": {
-      "binary": "codex",
-      "timeout_seconds": 900,
-      "pure": true,
-      "sandbox": "read-only",
-      "ephemeral": true,
-      "json_schema": false
     }
   },
   "models": {
     "default": [
       {
-        "id": "opencode-deepseek-flash",
-        "provider": "opencode",
-        "model": "opencode-go/deepseek-v4-flash",
-        "runs": 1
-      }
-    ],
-    "tu": [
-      {
-        "id": "codex-sol",
-        "provider": "codex",
-        "model": "gpt-5.6-sol",
-        "reasoning_effort": "high",
+        "id": "lmstudio-qwen",
+        "provider": "lmstudio",
+        "model": "qwen/qwen3.6-27b",
         "runs": 1
       }
     ]
@@ -86,6 +69,6 @@
     "max_callers": 3,
     "max_sibling_bodies": 3,
     "include_raw_hex": false,
-    "max_output_tokens": 4096
+    "max_output_tokens": 32768
   }
 }

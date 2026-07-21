@@ -10,7 +10,6 @@ This module collects all context needed for a translation-unit-level decompilati
 """
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -384,96 +383,239 @@ def _extract_class_definition(source: str, class_name: str) -> str:
     return ""
 
 
-def format_tu_prompt(context: TuContext) -> str:
+def _strip_asm_comments(asm: str) -> str:
+    """Strip /* hex bytecode */ comments from retail ASM listing.
+
+    Input:  /* 8045C174 004253B4 */  stwu r1, -0x370(r1)
+    Output: stwu r1, -0x370(r1)
+
+    Preserves .fn/.endfn directives, labels (.L_*), and blank lines.
     """
-    Format the TU context into a prompt for the LLM.
-    
-    This produces the complete prompt that gets sent to the model.
-    """
+    return re.sub(r'/\*[^*/]*\*/\s*', '', asm)
+
+
+def _function_dossier_entry(
+    f: FunctionContext,
+    *,
+    asm_char_limit: int,
+    current_source_limit: int,
+) -> Dict[str, Any]:
+    """Build one model-facing function entry; omit empty optional lists/bodies."""
+    asm = f.retail_asm
+    if asm:
+        asm = _strip_asm_comments(asm)[:asm_char_limit]
+    entry: Dict[str, Any] = {
+        "target_id": f.target_id,
+        "symbol": f.symbol,
+        "demangled": f.demangled,
+        "status": f.status,
+        "retail_asm": asm or "",
+        "retail_size": f.retail_size,
+        "is_matched": f.is_matched,
+    }
+    if f.current_source:
+        entry["current_source"] = f.current_source[:current_source_limit]
+    if f.called_functions:
+        entry["called_functions"] = f.called_functions
+    if f.callers:
+        entry["callers"] = f.callers
+    return entry
+
+
+def _fence(lang: str, body: str) -> str:
+    """Wrap *body* in a markdown fence; bump fence length if body contains ```."""
+    body = body.rstrip()
+    ticks = "```"
+    while ticks in body:
+        ticks += "`"
+    return f"{ticks}{lang}\n{body}\n{ticks}"
+
+
+def _render_function_section(entry: Dict[str, Any]) -> str:
+    lines = [
+        f"## function {entry.get('target_id', '')}",
+        f"symbol: {entry.get('symbol', '')}",
+        f"demangled: {entry.get('demangled', '')}",
+        f"status: {entry.get('status', '')}",
+        f"retail_size: {entry.get('retail_size', 0)}",
+        f"is_matched: {bool(entry.get('is_matched'))}",
+    ]
+    asm = str(entry.get("retail_asm") or "").rstrip()
+    if asm:
+        lines.append("")
+        lines.append("### retail_asm")
+        lines.append(_fence("asm", asm))
+    current = str(entry.get("current_source") or "").rstrip()
+    if current:
+        lines.append("")
+        lines.append("### current_source")
+        lines.append(_fence("cpp", current))
+    called = entry.get("called_functions") or []
+    if called:
+        lines.append("")
+        lines.append("called_functions: " + ", ".join(str(v) for v in called))
+    callers = entry.get("callers") or []
+    if callers:
+        lines.append("callers: " + ", ".join(str(v) for v in callers))
+    return "\n".join(lines)
+
+
+def render_tu_dossier_text(dossier: Dict[str, Any]) -> str:
+    """Render a TU dossier as fenced plaintext (real newlines, no JSON escapes)."""
+    parts: List[str] = [
+        f"unit: {dossier.get('unit', '')}",
+        f"acceptance: {dossier.get('acceptance', '')}",
+    ]
+    max_out = (dossier.get("constraints") or {}).get("max_output_tokens")
+    if max_out is not None:
+        parts.append(f"max_output_tokens: {max_out}")
+
+    header = str(dossier.get("header") or "").rstrip()
+    if header:
+        parts.extend(["", "## header", _fence("cpp", header)])
+
+    for entry in dossier.get("functions") or []:
+        if isinstance(entry, dict):
+            parts.extend(["", _render_function_section(entry)])
+
+    siblings = dossier.get("matched_siblings") or []
+    if siblings:
+        parts.extend(["", "## matched_siblings"])
+        for sib in siblings:
+            if not isinstance(sib, dict):
+                continue
+            parts.append(
+                f"### {sib.get('target_id', '')} ({sib.get('demangled') or sib.get('symbol', '')})"
+            )
+            body = str(sib.get("body") or "").rstrip()
+            if body:
+                parts.append(_fence("cpp", body))
+
+    callees = dossier.get("callee_summaries") or []
+    if callees:
+        parts.extend(["", "## callee_summaries"])
+        for callee in callees:
+            if not isinstance(callee, dict):
+                continue
+            line = f"- {callee.get('symbol', '')}"
+            demangled = callee.get("demangled")
+            if demangled:
+                line += f" ({demangled})"
+            status = callee.get("status")
+            if status:
+                line += f" [{status}]"
+            purpose = callee.get("purpose")
+            if purpose:
+                line += f": {purpose}"
+            parts.append(line)
+            sig = callee.get("signature")
+            if sig:
+                parts.append(f"  signature: {sig}")
+
+    struct_ctx = str(dossier.get("struct_context") or "").rstrip()
+    if struct_ctx:
+        parts.extend(["", "## struct_context", _fence("cpp", struct_ctx)])
+
+    return "\n".join(parts).rstrip() + "\n"
+
+
+def _build_tu_dossier_dict(context: TuContext, *, asm_char_limit: int, current_source_limit: int) -> Dict[str, Any]:
     budget = context.prompt_budget
-    max_chars = budget.get("max_chars", 60000)
     max_output = budget.get("max_output_tokens", 8192)
-    
-    # Build the dossier-like JSON for the model
-    dossier = {
+    decl_limit = budget.get("max_declaration_chars", 12000)
+
+    dossier: Dict[str, Any] = {
         "schema_version": 3,
         "repository": "xenoblade-wii-us",
         "workflow": "tu-decomp",
         "acceptance": "100% instruction match (FULL_MATCH) or EQUIVALENT_MATCH with certificate",
         "unit": context.unit_name,
-        "source": str(context.source_path),
-        "header": context.header_text[:budget.get("max_declaration_chars", 12000)] if context.header_text else "",
-        "functions": [],
-        "matched_siblings": [],
-        "callee_summaries": [],
-        "struct_context": context.struct_context,
-        "constraints": {
-            "max_output_tokens": max_output,
-            "high_level_cpp_only": True,
-            "no_inline_asm": True,
-            "trust_asm_over_header": True,
-            "consistent_layout_across_functions": True,
-        },
+        "functions": [
+            _function_dossier_entry(
+                f, asm_char_limit=asm_char_limit, current_source_limit=current_source_limit
+            )
+            for f in context.functions
+        ],
+        "constraints": {"max_output_tokens": max_output},
     }
-    
-    # Add function contexts
-    for f in context.functions:
-        dossier["functions"].append({
-            "target_id": f.target_id,
-            "symbol": f.symbol,
-            "demangled": f.demangled,
-            "status": f.status,
-            "retail_asm": f.retail_asm[:budget.get("max_decoded_instructions", 400) * 20] if f.retail_asm else "",
-            "retail_size": f.retail_size,
-            "current_source": f.current_source[:1000] if f.current_source else "",
-            "called_functions": f.called_functions,
-            "callers": f.callers,
-            "is_matched": f.is_matched,
-        })
-    
-    # Add matched siblings (few-shot examples)
+
+    if context.header_text:
+        dossier["header"] = context.header_text[:decl_limit]
+
+    matched_siblings = []
     for m in context.matched_siblings:
-        dossier["matched_siblings"].append({
+        matched_siblings.append({
             "target_id": m.target_id,
             "symbol": m.symbol,
             "demangled": m.demangled,
             "status": m.status,
-            "body": m.body[:budget.get("max_declaration_chars", 12000)],
+            "body": m.body[:decl_limit],
             "retail_size": m.retail_size,
         })
-    
-    # Add callee summaries
-    for sym, callee in context.callee_summaries.items():
-        dossier["callee_summaries"].append({
+    if matched_siblings:
+        dossier["matched_siblings"] = matched_siblings
+
+    callee_summaries = []
+    for _sym, callee in context.callee_summaries.items():
+        entry = {
             "symbol": callee.symbol,
             "demangled": callee.demangled,
             "status": callee.status,
-            "purpose": callee.purpose,
-            "signature": callee.signature,
-        })
-    
-    # Compact the dossier
-    dossier = compact_model_facing_dossier(dossier)
-    
-    # Read prompt templates
-    prompt_dir = context.source_path.parent / "tools" / "llm_harness" / "prompts"
-    # Actually, we need the project root - let's find it
-    # The prompt dir is passed via adapter, so we'll use a placeholder
-    # The actual prompt rendering happens in the adapter
-    
-    return json.dumps(dossier, separators=(",", ":"), indent=None)
+        }
+        if callee.purpose:
+            entry["purpose"] = callee.purpose
+        if callee.signature:
+            entry["signature"] = callee.signature
+        callee_summaries.append(entry)
+    if callee_summaries:
+        dossier["callee_summaries"] = callee_summaries
+
+    if context.struct_context:
+        dossier["struct_context"] = context.struct_context
+
+    return compact_model_facing_dossier(dossier)
 
 
-def render_tu_prompt(dossier_json: str, prompt_dir: Path) -> str:
-    """Render the final prompt from dossier JSON and templates."""
-    common = (prompt_dir / "common.md").read_text(encoding="utf-8")
+def format_tu_prompt(context: TuContext) -> str:
+    """Serialize the TU dossier as fenced plaintext for the model."""
+    budget = context.prompt_budget
+    max_chars = budget.get("max_chars", 60000)
+    asm_char_limit = budget.get("max_decoded_instructions", 400) * 18
+
+    dossier = _build_tu_dossier_dict(
+        context, asm_char_limit=asm_char_limit, current_source_limit=1000
+    )
+    # Soft size budget for the dossier only (final prompt is not hard-cut).
+    # Reserve room for tu-decomp.md template text.
+    dossier_budget = max(max_chars - 4000, 4000)
+    rendered = render_tu_dossier_text(dossier)
+    if len(rendered) <= dossier_budget:
+        return rendered
+
+    asm_limit = budget.get("max_decoded_instructions", 400)
+    for attempt in range(5):
+        if attempt > 0:
+            asm_limit //= 2
+        char_limit = asm_limit * 18
+        source_limit = 500 if attempt < 3 else 300
+        dossier = _build_tu_dossier_dict(
+            context, asm_char_limit=char_limit, current_source_limit=source_limit
+        )
+        if attempt >= 3:
+            dossier.pop("matched_siblings", None)
+            dossier.pop("callee_summaries", None)
+            dossier.pop("struct_context", None)
+        rendered = render_tu_dossier_text(dossier)
+        if len(rendered) <= dossier_budget:
+            return rendered
+
+    return rendered
+
+
+def render_tu_prompt(dossier_text: str, prompt_dir: Path) -> str:
+    """Render the tu-decomp prompt: workflow template + one plaintext dossier."""
     workflow = (prompt_dir / "tu-decomp.md").read_text(encoding="utf-8")
-    tu_shared = (prompt_dir / "tu-shared.md").read_text(encoding="utf-8") if (prompt_dir / "tu-shared.md").is_file() else ""
-    
-    # The common.md template expects {{WORKFLOW_PROMPT}} and {{DOSSIER_JSON}}
-    # and {{TU_SHARED}} for tu-shared.md content
-    prompt = common.replace("{{WORKFLOW_PROMPT}}", workflow)
-    prompt = prompt.replace("{{DOSSIER_JSON}}", dossier_json)
-    prompt = prompt.replace("{{TU_SHARED}}", tu_shared)
-    
-    return prompt
+    if "{{DOSSIER_TEXT}}" in workflow:
+        return workflow.replace("{{DOSSIER_TEXT}}", dossier_text).rstrip() + "\n"
+    # Back-compat if an older template still uses the JSON placeholder.
+    return workflow.replace("{{DOSSIER_JSON}}", dossier_text).rstrip() + "\n"

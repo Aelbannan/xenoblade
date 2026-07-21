@@ -1433,16 +1433,10 @@ class XenobladeAdapter:
             prompt_budget=prompt_budget,
         )
 
-        # Format the dossier JSON
-        dossier_json = format_tu_prompt(context)
+        # Format the plaintext dossier and render the final prompt.
+        dossier_text = format_tu_prompt(context)
+        prompt = render_tu_prompt(dossier_text, self.prompt_dir)
 
-        # Render the final prompt from templates
-        prompt = render_tu_prompt(dossier_json, self.prompt_dir)
-
-        # Truncate if needed
-        max_chars = int(self.prompt_budget.get("max_chars", 60000))
-        if len(prompt) > max_chars:
-            prompt = prompt[:max_chars] + "\n... truncated"
         return prompt
 
     def _function_tu_slots(
@@ -1813,19 +1807,12 @@ class XenobladeAdapter:
     def _evaluate_tu_decomp(self, unit_hint: str, candidate: Candidate) -> Evaluation:
         """Evaluate a TU-decomp candidate (two-phase header + cpp).
 
-        Handles the two-phase response format (phase1_header + phase2_cpp)
-        from the model. If the candidate already has per-function
-        SourcePatches (pre-parsed by the harness), they are used directly.
-        Otherwise the raw JSON response in candidate.source is parsed
-        using the tu_eval module's ``parse_tu_response`` / ``build_tu_candidate``
-        pipeline to create proper patches, then delegates to ``_evaluate_tu``
-        for the build / objdiff / regression-guard pipeline.
-
-        The improved header (phase1_header) is persisted in the evaluation
-        metrics so the harness can optionally promote it alongside function
-        patches.
+        Prefers ``candidate.phase1_header`` / ``phase2_cpp`` fields. Falls back
+        to legacy JSON stuffed into ``candidate.source``. Builds per-function
+        patches via ``tu_eval``, then delegates to ``_evaluate_tu``.
         """
         from tools.llm_harness.tu_eval import (
+            TuDecompResponse,
             build_tu_candidate,
             extract_tu_slots_and_targets,
             parse_tu_response,
@@ -1835,32 +1822,42 @@ class XenobladeAdapter:
         if candidate.patches:
             return self._evaluate_tu(unit_hint, candidate)
 
-        # Otherwise parse the raw two-phase JSON from candidate.source.
         unit = self.project.resolve_unit(unit_hint)
         if unit.source_path is None:
             raise ValueError(f"Unit {unit.name!r} has no source file")
         original_source = unit.source_path.read_text(encoding="utf-8")
 
-        # Extract TU slots and build the target map.
         slots, target_map = extract_tu_slots_and_targets(self, unit_hint)
         if not slots:
             raise ValueError(f"No TU slots found for unit {unit_hint!r}")
 
-        text = candidate.source.strip()
-        # Detect a raw two-phase response (phase1_header + phase2_cpp).
-        if text.startswith("{\"phase1_header\"") or text.startswith("{\"phase2_cpp"):
-            tu_response = parse_tu_response(text)
+        tu_response: Optional[TuDecompResponse] = None
+        if candidate.phase2_cpp.strip():
+            tu_response = TuDecompResponse(
+                phase1_header=candidate.phase1_header,
+                phase2_cpp=candidate.phase2_cpp,
+                hypothesis=candidate.hypothesis,
+                notes=list(candidate.notes),
+                next_change=candidate.next_change,
+            )
+        else:
+            text = candidate.source.strip()
+            if text.startswith("{\"phase1_header\"") or text.startswith("{\"phase2_cpp"):
+                tu_response = parse_tu_response(text)
+
+        if tu_response is not None:
             parsed_candidate = build_tu_candidate(
                 tu_response,
                 original_source,
                 slots,
                 target_map,
             )
-            # Evaluate using the same TU-level build/objdiff/guard pipeline.
-            return self._evaluate_tu(unit_hint, parsed_candidate)
+            evaluation = self._evaluate_tu(unit_hint, parsed_candidate)
+            if tu_response.phase1_header.strip():
+                evaluation.metrics["phase1_header_chars"] = len(tu_response.phase1_header)
+            return evaluation
 
         # Fallback: treat candidate.source as a complete .cpp replacement
-        # (full-context mode or already-spliced source).
         return self._evaluate_tu(unit_hint, candidate)
 
     def _tu_candidate_source(self, original: str, candidate: Candidate, unit: Any) -> str:

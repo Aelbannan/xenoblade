@@ -12,90 +12,42 @@
   "providers": {
     "opencode": {
       "base_url": "http://127.0.0.1:4096",
-      "timeout_seconds": 900,
+      "timeout_seconds": 360,
       "pure": true,
       "delete_session": true
-    },
-    "reasonix": {
-      "binary": "reasonix",
-      "timeout_seconds": 900,
-      "pure": true
     },
     "deepseek-raw": {
       "binary": "deepseek-raw",
       "timeout_seconds": 300,
       "pure": true
     },
-    "openrouter": {
-      "timeout_seconds": 300,
-      "pure": true
-    },
     "lmstudio": {
       "base_url": "http://localhost:1234/v1",
-      "api_key": "lm-studio",
       "timeout_seconds": 900,
       "temperature": 0.1,
       "max_tokens": 4096,
       "json_object": true,
-      "enable_thinking": false,
+      "enable_thinking": true,
       "reasoning_effort": "none",
       "thinking_budget": 0
-    },
-    "codex": {
-      "binary": "codex",
-      "timeout_seconds": 900,
-      "pure": true,
-      "sandbox": "read-only",
-      "ephemeral": true,
-      "json_schema": true
     }
   },
   "models": {
-    "initial": [
+    "default": [
       {
-        "id": "opencode-deepseek-flash",
+        "id": "opencode-dsv4",
         "provider": "opencode",
         "model": "opencode-go/deepseek-v4-flash",
-        "variant": "high",
-        "runs": 1
-      }
-    ],
-    "repair": [
-      {
-        "id": "deepseek-pro",
-        "provider": "deepseek-raw",
-        "model": "deepseek-pro",
-        "runs": 1
-      }
-    ],
-    "tu": [
-      {
-        "id": "openrouter-deepseek",
-        "provider": "openrouter",
-        "model": "deepseek/deepseek-chat",
-        "variant": "deepseek",
-        "runs": 1
-      }
-    ],
-    "sample": [
-      {
-        "id": "lmstudio-local",
-        "provider": "lmstudio",
-        "model": "qwen2.5-coder-32b-instruct",
-        "runs": 1
-      },
-      {
-        "id": "codex-gpt",
-        "provider": "codex",
-        "model": "gpt-5.4",
-        "reasoning_effort": "low",
-        "runs": 1
+        "runs": 1,
+        "variant": "",
+        "reasoning_effort": "",
+        "enable_thinking": false
       }
     ]
   },
   "execution": {
     "initial_parallel": 3,
-    "target_parallel": 2,
+    "target_parallel": 5,
     "max_retries": 0,
     "auto_promote": true,
     "auto_promote_owner": "llm-harness",
@@ -106,20 +58,20 @@
     }
   },
   "solve": {
-    "initial_candidates": 2,
-    "compile_repairs": 1,
-    "match_repairs": 3,
+    "initial_candidates": 3,
+    "compile_repairs": 2,
+    "match_repairs": 4,
     "max_repeated_fingerprint": 2,
     "stop_on_full_match": true,
     "stop_on_equivalent_match": true
   },
   "prompt": {
     "max_chars": 60000,
-    "max_decoded_instructions": 400,
+    "max_decoded_instructions": 2048,
     "max_declaration_chars": 12000,
     "max_callers": 3,
     "max_sibling_bodies": 3,
     "include_raw_hex": false,
-    "max_output_tokens": 4096
+    "max_output_tokens": 999999
   }
 }

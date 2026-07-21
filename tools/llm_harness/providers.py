@@ -4,6 +4,7 @@ import base64
 import json
 import os
 import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -16,6 +17,7 @@ from .types import ModelConfig, ProviderResult
 
 __all__ = [
     "CANDIDATE_JSON_SCHEMA",
+    "CodexProvider",
     "DeepSeekRawProvider",
     "LMStudioProvider",
     "OpenCodeCircuitBreaker",
@@ -23,6 +25,7 @@ __all__ = [
     "OpenCodeProvider",
     "OpenRouterProvider",
     "ReasonixProvider",
+    "parse_codex_output",
     "parse_opencode_message",
     "parse_opencode_output",
     "parse_reasonix_output",
@@ -482,6 +485,262 @@ class ReasonixProvider:
             cost=_float_or_none(usage.get("cost")),
             raw_events=events,
         )
+
+
+class CodexProvider:
+    """OpenAI Codex CLI provider via non-interactive `codex exec`.
+
+    Spawns the local ``codex`` binary with ``--json`` event streaming and
+    optional ``--output-schema`` for the shared decomp candidate shape.
+
+    With ``pure=true`` (default), the harness runs Codex in an empty temp
+    workspace, ignores user/project config/rules, disables shell / browser /
+    apps / plugins / multi-agent / web-search features, and rejects any tool
+    events in the JSONL stream. The prompt is fully inline via stdin.
+
+    Auth uses the normal Codex login (``codex login`` / ``~/.codex/auth.json``).
+    """
+
+    CANDIDATE_JSON_SCHEMA: Dict[str, Any] = SHARED_CANDIDATE_JSON_SCHEMA
+
+    # Feature flags disabled in pure mode so the model cannot reach files/tools.
+    _PURE_DISABLED_FEATURES = (
+        "shell_tool",
+        "unified_exec",
+        "browser_use",
+        "computer_use",
+        "apps",
+        "plugins",
+        "multi_agent",
+        "memories",
+        "image_generation",
+        "hooks",
+        "goals",
+        "web_search",
+    )
+    _TOOL_ITEM_TYPES = frozenset(
+        {
+            "command_execution",
+            "file_change",
+            "mcp_tool_call",
+            "web_search",
+            "collab_tool_call",
+        }
+    )
+
+    def __init__(
+        self,
+        binary: str = "codex",
+        timeout_seconds: int = 900,
+        pure: bool = True,
+        sandbox: str = "read-only",
+        ephemeral: bool = True,
+        json_schema: bool = True,
+        skip_git_repo_check: bool = False,
+        **_ignored: Any,
+    ) -> None:
+        self.binary = binary
+        self.timeout_seconds = timeout_seconds
+        self.pure = pure
+        self.sandbox = sandbox
+        self.ephemeral = ephemeral
+        self.json_schema = json_schema
+        # Pure mode always skips the git check (empty temp workspace).
+        self.skip_git_repo_check = skip_git_repo_check or pure
+        _load_env_vars(Path(".env"))
+
+    def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
+        started = time.monotonic()
+        cwd = cwd.resolve()
+        # Pure/inline mode never enables tools — even if cwd has TASK.md / dossier files.
+        has_context_files = (not self.pure) and any(cwd.iterdir())
+        if self.pure or not has_context_files:
+            guardrail = (
+                "Read the attached self-contained dossier. Do not use tools or inspect files. "
+                "Return only the requested JSON object."
+            )
+        else:
+            guardrail = (
+                "Read the attached dossier and the curated files in the current context directory. "
+                "Use read/search tools only when helpful, stay inside this context, do not edit files "
+                "or run shell commands, and return only the requested JSON object."
+            )
+        full_prompt = f"{guardrail}\n\n{prompt}"
+
+        # Pure mode: empty isolated workspace so Codex cannot see repo files /
+        # AGENTS.md / context artifacts. Non-pure keeps the curated context dir.
+        work_dir_ctx = (
+            tempfile.TemporaryDirectory(prefix="llm-harness-codex-")
+            if self.pure
+            else None
+        )
+        work_dir = Path(work_dir_ctx.name) if work_dir_ctx is not None else cwd
+        schema_path: Optional[Path] = None
+        last_message_path = work_dir / ".llm-harness-codex-last-message.txt"
+        try:
+            cmd = [
+                self.binary,
+                "exec",
+                "--json",
+                "--color",
+                "never",
+                "-C",
+                str(work_dir),
+                "-s",
+                self.sandbox,
+                "-m",
+                model.model,
+                "-o",
+                str(last_message_path),
+            ]
+            if self.ephemeral:
+                cmd.append("--ephemeral")
+            if self.skip_git_repo_check:
+                cmd.append("--skip-git-repo-check")
+            if self.pure:
+                # Drop user MCP/skills/rules and project AGENTS.md influence.
+                cmd.extend(["--ignore-user-config", "--ignore-rules"])
+                cmd.extend(["-c", 'approval_policy="never"'])
+                cmd.extend(["-c", 'web_search="disabled"'])
+                for feature in self._PURE_DISABLED_FEATURES:
+                    cmd.extend(["--disable", feature])
+            if self.json_schema:
+                schema_path = work_dir / ".llm-harness-codex-schema.json"
+                schema_body = self.CANDIDATE_JSON_SCHEMA.get(
+                    "schema", self.CANDIDATE_JSON_SCHEMA
+                )
+                schema_path.write_text(
+                    json.dumps(schema_body, indent=2) + "\n", encoding="utf-8"
+                )
+                cmd.extend(["--output-schema", str(schema_path)])
+
+            effort = (model.reasoning_effort or "").strip()
+            if not effort and self.pure:
+                effort = "low"
+            if effort:
+                cmd.extend(["-c", f"model_reasoning_effort={effort!r}"])
+
+            # Prompt via stdin (`-`) — dossiers can exceed argv limits.
+            cmd.append("-")
+
+            completed = subprocess.run(
+                cmd,
+                input=full_prompt,
+                cwd=work_dir,
+                text=True,
+                capture_output=True,
+                timeout=self.timeout_seconds,
+                check=False,
+            )
+            if completed.returncode:
+                detail = completed.stderr.strip() or completed.stdout.strip()
+                raise RuntimeError(
+                    f"Codex exited {completed.returncode}: {detail[-2000:]}"
+                )
+
+            last_message = ""
+            if last_message_path.is_file():
+                last_message = last_message_path.read_text(encoding="utf-8").strip()
+
+            text, events, usage = parse_codex_output(completed.stdout)
+            if self.pure:
+                self._reject_tool_events(events)
+            if last_message:
+                text = last_message
+            if not text.strip():
+                raise RuntimeError(
+                    "Codex: empty assistant text "
+                    f"(stdout_chars={len(completed.stdout)}, "
+                    f"stderr={completed.stderr.strip()[:400]!r})"
+                )
+            return ProviderResult(
+                text=text,
+                duration_seconds=time.monotonic() - started,
+                input_tokens=_int_or_none(usage.get("input")),
+                output_tokens=_int_or_none(usage.get("output")),
+                cache_read_tokens=_int_or_none(usage.get("cache_read")),
+                cache_write_tokens=_int_or_none(usage.get("cache_write")),
+                cost=_float_or_none(usage.get("cost")),
+                raw_events=events,
+            )
+        finally:
+            for path in (schema_path, last_message_path):
+                if path is None:
+                    continue
+                try:
+                    path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            if work_dir_ctx is not None:
+                work_dir_ctx.cleanup()
+
+    @classmethod
+    def _reject_tool_events(cls, events: list[Dict[str, Any]]) -> None:
+        """Fail closed if pure-mode Codex still invoked a tool."""
+        seen: list[str] = []
+        for event in events:
+            if not isinstance(event, dict):
+                continue
+            if not str(event.get("type") or "").startswith("item."):
+                continue
+            item = event.get("item") if isinstance(event.get("item"), dict) else {}
+            item_type = str(item.get("type") or "")
+            if item_type in cls._TOOL_ITEM_TYPES:
+                seen.append(item_type)
+        if seen:
+            uniq = ", ".join(sorted(set(seen)))
+            raise RuntimeError(
+                f"Codex pure mode: unexpected tool use in response ({uniq})"
+            )
+
+
+def parse_codex_output(stdout: str) -> tuple[str, list[Dict[str, Any]], Dict[str, Any]]:
+    """Parse ``codex exec --json`` JSONL into text, events, and usage.
+
+    Final answer is the last ``item.completed`` with ``item.type == agent_message``.
+    Usage is summed from ``turn.completed.usage``. ``turn.failed`` raises.
+    """
+    events: list[Dict[str, Any]] = []
+    messages: list[str] = []
+    usage_rows: list[Dict[str, Any]] = []
+    for line in stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            value = json.loads(stripped)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(value, dict):
+            continue
+        events.append(value)
+        event_type = value.get("type")
+        if event_type == "turn.failed":
+            err = value.get("error") if isinstance(value.get("error"), dict) else {}
+            message = err.get("message") if isinstance(err, dict) else None
+            message = message or value.get("message") or "turn failed"
+            raise RuntimeError(f"Codex turn failed: {message}")
+        if event_type == "turn.completed":
+            usage = value.get("usage") if isinstance(value.get("usage"), dict) else {}
+            usage_rows.append(
+                {
+                    "input": usage.get("input_tokens"),
+                    "output": usage.get("output_tokens"),
+                    "cache_read": usage.get("cached_input_tokens"),
+                    "cache_write": None,
+                    "cost": usage.get("cost"),
+                }
+            )
+            continue
+        if event_type != "item.completed":
+            continue
+        item = value.get("item") if isinstance(value.get("item"), dict) else {}
+        if item.get("type") == "agent_message" and isinstance(item.get("text"), str):
+            messages.append(item["text"])
+
+    usage = _sum_usage(usage_rows) if usage_rows else {}
+    text = messages[-1].strip() if messages else ""
+    return text, events, usage
 
 
 class DeepSeekRawProvider:

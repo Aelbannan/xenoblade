@@ -963,10 +963,10 @@ extern "C" int func_8006C678(void* p) {
 extern "C" void func_8006C684() {}
 // LLM-HARNESS-END: us-8006d0dc
 // LLM-HARNESS-BEGIN: us-8006d0f4
-extern "C" void func_8006C69C() {}
+extern "C" bool func_8006C69C(const void* self) { return (*(const unsigned short*)((const unsigned char*)self + 0x530) & 0x30) != 0; }
 // LLM-HARNESS-END: us-8006d0f4
 // LLM-HARNESS-BEGIN: us-8006d10c
-extern "C" void func_8006C6B4() {}
+extern "C" bool func_8006C6B4(void* self, unsigned int mask) { return ((*(unsigned int*)((char*)self + 0x1d4) & mask) != 0); }
 // LLM-HARNESS-END: us-8006d10c
 // LLM-HARNESS-BEGIN: us-8006d124
 extern "C" void func_8006C6CC() {}
@@ -1217,7 +1217,7 @@ extern "C" void func_800743A4() {}
 extern "C" void func_800743C0() {}
 // LLM-HARNESS-END: us-80074d5c
 // LLM-HARNESS-BEGIN: us-80075670
-extern "C" void func_80074CD4() {}
+extern "C" bool func_80074CD4(const unsigned* value, unsigned mask) { return (*value & mask) != 0; }
 // LLM-HARNESS-END: us-80075670
 // LLM-HARNESS-BEGIN: us-800756e0
 extern "C" bool func_80074D44() { return false; }

@@ -158,7 +158,7 @@ extern "C" void func_8004347C() {}
 extern "C" void func_800434AC() {}
 // LLM-HARNESS-END: us-80043a24
 // LLM-HARNESS-BEGIN: us-80043a54
-extern "C" void func_800434DC() {}
+extern "C" void func_800434DC(unsigned char* self, int enabled, int unused, unsigned int value) { unsigned int flags = *(unsigned int*)(self + 0x68); flags &= ~0x00000100u; *(unsigned int*)(self + 0x68) = flags; if (enabled != 0) { flags |= 0x00100000u; *(unsigned int*)(self + 0x68) = flags; } else { flags &= ~0x00100000u; *(unsigned int*)(self + 0x68) = flags; } *(unsigned int*)(self + 0xfc) = value; }
 // LLM-HARNESS-END: us-80043a54
 // LLM-HARNESS-BEGIN: us-80043a84
 extern "C" void func_8004350C() {}

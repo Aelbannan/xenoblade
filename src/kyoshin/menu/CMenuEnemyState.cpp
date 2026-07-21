@@ -753,7 +753,7 @@ done:
 }
 
 // LLM-HARNESS-BEGIN: us-8010f7f4
-extern "C" void func_8010ED18() {}
+extern "C" void func_8010ED18(void* self) { if (*(unsigned int*)((char*)self + 0x44) == 0) { *(unsigned int*)((char*)self + 0x44) = 1; *(unsigned char*)((char*)self + 0x40) = 0; } }
 // LLM-HARNESS-END: us-8010f7f4
 // LLM-HARNESS-BEGIN: us-8010f814
 extern "C" void func_8010ED38() {}

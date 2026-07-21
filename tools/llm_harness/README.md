@@ -17,6 +17,33 @@ python3 tools/llm_harness/run.py solve --number 10 --certified-funcs
 python3 tools/llm_harness/run.py solve <target-id>
 ```
 
+### Equivalence probe (no LLM)
+
+For functions that already compile but are not yet `FULL_MATCH` / current
+`EQUIVALENT_MATCH`, run objdiff + `ppc_equivalence` without spending model budget:
+
+```bash
+# Probe (writes results.jsonl; does not touch targets.json)
+python3 tools/llm_harness/run.py probe --number 20 --dry-run
+
+# Same as dry-run, then also persist accepted FULL/EQUIVALENT into targets.json
+python3 tools/llm_harness/run.py probe --number 20 --write
+
+# Explicit IDs or a whole TU
+python3 tools/llm_harness/run.py probe <target-id> --write
+python3 tools/llm_harness/run.py probe --tu kyoshin/CTaskGame --dry-run
+```
+
+Selection defaults: `selection=ready`, `--certified-funcs`, `--min-fuzzy 50`.
+Skips `FULL_MATCH` and `EQUIVALENT_MATCH` that already have a current certificate.
+Requires a built decomp object that still exports the symbol. Results land under
+`build/llm-harness/probe/<batch>/`. `--dry-run` still runs SMT; it only skips
+`targets.json` updates (`--write` is required to persist).
+
+Use `targets recertify --bottom-up` when the goal is only refreshing certificates
+on already-accepted targets; use `probe` to discover new `EQUIVALENT_MATCH`
+wins from the compiling pool.
+
 **Throughput knobs** (`llm-harness.json`):
 
 | Setting | Role |
@@ -77,6 +104,9 @@ python3 tools/llm_harness/run.py tu-complete <unit>
 python3 tools/llm_harness/run.py batch new <a> <b> <c>
 python3 tools/llm_harness/run.py stats
 ```
+
+`stats` aggregates `experiments.jsonl` per `model_id`, including a `by_status` map
+(`FULL_MATCH`, `CODE_MATCH`, `HIGH_MATCH`, `COMPILES`, `COMPILE_ERROR`, `ERROR`, …).
 
 ## Acceptance semantics
 

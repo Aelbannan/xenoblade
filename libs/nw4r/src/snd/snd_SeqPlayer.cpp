@@ -181,7 +181,7 @@ void SeqPlayer::SetChannelPriority(int priority) {
 }
 
 void SeqPlayer::SetReleasePriorityFix(bool flag) {
-    mReleasePriorityFixFlag = flag;
+    *(unsigned char*)((unsigned char*)this + 0xEF) = (unsigned char)flag;
 }
 
 void SeqPlayer::SetLocalVariable(int idx, s16 value) {

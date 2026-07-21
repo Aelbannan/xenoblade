@@ -1,4 +1,4 @@
-/* "libs/nw4r/src/snd/snd_SeqPlayer.cpp" line 0 "nw4r/snd.h" */
+/* "libs/nw4r/src/snd/snd_WsdPlayer.cpp" line 0 "nw4r/snd.h" */
 #ifndef NW4R_PUBLIC_SND_H
 #define NW4R_PUBLIC_SND_H
 
@@ -246943,132 +246943,93 @@ s16 DecodeDspAdpcm(AXPBADPCM* pAdpcm, u8 bits);
 
 #endif
 /* end "nw4r/snd.h" */
-/* "libs/nw4r/src/snd/snd_SeqPlayer.cpp" line 1 "nw4r/ut.h" */
+/* "libs/nw4r/src/snd/snd_WsdPlayer.cpp" line 1 "nw4r/ut.h" */
 /* end "nw4r/ut.h" */
+
+/* "libs/nw4r/src/snd/snd_WsdPlayer.cpp" line 3 "revolution/WPAD.h" */
+/**
+ * References: WiiBrew
+ */
+
+#ifndef RVL_SDK_PUBLIC_WPAD_H
+#define RVL_SDK_PUBLIC_WPAD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 10 "revolution/WPAD/WPAD.h" */
+/* end "revolution/WPAD/WPAD.h" */
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 11 "revolution/WPAD/WPADInternal.h" */
+/* end "revolution/WPAD/WPADInternal.h" */
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 12 "revolution/WPAD/debug_msg.h" */
+/* end "revolution/WPAD/debug_msg.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/WPAD.h" */
 
 namespace nw4r {
 namespace snd {
 namespace detail {
 
-volatile s16 SeqPlayer::mGlobalVariable[GLOBAL_VARIABLE_NUM];
-bool SeqPlayer::mGobalVariableInitialized = false;
+WsdPlayer::WsdPlayer() : mActiveFlag(false) {}
 
-SeqPlayer::SeqPlayer() {
-    mActiveFlag = false;
-    mStartedFlag = false;
-    mPauseFlag = false;
-    mReleasePriorityFixFlag = false;
-
-    mTempoRatio = 1.0f;
-    mTickFraction = 0.0f;
-    mSkipTickCounter = 0;
-    mSkipTimeCounter = 0.0f;
-    mPanRange = 1.0f;
-    mTickCounter = 0;
-    mVoiceOutCount = 0;
-
-    mParserParam.tempo = DEFAULT_TEMPO;
-    mParserParam.timebase = DEFAULT_TIMEBASE;
-    mParserParam.volume = 127;
-    mParserParam.priority = DEFAULT_PRIORITY;
-    mParserParam.callback = NULL;
-
-    for (int i = 0; i < LOCAL_VARIABLE_NUM; i++) {
-        mLocalVariable[i] = DEFAULT_VARIABLE_VALUE;
-    }
-    for (int i = 0; i < TRACK_NUM; i++) {
-        mTracks[i] = NULL;
-    }
-}
-
-SeqPlayer::~SeqPlayer() {
-    SeqPlayer::Stop();
-}
-
-void SeqPlayer::InitParam(int voices, NoteOnCallback* pCallback) {
+void WsdPlayer::InitParam(int voices, const WsdCallback* pCallback,
+                          u32 callbackArg) {
     BasicPlayer::InitParam();
 
     mStartedFlag = false;
     mPauseFlag = false;
-    mTempoRatio = 1.0f;
-    mSkipTickCounter = 0;
-    mSkipTimeCounter = 0.0f;
+    mReleasePriorityFixFlag = false;
+
     mPanRange = 1.0f;
-    mTickCounter = 0;
     mVoiceOutCount = voices;
+    mPriority = DEFAULT_PRIORITY;
 
-    mParserParam.tempo = DEFAULT_TEMPO;
-    mParserParam.timebase = DEFAULT_TIMEBASE;
-    mParserParam.volume = 127;
-    mParserParam.priority = 64;
-    mParserParam.callback = pCallback;
+    mCallback = pCallback;
+    mCallbackData = callbackArg;
 
-    mTickFraction = 0.0f;
+    mWsdData = NULL;
+    mWsdIndex = -1;
 
-    for (int i = 0; i < LOCAL_VARIABLE_NUM; i++) {
-        mLocalVariable[i] = DEFAULT_VARIABLE_VALUE;
-    }
-    for (int i = 0; i < TRACK_NUM; i++) {
-        mTracks[i] = NULL;
-    }
+    mWaveSoundInfo.pitch = 1.0f;
+    mWaveSoundInfo.pan = 64;
+    mWaveSoundInfo.surroundPan = 0;
+    mWaveSoundInfo.fxSendA = 0;
+    mWaveSoundInfo.fxSendB = 0;
+    mWaveSoundInfo.fxSendC = 0;
+    mWaveSoundInfo.mainSend = 127;
+
+    mLfoParam.Init();
+    mWavePlayFlag = false;
+    mChannel = NULL;
 }
 
-SeqPlayer::SetupResult SeqPlayer::Setup(SeqTrackAllocator* pAllocator,
-                                        u32 allocTrackFlags, int voices,
-                                        NoteOnCallback* pCallback) {
+bool WsdPlayer::Prepare(const void* pWsdData, int index,
+                        StartOffsetType startType, int startOffset, int voices,
+                        const WsdCallback* pCallback, u32 callbackArg) {
     SoundThread::AutoLock lock;
 
-    SeqPlayer::Stop();
-    InitParam(voices, pCallback);
-    {
-        ut::AutoInterruptLock lock;
-        int tracks = 0;
-
-        {
-            u32 trackFlags = allocTrackFlags;
-
-            for (; trackFlags != 0; trackFlags >>= 1) {
-                if (trackFlags & 1) {
-                    tracks++;
-                }
-            }
-        }
-
-        if (tracks > pAllocator->GetAllocatableTrackCount()) {
-            return SETUP_ERR_CANNOT_ALLOCATE_TRACK;
-        }
-
-        {
-            u32 trackFlags = allocTrackFlags;
-
-            for (int i = 0; trackFlags != 0; trackFlags >>= 1, i++) {
-                if (trackFlags & 1) {
-                    SeqTrack* pTrack = pAllocator->AllocTrack(this);
-                    SetPlayerTrack(i, pTrack);
-                }
-            }
-        }
+    if (mActiveFlag) {
+        FinishPlayer();
     }
-    DisposeCallbackManager::GetInstance().RegisterDisposeCallback(this);
 
-    mSeqTrackAllocator = pAllocator;
+    InitParam(voices, pCallback, callbackArg);
+
+    mWsdData = pWsdData;
+    mWsdIndex = index;
+    mStartOffsetType = startType;
+    mStartOffset = startOffset;
+
+    DisposeCallbackManager::GetInstance().RegisterDisposeCallback(this);
     mActiveFlag = true;
 
-    return SETUP_SUCCESS;
+    return true;
 }
 
-void SeqPlayer::SetSeqData(const void* pBase, s32 offset) {
-    SoundThread::AutoLock lock;
-
-    SeqTrack* pTrack = GetPlayerTrack(0);
-
-    if (pBase != NULL) {
-        pTrack->SetSeqData(pBase, offset);
-        pTrack->Open();
-    }
-}
-
-bool SeqPlayer::Start() {
+bool WsdPlayer::Start() {
     SoundThread::AutoLock lock;
 
     SoundThread::GetInstance().RegisterPlayerCallback(this);
@@ -247077,131 +247038,44 @@ bool SeqPlayer::Start() {
     return true;
 }
 
-void SeqPlayer::Stop() {
+void WsdPlayer::Stop() {
     SoundThread::AutoLock lock;
 
     FinishPlayer();
 }
 
-void SeqPlayer::Pause(bool flag) {
+void WsdPlayer::Pause(bool flag) {
     SoundThread::AutoLock lock;
 
-    mPauseFlag = flag;
+    mPauseFlag = static_cast<u8>(flag);
 
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
-
-        if (pTrack != NULL) {
-            pTrack->PauseAllChannel(flag);
-        }
+    if (IsChannelActive() && flag != mChannel->IsPause()) {
+        mChannel->Pause(flag);
     }
 }
 
-void SeqPlayer::Skip(OffsetType type, int offset) {
-    SoundThread::AutoLock lock;
-
-    if (!mActiveFlag) {
-        return;
-    }
-
-    switch (type) {
-    case OFFSET_TYPE_TICK: {
-        mSkipTickCounter += offset;
-        break;
-    }
-
-    case OFFSET_TYPE_MILLISEC: {
-        mSkipTimeCounter += offset;
-        break;
-    }
-    }
+void WsdPlayer::SetChannelPriority(int priority) {
+    u8* dst = reinterpret_cast<u8*>(this) + 0xfc;
+    *dst = static_cast<u8>(priority);
 }
 
-void SeqPlayer::SetTempoRatio(f32 tempo) {
-    mTempoRatio = tempo;
+void WsdPlayer::SetReleasePriorityFix(bool flag) {
+    mReleasePriorityFixFlag = flag;
 }
 
-void SeqPlayer::SetChannelPriority(int priority) {
-    *(u8*)((char*)this + 0x109) = priority;
-}
-
-void SeqPlayer::SetReleasePriorityFix(bool flag) {
-    *(unsigned char*)((unsigned char*)this + 0xEF) = (unsigned char)flag;
-}
-
-void SeqPlayer::SetLocalVariable(int idx, s16 value) {
-    mLocalVariable[idx] = value;
-}
-
-void SeqPlayer::SetGlobalVariable(int idx, s16 value) {
-    if (!mGobalVariableInitialized) {
-        InitGlobalVariable();
-    }
-
-    mGlobalVariable[idx] = value;
-}
-
-void SeqPlayer::SetTrackVolume(u32 trackFlags, f32 volume) {
-    SetTrackParam<f32>(trackFlags, &SeqTrack::SetVolume, volume);
-}
-
-void SeqPlayer::SetTrackPitch(u32 trackFlags, f32 pitch) {
-    SetTrackParam<f32>(trackFlags, &SeqTrack::SetPitch, pitch);
-}
-
-void SeqPlayer::InvalidateData(const void* pStart, const void* pEnd) {
+void WsdPlayer::InvalidateData(const void* pStart, const void* pEnd) {
     SoundThread::AutoLock lock;
 
     if (mActiveFlag) {
-        for (int i = 0; i < TRACK_NUM; i++) {
-            SeqTrack* pTrack = GetPlayerTrack(i);
-            if (pTrack == NULL) {
-                continue;
-            }
+        const void* pWsdData = GetWsdDataAddress();
 
-            const u8* pBase = pTrack->GetParserTrackParam().baseAddr;
-            if (pStart <= pBase && pBase <= pEnd) {
-                SeqPlayer::Stop();
-                break;
-            }
+        if (pStart <= pWsdData && pWsdData <= pEnd) {
+            FinishPlayer();
         }
     }
 }
 
-SeqTrack* SeqPlayer::GetPlayerTrack(int idx) {
-    if (idx > TRACK_NUM - 1) {
-        return NULL;
-    }
-
-    return mTracks[idx];
-}
-
-void SeqPlayer::CloseTrack(int idx) {
-    SoundThread::AutoLock lock;
-
-    SeqTrack* pTrack = GetPlayerTrack(idx);
-    if (pTrack == NULL) {
-        return;
-    }
-
-    pTrack->Close();
-
-    mSeqTrackAllocator->FreeTrack(mTracks[idx]);
-    mTracks[idx] = NULL;
-}
-
-void SeqPlayer::SetPlayerTrack(int idx, SeqTrack* pTrack) {
-    SoundThread::AutoLock lock;
-
-    if (idx > TRACK_NUM - 1) {
-        return;
-    }
-
-    mTracks[idx] = pTrack;
-    pTrack->SetPlayerTrackNo(idx);
-}
-
-void SeqPlayer::FinishPlayer() {
+void WsdPlayer::FinishPlayer() {
     SoundThread::AutoLock lock;
 
     if (mStartedFlag) {
@@ -247214,65 +247088,10 @@ void SeqPlayer::FinishPlayer() {
         mActiveFlag = false;
     }
 
-    for (int i = 0; i < TRACK_NUM; i++) {
-        CloseTrack(i);
-    }
+    CloseChannel();
 }
 
-void SeqPlayer::UpdateChannelParam() {
-    SoundThread::AutoLock lock;
-
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
-
-        if (pTrack != NULL) {
-            pTrack->UpdateChannelParam();
-        }
-    }
-}
-
-int SeqPlayer::ParseNextTick(bool doNoteOn) {
-    SoundThread::AutoLock lock;
-
-    bool active = false;
-
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
-        if (pTrack == NULL) {
-            continue;
-        }
-
-        pTrack->UpdateChannelLength();
-
-        if (pTrack->ParseNextTick(doNoteOn) < 0) {
-            CloseTrack(i);
-        }
-
-        if (pTrack->IsOpened()) {
-            active = true;
-        }
-    }
-
-    if (!active) {
-        return 1;
-    }
-
-    return 0;
-}
-
-volatile s16* SeqPlayer::GetVariablePtr(int idx) {
-    if (idx < LOCAL_VARIABLE_NUM) {
-        return &mLocalVariable[idx];
-    }
-
-    if (idx < VARIABLE_NUM) {
-        return &mGlobalVariable[idx - LOCAL_VARIABLE_NUM];
-    }
-
-    return NULL;
-}
-
-void SeqPlayer::Update() {
+void WsdPlayer::Update() {
     SoundThread::AutoLock lock;
 
     if (!mActiveFlag) {
@@ -247283,114 +247102,206 @@ void SeqPlayer::Update() {
         return;
     }
 
-    if (mSkipTickCounter != 0 || mSkipTimeCounter > 0.0f) {
-        SkipTick();
+    if (!mPauseFlag) {
+        if (mWavePlayFlag && mChannel == NULL) {
+            FinishPlayer();
+            return;
+        }
 
-    } else if (!mPauseFlag) {
-        UpdateTick(3);
+        if (!mWavePlayFlag && !StartChannel(mCallback, mCallbackData)) {
+            FinishPlayer();
+            return;
+        }
     }
 
-    UpdateChannelParam();
+    UpdateChannel();
 }
 
-void SeqPlayer::UpdateTick(int msec) {
-    f32 tickPerMsec = GetBaseTempo();
-    if (tickPerMsec == 0.0f) {
+bool WsdPlayer::StartChannel(const WsdCallback* pCallback, u32 callbackArg) {
+    SoundThread::AutoLock lock;
+
+    int priority = GetChannelPriority() + DEFAULT_PRIORITY;
+
+    WaveData waveData;
+    WaveSoundNoteInfo waveSoundNoteInfo;
+    if (!pCallback->GetWaveSoundData(&mWaveSoundInfo, &waveSoundNoteInfo,
+                                     &waveData, mWsdData, mWsdIndex, 0,
+                                     callbackArg)) {
+        return false;
+    }
+
+    u32 startSample;
+    if (mStartOffsetType == START_OFFSET_TYPE_SAMPLE) {
+        startSample = mStartOffset;
+    } else if (mStartOffsetType == START_OFFSET_TYPE_MILLISEC) {
+        startSample =
+            (static_cast<s64>(mStartOffset) * waveData.sampleRate) / 1000;
+    }
+
+    if (startSample > waveData.loopEnd) {
+        return false;
+    }
+
+    Channel* pChannel = Channel::AllocChannel(
+        ut::Min<int>(waveData.numChannels, CHANNEL_MAX), GetVoiceOutCount(),
+        priority, ChannelCallbackFunc, reinterpret_cast<u32>(this));
+
+    if (pChannel == NULL) {
+        return false;
+    }
+
+    pChannel->SetAttack(waveSoundNoteInfo.attack);
+    pChannel->SetDecay(waveSoundNoteInfo.decay);
+    pChannel->SetSustain(waveSoundNoteInfo.sustain);
+    pChannel->SetRelease(waveSoundNoteInfo.release);
+    pChannel->SetReleasePriorityFix(mReleasePriorityFixFlag);
+
+    pChannel->Start(waveData, -1, startSample);
+    mChannel = pChannel;
+    mWavePlayFlag = true;
+
+    return true;
+}
+
+void WsdPlayer::CloseChannel() {
+    SoundThread::AutoLock lock;
+
+    if (IsChannelActive()) {
+        UpdateChannel();
+        mChannel->Release();
+    }
+
+    if (mChannel != NULL) {
+        Channel::FreeChannel(mChannel);
+    }
+
+    mChannel = NULL;
+}
+
+void WsdPlayer::UpdateChannel() {
+    SoundThread::AutoLock lock;
+
+    if (mChannel == NULL) {
         return;
     }
 
-    f32 restMsec = static_cast<f32>(msec);
-    f32 nextMsec = mTickFraction / tickPerMsec;
+    f32 volume = 1.0f;
+    volume *= GetVolume();
 
-    while (nextMsec < restMsec) {
-        restMsec -= nextMsec;
+    f32 pitchRatio = 1.0f;
+    pitchRatio *= GetPitch();
+    pitchRatio *= mWaveSoundInfo.pitch;
 
-        if (ParseNextTick(true) != 0) {
-            FinishPlayer();
-            return;
-        }
-
-        mTickCounter++;
-
-        tickPerMsec = GetBaseTempo();
-        if (tickPerMsec == 0.0f) {
-            return;
-        }
-
-        nextMsec = 1.0f / tickPerMsec;
+    f32 pan = 0.0f;
+    if (mWaveSoundInfo.pan <= 1) {
+        pan += (mWaveSoundInfo.pan - 63) / 63.0f;
+    } else {
+        pan += (mWaveSoundInfo.pan - 64) / 63.0f;
     }
 
-    nextMsec -= restMsec;
-    mTickFraction = nextMsec * tickPerMsec;
+    pan *= GetPanRange();
+    pan += GetPan();
+
+    f32 surroundPan = 0.0f;
+    if (mWaveSoundInfo.surroundPan <= 1) {
+        surroundPan += (mWaveSoundInfo.surroundPan + 1) / 63.0f;
+    } else {
+        surroundPan += mWaveSoundInfo.surroundPan / 63.0f;
+    }
+
+    surroundPan += mWaveSoundInfo.surroundPan / 64.0f;
+    surroundPan += GetSurroundPan();
+
+    f32 lpfFreq = 0.0f;
+    lpfFreq += GetLpfFreq();
+
+    int remoteFilter = 0;
+    remoteFilter += GetRemoteFilter();
+
+    f32 mainSend = 0.0f;
+    mainSend += (mWaveSoundInfo.mainSend / 127.0f) - 1.0f;
+    mainSend += GetMainSend();
+
+    u8 infoSend[AUX_BUS_NUM];
+    infoSend[AUX_A] = mWaveSoundInfo.fxSendA;
+    infoSend[AUX_B] = mWaveSoundInfo.fxSendB;
+    infoSend[AUX_C] = mWaveSoundInfo.fxSendC;
+
+    f32 fxSend[AUX_BUS_NUM];
+    for (int i = 0; i < AUX_BUS_NUM; i++) {
+        fxSend[i] = 0.0f;
+        fxSend[i] += infoSend[i] / 127.0f;
+        fxSend[i] += GetFxSend(static_cast<AuxBus>(i));
+    }
+
+    f32 remoteSend[WPAD_MAX_CONTROLLERS];
+    f32 remoteFxSend[WPAD_MAX_CONTROLLERS];
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        remoteSend[i] = 0.0f;
+        remoteSend[i] += GetRemoteSend(i);
+
+        remoteFxSend[i] = 0.0f;
+        remoteFxSend[i] += GetRemoteFxSend(i);
+    }
+
+    mChannel->SetPanMode(GetPanMode());
+    mChannel->SetPanCurve(GetPanCurve());
+    mChannel->SetUserVolume(volume);
+    mChannel->SetUserPitchRatio(pitchRatio);
+    mChannel->SetUserPan(pan);
+    mChannel->SetUserSurroundPan(surroundPan);
+    mChannel->SetUserLpfFreq(lpfFreq);
+    mChannel->SetRemoteFilter(remoteFilter);
+    mChannel->SetOutputLine(GetOutputLine());
+    mChannel->SetMainOutVolume(GetMainOutVolume());
+    mChannel->SetMainSend(mainSend);
+
+    for (int i = 0; i < AUX_BUS_NUM; i++) {
+        mChannel->SetFxSend(static_cast<AuxBus>(i), fxSend[i]);
+    }
+
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        mChannel->SetRemoteOutVolume(i, GetRemoteOutVolume(i));
+        mChannel->SetRemoteSend(i, remoteSend[i]);
+        mChannel->SetRemoteFxSend(i, remoteFxSend[i]);
+    }
+
+    mChannel->SetLfoParam(mLfoParam);
 }
 
-void SeqPlayer::SkipTick() {
-    for (int i = 0; i < TRACK_NUM; i++) {
-        SeqTrack* pTrack = GetPlayerTrack(i);
+void WsdPlayer::ChannelCallbackFunc(Channel* pDropChannel,
+                                    Channel::ChannelCallbackStatus status,
+                                    u32 callbackArg) {
+    SoundThread::AutoLock lock;
 
-        if (pTrack != NULL) {
-            pTrack->ReleaseAllChannel(127);
-            pTrack->FreeAllChannel();
-        }
+    WsdPlayer* p = reinterpret_cast<WsdPlayer*>(callbackArg);
+
+    if (status == Channel::CALLBACK_STATUS_FINISH) {
+        Channel::FreeChannel(pDropChannel);
     }
 
-    int skipCount = 0;
-    while (mSkipTickCounter != 0 || mSkipTimeCounter * GetBaseTempo() >= 1.0f) {
-        if (skipCount >= MAX_SKIP_TICK_PER_FRAME) {
-            return;
-        }
-
-        if (mSkipTickCounter != 0) {
-            mSkipTickCounter--;
-        } else {
-            f32 tickPerMsec = GetBaseTempo();
-            f32 msecPerTick = 1.0f / tickPerMsec;
-
-            mSkipTimeCounter -= msecPerTick;
-        }
-
-        if (ParseNextTick(false) != 0) {
-            FinishPlayer();
-            return;
-        }
-
-        skipCount++;
-        mTickCounter++;
-    }
-
-    mSkipTimeCounter = 0.0f;
-}
-
-void SeqPlayer::InitGlobalVariable() {
-    for (int i = 0; i < GLOBAL_VARIABLE_NUM; i++) {
-        mGlobalVariable[i] = DEFAULT_VARIABLE_VALUE;
-    }
-
-    mGobalVariableInitialized = true;
-}
-
-Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {
-    return mParserParam.callback->NoteOn(this, bankNo, rInfo);
+    p->mChannel = NULL;
 }
 
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8041ba6c
-extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {}
-// LLM-HARNESS-END: us-8041ba6c
-// LLM-HARNESS-BEGIN: us-8041c4d0
-void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
-    void* _this, void* callback, void* arg)
-{
-    *(u32*)((u8*)_this + 0x118) = (u32)callback;
-    *(u32*)((u8*)_this + 0x11C) = (u32)arg;
-}
-// LLM-HARNESS-END: us-8041c4d0
-// LLM-HARNESS-BEGIN: us-8041c4dc
-extern "C" void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack() {}
-// LLM-HARNESS-END: us-8041c4dc
-// LLM-HARNESS-BEGIN: us-8041cf0c
-extern "C" void ChannelCallback__Q44nw4r3snd6detail9SeqPlayerFPQ44nw4r3snd6detail7Channel() {}
-// LLM-HARNESS-END: us-8041cf0c
+// LLM-HARNESS-BEGIN: us-8042d664
+extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
+// LLM-HARNESS-END: us-8042d664
+// LLM-HARNESS-BEGIN: us-8042d668
+extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
+// LLM-HARNESS-END: us-8042d668
+// LLM-HARNESS-BEGIN: us-8042d678
+extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9WsdPlayerFPCvPCv() {}
+// LLM-HARNESS-END: us-8042d678
+// LLM-HARNESS-BEGIN: us-8042d67c
+extern "C" void IsPause__Q44nw4r3snd6detail9WsdPlayerCFv() {}
+// LLM-HARNESS-END: us-8042d67c
+// LLM-HARNESS-BEGIN: us-8042d690
+extern "C" void IsStarted__Q44nw4r3snd6detail9WsdPlayerCFv() {}
+// LLM-HARNESS-END: us-8042d690
+// LLM-HARNESS-BEGIN: us-8042d6a4
+extern "C" void IsActive__Q44nw4r3snd6detail9WsdPlayerCFv() {}
+// LLM-HARNESS-END: us-8042d6a4

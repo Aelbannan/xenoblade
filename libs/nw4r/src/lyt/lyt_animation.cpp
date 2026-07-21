@@ -338,42 +338,8 @@ AnimTransformBasic::~AnimTransformBasic() {
     }
 }
 
-void AnimTransformBasic::SetResource(const res::AnimationBlock* pBlock,
-                                     ResourceAccessor* pAccessor) {
-
-    mpRes = pBlock;
-    mpFileResAry = NULL;
-
-    if (mpRes->fileNum > 0) {
-        mpFileResAry = static_cast<void**>(
-            Layout::AllocMemory(mpRes->fileNum * sizeof(void*)));
-
-        if (mpFileResAry != NULL) {
-            const u32* pStrTable = detail::ConvertOffsToPtr<u32>(
-                mpRes, sizeof(res::AnimationBlock));
-
-            for (int i = 0; i < mpRes->fileNum; i++) {
-                const char* pName = detail::GetStrTableStr(pStrTable, i);
-
-                mpFileResAry[i] = pAccessor->GetResource(
-                    ArcResourceAccessor::RES_TYPE_TEXTURE, pName, NULL);
-            }
-        }
-    }
-
-    mAnimLinkAry = static_cast<AnimationLink*>(
-        Layout::AllocMemory(pBlock->animContNum * sizeof(AnimationLink)));
-
-    if (mAnimLinkAry != NULL) {
-        mAnimLinkNum = pBlock->animContNum;
-
-        std::memset(mAnimLinkAry, 0,
-                    pBlock->animContNum * sizeof(AnimationLink));
-
-        for (u16 i = 0; i < pBlock->animContNum; i++) {
-            new (&mAnimLinkAry[i]) AnimationLink();
-        }
-    }
+void AnimTransformBasic::SetResource(const res::AnimationBlock* pBlock, ResourceAccessor* pAccessor) {
+    SetResource(pBlock, pAccessor, pBlock->animContNum);
 }
 
 void AnimTransformBasic::Bind(Pane* pPane, bool recursive) {

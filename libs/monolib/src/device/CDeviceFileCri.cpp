@@ -35,7 +35,13 @@ extern "C" void func_8044FC38() {}
 extern "C" void sinit_80450B2C() {}
 // LLM-HARNESS-END: us-80453840
 // LLM-HARNESS-BEGIN: us-80453858
-extern "C" bool func_80450B44() { return false; }
+extern "C" {
+void func_80450AB8__14CDeviceFileCriFUl(void* this_ptr, unsigned long arg);
+}
+
+extern "C" void func_80450B44(void* this_ptr, unsigned long arg) {
+    func_80450AB8__14CDeviceFileCriFUl((char*)this_ptr - 0x1c4, arg);
+}
 // LLM-HARNESS-END: us-80453858
 // LLM-HARNESS-BEGIN: us-80453860
 extern "C" void __dt__14CDeviceFileCriFv(void*);

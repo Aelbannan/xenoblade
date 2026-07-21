@@ -89,7 +89,12 @@ class AutomaticNewTargetTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         harness.select_targets.assert_called_once_with(
-            "solve", 2, certified_funcs=False, tu=None, selection="ready"
+            "solve",
+            2,
+            randomize=False,
+            certified_funcs=False,
+            tu=None,
+            selection="ready",
         )
         harness.select_new_targets.assert_not_called()
         printed = out.getvalue()
@@ -103,6 +108,31 @@ class AutomaticNewTargetTests(unittest.TestCase):
             model_parallel=None,
         )
         harness.solve.assert_not_called()
+
+    def test_solve_number_selects_randomized_batch(self) -> None:
+        harness = Mock()
+        harness.select_targets.return_value = ["two", "one"]
+        harness.run_batch.return_value = Path("batch-output")
+
+        with patch("tools.llm_harness.run.Harness", return_value=harness):
+            with redirect_stdout(io.StringIO()):
+                result = main(["solve", "--number", "2", "--random", "--dry-run"])
+
+        self.assertEqual(result, 0)
+        harness.select_targets.assert_called_once_with(
+            "solve",
+            2,
+            randomize=True,
+            certified_funcs=False,
+            tu=None,
+            selection="ready",
+        )
+        harness.run_batch.assert_called_once_with(
+            "solve",
+            ["two", "one"],
+            dry_run=True,
+            model_parallel=None,
+        )
 
     def test_solve_selection_leaf(self) -> None:
         harness = Mock()
@@ -118,7 +148,12 @@ class AutomaticNewTargetTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         harness.select_targets.assert_called_once_with(
-            "solve", 1, certified_funcs=False, tu=None, selection="leaf"
+            "solve",
+            1,
+            randomize=False,
+            certified_funcs=False,
+            tu=None,
+            selection="leaf",
         )
         self.assertIn("selected frontier selection=leaf count=1", out.getvalue())
         harness.run_batch.assert_called_once()

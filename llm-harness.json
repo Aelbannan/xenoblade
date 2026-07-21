@@ -27,7 +27,7 @@
       "temperature": 0.1,
       "max_tokens": 4096,
       "json_object": true,
-      "enable_thinking": false,
+      "enable_thinking": true,
       "reasoning_effort": "none",
       "thinking_budget": 0
     }
@@ -35,9 +35,9 @@
   "models": {
     "default": [
       {
-        "id": "opencode-deepseek-pro",
+        "id": "opencode-big-pickle",
         "provider": "opencode",
-        "model": "opencode-go/deepseek-v4-pro",
+        "model": "opencode/big-pickle",
         "runs": 1
       }
     ]
@@ -55,16 +55,16 @@
     }
   },
   "solve": {
-    "initial_candidates": 2,
-    "compile_repairs": 1,
-    "match_repairs": 3,
+    "initial_candidates": 3,
+    "compile_repairs": 2,
+    "match_repairs": 4,
     "max_repeated_fingerprint": 2,
     "stop_on_full_match": true,
     "stop_on_equivalent_match": true
   },
   "prompt": {
     "max_chars": 60000,
-    "max_decoded_instructions": 400,
+    "max_decoded_instructions": 2048,
     "max_declaration_chars": 12000,
     "max_callers": 3,
     "max_sibling_bodies": 3,

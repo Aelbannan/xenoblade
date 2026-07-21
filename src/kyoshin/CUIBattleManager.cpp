@@ -621,7 +621,11 @@ extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
 void Init__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308b8
 // LLM-HARNESS-BEGIN: us-80130a40
-extern "C" bool func_8012FF6C() { return false; }
+extern "C" void __dt__16CUIBattleManagerFv(void*);
+
+extern "C" void func_8012FF6C(void* p) {
+    __dt__16CUIBattleManagerFv((char*)p - 0x54);
+}
 // LLM-HARNESS-END: us-80130a40
 
 // LLM-HARNESS-BEGIN: us-8012ea60

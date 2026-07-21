@@ -603,10 +603,10 @@ extern "C" void func_8012F87C() {}
 extern "C" void func_8012FA5C() {}
 // LLM-HARNESS-END: us-80130530
 // LLM-HARNESS-BEGIN: us-8013054c
-extern "C" void func_8012FA78() {}
+extern "C" void* func_8012FA78() { void* p = lbl_eu_80664048; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
 // LLM-HARNESS-END: us-8013054c
 // LLM-HARNESS-BEGIN: us-80130890
-extern "C" void func_8012FDBC() {}
+extern "C" int func_8012FDBC() { if (lbl_eu_80664048 == 0) return -1; return *(int*)((char*)lbl_eu_80664048 + 0xec); }
 // LLM-HARNESS-END: us-80130890
 // LLM-HARNESS-BEGIN: us-801308ac
 extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}

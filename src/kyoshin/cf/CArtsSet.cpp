@@ -31,7 +31,7 @@ namespace cf {
 extern "C" void func_80153C48() {}
 // LLM-HARNESS-END: us-8015468c
 // LLM-HARNESS-BEGIN: us-801546a4
-extern "C" void func_80153C60() {}
+extern "C" unsigned short func_80153C60(void* this_, int index, int subindex) { return ((unsigned short*)((char*)this_ + (index << 4) + 4))[subindex]; }
 // LLM-HARNESS-END: us-801546a4
 // LLM-HARNESS-BEGIN: us-801546bc
 extern "C" void func_80153C78() {}
@@ -43,7 +43,7 @@ extern "C" void func_80153CAC() {}
 extern "C" void func_80153CE0() {}
 // LLM-HARNESS-END: us-80154724
 // LLM-HARNESS-BEGIN: us-801547dc
-extern "C" void func_80153D98() {}
+extern "C" void* func_80153D98(void* self, int index460, int index8c) { char* result = (char*)self + index460 * 0x460; result += index8c * 0x8c; return result + 0x38; }
 // LLM-HARNESS-END: us-801547dc
 // LLM-HARNESS-BEGIN: us-801547f4
 extern "C" void func_80153DB0() {}

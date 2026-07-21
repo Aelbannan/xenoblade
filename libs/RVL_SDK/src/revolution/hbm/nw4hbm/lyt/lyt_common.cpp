@@ -71,7 +71,7 @@ namespace lyt {
 namespace detail {
 
 void TexCoordAry::SetSize(u8 num) {
-    if (mpData != NULL && num < mCap) {
+    if (mpData != NULL && num <= mCap) {
         static const math::VEC2 sDefault[4] = {
             math::VEC2(0.0f, 0.0f),
             math::VEC2(1.0f, 0.0f),

@@ -15046,7 +15046,7 @@ extern "C" void func_800EC8FC() {}
 extern "C" void func_800F3958() {}
 // LLM-HARNESS-END: us-800f4440
 // LLM-HARNESS-BEGIN: us-800f48b0
-extern "C" void func_800F3DC8() {}
+extern "C" unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
 // LLM-HARNESS-END: us-800f48b0
 // LLM-HARNESS-BEGIN: us-800f4aec
 extern "C" void func_800F4004() {}

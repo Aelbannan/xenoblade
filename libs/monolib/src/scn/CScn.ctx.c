@@ -16585,7 +16585,7 @@ extern "C" void* func_80496274(void* _this) {
 }
 // LLM-HARNESS-END: us-8049a2ec
 // LLM-HARNESS-BEGIN: us-8049a2f4
-extern "C" void func_8049627C() {}
+extern "C" void func_8049627C(void* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
 // LLM-HARNESS-END: us-8049a2f4
 // LLM-HARNESS-BEGIN: us-8049a300
 extern "C" void func_80496288() {}

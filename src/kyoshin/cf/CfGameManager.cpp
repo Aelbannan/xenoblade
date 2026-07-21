@@ -150,7 +150,7 @@ extern "C" int getEnabledInputFlags() { return 0; }
 extern "C" bool func_80086F9C_Q22cf13CfGameManagerFv() { return false; }
 // LLM-HARNESS-END: us-80087974
 // LLM-HARNESS-BEGIN: us-80087988
-extern "C" void* getPad() { return 0; }
+CPad* cf::CfGameManager::getPad(int r3) { return (CPad*)((char*)&lbl_eu_80570D40 + (r3 & 7) * 0xf8); }
 // LLM-HARNESS-END: us-80087988
 // LLM-HARNESS-BEGIN: us-800879a0
 extern "C" void setPad_Q22cf13CfGameManagerFv() {}

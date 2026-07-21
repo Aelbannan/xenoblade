@@ -48,12 +48,21 @@
         "model": "opencode-go/deepseek-v4-flash",
         "runs": 1
       }
-    ],
-    "tu": [
+    ],   
+    "initial": [
       {
         "id": "codex-sol",
         "provider": "codex",
-        "model": "gpt-5.6-sol",
+        "model": "gpt-5.6-luna",
+        "reasoning_effort": "high",
+        "runs": 1
+      }
+    ],
+    "repair": [
+      {
+        "id": "codex-sol",
+        "provider": "codex",
+        "model": "gpt-5.6-luna",
         "reasoning_effort": "high",
         "runs": 1
       }

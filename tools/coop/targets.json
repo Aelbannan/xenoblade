@@ -8762,8 +8762,8 @@
       "size": "0x30",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -8771,7 +8771,199 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:34:18.981018+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-80043a54",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "f7b763ef46923ea19cdd2a656aac88c7ba250adb6f61d29f0cba2d4641f2820b",
+        "candidate_sha256": "24c4392b74055a2b9cabd316e4bfaac544ff915c1f966baf3ba4e923850df772",
+        "summary": {
+          "reads": [
+            "memory"
+          ],
+          "writes": [
+            "cr0",
+            "cr1",
+            "cr5",
+            "cr6",
+            "cr7",
+            "invalid_reason",
+            "memory",
+            "r0",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "718ff420b696dc18f4a2e494f51c9f18662fec615e8fb2c6d0cbf1d58ed9ef2d",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "718ff420b696dc18f4a2e494f51c9f18662fec615e8fb2c6d0cbf1d58ed9ef2d",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "b",
+          "bc",
+          "bclr",
+          "cmpwi",
+          "lwz",
+          "oris",
+          "rlwinm",
+          "stw"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "b",
+                  "bc",
+                  "bclr",
+                  "cmpwi",
+                  "lwz",
+                  "oris",
+                  "rlwinm",
+                  "stw"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "d9233ba42eed02e5ee673234efbdee7b0c42afb5da31235eec7fe470a8fe9a9d",
+                "requirements_sha256": "6cfff6113a4ce800d536c620a45bf0d5d2bae8b3847f90b540f9e41531f3fcfd"
+              },
+              "attestation_sha256": "b381fb7114ae1a21538127266a3a24b11b969d7bff012f743285125bbc9afe45"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "718ff420b696dc18f4a2e494f51c9f18662fec615e8fb2c6d0cbf1d58ed9ef2d",
+                "proof_request_hash": "718ff420b696dc18f4a2e494f51c9f18662fec615e8fb2c6d0cbf1d58ed9ef2d",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "1d5cc64cebb991508544ba7370462fbe85e51ca6e7e422183db2dfa3f07897c1",
+                "requirements_sha256": "6cfff6113a4ce800d536c620a45bf0d5d2bae8b3847f90b540f9e41531f3fcfd"
+              },
+              "attestation_sha256": "881a5fa2d3318c1068242f40b442bc7c35f2c450366647f957c220626a8a79a5"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "b",
+                "bc",
+                "bclr",
+                "cmpwi",
+                "lwz",
+                "oris",
+                "rlwinm",
+                "stw"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "d9233ba42eed02e5ee673234efbdee7b0c42afb5da31235eec7fe470a8fe9a9d"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "718ff420b696dc18f4a2e494f51c9f18662fec615e8fb2c6d0cbf1d58ed9ef2d",
+                "result_format": "21",
+                "source_hash": "718ff420b696dc18f4a2e494f51c9f18662fec615e8fb2c6d0cbf1d58ed9ef2d",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "1d5cc64cebb991508544ba7370462fbe85e51ca6e7e422183db2dfa3f07897c1"
+            }
+          ],
+          "requirements_sha256": "6cfff6113a4ce800d536c620a45bf0d5d2bae8b3847f90b540f9e41531f3fcfd"
+        },
+        "certificate_sha256": "9b359273cbfa3f2db441b85891479f2767a43d626f42967668addf6b9ecc31d1"
+      }
     },
     {
       "id": "us-80043a84",
@@ -38814,8 +39006,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -38823,7 +39015,183 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:38:58.623786+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-8006d0f4",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "08c2862c884fabaa430d4fc1be56819f24a0f42167ec6e36b446211d6bbf0dba",
+        "candidate_sha256": "323244e022d8d34b0abcd94cee61e81bc86e760c9cb106a6658a2f6c5c96108c",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "invalid_reason",
+            "r0",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "0c44e570fffa89e030dda2db946c36be2028eee62203e0bba7fe7b4c90513a5a",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "0c44e570fffa89e030dda2db946c36be2028eee62203e0bba7fe7b4c90513a5a",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "bclr",
+          "lhz",
+          "neg",
+          "or",
+          "rlwinm"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "bclr",
+                  "lhz",
+                  "neg",
+                  "or",
+                  "rlwinm"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "26290c15f2fe74193422dad1cf41ac325aca7f2be53ddff0414289c579037087",
+                "requirements_sha256": "acd87d31f4f5c0fe62065384383e5c267e5e89f2d55b0d2bd6b492a9d01fe217"
+              },
+              "attestation_sha256": "3f61a8d19870f2d3039c560eaf21641b1e2f571f1827e648246cf6bd7f830a85"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "0c44e570fffa89e030dda2db946c36be2028eee62203e0bba7fe7b4c90513a5a",
+                "proof_request_hash": "0c44e570fffa89e030dda2db946c36be2028eee62203e0bba7fe7b4c90513a5a",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "108302f8ad8074e4762aeed638f5a1e98922bc3cb212920e9bc4e118dc279ae5",
+                "requirements_sha256": "acd87d31f4f5c0fe62065384383e5c267e5e89f2d55b0d2bd6b492a9d01fe217"
+              },
+              "attestation_sha256": "fabbd8657ec5009199b3b66ddafed733e5db7a6692326e20f6f6fcf2c22707c6"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "bclr",
+                "lhz",
+                "neg",
+                "or",
+                "rlwinm"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "26290c15f2fe74193422dad1cf41ac325aca7f2be53ddff0414289c579037087"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "0c44e570fffa89e030dda2db946c36be2028eee62203e0bba7fe7b4c90513a5a",
+                "result_format": "21",
+                "source_hash": "0c44e570fffa89e030dda2db946c36be2028eee62203e0bba7fe7b4c90513a5a",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "108302f8ad8074e4762aeed638f5a1e98922bc3cb212920e9bc4e118dc279ae5"
+            }
+          ],
+          "requirements_sha256": "acd87d31f4f5c0fe62065384383e5c267e5e89f2d55b0d2bd6b492a9d01fe217"
+        },
+        "certificate_sha256": "651706f7666b85ad628d767d7015ed1a1d4f2bda9bdff62c4220d4c48fb3ab05"
+      }
     },
     {
       "id": "us-8006d10c",
@@ -38837,8 +39205,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -38846,7 +39214,186 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:07:47.068390+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-8006d10c",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "f9fe8f473221aaa30b2fe6587829831442371eb69f026c572e1ab4ecf3d2d119",
+        "candidate_sha256": "69c3281ad258650256390b6e1509265ce7984bc4f2e5fc66acdc68047d3d6845",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "invalid_reason",
+            "r0",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "7e04786dc2533fd55b6d55b2dcf5be6f35df2f3a358c5bd72cc6452ac7fbabe8",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "7e04786dc2533fd55b6d55b2dcf5be6f35df2f3a358c5bd72cc6452ac7fbabe8",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "and",
+          "bclr",
+          "lwz",
+          "neg",
+          "or",
+          "rlwinm"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "and",
+                  "bclr",
+                  "lwz",
+                  "neg",
+                  "or",
+                  "rlwinm"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "ef4c2975a883db5b95c08737b355540580ee045b6c8fed356fb62367b59a35b3",
+                "requirements_sha256": "ca2e078095ba4da6d1473d152ad75b0542d18e8fd9ce23492a7ed5d6cbadf78b"
+              },
+              "attestation_sha256": "f151c4460b7922fa555d85de5b858508a9252c973df333882ee82dd0f15c4749"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "7e04786dc2533fd55b6d55b2dcf5be6f35df2f3a358c5bd72cc6452ac7fbabe8",
+                "proof_request_hash": "7e04786dc2533fd55b6d55b2dcf5be6f35df2f3a358c5bd72cc6452ac7fbabe8",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "a62004169e745c5ae963a7c698c74af7459dce58ae848670d8728a671b118424",
+                "requirements_sha256": "ca2e078095ba4da6d1473d152ad75b0542d18e8fd9ce23492a7ed5d6cbadf78b"
+              },
+              "attestation_sha256": "f36cadbaa0ee3566271c5d0aa8c82c68f78e66e238e1e14f989296d2a73bde1d"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "and",
+                "bclr",
+                "lwz",
+                "neg",
+                "or",
+                "rlwinm"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "ef4c2975a883db5b95c08737b355540580ee045b6c8fed356fb62367b59a35b3"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "7e04786dc2533fd55b6d55b2dcf5be6f35df2f3a358c5bd72cc6452ac7fbabe8",
+                "result_format": "21",
+                "source_hash": "7e04786dc2533fd55b6d55b2dcf5be6f35df2f3a358c5bd72cc6452ac7fbabe8",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "a62004169e745c5ae963a7c698c74af7459dce58ae848670d8728a671b118424"
+            }
+          ],
+          "requirements_sha256": "ca2e078095ba4da6d1473d152ad75b0542d18e8fd9ce23492a7ed5d6cbadf78b"
+        },
+        "certificate_sha256": "a6026bffe21f8470f43e538d642cda5f965dfe106f457e8dc8ea336a6f140546"
+      }
     },
     {
       "id": "us-8006d124",
@@ -44225,8 +44772,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CfCam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfCam.cpp",
       "called_functions": [],
@@ -44234,7 +44781,186 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfCam.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:04:13.703846+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfCam.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-80075670",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "1711c3321fffa03bf2994fcab09b9a978efbe2ec8624ea698360865a2d7fecf2",
+        "candidate_sha256": "c769a712b14b984835cc3228ad1fe1e5510252355605739769d7232dec1fddee",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "invalid_reason",
+            "r0",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "92000b04e5471098ac7b57aa8c99dc34ea0de1b20441ab5536c92603034773f4",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "92000b04e5471098ac7b57aa8c99dc34ea0de1b20441ab5536c92603034773f4",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "and",
+          "bclr",
+          "lwz",
+          "neg",
+          "or",
+          "rlwinm"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "and",
+                  "bclr",
+                  "lwz",
+                  "neg",
+                  "or",
+                  "rlwinm"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "ef4c2975a883db5b95c08737b355540580ee045b6c8fed356fb62367b59a35b3",
+                "requirements_sha256": "50951bccfff8e73262f9b496314ecd9a1fc495026ab267870ea0e47e38090422"
+              },
+              "attestation_sha256": "82bea931c849d168890ce62f315fd328407dc97565b7a3cc3e9aae99b46ae7b1"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "92000b04e5471098ac7b57aa8c99dc34ea0de1b20441ab5536c92603034773f4",
+                "proof_request_hash": "92000b04e5471098ac7b57aa8c99dc34ea0de1b20441ab5536c92603034773f4",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "b0acac146489b1359548781b494553c830023377599f1376e94a52e86e39d7f5",
+                "requirements_sha256": "50951bccfff8e73262f9b496314ecd9a1fc495026ab267870ea0e47e38090422"
+              },
+              "attestation_sha256": "f800dffe409548c2859cbd0921933e2332793094aab2fb597bf87f70298c610a"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "and",
+                "bclr",
+                "lwz",
+                "neg",
+                "or",
+                "rlwinm"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "ef4c2975a883db5b95c08737b355540580ee045b6c8fed356fb62367b59a35b3"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "92000b04e5471098ac7b57aa8c99dc34ea0de1b20441ab5536c92603034773f4",
+                "result_format": "21",
+                "source_hash": "92000b04e5471098ac7b57aa8c99dc34ea0de1b20441ab5536c92603034773f4",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "b0acac146489b1359548781b494553c830023377599f1376e94a52e86e39d7f5"
+            }
+          ],
+          "requirements_sha256": "50951bccfff8e73262f9b496314ecd9a1fc495026ab267870ea0e47e38090422"
+        },
+        "certificate_sha256": "1a0107d68c1c5adfc61c6d37057f61e3d244f569dc07a082b564b95133a7084c"
+      }
     },
     {
       "id": "us-80075688",
@@ -54127,8 +54853,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "called_functions": [],
@@ -54136,7 +54862,172 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CfGameManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T19:56:26.881169+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfGameManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-80087988",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "c41c88580fd8729af2ce8a892317e14cbeaa040eb41ca0ec4b58f0852c73d390",
+        "candidate_sha256": "0628b906c9278b059b055aff1f8ea6bae60cfc87038894c9716359176e4740c4",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r0",
+            "r3"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "550985454ce057818171d691548bb7eb8bc3f5052f1fe58cc34ffc784dc48ac5",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "550985454ce057818171d691548bb7eb8bc3f5052f1fe58cc34ffc784dc48ac5",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "add",
+          "addi",
+          "addis",
+          "bclr",
+          "mulli",
+          "rlwinm"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "add",
+                  "addi",
+                  "addis",
+                  "bclr",
+                  "mulli",
+                  "rlwinm"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "12b258673625a261bc33a996371b27e3db14e12c4d0ec7121afdc17f5b15c269",
+                "requirements_sha256": "0a39a7bb84dcca239e7c2873c5e90a73c6a12bf1d72c61f263b96d69d2c73aed"
+              },
+              "attestation_sha256": "d22379a1730d97aac073d1ea9fb2883c56444aa68ce10323cfde78ca7c202bd3"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "550985454ce057818171d691548bb7eb8bc3f5052f1fe58cc34ffc784dc48ac5",
+                "proof_request_hash": "550985454ce057818171d691548bb7eb8bc3f5052f1fe58cc34ffc784dc48ac5",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "a184dd66c22f50360044387e6b6d2edc5efa2756930abcd90f230201b0dd071f",
+                "requirements_sha256": "0a39a7bb84dcca239e7c2873c5e90a73c6a12bf1d72c61f263b96d69d2c73aed"
+              },
+              "attestation_sha256": "d32c6258c7114cb8fefcfc08a579182a1d9351b49e2ed8ba8df3869ddac099cf"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "add",
+                "addi",
+                "addis",
+                "bclr",
+                "mulli",
+                "rlwinm"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "12b258673625a261bc33a996371b27e3db14e12c4d0ec7121afdc17f5b15c269"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "550985454ce057818171d691548bb7eb8bc3f5052f1fe58cc34ffc784dc48ac5",
+                "result_format": "21",
+                "source_hash": "550985454ce057818171d691548bb7eb8bc3f5052f1fe58cc34ffc784dc48ac5",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "a184dd66c22f50360044387e6b6d2edc5efa2756930abcd90f230201b0dd071f"
+            }
+          ],
+          "requirements_sha256": "0a39a7bb84dcca239e7c2873c5e90a73c6a12bf1d72c61f263b96d69d2c73aed"
+        },
+        "certificate_sha256": "2365677ecad2c84b081db159676cd4f51659f6004c547df72c7a44650b67fd93"
+      }
     },
     {
       "id": "us-800879a0",
@@ -91932,8 +92823,8 @@
       "size": "0xC4",
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [],
@@ -91941,7 +92832,196 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CBattleManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:49:43.611346+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CBattleManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-800f48b0",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "60e05ffadc25c29f997a100d37af90808a87b6c0efd037821f400d1e1b3d7599",
+        "candidate_sha256": "24d327236e4c71c95929c74c68d7d7fa981153b9db588297c043dc2b62d95fde",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "cr0",
+            "cr1",
+            "cr5",
+            "cr6",
+            "cr7",
+            "ctr",
+            "invalid_reason",
+            "r0",
+            "r3",
+            "r5",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "19afe4de229cbf88f9651a4c6a7a88d9e8cb230485d95cd5be24949354129142",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "19afe4de229cbf88f9651a4c6a7a88d9e8cb230485d95cd5be24949354129142",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "addi",
+          "bc",
+          "bclr",
+          "cmpw",
+          "lbz",
+          "lwz",
+          "mtspr"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "addi",
+                  "bc",
+                  "bclr",
+                  "cmpw",
+                  "lbz",
+                  "lwz",
+                  "mtspr"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "8fd10fec510f695dc55cea5b64cdc125aecc579087aebec6a155e6002cedb06b",
+                "requirements_sha256": "94e72ecd1505f25377f3abaec51c185e362e58994c21b6089578cb9ca863b272"
+              },
+              "attestation_sha256": "9c0cf9f1e725a2cb2ef28b0e685a19b8c1f39c0bfe0531a4a86536de862224ae"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "19afe4de229cbf88f9651a4c6a7a88d9e8cb230485d95cd5be24949354129142",
+                "proof_request_hash": "19afe4de229cbf88f9651a4c6a7a88d9e8cb230485d95cd5be24949354129142",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "378ddd5ca27905a7c6c5de5276bc413f19f222b6a45d284db894f5971d8aeafb",
+                "requirements_sha256": "94e72ecd1505f25377f3abaec51c185e362e58994c21b6089578cb9ca863b272"
+              },
+              "attestation_sha256": "3077a88eb7c94284b2df5304828071bbf19a8c7028ad442b208b348df91c3d71"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "addi",
+                "bc",
+                "bclr",
+                "cmpw",
+                "lbz",
+                "lwz",
+                "mtspr"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "8fd10fec510f695dc55cea5b64cdc125aecc579087aebec6a155e6002cedb06b"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "19afe4de229cbf88f9651a4c6a7a88d9e8cb230485d95cd5be24949354129142",
+                "result_format": "21",
+                "source_hash": "19afe4de229cbf88f9651a4c6a7a88d9e8cb230485d95cd5be24949354129142",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "378ddd5ca27905a7c6c5de5276bc413f19f222b6a45d284db894f5971d8aeafb"
+            }
+          ],
+          "requirements_sha256": "94e72ecd1505f25377f3abaec51c185e362e58994c21b6089578cb9ca863b272"
+        },
+        "certificate_sha256": "a73f0b2581bd1ce677aedaccbd2e6b703eac0323bda62c6a8c2b980aab806770"
+      }
     },
     {
       "id": "us-800f4974",
@@ -97903,8 +98983,8 @@
       "size": "0x20",
       "unit": "kyoshin/menu/CMenuEnemyState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
       "called_functions": [],
@@ -97912,7 +98992,194 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuEnemyState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:42:13.520186+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuEnemyState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-8010f7f4",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "1c1c0672660d3a4eca1a9ea99a27457ce1a3c5f0a69ca2a824cd41ce08a50b1d",
+        "candidate_sha256": "399427e76f8853d0b6f30880459597d2b8cdbc8e4c89916f7517834a47c6ff20",
+        "summary": {
+          "reads": [
+            "memory"
+          ],
+          "writes": [
+            "cr0",
+            "cr1",
+            "cr5",
+            "cr6",
+            "cr7",
+            "invalid_reason",
+            "memory",
+            "r0",
+            "r4",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "9c78f2d526def20258f1c07275a87a5226d62592a5fff2917f6d99e6ecf28807",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "9c78f2d526def20258f1c07275a87a5226d62592a5fff2917f6d99e6ecf28807",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "addi",
+          "bclr",
+          "cmpwi",
+          "lwz",
+          "stb",
+          "stw"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "addi",
+                  "bclr",
+                  "cmpwi",
+                  "lwz",
+                  "stb",
+                  "stw"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "6ae7f4204b21ad69972502da73fd5d0f1ad787401053a12aa00fc19aa336f77d",
+                "requirements_sha256": "8c524b5475c420c19d4a58e0c6b04478a5151bd1cbbd07537fafaa8dcdf2aac1"
+              },
+              "attestation_sha256": "61e8a38440a0ce1c380db41d52574ddc91c02541f24289e792e7bd7e1e992eb3"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "9c78f2d526def20258f1c07275a87a5226d62592a5fff2917f6d99e6ecf28807",
+                "proof_request_hash": "9c78f2d526def20258f1c07275a87a5226d62592a5fff2917f6d99e6ecf28807",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "c67e6cac8b6630744f0a51ba5f245c898e7ba54e1045b20ed9c825635ce9332b",
+                "requirements_sha256": "8c524b5475c420c19d4a58e0c6b04478a5151bd1cbbd07537fafaa8dcdf2aac1"
+              },
+              "attestation_sha256": "2f7876a76c7dc74f5200171bb4e7c83707c9d22067ff553d048f882cb7c9e48b"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "addi",
+                "bclr",
+                "cmpwi",
+                "lwz",
+                "stb",
+                "stw"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "6ae7f4204b21ad69972502da73fd5d0f1ad787401053a12aa00fc19aa336f77d"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "9c78f2d526def20258f1c07275a87a5226d62592a5fff2917f6d99e6ecf28807",
+                "result_format": "21",
+                "source_hash": "9c78f2d526def20258f1c07275a87a5226d62592a5fff2917f6d99e6ecf28807",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "c67e6cac8b6630744f0a51ba5f245c898e7ba54e1045b20ed9c825635ce9332b"
+            }
+          ],
+          "requirements_sha256": "8c524b5475c420c19d4a58e0c6b04478a5151bd1cbbd07537fafaa8dcdf2aac1"
+        },
+        "certificate_sha256": "4545e72653303354b39c747c59ce078ba6e493dbb9bbca66d390df513270551b"
+      }
     },
     {
       "id": "us-8010f814",
@@ -108092,8 +109359,8 @@
       "size": "0x30",
       "unit": "kyoshin/CUIBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUIBattleManager.cpp",
       "called_functions": [],
@@ -108101,7 +109368,191 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CUIBattleManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:05:18.365027+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CUIBattleManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-8013054c",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "61b22e8c3c55df4ba3c6be9754141ad30e7b714450f60ab016a9952a9b148d7e",
+        "candidate_sha256": "766b59a6e5c137597b86934881c111f185736c2d1c99d36bb381dc4a7a3d00d5",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "cr0",
+            "cr1",
+            "cr5",
+            "cr6",
+            "cr7",
+            "invalid_reason",
+            "r0",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "dd32485b57abd783e2301dacb71348da4a832b5a0b680b07486c2f45bfed917f",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "dd32485b57abd783e2301dacb71348da4a832b5a0b680b07486c2f45bfed917f",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "addi",
+          "bc",
+          "bclr",
+          "cmpwi",
+          "lbz",
+          "lwz"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "addi",
+                  "bc",
+                  "bclr",
+                  "cmpwi",
+                  "lbz",
+                  "lwz"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "7f7d503453c587d73b3579ee0944b52832c65b327f77ad7e198dde2466e8d42e",
+                "requirements_sha256": "22af52fce30e57a62358f198fb0403a04791fc87b22e62a5eeb4595c5c0905cd"
+              },
+              "attestation_sha256": "888f6b231bff763e290d25af9d683bdedd7083319a097c030d0bf7955cc18d17"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "dd32485b57abd783e2301dacb71348da4a832b5a0b680b07486c2f45bfed917f",
+                "proof_request_hash": "dd32485b57abd783e2301dacb71348da4a832b5a0b680b07486c2f45bfed917f",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "dd41d664d806b7b7566869c4a7ddb58664c52d13ef06990621eb471e87a7a75f",
+                "requirements_sha256": "22af52fce30e57a62358f198fb0403a04791fc87b22e62a5eeb4595c5c0905cd"
+              },
+              "attestation_sha256": "b464dac2b334611ae0cdc1b018d737e5c45368ba7a0d32dc43528ad89278da8f"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "addi",
+                "bc",
+                "bclr",
+                "cmpwi",
+                "lbz",
+                "lwz"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "7f7d503453c587d73b3579ee0944b52832c65b327f77ad7e198dde2466e8d42e"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "dd32485b57abd783e2301dacb71348da4a832b5a0b680b07486c2f45bfed917f",
+                "result_format": "21",
+                "source_hash": "dd32485b57abd783e2301dacb71348da4a832b5a0b680b07486c2f45bfed917f",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "dd41d664d806b7b7566869c4a7ddb58664c52d13ef06990621eb471e87a7a75f"
+            }
+          ],
+          "requirements_sha256": "22af52fce30e57a62358f198fb0403a04791fc87b22e62a5eeb4595c5c0905cd"
+        },
+        "certificate_sha256": "527954bffc90016f21e32fd1bafa1b4816b7b79b12e591ec1a8dfef1593cc34b"
+      }
     },
     {
       "id": "us-8013057c",
@@ -108215,8 +109666,8 @@
       "size": "0x1C",
       "unit": "kyoshin/CUIBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CUIBattleManager.cpp",
       "called_functions": [],
@@ -108224,7 +109675,187 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CUIBattleManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:14:03.315167+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CUIBattleManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-80130890",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "88106cf2622478b043adad4b286245d7bd1d8e54b4785860dd6e4cc5d0e4352f",
+        "candidate_sha256": "3a2b0e9e6376b5c610320c42fd90e153520d3619a09f7ddca719f7691a530bab",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "cr0",
+            "cr1",
+            "cr5",
+            "cr6",
+            "cr7",
+            "invalid_reason",
+            "r3",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "ff8c6504950802e811a247646e337fc30e827ba11c4e1c9dfbdfd0df9af96457",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "ff8c6504950802e811a247646e337fc30e827ba11c4e1c9dfbdfd0df9af96457",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "addi",
+          "bc",
+          "bclr",
+          "cmpwi",
+          "lwz"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "addi",
+                  "bc",
+                  "bclr",
+                  "cmpwi",
+                  "lwz"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "8f277e9a7e4cf2b50ea676839c3931b82efb850f1335f14c6bf29b640199577f",
+                "requirements_sha256": "691b4b325b1c6d8a665d51adc1aca66f9e3c285cdada62a22f08673021d1223f"
+              },
+              "attestation_sha256": "f9af083e78d891bb972289bfde996b3f85ccacbe4e9c06e9ef3426957a259aa1"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "ff8c6504950802e811a247646e337fc30e827ba11c4e1c9dfbdfd0df9af96457",
+                "proof_request_hash": "ff8c6504950802e811a247646e337fc30e827ba11c4e1c9dfbdfd0df9af96457",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "e91c88032132407c738c990548113e185245bc46400a891590fbe04b08b7c130",
+                "requirements_sha256": "691b4b325b1c6d8a665d51adc1aca66f9e3c285cdada62a22f08673021d1223f"
+              },
+              "attestation_sha256": "8d71ec74f82d9af192a39fcaf455148cce5f0af8a67b1f29e29a5abb23d18a69"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "addi",
+                "bc",
+                "bclr",
+                "cmpwi",
+                "lwz"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "8f277e9a7e4cf2b50ea676839c3931b82efb850f1335f14c6bf29b640199577f"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "ff8c6504950802e811a247646e337fc30e827ba11c4e1c9dfbdfd0df9af96457",
+                "result_format": "21",
+                "source_hash": "ff8c6504950802e811a247646e337fc30e827ba11c4e1c9dfbdfd0df9af96457",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "e91c88032132407c738c990548113e185245bc46400a891590fbe04b08b7c130"
+            }
+          ],
+          "requirements_sha256": "691b4b325b1c6d8a665d51adc1aca66f9e3c285cdada62a22f08673021d1223f"
+        },
+        "certificate_sha256": "3c9fab79be0c0aa9254f491469b59bec8be25ee0770af3b014ff3d99b59d637b"
+      }
     },
     {
       "id": "us-801308ac",
@@ -121116,8 +122747,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "called_functions": [],
@@ -121125,7 +122756,181 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CArtsSet.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:22:41.099408+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CArtsSet.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-801546a4",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "98e98b0026d1fe3c11609bc3f0d7857e27cbac2551e5ecc3fa93f1a215847b7d",
+        "candidate_sha256": "b3b80dc8e1d6914428c5ed48c0c6f1df515f485ff8dae0cf9fa80e13399770de",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "invalid_reason",
+            "r0",
+            "r3",
+            "r4",
+            "valid"
+          ],
+          "invalid_reasons": [
+            1
+          ],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "df1a04035ea5272e642546c4e5b447d4124dea8598b2682c92619b59e60d3475",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "df1a04035ea5272e642546c4e5b447d4124dea8598b2682c92619b59e60d3475",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "add",
+          "bclr",
+          "lhz",
+          "rlwinm"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "add",
+                  "bclr",
+                  "lhz",
+                  "rlwinm"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "d33e182a2d7b57d94ae345c52948732d8979ea3bd47a38958afe5d2470463b21",
+                "requirements_sha256": "96f390a98242532ff3f1dbfb9265972a4bbdcd855fbedda54b979f1e6c490dd6"
+              },
+              "attestation_sha256": "452f6faae0a57ae4ce076c068faa93831020bd2528e2c4e10e85f86b671da0ad"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "df1a04035ea5272e642546c4e5b447d4124dea8598b2682c92619b59e60d3475",
+                "proof_request_hash": "df1a04035ea5272e642546c4e5b447d4124dea8598b2682c92619b59e60d3475",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "addb5badcf17aeedcd6fdc1a7e5ab1272b2a31aeb6d873f409919f3764dd98bc",
+                "requirements_sha256": "96f390a98242532ff3f1dbfb9265972a4bbdcd855fbedda54b979f1e6c490dd6"
+              },
+              "attestation_sha256": "58aa626e58721ca2da9d8d98c20efcf0e87dd047d76850f2bc04095a1554abbb"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "assumed-ordinary-ram",
+              "required_opcodes": [],
+              "required_subjects": [
+                "assumed-ordinary-ram"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "a9891f0a5b9f2036db6dac0771c3adf27073817277adf80dfcd3edba1f59e0f2"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "add",
+                "bclr",
+                "lhz",
+                "rlwinm"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "d33e182a2d7b57d94ae345c52948732d8979ea3bd47a38958afe5d2470463b21"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "df1a04035ea5272e642546c4e5b447d4124dea8598b2682c92619b59e60d3475",
+                "result_format": "21",
+                "source_hash": "df1a04035ea5272e642546c4e5b447d4124dea8598b2682c92619b59e60d3475",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "addb5badcf17aeedcd6fdc1a7e5ab1272b2a31aeb6d873f409919f3764dd98bc"
+            }
+          ],
+          "requirements_sha256": "96f390a98242532ff3f1dbfb9265972a4bbdcd855fbedda54b979f1e6c490dd6"
+        },
+        "certificate_sha256": "48af7ee09e3ebf2b35d18bd9610e8bcb97965f0648c05eb39c4d03fbf690affc"
+      }
     },
     {
       "id": "us-801546bc",
@@ -121231,8 +123036,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "called_functions": [],
@@ -121240,7 +123045,167 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CArtsSet.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:26:05.651392+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CArtsSet.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 16,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v41",
+        "result_format": 21,
+        "target_id": "us-801547dc",
+        "evidence": "full-instruction-match",
+        "retail_sha256": "e6bab0c79623af0f290028b010c9f51e8945df853fdf309df28fcad3a426b062",
+        "candidate_sha256": "2fea24942f3ccc55c60caa2b8a057fa16f51dd5d46c9407464acb4e1bdc2408d",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r0",
+            "r3",
+            "r4"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+        "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+        "git_dirty": false,
+        "source_hash": "88b8b579b35f25afa278f8a14ef77a8ac41f9500b0066b89b808846f16976fc9",
+        "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+        "proof_request_hash": "88b8b579b35f25afa278f8a14ef77a8ac41f9500b0066b89b808846f16976fc9",
+        "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+        "opcodes_used": [
+          "add",
+          "addi",
+          "bclr",
+          "mulli"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "full-instruction-match",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "add",
+                  "addi",
+                  "bclr",
+                  "mulli"
+                ],
+                "ledger_sha256": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "requirement_sha256": "b32588658181e11086fae400a3e324c92c2da89eee8c6679ff41eda9e2272e30",
+                "requirements_sha256": "682b35c6e0dd58c58feb831128b8e64f5664f8a574bea0942fc389a64d7041ad"
+              },
+              "attestation_sha256": "e41cef9b2c5c83223b7ebd2101b287b72b22f342991896ec2065d7f7ea5ea035"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "result_format": 21,
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "source_hash": "88b8b579b35f25afa278f8a14ef77a8ac41f9500b0066b89b808846f16976fc9",
+                "proof_request_hash": "88b8b579b35f25afa278f8a14ef77a8ac41f9500b0066b89b808846f16976fc9",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": false,
+                "requirement_sha256": "ff78026c62569b5b76808ad7aff45e5b067a71ff6386f406182c557e90aabf91",
+                "requirements_sha256": "682b35c6e0dd58c58feb831128b8e64f5664f8a574bea0942fc389a64d7041ad"
+              },
+              "attestation_sha256": "346bdfca9f526fcb3ea35f89f0e473153ee4324bdd4a0e06e366877f06120cda"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "add",
+                "addi",
+                "bclr",
+                "mulli"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "b32588658181e11086fae400a3e324c92c2da89eee8c6679ff41eda9e2272e30"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v41",
+                "certifier_hash": "aed86a2a7592e401348249f59c52dc928bfe7167f1f1996d17670526115bdfbb",
+                "engine_hash": "b14ebb61f7128f560d3bffc2ed5f4507ba3c0e9404f0e61699b63096efc44fd2",
+                "git_commit": "35d7486d05503f4396ec4f64f609f045a7c80dc6",
+                "git_dirty": "false",
+                "proof_request_hash": "88b8b579b35f25afa278f8a14ef77a8ac41f9500b0066b89b808846f16976fc9",
+                "result_format": "21",
+                "source_hash": "88b8b579b35f25afa278f8a14ef77a8ac41f9500b0066b89b808846f16976fc9",
+                "validation_ledger_hash": "164c2dc283a5d7377ad9c61349aba58975c3b74e24f9badba4433870af9513fb"
+              },
+              "requirement_sha256": "ff78026c62569b5b76808ad7aff45e5b067a71ff6386f406182c557e90aabf91"
+            }
+          ],
+          "requirements_sha256": "682b35c6e0dd58c58feb831128b8e64f5664f8a574bea0942fc389a64d7041ad"
+        },
+        "certificate_sha256": "42ec34b5897bd7ec9fc3641ca8f0a4cb0622d1fc21d92292bcdf8e5cf2c01b2c"
+      }
     },
     {
       "id": "us-801547f4",
@@ -313085,8 +315050,8 @@
       "size": "0xF8",
       "unit": "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp",
       "called_functions": [],
@@ -313095,8 +315060,16 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.s",
       "abi_helper_calls": [],
-      "instruction_match": 99.919,
-      "equivalence_status": "internal_error"
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported",
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T19:55:55.640257+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      }
     },
     {
       "id": "us-8032f180",
@@ -480711,8 +482684,8 @@
       "size": "0xC",
       "unit": "monolib/src/scn/CScn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/scn/CScn.cpp",
       "called_functions": [],
@@ -480720,7 +482693,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/scn/CScn.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-21T20:24:20.037428+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/CScn.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unvalidated_callee"
     },
     {
       "id": "us-8049a300",

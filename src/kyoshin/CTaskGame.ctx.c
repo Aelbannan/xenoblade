@@ -233997,7 +233997,7 @@ extern "C" void func_8004347C() {}
 extern "C" void func_800434AC() {}
 // LLM-HARNESS-END: us-80043a24
 // LLM-HARNESS-BEGIN: us-80043a54
-extern "C" void func_800434DC() {}
+extern "C" void func_800434DC(unsigned char* self, int enabled, int unused, unsigned int value) { unsigned int flags = *(unsigned int*)(self + 0x68); flags &= ~0x00000100u; *(unsigned int*)(self + 0x68) = flags; if (enabled != 0) { flags |= 0x00100000u; *(unsigned int*)(self + 0x68) = flags; } else { flags &= ~0x00100000u; *(unsigned int*)(self + 0x68) = flags; } *(unsigned int*)(self + 0xfc) = value; }
 // LLM-HARNESS-END: us-80043a54
 // LLM-HARNESS-BEGIN: us-80043a84
 extern "C" void func_8004350C() {}
@@ -234060,7 +234060,6 @@ extern "C" bool func_80044138(void* ptr) { return ((bool(*)(char*))func_800433A8
 // LLM-HARNESS-END: us-800446d4
 // LLM-HARNESS-BEGIN: us-800446dc
 extern "C" void func_80044140(void* p) {
-    extern void __dt__9CTaskGameFv(CTaskGame*);
     __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x5c));
 }
 // LLM-HARNESS-END: us-800446dc
@@ -234068,7 +234067,6 @@ extern "C" void func_80044140(void* p) {
 extern "C" bool func_80044148(void* obj) { return ((bool (*)(void*))func_800436F4)((void*)((char*)obj - 0x60)); }
 // LLM-HARNESS-END: us-800446e4
 // LLM-HARNESS-BEGIN: us-800446ec
-extern "C" void __dt__9CTaskGameFv(struct CTaskGame*);
 extern "C" void func_80044150(void* p) {
     return __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x60));
 }

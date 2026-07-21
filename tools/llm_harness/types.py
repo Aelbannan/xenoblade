@@ -471,11 +471,14 @@ class SourcePatch:
 
 @dataclass
 class Candidate:
-    source: str
-    hypothesis: str
+    source: str = ""
+    hypothesis: str = ""
     notes: List[str] = field(default_factory=list)
     next_change: str = ""
     patches: List[SourcePatch] = field(default_factory=list)
+    # tu-decomp two-phase payload (prefer these over stuffing JSON into source)
+    phase1_header: str = ""
+    phase2_cpp: str = ""
 
     def __post_init__(self) -> None:
         self.patches = [

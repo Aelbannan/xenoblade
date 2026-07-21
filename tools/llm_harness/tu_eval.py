@@ -18,12 +18,17 @@ from typing import Any, Dict, List, Optional, Tuple
 from tools.llm_harness.source_regions import (
     SourceRegion,
     TuSlot,
+    begin_marker as _begin_marker,
+    end_marker as _end_marker,
     find_function_region as _find_function_region,
     find_tu_slots as _find_tu_slots,
+    matching_brace as _matching_brace,
+    signature_open_brace as _signature_open_brace,
     tu_begin_marker as _tu_begin_marker,
     tu_end_marker as _tu_end_marker,
 )
 from tools.llm_harness.types import Candidate, SourcePatch
+from tools.symbolrecover.lib.mwcc import demangle_symbol
 
 
 def strip_harness_markers(source: str) -> str:
@@ -102,69 +107,140 @@ def parse_tu_response(response_text: str) -> TuDecompResponse:
 def split_tu_into_functions(
     cpp_source: str,
     tu_slots: Dict[str, TuSlot],
-    target_map: Dict[str, Tuple[str, str]],  # slot_id -> (symbol, target_id)
+    target_map: Dict[str, Tuple[str, str]] | Dict[str, Tuple[str, str, str]],
 ) -> List[FunctionBody]:
     """
     Split the complete TU .cpp source into per-function bodies.
-    
-    Args:
-        cpp_source: Complete TU source from phase2_cpp
-        tu_slots: Map of slot_id -> TuSlot (from source_regions.find_tu_slots)
-        target_map: Map of slot_id -> (symbol, target_id) for function slots
-    
-    Returns:
-        List of FunctionBody objects, one per function slot
+
+    Never reuse original-file slot byte offsets against *cpp_source* — the model
+    output is a different document. Prefer harness markers in the model text,
+    then demangled / MWCC-derived callable names.
     """
-    results = []
-    
+    results: List[FunctionBody] = []
+    cleaned = strip_harness_markers(cpp_source) if "LLM-HARNESS-" in cpp_source else cpp_source
+
     for slot_id, slot in tu_slots.items():
         if not slot_id.startswith("function:"):
             continue
-        
-        symbol, target_id = target_map.get(slot_id, ("", ""))
+
+        entry = target_map.get(slot_id)
+        if not entry:
+            continue
+        if len(entry) == 3:
+            symbol, target_id, demangled = entry
+        else:
+            symbol, target_id = entry  # type: ignore[misc]
+            demangled = ""
         if not symbol or not target_id:
             continue
-        
-        # Extract the function body from the source using slot boundaries
-        # The slot's content_start/content_end mark the function body region
-        if slot.content_start < len(cpp_source) and slot.content_end <= len(cpp_source):
-            body = cpp_source[slot.content_start:slot.content_end].strip()
-        else:
-            # Fallback: try to find the function by name
-            body = _extract_function_by_name(cpp_source, symbol)
-        
-        if body:
-            results.append(FunctionBody(
+
+        body = _extract_marked_function(cpp_source, target_id)
+        if not body:
+            body = _extract_function_by_names(
+                cleaned, _callable_search_names(symbol, demangled)
+            )
+        if not body:
+            continue
+
+        start_idx = cpp_source.find(body) if body in cpp_source else cleaned.find(body)
+        end_idx = (start_idx + len(body)) if start_idx >= 0 else slot.content_end
+        start_idx = start_idx if start_idx >= 0 else slot.content_start
+        results.append(
+            FunctionBody(
                 symbol=symbol,
                 target_id=target_id,
                 body=body,
-                start_line=cpp_source[:slot.content_start].count('\n') + 1,
-                end_line=cpp_source[:slot.content_end].count('\n') + 1,
-            ))
-    
+                start_line=cpp_source[:start_idx].count("\n") + 1,
+                end_line=cpp_source[:end_idx].count("\n") + 1,
+            )
+        )
+
     return results
+
+
+def _callable_search_names(symbol: str, demangled: str = "") -> List[str]:
+    """Ordered name forms to look up a definition in model-produced C++."""
+    names: List[str] = []
+    demangled = (demangled or "").strip()
+    if demangled and demangled not in {"constructor", "destructor"}:
+        base = demangled.split("(", 1)[0].strip()
+        if base:
+            names.append(base)
+            names.append(base.split("::")[-1])
+
+    if symbol:
+        try:
+            info = demangle_symbol(symbol)
+        except Exception:
+            info = None
+        if info is not None:
+            class_name = info.class_name or ""
+            # Unscoped retail ctor/dtor linker names: __ct__CException / __dt__Foo
+            if not class_name and (info.is_ctor or info.is_dtor) and symbol.startswith(
+                ("__ct__", "__dt__")
+            ):
+                rest = symbol[6:]
+                if rest.endswith("Fv"):
+                    rest = rest[:-2]
+                elif "F" in rest:
+                    rest = rest[: rest.rfind("F")]
+                class_name = rest
+            if info.is_ctor and class_name:
+                names.append(f"{class_name}::{class_name}")
+            elif info.is_dtor and class_name:
+                names.append(f"{class_name}::~{class_name}")
+            elif class_name and info.function not in {"constructor", "destructor", symbol}:
+                names.append(f"{class_name}::{info.function}")
+                names.append(info.function)
+            elif info.function and info.function != symbol:
+                names.append(info.function)
+        if not is_likely_mangled(symbol):
+            names.append(symbol)
+
+    # Preserve order, drop empties/dupes.
+    seen: set[str] = set()
+    ordered: List[str] = []
+    for name in names:
+        if name and name not in seen:
+            seen.add(name)
+            ordered.append(name)
+    return ordered
+
+
+def is_likely_mangled(symbol: str) -> bool:
+    return "__" in (symbol or "")
+
+
+def _extract_marked_function(source: str, target_id: str) -> str:
+    begin = _begin_marker(target_id)
+    end = _end_marker(target_id)
+    begin_pos = source.find(begin)
+    end_pos = source.find(end)
+    if begin_pos < 0 or end_pos < 0 or end_pos <= begin_pos:
+        return ""
+    content_start = source.find("\n", begin_pos)
+    if content_start < 0:
+        return ""
+    return source[content_start + 1 : end_pos].strip()
+
+
+def _extract_function_by_names(source: str, names: List[str]) -> str:
+    """Extract a full definition by matching any of *names* then brace-balancing."""
+    for qualified in names:
+        pattern = re.compile(re.escape(qualified) + r"\s*\(")
+        for match in pattern.finditer(source):
+            brace = _signature_open_brace(source, match.end() - 1)
+            if brace is None:
+                continue
+            close = _matching_brace(source, brace)
+            line_start = source.rfind("\n", 0, match.start()) + 1
+            return source[line_start : close + 1].strip()
+    return ""
 
 
 def _extract_function_by_name(source: str, symbol: str) -> str:
     """Fallback: extract function body by searching for symbol in source."""
-    # Look for the function definition pattern
-    # This is a rough heuristic - proper implementation would use source_regions
-    pattern = rf'{re.escape(symbol)}\s*\([^)]*\)\s*\{{'
-    match = re.search(pattern, source)
-    if not match:
-        return ""
-    
-    start = match.end() - 1  # Position of opening brace
-    # Find matching closing brace
-    brace_count = 0
-    for i, ch in enumerate(source[start:], start=start):
-        if ch == '{':
-            brace_count += 1
-        elif ch == '}':
-            brace_count -= 1
-            if brace_count == 0:
-                return source[match.start():i+1].strip()
-    return ""
+    return _extract_function_by_names(source, _callable_search_names(symbol))
 
 
 def create_function_patches(
@@ -231,12 +307,16 @@ def build_tu_candidate(
     # TODO: Also create a header patch if phase1_header differs from current header
     # This would require finding the header slot or creating a TU-level slot
     
+    # Evaluation accepts either full source *or* slot patches, never both.
+    # Prefer patches when the TU split succeeded; otherwise fall back to phase2.
     return Candidate(
-        source=tu_response.phase2_cpp,  # Full TU source for reference
+        source="" if patches else tu_response.phase2_cpp,
         hypothesis=tu_response.hypothesis,
         notes=tu_response.notes,
         next_change=tu_response.next_change,
         patches=patches,
+        phase1_header=tu_response.phase1_header,
+        phase2_cpp=tu_response.phase2_cpp,
     )
 
 
@@ -301,12 +381,16 @@ def extract_tu_slots_and_targets(
         except (OSError, ValueError):
             continue
     
-    # Build target map
-    target_map = {}
+    # Build target map (symbol, target_id, demangled) for name-based extraction.
+    target_map: Dict[str, Tuple[str, str, str]] = {}
     for target in targets:
         if target.symbol and target.unit and _unit_matches(target.unit, unit_hint):
             slot_id = f"function:{target.id}"
             if slot_id in slots:
-                target_map[slot_id] = (target.symbol, target.id)
+                target_map[slot_id] = (
+                    target.symbol,
+                    target.id,
+                    target.function or "",
+                )
     
     return slots, target_map

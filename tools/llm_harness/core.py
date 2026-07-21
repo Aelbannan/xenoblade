@@ -20,6 +20,7 @@ from .compile_diagnostic import normalize_compile_output, select_root_diagnostic
 from .metrics import TimingRecorder, timings_from_records
 from .promotion import PromotionManager, evaluation_to_candidate, capture_baseline
 from .providers import (
+    CodexProvider,
     DeepSeekRawProvider,
     LMStudioProvider,
     OpenCodeCircuitBreaker,
@@ -111,6 +112,7 @@ class Harness:
             "deepseek-raw": DeepSeekRawProvider,
             "lmstudio": LMStudioProvider,
             "openrouter": OpenRouterProvider,
+            "codex": CodexProvider,
         }
         self.providers = {}
         for name, cfg in self.config.get("providers", {}).items():
@@ -154,6 +156,16 @@ class Harness:
                     password=str(cfg["password"]) if cfg.get("password") else None,
                     delete_session=bool(cfg.get("delete_session", True)),
                     binary=str(cfg.get("binary", "opencode")),
+                )
+            elif name == "codex":
+                self.providers[name] = cls(
+                    binary=str(cfg.get("binary", "codex")),
+                    timeout_seconds=int(cfg.get("timeout_seconds", 900)),
+                    pure=bool(cfg.get("pure", True)),
+                    sandbox=str(cfg.get("sandbox", "read-only")),
+                    ephemeral=bool(cfg.get("ephemeral", True)),
+                    json_schema=bool(cfg.get("json_schema", True)),
+                    skip_git_repo_check=bool(cfg.get("skip_git_repo_check", False)),
                 )
             else:
                 self.providers[name] = cls(
@@ -334,7 +346,7 @@ class Harness:
             raise ValueError("Harness config 'models' must be a list or object")
 
         allowed = {
-            "default", "new", "improve", "tu-complete",
+            "default", "new", "improve", "tu-complete", "tu-decomp",
             "initial", "repair", "tu", "sample",
         }
         unknown = sorted(set(configured) - allowed)
@@ -358,7 +370,8 @@ class Harness:
             "new": ("new", "initial", "default"),
             "improve": ("improve", "repair", "default"),
             "tu-complete": ("tu-complete", "tu", "default"),
-            "tu": ("tu", "tu-complete", "default"),
+            "tu-decomp": ("tu-decomp", "tu", "tu-complete", "default"),
+            "tu": ("tu", "tu-decomp", "tu-complete", "default"),
             "sample": ("sample", "new", "initial", "default"),
         }
         for key in aliases.get(workflow, (workflow, "default")):
@@ -1101,7 +1114,13 @@ class Harness:
                 # METRICS: format-repair is a second LLM call
                 with self.timings.measure("llm"):
                     repair_result = self._attempt_format_repair(
-                        result.text, error_msg, call_model, provider, context_dir,
+                        result.text,
+                        error_msg,
+                        call_model,
+                        provider,
+                        context_dir,
+                        workflow=workflow,
+                        full_context=full_context,
                     )
                 if repair_result is not None:
                     candidate = repair_result
@@ -1127,6 +1146,7 @@ class Harness:
                 json.dumps({"candidate": asdict(candidate), "evaluation": evaluation}, indent=2) + "\n",
                 encoding="utf-8",
             )
+            _write_tu_decomp_sidecars(artifact, candidate)
         except Exception as exc:
             timed_out = isinstance(exc, subprocess.TimeoutExpired)
             error = f"{type(exc).__name__}: {exc}"
@@ -2138,6 +2158,7 @@ class Harness:
                 json.dumps({"candidate": asdict(candidate), "evaluation": evaluation}, indent=2) + "\n",
                 encoding="utf-8",
             )
+            _write_tu_decomp_sidecars(artifact, candidate)
             row["evaluation"] = evaluation
             row["error"] = None
             row["winner"] = False
@@ -2156,9 +2177,13 @@ class Harness:
         if successful:
             best = max(successful, key=lambda record: self._rank_record(state["workflow"], record))
             best.winner = True
-            (directory / "best.json").write_text(
-                (self.root / best.artifact).read_text(encoding="utf-8"), encoding="utf-8"
-            )
+            best_text = (self.root / best.artifact).read_text(encoding="utf-8")
+            (directory / "best.json").write_text(best_text, encoding="utf-8")
+            best_payload = json.loads(best_text)
+            if isinstance(best_payload.get("candidate"), dict):
+                _write_tu_decomp_sidecars(
+                    directory / "best.json", Candidate(**best_payload["candidate"])
+                )
         state["records"] = [record.to_json() for record in records]
         state["status"] = "complete"
         state["rescored_at"] = datetime.now(timezone.utc).isoformat()
@@ -2402,8 +2427,16 @@ class Harness:
         model: ModelConfig,
         provider: Any,
         context_dir: Optional[Path],
+        *,
+        workflow: str = "new",
+        full_context: bool = False,
     ) -> Optional[Candidate]:
-        repair_path = self._prompt_dir() / "format_repair.md"
+        repair_name = (
+            "format_repair_tu_decomp.md"
+            if workflow == "tu-decomp"
+            else "format_repair.md"
+        )
+        repair_path = self._prompt_dir() / repair_name
         if not repair_path.is_file():
             self._debug(f"format-repair skipped: {repair_path} not found")
             return None
@@ -2433,7 +2466,9 @@ class Harness:
             result = provider.invoke(
                 prompt_text, repair_model, context_dir or Path(self.adapter.root)
             )
-            return parse_candidate(result.text, workflow="new")
+            return parse_candidate(
+                result.text, workflow=workflow, full_context=full_context
+            )
         except Exception as exc:
             self._debug(f"format-repair failed: {exc}")
             return None
@@ -2620,6 +2655,21 @@ def _salvage_candidate_dict(text: str) -> Optional[Dict[str, Any]]:
     return data
 
 
+def _write_tu_decomp_sidecars(artifact: Path, candidate: Candidate) -> None:
+    """Write readable phase1/phase2 sidecar files next to a candidate artifact."""
+    if not candidate.phase1_header.strip() and not candidate.phase2_cpp.strip():
+        return
+    stem = artifact.with_suffix("")
+    if candidate.phase1_header.strip():
+        stem.with_name(stem.name + "-phase1.hpp").write_text(
+            candidate.phase1_header.rstrip() + "\n", encoding="utf-8"
+        )
+    if candidate.phase2_cpp.strip():
+        stem.with_name(stem.name + "-phase2.cpp").write_text(
+            candidate.phase2_cpp.rstrip() + "\n", encoding="utf-8"
+        )
+
+
 def _looks_like_function_definition(source: str) -> bool:
     """True when source looks like a C/C++ function definition, not a bare name."""
     text = source.strip()
@@ -2633,10 +2683,81 @@ def _looks_like_function_definition(source: str) -> bool:
     return True
 
 
+def _parse_tu_decomp_sections(text: str) -> Optional[Dict[str, str]]:
+    """Parse delimiter-based tu-decomp output into section bodies."""
+    if "===PHASE2_CPP===" not in text and "===PHASE1_HEADER===" not in text:
+        return None
+    pattern = re.compile(
+        r"^===(PHASE1_HEADER|PHASE2_CPP|HYPOTHESIS|NOTES|NEXT_CHANGE)===\s*\n?",
+        re.MULTILINE,
+    )
+    matches = list(pattern.finditer(text))
+    if not matches:
+        return None
+    sections: Dict[str, str] = {}
+    for i, match in enumerate(matches):
+        name = match.group(1)
+        start = match.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        sections[name] = text[start:end].strip("\n")
+    return sections
+
+
+def _candidate_from_tu_decomp_fields(
+    *,
+    phase1: str,
+    phase2: str,
+    hypothesis: str,
+    notes: List[str],
+    next_change: str,
+    rejected_source: str = "",
+) -> Candidate:
+    if not isinstance(phase1, str):
+        raise ValueError("TU-decomp output 'phase1_header' must be a string")
+    if not isinstance(phase2, str):
+        raise ValueError("TU-decomp output 'phase2_cpp' must be a string")
+    if not phase2.strip():
+        raise ValueError(
+            "TU-decomp output requires non-empty 'phase2_cpp' "
+            "(got single-function 'source' or empty body)"
+            if rejected_source.strip()
+            else "TU-decomp output requires non-empty 'phase2_cpp'"
+        )
+    notes = [str(note)[:120] for note in notes[:3]]
+    return Candidate(
+        source="",
+        hypothesis=str(hypothesis)[:160],
+        notes=notes,
+        next_change=str(next_change)[:120],
+        patches=[],
+        phase1_header=phase1,
+        phase2_cpp=phase2,
+    )
+
+
 def parse_candidate(
     text: str, *, workflow: str = "new", full_context: bool = False
 ) -> Candidate:
-    cleaned = text.strip()
+    raw_text = text.strip()
+
+    if workflow == "tu-decomp":
+        sections = _parse_tu_decomp_sections(raw_text)
+        if sections is not None:
+            notes_raw = sections.get("NOTES", "")
+            notes = [
+                line.lstrip("-* ").strip()
+                for line in notes_raw.splitlines()
+                if line.strip()
+            ]
+            return _candidate_from_tu_decomp_fields(
+                phase1=sections.get("PHASE1_HEADER", ""),
+                phase2=sections.get("PHASE2_CPP", ""),
+                hypothesis=sections.get("HYPOTHESIS", "").strip(),
+                notes=notes,
+                next_change=sections.get("NEXT_CHANGE", "").strip(),
+            )
+
+    cleaned = raw_text
     fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", cleaned, re.DOTALL)
     if fenced:
         cleaned = fenced.group(1)
@@ -2648,10 +2769,34 @@ def parse_candidate(
             # Truncated object with no closing brace — keep from first '{'.
             cleaned = cleaned[start:]
     data = _try_json_parse(cleaned)
-    if data is None and cleaned != text.strip():
-        data = _try_json_parse(text.strip())
+    if data is None and cleaned != raw_text:
+        data = _try_json_parse(raw_text)
     if data is None:
         raise json.JSONDecodeError("No valid JSON found in model output", cleaned, 0)
+
+    notes = data.get("notes", [])
+    if isinstance(notes, str):
+        notes = [notes]
+    if not isinstance(notes, list) or not all(isinstance(v, str) for v in notes):
+        raise ValueError("Model output 'notes' must be a list of strings")
+    # Clamp metadata so verbose models cannot dominate the candidate record.
+    notes = [str(note)[:120] for note in notes[:3]]
+    hypothesis = str(data.get("hypothesis", ""))[:160]
+    next_change = str(data.get("next_change", ""))[:120]
+
+    if workflow == "tu-decomp":
+        # Legacy JSON two-phase responses still accepted.
+        return _candidate_from_tu_decomp_fields(
+            phase1=data.get("phase1_header", ""),
+            phase2=data.get("phase2_cpp", ""),
+            hypothesis=hypothesis,
+            notes=notes,
+            next_change=next_change,
+            rejected_source=str(data.get("source") or "")
+            if isinstance(data.get("source"), str)
+            else "",
+        )
+
     source = data.get("source", "")
     if not isinstance(source, str):
         raise ValueError("Model output 'source' must be a string")
@@ -2687,18 +2832,11 @@ def parse_candidate(
             raise ValueError("Targeted TU output must contain bounded 'patches', not full source")
     elif not source.strip():
         raise ValueError("Model output must contain non-empty string 'source'")
-    notes = data.get("notes", [])
-    if isinstance(notes, str):
-        notes = [notes]
-    if not isinstance(notes, list) or not all(isinstance(v, str) for v in notes):
-        raise ValueError("Model output 'notes' must be a list of strings")
-    # Clamp metadata so verbose models cannot dominate the candidate record.
-    notes = [str(note)[:120] for note in notes[:3]]
     return Candidate(
         source=source,
-        hypothesis=str(data.get("hypothesis", ""))[:160],
+        hypothesis=hypothesis,
         notes=notes,
-        next_change=str(data.get("next_change", ""))[:120],
+        next_change=next_change,
         patches=patches,
     )
 

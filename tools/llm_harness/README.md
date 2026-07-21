@@ -85,8 +85,9 @@ python3 tools/llm_harness/run.py promote-accepted
 ## Requirements
 
 - A working `coop.json`, retail split objects, MWCC toolchain, Ninja, and objdiff.
-- Providers configured in `llm-harness.json` (`opencode` via `opencode serve` HTTP API, `deepseek-raw`, optional `lmstudio`).
+- Providers configured in `llm-harness.json` (`opencode` via `opencode serve` HTTP API, `deepseek-raw`, optional `lmstudio` / `codex`).
 - For OpenCode: run `opencode serve --port 4096` (optional basic auth via `OPENCODE_SERVER_PASSWORD`) and set `providers.opencode.base_url`.
+- For Codex: install/login the Codex CLI (`codex login`), then set `providers.codex` and a model with `"provider": "codex"` (uses `codex exec --json`). With `providers.codex.pure=true` (default), Codex runs in an empty temp workspace with shell/apps/plugins/web-search disabled and no user/project config — prompt-only, no file/tool access.
 
 ```bash
 python3 tools/coop/run.py baseline

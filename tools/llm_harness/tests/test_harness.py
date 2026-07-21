@@ -79,6 +79,43 @@ class CandidateTests(unittest.TestCase):
         self.assertEqual(candidate.source, "")
         self.assertEqual(candidate.patches[0].slot_id, "vtable")
 
+    def test_parses_tu_decomp_two_phase(self) -> None:
+        candidate = parse_candidate(
+            '{"phase1_header":"class C {\\n};","phase2_cpp":"void C::f() {}","hypothesis":"h","notes":["n"],"next_change":"x"}',
+            workflow="tu-decomp",
+        )
+        self.assertEqual(candidate.phase1_header, "class C {\n};")
+        self.assertEqual(candidate.phase2_cpp, "void C::f() {}")
+        self.assertEqual(candidate.source, "")
+        self.assertEqual(candidate.hypothesis, "h")
+        with self.assertRaisesRegex(ValueError, "phase2_cpp"):
+            parse_candidate(
+                '{"source":"main/monolib/src/core/CException.cpp","hypothesis":"x"}',
+                workflow="tu-decomp",
+            )
+
+    def test_parses_tu_decomp_section_format(self) -> None:
+        text = (
+            "===PHASE1_HEADER===\n"
+            "class C {\n};\n"
+            "===PHASE2_CPP===\n"
+            "void C::f() {}\n"
+            "===HYPOTHESIS===\n"
+            "layout\n"
+            "===NOTES===\n"
+            "- note a\n"
+            "note b\n"
+            "===NEXT_CHANGE===\n"
+            "fix ctor\n"
+        )
+        candidate = parse_candidate(text, workflow="tu-decomp")
+        self.assertEqual(candidate.phase1_header, "class C {\n};")
+        self.assertEqual(candidate.phase2_cpp, "void C::f() {}")
+        self.assertEqual(candidate.hypothesis, "layout")
+        self.assertEqual(candidate.notes, ["note a", "note b"])
+        self.assertEqual(candidate.next_change, "fix ctor")
+        self.assertEqual(candidate.source, "")
+
     def test_rejects_mixed_full_source_and_tu_patches(self) -> None:
         with self.assertRaisesRegex(ValueError, "either 'source' or 'patches'"):
             parse_candidate(

@@ -14,6 +14,17 @@
       ]
     },
     {
+      "id": "scalar-fp-v2-capture",
+      "description": "Live Dolphin capture harness for scalar FP v2 NI=1 and non-RNE corpus rows",
+      "unit": "monolib/src/math/MTRand",
+      "symbol": "behaviour_main",
+      "ppc_source": "scalar_fp_v2_capture.c",
+      "ppc_cpu_core": 0,
+      "ppc_stubs": [
+        "scalar_fp_v2_capture_payloads.c"
+      ]
+    },
+    {
       "id": "game-set-view-rect",
       "description": "CGame::setViewRect thin wrapper (FULL_MATCH sanity baseline)",
       "unit": "kyoshin/CGame",

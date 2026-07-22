@@ -60,6 +60,35 @@ OpenCode with `pure: true` + JSON schema + tools disabled is the default high-vo
 
 **Early stop on unvalidated callees:** `solve` stops match-repair when the best candidate is blocked with `blocked_reason=unvalidated_callee` (`CODE_MATCH` + `INCONCLUSIVE_UNVALIDATED_CALLEE`) instead of burning `match_repairs`. Prefer `--certified-funcs` / `--selection ready` so those targets are not selected until callees are accepted.
 
+## ChatGPT Web batches (offline)
+
+Export ready-frontier function prompts into budget-limited text files, paste them
+into ChatGPT Web, then ingest the response for local MWCC/objdiff evaluation.
+Only authoritative **`FULL_MATCH`** or **certified `EQUIVALENT_MATCH`** results are
+promoted. ChatGPT-reported percentages are ignored.
+
+```bash
+python3 tools/llm_harness/run.py web-export --batches 3 --budget 40
+
+# Upload web_batches/batch_001.txt to ChatGPT Web.
+# Save its response as:
+# web_batches/batch_001.response.txt
+
+python3 tools/llm_harness/run.py web-ingest \
+  web_batches/batch_001.response.txt
+
+# Upload the overwritten web_batches/batch_001.txt for round 1.
+# Resume an interrupted EVALUATING round:
+python3 tools/llm_harness/run.py web-ingest \
+  web_batches/batch_001.response.txt --resume
+```
+
+Defaults: `--selection ready`, `--certified-funcs` on (`--no-certified-funcs` to
+disable). Active files live under `web_batches/`; every ingest round is archived
+under `web_batches/history/<batch_id>/round_NNN/`. Response candidates must not
+use Markdown code fences (`fence_policy=strict_reject_outer_code_fences` is
+printed on completion).
+
 ## Recommended workflow
 
 ```bash

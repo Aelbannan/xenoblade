@@ -777,7 +777,7 @@ extern "C" void func_80111074(void* _this) {
 }
 // LLM-HARNESS-END: us-80111b50
 // LLM-HARNESS-BEGIN: us-80113fc4
-extern "C" void sinit_801134E8() {}
+extern "C" void sinit_801134E8() { extern unsigned short lbl_eu_80663F58[4]; extern unsigned short lbl_eu_80663F60[4]; extern unsigned short lbl_eu_80663F68[4]; extern unsigned short lbl_eu_80663F70[4]; extern unsigned short lbl_eu_80663F78[4]; extern unsigned short lbl_eu_80663F80[4]; extern unsigned short lbl_eu_80663F88[4]; extern unsigned short lbl_eu_80663F90[4]; lbl_eu_80663F58[3] = 0; lbl_eu_80663F58[2] = 0; lbl_eu_80663F58[1] = 0; lbl_eu_80663F58[0] = 0; lbl_eu_80663F60[3] = 0; lbl_eu_80663F60[2] = 0; lbl_eu_80663F60[1] = 0; lbl_eu_80663F60[0] = 0; lbl_eu_80663F68[3] = 0; lbl_eu_80663F68[2] = 0; lbl_eu_80663F68[1] = 0; lbl_eu_80663F68[0] = 0x78; lbl_eu_80663F70[3] = 0; lbl_eu_80663F70[2] = 0x32; lbl_eu_80663F70[1] = 0x5a; lbl_eu_80663F70[0] = 0xff; lbl_eu_80663F78[3] = 0; lbl_eu_80663F78[2] = 0; lbl_eu_80663F78[1] = 0x43; lbl_eu_80663F78[0] = 0x54; lbl_eu_80663F80[3] = 0; lbl_eu_80663F80[2] = 0; lbl_eu_80663F80[1] = 0xff; lbl_eu_80663F80[0] = 0xff; lbl_eu_80663F88[3] = 0; lbl_eu_80663F88[2] = 0x6e; lbl_eu_80663F88[1] = 0x23; lbl_eu_80663F88[0] = 0; lbl_eu_80663F90[3] = 0; lbl_eu_80663F90[2] = 0xff; lbl_eu_80663F90[1] = 0xb4; lbl_eu_80663F90[0] = 0x46; }
 // LLM-HARNESS-END: us-80113fc4
 // LLM-HARNESS-BEGIN: us-801140a4
 extern "C" void __dt__15CMenuEnemyStateFv(void*);

@@ -16,7 +16,8 @@ from tools.ppc_equivalence.vtable import (
     VirtualCallCandidate,
     find_virtual_call_candidates,
     find_virtual_thunk_candidates,
-)from tools.ppc_equivalence.vtable_obligations import (
+)
+from tools.ppc_equivalence.vtable_obligations import (
     SemanticCalleeCertificate,
     VirtualCallProofContext,
     VtableSlotWords,

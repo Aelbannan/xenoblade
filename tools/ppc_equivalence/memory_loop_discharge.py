@@ -333,11 +333,24 @@ def discharge_memory_loop_plan(
 
     if any(item.status == "sat" for item in (body_step, postcondition, stack_escape)):
         refinement["status"] = "failed"
+        # Name the exact refinement block(s) that went SAT so triage is a
+        # concrete "summary-witness-mismatch", not an opaque "flaky internal".
+        sat_blocks = [
+            name
+            for name, item in (
+                ("body_step", body_step),
+                ("postcondition", postcondition),
+                ("stack_escape", stack_escape),
+            )
+            if item.status == "sat"
+        ]
         return MemoryLoopDischargeResult(
             "internal_error",
             entry_guard_payload,
             refinement,
-            "memory-loop refinement SAT: summary disagrees with instruction semantics",
+            "memory-loop refinement SAT (summary-witness-mismatch): "
+            "summary disagrees with instruction semantics on "
+            f"{', '.join(sat_blocks)}",
             "INTERNAL_ERROR",
         )
     if any(item.status == "sat" for item in (entry_guard, termination, footprint)):

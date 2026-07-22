@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+from .abi_shape import AbiShape
 from .spr import AUX_SPR_NAME_INDEX, AUX_SPR_OBSERVABLES
 
 
@@ -20,6 +21,7 @@ class EquivalenceContract:
     base_name: str | None = None
     auto_added: tuple[str, ...] = ()
     auto_reasons: tuple[str, ...] = ()
+    abi_shape: AbiShape | None = None
 
     def __post_init__(self) -> None:
         if not self.observables and self.name != "live-out":
@@ -28,13 +30,16 @@ class EquivalenceContract:
             raise ValueError("solver timeout must be between 1 and 600000 ms")
 
     def resolution_dict(self) -> dict[str, object] | None:
-        if self.base_name is None:
+        if self.base_name is None and self.abi_shape is None:
             return None
-        return {
-            "base": self.base_name,
-            "added": list(self.auto_added),
-            "reasons": list(self.auto_reasons),
-        }
+        result: dict[str, object] = {}
+        if self.base_name is not None:
+            result["base"] = self.base_name
+            result["added"] = list(self.auto_added)
+            result["reasons"] = list(self.auto_reasons)
+        if self.abi_shape is not None:
+            result["abi_shape"] = self.abi_shape.to_dict()
+        return result
 
 
 CONTRACT_PRESETS = ("auto", "ppc-eabi", "ppc-eabi-fp", "strict", "live-out")
@@ -54,13 +59,12 @@ AUTO_PERSISTENT_OBSERVABLES = (
     *AUX_SPR_OBSERVABLES,
 )
 
-# Tail virtual / PTMF thunks exit via ``bctr`` (``indirect-branch``).  MWCC
-# scratches the destination in ``r12`` (already omitted from ``ppc-eabi``), but
-# candidates may use ``r4`` / ``f1``.  Those are EABI *return* halves, not
-# caller-visible after a tail transfer — comparing them produces false
-# NOT_EQUIVALENT.  ``exit.target`` (CTR) and ``r3`` (adjusted ``this``) remain.
-INDIRECT_BRANCH_OMITTED_OBSERVABLES = frozenset({"r4", "f1", "f1.ps1"})
-_EXIT_KIND_FILTER_CONTRACTS = frozenset({"ppc-eabi", "ppc-eabi-fp", "auto"})
+# Historical: an exit-kind filter once omitted ``r4`` / ``f1`` / ``f1.ps1`` on
+# ``indirect-branch`` terminals, treating them as dead return halves after a
+# tail transfer.  That was unsound — at a ``bctr`` tail call those registers
+# are live outgoing arguments to the callee.  Kept as an empty frozenset so
+# older imports/tests that mention the name keep resolving.
+INDIRECT_BRANCH_OMITTED_OBSERVABLES: frozenset[str] = frozenset()
 
 
 def observables_for_exit(
@@ -69,21 +73,37 @@ def observables_for_exit(
 ) -> tuple[Observable, ...]:
     """Select observables for a matched terminal pair.
 
-    For ``indirect-branch`` under EABI-family contracts, omit volatile return
-    halves so ``mtctr r12; bctr`` vs ``mtctr r4; bctr`` with the same CTR/r3
-    chain can prove equivalent.  ``strict`` / ``manual`` / ``live-out`` keep
-    the full observable set.  ``return`` / ``call-indirect`` / ``fallthrough``
-    are unchanged.
+    With no ``abi_shape``, every contract observable is compared for every exit
+    kind (today's fail-closed behavior).  When an explicit :class:`AbiShape` is
+    attached, ``r4`` / ``f1`` / ``f1.ps1`` may be omitted on return/fallthrough
+    or indirect-branch/call-indirect according to return-width and outgoing-arg
+    counts.  ``r3``, memory, nonvolatiles, and other observables are never
+    dropped here.
     """
-    if exit_kind != "indirect-branch":
+    if contract.abi_shape is None:
         return contract.observables
-    if contract.name not in _EXIT_KIND_FILTER_CONTRACTS:
-        return contract.observables
-    return tuple(
-        item
-        for item in contract.observables
-        if item.name not in INDIRECT_BRANCH_OMITTED_OBSERVABLES
-    )
+
+    omit: set[str] = set()
+    shape = contract.abi_shape
+    if exit_kind in ("return", "fallthrough"):
+        if not shape.returns_i64:
+            omit.add("r4")
+        if not shape.returns_float:
+            omit.update({"f1", "f1.ps1"})
+    elif exit_kind in ("indirect-branch", "call-indirect"):
+        if shape.outgoing_gpr_args < 2:
+            omit.add("r4")
+        if shape.outgoing_fpr_args < 1:
+            omit.update({"f1", "f1.ps1"})
+    return tuple(o for o in contract.observables if o.name not in omit)
+
+
+def with_abi_shape(
+    contract: EquivalenceContract,
+    shape: AbiShape,
+) -> EquivalenceContract:
+    """Return a copy of ``contract`` with ``abi_shape`` attached."""
+    return replace(contract, abi_shape=shape)
 
 
 def preset_observable_names(name: str) -> tuple[str, ...]:
@@ -175,6 +195,7 @@ def _auto_contract(
     original_live_out: tuple[str, ...],
     candidate_live_out: tuple[str, ...],
     timeout_ms: int,
+    abi_shape: AbiShape | None = None,
 ) -> EquivalenceContract:
     base_names = preset_observable_names("ppc-eabi")
     base_set = set(base_names)
@@ -200,6 +221,47 @@ def _auto_contract(
         base_name="ppc-eabi",
         auto_added=added,
         auto_reasons=tuple(reasons),
+        abi_shape=abi_shape,
+    )
+
+
+def refine_auto_contract_with_writes(
+    contract: EquivalenceContract,
+    *,
+    symbolic_writes: set[str] | frozenset[str],
+) -> EquivalenceContract:
+    """Union auto-persistent observables discovered from symbolic terminal writes.
+
+    The syntactic ``automatic_live_out`` table is a fast pre-filter; this
+    refinement is the soundness backstop so a mis-tabled persistent write
+    cannot silently drop an observable under ``auto``.
+    """
+    if contract.name != "auto":
+        return contract
+    base_names = preset_observable_names("ppc-eabi")
+    base_set = set(base_names)
+    already = set(contract.auto_added)
+    extra = tuple(
+        name
+        for name in AUTO_PERSISTENT_OBSERVABLES
+        if name not in base_set
+        and name not in already
+        and name in symbolic_writes
+    )
+    if not extra:
+        return contract
+    added = tuple(contract.auto_added) + extra
+    reasons = tuple(contract.auto_reasons) + tuple(
+        f"{name} written by symbolic terminal refinement" for name in extra
+    )
+    return EquivalenceContract(
+        parse_observables(base_names + added),
+        contract.timeout_ms,
+        "auto",
+        base_name="ppc-eabi",
+        auto_added=added,
+        auto_reasons=reasons,
+        abi_shape=contract.abi_shape,
     )
 
 
@@ -211,6 +273,7 @@ def make_contract(
     live_out: tuple[str, ...] | None = None,
     original_live_out: tuple[str, ...] | None = None,
     candidate_live_out: tuple[str, ...] | None = None,
+    abi_shape: AbiShape | None = None,
 ) -> EquivalenceContract:
     if preset is not None and observe:
         raise ValueError("--contract and --observe are mutually exclusive")
@@ -218,15 +281,26 @@ def make_contract(
         if preset == "auto":
             if original_live_out is None or candidate_live_out is None:
                 raise ValueError("auto contract requires both decoded instruction sequences")
-            return _auto_contract(original_live_out, candidate_live_out, timeout_ms)
+            return _auto_contract(
+                original_live_out,
+                candidate_live_out,
+                timeout_ms,
+                abi_shape=abi_shape,
+            )
         names = live_out if preset == "live-out" else preset_observable_names(preset)
         return EquivalenceContract(
             parse_observables(names) if names else (),
             timeout_ms,
             preset,
+            abi_shape=abi_shape,
         )
     if observe:
-        return EquivalenceContract(parse_observables(observe), timeout_ms, "manual")
+        return EquivalenceContract(
+            parse_observables(observe),
+            timeout_ms,
+            "manual",
+            abi_shape=abi_shape,
+        )
     raise ValueError("select --contract or --observe")
 
 

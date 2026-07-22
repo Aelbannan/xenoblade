@@ -31,6 +31,7 @@ from .jump_table_obligations import (
     jump_table_gate_reason,
     obligations_from_discharge,
     rom_image_byte_constraints,
+    unresolved_indirect_exit_gate_reason,
 )
 from .vtable_obligations import (
     VirtualCallProofContext,
@@ -151,6 +152,47 @@ def _contract_covers(required: str, declared: frozenset[str]) -> bool:
     if "*" in declared or required in declared:
         return True
     return required.startswith("cr") and "cr" in declared
+
+
+def _symbolic_persistent_writes(
+    terminals: list[Any],
+    initial: MachineState,
+    ops: SymbolicOps,
+    *,
+    timeout_ms: int = 2_000,
+) -> set[str]:
+    """Return AUTO_PERSISTENT components that may change on a feasible path.
+
+    Structural ``z3.eq`` is the fast path; when expressions differ we confirm
+    with a short SMT query under the terminal path condition so ITE diamonds
+    that restore the initial value are not treated as writes.
+    """
+    from tools.ppc_equivalence.contract import AUTO_PERSISTENT_OBSERVABLES
+
+    z3 = ops.z3
+    initial_components = _contract_components(initial, z3)
+    written: set[str] = set()
+    for name in AUTO_PERSISTENT_OBSERVABLES:
+        initial_value = initial_components.get(name)
+        if initial_value is None:
+            continue
+        for terminal in terminals:
+            final_components = _contract_components(terminal.state, z3)
+            final_value = final_components.get(name)
+            if final_value is None:
+                continue
+            if z3.eq(final_value, initial_value):
+                continue
+            value_solver = z3.Solver()
+            value_solver.set(timeout=timeout_ms)
+            premises = [final_value != initial_value, terminal.condition]
+            if terminal.state.stack_layout_valid is not None:
+                premises.append(terminal.state.stack_layout_valid)
+            value_solver.add(*premises)
+            if value_solver.check() != z3.unsat:
+                written.add(name)
+                break
+    return written
 
 
 def validate_callee_contract(
@@ -1178,6 +1220,7 @@ def check_equivalence(
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     relocation_bindings: dict[str, int] | None = None,
     initial_gpr_bindings: dict[int, int] | None = None,
+    initial_gpr_ranges: dict[int, tuple[int, int]] | None = None,
     memory_environment: MemoryEnvironment | None = None,
     source_hash: str = "",
     floating_point_domain: FloatingPointDomain | None = None,
@@ -1201,6 +1244,10 @@ def check_equivalence(
     path, or mapping. When set, bounded-memory coverage is discharged from CFG
     terminals without folding ``build_memory_constraints`` into the coverage
     query. Assurance failure preserves EQUIVALENT but blocks Tier A.
+
+    ``initial_gpr_ranges``: optional per-GPR inclusive ``(lo, hi)`` bounds
+    (unsigned 32-bit). Used by object-base MEM1 constraints so symbolic
+    pointers (esp. ``r3``) stay inside RAM rather than spanning MMIO.
     """
     from tools.ppc_equivalence.process_pool import run_check_equivalence, should_isolate
 
@@ -1213,6 +1260,7 @@ def check_equivalence(
         callee_contracts=callee_contracts,
         relocation_bindings=relocation_bindings,
         initial_gpr_bindings=initial_gpr_bindings,
+        initial_gpr_ranges=initial_gpr_ranges,
         memory_environment=memory_environment,
         source_hash=source_hash,
         floating_point_domain=floating_point_domain,
@@ -1264,6 +1312,7 @@ def _check_equivalence_impl(
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     relocation_bindings: dict[str, int] | None = None,
     initial_gpr_bindings: dict[int, int] | None = None,
+    initial_gpr_ranges: dict[int, tuple[int, int]] | None = None,
     memory_environment: MemoryEnvironment | None = None,
     source_hash: str = "",
     floating_point_domain: FloatingPointDomain | None = None,
@@ -1540,6 +1589,42 @@ def _check_equivalence_impl(
     if assumed_callees_used is not None:
         assumed_callees_used.update(callees_used)
 
+    # M2: empty terminal lists make z3.Or() == False → vacuous unsat/EQUIVALENT.
+    if not original_exits or not candidate_exits:
+        return ProofResult(
+            status=ProofStatus.INCONCLUSIVE_UNSUPPORTED,
+            contract=contract.name,
+            contract_resolution=contract.resolution_dict(),
+            observables=[item.name for item in contract.observables],
+            unsupported=[
+                "empty-terminal-list: exploration produced no terminals on "
+                f"{'original' if not original_exits else 'candidate'} side"
+            ],
+            warnings=[
+                "refusing EQUIVALENT with an empty terminal list "
+                "(vacuous divergence query)"
+            ],
+            limits={
+                "max_instructions": max_instructions,
+                "max_paths": max_paths,
+                "max_loop_iterations": max_loop_iterations,
+            },
+            floating_point_domain=domain,
+            source_hash=source_hash,
+        )
+
+    # H1: refine auto observables from symbolic terminal≠initial writes so a
+    # mis-tabled persistent component cannot be silently omitted.
+    if contract.name == "auto":
+        from tools.ppc_equivalence.contract import refine_auto_contract_with_writes
+
+        symbolic_writes = _symbolic_persistent_writes(
+            original_exits + candidate_exits, initial, ops,
+        )
+        contract = refine_auto_contract_with_writes(
+            contract, symbolic_writes=symbolic_writes,
+        )
+
     try:
         deadline.require_time("constraint-build")
     except ProofDeadlineExceeded as exc:
@@ -1550,6 +1635,15 @@ def _check_equivalence_impl(
         for left in original_exits
         for right in candidate_exits
     ]
+    if not pair_differences:
+        return ProofResult(
+            status=ProofStatus.INTERNAL_ERROR,
+            contract=contract.name,
+            contract_resolution=contract.resolution_dict(),
+            observables=[item.name for item in contract.observables],
+            warnings=["internal: nonempty terminals but empty pair_differences"],
+            source_hash=source_hash,
+        )
     memory_scope = MemoryScope.from_terminals(
         original_exits, candidate_exits, ops,
     )
@@ -1568,6 +1662,29 @@ def _check_equivalence_impl(
         if not 0 <= reg < 32:
             raise ValueError(f"initial GPR binding register out of range: {reg}")
         layout_constraints.append(initial.gpr[reg] == ops.const(int(value) & 0xFFFFFFFF))
+
+    object_base_assumptions: list[str] = []
+    if initial_gpr_ranges:
+        from tools.ppc_equivalence.object_base import format_object_base_assumption
+
+        for register, bounds in initial_gpr_ranges.items():
+            reg = int(register)
+            if not 0 <= reg < 32:
+                raise ValueError(f"initial GPR range register out of range: {reg}")
+            if not isinstance(bounds, tuple) or len(bounds) != 2:
+                raise ValueError(
+                    f"initial GPR range for r{reg} must be a (lo, hi) tuple, got {bounds!r}"
+                )
+            lo_raw, hi_raw = bounds
+            if not isinstance(lo_raw, int) or not isinstance(hi_raw, int):
+                raise ValueError(
+                    f"initial GPR range for r{reg} requires int lo/hi, got {bounds!r}"
+                )
+            lo = lo_raw & 0xFFFFFFFF
+            hi = hi_raw & 0xFFFFFFFF
+            layout_constraints.append(z3.ULE(ops.const(lo), initial.gpr[reg]))
+            layout_constraints.append(z3.ULE(initial.gpr[reg], ops.const(hi)))
+            object_base_assumptions.append(format_object_base_assumption(reg, lo, hi))
 
     # Always apply and record an effective environment (default:
     # assumed-ordinary-ram). Omitting the field previously hid assumed-RAM from
@@ -1701,6 +1818,9 @@ def _check_equivalence_impl(
             for callee in sorted(callees_used, key=str)
         },
     )
+    for assumption in object_base_assumptions:
+        if assumption not in result.assumptions:
+            result.assumptions.append(assumption)
     result.source_hash = source_hash
     try:
         commit, dirty = live_git_identity(_REPO_ROOT)
@@ -2092,6 +2212,62 @@ def _check_equivalence_impl(
                 gated.unsupported.append(reason)
                 gated.warnings.append(reason)
                 gated.abstractions.append("virtual-call-unproven")
+        # M1: catch-all fail-closed gate for any *remaining* unresolved indirect
+        # exit when neither a jump-table nor virtual-call proof context is
+        # attached. Broader than the pattern-specific gates above: it keys on the
+        # actual terminal exit_kind, so non-canonical dispatchers (a bcctr with
+        # no adjacent lwzx, an unlinked bclr, etc.) also fail closed. Runs after
+        # the specific gates so their diagnostics win; input-derived virtual
+        # thunks are exempt (proven equal via exit.target — see the helper).
+        if (
+            gated.status is ProofStatus.EQUIVALENT
+            and jump_table is None
+            and virtual_call is None
+        ):
+            reason = unresolved_indirect_exit_gate_reason(
+                original_exits,
+                candidate_exits,
+                original=original,
+                candidate=candidate,
+            )
+            if reason is not None:
+                gated.status = ProofStatus.INCONCLUSIVE_UNSUPPORTED
+                gated.unsupported.append(reason)
+                gated.warnings.append(reason)
+                gated.abstractions.append("indirect-exit-unproven")
+        # H2: Z3 FP collapses NaN payloads — require NaN-freedom for EQUIVALENT.
+        if gated.status is ProofStatus.EQUIVALENT:
+            from tools.ppc_equivalence.nan_freedom import enforce_nan_freedom
+
+            used_fp = any(
+                insn.opcode in SUPPORTED_FP_OPCODES for insn in original + candidate
+            )
+            gated = enforce_nan_freedom(
+                gated,
+                original_exits=original_exits,
+                candidate_exits=candidate_exits,
+                contract=contract,
+                ops=ops,
+                domain=domain,
+                layout_constraints=layout_constraints,
+                used_fp=used_fp,
+                deadline_ms=min(5_000, max(1, contract.timeout_ms // 4)),
+            )
+        # M4: FPSCR sticky modeling is incomplete on the symbolic path —
+        # fail closed (demote EQUIVALENT) when fpscr was compared after arith
+        # on differing implementations.
+        if gated.status is ProofStatus.EQUIVALENT:
+            from tools.ppc_equivalence.fp_fpscr import (
+                annotate_fpscr_sticky_incompleteness,
+            )
+
+            annotate_fpscr_sticky_incompleteness(
+                gated,
+                identical_implementations=(
+                    original_hex.replace(" ", "").lower()
+                    == candidate_hex.replace(" ", "").lower()
+                ),
+            )
         # Stage 1 + 4: derive capability requirements and attach drafts.
         # Failure preserves EQUIVALENT; Tier A is blocked by incomplete assurance.
         if gated.status is ProofStatus.EQUIVALENT:

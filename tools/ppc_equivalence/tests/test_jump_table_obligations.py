@@ -207,6 +207,46 @@ class JumpTableEngineGateTests(unittest.TestCase):
         self.assertEqual(result.address_space["schema_version"], 2)
         self.assertEqual(result.indirect_targets["schema_version"], 2)
 
+    def test_jump_table_context_bypasses_unresolved_indirect_gate(self) -> None:
+        # With a JumpTableProofContext attached, the broadened M1 indirect-exit
+        # gate must NOT fire: closure is handled by the discharge path, and a
+        # retained indirect-branch remainder terminal is expected. Exact status
+        # may still be non-EQUIVALENT (coverage open), but never via the M1 gate.
+        code = bytes.fromhex(
+            "3c608001 38630000 28000001 5400103a 7c63002e 7c6903a6 4e800420"
+        )
+        base = 0x80001000
+        insns = decode_block(code, base, validate_with_capstone=False)
+        table = JumpTableWords(
+            base=0x80010000,
+            words=(0x80020000, 0x80020010),
+            source="test-fixture",
+        )
+        context = JumpTableProofContext(
+            table=table,
+            branch_pc=base + 24,
+            table_base_reg=3,
+            index_reg=0,
+        )
+        contract = make_contract(preset=None, observe=["r3"], timeout_ms=15_000)
+        result = check_equivalence(
+            insns,
+            insns,
+            contract,
+            original_hex=code.hex(),
+            candidate_hex=code.hex(),
+            jump_table=context,
+            max_paths=64,
+        )
+        self.assertFalse(
+            any(
+                "unresolved indirect-branch/call-indirect" in item
+                for item in result.unsupported
+            ),
+            result.unsupported,
+        )
+        self.assertNotIn("indirect-exit-unproven", result.abstractions)
+
     def test_closed_set_excluding_true_targets_never_equivalent(self) -> None:
         """False-eq regression: original→A, candidate→B, closed set {C,D}.
 

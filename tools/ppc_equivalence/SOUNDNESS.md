@@ -25,6 +25,28 @@
 
 <!-- END GENERATED PROOF_STATUS_TABLE -->
 
+## Two gates (do not conflate)
+
+1. **EQUIVALENT_MATCH acceptance** (decomp target closed): objdiff fuzzy
+   ≥ 50%, SMT `ProofStatus.EQUIVALENT`, and split-size fit. Confidence
+   tiers and capability assurance do **not** block this gate. Certificates
+   record `equivalence_strength` (`integer-core`, `fp-tier-c`,
+   `callee-dependent`, …) for honesty.
+2. **Promotion / Tier A–B reuse**: `classify_for_promotion` plus optional
+   capability-assurance. Default capability manifests keep
+   `shadow_mode=true` (assurance is advisory; legacy effect gates remain
+   authoritative). The `PromotionPolicy` *dataclass* default is `True`
+   for historical coop behavior, but the authoritative runtime value comes
+   from `CoopConfig.automatic_promotion`, which defaults to **`False`**
+   (`PromotionPolicy.from_config` propagates it), so real workflows have
+   automatic promotion **off** by default. Keep `automatic_promotion: false`
+   in `coop.json` for conservative workflows. FP and assumed callees are
+   Tier **C**.
+
+An `EQUIVALENT` result is always scoped to the listed observables and
+assumptions. Unsupported opcodes, timeouts, and solver `unknown` are
+inconclusive — never silent no-ops.
+
 ## Theorem
 
 For all shared initial machine states satisfying the selected contract
@@ -138,7 +160,17 @@ documented per-implementation private-storage abstraction.
   descriptive only: matching the `cmplwi` / shift / `lwzx` / `mtctr` / `bctr`
   shape does not prove equivalence. Without a `JumpTableProofContext`, the
   engine fail-closes otherwise-matching jump-table functions to
-  `INCONCLUSIVE_UNSUPPORTED`. With a context (explicit or auto-built by
+  `INCONCLUSIVE_UNSUPPORTED`. Beyond that canonical shape,
+  `jump_table_obligations.unresolved_indirect_exit_gate_reason` is a
+  terminal-based catch-all: when neither a jump-table nor virtual-call proof
+  context is attached, *any* retained `indirect-branch` / `call-indirect`
+  terminal (for example a `bcctr` with no adjacent `lwzx`) demotes an
+  otherwise-`EQUIVALENT` result to `INCONCLUSIVE_UNSUPPORTED`. Input-derived
+  MWCC virtual thunks are exempt (both sides branch to a CTR value loaded from
+  the shared `this` object and `exit.target` is compared for equality — see the
+  exit-kind ABI filter). When a proof context is present, the retained
+  unknown-remainder terminal is instead discharged by the coverage / no-write
+  path below and the catch-all is skipped. With a context (explicit or auto-built by
   `jump_table_auto.try_auto_jump_table_context` from `lis`/`addi` + linked
   DOL/ELF hydration), CFG expands each enumerated CTR target and retains an
   unknown-remainder ``indirect-branch`` terminal. Initial ROM bytes are pinned;
@@ -520,14 +552,29 @@ mmio-loop-emission allowlist empty; staged canaries live at
 - Memory is always compared when selected.
 - The `auto` contract resolves dynamically from both implementations' write
   effects. Volatile ABI scratch (temporary GPRs/FPRs, volatile CR fields, XER,
-  LR, CTR) is never added.
-- **Exit-kind filter:** when both terminals are `indirect-branch` (`bctr` /
-  unlinked `bcctr`) under `ppc-eabi` / `auto` / `ppc-eabi-fp`, observables
-  omit `r4`, `f1`, and `f1.ps1`. MWCC virtual thunks scratch the destination
-  in `r12` (already omitted); candidates may use `r4`. Comparing those return
-  halves after a tail transfer produced false `NOT_EQUIVALENT`. `exit.target`
-  (CTR) and `r3` (adjusted `this`) remain compared. `return` / `call-indirect`
-  / `strict` / `manual` / `live-out` are unchanged.
+  LR, CTR) is never added. After CFG exploration, auto is refined with
+  symbolic terminal≠initial writes for `AUTO_PERSISTENT_OBSERVABLES` so a
+  mis-tabled opcode cannot silently omit a persistent observable.
+- Symbolic FP `EQUIVALENT` under `allow_nan=True` additionally requires a
+  NaN-freedom discharge (`nan_freedom.enforce_nan_freedom`): Z3's single-NaN
+  theory cannot certify Broadway NaN payload identity.
+- **Indirect-branch observables:** matched `indirect-branch` (`bctr` /
+  unlinked `bcctr`) terminals compare the full contract observable set,
+  including `r4` / `f1` / `f1.ps1`, when no `AbiShape` is attached (fail-closed
+  default). At a tail call those registers are live outgoing arguments to the
+  callee, not dead return halves. MWCC virtual thunks must scratch the
+  destination in a non-observed volatile (`r12`) or otherwise preserve argument
+  registers; using `r4`/`f1` as CTR scratch is correctly `NOT_EQUIVALENT` to an
+  `r12` thunk that preserves them. `exit.target` (CTR) and `r3` (adjusted
+  `this`) remain compared.
+- **`AbiShape` (opt-in):** an explicit shape on `EquivalenceContract` may omit
+  `r4` on return/fallthrough when `returns_i64=False`, omit `f1`/`f1.ps1` when
+  `returns_float=False`, and omit those same registers on
+  `indirect-branch`/`call-indirect` when `outgoing_gpr_args < 2` or
+  `outgoing_fpr_args < 1`. Inference (`abi_infer.infer_abi_shape`) only narrows
+  when evidence is strong (neither side touches `r4`/`f1` on a simple vtable
+  dispatch, and/or a mangled `Fv` symbol hint); it does not blanket-drop `r4`
+  on every indirect branch.
 
 ### Calls
 
@@ -592,8 +639,13 @@ mmio-loop-emission allowlist empty; staged canaries live at
   even when FEX was already 1 (precise policy; MSR FE0/FE1 imprecise modes
   deferred — `traps_enabled` assumes precise). Incomplete opcodes (estimates,
   compares, conversions, non-oracle paired) fail closed as
-  `ExecutionInconclusive` / `INCONCLUSIVE_UNSUPPORTED`. SymbolicOps still
-  constrains OE/UE/XE clear (OX/UX/XX not SMT-modeled). Still **Tier C** only.
+  `ExecutionInconclusive` / `INCONCLUSIVE_UNSUPPORTED`.   SymbolicOps still
+  constrains OE/UE/XE clear (OX/UX/XX not SMT-modeled). When `fpscr` is a
+  compared observable after non-bitwise FP arithmetic on *differing*
+  implementations, EQUIVALENT is demoted to `INCONCLUSIVE_ABSTRACTION`
+  (`annotate_fpscr_sticky_incompleteness`). Byte-identical implementations keep
+  EQUIVALENT (same code ⇒ same hardware stickies) with an honesty assumption.
+  Still **Tier C** for promotion when FPSCR arithmetic is in play.
 - Finite-input overflow is excluded when `exclude_finite_overflow=true`
   (default) via `_constrain_fp_defined_result` → `FP_DOMAIN_EXCLUDED`.
 - Invalid-operation (`VX`) and divide-by-zero (`ZX`) causes are tracked.
@@ -606,6 +658,23 @@ mmio-loop-emission allowlist empty; staged canaries live at
 - Optional operand exclusions: `allow_nan`, `allow_infinity`, and
   `allow_subnormal` (defaults true) clear `valid` with `FP_DOMAIN_EXCLUDED`
   when false.
+- **NaN-payload freedom (H2):** Z3's SMT-LIB FP theory collapses every NaN
+  payload to a single abstract NaN, so `fpToIEEEBV` cannot distinguish
+  Broadway sequences that differ only in NaN payload bits. When a proof uses
+  FP and `allow_nan=True`, `nan_freedom.enforce_nan_freedom` runs an extra
+  query after the divergence query returns `unsat` (would-be `EQUIVALENT`):
+  it is `sat` iff some feasible, mutually-defined terminal pair carries a NaN
+  in a *compared* FPR/PS1 lane whose value is produced through the FP theory
+  **and** differs syntactically between the two implementations. `sat` demotes
+  to `INCONCLUSIVE_UNSUPPORTED` (`nan-payload-unmodeled`); `unknown`/timeout
+  fails closed; `unsat` keeps `EQUIVALENT` and records the
+  `nan-freedom:proven` assumption. Two exemptions keep the gate precise:
+  syntactically identical results (same deterministic function of shared
+  inputs — e.g. `f(x) ≡ f(x)` self-proofs) and pure bit-vector values
+  (`fmr`/`fabs`/`fneg`/`fnabs` sign moves, raw `lfd` loads) whose payload bits
+  are already compared exactly by the divergence query. With `allow_nan=False`
+  the domain already excludes NaN inputs via `FP_DOMAIN_EXCLUDED`, so the gate
+  is skipped (recorded as `nan-freedom:domain-allow_nan=false`).
 - Paired-single uses independent binary32 lanes with Force25 multiplication,
   accumulated lane exceptions, and unconditional paired writeback under enabled
   exceptions.
@@ -694,6 +763,14 @@ mmio-loop-emission allowlist empty; staged canaries live at
   `r13` / `r2` via `initial_gpr_bindings`. Absolute `relocation_bindings` are
   not forced for unlinked HA/LO proofs so typeinfo labels keep symbolic
   identity across DOL vs ELF placements.
+- **Object-base MEM1 / RAM-only strip (opt-in):** `object_base.py` helpers plus
+  engine `initial_gpr_ranges` constrain symbolic GPRs (typically `r3`) into
+  MEM1 / profile RAM with unsigned `ULE` bounds, recorded as
+  `object-base-mem1:rN:[lo,hi]` assumptions. Separately, when a hardware bus
+  includes MMIO but neither side can form MMIO addresses from immediates /
+  known high-halves (`0xCC00`/`0xCD00`) or MMIO-named relocs,
+  `ram_only_memory_bus` may strip MMIO regions/devices for that probe.
+  Coop knobs: `object_base_mem1`, `ram_only_when_no_mmio` (default false).
 
 ### Solver and timeout
 

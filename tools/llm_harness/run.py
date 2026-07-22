@@ -276,6 +276,93 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="List accepted winners that would be promoted without writing",
     )
+    web_export = sub.add_parser(
+        "web-export",
+        help="Pack ready-frontier functions into ChatGPT Web batch request files",
+    )
+    web_export.add_argument(
+        "--batches",
+        type=int,
+        required=True,
+        help="Exact number of non-empty active batch files to create",
+    )
+    web_export.add_argument(
+        "--budget",
+        type=int,
+        default=50,
+        help="Maximum difficulty units per batch (default: 50)",
+    )
+    web_export.add_argument(
+        "--selection",
+        choices=("leaf", "ready", "callees-accepted", "pending"),
+        default="ready",
+        help="Call-graph frontier for candidate selection (default: ready)",
+    )
+    web_export.add_argument(
+        "--certified-funcs",
+        action="store_true",
+        default=True,
+        help="Require accepted/certified callees (default)",
+    )
+    web_export.add_argument(
+        "--no-certified-funcs",
+        action="store_false",
+        dest="certified_funcs",
+        help="Allow export even when callees lack current certificates",
+    )
+    web_export.add_argument(
+        "--tu",
+        help="Restrict candidates to one translation unit",
+    )
+    web_export.add_argument(
+        "--random",
+        action="store_true",
+        help="Randomize candidates before packing; seed stored in manifest",
+    )
+    web_export.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Override output folder (default: web_batches/)",
+    )
+    web_export.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace an existing active batch set after archiving it",
+    )
+    web_export.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print selected packing without writing files",
+    )
+    web_ingest = sub.add_parser(
+        "web-ingest",
+        help="Parse a ChatGPT Web response, evaluate locally, promote accepted matches",
+    )
+    web_ingest.add_argument(
+        "response_file",
+        type=Path,
+        help="ChatGPT Web response text file (e.g. web_batches/batch_001.response.txt)",
+    )
+    web_ingest.add_argument(
+        "--owner",
+        default="chatgpt-web",
+        help="Claim/promotion owner (default: chatgpt-web)",
+    )
+    web_ingest.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Parse and evaluate, but do not promote or overwrite active batch",
+    )
+    web_ingest.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume an incomplete EVALUATING round using history artifacts",
+    )
+    web_ingest.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Override web_batches folder (default: web_batches/)",
+    )
     rescore = sub.add_parser("rescore", help="Re-evaluate saved candidates without new model calls")
     rescore.add_argument("experiment", type=Path)
     rescore.add_argument("--max-parallel", type=int)
@@ -319,6 +406,61 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "stats":
         print(json.dumps(harness.stats(), indent=2))
         return 0
+    if args.command == "web-export":
+        from tools.llm_harness.web_batches import (
+            EXIT_FORMAT,
+            create_web_batches,
+            format_export_summary,
+        )
+
+        try:
+            result = create_web_batches(
+                harness,
+                batch_count=int(args.batches),
+                budget=int(args.budget),
+                selection=str(args.selection),
+                certified_funcs=bool(args.certified_funcs),
+                tu=args.tu,
+                randomize=bool(args.random),
+                output_dir=args.output_dir,
+                force=bool(args.force),
+                dry_run=bool(args.dry_run),
+            )
+        except (ValueError, FileExistsError) as exc:
+            print(f"web-export error: {exc}", file=sys.stderr)
+            return EXIT_FORMAT
+        print(format_export_summary(result))
+        return 0
+    if args.command == "web-ingest":
+        from tools.llm_harness.web_batches import (
+            EXIT_FORMAT,
+            EXIT_STALE,
+            WebBatchFormatError,
+            WebBatchStaleError,
+            format_ingest_summary,
+            ingest_web_batch_output,
+        )
+
+        try:
+            result = ingest_web_batch_output(
+                harness,
+                args.response_file,
+                owner=str(args.owner),
+                dry_run=bool(args.dry_run),
+                resume=bool(args.resume),
+                output_dir=args.output_dir,
+            )
+        except WebBatchFormatError as exc:
+            print(f"web-ingest format error: {exc}", file=sys.stderr)
+            return EXIT_FORMAT
+        except WebBatchStaleError as exc:
+            print(f"web-ingest stale/conflict: {exc}", file=sys.stderr)
+            return EXIT_STALE
+        except FileNotFoundError as exc:
+            print(f"web-ingest error: {exc}", file=sys.stderr)
+            return EXIT_FORMAT
+        print(format_ingest_summary(result))
+        return int(result.exit_code)
     if args.command == "sample":
         print(harness.run(
             args.workflow,

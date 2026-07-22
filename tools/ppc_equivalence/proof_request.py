@@ -41,6 +41,10 @@ class ProofRequest:
     # Reviewed platform profile digest (Stage 3A). Same field name as
     # provenance.proof_request_identity / coop _cache_key.
     platform_profile_sha256: str | None = None
+    # H3: per-callee attested trust bindings (certificate / summary / body
+    # digests). Same field name as provenance.proof_request_identity /
+    # coop _cache_key. Empty when the proof assumes no certified callees.
+    certified_callee_digests: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 def _canonical_nested(value: Any) -> Any:
@@ -97,6 +101,22 @@ def canonical_request_dict(request: ProofRequest) -> dict[str, Any]:
     }
     if request.platform_profile_sha256 is not None:
         payload["platform_profile_sha256"] = request.platform_profile_sha256
+    # H3: only emit when present so existing (callee-free) request identities are
+    # unchanged; certified callees bind their digests here.
+    if request.certified_callee_digests:
+        payload["certified_callee_digests"] = {
+            str(target_id): {
+                str(key): str(value)
+                for key, value in sorted(
+                    digests.items(), key=lambda item: str(item[0])
+                )
+            }
+            for target_id, digests in sorted(
+                request.certified_callee_digests.items(),
+                key=lambda item: str(item[0]),
+            )
+            if isinstance(digests, dict)
+        }
     return payload
 
 

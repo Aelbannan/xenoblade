@@ -239,6 +239,7 @@ def proof_request_identity(
     floating_point_domain: object | None = None,
     assumed_callees: list[str] | None = None,
     callee_contract_sources: dict[str, str] | None = None,
+    certified_callee_digests: dict[str, dict[str, str]] | None = None,
     original_base: int | None = None,
     candidate_base: int | None = None,
     original_relocations: list | None = None,
@@ -298,6 +299,20 @@ def proof_request_identity(
             for name, source in sorted(
                 callee_contract_sources.items(), key=lambda item: str(item[0])
             )
+        }
+    # H3: bind each certified callee's certificate / summary / body digests into
+    # the caller's proof-request identity so a change in any callee's attested
+    # trust binding forces a fresh proof (no silent reuse of a stale callee).
+    if certified_callee_digests:
+        payload["certified_callee_digests"] = {
+            str(target_id): {
+                str(key): str(value)
+                for key, value in sorted(digests.items(), key=lambda item: str(item[0]))
+            }
+            for target_id, digests in sorted(
+                certified_callee_digests.items(), key=lambda item: str(item[0])
+            )
+            if isinstance(digests, dict)
         }
     if original_base is not None:
         payload["original_base"] = original_base

@@ -5500,10 +5500,15 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         reads.add("fpscr")
         writes.add(f"cr{a[0]}")
         writes.add("fpscr")
-    elif op in (Opcode.MFFS, Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP, Opcode.FNEG,
-                 Opcode.FMR, Opcode.FNABS, Opcode.FABS):
+    elif op in (Opcode.MFFS, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS):
         reads.add("fpscr" if op == Opcode.MFFS else f"f{a[1]}" if len(a) > 1 else "")
         writes.add(f"f{a[0]}")
+        if insn.record: writes.add("cr1")
+    elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP):
+        reads.add(f"f{a[1]}" if len(a) > 1 else "")
+        reads.add("fpscr")
+        writes.add(f"f{a[0]}")
+        writes.add("fpscr")
         if insn.record: writes.add("cr1")
     elif op in (Opcode.MTFSF, Opcode.MTFSFI, Opcode.MTFSB0, Opcode.MTFSB1):
         reads.add("fpscr")
@@ -5787,8 +5792,11 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
                 written.add(f"f{a[0]}.ps1")
             if op not in ({Opcode.FSEL, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS} | _FP_PS_SELECT | _FP_PS_SIMPLE):
                 written.add("fpscr")
-        elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP, Opcode.FNEG, Opcode.FMR,
-                     Opcode.FNABS, Opcode.FABS, Opcode.MFFS):
+        elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP):
+            # Convert / round-to-single update FPSCR (FI/FR/FPRF/exceptions).
+            written.add(f"f{a[0]}")
+            written.add("fpscr")
+        elif op in (Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS, Opcode.MFFS):
             written.add(f"f{a[0]}")
         elif op in (Opcode.MTFSF, Opcode.MTFSFI, Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS):
             written.add("fpscr")

@@ -255,6 +255,43 @@ def _load_mapping(path: Path, *, yaml: bool) -> dict[str, Any]:
     return data
 
 
+# Callee-contract sources that carry an attested / fixed trust binding. Anything
+# else (opaque EABI, --assume-relocated-callees, same-object inference) is not
+# independently verified and demotes the legacy tier to C (fail closed).
+_TRUSTED_CALLEE_SOURCE_PREFIXES = ("certified:", "fixed-eabi-runtime-helper:")
+
+
+def _has_untrusted_callees(result: ProofResult) -> bool:
+    """True when the proof leans on opaque / assumed / auto-inferred callees.
+
+    H3 (callee trust): the legacy effect-type tier cannot independently verify a
+    callee's behavior, so a proof that assumes callees may only reach Tier B when
+    every callee carries an attested trust binding — a certified certificate
+    (``certified:<sha>``, whose digests are now bound into proof/cache identity)
+    or a fixed EABI runtime helper. Opaque EABI, ``--assume-relocated-callees``,
+    and same-object inference are untrusted and demote to Tier C. Missing
+    contracts fail closed (treated as untrusted).
+    """
+    assumed = list(result.assumed_callees or [])
+    if not assumed:
+        return False
+    contracts = result.callee_contracts or {}
+    sources: list[str] = []
+    for entry in contracts.values():
+        if isinstance(entry, dict):
+            sources.append(str(entry.get("source", "")))
+        else:
+            sources.append(str(getattr(entry, "source", "")))
+    # Fail closed: fewer contracts than assumed callees means at least one callee
+    # is unaccounted for.
+    if len(sources) < len(assumed):
+        return True
+    return any(
+        not source.startswith(_TRUSTED_CALLEE_SOURCE_PREFIXES)
+        for source in sources
+    )
+
+
 def _compute_confidence_tier_legacy(
     result: ProofResult,
     ledger: ValidationLedger | None = None,
@@ -277,6 +314,10 @@ def _compute_confidence_tier_legacy(
     has_assumed_fp = fp_coverage == FP_COVERAGE_STATUS_ASSUMED
 
     has_callees = bool(result.assumed_callees)
+    # H3: opaque / assumed / inferred callees are not independently verified and
+    # must not reach Tier B via the legacy effect gate; certified & fixed-helper
+    # callees keep their attested binding and may still reach Tier B.
+    has_untrusted_callees = _has_untrusted_callees(result)
 
     has_memory_access = "memory" in result.observables
 
@@ -341,6 +382,7 @@ def _compute_confidence_tier_legacy(
         or has_domain_exceptions
         or has_assumed_ram
         or has_memory_bus
+        or has_untrusted_callees
         or not has_complete_provenance
         or ledger_incomplete
     ):
@@ -938,6 +980,9 @@ def classify_for_promotion_legacy(
 
 @dataclass(frozen=True)
 class PromotionPolicy:
+    # Default True matches historical coop behavior; SOUNDNESS.md documents that
+    # automatic promotion is a separate gate from EQUIVALENT_MATCH acceptance.
+    # Prefer coop.json ``automatic_promotion: false`` for conservative workflows.
     automatic_promotion: bool = True
     reject_architecture_models: frozenset[str] = frozenset(
         {

@@ -260,6 +260,37 @@ def _function_sha256(function: object) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
+def _certified_callee_digests(
+    context: "CertifiedCalleeContext | None",
+) -> dict[str, dict[str, str]] | None:
+    """H3: per-callee attested trust bindings for proof-request / cache identity.
+
+    Derived from the re-attested ``live_certificates`` of a certified callee
+    context: each entry binds the callee's certificate, effect-summary, and body
+    digests. Returns ``None`` when there are no certified callees (standalone /
+    non-registry proofs stay explicit non-certifying).
+    """
+    if context is None or not context.live_certificates:
+        return None
+    from tools.ppc_equivalence.certified_calls_obligations import compute_body_sha256
+
+    digests: dict[str, dict[str, str]] = {}
+    for callee_target_id, entry in sorted(
+        context.live_certificates.items(), key=lambda item: str(item[0])
+    ):
+        if not isinstance(entry, dict):
+            continue
+        digests[str(callee_target_id)] = {
+            "certificate_sha256": str(entry.get("certificate_sha256", "")),
+            "summary_sha256": str(entry.get("summary_sha256", "")),
+            "body_sha256": compute_body_sha256(
+                retail_sha256=str(entry.get("retail_sha256", "")),
+                candidate_sha256=str(entry.get("candidate_sha256", "")),
+            ),
+        }
+    return digests or None
+
+
 def _certificate_contract(certificate: dict) -> CalleeContract:
     summary = certificate["summary"]
     return CalleeContract(
@@ -308,8 +339,46 @@ def _reattest_certificate_tree(
         return "retail function changed"
     if _function_sha256(right) != certificate.get("candidate_sha256"):
         return "candidate function changed"
+    # M3: re-attest summary digest when present (byte hashes alone are not enough
+    # to catch a forged summary with matching retail/candidate blobs).
+    summary = certificate.get("summary")
+    stored_summary_digest = certificate.get("summary_sha256")
+    if isinstance(summary, dict) and isinstance(stored_summary_digest, str) and stored_summary_digest:
+        from tools.ppc_equivalence.certified_calls_obligations import (
+            compute_summary_sha256,
+        )
+
+        recomputed = compute_summary_sha256(
+            target_id=target_id,
+            symbol=symbol,
+            summary=summary,
+        )
+        if recomputed != stored_summary_digest:
+            return "summary_sha256 mismatch"
+    # M3: when the certificate carries a proof-request identity digest, it must be
+    # a well-formed SHA-256 so the callee's trust binding stays verifiable. A full
+    # recompute (SMT re-prove of the tree) is available via
+    # ``targets recertify --bottom-up``; byte + summary + edge digests above are
+    # the minimum viable re-attestation for callee reuse.
+    proof_request_digest = certificate.get("proof_request_hash")
+    if proof_request_digest is not None and not (
+        isinstance(proof_request_digest, str)
+        and re.fullmatch(r"[0-9a-f]{64}", proof_request_digest)
+    ):
+        return "proof_request_hash is not a lowercase SHA-256"
     for dependency in certificate.get("callees", []):
         callee_id = dependency["target_id"]
+        # Require callee edge digests when the parent certificate lists them.
+        edge_digest = dependency.get("certificate_sha256")
+        callee_row = by_id.get(callee_id)
+        if isinstance(edge_digest, str) and edge_digest and isinstance(callee_row, dict):
+            child_cert = callee_row.get("equivalence_certificate")
+            if isinstance(child_cert, dict):
+                child_digest = child_cert.get("certificate_sha256")
+                if child_digest != edge_digest:
+                    return (
+                        f"callee {callee_id!r}: certificate_sha256 edge mismatch"
+                    )
         error = _reattest_certificate_tree(project, callee_id, by_id, memo, active)
         if error:
             return f"callee {callee_id!r}: {error}"
@@ -540,6 +609,7 @@ def _cache_key(
     candidate_local_symbol: str | None = None,
     assumed_callees: frozenset[int | str] = frozenset(),
     callee_contracts: dict[int | str, CalleeContract] | None = None,
+    certified_callee_digests: dict[str, dict[str, str]] | None = None,
     certificate_target_id: str | None = None,
     memory_environment: dict[str, Any] | None = None,
     floating_point_domain: dict[str, Any] | None = None,
@@ -557,6 +627,9 @@ def _cache_key(
     obligations: dict[str, Any] | None = None,
     capability_assurance: dict[str, Any] | None = None,
     platform_profile_sha256: str | None = None,
+    abi_shape: dict[str, Any] | None = None,
+    initial_gpr_ranges: dict[str, list[int]] | None = None,
+    ram_only_projection: bool = False,
 ) -> str:
     def relocations(items: tuple) -> list[tuple]:
         return [
@@ -609,6 +682,30 @@ def _cache_key(
     }
     if platform_profile_sha256 is not None:
         payload["platform_profile_sha256"] = platform_profile_sha256
+    if abi_shape is not None:
+        payload["abi_shape"] = abi_shape
+    if initial_gpr_ranges:
+        payload["initial_gpr_ranges"] = {
+            str(reg): list(bounds) for reg, bounds in sorted(initial_gpr_ranges.items())
+        }
+    if ram_only_projection:
+        payload["ram_only_projection"] = True
+    # H3: bind each certified callee's attested trust-binding digests. Emit only
+    # when present so existing (callee-free / standalone) cache identities are
+    # unchanged; any change to a callee certificate/summary busts the caller.
+    if certified_callee_digests:
+        payload["certified_callee_digests"] = {
+            str(target_id): {
+                str(key): str(value)
+                for key, value in sorted(
+                    digests.items(), key=lambda item: str(item[0])
+                )
+            }
+            for target_id, digests in sorted(
+                certified_callee_digests.items(), key=lambda item: str(item[0])
+            )
+            if isinstance(digests, dict)
+        }
     if proof_features is not None:
         payload["proof_features"] = sorted(proof_features)
     # Top-level identity premise (not a proof feature): binds the exact per-side
@@ -1022,6 +1119,15 @@ def _build_equivalence_certificate(
         "callees": list(dependencies),
         "helpers": list(helpers),
     }
+    from tools.ppc_equivalence.certified_calls_obligations import (
+        compute_summary_sha256,
+    )
+
+    certificate["summary_sha256"] = compute_summary_sha256(
+        target_id=target_id,
+        symbol=getattr(left_function, "name", "") or target_id,
+        summary=certificate["summary"],
+    )
     if memory_scope is not None:
         certificate["memory_scope"] = memory_scope
     # Always emit git_dirty (including False) even when proof is absent.
@@ -1099,11 +1205,32 @@ def _build_equivalence_certificate(
                 block = getattr(proof, key, None)
                 if isinstance(block, dict):
                     certificate[key] = dict(block)
+        certificate["equivalence_strength"] = _equivalence_strength_for_proof(proof)
+    else:
+        certificate["equivalence_strength"] = "uncertified-summary"
     # Bind live trust-boundary trees last so stale proof/cache provenance cannot win.
     certificate["engine_hash"] = _current_engine_hash()
     certificate["certifier_hash"] = _current_certifier_hash()
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
+
+
+def _equivalence_strength_for_proof(proof: object) -> str:
+    """Label acceptance strength; tiers do not block EQUIVALENT_MATCH."""
+    from tools.ppc_equivalence.ir import SUPPORTED_FP_OPCODES
+
+    assumed = getattr(proof, "assumed_callees", None) or []
+    opcodes = set(getattr(proof, "opcodes_used", None) or [])
+    fp_values = {op.value for op in SUPPORTED_FP_OPCODES}
+    has_fp = bool(opcodes & fp_values)
+    features = set(getattr(proof, "proof_features", None) or [])
+    if assumed:
+        return "callee-dependent"
+    if "memory-bus" in features or getattr(proof, "memory_bus", None):
+        return "memory-bus-tier-c"
+    if has_fp:
+        return "fp-tier-c"
+    return "integer-core"
 
 
 def _prove_bytes(
@@ -1337,6 +1464,22 @@ def _prove_bytes(
         candidate_live_out=candidate_live_out,
     )
 
+    # Opt-in AbiShape inference: only attach when narrowed away from the
+    # fail-closed conservative default (keeps cache / resolution clean).
+    abi_shape_payload: dict[str, Any] | None = None
+    if project is not None:
+        from tools.coop.lib.config import abi_shape_inference_enabled
+        from tools.ppc_equivalence.abi_infer import infer_abi_shape
+        from tools.ppc_equivalence.contract import with_abi_shape
+
+        if abi_shape_inference_enabled(project.config):
+            inferred = infer_abi_shape(
+                original, candidate, symbol=symbol, enabled=True,
+            )
+            if inferred.source != "default-conservative":
+                resolved_contract = with_abi_shape(resolved_contract, inferred)
+                abi_shape_payload = inferred.to_dict()
+
     observables = tuple(item.name for item in resolved_contract.observables)
     orig_hex = orig_code.hex()
     cand_hex = cand_code.hex()
@@ -1399,10 +1542,26 @@ def _prove_bytes(
     # or unset profile leaves ``memory_bus_obj`` as ``None`` (no silent RAM).
     memory_bus_obj = None
     memory_bus_identity: dict[str, Any] | None = None
+    ram_only_projection = False
     if project is not None:
-        from tools.coop.lib.config import memory_bus_from_config
+        from tools.coop.lib.config import (
+            memory_bus_from_config,
+            ram_only_when_no_mmio_enabled,
+        )
 
         memory_bus_obj = memory_bus_from_config(project.config)
+        if (
+            memory_bus_obj is not None
+            and ram_only_when_no_mmio_enabled(project.config)
+        ):
+            from tools.ppc_equivalence.object_base import (
+                ram_only_memory_bus,
+                should_use_ram_only_bus,
+            )
+
+            if should_use_ram_only_bus(original, candidate, memory_bus_obj):
+                memory_bus_obj = ram_only_memory_bus(memory_bus_obj)
+                ram_only_projection = True
         if memory_bus_obj is not None:
             bus_spec = memory_bus_obj.specification
             memory_bus_identity = {
@@ -1411,6 +1570,17 @@ def _prove_bytes(
                 "hardware_profile": memory_bus_obj.hardware_profile_name,
                 "hardware_profile_sha256": memory_bus_obj.hardware_profile_sha256,
             }
+            if ram_only_projection:
+                memory_bus_identity["ram_only_projection"] = True
+
+    initial_gpr_ranges: dict[int, tuple[int, int]] | None = None
+    if project is not None:
+        from tools.coop.lib.config import object_base_mem1_enabled
+
+        if object_base_mem1_enabled(project.config):
+            from tools.ppc_equivalence.object_base import mem1_gpr_ranges
+
+            initial_gpr_ranges = mem1_gpr_ranges(profile=platform_profile_obj)
 
     raw_fp = floating_point_domain
     if raw_fp is None and project is not None:
@@ -1432,6 +1602,13 @@ def _prove_bytes(
         fp_domain_dict = dict(fp_domain_dict)
         fp_domain_dict.setdefault("fp_oracle_version", FP_ORACLE_VERSION)
 
+    # H3: derive per-callee attested trust bindings from the re-attested certified
+    # context. These digests (certificate / summary / body) bind the caller's
+    # cache + proof-request identity to the exact callee certificates trusted at
+    # prove time. Standalone / non-registry proofs (no certified context) omit
+    # this and stay explicit non-certifying.
+    certified_callee_digests = _certified_callee_digests(certified_context)
+
     memory_loop_readonly_identity = None
     if memory_loop_readonly_words is not None:
         from tools.ppc_equivalence.memory_loop_readonly import (
@@ -1451,6 +1628,7 @@ def _prove_bytes(
         candidate_local_symbol=candidate_local_symbol,
         assumed_callees=assumed_callees,
         callee_contracts=callee_contracts,
+        certified_callee_digests=certified_callee_digests,
         certificate_target_id=certificate_target_id,
         memory_environment=memory_environment,
         floating_point_domain=fp_domain_dict,
@@ -1465,6 +1643,13 @@ def _prove_bytes(
         memory_loop_readonly=memory_loop_readonly_identity,
         platform_profile_sha256=platform_profile_sha256,
         memory_bus=memory_bus_identity,
+        abi_shape=abi_shape_payload,
+        initial_gpr_ranges=(
+            {str(reg): [lo, hi] for reg, (lo, hi) in initial_gpr_ranges.items()}
+            if initial_gpr_ranges
+            else None
+        ),
+        ram_only_projection=ram_only_projection,
     )
 
     cache_d = _cache_dir(project)
@@ -1534,6 +1719,7 @@ def _prove_bytes(
             str(name): contract.source
             for name, contract in (callee_contracts or {}).items()
         },
+        certified_callee_digests=certified_callee_digests,
         original_base=orig_base,
         candidate_base=cand_base,
         original_relocations=_reloc_tuples(original_relocations),
@@ -1559,6 +1745,7 @@ def _prove_bytes(
         assumed_callees_used=callees_used,
         callee_contracts=callee_contracts,
         initial_gpr_bindings=initial_gpr_bindings,
+        initial_gpr_ranges=initial_gpr_ranges,
         memory_environment=mem_env,
         source_hash=source_hash,
         floating_point_domain=fp_domain,
@@ -1582,6 +1769,20 @@ def _prove_bytes(
         detail = "auto contract: ppc-eabi"
         if added:
             detail += " + " + ", ".join(str(item) for item in added)
+        shape = result.contract_resolution.get("abi_shape")
+        if isinstance(shape, dict) and shape.get("source"):
+            detail += f"; abi_shape: {shape['source']}"
+    if ram_only_projection:
+        note = "ram-only-bus-projection"
+        detail = f"{detail}; {note}" if detail else note
+    if initial_gpr_ranges:
+        from tools.ppc_equivalence.object_base import format_object_base_assumption
+
+        range_notes = ", ".join(
+            format_object_base_assumption(reg, lo, hi)
+            for reg, (lo, hi) in sorted(initial_gpr_ranges.items())
+        )
+        detail = f"{detail}; {range_notes}" if detail else range_notes
     if result.unsupported:
         detail = "; ".join(result.unsupported)
     elif result.mismatch:
@@ -1801,6 +2002,7 @@ def certify_unit_symbol(
             callee_contract_sources={
                 str(name): contract.source for name, contract in contracts.items()
             },
+            certified_callee_digests=_certified_callee_digests(context),
             original_base=left.base,
             candidate_base=right.base,
             certificate_target_id=target_id,

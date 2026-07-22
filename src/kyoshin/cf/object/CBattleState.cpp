@@ -1862,13 +1862,13 @@ F_slot_done:
 extern "C" void func_80145C00() {}
 // LLM-HARNESS-END: us-80146604
 // LLM-HARNESS-BEGIN: us-801467c0
-extern "C" void func_80145DBC() {}
+extern "C" bool func_80145DBC(int value) { int result; switch (value) { case 2: case 3: case 39: case 51: case 52: case 54: case 68: case 69: case 88: case 89: case 90: case 91: case 92: case 95: case 147: case 206: case 207: case 208: case 209: case 210: case 211: case 236: case 247: case 286: case 301: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 42: case 43: case 60: case 61: case 82: case 83: case 84: case 85: case 86: case 87: case 101: case 102: case 103: case 104: case 105: case 220: case 223: case 224: case 225: case 226: case 279: result = 1; break; case 234: case 237: case 238: case 239: case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 256: case 257: case 258: case 262: case 265: case 266: case 267: case 268: case 273: case 274: case 275: case 276: case 277: case 278: result = 3; break; default: result = 2; break; } return result == 1; }
 // LLM-HARNESS-END: us-801467c0
 // LLM-HARNESS-BEGIN: us-8014697c
 extern "C" void func_80145F78() {}
 // LLM-HARNESS-END: us-8014697c
 // LLM-HARNESS-BEGIN: us-80146b4c
-extern "C" void func_80146148() {}
+extern "C" bool func_80146148(int value) { int result; switch (value) { case 2: case 3: case 0x27: case 0x33: case 0x34: case 0x36: case 0x44: case 0x45: case 0x58: case 0x59: case 0x5a: case 0x5b: case 0x5c: case 0x5f: case 0x93: case 0xce: case 0xcf: case 0xd0: case 0xd1: case 0xd2: case 0xd3: case 0xec: case 0xf7: case 0x11e: case 0x12d: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 0x2a: case 0x2b: case 0x3c: case 0x3d: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0xdc: case 0xdf: case 0xe0: case 0xe1: case 0xe2: case 0x117: result = 1; break; case 0xea: case 0xed: case 0xee: case 0xef: case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0x100: case 0x101: case 0x102: case 0x106: case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x111: case 0x112: case 0x113: case 0x114: case 0x115: case 0x116: result = 3; break; default: result = 2; break; } return result == 0; }
 // LLM-HARNESS-END: us-80146b4c
 // LLM-HARNESS-BEGIN: us-80146d88
 extern "C" bool func_80146384(unsigned int value) { return value - 0x125u <= 5u; }
@@ -1906,10 +1906,21 @@ extern "C" void CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv() {}
 extern "C" void func_801490A0() {}
 // LLM-HARNESS-END: us-80149aa4
 // LLM-HARNESS-BEGIN: us-80149b58
-extern "C" void func_80149154() {}
+extern "C" void* func_80149154(void* self, unsigned int id) {
+    if (id >= 0x12Fu)
+        return 0;
+
+    unsigned char* entry = reinterpret_cast<unsigned char*>(self);
+    for (unsigned int i = 0; i < 0x68u; ++i) {
+        if (id == *reinterpret_cast<unsigned short*>(entry + 0x14u))
+            return reinterpret_cast<unsigned char*>(self) + i * 0x34u + 8u;
+        entry += 0x34u;
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-80149b58
 // LLM-HARNESS-BEGIN: us-80149ba8
-extern "C" void func_801491A4() {}
+extern "C" void* func_801491A4(void* self, unsigned int id) { if (id >= 0x12f) return 0; unsigned char* base = static_cast<unsigned char*>(self); unsigned char* entry = base; for (unsigned int i = 0; i < 0x68; ++i) { if (id == *reinterpret_cast<unsigned short*>(entry + 0x14)) return base + i * 0x34 + 0x8; entry += 0x34; } return 0; }
 // LLM-HARNESS-END: us-80149ba8
 // LLM-HARNESS-BEGIN: us-80149bf8
 extern "C" void func_801491F4() {}

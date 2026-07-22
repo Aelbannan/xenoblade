@@ -147,7 +147,33 @@ extern "C" bool func_800433A8() { return true; }
 extern "C" void func_800433B0(void* self, bool enabled, unsigned int mode) { unsigned int& flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68); flags &= ~0x100u; if (enabled) flags |= 0x200u; else flags &= ~0x200u; if (!enabled) { if (mode == 1u) flags |= 0x20000u; else if (mode == 2u) flags |= 0x40000u; } }
 // LLM-HARNESS-END: us-80043928
 // LLM-HARNESS-BEGIN: us-80043988
-extern "C" void func_80043410() {}
+extern "C" void func_80043410(void* self, int enabled, unsigned int mode, unsigned int value) {
+    volatile unsigned int* flags_ptr = reinterpret_cast<volatile unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68);
+    unsigned int flags = *flags_ptr;
+    flags &= ~0x100u;
+    *flags_ptr = flags;
+    if (enabled != 0) {
+        flags |= 0x400u;
+        *flags_ptr = flags;
+    } else {
+        flags &= ~0x400u;
+        *flags_ptr = flags;
+    }
+    if (enabled != 0)
+        return;
+    if (mode == 0) {
+        flags = *flags_ptr;
+        flags |= 0x4000u;
+        *flags_ptr = flags;
+        return;
+    }
+    if (mode != 5 && mode != 3)
+        return;
+    flags = *flags_ptr;
+    *reinterpret_cast<volatile unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0xfc) = value;
+    flags |= 0x8000u;
+    *flags_ptr = flags;
+}
 // LLM-HARNESS-END: us-80043988
 // LLM-HARNESS-BEGIN: us-800439f4
 extern "C" void func_8004347C(void* this_, int arg1, int arg2, unsigned int arg3) { unsigned int flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68); flags &= ~0x00000100u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; if (arg1 != 0) { flags |= 0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } else { flags &= ~0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0xfc) = arg3; }
@@ -178,7 +204,7 @@ extern "C" void func_80043628() {
 extern "C" void func_8004368C__9CTaskGameFv() {}
 // LLM-HARNESS-END: us-80043c08
 // LLM-HARNESS-BEGIN: us-80043c70
-extern "C" void func_800436F4() {}
+extern "C" void func_800436F4(void* self, int value) { unsigned int& flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68); if ((flags & 0x2000) != 0 && value == 1) return; void* object = *reinterpret_cast<void**>(reinterpret_cast<unsigned char*>(self) + 0xf0); *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(self) + 0xf4) = value; flags |= 0x1000; if (object != 0) *reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(object) + 0xea) = 1; }
 // LLM-HARNESS-END: us-80043c70
 // LLM-HARNESS-BEGIN: us-80043cac
 extern "C" void func_80043730(void* obj, int val) {
@@ -189,7 +215,12 @@ extern "C" void func_80043730(void* obj, int val) {
 extern "C" void func_80043BA4() {}
 // LLM-HARNESS-END: us-80044140
 // LLM-HARNESS-BEGIN: us-80044304
-extern "C" void func_80043D68() {}
+extern "C" bool func_80043D68() {
+    extern void* lbl_eu_80663D18;
+    if (lbl_eu_80663D18 == 0) return false;
+    unsigned int value = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(lbl_eu_80663D18) + 0xd8);
+    return value != 0xffffffffu;
+}
 // LLM-HARNESS-END: us-80044304
 // LLM-HARNESS-BEGIN: us-800444b4
 extern "C" u32 func_80043F18(void *ptr) { return *(u32 *)ptr; }

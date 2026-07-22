@@ -185,6 +185,37 @@ class ProvenanceHashTests(unittest.TestCase):
         )
         self.assertNotEqual(first, changed)
 
+    def test_proof_request_hash_binds_certified_callee_digests(self):
+        from tools.ppc_equivalence.provenance import proof_request_hash
+
+        base = dict(
+            original_hex="aa",
+            candidate_hex="bb",
+            contract="ppc-eabi",
+            assumed_callees=["leaf"],
+            callee_contract_sources={"leaf": "certified:" + "a" * 64},
+        )
+        without = proof_request_hash(**base)
+        with_digests = proof_request_hash(
+            **base,
+            certified_callee_digests={
+                "leaf": {"certificate_sha256": "a" * 64, "summary_sha256": "b" * 64},
+            },
+        )
+        self.assertNotEqual(without, with_digests)
+        changed_summary = proof_request_hash(
+            **base,
+            certified_callee_digests={
+                "leaf": {"certificate_sha256": "a" * 64, "summary_sha256": "c" * 64},
+            },
+        )
+        self.assertNotEqual(with_digests, changed_summary)
+        # Empty mapping is a no-op (keeps callee-free identity).
+        self.assertEqual(
+            without,
+            proof_request_hash(**base, certified_callee_digests={}),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -937,6 +937,87 @@ def jump_table_gate_reason(
     )
 
 
+# Exit-kind strings emitted by ``semantics.execute_cfg`` for a ``bcctr`` /
+# ``bclr`` whose target the engine did not resolve into the CFG.
+UNRESOLVED_INDIRECT_EXIT_KINDS = frozenset({"indirect-branch", "call-indirect"})
+
+
+def _side_has_unresolved_indirect_exit(terminals: Sequence[Any]) -> bool:
+    return any(
+        getattr(terminal, "exit_kind", None) in UNRESOLVED_INDIRECT_EXIT_KINDS
+        for terminal in terminals
+    )
+
+
+def _is_input_derived_virtual_thunk(
+    original: Sequence[Instruction],
+    candidate: Sequence[Instruction],
+) -> bool:
+    """True when both sides are a single matching MWCC virtual thunk.
+
+    A virtual thunk branches to a CTR value loaded from the shared ``this``
+    object (a proof input), so both sides provably transfer to the same
+    ``exit.target`` without any per-binary static-address assumption (see the
+    exit-kind ABI filter in ``SOUNDNESS.md``). Such tail thunks are sound
+    without a ``JumpTableProofContext``; this mirrors the acceptance shape used
+    by ``vtable_obligations.try_auto_virtual_thunk_context`` (exactly one match
+    per side, equal slot offset).
+    """
+    from tools.ppc_equivalence.vtable import find_virtual_thunk_candidates
+
+    left = find_virtual_thunk_candidates(original)
+    right = find_virtual_thunk_candidates(candidate)
+    if len(left) != 1 or len(right) != 1:
+        return False
+    return left[0].slot_offset == right[0].slot_offset
+
+
+def unresolved_indirect_exit_gate_reason(
+    original_exits: Sequence[Any],
+    candidate_exits: Sequence[Any],
+    *,
+    original: Sequence[Instruction] | None = None,
+    candidate: Sequence[Instruction] | None = None,
+) -> str | None:
+    """Fail-closed reason for any unresolved indirect-branch / call-indirect exit.
+
+    Broader than :func:`jump_table_gate_reason`: it fires on the *actual*
+    terminal ``exit_kind`` emitted by ``semantics.execute_cfg`` rather than on
+    the canonical ``cmplwi`` / ``lwzx`` / ``mtctr`` / ``bctr`` shape, so
+    non-canonical dispatchers (for example a ``bcctr`` with no adjacent
+    ``lwzx``) also fail closed unless a discharged ``JumpTableProofContext`` /
+    ``VirtualCallProofContext`` expanded and covered the enumerated targets.
+    Shared unconstrained memory could otherwise make two such functions look
+    ``EQUIVALENT`` without an immutable image or indirect-target closure.
+
+    Input-derived MWCC virtual thunks are exempt: both sides branch to a CTR
+    value loaded from the shared ``this`` object and ``exit.target`` is compared
+    for equality, which is sound without a proof context. Callers pass the
+    decoded instruction sequences via ``original`` / ``candidate`` to enable the
+    exemption; when omitted the check is purely terminal-based (fail-closed).
+    """
+    original_hit = _side_has_unresolved_indirect_exit(original_exits)
+    candidate_hit = _side_has_unresolved_indirect_exit(candidate_exits)
+    if not original_hit and not candidate_hit:
+        return None
+    if (
+        original is not None
+        and candidate is not None
+        and _is_input_derived_virtual_thunk(original, candidate)
+    ):
+        return None
+    sides: list[str] = []
+    if original_hit:
+        sides.append("original")
+    if candidate_hit:
+        sides.append("candidate")
+    return (
+        "unresolved indirect-branch/call-indirect exit requires "
+        "indirect-target-closure obligations before EQUIVALENT "
+        f"({', '.join(sides)})"
+    )
+
+
 def summarize_candidates(candidates: Sequence[JumpTableCandidate]) -> list[dict[str, Any]]:
     return [
         {

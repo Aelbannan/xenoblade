@@ -63,6 +63,16 @@ class CoopConfig:
     # and threaded through ``check_equivalence(..., memory_bus=)``.
     hardware_profile: str | None = None
     floating_point_domain: dict[str, Any] | None = None
+    # Opt-in object-base MEM1: constrain symbolic GPRs (esp. r3) into MEM1 /
+    # profile RAM so ordinary member-access proofs avoid mixed RAM/MMIO space.
+    object_base_mem1: bool = False
+    # When neither original nor candidate can form MMIO addresses via
+    # immediates/literals, strip MMIO regions/devices from the memory bus.
+    ram_only_when_no_mmio: bool = False
+    # Opt-in AbiShape inference (narrow r4/f1 observation when evidence is
+    # strong: simple vtable dispatch without r4/f1, or MWCC ``Fv`` symbol).
+    # Default off — fail-closed to today's full ppc-eabi observation.
+    abi_shape_inference: bool = False
     capability_manifest_path: Path = Path("tools/coop/capability_manifest.json")
     allowed_tier_a_capabilities: dict[str, tuple[str, ...]] = field(default_factory=dict)
     capability_assurance_shadow_mode: bool = True
@@ -236,6 +246,9 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             if isinstance(data.get("floating_point_domain"), dict)
             else None
         ),
+        object_base_mem1=bool(data.get("object_base_mem1", False)),
+        ram_only_when_no_mmio=bool(data.get("ram_only_when_no_mmio", False)),
+        abi_shape_inference=bool(data.get("abi_shape_inference", False)),
         capability_manifest_path=capability_manifest_path,
         allowed_tier_a_capabilities=allowed_tier_a,
         capability_assurance_shadow_mode=bool(shadow_mode),
@@ -337,6 +350,21 @@ def memory_environment_from_config(config: CoopConfig) -> dict[str, Any] | None:
         ranges=ranges,
     )
     return env.to_dict()
+
+
+def object_base_mem1_enabled(config: CoopConfig) -> bool:
+    """Return True when coop should constrain object-base GPRs into MEM1/RAM."""
+    return bool(config.object_base_mem1)
+
+
+def ram_only_when_no_mmio_enabled(config: CoopConfig) -> bool:
+    """Return True when coop may strip MMIO from the bus for RAM-only probes."""
+    return bool(config.ram_only_when_no_mmio)
+
+
+def abi_shape_inference_enabled(config: CoopConfig) -> bool:
+    """Return True when coop should infer and attach a narrowed ``AbiShape``."""
+    return bool(config.abi_shape_inference)
 
 
 def _optional_path(value: Any) -> Optional[Path]:

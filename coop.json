@@ -20,6 +20,10 @@
   "capability_assurance_shadow_mode": false,
   "require_capability_assurance": true,
   "hardware_profile": "wii-broadway-xenoblade-us-v2",
+  "platform_profile": "xenoblade-us-retail-v1",
+  "abi_shape_inference": true,
+  "object_base_mem1": true,
+  "ram_only_when_no_mmio": true,
   "reject_architecture_models": [
     "broadway-ppc32-be-v18",
     "broadway-ppc32-be-v19",

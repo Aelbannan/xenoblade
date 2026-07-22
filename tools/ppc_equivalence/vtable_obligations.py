@@ -480,8 +480,9 @@ def try_auto_virtual_thunk_context(
     fail-closed rule as :func:`try_auto_virtual_call_context`).
 
     Important: unlike ``bctrl`` virtual calls, bare thunks are **not** gated
-    when this returns ``None``. Symbolic CTR equality plus the
-    ``indirect-branch`` ABI filter is enough for same-offset thunks.
+    when this returns ``None``. Symbolic CTR equality plus full-contract
+    observable comparison (including live outgoing ``r4``/``f1``) is enough
+    for same-offset thunks that preserve argument registers.
     """
     del original_dol_path, candidate_elf_path  # reserved for future image chase
     left = find_virtual_thunk_candidates(original)

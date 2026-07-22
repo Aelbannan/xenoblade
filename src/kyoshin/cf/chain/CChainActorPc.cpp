@@ -11,7 +11,7 @@ extern "C" int func_80282048(int arg) {
 }
 // LLM-HARNESS-END: us-802844cc
 // LLM-HARNESS-BEGIN: us-802845f8
-extern "C" void func_80282174() {}
+extern "C" int func_80282174(void* self) { int value = *reinterpret_cast<unsigned short*>(*reinterpret_cast<unsigned char**>(self) + 0x3f28); if (value == 8) return 3; if (value == 9) return 8; if (value == 10) return 9; if (value == 11) return 10; if (value == 12) return 11; if (value == 13) return 12; return value; }
 // LLM-HARNESS-END: us-802845f8
 // LLM-HARNESS-BEGIN: us-802848e0
 extern "C" bool func_802A0AA0(void*);

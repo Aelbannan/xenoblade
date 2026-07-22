@@ -345,21 +345,122 @@ def apply_fpscr_transition_with_mcrfs(
 
 
 def fpscr_sticky_modeling_status() -> dict[str, bool]:
-    """Phase 4 capability surface for promotion / status reporting."""
+    """Capability surface for promotion / status reporting.
+
+    SymbolicOps does not fully SMT-model OX/UX/XX latching (SOUNDNESS.md).
+    ConcreteOps / SoftFloat and the opt-in exact-v2 path cover more bits, but
+    EQUIVALENT authorization uses SymbolicOps — report incompleteness honestly.
+    """
     return {
-        "ox": True,
-        "ux": True,
+        "ox": False,
+        "ux": False,
         "zx": True,
-        "xx": True,
+        "xx": False,
         "vx": True,
-        "vx_subcauses_complete": True,
-        "fx": True,
-        "fex": True,
-        "fi": True,
-        "fr": True,
-        "fprf": True,
+        "vx_subcauses_complete": False,
+        "fx": False,
+        "fex": False,
+        "fi": False,
+        "fr": False,
+        "fprf": False,
         "enable_ve_ze_oe_ue_xe": True,
-        "sticky_preservation_complete": True,
+        "sticky_preservation_complete": False,
         "mtfs_normalization": True,
         "mcrfs_selective_clear": True,
     }
+
+
+# Assumption tag recorded on EQUIVALENT proofs that compare ``fpscr`` while the
+# SymbolicOps path leaves OX/UX/XX stickies unmodeled (see SOUNDNESS.md).
+FPSCR_SYMBOLIC_STICKIES_ASSUMPTION = "fpscr-symbolic-stickies-incomplete"
+
+
+def symbolic_fpscr_stickies_incomplete() -> bool:
+    """True when the default SymbolicOps path leaves OX/UX/XX stickies unmodeled."""
+    status = fpscr_sticky_modeling_status()
+    return not (status["ox"] and status["ux"] and status["xx"])
+
+
+FPSCR_STICKIES_UNSUPPORTED = (
+    "fpscr compared after FP arithmetic but SymbolicOps leaves OX/UX/XX "
+    f"stickies unmodeled ({FPSCR_SYMBOLIC_STICKIES_ASSUMPTION}); "
+    "fail closed — cannot authorize EQUIVALENT"
+)
+
+
+def annotate_fpscr_sticky_incompleteness(
+    result: Any,
+    *,
+    identical_implementations: bool = False,
+) -> None:
+    """Fail closed when ``fpscr`` is compared after FP arithmetic under SymbolicOps.
+
+    SymbolicOps does not SMT-model OX/UX/XX sticky latching. An ``unsat``
+    divergence query over ``fpscr`` can therefore report EQUIVALENT while
+    hardware stickies diverge (for example, clearing XX after an inexact
+    ``fdivs``). When ``fpscr`` is among the compared observables and a
+    non-bitwise FP opcode was used on *differing* implementations, demote
+    EQUIVALENT to ``INCONCLUSIVE_ABSTRACTION``. Byte-identical implementations
+    keep EQUIVALENT (same code ⇒ same hardware stickies) but still record the
+    incompleteness assumption for triage. FP-bitwise-only proofs
+    (``fmr``/``fabs``/``fneg``/``fnabs``) never touch stickies and are skipped.
+
+    Idempotent. Safe to call on any result; no-ops unless the proof is still
+    EQUIVALENT and actually compared ``fpscr`` after FP arithmetic.
+    """
+    if getattr(result, "status", None) is None:
+        return
+    # Duck-typed EQUIVALENT check (avoid importing ProofStatus at module load).
+    status = result.status
+    status_value = getattr(status, "value", status)
+    if status_value != "equivalent":
+        return
+    observables = getattr(result, "observables", None) or []
+    if "fpscr" not in {str(item) for item in observables}:
+        return
+    if not symbolic_fpscr_stickies_incomplete():
+        return
+
+    from tools.ppc_equivalence.fp_bitwise import FP_BITWISE_OPS, fp_opcodes_among
+    from tools.ppc_equivalence.result import ProofStatus
+
+    fp_ops = fp_opcodes_among(getattr(result, "opcodes_used", None) or [])
+    # Only arithmetic-ish FP touches OX/UX/XX; pure bitwise sign ops do not.
+    if not (fp_ops - FP_BITWISE_OPS):
+        return
+
+    assumptions = list(getattr(result, "assumptions", None) or [])
+    if FPSCR_SYMBOLIC_STICKIES_ASSUMPTION not in assumptions:
+        assumptions.append(FPSCR_SYMBOLIC_STICKIES_ASSUMPTION)
+        result.assumptions = assumptions
+
+    if identical_implementations:
+        # Same bytes cannot diverge on unmodeled stickies; keep EQUIVALENT.
+        warning = (
+            "fpscr compared after FP arithmetic; SymbolicOps leaves OX/UX/XX "
+            f"stickies unmodeled ({FPSCR_SYMBOLIC_STICKIES_ASSUMPTION}), but "
+            "implementations are byte-identical so EQUIVALENT remains sound"
+        )
+        warnings = list(getattr(result, "warnings", None) or [])
+        if warning not in warnings:
+            warnings.append(warning)
+            result.warnings = warnings
+        return
+
+    warning = FPSCR_STICKIES_UNSUPPORTED
+    warnings = list(getattr(result, "warnings", None) or [])
+    if warning not in warnings:
+        warnings.append(warning)
+        result.warnings = warnings
+
+    unsupported = list(getattr(result, "unsupported", None) or [])
+    if FPSCR_STICKIES_UNSUPPORTED not in unsupported:
+        unsupported.append(FPSCR_STICKIES_UNSUPPORTED)
+        result.unsupported = unsupported
+
+    abstractions = list(getattr(result, "abstractions", None) or [])
+    if "fpscr-symbolic-stickies-unmodeled" not in abstractions:
+        abstractions.append("fpscr-symbolic-stickies-unmodeled")
+        result.abstractions = abstractions
+
+    result.status = ProofStatus.INCONCLUSIVE_ABSTRACTION

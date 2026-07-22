@@ -535,6 +535,57 @@ class CacheInvalidationTests(unittest.TestCase):
         )
         self.assertNotEqual(left, right)
 
+    def test_cache_key_binds_certified_callee_digests(self) -> None:
+        """H3: a change to any callee certificate/summary digest busts the
+        caller's cache identity; absence keeps legacy (callee-free) identity."""
+        from tools.coop.lib.equivalence_check import _cache_key
+
+        common = dict(
+            contract_name="auto",
+            observables=("r3",),
+            original_hex="48000001",
+            candidate_hex="48000001",
+            original_base=0x80000000,
+            candidate_base=0x80000000,
+        )
+        base = _cache_key(**common)
+        bound = _cache_key(
+            **common,
+            certified_callee_digests={
+                "leaf": {
+                    "certificate_sha256": "a" * 64,
+                    "summary_sha256": "b" * 64,
+                    "body_sha256": "c" * 64,
+                },
+            },
+        )
+        changed_cert = _cache_key(
+            **common,
+            certified_callee_digests={
+                "leaf": {
+                    "certificate_sha256": "d" * 64,
+                    "summary_sha256": "b" * 64,
+                    "body_sha256": "c" * 64,
+                },
+            },
+        )
+        changed_summary = _cache_key(
+            **common,
+            certified_callee_digests={
+                "leaf": {
+                    "certificate_sha256": "a" * 64,
+                    "summary_sha256": "e" * 64,
+                    "body_sha256": "c" * 64,
+                },
+            },
+        )
+        self.assertNotEqual(base, bound)
+        self.assertNotEqual(bound, changed_cert)
+        self.assertNotEqual(bound, changed_summary)
+        # None / empty leaves existing (standalone) identity unchanged.
+        self.assertEqual(base, _cache_key(**common, certified_callee_digests=None))
+        self.assertEqual(base, _cache_key(**common, certified_callee_digests={}))
+
 
 if __name__ == "__main__":
     unittest.main()

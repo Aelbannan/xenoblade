@@ -434,6 +434,88 @@ class XenobladeAdapter:
             equivalence_status=evaluation.get("equivalence"),
         )
 
+    def certify_web_promotion(self, target_id: str, evaluation: Dict[str, Any]) -> None:
+        """Rebuild + certify FULL_MATCH / EQUIVALENT_MATCH after a web-batch promote.
+
+        For EQUIVALENT_MATCH, requires a current equivalence certificate before the
+        registry row is treated as accepted. Falls back to ``record_auto_promotion``
+        + ``run_auto_promote_cycle`` when certification cannot run.
+        """
+        status = str(evaluation.get("status") or "").upper()
+        target = self._any_target(target_id)
+        if target.unit is None or target.symbol is None:
+            self.record_auto_promotion(target_id, evaluation)
+            self.run_auto_promote_cycle(target_id, evaluation)
+            return
+        unit = self.project.resolve_unit(target.unit)
+        if unit.base_path is None:
+            self.record_auto_promotion(target_id, evaluation)
+            self.run_auto_promote_cycle(target_id, evaluation)
+            return
+        build_error = self._build_object(unit.base_path)
+        if build_error:
+            raise ValueError(f"post-promote rebuild failed: {build_error}")
+        try:
+            certified = evaluate_unit_match(
+                self.project,
+                unit,
+                target.symbol,
+                target_id=target.id,
+                certify_full_match=True,
+                phase_timer=self._phase_timer(),
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError, ValueError) as exc:
+            raise ValueError(f"post-promote certification failed: {exc}") from exc
+
+        match_percent = (
+            certified.fn_match.match_percent
+            if certified.fn_match
+            else certified.unit_report.fuzzy_match_percent
+        )
+        cert_status = certified.status
+        certificate = certified.equivalence_certificate
+        if cert_status == "FULL_MATCH":
+            update_target_result(
+                self.config,
+                target_id,
+                status="FULL_MATCH",
+                instruction_match=float(match_percent or 0.0),
+                equivalence_status=certified.equivalence.value if certified.equivalence else None,
+                equivalence_certificate=None,
+                certificate_checked=False,
+            )
+            return
+        if cert_status == "EQUIVALENT_MATCH":
+            if certificate is None or certified.equivalence != ProofStatus.EQUIVALENT:
+                raise ValueError(
+                    "EQUIVALENT_MATCH promotion lacks a current equivalence certificate"
+                )
+            rows_by_id = {
+                item.id: {"id": item.id, **item.extra} for item in load_targets(self.config)
+            }
+            trial = dict(rows_by_id.get(target_id) or {"id": target_id})
+            trial["status"] = "EQUIVALENT_MATCH"
+            trial["equivalence_certificate"] = certificate
+            cert_error = equivalence_certificate_error(trial, rows_by_id)
+            if cert_error is not None:
+                raise ValueError(f"certificate rejected: {cert_error}")
+            update_target_result(
+                self.config,
+                target_id,
+                status="EQUIVALENT_MATCH",
+                instruction_match=float(match_percent or 0.0),
+                equivalence_status=certified.equivalence.value if certified.equivalence else None,
+                equivalence_certificate=certificate,
+                certificate_checked=True,
+            )
+            return
+        # Canonical re-eval did not accept — leave registry update to cycle fallback
+        # but surface the mismatch so promote_external_accepted can roll back via exception.
+        raise ValueError(
+            f"post-promote certification status={cert_status} "
+            f"(expected FULL_MATCH or EQUIVALENT_MATCH; isolated had {status})"
+        )
+
     def run_auto_promote_cycle(
         self, target_id: str, evaluation: Dict[str, Any]
     ) -> None:
@@ -927,6 +1009,156 @@ class XenobladeAdapter:
 
         candidates.sort(key=sort_key)
         return [target.id for target in candidates]
+
+    def web_batch_candidates(
+        self,
+        *,
+        selection: str = "ready",
+        certified_funcs: bool = True,
+        tu: Optional[str] = None,
+        randomize: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """Metadata rows for ChatGPT Web batch packing / export.
+
+        Uses the same ready/certified non-accepted frontier as solve selection,
+        plus retail size and call-graph fields needed for difficulty scoring.
+        """
+        from .promotion import PlaceholderDetector
+
+        source_cache: Dict[Path, str] = {}
+        units = self.project.load_objdiff_units()
+        unit_by_hint = {
+            hint: unit
+            for unit in units
+            for hint in {unit.name, unit.name.removeprefix("main/")}
+        }
+        retail_sizes: Dict[str, int] = {}
+        raw_targets = load_targets(self.config)
+        by_id = {target.id: target for target in raw_targets}
+        candidate_ids = self._non_accepted_candidates(
+            certified_funcs=certified_funcs, tu=tu, selection=selection
+        )
+        # Also include NOT_STARTED placeholders from the same frontier that the
+        # mismatch filter may skip when decomp already matches retail bytes
+        # incorrectly, or when no decomp symbol exists yet — re-query via
+        # harness_targets and keep buildable functions with a source region.
+        frontier_ids = {
+            target.id
+            for target in harness_targets(
+                raw_targets, selection=selection, include_catalog=True
+            )
+        }
+        ordered_ids = list(candidate_ids)
+        seen = set(ordered_ids)
+        for target in harness_targets(
+            raw_targets, selection=selection, include_catalog=True
+        ):
+            if target.id in seen:
+                continue
+            if (
+                not target.buildable
+                or not target.symbol
+                or target.source is None
+                or not target.source.is_file()
+                or not target.unit
+            ):
+                continue
+            if tu is not None and not _unit_matches(target.unit, tu):
+                continue
+            if target.status in ACCEPTED_MATCH_STATUSES:
+                # Skip certified accepted; keep stale EQUIVALENT for export.
+                if target.status == "FULL_MATCH":
+                    continue
+                rows_by_id = {
+                    item.id: {"id": item.id, **item.extra} for item in raw_targets
+                }
+                if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:
+                    continue
+            source = source_cache.get(target.source)
+            if source is None:
+                try:
+                    source = target.source.read_text(encoding="utf-8")
+                except OSError:
+                    continue
+                source_cache[target.source] = source
+            try:
+                _find_function_region(source, target)
+            except (OSError, ValueError):
+                continue
+            ordered_ids.append(target.id)
+            seen.add(target.id)
+
+        if certified_funcs:
+            filtered = self._filter_certified_funcs(
+                raw_targets, [by_id[tid] for tid in ordered_ids if tid in by_id]
+            )
+            allowed = {target.id for target in filtered}
+            ordered_ids = [tid for tid in ordered_ids if tid in allowed]
+
+        detector = PlaceholderDetector()
+        rows: List[Dict[str, Any]] = []
+        for target_id in ordered_ids:
+            target = by_id.get(target_id)
+            if target is None or target.source is None:
+                continue
+            unit = unit_by_hint.get(target.unit or "")
+            retail_text_size = retail_sizes.get(target_id, 0)
+            if unit is not None and unit.target_path is not None and unit.target_path.is_file():
+                try:
+                    retail = extract_function(unit.target_path, target.symbol or "")
+                    retail_text_size = int(getattr(retail, "size", 0) or 0)
+                    retail_sizes[target_id] = retail_text_size
+                except (OSError, ValueError):
+                    retail_text_size = 0
+            source = source_cache.get(target.source)
+            if source is None:
+                try:
+                    source = target.source.read_text(encoding="utf-8")
+                except OSError:
+                    continue
+                source_cache[target.source] = source
+            try:
+                region = _find_function_region(source, target)
+            except (OSError, ValueError):
+                continue
+            body = source[region.content_start : region.content_end]
+            workflow = "new" if detector.is_placeholder(body) else "improve"
+            called = list(target.extra.get("called_functions", []) or [])
+            unresolved = list(target.extra.get("unresolved_called_functions", []) or [])
+            try:
+                source_path = str(target.source.relative_to(self.root))
+            except ValueError:
+                source_path = str(target.source)
+            match = target.extra.get("instruction_match")
+            rows.append(
+                {
+                    "target_id": target.id,
+                    "unit": target.unit or "",
+                    "symbol": target.symbol or "",
+                    "source_path": source_path,
+                    "status": target.status,
+                    "instruction_match": float(match) if match is not None else None,
+                    "frontier_kind": self._frontier_kind(target),
+                    "retail_text_size": retail_text_size,
+                    "retail_instruction_count": max(1, (retail_text_size + 3) // 4)
+                    if retail_text_size
+                    else 1,
+                    "direct_call_count": len(called),
+                    "unresolved_call_count": len(unresolved),
+                    "has_indirect_calls": bool(target.extra.get("has_indirect_calls")),
+                    "tier": target.tier,
+                    "workflow": workflow,
+                    "in_frontier": target.id in frontier_ids,
+                    "branch_count": target.extra.get("branch_count"),
+                    "basic_block_count": target.extra.get("basic_block_count"),
+                    "loop_count": target.extra.get("loop_count"),
+                    "jump_table_count": target.extra.get("jump_table_count"),
+                }
+            )
+
+        if randomize:
+            random.shuffle(rows)
+        return rows
 
     def _improve_candidates(
         self,

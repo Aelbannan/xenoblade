@@ -266,6 +266,48 @@ class ClassifyForPromotionTests(unittest.TestCase):
             "A",
         )
 
+    def test_certified_callee_keeps_tier_b(self) -> None:
+        # H3: attested callees (certified:<sha>) may reach Tier B, never Tier A.
+        proof = _equivalent_proof(
+            assumed_callees=["leaf"],
+            callee_contracts={"leaf": {"source": "certified:" + "a" * 64}},
+        )
+        self.assertEqual(compute_confidence_tier(proof, _open_ledger()), "B")
+
+    def test_fixed_eabi_helper_callee_keeps_tier_b(self) -> None:
+        proof = _equivalent_proof(
+            assumed_callees=["_savegpr_14"],
+            callee_contracts={
+                "_savegpr_14": {
+                    "source": "fixed-eabi-runtime-helper:_savegpr_14",
+                },
+            },
+        )
+        self.assertEqual(compute_confidence_tier(proof, _open_ledger()), "B")
+
+    def test_opaque_callee_demotes_to_tier_c(self) -> None:
+        # H3: opaque EABI callees are not independently verified → Tier C.
+        proof = _equivalent_proof(
+            assumed_callees=["leaf"],
+            callee_contracts={"leaf": {"source": "opaque-eabi"}},
+        )
+        self.assertEqual(compute_confidence_tier(proof, _open_ledger()), "C")
+
+    def test_inferred_callee_demotes_to_tier_c(self) -> None:
+        proof = _equivalent_proof(
+            assumed_callees=["leaf"],
+            callee_contracts={"leaf": {"source": "inferred:leaf"}},
+        )
+        self.assertEqual(compute_confidence_tier(proof, _open_ledger()), "C")
+
+    def test_missing_callee_contract_fails_closed_tier_c(self) -> None:
+        # H3: an assumed callee without a contract is untrusted (fail closed).
+        proof = _equivalent_proof(
+            assumed_callees=["a", "b"],
+            callee_contracts={"a": {"source": "certified:" + "a" * 64}},
+        )
+        self.assertEqual(compute_confidence_tier(proof, _open_ledger()), "C")
+
     def test_require_bounded_ram_blocks_assumed_and_empty(self) -> None:
         ledger = _open_ledger()
         engine = "a" * 64

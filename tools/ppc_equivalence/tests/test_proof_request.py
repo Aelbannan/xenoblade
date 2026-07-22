@@ -108,6 +108,45 @@ class ProofRequestCanonicalTests(unittest.TestCase):
             cache_key(mutated, engine, certifier),
         )
 
+    def test_cache_key_changes_when_certified_callee_digests_mutate(self) -> None:
+        # H3: callee certificate / summary digests bind into request identity.
+        baseline = _sample_request(
+            certified_callee_digests={
+                "leaf": {"certificate_sha256": "a" * 64, "summary_sha256": "b" * 64},
+            },
+        )
+        changed_cert = _sample_request(
+            certified_callee_digests={
+                "leaf": {"certificate_sha256": "c" * 64, "summary_sha256": "b" * 64},
+            },
+        )
+        changed_summary = _sample_request(
+            certified_callee_digests={
+                "leaf": {"certificate_sha256": "a" * 64, "summary_sha256": "d" * 64},
+            },
+        )
+        engine = "e" * 64
+        certifier = "c" * 64
+        self.assertNotEqual(
+            cache_key(baseline, engine, certifier),
+            cache_key(changed_cert, engine, certifier),
+        )
+        self.assertNotEqual(
+            cache_key(baseline, engine, certifier),
+            cache_key(changed_summary, engine, certifier),
+        )
+        # Absent digests keep the legacy (callee-free) identity unchanged.
+        self.assertEqual(
+            proof_request_hash(_sample_request()),
+            proof_request_hash(
+                _sample_request(certified_callee_digests={}),
+            ),
+        )
+        self.assertNotEqual(
+            proof_request_hash(_sample_request()),
+            proof_request_hash(baseline),
+        )
+
     def test_cache_key_changes_when_engine_or_certifier_hash_mutates(self) -> None:
         request = _sample_request()
         self.assertNotEqual(

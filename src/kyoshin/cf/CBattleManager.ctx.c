@@ -15016,7 +15016,7 @@ extern "C" void func_800E2584(void* p, u32 mask) {
 }
 // LLM-HARNESS-END: us-800e306c
 // LLM-HARNESS-BEGIN: us-800eae6c
-extern "C" void func_800EA384() {}
+extern "C" void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
 // LLM-HARNESS-END: us-800eae6c
 // LLM-HARNESS-BEGIN: us-800eae94
 extern "C" void func_800EA3AC() {}

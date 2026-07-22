@@ -31918,15 +31918,13 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-803e8620
-extern "C" void GetLightSet_Q34nw4r3g3d12LightSettingFi() {}
+void GetLightSet__Q34nw4r3g3d12LightSettingFi(void *result, void *self, int index) { unsigned short count = *(unsigned short *)((unsigned char *)self + 2); *(void **)result = self; if (index >= 0 && index < (int)count) *(void **)((unsigned char *)result + 4) = (unsigned char *)*(void **)((unsigned char *)self + 0xC) + index * 12; else *(void **)((unsigned char *)result + 4) = 0; }
 // LLM-HARNESS-END: us-803e8620
 // LLM-HARNESS-BEGIN: us-803e869c
 extern "C" bool Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes() { return false; }
 // LLM-HARNESS-END: us-803e869c
 // LLM-HARNESS-BEGIN: us-803e86a4
-int Detach__Q34nw4r3g3d6AnmScnFi(int) {
-    return 0;
-}
+extern "C" int Detach__Q34nw4r3g3d6AnmScnFi(int) { return 0; }
 // LLM-HARNESS-END: us-803e86a4
 // LLM-HARNESS-BEGIN: us-803e86e8
 extern "C" unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
@@ -31993,7 +31991,7 @@ u16 GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* 
 extern "C" void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb() {}
 // LLM-HARNESS-END: us-803e8758
 // LLM-HARNESS-BEGIN: us-803e8a38
-extern "C" void SetFrame_Q34nw4r3g3d9AnmScnResFf() {}
+extern "C" void SetFrame__Q34nw4r3g3d9AnmScnResFf() {}
 // LLM-HARNESS-END: us-803e8a38
 // LLM-HARNESS-BEGIN: us-803e8a90
 float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
@@ -32001,7 +31999,7 @@ float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
 }
 // LLM-HARNESS-END: us-803e8a90
 // LLM-HARNESS-BEGIN: us-803e8a98
-extern "C" void SetUpdateRate_Q34nw4r3g3d9AnmScnResFf() {}
+extern "C" void SetUpdateRate__Q34nw4r3g3d9AnmScnResFf() {}
 // LLM-HARNESS-END: us-803e8a98
 // LLM-HARNESS-BEGIN: us-803e8abc
 float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) { return *(const float*)((const char*)this_ + 0x10); }
@@ -32016,7 +32014,7 @@ extern "C" void G3dProc__Q34nw4r3g3d9AnmScnResFUlUlPv() {}
 extern "C" void GetLightSet__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d8LightSetUl() {}
 // LLM-HARNESS-END: us-803e8b90
 // LLM-HARNESS-BEGIN: us-803e8cc8
-extern "C" void* GetAmbLightColor_Q34nw4r3g3d9AnmScnResFUl() { return 0; }
+extern "C" void GetAmbLightColor__Q34nw4r3g3d9AnmScnResFUl() {}
 // LLM-HARNESS-END: us-803e8cc8
 // LLM-HARNESS-BEGIN: us-803e8d30
 extern "C" void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl() {}
@@ -32040,10 +32038,10 @@ extern "C" void GetFogResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d12FogAnmResultUl
 extern "C" void GetCameraResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d15CameraAnmResultUl() {}
 // LLM-HARNESS-END: us-803e927c
 // LLM-HARNESS-BEGIN: us-803e9308
-extern "C" void GetSpecularLightID_Q34nw4r3g3d9AnmScnResCFUl() {}
+extern "C" void GetSpecularLightID__Q34nw4r3g3d9AnmScnResCFUl() {}
 // LLM-HARNESS-END: us-803e9308
 // LLM-HARNESS-BEGIN: us-803e9340
-extern "C" void HasSpecularLight_Q34nw4r3g3d9AnmScnResCFUl() {}
+extern "C" void HasSpecularLight__Q34nw4r3g3d9AnmScnResCFUl() {}
 // LLM-HARNESS-END: us-803e9340
 // LLM-HARNESS-BEGIN: us-803e9384
 extern "C" void UpdateCache__Q34nw4r3g3d9AnmScnResFv() {}

@@ -18,6 +18,15 @@ An `equivalent` result is scoped to the listed observables and assumptions. An
 unsupported instruction, timeout, or solver `unknown` is always
 `inconclusive`; the check never treats unsupported behavior as a no-op.
 
+### Acceptance vs promotion
+
+`EQUIVALENT_MATCH` acceptance of a decomp target requires SMT status
+`equivalent` (plus fuzzy ≥ 50% and split-size fit). Confidence tiers and
+capability assurance do **not** gate acceptance. Certificates may record
+`equivalence_strength` so Tier-C FP or callee-dependent proofs are visible.
+Promotion / Tier A reuse is a separate policy gate; capability assurance
+defaults to `shadow_mode=true`. See [SOUNDNESS.md](SOUNDNESS.md) §Two gates.
+
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
 - Architecture model: `broadway-ppc32-be-v43`
@@ -230,10 +239,11 @@ choice.
 | `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, every modeled auxiliary SPR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
 
-On matched `indirect-branch` exits (`bctr` / unlinked `bcctr`), `ppc-eabi` /
-`auto` / `ppc-eabi-fp` omit `r4` and `f1` (both lanes). Tail virtual thunks
-compare `r3`, nonvolatiles, memory, and `exit.target` (CTR). Use `strict` or
-`--observe` when a full volatile compare is required.
+On matched `indirect-branch` exits (`bctr` / unlinked `bcctr`), the full
+contract observable set is compared — including `r4` and `f1` (both lanes),
+which are live outgoing arguments at a tail call. Scratch the vtable/CTR
+chain in a non-observed volatile such as `r12`; do not reuse `r4`/`f1` as
+scratch unless both sides clobber them identically.
 
 Final-memory comparison uses per-implementation independent private-stack
 masking: each implementation's own private stack interval is masked

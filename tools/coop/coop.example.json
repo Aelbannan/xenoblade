@@ -55,7 +55,10 @@
   "require_bounded_ram": false,
   "memory_profile": null,
   "memory_ranges": [],
-  "platform_profile": null,
-  "hardware_profile": null,
+  "platform_profile": "xenoblade-us-retail-v1",
+  "hardware_profile": "wii-broadway-xenoblade-us-v2",
+  "object_base_mem1": true,
+  "ram_only_when_no_mmio": true,
+  "abi_shape_inference": true,
   "floating_point_domain": null
 }

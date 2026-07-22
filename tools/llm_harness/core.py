@@ -37,6 +37,7 @@ from .types import (
     ModelConfig,
     ProjectAdapter,
     PromotionPolicy,
+    PromotionResult,
     SourcePatch,
 )
 from .workspace import GitWorktreeManager
@@ -1972,6 +1973,233 @@ class Harness:
                 ),
             })
         return output
+
+    def build_external_prompt(
+        self,
+        workflow: str,
+        target_id: str,
+        *,
+        repair_context: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Build a function prompt for an external (non-provider) workflow."""
+        options: Optional[Dict[str, Any]] = None
+        if repair_context is not None:
+            # Adapter expects repair_context.source for current-body override.
+            normalized = dict(repair_context)
+            if "source" not in normalized and normalized.get("candidate_source"):
+                normalized["source"] = normalized["candidate_source"]
+            options = {"repair_context": normalized}
+        with self._adapter_lock:
+            history = self.records(target_id=target_id)
+            return self.adapter.build_prompt(workflow, target_id, history, options)
+
+    def evaluate_external_candidate(
+        self,
+        target_id: str,
+        source: str,
+        *,
+        hypothesis: str = "",
+        workspace_root: Optional[Path] = None,
+    ) -> Any:
+        """Evaluate a candidate through the same isolated path as harness experiments."""
+        candidate = Candidate(source=source, hypothesis=hypothesis or "external candidate")
+        # Prefer improve workflow for evaluation; adapter function path is shared.
+        workflow = "improve"
+        label = f"web-{target_id}"
+        if workspace_root is not None:
+            return self._evaluate_in_workspace(workspace_root, workflow, target_id, candidate)
+        return self._evaluate_candidate(workflow, target_id, candidate, label)
+
+    def promote_external_accepted(
+        self,
+        target_id: str,
+        source: str,
+        evaluation: Any,
+        *,
+        owner: str,
+        batch_id: str = "",
+        batch_round: int = 0,
+        dry_run: bool = False,
+    ) -> PromotionResult:
+        """Promote an externally supplied FULL_MATCH / certified EQUIVALENT_MATCH.
+
+        Claims the target for ``owner`` only at promote time (via
+        ``ensure_auto_promote_claim`` when available), then writes through the
+        same auto-promote path used by normal harness winners.
+        """
+        from .types import PromotionResult as PR
+
+        evaluation_dict: Dict[str, Any]
+        if isinstance(evaluation, dict):
+            evaluation_dict = dict(evaluation)
+        elif hasattr(evaluation, "__dataclass_fields__"):
+            evaluation_dict = asdict(evaluation)
+        else:
+            evaluation_dict = {
+                "status": getattr(evaluation, "status", ""),
+                "match_percent": getattr(evaluation, "match_percent", 0.0),
+                "accepted": getattr(evaluation, "accepted", False),
+                "symbol_accepted": getattr(evaluation, "symbol_accepted", False),
+                "equivalence": getattr(evaluation, "equivalence", None),
+                "detail": getattr(evaluation, "detail", ""),
+                "metrics": getattr(evaluation, "metrics", {}) or {},
+            }
+
+        if not self._record_is_symbol_accepted(
+            {"evaluation": evaluation_dict, "error": None}
+        ):
+            return PR(
+                promoted=False,
+                rolled_back=False,
+                reason="candidate is not symbol-accepted (FULL_MATCH or certified EQUIVALENT_MATCH)",
+                target_id=target_id,
+            )
+
+        if dry_run:
+            return PR(
+                promoted=False,
+                rolled_back=False,
+                reason="dry-run",
+                target_id=target_id,
+            )
+
+        experiment_id = f"web-{batch_id or 'batch'}-r{batch_round}"
+        experiment_dir = self.output_dir / target_id / experiment_id
+        experiment_dir.mkdir(parents=True, exist_ok=True)
+        status = str(evaluation_dict.get("status") or "").upper()
+        workflow = "improve"
+        state = {
+            "schema_version": 2,
+            "experiment_id": experiment_id,
+            "workflow": workflow,
+            "target_id": target_id,
+            "source": "chatgpt-web",
+            "batch_id": batch_id,
+            "batch_round": batch_round,
+            "status": "complete",
+            "records": [],
+        }
+        candidate = Candidate(
+            source=source,
+            hypothesis=f"web-batch {batch_id} round {batch_round}",
+        )
+        best = {
+            "candidate": asdict(candidate),
+            "evaluation": evaluation_dict,
+            "winner": True,
+        }
+        (experiment_dir / "prompt.md").write_text(
+            f"# External web-batch candidate\n\nbatch={batch_id} round={batch_round}\n",
+            encoding="utf-8",
+        )
+        (experiment_dir / "candidate.json").write_text(
+            json.dumps(asdict(candidate), indent=2) + "\n", encoding="utf-8"
+        )
+        (experiment_dir / "evaluation.json").write_text(
+            json.dumps(evaluation_dict, indent=2, default=str) + "\n", encoding="utf-8"
+        )
+        self._write_state(experiment_dir, state)
+        (experiment_dir / "best.json").write_text(
+            json.dumps(best, indent=2, default=str) + "\n", encoding="utf-8"
+        )
+
+        promote_fn = getattr(self.adapter, "promote", None)
+        if promote_fn is None:
+            return PR(
+                promoted=False,
+                rolled_back=False,
+                reason="adapter does not support promote",
+                target_id=target_id,
+            )
+
+        try:
+            with self._promote_lock:
+                ensure = getattr(self.adapter, "ensure_auto_promote_claim", None)
+                if ensure is not None:
+                    ensure(target_id, owner)
+                read_source = getattr(self.adapter, "read_target_source", None)
+                source_path_fn = getattr(self.adapter, "target_source_path", None)
+                source_before = ""
+                source_path: Optional[Path] = None
+                original_bytes: Optional[bytes] = None
+                if read_source is not None:
+                    source_before = read_source(target_id)
+                if source_path_fn is not None:
+                    try:
+                        source_path = source_path_fn(target_id)
+                        if source_path is not None and source_path.is_file():
+                            original_bytes = source_path.read_bytes()
+                    except Exception:
+                        source_path = None
+                result = promote_fn(
+                    workflow,
+                    target_id,
+                    candidate,
+                    write=True,
+                    owner=owner,
+                )
+                try:
+                    certify = getattr(self.adapter, "certify_web_promotion", None)
+                    if certify is not None:
+                        certify(target_id, evaluation_dict)
+                    else:
+                        record = getattr(self.adapter, "record_auto_promotion", None)
+                        if record is not None:
+                            record(target_id, evaluation_dict)
+                        cycle = getattr(self.adapter, "run_auto_promote_cycle", None)
+                        if cycle is not None:
+                            cycle(target_id, evaluation_dict)
+                except Exception as cert_exc:
+                    # Roll back canonical source if certification fails after write.
+                    if original_bytes is not None and source_path is not None:
+                        source_path.write_bytes(original_bytes)
+                    elif read_source is not None and source_before and source_path is not None:
+                        source_path.write_text(source_before, encoding="utf-8")
+                    raise RuntimeError(
+                        f"promotion certification failed after write; rolled back: {cert_exc}"
+                    ) from cert_exc
+            state["auto_promoted"] = True
+            state["auto_promote_owner"] = owner
+            self._write_state(experiment_dir, state)
+            return PR(
+                promoted=True,
+                rolled_back=False,
+                reason=f"promoted status={status}",
+                target_id=target_id,
+                validation_steps=[],
+            )
+        except Exception as exc:
+            state["auto_promoted"] = False
+            state["auto_promote_error"] = f"{type(exc).__name__}: {exc}"
+            try:
+                self._write_state(experiment_dir, state)
+            except OSError:
+                pass
+            rolled_back = "rolled back" in str(exc).lower()
+            return PR(
+                promoted=False,
+                rolled_back=rolled_back,
+                reason=f"{type(exc).__name__}: {exc}",
+                target_id=target_id,
+            )
+
+    # Back-compat alias from the design doc (FULL_MATCH name; accepts EQUIVALENT too).
+    def promote_external_full_match(
+        self,
+        target_id: str,
+        source: str,
+        evaluation: Any,
+        *,
+        owner: str,
+        dry_run: bool = False,
+    ) -> PromotionResult:
+        return self.promote_external_accepted(
+            target_id,
+            source,
+            evaluation,
+            owner=owner,
+            dry_run=dry_run,
+        )
 
     def promote(self, experiment_dir: Path, *, write: bool = False, owner: Optional[str] = None) -> str:
         directory = experiment_dir.resolve()

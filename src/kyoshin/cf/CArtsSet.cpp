@@ -28,7 +28,7 @@ namespace cf {
 }
 
 // LLM-HARNESS-BEGIN: us-8015468c
-extern "C" void func_80153C48() {}
+extern "C" void func_80153C48(void* self, unsigned short value, unsigned int row, unsigned int index) { unsigned char* base = static_cast<unsigned char*>(self) + ((row & 0xffffu) << 4); base += (index & 0xffffu) << 1; *reinterpret_cast<unsigned short*>(base + 4) = value; }
 // LLM-HARNESS-END: us-8015468c
 // LLM-HARNESS-BEGIN: us-801546a4
 extern "C" unsigned short func_80153C60(void* this_, int index, int subindex) { return ((unsigned short*)((char*)this_ + (index << 4) + 4))[subindex]; }
@@ -62,7 +62,7 @@ extern "C" void* func_80153DB0(void* self, unsigned int index) { unsigned short 
 extern "C" void func_80153DCC() {}
 // LLM-HARNESS-END: us-80154810
 // LLM-HARNESS-BEGIN: us-80154880
-extern "C" void func_80153E3C() {}
+extern "C" void* func_80153E3C(void* this_, int index1, int index2) { char* result = (char*)this_ + index1 * 0x460; result += index2 * 0x8c; return result + 0x38; }
 // LLM-HARNESS-END: us-80154880
 // LLM-HARNESS-BEGIN: us-80154898
 extern "C" void* func_80153E54(void* self, int index) { return (char*)self + 0x38 + (index / 8) * 0x460 + (index % 8) * 0x8c; }

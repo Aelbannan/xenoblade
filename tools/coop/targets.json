@@ -9137,8 +9137,8 @@
       "size": "0x6C",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -9146,7 +9146,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T12:25:15.252960+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-800439f4",
@@ -10170,8 +10180,8 @@
       "size": "0x3C",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -10179,7 +10189,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T11:53:34.389723+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80043cac",
@@ -10489,8 +10509,8 @@
       "size": "0x28",
       "unit": "kyoshin/CTaskGame",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/CTaskGame.cpp",
       "called_functions": [],
@@ -10498,7 +10518,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CTaskGame.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T11:30:48.840657+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTaskGame.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-8004432c",
@@ -93999,8 +94029,8 @@
       "size": "0x28",
       "unit": "kyoshin/cf/CBattleManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CBattleManager.cpp",
       "called_functions": [],
@@ -94008,7 +94038,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CBattleManager.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T11:33:34.598360+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CBattleManager.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-800eae94",
@@ -98759,8 +98799,8 @@
       "size": "0x30",
       "unit": "kyoshin/menu/CMenuArtsSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "called_functions": [],
@@ -98768,7 +98808,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuArtsSelect.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T11:40:35.637426+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuArtsSelect.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80104e08",
@@ -99010,8 +99060,8 @@
       "size": "0x24",
       "unit": "kyoshin/menu/CMenuArtsSelect",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuArtsSelect.cpp",
       "called_functions": [],
@@ -99019,7 +99069,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuArtsSelect.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T11:23:38.958910+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuArtsSelect.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80104ea4",
@@ -102743,8 +102803,8 @@
       "size": "0xE0",
       "unit": "kyoshin/menu/CMenuEnemyState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuEnemyState.cpp",
       "called_functions": [],
@@ -102752,7 +102812,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuEnemyState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T13:01:11.273257+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuEnemyState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-801140a4",
@@ -124007,8 +124077,8 @@
       "size": "0x1BC",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [],
@@ -124016,7 +124086,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T13:28:16.309142+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_timeout"
     },
     {
       "id": "us-8014697c",
@@ -124053,8 +124133,8 @@
       "size": "0x1B8",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [],
@@ -124062,7 +124142,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T13:27:30.419858+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_timeout"
     },
     {
       "id": "us-80146d04",
@@ -125034,8 +125124,8 @@
       "size": "0x50",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [],
@@ -125043,7 +125133,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T12:12:21.344322+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80149ba8",
@@ -125057,8 +125157,8 @@
       "size": "0x50",
       "unit": "kyoshin/cf/object/CBattleState",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CBattleState.cpp",
       "called_functions": [],
@@ -125066,7 +125166,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CBattleState.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T12:11:20.559053+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CBattleState.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80149bf8",
@@ -127248,8 +127358,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "called_functions": [],
@@ -127257,7 +127367,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CArtsSet.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T10:48:10.319629+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CArtsSet.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-801546a4",
@@ -127982,8 +128102,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/CArtsSet",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CArtsSet.cpp",
       "called_functions": [],
@@ -127991,7 +128111,701 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/CArtsSet.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T10:49:09.780177+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CArtsSet.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "equivalence_certificate": {
+        "version": 18,
+        "status": "SEMANTIC_CERTIFIED",
+        "architecture": "broadway-ppc32-be-v43",
+        "result_format": 23,
+        "target_id": "us-80154880",
+        "evidence": "symbolic-equivalence",
+        "retail_sha256": "8812ad80f3876e575d4d76bd9097c917c2dea14d162b73e5b814db97e8a02173",
+        "candidate_sha256": "e7b8ec723325d2c75f6091fede461db98ba57a0460014d0a775ec9c9ad9365ea",
+        "summary": {
+          "reads": [],
+          "writes": [
+            "r0",
+            "r3",
+            "r4"
+          ],
+          "invalid_reasons": [],
+          "return_behavior": "normal"
+        },
+        "callees": [],
+        "helpers": [],
+        "summary_sha256": "bc26c6db93569084d4bb7d7ec93385e4b08eed0856013192a498437326641e98",
+        "memory_scope": {
+          "comparison": "touched-byte-extensional",
+          "private_stack": {
+            "masking_semantics": "per-implementation-independent-v1",
+            "original": {
+              "enabled_on_all_terminal_paths": true,
+              "disabled_reasons": [],
+              "frame_relation": "symbolic-below-entry-sp"
+            },
+            "candidate": {
+              "enabled_on_all_terminal_paths": true,
+              "disabled_reasons": [],
+              "frame_relation": "symbolic-below-entry-sp"
+            }
+          }
+        },
+        "git_dirty": true,
+        "source_hash": "a8611e79069b1ed6d6bc9e8bee2ca0832225ecbf9ffc71bd0c7eaf1d0e9a9c28",
+        "git_commit": "2f6ffd0fc13035acaf0cd8e63e2f20eaa3c845de",
+        "proof_request_hash": "a8611e79069b1ed6d6bc9e8bee2ca0832225ecbf9ffc71bd0c7eaf1d0e9a9c28",
+        "validation_ledger_hash": "099be0dcd4a9529d2f532906e3c00e41c63c6e252098a871952ed280515782a7",
+        "environment": {
+          "memory_profile": "assumed-ordinary-ram",
+          "ranges": [],
+          "alignment": "instruction-natural",
+          "mmio": "unrestricted",
+          "address_wraparound": "rejected",
+          "fail_closed_empty_ranges": false,
+          "invalid_reason_code": 10
+        },
+        "observables": [
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r13",
+          "r14",
+          "r15",
+          "r16",
+          "r17",
+          "r18",
+          "r19",
+          "r20",
+          "r21",
+          "r22",
+          "r23",
+          "r24",
+          "r25",
+          "r26",
+          "r27",
+          "r28",
+          "r29",
+          "r30",
+          "r31",
+          "f1",
+          "f1.ps1",
+          "f14",
+          "f15",
+          "f16",
+          "f17",
+          "f18",
+          "f19",
+          "f20",
+          "f21",
+          "f22",
+          "f23",
+          "f24",
+          "f25",
+          "f26",
+          "f27",
+          "f28",
+          "f29",
+          "f30",
+          "f31",
+          "f14.ps1",
+          "f15.ps1",
+          "f16.ps1",
+          "f17.ps1",
+          "f18.ps1",
+          "f19.ps1",
+          "f20.ps1",
+          "f21.ps1",
+          "f22.ps1",
+          "f23.ps1",
+          "f24.ps1",
+          "f25.ps1",
+          "f26.ps1",
+          "f27.ps1",
+          "f28.ps1",
+          "f29.ps1",
+          "f30.ps1",
+          "f31.ps1",
+          "cr2",
+          "cr3",
+          "cr4",
+          "memory"
+        ],
+        "opcodes_used": [
+          "add",
+          "addi",
+          "bclr",
+          "mulli"
+        ],
+        "limits": {
+          "max_instructions": 2048,
+          "max_paths": 256,
+          "max_loop_iterations": 256
+        },
+        "contract": "auto",
+        "assumptions": [
+          "32-bit big-endian user-mode integer and IEEE 754 floating-point semantics",
+          "unresolved supported PPC relocations share canonical symbolic addresses across both objects",
+          "shared byte-addressed initial memory",
+          "non-escaping writes below the entry stack pointer, down to each implementation's lowest observed stack pointer, are function-private with independent per-implementation masking; calls or storing an r1-derived pointer disable that masking",
+          "well-formed function stacks do not move r1 above the entry stack pointer or wrap around address zero",
+          "all accessed addresses are mapped ordinary RAM and naturally aligned",
+          "FP invalid/divide-zero and conversion flags are tracked; scalar VE/ZE/OE/UE/XE suppression and Broadway paired-single unconditional writeback are modeled; SoftFloat OX/UX/XX latch on ConcreteOps scalar+paired-oracle paths",
+          "FP traps: optional traps_enabled delivers VE/ZE/OE/UE/XE program exceptions for SoftFloat scalar + paired-oracle subsets; estimates/compares/converts and MSR FE0/FE1 modes fail closed / deferred; still Tier C",
+          "FP arithmetic requires RN=nearest-even; default NI=0, optional NI flush-to-zero for NI_SUPPORTED_OPS (Tier C); finite-input overflow is excluded, modeled invalid/ZX cases are included",
+          "fused-single and paired-fused proofs require finite operands to be exact binary32 values expanded in FPRs",
+          "cache hints/order operations assume coherent ordinary RAM with no DMA or self-modifying code; dcbz requires HID0.DCE and dcbz_l also requires HID2.LCE",
+          "privileged register operations are defined only in supervisor mode; segment/MSR/BAT translation effects are outside ordinary-RAM checks",
+          "auxiliary SPR values are tracked, but HID/L2/cache-lock/DMA/debug register side effects are outside the value-semantics model",
+          "the time base, decrementer, and performance counters are stable during a bounded block except for explicit modeled writes",
+          "twi/sc/rfi model synchronous exception entry/return; asynchronous interrupts are absent",
+          "later-ISA fsqrt/fsqrts encodings are reserved on Broadway; VMX and atomics are unsupported",
+          "division results compared only on architecturally defined inputs",
+          "back-edges are explored with a per-PC visit bound (max_loop_iterations); exhausting the bound is inconclusive and never silently truncated; external call continuations require explicit matched-callee lemmas and use deterministic opaque ABI summaries",
+          "matched-callee summaries preserve EABI nonvolatile registers and machine-control state; a memory-writing callee may modify any aliased caller-frame or public-memory byte",
+          "matched callees are location-independent EABI functions: the absolute link-register return address is not a semantic input",
+          "MWCC _save/_rest gpr/fpr helpers use their fixed EABI r11-relative load/store layouts"
+        ],
+        "proof_features": [
+          "memory-bus"
+        ],
+        "capability_assurance": {
+          "schema_version": 1,
+          "policy": "capability-assurance-v1",
+          "capabilities": [
+            {
+              "capability": "gx-fifo-write-trace",
+              "model_version": "gx-fifo-trace-v2",
+              "algorithm": "gx-fifo-trace-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "mmio": {
+                  "schema_version": 2,
+                  "capability": "gx-fifo-write-trace",
+                  "model_version": "gx-fifo-trace-v2",
+                  "algorithm": "gx-fifo-trace-v2",
+                  "status": "promotion-grade",
+                  "source": "hardware-profile",
+                  "original": {
+                    "address_coverage": {
+                      "result": "unsat",
+                      "query_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                    },
+                    "unsupported_access": {
+                      "result": "unsat",
+                      "query_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f"
+                    },
+                    "event_trace_complete": {
+                      "result": "unsat",
+                      "query_sha256": "5ec332b5770fa423b04fd5deac48ab07a00300f8b818783cbf864f98dd703962"
+                    }
+                  },
+                  "candidate": {
+                    "address_coverage": {
+                      "result": "unsat",
+                      "query_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                    },
+                    "unsupported_access": {
+                      "result": "unsat",
+                      "query_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f"
+                    },
+                    "event_trace_complete": {
+                      "result": "unsat",
+                      "query_sha256": "5ec332b5770fa423b04fd5deac48ab07a00300f8b818783cbf864f98dd703962"
+                    }
+                  },
+                  "hardware_profile": "wii-broadway-xenoblade-us-v2",
+                  "hardware_profile_sha256": "3d513203c3ec316e69525f4c4c342747f7ad8859a39cd1396c9fc2c90e15ecce",
+                  "device_models_sha256": "13e335cabae4b2bae689fecae982085f6aa712881ff2a8c15e437e266ea14aaa",
+                  "bus_spec_sha256": "cce8611c63c6096876e28677f918b560cc5a1e0c4002b2683f118502f7186982",
+                  "memory_bus": {
+                    "schema_version": 2,
+                    "algorithm": "memory-bus-v1",
+                    "status": "discharged",
+                    "bus_spec_sha256": "cce8611c63c6096876e28677f918b560cc5a1e0c4002b2683f118502f7186982",
+                    "unsupported_access": {
+                      "original": {
+                        "status": "vacuously-discharged",
+                        "reason": "no-unsupported-predicates",
+                        "cfg_trace_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f",
+                        "access_coverage_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                      },
+                      "candidate": {
+                        "status": "vacuously-discharged",
+                        "reason": "no-unsupported-predicates",
+                        "cfg_trace_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f",
+                        "access_coverage_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                      }
+                    },
+                    "access_coverage": {
+                      "schema_version": 1,
+                      "status": "complete",
+                      "attested": true,
+                      "original": {
+                        "schema_version": 1,
+                        "status": "complete",
+                        "attested": true,
+                        "opcode_families": [],
+                        "rejections": [],
+                        "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                      },
+                      "candidate": {
+                        "schema_version": 1,
+                        "status": "complete",
+                        "attested": true,
+                        "opcode_families": [],
+                        "rejections": [],
+                        "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                      },
+                      "sides": {
+                        "original": {
+                          "schema_version": 1,
+                          "status": "complete",
+                          "attested": true,
+                          "opcode_families": [],
+                          "rejections": [],
+                          "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                        },
+                        "candidate": {
+                          "schema_version": 1,
+                          "status": "complete",
+                          "attested": true,
+                          "opcode_families": [],
+                          "rejections": [],
+                          "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+                        }
+                      },
+                      "sha256": "9b870639b5a3ed820448addc5b69356356b493649c22bc1ec0141e6395478162"
+                    }
+                  },
+                  "device_ids": [
+                    "gx-fifo",
+                    "pi-stub"
+                  ]
+                },
+                "hardware_profile": "wii-broadway-xenoblade-us-v2",
+                "hardware_profile_sha256": "3d513203c3ec316e69525f4c4c342747f7ad8859a39cd1396c9fc2c90e15ecce",
+                "bus_spec_sha256": "cce8611c63c6096876e28677f918b560cc5a1e0c4002b2683f118502f7186982",
+                "device_models_sha256": "13e335cabae4b2bae689fecae982085f6aa712881ff2a8c15e437e266ea14aaa",
+                "source": "hardware-profile",
+                "requirement_sha256": "3f326041a5784648da8ec6d171d8d53e0c3c385fc9ed43b7b445d4a874d369b9",
+                "requirements_sha256": "b86ea74b4b8a5dae3308d6b68f364514c377c4b23c462b24570abd269ae97f81"
+              },
+              "attestation_sha256": "c4c72b36258d174f152bb457253e94b984291fbcd784978533fd39dc88160bc5"
+            },
+            {
+              "capability": "integer-core",
+              "model_version": "integer-core-v1",
+              "algorithm": "opcode-ledger-v2",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "opcodes": [
+                  "add",
+                  "addi",
+                  "bclr",
+                  "mulli"
+                ],
+                "ledger_sha256": "099be0dcd4a9529d2f532906e3c00e41c63c6e252098a871952ed280515782a7",
+                "requirement_sha256": "b32588658181e11086fae400a3e324c92c2da89eee8c6679ff41eda9e2272e30",
+                "requirements_sha256": "b86ea74b4b8a5dae3308d6b68f364514c377c4b23c462b24570abd269ae97f81"
+              },
+              "attestation_sha256": "71792b25b096b6f8d359160298a2fffc6b5aae2149ecfce77bfa70ab16fbef1e"
+            },
+            {
+              "capability": "provenance",
+              "model_version": "provenance-v1",
+              "algorithm": "provenance-binding-v1",
+              "status": "incomplete",
+              "assumptions": [],
+              "unsupported": [],
+              "evidence": {
+                "architecture_model": "broadway-ppc32-be-v43",
+                "result_format": 23,
+                "engine_hash": "41ececcdd3e2db8dad0fdb24dca26a90817c2d8c33b99b81d2aa178f013688fc",
+                "certifier_hash": "9ced7d12f37ea085375d04b42194f52249a9e6d573dbaedf16950650043f1dd8",
+                "source_hash": "a8611e79069b1ed6d6bc9e8bee2ca0832225ecbf9ffc71bd0c7eaf1d0e9a9c28",
+                "proof_request_hash": "a8611e79069b1ed6d6bc9e8bee2ca0832225ecbf9ffc71bd0c7eaf1d0e9a9c28",
+                "validation_ledger_hash": "099be0dcd4a9529d2f532906e3c00e41c63c6e252098a871952ed280515782a7",
+                "git_commit": "2f6ffd0fc13035acaf0cd8e63e2f20eaa3c845de",
+                "git_dirty": true,
+                "requirement_sha256": "6d0807eb83dc56e95cb031b7acdfa3af3ba99d68a1f00b9385c534f844b44fd8",
+                "requirements_sha256": "b86ea74b4b8a5dae3308d6b68f364514c377c4b23c462b24570abd269ae97f81"
+              },
+              "attestation_sha256": "247cdf0483fafaa51f0afe06a5b967b717f7a7552f3531b8139887dcfcdc441e"
+            }
+          ]
+        },
+        "capability_requirements": {
+          "schema_version": 1,
+          "requirements": [
+            {
+              "capability": "gx-fifo-write-trace",
+              "required_opcodes": [],
+              "required_subjects": [
+                "gx-fifo",
+                "pi-stub"
+              ],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "3f326041a5784648da8ec6d171d8d53e0c3c385fc9ed43b7b445d4a874d369b9"
+            },
+            {
+              "capability": "integer-core",
+              "required_opcodes": [
+                "add",
+                "addi",
+                "bclr",
+                "mulli"
+              ],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {},
+              "requirement_sha256": "b32588658181e11086fae400a3e324c92c2da89eee8c6679ff41eda9e2272e30"
+            },
+            {
+              "capability": "provenance",
+              "required_opcodes": [],
+              "required_subjects": [],
+              "proof_features": [],
+              "evidence_identity": {
+                "architecture_model": "broadway-ppc32-be-v43",
+                "certifier_hash": "9ced7d12f37ea085375d04b42194f52249a9e6d573dbaedf16950650043f1dd8",
+                "engine_hash": "41ececcdd3e2db8dad0fdb24dca26a90817c2d8c33b99b81d2aa178f013688fc",
+                "git_commit": "2f6ffd0fc13035acaf0cd8e63e2f20eaa3c845de",
+                "git_dirty": "true",
+                "proof_request_hash": "a8611e79069b1ed6d6bc9e8bee2ca0832225ecbf9ffc71bd0c7eaf1d0e9a9c28",
+                "result_format": "23",
+                "source_hash": "a8611e79069b1ed6d6bc9e8bee2ca0832225ecbf9ffc71bd0c7eaf1d0e9a9c28",
+                "validation_ledger_hash": "099be0dcd4a9529d2f532906e3c00e41c63c6e252098a871952ed280515782a7"
+              },
+              "requirement_sha256": "6d0807eb83dc56e95cb031b7acdfa3af3ba99d68a1f00b9385c534f844b44fd8"
+            }
+          ],
+          "requirements_sha256": "b86ea74b4b8a5dae3308d6b68f364514c377c4b23c462b24570abd269ae97f81"
+        },
+        "memory_bus": {
+          "schema_version": 2,
+          "algorithm": "memory-bus-v1",
+          "status": "discharged",
+          "regions": [
+            {
+              "kind": "ram",
+              "start": 2147483648,
+              "end": 2172649471,
+              "label": "MEM1"
+            },
+            {
+              "kind": "mmio",
+              "start": 3422564352,
+              "end": 3422564383,
+              "label": "PI-stub",
+              "device_id": "pi-stub"
+            },
+            {
+              "kind": "mmio",
+              "start": 3422584832,
+              "end": 3422584959,
+              "label": "GX-WGPIPE",
+              "device_id": "gx-fifo"
+            }
+          ],
+          "load_kinds": [
+            "ram",
+            "rom-image",
+            "mmio-register-bank"
+          ],
+          "store_kinds": [
+            "ram",
+            "mmio-register-bank",
+            "gxfifo-stream"
+          ],
+          "mmio": "cfg-routed",
+          "unmapped": "fail-closed",
+          "cfg_rejection_reasons": [],
+          "loop_fifo_reject_markers": [],
+          "mixed_space_symbolic_mmio": "fail-closed",
+          "coverage": {
+            "mixed_space_symbolic_mmio": "fail-closed",
+            "pure_mmio_symbolic": "supported",
+            "bounded_summarized_fifo_emission": "unsupported",
+            "note": "Pure-MMIO symbolic routing exists; mixed RAM/ROM/MMIO symbolic addresses remain fail-closed. Loop-summary × FIFO has a hard rejection; bounded summarized emission is not supported.",
+            "loop_fifo_policy": "hard-reject",
+            "loop_fifo_emission": "unsupported",
+            "mixed_space": "fail-closed-policy"
+          },
+          "loop_fifo_policy": "hard-reject",
+          "loop_fifo_emission": "unsupported",
+          "bus_spec_sha256": "cce8611c63c6096876e28677f918b560cc5a1e0c4002b2683f118502f7186982",
+          "bus_spec_canonical": {
+            "devices": [
+              {
+                "base": 3422584832,
+                "device_id": "gx-fifo",
+                "registers": [],
+                "reg_width": 4,
+                "schema_version": 1,
+                "span": 128,
+                "theory": "gxfifo-stream"
+              },
+              {
+                "base": 3422564352,
+                "device_id": "pi-stub",
+                "registers": [
+                  {
+                    "offset": 0,
+                    "initial": 0,
+                    "w1c": false,
+                    "read_clear": false
+                  },
+                  {
+                    "offset": 4,
+                    "initial": 0,
+                    "w1c": true,
+                    "read_clear": false
+                  }
+                ],
+                "reg_width": 4,
+                "schema_version": 1,
+                "span": 0,
+                "theory": "register-bank"
+              }
+            ],
+            "regions": [
+              {
+                "end": 2172649471,
+                "kind": "ram",
+                "start": 2147483648,
+                "label": "MEM1"
+              },
+              {
+                "end": 3422564383,
+                "kind": "mmio",
+                "start": 3422564352,
+                "label": "PI-stub",
+                "device_id": "pi-stub"
+              },
+              {
+                "end": 3422584959,
+                "kind": "mmio",
+                "start": 3422584832,
+                "label": "GX-WGPIPE",
+                "device_id": "gx-fifo"
+              }
+            ],
+            "schema_version": 1
+          },
+          "hardware_profile": "wii-broadway-xenoblade-us-v2",
+          "hardware_profile_sha256": "3d513203c3ec316e69525f4c4c342747f7ad8859a39cd1396c9fc2c90e15ecce",
+          "device_models_sha256": "13e335cabae4b2bae689fecae982085f6aa712881ff2a8c15e437e266ea14aaa",
+          "symbolic_mmio": "cfg-routed",
+          "observability": {
+            "register_banks": {
+              "pi-stub": {
+                "0x0": "0x0",
+                "0x4": "0x0"
+              }
+            },
+            "fifo_traces": {
+              "gx-fifo": []
+            },
+            "symbolic": {
+              "original": {
+                "register_banks": {},
+                "fifo_traces": {}
+              },
+              "candidate": {
+                "register_banks": {},
+                "fifo_traces": {}
+              }
+            },
+            "touches": {
+              "original": [],
+              "candidate": []
+            }
+          },
+          "access_coverage": {
+            "schema_version": 1,
+            "status": "complete",
+            "attested": true,
+            "original": {
+              "schema_version": 1,
+              "status": "complete",
+              "attested": true,
+              "opcode_families": [],
+              "rejections": [],
+              "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+            },
+            "candidate": {
+              "schema_version": 1,
+              "status": "complete",
+              "attested": true,
+              "opcode_families": [],
+              "rejections": [],
+              "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+            },
+            "sides": {
+              "original": {
+                "schema_version": 1,
+                "status": "complete",
+                "attested": true,
+                "opcode_families": [],
+                "rejections": [],
+                "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+              },
+              "candidate": {
+                "schema_version": 1,
+                "status": "complete",
+                "attested": true,
+                "opcode_families": [],
+                "rejections": [],
+                "sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+              }
+            },
+            "sha256": "9b870639b5a3ed820448addc5b69356356b493649c22bc1ec0141e6395478162"
+          },
+          "device_state_in_compare": {
+            "included": true,
+            "digest_sha256": "5ec332b5770fa423b04fd5deac48ab07a00300f8b818783cbf864f98dd703962"
+          },
+          "unsupported_access": {
+            "original": {
+              "status": "vacuously-discharged",
+              "reason": "no-unsupported-predicates",
+              "cfg_trace_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f",
+              "access_coverage_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+            },
+            "candidate": {
+              "status": "vacuously-discharged",
+              "reason": "no-unsupported-predicates",
+              "cfg_trace_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f",
+              "access_coverage_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+            }
+          },
+          "register_bank_theory": {
+            "status": "present",
+            "devices": [
+              {
+                "device_id": "pi-stub",
+                "theory": "register-bank",
+                "region": {
+                  "start": 3422564352,
+                  "end": 3422564383
+                }
+              }
+            ],
+            "touched": []
+          },
+          "fifo_theory": {
+            "status": "present",
+            "devices": [
+              {
+                "device_id": "gx-fifo",
+                "theory": "gxfifo-stream",
+                "region": {
+                  "start": 3422584832,
+                  "end": 3422584959
+                }
+              }
+            ],
+            "touched": []
+          },
+          "register_bank_extensional": {
+            "schema_version": 1,
+            "algorithm": "register-bank-extensional-v1",
+            "status": "cfg-routed",
+            "bus_spec_sha256": "cce8611c63c6096876e28677f918b560cc5a1e0c4002b2683f118502f7186982",
+            "devices": [
+              {
+                "device_id": "pi-stub",
+                "theory": "register-bank",
+                "region": {
+                  "start": 3422564352,
+                  "end": 3422564383
+                }
+              }
+            ],
+            "unsupported_access": {
+              "original": {
+                "status": "vacuously-discharged",
+                "reason": "no-unsupported-predicates",
+                "cfg_trace_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f",
+                "access_coverage_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+              },
+              "candidate": {
+                "status": "vacuously-discharged",
+                "reason": "no-unsupported-predicates",
+                "cfg_trace_sha256": "7e72fda6c04e0d29de78e28c6b0d0fffef075a47b9e795316d1c90df4d59e48f",
+                "access_coverage_sha256": "141aa3ce2f55b9247b98d9ec62420db7fae194c5fcccda369ac90c1107d629d8"
+              }
+            },
+            "observability": {
+              "register_banks": {
+                "pi-stub": {
+                  "0x0": "0x0",
+                  "0x4": "0x0"
+                }
+              },
+              "fifo_traces": {
+                "gx-fifo": []
+              },
+              "symbolic": {
+                "original": {
+                  "register_banks": {},
+                  "fifo_traces": {}
+                },
+                "candidate": {
+                  "register_banks": {},
+                  "fifo_traces": {}
+                }
+              },
+              "touches": {
+                "original": [],
+                "candidate": []
+              }
+            }
+          },
+          "gxfifo_trace": {
+            "schema_version": 2,
+            "algorithm": "gxfifo-stream-trace-v2",
+            "status": "cfg-routed",
+            "bus_spec_sha256": "cce8611c63c6096876e28677f918b560cc5a1e0c4002b2683f118502f7186982",
+            "devices": [
+              {
+                "device_id": "gx-fifo",
+                "theory": "gxfifo-stream",
+                "region": {
+                  "start": 3422584832,
+                  "end": 3422584959
+                }
+              }
+            ],
+            "reads": {
+              "policy": "unsupported",
+              "reason": "gxfifo-read-unsupported"
+            },
+            "loop_fifo_policy": "hard-reject",
+            "bounded_summarized_emission": "unsupported"
+          }
+        },
+        "equivalence_strength": "memory-bus-tier-c",
+        "engine_hash": "41ececcdd3e2db8dad0fdb24dca26a90817c2d8c33b99b81d2aa178f013688fc",
+        "certifier_hash": "9ced7d12f37ea085375d04b42194f52249a9e6d573dbaedf16950650043f1dd8",
+        "certificate_sha256": "4b2062d05487db3bb22109782ba415bcf68d4771fa68d4502168bb001a2a356e"
+      }
     },
     {
       "id": "us-80154898",
@@ -242216,8 +243030,8 @@
       "size": "0x6C",
       "unit": "kyoshin/cf/chain/CChainActorPc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/chain/CChainActorPc.cpp",
       "called_functions": [],
@@ -242225,7 +243039,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainActorPc.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T12:26:12.545425+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/chain/CChainActorPc.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80284664",
@@ -258878,8 +259702,8 @@
       "size": "0x18",
       "unit": "kyoshin/cf/voice/CCharVoiceMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/voice/CCharVoiceMan.cpp",
       "called_functions": [],
@@ -258887,7 +259711,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/cf/voice/CCharVoiceMan.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T10:49:59.783296+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/voice/CCharVoiceMan.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-802a5cec",
@@ -401751,8 +402585,8 @@
       "size": "0x3C",
       "unit": "nw4r/src/g3d/g3d_anmscn",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/g3d_anmscn.cpp",
       "called_functions": [],
@@ -401760,7 +402594,17 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/g3d/g3d_anmscn.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "claim": {
+        "owner": "llm-harness",
+        "claimed_at": "2026-07-22T11:54:43.763352+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/g3d/g3d_anmscn.cpp"
+        ],
+        "note": "llm-harness auto-promote"
+      },
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-803e865c",

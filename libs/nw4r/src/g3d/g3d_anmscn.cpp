@@ -69,7 +69,7 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-803e8620
-extern "C" void GetLightSet__Q34nw4r3g3d12LightSettingFi(int) {}
+void GetLightSet__Q34nw4r3g3d12LightSettingFi(void *result, void *self, int index) { unsigned short count = *(unsigned short *)((unsigned char *)self + 2); *(void **)result = self; if (index >= 0 && index < (int)count) *(void **)((unsigned char *)result + 4) = (unsigned char *)*(void **)((unsigned char *)self + 0xC) + index * 12; else *(void **)((unsigned char *)result + 4) = 0; }
 // LLM-HARNESS-END: us-803e8620
 // LLM-HARNESS-BEGIN: us-803e869c
 extern "C" bool Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes() { return false; }

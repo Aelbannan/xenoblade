@@ -1184,13 +1184,13 @@ extern "C" bool func_801042B4() { return lbl_eu_80663F20 != 0; }
 extern "C" void func_801042C8() {}
 // LLM-HARNESS-END: us-80104db0
 // LLM-HARNESS-BEGIN: us-80104dd8
-extern "C" void func_801042F0() {}
+extern "C" int func_801042F0() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(menu) + 0x298); if (value != 1 && value != 3) return 1; } return 0; }
 // LLM-HARNESS-END: us-80104dd8
 // LLM-HARNESS-BEGIN: us-80104e08
 extern "C" CMenuArtsSelect* func_80104320() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(reinterpret_cast<unsigned char*>(lbl_eu_80663F20) + 0x7c); }
 // LLM-HARNESS-END: us-80104e08
 // LLM-HARNESS-BEGIN: us-80104e80
-extern "C" void func_80104398() {}
+extern "C" int func_80104398() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
 // LLM-HARNESS-END: us-80104e80
 // LLM-HARNESS-BEGIN: us-80109718
 extern "C" bool func_80108C30() { return false; }

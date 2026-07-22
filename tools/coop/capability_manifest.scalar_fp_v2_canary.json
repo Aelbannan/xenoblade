@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "policy": "capability-assurance-v1",
+  "description": "Phase 12 scalar FP exact v2 canary manifest. First allowlist entry: fp-load-store only. Point coop.json capability_manifest at this file and set SCALAR_FP_EXACT_V2=1 plus SCALAR_FP_EXACT_V2_PRODUCTION=1 to enable.",
+  "automatic_promotion": false,
+  "shadow_mode": false,
+  "scalar_fp_exact_v2": {
+    "experimental_env": "SCALAR_FP_EXACT_V2",
+    "production_env": "SCALAR_FP_EXACT_V2_PRODUCTION",
+    "allowlist_order": [
+      "fp-load-store",
+      "fp-compare",
+      "fp-convert",
+      "fp-fpscr-control",
+      "fp-scalar-arithmetic",
+      "fp-traps",
+      "fp-fused-arithmetic"
+    ],
+    "recommended_canary_targets": {
+      "fp-load-store": "us-80040998",
+      "fp-bitwise": "us-803e9714",
+      "fp-convert": "us-802c9b90",
+      "fp-fpscr-control": "us-802dd650",
+      "fp-scalar-arithmetic": "us-802dd650"
+    }
+  },
+  "allowed_tier_a_capabilities": {
+    "integer-core": ["integer-core-v1"],
+    "provenance": ["provenance-v1"],
+    "bounded-memory": ["bounded-memory-v2"],
+    "certified-calls": ["certified-calls-v2"],
+    "fp-bitwise": ["fp-bitwise-v1"],
+    "fp-load-store": ["broadway-fp-load-store-v2"],
+    "fp-compare": [],
+    "fp-convert": [],
+    "fp-fpscr-control": [],
+    "fp-scalar-arithmetic": [],
+    "fp-fused-arithmetic": [],
+    "fp-paired-single": [],
+    "fp-psq": [],
+    "fp-traps": [],
+    "precondition-closure": [],
+    "mmio-register-bank": [],
+    "gx-fifo-write-trace": [],
+    "gx-fifo-read": [],
+    "mmio-read-side-effects": [],
+    "mmio-external-input": [],
+    "mmio-loop-emission": [],
+    "mixed-address-space-routing": [],
+    "dma-interrupt-effects": [],
+    "memory-loop-summary": [],
+    "immutable-address-space": [],
+    "indirect-target-closure": [],
+    "affine-loop-summary": [],
+    "relational-loop-induction": []
+  },
+  "require_capability_assurance": true
+}

@@ -126,5 +126,30 @@ class CertifyUnitSymbolTests(unittest.TestCase):
         self.assertEqual(certificate.get("status"), "SEMANTIC_CERTIFIED")
 
 
+    def test_rebind_certificate_provenance_refreshes_stale_engine_hash(self) -> None:
+        from tools.coop.lib.equivalence_check import rebind_certificate_provenance
+        from tools.coop.lib.targets import equivalence_certificate_hash
+        from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
+
+        stale = {
+            "version": 17,
+            "status": "SEMANTIC_CERTIFIED",
+            "architecture": ARCHITECTURE_MODEL,
+            "result_format": RESULT_FORMAT,
+            "target_id": _TARGET_ID,
+            "evidence": "full-instruction-match",
+            "retail_sha256": "a" * 64,
+            "candidate_sha256": "b" * 64,
+            "summary": {"reads": [], "writes": [], "invalid_reasons": [], "return_behavior": "normal"},
+            "callees": [],
+            "helpers": [],
+            "engine_hash": "a" * 64,
+            "certifier_hash": "b" * 64,
+        }
+        stale["certificate_sha256"] = equivalence_certificate_hash(stale)
+        refreshed = rebind_certificate_provenance(stale)
+        self.assertEqual(refreshed["engine_hash"], hash_engine_tree(_REPO_ROOT))
+        self.assertEqual(refreshed["certifier_hash"], hash_certifier_tree(_REPO_ROOT))
+        self.assertNotEqual(refreshed["certificate_sha256"], stale["certificate_sha256"])
 if __name__ == "__main__":
     unittest.main()

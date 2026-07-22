@@ -2,9 +2,9 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v41`
-- Result format: `21`
-- Certificate format: `16`
+- Architecture model: `broadway-ppc32-be-v43`
+- Result format: `23`
+- Certificate format: `18`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -358,8 +358,7 @@ Tier classification is being migrated from effect-type hard-gates
 
 #### Wave 5 recertification notes
 
-After an architecture bump (parent-owned; this wave does **not** bump
-architecture or enable `automatic_promotion`):
+After an architecture bump (`automatic_promotion` stays `false`):
 
 1. Run bottom-up `targets recertify` (`--dry-run` first) before expecting a
    `callees-accepted` frontier.
@@ -367,6 +366,19 @@ architecture or enable `automatic_promotion`):
    time; recertify leaves first after each change.
 3. Never enable “all FP” or “all MMIO” in one bump — keep scalar FP and
    MMIO/gx-fifo allowlists empty until each has promotion-grade evidence.
+
+**GX FIFO Tier-A (v43):** the live architecture model is now
+`broadway-ppc32-be-v43` (v42 stays reserved for the Phase 12 scalar FP exact
+v2 production switch — see `SCALAR_FP_V2.md`). See
+[`GX_FIFO_TIER_A.md`](GX_FIFO_TIER_A.md) for the frozen `gx-fifo-write-trace`
+/ `gx-fifo-read` / `mmio-loop-emission` domain, and
+`gx_fifo_v1_rollout.py` (`python3 -m tools.ppc_equivalence.gx_fifo_v1_rollout
+readiness`) for the staged allowlist plumbing. `gx-fifo-read-v1` is outcome 3
+(architecturally reserved / undefined for equivalence) — allowlisting it
+authorizes the unsupported-read *policy* attestation, never a FIFO-load value
+model. Default and authoritative manifests keep every gx-fifo /
+mmio-loop-emission allowlist empty; staged canaries live at
+`tools/coop/capability_manifest.gx_fifo_*_canary.json`.
 
   - `assumed-ordinary-ram`: accesses are unconstrained ordinary RAM (external
     assumption; default). Private-stack masking still applies independently.
@@ -509,6 +521,13 @@ architecture or enable `automatic_promotion`):
 - The `auto` contract resolves dynamically from both implementations' write
   effects. Volatile ABI scratch (temporary GPRs/FPRs, volatile CR fields, XER,
   LR, CTR) is never added.
+- **Exit-kind filter:** when both terminals are `indirect-branch` (`bctr` /
+  unlinked `bcctr`) under `ppc-eabi` / `auto` / `ppc-eabi-fp`, observables
+  omit `r4`, `f1`, and `f1.ps1`. MWCC virtual thunks scratch the destination
+  in `r12` (already omitted); candidates may use `r4`. Comparing those return
+  halves after a tail transfer produced false `NOT_EQUIVALENT`. `exit.target`
+  (CTR) and `r3` (adjusted `this`) remain compared. `return` / `call-indirect`
+  / `strict` / `manual` / `live-out` are unchanged.
 
 ### Calls
 
@@ -669,6 +688,12 @@ architecture or enable `automatic_promotion`):
 - The layout-feasibility solver checks that an assignment exists satisfying all
   relocation constraints simultaneously. An impossible layout is
   `INCONCLUSIVE_LAYOUT`, never equivalence.
+- Co-op `_prove_bytes` extracts `_SDA_BASE_` / `_SDA2_BASE_` (or section-end
+  fallbacks) from the linked ELF when present, passes them as
+  `sda_bases` / `symbol_addresses` into jump-table auto, and constrains initial
+  `r13` / `r2` via `initial_gpr_bindings`. Absolute `relocation_bindings` are
+  not forced for unlinked HA/LO proofs so typeinfo labels keep symbolic
+  identity across DOL vs ELF placements.
 
 ### Solver and timeout
 

@@ -152,6 +152,36 @@ def apply_ni_single_result(bits: int, fpscr: int) -> int:
     return ni_force_single_result_bits(bits, ni=ni_from_fpscr(fpscr))
 
 
+def force_25bit(bits: int) -> int:
+    """Broadway ``Force25`` on a binary64 FPR value (``ConcreteOps.fp_force_25bit``)."""
+    bits = mask64(bits)
+    exponent = bits & 0x7FF0000000000000
+    fraction = bits & 0x000FFFFFFFFFFFFF
+    if exponent == 0 and fraction:
+        shift = (64 - fraction.bit_length()) - 11
+        signed_mask = 0xFFFFFFFFF8000000 - (1 << 64)
+        keep_mask = (signed_mask >> shift) & 0xFFFFFFFFFFFFFFFF
+        round_bit = 0x08000000 >> shift
+        return mask64((bits & keep_mask) + (bits & round_bit))
+    return mask64((bits & 0xFFFFFFFFF8000000) + (bits & 0x08000000))
+
+
+def adjust_binary64_ulp(bits: int, *, toward_plus_inf: bool) -> int:
+    """Step one ULP toward +inf (``toward_plus_inf=True``) or -inf."""
+    bits = mask64(bits)
+    sign = bool(bits >> 63)
+    magnitude = bits & ~(1 << 63)
+    if magnitude == 0:
+        return bits
+    if sign:
+        magnitude = magnitude - 1 if toward_plus_inf else magnitude + 1
+    else:
+        magnitude = magnitude + 1 if toward_plus_inf else magnitude - 1
+    if magnitude == 0:
+        return bits & (1 << 63)
+    return mask64((int(sign) << 63) | magnitude)
+
+
 __all__ = [
     "FiFrPolicy",
     "FPSCR_VXCVI",
@@ -161,9 +191,11 @@ __all__ = [
     "ScalarFPOutcome",
     "_NEGATIVE_INT_LIMIT",
     "_POSITIVE_INT_LIMIT",
+    "adjust_binary64_ulp",
     "apply_ni_operand",
     "apply_ni_single_result",
     "binary64_to_fraction",
+    "force_25bit",
     "compare_binary64_magnitude",
     "exact_v2_enabled",
     "fctiw_integer_result_bits",

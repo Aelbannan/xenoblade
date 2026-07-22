@@ -33,7 +33,12 @@ namespace cf{
 extern "C" bool func_802A1EA0() { return true; }
 // LLM-HARNESS-END: us-802a45d4
 // LLM-HARNESS-BEGIN: us-802a46d0
-extern "C" void func_802A1F9C() {}
+extern "C" unsigned char* lbl_eu_80664A58;
+extern "C" void func_802A1F9C() {
+    unsigned char* voice_man = lbl_eu_80664A58;
+    if (voice_man != 0)
+        voice_man[0x222] = 0;
+}
 // LLM-HARNESS-END: us-802a46d0
 // LLM-HARNESS-BEGIN: us-802a5424
 extern "C" void func_802A2CF0() {}
@@ -49,7 +54,7 @@ extern "C" bool func_802A3740() { return false; }
 // LLM-HARNESS-END: us-802a5e74
 
 // LLM-HARNESS-BEGIN: us-802a3af0
-extern "C" void ct_CCharVoiceMan() {}
+extern "C" void __ct__CCharVoiceMan() {}
 // LLM-HARNESS-END: us-802a3af0
 // LLM-HARNESS-BEGIN: us-802a3bec
 extern "C" void func_802A14B8() {}

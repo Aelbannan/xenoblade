@@ -245938,5 +245938,5 @@ extern "C" bool func_8043FBC4() { return false; }
 // LLM-HARNESS-END: us-8044255c
 
 // LLM-HARNESS-BEGIN: us-8043f178
-extern "C" void harness_stub_us_8043f178() {}
+extern "C" void __dt__5CViewFv() {}
 // LLM-HARNESS-END: us-8043f178

@@ -46,6 +46,7 @@ static asm void capture_enter(CaptureLiveState* live, CapturePayloadFn payload) 
     lfd f1, 0(r5)
     lfd f2, 8(r5)
     lfd f3, 16(r5)
+    lfd f7, 24(r5)
     lfd f0, 32(r5)
     mtfsf 0xff, f0
 
@@ -74,6 +75,7 @@ static void run_capture_case(u32 index) {
     s_live.fpr1 = capture->fpr1;
     s_live.fpr2 = capture->fpr2;
     s_live.fpr3 = capture->fpr3;
+    s_live.fpr7 = capture->fpr7_pre;
     s_live.fpscr_image = capture->fpscr_pre;
     capture_enter(&s_live, capture->payload);
 

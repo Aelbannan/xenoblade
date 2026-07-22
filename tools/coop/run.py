@@ -42,6 +42,7 @@ if str(ROOT) not in sys.path:
 
 from tools.coop.lib.attempts import AttemptRecord, append_attempt, append_contribution, count_attempts, read_attempts
 from tools.coop.lib.config import CoopConfig, load_config
+from tools.coop.lib.equivalence_check import rebind_certificate_provenance
 from tools.coop.lib.objdiff_report import (
     diff_function_json,
     evaluate_unit_match,
@@ -986,6 +987,8 @@ def cmd_targets_recertify(
                 failed_ids.add(target.id)
                 failed += 1
                 continue
+
+            certificate = rebind_certificate_provenance(certificate)
 
             document = load_targets_document(config)
             rows_by_id = {

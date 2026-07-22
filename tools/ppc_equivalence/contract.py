@@ -54,6 +54,37 @@ AUTO_PERSISTENT_OBSERVABLES = (
     *AUX_SPR_OBSERVABLES,
 )
 
+# Tail virtual / PTMF thunks exit via ``bctr`` (``indirect-branch``).  MWCC
+# scratches the destination in ``r12`` (already omitted from ``ppc-eabi``), but
+# candidates may use ``r4`` / ``f1``.  Those are EABI *return* halves, not
+# caller-visible after a tail transfer — comparing them produces false
+# NOT_EQUIVALENT.  ``exit.target`` (CTR) and ``r3`` (adjusted ``this``) remain.
+INDIRECT_BRANCH_OMITTED_OBSERVABLES = frozenset({"r4", "f1", "f1.ps1"})
+_EXIT_KIND_FILTER_CONTRACTS = frozenset({"ppc-eabi", "ppc-eabi-fp", "auto"})
+
+
+def observables_for_exit(
+    contract: EquivalenceContract,
+    exit_kind: str,
+) -> tuple[Observable, ...]:
+    """Select observables for a matched terminal pair.
+
+    For ``indirect-branch`` under EABI-family contracts, omit volatile return
+    halves so ``mtctr r12; bctr`` vs ``mtctr r4; bctr`` with the same CTR/r3
+    chain can prove equivalent.  ``strict`` / ``manual`` / ``live-out`` keep
+    the full observable set.  ``return`` / ``call-indirect`` / ``fallthrough``
+    are unchanged.
+    """
+    if exit_kind != "indirect-branch":
+        return contract.observables
+    if contract.name not in _EXIT_KIND_FILTER_CONTRACTS:
+        return contract.observables
+    return tuple(
+        item
+        for item in contract.observables
+        if item.name not in INDIRECT_BRANCH_OMITTED_OBSERVABLES
+    )
+
 
 def preset_observable_names(name: str) -> tuple[str, ...]:
     if name == "ppc-eabi":

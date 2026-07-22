@@ -106,8 +106,8 @@ namespace{
 }
 
 // LLM-HARNESS-BEGIN: us-8045a000
-extern "C" bool OnFileEvent() { return false; }
+extern "C" void OnFileEvent__8CDesktopFP10CEventFile() {}
 // LLM-HARNESS-END: us-8045a000
 // LLM-HARNESS-BEGIN: us-8045a05c
-extern "C" bool WorkEvent3() { return false; }
+extern "C" void WorkEvent3__8CDesktopFPv() {}
 // LLM-HARNESS-END: us-8045a05c

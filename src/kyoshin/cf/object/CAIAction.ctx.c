@@ -1034,11 +1034,7 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 }
 
 // LLM-HARNESS-BEGIN: us-8014b2fc
-extern "C" int lbl_eu_806641B0;
-
-void func_8014A8F8() {
-    lbl_eu_806641B0 = 0;
-}
+extern "C" void func_8014A8F8__Fv() {}
 // LLM-HARNESS-END: us-8014b2fc
 // LLM-HARNESS-BEGIN: us-8014b414
 extern "C" void func_8014AA10(void* obj, unsigned int value) {
@@ -1060,13 +1056,37 @@ extern "C" void* func_8014B2DC(void* p) {
 }
 // LLM-HARNESS-END: us-8014bce0
 // LLM-HARNESS-BEGIN: us-8014bcf0
-extern "C" void func_8014B2EC() {}
+extern "C" void func_8014B2EC(void* self, float delta) {
+    struct Entry {
+        unsigned char pad0[0x14];
+        float value;
+        unsigned char pad1[0x08];
+    };
+    struct Object {
+        unsigned char pad0[8];
+        unsigned short flags;
+        unsigned char pad1[0x202];
+        Entry* entries;
+        unsigned int start;
+        unsigned int count;
+        unsigned int period;
+    };
+    Object* object = static_cast<Object*>(self);
+    if ((object->flags & 2u) != 0)
+        return;
+    unsigned int i = 0;
+    while (i < object->count) {
+        unsigned int index = (object->start + i) % object->period;
+        object->entries[index].value -= delta;
+        ++i;
+    }
+}
 // LLM-HARNESS-END: us-8014bcf0
 // LLM-HARNESS-BEGIN: us-8014bd48
 extern "C" void func_8014B344() {}
 // LLM-HARNESS-END: us-8014bd48
 // LLM-HARNESS-BEGIN: us-8014c208
-extern "C" void func_8014B804() {}
+extern "C" void func_8014B804(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
 // LLM-HARNESS-END: us-8014c208
 // LLM-HARNESS-BEGIN: us-80154224
 extern "C" void func_801537E0(void* self) {
@@ -1075,7 +1095,7 @@ extern "C" void func_801537E0(void* self) {
 // LLM-HARNESS-END: us-80154224
 
 // LLM-HARNESS-BEGIN: us-8014b270
-void func_8014A86C(void*) {}
+extern "C" void func_8014A86C__FPv() {}
 // LLM-HARNESS-END: us-8014b270
 // LLM-HARNESS-BEGIN: us-8014c1b4
 extern "C" void func_8014B7B0() {}

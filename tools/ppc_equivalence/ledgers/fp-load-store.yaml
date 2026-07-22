@@ -1,6 +1,8 @@
 # Phase 6 per-opcode ledger — fp-load-store (SCALAR_FP_V2).
 # Bit transforms wired via _exact_v2_fp_bits_convert when SCALAR_FP_EXACT_V2=1;
 # memory addressing / bus routing remain on the existing semantics path.
+# Promotion-grade attestation uses fp-load-store-exact-v2 (schema v2 obligation);
+# bounded_memory / symbolic_backend / traps stay false until those proofs land.
 schema_version: 1
 capability: fp-load-store
 model_version: broadway-fp-load-store-v2

@@ -5100,7 +5100,7 @@ AXPB* __AXGetPBs(void) {
 void __AXSetPBDefault(AXVPB* vpb) {
     vpb->pb.state = AX_VOICE_STOP;
     vpb->pb.itd.flag = 0;
-    vpb->sync = 0x18A7FFDC;
+    vpb->sync = 0x18A80024;
     vpb->pb.lpf.on = 0;
     vpb->pb.biquad.on = 0;
     vpb->pb.remote = 0;

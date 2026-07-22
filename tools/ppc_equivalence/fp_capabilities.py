@@ -14,28 +14,30 @@ from typing import Any, Iterable
 
 from tools.ppc_equivalence.fp_bitwise import FP_BITWISE_OPS, fp_opcodes_among
 
-# Model-version stubs (Wave 3). Allowlists stay empty except fp-bitwise-v1.
-FP_LOAD_STORE_MODEL_VERSION = "broadway-fp-load-store-v1"
-FP_COMPARE_MODEL_VERSION = "broadway-fp-compare-v1"
-FP_CONVERT_MODEL_VERSION = "broadway-fp-convert-v1"
-FP_SCALAR_MODEL_VERSION = "broadway-fp-scalar-v2"
-FP_FUSED_MODEL_VERSION = "broadway-fp-fused-v1"
+# Model-version stubs (Wave 3 + Phase 12 scalar FP exact v2 identities).
+FP_LOAD_STORE_MODEL_VERSION = "broadway-fp-load-store-v2"
+FP_COMPARE_MODEL_VERSION = "broadway-fp-compare-v2"
+FP_CONVERT_MODEL_VERSION = "broadway-fp-convert-v2"
+FP_SCALAR_MODEL_VERSION = "broadway-fp-scalar-v3"
+FP_FUSED_MODEL_VERSION = "broadway-fp-fused-v2"
 FP_PAIRED_MODEL_VERSION = "broadway-fp-paired-v1"
 FP_PSQ_MODEL_VERSION = "broadway-fp-psq-v1"
-FP_TRAPS_MODEL_VERSION = "broadway-fp-traps-v1"
+FP_TRAPS_MODEL_VERSION = "broadway-fp-traps-v2"
+FP_FPSCR_CONTROL_MODEL_VERSION = "broadway-fp-fpscr-control-v1"
 
-# Experimental scalar-FP v2 identities (Phase 1 — SCALAR_FP_V2.md). Not used by
-# production Tier A until Phase 12; gated by SCALAR_FP_EXACT_V2 (default off).
-FP_LOAD_STORE_MODEL_VERSION_V2 = "broadway-fp-load-store-v2"
-FP_COMPARE_MODEL_VERSION_V2 = "broadway-fp-compare-v2"
-FP_CONVERT_MODEL_VERSION_V2 = "broadway-fp-convert-v2"
-FP_SCALAR_MODEL_VERSION_V3 = "broadway-fp-scalar-v3"
-FP_FUSED_MODEL_VERSION_V2 = "broadway-fp-fused-v2"
-FP_TRAPS_MODEL_VERSION_V2 = "broadway-fp-traps-v2"
-FP_FPSCR_CONTROL_MODEL_VERSION_V1 = "broadway-fp-fpscr-control-v1"
+# Aliases retained for contract / rollout code that references v2 experimental ids.
+FP_LOAD_STORE_MODEL_VERSION_V2 = FP_LOAD_STORE_MODEL_VERSION
+FP_COMPARE_MODEL_VERSION_V2 = FP_COMPARE_MODEL_VERSION
+FP_CONVERT_MODEL_VERSION_V2 = FP_CONVERT_MODEL_VERSION
+FP_SCALAR_MODEL_VERSION_V3 = FP_SCALAR_MODEL_VERSION
+FP_FUSED_MODEL_VERSION_V2 = FP_FUSED_MODEL_VERSION
+FP_TRAPS_MODEL_VERSION_V2 = FP_TRAPS_MODEL_VERSION
+FP_FPSCR_CONTROL_MODEL_VERSION_V1 = FP_FPSCR_CONTROL_MODEL_VERSION
 
 SCALAR_FP_EXACT_V2_ENV = "SCALAR_FP_EXACT_V2"
+SCALAR_FP_EXACT_V2_PRODUCTION_ENV = "SCALAR_FP_EXACT_V2_PRODUCTION"
 _SCALAR_FP_EXACT_V2_MODULE_FLAG: bool | None = None
+_SCALAR_FP_EXACT_V2_PRODUCTION_MODULE_FLAG: bool | None = None
 
 FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS: dict[str, str] = {
     "fp-load-store": FP_LOAD_STORE_MODEL_VERSION_V2,
@@ -172,6 +174,7 @@ FP_SUBCAPABILITY_MODEL_VERSIONS: dict[str, str] = {
     "fp-paired-single": FP_PAIRED_MODEL_VERSION,
     "fp-psq": FP_PSQ_MODEL_VERSION,
     "fp-traps": FP_TRAPS_MODEL_VERSION,
+    "fp-fpscr-control": FP_FPSCR_CONTROL_MODEL_VERSION,
 }
 
 _OPCODE_TO_CAPABILITY: tuple[tuple[frozenset[str], str], ...] = (
@@ -233,14 +236,33 @@ def scalar_fp_exact_v2_enabled() -> bool:
     return raw not in ("", "0", "false", "False", "no", "NO", "off", "OFF")
 
 
+def set_scalar_fp_exact_v2_production_module_flag(enabled: bool | None) -> None:
+    """Override ``SCALAR_FP_EXACT_V2_PRODUCTION`` for tests; ``None`` restores env-only."""
+    global _SCALAR_FP_EXACT_V2_PRODUCTION_MODULE_FLAG
+    _SCALAR_FP_EXACT_V2_PRODUCTION_MODULE_FLAG = enabled
+
+
+def scalar_fp_exact_v2_production_module_flag_override() -> bool | None:
+    """Return the production test override, or ``None`` when env-only."""
+    return _SCALAR_FP_EXACT_V2_PRODUCTION_MODULE_FLAG
+
+
+def scalar_fp_exact_v2_production_enabled() -> bool:
+    """True when scalar FP exact v2 production execution is armed (default off)."""
+    if _SCALAR_FP_EXACT_V2_PRODUCTION_MODULE_FLAG is not None:
+        return _SCALAR_FP_EXACT_V2_PRODUCTION_MODULE_FLAG
+    raw = os.environ.get(SCALAR_FP_EXACT_V2_PRODUCTION_ENV, "0")
+    return raw not in ("", "0", "false", "False", "no", "NO", "off", "OFF")
+
+
 def model_version_for_capability(capability: str) -> str | None:
     """Return the Wave-3 model-version stub for an FP capability, if known."""
     return FP_SUBCAPABILITY_MODEL_VERSIONS.get(capability)
 
 
 def experimental_model_version_for_capability(capability: str) -> str | None:
-    """Return the Phase 1 experimental model identity when v2 is enabled."""
-    if not scalar_fp_exact_v2_enabled():
+    """Return the exact-v2 model identity when production or experimental path is on."""
+    if not (scalar_fp_exact_v2_enabled() or scalar_fp_exact_v2_production_enabled()):
         return model_version_for_capability(capability)
     return FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS.get(
         capability,

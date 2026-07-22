@@ -1359,5 +1359,5 @@ void AxVoiceParamBlock::UpdateDelta() {
 extern "C" void IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam() {}
 // LLM-HARNESS-END: us-8041147c
 // LLM-HARNESS-BEGIN: us-8041215c
-extern "C" void SetBiquad_Q44nw4r3snd6detail7AxVoiceFUcf() {}
+extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf() {}
 // LLM-HARNESS-END: us-8041215c

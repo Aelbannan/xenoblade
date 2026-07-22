@@ -560,5 +560,5 @@ CPad* CPadManager::getMainGCPad(){
 }
 
 // LLM-HARNESS-BEGIN: us-80449f30
-extern "C" void func_eu_80449F30() {}
+extern "C" void* func_eu_80449F30(int index) { extern unsigned char* lbl_eu_80665630; return lbl_eu_80665630 + index * 0xf8 + 0x24; }
 // LLM-HARNESS-END: us-80449f30

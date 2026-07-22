@@ -35,6 +35,32 @@ def _live_certifier_hash() -> str:
     return hash_certifier_tree(_REPO_ROOT)
 
 
+def _attestation_model_version(capability: str) -> str:
+    from tools.ppc_equivalence.fp_capabilities import model_version_for_capability
+
+    return model_version_for_capability(capability) or f"{capability}-v0"
+
+
+def _attestation_algorithm(capability: str) -> str:
+    from tools.ppc_equivalence.capability_attachment import (
+        FP_COMPARE_ALGORITHM,
+        FP_CONVERT_ALGORITHM,
+        FP_LOAD_STORE_ALGORITHM,
+    )
+    from tools.ppc_equivalence.certified_calls_obligations import (
+        CERTIFIED_CALLS_ALGORITHM,
+    )
+
+    return {
+        "integer-core": "opcode-ledger-v2",
+        "provenance": "provenance-binding-v1",
+        "certified-calls": CERTIFIED_CALLS_ALGORITHM,
+        "fp-load-store": FP_LOAD_STORE_ALGORITHM,
+        "fp-compare": FP_COMPARE_ALGORITHM,
+        "fp-convert": FP_CONVERT_ALGORITHM,
+    }.get(capability, f"{capability}-incomplete-v0")
+
+
 def _certificate(target_id: str, callees: list[dict[str, str]] | None = None) -> dict:
     certificate = {
         "version": EQUIVALENCE_CERTIFICATE_VERSION,
@@ -50,7 +76,39 @@ def _certificate(target_id: str, callees: list[dict[str, str]] | None = None) ->
         "helpers": [],
         "engine_hash": _live_engine_hash(),
         "certifier_hash": _live_certifier_hash(),
+        "opcodes_used": ["addi", "blr"],
     }
+    from tools.coop.lib.equivalence_policy import proof_result_from_certificate
+    from tools.ppc_equivalence.capability_assurance import (
+        CapabilityAssurance,
+        build_attestation,
+    )
+    from tools.ppc_equivalence.capability_requirements import (
+        derive_capability_requirements,
+    )
+    from tools.ppc_equivalence.result import ProofStatus
+
+    proof = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+    requirements = derive_capability_requirements(proof)
+    by_cap = requirements.by_capability()
+    attestations = []
+    for capability, requirement in by_cap.items():
+        attestations.append(
+            build_attestation(
+                capability=capability,
+                model_version=_attestation_model_version(capability),
+                algorithm=_attestation_algorithm(capability),
+                evidence={
+                    "opcodes": list(requirement.required_opcodes),
+                    "requirement_sha256": requirement.requirement_sha256,
+                    "requirements_sha256": requirements.requirements_sha256,
+                },
+            )
+        )
+    certificate["capability_requirements"] = requirements.to_dict()
+    certificate["capability_assurance"] = CapabilityAssurance(
+        capabilities=tuple(attestations),
+    ).to_dict()
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate
 

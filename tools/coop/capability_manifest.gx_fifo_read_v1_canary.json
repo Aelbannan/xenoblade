@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "policy": "capability-assurance-v1",
+  "description": "Wave 5 GX FIFO Tier-A v1 rollout (GX_FIFO_TIER_A.md) — stage 'gx_fifo_read_v1'. Additionally allowlist the gx-fifo-read-v1 unsupported-read policy attestation (outcome 3; never a value model).",
+  "automatic_promotion": false,
+  "shadow_mode": false,
+  "require_capability_assurance": true,
+  "gx_fifo_exact_v1": {
+    "hardware_profile": "wii-broadway-xenoblade-us-v2",
+    "stage": "gx_fifo_read_v1",
+    "allowlist_order": [
+      "gx-fifo-write-trace",
+      "gx-fifo-read",
+      "mmio-loop-emission"
+    ],
+    "model_versions": {
+      "gx-fifo-write-trace": "gx-fifo-trace-v2",
+      "gx-fifo-read": "gx-fifo-read-v1",
+      "mmio-loop-emission": "mmio-loop-emission-v1"
+    },
+    "recommended_canary_targets": {
+      "gx-fifo-write-trace": "us-8031bfc0"
+    }
+  },
+  "allowed_tier_a_capabilities": {
+    "integer-core": [
+      "integer-core-v1"
+    ],
+    "provenance": [
+      "provenance-v1"
+    ],
+    "bounded-memory": [
+      "bounded-memory-v2"
+    ],
+    "certified-calls": [
+      "certified-calls-v2"
+    ],
+    "fp-bitwise": [
+      "fp-bitwise-v1"
+    ],
+    "fp-load-store": [],
+    "fp-compare": [],
+    "fp-convert": [],
+    "fp-scalar-arithmetic": [],
+    "fp-fused-arithmetic": [],
+    "fp-paired-single": [],
+    "fp-psq": [],
+    "fp-traps": [],
+    "precondition-closure": [],
+    "mmio-register-bank": [],
+    "gx-fifo-write-trace": [
+      "gx-fifo-trace-v2"
+    ],
+    "gx-fifo-read": [
+      "gx-fifo-read-v1"
+    ],
+    "mmio-read-side-effects": [],
+    "mmio-external-input": [],
+    "mmio-loop-emission": [],
+    "mixed-address-space-routing": [],
+    "dma-interrupt-effects": [],
+    "memory-loop-summary": [],
+    "immutable-address-space": [],
+    "indirect-target-closure": [],
+    "affine-loop-summary": [],
+    "relational-loop-induction": []
+  }
+}

@@ -37,6 +37,14 @@ MEMORY_BUS_ALGORITHM = "memory-bus-v1"
 LOOP_FIFO_POLICY = "hard-reject"
 LOOP_FIFO_EMISSION = "unsupported"
 LOOP_FIFO_REJECTION_REASON = "symbolic-loop-fifo-emission"
+# Narrow recognized-loop refinement (GX_FIFO_TIER_A.md ``mmio-loop-emission-v1``):
+# reported instead of the blanket hard-reject policy strings whenever the CFG
+# actually discharged one or more ``GxFifoLoopPlan`` summaries for this pair.
+# Recognition/discharge here never authorizes ``EQUIVALENT`` by itself — see
+# ``gx_fifo_loop.py`` and ``GX_FIFO_TIER_A.md`` "Authorization" for the real
+# per-block UNSAT obligations a used plan must still discharge.
+LOOP_FIFO_POLICY_GX_REFINEMENT = "gx-fifo-loop-exact-refinement-v2"
+LOOP_FIFO_EMISSION_SUMMARIZED_BOUNDED = "summarized-bounded"
 MIXED_SPACE_POLICY = "fail-closed"
 MIXED_SPACE_REJECTION_REASON = "symbolic-mmio-mixed-address-space"
 
@@ -211,6 +219,17 @@ def build_memory_bus_obligation(memory_bus: MemoryBus) -> dict[str, Any]:
         # Optional rebuild payload so JSON-only validators can recompute the
         # digest without a live MemoryBus.
         obligation["bus_spec_canonical"] = spec.canonical_dict()
+    # Reviewed hardware-profile identity (set only by
+    # ``build_memory_bus_from_hardware_profile``). Mirrors how
+    # ``build_mmio_capability_obligation`` binds these fields so
+    # ``draft_mmio_capability_attestations`` in ``capability_attachment.py``
+    # can see the reviewed source directly on ``result.memory_bus`` without a
+    # separate wrapper. Ad-hoc buses leave these unset (never promotion-grade).
+    if memory_bus.hardware_profile_name is not None:
+        obligation["hardware_profile"] = memory_bus.hardware_profile_name
+        obligation["hardware_profile_sha256"] = memory_bus.hardware_profile_sha256
+        if memory_bus.device_models_sha256 is not None:
+            obligation["device_models_sha256"] = memory_bus.device_models_sha256
     return obligation
 
 
@@ -836,12 +855,22 @@ def enrich_memory_bus_obligation_with_symbolic_mmio(
     ops: Any | None = None,
     deadline: Any | None = None,
     loop_summaries_active: bool = False,
+    gx_loop_plans_used: bool = False,
 ) -> dict[str, Any]:
     """Attach PR-14/15 CFG routing blocks and MMIO observability.
 
-    ``loop_summaries_active`` records the CFG hard-reject when affine/memory
-    loop summaries coexist with FIFO devices (even if ``execute_cfg`` raised
-    before producing terminals).
+    ``loop_summaries_active`` records the CFG hard-reject that fires when an
+    *unrecognized* loop summary may write into a GX FIFO region (``execute_cfg``
+    raises before producing terminals, so this must be passed explicitly by
+    the caller). Recognized ``GxFifoLoopPlan`` headers never trigger this —
+    they are covered by ``gx_loop_plans_used`` instead.
+
+    ``gx_loop_plans_used`` records that one or more recognized
+    ``mmio-loop-emission-v1`` (``GxFifoLoopPlan``) summaries were actually
+    discharged by the CFG for this pair. When set, the narrower
+    ``gx-fifo-loop-exact-refinement-v2`` / ``summarized-bounded`` policy
+    strings replace the blanket hard-reject policy attestation — this is
+    purely descriptive; it never authorizes ``EQUIVALENT`` by itself.
 
     ``original_instructions`` / ``candidate_instructions`` feed static
     per-side opcode-family coverage (preferred over last-execution-only).
@@ -865,10 +894,24 @@ def enrich_memory_bus_obligation_with_symbolic_mmio(
     if _bus_has_fifo_devices(memory_bus):
         enriched["loop_fifo_policy"] = LOOP_FIFO_POLICY
         enriched["loop_fifo_emission"] = LOOP_FIFO_EMISSION
+        if gx_loop_plans_used:
+            # Discharged mmio-loop-emission-v1 plans exist for this pair:
+            # report the narrow recognized-loop refinement policy instead of
+            # the blanket hard-reject strings (still never authorizes alone).
+            enriched["loop_fifo_policy"] = LOOP_FIFO_POLICY_GX_REFINEMENT
+            enriched["loop_fifo_emission"] = LOOP_FIFO_EMISSION_SUMMARIZED_BOUNDED
+            coverage["loop_fifo_policy"] = LOOP_FIFO_POLICY_GX_REFINEMENT
+            coverage["loop_fifo_emission"] = LOOP_FIFO_EMISSION_SUMMARIZED_BOUNDED
+            coverage["bounded_summarized_fifo_emission"] = (
+                LOOP_FIFO_EMISSION_SUMMARIZED_BOUNDED
+            )
+            enriched["coverage"] = coverage
 
     rejections = _cfg_rejections(original_terminals) + _cfg_rejections(candidate_terminals)
 
-    # Loop-summary × FIFO: hard-reject attestation (CFG raises before terminals).
+    # Loop-summary × FIFO: hard-reject attestation (CFG raises before terminals
+    # when an *unrecognized* loop may emit to a GX FIFO region; recognized
+    # GxFifoLoopPlan headers do not set ``loop_summaries_active``).
     if _bus_has_fifo_devices(memory_bus) and loop_summaries_active:
         if LOOP_FIFO_REJECTION_REASON not in rejections:
             rejections.append(LOOP_FIFO_REJECTION_REASON)
@@ -1572,8 +1615,16 @@ def _validate_gxfifo_trace(
             "memory_bus.gxfifo_trace.bus_spec_sha256 must match "
             "memory_bus.bus_spec_sha256"
         )
-    if block.get("reads") != "unsupported":
-        return "memory_bus.gxfifo_trace.reads must be 'unsupported'"
+    reads = block.get("reads")
+    if reads == "unsupported":
+        pass
+    elif isinstance(reads, dict) and reads.get("policy") == "unsupported":
+        pass
+    else:
+        return (
+            "memory_bus.gxfifo_trace.reads must be 'unsupported' "
+            "or {policy: unsupported, ...}"
+        )
     devices = block.get("devices")
     if not isinstance(devices, list) or not devices:
         return "memory_bus.gxfifo_trace.devices must be nonempty"

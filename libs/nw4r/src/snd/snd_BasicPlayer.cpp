@@ -73,7 +73,5 @@ void SetBiquadFilter__Q44nw4r3snd6detail11BasicPlayerFif(void* _this, int type, 
 }
 // LLM-HARNESS-END: us-80414770
 // LLM-HARNESS-BEGIN: us-8041477c
-void SetRemoteFilter__Q44nw4r3snd6detail11BasicPlayerFi(void* this_, int param) {
-    reinterpret_cast<unsigned char*>(this_)[0x1d] = static_cast<unsigned char>(param);
-}
+extern "C" void SetRemoteFilter__Q44nw4r3snd6detail11BasicPlayerFi(int) {}
 // LLM-HARNESS-END: us-8041477c

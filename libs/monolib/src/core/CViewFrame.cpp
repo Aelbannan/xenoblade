@@ -216,11 +216,11 @@ bool CViewFrame::render() {
 }
 
 // LLM-HARNESS-BEGIN: us-80442564
-extern "C" void ct_CViewFrame() {}
+extern "C" void __ct__CViewFrame() {}
 // LLM-HARNESS-END: us-80442564
 // LLM-HARNESS-BEGIN: us-80442600
-extern "C" void getFrame2ViewOffset() {}
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame() {}
 // LLM-HARNESS-END: us-80442600
 // LLM-HARNESS-BEGIN: us-80444550
-extern "C" void detachRenderWork() {}
+extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
 // LLM-HARNESS-END: us-80444550

@@ -56,5 +56,6 @@
   "memory_profile": null,
   "memory_ranges": [],
   "platform_profile": null,
+  "hardware_profile": null,
   "floating_point_domain": null
 }

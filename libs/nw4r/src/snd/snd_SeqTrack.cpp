@@ -90,9 +90,7 @@ void SeqTrack::SetSeqData(const void* pBase, s32 offset) {
     mParserTrackParam.currentAddr = mParserTrackParam.baseAddr + offset;
 }
 
-void SeqTrack::Open() {
-    mOpenFlag = true;
-}
+void SeqTrack::Open() { *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(this) + 0x4A) = 0; *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(this) + 0x40) = 0; *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(this) + 0x44) = 0; *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(this) + 0x5) = 1; }
 
 void SeqTrack::Close() {
     SoundThread::AutoLock lock;

@@ -1,0 +1,98 @@
+{
+  "profile": "wii-broadway-xenoblade-us-v2",
+  "regions": [
+    {
+      "kind": "ram",
+      "start": "0x80000000",
+      "end": "0x817fffff",
+      "label": "MEM1"
+    },
+    {
+      "kind": "mmio",
+      "start": "0xcc003000",
+      "end": "0xcc00301f",
+      "device_id": "pi-stub",
+      "label": "PI-stub"
+    },
+    {
+      "kind": "mmio",
+      "start": "0xcc008000",
+      "end": "0xcc00807f",
+      "device_id": "gx-fifo",
+      "label": "GX-WGPIPE"
+    }
+  ],
+  "devices": [
+    {
+      "device_id": "pi-stub",
+      "theory": "mmio-register-bank",
+      "base": "0xcc003000",
+      "reg_width": 4,
+      "span": 32,
+      "endian": "big"
+    },
+    {
+      "device_id": "gx-fifo",
+      "theory": "gxfifo-stream",
+      "base": "0xcc008000",
+      "span": 128,
+      "endian": "big",
+      "reg_width": 4,
+      "supported_widths": [1, 2, 4],
+      "alignment_required": true,
+      "read_policy": "unsupported",
+      "read_model_version": "gx-fifo-read-v1",
+      "write_event_semantics": "gx-fifo-trace-v2",
+      "read_side_effects": false,
+      "external_input": false,
+      "max_fifo_events": 256,
+      "legal_aliases": ["0xcc008000"]
+    }
+  ],
+  "register_specs": [
+    {
+      "device_id": "pi-stub",
+      "offset": 0,
+      "initial": 0,
+      "w1c": false,
+      "read_clear": false,
+      "access": "rw",
+      "reserved_mask": 0
+    },
+    {
+      "device_id": "pi-stub",
+      "offset": 4,
+      "initial": 0,
+      "w1c": true,
+      "read_clear": false,
+      "access": "rw",
+      "reserved_mask": 0
+    }
+  ],
+  "reset_state": {
+    "pi-stub": {
+      "0x0": 0,
+      "0x4": 0
+    },
+    "gx-fifo": {
+      "event_cursor": 0,
+      "write_count": 0,
+      "read_count": 0
+    }
+  },
+  "fifo_bound": 256,
+  "gx_fifo": {
+    "base": "0xcc008000",
+    "span": 128,
+    "endian": "big",
+    "supported_widths": [1, 2, 4],
+    "alignment_required": true,
+    "read_policy": "unsupported",
+    "read_model_version": "gx-fifo-read-v1",
+    "write_event_semantics": "gx-fifo-trace-v2",
+    "read_side_effects": false,
+    "external_input": false,
+    "max_fifo_events": 256
+  },
+  "profile_sha256": "3d513203c3ec316e69525f4c4c342747f7ad8859a39cd1396c9fc2c90e15ecce"
+}

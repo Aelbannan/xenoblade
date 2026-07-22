@@ -138,13 +138,13 @@ extern "C" void func_8006BC1C(unsigned int* p, unsigned int mask) {
 }
 // LLM-HARNESS-END: us-8006c674
 // LLM-HARNESS-BEGIN: us-8006c8bc
-extern "C" void* ct_cf_CfCam() { return 0; }
+extern "C" void __ct__cf_CfCam() {}
 // LLM-HARNESS-END: us-8006c8bc
 // LLM-HARNESS-BEGIN: us-8006c918
-extern "C" void harness_stub_us_8006c918() {}
+extern "C" void func_8006BEC0(void* self) {}
 // LLM-HARNESS-END: us-8006c918
 // LLM-HARNESS-BEGIN: us-8006c91c
-extern "C" void harness_stub_us_8006c91c() {}
+extern "C" void func_8006BEC4(void* self) {}
 // LLM-HARNESS-END: us-8006c91c
 // LLM-HARNESS-BEGIN: us-8006c93c
 extern "C" void func_8006BEE4(void* p) {
@@ -155,7 +155,7 @@ extern "C" void func_8006BEE4(void* p) {
 extern "C" void func_8006BEF0(void* self, int val) { *(int*)((char*)self + 0x8) = val; }
 // LLM-HARNESS-END: us-8006c948
 // LLM-HARNESS-BEGIN: us-8006c950
-extern "C" void harness_stub_us_8006c950() {}
+extern "C" void func_8006BEF8(void* self) {}
 // LLM-HARNESS-END: us-8006c950
 // LLM-HARNESS-BEGIN: us-8006c954
 void func_8006BEFC(void* param_1) { *(u32*)param_1 = 0; }
@@ -172,7 +172,7 @@ void* func_8006BF14(void* r3, int r4) { return (char*)r3 + r4 * 12; }
 extern "C" u32 func_8006BFBC(void *self) { return *(u32 *)((char *)self + 8); }
 // LLM-HARNESS-END: us-8006ca14
 // LLM-HARNESS-BEGIN: us-8006ca1c
-extern "C" void func_8006BFC4() {}
+extern "C" bool func_8006BFC4(const void* self, unsigned int mask) { return ((*reinterpret_cast<const unsigned int*>(static_cast<const unsigned char*>(self) + 4)) & mask) != 0; }
 // LLM-HARNESS-END: us-8006ca1c
 // LLM-HARNESS-BEGIN: us-8006cc08
 extern "C" int func_8006C1B0(void* p) {
@@ -197,7 +197,7 @@ extern "C" int func_8006C678(void* p) {
 }
 // LLM-HARNESS-END: us-8006d0d0
 // LLM-HARNESS-BEGIN: us-8006d0dc
-extern "C" void func_8006C684() {}
+extern "C" bool func_8006C684(const unsigned char* this_) { return (*(const unsigned short*)(this_ + 0x530) & 0x000C) != 0; }
 // LLM-HARNESS-END: us-8006d0dc
 // LLM-HARNESS-BEGIN: us-8006d0f4
 extern "C" bool func_8006C69C(const void* self) { return (*(const unsigned short*)((const unsigned char*)self + 0x530) & 0x30) != 0; }
@@ -276,7 +276,7 @@ extern "C" int func_8006DC40(void* p) {
 }
 // LLM-HARNESS-END: us-8006e698
 // LLM-HARNESS-BEGIN: us-8006e6a4
-extern "C" void func_8006DC4C() {}
+extern "C" int func_8006DC4C(void* self, unsigned int mask) { return ((*((unsigned int*)((char*)self + 0x4ec)) & mask) != 0); }
 // LLM-HARNESS-END: us-8006e6a4
 // LLM-HARNESS-BEGIN: us-8006e6bc
 extern "C" uint32_t func_8006DC64(void* self) {
@@ -389,7 +389,7 @@ extern "C" int func_80071A90(void* ptr) {
 }
 // LLM-HARNESS-END: us-800724bc
 // LLM-HARNESS-BEGIN: us-800724c8
-extern "C" void func_80071A9C() {}
+extern "C" void func_80071A9C(void* self) { *(reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 4)) &= 0xFFFFEDFFu; }
 // LLM-HARNESS-END: us-800724c8
 // LLM-HARNESS-BEGIN: us-80072598
 extern "C" bool func_8049EB60(void* obj);

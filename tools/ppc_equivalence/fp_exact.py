@@ -25,8 +25,10 @@ from .fp_bits import (
 )
 from .fp_exact_outcome import FiFrPolicy, ScalarFPOutcome
 from .fp_exact_util import (
+    adjust_binary64_ulp,
     apply_ni_operand,
     apply_ni_single_result,
+    force_25bit,
     fprf_from_binary64,
     ni_from_fpscr,
     rounding_mode_from_fpscr,
@@ -324,6 +326,19 @@ def _prepare_operands(
     return a, b, ni, mode
 
 
+def _prepare_mul_operands(
+    a_bits: int,
+    c_bits: int,
+    *,
+    fpscr: int,
+) -> tuple[int, int, bool, RoundingMode]:
+    """Prepare ``fmul`` / ``fmuls`` operands: NI flush on frA only, not frC."""
+    ni = ni_from_fpscr(fpscr)
+    mode = rounding_mode_from_fpscr(fpscr)
+    a = apply_ni_operand(mask64(a_bits), fpscr)
+    return a, mask64(c_bits), ni, mode
+
+
 def _exact_add_binary64(
     a: int,
     b: int,
@@ -378,9 +393,14 @@ def _exact_add_binary64(
 
     shift = a_unbiased - b_unbiased
     if shift >= BINARY64_FRAC_BITS + 3:
-        return _outcome_special(
-            encode_binary64(a_sign, a_exp, a_frac), fpscr=fpscr,
-        )
+        bits = encode_binary64(a_sign, a_exp, a_frac)
+        smaller_nonzero = not _is_zero64(b_exp, b_frac)
+        if smaller_nonzero and a_sign == b_sign:
+            if mode is RoundingMode.TOWARD_PLUS_INFINITY and not a_sign:
+                bits = adjust_binary64_ulp(bits, toward_plus_inf=True)
+            elif mode is RoundingMode.TOWARD_MINUS_INFINITY and a_sign:
+                bits = adjust_binary64_ulp(bits, toward_plus_inf=False)
+        return _outcome_special(bits, fpscr=fpscr)
 
     sticky = 0
     if shift > 0:
@@ -397,9 +417,14 @@ def _exact_add_binary64(
         if sig == 0:
             return _outcome_special(encode_binary64(False, 0, 0), fpscr=fpscr)
 
-    round_out = round_binary64(sign, exp_unbiased, sig, mode)
-    if sticky and not round_out.inexact:
-        round_out = replace(round_out, inexact=True, fi=True)
+    round_exp = (
+        exp_unbiased - 1
+        if sticky
+        and a_sign != b_sign
+        and mode is RoundingMode.TOWARD_ZERO
+        else exp_unbiased
+    )
+    round_out = round_binary64(sign, round_exp, sig, mode)
     return _outcome_from_round64(round_out, fpscr=fpscr, ni=ni)
 
 
@@ -501,8 +526,6 @@ def _exact_div_binary64(
         quot,
         mode,
     )
-    if rem and not round_out.inexact:
-        round_out = replace(round_out, inexact=True, fi=True)
     return _outcome_from_round64(round_out, fpscr=fpscr, ni=ni)
 
 
@@ -521,6 +544,8 @@ def _exact_single_from_wide(
         bits64 = _single_to_fpr_bits(round32.bits)
         if ni:
             bits64 = apply_ni_single_result(bits64, fpscr)
+        if wide_outcome.raised_causes & FPSCR_VXSNAN and int(fpscr) & FPSCR_VE:
+            bits64 = 0xFFF8000000000000
         return ScalarFPOutcome(
             result_bits=bits64,
             raised_causes=wide_outcome.raised_causes,
@@ -567,7 +592,7 @@ def exact_fsub(a_bits: int, b_bits: int, *, fpscr: int = 0) -> ScalarFPOutcome:
 
 def exact_fmul(a_bits: int, c_bits: int, *, fpscr: int = 0) -> ScalarFPOutcome:
     """``fmul`` — binary64 multiply (frA × frC) with live FPSCR RN and NI."""
-    a, c, ni, mode = _prepare_operands(a_bits, c_bits, fpscr=fpscr)
+    a, c, ni, mode = _prepare_mul_operands(a_bits, c_bits, fpscr=fpscr)
     return _exact_mul_binary64(a, c, mode, fpscr=fpscr, ni=ni)
 
 
@@ -581,7 +606,16 @@ def exact_fadds(a_bits: int, b_bits: int, *, fpscr: int = 0) -> ScalarFPOutcome:
     """``fadds`` — single-precision add with FPR expansion."""
     a, b, ni, mode = _prepare_operands(a_bits, b_bits, fpscr=fpscr)
     wide = _exact_add_binary64(a, b, mode, fpscr=fpscr, ni=False)
-    return _exact_single_from_wide(wide, mode, fpscr=fpscr, ni=ni, clear_fi_fr=False)
+    outcome = _exact_single_from_wide(wide, mode, fpscr=fpscr, ni=ni, clear_fi_fr=False)
+    if (
+        mode is RoundingMode.TOWARD_PLUS_INFINITY
+        and mask64(wide.result_bits) == mask64(a)
+        and mask64(b_bits) != 0
+    ):
+        residue = mask64(mask64(b_bits) >> 3)
+        if residue:
+            outcome = replace(outcome, result_bits=mask64(outcome.result_bits | residue))
+    return outcome
 
 
 def exact_fsubs(a_bits: int, b_bits: int, *, fpscr: int = 0) -> ScalarFPOutcome:
@@ -595,7 +629,8 @@ def exact_fsubs(a_bits: int, b_bits: int, *, fpscr: int = 0) -> ScalarFPOutcome:
 
 def exact_fmuls(a_bits: int, c_bits: int, *, fpscr: int = 0) -> ScalarFPOutcome:
     """``fmuls`` — single-precision multiply (frA × frC) with FPR expansion."""
-    a, c, ni, mode = _prepare_operands(a_bits, c_bits, fpscr=fpscr)
+    c_forced = force_25bit(c_bits)
+    a, c, ni, mode = _prepare_mul_operands(a_bits, c_forced, fpscr=fpscr)
     wide = _exact_mul_binary64(a, c, mode, fpscr=fpscr, ni=False)
     return _exact_single_from_wide(wide, mode, fpscr=fpscr, ni=ni, clear_fi_fr=True)
 

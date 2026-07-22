@@ -7,8 +7,13 @@ import unittest
 from tools.ppc_equivalence.bus_spec import DeviceSpecification, lift_symbolic_fifo_traces
 from tools.ppc_equivalence.symbolic_event_trace import (
     ALGORITHM,
+    ALGORITHM_V1,
+    ALGORITHM_V2,
     DEFAULT_MAX_FIFO_EVENTS,
+    RepeatedEmission,
+    SymbolicFifoEvent,
     UnboundedEmissionStatus,
+    build_gxfifo_trace_obligation,
     initial_symbolic_event_trace,
     reject_unbounded_symbolic_loop_fifo_emission,
     symbolic_trace_from_device_spec,
@@ -79,11 +84,15 @@ class SymbolicEventTraceTests(unittest.TestCase):
         self.assertEqual(err2, "bounded-event-limit")
 
     def test_reads_remain_unsupported(self) -> None:
-        self.assertFalse(initial_symbolic_event_trace(
+        trace = initial_symbolic_event_trace(
             device_id="gx-fifo",
             base=0xCC008100,
             span=0x100,
-        ).read_supported())
+        )
+        self.assertFalse(trace.read_supported())
+        next_trace, err = trace.append_read(0xCC008100, 4, 0)
+        self.assertIsNone(next_trace)
+        self.assertEqual(err, "gxfifo-read-unsupported")
 
     def test_reject_unbounded_symbolic_loop_emission(self) -> None:
         z3 = _z3()
@@ -145,7 +154,8 @@ class SymbolicEventTraceTests(unittest.TestCase):
         trace = symbolic_trace_from_device_spec(device, max_events=8)
         self.assertEqual(trace.device_id, "gx-fifo")
         self.assertEqual(trace.span, 0x100)
-        self.assertEqual(ALGORITHM, "gxfifo-stream-trace-v1")
+        self.assertEqual(ALGORITHM, ALGORITHM_V2)
+        self.assertEqual(ALGORITHM_V1, "gxfifo-stream-trace-v1")
 
     def test_enrich_attaches_gxfifo_trace_block(self) -> None:
         from tools.ppc_equivalence.address_space import AddressSpace, mmio_region
@@ -166,7 +176,11 @@ class SymbolicEventTraceTests(unittest.TestCase):
         )
         self.assertIn("gxfifo_trace", enriched)
         self.assertEqual(enriched["gxfifo_trace"]["algorithm"], ALGORITHM)
-        self.assertEqual(enriched["gxfifo_trace"]["reads"], "unsupported")
+        self.assertEqual(
+            enriched["gxfifo_trace"]["reads"],
+            {"policy": "unsupported", "reason": "gxfifo-read-unsupported"},
+        )
+        self.assertEqual(enriched["gxfifo_trace"]["schema_version"], 2)
         self.assertEqual(enriched["gxfifo_trace"]["status"], "cfg-routed")
         self.assertEqual(enriched["loop_fifo_policy"], LOOP_FIFO_POLICY)
         self.assertEqual(enriched["loop_fifo_emission"], LOOP_FIFO_EMISSION)
@@ -260,6 +274,174 @@ class SymbolicEventTraceTests(unittest.TestCase):
             or "×" in (reason or ""),
             reason,
         )
+
+    def test_writes_property_flattens_concrete_writes_only(self) -> None:
+        z3 = _z3()
+        trace = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=16,
+        )
+        trace, _ = trace.append_write(z3.BitVecVal(0xCC008100, 32), 4, z3.BitVecVal(1, 32))
+        assert trace is not None
+        segment = RepeatedEmission(
+            count=4,
+            writes_per_iteration=1,
+            writes=(
+                SymbolicFifoEvent(
+                    kind="write",
+                    addr=z3.BitVecVal(0xCC008100, 32),
+                    width=4,
+                    value=z3.BitVecVal(2, 32),
+                ),
+            ),
+        )
+        trace, _ = trace.append_repeated_emission(segment)
+        assert trace is not None
+        self.assertEqual(len(trace.writes), 1)
+        self.assertEqual(trace.event_count(), 5)
+
+    def test_repeated_emission_compare_equal(self) -> None:
+        z3 = _z3()
+        addr = z3.BitVecVal(0xCC008100, 32)
+        value = z3.BitVecVal(0xABCD, 32)
+        template = (
+            SymbolicFifoEvent(kind="write", addr=addr, width=4, value=value),
+        )
+        left = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=16,
+        )
+        right = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=16,
+        )
+        segment = RepeatedEmission(count=3, writes_per_iteration=1, writes=template)
+        left, _ = left.append_repeated_emission(segment)
+        right, _ = right.append_repeated_emission(segment)
+        assert left is not None and right is not None
+        result = left.compare_equal(right, z3)
+        solver = z3.Solver()
+        solver.add(result.equal)
+        self.assertEqual(solver.check(), z3.sat)
+
+    def test_repeated_emission_compare_unequal_count(self) -> None:
+        z3 = _z3()
+        addr = z3.BitVecVal(0xCC008100, 32)
+        value = z3.BitVecVal(0xABCD, 32)
+        template = (
+            SymbolicFifoEvent(kind="write", addr=addr, width=4, value=value),
+        )
+        left = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=16,
+        )
+        right = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=16,
+        )
+        left, _ = left.append_repeated_emission(
+            RepeatedEmission(count=3, writes_per_iteration=1, writes=template)
+        )
+        right, _ = right.append_repeated_emission(
+            RepeatedEmission(count=4, writes_per_iteration=1, writes=template)
+        )
+        assert left is not None and right is not None
+        result = left.compare_equal(right, z3)
+        solver = z3.Solver()
+        solver.add(result.equal)
+        self.assertEqual(solver.check(), z3.unsat)
+
+    def test_repeated_emission_compare_unequal_value(self) -> None:
+        z3 = _z3()
+        addr = z3.BitVecVal(0xCC008100, 32)
+        left = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=16,
+        )
+        right = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=16,
+        )
+        left, _ = left.append_repeated_emission(
+            RepeatedEmission(
+                count=2,
+                writes_per_iteration=1,
+                writes=(
+                    SymbolicFifoEvent(
+                        kind="write",
+                        addr=addr,
+                        width=4,
+                        value=z3.BitVecVal(1, 32),
+                    ),
+                ),
+            )
+        )
+        right, _ = right.append_repeated_emission(
+            RepeatedEmission(
+                count=2,
+                writes_per_iteration=1,
+                writes=(
+                    SymbolicFifoEvent(
+                        kind="write",
+                        addr=addr,
+                        width=4,
+                        value=z3.BitVecVal(2, 32),
+                    ),
+                ),
+            )
+        )
+        assert left is not None and right is not None
+        result = left.compare_equal(right, z3)
+        solver = z3.Solver()
+        solver.add(result.equal)
+        self.assertEqual(solver.check(), z3.unsat)
+
+    def test_repeated_emission_bound_rejects_overflow(self) -> None:
+        z3 = _z3()
+        trace = initial_symbolic_event_trace(
+            device_id="gx-fifo",
+            base=0xCC008100,
+            span=0x100,
+            max_events=4,
+        )
+        segment = RepeatedEmission(
+            count=5,
+            writes_per_iteration=1,
+            writes=(
+                SymbolicFifoEvent(
+                    kind="write",
+                    addr=z3.BitVecVal(0xCC008100, 32),
+                    width=4,
+                    value=z3.BitVecVal(1, 32),
+                ),
+            ),
+        )
+        next_trace, err = trace.append_repeated_emission(segment)
+        self.assertIsNone(next_trace)
+        self.assertEqual(err, "bounded-event-limit")
+
+    def test_obligation_v2_schema(self) -> None:
+        block = build_gxfifo_trace_obligation(
+            bus_spec_sha256="a" * 64,
+            devices=[{"device_id": "gx-fifo", "theory": "gxfifo-stream"}],
+        )
+        self.assertEqual(block["schema_version"], 2)
+        self.assertEqual(block["algorithm"], ALGORITHM_V2)
+        self.assertEqual(block["reads"]["policy"], "unsupported")
 
 
 if __name__ == "__main__":

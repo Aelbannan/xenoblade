@@ -44,6 +44,8 @@ from tools.ppc_equivalence.fp_capabilities import (
     FP_SCALAR_ARITH_OPS,
     FP_SUBCAPABILITY_MODEL_VERSIONS,
     classify_fp_capabilities,
+    scalar_fp_exact_v2_enabled,
+    scalar_fp_exact_v2_production_enabled,
     traps_enabled_from_result,
 )
 from tools.ppc_equivalence.fp_rounding import (
@@ -256,6 +258,58 @@ def build_fp_bitwise_attestation(
     )
 
 
+def build_fp_load_store_attestation(
+    *,
+    opcodes: Sequence[str],
+    requirements: Any | None = None,
+    validation_ledger_hash: str = "",
+) -> CapabilityAttestation:
+    """Exact-v2 load/store attestation when scalar FP v2 is enabled."""
+    import hashlib
+
+    from tools.ppc_equivalence.fp_load_store_obligations import (
+        FP_LOAD_STORE_BIT_TRANSFORM_OPS,
+        LOAD_STORE_BIT_V2_DIMENSIONS,
+        build_fp_load_store_attestation_v2,
+    )
+    from tools.ppc_equivalence.fp_scalar_obligations_v2 import (
+        live_scalar_fp_v2_corpus_sha256,
+    )
+
+    used = list(opcodes_for_fp_capability("fp-load-store", opcodes))
+    corpus_sha256 = live_scalar_fp_v2_corpus_sha256()
+    # stfs-only leaves have no unsupported remainder query; mark vacuous so the
+    # Phase 12 canary can promote under broadway-fp-load-store-v2 allowlist.
+    remainder_result = "incomplete"
+    remainder_query = ""
+    if used == ["stfs"] and set(used) <= FP_LOAD_STORE_BIT_TRANSFORM_OPS:
+        remainder_result = "vacuous"
+        remainder_query = hashlib.sha256(
+            b"fp-load-store-exact-v2:vacuous-stfs-only"
+        ).hexdigest()
+    att = build_fp_load_store_attestation_v2(
+        opcodes=used,
+        host_float=False,
+        dimensions=LOAD_STORE_BIT_V2_DIMENSIONS,
+        unsupported_remainder_result=remainder_result,
+        unsupported_remainder_query_sha256=remainder_query,
+        corpus_sha256=corpus_sha256,
+        validation_ledger_hash=validation_ledger_hash,
+    )
+    evidence = dict(att.evidence)
+    evidence["opcodes"] = used
+    evidence.update(_requirement_binding("fp-load-store", requirements))
+    return build_attestation(
+        capability=att.capability,
+        model_version=att.model_version,
+        algorithm=att.algorithm,
+        status=att.status,
+        assumptions=att.assumptions,
+        unsupported=att.unsupported,
+        evidence=evidence,
+    )
+
+
 def build_fp_foundation_incomplete_attestation(
     capability: str,
     *,
@@ -371,11 +425,30 @@ def draft_fp_capability_attestations(
         if bitwise is not None:
             attestations.append(bitwise)
 
-    for capability in ("fp-load-store", "fp-compare", "fp-convert"):
+    for capability in ("fp-compare", "fp-convert"):
         if capability in caps:
             attestations.append(
                 build_fp_foundation_incomplete_attestation(
                     capability,
+                    opcodes=opcodes,
+                    requirements=requirements,
+                )
+            )
+
+    if "fp-load-store" in caps:
+        ledger_hash = str(getattr(result, "validation_ledger_hash", "") or "")
+        if scalar_fp_exact_v2_enabled() or scalar_fp_exact_v2_production_enabled():
+            attestations.append(
+                build_fp_load_store_attestation(
+                    opcodes=opcodes,
+                    requirements=requirements,
+                    validation_ledger_hash=ledger_hash,
+                )
+            )
+        else:
+            attestations.append(
+                build_fp_foundation_incomplete_attestation(
+                    "fp-load-store",
                     opcodes=opcodes,
                     requirements=requirements,
                 )
@@ -478,20 +551,21 @@ def draft_mmio_capability_attestations(
     """Distinct MMIO attestations from ``result.memory_bus`` (allowlists empty)."""
     from tools.ppc_equivalence.mmio_capability_obligations import (
         ALWAYS_INCOMPLETE_MMIO_CAPABILITIES,
-        DMA_INTERRUPT_CAPABILITY,
         GX_FIFO_READ_CAPABILITY,
+        GX_FIFO_TRACE_ALGORITHM,
+        GX_FIFO_TRACE_MODEL_VERSION,
         GX_FIFO_WRITE_TRACE_CAPABILITY,
         MIXED_ADDRESS_SPACE_CAPABILITY,
-        MMIO_EXTERNAL_INPUT_CAPABILITY,
         MMIO_LOOP_EMISSION_CAPABILITY,
-        MMIO_READ_SIDE_EFFECTS_CAPABILITY,
         MMIO_REGISTER_BANK_ALGORITHM,
         MMIO_REGISTER_BANK_CAPABILITY,
         MMIO_REGISTER_BANK_MODEL_VERSION,
         build_always_incomplete_mmio_attestation,
-        build_gx_fifo_loop_refinement_attestation,
+        build_gx_fifo_loop_exact_refinement_attestation,
+        build_gx_fifo_read_attestation,
         build_mmio_attestation,
         build_mmio_capability_obligation,
+        build_mmio_loop_emission_attestation,
         infer_mmio_capabilities_from_memory_bus,
     )
     from tools.ppc_equivalence.result import ProofStatus
@@ -532,12 +606,7 @@ def draft_mmio_capability_attestations(
     attestations: list[CapabilityAttestation] = []
     for capability in sorted(demanded):
         req_bind = _requirement_binding(capability, requirements)
-        if capability in ALWAYS_INCOMPLETE_MMIO_CAPABILITIES or capability in {
-            GX_FIFO_READ_CAPABILITY,
-            MMIO_READ_SIDE_EFFECTS_CAPABILITY,
-            MMIO_EXTERNAL_INPUT_CAPABILITY,
-            DMA_INTERRUPT_CAPABILITY,
-        }:
+        if capability in ALWAYS_INCOMPLETE_MMIO_CAPABILITIES:
             att = build_always_incomplete_mmio_attestation(
                 capability,
                 extra_evidence={**binding, **req_bind},
@@ -545,20 +614,45 @@ def draft_mmio_capability_attestations(
             attestations.append(att)
             continue
 
-        if capability == MMIO_LOOP_EMISSION_CAPABILITY:
-            evidence = {
-                **binding,
-                "never_promotion_grade": True,
-                "capability": capability,
-                **req_bind,
-            }
+        if capability == GX_FIFO_READ_CAPABILITY:
+            # Promotable gx-fifo-read-v1 unsupported-read policy (Wave 5);
+            # drafting attaches an incomplete stub — real promotion requires
+            # an explicit vacuous claim or a reviewed-profile UNSAT digest
+            # supplied by the caller, never a value model for FIFO loads.
+            att = build_gx_fifo_read_attestation()
+            evidence = dict(att.evidence)
+            evidence.update(binding)
+            evidence.update(req_bind)
             attestations.append(
                 build_attestation(
-                    capability=capability,
-                    model_version="mmio-loop-emission-v0",
-                    algorithm="mmio-loop-emission-incomplete-v0",
+                    capability=att.capability,
+                    model_version=att.model_version,
+                    algorithm=att.algorithm,
                     status=STATUS_INCOMPLETE,
-                    unsupported=("mmio-loop-emission-incomplete",),
+                    assumptions=att.assumptions,
+                    unsupported=att.unsupported,
+                    evidence=evidence,
+                )
+            )
+            continue
+
+        if capability == MMIO_LOOP_EMISSION_CAPABILITY:
+            # Promotable mmio-loop-emission-v1 authorization attachment
+            # (Wave 5); drafting attaches an incomplete stub wrapping the
+            # default (also incomplete) v2 loop-refinement obligation — real
+            # promotion requires a caller-supplied discharged loop plan.
+            att = build_mmio_loop_emission_attestation()
+            evidence = dict(att.evidence)
+            evidence.update(binding)
+            evidence.update(req_bind)
+            attestations.append(
+                build_attestation(
+                    capability=att.capability,
+                    model_version=att.model_version,
+                    algorithm=att.algorithm,
+                    status=STATUS_INCOMPLETE,
+                    assumptions=att.assumptions,
+                    unsupported=att.unsupported,
                     evidence=evidence,
                 )
             )
@@ -578,8 +672,29 @@ def draft_mmio_capability_attestations(
             continue
 
         if capability == GX_FIFO_WRITE_TRACE_CAPABILITY:
-            if bus_map.get("loop_fifo_policy") or bus_map.get("loop_fifo_reject_markers"):
-                att = build_gx_fifo_loop_refinement_attestation()
+            # Ordinary write-trace vs loop-emission refinement: only use the
+            # loop-refinement attestation when a GX loop was actually
+            # summarized (or rejected as unrecognized fifo-touching). The
+            # ambient ``loop_fifo_policy=hard-reject`` flag alone must NOT
+            # force the loop path — that left ordinary WGPIPE stores stuck
+            # on incomplete loop-refinement stubs.
+            loop_emission = bus_map.get("loop_fifo_emission") or (
+                (bus_map.get("coverage") or {}).get("loop_fifo_emission")
+                if isinstance(bus_map.get("coverage"), Mapping)
+                else None
+            )
+            gx_plans = bus_map.get("gx_loop_plans_used") or bus_map.get(
+                "gx_fifo_plans_used"
+            )
+            use_loop_refinement = (
+                loop_emission == "summarized-bounded"
+                or bool(gx_plans)
+                or bool(bus_map.get("loop_fifo_reject_markers"))
+                or bus_map.get("loop_fifo_policy")
+                == "gx-fifo-loop-exact-refinement-v2"
+            )
+            if use_loop_refinement:
+                att = build_gx_fifo_loop_exact_refinement_attestation()
                 evidence = dict(att.evidence)
                 evidence.update(binding)
                 evidence.update(req_bind)
@@ -597,8 +712,8 @@ def draft_mmio_capability_attestations(
             else:
                 obligation = build_mmio_capability_obligation(
                     capability=GX_FIFO_WRITE_TRACE_CAPABILITY,
-                    model_version="gx-fifo-trace-v1",
-                    algorithm="gx-fifo-trace-v1",
+                    model_version=GX_FIFO_TRACE_MODEL_VERSION,
+                    algorithm=GX_FIFO_TRACE_ALGORITHM,
                     hardware_profile=hardware_profile
                     if isinstance(hardware_profile, (str, Mapping))
                     else None,

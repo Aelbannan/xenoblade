@@ -5,11 +5,11 @@
 // stays 0xA0 (out-of-line empty base adds a bl / +12).
 
 // LLM-HARNESS-BEGIN: us-8045bc8c
-extern "C" void ct_CException() {}
+extern "C" void __ct__CException() {}
 // LLM-HARNESS-END: us-8045bc8c
 // LLM-HARNESS-BEGIN: us-8045bd7c
-extern "C" bool func_80457C8C() { return false; }
+extern "C" void func_80457C8C__10CExceptionFv() {}
 // LLM-HARNESS-END: us-8045bd7c
 // LLM-HARNESS-BEGIN: us-8045bd94
-extern "C" void* func_80457CA4() { return 0; }
+extern "C" void func_80457CA4__10CExceptionFP11CWorkThreadPCwUl() {}
 // LLM-HARNESS-END: us-8045bd94

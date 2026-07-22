@@ -1936,6 +1936,7 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
     }
 }
 
+// LLM-HARNESS-BEGIN: us-80146dac
 // Batch 2026-07-16: battlestate-vfunc5 owns CBattleState_UnkVirtualFunc5
 // exclusively. Do not touch ctor / other vfuncs.
 //
@@ -2671,6 +2672,7 @@ F_skip_scan:
 F_slot_done:
     ;
 }
+// LLM-HARNESS-END: us-80146dac
 
 // LLM-HARNESS-BEGIN: us-80146604
 extern "C" void func_80145C00() {}
@@ -2685,22 +2687,22 @@ extern "C" void func_80145F78() {}
 extern "C" void func_80146148() {}
 // LLM-HARNESS-END: us-80146b4c
 // LLM-HARNESS-BEGIN: us-80146d88
-extern "C" void func_80146384() {}
+extern "C" bool func_80146384(unsigned int value) { return value - 0x125u <= 5u; }
 // LLM-HARNESS-END: us-80146d88
 // LLM-HARNESS-BEGIN: us-80146da8
-void cf::CBattleState::CBattleState_UnkVirtualFunc19() {}
+extern "C" void CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80146da8
 // LLM-HARNESS-BEGIN: us-80148188
-extern "C" void CBattleState_UnkVirtualFunc1() {}
+extern "C" int CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv() { return 0; }
 // LLM-HARNESS-END: us-80148188
 // LLM-HARNESS-BEGIN: us-80148190
-void cf::CBattleState::CBattleState_UnkVirtualFunc17() {}
+extern "C" void CBattleState_UnkVirtualFunc17__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80148190
 // LLM-HARNESS-BEGIN: us-80148a14
-void cf::CBattleState::CBattleState_UnkVirtualFunc18() {}
+extern "C" void CBattleState_UnkVirtualFunc18__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80148a14
 // LLM-HARNESS-BEGIN: us-80148f88
-extern "C" void CBattleState_UnkVirtualFunc12() {}
+extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80148f88
 // LLM-HARNESS-BEGIN: us-8014913c
 extern "C" void* CBattleState_UnkVirtualFunc13__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
@@ -2708,13 +2710,13 @@ extern "C" void* CBattleState_UnkVirtualFunc13__Q22cf12CBattleStateFv(cf::CBattl
 }
 // LLM-HARNESS-END: us-8014913c
 // LLM-HARNESS-BEGIN: us-8014914c
-extern "C" void CBattleState_UnkVirtualFunc14() {}
+extern "C" void CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-8014914c
 // LLM-HARNESS-BEGIN: us-8014915c
-extern "C" void CBattleState_UnkVirtualFunc15() {}
+extern "C" void CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-8014915c
 // LLM-HARNESS-BEGIN: us-8014916c
-extern "C" void CBattleState_UnkVirtualFunc16() {}
+extern "C" void CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-8014916c
 // LLM-HARNESS-BEGIN: us-80149aa4
 extern "C" void func_801490A0() {}
@@ -2732,16 +2734,16 @@ extern "C" void func_801491F4() {}
 extern "C" void func_80149330() {}
 // LLM-HARNESS-END: us-80149d34
 // LLM-HARNESS-BEGIN: us-80149e94
-extern "C" void CBattleState_UnkVirtualFunc30() {}
+extern "C" void CBattleState_UnkVirtualFunc30__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80149e94
 // LLM-HARNESS-BEGIN: us-8014a004
-extern "C" void CBattleState_UnkVirtualFunc32() {}
+extern "C" void CBattleState_UnkVirtualFunc32__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-8014a004
 // LLM-HARNESS-BEGIN: us-8014a174
-extern "C" void CBattleState_UnkVirtualFunc3() {}
+extern "C" int CBattleState_UnkVirtualFunc3__Q22cf12CBattleStateFv() { return 0; }
 // LLM-HARNESS-END: us-8014a174
 // LLM-HARNESS-BEGIN: us-8014a17c
-extern "C" void CBattleState_UnkVirtualFunc2() {}
+extern "C" int CBattleState_UnkVirtualFunc2__Q22cf12CBattleStateFv() { return 0; }
 // LLM-HARNESS-END: us-8014a17c
 
 // LLM-HARNESS-BEGIN: us-801465c8
@@ -2750,17 +2752,14 @@ extern "C" void func_80145BC4() {}
 // LLM-HARNESS-BEGIN: us-80146d04
 extern "C" void func_80146300() {}
 // LLM-HARNESS-END: us-80146d04
-// LLM-HARNESS-BEGIN: us-80146dac
-extern "C" void CBattleState_UnkVirtualFunc5() {}
-// LLM-HARNESS-END: us-80146dac
 // LLM-HARNESS-BEGIN: us-80148194
-extern "C" void CBattleState_UnkVirtualFunc4() {}
+extern "C" void CBattleState_UnkVirtualFunc4__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80148194
 // LLM-HARNESS-BEGIN: us-80148e5c
-extern "C" void CBattleState_UnkVirtualFunc9() {}
+extern "C" void CBattleState_UnkVirtualFunc9__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80148e5c
 // LLM-HARNESS-BEGIN: us-80148efc
-extern "C" void CBattleState_UnkVirtualFunc7() {}
+extern "C" void CBattleState_UnkVirtualFunc7__Q22cf12CBattleStateFv() {}
 // LLM-HARNESS-END: us-80148efc
 // LLM-HARNESS-BEGIN: us-8014917c
 extern "C" void func_80148778() {}

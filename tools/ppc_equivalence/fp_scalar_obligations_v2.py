@@ -51,6 +51,7 @@ from tools.ppc_equivalence.capability_assurance import (
 from tools.ppc_equivalence.fp_capabilities import (
     FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS,
     FP_FUSED_ARITH_OPS,
+    FP_LOAD_STORE_OPS,
 )
 from tools.ppc_equivalence.fp_rounding import BROADWAY_RN_MODES, normalize_rn_mode
 from tools.ppc_equivalence.provenance import canonical_json_sha256
@@ -59,6 +60,7 @@ FP_SCALAR_OBLIGATION_SCHEMA_VERSION_V2 = 2
 
 FP_SCALAR_EXACT_V2_ALGORITHM = "broadway-exact-fp-v2"
 FP_FUSED_EXACT_V2_ALGORITHM = "fp-fused-exact-v2"
+FP_LOAD_STORE_EXACT_V2_ALGORITHM = "fp-load-store-exact-v2"
 
 _SHA256_LEN = 64
 _HEX64 = frozenset("0123456789abcdef")
@@ -78,14 +80,16 @@ KNOWN_OBLIGATION_KEYS_V2 = frozenset(
         "notes",
     }
 )
-KNOWN_DOMAIN_KEYS_V2 = frozenset({"no_host_float", "fused_input_domain"})
+KNOWN_DOMAIN_KEYS_V2 = frozenset(
+    {"no_host_float", "fused_input_domain", "load_store_domain"}
+)
 KNOWN_MODES_KEYS_V2 = frozenset({"rn", "ni", "traps"})
 KNOWN_COVERAGE_KEYS_V2 = frozenset(
     {"unsupported_remainder", "corpus_sha256", "validation_ledger_hash"}
 )
 KNOWN_REMAINDER_KEYS_V2 = frozenset({"result", "query_sha256"})
 KNOWN_REMAINDER_RESULTS_V2 = frozenset(
-    {"unsat", "sat", "unknown", "incomplete", "timeout"}
+    {"unsat", "sat", "unknown", "incomplete", "timeout", "vacuous"}
 )
 KNOWN_TRAP_MODE_LABELS_V2 = frozenset(
     {
@@ -97,12 +101,24 @@ KNOWN_TRAP_MODE_LABELS_V2 = frozenset(
     }
 )
 KNOWN_FUSED_INPUT_DOMAINS = frozenset({"exact-expanded-binary32", "full-architectural"})
+KNOWN_LOAD_STORE_DOMAINS = frozenset({"bit-transform-exact-v2"})
 
 FUSED_V2_DIMENSIONS: dict[str, bool] = {
     "midpoint_residual": False,
     "sticky_residue": False,
     "result_bits": False,
     "nan_payloads": False,
+    "traps": False,
+}
+
+LOAD_STORE_V2_DIMENSIONS: dict[str, bool] = {
+    "bit_expansion_lfs": False,
+    "preserve_lfd": False,
+    "stfs_rounding": False,
+    "stfiwx_raw": False,
+    "all_rn_modes_stfs": False,
+    "bounded_memory": False,
+    "symbolic_backend": False,
     "traps": False,
 }
 
@@ -117,6 +133,18 @@ _CAPABILITY_DEFAULTS: dict[str, dict[str, Any]] = {
         "domain": {
             "no_host_float": True,
             "fused_input_domain": "exact-expanded-binary32",
+        },
+    },
+    "fp-load-store": {
+        "model_version": FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS[
+            "fp-load-store"
+        ],
+        "algorithm": FP_LOAD_STORE_EXACT_V2_ALGORITHM,
+        "opcode_set": FP_LOAD_STORE_OPS,
+        "dimensions": LOAD_STORE_V2_DIMENSIONS,
+        "domain": {
+            "no_host_float": True,
+            "load_store_domain": "bit-transform-exact-v2",
         },
     },
 }
@@ -240,9 +268,19 @@ def validate_fp_scalar_obligation_v2(
         return f"fp-scalar-v2.domain unknown fields: {', '.join(unknown_domain)}"
     if domain.get("no_host_float") is not True:
         return "fp-scalar-v2.domain.no_host_float must be true"
-    fused_domain = domain.get("fused_input_domain")
-    if fused_domain not in KNOWN_FUSED_INPUT_DOMAINS:
-        return f"fp-scalar-v2.domain.fused_input_domain unsupported ({fused_domain!r})"
+    if str(capability) == "fp-fused-arithmetic":
+        fused_domain = domain.get("fused_input_domain")
+        if fused_domain not in KNOWN_FUSED_INPUT_DOMAINS:
+            return (
+                f"fp-scalar-v2.domain.fused_input_domain unsupported ({fused_domain!r})"
+            )
+    elif str(capability) == "fp-load-store":
+        load_store_domain = domain.get("load_store_domain")
+        if load_store_domain not in KNOWN_LOAD_STORE_DOMAINS:
+            return (
+                "fp-scalar-v2.domain.load_store_domain unsupported "
+                f"({load_store_domain!r})"
+            )
 
     opcodes = obligation.get("opcodes")
     if not isinstance(opcodes, list) or not opcodes:
@@ -395,9 +433,11 @@ def validation_ledger_scalar_fp_v2_hook() -> dict[str, Any]:
 
 __all__ = [
     "FP_FUSED_EXACT_V2_ALGORITHM",
+    "FP_LOAD_STORE_EXACT_V2_ALGORITHM",
     "FP_SCALAR_EXACT_V2_ALGORITHM",
     "FP_SCALAR_OBLIGATION_SCHEMA_VERSION_V2",
     "FUSED_V2_DIMENSIONS",
+    "LOAD_STORE_V2_DIMENSIONS",
     "build_fp_scalar_obligation_v2",
     "evaluate_fp_scalar_obligation_v2_status",
     "live_scalar_fp_v2_corpus_sha256",

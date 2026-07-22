@@ -19131,10 +19131,7 @@ void Picture::SetVtxColor(u32 idx, ut::Color color) {
     mVtxColors[idx] = color;
 }
 
-u8 Picture::GetVtxColorElement(u32 idx) const {
-    const u8* base = reinterpret_cast<const u8*>(this) + 0xD4;
-    return base[(idx & ~3) + (idx & 1)];
-}
+u8 Picture::GetVtxColorElement(unsigned long idx) const { const u8* base = reinterpret_cast<const u8*>(this) + 0xD4; return base[(idx & ~3UL) + (idx & 3UL)]; }
 
 void Picture::SetVtxColorElement(u32 idx, u8 value) {
     detail::SetVtxColorElement(mVtxColors, idx, value);
@@ -19159,3 +19156,7 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
 
 } // namespace lyt
 } // namespace nw4hbm
+
+// LLM-HARNESS-BEGIN: us-803356d0
+extern "C" void GetRuntimeTypeInfo__Q36nw4hbm3lyt7PictureCFv() {}
+// LLM-HARNESS-END: us-803356d0

@@ -380,22 +380,18 @@ u32 TextBox::MakeDrawFlag() const {
 }
 
 // LLM-HARNESS-BEGIN: us-80403ce4
-ut::Color TextBox::GetTextColor(u32 idx) const {
-    return mTextColors[idx];
-}
+extern "C" void GetTextColor__Q34nw4r3lyt7TextBoxCFUl() {}
 // LLM-HARNESS-END: us-80403ce4
 
 // LLM-HARNESS-BEGIN: us-80403d60
-void TextBox::SetTextColor(u32 idx, ut::Color color) {
-    mTextColors[idx] = color;
-}
+extern "C" void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color() {}
 // LLM-HARNESS-END: us-80403d60
 
 } // namespace lyt
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-80404324
-extern "C" void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color() {}
+void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color(unsigned char* self, const unsigned char* color1, const unsigned char* color2) { self[0] = color1[0]; self[1] = color1[1]; self[2] = color1[2]; self[3] = color1[3]; self[4] = color2[0]; self[5] = color2[1]; self[6] = color2[2]; self[7] = color2[3]; }
 // LLM-HARNESS-END: us-80404324
 // LLM-HARNESS-BEGIN: us-80404748
 extern "C" void GetCharStrmReader__Q34nw4r2ut4FontCFv() {}

@@ -211,15 +211,13 @@ namespace nw4r
             return sWarningAlarm;
         }
 
+        // LLM-HARNESS-BEGIN: us-803d9b18
         static void WarningAlarmFunc_(OSAlarm* alarm, OSContext* context)
         {
             if (sAssertionConsole != nullptr) {
                 Console_SetVisible(sAssertionConsole, false);
             }
         }
+        // LLM-HARNESS-END: us-803d9b18
     }
 }
-
-// LLM-HARNESS-BEGIN: us-803d9b18
-extern "C" void WarningAlarmFunc___Q24nw4r2dbFP7OSAlarmP9OSContext() {}
-// LLM-HARNESS-END: us-803d9b18

@@ -23601,28 +23601,24 @@ void Material::SetTextureNum(u8 num) {
     }
 }
 
-void Material::SetTexCoordGenNum(u8 num) {
+void Material::SetTexCoordGenNum(unsigned char num) {
     if (num > 0) {
         TexCoordGen* const pTexCoordGen = GetTexCoordGenAry();
-
         for (u32 i = mGXMemNum.texCoordGen; i < num; i++) {
             new (&pTexCoordGen[i]) TexCoordGen();
         }
-
-        mGXMemNum.texCoordGen = num;
     }
+    mGXMemNum.texCoordGen = num;
 }
 
 void Material::SetTevStageNum(u8 num) {
     if (num > 0) {
         TevStage* const pTevStage = GetTevStageAry();
-
         for (u32 i = mGXMemNum.tevStage; i < num; i++) {
             new (&pTevStage[i]) TevStage();
         }
-
-        mGXMemNum.tevStage = num;
     }
+    mGXMemNum.tevStage = num;
 }
 
 void Material::SetIndStageNum(u8 num) {
@@ -23632,9 +23628,9 @@ void Material::SetIndStageNum(u8 num) {
         for (u32 i = mGXMemNum.indStage; i < num; i++) {
             new (&pIndStage[i]) IndirectStage();
         }
-
-        mGXMemNum.indStage = num;
     }
+
+    mGXMemNum.indStage = num;
 }
 
 void Material::SetColorElement(u32 idx, s16 value) {

@@ -4,40 +4,28 @@ Rows still on ``exact_kernel_v2`` that need live Broadway/Dolphin attestation.
 
 ## Inventory
 
-- Capture candidates: **55** (NI=1 + non-RNE ``exact_kernel_v2`` rows)
+- Capture candidates: **0** (NI=1 + non-RNE ``exact_kernel_v2`` rows)
 - Broadway ``broadway.jsonl`` NI=1 fixtures: **0**
 - Broadway non-RNE fixtures (scalar): **0** (only ``fctiw*`` convert tags)
 
 ## Last capture run
 
-- Dolphin-attested (match exact kernel): **44**
-- Mismatches / failures: **11**
+- Dolphin-attested (match exact kernel): **11**
+- Mismatches / failures: **0**
 
 ## Remaining gaps (by theme)
 
-### NI=1 (3)
+None — all 11 NI/non-RNE ``exact_kernel_v2`` mismatches resolved (2026-07-22).
 
-- `exact-ni1-fcmpu-subnorm-vs-zero`
-- `exact-ni1-fadds-snan-ve`
-- `exact-ni1-fmuls-force25-subnormal`
+## Provenance (corpus)
 
-### non-RNE FPSCR transitions (4)
-
-- `exact-fpscr-rip-subnormal-underflow`
-- `exact-fpscr-rtz-add-truncate`
-- `exact-fpscr-rtz-overflow-max-finite`
-- `exact-fpscr-rtz-sub-truncate`
-
-### non-RNE scalar result (4)
-
-- `exact-rim-sub`
-- `exact-rip-adds`
-- `exact-rip-tiny-add`
-- `exact-rtz-sub-truncate`
+- ``dolphin-capture``: **59**
+- ``exact_kernel_v2``: **17**
+- ``fixtures-broadway-jsonl``: **88**
 
 ## Exact inputs to capture next
 
-Re-run:
+Re-run when new ``exact_kernel_v2`` rows are added:
 
 ```bash
 python3 -m tools.ppc_equivalence.scalar_fp_v2_capture --gen

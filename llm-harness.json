@@ -90,7 +90,7 @@
   },
   "prompt": {
     "max_chars": 60000,
-    "max_decoded_instructions": 2048,
+    "max_decoded_instructions": 4096,
     "max_declaration_chars": 12000,
     "max_callers": 3,
     "max_sibling_bodies": 3,

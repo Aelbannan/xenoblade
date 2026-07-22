@@ -52,7 +52,7 @@ def exact_fcmp(
     ordered: bool,
     fpscr: int = 0,
     cr_bf: int = 0,
-    ni_flush_operands: bool = True,
+    ni_flush_operands: bool = False,
 ) -> CompareOutcome:
     """Execute ``fcmpu`` (``ordered=False``) or ``fcmpo`` (``ordered=True``).
 
@@ -66,6 +66,7 @@ def exact_fcmp(
         Target CR field index (0–7) for the compare nibble write.
     ni_flush_operands:
         When True and FPSCR.NI=1, flush denormal operands before relation.
+        Broadway ``fcmpu`` / ``fcmpo`` do not apply NI operand flush (Phase 5 policy).
     """
     if not exact_v2_enabled():
         scalar = unsupported_exact_outcome("SCALAR_FP_EXACT_V2 disabled")
@@ -116,7 +117,7 @@ def exact_fcmpu(
     *,
     fpscr: int = 0,
     cr_bf: int = 0,
-    ni_flush_operands: bool = True,
+    ni_flush_operands: bool = False,
 ) -> CompareOutcome:
     """Unordered compare ``fcmpu``."""
     return exact_fcmp(
@@ -135,7 +136,7 @@ def exact_fcmpo(
     *,
     fpscr: int = 0,
     cr_bf: int = 0,
-    ni_flush_operands: bool = True,
+    ni_flush_operands: bool = False,
 ) -> CompareOutcome:
     """Ordered compare ``fcmpo``."""
     return exact_fcmp(

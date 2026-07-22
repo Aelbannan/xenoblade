@@ -248935,7 +248935,7 @@ done:
 }
 
 // LLM-HARNESS-BEGIN: us-8010be00
-extern "C" void harness_stub_us_8010be00() {}
+extern "C" void func_8010B324(CMenuBattlePlayerStateSlot*) {}
 // LLM-HARNESS-END: us-8010be00
 // LLM-HARNESS-BEGIN: us-8010d924
 extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
@@ -248946,7 +248946,7 @@ extern "C" void func_8010CF5C(void* p) {
 }
 // LLM-HARNESS-END: us-8010da38
 // LLM-HARNESS-BEGIN: us-8010f4d4
-extern "C" void sinit_8010E9F8() {}
+extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2] = 0xff; lbl_eu_80663F30[1] = 0xff; lbl_eu_80663F30[0] = 0xff; lbl_eu_80663F38[3] = 0xff; lbl_eu_80663F38[2] = 0x5c; lbl_eu_80663F38[1] = 0x92; lbl_eu_80663F38[0] = 0xb9; lbl_eu_80663F40[3] = 0xff; lbl_eu_80663F40[2] = 0x50; lbl_eu_80663F40[1] = 0x50; lbl_eu_80663F40[0] = 0x50; }
 // LLM-HARNESS-END: us-8010f4d4
 // LLM-HARNESS-BEGIN: us-8010f528
 extern "C" {
@@ -248961,7 +248961,6 @@ extern "C" bool func_8010EA54() { return false; }
 // LLM-HARNESS-END: us-8010f530
 // LLM-HARNESS-BEGIN: us-8010f538
 extern "C" void func_8010EA5C(void* self) {
-    extern void __dt__22CMenuBattlePlayerStateFv(void*);
     __dt__22CMenuBattlePlayerStateFv((void*)((char*)self - 0x5c));
 }
 // LLM-HARNESS-END: us-8010f538
@@ -248979,11 +248978,14 @@ extern "C" void func_8010CF68() {}
 extern "C" void func_8010D0D4() {}
 // LLM-HARNESS-END: us-8010dbb0
 // LLM-HARNESS-BEGIN: us-8010dc90
-extern "C" void harness_stub_us_8010dc90() {}
+extern "C" void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
+                              CMenuBattlePlayerStateSlot* slot) {}
 // LLM-HARNESS-END: us-8010dc90
 // LLM-HARNESS-BEGIN: us-8010df8c
-extern "C" void harness_stub_us_8010df8c() {}
+extern "C" void func_8010D4B0(CMenuBattlePlayerState* self,
+                              CMenuBattlePlayerStateSlot* slot, u32 index) {}
 // LLM-HARNESS-END: us-8010df8c
 // LLM-HARNESS-BEGIN: us-8010e3b0
-extern "C" void harness_stub_us_8010e3b0() {}
+extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
+                              CMenuBattlePlayerStateSlot* slot) {}
 // LLM-HARNESS-END: us-8010e3b0

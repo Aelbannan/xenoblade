@@ -395,9 +395,30 @@ corpus/version/hash in `validation_ledger.yaml`.
 
 ### Phase 12 — production switch and rollout
 
-**Status (2026-07-21): plumbing only.** Production execution, authoritative
-manifest allowlists, and `ARCHITECTURE_MODEL` remain unchanged. Use the readiness
-gate before any operator-driven allowlist edit:
+**Status (2026-07-22): mechanically ready.** Identity bump (`broadway-ppc32-be-v42`,
+result format `22`, certificate version `17`) and production FP model versions are
+live in code. Default `capability_manifest.json` keeps FP allowlists empty; turn on
+exact v2 production only via env flags **and** the canary manifest.
+
+**To turn on (operator):**
+
+```bash
+export SCALAR_FP_EXACT_V2=1
+export SCALAR_FP_EXACT_V2_PRODUCTION=1
+# In coop.json, set capability_manifest to:
+#   tools/coop/capability_manifest.scalar_fp_v2_canary.json
+python3 -m tools.ppc_equivalence.scalar_fp_v2_rollout --readiness
+python3 -c "
+from tools.ppc_equivalence.scalar_fp_v2_rollout import enable_scalar_fp_exact_v2_production
+print(enable_scalar_fp_exact_v2_production(run_corpus_check=False))
+"
+```
+
+First canary allowlist entry: `fp-load-store` → `broadway-fp-load-store-v2`
+(recommended target `us-80040998`). `SCALAR_FP_EXACT_V2=1` remains required for
+exact-v2 semantics even when production is armed.
+
+Use the readiness gate before expanding allowlists:
 
 ```bash
 # Use the pinned equivalence venv (z3, PyYAML required for phase_test_suite).
@@ -419,35 +440,35 @@ The gate checks (honest infrastructure probes, not a promotion claim):
 | `fe0_fe1_status` | `fe0_fe1_modeling_status()` wired when `SCALAR_FP_EXACT_V2=1` |
 | `unsupported_query_helper` | `scalar_fp_unsupported_query` present |
 
-`production_switch_ready` stays **false** until explicit future work completes.
-`build_production_switch_checklist()` / `enable_scalar_fp_exact_v2_production()`
-evaluate gates then raise — do not call expecting a live switch.
+`production_switch_ready` is **true** only when infrastructure probes and all
+identity/env gates pass; residual Dolphin/symbolic/recert blockers remain listed in
+`PRODUCTION_SWITCH_BLOCKERS`. `enable_scalar_fp_exact_v2_production()` returns a
+success checklist dict when gates pass (no longer raises `NotImplementedError`).
 
-#### Version bump plan (draft — not applied)
+#### Version bump plan (applied — Phase 12)
 
 Lockstep identity bump when the first FP v2 capability enters an authoritative
-allowlist. **Live values today** remain in `result.py` and
-`tools/coop/lib/targets.py`; do not change until the operator-driven switch.
+allowlist. **Live values** are in `result.py` and `tools/coop/lib/targets.py`.
 
-| Identity | Live (production) | Planned (Phase 12 switch) | Location |
-|---|---|---|---|
-| `ARCHITECTURE_MODEL` | `broadway-ppc32-be-v41` | `broadway-ppc32-be-v42` | `tools/ppc_equivalence/result.py` |
-| `RESULT_FORMAT` | `21` | `22` | `tools/ppc_equivalence/result.py` |
-| `EQUIVALENCE_CERTIFICATE_VERSION` | `16` | `17` | `tools/coop/lib/targets.py` |
-| `validation_ledger.yaml` `architecture_model` | `broadway-ppc32-be-v41` | `broadway-ppc32-be-v42` | `tools/ppc_equivalence/validation_ledger.yaml` |
+| Identity | Live (production) | Location |
+|---|---|---|
+| `ARCHITECTURE_MODEL` | `broadway-ppc32-be-v42` | `tools/ppc_equivalence/result.py` |
+| `RESULT_FORMAT` | `22` | `tools/ppc_equivalence/result.py` |
+| `EQUIVALENCE_CERTIFICATE_VERSION` | `17` | `tools/coop/lib/targets.py` |
+| `validation_ledger.yaml` `architecture_model` | `broadway-ppc32-be-v42` | `tools/ppc_equivalence/validation_ledger.yaml` |
 
 **FP model versions** (experimental → production on switch; from
 `fp_capabilities.py` / `FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS`):
 
-| Capability | Production today | Planned production |
-|---|---|---|
-| `fp-load-store` | `broadway-fp-load-store-v1` | `broadway-fp-load-store-v2` |
-| `fp-compare` | `broadway-fp-compare-v1` | `broadway-fp-compare-v2` |
-| `fp-convert` | `broadway-fp-convert-v1` | `broadway-fp-convert-v2` |
-| `fp-scalar-arithmetic` | `broadway-fp-scalar-v2` | `broadway-fp-scalar-v3` |
-| `fp-fused-arithmetic` | `broadway-fp-fused-v1` | `broadway-fp-fused-v2` |
-| `fp-traps` | `broadway-fp-traps-v1` | `broadway-fp-traps-v2` |
-| `fp-fpscr-control` | *(bundled in scalar)* | `broadway-fp-fpscr-control-v1` |
+| Capability | Production (Phase 12) |
+|---|---|
+| `fp-load-store` | `broadway-fp-load-store-v2` |
+| `fp-compare` | `broadway-fp-compare-v2` |
+| `fp-convert` | `broadway-fp-convert-v2` |
+| `fp-scalar-arithmetic` | `broadway-fp-scalar-v3` |
+| `fp-fused-arithmetic` | `broadway-fp-fused-v2` |
+| `fp-traps` | `broadway-fp-traps-v2` |
+| `fp-fpscr-control` | `broadway-fp-fpscr-control-v1` |
 
 **FP obligation / algorithm identities** (schema v2 — `fp_scalar_obligations_v2.py`):
 
@@ -481,12 +502,9 @@ Constants mirrored in code: `scalar_fp_v2_rollout.PLANNED_ARCHITECTURE_MODEL`,
    remain open (Phase 7 exit).
 3. **Certificate / recert debt** — bottom-up recertify queue (~7 queued) must
    clear before any capability enters an authoritative manifest.
-4. **Architecture bump** — planned identities drafted above; live
-   `ARCHITECTURE_MODEL`, `RESULT_FORMAT`, and
-   `EQUIVALENCE_CERTIFICATE_VERSION` unchanged.
-5. **Production wiring** — execution path from manifest allowlist → exact-v2
-   semantics in the certifier/engine; today only the experimental env flag
-   selects v2 behavior.
+4. **Architecture bump** — applied (`broadway-ppc32-be-v42`, format `22`, cert `17`).
+5. **Production wiring** — `enable_scalar_fp_exact_v2_production()` armed; default
+   manifest / env remain off until operator enables canary manifest.
 
 #### Rollout sequence (after the above)
 
@@ -496,11 +514,11 @@ Constants mirrored in code: `scalar_fp_v2_rollout.PLANNED_ARCHITECTURE_MODEL`,
 4. Full CI + Dolphin validation.
 5. Bottom-up recertification before any new allowlist entry.
 6. Default manifest stays shadow mode / `automatic_promotion=false`.
-7. Add one capability/model version at a time to the authoritative canary
-   manifest. Shadow template:
-   `tools/coop/capability_manifest.scalar_fp_v2_canary.json.example`
-   (empty allowlists, `automatic_promotion=false`). Recommended canary target
-   ids: `python3 -m tools.ppc_equivalence.scalar_fp_v2_rollout`.
+7. Add one capability/model version at a time to the canary manifest.
+   Authoritative canary file:
+   `tools/coop/capability_manifest.scalar_fp_v2_canary.json`
+   (first entry: `fp-load-store` only, `automatic_promotion=false`). Empty template:
+   `tools/coop/capability_manifest.scalar_fp_v2_canary.json.example`.
 
 **Allowlist order:**
 

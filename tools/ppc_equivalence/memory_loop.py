@@ -43,6 +43,7 @@ from tools.ppc_equivalence.memory_semantics import (
     apply_memory_loop_transition,
     build_memory_loop_transition,
     footprint_ok_for_summary,
+    footprint_wraps_u32,
 )
 from tools.ppc_equivalence.provenance import canonical_json_sha256
 
@@ -478,6 +479,72 @@ def build_memory_loop_plan_map(
         )
         mapping[summary.header_pc] = MemoryLoopPlan(summary=summary, witness=witness)
     return mapping
+
+
+def memory_loop_plan_address_span(
+    plan: MemoryLoopPlan,
+    instructions: Sequence[Instruction],
+    *,
+    readonly_words: dict[int, int] | None = None,
+) -> tuple[int, int] | None:
+    """Resolve the concrete ``[start, end)`` byte span a recognized
+    constant-stride store loop touches, when its base register is a
+    concrete straight-line constant at loop entry (bounded materialization,
+    same technique ``gx_fifo_loop.py`` uses to resolve the FIFO address).
+
+    Returns ``None`` — "not provably resolvable" — when the base is not a
+    concrete constant or the footprint would wrap 32-bit address space.
+    Callers (Track C loop×FIFO routing) must treat ``None`` as "may touch
+    every MMIO region" and fail closed; this function never claims
+    disjointness it cannot prove.
+    """
+    summary = plan.summary
+    by_address = {insn.address: index for index, insn in enumerate(instructions)}
+    header_index = by_address.get(summary.header_pc)
+    if header_index is None:
+        return None
+    base_value, _notes = recover_gpr_constant(
+        instructions,
+        header_index,
+        summary.base_reg,
+        readonly_words=readonly_words,
+    )
+    if base_value is None:
+        return None
+    trip_count = int(summary.trip_count)
+    stride = int(summary.stride)
+    if footprint_wraps_u32(int(base_value), trip_count, stride, summary.store_kind):
+        return None
+    if summary.store_kind == "stwu":
+        start = (int(base_value) + stride) & 0xFFFFFFFF
+    else:
+        start = int(base_value) & 0xFFFFFFFF
+    end = start + trip_count * stride
+    return start, end
+
+
+def memory_loop_plan_may_touch_regions(
+    plan: MemoryLoopPlan,
+    instructions: Sequence[Instruction],
+    regions: Sequence[tuple[int, int]],
+    *,
+    readonly_words: dict[int, int] | None = None,
+) -> bool:
+    """True when ``plan``'s footprint cannot be proven disjoint from ``regions``.
+
+    Fail-closed / conservative: an unresolvable base address (or a footprint
+    that would wrap the address space) counts as "may touch" every region in
+    ``regions`` rather than "provably does not touch".
+    """
+    if not regions:
+        return False
+    span = memory_loop_plan_address_span(
+        plan, instructions, readonly_words=readonly_words,
+    )
+    if span is None:
+        return True
+    start, end = span
+    return any(start < r_end and r_start < end for r_start, r_end in regions)
 
 
 def collect_memory_loop_ctr_lwz_addresses(

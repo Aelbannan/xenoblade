@@ -150,7 +150,13 @@ ut::Color TextBox::GetVtxColor(u32 idx) const {
 }
 
 void TextBox::SetVtxColor(u32 idx, ut::Color color) {
-    SetTextColor(idx / TEXTCOLOR_MAX, color);
+    u8* dst = reinterpret_cast<u8*>(this) + 0xd8 + ((idx & 0x7ffffffe) << 1);
+    u32 packed = *reinterpret_cast<const u32*>(&color);
+    const u8* src = reinterpret_cast<const u8*>(&packed);
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
 }
 
 u8 TextBox::GetVtxColorElement(u32 idx) const {

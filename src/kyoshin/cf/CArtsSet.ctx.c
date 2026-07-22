@@ -995,19 +995,29 @@ extern "C" void func_80153C48() {}
 extern "C" unsigned short func_80153C60(void* this_, int index, int subindex) { return ((unsigned short*)((char*)this_ + (index << 4) + 4))[subindex]; }
 // LLM-HARNESS-END: us-801546a4
 // LLM-HARNESS-BEGIN: us-801546bc
-extern "C" void func_80153C78() {}
+extern "C" void func_80153C78(void* self, unsigned short value, int index) {
+    ((unsigned short (*)[8])((unsigned char*)self + 4))[index / 8][index % 8] = value;
+}
 // LLM-HARNESS-END: us-801546bc
 // LLM-HARNESS-BEGIN: us-801546f0
 extern "C" void func_80153CAC() {}
 // LLM-HARNESS-END: us-801546f0
 // LLM-HARNESS-BEGIN: us-80154724
-extern "C" void func_80153CE0() {}
+extern "C" unsigned short func_80153CE0(const void* this_, unsigned int index) {
+    const unsigned char* base = static_cast<const unsigned char*>(this_);
+    unsigned short count = *reinterpret_cast<const unsigned short*>(base);
+    unsigned int indexOffset = index << 1;
+    unsigned int countOffset = static_cast<unsigned int>(count) << 4;
+    const unsigned char* record = base + countOffset;
+    record += indexOffset;
+    return *reinterpret_cast<const unsigned short*>(record + 4);
+}
 // LLM-HARNESS-END: us-80154724
 // LLM-HARNESS-BEGIN: us-801547dc
 extern "C" void* func_80153D98(void* self, int index460, int index8c) { char* result = (char*)self + index460 * 0x460; result += index8c * 0x8c; return result + 0x38; }
 // LLM-HARNESS-END: us-801547dc
 // LLM-HARNESS-BEGIN: us-801547f4
-extern "C" void func_80153DB0() {}
+extern "C" void* func_80153DB0(void* self, unsigned int index) { unsigned short count = *static_cast<unsigned short*>(self); return static_cast<unsigned char*>(self) + 0x38 + count * 0x460 + index * 0x8c; }
 // LLM-HARNESS-END: us-801547f4
 // LLM-HARNESS-BEGIN: us-80154810
 extern "C" void func_80153DCC() {}
@@ -1016,7 +1026,7 @@ extern "C" void func_80153DCC() {}
 extern "C" void func_80153E3C() {}
 // LLM-HARNESS-END: us-80154880
 // LLM-HARNESS-BEGIN: us-80154898
-extern "C" void func_80153E54() {}
+extern "C" void* func_80153E54(void* self, int index) { return (char*)self + 0x38 + (index / 8) * 0x460 + (index % 8) * 0x8c; }
 // LLM-HARNESS-END: us-80154898
 // LLM-HARNESS-BEGIN: us-80154934
 extern "C" void* func_80153EF0(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }

@@ -7,8 +7,16 @@ Recognizes the linked indirect dispatch shape::
     mtctr target
     bctrl
 
+and the tail-call thunk shape (``bctr``, LK=0)::
+
+    lwz[/u] vptr, off(this)
+    lwz target, slot(vptr)
+    mtctr target
+    bctr
+
 Jump-table recognition (``jump_table.find_jump_table_candidates``) stays limited
-to ``bctr`` with ``LK=0``; virtual calls require ``bctrl`` with ``LK=1``.
+to ``cmplwi`` / ``lwzx`` / ``bctr`` tables; plain virtual thunks use
+:func:`find_virtual_thunk_candidates`.
 """
 
 from __future__ import annotations
@@ -35,6 +43,7 @@ class VirtualCallCandidate:
     instruction_indexes: tuple[int, ...]
     confidence: str
     notes: tuple[str, ...]
+    tail_call: bool = False
 
 
 def find_virtual_call_candidates(
@@ -44,14 +53,46 @@ def find_virtual_call_candidates(
 
     Returns an empty list when nothing matches; never raises on unmatched code.
     """
+    return _find_virtual_dispatch_candidates(instructions, require_link=True)
+
+
+def find_virtual_thunk_candidates(
+    instructions: Sequence[Instruction],
+) -> list[VirtualCallCandidate]:
+    """Scan for MWCC virtual thunks ending in ``mtctr`` / ``bctr`` (LK=0).
+
+    Accepts ``lwz`` or ``lwzu`` for the vptr load so forms like
+    ``lwzu r12, off(r3); lwz r12, slot(r12); mtctr r12; bctr`` match.
+    """
+    return _find_virtual_dispatch_candidates(
+        instructions,
+        require_link=False,
+        allow_lwzu_vptr=True,
+    )
+
+
+def _find_virtual_dispatch_candidates(
+    instructions: Sequence[Instruction],
+    *,
+    require_link: bool,
+    allow_lwzu_vptr: bool = False,
+) -> list[VirtualCallCandidate]:
     if not instructions:
         return []
 
     candidates: list[VirtualCallCandidate] = []
     for branch_index, branch in enumerate(instructions):
-        if not _is_linked_bctrl(branch):
-            continue
-        tail = _match_virtual_call_tail(instructions, branch_index)
+        if require_link:
+            if not _is_linked_bctrl(branch):
+                continue
+        else:
+            if not _is_unlinked_bctr(branch):
+                continue
+        tail = _match_virtual_call_tail(
+            instructions,
+            branch_index,
+            allow_lwzu_vptr=allow_lwzu_vptr,
+        )
         if tail is None:
             continue
         notes: list[str] = []
@@ -91,6 +132,7 @@ def find_virtual_call_candidates(
                 instruction_indexes=instruction_indexes,
                 confidence="exact-pattern",
                 notes=tuple(notes),
+                tail_call=not require_link,
             ),
         )
     return candidates
@@ -111,6 +153,8 @@ class _VirtualCallTail:
 def _match_virtual_call_tail(
     instructions: Sequence[Instruction],
     branch_index: int,
+    *,
+    allow_lwzu_vptr: bool = False,
 ) -> _VirtualCallTail | None:
     if branch_index < 3:
         return None
@@ -124,7 +168,11 @@ def _match_virtual_call_tail(
         return None
 
     vptr_load = instructions[branch_index - 3]
-    if vptr_load.opcode != Opcode.LWZ:
+    if vptr_load.opcode == Opcode.LWZ:
+        pass
+    elif allow_lwzu_vptr and vptr_load.opcode == Opcode.LWZU:
+        pass
+    else:
         return None
 
     target_reg, vptr_reg, slot_offset = slot_load.operands
@@ -220,6 +268,13 @@ def _clobbers_gpr(insn: Instruction, reg: int) -> bool:
 
 def _is_linked_bctrl(insn: Instruction) -> bool:
     if insn.opcode != Opcode.BCCTR or not insn.link:
+        return False
+    bo = insn.operands[0]
+    return bool(bo & 0b10000)
+
+
+def _is_unlinked_bctr(insn: Instruction) -> bool:
+    if insn.opcode != Opcode.BCCTR or insn.link:
         return False
     bo = insn.operands[0]
     return bool(bo & 0b10000)

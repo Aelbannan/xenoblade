@@ -44,6 +44,10 @@ public:
 typedef reslist<IUIWindow*>::iterator WindowIter;
 typedef _reslist_node<IUIWindow*> WindowNode;
 
+// LLM-HARNESS-BEGIN: us-8013fab4
+extern "C" void Term__Q216CUIWindowManager5CTestFv() {}
+// LLM-HARNESS-END: us-8013fab4
+
 void CUIWindowManager::Term() {
     cf::IFlagEvent* flagEvent = this; // implicit MI conversion -- do not static_cast / ternary / if
     func_8009D0B4();
@@ -188,14 +192,14 @@ extern "C" void func_8013F23C(CUIWindowManager* p) {
 extern "C" void func_8013F3EC() {}
 // LLM-HARNESS-END: us-8013fdf0
 // LLM-HARNESS-BEGIN: us-80141de0
-extern "C" void func_801413DC() {}
+extern "C" int func_801413DC(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }
 // LLM-HARNESS-END: us-80141de0
 
 // LLM-HARNESS-BEGIN: us-8013ca58
-extern "C" void ct_CUIWindowManager() {}
+extern "C" void __ct__CUIWindowManager() {}
 // LLM-HARNESS-END: us-8013ca58
 // LLM-HARNESS-BEGIN: us-8013cc2c
-extern "C" void dt_CTTask_CUIWindowManager() {}
+extern "C" void __dt__CTTask_CUIWindowManager() {}
 // LLM-HARNESS-END: us-8013cc2c
 // LLM-HARNESS-BEGIN: us-8013d5a4
 extern "C" void func_8013CBB4() {}
@@ -285,7 +289,7 @@ extern "C" void func_8013EAB0() {}
 extern "C" void func_8013EB90() {}
 // LLM-HARNESS-END: us-8013f594
 // LLM-HARNESS-BEGIN: us-8013fbdc
-extern "C" void dt_Q216CUIWindowManager5CTestFv() {}
+extern "C" void __dt__Q216CUIWindowManager5CTestFv() {}
 // LLM-HARNESS-END: us-8013fbdc
 // LLM-HARNESS-BEGIN: us-8013fc48
 extern "C" void func_8013F244() {}

@@ -195,6 +195,23 @@ class SymbolicRelocationTests(unittest.TestCase):
             )
             self.assertEqual(result.status.value, "equivalent")
 
+    def test_typeinfo_lis_addi_shared_symbol_without_absolute_binding(self) -> None:
+        """G3dObj::IsDerivedFrom-style HA/LO materialization of the same label."""
+        left = decode(
+            "3c600000 38630000",
+            (R(2, R_PPC_ADDR16_HA, "TYPE_NAME", 0), R(6, R_PPC_ADDR16_LO, "TYPE_NAME", 0)),
+        )
+        right = decode(
+            "3c600000 38630000",
+            (R(2, R_PPC_ADDR16_HA, "TYPE_NAME", 0), R(6, R_PPC_ADDR16_LO, "TYPE_NAME", 0)),
+        )
+        result = check_equivalence(
+            left, right,
+            make_contract(preset=None, observe=("r3",), timeout_ms=10_000),
+            original_hex="", candidate_hex="",
+        )
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
     def test_concrete_linker_rejects_impossible_branch_layout(self) -> None:
         ref = RelocationRef(0, R_PPC_REL24, "far", "far", 0)
         with self.assertRaisesRegex(DecodeError, "outside"):

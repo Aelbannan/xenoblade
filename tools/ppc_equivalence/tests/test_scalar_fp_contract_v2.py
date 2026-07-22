@@ -79,7 +79,7 @@ class ScalarFPContractV2Tests(unittest.TestCase):
                 FP_FPSCR_CONTROL_CAPABILITY,
             )
 
-    def test_experimental_model_versions_differ_from_production(self) -> None:
+    def test_phase12_model_identities_match_experimental(self) -> None:
         production_pairs = {
             "fp-load-store": FP_LOAD_STORE_MODEL_VERSION,
             "fp-compare": FP_COMPARE_MODEL_VERSION,
@@ -91,7 +91,7 @@ class ScalarFPContractV2Tests(unittest.TestCase):
         for capability, production in production_pairs.items():
             experimental = FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS[capability]
             with self.subTest(capability=capability):
-                self.assertNotEqual(experimental, production)
+                self.assertEqual(experimental, production)
 
         self.assertEqual(
             FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS[FP_FPSCR_CONTROL_CAPABILITY],
@@ -117,18 +117,18 @@ class ScalarFPContractV2Tests(unittest.TestCase):
             experimental_model_version_for_capability("fp-scalar-arithmetic"),
             FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS["fp-scalar-arithmetic"],
         )
-        self.assertNotEqual(
+        self.assertEqual(
             experimental_model_version_for_capability("fp-scalar-arithmetic"),
             model_version_for_capability("fp-scalar-arithmetic"),
         )
 
-    def test_production_model_versions_unchanged(self) -> None:
-        self.assertEqual(FP_LOAD_STORE_MODEL_VERSION, "broadway-fp-load-store-v1")
-        self.assertEqual(FP_COMPARE_MODEL_VERSION, "broadway-fp-compare-v1")
-        self.assertEqual(FP_CONVERT_MODEL_VERSION, "broadway-fp-convert-v1")
-        self.assertEqual(FP_SCALAR_MODEL_VERSION, "broadway-fp-scalar-v2")
-        self.assertEqual(FP_FUSED_MODEL_VERSION, "broadway-fp-fused-v1")
-        self.assertEqual(FP_TRAPS_MODEL_VERSION, "broadway-fp-traps-v1")
+    def test_production_model_versions_phase12(self) -> None:
+        self.assertEqual(FP_LOAD_STORE_MODEL_VERSION, "broadway-fp-load-store-v2")
+        self.assertEqual(FP_COMPARE_MODEL_VERSION, "broadway-fp-compare-v2")
+        self.assertEqual(FP_CONVERT_MODEL_VERSION, "broadway-fp-convert-v2")
+        self.assertEqual(FP_SCALAR_MODEL_VERSION, "broadway-fp-scalar-v3")
+        self.assertEqual(FP_FUSED_MODEL_VERSION, "broadway-fp-fused-v2")
+        self.assertEqual(FP_TRAPS_MODEL_VERSION, "broadway-fp-traps-v2")
 
 
 if __name__ == "__main__":

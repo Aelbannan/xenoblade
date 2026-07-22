@@ -16,8 +16,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Any, Mapping
 
-from tools.ppc_equivalence.address_space import AddressSpace, Region, RegionKind
+from tools.ppc_equivalence.address_space import AddressSpace, Region, RegionKind, mmio_region
 from tools.ppc_equivalence.bus_spec import (
     BusSpecification,
     BusState,
@@ -30,6 +32,9 @@ from tools.ppc_equivalence.device_model import (
     DeviceModel,
     DeviceReadResult,
     DeviceWriteResult,
+    GxFifoStreamDevice,
+    RegisterBankDevice,
+    RegisterSpec,
 )
 from tools.ppc_equivalence.model import ConcreteMemory
 
@@ -117,6 +122,13 @@ class MemoryBus:
     devices: dict[str, DeviceModel] = field(default_factory=dict)
     ram: ConcreteMemory = field(default_factory=ConcreteMemory)
     specification: BusSpecification | None = field(default=None, repr=False)
+    # Reviewed hardware-profile identity (Stage: GX FIFO Tier-A pre-allowlist
+    # wiring). Set only by ``build_memory_bus_from_hardware_profile``; ad-hoc
+    # buses built via ``build_memory_bus`` leave these ``None`` so obligations
+    # built from them classify as ``SOURCE_AD_HOC_BUS`` (never promotion-grade).
+    hardware_profile_name: str | None = None
+    hardware_profile_sha256: str | None = None
+    device_models_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if self.specification is None:
@@ -136,6 +148,9 @@ class MemoryBus:
             devices=materialize_devices(self.devices, state),
             ram=state.ram,
             specification=self.specification,
+            hardware_profile_name=self.hardware_profile_name,
+            hardware_profile_sha256=self.hardware_profile_sha256,
+            device_models_sha256=self.device_models_sha256,
         )
 
     def clone(self) -> MemoryBus:
@@ -258,3 +273,184 @@ def build_memory_bus(
         ram=ram if ram is not None else ConcreteMemory(),
         specification=build_bus_specification(address_space, device_map),
     )
+
+
+def _addr_int(value: Any) -> int:
+    if isinstance(value, int):
+        return value & 0xFFFFFFFF
+    text = str(value).strip()
+    if text.lower().startswith("0x"):
+        return int(text, 16) & 0xFFFFFFFF
+    return int(text, 0) & 0xFFFFFFFF
+
+
+def _register_specs_for_device(
+    device_id: str,
+    *,
+    register_specs: list[Mapping[str, Any]],
+    reset_state: Mapping[str, Any],
+) -> tuple[RegisterSpec, ...]:
+    """Merge profile ``register_specs`` with per-device ``reset_state`` overrides."""
+    by_offset: dict[int, RegisterSpec] = {}
+    for spec in register_specs:
+        if str(spec.get("device_id")) != device_id:
+            continue
+        offset = _addr_int(spec["offset"])
+        by_offset[offset] = RegisterSpec(
+            offset=offset,
+            initial=int(spec.get("initial", 0)),
+            w1c=bool(spec.get("w1c", False)),
+            read_clear=bool(spec.get("read_clear", False)),
+        )
+    for offset_key, value in dict(reset_state).items():
+        try:
+            offset = _addr_int(offset_key)
+        except (TypeError, ValueError):
+            continue
+        existing = by_offset.get(offset)
+        if existing is not None:
+            by_offset[offset] = RegisterSpec(
+                offset=offset,
+                initial=int(value),
+                w1c=existing.w1c,
+                read_clear=existing.read_clear,
+            )
+        else:
+            by_offset[offset] = RegisterSpec(offset=offset, initial=int(value))
+    return tuple(by_offset[offset] for offset in sorted(by_offset))
+
+
+def _build_device_from_profile(
+    device_id: str,
+    device_entry: Mapping[str, Any] | None,
+    *,
+    register_specs: list[Mapping[str, Any]],
+    reset_state: Mapping[str, Any],
+) -> DeviceModel:
+    """Materialize a ``RegisterBankDevice`` / ``GxFifoStreamDevice`` from profile JSON."""
+    if device_entry is None:
+        raise ValueError(
+            f"hardware profile missing devices[] entry for device_id {device_id!r}"
+        )
+    theory = str(device_entry["theory"])
+    base = _addr_int(device_entry["base"])
+    if theory == "mmio-register-bank":
+        return RegisterBankDevice(
+            base=base,
+            reg_width=int(device_entry.get("reg_width", 4)),
+            registers=_register_specs_for_device(
+                device_id, register_specs=register_specs, reset_state=reset_state,
+            ),
+        )
+    if theory == "gxfifo-stream":
+        widths = device_entry.get("supported_widths", [1, 2, 4])
+        return GxFifoStreamDevice(
+            base=base,
+            span=int(device_entry.get("span", 0x100)),
+            device_id=device_id,
+            endian=str(device_entry.get("endian", "big")),
+            supported_widths=frozenset(int(w) for w in widths),
+            alignment_required=bool(device_entry.get("alignment_required", True)),
+            read_policy=str(device_entry.get("read_policy", "unsupported")),
+            read_model_version=str(
+                device_entry.get("read_model_version", "gx-fifo-read-v1")
+            ),
+            write_event_semantics=str(
+                device_entry.get("write_event_semantics", "gx-fifo-trace-v2")
+            ),
+            read_side_effects=bool(device_entry.get("read_side_effects", False)),
+            external_input=bool(device_entry.get("external_input", False)),
+            max_fifo_events=int(device_entry.get("max_fifo_events", 256)),
+        )
+    raise ValueError(
+        f"unsupported hardware profile device theory {theory!r} for device_id {device_id!r}"
+    )
+
+
+def build_memory_bus_from_hardware_profile(
+    name_or_profile: str | Path | Mapping[str, Any],
+    *,
+    profiles_dir: Path | None = None,
+) -> MemoryBus:
+    """Materialize a ``MemoryBus`` from a reviewed hardware profile.
+
+    Builds the ``AddressSpace`` from ``profile["regions"]`` (``ram`` + ``mmio``)
+    and ``RegisterBankDevice`` / ``GxFifoStreamDevice`` instances from
+    ``profile["devices"]`` (merged with ``register_specs`` / ``reset_state``).
+    Binds ``hardware_profile_name`` / ``hardware_profile_sha256`` /
+    ``device_models_sha256`` onto the returned bus so
+    ``build_memory_bus_obligation`` (and, downstream, capability attachment)
+    can see the reviewed-profile source without a separate wrapper.
+
+    Fail-closed: an invalid/unreviewable profile raises rather than degrading
+    to an unconstrained or ad-hoc bus. Callers that want fail-closed ``None``
+    behavior (e.g. coop config wiring) must catch ``OSError`` / ``ValueError``
+    themselves — this helper never swallows errors silently.
+    """
+    from tools.ppc_equivalence.hardware_profile import (
+        compute_hardware_profile_sha256,
+        device_models_sha256 as compute_device_models_sha256,
+        load_hardware_profile,
+    )
+
+    if isinstance(name_or_profile, (str, Path)):
+        profile = load_hardware_profile(name_or_profile, profiles_dir=profiles_dir)
+    elif isinstance(name_or_profile, Mapping):
+        profile = dict(name_or_profile)
+        expected = compute_hardware_profile_sha256(profile)
+        declared = profile.get("profile_sha256")
+        if declared is not None and declared != expected:
+            raise ValueError(
+                "hardware profile profile_sha256 mismatch "
+                f"(declared={declared}, recomputed={expected})"
+            )
+        profile.setdefault("profile_sha256", expected)
+        if not profile.get("profile") and not profile.get("platform_profile"):
+            raise ValueError("hardware profile missing profile name")
+        profile.setdefault("profile", profile.get("profile") or profile.get("platform_profile"))
+    else:
+        raise TypeError(
+            "name_or_profile must be a profile name/path or a loaded mapping"
+        )
+
+    profile_name = str(profile.get("profile") or profile.get("platform_profile"))
+    profile_sha256 = str(profile["profile_sha256"])
+
+    device_entries: dict[str, Mapping[str, Any]] = {
+        str(entry["device_id"]): entry for entry in profile.get("devices", [])
+    }
+    register_specs = list(profile.get("register_specs", []))
+    reset_state_all = profile.get("reset_state", {})
+
+    regions: list[Region] = []
+    devices: dict[str, DeviceModel] = {}
+    for region_entry in profile.get("regions", []):
+        kind = str(region_entry["kind"])
+        start = _addr_int(region_entry["start"])
+        end = _addr_int(region_entry["end"])
+        label = region_entry.get("label")
+        if kind == "ram":
+            regions.append(Region(start=start, end=end, kind=RegionKind.RAM, label=label))
+        elif kind == "mmio":
+            device_id = region_entry.get("device_id")
+            if not isinstance(device_id, str) or not device_id:
+                raise ValueError(
+                    f"hardware profile mmio region [{start:#x}, {end:#x}] missing device_id"
+                )
+            regions.append(mmio_region(start, end, device_id=device_id, label=label))
+            if device_id not in devices:
+                devices[device_id] = _build_device_from_profile(
+                    device_id,
+                    device_entries.get(device_id),
+                    register_specs=register_specs,
+                    reset_state=reset_state_all.get(device_id, {}),
+                )
+        else:
+            raise ValueError(f"unsupported hardware profile region kind {kind!r}")
+
+    address_space = AddressSpace(tuple(regions))
+    bus = build_memory_bus(address_space, devices)
+    bus.hardware_profile_name = profile_name
+    bus.hardware_profile_sha256 = profile_sha256
+    bus.device_models_sha256 = compute_device_models_sha256(profile)
+    return bus

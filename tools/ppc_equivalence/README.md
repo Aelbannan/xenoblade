@@ -20,9 +20,9 @@ unsupported instruction, timeout, or solver `unknown` is always
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v41`
-- Result format: `21`
-- Certificate format: `16`
+- Architecture model: `broadway-ppc32-be-v43`
+- Result format: `23`
+- Certificate format: `18`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
 <!-- BEGIN GENERATED PROOF_STATUS_TABLE -->
@@ -229,6 +229,11 @@ choice.
 | `ppc-eabi-fp` | `ppc-eabi` plus FPSCR, available as an explicit fixed alternative to `auto` |
 | `strict` | All modeled GPRs, both lanes of every FPR, GQR0–GQR7, SR0–SR15, complete CR/FPSCR, `XER.CA/OV/SO`, LR, CTR, MSR, time base, SRR0/SRR1, every modeled auxiliary SPR, and all final memory |
 | `live-out` | Conservative automatic over-approximation: every modeled component written by either block |
+
+On matched `indirect-branch` exits (`bctr` / unlinked `bcctr`), `ppc-eabi` /
+`auto` / `ppc-eabi-fp` omit `r4` and `f1` (both lanes). Tail virtual thunks
+compare `r3`, nonvolatiles, memory, and `exit.target` (CTR). Use `strict` or
+`--observe` when a full volatile compare is required.
 
 Final-memory comparison uses per-implementation independent private-stack
 masking: each implementation's own private stack interval is masked
@@ -475,6 +480,15 @@ After an architecture-model bump:
    promotion-grade evidence and a dedicated canary.
 
 Keep `automatic_promotion=false` until operators deliberately open the gate.
+
+**GX FIFO Tier-A (v43):** see [`GX_FIFO_TIER_A.md`](GX_FIFO_TIER_A.md) for the
+frozen `gx-fifo-write-trace` / `gx-fifo-read` (outcome 3 — unsupported-read
+*policy*, never a value model) / `mmio-loop-emission` domain, and run
+`python3 -m tools.ppc_equivalence.gx_fifo_v1_rollout readiness` /
+`... stage <name>` / `... apply-canary <name>` to inspect the ordered
+allowlist-expansion stages under `tools/coop/capability_manifest.gx_fifo_*_canary.json`.
+Default and authoritative manifests keep every gx-fifo / mmio-loop-emission
+allowlist empty.
 
 Optional canary pin: set `allowed_engine_sha256` in `coop.json` to the live
 engine hash:

@@ -40,6 +40,7 @@ from .vtable_obligations import (
     virtual_call_scc_status,
 )
 from .bulk_remainder_relational import try_build_bulk_remainder_relational_sketch
+from .gx_fifo_loop import build_gx_fifo_loop_plans_for_devices
 from .loop_summary import (
     build_affine_summary_map,
     build_loop_summary_obligation,
@@ -478,6 +479,8 @@ def _terminal_difference(
     left: Terminal, right: Terminal, contract: EquivalenceContract,
     initial: MachineState, ops: SymbolicOps,
 ) -> Any:
+    from tools.ppc_equivalence.contract import observables_for_exit
+
     z3 = ops.z3
     kind_difference = z3.BoolVal(left.exit_kind != right.exit_kind)
     target_difference = z3.BoolVal(False)
@@ -486,9 +489,15 @@ def _terminal_difference(
             target_difference = z3.BoolVal(left.exit_target is not right.exit_target)
         else:
             target_difference = left.exit_target != right.exit_target
+    # Only apply exit-kind filtering when both sides agree on the exit kind;
+    # mismatched kinds already fail via kind_difference.
+    if left.exit_kind == right.exit_kind:
+        compared = observables_for_exit(contract, left.exit_kind)
+    else:
+        compared = contract.observables
     values = [
         _observable_difference(left.state, right.state, item, initial, ops)
-        for item in contract.observables
+        for item in compared
     ]
     # MMIO/FIFO device state is an automatic observable once either side touches it.
     from tools.ppc_equivalence.symbolic_bus import symbolic_bus_difference
@@ -847,8 +856,16 @@ def run_concrete_sampling(
             report["random_samples"] += 1
         else:
             report["interesting_samples"] += 1
+        from tools.ppc_equivalence.contract import observables_for_exit
+
+        left_exit = original_exits[0]
+        right_exit = candidate_exits[0]
+        if left_exit.exit_kind == right_exit.exit_kind:
+            sampled_observables = observables_for_exit(contract, left_exit.exit_kind)
+        else:
+            sampled_observables = contract.observables
         mismatches = _concrete_terminal_mismatches(
-            original_exits[0], candidate_exits[0], contract.observables,
+            left_exit, right_exit, sampled_observables,
         )
         if mismatches:
             first = mismatches[0]
@@ -1160,6 +1177,7 @@ def check_equivalence(
     assumed_callees_used: set[int | str] | None = None,
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     relocation_bindings: dict[str, int] | None = None,
+    initial_gpr_bindings: dict[int, int] | None = None,
     memory_environment: MemoryEnvironment | None = None,
     source_hash: str = "",
     floating_point_domain: FloatingPointDomain | None = None,
@@ -1194,6 +1212,7 @@ def check_equivalence(
         assumed_callees=assumed_callees,
         callee_contracts=callee_contracts,
         relocation_bindings=relocation_bindings,
+        initial_gpr_bindings=initial_gpr_bindings,
         memory_environment=memory_environment,
         source_hash=source_hash,
         floating_point_domain=floating_point_domain,
@@ -1244,6 +1263,7 @@ def _check_equivalence_impl(
     assumed_callees_used: set[int | str] | None = None,
     callee_contracts: dict[int | str, CalleeContract] | None = None,
     relocation_bindings: dict[str, int] | None = None,
+    initial_gpr_bindings: dict[int, int] | None = None,
     memory_environment: MemoryEnvironment | None = None,
     source_hash: str = "",
     floating_point_domain: FloatingPointDomain | None = None,
@@ -1337,6 +1357,34 @@ def _check_equivalence_impl(
     )
     original_memory_used: list = []
     candidate_memory_used: list = []
+
+    # GX FIFO recognized-loop plans (GX_FIFO_TIER_A.md mmio-loop-emission-v1):
+    # built only against ``gxfifo-stream`` devices actually declared on the
+    # bus, so targets without a memory bus (or without a GX device) pay zero
+    # cost and see zero behavior change.
+    gx_fifo_devices = []
+    if memory_bus is not None and memory_bus.specification is not None:
+        gx_fifo_devices = [
+            device
+            for device in memory_bus.specification.devices
+            if device.theory == "gxfifo-stream"
+        ]
+    original_gx_fifo = (
+        build_gx_fifo_loop_plans_for_devices(
+            original, gx_fifo_devices, readonly_words=original_readonly,
+        )
+        if gx_fifo_devices
+        else {}
+    )
+    candidate_gx_fifo = (
+        build_gx_fifo_loop_plans_for_devices(
+            candidate, gx_fifo_devices, readonly_words=candidate_readonly,
+        )
+        if gx_fifo_devices
+        else {}
+    )
+    original_gx_fifo_used: list = []
+    candidate_gx_fifo_used: list = []
 
     def _early_timeout(phase: str) -> ProofResult:
         return ProofResult(
@@ -1433,6 +1481,8 @@ def _check_equivalence_impl(
             affine_summaries_used=affine_used,
             memory_loop_plans=original_memory,
             memory_plans_used=original_memory_used,
+            gx_fifo_loop_plans=original_gx_fifo,
+            gx_fifo_plans_used=original_gx_fifo_used,
         )
         candidate_exits = execute_cfg(
             initial, candidate, ops,
@@ -1449,6 +1499,8 @@ def _check_equivalence_impl(
             affine_summaries_used=affine_used,
             memory_loop_plans=candidate_memory,
             memory_plans_used=candidate_memory_used,
+            gx_fifo_loop_plans=candidate_gx_fifo,
+            gx_fifo_plans_used=candidate_gx_fifo_used,
         )
     except ProofDeadlineExceeded as exc:
         return _early_timeout(exc.phase)
@@ -1468,7 +1520,11 @@ def _check_equivalence_impl(
             source_hash=source_hash,
         )
         # Track C: loop×FIFO hard-reject must still attest on the obligation
-        # (CFG raises before terminals exist).
+        # (CFG raises before terminals exist). ``execute_cfg`` now only raises
+        # this specific reason for an *unrecognized* fifo-touching loop —
+        # legitimate non-fifo-touching or GX-recognized summaries no longer
+        # reach this branch at all, so ``loop_summaries_active`` must track
+        # that targeted cause exactly (not "any loop summary exists").
         if memory_bus is not None:
             early.proof_features = ["memory-bus"]
             loop_fifo = "symbolic-loop-fifo" in str(exc)
@@ -1476,10 +1532,7 @@ def _check_equivalence_impl(
             early.memory_bus = enrich_memory_bus_obligation_with_symbolic_mmio(
                 obligation,
                 memory_bus,
-                loop_summaries_active=loop_fifo or bool(
-                    original_affine or candidate_affine
-                    or original_memory or candidate_memory
-                ),
+                loop_summaries_active=loop_fifo,
                 original_instructions=original,
                 candidate_instructions=candidate,
             )
@@ -1510,6 +1563,11 @@ def _check_equivalence_impl(
         if name not in ops.relocation_values:
             raise ValueError(f"relocation binding names unused symbol {name!r}")
         layout_constraints.append(ops.relocation_values[name] == ops.const(value))
+    for register, value in (initial_gpr_bindings or {}).items():
+        reg = int(register)
+        if not 0 <= reg < 32:
+            raise ValueError(f"initial GPR binding register out of range: {reg}")
+        layout_constraints.append(initial.gpr[reg] == ops.const(int(value) & 0xFFFFFFFF))
 
     # Always apply and record an effective environment (default:
     # assumed-ordinary-ram). Omitting the field previously hid assumed-RAM from
@@ -1731,12 +1789,13 @@ def _check_equivalence_impl(
                 candidate_instructions=candidate,
                 ops=ops,
                 deadline=deadline,
-                loop_summaries_active=bool(
-                    affine_used
-                    or original_memory_used or candidate_memory_used
-                    or original_affine or candidate_affine
-                    or original_memory or candidate_memory
-                ),
+                # Reaching this success path means ``execute_cfg`` did not
+                # raise for either side, so no *unrecognized* fifo-touching
+                # loop summary was present — the hard-reject attestation
+                # must not fire here. Whether a recognized GX FIFO loop plan
+                # was actually discharged is reported separately below.
+                loop_summaries_active=False,
+                gx_loop_plans_used=bool(original_gx_fifo_used or candidate_gx_fifo_used),
             )
             unsupported = (early.memory_bus or {}).get("unsupported_access") or {}
             for side in ("original", "candidate"):
@@ -2136,7 +2195,13 @@ def _check_equivalence_impl(
             "candidate": str(model.eval(right_exit.state.invalid_reason, model_completion=True)),
         }
     else:
-        for observable in contract.observables:
+        from tools.ppc_equivalence.contract import observables_for_exit
+
+        if left_exit.exit_kind == right_exit.exit_kind:
+            cex_observables = observables_for_exit(contract, left_exit.exit_kind)
+        else:
+            cex_observables = contract.observables
+        for observable in cex_observables:
             left = _observable_value(left_exit.state, observable, ops)
             right = _observable_value(right_exit.state, observable, ops)
             difference = _observable_difference(

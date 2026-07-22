@@ -12,8 +12,8 @@ import z3
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.engine import check_equivalence
 from tools.ppc_equivalence.fp_capabilities import set_scalar_fp_exact_v2_module_flag
-from tools.ppc_equivalence.fp_exact import exact_fadd, exact_fdiv, exact_fmul
-from tools.ppc_equivalence.fp_exact_fused import fmadd_binary64_rne
+from tools.ppc_equivalence.fp_exact import exact_fadd, exact_fdiv, exact_fdivs, exact_fmul
+from tools.ppc_equivalence.fp_exact_fused import fmadd_binary64_rne, fmadds_fpr_rne
 from tools.ppc_equivalence.fp_exact_symbolic import (
     scalar_fp_unsupported_predicate,
     scalar_fp_unsupported_query,
@@ -92,6 +92,16 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
             with self.subTest(a=a, b=b):
                 self.assertTrue(verify_exact_arith_bv_concrete("fdiv", a, b))
 
+    def test_payload_symbolic_fdivs_matches_exact_corpus(self) -> None:
+        pairs = [
+            (_F15, _F2),
+            (_ONE, _TWO),
+            (0x4000000000000000, 0x8000000000000000),
+        ]
+        for a, b in pairs:
+            with self.subTest(a=a, b=b):
+                self.assertTrue(verify_exact_arith_bv_concrete("fdivs", a, b))
+
     def test_payload_symbolic_fmadd_matches_exact_corpus(self) -> None:
         cases = [
             (_F15, _F4, _F2),
@@ -100,6 +110,18 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
         for a, c, b in cases:
             with self.subTest(a=a, c=c, b=b):
                 self.assertTrue(verify_exact_fused_bv_concrete("fmadd", a, c, b))
+
+    def test_payload_symbolic_single_fused_matches_exact_corpus(self) -> None:
+        cases = [
+            ("fmadds", _F15, _F2, _F4),
+            ("fmsubs", _F15, _F2, _F4),
+            ("fnmadds", _F15, _F2, _F4),
+            ("fnmsubs", _F15, _F2, _F4),
+            ("fmsubs", 0x3FF0000000000000, 0x3FF0000000000000, 0x3FF0000000000000),
+        ]
+        for opcode, a, b, c in cases:
+            with self.subTest(opcode=opcode, a=a, b=b, c=c):
+                self.assertTrue(verify_exact_fused_bv_concrete(opcode, a, c, b))
 
     def test_symbolic_neighbor_fadd_can_differ(self) -> None:
         ops = SymbolicOps()
@@ -231,6 +253,22 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
         expected = exact_fdiv(_F15, _F2, fpscr=0).result_bits
         self.assertEqual(try_concrete_bv64(final.fpr[3]), expected)
 
+    def test_fixed_input_symbolic_fdivs_matches_concrete_exact(self) -> None:
+        ops = SymbolicOps()
+        state = concrete_state({
+            "fpr": {"f1": _F15, "f2": _F2, "f7": 0},
+            "fpscr": 0,
+        })
+        state = state.with_fpr(1, ops.fp_const64(_F15))
+        state = state.with_fpr(2, ops.fp_const64(_F2))
+        final = execute_instruction(
+            state,
+            _insn(Opcode.FDIVS, (7, 1, 2)),
+            ops,
+        )
+        expected = exact_fdivs(_F15, _F2, fpscr=0).result_bits
+        self.assertEqual(try_concrete_bv64(final.fpr[7]), expected)
+
     def test_fixed_input_symbolic_fmadd_matches_concrete_exact(self) -> None:
         ops = SymbolicOps()
         state = concrete_state({
@@ -246,6 +284,23 @@ class SymbolicExactSemanticsV2Tests(unittest.TestCase):
             ops,
         )
         expected = fmadd_binary64_rne(_F15, _F4, _F2).bits64
+        self.assertEqual(try_concrete_bv64(final.fpr[7]), expected)
+
+    def test_fixed_input_symbolic_fmadds_matches_concrete_exact(self) -> None:
+        ops = SymbolicOps()
+        state = concrete_state({
+            "fpr": {"f1": _F15, "f2": _F2, "f3": _F4, "f7": 0},
+            "fpscr": 0,
+        })
+        state = state.with_fpr(1, ops.fp_const64(_F15))
+        state = state.with_fpr(2, ops.fp_const64(_F2))
+        state = state.with_fpr(3, ops.fp_const64(_F4))
+        final = execute_instruction(
+            state,
+            _insn(Opcode.FMADDS, (7, 1, 2, 3)),
+            ops,
+        )
+        expected = fmadds_fpr_rne(_F15, _F2, _F4).bits64
         self.assertEqual(try_concrete_bv64(final.fpr[7]), expected)
 
     def test_identical_fadd_equivalent_with_flag_on(self) -> None:

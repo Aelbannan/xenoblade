@@ -1068,10 +1068,10 @@ void operator delete[](void* p) {
 #pragma ecplusplus off
 
 // LLM-HARNESS-BEGIN: us-80435c98
-extern "C" void dt_Q33mtl10MemManager9MemRegionFv() {}
+extern "C" void __dt__Q33mtl10MemManager9MemRegionFv() {}
 // LLM-HARNESS-END: us-80435c98
 // LLM-HARNESS-BEGIN: us-804375bc
-extern "C" bool nw_FUl() { return false; }
+extern "C" int __nw__FUl() { return 0; }
 // LLM-HARNESS-END: us-804375bc
 // LLM-HARNESS-BEGIN: us-804375c4
 extern "C" void __dl__FPv() {}

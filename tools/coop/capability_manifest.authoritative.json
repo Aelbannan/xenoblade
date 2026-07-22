@@ -1,13 +1,32 @@
 {
   "schema_version": 1,
   "policy": "capability-assurance-v1",
+  "description": "Authoritative Wave 5 manifest. GX FIFO Tier-A graduated from capability_manifest.gx_fifo_loop_emission_v1_canary.json (canary us-8031bfc0 / GXInvalidateVtxCache). Keep automatic_promotion false in coop.json when expanding further MMIO allowlists.",
+  "automatic_promotion": false,
+  "gx_fifo_exact_v1": {
+    "hardware_profile": "wii-broadway-xenoblade-us-v2",
+    "stage": "gx_fifo_loop_emission_v1",
+    "allowlist_order": [
+      "gx-fifo-write-trace",
+      "gx-fifo-read",
+      "mmio-loop-emission"
+    ],
+    "model_versions": {
+      "gx-fifo-write-trace": "gx-fifo-trace-v2",
+      "gx-fifo-read": "gx-fifo-read-v1",
+      "mmio-loop-emission": "mmio-loop-emission-v1"
+    },
+    "recommended_canary_targets": {
+      "gx-fifo-write-trace": "us-8031bfc0"
+    }
+  },
   "allowed_tier_a_capabilities": {
     "integer-core": ["integer-core-v1"],
     "provenance": ["provenance-v1"],
     "bounded-memory": ["bounded-memory-v2"],
     "certified-calls": ["certified-calls-v2"],
     "fp-bitwise": ["fp-bitwise-v1"],
-    "fp-load-store": [],
+    "fp-load-store": ["broadway-fp-load-store-v2"],
     "fp-compare": [],
     "fp-convert": [],
     "fp-scalar-arithmetic": [],
@@ -17,11 +36,11 @@
     "fp-traps": [],
     "precondition-closure": [],
     "mmio-register-bank": [],
-    "gx-fifo-write-trace": [],
-    "gx-fifo-read": [],
+    "gx-fifo-write-trace": ["gx-fifo-trace-v2"],
+    "gx-fifo-read": ["gx-fifo-read-v1"],
     "mmio-read-side-effects": [],
     "mmio-external-input": [],
-    "mmio-loop-emission": [],
+    "mmio-loop-emission": ["mmio-loop-emission-v1"],
     "mixed-address-space-routing": [],
     "dma-interrupt-effects": [],
     "memory-loop-summary": [],

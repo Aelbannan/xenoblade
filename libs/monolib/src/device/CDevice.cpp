@@ -13,6 +13,8 @@ namespace {
     public:
         CDeviceException(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
             spInstance = this;
+            // Out-of-line getInstance must stay live for the retail symbol.
+            (void)getInstance();
         }
         virtual ~CDeviceException();
         virtual bool wkStandbyLogout();
@@ -149,9 +151,13 @@ void CDevice::initDevices(){
     CDeviceGX::setDevicesInitializedFlag(true);
 }
 
+// LLM-HARNESS-BEGIN: us-80450288
+#pragma dont_inline on
 CDeviceException* CDeviceException::getInstance(){
     return spInstance;
 }
+#pragma dont_inline off
+// LLM-HARNESS-END: us-80450288
 
 bool CDevice::wkStandbyLogin(){
     CDeviceException::create("CDeviceException", this);

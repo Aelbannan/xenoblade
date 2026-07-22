@@ -57,6 +57,11 @@ class CoopConfig:
     # Reviewed platform profile name or path (Stage 3A). Digest binds into the
     # proof request / cache key as ``platform_profile_sha256``.
     platform_profile: str | None = None
+    # Reviewed MMIO hardware profile name or path (GX FIFO Tier-A pre-allowlist
+    # wiring). Distinct from ``platform_profile`` (bounded RAM). When set, a
+    # ``MemoryBus`` is materialized from ``tools/ppc_equivalence/platform_profiles/``
+    # and threaded through ``check_equivalence(..., memory_bus=)``.
+    hardware_profile: str | None = None
     floating_point_domain: dict[str, Any] | None = None
     capability_manifest_path: Path = Path("tools/coop/capability_manifest.json")
     allowed_tier_a_capabilities: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -221,6 +226,11 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
             if data.get("platform_profile") is not None
             else None
         ),
+        hardware_profile=(
+            str(data["hardware_profile"])
+            if data.get("hardware_profile") is not None
+            else None
+        ),
         floating_point_domain=(
             dict(data["floating_point_domain"])
             if isinstance(data.get("floating_point_domain"), dict)
@@ -257,6 +267,52 @@ def platform_profile_digest_from_config(config: CoopConfig) -> str | None:
         return None
     digest = profile.get("profile_sha256")
     return str(digest) if isinstance(digest, str) else None
+
+
+def hardware_profile_from_config(config: CoopConfig) -> dict[str, Any] | None:
+    """Load the reviewed MMIO hardware profile from coop config, if configured.
+
+    Distinct from ``platform_profile_from_config`` (bounded RAM profiles).
+    Returns ``None`` when unset or unloadable/invalid (fail-closed: never
+    silently degrades to an unconstrained or ad-hoc bus).
+    """
+    if not config.hardware_profile:
+        return None
+    try:
+        from tools.ppc_equivalence.hardware_profile import load_hardware_profile
+
+        return load_hardware_profile(config.hardware_profile)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return None
+
+
+def hardware_profile_digest_from_config(config: CoopConfig) -> str | None:
+    """Return ``profile_sha256`` for the configured MMIO hardware profile."""
+    profile = hardware_profile_from_config(config)
+    if profile is None:
+        return None
+    digest = profile.get("profile_sha256")
+    return str(digest) if isinstance(digest, str) else None
+
+
+def memory_bus_from_config(config: CoopConfig) -> Any | None:
+    """Build a ``MemoryBus`` from coop config's ``hardware_profile`` knob.
+
+    Returns ``None`` when unset or the profile fails to load/validate.
+    Fail-closed: an invalid ``hardware_profile`` name never falls back to an
+    ad-hoc or unconstrained bus — the proof simply runs without a
+    ``memory_bus`` attached, exactly as if the knob were unset.
+    """
+    if not config.hardware_profile:
+        return None
+    try:
+        from tools.ppc_equivalence.memory_bus import (
+            build_memory_bus_from_hardware_profile,
+        )
+
+        return build_memory_bus_from_hardware_profile(config.hardware_profile)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return None
 
 
 def memory_environment_from_config(config: CoopConfig) -> dict[str, Any] | None:

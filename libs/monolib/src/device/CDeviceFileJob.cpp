@@ -10,6 +10,10 @@ unk210(0){
     mType = THREAD_CDEVICEFILEJOB;
 }
 
+// LLM-HARNESS-BEGIN: us-80454bcc
+extern "C" bool cancel__14CDeviceFileJobFP25CDeviceFileJob_UnkStruct1(void*) { return false; }
+// LLM-HARNESS-END: us-80454bcc
+
 bool CDeviceFileJob::cancel(const char* pFilename){
     return false;
 }

@@ -425,5 +425,5 @@ extern "C" void detail_AppendSound__Q34nw4r3snd11SoundPlayerFPQ44nw4r3snd6detail
 extern "C" void detail_RemoveSound__Q34nw4r3snd11SoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
 // LLM-HARNESS-END: us-80422f78
 // LLM-HARNESS-BEGIN: us-80423098
-extern "C" void detail_CanPlaySound_Q34nw4r3snd11SoundPlayerFi() {}
+extern "C" void detail_CanPlaySound__Q34nw4r3snd11SoundPlayerFi(int) {}
 // LLM-HARNESS-END: us-80423098

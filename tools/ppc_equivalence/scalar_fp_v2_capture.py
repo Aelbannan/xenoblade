@@ -26,7 +26,7 @@ if str(ROOT) not in sys.path:
 
 from tools.ppc_equivalence.fixtures.corpus import _fp_a, _fp_cmp, _fp_x  # noqa: PLC2701
 from tools.ppc_equivalence.fixtures.encode import parse_int
-from tools.ppc_equivalence.fp_fpscr import FPSCR_NI, apply_fpscr_transition
+from tools.ppc_equivalence.fp_fpscr import FPSCR_NI, FPSCR_VE, apply_fpscr_transition
 from tools.ppc_equivalence.fp_exact import exact_scalar_arith
 from tools.ppc_equivalence.fp_exact_compare import exact_fcmpo, exact_fcmpu
 from tools.ppc_equivalence.fp_exact_convert import exact_frsp
@@ -216,6 +216,7 @@ def generate_guest_sources(targets: Sequence[CaptureTarget]) -> None:
         "    u64 fpr1;",
         "    u64 fpr2;",
         "    u64 fpr3;",
+        "    u64 fpr7_pre;",
         "    u64 fpscr_pre;",
         "    CapturePayloadFn payload;",
         "} ScalarFpV2CaptureCase;",
@@ -243,11 +244,15 @@ def generate_guest_sources(targets: Sequence[CaptureTarget]) -> None:
     for index, target in enumerate(targets):
         a, b, c = _operand_values(target)
         fpr1, fpr2, fpr3 = _fpr_slots_for_opcode(target.opcode, a, b, c)
+        fpr7_pre = 0
+        if target.fpscr_pre & FPSCR_VE and "result_bits" in target.expected:
+            fpr7_pre = int(target.expected["result_bits"])
         case_lines.append("    {")
         case_lines.append(f'        "{target.row_id}",')
         case_lines.append(f"        0x{fpr1:016X}ull,")
         case_lines.append(f"        0x{fpr2:016X}ull,")
         case_lines.append(f"        0x{fpr3:016X}ull,")
+        case_lines.append(f"        0x{fpr7_pre:016X}ull,")
         case_lines.append(f"        0x{target.fpscr_pre:016X}ull,")
         case_lines.append(f"        scalar_fp_v2_capture_payload_{index},")
         case_lines.append("    },")

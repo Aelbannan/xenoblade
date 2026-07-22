@@ -51,5 +51,5 @@ extern "C" bool func_801A049C() { return false; }
 // LLM-HARNESS-END: us-801a1bb8
 
 // LLM-HARNESS-BEGIN: us-801a1a90
-extern "C" void ct_CMenuBattleMode() {}
+extern "C" void __ct__CMenuBattleMode() {}
 // LLM-HARNESS-END: us-801a1a90

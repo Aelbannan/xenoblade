@@ -19,7 +19,10 @@ _PLATFORM_PROFILES_DIR = Path(__file__).resolve().parent / "platform_profiles"
 # Reviewed hardware profiles eligible for MMIO promotion-grade paths (once
 # allowlisted). Ad-hoc maps are never listed here.
 REVIEWED_HARDWARE_PROFILES: frozenset[str] = frozenset(
-    {"wii-broadway-xenoblade-us-v1"}
+    {
+        "wii-broadway-xenoblade-us-v1",
+        "wii-broadway-xenoblade-us-v2",
+    }
 )
 
 SOURCE_HARDWARE_PROFILE = "hardware-profile"
@@ -44,6 +47,97 @@ def _profile_name(profile: Mapping[str, Any]) -> str:
     if not isinstance(name, str) or not name:
         raise ValueError("hardware profile missing profile name")
     return name
+
+
+_FIFO_DEVICE_KEYS: tuple[str, ...] = (
+    "supported_widths",
+    "alignment_required",
+    "read_policy",
+    "read_model_version",
+    "write_event_semantics",
+    "read_side_effects",
+    "external_input",
+    "max_fifo_events",
+    "legal_aliases",
+)
+
+
+def _reset_state_sort_key(key: str) -> tuple[int, int | str]:
+    if key.startswith("0x"):
+        return (0, int(key, 16))
+    return (1, key)
+
+
+def _normalize_reset_state_key(key: Any) -> str:
+    if isinstance(key, int):
+        return _normalize_addr_hex(key)
+    text = str(key).strip()
+    if text.startswith("0x") or text.isdigit():
+        return _normalize_addr_hex(key)
+    return str(key)
+
+
+def _normalize_gx_fifo_block(block: Mapping[str, Any]) -> dict[str, Any]:
+    supported = block.get("supported_widths", [1, 2, 4])
+    if not isinstance(supported, list):
+        raise ValueError("gx_fifo supported_widths must be a list")
+    return {
+        "alignment_required": bool(block.get("alignment_required", True)),
+        "base": _normalize_addr_hex(block["base"]),
+        "endian": str(block.get("endian", "big")),
+        "external_input": bool(block.get("external_input", False)),
+        "max_fifo_events": int(block.get("max_fifo_events", 256)),
+        "read_model_version": str(block["read_model_version"]),
+        "read_policy": str(block["read_policy"]),
+        "read_side_effects": bool(block.get("read_side_effects", False)),
+        "span": int(block["span"]),
+        "supported_widths": sorted(int(width) for width in supported),
+        "write_event_semantics": str(block["write_event_semantics"]),
+    }
+
+
+def _normalize_device_entry(device: Mapping[str, Any]) -> dict[str, Any]:
+    theory = str(device["theory"])
+    entry: dict[str, Any] = {
+        "base": _normalize_addr_hex(device["base"]),
+        "device_id": str(device["device_id"]),
+        "endian": str(device.get("endian", "big")),
+        "reg_width": int(device.get("reg_width", 4)),
+        "span": int(device.get("span", 0)),
+        "theory": theory,
+    }
+    include_fifo = theory == "gxfifo-stream"
+    for key in _FIFO_DEVICE_KEYS:
+        if key not in device and not include_fifo:
+            continue
+        if key == "supported_widths":
+            widths = device.get(key, [1, 2, 4])
+            if not isinstance(widths, list):
+                raise ValueError("device supported_widths must be a list")
+            entry[key] = sorted(int(width) for width in widths)
+        elif key == "legal_aliases":
+            aliases = device.get(key, [])
+            if not isinstance(aliases, list):
+                raise ValueError("device legal_aliases must be a list")
+            entry[key] = sorted(_normalize_addr_hex(alias) for alias in aliases)
+        elif key in {"alignment_required", "read_side_effects", "external_input"}:
+            default = key == "alignment_required"
+            entry[key] = bool(device.get(key, default))
+        elif key == "max_fifo_events":
+            entry[key] = int(device.get(key, 256))
+        else:
+            defaults = {
+                "read_policy": "unsupported",
+                "read_model_version": "gx-fifo-read-v1",
+                "write_event_semantics": "gx-fifo-trace-v2",
+            }
+            if key in device:
+                entry[key] = str(device[key])
+            elif include_fifo and key in defaults:
+                entry[key] = defaults[key]
+            else:
+                raise ValueError(f"device missing required FIFO field {key!r}")
+    return entry
 
 
 def hardware_profile_identity(profile: Mapping[str, Any]) -> dict[str, Any]:
@@ -72,16 +166,7 @@ def hardware_profile_identity(profile: Mapping[str, Any]) -> dict[str, Any]:
     for device in devices:
         if not isinstance(device, dict):
             raise ValueError("hardware profile device must be an object")
-        normalized_devices.append(
-            {
-                "base": _normalize_addr_hex(device["base"]),
-                "device_id": str(device["device_id"]),
-                "endian": str(device.get("endian", "big")),
-                "reg_width": int(device.get("reg_width", 4)),
-                "span": int(device.get("span", 0)),
-                "theory": str(device["theory"]),
-            }
-        )
+        normalized_devices.append(_normalize_device_entry(device))
 
     register_specs = profile.get("register_specs", [])
     if not isinstance(register_specs, list):
@@ -111,19 +196,27 @@ def hardware_profile_identity(profile: Mapping[str, Any]) -> dict[str, Any]:
             raise ValueError("hardware profile reset_state values must be objects")
         fixed: dict[str, int] = {}
         for offset, value in values.items():
-            key = _normalize_addr_hex(offset)
+            key = _normalize_reset_state_key(offset)
             fixed[key] = int(value)
         normalized_reset[str(device_id)] = {
-            key: fixed[key] for key in sorted(fixed, key=lambda item: int(item, 16))
+            key: fixed[key] for key in sorted(fixed, key=_reset_state_sort_key)
         }
 
-    return {
+    identity: dict[str, Any] = {
         "devices": normalized_devices,
         "profile": _profile_name(profile),
         "regions": normalized_regions,
         "register_specs": normalized_specs,
         "reset_state": normalized_reset,
     }
+    if "fifo_bound" in profile:
+        identity["fifo_bound"] = int(profile["fifo_bound"])
+    gx_fifo = profile.get("gx_fifo")
+    if gx_fifo is not None:
+        if not isinstance(gx_fifo, dict):
+            raise ValueError("hardware profile gx_fifo must be an object")
+        identity["gx_fifo"] = _normalize_gx_fifo_block(gx_fifo)
+    return identity
 
 
 def compute_hardware_profile_sha256(profile: Mapping[str, Any]) -> str:

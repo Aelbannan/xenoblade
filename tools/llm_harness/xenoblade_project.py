@@ -1527,6 +1527,7 @@ class XenobladeAdapter:
             target_function=target.function or "",
             target_symbol=target.symbol or "",
             source_path=target.source,
+            target_id=target.id,
         )
         unit = self.project.resolve_unit(target.unit)
         original_object = unit.base_path.read_bytes() if unit.base_path and unit.base_path.is_file() else None
@@ -1577,7 +1578,13 @@ class XenobladeAdapter:
                     status="SYMBOL_EXTRACTION_ERROR",
                     match_percent=match_percent,
                     accepted=False,
-                    detail=f"function-size extraction failed: {exc}",
+                    detail=_symbol_extraction_detail(
+                        exc,
+                        candidate_source=candidate.source,
+                        target_id=target.id,
+                        target_symbol=target.symbol or "",
+                        object_path=unit.base_path,
+                    ),
                 )
 
             structural_report = None
@@ -2269,6 +2276,7 @@ class XenobladeAdapter:
             target_function=target.function or "",
             target_symbol=target.symbol or "",
             source_path=target.source,
+            target_id=target.id,
         )
         if write:
             self._require_claim(target, owner)
@@ -2481,6 +2489,7 @@ class XenobladeAdapter:
             target_function=target.function or "",
             target_symbol=target.symbol or "",
             source_path=target.source,
+            target_id=target.id,
         )
         source_path.write_text(updated, encoding="utf-8")
         return SourcePatch(slot_id=target_id, source=candidate.source)
@@ -2503,6 +2512,7 @@ class XenobladeAdapter:
             target_function=target.function or "",
             target_symbol=target.symbol or "",
             source_path=target.source,
+            target_id=target.id,
         )
 
         unit = self.project.resolve_unit(target.unit)
@@ -2573,8 +2583,24 @@ class XenobladeAdapter:
                     warnings=["candidate object not found after build"],
                 )
 
-            retail_function = extract_function(ws_target, target.symbol)
-            candidate_function = extract_function(ws_base, target.symbol)
+            try:
+                retail_function = extract_function(ws_target, target.symbol)
+                candidate_function = extract_function(ws_base, target.symbol)
+            except (FileNotFoundError, ValueError) as exc:
+                return CandidateEvaluation(
+                    status=CandidateStatus.INVALID_RESPONSE,
+                    compile_report=CompileReport(succeeded=True),
+                    match_percent=match_percent,
+                    warnings=[
+                        _symbol_extraction_detail(
+                            exc,
+                            candidate_source=candidate.source,
+                            target_id=target.id,
+                            target_symbol=target.symbol,
+                            object_path=ws_base,
+                        )
+                    ],
+                )
 
             structural_report = None
             try:
@@ -3178,6 +3204,43 @@ def _function_size_comparison(retail_size: int, candidate_size: int) -> tuple[bo
         f"candidate function size 0x{candidate_size:X} fits retail 0x{retail_size:X} "
         f"(0x{spare:X} spare)"
     )
+
+
+def _symbol_extraction_detail(
+    exc: BaseException,
+    *,
+    candidate_source: str,
+    target_id: str,
+    target_symbol: str,
+    object_path: Optional[Path],
+) -> str:
+    """Explain missing linker symbols so match_repair can rename stubs."""
+    parts = [f"function-size extraction failed: {exc}"]
+    stub = "harness_stub_" + target_id.replace("-", "_") if target_id else ""
+    if stub and stub in (candidate_source or ""):
+        parts.append(
+            f"candidate still defines placeholder {stub!r}; emit linker symbol "
+            f"{target_symbol!r} instead"
+        )
+    elif target_symbol and target_symbol not in (candidate_source or ""):
+        parts.append(
+            f"candidate source does not mention expected linker symbol {target_symbol!r}"
+        )
+    if object_path is not None and object_path.is_file() and target_symbol:
+        try:
+            present = sorted(fn.name for fn in list_text_functions(object_path))
+        except Exception:
+            present = []
+        if present and target_symbol not in present:
+            hints = [
+                name
+                for name in present
+                if name.startswith("harness_stub_")
+                or name.endswith(target_symbol.split("__", 1)[0])
+            ][:8]
+            if hints:
+                parts.append("object has related symbols: " + ", ".join(hints))
+    return "; ".join(parts)
 
 
 def _binary_mismatch_summary(retail: Any, candidate: Any) -> str:

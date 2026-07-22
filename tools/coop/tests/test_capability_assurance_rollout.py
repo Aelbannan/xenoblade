@@ -152,7 +152,8 @@ class ManifestFilesTests(unittest.TestCase):
         loaded = load_capability_manifest(authoritative_capability_manifest_path())
         self.assertFalse(loaded.shadow_mode)
         self.assertTrue(loaded.require_capability_assurance)
-        # Safe Wave 5 set only — unfinished Wave 3/4 caps stay empty.
+        # Safe Wave 5 set + graduated GX FIFO Tier-A (canary us-8031bfc0).
+        # Unfinished MMIO caps (register-bank / DMA / read-side-effects) stay empty.
         self.assertEqual(
             loaded.allowed_versions("integer-core"),
             ("integer-core-v1",),
@@ -169,8 +170,18 @@ class ManifestFilesTests(unittest.TestCase):
         )
         self.assertEqual(loaded.allowed_versions("fp-scalar-arithmetic"), ())
         self.assertEqual(loaded.allowed_versions("mmio-register-bank"), ())
-        self.assertEqual(loaded.allowed_versions("gx-fifo-write-trace"), ())
-        self.assertEqual(loaded.allowed_versions("gx-fifo-read"), ())
+        self.assertEqual(
+            loaded.allowed_versions("gx-fifo-write-trace"),
+            ("gx-fifo-trace-v2",),
+        )
+        self.assertEqual(
+            loaded.allowed_versions("gx-fifo-read"),
+            ("gx-fifo-read-v1",),
+        )
+        self.assertEqual(
+            loaded.allowed_versions("mmio-loop-emission"),
+            ("mmio-loop-emission-v1",),
+        )
 
 
 class AuthoritativeCanaryTierTests(unittest.TestCase):

@@ -70,7 +70,7 @@ AxVoice::Format WaveFileReader::GetAxVoiceFormatFromWaveFileFormat(u32 format) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-8042bc24
-extern "C" void GetWaveFile_Q44nw4r3snd6detail17WaveArchiveReaderCFi() {}
+extern "C" void GetWaveFile__Q44nw4r3snd6detail17WaveArchiveReaderCFi(int) {}
 // LLM-HARNESS-END: us-8042bc24
 // LLM-HARNESS-BEGIN: us-8042bcd4
 extern "C" void ReadWaveInfo__Q44nw4r3snd6detail14WaveFileReaderCFPQ44nw4r3snd6detail8WaveInfoPCv() {}

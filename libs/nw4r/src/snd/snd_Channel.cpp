@@ -414,5 +414,5 @@ void Channel::FreeChannel(Channel* pChannel) {
 extern "C" void NoteOff__Q44nw4r3snd6detail7ChannelFv() {}
 // LLM-HARNESS-END: us-80416e54
 // LLM-HARNESS-BEGIN: us-8041702c
-extern "C" void SetBiquadFilter_Q44nw4r3snd6detail7ChannelFif() {}
+extern "C" void SetBiquadFilter__Q44nw4r3snd6detail7ChannelFif(int, float) {}
 // LLM-HARNESS-END: us-8041702c

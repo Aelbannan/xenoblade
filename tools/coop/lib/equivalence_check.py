@@ -181,6 +181,20 @@ def _certificate_from_refreshed_proof(
     return updated
 
 
+def rebind_certificate_provenance(certificate: dict[str, Any]) -> dict[str, Any]:
+    """Refresh trust-boundary provenance on a certificate before persistence."""
+    updated = dict(certificate)
+    updated["engine_hash"] = _current_engine_hash()
+    updated["certifier_hash"] = _current_certifier_hash()
+    commit, dirty = _live_git_identity()
+    if commit:
+        updated["git_commit"] = commit
+    updated["git_dirty"] = dirty
+    updated.pop("certificate_sha256", None)
+    updated["certificate_sha256"] = equivalence_certificate_hash(updated)
+    return updated
+
+
 def _reevaluate_cached_probe(
     probe: EquivalenceProbe,
     *,
@@ -1010,28 +1024,18 @@ def _build_equivalence_certificate(
     }
     if memory_scope is not None:
         certificate["memory_scope"] = memory_scope
-    # Always bind the live engine and certifier trees so certificates fail closed
-    # after semantic or policy edits.
-    certificate["engine_hash"] = _current_engine_hash()
-    certificate["certifier_hash"] = _current_certifier_hash()
     # Always emit git_dirty (including False) even when proof is absent.
     certificate["git_dirty"] = False
     if proof is not None:
-        engine_hash = getattr(proof, "engine_hash", "") or ""
         source_hash = getattr(proof, "source_hash", "") or ""
         git_commit = getattr(proof, "git_commit", "") or ""
-        certifier_hash = getattr(proof, "certifier_hash", "") or ""
         proof_request_hash_value = getattr(proof, "proof_request_hash", "") or ""
         validation_ledger_hash = getattr(proof, "validation_ledger_hash", "") or ""
-        if engine_hash:
-            certificate["engine_hash"] = engine_hash
         if source_hash:
             certificate["source_hash"] = source_hash
         certificate["git_dirty"] = bool(getattr(proof, "git_dirty", False))
         if git_commit:
             certificate["git_commit"] = git_commit
-        if certifier_hash:
-            certificate["certifier_hash"] = certifier_hash
         if proof_request_hash_value:
             certificate["proof_request_hash"] = proof_request_hash_value
         if validation_ledger_hash:
@@ -1095,6 +1099,9 @@ def _build_equivalence_certificate(
                 block = getattr(proof, key, None)
                 if isinstance(block, dict):
                     certificate[key] = dict(block)
+    # Bind live trust-boundary trees last so stale proof/cache provenance cannot win.
+    certificate["engine_hash"] = _current_engine_hash()
+    certificate["certifier_hash"] = _current_certifier_hash()
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate, ""
 
@@ -1151,6 +1158,7 @@ def _prove_bytes(
     jump_table_context = None
     virtual_call_context = None
     memory_loop_readonly_words = None
+    initial_gpr_bindings: dict[int, int] | None = None
     if proof_features is None and address_space is None and indirect_targets is None:
         from tools.ppc_equivalence.jump_table_auto import try_auto_jump_table_context
         from tools.ppc_equivalence.jump_table_obligations import (
@@ -1167,8 +1175,14 @@ def _prove_bytes(
         from tools.ppc_equivalence.memory_loop_readonly import (
             build_memory_loop_readonly_context,
         )
+        from tools.ppc_equivalence.sda_layout import (
+            collect_reloc_symbol_names,
+            extract_sda_bases,
+            extract_symbol_addresses,
+        )
         from tools.ppc_equivalence.vtable_obligations import (
             try_auto_virtual_call_context,
+            try_auto_virtual_thunk_context,
             virtual_call_gate_reason,
         )
 
@@ -1191,6 +1205,32 @@ def _prove_bytes(
                 original=original_artifact,
                 candidate=candidate_artifact,
             )
+
+        sda_bases: dict[int, int] = {}
+        symbol_addresses: dict[str, int] = {}
+        reloc_names = collect_reloc_symbol_names(
+            original_relocations, candidate_relocations,
+        )
+        # Prefer linked ELF for SDA / absolute symbols; DOL alone rarely exports
+        # _SDA_BASE_. Fail-closed when neither image yields bases.
+        for image in (elf_path, dol_path):
+            if image is None:
+                continue
+            for reg, value in extract_sda_bases(image).items():
+                sda_bases.setdefault(reg, value)
+            if reloc_names:
+                for name, value in extract_symbol_addresses(
+                    image, names=reloc_names,
+                ).items():
+                    symbol_addresses.setdefault(name, value)
+            else:
+                # Still capture SDA linker symbols even with empty reloc sets.
+                for name, value in extract_symbol_addresses(
+                    image,
+                    names={"_SDA_BASE_", "_SDA2_BASE_"},
+                ).items():
+                    symbol_addresses.setdefault(name, value)
+
         jump_table_context = try_auto_jump_table_context(
             original,
             candidate,
@@ -1198,10 +1238,22 @@ def _prove_bytes(
             # Per-side only — no shared dol_path/elf_path production fallback.
             original_dol_path=dol_path if artifacts is None else None,
             candidate_elf_path=elf_path if artifacts is None else None,
+            sda_bases=sda_bases or None,
+            symbol_addresses=symbol_addresses or None,
         )
         # Virtual-call try_auto: returns None without slot/certificate premises
         # (fail-closed). Pattern presence alone is gated inside check_equivalence.
         virtual_call_context = try_auto_virtual_call_context(original, candidate)
+        # Bctr thunks: optional readonly/closure when images hydrate; never
+        # demote bare symbolic CTR equivalence when hydration is absent.
+        if virtual_call_context is None:
+            virtual_call_context = try_auto_virtual_thunk_context(
+                original,
+                candidate,
+                artifacts=artifacts,
+                original_dol_path=dol_path if artifacts is None else None,
+                candidate_elf_path=elf_path if artifacts is None else None,
+            )
         # Per-side provenance: the original (retail) side is hydrated ONLY from
         # the DOL image and the candidate (decomp) side ONLY from the linked
         # ELF. Never let the ELF shadow the retail DOL (or vice versa).
@@ -1260,6 +1312,12 @@ def _prove_bytes(
             # so the engine gate demotes EQUIVALENT.
             pass
 
+        # Stash SDA bases as initial r2/r13 constraints (EABI invariant).
+        # Do not force absolute relocation_bindings here — unlinked HA/LO proofs
+        # share symbolic symbol addresses; binding one absolute VA can falsely
+        # distinguish DOL vs ELF placements of the same logical symbol.
+        initial_gpr_bindings = dict(sda_bases) if sda_bases else None
+    # note: when caller pre-supplies proof_features, leave initial_gpr unset
     original_live_out = automatic_live_out(original)
     candidate_live_out = automatic_live_out(candidate)
     live_out = None
@@ -1333,6 +1391,27 @@ def _prove_bytes(
         platform_profile_obj = platform_profile_from_config(project.config)
         platform_profile_sha256 = platform_profile_digest_from_config(project.config)
 
+    # GX FIFO Tier-A pre-allowlist wiring: reviewed MMIO ``hardware_profile``
+    # knob (distinct from ``platform_profile``'s bounded-RAM profiles). When
+    # configured, materialize a ``MemoryBus`` and thread it through
+    # ``check_equivalence(..., memory_bus=)`` so gx-fifo canaries can actually
+    # discharge under the reviewed hardware profile. Fail-closed: an invalid
+    # or unset profile leaves ``memory_bus_obj`` as ``None`` (no silent RAM).
+    memory_bus_obj = None
+    memory_bus_identity: dict[str, Any] | None = None
+    if project is not None:
+        from tools.coop.lib.config import memory_bus_from_config
+
+        memory_bus_obj = memory_bus_from_config(project.config)
+        if memory_bus_obj is not None:
+            bus_spec = memory_bus_obj.specification
+            memory_bus_identity = {
+                "algorithm": "memory-bus-v1",
+                "bus_spec_sha256": bus_spec.sha256() if bus_spec is not None else None,
+                "hardware_profile": memory_bus_obj.hardware_profile_name,
+                "hardware_profile_sha256": memory_bus_obj.hardware_profile_sha256,
+            }
+
     raw_fp = floating_point_domain
     if raw_fp is None and project is not None:
         raw_fp = getattr(project.config, "floating_point_domain", None)
@@ -1385,6 +1464,7 @@ def _prove_bytes(
         indirect_targets=indirect_targets,
         memory_loop_readonly=memory_loop_readonly_identity,
         platform_profile_sha256=platform_profile_sha256,
+        memory_bus=memory_bus_identity,
     )
 
     cache_d = _cache_dir(project)
@@ -1464,6 +1544,7 @@ def _prove_bytes(
         indirect_targets=indirect_targets,
         memory_loop_readonly=memory_loop_readonly_identity,
         platform_profile_sha256=platform_profile_sha256,
+        memory_bus=memory_bus_identity,
     )
     result = check_equivalence(
         original,
@@ -1477,6 +1558,7 @@ def _prove_bytes(
         assumed_callees=assumed_callees,
         assumed_callees_used=callees_used,
         callee_contracts=callee_contracts,
+        initial_gpr_bindings=initial_gpr_bindings,
         memory_environment=mem_env,
         source_hash=source_hash,
         floating_point_domain=fp_domain,
@@ -1484,6 +1566,7 @@ def _prove_bytes(
         virtual_call=virtual_call_context,
         memory_loop_readonly=memory_loop_readonly_words,
         platform_profile=platform_profile_obj,
+        memory_bus=memory_bus_obj,
     )
     # Stage 4: derive requirements + attach drafts (ledger + certified callees).
     # Engine may already have attached; orchestrator refreshes ledger binding.
@@ -1649,7 +1732,30 @@ def certify_unit_symbol(
     max_paths: int = 256,
     max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
 ) -> EquivalenceProbe:
-    """Issue a current semantic effect certificate for an already-equal pair."""
+    """Issue a current semantic effect certificate for an already-equal pair.
+
+    When ``coop.json`` configures a reviewed ``hardware_profile``, prefer the
+    full SMT prove path so MMIO/FIFO obligations (and Tier-A GX attestations)
+    participate in the certificate instead of a bare FULL_MATCH synthesis.
+    """
+    try:
+        from tools.coop.lib.config import memory_bus_from_config
+
+        if memory_bus_from_config(project.config) is not None:
+            return prove_unit_symbol(
+                project,
+                unit,
+                symbol,
+                target_id=target_id,
+                contract="auto",
+                max_instructions=max_instructions,
+                max_paths=max_paths,
+                max_loop_iterations=max_loop_iterations,
+            )
+    except Exception:
+        # Fall through to the historical FULL_MATCH synthesis path.
+        pass
+
     if unit.target_path is None or unit.base_path is None:
         return EquivalenceProbe(ProofStatus.INVALID_INPUT, "unit lacks an object pair")
     try:

@@ -302,7 +302,7 @@ extern "C" void func_80187F0C(void* p) {
 // LLM-HARNESS-END: us-801894c0
 
 // LLM-HARNESS-BEGIN: us-80188388
-extern "C" void ct_CMenuPTGauge() {}
+extern "C" void __ct__CMenuPTGauge() {}
 // LLM-HARNESS-END: us-80188388
 // LLM-HARNESS-BEGIN: us-80188b1c
 extern "C" void func_80187694() {}

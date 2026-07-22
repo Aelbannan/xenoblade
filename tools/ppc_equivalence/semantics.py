@@ -34,6 +34,11 @@ from .ir import (
     SUPPORTED_OPCODES,
     UnsupportedInstruction,
 )
+from .gx_fifo_loop import (
+    GxFifoLoopPlan,
+    apply_gx_fifo_loop_summary,
+    unresolved_fifo_touching_memory_loop_headers,
+)
 from .loop_summary import LoopSummary, apply_affine_loop_summary, build_affine_summary_map
 from .memory_bus import BusOutcome, MemoryBus
 from .memory_loop import MemoryLoopPlan, MemoryLoopSummary, apply_memory_loop_summary
@@ -4776,6 +4781,8 @@ def execute_cfg(
     affine_summaries_used: list[LoopSummary] | None = None,
     memory_loop_plans: dict[int, MemoryLoopPlan] | None = None,
     memory_plans_used: list[MemoryLoopPlan] | None = None,
+    gx_fifo_loop_plans: dict[int, GxFifoLoopPlan] | None = None,
+    gx_fifo_plans_used: list[GxFifoLoopPlan] | None = None,
     # Deprecated aliases kept for transitional callers / tests.
     memory_loop_summaries: dict[int, MemoryLoopSummary] | None = None,
     memory_summaries_used: list[MemoryLoopSummary] | None = None,
@@ -4828,14 +4835,37 @@ def execute_cfg(
 
                 lifted = initial_symbolic_bus_state(memory_bus, ops.z3)
                 if lifted is not None:
-                    # Loop summaries × FIFO: unbounded emission risk.
-                    if lifted.fifo_traces and (
-                        affine_loop_summaries or memory_loop_plans
-                    ):
-                        raise ExecutionInconclusive(
-                            "symbolic-loop-fifo-emission: loop summaries with "
-                            "GX FIFO devices are unsupported"
+                    # Loop summaries × FIFO: targeted rejection. ``affine_loop_summaries``
+                    # never perform stores (pure GPR closed forms), so they can
+                    # never touch FIFO and are not gated here. A recognized
+                    # ``GxFifoLoopPlan`` at a header is the proven-sound
+                    # closed-form for a FIFO-emitting counted loop (applied
+                    # under its own entry guard below); any *other* CTR
+                    # constant-stride ``MemoryLoopPlan`` whose footprint
+                    # cannot be proven disjoint from every declared FIFO
+                    # region must still hard-reject — it would otherwise
+                    # apply straight to the RAM array, bypassing FIFO
+                    # routing entirely (see ``memory_semantics.apply_store_effect``).
+                    if lifted.fifo_traces:
+                        fifo_regions = tuple(
+                            (trace.base, trace.base + trace.span)
+                            for trace in lifted.fifo_traces.values()
                         )
+                        risky_headers = unresolved_fifo_touching_memory_loop_headers(
+                            instructions,
+                            memory_loop_plans=memory_loop_plans,
+                            gx_fifo_loop_plans=gx_fifo_loop_plans,
+                            fifo_regions=fifo_regions,
+                        )
+                        if risky_headers:
+                            headers = ",".join(
+                                f"0x{header:08x}" for header in sorted(risky_headers)
+                            )
+                            raise ExecutionInconclusive(
+                                "symbolic-loop-fifo-emission: unrecognized loop "
+                                "summaries with GX FIFO devices are unsupported "
+                                f"(headers={headers})"
+                            )
                     state = replace(state, symbolic_bus=lifted)
         return _execute_cfg_body(
             state,
@@ -4853,6 +4883,8 @@ def execute_cfg(
             affine_summaries_used=affine_summaries_used,
             memory_loop_plans=memory_loop_plans,
             memory_plans_used=memory_plans_used,
+            gx_fifo_loop_plans=gx_fifo_loop_plans,
+            gx_fifo_plans_used=gx_fifo_plans_used,
         )
     finally:
         if coverage_armed:
@@ -4881,6 +4913,8 @@ def _execute_cfg_body(
     affine_summaries_used: list[LoopSummary] | None = None,
     memory_loop_plans: dict[int, MemoryLoopPlan] | None = None,
     memory_plans_used: list[MemoryLoopPlan] | None = None,
+    gx_fifo_loop_plans: dict[int, GxFifoLoopPlan] | None = None,
+    gx_fifo_plans_used: list[GxFifoLoopPlan] | None = None,
 ) -> list[Terminal]:
     if state.stack_low is None:
         state = replace(
@@ -4896,6 +4930,8 @@ def _execute_cfg_body(
         affine_loop_summaries = {}
     if memory_loop_plans is None:
         memory_loop_plans = {}
+    if gx_fifo_loop_plans is None:
+        gx_fifo_loop_plans = {}
     # visit_counts[pc] = times this path has already entered ``pc``.
     # A back-edge that would make the count reach max_loop_iterations fails closed.
     work: list[tuple[int, MachineState, Any, dict[int, int], int]] = [
@@ -4959,6 +4995,66 @@ def _execute_cfg_body(
                 summary.exit_pc,
                 summarized,
                 condition,
+                {**visit_counts, pc: 1},
+                steps + 1,
+            )
+            continue
+        gx_plan = gx_fifo_loop_plans.get(pc)
+        if (
+            gx_plan is not None
+            and prior_visits == 0
+            and gx_plan.summary.value_kind == "invariant"
+            and isinstance(ops, SymbolicOps)
+            and current.symbolic_bus is not None
+        ):
+            # Recognized mmio-loop-emission-v1 shape (GX_FIFO_TIER_A.md):
+            # apply the closed-form GPR/CTR update only under the proven
+            # entry-CTR guard, exactly like a memory-loop summary, then
+            # append the summarized RepeatedEmission segment to the bounded
+            # symbolic FIFO trace so terminal compare still proves real
+            # per-event UNSAT blocks — recognition alone never authorizes.
+            entry_guard = ops.eq(
+                current.ctr,
+                ops.const(int(gx_plan.summary.trip_count) & 0xFFFFFFFF),
+            )
+            record_terminal(
+                ops.land(condition, ops.lnot(entry_guard)),
+                current,
+                "gx-fifo-loop-entry-premise",
+                ops.const(gx_plan.summary.header_pc),
+                force=True,
+            )
+            next_state, descriptor = apply_gx_fifo_loop_summary(current, gx_plan, ops)
+            from tools.ppc_equivalence.symbolic_event_trace import RepeatedEmission
+
+            symbolic_bus = next_state.symbolic_bus
+            if isinstance(descriptor, RepeatedEmission) and symbolic_bus is not None:
+                trace = symbolic_bus.fifo_traces.get(gx_plan.summary.device_id)
+                if trace is None:
+                    symbolic_bus = symbolic_bus.with_rejection(
+                        f"gx-fifo-loop-device-missing:{gx_plan.summary.device_id}"
+                    )
+                else:
+                    next_trace, reject = trace.append_repeated_emission(descriptor)
+                    if next_trace is None:
+                        symbolic_bus = symbolic_bus.with_rejection(
+                            reject or "gx-fifo-loop-emission-rejected"
+                        )
+                    else:
+                        symbolic_bus = symbolic_bus.with_fifo(
+                            gx_plan.summary.device_id, next_trace,
+                        )
+            else:  # pragma: no cover - guarded by value_kind == "invariant" above
+                symbolic_bus = symbolic_bus.with_rejection(
+                    "gx-fifo-loop-emission-rejected:non-repeated-descriptor"
+                )
+            next_state = replace(next_state, symbolic_bus=symbolic_bus)
+            if gx_fifo_plans_used is not None:
+                gx_fifo_plans_used.append(gx_plan)
+            enqueue(
+                gx_plan.summary.exit_pc,
+                next_state,
+                ops.land(condition, entry_guard),
                 {**visit_counts, pc: 1},
                 steps + 1,
             )

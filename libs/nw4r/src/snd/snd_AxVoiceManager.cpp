@@ -13,6 +13,10 @@ AxVoiceManager& AxVoiceManager::GetInstance() {
 
 AxVoiceManager::AxVoiceManager() : mInitialized(false) {}
 
+// LLM-HARNESS-BEGIN: us-8041300c
+extern "C" u32 GetRequiredMemSize__Q44nw4r3snd6detail14AxVoiceManagerFi(int) { return 0; }
+// LLM-HARNESS-END: us-8041300c
+
 u32 AxVoiceManager::GetRequiredMemSize() {
     return (AXGetMaxVoices() + VOICE_MARGIN) * sizeof(AxVoice);
 }

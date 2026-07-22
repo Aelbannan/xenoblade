@@ -125,8 +125,8 @@ void Controller::setKpad(const HBMKPadData* pPadData, bool updatePos) {
     }
 
     if (updatePos) {
-        if (pPadData->kpad->dev_type == WPAD_DEV_CLASSIC &&
-            pPadData->use_devtype == WPAD_DEV_CLASSIC) {
+        if ((pPadData->kpad->dev_type == WPAD_DEV_CLASSIC && pPadData->use_devtype == WPAD_DEV_CLASSIC) ||
+            (pPadData->kpad->dev_type == 7 && pPadData->use_devtype == 7)) {
             mHBController.x = pPadData->pos.x;
             mHBController.y = pPadData->pos.y;
         } else {
@@ -139,29 +139,24 @@ void Controller::setKpad(const HBMKPadData* pPadData, bool updatePos) {
     mHBController.hold = pPadData->kpad->hold;
     mHBController.release = pPadData->kpad->release;
 
-    if (pPadData->kpad->dev_type == WPAD_DEV_CLASSIC &&
-        pPadData->use_devtype == WPAD_DEV_CLASSIC) {
+    if ((pPadData->kpad->dev_type == WPAD_DEV_CLASSIC && pPadData->use_devtype == WPAD_DEV_CLASSIC) ||
+        (pPadData->kpad->dev_type == 7 && pPadData->use_devtype == 7)) {
         u32 h = pPadData->kpad->ex_status.cl.hold;
         u32 t = pPadData->kpad->ex_status.cl.trig;
         u32 r = pPadData->kpad->ex_status.cl.release;
 
-        // clang-format off
-		if (h & WPAD_BUTTON_CL_A)     mHBController.hold    |= WPAD_BUTTON_A;
-		if (t & WPAD_BUTTON_CL_A)     mHBController.trig    |= WPAD_BUTTON_A;
-		if (r & WPAD_BUTTON_CL_A)     mHBController.release |= WPAD_BUTTON_A;
-
-		if (h & WPAD_BUTTON_CL_PLUS)  mHBController.hold    |= WPAD_BUTTON_PLUS;
-		if (t & WPAD_BUTTON_CL_PLUS)  mHBController.trig    |= WPAD_BUTTON_PLUS;
-		if (r & WPAD_BUTTON_CL_PLUS)  mHBController.release |= WPAD_BUTTON_PLUS;
-
-		if (h & WPAD_BUTTON_CL_MINUS) mHBController.hold    |= WPAD_BUTTON_MINUS;
-		if (t & WPAD_BUTTON_CL_MINUS) mHBController.trig    |= WPAD_BUTTON_MINUS;
-		if (r & WPAD_BUTTON_CL_MINUS) mHBController.release |= WPAD_BUTTON_MINUS;
-
-		if (h & WPAD_BUTTON_CL_HOME)  mHBController.hold    |= WPAD_BUTTON_HOME;
-		if (t & WPAD_BUTTON_CL_HOME)  mHBController.trig    |= WPAD_BUTTON_HOME;
-		if (r & WPAD_BUTTON_CL_HOME)  mHBController.release |= WPAD_BUTTON_HOME;
-        // clang-format on
+        if (h & WPAD_BUTTON_CL_A) mHBController.hold |= WPAD_BUTTON_A;
+        if (t & WPAD_BUTTON_CL_A) mHBController.trig |= WPAD_BUTTON_A;
+        if (r & WPAD_BUTTON_CL_A) mHBController.release |= WPAD_BUTTON_A;
+        if (h & WPAD_BUTTON_CL_PLUS) mHBController.hold |= WPAD_BUTTON_PLUS;
+        if (t & WPAD_BUTTON_CL_PLUS) mHBController.trig |= WPAD_BUTTON_PLUS;
+        if (r & WPAD_BUTTON_CL_PLUS) mHBController.release |= WPAD_BUTTON_PLUS;
+        if (h & WPAD_BUTTON_CL_MINUS) mHBController.hold |= WPAD_BUTTON_MINUS;
+        if (t & WPAD_BUTTON_CL_MINUS) mHBController.trig |= WPAD_BUTTON_MINUS;
+        if (r & WPAD_BUTTON_CL_MINUS) mHBController.release |= WPAD_BUTTON_MINUS;
+        if (h & WPAD_BUTTON_CL_HOME) mHBController.hold |= WPAD_BUTTON_HOME;
+        if (t & WPAD_BUTTON_CL_HOME) mHBController.trig |= WPAD_BUTTON_HOME;
+        if (r & WPAD_BUTTON_CL_HOME) mHBController.release |= WPAD_BUTTON_HOME;
     }
 }
 

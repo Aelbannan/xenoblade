@@ -11,7 +11,7 @@ namespace cf {
 }
 
 // LLM-HARNESS-BEGIN: us-8027e51c
-extern "C" void func_8027C098() {}
+extern "C" void func_8027C098(void* self) { *(unsigned short*)((char*)self + 0x0) = 0; *(unsigned short*)((char*)self + 0x8) = 0; *(unsigned short*)((char*)self + 0xa) = 0; *(unsigned char*)((char*)self + 0xc) = 0; }
 // LLM-HARNESS-END: us-8027e51c
 // LLM-HARNESS-BEGIN: us-8027ea50
 extern "C" void func_8027C5CC() {}

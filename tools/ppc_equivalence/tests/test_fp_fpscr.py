@@ -16,6 +16,7 @@ from tools.ppc_equivalence.fp_fpscr import (
     FPSCR_VX,
     FPSCR_VXIMZ,
     FPSCR_VXSNAN,
+    FPSCR_XE,
     FPSCR_XX,
     FPSCR_ZE,
     FPSCR_ZX,
@@ -94,7 +95,7 @@ class FpscrFiFrPolicyTests(unittest.TestCase):
         self.assertEqual(post & (FPSCR_FI | FPSCR_FR), FPSCR_FI | FPSCR_FR)
 
     def test_arithmetic_clears_then_sets_fi_fr(self) -> None:
-        pre = FPSCR_FI | FPSCR_FR | 0x4000
+        pre = FPSCR_FI | FPSCR_FR | FPSCR_XE | 0x4000
         outcome = ScalarFPOutcome(
             result_bits=0x4008000000000000,
             raised_causes=FPSCR_XX,
@@ -107,6 +108,19 @@ class FpscrFiFrPolicyTests(unittest.TestCase):
         self.assertEqual(post & FPSCR_FI, FPSCR_FI)
         self.assertFalse(post & FPSCR_FR)
         self.assertTrue(post & FPSCR_XX)
+
+    def test_xx_sticky_gated_without_xe(self) -> None:
+        pre = FPSCR_FI | FPSCR_FR | 0x4000
+        outcome = ScalarFPOutcome(
+            result_bits=0x4008000000000000,
+            raised_causes=FPSCR_XX,
+            fi=True,
+            fr=False,
+            fi_fr_policy=FiFrPolicy.SET,
+            fprf=0x04,
+        )
+        post = apply_fpscr_transition(pre, "fadd", outcome)
+        self.assertFalse(post & FPSCR_XX)
 
     def test_arithmetic_default_clears_fi_fr_without_new_values(self) -> None:
         pre = FPSCR_FI | FPSCR_FR

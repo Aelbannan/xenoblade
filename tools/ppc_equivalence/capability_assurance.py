@@ -19,7 +19,17 @@ schema for ordinary-N ≡ summarized-N FIFO traces; read-side-effects /
 external-input / DMA attestations always incomplete until Dolphin harness.
 Wave 5 ships an optional authoritative manifest
 (``tools/coop/capability_manifest.authoritative.json``) with
-``shadow_mode=false``; the default manifest stays shadow for safety.
+``shadow_mode=false``; the default manifest stays shadow for safety. Wave 5
+also bumps GX Tier A (see ``GX_FIFO_TIER_A.md``): ``gx-fifo-write-trace``
+moves to ``gx-fifo-trace-v2``; loop-emission refinement gains a production
+per-block ``gx-fifo-loop-exact-refinement-v2`` algorithm requiring real
+per-block UNSAT structure from the ``gx_fifo_loop.py`` discharge module
+(the legacy digest-only ``gx-fifo-loop-refinement-v1`` shape is permanently
+rejected for promotion); ``gx-fifo-read`` becomes a promotable
+unsupported-read *policy* attestation (``gx-fifo-read-v1`` — never a value
+model); and ``mmio-loop-emission`` becomes a promotable authorization
+attachment (``mmio-loop-emission-v1``) wrapping a discharged refinement
+plan. All four still fail closed while their allowlists stay empty.
 """
 
 from __future__ import annotations
@@ -71,15 +81,25 @@ KNOWN_ATTESTATION_ALGORITHMS = frozenset(
         "fp-outcome-unify-v1",
         # Wave 3: RN/NI/trap entry-precondition closure (UNSAT required).
         "precondition-closure-v1",
-        # Wave 3 MMIO foundations (promotion-grade only with hardware profile
-        # + complete obligations + allowlist; default allowlist empty).
+        # Wave 3–5 MMIO foundations (promotion-grade only with hardware
+        # profile + complete obligations + allowlist; default allowlist
+        # empty). gx-fifo-trace-v2 / gx-fifo-loop-exact-refinement-v2 /
+        # gx-fifo-read-v1 / mmio-loop-emission-v1 are the Wave 5 production
+        # algorithms — see GX_FIFO_TIER_A.md.
         "mmio-register-bank-v2",
+        "gx-fifo-trace-v2",
+        "gx-fifo-loop-exact-refinement-v2",
+        "gx-fifo-read-v1",
+        "mmio-loop-emission-v1",
+        # Legacy shapes retained only so old certificates still parse; never
+        # promotion-grade regardless of allowlist.
         "gx-fifo-trace-v1",
         "gx-fifo-loop-refinement-v1",
         "gx-fifo-read-incomplete-v0",
+        "mmio-loop-emission-incomplete-v0",
+        # Dolphin harness pending — always incomplete.
         "mmio-read-side-effects-incomplete-v0",
         "mmio-external-input-incomplete-v0",
-        "mmio-loop-emission-incomplete-v0",
         "mixed-address-space-incomplete-v0",
         "dma-interrupt-incomplete-v0",
         # Wave 4 FP advanced — never promotion-grade (midpoint / FE0/FE1).
@@ -89,8 +109,11 @@ KNOWN_ATTESTATION_ALGORITHMS = frozenset(
         "fp-traps-incomplete-v0",
         # Stage 3C FP foundation stubs (load/store/compare/convert).
         "fp-load-store-incomplete-v0",
+        "fp-load-store-exact-v2",
         "fp-compare-incomplete-v0",
         "fp-convert-incomplete-v0",
+        # Phase 9 fused exact kernel (schema v2).
+        "fp-fused-exact-v2",
         # Stage 3C proof-feature obligation binding.
         "proof-feature-obligation-v1",
         # Shadow / incomplete only — never promotion-grade.
@@ -539,7 +562,21 @@ def infer_used_capabilities(result: Any) -> frozenset[str]:
     if flags["has_domain_exceptions"]:
         used.add("domain-exception")
     if flags["has_assumed_ram"]:
-        used.add("assumed-ordinary-ram")
+        memory_bus = getattr(result, "memory_bus", None)
+        proof_features = getattr(result, "proof_features", None) or []
+        has_memory_bus = (
+            isinstance(memory_bus, dict)
+            or "memory-bus" in {str(item) for item in proof_features}
+        )
+        if not (
+            has_memory_bus
+            and isinstance(memory_bus, dict)
+            and (
+                memory_bus.get("hardware_profile_sha256")
+                or memory_bus.get("status") == "discharged"
+            )
+        ):
+            used.add("assumed-ordinary-ram")
     if flags["has_callees"]:
         used.add("certified-calls")
     if flags["has_memory_bus"]:
@@ -921,6 +958,25 @@ def _recompute_attestation_status(
             allowed_versions=manifest.allowed_versions(attestation.capability),
         )
 
+    if attestation.algorithm == "fp-load-store-exact-v2":
+        if attestation.capability != "fp-load-store":
+            return STATUS_INCOMPLETE
+        from tools.ppc_equivalence.fp_load_store_obligations import (
+            recompute_fp_load_store_attestation_status,
+        )
+
+        return recompute_fp_load_store_attestation_status(
+            attestation.evidence,
+            capability=attestation.capability,
+            algorithm=attestation.algorithm,
+            model_version=attestation.model_version,
+            unsupported=attestation.unsupported,
+            allowed_versions=manifest.allowed_versions(attestation.capability),
+            live_validation_ledger_hash=str(
+                getattr(result, "validation_ledger_hash", "") or ""
+            ),
+        )
+
     if attestation.algorithm in {
         "fp-load-store-incomplete-v0",
         "fp-compare-incomplete-v0",
@@ -957,6 +1013,10 @@ def _recompute_attestation_status(
 
     if attestation.algorithm in {
         "mmio-register-bank-v2",
+        "gx-fifo-trace-v2",
+        "gx-fifo-loop-exact-refinement-v2",
+        "gx-fifo-read-v1",
+        "mmio-loop-emission-v1",
         "gx-fifo-trace-v1",
         "gx-fifo-loop-refinement-v1",
         "gx-fifo-read-incomplete-v0",

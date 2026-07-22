@@ -22,7 +22,11 @@ from tools.ppc_equivalence.jump_table_obligations import (
     remainder_closure_conditions,
 )
 from tools.ppc_equivalence.result import ProofStatus
-from tools.ppc_equivalence.vtable import VirtualCallCandidate, find_virtual_call_candidates
+from tools.ppc_equivalence.vtable import (
+    VirtualCallCandidate,
+    find_virtual_call_candidates,
+    find_virtual_thunk_candidates,
+)
 from tools.ppc_equivalence.vtable_provenance import (
     VptrProvenance,
     classify_vptr_provenance,
@@ -436,6 +440,81 @@ def try_auto_virtual_call_context(
         if virtual_call_scc_status(callee_edges, root=identity) is not None:
             return None
     # Candidate-side branch PC may differ; record when the right match differs.
+    if right[0].branch_pc != left[0].branch_pc:
+        return VirtualCallProofContext(
+            candidate=built.candidate,
+            slot=built.slot,
+            pairing=built.pairing,
+            provenance=built.provenance,
+            branch_pc=built.branch_pc,
+            candidate_branch_pc=right[0].branch_pc,
+            candidate_slot=built.candidate_slot,
+            artifacts=built.artifacts,
+            callee_certificate=built.callee_certificate,
+        )
+    return built
+
+
+def try_auto_virtual_thunk_context(
+    original: Sequence[Instruction],
+    candidate: Sequence[Instruction],
+    *,
+    slot_word: int | None = None,
+    slot_base: int | None = None,
+    source: str = "auto-thunk",
+    artifact_path: str = "",
+    original_pc: int | None = None,
+    candidate_pc: int | None = None,
+    original_symbol: str | None = None,
+    candidate_symbol: str | None = None,
+    readonly_words: Mapping[int, int] | None = None,
+    artifacts: VirtualCallArtifacts | None = None,
+    callee_certificate: SemanticCalleeCertificate | None = None,
+    original_dol_path: Path | str | None = None,
+    candidate_elf_path: Path | str | None = None,
+) -> VirtualCallProofContext | None:
+    """Optional readonly/closure context for ``bctr`` virtual thunks.
+
+    Recognizes matching thunks on both sides. Returns a discharged-capable
+    context only when slot image + certificate premises are supplied (same
+    fail-closed rule as :func:`try_auto_virtual_call_context`).
+
+    Important: unlike ``bctrl`` virtual calls, bare thunks are **not** gated
+    when this returns ``None``. Symbolic CTR equality plus the
+    ``indirect-branch`` ABI filter is enough for same-offset thunks.
+    """
+    del original_dol_path, candidate_elf_path  # reserved for future image chase
+    left = find_virtual_thunk_candidates(original)
+    right = find_virtual_thunk_candidates(candidate)
+    if len(left) != 1 or len(right) != 1:
+        return None
+    if left[0].slot_offset != right[0].slot_offset:
+        return None
+    if (
+        slot_word is None
+        or slot_base is None
+        or original_pc is None
+        or candidate_pc is None
+        or callee_certificate is None
+    ):
+        return None
+    built = try_build_virtual_call_context(
+        original,
+        slot_word=slot_word,
+        slot_base=slot_base,
+        branch_pc=left[0].branch_pc,
+        source=source,
+        artifact_path=artifact_path,
+        original_pc=original_pc,
+        candidate_pc=candidate_pc,
+        original_symbol=original_symbol,
+        candidate_symbol=candidate_symbol,
+        readonly_words=readonly_words,
+        artifacts=artifacts,
+        callee_certificate=callee_certificate,
+    )
+    if isinstance(built, str):
+        return None
     if right[0].branch_pc != left[0].branch_pc:
         return VirtualCallProofContext(
             candidate=built.candidate,

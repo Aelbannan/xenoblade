@@ -594,13 +594,17 @@ extern "C" void func_8012F29C() {}
 extern "C" void func_8012F2BC() {}
 // LLM-HARNESS-END: us-8012fd90
 // LLM-HARNESS-BEGIN: us-80130334
-extern "C" void func_8012F860() {}
+extern "C" void func_8012F860() {
+    if (lbl_eu_80664048 != 0) {
+        reinterpret_cast<unsigned char *>(lbl_eu_80664048)[0x82] |= 0x3b;
+    }
+}
 // LLM-HARNESS-END: us-80130334
 // LLM-HARNESS-BEGIN: us-80130350
 extern "C" void func_8012F87C() {}
 // LLM-HARNESS-END: us-80130350
 // LLM-HARNESS-BEGIN: us-80130530
-extern "C" void func_8012FA5C() {}
+extern "C" unsigned char func_8012FA5C() { return lbl_eu_80664048 == 0 ? 0 : *(unsigned char *)((char *)lbl_eu_80664048 + 0xe8); }
 // LLM-HARNESS-END: us-80130530
 // LLM-HARNESS-BEGIN: us-8013054c
 extern "C" void* func_8012FA78() { void* p = lbl_eu_80664048; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
@@ -612,13 +616,13 @@ extern "C" int func_8012FDBC() { if (lbl_eu_80664048 == 0) return -1; return *(i
 extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308ac
 // LLM-HARNESS-BEGIN: us-801308b0
-void Move__Q216CUIBattleManager5CTestFv() {}
+extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308b0
 // LLM-HARNESS-BEGIN: us-801308b4
 extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308b4
 // LLM-HARNESS-BEGIN: us-801308b8
-void Init__Q216CUIBattleManager5CTestFv() {}
+extern "C" void Init__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801308b8
 // LLM-HARNESS-BEGIN: us-80130a40
 extern "C" void __dt__16CUIBattleManagerFv(void*);
@@ -629,7 +633,7 @@ extern "C" void func_8012FF6C(void* p) {
 // LLM-HARNESS-END: us-80130a40
 
 // LLM-HARNESS-BEGIN: us-8012ea60
-extern "C" void ct_CUIBattleManager() {}
+extern "C" void __ct__CUIBattleManager() {}
 // LLM-HARNESS-END: us-8012ea60
 // LLM-HARNESS-BEGIN: us-8012f104
 extern "C" void func_8012E630() {}
@@ -641,7 +645,7 @@ extern "C" void func_8012F2C0() {}
 extern "C" void func_8012F558() {}
 // LLM-HARNESS-END: us-8013002c
 // LLM-HARNESS-BEGIN: us-801300cc
-extern "C" void harness_stub_us_801300cc() {}
+extern "C" void func_8012F5F8() {}
 // LLM-HARNESS-END: us-801300cc
 // LLM-HARNESS-BEGIN: us-80130224
 extern "C" void func_8012F750() {}
@@ -659,5 +663,5 @@ extern "C" void func_8012FD04() {}
 extern "C" void func_8012FD60() {}
 // LLM-HARNESS-END: us-80130834
 // LLM-HARNESS-BEGIN: us-801309dc
-extern "C" void dt_Q216CUIBattleManager5CTestFv() {}
+extern "C" void __dt__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801309dc

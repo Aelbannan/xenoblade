@@ -1540,15 +1540,21 @@ class LoopFifoAndMixedSpaceCoverageTests(unittest.TestCase):
         solver.add(z3.Not(outcome.next_state.unsupported_predicates[0]))
         self.assertEqual(solver.check(), z3.sat)
 
-    def test_cfg_loop_summary_plus_fifo_inconclusive_with_obligation(self) -> None:
+    def test_cfg_affine_summary_plus_fifo_device_no_longer_rejects(self) -> None:
+        """Targeted loop×FIFO routing (see ``gx_fifo_loop.py``): an
+        ``affine_loop_summaries`` entry never performs a store (pure GPR
+        closed form), so it can never touch a GX FIFO device and must not
+        be hard-rejected just because a FIFO device happens to be declared
+        on the bus. This replaces the old blanket "any loop summary + any
+        FIFO device" rejection that this test used to assert.
+        """
         from tools.ppc_equivalence.contract import EquivalenceContract, parse_observables
         from tools.ppc_equivalence.device_model import GxFifoStreamDevice
         from tools.ppc_equivalence.engine import _symbolic_initial, check_equivalence
-        from tools.ppc_equivalence.ir import ExecutionInconclusive, Instruction, Opcode
+        from tools.ppc_equivalence.ir import Instruction, Opcode
         from tools.ppc_equivalence.loop_summary import build_affine_summary_map
         from tools.ppc_equivalence.memory_bus_obligations import (
             LOOP_FIFO_POLICY,
-            LOOP_FIFO_REJECTION_REASON,
             validate_memory_bus_obligation,
         )
         from tools.ppc_equivalence.result import ProofStatus
@@ -1558,7 +1564,8 @@ class LoopFifoAndMixedSpaceCoverageTests(unittest.TestCase):
         ) -> Instruction:
             return Instruction(address, 0, opcode, operands)
 
-        # CTR-affine counted loop (same pattern as test_loop_summary).
+        # CTR-affine counted loop (same pattern as test_loop_summary). No
+        # store at all — the closed form is a pure GPR update.
         program = [
             _insn(Opcode.ADDI, (0, 0, 4), address=0),
             _insn(Opcode.MTSPR, (0, 9), address=4),
@@ -1573,14 +1580,15 @@ class LoopFifoAndMixedSpaceCoverageTests(unittest.TestCase):
         mmio = mmio_region(0xCC008100, 0xCC0081FF, device_id="gx-fifo")
         bus = build_memory_bus(AddressSpace((mmio,)), devices={"gx-fifo": device})
         ops = SymbolicOps()
-        with self.assertRaisesRegex(ExecutionInconclusive, "symbolic-loop-fifo-emission"):
-            execute_cfg(
-                _symbolic_initial(ops),
-                program,
-                ops,
-                memory_bus=bus,
-                affine_loop_summaries=summaries,
-            )
+        # No longer raises: the affine summary cannot touch FIFO at all.
+        terminals = execute_cfg(
+            _symbolic_initial(ops),
+            program,
+            ops,
+            memory_bus=bus,
+            affine_loop_summaries=summaries,
+        )
+        self.assertTrue(terminals)
 
         contract = EquivalenceContract(parse_observables(["r3"]), timeout_ms=5_000)
         result = check_equivalence(
@@ -1592,26 +1600,18 @@ class LoopFifoAndMixedSpaceCoverageTests(unittest.TestCase):
             memory_bus=bus,
             max_loop_iterations=2,
         )
-        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_UNSUPPORTED)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
         self.assertIn("memory-bus", result.proof_features)
         self.assertIsNotNone(result.memory_bus)
         assert result.memory_bus is not None
+        # Default policy strings remain (no GxFifoLoopPlan was discharged),
+        # but no rejection attestation fires — the coexistence is allowed.
         self.assertEqual(result.memory_bus["loop_fifo_policy"], LOOP_FIFO_POLICY)
-        self.assertIn(
-            LOOP_FIFO_REJECTION_REASON,
-            result.memory_bus.get("cfg_rejection_reasons")
-            or result.memory_bus.get("cfg_rejections")
-            or [],
-        )
-        self.assertIn(
-            LOOP_FIFO_REJECTION_REASON,
-            result.memory_bus.get("loop_fifo_reject_markers") or [],
-        )
-        self.assertEqual(result.memory_bus["status"], "cfg-routed-rejected")
+        self.assertEqual(result.memory_bus.get("cfg_rejection_reasons"), [])
+        self.assertEqual(result.memory_bus.get("loop_fifo_reject_markers"), [])
+        self.assertNotIn("loop_fifo_rejection", result.memory_bus)
+        self.assertEqual(result.memory_bus["status"], "discharged")
         self.assertIsNone(validate_memory_bus_obligation(result.memory_bus))
-        forged = dict(result.memory_bus)
-        forged["status"] = "discharged"
-        self.assertIsNotNone(validate_memory_bus_obligation(forged))
 
 
 if __name__ == "__main__":

@@ -198,6 +198,7 @@ def materialize_devices(
             events = state.event_logs.get(device_id)
             if events is not None:
                 cloned.write_events = [dict(event) for event in events]
+                cloned.event_cursor = len(cloned.write_events)
         materialized[device_id] = cloned
     return materialized
 

@@ -691,7 +691,20 @@ def derive_capability_requirements(
     if ordinary_memory_was_accessed(result, terminals_meta=terminals_meta):
         environment = getattr(result, "environment", None)
         profile = getattr(environment, "profile", None) if environment else None
-        if profile is None or profile == MemoryProfile.ASSUMED_ORDINARY_RAM:
+        memory_bus = getattr(result, "memory_bus", None)
+        proof_features = getattr(result, "proof_features", None) or []
+        # A discharged / reviewed-profile memory bus supersedes the assumed
+        # ordinary-RAM capability: MMIO/FIFO effects are attested there.
+        has_memory_bus = (
+            isinstance(memory_bus, dict)
+            or "memory-bus" in {str(item) for item in proof_features}
+        )
+        if has_memory_bus and isinstance(memory_bus, dict) and (
+            memory_bus.get("hardware_profile_sha256")
+            or memory_bus.get("status") == "discharged"
+        ):
+            pass  # no assumed-ordinary-ram / bounded-memory demand
+        elif profile is None or profile == MemoryProfile.ASSUMED_ORDINARY_RAM:
             requirements.append(
                 build_requirement(
                     capability="assumed-ordinary-ram",
@@ -764,8 +777,13 @@ def derive_capability_requirements(
             canonical = bus.get("bus_spec_canonical")
             if isinstance(canonical, dict):
                 for device in canonical.get("devices") or []:
-                    if isinstance(device, dict) and device.get("id") is not None:
-                        device_ids.append(str(device["id"]))
+                    if not isinstance(device, dict):
+                        continue
+                    # Bus canonical form uses "device_id"; accept legacy
+                    # "id" too so older caller-built maps still bind.
+                    device_key = device.get("device_id") or device.get("id")
+                    if device_key is not None:
+                        device_ids.append(str(device_key))
             for key in ("device_ids", "touched_devices"):
                 raw = bus.get(key)
                 if isinstance(raw, (list, tuple)):

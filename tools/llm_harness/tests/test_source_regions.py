@@ -10,6 +10,7 @@ from tools.llm_harness.source_regions import (
     end_marker,
     find_function_region,
     replace_function_source,
+    rewrite_harness_stub_names,
     should_keep_extern_c_on_definition,
     strip_redundant_extern_decls,
 )
@@ -364,6 +365,49 @@ class StripRedundantExternTests(unittest.TestCase):
         body_a = source[region_a.content_start : region_a.content_end]
         cleaned_a = strip_redundant_extern_decls(source, region_a, body_a)
         self.assertNotIn("extern", cleaned_a)
+
+    def test_rewrite_harness_stub_names(self) -> None:
+        raw = 'extern "C" void harness_stub_us_8006c918() {}'
+        fixed = rewrite_harness_stub_names(
+            raw, target_id="us-8006c918", target_symbol="func_8006BEC0"
+        )
+        self.assertIn("func_8006BEC0", fixed)
+        self.assertNotIn("harness_stub_", fixed)
+
+        source = (
+            begin_marker("us-8006c918")
+            + "\n"
+            + raw
+            + "\n"
+            + end_marker("us-8006c918")
+            + "\n"
+        )
+        region = self._region(source, "us-8006c918", "func_8006BEC0")
+        updated = replace_function_source(
+            source,
+            region,
+            raw,
+            target_function="func_8006BEC0",
+            target_symbol="func_8006BEC0",
+            source_path="src/kyoshin/cf/CfCam.cpp",
+            target_id="us-8006c918",
+        )
+        self.assertIn("func_8006BEC0", updated)
+        self.assertNotIn("harness_stub_", updated)
+
+    def test_rewrite_truncated_and_typo_linker_names(self) -> None:
+        sym = "CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv"
+        truncated = 'extern "C" void CBattleState_UnkVirtualFunc1() {}'
+        self.assertIn(
+            sym,
+            rewrite_harness_stub_names(truncated, target_symbol=sym),
+        )
+        typo = 'extern "C" void SetBiquadFilter_Q44nw4r3snd6detail7ChannelFif() {}'
+        full = "SetBiquadFilter__Q44nw4r3snd6detail7ChannelFif"
+        self.assertIn(
+            full,
+            rewrite_harness_stub_names(typo, target_symbol=full),
+        )
 
 
 if __name__ == "__main__":

@@ -3149,7 +3149,7 @@ void WUDIsLatestDevice() {}
 void WUDUpdateSCSetting() {}
 // LLM-HARNESS-END: us-8037ec90
 // LLM-HARNESS-BEGIN: us-8037ece0
-void WUDiSetDevAddrForHandle() {}
+void WUDiSetDevAddrForHandle(unsigned char handle, unsigned char* addr) { _dev_handle_to_bda[handle] = addr; }
 // LLM-HARNESS-END: us-8037ece0
 // LLM-HARNESS-BEGIN: us-8037ed00
 void* WUDiGetDevAddrForHandle(u8 handle) {

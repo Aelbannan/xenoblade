@@ -29774,25 +29774,25 @@ extern "C" void func_8013314C() {}
 extern "C" void func_80133178() {}
 // LLM-HARNESS-END: us-80133c4c
 // LLM-HARNESS-BEGIN: us-801345bc
-extern "C" void func_80133AE8() {}
+extern "C" int func_80133AE8() { if (lbl_eu_80664054 == 0) return 0; if (*reinterpret_cast<volatile int *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0x5c) == 0) { volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags | 0x4); return 0; } volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags & 0xfffb); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x8); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x10); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x20); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x40); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x80); return 0; }
 // LLM-HARNESS-END: us-801345bc
 // LLM-HARNESS-BEGIN: us-80136024
-extern "C" void func_80135550() {}
+extern "C" void func_80135550() { if (lbl_eu_80664054 != 0) *(int*)((char*)lbl_eu_80664054 + 0x120) = 30; }
 // LLM-HARNESS-END: us-80136024
 // LLM-HARNESS-BEGIN: us-8013603c
-extern "C" void func_80135568() {}
+extern "C" void func_80135568(int value) { if (lbl_eu_80664054 == 0) return; if (value != 0) *(unsigned char *)((char *)lbl_eu_80664054 + 0x149) = 1; else *(unsigned char *)((char *)lbl_eu_80664054 + 0x148) = 1; *(unsigned short *)((char *)lbl_eu_80664054 + 0xc90) = 0; }
 // LLM-HARNESS-END: us-8013603c
 // LLM-HARNESS-BEGIN: us-80136074
-void func_801355A0() {}
+extern "C" void func_801355A0__Fv() {}
 // LLM-HARNESS-END: us-80136074
 // LLM-HARNESS-BEGIN: us-80136090
-extern "C" void func_801355BC() {}
+extern "C" void* func_801355BC() { if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0x9c; }
 // LLM-HARNESS-END: us-80136090
 // LLM-HARNESS-BEGIN: us-801360ac
-extern "C" void func_801355D8() {}
+extern "C" void* func_801355D8() { if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0xd8; }
 // LLM-HARNESS-END: us-801360ac
 // LLM-HARNESS-BEGIN: us-801360c8
-extern "C" void* func_801355F4() { return 0; }
+extern "C" void* func_801355F4() { void* p = lbl_eu_80664054; if (p == 0) return 0; return *(void**)((char*)p + 0x5c); }
 // LLM-HARNESS-END: us-801360c8
 // LLM-HARNESS-BEGIN: us-801360e4
 extern "C" void func_80135610() {}
@@ -29826,9 +29826,18 @@ extern "C" void func_80135998(u8 value) {
 // LLM-HARNESS-BEGIN: us-80136904
 extern "C" void Draw__Q212CUICfManager5CTestFv() {}
 // LLM-HARNESS-END: us-80136904
+// LLM-HARNESS-BEGIN: us-80136908
+extern "C" void Move__Q212CUICfManager5CTestFv() {}
+// LLM-HARNESS-END: us-80136908
+// LLM-HARNESS-BEGIN: us-8013690c
+extern "C" void Term__Q212CUICfManager5CTestFv() {}
+// LLM-HARNESS-END: us-8013690c
+// LLM-HARNESS-BEGIN: us-80136910
+extern "C" void Init__Q212CUICfManager5CTestFv() {}
+// LLM-HARNESS-END: us-80136910
 
 // LLM-HARNESS-BEGIN: us-80130a88
-extern "C" void harness_stub_us_80130a88() {}
+extern "C" void func_8012FFB4(void*) {}
 // LLM-HARNESS-END: us-80130a88
 // LLM-HARNESS-BEGIN: us-80130d18
 extern "C" void func_80130244() {}
@@ -29858,16 +29867,16 @@ extern "C" void func_801311B8() {}
 extern "C" void func_80131820() {}
 // LLM-HARNESS-END: us-801322f4
 // LLM-HARNESS-BEGIN: us-8013297c
-extern "C" void ct_CUICfManager() {}
+extern "C" void __ct__CUICfManager() {}
 // LLM-HARNESS-END: us-8013297c
 // LLM-HARNESS-BEGIN: us-801341b8
 extern "C" void func_801336E4() {}
 // LLM-HARNESS-END: us-801341b8
 // LLM-HARNESS-BEGIN: us-80134244
-extern "C" void harness_stub_us_80134244() {}
+extern "C" void func_80133770() {}
 // LLM-HARNESS-END: us-80134244
 // LLM-HARNESS-BEGIN: us-8013439c
-extern "C" void harness_stub_us_8013439c() {}
+extern "C" void func_801338C8(CUICfManager*) {}
 // LLM-HARNESS-END: us-8013439c
 // LLM-HARNESS-BEGIN: us-801344dc
 extern "C" void func_80133A08() {}
@@ -29969,5 +29978,5 @@ extern "C" void func_801359AC() {}
 extern "C" void func_80135D04() {}
 // LLM-HARNESS-END: us-801367d8
 // LLM-HARNESS-BEGIN: us-80136a34
-extern "C" void dt_Q212CUICfManager5CTestFv() {}
+extern "C" void __dt__Q212CUICfManager5CTestFv() {}
 // LLM-HARNESS-END: us-80136a34

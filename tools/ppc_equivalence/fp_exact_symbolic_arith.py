@@ -10,8 +10,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from .fp_bits import encode_binary64
-from .fp_round import BINARY64_EXP_BIAS, BINARY64_FRAC_BITS
+from .fp_bits import encode_binary32, encode_binary64
+from .fp_round import (
+    BINARY32_EXP_BIAS,
+    BINARY32_FRAC_BITS,
+    BINARY64_EXP_BIAS,
+    BINARY64_FRAC_BITS,
+)
 
 _B64_SIGN_SHIFT = 63
 _B64_EXP_MAX = 0x7FF
@@ -25,6 +30,64 @@ _SIG_WIDTH = 128
 _IDX_WIDTH = 8
 _DIV_EXTRA_SHIFT = BINARY64_FRAC_BITS + 3
 _FMA_FAR_SHIFT = BINARY64_FRAC_BITS * 3 + 8
+
+_B32_EXP_MAX = 0xFF
+_B32_FRAC_MASK = (1 << BINARY32_FRAC_BITS) - 1
+_B32_QUIET_NAN = 1 << (BINARY32_FRAC_BITS - 1)
+_B32_CANONICAL_NAN = 0x7FC00000
+_B32_EXP_BIAS = BINARY32_EXP_BIAS
+_B32_EXP_MIN_UNBIASED = 1 - _B32_EXP_BIAS
+_B32_EXP_MAX_UNBIASED = _B32_EXP_MAX - 1 - _B32_EXP_BIAS
+_SIG_WIDTH_32 = 64
+_BROADWAY_MIDPOINT_MASK = 0x000000001FFFFFFF
+_BROADWAY_MIDPOINT_PATTERN = 0x0000000010000000
+_SINGLE_FUSED_OPS = frozenset({"fmadds", "fmsubs", "fnmadds", "fnmsubs"})
+
+
+def try_concrete_bv64(value: Any) -> int | None:
+    """Return a concrete 64-bit value when ``value`` is a closed BitVec constant."""
+    if value is None:
+        return None
+    if isinstance(value, int):
+        return value & 0xFFFFFFFFFFFFFFFF
+    as_long = getattr(value, "as_long", None)
+    if callable(as_long):
+        try:
+            return int(as_long()) & 0xFFFFFFFFFFFFFFFF
+        except Exception:
+            pass
+    try:
+        import z3
+
+        simplified = z3.simplify(value)
+        if z3.is_bv_value(simplified):
+            return int(simplified.as_long()) & 0xFFFFFFFFFFFFFFFF
+    except Exception:
+        return None
+    return None
+
+
+def try_concrete_bv32(value: Any) -> int | None:
+    """Return a concrete 32-bit value when ``value`` is a closed BitVec constant."""
+    if value is None:
+        return None
+    if isinstance(value, int):
+        return value & 0xFFFFFFFF
+    as_long = getattr(value, "as_long", None)
+    if callable(as_long):
+        try:
+            return int(as_long()) & 0xFFFFFFFF
+        except Exception:
+            pass
+    try:
+        import z3
+
+        simplified = z3.simplify(value)
+        if z3.is_bv_value(simplified):
+            return int(simplified.as_long()) & 0xFFFFFFFF
+    except Exception:
+        return None
+    return None
 
 
 def _fp_const64(ops: Any, value: int) -> Any:
@@ -869,6 +932,432 @@ def exact_fused_result_bits_bv(
     return None
 
 
+def _bv32(ops: Any, value: int) -> Any:
+    return ops.z3.BitVecVal(int(value) & 0xFFFFFFFF, 32)
+
+
+def _decode_binary32_bv(ops: Any, bits32: Any) -> tuple[Any, Any, Any]:
+    z3 = ops.z3
+    if bits32.size() != 32:
+        bits32 = z3.Extract(31, 0, bits32)
+    return z3.Extract(31, 31, bits32), z3.Extract(30, 23, bits32), z3.Extract(22, 0, bits32)
+
+
+def _encode_binary32_bv(ops: Any, sign: Any, exp: Any, frac: Any) -> Any:
+    z3 = ops.z3
+    exp8 = z3.Extract(7, 0, exp) if exp.size() != 8 else exp
+    frac23 = z3.Extract(22, 0, frac) if frac.size() != 23 else frac
+    return z3.Concat(sign, exp8, frac23)
+
+
+def _exp32_is_zero(ops: Any, exp: Any) -> Any:
+    return ops.eq(exp, _bv(ops, 0, 8))
+
+
+def _exp32_is_max(ops: Any, exp: Any) -> Any:
+    return ops.eq(exp, _bv(ops, _B32_EXP_MAX, 8))
+
+
+def _frac32_is_zero(ops: Any, frac: Any) -> Any:
+    return ops.eq(frac, _bv(ops, 0, 23))
+
+
+def _single_to_fpr_bits_bv(ops: Any, bits32: Any) -> Any:
+    """Expand a binary32 bit pattern into Broadway FPR double-word storage."""
+    z3 = ops.z3
+    sign, exp, frac = _decode_binary32_bv(ops, bits32)
+    is_zero = ops.land(_exp32_is_zero(ops, exp), _frac32_is_zero(ops, frac))
+    is_inf = ops.land(_exp32_is_max(ops, exp), _frac32_is_zero(ops, frac))
+    is_nan = ops.land(_exp32_is_max(ops, exp), ops.lnot(_frac32_is_zero(ops, frac)))
+
+    zero_fpr = _signed_zero_bv(ops, sign)
+    inf_fpr = _encode_binary64_bv(
+        ops,
+        sign,
+        _bv(ops, _B64_EXP_MAX, 11),
+        _bv(ops, 0, 52),
+    )
+    quiet_frac = ops.bor(frac, _bv(ops, _B32_QUIET_NAN, 23))
+    nan_frac64 = z3.ZeroExt(29, quiet_frac) << (BINARY64_FRAC_BITS - BINARY32_FRAC_BITS)
+    nan_fpr = _encode_binary64_bv(
+        ops,
+        sign,
+        _bv(ops, _B64_EXP_MAX, 11),
+        z3.Extract(51, 0, nan_frac64),
+    )
+
+    msb = _msb_index_bv(ops, frac, BINARY32_FRAC_BITS)
+    shift = _bv(ops, BINARY32_FRAC_BITS, _IDX_WIDTH) - msb
+    shift_plus_one = shift + _bv(ops, 1, _IDX_WIDTH)
+    norm_frac = frac << z3.ZeroExt(BINARY32_FRAC_BITS - _IDX_WIDTH, shift_plus_one)
+    sub_exp = _bv(ops, _B32_EXP_MIN_UNBIASED, 32) - z3.ZeroExt(24, shift) - _bv(ops, 1, 32)
+    sub_frac64 = z3.ZeroExt(29, norm_frac) << (BINARY64_FRAC_BITS - BINARY32_FRAC_BITS)
+    subnormal_fpr = _encode_binary64_bv(
+        ops,
+        sign,
+        z3.Extract(10, 0, sub_exp + _bv(ops, _B64_EXP_BIAS, 32)),
+        z3.Extract(51, 0, sub_frac64),
+    )
+
+    norm_exp = z3.ZeroExt(24, exp) - _bv(ops, _B32_EXP_BIAS, 32) + _bv(ops, _B64_EXP_BIAS, 32)
+    norm_frac64 = z3.ZeroExt(29, frac) << (BINARY64_FRAC_BITS - BINARY32_FRAC_BITS)
+    normal_fpr = _encode_binary64_bv(
+        ops,
+        sign,
+        z3.Extract(10, 0, norm_exp),
+        z3.Extract(51, 0, norm_frac64),
+    )
+
+    subnormal = ops.land(_exp32_is_zero(ops, exp), ops.lnot(_frac32_is_zero(ops, frac)))
+    normal = ops.land(ops.lnot(_exp32_is_zero(ops, exp)), ops.lnot(_exp32_is_max(ops, exp)))
+    expanded = ops.ite(normal, normal_fpr, subnormal_fpr)
+    expanded = ops.ite(is_nan, nan_fpr, expanded)
+    expanded = ops.ite(is_inf, inf_fpr, expanded)
+    return ops.ite(is_zero, zero_fpr, expanded)
+
+
+def _round_binary32_bv(
+    ops: Any,
+    sign: Any,
+    exp_unbiased: Any,
+    sig: Any,
+    fpscr: Any,
+) -> Any:
+    """Round a wide significand to binary32 (returns 32-bit BV)."""
+    z3 = ops.z3
+    is_rne, is_rtz, is_rp, is_rm = _rounding_modes_bv(ops, fpscr)
+    sig64 = z3.ZeroExt(_SIG_WIDTH_32 - 64, sig) if sig.size() == 64 else sig
+    sig_is_zero = sig64 == _bv(ops, 0, _SIG_WIDTH_32)
+    msb = _msb_index_bv(ops, sig64, _SIG_WIDTH_32)
+    bit_len = msb
+    top_bit = msb - _bv(ops, 1, _IDX_WIDTH)
+
+    frac_bits = BINARY32_FRAC_BITS
+    exp_min = _bv(ops, _B32_EXP_MIN_UNBIASED, 32)
+    exp_max = _bv(ops, _B32_EXP_MAX_UNBIASED, 32)
+
+    shift_down = top_bit - _bv(ops, frac_bits, _IDX_WIDTH)
+    shift_up = _bv(ops, frac_bits, _IDX_WIDTH) - top_bit
+    needs_down = ops.land(
+        ops.lnot(sig_is_zero),
+        bit_len > _bv(ops, frac_bits, _IDX_WIDTH),
+    )
+    needs_up = ops.land(
+        ops.land(ops.lnot(sig_is_zero), ops.lnot(needs_down)),
+        bit_len < _bv(ops, frac_bits, _IDX_WIDTH),
+    )
+
+    rounded_down = _round_significand_int(
+        ops,
+        sign,
+        sig64,
+        0,
+        _SIG_WIDTH_32,
+        is_rne=is_rne,
+        is_rtz=is_rtz,
+        is_rp=is_rp,
+        is_rm=is_rm,
+    )
+    for shift_amt in range(1, _SIG_WIDTH_32):
+        rounded_down = ops.ite(
+            shift_down == _bv(ops, shift_amt, _IDX_WIDTH),
+            _round_significand_int(
+                ops,
+                sign,
+                sig64,
+                shift_amt,
+                _SIG_WIDTH_32,
+                is_rne=is_rne,
+                is_rtz=is_rtz,
+                is_rp=is_rp,
+                is_rm=is_rm,
+            ),
+            rounded_down,
+        )
+
+    norm_sig = ops.ite(
+        sig_is_zero,
+        _bv(ops, 0, _SIG_WIDTH_32),
+        ops.ite(
+            needs_down,
+            rounded_down,
+            ops.ite(
+                needs_up,
+                sig64 << z3.ZeroExt(_SIG_WIDTH_32 - _IDX_WIDTH, shift_up),
+                sig64,
+            ),
+        ),
+    )
+    norm_exp = ops.ite(
+        sig_is_zero,
+        exp_min,
+        ops.ite(
+            needs_down,
+            exp_unbiased + z3.ZeroExt(24, shift_down),
+            ops.ite(
+                needs_up,
+                exp_unbiased - z3.ZeroExt(24, shift_up),
+                exp_unbiased,
+            ),
+        ),
+    )
+
+    carry = ops.land(
+        ops.lnot(sig_is_zero),
+        norm_sig >= _bv(ops, 1 << (frac_bits + 1), _SIG_WIDTH_32),
+    )
+    norm_sig = ops.ite(
+        carry,
+        _round_significand_int(
+            ops,
+            sign,
+            norm_sig,
+            1,
+            _SIG_WIDTH_32,
+            is_rne=is_rne,
+            is_rtz=is_rtz,
+            is_rp=is_rp,
+            is_rm=is_rm,
+        ),
+        norm_sig,
+    )
+    norm_exp = ops.ite(carry, norm_exp + _bv(ops, 1, 32), norm_exp)
+
+    overflow = norm_exp > exp_max
+    underflow = norm_exp < exp_min
+
+    encoded_frac = z3.Extract(frac_bits - 1, 0, norm_sig)
+    encoded_exp = norm_exp + _bv(ops, _B32_EXP_BIAS, 32)
+    normal_bits = _encode_binary32_bv(
+        ops,
+        sign,
+        z3.Extract(7, 0, encoded_exp),
+        encoded_frac,
+    )
+
+    max_finite = _bv32(
+        ops,
+        encode_binary32(False, _B32_EXP_MAX - 1, _B32_FRAC_MASK),
+    )
+    pos_inf = _bv32(ops, encode_binary32(False, _B32_EXP_MAX, 0))
+    neg_inf = _bv32(ops, encode_binary32(True, _B32_EXP_MAX, 0))
+    pos_overflow = ops.land(
+        overflow,
+        ops.lor(
+            is_rne,
+            ops.lor(is_rp, ops.land(is_rm, sign == _bv(ops, 1, 1))),
+        ),
+    )
+    overflow_bits = ops.ite(
+        sign == _bv(ops, 1, 1),
+        ops.ite(pos_overflow, neg_inf, max_finite),
+        ops.ite(pos_overflow, pos_inf, max_finite),
+    )
+
+    tiny_shift = exp_min - norm_exp
+    tiny_sig = norm_sig
+    for shift_amt in range(1, 32):
+        tiny_sig = ops.ite(
+            tiny_shift == _bv(ops, shift_amt, 32),
+            _round_significand_int(
+                ops,
+                sign,
+                norm_sig,
+                shift_amt,
+                _SIG_WIDTH_32,
+                is_rne=is_rne,
+                is_rtz=is_rtz,
+                is_rp=is_rp,
+                is_rm=is_rm,
+            ),
+            tiny_sig,
+        )
+
+    denormal_bits = _encode_binary32_bv(
+        ops,
+        sign,
+        _bv(ops, 0, 8),
+        z3.Extract(frac_bits - 1, 0, tiny_sig),
+    )
+    underflow_bits = ops.ite(
+        tiny_sig == _bv(ops, 0, _SIG_WIDTH_32),
+        _encode_binary32_bv(ops, sign, _bv(ops, 0, 8), _bv(ops, 0, 23)),
+        denormal_bits,
+    )
+
+    rounded = ops.ite(overflow, overflow_bits, ops.ite(underflow, underflow_bits, normal_bits))
+    zero_bits = _encode_binary32_bv(ops, sign, _bv(ops, 0, 8), _bv(ops, 0, 23))
+    return ops.ite(sig_is_zero, zero_bits, rounded)
+
+
+def _round_wide_to_single_fpr_bv(ops: Any, wide_bits: Any, fpscr: Any) -> Any:
+    """Project a binary64-wide value through one binary32 round into FPR storage."""
+    z3 = ops.z3
+    sign, exp, frac = _decode_binary64_bv(ops, wide_bits)
+    is_inf = _is_inf_bv(ops, wide_bits)
+    is_nan = _is_nan_bv(ops, wide_bits)
+    is_zero = _is_zero_bv(ops, wide_bits)
+
+    inf32 = _bv32(ops, encode_binary32(False, _B32_EXP_MAX, 0))
+    inf32 = ops.ite(sign == _bv(ops, 1, 1), _bv32(ops, encode_binary32(True, _B32_EXP_MAX, 0)), inf32)
+    inf_fpr = _single_to_fpr_bits_bv(ops, inf32)
+
+    quiet = _quiet_nan_bv(ops, wide_bits)
+    q_sign, _qe, qfrac = _decode_binary64_bv(ops, quiet)
+    frac32 = z3.Extract(51, 51 - BINARY32_FRAC_BITS + 1, qfrac)
+    frac32 = ops.ite(
+        frac32 == _bv(ops, 0, 23),
+        _bv(ops, _B32_QUIET_NAN, 23),
+        frac32,
+    )
+    nan32 = _encode_binary32_bv(ops, q_sign, _bv(ops, _B32_EXP_MAX, 8), frac32)
+    nan_fpr = _single_to_fpr_bits_bv(ops, nan32)
+
+    zero32 = _encode_binary32_bv(ops, sign, _bv(ops, 0, 8), _bv(ops, 0, 23))
+    zero_fpr = _single_to_fpr_bits_bv(ops, zero32)
+
+    sig = _significand64_bv(ops, exp, frac)
+    unbiased = _unbiased_exp64_bv(ops, exp)
+    adjusted = unbiased - _bv(ops, BINARY64_FRAC_BITS - BINARY32_FRAC_BITS, 32)
+    rounded32 = _round_binary32_bv(ops, sign, adjusted, sig, fpscr)
+    finite_fpr = _single_to_fpr_bits_bv(ops, rounded32)
+
+    result = finite_fpr
+    result = ops.ite(is_zero, zero_fpr, result)
+    result = ops.ite(is_nan, nan_fpr, result)
+    return ops.ite(is_inf, inf_fpr, result)
+
+
+def _apply_broadway_midpoint_correction_bv(
+    ops: Any,
+    a_bits: Any,
+    c_bits: Any,
+    b_bits: Any,
+    result_bits: Any,
+) -> Any:
+    """Dolphin/Broadway residual tie correction before binary32 cast."""
+    from .fp_exact_fused import _apply_broadway_midpoint_correction
+
+    mask = _fp_const64(ops, _BROADWAY_MIDPOINT_MASK)
+    pattern = _fp_const64(ops, _BROADWAY_MIDPOINT_PATTERN)
+    matches = ops.eq(ops.band(result_bits, mask), pattern)
+    skip = ops.lor(ops.lnot(matches), _is_zero_bv(ops, b_bits))
+
+    a_i = try_concrete_bv64(a_bits)
+    c_i = try_concrete_bv64(c_bits)
+    b_i = try_concrete_bv64(b_bits)
+    r_i = try_concrete_bv64(result_bits)
+    if a_i is not None and c_i is not None and b_i is not None and r_i is not None:
+        corrected = _apply_broadway_midpoint_correction(a_i, c_i, b_i, r_i)
+        return ops.ite(skip, result_bits, _fp_const64(ops, corrected))
+
+    return result_bits
+
+
+def _exact_fused_single_wide_bv(
+    ops: Any,
+    a_bits: Any,
+    b_bits: Any,
+    c_bits: Any,
+    fpscr: Any,
+    *,
+    subtract_b: bool = False,
+) -> Any:
+    """Binary64-wide fused result for single-precision ops (frA, frB, frC order)."""
+    wide = _exact_fmadd_special_bv(
+        ops,
+        a_bits,
+        c_bits,
+        b_bits,
+        fpscr,
+        subtract_b=subtract_b,
+    )
+    return _apply_broadway_midpoint_correction_bv(ops, a_bits, c_bits, b_bits, wide)
+
+
+def _exact_fused_single_class_macro_bv(
+    opcode: str,
+    a_bits: Any,
+    b_bits: Any,
+    c_bits: Any,
+    fpscr: Any,
+    ops: Any,
+) -> Any:
+    """If-ladder over IEEE classes using the integer exact fused kernel at leaves."""
+    from .fp_exact_fused import dispatch_exact_fused
+    from .fp_exact_symbolic import _CLASS_REPS, _bv_class_is
+
+    fpscr_i = try_concrete_bv32(fpscr) or 0
+    class_names = ("snan", "qnan", "inf", "zero", "subnormal", "normal")
+    expr: Any = _fp_const64(ops, 0)
+    for a_name in class_names:
+        a_pred = _bv_class_is(ops, a_bits, a_name)
+        a_rep = _CLASS_REPS[a_name]
+        for b_name in class_names:
+            b_pred = _bv_class_is(ops, b_bits, b_name)
+            b_rep = _CLASS_REPS[b_name]
+            for c_name in class_names:
+                c_pred = _bv_class_is(ops, c_bits, c_name)
+                c_rep = _CLASS_REPS[c_name]
+                outcome = dispatch_exact_fused(opcode, a_rep, b_rep, c_rep)
+                if not outcome.supported:
+                    continue
+                guard = ops.land(a_pred, ops.land(b_pred, c_pred))
+                expr = ops.ite(guard, _fp_const64(ops, outcome.bits64), expr)
+    return expr
+
+
+def exact_fused_single_result_bits_bv(
+    opcode: str,
+    a_bits: Any,
+    b_bits: Any,
+    c_bits: Any,
+    fpscr: Any,
+    ops: Any,
+) -> Any | None:
+    """Return payload-accurate single-precision fused result bits when supported."""
+    name = str(opcode)
+    if name not in _SINGLE_FUSED_OPS:
+        return None
+
+    a_i = try_concrete_bv64(a_bits)
+    b_i = try_concrete_bv64(b_bits)
+    c_i = try_concrete_bv64(c_bits)
+    fpscr_i = try_concrete_bv32(fpscr)
+    if (
+        a_i is not None
+        and b_i is not None
+        and c_i is not None
+        and fpscr_i is not None
+    ):
+        from .fp_exact_fused import dispatch_exact_fused
+
+        outcome = dispatch_exact_fused(name, a_i, b_i, c_i)
+        if outcome.supported:
+            return _fp_const64(ops, outcome.bits64)
+        return None
+
+    if name == "fmadds":
+        wide = _exact_fused_single_wide_bv(ops, a_bits, b_bits, c_bits, fpscr)
+    elif name == "fmsubs":
+        wide = _exact_fused_single_wide_bv(
+            ops, a_bits, b_bits, c_bits, fpscr, subtract_b=True,
+        )
+    elif name == "fnmadds":
+        wide = _exact_fused_single_wide_bv(ops, a_bits, b_bits, c_bits, fpscr)
+    elif name == "fnmsubs":
+        wide = _exact_fused_single_wide_bv(
+            ops, a_bits, b_bits, c_bits, fpscr, subtract_b=True,
+        )
+    else:
+        return None
+
+    bv_rounded = _round_wide_to_single_fpr_bv(ops, wide, fpscr)
+    if name in ("fnmadds", "fnmsubs"):
+        bv_rounded = _negate_finite_bits_bv(ops, bv_rounded)
+    return bv_rounded
+
+
 def exact_arith_result_bits_bv(
     opcode: str,
     a_bits: Any,
@@ -892,6 +1381,9 @@ def exact_arith_result_bits_bv(
         return _exact_mul_special_bv(ops, left, right, fpscr)
     if name in ("fdiv",):
         return _exact_div_special_bv(ops, left, right, fpscr)
+    if name in ("fdivs",):
+        wide = _exact_div_special_bv(ops, left, right, fpscr)
+        return _round_wide_to_single_fpr_bv(ops, wide, fpscr)
     return None
 
 
@@ -951,10 +1443,15 @@ def verify_exact_fused_bv_concrete(
     c_bv = z3.BitVec("c", 64)
     b_bv = z3.BitVec("b", 64)
     fpscr_bv = z3.BitVec("fpscr", 32)
-    expr = exact_fused_result_bits_bv(opcode, a_bv, c_bv, b_bv, fpscr_bv, ops)
+    name = str(opcode)
+    if name in _SINGLE_FUSED_OPS:
+        expr = exact_fused_single_result_bits_bv(name, a_bv, b_bv, c_bv, fpscr_bv, ops)
+        expected = dispatch_exact_fused(name, a, b, c)
+    else:
+        expr = exact_fused_result_bits_bv(name, a_bv, c_bv, b_bv, fpscr_bv, ops)
+        expected = dispatch_exact_fused(name, a, c, b)
     if expr is None:
         return False
-    expected = dispatch_exact_fused(opcode, a, c, b)
     if not expected.supported:
         return False
     solver = z3.Solver()
@@ -974,6 +1471,7 @@ def verify_exact_fused_bv_concrete(
 __all__ = [
     "exact_arith_result_bits_bv",
     "exact_fused_result_bits_bv",
+    "exact_fused_single_result_bits_bv",
     "verify_exact_arith_bv_concrete",
     "verify_exact_fused_bv_concrete",
 ]

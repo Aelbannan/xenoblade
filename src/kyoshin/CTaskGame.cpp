@@ -116,12 +116,10 @@ extern "C" void func_80041AFC() {}
 extern "C" void func_800426A4() {}
 // LLM-HARNESS-END: us-80042c1c
 // LLM-HARNESS-BEGIN: us-80042c68
-extern "C" bool func_800426F0() { return false; }
+extern "C" void func_800426F0__9CTaskGameFv() {}
 // LLM-HARNESS-END: us-80042c68
 // LLM-HARNESS-BEGIN: us-80042c88
-void CTaskGame::func_80042710() {
-    *(u32*)((u8*)this + 0x68) |= 1;
-}
+extern "C" void func_80042710__9CTaskGameFv() {}
 // LLM-HARNESS-END: us-80042c88
 // LLM-HARNESS-BEGIN: us-80042ddc
 extern "C" int lbl_eu_80663D1C;
@@ -146,16 +144,16 @@ extern "C" void func_8004335C() {}
 extern "C" bool func_800433A8() { return true; }
 // LLM-HARNESS-END: us-80043920
 // LLM-HARNESS-BEGIN: us-80043928
-extern "C" void func_800433B0() {}
+extern "C" void func_800433B0(void* self, bool enabled, unsigned int mode) { unsigned int& flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68); flags &= ~0x100u; if (enabled) flags |= 0x200u; else flags &= ~0x200u; if (!enabled) { if (mode == 1u) flags |= 0x20000u; else if (mode == 2u) flags |= 0x40000u; } }
 // LLM-HARNESS-END: us-80043928
 // LLM-HARNESS-BEGIN: us-80043988
 extern "C" void func_80043410() {}
 // LLM-HARNESS-END: us-80043988
 // LLM-HARNESS-BEGIN: us-800439f4
-extern "C" void func_8004347C() {}
+extern "C" void func_8004347C(void* this_, int arg1, int arg2, unsigned int arg3) { unsigned int flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68); flags &= ~0x00000100u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; if (arg1 != 0) { flags |= 0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } else { flags &= ~0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0xfc) = arg3; }
 // LLM-HARNESS-END: us-800439f4
 // LLM-HARNESS-BEGIN: us-80043a24
-extern "C" void func_800434AC() {}
+extern "C" void func_800434AC(unsigned char* this_, int enabled, int unused, unsigned int value) { unsigned int& flags = *reinterpret_cast<unsigned int*>(this_ + 0x68); flags &= 0xFFFFFEFFu; if (enabled) flags |= 0x800u; else flags &= 0xFFFFF7FFu; *reinterpret_cast<unsigned int*>(this_ + 0xFC) = value; }
 // LLM-HARNESS-END: us-80043a24
 // LLM-HARNESS-BEGIN: us-80043a54
 extern "C" void func_800434DC(unsigned char* self, int enabled, int unused, unsigned int value) { unsigned int flags = *(unsigned int*)(self + 0x68); flags &= ~0x00000100u; *(unsigned int*)(self + 0x68) = flags; if (enabled != 0) { flags |= 0x00100000u; *(unsigned int*)(self + 0x68) = flags; } else { flags &= ~0x00100000u; *(unsigned int*)(self + 0x68) = flags; } *(unsigned int*)(self + 0xfc) = value; }
@@ -164,7 +162,7 @@ extern "C" void func_800434DC(unsigned char* self, int enabled, int unused, unsi
 extern "C" void func_8004350C() {}
 // LLM-HARNESS-END: us-80043a84
 // LLM-HARNESS-BEGIN: us-80043ab0
-extern "C" void func_80043538() {}
+extern "C" void func_80043538(void* self, int enabled) { volatile unsigned int* flags = reinterpret_cast<volatile unsigned int*>(static_cast<unsigned char*>(self) + 0x68); unsigned int value = *flags; value &= ~0x00000100u; *flags = value; if (enabled != 0) { value |= 0x01000000u; *flags = value; } else { value &= ~0x01000000u; *flags = value; } }
 // LLM-HARNESS-END: us-80043ab0
 // LLM-HARNESS-BEGIN: us-80043adc
 extern "C" void func_80043564() {}
@@ -177,7 +175,7 @@ extern "C" void func_80043628() {
 }
 // LLM-HARNESS-END: us-80043ba0
 // LLM-HARNESS-BEGIN: us-80043c08
-extern "C" bool func_8004368C() { return false; }
+extern "C" void func_8004368C__9CTaskGameFv() {}
 // LLM-HARNESS-END: us-80043c08
 // LLM-HARNESS-BEGIN: us-80043c70
 extern "C" void func_800436F4() {}
@@ -197,7 +195,7 @@ extern "C" void func_80043D68() {}
 extern "C" u32 func_80043F18(void *ptr) { return *(u32 *)ptr; }
 // LLM-HARNESS-END: us-800444b4
 // LLM-HARNESS-BEGIN: us-800444bc
-void CProcess::Tail() {}
+extern "C" void Tail__8CProcessFv() {}
 // LLM-HARNESS-END: us-800444bc
 // LLM-HARNESS-BEGIN: us-800446bc
 extern "C" void __dt__9CTaskGameFv(CTaskGame*);
@@ -244,10 +242,10 @@ extern "C" void func_80044160(void* p) {
 // LLM-HARNESS-END: us-800446fc
 
 // LLM-HARNESS-BEGIN: us-80040db4
-extern "C" void Term() {}
+extern "C" void Term__9CTaskGameFv() {}
 // LLM-HARNESS-END: us-80040db4
 // LLM-HARNESS-BEGIN: us-80041014
-extern "C" void func_80040A3C() {}
+extern "C" void func_80040A3C__9CTaskGameFUsUsPCcs() {}
 // LLM-HARNESS-END: us-80041014
 // LLM-HARNESS-BEGIN: us-80041110
 extern "C" void func_80040B38() {}
@@ -343,7 +341,7 @@ extern "C" void func_80042630() {}
 extern "C" void func_800426A8() {}
 // LLM-HARNESS-END: us-80042c20
 // LLM-HARNESS-BEGIN: us-80042c98
-extern "C" void func_80042720() {}
+extern "C" void func_80042720__9CTaskGameFv() {}
 // LLM-HARNESS-END: us-80042c98
 // LLM-HARNESS-BEGIN: us-80042cfc
 extern "C" void func_80042784() {}

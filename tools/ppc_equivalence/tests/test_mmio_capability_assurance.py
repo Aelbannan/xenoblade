@@ -34,18 +34,23 @@ from tools.ppc_equivalence.hardware_profile import (
     load_hardware_profile,
 )
 from tools.ppc_equivalence.mmio_capability_obligations import (
+    ALWAYS_INCOMPLETE_MMIO_CAPABILITIES,
     GX_FIFO_READ_ALGORITHM,
     GX_FIFO_READ_CAPABILITY,
     GX_FIFO_READ_MODEL_VERSION,
     GX_FIFO_WRITE_TRACE_CAPABILITY,
+    MMIO_LOOP_EMISSION_CAPABILITY,
     MMIO_REGISTER_BANK_ALGORITHM,
     MMIO_REGISTER_BANK_CAPABILITY,
     MMIO_REGISTER_BANK_MODEL_VERSION,
+    build_gx_fifo_read_obligation,
     build_mmio_attestation,
     build_mmio_capability_obligation,
+    gx_fifo_read_is_promotion_grade,
     infer_mmio_capabilities_from_memory_bus,
     obligation_is_promotion_grade,
     recompute_mmio_attestation_status,
+    validate_gx_fifo_read_obligation,
     validate_mmio_capability_obligation,
 )
 from tools.ppc_equivalence.result import (
@@ -269,9 +274,17 @@ class ObligationSchemaTests(unittest.TestCase):
 
 
 class GxFifoReadTests(unittest.TestCase):
-    def test_gx_fifo_read_remains_incomplete(self) -> None:
+    def test_gx_fifo_read_not_in_always_incomplete(self) -> None:
+        # Wave 5: gx-fifo-read and mmio-loop-emission are promotable in
+        # principle once validators + corpus + allowlist are complete.
+        self.assertNotIn(GX_FIFO_READ_CAPABILITY, ALWAYS_INCOMPLETE_MMIO_CAPABILITIES)
+        self.assertNotIn(MMIO_LOOP_EMISSION_CAPABILITY, ALWAYS_INCOMPLETE_MMIO_CAPABILITIES)
+
+    def test_gx_fifo_read_default_shaped_obligation_remains_incomplete(self) -> None:
+        # A register-bank-shaped obligation (wrong schema for gx-fifo-read)
+        # never satisfies the dedicated gx-fifo-read-v1 validator.
         original, candidate = _complete_sides()
-        obligation = build_mmio_capability_obligation(
+        wrong_shape = build_mmio_capability_obligation(
             capability=GX_FIFO_READ_CAPABILITY,
             model_version=GX_FIFO_READ_MODEL_VERSION,
             algorithm=GX_FIFO_READ_ALGORITHM,
@@ -282,7 +295,7 @@ class GxFifoReadTests(unittest.TestCase):
             status="promotion-grade",
         )
         status = recompute_mmio_attestation_status(
-            {"mmio": obligation},
+            {"gx_fifo_read": wrong_shape},
             capability=GX_FIFO_READ_CAPABILITY,
             algorithm=GX_FIFO_READ_ALGORITHM,
             model_version=GX_FIFO_READ_MODEL_VERSION,
@@ -290,6 +303,34 @@ class GxFifoReadTests(unittest.TestCase):
         )
         self.assertEqual(status, STATUS_INCOMPLETE)
 
+        # The correctly-shaped default obligation is also incomplete (no
+        # vacuous claim, no path∧GX-read UNSAT digest supplied).
+        default = build_gx_fifo_read_obligation()
+        self.assertIsNone(validate_gx_fifo_read_obligation(default))
+        self.assertFalse(gx_fifo_read_is_promotion_grade(default))
+        status_default = recompute_mmio_attestation_status(
+            {"gx_fifo_read": default},
+            capability=GX_FIFO_READ_CAPABILITY,
+            algorithm=GX_FIFO_READ_ALGORITHM,
+            model_version=GX_FIFO_READ_MODEL_VERSION,
+            allowed_versions=(GX_FIFO_READ_MODEL_VERSION,),
+        )
+        self.assertEqual(status_default, STATUS_INCOMPLETE)
+
+        # Still incomplete without an allowlist entry even for a vacuous
+        # (structurally promotable) claim.
+        vacuous = build_gx_fifo_read_obligation(vacuous=True, status="promotion-grade")
+        self.assertTrue(gx_fifo_read_is_promotion_grade(vacuous))
+        status_unallowed = recompute_mmio_attestation_status(
+            {"gx_fifo_read": vacuous},
+            capability=GX_FIFO_READ_CAPABILITY,
+            algorithm=GX_FIFO_READ_ALGORITHM,
+            model_version=GX_FIFO_READ_MODEL_VERSION,
+            allowed_versions=(),
+        )
+        self.assertEqual(status_unallowed, STATUS_INCOMPLETE)
+
+    def test_gx_fifo_read_inference_alongside_write_trace(self) -> None:
         caps = infer_mmio_capabilities_from_memory_bus(
             {
                 "fifo_theory": {"status": "present"},
@@ -302,6 +343,57 @@ class GxFifoReadTests(unittest.TestCase):
         )
         self.assertIn(GX_FIFO_READ_CAPABILITY, caps)
         self.assertIn(GX_FIFO_WRITE_TRACE_CAPABILITY, caps)
+
+
+class CapabilityRequirementsDeviceIdTests(unittest.TestCase):
+    def test_device_id_subject_extraction_from_bus_canonical(self) -> None:
+        from tools.ppc_equivalence.capability_requirements import (
+            derive_capability_requirements,
+        )
+
+        proof = _equivalent(
+            proof_features=["memory-bus"],
+            memory_bus={
+                "schema_version": 2,
+                "fifo_theory": {"status": "present"},
+                "bus_spec_canonical": {
+                    "devices": [
+                        {"device_id": "gx-fifo", "theory": "gxfifo-stream"},
+                    ]
+                },
+            },
+            opcodes_used=["stw"],
+        )
+        requirements = derive_capability_requirements(proof)
+        by_capability = {req.capability: req for req in requirements.requirements}
+        self.assertIn(GX_FIFO_WRITE_TRACE_CAPABILITY, by_capability)
+        self.assertIn(
+            "gx-fifo",
+            by_capability[GX_FIFO_WRITE_TRACE_CAPABILITY].required_subjects,
+        )
+
+        # Legacy "id" key still binds (backward compat).
+        proof_legacy_key = _equivalent(
+            proof_features=["memory-bus"],
+            memory_bus={
+                "schema_version": 2,
+                "fifo_theory": {"status": "present"},
+                "bus_spec_canonical": {
+                    "devices": [
+                        {"id": "gx-fifo-legacy", "theory": "gxfifo-stream"},
+                    ]
+                },
+            },
+            opcodes_used=["stw"],
+        )
+        legacy_requirements = derive_capability_requirements(proof_legacy_key)
+        legacy_by_capability = {
+            req.capability: req for req in legacy_requirements.requirements
+        }
+        self.assertIn(
+            "gx-fifo-legacy",
+            legacy_by_capability[GX_FIFO_WRITE_TRACE_CAPABILITY].required_subjects,
+        )
 
 
 class CertificateRoundTripTests(unittest.TestCase):
@@ -450,8 +542,8 @@ class ReadOracleTests(unittest.TestCase):
 
 class ArchitectureFreezeTests(unittest.TestCase):
     def test_architecture_tracks_live_model(self) -> None:
-        # Live architecture tracks parent bumps (currently v40 / cert15).
-        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v41")
+        # Live architecture tracks parent bumps (currently v43 / cert18).
+        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v43")
         self.assertTrue(ARCHITECTURE_MODEL.startswith("broadway-ppc32-be-v"))
 
 

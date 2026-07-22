@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from tools.ppc_equivalence.provenance import canonical_json_sha256
+
 _SUPPORTED_WIDTHS = frozenset({1, 2, 4})
 
 
@@ -184,15 +186,31 @@ class RegisterBankDevice(DeviceModel):
 
 @dataclass
 class GxFifoStreamDevice(DeviceModel):
-    """Stub GX FIFO device that records write-stream events only."""
+    """GX FIFO write-gather device with ordered trace events (``gx-fifo-trace-v2``)."""
 
     base: int
     span: int = 0x100
+    device_id: str = "gx-fifo"
+    endian: str = "big"
+    supported_widths: frozenset[int] = field(
+        default_factory=lambda: frozenset({1, 2, 4})
+    )
+    alignment_required: bool = True
+    read_policy: str = "unsupported"
+    read_model_version: str = "gx-fifo-read-v1"
+    write_event_semantics: str = "gx-fifo-trace-v2"
+    read_side_effects: bool = False
+    external_input: bool = False
+    max_fifo_events: int = 256
     write_events: list[dict[str, Any]] = field(default_factory=list, repr=False)
+    read_events: list[dict[str, Any]] = field(default_factory=list, repr=False)
+    event_cursor: int = 0
 
     def __post_init__(self) -> None:
         if self.span <= 0:
             raise ValueError("span must be positive")
+        if self.max_fifo_events <= 0:
+            raise ValueError("max_fifo_events must be positive")
 
     def _in_span(self, addr: int, width: int) -> bool:
         last = addr + width - 1
@@ -200,14 +218,20 @@ class GxFifoStreamDevice(DeviceModel):
             return False
         return self.base <= addr and last < self.base + self.span
 
+    def _state_digest(self) -> str:
+        return canonical_json_sha256(self.visible_state())
+
     def validate_access(self, addr: int, width: int, *, is_write: bool) -> AccessOutcome:
-        width_err = _validate_width(width)
-        if width_err is not None:
-            return width_err
-        if not is_write:
+        if width not in self.supported_widths:
+            return AccessOutcome.UNSUPPORTED
+        if self.alignment_required and addr % width != 0:
+            return AccessOutcome.MISALIGNED
+        if not is_write and self.read_policy == "unsupported":
             return AccessOutcome.UNSUPPORTED
         if not self._in_span(addr, width):
             return AccessOutcome.OUT_OF_RANGE
+        if is_write and len(self.write_events) >= self.max_fifo_events:
+            return AccessOutcome.UNSUPPORTED
         return AccessOutcome.OK
 
     def read(self, addr: int, width: int) -> DeviceReadResult:
@@ -218,13 +242,23 @@ class GxFifoStreamDevice(DeviceModel):
         outcome = self.validate_access(addr, width, is_write=True)
         if outcome is not AccessOutcome.OK:
             return DeviceWriteResult(outcome=outcome)
+        pre_state_digest = self._state_digest()
+        masked = _mask_width(value, width)
+        event_index = self.event_cursor
         self.write_events.append(
             {
-                "addr": hex(addr),
+                "kind": "write",
+                "device_id": self.device_id,
+                "event_index": event_index,
+                "address": hex(addr),
                 "width": width,
-                "value": hex(_mask_width(value, width)),
+                "value": hex(masked),
+                "pre_state_digest": pre_state_digest,
+                "post_state_digest": "",
             }
         )
+        self.event_cursor += 1
+        self.write_events[-1]["post_state_digest"] = self._state_digest()
         return DeviceWriteResult(outcome=AccessOutcome.OK)
 
     def visible_state(self) -> dict[str, Any]:
@@ -232,12 +266,35 @@ class GxFifoStreamDevice(DeviceModel):
             "kind": "gxfifo-stream",
             "base": hex(self.base),
             "span": hex(self.span),
+            "device_id": self.device_id,
+            "event_cursor": self.event_cursor,
+            "write_count": len(self.write_events),
+            "read_count": len(self.read_events),
+            "read_model_version": self.read_model_version,
+            "write_event_semantics": self.write_event_semantics,
+            "read_policy": self.read_policy,
             "write_events": list(self.write_events),
+            "read_events": list(self.read_events),
         }
 
     def clone(self) -> GxFifoStreamDevice:
         return GxFifoStreamDevice(
             base=self.base,
             span=self.span,
+            device_id=self.device_id,
+            endian=self.endian,
+            supported_widths=self.supported_widths,
+            alignment_required=self.alignment_required,
+            read_policy=self.read_policy,
+            read_model_version=self.read_model_version,
+            write_event_semantics=self.write_event_semantics,
+            read_side_effects=self.read_side_effects,
+            external_input=self.external_input,
+            max_fifo_events=self.max_fifo_events,
             write_events=[dict(event) for event in self.write_events],
+            read_events=[dict(event) for event in self.read_events],
+            event_cursor=self.event_cursor,
         )
+
+
+GxFifoDevice = GxFifoStreamDevice

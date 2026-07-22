@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .fp_exact_outcome import FiFrPolicy, ScalarFPOutcome
-from .fp_oracle import mask64
+from .fp_oracle import mask32, mask64
 
 # --- Broadway FPSCR bit layout (Gekko / Broadway, Python LSB indexing) ---
 
@@ -196,7 +196,7 @@ def apply_fprf(fpscr: int, fprf: int) -> int:
 
 def apply_raised_causes(pre_fpscr: int, raised_causes: int) -> int:
     """Latch OX/UX/ZX/XX and VX subcauses from an outcome cause mask."""
-    causes = int(raised_causes) & (
+    causes = mask_scalar_raised_by_enables(pre_fpscr, raised_causes) & (
         FPSCR_OX | FPSCR_UX | FPSCR_ZX | FPSCR_XX | FPSCR_VX_ANY
     )
     value = mask64(pre_fpscr)
@@ -210,6 +210,26 @@ def apply_raised_causes(pre_fpscr: int, raised_causes: int) -> int:
         value = recompute_vx_summary(value)
         value = recompute_fex(value)
     return value
+
+
+def mask_scalar_raised_by_enables(fpscr: int, raised_causes: int) -> int:
+    """Gate OX/UX/ZX/XX stickies on FPSCR enable bits (Broadway/Dolphin default paths).
+
+    VX subcauses always pass through. When OE/UE/XE/ZE are clear, hardware still
+    updates FPRF/FI/FR but does not latch the corresponding OX/UX/XX/ZX stickies.
+    """
+    fpscr = mask32(fpscr)
+    raised = int(raised_causes)
+    masked = raised & FPSCR_VX_ANY
+    if raised & FPSCR_ZX:
+        masked |= FPSCR_ZX
+    if raised & FPSCR_OX and (fpscr & FPSCR_OE):
+        masked |= FPSCR_OX
+    if raised & FPSCR_UX and (fpscr & FPSCR_UE):
+        masked |= FPSCR_UX
+    if raised & FPSCR_XX and (fpscr & FPSCR_XE):
+        masked |= FPSCR_XX
+    return masked
 
 
 def apply_mtfsf(pre_fpscr: int, fm: int, source32: int) -> int:

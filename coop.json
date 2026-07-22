@@ -14,11 +14,12 @@
     "--config",
     "functionRelocDiffs=data_value"
   ],
-  "automatic_promotion": true,
-  "allowed_engine_sha256": "4e57be7dae521d7d163de7734824825304a4961222035a93fb6312a7e1bf337a",
+  "automatic_promotion": false,
+  "allowed_engine_sha256": "17294e686bbe61dc67f97939db0d1915a7699954872d7fb9981900da9408e5b9",
   "capability_manifest_path": "tools/coop/capability_manifest.authoritative.json",
   "capability_assurance_shadow_mode": false,
   "require_capability_assurance": true,
+  "hardware_profile": "wii-broadway-xenoblade-us-v2",
   "reject_architecture_models": [
     "broadway-ppc32-be-v18",
     "broadway-ppc32-be-v19",

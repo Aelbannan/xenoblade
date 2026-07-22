@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import unittest
 from pathlib import Path
@@ -10,6 +9,7 @@ from pathlib import Path
 from tools.ppc_equivalence.fp_capabilities import (
     SCALAR_FP_EXACT_V2_ENV,
     set_scalar_fp_exact_v2_module_flag,
+    set_scalar_fp_exact_v2_production_module_flag,
 )
 from tools.ppc_equivalence.scalar_fp_v2_rollout import (
     PRODUCTION_SWITCH_BLOCKERS,
@@ -33,19 +33,28 @@ from tools.ppc_equivalence.scalar_fp_v2_rollout import (
     validate_shadow_manifest,
 )
 
-_MANIFEST = (
+from tools.ppc_equivalence.result import ARCHITECTURE_MODEL
+
+_MANIFEST_EXAMPLE = (
     Path(__file__).resolve().parents[2]
     / "coop"
     / "capability_manifest.scalar_fp_v2_canary.json.example"
+)
+_MANIFEST_CANARY = (
+    Path(__file__).resolve().parents[2]
+    / "coop"
+    / "capability_manifest.scalar_fp_v2_canary.json"
 )
 
 
 class ScalarFPV2RolloutTests(unittest.TestCase):
     def setUp(self) -> None:
         set_scalar_fp_exact_v2_module_flag(None)
+        set_scalar_fp_exact_v2_production_module_flag(None)
 
     def tearDown(self) -> None:
         set_scalar_fp_exact_v2_module_flag(None)
+        set_scalar_fp_exact_v2_production_module_flag(None)
 
     def test_canary_targets_match_census_notes(self) -> None:
         self.assertEqual(
@@ -82,8 +91,8 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
         ids = {row["target_id"] for row in rows}
         self.assertTrue(set(SCALAR_FP_V2_CANARY_TARGETS.values()) <= ids)
 
-    def test_shadow_manifest_is_default_off(self) -> None:
-        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST)
+    def test_shadow_manifest_example_is_default_off(self) -> None:
+        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST_EXAMPLE)
         self.assertFalse(manifest.get("automatic_promotion"))
         self.assertTrue(manifest.get("shadow_mode"))
         allowlists = manifest.get("allowed_tier_a_capabilities") or {}
@@ -95,12 +104,22 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
         for cap in fp_caps:
             self.assertEqual(allowlists.get(cap), [])
 
+    def test_canary_manifest_allowlists_fp_load_store_only(self) -> None:
+        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST_CANARY)
+        allowlists = manifest.get("allowed_tier_a_capabilities") or {}
+        self.assertEqual(
+            allowlists.get("fp-load-store"),
+            ["broadway-fp-load-store-v2"],
+        )
+        for cap in ("fp-compare", "fp-convert", "fp-fused-arithmetic"):
+            self.assertEqual(allowlists.get(cap), [])
+
     def test_production_preconditions_fail_by_default(self) -> None:
         env_backup = os.environ.pop(SCALAR_FP_EXACT_V2_ENV, None)
         prod_backup = os.environ.pop("SCALAR_FP_EXACT_V2_PRODUCTION", None)
         try:
             ok, reasons = scalar_fp_v2_production_preconditions(
-                manifest=load_scalar_fp_v2_canary_manifest(_MANIFEST),
+                manifest=load_scalar_fp_v2_canary_manifest(_MANIFEST_EXAMPLE),
             )
             self.assertFalse(ok)
             self.assertTrue(any(SCALAR_FP_EXACT_V2_ENV in r for r in reasons))
@@ -112,30 +131,23 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
 
     def test_enable_production_raises_when_gates_unmet(self) -> None:
         with self.assertRaises(ScalarFPExactV2ProductionError):
-            enable_scalar_fp_exact_v2_production(manifest_path=_MANIFEST)
+            enable_scalar_fp_exact_v2_production(manifest_path=_MANIFEST_EXAMPLE)
 
-    def test_enable_production_not_implemented_even_when_gates_met(self) -> None:
+    def test_enable_production_succeeds_when_gates_met(self) -> None:
         set_scalar_fp_exact_v2_module_flag(True)
         os.environ["SCALAR_FP_EXACT_V2_PRODUCTION"] = "1"
-        manifest = json.loads(_MANIFEST.read_text(encoding="utf-8"))
-        manifest["allowed_tier_a_capabilities"]["fp-fused-arithmetic"] = [
-            "broadway-fp-fused-v2"
-        ]
-        ok, reasons = scalar_fp_v2_production_preconditions(manifest=manifest)
-        self.assertTrue(ok, msg=str(reasons))
-        tmp = Path(__file__).resolve().parent / "_tmp_canary_manifest.json"
-        tmp.write_text(json.dumps(manifest), encoding="utf-8")
         try:
-            with self.assertRaises(NotImplementedError) as ctx:
-                enable_scalar_fp_exact_v2_production(
-                    manifest_path=tmp,
-                    run_corpus_check=False,
-                )
-            self.assertIn("production_switch_ready", str(ctx.exception))
-            self.assertIn("gates", str(ctx.exception))
+            result = enable_scalar_fp_exact_v2_production(
+                manifest_path=_MANIFEST_CANARY,
+                run_corpus_check=False,
+            )
+            self.assertTrue(result["enabled"])
+            self.assertIn("fp-load-store", result["enabled_capabilities"])
+            self.assertIn("checklist", result)
+            self.assertIn("operator_steps", result)
         finally:
-            tmp.unlink(missing_ok=True)
             os.environ.pop("SCALAR_FP_EXACT_V2_PRODUCTION", None)
+            set_scalar_fp_exact_v2_production_module_flag(None)
 
     def test_build_production_switch_checklist_structure(self) -> None:
         checklist = build_production_switch_checklist(run_corpus_check=False)
@@ -145,8 +157,8 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
         self.assertIn("infrastructure_readiness", gate_names)
         self.assertIn("architecture_model_bump", gate_names)
         payload = checklist.to_dict()
-        self.assertEqual(payload["planned"]["architecture_model"], "broadway-ppc32-be-v42")
-        self.assertEqual(payload["live"]["architecture_model"], "broadway-ppc32-be-v41")
+        self.assertEqual(payload["planned"]["architecture_model"], "broadway-ppc32-be-v43")
+        self.assertEqual(payload["live"]["architecture_model"], ARCHITECTURE_MODEL)
 
     def test_readiness_report_structure(self) -> None:
         report = readiness_report(run_corpus_check=False)
@@ -181,20 +193,19 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
 
     def test_readiness_report_blockers_are_honest(self) -> None:
         text = " ".join(PRODUCTION_SWITCH_BLOCKERS)
-        self.assertIn("ARCHITECTURE_MODEL", text)
-        self.assertIn("dolphin-capture", text)
-        self.assertIn("fdiv", text)
-        self.assertIn("NotImplemented", text)
+        self.assertIn("recertification", text)
+        self.assertNotIn("NotImplemented", text)
+        self.assertNotIn("ARCHITECTURE_MODEL", text)
 
     def test_canary_manifest_targets_dry_run(self) -> None:
-        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST)
+        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST_CANARY)
         ok, reasons = validate_canary_manifest_targets(manifest)
         self.assertTrue(ok, msg=str(reasons))
 
     def test_phase_test_modules_importable(self) -> None:
         ok, failures = check_phase_test_suite_importable()
         self.assertTrue(ok, msg=str(failures))
-        self.assertEqual(len(SCALAR_FP_V2_PHASE_TEST_MODULES), 12)
+        self.assertEqual(len(SCALAR_FP_V2_PHASE_TEST_MODULES), 13)
 
     def test_experimental_models_cover_allowlist_order(self) -> None:
         ok, missing = check_experimental_models_defined()
@@ -203,7 +214,7 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
             self.assertNotIn(capability, missing)
 
     def test_shadow_manifest_validates(self) -> None:
-        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST)
+        manifest = load_scalar_fp_v2_canary_manifest(_MANIFEST_CANARY)
         ok, reasons = validate_shadow_manifest(manifest)
         self.assertTrue(ok, msg=str(reasons))
 

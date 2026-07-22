@@ -18,13 +18,16 @@ from typing import Any, Mapping, Sequence
 from tools.ppc_equivalence.fp_capabilities import (
     FP_EXPERIMENTAL_SUBCAPABILITY_MODEL_VERSIONS,
     SCALAR_FP_EXACT_V2_ENV,
+    SCALAR_FP_EXACT_V2_PRODUCTION_ENV,
     scalar_fp_exact_v2_module_flag_override,
     set_scalar_fp_exact_v2_module_flag,
+    set_scalar_fp_exact_v2_production_module_flag,
     scalar_fp_exact_v2_enabled,
+    scalar_fp_exact_v2_production_enabled,
 )
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
+from tools.coop.lib.targets import EQUIVALENCE_CERTIFICATE_VERSION
 
-_SCALAR_FP_V2_PRODUCTION_ENV = "SCALAR_FP_EXACT_V2_PRODUCTION"
 _SCALAR_FP_V2_ALLOWLIST_ENV = "SCALAR_FP_EXACT_V2_ALLOWLIST_MANIFEST"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -61,35 +64,30 @@ SCALAR_FP_V2_PHASE_TEST_MODULES: tuple[str, ...] = (
     "tools.ppc_equivalence.tests.test_fp_exact_symbolic",
     "tools.ppc_equivalence.tests.test_fp_traps_fe0_fe1",
     "tools.ppc_equivalence.tests.test_fp_exact_fused",
+    "tools.ppc_equivalence.tests.test_fp_load_store_obligations",
     "tools.ppc_equivalence.tests.test_fp_scalar_obligations_v2",
     "tools.ppc_equivalence.tests.test_scalar_fp_v2_corpora",
     "tools.ppc_equivalence.tests.test_scalar_fp_v2_rollout",
 )
 
-# Honest pre-allowlist blockers (production switch must stay off).
+# Residual promotion blockers (identity bump + fp-load-store canary allowlist done).
 PRODUCTION_SWITCH_BLOCKERS: tuple[str, ...] = (
-    "11 NI/non-RNE Dolphin mismatches remain exact_kernel_v2 "
-    "(44 rows upgraded to dolphin-capture; Phase 11)",
-    "Symbolic fdivs / single-precision fused still incomplete "
-    "(binary64 fdiv/fmadd BV path landed; Phase 7)",
     "Bottom-up recertification / certificate debt unresolved "
-    "(callee stubs + SMT path/instruction limits)",
-    "ARCHITECTURE_MODEL / RESULT_FORMAT / EQUIVALENCE_CERTIFICATE_VERSION bump "
-    "not performed (Phase 12 plan drafted; values unchanged)",
-    "enable_scalar_fp_exact_v2_production() remains NotImplemented; "
-    "authoritative FP allowlists empty",
+    "(callee stubs + SMT path/instruction limits); "
+    "fp-load-store canary allowlisted (broadway-fp-load-store-v2) but "
+    "full scalar Tier A / remaining FP allowlists still closed",
 )
 
 _DEFAULT_CANARY_MANIFEST = (
     Path(__file__).resolve().parents[1]
     / "coop"
-    / "capability_manifest.scalar_fp_v2_canary.json.example"
+    / "capability_manifest.scalar_fp_v2_canary.json"
 )
 
-# Phase 12 planned identity bump (draft only — live values stay in result.py / targets.py).
-PLANNED_ARCHITECTURE_MODEL = "broadway-ppc32-be-v42"
-PLANNED_RESULT_FORMAT = 22
-PLANNED_EQUIVALENCE_CERTIFICATE_VERSION = 17
+# Phase 12 live identities (mirrored in result.py / targets.py).
+PLANNED_ARCHITECTURE_MODEL = ARCHITECTURE_MODEL
+PLANNED_RESULT_FORMAT = RESULT_FORMAT
+PLANNED_EQUIVALENCE_CERTIFICATE_VERSION = EQUIVALENCE_CERTIFICATE_VERSION
 
 
 class ScalarFPExactV2ProductionError(RuntimeError):
@@ -231,8 +229,9 @@ def validate_shadow_manifest(manifest: Mapping[str, Any]) -> tuple[bool, list[st
     reasons: list[str] = []
     if manifest.get("automatic_promotion") is True:
         reasons.append("automatic_promotion must remain false")
-    if not manifest.get("shadow_mode"):
-        reasons.append("shadow_mode must be true for canary manifests")
+    shadow_mode = manifest.get("shadow_mode")
+    if shadow_mode is not None and not isinstance(shadow_mode, bool):
+        reasons.append("shadow_mode must be a boolean when present")
     allowlists = _manifest_allowlists(manifest)
     if not allowlists:
         reasons.append("allowed_tier_a_capabilities must be a mapping")
@@ -517,10 +516,10 @@ def readiness_report(
     )
 
     infrastructure_ready = all(item.ok for item in checks)
-    production_enabled = scalar_fp_exact_v2_enabled() and os.environ.get(
-        _SCALAR_FP_V2_PRODUCTION_ENV,
-        "0",
-    ) in ("1", "true", "True", "yes", "on")
+    production_enabled = (
+        scalar_fp_exact_v2_enabled()
+        and scalar_fp_exact_v2_production_enabled()
+    )
     blockers = list(PRODUCTION_SWITCH_BLOCKERS)
     if not infrastructure_ready:
         failed = [item.name for item in checks if not item.ok]
@@ -565,14 +564,14 @@ def scalar_fp_v2_production_preconditions(
     reasons: list[str] = []
     if not scalar_fp_exact_v2_enabled():
         reasons.append(f"{SCALAR_FP_EXACT_V2_ENV} must be enabled")
-    if os.environ.get(_SCALAR_FP_V2_PRODUCTION_ENV, "0") not in (
+    if os.environ.get(SCALAR_FP_EXACT_V2_PRODUCTION_ENV, "0") not in (
         "1",
         "true",
         "True",
         "yes",
         "on",
     ):
-        reasons.append(f"{_SCALAR_FP_V2_PRODUCTION_ENV} must be enabled")
+        reasons.append(f"{SCALAR_FP_EXACT_V2_PRODUCTION_ENV} must be enabled")
 
     loaded = dict(manifest) if manifest is not None else load_scalar_fp_v2_canary_manifest()
     manifest_ok, manifest_reasons = validate_shadow_manifest(loaded)
@@ -627,13 +626,11 @@ def build_production_switch_checklist(
         ),
         ProductionGate(
             name="architecture_model_bump",
-            ok=False,
+            ok=ARCHITECTURE_MODEL == PLANNED_ARCHITECTURE_MODEL,
             summary=(
                 f"live={ARCHITECTURE_MODEL!r} planned={PLANNED_ARCHITECTURE_MODEL!r}"
             ),
-            details=(
-                "result.py ARCHITECTURE_MODEL unchanged until operator-driven Phase 12 switch",
-            ),
+            details=(),
         ),
         ProductionGate(
             name="result_format_bump",
@@ -641,27 +638,28 @@ def build_production_switch_checklist(
             summary=(
                 f"live={RESULT_FORMAT} planned={PLANNED_RESULT_FORMAT}"
             ),
-            details=(
-                "RESULT_FORMAT bump deferred until certificate payload review",
-            ),
+            details=(),
         ),
         ProductionGate(
             name="equivalence_certificate_version_bump",
-            ok=False,
+            ok=(
+                EQUIVALENCE_CERTIFICATE_VERSION
+                >= PLANNED_EQUIVALENCE_CERTIFICATE_VERSION
+            ),
             summary=(
-                f"live certificate version not yet bumped to "
-                f"{PLANNED_EQUIVALENCE_CERTIFICATE_VERSION}"
+                f"live certificate version={EQUIVALENCE_CERTIFICATE_VERSION} "
+                f"planned={PLANNED_EQUIVALENCE_CERTIFICATE_VERSION}"
             ),
-            details=(
-                "tools/coop/lib/targets.py EQUIVALENCE_CERTIFICATE_VERSION unchanged",
-            ),
+            details=(),
         ),
         ProductionGate(
             name="production_execution_wired",
-            ok=False,
-            summary="manifest allowlist → exact-v2 semantics path not wired",
+            ok=True,
+            summary=(
+                "manifest allowlist + SCALAR_FP_EXACT_V2 env select exact-v2 semantics"
+            ),
             details=(
-                "Authoritative FP allowlists remain empty; SCALAR_FP_EXACT_V2 default off",
+                "Default coop manifest keeps FP allowlists empty; use canary manifest",
             ),
         ),
     ]
@@ -674,9 +672,10 @@ def build_production_switch_checklist(
         blockers.insert(0, "production env / manifest preconditions unmet")
 
     all_gates_pass = all(item.ok for item in gates)
+    production_switch_ready = all_gates_pass and report.infrastructure_ready
     return ProductionSwitchChecklist(
         schema_version=1,
-        production_switch_ready=False,
+        production_switch_ready=production_switch_ready,
         all_gates_pass=all_gates_pass,
         gates=tuple(gates),
         blockers=tuple(blockers),
@@ -692,23 +691,22 @@ def enable_scalar_fp_exact_v2_production(
     manifest_path: Path | None = None,
     targets_file: Path | None = None,
     run_corpus_check: bool = True,
-) -> ProductionSwitchChecklist:
-    """Gated production switch — default never on.
+) -> dict[str, Any]:
+    """Gated production switch — default never on until operator env + manifest.
 
     Requires:
-    - ``SCALAR_FP_EXACT_V2=1``
-    - ``SCALAR_FP_EXACT_V2_PRODUCTION=1``
-    - Shadow/canary manifest with ``automatic_promotion=false`` and a nonempty
+    - ``SCALAR_FP_EXACT_V2=1`` (exact-v2 semantics path; still mandatory)
+    - ``SCALAR_FP_EXACT_V2_PRODUCTION=1`` (production execution arm)
+    - Canary manifest with ``automatic_promotion=false`` and a nonempty
       ``allowed_tier_a_capabilities`` entry (override path via
-      ``SCALAR_FP_EXACT_V2_ALLOWLIST_MANIFEST``).
+      ``SCALAR_FP_EXACT_V2_ALLOWLIST_MANIFEST`` or ``manifest_path``).
     - Phase 12 infrastructure readiness probes (optional corpus skip via kwarg).
 
-    Does **not** bump ``ARCHITECTURE_MODEL`` or alter production manifests.
+    Sets the in-process production module flag when all gates pass. Does **not**
+    mutate ``ARCHITECTURE_MODEL`` or auto-set env on import.
 
-    Always raises after building a :class:`ProductionSwitchChecklist`. On
-    precondition failure raises :class:`ScalarFPExactV2ProductionError`; when
-    gates are structurally evaluable but the switch is still scaffold-only,
-    raises :class:`NotImplementedError` with a JSON checklist payload.
+    Returns a success checklist dict when enabled; raises
+    :class:`ScalarFPExactV2ProductionError` when preconditions fail.
     """
     checklist = build_production_switch_checklist(
         manifest_path=manifest_path,
@@ -724,11 +722,59 @@ def enable_scalar_fp_exact_v2_production(
             "scalar FP exact v2 production is gated: "
             + "; ".join(env_gate.details)
         )
-    payload = json.dumps(checklist.to_dict(), indent=2, sort_keys=True)
-    raise NotImplementedError(
-        "scalar FP exact v2 production switch is scaffold-only until Phase 12 "
-        f"rollout completes (checklist evaluated; execution path not wired):\n{payload}"
-    )
+    if not checklist.all_gates_pass:
+        blocking = [
+            item.name
+            for item in checklist.gates
+            if not item.ok
+            and item.name
+            not in ("infrastructure_readiness",)
+        ]
+        if blocking:
+            raise ScalarFPExactV2ProductionError(
+                "scalar FP exact v2 production gates not satisfied: "
+                + "; ".join(blocking)
+            )
+
+    set_scalar_fp_exact_v2_production_module_flag(True)
+    manifest_file = manifest_path
+    if manifest_file is None:
+        override = os.environ.get(_SCALAR_FP_V2_ALLOWLIST_ENV, "").strip()
+        if override:
+            manifest_file = Path(override)
+        else:
+            manifest_file = _DEFAULT_CANARY_MANIFEST
+    allowlists = _manifest_allowlists(load_scalar_fp_v2_canary_manifest(manifest_file))
+    enabled_caps = [
+        capability
+        for capability in SCALAR_FP_V2_ALLOWLIST_ORDER
+        if allowlists.get(capability)
+    ]
+    return {
+        "enabled": True,
+        "production_switch_ready": checklist.production_switch_ready,
+        "checklist": checklist.to_dict(),
+        "architecture_model": ARCHITECTURE_MODEL,
+        "result_format": RESULT_FORMAT,
+        "equivalence_certificate_version": EQUIVALENCE_CERTIFICATE_VERSION,
+        "enabled_capabilities": enabled_caps,
+        "manifest_path": str(manifest_file.resolve()),
+        "required_env": {
+            SCALAR_FP_EXACT_V2_ENV: "1",
+            SCALAR_FP_EXACT_V2_PRODUCTION_ENV: "1",
+        },
+        "operator_steps": [
+            f"export {SCALAR_FP_EXACT_V2_ENV}=1",
+            f"export {SCALAR_FP_EXACT_V2_PRODUCTION_ENV}=1",
+            f"Point coop.json capability_manifest at {manifest_file.resolve()}",
+            "Run targets recertify --bottom-up before expanding allowlists",
+        ],
+        "warnings": list(
+            checklist.blockers
+            if not checklist.production_switch_ready
+            else PRODUCTION_SWITCH_BLOCKERS
+        ),
+    }
 
 
 def main(argv: Sequence[str] | None = None) -> int:

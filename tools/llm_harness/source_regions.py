@@ -395,6 +395,47 @@ def apply_strip_redundant_externs_to_regions(
     return updated, rows
 
 
+def rewrite_harness_stub_names(
+    candidate: str,
+    *,
+    target_id: str = "",
+    target_symbol: str = "",
+) -> str:
+    """Rewrite placeholder / truncated stub names to the real linker symbol.
+
+    Covers:
+    - ``harness_stub_us_…`` placeholders
+    - truncated ``UnkVirtualFuncN`` / mangled names missing the ``__Class…`` suffix
+    - single-underscore typos (``SetBiquadFilter_Q44…`` vs ``SetBiquadFilter__Q44…``)
+    """
+    if not candidate or not target_symbol:
+        return candidate
+    updated = candidate
+    if target_id:
+        stub = "harness_stub_" + target_id.replace("-", "_")
+        if stub in updated:
+            updated = re.sub(rf"\b{re.escape(stub)}\b", target_symbol, updated)
+    if target_symbol in updated:
+        return updated
+    # Single-underscore typo of an otherwise exact mangled name.
+    typo = target_symbol.replace("__", "_", 1)
+    if typo != target_symbol and re.search(rf"\b{re.escape(typo)}\b", updated):
+        updated = re.sub(rf"\b{re.escape(typo)}\b", target_symbol, updated)
+        return updated
+    # Truncated leaf before the MWCC ``__`` class/namespace suffix.
+    if "__" in target_symbol:
+        leaf = target_symbol.split("__", 1)[0]
+        if leaf and re.search(rf"\b{re.escape(leaf)}\b", updated):
+            # Only rewrite definition-like occurrences (name followed by '(').
+            updated = re.sub(
+                rf"\b{re.escape(leaf)}\s*\(",
+                target_symbol + "(",
+                updated,
+                count=1,
+            )
+    return updated
+
+
 def replace_function_source(
     source: str,
     region: SourceRegion,
@@ -403,7 +444,11 @@ def replace_function_source(
     target_function: str = "",
     target_symbol: str = "",
     source_path: str | Path | None = None,
+    target_id: str = "",
 ) -> str:
+    replacement = rewrite_harness_stub_names(
+        replacement, target_id=target_id, target_symbol=target_symbol
+    )
     value = strip_redundant_extern_decls(
         source,
         region,

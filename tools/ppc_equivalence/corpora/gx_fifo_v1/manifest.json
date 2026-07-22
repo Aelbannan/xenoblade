@@ -1,0 +1,23 @@
+{
+  "corpus": "gx_fifo_v1",
+  "schema_version": 1,
+  "hardware_profile": "wii-broadway-xenoblade-us-v2",
+  "oracle": "contract-v2",
+  "capabilities": [
+    "gx-fifo-write-trace",
+    "gx-fifo-read",
+    "mmio-loop-emission"
+  ],
+  "files": [
+    "write_trace.jsonl",
+    "read_policy.jsonl",
+    "loop_emission.jsonl"
+  ],
+  "row_counts": {
+    "write_trace.jsonl": 12,
+    "read_policy.jsonl": 12,
+    "loop_emission.jsonl": 14
+  },
+  "dolphin_capture_runs": 0,
+  "corpus_sha256": "d3a309529101c92cd7e02cc0879b4d96ed387e35bf4ee2ac0e5c2cd2e988b9a8"
+}

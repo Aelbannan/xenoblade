@@ -316,5 +316,5 @@ bool LightSet::SelectAmbLightObj(int lightObjIdx) {
 extern "C" void __as__Q34nw4r3g3d8LightObjFRCQ34nw4r3g3d8LightObj() {}
 // LLM-HARNESS-END: us-803ff6cc
 // LLM-HARNESS-BEGIN: us-803ff718
-extern "C" void __ne__Q34nw4r3g3d8LightObjCFRCQ34nw4r3g3d8LightObj() {}
+bool __ne__Q34nw4r3g3d8LightObjCFRCQ34nw4r3g3d8LightObj(const unsigned int* a, const unsigned int* b) { if (a[0] != b[0]) return true; if (a[1] != b[1]) return true; if (a[2] != b[2]) return true; if (a[3] != b[3]) return true; if (a[4] != b[4]) return true; if (a[5] != b[5]) return true; if (a[6] != b[6]) return true; if (a[7] != b[7]) return true; if (a[8] != b[8]) return true; if (a[9] != b[9]) return true; if (a[10] != b[10]) return true; if (a[11] != b[11]) return true; if (a[12] != b[12]) return true; if (a[13] != b[13]) return true; if (a[14] != b[14]) return true; if (a[15] != b[15]) return true; if (a[16] != b[16]) return true; return false; }
 // LLM-HARNESS-END: us-803ff718

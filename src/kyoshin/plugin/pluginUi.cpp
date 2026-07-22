@@ -9,7 +9,7 @@ void ui_mesGetArts(VMThread* pThread) {
 }
 
 // LLM-HARNESS-BEGIN: us-80045f9c
-extern "C" void func_800459FC() {}
+extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
 // LLM-HARNESS-END: us-80045f9c
 // LLM-HARNESS-BEGIN: us-80046de8
 extern "C" void pluginUiRegist() {}

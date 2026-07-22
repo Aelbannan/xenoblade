@@ -12,8 +12,11 @@ from tools.ppc_equivalence.jump_table_obligations import (
     validate_readonly_image_obligation,
 )
 from tools.ppc_equivalence.result import ProofStatus
-from tools.ppc_equivalence.vtable import VirtualCallCandidate, find_virtual_call_candidates
-from tools.ppc_equivalence.vtable_obligations import (
+from tools.ppc_equivalence.vtable import (
+    VirtualCallCandidate,
+    find_virtual_call_candidates,
+    find_virtual_thunk_candidates,
+)from tools.ppc_equivalence.vtable_obligations import (
     SemanticCalleeCertificate,
     VirtualCallProofContext,
     VtableSlotWords,
@@ -77,6 +80,26 @@ class VirtualCallRecognizerTests(unittest.TestCase):
     def test_rejects_bctr_not_bctrl(self) -> None:
         instructions = _decode("81830000 818c0048 7d8903a6 4e800420")
         self.assertEqual(find_virtual_call_candidates(instructions), [])
+
+    def test_recognizes_bctr_thunk(self) -> None:
+        instructions = _decode("81830000 818c0048 7d8903a6 4e800420")
+        matches = find_virtual_thunk_candidates(instructions)
+        self.assertEqual(len(matches), 1)
+        self.assertTrue(matches[0].tail_call)
+        self.assertEqual(matches[0].slot_offset, 0x48)
+        self.assertEqual(matches[0].target_reg, 12)
+
+    def test_recognizes_lwzu_bctr_thunk(self) -> None:
+        # lwzu r12,0x219c(r3); lwz r12,0x24(r12); mtctr r12; bctr
+        instructions = _decode("8583219c 818c0024 7d8903a6 4e800420")
+        matches = find_virtual_thunk_candidates(instructions)
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0].this_offset, 0x219c)
+        self.assertEqual(matches[0].slot_offset, 0x24)
+
+    def test_bctrl_not_matched_as_thunk(self) -> None:
+        instructions = _decode(_VIRTUAL_CALL_HEX)
+        self.assertEqual(find_virtual_thunk_candidates(instructions), [])
 
     def test_rejects_unrelated_code(self) -> None:
         instructions = _decode("38600001 38600002 4e800020")

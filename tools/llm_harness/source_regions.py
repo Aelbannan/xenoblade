@@ -445,7 +445,19 @@ def replace_function_source(
     target_symbol: str = "",
     source_path: str | Path | None = None,
     target_id: str = "",
+    local_mode: bool = False,
 ) -> str:
+    from .candidate_sanitize import sanitize_candidate_source
+
+    scaffold = source[region.content_start : region.content_end]
+    replacement = sanitize_candidate_source(
+        replacement,
+        target_function=target_function,
+        target_symbol=target_symbol,
+        source_path=source_path,
+        scaffold_from=scaffold,
+        local_mode=local_mode,
+    )
     replacement = rewrite_harness_stub_names(
         replacement, target_id=target_id, target_symbol=target_symbol
     )

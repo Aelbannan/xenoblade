@@ -24,20 +24,12 @@ void GXInitLightAttnA(GXLightObj* light, f32 a, f32 b, f32 c) {
     impl->ac = c;
 }
 
-//unused
-void GXGetLightAttnA(){
-}
-
 void GXInitLightAttnK(GXLightObj* light, f32 a, f32 b, f32 c) {
     GXLightObjImpl* impl = (GXLightObjImpl*)light;
 
     impl->ka = a;
     impl->kb = b;
     impl->kc = c;
-}
-
-//unused
-void GXGetLightAttnK(){
 }
 
 void GXInitLightSpot(GXLightObj* light, f32 angle, GXSpotFn fn) {
@@ -195,18 +187,9 @@ void GXInitSpecularDir(GXLightObj* light, f32 x, f32 y, f32 z) {
     impl->posZ = -999999999999999999.0f * z;
 }
 
-//unused
-void GXInitSpecularDirHA(){
-}
-
-
 void GXInitLightColor(GXLightObj* light, GXColor color) {
     GXLightObjImpl* impl = (GXLightObjImpl*)light;
     *(u32*)&impl->color = *(u32*)&color;
-}
-
-//unused
-void GXGetLightColor(){
 }
 
 // TODO(kiwi) This inline is fake, and also is a fake match (r6 hardcoded)
@@ -249,17 +232,6 @@ void GXLoadLightObjImm(const GXLightObj* light, GXLightID id) {
 
     GX_XF_LOAD_REGS(XF_MEM_LOBJ_SIZE - 1, num + GX_XF_MEM_LIGHTOBJ);
     WriteLightObj(&WGPIPE, impl);
-    gxdt->lastWriteWasXF = TRUE;
-}
-
-//unused
-void GXLoadLightObjIndx(u16 index, GXLightID id) {
-    u32 num;
-
-    num = 31 - __cntlzw(id);
-    num = (num % 8) * XF_MEM_LOBJ_SIZE;
-
-    GX_FIFO_LOAD_INDX_D(num + GX_XF_MEM_LIGHTOBJ, XF_MEM_LOBJ_SIZE - 1, index);
     gxdt->lastWriteWasXF = TRUE;
 }
 

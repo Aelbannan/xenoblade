@@ -157,7 +157,7 @@ class ScalarFPV2RolloutTests(unittest.TestCase):
         self.assertIn("infrastructure_readiness", gate_names)
         self.assertIn("architecture_model_bump", gate_names)
         payload = checklist.to_dict()
-        self.assertEqual(payload["planned"]["architecture_model"], "broadway-ppc32-be-v43")
+        self.assertEqual(payload["planned"]["architecture_model"], ARCHITECTURE_MODEL)
         self.assertEqual(payload["live"]["architecture_model"], ARCHITECTURE_MODEL)
 
     def test_readiness_report_structure(self) -> None:

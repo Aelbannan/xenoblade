@@ -49,5 +49,5 @@ python -m tools.ppc_equivalence.docs_sync --check
 
 - Submit LLM-assisted matching work to upstream `xbret/xenoblade`.
 - Commit `orig/`, `main.dol`, RELs, or disc assets.
-- **Decompile to assembly or registers** — matched code in `src/**` and `libs/**` must be **high-level C or C++** (see `PLAN.md` **§17.6** for narrow intrinsics / single-instruction asm exceptions).
+- **Decompile to assembly or registers** — matched code in `src/**` and `libs/**` must be **high-level C or C++**. **`asm void` / whole-function asm bodies are not allowed.** See `PLAN.md` **§17.6** for narrow intrinsics / single-instruction inline asm exceptions only.
 - Run Dolphin inside the restricted process — its universal binary reports missing NEON, so it must be launched outside the restricted process.

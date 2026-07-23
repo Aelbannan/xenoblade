@@ -49,13 +49,6 @@ void __DBVECTOR(void);
 void __OSEVSetNumber(void);
 void __OSEVEnd(void);
 
-DECOMP_FORCEACTIVE(OS_c, __OSRebootParams);
-
-
-//unused
-void __OSIsDebuggerPresent(){
-}
-
 asm void __OSFPRInit(void) {
     // clang-format off
     nofralloc
@@ -148,16 +141,8 @@ static void DisableWriteGatherPipe(void) {
     PPCMthid2(PPCMfhid2() & ~HID2_WPE);
 }
 
-//unused
-void __OSGetBroadwayRev(){
-}
-
-u32 __OSGetHollywoodRev(void) {
+static u32 __OSGetHollywoodRev(void) {
     return *(u32*)OSPhysicalToCached(OS_PHYS_HOLLYWOOD_REV);
-}
-
-//unused
-void __OSGetGDDRVendorCode(){
 }
 
 void __OSGetIOSRev(OSIOSRev* rev) {

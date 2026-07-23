@@ -63,43 +63,68 @@ void CUIWindowManager::Move() {
         return;
     }
 
-    for (WindowIter it = inst->mWindowList1.begin(); it != inst->mWindowList1.end(); ++it) {
-        IUIWindow* window = *it;
-        s32 timer = window->unk5C != NULL ? window->unk5C->unk828 : window->unk60;
-        if (timer > 0) {
-            lbl_eu_8066408C = (s16)timer;
-            break;
+    // Raw node walks for timer find (retail r7/r5/r4 shape).
+    {
+        WindowNode* sentinel = inst->mWindowList1.mStartNodePtr;
+        for (WindowNode* n = sentinel->mNext; n != sentinel; n = n->mNext) {
+            IUIWindow* window = n->mItem;
+            s32 timer;
+            if (window->unk5C != NULL) {
+                timer = window->unk5C->unk828;
+            } else {
+                timer = window->unk60;
+            }
+            if (timer > 0) {
+                lbl_eu_8066408C = (s16)timer;
+                break;
+            }
         }
     }
-    for (WindowIter it = inst->mWindowList2.begin(); it != inst->mWindowList2.end(); ++it) {
-        IUIWindow* window = *it;
-        s32 timer = window->unk5C != NULL ? window->unk5C->unk828 : window->unk60;
-        if (timer > 0) {
-            lbl_eu_8066408C = (s16)timer;
-            break;
+    {
+        WindowNode* sentinel = inst->mWindowList2.mStartNodePtr;
+        for (WindowNode* n = sentinel->mNext; n != sentinel; n = n->mNext) {
+            IUIWindow* window = n->mItem;
+            s32 timer;
+            if (window->unk5C != NULL) {
+                timer = window->unk5C->unk828;
+            } else {
+                timer = window->unk60;
+            }
+            if (timer > 0) {
+                lbl_eu_8066408C = (s16)timer;
+                break;
+            }
         }
     }
 
+    // Retail mark-all: search cursor (r6) walks; mark cursor (r7) stays at
+    // list head until a hit, then marks the entire list from the head.
     {
-        WindowIter it = mWindowList1.begin();
-        for (; it != mWindowList1.end(); ++it) {
-            if ((*it)->unk65 != 0 || unkA1 != 0) {
+        WindowNode* sentinel = mWindowList1.mStartNodePtr;
+        WindowNode* mark = sentinel->mNext;
+        WindowNode* search = mark;
+        for (; search != sentinel; search = search->mNext) {
+            if (search->mItem->unk65 != 0 || unkA1 != 0) {
+                bool flag = true;
+                for (; mark != sentinel; mark = mark->mNext) {
+                    mark->mItem->unk65 = flag;
+                }
                 break;
             }
-        }
-        for (; it != mWindowList1.end(); ++it) {
-            (*it)->unk65 = true;
         }
     }
     {
-        WindowIter it = mWindowList2.begin();
-        for (; it != mWindowList2.end(); ++it) {
-            if ((*it)->unk65 != 0 || unkA1 != 0) {
+        WindowNode* sentinel = mWindowList2.mStartNodePtr;
+        WindowNode* mark = sentinel->mNext;
+        WindowNode* search = mark;
+        for (; search != sentinel; search = search->mNext) {
+            if (search->mItem->unk65 != 0 || unkA1 != 0) {
+                bool flag = true;
+                for (; mark != sentinel; mark = mark->mNext) {
+                    mark->mItem->unk65 = flag;
+                }
                 break;
             }
-        }
-        for (; it != mWindowList2.end(); ++it) {
-            (*it)->unk65 = true;
         }
     }
 

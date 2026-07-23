@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tempfile
 import threading
@@ -258,33 +259,15 @@ class OpenCodeOutputTests(unittest.TestCase):
 
 
 class OpenCodeProviderTests(unittest.TestCase):
-    def test_invoke_uses_session_message_api(self) -> None:
-        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096", timeout_seconds=30)
-        calls: list[tuple[str, str]] = []
-
-        with tempfile.TemporaryDirectory() as tmp:
-            cwd = Path(tmp)
-
-            def fake_request(method: str, path: str, body=None, query=None):
-                calls.append((method, path))
-                if method == "GET" and path == "/global/health":
-                    return {"healthy": True, "version": "1.18.2"}
-                if method == "POST" and path == "/session":
-                    self.assertEqual(query.get("directory"), str(cwd.resolve()))
-                    self.assertIsInstance(body.get("permission"), list)
-                    return {"id": "ses_test123"}
-                if method == "POST" and path == "/session/ses_test123/message":
-                    self.assertEqual(query.get("directory"), str(cwd.resolve()))
-                    self.assertEqual(body["model"], {
-                        "providerID": "opencode",
-                        "modelID": "deepseek-v4-flash-free",
-                    })
-                    self.assertEqual(body["parts"][0]["type"], "text")
-                    self.assertIn("Return only the requested JSON object", body["parts"][0]["text"])
-                    self.assertFalse(body["tools"]["bash"])
-                    self.assertFalse(body["tools"]["edit"])
-                    return {
-                        "info": {
+    def test_invoke_uses_opencode_run_cli(self) -> None:
+        provider = OpenCodeProvider(timeout_seconds=30)
+        stdout = "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "step_finish",
+                        "part": {
+                            "type": "step-finish",
                             "cost": 0.02,
                             "tokens": {
                                 "input": 9,
@@ -292,116 +275,111 @@ class OpenCodeProviderTests(unittest.TestCase):
                                 "cache": {"read": 0, "write": 0},
                             },
                         },
-                        "parts": [{"type": "text", "text": '{"source":"void f(){}"}'}],
                     }
-                if method == "DELETE" and path == "/session/ses_test123":
-                    return True
-                raise AssertionError(f"unexpected request {method} {path}")
-
-            provider._request = fake_request  # type: ignore[method-assign]
-            result = provider.invoke(
-                prompt='{"task":"decompile"}',
-                model=ModelConfig(
-                    id="opencode-flash",
-                    provider="opencode",
-                    model="opencode/deepseek-v4-flash-free",
                 ),
-                cwd=cwd,
-            )
+                json.dumps(
+                    {
+                        "type": "text",
+                        "part": {"type": "text", "text": '{"source":"void f(){}"}'},
+                    }
+                ),
+            ]
+        )
+        completed = SimpleNamespace(returncode=0, stdout=stdout, stderr="")
 
+        with tempfile.TemporaryDirectory() as tmp:
+            cwd = Path(tmp)
+            with unittest.mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ) as run:
+                result = provider.invoke(
+                    prompt='{"task":"decompile"}',
+                    model=ModelConfig(
+                        id="opencode-flash",
+                        provider="opencode",
+                        model="opencode/deepseek-v4-flash-free",
+                    ),
+                    cwd=cwd,
+                )
+
+        cmd = run.call_args.args[0]
+        self.assertEqual(cmd[0:2], ["opencode", "run"])
+        self.assertIn("--model", cmd)
+        self.assertIn("opencode/deepseek-v4-flash-free", cmd)
+        self.assertIn("--format", cmd)
+        self.assertIn("json", cmd)
+        self.assertIn("--pure", cmd)
+        self.assertIn("--dir", cmd)
+        self.assertIn(str(cwd), cmd)
+        self.assertIn("--file", cmd)
+        self.assertIn("Return only the requested JSON object", cmd[-1])
         self.assertEqual(result.text, '{"source":"void f(){}"}')
         self.assertEqual(result.input_tokens, 9)
         self.assertEqual(result.output_tokens, 3)
         self.assertAlmostEqual(result.cost or 0.0, 0.02)
-        self.assertEqual(
-            calls,
-            [
-                ("GET", "/global/health"),
-                ("POST", "/session"),
-                ("POST", "/session/ses_test123/message"),
-                ("DELETE", "/session/ses_test123"),
-            ],
-        )
 
-    def test_invoke_requires_healthy_server(self) -> None:
-        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096")
-
-        def boom(*_args, **_kwargs):
-            raise RuntimeError("connection refused")
-
-        provider._request = boom  # type: ignore[method-assign]
+    def test_invoke_raises_on_nonzero_exit(self) -> None:
+        provider = OpenCodeProvider(timeout_seconds=30)
+        completed = SimpleNamespace(returncode=2, stdout="", stderr="boom")
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(RuntimeError, "unreachable"):
+            with unittest.mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ):
+                with self.assertRaisesRegex(RuntimeError, "OpenCode exited 2"):
+                    provider.invoke(
+                        prompt="hi",
+                        model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
+                        cwd=Path(tmp),
+                    )
+
+    def test_invoke_passes_optional_variant(self) -> None:
+        provider = OpenCodeProvider(timeout_seconds=30)
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {"type": "text", "part": {"type": "text", "text": "{}"}}
+            ),
+            stderr="",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            with unittest.mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ) as run:
+                provider.invoke(
+                    prompt="hi",
+                    model=ModelConfig(
+                        id="x",
+                        provider="opencode",
+                        model="opencode/m",
+                        variant="high",
+                    ),
+                    cwd=Path(tmp),
+                )
+        cmd = run.call_args.args[0]
+        self.assertIn("--variant", cmd)
+        self.assertEqual(cmd[cmd.index("--variant") + 1], "high")
+
+    def test_invoke_sets_none_variant_when_pure(self) -> None:
+        provider = OpenCodeProvider(timeout_seconds=30, pure=True)
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {"type": "text", "part": {"type": "text", "text": "{}"}}
+            ),
+            stderr="",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            with unittest.mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ) as run:
                 provider.invoke(
                     prompt="hi",
                     model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
                     cwd=Path(tmp),
                 )
-
-    def test_invoke_passes_optional_variant(self) -> None:
-        provider = OpenCodeProvider(base_url="http://127.0.0.1:4096", timeout_seconds=30)
-        seen: dict[str, Any] = {}
-
-        def fake_request(method: str, path: str, body=None, query=None):
-            if method == "GET" and path == "/global/health":
-                return {"healthy": True, "version": "1.18.2"}
-            if method == "POST" and path == "/session":
-                return {"id": "ses_variant"}
-            if method == "POST" and path.endswith("/message"):
-                seen["body"] = body
-                return {
-                    "info": {"cost": 0, "tokens": {"input": 1, "output": 1, "cache": {}}},
-                    "parts": [{"type": "text", "text": "{}"}],
-                }
-            if method == "DELETE":
-                return True
-            raise AssertionError(f"unexpected {method} {path}")
-
-        provider._request = fake_request  # type: ignore[method-assign]
-        with tempfile.TemporaryDirectory() as tmp:
-            provider.invoke(
-                prompt="hi",
-                model=ModelConfig(
-                    id="x",
-                    provider="opencode",
-                    model="opencode/m",
-                    variant="high",
-                ),
-                cwd=Path(tmp),
-            )
-        self.assertEqual(seen["body"]["variant"], "high")
-
-    def test_invoke_sets_none_variant_when_pure(self) -> None:
-        provider = OpenCodeProvider(
-            base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=True
-        )
-        seen: dict[str, Any] = {}
-
-        def fake_request(method: str, path: str, body=None, query=None):
-            if method == "GET" and path == "/global/health":
-                return {"healthy": True, "version": "1.18.2"}
-            if method == "POST" and path == "/session":
-                return {"id": "ses_novar"}
-            if method == "POST" and path.endswith("/message"):
-                seen["body"] = body
-                return {
-                    "info": {"cost": 0, "tokens": {"input": 1, "output": 1, "cache": {}}},
-                    "parts": [{"type": "text", "text": "{}"}],
-                }
-            if method == "DELETE":
-                return True
-            raise AssertionError(f"unexpected {method} {path}")
-
-        provider._request = fake_request  # type: ignore[method-assign]
-        with tempfile.TemporaryDirectory() as tmp:
-            provider.invoke(
-                prompt="hi",
-                model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
-                cwd=Path(tmp),
-            )
-        self.assertEqual(seen["body"]["variant"], "none")
-        self.assertEqual(seen["body"]["reasoning_effort"], "none")
-        self.assertFalse(seen["body"]["enable_thinking"])
+        cmd = run.call_args.args[0]
+        self.assertIn("--variant", cmd)
+        self.assertEqual(cmd[cmd.index("--variant") + 1], "none")
 
 
 class LMStudioProviderTests(unittest.TestCase):
@@ -491,6 +469,110 @@ class LMStudioProviderTests(unittest.TestCase):
         close_tag = "</" + "think" + ">"
         raw = f'{open_tag}\nwait...\n{close_tag}\n{{"source":"x"}}'
         self.assertEqual(_strip_think_blocks(raw).strip(), '{"source":"x"}')
+
+
+class OmlxProviderTests(unittest.TestCase):
+    def test_invoke_parses_openai_compatible_response(self) -> None:
+        from tools.llm_harness.providers import OmlxProvider
+
+        response = {
+            "choices": [{"message": {"content": '{"source":"int f(){return 1;}"}'}}],
+            "usage": {
+                "prompt_tokens": 80,
+                "completion_tokens": 12,
+                "prompt_tokens_details": {"cached_tokens": 40},
+            },
+        }
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(response) + "\n200",
+            stderr="",
+        )
+        provider = OmlxProvider(timeout_seconds=30, api_key="test-key")
+        with unittest.mock.patch(
+            "tools.llm_harness.providers.subprocess.run", return_value=completed
+        ) as run:
+            result = provider.invoke(
+                '{"task":"decompile"}',
+                ModelConfig(
+                    id="local",
+                    provider="omlx",
+                    model="mlx-community/ThinkingCap-Qwen3.6-27B-mlx-6Bit",
+                ),
+                Path("."),
+            )
+        self.assertEqual(result.text, '{"source":"int f(){return 1;}"}')
+        self.assertEqual(result.input_tokens, 80)
+        self.assertEqual(result.output_tokens, 12)
+        self.assertEqual(result.cache_read_tokens, 40)
+        cmd = run.call_args.args[0]
+        self.assertIn("Authorization: Bearer test-key", cmd)
+        body = json.loads(cmd[cmd.index("-d") + 1])
+        self.assertEqual(
+            body["model"], "mlx-community/ThinkingCap-Qwen3.6-27B-mlx-6Bit"
+        )
+        self.assertEqual(body["response_format"]["type"], "json_schema")
+        self.assertFalse(body["enable_thinking"])
+
+    def test_api_key_from_settings_when_unset(self) -> None:
+        from tools.llm_harness.providers import OmlxProvider
+
+        response = {
+            "choices": [{"message": {"content": "{}"}}],
+            "usage": {},
+        }
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(response) + "\n200",
+            stderr="",
+        )
+        provider = OmlxProvider(api_key=None)
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Path(tmp) / "settings.json"
+            settings.write_text(
+                json.dumps({"auth": {"api_key": "from-settings"}}),
+                encoding="utf-8",
+            )
+            with unittest.mock.patch.object(OmlxProvider, "SETTINGS_PATH", settings):
+                with unittest.mock.patch.dict(os.environ, {}, clear=False):
+                    os.environ.pop("OMLX_API_KEY", None)
+                    with unittest.mock.patch(
+                        "tools.llm_harness.providers.subprocess.run",
+                        return_value=completed,
+                    ) as run:
+                        provider.invoke(
+                            "{}",
+                            ModelConfig(id="local", provider="omlx", model="m"),
+                            Path("."),
+                        )
+        cmd = run.call_args.args[0]
+        self.assertIn("Authorization: Bearer from-settings", cmd)
+
+    def test_empty_config_api_key_skips_auth_header(self) -> None:
+        from tools.llm_harness.providers import OmlxProvider
+
+        response = {
+            "choices": [{"message": {"content": "{}"}}],
+            "usage": {},
+        }
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(response) + "\n200",
+            stderr="",
+        )
+        provider = OmlxProvider(api_key="")
+        with unittest.mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("OMLX_API_KEY", None)
+            with unittest.mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ) as run:
+                provider.invoke(
+                    "{}",
+                    ModelConfig(id="local", provider="omlx", model="m"),
+                    Path("."),
+                )
+        cmd = run.call_args.args[0]
+        self.assertFalse(any(str(arg).startswith("Authorization:") for arg in cmd))
 
 
 class ReasonixOutputTests(unittest.TestCase):

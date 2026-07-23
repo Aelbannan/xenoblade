@@ -2,6 +2,13 @@
 
 #include <climits>
 
+// Retail .sdata2 pools (US).
+extern "C" {
+extern const f32 lbl_eu_80669EE8; // 1.0f
+extern const f32 lbl_eu_80669EEC; // 0.0f
+extern const f64 lbl_eu_80669EF0; // int→double magic
+}
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -21,12 +28,13 @@ BasicSound::BasicSound()
       mId(INVALID_ID) {}
 
 void BasicSound::InitParam() {
-    mPauseFlag = false;
+    mPauseState = 0;
     mPauseFadeFlag = false;
     mStartFlag = false;
     mStartedFlag = false;
     mAutoStopFlag = false;
     mFadeOutFlag = false;
+    mPauseFlag = false;
 
     mAutoStopCounter = 0;
     mUpdateCounter = 0;
@@ -41,10 +49,15 @@ void BasicSound::InitParam() {
     mExtSurroundPan = 0.0f;
     mExtMoveVolume.InitValue(1.0f);
 
+    mUnk0xBC = 0.0f;
+    mUnk0xC0 = 0.0f;
     mOutputLineFlag = OUTPUT_LINE_MAIN;
     mOutputLineFlagEnable = false;
 
     mMainOutVolume = 1.0f;
+    for (int i = 0; i < 4; i++) {
+        mUnk0xCC[i] = 0.0f;
+    }
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         mRemoteOutVolume[i] = 1.0f;
     }
@@ -318,11 +331,18 @@ void BasicSound::SetPlayerPriority(int priority) {
 }
 
 void BasicSound::SetInitialVolume(f32 vol) {
-    mInitVolume = ut::Clamp(vol, 0.0f, 1.0f);
+    mInitVolume = ut::Clamp(vol, lbl_eu_80669EEC, lbl_eu_80669EE8);
 }
 
 void BasicSound::SetVolume(f32 vol, int frames) {
-    f32 target = ut::Clamp(vol, 0.0f, 1.0f);
+    f32 target;
+    if (vol > lbl_eu_80669EE8) {
+        target = lbl_eu_80669EE8;
+    } else if (vol < lbl_eu_80669EEC) {
+        target = lbl_eu_80669EEC;
+    } else {
+        target = vol;
+    }
     mExtMoveVolume.SetTarget(target, frames);
 }
 
@@ -438,63 +458,3 @@ void BasicSound::SetId(u32 id) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-// LLM-HARNESS-BEGIN: us-804154f4
-extern "C" void UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv() {}
-// LLM-HARNESS-END: us-804154f4
-// LLM-HARNESS-BEGIN: us-80415528
-extern "C" void UpdateParam__Q44nw4r3snd6detail10BasicSoundFv() {}
-// LLM-HARNESS-END: us-80415528
-// LLM-HARNESS-BEGIN: us-80415a70
-void AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(
-    nw4r::snd::detail::BasicSound* self,
-    nw4r::snd::detail::PlayerHeap* playerHeap)
-{
-    *reinterpret_cast<nw4r::snd::detail::PlayerHeap**>(reinterpret_cast<char*>(self) + 0x4) = playerHeap;
-}
-// LLM-HARNESS-END: us-80415a70
-// LLM-HARNESS-BEGIN: us-80415a78
-void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(void* _this, void* pHeap) {
-    *(int*)((char*)_this + 4) = 0;
-}
-// LLM-HARNESS-END: us-80415a78
-// LLM-HARNESS-BEGIN: us-80415a84
-void AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(nw4r::snd::detail::BasicSound* _this, nw4r::snd::SoundPlayer* player)
-{
-    *(void**)((char*)_this + 0x10) = player;
-}
-// LLM-HARNESS-END: us-80415a84
-// LLM-HARNESS-BEGIN: us-80415a8c
-void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(void* self, void* player) {
-    *(int*)((char*)self + 0x10) = 0;
-}
-// LLM-HARNESS-END: us-80415a8c
-// LLM-HARNESS-BEGIN: us-80415a98
-void AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(void* pThis, void* pActor)
-{
-    *(void**)((int)pThis + 0x14) = pActor;
-}
-// LLM-HARNESS-END: us-80415a98
-// LLM-HARNESS-BEGIN: us-80415aa0
-void AttachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer(nw4r::snd::detail::BasicSound* pThis, nw4r::snd::detail::ExternalSoundPlayer* pPlayer) { *(nw4r::snd::detail::ExternalSoundPlayer**)((char*)pThis + 0x18) = pPlayer; }
-// LLM-HARNESS-END: us-80415aa0
-// LLM-HARNESS-BEGIN: us-80415aa8
-extern "C" void DetachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer() {}
-// LLM-HARNESS-END: us-80415aa8
-// LLM-HARNESS-BEGIN: us-80415ab4
-u8 GetVoiceOutCount__Q44nw4r3snd6detail10BasicSoundCFv(const void* _this) {
-    return ((const u8*)_this)[0x95];
-}
-// LLM-HARNESS-END: us-80415ab4
-// LLM-HARNESS-BEGIN: us-80415b14
-extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail10BasicSoundFv() {}
-// LLM-HARNESS-END: us-80415b14
-// LLM-HARNESS-BEGIN: us-80415ca8
-extern "C" void SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo() {}
-// LLM-HARNESS-END: us-80415ca8
-// LLM-HARNESS-BEGIN: us-80415d74
-extern "C" void GetAmbientPriority__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfoUl() {}
-// LLM-HARNESS-END: us-80415d74
-// LLM-HARNESS-BEGIN: us-80415e64
-extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv() { return false; }
-// LLM-HARNESS-END: us-80415e64

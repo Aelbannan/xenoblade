@@ -16931,7 +16931,7 @@ CView* CViewRoot::getFullScreenView() {
 
         // keepGoing=0 before the branch: retail cmpwi/li/bne shape (size 0x1D8).
         // MWCC homes keepGoing in r4 vs retail r0 (cascades mState); closed by
-        // tools/postprocess_reloc_names.py CViewRoot.o insn_patches (§17.6).
+        // Chaitin near-miss — keep iterating in high-level C.
         keepGoing = 0;
         if (msgQualified != 0) {
         } else {

@@ -18,7 +18,7 @@ TAG_PATTERNS: dict[str, re.Pattern[str]] = {
     "inlining": re.compile(r"\binline(?:d|s|ing)?\b|\bIPA\b|helper boundar", re.I),
     "literal_pool": re.compile(r"literal pool|string pool|float pool|\.sdata2|@stringBase|@N\b", re.I),
     "loop_codegen": re.compile(r"\bloop\b|\bmtctr\b|\bbdnz\b|unroll|do-while|induction", re.I),
-    "policy_exception": re.compile(r"policy exception|§17\.6|insn_patches|inline asm|postprocess", re.I),
+    "policy_exception": re.compile(r"policy exception|§17\.6|inline asm|postprocess", re.I),
     "regalloc": re.compile(r"regalloc|register alloc|register color|Chaitin|regswap|callee-save|GPR|FPR", re.I),
     "relocation": re.compile(r"reloc|R_PPC_|@sda21|SDA\b|symbol name drift|extern \"C\"", re.I),
     "semantics": re.compile(r"semantic|behaviou?r|logic bug|correctness", re.I),

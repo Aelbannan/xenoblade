@@ -2170,6 +2170,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3485,12 +3550,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -4154,19 +4222,7 @@ asm void PPCMtmsr(register u32 val) {
     // clang-format on
 }
 
-
-//unused
-asm void PPCOrMsr(){
-}
-
-//unused
-asm void PPCAndMsr(){
-}
-
-//unused
-asm void PPCAndCMsr(){
-}
-
+#pragma dont_inline on
 asm u32 PPCMfhid0(void) {
     // clang-format off
     nofralloc
@@ -4175,9 +4231,14 @@ asm u32 PPCMfhid0(void) {
     // clang-format on
 }
 
-void PPCMthid0(register u32 val) {
-    __asm__ volatile("mtspr 0x3F0, %0" : : "r"(val));
+asm void PPCMthid0(register u32 val) {
+    // clang-format off
+    nofralloc
+    mthid0 val
+    blr
+    // clang-format on
 }
+#pragma dont_inline off
 
 asm u32 PPCMfl2cr(void) {
     // clang-format off
@@ -4195,20 +4256,12 @@ void PPCMtdec(u32 val) {
     asm("mtdec %0" : : "r"(val));
 }
 
-//unused
-asm void PPCMfdec(){
-}
-
 asm void PPCSync(void) {
     // clang-format off
     nofralloc
     sc
     blr
     // clang-format on
-}
-
-//unused
-asm void PPCEieio(){
 }
 
 asm void PPCHalt(void) {
@@ -4224,10 +4277,6 @@ loop:
     // clang-format on
 }
 
-//unused
-asm void PPCMfmmcr0(){
-}
-
 asm void PPCMtmmcr0(register u32 val) {
     // clang-format off
     nofralloc
@@ -4236,24 +4285,12 @@ asm void PPCMtmmcr0(register u32 val) {
     // clang-format on
 }
 
-//unused
-asm void PPCMfmmcr1(){
-}
-
 void PPCMtmmcr1(u32 val) {
     asm volatile("mtmmcr1 %0" : : "r"(val));
 }
 
-//unused
-asm void PPCMfpmc1(){
-}
-
 void PPCMtpmc1(u32 val) {
     asm volatile("mtpmc1 %0" : : "r"(val));
-}
-
-//unused
-asm void PPCMfpmc2(){
 }
 
 asm void PPCMtpmc2(register u32 val) {
@@ -4264,10 +4301,6 @@ asm void PPCMtpmc2(register u32 val) {
     // clang-format on
 }
 
-//unused
-asm void PPCMfpmc3(){
-}
-
 asm void PPCMtpmc3(register u32 val) {
     // clang-format off
     nofralloc
@@ -4276,20 +4309,8 @@ asm void PPCMtpmc3(register u32 val) {
     // clang-format on
 }
 
-//unused
-asm void PPCMfpmc4(){
-}
-
 void PPCMtpmc4(unsigned long val) {
     __asm("mtpmc4 %0" : : "r"(val));
-}
-
-//unused
-asm void PPCMfsia(){
-}
-
-//unused
-asm void PPCMtsia(){
 }
 
 u32 PPCMffpscr(void) {
@@ -4331,15 +4352,6 @@ asm void PPCMthid2(register u32 val) {
     // clang-format on
 }
 
-asm u32 PPCMfwpar(void) {
-    // clang-format off
-    nofralloc
-    sync
-    mfwpar r3
-    blr
-    // clang-format on
-}
-
 asm void PPCMtwpar(register u32 val) {
     // clang-format off
     nofralloc
@@ -4348,36 +4360,8 @@ asm void PPCMtwpar(register u32 val) {
     // clang-format on
 }
 
-//unused
-asm void PPCMfdmaU(){
-}
-
-//unused
-asm void PPCMfdmaL(){
-}
-
-//unused
-asm void PPCMtdmaU(){
-}
-
-//unused
-asm void PPCMtdmaL(){
-}
-
-//unused
-asm void PPCMfpvr(){
-}
-
-//unused
-void PPCEnableSpeculation(){
-}
-
 void PPCDisableSpeculation(void) {
     PPCMthid0(PPCMfhid0() | HID0_SPD);
-}
-
-//unused
-asm void PPCSetFpIEEEMode(){
 }
 
 asm void PPCSetFpNonIEEEMode(void) {
@@ -4386,10 +4370,6 @@ asm void PPCSetFpNonIEEEMode(void) {
     mtfsb1 29
     blr
     // clang-format on
-}
-
-//unused
-void PPCMfhid4(){
 }
 
 void PPCMthid4(register u32 val) {

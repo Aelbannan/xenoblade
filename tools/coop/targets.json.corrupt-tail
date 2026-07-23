@@ -1,0 +1,6 @@
+
+t": 1,
+    "direct_calls": "PPC bl destination",
+    "indirect_calls_are_unresolved": true
+  }
+}

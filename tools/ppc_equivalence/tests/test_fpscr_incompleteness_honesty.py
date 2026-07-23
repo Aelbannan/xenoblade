@@ -83,6 +83,50 @@ class AnnotateFpscrIncompletenessTests(unittest.TestCase):
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
         self.assertFalse(self._has_assumption(result))
 
+    def test_demotes_mffs_projection_into_compared_fpr(self) -> None:
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            observables=["f1"],
+            opcodes_used=["fdivs", "mffs"],
+        )
+        annotate_fpscr_sticky_incompleteness(result)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_ABSTRACTION)
+        self.assertTrue(self._has_assumption(result))
+        self.assertIn(FPSCR_STICKIES_UNSUPPORTED, result.unsupported or [])
+
+    def test_demotes_record_form_cr1_projection(self) -> None:
+        """Record-form Rc→CR1 exposes OX without mffs/mcrfs."""
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            observables=["f1", "cr1"],
+            opcodes_used=["fadds", "fmr", "mtfsb0"],
+        )
+        annotate_fpscr_sticky_incompleteness(result)
+        self.assertEqual(result.status, ProofStatus.INCONCLUSIVE_ABSTRACTION)
+        self.assertTrue(self._has_assumption(result))
+        self.assertIn(FPSCR_STICKIES_UNSUPPORTED, result.unsupported or [])
+
+    def test_skips_cr0_without_mcrfs_or_cr1(self) -> None:
+        """Integer CR0 alone is not an FPSCR sticky projection."""
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            observables=["r3", "cr0"],
+            opcodes_used=["fadds"],
+        )
+        annotate_fpscr_sticky_incompleteness(result)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+        self.assertFalse(self._has_assumption(result))
+
+    def test_skips_fpr_observe_without_mffs_projection(self) -> None:
+        result = ProofResult(
+            status=ProofStatus.EQUIVALENT,
+            observables=["f1"],
+            opcodes_used=["fdivs"],
+        )
+        annotate_fpscr_sticky_incompleteness(result)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+        self.assertFalse(self._has_assumption(result))
+
     def test_skips_when_not_equivalent(self) -> None:
         result = ProofResult(
             status=ProofStatus.NOT_EQUIVALENT,

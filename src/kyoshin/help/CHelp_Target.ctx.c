@@ -715,30 +715,45 @@ typedef int BOOL;
 /* "src/kyoshin/help/CHelp.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-namespace cf{
-    //min size: 0xC
-    class CHelp {
-    public:
-        virtual void CHelp_UnkVirtualFunc1();
-        virtual void CHelp_UnkVirtualFunc2();
-        virtual bool CHelp_UnkVirtualFunc3();
-        virtual void CHelp_UnkVirtualFunc4();
-        virtual void CHelp_UnkVirtualFunc5();
-    
-        //0x0: vtable
-        u8 unk4[0x8];
-        int unkC;
-    };
-}
+namespace cf {
+
+// Manual interface table at CHelp+0x8 (not a C++ vptr at +0).
+struct CHelpVtbl {
+    void* mSlots[8]; // +0x00..+0x1C
+};
+
+// Retail ctor writes: owner@0, param@4, vtbl@8. Base size is 0xC.
+// Construction uses retail symbol __ct__Q22cf5CHelpFv(self, owner, param).
+class CHelp {
+public:
+    void CHelp_UnkVirtualFunc2();
+
+    void* mOwner; // 0x0
+    u32 mParam; // 0x4 (low byte used by UnkVirtualFunc2)
+    CHelpVtbl* mVtbl; // 0x8
+};
+
+// Flag helper sharing the CHelp prefix; flag byte at +0xC.
+// CBC/CE4 keep Fv symbols via extern "C" in CHelp.cpp (arg in r4).
+class CHelpSwitch : public CHelp {
+public:
+    void func_802B7CB0();
+
+    u8 mFlag; // 0xC
+};
+
+} // namespace cf
 /* end "kyoshin/help/CHelp.hpp" */
 
-namespace cf{
-    //size: 0x10
-    class CHelp_Target : public CHelp {
-    public:
-        virtual bool CHelp_UnkVirtualFunc3();
-    };
-}
+namespace cf {
+// size: 0x10
+class CHelp_Target : public CHelp {
+public:
+    bool CHelp_UnkVirtualFunc3();
+
+    s32 unkC; // 0xC
+};
+} // namespace cf
 /* end "kyoshin/help/CHelp_Target.hpp" */
 /* "src/kyoshin/help/CHelp_Target.cpp" line 1 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
@@ -771,6 +786,7 @@ namespace cf{
         static void func_8007E218();
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();

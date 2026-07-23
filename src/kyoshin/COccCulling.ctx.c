@@ -2048,6 +2048,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3363,12 +3428,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -9020,7 +9088,10 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    char UNK_0x564[0x5EC - 0x564];
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -15280,7 +15351,8 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     float xScale = pFrustum->mScale.x;
     float yScale = pFrustum->mScale.y;
     CMat34 rotMat;
-    pFrustum->mMat.setScale(CVec3(xScale, yScale, 1));
+    // z-scale via SDA 1.0f (lbl_eu_80667C88) — slight fuzzy win vs literal 1.
+    pFrustum->mMat.setScale(CVec3(xScale, yScale, lbl_eu_80667C88));
     rotMat.setRotXYZ(pFrustum->mRot);
 
     CMat34::mul(pFrustum->mMat, pFrustum->mMat, rotMat);
@@ -15288,12 +15360,14 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     pFrustum->mMat.addTranslation(pFrustum->mPos);
     pFrustum->mMat.invert(&pFrustum->mMatInv);
 
-    pFrustum->mDir.set(0, 0, 1);
+    pFrustum->mDir.x = lbl_eu_80667C8C;
+    pFrustum->mDir.y = lbl_eu_80667C8C;
+    pFrustum->mDir.z = lbl_eu_80667C88;
     nw4r::math::VEC3TransformNormal(pFrustum->mDir, pFrustum->mMat, pFrustum->mDir);
     pFrustum->mDir.normalizeSub();
 
-    pFrustum->unk124 = 0;
-    pFrustum->unk128 = 0;
+    pFrustum->unk124 = lbl_eu_80667C8C;
+    pFrustum->unk128 = lbl_eu_80667C8C;
 
     for(int i = 0; i < ARRAY_SIZE(sPlaneCoords); i++){
         pFrustum->mMat.mul(pFrustum->unk90[i], sPlaneCoords[i]);
@@ -15309,12 +15383,11 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
 
     if(pFrustum->mFlags & CCullFrustum::FLAGS_01){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);
+        pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
+        pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
+        pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
+        pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
     }
-
-    pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
-    pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
-    pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
-    pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
 }
 
 bool COccCulling::func_801A0F04(CFrustum* r4){

@@ -182,7 +182,7 @@ CView* CProc::pssCreateView(const char* pName, CWorkThread* pThread, int param3)
     view->attachRenderWork(this);
     // Hoist mWorkID so the inlined free-slot walk matches retail preload
     // schedule (loop offsets / beq 0x0c). Remaining r5/r8 and stack-home
-    // coloring is closed by CProc.o insn_patches (PLAN.md section 17.6).
+    // coloring remains a Chaitin near-miss — keep iterating in high-level C.
     WORK_ID workId = view->mWorkID;
     mViewIDList.push_back(workId);
 

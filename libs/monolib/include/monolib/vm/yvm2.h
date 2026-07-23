@@ -18,7 +18,11 @@ void vmThreadStart(VMThread* pThread, u32 r4);
 BOOL vmThreadEnd(u32 r3);
 BOOL vmThreadIsAlive(u32 r3);
 BOOL vmThreadSleep(u32 r3);
+BOOL vmThreadWakeup(u32 r3);
 void vmThreadSleepAll(u8* pScriptData);
+void vmThreadWakeupAll(u8* pScriptData);
+BOOL vmThreadIsFinish(u8* pScriptData);
+BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
 
 VMArg* vmArgPtrGet(VMThread* pThread, int r4);
 BOOL vmArgOmitChk(VMThread* pThread, int r4);
@@ -32,6 +36,7 @@ void* vmArgOCGet(u32 r3, VMArg* r4);
 u32 vmDataGet(VMThread* pThread, int startIndex, int length);
 
 void vmRetValSet(VMThread* pThread, VMArg* pArg);
+void* vmOCPropertyGet(VMThread* pThread);
 void vmWaitModeSet(VMThread* pThread);
 u32 vmWkIdxGet(VMThread* pThread);
 void vmWkIdxSet(VMThread* pThread, u32 r4);

@@ -1,8 +1,9 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/vm/yvm2.h"
 
-//Utility class for handling bdat files.
+// Utility class for handling bdat files.
 class CBdat {
 public:
     static void func_8003AA34();
@@ -14,3 +15,13 @@ public:
     static u16 func_8003B1EC(void* pData);
     static u16 func_8003B41C(void* pData);
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ocBdatRegist();
+
+#ifdef __cplusplus
+}
+#endif

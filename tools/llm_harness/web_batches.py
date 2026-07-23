@@ -12,6 +12,7 @@ import os
 import random
 import re
 import shutil
+import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -903,6 +904,12 @@ def create_web_batches(
     if rows_fn is None:
         raise ValueError("Configured project adapter does not support web_batch_candidates")
 
+    print(
+        f"[web-export] loading candidates selection={selection} "
+        f"certified_funcs={certified_funcs} tu={tu!r}",
+        file=sys.stderr,
+        flush=True,
+    )
     with harness._adapter_lock:
         rows = list(
             rows_fn(
@@ -921,9 +928,27 @@ def create_web_batches(
         rng.shuffle(rows)
 
     targets = [web_target_from_row(row) for row in rows]
+    print(
+        f"[web-export] selected={len(targets)} eligible; packing batches={batch_count} budget={budget}",
+        file=sys.stderr,
+        flush=True,
+    )
     batches, oversized, not_packed = pack_candidates(
         targets, batch_count=batch_count, budget=budget
     )
+    packed = sum(len(b.targets) for b in batches)
+    print(
+        f"[web-export] packed={packed} oversized={len(oversized)} not_packed={len(not_packed)}",
+        file=sys.stderr,
+        flush=True,
+    )
+    if packed > 80:
+        print(
+            f"[web-export] note: {packed} prompts to build; this can take a few minutes "
+            f"(budget={budget} is large for a single batch)",
+            file=sys.stderr,
+            flush=True,
+        )
 
     if dry_run:
         return WebBatchCreateResult(
@@ -952,15 +977,58 @@ def create_web_batches(
     (out / "history").mkdir(exist_ok=True)
 
     batch_entries: list[dict[str, Any]] = []
+    total_prompts = sum(len(batch.targets) for batch in batches)
+    built = 0
+    prompt_skipped: list[dict[str, Any]] = []
     for batch in batches:
         prompts: dict[str, str] = {}
+        kept: list[WebTarget] = []
         for target in batch.targets:
-            prompts[target.target_id] = harness.build_external_prompt(
-                target.workflow, target.target_id
+            built += 1
+            if built == 1 or built == total_prompts or built % 10 == 0:
+                print(
+                    f"[web-export] building prompts {built}/{total_prompts} "
+                    f"({batch.batch_id} {target.target_id})",
+                    file=sys.stderr,
+                    flush=True,
+                )
+            try:
+                prompts[target.target_id] = harness.build_external_prompt(
+                    target.workflow, target.target_id
+                )
+                kept.append(target)
+            except Exception as exc:
+                detail = f"{type(exc).__name__}: {exc}"
+                print(
+                    f"[web-export] skip {target.target_id} ({target.symbol}): {detail}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                prompt_skipped.append(
+                    {
+                        "target_id": target.target_id,
+                        "reason": "prompt_build_failed",
+                        "detail": detail[:500],
+                        "cost": target.cost,
+                        "unit": target.unit,
+                        "symbol": target.symbol,
+                    }
+                )
+        if not kept:
+            raise ValueError(
+                f"{batch.batch_id}: every packed function failed prompt construction; "
+                f"skipped={len(prompt_skipped)}"
             )
+        batch.targets = kept
         request_text = render_batch_request(batch, prompts, round_number=0, mode="initial")
         active_path = out / f"{batch.batch_id}.txt"
         _atomic_write_text(active_path, request_text)
+        print(
+            f"[web-export] wrote {active_path.name} "
+            f"functions={len(batch.targets)} cost={batch.used_budget}",
+            file=sys.stderr,
+            flush=True,
+        )
         batch_entries.append(
             {
                 "batch_id": batch.batch_id,
@@ -1026,13 +1094,20 @@ def create_web_batches(
                 "cost": t.cost,
             }
             for t in oversized
-        ],
+        ]
+        + prompt_skipped,
         "not_packed": [
             {"target_id": t.target_id, "cost": t.cost, "unit": t.unit}
             for t in not_packed
         ],
     }
     _atomic_write_json(out / "manifest.json", manifest)
+    if prompt_skipped:
+        print(
+            f"[web-export] skipped_prompt_failures={len(prompt_skipped)}",
+            file=sys.stderr,
+            flush=True,
+        )
     return WebBatchCreateResult(
         output_dir=out,
         batch_count=batch_count,

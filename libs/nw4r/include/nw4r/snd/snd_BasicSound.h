@@ -69,35 +69,35 @@ public:
 
 public:
     BasicSound();
-    virtual ~BasicSound() {} // at 0xC
+    virtual ~BasicSound() {}
 
-    virtual void Update();                      // at 0x10
-    virtual void StartPrepared();               // at 0x14
-    virtual void Stop(int frames);              // at 0x18
-    virtual void Pause(bool flag, int frames);  // at 0x1C
-    virtual void SetAutoStopCounter(int count); // at 0x20
-    virtual void FadeIn(int frames);            // at 0x24
-    virtual void Shutdown();                    // at 0x28
-    virtual bool IsPrepared() const = 0;        // at 0x2C
-    virtual bool IsPause() const;               // at 0x30
+    virtual void Update();
+    virtual void StartPrepared();
+    virtual void Stop(int frames);
+    virtual void Pause(bool flag, int frames);
+    virtual void Shutdown();
+    // US retail: GetBasicPlayer at vtable+0x24.
+    virtual BasicPlayer& GetBasicPlayer() = 0;
+    virtual const BasicPlayer& GetBasicPlayer() const = 0;
+    virtual bool IsPrepared() const = 0;
+    virtual bool IsPause() const;
 
-    virtual void SetInitialVolume(f32 vol);       // at 0x34
-    virtual void SetVolume(f32 vol, int frames);  // at 0x38
-    virtual void SetPitch(f32 pitch);             // at 0x3C
-    virtual void SetPan(f32 pan);                 // at 0x40
-    virtual void SetSurroundPan(f32 pan);         // at 0x44
-    virtual void SetLpfFreq(f32 freq);            // at 0x48
-    virtual void SetPlayerPriority(int priority); // at 0x4C
-    virtual void SetRemoteFilter(int filter);     // at 0x50
-    virtual void SetPanMode(PanMode mode);        // at 0x54
-    virtual void SetPanCurve(PanCurve curve);     // at 0x58
+    virtual bool IsAttachedTempSpecialHandle() = 0;
+    virtual void DetachTempSpecialHandle() = 0;
 
-    virtual bool IsAttachedTempSpecialHandle() = 0; // at 0x5C
-    virtual void DetachTempSpecialHandle() = 0;     // at 0x60
-
-    virtual void InitParam();                              // at 0x64
-    virtual BasicPlayer& GetBasicPlayer() = 0;             // at 0x68
-    virtual const BasicPlayer& GetBasicPlayer() const = 0; // at 0x6C
+    void SetAutoStopCounter(int count);
+    void FadeIn(int frames);
+    void InitParam();
+    void SetInitialVolume(f32 vol);
+    void SetVolume(f32 vol, int frames);
+    void SetPitch(f32 pitch);
+    void SetPan(f32 pan);
+    void SetSurroundPan(f32 pan);
+    void SetLpfFreq(f32 freq);
+    void SetPlayerPriority(int priority);
+    void SetRemoteFilter(int filter);
+    void SetPanMode(PanMode mode);
+    void SetPanCurve(PanCurve curve);
 
     PlayerHeap* GetPlayerHeap() {
         return mHeap;
@@ -199,38 +199,51 @@ private:
     AmbientArgUpdateCallback* mAmbientArgUpdateCallback;       // at 0x1C
     AmbientArgAllocaterCallback* mAmbientArgAllocaterCallback; // at 0x20
     void* mAmbientArg;                                         // at 0x24
-    SoundParam mAmbientParam;                                  // at 0x28
+    u32 mUnk0x28;                                              // at 0x28
+    u32 mUnk0x2C;                                              // at 0x2C
+    SoundParam mAmbientParam;                                  // at 0x30
+    u32 mUnk0x4C;                                              // at 0x4C
+    u32 mUnk0x50;                                              // at 0x50 (ctor arg)
+    u32 mUnk0x54;                                              // at 0x54
+    u32 mUnk0x58;                                              // at 0x58
+    u32 mUnk0x5C;                                              // at 0x5C
 
-    MoveValue<f32, int> mFadeVolume;      // at 0x44
-    MoveValue<f32, int> mPauseFadeVolume; // at 0x54
-    bool mStartFlag;                      // at 0x64
-    bool mStartedFlag;                    // at 0x65
-    bool mAutoStopFlag;                   // at 0x66
-    bool mPauseFlag;                      // at 0x67
-    bool mPauseFadeFlag;                  // at 0x68
-    bool mFadeOutFlag;                    // at 0x69
-    int mAutoStopCounter;                 // at 0x6C
-    u32 mUpdateCounter;                   // at 0x70
+    MoveValue<f32, int> mFadeVolume;      // at 0x60
+    MoveValue<f32, int> mPauseFadeVolume; // at 0x70
 
-    u8 mPriority; // at 0x74
-    u32 mId;      // at 0x78
+    bool mStartFlag;                      // at 0x80
+    bool mStartedFlag;                    // at 0x81
+    bool mAutoStopFlag;                   // at 0x82
+    bool mFadeOutFlag;                    // at 0x83
+    int mPauseState;                      // at 0x84
+    bool mPauseFadeFlag;                  // at 0x88
+    bool mPauseFlag;                      // at 0x89
+    u8 mPad0x8A[2];                       // at 0x8A
+    int mAutoStopCounter;                 // at 0x8C
+    u32 mUpdateCounter;                   // at 0x90
+    u8 mPriority;                         // at 0x94
+    u8 mUnk0x95;                          // at 0x95
+    bool mOutputLineFlagEnable;           // at 0x96
+    u8 mPad0x97;                          // at 0x97
+    u32 mId;                              // at 0x98
 
-    MoveValue<f32, int> mExtMoveVolume; // at 0x7C
-    f32 mInitVolume;                    // at 0x8C
-    f32 mExtPan;                        // at 0x90
-    f32 mExtSurroundPan;                // at 0x94
-    f32 mExtPitch;                      // at 0x98
-
-    bool mOutputLineFlagEnable;                 // at 0x9C
-    int mOutputLineFlag;                        // at 0xA0
-    f32 mMainOutVolume;                         // at 0xA4
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xA8
+    MoveValue<f32, int> mExtMoveVolume; // at 0x9C
+    f32 mInitVolume;                    // at 0xAC
+    f32 mExtPan;                        // at 0xB0
+    f32 mExtSurroundPan;                // at 0xB4
+    f32 mExtPitch;                      // at 0xB8
+    f32 mUnk0xBC;                       // at 0xBC
+    f32 mUnk0xC0;                       // at 0xC0
+    int mOutputLineFlag;                // at 0xC4
+    f32 mMainOutVolume;                 // at 0xC8
+    f32 mUnk0xCC[4];                    // at 0xCC
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xDC
 
 public:
-    NW4R_UT_LINKLIST_NODE_DECL_EX(Prio);       // at 0xB8
-    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPlay); // at 0xC0
-    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPrio); // at 0xC8
-    NW4R_UT_LINKLIST_NODE_DECL_EX(ExtPlay);    // at 0xD0
+    NW4R_UT_LINKLIST_NODE_DECL_EX(Prio);       // at 0xEC
+    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPlay); // at 0xF4
+    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPrio); // at 0xFC
+    NW4R_UT_LINKLIST_NODE_DECL_EX(ExtPlay);    // at 0x104
 };
 
 NW4R_UT_LINKLIST_TYPEDEF_DECL_EX(BasicSound, Prio);

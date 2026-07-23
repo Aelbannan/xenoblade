@@ -46,7 +46,7 @@ python3 tools/coop/run.py size --all
 
 Acceptance remains **`EQUIVALENT_MATCH`** (or `FULL_MATCH`) + split-size fit. Below the bar, prefer:
 
-1. Continue matching / §17.6 exceptions (`insn_patches`, narrow asm) when co-op needs the symbol.
+1. Continue matching / §17.6 exceptions (narrow asm, intrinsics) when co-op needs the symbol.
 2. Optional **PPC** harness when the unit links (`ppc_source` in `manifest.json`).
 3. Optional Capstone+Z3 checks via `tools/ppc_equivalence/` for supported blocks
    (`check-hex`, `check-objects`, or `coop run equivalence check-unit <unit> --symbol …`).

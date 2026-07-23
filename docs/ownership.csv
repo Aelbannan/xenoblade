@@ -8,7 +8,7 @@ wkRender__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US
 setViewRect__5CGameFP5CViewssss,cursor-agent,2026-07-13,verified FULL_MATCH US
 wkUpdate__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; unk1FC clear via CGameRestart+13 pool offset
 viBeginFrame__9CDeviceGXFv,cursor-agent,2026-07-13,FULL_MATCH via lbl_eu_806656A0 SDA symbol
-setCurrent__5CViewFv,cursor-agent,2026-07-14,FULL_MATCH high-level+insn_patches
+setCurrent__5CViewFv,cursor-agent,2026-07-14,FULL_MATCH high-level
 setRect__5CViewFRCQ22ml7CRect16,auto-agent,2026-07-13,FULL_MATCH via CPnt16 dual homes + u16 modeSize
 wkStandbyLogin__5CGameFv,cursor-agent,2026-07-13,100% FULL_MATCH u32 shift narrow height
 func_80459270__17CViewRectDataCoreFv,auto-agent,2026-07-13,FULL_MATCH; configure path fixed to CViewRectDataCore.cpp
@@ -26,7 +26,7 @@ updateCfPadData__Q22cf9CfPadTaskFPQ22cf9CfPadDataPC4CPad,cursor-agent,2026-07-13
 wkUpdate__5CViewFv,cursor-agent,2026-07-13,FULL_MATCH per-gate scoped locals
 getInstance__Q22ml6MTRandFv,cursor-agent,2026-07-13,99.8% CODE_MATCH; @GUARD@ fixed via lbl_eu_80665580 s8 guard; instance_806561E0 suffix is decomp-toolkit split artifact
 pssSetFocus__5CProcFv,cursor-agent,2026-07-13,FULL_MATCH; local size-walk decl order curNode/length/endNode + convertToView(getFirstViewID)
-pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-14,FULL_MATCH 100%; workId hoist + CProc.o insn_patches/reloc_offset_moves; unit MatchingFor(us)
+pssCreateView__5CProcFPCcP11CWorkThreadi,cursor-agent,2026-07-14,FULL_MATCH 100%; workId hoist; unit MatchingFor(us)
 pssDetachView__5CProcFUl,cursor-agent,2026-07-13,99.97% CODE_MATCH; vtable detachRenderWork 0xB4 vs retail 0xB0
 GameMain__5CGameFv,cursor-agent,2026-07-13,verified FULL_MATCH US; sizeof 0x238 + stringBase+0x23
 update__Q22cf9CfPadTaskFv,cursor-agent,2026-07-13,verified FULL_MATCH US; volatile stick reload + setPad Fv reloc
@@ -75,15 +75,15 @@ getHandle__14CWorkSystemMemFv,auto-agent,2026-07-14,P3 batch-14c: SDA lbl_eu_806
 ICulling_UnkVirtualFunc1__Q22cf12CTaskCullingFPQ22ml8CFrustum,auto-agent,2026-07-14,P1 batch-14c: SDA lbl_eu_80664328; leave func_801A2C04
 Term__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14c: create CUICfManager.cpp Term
 func_801A2C04__Q22cf12CTaskCullingFv,auto-agent,2026-07-14,P1 batch-14d: SDA lbl_eu_80664328; leave ICulling_UnkVirtualFunc1
-Init__16CUIBattleManagerFv,auto-agent,2026-07-14,P1 batch-14d FULL_MATCH via insn_patches PTMF r0/r4
+Init__16CUIBattleManagerFv,auto-agent,2026-07-14,P1 batch-14d FULL_MATCH
 Init__12CUICfManagerFv,auto-agent,2026-07-14,P2 batch-14d FULL_MATCH via §17.6 asm void Init; leave Term
-func_801A1188__11COccCullingFP12CCullFrustum,auto-agent,2026-07-14,P1 batch-14d FULL_MATCH via insn_patches r3/r5 + lbl_eu_80667C8C
+func_801A1188__11COccCullingFP12CCullFrustum,auto-agent,2026-07-14,P1 batch-14d FULL_MATCH + lbl_eu_80667C8C
 __ct__14CWorkSystemMemFPCcP11CWorkThread,auto-agent,2026-07-14,P3 batch-14e: ctor; leave getHandle/wkStandby
 __ct__Q22cf12CBattleStateFv,auto-agent,2026-07-14,P1 batch-14e: create CBattleState.cpp ctor
 __ct__Q22cf9CAIActionFv,auto-agent,2026-07-14,P1 batch-14e: create CAIAction.cpp ctor
 cbRenderBefore__12CMenuPTGaugeFv,auto-agent,2026-07-14,P1 batch-14e: create CMenuPTGauge.cpp cbRenderBefore; leave Move
 Move__12CMenuPTGaugeFv,codex-ptgauge,2026-07-14,FULL_MATCH 100%; explicit reslist walks and width-specific byte aliases
-getFullScreenView__9CViewRootFv,auto-agent,2026-07-14,FULL_MATCH via insn_patches keepGoing r4↔r0; leave setCurrent/renderView/create
+getFullScreenView__9CViewRootFv,auto-agent,2026-07-14,FULL_MATCH; leave setCurrent/renderView/create
 Term__22CMenuBattlePlayerStateFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuBattlePlayerState.cpp Term only
 Term__15CMenuArtsSelectFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuArtsSelect.cpp Term only; lbl_eu_80663F24
 cbRenderBefore__15CMenuEnemyStateFv,auto-agent,2026-07-14,P1 batch-14f: create CMenuEnemyState.cpp cbRenderBefore

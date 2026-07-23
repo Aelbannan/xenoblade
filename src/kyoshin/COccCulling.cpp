@@ -68,7 +68,8 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     float xScale = pFrustum->mScale.x;
     float yScale = pFrustum->mScale.y;
     CMat34 rotMat;
-    pFrustum->mMat.setScale(CVec3(xScale, yScale, 1));
+    // z-scale via SDA 1.0f (lbl_eu_80667C88) — slight fuzzy win vs literal 1.
+    pFrustum->mMat.setScale(CVec3(xScale, yScale, lbl_eu_80667C88));
     rotMat.setRotXYZ(pFrustum->mRot);
 
     CMat34::mul(pFrustum->mMat, pFrustum->mMat, rotMat);
@@ -76,12 +77,14 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     pFrustum->mMat.addTranslation(pFrustum->mPos);
     pFrustum->mMat.invert(&pFrustum->mMatInv);
 
-    pFrustum->mDir.set(0, 0, 1);
+    pFrustum->mDir.x = lbl_eu_80667C8C;
+    pFrustum->mDir.y = lbl_eu_80667C8C;
+    pFrustum->mDir.z = lbl_eu_80667C88;
     nw4r::math::VEC3TransformNormal(pFrustum->mDir, pFrustum->mMat, pFrustum->mDir);
     pFrustum->mDir.normalizeSub();
 
-    pFrustum->unk124 = 0;
-    pFrustum->unk128 = 0;
+    pFrustum->unk124 = lbl_eu_80667C8C;
+    pFrustum->unk128 = lbl_eu_80667C8C;
 
     for(int i = 0; i < ARRAY_SIZE(sPlaneCoords); i++){
         pFrustum->mMat.mul(pFrustum->unk90[i], sPlaneCoords[i]);
@@ -97,12 +100,11 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
 
     if(pFrustum->mFlags & CCullFrustum::FLAGS_01){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);
+        pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
+        pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
+        pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
+        pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
     }
-
-    pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
-    pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
-    pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
-    pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
 }
 
 bool COccCulling::func_801A0F04(CFrustum* r4){

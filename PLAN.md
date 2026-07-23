@@ -1460,7 +1460,7 @@ Use only after normal C++ and decomp.me fail, and **log every use** in `docs/evi
 | **Goto gate chains** | CSplitFrame / multi-exit guards (see `setSplitLine` 100%) | Gotos for control-flow gates are OK; not for prologue spill ordering alone. |
 | **Relocation name drift** | `functionRelocDiffs=data_value` already compares values; TU-local `@N` vs retail `lbl_eu_*` at same offset | Prefer `extern "C" lbl_eu_*` when it does not regress codegen. If names still block 100% with identical instructions/data, post-process the object with `powerpc-eabi-objcopy --redefine-sym` (see `tools/postprocess_mtrand_object.py`; log in `attempts.jsonl`). `objdiff.json` `symbol_mappings` does not affect CLI reports (objdiff #279). |
 
-**Not approved:** `register rN`, fake `sp[]` buffers, whole-function asm, standalone `.s` units, or transcribed retail asm blocks.
+**Not approved:** `register rN`, fake `sp[]` buffers, **`asm void` / whole-function asm bodies**, standalone `.s` units, or transcribed retail asm blocks. Matching targets must remain **high-level C/C++**; do not replace a function with an `asm void` retail dump to force `FULL_MATCH`.
 
 **Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, decomp.me, and single-instruction asm per row above — not wholesale asm functions.
 

@@ -181,8 +181,8 @@ private:
         u32 magFilter : 3;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 anisotropy : 2;
         u32 paletteFormat : 2;
+        u32 anisotropy : 2;
     } mBits; // at 0x18
 };
 

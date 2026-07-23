@@ -11,14 +11,21 @@
   },
   "providers": {
     "opencode": {
-      "base_url": "http://127.0.0.1:4096",
+      "binary": "opencode",
       "timeout_seconds": 360,
-      "pure": true,
-      "delete_session": true
+      "pure": true
     },
     "deepseek-raw": {
       "binary": "deepseek-raw",
       "timeout_seconds": 300,
+      "pure": true
+    },
+    "openrouter": {
+      "timeout_seconds": 300,
+      "temperature": 0.1,
+      "max_tokens": 4096,
+      "json_object": true,
+      "allow_fallbacks": true,
       "pure": true
     },
     "lmstudio": {
@@ -30,6 +37,16 @@
       "enable_thinking": true,
       "reasoning_effort": "none",
       "thinking_budget": 0
+    },
+    "omlx": {
+      "base_url": "http://127.0.0.1:8000/v1",
+      "timeout_seconds": 900,
+      "temperature": 0.1,
+      "max_tokens": 4096,
+      "json_object": true,
+      "enable_thinking": true,
+      "reasoning_effort": "high",
+      "thinking_budget": 8192
     },
     "codex": {
       "binary": "codex",
@@ -43,34 +60,16 @@
   "models": {
     "default": [
       {
-        "id": "opencode-deepseek-flash",
-        "provider": "opencode",
-        "model": "opencode-go/deepseek-v4-flash",
-        "runs": 1
-      }
-    ],   
-    "initial": [
-      {
-        "id": "codex-luna",
-        "provider": "codex",
-        "model": "gpt-5.6-luna",
-        "reasoning_effort": "high",
-        "runs": 1
-      }
-    ],
-    "repair": [
-      {
-        "id": "codex-luna",
-        "provider": "codex",
-        "model": "gpt-5.6-luna",
-        "reasoning_effort": "high",
-        "runs": 1
-      }
+		"id": "or-mimo-2.5",
+		"provider": "openrouter",
+		"model": "xiaomi/mimo-v2.5",
+		"runs": 1
+	  }
     ]
   },
   "execution": {
-    "initial_parallel": 3,
-    "target_parallel": 5,
+    "initial_parallel": 2,
+    "target_parallel": 4,
     "max_retries": 0,
     "auto_promote": true,
     "auto_promote_owner": "llm-harness",
@@ -81,12 +80,23 @@
     }
   },
   "solve": {
-    "initial_candidates": 1,
+    "initial_candidates": 2,
     "compile_repairs": 3,
     "match_repairs": 5,
     "max_repeated_fingerprint": 2,
     "stop_on_full_match": true,
     "stop_on_equivalent_match": true
+  },
+  "solve-local": {
+    "initial_candidates": 1,
+    "compile_repairs": 2,
+    "match_repairs": 3,
+    "max_repeated_fingerprint": 1,
+    "strategies": ["typed"],
+    "stop_on_full_match": true,
+    "stop_on_equivalent_match": true,
+    "stop_if_all_initial_compile_error": true,
+    "reject_noop_compile_repair": true
   },
   "prompt": {
     "max_chars": 60000,

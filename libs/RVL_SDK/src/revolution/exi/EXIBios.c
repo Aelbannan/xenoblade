@@ -189,7 +189,7 @@ BOOL EXISync(EXIChannel chan) {
     return ret;
 }
 
-void EXIClearInterrupts(EXIChannel chan, BOOL exi, BOOL tc, BOOL ext) {
+static inline void EXIClearInterrupts(EXIChannel chan, BOOL exi, BOOL tc, BOOL ext) {
     u32 cpr = EXI_CHAN_PARAMS[chan].cpr & 0xFFF &
               ~(EXI_CPR_EXIINT | EXI_CPR_TCINT | EXI_CPR_EXTINT);
 
@@ -229,7 +229,7 @@ EXICallback EXISetExiCallback(EXIChannel chan, EXICallback callback) {
     return old;
 }
 
-void EXIProbeReset(void) {
+static inline void EXIProbeReset(void) {
     OS_EXI_LAST_INSERT[0] = OS_EXI_LAST_INSERT[1] = 0;
     Ecb[EXI_CHAN_0].lastInsert = Ecb[EXI_CHAN_1].lastInsert = 0;
     __EXIProbe(EXI_CHAN_0);
@@ -281,7 +281,7 @@ static BOOL __EXIProbe(EXIChannel chan) {
     return ret;
 }
 
-BOOL EXIProbe(EXIChannel chan) {
+static inline BOOL EXIProbe(EXIChannel chan) {
     EXIData* exi = &Ecb[chan];
 
     BOOL ret = __EXIProbe(chan);
@@ -293,11 +293,8 @@ BOOL EXIProbe(EXIChannel chan) {
     return FALSE;
 }
 
-//unused
-void EXIProbeEx(){
-}
 
-static BOOL __EXIAttach(EXIChannel chan, EXICallback callback) {
+static inline BOOL __EXIAttach(EXIChannel chan, EXICallback callback) {
     EXIData* exi = &Ecb[chan];
     BOOL enabled;
     u32 mask;
@@ -358,9 +355,6 @@ BOOL EXIDetach(EXIChannel chan) {
     return TRUE;
 }
 
-//unused
-void EXISelectSD(){
-}
 
 BOOL EXISelect(EXIChannel chan, u32 dev, u32 freq) {
     EXIData* exi = &Ecb[chan];
@@ -407,9 +401,6 @@ BOOL EXISelect(EXIChannel chan, u32 dev, u32 freq) {
     return TRUE;
 }
 
-//unused
-static inline void EXISelectEx(){
-}
 
 BOOL EXIDeselect(EXIChannel chan) {
     EXIData* exi = &Ecb[chan];
@@ -454,9 +445,6 @@ BOOL EXIDeselect(EXIChannel chan) {
     return TRUE;
 }
 
-//unused
-static inline void EXIDeselectEx(){
-}
 
 static void EXIIntrruptHandler(s32 intr, OSContext* ctx) {
     EXIData* exi;
@@ -465,11 +453,10 @@ static void EXIIntrruptHandler(s32 intr, OSContext* ctx) {
     OSContext temp;
 
     chan = (EXIChannel)((intr - OS_INTR_EXI_0_EXI) / 3);
+    exi = &Ecb[chan];
 
     EXIClearInterrupts(chan, TRUE, FALSE, FALSE);
 
-    exi = &Ecb[chan];
-    
     callback = exi->exiCallback;
     if (callback != NULL) {
         OSClearContext(&temp);
@@ -637,9 +624,6 @@ BOOL EXIUnlock(EXIChannel chan) {
     return TRUE;
 }
 
-//unused
-void EXIGetState(){
-}
 
 // Does nothing???
 static void UnlockedHandler(EXIChannel chan, OSContext* ctx) {
@@ -713,14 +697,5 @@ s32 EXIGetID(EXIChannel chan, u32 dev, u32* out) {
     return ret == 0;
 }
 
-//unused
-void EXIGetIDEx(){
-}
 
-//unused
-void EXIGetType(){
-}
 
-//unused
-void EXIGetTypeString(){
-}

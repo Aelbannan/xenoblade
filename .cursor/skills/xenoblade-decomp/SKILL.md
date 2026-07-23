@@ -299,7 +299,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `extern "C" lbl_eu_*` | Reloc names when values match under `functionRelocDiffs=data_value` |
 | Goto gate chains | Multi-exit guards (`setSplitLine` pattern) — not for prologue spill order alone |
 
-**Still forbidden:** `register rN`, fake `sp[]` buffers, whole-function asm, standalone `.s`.
+**Still forbidden:** `register rN`, fake `sp[]` buffers, **`asm void` / whole-function asm bodies**, standalone `.s`. Do not close a target by replacing its body with an `asm void` retail transcription.
 
 ## Low-level techniques — do not use in `src/**` / `libs/**`
 
@@ -318,8 +318,9 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 - Call `CGame::wkRender` or full frame update twice for split-screen experiments
 - Accept `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` as final state (policy is `EQUIVALENT_MATCH`)
 - Submit AI-assisted reconstruction upstream
-- **Use assembly as decompilation output** — no whole-function `asm { }` / `asm void` / `.s` units; **single-instruction** asm allowed per `PLAN.md` §17.6
+- **Use assembly as decompilation output** — no `asm void` bodies, whole-function `asm { }`, or `.s` units; **single-instruction** inline asm only per `PLAN.md` §17.6
 - **Micro-manage registers or the stack in source** — use §17.6 intrinsics or logged single-instruction asm when C++ is exhausted
+- **Post-process Chaitin / register soft-caps in `.text`** — no general `insn_patches`. Narrow linker-ADDR16 bake (`bake_linker_addrs` / `force_symbol_relocs` for DOL-split absolute symbols like `_stack_addr`) is allowed; rename relocs/pools and trim/drop symbols remain OK
 
 ## Key paths
 

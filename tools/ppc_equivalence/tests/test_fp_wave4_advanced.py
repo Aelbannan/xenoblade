@@ -777,7 +777,7 @@ class ManifestAndLedgerTests(unittest.TestCase):
         trap_dims = traps.get("dimensions") or {}
         self.assertFalse(trap_dims.get("fe0_fe1"))
         self.assertFalse(trap_dims.get("traps"))
-        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v43")
+        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v44")
         self.assertEqual(RESULT_FORMAT, 23)
 
 

@@ -33,7 +33,7 @@
 # Phase 11+: independent scalar_fp_v2 corpora under
 # tools/ppc_equivalence/corpora/scalar_fp_v2/ bind via schema-v2 obligations
 # (corpus_sha256 + validation_ledger_hash); see fp_scalar_obligations_v2.py.
-architecture_model: broadway-ppc32-be-v43
+architecture_model: broadway-ppc32-be-v44
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
 corpus_hash: a827ed9896c3a0648ff3b997e5e46bd3d80cb2c4c3553b5323395f66317b6c63

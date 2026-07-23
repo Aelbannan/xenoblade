@@ -60,14 +60,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Print effective configuration and exit",
     )
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("new", "improve", "tu-complete", "solve", "tu-solve"):
+    for name in ("new", "improve", "tu-complete", "solve", "solve-local", "tu-solve"):
         command = sub.add_parser(name)
         command.add_argument(
             "target_id",
             nargs="?",
             help="Target ID, or unit name for tu-complete",
         )
-        if name in {"new", "improve", "tu-complete", "solve", "tu-solve"}:
+        if name in {"new", "improve", "tu-complete", "solve", "solve-local", "tu-solve"}:
             command.add_argument(
                 "--number",
                 type=int,
@@ -75,33 +75,42 @@ def main(argv: list[str] | None = None) -> int:
                     "Automatically select this many fresh placeholder targets"
                     if name == "new"
                     else "Automatically select this many ready-frontier mismatching targets"
-                    if name == "solve"
+                    if name in {"solve", "solve-local"}
                     else "Automatically select this many non-accepted (not FULL/EQUIVALENT) targets"
                     if name == "improve"
                     else f"Automatically select this many {name} targets"
                 ),
             )
-        if name in {"improve", "tu-complete", "solve", "tu-solve"}:
+        if name in {"improve", "tu-complete", "solve", "solve-local", "tu-solve"}:
             command.add_argument(
                 "--random",
                 action="store_true",
                 help="Shuffle eligible targets before applying --number",
             )
-        if name in {"new", "improve", "solve", "tu-solve"}:
+        if name in {"new", "improve", "solve", "solve-local", "tu-solve"}:
             command.add_argument(
                 "--certified-funcs",
                 action="store_true",
                 help="Only select functions whose called functions are FULL_MATCH or EQUIVALENT+certified",
             )
             command.add_argument(
+                "--high-match-callees",
+                action="store_true",
+                help=(
+                    "Only select functions that are direct callees of HIGH_MATCH+ "
+                    "callers (CODE_MATCH / EQUIVALENT_MATCH included; FULL_MATCH "
+                    "callers excluded) — useful for unlocking equivalence proofs"
+                ),
+            )
+            command.add_argument(
                 "--tu",
                 help="Filter to functions in a specific translation unit (e.g. kyoshin/cf/CfPadTask)",
             )
-        if name in {"improve", "solve", "tu-solve"}:
+        if name in {"improve", "solve", "solve-local", "tu-solve"}:
             command.add_argument(
                 "--selection",
                 choices=("leaf", "ready", "callees-accepted", "pending"),
-                default="ready" if name in ("solve", "tu-solve") else "pending",
+                default="ready" if name in ("solve", "solve-local", "tu-solve") else "pending",
                 help=(
                     "Call-graph frontier for automatic --number selection "
                     "(solve default: ready; improve default: pending)"
@@ -113,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
                 action="store_true",
                 help="Allow automatic selection of functions before their callees are matched",
             )
-        if name not in ("solve", "tu-solve"):
+        if name not in ("solve", "solve-local", "tu-solve"):
             command.add_argument("--runs", type=int)
         command.add_argument("--dry-run", action="store_true")
         command.add_argument("--resume", type=Path, help="Resume an experiment directory")
@@ -672,14 +681,16 @@ def main(argv: list[str] | None = None) -> int:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         return 0
-    if args.command == "solve":
+    if args.command in {"solve", "solve-local"}:
+        local = args.command == "solve-local"
+        label = args.command
         if getattr(args, "number", None) is not None:
             if args.target_id is not None:
-                parser.error("solve accepts either target_id or --number, not both")
+                parser.error(f"{label} accepts either target_id or --number, not both")
             if args.number < 1:
                 parser.error("--number must be positive")
             if args.resume:
-                parser.error("solve --number does not support --resume")
+                parser.error(f"{label} --number does not support --resume")
             selection = getattr(args, "selection", "ready")
             try:
                 target_ids = harness.select_targets(
@@ -687,6 +698,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.number,
                     randomize=args.random,
                     certified_funcs=getattr(args, "certified_funcs", False),
+                    high_match_callees=getattr(args, "high_match_callees", False),
                     tu=getattr(args, "tu", None),
                     selection=selection,
                 )
@@ -695,10 +707,11 @@ def main(argv: list[str] | None = None) -> int:
             if args.dry_run:
                 _print_selected_frontier(harness, target_ids, selection)
             print(harness.run_batch(
-                "solve",
+                "solve-local" if local else "solve",
                 target_ids,
                 dry_run=args.dry_run,
                 model_parallel=args.max_parallel,
+                local=local,
             ))
             return 0
         if args.random:
@@ -706,24 +719,26 @@ def main(argv: list[str] | None = None) -> int:
         tu = getattr(args, "tu", None)
         if tu:
             if args.target_id is not None:
-                parser.error("solve accepts either target_id or --tu, not both")
+                parser.error(f"{label} accepts either target_id or --tu, not both")
             target_ids = harness.target_ids_for_unit(tu, "solve")
             if not target_ids:
                 parser.error(f"No eligible solve targets found in unit {tu!r}")
             print(harness.run_batch(
-                "solve",
+                "solve-local" if local else "solve",
                 target_ids,
                 dry_run=args.dry_run,
                 model_parallel=args.max_parallel,
+                local=local,
             ))
             return 0
         if args.target_id is None:
-            parser.error("solve requires target_id, --number, or --tu")
+            parser.error(f"{label} requires target_id, --number, or --tu")
         print(harness.solve(
             args.target_id,
             dry_run=args.dry_run,
             resume=args.resume,
             max_parallel=args.max_parallel,
+            local=local if local else None,
         ))
         return 0
     if args.command == "tu-solve":
@@ -741,6 +756,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.number,
                     randomize=args.random,
                     certified_funcs=getattr(args, "certified_funcs", False),
+                    high_match_callees=getattr(args, "high_match_callees", False),
                     tu=getattr(args, "tu", None),
                     selection=selection,
                 )
@@ -800,6 +816,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.number,
                     ignore_called_functions=args.ignore_called_functions,
                     certified_funcs=getattr(args, "certified_funcs", False),
+                    high_match_callees=getattr(args, "high_match_callees", False),
                     tu=getattr(args, "tu", None),
                 )
                 if args.dry_run:
@@ -809,6 +826,7 @@ def main(argv: list[str] | None = None) -> int:
                 select_kwargs = {
                     "randomize": args.random,
                     "certified_funcs": getattr(args, "certified_funcs", False),
+                    "high_match_callees": getattr(args, "high_match_callees", False),
                     "tu": getattr(args, "tu", None),
                 }
                 if args.command == "improve":

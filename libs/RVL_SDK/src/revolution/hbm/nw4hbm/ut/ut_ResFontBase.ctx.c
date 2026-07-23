@@ -13921,6 +13921,8 @@ u16 ResFontBase::FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const {
     return index;
 }
 
+
+
 const CharWidths& ResFontBase::GetCharWidthsFromIndex(u16 index) const {
     for (const FontWidth* pIt = mFontInfo->pWidth; pIt != NULL;
          pIt = pIt->pNext) {
@@ -13969,3 +13971,4 @@ void ResFontBase::GetGlyphFromIndex(Glyph* pGlyph, u16 index) const {
 } // namespace detail
 } // namespace ut
 } // namespace nw4hbm
+

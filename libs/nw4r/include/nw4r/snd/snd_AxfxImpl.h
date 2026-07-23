@@ -10,13 +10,13 @@ namespace snd {
 namespace detail {
 
 struct AxfxImpl {
-    bool mIsActive;      // at 0x0
-    MEMiHeapHead* mHeap; // at 0x4
-    u32 mAllocCount;     // at 0x8
+    MEMiHeapHead* mHeap; // at 0x0
+    u32 mAllocCount;     // at 0x4
+    bool mIsActive;      // at 0x8
 
     static const u32 HEAP_SIZE_MIN = MEM_FRM_HEAP_MIN_SIZE + 32;
 
-    AxfxImpl() : mIsActive(false), mHeap(NULL), mAllocCount(0) {}
+    AxfxImpl() : mHeap(NULL), mAllocCount(0), mIsActive(false) {}
 
     bool CreateHeap(void* pBuffer, u32 size);
     void DestroyHeap();

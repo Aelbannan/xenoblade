@@ -38,7 +38,7 @@ class FakeProvider:
             raise RuntimeError("no scripted responses left")
         text = self.responses.pop(0)
         if text == "__EMPTY__":
-            raise RuntimeError("OpenCode server: empty assistant text in message response")
+            raise RuntimeError("OpenCode CLI: empty assistant text in run output")
         return ProviderResult(text=text, duration_seconds=0.01)
 
 
@@ -415,6 +415,39 @@ class TestAcceptanceSemantics(unittest.TestCase):
             "symbol_accepted": True,
         })
         self.assertTrue(ev.symbol_accepted)
+
+
+class TestSolveLocal(unittest.TestCase):
+    def test_local_stops_when_all_initials_compile_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            harness, provider, adapter = _write_harness(
+                root,
+                [
+                    _cand("void target() { broken; }"),
+                    _cand("void target() { broken; again; }"),
+                    _cand("void target() { /* should not be requested */ }"),
+                ],
+            )
+            harness.config.setdefault("solve-local", {})["initial_candidates"] = 2
+            harness.config.setdefault("solve-local", {})["strategies"] = [
+                "typed",
+                "literal",
+            ]
+            experiment = harness.solve("demo-target", local=True)
+            state = json.loads((experiment / "state.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["workflow"], "solve-local")
+            self.assertEqual(state["reason"], "all_initial_compile_error")
+            phases = [b.get("phase") for b in state["branches"]]
+            self.assertTrue(all(p == "initial" for p in phases), phases)
+            self.assertLessEqual(len(provider.calls), 2)
+
+    def test_solve_local_help(self) -> None:
+        with redirect_stdout(io.StringIO()) as out:
+            with self.assertRaises(SystemExit) as cm:
+                main(["solve-local", "--help"])
+        self.assertEqual(cm.exception.code, 0)
+        self.assertIn("solve-local", out.getvalue())
 
 
 class TestSolveCli(unittest.TestCase):

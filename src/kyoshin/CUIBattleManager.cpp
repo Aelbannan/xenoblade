@@ -115,7 +115,7 @@ void CUIBattleManager::Move() {
     char pathBufF8[0x80];
     char pathBuf178[0x8C];
     // Grow frame toward retail -0x220 (spare between pending and paths).
-    int framePad[4];
+    int framePad[8];
     u32 localVal;
     int pendingCount;
     int i;
@@ -164,7 +164,10 @@ after_bit21:
             flags = unk82;
             flags &= 0xfe;
             unk82 = flags;
-            func_8012F5F8();
+            {
+                void (*const callF5F8)(void) = &func_8012F5F8;
+                callF5F8();
+            }
         }
     }
 
@@ -190,6 +193,9 @@ after_bit21:
                         pad0C = capacity;
                         pad10 = byteOff;
                         pad14 = i;
+                        pad18 = pad0C;
+                        pad1C = pad10;
+                        pad20 = pad14;
                         goto slot_check_2;
                     slot_body_2:
                         if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
@@ -232,11 +238,14 @@ after_bit21:
                         inst = lbl_eu_80664048;
                         i = 0;
                         byteOff = 0;
-                        startNode = inst->mChildList.mStartNodePtr;
                         capacity = inst->mChildList.mCapacity;
-                        pad18 = capacity;
-                        pad1C = byteOff;
-                        pad20 = i;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        pad0C = capacity;
+                        pad10 = byteOff;
+                        pad14 = i;
+                        pad18 = pad0C;
+                        pad1C = pad10;
+                        pad20 = pad14;
                         goto slot_check_8;
                     slot_body_8:
                         if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
@@ -268,11 +277,15 @@ after_bit21:
             flags &= 0xef;
             unk82 = flags;
             if (lbl_eu_80664048 != NULL) {
-                // Retail: cntlzw + srwi. zero-test. compat.h stubs __cntlzw to 0.
+                // Retail: cntlzw + srwi zero-test.
 #undef __cntlzw
-                if (__cntlzw((u32)func_8009CF8C(0x3357)) >> 5) {
-                    lbl_eu_80664048->unk82 |= 0x10;
-                    goto after_bit10;
+                {
+                    u32 cf8cVal = (u32)func_8009CF8C(0x3357);
+                    u32 cntlz = (u32)__cntlzw(cf8cVal);
+                    if ((cntlz >> 5) != 0) {
+                        lbl_eu_80664048->unk82 |= 0x10;
+                        goto after_bit10;
+                    }
                 }
                 if (func_801355F4() == NULL) {
                     lbl_eu_80664048->unk82 |= 0x10;
@@ -285,8 +298,14 @@ after_bit21:
                         inst = lbl_eu_80664048;
                         i = 0;
                         byteOff = 0;
-                        startNode = inst->mChildList.mStartNodePtr;
                         capacity = inst->mChildList.mCapacity;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        pad0C = capacity;
+                        pad10 = byteOff;
+                        pad14 = i;
+                        pad18 = pad0C;
+                        pad1C = pad10;
+                        pad20 = pad14;
                         goto slot_check_10;
                     slot_body_10:
                         if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
@@ -330,8 +349,14 @@ after_bit10:
                         inst = lbl_eu_80664048;
                         i = 0;
                         byteOff = 0;
-                        startNode = inst->mChildList.mStartNodePtr;
                         capacity = inst->mChildList.mCapacity;
+                        startNode = inst->mChildList.mStartNodePtr;
+                        pad0C = capacity;
+                        pad10 = byteOff;
+                        pad14 = i;
+                        pad18 = pad0C;
+                        pad1C = pad10;
+                        pad20 = pad14;
                         goto slot_check_20;
                     slot_body_20:
                         if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {
@@ -465,9 +490,15 @@ after_assets:
                                                             inst = lbl_eu_80664048;
                                                             i = 0;
                                                             byteOff = 0;
+                                                            capacity = inst->mChildList.mCapacity;
                                                             startNode =
                                                                 inst->mChildList.mStartNodePtr;
-                                                            capacity = inst->mChildList.mCapacity;
+                                                            pad0C = capacity;
+                                                            pad10 = byteOff;
+                                                            pad14 = i;
+                                                            pad18 = pad0C;
+                                                            pad1C = pad10;
+                                                            pad20 = pad14;
                                                             goto slot_check_a;
                                                         slot_body_a:
                                                             if (*(u32*)((u8*)inst->mChildList.mList +
@@ -518,8 +549,14 @@ after_assets:
                                 inst = lbl_eu_80664048;
                                 i = 0;
                                 byteOff = 0;
-                                startNode = inst->mChildList.mStartNodePtr;
                                 capacity = inst->mChildList.mCapacity;
+                                startNode = inst->mChildList.mStartNodePtr;
+                                pad0C = capacity;
+                                pad10 = byteOff;
+                                pad14 = i;
+                                pad18 = pad0C;
+                                pad1C = pad10;
+                                pad20 = pad14;
                                 goto slot_check_b;
                             slot_body_b:
                                 if (*(u32*)((u8*)inst->mChildList.mList + byteOff) == 0) {

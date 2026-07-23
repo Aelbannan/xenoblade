@@ -11,10 +11,9 @@
   },
   "providers": {
     "opencode": {
-      "base_url": "http://127.0.0.1:4096",
+      "binary": "opencode",
       "timeout_seconds": 900,
-      "pure": true,
-      "delete_session": true
+      "pure": true
     },
     "reasonix": {
       "binary": "reasonix",
@@ -28,6 +27,10 @@
     },
     "openrouter": {
       "timeout_seconds": 300,
+      "temperature": 0.1,
+      "max_tokens": 4096,
+      "json_object": true,
+      "allow_fallbacks": true,
       "pure": true
     },
     "lmstudio": {
@@ -58,7 +61,23 @@
         "model": "opencode-go/deepseek-v4-flash",
         "variant": "high",
         "runs": 1
-      }
+      },
+      {
+        "id": "omlx-qwen-3.5-6b",
+        "provider": "omlx",
+        "model": "mlx-community/ThinkingCap-Qwen3.6-27B-mlx-6Bit",
+        "runs": 1,
+        "enable_thinking": true,
+        "reasoning_effort": "high",
+        "thinking_budget": 8192
+      },
+	  {
+		"id": "or-deepseek",
+		"provider": "openrouter",
+		"model": "deepseek/deepseek-chat",
+		"variant": "deepseek",
+		"runs": 1
+	  }
     ],
     "repair": [
       {

@@ -93,10 +93,30 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 //
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
 extern "C" const float lbl_eu_80667414;
+
+// Cast-only SI iface for vt+0x48 tail-call (same RTTI omit as BattleStateV8If).
+struct BattleStateV6If {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void vf48(cf::CBattleStateEntry* entry); // UnkVirtualFunc17 @0x48
+};
+
 extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* arg) {
-    typedef void (*Vfunc17Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
-
     cf::CBattleStateEntry* entries;
     cf::CBattleStateEntry* p;
     int n;
@@ -118,7 +138,8 @@ extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
                     p->unk10 = arg->unk18;
                 }
             }
-            return ((Vfunc17Fn*)*(void**)self)[18](self, p);
+            reinterpret_cast<BattleStateV6If*>(self)->vf48(p);
+            return;
         }
     }
 
@@ -143,7 +164,7 @@ extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
             entries->unk30 = arg->unk30;
             entries->unk1C = entries->unk20;
             entries->unk28 = scaled;
-            ((Vfunc17Fn)(*(void***)self)[18])(self, entries);
+            reinterpret_cast<BattleStateV6If*>(self)->vf48(entries);
             return;
         }
     }
@@ -374,26 +395,35 @@ struct CBattleStateSrcEntry {
 };
 } // namespace cf
 
+// Cast-only SI: manual vslot loads color vptr as r5; virtual dispatch emits
+// retail lwz r12,0(this) / lwz r12,0x1c(r12) / bctr. Omit RTTI _v000/_v004 so
+// vf1C lands at 0x1C (same pattern as BattleStateV8If).
+struct BattleStateV26If {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void vf1C(cf::CBattleStateEntry* entry); // UnkVirtualFunc6 @0x1C
+};
+
 extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
     cf::CBattleState* self, const cf::CBattleStateSrcEntry* src) {
-    typedef void (*Vfunc6Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
-
     const cf::CBattleStateSrcEntry* rec;
     const cf::CBattleStateSrcEntry* recFlags;
     int n;
     int allZero;
-    u32 flag2000;
     u32 flag4000;
+    u32 flag2000;
 
     self->CBattleState_UnkVirtualFunc29();
 
-    flag2000 = 0x2000;
+    // Retail: li r26,0x4000 then li r25,0x2000.
     flag4000 = 0x4000;
+    flag2000 = 0x2000;
 
     for (n = 0, rec = src, recFlags = src; n < 8; n++, rec++, recFlags++) {
         cf::CBattleStateEntry entry;
-        u32 flags;
-        u16 id;
 
         allZero = 0;
         if (rec->unk00 == 0) {
@@ -408,22 +438,20 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
         }
 
         memset(&entry, 0, sizeof(entry));
-        id = rec->unk04;
-        flags = entry.unk30;
-        entry.unk0C = id;
-        flags |= 1;
+        // Retail schedule: id/flags/2000/fields, then extrwi on unk0E.
+        // `unk30 |= 1` beats an explicit flags temp here (~78.8%).
+        entry.unk0C = rec->unk04;
+        entry.unk30 |= 1;
         entry.unk08 = flag2000;
         entry.unk10 = rec->unk08;
         entry.unk14 = rec->unk0A;
         entry.unk18 = rec->unk0C;
         entry.unk1A = (s16)rec->unk06;
-        entry.unk30 = flags;
-        // u32 >> 15 & 1 -> extrwi (rlwinm. ...,17,31,31); u16 >> yields srawi
         if ((((u32)recFlags->unk0E >> 15) & 1) != 0) {
             entry.unk08 = flag4000;
         }
 
-        ((Vfunc6Fn*)*(void**)self)[7](self, &entry);
+        reinterpret_cast<BattleStateV26If*>(self)->vf1C(&entry);
     }
 
     // Retail: mtctr/bdnz + lwzu/stwu from this+0x1528 / src-4. do-while(--i)
@@ -452,20 +480,42 @@ extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
 // id (+ optional field eq unless unk30 bit 0x200) -> stack-copy/clear ->
 // vt+0x2C -> id-dup scan / clear unk15AC bit -> vt+0x4C; stop early if
 // arg->unk0C == 0.
+//
+// Cast-only SI iface: function-pointer vslot loads color the vptr as r5;
+// virtual dispatch emits retail lwz r12,0(this) / lwz r12,off(r12) / bctr.
+// RTTI on: omit _v000/_v004 so _v008 lands at retail 0x8 (MenuBpsActorIf).
+struct BattleStateV8If {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void vf2C(cf::CBattleStateEntry* entry); // UnkVirtualFunc10 @0x2C
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void vf48(cf::CBattleStateEntry* entry); // UnkVirtualFunc17 @0x48
+    virtual void vf4C(cf::CBattleStateEntry* entry); // UnkVirtualFunc18 @0x4C
+};
+
 extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* entry) {
-    typedef void (*Vfunc10Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
-    typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
-
-    // Hoist one/thirteen so Chaitin parks them in r26/r27 and leaves
-    // this/entry in r28/r29 matching retail's early mr pair.
+    // Function-scope slot/i reserve r31/r30 so Chaitin parks this/entry in
+    // r28/r29 and one/thirteen in r26/r27 (block-local slot/i stole r27/r28).
+    cf::CBattleStateEntry* slot;
+    int i;
     int one;
     int thirteen;
     int id;
     int kind;
 
-    one = 1;
-    thirteen = 0xd;
     id = entry->unk0C;
 
     // Flat if+goto mirrors retail's cmpwi/beq/bge chain 1:1. Nested if/else
@@ -627,149 +677,145 @@ kind_done:
         *(u32*)self->unk1528 = 0;
     }
 
-    ((Vfunc10Fn)(*(void***)self)[11])(self, entry);
+    reinterpret_cast<BattleStateV8If*>(self)->vf2C(entry);
 
-    {
-        cf::CBattleStateEntry* slot;
-        int i;
+    // Retail init order after the first vt+0x2C call:
+    //   slot=this+8, i=0, then one=1 / thirteen=13 into r26/r27.
+    slot = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+    i = 0;
+    one = 1;
+    thirteen = 0xd;
 
-        // Retail init order after the first vt+0x2C call:
-        //   slot=this+8, i=0  (one/thirteen already live in r26/r27)
-        slot = (cf::CBattleStateEntry*)((u8*)self + 0x8);
-        i = 0;
+    for (; i < 0x68; i++, slot++) {
+        u32 savedId;
+        int stillActive;
+        u32 savedWords[0x34 / 4];
+        u32* s;
+        u32 a;
+        u32 b;
+        void* clearPtr;
+        int clearVal;
+        int clearLen;
+        int trip;
+        int g;
+        u8* p;
 
-        for (; i < 0x68; i++, slot++) {
-            u32 savedId;
-            int stillActive;
-            u32 savedWords[0x34 / 4];
-            u32* s;
-            u32 a;
-            u32 b;
-            void* clearPtr;
-            int clearVal;
-            int clearLen;
-            int trip;
-            int g;
-            u8* p;
+        if (slot->unk0C != entry->unk0C) {
+            continue;
+        }
 
-            if (slot->unk0C != entry->unk0C) {
+        if ((entry->unk30 & 0x200) == 0) {
+            if (slot->unk00 != entry->unk00) {
                 continue;
             }
-
-            if ((entry->unk30 & 0x200) == 0) {
-                if (slot->unk00 != entry->unk00) {
-                    continue;
-                }
-                if (slot->unk04 != entry->unk04) {
-                    continue;
-                }
-                if (slot->unk08 != entry->unk08) {
-                    continue;
-                }
-                if (slot->unk2E != entry->unk2E) {
-                    continue;
-                }
+            if (slot->unk04 != entry->unk04) {
+                continue;
             }
+            if (slot->unk08 != entry->unk08) {
+                continue;
+            }
+            if (slot->unk2E != entry->unk2E) {
+                continue;
+            }
+        }
 
-            // Retail schedules memset args into the first pair of the
-            // word-copy (lwz r6/r0, mr dest, li val/len, stw pair hi/lo).
-            s = (u32*)slot;
-            a = s[0];
-            clearPtr = slot;
-            b = s[1];
-            clearVal = 0;
-            savedWords[1] = b;
-            clearLen = 0x34;
-            savedWords[0] = a;
-            a = s[2];
-            b = s[3];
-            savedWords[3] = b;
-            savedWords[2] = a;
-            a = s[4];
-            b = s[5];
-            savedWords[5] = b;
-            savedWords[4] = a;
-            a = s[6];
-            b = s[7];
-            savedWords[7] = b;
-            savedWords[6] = a;
-            a = s[8];
-            b = s[9];
-            savedWords[9] = b;
-            savedWords[8] = a;
-            a = s[10];
-            b = s[11];
-            savedWords[11] = b;
-            savedWords[10] = a;
-            savedWords[12] = s[12];
-            memset(clearPtr, clearVal, clearLen);
+        // Retail schedules memset args into the first pair of the
+        // word-copy (lwz r6/r0, mr dest, li val/len, stw pair hi/lo).
+        s = (u32*)slot;
+        a = s[0];
+        clearPtr = slot;
+        b = s[1];
+        clearVal = 0;
+        savedWords[1] = b;
+        clearLen = 0x34;
+        savedWords[0] = a;
+        a = s[2];
+        b = s[3];
+        savedWords[3] = b;
+        savedWords[2] = a;
+        a = s[4];
+        b = s[5];
+        savedWords[5] = b;
+        savedWords[4] = a;
+        a = s[6];
+        b = s[7];
+        savedWords[7] = b;
+        savedWords[6] = a;
+        a = s[8];
+        b = s[9];
+        savedWords[9] = b;
+        savedWords[8] = a;
+        a = s[10];
+        b = s[11];
+        savedWords[11] = b;
+        savedWords[10] = a;
+        savedWords[12] = s[12];
+        memset(clearPtr, clearVal, clearLen);
 
-            ((Vfunc10Fn)(*(void***)self)[11])(
-                self, (cf::CBattleStateEntry*)savedWords);
+        reinterpret_cast<BattleStateV8If*>(self)->vf2C(
+            (cf::CBattleStateEntry*)savedWords);
 
-            // Load halfword id into a wide local first (retail lhz -> r5).
-            savedId = *(u16*)((u8*)savedWords + 0xc);
-            if (savedId >= 0x12f) {
-                stillActive = 0;
-            } else {
-                // Retail: found in r0, dead trip in r3 (li 0 / addi +7 /
-                // unused after bdnz), scan base in r4. Keep trip live via
-                // a zeroing OR so MWCC cannot DSE the addi+7.
-                p = (u8*)self;
-                trip = 0;
-                stillActive = 0;
-                for (g = thirteen; g != 0; g--) {
-                    if (savedId == *(u16*)(p + 0x14)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    if (savedId == *(u16*)(p + 0x48)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    if (savedId == *(u16*)(p + 0x7c)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    if (savedId == *(u16*)(p + 0xb0)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    if (savedId == *(u16*)(p + 0xe4)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    if (savedId == *(u16*)(p + 0x118)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    if (savedId == *(u16*)(p + 0x14c)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    if (savedId == *(u16*)(p + 0x180)) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                    p += 0x1a0;
-                    trip += 7;
+        // Load halfword id into a wide local first (retail lhz -> r5).
+        savedId = *(u16*)((u8*)savedWords + 0xc);
+        if (savedId >= 0x12f) {
+            stillActive = 0;
+        } else {
+            // Retail: savedId in r5, dead trip in r3 (li 0 / addi +7 /
+            // unused after bdnz), scan base in r4, ctr=thirteen.
+            p = (u8*)self;
+            trip = 0;
+            stillActive = 0;
+            for (g = thirteen; g != 0; g--) {
+                if (savedId == *(u16*)(p + 0x14)) {
+                    stillActive = 1;
+                    goto scan_done;
                 }
-                stillActive = 0;
-            scan_done:
-                stillActive |= trip & 0;
+                if (savedId == *(u16*)(p + 0x48)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x7c)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0xb0)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0xe4)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x118)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x14c)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                if (savedId == *(u16*)(p + 0x180)) {
+                    stillActive = 1;
+                    goto scan_done;
+                }
+                p += 0x1a0;
+                trip += 7;
             }
+            stillActive = 0;
+        scan_done:
+            stillActive = stillActive + (trip & 0);
+        }
 
-            if (stillActive == 0) {
-                u8* wordPtr = self->unk15AC + ((savedId >> 3) & ~3u);
-                *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
-            }
+        if (stillActive == 0) {
+            u8* wordPtr = self->unk15AC + ((savedId >> 3) & ~3u);
+            *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
+        }
 
-            ((Vfunc18Fn)(*(void***)self)[19])(
-                self, (cf::CBattleStateEntry*)savedWords);
+        reinterpret_cast<BattleStateV8If*>(self)->vf4C(
+            (cf::CBattleStateEntry*)savedWords);
 
-            if (entry->unk0C == 0) {
-                break;
-            }
+        if (entry->unk0C == 0) {
+            break;
         }
     }
 }

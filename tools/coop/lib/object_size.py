@@ -29,7 +29,7 @@ def normalize_unit_hint(hint: str) -> str:
     path = hint.replace("\\", "/")
     if path.startswith("main/"):
         path = path[5:]
-    if path.endswith(".cpp"):
+    if path.endswith((".cpp", ".c", ".cp", ".C", ".cc", ".cxx")):
         return path
     return f"{path}.cpp"
 
@@ -42,10 +42,17 @@ def find_split_unit(units: list[SplitUnit], hint: str) -> SplitUnit | None:
             return unit
         if unit_path.endswith("/" + norm):
             return unit
-    stem = norm.removesuffix(".cpp")
+    stem = Path(norm).stem
+    for ext in (".cpp", ".c", ".cp", ".C", ".cc", ".cxx"):
+        candidate = f"{stem}{ext}"
+        for unit in units:
+            unit_path = unit.path.replace("\\", "/")
+            if unit_path.endswith("/" + candidate) or unit_path == candidate:
+                return unit
+        # also allow hint without directory: match by filename
     for unit in units:
         unit_path = unit.path.replace("\\", "/")
-        if unit_path.endswith(f"/{stem}.cpp") or unit_path == f"{stem}.cpp":
+        if Path(unit_path).stem == stem:
             return unit
     return None
 

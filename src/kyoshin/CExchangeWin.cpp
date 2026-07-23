@@ -1,0 +1,69 @@
+// Auto-scaffolded catalog TU for kyoshin/CExchangeWin
+// Mangled extern stubs for llm-harness / coop selection.
+// Replace stubs with high-level C/C++ during decomp.
+
+#include "kyoshin/harness_catalog.hpp"
+
+// LLM-HARNESS-BEGIN: us-8022ed68
+extern "C" void __ct__CExchangeWin() {}
+// LLM-HARNESS-END: us-8022ed68
+
+// LLM-HARNESS-BEGIN: us-8022edd0
+extern "C" void __dt__12CExchangeWinFv() {}
+// LLM-HARNESS-END: us-8022edd0
+
+// LLM-HARNESS-BEGIN: us-8022ee24
+extern "C" void func_8022CF2C() {}
+// LLM-HARNESS-END: us-8022ee24
+
+// LLM-HARNESS-BEGIN: us-8022ee74
+extern "C" void func_8022CF7C() {}
+// LLM-HARNESS-END: us-8022ee74
+
+// LLM-HARNESS-BEGIN: us-8022eee4
+extern "C" void func_8022CFEC() {}
+// LLM-HARNESS-END: us-8022eee4
+
+// LLM-HARNESS-BEGIN: us-8022ef10
+extern "C" void func_8022D018() {}
+// LLM-HARNESS-END: us-8022ef10
+
+// LLM-HARNESS-BEGIN: us-8022ef84
+extern "C" bool func_8022D08C() { return false; }
+// LLM-HARNESS-END: us-8022ef84
+
+// LLM-HARNESS-BEGIN: us-8022ef8c
+extern "C" bool func_8022D094() { return false; }
+// LLM-HARNESS-END: us-8022ef8c
+
+// LLM-HARNESS-BEGIN: us-8022ef94
+extern "C" bool func_8022D09C() { return false; }
+// LLM-HARNESS-END: us-8022ef94
+
+// LLM-HARNESS-BEGIN: us-8022ef9c
+extern "C" void func_8022D0A4() {}
+// LLM-HARNESS-END: us-8022ef9c
+
+// LLM-HARNESS-BEGIN: us-8022efc8
+extern "C" void func_8022D0D0() {}
+// LLM-HARNESS-END: us-8022efc8
+
+// LLM-HARNESS-BEGIN: us-8022eff0
+extern "C" void func_8022D0F8() {}
+// LLM-HARNESS-END: us-8022eff0
+
+// LLM-HARNESS-BEGIN: us-8022f094
+extern "C" void func_8022D19C() {}
+// LLM-HARNESS-END: us-8022f094
+
+// LLM-HARNESS-BEGIN: us-8022f0f0
+extern "C" void func_8022D1F8() {}
+// LLM-HARNESS-END: us-8022f0f0
+
+// LLM-HARNESS-BEGIN: us-8022f13c
+extern "C" void func_8022D244() {}
+// LLM-HARNESS-END: us-8022f13c
+
+// LLM-HARNESS-BEGIN: us-8022f18c
+extern "C" void OnFileEvent__12CExchangeWinFP10CEventFile() {}
+// LLM-HARNESS-END: us-8022f18c

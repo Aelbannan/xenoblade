@@ -16,13 +16,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .compile_diagnostic import normalize_compile_output, select_root_diagnostic
+from .candidate_sanitize import normalize_source_for_compare
+from .compile_diagnostic import (
+    clean_mwcc_diagnostics,
+    cookbook_for_diagnostics,
+    normalize_compile_output,
+    select_root_diagnostic,
+)
 from .metrics import TimingRecorder, timings_from_records
 from .promotion import PromotionManager, evaluation_to_candidate, capture_baseline
 from .providers import (
     CodexProvider,
     DeepSeekRawProvider,
     LMStudioProvider,
+    OmlxProvider,
     OpenCodeCircuitBreaker,
     OpenCodeEmptyResponse,
     OpenCodeProvider,
@@ -41,6 +48,21 @@ from .types import (
     SourcePatch,
 )
 from .workspace import GitWorktreeManager
+
+# Defaults for ``solve-local`` (scaffold+sanitize path for smaller local models).
+# Intentionally does *not* inherit solve.initial_candidates / repair budgets —
+# those are tuned for stronger models that escape COMPILE_ERROR.
+SOLVE_LOCAL_DEFAULTS: Dict[str, Any] = {
+    "initial_candidates": 1,
+    "compile_repairs": 2,
+    "match_repairs": 3,
+    "max_repeated_fingerprint": 1,
+    "stop_on_full_match": True,
+    "stop_on_equivalent_match": True,
+    "stop_if_all_initial_compile_error": True,
+    "reject_noop_compile_repair": True,
+    "strategies": ["typed"],
+}
 
 
 def _debug_value(value: Any) -> str:
@@ -112,6 +134,7 @@ class Harness:
             "reasonix": ReasonixProvider,
             "deepseek-raw": DeepSeekRawProvider,
             "lmstudio": LMStudioProvider,
+            "omlx": OmlxProvider,
             "openrouter": OpenRouterProvider,
             "codex": CodexProvider,
         }
@@ -121,8 +144,20 @@ class Harness:
             if cls is None:
                 continue
             if name == "openrouter":
+                api_key_raw = cfg.get("api_key")
                 self.providers[name] = cls(
                     timeout_seconds=int(cfg.get("timeout_seconds", 300)),
+                    temperature=float(cfg.get("temperature", 0.1)),
+                    max_tokens=int(cfg.get("max_tokens", 4096)),
+                    json_object=bool(cfg.get("json_object", True)),
+                    api_key=str(api_key_raw) if api_key_raw is not None else None,
+                    site_url=str(
+                        cfg.get("site_url", OpenRouterProvider.DEFAULT_SITE_URL)
+                    ),
+                    app_name=str(
+                        cfg.get("app_name", OpenRouterProvider.DEFAULT_APP_NAME)
+                    ),
+                    allow_fallbacks=bool(cfg.get("allow_fallbacks", True)),
                     pure=bool(cfg.get("pure", True)),
                 )
             elif name == "lmstudio":
@@ -140,6 +175,22 @@ class Harness:
                     reasoning_effort=str(effort_raw) if effort_raw is not None else None,
                     pure=bool(cfg.get("pure", True)),
                 )
+            elif name == "omlx":
+                budget_raw = cfg.get("thinking_budget")
+                effort_raw = cfg.get("reasoning_effort")
+                api_key_raw = cfg.get("api_key")
+                self.providers[name] = cls(
+                    base_url=str(cfg.get("base_url", OmlxProvider.DEFAULT_BASE_URL)),
+                    api_key=str(api_key_raw) if api_key_raw is not None else None,
+                    timeout_seconds=int(cfg.get("timeout_seconds", 900)),
+                    temperature=float(cfg.get("temperature", 0.1)),
+                    max_tokens=int(cfg.get("max_tokens", 4096)),
+                    json_object=bool(cfg.get("json_object", True)),
+                    enable_thinking=bool(cfg.get("enable_thinking", False)),
+                    thinking_budget=int(budget_raw) if budget_raw is not None else None,
+                    reasoning_effort=str(effort_raw) if effort_raw is not None else None,
+                    pure=bool(cfg.get("pure", True)),
+                )
             elif name == "deepseek-raw":
                 self.providers[name] = cls(
                     binary=cfg.get("binary", name),
@@ -148,15 +199,9 @@ class Harness:
                 )
             elif name == "opencode":
                 self.providers[name] = cls(
-                    base_url=str(
-                        cfg.get("base_url", OpenCodeProvider.DEFAULT_BASE_URL)
-                    ),
+                    binary=str(cfg.get("binary", "opencode")),
                     timeout_seconds=int(cfg.get("timeout_seconds", 900)),
                     pure=bool(cfg.get("pure", True)),
-                    username=str(cfg["username"]) if cfg.get("username") else None,
-                    password=str(cfg["password"]) if cfg.get("password") else None,
-                    delete_session=bool(cfg.get("delete_session", True)),
-                    binary=str(cfg.get("binary", "opencode")),
                 )
             elif name == "codex":
                 self.providers[name] = cls(
@@ -215,7 +260,17 @@ class Harness:
     def _validate_config_keys(self) -> None:
         """Phase 8: Validate that all config keys are recognized."""
         # Known top-level keys
-        known_top = {"project_adapter", "output_dir", "project", "providers", "execution", "models", "solve", "prompt"}
+        known_top = {
+            "project_adapter",
+            "output_dir",
+            "project",
+            "providers",
+            "execution",
+            "models",
+            "solve",
+            "solve-local",
+            "prompt",
+        }
         unknown_top = set(self.config.keys()) - known_top
         if unknown_top:
             raise ValueError(f"llm-harness.json: unknown top-level keys: {', '.join(sorted(unknown_top))}")
@@ -239,13 +294,47 @@ class Harness:
         if unknown_exec:
             raise ValueError(f"llm-harness.json: execution contains unknown keys: {', '.join(sorted(unknown_exec))}")
         
-        # Known solve keys
-        known_solve = {"initial_candidates", "compile_repairs", "match_repairs", 
-                       "max_repeated_fingerprint", "stop_on_full_match", "stop_on_equivalent_match"}
+        # Known solve keys (shared acceptance / budget knobs)
+        known_solve = {
+            "initial_candidates",
+            "compile_repairs",
+            "match_repairs",
+            "max_repeated_fingerprint",
+            "stop_on_full_match",
+            "stop_on_equivalent_match",
+        }
         solve = self.config.get("solve", {})
         unknown_solve = set(solve.keys()) - known_solve
         if unknown_solve:
             raise ValueError(f"llm-harness.json: solve contains unknown keys: {', '.join(sorted(unknown_solve))}")
+
+        known_solve_local = known_solve | {
+            "strategies",
+            "stop_if_all_initial_compile_error",
+            "reject_noop_compile_repair",
+        }
+        solve_local = self.config.get("solve-local", {})
+        if solve_local is None:
+            solve_local = {}
+        if not isinstance(solve_local, dict):
+            raise ValueError("llm-harness.json: solve-local must be an object")
+        unknown_solve_local = set(solve_local.keys()) - known_solve_local
+        if unknown_solve_local:
+            raise ValueError(
+                "llm-harness.json: solve-local contains unknown keys: "
+                f"{', '.join(sorted(unknown_solve_local))}"
+            )
+        strategies = solve_local.get("strategies")
+        if strategies is not None:
+            if not isinstance(strategies, list) or not strategies:
+                raise ValueError("llm-harness.json: solve-local.strategies must be a non-empty list")
+            allowed = {"literal", "typed", "alternate_cfg"}
+            bad = [s for s in strategies if s not in allowed]
+            if bad:
+                raise ValueError(
+                    "llm-harness.json: solve-local.strategies has unknown entries: "
+                    f"{', '.join(sorted(str(s) for s in bad))}"
+                )
         
         # Known prompt keys
         known_prompt = {"max_chars", "max_decoded_instructions", "max_declaration_chars",
@@ -257,12 +346,16 @@ class Harness:
             raise ValueError(f"llm-harness.json: prompt contains unknown keys: {', '.join(sorted(unknown_prompt))}")
         
         # Validate positive values
-        for key, value in [("solve.initial_candidates", solve.get("initial_candidates")),
-                           ("solve.compile_repairs", solve.get("compile_repairs")),
-                           ("solve.match_repairs", solve.get("match_repairs")),
-                           ("solve.max_repeated_fingerprint", solve.get("max_repeated_fingerprint"))]:
-            if value is not None and value < 0:
-                raise ValueError(f"{key} must be nonnegative, got {value}")
+        for prefix, section in (("solve", solve), ("solve-local", solve_local)):
+            for key in (
+                "initial_candidates",
+                "compile_repairs",
+                "match_repairs",
+                "max_repeated_fingerprint",
+            ):
+                value = section.get(key)
+                if value is not None and value < 0:
+                    raise ValueError(f"{prefix}.{key} must be nonnegative, got {value}")
 
     def _compute_effective_config(self) -> Dict[str, Any]:
         """Phase 8: Compute effective config with defaults for dry-run."""
@@ -301,6 +394,14 @@ class Harness:
         solve.setdefault("max_repeated_fingerprint", 2)
         solve.setdefault("stop_on_full_match", True)
         solve.setdefault("stop_on_equivalent_match", True)
+
+        solve_local = config.setdefault("solve-local", {})
+        for key, value in SOLVE_LOCAL_DEFAULTS.items():
+            solve_local.setdefault(key, value)
+        # Inherit acceptance stops from solve when not overridden.
+        for key in ("stop_on_full_match", "stop_on_equivalent_match"):
+            if key not in (self.config.get("solve-local") or {}):
+                solve_local[key] = solve[key]
         
         prompt = config.setdefault("prompt", {})
         prompt.setdefault("max_chars", 60000)
@@ -362,10 +463,62 @@ class Harness:
             raise ValueError("Harness config must define at least one model")
         return pipelines.get("default", []), pipelines
 
+    def resolve_solve_config(self, *, local: bool = False) -> Dict[str, Any]:
+        """Return effective solve / solve-local knobs (defaults applied)."""
+        solve = dict(self.config.get("solve") or {})
+        if not local:
+            out = {
+                "initial_candidates": int(solve.get("initial_candidates", 2)),
+                "compile_repairs": int(solve.get("compile_repairs", 1)),
+                "match_repairs": int(solve.get("match_repairs", 3)),
+                "max_repeated_fingerprint": int(solve.get("max_repeated_fingerprint", 2)),
+                "stop_on_full_match": bool(solve.get("stop_on_full_match", True)),
+                "stop_on_equivalent_match": bool(solve.get("stop_on_equivalent_match", True)),
+                "stop_if_all_initial_compile_error": False,
+                "reject_noop_compile_repair": False,
+                "strategies": ["literal", "typed", "alternate_cfg"][
+                    : max(1, int(solve.get("initial_candidates", 2)))
+                ],
+            }
+            return out
+
+        local_raw = dict(self.config.get("solve-local") or {})
+        merged = dict(SOLVE_LOCAL_DEFAULTS)
+        # Inherit acceptance stops from solve when not set in solve-local.
+        for key in ("stop_on_full_match", "stop_on_equivalent_match"):
+            if key not in local_raw and key in solve:
+                merged[key] = solve[key]
+        merged.update(local_raw)
+
+        strategies = merged.get("strategies") or list(SOLVE_LOCAL_DEFAULTS["strategies"])
+        if not isinstance(strategies, list):
+            strategies = list(SOLVE_LOCAL_DEFAULTS["strategies"])
+        initial_n = int(merged.get("initial_candidates", 1))
+        strategies = [str(s) for s in strategies][: max(1, initial_n)]
+        if not strategies:
+            strategies = ["typed"]
+
+        return {
+            "initial_candidates": initial_n,
+            "compile_repairs": int(merged.get("compile_repairs", 2)),
+            "match_repairs": int(merged.get("match_repairs", 3)),
+            "max_repeated_fingerprint": int(merged.get("max_repeated_fingerprint", 1)),
+            "stop_on_full_match": bool(merged.get("stop_on_full_match", True)),
+            "stop_on_equivalent_match": bool(merged.get("stop_on_equivalent_match", True)),
+            "stop_if_all_initial_compile_error": bool(
+                merged.get("stop_if_all_initial_compile_error", True)
+            ),
+            "reject_noop_compile_repair": bool(
+                merged.get("reject_noop_compile_repair", True)
+            ),
+            "strategies": strategies,
+        }
+
     def models_for_workflow(self, workflow: str) -> List[ModelConfig]:
         """Resolve models for a workflow or role, with legacy/role aliases."""
         aliases = {
             "solve": ("initial", "new", "default"),
+            "solve-local": ("solve-local", "initial", "new", "default"),
             "initial": ("initial", "new", "default"),
             "repair": ("repair", "improve", "default"),
             "new": ("new", "initial", "default"),
@@ -699,9 +852,15 @@ class Harness:
         max_target_parallel: Optional[int] = None,
         model_parallel: Optional[int] = None,
         full_context: bool = False,
+        local: bool = False,
     ) -> Path:
-        if workflow not in {"new", "improve", "tu-complete", "solve"}:
-            raise ValueError("Batch mode supports new, improve, tu-complete, or solve")
+        if workflow not in {"new", "improve", "tu-complete", "solve", "solve-local"}:
+            raise ValueError(
+                "Batch mode supports new, improve, tu-complete, solve, or solve-local"
+            )
+        solve_local = workflow == "solve-local" or local
+        if workflow == "solve-local":
+            workflow = "solve"
         targets = list(dict.fromkeys(target_ids))
         if not targets:
             raise ValueError("Batch mode requires at least one target")
@@ -729,15 +888,16 @@ class Harness:
         batch_id = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
         batch_dir = self.output_dir / "batches" / batch_id
         batch_dir.mkdir(parents=True, exist_ok=True)
+        batch_workflow = "solve-local" if solve_local else workflow
         self._debug(
-            f"batch started workflow={workflow} batch={batch_id} "
+            f"batch started workflow={batch_workflow} batch={batch_id} "
             f"targets={len(targets)} target_parallel={target_parallel} "
             f"model_parallel={per_target_parallel}"
         )
         manifest: Dict[str, Any] = {
             "schema_version": 1,
             "batch_id": batch_id,
-            "workflow": workflow,
+            "workflow": batch_workflow,
             "status": "running",
             "max_target_parallel": target_parallel,
             "model_parallel": per_target_parallel,
@@ -754,6 +914,7 @@ class Harness:
                         dry_run=dry_run,
                         max_parallel=per_target_parallel,
                         skip_auto_promote=defer_promote,
+                        local=solve_local or None,
                     )
                 else:
                     output = self.run(
@@ -826,6 +987,7 @@ class Harness:
 
     def select_new_targets(
         self, number: int, *, ignore_called_functions: bool = False, certified_funcs: bool = False,
+        high_match_callees: bool = False,
         tu: Optional[str] = None,
     ) -> List[str]:
         """Ask the project adapter for fresh function targets, optionally filtered to a TU."""
@@ -835,15 +997,27 @@ class Harness:
         if select is None:
             raise ValueError("Configured project adapter does not support automatic target selection")
         with self._adapter_lock:
-            target_ids = list(
-                select(
-                    number,
-                    self.records(),
-                    ignore_called_functions=ignore_called_functions,
-                    certified_funcs=certified_funcs,
-                    tu=tu,
+            try:
+                target_ids = list(
+                    select(
+                        number,
+                        self.records(),
+                        ignore_called_functions=ignore_called_functions,
+                        certified_funcs=certified_funcs,
+                        high_match_callees=high_match_callees,
+                        tu=tu,
+                    )
                 )
-            )
+            except TypeError:
+                target_ids = list(
+                    select(
+                        number,
+                        self.records(),
+                        ignore_called_functions=ignore_called_functions,
+                        certified_funcs=certified_funcs,
+                        tu=tu,
+                    )
+                )
         if len(target_ids) != number:
             raise ValueError(
                 f"Project adapter returned {len(target_ids)} targets; expected {number}"
@@ -857,6 +1031,7 @@ class Harness:
         *,
         randomize: bool = False,
         certified_funcs: bool = False,
+        high_match_callees: bool = False,
         tu: Optional[str] = None,
         selection: Optional[str] = None,
         min_fuzzy: Optional[float] = None,
@@ -872,6 +1047,7 @@ class Harness:
         kwargs: Dict[str, Any] = {
             "randomize": randomize,
             "certified_funcs": certified_funcs,
+            "high_match_callees": high_match_callees,
             "tu": tu,
         }
         if selection is not None:
@@ -882,9 +1058,10 @@ class Harness:
             try:
                 target_ids = list(select(workflow, number, **kwargs))
             except TypeError:
-                # Older adapters without selection=/min_fuzzy kwargs.
+                # Older adapters without selection=/min_fuzzy/high_match_callees kwargs.
                 kwargs.pop("selection", None)
                 kwargs.pop("min_fuzzy", None)
+                kwargs.pop("high_match_callees", None)
                 target_ids = list(select(workflow, number, **kwargs))
         if len(target_ids) != number:
             raise ValueError(
@@ -1342,6 +1519,7 @@ class Harness:
         resume: Optional[Path] = None,
         max_parallel: Optional[int] = None,
         skip_auto_promote: bool = False,
+        local: Optional[bool] = None,
     ) -> Path:
         """Adaptive closed loop: initial candidates -> compile/binary repair.
 
@@ -1350,24 +1528,43 @@ class Harness:
         max_target_parallel==1). Parallel initial strategies share that
         worktree under ``_workspace_eval_lock`` so provider calls overlap
         while evaluate stays serialized.
+
+        ``local=True`` enables the ``solve-local`` config section: scaffold+sanitize
+        hygiene, local prompts, aggressive candidate sanitizer, no-op repair
+        rejection, and early-stop when every initial fails to compile.
         """
-        solve_cfg = self.config.get("solve", {})
-        initial_n = int(solve_cfg.get("initial_candidates", 3))
-        compile_budget = int(solve_cfg.get("compile_repairs", 2))
-        match_budget = int(solve_cfg.get("match_repairs", 4))
-        max_repeated = int(solve_cfg.get("max_repeated_fingerprint", 2))
-        stop_on_full = bool(solve_cfg.get("stop_on_full_match", True))
-        stop_on_equiv = bool(solve_cfg.get("stop_on_equivalent_match", True))
-        strategies = ["literal", "typed", "alternate_cfg"][: max(1, initial_n)]
+        local_mode = bool(local) if local is not None else False
+        solve_cfg = self.resolve_solve_config(local=local_mode)
+        initial_n = int(solve_cfg["initial_candidates"])
+        compile_budget = int(solve_cfg["compile_repairs"])
+        match_budget = int(solve_cfg["match_repairs"])
+        max_repeated = int(solve_cfg["max_repeated_fingerprint"])
+        stop_on_full = bool(solve_cfg["stop_on_full_match"])
+        stop_on_equiv = bool(solve_cfg["stop_on_equivalent_match"])
+        stop_all_compile = bool(solve_cfg["stop_if_all_initial_compile_error"])
+        reject_noop = bool(solve_cfg["reject_noop_compile_repair"])
+        strategies = list(solve_cfg["strategies"])[: max(1, initial_n)]
+
+        prev_local = getattr(self.adapter, "local_sanitize", False)
+        setattr(self.adapter, "local_sanitize", local_mode)
 
         if resume:
             experiment_dir = resume.resolve()
             state = json.loads((experiment_dir / "state.json").read_text(encoding="utf-8"))
-            if state.get("workflow") != "solve" or state.get("target_id") != target_id:
+            if state.get("workflow") not in {"solve", "solve-local"} or state.get("target_id") != target_id:
                 raise ValueError("Resume state workflow/target does not match solve command")
             experiment_id = state["experiment_id"]
             prompt = (experiment_dir / "prompt.md").read_text(encoding="utf-8")
             context_dir = self._write_solve_context(experiment_dir, prompt)
+            local_mode = bool(state.get("local_mode", local_mode))
+            solve_state = state.get("solve") or {}
+            stop_all_compile = bool(
+                solve_state.get("stop_if_all_initial_compile_error", stop_all_compile)
+            )
+            reject_noop = bool(
+                solve_state.get("reject_noop_compile_repair", reject_noop)
+            )
+            setattr(self.adapter, "local_sanitize", local_mode)
         else:
             experiment_id = (
                 f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-"
@@ -1385,8 +1582,9 @@ class Harness:
             state = {
                 "schema_version": 3,
                 "experiment_id": experiment_id,
-                "workflow": "solve",
+                "workflow": "solve-local" if local_mode else "solve",
                 "target_id": target_id,
+                "local_mode": local_mode,
                 "status": "running",
                 "logged": False,
                 "logged_keys": [],
@@ -1401,6 +1599,9 @@ class Harness:
                     "match_repairs": match_budget,
                     "max_repeated_fingerprint": max_repeated,
                     "strategies": strategies,
+                    "local_mode": local_mode,
+                    "stop_if_all_initial_compile_error": stop_all_compile,
+                    "reject_noop_compile_repair": reject_noop,
                 },
                 "model_calls": 0,
             }
@@ -1435,6 +1636,7 @@ class Harness:
                 state["reason"] = "baseline_already_accepted"
                 state["model_calls"] = 0
                 self._write_state(experiment_dir, state)
+                setattr(self.adapter, "local_sanitize", prev_local)
                 return experiment_dir
             self._write_state(experiment_dir, state)
             if dry_run:
@@ -1442,12 +1644,15 @@ class Harness:
                     json.dumps(self.effective_config, indent=2) + "\n",
                     encoding="utf-8",
                 )
+                setattr(self.adapter, "local_sanitize", prev_local)
                 return experiment_dir
 
         if dry_run:
+            setattr(self.adapter, "local_sanitize", prev_local)
             return experiment_dir
 
-        initial_models = self.models_for_workflow("initial")
+        model_role = "solve-local" if local_mode else "initial"
+        initial_models = self.models_for_workflow(model_role)
         repair_models = self.models_for_workflow("repair")
         initial_model = initial_models[0]
         repair_model = repair_models[0]
@@ -1578,6 +1783,25 @@ class Harness:
                 )
                 return experiment_dir
 
+            initial_branches = [b for b in branches if b.get("phase") == "initial"]
+            if (
+                stop_all_compile
+                and initial_branches
+                and all(
+                    str(b.get("status") or "").upper() == "COMPILE_ERROR"
+                    for b in initial_branches
+                )
+            ):
+                state["reason"] = "all_initial_compile_error"
+                self._finalize_solve(
+                    experiment_dir,
+                    state,
+                    branches,
+                    best,
+                    skip_auto_promote=skip_auto_promote,
+                )
+                return experiment_dir
+
             # --- adaptive repair loop ---
             while True:
                 best = self._best_solve_record(state["records"])
@@ -1636,7 +1860,9 @@ class Harness:
                 }
 
                 if phase == "compile_repair":
-                    diagnostics = normalize_compile_output(str(evaluation.get("detail", "")))
+                    raw_detail = str(evaluation.get("detail", ""))
+                    diagnostics = normalize_compile_output(raw_detail)
+                    cleaned_detail = clean_mwcc_diagnostics(raw_detail) or raw_detail
                     retail_asm = ""
                     getter = getattr(self.adapter, "get_retail_asm", None)
                     if callable(getter):
@@ -1647,13 +1873,14 @@ class Harness:
                             retail_asm = ""
                     prompt = self._build_repair_prompt(
                         parent_candidate,
-                        str(evaluation.get("detail", "")),
+                        cleaned_detail,
                         diagnostics,
                         state,
                         budget=compile_budget,
                         repair_index=compile_used - 1,
                         seen_fingerprints=list(fingerprint_counts),
                         retail_asm=retail_asm,
+                        local_mode=local_mode,
                     )
                 else:
                     with self._adapter_lock:
@@ -1687,6 +1914,61 @@ class Harness:
                         compile_used = max(0, compile_used - 1)
                     else:
                         match_used = max(0, match_used - 1)
+                child_source = ""
+                if record.artifact:
+                    try:
+                        child_payload = json.loads(
+                            (self.root / record.artifact).read_text(encoding="utf-8")
+                        )
+                        child_source = str(
+                            ((child_payload.get("candidate") or {}).get("source")) or ""
+                        )
+                    except (OSError, json.JSONDecodeError, TypeError):
+                        child_source = ""
+                noop_repair = (
+                    reject_noop
+                    and phase == "compile_repair"
+                    and not record.error
+                    and bool(child_source)
+                    and normalize_source_for_compare(child_source)
+                    == normalize_source_for_compare(parent_candidate.source)
+                )
+                if noop_repair:
+                    # Refund budget; do not keep a duplicate branch as best.
+                    compile_used = max(0, compile_used - 1)
+                    record.candidate_summary = {
+                        **(record.candidate_summary or {}),
+                        "strategy": phase,
+                        "parent_id": parent_branch.get("branch_id"),
+                        "branch_id": branch_id,
+                        "iteration": iteration,
+                        "noop_repair": True,
+                    }
+                    state["records"].append(record.to_json())
+                    branches.append({
+                        "branch_id": branch_id,
+                        "parent_id": parent_branch.get("branch_id"),
+                        "phase": phase,
+                        "strategy": phase,
+                        "artifact": record.artifact,
+                        "run_index": run_index,
+                        "status": (record.evaluation or {}).get("status"),
+                        "match_percent": (record.evaluation or {}).get("match_percent"),
+                        "fingerprint": fingerprint,
+                        "iteration": iteration,
+                        "error": record.error,
+                        "noop_repair": True,
+                    })
+                    fingerprint_counts[fingerprint or "noop"] = (
+                        fingerprint_counts.get(fingerprint or "noop", 0) + 1
+                    )
+                    if fingerprint_counts[fingerprint or "noop"] >= max_repeated:
+                        state["reason"] = "noop_compile_repair"
+                        persist()
+                        break
+                    persist()
+                    continue
+
                 child_fp = ((record.evaluation or {}).get("metrics") or {}).get(
                     "mismatch_fingerprint", ""
                 )
@@ -1739,6 +2021,7 @@ class Harness:
             )
             return experiment_dir
         finally:
+            setattr(self.adapter, "local_sanitize", prev_local)
             if solve_workspace is not None and self.workspace_manager is not None:
                 self.workspace_manager.remove(solve_workspace)
 
@@ -2712,13 +2995,17 @@ class Harness:
         repair_index: int = 0,
         seen_fingerprints: list[str] | None = None,
         retail_asm: str = "",
+        local_mode: bool = False,
     ) -> str:
-        repair_path = self._prompt_dir() / "compile_repair.md"
+        repair_name = "compile_repair_local.md" if local_mode else "compile_repair.md"
+        repair_path = self._prompt_dir() / repair_name
+        if local_mode and not repair_path.is_file():
+            repair_path = self._prompt_dir() / "compile_repair.md"
         repair_instruction = (
             repair_path.read_text(encoding="utf-8") if repair_path.is_file() else ""
         )
 
-        # compile_repair.md is self-contained (same JSON schema as common.md).
+        # compile_repair*.md is self-contained (same JSON schema as common.md).
         # Do not paste common.md here — its {{WORKFLOW_PROMPT}} placeholders
         # would ship unsubstituted and waste context.
         lines: list[str] = [
@@ -2737,10 +3024,18 @@ class Harness:
             lines.append("")
             lines.append("## Normalized diagnostics")
             for i, d in enumerate(diagnostics):
+                loc = f"{d.file}:{d.line}" if d.file else (str(d.line) if d.line else "?")
                 symbol = f" symbol={d.symbol}" if d.symbol else ""
                 lines.append(
-                    f"  {i+1}. [{d.category}] {d.file}:{d.line}{symbol} — {d.message}"
+                    f"  {i+1}. [{d.category}] {loc}{symbol} — {d.message}"
                 )
+            if local_mode:
+                tips = cookbook_for_diagnostics(list(diagnostics))
+                if tips:
+                    lines.append("")
+                    lines.append("## Fix cookbook")
+                    for tip in tips:
+                        lines.append(f"  - {tip}")
 
         if seen_fingerprints:
             lines.append("")
@@ -2901,12 +3196,17 @@ def _write_tu_decomp_sidecars(artifact: Path, candidate: Candidate) -> None:
 def _looks_like_function_definition(source: str) -> bool:
     """True when source looks like a C/C++ function definition, not a bare name."""
     text = source.strip()
-    if not text or "(" not in text or "{" not in text:
+    if not text:
+        return False
+    # Body-only (scaffold mode): harness reattaches the locked signature.
+    if text.startswith("{") and text.endswith("}"):
+        return True
+    if "(" not in text or "{" not in text:
         return False
     # Reject pure declarations / dossier fragments.
     if re.fullmatch(r"[A-Za-z_][\w:<>\s*&]*", text):
         return False
-    if '"declaration"' in text or text.lstrip().startswith("{"):
+    if '"declaration"' in text:
         return False
     return True
 

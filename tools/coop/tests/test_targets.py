@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import multiprocessing
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -11,16 +13,51 @@ from tools.coop.lib.targets import (
     Target,
     claim_target,
     equivalence_certificate_error,
+    exclusive_targets_lock,
     harness_targets,
     import_symbols,
     load_split_ranges,
+    load_targets_document,
     parse_asm_calls,
     plan_recertify_bottom_up,
     recertify_ready_wave,
     release_target,
+    targets_lock_path,
+    update_target_result,
     validate_targets,
+    write_targets_document,
     equivalence_certificate_hash,
 )
+
+
+def _update_target_result_worker(
+    root: str,
+    target_id: str,
+    status: str,
+    result_queue: "multiprocessing.Queue[str]",
+) -> None:
+    try:
+        config = CoopConfig(project_root=Path(root), region="us")
+        update_target_result(
+            config,
+            target_id,
+            status=status,
+            instruction_match=12.5,
+        )
+        result_queue.put("ok")
+    except BaseException as exc:  # noqa: BLE001 - surface to parent
+        result_queue.put(f"error:{type(exc).__name__}:{exc}")
+
+
+def _hold_targets_lock_worker(root: str, ready_path: str, release_path: str) -> None:
+    config = CoopConfig(project_root=Path(root), region="us")
+    with exclusive_targets_lock(config, timeout=5.0):
+        Path(ready_path).write_text("ready", encoding="utf-8")
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline:
+            if Path(release_path).is_file():
+                break
+            time.sleep(0.05)
 from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
 
@@ -229,6 +266,79 @@ class TargetRegistryTests(unittest.TestCase):
             claim_target(self.config, "a", owner="two", allowed_paths=[])
         release_target(self.config, "a", owner="one")
         claim_target(self.config, "a", owner="two", allowed_paths=[])
+
+    def test_write_targets_document_is_atomic_and_creates_lock_sidecar(self) -> None:
+        path = self.root / "tools/coop/targets.json"
+        payload = {
+            "schema_version": 2,
+            "targets": [
+                {"id": "a", "symbol": "f", "address": "0x1", "status": "COMPILES"}
+            ],
+        }
+        write_targets_document(self.config, payload)
+        self.assertEqual(json.loads(path.read_text(encoding="utf-8")), payload)
+        self.assertTrue(targets_lock_path(self.config).is_file())
+
+    def test_concurrent_update_target_result_preserves_both_rows(self) -> None:
+        # flock is per-process, so concurrency must be exercised with subprocesses.
+        path = self.root / "tools/coop/targets.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 2,
+                    "targets": [
+                        {"id": "a", "symbol": "fa", "address": "0x1", "status": "NOT_STARTED"},
+                        {"id": "b", "symbol": "fb", "address": "0x2", "status": "NOT_STARTED"},
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        ctx = multiprocessing.get_context("spawn")
+        result_queue: multiprocessing.Queue[str] = ctx.Queue()
+        workers = [
+            ctx.Process(
+                target=_update_target_result_worker,
+                args=(str(self.root), "a", "COMPILES", result_queue),
+            ),
+            ctx.Process(
+                target=_update_target_result_worker,
+                args=(str(self.root), "b", "HIGH_MATCH", result_queue),
+            ),
+        ]
+        for worker in workers:
+            worker.start()
+        for worker in workers:
+            worker.join(timeout=30)
+            self.assertEqual(worker.exitcode, 0)
+        results = [result_queue.get(timeout=1) for _ in workers]
+        self.assertEqual(results, ["ok", "ok"])
+        data = load_targets_document(self.config)
+        by_id = {row["id"]: row for row in data["targets"]}
+        self.assertEqual(by_id["a"]["status"], "COMPILES")
+        self.assertEqual(by_id["b"]["status"], "HIGH_MATCH")
+        self.assertEqual(by_id["a"]["instruction_match"], 12.5)
+        self.assertEqual(by_id["b"]["instruction_match"], 12.5)
+
+    def test_exclusive_targets_lock_times_out_while_held(self) -> None:
+        ready_path = self.root / "lock-ready"
+        release_path = self.root / "lock-release"
+        ctx = multiprocessing.get_context("spawn")
+        holder = ctx.Process(
+            target=_hold_targets_lock_worker,
+            args=(str(self.root), str(ready_path), str(release_path)),
+        )
+        holder.start()
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline and not ready_path.is_file():
+            time.sleep(0.05)
+        self.assertTrue(ready_path.is_file(), "holder process never acquired the lock")
+        with self.assertRaisesRegex(TimeoutError, "Timed out"):
+            with exclusive_targets_lock(self.config, timeout=0.2):
+                pass
+        release_path.write_text("go", encoding="utf-8")
+        holder.join(timeout=5)
+        self.assertEqual(holder.exitcode, 0)
 
     def test_parse_calls_resolves_direct_destination_and_marks_indirect(self) -> None:
         asm = self.root / "calls.s"

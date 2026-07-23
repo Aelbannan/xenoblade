@@ -978,11 +978,6 @@ s32 ISFS_GetFileStatsAsync(s32 fd, FSFileStats* statsOut,
                           sizeof(FSFileStats), _isfsFuncCb, block);
 }
 
-//unused
-s32 ISFS_Seek(s32 fd, s32 offset, IPCSeekMode mode) {
-    return IOS_Seek(fd, offset, mode);
-}
-
 s32 ISFS_SeekAsync(s32 fd, s32 offset, IPCSeekMode mode,
                    FSAsyncCallback callback, void* callbackArg) {
     FSCommandBlock* block;

@@ -18,7 +18,7 @@ At the **start of every task** in this repository:
 
 **MWCC knowledge:** before matching, search by exact function/symbol and observed mismatch with `python3 tools/mwcc_kb.py search ... --json`, then open relevant records with `show <id> --json`; **append reusable patterns and breakthroughs** to `docs/MWCC_REFERENCE.md` when found (not only in `attempts.jsonl`).
 
-**Source language:** decompilation output is **high-level C/C++ only** — no asm, `.s`, register variables, or stack-offset tricks in `src/**` / `libs/**` (retail asm is reference-only).
+**Source language:** decompilation output is **high-level C/C++ only** — no `asm void` / whole-function asm bodies, `.s` units, register variables, or stack-offset tricks in `src/**` / `libs/**` (retail asm is reference-only; §17.6 allows single-instruction inline asm only).
 
 When editing `src/**`, `libs/**`, or `configure.py`, run `coop run cycle` or `coop run diff` for the affected unit before claiming a target is complete.
 

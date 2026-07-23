@@ -54,10 +54,13 @@ class ObservablesForExitTests(unittest.TestCase):
         contract = make_contract(preset="ppc-eabi", observe=None, timeout_ms=1_000)
         filtered = observables_for_exit(contract, "indirect-branch")
         names = {item.name for item in filtered}
-        # No exit-kind omission: r4/f1 are live outgoing args at a tail call.
+        # No exit-kind omission: r3–r10 / f1–f8 are live outgoing args at a tail call.
         self.assertEqual(INDIRECT_BRANCH_OMITTED_OBSERVABLES, frozenset())
         self.assertIn("r4", names)
+        self.assertIn("r5", names)
+        self.assertIn("r10", names)
         self.assertIn("f1", names)
+        self.assertIn("f2", names)
         self.assertIn("r3", names)
         self.assertIn("memory", names)
         self.assertIn("r13", names)
@@ -78,7 +81,13 @@ class ObservablesForExitTests(unittest.TestCase):
             preset=None, observe=("r3", "r4", "memory"), timeout_ms=1_000,
         )
         names = {item.name for item in observables_for_exit(contract, "indirect-branch")}
-        self.assertEqual(names, {"r3", "r4", "memory"})
+        # Manual observe still unions EABI outgoing args at indirect exits.
+        self.assertIn("r3", names)
+        self.assertIn("r4", names)
+        self.assertIn("r5", names)
+        self.assertIn("r10", names)
+        self.assertIn("f1", names)
+        self.assertIn("memory", names)
 
 
 class IndirectBranchAbiProofTests(unittest.TestCase):
@@ -91,10 +100,11 @@ class IndirectBranchAbiProofTests(unittest.TestCase):
     # same r12 chain, wrong slot 0x24
     _CAND_WRONG_SLOT = "81830000 818c0024 7d8903a6 4e800420"
 
-    def test_r12_vs_r5_scratch_same_slot_is_equivalent(self) -> None:
-        """Non-observed volatile scratch is fine when outgoing args match."""
+    def test_r12_vs_r5_scratch_same_slot_is_not_equivalent(self) -> None:
+        """Using r5 as CTR scratch destroys live outgoing arg r5."""
         result = _prove(self._RETAIL_R12, self._CAND_R5, preset="auto")
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.mismatch)
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual((result.mismatch or {}).get("name"), "r5")
 
     def test_r12_vs_r4_scratch_same_slot_is_not_equivalent(self) -> None:
         """Using r4 as CTR scratch destroys the live outgoing integer arg."""
@@ -113,13 +123,14 @@ class IndirectBranchAbiProofTests(unittest.TestCase):
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
         self.assertEqual((result.mismatch or {}).get("name"), "r4")
 
-    def test_this_adjust_thunk_r12_vs_r5(self) -> None:
+    def test_this_adjust_thunk_r12_vs_r5_not_equivalent(self) -> None:
         # lwz r3,0x8c(r3); lwz r12,0(r3); lwz r12,0x20(r12); mtctr r12; bctr
         retail = "8063008c 81830000 818c0020 7d8903a6 4e800420"
         # lwz r3,0x8c(r3); lwz r5,0(r3); lwz r5,0x20(r5); mtctr r5; bctr
         cand = "8063008c 80a30000 80a50020 7ca903a6 4e800420"
         result = _prove(retail, cand, preset="auto")
-        self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.mismatch)
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual((result.mismatch or {}).get("name"), "r5")
 
     def test_this_adjust_thunk_r12_vs_r4_not_equivalent(self) -> None:
         retail = "8063008c 81830000 818c0020 7d8903a6 4e800420"
@@ -150,14 +161,17 @@ class IndirectBranchAbiProofTests(unittest.TestCase):
         )
         self.assertEqual(result.status, ProofStatus.EQUIVALENT, result.mismatch)
 
-    def test_abi_shape_none_keeps_default_indirect_observation(self) -> None:
+    def test_abi_shape_none_observes_full_outgoing_args(self) -> None:
         contract = make_contract(preset="ppc-eabi", observe=None, timeout_ms=1_000)
         self.assertIsNone(contract.abi_shape)
         names = {
             item.name for item in observables_for_exit(contract, "indirect-branch")
         }
         self.assertIn("r4", names)
+        self.assertIn("r5", names)
+        self.assertIn("r10", names)
         self.assertIn("f1", names)
+        self.assertIn("f2", names)
 
 
 class UnresolvedIndirectExitGateTests(unittest.TestCase):

@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import base64
 import json
 import os
 import subprocess
 import tempfile
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
@@ -20,6 +16,7 @@ __all__ = [
     "CodexProvider",
     "DeepSeekRawProvider",
     "LMStudioProvider",
+    "OmlxProvider",
     "OpenCodeCircuitBreaker",
     "OpenCodeEmptyResponse",
     "OpenCodeProvider",
@@ -38,10 +35,10 @@ CANDIDATE_JSON_SCHEMA = SHARED_CANDIDATE_JSON_SCHEMA
 class OpenCodeEmptyResponse(RuntimeError):
     """OpenCode returned an empty assistant payload.
 
-    Non-retryable by default: the HTTP round-trip already completed with zero
-    useful text (often zero tokens). Callers such as core.py should not apply
-    ordinary max_retries to this exception — treat empty-assistant retries as 0
-    unless deliberately overridden.
+    Non-retryable by default: the CLI already finished with zero useful text
+    (often zero tokens). Callers such as core.py should not apply ordinary
+    max_retries to this exception — treat empty-assistant retries as 0 unless
+    deliberately overridden.
     """
 
 
@@ -99,60 +96,27 @@ def _load_env_vars(path: Path) -> None:
 
 
 class OpenCodeProvider:
-    """OpenCode provider via the headless HTTP server (`opencode serve`).
+    """OpenCode provider via the CLI (`opencode run`).
 
-    Talks to POST /session and POST /session/{id}/message instead of spawning
-    `opencode run`. Start the server separately, e.g.:
-
-        opencode serve --port 4096 --hostname 127.0.0.1
-
-    Optional basic auth uses OPENCODE_SERVER_USERNAME / OPENCODE_SERVER_PASSWORD
-    (or username/password in llm-harness.json).
+    Spawns a fresh process per invoke. Config may still include unused server
+    keys (`base_url`, `delete_session`, auth) for backward compatibility.
     """
-
-    DEFAULT_BASE_URL = "http://127.0.0.1:4096"
-    USERNAME_ENV = "OPENCODE_SERVER_USERNAME"
-    PASSWORD_ENV = "OPENCODE_SERVER_PASSWORD"
-
-    # Mutating / interactive tools always denied for harness purity.
-    _DENIED_TOOLS = (
-        "bash",
-        "edit",
-        "write",
-        "apply_patch",
-        "task",
-        "webfetch",
-        "websearch",
-        "todowrite",
-        "question",
-        "skill",
-    )
-    _READ_TOOLS = ("read", "glob", "grep")
 
     def __init__(
         self,
-        base_url: str = DEFAULT_BASE_URL,
+        binary: str = "opencode",
         timeout_seconds: int = 900,
         pure: bool = True,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        delete_session: bool = True,
-        binary: str = "opencode",  # accepted for config compat; unused
         **_ignored: Any,
     ) -> None:
-        self.base_url = base_url.rstrip("/")
+        self.binary = binary
         self.timeout_seconds = timeout_seconds
         self.pure = pure
-        self.username = username
-        self.password = password
-        self.delete_session = delete_session
-        self.binary = binary
-        _load_env_vars(Path(".env"))
 
     def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
         started = time.monotonic()
-        self._ensure_healthy()
-        directory = str(cwd.resolve())
+        prompt_file: Optional[Path] = None
+        temporary_prompt = False
         # Pure/inline mode never enables tools — even if cwd has TASK.md / dossier files.
         has_context_files = (not self.pure) and any(cwd.iterdir())
         if self.pure or not has_context_files:
@@ -166,66 +130,67 @@ class OpenCodeProvider:
                 "Use read/search tools only when helpful, stay inside this context, do not edit files "
                 "or run shell commands, and return only the requested JSON object."
             )
-        full_prompt = f"{guardrail}\n\n{prompt}"
-        provider_id, model_id = _split_opencode_model(model.model)
-        session_id: Optional[str] = None
         try:
-            session = self._request(
-                "POST",
-                "/session",
-                body={
-                    "title": f"llm-harness:{model.id}",
-                    "permission": self._permission_ruleset(has_context_files),
-                },
-                query={"directory": directory},
-            )
-            session_id = str(session.get("id") or "")
-            if not session_id:
-                raise RuntimeError(f"OpenCode server: session create missing id: {session!r}")
-
-            message_body: Dict[str, Any] = {
-                "model": {"providerID": provider_id, "modelID": model_id},
-                "parts": [{"type": "text", "text": full_prompt}],
-                "tools": self._tools_map(has_context_files),
-            }
+            stable_prompt = cwd.parent / "prompt.md"
+            if stable_prompt.is_file() and stable_prompt.read_text(encoding="utf-8") == prompt:
+                prompt_file = stable_prompt
+            else:
+                with tempfile.NamedTemporaryFile(
+                    mode="w",
+                    suffix=".md",
+                    prefix="llm-harness-",
+                    encoding="utf-8",
+                    delete=False,
+                ) as f:
+                    f.write(prompt)
+                    prompt_file = Path(f.name)
+                    temporary_prompt = True
+            cmd = [
+                self.binary,
+                "run",
+                "--model",
+                model.model,
+                "--format",
+                "json",
+                "--dir",
+                str(cwd),
+                "--file",
+                str(prompt_file),
+            ]
+            if self.pure:
+                cmd.append("--pure")
             if model.agent:
-                message_body["agent"] = model.agent
-
+                cmd.extend(["--agent", model.agent])
             # Reasoning / thinking: prefer explicit ModelConfig fields; in pure
-            # mode default variant/reasoning to "none" when unset.
+            # mode default variant to "none" when unset.
             variant = (model.variant or model.reasoning_effort or "").strip()
             if not variant and self.pure:
                 variant = "none"
             if variant:
-                message_body["variant"] = variant
-            if model.reasoning_effort is not None:
-                message_body["reasoning_effort"] = str(model.reasoning_effort).strip().lower()
-            elif self.pure and not (model.variant or "").strip():
-                message_body["reasoning_effort"] = "none"
-            if model.enable_thinking is not None:
-                message_body["enable_thinking"] = bool(model.enable_thinking)
-            elif self.pure:
-                message_body["enable_thinking"] = False
-
-            # Do not attach format.json_schema: Console Go (opencode-go) rejects it
-            # with invalid_request_error. Prompt-enforced JSON is enough; parsers
-            # still accept info.structured_output when a provider returns it.
-
-            response = self._request(
-                "POST",
-                f"/session/{session_id}/message",
-                body=message_body,
-                query={"directory": directory},
+                cmd.extend(["--variant", variant])
+            cmd.append(guardrail)
+            env = os.environ.copy()
+            env["OPENCODE_AUTO_SHARE"] = "false"
+            completed = subprocess.run(
+                cmd,
+                cwd=cwd,
+                env=env,
+                text=True,
+                capture_output=True,
+                timeout=self.timeout_seconds,
+                check=False,
             )
-            try:
-                text, events, usage = parse_opencode_message(response)
-            except RuntimeError as exc:
-                detail = _opencode_response_debug(response)
-                raise RuntimeError(f"{exc}; response_debug={detail}") from exc
+            if completed.returncode:
+                detail = completed.stderr.strip() or completed.stdout.strip()
+                raise RuntimeError(
+                    f"OpenCode exited {completed.returncode}: {detail[-2000:]}"
+                )
+            text, events, usage = parse_opencode_output(completed.stdout)
             if not text:
                 raise OpenCodeEmptyResponse(
-                    "OpenCode server: empty assistant text in message response; "
-                    f"response_debug={_opencode_response_debug(response)}"
+                    "OpenCode CLI: empty assistant text in run output; "
+                    f"stdout_chars={len(completed.stdout)}, "
+                    f"stderr={completed.stderr.strip()[:400]!r}"
                 )
             return ProviderResult(
                 text=text,
@@ -238,157 +203,17 @@ class OpenCodeProvider:
                 raw_events=events,
             )
         finally:
-            if self.delete_session and session_id:
-                try:
-                    self._request(
-                        "DELETE",
-                        f"/session/{session_id}",
-                        query={"directory": directory},
-                    )
-                except Exception:
-                    pass
-
-    def _ensure_healthy(self) -> None:
-        try:
-            health = self._request("GET", "/global/health")
-        except Exception as exc:
-            raise RuntimeError(
-                f"OpenCode server unreachable at {self.base_url} "
-                f"(start with `opencode serve --port 4096`): {exc}"
-            ) from exc
-        if not (isinstance(health, dict) and health.get("healthy")):
-            raise RuntimeError(
-                f"OpenCode server unhealthy at {self.base_url}: {health!r}"
-            )
-
-    def _tools_map(self, has_context_files: bool) -> Dict[str, bool]:
-        tools = {name: False for name in self._DENIED_TOOLS}
-        for name in self._READ_TOOLS:
-            # Pure mode always leaves has_context_files False at the call site.
-            tools[name] = bool(has_context_files) and not self.pure
-        return tools
-
-    def _permission_ruleset(self, has_context_files: bool) -> list[Dict[str, str]]:
-        rules: list[Dict[str, str]] = []
-        for name in self._DENIED_TOOLS:
-            rules.append({"permission": name, "pattern": "*", "action": "deny"})
-        allow_read = bool(has_context_files) and not self.pure
-        read_action = "allow" if allow_read else "deny"
-        for name in self._READ_TOOLS:
-            rules.append({"permission": name, "pattern": "*", "action": read_action})
-        return rules
-
-    def _auth_header(self) -> Optional[str]:
-        password = self.password or os.environ.get(self.PASSWORD_ENV)
-        if not password:
-            return None
-        username = (
-            self.username
-            or os.environ.get(self.USERNAME_ENV)
-            or "opencode"
-        )
-        token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
-        return f"Basic {token}"
-
-    def _request(
-        self,
-        method: str,
-        path: str,
-        body: Optional[Dict[str, Any]] = None,
-        query: Optional[Dict[str, str]] = None,
-    ) -> Any:
-        url = f"{self.base_url}{path}"
-        if query:
-            url = f"{url}?{urllib.parse.urlencode(query)}"
-        data = None
-        headers = {"Accept": "application/json"}
-        auth = self._auth_header()
-        if auth:
-            headers["Authorization"] = auth
-        if body is not None:
-            data = json.dumps(body).encode("utf-8")
-            headers["Content-Type"] = "application/json"
-        request = urllib.request.Request(url, data=data, headers=headers, method=method)
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
-                raw = response.read().decode("utf-8")
-                if not raw:
-                    return None
-                return json.loads(raw)
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")
-            hint = ""
-            try:
-                payload = json.loads(detail)
-                message = (
-                    (payload.get("data") or {}).get("message")
-                    if isinstance(payload, dict)
-                    else None
-                )
-                if isinstance(message, str) and "Check server logs" in message:
-                    hint = (
-                        " (see ~/.local/share/opencode/log/opencode.log — "
-                        "often a bad model id, e.g. use opencode/deepseek-v4-flash-free)"
-                    )
-            except Exception:
-                pass
-            raise RuntimeError(
-                f"OpenCode server {method} {path} failed "
-                f"(HTTP {exc.code}): {detail[-2000:]}{hint}"
-            ) from exc
-        except urllib.error.URLError as exc:
-            raise RuntimeError(
-                f"OpenCode server {method} {path} failed: {exc.reason}"
-            ) from exc
-
-
-def _split_opencode_model(model: str) -> tuple[str, str]:
-    """Split `provider/model` into OpenCode providerID + modelID."""
-    provider_id, sep, model_id = model.partition("/")
-    if not sep or not provider_id or not model_id:
-        raise RuntimeError(
-            f"OpenCode model must be 'provider/model', got: {model!r}"
-        )
-    return provider_id, model_id
-
-
-def _opencode_response_debug(response: Any, limit: int = 800) -> str:
-    """Short dump of part types / info keys for empty or error responses."""
-    if not isinstance(response, dict):
-        return repr(response)[:limit]
-    info = response.get("info") if isinstance(response.get("info"), dict) else {}
-    parts = response.get("parts") or []
-    part_types: list[Any] = []
-    for part in parts:
-        if isinstance(part, dict):
-            part_types.append(part.get("type"))
-        else:
-            part_types.append(type(part).__name__)
-    tokens = info.get("tokens") if isinstance(info.get("tokens"), dict) else {}
-    summary = {
-        "info_keys": sorted(info.keys()),
-        "part_types": part_types,
-        "tokens": {
-            "input": tokens.get("input"),
-            "output": tokens.get("output"),
-        },
-        "has_structured_output": "structured_output" in info,
-        "error": info.get("error"),
-    }
-    try:
-        return json.dumps(summary, default=str)[:limit]
-    except Exception:
-        return repr(summary)[:limit]
+            if temporary_prompt and prompt_file is not None:
+                prompt_file.unlink(missing_ok=True)
 
 
 def parse_opencode_message(
     response: Any,
 ) -> tuple[str, list[Dict[str, Any]], Dict[str, Any]]:
-    """Parse POST /session/:id/message JSON into text, events, and usage.
+    """Parse legacy server-style message JSON into text, events, and usage.
 
-    Prefers ``info.structured_output`` when text parts are empty (json_schema
-    format responses). Empty text with zero/missing tokens is left for the
-    caller to raise :class:`OpenCodeEmptyResponse` immediately (non-retryable).
+    Kept for tests and any saved server payloads. Prefers
+    ``info.structured_output`` when text parts are empty.
     """
     if not isinstance(response, dict):
         return "", [], {}
@@ -398,10 +223,7 @@ def parse_opencode_message(
         err = info["error"]
         message = err.get("data", {}).get("message") if isinstance(err.get("data"), dict) else None
         message = message or err.get("name") or str(err)
-        raise RuntimeError(
-            f"OpenCode server message error: {message}; "
-            f"response_debug={_opencode_response_debug(response)}"
-        )
+        raise RuntimeError(f"OpenCode message error: {message}")
 
     chunks: list[str] = []
     for part in response.get("parts") or []:
@@ -419,7 +241,6 @@ def parse_opencode_message(
         "cache_write": cache.get("write"),
         "cost": info.get("cost"),
     }
-    # Prefer structured_output from json_schema format when text parts are empty.
     structured = info.get("structured_output")
     if structured is not None and not "".join(chunks).strip():
         return json.dumps(structured), events, usage
@@ -1119,6 +940,190 @@ class LMStudioProvider:
         )
 
 
+class OmlxProvider:
+    """Local oMLX OpenAI-compatible chat completions provider.
+
+    Calls POST {base_url}/chat/completions (default http://127.0.0.1:8000/v1).
+    Start the server with ``omlx start`` / ``omlx serve``, then load a model
+    (admin UI at http://127.0.0.1:8000/admin or model-dir discovery).
+
+    Auth resolution order: ``OMLX_API_KEY`` env, config ``api_key``, then
+    ``~/.omlx/settings.json`` ``auth.api_key`` (omlx default). Pass an empty
+    string api_key and unset env to skip Authorization when the server has
+    verification disabled.
+    """
+
+    DEFAULT_BASE_URL = "http://127.0.0.1:8000/v1"
+    API_KEY_ENV = "OMLX_API_KEY"
+    SETTINGS_PATH = Path.home() / ".omlx" / "settings.json"
+    CANDIDATE_JSON_SCHEMA: Dict[str, Any] = SHARED_CANDIDATE_JSON_SCHEMA
+
+    def __init__(
+        self,
+        base_url: str = DEFAULT_BASE_URL,
+        api_key: Optional[str] = None,
+        timeout_seconds: int = 900,
+        temperature: float = 0.1,
+        max_tokens: int = 4096,
+        json_object: bool = True,
+        enable_thinking: bool = False,
+        thinking_budget: Optional[int] = None,
+        reasoning_effort: Optional[str] = None,
+        pure: bool = True,
+        **_ignored: Any,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
+        self.timeout_seconds = timeout_seconds
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.json_object = json_object
+        self.enable_thinking = enable_thinking
+        self.thinking_budget = thinking_budget
+        self.reasoning_effort = reasoning_effort
+        self.pure = pure
+        _load_env_vars(Path(".env"))
+
+    @staticmethod
+    def _effort_to_budget(effort: str) -> Optional[int]:
+        mapping = {
+            "none": 0,
+            "minimal": 128,
+            "low": 256,
+            "medium": 1024,
+            "high": 4096,
+            "xhigh": 8192,
+        }
+        return mapping.get(effort.strip().lower())
+
+    @classmethod
+    def _api_key_from_settings(cls) -> Optional[str]:
+        try:
+            payload = json.loads(cls.SETTINGS_PATH.read_text(encoding="utf-8"))
+        except (FileNotFoundError, OSError, json.JSONDecodeError):
+            return None
+        auth = payload.get("auth") if isinstance(payload, dict) else None
+        if not isinstance(auth, dict):
+            return None
+        key = auth.get("api_key")
+        if key is None:
+            return None
+        text = str(key).strip()
+        return text or None
+
+    def _resolve_api_key(self) -> Optional[str]:
+        env_key = os.environ.get(self.API_KEY_ENV)
+        if env_key is not None and env_key.strip():
+            return env_key.strip()
+        if self.api_key is not None:
+            text = str(self.api_key).strip()
+            return text or None
+        return self._api_key_from_settings()
+
+    def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
+        started = time.monotonic()
+        api_key = self._resolve_api_key()
+        max_tokens = int(model.max_tokens) if model.max_tokens else self.max_tokens
+        enable_thinking = (
+            bool(model.enable_thinking)
+            if model.enable_thinking is not None
+            else self.enable_thinking
+        )
+        reasoning_effort = model.reasoning_effort or self.reasoning_effort
+        thinking_budget = model.thinking_budget
+        if thinking_budget is None:
+            thinking_budget = self.thinking_budget
+        if thinking_budget is None and reasoning_effort:
+            thinking_budget = self._effort_to_budget(reasoning_effort)
+        if reasoning_effort and str(reasoning_effort).strip().lower() == "none":
+            enable_thinking = False
+            thinking_budget = 0
+
+        body: Dict[str, Any] = {
+            "model": model.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": self.temperature,
+            "max_tokens": max_tokens,
+        }
+        if self.json_object:
+            body["response_format"] = {
+                "type": "json_schema",
+                "json_schema": self.CANDIDATE_JSON_SCHEMA,
+            }
+        if reasoning_effort:
+            body["reasoning_effort"] = str(reasoning_effort).strip().lower()
+        if thinking_budget is not None:
+            body["thinking_budget"] = int(thinking_budget)
+        body["chat_template_kwargs"] = {"enable_thinking": bool(enable_thinking)}
+        body["enable_thinking"] = bool(enable_thinking)
+
+        request_body = json.dumps(body)
+        url = f"{self.base_url}/chat/completions"
+        cmd = [
+            "curl", "-s", "-w", "\n%{http_code}",
+            "-X", "POST", url,
+            "-H", "Content-Type: application/json",
+        ]
+        if api_key:
+            cmd.extend(["-H", f"Authorization: Bearer {api_key}"])
+        cmd.extend(["-d", request_body])
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=self.timeout_seconds,
+        )
+        stdout = completed.stdout.strip()
+        lines = stdout.rsplit("\n", 1)
+        if len(lines) != 2:
+            detail = (completed.stderr.strip() or stdout)[:2000]
+            raise RuntimeError(f"oMLX API: unexpected curl output: {detail}")
+        response_body, http_code = lines[0].strip(), lines[1]
+        if completed.returncode or not http_code.startswith("2"):
+            detail = (completed.stderr.strip() or response_body)[:2000]
+            raise RuntimeError(
+                f"oMLX API error (HTTP {http_code}): {detail}"
+            )
+
+        result = json.loads(response_body)
+        choices = result.get("choices", [])
+        if not choices:
+            raise RuntimeError(
+                f"oMLX API: no choices in response: {response_body[:500]}"
+            )
+
+        message = choices[0].get("message", {}) or {}
+        content = _strip_think_blocks(str(message.get("content") or "")).strip()
+        reasoning = str(
+            message.get("reasoning_content") or message.get("reasoning") or ""
+        ).strip()
+        text = _coerce_json_text(content) or _coerce_json_text(reasoning) or content
+        if not text and reasoning:
+            raise RuntimeError(
+                "oMLX returned empty content with reasoning_content — "
+                "thinking consumed the token budget. Disable thinking "
+                "(enable_thinking=false / reasoning_effort=none) or raise max_tokens."
+            )
+
+        usage = result.get("usage", {}) or {}
+        details = usage.get("prompt_tokens_details")
+        cached = (
+            details.get("cached_tokens")
+            if isinstance(details, dict)
+            else usage.get("cache_read_tokens")
+        )
+        return ProviderResult(
+            text=text,
+            duration_seconds=time.monotonic() - started,
+            input_tokens=_int_or_none(usage.get("prompt_tokens")),
+            output_tokens=_int_or_none(usage.get("completion_tokens")),
+            cache_read_tokens=_int_or_none(cached),
+            cache_write_tokens=None,
+            cost=None,
+            raw_events=[result],
+        )
+
+
 def _strip_think_blocks(text: str) -> str:
     """Remove Qwen-style think blocks that may prefix the real answer."""
     open_tag = "<" + "think" + ">"
@@ -1149,60 +1154,133 @@ def _coerce_json_text(text: str) -> str:
 
 
 class OpenRouterProvider:
-    """Direct OpenRouter API provider — supports multiple model providers via OpenRouter gateway.
+    """Direct OpenRouter API provider (OpenAI-compatible chat completions).
 
-    Calls https://openrouter.ai/api/v1/chat/completions with the specified model.
-    Supports provider routing via the "provider" field in the request body or model config variant.
+    Calls https://openrouter.ai/api/v1/chat/completions with the configured
+    model slug (e.g. ``deepseek/deepseek-chat``, ``anthropic/claude-sonnet-4``).
+
+    Auth: ``OPENROUTER_API_KEY``, optional ``providers.openrouter.api_key``, or
+    ``~/.openrouter/.env``. Attribution headers use ``site_url`` / ``app_name``.
+
+    Optional ``ModelConfig.variant`` is treated as an upstream provider preference
+    (``provider.order``), e.g. ``"anthropic"`` / ``"deepseek"``.
     """
 
     API_URL = "https://openrouter.ai/api/v1/chat/completions"
     API_KEY_ENV = "OPENROUTER_API_KEY"
+    DEFAULT_SITE_URL = "https://github.com/xbret/xenoblade"
+    DEFAULT_APP_NAME = "Xenoblade LLM Harness"
 
     def __init__(
-        self, timeout_seconds: int = 300, pure: bool = True
+        self,
+        timeout_seconds: int = 300,
+        temperature: float = 0.1,
+        max_tokens: int = 4096,
+        json_object: bool = True,
+        api_key: Optional[str] = None,
+        site_url: str = DEFAULT_SITE_URL,
+        app_name: str = DEFAULT_APP_NAME,
+        allow_fallbacks: bool = True,
+        pure: bool = True,
+        **_ignored: Any,
     ) -> None:
         self.timeout_seconds = timeout_seconds
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.json_object = json_object
+        self._api_key = api_key
+        self.site_url = site_url
+        self.app_name = app_name
+        self.allow_fallbacks = allow_fallbacks
         self.pure = pure
         _load_env_vars(Path(".env"))
         _load_env_vars(Path.home() / ".openrouter" / ".env")
 
-    def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
-        import time
-        import subprocess
-        import json
-        import os
+    def _resolve_api_key(self) -> Optional[str]:
+        if self._api_key:
+            text = str(self._api_key).strip()
+            return text or None
+        env = os.environ.get(self.API_KEY_ENV)
+        if env:
+            text = str(env).strip()
+            return text or None
+        return None
 
+    @staticmethod
+    def _message_text(message: Dict[str, Any]) -> str:
+        content = message.get("content")
+        if isinstance(content, list):
+            parts: list[str] = []
+            for part in content:
+                if isinstance(part, dict):
+                    text = part.get("text")
+                    if isinstance(text, str):
+                        parts.append(text)
+                elif isinstance(part, str):
+                    parts.append(part)
+            return "".join(parts)
+        if content is None:
+            return ""
+        return str(content)
+
+    def invoke(self, prompt: str, model: ModelConfig, cwd: Path) -> ProviderResult:
+        del cwd  # prompt-only; no workspace tools
         started = time.monotonic()
-        api_key = os.environ.get(self.API_KEY_ENV)
+        api_key = self._resolve_api_key()
         if not api_key:
             raise RuntimeError(
                 f"OpenRouter API key not found in ${self.API_KEY_ENV} — "
-                f"set it in ~/.openrouter/.env or your shell profile"
+                f"set it in ~/.openrouter/.env, providers.openrouter.api_key, "
+                f"or your shell profile"
             )
 
-        # OpenRouter supports provider routing via the "provider" field
-        # Use model.variant if set (e.g., "anthropic", "openai", "google"), otherwise let OpenRouter choose
-        provider_routing = {}
-        if model.variant:
-            provider_routing["provider"] = {"order": [model.variant], "allow_fallbacks": False}
-
-        request_body = json.dumps({
+        max_tokens = int(model.max_tokens) if model.max_tokens else self.max_tokens
+        body: Dict[str, Any] = {
             "model": model.model,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.1,
-            "max_tokens": int(model.max_tokens) if model.max_tokens else 4096,
-            "response_format": {"type": "json_object"},
-            **provider_routing,
-        })
+            "temperature": self.temperature,
+            "max_tokens": max_tokens,
+        }
+        if self.json_object:
+            body["response_format"] = {"type": "json_object"}
 
+        # Upstream provider preference via ModelConfig.variant (optional).
+        if model.variant:
+            body["provider"] = {
+                "order": [str(model.variant)],
+                "allow_fallbacks": bool(self.allow_fallbacks),
+            }
+
+        # OpenRouter reasoning controls (effort and/or max_tokens budget).
+        reasoning: Dict[str, Any] = {}
+        if model.reasoning_effort:
+            effort = str(model.reasoning_effort).strip().lower()
+            if effort and effort != "none":
+                reasoning["effort"] = effort
+        if model.thinking_budget is not None and int(model.thinking_budget) > 0:
+            reasoning["max_tokens"] = int(model.thinking_budget)
+        if reasoning:
+            body["reasoning"] = reasoning
+
+        request_body = json.dumps(body)
         cmd = [
-            "curl", "-s", "-w", "\n%{http_code}",
-            "-X", "POST", self.API_URL,
-            "-H", "Content-Type: application/json",
-            "-H", f"Authorization: Bearer {api_key}",
-            "-H", "HTTP-Referer: https://github.com/xenoblade-coop/xenoblade",
-            "-H", "X-Title: Xenoblade Co-op Decompilation",
-            "-d", request_body,
+            "curl",
+            "-s",
+            "-w",
+            "\n%{http_code}",
+            "-X",
+            "POST",
+            self.API_URL,
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            f"Authorization: Bearer {api_key}",
+            "-H",
+            f"HTTP-Referer: {self.site_url}",
+            "-H",
+            f"X-Title: {self.app_name}",
+            "-d",
+            request_body,
         ]
         completed = subprocess.run(
             cmd,
@@ -1230,8 +1308,20 @@ class OpenRouterProvider:
                 f"OpenRouter API: no choices in response: {response_body[:500]}"
             )
 
-        text = choices[0].get("message", {}).get("content", "").strip()
+        message = choices[0].get("message", {}) or {}
+        content = _strip_think_blocks(self._message_text(message)).strip()
+        reasoning_text = str(
+            message.get("reasoning") or message.get("reasoning_content") or ""
+        ).strip()
+        text = _coerce_json_text(content) or _coerce_json_text(reasoning_text) or content
+
         usage = result.get("usage", {}) or {}
+        details = usage.get("prompt_tokens_details")
+        cached = (
+            details.get("cached_tokens")
+            if isinstance(details, dict)
+            else None
+        )
 
         return ProviderResult(
             text=text,
@@ -1239,12 +1329,9 @@ class OpenRouterProvider:
             input_tokens=_int_or_none(usage.get("prompt_tokens")),
             output_tokens=_int_or_none(usage.get("completion_tokens")),
             cache_read_tokens=_int_or_none(
-                usage.get("prompt_cache_hit_tokens")
-                or (usage.get("prompt_tokens_details") or {}).get("cached_tokens")
+                usage.get("prompt_cache_hit_tokens") or cached
             ),
-            cache_write_tokens=_int_or_none(
-                usage.get("prompt_cache_miss_tokens")
-            ),
+            cache_write_tokens=_int_or_none(usage.get("prompt_cache_miss_tokens")),
             cost=_float_or_none(usage.get("cost")),
             raw_events=[result],
         )

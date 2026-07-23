@@ -27,7 +27,7 @@ static void WUDiRemovePatch(void);
 static void WUDiWritePatch(void);
 static void WUDiInstallPatch(void);
 
-WUDCB _wcb;
+WUDCB __rvl_wudcb;
 WUDDevInfo _work;
 static WUDDiscResp _discResp;
 SCBtDeviceInfoArray _scArray;
@@ -1894,7 +1894,7 @@ void WUDiInitSub(void) {
 void WUDiEnableStack(void) {
     WUDCB* p = &_wcb;
 
-    BTA_HhEnable(BTA_SEC_AUTHENTICATE, WUDHidHostCallback);
+    BTA_HhEnable(BTA_SEC_AUTHENTICATE, WUDiHidHostEventCallback);
 
     p->stackState = WUD_STATE_STACK_GET_STORED_LINK_KEY;
 
@@ -3137,7 +3137,7 @@ void __wudLinkKeyEventStackCallback() {}
 void __wudPowerMangeEventStackCallback() {}
 // LLM-HARNESS-END: us-8037e910
 // LLM-HARNESS-BEGIN: us-8037eba0
-void WUDiGetDiscoverDevice() {}
+WUDDevInfo* WUDiGetDiscoverDevice(void) { return &_work; }
 // LLM-HARNESS-END: us-8037eba0
 // LLM-HARNESS-BEGIN: us-8037ebb0
 void WUDSetDeviceHistory() {}
@@ -3149,11 +3149,11 @@ void WUDIsLatestDevice() {}
 void WUDUpdateSCSetting() {}
 // LLM-HARNESS-END: us-8037ec90
 // LLM-HARNESS-BEGIN: us-8037ece0
-void WUDiSetDevAddrForHandle(unsigned char handle, unsigned char* addr) { _dev_handle_to_bda[handle] = addr; }
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr) { _dev_handle_to_bda[handle] = addr; }
 // LLM-HARNESS-END: us-8037ece0
 // LLM-HARNESS-BEGIN: us-8037ed00
-void* WUDiGetDevAddrForHandle(u8 handle) {
-    return (void*)_dev_handle_to_bda[handle & 0xFF];
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle) {
+    return _dev_handle_to_bda[handle & 0xFF];
 }
 // LLM-HARNESS-END: us-8037ed00
 // LLM-HARNESS-BEGIN: us-8037ed20

@@ -205,7 +205,7 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     }
 
     // Fresh clear=0 (r4). Trailing 0x7c..0x7e = -1 rewrite is scheduled
-    // before the ptr clears by MWCC; reorder closed with §17.6 insn_patches.
+    // before the ptr clears by MWCC.
     {
         u32 clear = 0;
         p->unk200[0] = (UnkArtsSelectEntry*)clear;

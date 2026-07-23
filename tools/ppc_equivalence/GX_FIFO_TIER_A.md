@@ -1,6 +1,6 @@
 # GX FIFO Tier-A capability contracts
 
-Architecture-model consumers: `broadway-ppc32-be-v43` and later.
+Architecture-model consumers: `broadway-ppc32-be-v44` and later.
 Hardware profile: `wii-broadway-xenoblade-us-v2` (immutable; do not mutate v1).
 
 This document freezes the Tier-A domain for:

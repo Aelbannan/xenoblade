@@ -9,6 +9,7 @@
 #include "monolib/core/CProc.hpp"
 #include "monolib/core/CProcRoot.hpp"
 #include "monolib/core/CRsrc.hpp"
+#include "monolib/core/CRsrcData.hpp"
 #include "monolib/core/CScriptCode.hpp"
 #include "monolib/core/CTaskManager.hpp"
 #include "monolib/core/CView.hpp"

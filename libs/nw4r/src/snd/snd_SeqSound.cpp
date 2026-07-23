@@ -9,7 +9,8 @@ NW4R_UT_RTTI_DEF_DERIVED(SeqSound, BasicSound);
 
 SeqSound::SeqSound(SoundInstanceManager<SeqSound>* pManager)
     // TODO(kiwi) Fakematch
-    : mTempSpecialHandle(reinterpret_cast<SeqSoundHandle*>(
+    : BasicSound(0, 0),
+      mTempSpecialHandle(reinterpret_cast<SeqSoundHandle*>(
           mPreparedFlag = mLoadingFlag = false)),
       mManager(pManager),
       mStartOffset(0),

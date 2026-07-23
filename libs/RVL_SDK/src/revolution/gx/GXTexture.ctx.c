@@ -9541,6 +9541,7 @@ static u32 lbl_80665A40[2] = { 0x00040105, 0x02060000 };
 static u32 lbl_80665A48[2] = { 0x00020400, 0x01030500 };
 
 static const f32 float_8066C010[2] = { 16.0f, 0.0f };
+static const f64 double_8066C018 = 4503599627370496.0;
 static const f32 float_8066C020 = -4.0f;
 static const f32 float_8066C024 = 3.99f;
 static const f32 float_8066C028 = 4.0f;
@@ -9549,6 +9550,7 @@ static const f32 float_8066C030 = 0.0f;
 static const f32 float_8066C034 = 10.0f;
 static const f32 float_8066C038 = 0.0625f;
 static const f32 float_8066C03C = 0.03125f;
+static const f64 double_8066C040 = 4503602621440.0;
 
 static const u8 GXTexTileRowShift[61] = {
     3, 3, 3, 2, 2, 2, 2, 0, 3, 3, 2, 0, 0, 0, 3, 0, 0, 3, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -9720,20 +9722,32 @@ void GXInitTexObj(GXTexObj* obj, void* image_ptr, u16 width, u16 height, GXTexFm
 
 void GXInitTexObjCI(GXTexObj* obj, void* image_ptr, u16 width, u16 height, GXTexFmt format,
                     GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap, u32 tlut_name) {
-    GX_SETUP_TEXOBJ(t, obj)
+    /* Retail: snap stack arg into saved GPR before bl; store tlutName before
+       clearing flags bit1 (lbz / stw / rlwinm / stb). */
+    GXTexObjImpl* t = (GXTexObjImpl*)obj;
+    u32 name = tlut_name;
+    u8 flags;
 
-    GXInitTexObj(obj, image_ptr, width, height, (GXTexFmt)format, wrap_s, wrap_t, mipmap);
+    GXInitTexObj(obj, image_ptr, width, height, format, wrap_s, wrap_t, mipmap);
 
-    t->flags &= ~2;
-    t->tlutName = tlut_name;
+    flags = t->flags;
+    t->tlutName = name;
+    t->flags = (u8)(flags & ~2);
 }
 
 void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt, f32 min_lod,
                      f32 max_lod, f32 lod_bias, GXBool bias_clamp, GXBool do_edge_lod,
                      GXAnisotropy max_aniso) {
-    u8 lbias;
-    u8 lmin;
-    u8 lmax;
+    s32 lbias;
+    s32 lmin;
+    s32 lmax;
+    u32 mode0;
+    u32 mode0Out;
+    u32 mode1;
+    u32 magBits;
+    u32 edgeBits;
+    u8 minHw;
+    const u8* minFiltTbl;
     GXTexObjImpl* t = (GXTexObjImpl*)obj;
 
     if (lod_bias < float_8066C020) {
@@ -9741,33 +9755,44 @@ void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt, 
     } else if (lod_bias >= float_8066C028) {
         lod_bias = float_8066C024;
     }
-    lbias = (u8)((s8)(lod_bias * float_8066C02C));
 
-    SC_TX_SETMODE0_SET_LODBIAS(t->mode0, lbias);
-    SC_TX_SETMODE0_SET_MAG_FILTER(t->mode0, ((mag_filt == GX_LINEAR) ? 1 : 0));
-    SC_TX_SETMODE0_SET_MIN_FILTER(t->mode0, ((u8*)lbl_80665A40)[min_filt]);
-    SC_TX_SETMODE0_SET_DIAGLOD_ENABLE(t->mode0, ((do_edge_lod) ? 0 : 1));
-    SC_TX_SETMODE0_SET_ROUND(t->mode0, 0);
-    SC_TX_SETMODE0_SET_FIELD_PREDICT(t->mode0, 0);
-    SC_TX_SETMODE0_SET_MAXANISO(t->mode0, max_aniso);
-    SC_TX_SETMODE0_SET_LODCLAMP(t->mode0, bias_clamp);
+    /* Retail: cntlzw(mag/edge) under fmuls/fctiwz latency; clear ROUND/FIELD via
+       rlwinm wrap (PPC bits 13-14 == value bits 17-18), not & 0xFFFF9FFF. */
+    magBits = __cntlzw((u32)(mag_filt - 1));
+    edgeBits = __cntlzw((u32)do_edge_lod);
+    mode0 = t->mode0;
+    minFiltTbl = (const u8*)lbl_80665A40;
+    lbias = (s32)(f32)(float_8066C02C * lod_bias);
+    mode0 = __rlwimi(mode0, (u32)lbias, 9, 15, 22);
+    mode0 = __rlwimi(mode0, magBits, 31, 27, 27);
+    t->mode0 = mode0;
+
+    minHw = minFiltTbl[min_filt];
+    mode0 = __rlwimi(mode0, minHw, 5, 24, 26);
+    mode0 = __rlwimi(mode0, edgeBits, 3, 23, 23);
+    mode0Out = __rlwinm(mode0, 0, 15, 12);
+    mode0Out = __rlwimi(mode0Out, max_aniso, 19, 11, 12);
+    mode0Out = __rlwimi(mode0Out, bias_clamp, 21, 10, 10);
+    t->mode0 = mode0Out;
 
     if (min_lod < float_8066C030) {
         min_lod = float_8066C030;
     } else if (min_lod > float_8066C034) {
         min_lod = float_8066C034;
     }
-    lmin = (u8)(min_lod * float_8066C010[0]);
+    lmin = (s32)(f32)(float_8066C010[0] * min_lod);
 
     if (max_lod < float_8066C030) {
         max_lod = float_8066C030;
     } else if (max_lod > float_8066C034) {
         max_lod = float_8066C034;
     }
-    lmax = (u8)(max_lod * float_8066C010[0]);
+    lmax = (s32)(f32)(float_8066C010[0] * max_lod);
 
-    SC_TX_SETMODE1_SET_MINLOD(t->mode1, lmin);
-    SC_TX_SETMODE1_SET_MAXLOD(t->mode1, lmax);
+    mode1 = t->mode1;
+    mode1 = __rlwimi(mode1, (u32)lmin, 0, 24, 31);
+    mode1 = __rlwimi(mode1, (u32)lmax, 8, 16, 23);
+    t->mode1 = mode1;
 }
 
 void GXInitTexObjWrapMode(GXTexObj* obj, GXTexWrapMode sm, GXTexWrapMode tm) {
@@ -9790,9 +9815,12 @@ void GXInitTexObjFilter(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_fil
     u8 minHw;
     GXTexObjImpl* t = (GXTexObjImpl*)obj;
 
-    magBits = __cntlzw((u32)(mag_filt - 1));
     mode0 = t->mode0;
+    magBits = __cntlzw((u32)(mag_filt - 1));
     mode0 = __rlwimi(mode0, magBits, 31, 27, 27);
+    t->mode0 = mode0;
+
+    mode0 = t->mode0;
     minHw = ((u8*)lbl_80665A40)[min_filt];
     mode0 = __rlwimi(mode0, minHw, 5, 24, 26);
     t->mode0 = mode0;
@@ -9841,18 +9869,42 @@ GXBool GXGetTexObjMipMap(const GXTexObj* to) {
 void GXGetTexObjLODAll(GXTexObj* tex_obj, GXTexFilter* min_filt, GXTexFilter* mag_filt,
                        f32* min_lod, f32* max_lod, f32* lod_bias, GXBool* bias_clamp,
                        GXBool* do_edge_lod, GXAnisotropy* max_aniso) {
-    s16 tmp;
+    u32 mode0;
+    u32 mode1;
+    u8 minLodByte;
+    u8 maxLodByte;
+    s16 lodBiasRaw;
+    const u8* filtConv;
     GXTexObjImpl* t = (GXTexObjImpl*)tex_obj;
+    volatile f64 cvtMin;
+    volatile f64 cvtMax;
+    volatile f64 cvtBias;
 
-    *min_filt = (GXTexFilter)((u8*)lbl_80665A48)[TX_SETMODE0_GET_MIN_FILTER(t->mode0)];
-    *mag_filt = (GXTexFilter)TX_SETMODE0_GET_MAG_FILTER(t->mode0);
-    *min_lod = TX_SETMODE1_GET_MINLOD(t->mode1) * float_8066C038;
-    *max_lod = TX_SETMODE1_GET_MAXLOD(t->mode1) * float_8066C038;
-    tmp = (s16)TX_SETMODE0_GET_LODBIAS(t->mode0);
-    *lod_bias = ((f32)((s8)tmp) * float_8066C03C);
-    *bias_clamp = (GXBool)TX_SETMODE0_GET_LODCLAMP(t->mode0);
-    *do_edge_lod = (GXBool)!TX_SETMODE0_GET_DIAGLOD_ENABLE(t->mode0);
-    *max_aniso = (GXAnisotropy)TX_SETMODE0_GET_MAXANISO(t->mode0);
+    mode1 = t->mode1;
+    mode0 = t->mode0;
+    filtConv = (const u8*)lbl_80665A48;
+
+    *min_filt = (GXTexFilter)filtConv[TX_SETMODE0_GET_MIN_FILTER(mode0)];
+    *mag_filt = (GXTexFilter)TX_SETMODE0_GET_MAG_FILTER(mode0);
+
+    minLodByte = TX_SETMODE1_GET_MINLOD(mode1);
+    ((u32*)&cvtMin)[0] = 0x43300000;
+    ((u32*)&cvtMin)[1] = (u32)minLodByte;
+    *min_lod = (f32)(cvtMin - double_8066C018) * float_8066C038;
+
+    maxLodByte = TX_SETMODE1_GET_MAXLOD(mode1);
+    ((u32*)&cvtMax)[0] = 0x43300000;
+    ((u32*)&cvtMax)[1] = (u32)maxLodByte;
+    *max_lod = (f32)(cvtMax - double_8066C018) * float_8066C038;
+
+    lodBiasRaw = (s16)TX_SETMODE0_GET_LODBIAS(mode0);
+    ((u32*)&cvtBias)[0] = 0x43300000;
+    ((u32*)&cvtBias)[1] = (u32)((s32)lodBiasRaw ^ 0x8000);
+    *lod_bias = (f32)(cvtBias - double_8066C040) * float_8066C03C;
+
+    *bias_clamp = (GXBool)TX_SETMODE0_GET_LODCLAMP(mode0);
+    *do_edge_lod = (GXBool)!TX_SETMODE0_GET_DIAGLOD_ENABLE(mode0);
+    *max_aniso = (GXAnisotropy)TX_SETMODE0_GET_MAXANISO(mode0);
 }
 
 u32 GXGetTexObjTlut(GXTexObj* tex_obj) {
@@ -9860,59 +9912,102 @@ u32 GXGetTexObjTlut(GXTexObj* tex_obj) {
     return t->tlutName;
 }
 
+#pragma dont_inline on
 void GXLoadTexObjPreLoaded(GXTexObj* obj, GXTexRegion* region, GXTexMapID id) {
-    GXTlutRegionImpl* tlr;
-    u32 mode0;
-    u32 mode1;
-    u32 image0;
-    u32 image1;
-    u32 image2;
-    u32 image3;
+    /* Retail keeps WGPIPE as lis 0xCC01 + -0x8000 across the BP burst. */
+    volatile void* pipe = (volatile void*)&WGPIPE;
+    u8 cmd = GX_FIFO_CMD_LOAD_BP_REG;
     GXTexObjImpl* t = (GXTexObjImpl*)obj;
     GXTexRegionImpl* r = (GXTexRegionImpl*)region;
+    const u8* tblMode0 = (const u8*)lbl_80665A08;
+    const u8* tblMode1 = (const u8*)lbl_80665A10;
+    const u8* tblImage0 = (const u8*)lbl_80665A18;
+    const u8* tblImage1 = (const u8*)lbl_80665A20;
+    const u8* tblImage2 = (const u8*)lbl_80665A28;
+    const u8* tblImage3 = (const u8*)lbl_80665A30;
+    u32 mode0Val;
+    u32 mode1Val;
+    u32 image0Val;
+    u32 image1Val;
+    u32 image2Val;
+    u32 image3Val;
+    u8 mode0Id;
+    u8 mode1Id;
+    u8 image0Id;
+    u8 image1Id;
+    u8 image2Id;
+    u8 image3Id;
+    u8 flags;
 
-    mode0 = t->mode0;
-    mode1 = t->mode1;
-    image0 = t->image0;
-    image1 = r->image1;
-    image2 = r->image2;
-    image3 = t->image3;
+    /* Retail lbzx order: mode0, mode1, image0, image2, image1, image3. */
+    mode0Val = t->mode0;
+    mode0Id = tblMode0[id];
+    mode0Val = __rlwimi(mode0Val, mode0Id, 24, 0, 7);
 
-    mode0 = __rlwimi(mode0, ((u8*)lbl_80665A08)[id], 24, 0, 7);
-    mode1 = __rlwimi(mode1, ((u8*)lbl_80665A10)[id], 24, 0, 7);
-    image0 = __rlwimi(image0, ((u8*)lbl_80665A18)[id], 24, 0, 7);
-    image1 = __rlwimi(image1, ((u8*)lbl_80665A20)[id], 24, 0, 7);
-    image2 = __rlwimi(image2, ((u8*)lbl_80665A28)[id], 24, 0, 7);
-    image3 = __rlwimi(image3, ((u8*)lbl_80665A30)[id], 24, 0, 7);
+    mode1Val = t->mode1;
+    mode1Id = tblMode1[id];
+    image0Id = tblImage0[id];
+    mode1Val = __rlwimi(mode1Val, mode1Id, 24, 0, 7);
+    image2Id = tblImage2[id];
+    image1Id = tblImage1[id];
+    image3Id = tblImage3[id];
 
-    GX_BP_LOAD_REG(mode0);
-    GX_BP_LOAD_REG(mode1);
-    GX_BP_LOAD_REG(image0);
-    GX_BP_LOAD_REG(image1);
-    GX_BP_LOAD_REG(image2);
-    GX_BP_LOAD_REG(image3);
+    image0Val = t->image0;
+    image0Val = __rlwimi(image0Val, image0Id, 24, 0, 7);
 
-    if (!(t->flags & 2)) {
-        u32 tlutReg;
-        tlr = (GXTlutRegionImpl*)(gxdt->tlutRegionCallback)(t->tlutName);
-        tlutReg = tlr->tlutObj.tlut;
-        tlutReg = __rlwimi(tlutReg, ((u8*)lbl_80665A38)[id], 24, 0, 7);
-        tlr->tlutObj.tlut = tlutReg;
-        GX_BP_LOAD_REG(tlutReg);
+    *(volatile u8*)pipe = cmd;
+    image1Val = r->image1;
+    image1Val = __rlwimi(image1Val, image1Id, 24, 0, 7);
+    *(volatile u32*)pipe = mode0Val;
+
+    image2Val = r->image2;
+    image2Val = __rlwimi(image2Val, image2Id, 24, 0, 7);
+    *(volatile u8*)pipe = cmd;
+    flags = t->flags;
+    *(volatile u32*)pipe = mode1Val;
+
+    image3Val = t->image3;
+    *(volatile u8*)pipe = cmd;
+    image3Val = __rlwimi(image3Val, image3Id, 24, 0, 7);
+    *(volatile u32*)pipe = image0Val;
+
+    *(volatile u8*)pipe = cmd;
+    *(volatile u32*)pipe = image1Val;
+    *(volatile u8*)pipe = cmd;
+    *(volatile u32*)pipe = image2Val;
+
+    /* stb for image3 lands before these stores; stw follows. */
+    *(volatile u8*)pipe = cmd;
+    t->mode0 = mode0Val;
+    t->mode1 = mode1Val;
+    t->image0 = image0Val;
+    r->image1 = image1Val;
+    r->image2 = image2Val;
+    t->image3 = image3Val;
+    *(volatile u32*)pipe = image3Val;
+
+    /* rlwinm. flags bit1 — skip tlut when set. */
+    if ((flags & 2) == 0) {
+        GXTlutRegionImpl* tlr =
+            (GXTlutRegionImpl*)(gxdt->tlutRegionCallback)(t->tlutName);
+        const u8* tblTlut = (const u8*)lbl_80665A38;
+        u32 tlutVal = tlr->tlutObj.tlut;
+        u8 tlutId = tblTlut[id];
+        tlutVal = __rlwimi(tlutVal, tlutId, 24, 0, 7);
+        tlr->tlutObj.tlut = tlutVal;
+        *(volatile u8*)pipe = cmd;
+        *(volatile u32*)pipe = tlr->tlutObj.tlut;
     }
 
-    t->mode0 = mode0;
-    t->mode1 = mode1;
-    t->image0 = image0;
-    r->image1 = image1;
-    r->image2 = image2;
-    t->image3 = image3;
-
-    gxdt->tImage0[id] = t->image0;
-    gxdt->tMode0[id] = t->mode0;
-    gxdt->gxDirtyFlags |= GX_DIRTY_SU_TEX;
-    gxdt->lastWriteWasXF = FALSE;
+    {
+        GXData* gx = gxdt;
+        gx->tImage0[id] = t->image0;
+        gx->tMode0[id] = t->mode0;
+        gx->gxDirtyFlags |= GX_DIRTY_SU_TEX;
+        gx->lastWriteWasXF = 0;
+    }
 }
+#pragma dont_inline off
 
 void GXLoadTexObj(const GXTexObj* obj, GXTexMapID id) {
     GXTexRegion* r;
@@ -10137,62 +10232,65 @@ void __GXSetSUTexRegs(void) {
 }
 
 void __GXSetTmemConfig(u32 config) {
+    /* Retail BP payloads (SETIMAGE1/2 even+odd banks). Do not rebuild via
+       TX_SETIMAGE*(addr>>5, 3, 3, …) — that overflows tmem into the RID byte
+       and emits 0xBB001E00-style junk vs retail 0xB30DDC00. */
     switch (config) {
     case 2:
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x00000 >> 5, 3, 3, 0, TX_SETIMAGE1_I0_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x80000 >> 5, 3, 3, TX_SETIMAGE2_I0_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x10000 >> 5, 3, 3, 0, TX_SETIMAGE1_I1_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x90000 >> 5, 3, 3, TX_SETIMAGE2_I1_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x20000 >> 5, 3, 3, 0, TX_SETIMAGE1_I2_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xA0000 >> 5, 3, 3, TX_SETIMAGE2_I2_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x30000 >> 5, 3, 3, 0, TX_SETIMAGE1_I3_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xB0000 >> 5, 3, 3, TX_SETIMAGE2_I3_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x40000 >> 5, 3, 3, 0, TX_SETIMAGE1_I4_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x88000 >> 5, 3, 3, TX_SETIMAGE2_I4_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x50000 >> 5, 3, 3, 0, TX_SETIMAGE1_I5_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x98000 >> 5, 3, 3, TX_SETIMAGE2_I5_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x60000 >> 5, 3, 3, 0, TX_SETIMAGE1_I6_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xA8000 >> 5, 3, 3, TX_SETIMAGE2_I6_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x70000 >> 5, 3, 3, 0, TX_SETIMAGE1_I7_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xB8000 >> 5, 3, 3, TX_SETIMAGE2_I7_ID));
+        GX_BP_LOAD_REG(0x8C0D8000);
+        GX_BP_LOAD_REG(0x900DC000);
+        GX_BP_LOAD_REG(0x8D0D8800);
+        GX_BP_LOAD_REG(0x910DC800);
+        GX_BP_LOAD_REG(0x8E0D9000);
+        GX_BP_LOAD_REG(0x920DD000);
+        GX_BP_LOAD_REG(0x8F0D9800);
+        GX_BP_LOAD_REG(0x930DD800);
+        GX_BP_LOAD_REG(0xAC0DA000);
+        GX_BP_LOAD_REG(0xB00DC400);
+        GX_BP_LOAD_REG(0xAD0DA800);
+        GX_BP_LOAD_REG(0xB10DCC00);
+        GX_BP_LOAD_REG(0xAE0DB000);
+        GX_BP_LOAD_REG(0xB20DD400);
+        GX_BP_LOAD_REG(0xAF0DB800);
+        GX_BP_LOAD_REG(0xB30DDC00);
         break;
     case 1:
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x00000 >> 5, 3, 3, 0, TX_SETIMAGE1_I0_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x80000 >> 5, 3, 3, TX_SETIMAGE2_I0_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x10000 >> 5, 3, 3, 0, TX_SETIMAGE1_I1_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x90000 >> 5, 3, 3, TX_SETIMAGE2_I1_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x20000 >> 5, 3, 3, 0, TX_SETIMAGE1_I2_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xA0000 >> 5, 3, 3, TX_SETIMAGE2_I2_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x30000 >> 5, 3, 3, 0, TX_SETIMAGE1_I3_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xB0000 >> 5, 3, 3, TX_SETIMAGE2_I3_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x40000 >> 5, 3, 3, 0, TX_SETIMAGE1_I4_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xC0000 >> 5, 3, 3, TX_SETIMAGE2_I4_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x50000 >> 5, 3, 3, 0, TX_SETIMAGE1_I5_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xD0000 >> 5, 3, 3, TX_SETIMAGE2_I5_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x60000 >> 5, 3, 3, 0, TX_SETIMAGE1_I6_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xE0000 >> 5, 3, 3, TX_SETIMAGE2_I6_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x70000 >> 5, 3, 3, 0, TX_SETIMAGE1_I7_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xF0000 >> 5, 3, 3, TX_SETIMAGE2_I7_ID));
+        GX_BP_LOAD_REG(0x8C0D8000);
+        GX_BP_LOAD_REG(0x900DC000);
+        GX_BP_LOAD_REG(0x8D0D8800);
+        GX_BP_LOAD_REG(0x910DC800);
+        GX_BP_LOAD_REG(0x8E0D9000);
+        GX_BP_LOAD_REG(0x920DD000);
+        GX_BP_LOAD_REG(0x8F0D9800);
+        GX_BP_LOAD_REG(0x930DD800);
+        GX_BP_LOAD_REG(0xAC0DA000);
+        GX_BP_LOAD_REG(0xB00DE000);
+        GX_BP_LOAD_REG(0xAD0DA800);
+        GX_BP_LOAD_REG(0xB10DE800);
+        GX_BP_LOAD_REG(0xAE0DB000);
+        GX_BP_LOAD_REG(0xB20DF000);
+        GX_BP_LOAD_REG(0xAF0DB800);
+        GX_BP_LOAD_REG(0xB30DF800);
         break;
 
     default:
     case 0:
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x00000 >> 5, 3, 3, 0, TX_SETIMAGE1_I0_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x80000 >> 5, 3, 3, TX_SETIMAGE2_I0_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x08000 >> 5, 3, 3, 0, TX_SETIMAGE1_I1_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x88000 >> 5, 3, 3, TX_SETIMAGE2_I1_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x10000 >> 5, 3, 3, 0, TX_SETIMAGE1_I2_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x90000 >> 5, 3, 3, TX_SETIMAGE2_I2_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x18000 >> 5, 3, 3, 0, TX_SETIMAGE1_I3_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0x98000 >> 5, 3, 3, TX_SETIMAGE2_I3_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x20000 >> 5, 3, 3, 0, TX_SETIMAGE1_I4_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xA0000 >> 5, 3, 3, TX_SETIMAGE2_I4_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x28000 >> 5, 3, 3, 0, TX_SETIMAGE1_I5_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xA8000 >> 5, 3, 3, TX_SETIMAGE2_I5_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x30000 >> 5, 3, 3, 0, TX_SETIMAGE1_I6_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xB0000 >> 5, 3, 3, TX_SETIMAGE2_I6_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE1(0x38000 >> 5, 3, 3, 0, TX_SETIMAGE1_I7_ID));
-        GX_BP_LOAD_REG(TX_SETIMAGE2(0xB8000 >> 5, 3, 3, TX_SETIMAGE2_I7_ID));
+        GX_BP_LOAD_REG(0x8C0D8000);
+        GX_BP_LOAD_REG(0x900DC000);
+        GX_BP_LOAD_REG(0x8D0D8400);
+        GX_BP_LOAD_REG(0x910DC400);
+        GX_BP_LOAD_REG(0x8E0D8800);
+        GX_BP_LOAD_REG(0x920DC800);
+        GX_BP_LOAD_REG(0x8F0D8C00);
+        GX_BP_LOAD_REG(0x930DCC00);
+        GX_BP_LOAD_REG(0xAC0D9000);
+        GX_BP_LOAD_REG(0xB00DD000);
+        GX_BP_LOAD_REG(0xAD0D9400);
+        GX_BP_LOAD_REG(0xB10DD400);
+        GX_BP_LOAD_REG(0xAE0D9800);
+        GX_BP_LOAD_REG(0xB20DD800);
+        GX_BP_LOAD_REG(0xAF0D9C00);
+        GX_BP_LOAD_REG(0xB30DDC00);
         break;
     }
 }
@@ -10201,7 +10299,8 @@ void GXSetTexCoordCylWrap(GXTexCoordID coord, GXBool s_enable, GXBool t_enable) 
     GX_BP_SET_SU_SIZE_CYLINDRICWRAP(gxdt->suTs0[coord], s_enable);
     GX_BP_SET_SU_SIZE_CYLINDRICWRAP(gxdt->suTs1[coord], t_enable);
 
-    if (!(gxdt->tcsManEnab & (1 << coord))) {
+    /* Retail beqlr after and.: flush only when the coord is manually enabled. */
+    if (gxdt->tcsManEnab & (1 << coord)) {
         GX_BP_LOAD_REG(gxdt->suTs0[coord]);
         GX_BP_LOAD_REG(gxdt->suTs1[coord]);
         gxdt->lastWriteWasXF = FALSE;

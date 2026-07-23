@@ -6,6 +6,8 @@ Covers:
 3. FPSCR.XX divergence published via mffs → compared FPR under allow_nan=False
 4. Record-form Rc→CR1 OX sticky projection (no mffs/mcrfs)
 5. stwu back-chain clearing stack_private (false NOT_EQUIVALENT)
+6. register_effects(MFCR/CMP*) omitting CR → inferred callee false EQUIVALENT
+7. Compared-register SP publish (addi r3,r1,N left live) hiding private diverge
 """
 
 from __future__ import annotations
@@ -24,11 +26,20 @@ from tools.ppc_equivalence.fp_fpscr import (
     FPSCR_STICKIES_UNSUPPORTED,
     annotate_fpscr_sticky_incompleteness,
 )
+from tools.ppc_equivalence.ir import RelocationRef
 from tools.ppc_equivalence.result import FloatingPointDomain, ProofResult, ProofStatus
-from tools.ppc_equivalence.semantics import SymbolicOps, automatic_live_out
+from tools.ppc_equivalence.semantics import (
+    R_PPC_REL24,
+    SymbolicOps,
+    automatic_live_out,
+    infer_callee_contract,
+    register_effects,
+)
 from tools.ppc_equivalence.stack_escape import (
+    apply_compared_register_publish_escape,
     bv_depends_on_entry_r1,
     bv_is_load_derived,
+    compared_registers_publish_entry_r1,
     mark_stack_pointer_escape,
 )
 
@@ -328,6 +339,315 @@ class StwuBackChainPrivateStackTests(unittest.TestCase):
         stwu = _prove(stwu_l, stwu_r, observe=["memory"])
         self.assertEqual(addi.status, ProofStatus.EQUIVALENT)
         self.assertEqual(stwu.status, ProofStatus.EQUIVALENT)
+
+
+class CrRegisterEffectsCalleeInferenceTests(unittest.TestCase):
+    """register_effects must model CR for MFCR/CMP*/MTCRF (callee inference)."""
+
+    _CODE_BASE = 0x80000000
+
+    @staticmethod
+    def _mfcr(rd: int) -> str:
+        return _w((31 << 26) | (rd << 21) | (19 << 1))
+
+    @staticmethod
+    def _mtcrf(rs: int, fxm: int) -> str:
+        return _w((31 << 26) | (rs << 21) | (fxm << 12) | (144 << 1))
+
+    @staticmethod
+    def _cmpwi(crfd: int, ra: int, imm: int) -> str:
+        imm &= 0xFFFF
+        return _w((11 << 26) | (crfd << 23) | (ra << 16) | imm)
+
+    @staticmethod
+    def _cmpw(crfd: int, ra: int, rb: int) -> str:
+        return _w((31 << 26) | (crfd << 23) | (ra << 16) | (rb << 11) | (0 << 1))
+
+    def test_mfcr_effects_read_cr_not_destination(self) -> None:
+        insn = _decode(self._mfcr(3))[0]
+        reads, writes = register_effects(insn)
+        self.assertEqual(reads, {"cr"})
+        self.assertEqual(writes, {"r3"})
+
+    def test_mtcrf_effects_rmw_cr(self) -> None:
+        insn = _decode(self._mtcrf(3, 0xFF))[0]
+        reads, writes = register_effects(insn)
+        self.assertEqual(reads, {"r3", "cr"})
+        self.assertEqual(writes, {"cr"})
+
+    def test_cmpwi_effects_write_cr_field_not_gpr_from_imm(self) -> None:
+        # Operands (2, 3, 0): field=2, rA=3, SIMM=0 — must not treat 0/2 as GPRs.
+        insn = _decode(self._cmpwi(2, 3, 0))[0]
+        reads, writes = register_effects(insn)
+        self.assertEqual(reads, {"r3", "xer.so"})
+        self.assertEqual(writes, {"cr2"})
+        self.assertNotIn("r0", reads)
+        self.assertNotIn("r2", reads)
+
+    def test_cmpw_effects_write_cr_field(self) -> None:
+        insn = _decode(self._cmpw(2, 3, 4))[0]
+        reads, writes = register_effects(insn)
+        self.assertEqual(reads, {"r3", "r4", "xer.so"})
+        self.assertEqual(writes, {"cr2"})
+
+    def test_infer_mfcr_leaf_reads_cr(self) -> None:
+        leaf = _decode(self._mfcr(3) + " " + BLR)
+        contract = infer_callee_contract(leaf)
+        self.assertIn("cr", contract.reads)
+        self.assertIn("r3", contract.writes)
+        self.assertNotIn("r3", contract.reads)
+
+    def test_infer_cmpwi_cr2_leaf_writes_cr2(self) -> None:
+        leaf = _decode(self._cmpwi(2, 4, 0) + " " + BLR)
+        contract = infer_callee_contract(leaf)
+        self.assertIn("cr2", contract.writes)
+        self.assertIn("r4", contract.reads)
+
+    def test_mfcr_leaf_summarized_callers_not_false_equivalent(self) -> None:
+        """Callers that diverge only in CR2 before mfcr leaf must not prove EQ.
+
+        Historical hole: register_effects(MFCR) reported reads={r3}, so inference
+        omitted CR from the call token and unified r3 across CR-diverging callers.
+        """
+        leaf_hex = (self._mfcr(3) + BLR).replace(" ", "")
+        leaf = decode_block(
+            parse_hex(leaf_hex), base=0x80001000, validate_with_capstone=False,
+        )
+        inferred = infer_callee_contract(leaf)
+        self.assertIn("cr", inferred.reads)
+
+        left_hex = (_enc_li(5, 0) + self._cmpwi(2, 5, 0) + "48000001" + BLR).replace(" ", "")
+        right_hex = (_enc_li(5, 1) + self._cmpwi(2, 5, 0) + "48000001" + BLR).replace(" ", "")
+        reloc = (
+            RelocationRef(
+                offset=8,
+                relocation_type=R_PPC_REL24,
+                symbol="leaf",
+                canonical_symbol="leaf",
+                addend=0,
+            ),
+        )
+        left = decode_block(
+            parse_hex(left_hex),
+            base=self._CODE_BASE,
+            validate_with_capstone=False,
+            relocations=reloc,
+        )
+        right = decode_block(
+            parse_hex(right_hex),
+            base=self._CODE_BASE,
+            validate_with_capstone=False,
+            relocations=reloc,
+        )
+        summarized = check_equivalence(
+            left,
+            right,
+            make_contract(preset=None, observe=["r3"], timeout_ms=20_000),
+            original_hex=left_hex,
+            candidate_hex=right_hex,
+            assumed_callees=frozenset({"leaf"}),
+            callee_contracts={"leaf": inferred},
+        )
+        self.assertNotEqual(
+            summarized.status,
+            ProofStatus.EQUIVALENT,
+            f"false EQUIVALENT via mfcr inference: {summarized.status} "
+            f"mismatch={summarized.mismatch} contract={inferred}",
+        )
+        # Opaque UF with a correct CR dependency is inconclusive, not a silent EQ.
+        self.assertEqual(summarized.status, ProofStatus.INCONCLUSIVE_ABSTRACTION)
+
+        # Same bodies inlined (no summary) must be a concrete NOT_EQUIVALENT.
+        oh = (_enc_li(5, 0) + self._cmpwi(2, 5, 0) + self._mfcr(3) + BLR).replace(" ", "")
+        ch = (_enc_li(5, 1) + self._cmpwi(2, 5, 0) + self._mfcr(3) + BLR).replace(" ", "")
+        inlined = check_equivalence(
+            decode_block(parse_hex(oh), validate_with_capstone=False),
+            decode_block(parse_hex(ch), validate_with_capstone=False),
+            make_contract(preset=None, observe=["r3"], timeout_ms=15_000),
+            original_hex=oh,
+            candidate_hex=ch,
+        )
+        self.assertEqual(inlined.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual((inlined.mismatch or {}).get("name"), "r3")
+
+    def test_cmpwi_cr2_leaf_summarized_callers_not_false_equivalent(self) -> None:
+        """Leaves that write CR2 must expose that write in inferred summaries."""
+        leaf_hex = (self._cmpwi(2, 4, 0) + BLR).replace(" ", "")
+        leaf = decode_block(
+            parse_hex(leaf_hex), base=0x80001000, validate_with_capstone=False,
+        )
+        inferred = infer_callee_contract(leaf)
+        self.assertIn("cr2", inferred.writes)
+
+        left_hex = (_enc_li(4, 0) + "48000001" + BLR).replace(" ", "")
+        right_hex = (_enc_li(4, 1) + "48000001" + BLR).replace(" ", "")
+        reloc = (
+            RelocationRef(
+                offset=4,
+                relocation_type=R_PPC_REL24,
+                symbol="leaf",
+                canonical_symbol="leaf",
+                addend=0,
+            ),
+        )
+        left = decode_block(
+            parse_hex(left_hex),
+            base=self._CODE_BASE,
+            validate_with_capstone=False,
+            relocations=reloc,
+        )
+        right = decode_block(
+            parse_hex(right_hex),
+            base=self._CODE_BASE,
+            validate_with_capstone=False,
+            relocations=reloc,
+        )
+        summarized = check_equivalence(
+            left,
+            right,
+            make_contract(preset=None, observe=["cr2"], timeout_ms=20_000),
+            original_hex=left_hex,
+            candidate_hex=right_hex,
+            assumed_callees=frozenset({"leaf"}),
+            callee_contracts={"leaf": inferred},
+        )
+        self.assertNotEqual(
+            summarized.status,
+            ProofStatus.EQUIVALENT,
+            f"false EQUIVALENT via cmpwi cr2 inference: {summarized.status} "
+            f"contract={inferred}",
+        )
+
+
+def _enc_mr(rd: int, rs: int) -> str:
+    # or rA,rS,rB with rA=rd, rS=rB=rs  (PPC mr destination is rA)
+    return _w((31 << 26) | (rs << 21) | (rd << 16) | (rs << 11) | (444 << 1))
+
+
+class RegisterPublishStackEscapeTests(unittest.TestCase):
+    """Compared-register SP publish must clear private-stack masking.
+
+    Adversarial PoC (2026-07-23): ``addi r3,r1,8`` left live across ``blr`` with
+    divergent stores to that slot was falsely ``EQUIVALENT`` under auto / strict
+    / ``observe=[r3,memory]`` because escape only fired on public *stores*.
+    """
+
+    @staticmethod
+    def _pointer_slot_pair(
+        *,
+        pointer_reg: int,
+        clear_pointer: bool = False,
+        clear_r0: bool = True,
+    ) -> tuple[str, str]:
+        prologue = _enc_addi(1, 1, -32)
+        epilogue = _enc_addi(1, 1, 32)
+        publish = _enc_addi(pointer_reg, 1, 8)
+        body_orig = [prologue, publish, _enc_li(0, 1), _enc_stw(0, 1, 8)]
+        body_cand = [prologue, publish, _enc_li(0, 2), _enc_stw(0, 1, 8)]
+        if clear_r0:
+            body_orig.append(_enc_li(0, 0))
+            body_cand.append(_enc_li(0, 0))
+        if clear_pointer:
+            body_orig.append(_enc_li(pointer_reg, 0))
+            body_cand.append(_enc_li(pointer_reg, 0))
+        body_orig.extend([epilogue, BLR])
+        body_cand.extend([epilogue, BLR])
+        return " ".join(body_orig), " ".join(body_cand)
+
+    def test_helper_detects_r3_publish_not_r1(self) -> None:
+        ops = SymbolicOps()
+        z3 = ops.z3
+        state = _symbolic_initial(ops)
+        # After a symbolic addi into r3 from r1.
+        published = state.with_gpr(3, ops.add(state.gpr[1], ops.const(8)))
+        self.assertTrue(compared_registers_publish_entry_r1(published, (3,), ops))
+        self.assertFalse(compared_registers_publish_entry_r1(published, (1,), ops))
+        escaped = apply_compared_register_publish_escape(published, (3,), ops)
+        self.assertTrue(z3.is_false(z3.simplify(escaped.stack_private)))
+
+    def test_r3_pointer_private_diverge_not_equivalent(self) -> None:
+        original, candidate = self._pointer_slot_pair(pointer_reg=3)
+        for preset in ("auto", "ppc-eabi", "strict"):
+            with self.subTest(preset=preset):
+                result = _prove(original, candidate, preset=preset)
+                self.assertEqual(
+                    result.status,
+                    ProofStatus.NOT_EQUIVALENT,
+                    f"{preset}: {result.status} mismatch={result.mismatch}",
+                )
+                scope = result.memory_scope.to_dict()["private_stack"]
+                self.assertFalse(scope["original"]["enabled_on_all_terminal_paths"])
+                self.assertFalse(scope["candidate"]["enabled_on_all_terminal_paths"])
+
+    def test_r3_pointer_manual_r3_memory_not_equivalent(self) -> None:
+        original, candidate = self._pointer_slot_pair(pointer_reg=3)
+        result = _prove(original, candidate, observe=["r3", "memory"])
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual((result.mismatch or {}).get("kind"), "memory")
+
+    def test_r31_nonvolatile_pointer_not_equivalent(self) -> None:
+        original, candidate = self._pointer_slot_pair(pointer_reg=31)
+        result = _prove(original, candidate, preset="auto")
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_r14_nonvolatile_pointer_not_equivalent(self) -> None:
+        original, candidate = self._pointer_slot_pair(pointer_reg=14)
+        result = _prove(original, candidate, preset="ppc-eabi")
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_mr_r3_r1_publish_not_equivalent(self) -> None:
+        prologue = _enc_addi(1, 1, -32)
+        epilogue = _enc_addi(1, 1, 32)
+        publish = _enc_mr(3, 1)
+        original = " ".join([
+            prologue, publish, _enc_li(0, 1), _enc_stw(0, 1, 8),
+            _enc_li(0, 0), epilogue, BLR,
+        ])
+        candidate = " ".join([
+            prologue, publish, _enc_li(0, 2), _enc_stw(0, 1, 8),
+            _enc_li(0, 0), epilogue, BLR,
+        ])
+        result = _prove(original, candidate, preset="auto")
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+
+    def test_pointer_cleared_before_return_keeps_masking(self) -> None:
+        """If the frame pointer is killed before exit, private diverge may stay EQ."""
+        original, candidate = self._pointer_slot_pair(
+            pointer_reg=3, clear_pointer=True,
+        )
+        result = _prove(original, candidate, preset="auto")
+        self.assertEqual(
+            result.status,
+            ProofStatus.EQUIVALENT,
+            f"{result.status} mismatch={result.mismatch}",
+        )
+        scope = result.memory_scope.to_dict()["private_stack"]
+        self.assertTrue(scope["original"]["enabled_on_all_terminal_paths"])
+
+    def test_volatile_r11_temp_frame_pointer_keeps_masking(self) -> None:
+        """r11 frame-pointer temp is not compared under auto — must not false-NE."""
+        original, candidate = self._pointer_slot_pair(pointer_reg=11)
+        result = _prove(original, candidate, preset="auto")
+        self.assertEqual(
+            result.status,
+            ProofStatus.EQUIVALENT,
+            f"false NOT_EQUIVALENT via r11 temp: {result.status} "
+            f"mismatch={result.mismatch}",
+        )
+        scope = result.memory_scope.to_dict()["private_stack"]
+        self.assertTrue(scope["original"]["enabled_on_all_terminal_paths"])
+
+    def test_private_only_without_publish_still_equivalent(self) -> None:
+        prologue = _enc_addi(1, 1, -32)
+        epilogue = _enc_addi(1, 1, 32)
+        original = " ".join([
+            prologue, _enc_li(0, 1), _enc_stw(0, 1, 8), epilogue, BLR,
+        ])
+        candidate = " ".join([
+            prologue, _enc_li(0, 2), _enc_stw(0, 1, 8), epilogue, BLR,
+        ])
+        result = _prove(original, candidate, preset="auto")
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 
 
 if __name__ == "__main__":

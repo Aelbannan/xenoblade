@@ -141,12 +141,11 @@ bool SoundArchiveFileReader::ReadSoundInfo(
     pSoundInfo->remoteFilter = pCmnInfo->remoteFilter;
 
     if (GetVersion() >= NW4R_VERSION(1, 2)) {
-        pSoundInfo->panMode = static_cast<detail::PanMode>(pCmnInfo->panMode);
-        pSoundInfo->panCurve =
-            static_cast<detail::PanCurve>(pCmnInfo->panCurve);
+        pSoundInfo->panMode = static_cast<PanMode>(pCmnInfo->panMode);
+        pSoundInfo->panCurve = static_cast<PanCurve>(pCmnInfo->panCurve);
     } else {
-        pSoundInfo->panMode = detail::PAN_MODE_BALANCE;
-        pSoundInfo->panCurve = detail::PAN_CURVE_SQRT;
+        pSoundInfo->panMode = PAN_MODE_BALANCE;
+        pSoundInfo->panCurve = PAN_CURVE_SQRT;
     }
 
     return true;

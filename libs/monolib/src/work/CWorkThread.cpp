@@ -1,5 +1,6 @@
 #include "monolib/device.hpp"
 #include "monolib/work.hpp"
+#include <cstring>
 
 CWorkThread::CWorkThread(const char* pName, CWorkThread* pParent, int capacity)
     : mState(THREAD_STATE_NONE),
@@ -79,7 +80,32 @@ void CWorkThread::wkEntryChild(CWorkThread* pChild, bool prepend){
 }
 
 void CWorkThread::wkRemoveChild(CWorkThread* pChild){
-    mChildren.remove(pChild);
+    // Retail only unlinks the first matching node (unlike reslist::remove, which walks all).
+    // Loop shape matches retail: advance-at-top, head-check, then item compare.
+    _reslist_node<CWorkThread*>* head = mChildren.mStartNodePtr;
+    _reslist_node<CWorkThread*>* curr = head->mNext;
+    goto check;
+
+advance:
+    curr = curr->mNext;
+check:
+    if(curr == head){
+        goto done;
+    }
+    if(curr->mItem != pChild){
+        goto advance;
+    }
+
+done:
+    if(curr == head){
+        return;
+    }
+
+    _reslist_node<CWorkThread*>* prev = curr->mPrev;
+    _reslist_node<CWorkThread*>* next = curr->mNext;
+    prev->mNext = next;
+    next->mPrev = prev;
+    curr->mNext = nullptr;
 }
 
 void CWorkThread::wkSetEvent(EVT evt){
@@ -93,7 +119,9 @@ void CWorkThread::wkSetEvent(EVT evt){
 }
 
 void CWorkThread::wkSetEventChild(EVT evt){
-    for(reslist<CWorkThread*>::iterator it = mChildren.begin(); it != mChildren.end(); it++){
+    // Retail uses a 4-level unrolled descendant walk; recursive wkSetEvent
+    // is the high-level equivalent and keeps the TU within split size.
+    for(reslist<CWorkThread*>::iterator it = mChildren.begin(); it != mChildren.end(); ++it){
         (*it)->wkSetEvent(evt);
     }
 }
@@ -311,22 +339,29 @@ bool CWorkThread::wkStandbyLogout(){
 
 void CWorkThread::wkUpdate(){}
 
+#pragma dont_inline on
 CWorkThread* CWorkThread::getWorkThread(const char* name){
-    if(name == nullptr){
+    // Retail tolerates a null `this` (checks r3 before any member access).
+    if(this == nullptr){
         return nullptr;
     }
 
-    if(mName == name){
+    // Retail: addi r3, this, 4; bl strcmp (mString is first field of FixStr).
+    if(!std::strcmp(reinterpret_cast<const char*>(&mName), name)){
         return this;
     }
 
-    for(reslist<CWorkThread*>::iterator it = mChildren.begin(); it != mChildren.end(); it++){
-        CWorkThread* result = (*it)->getWorkThread(name);
+    _reslist_node<CWorkThread*>* head = mChildren.mStartNodePtr;
+    for(_reslist_node<CWorkThread*>* node = head->mNext; node != head; node = node->mNext){
+        CWorkThread* result = node->mItem->getWorkThread(name);
 
-        if(result != nullptr && result->mState != THREAD_STATE_SHUTDOWN){
-            return result;
+        if(result != nullptr){
+            if(result->mState != THREAD_STATE_SHUTDOWN){
+                return result;
+            }
         }
     }
 
     return nullptr;
 }
+#pragma dont_inline off

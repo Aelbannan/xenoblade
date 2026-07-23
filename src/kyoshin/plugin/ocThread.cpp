@@ -1,8 +1,21 @@
-// Auto-scaffolded catalog TU for kyoshin/plugin/ocThread
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
-
 #include "kyoshin/plugin/ocThread.hpp"
+
+extern "C" {
+BOOL vmOCRegist(OCData* pOC);
+extern OCData lbl_eu_80524C60;
+
+// BSS list headers (retail .bss); sinit fills the leading fields.
+struct OcThreadListHdr {
+    u32 unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+};
+
+extern OcThreadListHdr lbl_eu_805704C8;
+extern OcThreadListHdr lbl_eu_80570538;
+}
 
 // LLM-HARNESS-BEGIN: us-8003a6f0
 extern "C" int thread(VMThread* pThread) { return 0; }
@@ -33,18 +46,39 @@ extern "C" int wakeup(VMThread* pThread) { return 0; }
 // LLM-HARNESS-END: us-8003a88c
 
 // LLM-HARNESS-BEGIN: us-8003a8b4
-extern "C" void ocThreadRegist() {}
+extern "C" void ocThreadRegist() {
+    vmOCRegist(&lbl_eu_80524C60);
+}
 // LLM-HARNESS-END: us-8003a8b4
 
 // LLM-HARNESS-BEGIN: us-8003a8c0
-extern "C" void func_8003A4E0() {}
+extern "C" OcThreadListHdr* func_8003A4E0() {
+    return &lbl_eu_805704C8;
+}
 // LLM-HARNESS-END: us-8003a8c0
 
 // LLM-HARNESS-BEGIN: us-8003a8cc
-extern "C" void func_8003A4EC() {}
+extern "C" OcThreadListHdr* func_8003A4EC() {
+    return &lbl_eu_80570538;
+}
 // LLM-HARNESS-END: us-8003a8cc
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-8003a8d8
-extern "C" void sinit_8003A4F8() {}
+extern "C" void sinit_8003A4F8() {
+    OcThreadListHdr* a = &lbl_eu_805704C8;
+    OcThreadListHdr* b = &lbl_eu_80570538;
+
+    // Retail store order (both headers).
+    a->unk10 = 0;
+    a->unk0 = 0;
+    a->unkC = 0;
+    a->unk8 = 0;
+    a->unk4 = 9;
+
+    b->unk10 = 0;
+    b->unk0 = 0;
+    b->unkC = 0;
+    b->unk8 = 0;
+    b->unk4 = 9;
+}
 // LLM-HARNESS-END: us-8003a8d8

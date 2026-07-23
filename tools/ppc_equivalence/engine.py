@@ -508,6 +508,56 @@ def _memory_difference(
     return z3.Or(*differences) if differences else z3.BoolVal(False)
 
 
+def _compared_gpr_indices_for_exit(
+    contract: EquivalenceContract, exit_kind: str,
+) -> tuple[int, ...]:
+    """GPR indices compared for ``exit_kind``, excluding ``r1`` (always live SP)."""
+    from tools.ppc_equivalence.contract import observables_for_exit
+
+    indices: list[int] = []
+    for item in observables_for_exit(contract, exit_kind):
+        if item.kind == "gpr" and item.index is not None and item.index != 1:
+            indices.append(int(item.index))
+    return tuple(indices)
+
+
+def _apply_terminal_register_publish_escape(
+    terminal: Terminal,
+    contract: EquivalenceContract,
+    ops: SymbolicOps,
+) -> Terminal:
+    """Clear private-stack masking when a compared GPR publishes entry ``r1``.
+
+    Store-based escape alone misses ``addi r3,r1,8; …; blr``: the frame pointer
+    never leaves a register, yet the caller can load through ``r3`` after return.
+    Applied after CFG exploration once the exit-kind observable set is known so
+    volatile temps (e.g. ``r11``) that are not compared do not spuriously disable
+    masking.
+    """
+    from tools.ppc_equivalence.stack_escape import apply_compared_register_publish_escape
+
+    gpr_indices = _compared_gpr_indices_for_exit(contract, terminal.exit_kind)
+    if not gpr_indices:
+        return terminal
+    new_state = apply_compared_register_publish_escape(
+        terminal.state, gpr_indices, ops,
+    )
+    if new_state is terminal.state:
+        return terminal
+    return replace(terminal, state=new_state)
+
+
+def _apply_register_publish_escape_to_terminals(
+    terminals: list[Terminal],
+    contract: EquivalenceContract,
+    ops: SymbolicOps,
+) -> list[Terminal]:
+    return [
+        _apply_terminal_register_publish_escape(terminal, contract, ops)
+        for terminal in terminals
+    ]
+
+
 def _observable_difference(
     left: MachineState, right: MachineState, observable: Observable,
     initial: MachineState, ops: SymbolicOps,
@@ -1628,6 +1678,15 @@ def _check_equivalence_impl(
         contract = refine_auto_contract_with_writes(
             contract, symbolic_writes=symbolic_writes,
         )
+
+    # Compared-register SP publish: clear private masking when a live compared
+    # GPR (other than r1) still holds an r1-derived pointer at the terminal.
+    original_exits = _apply_register_publish_escape_to_terminals(
+        original_exits, contract, ops,
+    )
+    candidate_exits = _apply_register_publish_escape_to_terminals(
+        candidate_exits, contract, ops,
+    )
 
     try:
         deadline.require_time("constraint-build")

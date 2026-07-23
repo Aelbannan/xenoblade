@@ -3857,7 +3857,60 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             state = _set_cr_field(state, 1, _fpscr_cr1(state, ops), ops)
         return state
 
-    elif op in _FP_SCALAR_ARITH or op in _FP_PSQ_OPS:
+    elif op in _FP_PSQ_OPS:
+        # PSQ D-form operands are (fr, ra, disp, w, i); indexed are
+        # (fr, ra, rb, w, i). Never treat disp as an FPR index — offsets
+        # like 32 (common in MTX paired-single kernels) exceed fpr[0..31]
+        # and used to raise IndexError before the PSQ handler ran.
+        if op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU):
+            rs, ra, disp, w, i = a
+            address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(disp))
+        else:
+            rs, ra, rb, w, i = a
+            address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
+        is_psq_load = op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX)
+        gqr = state.gqr[i]
+        psq_span = 4 if w else 8
+        if active_memory_bus() is not None and _access_may_touch_mmio(
+            address, psq_span, ops,
+        ):
+            record_bus_access_family(BUS_ACCESS_FAMILY_PSQ)
+            record_bus_access_rejection(REASON_PSQ_MMIO)
+            raise ExecutionInconclusive(REASON_PSQ_MMIO)
+        if is_psq_load:
+            qtype = ops.band(ops.lshr(gqr, ops.const(16)), ops.const(7))
+            scale = ops.band(ops.lshr(gqr, ops.const(24)), ops.const(0x3F))
+            state = _psq_domain(state, address, w, qtype, ops, "read")
+            ps0_bits, ps1_bits, state = _psq_load_pair(
+                state, address, w, qtype, scale, ops,
+            )
+            state = state.with_fpr(rs, ps0_bits).with_ps1(rs, ps1_bits)
+        else:
+            qtype = ops.band(gqr, ops.const(7))
+            scale = ops.band(ops.lshr(gqr, ops.const(8)), ops.const(0x3F))
+            state = _psq_domain(state, address, w, qtype, ops, "write")
+            source0 = ops.fp_bits_to_double(state.fpr[rs])
+            source1 = ops.fp_bits_to_double(state.ps1[rs])
+            finite0 = ops.lnot(ops.lor(ops.fp_is_nan(source0), ops.fp_is_inf(source0)))
+            finite1 = ops.lnot(ops.lor(ops.fp_is_nan(source1), ops.fp_is_inf(source1)))
+            integer_type = ops.lnot(ops.eq(qtype, ops.const(0)))
+            finite_sources = ops.land(finite0, ops.bool(True) if w else finite1)
+            state = _constrain_valid(
+                state,
+                ops.lor(ops.lnot(integer_type), finite_sources),
+                InvalidReason.PSQ_NONFINITE_INTEGER_STORE,
+                ops,
+            )
+            state = _psq_store_pair(
+                state, address, w, qtype, scale,
+                state.fpr[rs], state.ps1[rs], ops,
+            )
+        update = op in (Opcode.PSQ_LU, Opcode.PSQ_STU, Opcode.PSQ_LUX, Opcode.PSQ_STUX)
+        if update:
+            state = state.with_gpr(ra, address)
+        return state
+
+    elif op in _FP_SCALAR_ARITH:
         fd, fa = a[0], a[1] if len(a) > 1 else 0
         fb = a[2] if len(a) > 2 else 0
         fc = a[3] if len(a) > 3 else 0
@@ -3916,13 +3969,12 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                     exact_scalar_used = True
 
         # Optional NaN / Inf / subnormal exclusions from FloatingPointDomain.
-        if op not in _FP_PSQ_OPS:
-            state = _constrain_fp_value_domain(state, op_fa, ops)
-            state = _constrain_fp_value_domain(state, op_fb, ops)
-            if op in ({Opcode.FMULS, Opcode.FMUL} | _FP_FUSED | {Opcode.FSEL}):
-                state = _constrain_fp_value_domain(
-                    state, ops.fp_bits_to_double(fc_source_bits), ops,
-                )
+        state = _constrain_fp_value_domain(state, op_fa, ops)
+        state = _constrain_fp_value_domain(state, op_fb, ops)
+        if op in ({Opcode.FMULS, Opcode.FMUL} | _FP_FUSED | {Opcode.FSEL}):
+            state = _constrain_fp_value_domain(
+                state, ops.fp_bits_to_double(fc_source_bits), ops,
+            )
 
         if op == Opcode.FSEL:
             if exact_scalar_used:
@@ -4145,57 +4197,6 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             new_fpscr = ops.band(state.fpscr, ops.bnot(ops.const(clear_mask)))
             state = state.with_fpscr(_fpscr_normalize(new_fpscr, ops))
             return _set_cr_field(state, bf, cr_nibble, ops)
-        elif op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU,
-                     Opcode.PSQ_LX, Opcode.PSQ_LUX, Opcode.PSQ_STX, Opcode.PSQ_STUX):
-            if op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_ST, Opcode.PSQ_STU):
-                rs, ra, disp, w, i = a
-                address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], ops.const(disp))
-            else:
-                rs, ra, rb, w, i = a
-                address = ops.add(ops.const(0) if ra == 0 else state.gpr[ra], state.gpr[rb])
-            is_psq_load = op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX)
-            gqr = state.gqr[i]
-            # PSQ quantizes via speculative multi-width loads/stores; MMIO side
-            # effects cannot be modeled soundly → fail closed when bus+MMIO.
-            psq_span = 4 if w else 8
-            if active_memory_bus() is not None and _access_may_touch_mmio(
-                address, psq_span, ops,
-            ):
-                record_bus_access_family(BUS_ACCESS_FAMILY_PSQ)
-                record_bus_access_rejection(REASON_PSQ_MMIO)
-                raise ExecutionInconclusive(REASON_PSQ_MMIO)
-            if is_psq_load:
-                qtype = ops.band(ops.lshr(gqr, ops.const(16)), ops.const(7))
-                scale = ops.band(ops.lshr(gqr, ops.const(24)), ops.const(0x3F))
-                state = _psq_domain(state, address, w, qtype, ops, "read")
-                ps0_bits, ps1_bits, state = _psq_load_pair(
-                    state, address, w, qtype, scale, ops,
-                )
-                state = state.with_fpr(rs, ps0_bits).with_ps1(rs, ps1_bits)
-            else:
-                qtype = ops.band(gqr, ops.const(7))
-                scale = ops.band(ops.lshr(gqr, ops.const(8)), ops.const(0x3F))
-                state = _psq_domain(state, address, w, qtype, ops, "write")
-                source0 = ops.fp_bits_to_double(state.fpr[rs])
-                source1 = ops.fp_bits_to_double(state.ps1[rs])
-                finite0 = ops.lnot(ops.lor(ops.fp_is_nan(source0), ops.fp_is_inf(source0)))
-                finite1 = ops.lnot(ops.lor(ops.fp_is_nan(source1), ops.fp_is_inf(source1)))
-                integer_type = ops.lnot(ops.eq(qtype, ops.const(0)))
-                finite_sources = ops.land(finite0, ops.bool(True) if w else finite1)
-                state = _constrain_valid(
-                    state,
-                    ops.lor(ops.lnot(integer_type), finite_sources),
-                    InvalidReason.PSQ_NONFINITE_INTEGER_STORE,
-                    ops,
-                )
-                state = _psq_store_pair(
-                    state, address, w, qtype, scale,
-                    state.fpr[rs], state.ps1[rs], ops,
-                )
-            update = op in (Opcode.PSQ_LU, Opcode.PSQ_STU, Opcode.PSQ_LUX, Opcode.PSQ_STUX)
-            if update:
-                state = state.with_gpr(ra, address)
-            return state
         else:
             raise UnsupportedInstruction(insn.address, insn.raw, f"semantics not implemented for {op.value}")
 
@@ -5600,9 +5601,39 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         if op == Opcode.BCLR: reads.add("lr")
         if op == Opcode.BCCTR: reads.add("ctr")
         if insn.link: writes.add("lr")
+    elif op == Opcode.MFCR:
+        # Destination-only operand; CR is the sole architectural input.
+        # Treating rD as a read (generic operand scan) dropped ``cr`` from
+        # inferred callee contracts and allowed false EQUIVALENT across callers
+        # that differ only in CR before ``mfcr``.
+        reads.add("cr")
+        writes.add(f"r{a[0]}")
+    elif op == Opcode.MTCRF:
+        # FXM selects which CR fields are written; unmarked fields are preserved.
+        reads.add(f"r{a[0]}")
+        reads.add("cr")
+        writes.add("cr")
+    elif op in (Opcode.CMPWI, Opcode.CMPLWI):
+        field, ra, _immediate = a
+        reads.add(f"r{ra}")
+        reads.add("xer.so")
+        writes.add(f"cr{field}")
+    elif op in (Opcode.CMPW, Opcode.CMPLW):
+        field, ra, rb = a
+        reads.add(f"r{ra}")
+        reads.add(f"r{rb}")
+        reads.add("xer.so")
+        writes.add(f"cr{field}")
+    elif op in (
+        Opcode.CRAND, Opcode.CRANDC, Opcode.CREQV, Opcode.CRNAND,
+        Opcode.CRNOR, Opcode.CROR, Opcode.CRORC, Opcode.CRXOR,
+    ):
+        reads.add("cr")
+        writes.add("cr")
     else:
         # A full operand-role table is less useful than the decoder/semantics source of truth;
         # all operand GPRs are conservatively live-in and the conventional destination is killed.
+        # Immediates that happen to lie in 0..31 are over-approximated as GPR reads (fail-closed).
         for value in a:
             if 0 <= value < 32: reads.add(f"r{value}")
         destination_ops = set(LOADS) | {
@@ -5612,7 +5643,7 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
             Opcode.SRAW, Opcode.SRAWI, Opcode.ADD, Opcode.ADDC, Opcode.ADDE, Opcode.ADDME,
             Opcode.ADDZE, Opcode.SUBF, Opcode.SUBFC, Opcode.SUBFE, Opcode.SUBFME, Opcode.SUBFZE,
             Opcode.NEG, Opcode.MULHW, Opcode.MULHWU, Opcode.MULLW, Opcode.DIVW, Opcode.DIVWU,
-            Opcode.EXTSB, Opcode.EXTSH, Opcode.CNTLZW, Opcode.MFCR, Opcode.MFSPR,
+            Opcode.EXTSB, Opcode.EXTSH, Opcode.CNTLZW,
         }
         if op in destination_ops: writes.add(f"r{a[0]}")
         if insn.record or op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT): writes.add("cr0")
@@ -5736,6 +5767,10 @@ def infer_callee_contract(
                 observed_writes.add("invalid_reason")
 
     writes = observed_writes & volatile
+    # CR2–CR4 are nonvolatile under EABI but still compared by ``ppc-eabi`` /
+    # ``auto``. Dropping them from summary writes preserves entry CR fields and
+    # yields false EQUIVALENT for leaves that update those fields (e.g. cmpwi).
+    writes |= observed_writes & {"cr2", "cr3", "cr4"}
     if "memory" in writes:
         reads.add("memory")
     if any(name == "cr" or name.startswith("cr") for name in writes):

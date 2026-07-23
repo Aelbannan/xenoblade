@@ -15,8 +15,8 @@ u32 AXFXDelayExpGetMemSizeDpl2(const AXFX_DELAY_EXP_DPL2* fx) {
 BOOL AXFXDelayExpInitDpl2(AXFX_DELAY_EXP_DPL2* fx) {
     u32 i;
     BOOL ok;
-    BOOL mask = OSDisableInterrupts();
     BOOL nested;
+    BOOL mask = OSDisableInterrupts();
     s32** p;
 
     if (AXGetMode() != AX_OUTPUT_DPL2) {
@@ -47,17 +47,17 @@ BOOL AXFXDelayExpInitDpl2(AXFX_DELAY_EXP_DPL2* fx) {
         fx->maxLength = 1;
     }
 
-    ok = TRUE;
     p = fx->line;
     for (i = 0; i < 4; i++) {
         *p = (s32*)__AXFXAlloc(fx->maxLength * 4);
         if (*p == NULL) {
             ok = FALSE;
-            break;
+            goto alloc_done;
         }
         p++;
     }
-
+    ok = TRUE;
+alloc_done:
     if (ok == FALSE) {
         nested = OSDisableInterrupts();
         fx->active |= 1;
@@ -142,8 +142,8 @@ BOOL AXFXDelayExpSettingsDpl2(AXFX_DELAY_EXP_DPL2* fx) {
 
 BOOL AXFXDelayExpSettingsUpdateDpl2(AXFX_DELAY_EXP_DPL2* fx) {
     u32 i;
-    BOOL mask;
     BOOL nested;
+    BOOL mask;
     s32** p;
 
     mask = OSDisableInterrupts();
@@ -188,6 +188,8 @@ void AXFXDelayExpShutdownDpl2(AXFX_DELAY_EXP_DPL2* fx) {
 }
 
 void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL2* fx) {
+    s32 coef;
+    s32 invCoef;
     s32* input[4];
     s32* inBus[4];
     s32* outBus[4];
@@ -195,8 +197,6 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
     s32 mixed[4];
     u32 samp;
     u32 ch;
-    s32 coef;
-    s32 invCoef;
     u32 pos;
     s32 in;
 
@@ -205,13 +205,12 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
         return;
     }
 
+    coef = fx->iirGain;
+    invCoef = 0x80 - coef;
     input[0] = update->left;
     input[1] = update->right;
     input[2] = update->left_surround;
     input[3] = update->right_surround;
-
-    coef = fx->iirGain;
-    invCoef = 0x80 - coef;
 
     if (fx->busIn != NULL) {
         inBus[0] = fx->busIn->left;

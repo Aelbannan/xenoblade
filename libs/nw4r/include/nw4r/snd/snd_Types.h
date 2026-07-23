@@ -37,11 +37,12 @@ struct SoundParam {
     f32 surroundPan; // at 0xC
     f32 fxSend;      // at 0x10
     f32 lpf;         // at 0x14
-    int priority;    // at 0x18
+    // US Xenoblade: extra f32 before priority (retail stfs@BasicSound+0x48).
+    f32 unk18;       // at 0x18
+    int priority;    // at 0x1C
 };
 
-namespace detail {
-
+// US retail mangles these as nw4r::snd::PanMode / PanCurve (not detail::).
 enum PanMode {
     PAN_MODE_DUAL,
     PAN_MODE_BALANCE,
@@ -58,6 +59,8 @@ enum PanCurve {
     PAN_CURVE_LINEAR_0DB,
     PAN_CURVE_LINEAR_0DB_CLAMP,
 };
+
+namespace detail {
 
 struct AdpcmParam {
     u16 coef[16];   // at 0x0

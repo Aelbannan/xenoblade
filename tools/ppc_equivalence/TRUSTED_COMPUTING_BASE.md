@@ -86,7 +86,9 @@ Architecture model: see `result.ARCHITECTURE_MODEL`.
 - Private-stack enable/disable on escape/call; frame relation
   `symbolic-below-entry-sp`.
 - Encoded in `MemoryScope` / `PrivateStackInfo` on certificates.
-- Trust risk: asymmetric frames (historical union-mask bug class).
+- Trust risk: asymmetric frames (historical union-mask bug class); compared
+  register holding an r1-derived pointer without a public store (historical
+  register-publish hole — gated by `apply_compared_register_publish_escape`).
 
 ## Callee summaries / certificates
 

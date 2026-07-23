@@ -68,26 +68,33 @@ public:
     static const int PRIORITY_MAX = 127;
 
 public:
-    BasicSound();
+    BasicSound(int priority, int arg);
     virtual ~BasicSound() {}
 
-    virtual void Update();
-    virtual void StartPrepared();
-    virtual void Stop(int frames);
-    virtual void Pause(bool flag, int frames);
+    // US Xenoblade vtable (after RTTI @+0x8, dtor @+0xC):
+    // +0x10 Shutdown, +0x14 IsPrepared, +0x18 IsAttachedTempSpecialHandle,
+    // +0x1C DetachTempSpecialHandle, +0x20 InitParam, +0x24/+0x28 GetBasicPlayer,
+    // +0x2C OnUpdatePlayerPriority, +0x30 UpdateMoveValue, +0x34 UpdateParam.
+    // Stop / Pause / Update / StartPrepared / IsPause are non-virtual.
     virtual void Shutdown();
-    // US retail: GetBasicPlayer at vtable+0x24.
-    virtual BasicPlayer& GetBasicPlayer() = 0;
-    virtual const BasicPlayer& GetBasicPlayer() const = 0;
     virtual bool IsPrepared() const = 0;
-    virtual bool IsPause() const;
-
     virtual bool IsAttachedTempSpecialHandle() = 0;
     virtual void DetachTempSpecialHandle() = 0;
+    virtual void InitParam();
+    virtual BasicPlayer& GetBasicPlayer() = 0;
+    virtual const BasicPlayer& GetBasicPlayer() const = 0;
+    virtual void OnUpdatePlayerPriority();
+    virtual void UpdateMoveValue();
+    virtual void UpdateParam();
+
+    void Update();
+    void StartPrepared();
+    void Stop(int frames);
+    void Pause(bool flag, int frames);
+    bool IsPause() const;
 
     void SetAutoStopCounter(int count);
     void FadeIn(int frames);
-    void InitParam();
     void SetInitialVolume(f32 vol);
     void SetVolume(f32 vol, int frames);
     void SetPitch(f32 pitch);
@@ -102,6 +109,8 @@ public:
     PlayerHeap* GetPlayerHeap() {
         return mHeap;
     }
+    void AttachPlayerHeap(PlayerHeap* pHeap);
+    void DetachPlayerHeap(PlayerHeap* pHeap);
     void SetPlayerHeap(PlayerHeap* pHeap) {
         mHeap = pHeap;
     }
@@ -118,6 +127,9 @@ public:
     void SetSoundPlayer(SoundPlayer* pPlayer) {
         mSoundPlayer = pPlayer;
     }
+    // Out-of-line in US (same stores as SetSoundPlayer / clear).
+    void AttachSoundPlayer(SoundPlayer* pPlayer);
+    void DetachSoundPlayer(SoundPlayer* pPlayer);
 
     ExternalSoundPlayer* GetExternalSoundPlayer() {
         return mExtSoundPlayer;
@@ -185,7 +197,9 @@ public:
     void SetFxSend(AuxBus bus, f32 send);
 
     int CalcCurrentPlayerPriority() const {
-        return ut::Clamp(mPriority + mAmbientParam.priority, 0, PRIORITY_MAX);
+        // US SortPriorityList adds mUnk0x50 (not SoundParam::priority @0x4C).
+        return ut::Clamp(static_cast<int>(mPriority) + static_cast<int>(mUnk0x50),
+                         0, PRIORITY_MAX);
     }
 
 private:
@@ -202,11 +216,10 @@ private:
     u32 mUnk0x28;                                              // at 0x28
     u32 mUnk0x2C;                                              // at 0x2C
     SoundParam mAmbientParam;                                  // at 0x30
-    u32 mUnk0x4C;                                              // at 0x4C
     u32 mUnk0x50;                                              // at 0x50 (ctor arg)
-    u32 mUnk0x54;                                              // at 0x54
-    u32 mUnk0x58;                                              // at 0x58
-    u32 mUnk0x5C;                                              // at 0x5C
+    f32 mUnk0x54;                                              // at 0x54
+    f32 mUnk0x58;                                              // at 0x58
+    f32 mUnk0x5C;                                              // at 0x5C
 
     MoveValue<f32, int> mFadeVolume;      // at 0x60
     MoveValue<f32, int> mPauseFadeVolume; // at 0x70

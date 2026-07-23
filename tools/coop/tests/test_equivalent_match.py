@@ -14,6 +14,7 @@ from tools.coop.lib.equivalence_check import (
     EQUIVALENT_MATCH_MIN_PERCENT,
     EquivalenceProbe,
     _cache_get,
+    _nv_spill_false_positive,
     _prove_bytes,
     should_probe_equivalence,
 )
@@ -36,6 +37,35 @@ def _unit(**kwargs) -> UnitReport:
     )
     defaults.update(kwargs)
     return UnitReport(**defaults)
+
+
+class NvSpillCertificateTests(unittest.TestCase):
+    def test_nv_spill_false_positive_only_callee_saves(self) -> None:
+        from types import SimpleNamespace
+
+        ok = SimpleNamespace(
+            reason=None,
+            missing_reads=frozenset(),
+            missing_writes=frozenset({"r28", "r29", "r30", "r31"}),
+            missing_invalid_reasons=frozenset(),
+        )
+        self.assertTrue(_nv_spill_false_positive(ok))
+
+        volatile = SimpleNamespace(
+            reason=None,
+            missing_reads=frozenset(),
+            missing_writes=frozenset({"r3"}),
+            missing_invalid_reasons=frozenset(),
+        )
+        self.assertFalse(_nv_spill_false_positive(volatile))
+
+        with_reason = SimpleNamespace(
+            reason="callee does not have only normal returns: fallthrough",
+            missing_reads=frozenset(),
+            missing_writes=frozenset({"r31"}),
+            missing_invalid_reasons=frozenset(),
+        )
+        self.assertFalse(_nv_spill_false_positive(with_reason))
 
 
 class ClassifyStatusTests(unittest.TestCase):

@@ -716,10 +716,15 @@ kyoshin/menu/CMenuBattleDamage.cpp:
 	.sbss       start:0x80666820 end:0x80666828
 	.sdata2     start:0x80669830 end:0x80669858
 
+kyoshin/menu/CMenuBattlePlayerState_ct.cpp:
+	extab       start:0x8000B1A4 end:0x8000B208
+	extabindex  start:0x80026990 end:0x8002699C
+	.text       start:0x8010ADA4 end:0x8010B324
+
 kyoshin/menu/CMenuBattlePlayerState.cpp:
-	extab       start:0x8000B1A4 end:0x8000B330
-	extabindex  start:0x80026990 end:0x80026A38
-	.text       start:0x8010ADA4 end:0x8010EA64
+	extab       start:0x8000B208 end:0x8000B330
+	extabindex  start:0x8002699C end:0x80026A38
+	.text       start:0x8010B324 end:0x8010EA64
 	.ctors      start:0x804F5944 end:0x804F5948
 	.rodata     start:0x804F8F28 end:0x804F93B0
 	.data       start:0x8052FB00 end:0x8052FC08

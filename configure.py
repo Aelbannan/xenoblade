@@ -505,6 +505,8 @@ config.libs = [
             Object(NonMatching, "kyoshin/CMainMenu.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuArtsSelect.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuBattleDamage.cpp"),
+            Object(NonMatching, "kyoshin/menu/CMenuBattlePlayerState_ct.cpp",
+                   extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/menu/CMenuBattlePlayerState.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuEnemyState.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuFade.cpp"),
@@ -949,8 +951,9 @@ config.libs = [
     DolphinLib(
         "bte",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_buffer.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_time.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_buffer.c", extra_cflags=["-func_align 4"]),
+            # Default -func_align 16: inter-fn pad + first-loop nop in GKI_update_timer_list (8/8 FULL).
+            Object(MatchingFor("us"), "RVL_SDK/src/revolution/bte/gki/gki_time.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_ppc.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/hci/hcisu_h2.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/hci/uusb_ppc.c"),
@@ -1621,6 +1624,8 @@ config.libs = [
             Object(NonMatching, "nw4r/src/snd/snd_SoundArchivePlayer.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_SoundHandle.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_SoundPlayer.cpp"),
+            # Alloc* / CheckPlayable / ambient helpers — outside SoundPlayer split.
+            Object(NonMatching, "nw4r/src/snd/snd_SoundPlayerAlloc.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_SoundStartable.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_SoundSystem.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_SoundThread.cpp"),
@@ -1695,7 +1700,7 @@ config.libs = [
             Object(MatchingFor("us"), "monolib/src/core/CProc.cpp"),
             Object(MatchingFor("jp", "us"), "monolib/src/core/CProcRoot.cpp"),
             Object(NonMatching, "monolib/src/core/CRsrc.cpp"),
-            Object(NonMatching, "monolib/src/core/CRsrcData.cpp"),
+            Object(MatchingFor("us"), "monolib/src/core/CRsrcData.cpp"),
             Object(NonMatching, "monolib/src/core/CScriptCode.cpp"),
             Object(NonMatching, "monolib/src/core/CToken.cpp"),
             Object(NonMatching, "monolib/src/work/CEvent1.cpp"),
@@ -1713,7 +1718,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkRoot.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(MatchingFor("jp"), "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(MatchingFor("jp", "us"), "monolib/src/work/CWorkSystemMem.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(MatchingFor("us"), "monolib/src/work/CProcess.cpp"),
+            Object(MatchingFor("us"), "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 4"]),
             Object(MatchingFor("jp"), "monolib/src/util/CDoubleListNode.cpp"),
             Object(MatchingFor("jp"), "monolib/src/util/CChildListNode.cpp"),
             Object(MatchingFor("jp"), "monolib/src/core/CPadManager.cpp"),

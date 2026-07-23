@@ -5,7 +5,6 @@
 #include <nw4r/snd/snd_BasicSound.h>
 #include <nw4r/snd/snd_PlayerHeap.h>
 
-#include <revolution/OS.h>
 #include <revolution/WPAD.h>
 
 namespace nw4r {
@@ -33,10 +32,14 @@ public:
 
     void SetVolume(f32 volume);
 
-    int detail_GetOutputLine() const;
-    bool detail_IsEnabledOutputLine() const;
+    int detail_GetOutputLine() const {
+        return mOutputLineFlag;
+    }
+    bool detail_IsEnabledOutputLine() const {
+        return mOutputLineFlagEnable;
+    }
 
-    f32 detail_GetRemoteOutVolume(int idx) const;
+    f32 GetRemoteOutVolume(int idx) const;
 
     void detail_InsertSoundList(detail::BasicSound* pSound);
     void detail_RemoveSoundList(detail::BasicSound* pSound);
@@ -44,7 +47,14 @@ public:
     void detail_InsertPriorityList(detail::BasicSound* pSound);
     void detail_RemovePriorityList(detail::BasicSound* pSound);
 
+    void detail_SortPriorityList(detail::BasicSound* pSound);
     void detail_SortPriorityList();
+
+    bool detail_AppendSound(detail::BasicSound* pSound);
+    void detail_RemoveSound(detail::BasicSound* pSound);
+    bool detail_CanPlaySound(int priority);
+
+    void SetFxSend(AuxBus bus, f32 send);
 
     detail::SeqSound* detail_AllocSeqSound(
         int priority, int startPriority,
@@ -105,17 +115,20 @@ private:
     detail::BasicSoundPlayerPrioList mPriorityList; // at 0xC
     detail::PlayerHeapList mHeapList;               // at 0x18
 
-    u16 mPlayableCount; // at 0x24
-    u16 mPlayableLimit; // at 0x26
+    u32 mPlayableCount; // at 0x24
+    u32 mPlayableLimit; // at 0x28
 
-    f32 mVolume;                                // at 0x28
-    bool mOutputLineFlagEnable;                 // at 0x2C
-    bool mUsePlayerHeap;                        // at 0x2D
-    int mOutputLineFlag;                        // at 0x30
-    f32 mMainOutVolume;                         // at 0x34
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x38
-
-    mutable OSMutex mMutex; // at 0x48
+    f32 mVolume;                                // at 0x2C
+    f32 mUnk0x30;                               // at 0x30
+    int mOutputLineFlag;                        // at 0x34
+    f32 mMainOutVolume;                         // at 0x38
+    bool mOutputLineFlagEnable;                 // at 0x3C
+    bool mUsePlayerHeap;                        // at 0x3D
+    u8 mPad0x3E[2];                             // at 0x3E
+    f32 mUnk0x40;                               // at 0x40
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x44
+    f32 mUnk0x54;                               // at 0x54
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x58
 };
 
 } // namespace snd

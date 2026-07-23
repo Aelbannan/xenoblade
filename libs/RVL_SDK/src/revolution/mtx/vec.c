@@ -1,9 +1,5 @@
 #include <revolution/MTX.h>
 
-//unused
-void C_VECAdd(){
-}
-
 asm void PSVECAdd(register const Vec* a, register const Vec* b,
                   register Vec* sum) {
     // clang-format off
@@ -27,41 +23,6 @@ asm void PSVECAdd(register const Vec* a, register const Vec* b,
 
     blr
     // clang-format on
-}
-
-//unused
-void C_VECSubtract(){
-}
-
-//unused
-asm void PSVECSubtract(){
-}
-
-//unused
-void C_VECScale(){
-}
-
-void PSVECScale(register const Vec* in, register Vec* out, register f32 scale) {
-    register f32 xy, z;
-    register f32 sxy, sz;
-
-    ASM (
-        // Load components
-        psq_l xy, Vec.x(in), 0, 0
-        psq_l z,  Vec.z(in), 1, 0
-
-        // Scale components
-        ps_muls0 sxy, xy, scale
-        ps_muls0 sz,  z,  scale
-
-        // Store result
-        psq_st sxy, Vec.x(out), 0, 0
-        psq_st sz,  Vec.z(out), 1, 0
-    )
-}
-
-//unused
-void C_VECNormalize(){
 }
 
 void PSVECNormalize(register const Vec* in, register Vec* out) {
@@ -102,18 +63,6 @@ void PSVECNormalize(register const Vec* in, register Vec* out) {
         psq_st xy, Vec.x(out), 0, 0
         psq_st z,  Vec.z(out), 1, 0
     )
-}
-
-//unused
-void C_VECSquareMag(){
-}
-
-//unused
-asm void PSVECSquareMag(){
-}
-
-//unused
-void C_VECMag(){
 }
 
 f32 PSVECMag(register const Vec* v) {
@@ -164,10 +113,6 @@ f32 PSVECMag(register const Vec* v) {
     return dot;
 }
 
-//unused
-void C_VECDotProduct(){
-}
-
 asm f32 PSVECDotProduct(register const Vec* a, register const Vec* b) {
     // clang-format off
     nofralloc
@@ -187,10 +132,6 @@ asm f32 PSVECDotProduct(register const Vec* a, register const Vec* b) {
 
     blr
     // clang-format on
-}
-
-//unused
-void C_VECCrossProduct(){
 }
 
 asm void PSVECCrossProduct(register const Vec* a, register const Vec* b,
@@ -251,46 +192,4 @@ void C_VECHalfAngle(register const Vec* a, register const Vec* b,
     } else {
         *half = ns;
     }
-}
-
-//unused
-void C_VECReflect(){
-}
-
-//unused
-void C_VECSquareDistance(){
-}
-
-f32 PSVECSquareDistance(register const Vec* a, register const Vec* b) {
-    register f32 ayz, byz;
-    register f32 axy, bxy;
-    register f32 dxy, dyz;
-    register f32 dist;
-
-    ASM (
-        // Load vector components
-        psq_l axy, Vec.x(a), 0, 0
-        psq_l ayz, Vec.y(a), 0, 0 
-        psq_l bxy, Vec.x(b), 0, 0
-        psq_l byz, Vec.y(b), 0, 0
-
-        // Compute differences
-        ps_sub dxy, axy, bxy
-        ps_sub dyz, ayz, byz
-
-        // Compute distance
-        ps_mul  dyz,  dyz,  dyz
-        ps_madd dist, dxy,  dxy, dyz
-        ps_sum0 dist, dist, dyz, dyz
-    )
-
-    return dist;
-}
-
-//unused
-void C_VECDistance(){
-}
-
-//unused
-void PSVECDistance(){
 }

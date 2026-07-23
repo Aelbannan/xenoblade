@@ -46,6 +46,9 @@ class UnitRules:
     pool_patterns: tuple[tuple[bytes, str], ...] = ()
     # Exact symbol renames (old -> new), applied after pool content matches.
     exact_renames: tuple[tuple[str, str], ...] = ()
+    # Prefix renames: first symbol whose name starts with old_prefix -> new.
+    # For MWCC static local numbering that drifts ($8802 vs $8817).
+    prefix_renames: tuple[tuple[str, str], ...] = ()
     # Shrink .text to this size, dropping MWCC-emitted weak IWorkEvent/CWorkThread
     # default virtual stubs that retail keeps outside the split (CProcRoot).
     trim_text_size: int | None = None
@@ -259,6 +262,11 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Weak IWorkEvent/CWorkThread stubs after setValues; retail .text ends at 0x8E8.
         trim_text_size=0x8E8,
     ),
+    # FORCEACTIVE packs @stringBase0 (Restart,"",43,arc,brlyt) so "CGame" is +0x23;
+    # drop the 0x1C thunk afterward — stubs already fill the split to 0xD08.
+    "CGame.o": UnitRules(
+        drop_text_symbols=("FORCEACTIVECGame_cpp_wkStandbyLogin__Fv",),
+    ),
     "CMenuArtsSelect.o": UnitRules(),
     "CMenuBattlePlayerState.o": UnitRules(
         # Move: MWCC int→float biases as TU-local @N; retail lbl_eu_80666FA8/FB8.
@@ -336,6 +344,18 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CProcRoot.o": UnitRules(
         # Retail .text-only split is 0x1C8; drop MWCC weak default-virtual stubs.
         trim_text_size=0x1C8,
+    ),
+    "CRsrcData.o": UnitRules(
+        # Retail .text ends after wkStandbyLogout (0x42C); drop weak IWorkEvent/CWorkThread stubs.
+        trim_text_size=0x42C,
+        exact_renames=(
+            ("__ct__9CRsrcDataFPCcP11CWorkThread", "__ct__CRsrcData"),
+            ("__vt__9CRsrcData", "lbl_eu_8056B360"),
+        ),
+    ),
+    "gki_time.o": UnitRules(
+        # Retail trailing align pad after GKI_remove_from_timer_list (0xC).
+        pad_text_size=0x590,
     ),
     "CWorkSystemMem.o": UnitRules(
         # Retail .text ends after wkStandbyLogout (0x160); drop weak IWorkEvent/CWorkThread stubs.
@@ -454,6 +474,50 @@ UNIT_RULES: dict[str, UnitRules] = {
         # MoveValue::GetValue int→double magic; local @N vs retail SDA label.
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80669EF0"),
+        ),
+        exact_renames=(
+            ("__vt__Q44nw4r3snd6detail10BasicSound", "lbl_eu_8056A710"),
+        ),
+    ),
+    # SortPriorityList() static buckets + C++ guard; LinkList Ofs is 252 in
+    # source (node@0xFC) but retail construct_array mangles 256.
+    "snd_SoundPlayer.o": UnitRules(
+        exact_renames=(
+            (
+                "__ct__Q34nw4r2ut44LinkList<Q44nw4r3snd6detail10BasicSound,252>Fv",
+                "__ct__Q34nw4r2ut44LinkList<Q44nw4r3snd6detail10BasicSound,256>Fv",
+            ),
+            (
+                "__dt__Q34nw4r2ut44LinkList<Q44nw4r3snd6detail10BasicSound,252>Fv",
+                "__dt__Q34nw4r2ut44LinkList<Q44nw4r3snd6detail10BasicSound,256>Fv",
+            ),
+        ),
+        prefix_renames=(
+            ("@GUARD@listsByPrio$", "lbl_eu_80665500"),
+            ("listsByPrio$", "lbl_eu_806382F0"),
+            ("__arraydtor$", "__arraydtor$4226"),
+            # register_global_object cookie immediately before the bucket array.
+            ("@#", "lbl_eu_806382E0"),
+        ),
+        symbol_sizes=(
+            ("lbl_eu_806382F0", 0x600),
+        ),
+        drop_text_symbols=(
+            "__dt__Q34nw4r2ut12LinkListNodeFv",
+            "__dt__Q34nw4r2ut44LinkList<Q44nw4r3snd6detail10BasicSound,244>Fv",
+            "__dt__Q34nw4r2ut43LinkList<Q44nw4r3snd6detail10PlayerHeap,24>Fv",
+            "__dt__Q44nw4r2ut29@unnamed@snd_SoundPlayer_cpp@11NonCopyableFv",
+            "__dt__Q54nw4r3snd6detail11SoundThread8AutoLockFv",
+        ),
+    ),
+    "snd_PlayerHeap.o": UnitRules(
+        exact_renames=(
+            ("__vt__Q44nw4r3snd6detail10PlayerHeap", "lbl_eu_8056AAE8"),
+        ),
+        drop_text_symbols=(
+            "__dt__Q34nw4r2ut12LinkListNodeFv",
+            "__dt__Q44nw4r2ut28@unnamed@snd_PlayerHeap_cpp@11NonCopyableFv",
+            "__dt__Q54nw4r3snd6detail11SoundThread8AutoLockFv",
         ),
     ),
 }
@@ -926,6 +990,70 @@ def rename_exact(path: Path, exact: tuple[tuple[str, str], ...]) -> bool:
         return False
     present = _all_symbols(path)
     renames = [(old, new) for old, new in exact if old in present and old != new]
+    return _apply_renames(path, renames)
+
+
+def rename_by_prefix(path: Path, prefixes: tuple[tuple[str, str], ...]) -> bool:
+    """Rename the first symbol matching each old prefix (MWCC $N drift).
+
+    Prefix ``@#`` matches a lone ``@`` + digits cookie in ``.bss``
+    (register_global_object).
+    """
+    if not prefixes:
+        return False
+
+    data = path.read_bytes()
+    sections, by_name = _read_elf_sections(data)
+    sym_idx = by_name.get(".symtab")
+    str_idx = by_name.get(".strtab")
+    bss_idx = by_name.get(".bss")
+    if sym_idx is None or str_idx is None:
+        return False
+
+    _, sym_off, sym_size, _ = next(s for s in sections if s[0] == sym_idx)
+    _, str_off, _, _ = next(s for s in sections if s[0] == str_idx)
+
+    # name -> (shndx, ...)
+    sym_shndx: dict[str, int] = {}
+    present: list[str] = []
+    for so in range(0, sym_size, 16):
+        st_name, _st_value, _st_size, _st_info, _st_other, st_shndx = struct.unpack_from(
+            ">IIIBBH", data, sym_off + so
+        )
+        if st_name == 0:
+            continue
+        end = data.index(0, str_off + st_name)
+        sname = data[str_off + st_name : end].decode("ascii")
+        present.append(sname)
+        sym_shndx[sname] = st_shndx
+    present_set = set(present)
+    present_sorted = sorted(present)
+
+    renames: list[tuple[str, str]] = []
+    used_old: set[str] = set()
+    used_new: set[str] = set()
+    for prefix, new in prefixes:
+        if new in used_new or new in present_set:
+            continue
+        for name in present_sorted:
+            if name in used_old or name == new:
+                continue
+            if prefix == "@#":
+                if (
+                    bss_idx is not None
+                    and sym_shndx.get(name) == bss_idx
+                    and name.startswith("@")
+                    and name[1:].isdigit()
+                ):
+                    renames.append((name, new))
+                    used_old.add(name)
+                    used_new.add(new)
+                    break
+            elif name.startswith(prefix):
+                renames.append((name, new))
+                used_old.add(name)
+                used_new.add(new)
+                break
     return _apply_renames(path, renames)
 
 
@@ -1578,6 +1706,7 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = pad_sdata2_section(path, rules.pad_sdata2_size) or changed
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     changed = rename_exact(path, rules.exact_renames) or changed
+    changed = rename_by_prefix(path, rules.prefix_renames) or changed
     changed = patch_symbol_sizes(path, rules.symbol_sizes) or changed
     # A second objcopy pass for exact renames can uniquify a pool symbol when
     # the retail name also exists in another section. Re-apply content-based

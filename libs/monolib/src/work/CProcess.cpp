@@ -39,9 +39,6 @@ CProcess::~CProcess() {
     }
 }
 
-void CProcess::Tail() {
-}
-
 void CProcess::Regist(CProcess* parent, bool insertTop) {
     if (mIsRegist) {
         return;
@@ -213,14 +210,6 @@ void CProcessMan::DrawImpl(CProcess* proc) {
     }
 }
 
-void CProcessMan::Tail() {
-    TChildListHeader<CProcess>& list = GetRootProcessList();
-
-    for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
-        TailImpl(proc);
-    }
-}
-
 void CProcessMan::TailImpl(CProcess* proc) {
     if (!proc->mIsDisableDraw && !proc->mIsRemove) {
         proc->Tail();
@@ -238,15 +227,22 @@ void CProcessMan::TailImpl(CProcess* proc) {
 }
 
 void CProcessMan::Delete() {
-    DeleteList(sFreeProcessList);
-    DeleteList(sRootProcessList);
-}
-
-void CProcessMan::DeleteList(TChildListHeader<CProcess>& list) {
+    // Retail inlines DeleteList twice (no separate DeleteList symbol in this TU).
     CProcess* proc;
     CProcess* next;
-    for (proc = list.Begin(); proc != nullptr; proc = next) {
-        next = list.IterNext(proc);
+
+    for (proc = sFreeProcessList.Begin(); proc != nullptr; proc = next) {
+        next = sFreeProcessList.IterNext(proc);
+
+        if (proc->mIsRemove == true) {
+            delete proc;
+        } else {
+            DeleteImpl(proc);
+        }
+    }
+
+    for (proc = sRootProcessList.Begin(); proc != nullptr; proc = next) {
+        next = sRootProcessList.IterNext(proc);
 
         if (proc->mIsRemove == true) {
             delete proc;

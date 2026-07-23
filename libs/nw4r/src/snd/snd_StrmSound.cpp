@@ -8,7 +8,7 @@ namespace detail {
 NW4R_UT_RTTI_DEF_DERIVED(StrmSound, BasicSound);
 
 StrmSound::StrmSound(SoundInstanceManager<StrmSound>* pManager)
-    : mManager(pManager), mTempSpecialHandle(NULL) {}
+    : BasicSound(0, 0), mManager(pManager), mTempSpecialHandle(NULL) {}
 
 bool StrmSound::Prepare(StrmBufferPool* pPool,
                         StrmPlayer::StartOffsetType offsetType, s32 offset,

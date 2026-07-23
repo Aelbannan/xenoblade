@@ -1,16 +1,21 @@
 """Conservative AbiShape inference from decoded bodies and optional symbol hints.
 
-v1 policy (fail-closed):
-- Narrow ``outgoing_gpr_args`` / ``outgoing_fpr_args`` only when both sides are
-  simple vtable dispatches that never touch outgoing-arg GPRs ``r4``–``r10`` or
-  ``f1`` (CTR scratch must stay in non-arg volatiles such as ``r11``/``r12``),
-  OR when a symbol mangling hint says ``Fv`` (void / no extra int/float args).
-- If either side uses ``r4``–``r10`` as scratch, do **not** auto-narrow unless
-  the symbol ``Fv`` hint is present (caller may still pass an explicit AbiShape).
+v2 policy (fail-closed):
+- Narrow ``outgoing_gpr_args`` / ``outgoing_fpr_args`` only when **both** sides
+  are simple vtable dispatches that never touch outgoing-arg GPRs ``r4``–``r10``
+  or ``f1`` (CTR scratch must stay in non-arg volatiles such as ``r11``/``r12``).
+- A mangled ``…Fv`` (void / no extra int/float args) hint may only *annotate*
+  an already-structural narrow; it must **never** override a body that touches
+  ``r4``–``r10`` / ``f1``. Xenoblade/MWCC often still passes hidden register
+  args under shortened ``…Fv`` names (see ``docs/MWCC_REFERENCE.md``).
+- ``endswith("Fv")`` alone is rejected: ``…FPFv`` / ``…FPCFv`` are
+  function-pointer parameter lists, not void-no-args.
 - Set ``returns_i64=False`` only when both sides return and neither writes ``r4``.
 """
 
 from __future__ import annotations
+
+import re
 
 from .abi_shape import AbiShape
 from .ir import Instruction, Opcode
@@ -29,6 +34,18 @@ _VTABLE_DISPATCH_OPS = frozenset({
     Opcode.BCCTR,
 })
 
+# Fixed MWCC Q-namespace prefixes (same set as tools/symbolrecover/lib/mwcc.py).
+_KNOWN_Q_PREFIXES = (
+    "Q26mpfsys",
+    "Q23LOD",
+    "Q22ml",
+    "Q22cf",
+)
+
+# No ^ anchor: Pattern.match(blob, pos) must match at ``pos``, and Python's
+# ``^`` does not rematch after a non-zero start offset.
+_LEN_PREFIXED_IDENT = re.compile(r"(\d{1,3})([A-Za-z_][A-Za-z0-9_:]*)")
+
 
 def infer_abi_shape(
     original: list[Instruction],
@@ -39,7 +56,7 @@ def infer_abi_shape(
 ) -> AbiShape:
     """Infer a conservative AbiShape, or the fail-closed default.
 
-    Symbol-based ``Fv`` narrowing is opt-in via ``enabled`` (default True when
+    Symbol-based ``Fv`` annotation is opt-in via ``enabled`` (default True when
     callers choose to invoke inference). Pass ``enabled=False`` to always get
     :meth:`AbiShape.conservative`.
     """
@@ -61,9 +78,9 @@ def infer_abi_shape(
         returns_i64 = False
         reasons.append("no-r4-write-return")
 
-    symbol_void = _symbol_suggests_void_no_extra_args(symbol)
     # Structural narrow requires CTR scratch outside outgoing-arg GPRs r4–r10
-    # (r11/r12 only). Using r5 as the vtable load chain clobbers a live arg.
+    # (r11/r12 only). Using r4/r5 as the vtable load chain clobbers a live arg
+    # — never narrow in that case, even when the mangled name ends in Fv.
     structural = (
         _is_simple_vtable_dispatch(original)
         and _is_simple_vtable_dispatch(candidate)
@@ -73,12 +90,11 @@ def infer_abi_shape(
         and not _touches_fpr(candidate, 1)
     )
 
-    if structural or symbol_void:
+    if structural:
         outgoing_gpr_args = 1
         outgoing_fpr_args = 0
-        if structural:
-            reasons.append("simple-vtable-dispatch")
-        if symbol_void:
+        reasons.append("simple-vtable-dispatch")
+        if _symbol_suggests_void_no_extra_args(symbol):
             reasons.append("symbol:Fv")
 
     if (
@@ -155,9 +171,75 @@ def _touches_fpr(insns: list[Instruction], reg: int) -> bool:
 
 
 def _symbol_suggests_void_no_extra_args(symbol: str | None) -> bool:
-    """MWCC Itanium-ish void / no-extra-int-arg mangling hints (``Fv``)."""
+    """True only when the MWCC parameter blob is exactly ``Fv``.
+
+    Rejects nested function-pointer encodings such as ``FPFv`` / ``FPCFv`` that
+    merely *end* with the characters ``Fv``. Unparseable mangling fails closed
+    (returns False — no void hint).
+    """
     if not symbol:
         return False
-    if symbol.endswith("Fv") or "__Fv" in symbol or "Fv)" in symbol:
-        return True
-    return False
+    return _mwcc_params_blob(symbol) == "Fv"
+
+
+def _mwcc_params_blob(symbol: str) -> str | None:
+    """Return the trailing MWCC ``F…`` parameter encoding, or None."""
+    if symbol.startswith("__ct__") or symbol.startswith("__dt__"):
+        tail = symbol[6:]
+    elif "__" in symbol:
+        tail = symbol.split("__", 1)[1]
+    else:
+        return None
+    if not tail:
+        return None
+
+    # Member: <len><ClassName>F…
+    if tail[0].isdigit():
+        consumed = _skip_length_prefixed(tail, 0)
+        if consumed is not None and consumed < len(tail) and tail[consumed] == "F":
+            return tail[consumed:]
+        return None
+
+    # Qualified: Q22cf5CHelpF… / generic Qn + n idents + F…
+    if tail.startswith("Q"):
+        consumed = _skip_q_encoding(tail)
+        if consumed is not None and consumed < len(tail) and tail[consumed] == "F":
+            return tail[consumed:]
+        return None
+
+    # Free function: entire tail is the param list (Fv, Fi, FPFv, …).
+    if tail.startswith("F"):
+        return tail
+    return None
+
+
+def _skip_length_prefixed(blob: str, pos: int) -> int | None:
+    match = _LEN_PREFIXED_IDENT.match(blob, pos)
+    if match is None:
+        return None
+    length = int(match.group(1))
+    name = match.group(2)
+    if len(name) < length:
+        return None
+    # Length prefix counts only the declared identifier span.
+    return pos + len(match.group(1)) + length
+
+
+def _skip_q_encoding(tail: str) -> int | None:
+    for prefix in _KNOWN_Q_PREFIXES:
+        if tail.startswith(prefix):
+            return _skip_length_prefixed(tail, len(prefix))
+
+    # Generic: Q<count><ident>×count (CodeWarrior nested-name encoding).
+    if len(tail) < 2 or tail[0] != "Q" or not tail[1].isdigit():
+        return None
+    count = int(tail[1])
+    if count <= 0:
+        return None
+    pos = 2
+    for _ in range(count):
+        nxt = _skip_length_prefixed(tail, pos)
+        if nxt is None:
+            return None
+        pos = nxt
+    return pos

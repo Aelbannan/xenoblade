@@ -51,6 +51,10 @@ class CoopConfig:
     # (shadow_mode=false / require_capability_assurance=true). Optional in
     # Wave 1 while shadow_mode remains the default.
     allowed_engine_sha256: str | None = None
+    # When true (default), dirty engine/certifier trust-boundary sources hard-block
+    # EQUIVALENT_MATCH promotion. Private forks with in-flight TCB edits can set
+    # false so git_dirty is a warning only.
+    require_clean_trust_boundary: bool = True
     require_bounded_ram: bool = False
     memory_profile: str | None = None
     memory_ranges: list[str] = field(default_factory=list)
@@ -224,6 +228,9 @@ def load_config(config_path: Optional[Path], project_root: Path) -> CoopConfig:
         reject_architecture_models=reject_models,
         allowed_confidence_tiers=allowed_tiers,
         allowed_engine_sha256=data.get("allowed_engine_sha256"),
+        require_clean_trust_boundary=bool(
+            data.get("require_clean_trust_boundary", True)
+        ),
         require_bounded_ram=bool(data.get("require_bounded_ram", False)),
         memory_profile=(
             str(data["memory_profile"])

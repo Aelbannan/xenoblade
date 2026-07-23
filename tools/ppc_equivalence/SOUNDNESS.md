@@ -279,11 +279,19 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   `addi rD,r1,imm` published via `stw` to a public base, or `stmw` ranges that
   include `r1` targeting a public base), **or** when a load-derived (`Select`)
   word is stored to an address that is not itself r1-relative (fail-closed: the
-  loaded word may equal the entry SP). Escape detection walks the BV cone for
-  `input.gpr.r1` and for `Select` nodes without descending into array
-  `Store`/`Select` spines (avoids super-linear memory-history walks). Spills of
-  r1-derived or loaded words back onto r1-relative addresses — including the
-  standard `stwu r1,-N(r1)` back-chain save — keep private-stack masking.
+  loaded word may equal the entry SP), **or** when any contract-compared GPR
+  other than `r1` still depends on `input.gpr.r1` at a terminal (register
+  publish: e.g. `addi r3,r1,8` left live across `blr` — the caller can load
+  through that pointer into the former private frame). Escape detection walks
+  the BV cone for `input.gpr.r1` and for `Select` nodes without descending into
+  array `Store`/`Select` spines (avoids super-linear memory-history walks).
+  Spills of r1-derived or loaded words back onto r1-relative addresses —
+  including the standard `stwu r1,-N(r1)` back-chain save — keep private-stack
+  masking. Temporary frame-pointer registers that are **not** compared at the
+  exit (volatile scratch such as `r11`) do not clear masking by themselves.
+  The compared-register gate runs in the engine after CFG exploration
+  (`apply_compared_register_publish_escape`) once `observables_for_exit` is
+  known; store-path escape remains in `stack_escape.mark_stack_pointer_escape`.
 - Stack layout feasibility also rejects frames deeper than
   `MAX_PRIVATE_STACK_DEPTH` (16 MiB). That bound fail-closes SP wraparound
   through address zero, which would otherwise collapse `stack_low` near 0 and
@@ -583,9 +591,12 @@ mmio-loop-emission allowlist empty; staged canaries live at
   `returns_float=False`, and truncate the outgoing-arg union on
   `indirect-branch`/`call-indirect` to the first `outgoing_gpr_args` /
   `outgoing_fpr_args` registers (defaults **8**/`8`). Inference
-  (`abi_infer.infer_abi_shape`) only narrows when evidence is strong (matching
-  simple vtable dispatches that never touch `r4`–`r10`/`f1`, and/or a mangled
-  `Fv` symbol hint); using `r5` as CTR scratch does **not** auto-narrow.
+  (`abi_infer.infer_abi_shape`) narrows only for matching simple vtable
+  dispatches that never touch `r4`–`r10`/`f1` (CTR scratch in `r11`/`r12`).
+  A mangled exact param blob `Fv` may annotate that structural narrow; it
+  never overrides a body that touches outgoing-arg registers (MWCC often
+  still passes hidden `r4+` under shortened `…Fv` names). Nested encodings
+  such as `FPFv` / `FPCFv` are not treated as void-no-args.
 
 ### Calls
 
@@ -828,7 +839,7 @@ mmio-loop-emission allowlist empty; staged canaries live at
 | INCONCLUSIVE_UNMODELED_EXCEPTION (reserved) | `result.ProofStatus` | — | `status` |
 | Exit-kind and exit-target comparison | `engine._terminal_difference` | `test_checker` control-flow tests | `mismatch.exit_kind`, `mismatch.exit_target` |
 | Private stack disabled after call | `semantics._apply_call_summary` (opaque and fixed helpers) | `test_call_disables_*`, `test_savegpr_*` | `memory_scope.private_stack.*.disabled_reasons` |
-| Private stack disabled after r1 escape | `semantics._mark_stack_pointer_escape` | escape / alias / stmw tests | `memory_scope.private_stack.*.disabled_reasons` |
+| Private stack disabled after r1 escape | `semantics._mark_stack_pointer_escape`, `stack_escape.apply_compared_register_publish_escape` | escape / alias / stmw tests, `RegisterPublishStackEscapeTests` | `memory_scope.private_stack.*.disabled_reasons` |
 | Architecture model versioned | `result.ARCHITECTURE_MODEL` | `test_targets.test_old_architecture_model_certificate_rejected` | Certificate `architecture` |
 | Result format versioned | `result.RESULT_FORMAT` | `test_targets.test_old_result_format_certificate_rejected` | Certificate `result_format` |
 | Certificate version accepted | `targets.EQUIVALENCE_CERTIFICATE_VERSION` | `test_targets.test_wrong_certificate_version_rejected` | Certificate `version` |

@@ -4259,17 +4259,8 @@ _loop:
     // clang-format on
 }
 
-asm void __init_user(void) {
-    // clang-format off
-    fralloc
-
-    bl __init_cpp
-
-    frfree
-    blr
-    // clang-format on
-}
-
+// Must not inline __init_cpp into __init_user (retail keeps a 0x20 trampoline).
+#pragma dont_inline on
 void __init_cpp(void) {
     funcptr_t* ctor;
 
@@ -4277,20 +4268,19 @@ void __init_cpp(void) {
         (*ctor)();
     }
 }
+#pragma dont_inline off
 
-void __fini_cpp(void) {
+void __init_user(void) {
+    __init_cpp();
+}
+
+// Retail inlines the dtor walk + PPCHalt into exit (no separate
+// __fini_cpp / _ExitProcess symbols in this unit's .text).
+void exit(void) {
     funcptr_t* dtor;
 
     for (dtor = _dtors; *dtor != NULL; dtor++) {
         (*dtor)();
     }
-}
-
-void exit(void) {
-    __fini_cpp();
-    _ExitProcess();
-}
-
-void _ExitProcess(void) {
     PPCHalt();
 }

@@ -1,4 +1,4 @@
-"""Shared stack-pointer escape marking for store effects.
+"""Shared stack-pointer escape marking for store and terminal effects.
 
 When a store publishes an ``r1``-derived pointer (the entry stack pointer, or a
 value computed from it) **outside** the private frame, the per-implementation
@@ -20,10 +20,19 @@ load-derived word to an address that is **not** itself r1-relative is treated
 as a potential SP publish (fail closed). Spills back to the private frame
 (r1-relative addresses) keep masking.
 
-This logic is shared between ordinary ``execute_instruction`` stores
+A third escape class is **compared-register publication** at a terminal: if any
+contract-compared GPR other than ``r1`` syntactically depends on
+``input.gpr.r1`` (for example ``addi r3,r1,8`` left live at ``blr``), the
+caller can dereference that pointer into the private frame after return.
+Masking must then be cleared even though no public *store* of the pointer
+occurred. Temporary frame-pointer registers that are not compared at the
+exit (for example volatile ``r11``) do not trigger this gate.
+
+Store-path logic is shared between ordinary ``execute_instruction`` stores
 (``semantics._mark_stack_pointer_escape``) and summarized closed-form
-memory-loop stores (``memory_semantics.apply_store_effect``) so both paths
-enforce the identical escape rule.
+memory-loop stores (``memory_semantics.apply_store_effect``). The register
+publish gate is applied by the equivalence engine after CFG exploration,
+once the exit-kind observable set is known.
 """
 
 from __future__ import annotations
@@ -174,3 +183,48 @@ def mark_stack_pointer_escape(
             return state
         return replace(state, stack_private=ops.bool(False))
     return state
+
+
+def compared_registers_publish_entry_r1(
+    state: Any,
+    gpr_indices: tuple[int, ...] | list[int],
+    ops: Any,
+) -> bool:
+    """Return True when a compared GPR (other than r1) depends on entry ``r1``.
+
+    ``r1`` itself always depends on ``input.gpr.r1`` after a normal prologue and
+    must not be treated as a publish. Only other compared GPRs count.
+    """
+    z3 = getattr(ops, "z3", None)
+    if z3 is None:
+        return False
+    for index in gpr_indices:
+        reg = int(index)
+        if reg == 1 or not 0 <= reg < 32:
+            continue
+        if bv_depends_on_entry_r1(state.gpr[reg], z3):
+            return True
+    return False
+
+
+def apply_compared_register_publish_escape(
+    state: Any,
+    gpr_indices: tuple[int, ...] | list[int],
+    ops: Any,
+) -> Any:
+    """Clear ``stack_private`` when a compared GPR publishes an r1-derived value.
+
+    Fail-closed and sticky: once cleared, masking cannot be re-enabled. No-op
+    under ConcreteOps (no symbolic ``input.gpr.r1`` cone) and when masking is
+    already disabled.
+    """
+    z3 = getattr(ops, "z3", None)
+    if z3 is None:
+        return state
+    if state.stack_private is False:
+        return state
+    if isinstance(state.stack_private, z3.BoolRef) and z3.is_false(state.stack_private):
+        return state
+    if not compared_registers_publish_entry_r1(state, gpr_indices, ops):
+        return state
+    return replace(state, stack_private=ops.bool(False))

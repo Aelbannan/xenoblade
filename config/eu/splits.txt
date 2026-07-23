@@ -450,10 +450,15 @@ kyoshin/menu/CMenuBattleDamage.cpp:
 	extabindex  start:0x80026B0C end:0x80026BCC
 	.text       start:0x80109740 end:0x8010B880
 
+kyoshin/menu/CMenuBattlePlayerState_ct.cpp:
+	extab       start:0x8000B20C end:0x8000B270
+	extabindex  start:0x80026BCC end:0x80026BD8
+	.text       start:0x8010B880 end:0x8010BE00
+
 kyoshin/menu/CMenuBattlePlayerState.cpp:
-	extab       start:0x8000B20C end:0x8000B398
-	extabindex  start:0x80026BCC end:0x80026C74
-	.text       start:0x8010B880 end:0x8010F540
+	extab       start:0x8000B270 end:0x8000B398
+	extabindex  start:0x80026BD8 end:0x80026C74
+	.text       start:0x8010BE00 end:0x8010F540
 	.ctors      start:0x804FA004 end:0x804FA008
 
 kyoshin/menu/CMenuEnemyState.cpp:

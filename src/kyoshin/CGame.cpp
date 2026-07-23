@@ -24,12 +24,15 @@ extern void func_801BFFAC(float f1, float f2);
 extern void func_801644BC(u32 value);
 extern void func_80044FBC(u32 value);
 
-// Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in 0x1C.
+// Non-vararg sink avoids crclr (varargs float ABI) so five pool strings fit in
+// 0x1C. Postprocess drops this FORCEACTIVE from .text (CGame.o drop_text_symbols)
+// after it packs @stringBase0 — stubs already fill the split to 0xD08.
 void force_cgame_strings(const char*, const char*, const char*, const char*, const char*);
 void FORCEACTIVECGame_cpp_wkStandbyLogin(void);
 void FORCEACTIVECGame_cpp_wkStandbyLogin(void) {
     force_cgame_strings("CGameRestart", "", "43", "arc", "4_3mode.brlyt");
 }
+
 
 CGame* CGame::spInstance;
 static FixStr<64> lbl_80573C80;
@@ -140,16 +143,27 @@ void CGame::wkRender() {
 }
 
 void CGame::func_800395F4(bool wide) {
-    if (spInstance != nullptr && spInstance->mView != nullptr) {
-        if (!wide) {
-            setViewRect(spInstance->mView, 0, 56,
-                CDeviceVI::getRenderModeObj()->fbWidth,
-                CDeviceVI::getRenderModeObj()->efbHeight - 114);
-        } else {
-            setViewRect(spInstance->mView, 0, 0,
-                CDeviceVI::getRenderModeObj()->fbWidth,
-                CDeviceVI::getRenderModeObj()->efbHeight);
-        }
+    CGame* self;
+
+    self = spInstance;
+    if (self == nullptr) {
+        return;
+    }
+    if (self->mView == nullptr) {
+        return;
+    }
+
+    if (!wide) {
+        // s32 height → self=r30 / height=r31 (retail). Letterbox from live unk230.
+        s32 height = (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
+            - ((u32)(u16)spInstance->unk230 << 1));
+        setViewRect(self->mView, 0, (s16)((u16)self->unk230 - 1),
+            CDeviceVI::getRenderModeObj()->fbWidth, (s16)height);
+    } else {
+        // Soft-cap ~99.8%: height in r30 (retail r31); pinning self scrambles schedule.
+        s16 height = CDeviceVI::getRenderModeObj()->efbHeight;
+        setViewRect(spInstance->mView, 0, 0,
+            CDeviceVI::getRenderModeObj()->fbWidth, height);
     }
 }
 
@@ -334,4 +348,126 @@ void CGame::onExit() {
             func_801BF93C();
         }
     }
+}
+
+// Retail emits IWorkEvent defaults as weak into CGame.s (descending WorkEvent31..1
+// after onExit). IWorkEvent.cpp is not a link unit for these.
+void IWorkEvent::WorkEvent31() {}
+
+bool IWorkEvent::WorkEvent30() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent29() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent28() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent27() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent26() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent25() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent24() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent23() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent22() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent21() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent20() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent19() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent18() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent17() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent16() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent15() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent14() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent13() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent12() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent11() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent10() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent9() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent8() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent7() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent6() {
+    return false;
+}
+
+void IWorkEvent::OnPauseTrigger(bool /*paused*/) {}
+
+bool IWorkEvent::WorkEvent4() {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent3(UNKTYPE* /*r4*/) {
+    return false;
+}
+
+bool IWorkEvent::OnFileEvent(CEventFile* /*pEventFile*/) {
+    return false;
+}
+
+bool IWorkEvent::WorkEvent1(UNKTYPE* /*r4*/, const char* /*r5*/) {
+    return false;
 }

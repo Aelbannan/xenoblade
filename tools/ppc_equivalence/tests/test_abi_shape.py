@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import unittest
 
-from tools.ppc_equivalence.abi_infer import infer_abi_shape
+from tools.ppc_equivalence.abi_infer import (
+    _mwcc_params_blob,
+    _symbol_suggests_void_no_extra_args,
+    infer_abi_shape,
+)
 from tools.ppc_equivalence.abi_shape import AbiShape
 from tools.ppc_equivalence.contract import (
     make_contract,
@@ -201,15 +205,52 @@ class AbiInferTests(unittest.TestCase):
         self.assertEqual(shape.outgoing_fpr_args, 8)
         self.assertEqual(shape.source, "default-conservative")
 
-    def test_r12_vs_r4_with_fv_symbol_narrows(self) -> None:
+    def test_r12_vs_r4_with_fv_symbol_stays_conservative(self) -> None:
+        """Fv must not override an r4-clobbering body (MWCC hidden-arg footgun)."""
+        original = _decode(_RETAIL_R12)
+        candidate = _decode(_CAND_R4)
+        for symbol in (
+            "foo__3BarFv",
+            "foo__Q22cf5CHelpFv",
+            "realVoid__5ThingFv",
+        ):
+            with self.subTest(symbol=symbol):
+                shape = infer_abi_shape(original, candidate, symbol=symbol)
+                self.assertEqual(shape.outgoing_gpr_args, 8)
+                self.assertEqual(shape.outgoing_fpr_args, 8)
+                self.assertEqual(shape.source, "default-conservative")
+
+    def test_r12_vs_r4_with_fpfv_symbol_stays_conservative(self) -> None:
+        """…FPFv is a function-pointer arg list, not void-no-args."""
         original = _decode(_RETAIL_R12)
         candidate = _decode(_CAND_R4)
         shape = infer_abi_shape(
-            original, candidate, symbol="foo__Q2_3cf4CBarFv",
+            original, candidate, symbol="setHook__5ThingFPFv",
         )
-        self.assertEqual(shape.outgoing_gpr_args, 1)
-        self.assertEqual(shape.outgoing_fpr_args, 0)
-        self.assertIn("symbol:Fv", shape.source)
+        self.assertEqual(shape.outgoing_gpr_args, 8)
+        self.assertFalse(_symbol_suggests_void_no_extra_args("setHook__5ThingFPFv"))
+        self.assertEqual(_mwcc_params_blob("setHook__5ThingFPFv"), "FPFv")
+
+    def test_symbol_void_hint_only_true_for_exact_fv_blob(self) -> None:
+        self.assertTrue(_symbol_suggests_void_no_extra_args("foo__Fv"))
+        self.assertTrue(_symbol_suggests_void_no_extra_args("foo__3BarFv"))
+        self.assertTrue(_symbol_suggests_void_no_extra_args("foo__Q22cf5CHelpFv"))
+        self.assertTrue(_symbol_suggests_void_no_extra_args("__ct__5ThingFv"))
+        self.assertTrue(
+            _symbol_suggests_void_no_extra_args("Process__12FvControllerFv"),
+        )
+        for symbol in (
+            "foo__FPFv",
+            "foo__FPCFv",
+            "setHook__5ThingFPFv",
+            "foo__3BarFPv",
+            "foo__FPv",
+            "foo__Fi",
+            None,
+            "",
+        ):
+            with self.subTest(symbol=symbol):
+                self.assertFalse(_symbol_suggests_void_no_extra_args(symbol))
 
     def test_r12_vs_r5_structural_does_not_narrow(self) -> None:
         """Using r5 as CTR scratch clobbers a live outgoing arg — stay fail-closed."""
@@ -228,6 +269,36 @@ class AbiInferTests(unittest.TestCase):
         self.assertEqual(shape.outgoing_gpr_args, 1)
         self.assertEqual(shape.outgoing_fpr_args, 0)
         self.assertIn("simple-vtable-dispatch", shape.source)
+
+    def test_matching_r12_thunks_annotate_exact_fv_symbol(self) -> None:
+        original = _decode(_RETAIL_R12)
+        candidate = _decode(_RETAIL_R12)
+        shape = infer_abi_shape(
+            original, candidate, symbol="hook__5ThingFv",
+        )
+        self.assertEqual(shape.outgoing_gpr_args, 1)
+        self.assertIn("simple-vtable-dispatch", shape.source)
+        self.assertIn("symbol:Fv", shape.source)
+
+    def test_inferred_fpfv_r12_vs_r4_not_equivalent(self) -> None:
+        """Adversarial PoC: inference must not authorize r4-clobber under FPFv."""
+        original = _decode(_RETAIL_R12)
+        candidate = _decode(_CAND_R4)
+        shape = infer_abi_shape(
+            original, candidate, symbol="setHook__5ThingFPFv",
+        )
+        result = _prove(_RETAIL_R12, _CAND_R4, abi_shape=shape)
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual((result.mismatch or {}).get("name"), "r4")
+
+    def test_inferred_fv_r12_vs_r4_not_equivalent(self) -> None:
+        """Even a true …Fv symbol must not drop r4 when the body clobbers it."""
+        original = _decode(_RETAIL_R12)
+        candidate = _decode(_CAND_R4)
+        shape = infer_abi_shape(original, candidate, symbol="foo__3BarFv")
+        result = _prove(_RETAIL_R12, _CAND_R4, abi_shape=shape)
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual((result.mismatch or {}).get("name"), "r4")
 
     def test_return_without_r4_write_sets_returns_i64_false(self) -> None:
         # li r3,1; blr

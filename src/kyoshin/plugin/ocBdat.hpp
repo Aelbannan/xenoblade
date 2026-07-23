@@ -6,9 +6,9 @@
 // Utility class for handling bdat files.
 class CBdat {
 public:
-    static void func_8003AA34();
-    static void func_8003AA50();
-    static void func_8003AA78(u32, void*);
+    static void* func_8003AA34();
+    static void* func_8003AA50();
+    static void* func_8003AA78(u32, void*);
     static void func_8003AA8C(u32 val);
     static void* getFP(const char* pName);
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);

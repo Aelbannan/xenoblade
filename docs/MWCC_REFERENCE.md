@@ -22,6 +22,8 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 | `switch` shape wrong | MWCC emits compare-tree vs jump-table | Match asm case order; duplicate "useless" cases |
 | Two identical patterns, opposite regalloc | Shared locals forced one color | **§4** — block-scope a fresh pair |
 | Wrong register for same opcode | Declaration order | **§4** — reorder locals |
+| Wide-arm reuses `r30` for height (`lha r30` vs retail `lha r31`) after non-wide correctly uses `self=r30`/`height=r31` | Precise liveness: `self` dead on wide arm so Chaitin recycles `r30`; keep-alives scramble dual-`getRenderModeObj` schedule | **CGame::func_800395F4** soft-cap ~99.8%: non-wide `s32 height` + `spInstance` reload; leave wide `s16` — do not chase keep-alive commas/ternaries |
+| `addi …, @stringBase0, imm` wrong imm / missing Restart→CGame pool | Pointer-table `force_active` does not pack MWCC `@stringBase0`; contiguous pool needs a `.text` FORCEACTIVE that references the literals in order | Keep non-vararg `force_cgame_strings(Restart,"",43,arc,brlyt)` then **`drop_text_symbols`** the 0x1C thunk in `postprocess_reloc_names.py` (`CGame.o`) so stubs still fit `0xD08` |
 | Stack slot at wrong offset | MWCC alignment / padding | **§5** — use multiple smaller types (`CPnt16` × N not `CRect16` × 1) |
 | Zeros/sign-extension: `extsh` vs none | `s16` local vs `int` | Use `int` unless retail has `extsh` |
 | Struct offset off by 4/8 | Missing pad or wrong base layout | Fix header layout before tuning C++ |
@@ -56,7 +58,7 @@ US `main` is **not** the JP-shaped “copy ErrMesData strings then initialize”
 
 ## CAIAction UnkVirtualFunc1/2 — `stwx` vs `stwux` (US)
 
-Frameless Fv+r4/r5 ring copy leaves. High-level C++ CSEs dest materialization into **`stwux`** (r4+=r8) plus sequential loads from src-in-r7; retail keeps **`stwx`+`add r7`** with src in **r9** and an interleaved **8-then-4** field schedule (exact size `0x110`). Indexed/`buf[i]` / separate `dstBytes` stores still fuse under MWCC. Soft-cap ~96%; keep high-level C++ — **no** `.text` `insn_patches` (skill forbids).
+Frameless Fv+r4/r5 ring copy leaves. High-level C++ CSEs dest materialization into **`stwux`** (r4+=r8) plus sequential loads from src-in-r7; retail keeps **`stwx`+`add r7`** with src in **r9** and an interleaved **8-then-4** field schedule (exact size `0x110` retail / `0x10C` decomp). Indexed/`buf[i]` / `slots[i].unk00` / separate `dstBytes` stores still fuse under MWCC. Dual `storeBase`/`destBase` aliases of `outB->buffer` **regress** (~95.1%). Soft-cap **96.02941%** CODE_MATCH; size PASS. `EQUIVALENT` blocked by ring-loop visit/instruction limits and Z3 timeout under `ppc-eabi`. Keep high-level C++ — **no** `.text` `insn_patches` / `asm void` (skill forbids).
 
 ## CBattleState UnkVirtualFunc6 — regalloc soft-cap (US)
 
@@ -84,33 +86,21 @@ Fv+r4 src table: vt+`0x78` clear, 8×`0x10` records → stack `CBattleStateEntry
 
 Exact size `0x588`. Best ~**89.2%** HIGH_MATCH: `setScale(CVec3(sx,sy,lbl_eu_80667C88))` + `setRotXYZ` + `FLAGS_01` plane guard + SDA dir/unk124/128 zeros + `math::sqrt` (inlined `FSqrt`/`Warning`/`FrSqrt`).
 
-Retail prologue builds scale with field `stfs` of SDA 0/1, then **`MTX34RotXYZFIdx`** with **`lbl_eu_80667C90`** (RAD_TO_FIDX) and `PSMTXConcat(rot,scale,scale)`. Explicit FIdx + `lbl_eu_80667C90` matches size but **drops fuzzy ~1–2%** vs `setRotXYZ` (`MTX34RotXYZRad`). Side-plane bodies are retail **psq-interleaved** edge/normalize/dist; sequential `CPlane::set(p0,p1)` stays shorter/differently scheduled. Split spare ~`0x14`. Keep high-level C++; **no** `insn_patches`.
+Retail prologue builds scale with field `stfs` of SDA 0/1, then **`MTX34RotXYZFIdx`** with **`lbl_eu_80667C90`** (RAD_TO_FIDX) and `PSMTXConcat(rot,scale,scale)`. Explicit FIdx + `lbl_eu_80667C90` matches size but **drops fuzzy ~1–2%** vs `setRotXYZ` (`MTX34RotXYZRad`). Side-plane bodies are retail **psq-interleaved** edge/normalize/dist; sequential `CPlane::set(p0,p1)` stays shorter/differently scheduled. Scalar `CVec3::sub` + fmadd corner loop (instead of `VEC3LenSq`) **regressed to ~86%**. Split spare ~`0x14`. Keep high-level C++; **no** `insn_patches`.
+
+## CMenuEnemyState::Move — `_savegpr_21` vs `_savegpr_22` (US)
+
+Exact size `0x9B8`. Peak ~**85.64%** HIGH_MATCH with `scratch`/`hasSub`/`skipDist`/`posTmpPtr` live set from commit `28b3f22`. Frame `-0xe0` / f28–f31 OK; residual is **one extra callee-saved** (`_savegpr_21` vs retail `_savegpr_22`) plus PS distance schedule vs scalar `distSq`. Dropping `scratch` / inlining `skipDist` regresses to ~80.9%. Behaviour host 24 scenarios PASS. Soft-cap under high-level C++; **no** `insn_patches`.
 
 ## CMenuBattlePlayerState ctor — 0x20 vs 0x60 pad clear (US)
 
-`__ct__CMenuBattlePlayerState`: Process+PTMF+`__construct_array`+per-slot stack temp. Peak ~**65.5%** STRUCTURAL; decomp ~`0x4C4` vs retail `0x580` (`_savegpr_21` / `-0x2B0`).
+`__ct__CMenuBattlePlayerState` (`menu-bps-ctor`, TU `-O4,s`): Process+PTMF+`__construct_array`+per-slot stack temp. Retail `0x580`, `_savegpr_21` / `-0x2B0`.
 
-Retail mid-clear of `pad90[0x174]` (and standalone leaf `func_8010B324`) is MWCC’s **0x60 + 0x0C** gated fill (`li`/`divwu`/`mtctr`/`bdnz`, ctor also hoists `0x2AAB` size math). Same high-level `do-while` word clear under stock **`-O4,p`** emits a **0x20 + 0x4** fill (`mulhw`-style gates). Explicit 24-store `/0x60` under `-O4,p` strength-reduces the count to **`mulhwu`** (or blows the loop with `for`-countdown).
+**Peak ~80.3% HIGH_MATCH, size PASS `0x570`/`0x580`:** (1) hoist pad bounds + signed `sizePlus/12` + dual bool gates (padSize/sizePlus signs, then q12/q12p1) interleaved with `unk7F4`/`unk7E*` stores; (2) gated 0x60/0x0C fill with `do {…} while (--c)` counted from `padStart`; (3) unrolled 0x11 header zeros; (4) retail slot copy — `dst[0]=0`, head words through `+0x7c`, `unk80` byte, then **`copyWords=0x30` lwzu/stwu pair-copy** from `+0x84` (CBattleState `*(s+1)` / `*(s+=2)` shape), then tail fields. Aggregate `mSlots[i]=slot` alone peaks ~75% but size FAIL (`0x5D4`, mtctr `0x2e` + hole lbz/lhz).
 
-**Breakthrough (leaf `us-8010be00` ~83.8% HIGH_MATCH, reported size `0x120`):** `#pragma optimize_for_size on` (or TU `-O4,s`) around the gated form plus a retail-like bool preamble:
+**Soft-cap residuals:** under `-O4,s`, signed `/12` stays **`divw`** (retail `lis 0x2AAB`/`mulhw`); explicit `0x2AAAAAAB` s64→mulhw drops fuzzy (~78.8%) and size FAIL (`0x59C`). Fill still not byte-identical to retail `mtctr`/`cmplw` schedule. Equivalence blocked on unvalidated callees (`CProcess` / `UnkClass_8045F564` / `__construct_array`). **no** `insn_patches`.
 
-```c
-if (start >= end) return;
-lim = end - 0x60;
-ok = 0; ok2 = 0;
-if (!(start > end)) ok = 1;
-if (ok != 0) ok2 = 1;
-if (ok2 != 0) {
-  c = (lim + 0x5f - start) / 0x60;
-  for (; c; --c) { /* 24 u32 stores */ p += 0x60; }
-}
-c = (end + 0xb - p) / 0xc;
-for (; c; --c) { /* 3 u32 stores */ p += 0xc; }
-```
-
-emits retail’s `li 0x60`/`divwu`/`mtctr`/`bdnz`/`addi …,0x60` family (same as `CMenuBattleDamage` `func_8010A940`). Whole-ctor `#pragma optimize_for_size` **regresses** fuzzy (rest of ctor wants speed opt); inlining the gated body into the ctor under `-O4,p` also regresses (~33%). Keep ctor on word-while + live `0x60`/`0x0C` NVs until a scoped size-opt path works. Remaining leaf gaps are mostly regalloc/schedule (e.g. end in `r8`, store-zero in `r5`).
-
-**Best ctor ~65.5% STRUCTURAL:** hoist stack `slot` + `padStart`/`padEnd`/`padSize` + live `0x60`/`0x0C`/`size+0xb` NVs **after** unk7D0 floats, word-while mid, post-float `0x11` head + sparse tails, keep NVs live with cheap xor + `(nv&z)` sink. Still `-0x2A0`. Ruled out earlier: `memset`/`__fill_mem` → `bl`; byte-index; fixed-trip unroll; `bl` leaf; early-hoist before Process; volatile strides (frame + no `mtctr`). **no** `insn_patches`.
+Retail mid-clear of `pad90[0x174]` (and leaf `func_8010B324` ~83.8%) is MWCC’s **0x60 + 0x0C** gated fill. Stock **`-O4,p`** word-while emits wrong **0x20 + 0x4**. Ctor TU split keeps `-O4,s` on `__ct` only; Term/`cbRenderBefore` stay FULL_MATCH.
 
 ## CHelp* / CChainCombo — r12 iface / vptr walks (US)
 
@@ -129,7 +119,11 @@ Large `-0x1A0` / `stmw r22` frame: `readFile` + `0x54` process/`__ptmf_null` (sa
 2. `#pragma pack(1)` Tail: `u32`, `u8 mid[8]` (pair-copy → `+8/+4` loads), `u16`, `u32` at `+0x0E`, then `u8[0x40]` + `u8[0x3E]` chunks.
 3. Zeros via `u16*` overlay at `+4` (six `sth`) + `u8*` stores at `+0x10/+0x12/+0x52` — not via the copy field types.
 4. Split field assigns; last chunk through a `u8[0x40]` cast view so the final pair is `lwz +0x8E/+0x8A` (2-byte overhang), not `lhz +0x8E`.
-5. Clear: fresh `&blocks[0]` + `(end+stride-1-start)/stride` countdown (today `mulhwu`/`bne`; retail `divwu`/`mtctr`/`bdnz` + `li r22,52` still open). One big `u8[0x82]`/`u8[0x7E]` → `lwzu`/`bdnz` loop — split under ~`0x40`.
+5. Clear: fresh `&blocks[0]` + `(end+stride-1-start)/stride` countdown (today `mulhwu`/`bne`; retail `divwu`/`mtctr`/`bdnz` + `li r22,52` still open). One big `u8[0x82]`/`u8[0x7E]` → `lwzu`/`bdnz` loop — split under ~`0x40`. **ok/ok2 + for(--clearCount) regressed to ~78.6%** — keep do-while peak.
+
+## CMenuArtsSelect::Move — header layout regression (US)
+
+Exact size `0xBB4`. Historical peak ~**93.8%** (commit `28b3f22`) used opaque `u8` padding through `0x54` + `slot+=4` walk + volatile `homes[3/4]` sink. After header refinement (named Process/vtable/ptmf + filled pads), same Move body falls to ~**78–79%**. Named `unk2A0[i]`/`unkA4[i]` HEAD shape is the current baseline (~79.4%). Extra early `volatile` NVs regress further. Soft-cap under high-level C++ until a new RA shape fits the refined layout; **no** `insn_patches`.
 
 **Regressions:** whole-Tail assign with large trailing arrays; union/`memcpy` dual-views; volatile stride (spills and shifts stack); runtime stride + `for(count)` reintroduces 8× clear unroll. Keep high-level C++; **`asm void` bodies are not allowed**.
 
@@ -250,7 +244,16 @@ High-level source should use `mVtbl->mSlots[N]` (or equivalent `this+0x8` reload
   Keep high-level C++; **no** `.text` `insn_patches`. Equivalence blocked by
   unvalidated callees → needs FULL_MATCH or a new RA shape / multi-insn §17.6.
 
-**CView CMsgParam soft-caps:** `attachRenderWork` (~85%) and `setCurrent` (~78%) share the dual-/single-inline enqueue snap-load schedule ceiling. High-level `CMsgParam<10>` already matches frame/`stmw`/`stwux`; prior FULL_MATCH used forbidden insn_patches or whole-function asm (rejected). Demote any ACCEPTED below EQUIVALENT/FULL.
+**CView CMsgParam soft-caps:** `attachRenderWork` (~85%) and `setCurrent` (~78%) share the dual-/single-inline enqueue snap-load schedule ceiling. High-level `CMsgParam<10>` already matches frame/`stmw`/`stwux`/size `0x1E0`; residual is Chaitin snap-load coloring (~95/120 insn near-miss). Ruled out for attach: early tag/flag locals (flat 85%), `last()` refs (regresses ~64–67%), WorkID hoist (~83.9%), dual CtxSnap expansions (~72–76%). Prior FULL_MATCH used forbidden insn_patches or whole-function asm (rejected). SMT `EQUIVALENT` for attach times out even at 120s (`layout-feasibility deadline exceeded` on dual uninit-snap enqueue); `setCurrent` (single enqueue) certifies. Demote any ACCEPTED below EQUIVALENT/FULL.
+
+**`view-set-current` certificate path:** SMT proves `equivalent` under `ppc-eabi`.
+Certificate issuance used to fail on opaque-eabi validation reporting
+callee-save spill writes (`r28`–`r31`). `_nv_spill_false_positive` in
+`tools/coop/lib/equivalence_check.py` treats NV-only gaps as OK and strips them
+from the callee summary. Private-fork promotion knobs in `coop.json`: `automatic_promotion`, live
+`allowed_engine_sha256`, `allowed_confidence_tiers` including `C`,
+`capability_assurance_shadow_mode`, and `require_clean_trust_boundary: false`.
+ACCEPTED as `EQUIVALENT_MATCH` at ~78.2% static.
 
 **CView::updateMsg (~76%):** size already `0x798`. Gains: three uninit `volatile CtxSnap` only (no fan-copy layer; was 74.4%), plus case 0/1 child fan-out via `CMsgParam<10>` enqueue. Residual: prologue still `-0x140`/`stmw r17` vs retail `-0x150`/`stmw r14`, snap homes `0x80/0x60/0x40` vs `0x48/0x28/0x08`, `switch` tree vs `bctr` jumptable (MWCC rejects GCC `&&label` computed goto). Same caller-stack class as attach/setCurrent — park under high-level C++.
 
@@ -413,6 +416,34 @@ zeros + relocs for `_stack_addr` / `__ArenaLo` / `_db_stack_end`. Retail
 `OSInit` also uses `memcpy@ha`/`@l` as `OS_BASE_CACHED` / the `0x80004000`
 fallback.
 
+**`__OSShutdownDevices` (US FULL_MATCH):** ogws groups `OS_SD_EVENT_RESTART` with
+FATAL/RETURN/LAUNCH as `keepEnable=FALSE`. Xenoblade retail is
+`(event-5)<=1` (RETURN/LAUNCH) **or** `event==FATAL` only — **RESTART keeps
+`keepEnable=TRUE`**. Inlined `KillThreads`: case order `READY` then `SLEEPING`
+emits retail `cmpwi 1` / `cmpwi 4`.
+
+**`OSReturnToMenu` / `OSResetSystem` / `OSRestart` / `__OSHotResetForError`
+(US FULL_MATCH):** same NAND sized-pool rule — bare `OS_ERROR("…")` / string
+literals → size-0 `…data.N` relocs and ~98% soft-cap despite identical opcodes.
+Use explicit `char OSReset_file[0xC]`, `OSReset_hotResetPool[0x60]`,
+`OSReset_menuPool[0x180]`, `OSReset_obsoletePool[0x7C]` (retail dtk object
+sizes; orphan setting/HTML strings live inside the menu pool) and
+`OSPanic(pool, line, msg)`.
+
+- Thin wrappers (`OSReturnToMenu`, `OSResetSystem`) and `OSRestart` /
+  `__OSHotResetForError` panic: pass **two distinct objects** so MWCC emits
+  `lis r3` / `lis r5` (retail). `OSPanic(base, n, base + off)` collapses to
+  one `lis` + `addi r5,r3,imm` and drops to ~85% / wrong size.
+- `__OSReturnToMenuForError` (FULL): hoist `char* strBase = OSReset_file` and
+  panic with `strBase+0xC` / `strBase+0x38` (retail keeps file in **r31**).
+- `__OSReturnToMenu` (~95% soft-cap): needs **three** `OSStateFlags` locals
+  (retail frame `-0x90` at `0x58`/`0x38`/`0x18`; one shared local → `-0x50`)
+  **and** Chaitin coloring `strBase=r30`, disc/ticket scratch=`r31`,
+  `menuMode=r29`. Current MWCC keeps `strBase` in **r31** (swapped with
+  scratch) despite decl-order / early-init experiments — residual is almost
+  entirely that register permutation. Unit `.data` may still 8-align after
+  the `0xC` file object.
+
 **Keep high-level C with extern linker symbols** (right schedule). Close the
 last immediates with `tools/postprocess_reloc_names.py`:
 
@@ -484,10 +515,17 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
 - TU exports **SettingsUpdate**, not Settings (Settings stays header-only).
 - **`GetMemSize` / `Shutdown`**: `return 0xc80 * 3 * sizeof(f32);` matches retail
   `lis`/`subi` → `0x9600`. Shutdown is a plain free-loop under interrupt mask.
-- **`Init` / `SettingsUpdate` (~99%)**: inlined free-on-failure (not `bl Shutdown`);
-  success flag set only on loop fallthrough (`ok = TRUE` after alloc/memset), with
-  delay `inPos`/`outPos`/`lastPos`/`sizeFP` computed in the memset success path.
-  Remaining miss is walk/index GPR color (`r27`/`r29` swap).
+- **`Init` (~99.9%) / `SettingsUpdate` (~99.8%)**: inlined free-on-failure (not
+  `bl Shutdown`); success flag set only on loop fallthrough (`ok = TRUE` after
+  alloc/memset), with delay `inPos`/`outPos`/`lastPos`/`sizeFP` in the memset
+  success path. Best shape: function-scope `f32** walk` for alloc / SU-memset;
+  block-scope `walkM` + separate `k` for Init memset (retail walk=`r28`, i=`r27`);
+  reuse `i` for alloc+first-free (pins nested=`r27`); `j` for later frees. Same
+  pattern on Dpl2 (4ch + `AXGetMode` gate). Soft-cap remains: Init alloc index
+  lands `r28` vs retail `r29` (same insn count; retail leaves an `r28` hole);
+  SU memset walk lands `r28` vs retail `r27` (index already `r29`). Decl-order,
+  block-scoped split `i`, early null/`nested=mask`, and separate `ai` do not open
+  the hole without regressing free1/memset.
 - **`__InitParams` (~96%)**: validate ranges (feedback is `[0,1)` via `>= 1.0f`);
   LFO setup `step = (32000/rate)*0.00390625`, `phaseAdd = (256*rate)/32000`, then
   `65536` scales. MWCC emits sdata2 tail `0.00390625,32000,256,65536`; retail is
@@ -511,13 +549,16 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
   the multi-reg latency-fill pattern (~36%). Volatile/pointer/explicit
   sequencing does not force `filter[0]` before `fmuls`. Soft-cap until a
   non-patch approach appears; no `.text` `insn_patches`.
-- **`Callback` (~98.4%)**: best setup is
+- **`Callback` (~98.9%)**: declare long-lived coef locals **before** loop temps
+  in order `lpfCoef2, earlyCoef, combCoef0/1, allpassCoef, lpfCoef1,
+  earlyGain, fusedGain` so MWCC homes them to **f0..f7** and emits retail's
+  setup (`1.0`→f2, `(1-lpf)`→f5, `0.6`→f3, gains→f6/f7, coefs→f1..f4). Keep
   `lpfCoef1 = 1.0f - reverb->lpfCoef; lpfCoef2 = reverb->lpfCoef;` then
-  `early/fused * 0.6f` and comb/allpass locals; hoist sample positions; unroll
-  pos updates. That already keeps **lpf in f0**. Remaining miss is FPR color
-  (`1.0`→f1 vs f2, `(1-lpf)`→f2 vs f5, comb/allpass perm, i2f magic f10 vs f11)
-  plus loop GPR allocation. Loading mem floats before `1.0f` to pin `1.0`→f2
-  regresses overall match. TU is `-lang=c` (C89): no mid-block declarations.
+  `early/fused * 0.6f`; hoist sample positions; unroll pos updates. Remaining
+  miss is **i2f magic f10 vs f11** (cascades loop FPR temps) plus busIn path
+  GPR color (`r24`/`r25`/`r26`). Loading mem floats before `1.0f`, hoisting
+  `outGain`/`sendGain`, or a live `0.0f` pad can force magic→f11 but regresses
+  match/size. TU is `-lang=c` (C89): no mid-block declarations.
 - **`.sdata2` pool order:** compute the `pow` exponent in a local first
   (`f32 exp = -3.0f * …; (f32)pow(10.0, exp);`) so MWCC emits `-3` (with pad),
   then `10.0`, then `0.95` (with pad) — matching retail’s 0x40 pool tail.
@@ -643,6 +684,76 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
 
 ---
 
+
+## CProcess size trim (US)
+
+- Retail **does not** emit `DeleteList__11CProcessMan...` or `Tail__11CProcessManFv` in this TU —
+  **inline `DeleteList` into `Delete`** (two loops). `CProcessMan::Tail` is unused / header-inline OK.
+- `Tail__8CProcessFv` lives in **`kyoshin/CTaskGame.cpp`** (0x800444BC), not `CProcess.cpp` — remove the
+  empty OOL from CProcess to clear the last **+4** bytes.
+
+## gki_time (US)
+
+- Retail slice is **exactly 8 symbols**. Strip Android-only APIs (`GKI_timer_update`,
+  `gki_timers_is_timer_running`, `gki_adjust_timer_count`, …). **Inline `gki_adjust_timer_count` into
+  `GKI_start_timer`**. Donor: ogws REVOLUTION `gki_time.c`.
+- **`GKI_update_timer_list` FULL:** drop `-func_align 4` — default **16-byte** function align places
+  the first while-loop body on a 16-byte boundary and emits retail's lone **`nop`** after the
+  forward `b` (same inter-fn pad pattern as retail). With `-func_align 4` the loop starts unaligned
+  and MWCC omits the nop (~97%).
+
+## CRsrcData (US)
+
+- **Size / FULL (0x42C):** one `extern "C" build__9CRsrcData…` only (no C++ static twin — double
+  emission). Ctor name via postprocess `__ct__9CRsrcDataFPCc…` → `__ct__CRsrcData`; vt →
+  `lbl_eu_8056B360`; `trim_text_size=0x42C` drops weak IWorkEvent stubs.
+- **build:** `lbl_eu_80522534` is **`"CRsrcData"`** (not `""`); call mangled ctor explicitly (not
+  placement `new`) to avoid a second null `beq`.
+- **dtor:** do **not** re-null-check `this` (virtual dtor already does); load `mCacheData` before
+  the compiler's vt store; `#pragma optimize_for_size` for `stmw r30`.
+- **destruct:** `#pragma dont_inline` so `wkUpdate` tail-`b`s it (`beqlr`/`bgtlr` leaf).
+- **isSameName:** return **`int`**, not `bool` (bool adds `neg`/`or` after `cntlzw`/`srwi`).
+- **setRsrcFile:** `getFilePtrFromPath(mName)` on the copied buffer; `unk4E0 = flag` (stb of bool reg).
+- **releaseCache:** `if (cache == data) { … return true; } return false;` (`bne` fail shape).
+
+## CWorkThread (`libs/monolib/src/work/CWorkThread.cpp`)
+
+- **`wkRemoveChild` (FULL_MATCH 0x48):** Do **not** call `reslist::remove` (walks all matches).
+  Retail unlinks the **first** match only. Emit retail loop with **`goto advance` /
+  `check:`** (advance-at-top, head compare, then item compare) — a plain
+  `while (curr != head) { if (item==) break; curr=next; }` stalls ~98%.
+- **`getWorkThread(const char*)`:** Null-check **`this`** (not `name`);
+  `strcmp((const char*)&mName, name)` (FixStr `mString` is first); `#pragma dont_inline on`
+  to stop recursive IPA unroll (otherwise ~0x16C vs retail 0x9C). Residual: `cmpwi` vs
+  retail `cntlzw`/`srwi` after strcmp, and `stw` vs `stmw r29`.
+- **`wkSetEvent` / `wkSetEventChild`:** Retail uses a **4-level unrolled** descendant walk
+  with OOL `CMsgParam<8>::enqueue`. High-level recursive `wkSetEvent` on children keeps
+  size under budget but caps fuzzy (~74% / ~33%).
+
+## CRsrc (`libs/monolib/src/core/CRsrc.cpp`)
+
+- **`entry` (FULL_MATCH 0x8C):** `#pragma dont_inline on` + **`extern "C"` forward decl** for
+  `isExistData__5CRsrcFPCv` and call **`isExistData__5CRsrcFPCv(data)`** (not
+  `CRsrc::isExistData`) — otherwise MWCC inlines the list scan and the TU gains ~0x2C.
+- **`releaseCache` / `isExistData` (FULL_MATCH 0x74):** Same **`#pragma dont_inline on`**
+  block + **`goto check` / `loop:`** bottom-tested loop, plus **`#pragma optimize_for_size`**.
+  Removing dont_inline regresses to ~0xA8/0xBC each (+0x88 TU).
+- **`#pragma optimize_for_size on` … `reset`:** Wrap **`releaseCacheLocal`**, **`releaseCache`**,
+  and **`isExistData`** (each with **`dont_inline`**) — drops TU from **0x3BC (+0x1C)** to
+  **0x394 (PASS, 0xC spare)**; **`releaseCacheLocal` → 0x64 (90.7%, retail 0x6C)**. Does **not** regress
+  **`convertToRsrcData` / `entry` / `hasChild`** FULL matches.
+- **`releaseCacheLocal` (+0x8 vs retail 0x6C):** `while (node != head)` with
+  **`head = parent->mChildren.mStartNodePtr`** beats goto/reload-head (+0x8 TU). Retail
+  uses bottom-tested **`cmplw`** against **`lwz 0x60(parent)`** each iteration.
+- **`hasChild` (FULL_MATCH 0x1C):** **`subf` / `or` / `srwi 31`** on sentinel vs first-child
+  pointers (`lwz 0x60` + `lwz 0(r4)`) — not `sentinel != first`.
+- **`sRsrcPointerList__5CRsrc`:** **`extern` BSS** in `extern "C"` block (not `static` member
+  definition in TU) for retail reloc shape.
+- **Callee certs:** `build__9CRsrcData`, `CWorkUtil::func_80438AF0`, `strlen`/`strcpy` still
+  block bottom-up equivalence on `entry` / `isExistDataLocal`.
+
+---
+
 ## mem_expHeap (`libs/RVL_SDK/src/revolution/mem/mem_expHeap.c`)
 
 - **`AllocFromHead_` / `AllocFromTail_`:** MKW-style loop locals (`found`, `foundSize`, `foundMem`, `bAllocFirst`) with `if (!found) return NULL` beats ternary tail-call for MWCC (head/tail both reached **FULL_MATCH**).
@@ -696,7 +807,8 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
 ## nw4r `TexMap::mBits` / `BasicPlayer` array bases (US)
 
 - **`TexMap::Get(GXTlutObj*)`:** retail `extrwi …, 2, 17` means `paletteFormat` sits at MSB bits 17–18 — **before** `anisotropy`. Swapping those two bitfields in `lyt_texMap.h` yields `FULL_MATCH` (and restores `b GXInitTlutObj` tail-call encoding).
-- **`BasicPlayer` send arrays:** retail `stfs`/`lfs` bases are `mFxSend@0x34`, `mRemoteOutVolume@0x40`, `mRemoteSend@0x50`, `mRemoteFxSend@0x60`. Insert two `u32` words after `mMainSend@0x28` (PlayerParamSet zeros at +0x28/+0x2C). Wrong base → ~99.8% on the tiny indexed accessors.
+- **`BasicPlayer` / `PlayerParamSet` (US):** param block lives at `BasicPlayer+0x4` (`sizeof == 0xCC`); `mId@0xD0`. Send-array bases on the player are still `mFxSend@0x34`, `mRemoteOutVolume@0x40`, `mRemoteSend@0x50`, `mRemoteFxSend@0x60`. `mPanMode@0x2C` / `mPanCurve@0x30` (param `+0x28`/`+0x2C`). `mRemoteFilter` is `u8@0x1D` (param `+0x19`) — **not** after the arrays. `BasicPlayer::InitParam` is `addi r3,r3,4; b PlayerParamSet::Init`. Init floats must reloc to `lbl_eu_80669EE0` (1.0) / `lbl_eu_80669EE4` (0.0) — `EE8`/`EEC` are a different duplicate pair and stick at ~99.8%.
+- **`PanMode` / `PanCurve` mangling:** retail is `nw4r::snd::PanMode` (`Q34nw4r3snd7PanMode`), not `detail::`. Wrong namespace → 0% on `SetPanMode`/`SetPanCurve`.
 
 ## nw4r `BasicSound` layout (US Xenoblade)
 
@@ -715,9 +827,25 @@ Insert `u32` pad before `SoundParam@0x30` and before fade; flag block includes `
 
 **`SetVolume` int→double:** inlined `MoveValue::GetValue` pools `@N`; add `snd_BasicSound.o` `pool_patterns` `(MAGIC_HI, MAGIC_LO) → lbl_eu_80669EF0`.
 
-**Vtable:** retail `GetBasicPlayer` is at `+0x24` (not stock `+0x68`). Keep `Update`…`Shutdown` virtual, then `GetBasicPlayer`; demote volume/pan setters + `InitParam` + `SetAutoStopCounter`/`FadeIn` to non-virtual (they are direct symbols in this DOL).
+**Vtable (US Xenoblade, not stock nw4r):** after RTTI/`__dt__`: `Shutdown@+0x10`, `IsPrepared@+0x14`, `IsAttachedTempSpecialHandle@+0x18`, `DetachTempSpecialHandle@+0x1C`, `InitParam@+0x20` (virtual!), `GetBasicPlayer@+0x24/+0x28`, `OnUpdatePlayerPriority@+0x2C`, `UpdateMoveValue@+0x30`, `UpdateParam@+0x34`. **`Stop` / `Pause` / `Update` / `StartPrepared` / `IsPause` are non-virtual.** Wrong Shutdown slot (`+0x20` vs `+0x10`) soft-caps `Stop` at ~99.99%.
 
-**`BasicPlayer::mId`:** retail `0xD0` (not `0x4`). Keep a pad word at `0x4` so send-array bases stay at `0x34+`; `mRemoteFilter` follows arrays at `0x70`.
+**`Stop`:** early `Shutdown()` via vt+`0x10`; fade path inlines `SetPlayerPriority(0)` (stb `mPriority@0x94` + `detail_SortPriorityList` + virt `OnUpdatePlayerPriority`); clears `mPauseState@0x84` (not `mPauseFlag`), sets `mFadeOutFlag`.
+
+**`Pause`:** `mPauseState` machine (on → state 1 / fade→0 / `mPauseFadeFlag=false`; off → state 3 / fade→1 / flag true). Retail has two unreachable `b` after pause-on and one after unpause range-check (`b work; b return`); MWCC omits them → ~98.7% with correct cascade+switch-off.
+
+**`InitParam`:** no `mPauseFlag` clear. `SoundParam` has an extra `f32 unk18` before `priority` (retail `stfs@0x48`, `priority@0x4C`). Output line: ternary `(mSoundPlayer != NULL) ? player->detail_GetOutputLine() : OUTPUT_LINE_MAIN` so MWCC reuses SetTarget’s `li r4,1` (if/else rematerializes and sticks ~98.7%). `SoundPlayer::mOutputLineFlag` is at `+0x34`. Floats via `lbl_eu_80669EE8`/`EEC`.
+
+**`BasicSound(int,int)` / MoveValue / LinkListNode:** retail ctor writes fields in place (no default-zero member ctors). Empty `MoveValue()` / `LinkListNode()` + `node.Init()` + late callback zeros; vtable rename `__vt__…BasicSound` → `lbl_eu_8056A710`. `UpdateMoveValue` updates only `mFadeVolume` + `mExtMoveVolume` (not pause).
+
+**`SoundPlayer` (US Xenoblade):** lock via `detail::SoundThread::AutoLock` (mutex `@+0x354`), not a `SoundPlayer::mMutex` member (ctor has no `OSInitMutex`; layout ends with `mFxSend[AUX_BUS_NUM]@0x58`). `CalcCurrentPlayerPriority` adds `mUnk0x50` (not `SoundParam::priority@0x4C`). `detail_SortPriorityList(BasicSound*)` unlocks between erase and insert. `SetPlayableSoundCount` always `Clamp(count,0,limit)` (no `mUsePlayerHeap` gate). Default `mPlayableLimit = 0x7FFFFFFF`. `PlayerHeap` is a compact type (`mSound@4`, `mPlayer@8`, node`@0x18`), not stock `SoundHeap` subclass; use `AttachSound`/`AttachPlayerHeap`/`AttachSoundPlayer` (bl, not inline). Split budget `0xBA8`: keep Alloc*/Insert-Remove helpers in `snd_SoundPlayerAlloc.cpp`; drop weak LinkListNode/NonCopyable/AutoLock dtors via postprocess.
+
+**`SortPriorityList()` void:** static bucket array + early-out when list size `< 2`. Postprocess: prefix-rename `@GUARD@listsByPrio$N` → `lbl_eu_80665500`, `listsByPrio$N` → `lbl_eu_806382F0`, `@#` bss cookie → `lbl_eu_806382E0`, `__arraydtor$N` → `__arraydtor$4226`; rename LinkList ct/dt mangled Ofs `252` → `256` (node stays `@0xFC`; construct_array only cares about the symbol name).
+
+**`detail_CanPlaySound`:** nest the lowest-priority check inside `playing >= playable` (not an early `return true` for room) so MWCC matches retail `blt` skip.
+
+**`PlayerHeap::Create`:** `limit = size + base` (not `base + size`) so MWCC emits `add r4,r5,r4`. Align with `(base+0x1F)&~0x1F`. `Clear`/`~PlayerHeap`: `u32` end−start for `subf`; dtor nulls `mEnd` after unlock.
+
+**`Pause`:** `mPauseState` machine; ~98.7% — retail dead epilogue `b`s.
 
 ---
 
@@ -742,7 +870,115 @@ Insert `u32` pad before `SoundParam@0x30` and before fade; flag block includes `
   `symbol_sizes=(float_8066BE30, 0x8)` in `postprocess_reloc_names.py` (§17.6).
 - **Init/Settings/Shutdown**: unroll the three-channel free/alloc paths (for-loops
   undersize `.text` by ~0x1A8). Init success sets `active |= 2; active &= ~1`.
-- **`Callback` / `__InitParams` / `SettingsUpdate`**: soft-caps on GPR coloring
-  (`_savegpr_20` vs lower, mask in r30 vs r31, iirGain temp r5/r6) while
-  semantics match; keep shared `>> 7` after the busIn branch join.
+- **`Callback` (~83.4%) / `__InitParams` (~99.8%)**: soft-caps on GPR coloring
+  (`_savegpr_20` vs lower; iirGain/zero temps r5/r6) while semantics match; keep
+  shared `>> 7` after the busIn branch join. Decl-order experiments on Callback
+  do not close the savegpr band.
+- **`SettingsUpdate`**: FULL when `BOOL nested` is declared before `BOOL mask`
+  (outer mask→r30, nested→r31).
+
+## RVL AXFX DelayExpDpl2 (4ch)
+
+- **`GetMemSize` / `__InitParams`**: FULL (`<< 4` for ×16; same scheduling-off
+  pattern as DelayExp). Gate Init on `AXGetMode() == AX_OUTPUT_DPL2`.
+- **`Callback` (~95.4%)**: coef/invCoef declared and assigned before input setup
+  improves over array-first (~90.9%). Residual is loop GPR color.
+- **`Init` (~90.8%)**: `ok = TRUE` only on alloc fallthrough + `goto alloc_done`
+  (Chorus-style) beats pre-setting `ok = TRUE`. Free/alloc still use `s32** p`
+  walks (retail advances the object base through `line[0..3]`).
+- **Settings/Shutdown (~88%)**: same walk family; unrolling 4ch regresses size
+  vs retail’s compact `blt` loops.
+
+## GXFifo — CP/PI register ops + fifo struct copy (US)
+
+`GXSetCPUFifo` / `GXSetGPFifo` soft-cap drivers:
+
+- **`GX_BITSET` on `gxdt->cpCtrlReg` / `cpClrReg`**: MSB-indexed `GX_BITSET` emits
+  `oris` into the upper half; retail uses `ori`/`rlwinm` on low CP bits. Replace
+  fifo helpers with `reg |= 4; reg &= ~8;` style updates + `GX_CP_REG_WRITE_U16`.
+- **PI CPBAS/CPTOP**: retail `clrlwi r4,r4,2` = `TOPHYSICAL(base)` — not `>> 2`.
+- **CP fifo / breakpoint high halves**: retail `extrwi rD,rS,14,2` is
+  `(ptr >> 16) & 0x3FFF` (MSB bit start 2), **not** `>> 2`. Watermarks use
+  `srwi >> 16`. Wrong `>> 2` was the sole miss on `GXEnableBreakPt` /
+  `__GXCleanGPFifo` (now FULL_MATCH).
+- **CP status/ctrl bit tests**: use LSB masks / shifts (`(reg >> 3) & 1` for
+  underflow-int enable, `(reg >> 1) & 1` for UNFL status, etc.). Feeding LSB
+  indices into MSB-style `GX_BITGET` emits the wrong `extrwi`.
+- **PI CPWRT wrap**: retail `extrwi …,1,2` → `(reg >> 29) & 1`, not
+  `GX_BITGET(reg, 29, 1)`.
+- **Struct copy**: retail load-all-then-store-all through one `r31` home; C field
+  stores interleaved with loads emit `@ha` base stores. Use block-local temporaries
+  for every `GXFifoObjImpl` field, then store batch (~81% → ~93% on `GXSetCPUFifo`,
+  ~87% → ~93% on `GXSetGPFifo`).
+
+Unit `RVL_SDK/src/revolution/gx/GXFifo`: ~96.7% fuzzy CODE_MATCH at exact size
+budget (`0xC30`, 0 spare). `GXInitFifoBase` at **FULL_MATCH**; remaining near-misses
+are single-instruction `extrwi` vs `rlwinm` soft-caps on pointer-high / wrap-bit extracts.
+
+Additional near-miss patterns:
+
+- **`GXInitFifoBase` loWatermark**: `(size >> 1) & ~0x1Fu` (retail `rlwinm …,1,26`) — not
+  `(size >> 1) & ~1u`.
+- **`__GXWriteFifoIntReset(TRUE, FALSE)`** (overflow IRQ path): retail `ori 1` then
+  `rlwinm …,31,29` to clear lo-reset while setting hi-reset — add `else if (hi) reg &= ~2`.
+- **`__GXCleanGPFifo` COUNTH**: `(u16)((s32)GPFifo.count >> 16)` for retail `srawi`, not
+  unsigned `>> 16` (`srwi`).
+- **Do not refactor `__GXCleanGPFifo`** into block-local temporaries — MWCC already
+  interleaves struct/CP stores; explicit rewrite dropped ~6.6% match despite freeing `0x10`.
+- **`GXSetGPFifo` tail breakpoint clear**: use `DECOMP_PPC_RLWINM(reg,0,31,29)` then
+  `DECOMP_PPC_RLWINM(reg,0,27,25)` before the double `CP_ENABLE` sth (retail rlwinm pair,
+  not `& ~0x22`). `(s32)count >> 16` for COUNTH (`srawi`).
+- **`GXSetCPUFifo` / `GXSetGPFifo` base @0x0**: MWCC still emits `@ha` `stw` for the first
+  struct field; keeping other fields through `dst = &CPUFifo` with `base` stored last is
+  the best soft-cap (~93.9% CPU / ~95.2% GP after NULL bind-order). Do not use struct
+  assign (`CPUFifo = tmp`) — grows +0x24 bytes and drops to ~85%.
+- **NULL-path bind flags**: `GXSetCPUFifo` clears `bind_gp` then `bind_cpu`;
+  `GXSetGPFifo` clears `bind_cpu` then `bind_gp`. Swapped order is a visible near-miss.
+- **`GXSetCPUFifo` Ready before copy**: set `CPUFifoReady = 1` before the field copy,
+  `bind_cpu = TRUE` after (the `+0x20` word copy would clobber an earlier bind store).
+- **Do not interleave `GXSetGPFifo` CP burst into the temp copy block** — collapses to
+  ~49%. Keep struct copy then separate `gpHome` CP writes.
+- **`__GXSaveFifo` / `GXCPInterruptHandler`**: remaining gap is pure GPR color (~99.4% /
+  ~99.7%); `u32 reg` on the BP path did not move InterruptHandler.
+
+- **`GXSetTexCoordCylWrap`**: retail `and.; beqlr` flushes BP when
+  `(tcsManEnab & (1<<coord)) != 0`. A negated test emits `bnelr` and stuck at
+  99.8% — invert to match ScaleManually-style “flush when enabled”.
+
+## GXInit — `.data` pool for `__GXInitGX` (US)
+
+- Put the version banner in **`.data`** as `char s_GXVersionStr[0x48] = "…"` (not
+  `const` / `.rodata`). Retail bases r28 on that object; `DefaultTexData` is
+  `aligned(32)` at +0x60, VAT list at +0x80, proj at +0x150.
+- `GXDefaultProjData` must be **8** floats (trailing 0 pad) so the object is
+  0x20 — seven floats leave a 0x1C hole and shift later pool offsets.
+
+## GXTexture — LOD + PreLoaded BP burst (US)
+
+- **`GXInitTexObjCI` (FULL_MATCH)**: snap stack `tlut_name` into a local before
+  `GXInitTexObj`; after the call do `flags = t->flags; t->tlutName = name;
+  t->flags = flags & ~2` so MWCC emits retail `lbz` / `stw tlut` / `rlwinm` /
+  `stb` order (tlut store **before** clearing flags bit1).
+- **`__GXSetTmemConfig` (FULL_MATCH)**: load the retail SETIMAGE1/2 words as
+  hex literals (`0x8C0D8000`, …). Rebuilding with
+  `TX_SETIMAGE*(addr >> 5, 3, 3, …)` overflows the 10-bit tmem field into the
+  RID byte (`0xBB001E00` vs retail `0xB30DDC00`) and fails equivalence.
+- **`GXInitTexObjLOD` (~92.8%, size exact `0x104`)**: clear ROUND/FIELD with
+  `__rlwinm(mode0, 0, 15, 12)` (retail wrap mask → value bits 17–18). Do **not** use
+  `& 0xFFFF9FFF` (wrong bits). Prefer early `__cntlzw(mag_filt - 1)` /
+  `__cntlzw(do_edge_lod)`, `float_8066C02C * lod_bias` (fmuls operand order), and
+  `(s32)(f32)` for `fctiwz`. Remaining gap is latency fill (`lfs 0` / `cntlzw` edge vs
+  `lwz mode0` order) — `#pragma scheduling off` and extra `biased`/`lod0` locals
+  regress. Soft-cap until a non-patch schedule appears.
+- **`GXLoadTexObjPreLoaded` (~75.1%, size `0x164`)**: keep `volatile void* pipe =
+  &WGPIPE` + `u8 cmd = 0x61` so MWCC emits `lis 0xCC01` / `li 0x61` and
+  `stb`/`stw` `-0x8000(r29)`. Interleave BP writes with RID `rlwimi` and store
+  fields back after the image3 `stb` (before image3 `stw`). `#pragma scheduling off`
+  drops to ~66%. Equivalence stays `inconclusive_unvalidated_callee` (indirect
+  `tlutRegionCallback`). Soft-cap is mostly prologue reg color / table-`li`
+  interleave vs retail.
+- **`GXGetTexObjLODAll` (~49%)**: volatile `f64` i2f stacks still tend to emit
+  `fsub`+`frsp` instead of retail `fsubs`; MWCC also saves an extra GPR (`r28`).
+  `^ 0x80000000` forces `xoris` but has not beaten the ~49% baseline yet. Park
+  while chasing InitLOD / PreLoaded.
 

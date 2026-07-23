@@ -43,8 +43,7 @@ Sound3DActor::detail_SetupSound(SoundHandle* pHandle, u32 id,
         pHandle, id, &argInfo, detail_GetActorSoundPlayer(0), hold, pStartInfo);
 
     if (pHandle->IsAttachedSound()) {
-        pHandle->detail_GetAttachedSound()->SetPanCurve(
-            detail::PAN_CURVE_SINCOS);
+        pHandle->detail_GetAttachedSound()->SetPanCurve(PAN_CURVE_SINCOS);
     }
 
     return result;

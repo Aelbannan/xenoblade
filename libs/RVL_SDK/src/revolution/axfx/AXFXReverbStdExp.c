@@ -119,28 +119,29 @@ void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* bufferUpdate, AXFX_REVERBSTD_EX
     u32 ch;
     u32 samp;
     s32* input[3];
-    f32 data;
     f32* earlyLine;
-    f32 earlySample;
-    f32 earlyOut;
     f32* preDelayLine;
-    f32 preDelayOut;
-    f32 filterOut;
     f32* combLine;
-    f32 combOut0;
-    f32 combOut1;
     f32* allpass;
-    f32 outTmp;
-    f32 allpassIn;
-    f32 allpassCoef;
-    f32 lpfOut;
-    f32 lpfCoef1;
+    /* Long-lived coefs first: MWCC colors these into f0..f7; i2f magic wants f11. */
     f32 lpfCoef2;
     f32 earlyCoef;
     f32 combCoef0;
     f32 combCoef1;
+    f32 allpassCoef;
+    f32 lpfCoef1;
     f32 earlyGain;
     f32 fusedGain;
+    f32 data;
+    f32 earlySample;
+    f32 earlyOut;
+    f32 preDelayOut;
+    f32 filterOut;
+    f32 combOut0;
+    f32 combOut1;
+    f32 outTmp;
+    f32 allpassIn;
+    f32 lpfOut;
     f32 fusedOut;
     f32 output;
     u32 earlyPos;
@@ -172,8 +173,6 @@ void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* bufferUpdate, AXFX_REVERBSTD_EX
         outBusData[1] = reverb->busOut->right;
         outBusData[2] = reverb->busOut->surround;
     }
-
-
 
     lpfCoef1 = 1.0f - reverb->lpfCoef;
     lpfCoef2 = reverb->lpfCoef;

@@ -140,7 +140,9 @@ static void EnableWriteGatherPipe(void);
 static GXTlutRegion* __GXDefaultTlutRegionCallback(u32);
 static GXTexRegion* __GXDefaultTexRegionCallback(const GXTexObj*, GXTexMapID);
 
-static const char s_GXVersionStr[] =
+/* Retail .data pool head: version[0x48] then align-32 DefaultTexData at +0x60.
+   __GXInitGX bases r28 here so +0x60/+0x80/+0x150 hit tex/VAT/proj. */
+static char s_GXVersionStr[0x48] =
     "<< RVL_SDK - GX \trelease build: Feb 27 2009 10:04:13 (0x4302_145) >>";
 const char* __GXVersion = s_GXVersionStr;
 
@@ -156,7 +158,8 @@ static GXVtxAttrFmtList GXDefaultVATList[] = {
     {GX_VA_TEX5, GX_TEX_ST, GX_F32, 0},          {GX_VA_TEX6, GX_TEX_ST, GX_F32, 0}, {GX_VA_TEX7, GX_TEX_ST, GX_F32, 0},
     {GX_VA_NULL, (GXCompCnt)0, (GXCompType)0, 0}};
 
-static f32 GXDefaultProjData[] = {1.0f, 0.0f, 1.0f, 0.0f, -1.0f, -2.0f, 0.0f};
+/* Retail object size 0x20 (trailing pad word). */
+static f32 GXDefaultProjData[8] = {1.0f, 0.0f, 1.0f, 0.0f, -1.0f, -2.0f, 0.0f, 0.0f};
 
 static u32 GXTexRegionAddrTable[] = {
     GX_TMEM_LO + 0x00000, GX_TMEM_LO + 0x10000, GX_TMEM_LO + 0x20000, GX_TMEM_LO + 0x30000, GX_TMEM_LO + 0x40000, GX_TMEM_LO + 0x50000,

@@ -8,6 +8,11 @@ memory-loop store path (``memory_semantics.apply_store_effect``) must route
 through it, otherwise a store that leaks the stack pointer could hide divergent
 private-frame bytes.
 
+Compared-register publication (a live compared GPR holding an r1-derived
+pointer at a terminal) is a separate engine-side gate
+(``apply_compared_register_publish_escape``); see
+``RegisterPublishStackEscapeTests``.
+
 These tests pin two things:
 
 1. Behaviour — storing ``input.gpr.r1`` clears ``stack_private``; storing an

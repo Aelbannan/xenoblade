@@ -11,6 +11,35 @@ static OSShutdownFunctionQueue ShutdownFunctionQueue;
 static u32 bootThisDol;
 volatile BOOL __OSIsReturnToIdle;
 
+/*
+ * Retail .data pools (sized arrays, not bare OS_ERROR literals — those leave
+ * size-0 relocs and soft-cap ~98%). Layout targets: file 0xC, hot 0x60,
+ * menu+orphans 0x180, obsolete 0x7C. MWCC may 8-align after the 0xC file
+ * object (unit data soft-cap); function match uses reloc *sizes*. Big callers
+ * use strBase=&OSReset_file with +0xC/+0x38; thin wrappers / OSRestart use
+ * distinct objects so MWCC emits two lis pairs.
+ */
+#pragma force_active on
+char OSReset_file[0xC] = "OSReset.c\0\0";
+char OSReset_hotResetPool[0x60] =
+    "__OSHotReset(): Falied to reset system.\n\0\0\0\0"
+    "__OSReturnToMenu(): Falied to boot system menu.\n\0\0\0";
+char OSReset_menuPool[0x180] =
+    "OSReturnToMenu(): Falied to boot system menu.\n\0\0"
+    "OSReturnToDataManager(): Falied to boot system menu.\n\0\0\0"
+    "Calendar/Calendar_index.html\0\0\0\0"
+    "Display/Display_index.html\0\0"
+    "Sound/Sound_index.html\0\0"
+    "Parental_Control/Parental_Control_index.html\0\0\0\0"
+    "Internet/Internet_index.html\0\0\0\0"
+    "WiiConnect24/Wiiconnect24_index.html\0\0\0\0"
+    "Update/Update_index.html\0\0\0\0"
+    "OSReturnToSetting(): You can't specify %d.  \n\0\0";
+char OSReset_obsoletePool[0x7C] =
+    "OSResetSystem() is obsoleted. It doesn't work any longer.\n\0\0"
+    "OSSetBootDol() is obsoleted. It doesn't work any longer.\n\0\0\0\0\0\0";
+#pragma force_active off
+
 static void KillThreads(void);
 void __OSHotResetForError(void);
 
@@ -87,8 +116,9 @@ void __OSShutdownDevices(u32 event) {
     BOOL keepEnable;
 
     switch (event) {
+    // Retail: (event-5)<=1 → {RETURN_TO_MENU,LAUNCH_APP}, else FATAL.
+    // RESTART (4) keeps recalibration enabled (unlike ogws switch grouping).
     case OS_SD_EVENT_FATAL:
-    case OS_SD_EVENT_RESTART:
     case OS_SD_EVENT_RETURN_TO_MENU:
     case OS_SD_EVENT_LAUNCH_APP:
         keepEnable = FALSE;
@@ -96,6 +126,7 @@ void __OSShutdownDevices(u32 event) {
     case OS_SD_EVENT_1:
     case OS_SD_EVENT_SHUTDOWN:
     case OS_SD_EVENT_3:
+    case OS_SD_EVENT_RESTART:
     default:
         keepEnable = TRUE;
         break;
@@ -187,19 +218,15 @@ static inline void HotResetPanic(void) {
     }
     __OSHotReset();
 
-    // clang-format off
-#line 1034
-    OS_ERROR("__OSHotReset(): Falied to reset system.\n");
-    // clang-format on
+    /* Use OSReset_file (+off) so CSE can hoist the base into r30 after disc/ticket
+     * scratch takes r31 — an early `char* strBase` local steals r31 and soft-caps ~95%. */
+    OSPanic(OSReset_file, 1034, OSReset_file + 0xC);
 }
 
 static inline void HotResetPanicMenu(void) {
     HotResetPanic();
 
-    // clang-format off
-#line 1010
-    OS_ERROR("__OSReturnToMenu(): Falied to boot system menu.\n");
-    // clang-format on
+    OSPanic(OSReset_file, 1010, OSReset_file + 0x38);
 }
 
 void OSRestart(u32 resetCode) {
@@ -222,22 +249,34 @@ void OSRestart(u32 resetCode) {
 
     OSDisableScheduler();
     __OSShutdownDevices(OS_SD_EVENT_1);
-    HotResetPanic();
+    /* Separate objects → retail's two lis (file + hot), not strBase+0xC. */
+    if (__OSInNandBoot || __OSInReboot) {
+        __OSInitSTM();
+    }
+    __OSHotReset();
+    OSPanic(OSReset_file, 1034, OSReset_hotResetPool);
 }
 
 void __OSReturnToMenu(u8 menuMode) {
+    /* Three OSStateFlags: retail frame -0x90 at 0x58/0x38/0x18. */
     OSStateFlags stateFlags;
-    void* ticketView;
-    u32 unk;
-    s32 playTime;
+    OSStateFlags stateFlagsEsp;
+    OSStateFlags stateFlagsAlloc;
+    /* Single long-lived scratch (disc byte, then ticket ptr) → r31; strBase → r30. */
+    u32 scratch;
+    char* strBase;
+
+    strBase = OSReset_file;
 
     __OSStopPlayRecord();
     __OSUnRegisterStateEvent();
     __DVDPrepareReset();
     __OSReadStateFlags(&stateFlags);
 
-    stateFlags.discState = GetDiscState(stateFlags.discState);
-    stateFlags.BYTE_0x5 = 3;
+    scratch = stateFlags.discState;
+    stateFlags.discState = GetDiscState((u8)scratch);
+    scratch = 3;
+    stateFlags.BYTE_0x5 = (u8)scratch;
     stateFlags.BYTE_0x7 = menuMode;
     __OSClearRTCFlags();
     __OSWriteStateFlags(&stateFlags);
@@ -246,36 +285,39 @@ void __OSReturnToMenu(u8 menuMode) {
     OSSetArenaHi((void*)0x812F0000);
 
     if (ESP_InitLib() != 0) {
-        __OSReadStateFlags(&stateFlags);
-        stateFlags.discState = 2;
-        stateFlags.BYTE_0x5 = 3;
+        __OSReadStateFlags(&stateFlagsEsp);
+        stateFlagsEsp.discState = 2;
+        stateFlagsEsp.BYTE_0x5 = (u8)scratch;
         __OSClearRTCFlags();
-        __OSWriteStateFlags(&stateFlags);
+        __OSWriteStateFlags(&stateFlagsEsp);
         __OSLaunchMenu();
         OSDisableScheduler();
         __VISetRGBModeImm();
-        HotResetPanicMenu();
+        HotResetPanicMenu(strBase);
     }
 
-    ticketView = OSAllocFromMEM1ArenaLo(0xE0, 0x20);
-    if (ticketView == NULL) {
-        __OSReadStateFlags(&stateFlags);
-        stateFlags.discState = 2;
-        stateFlags.BYTE_0x5 = 3;
+    scratch = (u32)OSAllocFromMEM1ArenaLo(0xE0, 0x20);
+    if ((void*)scratch == NULL) {
+        __OSReadStateFlags(&stateFlagsAlloc);
+        stateFlagsAlloc.discState = 2;
+        stateFlagsAlloc.BYTE_0x5 = 3;
         __OSClearRTCFlags();
-        __OSWriteStateFlags(&stateFlags);
+        __OSWriteStateFlags(&stateFlagsAlloc);
         __OSLaunchMenu();
         OSDisableScheduler();
         __VISetRGBModeImm();
-        HotResetPanicMenu();
+        HotResetPanicMenu(strBase);
     }
 
-    memset(ticketView, 0, 0xE0);
-    if (ESP_DiGetTicketView(NULL, ticketView) == 0) {
+    memset((void*)scratch, 0, 0xE0);
+    if (ESP_DiGetTicketView(NULL, (void*)scratch) == 0) {
         if (OSPlayTimeIsLimited()) {
+            u32 unk;
+            s32 playTime;
+
             unk = 0;
             playTime = -1;
-            __OSGetPlayTime(ticketView, &unk, &playTime);
+            __OSGetPlayTime((void*)scratch, &unk, &playTime);
             if (playTime == 0) {
                 __OSWriteExpiredFlagIfSet();
             }
@@ -288,20 +330,18 @@ void __OSReturnToMenu(u8 menuMode) {
     __OSLaunchMenu();
     OSDisableScheduler();
     __VISetRGBModeImm();
-    HotResetPanic();
+    HotResetPanic(strBase);
 }
 
 void OSReturnToMenu(void) {
     __OSReturnToMenu(0);
 
-    // clang-format off
-#line 895
-    OS_ERROR("OSReturnToMenu(): Falied to boot system menu.\n");
-    // clang-format on
+    OSPanic(OSReset_file, 895, OSReset_menuPool);
 }
 
 void __OSReturnToMenuForError(void) {
     OSStateFlags stateFlags;
+    char* strBase = OSReset_file;
 
     __OSReadStateFlags(&stateFlags);
     stateFlags.discState = 2;
@@ -312,30 +352,15 @@ void __OSReturnToMenuForError(void) {
     OSDisableScheduler();
     __VISetRGBModeImm();
 
-    if (__OSInNandBoot || __OSInReboot) {
-        __OSInitSTM();
-    }
-    __OSHotReset();
-
-    // clang-format off
-#line 1034
-    OS_ERROR("__OSHotReset(): Falied to reset system.\n");
-#line 1010
-    OS_ERROR("__OSReturnToMenu(): Falied to boot system menu.\n");
-    // clang-format on
+    HotResetPanicMenu(strBase);
 }
 
 void __OSHotResetForError(void) {
     if (__OSInNandBoot || __OSInReboot) {
         __OSInitSTM();
     }
-
     __OSHotReset();
-
-    // clang-format off
-#line 1034
-    OS_ERROR("__OSHotReset(): Falied to reset system.\n");
-    // clang-format on
+    OSPanic(OSReset_file, 1034, OSReset_hotResetPool);
 }
 
 u32 OSGetResetCode(void) {
@@ -351,26 +376,8 @@ void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu) {
 #pragma unused(resetCode)
 #pragma unused(forceMenu)
 
-    // clang-format off
-#line 1185
-    OS_ERROR("OSResetSystem() is obsoleted. It doesn't work any longer.\n");
-    // clang-format on
+    OSPanic(OSReset_file, 1185, OSReset_obsoletePool);
 }
-
-/* Orphan literals retained in retail .data (functions removed from this TU). */
-#pragma force_active on
-static const char OSReset_orphan_data[] =
-    "OSReturnToDataManager(): Falied to boot system menu.\n"
-    "Calendar/Calendar_index.html\0\0\0"
-    "Display/Display_index.html\0\0"
-    "Sound/Sound_index.html\0\0"
-    "Parental_Control/Parental_Control_index.html\0\0\0"
-    "Internet/Internet_index.html\0\0\0"
-    "WiiConnect24/Wiiconnect24_index.html\0\0\0"
-    "Update/Update_index.html\0\0\0"
-    "OSReturnToSetting(): You can't specify %d.  \n\0\0\0"
-    "OSSetBootDol() is obsoleted. It doesn't work any longer.\n";
-#pragma force_active off
 
 static void KillThreads(void) {
     OSThread* iter;
@@ -380,8 +387,8 @@ static void KillThreads(void) {
         next = iter->nextActive;
 
         switch (iter->state) {
-        case OS_THREAD_STATE_SLEEPING:
         case OS_THREAD_STATE_READY:
+        case OS_THREAD_STATE_SLEEPING:
             OSCancelThread(iter);
             break;
         }

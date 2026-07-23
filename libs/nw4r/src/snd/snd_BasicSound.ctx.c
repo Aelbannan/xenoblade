@@ -783,11 +783,12 @@ struct SoundParam {
     f32 surroundPan; // at 0xC
     f32 fxSend;      // at 0x10
     f32 lpf;         // at 0x14
-    int priority;    // at 0x18
+    // US Xenoblade: extra f32 before priority (retail stfs@BasicSound+0x48).
+    f32 unk18;       // at 0x18
+    int priority;    // at 0x1C
 };
 
-namespace detail {
-
+// US retail mangles these as nw4r::snd::PanMode / PanCurve (not detail::).
 enum PanMode {
     PAN_MODE_DUAL,
     PAN_MODE_BALANCE,
@@ -804,6 +805,8 @@ enum PanCurve {
     PAN_CURVE_LINEAR_0DB,
     PAN_CURVE_LINEAR_0DB_CLAMP,
 };
+
+namespace detail {
 
 struct AdpcmParam {
     u16 coef[16];   // at 0x0
@@ -13591,7 +13594,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() {}
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -17929,11 +17937,7 @@ namespace detail {
 
 template <typename TValue, typename TTime> class MoveValue {
 public:
-    MoveValue()
-        : mOrigin(TValue()),
-          mTarget(TValue()),
-          mFrame(TTime()),
-          mCounter(TTime()) {}
+    MoveValue() {}
 
     void InitValue(TValue t1) {
         mOrigin = t1;
@@ -237292,6 +237296,32 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Embedded at BasicPlayer+0x4. sizeof == 0xCC; BasicPlayer::mId follows at 0xD0.
+struct PlayerParamSet {
+    void Init();
+
+    f32 mVolume;      // at 0x0
+    f32 mPitch;       // at 0x4
+    f32 mPan;         // at 0x8
+    f32 mSurroundPan; // at 0xC
+    f32 mLpfFreq;     // at 0x10
+    f32 mUnk0x14;     // at 0x14
+    u8 mUnk0x18;      // at 0x18
+    u8 mRemoteFilter; // at 0x19 (BasicPlayer+0x1D)
+    u8 mPad0x1A[2];   // at 0x1A
+    int mOutputLine;  // at 0x1C
+    f32 mMainOutVolume;                         // at 0x20
+    f32 mMainSend;                              // at 0x24
+    PanMode mPanMode;                           // at 0x28 (BasicPlayer+0x2C)
+    PanCurve mPanCurve;                         // at 0x2C (BasicPlayer+0x30)
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x30 (BasicPlayer+0x34)
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x3C (BasicPlayer+0x40)
+    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x4C (BasicPlayer+0x50)
+    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x5C (BasicPlayer+0x60)
+    // Xenoblade extension: 4× (1,1,0,0,0,0) float groups through +0xC8.
+    f32 mUnk0x6C[24]; // at 0x6C
+};
+
 class BasicPlayer {
 public:
     BasicPlayer();
@@ -237314,59 +237344,59 @@ public:
     }
 
     f32 GetVolume() const {
-        return mVolume;
+        return mParam.mVolume;
     }
     void SetVolume(f32 volume) {
-        mVolume = volume;
+        mParam.mVolume = volume;
     }
 
     f32 GetPitch() const {
-        return mPitch;
+        return mParam.mPitch;
     }
     void SetPitch(f32 pitch) {
-        mPitch = pitch;
+        mParam.mPitch = pitch;
     }
 
     f32 GetPan() const {
-        return mPan;
+        return mParam.mPan;
     }
     void SetPan(f32 pan) {
-        mPan = pan;
+        mParam.mPan = pan;
     }
 
     f32 GetSurroundPan() const {
-        return mSurroundPan;
+        return mParam.mSurroundPan;
     }
     void SetSurroundPan(f32 pan) {
-        mSurroundPan = pan;
+        mParam.mSurroundPan = pan;
     }
 
     f32 GetLpfFreq() const {
-        return mLpfFreq;
+        return mParam.mLpfFreq;
     }
     void SetLpfFreq(f32 freq) {
-        mLpfFreq = freq;
+        mParam.mLpfFreq = freq;
     }
 
     int GetOutputLine() const {
-        return mOutputLine;
+        return mParam.mOutputLine;
     }
     void SetOutputLine(int flags) {
-        mOutputLine = flags;
+        mParam.mOutputLine = flags;
     }
 
     f32 GetMainOutVolume() const {
-        return mMainOutVolume;
+        return mParam.mMainOutVolume;
     }
     void SetMainOutVolume(f32 volume) {
-        mMainOutVolume = volume;
+        mParam.mMainOutVolume = volume;
     }
 
     f32 GetMainSend() const {
-        return mMainSend;
+        return mParam.mMainSend;
     }
     void SetMainSend(f32 send) {
-        mMainSend = send;
+        mParam.mMainSend = send;
     }
 
     void SetFxSend(AuxBus bus, f32 send);
@@ -237379,53 +237409,27 @@ public:
     f32 GetRemoteFxSend(int remote) const;
 
     int GetRemoteFilter() const {
-        return mRemoteFilter;
+        return mParam.mRemoteFilter;
     }
-    void SetRemoteFilter(int filter) {
-        mRemoteFilter = ut::Clamp(filter, 0, REMOTE_FILTER_MAX);
-    }
+    void SetRemoteFilter(int filter);
 
     PanMode GetPanMode() const {
-        return mPanMode;
+        return mParam.mPanMode;
     }
     void SetPanMode(PanMode mode) {
-        mPanMode = mode;
+        mParam.mPanMode = mode;
     }
 
     PanCurve GetPanCurve() const {
-        return mPanCurve;
+        return mParam.mPanCurve;
     }
     void SetPanCurve(PanCurve curve) {
-        mPanCurve = curve;
+        mParam.mPanCurve = curve;
     }
 
 private:
-    // 0x4 was mislabeled as mId; retail mId is at 0xD0. Keep the word so
-    // send-array bases (0x34/0x40/0x50/0x60) stay correct.
-    u32 mPad0x4; // at 0x4
-
-    f32 mVolume;      // at 0x8
-    f32 mPitch;       // at 0xC
-    f32 mPan;         // at 0x10
-    f32 mSurroundPan; // at 0x14
-    f32 mLpfFreq;     // at 0x18
-    char UNK_0x1C[0x4];
-
-    int mOutputLine;                            // at 0x20
-    f32 mMainOutVolume;                         // at 0x24
-    f32 mMainSend;                              // at 0x28
-    u32 mUnk0x2C;                               // at 0x2C
-    u32 mUnk0x30;                               // at 0x30
-    f32 mFxSend[AUX_BUS_NUM];                   // at 0x34
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x40
-    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x50
-    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x60
-    u8 mRemoteFilter;                           // at 0x70
-    u8 mPad0x71[3];                             // at 0x71
-    PanMode mPanMode;                           // at 0x74
-    PanCurve mPanCurve;                         // at 0x78
-    u8 mPad0x7C[0x54];                          // at 0x7C
-    u32 mId;                                    // at 0xD0
+    PlayerParamSet mParam; // at 0x4
+    u32 mId;               // at 0xD0
 };
 
 } // namespace detail
@@ -237531,26 +237535,33 @@ public:
     static const int PRIORITY_MAX = 127;
 
 public:
-    BasicSound();
+    BasicSound(int priority, int arg);
     virtual ~BasicSound() {}
 
-    virtual void Update();
-    virtual void StartPrepared();
-    virtual void Stop(int frames);
-    virtual void Pause(bool flag, int frames);
+    // US Xenoblade vtable (after RTTI @+0x8, dtor @+0xC):
+    // +0x10 Shutdown, +0x14 IsPrepared, +0x18 IsAttachedTempSpecialHandle,
+    // +0x1C DetachTempSpecialHandle, +0x20 InitParam, +0x24/+0x28 GetBasicPlayer,
+    // +0x2C OnUpdatePlayerPriority, +0x30 UpdateMoveValue, +0x34 UpdateParam.
+    // Stop / Pause / Update / StartPrepared / IsPause are non-virtual.
     virtual void Shutdown();
-    // US retail: GetBasicPlayer at vtable+0x24.
-    virtual BasicPlayer& GetBasicPlayer() = 0;
-    virtual const BasicPlayer& GetBasicPlayer() const = 0;
     virtual bool IsPrepared() const = 0;
-    virtual bool IsPause() const;
-
     virtual bool IsAttachedTempSpecialHandle() = 0;
     virtual void DetachTempSpecialHandle() = 0;
+    virtual void InitParam();
+    virtual BasicPlayer& GetBasicPlayer() = 0;
+    virtual const BasicPlayer& GetBasicPlayer() const = 0;
+    virtual void OnUpdatePlayerPriority();
+    virtual void UpdateMoveValue();
+    virtual void UpdateParam();
+
+    void Update();
+    void StartPrepared();
+    void Stop(int frames);
+    void Pause(bool flag, int frames);
+    bool IsPause() const;
 
     void SetAutoStopCounter(int count);
     void FadeIn(int frames);
-    void InitParam();
     void SetInitialVolume(f32 vol);
     void SetVolume(f32 vol, int frames);
     void SetPitch(f32 pitch);
@@ -237565,6 +237576,8 @@ public:
     PlayerHeap* GetPlayerHeap() {
         return mHeap;
     }
+    void AttachPlayerHeap(PlayerHeap* pHeap);
+    void DetachPlayerHeap(PlayerHeap* pHeap);
     void SetPlayerHeap(PlayerHeap* pHeap) {
         mHeap = pHeap;
     }
@@ -237581,6 +237594,9 @@ public:
     void SetSoundPlayer(SoundPlayer* pPlayer) {
         mSoundPlayer = pPlayer;
     }
+    // Out-of-line in US (same stores as SetSoundPlayer / clear).
+    void AttachSoundPlayer(SoundPlayer* pPlayer);
+    void DetachSoundPlayer(SoundPlayer* pPlayer);
 
     ExternalSoundPlayer* GetExternalSoundPlayer() {
         return mExtSoundPlayer;
@@ -237648,7 +237664,9 @@ public:
     void SetFxSend(AuxBus bus, f32 send);
 
     int CalcCurrentPlayerPriority() const {
-        return ut::Clamp(mPriority + mAmbientParam.priority, 0, PRIORITY_MAX);
+        // US SortPriorityList adds mUnk0x50 (not SoundParam::priority @0x4C).
+        return ut::Clamp(static_cast<int>(mPriority) + static_cast<int>(mUnk0x50),
+                         0, PRIORITY_MAX);
     }
 
 private:
@@ -237665,11 +237683,10 @@ private:
     u32 mUnk0x28;                                              // at 0x28
     u32 mUnk0x2C;                                              // at 0x2C
     SoundParam mAmbientParam;                                  // at 0x30
-    u32 mUnk0x4C;                                              // at 0x4C
     u32 mUnk0x50;                                              // at 0x50 (ctor arg)
-    u32 mUnk0x54;                                              // at 0x54
-    u32 mUnk0x58;                                              // at 0x58
-    u32 mUnk0x5C;                                              // at 0x5C
+    f32 mUnk0x54;                                              // at 0x54
+    f32 mUnk0x58;                                              // at 0x58
+    f32 mUnk0x5C;                                              // at 0x5C
 
     MoveValue<f32, int> mFadeVolume;      // at 0x60
     MoveValue<f32, int> mPauseFadeVolume; // at 0x70
@@ -237953,8 +237970,8 @@ public:
         int playerPriority;        // at 0x8
         int volume;                // at 0xC
         int remoteFilter;          // at 0x10
-        detail::PanMode panMode;   // at 0x14
-        detail::PanCurve panCurve; // at 0x18
+        PanMode panMode;   // at 0x14
+        PanCurve panCurve; // at 0x18
     };
 
     struct SeqSoundInfo {
@@ -239567,449 +239584,8 @@ private:
 /* "libs/nw4r/include/nw4r/snd/snd_PlayerHeap.h" line 2 "nw4r/types_nw4r.h" */
 /* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/snd/snd_PlayerHeap.h" line 4 "nw4r/snd/snd_SoundHeap.h" */
-#ifndef NW4R_SND_SOUND_HEAP_H
-#define NW4R_SND_SOUND_HEAP_H
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 4 "nw4r/snd/snd_FrameHeap.h" */
-/* end "nw4r/snd/snd_FrameHeap.h" */
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 5 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-#ifndef NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
-#define NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
-/* "libs/nw4r/include/nw4r/snd/snd_SoundMemoryAllocatable.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-namespace nw4r {
-namespace snd {
-
-class SoundMemoryAllocatable {
-public:
-    virtual ~SoundMemoryAllocatable() {} // at 0x8
-    virtual void* Alloc(u32 size) = 0;   // at 0xC
-};
-
-} // namespace snd
-} // namespace nw4r
-
-#endif
-/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 7 "nw4r/ut.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_PlayerHeap.h" line 4 "nw4r/ut.h" */
 /* end "nw4r/ut.h" */
-
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 9 "revolution/OS.h" */
-/**
- * References: YAGCD, WiiBrew, Dolphin Emulator
- */
-
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-/* end "revolution/OS/OS.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
-/* end "revolution/OS/OSAlarm.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
-/* end "revolution/OS/OSAlloc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
-/* end "revolution/OS/OSArena.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
-/* end "revolution/OS/OSAudioSystem.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
-/* end "revolution/OS/OSCache.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
-/* end "revolution/OS/OSCrc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
-/* end "revolution/OS/OSError.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
-/* end "revolution/OS/OSExec.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
-/* end "revolution/OS/OSFastCast.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
-/* end "revolution/OS/OSFatal.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
-/* end "revolution/OS/OSFont.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap4.html#sec4
- * https://www.gc-forever.com/yagcd/chap13.html#sec13
- * https://wiibrew.org/wiki/Memory_map
- */
-
-#ifndef RVL_SDK_OS_HARDWARE_H
-#define RVL_SDK_OS_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
-/* end "revolution/DVD/dvd.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSContext;
-typedef struct OSExecParams;
-
-// Derive offsets for use with OSAddress functions
-#define __DEF_ADDR_OFFSETS(name, addr)                                         \
-    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
-    static const u32 OS_CACHED_##name = (addr);                                \
-    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
-
-// Define a global variable in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name DECL_ADDRESS(addr);                                         \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define a global array in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name arr DECL_ADDRESS(addr);                                     \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define an global variable in the hardware-register range.
-#define OS_DEF_HW_REG(type, name, addr)                                        \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name : (addr);
-
-typedef enum {
-    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
-    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
-} OSBootMagic;
-
-typedef struct OSBootInfo {
-    DVDDiskID diskID; // at 0x0
-    u32 bootMagic;    // at 0x20
-    u32 aplVersion;   // at 0x24
-    u32 physMemSize;  // at 0x28
-    u32 consoleType;  // at 0x2C
-    void* arenaLo;    // at 0x30
-    void* arenaHi;    // at 0x34
-    void* fstStart;   // at 0x38
-    u32 fstSize;      // at 0x3C
-} OSBootInfo;
-
-typedef struct OSDebugInterface {
-    BOOL usingDebugger;    // at 0x0
-    u32 exceptionMask;     // at 0x4
-    void* exceptionHook;   // at 0x8
-    void* exceptionHookLR; // at 0xC
-} OSDebugInterface;
-
-typedef struct OSBI2 {
-    u32 dbgMonitorSize;   // at 0x0
-    u32 simulatedMemSize; // at 0x4
-    u32 argumentOfs;      // at 0x8
-    u32 debugFlag;        // at 0xC
-    u32 trackLocation;    // at 0x10
-    u32 trackSize;        // at 0x14
-    u32 countryCode;      // at 0x18
-    u32 WORD_0x1C;
-    u32 lastInsert;
-    u32 padSpec;            // at 0x24
-    u32 totalTextDataLimit; // at 0x28
-    u32 simulatedMem2Size;  // at 0x2C
-} OSBI2;
-
-/**
- * 0x80000000 - 0x80000100
- */
-// clang-format off
-OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
-OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
-OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
-OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
-OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
-OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
-OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
-OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
-OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
-OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
-OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
-OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
-OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
-// clang-format on
-
-/**
- * 0x80003000 - 0x80003F00
- */
-// clang-format off
-OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
-OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
-OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
-OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
-OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
-OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
-OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
-OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
-OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
-OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
-OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
-OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
-OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
-OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
-OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
-OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
-OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
-OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
-OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
-OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
-OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
-OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
-OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
-OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
-OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
-OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
-OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
-OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
-// clang-format on
-
-/**
- * PI hardware globals
- */
-volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
-typedef enum {
-    PI_INTSR,    //!< 0xCC003000
-    PI_INTMR,    //!< 0xCC003004
-    PI_REG_0x8,  //!< 0xCC003008
-    PI_REG_0xC,  //!< 0xCC00300C
-    PI_REG_0x10, //!< 0xCC003010
-    PI_REG_0x14, //!< 0xCC003014
-    PI_REG_0x18, //!< 0xCC003018
-    PI_REG_0x1C, //!< 0xCC00301C
-    PI_REG_0x20, //!< 0xCC003020
-    PI_RESET,    //!< 0xCC003024
-    // . . .
-} PIHwReg;
-
-// INTSR - Interrupt Cause Register
-#define PI_INTSR_ERROR (1 << 0)
-#define PI_INTSR_RSW (1 << 1)
-#define PI_INTSR_DI (1 << 2)
-#define PI_INTSR_SI (1 << 3)
-#define PI_INTSR_EXI (1 << 4)
-#define PI_INTSR_AI (1 << 5)
-#define PI_INTSR_DSP (1 << 6)
-#define PI_INTSR_MEM (1 << 7)
-#define PI_INTSR_VI (1 << 8)
-#define PI_INTSR_PE_TOKEN (1 << 9)
-#define PI_INTSR_PE_FINISH (1 << 10)
-#define PI_INTSR_CP (1 << 11)
-#define PI_INTSR_DEBUG (1 << 12)
-#define PI_INTSR_HSP (1 << 13)
-#define PI_INTSR_ACR (1 << 14)
-#define PI_INTSR_RSWST (1 << 16)
-
-// INTMR - Interrupt Mask Register
-#define PI_INTMR_ERROR (1 << 0)
-#define PI_INTMR_RSW (1 << 1)
-#define PI_INTMR_DI (1 << 2)
-#define PI_INTMR_SI (1 << 3)
-#define PI_INTMR_EXI (1 << 4)
-#define PI_INTMR_AI (1 << 5)
-#define PI_INTMR_DSP (1 << 6)
-#define PI_INTMR_MEM (1 << 7)
-#define PI_INTMR_VI (1 << 8)
-#define PI_INTMR_PE_TOKEN (1 << 9)
-#define PI_INTMR_PE_FINISH (1 << 10)
-#define PI_INTMR_CP (1 << 11)
-#define PI_INTMR_DEBUG (1 << 12)
-#define PI_INTMR_HSP (1 << 13)
-#define PI_INTMR_ACR (1 << 14)
-
-/**
- * MI hardware registers
- */
-volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
-typedef enum {
-    MI_PAGE_MEM0_H, //!< 0xCC004000
-    MI_PAGE_MEM0_L, //!< 0xCC004002
-    MI_PAGE_MEM1_H, //!< 0xCC004004
-    MI_PAGE_MEM1_L, //!< 0xCC004006
-    MI_PAGE_MEM2_H, //!< 0xCC004008
-    MI_PAGE_MEM2_L, //!< 0xCC00400A
-    MI_PAGE_MEM3_H, //!< 0xCC00400C
-    MI_PAGE_MEM3_L, //!< 0xCC00400E
-    MI_PROT_MEM0,   //!< 0xCC004010
-    MI_PROT_MEM1,   //!< 0xCC004012
-    MI_PROT_MEM2,   //!< 0xCC004014
-    MI_PROT_MEM3,   //!< 0xCC004016
-    MI_REG_0x18,    //!< 0xCC004018
-    MI_REG_0x1A,    //!< 0xCC00401A
-    MI_INTMR,       //!< 0xCC00401C
-    MI_INTSR,       //!< 0xCC00401E
-    MI_REG_0x20,    //!< 0xCC004020
-    MI_ADDRLO,      //!< 0xCC004022
-    MI_ADDRHI,      //!< 0xCC004024
-    MI_REG_0x26,    //!< 0xCC004026
-    MI_REG_0x28,    //!< 0xCC004028
-    // . . .
-} MIHwReg;
-
-// INTMR - Interrupt Mask Register
-#define MI_INTMR_MEM0 (1 << 0)
-#define MI_INTMR_MEM1 (1 << 1)
-#define MI_INTMR_MEM2 (1 << 2)
-#define MI_INTMR_MEM3 (1 << 3)
-#define MI_INTMR_ADDR (1 << 4)
-
-// INTSR - Interrupt Cause Register
-#define MI_INTSR_MEM0 (1 << 0)
-#define MI_INTSR_MEM1 (1 << 1)
-#define MI_INTSR_MEM2 (1 << 2)
-#define MI_INTSR_MEM3 (1 << 3)
-#define MI_INTSR_ADDR (1 << 4)
-
-/**
- * DI hardware registers
- */
-volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
-typedef enum {
-    DI_DMA_ADDR = 5, // !< 0xCD006014
-    DI_CONFIG = 9,   // !< 0xCD006024
-} DIHwReg;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSHardware.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
-/* end "revolution/OS/OSInterrupt.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
-/* end "revolution/OS/OSIpc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
-/* end "revolution/OS/OSLink.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
-/* end "revolution/OS/OSMemory.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
-/* end "revolution/OS/OSMessage.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
-/* end "revolution/OS/OSMutex.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
-/* end "revolution/OS/OSNet.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
-/* end "revolution/OS/OSPlayRecord.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
-/* end "revolution/OS/OSPlayTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
-/* end "revolution/OS/OSReset.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
-/* end "revolution/OS/OSRtc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
-/* end "revolution/OS/OSSerial.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
-/* end "revolution/OS/OSStateFlags.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
-/* end "revolution/OS/OSStateTM.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
-/* end "revolution/OS/OSSync.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
-/* end "revolution/OS/OSTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
-/* end "revolution/OS/OSUtf.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
-/* end "revolution/OS/__ppc_eabi_init.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS.h" */
-
-namespace nw4r {
-namespace snd {
-
-class SoundHeap : public SoundMemoryAllocatable {
-public:
-    SoundHeap();
-    virtual ~SoundHeap(); // at 0x8
-
-    virtual void* Alloc(u32 size); // at 0xC
-
-    void* Alloc(u32 size, detail::FrameHeap::FreeCallback pCallback,
-                void* pCallbackArg);
-
-    bool Create(void* pBase, u32 size);
-    void Destroy();
-
-    void Clear();
-
-    int SaveState();
-    void LoadState(int id);
-
-    bool IsValid() {
-        return mFrameHeap.IsValid();
-    }
-
-    int GetCurrentLevel() const {
-        ut::detail::AutoLock<OSMutex> lock(mMutex);
-        return mFrameHeap.GetCurrentLevel();
-    }
-
-    u32 GetFreeSize() const {
-        ut::detail::AutoLock<OSMutex> lock(mMutex);
-        return mFrameHeap.GetFreeSize();
-    }
-
-private:
-    static void DisposeCallbackFunc(void* pBuffer, u32 size,
-                                    void* pCallbackArg);
-
-private:
-    mutable OSMutex mMutex;       // at 0x0
-    detail::FrameHeap mFrameHeap; // at 0x1C
-};
-
-} // namespace snd
-} // namespace nw4r
-
-#endif
-/* end "nw4r/snd/snd_SoundHeap.h" */
 
 namespace nw4r {
 namespace snd {
@@ -240023,25 +239599,34 @@ class BasicSound;
 
 namespace detail {
 
-class PlayerHeap : public SoundHeap {
+// US Xenoblade PlayerHeap is a compact heap (not stock SoundHeap subclass).
+// Layout: vt@0, mSound@4, mPlayer@8, buffer ptrs@0xC/0x10/0x14, node@0x18.
+class PlayerHeap {
 public:
-    PlayerHeap() : mSound(NULL), mPlayer(NULL) {}
-    virtual ~PlayerHeap() {} // at 0x8
+    PlayerHeap();
+    virtual ~PlayerHeap();
 
-    void SetSound(BasicSound* pSound) {
-        mSound = pSound;
-    }
+    bool Create(void* pBase, u32 size);
+    void* Alloc(u32 size);
+    void Clear();
+    u32 GetFreeSize() const;
+
+    void AttachSound(BasicSound* pSound);
+    void DetachSound(BasicSound* pSound);
 
     void SetSoundPlayer(SoundPlayer* pPlayer) {
         mPlayer = pPlayer;
     }
 
-public:
-    NW4R_UT_LINKLIST_NODE_DECL(); // at 0x2C
-
 private:
-    BasicSound* mSound;   // at 0x34
-    SoundPlayer* mPlayer; // at 0x38
+    BasicSound* mSound;   // at 0x4
+    SoundPlayer* mPlayer; // at 0x8
+    void* mStart;         // at 0xC
+    void* mUnk0x10;       // at 0x10
+    void* mEnd;           // at 0x14
+
+public:
+    NW4R_UT_LINKLIST_NODE_DECL(); // at 0x18
 };
 
 NW4R_UT_LINKLIST_TYPEDEF_DECL(PlayerHeap);
@@ -245371,23 +244956,38 @@ private:
 #endif
 /* end "nw4r/snd/snd_SoundHandle.h" */
 /* "libs/nw4r/include/nw4r/snd.h" line 51 "nw4r/snd/snd_SoundHeap.h" */
-/* end "nw4r/snd/snd_SoundHeap.h" */
-/* "libs/nw4r/include/nw4r/snd.h" line 52 "nw4r/snd/snd_SoundInstanceManager.h" */
-/* end "nw4r/snd/snd_SoundInstanceManager.h" */
-/* "libs/nw4r/include/nw4r/snd.h" line 53 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-/* "libs/nw4r/include/nw4r/snd.h" line 54 "nw4r/snd/snd_SoundPlayer.h" */
-#ifndef NW4R_SND_SOUND_PLAYER_H
-#define NW4R_SND_SOUND_PLAYER_H
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 2 "nw4r/types_nw4r.h" */
+#ifndef NW4R_SND_SOUND_HEAP_H
+#define NW4R_SND_SOUND_HEAP_H
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 2 "nw4r/types_nw4r.h" */
 /* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 4 "nw4r/snd/snd_BasicSound.h" */
-/* end "nw4r/snd/snd_BasicSound.h" */
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 5 "nw4r/snd/snd_PlayerHeap.h" */
-/* end "nw4r/snd/snd_PlayerHeap.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 4 "nw4r/snd/snd_FrameHeap.h" */
+/* end "nw4r/snd/snd_FrameHeap.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 5 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+#ifndef NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
+#define NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
+/* "libs/nw4r/include/nw4r/snd/snd_SoundMemoryAllocatable.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 7 "revolution/OS.h" */
+namespace nw4r {
+namespace snd {
+
+class SoundMemoryAllocatable {
+public:
+    virtual ~SoundMemoryAllocatable() {} // at 0x8
+    virtual void* Alloc(u32 size) = 0;   // at 0xC
+};
+
+} // namespace snd
+} // namespace nw4r
+
+#endif
+/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 7 "nw4r/ut.h" */
+/* end "nw4r/ut.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 9 "revolution/OS.h" */
 /**
  * References: YAGCD, WiiBrew, Dolphin Emulator
  */
@@ -245748,7 +245348,72 @@ typedef enum {
 #endif
 #endif
 /* end "revolution/OS.h" */
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 8 "revolution/WPAD.h" */
+
+namespace nw4r {
+namespace snd {
+
+class SoundHeap : public SoundMemoryAllocatable {
+public:
+    SoundHeap();
+    virtual ~SoundHeap(); // at 0x8
+
+    virtual void* Alloc(u32 size); // at 0xC
+
+    void* Alloc(u32 size, detail::FrameHeap::FreeCallback pCallback,
+                void* pCallbackArg);
+
+    bool Create(void* pBase, u32 size);
+    void Destroy();
+
+    void Clear();
+
+    int SaveState();
+    void LoadState(int id);
+
+    bool IsValid() {
+        return mFrameHeap.IsValid();
+    }
+
+    int GetCurrentLevel() const {
+        ut::detail::AutoLock<OSMutex> lock(mMutex);
+        return mFrameHeap.GetCurrentLevel();
+    }
+
+    u32 GetFreeSize() const {
+        ut::detail::AutoLock<OSMutex> lock(mMutex);
+        return mFrameHeap.GetFreeSize();
+    }
+
+private:
+    static void DisposeCallbackFunc(void* pBuffer, u32 size,
+                                    void* pCallbackArg);
+
+private:
+    mutable OSMutex mMutex;       // at 0x0
+    detail::FrameHeap mFrameHeap; // at 0x1C
+};
+
+} // namespace snd
+} // namespace nw4r
+
+#endif
+/* end "nw4r/snd/snd_SoundHeap.h" */
+/* "libs/nw4r/include/nw4r/snd.h" line 52 "nw4r/snd/snd_SoundInstanceManager.h" */
+/* end "nw4r/snd/snd_SoundInstanceManager.h" */
+/* "libs/nw4r/include/nw4r/snd.h" line 53 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+/* "libs/nw4r/include/nw4r/snd.h" line 54 "nw4r/snd/snd_SoundPlayer.h" */
+#ifndef NW4R_SND_SOUND_PLAYER_H
+#define NW4R_SND_SOUND_PLAYER_H
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 4 "nw4r/snd/snd_BasicSound.h" */
+/* end "nw4r/snd/snd_BasicSound.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 5 "nw4r/snd/snd_PlayerHeap.h" */
+/* end "nw4r/snd/snd_PlayerHeap.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 7 "revolution/WPAD.h" */
 /**
  * References: WiiBrew
  */
@@ -245797,10 +245462,14 @@ public:
 
     void SetVolume(f32 volume);
 
-    int detail_GetOutputLine() const;
-    bool detail_IsEnabledOutputLine() const;
+    int detail_GetOutputLine() const {
+        return mOutputLineFlag;
+    }
+    bool detail_IsEnabledOutputLine() const {
+        return mOutputLineFlagEnable;
+    }
 
-    f32 detail_GetRemoteOutVolume(int idx) const;
+    f32 GetRemoteOutVolume(int idx) const;
 
     void detail_InsertSoundList(detail::BasicSound* pSound);
     void detail_RemoveSoundList(detail::BasicSound* pSound);
@@ -245808,7 +245477,14 @@ public:
     void detail_InsertPriorityList(detail::BasicSound* pSound);
     void detail_RemovePriorityList(detail::BasicSound* pSound);
 
+    void detail_SortPriorityList(detail::BasicSound* pSound);
     void detail_SortPriorityList();
+
+    bool detail_AppendSound(detail::BasicSound* pSound);
+    void detail_RemoveSound(detail::BasicSound* pSound);
+    bool detail_CanPlaySound(int priority);
+
+    void SetFxSend(AuxBus bus, f32 send);
 
     detail::SeqSound* detail_AllocSeqSound(
         int priority, int startPriority,
@@ -245869,17 +245545,20 @@ private:
     detail::BasicSoundPlayerPrioList mPriorityList; // at 0xC
     detail::PlayerHeapList mHeapList;               // at 0x18
 
-    u16 mPlayableCount; // at 0x24
-    u16 mPlayableLimit; // at 0x26
+    u32 mPlayableCount; // at 0x24
+    u32 mPlayableLimit; // at 0x28
 
-    f32 mVolume;                                // at 0x28
-    bool mOutputLineFlagEnable;                 // at 0x2C
-    bool mUsePlayerHeap;                        // at 0x2D
-    int mOutputLineFlag;                        // at 0x30
-    f32 mMainOutVolume;                         // at 0x34
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x38
-
-    mutable OSMutex mMutex; // at 0x48
+    f32 mVolume;                                // at 0x2C
+    f32 mUnk0x30;                               // at 0x30
+    int mOutputLineFlag;                        // at 0x34
+    f32 mMainOutVolume;                         // at 0x38
+    bool mOutputLineFlagEnable;                 // at 0x3C
+    bool mUsePlayerHeap;                        // at 0x3D
+    u8 mPad0x3E[2];                             // at 0x3E
+    f32 mUnk0x40;                               // at 0x40
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x44
+    f32 mUnk0x54;                               // at 0x54
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x58
 };
 
 } // namespace snd
@@ -247431,17 +247110,55 @@ namespace detail {
 
 NW4R_UT_RTTI_DEF_BASE(BasicSound);
 
-BasicSound::BasicSound()
+BasicSound::BasicSound(int priority, int arg)
     : mHeap(NULL),
       mGeneralHandle(NULL),
       mTempGeneralHandle(NULL),
       mSoundPlayer(NULL),
       mExtSoundPlayer(NULL),
-      mAmbientParamUpdateCallback(NULL),
-      mAmbientArgUpdateCallback(NULL),
-      mAmbientArgAllocaterCallback(NULL),
-      mAmbientArg(NULL),
-      mId(INVALID_ID) {}
+      mAmbientParamUpdateCallback(NULL) {
+    mAmbientParam.volume = lbl_eu_80669EE8;
+    mAmbientParam.pitch = lbl_eu_80669EE8;
+    mAmbientParam.pan = lbl_eu_80669EEC;
+    mAmbientParam.surroundPan = lbl_eu_80669EEC;
+    mAmbientParam.fxSend = lbl_eu_80669EEC;
+    mAmbientParam.lpf = lbl_eu_80669EEC;
+    mAmbientParam.unk18 = lbl_eu_80669EEC;
+    mAmbientParam.priority = 0;
+
+    mUnk0x54 = lbl_eu_80669EE8;
+    mUnk0x58 = lbl_eu_80669EE8;
+    mUnk0x5C = lbl_eu_80669EEC;
+
+    mFadeVolume.InitValue(lbl_eu_80669EEC);
+    mPauseFadeVolume.InitValue(lbl_eu_80669EEC);
+
+    mId = INVALID_ID;
+    mExtMoveVolume.InitValue(lbl_eu_80669EEC);
+
+    // Link-list nodes (retail zeros after ExtMoveVolume).
+    nodePrio.Init();
+    nodePlayerPlay.Init();
+    nodePlayerPrio.Init();
+    nodeExtPlay.Init();
+
+    mAmbientArgUpdateCallback = NULL;
+    mAmbientArgAllocaterCallback = NULL;
+    mAmbientArg = NULL;
+    mUnk0x28 = 0;
+    mUnk0x2C = 0;
+
+    mUnk0x95 = 1;
+    mPriority = priority;
+    mUnk0x50 = arg;
+}
+
+void BasicSound::UpdateMoveValue() {
+    mFadeVolume.Update();
+    mExtMoveVolume.Update();
+}
+
+void BasicSound::UpdateParam() {}
 
 void BasicSound::InitParam() {
     mPauseState = 0;
@@ -247450,41 +247167,45 @@ void BasicSound::InitParam() {
     mStartedFlag = false;
     mAutoStopFlag = false;
     mFadeOutFlag = false;
-    mPauseFlag = false;
 
     mAutoStopCounter = 0;
     mUpdateCounter = 0;
 
-    mFadeVolume.InitValue(0.0f);
-    mPauseFadeVolume.InitValue(1.0f);
-    mFadeVolume.SetTarget(1.0f, 1);
+    mFadeVolume.InitValue(lbl_eu_80669EEC);
+    mPauseFadeVolume.InitValue(lbl_eu_80669EE8);
+    mFadeVolume.SetTarget(lbl_eu_80669EE8, 1);
 
-    mInitVolume = 1.0f;
-    mExtPitch = 1.0f;
-    mExtPan = 0.0f;
-    mExtSurroundPan = 0.0f;
-    mExtMoveVolume.InitValue(1.0f);
+    mInitVolume = lbl_eu_80669EE8;
+    mExtPitch = lbl_eu_80669EE8;
+    mExtPan = lbl_eu_80669EEC;
+    mExtSurroundPan = lbl_eu_80669EEC;
+    mExtMoveVolume.InitValue(lbl_eu_80669EE8);
 
-    mUnk0xBC = 0.0f;
-    mUnk0xC0 = 0.0f;
-    mOutputLineFlag = OUTPUT_LINE_MAIN;
+    mUnk0xBC = lbl_eu_80669EEC;
     mOutputLineFlagEnable = false;
+    mUnk0xC0 = lbl_eu_80669EEC;
 
-    mMainOutVolume = 1.0f;
+    mOutputLineFlag =
+        (mSoundPlayer != NULL) ? mSoundPlayer->detail_GetOutputLine()
+                               : OUTPUT_LINE_MAIN;
+
+    mMainOutVolume = lbl_eu_80669EE8;
     for (int i = 0; i < 4; i++) {
-        mUnk0xCC[i] = 0.0f;
+        mUnk0xCC[i] = lbl_eu_80669EEC;
     }
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        mRemoteOutVolume[i] = 1.0f;
+        mRemoteOutVolume[i] = lbl_eu_80669EE8;
     }
 
-    mAmbientParam.volume = 1.0f;
-    mAmbientParam.pitch = 1.0f;
-    mAmbientParam.pan = 0.0f;
-    mAmbientParam.surroundPan = 0.0f;
-    mAmbientParam.fxSend = 0.0f;
-    mAmbientParam.lpf = 0.0f;
+    mAmbientParam.volume = lbl_eu_80669EE8;
+    mAmbientParam.pitch = lbl_eu_80669EE8;
+    mAmbientParam.pan = lbl_eu_80669EEC;
+    mAmbientParam.surroundPan = lbl_eu_80669EEC;
+    mAmbientParam.fxSend = lbl_eu_80669EEC;
+    mAmbientParam.lpf = lbl_eu_80669EEC;
+    mAmbientParam.unk18 = lbl_eu_80669EEC;
     mAmbientParam.priority = 0;
+    mUnk0x50 = 0;
 }
 
 void BasicSound::StartPrepared() {
@@ -247503,43 +247224,66 @@ void BasicSound::Stop(int frames) {
     }
 
     int t = frames * mFadeVolume.GetValue();
-    mFadeVolume.SetTarget(0.0f, t);
+    mFadeVolume.SetTarget(lbl_eu_80669EEC, t);
 
-    SetPlayerPriority(0);
+    // Inlined SetPlayerPriority(0) — retail does not bl.
+    mPriority = 0;
+    if (mSoundPlayer != NULL) {
+        mSoundPlayer->detail_SortPriorityList(this);
+    }
+    OnUpdatePlayerPriority();
+
     mAutoStopFlag = false;
-    mPauseFlag = false;
+    mPauseState = 0;
     mPauseFadeFlag = false;
     mFadeOutFlag = true;
 }
 
 void BasicSound::Pause(bool flag, int frames) {
-    BasicPlayer& rPlayer = GetBasicPlayer();
-
+    // Xenoblade Pause is driven by mPauseState, not mPauseFlag / player.Pause.
     if (flag) {
+        int state = mPauseState;
+        if (state == 2) {
+            return;
+        }
+        // Retail: bge to >=2 block, else cmpwi 0 / bge work.
+        if (state < 2) {
+            if (state < 0) {
+                return;
+            }
+        } else {
+            if (state >= 4) {
+                return;
+            }
+        }
+
         int t = frames * mPauseFadeVolume.GetValue();
-        mPauseFadeFlag = true;
-
         if (t <= 0) {
             t = 1;
         }
-
-        mPauseFadeVolume.SetTarget(0.0f, t);
+        mPauseFadeVolume.SetTarget(lbl_eu_80669EEC, t);
+        mPauseState = 1;
+        mPauseFadeFlag = false;
     } else {
-        if (mPauseFlag != flag) {
-            rPlayer.Pause(false);
+        switch (mPauseState) {
+        case 0:
+            return;
+        case 1:
+        case 2:
+        case 3: {
+            int t = frames * (lbl_eu_80669EE8 - mPauseFadeVolume.GetValue());
+            if (t <= 0) {
+                t = 1;
+            }
+            mPauseFadeVolume.SetTarget(lbl_eu_80669EE8, t);
+            mPauseState = 3;
+            mPauseFadeFlag = true;
+            break;
         }
-
-        int t = frames * (1.0f - mPauseFadeVolume.GetValue());
-        mPauseFadeFlag = true;
-
-        if (t <= 0) {
-            t = 1;
+        default:
+            return;
         }
-
-        mPauseFadeVolume.SetTarget(1.0f, t);
     }
-
-    mPauseFlag = flag;
 }
 
 void BasicSound::SetAutoStopCounter(int count) {
@@ -247657,7 +247401,7 @@ void BasicSound::Update() {
     f32 remoteOutVol[WPAD_MAX_CONTROLLERS];
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         remoteOutVol[i] = 1.0f;
-        remoteOutVol[i] *= mSoundPlayer->detail_GetRemoteOutVolume(i);
+        remoteOutVol[i] *= mSoundPlayer->GetRemoteOutVolume(i);
         remoteOutVol[i] *= GetRemoteOutVolume(i);
     }
 
@@ -247741,10 +247485,13 @@ void BasicSound::SetPlayerPriority(int priority) {
     mPriority = priority;
 
     if (mSoundPlayer != NULL) {
-        mSoundPlayer->detail_RemovePriorityList(this);
-        mSoundPlayer->detail_InsertPriorityList(this);
+        mSoundPlayer->detail_SortPriorityList(this);
     }
+
+    OnUpdatePlayerPriority();
 }
+
+void BasicSound::OnUpdatePlayerPriority() {}
 
 void BasicSound::SetInitialVolume(f32 vol) {
     mInitVolume = ut::Clamp(vol, lbl_eu_80669EEC, lbl_eu_80669EE8);
@@ -247848,6 +247595,24 @@ void BasicSound::SetAmbientParamCallback(
     mAmbientArgUpdateCallback = pArgUpdate;
     mAmbientArgAllocaterCallback = pArgAlloc;
     mAmbientArg = pArg;
+}
+
+void BasicSound::AttachPlayerHeap(PlayerHeap* pHeap) {
+    mHeap = pHeap;
+}
+
+void BasicSound::DetachPlayerHeap(PlayerHeap* pHeap) {
+    (void)pHeap;
+    mHeap = NULL;
+}
+
+void BasicSound::AttachSoundPlayer(SoundPlayer* pPlayer) {
+    mSoundPlayer = pPlayer;
+}
+
+void BasicSound::DetachSoundPlayer(SoundPlayer* pPlayer) {
+    (void)pPlayer;
+    mSoundPlayer = NULL;
 }
 
 bool BasicSound::IsAttachedGeneralHandle() {

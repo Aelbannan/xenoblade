@@ -13,7 +13,10 @@ u32 AXFXChorusExpGetMemSizeDpl2(const AXFX_CHORUS_EXP_DPL2* fx) {
 }
 
 BOOL AXFXChorusExpInitDpl2(AXFX_CHORUS_EXP_DPL2* fx) {
+    f32** walk;
     u32 i;
+    u32 k;
+    u32 j;
     BOOL ok;
     BOOL mask = OSDisableInterrupts();
     BOOL nested;
@@ -26,12 +29,14 @@ BOOL AXFXChorusExpInitDpl2(AXFX_CHORUS_EXP_DPL2* fx) {
     fx->active = 1;
     fx->delay.size = 0xc80;
 
+    walk = fx->delay.line;
     for (i = 0; i < 4; i++) {
-        fx->delay.line[i] = (f32*)__AXFXAlloc(fx->delay.size * 4);
-        if (fx->delay.line[i] == NULL) {
+        *walk = (f32*)__AXFXAlloc(fx->delay.size * 4);
+        if (*walk == NULL) {
             ok = FALSE;
             goto alloc_done;
         }
+        walk++;
     }
     ok = TRUE;
 alloc_done:
@@ -49,12 +54,17 @@ alloc_done:
         return FALSE;
     }
 
-    for (i = 0; i < 4; i++) {
-        if (fx->delay.line[i] == NULL) {
-            ok = FALSE;
-            goto memset_done;
+    {
+        f32** walkM;
+        walkM = fx->delay.line;
+        for (k = 0; k < 4; k++) {
+            if (*walkM == NULL) {
+                ok = FALSE;
+                goto memset_done;
+            }
+            memset(*walkM, 0, fx->delay.size * 4);
+            walkM++;
         }
-        memset(fx->delay.line[i], 0, fx->delay.size * 4);
     }
     fx->delay.inPos = 0;
     fx->delay.outPos = (fx->delay.size - (u32)(32.0f * fx->delayTime)) << 16;
@@ -65,11 +75,11 @@ memset_done:
     if (ok == FALSE) {
         nested = OSDisableInterrupts();
         fx->active |= 1;
-        for (i = 0; i < 4; i++) {
-            if (fx->delay.line[i] != NULL) {
-                __AXFXFree(fx->delay.line[i]);
+        for (j = 0; j < 4; j++) {
+            if (fx->delay.line[j] != NULL) {
+                __AXFXFree(fx->delay.line[j]);
             }
-            fx->delay.line[i] = NULL;
+            fx->delay.line[j] = NULL;
         }
         OSRestoreInterrupts(nested);
         OSRestoreInterrupts(mask);
@@ -79,11 +89,11 @@ memset_done:
     if (__InitParams(fx) == FALSE) {
         nested = OSDisableInterrupts();
         fx->active |= 1;
-        for (i = 0; i < 4; i++) {
-            if (fx->delay.line[i] != NULL) {
-                __AXFXFree(fx->delay.line[i]);
+        for (j = 0; j < 4; j++) {
+            if (fx->delay.line[j] != NULL) {
+                __AXFXFree(fx->delay.line[j]);
             }
-            fx->delay.line[i] = NULL;
+            fx->delay.line[j] = NULL;
         }
         OSRestoreInterrupts(nested);
         OSRestoreInterrupts(mask);
@@ -96,7 +106,9 @@ memset_done:
 }
 
 BOOL AXFXChorusExpSettingsUpdateDpl2(AXFX_CHORUS_EXP_DPL2* fx) {
+    f32** walk;
     u32 i;
+    u32 j;
     BOOL ok;
     BOOL result;
     BOOL mask = OSDisableInterrupts();
@@ -104,12 +116,14 @@ BOOL AXFXChorusExpSettingsUpdateDpl2(AXFX_CHORUS_EXP_DPL2* fx) {
 
     fx->active |= 1;
 
+    walk = fx->delay.line;
     for (i = 0; i < 4; i++) {
-        if (fx->delay.line[i] == NULL) {
+        if (*walk == NULL) {
             ok = FALSE;
             goto memset_done;
         }
-        memset(fx->delay.line[i], 0, fx->delay.size * 4);
+        memset(*walk, 0, fx->delay.size * 4);
+        walk++;
     }
     fx->delay.inPos = 0;
     fx->delay.outPos = (fx->delay.size - (u32)(32.0f * fx->delayTime)) << 16;
@@ -135,11 +149,11 @@ memset_done:
     if (result == FALSE) {
         nested = OSDisableInterrupts();
         fx->active |= 1;
-        for (i = 0; i < 4; i++) {
-            if (fx->delay.line[i] != NULL) {
-                __AXFXFree(fx->delay.line[i]);
+        for (j = 0; j < 4; j++) {
+            if (fx->delay.line[j] != NULL) {
+                __AXFXFree(fx->delay.line[j]);
             }
-            fx->delay.line[i] = NULL;
+            fx->delay.line[j] = NULL;
         }
         OSRestoreInterrupts(nested);
         OSRestoreInterrupts(mask);

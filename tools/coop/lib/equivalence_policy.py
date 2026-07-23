@@ -664,6 +664,7 @@ def _check_promotion_provenance(
     blockers: list[str],
     *,
     certificate: dict[str, Any] | None = None,
+    warnings: list[str] | None = None,
 ) -> None:
     """Hard-block promotion on incomplete or stale provenance bindings."""
     if not result.engine_hash:
@@ -676,7 +677,10 @@ def _check_promotion_provenance(
     if not certifier_hash:
         blockers.append("missing-certifier-hash")
     if result.git_dirty:
-        blockers.append("git-dirty")
+        if policy.require_clean_trust_boundary:
+            blockers.append("git-dirty")
+        elif warnings is not None:
+            warnings.append("git-dirty-allowed-by-config")
     if result.architecture_model != ARCHITECTURE_MODEL:
         blockers.append(
             f"architecture-model-{result.architecture_model}"
@@ -860,7 +864,7 @@ def classify_for_promotion(
         blockers.append(f"result-format-{result.format}-too-old")
 
     _check_promotion_provenance(
-        result, policy, blockers, certificate=certificate
+        result, policy, blockers, certificate=certificate, warnings=warnings
     )
 
     if result.memory_scope is not None:
@@ -1024,6 +1028,7 @@ class PromotionPolicy:
     )
     capability_assurance_shadow_mode: bool = True
     require_capability_assurance: bool = False
+    require_clean_trust_boundary: bool = True
 
     @classmethod
     def from_config(cls, config: CoopConfig) -> "PromotionPolicy":
@@ -1044,5 +1049,8 @@ class PromotionPolicy:
             ),
             require_capability_assurance=bool(
                 getattr(config, "require_capability_assurance", False)
+            ),
+            require_clean_trust_boundary=bool(
+                getattr(config, "require_clean_trust_boundary", True)
             ),
         )

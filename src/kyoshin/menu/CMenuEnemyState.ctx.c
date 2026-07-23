@@ -5928,6 +5928,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -5948,20 +5951,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -10176,7 +10208,95 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -10247,38 +10367,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -10297,7 +10436,11 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5EC - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
     GXPerf0 perf0; // at 0x5EC
     GXPerf1 perf1; // at 0x5F0
     u32 perfSel;   // at 0x5F4
@@ -10312,6 +10455,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -10483,83 +10631,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -21946,8 +22017,8 @@ private:
         u32 magFilter : 3;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 anisotropy : 2;
         u32 paletteFormat : 2;
+        u32 anisotropy : 2;
     } mBits; // at 0x18
 };
 
@@ -248233,6 +248304,9 @@ after_bit21:
     cf::CfObjectPc* pc =
         func_800BFC68(cf::CfGameManager::func_80082D54(0));
 
+    // Stack Vec homes + loop-invariant floats (retail: f28/f30/f31, r28/r29
+    // before the panel loop). Explicit address locals match r28/r29; a separate
+    // zero local matches r31 — keep the live set at _savegpr_22 (not 21/23).
     nw4r::math::VEC3 delta;
     nw4r::math::VEC3 scratch;
     f32 one = lbl_eu_80666FE8;
@@ -248250,14 +248324,17 @@ after_bit21:
 
         u8* panelData = entry + 0xA4;
 
-        if (panelData[0x28] == 0) {
+        if (panelData[0x28] == 0) { // entry+0xCC
             if (func_8013BF48()) {
-                u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
-                *bp = (*bp & 0xFE) | 1;
-                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
-                *bp = (*bp & 0xFE) | 1;
-                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
-                *bp = (*bp & 0xFE) | 1;
+                void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
+                void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
+                void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
+                u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
+                u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
+                u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
+                *b1 = (*b1 & 0xFE) | 1;
+                *b2 = (*b2 & 0xFE) | 1;
+                *b3 = (*b3 & 0xFE) | 1;
             }
         }
 
@@ -248271,22 +248348,32 @@ after_bit21:
         // r24 in retail's loop = result of func_8016FE34 (not the early target).
         void* actor2 = func_8016FE34();
         int skipDist = 0;
+        int hasSub = 0;
         if (actor2 != NULL) {
             void* sub3f34 =
                 *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor2) + 0x3f34);
             if (sub3f34 != NULL) {
-                u32 bits = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(sub3f34) + 0x7a4);
-                if ((bits >> 26) & 1) {
-                    skipDist = 1;
-                }
+                hasSub = 1;
+            }
+        }
+        if (hasSub) {
+            void* sub3f34 =
+                *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor2) + 0x3f34);
+            u32 bits = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(sub3f34) + 0x7a4);
+            if ((bits >> 26) & 1) {
+                skipDist = 1;
             }
         }
 
         if (actor2 != NULL) {
             typedef f32 (*GetFloatFn)(void*);
-            if (animMarker == vslot<GetFloatFn>(actor2, 0x128)(actor2) && panelData[0x1c] == 0) {
-                panelData[0x15] = z;
-                continue;
+            f32 stateVal = vslot<GetFloatFn>(actor2, 0x128)(actor2);
+            // Retail: state==FEC && panelData[0x1c]==0 → always cull.
+            if (animMarker == stateVal) {
+                if (panelData[0x1c] == 0) { // entry+0xC0
+                    panelData[0x15] = z;
+                    continue;
+                }
             }
         }
         if (skipDist) {
@@ -248294,6 +248381,8 @@ after_bit21:
             continue;
         }
 
+        // Distance cull + frustum test only when panelData[0x28]==0 and pc!=NULL.
+        // Retail skips both when either gate fails (falls through to flag work).
         if (panelData[0x28] == 0 && pc != NULL) {
             typedef void* (*GetPosFn)(void*);
             void* handlePos = vslot<GetPosFn>(handle, 0xAC)(handle);
@@ -248305,7 +248394,9 @@ after_bit21:
                 reinterpret_cast<const nw4r::math::VEC3*>(pcPos),
                 reinterpret_cast<const nw4r::math::VEC3*>(handlePos));
             scratch = delta;
-            if (scratch.x * scratch.x + scratch.y * scratch.y + scratch.z * scratch.z > distThresh) {
+            f32 distSq = scratch.x * scratch.x + scratch.y * scratch.y +
+                         scratch.z * scratch.z;
+            if (distSq > distThresh) {
                 panelData[0x15] = z;
                 continue;
             }
@@ -248321,11 +248412,11 @@ after_bit21:
                 b.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x13c);
                 b.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x140);
 
-                void* cpos = vslot<GetPosFn>(handle, 0xAC)(handle);
+                void* qpos = vslot<GetPosFn>(handle, 0xAC)(handle);
                 Vec3f c;
-                c.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(cpos) + 0);
-                c.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(cpos) + 4);
-                c.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(cpos) + 8);
+                c.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 0);
+                c.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 4);
+                c.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 8);
 
                 if (!func_8013A4B4(&a, &b, &c)) {
                     panelData[0x15] = z;
@@ -248334,13 +248425,17 @@ after_bit21:
             }
         }
 
-        if (panelData[0x28] == 0) {
-            if (panelData[0x1d] != 0) {
+        if (panelData[0x28] == 0) { // entry+0xCC
+            if (panelData[0x1d] != 0) { // entry+0xC1
                 if (actor2 != NULL) {
-                    u8* b1 = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
-                    *b1 = (*b1 & 0xFE) | 1;
+                    void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
+                    void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
+                    void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
+                    u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
+                    u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
+                    u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
 
-                    u8* b2 = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
+                    *b1 = (*b1 & 0xFE) | 1;
                     *b2 = *b2 & 0xFE;
 
                     typedef void* (*GetPtrFn)(void*);
@@ -248350,18 +248445,20 @@ after_bit21:
                         *b2 = (*b2 & 0xFE) | 1;
                     }
 
-                    u8* b3 = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
                     typedef u32 (*GetU8Fn)(void*);
                     u32 byteVal = vslot<GetU8Fn>(actor2, 0x260)(actor2) & 0xFF;
                     *b3 = (*b3 & 0xFE) | static_cast<u8>(byteVal);
                 }
             } else {
-                u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
-                *bp = *bp & 0xFE;
-                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
-                *bp = *bp & 0xFE;
-                bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
-                *bp = *bp & 0xFE;
+                void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
+                void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
+                void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
+                u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
+                u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
+                u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
+                *b1 = *b1 & 0xFE;
+                *b2 = *b2 & 0xFE;
+                *b3 = *b3 & 0xFE;
             }
         }
 
@@ -248371,33 +248468,28 @@ after_bit21:
             Vec3f posTmp;
             Vec3f posA;
             Vec3f posB;
+            Vec3f* posTmpPtr = &posTmp;
 
-            {
-                typedef void* (*GetVecFn)(void*, int);
-                void* tmp = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
-                if (tmp != NULL) {
-                    posTmp.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(tmp) + 0xc);
-                    posTmp.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(tmp) + 0x1c);
-                    posTmp.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(tmp) + 0x2c);
-                    posA.x = posTmp.x;
-                    posA.y = posTmp.y;
-                    posA.z = posTmp.z;
-                } else {
-                    typedef void* (*GetPosFn)(void*);
-                    void* pp = vslot<GetPosFn>(handle, 0xAC)(handle);
-                    posA.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 0);
-                    posA.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 4);
-                    posA.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 8);
-                }
-            }
-
-            {
+            typedef void* (*GetVecFn)(void*, int);
+            void* r = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
+            if (r != NULL) {
+                posTmpPtr->x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0xc);
+                posTmpPtr->y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0x1c);
+                posTmpPtr->z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0x2c);
+                posA = *posTmpPtr;
+            } else {
                 typedef void* (*GetPosFn)(void*);
-                void* pp = vslot<GetPosFn>(handle, 0xAC)(handle);
-                posB.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 0);
-                posB.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 4);
-                posB.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pp) + 8);
+                void* p = vslot<GetPosFn>(handle, 0xAC)(handle);
+                posA.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 0);
+                posA.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 4);
+                posA.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 8);
             }
+
+            typedef void* (*GetPosFn)(void*);
+            void* p2 = vslot<GetPosFn>(handle, 0xAC)(handle);
+            posB.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 0);
+            posB.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 4);
+            posB.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 8);
 
             u32 flagWord = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(handle) + 0x64);
             if ((flagWord & 0x4000) != 0 || (flagWord & 0x8000) != 0) {
@@ -248442,19 +248534,25 @@ after_bit21:
         }
 
         if (panelData[0x28] != 0) {
-            u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
-            *bp = *bp & 0xFE;
-            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
-            *bp = *bp & 0xFE;
-            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
-            *bp = *bp & 0xFE;
+            void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
+            void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
+            void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
+            u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
+            u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
+            u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
+            *b1 = *b1 & 0xFE;
+            *b2 = *b2 & 0xFE;
+            *b3 = *b3 & 0xFE;
         } else if (!func_8013BF48()) {
-            u8* bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x2c)) + 0xBB;
-            *bp = *bp & 0xFE;
-            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x30)) + 0xBB;
-            *bp = *bp & 0xFE;
-            bp = reinterpret_cast<u8*>(*reinterpret_cast<void**>(panelData + 0x34)) + 0xBB;
-            *bp = *bp & 0xFE;
+            void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
+            void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
+            void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
+            u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
+            u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
+            u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
+            *b1 = *b1 & 0xFE;
+            *b2 = *b2 & 0xFE;
+            *b3 = *b3 & 0xFE;
         }
     }
 
@@ -248511,94 +248609,3 @@ after_bit21:
 done:
     ;
 }
-
-// LLM-HARNESS-BEGIN: us-8010f7f4
-extern "C" void func_8010ED18(void* self) { if (*(unsigned int*)((char*)self + 0x44) == 0) { *(unsigned int*)((char*)self + 0x44) = 1; *(unsigned char*)((char*)self + 0x40) = 0; } }
-// LLM-HARNESS-END: us-8010f7f4
-// LLM-HARNESS-BEGIN: us-8010f814
-extern "C" void func_8010ED38(unsigned char* self) { if (*(int*)(self + 0x44) == 2) { *(int*)(self + 0x44) = 3; self[0x40] = 0; } }
-// LLM-HARNESS-END: us-8010f814
-// LLM-HARNESS-BEGIN: us-8010f8b0
-extern "C" unsigned char func_8010EDD4(const void* self) { return ((const unsigned char*)self)[0x40]; }
-// LLM-HARNESS-END: us-8010f8b0
-// LLM-HARNESS-BEGIN: us-8010f8b8
-extern "C" void func_8010EDDC(void *self, unsigned char val) {
-    *(unsigned char *)((char *)self + 0x41) = val;
-    func_8010EE40(self);
-}
-// LLM-HARNESS-END: us-8010f8b8
-// LLM-HARNESS-BEGIN: us-8011154c
-extern u32 lbl_eu_80663F50;
-extern "C" u32 func_80110A70() { return lbl_eu_80663F50; }
-// LLM-HARNESS-END: us-8011154c
-// LLM-HARNESS-BEGIN: us-80111b50
-extern "C" void func_80111074(void* _this) {
-    *(u8*)((u8*)_this + 0x54) = 1;
-}
-// LLM-HARNESS-END: us-80111b50
-// LLM-HARNESS-BEGIN: us-80113fc4
-extern "C" void sinit_801134E8() { extern unsigned short lbl_eu_80663F58[4]; extern unsigned short lbl_eu_80663F60[4]; extern unsigned short lbl_eu_80663F68[4]; extern unsigned short lbl_eu_80663F70[4]; extern unsigned short lbl_eu_80663F78[4]; extern unsigned short lbl_eu_80663F80[4]; extern unsigned short lbl_eu_80663F88[4]; extern unsigned short lbl_eu_80663F90[4]; lbl_eu_80663F58[3] = 0; lbl_eu_80663F58[2] = 0; lbl_eu_80663F58[1] = 0; lbl_eu_80663F58[0] = 0; lbl_eu_80663F60[3] = 0; lbl_eu_80663F60[2] = 0; lbl_eu_80663F60[1] = 0; lbl_eu_80663F60[0] = 0; lbl_eu_80663F68[3] = 0; lbl_eu_80663F68[2] = 0; lbl_eu_80663F68[1] = 0; lbl_eu_80663F68[0] = 0x78; lbl_eu_80663F70[3] = 0; lbl_eu_80663F70[2] = 0x32; lbl_eu_80663F70[1] = 0x5a; lbl_eu_80663F70[0] = 0xff; lbl_eu_80663F78[3] = 0; lbl_eu_80663F78[2] = 0; lbl_eu_80663F78[1] = 0x43; lbl_eu_80663F78[0] = 0x54; lbl_eu_80663F80[3] = 0; lbl_eu_80663F80[2] = 0; lbl_eu_80663F80[1] = 0xff; lbl_eu_80663F80[0] = 0xff; lbl_eu_80663F88[3] = 0; lbl_eu_80663F88[2] = 0x6e; lbl_eu_80663F88[1] = 0x23; lbl_eu_80663F88[0] = 0; lbl_eu_80663F90[3] = 0; lbl_eu_80663F90[2] = 0xff; lbl_eu_80663F90[1] = 0xb4; lbl_eu_80663F90[0] = 0x46; }
-// LLM-HARNESS-END: us-80113fc4
-// LLM-HARNESS-BEGIN: us-801140a4
-extern "C" void __dt__15CMenuEnemyStateFv(void*);
-
-extern "C" void func_801135C8(void* arg) {
-    __dt__15CMenuEnemyStateFv(static_cast<char*>(arg) - 0x58);
-}
-// LLM-HARNESS-END: us-801140a4
-// LLM-HARNESS-BEGIN: us-801140ac
-extern "C" void func_801135D0(void* obj) {
-    reinterpret_cast<CMenuEnemyState*>(static_cast<char*>(obj) - 0x5c)->cbRenderBefore();
-}
-// LLM-HARNESS-END: us-801140ac
-// LLM-HARNESS-BEGIN: us-801140b4
-extern "C" void func_801135D8(void* p) {
-    __dt__15CMenuEnemyStateFv((CMenuEnemyState*)((char*)p - 0x5c));
-}
-// LLM-HARNESS-END: us-801140b4
-
-// LLM-HARNESS-BEGIN: us-8010f620
-extern "C" void func_8010EB44() {}
-// LLM-HARNESS-END: us-8010f620
-// LLM-HARNESS-BEGIN: us-8010f834
-extern "C" void func_8010ED58() {}
-// LLM-HARNESS-END: us-8010f834
-// LLM-HARNESS-BEGIN: us-8010f8c0
-extern "C" void func_8010EDE4() {}
-// LLM-HARNESS-END: us-8010f8c0
-// LLM-HARNESS-BEGIN: us-8010f91c
-extern "C" void func_8010EE40(void* self) {}
-// LLM-HARNESS-END: us-8010f91c
-// LLM-HARNESS-BEGIN: us-801114b4
-extern "C" void func_801109D8() {}
-// LLM-HARNESS-END: us-801114b4
-// LLM-HARNESS-BEGIN: us-80111554
-extern "C" void func_80110A78() {}
-// LLM-HARNESS-END: us-80111554
-// LLM-HARNESS-BEGIN: us-80111b5c
-extern "C" void func_80111080(CMenuEnemyState* self, u8* panelData, void* posA, void* posB) {}
-// LLM-HARNESS-END: us-80111b5c
-// LLM-HARNESS-BEGIN: us-801120c4
-extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {}
-// LLM-HARNESS-END: us-801120c4
-// LLM-HARNESS-BEGIN: us-801125e4
-extern "C" void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {}
-// LLM-HARNESS-END: us-801125e4
-// LLM-HARNESS-BEGIN: us-8011272c
-extern "C" void func_80111C50() {}
-// LLM-HARNESS-END: us-8011272c
-// LLM-HARNESS-BEGIN: us-8011294c
-extern "C" void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {}
-// LLM-HARNESS-END: us-8011294c
-// LLM-HARNESS-BEGIN: us-80112c4c
-extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData) {}
-// LLM-HARNESS-END: us-80112c4c
-// LLM-HARNESS-BEGIN: us-80112fa4
-extern "C" void func_801124C8() {}
-// LLM-HARNESS-END: us-80112fa4
-// LLM-HARNESS-BEGIN: us-8011328c
-extern "C" void func_801127B0(CMenuEnemyState* self) {}
-// LLM-HARNESS-END: us-8011328c
-// LLM-HARNESS-BEGIN: us-80113d84
-extern "C" void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor) {}
-// LLM-HARNESS-END: us-80113d84

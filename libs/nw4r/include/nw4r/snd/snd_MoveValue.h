@@ -8,11 +8,7 @@ namespace detail {
 
 template <typename TValue, typename TTime> class MoveValue {
 public:
-    MoveValue()
-        : mOrigin(TValue()),
-          mTarget(TValue()),
-          mFrame(TTime()),
-          mCounter(TTime()) {}
+    MoveValue() {}
 
     void InitValue(TValue t1) {
         mOrigin = t1;

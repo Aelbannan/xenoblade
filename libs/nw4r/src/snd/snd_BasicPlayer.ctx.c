@@ -786,8 +786,7 @@ struct SoundParam {
     int priority;    // at 0x18
 };
 
-namespace detail {
-
+// US retail mangles these as nw4r::snd::PanMode / PanCurve (not detail::).
 enum PanMode {
     PAN_MODE_DUAL,
     PAN_MODE_BALANCE,
@@ -804,6 +803,8 @@ enum PanCurve {
     PAN_CURVE_LINEAR_0DB,
     PAN_CURVE_LINEAR_0DB_CLAMP,
 };
+
+namespace detail {
 
 struct AdpcmParam {
     u16 coef[16];   // at 0x0
@@ -8483,12 +8484,21 @@ void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
 GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
 GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
 
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
 u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
                        u8 max_lod);
 
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
 
 #ifdef __cplusplus
 }
@@ -237283,6 +237293,32 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Embedded at BasicPlayer+0x4. sizeof == 0xCC; BasicPlayer::mId follows at 0xD0.
+struct PlayerParamSet {
+    void Init();
+
+    f32 mVolume;      // at 0x0
+    f32 mPitch;       // at 0x4
+    f32 mPan;         // at 0x8
+    f32 mSurroundPan; // at 0xC
+    f32 mLpfFreq;     // at 0x10
+    f32 mUnk0x14;     // at 0x14
+    u8 mUnk0x18;      // at 0x18
+    u8 mRemoteFilter; // at 0x19 (BasicPlayer+0x1D)
+    u8 mPad0x1A[2];   // at 0x1A
+    int mOutputLine;  // at 0x1C
+    f32 mMainOutVolume;                         // at 0x20
+    f32 mMainSend;                              // at 0x24
+    PanMode mPanMode;                           // at 0x28 (BasicPlayer+0x2C)
+    PanCurve mPanCurve;                         // at 0x2C (BasicPlayer+0x30)
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x30 (BasicPlayer+0x34)
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x3C (BasicPlayer+0x40)
+    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x4C (BasicPlayer+0x50)
+    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x5C (BasicPlayer+0x60)
+    // Xenoblade extension: 4× (1,1,0,0,0,0) float groups through +0xC8.
+    f32 mUnk0x6C[24]; // at 0x6C
+};
+
 class BasicPlayer {
 public:
     BasicPlayer();
@@ -237305,59 +237341,59 @@ public:
     }
 
     f32 GetVolume() const {
-        return mVolume;
+        return mParam.mVolume;
     }
     void SetVolume(f32 volume) {
-        mVolume = volume;
+        mParam.mVolume = volume;
     }
 
     f32 GetPitch() const {
-        return mPitch;
+        return mParam.mPitch;
     }
     void SetPitch(f32 pitch) {
-        mPitch = pitch;
+        mParam.mPitch = pitch;
     }
 
     f32 GetPan() const {
-        return mPan;
+        return mParam.mPan;
     }
     void SetPan(f32 pan) {
-        mPan = pan;
+        mParam.mPan = pan;
     }
 
     f32 GetSurroundPan() const {
-        return mSurroundPan;
+        return mParam.mSurroundPan;
     }
     void SetSurroundPan(f32 pan) {
-        mSurroundPan = pan;
+        mParam.mSurroundPan = pan;
     }
 
     f32 GetLpfFreq() const {
-        return mLpfFreq;
+        return mParam.mLpfFreq;
     }
     void SetLpfFreq(f32 freq) {
-        mLpfFreq = freq;
+        mParam.mLpfFreq = freq;
     }
 
     int GetOutputLine() const {
-        return mOutputLine;
+        return mParam.mOutputLine;
     }
     void SetOutputLine(int flags) {
-        mOutputLine = flags;
+        mParam.mOutputLine = flags;
     }
 
     f32 GetMainOutVolume() const {
-        return mMainOutVolume;
+        return mParam.mMainOutVolume;
     }
     void SetMainOutVolume(f32 volume) {
-        mMainOutVolume = volume;
+        mParam.mMainOutVolume = volume;
     }
 
     f32 GetMainSend() const {
-        return mMainSend;
+        return mParam.mMainSend;
     }
     void SetMainSend(f32 send) {
-        mMainSend = send;
+        mParam.mMainSend = send;
     }
 
     void SetFxSend(AuxBus bus, f32 send);
@@ -237370,53 +237406,27 @@ public:
     f32 GetRemoteFxSend(int remote) const;
 
     int GetRemoteFilter() const {
-        return mRemoteFilter;
+        return mParam.mRemoteFilter;
     }
-    void SetRemoteFilter(int filter) {
-        mRemoteFilter = ut::Clamp(filter, 0, REMOTE_FILTER_MAX);
-    }
+    void SetRemoteFilter(int filter);
 
     PanMode GetPanMode() const {
-        return mPanMode;
+        return mParam.mPanMode;
     }
     void SetPanMode(PanMode mode) {
-        mPanMode = mode;
+        mParam.mPanMode = mode;
     }
 
     PanCurve GetPanCurve() const {
-        return mPanCurve;
+        return mParam.mPanCurve;
     }
     void SetPanCurve(PanCurve curve) {
-        mPanCurve = curve;
+        mParam.mPanCurve = curve;
     }
 
 private:
-    // 0x4 was mislabeled as mId; retail mId is at 0xD0. Keep the word so
-    // send-array bases (0x34/0x40/0x50/0x60) stay correct.
-    u32 mPad0x4; // at 0x4
-
-    f32 mVolume;      // at 0x8
-    f32 mPitch;       // at 0xC
-    f32 mPan;         // at 0x10
-    f32 mSurroundPan; // at 0x14
-    f32 mLpfFreq;     // at 0x18
-    char UNK_0x1C[0x4];
-
-    int mOutputLine;                            // at 0x20
-    f32 mMainOutVolume;                         // at 0x24
-    f32 mMainSend;                              // at 0x28
-    u32 mUnk0x2C;                               // at 0x2C
-    u32 mUnk0x30;                               // at 0x30
-    f32 mFxSend[AUX_BUS_NUM];                   // at 0x34
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x40
-    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x50
-    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x60
-    u8 mRemoteFilter;                           // at 0x70
-    u8 mPad0x71[3];                             // at 0x71
-    PanMode mPanMode;                           // at 0x74
-    PanCurve mPanCurve;                         // at 0x78
-    u8 mPad0x7C[0x54];                          // at 0x7C
-    u32 mId;                                    // at 0xD0
+    PlayerParamSet mParam; // at 0x4
+    u32 mId;               // at 0xD0
 };
 
 } // namespace detail
@@ -237523,35 +237533,37 @@ public:
 
 public:
     BasicSound();
-    virtual ~BasicSound() {} // at 0xC
+    virtual ~BasicSound() {}
 
-    virtual void Update();                      // at 0x10
-    virtual void StartPrepared();               // at 0x14
-    virtual void Stop(int frames);              // at 0x18
-    virtual void Pause(bool flag, int frames);  // at 0x1C
-    virtual void SetAutoStopCounter(int count); // at 0x20
-    virtual void FadeIn(int frames);            // at 0x24
-    virtual void Shutdown();                    // at 0x28
-    virtual bool IsPrepared() const = 0;        // at 0x2C
-    virtual bool IsPause() const;               // at 0x30
+    virtual void Update();
+    virtual void StartPrepared();
+    virtual void Stop(int frames);
+    virtual void Pause(bool flag, int frames);
+    virtual void Shutdown();
+    // US retail (dual dtor slots): GetBasicPlayer at vtable+0x24,
+    // OnUpdatePlayerPriority at +0x2C.
+    virtual BasicPlayer& GetBasicPlayer() = 0;
+    virtual const BasicPlayer& GetBasicPlayer() const = 0;
+    virtual void OnUpdatePlayerPriority();
+    virtual bool IsPrepared() const = 0;
+    virtual bool IsPause() const;
 
-    virtual void SetInitialVolume(f32 vol);       // at 0x34
-    virtual void SetVolume(f32 vol, int frames);  // at 0x38
-    virtual void SetPitch(f32 pitch);             // at 0x3C
-    virtual void SetPan(f32 pan);                 // at 0x40
-    virtual void SetSurroundPan(f32 pan);         // at 0x44
-    virtual void SetLpfFreq(f32 freq);            // at 0x48
-    virtual void SetPlayerPriority(int priority); // at 0x4C
-    virtual void SetRemoteFilter(int filter);     // at 0x50
-    virtual void SetPanMode(PanMode mode);        // at 0x54
-    virtual void SetPanCurve(PanCurve curve);     // at 0x58
+    virtual bool IsAttachedTempSpecialHandle() = 0;
+    virtual void DetachTempSpecialHandle() = 0;
 
-    virtual bool IsAttachedTempSpecialHandle() = 0; // at 0x5C
-    virtual void DetachTempSpecialHandle() = 0;     // at 0x60
-
-    virtual void InitParam();                              // at 0x64
-    virtual BasicPlayer& GetBasicPlayer() = 0;             // at 0x68
-    virtual const BasicPlayer& GetBasicPlayer() const = 0; // at 0x6C
+    void SetAutoStopCounter(int count);
+    void FadeIn(int frames);
+    void InitParam();
+    void SetInitialVolume(f32 vol);
+    void SetVolume(f32 vol, int frames);
+    void SetPitch(f32 pitch);
+    void SetPan(f32 pan);
+    void SetSurroundPan(f32 pan);
+    void SetLpfFreq(f32 freq);
+    void SetPlayerPriority(int priority);
+    void SetRemoteFilter(int filter);
+    void SetPanMode(PanMode mode);
+    void SetPanCurve(PanCurve curve);
 
     PlayerHeap* GetPlayerHeap() {
         return mHeap;
@@ -237944,8 +237956,8 @@ public:
         int playerPriority;        // at 0x8
         int volume;                // at 0xC
         int remoteFilter;          // at 0x10
-        detail::PanMode panMode;   // at 0x14
-        detail::PanCurve panCurve; // at 0x18
+        PanMode panMode;   // at 0x14
+        PanCurve panCurve; // at 0x18
     };
 
     struct SeqSoundInfo {
@@ -245799,6 +245811,7 @@ public:
     void detail_InsertPriorityList(detail::BasicSound* pSound);
     void detail_RemovePriorityList(detail::BasicSound* pSound);
 
+    void detail_SortPriorityList(detail::BasicSound* pSound);
     void detail_SortPriorityList();
 
     detail::SeqSound* detail_AllocSeqSound(
@@ -247406,6 +247419,12 @@ s16 DecodeDspAdpcm(AXPBADPCM* pAdpcm, u8 bits);
 #endif
 /* end "nw4r/snd.h" */
 
+// Retail .sdata2 pools for PlayerParamSet::Init (US target relocs).
+extern "C" {
+extern const f32 lbl_eu_80669EE0; // 1.0f
+extern const f32 lbl_eu_80669EE4; // 0.0f
+}
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -247414,55 +247433,77 @@ BasicPlayer::BasicPlayer() : mId(BasicSound::INVALID_ID) {
     InitParam();
 }
 
-void BasicPlayer::InitParam() {
-    // TODO(kiwi) Fakematch
-    mPan = 1.0f;
+void PlayerParamSet::Init() {
+    const f32 zero = lbl_eu_80669EE4;
+    const f32 one = lbl_eu_80669EE0;
 
-    mPan = 0.0f;
-    mVolume = 1.0f;
-    mPitch = 1.0f;
-    mSurroundPan = 0.0f;
-    mLpfFreq = 0.0f;
+    // Store order matches US retail (pan before volume/pitch; filter bytes
+    // around mUnk0x14; remotes interleaved per index).
+    mPan = zero;
+    mVolume = one;
+    mPitch = one;
+    mSurroundPan = zero;
+    mLpfFreq = zero;
+    mUnk0x18 = 0;
+    mUnk0x14 = zero;
     mRemoteFilter = 0;
+    mOutputLine = OUTPUT_LINE_MAIN;
+    mMainOutVolume = one;
+    mMainSend = zero;
     mPanMode = PAN_MODE_DUAL;
     mPanCurve = PAN_CURVE_SQRT;
-    mOutputLine = OUTPUT_LINE_MAIN;
-    mMainSend = 0.0f;
-    mMainOutVolume = 1.0f;
 
-    for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mFxSend[i] = 0.0f;
+    mFxSend[0] = zero;
+    mFxSend[1] = zero;
+    mFxSend[2] = zero;
+
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        mRemoteOutVolume[i] = one;
+        mRemoteSend[i] = zero;
+        mRemoteFxSend[i] = zero;
     }
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        mRemoteOutVolume[i] = 1.0f;
-        mRemoteSend[i] = 0.0f;
-        mRemoteFxSend[i] = 0.0f;
+        int base = i * 6;
+        mUnk0x6C[base + 0] = one;
+        mUnk0x6C[base + 1] = one;
+        mUnk0x6C[base + 2] = zero;
+        mUnk0x6C[base + 3] = zero;
+        mUnk0x6C[base + 4] = zero;
+        mUnk0x6C[base + 5] = zero;
     }
 }
 
+void BasicPlayer::InitParam() {
+    mParam.Init();
+}
+
 void BasicPlayer::SetFxSend(AuxBus bus, f32 send) {
-    mFxSend[bus] = send;
+    mParam.mFxSend[bus] = send;
 }
 
 f32 BasicPlayer::GetFxSend(AuxBus bus) const {
-    return mFxSend[bus];
+    return mParam.mFxSend[bus];
 }
 
 void BasicPlayer::SetRemoteOutVolume(int remote, f32 volume) {
-    mRemoteOutVolume[remote] = volume;
+    mParam.mRemoteOutVolume[remote] = volume;
 }
 
 f32 BasicPlayer::GetRemoteOutVolume(int remote) const {
-    return mRemoteOutVolume[remote];
+    return mParam.mRemoteOutVolume[remote];
 }
 
 f32 BasicPlayer::GetRemoteSend(int remote) const {
-    return mRemoteSend[remote];
+    return mParam.mRemoteSend[remote];
 }
 
 f32 BasicPlayer::GetRemoteFxSend(int remote) const {
-    return mRemoteFxSend[remote];
+    return mParam.mRemoteFxSend[remote];
+}
+
+void BasicPlayer::SetRemoteFilter(int filter) {
+    mParam.mRemoteFilter = filter;
 }
 
 } // namespace detail

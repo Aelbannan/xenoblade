@@ -153,8 +153,8 @@ BOOL AXFXDelayExpSettings(AXFX_DELAY_EXP* fx) {
 }
 
 BOOL AXFXDelayExpSettingsUpdate(AXFX_DELAY_EXP* fx) {
-    BOOL mask;
     BOOL nested;
+    BOOL mask;
 
     mask = OSDisableInterrupts();
     fx->active |= 1;

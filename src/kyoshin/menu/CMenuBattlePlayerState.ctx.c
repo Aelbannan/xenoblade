@@ -4635,20 +4635,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -8930,12 +8959,21 @@ void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
 GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
 GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
 
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
 u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
                        u8 max_lod);
 
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
 
 #ifdef __cplusplus
 }
@@ -12438,7 +12476,13 @@ public:
     
     static void Move();
     static void Draw();
-    static void Tail();
+    // Not present as OOL in retail CProcess.s; keep inline API for callers.
+    static void Tail() {
+        TChildListHeader<CProcess>& list = GetRootProcessList();
+        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
+            TailImpl(proc);
+        }
+    }
 
     static TChildListHeader<CProcess>& GetFreeProcessList() {
         return sFreeProcessList;
@@ -12454,7 +12498,6 @@ private:
 
     static bool Remove(CProcess* proc);
 
-    static void DeleteList(TChildListHeader<CProcess>& list);
     static void DeleteImpl(CProcess* proc);
 
     static bool sIsInitialized;
@@ -12535,8 +12578,11 @@ In XC3D, all instances of the unused event functions (including events 1, 3, and
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
 events being unused as well.
 
-Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
-do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
 class IWorkEvent {
 public:
     virtual ~IWorkEvent();
@@ -17817,7 +17863,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() {}
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -245269,13 +245320,66 @@ private:
 /* "libs/monolib/include/monolib/core/CRsrc.hpp" line 2 "types.h" */
 /* end "types.h" */
 
+/* "libs/monolib/include/monolib/core/CRsrc.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CRsrcData;
+
 class CRsrc {
 public:
-    static bool entry(UNKTYPE* r3, const char* r4, UNKTYPE* r5, void* r6, u32 r7, bool r8);
-
+    static CRsrcData* convertToRsrcData(CWorkThread* pThread);
+    static bool entry(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag);
+    static CRsrcData* getRsrc(u32 id);
 };
+
+extern "C" {
+bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
+bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* name, void** outData, u32* outLength);
+bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
+bool releaseCache__5CRsrcFPCv(const void* data);
+bool isExistData__5CRsrcFPCv(const void* data);
+}
 /* end "monolib/core/CRsrc.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 11 "monolib/core/CScriptCode.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 11 "monolib/core/CRsrcData.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 3 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+
+// size: 0x4E8
+class CRsrcData : public CWorkThread {
+public:
+    CRsrcData(const char* pName, CWorkThread* pParent);
+    virtual ~CRsrcData();
+
+    virtual void wkUpdate();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    void destruct(int arg);
+    bool releaseCache(const void* data);
+    void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
+    int isSameName(const char* name) const;
+
+    // Layout matches retail stores (CWorkThread ends at 0x1C4).
+    char mName[0x100];     // 0x1C4
+    u32 mNameLength;       // 0x2C4
+    char mAltPath[0x100];  // 0x2C8
+    u32 mAltPathLength;    // 0x3C8
+    char mPath[0x100];     // 0x3CC
+    u32 mPathLength;       // 0x4CC
+    void* mCacheData;      // 0x4D0
+    u32 mCacheLength;      // 0x4D4
+    u32 mRefCount;         // 0x4D8
+    u32 mFlags4DC;         // 0x4DC
+    u8 unk4E0;             // 0x4E0
+    s16 unk4E2;            // 0x4E2
+    s16 unk4E4;            // 0x4E4
+};
+/* end "monolib/core/CRsrcData.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CScriptCode.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CScriptCode.hpp" line 2 "monolib/work/CWorkThread.hpp" */
@@ -245290,7 +245394,7 @@ public:
     static CScriptCode* getInstance();
 };
 /* end "monolib/core/CScriptCode.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CTaskManager.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CTaskManager.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CTaskManager.hpp" line 2 "monolib/monolib_types.hpp" */
@@ -245316,11 +245420,11 @@ private:
     static void Start();
 };
 /* end "monolib/core/CTaskManager.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CView.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 14 "monolib/core/CView.hpp" */
 /* end "monolib/core/CView.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 14 "monolib/core/CViewFrame.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 15 "monolib/core/CViewFrame.hpp" */
 /* end "monolib/core/CViewFrame.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 15 "monolib/core/CViewRoot.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 16 "monolib/core/CViewRoot.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 2 "monolib/monolib_types.hpp" */
@@ -248111,7 +248215,7 @@ typedef enum {
 // Batch 2026-07-14g: menu-bps-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-bps-move owns Move exclusively; do not touch
 // Term / cbRenderBefore.
-// Batch 2026-07-14k: menu-bps-ctor owns __ct__CMenuBattlePlayerState only.
+// Batch 2026-07-14k: menu-bps-ctor lives in CMenuBattlePlayerState_ct.cpp (-O4,s).
 
 struct CMenuBpsProcessShim {
     u8 unk00[0x10];
@@ -248407,181 +248511,6 @@ static inline u32 menuBpsActorListSize(const reslist<cf::CfObjectActor*>* list) 
         curNode = curNode->mNext;
     }
     return length;
-}
-
-// Retail linker name is untyped `__ct__CMenuBattlePlayerState` (takes CScn* in r4).
-// Leaf uses optimize_for_size for divwu; whole-ctor size-opt regresses fuzzy.
-extern "C" CMenuBattlePlayerState*
-__ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
-    CMenuBpsProcessShim* process;
-    u8* ptmfBase;
-    char* vtFinal;
-    char* vtWork;
-    char* vtRender;
-    u32 ptmfWord0;
-    u32 ptmfWord1;
-    u32 ptmfWord2;
-    u32 z;
-    u32 v4;
-    u32 v6;
-    u32 vB;
-    u8 i;
-    UnkClass_8045F564* unk64p;
-
-    process = reinterpret_cast<CMenuBpsProcessShim*>(self);
-    __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
-
-    // Interim CProcess vtable, then final MI vtable + interface pieces.
-    // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C (ArtsSelect order).
-    process->vtable = lbl_eu_8052C1C0;
-    vtFinal = lbl_eu_8052C330;
-    ptmfBase = (u8*)__ptmf_null;
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
-    vtWork = vtFinal + 0x24;
-    vtRender = vtFinal + 0xac;
-    z = 0;
-    unk64p = &self->unk64;
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
-    process->callbacks[1] = ptmfWord1;
-    process->callbacks[0] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
-    process->callbacks[2] = ptmfWord2;
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
-    process->callbacks[4] = ptmfWord1;
-    process->callbacks[3] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
-    process->callbacks[5] = ptmfWord2;
-    self->unk54 = (u8)z;
-    self->unk55 = (u8)z;
-    process->vtable = vtFinal;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x58) = vtWork;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x5c) = vtRender;
-    self->mScn = scn;
-
-    __ct__17UnkClass_8045F564Fv(unk64p);
-    __construct_array(self->mSlots, reinterpret_cast<void*>(func_8010B324),
-                      reinterpret_cast<void*>(__dt__8010B444), 0x270, 3);
-
-    // Retail stores 0.0f then constructs unk7D0 before loading loop floats.
-    self->unk7C4 = lbl_eu_80666F94;
-    self->unk7C8 = (u8)z;
-    self->unk7C9 = (u8)z;
-    self->unk7CC = lbl_eu_8052C42C;
-    __ct__17UnkClass_8045F564Fv(&self->unk7D0);
-
-    self->unk7F4 = 1;
-    self->unk7E0 = (void*)z;
-    self->unk7E4 = (nw4r::lyt::Layout*)z;
-    self->unk7E8 = (nw4r::lyt::AnimTransform*)z;
-    self->unk7EC = (nw4r::lyt::AnimTransform*)z;
-    self->unk7F0 = (nw4r::lyt::AnimTransform*)z;
-    self->unk7F8 = z;
-
-    {
-        f32 zeroF;
-        f32 neg1F;
-        CMenuBattlePlayerStateSlot slot;
-        u8* padStart;
-        u8* padEnd;
-        u32 padSize;
-        // Live across the slot loop so MWCC prefers a wider savegpr set.
-        u32 nv21;
-        u32 nv22;
-        u32 nv23;
-        u32 nv24;
-        u32 nv25;
-        u32 nv26;
-
-        // Retail hoists pad start/end/size (+ 0x2AAB gate math) before the loop.
-        padStart = slot.pad90;
-        padEnd = reinterpret_cast<u8*>(&slot.unk204);
-        padSize = static_cast<u32>(padEnd - padStart);
-        nv21 = padSize;
-        nv22 = reinterpret_cast<u32>(padStart);
-        nv23 = reinterpret_cast<u32>(padEnd);
-        nv24 = 0x60;
-        nv25 = 0xc;
-        nv26 = nv21 + 0xb;
-
-        v4 = 4;
-        v6 = 6;
-        vB = 0xb;
-        zeroF = lbl_eu_80666F94;
-        neg1F = lbl_eu_80666FB0;
-        i = 0;
-        do {
-            // Inlined func_8010B324: clear +0x74..+0x8c then pad90[0x174].
-            slot.unk74 = (void*)z;
-            slot.unk78 = (nw4r::lyt::Layout*)z;
-            slot.unk7C = (nw4r::lyt::AnimTransform*)z;
-            slot.unk80 = (u8)z;
-            slot.unk84 = (void*)z;
-            slot.unk88 = (void*)z;
-            slot.unk8C = (void*)z;
-            // Word-while peak ~65.5%. Retail 0x60 fill needs size-opt (see leaf);
-            // inlining that shape here under O4,p blows the loop (~33%).
-            {
-                u32* p = reinterpret_cast<u32*>(padStart);
-                u32* end = reinterpret_cast<u32*>(padEnd);
-                if (p < end) {
-                    do {
-                        *p = z;
-                        p++;
-                    } while (p < end);
-                }
-            }
-
-            slot.unk220 = zeroF;
-            slot.unk224 = zeroF;
-            slot.unk228 = zeroF;
-            slot.unk22C = neg1F;
-            slot.unk248 = v4;
-            slot.unk250 = v6;
-            slot.unk254 = vB;
-            slot.unk258 = i;
-            slot.unk264 = zeroF;
-
-            // Post-float zeros: retail fills slot+0x00..+0x40 then sparse tail
-            // before the aggregate copy into mSlots[i].
-            {
-                u32* hp = reinterpret_cast<u32*>(&slot);
-                u32 left;
-                for (left = 0x11; left != 0; left--) {
-                    *hp = z;
-                    hp++;
-                }
-            }
-            slot.unk204 = (u8)z;
-            slot.unk208 = z;
-            slot.unk20C = z;
-            slot.unk210 = z;
-            slot.unk214 = z;
-            slot.unk218 = z;
-            slot.unk21C = z;
-            slot.unk230 = z;
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x234) = z;
-            slot.unk238 = z;
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x23c) = z;
-            slot.unk25C = z;
-            slot.unk240 = (u8)z;
-            slot.unk244 = z;
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x24c) = z;
-            *reinterpret_cast<u8*>(reinterpret_cast<u8*>(&slot) + 0x260) = (u8)z;
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x268) = z;
-            *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x26c) = z;
-
-            self->mSlots[i] = slot;
-            // Keep NV set live through the iteration.
-            nv21 ^= nv24;
-            nv22 ^= nv25;
-            nv23 ^= nv26;
-            i = (u8)(i + 1);
-        } while (i < 3);
-        self->unk7F8 = self->unk7F8 + (nv21 & z) + (nv22 & z) + (nv23 & z);
-    }
-
-    return self;
 }
 
 void CMenuBattlePlayerState::Init() {

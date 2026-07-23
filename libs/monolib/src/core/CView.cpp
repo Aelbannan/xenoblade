@@ -65,7 +65,7 @@ CView* CView::getCurrentView() {
 
 // Enqueue tag 6 onto the context ring (CMsgParam<10>). High-level enqueue
 // restores signed ring index + stwux; retail -0x40 spill interleave is closed
-// by CView.o insn_patches (§17.6). behaviour:view-set-current-ring.
+// Chaitin near-miss — keep iterating in high-level C. behaviour:view-set-current-ring.
 void CView::setCurrent() {
     CMsgParam<10>& messages =
         *reinterpret_cast<CMsgParam<10>*>(&mContextMsgVtable);
@@ -153,7 +153,7 @@ setRect_tail:
 bool CView::attachRenderWork(CWorkThread* pThread) {
     // Dual context-ring enqueue: tag0+WorkID then tag1+thread*. Typed
     // CMsgParam<10> restores exact -0x80 / stmw r21 / 0x1E0 / stwux; remaining
-    // dual-inline snap schedule is closed by CView.o insn_patches (§17.6).
+    // dual-inline snap schedule is a Chaitin near-miss — keep iterating in high-level C.
     CMsgParam<10>& messages =
         *reinterpret_cast<CMsgParam<10>*>(&mContextMsgVtable);
 
@@ -185,7 +185,8 @@ void CView::updateMsg() {
         u8 byte;
         u8 pad;
     };
-    // Three uninit 0x24 snaps (retail -0x150 frame homes @ 0x48 / 0x28 / 0x08).
+    // Three uninit 0x24 snaps (retail -0x150 homes @ 0x48 / 0x28 / 0x08).
+    // Keep only these — dual fan-copy volatiles force -0x140 / stmw r17.
     volatile CtxSnap snapFan0;
     volatile CtxSnap snapFan1;
     volatile CtxSnap snapTag1;
@@ -219,40 +220,6 @@ void CView::updateMsg() {
     u8* childRing;
     u8* childSlot;
     u32 workId;
-#if 1
-    volatile CtxSnap fan0;
-    volatile CtxSnap fan1;
-    volatile CtxSnap tag1Snap;
-    fan0.w0 = snapFan0.w0;
-    fan0.w1 = snapFan0.w1;
-    fan0.w2 = snapFan0.w2;
-    fan0.w3 = snapFan0.w3;
-    fan0.w4 = snapFan0.w4;
-    fan0.w5 = snapFan0.w5;
-    fan0.w6 = snapFan0.w6;
-    fan0.half = snapFan0.half;
-    fan0.byte = snapFan0.byte;
-
-    fan1.w0 = snapFan1.w0;
-    fan1.w1 = snapFan1.w1;
-    fan1.w2 = snapFan1.w2;
-    fan1.w3 = snapFan1.w3;
-    fan1.w4 = snapFan1.w4;
-    fan1.w5 = snapFan1.w5;
-    fan1.w6 = snapFan1.w6;
-    fan1.half = snapFan1.half;
-    fan1.byte = snapFan1.byte;
-
-    tag1Snap.w0 = snapTag1.w0;
-    tag1Snap.w1 = snapTag1.w1;
-    tag1Snap.w2 = snapTag1.w2;
-    tag1Snap.w3 = snapTag1.w3;
-    tag1Snap.w4 = snapTag1.w4;
-    tag1Snap.w5 = snapTag1.w5;
-    tag1Snap.w6 = snapTag1.w6;
-    tag1Snap.half = snapTag1.half;
-    tag1Snap.byte = snapTag1.byte;
-#endif
 
     goto updateMsg_check;
 
@@ -310,7 +277,7 @@ updateMsg_loop:
                 childThread = (CWorkThread*)childNode[2];
                 childView = CView::convertToView(childThread);
                 if (childView != nullptr) {
-#if 0
+#if 1
                     CMsgParam<10>& childMessages =
                         *reinterpret_cast<CMsgParam<10>*>(&childView->mContextMsgVtable);
                     childMessages.enqueue(0);
@@ -332,15 +299,15 @@ updateMsg_loop:
                     childRing = (u8*)childView->mContextRingBase;
                     childSlot = childRing + byteOff;
                     *(u32*)childSlot = tag0;
-                    *(u32*)(childSlot + 0x4) = fan0.w0;
-                    *(u32*)(childSlot + 0x8) = fan0.w1;
-                    *(u32*)(childSlot + 0xC) = fan0.w2;
-                    *(u32*)(childSlot + 0x10) = fan0.w3;
-                    *(u32*)(childSlot + 0x14) = fan0.w4;
-                    *(u32*)(childSlot + 0x18) = fan0.w5;
-                    *(u32*)(childSlot + 0x1C) = fan0.w6;
-                    *(s16*)(childSlot + 0x20) = fan0.half;
-                    childSlot[0x22] = fan0.byte;
+                    *(u32*)(childSlot + 0x4) = snapFan0.w0;
+                    *(u32*)(childSlot + 0x8) = snapFan0.w1;
+                    *(u32*)(childSlot + 0xC) = snapFan0.w2;
+                    *(u32*)(childSlot + 0x10) = snapFan0.w3;
+                    *(u32*)(childSlot + 0x14) = snapFan0.w4;
+                    *(u32*)(childSlot + 0x18) = snapFan0.w5;
+                    *(u32*)(childSlot + 0x1C) = snapFan0.w6;
+                    *(s16*)(childSlot + 0x20) = snapFan0.half;
+                    childSlot[0x22] = snapFan0.byte;
                     childSlot[0x23] = (u8)tag0;
 
                     writeIdx = childView->mContextRingWriteIndex + 1;
@@ -367,15 +334,15 @@ updateMsg_loop:
                     childRing = (u8*)childView->mContextRingBase;
                     childSlot = childRing + byteOff;
                     *(u32*)childSlot = tag1;
-                    *(u32*)(childSlot + 0x4) = fan1.w0;
-                    *(u32*)(childSlot + 0x8) = fan1.w1;
-                    *(u32*)(childSlot + 0xC) = fan1.w2;
-                    *(u32*)(childSlot + 0x10) = fan1.w3;
-                    *(u32*)(childSlot + 0x14) = fan1.w4;
-                    *(u32*)(childSlot + 0x18) = fan1.w5;
-                    *(u32*)(childSlot + 0x1C) = fan1.w6;
-                    *(s16*)(childSlot + 0x20) = fan1.half;
-                    childSlot[0x22] = fan1.byte;
+                    *(u32*)(childSlot + 0x4) = snapFan1.w0;
+                    *(u32*)(childSlot + 0x8) = snapFan1.w1;
+                    *(u32*)(childSlot + 0xC) = snapFan1.w2;
+                    *(u32*)(childSlot + 0x10) = snapFan1.w3;
+                    *(u32*)(childSlot + 0x14) = snapFan1.w4;
+                    *(u32*)(childSlot + 0x18) = snapFan1.w5;
+                    *(u32*)(childSlot + 0x1C) = snapFan1.w6;
+                    *(s16*)(childSlot + 0x20) = snapFan1.half;
+                    childSlot[0x22] = snapFan1.byte;
                     childSlot[0x23] = (u8)tag0;
 
                     writeIdx = childView->mContextRingWriteIndex + 1;
@@ -442,7 +409,7 @@ updateMsg_loop:
                 childThread = (CWorkThread*)childNode[2];
                 childView = CView::convertToView(childThread);
                 if (childView != nullptr) {
-#if 0
+#if 1
                     CMsgParam<10>& childMessages =
                         *reinterpret_cast<CMsgParam<10>*>(&childView->mContextMsgVtable);
                     childMessages.enqueue(1);
@@ -460,15 +427,15 @@ updateMsg_loop:
                     childRing = (u8*)childView->mContextRingBase;
                     childSlot = childRing + byteOff;
                     *(u32*)childSlot = tag1;
-                    *(u32*)(childSlot + 0x4) = tag1Snap.w0;
-                    *(u32*)(childSlot + 0x8) = tag1Snap.w1;
-                    *(u32*)(childSlot + 0xC) = tag1Snap.w2;
-                    *(u32*)(childSlot + 0x10) = tag1Snap.w3;
-                    *(u32*)(childSlot + 0x14) = tag1Snap.w4;
-                    *(u32*)(childSlot + 0x18) = tag1Snap.w5;
-                    *(u32*)(childSlot + 0x1C) = tag1Snap.w6;
-                    *(s16*)(childSlot + 0x20) = tag1Snap.half;
-                    childSlot[0x22] = tag1Snap.byte;
+                    *(u32*)(childSlot + 0x4) = snapTag1.w0;
+                    *(u32*)(childSlot + 0x8) = snapTag1.w1;
+                    *(u32*)(childSlot + 0xC) = snapTag1.w2;
+                    *(u32*)(childSlot + 0x10) = snapTag1.w3;
+                    *(u32*)(childSlot + 0x14) = snapTag1.w4;
+                    *(u32*)(childSlot + 0x18) = snapTag1.w5;
+                    *(u32*)(childSlot + 0x1C) = snapTag1.w6;
+                    *(s16*)(childSlot + 0x20) = snapTag1.half;
+                    childSlot[0x22] = snapTag1.byte;
                     childSlot[0x23] = (u8)tag0;
 
                     writeIdx = childView->mContextRingWriteIndex + 1;

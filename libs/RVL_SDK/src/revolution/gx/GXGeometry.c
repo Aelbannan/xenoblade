@@ -159,19 +159,11 @@ void GXSetLineWidth(u8 width, u32 offset) {
     gxdt->lastWriteWasXF = FALSE;
 }
 
-//unused
-void GXGetLineWidth(){
-}
-
 void GXSetPointSize(u8 size, u32 offset) {
     GX_BP_SET_LINEPTWIDTH_POINTSZ(gxdt->linePtWidth, size);
     GX_BP_SET_LINEPTWIDTH_POINTOFS(gxdt->linePtWidth, offset);
     GX_BP_LOAD_REG(gxdt->linePtWidth);
     gxdt->lastWriteWasXF = FALSE;
-}
-
-//unused
-void GXGetPointSize(){
 }
 
 void GXEnableTexOffsets(GXTexCoordID id, GXBool lineOfs, GXBool pointOfs) {
@@ -186,15 +178,6 @@ void GXSetCullMode(GXCullMode mode) {
     GXCullMode bits = (GXCullMode)(mode << 1 & 2 | mode >> 1 & 1);
     GX_BP_SET_GENMODE_CULLMODE(gxdt->genMode, bits);
     gxdt->gxDirtyFlags |= GX_DIRTY_GEN_MODE;
-}
-
-//unused
-void GXGetCullMode(GXCullMode* out) {
-    // TODO(kiwi) Fakematch? Should use GX_BP_GET_GENMODE_CULLMODE if possible
-    s32 bits = 0;
-    bits |= (s32)(gxdt->genMode >> (13 + 1) & 2) >> 1;
-    bits |= (s32)(gxdt->genMode >> 13 & 2);
-    *out = (GXCullMode)bits;
 }
 
 void GXSetCoPlanar(GXBool coplanar) {

@@ -86,7 +86,238 @@ static inline Fn vslot(void* obj, u32 offset) {
     return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
 }
 
+// Cast-only ifaces: MWCC virtual dispatch uses r12 (retail), unlike function-pointer
+// loads that color the vptr temp as r4. Never constructed.
+struct MenuBpsActorIf {
+    // MWCC (RTTI on) places two hidden slots before the first declared virtual;
+    // omit _v000/_v004 so vf108 lands at retail 0x108, etc.
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void _v0A8();
+    virtual void _v0AC();
+    virtual void _v0B0();
+    virtual void _v0B4();
+    virtual void _v0B8();
+    virtual void _v0BC();
+    virtual void _v0C0();
+    virtual void _v0C4();
+    virtual void _v0C8();
+    virtual void _v0CC();
+    virtual void _v0D0();
+    virtual void _v0D4();
+    virtual void _v0D8();
+    virtual void _v0DC();
+    virtual void _v0E0();
+    virtual void _v0E4();
+    virtual void _v0E8();
+    virtual void _v0EC();
+    virtual void _v0F0();
+    virtual void _v0F4();
+    virtual void _v0F8();
+    virtual void _v0FC();
+    virtual void _v100();
+    virtual void _v104();
+    virtual u32 vf108();
+    virtual void _v10C();
+    virtual void _v110();
+    virtual void _v114();
+    virtual void _v118();
+    virtual void _v11C();
+    virtual void _v120();
+    virtual void _v124();
+    virtual f32 vf128();
+    virtual f32 vf12C();
+    virtual void _v130();
+    virtual void _v134();
+    virtual void _v138();
+    virtual void _v13C();
+    virtual void _v140();
+    virtual void _v144();
+    virtual void _v148();
+    virtual void _v14C();
+    virtual void _v150();
+    virtual void _v154();
+    virtual void _v158();
+    virtual void _v15C();
+    virtual void _v160();
+    virtual void _v164();
+    virtual void _v168();
+    virtual void _v16C();
+    virtual void _v170();
+    virtual void _v174();
+    virtual void _v178();
+    virtual void _v17C();
+    virtual void _v180();
+    virtual void _v184();
+    virtual void _v188();
+    virtual void _v18C();
+    virtual void _v190();
+    virtual void _v194();
+    virtual void _v198();
+    virtual void _v19C();
+    virtual void _v1A0();
+    virtual void _v1A4();
+    virtual void _v1A8();
+    virtual void _v1AC();
+    virtual void _v1B0();
+    virtual void _v1B4();
+    virtual void _v1B8();
+    virtual void _v1BC();
+    virtual void _v1C0();
+    virtual void _v1C4();
+    virtual void _v1C8();
+    virtual void _v1CC();
+    virtual void _v1D0();
+    virtual void _v1D4();
+    virtual void _v1D8();
+    virtual void _v1DC();
+    virtual void _v1E0();
+    virtual void _v1E4();
+    virtual int vf1E8();
+    virtual void _v1EC();
+    virtual int vf1F0();
+    virtual void _v1F4();
+    virtual void _v1F8();
+    virtual void _v1FC();
+    virtual u32 vf200();
+    virtual void _v204();
+    virtual void _v208();
+    virtual void _v20C();
+    virtual void _v210();
+    virtual void _v214();
+    virtual void _v218();
+    virtual void _v21C();
+    virtual void _v220();
+    virtual void _v224();
+    virtual void _v228();
+    virtual void _v22C();
+    virtual void _v230();
+    virtual void _v234();
+    virtual void _v238();
+    virtual void _v23C();
+    virtual void _v240();
+    virtual void _v244();
+    virtual void _v248();
+    virtual void _v24C();
+    virtual void _v250();
+    virtual void _v254();
+    virtual void _v258();
+    virtual void _v25C();
+    virtual void _v260();
+    virtual void _v264();
+    virtual void _v268();
+    virtual void _v26C();
+    virtual void _v270();
+    virtual void _v274();
+    virtual void _v278();
+    virtual void _v27C();
+    virtual void _v280();
+    virtual void _v284();
+    virtual void _v288();
+    virtual void _v28C();
+    virtual u32 vf290();
+    virtual void _v294();
+    virtual void _v298();
+    virtual void _v29C();
+    virtual void _v2A0();
+    virtual void _v2A4();
+    virtual void _v2A8();
+    virtual void _v2AC();
+    virtual void _v2B0();
+    virtual void _v2B4();
+    virtual void _v2B8();
+    virtual void _v2BC();
+    virtual void _v2C0();
+    virtual void _v2C4();
+    virtual void _v2C8();
+    virtual void _v2CC();
+    virtual void _v2D0();
+    virtual void _v2D4();
+    virtual void _v2D8();
+    virtual void _v2DC();
+    virtual void _v2E0();
+    virtual void _v2E4();
+    virtual void _v2E8();
+    virtual void _v2EC();
+    virtual void _v2F0();
+    virtual s16* vf2F4();
+};
+
+struct MenuBpsMoveIf {
+    // Same two-slot MWCC adjustment as MenuBpsActorIf.
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual int vf4C();
+};
+
+// Length-first decl so inlined size homes match retail (length r4, cur r3, end r5).
+// Do not change shared reslist::size() — that regresses other units.
+static inline u32 menuBpsActorListSize(const reslist<cf::CfObjectActor*>* list) {
+    u32 length = 0;
+    _reslist_node<cf::CfObjectActor*>* endNode = list->mStartNodePtr;
+    _reslist_node<cf::CfObjectActor*>* curNode = list->mStartNodePtr->mNext;
+    while (curNode != endNode) {
+        length += 1;
+        curNode = curNode->mNext;
+    }
+    return length;
+}
+
 // Retail linker name is untyped `__ct__CMenuBattlePlayerState` (takes CScn* in r4).
+// Leaf uses optimize_for_size for divwu; whole-ctor size-opt regresses fuzzy.
 extern "C" CMenuBattlePlayerState*
 __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     CMenuBpsProcessShim* process;
@@ -157,6 +388,28 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     {
         f32 zeroF;
         f32 neg1F;
+        CMenuBattlePlayerStateSlot slot;
+        u8* padStart;
+        u8* padEnd;
+        u32 padSize;
+        // Live across the slot loop so MWCC prefers a wider savegpr set.
+        u32 nv21;
+        u32 nv22;
+        u32 nv23;
+        u32 nv24;
+        u32 nv25;
+        u32 nv26;
+
+        // Retail hoists pad start/end/size (+ 0x2AAB gate math) before the loop.
+        padStart = slot.pad90;
+        padEnd = reinterpret_cast<u8*>(&slot.unk204);
+        padSize = static_cast<u32>(padEnd - padStart);
+        nv21 = padSize;
+        nv22 = reinterpret_cast<u32>(padStart);
+        nv23 = reinterpret_cast<u32>(padEnd);
+        nv24 = 0x60;
+        nv25 = 0xc;
+        nv26 = nv21 + 0xb;
 
         v4 = 4;
         v6 = 6;
@@ -165,11 +418,7 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
         neg1F = lbl_eu_80666FB0;
         i = 0;
         do {
-            CMenuBattlePlayerStateSlot slot;
-            u32* p;
-            u32* end;
-
-            // Inlined func_8010B324: clear +0x74..+0x8c then +0x90..+0x204.
+            // Inlined func_8010B324: clear +0x74..+0x8c then pad90[0x174].
             slot.unk74 = (void*)z;
             slot.unk78 = (nw4r::lyt::Layout*)z;
             slot.unk7C = (nw4r::lyt::AnimTransform*)z;
@@ -177,11 +426,17 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
             slot.unk84 = (void*)z;
             slot.unk88 = (void*)z;
             slot.unk8C = (void*)z;
-            p = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x90);
-            end = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x204);
-            while (p < end) {
-                *p = z;
-                p++;
+            // Word-while peak ~65.5%. Retail 0x60 fill needs size-opt (see leaf);
+            // inlining that shape here under O4,p blows the loop (~33%).
+            {
+                u32* p = reinterpret_cast<u32*>(padStart);
+                u32* end = reinterpret_cast<u32*>(padEnd);
+                if (p < end) {
+                    do {
+                        *p = z;
+                        p++;
+                    } while (p < end);
+                }
             }
 
             slot.unk220 = zeroF;
@@ -224,8 +479,13 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
             *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x26c) = z;
 
             self->mSlots[i] = slot;
+            // Keep NV set live through the iteration.
+            nv21 ^= nv24;
+            nv22 ^= nv25;
+            nv23 ^= nv26;
             i = (u8)(i + 1);
         } while (i < 3);
+        self->unk7F8 = self->unk7F8 + (nv21 & z) + (nv22 & z) + (nv23 & z);
     }
 
     return self;
@@ -654,29 +914,24 @@ after_bit21:
         // Gauge/bias NVs intentionally not hoisted as named locals: retail loads
         // int->float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
 
-        typedef s16* (*GetS16PairFn)(void*);
-
         for (u8 i = 0; i < 3; i++) {
-            void* actor;
+            MenuBpsActorIf* actor;
             CMenuBattlePlayerStateSlot* slot;
             u32 hp;
             u32 maxHp;
             f32 hpRatio;
 
-            actor = actors[i];
+            actor = reinterpret_cast<MenuBpsActorIf*>(actors[i]);
             if (actor == NULL) {
                 continue;
             }
 
-            // Retail: clrlwi; mulli 0x270; add this; addi +0x74.
-            {
-                u8* row = reinterpret_cast<u8*>(this) + (i * 0x270);
-                slot = reinterpret_cast<CMenuBattlePlayerStateSlot*>(row + 0x74);
-            }
+            // Retail: clrlwi; mulli 0x270; add this; addi +0x74 → &mSlots[i].
+            slot = &mSlots[i];
             func_8010D1B4(this, actor, slot);
 
-            hp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x128)(actor));
-            maxHp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x12C)(actor));
+            hp = static_cast<u32>(actor->vf128());
+            maxHp = static_cast<u32>(actor->vf12C());
 
             // Retail: lfs f26, zero pool -- not fmr from a zero NV.
             hpRatio = lbl_eu_80666F94;
@@ -692,15 +947,15 @@ after_bit21:
 
             slot->unk204 = static_cast<u8>(*reinterpret_cast<u16*>(
                 reinterpret_cast<u8*>(actor) + 0x3f28));
-            slot->unk208 = vslot<GetU32Fn>(actor, 0x290)(actor);
+            slot->unk208 = actor->vf290();
 
             {
-                u32 statusId = vslot<GetU32Fn>(actor, 0x108)(actor);
+                u32 statusId = actor->vf108();
                 if (slot->unk20C != statusId) {
                     slot->unk25C |= 0x1;
                 }
             }
-            slot->unk20C = vslot<GetU32Fn>(actor, 0x108)(actor);
+            slot->unk20C = actor->vf108();
 
             if (slot->unk210 != hp) {
                 goto hp_dirty;
@@ -714,14 +969,14 @@ after_bit21:
         hp_clean:
             slot->unk210 = hp;
             slot->unk214 = maxHp;
-            slot->unk218 = vslot<GetU32Fn>(actor, 0x200)(actor);
+            slot->unk218 = actor->vf200();
             slot->unk220 = hpRatio;
 
             {
-                f32 tB = static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
-                if (tB == lbl_eu_80666F90) {
-                    f32 tB2 =
-                        static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
+                f32 tB = static_cast<f32>(actor->vf1F0());
+                // Constant on the left → retail fcmpu cr0,fNV,f0 (not f0,fNV).
+                if (lbl_eu_80666F90 == tB) {
+                    f32 tB2 = static_cast<f32>(actor->vf1F0());
                     if (slot->unk228 != tB2) {
                         slot->unk25C |= 0x4;
                     }
@@ -731,13 +986,11 @@ after_bit21:
                 }
 
                 {
-                    f32 tA = static_cast<f32>(static_cast<u32>(
-                        vslot<GetIntFn>(actor, 0x1E8)(actor)));
+                    f32 tA = static_cast<f32>(static_cast<u32>(actor->vf1E8()));
                     if (slot->unk224 != tA) {
                         goto tension_flag;
                     }
-                    f32 tB2 =
-                        static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
+                    f32 tB2 = static_cast<f32>(actor->vf1F0());
                     if (slot->unk228 == tB2) {
                         goto tension_store;
                     }
@@ -745,10 +998,9 @@ after_bit21:
             tension_flag:
                 slot->unk25C |= 0x4;
             tension_store:
-                slot->unk224 = static_cast<f32>(static_cast<u32>(
-                    vslot<GetIntFn>(actor, 0x1E8)(actor)));
-                slot->unk228 =
-                    static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
+                slot->unk224 =
+                    static_cast<f32>(static_cast<u32>(actor->vf1E8()));
+                slot->unk228 = static_cast<f32>(actor->vf1F0());
             }
         tension_done:
 
@@ -757,19 +1009,20 @@ after_bit21:
             }
 
             {
-                s16* pair = vslot<GetS16PairFn>(actor, 0x2F4)(actor);
+                s16* pair = actor->vf2F4();
                 slot->unk230 = pair[1];
                 slot->unk238 = pair[0];
             }
 
             {
                 cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                u32 nonempty = bm->mActorList1.size() != 0;
+                u32 nonempty = menuBpsActorListSize(&bm->mActorList1) != 0;
                 slot->unk240 = static_cast<u8>(nonempty);
                 if (nonempty == 0) {
-                    void* move = cf::CfGameManager::func_80082D54(0);
+                    MenuBpsMoveIf* move = reinterpret_cast<MenuBpsMoveIf*>(
+                        cf::CfGameManager::func_80082D54(0));
                     if (move != NULL) {
-                        int id = vslot<GetIntFn>(move, 0x4C)(move);
+                        int id = move->vf4C();
                         if (id != 0) {
                             void* handle = func_800B708C(id);
                             if (handle != NULL) {
@@ -894,11 +1147,11 @@ after_bit21:
             nw4r::lyt::Pane* pane =
                 unk7E4->GetRootPane()->FindPaneByName(lbl_eu_804FD720 + 0x95,
                                                       true);
-            f32 tx = lbl_eu_80666FA0;
-            f32 ty =
-                lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(unk7F5);
-            f32 tz = lbl_eu_80666F94;
-            pane->SetTranslate(nw4r::math::VEC3(tx, ty, tz));
+            // Inline VEC3 args so MWCC matches retail lfs/fnmsubs/stfs order.
+            pane->SetTranslate(nw4r::math::VEC3(
+                lbl_eu_80666FA0,
+                lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(unk7F5),
+                lbl_eu_80666F94));
         }
 
         unk7E4->Animate(0);
@@ -986,7 +1239,96 @@ done:
 }
 
 // LLM-HARNESS-BEGIN: us-8010be00
-extern "C" void func_8010B324(CMenuBattlePlayerStateSlot*) {}
+// Under stock -O4,p, /0x60 strength-reduces to mulhwu. Size opt keeps
+// retail li/divwu/mtctr/bdnz (same as TU -O4,s). See MWCC_REFERENCE.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void func_8010B324(CMenuBattlePlayerStateSlot* slot) {
+    u32 z;
+    u8* start;
+    u8* end;
+    u8* lim;
+    u8* p;
+    u32 big;
+    u32 little;
+    u32 c;
+    u32 ok;
+    u32 ok2;
+
+    z = 0;
+    big = 0x60;
+    little = 0xc;
+    start = slot->pad90;
+    end = reinterpret_cast<u8*>(&slot->unk204);
+
+    slot->unk74 = (void*)z;
+    slot->unk78 = (nw4r::lyt::Layout*)z;
+    slot->unk7C = (nw4r::lyt::AnimTransform*)z;
+    slot->unk80 = (u8)z;
+    slot->unk84 = (void*)z;
+    slot->unk88 = (void*)z;
+    slot->unk8C = (void*)z;
+
+    if (start >= end) {
+        return;
+    }
+
+    // Retail bool gate before the 0x60 body (cmplw start,end → ok/ok2).
+    lim = end - 0x60;
+    ok = 0;
+    ok2 = 0;
+    if (!(start > end)) {
+        ok = 1;
+    }
+    if (ok != 0) {
+        ok2 = 1;
+    }
+    p = start;
+    if (ok2 != 0) {
+        c = (u32)(lim + 0x5f - start) / big;
+        if (p < lim) {
+            for (; c != 0; --c) {
+                u32* w = reinterpret_cast<u32*>(p);
+                w[0] = z;
+                w[1] = z;
+                w[2] = z;
+                w[3] = z;
+                w[4] = z;
+                w[5] = z;
+                w[6] = z;
+                w[7] = z;
+                w[8] = z;
+                w[9] = z;
+                w[10] = z;
+                w[11] = z;
+                w[12] = z;
+                w[13] = z;
+                w[14] = z;
+                w[15] = z;
+                w[16] = z;
+                w[17] = z;
+                w[18] = z;
+                w[19] = z;
+                w[20] = z;
+                w[21] = z;
+                w[22] = z;
+                w[23] = z;
+                p += 0x60;
+            }
+        }
+    }
+    c = (u32)(end + 0xb - p) / little;
+    if (p < end) {
+        for (; c != 0; --c) {
+            u32* w = reinterpret_cast<u32*>(p);
+            w[0] = z;
+            w[1] = z;
+            w[2] = z;
+            p += 0xc;
+        }
+    }
+}
+#pragma pop
 // LLM-HARNESS-END: us-8010be00
 // LLM-HARNESS-BEGIN: us-8010d924
 extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
@@ -1029,14 +1371,17 @@ extern "C" void func_8010CF68() {}
 extern "C" void func_8010D0D4() {}
 // LLM-HARNESS-END: us-8010dbb0
 // LLM-HARNESS-BEGIN: us-8010dc90
-extern "C" void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
-                              CMenuBattlePlayerStateSlot* slot) {}
+// Keep names distinct from Move's extern callees or MWCC DCE's the bl sites.
+extern "C" void harness_stub_us_8010dc90(CMenuBattlePlayerState* self,
+                                         void* actor,
+                                         CMenuBattlePlayerStateSlot* slot) {}
 // LLM-HARNESS-END: us-8010dc90
 // LLM-HARNESS-BEGIN: us-8010df8c
-extern "C" void func_8010D4B0(CMenuBattlePlayerState* self,
-                              CMenuBattlePlayerStateSlot* slot, u32 index) {}
+extern "C" void harness_stub_us_8010df8c(CMenuBattlePlayerState* self,
+                                         CMenuBattlePlayerStateSlot* slot,
+                                         u32 index) {}
 // LLM-HARNESS-END: us-8010df8c
 // LLM-HARNESS-BEGIN: us-8010e3b0
-extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
-                              CMenuBattlePlayerStateSlot* slot) {}
+extern "C" void harness_stub_us_8010e3b0(CMenuBattlePlayerState* self,
+                                         CMenuBattlePlayerStateSlot* slot) {}
 // LLM-HARNESS-END: us-8010e3b0

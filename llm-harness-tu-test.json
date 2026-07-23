@@ -11,10 +11,9 @@
   },
   "providers": {
     "opencode": {
-      "base_url": "http://127.0.0.1:4096",
+      "binary": "opencode",
       "timeout_seconds": 360,
-      "pure": true,
-      "delete_session": true
+      "pure": true
     },
     "deepseek-raw": {
       "binary": "deepseek-raw",

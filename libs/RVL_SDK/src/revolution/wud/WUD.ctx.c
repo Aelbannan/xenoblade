@@ -214181,8 +214181,6 @@ extern "C" {
 #define WUD_DEV_HANDLE_INVALID (-1)
 
 // Forward declarations
-typedef struct WUDDevInfo;
-
 typedef enum {
     WUD_LIB_STATUS_0,
     WUD_LIB_STATUS_1,
@@ -214219,7 +214217,6 @@ typedef BOOL (*WUDFreeFunc)(void* pBlock);
 typedef void (*WUDSyncDeviceCallback)(s32 result, s32 num);
 typedef void (*WUDClearDeviceCallback)(s32 result);
 
-typedef void (*WUDHidConnCallback)(UINT8 devHandle, u8 open);
 typedef void (*WUDHidRecvCallback)(UINT8 devHandle, UINT8* pReport, UINT16 len);
 
 typedef struct WUDDevInfo {
@@ -214236,6 +214233,8 @@ typedef struct WUDDevInfo {
     u8 UNK_0x5D[1];
     tBTA_HH_ATTR_MASK hhAttrMask; // at 0x5E
 } WUDDevInfo;
+
+typedef void (*WUDHidConnCallback)(WUDDevInfo* pInfo, u8 open);
 
 BOOL WUDInit(void);
 BOOL WUDIsBusy(void);
@@ -217615,6 +217614,13 @@ extern BD_ADDR_PTR _dev_handle_to_bda[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
 
+WUDDevInfo* WUDiGetDiscoverDevice(void);
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr);
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle);
+void WUDiSetQueueSizeForHandle(u8 handle, u16 size);
+void WUDiSetNotAckNumForHandle(u8 handle, u16 notAckNum);
+int WUDIsLinkedWBC(void);
+
 #ifdef __cplusplus
 }
 #endif
@@ -218068,7 +218074,7 @@ extern "C" {
 extern "C" {
 #endif
 
-void WUDHidHostCallback(tBTA_HH_EVT event, tBTA_HH* pData);
+void WUDiHidHostEventCallback(tBTA_HH_EVT event, tBTA_HH* pData);
 
 #ifdef __cplusplus
 }
@@ -221002,7 +221008,7 @@ void WUDiInitSub(void) {
 void WUDiEnableStack(void) {
     WUDCB* p = &_wcb;
 
-    BTA_HhEnable(BTA_SEC_AUTHENTICATE, WUDHidHostCallback);
+    BTA_HhEnable(BTA_SEC_AUTHENTICATE, WUDiHidHostEventCallback);
 
     p->stackState = WUD_STATE_STACK_GET_STORED_LINK_KEY;
 
@@ -222245,7 +222251,7 @@ void __wudLinkKeyEventStackCallback() {}
 void __wudPowerMangeEventStackCallback() {}
 // LLM-HARNESS-END: us-8037e910
 // LLM-HARNESS-BEGIN: us-8037eba0
-void WUDiGetDiscoverDevice() {}
+WUDDevInfo* WUDiGetDiscoverDevice(void) { return &_work; }
 // LLM-HARNESS-END: us-8037eba0
 // LLM-HARNESS-BEGIN: us-8037ebb0
 void WUDSetDeviceHistory() {}
@@ -222257,11 +222263,11 @@ void WUDIsLatestDevice() {}
 void WUDUpdateSCSetting() {}
 // LLM-HARNESS-END: us-8037ec90
 // LLM-HARNESS-BEGIN: us-8037ece0
-void WUDiSetDevAddrForHandle(unsigned char handle, unsigned char* addr) { _dev_handle_to_bda[handle] = addr; }
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr) { _dev_handle_to_bda[handle] = addr; }
 // LLM-HARNESS-END: us-8037ece0
 // LLM-HARNESS-BEGIN: us-8037ed00
-void* WUDiGetDevAddrForHandle(u8 handle) {
-    return (void*)_dev_handle_to_bda[handle & 0xFF];
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle) {
+    return _dev_handle_to_bda[handle & 0xFF];
 }
 // LLM-HARNESS-END: us-8037ed00
 // LLM-HARNESS-BEGIN: us-8037ed20

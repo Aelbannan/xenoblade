@@ -299,6 +299,87 @@ class DefinednessSymmetricTests(unittest.TestCase):
 
 
 @unittest.skipUnless(__import__("importlib").util.find_spec("z3"), "z3-solver is not installed")
+class BothInvalidObservableTests(unittest.TestCase):
+    """Both-invalid same-reason paths must still compare committed observables."""
+
+    @staticmethod
+    def _prove(original_hex: str, candidate_hex: str, *, preset: str | None = "auto", observe=None):
+        from tools.ppc_equivalence.semantics import automatic_live_out
+
+        original = decode_block(
+            parse_hex(original_hex.replace(" ", "")),
+            base=0x80001000,
+            validate_with_capstone=False,
+        )
+        candidate = decode_block(
+            parse_hex(candidate_hex.replace(" ", "")),
+            base=0x80002000,
+            validate_with_capstone=False,
+        )
+        if observe is not None:
+            contract = make_contract(preset=None, observe=observe, timeout_ms=20_000)
+        elif preset == "auto":
+            contract = make_contract(
+                preset="auto",
+                observe=None,
+                timeout_ms=20_000,
+                original_live_out=automatic_live_out(original),
+                candidate_live_out=automatic_live_out(candidate),
+            )
+        else:
+            contract = make_contract(preset=preset, observe=None, timeout_ms=20_000)
+        return check_equivalence(
+            original,
+            candidate,
+            contract,
+            original_hex=original_hex.replace(" ", ""),
+            candidate_hex=candidate_hex.replace(" ", ""),
+        )
+
+    def test_store_before_unaligned_load_not_equivalent(self) -> None:
+        # li r4,0x1000; stw r3,0(r4); lwz r5,1(r4); blr
+        # vs li r4,0x1000; lwz r5,1(r4); blr
+        original = "38801000 90640000 80A40001 4E800020"
+        candidate = "38801000 80A40001 4E800020"
+        for preset in ("auto", "strict", None):
+            with self.subTest(preset=preset or "memory"):
+                kwargs = (
+                    {"observe": ["memory"]}
+                    if preset is None
+                    else {"preset": preset}
+                )
+                result = self._prove(original, candidate, **kwargs)
+                self.assertEqual(
+                    result.status,
+                    ProofStatus.NOT_EQUIVALENT,
+                    f"{preset}: {result.status} mismatch={result.mismatch}",
+                )
+                # auto/memory report the store; strict may report r5 first because
+                # the unaligned load overlaps the committed word.
+                if preset is None or preset == "auto":
+                    self.assertEqual((result.mismatch or {}).get("name"), "memory")
+                else:
+                    self.assertIn(
+                        (result.mismatch or {}).get("name"),
+                        {"memory", "r5"},
+                    )
+
+    def test_store_before_div0_not_equivalent(self) -> None:
+        # li r4,0x1000; stw r3,0(r4); li r5,0; divw r3,r4,r5; blr
+        # vs li r4,0x1000; li r5,0; divw r3,r4,r5; blr
+        original = "38801000 90640000 38A00000 7C642BD6 4E800020"
+        candidate = "38801000 38A00000 7C642BD6 4E800020"
+        result = self._prove(original, candidate, preset="auto")
+        self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
+        self.assertEqual((result.mismatch or {}).get("name"), "memory")
+
+    def test_identical_unaligned_blocks_still_equivalent(self) -> None:
+        code = "38801000 80A40001 4E800020"
+        result = self._prove(code, code, preset="auto")
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+
+
+@unittest.skipUnless(__import__("importlib").util.find_spec("z3"), "z3-solver is not installed")
 class CalleeSummaryDefinednessTests(unittest.TestCase):
     """Opaque call summaries must not erase distinct first-invalid reasons."""
 

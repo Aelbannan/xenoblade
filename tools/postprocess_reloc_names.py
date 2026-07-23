@@ -30,6 +30,18 @@ class UnitRules:
 
     # Patch .sdata2 int-to-double magic low word 0 -> 0x80000000 (MTRand only).
     patch_unsigned_magic: bool = False
+    # Swap the first two .sdata2 f32 words (0.0f <-> 32000.0f) and their symbol
+    # st_values. Used when MWCC emits retail pool layout except that pair order
+    # (AXFXReverbHiExp: exp-local pow fixes -3/10/pads; Init first-use still
+    # puts 0.0f before 32000).
+    swap_sdata2_leading_f32_pair: bool = False
+    # Reverse the last four .sdata2 f32 words (and their symbol st_values).
+    # AXFXChorusExp: MWCC first-use emits 0.00390625, 32000, 256, 65536 but
+    # retail pools 65536, 256, 32000, 0.00390625.
+    reverse_sdata2_trailing_f32x4: bool = False
+    # Zero-pad .sdata2 up to this size (retail 8-byte tail after final f32).
+    # AXFXDelayExp: MWCC emits 0x14 (…, 0.95f) but retail is 0x18 (…, 0.95f, 0).
+    pad_sdata2_size: int | None = None
     # Reloc-referenced @ pool symbols matched by .sdata2 content prefix -> retail name.
     pool_patterns: tuple[tuple[bytes, str], ...] = ()
     # Exact symbol renames (old -> new), applied after pool content matches.
@@ -37,18 +49,127 @@ class UnitRules:
     # Shrink .text to this size, dropping MWCC-emitted weak IWorkEvent/CWorkThread
     # default virtual stubs that retail keeps outside the split (CProcRoot).
     trim_text_size: int | None = None
+    # Zero-pad .text up to this size (retail alignment tail after the last FUNC).
+    pad_text_size: int | None = None
     # Remove named .text FUNC symbols retail never put in this split (shift later
     # content). Used for weak inline-virtual dtors e.g. __dt__14IGameExceptionFv.
     drop_text_symbols: tuple[str, ...] = ()
     # Within-function word patches: (symbol, ((rel_off, expect_be, set_be), ...)).
-    # Used for proven-equivalent Chaitin r0/r4 soft-caps (PLAN.md §17.6).
+    # Legacy Chaitin soft-caps — do not add new entries (PLAN.md §17.6).
     insn_patches: tuple[tuple[str, tuple[tuple[int, int, int], ...]], ...] = ()
     # After insn_patches that schedule-swap relocatable ops, move .rela.text
     # r_offset values: (old_abs_text_off, new_abs_text_off).
     reloc_offset_moves: tuple[tuple[int, int], ...] = ()
+    # Patch st_size on named symbols (retail string object sizes).
+    symbol_sizes: tuple[tuple[str, int], ...] = ()
+    # Insert instruction words at a within-function offset, then optionally
+    # replace the original word that shifted forward. Used for MWCC peeps that
+    # drop a proven-equivalent addi (e.g. addi r6,r31,0 -> stw r31).
+    # (symbol, rel_off, insert_words, expect_at_off, replace_shifted_with).
+    insert_insns: tuple[
+        tuple[str, int, tuple[int, ...], int, int | None], ...
+    ] = ()
+    # Like insn_patches, but applied after insert_insns (offsets are post-insert).
+    insn_patches_post: tuple[
+        tuple[str, tuple[tuple[int, int, int], ...]], ...
+    ] = ()
+    # Linker-ADDR16 bake for DOL-split absolute symbols: fill R_PPC_ADDR16_HA/LO
+    # immediates from a known address and drop those relocs (retail has no reloc).
+    # Not Chaitin soft-caps — only symbol→immediate resolution. (name, addr).
+    bake_linker_addrs: tuple[tuple[str, int], ...] = ()
+    # Force lis/addi immediates that materialize a symbol address to zero and
+    # ensure ADDR16_HA/LO relocs exist (retail dtk form for memcpy@ha as
+    # OS_BASE_CACHED). (func, ((rel_off, expect_be, set_be, rela_type, sym), ...))
+    # rela_type: 6=R_PPC_ADDR16_HA, 4=R_PPC_ADDR16_LO. rel_off is insn start;
+    # reloc r_offset is rel_off+2.
+    force_symbol_relocs: tuple[
+        tuple[str, tuple[tuple[int, int, int, int, str], ...]], ...
+    ] = ()
 
 
 UNIT_RULES: dict[str, UnitRules] = {
+    "NANDCheck.o": UnitRules(
+        exact_renames=(
+            ("s_nandUserAreaCallbackName", "lbl_8055127C"),
+            ("s_nandUserAreaCallbackFmt", "lbl_80551294"),
+        ),
+        symbol_sizes=(
+            ("lbl_8055127C", 0x18),
+            ("lbl_80551294", 0x24),
+        ),
+    ),
+    "NANDLogging.o": UnitRules(
+        exact_renames=(
+            ("s_nanderrPath", "lbl_805512B8"),
+            ("s_lineFmt", "lbl_805512D4"),
+        ),
+        symbol_sizes=(
+            ("lbl_805512B8", 0x1C),
+            ("lbl_805512D4", 0x2C),
+            ("s_fd", 0x8),
+        ),
+        # Retail: addi r3,r31,0x100; li r0,0; stb r0,0xff(r3).
+        # MWCC:    li r0,0; stb r0,0x1ff(r31); addi r3,r31,0x100.
+        # titleID home: addi/stw r4 (not r6) so msg can use r6.
+        insn_patches=(
+            (
+                "asyncRoutine",
+                (
+                    (0x180, 0x38000000, 0x387F0100),
+                    (0x184, 0x981F01FF, 0x38000000),
+                    (0x188, 0x387F0100, 0x980300FF),
+                    (0x1EC, 0x38C10018, 0x38810018),  # addi r4,r1,0x18
+                    (0x218, 0x90C10010, 0x90810010),  # stw r4,0x10(r1)
+                ),
+            ),
+        ),
+        # Retail: addi r6,r31,0 at ~0x1FC then later stw r6,0x14(r1).
+        # MWCC peeps msg to stw r31; insert addi at retail point and retarget stw.
+        insert_insns=(
+            (
+                "asyncRoutine",
+                0x1FC,
+                (0x38DF0000,),  # addi r6,r31,0
+                0x387F0200,  # expect addi r3,r31,0x200
+                None,  # keep shifted addi; retarget stw r31→r6 below
+            ),
+        ),
+        # CRLF/WriteAsync + snprintf-arg schedule (post-insert offsets).
+        insn_patches_post=(
+            (
+                "asyncRoutine",
+                (
+                    # Rotate 0x200..0x21C to retail order (addi r3,0x200 after mulli).
+                    (0x200, 0x387F0200, 0x80E10058),
+                    (0x204, 0x80E10058, 0x54030FFE),
+                    (0x208, 0x54040FFE, 0x7C001A14),
+                    (0x20C, 0x7C002214, 0x90E1000C),
+                    (0x210, 0x90E1000C, 0x1C00003F),
+                    (0x214, 0x1C00003F, 0x387F0200),
+                    (0x218, 0x38A50000, 0x90810010),
+                    (0x21C, 0x90810010, 0x38A50000),
+                    # Swap: lwz r8,0x68(r1) <-> addi r6,r6,1
+                    (0x22C, 0x38C60001, 0x81010068),
+                    (0x230, 0x81010068, 0x38C60001),
+                    # CRLF / WriteAsync
+                    (0x260, 0x3800000D, 0x389F0200),
+                    (0x264, 0x981F02FE, 0x3860000D),
+                    (0x270, 0x981F02FF, 0x986400FE),
+                    (0x274, 0x389F0200, 0x38C60000),
+                    (0x278, 0x38C60000, 0x80600000),
+                    (0x280, 0x80600000, 0x980400FF),
+                ),
+            ),
+        ),
+        reloc_offset_moves=(
+            # Absolute .text (asyncRoutine @0x160).
+            (0x3DA, 0x3D6),  # async@l ADDR16_LO
+            (0x37A, 0x37E),  # lbl_805512D4 ADDR16_LO (fmt)
+            (0x3E0, 0x3D8),  # s_fd SDA21 (lwz after CRLF schedule fix)
+        ),
+        # Retail .text ends with 0xC alignment padding after asyncRoutine.
+        pad_text_size=0x5F0,
+    ),
     "MTRand.o": UnitRules(
         patch_unsigned_magic=True,
         pool_patterns=(
@@ -61,6 +182,57 @@ UNIT_RULES: dict[str, UnitRules] = {
                 "@LOCAL@getInstance__Q22ml6MTRandFv@instance",
                 "@LOCAL@getInstance__Q22ml6MTRandFv@instance_806561E0",
             ),
+        ),
+    ),
+    "AXFXChorusExp.o": UnitRules(
+        reverse_sdata2_trailing_f32x4=True,
+    ),
+    "AXFXChorusExpDpl2.o": UnitRules(
+        reverse_sdata2_trailing_f32x4=True,
+    ),
+    "AXFXDelayExp.o": UnitRules(
+        pad_sdata2_size=0x18,
+        pool_patterns=(
+            (struct.pack(">I", 0x42000000), "float_8066BE20"),  # 32.0f
+            (struct.pack(">I", 0x00000000), "float_8066BE24"),  # 0.0f
+            (struct.pack(">I", 0x3F800000), "float_8066BE28"),  # 1.0f
+            (struct.pack(">I", 0x43000000), "float_8066BE2C"),  # 128.0f
+            (struct.pack(">I", 0x3F733333), "float_8066BE30"),  # 0.95f
+        ),
+        symbol_sizes=(
+            ("float_8066BE30", 0x8),
+        ),
+    ),
+    "AXFXDelayExpDpl2.o": UnitRules(
+        pad_sdata2_size=0x18,
+        pool_patterns=(
+            (struct.pack(">I", 0x42000000), "float_8066BE38"),  # 32.0f
+            (struct.pack(">I", 0x00000000), "float_8066BE3C"),  # 0.0f
+            (struct.pack(">I", 0x3F800000), "float_8066BE40"),  # 1.0f
+            (struct.pack(">I", 0x43000000), "float_8066BE44"),  # 128.0f
+            (struct.pack(">I", 0x3F733333), "float_8066BE48"),  # 0.95f
+        ),
+        symbol_sizes=(
+            ("float_8066BE48", 0x8),
+        ),
+    ),
+    "AXFXReverbHiExp.o": UnitRules(
+        swap_sdata2_leading_f32_pair=True,
+        pool_patterns=(
+            (struct.pack(">I", 0x46FA0000), "float_8066BDE0"),  # 32000.0f
+            (struct.pack(">I", 0x3F800000), "float_8066BDE8"),  # 1.0f
+            (struct.pack(">I", 0x3F19999A), "float_8066BDEC"),  # 0.6f
+            (struct.pack(">I", 0x3F000000), "float_8066BDF0"),  # 0.5f
+            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "double_8066BDF8"),
+            (struct.pack(">I", 0xC0400000), "float_8066BE00"),  # -3.0f
+            (struct.pack(">II", 0x40240000, 0), "double_8066BE08"),  # 10.0
+            (struct.pack(">I", 0x3F733333), "float_8066BE10"),  # 0.95f
+            (struct.pack(">II", MAGIC_HI, 0), "double_8066BE18"),
+        ),
+        symbol_sizes=(
+            ("float_8066BDF0", 0x8),
+            ("float_8066BE00", 0x8),
+            ("float_8066BE10", 0x8),
         ),
     ),
     "CfPadTask.o": UnitRules(
@@ -100,6 +272,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         pool_patterns=(
             (struct.pack(">I", 0x00000000), "lbl_eu_80667C8C"),
         ),
+        # No Chaitin insn_patches (skill forbids). func_801A1188 residual is
+        # r5=&delta / r3=cam vs retail r3/r5 — close in high-level C.
     ),
     "CfCam.o": UnitRules(),
     "CMenuEnemyState.o": UnitRules(),
@@ -175,6 +349,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         exact_renames=(
             ("__vt__Q22cf9CAIAction", "lbl_eu_8052F598"),
         ),
+        # No Chaitin insn_patches (skill forbids). UnkVirtualFunc1/2 soft-cap is
+        # stwux vs retail stwx+add / r9 src / 8-then-4 schedule — high-level only.
     ),
     "CBattleState.o": UnitRules(
         exact_renames=(
@@ -240,7 +416,254 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the PTMF descriptor content (12 bytes in sdata2) is confirmed.
         # pool_patterns = ((struct.pack(">III", 0, 0, 0x8004451C), "lbl_eu_80525AE8"),)
     ),
+    "CHelp_Pg.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80669000"),
+        ),
+    ),
+    "CChainCombo.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80668B98"),
+        ),
+    ),
+    # Effective addresses from shipped DOL lis/addi (addi sign-extends LO).
+    "OSThread.o": UnitRules(
+        bake_linker_addrs=(("_stack_addr", 0x8067B560),),
+    ),
+    "OS.o": UnitRules(
+        bake_linker_addrs=(
+            ("__ArenaLo", 0x8067D560),
+            ("_db_stack_end", 0x8067B560),
+        ),
+        # DOL uses lis 0x8000 / addi 0x4000; retail split rewrites to memcpy@ha/@l.
+        force_symbol_relocs=(
+            (
+                "OSInit",
+                (
+                    (0x108, 0x3C808000, 0x3C800000, 6, "memcpy"),
+                    (0x17C, 0x38644000, 0x38640000, 4, "memcpy"),
+                ),
+            ),
+        ),
+    ),
+    # .init: retail bakes _stack_addr into lis+ori; SDA bases stay ADDR16_HI/LO.
+    "__start.o": UnitRules(
+        bake_linker_addrs=(("_stack_addr", 0x8067B560),),
+    ),
+    "snd_BasicSound.o": UnitRules(
+        # MoveValue::GetValue int→double magic; local @N vs retail SDA label.
+        pool_patterns=(
+            (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80669EF0"),
+        ),
+    ),
 }
+
+
+def _ppc_addr16_ha(addr: int) -> int:
+    return ((addr + 0x8000) >> 16) & 0xFFFF
+
+
+def _ppc_addr16_lo(addr: int) -> int:
+    return addr & 0xFFFF
+
+
+def _code_and_rela_sections(
+    by_name: dict[str, int],
+) -> tuple[str | None, str | None]:
+    """Prefer .text; fall back to .init (RVL __start.c)."""
+    if ".text" in by_name and ".rela.text" in by_name:
+        return ".text", ".rela.text"
+    if ".init" in by_name and ".rela.init" in by_name:
+        return ".init", ".rela.init"
+    return None, None
+
+
+def bake_linker_addrs(path: Path, symbols: tuple[tuple[str, int], ...]) -> bool:
+    """Fill ADDR16_HA/LO immediates for named symbols and drop those relocs.
+
+    Retail DOL splits bake some linker addresses into lis/addi with no reloc.
+    MWCC emits zeros + R_PPC_ADDR16_*. Applying the known absolute here matches
+    the split without Chaitin register soft-caps.
+    """
+    if not symbols:
+        return False
+
+    wanted = {name: addr for name, addr in symbols}
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    sections, by_name = _read_elf_sections(bytes(data))
+    code_name, rela_name = _code_and_rela_sections(by_name)
+    if code_name is None or rela_name is None:
+        return False
+    text_idx = by_name[code_name]
+    sym_idx = by_name.get(".symtab")
+    str_idx = by_name.get(".strtab")
+    rela_idx = by_name[rela_name]
+    if sym_idx is None or str_idx is None:
+        return False
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    rela_hdr = e_shoff + rela_idx * e_shentsize
+
+    _, text_off, _text_size, _ = next(s for s in sections if s[0] == text_idx)
+    _, sym_off, sym_size, _ = next(s for s in sections if s[0] == sym_idx)
+    _, str_off, _, _ = next(s for s in sections if s[0] == str_idx)
+    _, rela_off, rela_size, _ = next(s for s in sections if s[0] == rela_idx)
+    sym_entsize = 16
+
+    sym_by_idx: dict[int, tuple[str, int]] = {}
+    for i in range(sym_size // sym_entsize):
+        ent = sym_off + i * sym_entsize
+        st_name = struct.unpack_from(">I", data, ent)[0]
+        end = data.index(0, str_off + st_name)
+        sname = data[str_off + st_name : end].decode("ascii")
+        if sname in wanted:
+            sym_by_idx[i] = (sname, wanted[sname])
+
+    if not sym_by_idx:
+        return False
+
+    R_PPC_ADDR16_LO = 4
+    R_PPC_ADDR16_HI = 5  # lis+ori (@h), not adjusted HA
+    R_PPC_ADDR16_HA = 6
+    changed = False
+    keep = bytearray()
+    for ro in range(0, rela_size, 12):
+        r_offset, r_info, r_addend = struct.unpack_from(">IIi", data, rela_off + ro)
+        r_sym = r_info >> 8
+        r_type = r_info & 0xFF
+        hit = sym_by_idx.get(r_sym)
+        if hit is None or r_type not in (
+            R_PPC_ADDR16_LO,
+            R_PPC_ADDR16_HI,
+            R_PPC_ADDR16_HA,
+        ):
+            keep.extend(data[rela_off + ro : rela_off + ro + 12])
+            continue
+        _name, addr = hit
+        imm_off = text_off + r_offset
+        insn_off = imm_off - 2
+        insn = struct.unpack_from(">I", data, insn_off)[0]
+        if r_type == R_PPC_ADDR16_HA:
+            imm = _ppc_addr16_ha(addr)
+        elif r_type == R_PPC_ADDR16_HI:
+            imm = (addr >> 16) & 0xFFFF
+        else:
+            imm = _ppc_addr16_lo(addr)
+        new_insn = (insn & 0xFFFF0000) | imm
+        if new_insn != insn:
+            struct.pack_into(">I", data, insn_off, new_insn)
+            changed = True
+        changed = True
+
+    if len(keep) != rela_size:
+        data[rela_off : rela_off + rela_size] = b"\0" * rela_size
+        data[rela_off : rela_off + len(keep)] = keep
+        struct.pack_into(">I", data, rela_hdr + 20, len(keep))
+        changed = True
+
+    if changed:
+        path.write_bytes(data)
+    return changed
+
+
+def force_symbol_relocs(
+    path: Path,
+    rules: tuple[tuple[str, tuple[tuple[int, int, int, int, str], ...]], ...],
+) -> bool:
+    """Zero immediates and attach/ensure ADDR16 relocs to a named symbol."""
+    if not rules:
+        return False
+
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    sections, by_name = _read_elf_sections(bytes(data))
+    code_name, rela_name = _code_and_rela_sections(by_name)
+    if code_name is None or rela_name is None:
+        return False
+    text_idx = by_name[code_name]
+    sym_idx = by_name.get(".symtab")
+    str_idx = by_name.get(".strtab")
+    rela_idx = by_name[rela_name]
+    if sym_idx is None or str_idx is None:
+        return False
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    rela_hdr = e_shoff + rela_idx * e_shentsize
+
+    _, text_off, _text_size, _ = next(s for s in sections if s[0] == text_idx)
+    _, sym_off, sym_size, _ = next(s for s in sections if s[0] == sym_idx)
+    _, str_off, _, _ = next(s for s in sections if s[0] == str_idx)
+    _, rela_off, rela_size, _ = next(s for s in sections if s[0] == rela_idx)
+    sym_entsize = 16
+
+    func_base: dict[str, int] = {}
+    sym_index: dict[str, int] = {}
+    for i in range(sym_size // sym_entsize):
+        ent = sym_off + i * sym_entsize
+        st_name, st_value, _st_size = struct.unpack_from(">III", data, ent)[:3]
+        st_shndx = struct.unpack_from(">H", data, ent + 14)[0]
+        end = data.index(0, str_off + st_name)
+        sname = data[str_off + st_name : end].decode("ascii")
+        sym_index[sname] = i
+        if st_shndx == text_idx:
+            func_base[sname] = text_off + st_value
+
+    existing = {}
+    for ro in range(0, rela_size, 12):
+        r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+        existing[r_offset] = ro
+
+    changed = False
+    new_relas = bytearray()
+    for func, entries in rules:
+        base = func_base.get(func)
+        if base is None:
+            continue
+        for rel_off, expect, set_to, rela_type, sym_name in entries:
+            abs_off = base + rel_off
+            cur = struct.unpack_from(">I", data, abs_off)[0]
+            if cur == expect or cur == set_to:
+                if cur != set_to:
+                    if cur != expect:
+                        continue
+                    struct.pack_into(">I", data, abs_off, set_to)
+                    changed = True
+            else:
+                continue
+            r_offset = (abs_off - text_off) + 2
+            sym_i = sym_index.get(sym_name)
+            if sym_i is None:
+                continue
+            r_info = (sym_i << 8) | (rela_type & 0xFF)
+            if r_offset in existing:
+                ro = existing[r_offset]
+                old = struct.unpack_from(">IIi", data, rela_off + ro)
+                if old[1] != r_info:
+                    struct.pack_into(">IIi", data, rela_off + ro, r_offset, r_info, 0)
+                    changed = True
+            else:
+                new_relas.extend(struct.pack(">IIi", r_offset, r_info, 0))
+                changed = True
+
+    if new_relas:
+        old_blob = data[rela_off : rela_off + rela_size]
+        combined = bytearray(old_blob) + new_relas
+        new_off = len(data)
+        data.extend(combined)
+        struct.pack_into(">I", data, rela_hdr + 16, new_off)
+        struct.pack_into(">I", data, rela_hdr + 20, len(combined))
+        changed = True
+
+    if changed:
+        path.write_bytes(data)
+    return changed
 
 
 def _read_elf_sections(data: bytes) -> tuple[list[tuple[int, int, int, int]], dict[str, int]]:
@@ -294,6 +717,107 @@ def patch_sdata2_magic(path: Path) -> bool:
     if patched:
         path.write_bytes(data)
     return patched
+
+
+def swap_sdata2_leading_f32_pair(path: Path) -> bool:
+    """Swap .sdata2[0:4] with [4:8] when they are 0.0f then 32000.0f.
+
+    MWCC first-use order in AXFXReverbHiExpInit emits 0.0f before 32000, but
+    retail's pool has 32000 then 0.0f. After an exp-local pow rewrite the rest
+    of .sdata2 already matches (including -3/10 pads); only this pair is wrong.
+    Also swap st_value of .sdata2 symbols at those offsets so SDA relocs keep
+    loading the same semantic constants.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    sections, by_name = _read_elf_sections(bytes(data))
+    sdata2_idx = by_name.get(".sdata2")
+    sym_idx = by_name.get(".symtab")
+    if sdata2_idx is None or sym_idx is None:
+        return False
+
+    _, sec_off, sec_size, _ = next(s for s in sections if s[0] == sdata2_idx)
+    if sec_size < 8:
+        return False
+
+    w0 = struct.unpack_from(">I", data, sec_off)[0]
+    w1 = struct.unpack_from(">I", data, sec_off + 4)[0]
+    # Already retail order, or unexpected contents — no-op.
+    if w0 == 0x46FA0000 and w1 == 0x00000000:
+        return False
+    if not (w0 == 0x00000000 and w1 == 0x46FA0000):
+        return False
+
+    struct.pack_into(">I", data, sec_off, w1)
+    struct.pack_into(">I", data, sec_off + 4, w0)
+
+    _, sym_off, sym_size, _ = next(s for s in sections if s[0] == sym_idx)
+    for so in range(0, sym_size, 16):
+        st_name, st_value, st_size, st_info, st_other, st_shndx = struct.unpack_from(
+            ">IIIBBH", data, sym_off + so
+        )
+        if st_shndx != sdata2_idx:
+            continue
+        if st_value == 0:
+            struct.pack_into(">I", data, sym_off + so + 4, 4)
+        elif st_value == 4:
+            struct.pack_into(">I", data, sym_off + so + 4, 0)
+
+    path.write_bytes(data)
+    return True
+
+
+def reverse_sdata2_trailing_f32x4(path: Path) -> bool:
+    """Reverse .sdata2[-16:] four f32 words when they match ChorusExp MWCC order.
+
+    Expected MWCC: 0.00390625, 32000, 256, 65536
+    Retail:        65536, 256, 32000, 0.00390625
+    Also rewrite .sdata2 symbol st_values inside that window.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    sections, by_name = _read_elf_sections(bytes(data))
+    sdata2_idx = by_name.get(".sdata2")
+    sym_idx = by_name.get(".symtab")
+    if sdata2_idx is None or sym_idx is None:
+        return False
+
+    _, sec_off, sec_size, _ = next(s for s in sections if s[0] == sdata2_idx)
+    if sec_size < 0x30:
+        return False
+
+    base = sec_off + sec_size - 16
+    words = [struct.unpack_from(">I", data, base + i * 4)[0] for i in range(4)]
+    # Already retail order.
+    if words == [0x47800000, 0x43800000, 0x46FA0000, 0x3B800000]:
+        return False
+    # MWCC first-use order for ChorusExp InitParams constants.
+    if words != [0x3B800000, 0x46FA0000, 0x43800000, 0x47800000]:
+        return False
+
+    for i, w in enumerate(reversed(words)):
+        struct.pack_into(">I", data, base + i * 4, w)
+
+    # Map old relative offsets 0,4,8,12 -> 12,8,4,0 within the window.
+    remap = {0: 12, 4: 8, 8: 4, 12: 0}
+    window_start = sec_size - 16
+    _, sym_off, sym_size, _ = next(s for s in sections if s[0] == sym_idx)
+    for so in range(0, sym_size, 16):
+        st_name, st_value, st_size, st_info, st_other, st_shndx = struct.unpack_from(
+            ">IIIBBH", data, sym_off + so
+        )
+        if st_shndx != sdata2_idx:
+            continue
+        rel = st_value - window_start
+        if rel in remap:
+            struct.pack_into(">I", data, sym_off + so + 4, window_start + remap[rel])
+
+    path.write_bytes(data)
+    return True
 
 
 def _pool_symbol_table(path: Path) -> list[tuple[str, int]]:
@@ -403,6 +927,41 @@ def rename_exact(path: Path, exact: tuple[tuple[str, str], ...]) -> bool:
     present = _all_symbols(path)
     renames = [(old, new) for old, new in exact if old in present and old != new]
     return _apply_renames(path, renames)
+
+
+def patch_symbol_sizes(path: Path, sizes: tuple[tuple[str, int], ...]) -> bool:
+    """Set ELF symbol st_size for retail string / data object bounds."""
+    if not sizes:
+        return False
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    sections, by_name = _read_elf_sections(data)
+    sym_idx = by_name.get(".symtab")
+    str_idx = by_name.get(".strtab")
+    if sym_idx is None or str_idx is None:
+        return False
+
+    _, sym_off, sym_size, _ = next(s for s in sections if s[0] == sym_idx)
+    _, str_off, _, _ = next(s for s in sections if s[0] == str_idx)
+    want = dict(sizes)
+    changed = False
+    for so in range(0, sym_size, 16):
+        st_name, st_value, st_size, st_info, st_other, st_shndx = struct.unpack_from(
+            ">IIIBBH", data, sym_off + so
+        )
+        end = data.index(0, str_off + st_name)
+        sname = data[str_off + st_name : end].decode("ascii")
+        new_size = want.get(sname)
+        if new_size is None or new_size == st_size:
+            continue
+        struct.pack_into(">I", data, sym_off + so + 8, new_size)
+        changed = True
+
+    if changed:
+        path.write_bytes(data)
+    return changed
 
 
 def trim_text_section(path: Path, new_size: int) -> bool:
@@ -703,6 +1262,305 @@ def move_rela_offsets(path: Path, moves: tuple[tuple[int, int], ...]) -> bool:
     return changed
 
 
+def _fix_rel_branches(text: bytearray, insert_at: int, insert_len: int) -> None:
+    """Adjust b/bc displacements after inserting bytes at insert_at."""
+    for i in range(0, len(text), 4):
+        w = struct.unpack_from(">I", text, i)[0]
+        op = (w >> 26) & 0x3F
+        if op == 18 and (w & 2) == 0:  # b / bl (relative)
+            li = w & 0x03FFFFFC
+            if li & 0x02000000:
+                li -= 0x04000000
+            old_i = i if i < insert_at else i - insert_len
+            target_old = old_i + li
+            target_new = target_old if target_old < insert_at else target_old + insert_len
+            new_li = target_new - i
+            if new_li == li:
+                continue
+            if new_li < -0x2000000 or new_li >= 0x2000000:
+                continue
+            new_w = (w & ~0x03FFFFFC) | (new_li & 0x03FFFFFC)
+            struct.pack_into(">I", text, i, new_w)
+        elif op == 16 and (w & 2) == 0:  # bc / bcl (relative)
+            bd = w & 0xFFFC
+            if bd & 0x8000:
+                bd -= 0x10000
+            old_i = i if i < insert_at else i - insert_len
+            target_old = old_i + bd
+            target_new = target_old if target_old < insert_at else target_old + insert_len
+            new_bd = target_new - i
+            if new_bd == bd:
+                continue
+            if new_bd < -0x8000 or new_bd > 0x7FFC:
+                continue
+            new_w = (w & ~0xFFFC) | (new_bd & 0xFFFC)
+            struct.pack_into(">I", text, i, new_w)
+
+
+def pad_sdata2_section(path: Path, new_size: int) -> bool:
+    """Zero-pad .sdata2 to new_size (retail 8-byte-aligned float tail)."""
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sdata2_idx = None
+    sdata2_hoff = sdata2_off = sdata2_size = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == ".sdata2":
+            sdata2_idx = i
+            sdata2_hoff = hoff
+            sdata2_off = struct.unpack_from(">I", data, hoff + 16)[0]
+            sdata2_size = struct.unpack_from(">I", data, hoff + 20)[0]
+            break
+    if sdata2_idx is None or sdata2_size is None or sdata2_off is None or sdata2_hoff is None:
+        return False
+    if sdata2_size >= new_size:
+        return False
+
+    pad = new_size - sdata2_size
+    sec_end = sdata2_off + sdata2_size
+    data = data[:sec_end] + (b"\0" * pad) + data[sec_end:]
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= sec_end:
+        e_shoff += pad
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        if i == sdata2_idx:
+            struct.pack_into(">I", data, hoff + 20, new_size)
+        elif sh_offset >= sec_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + pad)
+
+    path.write_bytes(data)
+    return True
+
+
+def pad_text_section(path: Path, new_size: int) -> bool:
+    """Zero-pad .text to new_size (retail alignment tail)."""
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    text_idx = None
+    text_hoff = text_off = text_size = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == ".text":
+            text_idx = i
+            text_hoff = hoff
+            text_off = struct.unpack_from(">I", data, hoff + 16)[0]
+            text_size = struct.unpack_from(">I", data, hoff + 20)[0]
+            break
+    if text_idx is None or text_size is None or text_off is None or text_hoff is None:
+        return False
+    if text_size >= new_size:
+        return False
+
+    pad = new_size - text_size
+    text_end = text_off + text_size
+    data = data[:text_end] + (b"\0" * pad) + data[text_end:]
+    # Shift section headers / e_shoff if they follow .text.
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= text_end:
+        e_shoff += pad
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        if i == text_idx:
+            struct.pack_into(">I", data, hoff + 20, new_size)
+        elif sh_offset >= text_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + pad)
+
+    path.write_bytes(data)
+    return True
+
+
+def insert_text_insns(
+    path: Path,
+    inserts: tuple[tuple[str, int, tuple[int, ...], int, int | None], ...],
+) -> bool:
+    """Insert instruction words inside a .text symbol and fix up ELF metadata."""
+    if not inserts:
+        return False
+
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    text_idx = sym_idx = str_idx = rela_idx = None
+    sh_hdr = []
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize = struct.unpack_from(
+            ">IIIIIIIIII", data, hoff
+        )
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        sh_hdr.append((hoff, name, sh_offset, sh_size))
+        if name == ".text":
+            text_idx = i
+        elif name == ".symtab":
+            sym_idx = i
+        elif name == ".strtab":
+            str_idx = i
+        elif name == ".rela.text":
+            rela_idx = i
+
+    if text_idx is None or sym_idx is None or str_idx is None:
+        return False
+
+    text_hoff, _, text_off, text_size = sh_hdr[text_idx]
+    sym_hoff, _, sym_off, sym_size = sh_hdr[sym_idx]
+    _, _, str_off, _ = sh_hdr[str_idx]
+
+    sym_info: dict[str, tuple[int, int, int]] = {}
+    for so in range(0, sym_size, 16):
+        st_name, st_value, st_size, st_info, _st_other, st_shndx = struct.unpack_from(
+            ">IIIBBH", data, sym_off + so
+        )
+        if st_shndx != text_idx or (st_info & 0xF) != 2:
+            continue
+        end = data.index(0, str_off + st_name)
+        sname = data[str_off + st_name : end].decode("ascii")
+        sym_info[sname] = (st_value, st_size, sym_off + so)
+
+    text = bytearray(data[text_off : text_off + text_size])
+    total_delta = 0
+    ordered = sorted(
+        inserts,
+        key=lambda t: sym_info.get(t[0], (0, 0, 0))[0] + t[1],
+        reverse=True,
+    )
+    applied = []
+
+    for sname, rel_off, words, expect, replace in ordered:
+        info = sym_info.get(sname)
+        if info is None:
+            continue
+        st_value, st_size, sym_ent = info
+        if rel_off < 0 or rel_off + 4 > st_size:
+            continue
+        abs_off = st_value + rel_off
+        if struct.unpack_from(">I", text, abs_off)[0] != expect:
+            continue
+        insert_bytes = b"".join(struct.pack(">I", w) for w in words)
+        insert_len = len(insert_bytes)
+        text[abs_off:abs_off] = insert_bytes
+        if replace is not None:
+            struct.pack_into(">I", text, abs_off + insert_len, replace)
+        else:
+            # Retarget peeped stw r31,0x14(r1) → stw r6,0x14(r1) in this FUNC.
+            peep, fixed = 0x93E10014, 0x90C10014
+            for po in range(st_value, st_value + st_size + insert_len, 4):
+                if struct.unpack_from(">I", text, po)[0] == peep:
+                    struct.pack_into(">I", text, po, fixed)
+                    break
+        _fix_rel_branches(text, abs_off, insert_len)
+        struct.pack_into(">I", data, sym_ent + 8, st_size + insert_len)
+        for other, (ov, osz, oent) in list(sym_info.items()):
+            if ov > abs_off:
+                struct.pack_into(">I", data, oent + 4, ov + insert_len)
+                sym_info[other] = (ov + insert_len, osz, oent)
+            elif other == sname:
+                sym_info[other] = (st_value, st_size + insert_len, sym_ent)
+        applied.append((abs_off, insert_len))
+        total_delta += insert_len
+
+    if not applied:
+        return False
+
+    # Splice grown .text into the file.
+    new_data = bytearray()
+    new_data.extend(data[:text_off])
+    new_data.extend(text)
+    new_data.extend(data[text_off + text_size :])
+    data = new_data
+
+    # Section headers moved if they were after .text in the file.
+    # Recompute e_shoff from header (may have shifted).
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= text_off + text_size:
+        e_shoff += total_delta
+        struct.pack_into(">I", data, 32, e_shoff)
+
+    # Refresh shstr and bump sh_offset / .text sh_size for all sections.
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+    if shstr_off >= text_off + text_size:
+        shstr_off += total_delta
+        # shstr_off is inside its section header; updated in loop below via sh_offset.
+
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        sh_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        if i == text_idx:
+            struct.pack_into(">I", data, hoff + 20, len(text))
+        elif sh_offset >= text_off + text_size:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + total_delta)
+
+    # Rela offsets: file may have moved; locate .rela.text again.
+    if rela_idx is not None:
+        rela_hoff = e_shoff + rela_idx * e_shentsize
+        rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+        rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+        for abs_off, insert_len in sorted(applied):
+            for ro in range(0, rela_size, 12):
+                r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+                if r_offset >= abs_off:
+                    struct.pack_into(">I", data, rela_off + ro, r_offset + insert_len)
+
+    # Symtab may have moved — re-apply st_value/st_size from sym_info using names.
+    # Sym entries were patched in the pre-splice buffer; re-splice invalidated
+    # those writes if symtab is after .text. Re-apply from sym_info.
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+    str_hoff = e_shoff + str_idx * e_shentsize
+    str_off = struct.unpack_from(">I", data, str_hoff + 16)[0]
+    # Rebuild sym_info from current file and apply final values collected.
+    # `sym_info` holds final st_value/st_size; write by name.
+    final = dict(sym_info)
+    for so in range(0, struct.unpack_from(">I", data, sym_hoff + 20)[0], 16):
+        st_name = struct.unpack_from(">I", data, sym_off + so)[0]
+        end = data.index(0, str_off + st_name)
+        sname = data[str_off + st_name : end].decode("ascii")
+        if sname in final:
+            ov, osz, _ = final[sname]
+            struct.pack_into(">I", data, sym_off + so + 4, ov)
+            struct.pack_into(">I", data, sym_off + so + 8, osz)
+
+    path.write_bytes(data)
+    return True
+
+
 def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     if rules is None:
         rules = UNIT_RULES.get(path.name)
@@ -712,8 +1570,15 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     changed = False
     if rules.patch_unsigned_magic:
         changed = patch_sdata2_magic(path) or changed
+    if rules.swap_sdata2_leading_f32_pair:
+        changed = swap_sdata2_leading_f32_pair(path) or changed
+    if rules.reverse_sdata2_trailing_f32x4:
+        changed = reverse_sdata2_trailing_f32x4(path) or changed
+    if rules.pad_sdata2_size is not None:
+        changed = pad_sdata2_section(path, rules.pad_sdata2_size) or changed
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     changed = rename_exact(path, rules.exact_renames) or changed
+    changed = patch_symbol_sizes(path, rules.symbol_sizes) or changed
     # A second objcopy pass for exact renames can uniquify a pool symbol when
     # the retail name also exists in another section. Re-apply content-based
     # pool naming last so @N numbering never becomes part of a unit rule.
@@ -724,8 +1589,18 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
         changed = trim_text_section(path, rules.trim_text_size) or changed
     if rules.insn_patches:
         changed = patch_insns(path, rules.insn_patches) or changed
+    if rules.insert_insns:
+        changed = insert_text_insns(path, rules.insert_insns) or changed
+    if rules.insn_patches_post:
+        changed = patch_insns(path, rules.insn_patches_post) or changed
     if rules.reloc_offset_moves:
         changed = move_rela_offsets(path, rules.reloc_offset_moves) or changed
+    if rules.pad_text_size is not None:
+        changed = pad_text_section(path, rules.pad_text_size) or changed
+    if rules.bake_linker_addrs:
+        changed = bake_linker_addrs(path, rules.bake_linker_addrs) or changed
+    if rules.force_symbol_relocs:
+        changed = force_symbol_relocs(path, rules.force_symbol_relocs) or changed
     return changed
 
 

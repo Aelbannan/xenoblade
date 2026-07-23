@@ -1,0 +1,2 @@
+{"raw":"menu-bps-ctor soft-cap: pad90 word/byte clears stay 0x20+0x4; explicit 0x60 math and fixed-trip unroll regress fuzzy; peak ~64.9% with post-float 0x11 head + sparse tails","timestamp":"2026-07-23T07:06:02.291417+00:00"}
+{"raw":"menu-bps-ctor: late-hoist pad ptrs+0x60/0x0C NVs after unk7D0 lifts peak to ~65.5%; Wii/1.1 word-while always 0x20 not retail 0x60","timestamp":"2026-07-23T07:21:06.219948+00:00"}

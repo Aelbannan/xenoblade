@@ -2119,6 +2119,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3434,12 +3499,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -4544,6 +4612,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -8792,7 +8863,86 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+// TODO
+UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
+UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -9041,38 +9191,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -9091,7 +9260,14 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -9103,6 +9279,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -9274,83 +9455,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -12429,42 +12533,45 @@ with no apparent calls to the other 3 (possibly debug only).
 
 In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well. */
+events being unused as well.
+
+Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
+do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent(){}
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5){ return false; }
-    virtual bool OnFileEvent(CEventFile* pEventFile){ return false; }
-    virtual bool WorkEvent3(UNKTYPE* r4){ return false; }
-    virtual bool WorkEvent4(){ return false; }
-    virtual void OnPauseTrigger(bool paused){}
-    //Completely unused, but still left in...
-    virtual bool WorkEvent6(){ return false; }
-    virtual bool WorkEvent7(){ return false; }
-    virtual bool WorkEvent8(){ return false; }
-    virtual bool WorkEvent9(){ return false; }
-    virtual bool WorkEvent10(){ return false; }
-    virtual bool WorkEvent11(){ return false; }
-    virtual bool WorkEvent12(){ return false; }
-    virtual bool WorkEvent13(){ return false; }
-    virtual bool WorkEvent14(){ return false; }
-    virtual bool WorkEvent15(){ return false; }
-    virtual bool WorkEvent16(){ return false; }
-    virtual bool WorkEvent17(){ return false; }
-    virtual bool WorkEvent18(){ return false; }
-    virtual bool WorkEvent19(){ return false; }
-    virtual bool WorkEvent20(){ return false; }
-    virtual bool WorkEvent21(){ return false; }
-    virtual bool WorkEvent22(){ return false; }
-    virtual bool WorkEvent23(){ return false; }
-    virtual bool WorkEvent24(){ return false; }
-    virtual bool WorkEvent25(){ return false; }
-    virtual bool WorkEvent26(){ return false; }
-    virtual bool WorkEvent27(){ return false; }
-    virtual bool WorkEvent28(){ return false; }
-    virtual bool WorkEvent29(){ return false; }
-    virtual bool WorkEvent30(){ return false; }
-    virtual void WorkEvent31(){}
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
 };
 /* end "monolib/work/IWorkEvent.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
@@ -19582,11 +19689,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -19603,18 +19714,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -19639,6 +19760,8 @@ typedef enum {
 } NANDCheckFlags;
 
 s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
 #ifdef __cplusplus
 }
@@ -19661,25 +19784,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -24061,7 +24194,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -25374,8 +25508,8 @@ private:
         u32 magFilter : 3;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 anisotropy : 2;
         u32 paletteFormat : 2;
+        u32 anisotropy : 2;
     } mBits; // at 0x18
 };
 
@@ -242859,8 +242993,6 @@ extern "C" {
 #define WUD_DEV_HANDLE_INVALID (-1)
 
 // Forward declarations
-typedef struct WUDDevInfo;
-
 typedef enum {
     WUD_LIB_STATUS_0,
     WUD_LIB_STATUS_1,
@@ -242897,7 +243029,6 @@ typedef BOOL (*WUDFreeFunc)(void* pBlock);
 typedef void (*WUDSyncDeviceCallback)(s32 result, s32 num);
 typedef void (*WUDClearDeviceCallback)(s32 result);
 
-typedef void (*WUDHidConnCallback)(UINT8 devHandle, u8 open);
 typedef void (*WUDHidRecvCallback)(UINT8 devHandle, UINT8* pReport, UINT16 len);
 
 typedef struct WUDDevInfo {
@@ -242914,6 +243045,8 @@ typedef struct WUDDevInfo {
     u8 UNK_0x5D[1];
     tBTA_HH_ATTR_MASK hhAttrMask; // at 0x5E
 } WUDDevInfo;
+
+typedef void (*WUDHidConnCallback)(WUDDevInfo* pInfo, u8 open);
 
 BOOL WUDInit(void);
 BOOL WUDIsBusy(void);
@@ -243001,7 +243134,7 @@ u8 _WUDGetLinkNumber(void);
 extern "C" {
 #endif
 
-void WUDHidHostCallback(tBTA_HH_EVT event, tBTA_HH* pData);
+void WUDiHidHostEventCallback(tBTA_HH_EVT event, tBTA_HH* pData);
 
 #ifdef __cplusplus
 }
@@ -243593,7 +243726,8 @@ typedef struct WUDCB {
     u16 bufferStatus1; // at 0x746
 } WUDCB;
 
-extern WUDCB _wcb;
+extern WUDCB __rvl_wudcb;
+#define _wcb __rvl_wudcb
 extern WUDDevInfo _work;
 
 extern SCBtDeviceInfoArray _scArray;
@@ -243601,6 +243735,13 @@ extern SCBtDeviceInfoArray _scArray;
 extern BD_ADDR_PTR _dev_handle_to_bda[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
+
+WUDDevInfo* WUDiGetDiscoverDevice(void);
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr);
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle);
+void WUDiSetQueueSizeForHandle(u8 handle, u16 size);
+void WUDiSetNotAckNumForHandle(u8 handle, u16 notAckNum);
+int WUDIsLinkedWBC(void);
 
 #ifdef __cplusplus
 }
@@ -245560,49 +245701,43 @@ struct CUICfInitBlock {
     u8 unk06[0x34 - 6];
 };
 
-struct CUICfInitTail {
-    u32 unk00;
-    u32 unk04;
-    u32 unk08;
-    u32 unk0C;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u32 unk20;
-    u32 unk24;
-    u32 unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    u32 unk38;
-    u32 unk3C;
-    u32 unk40;
-    u32 unk44;
-    u32 unk48;
-    u32 unk4C;
-    u32 unk50;
-    u32 unk54;
-    u32 unk58;
-    u32 unk5C;
-    u32 unk60;
-    u32 unk64;
-    u32 unk68;
-    u32 unk6C;
-    u32 unk70;
-    u32 unk74;
-    u32 unk78;
-    u32 unk7C;
-    u32 unk80;
-    u32 unk84;
-    u32 unk88;
-    u32 unk8C;
-};
-
 struct CUICfInitState {
     u8 mode;
     u8 state;
     u8 unk02[2];
+};
+
+// Retail copy: lwz +0; paired +8/+4; lhz +0xC; lone lwz +0x0E; paired words from +0x12.
+// Trailing bytes split so MWCC pair-unrolls (one big u8[] → lwzu). Zeros via u16* overlay.
+#pragma pack(push, 1)
+struct CUICfInitTailChunk8 {
+    u8 b[8];
+};
+struct CUICfInitTailChunk40 {
+    u8 b[0x40];
+};
+struct CUICfInitTailChunk3E {
+    u8 b[0x3E];
+};
+struct CUICfInitTailChunk40View {
+    u8 b[0x40]; // assign view: 2-byte overhang past Tail (retail last lwz pair)
+};
+struct CUICfInitTail {
+    u32 unk00;                  // +0x00
+    CUICfInitTailChunk8 mid;    // +0x04..+0x0B (memcpy pair → +8/+4 loads)
+    u16 unk0C;                  // +0x0C
+    u32 unk0E;                  // +0x0E
+    CUICfInitTailChunk40 rest0; // +0x12
+    CUICfInitTailChunk3E rest1; // +0x52
+}; // size = 0x90
+#pragma pack(pop)
+
+// Forces retail stack contiguity: state, block0, blocks[3], tail.
+struct CUICfInitTemplates {
+    CUICfInitState state;
+    CUICfInitBlock block0;
+    CUICfInitBlock blocks[3];
+    CUICfInitTail tail;
 };
 
 // 0xC-byte pool node for func_80133324's event queue - same layout as
@@ -247055,34 +247190,43 @@ namespace cf {
 /* "src/kyoshin/cf/chain/CChainCombo.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-void func_80294824(void*);
-void func_80294834(void*);
+// Gauge pair helpers (CSysWinSave.cpp) - C++ linkage -> func_80294824__FPv.
+void func_80294824(void* gauge);
+void func_80294834(void* gauge);
 void func_802AA338();
 
 namespace cf {
-    
-    /*
-    int lbl_8053C140[3] = {
-        1800, 1200, 600
-    };
-    */
 
-    //size: 0x18
-    class CChainCombo {
-    public:
-        int w; //0x0
-        int a; //0x4
-        bool b; //0x8
-        void* c; //0xC
-        int d; //0x10
-        //0x14: vtable
-        
-        virtual ~CChainCombo(){};
+// Two-float chain gauge at CChainCombo+0xC (written by func_80294824/34/44).
+struct CChainGauge {
+    float mVal0; // 0x0
+    float mVal1; // 0x4
+};
 
-        CChainCombo();
-        void func1();
-    };
-}
+// Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
+extern "C" void* lbl_eu_80538994[];
+
+/* Chain arts combo tracker. Size 0x18.
+   Manual vptr @0x14 (not a normal C++ vptr-at-0 class) to match retail and
+   avoid a weak local dtor / __vt__ reloc name mismatch. */
+struct CChainCombo {
+    int mArtsType; // 0x0 - last arts category byte (0..8)
+    int mComboCount; // 0x4 - steps 0..5
+    bool mPending; // 0x8 - set externally; consumed by func_80293EEC
+    u8 pad9[3];
+    CChainGauge mGauge; // 0xC
+    void* mVtbl; // 0x14 - lbl_eu_80538994
+
+    CChainCombo();
+    void func1();
+};
+
+} // namespace cf
+
+// Opaque objects that only expose a C++-style vptr at +0 (forces r12-style loads).
+struct CChainVObj {
+    void** mVtbl;
+};
 /* end "kyoshin/cf/chain/CChainCombo.hpp" */
 
 namespace cf {
@@ -248035,7 +248179,238 @@ static inline Fn vslot(void* obj, u32 offset) {
     return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
 }
 
+// Cast-only ifaces: MWCC virtual dispatch uses r12 (retail), unlike function-pointer
+// loads that color the vptr temp as r4. Never constructed.
+struct MenuBpsActorIf {
+    // MWCC (RTTI on) places two hidden slots before the first declared virtual;
+    // omit _v000/_v004 so vf108 lands at retail 0x108, etc.
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void _v0A8();
+    virtual void _v0AC();
+    virtual void _v0B0();
+    virtual void _v0B4();
+    virtual void _v0B8();
+    virtual void _v0BC();
+    virtual void _v0C0();
+    virtual void _v0C4();
+    virtual void _v0C8();
+    virtual void _v0CC();
+    virtual void _v0D0();
+    virtual void _v0D4();
+    virtual void _v0D8();
+    virtual void _v0DC();
+    virtual void _v0E0();
+    virtual void _v0E4();
+    virtual void _v0E8();
+    virtual void _v0EC();
+    virtual void _v0F0();
+    virtual void _v0F4();
+    virtual void _v0F8();
+    virtual void _v0FC();
+    virtual void _v100();
+    virtual void _v104();
+    virtual u32 vf108();
+    virtual void _v10C();
+    virtual void _v110();
+    virtual void _v114();
+    virtual void _v118();
+    virtual void _v11C();
+    virtual void _v120();
+    virtual void _v124();
+    virtual f32 vf128();
+    virtual f32 vf12C();
+    virtual void _v130();
+    virtual void _v134();
+    virtual void _v138();
+    virtual void _v13C();
+    virtual void _v140();
+    virtual void _v144();
+    virtual void _v148();
+    virtual void _v14C();
+    virtual void _v150();
+    virtual void _v154();
+    virtual void _v158();
+    virtual void _v15C();
+    virtual void _v160();
+    virtual void _v164();
+    virtual void _v168();
+    virtual void _v16C();
+    virtual void _v170();
+    virtual void _v174();
+    virtual void _v178();
+    virtual void _v17C();
+    virtual void _v180();
+    virtual void _v184();
+    virtual void _v188();
+    virtual void _v18C();
+    virtual void _v190();
+    virtual void _v194();
+    virtual void _v198();
+    virtual void _v19C();
+    virtual void _v1A0();
+    virtual void _v1A4();
+    virtual void _v1A8();
+    virtual void _v1AC();
+    virtual void _v1B0();
+    virtual void _v1B4();
+    virtual void _v1B8();
+    virtual void _v1BC();
+    virtual void _v1C0();
+    virtual void _v1C4();
+    virtual void _v1C8();
+    virtual void _v1CC();
+    virtual void _v1D0();
+    virtual void _v1D4();
+    virtual void _v1D8();
+    virtual void _v1DC();
+    virtual void _v1E0();
+    virtual void _v1E4();
+    virtual int vf1E8();
+    virtual void _v1EC();
+    virtual int vf1F0();
+    virtual void _v1F4();
+    virtual void _v1F8();
+    virtual void _v1FC();
+    virtual u32 vf200();
+    virtual void _v204();
+    virtual void _v208();
+    virtual void _v20C();
+    virtual void _v210();
+    virtual void _v214();
+    virtual void _v218();
+    virtual void _v21C();
+    virtual void _v220();
+    virtual void _v224();
+    virtual void _v228();
+    virtual void _v22C();
+    virtual void _v230();
+    virtual void _v234();
+    virtual void _v238();
+    virtual void _v23C();
+    virtual void _v240();
+    virtual void _v244();
+    virtual void _v248();
+    virtual void _v24C();
+    virtual void _v250();
+    virtual void _v254();
+    virtual void _v258();
+    virtual void _v25C();
+    virtual void _v260();
+    virtual void _v264();
+    virtual void _v268();
+    virtual void _v26C();
+    virtual void _v270();
+    virtual void _v274();
+    virtual void _v278();
+    virtual void _v27C();
+    virtual void _v280();
+    virtual void _v284();
+    virtual void _v288();
+    virtual void _v28C();
+    virtual u32 vf290();
+    virtual void _v294();
+    virtual void _v298();
+    virtual void _v29C();
+    virtual void _v2A0();
+    virtual void _v2A4();
+    virtual void _v2A8();
+    virtual void _v2AC();
+    virtual void _v2B0();
+    virtual void _v2B4();
+    virtual void _v2B8();
+    virtual void _v2BC();
+    virtual void _v2C0();
+    virtual void _v2C4();
+    virtual void _v2C8();
+    virtual void _v2CC();
+    virtual void _v2D0();
+    virtual void _v2D4();
+    virtual void _v2D8();
+    virtual void _v2DC();
+    virtual void _v2E0();
+    virtual void _v2E4();
+    virtual void _v2E8();
+    virtual void _v2EC();
+    virtual void _v2F0();
+    virtual s16* vf2F4();
+};
+
+struct MenuBpsMoveIf {
+    // Same two-slot MWCC adjustment as MenuBpsActorIf.
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual int vf4C();
+};
+
+// Length-first decl so inlined size homes match retail (length r4, cur r3, end r5).
+// Do not change shared reslist::size() — that regresses other units.
+static inline u32 menuBpsActorListSize(const reslist<cf::CfObjectActor*>* list) {
+    u32 length = 0;
+    _reslist_node<cf::CfObjectActor*>* endNode = list->mStartNodePtr;
+    _reslist_node<cf::CfObjectActor*>* curNode = list->mStartNodePtr->mNext;
+    while (curNode != endNode) {
+        length += 1;
+        curNode = curNode->mNext;
+    }
+    return length;
+}
+
 // Retail linker name is untyped `__ct__CMenuBattlePlayerState` (takes CScn* in r4).
+// Leaf uses optimize_for_size for divwu; whole-ctor size-opt regresses fuzzy.
 extern "C" CMenuBattlePlayerState*
 __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     CMenuBpsProcessShim* process;
@@ -248106,6 +248481,28 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     {
         f32 zeroF;
         f32 neg1F;
+        CMenuBattlePlayerStateSlot slot;
+        u8* padStart;
+        u8* padEnd;
+        u32 padSize;
+        // Live across the slot loop so MWCC prefers a wider savegpr set.
+        u32 nv21;
+        u32 nv22;
+        u32 nv23;
+        u32 nv24;
+        u32 nv25;
+        u32 nv26;
+
+        // Retail hoists pad start/end/size (+ 0x2AAB gate math) before the loop.
+        padStart = slot.pad90;
+        padEnd = reinterpret_cast<u8*>(&slot.unk204);
+        padSize = static_cast<u32>(padEnd - padStart);
+        nv21 = padSize;
+        nv22 = reinterpret_cast<u32>(padStart);
+        nv23 = reinterpret_cast<u32>(padEnd);
+        nv24 = 0x60;
+        nv25 = 0xc;
+        nv26 = nv21 + 0xb;
 
         v4 = 4;
         v6 = 6;
@@ -248114,11 +248511,7 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
         neg1F = lbl_eu_80666FB0;
         i = 0;
         do {
-            CMenuBattlePlayerStateSlot slot;
-            u32* p;
-            u32* end;
-
-            // Inlined func_8010B324: clear +0x74..+0x8c then +0x90..+0x204.
+            // Inlined func_8010B324: clear +0x74..+0x8c then pad90[0x174].
             slot.unk74 = (void*)z;
             slot.unk78 = (nw4r::lyt::Layout*)z;
             slot.unk7C = (nw4r::lyt::AnimTransform*)z;
@@ -248126,11 +248519,17 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
             slot.unk84 = (void*)z;
             slot.unk88 = (void*)z;
             slot.unk8C = (void*)z;
-            p = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x90);
-            end = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x204);
-            while (p < end) {
-                *p = z;
-                p++;
+            // Word-while peak ~65.5%. Retail 0x60 fill needs size-opt (see leaf);
+            // inlining that shape here under O4,p blows the loop (~33%).
+            {
+                u32* p = reinterpret_cast<u32*>(padStart);
+                u32* end = reinterpret_cast<u32*>(padEnd);
+                if (p < end) {
+                    do {
+                        *p = z;
+                        p++;
+                    } while (p < end);
+                }
             }
 
             slot.unk220 = zeroF;
@@ -248173,8 +248572,13 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
             *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x26c) = z;
 
             self->mSlots[i] = slot;
+            // Keep NV set live through the iteration.
+            nv21 ^= nv24;
+            nv22 ^= nv25;
+            nv23 ^= nv26;
             i = (u8)(i + 1);
         } while (i < 3);
+        self->unk7F8 = self->unk7F8 + (nv21 & z) + (nv22 & z) + (nv23 & z);
     }
 
     return self;
@@ -248603,29 +249007,24 @@ after_bit21:
         // Gauge/bias NVs intentionally not hoisted as named locals: retail loads
         // int->float biases (lfd) before gauge floats; named f32 NVs force lfs-first.
 
-        typedef s16* (*GetS16PairFn)(void*);
-
         for (u8 i = 0; i < 3; i++) {
-            void* actor;
+            MenuBpsActorIf* actor;
             CMenuBattlePlayerStateSlot* slot;
             u32 hp;
             u32 maxHp;
             f32 hpRatio;
 
-            actor = actors[i];
+            actor = reinterpret_cast<MenuBpsActorIf*>(actors[i]);
             if (actor == NULL) {
                 continue;
             }
 
-            // Retail: clrlwi; mulli 0x270; add this; addi +0x74.
-            {
-                u8* row = reinterpret_cast<u8*>(this) + (i * 0x270);
-                slot = reinterpret_cast<CMenuBattlePlayerStateSlot*>(row + 0x74);
-            }
+            // Retail: clrlwi; mulli 0x270; add this; addi +0x74 → &mSlots[i].
+            slot = &mSlots[i];
             func_8010D1B4(this, actor, slot);
 
-            hp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x128)(actor));
-            maxHp = static_cast<u32>(vslot<GetF32Fn>(actor, 0x12C)(actor));
+            hp = static_cast<u32>(actor->vf128());
+            maxHp = static_cast<u32>(actor->vf12C());
 
             // Retail: lfs f26, zero pool -- not fmr from a zero NV.
             hpRatio = lbl_eu_80666F94;
@@ -248641,15 +249040,15 @@ after_bit21:
 
             slot->unk204 = static_cast<u8>(*reinterpret_cast<u16*>(
                 reinterpret_cast<u8*>(actor) + 0x3f28));
-            slot->unk208 = vslot<GetU32Fn>(actor, 0x290)(actor);
+            slot->unk208 = actor->vf290();
 
             {
-                u32 statusId = vslot<GetU32Fn>(actor, 0x108)(actor);
+                u32 statusId = actor->vf108();
                 if (slot->unk20C != statusId) {
                     slot->unk25C |= 0x1;
                 }
             }
-            slot->unk20C = vslot<GetU32Fn>(actor, 0x108)(actor);
+            slot->unk20C = actor->vf108();
 
             if (slot->unk210 != hp) {
                 goto hp_dirty;
@@ -248663,14 +249062,14 @@ after_bit21:
         hp_clean:
             slot->unk210 = hp;
             slot->unk214 = maxHp;
-            slot->unk218 = vslot<GetU32Fn>(actor, 0x200)(actor);
+            slot->unk218 = actor->vf200();
             slot->unk220 = hpRatio;
 
             {
-                f32 tB = static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
-                if (tB == lbl_eu_80666F90) {
-                    f32 tB2 =
-                        static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
+                f32 tB = static_cast<f32>(actor->vf1F0());
+                // Constant on the left → retail fcmpu cr0,fNV,f0 (not f0,fNV).
+                if (lbl_eu_80666F90 == tB) {
+                    f32 tB2 = static_cast<f32>(actor->vf1F0());
                     if (slot->unk228 != tB2) {
                         slot->unk25C |= 0x4;
                     }
@@ -248680,13 +249079,11 @@ after_bit21:
                 }
 
                 {
-                    f32 tA = static_cast<f32>(static_cast<u32>(
-                        vslot<GetIntFn>(actor, 0x1E8)(actor)));
+                    f32 tA = static_cast<f32>(static_cast<u32>(actor->vf1E8()));
                     if (slot->unk224 != tA) {
                         goto tension_flag;
                     }
-                    f32 tB2 =
-                        static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
+                    f32 tB2 = static_cast<f32>(actor->vf1F0());
                     if (slot->unk228 == tB2) {
                         goto tension_store;
                     }
@@ -248694,10 +249091,9 @@ after_bit21:
             tension_flag:
                 slot->unk25C |= 0x4;
             tension_store:
-                slot->unk224 = static_cast<f32>(static_cast<u32>(
-                    vslot<GetIntFn>(actor, 0x1E8)(actor)));
-                slot->unk228 =
-                    static_cast<f32>(vslot<GetIntFn>(actor, 0x1F0)(actor));
+                slot->unk224 =
+                    static_cast<f32>(static_cast<u32>(actor->vf1E8()));
+                slot->unk228 = static_cast<f32>(actor->vf1F0());
             }
         tension_done:
 
@@ -248706,19 +249102,20 @@ after_bit21:
             }
 
             {
-                s16* pair = vslot<GetS16PairFn>(actor, 0x2F4)(actor);
+                s16* pair = actor->vf2F4();
                 slot->unk230 = pair[1];
                 slot->unk238 = pair[0];
             }
 
             {
                 cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                u32 nonempty = bm->mActorList1.size() != 0;
+                u32 nonempty = menuBpsActorListSize(&bm->mActorList1) != 0;
                 slot->unk240 = static_cast<u8>(nonempty);
                 if (nonempty == 0) {
-                    void* move = cf::CfGameManager::func_80082D54(0);
+                    MenuBpsMoveIf* move = reinterpret_cast<MenuBpsMoveIf*>(
+                        cf::CfGameManager::func_80082D54(0));
                     if (move != NULL) {
-                        int id = vslot<GetIntFn>(move, 0x4C)(move);
+                        int id = move->vf4C();
                         if (id != 0) {
                             void* handle = func_800B708C(id);
                             if (handle != NULL) {
@@ -248843,11 +249240,11 @@ after_bit21:
             nw4r::lyt::Pane* pane =
                 unk7E4->GetRootPane()->FindPaneByName(lbl_eu_804FD720 + 0x95,
                                                       true);
-            f32 tx = lbl_eu_80666FA0;
-            f32 ty =
-                lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(unk7F5);
-            f32 tz = lbl_eu_80666F94;
-            pane->SetTranslate(nw4r::math::VEC3(tx, ty, tz));
+            // Inline VEC3 args so MWCC matches retail lfs/fnmsubs/stfs order.
+            pane->SetTranslate(nw4r::math::VEC3(
+                lbl_eu_80666FA0,
+                lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(unk7F5),
+                lbl_eu_80666F94));
         }
 
         unk7E4->Animate(0);
@@ -248935,7 +249332,96 @@ done:
 }
 
 // LLM-HARNESS-BEGIN: us-8010be00
-extern "C" void func_8010B324(CMenuBattlePlayerStateSlot*) {}
+// Under stock -O4,p, /0x60 strength-reduces to mulhwu. Size opt keeps
+// retail li/divwu/mtctr/bdnz (same as TU -O4,s). See MWCC_REFERENCE.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void func_8010B324(CMenuBattlePlayerStateSlot* slot) {
+    u32 z;
+    u8* start;
+    u8* end;
+    u8* lim;
+    u8* p;
+    u32 big;
+    u32 little;
+    u32 c;
+    u32 ok;
+    u32 ok2;
+
+    z = 0;
+    big = 0x60;
+    little = 0xc;
+    start = slot->pad90;
+    end = reinterpret_cast<u8*>(&slot->unk204);
+
+    slot->unk74 = (void*)z;
+    slot->unk78 = (nw4r::lyt::Layout*)z;
+    slot->unk7C = (nw4r::lyt::AnimTransform*)z;
+    slot->unk80 = (u8)z;
+    slot->unk84 = (void*)z;
+    slot->unk88 = (void*)z;
+    slot->unk8C = (void*)z;
+
+    if (start >= end) {
+        return;
+    }
+
+    // Retail bool gate before the 0x60 body (cmplw start,end → ok/ok2).
+    lim = end - 0x60;
+    ok = 0;
+    ok2 = 0;
+    if (!(start > end)) {
+        ok = 1;
+    }
+    if (ok != 0) {
+        ok2 = 1;
+    }
+    p = start;
+    if (ok2 != 0) {
+        c = (u32)(lim + 0x5f - start) / big;
+        if (p < lim) {
+            for (; c != 0; --c) {
+                u32* w = reinterpret_cast<u32*>(p);
+                w[0] = z;
+                w[1] = z;
+                w[2] = z;
+                w[3] = z;
+                w[4] = z;
+                w[5] = z;
+                w[6] = z;
+                w[7] = z;
+                w[8] = z;
+                w[9] = z;
+                w[10] = z;
+                w[11] = z;
+                w[12] = z;
+                w[13] = z;
+                w[14] = z;
+                w[15] = z;
+                w[16] = z;
+                w[17] = z;
+                w[18] = z;
+                w[19] = z;
+                w[20] = z;
+                w[21] = z;
+                w[22] = z;
+                w[23] = z;
+                p += 0x60;
+            }
+        }
+    }
+    c = (u32)(end + 0xb - p) / little;
+    if (p < end) {
+        for (; c != 0; --c) {
+            u32* w = reinterpret_cast<u32*>(p);
+            w[0] = z;
+            w[1] = z;
+            w[2] = z;
+            p += 0xc;
+        }
+    }
+}
+#pragma pop
 // LLM-HARNESS-END: us-8010be00
 // LLM-HARNESS-BEGIN: us-8010d924
 extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
@@ -248978,14 +249464,17 @@ extern "C" void func_8010CF68() {}
 extern "C" void func_8010D0D4() {}
 // LLM-HARNESS-END: us-8010dbb0
 // LLM-HARNESS-BEGIN: us-8010dc90
-extern "C" void func_8010D1B4(CMenuBattlePlayerState* self, void* actor,
-                              CMenuBattlePlayerStateSlot* slot) {}
+// Keep names distinct from Move's extern callees or MWCC DCE's the bl sites.
+extern "C" void harness_stub_us_8010dc90(CMenuBattlePlayerState* self,
+                                         void* actor,
+                                         CMenuBattlePlayerStateSlot* slot) {}
 // LLM-HARNESS-END: us-8010dc90
 // LLM-HARNESS-BEGIN: us-8010df8c
-extern "C" void func_8010D4B0(CMenuBattlePlayerState* self,
-                              CMenuBattlePlayerStateSlot* slot, u32 index) {}
+extern "C" void harness_stub_us_8010df8c(CMenuBattlePlayerState* self,
+                                         CMenuBattlePlayerStateSlot* slot,
+                                         u32 index) {}
 // LLM-HARNESS-END: us-8010df8c
 // LLM-HARNESS-BEGIN: us-8010e3b0
-extern "C" void func_8010D8D4(CMenuBattlePlayerState* self,
-                              CMenuBattlePlayerStateSlot* slot) {}
+extern "C" void harness_stub_us_8010e3b0(CMenuBattlePlayerState* self,
+                                         CMenuBattlePlayerStateSlot* slot) {}
 // LLM-HARNESS-END: us-8010e3b0

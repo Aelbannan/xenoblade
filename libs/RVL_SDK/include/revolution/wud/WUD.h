@@ -14,8 +14,6 @@ extern "C" {
 #define WUD_DEV_HANDLE_INVALID (-1)
 
 // Forward declarations
-typedef struct WUDDevInfo;
-
 typedef enum {
     WUD_LIB_STATUS_0,
     WUD_LIB_STATUS_1,
@@ -52,7 +50,6 @@ typedef BOOL (*WUDFreeFunc)(void* pBlock);
 typedef void (*WUDSyncDeviceCallback)(s32 result, s32 num);
 typedef void (*WUDClearDeviceCallback)(s32 result);
 
-typedef void (*WUDHidConnCallback)(UINT8 devHandle, u8 open);
 typedef void (*WUDHidRecvCallback)(UINT8 devHandle, UINT8* pReport, UINT16 len);
 
 typedef struct WUDDevInfo {
@@ -69,6 +66,8 @@ typedef struct WUDDevInfo {
     u8 UNK_0x5D[1];
     tBTA_HH_ATTR_MASK hhAttrMask; // at 0x5E
 } WUDDevInfo;
+
+typedef void (*WUDHidConnCallback)(WUDDevInfo* pInfo, u8 open);
 
 BOOL WUDInit(void);
 BOOL WUDIsBusy(void);

@@ -1,5 +1,6 @@
 #include <revolution/GX.h>
 
+#pragma dont_inline on
 void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
                       GXIndTexFormat texFmt, GXIndTexBiasSel biasSel,
                       GXIndTexMtxID mtxId, GXIndTexWrap wrapS,
@@ -19,6 +20,7 @@ void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
     GX_BP_LOAD_REG(cmd);
     gxdt->lastWriteWasXF = FALSE;
 }
+#pragma dont_inline off
 
 void GXSetIndTexMtx(GXIndTexMtxID id, const f32 offset[2][3], s8 scaleExp) {
     u32 index;
@@ -169,28 +171,13 @@ void GXSetTevDirect(GXTevStageID stage) {
 }
 
 void GXSetTevIndWarp(GXTevStageID tev_stage, GXIndTexStageID ind_stage,
-GXBool signed_offsets, GXBool replace_mode, GXIndTexMtxID matrix_sel){
+                     GXBool signed_offsets, GXBool replace_mode,
+                     GXIndTexMtxID matrix_sel) {
     GXIndTexWrap wrap = replace_mode ? GX_ITW_0 : GX_ITW_OFF;
     GXIndTexBiasSel bias = signed_offsets ? GX_ITB_STU : GX_ITB_NONE;
 
-    GXSetTevIndirect(tev_stage, ind_stage, GX_ITF_8, bias, matrix_sel,
-                    wrap, wrap, FALSE, FALSE, GX_ITBA_OFF);
-}
-
-//unused
-void GXSetTevIndTile(){
-}
-
-//unused
-void GXSetTevIndBumpST(){
-}
-
-//unused
-void GXSetTevIndBumpXYZ(){
-}
-
-//unused
-void GXSetTevIndRepeat(){
+    GXSetTevIndirect(tev_stage, ind_stage, GX_ITF_8, bias, matrix_sel, wrap,
+                     wrap, FALSE, FALSE, GX_ITBA_OFF);
 }
 
 void __GXUpdateBPMask(void) {}

@@ -124,9 +124,55 @@ u16 ResFontBase::FindGlyphIndex(u16 ch) const {
     return GLYPH_INDEX_NOT_FOUND;
 }
 
-// LLM-HARNESS-BEGIN: us-8033bad0
-extern "C" void FindGlyphIndex__Q46nw4hbm2ut6detail11ResFontBaseCFPCQ36nw4hbm2ut11FontCodeMapUs() {}
-// LLM-HARNESS-END: us-8033bad0
+u16 ResFontBase::FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const {
+    u16 index = GLYPH_INDEX_NOT_FOUND;
+
+    switch (pMap->mappingMethod) {
+    case FONT_MAPMETHOD_DIRECT: {
+        index = pMap->mapInfo[0] + (ch - pMap->ccodeBegin);
+        break;
+    }
+
+    case FONT_MAPMETHOD_TABLE: {
+        index = pMap->mapInfo[ch - pMap->ccodeBegin];
+        break;
+    }
+
+    case FONT_MAPMETHOD_SCAN: {
+        struct CMapScanEntry {
+            u16 ccode; // at 0x0
+            u16 index; // at 0x2
+        };
+        struct CMapInfoScan {
+            u16 num;                 // at 0x0
+            CMapScanEntry entries[]; // at 0x2
+        };
+
+        const CMapInfoScan* pInfo =
+            reinterpret_cast<const CMapInfoScan*>(pMap->mapInfo);
+
+        const CMapScanEntry* pStart = pInfo->entries;
+        const CMapScanEntry* pEnd = &pInfo->entries[pInfo->num - 1];
+
+        while (pStart <= pEnd) {
+            const CMapScanEntry* pMiddle = pStart + (pEnd - pStart) / 2;
+
+            if (pMiddle->ccode < ch) {
+                pStart = pMiddle + 1;
+            } else if (ch < pMiddle->ccode) {
+                pEnd = pMiddle - 1;
+            } else {
+                return pMiddle->index;
+            }
+        }
+
+        break;
+    }
+    }
+
+    return index;
+}
+
 
 
 const CharWidths& ResFontBase::GetCharWidthsFromIndex(u16 index) const {

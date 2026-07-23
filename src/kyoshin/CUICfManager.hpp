@@ -42,49 +42,43 @@ struct CUICfInitBlock {
     u8 unk06[0x34 - 6];
 };
 
-struct CUICfInitTail {
-    u32 unk00;
-    u32 unk04;
-    u32 unk08;
-    u32 unk0C;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u32 unk20;
-    u32 unk24;
-    u32 unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    u32 unk38;
-    u32 unk3C;
-    u32 unk40;
-    u32 unk44;
-    u32 unk48;
-    u32 unk4C;
-    u32 unk50;
-    u32 unk54;
-    u32 unk58;
-    u32 unk5C;
-    u32 unk60;
-    u32 unk64;
-    u32 unk68;
-    u32 unk6C;
-    u32 unk70;
-    u32 unk74;
-    u32 unk78;
-    u32 unk7C;
-    u32 unk80;
-    u32 unk84;
-    u32 unk88;
-    u32 unk8C;
-};
-
 struct CUICfInitState {
     u8 mode;
     u8 state;
     u8 unk02[2];
+};
+
+// Retail copy: lwz +0; paired +8/+4; lhz +0xC; lone lwz +0x0E; paired words from +0x12.
+// Trailing bytes split so MWCC pair-unrolls (one big u8[] → lwzu). Zeros via u16* overlay.
+#pragma pack(push, 1)
+struct CUICfInitTailChunk8 {
+    u8 b[8];
+};
+struct CUICfInitTailChunk40 {
+    u8 b[0x40];
+};
+struct CUICfInitTailChunk3E {
+    u8 b[0x3E];
+};
+struct CUICfInitTailChunk40View {
+    u8 b[0x40]; // assign view: 2-byte overhang past Tail (retail last lwz pair)
+};
+struct CUICfInitTail {
+    u32 unk00;                  // +0x00
+    CUICfInitTailChunk8 mid;    // +0x04..+0x0B (memcpy pair → +8/+4 loads)
+    u16 unk0C;                  // +0x0C
+    u32 unk0E;                  // +0x0E
+    CUICfInitTailChunk40 rest0; // +0x12
+    CUICfInitTailChunk3E rest1; // +0x52
+}; // size = 0x90
+#pragma pack(pop)
+
+// Forces retail stack contiguity: state, block0, blocks[3], tail.
+struct CUICfInitTemplates {
+    CUICfInitState state;
+    CUICfInitBlock block0;
+    CUICfInitBlock blocks[3];
+    CUICfInitTail tail;
 };
 
 // 0xC-byte pool node for func_80133324's event queue - same layout as

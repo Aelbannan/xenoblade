@@ -2,8 +2,8 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v43`
-- Result format: `23`
+- Architecture model: `broadway-ppc32-be-v44`
+- Result format: `24`
 - Certificate format: `18`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->
@@ -252,8 +252,11 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   - If both sides are `valid`, all selected observables are compared.
   - If both sides are `invalid`, the `invalid_reason` codes are compared.
     A difference in reason codes is a mismatch.  When both sides agree on
-    the reason code, value comparison is suppressed.  No claim is made about
-    the relative exception class or hardware exception delivery.
+    the reason code, **selected observables are still compared** (including
+    touched memory).  A store that commits before a shared faulting op must
+    not be invisible to `EQUIVALENT`.  No claim is made about the relative
+    exception class or hardware exception delivery beyond the modeled reason
+    code and compared architectural state.
   - All `invalid_reason` values are Z3 bitvector expressions directly
     comparable by the solver.  A reason-code mismatch is found when the
     solver returns `sat` on the inequality; `INCONCLUSIVE_UNMODELED_EXCEPTION`
@@ -271,10 +274,16 @@ strings below are the exact values emitted by `semantics.execute_cfg`:
   An address private to one implementation does not hide a write by the other
   implementation. Masking is disabled when a call executes (including fixed
   EABI `_savegpr_*`/`_restgpr_*`/`_savefpr_*`/`_restfpr_*` helpers) or when an
-  r1-derived value is stored to memory (direct `r1`, register aliases such as
-  `mr`/`ori`, computed pointers such as `addi rD,r1,imm`, or `stmw` ranges that
-  include `r1`). Escape detection is a free-variable check for `input.gpr.r1`
-  in the stored expression (fail-closed; not a full taint lattice).
+  r1-derived value is stored to a **non-r1-relative** address (direct `r1`,
+  register aliases such as `mr`/`ori`, computed pointers such as
+  `addi rD,r1,imm` published via `stw` to a public base, or `stmw` ranges that
+  include `r1` targeting a public base), **or** when a load-derived (`Select`)
+  word is stored to an address that is not itself r1-relative (fail-closed: the
+  loaded word may equal the entry SP). Escape detection walks the BV cone for
+  `input.gpr.r1` and for `Select` nodes without descending into array
+  `Store`/`Select` spines (avoids super-linear memory-history walks). Spills of
+  r1-derived or loaded words back onto r1-relative addresses — including the
+  standard `stwu r1,-N(r1)` back-chain save — keep private-stack masking.
 - Stack layout feasibility also rejects frames deeper than
   `MAX_PRIVATE_STACK_DEPTH` (16 MiB). That bound fail-closes SP wraparound
   through address zero, which would otherwise collapse `stack_low` near 0 and
@@ -399,8 +408,9 @@ After an architecture bump (`automatic_promotion` stays `false`):
 3. Never enable “all FP” or “all MMIO” in one bump — keep scalar FP and
    MMIO/gx-fifo allowlists empty until each has promotion-grade evidence.
 
-**GX FIFO Tier-A (v43):** the live architecture model is now
-`broadway-ppc32-be-v43` (v42 stays reserved for the Phase 12 scalar FP exact
+**GX FIFO Tier-A (v43+):** the live architecture model is now
+`broadway-ppc32-be-v44` (v43 introduced GX FIFO Tier-A; v44 fixed both-invalid
+observable suppression; v42 stays reserved for the Phase 12 scalar FP exact
 v2 production switch — see `SCALAR_FP_V2.md`). See
 [`GX_FIFO_TIER_A.md`](GX_FIFO_TIER_A.md) for the frozen `gx-fifo-write-trace`
 / `gx-fifo-read` / `mmio-loop-emission` domain, and
@@ -559,22 +569,23 @@ mmio-loop-emission allowlist empty; staged canaries live at
   NaN-freedom discharge (`nan_freedom.enforce_nan_freedom`): Z3's single-NaN
   theory cannot certify Broadway NaN payload identity.
 - **Indirect-branch observables:** matched `indirect-branch` (`bctr` /
-  unlinked `bcctr`) terminals compare the full contract observable set,
-  including `r4` / `f1` / `f1.ps1`, when no `AbiShape` is attached (fail-closed
-  default). At a tail call those registers are live outgoing arguments to the
-  callee, not dead return halves. MWCC virtual thunks must scratch the
-  destination in a non-observed volatile (`r12`) or otherwise preserve argument
-  registers; using `r4`/`f1` as CTR scratch is correctly `NOT_EQUIVALENT` to an
-  `r12` thunk that preserves them. `exit.target` (CTR) and `r3` (adjusted
+  unlinked `bcctr`) terminals compare the contract observable set **union**
+  the full PowerPC EABI outgoing-argument registers (`r3`–`r10`, `f1`–`f8`
+  and `.ps1` lanes) when no `AbiShape` is attached (fail-closed default). At a
+  tail call those registers are live outgoing arguments to the callee, not
+  dead return halves. MWCC virtual thunks must scratch the destination in a
+  non-arg volatile (`r11`/`r12`) or otherwise preserve argument registers;
+  using `r4`–`r10` / `f1`–`f8` as CTR scratch is correctly `NOT_EQUIVALENT` to
+  an `r12` thunk that preserves them. `exit.target` (CTR) and `r3` (adjusted
   `this`) remain compared.
 - **`AbiShape` (opt-in):** an explicit shape on `EquivalenceContract` may omit
   `r4` on return/fallthrough when `returns_i64=False`, omit `f1`/`f1.ps1` when
-  `returns_float=False`, and omit those same registers on
-  `indirect-branch`/`call-indirect` when `outgoing_gpr_args < 2` or
-  `outgoing_fpr_args < 1`. Inference (`abi_infer.infer_abi_shape`) only narrows
-  when evidence is strong (neither side touches `r4`/`f1` on a simple vtable
-  dispatch, and/or a mangled `Fv` symbol hint); it does not blanket-drop `r4`
-  on every indirect branch.
+  `returns_float=False`, and truncate the outgoing-arg union on
+  `indirect-branch`/`call-indirect` to the first `outgoing_gpr_args` /
+  `outgoing_fpr_args` registers (defaults **8**/`8`). Inference
+  (`abi_infer.infer_abi_shape`) only narrows when evidence is strong (matching
+  simple vtable dispatches that never touch `r4`–`r10`/`f1`, and/or a mangled
+  `Fv` symbol hint); using `r5` as CTR scratch does **not** auto-narrow.
 
 ### Calls
 
@@ -640,12 +651,15 @@ mmio-loop-emission allowlist empty; staged canaries live at
   deferred — `traps_enabled` assumes precise). Incomplete opcodes (estimates,
   compares, conversions, non-oracle paired) fail closed as
   `ExecutionInconclusive` / `INCONCLUSIVE_UNSUPPORTED`.   SymbolicOps still
-  constrains OE/UE/XE clear (OX/UX/XX not SMT-modeled). When `fpscr` is a
-  compared observable after non-bitwise FP arithmetic on *differing*
+  constrains OE/UE/XE clear (OX/UX/XX not SMT-modeled). When `fpscr` — or an
+  FPR/CR field that received a sticky projection via `mffs` / `mcrfs`, or
+  record-form FP Rc copying FPSCR[FX,FEX,VX,OX] into observed `cr1` / `cr` —
+  is a compared observable after non-bitwise FP arithmetic on *differing*
   implementations, EQUIVALENT is demoted to `INCONCLUSIVE_ABSTRACTION`
-  (`annotate_fpscr_sticky_incompleteness`). Byte-identical implementations keep
-  EQUIVALENT (same code ⇒ same hardware stickies) with an honesty assumption.
-  Still **Tier C** for promotion when FPSCR arithmetic is in play.
+  (`annotate_fpscr_sticky_incompleteness`). This demotion is independent of
+  `allow_nan` (NaN-freedom is a separate gate). Byte-identical implementations
+  keep EQUIVALENT (same code ⇒ same hardware stickies) with an honesty
+  assumption. Still **Tier C** for promotion when FPSCR arithmetic is in play.
 - Finite-input overflow is excluded when `exclude_finite_overflow=true`
   (default) via `_constrain_fp_defined_result` → `FP_DOMAIN_EXCLUDED`.
 - Invalid-operation (`VX`) and divide-by-zero (`ZX`) causes are tracked.
@@ -808,6 +822,7 @@ mmio-loop-emission allowlist empty; staged canaries live at
 | No vacuous proof through impossible layout | `engine.check_equivalence` layout feasibility | layout tests | `status=INCONCLUSIVE_LAYOUT` |
 | Definedness-preserving partial equivalence | `engine._terminal_difference` | definedness tests | `mismatch.kind=definedness` |
 | Invalid-reason comparison when both invalid | `engine._terminal_difference` | definedness tests | `mismatch.name=invalid-reason` |
+| Both-invalid still compares observables/memory | `engine._terminal_difference` | `test_definedness.BothInvalidObservableTests` | `status=NOT_EQUIVALENT` when pre-fault stores diverge |
 | InvalidReason tracked per instruction | `semantics._constrain_valid` | definedness tests | `state.invalid_reason` |
 | Call summary preserves first invalid reason | `semantics.call_token`, `_apply_call_summary` | `test_definedness.CalleeSummaryDefinednessTests` | `state.invalid_reason` |
 | INCONCLUSIVE_UNMODELED_EXCEPTION (reserved) | `result.ProofStatus` | — | `status` |

@@ -26,8 +26,8 @@ The coop runner defaults to **US**. Use another region via `coop.json` or `confi
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v43`
-- Result format: `23`
+- Architecture model: `broadway-ppc32-be-v44`
+- Result format: `24`
 - Certificate format: `18`
 
 <!-- END GENERATED PPC_EQUIVALENCE_VERSION -->

@@ -98,7 +98,7 @@ extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* s
     *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0xa0) = zero;
 
     // do-while + live panelEnd matches retail fall-into-body cmplw/blt shape.
-    // panelEnd/one r0?r3 Chaitin soft-cap closed via postprocess insn_patches.
+    // panelEnd/one r0/r3 Chaitin soft-cap — keep iterating in high-level C.
     do {
         *reinterpret_cast<u32*>(panel + 0x00) = zero;
         *reinterpret_cast<u32*>(panel + 0x04) = zero;
@@ -285,13 +285,17 @@ after_bit21:
         // Rematerialize &indices[j] each step (retail addi r1,0x8). Load depthB before
         // depthA so fcmpo uses f1/f0. XOR via store-reload of order[j]/pair[1].
         {
-            u32* order = indices;
+            // pass-before-order + block-scoped limit → order=r9, j=r12, swapped=r11
+            // (retail). Peak 99.172%: pass/limit/pair still color r8/r10/r30 vs
+            // retail r10/r5/r8; XOR operand/dest Chaitin follows from that.
             u8 pass = 0;
+            u32* order = indices;
+            s32 limit;
             u32 left;
             for (left = 0x17; left != 0; left--) {
                 u8 swapped = 0;
                 u8 pass8 = pass;
-                s32 limit = 0x17 - pass8;
+                limit = 0x17 - pass8;
                 u8 j = 0;
                 goto sort_test;
             sort_body: {
@@ -305,11 +309,11 @@ after_bit21:
                     if (depthA > depthB) {
                         u32 tmp = order[j] ^ pair[1];
                         order[j] = tmp;
+                        swapped = 1; // retail sets this before finishing the XOR swap
                         tmp = pair[1] ^ tmp;
                         pair[1] = tmp;
                         tmp = order[j] ^ tmp;
                         order[j] = tmp;
-                        swapped = 1;
                     }
                     j++;
                 }
@@ -325,14 +329,17 @@ after_bit21:
         }
 
         // NV decl order entry, order, i -> r30/r29/r28 (MWCC_REFERENCE 8c6).
+        // u32 counter; cast to u8 only when indexing. Compare stays cmpli (no
+        // terminal clrlwi) so .text is retail 0x274.
         {
             u8* entry;
             u32* order;
-            u8 i;
+            u32 i;
             order = indices;
             i = 0;
             do {
-                entry = reinterpret_cast<u8*>(this) + order[i] * 0x4c;
+                entry = reinterpret_cast<u8*>(this) +
+                        order[static_cast<u8>(i)] * 0x4c;
                 if (entry[0xb9] == 0) {
                     goto draw_next;
                 }

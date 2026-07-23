@@ -387,26 +387,72 @@ FPSCR_STICKIES_UNSUPPORTED = (
     "fail closed — cannot authorize EQUIVALENT"
 )
 
+# Opcodes that publish FPSCR (or a sticky-bearing projection) into another
+# compared observable — demotion must not require the literal ``fpscr`` name.
+_FPSCR_PROJECTION_OPS = frozenset({"mffs", "mcrfs"})
+
+
+def _observes_cr_field(observables: set[str], field: int) -> bool:
+    """True when ``cr`` or ``cr{field}`` is among compared observables."""
+    return "cr" in observables or f"cr{field}" in observables
+
+
+def _compares_fpscr_or_sticky_projection(result: Any) -> bool:
+    """True when compared observables can see incomplete FPSCR stickies.
+
+    Sticky visibility paths:
+    * literal ``fpscr``
+    * ``mffs`` into a compared FPR / ``mcrfs`` into a compared CR field
+    * record-form FP Rc copying FPSCR[FX,FEX,VX,OX] into CR1 (observing
+      ``cr1`` or whole ``cr``) — even when ``mffs``/``mcrfs`` are absent
+    """
+    observables = {str(item) for item in (getattr(result, "observables", None) or [])}
+    if "fpscr" in observables:
+        return True
+    # Record-form scalar/PS Rc writes CR1 from the FPSCR high nibble (includes
+    # OX). Observing that field after FP arithmetic is a sticky projection.
+    if _observes_cr_field(observables, 1):
+        return True
+    opcodes = {str(item) for item in (getattr(result, "opcodes_used", None) or [])}
+    if not opcodes & _FPSCR_PROJECTION_OPS:
+        return False
+    # mffs writes an FPR; mcrfs writes a CR field. Either projection carries XX.
+    if any(
+        name.startswith("f") and (name[1:].isdigit() or name.endswith(".ps1"))
+        for name in observables
+    ):
+        return True
+    if "cr" in observables or any(
+        name.startswith("cr") and name[2:].isdigit() for name in observables
+    ):
+        return True
+    return False
+
 
 def annotate_fpscr_sticky_incompleteness(
     result: Any,
     *,
     identical_implementations: bool = False,
 ) -> None:
-    """Fail closed when ``fpscr`` is compared after FP arithmetic under SymbolicOps.
+    """Fail closed when FPSCR stickies are compared after FP arithmetic under SymbolicOps.
 
     SymbolicOps does not SMT-model OX/UX/XX sticky latching. An ``unsat``
-    divergence query over ``fpscr`` can therefore report EQUIVALENT while
-    hardware stickies diverge (for example, clearing XX after an inexact
-    ``fdivs``). When ``fpscr`` is among the compared observables and a
-    non-bitwise FP opcode was used on *differing* implementations, demote
-    EQUIVALENT to ``INCONCLUSIVE_ABSTRACTION``. Byte-identical implementations
-    keep EQUIVALENT (same code ⇒ same hardware stickies) but still record the
-    incompleteness assumption for triage. FP-bitwise-only proofs
-    (``fmr``/``fabs``/``fneg``/``fnabs``) never touch stickies and are skipped.
+    divergence query over ``fpscr`` — or over an FPR/CR field that received a
+    sticky projection via ``mffs`` / ``mcrfs`` / record-form Rc→CR1 — can
+    therefore report EQUIVALENT while hardware stickies diverge (for example,
+    clearing XX after an inexact ``fdivs``, then ``mffs`` into a compared FPR;
+    or overflow ``fadds.`` vs clear-OX + ``fmr.`` when ``cr1`` is observed).
+    When such an observable is compared and a non-bitwise FP opcode was used on
+    *differing* implementations, demote EQUIVALENT to ``INCONCLUSIVE_ABSTRACTION``.
+    Byte-identical implementations keep EQUIVALENT (same code ⇒ same hardware
+    stickies) but still record the incompleteness assumption for triage.
+    FP-bitwise-only proofs (``fmr``/``fabs``/``fneg``/``fnabs``) never touch
+    stickies and are skipped.
 
     Idempotent. Safe to call on any result; no-ops unless the proof is still
-    EQUIVALENT and actually compared ``fpscr`` after FP arithmetic.
+    EQUIVALENT and actually compared fpscr (or a sticky projection) after FP
+    arithmetic. Independent of ``allow_nan``: NaN-freedom and sticky modeling
+    are separate fail-closed gates.
     """
     if getattr(result, "status", None) is None:
         return
@@ -415,8 +461,7 @@ def annotate_fpscr_sticky_incompleteness(
     status_value = getattr(status, "value", status)
     if status_value != "equivalent":
         return
-    observables = getattr(result, "observables", None) or []
-    if "fpscr" not in {str(item) for item in observables}:
+    if not _compares_fpscr_or_sticky_projection(result):
         return
     if not symbolic_fpscr_stickies_incomplete():
         return
@@ -426,7 +471,8 @@ def annotate_fpscr_sticky_incompleteness(
 
     fp_ops = fp_opcodes_among(getattr(result, "opcodes_used", None) or [])
     # Only arithmetic-ish FP touches OX/UX/XX; pure bitwise sign ops do not.
-    if not (fp_ops - FP_BITWISE_OPS):
+    # Projection ops alone (mffs of an untouched fpscr) do not require demotion.
+    if not (fp_ops - FP_BITWISE_OPS - _FPSCR_PROJECTION_OPS):
         return
 
     assumptions = list(getattr(result, "assumptions", None) or [])

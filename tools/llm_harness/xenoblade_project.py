@@ -24,7 +24,12 @@ from tools.coop.lib.equivalence_check import (
     EQUIVALENT_MATCH_MIN_PERCENT,
     prove_unit_symbol,
 )
-from tools.coop.lib.objdiff_report import evaluate_unit_match, meets_required_level, report_unit
+from tools.coop.lib.objdiff_report import (
+    STATUS_RANK,
+    evaluate_unit_match,
+    meets_required_level,
+    report_unit,
+)
 from tools.coop.lib.object_size import check_object_size
 from tools.coop.lib.project import Project
 from tools.coop.lib.targets import (
@@ -105,6 +110,11 @@ PROBE_COMPILE_STATUSES = {
     "CODE_MATCH",
 }
 
+# Callers at this rank or better (excluding FULL_MATCH) define the
+# --high-match-callees selection set: their direct callees are useful
+# bottom-up targets for unlocking equivalence proofs.
+_HIGH_MATCH_CALLER_MIN_RANK = STATUS_RANK["HIGH_MATCH"]
+
 
 def _unit_matches(unit: Optional[str], tu: str) -> bool:
     """Check if a target's unit hint matches a given TU name.
@@ -141,6 +151,12 @@ class XenobladeAdapter:
         self.prompt_budget.update(dict(settings.get("prompt") or {}))
         # Set by Harness before evaluate() so ninja/objdiff/smt wall time aggregates.
         self.timings: Any = None
+        # When True (solve-local), enable aggressive candidate sanitizer + local prompts.
+        self.local_sanitize: bool = False
+        # Avoid re-parsing tools/coop/targets.json on every sibling/caller lookup
+        # during prompt construction (web-export builds hundreds of prompts).
+        self._targets_cache: Optional[List[Target]] = None
+        self._targets_by_id: Optional[Dict[str, Target]] = None
 
     def _phase(self, name: str) -> AbstractContextManager[Any]:
         """Record ``name`` into ``self.timings`` when the harness attached a recorder."""
@@ -154,6 +170,17 @@ class XenobladeAdapter:
     def _phase_timer(self):
         return lambda phase: self._phase(phase)
 
+    def invalidate_targets_cache(self) -> None:
+        """Drop cached registry rows after claim/promote/status writes."""
+        self._targets_cache = None
+        self._targets_by_id = None
+
+    def _cached_targets(self) -> List[Target]:
+        if self._targets_cache is None:
+            self._targets_cache = load_targets(self.config)
+            self._targets_by_id = {target.id: target for target in self._targets_cache}
+        return self._targets_cache
+
     def _target(self, target_id: str) -> Target:
         target = self._any_target(target_id)
         if not target.buildable or target.source is None or target.unit is None or not target.symbol:
@@ -161,7 +188,12 @@ class XenobladeAdapter:
         return target
 
     def _any_target(self, target_id: str) -> Target:
-        return get_target(load_targets(self.config), target_id)
+        self._cached_targets()
+        assert self._targets_by_id is not None
+        target = self._targets_by_id.get(target_id)
+        if target is None:
+            raise KeyError(f"Unknown target id: {target_id}")
+        return target
 
     def target_ids_for_unit(self, unit_name: str, workflow: str) -> List[str]:
         """Return all eligible target IDs in a translation unit for a given workflow."""
@@ -237,6 +269,7 @@ class XenobladeAdapter:
         *,
         ignore_called_functions: bool = False,
         certified_funcs: bool = False,
+        high_match_callees: bool = False,
         tu: Optional[str] = None,
     ) -> List[str]:
         """Return placeholder/empty functions from the call-graph-safe catalog frontier."""
@@ -265,6 +298,8 @@ class XenobladeAdapter:
         ]
         if certified_funcs:
             candidates = self._filter_certified_funcs(raw_targets, candidates)
+        if high_match_callees:
+            candidates = self._filter_high_match_callees(raw_targets, candidates)
         from .promotion import PlaceholderDetector
 
         detector = PlaceholderDetector()
@@ -414,6 +449,7 @@ class XenobladeAdapter:
                 allowed_paths=paths,
                 note="llm-harness auto-promote",
             )
+            self.invalidate_targets_cache()
             return
         if current != owner:
             raise ValueError(
@@ -433,6 +469,7 @@ class XenobladeAdapter:
             instruction_match=float(evaluation.get("match_percent") or 0.0),
             equivalence_status=evaluation.get("equivalence"),
         )
+        self.invalidate_targets_cache()
 
     def certify_web_promotion(self, target_id: str, evaluation: Dict[str, Any]) -> None:
         """Rebuild + certify FULL_MATCH / EQUIVALENT_MATCH after a web-batch promote.
@@ -484,14 +521,16 @@ class XenobladeAdapter:
                 equivalence_certificate=None,
                 certificate_checked=False,
             )
+            self.invalidate_targets_cache()
             return
         if cert_status == "EQUIVALENT_MATCH":
             if certificate is None or certified.equivalence != ProofStatus.EQUIVALENT:
                 raise ValueError(
                     "EQUIVALENT_MATCH promotion lacks a current equivalence certificate"
                 )
+            raw_doc = load_targets_document(self.config)
             rows_by_id = {
-                item.id: {"id": item.id, **item.extra} for item in load_targets(self.config)
+                str(row["id"]): row for row in raw_doc.get("targets", []) if row.get("id")
             }
             trial = dict(rows_by_id.get(target_id) or {"id": target_id})
             trial["status"] = "EQUIVALENT_MATCH"
@@ -508,6 +547,7 @@ class XenobladeAdapter:
                 equivalence_certificate=certificate,
                 certificate_checked=True,
             )
+            self.invalidate_targets_cache()
             return
         # Canonical re-eval did not accept — leave registry update to cycle fallback
         # but surface the mismatch so promote_external_accepted can roll back via exception.
@@ -549,6 +589,7 @@ class XenobladeAdapter:
         *,
         randomize: bool = False,
         certified_funcs: bool = False,
+        high_match_callees: bool = False,
         tu: Optional[str] = None,
         selection: Optional[str] = None,
         min_fuzzy: Optional[float] = None,
@@ -558,7 +599,10 @@ class XenobladeAdapter:
             if selection is None:
                 selection = "ready" if workflow == "solve" else "pending"
             candidates = self._non_accepted_candidates(
-                certified_funcs=certified_funcs, tu=tu, selection=selection
+                certified_funcs=certified_funcs,
+                high_match_callees=high_match_callees,
+                tu=tu,
+                selection=selection,
             )
         elif workflow == "tu-complete":
             candidates = self._tu_completion_candidates()
@@ -920,10 +964,35 @@ class XenobladeAdapter:
             or all(fid in certified_ids for fid in t.extra.get("called_functions", []))
         ]
 
+    @staticmethod
+    def _high_match_caller_callee_ids(all_targets: List[Target]) -> set[str]:
+        """Direct callees of callers ranked HIGH_MATCH+ but not FULL_MATCH.
+
+        Matching these callees first unlocks certified-callee equivalence
+        proofs for near-matched callers.
+        """
+        callee_ids: set[str] = set()
+        for target in all_targets:
+            if target.status == "FULL_MATCH":
+                continue
+            if STATUS_RANK.get(target.status, -1) < _HIGH_MATCH_CALLER_MIN_RANK:
+                continue
+            for callee_id in target.extra.get("called_functions", []) or []:
+                callee_ids.add(str(callee_id))
+        return callee_ids
+
+    @classmethod
+    def _filter_high_match_callees(
+        cls, all_targets: List[Target], candidates: List[Target]
+    ) -> List[Target]:
+        allowed = cls._high_match_caller_callee_ids(all_targets)
+        return [target for target in candidates if target.id in allowed]
+
     def _non_accepted_candidates(
         self,
         *,
         certified_funcs: bool = False,
+        high_match_callees: bool = False,
         tu: Optional[str] = None,
         selection: str = "pending",
     ) -> List[str]:
@@ -993,6 +1062,8 @@ class XenobladeAdapter:
             candidates.append(target)
         if certified_funcs:
             candidates = self._filter_certified_funcs(raw_targets, candidates)
+        if high_match_callees:
+            candidates = self._filter_high_match_callees(raw_targets, candidates)
         tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P9": 9}
 
         def sort_key(target: Target) -> tuple:
@@ -1096,20 +1167,36 @@ class XenobladeAdapter:
             ordered_ids = [tid for tid in ordered_ids if tid in allowed]
 
         detector = PlaceholderDetector()
+        retail_symbols: Dict[Path, set[str]] = {}
         rows: List[Dict[str, Any]] = []
         for target_id in ordered_ids:
             target = by_id.get(target_id)
-            if target is None or target.source is None:
+            if target is None or target.source is None or not target.symbol:
                 continue
             unit = unit_by_hint.get(target.unit or "")
-            retail_text_size = retail_sizes.get(target_id, 0)
-            if unit is not None and unit.target_path is not None and unit.target_path.is_file():
+            if unit is None or unit.target_path is None or not unit.target_path.is_file():
+                continue
+            # Prompt construction requires an extractable retail symbol. Skip
+            # catalog rows whose split object does not export the named function
+            # (e.g. Runtime/__mem.o currently only exposes strlen).
+            symbols = retail_symbols.get(unit.target_path)
+            if symbols is None:
                 try:
-                    retail = extract_function(unit.target_path, target.symbol or "")
-                    retail_text_size = int(getattr(retail, "size", 0) or 0)
-                    retail_sizes[target_id] = retail_text_size
+                    symbols = {fn.name for fn in list_text_functions(unit.target_path)}
                 except (OSError, ValueError):
-                    retail_text_size = 0
+                    continue
+                retail_symbols[unit.target_path] = symbols
+            if target.symbol not in symbols:
+                continue
+            retail_text_size = retail_sizes.get(target_id, 0)
+            try:
+                retail = extract_function(unit.target_path, target.symbol)
+                retail_text_size = int(getattr(retail, "size", 0) or 0)
+                retail_sizes[target_id] = retail_text_size
+            except (OSError, ValueError):
+                continue
+            if retail_text_size <= 0:
+                continue
             source = source_cache.get(target.source)
             if source is None:
                 try:
@@ -1140,9 +1227,7 @@ class XenobladeAdapter:
                     "instruction_match": float(match) if match is not None else None,
                     "frontier_kind": self._frontier_kind(target),
                     "retail_text_size": retail_text_size,
-                    "retail_instruction_count": max(1, (retail_text_size + 3) // 4)
-                    if retail_text_size
-                    else 1,
+                    "retail_instruction_count": max(1, (retail_text_size + 3) // 4),
                     "direct_call_count": len(called),
                     "unresolved_call_count": len(unresolved),
                     "has_indirect_calls": bool(target.extra.get("has_indirect_calls")),
@@ -1164,12 +1249,16 @@ class XenobladeAdapter:
         self,
         *,
         certified_funcs: bool = False,
+        high_match_callees: bool = False,
         tu: Optional[str] = None,
         selection: str = "pending",
     ) -> List[str]:
         """Alias kept for callers/tests; prefer `_non_accepted_candidates`."""
         return self._non_accepted_candidates(
-            certified_funcs=certified_funcs, tu=tu, selection=selection
+            certified_funcs=certified_funcs,
+            high_match_callees=high_match_callees,
+            tu=tu,
+            selection=selection,
         )
 
     def _tu_completion_candidates(self) -> List[str]:
@@ -1336,7 +1425,7 @@ class XenobladeAdapter:
         same_unit = sorted(
             (
                 {"id": item.id, "function": item.function, "status": item.status}
-                for item in load_targets(self.config)
+                for item in self._cached_targets()
                 if item.unit == target.unit
                 and item.id != target.id
                 and item.status in {"FULL_MATCH", "EQUIVALENT_MATCH"}
@@ -1458,19 +1547,30 @@ class XenobladeAdapter:
 
         common = (self.prompt_dir / "common.md").read_text(encoding="utf-8")
         prompt_workflow = "improve" if workflow == "solve" else workflow
+        if self.local_sanitize and prompt_workflow == "new":
+            prompt_workflow = "new_local"
         workflow_file = self.prompt_dir / f"{prompt_workflow}.md"
         if not workflow_file.is_file():
             workflow_file = self.prompt_dir / "new.md"
         workflow_prompt = workflow_file.read_text(encoding="utf-8")
+        if self.local_sanitize:
+            workflow_prompt = workflow_prompt.replace(
+                "{{CURRENT_FUNCTION}}", current_function
+            )
 
         max_sibling_bodies = int(self.prompt_budget.get("max_sibling_bodies", 3))
         sibling_candidates = []
+        source_cache: Dict[Path, str] = {target.source: source}
         if same_unit and max_sibling_bodies > 0:
             for sibling in same_unit:
                 sibling_target = self._any_target(sibling["id"])
                 if sibling_target.source and sibling_target.source.is_file():
                     try:
-                        sib_source = sibling_target.source.read_text(encoding="utf-8")
+                        sib_path = sibling_target.source
+                        sib_source = source_cache.get(sib_path)
+                        if sib_source is None:
+                            sib_source = sib_path.read_text(encoding="utf-8")
+                            source_cache[sib_path] = sib_source
                         sib_region = _find_function_region(sib_source, sibling_target)
                         sib_body = sib_source[
                             sib_region.content_start : sib_region.content_end
@@ -1501,7 +1601,11 @@ class XenobladeAdapter:
                 caller_target = self._any_target(caller_id)
                 if caller_target.source and caller_target.source.is_file():
                     try:
-                        caller_source = caller_target.source.read_text(encoding="utf-8")
+                        caller_path = caller_target.source
+                        caller_source = source_cache.get(caller_path)
+                        if caller_source is None:
+                            caller_source = caller_path.read_text(encoding="utf-8")
+                            source_cache[caller_path] = caller_source
                         caller_region = _find_function_region(caller_source, caller_target)
                         caller_body = caller_source[
                             caller_region.content_start : caller_region.content_end
@@ -1760,6 +1864,7 @@ class XenobladeAdapter:
             target_symbol=target.symbol or "",
             source_path=target.source,
             target_id=target.id,
+            local_mode=bool(self.local_sanitize),
         )
         unit = self.project.resolve_unit(target.unit)
         original_object = unit.base_path.read_bytes() if unit.base_path and unit.base_path.is_file() else None
@@ -2509,6 +2614,7 @@ class XenobladeAdapter:
             target_symbol=target.symbol or "",
             source_path=target.source,
             target_id=target.id,
+            local_mode=bool(self.local_sanitize),
         )
         if write:
             self._require_claim(target, owner)
@@ -2722,6 +2828,7 @@ class XenobladeAdapter:
             target_symbol=target.symbol or "",
             source_path=target.source,
             target_id=target.id,
+            local_mode=bool(self.local_sanitize),
         )
         source_path.write_text(updated, encoding="utf-8")
         return SourcePatch(slot_id=target_id, source=candidate.source)
@@ -2745,6 +2852,7 @@ class XenobladeAdapter:
             target_symbol=target.symbol or "",
             source_path=target.source,
             target_id=target.id,
+            local_mode=bool(self.local_sanitize),
         )
 
         unit = self.project.resolve_unit(target.unit)

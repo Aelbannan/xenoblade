@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+extern unsigned long __cvt_fp2unsigned(double d);
+
 void GXSetFog(GXFogType type, GXColor color, f32 start, f32 end, f32 near,
               f32 far) {
     f32 a, c;
@@ -49,7 +51,7 @@ void GXSetFog(GXFogType type, GXColor color, f32 start, f32 end, f32 near,
         }
 
         a = f28 / (1 << (expB + 1));
-        magB = 8388638.0f * f25;
+        magB = __cvt_fp2unsigned((double)(8388638.0f * f25));
         shiftB = expB + 1;
         c = f24;
 
@@ -57,6 +59,14 @@ void GXSetFog(GXFogType type, GXColor color, f32 start, f32 end, f32 near,
         GX_BP_SET_OPCODE(fogParamReg1, GX_BP_REG_FOGPARAM1);
         GX_BP_SET_FOGPARAM2_B_SHIFT(fogParamReg2, shiftB);
         GX_BP_SET_OPCODE(fogParamReg2, GX_BP_REG_FOGPARAM2);
+        /* Volatile WGPIPE pointer keeps FIFO base in r4 across both writes. */
+        {
+            volatile void* pipe = (volatile void*)&WGPIPE;
+            *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
+            *(volatile u32*)pipe = fogParamReg1;
+            *(volatile u8*)pipe = GX_FIFO_CMD_LOAD_BP_REG;
+            *(volatile u32*)pipe = fogParamReg2;
+        }
     }
 
     a_bits = *(u32*)&a;
@@ -78,8 +88,6 @@ void GXSetFog(GXFogType type, GXColor color, f32 start, f32 end, f32 near,
     GX_BP_SET_OPCODE(fogColorReg, GX_BP_REG_FOGCOLOR);
 
     GX_BP_LOAD_REG(fogParamReg0);
-    GX_BP_LOAD_REG(fogParamReg1);
-    GX_BP_LOAD_REG(fogParamReg2);
     GX_BP_LOAD_REG(fogParamReg3);
     GX_BP_LOAD_REG(fogColorReg);
 
@@ -115,7 +123,7 @@ void GXSetFogRangeAdj(GXBool enable, u16 center, const GXFogAdjTable* table) {
     int i;
 
     if (enable) {
-        for (i = 0; i < 10; i += 2) {
+        for (i = 0; i < ARRAY_SIZE(table->r); i += 2) {
             fogRangeRegK = 0;
             GX_BP_SET_FOGRANGEK_HI(fogRangeRegK, table->r[i]);
             GX_BP_SET_FOGRANGEK_LO(fogRangeRegK, table->r[i + 1]);
@@ -133,8 +141,9 @@ void GXSetFogRangeAdj(GXBool enable, u16 center, const GXFogAdjTable* table) {
     gxdt->lastWriteWasXF = FALSE;
 }
 
-void GXSetBlendMode(GXBlendMode mode, GXBlendFactor src, GXBlendFactor dst, GXLogicOp op) {
-    u32 blendModeReg = __GXData->blendMode;
+void GXSetBlendMode(GXBlendMode mode, GXBlendFactor src, GXBlendFactor dst,
+                    GXLogicOp op) {
+    u32 blendModeReg = gxdt->blendMode;
     GX_BP_SET_BLENDMODE_SUBTRACT(blendModeReg, mode == GX_BM_SUBTRACT);
     GX_BP_SET_BLENDMODE_BLEND_ENABLE(blendModeReg, mode);
     GX_BP_SET_BLENDMODE_LOGIC_OP_ENABLE(blendModeReg, mode == GX_BM_LOGIC);
@@ -143,9 +152,9 @@ void GXSetBlendMode(GXBlendMode mode, GXBlendFactor src, GXBlendFactor dst, GXLo
     GX_BP_SET_BLENDMODE_DST_FACTOR(blendModeReg, dst);
 
     GX_BP_LOAD_REG(blendModeReg);
-    __GXData->blendMode = blendModeReg;
+    gxdt->blendMode = blendModeReg;
 
-    __GXData->lastWriteWasXF = FALSE;
+    gxdt->lastWriteWasXF = FALSE;
 }
 
 void GXSetColorUpdate(GXBool enable) {

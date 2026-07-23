@@ -1408,6 +1408,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -2270,6 +2335,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -2290,20 +2358,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -3816,12 +3913,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -8316,7 +8416,95 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -8565,38 +8753,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -8615,7 +8822,14 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -8627,6 +8841,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -8798,83 +9017,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -15321,11 +15463,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -15342,18 +15488,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -15378,6 +15534,8 @@ typedef enum {
 } NANDCheckFlags;
 
 s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
 #ifdef __cplusplus
 }
@@ -15400,25 +15558,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -19238,8 +19406,8 @@ typedef struct AXFX_CHORUS_EXP {
     f32 depth;                   // at 0x84
     f32 rate;                    // at 0x88
     f32 feedback;                // at 0x8C
-    struct AXFX_BUS* busIn;             // at 0x90
-    struct AXFX_BUS* busOut;            // at 0x94
+    struct AXFX_BUS* busIn;      // at 0x90
+    struct AXFX_BUS* busOut;     // at 0x94
     f32 outGain;                 // at 0x98
     f32 sendGain;                // at 0x9C
 } AXFX_CHORUS_EXP;
@@ -19248,6 +19416,7 @@ u32 AXFXChorusExpGetMemSize(const AXFX_CHORUS_EXP* fx);
 BOOL AXFXChorusExpInit(AXFX_CHORUS_EXP* fx);
 void AXFXChorusExpShutdown(AXFX_CHORUS_EXP* fx);
 BOOL AXFXChorusExpSettings(AXFX_CHORUS_EXP* fx);
+BOOL AXFXChorusExpSettingsUpdate(AXFX_CHORUS_EXP* fx);
 void AXFXChorusExpCallback(struct AXFX_BUFFERUPDATE* update, AXFX_CHORUS_EXP* fx);
 
 #ifdef __cplusplus
@@ -19279,7 +19448,57 @@ void AXFXChorusCallback(void* chans, void* context);
 /* end "revolution/AXFX/AXFXChorus.h" */
 /* "libs/RVL_SDK/include/revolution/AXFX.h" line 7 "revolution/AXFX/AXFXChorusExp.h" */
 /* end "revolution/AXFX/AXFXChorusExp.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 8 "revolution/AXFX/AXFXCommon.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 8 "revolution/AXFX/AXFXChorusExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_CHORUS_EXP_DPL2_H
+#define RVL_SDK_AXFX_CHORUS_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXChorusExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXChorusExpDpl2.h" line 3 "revolution/AXFX/AXFXChorusExp.h" */
+/* end "revolution/AXFX/AXFXChorusExp.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_CHORUS_EXP_DELAY_DPL2 {
+    f32* line[4]; // at 0x0
+    u32 inPos;    // at 0x10
+    u32 outPos;   // at 0x14
+    u32 lastPos;  // at 0x18
+    u32 sizeFP;   // at 0x1C
+    u32 size;     // at 0x20
+} AXFX_CHORUS_EXP_DELAY_DPL2;
+
+typedef struct AXFX_CHORUS_EXP_DPL2 {
+    AXFX_CHORUS_EXP_DELAY_DPL2 delay; // at 0x0
+    AXFX_CHORUS_EXP_LFO lfo;          // at 0x24
+    f32 history[4][4];                // at 0x4C
+    u32 histIndex;                    // at 0x8C
+    u32 active;                       // at 0x90
+    f32 delayTime;                    // at 0x94
+    f32 depth;                        // at 0x98
+    f32 rate;                         // at 0x9C
+    f32 feedback;                     // at 0xA0
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0xA4
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0xA8
+    f32 outGain;                      // at 0xAC
+    f32 sendGain;                     // at 0xB0
+} AXFX_CHORUS_EXP_DPL2;
+
+u32 AXFXChorusExpGetMemSizeDpl2(const AXFX_CHORUS_EXP_DPL2* fx);
+BOOL AXFXChorusExpInitDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+void AXFXChorusExpShutdownDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+BOOL AXFXChorusExpSettingsUpdateDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+void AXFXChorusExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update, AXFX_CHORUS_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXChorusExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 9 "revolution/AXFX/AXFXCommon.h" */
 #ifndef RVL_SDK_AXFX_COMMON_H
 #define RVL_SDK_AXFX_COMMON_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXCommon.h" line 2 "types.h" */
@@ -19312,7 +19531,7 @@ typedef struct AXFX_BUFFERUPDATE_DPL2 {
 #endif
 #endif
 /* end "revolution/AXFX/AXFXCommon.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 9 "revolution/AXFX/AXFXDelay.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 10 "revolution/AXFX/AXFXDelay.h" */
 #ifndef RVL_SDK_AXFX_DELAY_H
 #define RVL_SDK_AXFX_DELAY_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelay.h" line 2 "types.h" */
@@ -19344,7 +19563,98 @@ void AXFXDelayCallback(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXDelay.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 10 "revolution/AXFX/AXFXHooks.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 11 "revolution/AXFX/AXFXDelayExp.h" */
+#ifndef RVL_SDK_AXFX_DELAY_EXP_H
+#define RVL_SDK_AXFX_DELAY_EXP_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelayExp.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUS;
+typedef struct AXFX_BUFFERUPDATE;
+
+typedef struct AXFX_DELAY_EXP {
+    s32* line[3];            // at 0x0
+    u32 curPos;              // at 0xC
+    u32 length;              // at 0x10
+    u32 maxLength;           // at 0x14
+    s32 feedbackGain;        // at 0x18
+    s32 last[3];             // at 0x1C
+    s32 iirGain;             // at 0x28
+    s32 outGainI;            // at 0x2C
+    s32 sendGainI;           // at 0x30
+    u32 active;              // at 0x34
+    f32 delayTimeMax;        // at 0x38
+    f32 delayTime;           // at 0x3C
+    f32 feedback;            // at 0x40
+    f32 iir;                 // at 0x44
+    struct AXFX_BUS* busIn;  // at 0x48
+    struct AXFX_BUS* busOut; // at 0x4C
+    f32 outGain;             // at 0x50
+    f32 sendGain;            // at 0x54
+} AXFX_DELAY_EXP;
+
+u32 AXFXDelayExpGetMemSize(const AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpInit(AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpSettings(AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpSettingsUpdate(AXFX_DELAY_EXP* fx);
+void AXFXDelayExpShutdown(AXFX_DELAY_EXP* fx);
+void AXFXDelayExpCallback(struct AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXDelayExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 12 "revolution/AXFX/AXFXDelayExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_DELAY_EXP_DPL2_H
+#define RVL_SDK_AXFX_DELAY_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelayExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_DELAY_EXP_DPL2 {
+    s32* line[4];                              // at 0x0
+    u32 curPos;                                // at 0x10
+    u32 length;                                // at 0x14
+    u32 maxLength;                             // at 0x18
+    s32 feedbackGain;                          // at 0x1C
+    s32 last[4];                               // at 0x20
+    s32 iirGain;                               // at 0x30
+    s32 outGainI;                              // at 0x34
+    s32 sendGainI;                             // at 0x38
+    u32 active;                                // at 0x3C
+    f32 delayTimeMax;                          // at 0x40
+    f32 delayTime;                             // at 0x44
+    f32 feedback;                              // at 0x48
+    f32 iir;                                   // at 0x4C
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0x50
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0x54
+    f32 outGain;                               // at 0x58
+    f32 sendGain;                              // at 0x5C
+} AXFX_DELAY_EXP_DPL2;
+
+u32 AXFXDelayExpGetMemSizeDpl2(const AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpInitDpl2(AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpSettingsDpl2(AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpSettingsUpdateDpl2(AXFX_DELAY_EXP_DPL2* fx);
+void AXFXDelayExpShutdownDpl2(AXFX_DELAY_EXP_DPL2* fx);
+void AXFXDelayExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXDelayExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 13 "revolution/AXFX/AXFXHooks.h" */
 #ifndef RVL_SDK_AXFX_HOOKS_H
 #define RVL_SDK_AXFX_HOOKS_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXHooks.h" line 2 "types.h" */
@@ -19367,7 +19677,7 @@ void AXFXGetHooks(AXFXAllocHook* alloc, AXFXFreeHook* free);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXHooks.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 11 "revolution/AXFX/AXFXLfoTable.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 14 "revolution/AXFX/AXFXLfoTable.h" */
 #ifndef RVL_SDK_AXFX_LFO_TABLE_H
 #define RVL_SDK_AXFX_LFO_TABLE_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXLfoTable.h" line 2 "types.h" */
@@ -19383,7 +19693,7 @@ s32* __AXFXGetLfoSinTable(void);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXLfoTable.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 12 "revolution/AXFX/AXFXReverbHi.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 15 "revolution/AXFX/AXFXReverbHi.h" */
 #ifndef RVL_SDK_AXFX_REVERB_HI_H
 #define RVL_SDK_AXFX_REVERB_HI_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbHi.h" line 2 "types.h" */
@@ -19486,7 +19796,7 @@ void AXFXReverbHiCallback(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXReverbHi.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 13 "revolution/AXFX/AXFXReverbHiDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 16 "revolution/AXFX/AXFXReverbHiDpl2.h" */
 #ifndef RVL_SDK_AXFX_REVERB_HI_DPL2_H
 #define RVL_SDK_AXFX_REVERB_HI_DPL2_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbHiDpl2.h" line 2 "types.h" */
@@ -19590,11 +19900,144 @@ void AXFXReverbHiCallbackDpl2(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXReverbHiDpl2.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 14 "revolution/AXFX/AXFXReverbHiExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 17 "revolution/AXFX/AXFXReverbHiExp.h" */
 /* end "revolution/AXFX/AXFXReverbHiExp.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 15 "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 18 "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
 /* end "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 16 "revolution/AXFX/AXFXSrcCoef.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 19 "revolution/AXFX/AXFXReverbStdExp.h" */
+#ifndef RVL_SDK_AXFX_REVERB_STD_EXP_H
+#define RVL_SDK_AXFX_REVERB_STD_EXP_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbStdExp.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUS;
+typedef struct AXFX_BUFFERUPDATE;
+
+typedef struct AXFX_REVERBSTD_EXP {
+    f32* earlyLine[3];       // at 0x0
+    u32 earlyPos;            // at 0xC
+    u32 earlyLength;         // at 0x10
+    u32 earlyMaxLength;      // at 0x14
+    f32 earlyCoef;           // at 0x18
+
+    f32* preDelayLine[3];    // at 0x1C
+    u32 preDelayPos;         // at 0x28
+    u32 preDelayLength;      // at 0x2C
+    u32 preDelayMaxLength;   // at 0x30
+
+    f32* combLine[3][2];     // at 0x34
+    u32 combPos[2];          // at 0x4C
+    u32 combLength[2];       // at 0x54
+    u32 combMaxLength[2];    // at 0x5C
+    f32 combCoef[2];         // at 0x64
+
+    f32* allpassLine[3][2];  // at 0x6C
+    u32 allpassPos[2];       // at 0x84
+    u32 allpassLength[2];    // at 0x8C
+    u32 allpassMaxLength[2]; // at 0x94
+
+    f32 allpassCoef;         // at 0x9C
+    f32 lastLpfOut[3];       // at 0xA0
+    f32 lpfCoef;             // at 0xAC
+    u32 active;              // at 0xB0
+    u32 earlyMode;           // at 0xB4
+    f32 preDelayTimeMax;     // at 0xB8
+    f32 preDelayTime;        // at 0xBC
+    u32 fusedMode;           // at 0xC0
+    f32 fusedTime;           // at 0xC4
+    f32 coloration;          // at 0xC8
+    f32 damping;             // at 0xCC
+    f32 earlyGain;           // at 0xD0
+    f32 fusedGain;           // at 0xD4
+    struct AXFX_BUS* busIn;  // at 0xD8
+    struct AXFX_BUS* busOut; // at 0xDC
+    f32 outGain;             // at 0xE0
+    f32 sendGain;            // at 0xE4
+} AXFX_REVERBSTD_EXP;
+
+u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* fx);
+BOOL AXFXReverbStdExpInit(AXFX_REVERBSTD_EXP* fx);
+BOOL AXFXReverbStdExpSettings(AXFX_REVERBSTD_EXP* fx);
+BOOL AXFXReverbStdExpSettingsUpdate(AXFX_REVERBSTD_EXP* fx);
+void AXFXReverbStdExpShutdown(AXFX_REVERBSTD_EXP* fx);
+void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* update, AXFX_REVERBSTD_EXP* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXReverbStdExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 20 "revolution/AXFX/AXFXReverbStdExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_REVERB_STD_EXP_DPL2_H
+#define RVL_SDK_AXFX_REVERB_STD_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbStdExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_REVERBSTD_EXP_DPL2 {
+    f32* earlyLine[4];       // at 0x0
+    u32 earlyPos;            // at 0x10
+    u32 earlyLength;         // at 0x14
+    u32 earlyMaxLength;      // at 0x18
+    f32 earlyCoef;           // at 0x1C
+
+    f32* preDelayLine[4];    // at 0x20
+    u32 preDelayPos;         // at 0x30
+    u32 preDelayLength;      // at 0x34
+    u32 preDelayMaxLength;   // at 0x38
+
+    f32* combLine[4][2];     // at 0x3C
+    u32 combPos[2];          // at 0x5C
+    u32 combLength[2];       // at 0x64
+    u32 combMaxLength[2];    // at 0x6C
+    f32 combCoef[2];         // at 0x74
+
+    f32* allpassLine[4][2];  // at 0x7C
+    u32 allpassPos[2];       // at 0x9C
+    u32 allpassLength[2];    // at 0xA4
+    u32 allpassMaxLength[2]; // at 0xAC
+
+    f32 allpassCoef;         // at 0xB4
+    f32 lastLpfOut[4];       // at 0xB8
+    f32 lpfCoef;             // at 0xC8
+    u32 active;              // at 0xCC
+    u32 earlyMode;           // at 0xD0
+    f32 preDelayTimeMax;     // at 0xD4
+    f32 preDelayTime;        // at 0xD8
+    u32 fusedMode;           // at 0xDC
+    f32 fusedTime;           // at 0xE0
+    f32 coloration;          // at 0xE4
+    f32 damping;             // at 0xE8
+    f32 earlyGain;           // at 0xEC
+    f32 fusedGain;           // at 0xF0
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0xF4
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0xF8
+    f32 outGain;             // at 0xFC
+    f32 sendGain;            // at 0x100
+} AXFX_REVERBSTD_EXP_DPL2;
+
+u32 AXFXReverbStdExpGetMemSizeDpl2(const AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpInitDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpSettingsDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpSettingsUpdateDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+void AXFXReverbStdExpShutdownDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+void AXFXReverbStdExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update,
+                                  AXFX_REVERBSTD_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXReverbStdExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 21 "revolution/AXFX/AXFXSrcCoef.h" */
 #ifndef RVL_SDK_AXFX_SRC_COEF_H
 #define RVL_SDK_AXFX_SRC_COEF_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXSrcCoef.h" line 2 "types.h" */
@@ -19722,7 +20165,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -20399,13 +20843,13 @@ namespace snd {
 namespace detail {
 
 struct AxfxImpl {
-    bool mIsActive;      // at 0x0
-    MEMiHeapHead* mHeap; // at 0x4
-    u32 mAllocCount;     // at 0x8
+    MEMiHeapHead* mHeap; // at 0x0
+    u32 mAllocCount;     // at 0x4
+    bool mIsActive;      // at 0x8
 
     static const u32 HEAP_SIZE_MIN = MEM_FRM_HEAP_MIN_SIZE + 32;
 
-    AxfxImpl() : mIsActive(false), mHeap(NULL), mAllocCount(0) {}
+    AxfxImpl() : mHeap(NULL), mAllocCount(0), mIsActive(false) {}
 
     bool CreateHeap(void* pBuffer, u32 size);
     void DestroyHeap();
@@ -234576,8 +235020,6 @@ extern "C" {
 #define WUD_DEV_HANDLE_INVALID (-1)
 
 // Forward declarations
-typedef struct WUDDevInfo;
-
 typedef enum {
     WUD_LIB_STATUS_0,
     WUD_LIB_STATUS_1,
@@ -234614,7 +235056,6 @@ typedef BOOL (*WUDFreeFunc)(void* pBlock);
 typedef void (*WUDSyncDeviceCallback)(s32 result, s32 num);
 typedef void (*WUDClearDeviceCallback)(s32 result);
 
-typedef void (*WUDHidConnCallback)(UINT8 devHandle, u8 open);
 typedef void (*WUDHidRecvCallback)(UINT8 devHandle, UINT8* pReport, UINT16 len);
 
 typedef struct WUDDevInfo {
@@ -234631,6 +235072,8 @@ typedef struct WUDDevInfo {
     u8 UNK_0x5D[1];
     tBTA_HH_ATTR_MASK hhAttrMask; // at 0x5E
 } WUDDevInfo;
+
+typedef void (*WUDHidConnCallback)(WUDDevInfo* pInfo, u8 open);
 
 BOOL WUDInit(void);
 BOOL WUDIsBusy(void);
@@ -234718,7 +235161,7 @@ u8 _WUDGetLinkNumber(void);
 extern "C" {
 #endif
 
-void WUDHidHostCallback(tBTA_HH_EVT event, tBTA_HH* pData);
+void WUDiHidHostEventCallback(tBTA_HH_EVT event, tBTA_HH* pData);
 
 #ifdef __cplusplus
 }
@@ -235310,7 +235753,8 @@ typedef struct WUDCB {
     u16 bufferStatus1; // at 0x746
 } WUDCB;
 
-extern WUDCB _wcb;
+extern WUDCB __rvl_wudcb;
+#define _wcb __rvl_wudcb
 extern WUDDevInfo _work;
 
 extern SCBtDeviceInfoArray _scArray;
@@ -235318,6 +235762,13 @@ extern SCBtDeviceInfoArray _scArray;
 extern BD_ADDR_PTR _dev_handle_to_bda[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
+
+WUDDevInfo* WUDiGetDiscoverDevice(void);
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr);
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle);
+void WUDiSetQueueSizeForHandle(u8 handle, u16 size);
+void WUDiSetNotAckNumForHandle(u8 handle, u16 notAckNum);
+int WUDIsLinkedWBC(void);
 
 #ifdef __cplusplus
 }
@@ -236949,7 +237400,9 @@ public:
     }
 
 private:
-    u32 mId; // at 0x4
+    // 0x4 was mislabeled as mId; retail mId is at 0xD0. Keep the word so
+    // send-array bases (0x34/0x40/0x50/0x60) stay correct.
+    u32 mPad0x4; // at 0x4
 
     f32 mVolume;      // at 0x8
     f32 mPitch;       // at 0xC
@@ -236961,13 +237414,18 @@ private:
     int mOutputLine;                            // at 0x20
     f32 mMainOutVolume;                         // at 0x24
     f32 mMainSend;                              // at 0x28
-    f32 mFxSend[AUX_BUS_NUM];                   // at 0x2C
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x38
-    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x48
-    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x58
-    u8 mRemoteFilter;                           // at 0x68
-    PanMode mPanMode;                           // at 0x6C
-    PanCurve mPanCurve;                         // at 0x70
+    u32 mUnk0x2C;                               // at 0x2C
+    u32 mUnk0x30;                               // at 0x30
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x34
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x40
+    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x50
+    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x60
+    u8 mRemoteFilter;                           // at 0x70
+    u8 mPad0x71[3];                             // at 0x71
+    PanMode mPanMode;                           // at 0x74
+    PanCurve mPanCurve;                         // at 0x78
+    u8 mPad0x7C[0x54];                          // at 0x7C
+    u32 mId;                                    // at 0xD0
 };
 
 } // namespace detail
@@ -237074,35 +237532,35 @@ public:
 
 public:
     BasicSound();
-    virtual ~BasicSound() {} // at 0xC
+    virtual ~BasicSound() {}
 
-    virtual void Update();                      // at 0x10
-    virtual void StartPrepared();               // at 0x14
-    virtual void Stop(int frames);              // at 0x18
-    virtual void Pause(bool flag, int frames);  // at 0x1C
-    virtual void SetAutoStopCounter(int count); // at 0x20
-    virtual void FadeIn(int frames);            // at 0x24
-    virtual void Shutdown();                    // at 0x28
-    virtual bool IsPrepared() const = 0;        // at 0x2C
-    virtual bool IsPause() const;               // at 0x30
+    virtual void Update();
+    virtual void StartPrepared();
+    virtual void Stop(int frames);
+    virtual void Pause(bool flag, int frames);
+    virtual void Shutdown();
+    // US retail: GetBasicPlayer at vtable+0x24.
+    virtual BasicPlayer& GetBasicPlayer() = 0;
+    virtual const BasicPlayer& GetBasicPlayer() const = 0;
+    virtual bool IsPrepared() const = 0;
+    virtual bool IsPause() const;
 
-    virtual void SetInitialVolume(f32 vol);       // at 0x34
-    virtual void SetVolume(f32 vol, int frames);  // at 0x38
-    virtual void SetPitch(f32 pitch);             // at 0x3C
-    virtual void SetPan(f32 pan);                 // at 0x40
-    virtual void SetSurroundPan(f32 pan);         // at 0x44
-    virtual void SetLpfFreq(f32 freq);            // at 0x48
-    virtual void SetPlayerPriority(int priority); // at 0x4C
-    virtual void SetRemoteFilter(int filter);     // at 0x50
-    virtual void SetPanMode(PanMode mode);        // at 0x54
-    virtual void SetPanCurve(PanCurve curve);     // at 0x58
+    virtual bool IsAttachedTempSpecialHandle() = 0;
+    virtual void DetachTempSpecialHandle() = 0;
 
-    virtual bool IsAttachedTempSpecialHandle() = 0; // at 0x5C
-    virtual void DetachTempSpecialHandle() = 0;     // at 0x60
-
-    virtual void InitParam();                              // at 0x64
-    virtual BasicPlayer& GetBasicPlayer() = 0;             // at 0x68
-    virtual const BasicPlayer& GetBasicPlayer() const = 0; // at 0x6C
+    void SetAutoStopCounter(int count);
+    void FadeIn(int frames);
+    void InitParam();
+    void SetInitialVolume(f32 vol);
+    void SetVolume(f32 vol, int frames);
+    void SetPitch(f32 pitch);
+    void SetPan(f32 pan);
+    void SetSurroundPan(f32 pan);
+    void SetLpfFreq(f32 freq);
+    void SetPlayerPriority(int priority);
+    void SetRemoteFilter(int filter);
+    void SetPanMode(PanMode mode);
+    void SetPanCurve(PanCurve curve);
 
     PlayerHeap* GetPlayerHeap() {
         return mHeap;
@@ -237204,38 +237662,51 @@ private:
     AmbientArgUpdateCallback* mAmbientArgUpdateCallback;       // at 0x1C
     AmbientArgAllocaterCallback* mAmbientArgAllocaterCallback; // at 0x20
     void* mAmbientArg;                                         // at 0x24
-    SoundParam mAmbientParam;                                  // at 0x28
+    u32 mUnk0x28;                                              // at 0x28
+    u32 mUnk0x2C;                                              // at 0x2C
+    SoundParam mAmbientParam;                                  // at 0x30
+    u32 mUnk0x4C;                                              // at 0x4C
+    u32 mUnk0x50;                                              // at 0x50 (ctor arg)
+    u32 mUnk0x54;                                              // at 0x54
+    u32 mUnk0x58;                                              // at 0x58
+    u32 mUnk0x5C;                                              // at 0x5C
 
-    MoveValue<f32, int> mFadeVolume;      // at 0x44
-    MoveValue<f32, int> mPauseFadeVolume; // at 0x54
-    bool mStartFlag;                      // at 0x64
-    bool mStartedFlag;                    // at 0x65
-    bool mAutoStopFlag;                   // at 0x66
-    bool mPauseFlag;                      // at 0x67
-    bool mPauseFadeFlag;                  // at 0x68
-    bool mFadeOutFlag;                    // at 0x69
-    int mAutoStopCounter;                 // at 0x6C
-    u32 mUpdateCounter;                   // at 0x70
+    MoveValue<f32, int> mFadeVolume;      // at 0x60
+    MoveValue<f32, int> mPauseFadeVolume; // at 0x70
 
-    u8 mPriority; // at 0x74
-    u32 mId;      // at 0x78
+    bool mStartFlag;                      // at 0x80
+    bool mStartedFlag;                    // at 0x81
+    bool mAutoStopFlag;                   // at 0x82
+    bool mFadeOutFlag;                    // at 0x83
+    int mPauseState;                      // at 0x84
+    bool mPauseFadeFlag;                  // at 0x88
+    bool mPauseFlag;                      // at 0x89
+    u8 mPad0x8A[2];                       // at 0x8A
+    int mAutoStopCounter;                 // at 0x8C
+    u32 mUpdateCounter;                   // at 0x90
+    u8 mPriority;                         // at 0x94
+    u8 mUnk0x95;                          // at 0x95
+    bool mOutputLineFlagEnable;           // at 0x96
+    u8 mPad0x97;                          // at 0x97
+    u32 mId;                              // at 0x98
 
-    MoveValue<f32, int> mExtMoveVolume; // at 0x7C
-    f32 mInitVolume;                    // at 0x8C
-    f32 mExtPan;                        // at 0x90
-    f32 mExtSurroundPan;                // at 0x94
-    f32 mExtPitch;                      // at 0x98
-
-    bool mOutputLineFlagEnable;                 // at 0x9C
-    int mOutputLineFlag;                        // at 0xA0
-    f32 mMainOutVolume;                         // at 0xA4
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xA8
+    MoveValue<f32, int> mExtMoveVolume; // at 0x9C
+    f32 mInitVolume;                    // at 0xAC
+    f32 mExtPan;                        // at 0xB0
+    f32 mExtSurroundPan;                // at 0xB4
+    f32 mExtPitch;                      // at 0xB8
+    f32 mUnk0xBC;                       // at 0xBC
+    f32 mUnk0xC0;                       // at 0xC0
+    int mOutputLineFlag;                // at 0xC4
+    f32 mMainOutVolume;                 // at 0xC8
+    f32 mUnk0xCC[4];                    // at 0xCC
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xDC
 
 public:
-    NW4R_UT_LINKLIST_NODE_DECL_EX(Prio);       // at 0xB8
-    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPlay); // at 0xC0
-    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPrio); // at 0xC8
-    NW4R_UT_LINKLIST_NODE_DECL_EX(ExtPlay);    // at 0xD0
+    NW4R_UT_LINKLIST_NODE_DECL_EX(Prio);       // at 0xEC
+    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPlay); // at 0xF4
+    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPrio); // at 0xFC
+    NW4R_UT_LINKLIST_NODE_DECL_EX(ExtPlay);    // at 0x104
 };
 
 NW4R_UT_LINKLIST_TYPEDEF_DECL_EX(BasicSound, Prio);
@@ -246947,6 +247418,13 @@ s16 DecodeDspAdpcm(AXPBADPCM* pAdpcm, u8 bits);
 /* "libs/nw4r/src/snd/snd_BasicSound.cpp" line 2 "climits" */
 /* end "climits" */
 
+// Retail .sdata2 pools (US).
+extern "C" {
+extern const f32 lbl_eu_80669EE8; // 1.0f
+extern const f32 lbl_eu_80669EEC; // 0.0f
+extern const f64 lbl_eu_80669EF0; // int→double magic
+}
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -246966,12 +247444,13 @@ BasicSound::BasicSound()
       mId(INVALID_ID) {}
 
 void BasicSound::InitParam() {
-    mPauseFlag = false;
+    mPauseState = 0;
     mPauseFadeFlag = false;
     mStartFlag = false;
     mStartedFlag = false;
     mAutoStopFlag = false;
     mFadeOutFlag = false;
+    mPauseFlag = false;
 
     mAutoStopCounter = 0;
     mUpdateCounter = 0;
@@ -246986,10 +247465,15 @@ void BasicSound::InitParam() {
     mExtSurroundPan = 0.0f;
     mExtMoveVolume.InitValue(1.0f);
 
+    mUnk0xBC = 0.0f;
+    mUnk0xC0 = 0.0f;
     mOutputLineFlag = OUTPUT_LINE_MAIN;
     mOutputLineFlagEnable = false;
 
     mMainOutVolume = 1.0f;
+    for (int i = 0; i < 4; i++) {
+        mUnk0xCC[i] = 0.0f;
+    }
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
         mRemoteOutVolume[i] = 1.0f;
     }
@@ -247263,11 +247747,18 @@ void BasicSound::SetPlayerPriority(int priority) {
 }
 
 void BasicSound::SetInitialVolume(f32 vol) {
-    mInitVolume = ut::Clamp(vol, 0.0f, 1.0f);
+    mInitVolume = ut::Clamp(vol, lbl_eu_80669EEC, lbl_eu_80669EE8);
 }
 
 void BasicSound::SetVolume(f32 vol, int frames) {
-    f32 target = ut::Clamp(vol, 0.0f, 1.0f);
+    f32 target;
+    if (vol > lbl_eu_80669EE8) {
+        target = lbl_eu_80669EE8;
+    } else if (vol < lbl_eu_80669EEC) {
+        target = lbl_eu_80669EEC;
+    } else {
+        target = vol;
+    }
     mExtMoveVolume.SetTarget(target, frames);
 }
 
@@ -247383,63 +247874,3 @@ void BasicSound::SetId(u32 id) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-// LLM-HARNESS-BEGIN: us-804154f4
-extern "C" void UpdateMoveValue__Q44nw4r3snd6detail10BasicSoundFv() {}
-// LLM-HARNESS-END: us-804154f4
-// LLM-HARNESS-BEGIN: us-80415528
-extern "C" void UpdateParam__Q44nw4r3snd6detail10BasicSoundFv() {}
-// LLM-HARNESS-END: us-80415528
-// LLM-HARNESS-BEGIN: us-80415a70
-extern "C" void AttachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(
-    nw4r::snd::detail::BasicSound* self,
-    nw4r::snd::detail::PlayerHeap* playerHeap)
-{
-    *reinterpret_cast<nw4r::snd::detail::PlayerHeap**>(reinterpret_cast<char*>(self) + 0x4) = playerHeap;
-}
-// LLM-HARNESS-END: us-80415a70
-// LLM-HARNESS-BEGIN: us-80415a78
-extern "C" void DetachPlayerHeap__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail10PlayerHeap(void* _this, void* pHeap) {
-    *(int*)((char*)_this + 4) = 0;
-}
-// LLM-HARNESS-END: us-80415a78
-// LLM-HARNESS-BEGIN: us-80415a84
-extern "C" void AttachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(nw4r::snd::detail::BasicSound* _this, nw4r::snd::SoundPlayer* player)
-{
-    *(void**)((char*)_this + 0x10) = player;
-}
-// LLM-HARNESS-END: us-80415a84
-// LLM-HARNESS-BEGIN: us-80415a8c
-extern "C" void DetachSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd11SoundPlayer(void* self, void* player) {
-    *(int*)((char*)self + 0x10) = 0;
-}
-// LLM-HARNESS-END: us-80415a8c
-// LLM-HARNESS-BEGIN: us-80415a98
-extern "C" void AttachSoundActor__Q44nw4r3snd6detail10BasicSoundFPQ34nw4r3snd10SoundActor(void* pThis, void* pActor)
-{
-    *(void**)((int)pThis + 0x14) = pActor;
-}
-// LLM-HARNESS-END: us-80415a98
-// LLM-HARNESS-BEGIN: us-80415aa0
-extern "C" void AttachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer(nw4r::snd::detail::BasicSound* pThis, nw4r::snd::detail::ExternalSoundPlayer* pPlayer) { *(nw4r::snd::detail::ExternalSoundPlayer**)((char*)pThis + 0x18) = pPlayer; }
-// LLM-HARNESS-END: us-80415aa0
-// LLM-HARNESS-BEGIN: us-80415aa8
-extern "C" void DetachExternalSoundPlayer__Q44nw4r3snd6detail10BasicSoundFPQ44nw4r3snd6detail19ExternalSoundPlayer() {}
-// LLM-HARNESS-END: us-80415aa8
-// LLM-HARNESS-BEGIN: us-80415ab4
-extern "C" u8 GetVoiceOutCount__Q44nw4r3snd6detail10BasicSoundCFv(const void* _this) {
-    return ((const u8*)_this)[0x95];
-}
-// LLM-HARNESS-END: us-80415ab4
-// LLM-HARNESS-BEGIN: us-80415b14
-extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail10BasicSoundFv() {}
-// LLM-HARNESS-END: us-80415b14
-// LLM-HARNESS-BEGIN: us-80415ca8
-extern "C" void SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo() {}
-// LLM-HARNESS-END: us-80415ca8
-// LLM-HARNESS-BEGIN: us-80415d74
-extern "C" void GetAmbientPriority__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfoUl() {}
-// LLM-HARNESS-END: us-80415d74
-// LLM-HARNESS-BEGIN: us-80415e64
-extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv() { return false; }
-// LLM-HARNESS-END: us-80415e64

@@ -62,8 +62,8 @@ STB_R3_8 = "98610008"    # stb r3,8(r1)  -> entry_sp-N+8
 STB_R3_NEG32 = "9861ffe0"  # stb r3,-32(r1) -> entry_sp-N-32
 STB_R3_NEG48 = "9861ffd0"  # stb r3,-48(r1) -> entry_sp-N-48
 
-# Store r1 to trigger stack-pointer escape (even byte-store of r1 detected).
-STB_R1_0 = "98210000"    # stb r1,0(r1)
+# Store r1: frame-relative spill keeps masking; public base escapes.
+STB_R1_0 = "98210000"    # stb r1,0(r1) — private back-chain-style spill
 STW_R1_0_R5 = "90250000"  # stw r1,0(r5) — escape via public store of SP
 MR_R4_R1 = "7c240b78"     # mr r4,r1  (or r4,r1,r1)
 ADDI_R4_R1_8 = "38810008"  # addi r4,r1,8
@@ -125,7 +125,8 @@ class PrivateStackMemoryTests(unittest.TestCase):
         self.assertIsNotNone(result.counterexample)
 
     def test_stack_escape_disables_masking_on_original_only(self):
-        original = ADDI_NEG_64 + STB_R1_0 + STB_R3_8 + ADDI_POS_64 + BLR
+        # Public SP publish on original only — private stb becomes compared.
+        original = ADDI_NEG_64 + STW_R1_0_R5 + STB_R3_8 + ADDI_POS_64 + BLR
         candidate = ADDI_NEG_16 + STB_R3_8 + ADDI_POS_16 + BLR
         result = prove_bytes(original, candidate)
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
@@ -133,14 +134,24 @@ class PrivateStackMemoryTests(unittest.TestCase):
 
     def test_stack_escape_disables_masking_on_candidate_only(self):
         original = ADDI_NEG_64 + STB_R3_8 + ADDI_POS_64 + BLR
-        candidate = ADDI_NEG_16 + STB_R1_0 + STB_R3_8 + ADDI_POS_16 + BLR
+        candidate = ADDI_NEG_16 + STW_R1_0_R5 + STB_R3_8 + ADDI_POS_16 + BLR
         result = prove_bytes(original, candidate)
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
         self.assertIsNotNone(result.counterexample)
 
+    def test_frame_relative_r1_spill_keeps_masking(self):
+        """stb r1,0(r1) is a private-frame spill, not a public SP publish."""
+        original = ADDI_NEG_64 + STB_R1_0 + STB_R3_8 + ADDI_POS_64 + BLR
+        candidate = ADDI_NEG_64 + STB_R1_0 + ADDI_POS_64 + BLR
+        result = prove_bytes(original, candidate)
+        self.assertEqual(result.status, ProofStatus.EQUIVALENT)
+        scope = result.memory_scope.to_dict()["private_stack"]
+        self.assertTrue(scope["original"]["enabled_on_all_terminal_paths"])
+        self.assertTrue(scope["candidate"]["enabled_on_all_terminal_paths"])
+
     def test_stack_escape_on_both_sides_public_writes_must_match(self):
-        original = ADDI_NEG_64 + STB_R1_0 + "98610040" + ADDI_POS_64 + BLR
-        candidate = ADDI_NEG_64 + STB_R1_0 + "98610040" + ADDI_POS_64 + BLR
+        original = ADDI_NEG_64 + STW_R1_0_R5 + "98610040" + ADDI_POS_64 + BLR
+        candidate = ADDI_NEG_64 + STW_R1_0_R5 + "98610040" + ADDI_POS_64 + BLR
         result = prove_bytes(original, candidate)
         self.assertEqual(result.status, ProofStatus.EQUIVALENT)
 

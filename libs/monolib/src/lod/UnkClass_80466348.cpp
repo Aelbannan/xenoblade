@@ -1,0 +1,274 @@
+// Auto-scaffolded catalog TU for monolib/src/lod/UnkClass_80466348
+// Mangled extern stubs for llm-harness / coop selection.
+// Replace stubs with high-level C/C++ during decomp.
+
+#include <harness_catalog.h>
+
+// LLM-HARNESS-BEGIN: us-8046a318
+extern "C" void func_80466348__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a318
+
+// LLM-HARNESS-BEGIN: us-8046a360
+extern "C" void func_80466390__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a360
+
+// LLM-HARNESS-BEGIN: us-8046a3a0
+extern "C" void func_804663D0__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a3a0
+
+// LLM-HARNESS-BEGIN: us-8046a3e8
+extern "C" void func_80466418__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a3e8
+
+// LLM-HARNESS-BEGIN: us-8046a428
+extern "C" void func_80466458__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a428
+
+// LLM-HARNESS-BEGIN: us-8046a470
+extern "C" void func_804664A0__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a470
+
+// LLM-HARNESS-BEGIN: us-8046a4b8
+extern "C" void func_804664E8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a4b8
+
+// LLM-HARNESS-BEGIN: us-8046a4f0
+extern "C" void func_80466520__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a4f0
+
+// LLM-HARNESS-BEGIN: us-8046a528
+extern "C" void func_80466558__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a528
+
+// LLM-HARNESS-BEGIN: us-8046a560
+extern "C" void func_80466590__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a560
+
+// LLM-HARNESS-BEGIN: us-8046a608
+extern "C" void func_80466638__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a608
+
+// LLM-HARNESS-BEGIN: us-8046a6b0
+extern "C" void func_804666E0__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a6b0
+
+// LLM-HARNESS-BEGIN: us-8046a764
+extern "C" void func_80466794__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a764
+
+// LLM-HARNESS-BEGIN: us-8046a818
+extern "C" void func_80466848__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a818
+
+// LLM-HARNESS-BEGIN: us-8046a8c0
+extern "C" void func_804668F0__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a8c0
+
+// LLM-HARNESS-BEGIN: us-8046a968
+extern "C" void func_80466998__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046a968
+
+// LLM-HARNESS-BEGIN: us-8046aa1c
+extern "C" void func_80466A4C__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046aa1c
+
+// LLM-HARNESS-BEGIN: us-8046aab8
+extern "C" void func_80466AE8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046aab8
+
+// LLM-HARNESS-BEGIN: us-8046ab54
+extern "C" void func_80466B84__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046ab54
+
+// LLM-HARNESS-BEGIN: us-8046ac08
+extern "C" void func_80466C38__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046ac08
+
+// LLM-HARNESS-BEGIN: us-8046acbc
+extern "C" void func_80466CEC__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046acbc
+
+// LLM-HARNESS-BEGIN: us-8046ad64
+extern "C" void func_80466D94__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046ad64
+
+// LLM-HARNESS-BEGIN: us-8046ae0c
+extern "C" void func_80466E3C__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046ae0c
+
+// LLM-HARNESS-BEGIN: us-8046aeb4
+extern "C" void func_80466EE4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046aeb4
+
+// LLM-HARNESS-BEGIN: us-8046af5c
+extern "C" void func_80466F8C__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046af5c
+
+// LLM-HARNESS-BEGIN: us-8046afc8
+extern "C" void func_80466FF8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046afc8
+
+// LLM-HARNESS-BEGIN: us-8046b040
+extern "C" void func_80467070__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b040
+
+// LLM-HARNESS-BEGIN: us-8046b0b8
+extern "C" void func_804670E8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b0b8
+
+// LLM-HARNESS-BEGIN: us-8046b13c
+extern "C" void func_8046716C__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b13c
+
+// LLM-HARNESS-BEGIN: us-8046b1b4
+extern "C" void func_804671E4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b1b4
+
+// LLM-HARNESS-BEGIN: us-8046b238
+extern "C" void func_80467268__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b238
+
+// LLM-HARNESS-BEGIN: us-8046b2a4
+extern "C" void func_804672D4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b2a4
+
+// LLM-HARNESS-BEGIN: us-8046b31c
+extern "C" void func_8046734C__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b31c
+
+// LLM-HARNESS-BEGIN: us-8046b3a0
+extern "C" void func_804673D0__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b3a0
+
+// LLM-HARNESS-BEGIN: us-8046b424
+extern "C" void func_80467454__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b424
+
+// LLM-HARNESS-BEGIN: us-8046b4b4
+extern "C" void func_804674E4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b4b4
+
+// LLM-HARNESS-BEGIN: us-8046b538
+extern "C" void func_80467568__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b538
+
+// LLM-HARNESS-BEGIN: us-8046b5c8
+extern "C" void func_804675F8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b5c8
+
+// LLM-HARNESS-BEGIN: us-8046b5e0
+extern "C" void func_80467610__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b5e0
+
+// LLM-HARNESS-BEGIN: us-8046b5f8
+extern "C" void func_80467628__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b5f8
+
+// LLM-HARNESS-BEGIN: us-8046b610
+extern "C" void func_80467640__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b610
+
+// LLM-HARNESS-BEGIN: us-8046b624
+extern "C" void func_80467654__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b624
+
+// LLM-HARNESS-BEGIN: us-8046b638
+extern "C" void func_80467668__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b638
+
+// LLM-HARNESS-BEGIN: us-8046b64c
+extern "C" void func_8046767C__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b64c
+
+// LLM-HARNESS-BEGIN: us-8046b660
+extern "C" void func_80467690__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b660
+
+// LLM-HARNESS-BEGIN: us-8046b674
+extern "C" void func_804676A4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b674
+
+// LLM-HARNESS-BEGIN: us-8046b68c
+extern "C" void func_804676BC__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b68c
+
+// LLM-HARNESS-BEGIN: us-8046b6a4
+extern "C" void func_804676D4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b6a4
+
+// LLM-HARNESS-BEGIN: us-8046b6bc
+extern "C" void func_804676EC__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b6bc
+
+// LLM-HARNESS-BEGIN: us-8046b71c
+extern "C" void func_8046774C__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b71c
+
+// LLM-HARNESS-BEGIN: us-8046b728
+extern "C" void func_80467758__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b728
+
+// LLM-HARNESS-BEGIN: us-8046b768
+extern "C" void func_80467798__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b768
+
+// LLM-HARNESS-BEGIN: us-8046b868
+extern "C" void func_80467898__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b868
+
+// LLM-HARNESS-BEGIN: us-8046b8b8
+extern "C" void func_804678E8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b8b8
+
+// LLM-HARNESS-BEGIN: us-8046b9b8
+extern "C" void func_804679E8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046b9b8
+
+// LLM-HARNESS-BEGIN: us-8046bad4
+extern "C" void func_80467B04__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046bad4
+
+// LLM-HARNESS-BEGIN: us-8046bba4
+extern "C" void func_80467BD4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046bba4
+
+// LLM-HARNESS-BEGIN: us-8046bcc0
+extern "C" void func_80467CF0__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046bcc0
+
+// LLM-HARNESS-BEGIN: us-8046bde4
+extern "C" void func_80467E14__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046bde4
+
+// LLM-HARNESS-BEGIN: us-8046be64
+extern "C" void func_80467E94__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046be64
+
+// LLM-HARNESS-BEGIN: us-8046bf88
+extern "C" void func_80467FB8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046bf88
+
+// LLM-HARNESS-BEGIN: us-8046c0ac
+extern "C" void func_804680DC__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046c0ac
+
+// LLM-HARNESS-BEGIN: us-8046c184
+extern "C" void func_804681B4__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046c184
+
+// LLM-HARNESS-BEGIN: us-8046c2a8
+extern "C" void func_804682D8__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046c2a8
+
+// LLM-HARNESS-BEGIN: us-8046c324
+extern "C" void func_80468354__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046c324
+
+// LLM-HARNESS-BEGIN: us-8046c3a0
+extern "C" void func_804683D0__Q23LOD17UnkClass_80466348Fv() {}
+// LLM-HARNESS-END: us-8046c3a0
+
+// --- hard-symbol stubs (scaffold_hard_symbols) ---
+// LLM-HARNESS-BEGIN: us-8046c3b8
+extern "C" void sinit_804683E8() {}
+// LLM-HARNESS-END: us-8046c3b8

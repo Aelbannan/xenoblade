@@ -49,9 +49,6 @@ class TestSolveCommand(unittest.TestCase):
             "models": {
                 "default": [{"id": "test", "provider": "opencode", "model": "test", "runs": 1}]
             },
-            "models": {
-                "default": [{"id": "test", "provider": "opencode", "model": "test", "runs": 1}]
-            },
             "solve": {
                 "initial_candidates": 5,
                 "compile_repairs": 3,
@@ -59,7 +56,12 @@ class TestSolveCommand(unittest.TestCase):
                 "max_repeated_fingerprint": 3,
                 "stop_on_full_match": False,
                 "stop_on_equivalent_match": True,
-            }
+            },
+            "solve-local": {
+                "initial_candidates": 1,
+                "compile_repairs": 2,
+                "strategies": ["typed"],
+            },
         }
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
@@ -72,6 +74,13 @@ class TestSolveCommand(unittest.TestCase):
                 self.assertEqual(harness.config["solve"]["initial_candidates"], 5)
                 self.assertEqual(harness.config["solve"]["compile_repairs"], 3)
                 self.assertEqual(harness.config["solve"]["match_repairs"], 6)
+                local = harness.resolve_solve_config(local=True)
+                self.assertEqual(local["initial_candidates"], 1)
+                self.assertEqual(local["compile_repairs"], 2)
+                self.assertEqual(local["strategies"], ["typed"])
+                self.assertTrue(local["stop_if_all_initial_compile_error"])
+                # Acceptance stops inherit from solve when omitted in solve-local.
+                self.assertFalse(local["stop_on_full_match"])
         finally:
             Path(config_path).unlink()
 

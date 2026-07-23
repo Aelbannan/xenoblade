@@ -51,10 +51,9 @@ wins from the compiling pool.
 | `execution.initial_parallel` | Parallel initial candidates inside one `solve` |
 | `execution.target_parallel` | Parallel targets in `batch` / `--number` |
 | `execution.isolation.mode=git-worktree` | Isolate each candidate evaluation |
-| `providers.opencode.pure=true` | Inline dossier; tools disabled; JSON schema enforced |
-| `providers.opencode.delete_session=true` | Drop OpenCode sessions after each call |
+| `providers.opencode.pure=true` | Inline dossier; `opencode run --pure`; tools disabled |
 
-OpenCode with `pure: true` + JSON schema + tools disabled is the default high-volume path. `deepseek-raw` remains an optional alternative provider (same candidate schema); keep it configured if you want a second model/role, but you do not need to switch for the default loop.
+OpenCode with `pure: true` (`opencode run --pure`, prompt-enforced JSON) is the default high-volume path. `deepseek-raw` remains an optional alternative provider (same candidate schema); keep it configured if you want a second model/role, but you do not need to switch for the default loop.
 
 **Worktree reuse / SPLIT:** each isolated evaluation currently creates a fresh git worktree, runs `configure.py`, then ninja-builds one object. `prepare_workspace` already symlinks shared `build/<region>/{obj,include,asm}` and stamps `config.json` via `eval_cache.stamp_split_config` so ninja should skip expensive `dtk dol split`. A persistent worktree pool (reuse configured trees across candidates) is a follow-up if configure still dominates wall time — see `tools/llm_harness/eval_cache.py`.
 
@@ -96,6 +95,11 @@ printed on completion).
 python3 tools/llm_harness/run.py solve <target-id> --dry-run
 python3 tools/llm_harness/run.py solve <target-id>
 
+# Local/scaffold path for smaller models (Qwen/omlx): sanitizer + clean MWCC
+# diagnostics + no-op repair rejection + early-stop on all-initial COMPILE_ERROR
+python3 tools/llm_harness/run.py solve-local <target-id>
+python3 tools/llm_harness/run.py solve-local --number 10 --selection leaf
+
 # Blind identical-prompt sampling for model research only
 python3 tools/llm_harness/run.py sample new <target-id> --runs 10
 
@@ -111,11 +115,15 @@ python3 tools/llm_harness/run.py promote-accepted
 
 `solve` generates a few diverse initial candidates, then spends remaining budget on compile repair or binary-diff repair against the best saved candidate. It stops on `FULL_MATCH` / `EQUIVALENT_MATCH`, repeated mismatch fingerprints, unvalidated-callee blocks, or exhausted repair budgets. Accepted wins are written into source and `targets.json` automatically unless `execution.auto_promote` is false.
 
+`solve-local` keeps the same loop but moves MWCC hygiene out of the model: deterministic sanitizer (illegal `this` params, flat mangled call suffixes, body-only scaffold onto the locked signature), cleaned MWCC diagnostics + fix cookbook, reject identical compile repairs, and stop when every initial candidate is `COMPILE_ERROR` (escalate to a stronger model). Knobs live in the top-level `solve-local` section of `llm-harness.json` (not under `solve`).
+
 ## Requirements
 
 - A working `coop.json`, retail split objects, MWCC toolchain, Ninja, and objdiff.
-- Providers configured in `llm-harness.json` (`opencode` via `opencode serve` HTTP API, `deepseek-raw`, optional `lmstudio` / `codex`).
-- For OpenCode: run `opencode serve --port 4096` (optional basic auth via `OPENCODE_SERVER_PASSWORD`) and set `providers.opencode.base_url`.
+- Providers configured in `llm-harness.json` (`opencode` via `opencode run` CLI, `deepseek-raw`, optional `openrouter` / `lmstudio` / `omlx` / `codex`).
+- For OpenCode: install the `opencode` CLI on `PATH` (or set `providers.opencode.binary`).
+- For OpenRouter: set `OPENROUTER_API_KEY` (or `providers.openrouter.api_key` / `~/.openrouter/.env`), then use a model with `"provider": "openrouter"` and an OpenRouter model slug (e.g. `deepseek/deepseek-chat`). Optional `variant` pins upstream provider routing (`provider.order`); `reasoning_effort` / `thinking_budget` map to OpenRouter `reasoning`.
+- For oMLX: run `omlx start` (OpenAI-compatible API at `http://127.0.0.1:8000/v1`), load a model in the admin UI, then set a model with `"provider": "omlx"`. Auth uses `OMLX_API_KEY`, optional `providers.omlx.api_key`, or `~/.omlx/settings.json` `auth.api_key`.
 - For Codex: install/login the Codex CLI (`codex login`), then set `providers.codex` and a model with `"provider": "codex"` (uses `codex exec --json`). With `providers.codex.pure=true` (default), Codex runs in an empty temp workspace with shell/apps/plugins/web-search disabled and no user/project config — prompt-only, no file/tool access.
 
 ```bash
@@ -185,9 +193,8 @@ Checked-in schema uses model roles:
   },
   "providers": {
     "opencode": {
-      "base_url": "http://127.0.0.1:4096",
-      "pure": true,
-      "delete_session": true
+      "binary": "opencode",
+      "pure": true
     }
   }
 }

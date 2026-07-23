@@ -6,8 +6,10 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Optional
 from unittest.mock import Mock, patch
 
+from tools.coop.lib.targets import Target
 from tools.llm_harness.run import main
 from tools.llm_harness.source_regions import begin_marker, end_marker
 from tools.llm_harness.xenoblade_project import XenobladeAdapter
@@ -28,7 +30,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         harness.select_new_targets.assert_called_once_with(
-            2, ignore_called_functions=True, certified_funcs=False, tu=None
+            2, ignore_called_functions=True, certified_funcs=False,
+            high_match_callees=False, tu=None
         )
         harness.run_batch.assert_called_once_with(
             "new",
@@ -66,6 +69,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
             2,
             randomize=True,
             certified_funcs=False,
+            high_match_callees=False,
             tu=None,
             selection="pending",
         )
@@ -93,6 +97,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
             2,
             randomize=False,
             certified_funcs=False,
+            high_match_callees=False,
             tu=None,
             selection="ready",
         )
@@ -106,6 +111,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
             ["one", "two"],
             dry_run=True,
             model_parallel=None,
+            local=False,
         )
         harness.solve.assert_not_called()
 
@@ -124,6 +130,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
             2,
             randomize=True,
             certified_funcs=False,
+            high_match_callees=False,
             tu=None,
             selection="ready",
         )
@@ -132,6 +139,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
             ["two", "one"],
             dry_run=True,
             model_parallel=None,
+            local=False,
         )
 
     def test_solve_selection_leaf(self) -> None:
@@ -152,11 +160,58 @@ class AutomaticNewTargetTests(unittest.TestCase):
             1,
             randomize=False,
             certified_funcs=False,
+            high_match_callees=False,
             tu=None,
             selection="leaf",
         )
         self.assertIn("selected frontier selection=leaf count=1", out.getvalue())
         harness.run_batch.assert_called_once()
+
+    def test_solve_high_match_callees_flag(self) -> None:
+        harness = Mock()
+        harness.select_targets.return_value = ["callee"]
+        harness.run_batch.return_value = Path("batch-output")
+        harness.adapter.describe_frontier.return_value = [
+            {"id": "callee", "kind": "leaf"},
+        ]
+
+        with patch("tools.llm_harness.run.Harness", return_value=harness):
+            with redirect_stdout(io.StringIO()):
+                result = main([
+                    "solve", "--number", "1", "--high-match-callees", "--dry-run",
+                ])
+
+        self.assertEqual(result, 0)
+        harness.select_targets.assert_called_once_with(
+            "solve",
+            1,
+            randomize=False,
+            certified_funcs=False,
+            high_match_callees=True,
+            tu=None,
+            selection="ready",
+        )
+
+    def test_new_high_match_callees_flag(self) -> None:
+        harness = Mock()
+        harness.select_new_targets.return_value = ["callee"]
+        harness.run_batch.return_value = Path("batch-output")
+
+        with patch("tools.llm_harness.run.Harness", return_value=harness):
+            with redirect_stdout(io.StringIO()):
+                result = main([
+                    "new", "--number", "1", "--high-match-callees",
+                    "--ignore-called-functions", "--dry-run",
+                ])
+
+        self.assertEqual(result, 0)
+        harness.select_new_targets.assert_called_once_with(
+            1,
+            ignore_called_functions=True,
+            certified_funcs=False,
+            high_match_callees=True,
+            tu=None,
+        )
 
     def test_batch_solve_uses_run_batch(self) -> None:
         harness = Mock()
@@ -195,6 +250,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
             1,
             randomize=False,
             certified_funcs=False,
+            high_match_callees=False,
             tu=None,
             selection="ready",
         )
@@ -213,7 +269,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         harness.select_targets.assert_called_once_with(
-            "tu-complete", 2, randomize=True, certified_funcs=False, tu=None
+            "tu-complete", 2, randomize=True, certified_funcs=False,
+            high_match_callees=False, tu=None
         )
         harness.run_batch.assert_called_once_with(
             "tu-complete", ["unit-a", "unit-b"], runs=None, dry_run=True,
@@ -257,6 +314,62 @@ class AutomaticNewTargetTests(unittest.TestCase):
         with patch("tools.llm_harness.run.Harness", return_value=harness):
             with self.assertRaises(SystemExit):
                 main(["strip-redundant-externs", "nope", "--dry-run"])
+
+
+class HighMatchCalleesFilterTests(unittest.TestCase):
+    def _target(
+        self,
+        tid: str,
+        status: str,
+        *,
+        called: Optional[list[str]] = None,
+    ) -> Target:
+        return Target(
+            id=tid,
+            tier="P1",
+            milestone="test",
+            function=tid,
+            symbol=tid,
+            address=None,
+            source=None,
+            unit=None,
+            required_level="EQUIVALENT_MATCH",
+            status=status,
+            extra={"called_functions": list(called or [])},
+        )
+
+    def test_collects_callees_of_high_match_and_above_excluding_full(self) -> None:
+        targets = [
+            self._target("caller-high", "HIGH_MATCH", called=["a", "b"]),
+            self._target("caller-code", "CODE_MATCH", called=["b", "c"]),
+            self._target("caller-equiv", "EQUIVALENT_MATCH", called=["d"]),
+            self._target("caller-full", "FULL_MATCH", called=["e"]),
+            self._target("caller-struct", "STRUCTURAL", called=["f"]),
+            self._target("a", "NOT_STARTED"),
+            self._target("b", "NOT_STARTED"),
+            self._target("c", "NOT_STARTED"),
+            self._target("d", "NOT_STARTED"),
+            self._target("e", "NOT_STARTED"),
+            self._target("f", "NOT_STARTED"),
+        ]
+        allowed = XenobladeAdapter._high_match_caller_callee_ids(targets)
+        self.assertEqual(allowed, {"a", "b", "c", "d"})
+
+    def test_filter_keeps_only_callees_of_near_matched_callers(self) -> None:
+        all_targets = [
+            self._target("caller", "HIGH_MATCH", called=["keep"]),
+            self._target("full", "FULL_MATCH", called=["drop-full"]),
+            self._target("keep", "NOT_STARTED"),
+            self._target("drop-full", "NOT_STARTED"),
+            self._target("unrelated", "NOT_STARTED"),
+        ]
+        candidates = [
+            all_targets[2],
+            all_targets[3],
+            all_targets[4],
+        ]
+        filtered = XenobladeAdapter._filter_high_match_callees(all_targets, candidates)
+        self.assertEqual([t.id for t in filtered], ["keep"])
 
 
 class StripAcceptedRedundantExternAdapterTests(unittest.TestCase):

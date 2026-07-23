@@ -66,6 +66,14 @@ AUTO_PERSISTENT_OBSERVABLES = (
 # older imports/tests that mention the name keep resolving.
 INDIRECT_BRANCH_OMITTED_OBSERVABLES: frozenset[str] = frozenset()
 
+# PowerPC EABI outgoing argument registers at a tail call / virtual thunk.
+# ``ppc-eabi`` / ``auto`` base contracts only list ``r3``/``r4`` and ``f1`` among
+# volatiles (return halves). At ``indirect-branch`` / ``call-indirect`` those
+# same slots are live outgoing args, and so are ``r5``–``r10`` / ``f2``–``f8``.
+EABI_OUTGOING_GPR_ARGS: tuple[str, ...] = tuple(f"r{index}" for index in range(3, 11))
+EABI_OUTGOING_FPR_ARGS: tuple[str, ...] = tuple(f"f{index}" for index in range(1, 9))
+EABI_OUTGOING_PS1_ARGS: tuple[str, ...] = tuple(f"f{index}.ps1" for index in range(1, 9))
+
 
 def observables_for_exit(
     contract: EquivalenceContract,
@@ -73,13 +81,20 @@ def observables_for_exit(
 ) -> tuple[Observable, ...]:
     """Select observables for a matched terminal pair.
 
-    With no ``abi_shape``, every contract observable is compared for every exit
-    kind (today's fail-closed behavior).  When an explicit :class:`AbiShape` is
-    attached, ``r4`` / ``f1`` / ``f1.ps1`` may be omitted on return/fallthrough
-    or indirect-branch/call-indirect according to return-width and outgoing-arg
-    counts.  ``r3``, memory, nonvolatiles, and other observables are never
+    For ``indirect-branch`` / ``call-indirect``, the compared set is the contract
+    observables **union** the EABI outgoing argument registers (``r3``–``r10``,
+    ``f1``–``f8`` and ``.ps1`` lanes), truncated by an attached :class:`AbiShape`
+    when present. Without a shape, all eight integer and eight float outgoing
+    args are live (fail closed).
+
+    When an explicit :class:`AbiShape` is attached, ``r4`` / ``f1`` / ``f1.ps1``
+    may also be omitted on return/fallthrough according to return-width flags.
+    ``r3``, memory, nonvolatiles, and other non-arg observables are never
     dropped here.
     """
+    if exit_kind in ("indirect-branch", "call-indirect"):
+        return _observables_for_indirect_exit(contract)
+
     if contract.abi_shape is None:
         return contract.observables
 
@@ -90,12 +105,46 @@ def observables_for_exit(
             omit.add("r4")
         if not shape.returns_float:
             omit.update({"f1", "f1.ps1"})
-    elif exit_kind in ("indirect-branch", "call-indirect"):
-        if shape.outgoing_gpr_args < 2:
-            omit.add("r4")
-        if shape.outgoing_fpr_args < 1:
-            omit.update({"f1", "f1.ps1"})
     return tuple(o for o in contract.observables if o.name not in omit)
+
+
+def _observables_for_indirect_exit(
+    contract: EquivalenceContract,
+) -> tuple[Observable, ...]:
+    """Union contract observables with live EABI outgoing args at a tail transfer."""
+    if contract.abi_shape is None:
+        gpr_n = 8
+        fpr_n = 8
+    else:
+        gpr_n = int(contract.abi_shape.outgoing_gpr_args)
+        fpr_n = int(contract.abi_shape.outgoing_fpr_args)
+
+    live_args = (
+        EABI_OUTGOING_GPR_ARGS[:gpr_n]
+        + EABI_OUTGOING_FPR_ARGS[:fpr_n]
+        + EABI_OUTGOING_PS1_ARGS[:fpr_n]
+    )
+    # Drop outgoing-arg registers beyond the declared count that may still be
+    # present in the base ``ppc-eabi`` contract (e.g. ``r4`` / ``f1`` when
+    # ``outgoing_gpr_args=1``).
+    omit = set(EABI_OUTGOING_GPR_ARGS[gpr_n:])
+    omit.update(EABI_OUTGOING_FPR_ARGS[fpr_n:])
+    omit.update(EABI_OUTGOING_PS1_ARGS[fpr_n:])
+
+    merged: list[Observable] = []
+    seen: set[str] = set()
+    for item in contract.observables:
+        if item.name in omit:
+            continue
+        if item.name not in seen:
+            merged.append(item)
+            seen.add(item.name)
+    for name in live_args:
+        if name in seen or name in omit:
+            continue
+        merged.extend(parse_observables((name,)))
+        seen.add(name)
+    return tuple(merged)
 
 
 def with_abi_shape(

@@ -2067,6 +2067,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3382,12 +3447,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -9039,7 +9107,10 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    char UNK_0x564[0x5EC - 0x564];
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -12492,42 +12563,45 @@ with no apparent calls to the other 3 (possibly debug only).
 
 In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well. */
+events being unused as well.
+
+Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
+do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent(){}
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5){ return false; }
-    virtual bool OnFileEvent(CEventFile* pEventFile){ return false; }
-    virtual bool WorkEvent3(UNKTYPE* r4){ return false; }
-    virtual bool WorkEvent4(){ return false; }
-    virtual void OnPauseTrigger(bool paused){}
-    //Completely unused, but still left in...
-    virtual bool WorkEvent6(){ return false; }
-    virtual bool WorkEvent7(){ return false; }
-    virtual bool WorkEvent8(){ return false; }
-    virtual bool WorkEvent9(){ return false; }
-    virtual bool WorkEvent10(){ return false; }
-    virtual bool WorkEvent11(){ return false; }
-    virtual bool WorkEvent12(){ return false; }
-    virtual bool WorkEvent13(){ return false; }
-    virtual bool WorkEvent14(){ return false; }
-    virtual bool WorkEvent15(){ return false; }
-    virtual bool WorkEvent16(){ return false; }
-    virtual bool WorkEvent17(){ return false; }
-    virtual bool WorkEvent18(){ return false; }
-    virtual bool WorkEvent19(){ return false; }
-    virtual bool WorkEvent20(){ return false; }
-    virtual bool WorkEvent21(){ return false; }
-    virtual bool WorkEvent22(){ return false; }
-    virtual bool WorkEvent23(){ return false; }
-    virtual bool WorkEvent24(){ return false; }
-    virtual bool WorkEvent25(){ return false; }
-    virtual bool WorkEvent26(){ return false; }
-    virtual bool WorkEvent27(){ return false; }
-    virtual bool WorkEvent28(){ return false; }
-    virtual bool WorkEvent29(){ return false; }
-    virtual bool WorkEvent30(){ return false; }
-    virtual void WorkEvent31(){}
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
 };
 /* end "monolib/work/IWorkEvent.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
@@ -19535,11 +19609,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -19556,18 +19634,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -19592,6 +19680,8 @@ typedef enum {
 } NANDCheckFlags;
 
 s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
 #ifdef __cplusplus
 }
@@ -19614,25 +19704,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -24014,7 +24114,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -25327,8 +25428,8 @@ private:
         u32 magFilter : 3;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 anisotropy : 2;
         u32 paletteFormat : 2;
+        u32 anisotropy : 2;
     } mBits; // at 0x18
 };
 
@@ -26417,49 +26518,43 @@ struct CUICfInitBlock {
     u8 unk06[0x34 - 6];
 };
 
-struct CUICfInitTail {
-    u32 unk00;
-    u32 unk04;
-    u32 unk08;
-    u32 unk0C;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u32 unk20;
-    u32 unk24;
-    u32 unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    u32 unk38;
-    u32 unk3C;
-    u32 unk40;
-    u32 unk44;
-    u32 unk48;
-    u32 unk4C;
-    u32 unk50;
-    u32 unk54;
-    u32 unk58;
-    u32 unk5C;
-    u32 unk60;
-    u32 unk64;
-    u32 unk68;
-    u32 unk6C;
-    u32 unk70;
-    u32 unk74;
-    u32 unk78;
-    u32 unk7C;
-    u32 unk80;
-    u32 unk84;
-    u32 unk88;
-    u32 unk8C;
-};
-
 struct CUICfInitState {
     u8 mode;
     u8 state;
     u8 unk02[2];
+};
+
+// Retail copy: lwz +0; paired +8/+4; lhz +0xC; lone lwz +0x0E; paired words from +0x12.
+// Trailing bytes split so MWCC pair-unrolls (one big u8[] → lwzu). Zeros via u16* overlay.
+#pragma pack(push, 1)
+struct CUICfInitTailChunk8 {
+    u8 b[8];
+};
+struct CUICfInitTailChunk40 {
+    u8 b[0x40];
+};
+struct CUICfInitTailChunk3E {
+    u8 b[0x3E];
+};
+struct CUICfInitTailChunk40View {
+    u8 b[0x40]; // assign view: 2-byte overhang past Tail (retail last lwz pair)
+};
+struct CUICfInitTail {
+    u32 unk00;                  // +0x00
+    CUICfInitTailChunk8 mid;    // +0x04..+0x0B (memcpy pair → +8/+4 loads)
+    u16 unk0C;                  // +0x0C
+    u32 unk0E;                  // +0x0E
+    CUICfInitTailChunk40 rest0; // +0x12
+    CUICfInitTailChunk3E rest1; // +0x52
+}; // size = 0x90
+#pragma pack(pop)
+
+// Forces retail stack contiguity: state, block0, blocks[3], tail.
+struct CUICfInitTemplates {
+    CUICfInitState state;
+    CUICfInitBlock block0;
+    CUICfInitBlock blocks[3];
+    CUICfInitTail tail;
 };
 
 // 0xC-byte pool node for func_80133324's event queue - same layout as
@@ -26622,175 +26717,15 @@ public:
 /* "src/kyoshin/CUICfManager.cpp" line 3 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
 
-/* "src/kyoshin/CUICfManager.cpp" line 5 "decomp.h" */
-/**
- * Codewarrior tricks for matching decomp
- * (Macros generate prototypes to satisfy -requireprotos)
- */
+// High-level Init (no asm void). Best ~94.8% HIGH_MATCH.
+// Tail: scalars + u8 mid[8] + lone u32@+0x0E + pair-unroll chunks; zeros via u16* overlay.
 
-#ifndef DECOMP_H
-#define DECOMP_H
-
-/* "include/decomp.h" line 8 "macros.h" */
-/**
- * Common macros
- */
-
-#ifndef MACROS_H
-#define MACROS_H
-
-/******************************************************************************
- *
- * Strings
- *
- ******************************************************************************/
-
-// Stringify expression
-#define __STR(x) #x
-#define STR(x) __STR(x)
-
-// Concatenate strings
-#define __CONCAT(x, y) x##y
-#define CONCAT(x, y) __CONCAT(x, y)
-
-// Multi-character character constants
-// clang-format off
-#define TWOCC(c0, c1)                                                          \
-    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
-#define THREECC(c0, c1, c2)                                                    \
-    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
-#define FOURCC(c0, c1, c2, c3)                                                 \
-    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
-// clang-format on
-
-/******************************************************************************
- *
- * Arithmetic
- *
- ******************************************************************************/
-
-// Min/max expression
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-
-// Clamp to a range
-#define CLAMP(low, high, x)                                                    \
-    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
-
-// Round up value
-#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
-#define ROUND_UP_PTR(x, align)                                                 \
-    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
-
-// Round down value
-#define ROUND_DOWN(x, align) ((x) & (-(align)))
-#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
-
-// Distance between pointers
-#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
-
-/******************************************************************************
- *
- * Arrays
- *
- ******************************************************************************/
-
-// Size of compile-time arrays
-#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
-#define LENGTHOF(x) ARRAY_SIZE(x)
-
-// Declare an array of hardware registers
-#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
-
-/******************************************************************************
- *
- * Intrinsics
- *
- ******************************************************************************/
-
-// Memory clear intrinsic
-#define MEMCLR(x) __memclr((x), sizeof(*(x)))
-
-/******************************************************************************
- *
- * Attributes
- *
- ******************************************************************************/
-
-// Alignment attribute
-#define ALIGN(x) __attribute__((aligned(x)))
-
-// Place a symbol in a specific ELF section
-#define DECL_SECTION(x) __declspec(section x)
-
-// Give a symbol weak linkage
-#define DECL_WEAK __declspec(weak)
-
-#endif
-/* end "macros.h" */
-
-// Compile without matching hacks.
-#if defined(NONMATCHING) || defined(COMPAT_ANY)
-#define DECOMP_FORCEACTIVE(module, ...)
-#define DECOMP_FORCELITERAL(module, ...)
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)
-#define DECOMP_INLINE
-#define DECOMP_DONT_INLINE
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
-#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
-// Compile with matching hacks.
-// (This version of CW does not support pragmas inside macros.)
-#else
-// Force reference specific data
-#define DECOMP_FORCEACTIVE(module, ...)                                        \
-    void fake_function(...);                                                   \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
-        fake_function(__VA_ARGS__);                                            \
-    }
-
-// Force literal ordering, such as floats in sdata2
-#define DECOMP_FORCELITERAL(module, ...)                                       \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
-        (__VA_ARGS__);                                                         \
-    }
-
-// Force reference destructor
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
-        cls dummy;                                                             \
-        dummy.~cls();                                                          \
-    }
-
-#define DECOMP_INLINE inline
-#define DECOMP_DONT_INLINE __attribute__((never_inline))
-
-/**
- * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
- * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
- */
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
-/** slwi expansion: rlwinm rD,rA,1,0,30 */
-#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
-
-/**
- * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
- * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
- */
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
-
-#endif
-
-#endif
-/* end "decomp.h" */
-
-// section 17.6 whole-function asm: packed tail copy + -0x1A0/stmw frame not recoverable
-// in high-level C++ (60% STRUCTURAL). User-approved "Fix it".
+struct CUICfInitProcess {
+    u8 unk00[0x10];
+    void* vtable;
+    u8 unk14[0x28];
+    u32 callbacks[6];
+};
 
 extern "C" {
 CProcess* lbl_eu_80664054;
@@ -26799,209 +26734,123 @@ char lbl_eu_8052E404[];
 char lbl_eu_8052E3BC[];
 u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
-void* getWorkMem__17CWorkThreadSystemFv(void);
-void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
-CFileHandle* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, IWorkEvent*, int, int);
-void func_8044F154__11CDeviceFileFP11CFileHandlei(CFileHandle*, int);
-void Regist__8CProcessFP8CProcessb(CProcess*, CProcess*, bool);
-void func_8015704C(void*, const void*);
+void func_8015704C(CUICfInitBlock*, const CUICfInitBlock*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 }
 
-asm void CUICfManager::Init() {
-    nofralloc
-    stwu r1, -0x1a0(r1)
-    mflr r0
-    cmpwi r3, 0x0
-    stw r0, 0x1a4(r1)
-    stmw r22, 0x178(r1)
-    mr r23, r3
-    mr r5, r23
-    beq lbl_80132EEC
-    addi r5, r3, 0x54
-lbl_80132EEC:
-    lwz r3, 0x118(r3)
-    li r6, 0x0
-    lwz r4, lbl_eu_806621A8
-    li r7, 0x0
-    bl readFile__11CDeviceFileFUlPCcP10IWorkEventii
-    stw r3, 0x114(r23)
-    li r4, 0x3
-    bl func_8044F154__11CDeviceFileFP11CFileHandlei
-    bl getWorkMem__17CWorkThreadSystemFv
-    mr r4, r3
-    li r3, 0x54
-    bl allocate__Q23mtl10MemManagerFUlUl
-    cmpwi r3, 0x0
-    mr r22, r3
-    beq lbl_80132F7C
-    bl __ct__8CProcessFv
-    lis r3, lbl_eu_8052E404@ha
-    lis r5, __ptmf_null@ha
-    addi r3, r3, lbl_eu_8052E404@l
-    stw r3, 0x10(r22)
-    addi r5, r5, __ptmf_null@l
-    lwz r0, 0x4(r5)
-    lis r3, lbl_eu_8052E3BC@ha
-    lwz r4, 0x0(r5)
-    addi r3, r3, lbl_eu_8052E3BC@l
-    stw r4, 0x3c(r22)
-    stw r0, 0x40(r22)
-    lwz r0, 0x8(r5)
-    stw r0, 0x44(r22)
-    lwz r0, 0x4(r5)
-    lwz r4, 0x0(r5)
-    stw r4, 0x48(r22)
-    stw r0, 0x4c(r22)
-    lwz r0, 0x8(r5)
-    stw r0, 0x50(r22)
-    stw r3, 0x10(r22)
-lbl_80132F7C:
-    stw r22, 0x144(r23)
-    mr r3, r22
-    li r5, 0x0
-    lwz r4, lbl_eu_80664054
-    bl Regist__8CProcessFP8CProcessb
-    addi r27, r1, 0xdc
-    addi r26, r1, 0x40
-    addi r25, r1, 0x74
-    addi r24, r1, 0xa8
-    li r28, 0x0
-    li r30, 0x0
-    li r31, 0x7
-    li r22, 0x34
-lbl_80132FB0:
-    clrlwi r0, r28, 24
-    addi r3, r1, 0x40
-    mulli r0, r0, 0x168
-    sth r30, 0x10(r1)
-    cmplw r3, r27
-    stw r30, 0xc(r1)
-    add r29, r23, r0
-    bge lbl_80132FF4
-    addi r0, r27, 0x33
-    subf r0, r3, r0
-    divwu r0, r0, r22
-    mtctr r0
-    bge lbl_80132FF4
-lbl_80132FE4:
-    sth r30, 0x4(r3)
-    stw r30, 0x0(r3)
-    addi r3, r3, 0x34
-    bdnz lbl_80132FE4
-lbl_80132FF4:
-    stb r30, 0x9(r1)
-    addi r3, r29, 0x150
-    addi r4, r1, 0xc
-    stw r30, 0xdc(r1)
-    sth r30, 0xe0(r1)
-    sth r30, 0xe2(r1)
-    sth r30, 0xe4(r1)
-    sth r30, 0xe6(r1)
-    sth r30, 0xe8(r1)
-    sth r30, 0xea(r1)
-    stb r30, 0xec(r1)
-    stb r30, 0xee(r1)
-    stb r30, 0x12e(r1)
-    stb r31, 0x8(r1)
-    stb r31, 0x14c(r29)
-    lbz r0, 0x9(r1)
-    stb r0, 0x14d(r29)
-    bl func_8015704C
-    mr r4, r26
-    addi r3, r29, 0x184
-    bl func_8015704C
-    mr r4, r25
-    addi r3, r29, 0x1b8
-    bl func_8015704C
-    mr r4, r24
-    addi r3, r29, 0x1ec
-    bl func_8015704C
-    lwz r0, 0xdc(r1)
-    addi r28, r28, 0x1
-    stw r0, 0x220(r29)
-    cmplwi r28, 0x8
-    lwz r0, 0xe4(r1)
-    lwz r3, 0xe0(r1)
-    stw r3, 0x224(r29)
-    stw r0, 0x228(r29)
-    lhz r0, 0xe8(r1)
-    sth r0, 0x22c(r29)
-    lwz r0, 0xea(r1)
-    stw r0, 0x22e(r29)
-    lwz r0, 0xf2(r1)
-    lwz r3, 0xee(r1)
-    stw r3, 0x232(r29)
-    stw r0, 0x236(r29)
-    lwz r0, 0xfa(r1)
-    lwz r3, 0xf6(r1)
-    stw r3, 0x23a(r29)
-    stw r0, 0x23e(r29)
-    lwz r0, 0x102(r1)
-    lwz r3, 0xfe(r1)
-    stw r3, 0x242(r29)
-    stw r0, 0x246(r29)
-    lwz r0, 0x10a(r1)
-    lwz r3, 0x106(r1)
-    stw r3, 0x24a(r29)
-    stw r0, 0x24e(r29)
-    lwz r0, 0x112(r1)
-    lwz r3, 0x10e(r1)
-    stw r3, 0x252(r29)
-    stw r0, 0x256(r29)
-    lwz r0, 0x11a(r1)
-    lwz r3, 0x116(r1)
-    stw r3, 0x25a(r29)
-    stw r0, 0x25e(r29)
-    lwz r0, 0x122(r1)
-    lwz r3, 0x11e(r1)
-    stw r3, 0x262(r29)
-    stw r0, 0x266(r29)
-    lwz r0, 0x12a(r1)
-    lwz r3, 0x126(r1)
-    stw r3, 0x26a(r29)
-    stw r0, 0x26e(r29)
-    lwz r0, 0x132(r1)
-    lwz r3, 0x12e(r1)
-    stw r3, 0x272(r29)
-    stw r0, 0x276(r29)
-    lwz r0, 0x13a(r1)
-    lwz r3, 0x136(r1)
-    stw r3, 0x27a(r29)
-    stw r0, 0x27e(r29)
-    lwz r0, 0x142(r1)
-    lwz r3, 0x13e(r1)
-    stw r3, 0x282(r29)
-    stw r0, 0x286(r29)
-    lwz r0, 0x14a(r1)
-    lwz r3, 0x146(r1)
-    stw r3, 0x28a(r29)
-    stw r0, 0x28e(r29)
-    lwz r0, 0x152(r1)
-    lwz r3, 0x14e(r1)
-    stw r3, 0x292(r29)
-    stw r0, 0x296(r29)
-    lwz r0, 0x15a(r1)
-    lwz r3, 0x156(r1)
-    stw r3, 0x29a(r29)
-    stw r0, 0x29e(r29)
-    lwz r0, 0x162(r1)
-    lwz r3, 0x15e(r1)
-    stw r3, 0x2a2(r29)
-    stw r0, 0x2a6(r29)
-    lwz r0, 0x16a(r1)
-    lwz r3, 0x166(r1)
-    stw r3, 0x2aa(r29)
-    stw r0, 0x2ae(r29)
-    blt lbl_80132FB0
-    lmw r22, 0x178(r1)
-    lwz r0, 0x1a4(r1)
-    mtlr r0
-    addi r1, r1, 0x1a0
-    blr
+static IWorkEvent* cfWorkEvent(CUICfManager* self) {
+    IWorkEvent* workEvent = reinterpret_cast<IWorkEvent*>(self);
+    if (self != NULL) {
+        workEvent = reinterpret_cast<IWorkEvent*>(reinterpret_cast<u8*>(self) + 0x54);
+    }
+    return workEvent;
+}
+
+void CUICfManager::Init() {
+    CUICfInitProcess* process;
+    u8* ptmfBase;
+    char* vtFinal;
+    u32 ptmfWord1;
+    u32 ptmfWord0;
+    u32 ptmfWord2;
+    // Retail stack: state@+0x8, block0@+0xC, blocks[3]@+0x40, tail@+0xDC.
+    CUICfInitTemplates tmpl;
+    CUICfInitBlock* clearEnd;
+    CUICfInitBlock* initBlock1Ptr;
+    CUICfInitBlock* initBlock2Ptr;
+    CUICfInitBlock* initBlock3Ptr;
+    CUICfInitBlock* clearPtr;
+    u32 blockStride;
+    u32 clearCount;
+    u8 i;
+
+    mFileHandle = CDeviceFile::readFile(unk118, lbl_eu_806621A8, cfWorkEvent(this), 0, 0);
+    CDeviceFile::func_8044F154(mFileHandle, 3);
+
+    process = static_cast<CUICfInitProcess*>(
+        mtl::MemManager::allocate(0x54, CWorkThreadSystem::getWorkMem()));
+    if (process != NULL) {
+        __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
+        ptmfBase = (u8*)__ptmf_null;
+        process->vtable = lbl_eu_8052E404;
+        ptmfWord1 = *(u32*)(ptmfBase + 4);
+        vtFinal = lbl_eu_8052E3BC;
+        ptmfWord0 = *(u32*)(ptmfBase + 0);
+        process->callbacks[0] = ptmfWord0;
+        process->callbacks[1] = ptmfWord1;
+        ptmfWord2 = *(u32*)(ptmfBase + 8);
+        process->callbacks[2] = ptmfWord2;
+        ptmfWord1 = *(u32*)(ptmfBase + 4);
+        ptmfWord0 = *(u32*)(ptmfBase + 0);
+        process->callbacks[3] = ptmfWord0;
+        process->callbacks[4] = ptmfWord1;
+        ptmfWord2 = *(u32*)(ptmfBase + 8);
+        process->callbacks[5] = ptmfWord2;
+        process->vtable = vtFinal;
+    }
+    unk144 = reinterpret_cast<CUICfUnk144*>(process);
+    reinterpret_cast<CProcess*>(process)->Regist(lbl_eu_80664054, false);
+
+    // Retail: r27=&tail end, r26/r25/r24 = blocks, r22 = 0x34 stride.
+    clearEnd = reinterpret_cast<CUICfInitBlock*>(&tmpl.tail);
+    initBlock1Ptr = &tmpl.blocks[0];
+    initBlock2Ptr = &tmpl.blocks[1];
+    initBlock3Ptr = &tmpl.blocks[2];
+    blockStride = sizeof(CUICfInitBlock);
+    for (i = 0; i < 8; ++i) {
+        CUICfInitSlot& slot = mInitSlots[i];
+        u16* tailHalves;
+        u8* tailBytes;
+
+        tmpl.block0.unk04 = 0;
+        tmpl.block0.unk00 = 0;
+        // Fresh &blocks[0] + (end+stride-1-start)/stride (retail clear shape).
+        clearPtr = &tmpl.blocks[0];
+        if (clearPtr < clearEnd) {
+            clearCount =
+                (reinterpret_cast<u8*>(clearEnd) + (blockStride - 1) - reinterpret_cast<u8*>(clearPtr)) /
+                blockStride;
+            do {
+                clearPtr->unk04 = 0;
+                clearPtr->unk00 = 0;
+                clearPtr = reinterpret_cast<CUICfInitBlock*>(reinterpret_cast<u8*>(clearPtr) +
+                                                             blockStride);
+            } while (--clearCount != 0);
+        }
+
+        tmpl.state.state = 0;
+        tmpl.tail.unk00 = 0;
+        // Overlay: retail sth zeros at +4..+0xE (copy still words at +4/+8).
+        tailHalves = reinterpret_cast<u16*>(reinterpret_cast<u8*>(&tmpl.tail) + 4);
+        tailHalves[0] = 0;
+        tailHalves[1] = 0;
+        tailHalves[2] = 0;
+        tailHalves[3] = 0;
+        tailHalves[4] = 0;
+        tailHalves[5] = 0;
+        tailBytes = reinterpret_cast<u8*>(&tmpl.tail);
+        tailBytes[0x10] = 0;
+        tailBytes[0x12] = 0;
+        tailBytes[0x52] = 0;
+        tmpl.state.mode = 7;
+        slot.unk04 = tmpl.state.mode;
+        slot.unk05 = tmpl.state.state;
+
+        func_8015704C(&slot.unk08, &tmpl.block0);
+        func_8015704C(&slot.unk3C, initBlock1Ptr);
+        func_8015704C(&slot.unk70, initBlock2Ptr);
+        func_8015704C(&slot.unkA4, initBlock3Ptr);
+        slot.unkD8.unk00 = tmpl.tail.unk00;
+        slot.unkD8.mid = tmpl.tail.mid;
+        slot.unkD8.unk0C = tmpl.tail.unk0C;
+        slot.unkD8.unk0E = tmpl.tail.unk0E;
+        slot.unkD8.rest0 = tmpl.tail.rest0;
+        *reinterpret_cast<CUICfInitTailChunk40View*>(&slot.unkD8.rest1) =
+            *reinterpret_cast<CUICfInitTailChunk40View*>(&tmpl.tail.rest1);
+    }
 }
 
 void CUICfManager::Term() {
@@ -27034,7 +26883,7 @@ void CUICfManager::Term() {
 // Event-queue insert is the same shape as reslist::push_back -> setItem
 // (try/catch forces -0x80 / mr r31,r1 / stw r1 epilogue). Leaf body order
 // matches retail text: 221 -> 312c -> 7fc -> 22 -> 609.
-/* "src/kyoshin/CUICfManager.cpp" line 252 "monolib/util/reslist.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 171 "monolib/util/reslist.hpp" */
 /* end "monolib/util/reslist.hpp" */
 
 extern "C" {
@@ -27309,7 +27158,7 @@ end:
 // enum-list proximity spawn, then mark/clear walks of the menu queue.
 // ---------------------------------------------------------------------------
 
-/* "src/kyoshin/CUICfManager.cpp" line 526 "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 445 "monolib/device/CDeviceVI.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 2 "types.h" */
@@ -29125,7 +28974,7 @@ static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
 /* end "monolib/device/CDeviceVI.hpp" */
-/* "src/kyoshin/CUICfManager.cpp" line 527 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 446 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */

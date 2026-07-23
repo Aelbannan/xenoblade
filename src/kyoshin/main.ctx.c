@@ -1,4 +1,170 @@
-/* "src/kyoshin/main.cpp" line 0 "kyoshin/cf/object/CAIAction.hpp" */
+/* "src/kyoshin/main.cpp" line 0 "decomp.h" */
+/**
+ * Codewarrior tricks for matching decomp
+ * (Macros generate prototypes to satisfy -requireprotos)
+ */
+
+#ifndef DECOMP_H
+#define DECOMP_H
+
+/* "include/decomp.h" line 8 "macros.h" */
+/**
+ * Common macros
+ */
+
+#ifndef MACROS_H
+#define MACROS_H
+
+/******************************************************************************
+ *
+ * Strings
+ *
+ ******************************************************************************/
+
+// Stringify expression
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
+// Concatenate strings
+#define __CONCAT(x, y) x##y
+#define CONCAT(x, y) __CONCAT(x, y)
+
+// Multi-character character constants
+// clang-format off
+#define TWOCC(c0, c1)                                                          \
+    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
+#define THREECC(c0, c1, c2)                                                    \
+    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
+#define FOURCC(c0, c1, c2, c3)                                                 \
+    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
+// clang-format on
+
+/******************************************************************************
+ *
+ * Arithmetic
+ *
+ ******************************************************************************/
+
+// Min/max expression
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+// Clamp to a range
+#define CLAMP(low, high, x)                                                    \
+    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
+
+// Round up value
+#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
+#define ROUND_UP_PTR(x, align)                                                 \
+    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
+
+// Round down value
+#define ROUND_DOWN(x, align) ((x) & (-(align)))
+#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
+
+// Distance between pointers
+#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
+
+/******************************************************************************
+ *
+ * Arrays
+ *
+ ******************************************************************************/
+
+// Size of compile-time arrays
+#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#define LENGTHOF(x) ARRAY_SIZE(x)
+
+// Declare an array of hardware registers
+#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
+
+/******************************************************************************
+ *
+ * Intrinsics
+ *
+ ******************************************************************************/
+
+// Memory clear intrinsic
+#define MEMCLR(x) __memclr((x), sizeof(*(x)))
+
+/******************************************************************************
+ *
+ * Attributes
+ *
+ ******************************************************************************/
+
+// Alignment attribute
+#define ALIGN(x) __attribute__((aligned(x)))
+
+// Place a symbol in a specific ELF section
+#define DECL_SECTION(x) __declspec(section x)
+
+// Give a symbol weak linkage
+#define DECL_WEAK __declspec(weak)
+
+#endif
+/* end "macros.h" */
+
+// Compile without matching hacks.
+#if defined(NONMATCHING) || defined(COMPAT_ANY)
+#define DECOMP_FORCEACTIVE(module, ...)
+#define DECOMP_FORCELITERAL(module, ...)
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)
+#define DECOMP_INLINE
+#define DECOMP_DONT_INLINE
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
+#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+// Compile with matching hacks.
+// (This version of CW does not support pragmas inside macros.)
+#else
+// Force reference specific data
+#define DECOMP_FORCEACTIVE(module, ...)                                        \
+    void fake_function(...);                                                   \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
+        fake_function(__VA_ARGS__);                                            \
+    }
+
+// Force literal ordering, such as floats in sdata2
+#define DECOMP_FORCELITERAL(module, ...)                                       \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
+        (__VA_ARGS__);                                                         \
+    }
+
+// Force reference destructor
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
+        cls dummy;                                                             \
+        dummy.~cls();                                                          \
+    }
+
+#define DECOMP_INLINE inline
+#define DECOMP_DONT_INLINE __attribute__((never_inline))
+
+/**
+ * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
+ * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
+ */
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
+/** slwi expansion: rlwinm rD,rA,1,0,30 */
+#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
+
+/**
+ * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
+ * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ */
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+
+#endif
+
+#endif
+/* end "decomp.h" */
+/* "src/kyoshin/main.cpp" line 1 "kyoshin/cf/object/CAIAction.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/object/CAIAction.hpp" line 2 "types.h" */
@@ -778,18 +944,468 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 extern void func_8014A86C(void*);
 extern void func_8014A8F8();
 /* end "kyoshin/cf/object/CAIAction.hpp" */
-/* "src/kyoshin/main.cpp" line 1 "kyoshin/plugin/pluginMain.hpp" */
+/* "src/kyoshin/main.cpp" line 2 "kyoshin/plugin/pluginMain.hpp" */
 #pragma once
 
 void pluginRegist();
 /* end "kyoshin/plugin/pluginMain.hpp" */
-/* "src/kyoshin/main.cpp" line 2 "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/main.cpp" line 3 "kyoshin/plugin/ocBdat.hpp" */
 #pragma once
 
 /* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
 /* end "types.h" */
+/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
+#pragma once
 
-//Utility class for handling bdat files.
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
+#pragma once
+
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
+#pragma once
+
+//Types/defines for SB script files.
+
+/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Minimum supported SB version
+#define SB_MIN_VERSION 2
+
+enum SBFlags{
+    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
+    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
+};
+
+typedef struct SBSectionHeader{
+    int entriesOffset;  //0x0
+    int entries; //0x4
+    int offsetSize;  //0x8
+} SBSectionHeader;
+
+typedef struct SBHeader{
+    char magic[4];                      //0x0
+    u8 version;                         //0x4
+    u8 unk5; //unused?
+    u8 flags;                           //0x6
+    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
+    (for the loaded flag) gets used, however. */
+    u8 vmFlags;                         //0x7
+    SBSectionHeader* codeOfs;            //0x8
+    SBSectionHeader* idPoolOfs;          //0xC
+    SBSectionHeader* intPoolOfs;         //0x10
+    SBSectionHeader* fixedPoolOfs;       //0x14
+    SBSectionHeader* stringPoolOfs;      //0x18
+    SBSectionHeader* functionPoolOfs;    //0x1C
+    SBSectionHeader* pluginImportsOfs;   //0x20
+    SBSectionHeader* ocImportsOfs;       //0x24
+    SBSectionHeader* functionImportsOfs; //0x28
+    SBSectionHeader* staticVarsOfs;      //0x2C
+    SBSectionHeader* localPoolOfs;       //0x30
+    SBSectionHeader* sysAtrPoolOfs;      //0x34
+    SBSectionHeader* usrAtrPoolOfs;      //0x38
+    SBSectionHeader* debugSymbolsOfs;    //0x3C
+} SBHeader;
+
+//Section specific structs
+
+//Function pool
+
+typedef struct FunctionPoolEntry{
+    u16 unk0;
+    s16 unk2;
+    u16 unk4;
+    u8 unk8[0xC - 0x8];
+    u32 unkC;
+    u8 unk10[0x14 - 0x10];
+} FunctionPoolEntry;
+
+//Plugin imports
+
+typedef struct PluginImportEntry{
+    u16 unk0;
+    u16 unk2;
+} PluginImportEntry;
+
+//OC imports
+
+typedef struct OCImportEntry{
+    u16 unk0;
+} OCImportEntry;
+
+//Function imports
+
+typedef struct FunctionImportEntry{
+    u16 unk0;
+    u16 unk2;
+} FunctionImportEntry;
+
+//Static vars
+
+typedef struct StaticVarsEntry{
+    u32 unk0;
+    u32 unk4;
+} StaticVarsEntry;
+
+//Local pool
+
+typedef struct LocalPoolEntry{
+    u32 unk0;
+    u32 unk4;
+} LocalPoolEntry;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/sb_types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Misc constants
+
+#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
+#define MAX_PLUGINS 48
+#define MAX_OCS 48
+#define MAX_THREADS 16
+#define MAX_BREAKPOINTS 4
+#define MAX_STACK_ENTRIES 128
+
+#define VMC_MAX 96 //Max number of opcodes
+
+typedef struct VMArg{
+    u8 type; //0x0
+    u16 unk2;
+    union {
+        void* pointerVal;
+        u32 uintVal;
+        int intVal;   
+    } value; //0x4
+} VMArg;
+
+typedef struct VMReg{
+    int pc; //0x0
+    int sp; //0x4
+    int unk8; //0x8
+    int exception; //0xC
+    int unk10; //0x10
+} VMReg;
+
+typedef struct _sVMThread{
+    VMReg reg; //0x0
+    VMArg unk14[2];
+    s16 unk24;
+    u8 unk26[2];
+    u32 unk28;
+    s16 unk2C;
+    u8 unk2E[2];
+    SBHeader* scriptData; //0x30
+    u8* codeData; //0x34
+    StaticVarsEntry* staticVarsEntries; //0x38
+    VMArg* stack; //0x3C
+    u32 unk40;
+    u32 id; //0x44
+    int unk48;
+    BOOL waitMode; //0x4C
+    u32 wkIdx; //0x50
+    u32 unk54;
+    u8 unk58[0x60 - 0x58];
+} VMThread;
+
+//Forward declaration
+struct OCData;
+
+typedef int (*PluginFunc)(VMThread* pThread);
+typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
+typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
+typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
+
+typedef struct PluginFuncData{
+    const char* name; //0x0
+    PluginFunc func; //0x4
+} PluginFuncData;
+
+typedef struct OCProperty{
+    const char* name; //0x0
+    OCGetSetFunc getFunc; //0x4
+    OCGetSetFunc setFunc; //0x8
+    int nameLength; //0xC
+} OCProperty;
+
+typedef struct OCSelector{
+    const char* name; //0x0
+    OCSelectorFunc func; //0x4
+    int nameLength; //0x8
+} OCSelector;
+
+typedef struct OCData{
+    const char* name; //0x0
+    OCCtorFunc ctor; //0x4
+    OCProperty* properties; //0x8
+    OCSelector* selectors; //0xC
+} OCData;
+
+typedef struct VMPackage{
+    SBHeader* scriptDataPtr; //0x0
+    u32 unk4;
+} VMPackage;
+
+typedef struct VMPlugin{
+    char* unk0;
+    PluginFuncData* unk4;
+} VMPlugin;
+
+typedef struct VMOC{
+    OCData* unk0;
+} VMOC;
+
+typedef struct VMBreakpoint{
+    u8 unk0[0xC];
+} VMBreakpoint;
+
+typedef struct VMState{
+    VMPackage packages[MAX_PACKAGES]; //0x0
+    VMThread* activeThread; //0x40
+    u32 nextThreadId; //0x44
+    VMThread* unk48[MAX_THREADS]; //0x48
+    VMThread threads[MAX_THREADS]; //0x88
+    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
+    VMPlugin plugins[MAX_PLUGINS]; //0x4688
+    VMOC ocs[MAX_OCS]; //0x4808
+    OCData* builtinOC; //0x48C8
+    //Unused debug data (based on info from XCX)
+    BOOL debMode; //0x48CC
+    u8 unk48D0[0xC];
+    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
+} VMState;
+
+//Enums
+
+typedef enum VMCResult{
+    VMC_RESULT_0,
+    VMC_RESULT_1,
+    VMC_RESULT_2,
+    VMC_RESULT_3
+} VMCResult;
+
+typedef enum VMCOpcodeType{
+    VMC_OP_NOP,
+    VMC_OP_CONST_0,
+    VMC_OP_CONST_1,
+    VMC_OP_CONST_2,
+    VMC_OP_CONST_3,
+    VMC_OP_CONST_4,
+    VMC_OP_CONST_I,
+    VMC_OP_CONST_I_W,
+    VMC_OP_POOL_INT,
+    VMC_OP_POOL_INT_W,
+    VMC_OP_POOL_FIXED,
+    VMC_OP_POOL_FIXED_W,
+    VMC_OP_POOL_STR,
+    VMC_OP_POOL_STR_W,
+    VMC_OP_LD,
+    VMC_OP_ST,
+    VMC_OP_LD_ARG,
+    VMC_OP_ST_ARG,
+    VMC_OP_ST_ARG_OMIT,
+    VMC_OP_LD_0,
+    VMC_OP_LD_1,
+    VMC_OP_LD_2,
+    VMC_OP_LD_3,
+    VMC_OP_ST_0,
+    VMC_OP_ST_1,
+    VMC_OP_ST_2,
+    VMC_OP_ST_3,
+    VMC_OP_LD_ARG_0,
+    VMC_OP_LD_ARG_1,
+    VMC_OP_LD_ARG_2,
+    VMC_OP_LD_ARG_3,
+    VMC_OP_ST_ARG_0,
+    VMC_OP_ST_ARG_1,
+    VMC_OP_ST_ARG_2,
+    VMC_OP_ST_ARG_3,
+    VMC_OP_LD_STATIC,
+    VMC_OP_LD_STATIC_W,
+    VMC_OP_ST_STATIC,
+    VMC_OP_ST_STATIC_W,
+    VMC_OP_LD_AR,
+    VMC_OP_ST_AR,
+    VMC_OP_LD_NIL,
+    VMC_OP_LD_TRUE,
+    VMC_OP_LD_FALSE,
+    VMC_OP_LD_FUNC,
+    VMC_OP_LD_FUNC_W,
+    VMC_OP_LD_PLUGIN,
+    VMC_OP_LD_PLUGIN_W,
+    VMC_OP_LD_FUNC_FAR,
+    VMC_OP_LD_FUNC_FAR_W,
+    VMC_OP_MINUS,
+    VMC_OP_NOT,
+    VMC_OP_L_NOT,
+    VMC_OP_ADD,
+    VMC_OP_SUB,
+    VMC_OP_MUL,
+    VMC_OP_DIV,
+    VMC_OP_MOD,
+    VMC_OP_OR,
+    VMC_OP_AND,
+    VMC_OP_R_SHIFT,
+    VMC_OP_L_SHIFT,
+    VMC_OP_EQ,
+    VMC_OP_NE,
+    VMC_OP_GT,
+    VMC_OP_LT,
+    VMC_OP_GE,
+    VMC_OP_LE,
+    VMC_OP_L_OR,
+    VMC_OP_L_AND,
+    VMC_OP_JMP,
+    VMC_OP_JPF,
+    VMC_OP_CALL,
+    VMC_OP_CALL_W,
+    VMC_OP_CALL_IND,
+    VMC_OP_RET,
+    VMC_OP_NEXT,
+    VMC_OP_PLUGIN,
+    VMC_OP_PLUGIN_W,
+    VMC_OP_CALL_FAR,
+    VMC_OP_CALL_FAR_W,
+    VMC_OP_GET_OC,
+    VMC_OP_GET_OC_W,
+    VMC_OP_GETTER,
+    VMC_OP_GETTER_W,
+    VMC_OP_SETTER,
+    VMC_OP_SETTER_W,
+    VMC_OP_SEND,
+    VMC_OP_SEND_W,
+    VMC_OP_TYPEOF,
+    VMC_OP_SIZEOF,
+    VMC_OP_SWITCH,
+    VMC_OP_INC,
+    VMC_OP_DEC,
+    VMC_OP_EXIT,
+    VMC_OP_BP //Breakpoint
+} VMCOpcodeType;
+
+typedef enum _VMTypes {
+    VM_TYPE_NIL,
+    VM_TYPE_TRUE,
+    VM_TYPE_FALSE,
+    VM_TYPE_INT,
+    VM_TYPE_FIXED,
+    VM_TYPE_STRING,
+    VM_TYPE_ARRAY,
+    VM_TYPE_FUNCTION,
+    VM_TYPE_PLUGIN,
+    VM_TYPE_OC,
+    VM_TYPE_SYS,
+
+    VM_MAX_TYPE = 11
+} VMTypes;
+
+typedef enum VMException {
+    VM_EXCEPTION_NONE,
+    VM_EXCEPTION_PLUGIN,
+    VM_EXCEPTION_OC,
+    VM_EXCEPTION_DIV_BY_ZERO,
+    VM_EXCEPTION_INVALID_ARRAY,
+    VM_EXCEPTION_INDEX_OOB,
+    VM_EXCEPTION_MATH_INVALID_ARG,
+    VM_EXCEPTION_CALC_INVALID_ARG,
+    VM_EXCEPTION_8,
+    VM_EXCEPTION_JPF_INVALID_ARG,
+    VM_EXCEPTION_CALLIND_INVALID_ARG,
+    VM_EXCEPTION_INVALID_OC,
+    VM_EXCEPTION_SEND_ERROR,
+    VM_EXCEPTION_INVALID_PROPERTY,
+    VM_EXCEPTION_INVALID_GETSET_FUNC
+} VMException;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm_types.h" */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void vmInit();
+BOOL vmLink(u8* pData);
+BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
+void vmStart(u8* pData);
+
+VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
+void vmThreadStart(VMThread* pThread, u32 r4);
+BOOL vmThreadEnd(u32 r3);
+BOOL vmThreadIsAlive(u32 r3);
+BOOL vmThreadSleep(u32 r3);
+BOOL vmThreadWakeup(u32 r3);
+void vmThreadSleepAll(u8* pScriptData);
+void vmThreadWakeupAll(u8* pScriptData);
+BOOL vmThreadIsFinish(u8* pScriptData);
+BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
+
+VMArg* vmArgPtrGet(VMThread* pThread, int r4);
+BOOL vmArgOmitChk(VMThread* pThread, int r4);
+BOOL vmArgBoolGet(u32 r3, VMArg* r4);
+int vmArgIntGet(u32 r3, VMArg* r4);
+int vmArgFixedGet(u32 r3, VMArg* r4);
+const char* vmArgStringGet(u32 r3, VMArg* r4);
+u32 vmArgFunctionGet(u32 r3, VMArg* r4);
+void* vmArgArrayGet(u32 r3, VMArg* r4);
+void* vmArgOCGet(u32 r3, VMArg* r4);
+u32 vmDataGet(VMThread* pThread, int startIndex, int length);
+
+void vmRetValSet(VMThread* pThread, VMArg* pArg);
+void* vmOCPropertyGet(VMThread* pThread);
+void vmWaitModeSet(VMThread* pThread);
+u32 vmWkIdxGet(VMThread* pThread);
+void vmWkIdxSet(VMThread* pThread, u32 r4);
+u32* vmWkGet(VMThread* pThread, u32 r4);
+
+void vmPluginExceptionThrow(VMThread* pThread);
+void vmOCExceptionThrow(VMThread* pThread);
+DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
+void vmExceptionThrow(VMThread* pThread, u32 exception);
+
+const char* vmIdPoolGet(SBHeader* data, u32 no);
+int vmIntPoolGet(SBHeader* data, u32 no);
+int vmFixedPoolGet(SBHeader* data, u32 no);
+void* vmStringPoolGet(SBHeader* data, u32 no);
+void* vmLocalPoolGet(SBHeader* data, u32 no);
+void* vmFunctionPoolGet(SBHeader* data, u32 no);
+u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
+u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
+
+u32 vmSysAtrSearch(SBHeader* data, u32 no);
+u32 vmPluginSearch(const char* param1, const char* param2);
+u32 vmOCSearch(const char* pName);
+u32 vmPropertySearch(OCData* pOC, const char* pName);
+u32 vmSelectorSearch(OCData* pOC, const char* pName);
+u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
+
+void encodeScramble(u8* data);
+int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
+
+void vmArgErr();
+void vmHalt();
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm2.h" */
+
+// Utility class for handling bdat files.
 class CBdat {
 public:
     static void func_8003AA34();
@@ -801,8 +1417,18 @@ public:
     static u16 func_8003B1EC(void* pData);
     static u16 func_8003B41C(void* pData);
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ocBdatRegist();
+
+#ifdef __cplusplus
+}
+#endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
-/* "src/kyoshin/main.cpp" line 3 "kyoshin/CGame.hpp" */
+/* "src/kyoshin/main.cpp" line 4 "kyoshin/CGame.hpp" */
 #pragma once
 
 /* "src/kyoshin/CGame.hpp" line 2 "types.h" */
@@ -2146,6 +2772,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3461,12 +4152,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -9118,7 +9812,10 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    char UNK_0x564[0x5EC - 0x564];
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -12538,42 +13235,45 @@ with no apparent calls to the other 3 (possibly debug only).
 
 In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well. */
+events being unused as well.
+
+Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
+do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent(){}
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5){ return false; }
-    virtual bool OnFileEvent(CEventFile* pEventFile){ return false; }
-    virtual bool WorkEvent3(UNKTYPE* r4){ return false; }
-    virtual bool WorkEvent4(){ return false; }
-    virtual void OnPauseTrigger(bool paused){}
-    //Completely unused, but still left in...
-    virtual bool WorkEvent6(){ return false; }
-    virtual bool WorkEvent7(){ return false; }
-    virtual bool WorkEvent8(){ return false; }
-    virtual bool WorkEvent9(){ return false; }
-    virtual bool WorkEvent10(){ return false; }
-    virtual bool WorkEvent11(){ return false; }
-    virtual bool WorkEvent12(){ return false; }
-    virtual bool WorkEvent13(){ return false; }
-    virtual bool WorkEvent14(){ return false; }
-    virtual bool WorkEvent15(){ return false; }
-    virtual bool WorkEvent16(){ return false; }
-    virtual bool WorkEvent17(){ return false; }
-    virtual bool WorkEvent18(){ return false; }
-    virtual bool WorkEvent19(){ return false; }
-    virtual bool WorkEvent20(){ return false; }
-    virtual bool WorkEvent21(){ return false; }
-    virtual bool WorkEvent22(){ return false; }
-    virtual bool WorkEvent23(){ return false; }
-    virtual bool WorkEvent24(){ return false; }
-    virtual bool WorkEvent25(){ return false; }
-    virtual bool WorkEvent26(){ return false; }
-    virtual bool WorkEvent27(){ return false; }
-    virtual bool WorkEvent28(){ return false; }
-    virtual bool WorkEvent29(){ return false; }
-    virtual bool WorkEvent30(){ return false; }
-    virtual void WorkEvent31(){}
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
 };
 /* end "monolib/work/IWorkEvent.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
@@ -231281,8 +231981,6 @@ extern "C" {
 #define WUD_DEV_HANDLE_INVALID (-1)
 
 // Forward declarations
-typedef struct WUDDevInfo;
-
 typedef enum {
     WUD_LIB_STATUS_0,
     WUD_LIB_STATUS_1,
@@ -231319,7 +232017,6 @@ typedef BOOL (*WUDFreeFunc)(void* pBlock);
 typedef void (*WUDSyncDeviceCallback)(s32 result, s32 num);
 typedef void (*WUDClearDeviceCallback)(s32 result);
 
-typedef void (*WUDHidConnCallback)(UINT8 devHandle, u8 open);
 typedef void (*WUDHidRecvCallback)(UINT8 devHandle, UINT8* pReport, UINT16 len);
 
 typedef struct WUDDevInfo {
@@ -231336,6 +232033,8 @@ typedef struct WUDDevInfo {
     u8 UNK_0x5D[1];
     tBTA_HH_ATTR_MASK hhAttrMask; // at 0x5E
 } WUDDevInfo;
+
+typedef void (*WUDHidConnCallback)(WUDDevInfo* pInfo, u8 open);
 
 BOOL WUDInit(void);
 BOOL WUDIsBusy(void);
@@ -231423,7 +232122,7 @@ u8 _WUDGetLinkNumber(void);
 extern "C" {
 #endif
 
-void WUDHidHostCallback(tBTA_HH_EVT event, tBTA_HH* pData);
+void WUDiHidHostEventCallback(tBTA_HH_EVT event, tBTA_HH* pData);
 
 #ifdef __cplusplus
 }
@@ -232015,7 +232714,8 @@ typedef struct WUDCB {
     u16 bufferStatus1; // at 0x746
 } WUDCB;
 
-extern WUDCB _wcb;
+extern WUDCB __rvl_wudcb;
+#define _wcb __rvl_wudcb
 extern WUDDevInfo _work;
 
 extern SCBtDeviceInfoArray _scArray;
@@ -232023,6 +232723,13 @@ extern SCBtDeviceInfoArray _scArray;
 extern BD_ADDR_PTR _dev_handle_to_bda[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
+
+WUDDevInfo* WUDiGetDiscoverDevice(void);
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr);
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle);
+void WUDiSetQueueSizeForHandle(u8 handle, u16 size);
+void WUDiSetNotAckNumForHandle(u8 handle, u16 notAckNum);
+int WUDIsLinkedWBC(void);
 
 #ifdef __cplusplus
 }
@@ -238332,11 +239039,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -238353,18 +239064,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -238389,6 +239110,8 @@ typedef enum {
 } NANDCheckFlags;
 
 s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
 #ifdef __cplusplus
 }
@@ -238411,25 +239134,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -242738,7 +243471,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -244820,12 +245554,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -245205,23 +245935,6 @@ namespace {
     };
 }
 /* end "kyoshin/CGame.hpp" */
-/* "src/kyoshin/main.cpp" line 4 "kyoshin/ErrMesData.hpp" */
-#pragma once
-
-/* "src/kyoshin/ErrMesData.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-const wchar_t* getNoDiscErrorMessage();
-const wchar_t* getDiscUnreadableErrorMessage();
-const wchar_t* getReadingDiscErrorMessage();
-const wchar_t* getWiiRemoteDisconnectedErrorMessage();
-const wchar_t* getNunchuckDisconnectedErrorMessage();
-const wchar_t* getClassicControllerDisconnectedErrorMessage();
-const wchar_t* getNoExtensionErrorMessage();
-const wchar_t* getMemoryDamagedErrorMessage();
-const wchar_t* getMemoryReadWriteFailErrorMessage();
-const wchar_t* getErrorDuringMemoryReadWriteErrorMessage();
-/* end "kyoshin/ErrMesData.hpp" */
 /* "src/kyoshin/main.cpp" line 5 "kyoshin/action/CActParamData.hpp" */
 #pragma once
 
@@ -245241,461 +245954,10 @@ extern void func_804DAA98(const wchar_t*);
 extern void func_804DAAA0(const wchar_t*);
 /* end "monolib/nand/CNand.hpp" */
 /* "src/kyoshin/main.cpp" line 7 "monolib/vm/yvm2.h" */
-#pragma once
-
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
-#pragma once
-
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
-#pragma once
-
-//Types/defines for SB script files.
-
-/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Minimum supported SB version
-#define SB_MIN_VERSION 2
-
-enum SBFlags{
-    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
-    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
-};
-
-typedef struct SBSectionHeader{
-    int entriesOffset;  //0x0
-    int entries; //0x4
-    int offsetSize;  //0x8
-} SBSectionHeader;
-
-typedef struct SBHeader{
-    char magic[4];                      //0x0
-    u8 version;                         //0x4
-    u8 unk5; //unused?
-    u8 flags;                           //0x6
-    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
-    (for the loaded flag) gets used, however. */
-    u8 vmFlags;                         //0x7
-    SBSectionHeader* codeOfs;            //0x8
-    SBSectionHeader* idPoolOfs;          //0xC
-    SBSectionHeader* intPoolOfs;         //0x10
-    SBSectionHeader* fixedPoolOfs;       //0x14
-    SBSectionHeader* stringPoolOfs;      //0x18
-    SBSectionHeader* functionPoolOfs;    //0x1C
-    SBSectionHeader* pluginImportsOfs;   //0x20
-    SBSectionHeader* ocImportsOfs;       //0x24
-    SBSectionHeader* functionImportsOfs; //0x28
-    SBSectionHeader* staticVarsOfs;      //0x2C
-    SBSectionHeader* localPoolOfs;       //0x30
-    SBSectionHeader* sysAtrPoolOfs;      //0x34
-    SBSectionHeader* usrAtrPoolOfs;      //0x38
-    SBSectionHeader* debugSymbolsOfs;    //0x3C
-} SBHeader;
-
-//Section specific structs
-
-//Function pool
-
-typedef struct FunctionPoolEntry{
-    u16 unk0;
-    s16 unk2;
-    u16 unk4;
-    u8 unk8[0xC - 0x8];
-    u32 unkC;
-    u8 unk10[0x14 - 0x10];
-} FunctionPoolEntry;
-
-//Plugin imports
-
-typedef struct PluginImportEntry{
-    u16 unk0;
-    u16 unk2;
-} PluginImportEntry;
-
-//OC imports
-
-typedef struct OCImportEntry{
-    u16 unk0;
-} OCImportEntry;
-
-//Function imports
-
-typedef struct FunctionImportEntry{
-    u16 unk0;
-    u16 unk2;
-} FunctionImportEntry;
-
-//Static vars
-
-typedef struct StaticVarsEntry{
-    u32 unk0;
-    u32 unk4;
-} StaticVarsEntry;
-
-//Local pool
-
-typedef struct LocalPoolEntry{
-    u32 unk0;
-    u32 unk4;
-} LocalPoolEntry;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/sb_types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Misc constants
-
-#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
-#define MAX_PLUGINS 48
-#define MAX_OCS 48
-#define MAX_THREADS 16
-#define MAX_BREAKPOINTS 4
-#define MAX_STACK_ENTRIES 128
-
-#define VMC_MAX 96 //Max number of opcodes
-
-typedef struct VMArg{
-    u8 type; //0x0
-    u16 unk2;
-    union {
-        void* pointerVal;
-        u32 uintVal;
-        int intVal;   
-    } value; //0x4
-} VMArg;
-
-typedef struct VMReg{
-    int pc; //0x0
-    int sp; //0x4
-    int unk8; //0x8
-    int exception; //0xC
-    int unk10; //0x10
-} VMReg;
-
-typedef struct _sVMThread{
-    VMReg reg; //0x0
-    VMArg unk14[2];
-    s16 unk24;
-    u8 unk26[2];
-    u32 unk28;
-    s16 unk2C;
-    u8 unk2E[2];
-    SBHeader* scriptData; //0x30
-    u8* codeData; //0x34
-    StaticVarsEntry* staticVarsEntries; //0x38
-    VMArg* stack; //0x3C
-    u32 unk40;
-    u32 id; //0x44
-    int unk48;
-    BOOL waitMode; //0x4C
-    u32 wkIdx; //0x50
-    u32 unk54;
-    u8 unk58[0x60 - 0x58];
-} VMThread;
-
-//Forward declaration
-struct OCData;
-
-typedef int (*PluginFunc)(VMThread* pThread);
-typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
-typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
-typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
-
-typedef struct PluginFuncData{
-    const char* name; //0x0
-    PluginFunc func; //0x4
-} PluginFuncData;
-
-typedef struct OCProperty{
-    const char* name; //0x0
-    OCGetSetFunc getFunc; //0x4
-    OCGetSetFunc setFunc; //0x8
-    int nameLength; //0xC
-} OCProperty;
-
-typedef struct OCSelector{
-    const char* name; //0x0
-    OCSelectorFunc func; //0x4
-    int nameLength; //0x8
-} OCSelector;
-
-typedef struct OCData{
-    const char* name; //0x0
-    OCCtorFunc ctor; //0x4
-    OCProperty* properties; //0x8
-    OCSelector* selectors; //0xC
-} OCData;
-
-typedef struct VMPackage{
-    SBHeader* scriptDataPtr; //0x0
-    u32 unk4;
-} VMPackage;
-
-typedef struct VMPlugin{
-    char* unk0;
-    PluginFuncData* unk4;
-} VMPlugin;
-
-typedef struct VMOC{
-    OCData* unk0;
-} VMOC;
-
-typedef struct VMBreakpoint{
-    u8 unk0[0xC];
-} VMBreakpoint;
-
-typedef struct VMState{
-    VMPackage packages[MAX_PACKAGES]; //0x0
-    VMThread* activeThread; //0x40
-    u32 nextThreadId; //0x44
-    VMThread* unk48[MAX_THREADS]; //0x48
-    VMThread threads[MAX_THREADS]; //0x88
-    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
-    VMPlugin plugins[MAX_PLUGINS]; //0x4688
-    VMOC ocs[MAX_OCS]; //0x4808
-    OCData* builtinOC; //0x48C8
-    //Unused debug data (based on info from XCX)
-    BOOL debMode; //0x48CC
-    u8 unk48D0[0xC];
-    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
-} VMState;
-
-//Enums
-
-typedef enum VMCResult{
-    VMC_RESULT_0,
-    VMC_RESULT_1,
-    VMC_RESULT_2,
-    VMC_RESULT_3
-} VMCResult;
-
-typedef enum VMCOpcodeType{
-    VMC_OP_NOP,
-    VMC_OP_CONST_0,
-    VMC_OP_CONST_1,
-    VMC_OP_CONST_2,
-    VMC_OP_CONST_3,
-    VMC_OP_CONST_4,
-    VMC_OP_CONST_I,
-    VMC_OP_CONST_I_W,
-    VMC_OP_POOL_INT,
-    VMC_OP_POOL_INT_W,
-    VMC_OP_POOL_FIXED,
-    VMC_OP_POOL_FIXED_W,
-    VMC_OP_POOL_STR,
-    VMC_OP_POOL_STR_W,
-    VMC_OP_LD,
-    VMC_OP_ST,
-    VMC_OP_LD_ARG,
-    VMC_OP_ST_ARG,
-    VMC_OP_ST_ARG_OMIT,
-    VMC_OP_LD_0,
-    VMC_OP_LD_1,
-    VMC_OP_LD_2,
-    VMC_OP_LD_3,
-    VMC_OP_ST_0,
-    VMC_OP_ST_1,
-    VMC_OP_ST_2,
-    VMC_OP_ST_3,
-    VMC_OP_LD_ARG_0,
-    VMC_OP_LD_ARG_1,
-    VMC_OP_LD_ARG_2,
-    VMC_OP_LD_ARG_3,
-    VMC_OP_ST_ARG_0,
-    VMC_OP_ST_ARG_1,
-    VMC_OP_ST_ARG_2,
-    VMC_OP_ST_ARG_3,
-    VMC_OP_LD_STATIC,
-    VMC_OP_LD_STATIC_W,
-    VMC_OP_ST_STATIC,
-    VMC_OP_ST_STATIC_W,
-    VMC_OP_LD_AR,
-    VMC_OP_ST_AR,
-    VMC_OP_LD_NIL,
-    VMC_OP_LD_TRUE,
-    VMC_OP_LD_FALSE,
-    VMC_OP_LD_FUNC,
-    VMC_OP_LD_FUNC_W,
-    VMC_OP_LD_PLUGIN,
-    VMC_OP_LD_PLUGIN_W,
-    VMC_OP_LD_FUNC_FAR,
-    VMC_OP_LD_FUNC_FAR_W,
-    VMC_OP_MINUS,
-    VMC_OP_NOT,
-    VMC_OP_L_NOT,
-    VMC_OP_ADD,
-    VMC_OP_SUB,
-    VMC_OP_MUL,
-    VMC_OP_DIV,
-    VMC_OP_MOD,
-    VMC_OP_OR,
-    VMC_OP_AND,
-    VMC_OP_R_SHIFT,
-    VMC_OP_L_SHIFT,
-    VMC_OP_EQ,
-    VMC_OP_NE,
-    VMC_OP_GT,
-    VMC_OP_LT,
-    VMC_OP_GE,
-    VMC_OP_LE,
-    VMC_OP_L_OR,
-    VMC_OP_L_AND,
-    VMC_OP_JMP,
-    VMC_OP_JPF,
-    VMC_OP_CALL,
-    VMC_OP_CALL_W,
-    VMC_OP_CALL_IND,
-    VMC_OP_RET,
-    VMC_OP_NEXT,
-    VMC_OP_PLUGIN,
-    VMC_OP_PLUGIN_W,
-    VMC_OP_CALL_FAR,
-    VMC_OP_CALL_FAR_W,
-    VMC_OP_GET_OC,
-    VMC_OP_GET_OC_W,
-    VMC_OP_GETTER,
-    VMC_OP_GETTER_W,
-    VMC_OP_SETTER,
-    VMC_OP_SETTER_W,
-    VMC_OP_SEND,
-    VMC_OP_SEND_W,
-    VMC_OP_TYPEOF,
-    VMC_OP_SIZEOF,
-    VMC_OP_SWITCH,
-    VMC_OP_INC,
-    VMC_OP_DEC,
-    VMC_OP_EXIT,
-    VMC_OP_BP //Breakpoint
-} VMCOpcodeType;
-
-typedef enum _VMTypes {
-    VM_TYPE_NIL,
-    VM_TYPE_TRUE,
-    VM_TYPE_FALSE,
-    VM_TYPE_INT,
-    VM_TYPE_FIXED,
-    VM_TYPE_STRING,
-    VM_TYPE_ARRAY,
-    VM_TYPE_FUNCTION,
-    VM_TYPE_PLUGIN,
-    VM_TYPE_OC,
-    VM_TYPE_SYS,
-
-    VM_MAX_TYPE = 11
-} VMTypes;
-
-typedef enum VMException {
-    VM_EXCEPTION_NONE,
-    VM_EXCEPTION_PLUGIN,
-    VM_EXCEPTION_OC,
-    VM_EXCEPTION_DIV_BY_ZERO,
-    VM_EXCEPTION_INVALID_ARRAY,
-    VM_EXCEPTION_INDEX_OOB,
-    VM_EXCEPTION_MATH_INVALID_ARG,
-    VM_EXCEPTION_CALC_INVALID_ARG,
-    VM_EXCEPTION_8,
-    VM_EXCEPTION_JPF_INVALID_ARG,
-    VM_EXCEPTION_CALLIND_INVALID_ARG,
-    VM_EXCEPTION_INVALID_OC,
-    VM_EXCEPTION_SEND_ERROR,
-    VM_EXCEPTION_INVALID_PROPERTY,
-    VM_EXCEPTION_INVALID_GETSET_FUNC
-} VMException;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/yvm_types.h" */
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void vmInit();
-BOOL vmLink(u8* pData);
-BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
-void vmStart(u8* pData);
-
-VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
-void vmThreadStart(VMThread* pThread, u32 r4);
-BOOL vmThreadEnd(u32 r3);
-BOOL vmThreadIsAlive(u32 r3);
-BOOL vmThreadSleep(u32 r3);
-void vmThreadSleepAll(u8* pScriptData);
-
-VMArg* vmArgPtrGet(VMThread* pThread, int r4);
-BOOL vmArgOmitChk(VMThread* pThread, int r4);
-BOOL vmArgBoolGet(u32 r3, VMArg* r4);
-int vmArgIntGet(u32 r3, VMArg* r4);
-int vmArgFixedGet(u32 r3, VMArg* r4);
-const char* vmArgStringGet(u32 r3, VMArg* r4);
-u32 vmArgFunctionGet(u32 r3, VMArg* r4);
-void* vmArgArrayGet(u32 r3, VMArg* r4);
-void* vmArgOCGet(u32 r3, VMArg* r4);
-u32 vmDataGet(VMThread* pThread, int startIndex, int length);
-
-void vmRetValSet(VMThread* pThread, VMArg* pArg);
-void vmWaitModeSet(VMThread* pThread);
-u32 vmWkIdxGet(VMThread* pThread);
-void vmWkIdxSet(VMThread* pThread, u32 r4);
-u32* vmWkGet(VMThread* pThread, u32 r4);
-
-void vmPluginExceptionThrow(VMThread* pThread);
-void vmOCExceptionThrow(VMThread* pThread);
-DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
-void vmExceptionThrow(VMThread* pThread, u32 exception);
-
-const char* vmIdPoolGet(SBHeader* data, u32 no);
-int vmIntPoolGet(SBHeader* data, u32 no);
-int vmFixedPoolGet(SBHeader* data, u32 no);
-void* vmStringPoolGet(SBHeader* data, u32 no);
-void* vmLocalPoolGet(SBHeader* data, u32 no);
-void* vmFunctionPoolGet(SBHeader* data, u32 no);
-u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
-u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
-
-u32 vmSysAtrSearch(SBHeader* data, u32 no);
-u32 vmPluginSearch(const char* param1, const char* param2);
-u32 vmOCSearch(const char* pName);
-u32 vmPropertySearch(OCData* pOC, const char* pName);
-u32 vmSelectorSearch(OCData* pOC, const char* pName);
-u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
-
-void encodeScramble(u8* data);
-int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
-
-void vmArgErr();
-void vmHalt();
-
-#ifdef __cplusplus
-}
-#endif
 /* end "monolib/vm/yvm2.h" */
-/* "src/kyoshin/main.cpp" line 8 "monolib/effect/Unknown1.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/effect/Unknown1.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-extern s8 lbl_80666438;
-/* end "monolib/effect/Unknown1.hpp" */
-/* "src/kyoshin/main.cpp" line 9 "monolib/core.hpp" */
+/* "src/kyoshin/main.cpp" line 8 "monolib/core.hpp" */
 /* end "monolib/core.hpp" */
-/* "src/kyoshin/main.cpp" line 10 "monolib/lib.hpp" */
+/* "src/kyoshin/main.cpp" line 9 "monolib/lib.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/lib.hpp" line 2 "monolib/lib/CLib.hpp" */
@@ -246592,7 +246854,7 @@ public:
 };
 /* end "monolib/lib/UnkClass_8045F564.hpp" */
 /* end "monolib/lib.hpp" */
-/* "src/kyoshin/main.cpp" line 11 "monolib/device.hpp" */
+/* "src/kyoshin/main.cpp" line 10 "monolib/device.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device.hpp" line 2 "monolib/device/CDevice.hpp" */
@@ -248170,10 +248432,41 @@ private:
 /* "libs/monolib/include/monolib/device.hpp" line 14 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device.hpp" */
-/* "src/kyoshin/main.cpp" line 12 "monolib/work.hpp" */
+/* "src/kyoshin/main.cpp" line 11 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
-/* "src/kyoshin/main.cpp" line 13 "monolib/util.hpp" */
+/* "src/kyoshin/main.cpp" line 12 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
+/* "src/kyoshin/main.cpp" line 13 "monolib/device/CDeviceFileCri.hpp" */
+/* end "monolib/device/CDeviceFileCri.hpp" */
+/* "src/kyoshin/main.cpp" line 14 "monolib/device/CDeviceGX.hpp" */
+/* end "monolib/device/CDeviceGX.hpp" */
+/* "src/kyoshin/main.cpp" line 15 "revolution/gx/GXTypes.h" */
+/* end "revolution/gx/GXTypes.h" */
+
+// US/EU error / path helpers (kyoshin/CErrMes, CNandData, CDeviceFile, CDeviceFont).
+extern "C" {
+extern u8 lbl_eu_8065FD00[];
+extern s8 lbl_eu_80663B18;
+
+void func_eu_802B12DC();
+void func_eu_802B11C0();
+const char* func_eu_802B14D4();
+const char* func_eu_802B14E0();
+const char* func_eu_802B14EC();
+const wchar_t* func_eu_802B133C();
+const wchar_t* func_eu_802B1354();
+const wchar_t* func_eu_802B136C();
+const wchar_t* func_eu_802B13E4();
+const wchar_t* func_eu_802B13FC();
+const wchar_t* func_eu_802B1414();
+void func_eu_802B1334();
+
+void func_eu_804520B0(const void* p);
+void func_eu_80457318(const wchar_t* msg);
+
+// Mangled CDesktop::entryTable — asm bl target (PLAN.md §17.6).
+void entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(DesktopIcon*, bool);
+}
 
 static DesktopIcon sGameMainIcon = {
 #if defined(VERSION_JP)
@@ -248184,45 +248477,10 @@ static DesktopIcon sGameMainIcon = {
     &CGame::GameMain
 };
 
-static const char* const scStaticArcStr =
-#if defined(VERSION_JP)
-"static.arc";
-#else //EU/US
-"lang/jp/static.arc";
-#endif
-
-static const char* const sPkhFilenames[13] = {
-#if defined(VERSION_JP)
-    "ahx.pkh",
-    "adx.pkh",
-    "chr.pkh",
-    "common.pkh",
-    "eff.pkh",
-    "font.pkh",
-    "map.pkh",
-    "menu.pkh",
-    "obj.pkh",
-    "script.pkh",
-    "snd.pkh",
-    "work.pkh"
-#else //EU/US
-    "ahx/jp/ahx.pkh",
-    "common/jp/common.pkh",
-    "mapbdat/jp/mapbdat.pkh",
-    "menu/jp/menu.pkh",
-    "script/jp/script.pkh",
-    "adx.pkh",
-    "chr/jp/chr.pkh",
-    "eff.pkh",
-    "font.pkh",
-    "map.pkh",
-    "obj.pkh",
-    "snd.pkh"
-#endif
-};
-
 #if !defined(VERSION_JP)
-static const char* const sLanguageFolderPaths[8] = {
+// Non-const so these sit in .data immediately after sGameMainIcon (retail main
+// keeps r30 = &sGameMainIcon and uses r30+0x10 / +0x30 / +0x50).
+static const char* sLanguageFolderPaths[8] = {
     "/jp/",
     "/en/",
     "/en/",
@@ -248230,16 +248488,18 @@ static const char* const sLanguageFolderPaths[8] = {
     "/fr/",
     "/sp/",
     "/it/",
+    nullptr,
 };
 
-const char* const sLanguageFolderPaths2[8] = {
+const char* languageFolderPaths[8] = {
     "\\jp\\",
     "\\en\\",
     "\\en\\",
     "\\de\\",
     "\\fr\\",
     "\\sp\\",
-    "\\it\\"
+    "\\it\\",
+    nullptr,
 };
 #endif
 
@@ -248287,6 +248547,45 @@ static StaticArcFileData sStaticArcFiles[10] = {
     {"HBMSTOP","dvddata/etc/hbmstop.tpl",HANDLE_MEM2,&OnHbmstopFileLoaded,&OnHbmstopFileUnloaded}
 };
 
+static const char* const scStaticArcStr =
+#if defined(VERSION_JP)
+"static.arc";
+#else //EU/US
+"lang/jp/static.arc";
+#endif
+
+static const char* const sPkhFilenames[13] = {
+#if defined(VERSION_JP)
+    "ahx.pkh",
+    "adx.pkh",
+    "chr.pkh",
+    "common.pkh",
+    "eff.pkh",
+    "font.pkh",
+    "map.pkh",
+    "menu.pkh",
+    "obj.pkh",
+    "script.pkh",
+    "snd.pkh",
+    "work.pkh",
+    nullptr
+#else //EU/US
+    "ahx/jp/ahx.pkh",
+    "common/jp/common.pkh",
+    "mapbdat/jp/mapbdat.pkh",
+    "menu/jp/menu.pkh",
+    "script/jp/script.pkh",
+    "adx.pkh",
+    "chr/jp/chr.pkh",
+    "eff.pkh",
+    "font.pkh",
+    "map.pkh",
+    "obj.pkh",
+    "snd.pkh",
+    nullptr
+#endif
+};
+
 //VM initialization callback functions.
 
 void vmInitPluginRegistCallback(){
@@ -248298,32 +248597,52 @@ void vmInitCallback() {
     vmInit();
 }
 
-static void copyErrorMessages(){
-    //Copy the error message string pointers
-    CDeviceFileCri::func_80450B14(getNoDiscErrorMessage());
-    CDeviceFileCri::func_80450B1C(getDiscUnreadableErrorMessage());
-    CDeviceFileCri::func_80450B24(getReadingDiscErrorMessage());
-    func_804DAA90(getMemoryDamagedErrorMessage());
-    func_804DAA98(getMemoryReadWriteFailErrorMessage());
-    func_804DAAA0(getErrorDuringMemoryReadWriteErrorMessage());
-}
-
 #ifdef __MWERKS__
 void main(){
 #else
 int main(){
 #endif
-    copyErrorMessages();
-    lbl_80666438 = 0;
-    mtl::MemManager::MemRegion::initialize();
-    CDeviceVI::setUseStaticHandle(false);
-    CDeviceGX::initialize();
-    CDesktop::entryTable(&sGameMainIcon, true); //Pass the start function struct to CDesktop to have it be run later
-    CLibStaticData::saveStaticFileArray(sStaticArcFiles);
+    // Keep .data base in a named local so MWCC relocates via sGameMainIcon
+    // (not ...data.0) and can emit stmw r30/r31 like retail.
+    char* dataBase = reinterpret_cast<char*>(&sGameMainIcon);
+    lbl_eu_8065FD00[0x125] = 0;
+    CBdat::func_8003AA50();
+    func_eu_802B12DC();
+    func_eu_802B11C0();
+    func_eu_804520B0(func_eu_802B14D4());
+    func_eu_804520B0(func_eu_802B14E0());
+    func_eu_804520B0(func_eu_802B14EC());
+#if !defined(VERSION_JP)
+    func_eu_804520B0(dataBase + 0x10);
+    func_eu_804520B0(dataBase + 0x30);
+#endif
+    CDeviceFileCri::func_80450B14(func_eu_802B133C());
+    CDeviceFileCri::func_80450B1C(func_eu_802B1354());
+    CDeviceFileCri::func_80450B24(func_eu_802B136C());
+    func_804DAA90(func_eu_802B13E4());
+    func_804DAA98(func_eu_802B13FC());
+    func_804DAAA0(func_eu_802B1414());
+    lbl_eu_80663B18 = 0;
+    mtl::MemManager::MemRegion::setRegionMaxSize(0x686000, 0);
+    CDeviceVI::setUseStaticHandle(true);
+    CDeviceGX::setValues(GX_PF_RGB8_Z24, 0x180000);
+    // PLAN.md §17.6: MWCC peeps C `dataBase+0` / even asm `addi r3,r30,0` to
+    // `mr r3,r30`. Emit addi encoding as opword + the retail li/bl call site.
+    // A live `int clear` local next to this asm reshuffles r30/r31; use 0 lit.
+    DECOMP_ASM_INSN_BEGIN
+    asm {
+        opword 0x387E0000
+        li r4, 1
+        bl entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb
+    }
+    DECOMP_ASM_INSN_END
+    CLibStaticData::saveStaticFileArray(reinterpret_cast<StaticArcFileData*>(dataBase + 0x50));
     CLibVM::setCallbacks(&vmInitPluginRegistCallback, &vmInitCallback);
     CWorkSystemPack::SaveStaticArcFilenameStringPtr(&scStaticArcStr);
     CWorkSystemPack::SavePkhFilenamesArrayPtr(sPkhFilenames);
     CActParamData::func_80057CDC();
-    CLibHbm::func_8045D5C8(1);
-    CWorkRoot::run(); //Start up CWorkRoot, which later starts CGame
+    CLibHbm::func_8045D5C8(true);
+    func_eu_80457318(func_eu_802B136C());
+    CWorkRoot::run();
+    func_eu_802B1334();
 }

@@ -1,0 +1,325 @@
+// Auto-scaffolded catalog TU for monolib/src/lod/LODMemMan
+// Mangled extern stubs for llm-harness / coop selection.
+// Replace stubs with high-level C/C++ during decomp.
+
+#include <harness_catalog.h>
+
+// LLM-HARNESS-BEGIN: us-80470fb0
+extern "C" void __ct__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80470fb0
+
+// LLM-HARNESS-BEGIN: us-804710d4
+extern "C" void __dt__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804710d4
+
+// LLM-HARNESS-BEGIN: us-80471114
+extern "C" void __dt__8046D144() {}
+// LLM-HARNESS-END: us-80471114
+
+// LLM-HARNESS-BEGIN: us-80471234
+extern "C" void func_8046D264__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80471234
+
+// LLM-HARNESS-BEGIN: us-80471868
+extern "C" void func_8046D898__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80471868
+
+// LLM-HARNESS-BEGIN: us-804719d4
+extern "C" void func_8046DA04__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804719d4
+
+// LLM-HARNESS-BEGIN: us-80471a34
+extern "C" void func_8046DA64__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80471a34
+
+// LLM-HARNESS-BEGIN: us-80471a90
+extern "C" void func_8046DAC0__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80471a90
+
+// LLM-HARNESS-BEGIN: us-80471b98
+extern "C" void func_8046DBC8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80471b98
+
+// LLM-HARNESS-BEGIN: us-80471d6c
+extern "C" void func_8046DD9C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80471d6c
+
+// LLM-HARNESS-BEGIN: us-804721ac
+extern "C" void func_8046E1DC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804721ac
+
+// LLM-HARNESS-BEGIN: us-80472564
+extern "C" void func_8046E594__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472564
+
+// LLM-HARNESS-BEGIN: us-8047258c
+extern "C" void func_8046E5BC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-8047258c
+
+// LLM-HARNESS-BEGIN: us-804726ac
+extern "C" void func_8046E6DC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804726ac
+
+// LLM-HARNESS-BEGIN: us-80472740
+extern "C" void func_8046E770__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472740
+
+// LLM-HARNESS-BEGIN: us-80472750
+extern "C" void func_8046E780__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472750
+
+// LLM-HARNESS-BEGIN: us-804727a0
+extern "C" void func_8046E7D0__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804727a0
+
+// LLM-HARNESS-BEGIN: us-804727f0
+extern "C" void func_8046E820__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804727f0
+
+// LLM-HARNESS-BEGIN: us-80472898
+extern "C" void func_8046E8C8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472898
+
+// LLM-HARNESS-BEGIN: us-804728f0
+extern "C" void func_8046E920__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804728f0
+
+// LLM-HARNESS-BEGIN: us-80472958
+extern "C" void func_8046E988__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472958
+
+// LLM-HARNESS-BEGIN: us-80472ab8
+extern "C" void func_8046EAE8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472ab8
+
+// LLM-HARNESS-BEGIN: us-80472b20
+extern "C" void func_8046EB50__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472b20
+
+// LLM-HARNESS-BEGIN: us-80472bbc
+extern "C" void func_8046EBEC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472bbc
+
+// LLM-HARNESS-BEGIN: us-80472c58
+extern "C" void func_8046EC88__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472c58
+
+// LLM-HARNESS-BEGIN: us-80472ca4
+extern "C" void func_8046ECD4__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472ca4
+
+// LLM-HARNESS-BEGIN: us-80472d38
+extern "C" void func_8046ED68__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472d38
+
+// LLM-HARNESS-BEGIN: us-80472da0
+extern "C" void func_8046EDD0__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472da0
+
+// LLM-HARNESS-BEGIN: us-80472e6c
+extern "C" void func_8046EE9C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472e6c
+
+// LLM-HARNESS-BEGIN: us-80472eb8
+extern "C" void func_8046EEE8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472eb8
+
+// LLM-HARNESS-BEGIN: us-80472f00
+extern "C" void func_8046EF30__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472f00
+
+// LLM-HARNESS-BEGIN: us-80472f4c
+extern "C" void func_8046EF7C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472f4c
+
+// LLM-HARNESS-BEGIN: us-80472fe0
+extern "C" void func_8046F010__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472fe0
+
+// LLM-HARNESS-BEGIN: us-80472fec
+extern "C" bool func_8046F01C__Q23LOD9LODMemManFv() { return false; }
+// LLM-HARNESS-END: us-80472fec
+
+// LLM-HARNESS-BEGIN: us-80472ff4
+extern "C" void func_8046F024__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80472ff4
+
+// LLM-HARNESS-BEGIN: us-80473058
+extern "C" bool func_8046F088__Q23LOD9LODMemManFv() { return false; }
+// LLM-HARNESS-END: us-80473058
+
+// LLM-HARNESS-BEGIN: us-80473060
+extern "C" void func_8046F090__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80473060
+
+// LLM-HARNESS-BEGIN: us-80473134
+extern "C" void func_8046F164__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80473134
+
+// LLM-HARNESS-BEGIN: us-80473228
+extern "C" void func_8046F258__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80473228
+
+// LLM-HARNESS-BEGIN: us-80473564
+extern "C" void func_8046F594__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80473564
+
+// LLM-HARNESS-BEGIN: us-80473bd4
+extern "C" void func_8046FC04__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80473bd4
+
+// LLM-HARNESS-BEGIN: us-80473e88
+extern "C" void func_8046FEB8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80473e88
+
+// LLM-HARNESS-BEGIN: us-80473f54
+extern "C" void func_8046FF84__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80473f54
+
+// LLM-HARNESS-BEGIN: us-80474154
+extern "C" void func_80470184__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474154
+
+// LLM-HARNESS-BEGIN: us-804742c0
+extern "C" void func_804702F0__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804742c0
+
+// LLM-HARNESS-BEGIN: us-80474604
+extern "C" void func_80470634__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474604
+
+// LLM-HARNESS-BEGIN: us-80474884
+extern "C" void func_804708B4__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474884
+
+// LLM-HARNESS-BEGIN: us-804749cc
+extern "C" void func_804709FC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804749cc
+
+// LLM-HARNESS-BEGIN: us-80474a60
+extern "C" void func_80470A90__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474a60
+
+// LLM-HARNESS-BEGIN: us-80474ae0
+extern "C" void func_80470B10__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474ae0
+
+// LLM-HARNESS-BEGIN: us-80474d80
+extern "C" void func_80470DB0__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474d80
+
+// LLM-HARNESS-BEGIN: us-80474d9c
+extern "C" void func_80470DCC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474d9c
+
+// LLM-HARNESS-BEGIN: us-80474ec8
+extern "C" void func_80470EF8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80474ec8
+
+// LLM-HARNESS-BEGIN: us-8047505c
+extern "C" void func_8047108C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-8047505c
+
+// LLM-HARNESS-BEGIN: us-80475154
+extern "C" void func_80471184__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475154
+
+// LLM-HARNESS-BEGIN: us-804751f4
+extern "C" void func_80471224__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804751f4
+
+// LLM-HARNESS-BEGIN: us-804752b0
+extern "C" void func_804712E0__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804752b0
+
+// LLM-HARNESS-BEGIN: us-804752dc
+extern "C" void func_8047130C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804752dc
+
+// LLM-HARNESS-BEGIN: us-8047530c
+extern "C" void func_8047133C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-8047530c
+
+// LLM-HARNESS-BEGIN: us-80475420
+extern "C" void func_80471450__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475420
+
+// LLM-HARNESS-BEGIN: us-8047543c
+extern "C" void func_8047146C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-8047543c
+
+// LLM-HARNESS-BEGIN: us-80475454
+extern "C" void func_80471484__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475454
+
+// LLM-HARNESS-BEGIN: us-8047560c
+extern "C" void func_8047163C__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-8047560c
+
+// LLM-HARNESS-BEGIN: us-80475688
+extern "C" void func_804716B8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475688
+
+// LLM-HARNESS-BEGIN: us-804756e8
+extern "C" void func_80471718__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804756e8
+
+// LLM-HARNESS-BEGIN: us-80475718
+extern "C" void func_80471748__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475718
+
+// LLM-HARNESS-BEGIN: us-80475750
+extern "C" void func_80471780__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475750
+
+// LLM-HARNESS-BEGIN: us-80475764
+extern "C" void func_80471794__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475764
+
+// LLM-HARNESS-BEGIN: us-804757cc
+extern "C" void func_804717FC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804757cc
+
+// LLM-HARNESS-BEGIN: us-80475804
+extern "C" void func_80471834__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475804
+
+// LLM-HARNESS-BEGIN: us-80475908
+extern "C" void func_80471938__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475908
+
+// LLM-HARNESS-BEGIN: us-804759cc
+extern "C" void func_804719FC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-804759cc
+
+// LLM-HARNESS-BEGIN: us-80475a40
+extern "C" void func_80471A70__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475a40
+
+// LLM-HARNESS-BEGIN: us-80475a9c
+extern "C" void func_80471ACC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475a9c
+
+// LLM-HARNESS-BEGIN: us-80475b98
+extern "C" void func_80471BC8__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475b98
+
+// LLM-HARNESS-BEGIN: us-80475bc4
+extern "C" void func_80471BF4__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475bc4
+
+// LLM-HARNESS-BEGIN: us-80475c94
+extern "C" bool func_80471CC4__Q23LOD9LODMemManFv() { return false; }
+// LLM-HARNESS-END: us-80475c94
+
+// LLM-HARNESS-BEGIN: us-80475c9c
+extern "C" void func_80471CCC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475c9c
+
+// LLM-HARNESS-BEGIN: us-80475cac
+extern "C" void func_80471CDC__Q23LOD9LODMemManFv() {}
+// LLM-HARNESS-END: us-80475cac
+
+// LLM-HARNESS-BEGIN: us-80475e6c
+extern "C" void OnFileEvent__Q23LOD9LODMemManFP10CEventFile() {}
+// LLM-HARNESS-END: us-80475e6c

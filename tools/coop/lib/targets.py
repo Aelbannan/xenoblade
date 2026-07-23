@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-import json
+import fcntl
 import hashlib
+import json
+import os
 import re
+import tempfile
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterator, Iterable, List, Optional
 
 from tools.coop.lib.config import CoopConfig, _load_yaml
 from tools.symbolrecover.lib.mwcc import demangle_symbol
@@ -14,6 +19,9 @@ from tools.symbolrecover.lib.parser import SymbolEntry, load_symbols
 from tools.ppc_equivalence.proof_features import validate_proof_features
 from tools.ppc_equivalence.provenance import hash_certifier_tree, hash_engine_tree
 from tools.ppc_equivalence.result import ARCHITECTURE_MODEL, RESULT_FORMAT
+
+# Sidecar flock for targets.json read-modify-write. Released on process exit.
+TARGETS_LOCK_TIMEOUT_S = 120.0
 
 
 MATCH_STATUSES = {
@@ -264,6 +272,65 @@ def targets_path(config: CoopConfig) -> Path:
     return config.resolve(config.targets_file)
 
 
+def targets_lock_path(config: CoopConfig) -> Path:
+    """Sidecar lock file path for exclusive registry updates."""
+    path = targets_path(config)
+    return path.with_name(path.name + ".lock")
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Replace ``path`` atomically so readers never see a torn write."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        dir=str(path.parent),
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as tmp:
+            tmp.write(text)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+        os.replace(tmp_name, path)
+    except Exception:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+
+
+@contextmanager
+def exclusive_targets_lock(
+    config: CoopConfig,
+    *,
+    timeout: float = TARGETS_LOCK_TIMEOUT_S,
+) -> Iterator[None]:
+    """Exclusive flock for targets.json updates (cycle, claim, sync, etc.)."""
+    lock_path = targets_lock_path(config)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o644)
+    deadline = time.monotonic() + timeout
+    try:
+        while True:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(
+                        f"Timed out after {timeout:g}s waiting for exclusive lock on "
+                        f"{lock_path} (another process is updating targets.json)"
+                    ) from None
+                time.sleep(0.05)
+        yield
+    finally:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
+
 def load_targets_document(config: CoopConfig) -> Dict[str, Any]:
     path = targets_path(config)
     if not path.is_file():
@@ -274,12 +341,19 @@ def load_targets_document(config: CoopConfig) -> Dict[str, Any]:
         return json.load(f)
 
 
-def write_targets_document(config: CoopConfig, data: Dict[str, Any]) -> Path:
+def _write_targets_document_unlocked(config: CoopConfig, data: Dict[str, Any]) -> Path:
     path = targets_path(config)
     if path.suffix in {".yaml", ".yml"}:
         raise ValueError("Symbol import currently writes JSON target registries only")
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+    _atomic_write_text(path, text)
     return path
+
+
+def write_targets_document(config: CoopConfig, data: Dict[str, Any]) -> Path:
+    """Atomically persist the registry under an exclusive lock."""
+    with exclusive_targets_lock(config):
+        return _write_targets_document_unlocked(config, data)
 
 
 def update_target_result(
@@ -295,33 +369,37 @@ def update_target_result(
     equivalence_policy: Optional[str] = None,
 ) -> Path:
     """Persist the latest result so the registry remains current state."""
-    data = load_targets_document(config)
-    for row in data.get("targets", []):
-        if row.get("id") != target_id:
-            continue
-        row["status"] = status
-        if instruction_match is not None:
-            row["instruction_match"] = round(float(instruction_match), 3)
-        if equivalence_status:
-            row["equivalence_status"] = equivalence_status
-        if certificate_checked:
-            if equivalence_certificate is None:
-                row.pop("equivalence_certificate", None)
+    with exclusive_targets_lock(config):
+        data = load_targets_document(config)
+        for row in data.get("targets", []):
+            if row.get("id") != target_id:
+                continue
+            row["status"] = status
+            if instruction_match is not None:
+                row["instruction_match"] = round(float(instruction_match), 3)
+            if equivalence_status:
+                row["equivalence_status"] = equivalence_status
+            if certificate_checked:
+                if equivalence_certificate is None:
+                    row.pop("equivalence_certificate", None)
+                else:
+                    row["equivalence_certificate"] = equivalence_certificate
+            if status == "EQUIVALENT_MATCH":
+                if equivalence_confidence is not None:
+                    row["equivalence_confidence"] = equivalence_confidence
+                if equivalence_policy is not None:
+                    row["equivalence_policy"] = equivalence_policy
             else:
-                row["equivalence_certificate"] = equivalence_certificate
-        if status == "EQUIVALENT_MATCH":
-            if equivalence_confidence is not None:
-                row["equivalence_confidence"] = equivalence_confidence
-            if equivalence_policy is not None:
-                row["equivalence_policy"] = equivalence_policy
-        else:
-            row.pop("equivalence_confidence", None)
-            row.pop("equivalence_policy", None)
-        if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
-            row["workflow_status"] = "ACCEPTED"
-        elif row.get("workflow_status") in {None, "BACKLOG", "QUEUED", "CLAIMED"}:
-            row["workflow_status"] = "ACTIVE"
-        return write_targets_document(config, data)
+                row.pop("equivalence_confidence", None)
+                row.pop("equivalence_policy", None)
+            if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
+                row["workflow_status"] = "ACCEPTED"
+            elif row.get("workflow_status") in {
+                None, "BACKLOG", "QUEUED", "CLAIMED", "ACCEPTED",
+            }:
+                # Demote stale ACCEPTED when match falls below acceptance.
+                row["workflow_status"] = "ACTIVE"
+            return _write_targets_document_unlocked(config, data)
     raise KeyError(f"Unknown target id: {target_id}")
 
 
@@ -332,34 +410,37 @@ def sync_results_from_attempts(config: CoopConfig, attempts: Iterable[Dict[str, 
         target_id = attempt.get("target_id")
         if target_id:
             latest[str(target_id)] = attempt
-    data = load_targets_document(config)
-    changed = 0
-    for row in data.get("targets", []):
-        attempt = latest.get(str(row.get("id")))
-        if not attempt:
-            continue
-        before = (
-            row.get("status"), row.get("workflow_status"), row.get("instruction_match"),
-            row.get("equivalence_status"),
-        )
-        status = str(attempt.get("status", row.get("status", "NOT_STARTED")))
-        row["status"] = status
-        if attempt.get("instruction_match") is not None:
-            row["instruction_match"] = round(float(attempt["instruction_match"]), 3)
-        if attempt.get("equivalence_status"):
-            row["equivalence_status"] = attempt["equivalence_status"]
-        if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
-            row["workflow_status"] = "ACCEPTED"
-        elif row.get("workflow_status") in {None, "BACKLOG", "QUEUED", "CLAIMED"}:
-            row["workflow_status"] = "ACTIVE"
-        after = (
-            row.get("status"), row.get("workflow_status"), row.get("instruction_match"),
-            row.get("equivalence_status"),
-        )
-        changed += before != after
-    if changed:
-        write_targets_document(config, data)
-    return changed
+    with exclusive_targets_lock(config):
+        data = load_targets_document(config)
+        changed = 0
+        for row in data.get("targets", []):
+            attempt = latest.get(str(row.get("id")))
+            if not attempt:
+                continue
+            before = (
+                row.get("status"), row.get("workflow_status"), row.get("instruction_match"),
+                row.get("equivalence_status"),
+            )
+            status = str(attempt.get("status", row.get("status", "NOT_STARTED")))
+            row["status"] = status
+            if attempt.get("instruction_match") is not None:
+                row["instruction_match"] = round(float(attempt["instruction_match"]), 3)
+            if attempt.get("equivalence_status"):
+                row["equivalence_status"] = attempt["equivalence_status"]
+            if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
+                row["workflow_status"] = "ACCEPTED"
+            elif row.get("workflow_status") in {
+                None, "BACKLOG", "QUEUED", "CLAIMED", "ACCEPTED",
+            }:
+                row["workflow_status"] = "ACTIVE"
+            after = (
+                row.get("status"), row.get("workflow_status"), row.get("instruction_match"),
+                row.get("equivalence_status"),
+            )
+            changed += before != after
+        if changed:
+            _write_targets_document_unlocked(config, data)
+        return changed
 
 
 def claim_target(
@@ -370,48 +451,50 @@ def claim_target(
     allowed_paths: List[str],
     note: str = "",
 ) -> Path:
-    data = load_targets_document(config)
-    for row in data.get("targets", []):
-        if row.get("id") != target_id:
-            continue
-        claim = row.get("claim")
-        if isinstance(claim, dict) and claim.get("owner") and claim.get("owner") != owner:
-            raise ValueError(
-                f"target {target_id!r} is already claimed by {claim['owner']!r}; release it first"
-            )
-        row["claim"] = {
-            "owner": owner,
-            "claimed_at": datetime.now(timezone.utc).isoformat(),
-            "allowed_paths": allowed_paths,
-            "note": note,
-        }
-        if row.get("workflow_status") not in {"ACCEPTED", "NOT_REQUIRED"}:
-            row["workflow_status"] = "CLAIMED"
-        return write_targets_document(config, data)
+    with exclusive_targets_lock(config):
+        data = load_targets_document(config)
+        for row in data.get("targets", []):
+            if row.get("id") != target_id:
+                continue
+            claim = row.get("claim")
+            if isinstance(claim, dict) and claim.get("owner") and claim.get("owner") != owner:
+                raise ValueError(
+                    f"target {target_id!r} is already claimed by {claim['owner']!r}; release it first"
+                )
+            row["claim"] = {
+                "owner": owner,
+                "claimed_at": datetime.now(timezone.utc).isoformat(),
+                "allowed_paths": allowed_paths,
+                "note": note,
+            }
+            if row.get("workflow_status") not in {"ACCEPTED", "NOT_REQUIRED"}:
+                row["workflow_status"] = "CLAIMED"
+            return _write_targets_document_unlocked(config, data)
     raise KeyError(f"Unknown target id: {target_id}")
 
 
 def release_target(config: CoopConfig, target_id: str, *, owner: Optional[str]) -> Path:
-    data = load_targets_document(config)
-    for row in data.get("targets", []):
-        if row.get("id") != target_id:
-            continue
-        claim = row.get("claim")
-        if not isinstance(claim, dict):
-            raise ValueError(f"target {target_id!r} is not claimed")
-        current_owner = claim.get("owner")
-        if owner and current_owner != owner:
-            raise ValueError(
-                f"target {target_id!r} is claimed by {current_owner!r}, not {owner!r}"
-            )
-        row.pop("claim", None)
-        if row.get("workflow_status") == "CLAIMED":
-            row["workflow_status"] = (
-                "ACCEPTED"
-                if row.get("status") in {"FULL_MATCH", "EQUIVALENT_MATCH"}
-                else "BACKLOG"
-            )
-        return write_targets_document(config, data)
+    with exclusive_targets_lock(config):
+        data = load_targets_document(config)
+        for row in data.get("targets", []):
+            if row.get("id") != target_id:
+                continue
+            claim = row.get("claim")
+            if not isinstance(claim, dict):
+                raise ValueError(f"target {target_id!r} is not claimed")
+            current_owner = claim.get("owner")
+            if owner and current_owner != owner:
+                raise ValueError(
+                    f"target {target_id!r} is claimed by {current_owner!r}, not {owner!r}"
+                )
+            row.pop("claim", None)
+            if row.get("workflow_status") == "CLAIMED":
+                row["workflow_status"] = (
+                    "ACCEPTED"
+                    if row.get("status") in {"FULL_MATCH", "EQUIVALENT_MATCH"}
+                    else "BACKLOG"
+                )
+            return _write_targets_document_unlocked(config, data)
     raise KeyError(f"Unknown target id: {target_id}")
 
 
@@ -991,7 +1074,24 @@ def audit_promotion_registry(
                     "reason": entry["certificate_error"],
                 }
             )
-        write_targets_document(config, data)
+        with exclusive_targets_lock(config):
+            # Re-load under the lock and apply the same id→CODE_MATCH mutations so a
+            # concurrent cycle update is not overwritten by a stale in-memory copy.
+            fresh = load_targets_document(config)
+            fresh_by_id = {
+                str(row["id"]): row
+                for row in fresh.get("targets", [])
+                if isinstance(row, dict) and isinstance(row.get("id"), str)
+            }
+            for entry in affected:
+                row = fresh_by_id.get(entry["id"])
+                if row is None or row.get("status") != "EQUIVALENT_MATCH":
+                    continue
+                row["status"] = "CODE_MATCH"
+                row["workflow_status"] = "REVALIDATION_REQUIRED"
+                row.pop("equivalence_confidence", None)
+                row.pop("equivalence_policy", None)
+            _write_targets_document_unlocked(config, fresh)
 
     return {
         "architecture_model": ARCHITECTURE_MODEL,

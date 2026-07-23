@@ -1,6 +1,10 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
+// Retail SDA names (US) - Free/Alloc/Hook must use these for reloc match.
+extern "C" nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8;
+extern "C" u32 lbl_eu_806654CC;
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -22,19 +26,19 @@ void AxfxImpl::DestroyHeap() {
 void AxfxImpl::HookAlloc(AXFXAllocHook* pAllocHook, AXFXFreeHook* pFreeHook) {
     AXFXGetHooks(pAllocHook, pFreeHook);
     AXFXSetHooks(Alloc, Free);
-    mCurrentFx = this;
+    lbl_eu_806654C8 = this;
 }
 
 void AxfxImpl::RestoreAlloc(AXFXAllocHook allocHook, AXFXFreeHook freeHook) {
     AXFXSetHooks(allocHook, freeHook);
-    mCurrentFx = NULL;
+    lbl_eu_806654C8 = NULL;
 }
 
 void* AxfxImpl::Alloc(u32 size) {
-    void* pBlock = MEMAllocFromFrmHeap(mCurrentFx->mHeap, size);
+    void* pBlock = MEMAllocFromFrmHeap(lbl_eu_806654C8->mHeap, size);
 
-    mCurrentFx->mAllocCount++;
-    mAllocatedSize += ut::RoundUp(size, 4);
+    lbl_eu_806654C8->mAllocCount++;
+    lbl_eu_806654CC += ut::RoundUp(size, 4);
 
     return pBlock;
 }
@@ -42,12 +46,12 @@ void* AxfxImpl::Alloc(u32 size) {
 void AxfxImpl::Free(void* pBlock) {
 #pragma unused(pBlock)
 
-    if (mCurrentFx->mAllocCount != 0) {
-        mCurrentFx->mAllocCount--;
+    if (lbl_eu_806654C8->mAllocCount != 0) {
+        lbl_eu_806654C8->mAllocCount--;
     }
 
-    if (mCurrentFx->mAllocCount == 0) {
-        MEMFreeToFrmHeap(mCurrentFx->mHeap, MEM_FRM_HEAP_FREE_ALL);
+    if (lbl_eu_806654C8->mAllocCount == 0) {
+        MEMFreeToFrmHeap(lbl_eu_806654C8->mHeap, MEM_FRM_HEAP_FREE_ALL);
     }
 }
 

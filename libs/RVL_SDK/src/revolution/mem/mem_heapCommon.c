@@ -22,10 +22,6 @@ static MEMiHeapHead* FindContainHeap_(MEMList* list, const void* memBlock) {
     return NULL;
 }
 
-//unused
-void FindParentHeap_(){
-}
-
 static MEMList* FindListContainHeap_(MEMiHeapHead* heap) {
     MEMList* list = &sRootList;
     MEMiHeapHead* result = FindContainHeap_(&sRootList, heap);
@@ -62,17 +58,4 @@ void MEMiFinalizeHeap(MEMiHeapHead* heap) {
     MEMRemoveListObject(FindListContainHeap_(heap), heap);
     OSUnlockMutex(&sRootMutex);
     heap->magic = 0;
-}
-
-//unused
-void MEMiDumpHeapHead(){
-}
-
-//unused
-MEMiHeapHead* MEMFindContainHeap(const void* memBlock) {
-    return FindContainHeap_(&sRootList, memBlock);
-}
-
-//unused
-void MEMFindParentHeap(){
 }

@@ -1,37 +1,26 @@
 #include <revolution/OS.h>
 
-static void DefaultSwitchThreadCallback(OSThread* currThread,
-                                        OSThread* newThread);
+void DefaultSwitchThreadCallback(OSThread* currThread, OSThread* newThread);
 
-static OSSwitchThreadCallback SwitchThreadCallback =
-    DefaultSwitchThreadCallback;
+OSSwitchThreadCallback SwitchThreadCallback = DefaultSwitchThreadCallback;
 
-static OSThread DefaultThread;
-static OSThreadQueue RunQueue[32];
-static OSContext IdleContext;
-static OSThread IdleThread;
+OSThread DefaultThread;
+OSThreadQueue RunQueue[32];
+OSContext IdleContext;
+OSThread IdleThread;
 
-volatile static s32 Reschedule = 0;
-volatile static BOOL RunQueueHint = FALSE;
-volatile static u32 RunQueueBits = 0;
+volatile s32 Reschedule = 0;
+volatile BOOL RunQueueHint = FALSE;
+volatile u32 RunQueueBits = 0;
 
-static void DefaultSwitchThreadCallback(OSThread* currThread,
-                                        OSThread* newThread) {
+void DefaultSwitchThreadCallback(OSThread* currThread, OSThread* newThread) {
 #pragma unused(currThread)
 #pragma unused(newThread)
 }
 
-OSSwitchThreadCallback OSSetSwitchThreadCallback(OSSwitchThreadCallback newCb) {
-    OSSwitchThreadCallback oldCb;
-    BOOL enabled = OSDisableInterrupts();
-
-    oldCb = SwitchThreadCallback;
-    SwitchThreadCallback =
-        (newCb != NULL) ? newCb : DefaultSwitchThreadCallback;
-
-    OSRestoreInterrupts(enabled);
-    return (oldCb == DefaultSwitchThreadCallback) ? NULL : oldCb;
-}
+static void OSSetCurrentThread(OSThread* thread);
+static void OSInitMutexQueue(OSMutexQueue* queue);
+static void OSClearStack(u8 val);
 
 void __OSThreadInit(void) {
     int i;
@@ -83,12 +72,12 @@ void __OSThreadInit(void) {
     Reschedule = 0;
 }
 
-void OSSetCurrentThread(OSThread* thread) {
+static void OSSetCurrentThread(OSThread* thread) {
     SwitchThreadCallback(OSGetCurrentThread(), thread);
     OS_CURRENT_THREAD = thread;
 }
 
-void OSInitMutexQueue(OSMutexQueue* queue) {
+static void OSInitMutexQueue(OSMutexQueue* queue) {
     queue->tail = NULL;
     queue->head = NULL;
 }
@@ -108,16 +97,6 @@ static void __OSSwitchThread(OSThread* thread) {
     OSLoadContext(&thread->context);
 }
 
-//unused
-BOOL OSIsThreadSuspended(){
-}
-
-BOOL OSIsThreadTerminated(OSThread* thread) {
-    return thread->state == OS_THREAD_STATE_MORIBUND ||
-                   thread->state == OS_THREAD_STATE_EXITED
-               ? TRUE
-               : FALSE;
-}
 
 static BOOL __OSIsThreadActive(OSThread* thread) {
     OSThread* iter;
@@ -179,7 +158,7 @@ static void SetRun(OSThread* thread) {
     RunQueueHint = TRUE;
 }
 
-static void UnsetRun(OSThread* thread) DECOMP_DONT_INLINE {
+void UnsetRun(OSThread* thread) DECOMP_DONT_INLINE {
     OSThreadQueue* queue;
     OSThread* next;
     OSThread* prev;
@@ -221,7 +200,7 @@ s32 __OSGetEffectivePriority(OSThread* thread) {
     return prio;
 }
 
-static OSThread* SetEffectivePriority(OSThread* thread, s32 prio) {
+OSThread* SetEffectivePriority(OSThread* thread, s32 prio) {
     OSThread* iter;
     OSThread* iterPrev;
     OSThread* next;
@@ -331,7 +310,7 @@ void __OSPromoteThread(OSThread* thread, s32 prio) {
     }
 }
 
-static OSThread* SelectThread(BOOL b) {
+OSThread* SelectThread(BOOL b) {
     OSThreadQueue* queue;
     OSThread* currThread;
     OSThread* head;
@@ -646,37 +625,6 @@ BOOL OSJoinThread(OSThread* thread, void* val) {
     return FALSE;
 }
 
-void OSDetachThread(OSThread* thread) {
-    BOOL enabled;
-    OSThread* next;
-    OSThread* prev;
-
-    enabled = OSDisableInterrupts();
-    thread->flags |= OS_THREAD_DETACHED;
-
-    if (thread->state == OS_THREAD_STATE_MORIBUND) {
-        next = thread->nextActive;
-        prev = thread->prevActive;
-
-        if (next == NULL) {
-            OS_THREAD_QUEUE.tail = prev;
-        } else {
-            next->prevActive = prev;
-        }
-
-        if (prev == NULL) {
-            OS_THREAD_QUEUE.head = next;
-        } else {
-            prev->nextActive = next;
-        }
-
-        thread->state = OS_THREAD_STATE_EXITED;
-    }
-
-    OSWakeupThread(&thread->joinQueue);
-    OSRestoreInterrupts(enabled);
-}
-
 s32 OSResumeThread(OSThread* thread) {
     BOOL enabled;
     s32 suspend;
@@ -912,28 +860,11 @@ BOOL OSSetThreadPriority(OSThread* thread, s32 prio) {
     return TRUE;
 }
 
-s32 OSGetThreadPriority(OSThread* thread){
+s32 OSGetThreadPriority(OSThread* thread) {
     return thread->base;
 }
 
-
-//unused
-void OSSetIdleFunction(){
-}
-
-//unused
-void OSGetIdleFunction(){
-}
-
-//unused
-void CheckThreadQueue(){
-}
-
-//unused
-void OSCheckActiveThreads(){
-}
-
-void OSClearStack(u8 val) {
+static void OSClearStack(u8 val) {
     u32* end;
     u32* begin;
     u32 longVal;
@@ -947,44 +878,3 @@ void OSClearStack(u8 val) {
         *end = longVal;
     }
 }
-
-//unused
-void OSSetThreadSpecific(){
-}
-
-//unused
-void OSGetThreadSpecific(){
-}
-
-//unused
-static void SleepAlarmHandler(OSAlarm* alarm, OSContext* ctx) {
-#pragma unused(ctx)
-
-    OSResumeThread((OSThread*)OSGetAlarmUserData(alarm));
-}
-
-//unused
-void OSSleepTicks(s64 ticks) {
-    BOOL enabled;
-    OSAlarm alarm;
-    OSThread* thread;
-
-    enabled = OSDisableInterrupts();
-
-    thread = OS_CURRENT_THREAD;
-    if (thread == NULL) {
-        OSRestoreInterrupts(enabled);
-        return;
-    }
-
-    OSCreateAlarm(&alarm);
-    OSSetAlarmTag(&alarm, (u32)thread);
-    OSSetAlarmUserData(&alarm, thread);
-    OSSetAlarm(&alarm, ticks, SleepAlarmHandler);
-
-    OSSuspendThread(thread);
-    OSCancelAlarm(&alarm);
-    OSRestoreInterrupts(enabled);
-}
-
-DECOMP_FORCEACTIVE(OSThread_c, IdleThread);

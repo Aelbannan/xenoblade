@@ -1866,10 +1866,16 @@ def _touch_memory(
 
 
 def _mark_stack_pointer_escape(
-    state: MachineState, stored_value: Any, ops: WordOps,
+    state: MachineState,
+    stored_value: Any,
+    ops: WordOps,
+    *,
+    store_address: Any | None = None,
 ) -> MachineState:
     """Thin wrapper over the shared :func:`stack_escape.mark_stack_pointer_escape`."""
-    return _shared_mark_stack_pointer_escape(state, stored_value, ops)
+    return _shared_mark_stack_pointer_escape(
+        state, stored_value, ops, store_address=store_address,
+    )
 
 
 _PSQ_INTEGER_TYPES = {
@@ -3531,7 +3537,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
             return state
         width, update, reverse_bytes = STORES[op]
         state = _touch_memory(state, address, width, ops, "write")
-        state = _mark_stack_pointer_escape(state, state.gpr[reg], ops)
+        state = _mark_stack_pointer_escape(
+            state, state.gpr[reg], ops, store_address=address,
+        )
         state = _bus_mem_store(
             state, address, state.gpr[reg], width, ops,
             family=BUS_ACCESS_FAMILY_INTEGER, reverse=reverse_bytes,
@@ -4489,7 +4497,9 @@ def _execute_instruction_body(state: MachineState, insn: Instruction, ops: WordO
                 state = state.with_gpr(index, value)
             else:
                 state = _touch_memory(state, address, 4, ops, "write")
-                state = _mark_stack_pointer_escape(state, state.gpr[index], ops)
+                state = _mark_stack_pointer_escape(
+                    state, state.gpr[index], ops, store_address=address,
+                )
                 state = _bus_mem_store(
                     state, address, state.gpr[index], 4, ops,
                     family=BUS_ACCESS_FAMILY_LMW,
@@ -4615,7 +4625,9 @@ def _apply_call_summary(
                 result = _touch_memory(result, address, width, ops, "write")
                 value = state.fpr[index] if is_fpr else state.gpr[index]
                 if not is_fpr:
-                    result = _mark_stack_pointer_escape(result, value, ops)
+                    result = _mark_stack_pointer_escape(
+                        result, value, ops, store_address=address,
+                    )
                 if is_fpr:
                     # FPR helpers: two ordered BE 32-bit bus transactions.
                     result = _bus_mem_store64(

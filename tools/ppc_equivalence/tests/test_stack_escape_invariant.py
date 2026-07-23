@@ -66,6 +66,53 @@ class StackEscapeBehaviourTests(unittest.TestCase):
         self.assertTrue(z3.is_true(z3.simplify(escaped.stack_private)))
         self.assertIs(escaped, state)
 
+    def test_load_derived_publish_outside_frame_clears_masking(self) -> None:
+        ops = SymbolicOps()
+        z3 = ops.z3
+        state = _symbolic_initial(ops)
+        loaded = ops.load_byte(state.memory, state.gpr[4])
+        escaped = mark_stack_pointer_escape(
+            state, loaded, ops, store_address=state.gpr[5],
+        )
+        self.assertTrue(
+            z3.is_false(z3.simplify(escaped.stack_private)),
+            "publishing a Select-derived word outside the frame must escape",
+        )
+
+    def test_load_derived_spill_to_frame_keeps_masking(self) -> None:
+        ops = SymbolicOps()
+        z3 = ops.z3
+        state = _symbolic_initial(ops)
+        loaded = ops.load_byte(state.memory, state.gpr[4])
+        spill = ops.add(state.gpr[1], ops.const(8))
+        kept = mark_stack_pointer_escape(
+            state, loaded, ops, store_address=spill,
+        )
+        self.assertTrue(z3.is_true(z3.simplify(kept.stack_private)))
+        self.assertIs(kept, state)
+
+    def test_r1_spill_to_frame_keeps_masking(self) -> None:
+        """stwu / stw r1,disp(r1) back-chain stays inside the private frame."""
+        ops = SymbolicOps()
+        z3 = ops.z3
+        state = _symbolic_initial(ops)
+        # Effective address of stwu r1,-64(r1) before the update.
+        back_chain = ops.add(state.gpr[1], ops.const(0xFFFFFFC0))
+        kept = mark_stack_pointer_escape(
+            state, state.gpr[1], ops, store_address=back_chain,
+        )
+        self.assertTrue(z3.is_true(z3.simplify(kept.stack_private)))
+        self.assertIs(kept, state)
+
+    def test_r1_publish_outside_frame_still_clears(self) -> None:
+        ops = SymbolicOps()
+        z3 = ops.z3
+        state = _symbolic_initial(ops)
+        escaped = mark_stack_pointer_escape(
+            state, state.gpr[1], ops, store_address=state.gpr[5],
+        )
+        self.assertTrue(z3.is_false(z3.simplify(escaped.stack_private)))
+
     def test_escape_is_sticky_once_cleared(self) -> None:
         ops = SymbolicOps()
         z3 = ops.z3

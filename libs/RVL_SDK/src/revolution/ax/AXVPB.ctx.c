@@ -4036,12 +4036,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -4761,8 +4764,6 @@ void* memset(void* dest, int val, size_t count);
 #endif
 /* end "string.h" */
 
-DECOMP_FORCELITERAL(AXVPB_c, 2.0f);
-
 /**
  * It's really even worse than this: what appears to be manually unrolled
  * copies.
@@ -4986,19 +4987,6 @@ void __AXServiceVPB(AXVPB* vpb) {
     }
 }
 
-void __AXDumpVPB(AXVPB* vpb) {
-    AXPB* pb = &__AXPB[vpb->index];
-
-    if (pb->state == AX_VOICE_RUN) {
-        __AXDepopVoice(pb);
-    }
-
-    vpb->pb.state = AX_VOICE_STOP;
-    pb->state = AX_VOICE_STOP;
-
-    __AXPushCallbackStack(vpb);
-}
-
 void __AXSyncPBs(u32 baseCycles) {
     u32 cycles;
     u32 prio;
@@ -5065,7 +5053,16 @@ void __AXSyncPBs(u32 baseCycles) {
                 if (__AXMaxDspCycles > cycles) {
                     __AXServiceVPB(head);
                 } else {
-                    __AXDumpVPB(head);
+                    /* Retail inlines former __AXDumpVPB here. */
+                    AXPB* pb = &__AXPB[head->index];
+
+                    if (pb->state == AX_VOICE_RUN) {
+                        __AXDepopVoice(pb);
+                    }
+
+                    head->pb.state = AX_VOICE_STOP;
+                    pb->state = AX_VOICE_STOP;
+                    __AXPushCallbackStack(head);
                 }
 
             } else {
@@ -5345,10 +5342,6 @@ void AXGetLpfCoefs(u16 freq, u16* a, u16* b) {
 
     *b = 32768 * -rf30;
     *a = 32767 - *b;
-}
-
-void AXSetMaxDspCycles(u32 num) {
-    __AXMaxDspCycles = num;
 }
 
 static u32 __AXGetSrcCycles(u16 select, const AXPBSRC* src) {

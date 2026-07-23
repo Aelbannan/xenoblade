@@ -52,8 +52,8 @@ class AbiShapeUnitTests(unittest.TestCase):
         shape = AbiShape.conservative()
         self.assertTrue(shape.returns_i64)
         self.assertTrue(shape.returns_float)
-        self.assertEqual(shape.outgoing_gpr_args, 2)
-        self.assertEqual(shape.outgoing_fpr_args, 1)
+        self.assertEqual(shape.outgoing_gpr_args, 8)
+        self.assertEqual(shape.outgoing_fpr_args, 8)
         self.assertEqual(shape.source, "default-conservative")
 
     def test_from_dict_roundtrip(self) -> None:
@@ -82,6 +82,18 @@ class ObservablesForExitAbiShapeTests(unittest.TestCase):
             self.assertIn("r4", names)
             self.assertIn("f1", names)
             self.assertIn("f1.ps1", names)
+        # Fail-closed: indirect exits also observe r5–r10 / f2–f8.
+        ind = {
+            item.name
+            for item in observables_for_exit(contract, "indirect-branch")
+        }
+        self.assertIn("r5", ind)
+        self.assertIn("r10", ind)
+        self.assertIn("f2", ind)
+        self.assertIn("f8", ind)
+        ret = {item.name for item in observables_for_exit(contract, "return")}
+        self.assertNotIn("r5", ret)
+        self.assertNotIn("f2", ret)
 
     def test_returns_i64_false_drops_r4_on_return_only(self) -> None:
         shape = AbiShape(returns_i64=False, source="test")
@@ -185,8 +197,8 @@ class AbiInferTests(unittest.TestCase):
         original = _decode(_RETAIL_R12)
         candidate = _decode(_CAND_R4)
         shape = infer_abi_shape(original, candidate)
-        self.assertEqual(shape.outgoing_gpr_args, 2)
-        self.assertEqual(shape.outgoing_fpr_args, 1)
+        self.assertEqual(shape.outgoing_gpr_args, 8)
+        self.assertEqual(shape.outgoing_fpr_args, 8)
         self.assertEqual(shape.source, "default-conservative")
 
     def test_r12_vs_r4_with_fv_symbol_narrows(self) -> None:
@@ -199,10 +211,19 @@ class AbiInferTests(unittest.TestCase):
         self.assertEqual(shape.outgoing_fpr_args, 0)
         self.assertIn("symbol:Fv", shape.source)
 
-    def test_r12_vs_r5_structural_narrows(self) -> None:
-        """Neither side touches r4/f1 — simple vtable dispatch may narrow."""
+    def test_r12_vs_r5_structural_does_not_narrow(self) -> None:
+        """Using r5 as CTR scratch clobbers a live outgoing arg — stay fail-closed."""
         original = _decode(_RETAIL_R12)
         candidate = _decode(_CAND_R5)
+        shape = infer_abi_shape(original, candidate)
+        self.assertEqual(shape.outgoing_gpr_args, 8)
+        self.assertEqual(shape.outgoing_fpr_args, 8)
+        self.assertEqual(shape.source, "default-conservative")
+
+    def test_matching_r12_thunks_structural_narrow(self) -> None:
+        """Identical r12-only thunks may narrow to a single outgoing GPR arg."""
+        original = _decode(_RETAIL_R12)
+        candidate = _decode(_RETAIL_R12)
         shape = infer_abi_shape(original, candidate)
         self.assertEqual(shape.outgoing_gpr_args, 1)
         self.assertEqual(shape.outgoing_fpr_args, 0)

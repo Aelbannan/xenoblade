@@ -120,7 +120,9 @@ public:
     }
 
 private:
-    u32 mId; // at 0x4
+    // 0x4 was mislabeled as mId; retail mId is at 0xD0. Keep the word so
+    // send-array bases (0x34/0x40/0x50/0x60) stay correct.
+    u32 mPad0x4; // at 0x4
 
     f32 mVolume;      // at 0x8
     f32 mPitch;       // at 0xC
@@ -132,13 +134,18 @@ private:
     int mOutputLine;                            // at 0x20
     f32 mMainOutVolume;                         // at 0x24
     f32 mMainSend;                              // at 0x28
-    f32 mFxSend[AUX_BUS_NUM];                   // at 0x2C
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x38
-    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x48
-    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x58
-    u8 mRemoteFilter;                           // at 0x68
-    PanMode mPanMode;                           // at 0x6C
-    PanCurve mPanCurve;                         // at 0x70
+    u32 mUnk0x2C;                               // at 0x2C
+    u32 mUnk0x30;                               // at 0x30
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x34
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x40
+    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x50
+    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x60
+    u8 mRemoteFilter;                           // at 0x70
+    u8 mPad0x71[3];                             // at 0x71
+    PanMode mPanMode;                           // at 0x74
+    PanCurve mPanCurve;                         // at 0x78
+    u8 mPad0x7C[0x54];                          // at 0x7C
+    u32 mId;                                    // at 0xD0
 };
 
 } // namespace detail

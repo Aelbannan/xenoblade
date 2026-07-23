@@ -1,0 +1,93 @@
+// Auto-scaffolded catalog TU for kyoshin/CNumSelect
+// Mangled extern stubs for llm-harness / coop selection.
+// Replace stubs with high-level C/C++ during decomp.
+
+#include "kyoshin/harness_catalog.hpp"
+
+// LLM-HARNESS-BEGIN: us-801ec9bc
+extern "C" void __ct__CNumSelect() {}
+// LLM-HARNESS-END: us-801ec9bc
+
+// LLM-HARNESS-BEGIN: us-801eca34
+extern "C" void __dt__10CNumSelectFv() {}
+// LLM-HARNESS-END: us-801eca34
+
+// LLM-HARNESS-BEGIN: us-801eca88
+extern "C" void func_801EAE8C() {}
+// LLM-HARNESS-END: us-801eca88
+
+// LLM-HARNESS-BEGIN: us-801ecad0
+extern "C" void func_801EAED4() {}
+// LLM-HARNESS-END: us-801ecad0
+
+// LLM-HARNESS-BEGIN: us-801ecb78
+extern "C" void func_801EAF7C() {}
+// LLM-HARNESS-END: us-801ecb78
+
+// LLM-HARNESS-BEGIN: us-801ecb98
+extern "C" void func_801EAF9C() {}
+// LLM-HARNESS-END: us-801ecb98
+
+// LLM-HARNESS-BEGIN: us-801ecc14
+extern "C" bool func_801EB018() { return false; }
+// LLM-HARNESS-END: us-801ecc14
+
+// LLM-HARNESS-BEGIN: us-801ecc1c
+extern "C" bool func_801EB020() { return false; }
+// LLM-HARNESS-END: us-801ecc1c
+
+// LLM-HARNESS-BEGIN: us-801ecc24
+extern "C" bool func_801EB028() { return false; }
+// LLM-HARNESS-END: us-801ecc24
+
+// LLM-HARNESS-BEGIN: us-801ecc2c
+extern "C" void func_801EB030() {}
+// LLM-HARNESS-END: us-801ecc2c
+
+// LLM-HARNESS-BEGIN: us-801ecc48
+extern "C" void func_801EB04C() {}
+// LLM-HARNESS-END: us-801ecc48
+
+// LLM-HARNESS-BEGIN: us-801ecc60
+extern "C" void func_801EB064() {}
+// LLM-HARNESS-END: us-801ecc60
+
+// LLM-HARNESS-BEGIN: us-801eccd0
+extern "C" void func_801EB0D4() {}
+// LLM-HARNESS-END: us-801eccd0
+
+// LLM-HARNESS-BEGIN: us-801ecd74
+extern "C" void func_801EB178() {}
+// LLM-HARNESS-END: us-801ecd74
+
+// LLM-HARNESS-BEGIN: us-801ece14
+extern "C" void func_801EB218() {}
+// LLM-HARNESS-END: us-801ece14
+
+// LLM-HARNESS-BEGIN: us-801ecf10
+extern "C" void func_801EB314() {}
+// LLM-HARNESS-END: us-801ecf10
+
+// LLM-HARNESS-BEGIN: us-801ed00c
+extern "C" void func_801EB410() {}
+// LLM-HARNESS-END: us-801ed00c
+
+// LLM-HARNESS-BEGIN: us-801ed098
+extern "C" void func_801EB49C() {}
+// LLM-HARNESS-END: us-801ed098
+
+// LLM-HARNESS-BEGIN: us-801ed12c
+extern "C" void func_801EB530() {}
+// LLM-HARNESS-END: us-801ed12c
+
+// LLM-HARNESS-BEGIN: us-801ed17c
+extern "C" void func_801EB580() {}
+// LLM-HARNESS-END: us-801ed17c
+
+// LLM-HARNESS-BEGIN: us-801ed240
+extern "C" void func_801EB644() {}
+// LLM-HARNESS-END: us-801ed240
+
+// LLM-HARNESS-BEGIN: us-801ed304
+extern "C" void OnFileEvent__10CNumSelectFP10CEventFile() {}
+// LLM-HARNESS-END: us-801ed304

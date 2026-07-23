@@ -555,11 +555,15 @@ def _terminal_difference(
         both_invalid,
         left.state.invalid_reason != right.state.invalid_reason,
     )
-    defined_value_difference = z3.And(
-        left.state.valid,
-        right.state.valid,
-        z3.Or(*(values + [device_difference])),
+    # Observables (including memory) are compared whenever both sides share
+    # definedness polarity. Suppressing values on both-invalid same-reason
+    # paths hid committed stores before a shared fault (false EQUIVALENT).
+    observable_difference = z3.Or(*(values + [device_difference]))
+    comparable_definedness = z3.Or(
+        z3.And(left.state.valid, right.state.valid),
+        both_invalid,
     )
+    defined_value_difference = z3.And(comparable_definedness, observable_difference)
     return z3.And(
         left.condition,
         right.condition,

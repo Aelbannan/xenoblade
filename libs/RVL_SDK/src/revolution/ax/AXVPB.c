@@ -3,8 +3,6 @@
 #include <revolution/OS.h>
 #include <string.h>
 
-DECOMP_FORCELITERAL(AXVPB_c, 2.0f);
-
 /**
  * It's really even worse than this: what appears to be manually unrolled
  * copies.
@@ -228,19 +226,6 @@ void __AXServiceVPB(AXVPB* vpb) {
     }
 }
 
-void __AXDumpVPB(AXVPB* vpb) {
-    AXPB* pb = &__AXPB[vpb->index];
-
-    if (pb->state == AX_VOICE_RUN) {
-        __AXDepopVoice(pb);
-    }
-
-    vpb->pb.state = AX_VOICE_STOP;
-    pb->state = AX_VOICE_STOP;
-
-    __AXPushCallbackStack(vpb);
-}
-
 void __AXSyncPBs(u32 baseCycles) {
     u32 cycles;
     u32 prio;
@@ -307,7 +292,16 @@ void __AXSyncPBs(u32 baseCycles) {
                 if (__AXMaxDspCycles > cycles) {
                     __AXServiceVPB(head);
                 } else {
-                    __AXDumpVPB(head);
+                    /* Retail inlines former __AXDumpVPB here. */
+                    AXPB* pb = &__AXPB[head->index];
+
+                    if (pb->state == AX_VOICE_RUN) {
+                        __AXDepopVoice(pb);
+                    }
+
+                    head->pb.state = AX_VOICE_STOP;
+                    pb->state = AX_VOICE_STOP;
+                    __AXPushCallbackStack(head);
                 }
 
             } else {
@@ -587,10 +581,6 @@ void AXGetLpfCoefs(u16 freq, u16* a, u16* b) {
 
     *b = 32768 * -rf30;
     *a = 32767 - *b;
-}
-
-void AXSetMaxDspCycles(u32 num) {
-    __AXMaxDspCycles = num;
 }
 
 static u32 __AXGetSrcCycles(u16 select, const AXPBSRC* src) {

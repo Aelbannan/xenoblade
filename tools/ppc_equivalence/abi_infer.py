@@ -2,10 +2,11 @@
 
 v1 policy (fail-closed):
 - Narrow ``outgoing_gpr_args`` / ``outgoing_fpr_args`` only when both sides are
-  simple vtable dispatches that never touch ``r4`` / ``f1``, OR when a symbol
-  mangling hint says ``Fv`` (void / no extra int/float args).
-- If either side uses ``r4`` as scratch, do **not** auto-narrow unless the
-  symbol ``Fv`` hint is present (caller may still pass an explicit AbiShape).
+  simple vtable dispatches that never touch outgoing-arg GPRs ``r4``–``r10`` or
+  ``f1`` (CTR scratch must stay in non-arg volatiles such as ``r11``/``r12``),
+  OR when a symbol mangling hint says ``Fv`` (void / no extra int/float args).
+- If either side uses ``r4``–``r10`` as scratch, do **not** auto-narrow unless
+  the symbol ``Fv`` hint is present (caller may still pass an explicit AbiShape).
 - Set ``returns_i64=False`` only when both sides return and neither writes ``r4``.
 """
 
@@ -48,8 +49,8 @@ def infer_abi_shape(
     reasons: list[str] = []
     returns_i64 = True
     returns_float = True
-    outgoing_gpr_args = 2
-    outgoing_fpr_args = 1
+    outgoing_gpr_args = 8
+    outgoing_fpr_args = 8
 
     if (
         _contains_return(original)
@@ -61,11 +62,13 @@ def infer_abi_shape(
         reasons.append("no-r4-write-return")
 
     symbol_void = _symbol_suggests_void_no_extra_args(symbol)
+    # Structural narrow requires CTR scratch outside outgoing-arg GPRs r4–r10
+    # (r11/r12 only). Using r5 as the vtable load chain clobbers a live arg.
     structural = (
         _is_simple_vtable_dispatch(original)
         and _is_simple_vtable_dispatch(candidate)
-        and not _touches_gpr(original, 4)
-        and not _touches_gpr(candidate, 4)
+        and not _touches_outgoing_arg_gprs(original)
+        and not _touches_outgoing_arg_gprs(candidate)
         and not _touches_fpr(original, 1)
         and not _touches_fpr(candidate, 1)
     )
@@ -81,8 +84,8 @@ def infer_abi_shape(
     if (
         returns_i64
         and returns_float
-        and outgoing_gpr_args == 2
-        and outgoing_fpr_args == 1
+        and outgoing_gpr_args == 8
+        and outgoing_fpr_args == 8
     ):
         return AbiShape.conservative()
 
@@ -135,6 +138,11 @@ def _touches_gpr(insns: list[Instruction], reg: int) -> bool:
         if name in reads or name in writes:
             return True
     return False
+
+
+def _touches_outgoing_arg_gprs(insns: list[Instruction]) -> bool:
+    """True when any of r4–r10 (outgoing args beyond ``this``) is read or written."""
+    return any(_touches_gpr(insns, reg) for reg in range(4, 11))
 
 
 def _touches_fpr(insns: list[Instruction], reg: int) -> bool:

@@ -928,8 +928,7 @@ CAIAction::CAIAction() {
 } // namespace cf
 
 // symbols.txt: Fv; retail uses r3=this, r4=outA, r5=outB.
-// Soft-cap ~93.2%: frameless leaf; MWCC CSE of early zeros and stwux vs retail
-// stwx+add keep the last ~7% under high-level-only (see MWCC_REFERENCE).
+// Soft-cap ~96%: stwux vs retail stwx+add (no .text insn_patches).
 extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
                                                               cf::CAIActionSlot* outA,
                                                               cf::CAIActionExport* outB) {

@@ -741,12 +741,12 @@ public:
     ~Class_8045F858();
 };
 /* end "monolib/lib/UnkClass_8045F564.hpp" */
-/* "src/kyoshin/CBgTex.hpp" line 5 "monolib/work/IWorkEvent.hpp" */
+/* "src/kyoshin/CBgTex.hpp" line 5 "monolib/work/CEventFile.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
 #pragma once
 
 //List of forward declarations for commonly used classes.
@@ -787,56 +787,14 @@ class CProc;
 class CWorkThread;
 /* end "monolib/monolib_types.hpp" */
 
-/* Interface for work events, which provides a set of 32 event handler functions that
-get triggered when a certain event happens (such as when loading a file for OnFileEvent).
-Deriving classes can override any of these functions to run their own code when the
-corresponding event happens.
-
-Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
-being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
-out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
-with no apparent calls to the other 3 (possibly debug only).
-
-In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
-with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well. */
-class IWorkEvent {
+class CEventFile {
 public:
-    virtual ~IWorkEvent(){}
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5){ return false; }
-    virtual bool OnFileEvent(CEventFile* pEventFile){ return false; }
-    virtual bool WorkEvent3(UNKTYPE* r4){ return false; }
-    virtual bool WorkEvent4(){ return false; }
-    virtual void OnPauseTrigger(bool paused){}
-    //Completely unused, but still left in...
-    virtual bool WorkEvent6(){ return false; }
-    virtual bool WorkEvent7(){ return false; }
-    virtual bool WorkEvent8(){ return false; }
-    virtual bool WorkEvent9(){ return false; }
-    virtual bool WorkEvent10(){ return false; }
-    virtual bool WorkEvent11(){ return false; }
-    virtual bool WorkEvent12(){ return false; }
-    virtual bool WorkEvent13(){ return false; }
-    virtual bool WorkEvent14(){ return false; }
-    virtual bool WorkEvent15(){ return false; }
-    virtual bool WorkEvent16(){ return false; }
-    virtual bool WorkEvent17(){ return false; }
-    virtual bool WorkEvent18(){ return false; }
-    virtual bool WorkEvent19(){ return false; }
-    virtual bool WorkEvent20(){ return false; }
-    virtual bool WorkEvent21(){ return false; }
-    virtual bool WorkEvent22(){ return false; }
-    virtual bool WorkEvent23(){ return false; }
-    virtual bool WorkEvent24(){ return false; }
-    virtual bool WorkEvent25(){ return false; }
-    virtual bool WorkEvent26(){ return false; }
-    virtual bool WorkEvent27(){ return false; }
-    virtual bool WorkEvent28(){ return false; }
-    virtual bool WorkEvent29(){ return false; }
-    virtual bool WorkEvent30(){ return false; }
-    virtual void WorkEvent31(){}
+    BOOL unk0;
+    CFileHandle* mFileHandle; //0x4
+
+    void* getFileDataPtr();
 };
-/* end "monolib/work/IWorkEvent.hpp" */
+/* end "monolib/work/CEventFile.hpp" */
 
 /* "src/kyoshin/CBgTex.hpp" line 7 "nw4r/lyt.h" */
 #ifndef NW4R_PUBLIC_LYT_H
@@ -2307,6 +2265,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3622,12 +3645,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -10358,7 +10384,10 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    char UNK_0x564[0x5EC - 0x564];
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -15367,11 +15396,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -15388,18 +15421,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -15446,25 +15489,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -20245,7 +20298,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -22746,12 +22800,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -23034,64 +23084,37 @@ protected:
 #endif
 /* end "nw4r/lyt.h" */
 
-class CBgTex : IWorkEvent {
-public:
-    CBgTex(u8);
-    ~CBgTex();
-    void func_801C3A24();
-    bool func_801C3C14();
-    void func_801C3D54();
-    void func_801C3D7C(nw4r::lyt::DrawInfo*);
-    void func_801C3D9C();
-    u8 func_801C3E34();
-    void func_801C3E3C();
-    bool OnFileEvent(CEventFile* pEventFile) override;
+// IWorkEvent-compatible vtable (split1 .data).
+extern "C" void* lbl_eu_80533DC8[];
 
-    UnkClass_8045F564 unkClass; //0x04
-    CFileHandle* mFileHandle;   //0x14
-    nw4r::lyt::Layout* mLayout; //0x18
-    u8 unk1c;
-    u8 unk1d;
-    u8 unk1e;
+/* Background layout texture widget. Layout-compatible with IWorkEvent (vptr @0)
+for CDeviceFile::readFile, but not a C++ IWorkEvent subclass (avoids weak stubs).
+
+US retail strips most member manglings (__ct__CBgTex, func_801C3A24, ...); dtor and
+OnFileEvent keep C++ names. See CBgTex.cpp. */
+struct CBgTex {
+    void* mVtbl; // 0x0 - lbl_eu_80533DC8
+    UnkClass_8045F564 mMemRegion; // 0x4
+    CFileHandle* mFileHandle; // 0x14
+    nw4r::lyt::Layout* mLayout; // 0x18
+    bool mLayoutReady; // 0x1C
+    u8 mLoaded; // 0x1D
+    u8 mPtmMode; // 0x1E
+
+    ~CBgTex();
+    bool OnFileEvent(CEventFile* pEventFile);
 };
 /* end "kyoshin/CBgTex.hpp" */
 
-/* "src/kyoshin/CBgTex.cpp" line 2 "kyoshin/cf/CfBdat.hpp" */
+/* "src/kyoshin/CBgTex.cpp" line 2 "kyoshin/code_80135FDC.hpp" */
 #pragma once
 
-/* "src/kyoshin/cf/CfBdat.hpp" line 2 "monolib/work.hpp" */
+/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-
-class CEventFile {
-public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
-
-    void* getFileDataPtr();
-};
-/* end "monolib/work/CEventFile.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 3 "monolib/work/CMsgParam.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
@@ -24967,6 +24990,56 @@ template <typename T> T* PtrSingleton<T>::spInstance;
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+/*
+Handle to a work memory region
+*/
+typedef u32 WORK_ID;
+static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
+
+class CWorkThreadSystem{
+    friend class CWorkThread;
+
+public:
+    static void initialize();
+    static void destroy();
+
+    static WORK_ID allocWID(CWorkThread* thread);
+    static void freeWID(WORK_ID wid){
+        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
+        sWorkThreads[wid] = nullptr;
+    }
+
+    static mtl::ALLOC_HANDLE getWorkMem();
+
+private:
+    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
+
+    //Highest allowed work ID
+    static const WORK_ID MAX_WORK_ID = 2048;
+    //One registration bit flag per work ID
+    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
+
+    static const char* scRegionName;
+    static BOOL sMemAvailable;
+
+    //Handle for all work memory allocations
+    static mtl::ALLOC_HANDLE sAllocHandle;
+
+    //Work thread registration flags, by ID
+    static u32* sAllocFlags;
+
+    //Registered work threads, by ID
+    static CWorkThread** sWorkThreads;
+};
 /* end "monolib/work/CWorkThreadSystem.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
 #ifndef MSL_CPP_ALGORITHM_H
@@ -25463,47 +25536,164 @@ namespace ml{
 /* end "monolib/util/TPLUtils.hpp" */
 /* end "monolib/util.hpp" */
 
-/*
-Handle to a work memory region
-*/
-typedef u32 WORK_ID;
-static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
+enum CBM {
+    CBM_0,
+    CBM_1,
+    CBM_2,
+    CBM_3,
+    CBM_4,
+    CBM_5
+};
 
-class CWorkThreadSystem{
-    friend class CWorkThread;
+struct CFileHandle {
+    int unk0;
+    void* mData; //0x4
+    u8 unk8[0x10 - 0x8];
+    int unk10;
+    u32 unk14;
+    u8 unk18[0x3C - 0x18];
+    u32 mLength; //0x3C
+    u8 unk40[0x5C - 0x40];
+    ml::FixStr<32> mName; //0x5C
+    u8 unk80[0x160 - 0x80];
+    u32 unk160;
 
-public:
-    static void initialize();
-    static void destroy();
+    void call(CBM cbm);
+    bool checkExistRsrc(CBM cbm);
+    UNKTYPE* getRsrc();
 
-    static WORK_ID allocWID(CWorkThread* thread);
-    static void freeWID(WORK_ID wid){
-        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
-        sWorkThreads[wid] = nullptr;
+    inline void* getData(){
+        void* r31 = mData;
+        mData = nullptr;
+        return r31;
     }
 
-    static mtl::ALLOC_HANDLE getWorkMem();
+    inline bool unkInline2() const {
+        return unk10 != 0 && unk10 == mLength;
+    }
 
-private:
-    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
+    inline u32 getLength() const {
+        return mLength;
+    }
 
-    //Highest allowed work ID
-    static const WORK_ID MAX_WORK_ID = 2048;
-    //One registration bit flag per work ID
-    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
-
-    static const char* scRegionName;
-    static BOOL sMemAvailable;
-
-    //Handle for all work memory allocations
-    static mtl::ALLOC_HANDLE sAllocHandle;
-
-    //Work thread registration flags, by ID
-    static u32* sAllocFlags;
-
-    //Registered work threads, by ID
-    static CWorkThread** sWorkThreads;
 };
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+/* Interface for work events, which provides a set of 32 event handler functions that
+get triggered when a certain event happens (such as when loading a file for OnFileEvent).
+Deriving classes can override any of these functions to run their own code when the
+corresponding event happens.
+
+Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
+being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
+out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
+with no apparent calls to the other 3 (possibly debug only).
+
+In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
+with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
+events being unused as well.
+
+Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
+do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
+};
+/* end "monolib/work/IWorkEvent.hpp" */
+
+/* "src/kyoshin/code_80135FDC.hpp" line 5 "revolution/gx/GXTypes.h" */
+/* end "revolution/gx/GXTypes.h" */
+
+/* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
+/* end "nw4r/lyt.h" */
+
+u16 func_8013606C(char*, char*, u16);
+char* func_80136190(char*, char*, u32);
+u32 func_801361E8(void*, char*, u32);
+char* func_8013639C(void*, char*, u16);
+void func_8013676C(nw4r::lyt::Pane*, u32);
+void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void func_80137038(nw4r::lyt::Layout* pLayout, nw4r::lyt::DrawInfo* pDrawInfo, int r5, int r6);
+void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+u8 func_801372B4(u32);
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
+char* func_80138F78(u16);
+void func_801390E0(CFileHandle**);
+void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+/* end "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/CBgTex.cpp" line 3 "monolib/device.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device.hpp" line 2 "monolib/device/CDevice.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CDevice.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CDevice.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 4 "monolib/work/CMsgParam.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
 /* end "monolib/work/CWorkThreadSystem.hpp" */
 
 //Message param entry format:
@@ -25622,152 +25812,6 @@ private:
     u32 field6; //N*0x24 + 0x14
     u32 field7; //N*0x24 + 0x18
 };
-/* end "monolib/work/CMsgParam.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 4 "monolib/work/CTTask.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CTTask.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CTTask.hpp" line 3 "monolib/work/CProcess.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CProcess.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CProcess.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-/*
-Instance of a game task.
-
-Processes can contain child sub-processes,
-and somewhat maintain a priority system.
-
-Each process can implement specific behavior
-for its initialization/termination,
-and for the update ("Move") and render ("Draw") game events.
-*/
-class CProcess : public CChildListNode{
-    friend class CProcessMan;
-
-public:
-    CProcess();
-    virtual ~CProcess();
-
-    virtual void Init() = 0;
-    virtual void Term() = 0;
-
-    virtual void Move() = 0;
-    virtual void Draw() = 0;
-    // Out-of-line: inline `{}` emits Tail__8CProcessFv into every derived TU (CfPadTask +.text).
-    virtual void Tail();
-
-    void Regist(CProcess* parent, bool insertTop);
-    void Remove();
-
-    void SetRemove(){
-        mIsRemove = true;    
-    }
-
-private:
-    //0x0-10: CDoubleListNode
-    //0x10: vtable
-    //0x14-38: CChildListNode
-    bool mIsRegist; //0x38
-    bool mIsRemove; //0x39
-    bool mIsDisableMove; //0x3A
-    bool mIsDisableDraw; //0x3B
-};
-
-/*
-Process manager.
-
-Responsible for dispatching all process events every tick,
-and for maintaining the lists of both root-level processes and released processes.
-*/
-class CProcessMan {
-public:
-    static void Reset();
-    static void Delete();
-
-    static void Init();
-    static void Term();
-    
-    static void Move();
-    static void Draw();
-    static void Tail();
-
-    static TChildListHeader<CProcess>& GetFreeProcessList() {
-        return sFreeProcessList;
-    }
-    static TChildListHeader<CProcess>& GetRootProcessList() {
-        return sRootProcessList;
-    }
-
-private:
-    static void MoveImpl(CProcess* proc);
-    static void DrawImpl(CProcess* proc);
-    static void TailImpl(CProcess* proc);
-
-    static bool Remove(CProcess* proc);
-
-    static void DeleteList(TChildListHeader<CProcess>& list);
-    static void DeleteImpl(CProcess* proc);
-
-    static bool sIsInitialized;
-    static TChildListHeader<CProcess> sFreeProcessList;
-    static TChildListHeader<CProcess> sRootProcessList;
-};
-/* end "monolib/work/CProcess.hpp" */
-
-/*
-Generic task object.
-
-Provides a way to implement Move/Draw behavior without needing to work with the
-CProcess api.
-
-Derived classes must inherit using CRTP to allow binding the move/draw functions.
-*/
-template <typename TDerived>
-class CTTask : public CProcess {
-public:
-    typedef void (TDerived::*MoveFunc)();
-    typedef void (TDerived::*DrawFunc)();
-
-public:
-    CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
-
-    virtual void Move() {
-        if (mMoveFunc) {
-            (static_cast<TDerived*>(this)->*mMoveFunc)();
-        }
-    }
-    virtual void Draw() {
-        if (mDrawFunc) {
-            (static_cast<TDerived*>(this)->*mDrawFunc)();
-        }
-    }
-
-protected:
-    //0x0-10: CDoubleListNode
-    //0x10: vtable
-    //0x14-3C: CProcess
-    MoveFunc mMoveFunc; //0x3C
-    DrawFunc mDrawFunc; //0x48
-}; // size: 0x54
-/* end "monolib/work/CTTask.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 5 "monolib/work/CWorkControl.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 4 "monolib/work/CMsgParam.hpp" */
 /* end "monolib/work/CMsgParam.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 5 "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work/IWorkEvent.hpp" */
@@ -26010,389 +26054,6 @@ private:
     }                                                                            \
 
 #define CREATE_WORKTHREAD(class, parent) class::create(#class, parent);
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 5 "monolib/work/CWorkUtil.hpp" */
-/* end "monolib/work/CWorkUtil.hpp" */
-
-class CWorkControl : public CWorkThread{
-public:
-    static CWorkControl* getInstance();
-    static CWorkControl* create(CWorkThread* pParent);
-    static CWorkControl* create(const char* pName, CWorkThread* pParent);
-
-    static bool setFlowSetup();
-    static void pause(bool paused);
-    static bool hasFlow();
-
-    virtual bool wkStandbyLogin();  //0x94
-    virtual bool wkStandbyLogout(); //0x98
-
-private:
-    static const int MAX_CHILD = 32;
-
-private:
-    CWorkControl(const char* pName, CWorkThread* pParent);
-    virtual ~CWorkControl();
-
-private:
-    char unk1C8[4];
-
-private:
-    static CWorkControl* spInstance;
-};
-/* end "monolib/work/CWorkControl.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 6 "monolib/work/CWorkFlowSetup.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 5 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 6 "monolib/work/CWorkUtil.hpp" */
-/* end "monolib/work/CWorkUtil.hpp" */
-
-class CWorkFlowSetup : public CWorkThread{
-public:
-    static CWorkFlowSetup* getInstance();
-
-    DECL_WORKTHREAD_CREATE(CWorkFlowSetup);
-
-    virtual bool wkStandbyLogin();  //0x94
-    virtual bool wkStandbyLogout(); //0x98
-
-private:
-    CWorkFlowSetup(const char* pName, CWorkThread* pParent);
-    virtual ~CWorkFlowSetup();
-
-private:
-    u32 unk1C4;
-
-    static CWorkFlowSetup* spInstance;
-};
-/* end "monolib/work/CWorkFlowSetup.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 7 "monolib/work/CWorkFlowShutdownAll.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowShutdownAll.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowShutdownAll.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowShutdownAll : public CWorkThread{
-public:
-    static CWorkFlowShutdownAll* getInstance();
-
-private:
-    static CWorkFlowShutdownAll* spInstance;
-};
-/* end "monolib/work/CWorkFlowShutdownAll.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 8 "monolib/work/CWorkFlowWiiMenu.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiMenu.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiMenu.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowWiiMenu : public CWorkThread{
-public:
-    static CWorkFlowWiiMenu* getInstance();
-
-private:
-    static CWorkFlowWiiMenu* spInstance;
-};
-/* end "monolib/work/CWorkFlowWiiMenu.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 9 "monolib/work/CWorkFlowWiiPowerOff.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiPowerOff.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiPowerOff.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowWiiPowerOff : public CWorkThread{
-public:
-    static CWorkFlowWiiPowerOff* getInstance();
-
-private:
-    static CWorkFlowWiiPowerOff* spInstance;
-};
-/* end "monolib/work/CWorkFlowWiiPowerOff.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 10 "monolib/work/CWorkFlowWiiReset.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiReset.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiReset.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowWiiReset : public CWorkThread{
-public:
-    static CWorkFlowWiiReset* getInstance();
-
-private:
-    static CWorkFlowWiiReset* spInstance;
-};
-/* end "monolib/work/CWorkFlowWiiReset.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 11 "monolib/work/CWorkRoot.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 4 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-/*
-Main game framework class. It handles setting up/cleaning up most of the framework
-components, and contains the core program loop, which is responsible for managing/
-updating all of the threads/processes the game uses as well as other things. This
-includes the main game process, which gets ran by CDesktop, which itself is ran
-by this class.
-*/
-class CWorkRoot{
-public:
-
-    static void initialize();
-    static void destroy();
-
-    static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);
-    static void standbyWork(CWorkThread* pThread, bool arg1);
-    static void updateWork(CWorkThread* pThread, bool arg1);
-    static void standbyWork();
-    static void renderWork();
-
-    static bool runSingle();
-    static void exit();
-    static void run();
-    static void preRetraceCallback(u32 retraceCount);
-
-    static void setException(CException* pException);
-    static CException* getException();
-
-private:
-    enum ExitMode {
-        EXIT_PROG_END,
-        EXIT_WII_MENU,
-        EXIT_RESTART,
-        EXIT_SHUTDOWN
-    };
-
-    static bool dummy1(CWorkThread* pThread);
-    static inline bool isShutdownAll();
-    static inline void initializeComponents();
-    static inline void destroyComponents();
-
-    static ExitMode sExitMode;
-    static CException* sException;
-    static CErrorWii sErrorWii;
-};
-/* end "monolib/work/CWorkRoot.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 12 "monolib/work/CWorkSystem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystem.hpp" line 2 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkSystem.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-class CWorkSystem : public CWorkThread {
-public:
-    typedef void (*ExitFunc)();
-
-public:
-    CWorkSystem(const char *pName, CWorkThread *pParent);
-    virtual ~CWorkSystem();
-
-    static CWorkSystem* getInstance();
-    static bool isOff();
-    static mtl::ALLOC_HANDLE getMem();
-    static bool isPowerOff();
-    static bool isReset();
-    static void setSaveLoadInvalidReset(bool state);
-
-    virtual void wkUpdate();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-    static CWorkSystem* create();
-    DECL_WORKTHREAD_CREATE(CWorkSystem);
-
-    static void setExitFunc(ExitFunc func);
-    static void callExitFunc();
-
-private:
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    mtl::ALLOC_HANDLE mMemHandle; //0x1C4
-    bool mPowerOff; //0x1C8
-    bool mReset; //0x1C9
-    bool mSaveLoadInvalidReset; //0x1CA
-    u8 unk1CB[0x1D0 - 0x1CB];
-
-    static CWorkSystem* spInstance;
-    static ExitFunc sExitFunc;
-};
-
-//Reset handling functions. Due to string pooling, these had to have been defined outside of a class as static functions.
-
-/* TODO: Ideally this wouldn't need to be a macro, but for files using O4,s (CWorkSystem.cpp), if a function
-ends up calling the same function twice, which happens in CWorkSystem::wkUpdate, it refuses to inline it. */
-#define prepareReset(){          \
-    CWorkSystem::callExitFunc(); \
-                                 \
-    VISetBlack(VI_TRUE);         \
-    VIFlush();                   \
-                                 \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-}                           
-
-static inline void resetGame(bool direct){
-    if(!direct){
-        prepareReset();
-    }
-
-    //Restart
-    OSReport("exit wii reset\n");
-    OSRestart(0);
-}
-
-static inline void shutdownGame(bool direct){
-    if(!direct){
-        prepareReset();
-    }
-
-    //Restart
-    OSReport("exit wii power off\n");
-    OSShutdownSystem();
-}
-
-
-static inline void returnToWiiMenu(bool direct){
-    if(!direct){
-        prepareReset();
-    }
-
-    //Restart
-    OSReport("exit wii menu\n");
-    OSShutdownSystem();
-}
-/* end "monolib/work/CWorkSystem.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 13 "monolib/work/CWorkSystemMem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystemMem.hpp" line 2 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkSystemMem.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-class CWorkSystemMem : public CWorkThread {
-public:
-    CWorkSystemMem(const char* pName, CWorkThread* pParent);
-    virtual ~CWorkSystemMem();
-
-    DECL_WORKTHREAD_CREATE(CWorkSystemMem);
-
-    static mtl::ALLOC_HANDLE getHandle();
-
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-private:
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    mtl::ALLOC_HANDLE mHandle; //0x1C4
-
-    static const u32 REGION_SIZE = 0x1000 - sizeof(mtl::MemBlock);
-
-    static CWorkSystemMem* spInstance;
-};
-/* end "monolib/work/CWorkSystemMem.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 14 "monolib/work/CWorkSystemCache.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystemCache.hpp" line 2 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkSystemCache.hpp" line 3 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-
-class CWorkSystemCache : public CWorkThread {
-public:
-    CWorkSystemCache(const char* pName, CWorkThread* pParent);
-
-    DECL_WORKTHREAD_CREATE(CWorkSystemCache);
-
-    //inline CWorkSystemCache* create(){
-    //    return new (CWorkThreadSystem::getWorkMem()) CWorkSystemCache()
-    //}
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u8 unk1E8[0x1E8 - 0x1C4];
-};
-/* end "monolib/work/CWorkSystemCache.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 15 "monolib/work/CWorkSystemPack.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystemPack.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkSystemPack.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkSystemPack : public CWorkThread {
-public:
-    CWorkSystemPack(const char* pName, CWorkThread* pParent);
-
-    DECL_WORKTHREAD_CREATE(CWorkSystemPack);
-
-    static bool func_804DDFBC(UNKWORD r3);
-    static bool func_804DDDF4(const char* r3, void* r4, u32* r5);
-    static bool func_804DE08C();
-    static bool func_804DE100();
-    static void SavePkhFilenamesArrayPtr(const char* const[]);
-    static void SaveStaticArcFilenameStringPtr(const char* const*);
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u8 unk1C4[0x208 - 0x1C4];
-};
-/* end "monolib/work/CWorkSystemPack.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 16 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 17 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 18 "monolib/work/CWorkUtil.hpp" */
-/* end "monolib/work/CWorkUtil.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 19 "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work.hpp" */
-/* "src/kyoshin/cf/CfBdat.hpp" line 3 "monolib/device.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device.hpp" line 2 "monolib/device/CDevice.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDevice.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDevice.hpp" line 3 "monolib/device/CDeviceBase.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 3 "monolib/work/CWorkThread.hpp" */
 /* end "monolib/work/CWorkThread.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 4 "monolib/work/CWorkUtil.hpp" */
 /* end "monolib/work/CWorkUtil.hpp" */
@@ -26971,54 +26632,6 @@ public:
 /* "libs/monolib/include/monolib/device/CDeviceFileJob.hpp" line 3 "monolib/work/CWorkThread.hpp" */
 /* end "monolib/work/CWorkThread.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceFileJob.hpp" line 4 "monolib/device/CFileHandle.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-enum CBM {
-    CBM_0,
-    CBM_1,
-    CBM_2,
-    CBM_3,
-    CBM_4,
-    CBM_5
-};
-
-struct CFileHandle {
-    int unk0;
-    void* mData; //0x4
-    u8 unk8[0x10 - 0x8];
-    int unk10;
-    u32 unk14;
-    u8 unk18[0x3C - 0x18];
-    u32 mLength; //0x3C
-    u8 unk40[0x5C - 0x40];
-    ml::FixStr<32> mName; //0x5C
-    u8 unk80[0x160 - 0x80];
-    u32 unk160;
-
-    void call(CBM cbm);
-    bool checkExistRsrc(CBM cbm);
-    UNKTYPE* getRsrc();
-
-    inline void* getData(){
-        void* r31 = mData;
-        mData = nullptr;
-        return r31;
-    }
-
-    inline bool unkInline2() const {
-        return unk10 != 0 && unk10 == mLength;
-    }
-
-    inline u32 getLength() const {
-        return mLength;
-    }
-
-};
 /* end "monolib/device/CFileHandle.hpp" */
 
 //Base class for jobs carried out by CDeviceFile.
@@ -242511,8 +242124,6 @@ extern "C" {
 #define WUD_DEV_HANDLE_INVALID (-1)
 
 // Forward declarations
-typedef struct WUDDevInfo;
-
 typedef enum {
     WUD_LIB_STATUS_0,
     WUD_LIB_STATUS_1,
@@ -242549,7 +242160,6 @@ typedef BOOL (*WUDFreeFunc)(void* pBlock);
 typedef void (*WUDSyncDeviceCallback)(s32 result, s32 num);
 typedef void (*WUDClearDeviceCallback)(s32 result);
 
-typedef void (*WUDHidConnCallback)(UINT8 devHandle, u8 open);
 typedef void (*WUDHidRecvCallback)(UINT8 devHandle, UINT8* pReport, UINT16 len);
 
 typedef struct WUDDevInfo {
@@ -242566,6 +242176,8 @@ typedef struct WUDDevInfo {
     u8 UNK_0x5D[1];
     tBTA_HH_ATTR_MASK hhAttrMask; // at 0x5E
 } WUDDevInfo;
+
+typedef void (*WUDHidConnCallback)(WUDDevInfo* pInfo, u8 open);
 
 BOOL WUDInit(void);
 BOOL WUDIsBusy(void);
@@ -242653,7 +242265,7 @@ u8 _WUDGetLinkNumber(void);
 extern "C" {
 #endif
 
-void WUDHidHostCallback(tBTA_HH_EVT event, tBTA_HH* pData);
+void WUDiHidHostEventCallback(tBTA_HH_EVT event, tBTA_HH* pData);
 
 #ifdef __cplusplus
 }
@@ -243245,7 +242857,8 @@ typedef struct WUDCB {
     u16 bufferStatus1; // at 0x746
 } WUDCB;
 
-extern WUDCB _wcb;
+extern WUDCB __rvl_wudcb;
+#define _wcb __rvl_wudcb
 extern WUDDevInfo _work;
 
 extern SCBtDeviceInfoArray _scArray;
@@ -243253,6 +242866,13 @@ extern SCBtDeviceInfoArray _scArray;
 extern BD_ADDR_PTR _dev_handle_to_bda[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
+
+WUDDevInfo* WUDiGetDiscoverDevice(void);
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr);
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle);
+void WUDiSetQueueSizeForHandle(u8 handle, u16 size);
+void WUDiSetNotAckNumForHandle(u8 handle, u16 notAckNum);
+int WUDIsLinkedWBC(void);
 
 #ifdef __cplusplus
 }
@@ -245569,141 +245189,6 @@ private:
 /* "libs/monolib/include/monolib/device.hpp" line 14 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device.hpp" */
-
-namespace cf{
-
-    class CfBdat : IWorkEvent {
-    public:
-        CfBdat(){}
-        virtual ~CfBdat();
-        virtual bool OnFileEvent(CEventFile* pEventFile);
-
-        static void func_801414CC();
-        static void resetMapBdatFileDataPointers();
-        static void loadMapBdatFileDataPointers(int mapId, int areaId);
-        static void* func_80141B20(const char* pName);
-        static const char* func_801421C4(u16 index);
-        static u32 func_801422A8(u32 param1);
-        static const char* func_801424A8(u16 index);
-
-        //Pointers to file data for bdat files
-        static void* spBtlPcListFileData;
-        static void* spBtlEneListFileData;
-        static void* spFldNpcListFileData;
-        static void* lbl_8066698C;
-        static void* spLandmarkListFileData;
-
-        static void* spCurRouteListFileData;
-        static void* spFldMapListFileData;
-        static void* spCurMapEffListFileData;
-        static void* spCurMapObjListFileData;
-        static void* spCurMapLodListFileData;
-        static void* spCurMapSeListFileData;
-        static void* spCurFldGimCamListFileData;
-        static void* spCurLItemListFileData;
-        static void* spCurExTalkListFileData;
-        static void* spCurMineListFileData;
-        static void* spCurBtlEneListFileData;
-
-        static void* spFldValPopListFileData;
-        static void* spFldDmObjListFileData;
-        static void* spBtlSkillListFileData;
-        static void* spBtlGrowListFileData;
-        static void* spBtlBuffListFileData;
-        static void* spFldPointListFileData;
-        static void* spFldTboxListFileData;
-        static void* spItmItemListFileData;
-        static void* lbl_806669E0;
-
-        //Item bdat files
-        static void* spItmWpnListFileData;
-        static void* spItmEquipListFileData;
-        static void* spItmCrystalListFileData;
-        static void* spItmDropCrystalListFileData;
-        static void* spItmCollectListFileData;
-        static void* spItmMaterialListFileData;
-        static void* spItmValuableListFileData;
-        static void* spItmArtsListFileData;
-        static void* spItmHeadListFileData;
-        static void* spItmBodyListFileData;
-        static void* spItmArmListFileData;
-        static void* spItmWaistListFileData;
-        static void* spItmLeggListFileData;
-
-        static void* spCurGimListFileData;
-        static void* spCurFieldLockFileData;
-        static void* spCurElvGmFileData;
-        static void* spCurWarpGmFileData;
-        static void* spCurJumpGmFileData;
-        static void* spCurItemGmFileData;
-        static void* spCurGimSvOffFileData;
-        static void* spCurGimEneFileData;
-        static void* spCurGimMessFileData;
-        static void* spCurDropNmlListFileData;
-        static void* spCurDropRarListFileData;
-        static void* spCurDropSprListFileData;
-
-        static void* spBtlPsvSkillFileData;
-        static void* spBtlPsvLinkFileData;
-        static void* spBtlPssListFileData;
-        static void* spBtlCamListFileData;
-        static void* spBtlCamDataListFileData;
-        static void* spBtlCrystalNameListFileData;
-
-        static void* spMnuItemFileData;
-        static void* spMnuEveStartFileData;
-        static void* spMnuEveTableFileData;
-
-        static CFileHandle* lbl_80666A6C;
-        static void* lbl_80666A70;
-        static u32 lbl_80666A74;
-        static void* lbl_80666A78;
-        static float lbl_80666A7C;
-        static CfBdat lbl_80666A80;
-        static void* lbl_80666A84;
-
-        static void* lbl_80577510[];
-        static const char* lbl_80531EC0[];
-    };
-
-} //namespace cf
-/* end "kyoshin/cf/CfBdat.hpp" */
-/* "src/kyoshin/CBgTex.cpp" line 3 "kyoshin/code_80135FDC.hpp" */
-#pragma once
-
-/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
-/* end "monolib/device/CFileHandle.hpp" */
-/* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work/IWorkEvent.hpp" */
-
-/* "src/kyoshin/code_80135FDC.hpp" line 5 "revolution/gx/GXTypes.h" */
-/* end "revolution/gx/GXTypes.h" */
-
-/* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
-/* end "nw4r/lyt.h" */
-
-u16 func_8013606C(char*, char*, u16);
-char* func_80136190(char*, char*, u32);
-u32 func_801361E8(void*, char*, u32);
-char* func_8013639C(void*, char*, u16);
-void func_8013676C(nw4r::lyt::Pane*, u32);
-void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-void func_80136910(nw4r::lyt::Layout*, char*, u8);
-void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-void func_80137038(nw4r::lyt::Layout* pLayout, nw4r::lyt::DrawInfo* pDrawInfo, int r5, int r6);
-void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
-u8 func_801372B4(u32);
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
-char* func_80138F78(u16);
-void func_801390E0(CFileHandle**);
-void func_80139124(nw4r::lyt::ArcResourceAccessor*);
-void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
-/* end "kyoshin/code_80135FDC.hpp" */
 /* "src/kyoshin/CBgTex.cpp" line 4 "monolib/lib/CLibLayout.hpp" */
 #pragma once
 
@@ -245732,144 +245217,181 @@ public:
 /* end "monolib/lib/CLibLayout.hpp" */
 /* "src/kyoshin/CBgTex.cpp" line 5 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
+/* "src/kyoshin/CBgTex.cpp" line 6 "monolib/work/IWorkEvent.hpp" */
+/* end "monolib/work/IWorkEvent.hpp" */
 
-/* "src/kyoshin/CBgTex.cpp" line 7 "nw4r/lyt.h" */
+/* "src/kyoshin/CBgTex.cpp" line 8 "nw4r/lyt.h" */
 /* end "nw4r/lyt.h" */
 
-extern void func_80124270(nw4r::lyt::Pane*, u32);
+extern void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+extern void func_801390E0(CFileHandle**);
 
-static s32 lbl_80666D50;
-static nw4r::lyt::ArcResourceAccessor* lbl_80666D54;
+// US retail keeps these callee names unmangled in CBgTex.o relocs.
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" u8 func_801372B4(u8);
 
-CBgTex::CBgTex(u8 arg) : mFileHandle(nullptr), mLayout(nullptr), unk1c(0), unk1d(0), unk1e(arg) {}
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+
+// Shared string pool (split1 .rodata).
+extern "C" char lbl_eu_80505370[];
+
+// SDA globals (retail names; defined in common/sbss splits).
+extern "C" u32 lbl_eu_80664184;
+extern "C" s32 lbl_eu_80664460;
+extern "C" nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464;
+
+extern "C" void func_801C3E3C(CBgTex* self);
+
+// Emit ctor before dtor so .text order matches retail (avoids 0xC align pad).
+extern "C" CBgTex* __ct__CBgTex(CBgTex* self, u8 arg) {
+    self->mVtbl = lbl_eu_80533DC8;
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
+    self->mFileHandle = nullptr;
+    self->mLayout = nullptr;
+    self->mLayoutReady = false;
+    self->mLoaded = 0;
+    self->mPtmMode = arg;
+    return self;
+}
 
 CBgTex::~CBgTex() {}
 
-void CBgTex::func_801C3A24() {
+
+extern "C" void func_801C3A24(CBgTex* self) {
     u32 handle = mtl::MemManager::getHandleMEM2();
-    unkClass.createRegion(handle, 0x2000, "CBgTexLyt", 1);
-    Class_8045F858 unusedVar = Class_8045F858(&unkClass);
+    self->mMemRegion.createRegion(handle, 0x2000, lbl_eu_80505370, 1);
+    Class_8045F858 unusedVar = Class_8045F858(&self->mMemRegion);
     mtl::MemManager::func_80434A4C(false);
 
-    u8 lbl_80666_a74 = cf::CfBdat::lbl_80666A74;
-    if(lbl_80666_a74 == 0x19) {
-        func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg06.brlyt");
-    } else if(lbl_80666_a74 == 0x1a) {
-        func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg07.brlyt");
+    u8 regionId = static_cast<u8>(lbl_eu_80664184);
+    if (regionId == 0x19) {
+        func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x0A);
+    } else if (regionId == 0x1A) {
+        func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x1E);
     } else {
-        switch(func_801372B4(lbl_80666_a74)) {
-            case 1:
-                func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg01.brlyt");
-                break;
-            case 2:
-                func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg02.brlyt");
-                break;
-            case 3:
-                func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg03.brlyt");
-                break;
-            case 4:
-                func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg04.brlyt");
-                break;
-            case 5:
-                func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg05.brlyt");
-                break;
-            case 0:
-                func_80136E84(&mLayout, lbl_80666D54, "mf00_reg_bg01.brlyt");
-                break;
-            default:
-                break;
+        switch (func_801372B4(regionId)) {
+        case 1:
+            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            break;
+        case 2:
+            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x46);
+            break;
+        case 3:
+            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x5A);
+            break;
+        case 4:
+            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x6E);
+            break;
+        case 5:
+            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x82);
+            break;
+        case 0:
+            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            break;
+        default:
+            break;
         }
     }
-    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName("pic_ptm00", true);
-    func_80124270(pane, !unk1e);
-    pane = mLayout->GetRootPane()->FindPaneByName("pic_ptm01", true);
-    func_80124270(pane, !unk1e);
-    func_801C3E3C();
-    unkClass.func_8045F810();
+
+    nw4r::lyt::Pane* pane =
+        self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0x96, true);
+    func_80124270(pane, !self->mPtmMode);
+    pane = self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0xA0, true);
+    func_80124270(pane, !self->mPtmMode);
+    func_801C3E3C(self);
+    self->mMemRegion.func_8045F810();
 }
 
-bool CBgTex::func_801C3C14() {
-    lbl_80666D50 += 1;
-    if(lbl_80666D54 != nullptr) return true;
-    char* file = nullptr;
+extern "C" bool func_801C3C14(CBgTex* self) {
+    nw4r::lyt::ArcResourceAccessor* accessor = lbl_eu_80664464;
+    s32 count = lbl_eu_80664460;
+    lbl_eu_80664460 = count + 1;
+    if (accessor != nullptr) {
+        return true;
+    }
 
-    u8 lbl_80666_a74 = cf::CfBdat::lbl_80666A74;
-    if(lbl_80666_a74 == 0x19) {
-        file = "/menu/BgTex06.arc";
-    } else if(lbl_80666_a74 == 0x1a) {
-        file = "/menu/BgTex07.arc";
+    char* file = nullptr;
+    u8 regionId = static_cast<u8>(lbl_eu_80664184);
+    if (regionId == 0x19) {
+        file = lbl_eu_80505370 + 0xAA;
+    } else if (regionId == 0x1A) {
+        file = lbl_eu_80505370 + 0xBE;
     } else {
-        switch(func_801372B4(lbl_80666_a74)) {
-            case 1:
-                file = "/menu/BgTex01.arc";
-                break;
-            case 2:
-                file = "/menu/BgTex02.arc";
-                break;
-            case 3:
-                file = "/menu/BgTex03.arc";
-                break;
-            case 4:
-                file = "/menu/BgTex04.arc";
-                break;
-            case 5:
-                file = "/menu/BgTex05.arc";
-                break;
-            case 0:
-                file = "/menu/BgTex01.arc";
-                break;
+        switch (func_801372B4(regionId)) {
+        case 1:
+            file = lbl_eu_80505370 + 0xD2;
+            break;
+        case 2:
+            file = lbl_eu_80505370 + 0xE6;
+            break;
+        case 3:
+            file = lbl_eu_80505370 + 0xFA;
+            break;
+        case 4:
+            file = lbl_eu_80505370 + 0x10E;
+            break;
+        case 5:
+            file = lbl_eu_80505370 + 0x122;
+            break;
+        case 0:
+            file = lbl_eu_80505370 + 0xD2;
+            break;
         }
     }
+
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
-    mFileHandle = CDeviceFile::readFile(allocHandle, file, this, 0, 0);
-    CDeviceFile::setHandleFlag1(mFileHandle);
+    self->mFileHandle = CDeviceFile::readFile(
+        allocHandle, file, reinterpret_cast<IWorkEvent*>(self), 0, 0);
+    CDeviceFile::setHandleFlag1(self->mFileHandle);
     return false;
 }
 
-void CBgTex::func_801C3D54() {
-    if (unk1c == 0)
+extern "C" void func_801C3D54(CBgTex* self) {
+    if (self->mLayoutReady == false)
         return;
-    mLayout->Animate(0);
+    self->mLayout->Animate(0);
 }
 
-void CBgTex::func_801C3D7C(nw4r::lyt::DrawInfo* drawInfo) {
-    if (unk1c == 0) return;
-    func_80137038(mLayout, drawInfo, 0, 1);
+extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->mLayoutReady == false)
+        return;
+    func_80137038(self->mLayout, drawInfo, 0, 1);
 }
 
-void CBgTex::func_801C3D9C() {
-    lbl_80666D50 -= 1;
-    func_801390E0(&mFileHandle);
-    unk1c = 0;
+extern "C" void func_801C3D9C(CBgTex* self) {
+    lbl_eu_80664460 -= 1;
+    func_801390E0(&self->mFileHandle);
+    self->mLayoutReady = false;
     CDeviceVI::waitForDrawDone();
-    if(mLayout != nullptr) {
-        delete mLayout;
-        mLayout = nullptr;
+    if (self->mLayout != nullptr) {
+        delete self->mLayout;
+        self->mLayout = nullptr;
     }
-    if(lbl_80666D50 <= 0) {
-        func_80139124(lbl_80666D54);
-        lbl_80666D54 = nullptr;
+    if (lbl_eu_80664460 <= 0) {
+        func_80139124(lbl_eu_80664464);
+        lbl_eu_80664464 = nullptr;
     }
-    unkClass.func_8045F778();
+    self->mMemRegion.func_8045F778();
 }
 
-u8 CBgTex::func_801C3E34() {
-    return unk1d;
+extern "C" u8 func_801C3E34(CBgTex* self) {
+    return self->mLoaded;
 }
 
-void CBgTex::func_801C3E3C() {
-    if(mLayout == nullptr) return;
-    unk1d = 1;
-    unk1c = 1;
+extern "C" void func_801C3E3C(CBgTex* self) {
+    if (self->mLayout == nullptr)
+        return;
+    self->mLoaded = 1;
+    self->mLayoutReady = true;
 }
 
 bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
-    if(mFileHandle == pEventFile->mFileHandle) {
+    if (mFileHandle == pEventFile->mFileHandle) {
         void* pArchive = mFileHandle->getData();
-        lbl_80666D54 = CLibLayout::createArcResourceAccessor();
-        lbl_80666D54->Attach(pArchive, "arc");
+        lbl_eu_80664464 = CLibLayout::createArcResourceAccessor();
+        lbl_eu_80664464->Attach(pArchive, lbl_eu_80505370 + 0x136);
         mFileHandle = nullptr;
-        func_801C3A24();
+        func_801C3A24(this);
         return true;
     }
     return false;

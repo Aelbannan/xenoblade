@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
+from types import SimpleNamespace
+from unittest import mock
 
 from tools.llm_harness.candidate_schema import CANDIDATE_JSON_SCHEMA
 from tools.llm_harness.providers import (
@@ -18,161 +20,83 @@ from tools.llm_harness.providers import (
 from tools.llm_harness.types import ModelConfig
 
 
-def _healthy_then_message(
-    *,
-    session_id: str = "ses_test",
-    message_response: dict[str, Any] | None = None,
-    capture: dict[str, Any] | None = None,
-):
-    """Build a fake `_request` that answers health/session/message/delete."""
-
-    def fake_request(method: str, path: str, body=None, query=None):
-        if capture is not None:
-            if method == "POST" and path == "/session":
-                capture["session_body"] = body
-            if method == "POST" and path.endswith("/message"):
-                capture["message_body"] = body
-        if method == "GET" and path == "/global/health":
-            return {"healthy": True, "version": "1.18.2"}
-        if method == "POST" and path == "/session":
-            return {"id": session_id}
-        if method == "POST" and path.endswith("/message"):
-            return message_response or {
-                "info": {
-                    "cost": 0,
-                    "tokens": {"input": 1, "output": 1, "cache": {}},
-                },
-                "parts": [{"type": "text", "text": '{"source":"void f(){}"}'}],
-            }
-        if method == "DELETE":
-            return True
-        raise AssertionError(f"unexpected {method} {path}")
-
-    return fake_request
+def _cli_json_stdout(text: str = '{"source":"void f(){}"}', *, input_tokens: int = 9, output_tokens: int = 3) -> str:
+    return "\n".join(
+        [
+            json.dumps(
+                {
+                    "type": "step_finish",
+                    "part": {
+                        "type": "step-finish",
+                        "cost": 0.02,
+                        "tokens": {
+                            "input": input_tokens,
+                            "output": output_tokens,
+                            "cache": {"read": 0, "write": 0},
+                        },
+                    },
+                }
+            ),
+            json.dumps({"type": "text", "part": {"type": "text", "text": text}}),
+        ]
+    )
 
 
-class PureModeToolsTests(unittest.TestCase):
-    def test_pure_disables_all_tools_even_with_cwd_files(self) -> None:
-        provider = OpenCodeProvider(
-            base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=True
-        )
-        capture: dict[str, Any] = {}
-        provider._request = _healthy_then_message(capture=capture)  # type: ignore[method-assign]
-
+class PureModeCliTests(unittest.TestCase):
+    def test_pure_passes_pure_flag_and_self_contained_guardrail(self) -> None:
+        provider = OpenCodeProvider(timeout_seconds=30, pure=True)
+        completed = SimpleNamespace(returncode=0, stdout=_cli_json_stdout(), stderr="")
         with tempfile.TemporaryDirectory() as tmp:
             cwd = Path(tmp)
             (cwd / "TASK.md").write_text("# task\n", encoding="utf-8")
-            (cwd / "dossier.json").write_text("{}", encoding="utf-8")
-            provider.invoke(
-                prompt="hi",
-                model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
-                cwd=cwd,
-            )
+            with mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ) as run:
+                provider.invoke(
+                    prompt="hi",
+                    model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
+                    cwd=cwd,
+                )
+        cmd = run.call_args.args[0]
+        self.assertIn("--pure", cmd)
+        self.assertIn("Do not use tools", cmd[-1])
+        self.assertIn("self-contained dossier", cmd[-1])
 
-        tools = capture["message_body"]["tools"]
-        for name in OpenCodeProvider._DENIED_TOOLS + OpenCodeProvider._READ_TOOLS:
-            self.assertFalse(tools[name], msg=f"tool {name} should be False in pure mode")
-        perms = {row["permission"]: row["action"] for row in capture["session_body"]["permission"]}
-        for name in OpenCodeProvider._READ_TOOLS:
-            self.assertEqual(perms[name], "deny")
-        prompt_text = capture["message_body"]["parts"][0]["text"]
-        self.assertIn("Do not use tools", prompt_text)
-        self.assertIn("self-contained dossier", prompt_text)
-
-    def test_non_pure_enables_read_tools_when_cwd_has_files(self) -> None:
-        provider = OpenCodeProvider(
-            base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=False
-        )
-        capture: dict[str, Any] = {}
-        provider._request = _healthy_then_message(capture=capture)  # type: ignore[method-assign]
-
+    def test_non_pure_allows_context_guardrail_when_cwd_has_files(self) -> None:
+        provider = OpenCodeProvider(timeout_seconds=30, pure=False)
+        completed = SimpleNamespace(returncode=0, stdout=_cli_json_stdout(), stderr="")
         with tempfile.TemporaryDirectory() as tmp:
             cwd = Path(tmp)
             (cwd / "TASK.md").write_text("# task\n", encoding="utf-8")
-            provider.invoke(
-                prompt="hi",
-                model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
-                cwd=cwd,
-            )
-
-        tools = capture["message_body"]["tools"]
-        self.assertTrue(tools["read"])
-        self.assertTrue(tools["glob"])
-        self.assertTrue(tools["grep"])
-        self.assertFalse(tools["bash"])
-        self.assertNotIn("format", capture["message_body"])
-
-
-class JsonSchemaFormatTests(unittest.TestCase):
-    def test_pure_message_omits_json_schema_format(self) -> None:
-        # Console Go rejects format.json_schema; harness relies on prompt JSON.
-        provider = OpenCodeProvider(
-            base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=True
-        )
-        capture: dict[str, Any] = {}
-        provider._request = _healthy_then_message(capture=capture)  # type: ignore[method-assign]
-
-        with tempfile.TemporaryDirectory() as tmp:
-            provider.invoke(
-                prompt="hi",
-                model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
-                cwd=Path(tmp),
-            )
-
-        self.assertNotIn("format", capture["message_body"])
+            with mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ) as run:
+                provider.invoke(
+                    prompt="hi",
+                    model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
+                    cwd=cwd,
+                )
+        cmd = run.call_args.args[0]
+        self.assertNotIn("--pure", cmd)
+        self.assertIn("curated files", cmd[-1])
 
 
 class EmptyResponseTests(unittest.TestCase):
     def test_empty_response_raises_opencode_empty_response(self) -> None:
-        provider = OpenCodeProvider(
-            base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=True
-        )
-        empty = {
-            "info": {"tokens": {"input": 0, "output": 0, "cache": {}}},
-            "parts": [],
-        }
-        provider._request = _healthy_then_message(  # type: ignore[method-assign]
-            message_response=empty
-        )
-
+        provider = OpenCodeProvider(timeout_seconds=30, pure=True)
+        completed = SimpleNamespace(returncode=0, stdout="", stderr="")
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaises(OpenCodeEmptyResponse) as ctx:
-                provider.invoke(
-                    prompt="hi",
-                    model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
-                    cwd=Path(tmp),
-                )
+            with mock.patch(
+                "tools.llm_harness.providers.subprocess.run", return_value=completed
+            ):
+                with self.assertRaises(OpenCodeEmptyResponse) as ctx:
+                    provider.invoke(
+                        prompt="hi",
+                        model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
+                        cwd=Path(tmp),
+                    )
         self.assertIn("empty assistant text", str(ctx.exception))
-        self.assertIn("response_debug=", str(ctx.exception))
-        self.assertIn("part_types", str(ctx.exception))
-
-    def test_structured_output_avoids_empty_raise(self) -> None:
-        provider = OpenCodeProvider(
-            base_url="http://127.0.0.1:4096", timeout_seconds=30, pure=True
-        )
-        response = {
-            "info": {
-                "tokens": {"input": 5, "output": 2, "cache": {}},
-                "structured_output": {
-                    "source": "void f(){}",
-                    "hypothesis": "h",
-                    "notes": [],
-                    "next_change": "",
-                    "change": "",
-                },
-            },
-            "parts": [],
-        }
-        provider._request = _healthy_then_message(  # type: ignore[method-assign]
-            message_response=response
-        )
-        with tempfile.TemporaryDirectory() as tmp:
-            result = provider.invoke(
-                prompt="hi",
-                model=ModelConfig(id="x", provider="opencode", model="opencode/m"),
-                cwd=Path(tmp),
-            )
-        self.assertIn("void f()", result.text)
+        self.assertIn("stdout_chars=", str(ctx.exception))
 
     def test_parse_prefers_structured_output(self) -> None:
         text, _, usage = parse_opencode_message(

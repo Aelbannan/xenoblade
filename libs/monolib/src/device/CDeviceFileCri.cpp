@@ -49,5 +49,5 @@ extern "C" void func_80450B4C(void* self) {
 // LLM-HARNESS-END: us-80453860
 
 // LLM-HARNESS-BEGIN: us-8045233c
-extern "C" void __dt__14CDeviceFileCriFv() {}
+extern "C" void __dt__14CDeviceFileCriFv(void* self) {}
 // LLM-HARNESS-END: us-8045233c

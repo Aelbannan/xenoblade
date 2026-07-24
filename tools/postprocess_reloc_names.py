@@ -267,6 +267,23 @@ UNIT_RULES: dict[str, UnitRules] = {
     "CGame.o": UnitRules(
         drop_text_symbols=("FORCEACTIVECGame_cpp_wkStandbyLogin__Fv",),
     ),
+    # MWCC switch cookies for func_8003B6A0 / func_8003B800.
+    # VM wrappers: retail asm keeps address-suffixed names; MWCC emits short names.
+    "ocBdat.o": UnitRules(
+        exact_renames=(
+            # MWCC cookie ids drift with TU growth; size-0x24 switch tables.
+            ("@1095", "jumptable_eu_80524D90"),
+            ("@1252", "jumptable_eu_80524DB8"),
+            ("bdat", "bdat_8003BD4C"),
+            ("getVal", "getVal_8003BDB8"),
+            ("getArrayVal", "getArrayVal_8003BE70"),
+            ("getArrayCount", "getArrayCount_8003BF48"),
+            ("getVarType", "getVarType_8003BFB8"),
+            ("getIdCount", "getIdCount_8003C028"),
+            ("getIdTop", "getIdTop_8003C074"),
+            ("getFlagVal", "getFlagVal_8003C0C0"),
+        ),
+    ),
     "CMenuArtsSelect.o": UnitRules(),
     "CMenuBattlePlayerState.o": UnitRules(
         # Move: MWCC int→float biases as TU-local @N; retail lbl_eu_80666FA8/FB8.
@@ -469,6 +486,15 @@ UNIT_RULES: dict[str, UnitRules] = {
     # .init: retail bakes _stack_addr into lis+ori; SDA bases stay ADDR16_HI/LO.
     "__start.o": UnitRules(
         bake_linker_addrs=(("_stack_addr", 0x8067B560),),
+    ),
+    "lyt_texMap.o": UnitRules(
+        # TexMap::Get(GXTexObj*): MWCC @N pools vs retail SDA labels.
+        # 1/256f (@5590), signed int→double magic (@5594), 256.0f (@5623).
+        pool_patterns=(
+            (struct.pack(">I", 0x3B800000), "lbl_eu_80669DB8"),
+            (struct.pack(">II", MAGIC_HI, 0), "lbl_eu_80669DC0"),
+            (struct.pack(">I", 0x43800000), "lbl_eu_80669DC8"),
+        ),
     ),
     "snd_BasicSound.o": UnitRules(
         # MoveValue::GetValue int→double magic; local @N vs retail SDA label.

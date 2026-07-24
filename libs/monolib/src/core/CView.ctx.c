@@ -16572,6 +16572,7 @@ public:
     s16 getSplitLine();
     void setSplitLine(s16 line);
     void setCurrent();
+    bool hasCurrent() const;
     void updateMsg();
     void renderView();
 
@@ -233665,6 +233666,19 @@ public:
 };
 /* end "monolib/core/CRsrcData.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CScriptCode.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CScriptCode.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CScriptCode : public CWorkThread {
+public:
+    CScriptCode(const char* pName, CWorkThread* pParent);
+
+    static CScriptCode* create(CWorkThread* pParent);
+
+    static CScriptCode* getInstance();
+};
 /* end "monolib/core/CScriptCode.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CTaskManager.hpp" */
 #pragma once
@@ -233726,6 +233740,8 @@ public:
     static CViewRoot* create(CWorkThread* pParent);
     static CViewRoot* getInstance();
     static CView* getCurrent();
+    static bool isCurrent(const CView* view);
+    static bool isCurrentChild(const CView* view, const CView* current);
     static bool isInitialized();
     static void destroyProc(CProc* pProc);
     static void setCurrent(CView* view);
@@ -245959,6 +245975,20 @@ void CView::setDisp(bool r4, bool r5) {
             invalidCurrent__9CViewRootFP5CView(this);
         }
     }
+}
+
+// True when this view is neither the root current nor under it (inactive chrome).
+bool CView::hasCurrent() const {
+    int result = 0;
+    if (CViewRoot::isCurrent(this)) {
+        goto done;
+    }
+    if (CViewRoot::isCurrentChild(this, CViewRoot::getCurrent())) {
+        goto done;
+    }
+    result = 1;
+done:
+    return (bool)result;
 }
 
 // PLAN.md 17.6: whole-function asm. MWCC C++ spills then lwz unk45C; retail

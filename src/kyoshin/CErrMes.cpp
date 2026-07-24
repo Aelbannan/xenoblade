@@ -8,8 +8,9 @@
 extern "C" void func_eu_802B12DC() {}
 // LLM-HARNESS-END: us-802b12dc
 
+extern "C" void func_8003AA8C__5CBdatFUl(unsigned long);
 // LLM-HARNESS-BEGIN: us-802b1334
-extern "C" bool func_eu_802B1334() { return false; }
+extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
 // LLM-HARNESS-END: us-802b1334
 
 // LLM-HARNESS-BEGIN: us-802b133c

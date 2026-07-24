@@ -29,7 +29,7 @@ defaults to `shadow_mode=true`. See [SOUNDNESS.md](SOUNDNESS.md) §Two gates.
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v44`
+- Architecture model: `broadway-ppc32-be-v51`
 - Result format: `24`
 - Certificate format: `18`
 

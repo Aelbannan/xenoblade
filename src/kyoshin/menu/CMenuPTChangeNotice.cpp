@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuPTChangeNotice() {}
 // LLM-HARNESS-END: us-8029573c
 
 // LLM-HARNESS-BEGIN: us-80295820
-extern "C" void __dt__19CMenuPTChangeNoticeFv() {}
+extern "C" void __dt__19CMenuPTChangeNoticeFv(void* self) {}
 // LLM-HARNESS-END: us-80295820
 
 // LLM-HARNESS-BEGIN: us-802958ac
@@ -25,11 +25,11 @@ extern "C" void Move__19CMenuPTChangeNoticeFv() {}
 // LLM-HARNESS-END: us-802959c8
 
 // LLM-HARNESS-BEGIN: us-80295a88
-extern "C" void func_8029348C() {}
+extern "C" void func_8029348C(void* self) {}
 // LLM-HARNESS-END: us-80295a88
 
 // LLM-HARNESS-BEGIN: us-802960ec
-extern "C" void cbRenderBefore__19CMenuPTChangeNoticeFv() {}
+extern "C" void cbRenderBefore__19CMenuPTChangeNoticeFv(void* self) {}
 // LLM-HARNESS-END: us-802960ec
 
 // LLM-HARNESS-BEGIN: us-80296198
@@ -53,17 +53,17 @@ extern "C" void func_80293D2C() {}
 // LLM-HARNESS-END: us-80296328
 
 // LLM-HARNESS-BEGIN: us-8029636c
-extern "C" bool OnFileEvent__19CMenuPTChangeNoticeFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__19CMenuPTChangeNoticeFP10CEventFile(void* self) { ((void(*)(void*))func_8029348C)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-8029636c
 
 // LLM-HARNESS-BEGIN: us-80296374
-extern "C" bool func_80293D78() { return false; }
+extern "C" void func_80293D78(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296374
 
 // LLM-HARNESS-BEGIN: us-8029637c
-extern "C" bool func_80293D80() { return false; }
+extern "C" void func_80293D80(void* self) { ((void(*)(void*))cbRenderBefore__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-8029637c
 
 // LLM-HARNESS-BEGIN: us-80296384
-extern "C" bool func_80293D88() { return false; }
+extern "C" void func_80293D88(void* self) { ((void(*)(void*))__dt__19CMenuPTChangeNoticeFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-80296384

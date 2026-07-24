@@ -3007,6 +3007,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -4322,12 +4387,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -7524,71 +7592,67 @@ namespace cf {
 }
 
 // LLM-HARNESS-BEGIN: us-8017798c
-extern "C" void CActorParam_UnkVirtualFunc1() {}
+extern "C" void CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017798c
 // LLM-HARNESS-BEGIN: us-80177ee4
-extern "C" void CActorParam_UnkVirtualFunc2() {}
+extern "C" int CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) { return 0x0; }
 // LLM-HARNESS-END: us-80177ee4
 // LLM-HARNESS-BEGIN: us-80179e28
-extern "C" void CActorParam_UnkVirtualFunc35() {}
+extern "C" void CActorParam_UnkVirtualFunc35__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-80179e28
 // LLM-HARNESS-BEGIN: us-8017e404
-extern "C" void CActorParam_UnkVirtualFunc54() {}
+extern "C" void CActorParam_UnkVirtualFunc54__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e404
 // LLM-HARNESS-BEGIN: us-8017e43c
-extern "C" void CActorParam_UnkVirtualFunc60() {}
+extern "C" void CActorParam_UnkVirtualFunc60__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e43c
 // LLM-HARNESS-BEGIN: us-8017e998
-extern "C" void CActorParam_UnkVirtualFunc40() {}
+extern "C" void CActorParam_UnkVirtualFunc40__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e998
 // LLM-HARNESS-BEGIN: us-8017e9ac
-extern "C" void CActorParam_UnkVirtualFunc46() {}
+extern "C" void CActorParam_UnkVirtualFunc46__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e9ac
 // LLM-HARNESS-BEGIN: us-8017e9c0
-extern "C" void CActorParam_UnkVirtualFunc52() {}
+extern "C" void CActorParam_UnkVirtualFunc52__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e9c0
 // LLM-HARNESS-BEGIN: us-8017ea9c
-void cf::CActorParam::CActorParam_UnkVirtualFunc58() {
-    *(unsigned short*)((u8*)this + 0x160c) = 0;
-}
+extern "C" void CActorParam_UnkVirtualFunc58__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017ea9c
 // LLM-HARNESS-BEGIN: us-8017eaa8
-void cf::CActorParam::CActorParam_UnkVirtualFunc64() {
-    *(u16*)((u8*)this + 0x1614) = 0;
-}
+extern "C" void CActorParam_UnkVirtualFunc64__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017eaa8
 // LLM-HARNESS-BEGIN: us-8017f098
-extern "C" void CActorParam_UnkVirtualFunc141() {}
+extern "C" void CActorParam_UnkVirtualFunc141__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f098
 // LLM-HARNESS-BEGIN: us-8017f0dc
-extern "C" void CActorParam_UnkVirtualFunc142() {}
+extern "C" void CActorParam_UnkVirtualFunc142__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f0dc
 // LLM-HARNESS-BEGIN: us-8017f188
-extern "C" void CActorParam_UnkVirtualFunc143() {}
+extern "C" void CActorParam_UnkVirtualFunc143__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f188
 // LLM-HARNESS-BEGIN: us-8017f1d0
-extern "C" void CActorParam_UnkVirtualFunc144() {}
+extern "C" void CActorParam_UnkVirtualFunc144__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f1d0
 // LLM-HARNESS-BEGIN: us-8017f258
-extern "C" void CActorParam_UnkVirtualFunc149() {}
+extern "C" void CActorParam_UnkVirtualFunc149__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f258
 // LLM-HARNESS-BEGIN: us-8017f334
-extern "C" void CActorParam_UnkVirtualFunc150() {}
+extern "C" void CActorParam_UnkVirtualFunc150__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f334
 // LLM-HARNESS-BEGIN: us-8017f674
-extern "C" void CActorParam_UnkVirtualFunc155() {}
+extern "C" s16 CActorParam_UnkVirtualFunc155__Q22cf11CActorParamFv(void* self) { return *(s16*)((u8*)self + 0x3358); }
 // LLM-HARNESS-END: us-8017f674
 // LLM-HARNESS-BEGIN: us-8017f850
-extern "C" void CActorParam_UnkVirtualFunc157() {}
+extern "C" s16 CActorParam_UnkVirtualFunc157__Q22cf11CActorParamFv(void* self) { return *(s16*)((u8*)self + 0x335a); }
 // LLM-HARNESS-END: us-8017f850
 // LLM-HARNESS-BEGIN: us-8017fb40
-extern "C" void CActorParam_UnkVirtualFunc160() {}
+extern "C" void CActorParam_UnkVirtualFunc160__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017fb40
 // LLM-HARNESS-BEGIN: us-80180158
-extern "C" void CActorParam_UnkVirtualFunc23() {}
+extern "C" float CActorParam_UnkVirtualFunc23__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x15e8); }
 // LLM-HARNESS-END: us-80180158
 // LLM-HARNESS-BEGIN: us-80180160
-extern "C" void CActorParam_UnkVirtualFunc21() {}
+extern "C" void CActorParam_UnkVirtualFunc21__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x15e8) = val; }
 // LLM-HARNESS-END: us-80180160
 
 // LLM-HARNESS-BEGIN: us-80176e4c
@@ -7598,95 +7662,95 @@ extern "C" void func_80175A50() {}
 extern "C" void func_801765A4() {}
 // LLM-HARNESS-END: us-801779a0
 // LLM-HARNESS-BEGIN: us-80177eec
-extern "C" void CActorParam_UnkVirtualFunc177() {}
+extern "C" void CActorParam_UnkVirtualFunc177__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-80177eec
 // LLM-HARNESS-BEGIN: us-80179e38
-extern "C" void CActorParam_UnkVirtualFunc4() {}
+extern "C" void CActorParam_UnkVirtualFunc4__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-80179e38
 // LLM-HARNESS-BEGIN: us-8017c700
-extern "C" void CActorParam_UnkVirtualFunc174() {}
+extern "C" void CActorParam_UnkVirtualFunc174__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017c700
 // LLM-HARNESS-BEGIN: us-8017cdb0
-extern "C" void CActorParam_UnkVirtualFunc175() {}
+extern "C" void CActorParam_UnkVirtualFunc175__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017cdb0
 // LLM-HARNESS-BEGIN: us-8017cf48
-extern "C" void CActorParam_UnkVirtualFunc176() {}
+extern "C" void CActorParam_UnkVirtualFunc176__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017cf48
 // LLM-HARNESS-BEGIN: us-8017d594
-extern "C" void CActorParam_UnkVirtualFunc10() {}
+extern "C" void CActorParam_UnkVirtualFunc10__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017d594
 // LLM-HARNESS-BEGIN: us-8017d83c
-extern "C" void CActorParam_UnkVirtualFunc11() {}
+extern "C" void CActorParam_UnkVirtualFunc11__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017d83c
 // LLM-HARNESS-BEGIN: us-8017d9a0
-extern "C" void CActorParam_UnkVirtualFunc12() {}
+extern "C" void CActorParam_UnkVirtualFunc12__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017d9a0
 // LLM-HARNESS-BEGIN: us-8017e2fc
-extern "C" void CActorParam_UnkVirtualFunc13() {}
+extern "C" void CActorParam_UnkVirtualFunc13__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e2fc
 // LLM-HARNESS-BEGIN: us-8017e370
-extern "C" void CActorParam_UnkVirtualFunc179() {}
+extern "C" void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e370
 // LLM-HARNESS-BEGIN: us-8017e474
-extern "C" void CActorParam_UnkVirtualFunc180() {}
+extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e474
 // LLM-HARNESS-BEGIN: us-8017e5b8
-extern "C" void CActorParam_UnkVirtualFunc5() {}
+extern "C" void CActorParam_UnkVirtualFunc5__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e5b8
 // LLM-HARNESS-BEGIN: us-8017e644
-extern "C" void CActorParam_UnkVirtualFunc6() {}
+extern "C" void CActorParam_UnkVirtualFunc6__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e644
 // LLM-HARNESS-BEGIN: us-8017e6b8
-extern "C" void CActorParam_UnkVirtualFunc9() {}
+extern "C" void CActorParam_UnkVirtualFunc9__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e6b8
 // LLM-HARNESS-BEGIN: us-8017e9d4
-extern "C" void CActorParam_UnkVirtualFunc48() {}
+extern "C" void CActorParam_UnkVirtualFunc48__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e9d4
 // LLM-HARNESS-BEGIN: us-8017eab4
-extern "C" void CActorParam_UnkVirtualFunc67() {}
+extern "C" void CActorParam_UnkVirtualFunc67__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017eab4
 // LLM-HARNESS-BEGIN: us-8017eaec
-extern "C" void CActorParam_UnkVirtualFunc70() {}
+extern "C" void CActorParam_UnkVirtualFunc70__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017eaec
 // LLM-HARNESS-BEGIN: us-8017eb24
-extern "C" void CActorParam_UnkVirtualFunc7() {}
+extern "C" void CActorParam_UnkVirtualFunc7__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017eb24
 // LLM-HARNESS-BEGIN: us-8017ebdc
-extern "C" void CActorParam_UnkVirtualFunc8() {}
+extern "C" void CActorParam_UnkVirtualFunc8__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017ebdc
 // LLM-HARNESS-BEGIN: us-8017ec94
-extern "C" bool CActorParam_UnkVirtualFunc138() { return false; }
+extern "C" void CActorParam_UnkVirtualFunc138__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017ec94
 // LLM-HARNESS-BEGIN: us-8017ed30
-extern "C" void CActorParam_UnkVirtualFunc140() {}
+extern "C" void CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017ed30
 // LLM-HARNESS-BEGIN: us-8017f410
-extern "C" void CActorParam_UnkVirtualFunc153() {}
+extern "C" void CActorParam_UnkVirtualFunc153__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f410
 // LLM-HARNESS-BEGIN: us-8017f5f0
-extern "C" void CActorParam_UnkVirtualFunc154() {}
+extern "C" void CActorParam_UnkVirtualFunc154__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f5f0
 // LLM-HARNESS-BEGIN: us-8017f67c
-extern "C" void CActorParam_UnkVirtualFunc156() {}
+extern "C" void CActorParam_UnkVirtualFunc156__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f67c
 // LLM-HARNESS-BEGIN: us-8017f858
-extern "C" void CActorParam_UnkVirtualFunc158() {}
+extern "C" void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f858
 // LLM-HARNESS-BEGIN: us-8017f8fc
-extern "C" void CActorParam_UnkVirtualFunc159() {}
+extern "C" void CActorParam_UnkVirtualFunc159__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017f8fc
 // LLM-HARNESS-BEGIN: us-8017fb94
-extern "C" void CActorParam_UnkVirtualFunc86() {}
+extern "C" void CActorParam_UnkVirtualFunc86__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017fb94
 // LLM-HARNESS-BEGIN: us-8017fbf0
-extern "C" void CActorParam_UnkVirtualFunc87() {}
+extern "C" void CActorParam_UnkVirtualFunc87__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017fbf0
 // LLM-HARNESS-BEGIN: us-8017fc50
-extern "C" void CActorParam_UnkVirtualFunc135() {}
+extern "C" void CActorParam_UnkVirtualFunc135__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017fc50
 // LLM-HARNESS-BEGIN: us-8017fd2c
-extern "C" void CActorParam_UnkVirtualFunc136() {}
+extern "C" void CActorParam_UnkVirtualFunc136__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017fd2c
 // LLM-HARNESS-BEGIN: us-8017fe00
-extern "C" void CActorParam_UnkVirtualFunc137() {}
+extern "C" void CActorParam_UnkVirtualFunc137__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017fe00

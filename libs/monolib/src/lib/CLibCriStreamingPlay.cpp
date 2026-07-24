@@ -41,7 +41,7 @@ extern "C" void wkUpdate__20CLibCriStreamingPlayFv() {}
 // LLM-HARNESS-END: us-8045ff08
 
 // LLM-HARNESS-BEGIN: us-80460428
-extern "C" void wkStandbyLogin__20CLibCriStreamingPlayFv() {}
+extern "C" void wkStandbyLogin__20CLibCriStreamingPlayFv(void) {}
 // LLM-HARNESS-END: us-80460428
 
 // LLM-HARNESS-BEGIN: us-8046042c
@@ -85,9 +85,9 @@ extern "C" void func_8045D03C__20CLibCriStreamingPlayFv() {}
 // LLM-HARNESS-END: us-80461080
 
 // LLM-HARNESS-BEGIN: us-80461184
-extern "C" bool func_8045D140__20CLibCriStreamingPlayFv() { return false; }
+extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
 // LLM-HARNESS-END: us-80461184
 
 // LLM-HARNESS-BEGIN: us-8046118c
-extern "C" bool func_8045D148__20CLibCriStreamingPlayFv() { return false; }
+extern "C" void func_8045D148__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))__dt__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
 // LLM-HARNESS-END: us-8046118c

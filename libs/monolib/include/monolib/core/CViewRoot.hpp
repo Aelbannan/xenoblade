@@ -24,6 +24,8 @@ public:
     static CViewRoot* create(CWorkThread* pParent);
     static CViewRoot* getInstance();
     static CView* getCurrent();
+    static bool isCurrent(const CView* view);
+    static bool isCurrentChild(const CView* view, const CView* current);
     static bool isInitialized();
     static void destroyProc(CProc* pProc);
     static void setCurrent(CView* view);

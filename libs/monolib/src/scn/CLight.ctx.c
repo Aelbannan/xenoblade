@@ -2176,6 +2176,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3491,12 +3556,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -6712,7 +6780,8 @@ extern "C" void func_804C0920(CLight* _this, float f, _GXSpotFn spotFn) {
 extern "C" void func_804C0928() {}
 // LLM-HARNESS-END: us-804c4a84
 // LLM-HARNESS-BEGIN: us-804c4b3c
-extern "C" bool func_804C09E0() { return false; }
+extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
+extern "C" void func_804C09E0(void* self) { InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
 // LLM-HARNESS-END: us-804c4b3c
 // LLM-HARNESS-BEGIN: us-804c4b44
 extern "C" void func_804C09E8() {}

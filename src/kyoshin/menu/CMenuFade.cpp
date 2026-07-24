@@ -28,12 +28,13 @@ extern "C" void func_80113E38(CMenuFade* p) {
     __dt__9CMenuFadeFv((CMenuFade*)((char*)p - 0x58));
 }
 // LLM-HARNESS-END: us-80114914
+extern "C" void cbRenderBefore__9CMenuFadeFv(void* self);
 // LLM-HARNESS-BEGIN: us-8011491c
-extern "C" bool func_80113E40() { return false; }
+extern "C" void func_80113E40(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-8011491c
 // LLM-HARNESS-BEGIN: us-80114924
 extern "C" void func_80113E48(void* arg0) {
-    __dt__9CMenuFadeFv((char*)arg0 - 0x5C);
+    __dt__9CMenuFadeFv((struct CMenuFade*)((char*)arg0 - 0x5C));
 }
 // LLM-HARNESS-END: us-80114924
 

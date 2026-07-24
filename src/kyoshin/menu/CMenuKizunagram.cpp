@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuKizunagram() {}
 // LLM-HARNESS-END: us-80258ba4
 
 // LLM-HARNESS-BEGIN: us-80258c90
-extern "C" void __dt__15CMenuKizunagramFv() {}
+extern "C" void __dt__15CMenuKizunagramFv(void* self) {}
 // LLM-HARNESS-END: us-80258c90
 
 // LLM-HARNESS-BEGIN: us-80258d20
@@ -25,7 +25,7 @@ extern "C" void Move__15CMenuKizunagramFv() {}
 // LLM-HARNESS-END: us-80259278
 
 // LLM-HARNESS-BEGIN: us-802593f4
-extern "C" void cbRenderBefore__15CMenuKizunagramFv() {}
+extern "C" void cbRenderBefore__15CMenuKizunagramFv(void* self) {}
 // LLM-HARNESS-END: us-802593f4
 
 // LLM-HARNESS-BEGIN: us-802594c8
@@ -81,9 +81,9 @@ extern "C" void func_80257A2C() {}
 // LLM-HARNESS-END: us-80259c68
 
 // LLM-HARNESS-BEGIN: us-80259cb8
-extern "C" bool func_80257A7C() { return false; }
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80259cb8
 
 // LLM-HARNESS-BEGIN: us-80259cc0
-extern "C" bool func_80257A84() { return false; }
+extern "C" void func_80257A84(void* self) { ((void(*)(void*))__dt__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80259cc0

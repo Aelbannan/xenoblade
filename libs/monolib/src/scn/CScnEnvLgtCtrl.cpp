@@ -309,7 +309,7 @@ extern "C" void func_804C6B44() {}
 // LLM-HARNESS-END: us-804caca0
 
 // LLM-HARNESS-BEGIN: us-804cacc0
-extern "C" bool func_804C6B64() { return false; }
+extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804cacc0
 
 // LLM-HARNESS-BEGIN: us-804cacc8
@@ -317,19 +317,19 @@ extern "C" void func_804C6B6C() {}
 // LLM-HARNESS-END: us-804cacc8
 
 // LLM-HARNESS-BEGIN: us-804cace4
-extern "C" bool func_804C6B88() { return false; }
+extern "C" float func_804C6B88(void* self) { return *(float*)((u8*)self + 0xc8); }
 // LLM-HARNESS-END: us-804cace4
 
 // LLM-HARNESS-BEGIN: us-804cacec
-extern "C" bool func_804C6B90() { return false; }
+extern "C" void func_804C6B90(void* self, float val) { *(float*)((u8*)self + 0xc8) = val; }
 // LLM-HARNESS-END: us-804cacec
 
 // LLM-HARNESS-BEGIN: us-804cacf4
-extern "C" bool func_804C6B98() { return false; }
+extern "C" float func_804C6B98(void* self) { return *(float*)((u8*)self + 0xcc); }
 // LLM-HARNESS-END: us-804cacf4
 
 // LLM-HARNESS-BEGIN: us-804cacfc
-extern "C" bool func_804C6BA0() { return false; }
+extern "C" void func_804C6BA0(void* self, float val) { *(float*)((u8*)self + 0xcc) = val; }
 // LLM-HARNESS-END: us-804cacfc
 
 // LLM-HARNESS-BEGIN: us-804cad04

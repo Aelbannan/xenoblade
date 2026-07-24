@@ -2,7 +2,7 @@
 
 <!-- BEGIN GENERATED PPC_EQUIVALENCE_VERSION -->
 
-- Architecture model: `broadway-ppc32-be-v44`
+- Architecture model: `broadway-ppc32-be-v51`
 - Result format: `24`
 - Certificate format: `18`
 
@@ -417,9 +417,11 @@ After an architecture bump (`automatic_promotion` stays `false`):
    MMIO/gx-fifo allowlists empty until each has promotion-grade evidence.
 
 **GX FIFO Tier-A (v43+):** the live architecture model is now
-`broadway-ppc32-be-v44` (v43 introduced GX FIFO Tier-A; v44 fixed both-invalid
-observable suppression; v42 stays reserved for the Phase 12 scalar FP exact
-v2 production switch — see `SCALAR_FP_V2.md`). See
+`broadway-ppc32-be-v51` (v43 introduced GX FIFO Tier-A; v44 fixed both-invalid
+observable suppression; v45–v50 CR/XER/FPSCR/LR/MSR–SPR/FMR callee-summary
+fixes; v51 record-form CR0 reads `xer.so` and logical immediates list their
+destination GPR; v42 stays reserved for the Phase 12 scalar FP exact v2
+production switch — see `SCALAR_FP_V2.md`). See
 [`GX_FIFO_TIER_A.md`](GX_FIFO_TIER_A.md) for the frozen `gx-fifo-write-trace`
 / `gx-fifo-read` / `mmio-loop-emission` domain, and
 `gx_fifo_v1_rollout.py` (`python3 -m tools.ppc_equivalence.gx_fifo_v1_rollout
@@ -602,8 +604,44 @@ mmio-loop-emission allowlist empty; staged canaries live at
 
 - Direct calls (`bl`/`bcl`) with a recorded matched-callee summary are modeled
   as deterministic ABI transitions: inputs are the preserved read set,
-  outputs reflect the write set, and nonvolatile EABI state is preserved.
-  Summaries may be opaque EABI or precise body-inferred effect sets.
+  outputs reflect the write set, and nonvolatile EABI state is preserved
+  unless the summary write set names it. `_apply_call_summary` refreshes every
+  CR field listed in the write set (`cr0`…`cr7`); a whole-`cr` write refreshes
+  all eight fields. Opaque EABI lists only volatile CR fields, so CR2–CR4 stay
+  preserved under that contract; body-inferred leaves that write `cr2`/`cr3`/
+  `cr4` (for example `cmpwi cr2,…`) or `cr` (`mtcrf`) must update those bits
+  from the summary UF — preserving entry CR2–CR4 here is a false-EQUIVALENT /
+  false-refusal hole. Inference must not inject a whole-`cr` read solely
+  because a CR field is written: overwrite compares do not read CR, and
+  keying the call token on entry CR refuses EQUIVALENT when only overwritten
+  entry CR2–CR4 differed. True CR RMW ops already list `cr` in
+  `register_effects` reads. Carry / OE arithmetic must list `xer.ca` (and
+  OE `xer.ov` / `xer.so`) in `register_effects`: an `adde` leaf that omitted
+  `xer.ca` from the call token unified callers that differed only in CA and
+  yielded false EQUIVALENT on the summarized `r3` result. Record-form integer
+  ops (`Rc`, `andi.`, `andis.`, `addic.`) must also read `xer.so` because
+  `_record_cr0` embeds SO into CR0 — omitting it unified callers that differed
+  only in SO on summarized `cr0`. Logical immediates (`ori`/`oris`/`xori`/
+  `xoris`/`andi.`/`andis.`) must appear in `destination_ops` so the destination
+  GPR is written in the effect set. FP arithmetic must
+  list `fpscr` reads/writes in `register_effects` (sticky / FPRF updates); a
+  `fadds` leaf that omitted `fpscr` allowed post-call `mffs` observers to prove
+  EQUIVALENT across divergent FP inputs. `register_effects` for FMR/FNEG/FABS/
+  FNABS/FRSP/FCTIW* must read FB (`operands[2]`): the decoder emits
+  `(fd, fa, fb, fc)` with reserved `fa==0`, and indexing `fa` made inference
+  depend on `f0` and omit the real source — false EQUIVALENT on summarized
+  `fmr` leaves when callers only diverged in FB. `automatic_live_out` must
+  classify `mffs` / `mtfs*` before the broad `_FP_SCALAR_ARITH` arm so MFFS is
+  not treated as writing FPSCR and `mtfsb0` is not treated as writing `f0`.
+  `_apply_call_summary` must refresh `lr` when it appears in the write set
+  (trampoline `mtlr; blr`); inference keeps `lr` in the volatile write filter.
+  Opaque EABI still omits `lr` so ordinary returns preserve the link register.
+  The same apply path must refresh `msr`, `gqr*`, `sr*`, `time_base`, `srr0`/
+  `srr1`, and aux SPRs when written — preserving entry MSR/GQR across an
+  `mtmsr` / `mtspr` leaf allowed post-call `mfmsr` / `mfspr` observers to prove
+  EQUIVALENT. Inference's volatile filter and opaque EABI writes include those
+  components (fail-closed for unknown callees). Summaries may be opaque EABI or
+  precise body-inferred effect sets.
 - Same-object inference composes nested precise summaries when every nested
   relocated callee has a non-opaque contract; otherwise it stays
   `nested-call-opaque-eabi`. Validation failures widen required effects rather

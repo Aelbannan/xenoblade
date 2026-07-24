@@ -178,11 +178,13 @@ private:
         u32 wrapS : 2;
         u32 wrapT : 2;
         u32 minFilter : 3;
-        u32 magFilter : 3;
+        // Retail Get(GXTexObj) LOD path: extrwi mag@12 (1), bias@13, edge@14, aniso@15 (2).
+        // magFilter is 1 bit here (GX_NEAR/GX_LINEAR); paletteFormat follows anisotropy.
+        u32 magFilter : 1;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 paletteFormat : 2;
         u32 anisotropy : 2;
+        u32 paletteFormat : 2;
     } mBits; // at 0x18
 };
 

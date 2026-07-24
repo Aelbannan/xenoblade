@@ -69,10 +69,10 @@ void CUIWindowManager::Move() {
         for (WindowNode* n = sentinel->mNext; n != sentinel; n = n->mNext) {
             IUIWindow* window = n->mItem;
             s32 timer;
-            if (window->unk5C != NULL) {
-                timer = window->unk5C->unk828;
-            } else {
+            if (window->unk5C == NULL) {
                 timer = window->unk60;
+            } else {
+                timer = window->unk5C->unk828;
             }
             if (timer > 0) {
                 lbl_eu_8066408C = (s16)timer;
@@ -85,10 +85,10 @@ void CUIWindowManager::Move() {
         for (WindowNode* n = sentinel->mNext; n != sentinel; n = n->mNext) {
             IUIWindow* window = n->mItem;
             s32 timer;
-            if (window->unk5C != NULL) {
-                timer = window->unk5C->unk828;
-            } else {
+            if (window->unk5C == NULL) {
                 timer = window->unk60;
+            } else {
+                timer = window->unk5C->unk828;
             }
             if (timer > 0) {
                 lbl_eu_8066408C = (s16)timer;
@@ -106,7 +106,7 @@ void CUIWindowManager::Move() {
         for (; search != sentinel; search = search->mNext) {
             if (search->mItem->unk65 != 0 || unkA1 != 0) {
                 bool flag = true;
-                for (; mark != sentinel; mark = mark->mNext) {
+                for (; mark != mWindowList1.mStartNodePtr; mark = mark->mNext) {
                     mark->mItem->unk65 = flag;
                 }
                 break;
@@ -120,7 +120,7 @@ void CUIWindowManager::Move() {
         for (; search != sentinel; search = search->mNext) {
             if (search->mItem->unk65 != 0 || unkA1 != 0) {
                 bool flag = true;
-                for (; mark != sentinel; mark = mark->mNext) {
+                for (; mark != mWindowList2.mStartNodePtr; mark = mark->mNext) {
                     mark->mItem->unk65 = flag;
                 }
                 break;
@@ -196,10 +196,10 @@ extern "C" void func_8013EC60() {
 extern "C" void func_8013EC6C() {}
 // LLM-HARNESS-END: us-8013f670
 // LLM-HARNESS-BEGIN: us-8013faac
-extern "C" void Draw__Q216CUIWindowManager5CTestFv() {}
+extern "C" void Draw__Q216CUIWindowManager5CTestFv(void* self) {}
 // LLM-HARNESS-END: us-8013faac
 // LLM-HARNESS-BEGIN: us-8013fab8
-extern "C" void Init__Q216CUIWindowManager5CTestFv() {}
+extern "C" void Init__Q216CUIWindowManager5CTestFv(void* self) {}
 // LLM-HARNESS-END: us-8013fab8
 // LLM-HARNESS-BEGIN: us-8013fc38
 extern "C" void* func_8013F234(void* self) {

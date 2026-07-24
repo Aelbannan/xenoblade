@@ -84,10 +84,11 @@ extern "C" void func_800CA42C() {}
 extern "C" void func_800CA458() {}
 // LLM-HARNESS-END: us-800cae8c
 
+extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);
 // LLM-HARNESS-BEGIN: us-800caf10
-extern "C" bool func_800CA4DC() { return false; }
+extern "C" void func_800CA4DC(void* self) { ((void(*)(void*))__dt__Q22cf14CfObjectImplPcFv)((char*)self - 0xc); }
 // LLM-HARNESS-END: us-800caf10
 
 // LLM-HARNESS-BEGIN: us-800caf18
-extern "C" bool func_800CA4E4() { return false; }
+extern "C" void func_800CA4E4(void* self) { ((void(*)(void*))__dt__Q22cf14CfObjectImplPcFv)((char*)self - 0x10); }
 // LLM-HARNESS-END: us-800caf18

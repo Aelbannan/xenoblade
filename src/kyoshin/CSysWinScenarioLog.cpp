@@ -9,7 +9,7 @@ extern "C" void __ct__CSysWinScenarioLog() {}
 // LLM-HARNESS-END: us-80280934
 
 // LLM-HARNESS-BEGIN: us-80280a38
-extern "C" void __dt__18CSysWinScenarioLogFv() {}
+extern "C" void __dt__18CSysWinScenarioLogFv(void* self) {}
 // LLM-HARNESS-END: us-80280a38
 
 // LLM-HARNESS-BEGIN: us-80280aac
@@ -25,7 +25,7 @@ extern "C" void Move__18CSysWinScenarioLogFv() {}
 // LLM-HARNESS-END: us-80280c54
 
 // LLM-HARNESS-BEGIN: us-80280dc0
-extern "C" void cbRenderBefore__18CSysWinScenarioLogFv() {}
+extern "C" void cbRenderBefore__18CSysWinScenarioLogFv(void* self) {}
 // LLM-HARNESS-END: us-80280dc0
 
 // LLM-HARNESS-BEGIN: us-80280e6c
@@ -41,23 +41,23 @@ extern "C" void func_8027EA6C() {}
 // LLM-HARNESS-END: us-80280ef0
 
 // LLM-HARNESS-BEGIN: us-80281104
-extern "C" void func_8027EC80() {}
+extern "C" void func_8027EC80(void* self) {}
 // LLM-HARNESS-END: us-80281104
 
 // LLM-HARNESS-BEGIN: us-802812ec
-extern "C" bool OnFileEvent__18CSysWinScenarioLogFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__18CSysWinScenarioLogFP10CEventFile(void* self) { ((void(*)(void*))func_8027EC80)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-802812ec
 
 // LLM-HARNESS-BEGIN: us-802812f4
-extern "C" bool func_8027EE70() { return false; }
+extern "C" void func_8027EE70(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-802812f4
 
 // LLM-HARNESS-BEGIN: us-802812fc
-extern "C" bool func_8027EE78() { return false; }
+extern "C" void func_8027EE78(void* self) { ((void(*)(void*))cbRenderBefore__18CSysWinScenarioLogFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-802812fc
 
 // LLM-HARNESS-BEGIN: us-80281304
-extern "C" bool func_8027EE80() { return false; }
+extern "C" void func_8027EE80(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-80281304
 
 // LLM-HARNESS-BEGIN: us-8028130c

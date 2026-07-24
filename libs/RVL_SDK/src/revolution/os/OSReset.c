@@ -212,21 +212,19 @@ void OSShutdownSystem(void) {
     }
 }
 
-static inline void HotResetPanic(void) {
+static inline void HotResetPanic(char* strBase) {
     if (__OSInNandBoot || __OSInReboot) {
         __OSInitSTM();
     }
     __OSHotReset();
 
-    /* Use OSReset_file (+off) so CSE can hoist the base into r30 after disc/ticket
-     * scratch takes r31 — an early `char* strBase` local steals r31 and soft-caps ~95%. */
-    OSPanic(OSReset_file, 1034, OSReset_file + 0xC);
+    OSPanic(strBase, 1034, strBase + 0xC);
 }
 
-static inline void HotResetPanicMenu(void) {
-    HotResetPanic();
+static inline void HotResetPanicMenu(char* strBase) {
+    HotResetPanic(strBase);
 
-    OSPanic(OSReset_file, 1010, OSReset_file + 0x38);
+    OSPanic(strBase, 1010, strBase + 0x38);
 }
 
 void OSRestart(u32 resetCode) {
@@ -258,25 +256,25 @@ void OSRestart(u32 resetCode) {
 }
 
 void __OSReturnToMenu(u8 menuMode) {
-    /* Three OSStateFlags: retail frame -0x90 at 0x58/0x38/0x18. */
+    /* Three OSStateFlags: retail frame -0x90 at 0x58/0x38/0x18.
+     * Soft-cap ~95%: early strBase lands in r31 (retail r30); disc/ticket in r30
+     * (retail r31). Decl-order / union / CSE-hoist experiments did not flip it. */
     OSStateFlags stateFlags;
     OSStateFlags stateFlagsEsp;
     OSStateFlags stateFlagsAlloc;
-    /* Single long-lived scratch (disc byte, then ticket ptr) → r31; strBase → r30. */
-    u32 scratch;
-    char* strBase;
-
-    strBase = OSReset_file;
+    void* ticketView;
+    u8 disc;
+    char* strBase = OSReset_file;
 
     __OSStopPlayRecord();
     __OSUnRegisterStateEvent();
     __DVDPrepareReset();
     __OSReadStateFlags(&stateFlags);
 
-    scratch = stateFlags.discState;
-    stateFlags.discState = GetDiscState((u8)scratch);
-    scratch = 3;
-    stateFlags.BYTE_0x5 = (u8)scratch;
+    disc = stateFlags.discState;
+    stateFlags.discState = GetDiscState(disc);
+    disc = 3;
+    stateFlags.BYTE_0x5 = disc;
     stateFlags.BYTE_0x7 = menuMode;
     __OSClearRTCFlags();
     __OSWriteStateFlags(&stateFlags);
@@ -287,7 +285,7 @@ void __OSReturnToMenu(u8 menuMode) {
     if (ESP_InitLib() != 0) {
         __OSReadStateFlags(&stateFlagsEsp);
         stateFlagsEsp.discState = 2;
-        stateFlagsEsp.BYTE_0x5 = (u8)scratch;
+        stateFlagsEsp.BYTE_0x5 = disc;
         __OSClearRTCFlags();
         __OSWriteStateFlags(&stateFlagsEsp);
         __OSLaunchMenu();
@@ -296,11 +294,11 @@ void __OSReturnToMenu(u8 menuMode) {
         HotResetPanicMenu(strBase);
     }
 
-    scratch = (u32)OSAllocFromMEM1ArenaLo(0xE0, 0x20);
-    if ((void*)scratch == NULL) {
+    ticketView = OSAllocFromMEM1ArenaLo(0xE0, 0x20);
+    if (ticketView == NULL) {
         __OSReadStateFlags(&stateFlagsAlloc);
         stateFlagsAlloc.discState = 2;
-        stateFlagsAlloc.BYTE_0x5 = 3;
+        stateFlagsAlloc.BYTE_0x5 = disc;
         __OSClearRTCFlags();
         __OSWriteStateFlags(&stateFlagsAlloc);
         __OSLaunchMenu();
@@ -309,15 +307,15 @@ void __OSReturnToMenu(u8 menuMode) {
         HotResetPanicMenu(strBase);
     }
 
-    memset((void*)scratch, 0, 0xE0);
-    if (ESP_DiGetTicketView(NULL, (void*)scratch) == 0) {
+    memset(ticketView, 0, 0xE0);
+    if (ESP_DiGetTicketView(NULL, ticketView) == 0) {
         if (OSPlayTimeIsLimited()) {
             u32 unk;
             s32 playTime;
 
             unk = 0;
             playTime = -1;
-            __OSGetPlayTime((void*)scratch, &unk, &playTime);
+            __OSGetPlayTime(ticketView, &unk, &playTime);
             if (playTime == 0) {
                 __OSWriteExpiredFlagIfSet();
             }

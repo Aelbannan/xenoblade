@@ -15571,7 +15571,13 @@ public:
     
     static void Move();
     static void Draw();
-    static void Tail();
+    // Not present as OOL in retail CProcess.s; keep inline API for callers.
+    static void Tail() {
+        TChildListHeader<CProcess>& list = GetRootProcessList();
+        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
+            TailImpl(proc);
+        }
+    }
 
     static TChildListHeader<CProcess>& GetFreeProcessList() {
         return sFreeProcessList;
@@ -15587,7 +15593,6 @@ private:
 
     static bool Remove(CProcess* proc);
 
-    static void DeleteList(TChildListHeader<CProcess>& list);
     static void DeleteImpl(CProcess* proc);
 
     static bool sIsInitialized;
@@ -15668,8 +15673,11 @@ In XC3D, all instances of the unused event functions (including events 1, 3, and
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
 events being unused as well.
 
-Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
-do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
 class IWorkEvent {
 public:
     virtual ~IWorkEvent();
@@ -16392,7 +16400,8 @@ func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
 void func_8004302C(int, int);
 bool func_8009CF8C(int);
 void func_8009D018(int, int);
-int* func_8009ECB0();
+// Unmangled retail symbol (not func_8009ECB0__Fv).
+extern "C" int* func_8009ECB0();
 void func_8009E574(int*, int, int, int);
 /* end "functions.hpp" */
 
@@ -243110,13 +243119,66 @@ private:
 /* "libs/monolib/include/monolib/core/CRsrc.hpp" line 2 "types.h" */
 /* end "types.h" */
 
+/* "libs/monolib/include/monolib/core/CRsrc.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CRsrcData;
+
 class CRsrc {
 public:
-    static bool entry(UNKTYPE* r3, const char* r4, UNKTYPE* r5, void* r6, u32 r7, bool r8);
-
+    static CRsrcData* convertToRsrcData(CWorkThread* pThread);
+    static bool entry(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag);
+    static CRsrcData* getRsrc(u32 id);
 };
+
+extern "C" {
+bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
+bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* name, void** outData, u32* outLength);
+bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
+bool releaseCache__5CRsrcFPCv(const void* data);
+bool isExistData__5CRsrcFPCv(const void* data);
+}
 /* end "monolib/core/CRsrc.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 11 "monolib/core/CScriptCode.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 11 "monolib/core/CRsrcData.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 3 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+
+// size: 0x4E8
+class CRsrcData : public CWorkThread {
+public:
+    CRsrcData(const char* pName, CWorkThread* pParent);
+    virtual ~CRsrcData();
+
+    virtual void wkUpdate();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    void destruct(int arg);
+    bool releaseCache(const void* data);
+    void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
+    int isSameName(const char* name) const;
+
+    // Layout matches retail stores (CWorkThread ends at 0x1C4).
+    char mName[0x100];     // 0x1C4
+    u32 mNameLength;       // 0x2C4
+    char mAltPath[0x100];  // 0x2C8
+    u32 mAltPathLength;    // 0x3C8
+    char mPath[0x100];     // 0x3CC
+    u32 mPathLength;       // 0x4CC
+    void* mCacheData;      // 0x4D0
+    u32 mCacheLength;      // 0x4D4
+    u32 mRefCount;         // 0x4D8
+    u32 mFlags4DC;         // 0x4DC
+    u8 unk4E0;             // 0x4E0
+    s16 unk4E2;            // 0x4E2
+    s16 unk4E4;            // 0x4E4
+};
+/* end "monolib/core/CRsrcData.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CScriptCode.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CScriptCode.hpp" line 2 "monolib/work/CWorkThread.hpp" */
@@ -243131,7 +243193,7 @@ public:
     static CScriptCode* getInstance();
 };
 /* end "monolib/core/CScriptCode.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CTaskManager.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CTaskManager.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CTaskManager.hpp" line 2 "monolib/monolib_types.hpp" */
@@ -243157,11 +243219,11 @@ private:
     static void Start();
 };
 /* end "monolib/core/CTaskManager.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CView.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 14 "monolib/core/CView.hpp" */
 /* end "monolib/core/CView.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 14 "monolib/core/CViewFrame.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 15 "monolib/core/CViewFrame.hpp" */
 /* end "monolib/core/CViewFrame.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 15 "monolib/core/CViewRoot.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 16 "monolib/core/CViewRoot.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 2 "monolib/monolib_types.hpp" */
@@ -248615,7 +248677,6 @@ after_ce48:
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
-            // f32[5] stack homes -> frame -0x70 with stfs at sp+0x10..0x20.
             f32 homes[5];
             homes[0] = lbl_eu_80666F28;
             homes[1] = lbl_eu_80666F40 * unk88->GetFrame();
@@ -248627,10 +248688,10 @@ after_ce48:
             t[0] = homes[0];
             t[1] = homes[1];
             t[2] = homes[2];
+            // Sink homes[3/4] so the array storage is not truncated.
+            (void)*(volatile f32*)&homes[3];
+            (void)*(volatile f32*)&homes[4];
             unk308 |= 0x1u;
-            if (homes[3] + homes[4] == 0.0f) {
-                t[0] = homes[4];
-            }
         }
         break;
     case 4:

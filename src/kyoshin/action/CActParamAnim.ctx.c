@@ -1311,17 +1311,19 @@ void* func_80186D20(void* p);
 /* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
 /* end "monolib/vm/yvm2.h" */
 
+void* getFP(const char* pName);
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
-    static void func_8003AA34();
-    static void func_8003AA50();
-    static void func_8003AA78(u32, void*);
+    static void* func_8003AA34();
+    static void* func_8003AA50();
+    static void* func_8003AA78(u32, void*);
     static void func_8003AA8C(u32 val);
-    static void* getFP(const char* pName);
+    static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
 
 #ifdef __cplusplus
@@ -1365,7 +1367,9 @@ extern "C" void* func_8004B344(void* self) { return static_cast<char*>(self) + 0
 // LLM-HARNESS-END: us-8004ba1c
 
 // LLM-HARNESS-BEGIN: us-8004ba24
-extern "C" bool func_8004B34C() { return false; }
+extern "C" float func_8004B34C(void* self) {
+    return *(float*)((char*)self + 0x43c);
+}
 // LLM-HARNESS-END: us-8004ba24
 
 // LLM-HARNESS-BEGIN: us-8004ba2c
@@ -1389,7 +1393,9 @@ extern "C" void func_8004B4A4() {}
 // LLM-HARNESS-END: us-8004bb7c
 
 // LLM-HARNESS-BEGIN: us-8004bbf4
-extern "C" bool func_8004B51C() { return false; }
+extern "C" void* func_8004B51C(void* self) {
+    return *(void**)((char*)self + 8);
+}
 // LLM-HARNESS-END: us-8004bbf4
 
 // LLM-HARNESS-BEGIN: us-8004bbfc
@@ -1409,7 +1415,9 @@ extern "C" void func_8004B60C(float *data, float a, float b, float c) { data[0] 
 // LLM-HARNESS-END: us-8004bce4
 
 // LLM-HARNESS-BEGIN: us-8004bcf4
-extern "C" bool func_8004B61C() { return false; }
+extern "C" float func_8004B61C(void* self) {
+    return *(float*)((char*)self + 0x444);
+}
 // LLM-HARNESS-END: us-8004bcf4
 
 // LLM-HARNESS-BEGIN: us-8004bcfc
@@ -1465,7 +1473,9 @@ extern "C" void func_8004B7DC() {}
 // LLM-HARNESS-END: us-8004beb4
 
 // LLM-HARNESS-BEGIN: us-8004bf18
-extern "C" bool func_8004B840() { return false; }
+extern "C" void func_8004B840(void* self, float val) {
+    *(float*)((char*)self + 0x3c4) = val;
+}
 // LLM-HARNESS-END: us-8004bf18
 
 // LLM-HARNESS-BEGIN: us-8004bf20
@@ -1623,7 +1633,9 @@ extern "C" void func_8004D950__13CActParamAnimFv() {}
 // LLM-HARNESS-END: us-8004dfa8
 
 // LLM-HARNESS-BEGIN: us-8004e11c
-extern "C" bool func_8004DAC4() { return false; }
+extern "C" void* func_8004DAC4(void* self) {
+    return *(void**)((char*)self + 0x4c0);
+}
 // LLM-HARNESS-END: us-8004e11c
 
 // LLM-HARNESS-BEGIN: us-8004e124

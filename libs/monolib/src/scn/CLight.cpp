@@ -68,7 +68,8 @@ extern "C" void func_804C0920(CLight* _this, float f, _GXSpotFn spotFn) {
 extern "C" void func_804C0928() {}
 // LLM-HARNESS-END: us-804c4a84
 // LLM-HARNESS-BEGIN: us-804c4b3c
-extern "C" bool func_804C09E0() { return false; }
+extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
+extern "C" void func_804C09E0(void* self) { InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
 // LLM-HARNESS-END: us-804c4b3c
 // LLM-HARNESS-BEGIN: us-804c4b44
 extern "C" void func_804C09E8() {}

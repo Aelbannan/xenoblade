@@ -5,7 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-8006a17c
-extern "C" void __dt__Q22cf10CfTaskMainFv() {}
+extern "C" void __dt__Q22cf10CfTaskMainFv(void* self) {}
 // LLM-HARNESS-END: us-8006a17c
 
 // LLM-HARNESS-BEGIN: us-8006a1d8
@@ -21,11 +21,11 @@ extern "C" void Move__Q22cf10CfTaskMainFv() {}
 // LLM-HARNESS-END: us-8006a1e0
 
 // LLM-HARNESS-BEGIN: us-8006a1f4
-extern "C" void Draw__Q22cf10CfTaskMainFv() {}
+extern "C" void Draw__Q22cf10CfTaskMainFv(void) {}
 // LLM-HARNESS-END: us-8006a1f4
 
 // LLM-HARNESS-BEGIN: us-8006a1f8
-extern "C" void Tail__Q22cf10CfTaskMainFv() {}
+extern "C" void Tail__Q22cf10CfTaskMainFv(void) {}
 // LLM-HARNESS-END: us-8006a1f8
 
 // LLM-HARNESS-BEGIN: us-8006a1fc
@@ -33,7 +33,7 @@ extern "C" void __ct__800697E8() {}
 // LLM-HARNESS-END: us-8006a1fc
 
 // LLM-HARNESS-BEGIN: us-8006a358
-extern "C" bool func_80069944() { return false; }
+extern "C" void func_80069944(void* self) { ((void(*)(void*))__dt__Q22cf10CfTaskMainFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-8006a358
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

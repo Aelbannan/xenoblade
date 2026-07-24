@@ -13,11 +13,15 @@ void ADXCRS_Finish() {}
 // LLM-HARNESS-END: us-8038c654
 
 // LLM-HARNESS-BEGIN: us-8038c680
-void ADXCRS_Lock() {}
+void ADXCRS_Lock(void) {
+    SVM_Lock();
+}
 // LLM-HARNESS-END: us-8038c680
 
 // LLM-HARNESS-BEGIN: us-8038c684
-void ADXCRS_Unlock() {}
+void ADXCRS_Unlock(void) {
+    SVM_Unlock();
+}
 // LLM-HARNESS-END: us-8038c684
 
 // LLM-HARNESS-BEGIN: us-8038c688

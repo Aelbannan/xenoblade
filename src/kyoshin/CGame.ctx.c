@@ -233653,9 +233653,7 @@ public:
     void destruct(int arg);
     bool releaseCache(const void* data);
     void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
-    static CRsrcData* build(void* parent, const char* name, void* arg2, void* data, u32 length,
-                            bool flag);
-    bool isSameName(const char* name) const;
+    int isSameName(const char* name) const;
 
     // Layout matches retail stores (CWorkThread ends at 0x1C4).
     char mName[0x100];     // 0x1C4
@@ -247235,7 +247233,8 @@ func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
 void func_8004302C(int, int);
 bool func_8009CF8C(int);
 void func_8009D018(int, int);
-int* func_8009ECB0();
+// Unmangled retail symbol (not func_8009ECB0__Fv).
+extern "C" int* func_8009ECB0();
 void func_8009E574(int*, int, int, int);
 /* end "functions.hpp" */
 

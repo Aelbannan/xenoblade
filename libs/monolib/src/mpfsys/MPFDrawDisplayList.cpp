@@ -85,9 +85,9 @@ extern "C" void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv() {}
 // LLM-HARNESS-END: us-8047d6c0
 
 // LLM-HARNESS-BEGIN: us-8047d80c
-extern "C" void func_8047983C__Q26mpfsys18MPFDrawDisplayListFv() {}
+extern "C" void func_8047983C__Q26mpfsys18MPFDrawDisplayListFv(void) {}
 // LLM-HARNESS-END: us-8047d80c
 
 // LLM-HARNESS-BEGIN: us-8047d810
-extern "C" void func_80479840__Q26mpfsys18MPFDrawDisplayListFv() {}
+extern "C" void func_80479840__Q26mpfsys18MPFDrawDisplayListFv(void) {}
 // LLM-HARNESS-END: us-8047d810

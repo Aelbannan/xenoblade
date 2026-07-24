@@ -11,7 +11,7 @@ namespace ml {
 
         mNormal = cross;
         normalize();
-        mDist = -CVec3::dot(pos,mNormal);
+        mDist = -CVec3::dot(pos, mNormal);
 
         return this;
     }

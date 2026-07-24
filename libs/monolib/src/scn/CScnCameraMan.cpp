@@ -53,7 +53,9 @@ extern "C" void func_8049B3FC() {}
 // LLM-HARNESS-END: us-8049f4e0
 
 // LLM-HARNESS-BEGIN: us-8049f4ec
-extern "C" bool func_8049B408() { return false; }
+extern void func_8043A57C__11CScriptCodeFv();
+extern u32 lbl_eu_80663A08;
+extern "C" void func_8049B408(void* self) { func_8043A57C__11CScriptCodeFv(); }
 // LLM-HARNESS-END: us-8049f4ec
 
 // LLM-HARNESS-BEGIN: us-8049f4f4

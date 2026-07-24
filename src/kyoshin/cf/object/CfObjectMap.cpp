@@ -61,11 +61,11 @@ extern "C" void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv() {}
 // LLM-HARNESS-END: us-800bb02c
 
 // LLM-HARNESS-BEGIN: us-800bb054
-extern "C" bool CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv() { return false; }
+extern "C" int CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-800bb054
 
 // LLM-HARNESS-BEGIN: us-800bb05c
-extern "C" bool CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv() { return false; }
+extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-800bb05c
 
 // LLM-HARNESS-BEGIN: us-800bb064

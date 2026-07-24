@@ -13508,7 +13508,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() {}
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -25796,7 +25801,13 @@ public:
     
     static void Move();
     static void Draw();
-    static void Tail();
+    // Not present as OOL in retail CProcess.s; keep inline API for callers.
+    static void Tail() {
+        TChildListHeader<CProcess>& list = GetRootProcessList();
+        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
+            TailImpl(proc);
+        }
+    }
 
     static TChildListHeader<CProcess>& GetFreeProcessList() {
         return sFreeProcessList;
@@ -25812,7 +25823,6 @@ private:
 
     static bool Remove(CProcess* proc);
 
-    static void DeleteList(TChildListHeader<CProcess>& list);
     static void DeleteImpl(CProcess* proc);
 
     static bool sIsInitialized;
@@ -25893,8 +25903,11 @@ In XC3D, all instances of the unused event functions (including events 1, 3, and
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
 events being unused as well.
 
-Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
-do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
 class IWorkEvent {
 public:
     virtual ~IWorkEvent();
@@ -245121,13 +245134,66 @@ private:
 /* "libs/monolib/include/monolib/core/CRsrc.hpp" line 2 "types.h" */
 /* end "types.h" */
 
+/* "libs/monolib/include/monolib/core/CRsrc.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CRsrcData;
+
 class CRsrc {
 public:
-    static bool entry(UNKTYPE* r3, const char* r4, UNKTYPE* r5, void* r6, u32 r7, bool r8);
-
+    static CRsrcData* convertToRsrcData(CWorkThread* pThread);
+    static bool entry(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag);
+    static CRsrcData* getRsrc(u32 id);
 };
+
+extern "C" {
+bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
+bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* name, void** outData, u32* outLength);
+bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
+bool releaseCache__5CRsrcFPCv(const void* data);
+bool isExistData__5CRsrcFPCv(const void* data);
+}
 /* end "monolib/core/CRsrc.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 11 "monolib/core/CScriptCode.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 11 "monolib/core/CRsrcData.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 3 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+
+// size: 0x4E8
+class CRsrcData : public CWorkThread {
+public:
+    CRsrcData(const char* pName, CWorkThread* pParent);
+    virtual ~CRsrcData();
+
+    virtual void wkUpdate();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    void destruct(int arg);
+    bool releaseCache(const void* data);
+    void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
+    int isSameName(const char* name) const;
+
+    // Layout matches retail stores (CWorkThread ends at 0x1C4).
+    char mName[0x100];     // 0x1C4
+    u32 mNameLength;       // 0x2C4
+    char mAltPath[0x100];  // 0x2C8
+    u32 mAltPathLength;    // 0x3C8
+    char mPath[0x100];     // 0x3CC
+    u32 mPathLength;       // 0x4CC
+    void* mCacheData;      // 0x4D0
+    u32 mCacheLength;      // 0x4D4
+    u32 mRefCount;         // 0x4D8
+    u32 mFlags4DC;         // 0x4DC
+    u8 unk4E0;             // 0x4E0
+    s16 unk4E2;            // 0x4E2
+    s16 unk4E4;            // 0x4E4
+};
+/* end "monolib/core/CRsrcData.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CScriptCode.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CScriptCode.hpp" line 2 "monolib/work/CWorkThread.hpp" */
@@ -245142,7 +245208,7 @@ public:
     static CScriptCode* getInstance();
 };
 /* end "monolib/core/CScriptCode.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CTaskManager.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CTaskManager.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CTaskManager.hpp" line 2 "monolib/monolib_types.hpp" */
@@ -245168,11 +245234,11 @@ private:
     static void Start();
 };
 /* end "monolib/core/CTaskManager.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CView.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 14 "monolib/core/CView.hpp" */
 /* end "monolib/core/CView.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 14 "monolib/core/CViewFrame.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 15 "monolib/core/CViewFrame.hpp" */
 /* end "monolib/core/CViewFrame.hpp" */
-/* "libs/monolib/include/monolib/core.hpp" line 15 "monolib/core/CViewRoot.hpp" */
+/* "libs/monolib/include/monolib/core.hpp" line 16 "monolib/core/CViewRoot.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 2 "monolib/monolib_types.hpp" */
@@ -245350,7 +245416,8 @@ func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
 void func_8004302C(int, int);
 bool func_8009CF8C(int);
 void func_8009D018(int, int);
-int* func_8009ECB0();
+// Unmangled retail symbol (not func_8009ECB0__Fv).
+extern "C" int* func_8009ECB0();
 void func_8009E574(int*, int, int, int);
 /* end "functions.hpp" */
 
@@ -248301,17 +248368,17 @@ after_bit21:
 
     func_801127B0(this);
 
+    // Retail pre-loop materialization (80110A88..AA4): pc call, then
+    // f30/r30/f31/r29/f28/r28/r27/r31 — declare in that dependence order.
     cf::CfObjectPc* pc =
         func_800BFC68(cf::CfGameManager::func_80082D54(0));
-
-    // Stack Vec homes + loop-invariant floats (retail: f28/f30/f31, r28/r29
-    // before the panel loop). Explicit address locals match r28/r29; a separate
-    // zero local matches r31 — keep the live set at _savegpr_22 (not 21/23).
-    nw4r::math::VEC3 delta;
-    nw4r::math::VEC3 scratch;
-    f32 one = lbl_eu_80666FE8;
     f32 animMarker = lbl_eu_80666FEC;
     f32 distThresh = lbl_eu_80667014;
+    nw4r::math::VEC3 scratch;
+    nw4r::math::VEC3* pScratch = &scratch;
+    f32 one = lbl_eu_80666FE8;
+    nw4r::math::VEC3 delta;
+    nw4r::math::VEC3* pDelta = &delta;
     u8 i = 0;
     u8 z = 0;
 
@@ -248390,12 +248457,12 @@ after_bit21:
             void* pcPos = vslot<GetPosFn>(pcEmbed, 0xAC)(pcEmbed);
 
             nw4r::math::VEC3Sub(
-                &delta,
+                pDelta,
                 reinterpret_cast<const nw4r::math::VEC3*>(pcPos),
                 reinterpret_cast<const nw4r::math::VEC3*>(handlePos));
             scratch = delta;
-            f32 distSq = scratch.x * scratch.x + scratch.y * scratch.y +
-                         scratch.z * scratch.z;
+            // Retail: interleaved assign + VEC3LenSq (ps_mul/ps_madd/ps_sum0).
+            f32 distSq = nw4r::math::VEC3LenSq(pScratch);
             if (distSq > distThresh) {
                 panelData[0x15] = z;
                 continue;

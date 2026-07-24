@@ -13,9 +13,13 @@ void LSC_Leave() {}
 // LLM-HARNESS-END: us-80395a10
 
 // LLM-HARNESS-BEGIN: us-80395a14
-void LSC_LockCrs() {}
+void LSC_LockCrs(void) {
+    SVM_Lock();
+}
 // LLM-HARNESS-END: us-80395a14
 
 // LLM-HARNESS-BEGIN: us-80395a18
-void LSC_UnlockCrs() {}
+void LSC_UnlockCrs(void) {
+    SVM_Unlock();
+}
 // LLM-HARNESS-END: us-80395a18

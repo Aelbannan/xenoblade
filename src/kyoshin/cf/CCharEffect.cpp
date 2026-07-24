@@ -69,7 +69,7 @@ extern "C" void func_8015C9A0() {}
 // LLM-HARNESS-END: us-8015da70
 
 // LLM-HARNESS-BEGIN: us-8015dc58
-extern "C" bool func_8015CB88() { return false; }
+extern "C" int func_8015CB88(void* self) { return 1; }
 // LLM-HARNESS-END: us-8015dc58
 
 // LLM-HARNESS-BEGIN: us-8015dc60
@@ -89,5 +89,5 @@ extern "C" void func_8015CC50() {}
 // LLM-HARNESS-END: us-8015dd20
 
 // LLM-HARNESS-BEGIN: us-8015dd84
-extern "C" bool func_8015CCB4() { return false; }
+extern "C" int func_8015CCB4(void* self) { return 0; }
 // LLM-HARNESS-END: us-8015dd84

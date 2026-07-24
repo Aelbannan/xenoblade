@@ -49,7 +49,7 @@ extern "C" void deleteTextboxOrPicture__10CLibLayoutFv() {}
 // LLM-HARNESS-END: us-804632dc
 
 // LLM-HARNESS-BEGIN: us-804632ec
-extern "C" void wkUpdate__10CLibLayoutFv() {}
+extern "C" void wkUpdate__10CLibLayoutFv(void) {}
 // LLM-HARNESS-END: us-804632ec
 
 // LLM-HARNESS-BEGIN: us-804632f0

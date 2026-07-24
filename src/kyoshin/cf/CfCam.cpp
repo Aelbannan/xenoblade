@@ -138,7 +138,7 @@ extern "C" void func_8006BC1C(unsigned int* p, unsigned int mask) {
 }
 // LLM-HARNESS-END: us-8006c674
 // LLM-HARNESS-BEGIN: us-8006c8bc
-extern "C" void __ct__cf_CfCam() {}
+extern "C" void __ct__Q22cf5CfCamFv() {}
 // LLM-HARNESS-END: us-8006c8bc
 // LLM-HARNESS-BEGIN: us-8006c918
 extern "C" void func_8006BEC0(void* self) {}
@@ -457,7 +457,7 @@ extern "C" void func_800743C0() {}
 extern "C" bool func_80074CD4(const unsigned* value, unsigned mask) { return (*value & mask) != 0; }
 // LLM-HARNESS-END: us-80075670
 // LLM-HARNESS-BEGIN: us-800756e0
-extern "C" bool func_80074D44() { return false; }
+extern "C" int func_80074D44(void* self) { return 0x0; }
 // LLM-HARNESS-END: us-800756e0
 // LLM-HARNESS-BEGIN: us-800756e8
 extern "C" void* func_80074D4C(void* p) {

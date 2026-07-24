@@ -7,6 +7,8 @@ void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c);
 int func_8043CAFC__5CViewFv(CView* view);
 void func_80442C68__9CViewRootFv();
+float lbl_eu_8066A318;
+float lbl_eu_8066A2F4;
 
 // Undefined here so MWCC cannot DCE same-TU empty stubs.
 void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw);
@@ -215,12 +217,178 @@ bool CViewFrame::render() {
     return true;
 }
 
+// Draw frame border quads into CDrawGX (outer edges + inset 1px lines).
+extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* drawPtr,
+                                                 void* rectPtr) {
+    CDrawGX* draw = (CDrawGX*)drawPtr;
+    ml::CRect16* rect = (ml::CRect16*)rectPtr;
+    ml::CCol4 col;
+    ml::CRect16 piece;
+    s16 border = self->unk58;
+    float scale = lbl_eu_8066A318;
+    float opacity = *(float*)((u8*)self->mOwner + 0x458);
+
+    col.r = self->mFrameColor.r * scale;
+    col.g = self->mFrameColor.g * scale;
+    col.b = self->mFrameColor.b * scale;
+    col.a = self->mFrameColor.a * opacity;
+    draw->setCol(col);
+
+    draw->begin(9, 1);
+    piece.mPos.x = rect->mPos.x;
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = border;
+    piece.mSize.y = rect->mSize.y;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = rect->mPos.x;
+    piece.mPos.y = (s16)((s16)(rect->mPos.y + rect->mSize.y) - border);
+    piece.mSize.x = rect->mSize.x;
+    piece.mSize.y = border;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)((s16)(rect->mPos.x + rect->mSize.x) - border);
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = border;
+    piece.mSize.y = rect->mSize.y;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = rect->mPos.x;
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = rect->mSize.x;
+    piece.mSize.y = border;
+    draw->add(piece);
+    draw->end();
+
+    scale = lbl_eu_8066A2F4;
+    col.r = self->mFrameColor.r * scale;
+    col.g = self->mFrameColor.g * scale;
+    col.b = self->mFrameColor.b * scale;
+    col.a = self->mFrameColor.a * opacity;
+    draw->setCol(col);
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)((s16)(border + rect->mPos.x) - 1);
+    piece.mPos.y = (s16)(rect->mPos.y + border);
+    piece.mSize.x = 1;
+    piece.mSize.y = (s16)(rect->mSize.y - (s16)(border * 2));
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)(rect->mPos.x + border);
+    piece.mPos.y = (s16)((s16)(border + rect->mPos.y) - 1);
+    piece.mSize.x = (s16)(rect->mSize.x - (s16)(border * 2));
+    piece.mSize.y = 1;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)(rect->mPos.x - 1);
+    piece.mPos.y = (s16)((s16)(rect->mPos.y + rect->mSize.y) - 1);
+    piece.mSize.x = rect->mSize.x;
+    piece.mSize.y = 1;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)((s16)(rect->mPos.x + rect->mSize.x) - 1);
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = 1;
+    piece.mSize.y = rect->mSize.y;
+    draw->add(piece);
+    draw->end();
+}
+
 // LLM-HARNESS-BEGIN: us-80442564
 extern "C" void __ct__CViewFrame() {}
 // LLM-HARNESS-END: us-80442564
 // LLM-HARNESS-BEGIN: us-80442600
-extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame() {}
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* out, const CViewFrame* frame) {
+    out->mPos.x = 0;
+    out->mPos.y = 0;
+
+    CView* owner = frame->mOwner;
+    int apply = 0;
+    if ((owner->unk27C & 1) != 0) {
+        u32 flags = owner->unk278;
+        if ((flags & 1) == 0 && (flags & 2) == 0) {
+            apply = 1;
+        }
+    }
+    if (apply == 0) {
+        return;
+    }
+
+    out->mPos.x = (s16)(out->mPos.x + frame->unk58);
+    out->mPos.y = (s16)(out->mPos.y + frame->unk58);
+
+    apply = 0;
+    owner = frame->mOwner;
+    if ((owner->unk27C & 2) != 0) {
+        u32 flags = owner->unk278;
+        if ((flags & 1) == 0 && (flags & 2) == 0) {
+            apply = 1;
+        }
+    }
+    if (apply == 0) {
+        return;
+    }
+
+    out->mPos.y = (s16)(out->mPos.y + (s16)(frame->unk58 + 0x16));
+}
 // LLM-HARNESS-END: us-80442600
+
+// Owner client rect into out; optional border expand (same gates as render()).
+extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* out, const CViewFrame* frame) {
+    CView* view = frame->mOwner;
+    int expand = 0;
+
+    out->mPos.x = view->unk1DC.unk54;
+    out->mPos.y = view->unk1DC.unk56;
+    out->mSize.x = view->unk1C8.unk0;
+    out->mSize.y = view->unk1C8.unk2;
+
+    if ((view->unk27C & 1) != 0) {
+        u32 mode = view->unk278;
+        if ((mode & 1) == 0 && (mode & 2) == 0) {
+            expand = 1;
+        }
+    }
+    if (expand == 0) {
+        return;
+    }
+
+    {
+        s16 border = frame->unk58;
+        out->mSize.x = (s16)(out->mSize.x + (s16)(border * 2));
+    }
+
+    expand = 0;
+    view = frame->mOwner;
+    if ((view->unk27C & 2) != 0) {
+        u32 mode = view->unk278;
+        if ((mode & 1) == 0 && (mode & 2) == 0) {
+            expand = 1;
+        }
+    }
+    if (expand != 0) {
+        s16 border = frame->unk58;
+        out->mSize.y = (s16)(out->mSize.y + (s16)(border * 3 + 0x16));
+    } else {
+        s16 border = frame->unk58;
+        out->mSize.y = (s16)(out->mSize.y + (s16)(border * 2));
+    }
+}
+
 // LLM-HARNESS-BEGIN: us-80444550
 extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
 // LLM-HARNESS-END: us-80444550

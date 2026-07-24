@@ -543,7 +543,7 @@ class ReadOracleTests(unittest.TestCase):
 class ArchitectureFreezeTests(unittest.TestCase):
     def test_architecture_tracks_live_model(self) -> None:
         # Live architecture tracks parent bumps (currently v43 / cert18).
-        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v44")
+        self.assertEqual(ARCHITECTURE_MODEL, "broadway-ppc32-be-v51")
         self.assertTrue(ARCHITECTURE_MODEL.startswith("broadway-ppc32-be-v"))
 
 

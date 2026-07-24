@@ -17,7 +17,7 @@ extern "C" void __ct__801B2794() {}
 // LLM-HARNESS-END: us-801b4058
 
 // LLM-HARNESS-BEGIN: us-801b4218
-extern "C" void __dt__17CMenuGetItemMultiFv() {}
+extern "C" void __dt__17CMenuGetItemMultiFv(void* self) {}
 // LLM-HARNESS-END: us-801b4218
 
 // LLM-HARNESS-BEGIN: us-801b42a4
@@ -37,11 +37,11 @@ extern "C" void Move__17CMenuGetItemMultiFv() {}
 // LLM-HARNESS-END: us-801b5998
 
 // LLM-HARNESS-BEGIN: us-801b5e74
-extern "C" void func_801B45A0() {}
+extern "C" void func_801B45A0(void* self) {}
 // LLM-HARNESS-END: us-801b5e74
 
 // LLM-HARNESS-BEGIN: us-801b5f0c
-extern "C" void cbRenderBefore__17CMenuGetItemMultiFv() {}
+extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void* self) {}
 // LLM-HARNESS-END: us-801b5f0c
 
 // LLM-HARNESS-BEGIN: us-801b5fb8
@@ -117,19 +117,19 @@ extern "C" void func_801B9C1C() {}
 // LLM-HARNESS-END: us-801bb514
 
 // LLM-HARNESS-BEGIN: us-801bba24
-extern "C" bool OnFileEvent__17CMenuGetItemMultiFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(void* self) { ((void(*)(void*))func_801B45A0)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801bba24
 
 // LLM-HARNESS-BEGIN: us-801bba2c
-extern "C" bool func_801BA134() { return false; }
+extern "C" void func_801BA134(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801bba2c
 
 // LLM-HARNESS-BEGIN: us-801bba34
-extern "C" bool func_801BA13C() { return false; }
+extern "C" void func_801BA13C(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-801bba34
 
 // LLM-HARNESS-BEGIN: us-801bba3c
-extern "C" bool func_801BA144() { return false; }
+extern "C" void func_801BA144(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-801bba3c
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

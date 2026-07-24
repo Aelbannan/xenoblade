@@ -12539,7 +12539,13 @@ public:
     
     static void Move();
     static void Draw();
-    static void Tail();
+    // Not present as OOL in retail CProcess.s; keep inline API for callers.
+    static void Tail() {
+        TChildListHeader<CProcess>& list = GetRootProcessList();
+        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
+            TailImpl(proc);
+        }
+    }
 
     static TChildListHeader<CProcess>& GetFreeProcessList() {
         return sFreeProcessList;
@@ -12555,7 +12561,6 @@ private:
 
     static bool Remove(CProcess* proc);
 
-    static void DeleteList(TChildListHeader<CProcess>& list);
     static void DeleteImpl(CProcess* proc);
 
     static bool sIsInitialized;
@@ -12636,8 +12641,11 @@ In XC3D, all instances of the unused event functions (including events 1, 3, and
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
 events being unused as well.
 
-Default bodies are out-of-line (IWorkEvent.cpp) so TUs that override a subset of these
-do not emit a full set of weak stubs into their .text (retail keeps those in CGame / CDevice_vt). */
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
 class IWorkEvent {
 public:
     virtual ~IWorkEvent();
@@ -17808,7 +17816,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() {}
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -25496,11 +25509,13 @@ private:
         u32 wrapS : 2;
         u32 wrapT : 2;
         u32 minFilter : 3;
-        u32 magFilter : 3;
+        // Retail Get(GXTexObj) LOD path: extrwi mag@12 (1), bias@13, edge@14, aniso@15 (2).
+        // magFilter is 1 bit here (GX_NEAR/GX_LINEAR); paletteFormat follows anisotropy.
+        u32 magFilter : 1;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 paletteFormat : 2;
         u32 anisotropy : 2;
+        u32 paletteFormat : 2;
     } mBits; // at 0x18
 };
 
@@ -26976,14 +26991,8 @@ u16 lbl_eu_804FFFDC[];
 void func_8013B428(u32);
 
 void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
-    // Decl order: savedRet@0x8, gap, setItem stw-r1 home, idTable@0x28 (retail frame).
+    // Decl order: savedRet@0x8, gap, setItem stw-r1 home@0x24, idTable@0x28 (retail frame).
     volatile int savedRet;
-    int pad0C;
-    int pad10;
-    int pad14;
-    int pad18;
-    int pad1C;
-    int pad20;
     CUICfIdTable idTable;
     u8 codePersist;
 
@@ -27078,6 +27087,8 @@ range_312c_31f3: {
         goto end;
     }
 
+    // Retail: addi r3,id,-0x312c / li r0,0xc8 / clrlwi. / clrlwi into codePersist (r30).
+    // Soft-cap: MWCC colors diff/code as r0/r3 (and codePersist r27) vs retail r3/r0 (r30).
     {
         u32 diff = id - 0x312c;
         u32 code = 0xc8;
@@ -27096,17 +27107,14 @@ range_312c_31f3: {
         if (tempRet != 0) {
             inst = (CUICfManager*)lbl_eu_80664054;
 
-            _reslist_node<u32>* startNode = (_reslist_node<u32>*)inst->unk128;
-            int capacity = inst->unk13C;
+            // Decl capacity before startNode so Chaitin colors capacity=r7, startNode=r8;
+            // assign startNode then capacity to keep retail load order (296 then 316).
             int i = 0;
             int byteOff = 0;
-            // Keep pads "live" enough that MWCC does not DCE them entirely.
-            pad0C = capacity;
-            pad10 = byteOff;
-            pad14 = i;
-            pad18 = pad0C;
-            pad1C = pad10;
-            pad20 = pad14;
+            int capacity;
+            CUICfListNode* startNode;
+            startNode = (CUICfListNode*)inst->unk128;
+            capacity = inst->unk13C;
             goto slot_check;
         slot_body:
             if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
@@ -27120,12 +27128,20 @@ range_312c_31f3: {
             }
         slot_found:
             {
-                _reslist_node<u32>* temp = (_reslist_node<u32>*)((u8*)inst->unk138 + i * 0xc);
-                temp->setItem((u32)savedRet);
-                temp->mNext = startNode;
-                temp->mPrev = startNode->mPrev;
-                startNode->mPrev->mNext = temp;
-                startNode->mPrev = temp;
+                // Expand setItem so temp lands in r4 before savedRet reload (addic. r3,r4,8).
+                CUICfListNode* temp = (CUICfListNode*)((u8*)inst->unk138 + i * 0xc);
+                u32* ptr = &temp->item;
+                if (ptr != 0) {
+                    try {
+                        *ptr = (u32)savedRet;
+                    } catch (...) {
+                        throw;
+                    }
+                }
+                temp->next = startNode;
+                temp->prev = startNode->prev;
+                startNode->prev->next = temp;
+                startNode->prev = temp;
             }
         }
     }
@@ -27229,7 +27245,7 @@ end:
 // enum-list proximity spawn, then mark/clear walks of the menu queue.
 // ---------------------------------------------------------------------------
 
-/* "src/kyoshin/CUICfManager.cpp" line 445 "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 446 "monolib/device/CDeviceVI.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 2 "types.h" */
@@ -29045,7 +29061,7 @@ static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
 /* end "monolib/device/CDeviceVI.hpp" */
-/* "src/kyoshin/CUICfManager.cpp" line 446 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 447 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */

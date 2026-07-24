@@ -46,7 +46,7 @@ loop:
     dcbf 0, r5
     sync
     icbi 0, r5
-    addic r5, r5, 0
+    addic r5, r5, 8
     addic. r4, r4, -8
     bge loop
     isync

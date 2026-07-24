@@ -4,8 +4,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+extern "C" void getPad__Q22cf13CfGameManagerFi(int);
 // LLM-HARNESS-BEGIN: us-8027732c
-extern "C" bool func_80274EA8() { return false; }
+extern "C" void func_80274EA8(void* self) { getPad__Q22cf13CfGameManagerFi(0); }
 // LLM-HARNESS-END: us-8027732c
 
 // LLM-HARNESS-BEGIN: us-80277334

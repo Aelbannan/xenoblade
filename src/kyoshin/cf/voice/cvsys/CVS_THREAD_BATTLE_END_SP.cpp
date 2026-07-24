@@ -21,5 +21,5 @@ extern "C" void func_802ABAC0() {}
 // LLM-HARNESS-END: us-802ae1f8
 
 // LLM-HARNESS-BEGIN: us-802ae270
-extern "C" bool func_802ABB38() { return false; }
+extern "C" int func_802ABB38(void* self) { return 70; }
 // LLM-HARNESS-END: us-802ae270

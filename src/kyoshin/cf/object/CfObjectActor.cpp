@@ -9,11 +9,15 @@ namespace cf {
     }
 }
 
+// Forward declarations for thunks
+extern "C" void __dt__Q22cf13CfObjectActorFv(void* self);
+extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
+
 // LLM-HARNESS-BEGIN: us-80173514
 extern "C" void CfObjectActor_UnkVirtualFunc5__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-80173514
 // LLM-HARNESS-BEGIN: us-80173828
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv() { return 0.0f; }
+extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self) { return *(float*)((u8*)self + 0x3ee8); }
 // LLM-HARNESS-END: us-80173828
 // LLM-HARNESS-BEGIN: us-801738a4
 extern "C" void CfObjectActor_UnkVirtualFunc8__Q22cf13CfObjectActorFv() {}

@@ -233,7 +233,7 @@ extern "C" void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv() {}
 // LLM-HARNESS-END: us-8003e1e0
 
 // LLM-HARNESS-BEGIN: us-8003e1f0
-extern "C" bool CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv() { return false; }
+extern "C" void CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
 // LLM-HARNESS-END: us-8003e1f0
 
 // LLM-HARNESS-BEGIN: us-8003e1f8
@@ -269,7 +269,7 @@ extern "C" void lookAt() {}
 // LLM-HARNESS-END: us-8003e5ec
 
 // LLM-HARNESS-BEGIN: us-8003e944
-extern "C" bool CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv() { return false; }
+extern "C" void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { ((u8*)self)[0xBD] = val; }
 // LLM-HARNESS-END: us-8003e944
 
 // LLM-HARNESS-BEGIN: us-8003e94c
@@ -289,7 +289,7 @@ extern "C" void func_8003E528() {}
 // LLM-HARNESS-END: us-8003eaa4
 
 // LLM-HARNESS-BEGIN: us-8003ebe0
-extern "C" bool CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv() { return false; }
+extern "C" u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 // LLM-HARNESS-END: us-8003ebe0
 
 // LLM-HARNESS-BEGIN: us-8003ebe8

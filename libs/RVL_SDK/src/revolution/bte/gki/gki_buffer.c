@@ -4,50 +4,57 @@
 #error Number of pools out of range (16 Max)!
 #endif
 
+/* Retail MAGIC_NO check: odd ptr => bad; else (exp-v)|(v-exp)>>31. Must stay a
+ * macro so MWCC inlines into each caller (no separate symbol). */
+#define gki_magic_corrupted(magic)                                             \
+    (((UINT32)(magic) & 1)                                                     \
+         ? 1u                                                                  \
+         : ((((MAGIC_NO) - *(UINT32*)(magic)) |                                \
+             (*(UINT32*)(magic) - (MAGIC_NO))) >>                              \
+            31))
+
 void gki_init_free_queue(UINT8 id, UINT16 size, UINT16 total, void* p_mem) {
     UINT16 i;
     UINT16 act_size;
     BUFFER_HDR_T* hdr;
     BUFFER_HDR_T* hdr1 = NULL;
-    UINT32* magic;
-    INT32 tempsize = size;
+    INT32 tempsize;
     tGKI_COM_CB* p_cb = &gki_cb.com;
 
     tempsize = (INT32)ALIGN_POOL(size);
     act_size = (UINT16)(tempsize + BUFFER_PADDING_SIZE);
 
-    if (p_mem) {
-        p_cb->pool_start[id] = (UINT8*)p_mem;
-        p_cb->pool_end[id] = (UINT8*)p_mem + (act_size * total);
-    }
-
+    /* REVOLUTION: always store start/end. */
+    p_cb->pool_start[id] = (UINT8*)p_mem;
+    p_cb->pool_end[id] = (UINT8*)p_mem + (act_size * total);
     p_cb->pool_size[id] = act_size;
     p_cb->freeq[id].size = (UINT16)tempsize;
     p_cb->freeq[id].total = total;
     p_cb->freeq[id].cur_cnt = 0;
     p_cb->freeq[id].max_cnt = 0;
 
-    if (!p_mem) {
-        return;
-    }
-
     hdr = (BUFFER_HDR_T*)p_mem;
     p_cb->freeq[id].p_first = hdr;
+
+    if (total == 0) {
+        goto finish;
+    }
+
+    /* Retail has an 8x CTR unroll when total>8; MWCC does not emit it from a
+     * handwritten 8-body (size blows past 0x220). Keep a single loop. */
     for (i = 0; i < total; i++) {
         hdr->task_id = GKI_INVALID_TASK;
         hdr->q_id = id;
         hdr->status = BUF_STATUS_FREE;
-        hdr->Type = 0;
-        magic = (UINT32*)((UINT8*)hdr + BUFFER_HDR_SIZE + tempsize);
-        *magic = MAGIC_NO;
+        *(UINT32*)((UINT8*)hdr + tempsize + BUFFER_HDR_SIZE) = MAGIC_NO;
         hdr1 = hdr;
         hdr = (BUFFER_HDR_T*)((UINT8*)hdr + act_size);
         hdr1->p_next = hdr;
     }
 
+finish:
     hdr1->p_next = NULL;
     p_cb->freeq[id].p_last = hdr1;
-    return;
 }
 
 void gki_buffer_init(void) {
@@ -109,21 +116,30 @@ void GKI_init_q(BUFFER_Q* p_q) {
 
 void* GKI_getbuf(UINT16 size) {
     UINT8 i;
+    UINT8 pool;
     FREE_QUEUE_T* Q;
     BUFFER_HDR_T* p_hdr;
     tGKI_COM_CB* p_cb = &gki_cb.com;
+    void* ret;
 
     if (size == 0) {
         GKI_exception(GKI_ERROR_BUF_SIZE_ZERO, "getbuf: Size is zero");
         return NULL;
     }
 
-    for (i = 0; i < p_cb->curr_total_no_of_pools; i++) {
-        if (size <= p_cb->freeq[p_cb->pool_list[i]].size) {
-            break;
-        }
+    /* Bottom-tested scan; join at cmplw i/total (retail bne-to-disable). */
+    i = 0;
+    goto getbuf_scan_test;
+getbuf_scan:
+    if (size <= p_cb->freeq[p_cb->pool_list[i]].size) {
+        goto getbuf_scan_done;
     }
-
+    i++;
+getbuf_scan_test:
+    if (i < p_cb->curr_total_no_of_pools) {
+        goto getbuf_scan;
+    }
+getbuf_scan_done:
     if (i == p_cb->curr_total_no_of_pools) {
         GKI_exception(GKI_ERROR_BUF_SIZE_TOOBIG, "getbuf: Size is too big");
         return NULL;
@@ -131,42 +147,39 @@ void* GKI_getbuf(UINT16 size) {
 
     GKI_disable();
 
-    for (; i < p_cb->curr_total_no_of_pools; i++) {
-        if (((UINT16)1 << p_cb->pool_list[i]) & p_cb->pool_access_mask) {
-            continue;
-        }
-
-        if (size <= p_cb->freeq[p_cb->pool_list[i]].size) {
-            Q = &p_cb->freeq[p_cb->pool_list[i]];
-        } else {
-            continue;
-        }
-
+    /* Second phase: access-mask + free slot only (no size re-check). */
+    goto getbuf_take_test;
+getbuf_take:
+    pool = p_cb->pool_list[i];
+    if (!(((UINT16)1 << pool) & p_cb->pool_access_mask)) {
+        Q = &p_cb->freeq[pool];
         if (Q->cur_cnt < Q->total) {
             p_hdr = Q->p_first;
             Q->p_first = p_hdr->p_next;
-
             if (!Q->p_first) {
                 Q->p_last = NULL;
             }
-
             if (++Q->cur_cnt > Q->max_cnt) {
                 Q->max_cnt = Q->cur_cnt;
             }
-
             GKI_enable();
             p_hdr->task_id = GKI_get_taskid();
+            ret = (void*)((UINT8*)p_hdr + BUFFER_HDR_SIZE);
             p_hdr->status = BUF_STATUS_UNLINKED;
-            p_hdr->p_next = NULL;
             p_hdr->Type = 0;
-            return (void*)((UINT8*)p_hdr + BUFFER_HDR_SIZE);
+            p_hdr->p_next = NULL;
+            return ret;
         }
+    }
+    i++;
+getbuf_take_test:
+    if (i < p_cb->curr_total_no_of_pools) {
+        goto getbuf_take;
     }
 
     GKI_enable();
     return NULL;
 }
-
 void* GKI_getpoolbuf(UINT8 pool_id) {
     FREE_QUEUE_T* Q;
     BUFFER_HDR_T* p_hdr;
@@ -208,30 +221,42 @@ void GKI_freebuf(void* p_buf) {
     BUFFER_HDR_T* p_hdr;
     UINT32* magic;
     UINT16 buf_size;
-    tGKI_COM_CB* p_cb = &gki_cb.com;
+    UINT32 v;
+    UINT32 exp;
+    UINT8 bad;
+    /* Retail: string pool base in r5 only at prologue (no early gki_cb → no r30). */
+    char* msg = (char*)"getbuf: Size is zero";
 
 #if (GKI_ENABLE_BUF_CORRUPTION_CHECK == TRUE)
     if (!p_buf) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Free - Buf Corrupted");
-        return;
+        goto free_corrupted;
     }
 
     p_hdr = (BUFFER_HDR_T*)((UINT8*)p_buf - BUFFER_HDR_SIZE);
-    buf_size = 0;
-    if (!((UINT32)p_hdr & 1)) {
-        if (p_hdr->q_id < GKI_NUM_TOTAL_BUF_POOLS) {
-            buf_size = p_cb->freeq[p_hdr->q_id].size;
+    /* Odd hdr → size 0; else q_id>=9 → 0; else load (retail bge-skip shape). */
+    if ((UINT32)p_hdr & 1) {
+        buf_size = 0;
+    } else {
+        if (p_hdr->q_id >= GKI_NUM_TOTAL_BUF_POOLS) {
+            buf_size = 0;
+        } else {
+            buf_size = gki_cb.com.freeq[p_hdr->q_id].size;
         }
     }
 
     magic = (UINT32*)((UINT8*)p_buf + buf_size);
     if ((UINT32)magic & 1) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Free - Buf Corrupted");
-        return;
+        bad = 1;
+    } else {
+        /* Load MAGIC before *magic so MWCC keeps exp in a GPR for dual subf. */
+        exp = MAGIC_NO;
+        v = *magic;
+        bad = (UINT8)(((exp - v) | (v - exp)) >> 31);
     }
 
-    if (*magic != MAGIC_NO) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Free - Buf Corrupted");
+    if (bad) {
+    free_corrupted:
+        GKI_exception(GKI_ERROR_BUF_CORRUPTED, msg + 0x30);
         return;
     }
 #else
@@ -239,18 +264,18 @@ void GKI_freebuf(void* p_buf) {
 #endif
 
     if (p_hdr->status != BUF_STATUS_UNLINKED) {
-        GKI_exception(GKI_ERROR_FREEBUF_BUF_LINKED, "Freeing Linked Buf");
+        GKI_exception(GKI_ERROR_FREEBUF_BUF_LINKED, msg + 0x48);
         return;
     }
 
     if (p_hdr->q_id >= GKI_NUM_TOTAL_BUF_POOLS) {
-        GKI_exception(GKI_ERROR_FREEBUF_BAD_QID, "Bad Buf QId");
+        GKI_exception(GKI_ERROR_FREEBUF_BAD_QID, msg + 0x5c);
         return;
     }
 
     GKI_disable();
 
-    Q = &p_cb->freeq[p_hdr->q_id];
+    Q = &gki_cb.com.freeq[p_hdr->q_id];
     if (Q->p_last) {
         Q->p_last->p_next = p_hdr;
     } else {
@@ -267,7 +292,6 @@ void GKI_freebuf(void* p_buf) {
     }
 
     GKI_enable();
-    return;
 }
 
 UINT16 GKI_get_buf_size(void* p_buf) {
@@ -308,12 +332,7 @@ void GKI_send_msg(UINT8 task_id, UINT8 mbox, void* msg) {
     }
 
     magic = (UINT32*)((UINT8*)msg + buf_size);
-    if ((UINT32)magic & 1) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Send - Buffer corrupted");
-        return;
-    }
-
-    if (*magic != MAGIC_NO) {
+    if (gki_magic_corrupted(magic)) {
         GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Send - Buffer corrupted");
         return;
     }
@@ -382,12 +401,7 @@ void GKI_enqueue(BUFFER_Q* p_q, void* p_buf) {
     }
 
     magic = (UINT32*)((UINT8*)p_buf + buf_size);
-    if ((UINT32)magic & 1) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Enqueue - Buffer corrupted");
-        return;
-    }
-
-    if (*magic != MAGIC_NO) {
+    if (gki_magic_corrupted(magic)) {
         GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Enqueue - Buffer corrupted");
         return;
     }
@@ -433,12 +447,7 @@ void GKI_enqueue_head(BUFFER_Q* p_q, void* p_buf) {
     }
 
     magic = (UINT32*)((UINT8*)p_buf + buf_size);
-    if ((UINT32)magic & 1) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Enqueue - Buffer corrupted");
-        return;
-    }
-
-    if (*magic != MAGIC_NO) {
+    if (gki_magic_corrupted(magic)) {
         GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Enqueue - Buffer corrupted");
         return;
     }
@@ -552,20 +561,33 @@ BOOLEAN GKI_queue_is_empty(BUFFER_Q* p_q) {
 
 UINT8 GKI_create_pool(UINT16 size, UINT16 count, UINT8 permission, void* p_mem_pool) {
     UINT8 xx;
+    UINT8 groups;
     INT32 i;
     INT32 j;
-    INT32 tempsize = size;
+    INT32 tempsize;
     tGKI_COM_CB* p_cb = &gki_cb.com;
 
     if (size > MAX_USER_BUF_SIZE) {
         return GKI_INVALID_POOL;
     }
 
-    for (xx = 0; xx < GKI_NUM_TOTAL_BUF_POOLS; xx++) {
+    /* Retail: 3 bodies per CTR trip over 9 total pools. */
+    xx = 0;
+    groups = 3;
+    do {
         if (!p_cb->pool_start[xx]) {
             break;
         }
-    }
+        xx++;
+        if (!p_cb->pool_start[xx]) {
+            break;
+        }
+        xx++;
+        if (!p_cb->pool_start[xx]) {
+            break;
+        }
+        xx++;
+    } while (--groups != 0);
 
     if (xx == GKI_NUM_TOTAL_BUF_POOLS) {
         return GKI_INVALID_POOL;
@@ -589,6 +611,7 @@ UINT8 GKI_create_pool(UINT16 size, UINT16 count, UINT8 permission, void* p_mem_p
         }
     }
 
+    /* Scalar shift — handwritten 8× CTR body regresses (~48%). */
     for (j = p_cb->curr_total_no_of_pools; j > i; j--) {
         p_cb->pool_list[j] = p_cb->pool_list[j - 1];
     }

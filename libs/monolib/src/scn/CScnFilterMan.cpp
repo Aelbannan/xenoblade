@@ -29,7 +29,7 @@ extern "C" void func_8049CAF4() {}
 // LLM-HARNESS-END: us-804a0c50
 
 // LLM-HARNESS-BEGIN: us-804a0cc8
-extern "C" void func_8049CB6C() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0cc8
 
 // LLM-HARNESS-BEGIN: us-804a0ccc
@@ -53,7 +53,7 @@ extern "C" void func_8049CC70() {}
 // LLM-HARNESS-END: us-804a0dcc
 
 // LLM-HARNESS-BEGIN: us-804a0e00
-extern "C" void func_8049CCA4() {}
+extern "C" void func_8049CCA4(void) {}
 // LLM-HARNESS-END: us-804a0e00
 
 // LLM-HARNESS-BEGIN: us-804a0e04
@@ -65,7 +65,7 @@ extern "C" void func_8049CD34() {}
 // LLM-HARNESS-END: us-804a0e90
 
 // LLM-HARNESS-BEGIN: us-804a0f08
-extern "C" void func_8049CDAC() {}
+extern "C" void func_8049CDAC(void) {}
 // LLM-HARNESS-END: us-804a0f08
 
 // LLM-HARNESS-BEGIN: us-804a0f0c
@@ -77,7 +77,7 @@ extern "C" void __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter
 // LLM-HARNESS-END: us-804a0f18
 
 // LLM-HARNESS-BEGIN: us-804a0f70
-extern "C" void func_8049CE14() {}
+extern "C" void func_8049CE14(void) {}
 // LLM-HARNESS-END: us-804a0f70
 
 // LLM-HARNESS-BEGIN: us-804a0f74
@@ -85,7 +85,7 @@ extern "C" void func_8049CE18() {}
 // LLM-HARNESS-END: us-804a0f74
 
 // LLM-HARNESS-BEGIN: us-804a10a0
-extern "C" void func_8049CF44() {}
+extern "C" void func_8049CF44(void) {}
 // LLM-HARNESS-END: us-804a10a0
 
 // LLM-HARNESS-BEGIN: us-804a10a4
@@ -97,7 +97,7 @@ extern "C" void __dt__13CScnFilterManFv() {}
 // LLM-HARNESS-END: us-804a11ec
 
 // LLM-HARNESS-BEGIN: us-804a1288
-extern "C" void func_8049D12C() {}
+extern "C" void func_8049D12C(void) {}
 // LLM-HARNESS-END: us-804a1288
 
 // LLM-HARNESS-BEGIN: us-804a128c
@@ -105,7 +105,7 @@ extern "C" void __dt__8049D130() {}
 // LLM-HARNESS-END: us-804a128c
 
 // LLM-HARNESS-BEGIN: us-804a12e4
-extern "C" void func_8049D188() {}
+extern "C" void func_8049D188(void) {}
 // LLM-HARNESS-END: us-804a12e4
 
 // LLM-HARNESS-BEGIN: us-804a12e8
@@ -121,11 +121,11 @@ extern "C" void func_8049D218() {}
 // LLM-HARNESS-END: us-804a1374
 
 // LLM-HARNESS-BEGIN: us-804a13c8
-extern "C" bool func_8049D26C() { return false; }
-// LLM-HARNESS-END: us-804a13c8
+extern "C" void func_8049D274(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+// LLM-HARNESS-END: us-804a13d0
 
-// LLM-HARNESS-BEGIN: us-804a13d0
-extern "C" bool func_8049D274() { return false; }
+// LLM-HARNESS-BEGIN: us-804a13c8
+extern "C" void func_8049D26C(void* self) { func_8049D274(*(void**)((char*)self + 0x4), 0); }
 // LLM-HARNESS-END: us-804a13d0
 
 // LLM-HARNESS-BEGIN: us-804a13d8
@@ -181,11 +181,11 @@ extern "C" void func_8049D5F0() {}
 // LLM-HARNESS-END: us-804a174c
 
 // LLM-HARNESS-BEGIN: us-804a17a0
-extern "C" bool func_8049D644() { return false; }
-// LLM-HARNESS-END: us-804a17a0
+extern "C" void func_8049D64C(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+// LLM-HARNESS-END: us-804a17a8
 
-// LLM-HARNESS-BEGIN: us-804a17a8
-extern "C" bool func_8049D64C() { return false; }
+// LLM-HARNESS-BEGIN: us-804a17a0
+extern "C" void func_8049D644(void* self) { func_8049D64C(*(void**)((char*)self + 0x4), 0); }
 // LLM-HARNESS-END: us-804a17a8
 
 // LLM-HARNESS-BEGIN: us-804a17b0
@@ -245,7 +245,7 @@ extern "C" void func_8049D9B0() {}
 // LLM-HARNESS-END: us-804a1b0c
 
 // LLM-HARNESS-BEGIN: us-804a1b28
-extern "C" void func_8049D9CC() {}
+extern "C" void func_8049D9CC(void) {}
 // LLM-HARNESS-END: us-804a1b28
 
 // LLM-HARNESS-BEGIN: us-804a1b2c
@@ -253,7 +253,7 @@ extern "C" void func_8049D9D0() {}
 // LLM-HARNESS-END: us-804a1b2c
 
 // LLM-HARNESS-BEGIN: us-804a1c50
-extern "C" bool func_8049DAF4() { return false; }
+extern "C" u8 func_8049DAF4(void* self) { return ((u8*)self)[0x4]; }
 // LLM-HARNESS-END: us-804a1c50
 
 // LLM-HARNESS-BEGIN: us-804a1c58
@@ -293,7 +293,7 @@ extern "C" void func_8049DCF4() {}
 // LLM-HARNESS-END: us-804a1e50
 
 // LLM-HARNESS-BEGIN: us-804a1e84
-extern "C" bool func_8049DD28() { return false; }
+extern "C" void func_8049DD28(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 // LLM-HARNESS-END: us-804a1e84
 
 // LLM-HARNESS-BEGIN: us-804a1e8c

@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuPlayAward() {}
 // LLM-HARNESS-END: us-8027212c
 
 // LLM-HARNESS-BEGIN: us-80272200
-extern "C" void __dt__14CMenuPlayAwardFv() {}
+extern "C" void __dt__14CMenuPlayAwardFv(void* self) {}
 // LLM-HARNESS-END: us-80272200
 
 // LLM-HARNESS-BEGIN: us-80272278
@@ -25,7 +25,7 @@ extern "C" void Move__14CMenuPlayAwardFv() {}
 // LLM-HARNESS-END: us-802725d8
 
 // LLM-HARNESS-BEGIN: us-802726e8
-extern "C" void cbRenderBefore__14CMenuPlayAwardFv() {}
+extern "C" void cbRenderBefore__14CMenuPlayAwardFv(void* self) {}
 // LLM-HARNESS-END: us-802726e8
 
 // LLM-HARNESS-BEGIN: us-8027278c
@@ -53,11 +53,11 @@ extern "C" void func_802705F4() {}
 // LLM-HARNESS-END: us-80272a78
 
 // LLM-HARNESS-BEGIN: us-80272ac8
-extern "C" bool func_80270644() { return false; }
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80272ac8
 
 // LLM-HARNESS-BEGIN: us-80272ad0
-extern "C" bool func_8027064C() { return false; }
+extern "C" void func_8027064C(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80272ad0
 
 // LLM-HARNESS-BEGIN: us-80272ad8
@@ -117,7 +117,7 @@ extern "C" void func_80270F28() {}
 // LLM-HARNESS-END: us-802733ac
 
 // LLM-HARNESS-BEGIN: us-802733f0
-extern "C" bool func_80270F6C() { return false; }
+extern "C" u8 func_80270F6C(void* self) { return ((u8*)self)[0x8b]; }
 // LLM-HARNESS-END: us-802733f0
 
 // LLM-HARNESS-BEGIN: us-802733f8

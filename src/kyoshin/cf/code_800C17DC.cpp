@@ -45,7 +45,7 @@ extern "C" void func_800C1EB8() {}
 // LLM-HARNESS-END: us-800c2900
 
 // LLM-HARNESS-BEGIN: us-800c2970
-extern "C" void func_800C1F28() {}
+extern "C" void func_800C1F28(void) {}
 // LLM-HARNESS-END: us-800c2970
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

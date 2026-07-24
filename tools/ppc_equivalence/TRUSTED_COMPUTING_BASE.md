@@ -92,12 +92,25 @@ Architecture model: see `result.ARCHITECTURE_MODEL`.
 
 ## Callee summaries / certificates
 
-- **Modules:** `callee_inference.py`, `semantics.py` (`CalleeContract`),
-  coop certificate chain in `tools/coop/lib/targets.py` /
+- **Modules:** `callee_inference.py`, `semantics.py` (`CalleeContract`,
+  `_apply_call_summary`), coop certificate chain in `tools/coop/lib/targets.py` /
   `tools/coop/lib/equivalence_check.py`
 - Opaque EABI summaries; precise body-inferred / composed matched-callee lemmas;
   transitive certificate checks.
-- Trust risk: stale or incomplete callee certificates → false leaf equivalence.
+- `_apply_call_summary` must refresh every CR field named in the write set
+  (including CR2–CR4 and whole-`cr`) and must refresh `lr`, `msr`, `gqr*`,
+  `sr*`, `time_base`, `srr*`, and aux SPRs when written; inference must not
+  inject a whole-`cr` read for field-overwrite compares.
+- `register_effects` must include `xer.ca` reads/writes for carry arithmetic
+  and OE `xer.ov`/`xer.so` updates; omitting them unsoundly unifies call tokens.
+- Record-form CR0 updates (`Rc` / `andi.` / `addic.`) must read `xer.so`;
+  logical immediates must list their destination GPR in `destination_ops`.
+- FP arithmetic must include `fpscr` in `register_effects`; `automatic_live_out`
+  must not mis-table `mffs`/`mtfs*` via `_FP_SCALAR_ARITH`.
+- `register_effects` for FMR/FNEG/FABS/FNABS/FRSP/FCTIW* must use FB
+  (`operands[2]`), not reserved FA (`operands[1]`).
+- Trust risk: stale or incomplete callee certificates → false leaf equivalence;
+  under-applying declared CR/XER/FPSCR writes → false EQUIVALENT / false refusal.
 
 ## Query construction
 

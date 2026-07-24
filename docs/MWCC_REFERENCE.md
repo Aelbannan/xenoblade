@@ -58,7 +58,9 @@ US `main` is **not** the JP-shaped “copy ErrMesData strings then initialize”
 
 ## CAIAction UnkVirtualFunc1/2 — `stwx` vs `stwux` (US)
 
-Frameless Fv+r4/r5 ring copy leaves. High-level C++ CSEs dest materialization into **`stwux`** (r4+=r8) plus sequential loads from src-in-r7; retail keeps **`stwx`+`add r7`** with src in **r9** and an interleaved **8-then-4** field schedule (exact size `0x110` retail / `0x10C` decomp). Indexed/`buf[i]` / `slots[i].unk00` / separate `dstBytes` stores still fuse under MWCC. Dual `storeBase`/`destBase` aliases of `outB->buffer` **regress** (~95.1%). Soft-cap **96.02941%** CODE_MATCH; size PASS. `EQUIVALENT` blocked by ring-loop visit/instruction limits and Z3 timeout under `ppc-eabi`. Keep high-level C++ — **no** `.text` `insn_patches` / `asm void` (skill forbids).
+Frameless Fv+r4/r5 ring copy leaves. High-level C++ CSEs dest materialization into **`stwux`** (r4+=r8) plus sequential loads from src-in-r7; retail keeps **`stwx`+`add r7`** with src in **r9** and an interleaved **8-then-4** field schedule (exact size `0x110` retail / `0x10C` decomp). Pointer+offset `(u8*)buffer+(outIdx<<5)` holds **96.02941%**; `outB->buffer[outIdx].unk00` + `&buffer[outIdx]` **regresses ~87.1%**. Dual `storeBase`/`destBase` aliases of `outB->buffer` **regress** (~95.1%). Soft-cap **96.02941%** CODE_MATCH; size PASS. `EQUIVALENT` blocked by ring-loop visit/instruction limits and Z3 timeout under `ppc-eabi` (cfg-exploration deadline even at soft-cap 15min budget).
+
+**Also ruled out (still `stwux`):** distinct `off`/`offDest` copies; fresh `(outIdx<<5)` for dest vs store; `#pragma opt_propagation off`; `#pragma optimization_level 1`; `#pragma global_optimizer off` (grows to `0x124`, still `stwux`); `for`↔`while` mirror between vfunc1/vfunc2. Keep high-level C++ — **no** `.text` `insn_patches` / `asm void` (skill forbids).
 
 ## CBattleState UnkVirtualFunc6 — regalloc soft-cap (US)
 
@@ -67,12 +69,31 @@ tail-call vt+`0x48` via **`bctr`**. Exact size `0x154`. **`BattleStateV6If::vf48
 fixes vptr coloring to retail `lwz r12` (~92.5%, was ~92.2% with FP temps).
 Residual ~44 words: prologue GPR homes (`id`/`one`/`entries`/`n` = retail
 `r6`/`r7`/`r5`/`r0` vs MWCC `r0`/`r5`/`r8`/`r10`) and walk in `r9` vs `r7`.
-`id`/`one`/`entries` decl-order and scoped-`one` regress. Keep high-level C++;
+Retail emits `li one` before `addi entries`; MWCC prefers entries-first and
+**constant-folds** `0x1387+one` → bare `addi 0x1388` (dependency does not stick).
+Keeping `id` live across the match walk (`entries->unk0C = id` / compare on
+cached `id` without clrlwi kill) drops to ~90%. Expanded byte/FPR copy schedule
+also soft-caps ~92.47% at exact size. SMT `ppc-eabi`+fpscr stays
+`inconclusive_timeout` on the peak body. `id`/`one`/`entries` decl-order and
+scoped-`one` regress.
+
+**FPR residual (free-slot fill):** peak already matches retail’s early
+`lfs f0,lbl` + `f1`/`f2` copy schedule; only the scale multiply differs —
+retail `fmuls f0,f0,f1` vs MWCC `fmuls f1,f0,f1` from
+`f32 scaled = lbl * entries->unk24`. Ruled out: `scale = lbl; scale *= unk24`
+(and assign-then-mul) → constant lands in **f2**; `*(volatile f32*)&lbl`
+same f2 regression; operand swap `unk24 * lbl` → `fmuls f1,f1,f0` (still
+dest=f1). Named bitfield temps/`self+off+0x15AC` do not change prologue
+GPR homes. §17.6 single-insn asm not eligible (&lt;99%). Keep high-level C++;
 **do not** use `asm void`.
 
 ## CBattleState UnkVirtualFunc8 — NV home / scan soft-cap (US)
 
-Fv+r4 kind tree + slot walk (`0x68`×`0x34`). Fake SI `BattleStateV8If` (omit RTTI `_v000`/`_v004`) emits retail **`lwz r12` / `bctr`** for vt+`0x2C`/`0x4C`. Soft-cap ~98%: Chaitin parks **this/entry in r27/r28** (retail **r28/r29**) and **thirteen in r29** (retail **r27**); scan loop drops dead **`addi r3,r3,7`** (decomp `0x420` vs retail `0x428`); word-copy uses r0/r5 vs retail r6/r0. Function-scope `slot`/`i`, late `one`/`thirteen`, and trip keep-alives do not move the NV homes. EQUIVALENT blocked by indirect vcalls + unaccepted `memset`. Keep high-level C++; **do not** use `asm void`.
+Fv+r4 kind tree + slot walk (`0x68`×`0x34`). Fake SI `BattleStateV8If` (omit RTTI `_v000`/`_v004`) emits retail **`lwz r12` / `bctr`** for vt+`0x2C`/`0x4C`. Soft-cap ~**98.4%** (was ~98.1%): `volatile int tripKeep = trip; stillActive |= tripKeep & 0` restores dead **`li r3,0` / `addi r3,r3,7`**; bit clear uses **`(id >> 3) & 0x1FFC`** for retail `rlwinm SH=29,MB=19,ME=29` (`~3u` widens MB). Residual: Chaitin **this/entry** homes (`r27/r28` vs retail `r28/r29`), **thirteen** (`r29` vs `r27`), scan base in **r5** vs retail **r4** (tripKeep stack slot shifts frame / steals r4), word-copy **r0/r5** vs **r6/r0**. Plain `trip&0` / `trip^trip` / `clearLen=trip` DSE the addi. EQUIVALENT blocked by unresolved indirect vcalls + `memset` lacking an equivalence certificate (FULL_MATCH leaf). Keep high-level C++; **do not** use `asm void`.
+
+## CBattleState UnkVirtualFunc10 — trip / SI / mask soft-cap (US)
+
+Fv+r4 early-out on `arg->unk2E==0`, spill arg words, walk `0x68`×`0x34` matching `unk2E` (+ optional key eq). Same kind tree as vfunc8 on **slot** id; kind==3 clears `+0x1528`; stack-copy + `memset` + id-dup scan + vt+`0x4C` (no recursive vt+`0x2C`). Soft-cap ~**98.5%** (was ~98.2%): SI `BattleStateV8If::vf4C` restores **`lwz r12`**; same **tripKeep** + **`0x1FFC`** mask as vfunc8. Residual: NV **this** `r23` vs `r24`, scan **r5** vs **r4**, extra tripKeep `stw`, word-copy pair regs. EQUIVALENT same indirect/`memset` cert blocker. Keep high-level C++; **do not** use `asm void`.
 
 ## CBattleState UnkVirtualFunc26 — schedule + mtctr copy (US)
 
@@ -86,11 +107,17 @@ Fv+r4 src table: vt+`0x78` clear, 8×`0x10` records → stack `CBattleStateEntry
 
 Exact size `0x588`. Best ~**89.2%** HIGH_MATCH: `setScale(CVec3(sx,sy,lbl_eu_80667C88))` + `setRotXYZ` + `FLAGS_01` plane guard + SDA dir/unk124/128 zeros + `math::sqrt` (inlined `FSqrt`/`Warning`/`FrSqrt`).
 
-Retail prologue builds scale with field `stfs` of SDA 0/1, then **`MTX34RotXYZFIdx`** with **`lbl_eu_80667C90`** (RAD_TO_FIDX) and `PSMTXConcat(rot,scale,scale)`. Explicit FIdx + `lbl_eu_80667C90` matches size but **drops fuzzy ~1–2%** vs `setRotXYZ` (`MTX34RotXYZRad`). Side-plane bodies are retail **psq-interleaved** edge/normalize/dist; sequential `CPlane::set(p0,p1)` stays shorter/differently scheduled. Scalar `CVec3::sub` + fmadd corner loop (instead of `VEC3LenSq`) **regressed to ~86%**. Split spare ~`0x14`. Keep high-level C++; **no** `insn_patches`.
+Retail prologue builds scale with field `stfs` of SDA 0/1, then **`MTX34RotXYZFIdx`** with **`lbl_eu_80667C90`** (RAD_TO_FIDX) and `PSMTXConcat(rot,scale,scale)`. Explicit FIdx + `lbl_eu_80667C90` matches size but **drops fuzzy ~1–2%** vs `setRotXYZ` (`MTX34RotXYZRad`). Side-plane bodies are retail **psq-interleaved** edge/normalize/dist; sequential `CPlane::set(p0,p1)` stays shorter/differently scheduled. Explicit side-plane edge temps (4 locals or ping-pong `edgeA`/`edgeB` with early N+1 `sub` before `mDist` N) **regressed to ~69%** and **size FAIL** (+`0x24`–`0x38`). Scalar `CVec3::sub` + fmadd / direct `VEC3Sub`+`VEC3LenSq` corner loop **regressed to ~86–87%**. Split spare ~`0x14`.
 
-## CMenuEnemyState::Move — `_savegpr_21` vs `_savegpr_22` (US)
+`EQUIVALENT_MATCH` blocked on retail callees: `MTX34RotXYZFIdx` (`us-8040d584`, COMPILES) and `CPlane::set` 3-arg (`us-804398b8`, ~79% HIGH_MATCH soft-cap) plus missing/stale v45 certs on FULL_MATCH math helpers. Keep high-level C++; **no** `insn_patches`.
 
-Exact size `0x9B8`. Peak ~**85.64%** HIGH_MATCH with `scratch`/`hasSub`/`skipDist`/`posTmpPtr` live set from commit `28b3f22`. Frame `-0xe0` / f28–f31 OK; residual is **one extra callee-saved** (`_savegpr_21` vs retail `_savegpr_22`) plus PS distance schedule vs scalar `distSq`. Dropping `scratch` / inlining `skipDist` regresses to ~80.9%. Behaviour host 24 scenarios PASS. Soft-cap under high-level C++; **no** `insn_patches`.
+## CMenuEnemyState::Move — `_savegpr_20` vs `_savegpr_22` (US)
+
+Retail size `0x9B8` (decomp peak `0x984`). Frame `-0xe0` / f28–f31 OK.
+
+**Breakthrough (87.16% HIGH_MATCH):** replace scalar `distSq = x*x+y*y+z*z` with `VEC3Sub(pDelta,…)； scratch=delta； VEC3LenSq(pScratch)`. That recovers retail `ps_mul` / `ps_madd` / `ps_sum0` (+~1.5% over the prior 85.64% soft-cap). Keep pre-loop order `pc → animMarker → distThresh → scratch/pScratch → one → delta/pDelta → i/z` and `posTmpPtr`.
+
+**Residual soft-cap:** decomp still emits `_savegpr_20` (two extra NVs vs retail `_savegpr_22`), so GPR homes stay shifted (`this` in r20 vs r23). Ruled out for shedding: dual-home pulse `obj`/`noTarget`, dropping `posTmpPtr`, block-scoping `hasSub`, `*pScratch=*pDelta` vs `scratch=delta`. Dropping `scratch` / inlining `skipDist` still regresses (~80.9%). `EQUIVALENT` blocked by unresolved indirect + many unvalidated callees. Soft-cap under high-level C++; **no** `insn_patches`.
 
 ## CMenuBattlePlayerState ctor — 0x20 vs 0x60 pad clear (US)
 
@@ -106,9 +133,33 @@ Retail mid-clear of `pad90[0x174]` (and leaf `func_8010B324` ~83.8%) is MWCC’s
 
 Manual vptr loads (`this+8` iface tables, `CChainVObj` / `CfObjectPc` vptrs) must use **`lwz r12,…`** like a C++ virtual call. High-level function-pointer temps color as **r4/r5**. Prefer fake SI virtual iface (`MenuBpsActorIf` pattern) or other high-level reshape — **`asm void` bodies are not allowed**.
 
+## CUICfManager::func_80133324 — 312c codePersist / slot RA (US)
+
+Exact size `0x3C0`, frame `-0x80` / `stmw r25` / `mr r31,r1`. Peak ~**99.56%** CODE_MATCH.
+
+**Breakthroughs:**
+1. Drop dead `pad0C`…`pad20` keep-alives (fully DCE’d but scrambled Chaitin).
+2. Expand `setItem` via `CUICfListNode` + `u32* ptr = &temp->item` / try-catch so retail schedules `add r4,temp` → `addic. r3,r4,8` → **then** `lwz savedRet` (not arg-first).
+3. Slot locals: **declare** `capacity` before `startNode`, **assign** `startNode` then `capacity` → retail `lwz r8,0x128` / `lwz r7,0x13C` with `i`/`byteOff` in `r5`/`r6`.
+
+**Soft-cap (8 words):** `id-0x312c` / `li 0xc8` colored `r0`/`r3` (decomp) vs retail `r3`/`r0`, so `codePersist` lands in **r27** vs retail **r30** (and `mr` vs second `clrlwi` on the assign). Decl-order / goto / inline-helper / `u32`+ret2 reuse did not flip it. `EQUIVALENT` blocked by unvalidated callees. Keep high-level C++; **no** `asm void`.
+
+**Stall packet (cursor-gki-uicf, 2026-07-24):** peak **99.5625%** CODE_MATCH, size PASS `0x3C0`, equiv `inconclusive_unvalidated_callee` (9 callees). Residual still the 8-word Chaitin pair above. Fresh RA shapes ruled out: (1) `u16 codePersist` reused for `ret2` — flat 99.56%; (2) `u8 code` + `u32 diff` — **98.58%** (`li r25,0xc8` steals a1 home); (3) `codePersist=0xc8` then conditional overwrite — **98.58%** (`li r27` early). Prior ruled out: decl-order, goto beq-skip, inline helper, masked temp, `u32`+ret2. Next experiments: decomp.me scratch for li→r0 anti-coalesce; certify callees for EQUIVALENT route; avoid narrowing `code` onto NV early. Term measures ~99.8% on current toolchain (registry FULL_MATCH stale at HEAD too) — do not chase via this function's locals.
+
 ## CUICfManager::Init — packed slot templates (US)
 
 Large `-0x1A0` / `stmw r22` frame: `readFile` + `0x54` process/`__ptmf_null` (same prelude as `CUIBattleManager::Init`) then eight `0x168` slots.
+
+## CUIBattleManager::Move — stmw r25 / slot r7–r8 soft-cap (US)
+
+Exact size `0xB00`. Peak ~**95.57%** CODE_MATCH (`battle-mgr-move`): per-site `savedRet` stack homes, inline `setItem` list inserts, `pad0C`/`pad18` chain to keep capacity live, `__cntlzw`/`srwi` for `func_8009CF8C(0x3357)`, indirect `func_8012F5F8` call, `framePad[8]` toward retail `-0x220`.
+
+**Residual categories (byte diff vs retail):**
+1. **Prologue:** retail `stwu -0x220` + `stmw r25,0x204`; decomp `-0x210` + `stmw r31,0x1f0` (shallower callee-save set).
+2. **Six inline slot-search inserts:** retail `lwz r8,0x60` / `lwz r7,0x74` then `cmpw r5,r7`; decomp swaps **r7/r8** and emits `cmpw r5,r8` plus wrong sentinel register in list-link stores (`stw r7,0(r4)` vs retail `stw r8,0(r4)`).
+3. **Asset/party loop:** alternate `this`/`partyId` register homes vs retail `r30`/`r26`/`r27` schedule.
+
+**Regressions ruled out:** direct `bl func_8012F5F8` (drops ~0.05%); uniform `startNode`-before-`capacity` in all blocks; raw `0x60`/`0x74` offset loads; `framePad[12]`. Behaviour host `battle-mgr-move` (20 scenarios) PASS; size PASS. **EQUIVALENT** blocked: 26 callees lack v18 certificates + indirect call edge. Soft-cap under high-level C++; **no** `insn_patches` yet (would need per-site Chaitin patches across ~704 words).
 
 **Breakthrough:** stack **zeros** and aggregate **copy** are different views of the same `0x90` bytes. Named `u16` fields give correct `sth` zeros but memberwise `lhz` copies. Retail copy is:
 
@@ -123,9 +174,13 @@ Large `-0x1A0` / `stmw r22` frame: `readFile` + `0x54` process/`__ptmf_null` (sa
 
 ## CMenuArtsSelect::Move — header layout regression (US)
 
-Exact size `0xBB4`. Historical peak ~**93.8%** (commit `28b3f22`) used opaque `u8` padding through `0x54` + `slot+=4` walk + volatile `homes[3/4]` sink. After header refinement (named Process/vtable/ptmf + filled pads), same Move body falls to ~**78–79%**. Named `unk2A0[i]`/`unkA4[i]` HEAD shape is the current baseline (~79.4%). Extra early `volatile` NVs regress further. Soft-cap under high-level C++ until a new RA shape fits the refined layout; **no** `insn_patches`.
+Exact retail size `0xBB4`. Historical peak ~**93.8%** (commit `28b3f22`) used opaque `u8` padding through `0x54` + `slot+=4` walk + volatile `homes[3/4]` sink (`stwu -0x70`, `savegpr_20`, `this=r21`). After header refinement (named Process/vtable/ptmf + filled pads for ctor FULL_MATCH), same peak Move body falls to ~**78%**; named `unk2A0[i]`/`unkA4[i]` HEAD shape is the current baseline (~**79.4%**).
 
-**Regressions:** whole-Tail assign with large trailing arrays; union/`memcpy` dual-views; volatile stride (spills and shifts stack); runtime stride + `for(count)` reintroduces 8× clear unroll. Keep high-level C++; **`asm void` bodies are not allowed**.
+**Current codegen gap (refined header):** decomp emits ~`0xA28`–`0xA34` (not `0xBB4`), `stwu -0x60`, `this=r24`. Opaque `unk00[0x54]` alone is insufficient without the rest of the peak pad layout. Function-scope extra f32/NV keep-alives regress (~75.7%). Full peak header conflicts with Init/ctor typed `unk90`/`unk224[]`/vtiface fields.
+
+**Conflict:** Move peak needs opaque pads; ctor FULL_MATCH needs named Process/vt/PTMF (plus removed §17.6 epilogue `insn_patches` — without them ctor measures ~88.8%). Term stays 100%; cbRenderBefore soft-cap 99.3%. EQUIVALENT blocked by many unvalidated callees + indirect call. Soft-cap under high-level C++; **no** `insn_patches`.
+
+**Regressions:** whole-Tail assign with large trailing arrays; union/`memcpy` dual-views; volatile stride (spills and shifts stack); runtime stride + `for(count)` reintroduces 8× clear unroll; function-scope dummy f32/NV pads. Keep high-level C++; **`asm void` bodies are not allowed**.
 
 ## CBattery / CBgTex IWorkEvent-compatible widgets (US)
 
@@ -236,13 +291,82 @@ High-level source should use `mVtbl->mSlots[N]` (or equivalent `this+0x8` reload
 
 **menu-enemy-cbrender sort Chaitin (~99.172%):** keep exact size `0x274` with draw counter as `u32 i` and `order[static_cast<u8>(i)]` / `while (i < 0x18)` (u8 counter emits terminal `clrlwi`, +4). Sort: pass-before-order + block-scoped `s32 limit`, outer `for (left=0x17; left!=0; left--)` CTR, inner bottom-tested goto, `&indices[j]` rematerialize, depthB before depthA, XOR store-reload with `swapped=1` after the first store. That locks `order=r9`, `j=r12`, `swapped=r11`. Residual: `pass/limit/pair` = MWCC `r8/r10/r30` vs retail `r10/r5/r8` (pair should reuse vacant `r8`). Hoisting `j` before `order` gets `pass=r10` but pins `j` in `r8` and spills pair to `r30`. Dead `gap` before the loop is DCE'd and does not reserve `r8`. Equivalence blocked by unvalidated callees.
 
+**menu-arts-cbrender bitfield-loop Chaitin (~99.3125%):** exact size `0x3C0`; gates + `unk1B8`/`unk80`/`unk98` draws are byte-identical. Residual is NV homes on the 8-slot (`unk318`/`unkA4`) and 9-slot (`unk310`/`unk314`/`unk104`/`unk170`) bitfield passes only: retail `i8=r28` / `i9=r27` with `bitI=r28`/`bit18=r29`, MWCC coalesces both counters into `r29` (`bitI=r27`/`bit18=r28`). `one=r31` and pointer `r30` already match. Ruled out: distinct `Layout**` walks (~94.8%), predeclared `i8`/`i9` (flat), early `i8=i9=0` overlap (~98.5%), `#pragma scheduling off` (~75%). Keep high-level C++; **no** `.text` `insn_patches`. EQUIVALENT blocked by unvalidated callees (`getInstance`, `func_800426F0`, layout draw helpers, `DrawInfo` ctor/dtor, etc.).
+
 **occ-cull-helper dir-vector Chaitin (~99.829%):** keep `CPlane::isOnPositiveSide`
   + `CVec3::dot(mDir, unk24->unk10C - mPos)` / `lbl_eu_80667C8C` (0.0f pool rename OK).
   Residual six words: retail `r3=&delta(sp+0x14)` / `r5=cam` vs MWCC `r5=&delta` /
   `r3=cam`. Ruled out: scratch/dir/cam decl order (size +8, ~92%), named
   `CVec3::sub` (~99.6%), cam-alias / `CFrustum&` (~98%), two-stage copy (+size).
-  Keep high-level C++; **no** `.text` `insn_patches`. Equivalence blocked by
-  unvalidated callees → needs FULL_MATCH or a new RA shape / multi-insn §17.6.
+  Keep high-level C++; **no** `.text` `insn_patches`. Callee leaves
+  `PSMTXMultVec` / `PSVECNormalize` / `PSVECCrossProduct` are now FULL+certified;
+  remaining EQUIVALENT block is **`CPlane::set` 3-arg** (~79% soft-cap, SMT
+  timeout even at 120s) — same psq-interleave class as occ-set-frustum side planes.
+  Peak high-level body keeps **`CVec3::sub` temp+`set` wrappers** (not bare
+  `nw4r::VEC3Sub`, not `operator-`): direct PS/nw4r paths regress to ~56–75%.
+  **`mNormal = cross`** beats `cross(mNormal,…)`, component `set`, or field stores.
+  Inline retail zero/`PSVECNormalize` or **`PSVECDotProduct`** also regress.
+  Decomp is **8 bytes short** (`0x220` vs retail `0x228`); residual is prologue
+  psq-interleave + post-cross stack shuffle + Chaitin coloring, not callee choice.
+  Linked prove blocked until **`PSVEC*` certificates refresh** (stale
+  `engine_hash` → no matched-callee lemma).
+
+**cview-render-view leaf recovery (2026-07-23):** `getView1`/`getView2` are
+  FULL_MATCH (`lwz` WORK_ID @+0x10/+0x14 then `b getView`). `getFrame2ViewOffset`
+  is EQUIVALENT_MATCH (~96.5%) with cert. `fontFlush`/`func_8044BE38` are
+  FULL_MATCH pure tails (`b` to `CDeviceFont::func_80452CF8` / `func_8044C1FC`);
+  keep callee undefined or `#pragma dont_inline` so MWCC does not inline empty
+  same-TU stubs into `blr`. `getScissorRect1/2` soft-cap (~68%/66%): declare `split` before `offset` so MWCC
+  places split@sp+0x10 / offset@sp+0x8 (first local = higher addr). Exact retail
+  size; residual is post-`bl` lha/sth interleave + overlap/clip Chaitin. Dead-result
+  `getFrame2ViewOffset` required.
+
+**`func_8043CAFC` / `func_8043FD10` / `func_8043E58C`:** CAFC is the dual-view
+  probe shared with `getSplitLine`/`setSplitLine` (return hasView2); high-level C
+  soft-caps ~87.5% on the same prologue interleave — use `extern "C" asm` like
+  `getSplitLine` (not C++-mangled `asm int name(CView*)`, which emits
+  `name__FP5CView`). FD10 is the render() client-rect + border expand helper —
+  peak ~99.5% + SMT `EQUIVALENT` (plain field stores; `volatile` lha regresses).
+  Cycle may label that `CODE_MATCH` even when `equivalence=equivalent`; promote
+  to `EQUIVALENT_MATCH` when the cert is issued. E58C walks `mParent` via
+  `convertToView` / `getInstance` accumulating `getFrame2ViewOffset`, then FD10
+  for size (~87% schedule); avoid long `cycle` SMT on it.
+
+**`func_8043CE90` / frame draw / GX scissor ring:** CE90 is `lbz` of
+  `unk45C[8]` (FULL via tiny `extern "C" asm`). `func_804409D0` draws border
+  quads (`begin(9,1)`/`add`/`end`) with `mFrameColor`×`lbl_eu_8066A318` then
+  ×`lbl_eu_8066A2F4` (~54% first pass). `func_8044B298` copies optional
+  `{u32,u32}` pairs into cache+0x4A8/0x4B0 (fix `C1FCCacheLayout` pad so
+  rect4A8 lands at 0x4A8 — `pad1[0x4A8-0x49C]` wrongly started rects at
+  0x4AC), finds tags 0xB/0xC with `for (n=size; n!=0; n--)` mtctr/bdnz, dual
+  slot recompute for stb then stw, then `CE68(this+4, tag)`. Peak ~88%; CSE of
+  `(this+4)` into saved r31 is the +4B over retail (unit split still PASS).
+  `CE68`: same countdown for-loop → mtctr/bdnz + bctr vtbl[3] (~86%, size
+  140/144). SMT on both rings hits loop-iteration bounds quickly. `isCurrent`
+  is FULL+cert (`mCurrentView` compare). `isCurrentChild` ~86% (3-level unroll
+  + recurse via `convertToView`/`mChildren`). `hasCurrent` ~89% (size 104/96).
+  Inlining `42DA8` without `poolPairAt` regresses ~94%→~72%; keep the helper.
+  Ring EQUIVALENT needs B298 accepted+certified first.
+
+**CViewRoot ring helpers:** `func_80442B54`/`42C68`/`42DA8` push/pop three
+  `{u32,u32}` rings in `mPool0/1/2` trailer (`mStartNodePtr`=base, `mList`=index,
+  `mUsed`, `mCapacity`) then `CGXCache::func_8044B298`. Peak ~68%/81%/93% before
+  schedule regressions; keep high-level divw shape (`sum - (sum/cap)*cap`). Certify of byte-identical callers must skip
+  `validate_callee_contract` (path explosion on `getView`→`getWorkThread`);
+  rebind certs after certifier-tree edits and recertify leaves bottom-up.
+
+**RVL `PSMTXMultVec` / `vec.c` split fit:** retail MTX paired-single kernels match
+  only via the same `asm void` / `ASM()` PS idiom already used for `PSVEC*` /
+  `PSMTXConcat` in this fork (scalar C is 0% and oversize). Strip unused
+  `C_*` / empty `asm` stubs from `mtxvec.c` / `vec.c` — each emits a 4-byte
+  `blr` + align and blows the split (`mtxvec` 0x60, `vec` 0x210).
+
+**PSQ certify `IndexError`:** `execute_instruction` used to treat PSQ D-form
+  `disp` as `frB` and index `state.fpr[disp]` before the PSQ handler (offsets
+  ≥32, e.g. MTX row loads). Handle `_FP_PSQ_OPS` in a dedicated branch. For
+  byte-identical FULL_MATCH leaves, `certify_unit_symbol` skips SMT prove
+  (incomplete PS capability stubs / timeouts) and synthesizes
+  `full-instruction-match` certificates so parents can trust them.
 
 **CView CMsgParam soft-caps:** `attachRenderWork` (~85%) and `setCurrent` (~78%) share the dual-/single-inline enqueue snap-load schedule ceiling. High-level `CMsgParam<10>` already matches frame/`stmw`/`stwux`/size `0x1E0`; residual is Chaitin snap-load coloring (~95/120 insn near-miss). Ruled out for attach: early tag/flag locals (flat 85%), `last()` refs (regresses ~64–67%), WorkID hoist (~83.9%), dual CtxSnap expansions (~72–76%). Prior FULL_MATCH used forbidden insn_patches or whole-function asm (rejected). SMT `EQUIVALENT` for attach times out even at 120s (`layout-feasibility deadline exceeded` on dual uninit-snap enqueue); `setCurrent` (single enqueue) certifies. Demote any ACCEPTED below EQUIVALENT/FULL.
 
@@ -257,7 +381,9 @@ ACCEPTED as `EQUIVALENT_MATCH` at ~78.2% static.
 
 **CView::updateMsg (~76%):** size already `0x798`. Gains: three uninit `volatile CtxSnap` only (no fan-copy layer; was 74.4%), plus case 0/1 child fan-out via `CMsgParam<10>` enqueue. Residual: prologue still `-0x140`/`stmw r17` vs retail `-0x150`/`stmw r14`, snap homes `0x80/0x60/0x40` vs `0x48/0x28/0x08`, `switch` tree vs `bctr` jumptable (MWCC rejects GCC `&&label` computed goto). Same caller-stack class as attach/setCurrent — park under high-level C++.
 
-**CUIWindowManager::Move (~84.7%):** size `0x4DC` (8-wide unlink unroll present). Win: dual-cursor mark-all — search walks while mark stays at list head, then marks the *entire* list (retail r6/r7; was ~80.2% with iterator “mark from hit”). Keep poison-store `pending[i]=0` after `mNext=NULL` (dropping it → ~83.1%). Residual: unlink Chaitin + extra poison vs retail single `mNext` clear. Park unless IPA-outlined unlink helper.
+**CUIWindowManager::Move (~84.96%):** peak keeps dual-cursor mark + store-then-SetRemove + poison scalar unlink; function size now `0x4DC` PASS (unit split spare). Residual: retail 8× `mtctr` unlink Chaitin. SMT times out under `ppc-eabi`. Ruled out: IPA `unlinkWindowNode` (~83.9%); CUICfManager goto 8× with dual-cursor (~40%); high-level `while`/`for` 8× threshold (~49%); SetRemove-first + `stwx` byteOff collect (~83.6%); iterator-mark + goto 8× (~40%); empty-guard poison (~83.9%); volatile pending w/o poison (~83.6%). Soft-cap park under high-level C++.
+
+**CUIBattleManager::Move soft-cap (~95.57%):** unit size PASS; function `0xB2C` vs retail `0xB00`. Peak keeps indirect `func_8012F5F8` call (same-TU empty stub is IPA'd away on direct `bl`), pad0C chain, capacity-first slot loads, `framePad[8]`. Residual: decomp `-0x210`/`stmw r24` vs retail `-0x220`/`stmw r25` because `battleWorkEvent` `this+0x54` is CSE'd into an NV across the asset `readFile` loop (4th NV). Volatile `this` reload restores `stmw r25`/`-0x220` but fuzzy drops to ~94.4%. Slot `r8`/`r7` order and pathBuf homes (`0x178`/`0xF8` vs `0x158`/`0xD8`) ride the frame skew. `EQUIVALENT` blocked by unresolved indirect + unvalidated callees. Keep high-level C++; no `asm void`.
 
 `CHelp_Pg::func_802B85A4` int→float uses retail `lbl_eu_80669000@sda21`; MWCC pools `@N` with the signed magic double — rename via `CHelp_Pg.o` `pool_patterns` `(MAGIC_HI, MAGIC_LO) → lbl_eu_80669000` once `.text` already matches.
 
@@ -434,15 +560,20 @@ sizes; orphan setting/HTML strings live inside the menu pool) and
   `__OSHotResetForError` panic: pass **two distinct objects** so MWCC emits
   `lis r3` / `lis r5` (retail). `OSPanic(base, n, base + off)` collapses to
   one `lis` + `addi r5,r3,imm` and drops to ~85% / wrong size.
-- `__OSReturnToMenuForError` (FULL): hoist `char* strBase = OSReset_file` and
-  panic with `strBase+0xC` / `strBase+0x38` (retail keeps file in **r31**).
-- `__OSReturnToMenu` (~95% soft-cap): needs **three** `OSStateFlags` locals
+- `__OSReturnToMenuForError` (~97.1% soft-cap): hoist `char* strBase =
+  OSReset_file` and `HotResetPanicMenu(strBase)` (`strBase+0xC` / `+0x38`,
+  file in **r31**). Only residual vs prior FULL: MWCC peeps `addi r3,r31,0` →
+  `mr r3,r31` at both `OSPanic` file args (`strBase+0` / asm `addi` also peep).
+  §17.6 whole-call asm blocks regressed (~90%); needs a tighter opword-only
+  carve-out or a C shape that keeps `addi` (historical orphan-pool FULL).
+- `__OSReturnToMenu` (~95.1% soft-cap): needs **three** `OSStateFlags` locals
   (retail frame `-0x90` at `0x58`/`0x38`/`0x18`; one shared local → `-0x50`)
   **and** Chaitin coloring `strBase=r30`, disc/ticket scratch=`r31`,
   `menuMode=r29`. Current MWCC keeps `strBase` in **r31** (swapped with
-  scratch) despite decl-order / early-init experiments — residual is almost
-  entirely that register permutation. Unit `.data` may still 8-align after
-  the `0xC` file object.
+  scratch) despite decl-order / union / CSE-hoist / late-init experiments —
+  residual is almost entirely that register permutation (plus the same
+  `addi`→`mr` peep on panic args). Peak pre-sized-pool was ~99.88%. Unit
+  `.data` may still 8-align after the `0xC` file object.
 
 **Keep high-level C with extern linker symbols** (right schedule). Close the
 last immediates with `tools/postprocess_reloc_names.py`:
@@ -732,27 +863,39 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
 
 ## CRsrc (`libs/monolib/src/core/CRsrc.cpp`)
 
-- **`entry` (FULL_MATCH 0x8C):** `#pragma dont_inline on` + **`extern "C"` forward decl** for
-  `isExistData__5CRsrcFPCv` and call **`isExistData__5CRsrcFPCv(data)`** (not
-  `CRsrc::isExistData`) — otherwise MWCC inlines the list scan and the TU gains ~0x2C.
-- **`releaseCache` / `isExistData` (FULL_MATCH 0x74):** Same **`#pragma dont_inline on`**
-  block + **`goto check` / `loop:`** bottom-tested loop, plus **`#pragma optimize_for_size`**.
-  Removing dont_inline regresses to ~0xA8/0xBC each (+0x88 TU).
-- **`#pragma optimize_for_size on` … `reset`:** Wrap **`releaseCacheLocal`**, **`releaseCache`**,
-  and **`isExistData`** (each with **`dont_inline`**) — drops TU from **0x3BC (+0x1C)** to
-  **0x394 (PASS, 0xC spare)**; **`releaseCacheLocal` → 0x64 (90.7%, retail 0x6C)**. Does **not** regress
-  **`convertToRsrcData` / `entry` / `hasChild`** FULL matches.
-- **`releaseCacheLocal` (+0x8 vs retail 0x6C):** `while (node != head)` with
-  **`head = parent->mChildren.mStartNodePtr`** beats goto/reload-head (+0x8 TU). Retail
-  uses bottom-tested **`cmplw`** against **`lwz 0x60(parent)`** each iteration.
-- **`hasChild` (FULL_MATCH 0x1C):** **`subf` / `or` / `srwi 31`** on sentinel vs first-child
-  pointers (`lwz 0x60` + `lwz 0(r4)`) — not `sentinel != first`.
-- **`sRsrcPointerList__5CRsrc`:** **`extern` BSS** in `extern "C"` block (not `static` member
-  definition in TU) for retail reloc shape.
-- **Callee certs:** `build__9CRsrcData`, `CWorkUtil::func_80438AF0`, `strlen`/`strcpy` still
-  block bottom-up equivalence on `entry` / `isExistDataLocal`.
+- **FULL_MATCH 9/9, size exact 0x3A0 (US).**
+- **`releaseCacheLocal`:** bottom-tested `goto check`/`loop:` with per-iter
+  `lwz 0x60(parent)` head reload (not a cached `head` local).
+- **`getRsrc`:** force `extsh`/`slwi`/`lwzx` via `(u8*)list+(off<<2)`; declare
+  **`entry` before `index`** for retail r6/r7; `if (id == *(u32*)(entry+0x1C4))`.
+- **`isExistDataLocal`:** `addi this,0x5c` into `func_80438AF0`; retail flag shape
+  (match when cache==data and NOT (non-null && refCount==0)); `optimize_for_size`
+  for `stmw`.
+- **`entry`:** `#pragma dont_inline` + **`extern "C"`** `isExistData__5CRsrcFPCv(data)`.
+- **`releaseCache` / `isExistData`:** `dont_inline` + `goto check`/`loop:` +
+  `optimize_for_size`.
+- **`hasChild`:** `subf`/`or`/`srwi 31` on sentinel vs first-child.
+- **`sRsrcPointerList__5CRsrc`:** `extern` BSS in `extern "C"` block.
 
----
+## gki_buffer (US)
+
+- Shared corruption check: odd-ptr guard + `subf`/`or`/`srwi` vs `MAGIC_NO`
+  (`0xDDBADDBA`), not `*magic != MAGIC_NO`. Macro `gki_magic_corrupted` for
+  send/enqueue (do **not** use GNU statement-exprs — regresses those callers).
+- **`GKI_freebuf` (~91.4%, size exact `0x170`):** no early `p_cb` (avoids r30);
+  pooled string base `"getbuf: Size is zero"` + `+0x30/+0x48/+0x5c`; shared
+  `free_corrupted:`; open-coded odd/`bad`. Residual: MWCC `addis` form of
+  `v-MAGIC` vs retail dual `subf`.
+- **`gki_init_free_queue` (~96.3%, size exact `0x220`):** REVOLUTION always-store
+  `pool_start`/`pool_end`; `total==0` early; no `Type=0` stb; magic via
+  `*(UINT32*)((UINT8*)hdr + tempsize + BUFFER_HDR_SIZE)`. Handwritten 8× CTR
+  unroll blows size — leave scalar.
+- **`GKI_getbuf` (~97.7%, size exact `0x1A0`):** bottom-tested scan joining at
+  `if (i == curr_total)` (retail `cmplw`/`bne`); post-`disable` take without
+  size re-check; success: `task_id` → ret → status/Type/p_next.
+- **`GKI_create_pool`:** 3× empty-slot search; handwritten 8× shift regresses.
+
+## CWorkThread (`libs/monolib/src/work/CWorkThread.cpp`)
 
 ## mem_expHeap (`libs/RVL_SDK/src/revolution/mem/mem_expHeap.c`)
 
@@ -806,7 +949,8 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
 
 ## nw4r `TexMap::mBits` / `BasicPlayer` array bases (US)
 
-- **`TexMap::Get(GXTlutObj*)`:** retail `extrwi …, 2, 17` means `paletteFormat` sits at MSB bits 17–18 — **before** `anisotropy`. Swapping those two bitfields in `lyt_texMap.h` yields `FULL_MATCH` (and restores `b GXInitTlutObj` tail-call encoding).
+- **`TexMap::Get(GXTexObj*)` / `mBits`:** retail LOD path uses `extrwi` mag@12 (1 bit), bias@13, edge@14, aniso@15 (2). Layout is `magFilter:1` then bias/edge/`anisotropy:2` then `paletteFormat:2` (not `magFilter:3` with palette before aniso). Residual ~0.17% after that was `@N` → `lbl_eu_80669DB8/DC0/DC8` pool renames in `postprocess_reloc_names.py` (`lyt_texMap.o`).
+- **`TexMap::Get(GXTlutObj*)`:** stays `FULL_MATCH` with the same `mBits` order (palette after anisotropy).
 - **`BasicPlayer` / `PlayerParamSet` (US):** param block lives at `BasicPlayer+0x4` (`sizeof == 0xCC`); `mId@0xD0`. Send-array bases on the player are still `mFxSend@0x34`, `mRemoteOutVolume@0x40`, `mRemoteSend@0x50`, `mRemoteFxSend@0x60`. `mPanMode@0x2C` / `mPanCurve@0x30` (param `+0x28`/`+0x2C`). `mRemoteFilter` is `u8@0x1D` (param `+0x19`) — **not** after the arrays. `BasicPlayer::InitParam` is `addi r3,r3,4; b PlayerParamSet::Init`. Init floats must reloc to `lbl_eu_80669EE0` (1.0) / `lbl_eu_80669EE4` (0.0) — `EE8`/`EEC` are a different duplicate pair and stick at ~99.8%.
 - **`PanMode` / `PanCurve` mangling:** retail is `nw4r::snd::PanMode` (`Q34nw4r3snd7PanMode`), not `detail::`. Wrong namespace → 0% on `SetPanMode`/`SetPanCurve`.
 
@@ -981,4 +1125,81 @@ Additional near-miss patterns:
   `fsub`+`frsp` instead of retail `fsubs`; MWCC also saves an extra GPR (`r28`).
   `^ 0x80000000` forces `xoris` but has not beaten the ~49% baseline yet. Park
   while chasing InitLOD / PreLoaded.
+
+## ocMsg ring push/pop (US)
+
+Frameless helpers on a list in **r4** (unused first arg / return in **r3**). Shared
+header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
+
+- Reuse one `s32` local/param for **index then count** so MWCC emits retail
+  `addi r5,r3,1` / `lwz r3,count` (separate temps → `addi r3,r3,1`).
+- Compare **`s32 newIdx > s32 capacity`** → **`cmpw`**. Same test on `u32` emits
+  **`cmplw`** (1-insn miss, ~97%, and SMT `not_equivalent`).
+- Slot stride 8 (`func_8003A714`/`A764`, cur at `0x64`/`0x68`) or 12
+  (`A950`/`A9A8`, cur at `0x8C`/`0x90`/`0x94`).
+
+## ocBdat typed load / column lookup (US)
+
+- **`func_8003B6A0`**: `volatile u32 local; local = 0;` plus `switch (type)` with
+  `default: break;` emits retail `stwu -0x10` / stack slot / `cmplwi` / `bctr`
+  jumptable. Per-case typed stores via `volatile u8|u16|s16*`; case 7 adds
+  `base`. `#pragma dont_inline` keeps callers on `b`. Rename MWCC switch cookie
+  (currently `@1095`; drifts with TU growth) → `jumptable_eu_80524D90` in
+  `postprocess_reloc_names.py` (`ocBdat.o`) — opcode-identical near-FULLs often
+  fail objdiff solely on this reloc name.
+- **`func_8003B800`**: same switch skeleton as B6A0 but writes `VMArg*` (`r28` out,
+  `r31` local in retail); cases 7/8 set string/fixed types and skip the final
+  `VM_TYPE_INT` pack. Rename MWCC cookie (currently `@1252`) →
+  `jumptable_eu_80524DB8`. Soft-cap ~78% when `local` spills to `8(r1)` instead
+  of `r31`.
+- **`func_8003B434` (US FULL_MATCH) / `func_8003B748`**: load **`0x12` then `0x10`**;
+  bounds via **`lhz` + `cmpw`** (`s32`). B434: use **goto fail-before-success**
+  (`if (max < row) goto fail; if (row >= 0) goto success; fail: ok=0; … success:
+  rowArg=row; ok=1`) so MWCC emits retail **`blt`/`bge`** polarity — a merged
+  ok-flag `if` soft-caps ~94%. Then assign **`row = rowIdx`** before the ok
+  flag (retail `mr r6,r4` / `li r0,1`) and keep retail tail load order into
+  `b func_8003B6A0`. B748 elem-size: `(type-6)<=1` → `*4`, else inner `switch`
+  on 1/4/2/5/3 (flat `else if` regresses hard). Soft-cap **B748 ~86%** (elem-size
+  `cmpwi` schedule). Soft-cap near-misses: **getFP ~95%**, **B4B0 ~96%**,
+  **AD98 ~96%**, **B488 ~87%**, **B800 ~98%** (drop `volatile` stores on cases
+  1/2 to hit retail `0xEC`). **`getIdCount`/`getIdTop`:** helpers return **`u32`**
+  while still loading `u16` — `u16` return emits caller `clrlwi` and blows the
+  `0x4c` leaf size.
+- **`func_eu_8003B720`** (XOR decrypt / string pool walk): exact retail size
+  **`0x540`**, objdiff fuzzy **~84%**. Critical MWCC shapes:
+  - Retail outer walk: **cached** `count` in `r11` + `cmplw`/`blt` (not CTR).
+    Retail **inners** take CTR (`mtctr`/`bdnz` on 16-byte + residual). High-level
+    `do { … } while (--n)` emits **`addic.`/`bne`** for those inners (known
+    soft-cap elsewhere too), which leaves CTR free — then a cached outer count
+    becomes **`mtctr`/`bdnz`** and undersizes (`0x53C`). Workaround: bottom-tested
+    outer with a **reloaded** count so outer cannot take CTR:
+    `goto loop_check; loop_body: { …; entryList++; idx++; } loop_check: if (idx < *p) goto loop_body;`
+  - Top-tested `while (1) { if (idx >= count) break; … }` can still hit `0x540`
+    but **drops fuzzy to 0%** (objdiff skips scoring). Prefer reload bottom-test.
+  - Schedule: load `start`/`len`/`key` then `end=start+len`; `nor` interleaved
+    with `cmpw` before key masks; restore keys from full `nor` temps; `ent[start]`
+    for `lbzx`/`stbx`; defer `lim = mem1-3` into gate bodies; phase2 overflow
+    tests `span` then `span1` signs (no `span+=1`).
+  - Residual vs retail: `stmw r24` (decomp) vs `stmw r23` (retail XOR temp) and
+    inner `addic.`/`bne` vs `mtctr`/`bdnz` — SMT on the full `0x540` XOR often
+    `inconclusive_timeout` at the default prove budget.
+  - **Do not** switch the 16-byte/residual decrypt to
+    `for (; n != 0; n--)` here: it can emit `mtctr`/`bdnz` but **inflates** the
+    body (`~0x6D8`, unit size FAIL) and drops fuzzy to ~57%. Keep
+    `do { … } while (--n != 0)` for the exact-size peak.
+  - Unit split budget `0x1378`: shrink oversizers
+    (`getBdatStringColumnValue` early row-bounds `return`, keep B748 `switch`)
+    for size PASS before accepting B720. Accepted leaves in-unit:
+    `func_8003B204`, `func_8003AFC0`, `bdat`, `ocBdatRegist`.
+  - VM wrappers: MWCC emits short names (`getVal`, …); retail objects use
+    `getVal_8003BDB8`, … — rename in `postprocess_reloc_names.py` (`ocBdat.o`
+    `exact_renames`). After rename: `getArrayCount`/`getVarType`/`getIdCount`/
+    `getIdTop`/`getFlagVal`/`bdat` at **100%**; `getVal` ~91%, `getArrayVal` ~97%.
+- **`getFP__FPCc`**: retail symbol is a C++ **free function** `getFP(const char*)` →
+  `getFP__FPCc`, not `CBdat::getFP` (`getFP__5CBdatFPCc`). Do not forward-declare
+  inside `extern "C"`. `CBdat::getFP` can inline-delegate to `::getFP`. Binary search
+  over `lbl_eu_805705D0[0..6]` with `strcmp` on entry name at `entry + lhz(entry+6)`.
+- **`func_8003B4B0`**: column hash `hash = hash*7 + (s8)c` for up to 8 chars
+  (`strlen` capped), `rem = hash % bucketCount` via div/mul/sub, bucket walk with
+  `strcmp(col, entry+4)` and `lhz(entry+2)` chain.
 

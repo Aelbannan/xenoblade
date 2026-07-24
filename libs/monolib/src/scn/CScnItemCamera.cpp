@@ -9,7 +9,7 @@ extern "C" void __ct__CScnItemCamera() {}
 // LLM-HARNESS-END: us-804a2a20
 
 // LLM-HARNESS-BEGIN: us-804a2bf4
-extern "C" void func_8049EA98() {}
+extern "C" void func_8049EA98(void) {}
 // LLM-HARNESS-END: us-804a2bf4
 
 // LLM-HARNESS-BEGIN: us-804a2bf8
@@ -57,7 +57,7 @@ extern "C" void func_8049F8E4() {}
 // LLM-HARNESS-END: us-804a3a40
 
 // LLM-HARNESS-BEGIN: us-804a3b00
-extern "C" void func_8049F9A4() {}
+extern "C" void func_8049F9A4(void) {}
 // LLM-HARNESS-END: us-804a3b00
 
 // LLM-HARNESS-BEGIN: us-804a3b04

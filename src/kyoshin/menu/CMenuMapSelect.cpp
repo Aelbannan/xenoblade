@@ -24,10 +24,12 @@ extern "C" void func_80242524() {}
 extern "C" void func_80242A28() {}
 // LLM-HARNESS-END: us-80244be0
 
+extern "C" void cbRenderBefore__14CMenuMapSelectFv(void* self);
 // LLM-HARNESS-BEGIN: us-80245254
-extern "C" bool func_8024309C() { return false; }
+extern "C" void func_8024309C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuMapSelectFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80245254
 
+extern "C" void __dt__14CMenuMapSelectFv(void* self);
 // LLM-HARNESS-BEGIN: us-8024525c
-extern "C" bool func_802430A4() { return false; }
+extern "C" void func_802430A4(void* self) { ((void(*)(void*))__dt__14CMenuMapSelectFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8024525c

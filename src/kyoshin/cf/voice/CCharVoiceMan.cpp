@@ -50,7 +50,7 @@ extern "C" void func_802A34E4() {}
 extern "C" unsigned int func_802A35A0(unsigned int value) { extern unsigned int lbl_eu_80664A5C; unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
 // LLM-HARNESS-END: us-802a5cd4
 // LLM-HARNESS-BEGIN: us-802a5e74
-extern "C" bool func_802A3740() { return false; }
+extern "C" int func_802A3740(void* self) { return 0; }
 // LLM-HARNESS-END: us-802a5e74
 
 // LLM-HARNESS-BEGIN: us-802a3af0

@@ -82,5 +82,5 @@ extern "C" void func_804BC9DC() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-804c0b44
-extern "C" void sinit_804BC9E8() {}
+extern "C" void sinit_804BC9E8(void) {}
 // LLM-HARNESS-END: us-804c0b44

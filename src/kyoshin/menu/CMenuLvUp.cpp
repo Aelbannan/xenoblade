@@ -5,7 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-80277e4c
-extern "C" void __dt__9CMenuLvUpFv() {}
+extern "C" void __dt__9CMenuLvUpFv(void* self) {}
 // LLM-HARNESS-END: us-80277e4c
 
 // LLM-HARNESS-BEGIN: us-80277ec0
@@ -21,7 +21,7 @@ extern "C" void Move__9CMenuLvUpFv() {}
 // LLM-HARNESS-END: us-80278144
 
 // LLM-HARNESS-BEGIN: us-80278300
-extern "C" void cbRenderBefore__9CMenuLvUpFv() {}
+extern "C" void cbRenderBefore__9CMenuLvUpFv(void* self) {}
 // LLM-HARNESS-END: us-80278300
 
 // LLM-HARNESS-BEGIN: us-802783f8
@@ -57,13 +57,13 @@ extern "C" void func_80276B14() {}
 // LLM-HARNESS-END: us-80278f98
 
 // LLM-HARNESS-BEGIN: us-8027909c
-extern "C" bool func_80276C18() { return false; }
+extern "C" void func_80276C18(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8027909c
 
 // LLM-HARNESS-BEGIN: us-802790a4
-extern "C" bool func_80276C20() { return false; }
+extern "C" void func_80276C20(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuLvUpFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-802790a4
 
 // LLM-HARNESS-BEGIN: us-802790ac
-extern "C" bool func_80276C28() { return false; }
+extern "C" void func_80276C28(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-802790ac

@@ -29,7 +29,7 @@ extern "C" void func_8048C400() {}
 // LLM-HARNESS-END: us-80490474
 
 // LLM-HARNESS-BEGIN: us-804904ec
-extern "C" bool func_8048C478() { return false; }
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-804904ec
 
 // LLM-HARNESS-BEGIN: us-804904f4
@@ -61,7 +61,7 @@ extern "C" void func_8048C630() {}
 // LLM-HARNESS-END: us-804906a4
 
 // LLM-HARNESS-BEGIN: us-80490704
-extern "C" bool func_8048C690() { return false; }
+extern "C" u16 func_8048C690(void* self) { return *(u16*)((u8*)self + 0x8); }
 // LLM-HARNESS-END: us-80490704
 
 // LLM-HARNESS-BEGIN: us-8049070c
@@ -77,7 +77,7 @@ extern "C" void func_8048C750() {}
 // LLM-HARNESS-END: us-804907c4
 
 // LLM-HARNESS-BEGIN: us-80490930
-extern "C" bool func_8048C8BC() { return false; }
+extern "C" u32 func_8048C8BC(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80490930
 
 // LLM-HARNESS-BEGIN: us-80490938
@@ -141,7 +141,7 @@ extern "C" void func_8048CD0C() {}
 // LLM-HARNESS-END: us-80490d80
 
 // LLM-HARNESS-BEGIN: us-80490e1c
-extern "C" void func_8048CDA8() {}
+extern "C" void func_8048CDA8(void) {}
 // LLM-HARNESS-END: us-80490e1c
 
 // LLM-HARNESS-BEGIN: us-80490e20
@@ -157,7 +157,7 @@ extern "C" void func_8048CEDC__12CScnItemPoolFv() {}
 // LLM-HARNESS-END: us-80490f50
 
 // LLM-HARNESS-BEGIN: us-80490fcc
-extern "C" void func_8048CF58__12CScnItemPoolFv() {}
+extern "C" void func_8048CF58__12CScnItemPoolFv(void) {}
 // LLM-HARNESS-END: us-80490fcc
 
 // LLM-HARNESS-BEGIN: us-80490fd0
@@ -165,11 +165,11 @@ extern "C" void func_8048CF5C() {}
 // LLM-HARNESS-END: us-80490fd0
 
 // LLM-HARNESS-BEGIN: us-80491088
-extern "C" bool func_8048D014__12CScnItemPoolFv() { return false; }
+extern "C" void func_8048D014__12CScnItemPoolFv(void* self) { ((void(*)(void*))func_8048CF58__12CScnItemPoolFv)((char*)self - 0x4); }
 // LLM-HARNESS-END: us-80491088
 
 // LLM-HARNESS-BEGIN: us-80491090
-extern "C" bool func_8048D01C__12CScnItemPoolFv() { return false; }
+extern "C" void func_8048D01C__12CScnItemPoolFv(void* self) { ((void(*)(void*))__dt__12CScnItemPoolFv)((char*)self - 0x4); }
 // LLM-HARNESS-END: us-80491090
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

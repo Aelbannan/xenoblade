@@ -9,7 +9,7 @@ extern "C" void func_80471EC8__Q26mpfsys17UnkClass_80471EC8Fv() {}
 // LLM-HARNESS-END: us-80475e98
 
 // LLM-HARNESS-BEGIN: us-80475f98
-extern "C" void func_80471FC8__Q26mpfsys17UnkClass_80471EC8Fv() {}
+extern "C" void func_80471FC8__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80475f98
 
 // LLM-HARNESS-BEGIN: us-80475f9c
@@ -158,5 +158,5 @@ extern "C" void func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-80478f4c
-extern "C" void sinit_80474F7C() {}
+extern "C" void sinit_80474F7C(void) {}
 // LLM-HARNESS-END: us-80478f4c

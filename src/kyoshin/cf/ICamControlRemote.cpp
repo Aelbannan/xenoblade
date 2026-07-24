@@ -5,7 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-80276fac
-extern "C" void func_80274B28() {}
+extern "C" void func_80274B28(void) {}
 // LLM-HARNESS-END: us-80276fac
 
 // LLM-HARNESS-BEGIN: us-80276fb0

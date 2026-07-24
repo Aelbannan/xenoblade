@@ -29,7 +29,7 @@ extern "C" void SetVolumeAllSeq__10homebuttonFf() {}
 // LLM-HARNESS-END: us-803252a0
 
 // LLM-HARNESS-BEGIN: us-803253c0
-extern "C" void SetSoundMode__10homebuttonFUl() {}
+extern "C" void SetSoundMode__10homebuttonFUl(void) {}
 // LLM-HARNESS-END: us-803253c0
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

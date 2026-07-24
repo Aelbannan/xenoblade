@@ -9,7 +9,7 @@ extern "C" void __ct__Q22cf10CfObjectPcFv() {}
 // LLM-HARNESS-END: us-800c06d8
 
 // LLM-HARNESS-BEGIN: us-800c0770
-extern "C" void __dt__Q22cf10CfObjectPcFv() {}
+extern "C" void __dt__Q22cf10CfObjectPcFv(void* self) {}
 // LLM-HARNESS-END: us-800c0770
 
 // LLM-HARNESS-BEGIN: us-800c0828
@@ -17,19 +17,19 @@ extern "C" void func_800BFDE0() {}
 // LLM-HARNESS-END: us-800c0828
 
 // LLM-HARNESS-BEGIN: us-800c0968
-extern "C" void func_800BFF20__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800BFF20__Q22cf10CfObjectPcFv(void* self) {}
 // LLM-HARNESS-END: us-800c0968
 
 // LLM-HARNESS-BEGIN: us-800c0a34
-extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv(void* self) {}
 // LLM-HARNESS-END: us-800c0a34
 
 // LLM-HARNESS-BEGIN: us-800c0ac8
-extern "C" void func_800C0080__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800C0080__Q22cf10CfObjectPcFv(void* self) {}
 // LLM-HARNESS-END: us-800c0ac8
 
 // LLM-HARNESS-BEGIN: us-800c0b08
-extern "C" void func_800C00C0__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(void* self) {}
 // LLM-HARNESS-END: us-800c0b08
 
 // LLM-HARNESS-BEGIN: us-800c0bbc
@@ -77,7 +77,7 @@ extern "C" void func_800C0514__Q22cf10CfObjectPcFv() {}
 // LLM-HARNESS-END: us-800c0f5c
 
 // LLM-HARNESS-BEGIN: us-800c0f6c
-extern "C" void func_800C0524__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800C0524__Q22cf10CfObjectPcFv(void* self) {}
 // LLM-HARNESS-END: us-800c0f6c
 
 // LLM-HARNESS-BEGIN: us-800c1338
@@ -85,7 +85,7 @@ extern "C" void CActorParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv() {}
 // LLM-HARNESS-END: us-800c1338
 
 // LLM-HARNESS-BEGIN: us-800c146c
-extern "C" void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv() {}
+extern "C" void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv(void) {}
 // LLM-HARNESS-END: us-800c146c
 
 // LLM-HARNESS-BEGIN: us-800c1470
@@ -109,35 +109,35 @@ extern "C" void func_800C0DD4() {}
 // LLM-HARNESS-END: us-800c181c
 
 // LLM-HARNESS-BEGIN: us-800c1c14
-extern "C" void func_800C11CC__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800C11CC__Q22cf10CfObjectPcFv(void* self) {}
 // LLM-HARNESS-END: us-800c1c14
 
 // LLM-HARNESS-BEGIN: us-800c1c38
-extern "C" bool CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv() { return false; }
+extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 // LLM-HARNESS-END: us-800c1c38
 
 // LLM-HARNESS-BEGIN: us-800c1c40
-extern "C" bool CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv() { return false; }
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0080__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 // LLM-HARNESS-END: us-800c1c40
 
 // LLM-HARNESS-BEGIN: us-800c1c48
-extern "C" bool CfObject_UnkVirtualFunc2__Q22cf10CfObjectPcFv() { return false; }
+extern "C" void CfObject_UnkVirtualFunc2__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800BFF20__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 // LLM-HARNESS-END: us-800c1c48
 
 // LLM-HARNESS-BEGIN: us-800c1c50
-extern "C" bool CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv() { return false; }
+extern "C" void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C11CC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 // LLM-HARNESS-END: us-800c1c50
 
 // LLM-HARNESS-BEGIN: us-800c1c58
-extern "C" bool CfObject_UnkVirtualFunc6__Q22cf10CfObjectPcFv() { return false; }
+extern "C" void CfObject_UnkVirtualFunc6__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800BFFEC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 // LLM-HARNESS-END: us-800c1c58
 
 // LLM-HARNESS-BEGIN: us-800c1c60
-extern "C" bool CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv() { return false; }
+extern "C" void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 // LLM-HARNESS-END: us-800c1c60
 
 // LLM-HARNESS-BEGIN: us-800c1c68
-extern "C" bool func_800C1220__Q22cf10CfObjectPcFv() { return false; }
+extern "C" void func_800C1220__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 // LLM-HARNESS-END: us-800c1c68
 
 // LLM-HARNESS-BEGIN: us-800c1c70

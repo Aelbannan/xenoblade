@@ -29,15 +29,15 @@ extern "C" void func_801EAF9C() {}
 // LLM-HARNESS-END: us-801ecb98
 
 // LLM-HARNESS-BEGIN: us-801ecc14
-extern "C" bool func_801EB018() { return false; }
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ecc14
 
 // LLM-HARNESS-BEGIN: us-801ecc1c
-extern "C" bool func_801EB020() { return false; }
+extern "C" u8 func_801EB020(void* self) { return ((u8*)self)[0x2C]; }
 // LLM-HARNESS-END: us-801ecc1c
 
 // LLM-HARNESS-BEGIN: us-801ecc24
-extern "C" bool func_801EB028() { return false; }
+extern "C" u8 func_801EB028(void* self) { return ((u8*)self)[0x2E]; }
 // LLM-HARNESS-END: us-801ecc24
 
 // LLM-HARNESS-BEGIN: us-801ecc2c

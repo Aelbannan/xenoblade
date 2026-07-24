@@ -5,7 +5,8 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804c0b48
-extern "C" bool func_804BC9EC__Fv() { return false; }
+extern u32 lbl_eu_80665968;
+extern "C" int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 // LLM-HARNESS-END: us-804c0b48
 
 // LLM-HARNESS-BEGIN: us-804c0b50

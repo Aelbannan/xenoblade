@@ -81,6 +81,7 @@ public:
     s16 getSplitLine();
     void setSplitLine(s16 line);
     void setCurrent();
+    bool hasCurrent() const;
     void updateMsg();
     void renderView();
 

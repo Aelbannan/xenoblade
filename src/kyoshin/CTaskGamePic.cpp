@@ -9,7 +9,7 @@ extern "C" void __ct__CTaskGamePic() {}
 // LLM-HARNESS-END: us-802972b0
 
 // LLM-HARNESS-BEGIN: us-80297400
-extern "C" void __dt__12CTaskGamePicFv() {}
+extern "C" void __dt__12CTaskGamePicFv(void* self) {}
 // LLM-HARNESS-END: us-80297400
 
 // LLM-HARNESS-BEGIN: us-80297454
@@ -33,7 +33,7 @@ extern "C" void Move__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-802975b4
 
 // LLM-HARNESS-BEGIN: us-802976f0
-extern "C" void cbRenderBefore__12CTaskGamePicFv() {}
+extern "C" void cbRenderBefore__12CTaskGamePicFv(void* self) {}
 // LLM-HARNESS-END: us-802976f0
 
 // LLM-HARNESS-BEGIN: us-80297984
@@ -41,7 +41,7 @@ extern "C" void func_80295388() {}
 // LLM-HARNESS-END: us-80297984
 
 // LLM-HARNESS-BEGIN: us-80297998
-extern "C" void func_8029539C() {}
+extern "C" void func_8029539C(void* self) {}
 // LLM-HARNESS-END: us-80297998
 
 // LLM-HARNESS-BEGIN: us-80297a44
@@ -53,19 +53,19 @@ extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-80297aac
 
 // LLM-HARNESS-BEGIN: us-80297b40
-extern "C" bool OnFileEvent__12CTaskGamePicFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__12CTaskGamePicFP10CEventFile(void* self) { ((void(*)(void*))func_8029539C)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80297b40
 
 // LLM-HARNESS-BEGIN: us-80297b48
-extern "C" bool func_8029554C() { return false; }
+extern "C" void func_8029554C(void* self) { ((void(*)(void*))__dt__12CTaskGamePicFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80297b48
 
 // LLM-HARNESS-BEGIN: us-80297b50
-extern "C" bool func_80295554() { return false; }
+extern "C" void func_80295554(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGamePicFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80297b50
 
 // LLM-HARNESS-BEGIN: us-80297b58
-extern "C" bool func_8029555C() { return false; }
+extern "C" void func_8029555C(void* self) { ((void(*)(void*))__dt__12CTaskGamePicFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80297b58
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

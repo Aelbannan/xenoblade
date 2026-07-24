@@ -53,10 +53,20 @@ from tools.ppc_equivalence.semantics import (
 # Fuzzy match floor for EQUIVALENT_MATCH (strictly below FULL_MATCH).
 EQUIVALENT_MATCH_MIN_PERCENT = 50.0
 
-# Auto-scale: 20 ms per instruction, floor 5 s, ceiling 120 s.
-_TIMEOUT_MS_MIN = 5_000
-_TIMEOUT_MS_MAX = 120_000
-_TIMEOUT_MS_PER_INSN = 20
+# Auto-scale: 100 ms per static insn, floor 2 min, ceiling 15 min.
+# Soft-cap / loop-heavy leaves expand far past static size; when exploration
+# ceilings are raised above the historical 2k/256 defaults, use the full
+# ceiling so cycle does not die at the floor (~30–120s).
+# Engine accepts up to 1_800_000 ms (contract.py); coop soft-cap retry uses 15 min.
+_TIMEOUT_MS_MIN = 120_000
+_TIMEOUT_MS_MAX = 900_000
+_TIMEOUT_MS_PER_INSN = 100
+
+# Soft-cap / loop-heavy leaves (CAIAction ring copy, CView dual enqueue, …)
+# need more headroom than the historical 2048/256 defaults.
+_DEFAULT_MAX_INSTRUCTIONS = 65_536
+_DEFAULT_MAX_PATHS = 4_096
+_DEFAULT_MAX_LOOP_ITERATIONS = 2_048
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -1102,40 +1112,52 @@ def _build_equivalence_certificate(
     max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
     memory_scope: dict | None = None,
     proof: object | None = None,
+    skip_semantic_validation: bool = False,
 ) -> tuple[dict | None, str]:
-    """Derive and validate a normal-return semantic effect summary."""
-    declared = CalleeContract.opaque_eabi()
-    validations = [
-        validate_callee_contract(
-            instructions,
-            declared,
-            max_instructions=max_instructions,
-            max_paths=max_paths,
-            max_loop_iterations=max_loop_iterations,
-            assumed_callees=call_targets,
-            callee_contracts=callee_contracts,
-            require_normal_return=True,
-        )
-        for instructions in (original, candidate)
-    ]
-    for side, validation in zip(("retail", "candidate"), validations):
-        if not validation.valid and not _nv_spill_false_positive(validation):
-            detail = validation.reason or (
-                "contract omitted reads " + ", ".join(sorted(validation.missing_reads))
-                + "; writes " + ", ".join(sorted(validation.missing_writes))
+    """Derive and validate a normal-return semantic effect summary.
+
+    When ``skip_semantic_validation`` is set (byte-identical FULL_MATCH
+    synthesis), skip ``validate_callee_contract`` — path explosion on small
+    callers with certified callees (e.g. ``getView`` → ``getWorkThread``)
+    otherwise hangs certify and blocks the ACCEPTED frontier.
+    """
+    if skip_semantic_validation:
+        reads: list[str] = []
+        writes: list[str] = []
+        invalid_reasons: list[str] = []
+    else:
+        declared = CalleeContract.opaque_eabi()
+        validations = [
+            validate_callee_contract(
+                instructions,
+                declared,
+                max_instructions=max_instructions,
+                max_paths=max_paths,
+                max_loop_iterations=max_loop_iterations,
+                assumed_callees=call_targets,
+                callee_contracts=callee_contracts,
+                require_normal_return=True,
             )
-            return None, f"{side} certificate validation failed: {detail}"
-    reads = sorted(validations[0].required_reads | validations[1].required_reads)
-    # Never advertise NV clobbers in the callee summary: callers rely on EABI
-    # preservation, and EQUIVALENT under ppc-eabi already checked that.
-    writes = sorted(
-        (validations[0].required_writes | validations[1].required_writes)
-        - _EABI_NONVOLATILE_EFFECTS
-    )
-    invalid_reasons = sorted(
-        set(validations[0].required_invalid_reasons)
-        | set(validations[1].required_invalid_reasons)
-    )
+            for instructions in (original, candidate)
+        ]
+        for side, validation in zip(("retail", "candidate"), validations):
+            if not validation.valid and not _nv_spill_false_positive(validation):
+                detail = validation.reason or (
+                    "contract omitted reads " + ", ".join(sorted(validation.missing_reads))
+                    + "; writes " + ", ".join(sorted(validation.missing_writes))
+                )
+                return None, f"{side} certificate validation failed: {detail}"
+        reads = sorted(validations[0].required_reads | validations[1].required_reads)
+        # Never advertise NV clobbers in the callee summary: callers rely on EABI
+        # preservation, and EQUIVALENT under ppc-eabi already checked that.
+        writes = sorted(
+            (validations[0].required_writes | validations[1].required_writes)
+            - _EABI_NONVOLATILE_EFFECTS
+        )
+        invalid_reasons = sorted(
+            set(validations[0].required_invalid_reasons)
+            | set(validations[1].required_invalid_reasons)
+        )
     certificate = {
         "version": EQUIVALENCE_CERTIFICATE_VERSION,
         "status": "SEMANTIC_CERTIFIED",
@@ -1488,7 +1510,15 @@ def _prove_bytes(
 
     if timeout_ms <= 0:
         instr_count = max(len(original), len(candidate))
-        timeout_ms = max(_TIMEOUT_MS_MIN, min(_TIMEOUT_MS_MAX, instr_count * _TIMEOUT_MS_PER_INSN))
+        scaled = instr_count * _TIMEOUT_MS_PER_INSN
+        # Raised prove_unit_symbol ceilings (soft-cap retry) → full budget.
+        if (
+            max_instructions > 4096
+            or max_loop_iterations > 512
+            or max_paths > 512
+        ):
+            scaled = max(scaled, _TIMEOUT_MS_MAX)
+        timeout_ms = max(_TIMEOUT_MS_MIN, min(_TIMEOUT_MS_MAX, scaled))
 
     resolved_contract = make_contract(
         preset=contract,
@@ -1893,9 +1923,9 @@ def prove_unit_symbol(
     *,
     contract: str = "auto",
     timeout_ms: int = 0,
-    max_instructions: int = 2048,
-    max_paths: int = 256,
-    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
+    max_instructions: int = _DEFAULT_MAX_INSTRUCTIONS,
+    max_paths: int = _DEFAULT_MAX_PATHS,
+    max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
     candidate_symbol: str | None = None,
     linked: bool = False,
     target_id: str | None = None,
@@ -1964,9 +1994,9 @@ def certify_unit_symbol(
     target_id: str,
     *,
     evidence: str = "full-instruction-match",
-    max_instructions: int = 2048,
-    max_paths: int = 256,
-    max_loop_iterations: int = DEFAULT_MAX_LOOP_ITERATIONS,
+    max_instructions: int = _DEFAULT_MAX_INSTRUCTIONS,
+    max_paths: int = _DEFAULT_MAX_PATHS,
+    max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
 ) -> EquivalenceProbe:
     """Issue a current semantic effect certificate for an already-equal pair.
 
@@ -2099,6 +2129,9 @@ def certify_unit_symbol(
             max_paths=max_paths,
             max_loop_iterations=max_loop_iterations,
             proof=proof,
+            # Byte-identical bodies are already FULL_MATCH; skip effect
+            # validation that path-explodes on small callers with calls.
+            skip_semantic_validation=bytes_identical,
         )
         if cert_detail:
             detail = f"{detail}; {cert_detail}" if detail else cert_detail

@@ -15,8 +15,12 @@
     "functionRelocDiffs=data_value"
   ],
   "automatic_promotion": true,
-  "allowed_engine_sha256": "468cac1d857d0ed7e68b56091a37ef5365ff6f0edcc902d67cc67d845ade2011",
-  "allowed_confidence_tiers": ["A", "B", "C"],
+  "allowed_engine_sha256": "3ad13c4a6509e982a9e742aeadaa6c5f4e8e506456acfac7494d7a0ed1c54c66",
+  "allowed_confidence_tiers": [
+    "A",
+    "B",
+    "C"
+  ],
   "require_clean_trust_boundary": false,
   "capability_manifest_path": "tools/coop/capability_manifest.authoritative.json",
   "capability_assurance_shadow_mode": true,

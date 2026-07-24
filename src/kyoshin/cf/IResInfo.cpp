@@ -305,5 +305,5 @@ extern "C" bool func_80068A10() { return false; }
 // LLM-HARNESS-END: us-80069420
 
 // LLM-HARNESS-BEGIN: us-80069428
-extern "C" bool func_80068A18() { return false; }
+extern "C" int func_80068A18(void* self) { return 512; }
 // LLM-HARNESS-END: us-80069428

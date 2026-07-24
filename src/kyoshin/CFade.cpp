@@ -29,11 +29,11 @@ extern "C" void func_8024448C() {}
 // LLM-HARNESS-END: us-80246644
 
 // LLM-HARNESS-BEGIN: us-802466c0
-extern "C" bool func_80244508() { return false; }
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-802466c0
 
 // LLM-HARNESS-BEGIN: us-802466c8
-extern "C" bool func_80244510() { return false; }
+extern "C" u8 func_80244510(void* self) { return ((u8*)self)[0x27]; }
 // LLM-HARNESS-END: us-802466c8
 
 // LLM-HARNESS-BEGIN: us-802466d0

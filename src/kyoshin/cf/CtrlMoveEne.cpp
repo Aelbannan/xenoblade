@@ -17,7 +17,7 @@ extern "C" void func_8008A2C8() {}
 // LLM-HARNESS-END: us-8008aca0
 
 // LLM-HARNESS-BEGIN: us-8008bf50
-extern "C" bool CActorParam_UnkVirtualFunc132__Q22cf11CActorParamFv() { return false; }
+extern "C" void* CActorParam_UnkVirtualFunc132__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x3298); }
 // LLM-HARNESS-END: us-8008bf50
 
 // LLM-HARNESS-BEGIN: us-8008bf58
@@ -25,7 +25,7 @@ extern "C" void func_8008B580() {}
 // LLM-HARNESS-END: us-8008bf58
 
 // LLM-HARNESS-BEGIN: us-8008c308
-extern "C" void func_8008B930() {}
+extern "C" void func_8008B930(void) {}
 // LLM-HARNESS-END: us-8008c308
 
 // LLM-HARNESS-BEGIN: us-8008c30c
@@ -69,7 +69,7 @@ extern "C" void func_8008D51C() {}
 // LLM-HARNESS-END: us-8008def4
 
 // LLM-HARNESS-BEGIN: us-8008ea3c
-extern "C" bool CfObject_UnkVirtualFunc58__Q22cf12CfObjectMoveFv() { return false; }
+extern "C" void* CfObject_UnkVirtualFunc58__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e4); }
 // LLM-HARNESS-END: us-8008ea3c
 
 // LLM-HARNESS-BEGIN: us-8008ea44
@@ -117,7 +117,7 @@ extern "C" void func_80091864() {}
 // LLM-HARNESS-END: us-8009223c
 
 // LLM-HARNESS-BEGIN: us-80093680
-extern "C" bool CfObjectMove_UnkVirtualFunc5__Q22cf12CfObjectMoveFv() { return false; }
+extern "C" void* CfObjectMove_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e8); }
 // LLM-HARNESS-END: us-80093680
 
 // LLM-HARNESS-BEGIN: us-80093688

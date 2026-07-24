@@ -1,19 +1,39 @@
-// Auto-scaffolded catalog TU for monolib/src/core/CSplitFrame
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+#include "monolib/core/CViewRoot.hpp"
+#include "monolib/core/CView.hpp"
+#include "monolib/core/CViewFrame.hpp"
+#include "monolib/math.hpp"
+#include <types.h>
 
-#include <harness_catalog.h>
+// Layout recovered from retail getView1/getView2 / getScissorRect* / apply.
+struct CSplitFrame {
+    void* mVtable; // 0x0
+    CView* mParent; // 0x4
+    u8 mVertical; // 0x8  nonzero = vertical split
+    u8 pad9;
+    s16 mSplitX; // 0xa
+    s16 mSplitY; // 0xc
+    u16 padE;
+    WORK_ID mView1; // 0x10
+    WORK_ID mView2; // 0x14
+};
+
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* out, const CViewFrame* frame);
 
 // LLM-HARNESS-BEGIN: us-8043df30
 extern "C" void apply__11CSplitFrameFv() {}
 // LLM-HARNESS-END: us-8043df30
 
 // LLM-HARNESS-BEGIN: us-8043e060
-extern "C" bool getView1__11CSplitFrameFv() { return false; }
+extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
+    return CViewRoot::getView(self->mView1);
+}
 // LLM-HARNESS-END: us-8043e060
 
 // LLM-HARNESS-BEGIN: us-8043e068
-extern "C" bool getView2__11CSplitFrameFv() { return false; }
+extern "C" CView* getView2__11CSplitFrameFv(CSplitFrame* self) {
+    return CViewRoot::getView(self->mView2);
+}
 // LLM-HARNESS-END: us-8043e068
 
 // LLM-HARNESS-BEGIN: us-8043e070
@@ -29,9 +49,181 @@ extern "C" void setSplitLine__11CSplitFrameFs() {}
 // LLM-HARNESS-END: us-8043e0ec
 
 // LLM-HARNESS-BEGIN: us-8043e288
-extern "C" void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame() {}
+extern "C" void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
+    ml::CRect16* out, const CSplitFrame* self) {
+    // MWCC: first local = higher addr. Retail wants split@sp+0x10, offset@sp+0x8.
+    volatile ml::CRect16 split;
+    volatile ml::CRect16 offset;
+    CView* view = self->mParent;
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&offset, &view->unk1DC);
+
+    // Retail post-bl schedule: lbz/li, lha size@1cc/1ce, cmp, sth zeros,
+    // lha bound@1c8/1ca interleaved with sth size.
+    s16 zero = 0;
+    u8 vert = self->mVertical;
+    s16 sizeX = view->unk1C8.unk4;
+    s16 sizeY = view->unk1C8.unk6;
+    s16 boundW;
+    s16 boundH;
+    if ((vert != 0, split.mPos.x = zero, boundW = view->unk1C8.unk0,
+         split.mPos.y = zero, boundH = view->unk1C8.unk2,
+         split.mSize.x = sizeX, split.mSize.y = sizeY, vert != 0)) {
+        split.mSize.y = self->mSplitY;
+    } else {
+        split.mSize.x = self->mSplitX;
+    }
+
+    s16 sx = split.mPos.x;
+    s16 sy = split.mPos.y;
+    s16 sw = split.mSize.x;
+    s16 sh = split.mSize.y;
+
+    // Retail max(boundW, sx+sw) / max(0,sx) then signed-overlap via xor/srawi.
+    s16 edge = (s16)(sx + sw);
+    if (boundW > edge) {
+        edge = boundW;
+    }
+    s32 mask = ((-(s32)sx) & ~(s32)sx) >> 31;
+    s16 lo = (s16)((s32)sx & ~mask);
+    s16 span = (s16)(edge - lo);
+    s16 sum = (s16)(boundW + sw);
+    s32 t = (s32)sum ^ (s32)span;
+    s32 u = (t >> 1) - (t & (s32)sum);
+    s16 flag = (s16)((u32)u >> 31);
+
+    if (flag != 0) {
+        edge = (s16)(sy + sh);
+        if (boundH > edge) {
+            edge = boundH;
+        }
+        mask = ((-(s32)sy) & ~(s32)sy) >> 31;
+        lo = (s16)((s32)sy & ~mask);
+        span = (s16)(edge - lo);
+        sum = (s16)(boundH + sh);
+        t = (s32)sum ^ (s32)span;
+        u = (t >> 1) - (t & (s32)sum);
+        flag = (s16)((u32)u >> 31);
+    }
+
+    if (flag == 0) {
+        out->mPos.x = 0;
+        out->mPos.y = 0;
+        out->mSize.x = 0;
+        out->mSize.y = 0;
+        return;
+    }
+
+    s16 x0 = sx;
+    mask = (s32)sx >> 31;
+    x0 = (s16)((s32)sx & ~mask);
+    s16 y0 = sy;
+    mask = (s32)sy >> 31;
+    y0 = (s16)((s32)sy & ~mask);
+
+    s16 x1 = (s16)(sx + sw);
+    if (boundW < x1) {
+        x1 = boundW;
+    }
+    s16 y1 = (s16)(sy + sh);
+    if (boundH < y1) {
+        y1 = boundH;
+    }
+
+    out->mPos.x = x0;
+    out->mPos.y = y0;
+    out->mSize.x = (s16)(x1 - x0);
+    out->mSize.y = (s16)(y1 - y0);
+}
 // LLM-HARNESS-END: us-8043e288
 
 // LLM-HARNESS-BEGIN: us-8043e43c
-extern "C" void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame() {}
+extern "C" void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
+    ml::CRect16* out, const CSplitFrame* self) {
+    volatile ml::CRect16 split;
+    volatile ml::CRect16 offset;
+    CView* view = self->mParent;
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&offset, &view->unk1DC);
+
+    s16 zero = 0;
+    u8 vert = self->mVertical;
+    s16 sizeX = view->unk1C8.unk4;
+    s16 sizeY = view->unk1C8.unk6;
+    s16 boundW;
+    s16 boundH;
+    s16 border;
+    if ((vert != 0, split.mPos.x = zero, boundW = view->unk1C8.unk0,
+         split.mPos.y = zero, boundH = view->unk1C8.unk2,
+         split.mSize.x = sizeX, split.mSize.y = sizeY,
+         border = view->unk1DC.unk58, vert != 0)) {
+        s16 y = (s16)(self->mSplitY + border);
+        split.mPos.y = y;
+        split.mSize.y = (s16)(split.mSize.y - y);
+    } else {
+        s16 x = (s16)(self->mSplitX + border);
+        split.mPos.x = x;
+        split.mSize.x = (s16)(split.mSize.x - x);
+    }
+
+    s16 sx = split.mPos.x;
+    s16 sy = split.mPos.y;
+    s16 sw = split.mSize.x;
+    s16 sh = split.mSize.y;
+
+    s16 edge = (s16)(sx + sw);
+    if (boundW > edge) {
+        edge = boundW;
+    }
+    s32 mask = ((-(s32)sx) & ~(s32)sx) >> 31;
+    s16 lo = (s16)((s32)sx & ~mask);
+    s16 span = (s16)(edge - lo);
+    s16 sum = (s16)(boundW + sw);
+    s32 t = (s32)sum ^ (s32)span;
+    s32 u = (t >> 1) - (t & (s32)sum);
+    s16 flag = (s16)((u32)u >> 31);
+
+    if (flag != 0) {
+        edge = (s16)(sy + sh);
+        if (boundH > edge) {
+            edge = boundH;
+        }
+        mask = ((-(s32)sy) & ~(s32)sy) >> 31;
+        lo = (s16)((s32)sy & ~mask);
+        span = (s16)(edge - lo);
+        sum = (s16)(boundH + sh);
+        t = (s32)sum ^ (s32)span;
+        u = (t >> 1) - (t & (s32)sum);
+        flag = (s16)((u32)u >> 31);
+    }
+
+    if (flag == 0) {
+        out->mPos.x = 0;
+        out->mPos.y = 0;
+        out->mSize.x = 0;
+        out->mSize.y = 0;
+        return;
+    }
+
+    s16 x0 = sx;
+    mask = (s32)sx >> 31;
+    x0 = (s16)((s32)sx & ~mask);
+    s16 y0 = sy;
+    mask = (s32)sy >> 31;
+    y0 = (s16)((s32)sy & ~mask);
+
+    s16 x1 = (s16)(sx + sw);
+    if (boundW < x1) {
+        x1 = boundW;
+    }
+    s16 y1 = (s16)(sy + sh);
+    if (boundH < y1) {
+        y1 = boundH;
+    }
+
+    out->mPos.x = x0;
+    out->mPos.y = y0;
+    out->mSize.x = (s16)(x1 - x0);
+    out->mSize.y = (s16)(y1 - y0);
+}
 // LLM-HARNESS-END: us-8043e43c

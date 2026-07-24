@@ -25,7 +25,7 @@ extern "C" void __dt__804B5AD0() {}
 // LLM-HARNESS-END: us-804b9c2c
 
 // LLM-HARNESS-BEGIN: us-804b9c90
-extern "C" void func_804B5B34() {}
+extern "C" void func_804B5B34(void) {}
 // LLM-HARNESS-END: us-804b9c90
 
 // LLM-HARNESS-BEGIN: us-804b9c94
@@ -53,7 +53,7 @@ extern "C" void func_804B5E68() {}
 // LLM-HARNESS-END: us-804b9fc4
 
 // LLM-HARNESS-BEGIN: us-804ba354
-extern "C" void func_804B61F8() {}
+extern "C" void func_804B61F8(void) {}
 // LLM-HARNESS-END: us-804ba354
 
 // LLM-HARNESS-BEGIN: us-804ba358
@@ -81,7 +81,7 @@ extern "C" void func_804B6580() {}
 // LLM-HARNESS-END: us-804ba6dc
 
 // LLM-HARNESS-BEGIN: us-804ba790
-extern "C" void func_804B6634() {}
+extern "C" void func_804B6634(void) {}
 // LLM-HARNESS-END: us-804ba790
 
 // LLM-HARNESS-BEGIN: us-804ba794
@@ -165,7 +165,7 @@ extern "C" void func_804B7A00() {}
 // LLM-HARNESS-END: us-804bbb5c
 
 // LLM-HARNESS-BEGIN: us-804bbc24
-extern "C" void func_804B7AC8() {}
+extern "C" void func_804B7AC8(void) {}
 // LLM-HARNESS-END: us-804bbc24
 
 // LLM-HARNESS-BEGIN: us-804bbc28

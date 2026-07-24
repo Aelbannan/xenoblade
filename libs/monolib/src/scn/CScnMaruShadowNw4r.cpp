@@ -61,10 +61,10 @@ extern "C" void func_8048EA74() {}
 // LLM-HARNESS-END: us-80492ae8
 
 // LLM-HARNESS-BEGIN: us-80492b10
-extern "C" bool func_8048EA9C() { return false; }
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80492b10
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-80492b18
-extern "C" void sinit_8048EAA4() {}
+extern "C" void sinit_8048EAA4(void) {}
 // LLM-HARNESS-END: us-80492b18

@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuMapSelectSC() {}
 // LLM-HARNESS-END: us-80252f5c
 
 // LLM-HARNESS-BEGIN: us-80253028
-extern "C" void __dt__16CMenuMapSelectSCFv() {}
+extern "C" void __dt__16CMenuMapSelectSCFv(void* self) {}
 // LLM-HARNESS-END: us-80253028
 
 // LLM-HARNESS-BEGIN: us-802530a0
@@ -29,7 +29,7 @@ extern "C" void Move__16CMenuMapSelectSCFv() {}
 // LLM-HARNESS-END: us-80253578
 
 // LLM-HARNESS-BEGIN: us-80253668
-extern "C" void cbRenderBefore__16CMenuMapSelectSCFv() {}
+extern "C" void cbRenderBefore__16CMenuMapSelectSCFv(void* self) {}
 // LLM-HARNESS-END: us-80253668
 
 // LLM-HARNESS-BEGIN: us-8025370c
@@ -65,9 +65,9 @@ extern "C" void func_80251D94() {}
 // LLM-HARNESS-END: us-80253fcc
 
 // LLM-HARNESS-BEGIN: us-80254020
-extern "C" bool func_80251DE8() { return false; }
+extern "C" void func_80251DE8(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuMapSelectSCFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254020
 
 // LLM-HARNESS-BEGIN: us-80254028
-extern "C" bool func_80251DF0() { return false; }
+extern "C" void func_80251DF0(void* self) { ((void(*)(void*))__dt__16CMenuMapSelectSCFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254028

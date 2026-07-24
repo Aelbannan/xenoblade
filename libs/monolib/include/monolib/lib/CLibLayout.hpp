@@ -14,8 +14,10 @@ public:
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
 
+    virtual void wkUpdate() override;  //0x88
+
     //0x0: vtable
     //0x0-1c4: CWorkThread
-    u32 unk1C4;
-    u8 unk1C8[0x2C0 - 0x1C8];
+    u32 unk1C4;                       // 0x1C4: unknown field
+    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
 };

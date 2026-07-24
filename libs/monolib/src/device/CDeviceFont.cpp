@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/device/CDeviceFont.hpp"
 
 // LLM-HARNESS-BEGIN: us-80454fb0
 extern "C" void __ct__11CDeviceFontFPCcP11CWorkThread() {}
@@ -21,8 +22,8 @@ extern "C" void __dt__11CDeviceFontFv() {}
 // LLM-HARNESS-END: us-80455204
 
 // LLM-HARNESS-BEGIN: us-804552e4
-extern "C" u32 getInstance__11CDeviceFontFv(void) {
-    extern u32 lbl_eu_80665678;
+extern "C" CDeviceFont* getInstance__11CDeviceFontFv() {
+    extern CDeviceFont* lbl_eu_80665678; // sdata2 singleton pointer
     return lbl_eu_80665678;
 }
 // LLM-HARNESS-END: us-804552e4
@@ -105,7 +106,7 @@ extern "C" void wkStandbyLogout__11CDeviceFontFv() {}
 
 // LLM-HARNESS-BEGIN: us-80457318
 extern "C" void func_eu_80457318(u32 val) {
-    extern u32 lbl_eu_80665680;
+    extern u32 lbl_eu_80665680; // sdata2: font device config/state value
     lbl_eu_80665680 = val;
 }
 // LLM-HARNESS-END: us-80457318

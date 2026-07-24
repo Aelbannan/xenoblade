@@ -17,6 +17,9 @@ public:
     // CTitleAHelp::OnFileEvent
     static void* func_80452C10(u32, nw4r::lyt::Layout*);
 
+    /// Flush font rendering state.
+    void func_80452CF8();
+
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 
     //0x0: vtable

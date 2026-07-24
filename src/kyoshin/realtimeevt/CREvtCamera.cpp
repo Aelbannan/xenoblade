@@ -2,7 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/realtimeevt/CREvtCamera.hpp"
 
 // LLM-HARNESS-BEGIN: us-80181374
 extern "C" void __ct__CREvtCamera() {}
@@ -57,9 +57,9 @@ extern "C" void func_80180990() {}
 // LLM-HARNESS-END: us-80181d8c
 
 // LLM-HARNESS-BEGIN: us-80181da4
-extern "C" int func_801809A8(void* self) { return 1; }
+extern "C" int func_801809A8(const CREvtCamera* self) { return 1; }
 // LLM-HARNESS-END: us-80181da4
 
 // LLM-HARNESS-BEGIN: us-80181dac
-extern "C" u32 func_801809B0(void* self) { return *(u32*)((u8*)self + 0x1C); }
+extern "C" u32 func_801809B0(const CREvtCamera* self) { return self->mField1C; }
 // LLM-HARNESS-END: us-80181dac

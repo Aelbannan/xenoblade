@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80475e98
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_80471EC8__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80475e98
 
 // LLM-HARNESS-BEGIN: us-80475f98
@@ -13,31 +13,31 @@ extern "C" void func_80471FC8__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80475f98
 
 // LLM-HARNESS-BEGIN: us-80475f9c
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_80471FCC__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80475f9c
 
 // LLM-HARNESS-BEGIN: us-80476034
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_80472064__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80476034
 
 // LLM-HARNESS-BEGIN: us-804762dc
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_8047230C__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-804762dc
 
 // LLM-HARNESS-BEGIN: us-8047630c
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_8047233C__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-8047630c
 
 // LLM-HARNESS-BEGIN: us-80476340
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_80472370__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80476340
 
 // LLM-HARNESS-BEGIN: us-80476374
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_804723A4__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80476374
 
 // LLM-HARNESS-BEGIN: us-804764ac
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_804724DC__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-804764ac
 
 // LLM-HARNESS-BEGIN: us-80476834
@@ -45,7 +45,7 @@ extern "C" void func_80472864__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80476834
 
 // LLM-HARNESS-BEGIN: us-80476840
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void func_80472870__Q26mpfsys17UnkClass_80471EC8Fv(void) {}
 // LLM-HARNESS-END: us-80476840
 
 // LLM-HARNESS-BEGIN: us-804768b8
@@ -157,6 +157,10 @@ extern "C" void func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv() {}
 // LLM-HARNESS-END: us-80478f24
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
+// Static initializer referenced by .ctors section.
+// No runtime initialisation required; returns immediately (blr).
 // LLM-HARNESS-BEGIN: us-80478f4c
-extern "C" void sinit_80474F7C(void) {}
+extern "C" void sinit_80474F7C(void)
+{
+}
 // LLM-HARNESS-END: us-80478f4c

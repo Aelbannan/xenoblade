@@ -198,7 +198,7 @@ void MemorySoundArchive::MemoryFileStream::Seek(s32 offset, u32 origin) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-80419880
-extern "C" int GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv(void) { return lbl_eu_80665548@sda21; }
+extern "C" int GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv(void) { return 0; }
 // LLM-HARNESS-END: us-80419880
 // LLM-HARNESS-BEGIN: us-80419888
 extern "C" u32 GetSize__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void* self) { return *(u32*)((u8*)self + 0x18); }

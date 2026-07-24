@@ -378,96 +378,165 @@ extern "C" void func_8012B9E0() {}
 extern "C" void func_8012B9F0() {}
 // LLM-HARNESS-END: us-8012c4bc
 
+extern u32 lbl_eu_8052D9E0[];
 // LLM-HARNESS-BEGIN: us-8012c5a0
-extern "C" void __ct__CTagCodeCL() {}
+extern "C" void __ct__CTagCodeCL(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D9E0;
+}
 // LLM-HARNESS-END: us-8012c5a0
 
+extern u32 lbl_eu_8052D9B8[];
 // LLM-HARNESS-BEGIN: us-8012c5b0
-extern "C" void __ct__CTagCodeCP() {}
+extern "C" void __ct__CTagCodeCP(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D9B8;
+}
 // LLM-HARNESS-END: us-8012c5b0
 
+extern u32 lbl_eu_8052D990[];
 // LLM-HARNESS-BEGIN: us-8012c5c0
-extern "C" void __ct__CTagCodeWait() {}
+extern "C" void __ct__CTagCodeWait(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D990;
+}
 // LLM-HARNESS-END: us-8012c5c0
 
+extern u32 lbl_eu_8052D968[];
 // LLM-HARNESS-BEGIN: us-8012c5d0
-extern "C" void __ct__CTagCodeDel() {}
+extern "C" void __ct__CTagCodeDel(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D968;
+}
 // LLM-HARNESS-END: us-8012c5d0
 
+extern u32 lbl_eu_8052D940[];
 // LLM-HARNESS-BEGIN: us-8012c5e0
-extern "C" void __ct__CTagCodeRuby() {}
+extern "C" void __ct__CTagCodeRuby(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D940;
+}
 // LLM-HARNESS-END: us-8012c5e0
 
+extern u32 lbl_eu_8052D918[];
 // LLM-HARNESS-BEGIN: us-8012c5f0
-extern "C" void __ct__CTagCodeCol() {}
+extern "C" void __ct__CTagCodeCol(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D918;
+}
 // LLM-HARNESS-END: us-8012c5f0
 
+extern u32 lbl_eu_8052D898[];
 // LLM-HARNESS-BEGIN: us-8012c600
-extern "C" void __ct__CTagCodeTrust() {}
+extern "C" void __ct__CTagCodeTrust(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D898;
+}
 // LLM-HARNESS-END: us-8012c600
 
+extern u32 lbl_eu_8052D870[];
 // LLM-HARNESS-BEGIN: us-8012c610
-extern "C" void __ct__CTagCodeType() {}
+extern "C" void __ct__CTagCodeType(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D870;
+}
 // LLM-HARNESS-END: us-8012c610
 
+extern u32 lbl_eu_8052D848[];
 // LLM-HARNESS-BEGIN: us-8012c620
-extern "C" void __ct__CTagCodePos() {}
+extern "C" void __ct__CTagCodePos(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D848;
+}
 // LLM-HARNESS-END: us-8012c620
 
+extern u32 lbl_eu_8052D820[];
 // LLM-HARNESS-BEGIN: us-8012c630
-extern "C" void __ct__CTagCodeMouth() {}
+extern "C" void __ct__CTagCodeMouth(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D820;
+}
 // LLM-HARNESS-END: us-8012c630
 
+extern u32 lbl_eu_8052D7F8[];
 // LLM-HARNESS-BEGIN: us-8012c640
-extern "C" void __ct__CTagCodeLine() {}
+extern "C" void __ct__CTagCodeLine(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D7F8;
+}
 // LLM-HARNESS-END: us-8012c640
 
+extern u32 lbl_eu_8052D7D0[];
 // LLM-HARNESS-BEGIN: us-8012c650
-extern "C" void __ct__CTagCodeSelect() {}
+extern "C" void __ct__CTagCodeSelect(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D7D0;
+}
 // LLM-HARNESS-END: us-8012c650
 
+extern u32 lbl_eu_8052D7A8[];
 // LLM-HARNESS-BEGIN: us-8012c660
-extern "C" void __ct__CTagCodeSelect2() {}
+extern "C" void __ct__CTagCodeSelect2(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D7A8;
+}
 // LLM-HARNESS-END: us-8012c660
 
+extern u32 lbl_eu_8052D780[];
 // LLM-HARNESS-BEGIN: us-8012c670
-extern "C" void __ct__CTagCodeAct() {}
+extern "C" void __ct__CTagCodeAct(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D780;
+}
 // LLM-HARNESS-END: us-8012c670
 
+extern u32 lbl_eu_8052D758[];
 // LLM-HARNESS-BEGIN: us-8012c680
-extern "C" void __ct__CTagCodeFade() {}
+extern "C" void __ct__CTagCodeFade(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D758;
+}
 // LLM-HARNESS-END: us-8012c680
 
+extern u32 lbl_eu_8052D730[];
 // LLM-HARNESS-BEGIN: us-8012c690
-extern "C" void __ct__CTagCodeQuest() {}
+extern "C" void __ct__CTagCodeQuest(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D730;
+}
 // LLM-HARNESS-END: us-8012c690
 
+extern u32 lbl_eu_8052D708[];
 // LLM-HARNESS-BEGIN: us-8012c6a0
-extern "C" void __ct__CTagCodeInvisible() {}
+extern "C" void __ct__CTagCodeInvisible(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D708;
+}
 // LLM-HARNESS-END: us-8012c6a0
 
+extern u32 lbl_eu_8052D6E0[];
 // LLM-HARNESS-BEGIN: us-8012c6b0
-extern "C" void __ct__CTagCodeQstStart() {}
+extern "C" void __ct__CTagCodeQstStart(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D6E0;
+}
 // LLM-HARNESS-END: us-8012c6b0
 
+extern u32 lbl_eu_8052D6B8[];
 // LLM-HARNESS-BEGIN: us-8012c6c0
-extern "C" void __ct__CTagCodePresent() {}
+extern "C" void __ct__CTagCodePresent(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D6B8;
+}
 // LLM-HARNESS-END: us-8012c6c0
 
+extern u32 lbl_eu_8052D690[];
 // LLM-HARNESS-BEGIN: us-8012c6d0
-extern "C" void __ct__CTagCodeTailOff() {}
+extern "C" void __ct__CTagCodeTailOff(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D690;
+}
 // LLM-HARNESS-END: us-8012c6d0
 
+extern u32 lbl_eu_8052D668[];
 // LLM-HARNESS-BEGIN: us-8012c6e0
-extern "C" void __ct__CTagCodeExchange() {}
+extern "C" void __ct__CTagCodeExchange(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D668;
+}
 // LLM-HARNESS-END: us-8012c6e0
 
+extern u32 lbl_eu_8052D640[];
 // LLM-HARNESS-BEGIN: us-8012c6f0
-extern "C" void __ct__CTagCodeShop() {}
+extern "C" void __ct__CTagCodeShop(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D640;
+}
 // LLM-HARNESS-END: us-8012c6f0
 
+extern u32 lbl_eu_8052D618[];
 // LLM-HARNESS-BEGIN: us-8012c700
-extern "C" void __ct__CTagCodeMakeCrystal() {}
+extern "C" void __ct__CTagCodeMakeCrystal(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D618;
+}
 // LLM-HARNESS-END: us-8012c700
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

@@ -78,5 +78,5 @@ extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail9StrmSoundCFv(void* self) { r
 extern "C" u8 IsPrepared__Q44nw4r3snd6detail9StrmSoundCFv(void* self) { return ((u8*)self)[0x22f]; }
 // LLM-HARNESS-END: us-80427a94
 // LLM-HARNESS-BEGIN: us-80427a9c
-extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail9StrmSoundCFv(void) { return lbl_eu_80665520@sda21; }
+extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail9StrmSoundCFv(void) { return 0; }
 // LLM-HARNESS-END: us-80427a9c

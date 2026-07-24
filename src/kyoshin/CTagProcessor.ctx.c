@@ -1342,42 +1342,6 @@ void ocBdatRegist();
 extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125dec
 
-// LLM-HARNESS-BEGIN: us-80125e2c
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125e2c
-
-// LLM-HARNESS-BEGIN: us-80125e6c
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125e6c
-
-// LLM-HARNESS-BEGIN: us-80125eac
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125eac
-
-// LLM-HARNESS-BEGIN: us-80125eec
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125eec
-
-// LLM-HARNESS-BEGIN: us-80125f2c
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125f2c
-
-// LLM-HARNESS-BEGIN: us-80125f6c
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125f6c
-
-// LLM-HARNESS-BEGIN: us-80125fac
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125fac
-
-// LLM-HARNESS-BEGIN: us-80125fec
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-80125fec
-
-// LLM-HARNESS-BEGIN: us-8012602c
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-8012602c
-
 // LLM-HARNESS-BEGIN: us-8012606c
 extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeLine() {}
 // LLM-HARNESS-END: us-8012606c
@@ -1466,9 +1430,7 @@ extern "C" void __dt__17CTagProcessorBaseFv() {}
 extern "C" void func_80125AB8() {}
 // LLM-HARNESS-END: us-80126594
 
-// LLM-HARNESS-BEGIN: us-801265dc
-extern "C" int func_80125B00(void* self) { return 0; }
-// LLM-HARNESS-END: us-801265dc
+
 
 // LLM-HARNESS-BEGIN: us-801265e4
 extern "C" void func_80125B08() {}
@@ -1750,8 +1712,11 @@ extern "C" void func_8012B9E0() {}
 extern "C" void func_8012B9F0() {}
 // LLM-HARNESS-END: us-8012c4bc
 
+extern u32 lbl_eu_8052D9E0[];
 // LLM-HARNESS-BEGIN: us-8012c5a0
-extern "C" void __ct__CTagCodeCL() {}
+extern "C" void __ct__CTagCodeCL(void* self) {
+    *(u32*)self = (u32)lbl_eu_8052D9E0;
+}
 // LLM-HARNESS-END: us-8012c5a0
 
 // LLM-HARNESS-BEGIN: us-8012c5b0

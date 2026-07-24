@@ -17,6 +17,7 @@ void bta_dm_disable_timer_cback() {}
 // LLM-HARNESS-END: us-802e18d4
 
 // LLM-HARNESS-BEGIN: us-802e1990
+extern void BTM_SetLocalDeviceName(void*);
 void bta_dm_set_dev_name(void* self) { ((void(*)(void*))BTM_SetLocalDeviceName)((char*)self + 0x8); }
 // LLM-HARNESS-END: us-802e1990
 

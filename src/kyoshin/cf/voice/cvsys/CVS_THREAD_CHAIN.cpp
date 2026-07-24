@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp"
 
 // LLM-HARNESS-BEGIN: us-802a7f64
 extern "C" void __ct__802A5830() {}
@@ -21,7 +22,7 @@ extern "C" void func_802A598C() {}
 // LLM-HARNESS-END: us-802a80c0
 
 // LLM-HARNESS-BEGIN: us-802a8140
-extern "C" int func_802A5A0C(void* self) { return 1; }
+extern "C" int func_802A5A0C(cf::CVS_THREAD_CHAIN* self) { return 1; }
 // LLM-HARNESS-END: us-802a8140
 
 // LLM-HARNESS-BEGIN: us-802a8148

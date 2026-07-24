@@ -1337,6 +1337,52 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp" line 5 "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp" line 2 "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CVS_THREAD{
+public:
+    u32* unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+
+    CVS_THREAD();
+
+    //Virtual table (0x1c)
+    virtual void func_802A3B50();
+    virtual void func_802A3BEC();
+    virtual void blank1();
+    virtual void func_802A1EA0();
+    virtual void func_802A3740();
+    virtual void blank2();
+};
+
+extern void func_802A35A0(u32* destPtr);
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+
+namespace cf {
+
+/**
+ * CVS_THREAD_CHAIN - voice thread chain node.
+ *
+ * Inherits from CVS_THREAD and adds a link pointer for chaining
+ * multiple voice threads together (e.g. multi-part battle voices).
+ */
+class CVS_THREAD_CHAIN : public CVS_THREAD {
+};
+
+} // namespace cf
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp" */
 
 // LLM-HARNESS-BEGIN: us-802a7f64
 extern "C" void __ct__802A5830() {}
@@ -1355,7 +1401,7 @@ extern "C" void func_802A598C() {}
 // LLM-HARNESS-END: us-802a80c0
 
 // LLM-HARNESS-BEGIN: us-802a8140
-extern "C" int func_802A5A0C(void* self) { return 1; }
+extern "C" int func_802A5A0C(cf::CVS_THREAD_CHAIN* self) { return 1; }
 // LLM-HARNESS-END: us-802a8140
 
 // LLM-HARNESS-BEGIN: us-802a8148

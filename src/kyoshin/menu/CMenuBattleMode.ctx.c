@@ -26629,11 +26629,11 @@ public:
     void Init();
 
     // IWorkEvent @0x58; IScnRender @0x5c (extab)
-    UnkClass_8045F564 unk60; // 0x60 -- layout memory region
-    CScn* unk70;              // 0x70 -- owning scene (addRenderCB target)
-    nw4r::lyt::Layout* unk74; // 0x74 -- layout draw target
-    nw4r::lyt::AnimTransform* unk78; // 0x78
-    nw4r::lyt::AnimTransform* unk7C; // 0x7c
+    UnkClass_8045F564 mLayoutMem;        // 0x60 -- layout memory region (MEM2 alloc, scoped region guard)
+    CScn* mScn;                          // 0x70 -- owning scene; addRenderCB target
+    nw4r::lyt::Layout* mLayout;          // 0x74 -- layout draw target (hosts animations)
+    nw4r::lyt::AnimTransform* mAnimDefault; // 0x78 -- default animation (label text, enabled at init)
+    nw4r::lyt::AnimTransform* mAnimLabel;   // 0x7C -- label animation (disabled at init)
 };
 /* end "kyoshin/menu/CMenuBattleMode.hpp" */
 
@@ -26724,46 +26724,60 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 /* "src/kyoshin/menu/CMenuBattleMode.cpp" line 3 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
 
-// Batch 2026-07-14l: menu-battlemode-init owns Init exclusively.
+// CLEANUP: renamed all unk fields to descriptive names (see header).
 
 extern "C" {
-extern char lbl_eu_80503D80[];
-extern const f32 lbl_eu_80667C80;
+extern char lbl_eu_80503D80[];       // String table base; string offsets 0x10/0x29/0x45 select ARC resource names
+extern const f32 lbl_eu_80667C80;    // Initial frame value for the default animation
 // Retail calls this unmangled (matches CUIBattleManager.cpp / CMenuPTGauge.cpp
 // usage) rather than through the CUICfManager::func_801355F4 mangled name.
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+nw4r::lyt::ArcResourceAccessor* func_801355F4();  // Shared ARC resource accessor
 }
 
+/**
+ * Initialises the battle mode layout.
+ *
+ * Allocates a 0xd00-byte MEM2 region via mLayoutMem, then builds the primary
+ * layout (mLayout) and two animation layers (mAnimDefault, mAnimLabel) from the
+ * shared battle ARC resource at string offsets 0x10, 0x29, 0x45 respectively.
+ * mAnimLabel is disabled at init; mAnimDefault is enabled and its frame set to
+ * the initial value. Registers this object as an IScnRender render callback at
+ * layer 7 on the owning scene.
+ */
 void CMenuBattleMode::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    unk60.createRegion(handle, 0xd00, lbl_eu_80503D80, 0);
-    Class_8045F858 unkClass8045F858(&unk60);
+    mLayoutMem.createRegion(handle, 0xd00, lbl_eu_80503D80, 0);
+    // Scoped region guard — destructor releases the region when Init finishes
+    Class_8045F858 regionGuard(&mLayoutMem);
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-    func_80136E84(&unk74, accessor, lbl_eu_80503D80 + 0x10);
+    func_80136E84(&mLayout, accessor, lbl_eu_80503D80 + 0x10);
 
     accessor = func_801355F4();
-    func_80136F08(unk74, &unk78, accessor, lbl_eu_80503D80 + 0x29);
+    func_80136F08(mLayout, &mAnimDefault, accessor, lbl_eu_80503D80 + 0x29);
 
     accessor = func_801355F4();
-    func_80136F08(unk74, &unk7C, accessor, lbl_eu_80503D80 + 0x45);
+    func_80136F08(mLayout, &mAnimLabel, accessor, lbl_eu_80503D80 + 0x45);
 
-    unk74->SetAnimationEnable(unk7C, false);
-    unk74->SetAnimationEnable(unk78, true);
-    unk78->SetFrame(lbl_eu_80667C80);
-    unk74->Animate(0);
+    mLayout->SetAnimationEnable(mAnimLabel, false);
+    mLayout->SetAnimationEnable(mAnimDefault, true);
+    mAnimDefault->SetFrame(lbl_eu_80667C80);
+    mLayout->Animate(0);
 
     IScnRender* cb = this;
-    unk70->addRenderCB(cb, 7, 0);
-    unk60.func_8045F810();
+    mScn->addRenderCB(cb, 7, 0);
+    mLayoutMem.func_8045F810();
 }
 
-// LLM-HARNESS-BEGIN: us-801a1ba8
-extern "C" void func_801A048C(CMenuBattleMode* param_1) {
+// Thunk for ~CMenuBattleMode accessed via IWorkEvent vtable (offset +0x58).
+// Adjusts 'this' from the IWorkEvent subobject back to CMenuBattleMode,
+// then tail-calls the real destructor.
+extern "C" void func_801A048C(IWorkEvent* self) {
     extern void __dt__15CMenuBattleModeFv(CMenuBattleMode*);
-    return __dt__15CMenuBattleModeFv((CMenuBattleMode*)((char*)param_1 - 0x58));
+    return __dt__15CMenuBattleModeFv(
+        reinterpret_cast<CMenuBattleMode*>(
+            reinterpret_cast<char*>(self) - 0x58));
 }
-// LLM-HARNESS-END: us-801a1ba8
 // LLM-HARNESS-BEGIN: us-801a1bb0
 extern void cbRenderBefore__15CMenuBattleModeFv();
 extern "C" void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }

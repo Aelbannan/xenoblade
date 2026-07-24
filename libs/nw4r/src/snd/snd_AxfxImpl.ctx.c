@@ -783,11 +783,12 @@ struct SoundParam {
     f32 surroundPan; // at 0xC
     f32 fxSend;      // at 0x10
     f32 lpf;         // at 0x14
-    int priority;    // at 0x18
+    // US Xenoblade: extra f32 before priority (retail stfs@BasicSound+0x48).
+    f32 unk18;       // at 0x18
+    int priority;    // at 0x1C
 };
 
-namespace detail {
-
+// US retail mangles these as nw4r::snd::PanMode / PanCurve (not detail::).
 enum PanMode {
     PAN_MODE_DUAL,
     PAN_MODE_BALANCE,
@@ -804,6 +805,8 @@ enum PanCurve {
     PAN_CURVE_LINEAR_0DB,
     PAN_CURVE_LINEAR_0DB_CLAMP,
 };
+
+namespace detail {
 
 struct AdpcmParam {
     u16 coef[16];   // at 0x0
@@ -2335,6 +2338,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -2355,20 +2361,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -8384,7 +8419,95 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -8633,38 +8756,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -8683,7 +8825,11 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5EC - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
     GXPerf0 perf0; // at 0x5EC
     GXPerf1 perf1; // at 0x5F0
     u32 perfSel;   // at 0x5F4
@@ -8698,6 +8844,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -8869,83 +9020,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -13520,7 +13594,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() {}
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -17858,11 +17937,7 @@ namespace detail {
 
 template <typename TValue, typename TTime> class MoveValue {
 public:
-    MoveValue()
-        : mOrigin(TValue()),
-          mTarget(TValue()),
-          mFrame(TTime()),
-          mCounter(TTime()) {}
+    MoveValue() {}
 
     void InitValue(TValue t1) {
         mOrigin = t1;
@@ -19335,8 +19410,8 @@ typedef struct AXFX_CHORUS_EXP {
     f32 depth;                   // at 0x84
     f32 rate;                    // at 0x88
     f32 feedback;                // at 0x8C
-    struct AXFX_BUS* busIn;             // at 0x90
-    struct AXFX_BUS* busOut;            // at 0x94
+    struct AXFX_BUS* busIn;      // at 0x90
+    struct AXFX_BUS* busOut;     // at 0x94
     f32 outGain;                 // at 0x98
     f32 sendGain;                // at 0x9C
 } AXFX_CHORUS_EXP;
@@ -19345,6 +19420,7 @@ u32 AXFXChorusExpGetMemSize(const AXFX_CHORUS_EXP* fx);
 BOOL AXFXChorusExpInit(AXFX_CHORUS_EXP* fx);
 void AXFXChorusExpShutdown(AXFX_CHORUS_EXP* fx);
 BOOL AXFXChorusExpSettings(AXFX_CHORUS_EXP* fx);
+BOOL AXFXChorusExpSettingsUpdate(AXFX_CHORUS_EXP* fx);
 void AXFXChorusExpCallback(struct AXFX_BUFFERUPDATE* update, AXFX_CHORUS_EXP* fx);
 
 #ifdef __cplusplus
@@ -19376,7 +19452,57 @@ void AXFXChorusCallback(void* chans, void* context);
 /* end "revolution/AXFX/AXFXChorus.h" */
 /* "libs/RVL_SDK/include/revolution/AXFX.h" line 7 "revolution/AXFX/AXFXChorusExp.h" */
 /* end "revolution/AXFX/AXFXChorusExp.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 8 "revolution/AXFX/AXFXCommon.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 8 "revolution/AXFX/AXFXChorusExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_CHORUS_EXP_DPL2_H
+#define RVL_SDK_AXFX_CHORUS_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXChorusExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXChorusExpDpl2.h" line 3 "revolution/AXFX/AXFXChorusExp.h" */
+/* end "revolution/AXFX/AXFXChorusExp.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_CHORUS_EXP_DELAY_DPL2 {
+    f32* line[4]; // at 0x0
+    u32 inPos;    // at 0x10
+    u32 outPos;   // at 0x14
+    u32 lastPos;  // at 0x18
+    u32 sizeFP;   // at 0x1C
+    u32 size;     // at 0x20
+} AXFX_CHORUS_EXP_DELAY_DPL2;
+
+typedef struct AXFX_CHORUS_EXP_DPL2 {
+    AXFX_CHORUS_EXP_DELAY_DPL2 delay; // at 0x0
+    AXFX_CHORUS_EXP_LFO lfo;          // at 0x24
+    f32 history[4][4];                // at 0x4C
+    u32 histIndex;                    // at 0x8C
+    u32 active;                       // at 0x90
+    f32 delayTime;                    // at 0x94
+    f32 depth;                        // at 0x98
+    f32 rate;                         // at 0x9C
+    f32 feedback;                     // at 0xA0
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0xA4
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0xA8
+    f32 outGain;                      // at 0xAC
+    f32 sendGain;                     // at 0xB0
+} AXFX_CHORUS_EXP_DPL2;
+
+u32 AXFXChorusExpGetMemSizeDpl2(const AXFX_CHORUS_EXP_DPL2* fx);
+BOOL AXFXChorusExpInitDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+void AXFXChorusExpShutdownDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+BOOL AXFXChorusExpSettingsUpdateDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+void AXFXChorusExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update, AXFX_CHORUS_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXChorusExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 9 "revolution/AXFX/AXFXCommon.h" */
 #ifndef RVL_SDK_AXFX_COMMON_H
 #define RVL_SDK_AXFX_COMMON_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXCommon.h" line 2 "types.h" */
@@ -19409,7 +19535,7 @@ typedef struct AXFX_BUFFERUPDATE_DPL2 {
 #endif
 #endif
 /* end "revolution/AXFX/AXFXCommon.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 9 "revolution/AXFX/AXFXDelay.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 10 "revolution/AXFX/AXFXDelay.h" */
 #ifndef RVL_SDK_AXFX_DELAY_H
 #define RVL_SDK_AXFX_DELAY_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelay.h" line 2 "types.h" */
@@ -19441,7 +19567,98 @@ void AXFXDelayCallback(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXDelay.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 10 "revolution/AXFX/AXFXHooks.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 11 "revolution/AXFX/AXFXDelayExp.h" */
+#ifndef RVL_SDK_AXFX_DELAY_EXP_H
+#define RVL_SDK_AXFX_DELAY_EXP_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelayExp.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUS;
+typedef struct AXFX_BUFFERUPDATE;
+
+typedef struct AXFX_DELAY_EXP {
+    s32* line[3];            // at 0x0
+    u32 curPos;              // at 0xC
+    u32 length;              // at 0x10
+    u32 maxLength;           // at 0x14
+    s32 feedbackGain;        // at 0x18
+    s32 last[3];             // at 0x1C
+    s32 iirGain;             // at 0x28
+    s32 outGainI;            // at 0x2C
+    s32 sendGainI;           // at 0x30
+    u32 active;              // at 0x34
+    f32 delayTimeMax;        // at 0x38
+    f32 delayTime;           // at 0x3C
+    f32 feedback;            // at 0x40
+    f32 iir;                 // at 0x44
+    struct AXFX_BUS* busIn;  // at 0x48
+    struct AXFX_BUS* busOut; // at 0x4C
+    f32 outGain;             // at 0x50
+    f32 sendGain;            // at 0x54
+} AXFX_DELAY_EXP;
+
+u32 AXFXDelayExpGetMemSize(const AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpInit(AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpSettings(AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpSettingsUpdate(AXFX_DELAY_EXP* fx);
+void AXFXDelayExpShutdown(AXFX_DELAY_EXP* fx);
+void AXFXDelayExpCallback(struct AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXDelayExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 12 "revolution/AXFX/AXFXDelayExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_DELAY_EXP_DPL2_H
+#define RVL_SDK_AXFX_DELAY_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelayExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_DELAY_EXP_DPL2 {
+    s32* line[4];                              // at 0x0
+    u32 curPos;                                // at 0x10
+    u32 length;                                // at 0x14
+    u32 maxLength;                             // at 0x18
+    s32 feedbackGain;                          // at 0x1C
+    s32 last[4];                               // at 0x20
+    s32 iirGain;                               // at 0x30
+    s32 outGainI;                              // at 0x34
+    s32 sendGainI;                             // at 0x38
+    u32 active;                                // at 0x3C
+    f32 delayTimeMax;                          // at 0x40
+    f32 delayTime;                             // at 0x44
+    f32 feedback;                              // at 0x48
+    f32 iir;                                   // at 0x4C
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0x50
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0x54
+    f32 outGain;                               // at 0x58
+    f32 sendGain;                              // at 0x5C
+} AXFX_DELAY_EXP_DPL2;
+
+u32 AXFXDelayExpGetMemSizeDpl2(const AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpInitDpl2(AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpSettingsDpl2(AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpSettingsUpdateDpl2(AXFX_DELAY_EXP_DPL2* fx);
+void AXFXDelayExpShutdownDpl2(AXFX_DELAY_EXP_DPL2* fx);
+void AXFXDelayExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXDelayExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 13 "revolution/AXFX/AXFXHooks.h" */
 #ifndef RVL_SDK_AXFX_HOOKS_H
 #define RVL_SDK_AXFX_HOOKS_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXHooks.h" line 2 "types.h" */
@@ -19464,7 +19681,7 @@ void AXFXGetHooks(AXFXAllocHook* alloc, AXFXFreeHook* free);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXHooks.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 11 "revolution/AXFX/AXFXLfoTable.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 14 "revolution/AXFX/AXFXLfoTable.h" */
 #ifndef RVL_SDK_AXFX_LFO_TABLE_H
 #define RVL_SDK_AXFX_LFO_TABLE_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXLfoTable.h" line 2 "types.h" */
@@ -19480,7 +19697,7 @@ s32* __AXFXGetLfoSinTable(void);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXLfoTable.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 12 "revolution/AXFX/AXFXReverbHi.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 15 "revolution/AXFX/AXFXReverbHi.h" */
 #ifndef RVL_SDK_AXFX_REVERB_HI_H
 #define RVL_SDK_AXFX_REVERB_HI_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbHi.h" line 2 "types.h" */
@@ -19583,7 +19800,7 @@ void AXFXReverbHiCallback(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXReverbHi.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 13 "revolution/AXFX/AXFXReverbHiDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 16 "revolution/AXFX/AXFXReverbHiDpl2.h" */
 #ifndef RVL_SDK_AXFX_REVERB_HI_DPL2_H
 #define RVL_SDK_AXFX_REVERB_HI_DPL2_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbHiDpl2.h" line 2 "types.h" */
@@ -19687,11 +19904,11 @@ void AXFXReverbHiCallbackDpl2(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXReverbHiDpl2.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 14 "revolution/AXFX/AXFXReverbHiExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 17 "revolution/AXFX/AXFXReverbHiExp.h" */
 /* end "revolution/AXFX/AXFXReverbHiExp.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 15 "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 18 "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
 /* end "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 16 "revolution/AXFX/AXFXReverbStdExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 19 "revolution/AXFX/AXFXReverbStdExp.h" */
 #ifndef RVL_SDK_AXFX_REVERB_STD_EXP_H
 #define RVL_SDK_AXFX_REVERB_STD_EXP_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbStdExp.h" line 2 "types.h" */
@@ -19758,7 +19975,73 @@ void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* update, AXFX_REVERBSTD_EXP* fx)
 #endif
 #endif
 /* end "revolution/AXFX/AXFXReverbStdExp.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 17 "revolution/AXFX/AXFXSrcCoef.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 20 "revolution/AXFX/AXFXReverbStdExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_REVERB_STD_EXP_DPL2_H
+#define RVL_SDK_AXFX_REVERB_STD_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbStdExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_REVERBSTD_EXP_DPL2 {
+    f32* earlyLine[4];       // at 0x0
+    u32 earlyPos;            // at 0x10
+    u32 earlyLength;         // at 0x14
+    u32 earlyMaxLength;      // at 0x18
+    f32 earlyCoef;           // at 0x1C
+
+    f32* preDelayLine[4];    // at 0x20
+    u32 preDelayPos;         // at 0x30
+    u32 preDelayLength;      // at 0x34
+    u32 preDelayMaxLength;   // at 0x38
+
+    f32* combLine[4][2];     // at 0x3C
+    u32 combPos[2];          // at 0x5C
+    u32 combLength[2];       // at 0x64
+    u32 combMaxLength[2];    // at 0x6C
+    f32 combCoef[2];         // at 0x74
+
+    f32* allpassLine[4][2];  // at 0x7C
+    u32 allpassPos[2];       // at 0x9C
+    u32 allpassLength[2];    // at 0xA4
+    u32 allpassMaxLength[2]; // at 0xAC
+
+    f32 allpassCoef;         // at 0xB4
+    f32 lastLpfOut[4];       // at 0xB8
+    f32 lpfCoef;             // at 0xC8
+    u32 active;              // at 0xCC
+    u32 earlyMode;           // at 0xD0
+    f32 preDelayTimeMax;     // at 0xD4
+    f32 preDelayTime;        // at 0xD8
+    u32 fusedMode;           // at 0xDC
+    f32 fusedTime;           // at 0xE0
+    f32 coloration;          // at 0xE4
+    f32 damping;             // at 0xE8
+    f32 earlyGain;           // at 0xEC
+    f32 fusedGain;           // at 0xF0
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0xF4
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0xF8
+    f32 outGain;             // at 0xFC
+    f32 sendGain;            // at 0x100
+} AXFX_REVERBSTD_EXP_DPL2;
+
+u32 AXFXReverbStdExpGetMemSizeDpl2(const AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpInitDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpSettingsDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpSettingsUpdateDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+void AXFXReverbStdExpShutdownDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+void AXFXReverbStdExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update,
+                                  AXFX_REVERBSTD_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXReverbStdExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 21 "revolution/AXFX/AXFXSrcCoef.h" */
 #ifndef RVL_SDK_AXFX_SRC_COEF_H
 #define RVL_SDK_AXFX_SRC_COEF_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXSrcCoef.h" line 2 "types.h" */
@@ -237013,6 +237296,32 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Embedded at BasicPlayer+0x4. sizeof == 0xCC; BasicPlayer::mId follows at 0xD0.
+struct PlayerParamSet {
+    void Init();
+
+    f32 mVolume;      // at 0x0
+    f32 mPitch;       // at 0x4
+    f32 mPan;         // at 0x8
+    f32 mSurroundPan; // at 0xC
+    f32 mLpfFreq;     // at 0x10
+    f32 mUnk0x14;     // at 0x14
+    u8 mUnk0x18;      // at 0x18
+    u8 mRemoteFilter; // at 0x19 (BasicPlayer+0x1D)
+    u8 mPad0x1A[2];   // at 0x1A
+    int mOutputLine;  // at 0x1C
+    f32 mMainOutVolume;                         // at 0x20
+    f32 mMainSend;                              // at 0x24
+    PanMode mPanMode;                           // at 0x28 (BasicPlayer+0x2C)
+    PanCurve mPanCurve;                         // at 0x2C (BasicPlayer+0x30)
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x30 (BasicPlayer+0x34)
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x3C (BasicPlayer+0x40)
+    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x4C (BasicPlayer+0x50)
+    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x5C (BasicPlayer+0x60)
+    // Xenoblade extension: 4× (1,1,0,0,0,0) float groups through +0xC8.
+    f32 mUnk0x6C[24]; // at 0x6C
+};
+
 class BasicPlayer {
 public:
     BasicPlayer();
@@ -237035,59 +237344,59 @@ public:
     }
 
     f32 GetVolume() const {
-        return mVolume;
+        return mParam.mVolume;
     }
     void SetVolume(f32 volume) {
-        mVolume = volume;
+        mParam.mVolume = volume;
     }
 
     f32 GetPitch() const {
-        return mPitch;
+        return mParam.mPitch;
     }
     void SetPitch(f32 pitch) {
-        mPitch = pitch;
+        mParam.mPitch = pitch;
     }
 
     f32 GetPan() const {
-        return mPan;
+        return mParam.mPan;
     }
     void SetPan(f32 pan) {
-        mPan = pan;
+        mParam.mPan = pan;
     }
 
     f32 GetSurroundPan() const {
-        return mSurroundPan;
+        return mParam.mSurroundPan;
     }
     void SetSurroundPan(f32 pan) {
-        mSurroundPan = pan;
+        mParam.mSurroundPan = pan;
     }
 
     f32 GetLpfFreq() const {
-        return mLpfFreq;
+        return mParam.mLpfFreq;
     }
     void SetLpfFreq(f32 freq) {
-        mLpfFreq = freq;
+        mParam.mLpfFreq = freq;
     }
 
     int GetOutputLine() const {
-        return mOutputLine;
+        return mParam.mOutputLine;
     }
     void SetOutputLine(int flags) {
-        mOutputLine = flags;
+        mParam.mOutputLine = flags;
     }
 
     f32 GetMainOutVolume() const {
-        return mMainOutVolume;
+        return mParam.mMainOutVolume;
     }
     void SetMainOutVolume(f32 volume) {
-        mMainOutVolume = volume;
+        mParam.mMainOutVolume = volume;
     }
 
     f32 GetMainSend() const {
-        return mMainSend;
+        return mParam.mMainSend;
     }
     void SetMainSend(f32 send) {
-        mMainSend = send;
+        mParam.mMainSend = send;
     }
 
     void SetFxSend(AuxBus bus, f32 send);
@@ -237100,48 +237409,27 @@ public:
     f32 GetRemoteFxSend(int remote) const;
 
     int GetRemoteFilter() const {
-        return mRemoteFilter;
+        return mParam.mRemoteFilter;
     }
-    void SetRemoteFilter(int filter) {
-        mRemoteFilter = ut::Clamp(filter, 0, REMOTE_FILTER_MAX);
-    }
+    void SetRemoteFilter(int filter);
 
     PanMode GetPanMode() const {
-        return mPanMode;
+        return mParam.mPanMode;
     }
     void SetPanMode(PanMode mode) {
-        mPanMode = mode;
+        mParam.mPanMode = mode;
     }
 
     PanCurve GetPanCurve() const {
-        return mPanCurve;
+        return mParam.mPanCurve;
     }
     void SetPanCurve(PanCurve curve) {
-        mPanCurve = curve;
+        mParam.mPanCurve = curve;
     }
 
 private:
-    u32 mId; // at 0x4
-
-    f32 mVolume;      // at 0x8
-    f32 mPitch;       // at 0xC
-    f32 mPan;         // at 0x10
-    f32 mSurroundPan; // at 0x14
-    f32 mLpfFreq;     // at 0x18
-    char UNK_0x1C[0x4];
-
-    int mOutputLine;                            // at 0x20
-    f32 mMainOutVolume;                         // at 0x24
-    f32 mMainSend;                              // at 0x28
-    u32 mUnk0x2C;                               // at 0x2C
-    u32 mUnk0x30;                               // at 0x30
-    f32 mFxSend[AUX_BUS_NUM];                   // at 0x34
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x40
-    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x50
-    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x60
-    u8 mRemoteFilter;                           // at 0x68
-    PanMode mPanMode;                           // at 0x6C
-    PanCurve mPanCurve;                         // at 0x70
+    PlayerParamSet mParam; // at 0x4
+    u32 mId;               // at 0xD0
 };
 
 } // namespace detail
@@ -237247,40 +237535,49 @@ public:
     static const int PRIORITY_MAX = 127;
 
 public:
-    BasicSound();
-    virtual ~BasicSound() {} // at 0xC
+    BasicSound(int priority, int arg);
+    virtual ~BasicSound() {}
 
-    virtual void Update();                      // at 0x10
-    virtual void StartPrepared();               // at 0x14
-    virtual void Stop(int frames);              // at 0x18
-    virtual void Pause(bool flag, int frames);  // at 0x1C
-    virtual void SetAutoStopCounter(int count); // at 0x20
-    virtual void FadeIn(int frames);            // at 0x24
-    virtual void Shutdown();                    // at 0x28
-    virtual bool IsPrepared() const = 0;        // at 0x2C
-    virtual bool IsPause() const;               // at 0x30
+    // US Xenoblade vtable (after RTTI @+0x8, dtor @+0xC):
+    // +0x10 Shutdown, +0x14 IsPrepared, +0x18 IsAttachedTempSpecialHandle,
+    // +0x1C DetachTempSpecialHandle, +0x20 InitParam, +0x24/+0x28 GetBasicPlayer,
+    // +0x2C OnUpdatePlayerPriority, +0x30 UpdateMoveValue, +0x34 UpdateParam.
+    // Stop / Pause / Update / StartPrepared / IsPause are non-virtual.
+    virtual void Shutdown();
+    virtual bool IsPrepared() const = 0;
+    virtual bool IsAttachedTempSpecialHandle() = 0;
+    virtual void DetachTempSpecialHandle() = 0;
+    virtual void InitParam();
+    virtual BasicPlayer& GetBasicPlayer() = 0;
+    virtual const BasicPlayer& GetBasicPlayer() const = 0;
+    virtual void OnUpdatePlayerPriority();
+    virtual void UpdateMoveValue();
+    virtual void UpdateParam();
 
-    virtual void SetInitialVolume(f32 vol);       // at 0x34
-    virtual void SetVolume(f32 vol, int frames);  // at 0x38
-    virtual void SetPitch(f32 pitch);             // at 0x3C
-    virtual void SetPan(f32 pan);                 // at 0x40
-    virtual void SetSurroundPan(f32 pan);         // at 0x44
-    virtual void SetLpfFreq(f32 freq);            // at 0x48
-    virtual void SetPlayerPriority(int priority); // at 0x4C
-    virtual void SetRemoteFilter(int filter);     // at 0x50
-    virtual void SetPanMode(PanMode mode);        // at 0x54
-    virtual void SetPanCurve(PanCurve curve);     // at 0x58
+    void Update();
+    void StartPrepared();
+    void Stop(int frames);
+    void Pause(bool flag, int frames);
+    bool IsPause() const;
 
-    virtual bool IsAttachedTempSpecialHandle() = 0; // at 0x5C
-    virtual void DetachTempSpecialHandle() = 0;     // at 0x60
-
-    virtual void InitParam();                              // at 0x64
-    virtual BasicPlayer& GetBasicPlayer() = 0;             // at 0x68
-    virtual const BasicPlayer& GetBasicPlayer() const = 0; // at 0x6C
+    void SetAutoStopCounter(int count);
+    void FadeIn(int frames);
+    void SetInitialVolume(f32 vol);
+    void SetVolume(f32 vol, int frames);
+    void SetPitch(f32 pitch);
+    void SetPan(f32 pan);
+    void SetSurroundPan(f32 pan);
+    void SetLpfFreq(f32 freq);
+    void SetPlayerPriority(int priority);
+    void SetRemoteFilter(int filter);
+    void SetPanMode(PanMode mode);
+    void SetPanCurve(PanCurve curve);
 
     PlayerHeap* GetPlayerHeap() {
         return mHeap;
     }
+    void AttachPlayerHeap(PlayerHeap* pHeap);
+    void DetachPlayerHeap(PlayerHeap* pHeap);
     void SetPlayerHeap(PlayerHeap* pHeap) {
         mHeap = pHeap;
     }
@@ -237297,6 +237594,9 @@ public:
     void SetSoundPlayer(SoundPlayer* pPlayer) {
         mSoundPlayer = pPlayer;
     }
+    // Out-of-line in US (same stores as SetSoundPlayer / clear).
+    void AttachSoundPlayer(SoundPlayer* pPlayer);
+    void DetachSoundPlayer(SoundPlayer* pPlayer);
 
     ExternalSoundPlayer* GetExternalSoundPlayer() {
         return mExtSoundPlayer;
@@ -237364,7 +237664,9 @@ public:
     void SetFxSend(AuxBus bus, f32 send);
 
     int CalcCurrentPlayerPriority() const {
-        return ut::Clamp(mPriority + mAmbientParam.priority, 0, PRIORITY_MAX);
+        // US SortPriorityList adds mUnk0x50 (not SoundParam::priority @0x4C).
+        return ut::Clamp(static_cast<int>(mPriority) + static_cast<int>(mUnk0x50),
+                         0, PRIORITY_MAX);
     }
 
 private:
@@ -237378,38 +237680,50 @@ private:
     AmbientArgUpdateCallback* mAmbientArgUpdateCallback;       // at 0x1C
     AmbientArgAllocaterCallback* mAmbientArgAllocaterCallback; // at 0x20
     void* mAmbientArg;                                         // at 0x24
-    SoundParam mAmbientParam;                                  // at 0x28
+    u32 mUnk0x28;                                              // at 0x28
+    u32 mUnk0x2C;                                              // at 0x2C
+    SoundParam mAmbientParam;                                  // at 0x30
+    u32 mUnk0x50;                                              // at 0x50 (ctor arg)
+    f32 mUnk0x54;                                              // at 0x54
+    f32 mUnk0x58;                                              // at 0x58
+    f32 mUnk0x5C;                                              // at 0x5C
 
-    MoveValue<f32, int> mFadeVolume;      // at 0x44
-    MoveValue<f32, int> mPauseFadeVolume; // at 0x54
-    bool mStartFlag;                      // at 0x64
-    bool mStartedFlag;                    // at 0x65
-    bool mAutoStopFlag;                   // at 0x66
-    bool mPauseFlag;                      // at 0x67
-    bool mPauseFadeFlag;                  // at 0x68
-    bool mFadeOutFlag;                    // at 0x69
-    int mAutoStopCounter;                 // at 0x6C
-    u32 mUpdateCounter;                   // at 0x70
+    MoveValue<f32, int> mFadeVolume;      // at 0x60
+    MoveValue<f32, int> mPauseFadeVolume; // at 0x70
 
-    u8 mPriority; // at 0x74
-    u32 mId;      // at 0x78
+    bool mStartFlag;                      // at 0x80
+    bool mStartedFlag;                    // at 0x81
+    bool mAutoStopFlag;                   // at 0x82
+    bool mFadeOutFlag;                    // at 0x83
+    int mPauseState;                      // at 0x84
+    bool mPauseFadeFlag;                  // at 0x88
+    bool mPauseFlag;                      // at 0x89
+    u8 mPad0x8A[2];                       // at 0x8A
+    int mAutoStopCounter;                 // at 0x8C
+    u32 mUpdateCounter;                   // at 0x90
+    u8 mPriority;                         // at 0x94
+    u8 mUnk0x95;                          // at 0x95
+    bool mOutputLineFlagEnable;           // at 0x96
+    u8 mPad0x97;                          // at 0x97
+    u32 mId;                              // at 0x98
 
-    MoveValue<f32, int> mExtMoveVolume; // at 0x7C
-    f32 mInitVolume;                    // at 0x8C
-    f32 mExtPan;                        // at 0x90
-    f32 mExtSurroundPan;                // at 0x94
-    f32 mExtPitch;                      // at 0x98
-
-    bool mOutputLineFlagEnable;                 // at 0x9C
-    int mOutputLineFlag;                        // at 0xA0
-    f32 mMainOutVolume;                         // at 0xA4
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xA8
+    MoveValue<f32, int> mExtMoveVolume; // at 0x9C
+    f32 mInitVolume;                    // at 0xAC
+    f32 mExtPan;                        // at 0xB0
+    f32 mExtSurroundPan;                // at 0xB4
+    f32 mExtPitch;                      // at 0xB8
+    f32 mUnk0xBC;                       // at 0xBC
+    f32 mUnk0xC0;                       // at 0xC0
+    int mOutputLineFlag;                // at 0xC4
+    f32 mMainOutVolume;                 // at 0xC8
+    f32 mUnk0xCC[4];                    // at 0xCC
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0xDC
 
 public:
-    NW4R_UT_LINKLIST_NODE_DECL_EX(Prio);       // at 0xB8
-    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPlay); // at 0xC0
-    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPrio); // at 0xC8
-    NW4R_UT_LINKLIST_NODE_DECL_EX(ExtPlay);    // at 0xD0
+    NW4R_UT_LINKLIST_NODE_DECL_EX(Prio);       // at 0xEC
+    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPlay); // at 0xF4
+    NW4R_UT_LINKLIST_NODE_DECL_EX(PlayerPrio); // at 0xFC
+    NW4R_UT_LINKLIST_NODE_DECL_EX(ExtPlay);    // at 0x104
 };
 
 NW4R_UT_LINKLIST_TYPEDEF_DECL_EX(BasicSound, Prio);
@@ -237656,8 +237970,8 @@ public:
         int playerPriority;        // at 0x8
         int volume;                // at 0xC
         int remoteFilter;          // at 0x10
-        detail::PanMode panMode;   // at 0x14
-        detail::PanCurve panCurve; // at 0x18
+        PanMode panMode;   // at 0x14
+        PanCurve panCurve; // at 0x18
     };
 
     struct SeqSoundInfo {
@@ -239270,449 +239584,8 @@ private:
 /* "libs/nw4r/include/nw4r/snd/snd_PlayerHeap.h" line 2 "nw4r/types_nw4r.h" */
 /* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/snd/snd_PlayerHeap.h" line 4 "nw4r/snd/snd_SoundHeap.h" */
-#ifndef NW4R_SND_SOUND_HEAP_H
-#define NW4R_SND_SOUND_HEAP_H
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 4 "nw4r/snd/snd_FrameHeap.h" */
-/* end "nw4r/snd/snd_FrameHeap.h" */
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 5 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-#ifndef NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
-#define NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
-/* "libs/nw4r/include/nw4r/snd/snd_SoundMemoryAllocatable.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-namespace nw4r {
-namespace snd {
-
-class SoundMemoryAllocatable {
-public:
-    virtual ~SoundMemoryAllocatable() {} // at 0x8
-    virtual void* Alloc(u32 size) = 0;   // at 0xC
-};
-
-} // namespace snd
-} // namespace nw4r
-
-#endif
-/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 7 "nw4r/ut.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_PlayerHeap.h" line 4 "nw4r/ut.h" */
 /* end "nw4r/ut.h" */
-
-/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 9 "revolution/OS.h" */
-/**
- * References: YAGCD, WiiBrew, Dolphin Emulator
- */
-
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-/* end "revolution/OS/OS.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
-/* end "revolution/OS/OSAlarm.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
-/* end "revolution/OS/OSAlloc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
-/* end "revolution/OS/OSArena.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
-/* end "revolution/OS/OSAudioSystem.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
-/* end "revolution/OS/OSCache.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
-/* end "revolution/OS/OSCrc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
-/* end "revolution/OS/OSError.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
-/* end "revolution/OS/OSExec.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
-/* end "revolution/OS/OSFastCast.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
-/* end "revolution/OS/OSFatal.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
-/* end "revolution/OS/OSFont.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap4.html#sec4
- * https://www.gc-forever.com/yagcd/chap13.html#sec13
- * https://wiibrew.org/wiki/Memory_map
- */
-
-#ifndef RVL_SDK_OS_HARDWARE_H
-#define RVL_SDK_OS_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
-/* end "revolution/DVD/dvd.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSContext;
-typedef struct OSExecParams;
-
-// Derive offsets for use with OSAddress functions
-#define __DEF_ADDR_OFFSETS(name, addr)                                         \
-    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
-    static const u32 OS_CACHED_##name = (addr);                                \
-    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
-
-// Define a global variable in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name DECL_ADDRESS(addr);                                         \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define a global array in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name arr DECL_ADDRESS(addr);                                     \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define an global variable in the hardware-register range.
-#define OS_DEF_HW_REG(type, name, addr)                                        \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name : (addr);
-
-typedef enum {
-    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
-    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
-} OSBootMagic;
-
-typedef struct OSBootInfo {
-    DVDDiskID diskID; // at 0x0
-    u32 bootMagic;    // at 0x20
-    u32 aplVersion;   // at 0x24
-    u32 physMemSize;  // at 0x28
-    u32 consoleType;  // at 0x2C
-    void* arenaLo;    // at 0x30
-    void* arenaHi;    // at 0x34
-    void* fstStart;   // at 0x38
-    u32 fstSize;      // at 0x3C
-} OSBootInfo;
-
-typedef struct OSDebugInterface {
-    BOOL usingDebugger;    // at 0x0
-    u32 exceptionMask;     // at 0x4
-    void* exceptionHook;   // at 0x8
-    void* exceptionHookLR; // at 0xC
-} OSDebugInterface;
-
-typedef struct OSBI2 {
-    u32 dbgMonitorSize;   // at 0x0
-    u32 simulatedMemSize; // at 0x4
-    u32 argumentOfs;      // at 0x8
-    u32 debugFlag;        // at 0xC
-    u32 trackLocation;    // at 0x10
-    u32 trackSize;        // at 0x14
-    u32 countryCode;      // at 0x18
-    u32 WORD_0x1C;
-    u32 lastInsert;
-    u32 padSpec;            // at 0x24
-    u32 totalTextDataLimit; // at 0x28
-    u32 simulatedMem2Size;  // at 0x2C
-} OSBI2;
-
-/**
- * 0x80000000 - 0x80000100
- */
-// clang-format off
-OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
-OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
-OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
-OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
-OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
-OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
-OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
-OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
-OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
-OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
-OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
-OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
-OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
-// clang-format on
-
-/**
- * 0x80003000 - 0x80003F00
- */
-// clang-format off
-OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
-OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
-OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
-OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
-OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
-OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
-OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
-OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
-OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
-OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
-OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
-OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
-OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
-OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
-OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
-OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
-OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
-OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
-OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
-OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
-OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
-OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
-OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
-OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
-OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
-OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
-OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
-OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
-// clang-format on
-
-/**
- * PI hardware globals
- */
-volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
-typedef enum {
-    PI_INTSR,    //!< 0xCC003000
-    PI_INTMR,    //!< 0xCC003004
-    PI_REG_0x8,  //!< 0xCC003008
-    PI_REG_0xC,  //!< 0xCC00300C
-    PI_REG_0x10, //!< 0xCC003010
-    PI_REG_0x14, //!< 0xCC003014
-    PI_REG_0x18, //!< 0xCC003018
-    PI_REG_0x1C, //!< 0xCC00301C
-    PI_REG_0x20, //!< 0xCC003020
-    PI_RESET,    //!< 0xCC003024
-    // . . .
-} PIHwReg;
-
-// INTSR - Interrupt Cause Register
-#define PI_INTSR_ERROR (1 << 0)
-#define PI_INTSR_RSW (1 << 1)
-#define PI_INTSR_DI (1 << 2)
-#define PI_INTSR_SI (1 << 3)
-#define PI_INTSR_EXI (1 << 4)
-#define PI_INTSR_AI (1 << 5)
-#define PI_INTSR_DSP (1 << 6)
-#define PI_INTSR_MEM (1 << 7)
-#define PI_INTSR_VI (1 << 8)
-#define PI_INTSR_PE_TOKEN (1 << 9)
-#define PI_INTSR_PE_FINISH (1 << 10)
-#define PI_INTSR_CP (1 << 11)
-#define PI_INTSR_DEBUG (1 << 12)
-#define PI_INTSR_HSP (1 << 13)
-#define PI_INTSR_ACR (1 << 14)
-#define PI_INTSR_RSWST (1 << 16)
-
-// INTMR - Interrupt Mask Register
-#define PI_INTMR_ERROR (1 << 0)
-#define PI_INTMR_RSW (1 << 1)
-#define PI_INTMR_DI (1 << 2)
-#define PI_INTMR_SI (1 << 3)
-#define PI_INTMR_EXI (1 << 4)
-#define PI_INTMR_AI (1 << 5)
-#define PI_INTMR_DSP (1 << 6)
-#define PI_INTMR_MEM (1 << 7)
-#define PI_INTMR_VI (1 << 8)
-#define PI_INTMR_PE_TOKEN (1 << 9)
-#define PI_INTMR_PE_FINISH (1 << 10)
-#define PI_INTMR_CP (1 << 11)
-#define PI_INTMR_DEBUG (1 << 12)
-#define PI_INTMR_HSP (1 << 13)
-#define PI_INTMR_ACR (1 << 14)
-
-/**
- * MI hardware registers
- */
-volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
-typedef enum {
-    MI_PAGE_MEM0_H, //!< 0xCC004000
-    MI_PAGE_MEM0_L, //!< 0xCC004002
-    MI_PAGE_MEM1_H, //!< 0xCC004004
-    MI_PAGE_MEM1_L, //!< 0xCC004006
-    MI_PAGE_MEM2_H, //!< 0xCC004008
-    MI_PAGE_MEM2_L, //!< 0xCC00400A
-    MI_PAGE_MEM3_H, //!< 0xCC00400C
-    MI_PAGE_MEM3_L, //!< 0xCC00400E
-    MI_PROT_MEM0,   //!< 0xCC004010
-    MI_PROT_MEM1,   //!< 0xCC004012
-    MI_PROT_MEM2,   //!< 0xCC004014
-    MI_PROT_MEM3,   //!< 0xCC004016
-    MI_REG_0x18,    //!< 0xCC004018
-    MI_REG_0x1A,    //!< 0xCC00401A
-    MI_INTMR,       //!< 0xCC00401C
-    MI_INTSR,       //!< 0xCC00401E
-    MI_REG_0x20,    //!< 0xCC004020
-    MI_ADDRLO,      //!< 0xCC004022
-    MI_ADDRHI,      //!< 0xCC004024
-    MI_REG_0x26,    //!< 0xCC004026
-    MI_REG_0x28,    //!< 0xCC004028
-    // . . .
-} MIHwReg;
-
-// INTMR - Interrupt Mask Register
-#define MI_INTMR_MEM0 (1 << 0)
-#define MI_INTMR_MEM1 (1 << 1)
-#define MI_INTMR_MEM2 (1 << 2)
-#define MI_INTMR_MEM3 (1 << 3)
-#define MI_INTMR_ADDR (1 << 4)
-
-// INTSR - Interrupt Cause Register
-#define MI_INTSR_MEM0 (1 << 0)
-#define MI_INTSR_MEM1 (1 << 1)
-#define MI_INTSR_MEM2 (1 << 2)
-#define MI_INTSR_MEM3 (1 << 3)
-#define MI_INTSR_ADDR (1 << 4)
-
-/**
- * DI hardware registers
- */
-volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
-typedef enum {
-    DI_DMA_ADDR = 5, // !< 0xCD006014
-    DI_CONFIG = 9,   // !< 0xCD006024
-} DIHwReg;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSHardware.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
-/* end "revolution/OS/OSInterrupt.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
-/* end "revolution/OS/OSIpc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
-/* end "revolution/OS/OSLink.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
-/* end "revolution/OS/OSMemory.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
-/* end "revolution/OS/OSMessage.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
-/* end "revolution/OS/OSMutex.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
-/* end "revolution/OS/OSNet.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
-/* end "revolution/OS/OSPlayRecord.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
-/* end "revolution/OS/OSPlayTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
-/* end "revolution/OS/OSReset.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
-/* end "revolution/OS/OSRtc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
-/* end "revolution/OS/OSSerial.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
-/* end "revolution/OS/OSStateFlags.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
-/* end "revolution/OS/OSStateTM.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
-/* end "revolution/OS/OSSync.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
-/* end "revolution/OS/OSTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
-/* end "revolution/OS/OSUtf.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
-/* end "revolution/OS/__ppc_eabi_init.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS.h" */
-
-namespace nw4r {
-namespace snd {
-
-class SoundHeap : public SoundMemoryAllocatable {
-public:
-    SoundHeap();
-    virtual ~SoundHeap(); // at 0x8
-
-    virtual void* Alloc(u32 size); // at 0xC
-
-    void* Alloc(u32 size, detail::FrameHeap::FreeCallback pCallback,
-                void* pCallbackArg);
-
-    bool Create(void* pBase, u32 size);
-    void Destroy();
-
-    void Clear();
-
-    int SaveState();
-    void LoadState(int id);
-
-    bool IsValid() {
-        return mFrameHeap.IsValid();
-    }
-
-    int GetCurrentLevel() const {
-        ut::detail::AutoLock<OSMutex> lock(mMutex);
-        return mFrameHeap.GetCurrentLevel();
-    }
-
-    u32 GetFreeSize() const {
-        ut::detail::AutoLock<OSMutex> lock(mMutex);
-        return mFrameHeap.GetFreeSize();
-    }
-
-private:
-    static void DisposeCallbackFunc(void* pBuffer, u32 size,
-                                    void* pCallbackArg);
-
-private:
-    mutable OSMutex mMutex;       // at 0x0
-    detail::FrameHeap mFrameHeap; // at 0x1C
-};
-
-} // namespace snd
-} // namespace nw4r
-
-#endif
-/* end "nw4r/snd/snd_SoundHeap.h" */
 
 namespace nw4r {
 namespace snd {
@@ -239726,25 +239599,34 @@ class BasicSound;
 
 namespace detail {
 
-class PlayerHeap : public SoundHeap {
+// US Xenoblade PlayerHeap is a compact heap (not stock SoundHeap subclass).
+// Layout: vt@0, mSound@4, mPlayer@8, buffer ptrs@0xC/0x10/0x14, node@0x18.
+class PlayerHeap {
 public:
-    PlayerHeap() : mSound(NULL), mPlayer(NULL) {}
-    virtual ~PlayerHeap() {} // at 0x8
+    PlayerHeap();
+    virtual ~PlayerHeap();
 
-    void SetSound(BasicSound* pSound) {
-        mSound = pSound;
-    }
+    bool Create(void* pBase, u32 size);
+    void* Alloc(u32 size);
+    void Clear();
+    u32 GetFreeSize() const;
+
+    void AttachSound(BasicSound* pSound);
+    void DetachSound(BasicSound* pSound);
 
     void SetSoundPlayer(SoundPlayer* pPlayer) {
         mPlayer = pPlayer;
     }
 
-public:
-    NW4R_UT_LINKLIST_NODE_DECL(); // at 0x2C
-
 private:
-    BasicSound* mSound;   // at 0x34
-    SoundPlayer* mPlayer; // at 0x38
+    BasicSound* mSound;   // at 0x4
+    SoundPlayer* mPlayer; // at 0x8
+    void* mStart;         // at 0xC
+    void* mUnk0x10;       // at 0x10
+    void* mEnd;           // at 0x14
+
+public:
+    NW4R_UT_LINKLIST_NODE_DECL(); // at 0x18
 };
 
 NW4R_UT_LINKLIST_TYPEDEF_DECL(PlayerHeap);
@@ -245074,23 +244956,38 @@ private:
 #endif
 /* end "nw4r/snd/snd_SoundHandle.h" */
 /* "libs/nw4r/include/nw4r/snd.h" line 51 "nw4r/snd/snd_SoundHeap.h" */
-/* end "nw4r/snd/snd_SoundHeap.h" */
-/* "libs/nw4r/include/nw4r/snd.h" line 52 "nw4r/snd/snd_SoundInstanceManager.h" */
-/* end "nw4r/snd/snd_SoundInstanceManager.h" */
-/* "libs/nw4r/include/nw4r/snd.h" line 53 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
-/* "libs/nw4r/include/nw4r/snd.h" line 54 "nw4r/snd/snd_SoundPlayer.h" */
-#ifndef NW4R_SND_SOUND_PLAYER_H
-#define NW4R_SND_SOUND_PLAYER_H
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 2 "nw4r/types_nw4r.h" */
+#ifndef NW4R_SND_SOUND_HEAP_H
+#define NW4R_SND_SOUND_HEAP_H
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 2 "nw4r/types_nw4r.h" */
 /* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 4 "nw4r/snd/snd_BasicSound.h" */
-/* end "nw4r/snd/snd_BasicSound.h" */
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 5 "nw4r/snd/snd_PlayerHeap.h" */
-/* end "nw4r/snd/snd_PlayerHeap.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 4 "nw4r/snd/snd_FrameHeap.h" */
+/* end "nw4r/snd/snd_FrameHeap.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 5 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+#ifndef NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
+#define NW4R_SND_SOUND_MEMORY_ALLOCATABLE_H
+/* "libs/nw4r/include/nw4r/snd/snd_SoundMemoryAllocatable.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 7 "revolution/OS.h" */
+namespace nw4r {
+namespace snd {
+
+class SoundMemoryAllocatable {
+public:
+    virtual ~SoundMemoryAllocatable() {} // at 0x8
+    virtual void* Alloc(u32 size) = 0;   // at 0xC
+};
+
+} // namespace snd
+} // namespace nw4r
+
+#endif
+/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 7 "nw4r/ut.h" */
+/* end "nw4r/ut.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundHeap.h" line 9 "revolution/OS.h" */
 /**
  * References: YAGCD, WiiBrew, Dolphin Emulator
  */
@@ -245451,7 +245348,72 @@ typedef enum {
 #endif
 #endif
 /* end "revolution/OS.h" */
-/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 8 "revolution/WPAD.h" */
+
+namespace nw4r {
+namespace snd {
+
+class SoundHeap : public SoundMemoryAllocatable {
+public:
+    SoundHeap();
+    virtual ~SoundHeap(); // at 0x8
+
+    virtual void* Alloc(u32 size); // at 0xC
+
+    void* Alloc(u32 size, detail::FrameHeap::FreeCallback pCallback,
+                void* pCallbackArg);
+
+    bool Create(void* pBase, u32 size);
+    void Destroy();
+
+    void Clear();
+
+    int SaveState();
+    void LoadState(int id);
+
+    bool IsValid() {
+        return mFrameHeap.IsValid();
+    }
+
+    int GetCurrentLevel() const {
+        ut::detail::AutoLock<OSMutex> lock(mMutex);
+        return mFrameHeap.GetCurrentLevel();
+    }
+
+    u32 GetFreeSize() const {
+        ut::detail::AutoLock<OSMutex> lock(mMutex);
+        return mFrameHeap.GetFreeSize();
+    }
+
+private:
+    static void DisposeCallbackFunc(void* pBuffer, u32 size,
+                                    void* pCallbackArg);
+
+private:
+    mutable OSMutex mMutex;       // at 0x0
+    detail::FrameHeap mFrameHeap; // at 0x1C
+};
+
+} // namespace snd
+} // namespace nw4r
+
+#endif
+/* end "nw4r/snd/snd_SoundHeap.h" */
+/* "libs/nw4r/include/nw4r/snd.h" line 52 "nw4r/snd/snd_SoundInstanceManager.h" */
+/* end "nw4r/snd/snd_SoundInstanceManager.h" */
+/* "libs/nw4r/include/nw4r/snd.h" line 53 "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+/* end "nw4r/snd/snd_SoundMemoryAllocatable.h" */
+/* "libs/nw4r/include/nw4r/snd.h" line 54 "nw4r/snd/snd_SoundPlayer.h" */
+#ifndef NW4R_SND_SOUND_PLAYER_H
+#define NW4R_SND_SOUND_PLAYER_H
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 4 "nw4r/snd/snd_BasicSound.h" */
+/* end "nw4r/snd/snd_BasicSound.h" */
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 5 "nw4r/snd/snd_PlayerHeap.h" */
+/* end "nw4r/snd/snd_PlayerHeap.h" */
+
+/* "libs/nw4r/include/nw4r/snd/snd_SoundPlayer.h" line 7 "revolution/WPAD.h" */
 /**
  * References: WiiBrew
  */
@@ -245500,10 +245462,14 @@ public:
 
     void SetVolume(f32 volume);
 
-    int detail_GetOutputLine() const;
-    bool detail_IsEnabledOutputLine() const;
+    int detail_GetOutputLine() const {
+        return mOutputLineFlag;
+    }
+    bool detail_IsEnabledOutputLine() const {
+        return mOutputLineFlagEnable;
+    }
 
-    f32 detail_GetRemoteOutVolume(int idx) const;
+    f32 GetRemoteOutVolume(int idx) const;
 
     void detail_InsertSoundList(detail::BasicSound* pSound);
     void detail_RemoveSoundList(detail::BasicSound* pSound);
@@ -245511,7 +245477,14 @@ public:
     void detail_InsertPriorityList(detail::BasicSound* pSound);
     void detail_RemovePriorityList(detail::BasicSound* pSound);
 
+    void detail_SortPriorityList(detail::BasicSound* pSound);
     void detail_SortPriorityList();
+
+    bool detail_AppendSound(detail::BasicSound* pSound);
+    void detail_RemoveSound(detail::BasicSound* pSound);
+    bool detail_CanPlaySound(int priority);
+
+    void SetFxSend(AuxBus bus, f32 send);
 
     detail::SeqSound* detail_AllocSeqSound(
         int priority, int startPriority,
@@ -245572,17 +245545,20 @@ private:
     detail::BasicSoundPlayerPrioList mPriorityList; // at 0xC
     detail::PlayerHeapList mHeapList;               // at 0x18
 
-    u16 mPlayableCount; // at 0x24
-    u16 mPlayableLimit; // at 0x26
+    u32 mPlayableCount; // at 0x24
+    u32 mPlayableLimit; // at 0x28
 
-    f32 mVolume;                                // at 0x28
-    bool mOutputLineFlagEnable;                 // at 0x2C
-    bool mUsePlayerHeap;                        // at 0x2D
-    int mOutputLineFlag;                        // at 0x30
-    f32 mMainOutVolume;                         // at 0x34
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x38
-
-    mutable OSMutex mMutex; // at 0x48
+    f32 mVolume;                                // at 0x2C
+    f32 mUnk0x30;                               // at 0x30
+    int mOutputLineFlag;                        // at 0x34
+    f32 mMainOutVolume;                         // at 0x38
+    bool mOutputLineFlagEnable;                 // at 0x3C
+    bool mUsePlayerHeap;                        // at 0x3D
+    u8 mPad0x3E[2];                             // at 0x3E
+    f32 mUnk0x40;                               // at 0x40
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x44
+    f32 mUnk0x54;                               // at 0x54
+    f32 mFxSend[AUX_BUS_NUM];                   // at 0x58
 };
 
 } // namespace snd
@@ -247120,7 +247096,7 @@ s16 DecodeDspAdpcm(AXPBADPCM* pAdpcm, u8 bits);
 /* "libs/nw4r/src/snd/snd_AxfxImpl.cpp" line 1 "nw4r/ut.h" */
 /* end "nw4r/ut.h" */
 
-// Retail SDA names (US) — Free/Alloc/Hook must use these for reloc match.
+// Retail SDA names (US) - Free/Alloc/Hook must use these for reloc match.
 extern "C" nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8;
 extern "C" u32 lbl_eu_806654CC;
 

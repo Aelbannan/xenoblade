@@ -2,6 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802ab338
@@ -21,5 +22,6 @@ extern "C" void func_802A8D60() {}
 // LLM-HARNESS-END: us-802ab494
 
 // LLM-HARNESS-BEGIN: us-802ab514
-extern "C" int func_802A8DE0(void* self) { return 1; }
+// Virtual override of blank1(): returns 1 for SUDDEN thread (minimal buffer flag).
+extern "C" int func_802A8DE0(CVS_THREAD_SUDDEN* self) { return 1; }
 // LLM-HARNESS-END: us-802ab514

@@ -247640,5 +247640,5 @@ void BasicSound::SetId(u32 id) {
 } // namespace snd
 } // namespace nw4r
 // LLM-HARNESS-BEGIN: us-80415e64
-extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv() { return lbl_eu_806654D0@sda21; }
+extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv() { return 0; }
 // LLM-HARNESS-END: us-80415e64

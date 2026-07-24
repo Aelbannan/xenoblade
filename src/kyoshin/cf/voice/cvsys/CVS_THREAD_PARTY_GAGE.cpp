@@ -1,7 +1,7 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// CVS_THREAD_PARTY_GAGE - voice thread for party gauge change events.
+// Virtual method overrides and thread management for party gauge voice processing.
 
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802aa8a8
@@ -25,7 +25,11 @@ extern "C" void func_802A85A8() {}
 // LLM-HARNESS-END: us-802aacdc
 
 // LLM-HARNESS-BEGIN: us-802aad54
-extern "C" int func_802A8620(void* self) { return 140; }
+// Virtual method override: returns the buffer size for this thread type.
+// Matches CVS_THREAD::blank2 slot in vtable; PARTY_GAGE subclass returns 0x8C (140).
+extern "C" int func_802A8620(CVS_THREAD_PARTY_GAGE* self) {
+    return CVS_THREAD_PARTY_GAGE::BUFFER_SIZE;
+}
 // LLM-HARNESS-END: us-802aad54
 
 // LLM-HARNESS-BEGIN: us-802aad5c

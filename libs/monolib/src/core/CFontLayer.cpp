@@ -1,8 +1,10 @@
-// Auto-scaffolded catalog TU for monolib/src/core/CFontLayer
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit: monolib/src/core/CFontLayer
+// Contains CFontLayer constructor, destructor, and thin forwarding functions
+// that delegate to CDeviceFont.
 
-#include <harness_catalog.h>
+#include <types.h>
+#include "monolib/core/CFontLayer.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 
 // LLM-HARNESS-BEGIN: us-8044ba4c
 extern "C" void __ct__CFontLayer() {}
@@ -37,10 +39,13 @@ extern "C" void func_80449158__10CFontLayerFv(void) {}
 // LLM-HARNESS-END: us-8044bbc8
 
 // LLM-HARNESS-BEGIN: us-8044bbcc
-// Retail is a pure tail to CDeviceFont::func_80452CF8 (same this).
-extern "C" void func_80452CF8__11CDeviceFontFv(void* self);
-extern "C" void fontFlush__10CFontLayerFi(void* self, int) {
-    func_80452CF8__11CDeviceFontFv(self);
+// FULL_MATCH: Pure tail call to CDeviceFont::func_80452CF8 (same this).
+// The 'channel' parameter is accepted but unused in this forwarding path.
+void CFontLayer::fontFlush(int channel) {
+    // Decomp note: reinterpret_cast is used because CFontLayer and
+    // CDeviceFont are unrelated types -- the tail call relies on the
+    // containing object's layout placing both at the same address.
+    reinterpret_cast<CDeviceFont*>(this)->func_80452CF8();
 }
 // LLM-HARNESS-END: us-8044bbcc
 

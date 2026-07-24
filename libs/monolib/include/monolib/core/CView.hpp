@@ -6,13 +6,7 @@
 #include "monolib/util.hpp"
 #include "monolib/core/CViewFrame.hpp"
 #include "monolib/core/CViewRectData.hpp"
-
-//size: 0x4
-class CFontLayer {
-public:
-    CFontLayer();
-    virtual ~CFontLayer();
-};
+#include "monolib/core/CFontLayer.hpp"
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {

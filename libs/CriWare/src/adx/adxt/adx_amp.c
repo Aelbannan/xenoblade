@@ -13,9 +13,9 @@ void ADXAMP_Start() {}
 // LLM-HARNESS-END: us-80388cd8
 
 // LLM-HARNESS-BEGIN: us-80388e94
-void ADXAMP_Stop() {}
+void ADXAMP_Stop(void) {}
 // LLM-HARNESS-END: us-80388e94
 
 // LLM-HARNESS-BEGIN: us-80388ea0
-int ADXAMP_SetSfreq() { return 0; }
+void ADXAMP_SetSfreq(void* self, u32 val) { *(u32*)((u8*)self + 0x20) = val; }
 // LLM-HARNESS-END: us-80388ea0

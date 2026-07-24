@@ -9,15 +9,15 @@ extern "C" void CalcWorld__Q24nw4r3g3dFPQ34nw4r4math5MTX34PUlPCUcPCQ34nw4r4math5
 // LLM-HARNESS-END: us-803f0a40
 
 // LLM-HARNESS-BEGIN: us-803f1004
-extern "C" void ExecCallbackA__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d12ChrAnmResultQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld() {}
+extern "C" void ExecCallbackA__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d12ChrAnmResultQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld(void) {}
 // LLM-HARNESS-END: us-803f1004
 
 // LLM-HARNESS-BEGIN: us-803f1008
-extern "C" void ExecCallbackB__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d13WorldMtxManipQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld() {}
+extern "C" void ExecCallbackB__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d13WorldMtxManipQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld(void) {}
 // LLM-HARNESS-END: us-803f1008
 
 // LLM-HARNESS-BEGIN: us-803f100c
-extern "C" void ExecCallbackC__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r4math5MTX34Q34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld() {}
+extern "C" void ExecCallbackC__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r4math5MTX34Q34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld(void) {}
 // LLM-HARNESS-END: us-803f100c
 
 // LLM-HARNESS-BEGIN: us-803f1010

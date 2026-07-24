@@ -1184,23 +1184,58 @@ struct OcMsgRingHdr {
 };
 
 // LLM-HARNESS-BEGIN: us-8003a91c
-extern "C" void func_8003A53C() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a91c
 
 // LLM-HARNESS-BEGIN: us-8003a968
-extern "C" void func_8003A588() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a968
 
 // LLM-HARNESS-BEGIN: us-8003a9a0
-extern "C" void func_8003A5C0() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a9a0
 
 // LLM-HARNESS-BEGIN: us-8003a9d8
-extern "C" void func_8003A5F8() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a9d8
 
 // LLM-HARNESS-BEGIN: us-8003aa10
-extern "C" void func_8003A630() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003aa10
 
 // LLM-HARNESS-BEGIN: us-8003aa48
@@ -1215,11 +1250,25 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // LLM-HARNESS-END: us-8003aa48
 
 // LLM-HARNESS-BEGIN: us-8003aa6c
-extern "C" void func_8003A68C() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003aa6c
 
 // LLM-HARNESS-BEGIN: us-8003aab4
-extern "C" void func_8003A6D4() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003aab4
 
 // LLM-HARNESS-BEGIN: us-8003aaf4
@@ -1265,15 +1314,36 @@ extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
 // LLM-HARNESS-END: us-8003ab44
 
 // LLM-HARNESS-BEGIN: us-8003ab94
-extern "C" void func_8003A7B4() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003ab94
 
 // LLM-HARNESS-BEGIN: us-8003abe0
-extern "C" void func_8003A800() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003abe0
 
 // LLM-HARNESS-BEGIN: us-8003ac18
-extern "C" void func_8003A838() {}
+extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+    list->count = 0;
+    list->wrap = 0;
+    list->writeIdx = 0;
+    list->readIdx = 0;
+    list->capacity = 9;
+    return 0;
+}
 // LLM-HARNESS-END: us-8003ac18
 
 // LLM-HARNESS-BEGIN: us-8003ac50

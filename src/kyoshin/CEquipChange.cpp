@@ -5,31 +5,31 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-8020377c
-extern "C" void __ct__CEquipChange() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-8020377c
 
 // LLM-HARNESS-BEGIN: us-80203cec
-extern "C" void __dt__12CEquipChangeFv() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-80203cec
 
 // LLM-HARNESS-BEGIN: us-80203d88
-extern "C" void func_80202090() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-80203d88
 
 // LLM-HARNESS-BEGIN: us-80203e08
-extern "C" void func_80202110() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-80203e08
 
 // LLM-HARNESS-BEGIN: us-80203edc
-extern "C" void func_802021E4() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-80203edc
 
 // LLM-HARNESS-BEGIN: us-80203f84
-extern "C" void func_8020228C() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-80203f84
 
 // LLM-HARNESS-BEGIN: us-8020405c
-extern "C" void func_80202364() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-8020405c
 
 // LLM-HARNESS-BEGIN: us-802040b8
@@ -42,11 +42,11 @@ extern "C" void func_802023C8(void* self) { ((void(*)(void*))func_802865A0)((cha
 // LLM-HARNESS-END: us-802040c0
 
 // LLM-HARNESS-BEGIN: us-802040c8
-extern "C" void func_802023D0() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-802040c8
 
 // LLM-HARNESS-BEGIN: us-8020411c
-extern "C" void func_80202424() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-8020411c
 
 extern "C" void func_80286650(void* self);
@@ -55,7 +55,7 @@ extern "C" void func_8020247C(void* self) { ((void(*)(void*))func_80286650)((cha
 // LLM-HARNESS-END: us-80204174
 
 // LLM-HARNESS-BEGIN: us-8020417c
-extern "C" void func_80202484() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-8020417c
 
 // LLM-HARNESS-BEGIN: us-802041c4

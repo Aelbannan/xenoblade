@@ -1322,8 +1322,8 @@ public:
     static void func_8003AA8C(u32 val);
     static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
 
 #ifdef __cplusplus
@@ -1339,11 +1339,11 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801d56c0
-extern "C" void func_801D3C74() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d56c0
 
 // LLM-HARNESS-BEGIN: us-801d59e4
-extern "C" void __ct__CItemBoxInfo() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d59e4
 
 // LLM-HARNESS-BEGIN: us-801d5acc
@@ -1351,23 +1351,23 @@ extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5acc
 
 // LLM-HARNESS-BEGIN: us-801d5ad0
-extern "C" void __dt__12CItemBoxInfoFv() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5ad0
 
 // LLM-HARNESS-BEGIN: us-801d5b30
-extern "C" void func_801D4054() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5b30
 
 // LLM-HARNESS-BEGIN: us-801d5ba0
-extern "C" void func_801D40C4() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5ba0
 
 // LLM-HARNESS-BEGIN: us-801d5c30
-extern "C" void func_801D4154() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5c30
 
 // LLM-HARNESS-BEGIN: us-801d5c50
-extern "C" void func_801D4174() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5c50
 
 // LLM-HARNESS-BEGIN: us-801d5cf0
@@ -1377,7 +1377,7 @@ extern "C" u8 func_801D4214(void* self) {
 // LLM-HARNESS-END: us-801d5cf0
 
 // LLM-HARNESS-BEGIN: us-801d5cf8
-extern "C" void func_801D421C() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5cf8
 
 // LLM-HARNESS-BEGIN: us-801d5d1c
@@ -1385,11 +1385,11 @@ extern "C" void func_801D4240() {}
 // LLM-HARNESS-END: us-801d5d1c
 
 // LLM-HARNESS-BEGIN: us-801d5d3c
-extern "C" void func_801D4260() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d5d3c
 
 // LLM-HARNESS-BEGIN: us-801d62b0
-extern "C" void func_801D47D4() {}
+extern "C" void func_801D3FF0() {}
 // LLM-HARNESS-END: us-801d62b0
 
 // LLM-HARNESS-BEGIN: us-801d6508

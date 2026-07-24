@@ -75,7 +75,8 @@ bool CViewRoot::isCurrent(const CView* view) {
 }
 
 // Walk view's child tree looking for `current`. Retail unrolls three levels
-// then recurses (same convertToView / mChildren walk as setCurrent).
+// then recurses. Mid-level gates are lbl/current only (bne + found=0 + b);
+// no child/grand null checks before descending.
 bool CViewRoot::isCurrentChild(const CView* view, const CView* current) {
     _reslist_node<CWorkThread*>* node;
     _reslist_node<CWorkThread*>* gnode;
@@ -99,38 +100,55 @@ bool CViewRoot::isCurrentChild(const CView* view, const CView* current) {
             return true;
         }
 
-        found = 0;
-        if (lbl_eu_806655D0 != nullptr && current != nullptr && child != nullptr) {
-            gnode = child->mChildren.mStartNodePtr->mNext;
-            while (gnode != child->mChildren.mStartNodePtr) {
-                grand = CView::convertToView(gnode->mItem);
-                if (current == grand) {
-                    found = 1;
-                    break;
-                }
-                found = 0;
-                if (lbl_eu_806655D0 != nullptr && current != nullptr && grand != nullptr) {
-                    hnode = grand->mChildren.mStartNodePtr->mNext;
-                    while (hnode != grand->mChildren.mStartNodePtr) {
-                        great = CView::convertToView(hnode->mItem);
-                        if (current == great) {
-                            found = 1;
-                            break;
-                        }
-                        if (isCurrentChild(great, current)) {
-                            found = 1;
-                            break;
-                        }
-                        hnode = hnode->mNext;
-                    }
-                }
-                if (found != 0) {
-                    found = 1;
-                    break;
-                }
-                gnode = gnode->mNext;
-            }
+        if (lbl_eu_806655D0 == nullptr) {
+            found = 0;
+            goto after_l1;
         }
+        if (current == nullptr) {
+            found = 0;
+            goto after_l1;
+        }
+
+        gnode = child->mChildren.mStartNodePtr->mNext;
+        while (gnode != child->mChildren.mStartNodePtr) {
+            grand = CView::convertToView(gnode->mItem);
+            if (current == grand) {
+                found = 1;
+                goto after_l1;
+            }
+
+            if (lbl_eu_806655D0 == nullptr) {
+                found = 0;
+                goto after_l2;
+            }
+            if (current == nullptr) {
+                found = 0;
+                goto after_l2;
+            }
+
+            hnode = grand->mChildren.mStartNodePtr->mNext;
+            while (hnode != grand->mChildren.mStartNodePtr) {
+                great = CView::convertToView(hnode->mItem);
+                if (current == great) {
+                    found = 1;
+                    goto after_l2;
+                }
+                if (isCurrentChild(great, current)) {
+                    found = 1;
+                    goto after_l2;
+                }
+                hnode = hnode->mNext;
+            }
+            found = 0;
+        after_l2:
+            if (found != 0) {
+                found = 1;
+                goto after_l1;
+            }
+            gnode = gnode->mNext;
+        }
+        found = 0;
+    after_l1:
         if (found != 0) {
             return true;
         }
@@ -471,12 +489,12 @@ CView* CViewRoot::getFullScreenView() {
             return childView;
         }
 
-        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &childView->unk1DC);
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &childView->mFrame);
 
-        posSumY = childView->unk1DC.unk54 + frameOffset.mPos.x;
-        posSumX = childView->unk1DC.unk56 + frameOffset.mPos.y;
-        viewWidth = childView->unk1C8.unk0;
-        viewHeight = childView->unk1C8.unk2;
+        posSumY = childView->mFrame.mContentX + frameOffset.mPos.x;
+        posSumX = childView->mFrame.mContentY + frameOffset.mPos.y;
+        viewWidth = childView->mRectData.mViewSize.x;
+        viewHeight = childView->mRectData.mViewSize.y;
 
         if ((childView->unk278 & 4) != 0) {
             goto getFullScreenView_next;

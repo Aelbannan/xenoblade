@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8048a0dc
-extern "C" void __ct__CScnItemModelNw4r() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048a0dc
 
 // LLM-HARNESS-BEGIN: us-8048b1ec
@@ -13,11 +13,11 @@ extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b1ec
 
 // LLM-HARNESS-BEGIN: us-8048b1f4
-extern "C" void __dt__804871B0() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b1f4
 
 // LLM-HARNESS-BEGIN: us-8048b28c
-extern "C" void __dt__17CScnItemModelNw4rFv() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b28c
 
 // LLM-HARNESS-BEGIN: us-8048b3b0
@@ -25,15 +25,15 @@ extern "C" u32 func_8048736C(void* self) { return *(u32*)((u8*)self + 0x14c0); }
 // LLM-HARNESS-END: us-8048b3b0
 
 // LLM-HARNESS-BEGIN: us-8048b3b8
-extern "C" void func_80487374() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b3b8
 
 // LLM-HARNESS-BEGIN: us-8048b430
-extern "C" void func_804873EC() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b430
 
 // LLM-HARNESS-BEGIN: us-8048b5fc
-extern "C" void func_804875B8() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b5fc
 
 // LLM-HARNESS-BEGIN: us-8048b704
@@ -51,19 +51,19 @@ extern "C" void func_804876E4(void* self) { ((void(*)(void*))func_804EB7F8)((cha
 // LLM-HARNESS-END: us-8048b728
 
 // LLM-HARNESS-BEGIN: us-8048b730
-extern "C" void func_804876EC() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b730
 
 // LLM-HARNESS-BEGIN: us-8048b7b0
-extern "C" void func_8048776C() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b7b0
 
 // LLM-HARNESS-BEGIN: us-8048b85c
-extern "C" void func_80487818() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048b85c
 
 // LLM-HARNESS-BEGIN: us-8048bb5c
-extern "C" void func_80487B18() {}
+extern "C" u32 func_804871A8(void* self) { return *(u32*)((u8*)self + 0x4ac); }
 // LLM-HARNESS-END: us-8048bb5c
 
 // LLM-HARNESS-BEGIN: us-8048bbc8

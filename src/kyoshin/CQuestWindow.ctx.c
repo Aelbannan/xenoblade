@@ -1339,39 +1339,64 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80122c40
-extern "C" void __ct__CQuestWindow() {}
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80122c40
 
 // LLM-HARNESS-BEGIN: us-80122e38
-extern "C" void __dt__9IUIWindowFv() {}
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80122e38
 
 // LLM-HARNESS-BEGIN: us-80122e8c
-extern "C" void __dt__12CQuestWindowFv(void* self) {}
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80122e8c
 
 // LLM-HARNESS-BEGIN: us-80122f24
-extern "C" bool func_80122448() { return false; }
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80122f24
 
 // LLM-HARNESS-BEGIN: us-80122f2c
-extern "C" void func_80122450() {}
+extern "C" int lbl_eu_80663D1C;
+
+extern "C" int func_80042864() {
+    return lbl_eu_80663D1C != 0;
+}
 // LLM-HARNESS-END: us-80122f2c
 
 // LLM-HARNESS-BEGIN: us-80122f3c
-extern "C" void func_80122460() {}
+extern "C" void func_80122460() { lbl_eu_80663F24 = 0; }
 // LLM-HARNESS-END: us-80122f3c
 
 // LLM-HARNESS-BEGIN: us-80122f48
-extern "C" void func_8012246C() {}
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80122f48
 
 // LLM-HARNESS-BEGIN: us-80122f6c
-extern "C" void Init__12CQuestWindowFv() {}
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80122f6c
 
 // LLM-HARNESS-BEGIN: us-80123000
-extern "C" void Term__12CQuestWindowFv() {}
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80123000
 
 // LLM-HARNESS-BEGIN: us-80123130
@@ -1460,7 +1485,10 @@ public:
 
 class IUIWindow;
 // LLM-HARNESS-BEGIN: us-80122de8
-template<> CTTask<IUIWindow>::~CTTask() {}
+extern "C" u32 func_80122448(void) {
+    extern u32 lbl_eu_80663FD0;
+    return lbl_eu_80663FD0;
+}
 // LLM-HARNESS-END: us-80122de8
 // LLM-HARNESS-BEGIN: us-80125018
 template<> void CTTask<IUIWindow>::Move() {}

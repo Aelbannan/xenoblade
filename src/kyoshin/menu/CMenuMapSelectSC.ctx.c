@@ -1371,7 +1371,11 @@ extern "C" void func_802514D4() {}
 // LLM-HARNESS-END: us-8025370c
 
 // LLM-HARNESS-BEGIN: us-80253788
-extern "C" void func_80251550() {}
+extern "C" int lbl_eu_80663D1C;
+
+extern "C" int func_80042864() {
+    return lbl_eu_80663D1C != 0;
+}
 // LLM-HARNESS-END: us-80253788
 
 // LLM-HARNESS-BEGIN: us-80253798

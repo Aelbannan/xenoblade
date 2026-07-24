@@ -9,7 +9,7 @@ void SFTST_Create() {}
 // LLM-HARNESS-END: us-803d1a94
 
 // LLM-HARNESS-BEGIN: us-803d1c6c
-int SFTST_SetTstFlg() { return 0; }
+void SFTST_SetTstFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 // LLM-HARNESS-END: us-803d1c6c
 
 // LLM-HARNESS-BEGIN: us-803d1c74
@@ -33,11 +33,11 @@ void SFTST_SetMovaveRange() {}
 // LLM-HARNESS-END: us-803d1d04
 
 // LLM-HARNESS-BEGIN: us-803d1d14
-int SFTST_Pause() { return 0; }
+void SFTST_Pause(void* self, u32 val) { *(u32*)((u8*)self + 0x4) = val; }
 // LLM-HARNESS-END: us-803d1d14
 
 // LLM-HARNESS-BEGIN: us-803d1d1c
-int SFTST_SetAdjFlg() { return 0; }
+void SFTST_SetAdjFlg(void* self, u32 val) { *(u32*)((u8*)self + 0xc) = val; }
 // LLM-HARNESS-END: us-803d1d1c
 
 // LLM-HARNESS-BEGIN: us-803d1d24
@@ -45,7 +45,7 @@ void SFTST_GoNextFrame() {}
 // LLM-HARNESS-END: us-803d1d24
 
 // LLM-HARNESS-BEGIN: us-803d1da4
-void SFTST_SetSpeed() {}
+void SFTST_SetSpeed(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-803d1da4
 
 // LLM-HARNESS-BEGIN: us-803d1db0

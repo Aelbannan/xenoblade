@@ -5,9 +5,9 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8039c310
-void GCRNA_LockCs() {}
+void GCRNA_LockCs(void) {}
 // LLM-HARNESS-END: us-8039c310
 
 // LLM-HARNESS-BEGIN: us-8039c314
-void GCRNA_UnlockCs() {}
+void GCRNA_UnlockCs(void) {}
 // LLM-HARNESS-END: us-8039c314

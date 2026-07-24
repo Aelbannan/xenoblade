@@ -13,7 +13,10 @@ extern "C" void __dt__14CDeviceFileDvdFv() {}
 // LLM-HARNESS-END: us-804538c8
 
 // LLM-HARNESS-BEGIN: us-80453928
-extern "C" bool getInstance__14CDeviceFileDvdFv() { return false; }
+extern "C" u32 getInstance__14CDeviceFileDvdFv(void) {
+    extern u32 lbl_eu_80665670;
+    return lbl_eu_80665670;
+}
 // LLM-HARNESS-END: us-80453928
 
 // LLM-HARNESS-BEGIN: us-80453930

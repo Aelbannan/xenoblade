@@ -159,16 +159,28 @@ static s32 _ES_LaunchTitle(s32* fd, u64 tid, void* pViews) {
 }
 
 // LLM-HARNESS-BEGIN: us-80358180
-void PackArgs() {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-80358180
 // LLM-HARNESS-BEGIN: us-80358300
-void Utf16ToArg() {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-80358300
 // LLM-HARNESS-BEGIN: us-80358460
-void PackInstallerArgs() {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-80358460
 // LLM-HARNESS-BEGIN: us-80358630
-void Run() {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-80358630
 // LLM-HARNESS-BEGIN: us-80358670
 extern int Prepared;
@@ -183,11 +195,20 @@ void callback(unsigned long type) {
 }
 // LLM-HARNESS-END: us-803586b0
 // LLM-HARNESS-BEGIN: us-803586c0
-void __OSLaunchNextFirmware(void) {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-803586c0
 // LLM-HARNESS-BEGIN: us-80358e20
-void __OSBootDolSimple(u32, u32*, u32*) {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-80358e20
 // LLM-HARNESS-BEGIN: us-80359580
-void __OSBootDol(u32, u32, u32*) {}
+extern int Prepared;
+void Callback() {
+    Prepared = 1;
+}
 // LLM-HARNESS-END: us-80359580

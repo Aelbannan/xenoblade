@@ -1339,7 +1339,7 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800acef8
-extern "C" void __ct__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800acef8
 
 // LLM-HARNESS-BEGIN: us-800ad028
@@ -1347,7 +1347,7 @@ extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad028
 
 // LLM-HARNESS-BEGIN: us-800ad02c
-extern "C" void __dt__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad02c
 
 // LLM-HARNESS-BEGIN: us-800ad094
@@ -1355,19 +1355,19 @@ extern "C" void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad094
 
 // LLM-HARNESS-BEGIN: us-800ad098
-extern "C" void func_800AC7CC__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad098
 
 // LLM-HARNESS-BEGIN: us-800ad0c8
-extern "C" void func_800AC7FC__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad0c8
 
 // LLM-HARNESS-BEGIN: us-800ad0dc
-extern "C" void func_800AC810__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad0dc
 
 // LLM-HARNESS-BEGIN: us-800ad138
-extern "C" void func_800AC86C__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad138
 
 // LLM-HARNESS-BEGIN: us-800ad258
@@ -1375,19 +1375,19 @@ extern "C" void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv() {}
 // LLM-HARNESS-END: us-800ad258
 
 // LLM-HARNESS-BEGIN: us-800ad25c
-extern "C" void func_800AC990__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad25c
 
 // LLM-HARNESS-BEGIN: us-800ad324
-extern "C" void func_800ACA58__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad324
 
 // LLM-HARNESS-BEGIN: us-800ad3b4
-extern "C" void func_800ACAE8__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad3b4
 
 // LLM-HARNESS-BEGIN: us-800ad3d4
-extern "C" void func_800ACB08__Q22cf11CfObjectEffFv() {}
+extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ad3d4
 
 // LLM-HARNESS-BEGIN: us-800ad470
@@ -1503,7 +1503,7 @@ extern "C" void func_800AD3A4__Q22cf11CfObjectEffFv() {}
 // LLM-HARNESS-END: us-800adc70
 
 // LLM-HARNESS-BEGIN: us-800add70
-extern "C" void func_800AD4A4__Q22cf11CfObjectEffFv() {}
+extern "C" u32 func_800AD4A4__Q22cf11CfObjectEffFv(u32 val) { return (val >> 16) & 0xFF; }
 // LLM-HARNESS-END: us-800add70
 
 // LLM-HARNESS-BEGIN: us-800add7c

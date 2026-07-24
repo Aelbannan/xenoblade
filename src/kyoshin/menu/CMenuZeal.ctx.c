@@ -1367,7 +1367,10 @@ extern "C" void func_8017FC88() {}
 // LLM-HARNESS-END: us-80181084
 
 // LLM-HARNESS-BEGIN: us-80181140
-extern "C" bool func_8017FD44() { return false; }
+extern "C" u32 func_8017FD44(void) {
+    extern u32 lbl_eu_806642A0;
+    return lbl_eu_806642A0;
+}
 // LLM-HARNESS-END: us-80181140
 
 // LLM-HARNESS-BEGIN: us-80181148

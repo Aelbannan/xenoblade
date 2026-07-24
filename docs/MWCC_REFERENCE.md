@@ -341,12 +341,18 @@ High-level source should use `mVtbl->mSlots[N]` (or equivalent `this+0x8` reload
   0x4AC), finds tags 0xB/0xC with `for (n=size; n!=0; n--)` mtctr/bdnz, dual
   slot recompute for stb then stw, then `CE68(this+4, tag)`. Peak ~88%; CSE of
   `(this+4)` into saved r31 is the +4B over retail (unit split still PASS).
-  `CE68`: same countdown for-loop → mtctr/bdnz + bctr vtbl[3] (~86%, size
-  140/144). SMT on both rings hits loop-iteration bounds quickly. `isCurrent`
-  is FULL+cert (`mCurrentView` compare). `isCurrentChild` ~86% (3-level unroll
-  + recurse via `convertToView`/`mChildren`). `hasCurrent` ~89% (size 104/96).
-  Inlining `42DA8` without `poolPairAt` regresses ~94%→~72%; keep the helper.
-  Ring EQUIVALENT needs B298 accepted+certified first.
+  `CE68` / `CEF8`: ascending `for (i = 0; i < mSize; i++)` (same as C1FC ring
+  walk) → `mtctr` + `cmplwi`/`ble` (~88% / ~94%). Countdown `n != 0` stayed on
+  `cmpwi`/`beq`. Residual CE68: retail early `mr r9,r3` (decomp late-copies at
+  dispatch before `lwz r3,field7`) and match `bne+8; b` vs `beq` (size 140/144).
+  `saved=self` + dispatch clobber does not force the early `mr` under `-O4,s`
+  (CSE until field7). SMT still hits loop-iteration bounds. `isCurrent` and
+  `isCurrentChild` are FULL+cert — mid-level gates are lbl/current only with
+  `found=0` on the fail path (`bne` + `li r0,0` + `b`), **no** child/grand null
+  checks before descending; recursive self-cert bootstraps via opaque EABI on
+  the self edge. `hasCurrent` ~89% (size 104/96). Inlining `42DA8` without
+  `poolPairAt` regresses ~94%→~72%; keep the helper. Ring EQUIVALENT needs CE68
+  then B298 accepted+certified.
 
 **CViewRoot ring helpers:** `func_80442B54`/`42C68`/`42DA8` push/pop three
   `{u32,u32}` rings in `mPool0/1/2` trailer (`mStartNodePtr`=base, `mList`=index,

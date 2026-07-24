@@ -5,5 +5,5 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803bdf50
-void MEM_Copy() {}
+void MEM_Copy(void) {}
 // LLM-HARNESS-END: us-803bdf50

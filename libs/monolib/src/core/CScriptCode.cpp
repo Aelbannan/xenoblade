@@ -9,7 +9,10 @@ extern "C" void __dt__11CScriptCodeFv() {}
 // LLM-HARNESS-END: us-8043ca78
 
 // LLM-HARNESS-BEGIN: us-8043cb6c
-extern "C" bool getInstance__11CScriptCodeFv() { return false; }
+extern "C" u32 getInstance__11CScriptCodeFv(void) {
+    extern u32 lbl_eu_806655B0;
+    return lbl_eu_806655B0;
+}
 // LLM-HARNESS-END: us-8043cb6c
 
 // LLM-HARNESS-BEGIN: us-8043cb74

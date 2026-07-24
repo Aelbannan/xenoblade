@@ -17,7 +17,7 @@ void bta_dm_disable_timer_cback() {}
 // LLM-HARNESS-END: us-802e18d4
 
 // LLM-HARNESS-BEGIN: us-802e1990
-int bta_dm_set_dev_name() { return 0; }
+void bta_dm_set_dev_name(void* self) { ((void(*)(void*))BTM_SetLocalDeviceName)((char*)self + 0x8); }
 // LLM-HARNESS-END: us-802e1990
 
 // LLM-HARNESS-BEGIN: us-802e1998
@@ -141,7 +141,7 @@ void bta_dm_disc_remname_cback() {}
 // LLM-HARNESS-END: us-802e2b90
 
 // LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name() {}
+void bta_dm_cancel_rmt_name(void) {}
 // LLM-HARNESS-END: us-802e2c18
 
 // LLM-HARNESS-BEGIN: us-802e2c1c
@@ -157,7 +157,7 @@ void bta_dm_pin_cback() {}
 // LLM-HARNESS-END: us-802e2da4
 
 // LLM-HARNESS-BEGIN: us-802e2ed4
-int bta_dm_link_key_request_cback() { return 0; }
+int bta_dm_link_key_request_cback(void) { return 0xb; }
 // LLM-HARNESS-END: us-802e2ed4
 
 // LLM-HARNESS-BEGIN: us-802e2edc
@@ -221,7 +221,7 @@ void bta_dm_immediate_disable() {}
 // LLM-HARNESS-END: us-802e39e0
 
 // LLM-HARNESS-BEGIN: us-802e39fc
-void bta_dm_reset_complete() {}
+void bta_dm_reset_complete(void) {}
 // LLM-HARNESS-END: us-802e39fc
 
 // LLM-HARNESS-BEGIN: us-802e3a00

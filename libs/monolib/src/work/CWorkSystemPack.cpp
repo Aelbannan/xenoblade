@@ -49,11 +49,17 @@ extern "C" void func_804DDDF4__15CWorkSystemPackFPCcPvPUl() {}
 // LLM-HARNESS-END: us-804e2104
 
 // LLM-HARNESS-BEGIN: us-804e213c
-extern "C" bool SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc() { return false; }
+extern "C" void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(u32 val) {
+    extern u32 lbl_eu_80665A14;
+    lbl_eu_80665A14 = val;
+}
 // LLM-HARNESS-END: us-804e213c
 
 // LLM-HARNESS-BEGIN: us-804e2144
-extern "C" bool SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc() { return false; }
+extern "C" void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(u32 val) {
+    extern u32 lbl_eu_80665A18;
+    lbl_eu_80665A18 = val;
+}
 // LLM-HARNESS-END: us-804e2144
 
 // LLM-HARNESS-BEGIN: us-804e214c

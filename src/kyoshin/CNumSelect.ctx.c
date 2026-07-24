@@ -1339,27 +1339,27 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801ec9bc
-extern "C" void __ct__CNumSelect() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ec9bc
 
 // LLM-HARNESS-BEGIN: us-801eca34
-extern "C" void __dt__10CNumSelectFv() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801eca34
 
 // LLM-HARNESS-BEGIN: us-801eca88
-extern "C" void func_801EAE8C() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801eca88
 
 // LLM-HARNESS-BEGIN: us-801ecad0
-extern "C" void func_801EAED4() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ecad0
 
 // LLM-HARNESS-BEGIN: us-801ecb78
-extern "C" void func_801EAF7C() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ecb78
 
 // LLM-HARNESS-BEGIN: us-801ecb98
-extern "C" void func_801EAF9C() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ecb98
 
 // LLM-HARNESS-BEGIN: us-801ecc14
@@ -1375,19 +1375,19 @@ extern "C" u8 func_801EB028(void* self) { return ((u8*)self)[0x2E]; }
 // LLM-HARNESS-END: us-801ecc24
 
 // LLM-HARNESS-BEGIN: us-801ecc2c
-extern "C" void func_801EB030() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ecc2c
 
 // LLM-HARNESS-BEGIN: us-801ecc48
-extern "C" void func_801EB04C() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ecc48
 
 // LLM-HARNESS-BEGIN: us-801ecc60
-extern "C" void func_801EB064() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ecc60
 
 // LLM-HARNESS-BEGIN: us-801eccd0
-extern "C" void func_801EB0D4() {}
+extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801eccd0
 
 // LLM-HARNESS-BEGIN: us-801ecd74

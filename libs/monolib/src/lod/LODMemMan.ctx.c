@@ -848,7 +848,7 @@ extern "C" void func_8046EF7C__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80472f4c
 
 // LLM-HARNESS-BEGIN: us-80472fe0
-extern "C" void func_8046F010__Q23LOD9LODMemManFv() {}
+extern "C" void func_8046F010__Q23LOD9LODMemManFv(void* self, float a, float b) {}
 // LLM-HARNESS-END: us-80472fe0
 
 // LLM-HARNESS-BEGIN: us-80472fec

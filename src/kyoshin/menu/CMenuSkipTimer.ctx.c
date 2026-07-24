@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-802a1040
-extern "C" void __ct__CMenuSkipTimer() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a1040
 
 // LLM-HARNESS-BEGIN: us-802a1100
-extern "C" void __dt__14CMenuSkipTimerFv(void* self) {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a1100
 
 // LLM-HARNESS-BEGIN: us-802a1178
-extern "C" void Init__14CMenuSkipTimerFv() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a1178
 
 // LLM-HARNESS-BEGIN: us-802a1410
-extern "C" void Term__14CMenuSkipTimerFv() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a1410
 
 // LLM-HARNESS-BEGIN: us-802a147c
-extern "C" void Move__14CMenuSkipTimerFv() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a147c
 
 // LLM-HARNESS-BEGIN: us-802a159c
-extern "C" void cbRenderBefore__14CMenuSkipTimerFv(void* self) {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a159c
 
 // LLM-HARNESS-BEGIN: us-802a1640
-extern "C" void func_8029EDE4() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a1640
 
 // LLM-HARNESS-BEGIN: us-802a16b4
-extern "C" void func_8029EE58() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a16b4
 
 // LLM-HARNESS-BEGIN: us-802a16c4
-extern "C" void func_8029EE68() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a16c4
 
 // LLM-HARNESS-BEGIN: us-802a173c
-extern "C" void func_8029EEE0() {}
+extern "C" void func_8029F098(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuSkipTimerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802a173c
 
 // LLM-HARNESS-BEGIN: us-802a178c

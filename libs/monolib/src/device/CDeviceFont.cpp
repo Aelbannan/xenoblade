@@ -21,7 +21,10 @@ extern "C" void __dt__11CDeviceFontFv() {}
 // LLM-HARNESS-END: us-80455204
 
 // LLM-HARNESS-BEGIN: us-804552e4
-extern "C" bool getInstance__11CDeviceFontFv() { return false; }
+extern "C" u32 getInstance__11CDeviceFontFv(void) {
+    extern u32 lbl_eu_80665678;
+    return lbl_eu_80665678;
+}
 // LLM-HARNESS-END: us-804552e4
 
 // LLM-HARNESS-BEGIN: us-804552ec
@@ -101,5 +104,8 @@ extern "C" void wkStandbyLogout__11CDeviceFontFv() {}
 // LLM-HARNESS-END: us-804571fc
 
 // LLM-HARNESS-BEGIN: us-80457318
-extern "C" bool func_eu_80457318() { return false; }
+extern "C" void func_eu_80457318(u32 val) {
+    extern u32 lbl_eu_80665680;
+    lbl_eu_80665680 = val;
+}
 // LLM-HARNESS-END: us-80457318

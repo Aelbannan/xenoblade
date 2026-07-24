@@ -5,43 +5,73 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-80280934
-extern "C" void __ct__CSysWinScenarioLog() {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280934
 
 // LLM-HARNESS-BEGIN: us-80280a38
-extern "C" void __dt__18CSysWinScenarioLogFv(void* self) {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280a38
 
 // LLM-HARNESS-BEGIN: us-80280aac
-extern "C" void Init__18CSysWinScenarioLogFv() {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280aac
 
 // LLM-HARNESS-BEGIN: us-80280b60
-extern "C" void Term__18CSysWinScenarioLogFv() {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280b60
 
 // LLM-HARNESS-BEGIN: us-80280c54
-extern "C" void Move__18CSysWinScenarioLogFv() {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280c54
 
 // LLM-HARNESS-BEGIN: us-80280dc0
-extern "C" void cbRenderBefore__18CSysWinScenarioLogFv(void* self) {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280dc0
 
 // LLM-HARNESS-BEGIN: us-80280e6c
-extern "C" void func_8027E9E8() {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280e6c
 
 // LLM-HARNESS-BEGIN: us-80280ee8
-extern "C" bool func_8027EA64() { return false; }
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280ee8
 
 // LLM-HARNESS-BEGIN: us-80280ef0
-extern "C" void func_8027EA6C() {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80280ef0
 
 // LLM-HARNESS-BEGIN: us-80281104
-extern "C" void func_8027EC80(void* self) {}
+extern "C" u32 func_8027EA64(void) {
+    extern u32 lbl_eu_80664908;
+    return lbl_eu_80664908;
+}
 // LLM-HARNESS-END: us-80281104
 
 // LLM-HARNESS-BEGIN: us-802812ec

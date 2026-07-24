@@ -25,7 +25,7 @@ void SFSET_GetCond() {}
 // LLM-HARNESS-END: us-803cef8c
 
 // LLM-HARNESS-BEGIN: us-803cef9c
-void SFD_SetSfdHeaderFn() {}
+void SFD_SetSfdHeaderFn(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-803cef9c
 
 // LLM-HARNESS-BEGIN: us-803cefa8

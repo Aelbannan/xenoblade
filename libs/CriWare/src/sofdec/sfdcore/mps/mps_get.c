@@ -5,11 +5,11 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803bf274
-void MPSGET_Init() {}
+void MPSGET_Init(void) {}
 // LLM-HARNESS-END: us-803bf274
 
 // LLM-HARNESS-BEGIN: us-803bf278
-void MPSGET_Finish() {}
+void MPSGET_Finish(void) {}
 // LLM-HARNESS-END: us-803bf278
 
 // LLM-HARNESS-BEGIN: us-803bf27c

@@ -5,5 +5,5 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80399b08
-void SJERR_CallErr() {}
+void SJERR_CallErr(void) {}
 // LLM-HARNESS-END: us-80399b08

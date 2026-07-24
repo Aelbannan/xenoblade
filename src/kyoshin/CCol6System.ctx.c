@@ -1322,8 +1322,8 @@ public:
     static void func_8003AA8C(u32 val);
     static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
 
 #ifdef __cplusplus
@@ -1351,7 +1351,7 @@ extern "C" void Init__13CCol6CheckBatFv() {}
 // LLM-HARNESS-END: us-8015e204
 
 // LLM-HARNESS-BEGIN: us-8015e208
-extern "C" void Term__13CCol6CheckBatFv() {}
+extern "C" void Term__13CCol6CheckBatFv(void) {}
 // LLM-HARNESS-END: us-8015e208
 
 // LLM-HARNESS-BEGIN: us-8015e214

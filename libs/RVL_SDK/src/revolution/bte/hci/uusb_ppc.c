@@ -33,7 +33,7 @@ void UUSB_Open() {}
 // LLM-HARNESS-END: us-802e0280
 
 // LLM-HARNESS-BEGIN: us-802e0410
-int UUSB_Read() { return 0; }
+int UUSB_Read(void) { return 0x0; }
 // LLM-HARNESS-END: us-802e0410
 
 // LLM-HARNESS-BEGIN: us-802e0420

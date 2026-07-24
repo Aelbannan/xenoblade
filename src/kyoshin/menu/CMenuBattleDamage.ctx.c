@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80109740
-extern "C" void __ct__CMenuBattleDamage() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80109740
 
 // LLM-HARNESS-BEGIN: us-80109910
-extern "C" void __dt__17CMenuBattleDamageFv(void* self) {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80109910
 
 // LLM-HARNESS-BEGIN: us-80109984
-extern "C" void Init__17CMenuBattleDamageFv() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80109984
 
 // LLM-HARNESS-BEGIN: us-80109b6c
-extern "C" void Term__17CMenuBattleDamageFv() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80109b6c
 
 // LLM-HARNESS-BEGIN: us-80109c48
-extern "C" void Move__17CMenuBattleDamageFv() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80109c48
 
 // LLM-HARNESS-BEGIN: us-80109f2c
-extern "C" void cbRenderBefore__17CMenuBattleDamageFv(void* self) {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80109f2c
 
 // LLM-HARNESS-BEGIN: us-8010a1a0
-extern "C" void func_801096B8() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8010a1a0
 
 // LLM-HARNESS-BEGIN: us-8010a21c
-extern "C" void func_80109734() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8010a21c
 
 // LLM-HARNESS-BEGIN: us-8010a244
-extern "C" void func_8010975C() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8010a244
 
 // LLM-HARNESS-BEGIN: us-8010a258
-extern "C" void func_80109770() {}
+extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8010a258
 
 // LLM-HARNESS-BEGIN: us-8010a26c

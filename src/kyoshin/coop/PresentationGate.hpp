@@ -29,7 +29,7 @@ static const u32 kSynthModalMenu = 0x40000000u;
 struct PresentationSnapshot {
     u32 eventFlags;  // lbl_eu_80663E24
     u32 modeFlags;   // lbl_eu_80663E28
-    bool pauseOrHbm; // CGame::unk228 > 0 or HBM active
+    bool pauseOrHbm; // CGame::mPauseRefCount > 0 or HBM active
     bool modalMenu;  // CUIWindowManager queues or CUICfManager::mFlags
 };
 

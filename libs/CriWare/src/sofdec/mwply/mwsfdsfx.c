@@ -9,19 +9,19 @@ void MWSFSFX_Init() {}
 // LLM-HARNESS-END: us-803a1330
 
 // LLM-HARNESS-BEGIN: us-803a1360
-void mwsfsfx_SfxErrCbFn() {}
+void mwsfsfx_SfxErrCbFn(void) {}
 // LLM-HARNESS-END: us-803a1360
 
 // LLM-HARNESS-BEGIN: us-803a136c
-int MWSFSFX_CalcHnWorkSiz() { return 0; }
+int MWSFSFX_CalcHnWorkSiz(void) { return 0x301f; }
 // LLM-HARNESS-END: us-803a136c
 
 // LLM-HARNESS-BEGIN: us-803a1374
-void MWSFSFX_Create() {}
+void MWSFSFX_Create(void) {}
 // LLM-HARNESS-END: us-803a1374
 
 // LLM-HARNESS-BEGIN: us-803a1378
-void MWSFSFX_Destroy() {}
+void MWSFSFX_Destroy(void) {}
 // LLM-HARNESS-END: us-803a1378
 
 // LLM-HARNESS-BEGIN: us-803a137c
@@ -45,7 +45,7 @@ void mwsfsfx_SetYcc420plnInfToSfx() {}
 // LLM-HARNESS-END: us-803a17c8
 
 // LLM-HARNESS-BEGIN: us-803a1884
-int MWSFSFX_SetCompoMode() { return 0; }
+void MWSFSFX_SetCompoMode(void) {}
 // LLM-HARNESS-END: us-803a1884
 
 // LLM-HARNESS-BEGIN: us-803a188c

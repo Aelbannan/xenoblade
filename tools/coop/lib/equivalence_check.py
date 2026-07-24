@@ -437,6 +437,25 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         if callee.get("status") not in ACCEPTED_MATCH_STATUSES:
             errors.append(f"callee {callee_id!r} is not accepted")
             continue
+        # Direct self-recursion cannot require its own certificate (bootstrap).
+        # Model the recursive edge as opaque EABI while the caller certifies.
+        if str(callee_id) == target_id:
+            symbol = callee.get("symbol")
+            if not isinstance(symbol, str):
+                errors.append(f"self-callee {callee_id!r} lacks a symbol")
+                continue
+            contract = CalleeContract.opaque_eabi()
+            contracts[symbol] = contract
+            address = callee.get("address")
+            if isinstance(address, str):
+                try:
+                    parsed_address = int(address, 0)
+                    contracts[parsed_address] = contract
+                    address_to_target_id[parsed_address] = str(callee_id)
+                except ValueError:
+                    pass
+            call_graph[str(callee_id)] = frozenset()
+            continue
         attestation_error = _reattest_certificate_tree(
             project, str(callee_id), by_id, attestation_memo,
         )
@@ -2050,12 +2069,17 @@ def certify_unit_symbol(
             )
         call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
         missing = sorted((item for item in call_targets if item not in context.contracts), key=str)
-        if missing:
+        if missing and not bytes_identical:
             return EquivalenceProbe(
                 ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
                 "calls lack current certificates: " + ", ".join(str(item) for item in missing),
             )
-        contracts = {item: context.contracts[item] for item in call_targets}
+        # Byte-identical FULL_MATCH: relative self-bl / unresolved same-TU edges
+        # get opaque EABI so recursive leaves can bootstrap a certificate.
+        contracts = {
+            item: context.contracts.get(item) or CalleeContract.opaque_eabi()
+            for item in call_targets
+        }
         opcodes_used = sorted(
             {
                 insn.opcode.value

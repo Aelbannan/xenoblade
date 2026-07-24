@@ -105,5 +105,5 @@ void* __dynamic_cast(void* obj, int offset, type_info_struct* typeInfo, type_inf
 }
 
 // LLM-HARNESS-BEGIN: us-802bca90
-extern "C" void what__Q23std8bad_castCFv() {}
+extern "C" void* what__Q23std8bad_castCFv(void) { return 0; }
 // LLM-HARNESS-END: us-802bca90

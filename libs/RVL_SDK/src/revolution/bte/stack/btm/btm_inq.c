@@ -65,7 +65,7 @@ void btm_inq_db_reset() {}
 // LLM-HARNESS-END: us-802ebad0
 
 // LLM-HARNESS-BEGIN: us-802ebc68
-void btm_inq_db_init() {}
+void btm_inq_db_init(void) {}
 // LLM-HARNESS-END: us-802ebc68
 
 // LLM-HARNESS-BEGIN: us-802ebc6c

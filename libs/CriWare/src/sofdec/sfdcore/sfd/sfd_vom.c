@@ -57,5 +57,5 @@ void SFVOM_AddRead() {}
 // LLM-HARNESS-END: us-803d17f0
 
 // LLM-HARNESS-BEGIN: us-803d1804
-int SFVOM_Seek() { return 0; }
+int SFVOM_Seek(void) { return 0x0; }
 // LLM-HARNESS-END: us-803d1804

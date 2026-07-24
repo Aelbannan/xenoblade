@@ -1591,7 +1591,10 @@ extern "C" void OnFileEvent__9CSaveLoadFv() {}
 // LLM-HARNESS-END: us-802938d0
 
 // LLM-HARNESS-BEGIN: us-80293e38
-extern "C" bool func_8029183C() { return false; }
+extern "C" u32 func_8029183C(void) {
+    extern u32 lbl_eu_80662AD0;
+    return lbl_eu_80662AD0;
+}
 // LLM-HARNESS-END: us-80293e38
 
 // LLM-HARNESS-BEGIN: us-80293e40

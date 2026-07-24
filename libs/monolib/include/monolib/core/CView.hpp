@@ -103,19 +103,19 @@ public:
     
     void getRect(ml::CRect16& rect){
         ml::CRect16 tempRect;
-        getFrame2ViewOffset(tempRect, &unk1DC);
+        getFrame2ViewOffset(tempRect, &mFrame);
 
-        rect.mPos.x = tempRect.mPos.x + unk1DC.unk54;
-        rect.mPos.y = tempRect.mPos.y + unk1DC.unk56;
-        rect.mSize.x = unk1C8.unk0;
-        rect.mSize.y = unk1C8.unk2;
+        rect.mPos.x = tempRect.mPos.x + mFrame.mContentX;
+        rect.mPos.y = tempRect.mPos.y + mFrame.mContentY;
+        rect.mSize.x = mRectData.mViewSize.x;
+        rect.mSize.y = mRectData.mViewSize.y;
     }
 
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CViewRectDataCore unk1C8; //0x1C8
-    CViewFrame unk1DC; //0x1DC
+    CViewRectDataCore mRectData; //0x1C8
+    CViewFrame mFrame; //0x1DC
     CViewResList unk238; //0x238 reslist<WORK_ID>
     CViewResList unk258; //0x258 reslist<IWorkEvent*>
     u32 unk278; //0x278
@@ -129,7 +129,8 @@ public:
     u32 unk3FC; //0x3FC
     ml::FixStr<64> mName; //0x400
     ml::CVec4 unk444; //0x444
-    u8 unk454[0x45C - 0x454]; //0x454
+    u32 mGXCacheId; //0x454
+    float mAlpha; //0x458
     void* unk45C; //0x45C
     u32 unk460; //0x460
     s16 unk464;

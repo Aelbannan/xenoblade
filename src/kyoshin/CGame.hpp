@@ -43,18 +43,18 @@ public:
     //0x0-1ec: CProc
     CView* mView; //0x1EC
     ShutdownState mShutdownState; //0x1F0
-    s16 unk1F4;
-    s16 unk1F6;
-    s16 unk1F8;
-    u8 unk1FA[2];
-    ml::FixStr<32> unk1FC;
-    u32 mTaskManUpdateCount; //0x220
-    float unk224;
-    int unk228;
-    u32 unk22C;
-    s16 unk230; //0x230 - letterbox half-band (retail ctor: 57)
-    u16 unk232; // pad
-    u32 unk234; //0x234 - sizeof(CGame)==0x238 for retail GameMain allocate
+    s16 mSceneReqId;
+    s16 mSceneReqId2;
+    s16 mSceneReqFlag;
+    u8 mPad1FA[2]; //0x1FA - alignment padding between s16 mSceneReqFlag and FixStr<32> unk1FC at 0x1FC
+    ml::FixStr<32> unk1FC; //0x1FC - scene transition parameter string (used as pool ref, not content)
+    u32 mTaskManUpdateCount; //0x220 - number of CTaskManager::Move() calls per frame (default 1)
+    float mPrevBgmSpeed; //0x224 - BGM speed before pause, restored on resume
+    int mPauseRefCount; //0x228 - nested pause refcount; 0 = unpaused
+    u32 mUnk22C; //0x22C - unknown; written by create() but never read within CGame
+    s16 mLetterboxBorder; //0x230 - letterbox half-band in scanlines (initialized to 57 in ctor)
+    u16 mPad232; //0x232 - padding to align mAllocSize at 0x234
+    u32 mAllocSize; //0x234 - sizeof(CGame)==0x238; used for allocation capacity in GameMain
 
 private:
     static const int MAX_CHILD = 8;

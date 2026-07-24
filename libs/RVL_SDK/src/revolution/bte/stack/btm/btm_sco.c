@@ -41,7 +41,7 @@ void btm_sco_acl_removed() {}
 // LLM-HARNESS-END: us-802ede20
 
 // LLM-HARNESS-BEGIN: us-802eded4
-void btm_route_sco_data() {}
+void btm_route_sco_data(void) {}
 // LLM-HARNESS-END: us-802eded4
 
 // LLM-HARNESS-BEGIN: us-802eded8

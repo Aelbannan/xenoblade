@@ -1363,7 +1363,10 @@ extern "C" void __dt__9CMainMenuFv(void* self) {}
 // LLM-HARNESS-END: us-800ff850
 
 // LLM-HARNESS-BEGIN: us-800ff8e0
-extern "C" bool func_800FEDF8() { return false; }
+extern "C" u32 func_800FEDF8(void) {
+    extern u32 lbl_eu_80663F18;
+    return lbl_eu_80663F18;
+}
 // LLM-HARNESS-END: us-800ff8e0
 
 // LLM-HARNESS-BEGIN: us-800ff8e8
@@ -1407,7 +1410,7 @@ extern "C" void func_800FF8B0() {}
 // LLM-HARNESS-END: us-80100398
 
 // LLM-HARNESS-BEGIN: us-801003fc
-extern "C" void func_800FF914() {}
+extern "C" void func_800FF914(void) {}
 // LLM-HARNESS-END: us-801003fc
 
 // LLM-HARNESS-BEGIN: us-80100408

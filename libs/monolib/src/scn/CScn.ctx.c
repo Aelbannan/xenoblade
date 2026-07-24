@@ -16772,10 +16772,10 @@ extern "C" int func_8049698C() {
 }
 // LLM-HARNESS-END: us-8049aa68
 // LLM-HARNESS-BEGIN: us-8049aa70
-extern "C" void func_80496994__Fv() {}
+extern "C" void func_80496994__Fv(void) {}
 // LLM-HARNESS-END: us-8049aa70
 // LLM-HARNESS-BEGIN: us-8049aa74
-extern "C" void func_80496998__Fv() {}
+extern "C" void func_80496998__Fv(void) {}
 // LLM-HARNESS-END: us-8049aa74
 // LLM-HARNESS-BEGIN: us-8049aa78
 extern "C" void func_8049699C() {}

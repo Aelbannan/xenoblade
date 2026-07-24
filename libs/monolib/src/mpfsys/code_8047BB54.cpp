@@ -5,15 +5,15 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8047fb24
-extern "C" void func_8047BB54__17UnkClass_8047BB54Fv() {}
+extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 // LLM-HARNESS-END: us-8047fb24
 
 // LLM-HARNESS-BEGIN: us-8047fc24
-extern "C" void func_8047BC54__17UnkClass_8047BB54Fv() {}
+extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 // LLM-HARNESS-END: us-8047fc24
 
 // LLM-HARNESS-BEGIN: us-8047fc44
-extern "C" void __dt__8047BC74() {}
+extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 // LLM-HARNESS-END: us-8047fc44
 
 // LLM-HARNESS-BEGIN: us-8047fd4c
@@ -45,15 +45,15 @@ extern "C" void func_8047BDA0__17UnkClass_8047BB54Fv(void* self) { ((void(*)(voi
 // LLM-HARNESS-END: us-8047fd70
 
 // LLM-HARNESS-BEGIN: us-8047fd78
-extern "C" void __dt__8047BDA8() {}
+extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 // LLM-HARNESS-END: us-8047fd78
 
 // LLM-HARNESS-BEGIN: us-8047fe5c
-extern "C" void func_8047BE8C__17UnkClass_8047BB54Fv() {}
+extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 // LLM-HARNESS-END: us-8047fe5c
 
 // LLM-HARNESS-BEGIN: us-8047ff78
-extern "C" void __dt__8047BFA8() {}
+extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 // LLM-HARNESS-END: us-8047ff78
 
 // LLM-HARNESS-BEGIN: us-8047ffcc
@@ -61,7 +61,7 @@ extern "C" void __dt__8047BFFC() {}
 // LLM-HARNESS-END: us-8047ffcc
 
 // LLM-HARNESS-BEGIN: us-80480004
-extern "C" void func_8047C034__17UnkClass_8047BB54Fv() {}
+extern "C" void* func_8047C034__17UnkClass_8047BB54Fv(void) { return 0; }
 // LLM-HARNESS-END: us-80480004
 
 // LLM-HARNESS-BEGIN: us-80480010

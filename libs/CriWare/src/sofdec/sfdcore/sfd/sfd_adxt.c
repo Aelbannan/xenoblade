@@ -5,19 +5,19 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803bfab0
-void SFADXT_SetOutPan() {}
+void SFADXT_SetOutPan(void) {}
 // LLM-HARNESS-END: us-803bfab0
 
 // LLM-HARNESS-BEGIN: us-803bfabc
-void SFADXT_GetOutPan() {}
+void SFADXT_GetOutPan(void) {}
 // LLM-HARNESS-END: us-803bfabc
 
 // LLM-HARNESS-BEGIN: us-803bfac8
-void SFADXT_SetOutVol() {}
+void SFADXT_SetOutVol(void) {}
 // LLM-HARNESS-END: us-803bfac8
 
 // LLM-HARNESS-BEGIN: us-803bfad4
-void SFADXT_GetOutVol() {}
+void SFADXT_GetOutVol(void) {}
 // LLM-HARNESS-END: us-803bfad4
 
 // LLM-HARNESS-BEGIN: us-803bfae0
@@ -37,7 +37,7 @@ void SFADXT_Finish() {}
 // LLM-HARNESS-END: us-803bfcf8
 
 // LLM-HARNESS-BEGIN: us-803bfd20
-void criware_803BD518() {}
+void criware_803BD518(void) {}
 // LLM-HARNESS-END: us-803bfd20
 
 // LLM-HARNESS-BEGIN: us-803bfd2c
@@ -89,7 +89,7 @@ void SFADXT_Destroy() {}
 // LLM-HARNESS-END: us-803c0d18
 
 // LLM-HARNESS-BEGIN: us-803c0e00
-int SFADXT_RequestStop() { return 0; }
+int SFADXT_RequestStop(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c0e00
 
 // LLM-HARNESS-BEGIN: us-803c0e08

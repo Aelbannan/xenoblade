@@ -9,7 +9,7 @@ void __HBMSYNClearVoiceReferences() {}
 // LLM-HARNESS-END: us-80344ab0
 
 // LLM-HARNESS-BEGIN: us-80344b60
-void __HBMSYNSetVoiceToRelease() {}
+void __HBMSYNSetVoiceToRelease(void) {}
 // LLM-HARNESS-END: us-80344b60
 
 // LLM-HARNESS-BEGIN: us-80344b70

@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801ad534
-extern "C" void __ct__CMenuVision() {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801ad534
 
 // LLM-HARNESS-BEGIN: us-801ad748
-extern "C" void __dt__11CMenuVisionFv(void* self) {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801ad748
 
 // LLM-HARNESS-BEGIN: us-801ad7bc
-extern "C" void func_801AC088() {}
+extern "C" bool func_801AC088() { return lbl_eu_80663F20 != 0; }
 // LLM-HARNESS-END: us-801ad7bc
 
 // LLM-HARNESS-BEGIN: us-801ad7d0
-extern "C" void func_801AC09C() {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801ad7d0
 
 // LLM-HARNESS-BEGIN: us-801ad858
-extern "C" void func_801AC124() {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801ad858
 
 // LLM-HARNESS-BEGIN: us-801ad92c
-extern "C" void func_801AC1F8() {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801ad92c
 
 // LLM-HARNESS-BEGIN: us-801ad944
-extern "C" void Init__11CMenuVisionFv() {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801ad944
 
 // LLM-HARNESS-BEGIN: us-801addfc
-extern "C" void Term__11CMenuVisionFv() {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801addfc
 
 // LLM-HARNESS-BEGIN: us-801adeb0
-extern "C" void Move__11CMenuVisionFv() {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801adeb0
 
 // LLM-HARNESS-BEGIN: us-801ae288
-extern "C" void cbRenderBefore__11CMenuVisionFv(void* self) {}
+extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801ae288
 
 // LLM-HARNESS-BEGIN: us-801ae414

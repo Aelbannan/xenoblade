@@ -21,7 +21,9 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame);
 
 // LLM-HARNESS-BEGIN: us-8043df30
-extern "C" void apply__11CSplitFrameFv() {}
+extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
+    return CViewRoot::getView(self->mView1);
+}
 // LLM-HARNESS-END: us-8043df30
 
 // LLM-HARNESS-BEGIN: us-8043e060
@@ -37,15 +39,21 @@ extern "C" CView* getView2__11CSplitFrameFv(CSplitFrame* self) {
 // LLM-HARNESS-END: us-8043e068
 
 // LLM-HARNESS-BEGIN: us-8043e070
-extern "C" void isActive__11CSplitFrameFv() {}
+extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
+    return CViewRoot::getView(self->mView1);
+}
 // LLM-HARNESS-END: us-8043e070
 
 // LLM-HARNESS-BEGIN: us-8043e0d0
-extern "C" void getSplitLine__11CSplitFrameFv() {}
+extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
+    return CViewRoot::getView(self->mView1);
+}
 // LLM-HARNESS-END: us-8043e0d0
 
 // LLM-HARNESS-BEGIN: us-8043e0ec
-extern "C" void setSplitLine__11CSplitFrameFs() {}
+extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
+    return CViewRoot::getView(self->mView1);
+}
 // LLM-HARNESS-END: us-8043e0ec
 
 // LLM-HARNESS-BEGIN: us-8043e288
@@ -56,18 +64,18 @@ extern "C" void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
     volatile ml::CRect16 offset;
     CView* view = self->mParent;
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&offset, &view->unk1DC);
+        (ml::CRect16*)&offset, &view->mFrame);
 
     // Retail post-bl schedule: lbz/li, lha size@1cc/1ce, cmp, sth zeros,
     // lha bound@1c8/1ca interleaved with sth size.
     s16 zero = 0;
     u8 vert = self->mVertical;
-    s16 sizeX = view->unk1C8.unk4;
-    s16 sizeY = view->unk1C8.unk6;
+    s16 sizeX = view->mRectData.mBoundsSize.x;
+    s16 sizeY = view->mRectData.mBoundsSize.y;
     s16 boundW;
     s16 boundH;
-    if ((vert != 0, split.mPos.x = zero, boundW = view->unk1C8.unk0,
-         split.mPos.y = zero, boundH = view->unk1C8.unk2,
+    if ((vert != 0, split.mPos.x = zero, boundW = view->mRectData.mViewSize.x,
+         split.mPos.y = zero, boundH = view->mRectData.mViewSize.y,
          split.mSize.x = sizeX, split.mSize.y = sizeY, vert != 0)) {
         split.mSize.y = self->mSplitY;
     } else {
@@ -144,19 +152,19 @@ extern "C" void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
     volatile ml::CRect16 offset;
     CView* view = self->mParent;
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&offset, &view->unk1DC);
+        (ml::CRect16*)&offset, &view->mFrame);
 
     s16 zero = 0;
     u8 vert = self->mVertical;
-    s16 sizeX = view->unk1C8.unk4;
-    s16 sizeY = view->unk1C8.unk6;
+    s16 sizeX = view->mRectData.mBoundsSize.x;
+    s16 sizeY = view->mRectData.mBoundsSize.y;
     s16 boundW;
     s16 boundH;
     s16 border;
-    if ((vert != 0, split.mPos.x = zero, boundW = view->unk1C8.unk0,
-         split.mPos.y = zero, boundH = view->unk1C8.unk2,
+    if ((vert != 0, split.mPos.x = zero, boundW = view->mRectData.mViewSize.x,
+         split.mPos.y = zero, boundH = view->mRectData.mViewSize.y,
          split.mSize.x = sizeX, split.mSize.y = sizeY,
-         border = view->unk1DC.unk58, vert != 0)) {
+         border = view->mFrame.mBorder, vert != 0)) {
         s16 y = (s16)(self->mSplitY + border);
         split.mPos.y = y;
         split.mSize.y = (s16)(split.mSize.y - y);

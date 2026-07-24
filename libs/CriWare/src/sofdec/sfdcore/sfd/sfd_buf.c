@@ -45,11 +45,11 @@ void SFBUF_GetUoch() {}
 // LLM-HARNESS-END: us-803c1d84
 
 // LLM-HARNESS-BEGIN: us-803c1db8
-int SFBUF_RingGetWrite() { return 0; }
+void SFBUF_RingGetWrite(void) {}
 // LLM-HARNESS-END: us-803c1db8
 
 // LLM-HARNESS-BEGIN: us-803c1dc0
-int SFBUF_RingGetRead() { return 0; }
+void SFBUF_RingGetRead(void) {}
 // LLM-HARNESS-END: us-803c1dc0
 
 // LLM-HARNESS-BEGIN: us-803c1dc8
@@ -57,11 +57,11 @@ void sfbuf_RingGetSub() {}
 // LLM-HARNESS-END: us-803c1dc8
 
 // LLM-HARNESS-BEGIN: us-803c1f10
-int SFBUF_RingAddWrite() { return 0; }
+void SFBUF_RingAddWrite(void) {}
 // LLM-HARNESS-END: us-803c1f10
 
 // LLM-HARNESS-BEGIN: us-803c1f18
-int SFBUF_RingAddRead() { return 0; }
+void SFBUF_RingAddRead(void) {}
 // LLM-HARNESS-END: us-803c1f18
 
 // LLM-HARNESS-BEGIN: us-803c1f20

@@ -9,7 +9,7 @@ void MPVCDEC_Init() {}
 // LLM-HARNESS-END: us-803a7710
 
 // LLM-HARNESS-BEGIN: us-803a7770
-int fn_803A7770() { return 0; }
+void fn_803A7770(void) {}
 // LLM-HARNESS-END: us-803a7770
 
 // LLM-HARNESS-BEGIN: us-803a7778

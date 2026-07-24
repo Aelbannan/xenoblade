@@ -720,11 +720,11 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-804a2738
-extern "C" void __dt__12CScnItemAnimFv() {}
+extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw4r3g3d7ResFileCFi)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804a2738
 
 // LLM-HARNESS-BEGIN: us-804a27a4
-extern "C" void func_8049E648() {}
+extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw4r3g3d7ResFileCFi)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804a27a4
 
 extern "C" void GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* self);
@@ -733,7 +733,7 @@ extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw
 // LLM-HARNESS-END: us-804a2864
 
 // LLM-HARNESS-BEGIN: us-804a286c
-extern "C" void __ct__8049E710() {}
+extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw4r3g3d7ResFileCFi)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804a286c
 
 // LLM-HARNESS-BEGIN: us-804a2a10

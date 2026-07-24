@@ -154,17 +154,17 @@ static inline ml::CRect16& pssMakeClientRectInline(
     }
 
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        &wf.frameOffset, &parentView->unk1DC);
+        &wf.frameOffset, &parentView->mFrame);
 
-    s16 sizeX = parentView->unk1C8.unk0;
-    s16 sizeY = parentView->unk1C8.unk2;
+    s16 sizeX = parentView->mRectData.mViewSize.x;
+    s16 sizeY = parentView->mRectData.mViewSize.y;
     s16 scaledX = (s16)((float)sizeX * lbl_eu_8066A278);
     s16 scaledY = (s16)((float)sizeY * lbl_eu_8066A278);
     s16 anotherX = (scaledX - sizeX) / 2;
     s16 anotherY = (scaledY - sizeY) / 2;
     s16 childOff = (s16)(numChildren * 20);
-    s16 posX = (s16)(parentView->unk1DC.unk54 + wf.frameOffset.mPos.x);
-    s16 posY = (s16)(parentView->unk1DC.unk56 + wf.frameOffset.mPos.y);
+    s16 posX = (s16)(parentView->mFrame.mContentX + wf.frameOffset.mPos.x);
+    s16 posY = (s16)(parentView->mFrame.mContentY + wf.frameOffset.mPos.y);
 
     wf.clientRect.mPos.x = (s16)((posX - anotherX) + childOff);
     wf.clientRect.mPos.y = (s16)((posY - anotherY) + childOff);

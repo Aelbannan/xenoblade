@@ -53,11 +53,11 @@ void SFMPVF_AddRead() {}
 // LLM-HARNESS-END: us-803cacc8
 
 // LLM-HARNESS-BEGIN: us-803caf14
-void SFMPVF_TermDec() {}
+void SFMPVF_TermDec(void) {}
 // LLM-HARNESS-END: us-803caf14
 
 // LLM-HARNESS-BEGIN: us-803caf20
-int SFMPVF_IsTermDec() { return 0; }
+u32 SFMPVF_IsTermDec(void* self) { return *(u32*)((u8*)self + 0x27f0); }
 // LLM-HARNESS-END: us-803caf20
 
 // LLM-HARNESS-BEGIN: us-803caf28

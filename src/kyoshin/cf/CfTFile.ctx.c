@@ -1439,7 +1439,10 @@ extern "C" bool func_8006A3FC() { return false; }
 // LLM-HARNESS-END: us-8006ae14
 
 // LLM-HARNESS-BEGIN: us-8006ae1c
-extern "C" bool func_8006A404() { return false; }
+extern "C" unsigned short func_8006A404()
+{
+    return lbl_eu_8066408C;
+}
 // LLM-HARNESS-END: us-8006ae1c
 
 // LLM-HARNESS-BEGIN: us-8006ae24
@@ -1459,7 +1462,10 @@ extern "C" void func_8006A75C() {}
 // LLM-HARNESS-END: us-8006b174
 
 // LLM-HARNESS-BEGIN: us-8006b224
-extern "C" bool func_8006A80C() { return false; }
+extern "C" u32 func_8006A80C(void) {
+    extern u32 lbl_eu_80663DA8;
+    return lbl_eu_80663DA8;
+}
 // LLM-HARNESS-END: us-8006b224
 
 // LLM-HARNESS-BEGIN: us-8006b22c
@@ -1472,5 +1478,5 @@ extern "C" void func_eu_8006B238() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-8006b278
-extern "C" void sinit_8006A820() {}
+extern "C" void sinit_8006A820() { lbl_eu_80663F24 = 0; }
 // LLM-HARNESS-END: us-8006b278

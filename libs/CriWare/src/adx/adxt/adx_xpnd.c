@@ -37,7 +37,7 @@ void ADXPD_Destroy() {}
 // LLM-HARNESS-END: us-80388a80
 
 // LLM-HARNESS-BEGIN: us-80388aa0
-int ADXPD_GetStat() { return 0; }
+u32 ADXPD_GetStat(void* self) { return *(u32*)((u8*)self + 0xc); }
 // LLM-HARNESS-END: us-80388aa0
 
 // LLM-HARNESS-BEGIN: us-80388aa8
@@ -65,7 +65,7 @@ void ADXPD_Reset() {}
 // LLM-HARNESS-END: us-80388b7c
 
 // LLM-HARNESS-BEGIN: us-80388b94
-int ADXPD_GetNumBlk() { return 0; }
+u32 ADXPD_GetNumBlk(void* self) { return *(u32*)((u8*)self + 0x10); }
 // LLM-HARNESS-END: us-80388b94
 
 // LLM-HARNESS-BEGIN: us-80388b9c

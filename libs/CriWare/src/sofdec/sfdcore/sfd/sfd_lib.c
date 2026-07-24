@@ -21,7 +21,7 @@ void fn_803C34DC() {}
 // LLM-HARNESS-END: us-803c34dc
 
 // LLM-HARNESS-BEGIN: us-803c34f8
-void fn_803C34F8() {}
+void fn_803C34F8(void) {}
 // LLM-HARNESS-END: us-803c34f8
 
 // LLM-HARNESS-BEGIN: us-803c34fc
@@ -37,9 +37,9 @@ void SFLIB_CheckHn() {}
 // LLM-HARNESS-END: us-803c36ac
 
 // LLM-HARNESS-BEGIN: us-803c36e0
-void SFLIB_LockCs() {}
+void SFLIB_LockCs(void) {}
 // LLM-HARNESS-END: us-803c36e0
 
 // LLM-HARNESS-BEGIN: us-803c36e4
-void SFLIB_UnlockCs() {}
+void SFLIB_UnlockCs(void) {}
 // LLM-HARNESS-END: us-803c36e4

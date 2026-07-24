@@ -3,46 +3,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern "C" void __dt__13CMenuMiniMap2Fv(void* self);
 
 // LLM-HARNESS-BEGIN: us-80116aac
-extern "C" void func_80115FD0() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80116aac
-
-// LLM-HARNESS-BEGIN: us-80116b84
-extern "C" void func_801160A8() {}
-// LLM-HARNESS-END: us-80116b84
-
-// LLM-HARNESS-BEGIN: us-80116d68
-extern "C" void func_8011628C() {}
-// LLM-HARNESS-END: us-80116d68
-
-// LLM-HARNESS-BEGIN: us-801170c8
-extern "C" void func_801165EC() {}
-// LLM-HARNESS-END: us-801170c8
-
-// LLM-HARNESS-BEGIN: us-8011714c
-extern "C" void func_80116670() {}
-// LLM-HARNESS-END: us-8011714c
-
-// LLM-HARNESS-BEGIN: us-801172c8
-extern "C" void func_801167EC() {}
-// LLM-HARNESS-END: us-801172c8
-
-// LLM-HARNESS-BEGIN: us-8011737c
-extern "C" void func_801168A0() {}
-// LLM-HARNESS-END: us-8011737c
-
-// LLM-HARNESS-BEGIN: us-8011761c
-extern "C" void func_80116B40() {}
-// LLM-HARNESS-END: us-8011761c
-
-// LLM-HARNESS-BEGIN: us-8011801c
-extern "C" void __dt__8CMMClockFv() {}
-// LLM-HARNESS-END: us-8011801c
-
-// LLM-HARNESS-BEGIN: us-80118078
-extern "C" void OnFileEvent__8CMMClockFP10CEventFile() {}
-// LLM-HARNESS-END: us-80118078
 
 // LLM-HARNESS-BEGIN: us-801181d0
 extern "C" void __dt__6CMMTexFv() {}
@@ -108,8 +73,9 @@ extern "C" void cbRenderBefore__13CMenuMiniMap2Fv(void* self) {}
 extern "C" void __ct__8011C1B8() {}
 // LLM-HARNESS-END: us-8011cc94
 
+extern u32 lbl_eu_80663F20;
 // LLM-HARNESS-BEGIN: us-8011cdc4
-extern "C" void func_8011C2E8() {}
+extern "C" bool func_8011C2E8() { return lbl_eu_80663F20 != 0; }
 // LLM-HARNESS-END: us-8011cdc4
 
 // LLM-HARNESS-BEGIN: us-8011cdd8
@@ -119,10 +85,6 @@ extern "C" void func_8011C2FC() {}
 // LLM-HARNESS-BEGIN: us-8011cedc
 extern "C" void func_8011C400() {}
 // LLM-HARNESS-END: us-8011cedc
-
-// LLM-HARNESS-BEGIN: us-8011cf10
-extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-8011cf10
 
 // LLM-HARNESS-BEGIN: us-8011cf18
 extern "C" void func_8011C43C(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuMiniMap2Fv)((char*)self - 0x5c); }

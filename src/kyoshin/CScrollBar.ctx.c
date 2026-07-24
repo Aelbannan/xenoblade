@@ -1371,7 +1371,7 @@ extern "C" u8 func_801F3668(void* self) { return ((u8*)self)[0x27]; }
 // LLM-HARNESS-END: us-801f5324
 
 // LLM-HARNESS-BEGIN: us-801f532c
-extern "C" void func_801F3670() {}
+extern "C" void func_801F3670(void) {}
 // LLM-HARNESS-END: us-801f532c
 
 // LLM-HARNESS-BEGIN: us-801f5338

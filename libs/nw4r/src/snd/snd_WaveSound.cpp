@@ -62,14 +62,14 @@ void WaveSound::DetachTempSpecialHandle() {
 extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail9WaveSoundFv() {}
 // LLM-HARNESS-END: us-8042c170
 // LLM-HARNESS-BEGIN: us-8042c270
-extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundFv() { return false; }
+extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 // LLM-HARNESS-END: us-8042c270
 // LLM-HARNESS-BEGIN: us-8042c278
-extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundCFv() { return false; }
+extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 // LLM-HARNESS-END: us-8042c278
 // LLM-HARNESS-BEGIN: us-8042c280
-extern "C" bool IsPrepared__Q44nw4r3snd6detail9WaveSoundCFv() { return false; }
+extern "C" u8 IsPrepared__Q44nw4r3snd6detail9WaveSoundCFv(void* self) { return ((u8*)self)[0x24c]; }
 // LLM-HARNESS-END: us-8042c280
 // LLM-HARNESS-BEGIN: us-8042c288
-extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail9WaveSoundCFv() { return false; }
+extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail9WaveSoundCFv(void) { return lbl_eu_80665538@sda21; }
 // LLM-HARNESS-END: us-8042c288

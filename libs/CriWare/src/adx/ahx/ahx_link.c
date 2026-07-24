@@ -17,11 +17,11 @@ void AHXLINK_DetachAhx() {}
 // LLM-HARNESS-END: us-8038da98
 
 // LLM-HARNESS-BEGIN: us-8038db20
-void AHXLINK_SetDecSmpl() {}
+void AHXLINK_SetDecSmpl(void) {}
 // LLM-HARNESS-END: us-8038db20
 
 // LLM-HARNESS-BEGIN: us-8038db24
-void AHXLINK_TermSupply() {}
+void AHXLINK_TermSupply(void) {}
 // LLM-HARNESS-END: us-8038db24
 
 // LLM-HARNESS-BEGIN: us-8038db28

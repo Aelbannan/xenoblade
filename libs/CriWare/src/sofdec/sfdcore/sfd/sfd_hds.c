@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803c28fc
-void SFHDS_Init() {}
+void SFHDS_Init(void) {}
 // LLM-HARNESS-END: us-803c28fc
 
 // LLM-HARNESS-BEGIN: us-803c2900

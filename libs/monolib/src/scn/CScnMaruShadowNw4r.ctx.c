@@ -720,43 +720,43 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-80491238
-extern "C" void __ct__CScnMaruShadowNw4r() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80491238
 
 // LLM-HARNESS-BEGIN: us-80491298
-extern "C" void __dt__4CScnFvMaruShadowNw4r() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80491298
 
 // LLM-HARNESS-BEGIN: us-804912d8
-extern "C" void func_8048D264() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-804912d8
 
 // LLM-HARNESS-BEGIN: us-80491574
-extern "C" void func_8048D500() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80491574
 
 // LLM-HARNESS-BEGIN: us-80491bcc
-extern "C" void func_8048DB58() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80491bcc
 
 // LLM-HARNESS-BEGIN: us-80491be4
-extern "C" void func_8048DB70() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80491be4
 
 // LLM-HARNESS-BEGIN: us-80491d8c
-extern "C" void func_8048DD18() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80491d8c
 
 // LLM-HARNESS-BEGIN: us-8049236c
-extern "C" void func_8048E2F8() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-8049236c
 
 // LLM-HARNESS-BEGIN: us-804926f0
-extern "C" void func_8048E67C() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-804926f0
 
 // LLM-HARNESS-BEGIN: us-80492710
-extern "C" void func_8048E69C() {}
+extern "C" int func_8048EA9C(void* self) { return 1; }
 // LLM-HARNESS-END: us-80492710
 
 // LLM-HARNESS-BEGIN: us-80492aac

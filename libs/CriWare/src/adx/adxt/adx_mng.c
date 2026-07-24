@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803826f8
-void ADXMNG_SetFramework() {}
+void ADXMNG_SetFramework(u32 val) {}
 // LLM-HARNESS-END: us-803826f8
 
 // LLM-HARNESS-BEGIN: us-80382704

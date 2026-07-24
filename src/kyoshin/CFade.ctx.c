@@ -1339,27 +1339,27 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80246498
-extern "C" void __ct__CFade() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-80246498
 
 // LLM-HARNESS-BEGIN: us-80246500
-extern "C" void __dt__5CFadeFv() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-80246500
 
 // LLM-HARNESS-BEGIN: us-80246554
-extern "C" void func_8024439C() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-80246554
 
 // LLM-HARNESS-BEGIN: us-802465a0
-extern "C" void func_802443E8() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-802465a0
 
 // LLM-HARNESS-BEGIN: us-80246618
-extern "C" void func_80244460() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-80246618
 
 // LLM-HARNESS-BEGIN: us-80246644
-extern "C" void func_8024448C() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-80246644
 
 // LLM-HARNESS-BEGIN: us-802466c0
@@ -1371,19 +1371,19 @@ extern "C" u8 func_80244510(void* self) { return ((u8*)self)[0x27]; }
 // LLM-HARNESS-END: us-802466c8
 
 // LLM-HARNESS-BEGIN: us-802466d0
-extern "C" void func_80244518() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-802466d0
 
 // LLM-HARNESS-BEGIN: us-802466f0
-extern "C" void func_80244538() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-802466f0
 
 // LLM-HARNESS-BEGIN: us-80246710
-extern "C" void func_80244558() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-80246710
 
 // LLM-HARNESS-BEGIN: us-8024675c
-extern "C" void func_802445A4() {}
+extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8024675c
 
 // LLM-HARNESS-BEGIN: us-802467a8

@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-802655c8
-extern "C" void __ct__CMenuPassiveSkill() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802655c8
 
 // LLM-HARNESS-BEGIN: us-80265698
-extern "C" void __dt__17CMenuPassiveSkillFv(void* self) {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265698
 
 // LLM-HARNESS-BEGIN: us-80265710
-extern "C" void Init__17CMenuPassiveSkillFv() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265710
 
 // LLM-HARNESS-BEGIN: us-80265b7c
-extern "C" void Term__17CMenuPassiveSkillFv() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265b7c
 
 // LLM-HARNESS-BEGIN: us-80265be8
-extern "C" void Move__17CMenuPassiveSkillFv() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265be8
 
 // LLM-HARNESS-BEGIN: us-80265c9c
-extern "C" void cbRenderBefore__17CMenuPassiveSkillFv(void* self) {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265c9c
 
 // LLM-HARNESS-BEGIN: us-80265d40
-extern "C" void func_802638D0() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265d40
 
 // LLM-HARNESS-BEGIN: us-80265db4
-extern "C" void func_80263944() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265db4
 
 // LLM-HARNESS-BEGIN: us-80265dc4
-extern "C" void func_80263954() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265dc4
 
 // LLM-HARNESS-BEGIN: us-80265e54
-extern "C" void func_802639E4() {}
+extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80265e54
 
 // LLM-HARNESS-BEGIN: us-80265ea4

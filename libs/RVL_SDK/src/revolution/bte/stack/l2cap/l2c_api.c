@@ -53,5 +53,5 @@ void L2CA_SetTraceLevel() {}
 // LLM-HARNESS-END: us-802f9e00
 
 // LLM-HARNESS-BEGIN: us-802f9e1c
-void L2CA_RegisterCompression() {}
+void L2CA_RegisterCompression(void) {}
 // LLM-HARNESS-END: us-802f9e1c

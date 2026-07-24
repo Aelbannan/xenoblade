@@ -1339,7 +1339,10 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801f589c
-extern "C" bool func_801F3BE0() { return false; }
+extern "C" u32 func_801F3BE0(void) {
+    extern u32 lbl_eu_80664658;
+    return lbl_eu_80664658;
+}
 // LLM-HARNESS-END: us-801f589c
 
 // LLM-HARNESS-BEGIN: us-801f58a4

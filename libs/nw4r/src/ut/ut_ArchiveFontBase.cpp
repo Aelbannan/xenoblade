@@ -25,7 +25,7 @@ extern "C" void SetResourceBuffer__Q44nw4r2ut6detail15ArchiveFontBaseFPvPQ34nw4r
 // LLM-HARNESS-END: us-8042f79c
 
 // LLM-HARNESS-BEGIN: us-8042f7d8
-extern "C" void RemoveResourceBuffer__Q44nw4r2ut6detail15ArchiveFontBaseFv() {}
+extern "C" void RemoveResourceBuffer__Q44nw4r2ut6detail15ArchiveFontBaseFv(void) {}
 // LLM-HARNESS-END: us-8042f7d8
 
 // LLM-HARNESS-BEGIN: us-8042f7e4

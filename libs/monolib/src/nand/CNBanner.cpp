@@ -13,15 +13,15 @@ extern "C" void __dt__8CNBannerFv() {}
 // LLM-HARNESS-END: us-804f9794
 
 // LLM-HARNESS-BEGIN: us-804f9870
-extern "C" void func_804F52F8__8CNBannerFPCc() {}
+extern "C" void func_804F52F8__8CNBannerFPCc(void) {}
 // LLM-HARNESS-END: us-804f9870
 
 // LLM-HARNESS-BEGIN: us-804f987c
-extern "C" void func_804F5304__8CNBannerFPCc() {}
+extern "C" void func_804F5304__8CNBannerFPCc(void) {}
 // LLM-HARNESS-END: us-804f987c
 
 // LLM-HARNESS-BEGIN: us-804f9888
-extern "C" void func_804F5310__8CNBannerFPCc() {}
+extern "C" void func_804F5310__8CNBannerFPCc(void) {}
 // LLM-HARNESS-END: us-804f9888
 
 // LLM-HARNESS-BEGIN: us-804f9894

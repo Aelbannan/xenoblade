@@ -49,11 +49,11 @@ void rfc_process_rls() {}
 // LLM-HARNESS-END: us-8030322c
 
 // LLM-HARNESS-BEGIN: us-803032b8
-void rfc_process_nsc() {}
+void rfc_process_nsc(void) {}
 // LLM-HARNESS-END: us-803032b8
 
 // LLM-HARNESS-BEGIN: us-803032bc
-int rfc_process_test_rsp() { return 0; }
+void rfc_process_test_rsp(void) {}
 // LLM-HARNESS-END: us-803032bc
 
 // LLM-HARNESS-BEGIN: us-803032c4

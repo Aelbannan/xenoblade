@@ -2293,23 +2293,23 @@ void ocUnitRegist();
 /* end "kyoshin/plugin/ocUnit.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8003c18c
-extern "C" void func_8003BC10() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c18c
 
 // LLM-HARNESS-BEGIN: us-8003c2e0
-extern "C" void CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv() {}
+extern "C" int CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv(void* self) { return (signed char)((u8*)self)[0]; }
 // LLM-HARNESS-END: us-8003c2e0
 
 // LLM-HARNESS-BEGIN: us-8003c2ec
-extern "C" void CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv() {}
+extern "C" int CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv(void* self) { return (signed char)((u8*)self)[0]; }
 // LLM-HARNESS-END: us-8003c2ec
 
 // LLM-HARNESS-BEGIN: us-8003c2f8
-extern "C" void func_8003BD7C() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c2f8
 
 // LLM-HARNESS-BEGIN: us-8003c5c0
-extern "C" void func_8003C044() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c5c0
 
 // LLM-HARNESS-BEGIN: us-8003c644
@@ -2317,23 +2317,23 @@ extern "C" bool CfObject_UnkVirtualFunc23__Q22cf8CfObjectFv() { return false; }
 // LLM-HARNESS-END: us-8003c644
 
 // LLM-HARNESS-BEGIN: us-8003c64c
-extern "C" void func_8003C0D0() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c64c
 
 // LLM-HARNESS-BEGIN: us-8003c6d0
-extern "C" void func_8003C154() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c6d0
 
 // LLM-HARNESS-BEGIN: us-8003c754
-extern "C" void func_8003C1D8() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c754
 
 // LLM-HARNESS-BEGIN: us-8003c7cc
-extern "C" void CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c7cc
 
 // LLM-HARNESS-BEGIN: us-8003c7dc
-extern "C" void func_8003C260() {}
+extern "C" bool isValid() { return false; }
 // LLM-HARNESS-END: us-8003c7dc
 
 // LLM-HARNESS-BEGIN: us-8003c868

@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80390c64
-void AHXDCD_SetupAtbl() {}
+void AHXDCD_SetupAtbl(u32 val) {}
 // LLM-HARNESS-END: us-80390c64
 
 // LLM-HARNESS-BEGIN: us-80390c70

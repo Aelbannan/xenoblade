@@ -16469,9 +16469,9 @@ public:
     float unk4C; // 0x4C
     s16 unk50; // 0x50
     s16 unk52; // 0x52
-    s16 unk54; // 0x54 position / client origin x
-    s16 unk56; // 0x56 position / client origin y
-    s16 unk58; // 0x58 border thickness
+    s16 mContentX; // 0x54 client origin x
+    s16 mContentY; // 0x56 client origin y
+    s16 mBorder; // 0x58 border thickness
     s16 unk5A; // 0x5A
 };
 
@@ -16485,23 +16485,22 @@ extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
 /* "libs/monolib/include/monolib/core/CViewRectData.hpp" line 3 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
 
-// CViewRectDataCore: viewport rectangle state at CView::unk1C8 (size 0x14).
+// CViewRectDataCore: viewport rectangle state at CView::mRectData (size 0x14).
 class CViewRectDataCore {
 public:
     CViewRectDataCore* func_80459270();
     void func_804592F0(const ml::CPnt16& size);
     void func_80459384(const ml::CPnt16& maxSize);
 
-    s16 unk0;
-    s16 unk2;
-    s16 unk4;
-    s16 unk6;
-    s16 unk8;
-    s16 unkA;
-    s16 unkC;
-    s16 unkE;
-    s16 unk10;
-    s16 unk12;
+    // Viewport rect data: first two pairs are CPnt16 structs for lwz/stw copies.
+    ml::CPnt16 mViewSize;      // offset 0x00 - current viewport size (x=width, y=height)
+    ml::CPnt16 mBoundsSize;    // offset 0x04 - maximum bounding size
+    s16 mScrollX;              // offset 0x08 - horizontal scroll/offset
+    s16 mScrollY;              // offset 0x0A - vertical scroll/offset
+    s16 mInsetLeft;            // offset 0x0C - left inset
+    s16 mInsetTop;             // offset 0x0E - top inset
+    s16 mInsetRight;           // offset 0x10 - right inset
+    s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
 
@@ -16579,6 +16578,7 @@ public:
     s16 getSplitLine();
     void setSplitLine(s16 line);
     void setCurrent();
+    bool hasCurrent() const;
     void updateMsg();
     void renderView();
 
@@ -16600,19 +16600,19 @@ public:
     
     void getRect(ml::CRect16& rect){
         ml::CRect16 tempRect;
-        getFrame2ViewOffset(tempRect, &unk1DC);
+        getFrame2ViewOffset(tempRect, &mFrame);
 
-        rect.mPos.x = tempRect.mPos.x + unk1DC.unk54;
-        rect.mPos.y = tempRect.mPos.y + unk1DC.unk56;
-        rect.mSize.x = unk1C8.unk0;
-        rect.mSize.y = unk1C8.unk2;
+        rect.mPos.x = tempRect.mPos.x + mFrame.mContentX;
+        rect.mPos.y = tempRect.mPos.y + mFrame.mContentY;
+        rect.mSize.x = mRectData.mViewSize.x;
+        rect.mSize.y = mRectData.mViewSize.y;
     }
 
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CViewRectDataCore unk1C8; //0x1C8
-    CViewFrame unk1DC; //0x1DC
+    CViewRectDataCore mRectData; //0x1C8
+    CViewFrame mFrame; //0x1DC
     CViewResList unk238; //0x238 reslist<WORK_ID>
     CViewResList unk258; //0x258 reslist<IWorkEvent*>
     u32 unk278; //0x278
@@ -16626,7 +16626,8 @@ public:
     u32 unk3FC; //0x3FC
     ml::FixStr<64> mName; //0x400
     ml::CVec4 unk444; //0x444
-    u8 unk454[0x45C - 0x454]; //0x454
+    u32 mGXCacheId; //0x454
+    float mAlpha; //0x458
     void* unk45C; //0x45C
     u32 unk460; //0x460
     s16 unk464;
@@ -233746,6 +233747,8 @@ public:
     static CViewRoot* create(CWorkThread* pParent);
     static CViewRoot* getInstance();
     static CView* getCurrent();
+    static bool isCurrent(const CView* view);
+    static bool isCurrentChild(const CView* view, const CView* current);
     static bool isInitialized();
     static void destroyProc(CProc* pProc);
     static void setCurrent(CView* view);
@@ -244195,11 +244198,13 @@ private:
         u32 wrapS : 2;
         u32 wrapT : 2;
         u32 minFilter : 3;
-        u32 magFilter : 3;
+        // Retail Get(GXTexObj) LOD path: extrwi mag@12 (1), bias@13, edge@14, aniso@15 (2).
+        // magFilter is 1 bit here (GX_NEAR/GX_LINEAR); paletteFormat follows anisotropy.
+        u32 magFilter : 1;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 paletteFormat : 2;
         u32 anisotropy : 2;
+        u32 paletteFormat : 2;
     } mBits; // at 0x18
 };
 
@@ -245288,18 +245293,18 @@ public:
     //0x0-1ec: CProc
     CView* mView; //0x1EC
     ShutdownState mShutdownState; //0x1F0
-    s16 unk1F4;
-    s16 unk1F6;
-    s16 unk1F8;
-    u8 unk1FA[2];
+    s16 mSceneReqId;
+    s16 mSceneReqId2;
+    s16 mSceneReqFlag;
+    u8 mPad1FA[2];
     ml::FixStr<32> unk1FC;
     u32 mTaskManUpdateCount; //0x220
-    float unk224;
-    int unk228;
-    u32 unk22C;
-    s16 unk230; //0x230 - letterbox half-band (retail ctor: 57)
-    u16 unk232; // pad
-    u32 unk234; //0x234 - sizeof(CGame)==0x238 for retail GameMain allocate
+    float mPrevBgmSpeed;
+    int mPauseRefCount;
+    u32 mUnk22C;
+    s16 mLetterboxBorder; //0x230 - letterbox half-band (retail ctor: 57)
+    u16 mPad232; // pad
+    u32 mAllocSize; //0x234 - sizeof(CGame)==0x238 for retail GameMain allocate
 
 private:
     static const int MAX_CHILD = 8;
@@ -250433,19 +250438,19 @@ CGame::CGame(const char* pName, CWorkThread* pParent) :
     CProc(pName, pParent, MAX_CHILD),
     mView(nullptr),
     mShutdownState(SHUTDOWN_STATE_0),
-    unk1F4(-1),
-    unk1F6(-1),
-    unk1F8(0),
+    mSceneReqId(-1),
+    mSceneReqId2(-1),
+    mSceneReqFlag(0),
     unk1FC(),
     mTaskManUpdateCount(1),
-    unk224(1.0f),
-    unk228(0) {
+    mPrevBgmSpeed(1.0f),
+    mPauseRefCount(0) {
     spInstance = this;
     CLibHbm::func_8045D5C8(1);
     CWorkSystem::setExitFunc(&onExit);
     wkSetEvent(EVT_4);
     CDeviceVI::isTvFormatPal();
-    unk230 = 57;
+    mLetterboxBorder = 57;
 }
 
 CGame::~CGame() {
@@ -250482,19 +250487,19 @@ void CGame::setTaskManagerUpdateCount(u32 count) {
 }
 
 void CGame::wkUpdate() {
-    if ((s16)unk1F4 >= 0 && CTaskGame::getInstance() != nullptr) {
+    if ((s16)mSceneReqId >= 0 && CTaskGame::getInstance() != nullptr) {
         if (unk1FC.size() == 0) {
-            CTaskGame::getInstance()->func_80040A3C(unk1F4, unk1F6, nullptr, unk1F8);
+            CTaskGame::getInstance()->func_80040A3C(mSceneReqId, mSceneReqId2, nullptr, mSceneReqFlag);
         } else {
-            CTaskGame::getInstance()->func_80040A3C(unk1F4, unk1F6, unk1FC.c_str(), unk1F8);
+            CTaskGame::getInstance()->func_80040A3C(mSceneReqId, mSceneReqId2, unk1FC.c_str(), mSceneReqFlag);
         }
 
-        unk1F4 = -1;
-        unk1F6 = -1;
+        mSceneReqId = -1;
+        mSceneReqId2 = -1;
         // Preserve the retail string-pool reference to the terminator after
         // "CGameRestart"; a plain "" resolves to a different pool entry.
         unk1FC = "CGameRestart" + 13;
-        unk1F8 = 0;
+        mSceneReqFlag = 0;
     }
 
     if (isNoEvent() && CTaskGame::getInstance() != nullptr) {
@@ -250542,10 +250547,10 @@ void CGame::func_800395F4(bool wide) {
     }
 
     if (!wide) {
-        // s32 height → self=r30 / height=r31 (retail). Letterbox from live unk230.
+        // s32 height → self=r30 / height=r31 (retail). Letterbox from live mLetterboxBorder.
         s32 height = (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
-            - ((u32)(u16)spInstance->unk230 << 1));
-        setViewRect(self->mView, 0, (s16)((u16)self->unk230 - 1),
+            - ((u32)(u16)spInstance->mLetterboxBorder << 1));
+        setViewRect(self->mView, 0, (s16)((u16)self->mLetterboxBorder - 1),
             CDeviceVI::getRenderModeObj()->fbWidth, (s16)height);
     } else {
         // Soft-cap ~99.8%: height in r30 (retail r31); pinning self scrambles schedule.
@@ -250582,10 +250587,10 @@ bool CGame::wkStandbyLogin() {
             CDeviceVI::getRenderModeObj()->efbHeight);
     } else {
         setViewRect(mView, 0,
-            (s16)((u16)unk230 - 1),
+            (s16)((u16)mLetterboxBorder - 1),
             CDeviceVI::getRenderModeObj()->fbWidth,
             (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
-                - ((u32)(u16)unk230 << 1)));
+                - ((u32)(u16)mLetterboxBorder << 1)));
     }
 
     mView->unk444 = CVec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -250695,8 +250700,8 @@ bool CGame::wkStandbyExceptionRetry(u32 wid) {
 void CGame::OnPauseTrigger(bool paused) {
     if (cf::CfGameManager::func_8007E1B4()) {
         if (paused) {
-            if (unk228 == 0) {
-                unk224 = func_801C0014();
+            if (mPauseRefCount == 0) {
+                mPrevBgmSpeed = func_801C0014();
                 func_801BFFAC(0, 0);
                 func_801644BC(1);
 
@@ -250708,10 +250713,10 @@ void CGame::OnPauseTrigger(bool paused) {
                 func_80044FBC(1);
             }
 
-            unk228++;
+            mPauseRefCount++;
         } else {
-            if (unk228 <= 1) {
-                func_801BFFAC(unk224, 0);
+            if (mPauseRefCount <= 1) {
+                func_801BFFAC(mPrevBgmSpeed, 0);
                 func_801644BC(0);
 
                 if (cf::CBattleManager::getInstance() != nullptr) {
@@ -250722,9 +250727,9 @@ void CGame::OnPauseTrigger(bool paused) {
                 func_80044FBC(0);
             }
 
-            unk228--;
-            if (unk228 < 0) {
-                unk228 = 0;
+            mPauseRefCount--;
+            if (mPauseRefCount < 0) {
+                mPauseRefCount = 0;
             }
         }
     }

@@ -96,10 +96,16 @@ void CScn::Draw() {
 
 
 // LLM-HARNESS-BEGIN: us-80499ca0
-extern "C" void __ct__CScn() {}
+extern "C" bool func_80495E84(void* self) {
+    extern bool func_8048CB14(void*);
+    return func_8048CB14(*(void**)((char*)self + 0x60));
+}
 // LLM-HARNESS-END: us-80499ca0
 // LLM-HARNESS-BEGIN: us-80499ed8
-extern "C" void func_80495E60() {}
+extern "C" bool func_80495E84(void* self) {
+    extern bool func_8048CB14(void*);
+    return func_8048CB14(*(void**)((char*)self + 0x60));
+}
 // LLM-HARNESS-END: us-80499ed8
 // LLM-HARNESS-BEGIN: us-80499efc
 extern "C" bool func_80495E84(void* self) {
@@ -255,10 +261,10 @@ extern "C" int func_8049698C() {
 }
 // LLM-HARNESS-END: us-8049aa68
 // LLM-HARNESS-BEGIN: us-8049aa70
-extern "C" void func_80496994__Fv() {}
+extern "C" void func_80496994__Fv(void) {}
 // LLM-HARNESS-END: us-8049aa70
 // LLM-HARNESS-BEGIN: us-8049aa74
-extern "C" void func_80496998__Fv() {}
+extern "C" void func_80496998__Fv(void) {}
 // LLM-HARNESS-END: us-8049aa74
 // LLM-HARNESS-BEGIN: us-8049aa78
 extern "C" void func_8049699C() {}

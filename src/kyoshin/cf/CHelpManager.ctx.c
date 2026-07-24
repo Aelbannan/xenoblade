@@ -1339,39 +1339,39 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80297e84
-extern "C" void __ct__Q22cf12CHelpManagerFv() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-80297e84
 
 // LLM-HARNESS-BEGIN: us-80297f20
-extern "C" void func_80295924() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-80297f20
 
 // LLM-HARNESS-BEGIN: us-80297f68
-extern "C" void __dt__Q22cf12CHelpManagerFv() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-80297f68
 
 // LLM-HARNESS-BEGIN: us-80297fa8
-extern "C" void func_802959AC() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-80297fa8
 
 // LLM-HARNESS-BEGIN: us-80298084
-extern "C" void func_80295A88() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-80298084
 
 // LLM-HARNESS-BEGIN: us-802981a8
-extern "C" void func_80295BAC() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-802981a8
 
 // LLM-HARNESS-BEGIN: us-802981f0
-extern "C" void func_80295BF4() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-802981f0
 
 // LLM-HARNESS-BEGIN: us-802982c4
-extern "C" void func_80295CC8() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-802982c4
 
 // LLM-HARNESS-BEGIN: us-8029832c
-extern "C" void func_80295D30() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-8029832c
 
 // LLM-HARNESS-BEGIN: us-8029837c
@@ -1428,5 +1428,5 @@ extern "C" void func_80296924() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-802983ac
-extern "C" void sinit_80295DB0() {}
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-802983ac

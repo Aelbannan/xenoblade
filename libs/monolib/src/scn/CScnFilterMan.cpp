@@ -5,27 +5,27 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804a0aa4
-extern "C" void __ct__CScnFilterMan() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0aa4
 
 // LLM-HARNESS-BEGIN: us-804a0b54
-extern "C" void func_8049C9F8() {}
+extern "C" void func_8049C9F8(void) {}
 // LLM-HARNESS-END: us-804a0b54
 
 // LLM-HARNESS-BEGIN: us-804a0b60
-extern "C" void __ct__reslist_CScnFilter() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0b60
 
 // LLM-HARNESS-BEGIN: us-804a0b9c
-extern "C" void __ct___reslist_base_CScnFilter() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0b9c
 
 // LLM-HARNESS-BEGIN: us-804a0bcc
-extern "C" void __dt___reslist_base_CScnFilter() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0bcc
 
 // LLM-HARNESS-BEGIN: us-804a0c50
-extern "C" void func_8049CAF4() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0c50
 
 // LLM-HARNESS-BEGIN: us-804a0cc8
@@ -33,19 +33,19 @@ extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0cc8
 
 // LLM-HARNESS-BEGIN: us-804a0ccc
-extern "C" void func_8049CB70() {}
+extern "C" void func_8049CB70(void) {}
 // LLM-HARNESS-END: us-804a0ccc
 
 // LLM-HARNESS-BEGIN: us-804a0cd8
-extern "C" void __dt__reslist_CScnFilter() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0cd8
 
 // LLM-HARNESS-BEGIN: us-804a0d30
-extern "C" void __ct__8049CBD4() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0d30
 
 // LLM-HARNESS-BEGIN: us-804a0d6c
-extern "C" void __ct__8049CC10() {}
+extern "C" void func_8049CB6C(void) {}
 // LLM-HARNESS-END: us-804a0d6c
 
 // LLM-HARNESS-BEGIN: us-804a0dcc
@@ -69,7 +69,7 @@ extern "C" void func_8049CDAC(void) {}
 // LLM-HARNESS-END: us-804a0f08
 
 // LLM-HARNESS-BEGIN: us-804a0f0c
-extern "C" void func_8049CDB0() {}
+void func_8049CDB0(void* param_1) { *(u32*)param_1 = 0; }
 // LLM-HARNESS-END: us-804a0f0c
 
 // LLM-HARNESS-BEGIN: us-804a0f18
@@ -157,11 +157,11 @@ extern "C" void func_8049D520() {}
 // LLM-HARNESS-END: us-804a167c
 
 // LLM-HARNESS-BEGIN: us-804a168c
-extern "C" void func_8049D530() {}
+extern "C" u32 func_8049D530(void* self) { return *(u32*)((u8*)self + 0); }
 // LLM-HARNESS-END: us-804a168c
 
 // LLM-HARNESS-BEGIN: us-804a1698
-extern "C" void func_8049D53C() {}
+extern "C" void func_8049D53C(void) {}
 // LLM-HARNESS-END: us-804a1698
 
 // LLM-HARNESS-BEGIN: us-804a16a4
@@ -221,11 +221,11 @@ extern "C" void func_8049D914() {}
 // LLM-HARNESS-END: us-804a1a70
 
 // LLM-HARNESS-BEGIN: us-804a1aa4
-extern "C" void func_8049D948() {}
+extern "C" void func_8049D948(void) {}
 // LLM-HARNESS-END: us-804a1aa4
 
 // LLM-HARNESS-BEGIN: us-804a1ab0
-extern "C" void func_8049D954() {}
+extern "C" u32 func_8049D954(void* self) { return *(u32*)((u8*)self + 0); }
 // LLM-HARNESS-END: us-804a1ab0
 
 // LLM-HARNESS-BEGIN: us-804a1abc
@@ -265,11 +265,14 @@ extern "C" void func_8049DB14() {}
 // LLM-HARNESS-END: us-804a1c70
 
 // LLM-HARNESS-BEGIN: us-804a1d4c
-extern "C" bool func_8049DBF0() { return false; }
+extern "C" u32 func_8049DBF0(void) {
+    extern u32 cacheInstance__9CDeviceGX;
+    return cacheInstance__9CDeviceGX;
+}
 // LLM-HARNESS-END: us-804a1d4c
 
 // LLM-HARNESS-BEGIN: us-804a1d54
-extern "C" void func_8049DBF8() {}
+extern "C" void func_8049DBF8(void) {}
 // LLM-HARNESS-END: us-804a1d54
 
 // LLM-HARNESS-BEGIN: us-804a1d60

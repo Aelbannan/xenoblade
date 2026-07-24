@@ -772,5 +772,5 @@ void SFMEM_AddRead() {}
 // LLM-HARNESS-END: us-803c3784
 
 // LLM-HARNESS-BEGIN: us-803c3790
-int SFMEM_Seek() { return 0; }
+int SFMEM_Seek(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c3790

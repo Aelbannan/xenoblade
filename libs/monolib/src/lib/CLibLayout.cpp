@@ -17,11 +17,14 @@ extern "C" void __dt__10CLibLayoutFv() {}
 // LLM-HARNESS-END: us-8046301c
 
 // LLM-HARNESS-BEGIN: us-80463090
-extern "C" void getAllocHandle__10CLibLayoutFv() {}
+extern "C" void getAllocHandle__10CLibLayoutFv(void) {}
 // LLM-HARNESS-END: us-80463090
 
 // LLM-HARNESS-BEGIN: us-8046309c
-extern "C" bool getInstance__10CLibLayoutFv() { return false; }
+extern "C" u32 getInstance__10CLibLayoutFv(void) {
+    extern u32 lbl_eu_80665710;
+    return lbl_eu_80665710;
+}
 // LLM-HARNESS-END: us-8046309c
 
 // LLM-HARNESS-BEGIN: us-804630a4

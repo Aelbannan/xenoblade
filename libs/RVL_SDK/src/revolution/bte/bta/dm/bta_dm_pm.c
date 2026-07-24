@@ -33,5 +33,5 @@ void bta_dm_pm_btm_status() {}
 // LLM-HARNESS-END: us-802e490c
 
 // LLM-HARNESS-BEGIN: us-802e4a2c
-void bta_dm_pm_timer() {}
+void bta_dm_pm_timer(void) {}
 // LLM-HARNESS-END: us-802e4a2c

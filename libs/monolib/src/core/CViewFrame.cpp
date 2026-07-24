@@ -1,6 +1,7 @@
 #include "monolib/core/CViewFrame.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/core/CDrawGX.hpp"
+#include "monolib/core/CViewRectData.hpp"
 
 extern "C" {
 void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
@@ -11,11 +12,15 @@ float lbl_eu_8066A318;
 float lbl_eu_8066A2F4;
 
 // Undefined here so MWCC cannot DCE same-TU empty stubs.
-void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw);
-void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* rect);
-void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* pos);
+void func_804406D8__10CViewFrameFPv(CViewFrame* self, CDrawGX* draw);
+void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw, ml::CRect16* rect);
+void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw, ml::CPnt16* pos);
 }
 
+// Render the view frame: compute the visible rectangle (with optional
+// border expansion for menu/target frames), clip to parent, and draw
+// border quads via CDrawGX. Returns false if the frame has no owner or
+// the computed content rect is degenerate (zero width/height).
 bool CViewFrame::render() {
     // Decl order first = higher addr. Target: col@0x30 view@0x28 frame@0x20
     // early rect@0x18 clip@0x10 scratch@0x08; CDrawGX nested late @0x40.
@@ -37,13 +42,13 @@ bool CViewFrame::render() {
     {
         int expand = 0;
         CView* owner = mOwner;
-        CView* view = owner->unk1DC.mOwner;
+        CView* view = owner->mFrame.mOwner;
         u32 flags = view->unk27C;
         // Volatile loads pin 0x230/232/1c8/1ca order; expand already live → retail r6/r5/r3/r0.
-        s16 px = *(volatile s16*)&view->unk1DC.unk54;
-        s16 py = *(volatile s16*)&view->unk1DC.unk56;
-        s16 sx = *(volatile s16*)&view->unk1C8.unk0;
-        s16 sy = *(volatile s16*)&view->unk1C8.unk2;
+        s16 px = *(volatile s16*)&view->mFrame.mContentX;
+        s16 py = *(volatile s16*)&view->mFrame.mContentY;
+        s16 sx = *(volatile s16*)&view->mRectData.mViewSize.x;
+        s16 sy = *(volatile s16*)&view->mRectData.mViewSize.y;
         ml::CRect16* r = (ml::CRect16*)&rect;
         r->mPos.x = px;
         r->mPos.y = py;
@@ -58,11 +63,11 @@ bool CViewFrame::render() {
         }
 
         if (expand != 0) {
-            view = *(CView* volatile*)&owner->unk1DC.mOwner;
+            view = *(CView* volatile*)&owner->mFrame.mOwner;
             expand = 0;
 
             {
-                s16 border = owner->unk1DC.unk58;
+                s16 border = owner->mFrame.mBorder;
                 rect.mSize.x = (s16)(rect.mSize.x + (s16)(border * 2));
             }
 
@@ -75,11 +80,11 @@ bool CViewFrame::render() {
 
             // Separate scopes so width-path border is dead before these lha 0x234.
             if (expand != 0) {
-                s16 b1 = owner->unk1DC.unk58;
+                s16 b1 = owner->mFrame.mBorder;
                 rect.mSize.y =
                     (s16)(rect.mSize.y + (s16)(b1 * 3 + 0x16));
             } else {
-                s16 b2 = owner->unk1DC.unk58;
+                s16 b2 = owner->mFrame.mBorder;
                 rect.mSize.y = (s16)(rect.mSize.y + (s16)(b2 * 2));
             }
         }
@@ -123,9 +128,9 @@ bool CViewFrame::render() {
         CView* own = mOwner;
         flagExpand = 0;
         flagInner = 0;
-        CView* vw = own->unk1DC.mOwner;
-        width = vw->unk1C8.unk0;
-        height = vw->unk1C8.unk2;
+        CView* vw = own->mFrame.mOwner;
+        width = vw->mRectData.mViewSize.x;
+        height = vw->mRectData.mViewSize.y;
 
         if ((vw->unk27C & 1) != 0) {
             if ((vw->unk278 & 1) == 0) {
@@ -139,7 +144,7 @@ bool CViewFrame::render() {
         }
 
         if (flagExpand != 0) {
-            border = own->unk1DC.unk58;
+            border = own->mFrame.mBorder;
             flagExpand = 0;
             // No outer (s16) on the sum: retail does add r31,r31,r0 without final extsh.
             width += (s16)(border * 2);
@@ -167,7 +172,7 @@ bool CViewFrame::render() {
 
             col = mFrameColor;
             {
-                float opacity = *(float*)((u8*)mOwner + 0x458);
+                float opacity = mOwner->mAlpha;
                 col.a = col.a * opacity;
             }
             draw.setCol(col);
@@ -202,7 +207,7 @@ bool CViewFrame::render() {
 
                 if (drawSplit != 0) {
                     func_804406D8__10CViewFrameFPv(this, &draw);
-                    s16 adj = (s16)(unk58 + 0x16);
+                    s16 adj = (s16)(mBorder + 0x16);
                     frameRect.mPos.y = (s16)(frameRect.mPos.y + adj);
                     frameRect.mSize.y = (s16)(frameRect.mSize.y - adj);
                 }
@@ -217,16 +222,20 @@ bool CViewFrame::render() {
     return true;
 }
 
-// Draw frame border quads into CDrawGX (outer edges + inset 1px lines).
-extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* drawPtr,
-                                                 void* rectPtr) {
-    CDrawGX* draw = (CDrawGX*)drawPtr;
-    ml::CRect16* rect = (ml::CRect16*)rectPtr;
+// Draw the 8-segment frame border into the CDrawGX batch: 4 outer
+// edge rectangles (left, bottom, right, top) with the frame colour,
+// then 4 inner 1px highlight/outline lines (right+bottom outer
+// outline, top+left inner highlight) at the scaled-down colour.
+// @param self  CViewFrame with mBorder thickness and mFrameColor.
+// @param draw  Target CDrawGX draw context.
+// @param rect  Bounding rectangle of the frame area to draw.
+extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw,
+                                                 ml::CRect16* rect) {
     ml::CCol4 col;
     ml::CRect16 piece;
-    s16 border = self->unk58;
+    s16 border = self->mBorder;
     float scale = lbl_eu_8066A318;
-    float opacity = *(float*)((u8*)self->mOwner + 0x458);
+    float opacity = self->mOwner->mAlpha;
 
     col.r = self->mFrameColor.r * scale;
     col.g = self->mFrameColor.g * scale;
@@ -307,9 +316,16 @@ extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* drawPtr
 }
 
 // LLM-HARNESS-BEGIN: us-80442564
+// CViewFrame default constructor — empty; initialisation is done by the
+// placement-new caller or caller-side inline init.
 extern "C" void __ct__CViewFrame() {}
 // LLM-HARNESS-END: us-80442564
 // LLM-HARNESS-BEGIN: us-80442600
+// Compute the offset from the frame's outer rect to its viewport content
+// area (i.e. how much the content region is inset by border + split gap).
+// Only applies when the owner view has border-expand/split flags enabled.
+// @param out    Receives the offset as a position vector.
+// @param frame  The frame whose border inset to compute.
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame) {
     out->mPos.x = 0;
@@ -327,8 +343,8 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
         return;
     }
 
-    out->mPos.x = (s16)(out->mPos.x + frame->unk58);
-    out->mPos.y = (s16)(out->mPos.y + frame->unk58);
+    out->mPos.x = (s16)(out->mPos.x + frame->mBorder);
+    out->mPos.y = (s16)(out->mPos.y + frame->mBorder);
 
     apply = 0;
     owner = frame->mOwner;
@@ -342,20 +358,24 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
         return;
     }
 
-    out->mPos.y = (s16)(out->mPos.y + (s16)(frame->unk58 + 0x16));
+    out->mPos.y = (s16)(out->mPos.y + (s16)(frame->mBorder + 0x16));
 }
 // LLM-HARNESS-END: us-80442600
 
-// Owner client rect into out; optional border expand (same gates as render()).
+// Get the client rect of the frame's owner view, optionally expanded
+// by the border thickness (same gate logic as render()). The result
+// is the visible content area in the owner's coordinate space.
+// @param out    Receives the client rectangle.
+// @param frame  The frame whose owner's client rect to query.
 extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame) {
     CView* view = frame->mOwner;
     int expand = 0;
 
-    out->mPos.x = view->unk1DC.unk54;
-    out->mPos.y = view->unk1DC.unk56;
-    out->mSize.x = view->unk1C8.unk0;
-    out->mSize.y = view->unk1C8.unk2;
+    out->mPos.x = view->mFrame.mContentX;
+    out->mPos.y = view->mFrame.mContentY;
+    out->mSize.x = view->mRectData.mViewSize.x;
+    out->mSize.y = view->mRectData.mViewSize.y;
 
     if ((view->unk27C & 1) != 0) {
         u32 mode = view->unk278;
@@ -368,7 +388,7 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
     }
 
     {
-        s16 border = frame->unk58;
+        s16 border = frame->mBorder;
         out->mSize.x = (s16)(out->mSize.x + (s16)(border * 2));
     }
 
@@ -381,14 +401,16 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
         }
     }
     if (expand != 0) {
-        s16 border = frame->unk58;
+        s16 border = frame->mBorder;
         out->mSize.y = (s16)(out->mSize.y + (s16)(border * 3 + 0x16));
     } else {
-        s16 border = frame->unk58;
+        s16 border = frame->mBorder;
         out->mSize.y = (s16)(out->mSize.y + (s16)(border * 2));
     }
 }
 
 // LLM-HARNESS-BEGIN: us-80444550
+// Detach the frame from a CWorkThread's render list. Currently a stub;
+// the retail function unlinks from a linked-list render-work chain.
 extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
 // LLM-HARNESS-END: us-80444550

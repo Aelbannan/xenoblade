@@ -25,7 +25,7 @@ void MWSFD_GetCond() {}
 // LLM-HARNESS-END: us-803a553c
 
 // LLM-HARNESS-BEGIN: us-803a5554
-int MWSFD_GetStmHn() { return 0; }
+u32 MWSFD_GetStmHn(void* self) { return *(u32*)((u8*)self + 0x5c); }
 // LLM-HARNESS-END: us-803a5554
 
 // LLM-HARNESS-BEGIN: us-803a555c

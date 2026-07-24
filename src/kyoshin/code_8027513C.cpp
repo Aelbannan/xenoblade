@@ -5,43 +5,43 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802775c0
-extern "C" void initCamControlInstances() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-802775c0
 
 // LLM-HARNESS-BEGIN: us-8027767c
-extern "C" void func_802751F8() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-8027767c
 
 // LLM-HARNESS-BEGIN: us-802776bc
-extern "C" void func_80275238() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-802776bc
 
 // LLM-HARNESS-BEGIN: us-802776fc
-extern "C" void func_80275278() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-802776fc
 
 // LLM-HARNESS-BEGIN: us-8027773c
-extern "C" void func_802752B8() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-8027773c
 
 // LLM-HARNESS-BEGIN: us-8027777c
-extern "C" void func_802752F8() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-8027777c
 
 // LLM-HARNESS-BEGIN: us-802777bc
-extern "C" void func_80275338() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-802777bc
 
 // LLM-HARNESS-BEGIN: us-802777fc
-extern "C" void func_80275378() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-802777fc
 
 // LLM-HARNESS-BEGIN: us-8027783c
-extern "C" void func_802753B8() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-8027783c
 
 // LLM-HARNESS-BEGIN: us-8027787c
-extern "C" void func_802753F8() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-8027787c
 
 // LLM-HARNESS-BEGIN: us-802778d8

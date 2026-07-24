@@ -45,7 +45,7 @@ extern "C" void func_804B2F80() {}
 // LLM-HARNESS-END: us-804b70dc
 
 // LLM-HARNESS-BEGIN: us-804b7104
-extern "C" void func_804B2FA8() {}
+extern "C" u32 func_804B2FA8(u32 val) { return (val >> 16) & 0xFF; }
 // LLM-HARNESS-END: us-804b7104
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

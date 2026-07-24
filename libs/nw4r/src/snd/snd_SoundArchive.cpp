@@ -232,5 +232,5 @@ void SoundArchive::SetExternalFileRoot(const char* pExtFileRoot) {
 extern "C" u32 GetSoundCount__Q34nw4r3snd12SoundArchiveCFv(void* self) { return ((u32(*)(void*))GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)((char*)self + 0x4); }
 // LLM-HARNESS-END: us-8041eb78
 // LLM-HARNESS-BEGIN: us-8041ebf8
-extern "C" bool detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv() { return false; }
+extern "C" void detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(void) {}
 // LLM-HARNESS-END: us-8041ebf8

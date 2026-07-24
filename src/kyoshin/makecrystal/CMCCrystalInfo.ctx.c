@@ -1339,27 +1339,27 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8021c48c
-extern "C" void __ct__CMCCrystalInfo() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c48c
 
 // LLM-HARNESS-BEGIN: us-8021c510
-extern "C" void __dt__14CMCCrystalInfoFv() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c510
 
 // LLM-HARNESS-BEGIN: us-8021c570
-extern "C" void func_8021A718() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c570
 
 // LLM-HARNESS-BEGIN: us-8021c5d8
-extern "C" void func_8021A780() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c5d8
 
 // LLM-HARNESS-BEGIN: us-8021c698
-extern "C" void func_8021A840() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c698
 
 // LLM-HARNESS-BEGIN: us-8021c6b8
-extern "C" void func_8021A860() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c6b8
 
 // LLM-HARNESS-BEGIN: us-8021c744
@@ -1367,19 +1367,19 @@ extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c744
 
 // LLM-HARNESS-BEGIN: us-8021c74c
-extern "C" void func_8021A8F4() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c74c
 
 // LLM-HARNESS-BEGIN: us-8021c770
-extern "C" void func_8021A918() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c770
 
 // LLM-HARNESS-BEGIN: us-8021c794
-extern "C" void func_8021A93C() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c794
 
 // LLM-HARNESS-BEGIN: us-8021c7b8
-extern "C" void func_8021A960() {}
+extern "C" u8 func_8021A8EC(void* self) { return ((u8*)self)[0x50]; }
 // LLM-HARNESS-END: us-8021c7b8
 
 // LLM-HARNESS-BEGIN: us-8021c7dc

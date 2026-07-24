@@ -1,7 +1,11 @@
 
 
 // LLM-HARNESS-BEGIN: us-802844a4
-extern "C" void func_80282020() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-802844a4
 // LLM-HARNESS-BEGIN: us-802844cc
 extern "C" int func_802A0804(int, int);
@@ -39,28 +43,60 @@ extern "C" void func_80282490() {}
 // LLM-HARNESS-END: us-80284914
 
 // LLM-HARNESS-BEGIN: us-80283da8
-extern "C" void func_80281924() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-80283da8
 // LLM-HARNESS-BEGIN: us-80283ddc
-extern "C" void func_80281958() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-80283ddc
 // LLM-HARNESS-BEGIN: us-8028413c
-extern "C" void func_80281CB8() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-8028413c
 // LLM-HARNESS-BEGIN: us-80284174
-extern "C" void func_80281CF0() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-80284174
 // LLM-HARNESS-BEGIN: us-802843bc
-extern "C" void func_80281F38() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-802843bc
 // LLM-HARNESS-BEGIN: us-80284424
-extern "C" void func_80281FA0() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-80284424
 // LLM-HARNESS-BEGIN: us-802844d8
-extern "C" void func_80282054() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-802844d8
 // LLM-HARNESS-BEGIN: us-80284520
-extern "C" void func_8028209C() {}
+extern "C" int func_802A0804(int, int);
+
+extern "C" int func_80282048(int arg) {
+    return func_802A0804(0xb3, arg);
+}
 // LLM-HARNESS-END: us-80284520
 // LLM-HARNESS-BEGIN: us-80284558
 extern "C" void func_802820D4() {}

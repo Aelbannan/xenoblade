@@ -91,11 +91,11 @@ void CView::setRect(const ml::CRect16& rect) {
 
     if ((unk278 & 1) != 0) {
         getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-            (ml::CRect16*)&splitPos, &unk1DC);
+            (ml::CRect16*)&splitPos, &mFrame);
         splitSize.x = -splitPos.x;
         parentSnap = mParent;
         splitSize.y = -splitPos.y;
-        *(u32*)&unk1DC.unk54 = *(u32*)&splitSize;
+        *(u32*)&mFrame.mContentX = *(u32*)&splitSize;
 
         if (getInstance__9CViewRootFv() == parentSnap) {
             sourceParent = nullptr;
@@ -118,7 +118,7 @@ void CView::setRect(const ml::CRect16& rect) {
 
         if (sourceParent != nullptr) {
             func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                &unk1C8, *(const ml::CPnt16*)((u8*)sourceParent + 0x1CC));
+                &mRectData, *(const ml::CPnt16*)((u8*)sourceParent + 0x1CC));
         } else {
             {
                 u16 modeHeight;
@@ -131,22 +131,22 @@ void CView::setRect(const ml::CRect16& rect) {
                 modeSize.x = modeWidth;
                 modeSize.y = modeHeight;
                 func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                    &unk1C8, *(const ml::CPnt16*)&modeSize);
+                    &mRectData, *(const ml::CPnt16*)&modeSize);
             }
         }
         goto setRect_tail;
     }
 
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&normalPos, &unk1DC);
+        (ml::CRect16*)&normalPos, &mFrame);
     normalSize.x = rect.mPos.x - normalPos.x;
     normalSize.y = rect.mPos.y - normalPos.y;
-    *(u32*)&unk1DC.unk54 = *(u32*)&normalSize;
-    func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, rect.mSize);
+    *(u32*)&mFrame.mContentX = *(u32*)&normalSize;
+    func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
 
 setRect_tail:
     if ((unk278 & 0x10) == 0) {
-        func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(&unk1C8, rect.mSize);
+        func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(&mRectData, rect.mSize);
     }
 }
 
@@ -167,7 +167,7 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
 }
 
 void CView::detachRenderWork(CWorkThread* pThread) {
-    unk1DC.detachRenderWork(pThread);
+    mFrame.detachRenderWork(pThread);
 }
 
 // Drain the context ring: classify each pending message and apply side effects.
@@ -704,7 +704,7 @@ renderView_after_cross:
         float z = unk444.z;
         float y = unk444.y;
         float x = unk444.x;
-        float scale = *(float*)&unk454[4];
+        float scale = mAlpha;
         float b = z * scale;
         float a = unk444.w;
         float g = y * scale;
@@ -718,10 +718,10 @@ renderView_after_cross:
 
 renderView_after_cache_color:
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
-                                                              &unk1DC);
-    savedSizeX = unk1C8.unk0;
-    savedSizeY = unk1C8.unk2;
-    yAccum = unk1DC.unk56;
+                                                              &mFrame);
+    savedSizeX = mRectData.mViewSize.x;
+    savedSizeY = mRectData.mViewSize.y;
+    yAccum = mFrame.mContentY;
     parentThread = mParent;
 
     if (getInstance__9CViewRootFv() == parentThread) {
@@ -733,8 +733,8 @@ renderView_after_cache_color:
 
 renderView_y_accum_body:
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
-                                                              &parentView->unk1DC);
-    yAccum = (s16)(yAccum + (s16)(parentView->unk1DC.unk56 + home30.mPos.y));
+                                                              &parentView->mFrame);
+    yAccum = (s16)(yAccum + (s16)(parentView->mFrame.mContentY + home30.mPos.y));
     parentThread = parentView->mParent;
     if (getInstance__9CViewRootFv() == parentThread) {
         parentView = nullptr;
@@ -749,19 +749,19 @@ renderView_y_accum_check:
     *reinterpret_cast<volatile s16*>(&home08.mPos.y) = yAccum;
 
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home34,
-                                                              &unk1DC);
+                                                              &mFrame);
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home28,
-                                                              &unk1DC);
+                                                              &mFrame);
 
     invalidRect = 0;
-    viewRect.mPos.y = (s16)(unk1DC.unk56 + home28.mPos.y);
-    viewRect.mPos.x = (s16)(unk1DC.unk54 + home28.mPos.x);
-    viewRect.mSize.x = unk1C8.unk0;
-    viewRect.mSize.y = unk1C8.unk2;
-    if (unk1C8.unk0 <= 0) {
+    viewRect.mPos.y = (s16)(mFrame.mContentY + home28.mPos.y);
+    viewRect.mPos.x = (s16)(mFrame.mContentX + home28.mPos.x);
+    viewRect.mSize.x = mRectData.mViewSize.x;
+    viewRect.mSize.y = mRectData.mViewSize.y;
+    if (mRectData.mViewSize.x <= 0) {
         goto renderView_mark_invalid;
     }
-    if (unk1C8.unk2 > 0) {
+    if (mRectData.mViewSize.y > 0) {
         goto renderView_after_size_gate1;
     }
 renderView_mark_invalid:
@@ -789,10 +789,10 @@ renderView_after_size_gate2:
         u32 maxSizeBad;
 
         maxSizeBad = 0;
-        if (unk1C8.unk4 > 0) {
+        if (mRectData.mBoundsSize.x > 0) {
             goto renderView_after_max_gate;
         }
-        if (unk1C8.unk6 > 0) {
+        if (mRectData.mBoundsSize.y > 0) {
             goto renderView_after_max_gate;
         }
         maxSizeBad = 1;
@@ -849,18 +849,18 @@ renderView_after_size_gate2:
             {
                 ml::CCol4 clearColor;
                 clearColor = *reinterpret_cast<ml::CCol4*>(&unk444);
-                clearColor.a *= *(float*)&unk454[4];
+                clearColor.a *= mAlpha;
                 draw.setCol(clearColor);
             }
         renderView_clear_begin:
-            *(u32*)((u8*)&draw + 0x1C) = *(u32*)unk454;
+            *(u32*)((u8*)&draw + 0x1C) = mGXCacheId;
             draw.begin(PRIM_QUADS, 1);
             getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
-                                                                      &unk1DC);
-            clearRect.mPos.y = (s16)(unk1DC.unk56 + home30.mPos.y);
-            clearRect.mPos.x = (s16)(unk1DC.unk54 + home30.mPos.x);
-            clearRect.mSize.x = unk1C8.unk0;
-            clearRect.mSize.y = unk1C8.unk2;
+                                                                      &mFrame);
+            clearRect.mPos.y = (s16)(mFrame.mContentY + home30.mPos.y);
+            clearRect.mPos.x = (s16)(mFrame.mContentX + home30.mPos.x);
+            clearRect.mSize.x = mRectData.mViewSize.x;
+            clearRect.mSize.y = mRectData.mViewSize.y;
             draw.add(clearRect);
             draw.end();
             if (colorUpdateOff != 0) {
@@ -874,14 +874,14 @@ renderView_scissor_setup:
         goto renderView_works_or_children;
     }
 
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home18, &unk1DC);
-    accumRect.mPos.y = (s16)(unk1DC.unk56 + home18.mPos.y);
-    accumRect.mPos.x = (s16)(unk1DC.unk54 + home18.mPos.x);
-    accumRect.mSize.x = unk1C8.unk0;
-    accumRect.mSize.y = unk1C8.unk2;
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home18, &mFrame);
+    accumRect.mPos.y = (s16)(mFrame.mContentY + home18.mPos.y);
+    accumRect.mPos.x = (s16)(mFrame.mContentX + home18.mPos.x);
+    accumRect.mSize.x = mRectData.mViewSize.x;
+    accumRect.mSize.y = mRectData.mViewSize.y;
 
-    accumX = unk1DC.unk54;
-    accumY = unk1DC.unk56;
+    accumX = mFrame.mContentX;
+    accumY = mFrame.mContentY;
 
     parentThread = mParent;
     if (getInstance__9CViewRootFv() == parentThread) {
@@ -893,9 +893,9 @@ renderView_scissor_setup:
 
 renderView_xy_accum_body:
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home14,
-                                                              &parentView->unk1DC);
-    accumX += (s16)(parentView->unk1DC.unk54 + home14.mPos.x);
-    accumY += (s16)(parentView->unk1DC.unk56 + home14.mPos.y);
+                                                              &parentView->mFrame);
+    accumX += (s16)(parentView->mFrame.mContentX + home14.mPos.x);
+    accumY += (s16)(parentView->mFrame.mContentY + home14.mPos.y);
     parentThread = parentView->mParent;
     if (getInstance__9CViewRootFv() == parentThread) {
         parentView = nullptr;
@@ -908,17 +908,17 @@ renderView_xy_accum_check:
         goto renderView_xy_accum_body;
     }
 
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home18, &unk1DC);
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home18, &mFrame);
     accumRect.mPos.x = (s16)(accumX + home18.mPos.x);
     accumRect.mPos.y = (s16)(accumY + home18.mPos.y);
 
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home08, &unk1DC);
-    parentAccumX = unk1DC.unk54;
-    parentAccumY = unk1DC.unk56;
-    parentAccumRect.mPos.x = (s16)(unk1DC.unk54 + home08.mPos.x);
-    parentAccumRect.mPos.y = (s16)(unk1DC.unk56 + home08.mPos.y);
-    parentAccumRect.mSize.x = unk1C8.unk0;
-    parentAccumRect.mSize.y = unk1C8.unk2;
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home08, &mFrame);
+    parentAccumX = mFrame.mContentX;
+    parentAccumY = mFrame.mContentY;
+    parentAccumRect.mPos.x = (s16)(mFrame.mContentX + home08.mPos.x);
+    parentAccumRect.mPos.y = (s16)(mFrame.mContentY + home08.mPos.y);
+    parentAccumRect.mSize.x = mRectData.mViewSize.x;
+    parentAccumRect.mSize.y = mRectData.mViewSize.y;
 
     parentThread = mParent;
     if (getInstance__9CViewRootFv() == parentThread) {
@@ -930,9 +930,9 @@ renderView_xy_accum_check:
 
 renderView_parent_accum_body:
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home14,
-                                                              &parentView->unk1DC);
-    parentAccumX += (s16)(parentView->unk1DC.unk54 + home14.mPos.x);
-    parentAccumY += (s16)(parentView->unk1DC.unk56 + home14.mPos.y);
+                                                              &parentView->mFrame);
+    parentAccumX += (s16)(parentView->mFrame.mContentX + home14.mPos.x);
+    parentAccumY += (s16)(parentView->mFrame.mContentY + home14.mPos.y);
     parentThread = parentView->mParent;
     if (getInstance__9CViewRootFv() == parentThread) {
         parentView = nullptr;
@@ -945,7 +945,7 @@ renderView_parent_accum_check:
         goto renderView_parent_accum_body;
     }
 
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home08, &unk1DC);
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home08, &mFrame);
     parentAccumRect.mPos.x = (s16)(parentAccumX + home08.mPos.x);
     parentAccumRect.mPos.y = (s16)(parentAccumY + home08.mPos.y);
 
@@ -989,11 +989,11 @@ renderView_frame_parent_ready:
     }
 
 renderView_local_scissor:
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home14, &unk1DC);
-    scissorSrc.mPos.y = (s16)(unk1DC.unk56 + home14.mPos.y);
-    scissorSrc.mPos.x = (s16)(unk1DC.unk54 + home14.mPos.x);
-    scissorSrc.mSize.x = unk1C8.unk0;
-    scissorSrc.mSize.y = unk1C8.unk2;
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home14, &mFrame);
+    scissorSrc.mPos.y = (s16)(mFrame.mContentY + home14.mPos.y);
+    scissorSrc.mPos.x = (s16)(mFrame.mContentX + home14.mPos.x);
+    scissorSrc.mSize.x = mRectData.mViewSize.x;
+    scissorSrc.mSize.y = mRectData.mViewSize.y;
     goto renderView_scissor_ready;
 
 renderView_parent_split_scissor:
@@ -1041,10 +1041,10 @@ renderView_scissor_ready:
     scissorOut.mPos.y = parentAccumRect.mPos.y;
     scissorOut.mSize.x = scissorSrc.mSize.x;
     scissorOut.mSize.y = scissorSrc.mSize.y;
-    insetRect.mPos.x = unk1C8.unk8;
-    insetRect.mPos.y = unk1C8.unkA;
-    insetRect.mSize.x = unk1C8.unk4;
-    insetRect.mSize.y = unk1C8.unk6;
+    insetRect.mPos.x = mRectData.mScrollX;
+    insetRect.mPos.y = mRectData.mScrollY;
+    insetRect.mSize.x = mRectData.mBoundsSize.x;
+    insetRect.mSize.y = mRectData.mBoundsSize.y;
     func_80442B54__9CViewRootFPvPv(&accumRect, &scissorOut, &insetRect);
 
 renderView_works_or_children:
@@ -1425,7 +1425,7 @@ renderView_tail:
 
 renderView_frame_call:
     // Keep frameParent live in r4 by passing as extra param to render
-    ((void(*)(CViewFrame*, CView*))render__10CViewFrameFv)(&unk1DC, frameParent);
+    ((void(*)(CViewFrame*, CView*))render__10CViewFrameFv)(&mFrame, frameParent);
 }
 
 void CView::setDisp(bool r4, bool r5) {
@@ -1543,8 +1543,8 @@ CView::CView(const char* pName, CWorkThread* pParent)
     void* sentinel0;
 
     zero = 0;
-    unk1C8.func_80459270();
-    __ct__CViewFrame(&unk1DC);
+    mRectData.func_80459270();
+    __ct__CViewFrame(&mFrame);
 
     *(void**)&unk238 = lbl_eu_8056B298;
     sentinel0 = &unk238.mSentinelNext;
@@ -1578,12 +1578,12 @@ CView::CView(const char* pName, CWorkThread* pParent)
     unk3FC = zero;
     mName.clear();
 
-    *(u32*)unk454 = func_8044BE2C__8CGXCacheFv();
-    *(float*)(unk454 + 4) = 1.0f;
+    mGXCacheId = func_8044BE2C__8CGXCacheFv();
+    mAlpha = 1.0f;
     unk45C = (void*)zero;
     unk460 = 0xb;
     mType = THREAD_CVIEW;
-    func_8043FC60__10CViewFrameFUl(&unk1DC, (u32)this);
+    func_8043FC60__10CViewFrameFUl(&mFrame, (u32)this);
 
     reinterpret_cast<reslist<u32>*>(&unk238)->reserve(mAllocHandle, 0x10);
     reinterpret_cast<reslist<void*>*>(&unk258)->reserve(mAllocHandle, 0x10);
@@ -1597,8 +1597,8 @@ CView::CView(const char* pName, CWorkThread* pParent)
     unk468 = (s16)zero;
     unk46A = (s16)zero;
 
-    *(ml::CCol4*)((u8*)&unk1DC + 0x8) = sFrameColor;
-    *(ml::CCol4*)((u8*)&unk1DC + 0x28) = lbl_8065A0C8;
+    *(ml::CCol4*)((u8*)&mFrame + 0x8) = sFrameColor;
+    *(ml::CCol4*)((u8*)&mFrame + 0x28) = lbl_8065A0C8;
 }
 
 // LLM-HARNESS-BEGIN: us-8043f350

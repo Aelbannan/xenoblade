@@ -13,11 +13,11 @@ extern "C" void GetRequiredMemSize__Q34nw4r3snd12FxChorusDpl2Fv() {}
 // LLM-HARNESS-END: us-80417e00
 
 // LLM-HARNESS-BEGIN: us-80417e54
-extern "C" bool AssignWorkBuffer__Q34nw4r3snd12FxChorusDpl2FPvUl() { return false; }
+extern "C" void AssignWorkBuffer__Q34nw4r3snd12FxChorusDpl2FPvUl(void* self) { ((void(*)(void*))CreateHeap__Q44nw4r3snd6detail8AxfxImplFPvUl)((char*)self + 0x14); }
 // LLM-HARNESS-END: us-80417e54
 
 // LLM-HARNESS-BEGIN: us-80417e5c
-extern "C" bool ReleaseWorkBuffer__Q34nw4r3snd12FxChorusDpl2Fv() { return false; }
+extern "C" void ReleaseWorkBuffer__Q34nw4r3snd12FxChorusDpl2Fv(void* self) { ((void(*)(void*))DestroyHeap__Q44nw4r3snd6detail8AxfxImplFv)((char*)self + 0x14); }
 // LLM-HARNESS-END: us-80417e5c
 
 // LLM-HARNESS-BEGIN: us-80417e64

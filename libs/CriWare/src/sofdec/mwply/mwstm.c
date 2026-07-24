@@ -23,7 +23,7 @@ void MWSTM_GetReadFlg(void) {
 // LLM-HARNESS-END: us-803a1270
 
 // LLM-HARNESS-BEGIN: us-803a1274
-int MWSTM_Create() { return 0; }
+void MWSTM_Create(void) {}
 // LLM-HARNESS-END: us-803a1274
 
 // LLM-HARNESS-BEGIN: us-803a127c

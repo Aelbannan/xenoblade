@@ -720,43 +720,43 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-8049abf0
-extern "C" void __ct__80496B0C() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049abf0
 
 // LLM-HARNESS-BEGIN: us-8049ac98
-extern "C" void __dt__80496BB4() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049ac98
 
 // LLM-HARNESS-BEGIN: us-8049ae58
-extern "C" void func_80496D74() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049ae58
 
 // LLM-HARNESS-BEGIN: us-8049aff8
-extern "C" void func_80496F14() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049aff8
 
 // LLM-HARNESS-BEGIN: us-8049b0a8
-extern "C" void func_80496FC4() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049b0a8
 
 // LLM-HARNESS-BEGIN: us-8049b1b4
-extern "C" void func_804970D0() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049b1b4
 
 // LLM-HARNESS-BEGIN: us-8049b240
-extern "C" void func_8049715C() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049b240
 
 // LLM-HARNESS-BEGIN: us-8049b274
-extern "C" void func_80497190() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049b274
 
 // LLM-HARNESS-BEGIN: us-8049b3cc
-extern "C" void func_804972E8() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049b3cc
 
 // LLM-HARNESS-BEGIN: us-8049b628
-extern "C" void func_80497544() {}
+extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 // LLM-HARNESS-END: us-8049b628
 
 // LLM-HARNESS-BEGIN: us-8049b800

@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803a98e0
-void MPVERR_Init() {}
+void MPVERR_Init(void) {}
 // LLM-HARNESS-END: us-803a98e0
 
 // LLM-HARNESS-BEGIN: us-803a98e4

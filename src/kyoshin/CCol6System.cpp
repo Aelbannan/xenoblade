@@ -17,7 +17,7 @@ extern "C" void Init__13CCol6CheckBatFv() {}
 // LLM-HARNESS-END: us-8015e204
 
 // LLM-HARNESS-BEGIN: us-8015e208
-extern "C" void Term__13CCol6CheckBatFv() {}
+extern "C" void Term__13CCol6CheckBatFv(void) {}
 // LLM-HARNESS-END: us-8015e208
 
 // LLM-HARNESS-BEGIN: us-8015e214

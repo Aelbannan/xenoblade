@@ -1339,27 +1339,27 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801feb2c
-extern "C" void __ct__CPartyState() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801feb2c
 
 // LLM-HARNESS-BEGIN: us-801febb8
-extern "C" void __dt__11CPartyStateFv() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801febb8
 
 // LLM-HARNESS-BEGIN: us-801fec18
-extern "C" void func_801FCF5C() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801fec18
 
 // LLM-HARNESS-BEGIN: us-801fecb4
-extern "C" void func_801FCFF4() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801fecb4
 
 // LLM-HARNESS-BEGIN: us-801fed60
-extern "C" void func_801FD0A0() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801fed60
 
 // LLM-HARNESS-BEGIN: us-801fedb4
-extern "C" void func_801FD0F4() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801fedb4
 
 // LLM-HARNESS-BEGIN: us-801fee3c
@@ -1375,19 +1375,19 @@ extern "C" u8 func_801FD18C(void* self) { return ((u8*)self)[0x57]; }
 // LLM-HARNESS-END: us-801fee4c
 
 // LLM-HARNESS-BEGIN: us-801fee54
-extern "C" void func_801FD194() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801fee54
 
 // LLM-HARNESS-BEGIN: us-801fee7c
-extern "C" void func_801FD1BC() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801fee7c
 
 // LLM-HARNESS-BEGIN: us-801feee0
-extern "C" void func_801FD220() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801feee0
 
 // LLM-HARNESS-BEGIN: us-801fef50
-extern "C" void func_801FD290() {}
+extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801fef50
 
 // LLM-HARNESS-BEGIN: us-801fefc4

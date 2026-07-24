@@ -5,15 +5,24 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-801faf94
-extern "C" void __ct__CPartyStateWin() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801faf94
 
 // LLM-HARNESS-BEGIN: us-801fb048
-extern "C" void __dt__14CPartyStateWinFv(void* self) {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb048
 
 // LLM-HARNESS-BEGIN: us-801fb0d8
-extern "C" void func_801F941C() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb0d8
 
 // LLM-HARNESS-BEGIN: us-801fb340
@@ -25,31 +34,52 @@ extern "C" u32 func_801F968C(void* self) { return *(u32*)((u8*)self + 0x70); }
 // LLM-HARNESS-END: us-801fb348
 
 // LLM-HARNESS-BEGIN: us-801fb350
-extern "C" bool func_801F9694() { return false; }
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb350
 
 // LLM-HARNESS-BEGIN: us-801fb358
-extern "C" void func_801F969C() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb358
 
 // LLM-HARNESS-BEGIN: us-801fb3c8
-extern "C" void func_801F970C() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb3c8
 
 // LLM-HARNESS-BEGIN: us-801fb3ec
-extern "C" void func_801F9730() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb3ec
 
 // LLM-HARNESS-BEGIN: us-801fb410
-extern "C" void func_801F9754() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb410
 
 // LLM-HARNESS-BEGIN: us-801fb4d8
-extern "C" void func_801F981C() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb4d8
 
 // LLM-HARNESS-BEGIN: us-801fb520
-extern "C" void func_801F9864() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801fb520
 
 // LLM-HARNESS-BEGIN: us-801fb550

@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8027212c
-extern "C" void __ct__CMenuPlayAward() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8027212c
 
 // LLM-HARNESS-BEGIN: us-80272200
-extern "C" void __dt__14CMenuPlayAwardFv(void* self) {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80272200
 
 // LLM-HARNESS-BEGIN: us-80272278
-extern "C" void Init__14CMenuPlayAwardFv() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80272278
 
 // LLM-HARNESS-BEGIN: us-8027256c
-extern "C" void Term__14CMenuPlayAwardFv() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8027256c
 
 // LLM-HARNESS-BEGIN: us-802725d8
-extern "C" void Move__14CMenuPlayAwardFv() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802725d8
 
 // LLM-HARNESS-BEGIN: us-802726e8
-extern "C" void cbRenderBefore__14CMenuPlayAwardFv(void* self) {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802726e8
 
 // LLM-HARNESS-BEGIN: us-8027278c
-extern "C" void func_80270308() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8027278c
 
 // LLM-HARNESS-BEGIN: us-80272800
-extern "C" void func_8027037C() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80272800
 
 // LLM-HARNESS-BEGIN: us-80272810
-extern "C" void func_8027038C() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80272810
 
 // LLM-HARNESS-BEGIN: us-80272888
-extern "C" void func_80270404() {}
+extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80272888
 
 // LLM-HARNESS-BEGIN: us-802728d8

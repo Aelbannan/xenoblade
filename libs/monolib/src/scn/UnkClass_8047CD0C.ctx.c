@@ -752,7 +752,7 @@ extern "C" void func_8047D028__17UnkClass_8047CD0CFv(void) {}
 // LLM-HARNESS-END: us-80480ff8
 
 // LLM-HARNESS-BEGIN: us-80480ffc
-extern "C" void func_8047D02C__17UnkClass_8047CD0CFv() {}
+extern "C" void func_8047D02C__17UnkClass_8047CD0CFv(void) {}
 // LLM-HARNESS-END: us-80480ffc
 
 // LLM-HARNESS-BEGIN: us-80481008

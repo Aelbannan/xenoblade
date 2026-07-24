@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8014a184
-extern "C" void __ct__CMenuGetItem() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a184
 
 // LLM-HARNESS-BEGIN: us-8014a27c
-extern "C" void __ct__80149878() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a27c
 
 // LLM-HARNESS-BEGIN: us-8014a374
-extern "C" void __ct__80149970() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a374
 
 // LLM-HARNESS-BEGIN: us-8014a460
-extern "C" void __dt__12CMenuGetItemFv(void* self) {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a460
 
 // LLM-HARNESS-BEGIN: us-8014a4d4
-extern "C" void Init__12CMenuGetItemFv() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a4d4
 
 // LLM-HARNESS-BEGIN: us-8014a7c8
-extern "C" void Term__12CMenuGetItemFv() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a7c8
 
 // LLM-HARNESS-BEGIN: us-8014a854
-extern "C" void Move__12CMenuGetItemFv() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a854
 
 // LLM-HARNESS-BEGIN: us-8014a9bc
-extern "C" void cbRenderBefore__12CMenuGetItemFv(void* self) {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014a9bc
 
 // LLM-HARNESS-BEGIN: us-8014aa68
-extern "C" void func_8014A064() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014aa68
 
 // LLM-HARNESS-BEGIN: us-8014ab20
-extern "C" void func_8014A11C() {}
+extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8014ab20
 
 // LLM-HARNESS-BEGIN: us-8014abd8
@@ -1383,7 +1383,7 @@ extern "C" void func_8014A1D4() {}
 // LLM-HARNESS-END: us-8014abd8
 
 // LLM-HARNESS-BEGIN: us-8014aca4
-extern "C" void func_8014A2A0() {}
+extern "C" bool func_8014A2A0() { return lbl_eu_80663F20 != 0; }
 // LLM-HARNESS-END: us-8014aca4
 
 // LLM-HARNESS-BEGIN: us-8014acb8

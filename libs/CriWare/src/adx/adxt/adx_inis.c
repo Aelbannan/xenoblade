@@ -5,11 +5,11 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803823e4
-int adxini_rnaerr_cbfn() { return 0; }
+void adxini_rnaerr_cbfn(void) {}
 // LLM-HARNESS-END: us-803823e4
 
 // LLM-HARNESS-BEGIN: us-803823ec
-int adxini_lscerr_cbfn() { return 0; }
+void adxini_lscerr_cbfn(void) {}
 // LLM-HARNESS-END: us-803823ec
 
 // LLM-HARNESS-BEGIN: us-803823f4

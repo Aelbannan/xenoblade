@@ -45,19 +45,19 @@ CGame::CGame(const char* pName, CWorkThread* pParent) :
     CProc(pName, pParent, MAX_CHILD),
     mView(nullptr),
     mShutdownState(SHUTDOWN_STATE_0),
-    unk1F4(-1),
-    unk1F6(-1),
-    unk1F8(0),
+    mSceneReqId(-1),
+    mSceneReqId2(-1),
+    mSceneReqFlag(0),
     unk1FC(),
     mTaskManUpdateCount(1),
-    unk224(1.0f),
-    unk228(0) {
+    mPrevBgmSpeed(1.0f),
+    mPauseRefCount(0) {
     spInstance = this;
     CLibHbm::func_8045D5C8(1);
     CWorkSystem::setExitFunc(&onExit);
     wkSetEvent(EVT_4);
     CDeviceVI::isTvFormatPal();
-    unk230 = 57;
+    mLetterboxBorder = 57;
 }
 
 CGame::~CGame() {
@@ -93,20 +93,23 @@ void CGame::setTaskManagerUpdateCount(u32 count) {
     }
 }
 
+// Dispatch pending scene transitions through CTaskGame, then run the task
+// manager update loop mTaskManUpdateCount times per frame.
+// Scene requests arrive via external setters (mSceneReqId/mSceneReqId2).
 void CGame::wkUpdate() {
-    if ((s16)unk1F4 >= 0 && CTaskGame::getInstance() != nullptr) {
+    if ((s16)mSceneReqId >= 0 && CTaskGame::getInstance() != nullptr) {
         if (unk1FC.size() == 0) {
-            CTaskGame::getInstance()->func_80040A3C(unk1F4, unk1F6, nullptr, unk1F8);
+            CTaskGame::getInstance()->func_80040A3C(mSceneReqId, mSceneReqId2, nullptr, mSceneReqFlag);
         } else {
-            CTaskGame::getInstance()->func_80040A3C(unk1F4, unk1F6, unk1FC.c_str(), unk1F8);
+            CTaskGame::getInstance()->func_80040A3C(mSceneReqId, mSceneReqId2, unk1FC.c_str(), mSceneReqFlag);
         }
 
-        unk1F4 = -1;
-        unk1F6 = -1;
+        mSceneReqId = -1;
+        mSceneReqId2 = -1;
         // Preserve the retail string-pool reference to the terminator after
         // "CGameRestart"; a plain "" resolves to a different pool entry.
         unk1FC = "CGameRestart" + 13;
-        unk1F8 = 0;
+        mSceneReqFlag = 0;
     }
 
     if (isNoEvent() && CTaskGame::getInstance() != nullptr) {
@@ -122,6 +125,8 @@ void CGame::wkUpdate() {
     }
 }
 
+// Animate and draw the 4:3 letterbox overlay (when active), then dispatch
+// per-task rendering. The overlay is only rendered in non-widescreen mode.
 void CGame::wkRender() {
     if (lbl_80666604 != nullptr) {
         lbl_80666604->Animate(0);
@@ -142,6 +147,11 @@ void CGame::wkRender() {
     CTaskManager::Draw();
 }
 
+// Reconfigure the rendering viewport for the current aspect ratio.
+// In 4:3 (wide==false), letterbox the viewport by subtracting 2*mLetterboxBorder
+// scanlines from efbHeight and offsetting Y by mLetterboxBorder-1.
+// In 16:9 (wide==true), use the full framebuffer dimensions.
+// @param wide true = 16:9 content, false = 4:3 content with letterbox borders
 void CGame::func_800395F4(bool wide) {
     CGame* self;
 
@@ -154,13 +164,14 @@ void CGame::func_800395F4(bool wide) {
     }
 
     if (!wide) {
-        // s32 height → self=r30 / height=r31 (retail). Letterbox from live unk230.
+        // Letterbox: visible height = efbHeight - 2*mLetterboxBorder.
+        // mLetterboxBorder is shifted left by 1 (= *2) to account for both top and bottom.
         s32 height = (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
-            - ((u32)(u16)spInstance->unk230 << 1));
-        setViewRect(self->mView, 0, (s16)((u16)self->unk230 - 1),
+            - ((u32)(u16)spInstance->mLetterboxBorder << 1));
+        setViewRect(self->mView, 0, (s16)((u16)self->mLetterboxBorder - 1),
             CDeviceVI::getRenderModeObj()->fbWidth, (s16)height);
     } else {
-        // Soft-cap ~99.8%: height in r30 (retail r31); pinning self scrambles schedule.
+        // Full 16:9 viewport; using spInstance directly to match retail regalloc.
         s16 height = CDeviceVI::getRenderModeObj()->efbHeight;
         setViewRect(spInstance->mView, 0, 0,
             CDeviceVI::getRenderModeObj()->fbWidth, height);
@@ -171,6 +182,11 @@ void CGame::setViewRect(CView* view, s16 x, s16 y, s16 width, s16 height) {
     view->setRect(ml::CRect16(x, y, width, height));
 }
 
+// Initialize the full CGame presentation layer during standby login.
+// Creates the Bionis view, configures letterboxing/4:3 overlay,
+// bootstraps CTaskGame, arms controller dimming, and loads the
+// 4:3 border layout from the static file archive.
+// @return true on success, false if CLibStaticData not yet initialized
 bool CGame::wkStandbyLogin() {
     StaticDataHandle handle;
 
@@ -194,10 +210,10 @@ bool CGame::wkStandbyLogin() {
             CDeviceVI::getRenderModeObj()->efbHeight);
     } else {
         setViewRect(mView, 0,
-            (s16)((u16)unk230 - 1),
+            (s16)((u16)mLetterboxBorder - 1),
             CDeviceVI::getRenderModeObj()->fbWidth,
             (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
-                - ((u32)(u16)unk230 << 1)));
+                - ((u32)(u16)mLetterboxBorder << 1)));
     }
 
     mView->unk444 = CVec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -206,19 +222,27 @@ bool CGame::wkStandbyLogin() {
     CDeviceGX::updateVerticalFilter(VFILTER_NONE);
     CTaskManager::Reset();
     CTaskGame::create(mView, this, 1);
-    WPADSetAutoSleepTime(5);
-    VIEnableDimming(1);
-    VISetTimeToDimming(1);
+    WPADSetAutoSleepTime(5); // auto-sleep after 5 min of inactivity
+    VIEnableDimming(1); // enable VI dimming for controller disconnect
+    VISetTimeToDimming(1); // dim after 1 frame of no input
 
+    // +14: "CGameRestart" after null → same string reused as resource filename
     if (CLibStaticData::getStaticFileData("CGameRestart" + 14, &handle, nullptr)) {
         sArcResourceAccessor = CLibLayout::createArcResourceAccessor();
+        // +17: points past "CGameRestart".\0" → archive key within the ARC
         sArcResourceAccessor->Attach(handle.data, "CGameRestart" + 17);
+        // +21: points past "CGameRestart".\0"arc" → "4_3mode.brlyt" layout name
         func_80136E84(&lbl_80666604, sArcResourceAccessor, "CGameRestart" + 21);
     }
 
     return CProc::wkStandbyLogin();
 }
 
+// Phased shutdown of the CGame subsystem.
+// Phase 0: signal CTaskGame to begin teardown.
+// Phase 1: wait for CTaskGame's unk68 bit 4 (0x10) to confirm readiness.
+// Phase 2: reset task manager and free overlay resources once children exit.
+// @return true when fully torn down, false while waiting for phases
 bool CGame::wkStandbyLogout() {
     if (mShutdownState == SHUTDOWN_STATE_0) {
         CTaskGame::getInstance()->func_80042710();
@@ -232,7 +256,7 @@ bool CGame::wkStandbyLogout() {
         mShutdownState = SHUTDOWN_STATE_2;
     }
 
-    // Teardown can begin only after all child threads have stopped.
+    // All child work threads must have exited before freeing resources.
     if (mChildren.empty()) {
         CTaskManager::Reset();
 
@@ -267,7 +291,12 @@ void CGame::GameMain() {
     }
 }
 
-// Register an exception entry for a controller-related error, such as a disconnect.
+// Register an exception entry for a controller-related error (e.g. disconnect).
+// Creates a CException attached to the CGame work thread if the game is in a
+// state that can handle it (not in a no-event state, no existing exception lock).
+// @param message  Wide-character error description
+// @param handler  Callback interface invoked during exception retry
+// @param param    Opaque parameter forwarded to the handler
 void CGame::registerControllerErrorEntry(const wchar_t* message, IGameException* handler, u32 param) {
     if (spInstance != nullptr && CTaskGame::func_800426F0() == nullptr && !spInstance->isNoEvent()) {
         CException* exception = CException::func_80457CA4(spInstance, message, 5);
@@ -278,7 +307,11 @@ void CGame::registerControllerErrorEntry(const wchar_t* message, IGameException*
     }
 }
 
-// Retry a controller exception raised by CfPadTask.
+// Retry handler for controller exceptions (e.g. reconnection after disconnect).
+// Resolves the exception by work thread ID, checks retry readiness via the
+// exception state machine, and dispatches to the stored handler callback.
+// @param wid  Work thread ID of the exception source
+// @return  true if exception resolved or no retry needed, false if still pending
 bool CGame::wkStandbyExceptionRetry(u32 wid) {
     if (isNoEvent()) {
         return true;
@@ -304,11 +337,16 @@ bool CGame::wkStandbyExceptionRetry(u32 wid) {
     return handler->gameExceptionCB(exception->unk204);
 }
 
+// Handle game pause/resume triggered by controller events (Start button).
+// On first pause: snap BGM speed, mute audio, disable battle vision effects.
+// On last resume: restore BGM speed, re-enable audio and vision.
+// Uses reference counting to correctly handle nested pause/resume sequences.
+// @param paused  true = enter pause, false = exit pause
 void CGame::OnPauseTrigger(bool paused) {
     if (cf::CfGameManager::func_8007E1B4()) {
         if (paused) {
-            if (unk228 == 0) {
-                unk224 = func_801C0014();
+            if (mPauseRefCount == 0) {
+                mPrevBgmSpeed = func_801C0014();
                 func_801BFFAC(0, 0);
                 func_801644BC(1);
 
@@ -320,10 +358,11 @@ void CGame::OnPauseTrigger(bool paused) {
                 func_80044FBC(1);
             }
 
-            unk228++;
+            mPauseRefCount++;
         } else {
-            if (unk228 <= 1) {
-                func_801BFFAC(unk224, 0);
+            // <=1 catches the last resume (count drops to 0 after decrement)
+            if (mPauseRefCount <= 1) {
+                func_801BFFAC(mPrevBgmSpeed, 0);
                 func_801644BC(0);
 
                 if (cf::CBattleManager::getInstance() != nullptr) {
@@ -334,9 +373,9 @@ void CGame::OnPauseTrigger(bool paused) {
                 func_80044FBC(0);
             }
 
-            unk228--;
-            if (unk228 < 0) {
-                unk228 = 0;
+            mPauseRefCount--;
+            if (mPauseRefCount < 0) {
+                mPauseRefCount = 0;
             }
         }
     }

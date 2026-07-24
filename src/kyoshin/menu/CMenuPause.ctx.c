@@ -1339,39 +1339,39 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80254030
-extern "C" void __dt__10CMenuPauseFv(void* self) {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254030
 
 // LLM-HARNESS-BEGIN: us-802540a4
-extern "C" void Init__10CMenuPauseFv() {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802540a4
 
 // LLM-HARNESS-BEGIN: us-80254434
-extern "C" void Term__10CMenuPauseFv() {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254434
 
 // LLM-HARNESS-BEGIN: us-802544c4
-extern "C" void Move__10CMenuPauseFv() {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802544c4
 
 // LLM-HARNESS-BEGIN: us-802545ac
-extern "C" void cbRenderBefore__10CMenuPauseFv(void* self) {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802545ac
 
 // LLM-HARNESS-BEGIN: us-80254648
-extern "C" void __ct__CMenuPause() {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254648
 
 // LLM-HARNESS-BEGIN: us-8025475c
-extern "C" void isInitialized__10CMenuPauseFv() {}
+extern "C" bool isInitialized__10CMenuPauseFv() { return lbl_eu_80663F20 != 0; }
 // LLM-HARNESS-END: us-8025475c
 
 // LLM-HARNESS-BEGIN: us-80254770
-extern "C" void func_80252538() {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254770
 
 // LLM-HARNESS-BEGIN: us-8025479c
-extern "C" void func_80252564() {}
+extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8025479c
 
 // LLM-HARNESS-BEGIN: us-80254864

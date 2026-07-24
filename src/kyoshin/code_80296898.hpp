@@ -2,11 +2,17 @@
 
 #include <types.h>
 
+/// 64-byte game configuration structure.
+/// Frame timing, flag values, and per-slot settings are initialized to defaults
+/// in init() and can be overwritten via func_80296AE8.
 class Class_80296898{
 public:
-    u8 unk00[0x0F - 0x00];
-    u8 unk_0F;
-    u8 unk10[0x40 - 0x10];
+    // 0x00-0x0E: slot configuration flags (first 8 bytes initialized to 1/2)
+    u8 mSlotFlags[0x0F - 0x00];
+    // 0x0F: frame counter for VI timing (default 10)
+    u8 mFrameCount;
+    // 0x10-0x3F: additional configuration values
+    u8 mConfigData[0x40 - 0x10];
 
     Class_80296898(){
         init();

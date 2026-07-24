@@ -749,176 +749,28 @@ struct CChainVObj {
 };
 /* end "kyoshin/cf/chain/CChainCombo.hpp" */
 
-/* "src/kyoshin/cf/chain/CChainCombo.cpp" line 2 "monolib/math/Random.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace ml{
-    namespace math{
-        void mtInit(u32 seed);
-        int mtRand();
-        int mtRand(int max);
-        int mtRand(int min,int max);
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Random.hpp" */
-
-// US retail unmangled / special callees.
-extern "C" {
-void func_8013EAB0(int artsType);
-void func_80294844(cf::CChainGauge* gauge, float value);
-void* func_8016FE34();
-void func_802A07F4(int, void*);
-void func_800B708C__Fi(int);
-int mtRand__Q22ml4mathFi(int);
+namespace cf{
+    CChainCombo::CChainCombo(){
+        func_80294824(&mGauge);
+        mArtsType = 0;
+        mComboCount = 0;
+        mPending = false;
+        func_80294834(&mGauge);
+        func_802AA338();
+    }
+    
+    void CChainCombo::func1(){
+        mArtsType = 0;
+        mComboCount = 0;
+        mPending = false;
+        func_80294834(&mGauge);
+        func_802AA338();
+    }
 }
 
-// Duration table: {1800, 1200, 600} in split1 .data.
-extern "C" int lbl_eu_80538988[3];
-// sdata2 4503601774854144.0 (int→float bias); asm uses bare symbol (emits @sda21).
-extern "C" f64 lbl_eu_80668B98;
-
-namespace cf {
-
-CChainCombo::CChainCombo() {
-    mVtbl = lbl_eu_80538994;
-    func_80294824(&mGauge);
-    mArtsType = 0;
-    mComboCount = 0;
-    mPending = false;
-    func_80294834(&mGauge);
-    func_802AA338();
-}
-
-void CChainCombo::func1() {
-    mArtsType = 0;
-    mComboCount = 0;
-    mPending = false;
-    func_80294834(&mGauge);
-    func_802AA338();
-}
-
-} // namespace cf
-
-// PLAN.md §17.6: CChainVObj vptr walks must use r12; C temps color as r5/r4 and
-// reorder the EEC iface addi/lwz pair.
-extern "C" asm void func_80293E24(cf::CChainCombo* self, CChainVObj* obj) {
-    nofralloc
-    stwu r1, -0x20(r1)
-    mflr r0
-    stw r0, 0x24(r1)
-    stw r31, 0x1c(r1)
-    mr r31, r3
-    mr r3, r4
-    lwz r12, 0x0(r4)
-    lwz r12, 0x2a4(r12)
-    mtctr r12
-    bctrl
-    lwz r3, 0x50(r3)
-    lwz r0, 0x0(r31)
-    lbz r3, 0x3e(r3)
-    cmpwi r3, 0x8
-    bne lbl_80296464
-    li r0, 0x0
-    b lbl_80296484
-lbl_80296464:
-    cmpwi r0, 0x8
-    bne lbl_80296474
-    li r0, 0x0
-    b lbl_80296484
-lbl_80296474:
-    subf r4, r3, r0
-    subf r0, r0, r3
-    or r0, r4, r0
-    srwi r0, r0, 31
-lbl_80296484:
-    cmpwi r0, 0x0
-    beq lbl_80296494
-    li r0, 0x0
-    stw r0, 0x4(r31)
-lbl_80296494:
-    stw r3, 0x0(r31)
-    bl func_8013EAB0
-    lwz r3, 0x4(r31)
-    cmpwi r3, 0x5
-    bge lbl_802964D4
-    addi r4, r3, 0x1
-    lis r0, 0x4330
-    xoris r3, r4, 0x8000
-    stw r3, 0xc(r1)
-    lfd f1, lbl_eu_80668B98
-    addi r3, r31, 0xc
-    stw r0, 0x8(r1)
-    lfd f0, 0x8(r1)
-    stw r4, 0x4(r31)
-    fsubs f1, f0, f1
-    bl func_80294844
-lbl_802964D4:
-    lwz r0, 0x24(r1)
-    lwz r31, 0x1c(r1)
-    mtlr r0
-    addi r1, r1, 0x20
-    blr
-}
-
-extern "C" asm void func_80293EEC(cf::CChainCombo* self, void* arg) {
-    nofralloc
-    stwu r1, -0x10(r1)
-    mflr r0
-    stw r0, 0x14(r1)
-    stw r31, 0xc(r1)
-    stw r30, 0x8(r1)
-    mr r30, r3
-    lbz r0, 0x8(r3)
-    cmpwi r0, 0x0
-    beq lbl_80296594
-    lwz r12, 0x3e9c(r4)
-    addi r3, r4, 0x3e9c
-    lwz r12, 0x4c(r12)
-    mtctr r12
-    bctrl
-    bl func_800B708C__Fi
-    bl func_8016FE34
-    cmpwi r3, 0x0
-    mr r31, r3
-    beq lbl_8029659C
-    li r3, 0x64
-    bl mtRand__Q22ml4mathFi
-    cmpwi r3, 0x5
-    bge lbl_80296550
-    lis r3, lbl_eu_80538988@ha
-    lwz r4, lbl_eu_80538988@l(r3)
-    b lbl_80296574
-lbl_80296550:
-    cmpwi r3, 0x19
-    bge lbl_80296568
-    lis r3, lbl_eu_80538988@ha
-    addi r3, r3, lbl_eu_80538988@l
-    lwz r4, 0x4(r3)
-    b lbl_80296574
-lbl_80296568:
-    lis r3, lbl_eu_80538988@ha
-    addi r3, r3, lbl_eu_80538988@l
-    lwz r4, 0x8(r3)
-lbl_80296574:
-    lwz r12, 0x0(r31)
-    mr r3, r31
-    lwz r12, 0x184(r12)
-    mtctr r12
-    bctrl
-    mr r4, r31
-    li r3, 0xbf
-    bl func_802A07F4
-lbl_80296594:
-    li r0, 0x0
-    stb r0, 0x8(r30)
-lbl_8029659C:
-    lwz r0, 0x14(r1)
-    lwz r31, 0xc(r1)
-    lwz r30, 0x8(r1)
-    mtlr r0
-    addi r1, r1, 0x10
-    blr
-}
+// LLM-HARNESS-BEGIN: us-80296420
+extern "C" void func_80293E24() {}
+// LLM-HARNESS-END: us-80296420
+// LLM-HARNESS-BEGIN: us-802964e8
+extern "C" void func_80293EEC() {}
+// LLM-HARNESS-END: us-802964e8

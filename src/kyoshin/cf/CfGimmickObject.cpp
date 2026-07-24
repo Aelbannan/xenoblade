@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfGimmickObject.hpp"
 
 // LLM-HARNESS-BEGIN: us-801f6c24
 extern "C" void __ct__cf_CfGimmickObject() {}
@@ -93,7 +94,7 @@ extern "C" void func_801F7F24() {}
 // LLM-HARNESS-END: us-801f9be0
 
 // LLM-HARNESS-BEGIN: us-801fa220
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" int func_801F8564() { return 1; }
 // LLM-HARNESS-END: us-801fa220
 
 // LLM-HARNESS-BEGIN: us-801fa228

@@ -2,7 +2,8 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/menu/CMenuTutorialList.hpp"
+#include <types.h>
 
 // LLM-HARNESS-BEGIN: us-802ae4e8
 extern "C" void __ct__CMenuTutorialList() {}
@@ -68,10 +69,28 @@ extern "C" void func_802ACA38() {}
 extern "C" void func_802ACB50() {}
 // LLM-HARNESS-END: us-802af288
 
+// --- FULL_MATCH thunks ---
+// These are IScnRender vtable trampolines.  When CMenuTutorialList inherits from
+// IScnRender (which sits at offset +0x58 in the MI layout), calling a virtual
+// function through the IScnRender vtable delivers an IScnRender* (pointing at
+// the subobject within the full object).  Each thunk adjusts 'this' back by
+// -0x58 so the real CMenuTutorialList implementation receives the correct pointer.
+
 // LLM-HARNESS-BEGIN: us-802af304
-extern "C" void func_802ACBCC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuTutorialListFv)((char*)self - 0x58); }
+class IScnRender;
+typedef void (*CbRenderBeforeFunc)(CMenuTutorialList*);
+extern "C" void func_802ACBCC(IScnRender* self) {
+    ((CbRenderBeforeFunc)cbRenderBefore__17CMenuTutorialListFv)(
+        reinterpret_cast<CMenuTutorialList*>(
+            reinterpret_cast<char*>(self) - 0x58));
+}
 // LLM-HARNESS-END: us-802af304
 
 // LLM-HARNESS-BEGIN: us-802af30c
-extern "C" void func_802ACBD4(void* self) { ((void(*)(void*))__dt__17CMenuTutorialListFv)((char*)self - 0x58); }
+typedef void (*DtorFunc)(CMenuTutorialList*);
+extern "C" void func_802ACBD4(IScnRender* self) {
+    ((DtorFunc)__dt__17CMenuTutorialListFv)(
+        reinterpret_cast<CMenuTutorialList*>(
+            reinterpret_cast<char*>(self) - 0x58));
+}
 // LLM-HARNESS-END: us-802af30c

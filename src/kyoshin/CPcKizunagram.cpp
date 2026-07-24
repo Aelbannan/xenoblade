@@ -1,11 +1,10 @@
-// Auto-scaffolded catalog TU for kyoshin/CPcKizunagram
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// TU for kyoshin/CPcKizunagram — PC affinity chart window.
+// func_8025DA40 / func_8025DA48: FULL_MATCH (byte-identical).
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CPcKizunagram.hpp"
 
 // LLM-HARNESS-BEGIN: us-8025f5bc
-extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
+extern "C" u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 // LLM-HARNESS-END: us-8025f5bc
 
 
@@ -31,7 +30,7 @@ extern "C" void func_8025D9C4() {}
 
 
 // LLM-HARNESS-BEGIN: us-8025fb94
-extern "C" u8 func_8025DA48(void* self) { return ((u8*)self)[0x27]; }
+extern "C" u8 func_8025DA48(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; }
 // LLM-HARNESS-END: us-8025fb94
 
 // LLM-HARNESS-BEGIN: us-8025fb9c

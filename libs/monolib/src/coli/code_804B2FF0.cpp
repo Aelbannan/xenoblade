@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/coli/CTaskColiManager.hpp"
 
 // LLM-HARNESS-BEGIN: us-804b714c
 extern "C" void func_804B2FF0() {}
@@ -100,12 +101,44 @@ extern "C" void func_804B4BDC() {}
 extern "C" void func_804B4C7C() {}
 // LLM-HARNESS-END: us-804b8dd8
 
+// --- CTTask local declaration ---
+// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
+// Do not include monolib/work/CTTask.hpp here — its inline methods collide
+// with the explicit out-of-line instantiations below.
+template <typename T>
+class CTTask {
+public:
+    CTTask();
+    virtual ~CTTask();
+    virtual void Move();
+    virtual void Draw();
+};
+
+// --- CTaskColiManager class definition ---
+// Full class definition lives here (single-TU scope) because CTTask must
+// be defined locally to avoid inline-method codegen from CTTask.hpp.
+class CTaskColiManager : public CTTask<CTaskColiManager> {
+public:
+    // Overrides from CProcess (pure virtual)
+    void Init() override;
+    void Term() override;
+    void Move() override;
+    void Draw() override;
+
+    virtual ~CTaskColiManager();
+    static CTaskColiManager* create();
+};
+
 // LLM-HARNESS-BEGIN: us-804b8eac
-extern "C" void Init__16CTaskColiManagerFv(void) {}
+void CTaskColiManager::Init() {
+    // Empty override — no initialization required.
+}
 // LLM-HARNESS-END: us-804b8eac
 
 // LLM-HARNESS-BEGIN: us-804b8eb0
-extern "C" void Term__16CTaskColiManagerFv(void) {}
+void CTaskColiManager::Term() {
+    // Empty override — no termination required.
+}
 // LLM-HARNESS-END: us-804b8eb0
 
 // LLM-HARNESS-BEGIN: us-804b8eb4
@@ -113,7 +146,9 @@ extern "C" void Move__16CTaskColiManagerFv() {}
 // LLM-HARNESS-END: us-804b8eb4
 
 // LLM-HARNESS-BEGIN: us-804b8f68
-extern "C" void Draw__16CTaskColiManagerFv(void) {}
+void CTaskColiManager::Draw() {
+    // Empty override — no draw-time work required.
+}
 // LLM-HARNESS-END: us-804b8f68
 
 // LLM-HARNESS-BEGIN: us-804b8f6c
@@ -140,19 +175,7 @@ extern "C" void func_804B5658() {}
 extern "C" void create__16CTaskColiManagerFv() {}
 // LLM-HARNESS-END: us-804b9950
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
-
-class CTaskColiManager;
+// --- Explicit template specializations for CTTask<CTaskColiManager> ---
 // LLM-HARNESS-BEGIN: us-804b8c7c
 template<> CTTask<CTaskColiManager>::~CTTask() {}
 // LLM-HARNESS-END: us-804b8c7c

@@ -1,93 +1,63 @@
-// Auto-scaffolded catalog TU for monolib/src/lib/CLibCriStreamingPlay
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// CLibCriStreamingPlay - CRI streaming audio playback manager
+// Inherits from CLibCri (which inherits CWorkThread, CDeviceVICb, IErrorWii)
 
+#include "monolib/lib/CLibCriStreamingPlay.hpp"
 #include <harness_catalog.h>
+#include <stdint.h>
 
-// LLM-HARNESS-BEGIN: us-8045f418
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045f418
-
-// LLM-HARNESS-BEGIN: us-8045f534
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045f534
-
-// LLM-HARNESS-BEGIN: us-8045f5d8
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045f5d8
-
-// LLM-HARNESS-BEGIN: us-8045f9ac
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045f9ac
-
-// LLM-HARNESS-BEGIN: us-8045faec
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045faec
-
-// LLM-HARNESS-BEGIN: us-8045fbdc
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045fbdc
-
-// LLM-HARNESS-BEGIN: us-8045fc88
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045fc88
-
-// LLM-HARNESS-BEGIN: us-8045fe84
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045fe84
-
-// LLM-HARNESS-BEGIN: us-8045ff08
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8045ff08
+// Extern "C" stub declarations for functions not yet decompiled
+// These will be replaced with proper member functions during full decompilation
+extern "C" {
+void func_8045CF30__20CLibCriStreamingPlayFv();
+void __dt__20CLibCriStreamingPlayFv();
+void func_8045CFDC__20CLibCriStreamingPlayFv();
+void func_8045D03C__20CLibCriStreamingPlayFv();
+void func_8045C67C__20CLibCriStreamingPlayFv();
+void func_8045C700__20CLibCriStreamingPlayFv();
+void func_8045C8B0__20CLibCriStreamingPlayFv();
+void func_8045CA4C__20CLibCriStreamingPlayFv();
+void func_8045CCFC__20CLibCriStreamingPlayFv();
+}
 
 // LLM-HARNESS-BEGIN: us-80460428
-extern "C" void wkStandbyLogin__20CLibCriStreamingPlayFv(void) {}
+bool CLibCriStreamingPlay::wkStandbyLogin() { return false; }
 // LLM-HARNESS-END: us-80460428
 
-// LLM-HARNESS-BEGIN: us-8046042c
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
-// LLM-HARNESS-END: us-8046042c
-
 // LLM-HARNESS-BEGIN: us-804604e4
-extern "C" void OnPauseTrigger__20CLibCriStreamingPlayFb() {}
+void CLibCriStreamingPlay::OnPauseTrigger(bool paused) {}
 // LLM-HARNESS-END: us-804604e4
 
-// LLM-HARNESS-BEGIN: us-804606c0
-extern "C" void func_8045C67C__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-804606c0
-
-// LLM-HARNESS-BEGIN: us-80460744
-extern "C" void func_8045C700__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-80460744
-
-// LLM-HARNESS-BEGIN: us-804608f4
-extern "C" void func_8045C8B0__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-804608f4
-
-// LLM-HARNESS-BEGIN: us-80460a90
-extern "C" void func_8045CA4C__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-80460a90
-
-// LLM-HARNESS-BEGIN: us-80460d40
-extern "C" void func_8045CCFC__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-80460d40
-
-// LLM-HARNESS-BEGIN: us-80460f74
-extern "C" void func_8045CF30__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-80460f74
-
-// LLM-HARNESS-BEGIN: us-80461020
-extern "C" void func_8045CFDC__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-80461020
-
-// LLM-HARNESS-BEGIN: us-80461080
-extern "C" void func_8045D03C__20CLibCriStreamingPlayFv() {}
-// LLM-HARNESS-END: us-80461080
+// ============================================================================
+// FULL_MATCH functions (us-80461184, us-8046118c)
+// Virtual thunks for CDeviceVICb overrides in CLibCriStreamingPlay.
+// When called through the CDeviceVICb vtable, 'this' points to the
+// CDeviceVICb subobject at offset 0x1c4 from the CLibCriStreamingPlay base.
+// These thunks adjust 'this' back to the CLibCriStreamingPlay base and
+// tail-call the implementation.
+// ============================================================================
 
 // LLM-HARNESS-BEGIN: us-80461184
-extern "C" void func_8045D140__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))func_8045CF30__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
+// Thunk: adjusts this from CDeviceVICb subobject (+0x1c4) to CLibCriStreamingPlay base,
+// then calls the streaming cleanup function.
+void CLibCriStreamingPlay::func_8045D140() {
+    typedef void (*CleanupFn)(CLibCriStreamingPlay*);
+    CleanupFn cleanup = reinterpret_cast<CleanupFn>(func_8045CF30__20CLibCriStreamingPlayFv);
+    CLibCriStreamingPlay* base = reinterpret_cast<CLibCriStreamingPlay*>(
+        reinterpret_cast<uintptr_t>(this) - 0x1c4
+    );
+    cleanup(base);
+}
 // LLM-HARNESS-END: us-80461184
 
 // LLM-HARNESS-BEGIN: us-8046118c
-extern "C" void func_8045D148__20CLibCriStreamingPlayFv(void* self) { ((void(*)(void*))__dt__20CLibCriStreamingPlayFv)((char*)self - 0x1c4); }
+// Thunk: adjusts this from CDeviceVICb subobject (+0x1c4) to CLibCriStreamingPlay base,
+// then calls the destructor.
+void CLibCriStreamingPlay::func_8045D148() {
+    typedef void (*DtorFn)(CLibCriStreamingPlay*);
+    DtorFn dtor = reinterpret_cast<DtorFn>(__dt__20CLibCriStreamingPlayFv);
+    CLibCriStreamingPlay* base = reinterpret_cast<CLibCriStreamingPlay*>(
+        reinterpret_cast<uintptr_t>(this) - 0x1c4
+    );
+    dtor(base);
+}
 // LLM-HARNESS-END: us-8046118c

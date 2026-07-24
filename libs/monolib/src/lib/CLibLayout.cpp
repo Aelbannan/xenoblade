@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/lib/CLibLayout.hpp"
 
 // LLM-HARNESS-BEGIN: us-80462f54
 extern "C" void __ct__10CLibLayoutFPCcP11CWorkThread() {}
@@ -21,8 +22,9 @@ extern "C" void getAllocHandle__10CLibLayoutFv(void) {}
 // LLM-HARNESS-END: us-80463090
 
 // LLM-HARNESS-BEGIN: us-8046309c
-extern "C" u32 getInstance__10CLibLayoutFv(void) {
-    extern u32 lbl_eu_80665710;
+// Returns the global CLibLayout singleton instance.
+CLibLayout* CLibLayout::getInstance() {
+    extern CLibLayout* lbl_eu_80665710; // sbss singleton pointer
     return lbl_eu_80665710;
 }
 // LLM-HARNESS-END: us-8046309c
@@ -52,7 +54,8 @@ extern "C" void deleteTextboxOrPicture__10CLibLayoutFv() {}
 // LLM-HARNESS-END: us-804632dc
 
 // LLM-HARNESS-BEGIN: us-804632ec
-extern "C" void wkUpdate__10CLibLayoutFv(void) {}
+// No-op override; CLibLayout performs no per-frame work.
+void CLibLayout::wkUpdate() {}
 // LLM-HARNESS-END: us-804632ec
 
 // LLM-HARNESS-BEGIN: us-804632f0

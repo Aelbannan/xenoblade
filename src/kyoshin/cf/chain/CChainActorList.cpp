@@ -1,4 +1,5 @@
 #include "kyoshin/cf/chain/CChainActorList.hpp"
+#include "kyoshin/cf/chain/CChainChance.hpp"
 
 namespace cf {
     CChainActorList::CChainActorList(){
@@ -11,7 +12,14 @@ namespace cf {
 }
 
 // LLM-HARNESS-BEGIN: us-8027e51c
-extern "C" void func_8027C098(void* self) { *(unsigned short*)((char*)self + 0x0) = 0; *(unsigned short*)((char*)self + 0x8) = 0; *(unsigned short*)((char*)self + 0xa) = 0; *(unsigned char*)((char*)self + 0xc) = 0; }
+// Initializes partial CChainChance fields to 0
+// Called from CChain constructor during chain attack chance setup
+extern "C" void func_8027C098(cf::CChainChance* self) {
+    self->mChainCount = 0;
+    self->mField08 = 0;
+    self->mField0A = 0;
+    self->mField0C = 0;
+}
 // LLM-HARNESS-END: us-8027e51c
 // LLM-HARNESS-BEGIN: us-8027ea50
 extern "C" void func_8027C5CC() {}

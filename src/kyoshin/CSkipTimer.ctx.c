@@ -1337,46 +1337,199 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CSkipTimer.cpp" line 5 "kyoshin/CSkipTimer.hpp" */
+#pragma once
+
+/* "src/kyoshin/CSkipTimer.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/CSkipTimer.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+
+/* Interface for work events, which provides a set of 32 event handler functions that
+get triggered when a certain event happens (such as when loading a file for OnFileEvent).
+Deriving classes can override any of these functions to run their own code when the
+corresponding event happens.
+
+Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
+being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
+out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
+with no apparent calls to the other 3 (possibly debug only).
+
+In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
+with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
+};
+/* end "monolib/work/IWorkEvent.hpp" */
+/* "src/kyoshin/CSkipTimer.hpp" line 4 "monolib/lib/UnkClass_8045F564.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class UnkClass_8045F564{
+public:
+    int unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+
+    UnkClass_8045F564();
+    ~UnkClass_8045F564();
+
+    
+    void createRegion(int, int, const char*, int);
+    void func_8045F778();
+    void func_8045F810();
+};
+
+class Class_8045F858{
+public:
+    void* unk0;
+    u32 unk4;
+
+    Class_8045F858(UnkClass_8045F564* unkClass);
+    ~Class_8045F858();
+};
+/* end "monolib/lib/UnkClass_8045F564.hpp" */
+
+/*
+  Skip-timer widget backing data. Used by CMenuSkipTimer for cutscene skip UI.
+  Inherits IWorkEvent for file-event dispatch; owns a memory region,
+  nw4r layout/animation handles, state flags, a CSysWin panel (0x3C bytes at
+  +0x34), and a nested CSkipTimer2 sub-controller (0x28 bytes at +0x70).
+  Total size 0x98 bytes.
+*/
+class CSkipTimer : public IWorkEvent {
+public:
+    CSkipTimer();
+    ~CSkipTimer();
+
+    bool OnFileEvent(CEventFile* pEventFile);
+
+    // Returns the skip-timer active flag at +0x30.
+    u8 getActive() const { return mActive; }
+
+    // --- member fields ---
+    /* 0x04 */ UnkClass_8045F564 mMemRegion;   // scratch region for layout build
+    /* 0x14 */ void* mParent;                   // parent handle, set at construction
+    /* 0x18 */ void* mLayout;                   // nw4r::lyt::Layout*
+    /* 0x1C */ void* mAnimTransform;            // nw4r::lyt::AnimTransform*
+    /* 0x20 */ u32 mField20;                    // pointer/word, init 0
+    /* 0x24 */ u32 mField24;                    // pointer/word, init 0
+    /* 0x28 */ u8 mField28;                     // init 0
+    /* 0x29 */ u8 mField29;                     // init 0
+    /* 0x2A */ u8 mField2A;                     // init 0
+    /* 0x2B */ u8 mField2B;                     // init 1
+    /* 0x2C */ u16 mField2C;                    // init 0
+    /* 0x2E */ u16 mField2E;                    // init 0
+    /* 0x30 */ u8 mActive;                      // active flag; init 0, read by getActive
+    /* 0x31 */ u8 pad31[3];
+    /* 0x34 */ u8 mSysWinData[0x3C];            // CSysWin panel widget
+    /* 0x70 */ u8 mSkipTimer2Data[0x28];        // CSkipTimer2 sub-controller
+};
+// Total size: 0x98 bytes (verified via CMenuSkipTimer mTimerData[0x98])
+/* end "kyoshin/CSkipTimer.hpp" */
 
 // LLM-HARNESS-BEGIN: us-802a1904
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
+extern "C" void __ct__CSkipTimer2() {}
 // LLM-HARNESS-END: us-802a1904
 
-// LLM-HARNESS-BEGIN: us-802a1970
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1970
+// LLM-HARNESS-BEGIN: us-802a2650
+extern "C" u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
+// LLM-HARNESS-END: us-802a2650
 
-// LLM-HARNESS-BEGIN: us-802a19c4
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a19c4
 
-// LLM-HARNESS-BEGIN: us-802a1aa0
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1aa0
 
-// LLM-HARNESS-BEGIN: us-802a1b30
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1b30
 
-// LLM-HARNESS-BEGIN: us-802a1b98
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1b98
 
-// LLM-HARNESS-BEGIN: us-802a1c1c
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1c1c
 
-// LLM-HARNESS-BEGIN: us-802a1c4c
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1c4c
 
-// LLM-HARNESS-BEGIN: us-802a1ca8
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1ca8
 
-// LLM-HARNESS-BEGIN: us-802a1d4c
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a1d4c
+
 
 // LLM-HARNESS-BEGIN: us-802a1e20
 extern "C" void func_8029F6EC() {}
@@ -1430,9 +1583,6 @@ extern "C" void func_8029FEBC() {}
 extern "C" void func_8029FF00() {}
 // LLM-HARNESS-END: us-802a2634
 
-// LLM-HARNESS-BEGIN: us-802a2650
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-802a2650
 
 // LLM-HARNESS-BEGIN: us-802a2658
 extern "C" void func_8029FF24() {}

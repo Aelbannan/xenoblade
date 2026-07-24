@@ -1,26 +1,23 @@
 // Auto-scaffolded catalog TU for kyoshin/CSelShopWin
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSelShopWin.hpp"
 
-// LLM-HARNESS-BEGIN: us-8022e5ac
-extern "C" u8 func_8022C8D0(void* self) { return ((u8*)self)[0x25]; }
-// LLM-HARNESS-END: us-8022e5ac
-
-
-
-
-
-
+// LLM-HARNESS-BEGIN: us-8022e7c8
+/* Returns whether the shop window has finished loading resources
+   and is ready for interaction. (C-linkage: func_8022C8D0) */
+extern "C" u8 func_8022C8D0(CSelShopWin* self) {
+    return self->mIsLoaded;
+}
+// LLM-HARNESS-END: us-8022e7c8
 
 // LLM-HARNESS-BEGIN: us-8022e7d0
-extern "C" u8 func_8022C8D8(void* self) { return ((u8*)self)[0x27]; }
+/* Returns whether a show/hide animation is currently active.
+   (C-linkage: func_8022C8D8) */
+extern "C" u8 func_8022C8D8(CSelShopWin* self) {
+    return self->mAnimActive;
+}
 // LLM-HARNESS-END: us-8022e7d0
-
-
-
-
 
 // LLM-HARNESS-BEGIN: us-8022e918
 extern "C" void func_8022CA20() {}

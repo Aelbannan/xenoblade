@@ -3,10 +3,15 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CQstLogList.hpp"
 
 // LLM-HARNESS-BEGIN: us-80229584
-extern "C" u8 func_80227CCC(void* self) { return ((u8*)self)[0x179]; }
+extern "C" void __ct__11CQstLogListFv() {}
 // LLM-HARNESS-END: us-80229584
+
+// LLM-HARNESS-BEGIN: us-80229b04
+extern "C" u8 func_80227CCC(CQstLogList* self) { return self->mSortEnabled; }
+// LLM-HARNESS-END: us-80229b04
 
 // LLM-HARNESS-BEGIN: us-802297cc
 extern "C" void func_80227994() {}
@@ -20,7 +25,7 @@ extern "C" void func_80227994() {}
 
 
 // LLM-HARNESS-BEGIN: us-80229b0c
-extern "C" u8 func_80227CD4(void* self) { return ((u8*)self)[0x17A]; }
+extern "C" u8 func_80227CD4(CQstLogList* self) { return self->mSortDescending; }
 // LLM-HARNESS-END: us-80229b0c
 
 

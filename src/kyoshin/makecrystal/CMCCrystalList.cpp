@@ -2,7 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/makecrystal/CMCCrystalList.hpp"
 
 // LLM-HARNESS-BEGIN: us-80224580
 extern "C" void __ct__CMCCrystalList() {}
@@ -29,11 +29,11 @@ extern "C" void __dt__80222984() {}
 // LLM-HARNESS-END: us-802247c4
 
 // LLM-HARNESS-BEGIN: us-80224890
-extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
+extern "C" u8 func_80222A50(CMCCrystalList* self) { return self->mDataFlag; }
 // LLM-HARNESS-END: us-80224890
 
 // LLM-HARNESS-BEGIN: us-80224898
-extern "C" u8 func_80222A58(void* self) { return ((u8*)self)[0x57]; }
+extern "C" u8 func_80222A58(CMCCrystalList* self) { return self->mIsActive; }
 // LLM-HARNESS-END: us-80224898
 
 // LLM-HARNESS-BEGIN: us-802248a0

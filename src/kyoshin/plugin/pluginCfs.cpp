@@ -1,8 +1,8 @@
-// Auto-scaffolded catalog TU for kyoshin/plugin/pluginCfs
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit for kyoshin/plugin/pluginCfs
+// Plugin script functions for the CFS (Common File System / script) subsystem.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/plugin/pluginCfs.hpp"
 
 // LLM-HARNESS-BEGIN: us-8004785c
 extern "C" void setMapJumpArea() {}
@@ -150,7 +150,9 @@ extern "C" void getWeaponSlot() {}
 // LLM-HARNESS-END: us-8004a7c8
 
 // LLM-HARNESS-BEGIN: us-8004a8d0
-extern "C" bool func_8004A2E8() { return false; }
+bool func_8004A2E8() {
+    return false;
+}
 // LLM-HARNESS-END: us-8004a8d0
 
 // LLM-HARNESS-BEGIN: us-8004a8d8
@@ -158,7 +160,9 @@ extern "C" void setWeaponSlot() {}
 // LLM-HARNESS-END: us-8004a8d8
 
 // LLM-HARNESS-BEGIN: us-8004a9e8
-extern "C" void func_8004A400() {}
+void func_8004A400() {
+    // Intentionally empty
+}
 // LLM-HARNESS-END: us-8004a9e8
 
 // LLM-HARNESS-BEGIN: us-8004a9ec

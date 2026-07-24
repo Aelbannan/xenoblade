@@ -757,10 +757,13 @@ extern "C" void __ct__Q22cf5CHelpFv(cf::CHelp* self, void* owner, u32 param) {
 namespace cf {
 
 void CHelp::CHelp_UnkVirtualFunc2() {
-    CHelpVtbl* vt = mVtbl;
-    UNKWORD a = reinterpret_cast<UNKWORD (*)(CHelp*)>(vt->mSlots[6])(this);
-    vt = mVtbl;
-    UNKWORD b = reinterpret_cast<UNKWORD (*)(CHelp*)>(vt->mSlots[5])(this);
+    // One-shot indirect calls (no named CHelpVtbl* temp) so MWCC colors the
+    // iface base like a virtual dispatch (r12), matching retail.
+    typedef UNKWORD (*SlotFn)(CHelp*);
+    UNKWORD a = reinterpret_cast<SlotFn>(
+        (*reinterpret_cast<void***>(reinterpret_cast<char*>(this) + 8))[6])(this);
+    UNKWORD b = reinterpret_cast<SlotFn>(
+        (*reinterpret_cast<void***>(reinterpret_cast<char*>(this) + 8))[5])(this);
     func_80134D18(static_cast<u8>(mParam), b, a);
     func_8009D018(mOwner, 1);
 }

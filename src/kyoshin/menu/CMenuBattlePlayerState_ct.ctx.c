@@ -25559,11 +25559,13 @@ private:
         u32 wrapS : 2;
         u32 wrapT : 2;
         u32 minFilter : 3;
-        u32 magFilter : 3;
+        // Retail Get(GXTexObj) LOD path: extrwi mag@12 (1), bias@13, edge@14, aniso@15 (2).
+        // magFilter is 1 bit here (GX_NEAR/GX_LINEAR); paletteFormat follows anisotropy.
+        u32 magFilter : 1;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
-        u32 paletteFormat : 2;
         u32 anisotropy : 2;
+        u32 paletteFormat : 2;
     } mBits; // at 0x18
 };
 
@@ -27004,7 +27006,7 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
         sizePlus = padSize + 0xb;
         self->unk7F4 = 1;
         // Signed /12: under -O4,s stays divw (retail lis 0x2AAB/mulhw). Soft-cap.
-        q12 = sizePlus / 12;
+        q12 = (u32)sizePlus / 12u;
         sizeSign = padSize >> 31;
         padLim = padEnd - 0x60;
         zeroF = lbl_eu_80666F94;

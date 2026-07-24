@@ -73,23 +73,25 @@ extern "C" void func_804DAA58() {}
 // LLM-HARNESS-END: us-804deccc
 
 // LLM-HARNESS-BEGIN: us-804ded04
-extern "C" void func_804DAA90__FPCw(u32 val) {
-    extern u32 lbl_eu_80663B60;
-    lbl_eu_80663B60 = val;
+// Set the NAND error message string for error code -4 / -64
+extern "C" void func_804DAA90__FPCw(const wchar_t* msg) {
+    extern const wchar_t* lbl_eu_80663B60;
+    lbl_eu_80663B60 = msg;
 }
 // LLM-HARNESS-END: us-804ded04
 
 // LLM-HARNESS-BEGIN: us-804ded0c
-extern "C" void func_804DAA98__FPCw(u32 val) {
-    extern u32 lbl_eu_80663B64;
-    lbl_eu_80663B64 = val;
+// Set the NAND error message string for error code -3
+extern "C" void func_804DAA98__FPCw(const wchar_t* msg) {
+    extern const wchar_t* lbl_eu_80663B64;
+    lbl_eu_80663B64 = msg;
 }
 // LLM-HARNESS-END: us-804ded0c
 
 // LLM-HARNESS-BEGIN: us-804ded14
-extern "C" void func_804DAAA0__FPCw(u32 val) {
-    extern u32 lbl_eu_80663B68;
-    lbl_eu_80663B68 = val;
+extern "C" void func_804DAAA0__FPCw(const wchar_t* msg) {
+    extern const wchar_t* lbl_eu_80663B68;
+    lbl_eu_80663B68 = msg;
 }
 // LLM-HARNESS-END: us-804ded14
 

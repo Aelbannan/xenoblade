@@ -242288,18 +242288,18 @@ public:
     ml::CCol4 mFrameColor; // 0x8
     ml::CCol4 mColor18; // 0x18
     ml::CCol4 mColor28; // 0x28
-    u32 unk38; // 0x38 — render flags / mode bits (1=border expand, 2=split)
-    float unk3C; // 0x3C — possibly padding or unused alignment filler
-    float unk40; // 0x40 — unused alignment padding to align mBorder siblings
-    float unk44; // 0x44 — unused alignment padding
-    float unk48; // 0x48 — unused alignment padding
-    float unk4C; // 0x4C — unused alignment padding
-    s16 unk50; // 0x50 — unused padding
-    s16 unk52; // 0x52 — unused padding
-    s16 mContentX; // 0x54 — client-area origin X (pixels from frame left edge to content)
-    s16 mContentY; // 0x56 — client-area origin Y (pixels from frame top edge to content)
-    s16 mBorder; // 0x58 — frame border thickness in pixels (used for expand/split sizing)
-    s16 unk5A; // 0x5A — unused trailing padding; satisfies 0x5C sizeof
+    u32 unk38; // 0x38 - render flags / mode bits (1=border expand, 2=split)
+    float unk3C; // 0x3C - possibly padding or unused alignment filler
+    float unk40; // 0x40 - unused alignment padding to align mBorder siblings
+    float unk44; // 0x44 - unused alignment padding
+    float unk48; // 0x48 - unused alignment padding
+    float unk4C; // 0x4C - unused alignment padding
+    s16 unk50; // 0x50 - unused padding
+    s16 unk52; // 0x52 - unused padding
+    s16 mContentX; // 0x54 - client-area origin X (pixels from frame left edge to content)
+    s16 mContentY; // 0x56 - client-area origin Y (pixels from frame top edge to content)
+    s16 mBorder; // 0x58 - frame border thickness in pixels (used for expand/split sizing)
+    s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
 extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
@@ -244646,9 +244646,19 @@ namespace cf {
 
 namespace cf {
     class CChainActorEne : public CChainActor {
-
+    public:
+        // No additional members beyond CChainActor
+        // Class methods use extern "C" linkage to match retail symbol names
     };
 }
+
+// Forwarding: passes &self->mChainEffect to func_802A0AA0
+// Returns whether the effect matches the given parameter
+extern "C" void func_802818D4(cf::CChainActorEne* self);
+
+// Returns whether this enemy chain actor is active
+extern "C" s32 func_802818DC(cf::CChainActorEne* self);
+
 /* end "kyoshin/cf/chain/CChainActorEne.hpp" */
 
 namespace cf {
@@ -244749,15 +244759,19 @@ namespace cf {
 namespace cf {
     class CChainChance {
     public:
-        u16 unk0;
-        u8 unk2[2];
-        u32 unk4;
-        u8 unk8[0x10 - 0x8];
+        // Fields initialized to 0 by func_8027C098 (partial init function)
+        u16 mChainCount;      //0x0 - Number of successful chain links/extensions
+        u8 unk2[2];           //0x2
+        u32 unk4;             //0x4 - Possibly a pointer or timer
+        u16 mField08;         //0x8 - Partially initialized by func_8027C098
+        u16 mField0A;         //0xA - Partially initialized by func_8027C098
+        u8 mField0C;          //0xC - Partially initialized by func_8027C098
+        u8 mPadding0D[3];     //0xD
         //0x10: vtable
 
         virtual ~CChainChance(){}
 
-        u8 unk14[4];
+        u8 unk14[4];          //0x14
     };
 }
 /* end "kyoshin/cf/chain/CChainChance.hpp" */
@@ -244767,32 +244781,41 @@ namespace cf {
 /* "src/kyoshin/cf/chain/CChainCombo.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-// Gauge pair helpers (CSysWinSave.cpp) - C++ linkage -> func_80294824__FPv.
-void func_80294824(void* gauge);
-void func_80294834(void* gauge);
-void func_802AA338();
-
 namespace cf {
 
 // Two-float chain gauge at CChainCombo+0xC (written by func_80294824/34/44).
 struct CChainGauge {
-    float mVal0; // 0x0
-    float mVal1; // 0x4
+    float mVal0; // 0x0 first gauge value (initialized by func_80294824)
+    float mVal1; // 0x4 second gauge value (written by func_80294834/44)
 };
+
+} // namespace cf
+
+// Gauge pair helpers (CSysWinSave.cpp).
+// Declared as extern "C" with explicit mangled names so callers in this TU
+// reference the correct retail symbols without re-mangling when the parameter
+// type is not void*.  The gauges these operate on live at CChainCombo+0xC.
+extern "C" void func_80294824__FPv(cf::CChainGauge* gauge);
+extern "C" void func_80294834__FPv(cf::CChainGauge* gauge);
+
+// Resets/respawns chain combo state (CMenuBattleChain.cpp).
+extern "C" void func_802AA338__Fv();
 
 // Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
 extern "C" void* lbl_eu_80538994[];
+
+namespace cf {
 
 /* Chain arts combo tracker. Size 0x18.
    Manual vptr @0x14 (not a normal C++ vptr-at-0 class) to match retail and
    avoid a weak local dtor / __vt__ reloc name mismatch. */
 struct CChainCombo {
-    int mArtsType; // 0x0 - last arts category byte (0..8)
+    int mArtsType;   // 0x0 - last arts category byte (0..8)
     int mComboCount; // 0x4 - steps 0..5
-    bool mPending; // 0x8 - set externally; consumed by func_80293EEC
+    bool mPending;   // 0x8 - set externally; consumed by func_80293EEC
     u8 pad9[3];
-    CChainGauge mGauge; // 0xC
-    void* mVtbl; // 0x14 - lbl_eu_80538994
+    CChainGauge mGauge; // 0xC - chain gauge pair
+    void* mVtbl;        // 0x14 - lbl_eu_80538994
 
     CChainCombo();
     void func1();

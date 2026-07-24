@@ -701,14 +701,11 @@ renderView_after_cross:
     {
         ml::CCol4 cacheColor;
         // Retail: lfs scale->f4, z, y, x; fmuls b; lfs w; fmuls g/r; stfs a,r,g,b
-        float z = unk444.z;
-        float y = unk444.y;
-        float x = unk444.x;
         float scale = mAlpha;
-        float b = z * scale;
+        float b = unk444.z * scale;
         float a = unk444.w;
-        float g = y * scale;
-        float r = x * scale;
+        float g = unk444.y * scale;
+        float r = unk444.x * scale;
         cacheColor.a = a;
         cacheColor.r = r;
         cacheColor.g = g;

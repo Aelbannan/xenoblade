@@ -233666,6 +233666,19 @@ public:
 };
 /* end "monolib/core/CRsrcData.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 12 "monolib/core/CScriptCode.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CScriptCode.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CScriptCode : public CWorkThread {
+public:
+    CScriptCode(const char* pName, CWorkThread* pParent);
+
+    static CScriptCode* create(CWorkThread* pParent);
+
+    static CScriptCode* getInstance();
+};
 /* end "monolib/core/CScriptCode.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 13 "monolib/core/CTaskManager.hpp" */
 #pragma once
@@ -245225,14 +245238,11 @@ renderView_after_cross:
     {
         ml::CCol4 cacheColor;
         // Retail: lfs scale->f4, z, y, x; fmuls b; lfs w; fmuls g/r; stfs a,r,g,b
-        float z = unk444.z;
-        float y = unk444.y;
-        float x = unk444.x;
         float scale = mAlpha;
-        float b = z * scale;
+        float b = unk444.z * scale;
         float a = unk444.w;
-        float g = y * scale;
-        float r = x * scale;
+        float g = unk444.y * scale;
+        float r = unk444.x * scale;
         cacheColor.a = a;
         cacheColor.r = r;
         cacheColor.g = g;

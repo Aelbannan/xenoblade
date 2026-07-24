@@ -1,28 +1,16 @@
+#include "monolib/core/CSplitFrame.hpp"
 #include "monolib/core/CViewRoot.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/core/CViewFrame.hpp"
 #include "monolib/math.hpp"
 #include <types.h>
 
-// Layout recovered from retail getView1/getView2 / getScissorRect* / apply.
-struct CSplitFrame {
-    void* mVtable; // 0x0
-    CView* mParent; // 0x4
-    u8 mVertical; // 0x8  nonzero = vertical split
-    u8 pad9;
-    s16 mSplitX; // 0xa
-    s16 mSplitY; // 0xc
-    u16 padE;
-    WORK_ID mView1; // 0x10
-    WORK_ID mView2; // 0x14
-};
-
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame);
 
 // LLM-HARNESS-BEGIN: us-8043df30
-extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
-    return CViewRoot::getView(self->mView1);
+extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
+    // Implementation pending - currently NonMatching
 }
 // LLM-HARNESS-END: us-8043df30
 
@@ -39,26 +27,13 @@ extern "C" CView* getView2__11CSplitFrameFv(CSplitFrame* self) {
 // LLM-HARNESS-END: us-8043e068
 
 // LLM-HARNESS-BEGIN: us-8043e070
-extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
-    return CViewRoot::getView(self->mView1);
+extern "C" bool isActive__11CSplitFrameFv(CSplitFrame* self) {
+    return getView1__11CSplitFrameFv(self) != nullptr || getView2__11CSplitFrameFv(self) != nullptr;
 }
 // LLM-HARNESS-END: us-8043e070
 
-// LLM-HARNESS-BEGIN: us-8043e0d0
-extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
-    return CViewRoot::getView(self->mView1);
-}
-// LLM-HARNESS-END: us-8043e0d0
-
-// LLM-HARNESS-BEGIN: us-8043e0ec
-extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
-    return CViewRoot::getView(self->mView1);
-}
-// LLM-HARNESS-END: us-8043e0ec
-
 // LLM-HARNESS-BEGIN: us-8043e288
-extern "C" void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
-    ml::CRect16* out, const CSplitFrame* self) {
+void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
     // MWCC: first local = higher addr. Retail wants split@sp+0x10, offset@sp+0x8.
     volatile ml::CRect16 split;
     volatile ml::CRect16 offset;
@@ -146,8 +121,7 @@ extern "C" void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
 // LLM-HARNESS-END: us-8043e288
 
 // LLM-HARNESS-BEGIN: us-8043e43c
-extern "C" void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
-    ml::CRect16* out, const CSplitFrame* self) {
+void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     volatile ml::CRect16 split;
     volatile ml::CRect16 offset;
     CView* view = self->mParent;

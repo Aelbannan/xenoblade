@@ -6,10 +6,12 @@
 #include "kyoshin/CSkipTimer.hpp"
 
 // LLM-HARNESS-BEGIN: us-802a1904
-// TODO(catalog): replace with proper CSkipTimer2 constructor
-// Currently generates func_8029FF1C body as a placeholder
-extern "C" u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
+extern "C" void __ct__CSkipTimer2() {}
 // LLM-HARNESS-END: us-802a1904
+
+// LLM-HARNESS-BEGIN: us-802a2650
+extern "C" u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
+// LLM-HARNESS-END: us-802a2650
 
 
 

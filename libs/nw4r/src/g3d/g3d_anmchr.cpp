@@ -21,7 +21,8 @@ extern "C" void SetWeight__Q34nw4r3g3d9AnmObjChrFif(void) {}
 // LLM-HARNESS-END: us-803e61c4
 
 // LLM-HARNESS-BEGIN: us-803e61c8
-extern "C" bool GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return false; }
+extern float lbl_eu_80669B88;
+extern "C" float GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return lbl_eu_80669B88; }
 // LLM-HARNESS-END: us-803e61c8
 
 // LLM-HARNESS-BEGIN: us-803e61d0
@@ -121,7 +122,7 @@ extern "C" void SetUpdateRate__Q34nw4r3g3d12AnmObjChrResFf() {}
 // LLM-HARNESS-END: us-803e760c
 
 // LLM-HARNESS-BEGIN: us-803e76c0
-extern "C" float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 0x10); }
+extern "C" float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 28); }
 // LLM-HARNESS-END: us-803e76c0
 
 // LLM-HARNESS-BEGIN: us-803e76c8

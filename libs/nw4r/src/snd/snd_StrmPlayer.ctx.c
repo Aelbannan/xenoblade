@@ -241776,7 +241776,7 @@ public:
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
-        return mPreparedFlag;
+        return *(bool*)((u8*)this + 677);
     } // at 0x2C
 
     virtual void SetPlayerPriority(int priority); // at 0x4C
@@ -243978,13 +243978,13 @@ public:
     virtual void Pause(bool flag); // at 0x14
 
     virtual bool IsActive() const {
-        return mActiveFlag;
+        return *(bool*)((u8*)this + 289);
     } // at 0x18
     virtual bool IsStarted() const {
-        return mStartedFlag;
+        return *(bool*)((u8*)this + 290);
     } // at 0x1C
     virtual bool IsPause() const {
-        return mPauseFlag;
+        return *(bool*)((u8*)this + 295);
     }; // at 0x20
 
     virtual void OnUpdateFrameSoundThread() {
@@ -248058,11 +248058,11 @@ extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 // LLM-HARNESS-END: us-804272d8
 // LLM-HARNESS-BEGIN: us-804272e8
-extern "C" bool IsPause__Q44nw4r3snd6detail10StrmPlayerCFv() { return false; }
+extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return ((u8*)self)[295]; }
 // LLM-HARNESS-END: us-804272e8
 // LLM-HARNESS-BEGIN: us-804272f0
-extern "C" bool IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv() { return false; }
+extern "C" u8 IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return ((u8*)self)[290]; }
 // LLM-HARNESS-END: us-804272f0
 // LLM-HARNESS-BEGIN: us-804272f8
-extern "C" bool IsActive__Q44nw4r3snd6detail10StrmPlayerCFv() { return false; }
+extern "C" u8 IsActive__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return ((u8*)self)[289]; }
 // LLM-HARNESS-END: us-804272f8

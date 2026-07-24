@@ -17,5 +17,5 @@ void SFHLOCAL_GetNbyteB64() {}
 // LLM-HARNESS-END: us-803d2cb0
 
 // LLM-HARNESS-BEGIN: us-803d2e38
-int SFHLOCAL_GetSizeofMember() { return 0; }
+int SFHLOCAL_GetSizeofMember(int a, int b) { return b - a; }
 // LLM-HARNESS-END: us-803d2e38

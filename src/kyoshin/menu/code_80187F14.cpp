@@ -81,7 +81,8 @@ extern "C" void func_80189510() {}
 // LLM-HARNESS-END: us-8018aac4
 
 // LLM-HARNESS-BEGIN: us-8018aba0
-extern "C" bool func_801895EC() { return false; }
+extern float lbl_eu_80662490;
+extern "C" float func_801895EC() { return lbl_eu_80662490; }
 // LLM-HARNESS-END: us-8018aba0
 
 // LLM-HARNESS-BEGIN: us-8018aba8
@@ -89,7 +90,8 @@ extern "C" void func_801895F4() {}
 // LLM-HARNESS-END: us-8018aba8
 
 // LLM-HARNESS-BEGIN: us-8018ac54
-extern "C" bool func_801896A0() { return false; }
+extern float lbl_eu_80662498;
+extern "C" float func_801896A0() { return lbl_eu_80662498; }
 // LLM-HARNESS-END: us-8018ac54
 
 // LLM-HARNESS-BEGIN: us-8018ac5c

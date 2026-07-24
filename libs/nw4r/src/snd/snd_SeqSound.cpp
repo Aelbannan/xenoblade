@@ -218,7 +218,7 @@ extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { ret
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 // LLM-HARNESS-END: us-8041d644
 // LLM-HARNESS-BEGIN: us-8041d64c
-extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return ((u8*)self)[0x2a5]; }
+extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return ((u8*)self)[677]; }
 // LLM-HARNESS-END: us-8041d64c
 // LLM-HARNESS-BEGIN: us-8041d654
 extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail8SeqSoundCFv(void) { return 0; }

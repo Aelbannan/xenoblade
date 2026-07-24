@@ -13,11 +13,11 @@ void ADXM_ExecMain(void) {}
 // LLM-HARNESS-END: us-8039dd80
 
 // LLM-HARNESS-BEGIN: us-8039dd84
-void ADXM_Lock(void) {}
+void ADXM_Lock(void) { SVM_Lock(); }
 // LLM-HARNESS-END: us-8039dd84
 
 // LLM-HARNESS-BEGIN: us-8039dd88
-void ADXM_Unlock(void) {}
+void ADXM_Unlock(void) { SVM_Unlock(); }
 // LLM-HARNESS-END: us-8039dd88
 
 // LLM-HARNESS-BEGIN: us-8039dd8c
@@ -49,7 +49,7 @@ void adxm_mwidle_proc() {}
 // LLM-HARNESS-END: us-8039e08c
 
 // LLM-HARNESS-BEGIN: us-8039e15c
-void ADXM_SetCbErr(void) {}
+void ADXM_SetCbErr(void) { SVM_SetCbErr(); }
 // LLM-HARNESS-END: us-8039e15c
 
 // LLM-HARNESS-BEGIN: us-8039e160

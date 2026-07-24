@@ -1339,47 +1339,48 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8016e11c
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void __ct__cf_CfResReloadImpl() {}
 // LLM-HARNESS-END: us-8016e11c
 
 // LLM-HARNESS-BEGIN: us-8016e198
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016CE3C() {}
 // LLM-HARNESS-END: us-8016e198
 
 // LLM-HARNESS-BEGIN: us-8016e1b8
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016CE5C() {}
 // LLM-HARNESS-END: us-8016e1b8
 
 // LLM-HARNESS-BEGIN: us-8016e278
-extern "C" int func_8016CF1C(void* self) { return 12; }
+// FULL_MATCH: vtable slot 6 - returns constant resource type identifier
+extern "C" int func_8016CF1C() { return 12; }
 // LLM-HARNESS-END: us-8016e278
 
 // LLM-HARNESS-BEGIN: us-8016e280
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016CF24() {}
 // LLM-HARNESS-END: us-8016e280
 
 // LLM-HARNESS-BEGIN: us-8016e318
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016CFBC() {}
 // LLM-HARNESS-END: us-8016e318
 
 // LLM-HARNESS-BEGIN: us-8016e338
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016CFDC() {}
 // LLM-HARNESS-END: us-8016e338
 
 // LLM-HARNESS-BEGIN: us-8016e41c
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016D0C0() {}
 // LLM-HARNESS-END: us-8016e41c
 
 // LLM-HARNESS-BEGIN: us-8016e4a0
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016D144() {}
 // LLM-HARNESS-END: us-8016e4a0
 
 // LLM-HARNESS-BEGIN: us-8016e534
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016D1D8() {}
 // LLM-HARNESS-END: us-8016e534
 
 // LLM-HARNESS-BEGIN: us-8016e59c
-extern "C" int func_8016CF1C(void* self) { return 12; }
+extern "C" void func_8016D240() {}
 // LLM-HARNESS-END: us-8016e59c
 
 // LLM-HARNESS-BEGIN: us-8016e658
@@ -1423,7 +1424,8 @@ extern "C" void func_8016DE8C() {}
 // LLM-HARNESS-END: us-8016f240
 
 // LLM-HARNESS-BEGIN: us-8016f280
-extern "C" int func_8016DECC(void* self) { return 1; }
+// FULL_MATCH: vtable slot 23 - returns constant resource sub-type
+extern "C" int func_8016DECC() { return 1; }
 // LLM-HARNESS-END: us-8016f280
 
 // LLM-HARNESS-BEGIN: us-8016f288
@@ -1435,10 +1437,8 @@ extern "C" void __dt__Q22cf15CfResReloadImplFv() {}
 // LLM-HARNESS-END: us-8016f2a0
 
 // LLM-HARNESS-BEGIN: us-8016f2e0
-extern "C" unsigned short func_8016DF2C()
-{
-    return lbl_eu_8066408C;
-}
+extern u16 lbl_eu_80664278;
+extern "C" u16 func_8016DF2C() { return lbl_eu_80664278; }
 // LLM-HARNESS-END: us-8016f2e0
 
 // LLM-HARNESS-BEGIN: us-8016f2e8
@@ -1450,17 +1450,13 @@ extern "C" void func_8016DF4C() {}
 // LLM-HARNESS-END: us-8016f300
 
 // LLM-HARNESS-BEGIN: us-8016f440
-extern "C" unsigned short func_8016E08C()
-{
-    return lbl_eu_8066408C;
-}
+extern u16 lbl_eu_80664280;
+extern "C" u16 func_8016E08C() { return lbl_eu_80664280; }
 // LLM-HARNESS-END: us-8016f440
 
 // LLM-HARNESS-BEGIN: us-8016f448
-extern "C" unsigned short func_8016E094()
-{
-    return lbl_eu_8066408C;
-}
+extern u16 lbl_eu_8066427E;
+extern "C" u16 func_8016E094() { return lbl_eu_8066427E; }
 // LLM-HARNESS-END: us-8016f448
 
 // LLM-HARNESS-BEGIN: us-8016f450

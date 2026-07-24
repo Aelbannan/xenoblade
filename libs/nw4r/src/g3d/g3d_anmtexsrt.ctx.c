@@ -760,7 +760,7 @@ extern "C" void SetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResFf() {}
 // LLM-HARNESS-END: us-803e5a60
 
 // LLM-HARNESS-BEGIN: us-803e5b14
-extern "C" float GetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResCFv(void *self) { return *(float *)((char *)self + 0x10); }
+extern "C" float GetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResCFv(void *self) { return *(float *)((char *)self + 28); }
 // LLM-HARNESS-END: us-803e5b14
 
 // LLM-HARNESS-BEGIN: us-803e5b1c

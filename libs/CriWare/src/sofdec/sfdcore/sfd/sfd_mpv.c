@@ -193,7 +193,7 @@ void sfmpv_SetFrmInf() {}
 // LLM-HARNESS-END: us-803ca16c
 
 // LLM-HARNESS-BEGIN: us-803ca2d8
-void SFMPV_AddRead(void) {}
+void SFMPV_AddRead(void) { SFMPVF_AddRead(); }
 // LLM-HARNESS-END: us-803ca2d8
 
 // LLM-HARNESS-BEGIN: us-803ca2dc

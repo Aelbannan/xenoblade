@@ -857,7 +857,7 @@ void bta_dm_disc_remname_cback() {}
 // LLM-HARNESS-END: us-802e2b90
 
 // LLM-HARNESS-BEGIN: us-802e2c18
-void bta_dm_cancel_rmt_name(void) {}
+void bta_dm_cancel_rmt_name(void) { BTM_CancelRemoteDeviceName(); }
 // LLM-HARNESS-END: us-802e2c18
 
 // LLM-HARNESS-BEGIN: us-802e2c1c

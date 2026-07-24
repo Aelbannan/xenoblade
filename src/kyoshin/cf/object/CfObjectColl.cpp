@@ -121,7 +121,8 @@ extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) =
 // LLM-HARNESS-END: us-800acd74
 
 // LLM-HARNESS-BEGIN: us-800acd7c
-extern "C" bool CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666914;
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
 // LLM-HARNESS-END: us-800acd7c
 
 // LLM-HARNESS-BEGIN: us-800acd84
@@ -129,7 +130,8 @@ extern "C" void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800acd84
 
 // LLM-HARNESS-BEGIN: us-800acd88
-extern "C" bool CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800acd88
 
 // LLM-HARNESS-BEGIN: us-800acd90
@@ -157,7 +159,8 @@ extern "C" void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800acdf4
 
 // LLM-HARNESS-BEGIN: us-800acdf8
-extern "C" bool CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800acdf8
 
 // LLM-HARNESS-BEGIN: us-800ace00
@@ -233,7 +236,8 @@ extern "C" int CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv(void* self) { return 
 // LLM-HARNESS-END: us-800ace84
 
 // LLM-HARNESS-BEGIN: us-800ace8c
-extern "C" bool CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800ace8c
 
 // LLM-HARNESS-BEGIN: us-800ace94
@@ -241,7 +245,8 @@ extern "C" void CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ace94
 
 // LLM-HARNESS-BEGIN: us-800ace98
-extern "C" bool CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800ace98
 
 // LLM-HARNESS-BEGIN: us-800acea0

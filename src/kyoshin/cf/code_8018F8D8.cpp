@@ -137,7 +137,8 @@ extern "C" void func_80190840() {}
 // LLM-HARNESS-END: us-80191f5c
 
 // LLM-HARNESS-BEGIN: us-80192054
-extern "C" bool func_80190938() { return false; }
+extern float lbl_eu_80667A90;
+extern "C" float func_80190938() { return lbl_eu_80667A90; }
 // LLM-HARNESS-END: us-80192054
 
 // LLM-HARNESS-BEGIN: us-8019205c

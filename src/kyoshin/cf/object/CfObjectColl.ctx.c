@@ -1339,23 +1339,23 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800abc9c
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB3D0() {}
 // LLM-HARNESS-END: us-800abc9c
 
 // LLM-HARNESS-BEGIN: us-800abcb8
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB3EC__Q22cf12CfObjectCollFv() {}
 // LLM-HARNESS-END: us-800abcb8
 
 // LLM-HARNESS-BEGIN: us-800abcf0
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void __dt__Q22cf12CfObjectCollFv() {}
 // LLM-HARNESS-END: us-800abcf0
 
 // LLM-HARNESS-BEGIN: us-800abd64
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB498__Q22cf12CfObjectCollFv() {}
 // LLM-HARNESS-END: us-800abd64
 
 // LLM-HARNESS-BEGIN: us-800abd78
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void CfObjectColl_initCollImplInstances() {}
 // LLM-HARNESS-END: us-800abd78
 
 // LLM-HARNESS-BEGIN: us-800abe48
@@ -1363,23 +1363,23 @@ extern "C" void func_800AB57C__Q22cf12CfObjectCollFv(void) {}
 // LLM-HARNESS-END: us-800abe48
 
 // LLM-HARNESS-BEGIN: us-800abe4c
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB580() {}
 // LLM-HARNESS-END: us-800abe4c
 
 // LLM-HARNESS-BEGIN: us-800ac064
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB798__Q22cf12CfObjectCollFv() {}
 // LLM-HARNESS-END: us-800ac064
 
 // LLM-HARNESS-BEGIN: us-800ac074
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB7A8__Q22cf12CfObjectCollFv() {}
 // LLM-HARNESS-END: us-800ac074
 
 // LLM-HARNESS-BEGIN: us-800ac0c4
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB7F8() {}
 // LLM-HARNESS-END: us-800ac0c4
 
 // LLM-HARNESS-BEGIN: us-800ac198
-extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
+extern "C" void func_800AB8CC() {}
 // LLM-HARNESS-END: us-800ac198
 
 // LLM-HARNESS-BEGIN: us-800ac244
@@ -1455,7 +1455,8 @@ extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) =
 // LLM-HARNESS-END: us-800acd74
 
 // LLM-HARNESS-BEGIN: us-800acd7c
-extern "C" bool CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666914;
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf8CfObjectFv() { return lbl_eu_80666914; }
 // LLM-HARNESS-END: us-800acd7c
 
 // LLM-HARNESS-BEGIN: us-800acd84
@@ -1463,7 +1464,8 @@ extern "C" void CfObject_UnkVirtualFunc72__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800acd84
 
 // LLM-HARNESS-BEGIN: us-800acd88
-extern "C" bool CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc71__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800acd88
 
 // LLM-HARNESS-BEGIN: us-800acd90
@@ -1491,7 +1493,8 @@ extern "C" void CfObject_UnkVirtualFunc61__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800acdf4
 
 // LLM-HARNESS-BEGIN: us-800acdf8
-extern "C" bool CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc60__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800acdf8
 
 // LLM-HARNESS-BEGIN: us-800ace00
@@ -1567,7 +1570,8 @@ extern "C" int CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv(void* self) { return 
 // LLM-HARNESS-END: us-800ace84
 
 // LLM-HARNESS-BEGIN: us-800ace8c
-extern "C" bool CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800ace8c
 
 // LLM-HARNESS-BEGIN: us-800ace94
@@ -1575,7 +1579,8 @@ extern "C" void CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800ace94
 
 // LLM-HARNESS-BEGIN: us-800ace98
-extern "C" bool CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv() { return false; }
+extern float lbl_eu_80666910;
+extern "C" float CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 // LLM-HARNESS-END: us-800ace98
 
 // LLM-HARNESS-BEGIN: us-800acea0
@@ -1591,7 +1596,7 @@ extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800aceac
 
 // LLM-HARNESS-BEGIN: us-800aceb0
-extern "C" u32 CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv(u32 val) { return val & 0xFFFFFF; }
+extern "C" void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800aceb0
 
 // LLM-HARNESS-BEGIN: us-800acebc
@@ -1603,7 +1608,7 @@ extern "C" void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800acecc
 
 // LLM-HARNESS-BEGIN: us-800aced0
-extern "C" u32 func_800AC604__Q22cf13CfObjectPointFv(u32 val) { return (val >> 16) & 0xFF; }
+extern "C" void func_800AC604__Q22cf13CfObjectPointFv() {}
 // LLM-HARNESS-END: us-800aced0
 
 // LLM-HARNESS-BEGIN: us-800acedc

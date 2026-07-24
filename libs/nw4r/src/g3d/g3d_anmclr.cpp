@@ -45,7 +45,7 @@ extern "C" void SetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResFf() {}
 // LLM-HARNESS-END: us-803e42b0
 
 // LLM-HARNESS-BEGIN: us-803e4364
-extern "C" float GetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResCFv(void *self) { return *(float *)((char *)self + 0x10); }
+extern "C" float GetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResCFv(void *self) { return *(float *)((char *)self + 28); }
 // LLM-HARNESS-END: us-803e4364
 
 // LLM-HARNESS-BEGIN: us-803e436c

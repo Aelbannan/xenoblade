@@ -45,7 +45,8 @@ extern "C" void __dt__Q22cf7CfTFileFv() {}
 // LLM-HARNESS-END: us-8006a878
 
 // LLM-HARNESS-BEGIN: us-8006a8b8
-extern "C" bool func_80069EA0() { return false; }
+extern float lbl_eu_80661AF0;
+extern "C" float func_80069EA0() { return lbl_eu_80661AF0; }
 // LLM-HARNESS-END: us-8006a8b8
 
 // LLM-HARNESS-BEGIN: us-8006a8c0
@@ -101,11 +102,13 @@ extern "C" void func_8006A3BC() {}
 // LLM-HARNESS-END: us-8006add4
 
 // LLM-HARNESS-BEGIN: us-8006ae14
-extern "C" bool func_8006A3FC() { return false; }
+extern u16 lbl_eu_80661AF8;
+extern "C" u16 func_8006A3FC(u16 val) { lbl_eu_80661AF8 = val; return val; }
 // LLM-HARNESS-END: us-8006ae14
 
 // LLM-HARNESS-BEGIN: us-8006ae1c
-extern "C" bool func_8006A404() { return false; }
+extern u16 lbl_eu_80661AF8;
+extern "C" u16 func_8006A404() { return lbl_eu_80661AF8; }
 // LLM-HARNESS-END: us-8006ae1c
 
 // LLM-HARNESS-BEGIN: us-8006ae24

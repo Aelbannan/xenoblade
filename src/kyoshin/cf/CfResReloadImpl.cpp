@@ -103,7 +103,8 @@ extern "C" void __dt__Q22cf15CfResReloadImplFv() {}
 // LLM-HARNESS-END: us-8016f2a0
 
 // LLM-HARNESS-BEGIN: us-8016f2e0
-extern "C" bool func_8016DF2C() { return false; }
+extern u16 lbl_eu_80664278;
+extern "C" u16 func_8016DF2C() { return lbl_eu_80664278; }
 // LLM-HARNESS-END: us-8016f2e0
 
 // LLM-HARNESS-BEGIN: us-8016f2e8
@@ -115,11 +116,13 @@ extern "C" void func_8016DF4C() {}
 // LLM-HARNESS-END: us-8016f300
 
 // LLM-HARNESS-BEGIN: us-8016f440
-extern "C" bool func_8016E08C() { return false; }
+extern u16 lbl_eu_80664280;
+extern "C" u16 func_8016E08C() { return lbl_eu_80664280; }
 // LLM-HARNESS-END: us-8016f440
 
 // LLM-HARNESS-BEGIN: us-8016f448
-extern "C" bool func_8016E094() { return false; }
+extern u16 lbl_eu_8066427E;
+extern "C" u16 func_8016E094() { return lbl_eu_8066427E; }
 // LLM-HARNESS-END: us-8016f448
 
 // LLM-HARNESS-BEGIN: us-8016f450

@@ -37,5 +37,6 @@ void bta_sys_disable() {}
 // LLM-HARNESS-END: us-802e1480
 
 // LLM-HARNESS-BEGIN: us-802e14e8
-int bta_sys_set_trace_level() { return 0; }
+extern u8 appl_trace_level;
+extern u8 bta_sys_set_trace_level(u8 val) { appl_trace_level = val; return val; }
 // LLM-HARNESS-END: us-802e14e8

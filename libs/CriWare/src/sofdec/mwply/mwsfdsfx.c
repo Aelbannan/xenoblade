@@ -17,11 +17,11 @@ int MWSFSFX_CalcHnWorkSiz(void) { return 0x301f; }
 // LLM-HARNESS-END: us-803a136c
 
 // LLM-HARNESS-BEGIN: us-803a1374
-void MWSFSFX_Create(void) {}
+void MWSFSFX_Create(void) { SFX_Create(); }
 // LLM-HARNESS-END: us-803a1374
 
 // LLM-HARNESS-BEGIN: us-803a1378
-void MWSFSFX_Destroy(void) {}
+void MWSFSFX_Destroy(void) { SFX_Destroy(); }
 // LLM-HARNESS-END: us-803a1378
 
 // LLM-HARNESS-BEGIN: us-803a137c

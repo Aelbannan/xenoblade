@@ -21,7 +21,7 @@ void AHXSJD_SetupFtbl(void) {}
 // LLM-HARNESS-END: us-8039143c
 
 // LLM-HARNESS-BEGIN: us-80391440
-void AHXSJD_SetupWtbl(void) {}
+void AHXSJD_SetupWtbl(void) { AHXDCD_SetupWtbl(); }
 // LLM-HARNESS-END: us-80391440
 
 // LLM-HARNESS-BEGIN: us-80391444

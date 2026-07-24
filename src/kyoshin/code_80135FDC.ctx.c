@@ -1571,7 +1571,8 @@ extern "C" u8 func_801392B4(void* self) { return ((u8*)self)[0]; }
 // LLM-HARNESS-END: us-80139c78
 
 // LLM-HARNESS-BEGIN: us-80139c84
-extern "C" bool func_801392C0() { return false; }
+extern u8 lbl_eu_80664077;
+extern "C" u8 func_801392C0() { return lbl_eu_80664077; }
 // LLM-HARNESS-END: us-80139c84
 
 // LLM-HARNESS-BEGIN: us-80139c8c
@@ -1579,7 +1580,8 @@ extern "C" void func_801392C8() {}
 // LLM-HARNESS-END: us-80139c8c
 
 // LLM-HARNESS-BEGIN: us-80139ca0
-extern "C" bool func_801392DC() { return false; }
+extern u8 lbl_eu_8066407E;
+extern "C" u8 func_801392DC() { return lbl_eu_8066407E; }
 // LLM-HARNESS-END: us-80139ca0
 
 // LLM-HARNESS-BEGIN: us-80139ca8
@@ -1679,11 +1681,13 @@ extern "C" void func_8013B428__FUl() {}
 // LLM-HARNESS-END: us-8013bdec
 
 // LLM-HARNESS-BEGIN: us-8013c240
-extern "C" bool func_8013B87C() { return false; }
+extern u8 lbl_eu_8066407F;
+extern "C" u8 func_8013B87C(u8 val) { lbl_eu_8066407F = val; return val; }
 // LLM-HARNESS-END: us-8013c240
 
 // LLM-HARNESS-BEGIN: us-8013c248
-extern "C" bool func_8013B884() { return false; }
+extern u8 lbl_eu_8066407F;
+extern "C" u8 func_8013B884() { return lbl_eu_8066407F; }
 // LLM-HARNESS-END: us-8013c248
 
 // LLM-HARNESS-BEGIN: us-8013c250
@@ -1699,7 +1703,8 @@ extern "C" void func_8013B980() {}
 // LLM-HARNESS-END: us-8013c344
 
 // LLM-HARNESS-BEGIN: us-8013c368
-extern "C" bool func_8013B9A4() { return false; }
+extern u8 lbl_eu_80664080;
+extern "C" u8 func_8013B9A4() { return lbl_eu_80664080; }
 // LLM-HARNESS-END: us-8013c368
 
 // LLM-HARNESS-BEGIN: us-8013c370
@@ -1731,7 +1736,8 @@ extern "C" void func_8013BDA8(void) {}
 // LLM-HARNESS-END: us-8013c76c
 
 // LLM-HARNESS-BEGIN: us-8013c778
-extern "C" bool func_8013BDB4() { return false; }
+extern u8 lbl_eu_80664058;
+extern "C" u8 func_8013BDB4() { return lbl_eu_80664058; }
 // LLM-HARNESS-END: us-8013c778
 
 // LLM-HARNESS-BEGIN: us-8013c780
@@ -1743,7 +1749,8 @@ extern "C" void func_8013BDD0(void) {}
 // LLM-HARNESS-END: us-8013c794
 
 // LLM-HARNESS-BEGIN: us-8013c7a0
-extern "C" bool func_8013BDDC() { return false; }
+extern u8 lbl_eu_80664059;
+extern "C" u8 func_8013BDDC() { return lbl_eu_80664059; }
 // LLM-HARNESS-END: us-8013c7a0
 
 // LLM-HARNESS-BEGIN: us-8013c7a8
@@ -1760,7 +1767,8 @@ extern "C" u8 func_8013BE0C() { return lbl_eu_8066405A; }
 // LLM-HARNESS-END: us-8013c7d0
 
 // LLM-HARNESS-BEGIN: us-8013c7d8
-extern "C" bool func_8013BE14() { return false; }
+extern u8 lbl_eu_8066405B;
+extern "C" u8 func_8013BE14() { return lbl_eu_8066405B; }
 // LLM-HARNESS-END: us-8013c7d8
 
 // LLM-HARNESS-BEGIN: us-8013c7e0

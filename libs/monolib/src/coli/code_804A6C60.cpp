@@ -80,7 +80,8 @@ extern "C" void func_804A7E7C() {}
 // LLM-HARNESS-END: us-804abfd8
 
 // LLM-HARNESS-BEGIN: us-804ac024
-extern "C" bool func_804A7EC8() { return false; }
+extern u32 lbl_eu_80665938;
+extern "C" u32 func_804A7EC8(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
 // LLM-HARNESS-END: us-804ac024
 
 // LLM-HARNESS-BEGIN: us-804ac02c

@@ -1,6 +1,6 @@
-// Auto-scaffolded catalog TU for monolib/src/coli/code_804A6C60
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit: monolib/src/coli/code_804A6C60
+// Collision subsystem — method dispatch table handlers and utilities.
+// Each stub below is a catalog placeholder pending decompilation.
 
 /* "libs/monolib/src/coli/code_804A6C60.cpp" line 4 "harness_catalog.h" */
 #pragma once
@@ -718,45 +718,62 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 /* end "harness_catalog.h" */
+/* "libs/monolib/src/coli/code_804A6C60.cpp" line 5 "monolib/coli/coli_types.hpp" */
+#ifndef MONOLIB_COLI_TYPES_HPP
+#define MONOLIB_COLI_TYPES_HPP
+
+namespace ml {
+namespace coli {
+
+/** Forward declaration for collision objects used in the coli subsystem. */
+struct CColiObject;
+
+} // namespace coli
+} // namespace ml
+
+#endif
+/* end "monolib/coli/coli_types.hpp" */
+
+using ml::coli::CColiObject;
 
 // LLM-HARNESS-BEGIN: us-804aadbc
-extern "C" void func_804A6C60() {}
+extern "C" void func_804A6C60(void) {}
 // LLM-HARNESS-END: us-804aadbc
 
 // LLM-HARNESS-BEGIN: us-804aaeec
-extern "C" void func_804A6D90() {}
+extern "C" void func_804A6D90(void) {}
 // LLM-HARNESS-END: us-804aaeec
 
 // LLM-HARNESS-BEGIN: us-804aaf1c
-extern "C" void func_804A6DC0() {}
+extern "C" void func_804A6DC0(void) {}
 // LLM-HARNESS-END: us-804aaf1c
 
 // LLM-HARNESS-BEGIN: us-804aaf7c
-extern "C" void func_804A6E20() {}
+extern "C" void func_804A6E20(void) {}
 // LLM-HARNESS-END: us-804aaf7c
 
 // LLM-HARNESS-BEGIN: us-804ab254
-extern "C" void func_804A70F8() {}
+extern "C" void func_804A70F8(void) {}
 // LLM-HARNESS-END: us-804ab254
 
 // LLM-HARNESS-BEGIN: us-804ab488
-extern "C" void func_804A732C() {}
+extern "C" void func_804A732C(void) {}
 // LLM-HARNESS-END: us-804ab488
 
 // LLM-HARNESS-BEGIN: us-804ab4fc
-extern "C" void func_804A73A0() {}
+extern "C" void func_804A73A0(void) {}
 // LLM-HARNESS-END: us-804ab4fc
 
 // LLM-HARNESS-BEGIN: us-804ab798
-extern "C" void func_804A763C() {}
+extern "C" void func_804A763C(void) {}
 // LLM-HARNESS-END: us-804ab798
 
 // LLM-HARNESS-BEGIN: us-804ab990
-extern "C" void func_804A7834() {}
+extern "C" void func_804A7834(void) {}
 // LLM-HARNESS-END: us-804ab990
 
 // LLM-HARNESS-BEGIN: us-804ab9d4
-extern "C" void func_804A7878() {}
+extern "C" void func_804A7878(void) {}
 // LLM-HARNESS-END: us-804ab9d4
 
 // LLM-HARNESS-BEGIN: us-804aba68
@@ -792,7 +809,8 @@ extern "C" void func_804A7E7C() {}
 // LLM-HARNESS-END: us-804abfd8
 
 // LLM-HARNESS-BEGIN: us-804ac024
-extern "C" bool func_804A7EC8() { return false; }
+extern u32 lbl_eu_80665938;
+extern "C" u32 func_804A7EC8(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
 // LLM-HARNESS-END: us-804ac024
 
 // LLM-HARNESS-BEGIN: us-804ac02c
@@ -808,7 +826,9 @@ extern "C" void func_804A7F50() {}
 // LLM-HARNESS-END: us-804ac0ac
 
 // LLM-HARNESS-BEGIN: us-804ac388
-extern "C" void func_804A822C(void) {}
+// No-op handler. Used as a default stub in collision dispatch tables for
+// method slots that require no action (e.g. optional callbacks).
+extern "C" void func_804A822C() {}
 // LLM-HARNESS-END: us-804ac388
 
 // LLM-HARNESS-BEGIN: us-804ac38c
@@ -924,7 +944,10 @@ extern "C" void func_804AC5D8() {}
 // LLM-HARNESS-END: us-804b0734
 
 // LLM-HARNESS-BEGIN: us-804b0778
-extern "C" int func_804AC61C(void* self) { return 0; }
+// Default false-return handler. Used as a placeholder in collision method
+// dispatch tables for boolean-returning virtual method slots that are
+// not overridden (always returns 0 / false). The self pointer is unused.
+extern "C" int func_804AC61C(CColiObject* /*self*/) { return 0; }
 // LLM-HARNESS-END: us-804b0778
 
 // LLM-HARNESS-BEGIN: us-804b0780

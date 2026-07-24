@@ -62,7 +62,7 @@ public:
     }
 
     f32 GetCharSpace() const {
-        return mCharSpace;
+        return *(f32*)((u8*)this + 76);
     }
     void SetCharSpace(f32 space) {
         mCharSpace = space;
@@ -76,11 +76,6 @@ public:
     }
 
     int GetTabWidth() const;
-    /*
-    int GetTabWidth() const {
-        return mTabWidth;
-    }
-    */
     void SetTabWidth(int width) {
         mTabWidth = width;
     }

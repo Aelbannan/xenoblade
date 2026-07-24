@@ -772,5 +772,5 @@ void GKI_os_malloc() {}
 // LLM-HARNESS-END: us-802df3b0
 
 // LLM-HARNESS-BEGIN: us-802df3e0
-void GKI_os_free(void) {}
+void GKI_os_free(void) { App_MEMfree(); }
 // LLM-HARNESS-END: us-802df3e0

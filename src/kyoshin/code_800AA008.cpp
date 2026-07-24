@@ -123,11 +123,13 @@ u32 func_800AA300(u32 a, u32 b, u32 c) {
     return (a << 20) | (b << 10) | c | 0x20000000;
 }
 
-void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3) {
-    *out0 = packed >> 27;
-    *out1 = (packed >> 20) & 0x7F;
-    *out2 = (packed >> 10) & 0x3FF;
-    *out3 = packed & 0x3FF;
+// Unpack a packed token into entry ID and up to three parameters.
+// Bits: [31:27]=entryId, [26:20]=param1(7bit), [19:10]=param2(10bit), [9:0]=param3(10bit)
+void func_800AA318(u32 packedToken, u32* outEntryId, u32* outParam1, u32* outParam2, u32* outParam3) {
+    *outEntryId = packedToken >> 27;
+    *outParam1 = (packedToken >> 20) & 0x7F;
+    *outParam2 = (packedToken >> 10) & 0x3FF;
+    *outParam3 = packedToken & 0x3FF;
 }
 
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag) {
@@ -358,6 +360,5 @@ found_ext:
 }
 
 void sinit_800AABBC() {
-    lbl_eu_80572C80[0] = '\0';
-    *(u32*)&lbl_eu_80572C80[0x40] = 0;
+    reinterpret_cast<ml::FixStr<64>*>(lbl_eu_80572C80)->clear();
 }

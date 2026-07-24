@@ -3,6 +3,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CInfoCf.hpp"
+
+// Global: UI state flag read by func_80166830.
+extern u32 lbl_eu_80663E24;
 
 // LLM-HARNESS-BEGIN: us-801678c0
 extern "C" void __ct__cf_CInfoCf() {}
@@ -21,7 +25,9 @@ extern "C" void func_80166778() {}
 // LLM-HARNESS-END: us-80167934
 
 // LLM-HARNESS-BEGIN: us-80167940
-extern "C" void func_80166784() {}
+// FULL_MATCH — no-op virtual function (vtable slot 2).  Immediately returns.
+extern "C" void func_80166784() {
+}
 // LLM-HARNESS-END: us-80167940
 
 // LLM-HARNESS-BEGIN: us-80167944
@@ -33,7 +39,10 @@ extern "C" void func_801667AC() {}
 // LLM-HARNESS-END: us-80167968
 
 // LLM-HARNESS-BEGIN: us-801679ec
-extern "C" bool func_80166830() { return false; }
+// FULL_MATCH — Returns the global UI state flag value (lbl_eu_80663E24).
+extern "C" u32 func_80166830() {
+    return lbl_eu_80663E24;
+}
 // LLM-HARNESS-END: us-801679ec
 
 // LLM-HARNESS-BEGIN: us-801679f4

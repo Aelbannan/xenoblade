@@ -2,20 +2,14 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/CKizunaTalkList.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-// LLM-HARNESS-BEGIN: us-80274b78
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-80274b78
-
-
-
-
-
-
-
-
-
+// LLM-HARNESS-BEGIN: us-802759e0
+extern "C" u8 func_8027355C(CKizunaTalkList* self) {
+    return self->mNeedsRebuild;
+}
+// LLM-HARNESS-END: us-802759e0
 
 // LLM-HARNESS-BEGIN: us-802755a4
 extern "C" void __ct__CKizunaTalkList() {}

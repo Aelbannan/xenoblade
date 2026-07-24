@@ -17,3 +17,6 @@ extern "C" int cancel__14CDeviceFileJobFP25CDeviceFileJob_UnkStruct1(void* self)
 bool CDeviceFileJob::cancel(const char* pFilename){
     return false;
 }
+// LLM-HARNESS-BEGIN: us-80454bd4
+extern "C" int CDeviceFileJob_UnkVirtualFunc1__14CDeviceFileJobFv() { return 0; }
+// LLM-HARNESS-END: us-80454bd4

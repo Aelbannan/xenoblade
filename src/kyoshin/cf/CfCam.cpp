@@ -705,3 +705,12 @@ extern "C" void func_80074AA4() {}
 // LLM-HARNESS-BEGIN: us-80075688
 extern "C" void func_80074CEC() {}
 // LLM-HARNESS-END: us-80075688
+// LLM-HARNESS-BEGIN: us-80073dd4
+extern "C" int CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv() { return 0; }
+// LLM-HARNESS-END: us-80073dd4
+// LLM-HARNESS-BEGIN: us-80074ba0
+extern "C" int CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv() { return 0; }
+// LLM-HARNESS-END: us-80074ba0
+// LLM-HARNESS-BEGIN: us-80074bc4
+extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }
+// LLM-HARNESS-END: us-80074bc4

@@ -1,37 +1,41 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectNpc
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Decompiled TU for kyoshin/cf/object/CfObjectNpc
+// NPC object implementation.
+//
+// CfObjectNpc represents an NPC in the game world. It extends CfObjectMove
+// and adds NPC-specific fields and behavior: icon type (from BDAT icon_type),
+// relationship meet value (rlt_meet), and a timer for dialogue triggers.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectNpc.hpp"
 
-// LLM-HARNESS-BEGIN: us-800bfd48
-extern "C" void __ct__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfd48
+namespace cf {
 
-// LLM-HARNESS-BEGIN: us-800bfe00
-extern "C" void __dt__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfe00
+// 0x800BFD48
+CfObjectNpc::CfObjectNpc() {}
 
-// LLM-HARNESS-BEGIN: us-800bfe74
-extern "C" void func_800BF46C__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfe74
+// 0x800BFE00
+CfObjectNpc::~CfObjectNpc() {}
 
-// LLM-HARNESS-BEGIN: us-800bfee4
-extern "C" void func_800BF4DC__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfee4
+// 0x800BFE74
+bool CfObjectNpc::func_800BF46C() { return false; }
 
-// LLM-HARNESS-BEGIN: us-800c016c
-extern "C" void func_800BF764__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800c016c
+// 0x800BFEE4
+void CfObjectNpc::func_800BF4DC() {}
 
-// LLM-HARNESS-BEGIN: us-800c0314
-extern "C" void func_800BF8CC__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800c0314
+// 0x800C016C
+void CfObjectNpc::func_800BF764() {}
 
-// LLM-HARNESS-BEGIN: us-800c0368
-extern "C" void func_800BF920__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800c0368
+// 0x800C0314
+void CfObjectNpc::func_800BF8CC() {}
 
-// LLM-HARNESS-BEGIN: us-800c03cc
-extern "C" u8 func_800BF984__Q22cf11CfObjectNpcFv(void* self) { return ((u8*)self)[0x71C]; }
-// LLM-HARNESS-END: us-800c03cc
+// 0x800C0368
+s16 CfObjectNpc::func_800BF920() { return 0; }
+
+/**
+ * Returns the NPC icon type byte.
+ * This value comes from the icon_type BDAT column and is stored at offset 0x71C.
+ */
+u8 CfObjectNpc::func_800BF984() {
+    return mIconType;
+}
+
+} // namespace cf

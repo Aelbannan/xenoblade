@@ -9,5 +9,7 @@ namespace cf {
     public:
         //0x0: vtable 1
         //0x0-718: CfObjectMove
+
+        void func_800BFAAC();
     };
 }

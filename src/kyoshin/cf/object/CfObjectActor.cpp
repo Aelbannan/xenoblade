@@ -7,6 +7,14 @@ namespace cf {
     CActorParam(static_cast<CObjectParam*>(this), nullptr) {
         
     }
+
+// LLM-HARNESS-BEGIN: us-80173828
+float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
+    // Float field at absolute offset 0x3EE8 within CfObjectActor
+    // (0x4C within the CfObjectMove subobject at 0x3E9C)
+    return *(float*)(reinterpret_cast<uintptr_t>(this) + 0x3EE8);
+}
+// LLM-HARNESS-END: us-80173828
 }
 
 // Forward declarations for thunks
@@ -16,9 +24,6 @@ extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 // LLM-HARNESS-BEGIN: us-80173514
 extern "C" void CfObjectActor_UnkVirtualFunc5__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-80173514
-// LLM-HARNESS-BEGIN: us-80173828
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self) { return *(float*)((u8*)self + 0x3ee8); }
-// LLM-HARNESS-END: us-80173828
 // LLM-HARNESS-BEGIN: us-801738a4
 extern "C" void CfObjectActor_UnkVirtualFunc8__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-801738a4

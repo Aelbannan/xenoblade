@@ -49,9 +49,6 @@ extern "C" void func_80118854() {}
 extern "C" void func_8011B05C() {}
 // LLM-HARNESS-END: us-8011bb38
 
-// LLM-HARNESS-BEGIN: us-8011c1b0
-extern "C" void __dt__13CMenuMiniMap2Fv(void* self) {}
-// LLM-HARNESS-END: us-8011c1b0
 
 // LLM-HARNESS-BEGIN: us-8011c254
 extern "C" void Init__13CMenuMiniMap2Fv() {}

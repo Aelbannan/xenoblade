@@ -8,41 +8,14 @@
 extern "C" void func_8025C870() {}
 // LLM-HARNESS-END: us-80259cc8
 
-// LLM-HARNESS-BEGIN: us-80259cf8
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-80259cf8
 
-// LLM-HARNESS-BEGIN: us-80259d38
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-80259d38
 
-// LLM-HARNESS-BEGIN: us-80259da8
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-80259da8
 
-// LLM-HARNESS-BEGIN: us-80259fcc
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-80259fcc
 
-// LLM-HARNESS-BEGIN: us-8025a024
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-8025a024
 
-// LLM-HARNESS-BEGIN: us-8025a054
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-8025a054
 
-// LLM-HARNESS-BEGIN: us-8025a094
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-8025a094
 
-// LLM-HARNESS-BEGIN: us-8025a11c
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-8025a11c
 
-// LLM-HARNESS-BEGIN: us-8025a180
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-8025a180
 
 // LLM-HARNESS-BEGIN: us-8025a1d8
 extern "C" void func_80257F9C() {}
@@ -244,9 +217,6 @@ extern "C" void func_8025C7D0() {}
 extern "C" void func_8025C7FC() {}
 // LLM-HARNESS-END: us-8025e948
 
-// LLM-HARNESS-BEGIN: us-8025e9bc
-extern "C" void func_8025C870() {}
-// LLM-HARNESS-END: us-8025e9bc
 
 // LLM-HARNESS-BEGIN: us-8025e9c0
 extern "C" void func_8025C874() {}

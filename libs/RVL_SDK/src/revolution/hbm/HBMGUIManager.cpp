@@ -382,3 +382,6 @@ void IsVisible__Q36nw4hbm3lyt4PaneCFv() { *(u8*)0xcf = 0; }
 // LLM-HARNESS-BEGIN: us-80323190
 inline void GetParent__Q36nw4hbm3lyt4PaneCFv() { }
 // LLM-HARNESS-END: us-80323190
+// LLM-HARNESS-BEGIN: us-803232c0
+extern "C" void onDrag__Q310homebutton3gui9ComponentFff() {}
+// LLM-HARNESS-END: us-803232c0

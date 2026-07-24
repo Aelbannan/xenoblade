@@ -8,37 +8,13 @@
 extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-802972b0
 
-// LLM-HARNESS-BEGIN: us-80297400
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-80297400
 
-// LLM-HARNESS-BEGIN: us-80297454
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-80297454
 
-// LLM-HARNESS-BEGIN: us-802974bc
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-802974bc
 
-// LLM-HARNESS-BEGIN: us-80297520
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-80297520
 
-// LLM-HARNESS-BEGIN: us-80297540
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-80297540
 
-// LLM-HARNESS-BEGIN: us-802975b4
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-802975b4
 
-// LLM-HARNESS-BEGIN: us-802976f0
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-802976f0
 
-// LLM-HARNESS-BEGIN: us-80297984
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-80297984
 
 // LLM-HARNESS-BEGIN: us-80297998
 extern "C" void func_8029539C(void* self) {}
@@ -48,9 +24,6 @@ extern "C" void func_8029539C(void* self) {}
 extern "C" void create__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-80297a44
 
-// LLM-HARNESS-BEGIN: us-80297aac
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-80297aac
 
 // LLM-HARNESS-BEGIN: us-80297b40
 extern "C" void OnFileEvent__12CTaskGamePicFP10CEventFile(void* self) { ((void(*)(void*))func_8029539C)((char*)self - 0x54); }
@@ -81,9 +54,6 @@ public:
 };
 
 class CTaskGamePic;
-// LLM-HARNESS-BEGIN: us-802973b0
-extern "C" void Draw__12CTaskGamePicFv() {}
-// LLM-HARNESS-END: us-802973b0
 // LLM-HARNESS-BEGIN: us-80297ab0
 template<> void CTTask<CTaskGamePic>::Move() {}
 // LLM-HARNESS-END: us-80297ab0

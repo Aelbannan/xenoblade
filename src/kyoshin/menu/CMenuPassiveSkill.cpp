@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/menu/CMenuPassiveSkill.hpp"
 
 // LLM-HARNESS-BEGIN: us-802655c8
 extern "C" void __ct__CMenuPassiveSkill() {}
@@ -65,9 +66,24 @@ extern "C" void func_80263E4C() {}
 // LLM-HARNESS-END: us-802662bc
 
 // LLM-HARNESS-BEGIN: us-8026631c
-extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
+// Adjusted-this thunk: called through a secondary-base vtable entry
+// (IScnRender at offset +0x58 within CMenuPassiveSkill).
+// Upcasts to the full object and tail-calls cbRenderBefore.
+extern "C" void func_80263EAC(CMenuPassiveSkill* self) {
+    ((void(*)(CMenuPassiveSkill*))cbRenderBefore__17CMenuPassiveSkillFv)(
+        reinterpret_cast<CMenuPassiveSkill*>(
+            reinterpret_cast<char*>(self) - 0x58));
+}
 // LLM-HARNESS-END: us-8026631c
 
 // LLM-HARNESS-BEGIN: us-80266324
-extern "C" void func_80263EB4(void* self) { ((void(*)(void*))__dt__17CMenuPassiveSkillFv)((char*)self - 0x58); }
+// Adjusted-this thunk: called through a secondary-base vtable entry
+// (IScnRender at offset +0x58 within CMenuPassiveSkill).
+// Upcasts to the full object and tail-calls the destructor.
+// r4 (dealloc flag) is left unchanged — the caller sets it via vtable.
+extern "C" void func_80263EB4(CMenuPassiveSkill* self) {
+    ((void(*)(CMenuPassiveSkill*))__dt__17CMenuPassiveSkillFv)(
+        reinterpret_cast<CMenuPassiveSkill*>(
+            reinterpret_cast<char*>(self) - 0x58));
+}
 // LLM-HARNESS-END: us-80266324

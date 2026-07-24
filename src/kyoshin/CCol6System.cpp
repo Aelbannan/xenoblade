@@ -1,28 +1,29 @@
 // Auto-scaffolded catalog TU for kyoshin/CCol6System
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
+#include "kyoshin/CCol6CheckBat.hpp"
 #include "kyoshin/harness_catalog.hpp"
+
+// Singleton instance (retail: lbl_eu_80664230).
+CCol6CheckBat* gCol6CheckBat;
 
 // LLM-HARNESS-BEGIN: us-8015e188
 extern "C" void func_8015D0B8() {}
 // LLM-HARNESS-END: us-8015e188
 
-// LLM-HARNESS-BEGIN: us-8015e1a4
-extern "C" void __dt__13CCol6CheckBatFv() {}
-// LLM-HARNESS-END: us-8015e1a4
+// CCol6CheckBat::~CCol6CheckBat()
+CCol6CheckBat::~CCol6CheckBat() {}
 
-// LLM-HARNESS-BEGIN: us-8015e204
-extern "C" void Init__13CCol6CheckBatFv() {}
-// LLM-HARNESS-END: us-8015e204
+// CCol6CheckBat::Init() - no-op; override satisfies CProcess pure-virtual.
+void CCol6CheckBat::Init() {}
 
-// LLM-HARNESS-BEGIN: us-8015e208
-extern "C" void Term__13CCol6CheckBatFv(void) {}
-// LLM-HARNESS-END: us-8015e208
+// CCol6CheckBat::Term() - clears singleton pointer.
+void CCol6CheckBat::Term() {
+    gCol6CheckBat = nullptr;
+}
 
-// LLM-HARNESS-BEGIN: us-8015e214
-extern "C" void Move__13CCol6CheckBatFv() {}
-// LLM-HARNESS-END: us-8015e214
+// CCol6CheckBat::Move() - update tick (stub pending decomp).
+void CCol6CheckBat::Move() {}
 
 // LLM-HARNESS-BEGIN: us-8015e2d8
 extern "C" void __ct__CCol6CheckBat() {}

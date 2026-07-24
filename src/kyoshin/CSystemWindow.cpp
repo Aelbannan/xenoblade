@@ -2,6 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/CSystemWindow.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-801250c8
@@ -33,7 +34,8 @@ extern "C" void func_80124AEC() {}
 // LLM-HARNESS-END: us-801255c8
 
 // LLM-HARNESS-BEGIN: us-80125654
-extern "C" u32 func_80124B78(void) {
+/* Returns the singleton CSystemWindow instance (lbl_eu_80663FD8 in .sbss). */
+extern "C" u32 func_80124B78() {
     extern u32 lbl_eu_80663FD8;
     return lbl_eu_80663FD8;
 }

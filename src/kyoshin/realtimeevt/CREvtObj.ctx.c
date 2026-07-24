@@ -1339,19 +1339,19 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80186b18
-extern "C" int func_80185758(void* self) { return 0; }
+extern "C" void __ct__cf_CREvtObj() {}
 // LLM-HARNESS-END: us-80186b18
 
 // LLM-HARNESS-BEGIN: us-80186b48
-extern "C" int func_80185758(void* self) { return 0; }
+extern "C" void __dt__Q22cf8CREvtObjFv() {}
 // LLM-HARNESS-END: us-80186b48
 
 // LLM-HARNESS-BEGIN: us-80186b88
-extern "C" int func_80185758(void* self) { return 0; }
+extern "C" void func_80185700() {}
 // LLM-HARNESS-END: us-80186b88
 
 // LLM-HARNESS-BEGIN: us-80186bd0
-extern "C" void func_80185748(void) {}
+extern "C" void func_80185748() {}
 // LLM-HARNESS-END: us-80186bd0
 
 // LLM-HARNESS-BEGIN: us-80186bdc
@@ -1359,5 +1359,6 @@ extern "C" void __dt__80185754(void) {}
 // LLM-HARNESS-END: us-80186bdc
 
 // LLM-HARNESS-BEGIN: us-80186be0
-extern "C" int func_80185758(void* self) { return 0; }
+// Returns 0 unconditionally.
+extern "C" int func_80185758() { return 0; }
 // LLM-HARNESS-END: us-80186be0

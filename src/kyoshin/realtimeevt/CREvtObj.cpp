@@ -25,5 +25,6 @@ extern "C" void __dt__80185754(void) {}
 // LLM-HARNESS-END: us-80186bdc
 
 // LLM-HARNESS-BEGIN: us-80186be0
-extern "C" int func_80185758(void* self) { return 0; }
+// Returns 0 unconditionally.
+extern "C" int func_80185758() { return 0; }
 // LLM-HARNESS-END: us-80186be0

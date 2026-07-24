@@ -2,6 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802b24f0
@@ -29,7 +30,10 @@ extern "C" void func_802B0248() {}
 // LLM-HARNESS-END: us-802b2cb8
 
 // LLM-HARNESS-BEGIN: us-802b2dac
-extern "C" int func_802B033C(void* self) { return 30; }
+// Virtual override of blank1(): returns buffer size for BATTLE_BEGIN thread.
+extern "C" int func_802B033C(CVS_THREAD_BATTLE_BEGIN* self) {
+    return CVS_THREAD_BATTLE_BEGIN::BUFFER_SIZE;
+}
 // LLM-HARNESS-END: us-802b2dac
 
 // LLM-HARNESS-BEGIN: us-802b2db4

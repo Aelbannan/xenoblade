@@ -1,13 +1,10 @@
-// Auto-scaffolded catalog TU for kyoshin/CErrMes
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Error-message UI helper (EU region).
 
-#include "kyoshin/harness_catalog.hpp"
-
-extern "C" void func_8003AA8C__5CBdatFUl(unsigned long);
+#include "kyoshin/CErrMes.hpp"
+#include "kyoshin/plugin/ocBdat.hpp"
 
 // LLM-HARNESS-BEGIN: us-802b12dc
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
+void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
 // LLM-HARNESS-END: us-802b12dc
 
 

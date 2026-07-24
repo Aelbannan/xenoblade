@@ -1,8 +1,4 @@
-// Auto-scaffolded catalog TU for monolib/src/lib/CLibVM
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
-
-#include <harness_catalog.h>
+#include "monolib/lib/CLibVM.hpp"
 
 // LLM-HARNESS-BEGIN: us-804640b0
 extern "C" void __ct__6CLibVMFPCcP11CWorkThread() {}
@@ -12,10 +8,11 @@ extern "C" void __ct__6CLibVMFPCcP11CWorkThread() {}
 extern "C" void __dt__6CLibVMFv() {}
 // LLM-HARNESS-END: us-804640fc
 
+CLibVM* CLibVM::spInstance;
+
 // LLM-HARNESS-BEGIN: us-8046415c
-extern "C" u32 getInstance__6CLibVMFv(void) {
-    extern u32 lbl_eu_80665720;
-    return lbl_eu_80665720;
+CLibVM* CLibVM::getInstance() {
+    return spInstance;
 }
 // LLM-HARNESS-END: us-8046415c
 

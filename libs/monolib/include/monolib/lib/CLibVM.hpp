@@ -17,4 +17,6 @@ public:
     //0x0: vtable
     //0x0-1c4: CWorkThread
     u32 unk1C4;
+
+    static CLibVM* spInstance;
 };

@@ -1718,7 +1718,7 @@ extern "C" void func_800631DC() {}
 // LLM-HARNESS-END: us-800639a4
 
 // LLM-HARNESS-BEGIN: us-800639b8
-extern "C" void func_800631F0() {}
+extern "C" void* func_800631F0(void* self, u32 idx) { return (u8*)self + idx * 12; }
 // LLM-HARNESS-END: us-800639b8
 
 // LLM-HARNESS-BEGIN: us-800639c4
@@ -1726,7 +1726,7 @@ extern "C" void func_800631FC() {}
 // LLM-HARNESS-END: us-800639c4
 
 // LLM-HARNESS-BEGIN: us-80063a40
-extern "C" void func_80063278() {}
+extern "C" void* func_80063278(void* self, u32 idx) { return (u8*)self + idx * 12; }
 // LLM-HARNESS-END: us-80063a40
 
 // LLM-HARNESS-BEGIN: us-80063a4c
@@ -1766,7 +1766,7 @@ extern "C" void func_8006354C(void* self, u32 val) { *(u32*)((u8*)self + 0x4) = 
 // LLM-HARNESS-END: us-80063d14
 
 // LLM-HARNESS-BEGIN: us-80063d1c
-extern "C" void func_80063554() {}
+extern "C" void func_80063554(void* self) { *(u32*)((u8*)self + 8) = 0; }
 // LLM-HARNESS-END: us-80063d1c
 
 // LLM-HARNESS-BEGIN: us-80063d28
@@ -1774,7 +1774,7 @@ extern "C" void func_80063560() {}
 // LLM-HARNESS-END: us-80063d28
 
 // LLM-HARNESS-BEGIN: us-80064070
-extern "C" void func_800638A8() {}
+extern "C" void func_800638A8(void* self) { *(u32*)((u8*)self + 4) = 0; }
 // LLM-HARNESS-END: us-80064070
 
 // LLM-HARNESS-BEGIN: us-8006407c

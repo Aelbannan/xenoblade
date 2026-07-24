@@ -49,7 +49,7 @@ extern "C" void func_80044FBC__FUl() {}
 // LLM-HARNESS-END: us-8004555c
 
 // LLM-HARNESS-BEGIN: us-800455d8
-extern "C" void cbRenderBefore__12CTaskGameEffFv() {}
+extern "C" void cbRenderBefore__12CTaskGameEffFv(void) { func_804CBB60(); }
 // LLM-HARNESS-END: us-800455d8
 
 // LLM-HARNESS-BEGIN: us-800455e4

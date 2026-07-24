@@ -164,5 +164,6 @@ extern "C" void OnFileEvent__7COptionFP10CEventFile() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-802a1034
-extern "C" void sinit_8029E7D8() {}
+extern void func_80296A04__FP14Class_80296898();
+extern "C" void sinit_8029E7D8(void) { func_80296A04__FP14Class_80296898(); }
 // LLM-HARNESS-END: us-802a1034

@@ -105,7 +105,7 @@ extern "C" void func_800A8C68() {}
 // LLM-HARNESS-END: us-800a9534
 
 // LLM-HARNESS-BEGIN: us-800a9550
-extern "C" void func_800A8C84() {}
+extern "C" void func_800A8C84(void) { func_800A3940(); }
 // LLM-HARNESS-END: us-800a9550
 
 // LLM-HARNESS-BEGIN: us-800a955c

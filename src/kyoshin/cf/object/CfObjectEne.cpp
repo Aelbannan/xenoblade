@@ -465,7 +465,7 @@ extern "C" u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(void* self) { r
 // LLM-HARNESS-END: us-800b0eb0
 
 // LLM-HARNESS-BEGIN: us-800b0eb8
-extern "C" void CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv() {}
+extern "C" u32 CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv(void* self) { return (*(u32*)((u8*)self + 104) >> 21) & 0x1u; }
 // LLM-HARNESS-END: us-800b0eb8
 
 // LLM-HARNESS-BEGIN: us-800b0ec4

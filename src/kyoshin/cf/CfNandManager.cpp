@@ -17,7 +17,8 @@ extern "C" void __dt__Q22cf13CfNandManagerFv(void* self) {}
 // LLM-HARNESS-END: us-8023e148
 
 // LLM-HARNESS-BEGIN: us-8023e22c
-extern "C" void Init__Q22cf13CfNandManagerFv() {}
+extern void func_804DA1B4();
+extern "C" void Init__Q22cf13CfNandManagerFv(void) { func_804DA1B4(); }
 // LLM-HARNESS-END: us-8023e22c
 
 // LLM-HARNESS-BEGIN: us-8023e238

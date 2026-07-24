@@ -1732,7 +1732,8 @@ extern "C" void func_8013BD9C(void) {}
 // LLM-HARNESS-END: us-8013c760
 
 // LLM-HARNESS-BEGIN: us-8013c76c
-extern "C" void func_8013BDA8(void) {}
+extern u8 lbl_eu_80664058;
+extern "C" void func_8013BDA8() { lbl_eu_80664058 = 0; }
 // LLM-HARNESS-END: us-8013c76c
 
 // LLM-HARNESS-BEGIN: us-8013c778
@@ -1745,7 +1746,8 @@ extern "C" void func_8013BDBC() {}
 // LLM-HARNESS-END: us-8013c780
 
 // LLM-HARNESS-BEGIN: us-8013c794
-extern "C" void func_8013BDD0(void) {}
+extern u8 lbl_eu_80664059;
+extern "C" void func_8013BDD0() { lbl_eu_80664059 = 0; }
 // LLM-HARNESS-END: us-8013c794
 
 // LLM-HARNESS-BEGIN: us-8013c7a0
@@ -1758,7 +1760,8 @@ extern "C" void func_8013BDE4() {}
 // LLM-HARNESS-END: us-8013c7a8
 
 // LLM-HARNESS-BEGIN: us-8013c7c4
-extern "C" void func_8013BE00(void) {}
+extern u8 lbl_eu_8066405B;
+extern "C" void func_8013BE00() { lbl_eu_8066405B = 1; }
 // LLM-HARNESS-END: us-8013c7c4
 
 // LLM-HARNESS-BEGIN: us-8013c7d0
@@ -1815,11 +1818,13 @@ extern "C" void func_8013BEE8() {}
 // LLM-HARNESS-END: us-8013c8ac
 
 // LLM-HARNESS-BEGIN: us-8013c8dc
-extern "C" void func_eu_8013C8DC(void) {}
+extern u8 lbl_eu_80664064;
+extern "C" void func_eu_8013C8DC() { lbl_eu_80664064 = 1; }
 // LLM-HARNESS-END: us-8013c8dc
 
 // LLM-HARNESS-BEGIN: us-8013c8e8
-extern "C" void func_eu_8013C8E8(void) {}
+extern u8 lbl_eu_80664064;
+extern "C" void func_eu_8013C8E8() { lbl_eu_80664064 = 0; }
 // LLM-HARNESS-END: us-8013c8e8
 
 // LLM-HARNESS-BEGIN: us-8013c8f4

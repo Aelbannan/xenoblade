@@ -1339,17 +1339,11 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80058be4
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void __ct__CTaskEnvironment() {}
 // LLM-HARNESS-END: us-80058be4
 
 // LLM-HARNESS-BEGIN: us-80058d50
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void func_800586E8() {}
 // LLM-HARNESS-END: us-80058d50
 
 // LLM-HARNESS-BEGIN: us-80058d74
@@ -1369,17 +1363,11 @@ extern "C" bool func_80058724() { return false; }
 // LLM-HARNESS-END: us-80058d8c
 
 // LLM-HARNESS-BEGIN: us-80058dec
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void __dt__16CTaskEnvironmentFv() {}
 // LLM-HARNESS-END: us-80058dec
 
 // LLM-HARNESS-BEGIN: us-80058e50
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" bool func_800587E8() { return false; }
 // LLM-HARNESS-END: us-80058e50
 
 // LLM-HARNESS-BEGIN: us-80058e58
@@ -1387,10 +1375,7 @@ extern "C" u32 func_800587F0(void* self) { return *(u32*)((u8*)self + 0x7C); }
 // LLM-HARNESS-END: us-80058e58
 
 // LLM-HARNESS-BEGIN: us-80058e60
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void func_800587F8() {}
 // LLM-HARNESS-END: us-80058e60
 
 // LLM-HARNESS-BEGIN: us-80058ea4
@@ -1398,31 +1383,19 @@ extern "C" u32 func_8005883C(void* self) { return *(u32*)((u8*)self + 0x5C); }
 // LLM-HARNESS-END: us-80058ea4
 
 // LLM-HARNESS-BEGIN: us-80058eac
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void func_80058844() {}
 // LLM-HARNESS-END: us-80058eac
 
 // LLM-HARNESS-BEGIN: us-80059240
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void func_80058BD8() {}
 // LLM-HARNESS-END: us-80059240
 
 // LLM-HARNESS-BEGIN: us-80059270
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void Init__16CTaskEnvironmentFv() {}
 // LLM-HARNESS-END: us-80059270
 
 // LLM-HARNESS-BEGIN: us-800592c0
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+extern "C" void Term__16CTaskEnvironmentFv() {}
 // LLM-HARNESS-END: us-800592c0
 
 // LLM-HARNESS-BEGIN: us-80059350
@@ -1438,7 +1411,8 @@ extern "C" void func_80059610() {}
 // LLM-HARNESS-END: us-80059c78
 
 // LLM-HARNESS-BEGIN: us-80059d14
-extern "C" float func_800596AC(void* self, float val) { return 0.0f; }
+extern float lbl_eu_8066A210;
+extern "C" float func_800596AC(float val) { return val * lbl_eu_8066A210; }
 // LLM-HARNESS-END: us-80059d14
 
 // LLM-HARNESS-BEGIN: us-80059d20
@@ -1450,7 +1424,7 @@ extern "C" void func_800598A8() {}
 // LLM-HARNESS-END: us-80059f10
 
 // LLM-HARNESS-BEGIN: us-80059f74
-extern "C" u32 func_8005990C(u32 val) { return (val >> 16) & 0xFF; }
+extern "C" u32 func_8005990C(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
 // LLM-HARNESS-END: us-80059f74
 
 // LLM-HARNESS-BEGIN: us-80059f80
@@ -1507,10 +1481,7 @@ public:
 
 class CTaskEnvironment;
 // LLM-HARNESS-BEGIN: us-80058d94
-extern "C" u32 func_800587E8(void) {
-    extern u32 lbl_eu_80663D58;
-    return lbl_eu_80663D58;
-}
+template<> CTTask<CTaskEnvironment>::~CTTask() {}
 // LLM-HARNESS-END: us-80058d94
 // LLM-HARNESS-BEGIN: us-8005a338
 template<> void CTTask<CTaskEnvironment>::Move() {}

@@ -382,7 +382,7 @@ extern "C" void func_800A33C8() {}
 // LLM-HARNESS-END: us-800a3c90
 
 // LLM-HARNESS-BEGIN: us-800a3d50
-extern "C" void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv() {}
+extern "C" void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv(void* self) { *(u32*)((u8*)self + 12) = *(u32*)((u8*)self + 8); }
 // LLM-HARNESS-END: us-800a3d50
 
 // LLM-HARNESS-BEGIN: us-800a3d5c
@@ -390,11 +390,11 @@ extern "C" void* CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv(void* self
 // LLM-HARNESS-END: us-800a3d5c
 
 // LLM-HARNESS-BEGIN: us-800a3d64
-extern "C" void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv() {}
+extern "C" void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv(void* self) { *(u32*)((u8*)self + 8) = 0; }
 // LLM-HARNESS-END: us-800a3d64
 
 // LLM-HARNESS-BEGIN: us-800a3d70
-extern "C" void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv() {}
+extern "C" void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv(void* self) { *(u32*)((u8*)self + 4) = 0; }
 // LLM-HARNESS-END: us-800a3d70
 
 // LLM-HARNESS-BEGIN: us-800a3d7c

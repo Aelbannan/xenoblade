@@ -129,5 +129,5 @@ void ADXSTM_SetSj() {}
 // LLM-HARNESS-END: us-803852ec
 
 // LLM-HARNESS-BEGIN: us-80385384
-void ADXSTM_IsOpenedFile() {}
+int ADXSTM_IsOpenedFile(void* self) { return (signed char)((u8*)self)[0]; }
 // LLM-HARNESS-END: us-80385384

@@ -45,11 +45,11 @@ void MWSFSVR_SetMwsfdSvrFlg() {}
 // LLM-HARNESS-END: us-803a6658
 
 // LLM-HARNESS-BEGIN: us-803a6688
-int MWSFSVR_SetHnMwplySvrFlg() { return 0; }
+void MWSFSVR_SetHnMwplySvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x7c) = val; }
 // LLM-HARNESS-END: us-803a6688
 
 // LLM-HARNESS-BEGIN: us-803a6690
-int MWSFSVR_SetHnSfdSvrFlg() { return 0; }
+void MWSFSVR_SetHnSfdSvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x80) = val; }
 // LLM-HARNESS-END: us-803a6690
 
 // LLM-HARNESS-BEGIN: us-803a6698

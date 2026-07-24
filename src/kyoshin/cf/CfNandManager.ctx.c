@@ -1363,7 +1363,7 @@ extern "C" void Move__Q22cf13CfNandManagerFv() {}
 // LLM-HARNESS-END: us-8023e284
 
 // LLM-HARNESS-BEGIN: us-8023e2e4
-extern "C" void func_8023C1B4() {}
+extern "C" void* func_8023C1B4(void) { return 0; }
 // LLM-HARNESS-END: us-8023e2e4
 
 // LLM-HARNESS-BEGIN: us-8023e2f0

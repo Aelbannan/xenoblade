@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8025487c
-extern "C" void __ct__CMenuCollepedia() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8025487c
 
 // LLM-HARNESS-BEGIN: us-8025494c
-extern "C" void __dt__15CMenuCollepediaFv(void* self) {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8025494c
 
 // LLM-HARNESS-BEGIN: us-802549c4
-extern "C" void Init__15CMenuCollepediaFv() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802549c4
 
 // LLM-HARNESS-BEGIN: us-80254d08
-extern "C" void Term__15CMenuCollepediaFv() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254d08
 
 // LLM-HARNESS-BEGIN: us-80254d74
-extern "C" void Move__15CMenuCollepediaFv() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254d74
 
 // LLM-HARNESS-BEGIN: us-80254df8
-extern "C" void cbRenderBefore__15CMenuCollepediaFv(void* self) {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254df8
 
 // LLM-HARNESS-BEGIN: us-80254e9c
-extern "C" void func_80252C60() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254e9c
 
 // LLM-HARNESS-BEGIN: us-80254f10
-extern "C" void func_80252CD4() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254f10
 
 // LLM-HARNESS-BEGIN: us-80254f20
-extern "C" void func_80252CE4() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254f20
 
 // LLM-HARNESS-BEGIN: us-80254fc4
-extern "C" void func_80252D88() {}
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80254fc4
 
 // LLM-HARNESS-BEGIN: us-80255014

@@ -1339,35 +1339,35 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8012565c
-extern "C" void __ct__CSysWinSelect() {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-8012565c
 
 // LLM-HARNESS-BEGIN: us-801257ac
-extern "C" void __dt__13CSysWinSelectFv(void* self) {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801257ac
 
 // LLM-HARNESS-BEGIN: us-8012582c
-extern "C" void Init__13CSysWinSelectFv() {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-8012582c
 
 // LLM-HARNESS-BEGIN: us-801258e8
-extern "C" void Term__13CSysWinSelectFv() {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801258e8
 
 // LLM-HARNESS-BEGIN: us-80125950
-extern "C" void Move__13CSysWinSelectFv() {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80125950
 
 // LLM-HARNESS-BEGIN: us-80125ab4
-extern "C" void cbRenderBefore__13CSysWinSelectFv(void* self) {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80125ab4
 
 // LLM-HARNESS-BEGIN: us-80125b4c
-extern "C" void func_80125070() {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80125b4c
 
 // LLM-HARNESS-BEGIN: us-80125bd8
-extern "C" void func_801250FC() {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80125bd8
 
 extern "C" void __dt__13CSystemWindowFv(void* self);
@@ -1397,5 +1397,5 @@ extern "C" void func_801252C8(void* self) { ((void(*)(void*))__dt__13CSysWinSele
 // LLM-HARNESS-END: us-80125da4
 
 // LLM-HARNESS-BEGIN: us-80125dac
-extern "C" void __dt__Q34nw4r2ut5ColorFv() {}
+extern "C" void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80125dac

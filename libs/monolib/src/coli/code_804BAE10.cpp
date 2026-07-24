@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804bef6c
-extern "C" void func_804BAE10() {}
+extern "C" void func_804BAE10(void) {}
 // LLM-HARNESS-END: us-804bef6c
 
 // LLM-HARNESS-BEGIN: us-804bef78
@@ -77,7 +77,7 @@ extern "C" void func_804BC9B4() {}
 // LLM-HARNESS-END: us-804c0b10
 
 // LLM-HARNESS-BEGIN: us-804c0b38
-extern "C" void func_804BC9DC() {}
+extern "C" void func_804BC9DC(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-804c0b38
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

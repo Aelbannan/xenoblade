@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8029dbc4
-extern "C" void __ct__CMenuOption() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029dbc4
 
 // LLM-HARNESS-BEGIN: us-8029dc90
-extern "C" void __dt__11CMenuOptionFv(void* self) {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029dc90
 
 // LLM-HARNESS-BEGIN: us-8029dd08
-extern "C" void Init__11CMenuOptionFv() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029dd08
 
 // LLM-HARNESS-BEGIN: us-8029e038
-extern "C" void Term__11CMenuOptionFv() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029e038
 
 // LLM-HARNESS-BEGIN: us-8029e0a4
-extern "C" void Move__11CMenuOptionFv() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029e0a4
 
 // LLM-HARNESS-BEGIN: us-8029e158
-extern "C" void cbRenderBefore__11CMenuOptionFv(void* self) {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029e158
 
 // LLM-HARNESS-BEGIN: us-8029e1fc
-extern "C" void func_8029BB24() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029e1fc
 
 // LLM-HARNESS-BEGIN: us-8029e278
-extern "C" void func_8029BBA0() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029e278
 
 // LLM-HARNESS-BEGIN: us-8029e288
-extern "C" void func_8029BBB0() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029e288
 
 // LLM-HARNESS-BEGIN: us-8029e300
-extern "C" void func_8029BC28() {}
+extern "C" void func_8029BECC(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuOptionFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029e300
 
 // LLM-HARNESS-BEGIN: us-8029e350

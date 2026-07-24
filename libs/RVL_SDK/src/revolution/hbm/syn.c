@@ -33,5 +33,5 @@ void HBMSYNMidiInput() {}
 // LLM-HARNESS-END: us-80343990
 
 // LLM-HARNESS-BEGIN: us-803439e0
-void HBMSYNSetMasterVolume() {}
+void HBMSYNSetMasterVolume(void* self, u32 val) {}
 // LLM-HARNESS-END: us-803439e0

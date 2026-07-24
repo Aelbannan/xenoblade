@@ -5,31 +5,31 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-801fda84
-extern "C" void __ct__CModelDisp() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fda84
 
 // LLM-HARNESS-BEGIN: us-801fdb74
-extern "C" void func_801FBEB8() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fdb74
 
 // LLM-HARNESS-BEGIN: us-801fdbc8
-extern "C" void __dt__801FBF0C() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fdbc8
 
 // LLM-HARNESS-BEGIN: us-801fdc34
-extern "C" void __dt__10CModelDispFv() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fdc34
 
 // LLM-HARNESS-BEGIN: us-801fdc94
-extern "C" void func_801FBFD8() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fdc94
 
 // LLM-HARNESS-BEGIN: us-801fdd1c
-extern "C" void func_801FC060() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fdd1c
 
 // LLM-HARNESS-BEGIN: us-801fdd80
-extern "C" void func_801FC0C4() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fdd80
 
 // LLM-HARNESS-BEGIN: us-801fddd0
@@ -37,15 +37,15 @@ extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fddd0
 
 // LLM-HARNESS-BEGIN: us-801fddd8
-extern "C" void func_801FC11C() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fddd8
 
 // LLM-HARNESS-BEGIN: us-801fddf8
-extern "C" void func_801FC13C() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fddf8
 
 // LLM-HARNESS-BEGIN: us-801fde18
-extern "C" void func_801FC15C() {}
+extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
 // LLM-HARNESS-END: us-801fde18
 
 // LLM-HARNESS-BEGIN: us-801fded4

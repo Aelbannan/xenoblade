@@ -5,11 +5,11 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803a41c0
-void MWSFLIB_GetLibWorkPtr() {}
+void* MWSFLIB_GetLibWorkPtr(void) { return 0; }
 // LLM-HARNESS-END: us-803a41c0
 
 // LLM-HARNESS-BEGIN: us-803a41cc
-void mwsflib_LscErrFunc() {}
+void mwsflib_LscErrFunc(void) {}
 // LLM-HARNESS-END: us-803a41cc
 
 // LLM-HARNESS-BEGIN: us-803a41d8

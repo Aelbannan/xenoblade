@@ -5,15 +5,15 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80492d98
-extern "C" void __ct__CScnRoot() {}
+extern "C" int func_8048EDD0(void* self) { return -1; }
 // LLM-HARNESS-END: us-80492d98
 
 // LLM-HARNESS-BEGIN: us-80492db4
-extern "C" void __dt__8CScnRootFv() {}
+extern "C" int func_8048EDD0(void* self) { return -1; }
 // LLM-HARNESS-END: us-80492db4
 
 // LLM-HARNESS-BEGIN: us-80492df4
-extern "C" void func_8048ED80() {}
+extern "C" int func_8048EDD0(void* self) { return -1; }
 // LLM-HARNESS-END: us-80492df4
 
 // LLM-HARNESS-BEGIN: us-80492e44
@@ -29,9 +29,9 @@ extern "C" int func_8048EDE0(void* self) { return -1; }
 // LLM-HARNESS-END: us-80492e54
 
 // LLM-HARNESS-BEGIN: us-80492e5c
-extern "C" void __ct__CScnRootNw4r() {}
+extern "C" int func_8048EDD0(void* self) { return -1; }
 // LLM-HARNESS-END: us-80492e5c
 
 // LLM-HARNESS-BEGIN: us-80493364
-extern "C" void func_8048F2F0() {}
+extern "C" int func_8048EDD0(void* self) { return -1; }
 // LLM-HARNESS-END: us-80493364

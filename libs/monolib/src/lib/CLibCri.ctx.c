@@ -720,19 +720,31 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-8045d840
-extern "C" void func_80459830__7CLibCriFv() {}
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045d840
 
 // LLM-HARNESS-BEGIN: us-8045d874
-extern "C" void __ct__7CLibCriFPCcP11CWorkThread() {}
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045d874
 
 // LLM-HARNESS-BEGIN: us-8045d8ec
-extern "C" void __dt__7CLibCriFv() {}
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045d8ec
 
 // LLM-HARNESS-BEGIN: us-8045d98c
-extern "C" void func_8045997C__7CLibCriFv() {}
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045d98c
 
 // LLM-HARNESS-BEGIN: us-8045da88
@@ -792,7 +804,10 @@ extern "C" void func_80459AAC__7CLibCriFv() {}
 // LLM-HARNESS-END: us-8045dabc
 
 // LLM-HARNESS-BEGIN: us-8045dac0
-extern "C" void func_80459AB0__7CLibCriFv() {}
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045dac0
 
 // LLM-HARNESS-BEGIN: us-8045dad0
@@ -824,15 +839,24 @@ extern "C" void func_80459AD8__7CLibCriFv() {}
 // LLM-HARNESS-END: us-8045dae8
 
 // LLM-HARNESS-BEGIN: us-8045daec
-extern "C" bool getInstance__7CLibCriFv() { return false; }
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045daec
 
 // LLM-HARNESS-BEGIN: us-8045daf4
-extern "C" void wkStandbyLogin__7CLibCriFv() {}
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045daf4
 
 // LLM-HARNESS-BEGIN: us-8045dc08
-extern "C" void wkStandbyLogout__7CLibCriFv() {}
+extern "C" u32 getInstance__7CLibCriFv(void) {
+    extern u32 lbl_eu_806656D8;
+    return lbl_eu_806656D8;
+}
 // LLM-HARNESS-END: us-8045dc08
 
 // LLM-HARNESS-BEGIN: us-8045dc88

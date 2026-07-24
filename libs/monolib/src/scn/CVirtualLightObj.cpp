@@ -5,43 +5,43 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8049880c
-extern "C" void __ct__CVirtualLightObj() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-8049880c
 
 // LLM-HARNESS-BEGIN: us-80498860
-extern "C" void func_804947EC() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80498860
 
 // LLM-HARNESS-BEGIN: us-80498900
-extern "C" void func_8049488C() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80498900
 
 // LLM-HARNESS-BEGIN: us-80498968
-extern "C" void func_804948F4() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80498968
 
 // LLM-HARNESS-BEGIN: us-80498ad8
-extern "C" void func_80494A64() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80498ad8
 
 // LLM-HARNESS-BEGIN: us-80498ca4
-extern "C" void func_80494C30() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80498ca4
 
 // LLM-HARNESS-BEGIN: us-80498df8
-extern "C" void func_80494D84() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80498df8
 
 // LLM-HARNESS-BEGIN: us-80498f84
-extern "C" void func_80494F10() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80498f84
 
 // LLM-HARNESS-BEGIN: us-80499168
-extern "C" void func_804950F4() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80499168
 
 // LLM-HARNESS-BEGIN: us-80499274
-extern "C" void __dt__80495200() {}
+extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 // LLM-HARNESS-END: us-80499274
 
 // LLM-HARNESS-BEGIN: us-80499338
@@ -61,7 +61,7 @@ extern "C" void func_80495644() {}
 // LLM-HARNESS-END: us-804996b8
 
 // LLM-HARNESS-BEGIN: us-8049976c
-extern "C" void func_804956F8() {}
+extern "C" void func_804956F8(void) {}
 // LLM-HARNESS-END: us-8049976c
 
 // LLM-HARNESS-BEGIN: us-80499778

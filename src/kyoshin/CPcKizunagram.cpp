@@ -5,43 +5,43 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-8025f5bc
-extern "C" void __ct__CPcKizunaCur() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f5bc
 
 // LLM-HARNESS-BEGIN: us-8025f5f0
-extern "C" void __dt__12CPcKizunaCurFv() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f5f0
 
 // LLM-HARNESS-BEGIN: us-8025f630
-extern "C" void func_8025D4E4() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f630
 
 // LLM-HARNESS-BEGIN: us-8025f75c
-extern "C" void func_8025D610() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f75c
 
 // LLM-HARNESS-BEGIN: us-8025f7d4
-extern "C" void func_8025D688() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f7d4
 
 // LLM-HARNESS-BEGIN: us-8025f82c
-extern "C" void func_8025D6E0() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f82c
 
 // LLM-HARNESS-BEGIN: us-8025f850
-extern "C" void func_8025D704() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f850
 
 // LLM-HARNESS-BEGIN: us-8025f8e0
-extern "C" void __ct__CPcKizunagram() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f8e0
 
 // LLM-HARNESS-BEGIN: us-8025f96c
-extern "C" void __dt__13CPcKizunagramFv() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f96c
 
 // LLM-HARNESS-BEGIN: us-8025f9c0
-extern "C" void func_8025D874() {}
+extern "C" u8 func_8025DA40(void* self) { return ((u8*)self)[0x26]; }
 // LLM-HARNESS-END: us-8025f9c0
 
 // LLM-HARNESS-BEGIN: us-8025fa10

@@ -13,13 +13,13 @@ void criware_803A3AE4() {}
 // LLM-HARNESS-END: us-803a7260
 
 // LLM-HARNESS-BEGIN: us-803a7314
-void criware_803A3B98() {}
+void criware_803A3B98(void) {}
 // LLM-HARNESS-END: us-803a7314
 
 // LLM-HARNESS-BEGIN: us-803a7320
-int fn_803A7320() { return 0; }
+u32 fn_803A7320(void* self) { return *(u32*)((u8*)self + 0x554); }
 // LLM-HARNESS-END: us-803a7320
 
 // LLM-HARNESS-BEGIN: us-803a7328
-int fn_803A7328() { return 0; }
+int fn_803A7328(void) { return 0x0; }
 // LLM-HARNESS-END: us-803a7328

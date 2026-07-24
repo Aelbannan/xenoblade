@@ -12659,7 +12659,7 @@ extern "C" void func_8013F23C(CUIWindowManager* p) {
 }
 // LLM-HARNESS-END: us-8013fc40
 // LLM-HARNESS-BEGIN: us-8013fdf0
-extern "C" void func_8013F3EC() {}
+extern "C" void func_8013F3EC(void) {}
 // LLM-HARNESS-END: us-8013fdf0
 // LLM-HARNESS-BEGIN: us-80141de0
 extern "C" int func_801413DC(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }

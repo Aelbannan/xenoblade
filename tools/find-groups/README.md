@@ -1,114 +1,91 @@
-# find-groups — Structural function clustering for the Xenoblade decomp
+# find-groups — Function similarity tools
 
-Finds groups of structurally similar functions by reading structural feature
-vectors from the **Decomp Atlas** SQLite database and applying cosine-similarity
-clustering. Within each translation unit, the tool runs exact connected-components
-clustering. Optionally finds cross-unit patterns using LSH approximation.
+Two tools for finding groups of similar functions in the Xenoblade decompilation,
+targeting different levels of abstraction.
 
-## Quick start
+## Tool 1: `cluster.py` — Structural similarity (opcode-class profiles)
 
-```bash
-# Prerequisite: build the Atlas vector index
-python3 tools/decomp_atlas/run.py index --vectors
-
-# Show top groups of NOT_STARTED functions
-python3 tools/find-groups/cluster.py
-
-# Show detailed member names for top 5 groups
-python3 tools/find-groups/cluster.py --detail 5
-
-# Show full IDs too
-python3 tools/find-groups/cluster.py --detail 2
-```
-
-## Use cases
-
-### 1. Find batch-matchable groups
-
-The tool ranks groups by:
-
-1. Most NOT_STARTED members first
-2. Same-unit groups (share types/headers) first
-3. Lower difficulty first
-4. Larger groups first
-
-The top groups are the best candidates for batch matching:
-
-- Match one function from the group, apply the same pattern to the rest
-- All functions in the same unit already share the same headers and types
+Groups functions by **code shape** — which *kinds* of instructions dominate
+(loads, stores, arithmetic, branches, float, etc.). Finds functions with similar
+overall structure, even if the specific instructions differ.
 
 ```bash
-python3 tools/find-groups/cluster.py --detail 3 --threshold 0.85
+python3 tools/find-groups/cluster.py --detail 3
+
+# Focus on one unit
+python3 tools/find-groups/cluster.py --unit kyoshin/cf/CBattleManager --detail 3
 ```
 
-### 2. Focus on a specific unit
+**Best for:** Finding functions in the same translation unit that share
+structural patterns → can probably batch-match with similar C code.
+
+## Tool 2: `by-instructions.py` — Instruction-level identity (PPC fingerprints)
+
+Groups functions with **identical instruction sequences** (register-normalized).
+Functions in the same group have the exact same PPC — they almost certainly
+decompile to the same C code.
 
 ```bash
-# All NOT_STARTED in kyoshin/cf
-python3 tools/find-groups/cluster.py --unit kyoshin/cf
+# Level 2 (default): register-normalized — GPRs/FPRs replaced with placeholders
+python3 tools/find-groups/by-instructions.py --detail 3
 
-# Include already-matched functions too (to see what's been done)
-python3 tools/find-groups/cluster.py --unit kyoshin/cf/CGame --all-status
+# Level 1: opcode mnemonics only — broader groups
+python3 tools/find-groups/by-instructions.py --level 1 --detail 3
+
+# Level 3: full operands — strictest matching (still normalizes registers)
+python3 tools/find-groups/by-instructions.py --level 3
 ```
 
-### 3. Find cross-unit similar functions
+**Best for:** True batch matching — match one function per group, apply the
+exact same C code to all others.
 
-Slower but finds shared patterns (getter/setter clusters, vtable dispatch
-patterns, etc.):
+## Instructions tool: What the groups mean
+
+| Pattern | Count | Meaning | C code |
+| --------- | ------: | --------- | -------- |
+| `bclr` | 70 | Empty function | `void func() {}` |
+| `addi R,R,X; bclr` | 101 | Return constant | `return X;` |
+| `lwz R,X(R); bclr` | 55 | Simple getter | `return member;` |
+| `addis R,R,X; addi R,R,Y; bclr` | 37 | Return pointer | `return ptr + offset;` |
+| `lbz R,X(R); bclr` | 17 | Byte getter | `return (u8)member;` |
+| `stw R,X(R); bclr` | 15 | Simple setter | `member = value;` |
+| `lfs R,X(R); bclr` | 13 | Float getter | `return (float)member;` |
+
+These groups cross translation units because the patterns are universal.
+
+### Deeper groups (5+ instructions)
+
+Level 2 with ≥5 insns finds full functions that have identical PPC across
+different contexts — these are the same function (or clone) in different TUs:
 
 ```bash
-python3 tools/find-groups/cluster.py --cross-unit --threshold 0.85
+# Show groups with 5+ instruction patterns
+python3 tools/find-groups/by-instructions.py --level 1 --detail 3 | head -10
 ```
 
-### 4. Save as JSON for further analysis
+## Batch-match workflow
+
+1. Find a group of NOT_STARTED functions all in the same unit
+2. Match one using the LLM harness
+3. Apply the same `.cpp` change to the rest — same C code, same PPC output
 
 ```bash
-python3 tools/find-groups/cluster.py --json > groups.json
+# Find groups
+python3 tools/find-groups/by-instructions.py --detail 1
+
+# Match one target
+python3 tools/llm_harness/run.py solve <target-id>
+
+# The rest follow the same pattern
 ```
-
-### 5. Adjust sensitivity
-
-Higher threshold = fewer, tighter groups. Lower = broader, looser groups.
-
-```bash
-# Very tight: only nearly identical functions
-python3 tools/find-groups/cluster.py --threshold 0.95
-
-# Loose: find broader categories
-python3 tools/find-groups/cluster.py --threshold 0.70
-```
-
-## What makes functions "similar"
-
-The structural feature vectors capture:
-
-- Function size and instruction count
-- Branch density (control flow complexity)
-- Direct and indirect call counts
-- Opcode class distribution (arithmetic, load/store, float, branch, compare, logical)
-- Stack frame size
-- Relocation count
-- Current match percentage
-
-Functions with similar code *shape* get the same vector — setters look like
-setters, dispatch functions look like dispatch functions, etc.
-
-## Output interpretation
-
-| Column | Meaning |
-| -------- | --------- |
-| `#` | Rank (by NOT_STARTED count + same-unit + difficulty + size) |
-| `Size` | Total members in this group |
-| `NS` | NOT_STARTED members |
-| `NS%` | Percentage of members that are NOT_STARTED |
-| `SameU` | ✓ = all members in the same translation unit |
-| `Diff` | Average difficulty (0-100, higher = harder) |
-| `SzB` | Average function size in bytes |
-| `Status` | Most common match status in the group |
-| `Unit` | Most common translation unit |
 
 ## Requirements
 
 - Python 3.10+
-- Decomp Atlas SQLite DB with vectors built (`atlas index --vectors`)
-- No external Python packages required
+- Atlas DB built with `--full --vectors`:
+
+  ```bash
+  python3 tools/decomp_atlas/run.py index --full --vectors
+  ```
+
+- No external Python packages

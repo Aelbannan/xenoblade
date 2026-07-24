@@ -760,19 +760,19 @@ extern "C" void* func_804537F8__18CDeviceFontInfoRomFv(void* self) { return (voi
 // LLM-HARNESS-END: us-804578c8
 
 // LLM-HARNESS-BEGIN: us-804578d0
-extern "C" void func_80453800__18CDeviceFontInfoRomFv() {}
+extern "C" void func_80453800__18CDeviceFontInfoRomFv(void) {}
 // LLM-HARNESS-END: us-804578d0
 
 // LLM-HARNESS-BEGIN: us-804578dc
-extern "C" void func_8045380C__18CDeviceFontInfoRomFv() {}
+extern "C" void func_8045380C__18CDeviceFontInfoRomFv(void) {}
 // LLM-HARNESS-END: us-804578dc
 
 // LLM-HARNESS-BEGIN: us-804578e8
-extern "C" void func_80453818__18CDeviceFontInfoRomFv() {}
+extern "C" void func_80453818__18CDeviceFontInfoRomFv(void) {}
 // LLM-HARNESS-END: us-804578e8
 
 // LLM-HARNESS-BEGIN: us-804578f4
-extern "C" void func_80453824__18CDeviceFontInfoRomFv() {}
+extern "C" void func_80453824__18CDeviceFontInfoRomFv(void) {}
 // LLM-HARNESS-END: us-804578f4
 
 // LLM-HARNESS-BEGIN: us-80457900

@@ -73,7 +73,7 @@ void read_kpad_ext() {}
 // LLM-HARNESS-END: us-803497c0
 
 // LLM-HARNESS-BEGIN: us-8034a090
-int KPADReadEx() { return 0; }
+void KPADReadEx(void) {}
 // LLM-HARNESS-END: us-8034a090
 
 // LLM-HARNESS-BEGIN: us-8034a0a0

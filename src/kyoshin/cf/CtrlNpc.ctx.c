@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80094070
-extern "C" void __ct__CtrlNpc() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-80094070
 
 // LLM-HARNESS-BEGIN: us-80094154
-extern "C" void func_8009377C() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-80094154
 
 // LLM-HARNESS-BEGIN: us-800942fc
-extern "C" void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-800942fc
 
 // LLM-HARNESS-BEGIN: us-80094310
-extern "C" void func_80093938() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-80094310
 
 // LLM-HARNESS-BEGIN: us-80094364
-extern "C" void func_8009398C() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-80094364
 
 // LLM-HARNESS-BEGIN: us-80094900
-extern "C" void func_80093F28() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-80094900
 
 // LLM-HARNESS-BEGIN: us-80095274
-extern "C" void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-80095274
 
 // LLM-HARNESS-BEGIN: us-800952d0
-extern "C" void func_800948F8() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-800952d0
 
 // LLM-HARNESS-BEGIN: us-80095474
-extern "C" void func_80094A9C() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-80095474
 
 // LLM-HARNESS-BEGIN: us-800956c0
-extern "C" void func_80094CE8() {}
+extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 // LLM-HARNESS-END: us-800956c0
 
 // LLM-HARNESS-BEGIN: us-800956f4

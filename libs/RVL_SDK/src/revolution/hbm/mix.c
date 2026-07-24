@@ -17,7 +17,7 @@ void HBMMIXQuit() {}
 // LLM-HARNESS-END: us-80341e80
 
 // LLM-HARNESS-BEGIN: us-80341ea0
-void HBMMIXSetSoundMode() {}
+void HBMMIXSetSoundMode(u32 val) {}
 // LLM-HARNESS-END: us-80341ea0
 
 // LLM-HARNESS-BEGIN: us-80341eb0

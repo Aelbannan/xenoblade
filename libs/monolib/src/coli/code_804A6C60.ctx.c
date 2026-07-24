@@ -1052,11 +1052,11 @@ extern "C" void func_804B09C8() {}
 // LLM-HARNESS-END: us-804b4b24
 
 // LLM-HARNESS-BEGIN: us-804b4bc8
-extern "C" bool func_804B0A6C() { return false; }
+extern "C" void func_804B0A6C(void) {}
 // LLM-HARNESS-END: us-804b4bc8
 
 // LLM-HARNESS-BEGIN: us-804b4bd0
-extern "C" bool func_804B0A74() { return false; }
+extern "C" void func_804B0A74(void) {}
 // LLM-HARNESS-END: us-804b4bd0
 
 // LLM-HARNESS-BEGIN: us-804b4bd8

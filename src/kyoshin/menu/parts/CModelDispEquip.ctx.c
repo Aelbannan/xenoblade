@@ -1383,7 +1383,7 @@ extern "C" void func_801FF98C() {}
 // LLM-HARNESS-END: us-8020167c
 
 // LLM-HARNESS-BEGIN: us-80201690
-extern "C" void func_801FF9A0() {}
+extern "C" u32 func_801FF9A0(u32 val) { return val & 0xFFFFFF; }
 // LLM-HARNESS-END: us-80201690
 
 // LLM-HARNESS-BEGIN: us-8020169c
@@ -1415,7 +1415,7 @@ extern "C" void func_801FFDC4() {}
 // LLM-HARNESS-END: us-80201ab4
 
 // LLM-HARNESS-BEGIN: us-80202078
-extern "C" void func_80200388() {}
+extern "C" void func_80200388(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-80202078
 
 // LLM-HARNESS-BEGIN: us-80202084

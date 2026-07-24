@@ -1543,7 +1543,7 @@ extern "C" u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(void* self) {
 // LLM-HARNESS-END: us-800b05dc
 
 // LLM-HARNESS-BEGIN: us-800b05e4
-extern "C" void CActorParam_UnkVirtualFunc134__Q22cf11CActorParamFv() {}
+extern "C" void CActorParam_UnkVirtualFunc134__Q22cf11CActorParamFv(void) {}
 // LLM-HARNESS-END: us-800b05e4
 
 // LLM-HARNESS-BEGIN: us-800b05f0
@@ -1607,7 +1607,7 @@ extern "C" void* CActorParam_UnkVirtualFunc104__Q22cf11CActorParamFv(void* self)
 // LLM-HARNESS-END: us-800b0a38
 
 // LLM-HARNESS-BEGIN: us-800b0a40
-extern "C" void CActorParam_UnkVirtualFunc103__Q22cf11CActorParamFv() {}
+extern "C" void CActorParam_UnkVirtualFunc103__Q22cf11CActorParamFv(void* self, float val) {}
 // LLM-HARNESS-END: us-800b0a40
 
 // LLM-HARNESS-BEGIN: us-800b0a4c
@@ -1799,7 +1799,7 @@ extern "C" u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(void* self) { r
 // LLM-HARNESS-END: us-800b0eb0
 
 // LLM-HARNESS-BEGIN: us-800b0eb8
-extern "C" void CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv() {}
+extern "C" u32 CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv(u32 val) { return (val >> 16) & 0xFF; }
 // LLM-HARNESS-END: us-800b0eb8
 
 // LLM-HARNESS-BEGIN: us-800b0ec4
@@ -1823,7 +1823,7 @@ extern "C" u32 CfObjectModel_UnkVirtualFunc4__Q22cf12CfObjectMoveFv(void* self) 
 // LLM-HARNESS-END: us-800b0ee4
 
 // LLM-HARNESS-BEGIN: us-800b0eec
-extern "C" void CfObjectActor_UnkVirtualFunc13__Q22cf13CfObjectActorFv() {}
+extern "C" void CfObjectActor_UnkVirtualFunc13__Q22cf13CfObjectActorFv(void) {}
 // LLM-HARNESS-END: us-800b0eec
 
 // LLM-HARNESS-BEGIN: us-800b0ef8

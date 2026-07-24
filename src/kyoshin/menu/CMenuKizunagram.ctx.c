@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80258ba4
-extern "C" void __ct__CMenuKizunagram() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80258ba4
 
 // LLM-HARNESS-BEGIN: us-80258c90
-extern "C" void __dt__15CMenuKizunagramFv(void* self) {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80258c90
 
 // LLM-HARNESS-BEGIN: us-80258d20
-extern "C" void Init__15CMenuKizunagramFv() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80258d20
 
 // LLM-HARNESS-BEGIN: us-802591dc
-extern "C" void Term__15CMenuKizunagramFv() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802591dc
 
 // LLM-HARNESS-BEGIN: us-80259278
-extern "C" void Move__15CMenuKizunagramFv() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80259278
 
 // LLM-HARNESS-BEGIN: us-802593f4
-extern "C" void cbRenderBefore__15CMenuKizunagramFv(void* self) {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802593f4
 
 // LLM-HARNESS-BEGIN: us-802594c8
-extern "C" void func_8025728C() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802594c8
 
 // LLM-HARNESS-BEGIN: us-80259544
-extern "C" void func_80257308() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80259544
 
 // LLM-HARNESS-BEGIN: us-80259554
-extern "C" void func_80257318() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80259554
 
 // LLM-HARNESS-BEGIN: us-8025959c
-extern "C" void func_80257360() {}
+extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8025959c
 
 // LLM-HARNESS-BEGIN: us-802595f4

@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80274b78
-extern "C" void __ct__802726F4() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-80274b78
 
 // LLM-HARNESS-BEGIN: us-80274bd0
-extern "C" void func_8027274C() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-80274bd0
 
 // LLM-HARNESS-BEGIN: us-80274bf8
-extern "C" void __dt__80272774() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-80274bf8
 
 // LLM-HARNESS-BEGIN: us-80274c38
-extern "C" void __dt__802727B4() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-80274c38
 
 // LLM-HARNESS-BEGIN: us-80274c94
-extern "C" void func_80272810() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-80274c94
 
 // LLM-HARNESS-BEGIN: us-8027542c
-extern "C" void func_80272FA8() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-8027542c
 
 // LLM-HARNESS-BEGIN: us-8027544c
-extern "C" void func_80272FC8() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-8027544c
 
 // LLM-HARNESS-BEGIN: us-80275488
-extern "C" void func_80273004() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-80275488
 
 // LLM-HARNESS-BEGIN: us-802754c4
-extern "C" void func_80273040() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-802754c4
 
 // LLM-HARNESS-BEGIN: us-802754e0
-extern "C" void func_8027305C() {}
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-802754e0
 
 // LLM-HARNESS-BEGIN: us-802755a4

@@ -21,7 +21,7 @@ void MWSFSVM_EntryMainFunc() {}
 // LLM-HARNESS-END: us-803a1050
 
 // LLM-HARNESS-BEGIN: us-803a1090
-void MWSFSVM_TestAndSet() {}
+void MWSFSVM_TestAndSet(void) {}
 // LLM-HARNESS-END: us-803a1090
 
 // LLM-HARNESS-BEGIN: us-803a1094

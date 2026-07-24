@@ -5,43 +5,43 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804864f8
-extern "C" void __ct__CScnItemModel() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804864f8
 
 // LLM-HARNESS-BEGIN: us-8048665c
-extern "C" void __dt__8048268C() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-8048665c
 
 // LLM-HARNESS-BEGIN: us-804866f4
-extern "C" void __dt__13CScnItemModelFv() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804866f4
 
 // LLM-HARNESS-BEGIN: us-804867ac
-extern "C" void func_804827DC() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804867ac
 
 // LLM-HARNESS-BEGIN: us-804868c0
-extern "C" void func_804828F0() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804868c0
 
 // LLM-HARNESS-BEGIN: us-804868e8
-extern "C" void func_80482918() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804868e8
 
 // LLM-HARNESS-BEGIN: us-804869b8
-extern "C" void func_804829E8() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-804869b8
 
 // LLM-HARNESS-BEGIN: us-80486a88
-extern "C" void func_80482AB8() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-80486a88
 
 // LLM-HARNESS-BEGIN: us-80486aa4
-extern "C" void func_80482AD4() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-80486aa4
 
 // LLM-HARNESS-BEGIN: us-80486b0c
-extern "C" void func_80482B3C() {}
+extern "C" void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 // LLM-HARNESS-END: us-80486b0c
 
 // LLM-HARNESS-BEGIN: us-80486dc4

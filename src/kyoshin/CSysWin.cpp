@@ -5,27 +5,27 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-8022d450
-extern "C" void __ct__CSysWin() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d450
 
 // LLM-HARNESS-BEGIN: us-8022d4d8
-extern "C" void __dt__7CSysWinFv() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d4d8
 
 // LLM-HARNESS-BEGIN: us-8022d52c
-extern "C" void func_8022B6F4() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d52c
 
 // LLM-HARNESS-BEGIN: us-8022d580
-extern "C" void func_8022B748() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d580
 
 // LLM-HARNESS-BEGIN: us-8022d600
-extern "C" void func_8022B7C8() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d600
 
 // LLM-HARNESS-BEGIN: us-8022d62c
-extern "C" void func_8022B7F4() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d62c
 
 // LLM-HARNESS-BEGIN: us-8022d6d8
@@ -41,19 +41,19 @@ extern "C" u8 func_8022B8B0(void* self) { return ((u8*)self)[0x36]; }
 // LLM-HARNESS-END: us-8022d6e8
 
 // LLM-HARNESS-BEGIN: us-8022d6f0
-extern "C" void func_8022B8B8() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d6f0
 
 // LLM-HARNESS-BEGIN: us-8022d71c
-extern "C" void func_8022B8E4() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d71c
 
 // LLM-HARNESS-BEGIN: us-8022d744
-extern "C" void func_8022B90C() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d744
 
 // LLM-HARNESS-BEGIN: us-8022d7ec
-extern "C" void func_8022B9B4() {}
+extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d7ec
 
 // LLM-HARNESS-BEGIN: us-8022de64

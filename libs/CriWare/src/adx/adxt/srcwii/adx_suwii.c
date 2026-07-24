@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8039e5f4
-int adxwii_err_dvd() { return 0; }
+void adxwii_err_dvd(void) {}
 // LLM-HARNESS-END: us-8039e5f4
 
 // LLM-HARNESS-BEGIN: us-8039e5fc

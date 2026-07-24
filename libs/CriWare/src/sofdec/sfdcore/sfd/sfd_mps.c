@@ -65,7 +65,7 @@ void sfmps_CopyUsrSj() {}
 // LLM-HARNESS-END: us-803c4a60
 
 // LLM-HARNESS-BEGIN: us-803c4c1c
-int sfmps_CopyPadding() { return 0; }
+int sfmps_CopyPadding(void) { return 0x1; }
 // LLM-HARNESS-END: us-803c4c1c
 
 // LLM-HARNESS-BEGIN: us-803c4c24
@@ -101,7 +101,7 @@ void sfmps_InitInf() {}
 // LLM-HARNESS-END: us-803c5414
 
 // LLM-HARNESS-BEGIN: us-803c552c
-void sfmps_ErrFn() {}
+void sfmps_ErrFn(void) {}
 // LLM-HARNESS-END: us-803c552c
 
 // LLM-HARNESS-BEGIN: us-803c5530
@@ -109,19 +109,19 @@ void SFMPS_Destroy() {}
 // LLM-HARNESS-END: us-803c5530
 
 // LLM-HARNESS-BEGIN: us-803c5584
-int SFMPS_RequestStop() { return 0; }
+int SFMPS_RequestStop(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c5584
 
 // LLM-HARNESS-BEGIN: us-803c558c
-int SFMPS_Start() { return 0; }
+int SFMPS_Start(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c558c
 
 // LLM-HARNESS-BEGIN: us-803c5594
-int SFMPS_Stop() { return 0; }
+int SFMPS_Stop(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c5594
 
 // LLM-HARNESS-BEGIN: us-803c559c
-int SFMPS_Pause() { return 0; }
+int SFMPS_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c559c
 
 // LLM-HARNESS-BEGIN: us-803c55a4
@@ -145,5 +145,5 @@ void SFMPS_Seek() {}
 // LLM-HARNESS-END: us-803c55d4
 
 // LLM-HARNESS-BEGIN: us-803c5700
-void SFMPS_GetConcatCnt() {}
+void SFMPS_GetConcatCnt(void) {}
 // LLM-HARNESS-END: us-803c5700

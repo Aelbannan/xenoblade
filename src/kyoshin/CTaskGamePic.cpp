@@ -5,39 +5,39 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802972b0
-extern "C" void __ct__CTaskGamePic() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-802972b0
 
 // LLM-HARNESS-BEGIN: us-80297400
-extern "C" void __dt__12CTaskGamePicFv(void* self) {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-80297400
 
 // LLM-HARNESS-BEGIN: us-80297454
-extern "C" void func_80294E58() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-80297454
 
 // LLM-HARNESS-BEGIN: us-802974bc
-extern "C" void func_80294EC0() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-802974bc
 
 // LLM-HARNESS-BEGIN: us-80297520
-extern "C" void Init__12CTaskGamePicFv() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-80297520
 
 // LLM-HARNESS-BEGIN: us-80297540
-extern "C" void Term__12CTaskGamePicFv() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-80297540
 
 // LLM-HARNESS-BEGIN: us-802975b4
-extern "C" void Move__12CTaskGamePicFv() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-802975b4
 
 // LLM-HARNESS-BEGIN: us-802976f0
-extern "C" void cbRenderBefore__12CTaskGamePicFv(void* self) {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-802976f0
 
 // LLM-HARNESS-BEGIN: us-80297984
-extern "C" void func_80295388() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-80297984
 
 // LLM-HARNESS-BEGIN: us-80297998
@@ -82,7 +82,7 @@ public:
 
 class CTaskGamePic;
 // LLM-HARNESS-BEGIN: us-802973b0
-template<> CTTask<CTaskGamePic>::~CTTask() {}
+extern "C" void Draw__12CTaskGamePicFv() {}
 // LLM-HARNESS-END: us-802973b0
 // LLM-HARNESS-BEGIN: us-80297ab0
 template<> void CTTask<CTaskGamePic>::Move() {}

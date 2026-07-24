@@ -9,11 +9,11 @@ void btm_cback() {}
 // LLM-HARNESS-END: us-802f31f0
 
 // LLM-HARNESS-BEGIN: us-802f33c8
-void gap_btm_cback0() {}
+void gap_btm_cback0(void) {}
 // LLM-HARNESS-END: us-802f33c8
 
 // LLM-HARNESS-BEGIN: us-802f33d4
-void gap_btm_cback1() {}
+void gap_btm_cback1(void) {}
 // LLM-HARNESS-END: us-802f33d4
 
 // LLM-HARNESS-BEGIN: us-802f33e0

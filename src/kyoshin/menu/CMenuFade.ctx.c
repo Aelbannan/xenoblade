@@ -16468,5 +16468,5 @@ extern "C" void func_80113E48(void* arg0) {
 // LLM-HARNESS-END: us-80114924
 
 // LLM-HARNESS-BEGIN: us-80114760
-extern "C" void func_80113C84() {}
+extern "C" void func_80113E40(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-80114760

@@ -764,7 +764,7 @@ extern "C" void WorkEvent3__13CScnCameraManFPv() {}
 // LLM-HARNESS-END: us-8049f42c
 
 // LLM-HARNESS-BEGIN: us-8049f4e0
-extern "C" void func_8049B3FC() {}
+extern "C" void func_8049B3FC(void) {}
 // LLM-HARNESS-END: us-8049f4e0
 
 // LLM-HARNESS-BEGIN: us-8049f4ec

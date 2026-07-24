@@ -21,7 +21,7 @@ void ADXSJD_Destroy() {}
 // LLM-HARNESS-END: us-80382ae0
 
 // LLM-HARNESS-BEGIN: us-80382b44
-void ADXSJD_GetStat() {}
+int ADXSJD_GetStat(void* self) { return (signed char)((u8*)self)[0]; }
 // LLM-HARNESS-END: us-80382b44
 
 // LLM-HARNESS-BEGIN: us-80382b50
@@ -33,7 +33,7 @@ void ADXSJD_SetMaxDecSmpl() {}
 // LLM-HARNESS-END: us-80382b5c
 
 // LLM-HARNESS-BEGIN: us-80382b68
-int ADXSJD_TermSupply() { return 0; }
+void ADXSJD_TermSupply(void) {}
 // LLM-HARNESS-END: us-80382b68
 
 // LLM-HARNESS-BEGIN: us-80382b70
@@ -77,15 +77,15 @@ void ADXSJD_ExecServer() {}
 // LLM-HARNESS-END: us-803839a0
 
 // LLM-HARNESS-BEGIN: us-80383b20
-int ADXSJD_GetDecDtLen() { return 0; }
+u32 ADXSJD_GetDecDtLen(void* self) { return *(u32*)((u8*)self + 0x30); }
 // LLM-HARNESS-END: us-80383b20
 
 // LLM-HARNESS-BEGIN: us-80383b28
-int ADXSJD_GetDecNumSmpl() { return 0; }
+u32 ADXSJD_GetDecNumSmpl(void* self) { return *(u32*)((u8*)self + 0x2c); }
 // LLM-HARNESS-END: us-80383b28
 
 // LLM-HARNESS-BEGIN: us-80383b30
-int ADXSJD_SetDecPos() { return 0; }
+void ADXSJD_SetDecPos(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
 // LLM-HARNESS-END: us-80383b30
 
 // LLM-HARNESS-BEGIN: us-80383b38
@@ -93,59 +93,59 @@ void ADXSJD_SetLnkSw() {}
 // LLM-HARNESS-END: us-80383b38
 
 // LLM-HARNESS-BEGIN: us-80383b44
-int ADXSJD_SetDefFmt() { return 0; }
+void ADXSJD_SetDefFmt(void) {}
 // LLM-HARNESS-END: us-80383b44
 
 // LLM-HARNESS-BEGIN: us-80383b4c
-void ADXSJD_EntryFltFunc() {}
+void ADXSJD_EntryFltFunc(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-80383b4c
 
 // LLM-HARNESS-BEGIN: us-80383b58
-void ADXSJD_EntryTrapFunc() {}
+void ADXSJD_EntryTrapFunc(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-80383b58
 
 // LLM-HARNESS-BEGIN: us-80383b64
-int ADXSJD_SetTrapNumSmpl() { return 0; }
+void ADXSJD_SetTrapNumSmpl(void* self, u32 val) { *(u32*)((u8*)self + 0x3c) = val; }
 // LLM-HARNESS-END: us-80383b64
 
 // LLM-HARNESS-BEGIN: us-80383b6c
-int ADXSJD_SetTrapCnt() { return 0; }
+void ADXSJD_SetTrapCnt(void* self, u32 val) { *(u32*)((u8*)self + 0x40) = val; }
 // LLM-HARNESS-END: us-80383b6c
 
 // LLM-HARNESS-BEGIN: us-80383b74
-int ADXSJD_SetTrapDtLen() { return 0; }
+void ADXSJD_SetTrapDtLen(void* self, u32 val) { *(u32*)((u8*)self + 0x44) = val; }
 // LLM-HARNESS-END: us-80383b74
 
 // LLM-HARNESS-BEGIN: us-80383b7c
-int ADXSJD_GetFormat() { return 0; }
+void ADXSJD_GetFormat(void) {}
 // LLM-HARNESS-END: us-80383b7c
 
 // LLM-HARNESS-BEGIN: us-80383b84
-int ADXSJD_GetSfreq() { return 0; }
+void ADXSJD_GetSfreq(void) {}
 // LLM-HARNESS-END: us-80383b84
 
 // LLM-HARNESS-BEGIN: us-80383b8c
-int ADXSJD_GetNumChan() { return 0; }
+void ADXSJD_GetNumChan(void) {}
 // LLM-HARNESS-END: us-80383b8c
 
 // LLM-HARNESS-BEGIN: us-80383b94
-int ADXSJD_GetOutBps() { return 0; }
+void ADXSJD_GetOutBps(void) {}
 // LLM-HARNESS-END: us-80383b94
 
 // LLM-HARNESS-BEGIN: us-80383b9c
-int ADXSJD_GetBlkSmpl() { return 0; }
+void ADXSJD_GetBlkSmpl(void) {}
 // LLM-HARNESS-END: us-80383b9c
 
 // LLM-HARNESS-BEGIN: us-80383ba4
-int ADXSJD_GetTotalNumSmpl() { return 0; }
+void ADXSJD_GetTotalNumSmpl(void) {}
 // LLM-HARNESS-END: us-80383ba4
 
 // LLM-HARNESS-BEGIN: us-80383bac
-int ADXSJD_GetNumLoop() { return 0; }
+void ADXSJD_GetNumLoop(void) {}
 // LLM-HARNESS-END: us-80383bac
 
 // LLM-HARNESS-BEGIN: us-80383bb4
-int ADXSJD_GetLpStartPos() { return 0; }
+void ADXSJD_GetLpStartPos(void) {}
 // LLM-HARNESS-END: us-80383bb4
 
 // LLM-HARNESS-BEGIN: us-80383bbc
@@ -153,11 +153,11 @@ void ADXSJD_GetLpStartOfst() {}
 // LLM-HARNESS-END: us-80383bbc
 
 // LLM-HARNESS-BEGIN: us-80383bd8
-int ADXSJD_GetLpEndPos() { return 0; }
+void ADXSJD_GetLpEndPos(void) {}
 // LLM-HARNESS-END: us-80383bd8
 
 // LLM-HARNESS-BEGIN: us-80383be0
-int ADXSJD_GetLpEndOfst() { return 0; }
+void ADXSJD_GetLpEndOfst(void) {}
 // LLM-HARNESS-END: us-80383be0
 
 // LLM-HARNESS-BEGIN: us-80383be8
@@ -169,13 +169,13 @@ void ADXSJD_GetDefPan() {}
 // LLM-HARNESS-END: us-80383c44
 
 // LLM-HARNESS-BEGIN: us-80383cb0
-int ADXSJD_GetSpsdInfo() { return 0; }
+void* ADXSJD_GetSpsdInfo(void* self) { return (void*)((u8*)self + 0x60); }
 // LLM-HARNESS-END: us-80383cb0
 
 // LLM-HARNESS-BEGIN: us-80383cb8
-int ADXSJD_TakeSnapshot() { return 0; }
+void ADXSJD_TakeSnapshot(void) {}
 // LLM-HARNESS-END: us-80383cb8
 
 // LLM-HARNESS-BEGIN: us-80383cc0
-int ADXSJD_RestoreSnapshot() { return 0; }
+void ADXSJD_RestoreSnapshot(void) {}
 // LLM-HARNESS-END: us-80383cc0

@@ -77,7 +77,7 @@ extern "C" void func_80454E2C__16CDeviceFontLayerFv() {}
 // LLM-HARNESS-END: us-80458f1c
 
 // LLM-HARNESS-BEGIN: us-80458f5c
-extern "C" void func_80454E6C__16CDeviceFontLayerFv() {}
+extern "C" void func_80454E6C__16CDeviceFontLayerFv(void) {}
 // LLM-HARNESS-END: us-80458f5c
 
 // LLM-HARNESS-BEGIN: us-80458f68

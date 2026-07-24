@@ -5,11 +5,11 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8038f6cc
-void AHXDCD_SetupFtbl() {}
+void AHXDCD_SetupFtbl(u32 val) {}
 // LLM-HARNESS-END: us-8038f6cc
 
 // LLM-HARNESS-BEGIN: us-8038f6d8
-void AHXDCD_SetupWtbl() {}
+void AHXDCD_SetupWtbl(u32 val) {}
 // LLM-HARNESS-END: us-8038f6d8
 
 // LLM-HARNESS-BEGIN: us-8038f6e4
@@ -29,5 +29,5 @@ void AHXSBF_Create() {}
 // LLM-HARNESS-END: us-8038f990
 
 // LLM-HARNESS-BEGIN: us-8038f9f4
-void AHXSBF_Destroy() {}
+void AHXSBF_Destroy(void) {}
 // LLM-HARNESS-END: us-8038f9f4

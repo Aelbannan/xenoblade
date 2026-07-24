@@ -13,15 +13,15 @@ extern "C" void Release__Q34nw4r3g3d12AnmObjTexSrtFv() {}
 // LLM-HARNESS-END: us-803e5718
 
 // LLM-HARNESS-BEGIN: us-803e5754
-extern "C" bool Attach__Q34nw4r3g3d12AnmObjTexSrtFiPQ34nw4r3g3d15AnmObjTexSrtRes() { return false; }
+extern "C" int Attach__Q34nw4r3g3d12AnmObjTexSrtFiPQ34nw4r3g3d15AnmObjTexSrtRes(void) { return 0x0; }
 // LLM-HARNESS-END: us-803e5754
 
 // LLM-HARNESS-BEGIN: us-803e575c
-extern "C" bool Detach__Q34nw4r3g3d12AnmObjTexSrtFi() { return false; }
+extern "C" int Detach__Q34nw4r3g3d12AnmObjTexSrtFi(void) { return 0x0; }
 // LLM-HARNESS-END: us-803e575c
 
 // LLM-HARNESS-BEGIN: us-803e5764
-extern "C" void DetachAll__Q34nw4r3g3d12AnmObjTexSrtFv() {}
+extern "C" void DetachAll__Q34nw4r3g3d12AnmObjTexSrtFv(void) {}
 // LLM-HARNESS-END: us-803e5764
 
 // LLM-HARNESS-BEGIN: us-803e5768
@@ -37,7 +37,7 @@ extern "C" void SetFrame__Q34nw4r3g3d15AnmObjTexSrtResFf() {}
 // LLM-HARNESS-END: us-803e5998
 
 // LLM-HARNESS-BEGIN: us-803e5a58
-extern "C" bool GetFrame__Q34nw4r3g3d15AnmObjTexSrtResCFv() { return false; }
+extern "C" float GetFrame__Q34nw4r3g3d15AnmObjTexSrtResCFv(void *self) { return *(float *)((char *)self + 0x10); }
 // LLM-HARNESS-END: us-803e5a58
 
 // LLM-HARNESS-BEGIN: us-803e5a60
@@ -45,7 +45,7 @@ extern "C" void SetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResFf() {}
 // LLM-HARNESS-END: us-803e5a60
 
 // LLM-HARNESS-BEGIN: us-803e5b14
-extern "C" bool GetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResCFv() { return false; }
+extern "C" float GetUpdateRate__Q34nw4r3g3d15AnmObjTexSrtResCFv(void *self) { return *(float *)((char *)self + 0x10); }
 // LLM-HARNESS-END: us-803e5b14
 
 // LLM-HARNESS-BEGIN: us-803e5b1c
@@ -85,7 +85,7 @@ extern "C" void GetTypeName__Q34nw4r3g3d15AnmObjTexSrtResCFv() {}
 // LLM-HARNESS-END: us-803e60bc
 
 // LLM-HARNESS-BEGIN: us-803e60ec
-extern "C" void GetTypeObj__Q34nw4r3g3d15AnmObjTexSrtResCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d15AnmObjTexSrtResCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803e60ec
 
 // LLM-HARNESS-BEGIN: us-803e60f8
@@ -97,5 +97,5 @@ extern "C" void GetTypeName__Q34nw4r3g3d20AnmObjTexSrtOverrideCFv() {}
 // LLM-HARNESS-END: us-803e613c
 
 // LLM-HARNESS-BEGIN: us-803e616c
-extern "C" void GetTypeObj__Q34nw4r3g3d20AnmObjTexSrtOverrideCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d20AnmObjTexSrtOverrideCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803e616c

@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803ace78
-int MPVVLC_IsVlcSizErr() { return 0; }
+int MPVVLC_IsVlcSizErr(void) { return 0x0; }
 // LLM-HARNESS-END: us-803ace78
 
 // LLM-HARNESS-BEGIN: us-803ace80

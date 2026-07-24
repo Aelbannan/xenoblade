@@ -41,7 +41,7 @@ void SFTIM_GetVideoStartSample() {}
 // LLM-HARNESS-END: us-803cf8ec
 
 // LLM-HARNESS-BEGIN: us-803cf960
-void SFTIM_SetStartTime() {}
+void SFTIM_SetStartTime(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-803cf960
 
 // LLM-HARNESS-BEGIN: us-803cf96c
@@ -161,7 +161,7 @@ void SFTIM_IsVideoTerm() {}
 // LLM-HARNESS-END: us-803d09d0
 
 // LLM-HARNESS-BEGIN: us-803d0a54
-void SFTIM_SetSpeed() {}
+void SFTIM_SetSpeed(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-803d0a54
 
 // LLM-HARNESS-BEGIN: us-803d0a60
@@ -181,7 +181,7 @@ void SFD_CalcCycleFromFps() {}
 // LLM-HARNESS-END: us-803d0b9c
 
 // LLM-HARNESS-BEGIN: us-803d0d24
-int SFD_SetLimitTime() { return 0; }
+void SFD_SetLimitTime(void* self, u32 val) { *(u32*)((u8*)self + 0x1390) = val; }
 // LLM-HARNESS-END: us-803d0d24
 
 // LLM-HARNESS-BEGIN: us-803d0d2c

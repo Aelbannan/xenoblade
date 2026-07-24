@@ -880,20 +880,20 @@ extern "C" void* func_8006B6B8(void* self) { return (char*)self + 0x1c; }
 extern "C" bool func_8006B6C0() { return true; }
 // LLM-HARNESS-END: us-8006c118
 // LLM-HARNESS-BEGIN: us-8006c4d8
-extern "C" void func_8006BA80() {}
+extern "C" void* func_8006B6A0(void* self) { return (char*)self + 0x10; }
 // LLM-HARNESS-END: us-8006c4d8
 // LLM-HARNESS-BEGIN: us-8006c548
-extern "C" void func_8006BAF0() {}
+extern "C" void* func_8006B6A0(void* self) { return (char*)self + 0x10; }
 // LLM-HARNESS-END: us-8006c548
 // LLM-HARNESS-BEGIN: us-8006c558
 extern "C" float PSVECMag(const float* v);
 extern "C" float func_8006BB00(const float* v) { return PSVECMag(v); }
 // LLM-HARNESS-END: us-8006c558
 // LLM-HARNESS-BEGIN: us-8006c55c
-extern "C" void func_8006BB04() {}
+extern "C" void* func_8006B6A0(void* self) { return (char*)self + 0x10; }
 // LLM-HARNESS-END: us-8006c55c
 // LLM-HARNESS-BEGIN: us-8006c64c
-extern "C" void func_8006BBF4() {}
+extern "C" void* func_8006B6A0(void* self) { return (char*)self + 0x10; }
 // LLM-HARNESS-END: us-8006c64c
 // LLM-HARNESS-BEGIN: us-8006c674
 extern "C" void func_8006BC1C(unsigned int* p, unsigned int mask) {

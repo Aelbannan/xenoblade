@@ -69,7 +69,10 @@ void VISetBlack() {}
 // LLM-HARNESS-END: us-803690b0
 
 // LLM-HARNESS-BEGIN: us-80369130
-int VIGetRetraceCount() { return 0; }
+u32 VIGetRetraceCount(void) {
+    extern u32 retraceCount;
+    return retraceCount;
+}
 // LLM-HARNESS-END: us-80369130
 
 // LLM-HARNESS-BEGIN: us-80369140

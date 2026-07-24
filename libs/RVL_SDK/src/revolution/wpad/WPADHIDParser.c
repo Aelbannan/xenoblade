@@ -101,5 +101,5 @@ void __a1_3f_data_type() {}
 // LLM-HARNESS-END: us-80377590
 
 // LLM-HARNESS-BEGIN: us-80377740
-void __a1_unused_report() {}
+void __a1_unused_report(void) {}
 // LLM-HARNESS-END: us-80377740

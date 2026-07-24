@@ -198,26 +198,26 @@ void MemorySoundArchive::MemoryFileStream::Seek(s32 offset, u32 origin) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-80419880
-extern "C" bool GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv() { return false; }
+extern "C" int GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv(void) { return lbl_eu_80665548@sda21; }
 // LLM-HARNESS-END: us-80419880
 // LLM-HARNESS-BEGIN: us-80419888
-extern "C" bool GetSize__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+extern "C" u32 GetSize__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-80419888
 // LLM-HARNESS-BEGIN: us-80419890
-extern "C" bool Tell__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+extern "C" u32 Tell__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void* self) { return *(u32*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-80419890
 // LLM-HARNESS-BEGIN: us-80419898
-extern "C" bool CanWrite__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+extern "C" int CanWrite__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x0; }
 // LLM-HARNESS-END: us-80419898
 // LLM-HARNESS-BEGIN: us-804198a0
-extern "C" bool CanRead__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+extern "C" int CanRead__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x1; }
 // LLM-HARNESS-END: us-804198a0
 // LLM-HARNESS-BEGIN: us-804198a8
-extern "C" bool CanAsync__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+extern "C" int CanAsync__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x0; }
 // LLM-HARNESS-END: us-804198a8
 // LLM-HARNESS-BEGIN: us-804198b0
-extern "C" bool CanCancel__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+extern "C" int CanCancel__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x1; }
 // LLM-HARNESS-END: us-804198b0
 // LLM-HARNESS-BEGIN: us-804198b8
-extern "C" bool CanSeek__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv() { return false; }
+extern "C" int CanSeek__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x1; }
 // LLM-HARNESS-END: us-804198b8

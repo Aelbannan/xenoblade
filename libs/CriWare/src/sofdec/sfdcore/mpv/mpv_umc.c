@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803afbc8
-void MPVUMC_Init() {}
+void MPVUMC_Init(void) {}
 // LLM-HARNESS-END: us-803afbc8
 
 // LLM-HARNESS-BEGIN: us-803afbcc
@@ -13,7 +13,7 @@ void mpvumc_InitOneRef() {}
 // LLM-HARNESS-END: us-803afbcc
 
 // LLM-HARNESS-BEGIN: us-803afc78
-void MPVUMC_Finish() {}
+void MPVUMC_Finish(void) {}
 // LLM-HARNESS-END: us-803afc78
 
 // LLM-HARNESS-BEGIN: us-803afc7c
@@ -21,7 +21,7 @@ void MPVUMC_InitOutRfb() {}
 // LLM-HARNESS-END: us-803afc7c
 
 // LLM-HARNESS-BEGIN: us-803afdac
-void MPVUMC_EndOfFrame() {}
+void MPVUMC_EndOfFrame(void) {}
 // LLM-HARNESS-END: us-803afdac
 
 // LLM-HARNESS-BEGIN: us-803afdb0

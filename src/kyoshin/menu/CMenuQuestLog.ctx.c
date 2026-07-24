@@ -1339,43 +1339,47 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8011cf28
-extern "C" void __ct__CMenuQuestLog() {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011cf28
 
 // LLM-HARNESS-BEGIN: us-8011d008
-extern "C" void __dt__13CMenuQuestLogFv(void* self) {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d008
 
 // LLM-HARNESS-BEGIN: us-8011d08c
-extern "C" void Init__13CMenuQuestLogFv() {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d08c
 
 // LLM-HARNESS-BEGIN: us-8011d450
-extern "C" void __ct__UnkClass_8011C974() {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d450
 
 // LLM-HARNESS-BEGIN: us-8011d474
-extern "C" void func_8011C998() {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d474
 
 // LLM-HARNESS-BEGIN: us-8011d528
-extern "C" void Term__13CMenuQuestLogFv() {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d528
 
 // LLM-HARNESS-BEGIN: us-8011d5b0
-extern "C" void Move__13CMenuQuestLogFv() {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d5b0
 
 // LLM-HARNESS-BEGIN: us-8011d70c
-extern "C" void cbRenderBefore__13CMenuQuestLogFv(void* self) {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d70c
 
 // LLM-HARNESS-BEGIN: us-8011d7bc
-extern "C" void func_8011CCE0() {}
+extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011d7bc
 
 // LLM-HARNESS-BEGIN: us-8011d838
-extern "C" void func_8011CD5C() {}
+extern "C" int lbl_eu_80663D1C;
+
+extern "C" int func_80042864() {
+    return lbl_eu_80663D1C != 0;
+}
 // LLM-HARNESS-END: us-8011d838
 
 // LLM-HARNESS-BEGIN: us-8011d848

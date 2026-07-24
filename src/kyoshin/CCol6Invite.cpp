@@ -3,19 +3,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern "C" void __dt__13CCol6CheckBatFv(void* self);
 
 // LLM-HARNESS-BEGIN: us-80165088
-extern "C" void __ct__CCol6Invite() {}
-// LLM-HARNESS-END: us-80165088
-
-// LLM-HARNESS-BEGIN: us-801651a0
-extern "C" void func_eu_801651A0() {}
-// LLM-HARNESS-END: us-801651a0
-
-extern "C" void __dt__13CCol6CheckBatFv(void* self);
-// LLM-HARNESS-BEGIN: us-80165268
 extern "C" void func_801640D0(void* self) { ((void(*)(void*))__dt__13CCol6CheckBatFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80165268
+// LLM-HARNESS-END: us-80165088
 
 extern "C" void func_8015DB08(void* self);
 // LLM-HARNESS-BEGIN: us-80165270

@@ -1339,39 +1339,39 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8011de14
-extern "C" void func_8011D338() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011de14
 
 // LLM-HARNESS-BEGIN: us-8011df00
-extern "C" void __ct__CMenuSymbolMark() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011df00
 
 // LLM-HARNESS-BEGIN: us-8011e49c
-extern "C" void __dt__15CMenuSymbolMarkFv(void* self) {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011e49c
 
 // LLM-HARNESS-BEGIN: us-8011e510
-extern "C" void Init__15CMenuSymbolMarkFv() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011e510
 
 // LLM-HARNESS-BEGIN: us-8011e714
-extern "C" void Term__15CMenuSymbolMarkFv() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011e714
 
 // LLM-HARNESS-BEGIN: us-8011e7e0
-extern "C" void Move__15CMenuSymbolMarkFv() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011e7e0
 
 // LLM-HARNESS-BEGIN: us-8011ee9c
-extern "C" void cbRenderBefore__15CMenuSymbolMarkFv(void* self) {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011ee9c
 
 // LLM-HARNESS-BEGIN: us-8011efa0
-extern "C" void func_8011E4C4() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011efa0
 
 // LLM-HARNESS-BEGIN: us-8011f01c
-extern "C" void func_8011E540() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011f01c
 
 // LLM-HARNESS-BEGIN: us-8011f254
@@ -1464,7 +1464,7 @@ public:
 
 class CArrow3D;
 // LLM-HARNESS-BEGIN: us-8011e6bc
-template<> CTTask<CArrow3D>::~CTTask() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8011e6bc
 // LLM-HARNESS-BEGIN: us-80122b88
 template<> void CTTask<CArrow3D>::Move() {}

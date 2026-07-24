@@ -1339,7 +1339,7 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8004785c
-extern "C" void setMapJumpArea() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-8004785c
 
 // LLM-HARNESS-BEGIN: us-80047dfc
@@ -1347,39 +1347,39 @@ extern "C" void func_80047814__Q22cf13CfObjectPointFv() {}
 // LLM-HARNESS-END: us-80047dfc
 
 // LLM-HARNESS-BEGIN: us-80047e18
-extern "C" void setMapJumpAreaBox() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-80047e18
 
 // LLM-HARNESS-BEGIN: us-80048238
-extern "C" void setWarpArea() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-80048238
 
 // LLM-HARNESS-BEGIN: us-800487dc
-extern "C" void setMapPreloadArea() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-800487dc
 
 // LLM-HARNESS-BEGIN: us-80048a5c
-extern "C" void mapJump() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-80048a5c
 
 // LLM-HARNESS-BEGIN: us-80048c84
-extern "C" void setMapPreloadArea2() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-80048c84
 
 // LLM-HARNESS-BEGIN: us-80048ecc
-extern "C" void setEventArea() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-80048ecc
 
 // LLM-HARNESS-BEGIN: us-80049130
-extern "C" void delEventArea() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-80049130
 
 // LLM-HARNESS-BEGIN: us-80049190
-extern "C" void setTownArea() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-80049190
 
 // LLM-HARNESS-BEGIN: us-8004953c
-extern "C" void addPopID() {}
+extern "C" bool func_8004A2E8() { return false; }
 // LLM-HARNESS-END: us-8004953c
 
 // LLM-HARNESS-BEGIN: us-80049574

@@ -1339,43 +1339,47 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801be330
-extern "C" void __ct__CMenuKizunaTalk() {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be330
 
 // LLM-HARNESS-BEGIN: us-801be438
-extern "C" void __dt__15CMenuKizunaTalkFv(void* self) {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be438
 
 // LLM-HARNESS-BEGIN: us-801be4b0
-extern "C" void Init__15CMenuKizunaTalkFv() {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be4b0
 
 // LLM-HARNESS-BEGIN: us-801be518
-extern "C" void Term__15CMenuKizunaTalkFv() {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be518
 
 // LLM-HARNESS-BEGIN: us-801be5dc
-extern "C" void Move__15CMenuKizunaTalkFv() {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be5dc
 
 // LLM-HARNESS-BEGIN: us-801be6e4
-extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void* self) {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be6e4
 
 // LLM-HARNESS-BEGIN: us-801be7b4
-extern "C" void func_801BCEBC() {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be7b4
 
 // LLM-HARNESS-BEGIN: us-801be830
-extern "C" void func_801BCF38() {}
+extern "C" int lbl_eu_80663D1C;
+
+extern "C" int func_80042864() {
+    return lbl_eu_80663D1C != 0;
+}
 // LLM-HARNESS-END: us-801be830
 
 // LLM-HARNESS-BEGIN: us-801be840
-extern "C" void func_801BCF48() {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be840
 
 // LLM-HARNESS-BEGIN: us-801be9ac
-extern "C" void func_801BD0B4() {}
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801be9ac
 
 // LLM-HARNESS-BEGIN: us-801beb20

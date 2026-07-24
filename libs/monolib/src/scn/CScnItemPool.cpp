@@ -5,27 +5,27 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8048fe08
-extern "C" void __ct__CScnItemPool() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-8048fe08
 
 // LLM-HARNESS-BEGIN: us-8048ffb8
-extern "C" void __ct__reslist_CScnItem() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-8048ffb8
 
 // LLM-HARNESS-BEGIN: us-80490160
-extern "C" void func_8048C0EC() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-80490160
 
 // LLM-HARNESS-BEGIN: us-8049028c
-extern "C" void __dt__12CScnItemPoolFv() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-8049028c
 
 // LLM-HARNESS-BEGIN: us-804903ec
-extern "C" void __dt__8048C378() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-804903ec
 
 // LLM-HARNESS-BEGIN: us-80490474
-extern "C" void func_8048C400() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-80490474
 
 // LLM-HARNESS-BEGIN: us-804904ec
@@ -33,11 +33,11 @@ extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-804904ec
 
 // LLM-HARNESS-BEGIN: us-804904f4
-extern "C" void func_8048C480() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-804904f4
 
 // LLM-HARNESS-BEGIN: us-8049056c
-extern "C" void func_8048C4F8() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-8049056c
 
 // LLM-HARNESS-BEGIN: us-80490598
@@ -97,7 +97,7 @@ extern "C" void func_8048C9D8() {}
 // LLM-HARNESS-END: us-80490a4c
 
 // LLM-HARNESS-BEGIN: us-80490a68
-extern "C" void func_8048C9F4() {}
+extern "C" u32 func_8048C9F4(void* self) { return *(u32*)((u8*)self + 0); }
 // LLM-HARNESS-END: us-80490a68
 
 // LLM-HARNESS-BEGIN: us-80490a74
@@ -109,7 +109,9 @@ extern "C" void func_8048CA10() {}
 // LLM-HARNESS-END: us-80490a84
 
 // LLM-HARNESS-BEGIN: us-80490a9c
-extern "C" void func_8048CA28() {}
+extern "C" void func_8048CA28(int* dst, int* src) {
+    *dst = *src;
+}
 // LLM-HARNESS-END: us-80490a9c
 
 // LLM-HARNESS-BEGIN: us-80490aa8
@@ -145,7 +147,9 @@ extern "C" void func_8048CDA8(void) {}
 // LLM-HARNESS-END: us-80490e1c
 
 // LLM-HARNESS-BEGIN: us-80490e20
-extern "C" void func_8048CDAC() {}
+extern "C" void func_8048CDAC(int* dst, int* src) {
+    *dst = *src;
+}
 // LLM-HARNESS-END: us-80490e20
 
 // LLM-HARNESS-BEGIN: us-80490e2c
@@ -175,10 +179,8 @@ extern "C" void func_8048D01C__12CScnItemPoolFv(void* self) { ((void(*)(void*))_
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 class CScnItem;
 // LLM-HARNESS-BEGIN: us-8048fff4
-template <typename T> class _reslist_base { public: ~_reslist_base(); };
-template <> _reslist_base<CScnItem*>::~_reslist_base() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-8048fff4
 // LLM-HARNESS-BEGIN: us-804900a8
-template <typename T> class reslist { public: ~reslist(); };
-template <> reslist<CScnItem*>::~reslist() {}
+extern "C" u32 func_8048C478(void* self) { return *(u32*)((u8*)self + 0x18); }
 // LLM-HARNESS-END: us-804900a8

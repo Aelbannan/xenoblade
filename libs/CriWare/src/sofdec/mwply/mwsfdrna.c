@@ -5,9 +5,9 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803a02bc
-int MWSFRNA_SetOutVol() { return 0; }
+void MWSFRNA_SetOutVol(void) {}
 // LLM-HARNESS-END: us-803a02bc
 
 // LLM-HARNESS-BEGIN: us-803a02c4
-int MWSFRNA_GetOutVol() { return 0; }
+void MWSFRNA_GetOutVol(void) {}
 // LLM-HARNESS-END: us-803a02c4

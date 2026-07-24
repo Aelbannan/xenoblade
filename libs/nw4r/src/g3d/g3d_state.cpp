@@ -29,7 +29,7 @@ extern "C" void __dt__Q34nw4r3g3d12LightSettingFv() {}
 // LLM-HARNESS-END: us-803ea8dc
 
 // LLM-HARNESS-BEGIN: us-803ea91c
-extern "C" void __ct__Q34nw4r3g3d8LightObjFv() {}
+extern "C" void __ct__Q34nw4r3g3d8LightObjFv(void) {}
 // LLM-HARNESS-END: us-803ea91c
 
 // LLM-HARNESS-BEGIN: us-803ea928
@@ -101,7 +101,10 @@ extern "C" void GetViewNrmMtxPtr__Q34nw4r3g3d8G3DStateFUl() {}
 // LLM-HARNESS-END: us-803ecc8c
 
 // LLM-HARNESS-BEGIN: us-803ecd14
-extern "C" bool GetIndMtxOp__Q34nw4r3g3d8G3DStateFv() { return false; }
+extern "C" u32 GetIndMtxOp__Q34nw4r3g3d8G3DStateFv(void) {
+    extern u32 lbl_eu_8066346C;
+    return lbl_eu_8066346C;
+}
 // LLM-HARNESS-END: us-803ecd14
 
 // LLM-HARNESS-BEGIN: us-803ecd1c
@@ -145,7 +148,7 @@ extern "C" void SetRenderModeObj__Q34nw4r3g3d8G3DStateFRC16_GXRenderModeObj() {}
 // LLM-HARNESS-END: us-803ed040
 
 // LLM-HARNESS-BEGIN: us-803ed240
-extern "C" void GetRenderModeObj__Q34nw4r3g3d8G3DStateFv() {}
+extern "C" void* GetRenderModeObj__Q34nw4r3g3d8G3DStateFv(void) { return 0; }
 // LLM-HARNESS-END: us-803ed240
 
 // LLM-HARNESS-BEGIN: us-803ed24c

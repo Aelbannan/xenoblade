@@ -29,5 +29,5 @@ void SFXA_MakeAlp3211Tbl() {}
 // LLM-HARNESS-END: us-803d83d4
 
 // LLM-HARNESS-BEGIN: us-803d8400
-int SFXA_IsNeedUpdateLumiTbl() { return 0; }
+u32 SFXA_IsNeedUpdateLumiTbl(void* self) { return *(u32*)((u8*)self + 0x4); }
 // LLM-HARNESS-END: us-803d8400

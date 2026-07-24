@@ -1339,27 +1339,27 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8012c710
-extern "C" void __ct__CTalkWindow() {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012c710
 
 // LLM-HARNESS-BEGIN: us-8012c828
-extern "C" void __dt__11CTalkWindowFv(void* self) {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012c828
 
 // LLM-HARNESS-BEGIN: us-8012c89c
-extern "C" void func_8012BDD0() {}
+extern "C" void func_8012BDD0(void) {}
 // LLM-HARNESS-END: us-8012c89c
 
 // LLM-HARNESS-BEGIN: us-8012c8a8
-extern "C" void Init__11CTalkWindowFv() {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012c8a8
 
 // LLM-HARNESS-BEGIN: us-8012d2c4
-extern "C" void Term__11CTalkWindowFv() {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d2c4
 
 // LLM-HARNESS-BEGIN: us-8012d374
-extern "C" void Move__11CTalkWindowFv() {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d374
 
 // LLM-HARNESS-BEGIN: us-8012d69c
@@ -1367,19 +1367,19 @@ extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d69c
 
 // LLM-HARNESS-BEGIN: us-8012d6a0
-extern "C" void cbRenderBefore__11CTalkWindowFv(void* self) {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d6a0
 
 // LLM-HARNESS-BEGIN: us-8012d744
-extern "C" void func_8012CC78() {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d744
 
 // LLM-HARNESS-BEGIN: us-8012d7f4
-extern "C" void func_8012CD24() {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d7f4
 
 // LLM-HARNESS-BEGIN: us-8012d808
-extern "C" void func_8012CD38() {}
+extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d808
 
 // LLM-HARNESS-BEGIN: us-8012dea8

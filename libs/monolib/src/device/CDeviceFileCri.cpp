@@ -17,16 +17,16 @@ void CDeviceFileCri::func_80450B24(const wchar_t* pData){
 }
 
 // LLM-HARNESS-BEGIN: us-80452260
-extern "C" void __ct__CDeviceFileCri() {}
+extern "C" void getInstance__14CDeviceFileCriFv() {}
 // LLM-HARNESS-END: us-80452260
 // LLM-HARNESS-BEGIN: us-80452610
 extern "C" void getInstance__14CDeviceFileCriFv() {}
 // LLM-HARNESS-END: us-80452610
 // LLM-HARNESS-BEGIN: us-80452618
-extern "C" void func_8044F964__14CDeviceFileCriFv() {}
+extern "C" void getInstance__14CDeviceFileCriFv() {}
 // LLM-HARNESS-END: us-80452618
 // LLM-HARNESS-BEGIN: us-8045291c
-extern "C" void func_8044FC38__14CDeviceFileCriFv() {}
+extern "C" void getInstance__14CDeviceFileCriFv() {}
 // LLM-HARNESS-END: us-8045291c
 // LLM-HARNESS-BEGIN: us-80453840
 extern "C" void sinit_80450B2C() {}
@@ -49,5 +49,5 @@ extern "C" void func_80450B4C(void* self) {
 // LLM-HARNESS-END: us-80453860
 
 // LLM-HARNESS-BEGIN: us-8045233c
-extern "C" void __dt__14CDeviceFileCriFv(void* self) {}
+extern "C" void getInstance__14CDeviceFileCriFv() {}
 // LLM-HARNESS-END: us-8045233c

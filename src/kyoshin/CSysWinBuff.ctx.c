@@ -1339,35 +1339,59 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80276958
-extern "C" void __dt__11CSysWinBuffFv(void* self) {}
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-80276958
 
 // LLM-HARNESS-BEGIN: us-802769cc
-extern "C" void Init__11CSysWinBuffFv() {}
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-802769cc
 
 // LLM-HARNESS-BEGIN: us-80276b08
-extern "C" void Term__11CSysWinBuffFv() {}
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-80276b08
 
 // LLM-HARNESS-BEGIN: us-80276b88
-extern "C" void Move__11CSysWinBuffFv() {}
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-80276b88
 
 // LLM-HARNESS-BEGIN: us-80276d34
-extern "C" void cbRenderBefore__11CSysWinBuffFv(void* self) {}
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-80276d34
 
 // LLM-HARNESS-BEGIN: us-80276dcc
-extern "C" void create__11CSysWinBuffFv() {}
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-80276dcc
 
 // LLM-HARNESS-BEGIN: us-80276f00
-extern "C" bool getInstance__11CSysWinBuffFv() { return false; }
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-80276f00
 
 // LLM-HARNESS-BEGIN: us-80276f08
-extern "C" void func_80274A84(void* self) {}
+extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+    extern u32 lbl_eu_806648E0;
+    return lbl_eu_806648E0;
+}
 // LLM-HARNESS-END: us-80276f08
 
 // LLM-HARNESS-BEGIN: us-80276f84

@@ -1363,7 +1363,10 @@ extern "C" void __dt__12CTaskGameEffFv() {}
 // LLM-HARNESS-END: us-8004531c
 
 // LLM-HARNESS-BEGIN: us-80045394
-extern "C" bool func_80044DF4() { return false; }
+extern "C" u32 func_80044DF4(void) {
+    extern u32 lbl_eu_80663D40;
+    return lbl_eu_80663D40;
+}
 // LLM-HARNESS-END: us-80045394
 
 // LLM-HARNESS-BEGIN: us-8004539c

@@ -17,11 +17,11 @@ void SFXCNV_MakeCcirFromY() {}
 // LLM-HARNESS-END: us-803d7324
 
 // LLM-HARNESS-BEGIN: us-803d7600
-int SFX_SetCnvFrmCbFunc() { return 0; }
+void SFX_SetCnvFrmCbFunc(void* self, u32 val) { *(u32*)((u8*)self + 0x68) = val; }
 // LLM-HARNESS-END: us-803d7600
 
 // LLM-HARNESS-BEGIN: us-803d7608
-int SFX_SetCopyAlphaCbFunc() { return 0; }
+void SFX_SetCopyAlphaCbFunc(void* self, u32 val) { *(u32*)((u8*)self + 0x6c) = val; }
 // LLM-HARNESS-END: us-803d7608
 
 // LLM-HARNESS-BEGIN: us-803d7610
@@ -37,7 +37,7 @@ void SFX_SetMakeAlp3110TableCbFunc() {}
 // LLM-HARNESS-END: us-803d7628
 
 // LLM-HARNESS-BEGIN: us-803d7634
-int SFX_SetMakeColAdjTableCbFunc() { return 0; }
+void SFX_SetMakeColAdjTableCbFunc(void* self, u32 val) { *(u32*)((u8*)self + 0x70) = val; }
 // LLM-HARNESS-END: us-803d7634
 
 // LLM-HARNESS-BEGIN: us-803d763c
@@ -57,7 +57,7 @@ void sfxcnv_ExecCopyAlphaByCbFunc() {}
 // LLM-HARNESS-END: us-803d7ad8
 
 // LLM-HARNESS-BEGIN: us-803d7c4c
-int SFX_SetBytePerPixelOutBuf() { return 0; }
+void SFX_SetBytePerPixelOutBuf(void* self, u32 val) { *(u32*)((u8*)self + 0x74) = val; }
 // LLM-HARNESS-END: us-803d7c4c
 
 // LLM-HARNESS-BEGIN: us-803d7c54

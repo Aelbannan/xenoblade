@@ -17,11 +17,11 @@ extern "C" void ScnMdlSmpl_G3DPROC_CALC_VIEW__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34n
 // LLM-HARNESS-END: us-803f9c48
 
 // LLM-HARNESS-BEGIN: us-803f9f94
-extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
+extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 // LLM-HARNESS-END: us-803f9f94
 
 // LLM-HARNESS-BEGIN: us-803f9f98
-extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
+extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 // LLM-HARNESS-END: us-803f9f98
 
 // LLM-HARNESS-BEGIN: us-803f9f9c
@@ -101,5 +101,5 @@ extern "C" void GetTypeName__Q34nw4r3g3d12ScnMdlSimpleCFv() {}
 // LLM-HARNESS-END: us-803fb830
 
 // LLM-HARNESS-BEGIN: us-803fb860
-extern "C" void GetTypeObj__Q34nw4r3g3d12ScnMdlSimpleCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d12ScnMdlSimpleCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803fb860

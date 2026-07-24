@@ -9,15 +9,15 @@ extern "C" void Release__Q34nw4r3g3d9AnmObjChrFv() {}
 // LLM-HARNESS-END: us-803e6178
 
 // LLM-HARNESS-BEGIN: us-803e61b4
-extern "C" bool Attach__Q34nw4r3g3d9AnmObjChrFiPQ34nw4r3g3d12AnmObjChrRes() { return false; }
+extern "C" int Attach__Q34nw4r3g3d9AnmObjChrFiPQ34nw4r3g3d12AnmObjChrRes(void) { return 0x0; }
 // LLM-HARNESS-END: us-803e61b4
 
 // LLM-HARNESS-BEGIN: us-803e61bc
-extern "C" bool Detach__Q34nw4r3g3d9AnmObjChrFi() { return false; }
+extern "C" int Detach__Q34nw4r3g3d9AnmObjChrFi(void) { return 0x0; }
 // LLM-HARNESS-END: us-803e61bc
 
 // LLM-HARNESS-BEGIN: us-803e61c4
-extern "C" void SetWeight__Q34nw4r3g3d9AnmObjChrFif() {}
+extern "C" void SetWeight__Q34nw4r3g3d9AnmObjChrFif(void) {}
 // LLM-HARNESS-END: us-803e61c4
 
 // LLM-HARNESS-BEGIN: us-803e61c8
@@ -25,7 +25,7 @@ extern "C" bool GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return false; }
 // LLM-HARNESS-END: us-803e61c8
 
 // LLM-HARNESS-BEGIN: us-803e61d0
-extern "C" void DetachAll__Q34nw4r3g3d9AnmObjChrFv() {}
+extern "C" void DetachAll__Q34nw4r3g3d9AnmObjChrFv(void) {}
 // LLM-HARNESS-END: us-803e61d0
 
 // LLM-HARNESS-BEGIN: us-803e61d4
@@ -113,7 +113,7 @@ extern "C" void SetFrame__Q34nw4r3g3d12AnmObjChrResFf() {}
 // LLM-HARNESS-END: us-803e7544
 
 // LLM-HARNESS-BEGIN: us-803e7604
-extern "C" bool GetFrame__Q34nw4r3g3d12AnmObjChrResCFv() { return false; }
+extern "C" float GetFrame__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 0x10); }
 // LLM-HARNESS-END: us-803e7604
 
 // LLM-HARNESS-BEGIN: us-803e760c
@@ -121,7 +121,7 @@ extern "C" void SetUpdateRate__Q34nw4r3g3d12AnmObjChrResFf() {}
 // LLM-HARNESS-END: us-803e760c
 
 // LLM-HARNESS-BEGIN: us-803e76c0
-extern "C" bool GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv() { return false; }
+extern "C" float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 0x10); }
 // LLM-HARNESS-END: us-803e76c0
 
 // LLM-HARNESS-BEGIN: us-803e76c8
@@ -161,7 +161,7 @@ extern "C" void GetTypeName__Q34nw4r3g3d12AnmObjChrResCFv() {}
 // LLM-HARNESS-END: us-803e7df0
 
 // LLM-HARNESS-BEGIN: us-803e7e20
-extern "C" void GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803e7e20
 
 // LLM-HARNESS-BEGIN: us-803e7e2c
@@ -181,7 +181,7 @@ extern "C" void GetTypeName__Q34nw4r3g3d14AnmObjChrBlendCFv() {}
 // LLM-HARNESS-END: us-803e7f54
 
 // LLM-HARNESS-BEGIN: us-803e7f84
-extern "C" void GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803e7f84
 
 // LLM-HARNESS-BEGIN: us-803e7f90
@@ -193,7 +193,7 @@ extern "C" void GetTypeName__Q34nw4r3g3d13AnmObjChrNodeCFv() {}
 // LLM-HARNESS-END: us-803e7ff8
 
 // LLM-HARNESS-BEGIN: us-803e8028
-extern "C" void GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803e8028
 
 // LLM-HARNESS-BEGIN: us-803e8034
@@ -201,5 +201,5 @@ extern "C" void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv() {}
 // LLM-HARNESS-END: us-803e8034
 
 // LLM-HARNESS-BEGIN: us-803e8064
-extern "C" void GetTypeObj__Q34nw4r3g3d9AnmObjChrCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d9AnmObjChrCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803e8064

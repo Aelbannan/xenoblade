@@ -1229,15 +1229,11 @@ extern "C" void ocThreadRegist() {
 // LLM-HARNESS-END: us-8003a8b4
 
 // LLM-HARNESS-BEGIN: us-8003a8c0
-extern "C" OcThreadListHdr* func_8003A4E0() {
-    return &lbl_eu_805704C8;
-}
+extern "C" void* func_8003A4E0(void) { return 0; }
 // LLM-HARNESS-END: us-8003a8c0
 
 // LLM-HARNESS-BEGIN: us-8003a8cc
-extern "C" OcThreadListHdr* func_8003A4EC() {
-    return &lbl_eu_80570538;
-}
+extern "C" void* func_8003A4EC(void) { return 0; }
 // LLM-HARNESS-END: us-8003a8cc
 
 // LLM-HARNESS-BEGIN: us-8003a8d8

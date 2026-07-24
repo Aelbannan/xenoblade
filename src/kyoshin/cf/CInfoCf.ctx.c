@@ -1322,8 +1322,8 @@ public:
     static void func_8003AA8C(u32 val);
     static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
 
 #ifdef __cplusplus
@@ -1347,11 +1347,11 @@ extern "C" void __dt__Q22cf7CInfoCfFv() {}
 // LLM-HARNESS-END: us-801678e0
 
 // LLM-HARNESS-BEGIN: us-80167928
-extern "C" void func_8016676C() {}
+extern "C" void func_8016676C(void) {}
 // LLM-HARNESS-END: us-80167928
 
 // LLM-HARNESS-BEGIN: us-80167934
-extern "C" void func_80166778() {}
+extern "C" void func_80166778(void) {}
 // LLM-HARNESS-END: us-80167934
 
 // LLM-HARNESS-BEGIN: us-80167940
@@ -1367,7 +1367,10 @@ extern "C" void func_801667AC() {}
 // LLM-HARNESS-END: us-80167968
 
 // LLM-HARNESS-BEGIN: us-801679ec
-extern "C" bool func_80166830() { return false; }
+extern "C" u32 func_80166830(void) {
+    extern u32 lbl_eu_80663E24;
+    return lbl_eu_80663E24;
+}
 // LLM-HARNESS-END: us-801679ec
 
 // LLM-HARNESS-BEGIN: us-801679f4

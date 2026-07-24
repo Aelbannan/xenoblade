@@ -5,43 +5,73 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80450bd4
-extern "C" void __ct__11CDeviceFileFPCcP11CWorkThread() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80450bd4
 
 // LLM-HARNESS-BEGIN: us-80450d54
-extern "C" void __dt___reslist_base_CFileHandle() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80450d54
 
 // LLM-HARNESS-BEGIN: us-80450e08
-extern "C" void __dt__reslist_CFileHandle() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80450e08
 
 // LLM-HARNESS-BEGIN: us-80450ec0
-extern "C" void __dt__11CDeviceFileFv() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80450ec0
 
 // LLM-HARNESS-BEGIN: us-80450fa0
-extern "C" bool getInstance__11CDeviceFileFv() { return false; }
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80450fa0
 
 // LLM-HARNESS-BEGIN: us-80450fa8
-extern "C" void isInitialized__11CDeviceFileFv() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80450fa8
 
 // LLM-HARNESS-BEGIN: us-804511fc
-extern "C" bool func_8044E768__11CDeviceFileFv() { return false; }
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-804511fc
 
 // LLM-HARNESS-BEGIN: us-80451204
-extern "C" void func_8044E770__11CDeviceFileFP11CWorkThread() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80451204
 
 // LLM-HARNESS-BEGIN: us-80451214
-extern "C" void func_8044E780__11CDeviceFileFv() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80451214
 
 // LLM-HARNESS-BEGIN: us-80451228
-extern "C" void readFile__11CDeviceFileFUlPCcP10IWorkEventii() {}
+extern "C" u32 getInstance__11CDeviceFileFv(void) {
+    extern u32 lbl_eu_80665660;
+    return lbl_eu_80665660;
+}
 // LLM-HARNESS-END: us-80451228
 
 // LLM-HARNESS-BEGIN: us-80451654

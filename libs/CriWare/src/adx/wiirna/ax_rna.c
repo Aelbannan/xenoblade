@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8039c384
-void AXRNA_EntryErrFunc() {}
+void AXRNA_EntryErrFunc(void) {}
 // LLM-HARNESS-END: us-8039c384
 
 // LLM-HARNESS-BEGIN: us-8039c388
@@ -85,11 +85,11 @@ void AXRNA_SetBitPerSmpl() {}
 // LLM-HARNESS-END: us-8039db60
 
 // LLM-HARNESS-BEGIN: us-8039db70
-int AXRNA_SetStmHdInfo() { return 0; }
+int AXRNA_SetStmHdInfo(void) { return 0x0; }
 // LLM-HARNESS-END: us-8039db70
 
 // LLM-HARNESS-BEGIN: us-8039db78
-int AXRNA_DiscardData() { return 0; }
+int AXRNA_DiscardData(void) { return 0x0; }
 // LLM-HARNESS-END: us-8039db78
 
 // LLM-HARNESS-BEGIN: us-8039db80

@@ -212,14 +212,14 @@ void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUs
 extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv() {}
 // LLM-HARNESS-END: us-8041d3f4
 // LLM-HARNESS-BEGIN: us-8041d63c
-extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv() { return false; }
+extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 // LLM-HARNESS-END: us-8041d63c
 // LLM-HARNESS-BEGIN: us-8041d644
-extern "C" bool GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv() { return false; }
+extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 // LLM-HARNESS-END: us-8041d644
 // LLM-HARNESS-BEGIN: us-8041d64c
-extern "C" bool IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv() { return false; }
+extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return ((u8*)self)[0x2a5]; }
 // LLM-HARNESS-END: us-8041d64c
 // LLM-HARNESS-BEGIN: us-8041d654
-extern "C" bool GetRuntimeTypeInfo__Q44nw4r3snd6detail8SeqSoundCFv() { return false; }
+extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail8SeqSoundCFv(void) { return lbl_eu_806654F8@sda21; }
 // LLM-HARNESS-END: us-8041d654

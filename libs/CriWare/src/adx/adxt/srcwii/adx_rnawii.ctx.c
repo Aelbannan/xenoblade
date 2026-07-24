@@ -778,27 +778,27 @@ void ADXRNA_ExecServer(void) {
 // LLM-HARNESS-END: us-8039e728
 
 // LLM-HARNESS-BEGIN: us-8039e72c
-void ADXRNA_SetNumChan() {}
+void ADXRNA_SetNumChan(void) {}
 // LLM-HARNESS-END: us-8039e72c
 
 // LLM-HARNESS-BEGIN: us-8039e730
-void ADXRNA_SetSfreq() {}
+void ADXRNA_SetSfreq(void) {}
 // LLM-HARNESS-END: us-8039e730
 
 // LLM-HARNESS-BEGIN: us-8039e734
-void ADXRNA_SetOutVol() {}
+void ADXRNA_SetOutVol(void) {}
 // LLM-HARNESS-END: us-8039e734
 
 // LLM-HARNESS-BEGIN: us-8039e738
-void ADXRNA_SetOutPan() {}
+void ADXRNA_SetOutPan(void) {}
 // LLM-HARNESS-END: us-8039e738
 
 // LLM-HARNESS-BEGIN: us-8039e73c
-void ADXRNA_SetBitPerSmpl() {}
+void ADXRNA_SetBitPerSmpl(void) {}
 // LLM-HARNESS-END: us-8039e73c
 
 // LLM-HARNESS-BEGIN: us-8039e740
-void ADXRNA_DiscardData() {}
+void ADXRNA_DiscardData(void) {}
 // LLM-HARNESS-END: us-8039e740
 
 // LLM-HARNESS-BEGIN: us-8039e744

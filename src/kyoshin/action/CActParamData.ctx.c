@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80054044
-extern "C" void __ct__13CActParamDataFv() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-80054044
 
 // LLM-HARNESS-BEGIN: us-800540a8
-extern "C" void __dt__13CActParamDataFv() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-800540a8
 
 // LLM-HARNESS-BEGIN: us-800540e8
-extern "C" void func_80053A90() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-800540e8
 
 // LLM-HARNESS-BEGIN: us-8005417c
-extern "C" void func_80053B24() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-8005417c
 
 // LLM-HARNESS-BEGIN: us-80054440
-extern "C" void func_80053DE8() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-80054440
 
 // LLM-HARNESS-BEGIN: us-80054598
-extern "C" void func_80053F40() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-80054598
 
 // LLM-HARNESS-BEGIN: us-800545d4
-extern "C" void func_80053F7C() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-800545d4
 
 // LLM-HARNESS-BEGIN: us-800547d8
-extern "C" void func_80054170() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-800547d8
 
 // LLM-HARNESS-BEGIN: us-80054aa0
-extern "C" void func_80054438() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-80054aa0
 
 // LLM-HARNESS-BEGIN: us-80054c7c
-extern "C" void func_80054614() {}
+extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-80054c7c
 
 // LLM-HARNESS-BEGIN: us-80054e3c

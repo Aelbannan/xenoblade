@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8005aa64
-extern "C" void __ct__8005A3FC() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005aa64
 
 // LLM-HARNESS-BEGIN: us-8005aad4
-extern "C" void __ct__Q22cf17CActParamAnimGameFv() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005aad4
 
 // LLM-HARNESS-BEGIN: us-8005ab34
-extern "C" void __dt__Q22cf17CActParamAnimGameFv() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005ab34
 
 // LLM-HARNESS-BEGIN: us-8005ab8c
-extern "C" void func_8005A524__Q22cf17CActParamAnimGame() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005ab8c
 
 // LLM-HARNESS-BEGIN: us-8005abfc
-extern "C" void func_8005A594() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005abfc
 
 // LLM-HARNESS-BEGIN: us-8005ac18
-extern "C" void func_8005A5B0() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005ac18
 
 // LLM-HARNESS-BEGIN: us-8005be88
-extern "C" void func_8005B820() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005be88
 
 // LLM-HARNESS-BEGIN: us-8005c240
-extern "C" void func_8005BC14() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005c240
 
 // LLM-HARNESS-BEGIN: us-8005d90c
-extern "C" void func_8005D2C4__Q22cf17CActParamAnimGame() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005d90c
 
 // LLM-HARNESS-BEGIN: us-8005dc50
-extern "C" void func_8005D608__Q22cf17CActParamAnimGame() {}
+extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005dc50
 
 // LLM-HARNESS-BEGIN: us-8005dcc4

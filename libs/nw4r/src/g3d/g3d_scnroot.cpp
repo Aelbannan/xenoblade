@@ -21,7 +21,7 @@ extern "C" void GetCurrentCamera__Q34nw4r3g3d7ScnRootFv() {}
 // LLM-HARNESS-END: us-803f81e4
 
 // LLM-HARNESS-BEGIN: us-803f8220
-extern "C" bool SetCurrentCamera__Q34nw4r3g3d7ScnRootFi() { return false; }
+extern "C" void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(void* self, u8 val) { ((u8*)self)[0xf4] = val; }
 // LLM-HARNESS-END: us-803f8220
 
 // LLM-HARNESS-BEGIN: us-803f8228
@@ -105,7 +105,7 @@ extern "C" void DrawXlu__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(
 // LLM-HARNESS-END: us-803f9834
 
 // LLM-HARNESS-BEGIN: us-803f98bc
-extern "C" bool CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj() { return false; }
+extern "C" int CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj(void) { return 0x0; }
 // LLM-HARNESS-END: us-803f98bc
 
 // LLM-HARNESS-BEGIN: us-803f98c4
@@ -125,7 +125,7 @@ extern "C" void GetTypeName__Q34nw4r3g3d7ScnRootCFv() {}
 // LLM-HARNESS-END: us-803f997c
 
 // LLM-HARNESS-BEGIN: us-803f99ac
-extern "C" void GetTypeObj__Q34nw4r3g3d7ScnRootCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d7ScnRootCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803f99ac
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

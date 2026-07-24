@@ -25,7 +25,7 @@ void RFCOMM_ConfigCnf() {}
 // LLM-HARNESS-END: us-803010b4
 
 // LLM-HARNESS-BEGIN: us-803011bc
-void RFCOMM_QoSViolationInd() {}
+void RFCOMM_QoSViolationInd(void) {}
 // LLM-HARNESS-END: us-803011bc
 
 // LLM-HARNESS-BEGIN: us-803011c0

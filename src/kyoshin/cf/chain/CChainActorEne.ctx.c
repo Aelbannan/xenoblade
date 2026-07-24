@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8028378c
-extern "C" void func_80281308() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-8028378c
 
 // LLM-HARNESS-BEGIN: us-802837c0
-extern "C" void func_8028133C() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-802837c0
 
 // LLM-HARNESS-BEGIN: us-80283808
-extern "C" void func_80281384() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-80283808
 
 // LLM-HARNESS-BEGIN: us-802838bc
-extern "C" void func_80281438() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-802838bc
 
 // LLM-HARNESS-BEGIN: us-802838e4
-extern "C" void func_80281460() {}
+extern "C" void func_80281460(void) {}
 // LLM-HARNESS-END: us-802838e4
 
 // LLM-HARNESS-BEGIN: us-802838f0
-extern "C" void func_8028146C() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-802838f0
 
 // LLM-HARNESS-BEGIN: us-80283968
-extern "C" void func_802814E4() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-80283968
 
 // LLM-HARNESS-BEGIN: us-80283a3c
-extern "C" void func_802815B8() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-80283a3c
 
 // LLM-HARNESS-BEGIN: us-80283b80
-extern "C" void func_802816FC() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-80283b80
 
 // LLM-HARNESS-BEGIN: us-80283cc0
-extern "C" void func_8028183C() {}
+extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
 // LLM-HARNESS-END: us-80283cc0
 
 extern "C" void func_802A0AA0(void* self);

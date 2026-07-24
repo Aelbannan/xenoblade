@@ -13,7 +13,7 @@ void SFH_Create() {}
 // LLM-HARNESS-END: us-803d2e54
 
 // LLM-HARNESS-BEGIN: us-803d2ee8
-void SFH_Destroy() {}
+void SFH_Destroy(void) {}
 // LLM-HARNESS-END: us-803d2ee8
 
 // LLM-HARNESS-BEGIN: us-803d2ef4

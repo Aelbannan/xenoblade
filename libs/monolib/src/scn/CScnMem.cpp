@@ -5,27 +5,27 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80492b1c
-extern "C" void __ct__CScnMem() {}
+extern "C" u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80492b1c
 
 // LLM-HARNESS-BEGIN: us-80492b40
-extern "C" void __dt__7CScnMemFv() {}
+extern "C" u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80492b40
 
 // LLM-HARNESS-BEGIN: us-80492ba4
-extern "C" void func_8048EB30() {}
+extern "C" u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80492ba4
 
 // LLM-HARNESS-BEGIN: us-80492bec
-extern "C" void __ct__CScnNw4r() {}
+extern "C" u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80492bec
 
 // LLM-HARNESS-BEGIN: us-80492c30
-extern "C" void __dt__8CScnNw4rFv() {}
+extern "C" u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80492c30
 
 // LLM-HARNESS-BEGIN: us-80492c88
-extern "C" void func_8048EC14() {}
+extern "C" u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80492c88
 
 // LLM-HARNESS-BEGIN: us-80492d44
@@ -33,7 +33,7 @@ extern "C" u32 func_8048ECD0(void* self) { return *(u32*)((u8*)self + 0x8c); }
 // LLM-HARNESS-END: us-80492d44
 
 // LLM-HARNESS-BEGIN: us-80492d4c
-extern "C" void func_8048ECD8() {}
+extern "C" void func_8048ECD8(void) {}
 // LLM-HARNESS-END: us-80492d4c
 
 // LLM-HARNESS-BEGIN: us-80492d58

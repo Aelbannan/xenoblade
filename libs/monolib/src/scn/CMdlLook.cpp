@@ -21,7 +21,7 @@ extern "C" void func_804E8220() {}
 // LLM-HARNESS-END: us-804ec6bc
 
 // LLM-HARNESS-BEGIN: us-804ec720
-extern "C" void func_804E8284() {}
+extern "C" void func_804E8284(void* self, float a, float b) {}
 // LLM-HARNESS-END: us-804ec720
 
 // LLM-HARNESS-BEGIN: us-804ec72c

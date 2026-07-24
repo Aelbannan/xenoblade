@@ -33,5 +33,5 @@ void SFX_SetCcirFx() {}
 // LLM-HARNESS-END: us-803d8240
 
 // LLM-HARNESS-BEGIN: us-803d8250
-void SFX_GetForceSplitField() {}
+u32 SFX_GetForceSplitField(void) { return 0; }
 // LLM-HARNESS-END: us-803d8250

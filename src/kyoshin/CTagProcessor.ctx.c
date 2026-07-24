@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80125dec
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeCL() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125dec
 
 // LLM-HARNESS-BEGIN: us-80125e2c
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeCP() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125e2c
 
 // LLM-HARNESS-BEGIN: us-80125e6c
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeWait() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125e6c
 
 // LLM-HARNESS-BEGIN: us-80125eac
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeDel() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125eac
 
 // LLM-HARNESS-BEGIN: us-80125eec
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeRuby() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125eec
 
 // LLM-HARNESS-BEGIN: us-80125f2c
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeCol() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125f2c
 
 // LLM-HARNESS-BEGIN: us-80125f6c
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeTrust() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125f6c
 
 // LLM-HARNESS-BEGIN: us-80125fac
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeType() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125fac
 
 // LLM-HARNESS-BEGIN: us-80125fec
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodePos() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-80125fec
 
 // LLM-HARNESS-BEGIN: us-8012602c
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeMouth() {}
+extern "C" int func_80125B00(void* self) { return 0; }
 // LLM-HARNESS-END: us-8012602c
 
 // LLM-HARNESS-BEGIN: us-8012606c

@@ -740,7 +740,7 @@ void SFX_GetTagInf() {}
 // LLM-HARNESS-END: us-803d6fd8
 
 // LLM-HARNESS-BEGIN: us-803d7008
-void SFX_GetZfrmRange() {}
+void SFX_GetZfrmRange(void) {}
 // LLM-HARNESS-END: us-803d7008
 
 // LLM-HARNESS-BEGIN: us-803d7014

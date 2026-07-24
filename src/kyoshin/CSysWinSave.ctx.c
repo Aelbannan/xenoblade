@@ -1339,35 +1339,35 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-802965b4
-extern "C" void __dt__11CSysWinSaveFv(void* self) {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-802965b4
 
 // LLM-HARNESS-BEGIN: us-80296640
-extern "C" void Init__11CSysWinSaveFv() {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296640
 
 // LLM-HARNESS-BEGIN: us-802967ec
-extern "C" void Term__11CSysWinSaveFv() {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-802967ec
 
 // LLM-HARNESS-BEGIN: us-80296870
-extern "C" void Move__11CSysWinSaveFv() {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296870
 
 // LLM-HARNESS-BEGIN: us-80296a3c
-extern "C" void cbRenderBefore__11CSysWinSaveFv(void* self) {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296a3c
 
 // LLM-HARNESS-BEGIN: us-80296ad4
-extern "C" void __ct__802944D8() {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296ad4
 
 // LLM-HARNESS-BEGIN: us-80296c20
-extern "C" void func_80294624() {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296c20
 
 // LLM-HARNESS-BEGIN: us-80296c34
-extern "C" void func_80294638() {}
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296c34
 
 // LLM-HARNESS-BEGIN: us-80296e08

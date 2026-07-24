@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804dd3e8
-extern "C" bool func_804D9274() { return false; }
+extern "C" void func_804D9274(void) {}
 // LLM-HARNESS-END: us-804dd3e8
 
 // LLM-HARNESS-BEGIN: us-804dd3f0

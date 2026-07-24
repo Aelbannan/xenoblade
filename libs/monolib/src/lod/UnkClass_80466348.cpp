@@ -201,7 +201,7 @@ extern "C" void func_804676EC__Q23LOD17UnkClass_80466348Fv() {}
 // LLM-HARNESS-END: us-8046b6bc
 
 // LLM-HARNESS-BEGIN: us-8046b71c
-extern "C" void func_8046774C__Q23LOD17UnkClass_80466348Fv() {}
+extern "C" void func_8046774C__Q23LOD17UnkClass_80466348Fv(void) {}
 // LLM-HARNESS-END: us-8046b71c
 
 // LLM-HARNESS-BEGIN: us-8046b728

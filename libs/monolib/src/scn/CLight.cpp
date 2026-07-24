@@ -17,7 +17,9 @@ CLight::CLight(){
 }
 
 // LLM-HARNESS-BEGIN: us-804c4440
-extern "C" void func_804C02E4() {}
+extern "C" void func_804C0398(void* self, int value) {
+    *(int*)((char*)self + 0x2c) = value;
+}
 // LLM-HARNESS-END: us-804c4440
 // LLM-HARNESS-BEGIN: us-804c44f4
 extern "C" void func_804C0398(void* self, int value) {
@@ -25,19 +27,29 @@ extern "C" void func_804C0398(void* self, int value) {
 }
 // LLM-HARNESS-END: us-804c44f4
 // LLM-HARNESS-BEGIN: us-804c44fc
-extern "C" void func_804C03A0() {}
+extern "C" void func_804C0398(void* self, int value) {
+    *(int*)((char*)self + 0x2c) = value;
+}
 // LLM-HARNESS-END: us-804c44fc
 // LLM-HARNESS-BEGIN: us-804c45b0
-extern "C" void func_804C0454() {}
+extern "C" void func_804C0398(void* self, int value) {
+    *(int*)((char*)self + 0x2c) = value;
+}
 // LLM-HARNESS-END: us-804c45b0
 // LLM-HARNESS-BEGIN: us-804c45e0
-extern "C" void func_804C0484() {}
+extern "C" void func_804C0398(void* self, int value) {
+    *(int*)((char*)self + 0x2c) = value;
+}
 // LLM-HARNESS-END: us-804c45e0
 // LLM-HARNESS-BEGIN: us-804c46cc
-extern "C" void func_804C0570() {}
+extern "C" void func_804C0398(void* self, int value) {
+    *(int*)((char*)self + 0x2c) = value;
+}
 // LLM-HARNESS-END: us-804c46cc
 // LLM-HARNESS-BEGIN: us-804c494c
-extern "C" void func_804C07F0() {}
+extern "C" void func_804C0398(void* self, int value) {
+    *(int*)((char*)self + 0x2c) = value;
+}
 // LLM-HARNESS-END: us-804c494c
 // LLM-HARNESS-BEGIN: us-804c4a24
 extern "C" void func_804C08C8(void* self, int param) {

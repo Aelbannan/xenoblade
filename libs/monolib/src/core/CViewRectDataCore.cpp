@@ -3,25 +3,34 @@
 
 extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 
+// Initialises view rect from the current framebuffer display mode.
+// Copies the framebuffer width/height into both mViewSize and mBoundsSize,
+// then zeroes all scroll/inset fields. Calls getRenderModeObj on each access
+// to match retail register allocation rather than caching the pointer.
+// @return Pointer to this CViewRectDataCore instance for chaining.
 CViewRectDataCore* CViewRectDataCore::func_80459270() {
     s16 efbHeight;
     s16 zero = 0;
 
     efbHeight = getRenderModeObj__9CDeviceVIFv()->efbHeight;
-    unk0 = getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    unk2 = efbHeight;
+    mViewSize.x = getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    mViewSize.y = efbHeight;
     efbHeight = getRenderModeObj__9CDeviceVIFv()->efbHeight;
-    unk4 = getRenderModeObj__9CDeviceVIFv()->fbWidth;
-    unk6 = efbHeight;
-    unk8 = zero;
-    unkA = zero;
-    unkC = zero;
-    unkE = zero;
-    unk10 = zero;
-    unk12 = zero;
+    mBoundsSize.x = getRenderModeObj__9CDeviceVIFv()->fbWidth;
+    mBoundsSize.y = efbHeight;
+    mScrollX = zero;
+    mScrollY = zero;
+    mInsetLeft = zero;
+    mInsetTop = zero;
+    mInsetRight = zero;
+    mInsetBottom = zero;
     return this;
 }
 
+// Recalculates scroll offsets after the viewport |size| changes.
+// Clamps mScrollX and mScrollY so the visible area does not extend beyond
+// mBoundsSize after subtracting the inset margins on each axis.
+// @param size New viewport dimensions (x=width, y=height).
 void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
     s16 maxWidth;
     s16 maxHeight;
@@ -31,38 +40,38 @@ void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
     int overW;
     int overH;
 
-    *(ml::CPnt16*)&unk0 = size;
+    mViewSize = size;
 
     // Match retail register allocation:
     // maxWidth in r5 (via extsh), widthRemain in r8, partialH in r4
-    maxWidth = (s16)(unk0 - unkC - unk10);
+    maxWidth = (s16)(mViewSize.x - mInsetLeft - mInsetRight);
 
-    // Compute widthRemain first so it stays in r8 (unk4 in r4, maxWidth in r5)
-    widthRemain = unk4 - maxWidth;
+    // Compute widthRemain first so it stays in r8 (mBoundsSize.x in r4, maxWidth in r5)
+    widthRemain = mBoundsSize.x - maxWidth;
 
-    // Then partialH in r4 (unk2 in r6, unkE in r7)
-    partialH = unk2 - unkE;
+    // Then partialH in r4 (mViewSize.y in r6, mInsetTop in r7)
+    partialH = mViewSize.y - mInsetTop;
 
-    // Retail: cmpw unk8,widthRemain then maxHeight=partialH-unk12 then ble.
-    if ((overW = (unk8 > widthRemain), maxHeight = (s16)(partialH - unk12), overW)) {
-        unk8 = widthRemain;
+    // Retail: cmpw mScrollX,widthRemain then maxHeight=partialH-mInsetBottom then ble.
+    if ((overW = (mScrollX > widthRemain), maxHeight = (s16)(partialH - mInsetBottom), overW)) {
+        mScrollX = widthRemain;
     }
 
-    heightRemain = unk6 - maxHeight;
-    if ((overH = (unkA > heightRemain), overH)) {
-        unkA = heightRemain;
+    heightRemain = mBoundsSize.y - maxHeight;
+    if ((overH = (mScrollY > heightRemain), overH)) {
+        mScrollY = heightRemain;
     }
 
-    if (unk8 < 0) {
-        unk8 = 0;
+    if (mScrollX < 0) {
+        mScrollX = 0;
     }
 
-    if (unkA >= 0) {
+    if (mScrollY >= 0) {
         return;
     }
-    unkA = 0;
+    mScrollY = 0;
 }
 
 void CViewRectDataCore::func_80459384(const ml::CPnt16& maxSize) {
-    *(ml::CPnt16*)&unk4 = maxSize;
+    mBoundsSize = maxSize;
 }

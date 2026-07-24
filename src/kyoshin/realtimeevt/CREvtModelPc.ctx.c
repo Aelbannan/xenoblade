@@ -1339,39 +1339,39 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80184b40
-extern "C" void __ct__CREvtModelPc() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80184b40
 
 // LLM-HARNESS-BEGIN: us-80184c78
-extern "C" void __ct__8018385C(void* self) {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80184c78
 
 // LLM-HARNESS-BEGIN: us-80184cf4
-extern "C" void func_801838D8() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80184cf4
 
 // LLM-HARNESS-BEGIN: us-80184d94
-extern "C" void func_80183978() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80184d94
 
 // LLM-HARNESS-BEGIN: us-80184e58
-extern "C" void func_80183A3C() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80184e58
 
 // LLM-HARNESS-BEGIN: us-80185038
-extern "C" void func_80183C1C() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80185038
 
 // LLM-HARNESS-BEGIN: us-801850ac
-extern "C" void func_80183C90() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-801850ac
 
 // LLM-HARNESS-BEGIN: us-80185a18
-extern "C" void func_801845F0() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80185a18
 
 // LLM-HARNESS-BEGIN: us-80185aec
-extern "C" void func_801846C4() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80185aec
 
 // LLM-HARNESS-BEGIN: us-80185b5c
@@ -1379,7 +1379,7 @@ extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80185b5c
 
 // LLM-HARNESS-BEGIN: us-80185b64
-extern "C" void func_80184730() {}
+extern "C" u32 func_80184728(void* self) { return *(u32*)((u8*)self + 0x20); }
 // LLM-HARNESS-END: us-80185b64
 
 // LLM-HARNESS-BEGIN: us-80185d2c

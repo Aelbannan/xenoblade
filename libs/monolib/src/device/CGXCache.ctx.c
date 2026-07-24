@@ -11765,95 +11765,118 @@ extern "C" void func_8044B294__8CGXCacheFUl(void) {}
 
 extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 
+struct C1FCMsgEntry {
+    u32 command;
+    u32 wid;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
+};
+
+struct C1FCCacheLayout {
+    u8 pad0[0x488];
+    C1FCMsgEntry* mArrayPtr;
+    u32 mFront;
+    u32 mSize;
+    u32 mCapacity;
+    u32 field6;
+    u32 field7;
+    u8 pad1[8]; // 0x4A0..0x4A7 so rect4A8 lands at 0x4A8
+    s16 rect4A8[4];
+    s16 rect4B0[4];
+    u8 pad2[0x50C - 0x4B8];
+    u32 unk50C;
+};
+
 // LLM-HARNESS-BEGIN: us-8044dd08
 // Optional ring pair pointers in r4–r6 update cached scissor rects, then enqueue
 // GX commands for tags 0xB / 0xC via func_8044CE68 (this+4).
 extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c) {
-    u8* cache = (u8*)self;
-    u32* viewPair = (u32*)a;
-    u32* insetPair = (u32*)b;
-    u32* scissorPair = (u32*)c;
-    s16 delta[4];
-    u32 index;
-    u32 count;
-    u32 cap;
-    u8* base;
+    C1FCCacheLayout* cache = (C1FCCacheLayout*)self;
+    u32* insetPair;
+    s16 stack[4];
     u32 i;
+    u32 idx;
     u32 slot;
-    u8* entry;
-    u32 w0;
-    u32 w1;
+    C1FCMsgEntry* entry;
 
-    if (viewPair != 0) {
-        // Retail stores +0x4AC then +0x4A8.
-        *(u32*)(cache + 0x4ac) = viewPair[1];
-        *(u32*)(cache + 0x4a8) = viewPair[0];
+    // Keep b in r31 across the function like retail (null → this+0x4A8).
+    insetPair = (u32*)b;
+    if (a != 0) {
+        u32 w0 = ((u32*)a)[0];
+        u32 w1 = ((u32*)a)[1];
+        *(u32*)&cache->rect4A8[2] = w1;
+        *(u32*)&cache->rect4A8[0] = w0;
     }
-    if (scissorPair != 0) {
-        *(u32*)(cache + 0x4b4) = scissorPair[1];
-        *(u32*)(cache + 0x4b0) = scissorPair[0];
+    if (c != 0) {
+        u32 w0 = ((u32*)c)[0];
+        u32 w1 = ((u32*)c)[1];
+        *(u32*)&cache->rect4B0[2] = w1;
+        *(u32*)&cache->rect4B0[0] = w0;
     }
     if (insetPair == 0) {
-        insetPair = (u32*)(cache + 0x4a8);
+        insetPair = (u32*)((u8*)cache + 0x4a8);
     }
 
-    delta[0] = (s16)(*(s16*)(cache + 0x4a8) - *(s16*)(cache + 0x4b0));
-    delta[1] = (s16)(*(s16*)(cache + 0x4aa) - *(s16*)(cache + 0x4b2));
-    delta[2] = *(s16*)(cache + 0x4b4);
-    delta[3] = *(s16*)(cache + 0x4b6);
-    *(s16*)(cache + 0x4bc) = delta[2];
-    *(s16*)(cache + 0x4be) = delta[3];
-    w0 = *(u32*)&delta[0];
-    w1 = *(u32*)&delta[2];
-
-    index = *(u32*)(cache + 0x48c);
-    count = *(u32*)(cache + 0x490);
-    cap = *(u32*)(cache + 0x494);
-    base = *(u8**)(cache + 0x488);
+    stack[0] = (s16)(cache->rect4A8[0] - cache->rect4B0[0]);
+    stack[1] = (s16)(cache->rect4A8[1] - cache->rect4B0[1]);
+    stack[2] = cache->rect4B0[2];
+    stack[3] = cache->rect4B0[3];
+    *(s16*)((u8*)cache + 0x4bc) = stack[2];
+    *(s16*)((u8*)cache + 0x4be) = stack[3];
 
     i = 0;
-    if (count != 0) {
-        do {
-            slot = index + i - ((index + i) / cap) * cap;
-            entry = base + slot * 0x24;
-            if (*(u32*)entry == 0xb) {
-                goto found_b;
-            }
-            i++;
-        } while (i < count);
+    for (u32 n = cache->mSize; n != 0; n--) {
+        idx = cache->mFront + i;
+        slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+        if (cache->mArrayPtr[slot].command == 0xb) {
+            goto found_b;
+        }
+        i++;
     }
     i = (u32)-1;
 found_b:
-    slot = index + i - ((index + i) / cap) * cap;
-    entry = base + slot * 0x24;
-    entry[0x23] = 0xd;
-    *(u32*)(entry + 4) = w0;
-    *(u32*)(entry + 8) = w1;
-    func_8044CE68__8CGXCacheFv(cache + 4, 0xb);
+    idx = cache->mFront + i;
+    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+    cache->mArrayPtr[slot].unk23 = 0xd;
+    idx = cache->mFront + i;
+    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+    entry = &cache->mArrayPtr[slot];
+    entry->wid = *(u32*)&stack[0];
+    entry->unk8 = *(u32*)&stack[2];
+    // Retail recomputes this+4 at each call site (addi before bl).
+    func_8044CE68__8CGXCacheFv((u8*)self + 4, 0xb);
 
-    index = *(u32*)(cache + 0x48c);
-    count = *(u32*)(cache + 0x490);
-    cap = *(u32*)(cache + 0x494);
-    base = *(u8**)(cache + 0x488);
     i = 0;
-    if (count != 0) {
-        do {
-            slot = index + i - ((index + i) / cap) * cap;
-            entry = base + slot * 0x24;
-            if (*(u32*)entry == 0xc) {
-                goto found_c;
-            }
-            i++;
-        } while (i < count);
+    for (u32 n = cache->mSize; n != 0; n--) {
+        idx = cache->mFront + i;
+        slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+        if (cache->mArrayPtr[slot].command == 0xc) {
+            goto found_c;
+        }
+        i++;
     }
     i = (u32)-1;
 found_c:
-    slot = index + i - ((index + i) / cap) * cap;
-    entry = base + slot * 0x24;
-    entry[0x23] = 0xd;
-    *(u32*)(entry + 4) = insetPair[0];
-    *(u32*)(entry + 8) = insetPair[1];
-    func_8044CE68__8CGXCacheFv(cache + 4, 0xc);
+    idx = cache->mFront + i;
+    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+    cache->mArrayPtr[slot].unk23 = 0xd;
+    idx = cache->mFront + i;
+    slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+    entry = &cache->mArrayPtr[slot];
+    entry->wid = insetPair[0];
+    entry->unk8 = insetPair[1];
+    {
+        // volatile blocks CSE of (self+4) into a third saved GPR (+4B over).
+        void* volatile vself = self;
+        func_8044CE68__8CGXCacheFv((u8*)vself + 4, 0xc);
+    }
 }
 // LLM-HARNESS-END: us-8044dd08
 
@@ -11862,7 +11885,7 @@ extern "C" void func_8044B4B8__8CGXCacheFP9_GXTexObjUsUs() {}
 // LLM-HARNESS-END: us-8044df28
 
 // LLM-HARNESS-BEGIN: us-8044e024
-extern "C" void func_8044B5B4__8CGXCacheFv() {}
+extern "C" void func_8044B5B4__8CGXCacheFv(void) {}
 // LLM-HARNESS-END: us-8044e024
 
 // LLM-HARNESS-BEGIN: us-8044e030
@@ -11886,7 +11909,7 @@ extern "C" void func_8044BD74__8CGXCacheFi() {}
 // LLM-HARNESS-END: us-8044e7e4
 
 // LLM-HARNESS-BEGIN: us-8044e880
-extern "C" void func_8044BE10__8CGXCacheFv() {}
+extern "C" void func_8044BE10__8CGXCacheFv(void) {}
 // LLM-HARNESS-END: us-8044e880
 
 // LLM-HARNESS-BEGIN: us-8044e88c
@@ -11898,7 +11921,7 @@ extern "C" u8 func_8044BE24__8CGXCacheFv(void* self) { return ((u8*)self)[0x518]
 // LLM-HARNESS-END: us-8044e894
 
 // LLM-HARNESS-BEGIN: us-8044e89c
-extern "C" void func_8044BE2C__8CGXCacheFv() {}
+extern "C" void* func_8044BE2C__8CGXCacheFv(void) { return 0; }
 // LLM-HARNESS-END: us-8044e89c
 
 // LLM-HARNESS-BEGIN: us-8044e8a8
@@ -11986,35 +12009,6 @@ void func_8044C034__8CGXCacheFv(void* self);
 void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
 }
-
-struct C1FCMsgEntry {
-    u32 command;
-    u32 wid;
-    u32 unk8;
-    u32 unkC;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u16 unk20;
-    u8 unk22;
-    u8 unk23;
-};
-
-struct C1FCCacheLayout {
-    u8 pad0[0x488];
-    C1FCMsgEntry* mArrayPtr;
-    u32 mFront;
-    u32 mSize;
-    u32 mCapacity;
-    u32 field6;
-    u32 field7;
-    u8 pad1[0x4A8 - 0x49C];
-    s16 rect4A8[4];
-    s16 rect4B0[4];
-    u8 pad2[0x50C - 0x4B8];
-    u32 unk50C;
-};
 
 #pragma dont_inline on
 extern "C" void func_8044C1FC__8CGXCacheFv(void* self) {
@@ -12355,32 +12349,26 @@ struct MsgParam32Ring {
 extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i = 0;
-    u32 n = ring->mSize;
-    s32 found;
+    u32 n;
 
-    found = -1;
-    if (n != 0) {
-        do {
-            u32 idx = ring->mFront + i;
-            u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
-            if (ring->mArrayPtr[slot].command == cmd) {
-                found = (s32)i;
-                goto dispatch;
-            }
-            i++;
-        } while (--n != 0);
+    // `for (n = size; n != 0; n--)` emits retail mtctr/bdnz (~86%).
+    for (n = ring->mSize; n != 0; n--) {
+        u32 idx = ring->mFront + i;
+        u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
+        if (ring->mArrayPtr[slot].command == cmd) {
+            goto dispatch;
+        }
+        i++;
     }
+    i = (u32)-1;
 dispatch:
     {
-        void* obj;
-        void** vtbl;
-        u32 idx = ring->mFront + (u32)found;
+        void* obj = ring->field7;
+        void** vtbl = *(void***)obj;
+        u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
-        MsgParam32Entry* entry = &ring->mArrayPtr[slot];
-        obj = ring->field7;
-        vtbl = *(void***)obj;
         // Retail: r3=obj, r4=cmd, r5=entry+4, then bctr vtbl[3].
-        ((void (*)(void*, u32, void*))vtbl[3])(obj, cmd, (u8*)entry + 4);
+        ((void (*)(void*, u32, void*))vtbl[3])(obj, cmd, (u8*)&ring->mArrayPtr[slot] + 4);
     }
 }
 // LLM-HARNESS-END: us-8044f8d8
@@ -12389,24 +12377,20 @@ dispatch:
 extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i = 0;
-    u32 count = ring->mSize;
-    s32 found = -1;
+    u32 n;
 
-    if ((s32)count > 0) {
-        do {
-            u32 idx = ring->mFront + i;
-            u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
-            if (ring->mArrayPtr[slot].command == cmd) {
-                found = (s32)i;
-                goto found_entry;
-            }
-            i++;
-            count--;
-        } while (count != 0);
+    for (n = ring->mSize; n != 0; n--) {
+        u32 idx = ring->mFront + i;
+        u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
+        if (ring->mArrayPtr[slot].command == cmd) {
+            goto found_entry;
+        }
+        i++;
     }
+    i = (u32)-1;
 found_entry:
     {
-        u32 idx = ring->mFront + (u32)found;
+        u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
         return (u8*)&ring->mArrayPtr[slot] + 4;
     }

@@ -1339,15 +1339,15 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80168aac
-extern "C" void __ct__CMenuItem() {}
+extern "C" void func_80167C30(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80168aac
 
 // LLM-HARNESS-BEGIN: us-80168bd4
-extern "C" void func_80167A18() {}
+extern "C" bool func_80167A18() { return lbl_eu_80663F20 != 0; }
 // LLM-HARNESS-END: us-80168bd4
 
 // LLM-HARNESS-BEGIN: us-80168be8
-extern "C" void func_80167A2C() {}
+extern "C" void func_80167C30(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuItemFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80168be8
 
 extern "C" void cbRenderBefore__9CMenuItemFv(void* self);

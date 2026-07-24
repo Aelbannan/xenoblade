@@ -1339,39 +1339,39 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-802b7310
-extern "C" void func_802B48A0() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b7310
 
 // LLM-HARNESS-BEGIN: us-802b7328
-extern "C" void func_802B48B8() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b7328
 
 // LLM-HARNESS-BEGIN: us-802b7354
-extern "C" void func_802B48E4() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b7354
 
 // LLM-HARNESS-BEGIN: us-802b73d8
-extern "C" void func_802B4968() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b73d8
 
 // LLM-HARNESS-BEGIN: us-802b74d8
-extern "C" void func_802B4A68() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b74d8
 
 // LLM-HARNESS-BEGIN: us-802b75f4
-extern "C" void func_802B4B84() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b75f4
 
 // LLM-HARNESS-BEGIN: us-802b769c
-extern "C" void __dt__12CUIErrMesWinFv(void* self) {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b769c
 
 // LLM-HARNESS-BEGIN: us-802b770c
-extern "C" void Init__12CUIErrMesWinFv() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b770c
 
 // LLM-HARNESS-BEGIN: us-802b7768
-extern "C" void Term__12CUIErrMesWinFv() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b7768
 
 // LLM-HARNESS-BEGIN: us-802b77b8
@@ -1387,7 +1387,7 @@ extern "C" void __ct__802B4DF4() {}
 // LLM-HARNESS-END: us-802b7864
 
 // LLM-HARNESS-BEGIN: us-802b7964
-extern "C" void func_802B4EF4() {}
+extern "C" void func_802B4EF4(void) {}
 // LLM-HARNESS-END: us-802b7964
 
 // LLM-HARNESS-BEGIN: us-802b7970
@@ -1411,7 +1411,7 @@ extern "C" void func_802B5054() {}
 // LLM-HARNESS-END: us-802b7ac4
 
 // LLM-HARNESS-BEGIN: us-802b7b04
-extern "C" void func_802B5094() {}
+extern "C" void func_802B5094(void) {}
 // LLM-HARNESS-END: us-802b7b04
 
 // LLM-HARNESS-BEGIN: us-802b7ba0
@@ -1484,7 +1484,7 @@ public:
 
 class CUIErrMesWin;
 // LLM-HARNESS-BEGIN: us-802b7644
-template<> CTTask<CUIErrMesWin>::~CTTask() {}
+extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b7644
 // LLM-HARNESS-BEGIN: us-802b7b10
 template<> void CTTask<CUIErrMesWin>::Move() {}

@@ -17,11 +17,11 @@ void SFAOAP_SetSpeed() {}
 // LLM-HARNESS-END: us-803c11c4
 
 // LLM-HARNESS-BEGIN: us-803c1238
-int SFAOAP_Init() { return 0; }
+int SFAOAP_Init(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c1238
 
 // LLM-HARNESS-BEGIN: us-803c1240
-int SFAOAP_Finish() { return 0; }
+int SFAOAP_Finish(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c1240
 
 // LLM-HARNESS-BEGIN: us-803c1248
@@ -33,7 +33,7 @@ void SFAOAP_Create() {}
 // LLM-HARNESS-END: us-803c12fc
 
 // LLM-HARNESS-BEGIN: us-803c1348
-int SFAOAP_Destroy() { return 0; }
+int SFAOAP_Destroy(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c1348
 
 // LLM-HARNESS-BEGIN: us-803c1350
@@ -69,5 +69,5 @@ void SFAOAP_AddRead() {}
 // LLM-HARNESS-END: us-803c14ec
 
 // LLM-HARNESS-BEGIN: us-803c14f8
-int SFAOAP_Seek() { return 0; }
+int SFAOAP_Seek(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c14f8

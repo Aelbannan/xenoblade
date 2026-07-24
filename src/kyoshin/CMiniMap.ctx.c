@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80116aac
-extern "C" void func_80115FD0() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80116aac
 
 // LLM-HARNESS-BEGIN: us-80116b84
-extern "C" void func_801160A8() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80116b84
 
 // LLM-HARNESS-BEGIN: us-80116d68
-extern "C" void func_8011628C() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80116d68
 
 // LLM-HARNESS-BEGIN: us-801170c8
-extern "C" void func_801165EC() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801170c8
 
 // LLM-HARNESS-BEGIN: us-8011714c
-extern "C" void func_80116670() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011714c
 
 // LLM-HARNESS-BEGIN: us-801172c8
-extern "C" void func_801167EC() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-801172c8
 
 // LLM-HARNESS-BEGIN: us-8011737c
-extern "C" void func_801168A0() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011737c
 
 // LLM-HARNESS-BEGIN: us-8011761c
-extern "C" void func_80116B40() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011761c
 
 // LLM-HARNESS-BEGIN: us-8011801c
-extern "C" void __dt__8CMMClockFv() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8011801c
 
 // LLM-HARNESS-BEGIN: us-80118078
-extern "C" void OnFileEvent__8CMMClockFP10CEventFile() {}
+extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80118078
 
 // LLM-HARNESS-BEGIN: us-801181d0
@@ -1443,7 +1443,7 @@ extern "C" void __ct__8011C1B8() {}
 // LLM-HARNESS-END: us-8011cc94
 
 // LLM-HARNESS-BEGIN: us-8011cdc4
-extern "C" void func_8011C2E8() {}
+extern "C" bool func_8011C2E8() { return lbl_eu_80663F20 != 0; }
 // LLM-HARNESS-END: us-8011cdc4
 
 // LLM-HARNESS-BEGIN: us-8011cdd8

@@ -9,19 +9,19 @@ void SKG_GenerateKey() {}
 // LLM-HARNESS-END: us-80390c84
 
 // LLM-HARNESS-BEGIN: us-8039142c
-void AHXSJD_SetupAtbl() {}
+void AHXSJD_SetupAtbl(void) {}
 // LLM-HARNESS-END: us-8039142c
 
 // LLM-HARNESS-BEGIN: us-80391430
-void AHXSJD_SetupMtbl() {}
+void AHXSJD_SetupMtbl(u32 val) {}
 // LLM-HARNESS-END: us-80391430
 
 // LLM-HARNESS-BEGIN: us-8039143c
-void AHXSJD_SetupFtbl() {}
+void AHXSJD_SetupFtbl(void) {}
 // LLM-HARNESS-END: us-8039143c
 
 // LLM-HARNESS-BEGIN: us-80391440
-void AHXSJD_SetupWtbl() {}
+void AHXSJD_SetupWtbl(void) {}
 // LLM-HARNESS-END: us-80391440
 
 // LLM-HARNESS-BEGIN: us-80391444
@@ -65,11 +65,11 @@ void AHXDCD_DecodeData() {}
 // LLM-HARNESS-END: us-80391984
 
 // LLM-HARNESS-BEGIN: us-80391a40
-void AHXDCD_GetOutBps() {}
+int AHXDCD_GetOutBps(void* self) { return (signed char)((u8*)self)[0]; }
 // LLM-HARNESS-END: us-80391a40
 
 // LLM-HARNESS-BEGIN: us-80391a4c
-int AHXDCD_GetOutSmpl() { return 0; }
+int AHXDCD_GetOutSmpl(void) { return 0x60; }
 // LLM-HARNESS-END: us-80391a4c
 
 // LLM-HARNESS-BEGIN: us-80391a54
@@ -77,7 +77,7 @@ void AHXDCD_GetTotalNumSmpl() {}
 // LLM-HARNESS-END: us-80391a54
 
 // LLM-HARNESS-BEGIN: us-80391a70
-void AHXDCD_SetExtPrm() {}
+void AHXDCD_SetExtPrm(void) {}
 // LLM-HARNESS-END: us-80391a70
 
 // LLM-HARNESS-BEGIN: us-80391a7c

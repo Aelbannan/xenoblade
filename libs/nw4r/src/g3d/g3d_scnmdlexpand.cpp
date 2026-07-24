@@ -41,5 +41,5 @@ extern "C" void GetTypeName__Q34nw4r3g3d12ScnMdlExpandCFv() {}
 // LLM-HARNESS-END: us-803fec54
 
 // LLM-HARNESS-BEGIN: us-803fec84
-extern "C" void GetTypeObj__Q34nw4r3g3d12ScnMdlExpandCFv() {}
+extern "C" void* GetTypeObj__Q34nw4r3g3d12ScnMdlExpandCFv(void) { return 0; }
 // LLM-HARNESS-END: us-803fec84

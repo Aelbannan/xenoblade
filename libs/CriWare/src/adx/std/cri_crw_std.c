@@ -9,19 +9,19 @@ void criCrw_GetVersion() {}
 // LLM-HARNESS-END: us-8039e76c
 
 // LLM-HARNESS-BEGIN: us-8039e780
-int CRICRW_Strcpy() { return 0; }
+void CRICRW_Strcpy(void) {}
 // LLM-HARNESS-END: us-8039e780
 
 // LLM-HARNESS-BEGIN: us-8039e788
-void CRICRW_Strncpy() {}
+void CRICRW_Strncpy(void) {}
 // LLM-HARNESS-END: us-8039e788
 
 // LLM-HARNESS-BEGIN: us-8039e794
-int CRICRW_Strcat() { return 0; }
+void CRICRW_Strcat(void) {}
 // LLM-HARNESS-END: us-8039e794
 
 // LLM-HARNESS-BEGIN: us-8039e79c
-void CRICRW_Strncat() {}
+void CRICRW_Strncat(void) {}
 // LLM-HARNESS-END: us-8039e79c
 
 // LLM-HARNESS-BEGIN: us-8039e7a8
@@ -29,7 +29,7 @@ void CRICRW_Sprintf() {}
 // LLM-HARNESS-END: us-8039e7a8
 
 // LLM-HARNESS-BEGIN: us-8039e838
-void CRICRW_Vsprintf() {}
+void CRICRW_Vsprintf(void) {}
 // LLM-HARNESS-END: us-8039e838
 
 // LLM-HARNESS-BEGIN: us-8039e844

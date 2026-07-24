@@ -3,42 +3,22 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+extern "C" void __dt__9CMainMenuFv();
 
 // LLM-HARNESS-BEGIN: us-800ff518
-extern "C" void __dt__800FEA30() {}
+extern "C" u32 func_800FEDF8(void) {
+    extern u32 lbl_eu_80663F18;
+    return lbl_eu_80663F18;
+}
 // LLM-HARNESS-END: us-800ff518
 
-// LLM-HARNESS-BEGIN: us-800ff570
-extern "C" void func_800FEA88() {}
-// LLM-HARNESS-END: us-800ff570
 
-// LLM-HARNESS-BEGIN: us-800ff5fc
-extern "C" void func_800FEB14() {}
-// LLM-HARNESS-END: us-800ff5fc
 
-// LLM-HARNESS-BEGIN: us-800ff66c
-extern "C" void __ct__CMainMenu() {}
-// LLM-HARNESS-END: us-800ff66c
 
-// LLM-HARNESS-BEGIN: us-800ff7f4
-extern "C" void __dt__800FED0C() {}
-// LLM-HARNESS-END: us-800ff7f4
 
-// LLM-HARNESS-BEGIN: us-800ff850
-extern "C" void __dt__9CMainMenuFv(void* self) {}
-// LLM-HARNESS-END: us-800ff850
 
-// LLM-HARNESS-BEGIN: us-800ff8e0
-extern "C" bool func_800FEDF8() { return false; }
-// LLM-HARNESS-END: us-800ff8e0
 
-// LLM-HARNESS-BEGIN: us-800ff8e8
-extern "C" void Init__9CMainMenuFv() {}
-// LLM-HARNESS-END: us-800ff8e8
 
-// LLM-HARNESS-BEGIN: us-800ff944
-extern "C" void Term__9CMainMenuFv() {}
-// LLM-HARNESS-END: us-800ff944
 
 // LLM-HARNESS-BEGIN: us-800ffa08
 extern "C" void func_800FEF20() {}
@@ -73,7 +53,7 @@ extern "C" void func_800FF8B0() {}
 // LLM-HARNESS-END: us-80100398
 
 // LLM-HARNESS-BEGIN: us-801003fc
-extern "C" void func_800FF914() {}
+extern "C" void func_800FF914(void) {}
 // LLM-HARNESS-END: us-801003fc
 
 // LLM-HARNESS-BEGIN: us-80100408
@@ -129,9 +109,6 @@ public:
 };
 
 class IUICf;
-// LLM-HARNESS-BEGIN: us-800ff79c
-template<> CTTask<IUICf>::~CTTask() {}
-// LLM-HARNESS-END: us-800ff79c
 // LLM-HARNESS-BEGIN: us-80102a58
 template<> void CTTask<IUICf>::Move() {}
 // LLM-HARNESS-END: us-80102a58

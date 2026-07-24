@@ -5,43 +5,43 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-8026632c
-extern "C" void __ct__UI_CPassiveSkillCur() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-8026632c
 
 // LLM-HARNESS-BEGIN: us-80266360
-extern "C" void __dt__Q22UI16CPassiveSkillCurFv() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-80266360
 
 // LLM-HARNESS-BEGIN: us-802663a0
-extern "C" void func_80263F30() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-802663a0
 
 // LLM-HARNESS-BEGIN: us-80266458
-extern "C" void func_80263FE8() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-80266458
 
 // LLM-HARNESS-BEGIN: us-802664d0
-extern "C" void func_80264060() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-802664d0
 
 // LLM-HARNESS-BEGIN: us-80266528
-extern "C" void func_802640B8() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-80266528
 
 // LLM-HARNESS-BEGIN: us-802665b0
-extern "C" void func_80264140() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-802665b0
 
 // LLM-HARNESS-BEGIN: us-80266640
-extern "C" void func_802641D0() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-80266640
 
 // LLM-HARNESS-BEGIN: us-80266674
-extern "C" void func_80264204() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-80266674
 
 // LLM-HARNESS-BEGIN: us-802667b4
-extern "C" void func_80264344() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-802667b4
 
 // LLM-HARNESS-BEGIN: us-8026680c

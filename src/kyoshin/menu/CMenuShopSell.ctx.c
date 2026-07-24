@@ -1339,43 +1339,47 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8018bbdc
-extern "C" void __ct__CMenuShopSell() {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018bbdc
 
 // LLM-HARNESS-BEGIN: us-8018bcac
-extern "C" void __dt__13CMenuShopSellFv(void* self) {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018bcac
 
 // LLM-HARNESS-BEGIN: us-8018bd24
-extern "C" void Init__13CMenuShopSellFv() {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018bd24
 
 // LLM-HARNESS-BEGIN: us-8018c6b0
-extern "C" void func_8018B0FC() {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018c6b0
 
 // LLM-HARNESS-BEGIN: us-8018c6e4
-extern "C" void func_8018B130() {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018c6e4
 
 // LLM-HARNESS-BEGIN: us-8018c714
-extern "C" void Term__13CMenuShopSellFv() {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018c714
 
 // LLM-HARNESS-BEGIN: us-8018c780
-extern "C" void Move__13CMenuShopSellFv() {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018c780
 
 // LLM-HARNESS-BEGIN: us-8018c834
-extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self) {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018c834
 
 // LLM-HARNESS-BEGIN: us-8018c8d8
-extern "C" void func_8018B324() {}
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018c8d8
 
 // LLM-HARNESS-BEGIN: us-8018c94c
-extern "C" void func_8018B398() {}
+extern "C" int lbl_eu_80663D1C;
+
+extern "C" int func_80042864() {
+    return lbl_eu_80663D1C != 0;
+}
 // LLM-HARNESS-END: us-8018c94c
 
 // LLM-HARNESS-BEGIN: us-8018c95c

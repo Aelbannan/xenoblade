@@ -1339,7 +1339,7 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800caf20
-extern "C" void func_800CA4EC() {}
+extern "C" void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 // LLM-HARNESS-END: us-800caf20
 
 // LLM-HARNESS-BEGIN: us-800caf6c
@@ -1347,11 +1347,11 @@ extern "C" void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 // LLM-HARNESS-END: us-800caf6c
 
 // LLM-HARNESS-BEGIN: us-800caf74
-extern "C" void func_800CA540() {}
+extern "C" void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 // LLM-HARNESS-END: us-800caf74
 
 // LLM-HARNESS-BEGIN: us-800cafb4
-extern "C" void func_800CA580() {}
+extern "C" void func_800CA580(void) {}
 // LLM-HARNESS-END: us-800cafb4
 
 // LLM-HARNESS-BEGIN: us-800cafc0
@@ -1359,11 +1359,11 @@ extern "C" void func_800CA58C(void) {}
 // LLM-HARNESS-END: us-800cafc0
 
 // LLM-HARNESS-BEGIN: us-800cafc4
-extern "C" void func_800CA590() {}
+extern "C" void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 // LLM-HARNESS-END: us-800cafc4
 
 // LLM-HARNESS-BEGIN: us-800cb0a4
-extern "C" void __dt__Q22cf15CfObjectImplObjFv(void* self) {}
+extern "C" void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 // LLM-HARNESS-END: us-800cb0a4
 
 extern "C" void func_800CEE28(void* self);

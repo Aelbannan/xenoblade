@@ -720,35 +720,35 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-80457320
-extern "C" void __ct__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-80457320
 
 // LLM-HARNESS-BEGIN: us-8045742c
-extern "C" void __dt__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-8045742c
 
 // LLM-HARNESS-BEGIN: us-804574b4
-extern "C" void func_80453468__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-804574b4
 
 // LLM-HARNESS-BEGIN: us-804575b0
-extern "C" void create__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-804575b0
 
 // LLM-HARNESS-BEGIN: us-8045760c
-extern "C" void func_804535C0__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-8045760c
 
 // LLM-HARNESS-BEGIN: us-80457628
-extern "C" void func_804535DC__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-80457628
 
 // LLM-HARNESS-BEGIN: us-80457640
-extern "C" void func_804535F4__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-80457640
 
 // LLM-HARNESS-BEGIN: us-80457654
-extern "C" void func_80453608__18CDeviceFontInfoExtFv() {}
+extern "C" void* func_80453624__18CDeviceFontInfoExtFv(void* self) { return (void*)((u8*)self + 0x1c); }
 // LLM-HARNESS-END: us-80457654
 
 // LLM-HARNESS-BEGIN: us-80457670

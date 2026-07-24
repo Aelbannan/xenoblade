@@ -29,7 +29,7 @@ void AHXBSR_GetBitStm() {}
 // LLM-HARNESS-END: us-803909f4
 
 // LLM-HARNESS-BEGIN: us-80390a90
-int AHXBSR_Tell() { return 0; }
+u32 AHXBSR_Tell(void* self) { return *(u32*)((u8*)self + 0x10); }
 // LLM-HARNESS-END: us-80390a90
 
 // LLM-HARNESS-BEGIN: us-80390a98

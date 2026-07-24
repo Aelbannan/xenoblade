@@ -1339,27 +1339,27 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80224580
-extern "C" void __ct__CMCCrystalList() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-80224580
 
 // LLM-HARNESS-BEGIN: us-80224628
-extern "C" void __dt__14CMCCrystalListFv() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-80224628
 
 // LLM-HARNESS-BEGIN: us-80224688
-extern "C" void func_80222848() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-80224688
 
 // LLM-HARNESS-BEGIN: us-802246f8
-extern "C" void func_802228B8() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-802246f8
 
 // LLM-HARNESS-BEGIN: us-802247a4
-extern "C" void func_80222964() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-802247a4
 
 // LLM-HARNESS-BEGIN: us-802247c4
-extern "C" void __dt__80222984() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-802247c4
 
 // LLM-HARNESS-BEGIN: us-80224890
@@ -1371,19 +1371,19 @@ extern "C" u8 func_80222A58(void* self) { return ((u8*)self)[0x57]; }
 // LLM-HARNESS-END: us-80224898
 
 // LLM-HARNESS-BEGIN: us-802248a0
-extern "C" void func_80222A60() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-802248a0
 
 // LLM-HARNESS-BEGIN: us-802248c4
-extern "C" void func_80222A84() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-802248c4
 
 // LLM-HARNESS-BEGIN: us-802248e8
-extern "C" void func_80222AA8() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-802248e8
 
 // LLM-HARNESS-BEGIN: us-8022490c
-extern "C" void func_80222ACC() {}
+extern "C" u8 func_80222A50(void* self) { return ((u8*)self)[0x56]; }
 // LLM-HARNESS-END: us-8022490c
 
 // LLM-HARNESS-BEGIN: us-80224930

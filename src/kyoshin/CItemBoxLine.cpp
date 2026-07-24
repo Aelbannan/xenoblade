@@ -283,3 +283,12 @@ extern "C" void OnFileEvent__12CItemBoxLineFP10CEventFile() {}
 // LLM-HARNESS-BEGIN: us-801f4fa8
 extern "C" void sinit_801F32EC() {}
 // LLM-HARNESS-END: us-801f4fa8
+
+// LLM-HARNESS-BEGIN: us-801ed784
+extern "C" void func_801EBB88(void* self, u16 r4, u32 r5, u8 r6, u8 r7) {
+    *(u16*)self = r4;
+    *(u32*)((u8*)self + 4) = r5;
+    *((u8*)self + 8) = r6;
+    *((u8*)self + 9) = r7;
+}
+// LLM-HARNESS-END: us-801ed784

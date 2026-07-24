@@ -13,7 +13,10 @@ extern "C" void __ct__CMenuPTState() {}
 // LLM-HARNESS-END: us-801941d4
 
 // LLM-HARNESS-BEGIN: us-801942ec
-extern "C" void func_80192BD0() {}
+extern "C" unsigned long func_80192BD0() {
+    unsigned long v = *(unsigned long*)(lbl_eu_80664300);
+    return !!v;
+}
 // LLM-HARNESS-END: us-801942ec
 
 // FULL_MATCH: vtable adjustor thunks (offset +0x58).

@@ -6,7 +6,12 @@
 #include "kyoshin/cf/CfScript.hpp"
 
 // LLM-HARNESS-BEGIN: us-80069430
-extern "C" void func_80068A20() {}
+extern "C" void func_80068A20() {
+    extern void func_80068A30(void*, unsigned long);
+    extern char lbl_eu_805708D0[];
+    extern unsigned long lbl_eu_80661AC0;
+    func_80068A30((void*)lbl_eu_805708D0, lbl_eu_80661AC0);
+}
 // LLM-HARNESS-END: us-80069430
 
 // LLM-HARNESS-BEGIN: us-80069440
@@ -62,7 +67,9 @@ extern "C" void func_80068B9C() {}
 // LLM-HARNESS-END: us-800695ac
 
 // LLM-HARNESS-BEGIN: us-800695d0
-extern "C" void func_80068BC0() {}
+extern "C" void func_80068BC0(void* self) {
+    *(unsigned long*)((char*)self + 0x4c) |= 4;
+}
 // LLM-HARNESS-END: us-800695d0
 
 // LLM-HARNESS-BEGIN: us-800695e0
@@ -70,7 +77,9 @@ extern "C" void func_80068BD0() {}
 // LLM-HARNESS-END: us-800695e0
 
 // LLM-HARNESS-BEGIN: us-80069604
-extern "C" void func_80068BF4() {}
+extern "C" void func_80068BF4(void* self) {
+    *(unsigned long*)((char*)self + 0xa4) |= 4;
+}
 // LLM-HARNESS-END: us-80069604
 
 // LLM-HARNESS-BEGIN: us-80069614
@@ -78,7 +87,9 @@ extern "C" void func_80068C04() {}
 // LLM-HARNESS-END: us-80069614
 
 // LLM-HARNESS-BEGIN: us-80069638
-extern "C" void func_80068C28() {}
+extern "C" void func_80068C28(void* self) {
+    *(unsigned long*)((char*)self + 0xfc) |= 4;
+}
 // LLM-HARNESS-END: us-80069638
 
 // LLM-HARNESS-BEGIN: us-80069648
@@ -131,7 +142,9 @@ extern "C" void waitLoad__Q22cf8CfScriptFv() {}
 // LLM-HARNESS-END: us-80069bcc
 
 // LLM-HARNESS-BEGIN: us-80069c40
-extern "C" void update__Q22cf8CfScriptFv() {}
+extern "C" void update__Q22cf8CfScriptFv(void* self) {
+    *(unsigned long*)((char*)self + 0x4c) |= 0x20;
+}
 // LLM-HARNESS-END: us-80069c40
 
 // LLM-HARNESS-BEGIN: us-80069c50

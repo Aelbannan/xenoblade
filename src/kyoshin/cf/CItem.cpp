@@ -33,7 +33,10 @@ extern "C" void func_80155CB4() {}
 // LLM-HARNESS-END: us-80156780
 
 // LLM-HARNESS-BEGIN: us-8015678c
-extern "C" void func_80155CC0() {}
+extern "C" void func_80155CC0(void* self, void* ptr, unsigned long val) {
+    unsigned long v = *(unsigned long*)ptr;
+    *(unsigned long*)ptr = __rlwimi(v, val, 2, 27, 29);
+}
 // LLM-HARNESS-END: us-8015678c
 
 // LLM-HARNESS-BEGIN: us-8015679c
@@ -41,7 +44,10 @@ extern "C" void func_80155CD0() {}
 // LLM-HARNESS-END: us-8015679c
 
 // LLM-HARNESS-BEGIN: us-801567f4
-extern "C" void func_80155D28() {}
+extern "C" char* func_80155D28() {
+    extern char lbl_eu_80501C58[];
+    return lbl_eu_80501C58 + 0x63;
+}
 // LLM-HARNESS-END: us-801567f4
 
 // LLM-HARNESS-BEGIN: us-80156804

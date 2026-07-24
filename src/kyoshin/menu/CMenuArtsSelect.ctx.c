@@ -6733,716 +6733,31 @@ namespace ml{
 } //namespace ml
 /* end "monolib/math/Random.hpp" */
 /* end "monolib/math.hpp" */
-
-class CLight{
-public:
-    CLight();
-    virtual ~CLight(){}
-
-    ml::CVec3 unk4;
-    ml::CVec3 unk10;
-    ml::CVec3 unk1C;
-    float unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    float unk38;
-    float unk3C;
-};
-/* end "monolib/scn/CLight.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 3 "monolib/monolib_types.hpp" */
-#pragma once
-
-//List of forward declarations for commonly used classes.
-
-//Core
-class CView;
-class CException;
-
-//Device
-class CFileHandle;
-class CDeviceFileJob;
-
-//Math
-namespace ml {
-    struct CPnt16;
-    struct CRect16;
-    struct CVec3;
-    struct CVec4;
-    struct CCol3;
-    struct CCol4;
-    struct CMat34;
-    struct CFrustum;
-} //namespace ml
-
-//Scene
-class CScn;
-class CScnNw4r;
-class IScnRender;
-class ICulling;
-
-//Util
-class CChildListNode;
-
-//Work
-class CEventFile;
-class CProcess;
-class CProc;
-class CWorkThread;
-/* end "monolib/monolib_types.hpp" */
-
-//Unofficial name
-class ICulling {
-public:
-    virtual ~ICulling(){}
-    virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
-    virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
-    virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
-};
-/* end "monolib/scn/ICulling.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 4 "monolib/scn/CScn.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-
-class CEventFile {
-public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
-
-    void* getFileDataPtr();
-};
-/* end "monolib/work/CEventFile.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 3 "monolib/work/CMsgParam.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
-#pragma once
-
-namespace ml {
-    /* Optimized way of calculating if only one of two bools are true. This may
-    or may not have had a dedicated inline function, but it'll get one anyway */
-    inline bool boolXor(bool a, bool b){
-        return a ^ b;
-    }
-}
-/* end "monolib/util/BoolUtils.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 3 "monolib/util/CChildListNode.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/CChildListNode.hpp" line 2 "monolib/util/CDoubleListNode.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/CDoubleListNode.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/*
-Doubly-linked list node
-*/
-class CDoubleListNode {
-public:
-    CDoubleListNode* mPrev; //0x0
-    CDoubleListNode* mNext; //0x4
-    u8 unk8;
-    int unkC;
-
-public:
-    CDoubleListNode();
-    virtual ~CDoubleListNode() {}
-    virtual void Reset();
-
-    //Node links
-    CDoubleListNode* GetPrev() const { return mPrev; }
-    CDoubleListNode* GetNext() const { return mNext; }
-    void SetPrev(CDoubleListNode* prev) { mPrev = prev; }
-    void SetNext(CDoubleListNode* next) { mNext = next; }
-}; // size = 0x10
-
-/*
-Doubly-linked, circular list
-*/
-class CDoubleListHeader {
-private:
-    /* Circular list which begins *AFTER* mEnd:
-    mEnd ("End") -> X ("Top") -> Y -> Z -> mEnd */
-    CDoubleListNode* mEnd; //0x0
-
-public:
-    CDoubleListHeader() { Reset(); }
-    
-    void Reset() { mEnd = nullptr; }
-
-    //List iterators
-    CDoubleListNode* Begin() const {
-        return mEnd != nullptr ? mEnd->GetNext() : nullptr;
-    }
-    CDoubleListNode* End() const { return mEnd; }
-
-    //Add/remove nodes
-    CDoubleListNode* InsertTop(CDoubleListNode* node);
-    CDoubleListNode* InsertEnd(CDoubleListNode* node);
-    CDoubleListNode* Remove(CDoubleListNode* node);
-};
-/* end "monolib/util/CDoubleListNode.hpp" */
-
-//Forward declarations
-class CChildListNode;
-
-/*
-List containing nodes designated as children
-*/
-template <typename T>
-class TChildListHeader : private CDoubleListHeader {
-private:
-    //Many methods delegate to the implementation
-    typedef CDoubleListHeader Base;
-
-private:
-    //0x0-4: CDoubleListHeader
-    char unk4[0x10 - 0x4];
-
-public:
-    TChildListHeader() { Reset(); }
-    virtual ~TChildListHeader() {}
-    
-    void Reset() { Base::Reset(); }
-
-    //List iterators/elements
-    T* Begin() const {
-        return static_cast<T*>(Base::Begin());
-    }
-    T* End() const {
-        return static_cast<T*>(Base::End());
-    }
-
-    //Add/remove nodes
-    CChildListNode* InsertTop(CChildListNode* node) {
-        return static_cast<CChildListNode*>(Base::InsertTop(node));
-    }
-    CChildListNode* InsertEnd(CChildListNode* node) {
-        return static_cast<CChildListNode*>(Base::InsertEnd(node));
-    }
-    CChildListNode* Remove(CChildListNode* node) {
-        return static_cast<CChildListNode*>(Base::Remove(node));
-    }
-
-    //Advance iterators
-    T* IterNext(const T* iter) const {
-        //Need specific inline depth
-        (void)0;
-        
-        if (iter != nullptr) {
-            return iter != static_cast<T*>(End())
-                ? static_cast<T*>(iter->GetNext()) : nullptr;
-        }
-
-        return nullptr;
-    }
-    T* IterPrev(const T* iter) const {
-        //Need specific inline depth
-        (void)0;
-        
-        if (iter != nullptr) {
-            return iter != static_cast<T*>(Begin())
-                ? static_cast<T*>(iter->GetPrev()) : nullptr;
-        }
-
-        return nullptr;
-    }
-};
-
-/*
-Children-list node
-*/
-class CChildListNode : public CDoubleListNode {
-private:
-    typedef TChildListHeader<CChildListNode> ChildrenType;
-
-public:
-    CChildListNode();
-    virtual ~CChildListNode() {}
-    virtual void Reset();
-
-    //Parent node
-    CChildListNode* GetParent() const { return mParent; }
-    void SetParent(CChildListNode* parent) { mParent = parent; }
-
-    //Children of this child
-    ChildrenType& GetChildren() { return mChildren; }
-    const ChildrenType& GetChildren() const { return mChildren; }
-
-protected:
-    //0x0-10: CDoubleListNode
-    //0x10: vtable
-    CChildListNode* mParent; //0x14
-    char unk18[0x24 - 0x18];
-    ChildrenType mChildren; //0x24
-};
-/* end "monolib/util/CChildListNode.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 4 "monolib/util/CDoubleListNode.hpp" */
-/* end "monolib/util/CDoubleListNode.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 5 "monolib/util/CErrorWii.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 3 "monolib/util/fixed_vector.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/fixed_vector.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace mtl {
-    template <typename T, size_t N>
-    struct fixed_vector {
-
-        fixed_vector(){
-            mCount = 0;
-        }
-
-        void erase(T& value){
-            for(int i = 0; i < size(); i++){
-                if(mArray[i] == value){
-                    while(i < mCount - 1){
-                        mArray[i] = mArray[i + 1];
-                        i++;
-                    }
-                
-                    mCount--;
-                    return;
-                }
-            }
-        }
-
-        //T* begin()
-        //T* end()
-        //T& at(u32 index)
-        //T* find(const T& value)
-        //T* erase(T* value)
-
-        int size() const {
-            return mCount;
-        }
-
-        bool empty() const {
-            return mCount == 0;
-        }
-
-        T& operator[](u32 index){
-            return mArray[index];
-        }
-
-        void push_back(const T& value){
-            mArray[mCount++] = value;
-        }
-
-        T mArray[N];
-        int mCount;
-    };
-} //namespace mtl
-/* end "monolib/util/fixed_vector.hpp" */
-/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 4 "revolution/OS.h" */
-/**
- * References: YAGCD, WiiBrew, Dolphin Emulator
- */
-
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-/* end "revolution/OS/OS.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
-/* end "revolution/OS/OSAlarm.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
-/* end "revolution/OS/OSAlloc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
-/* end "revolution/OS/OSArena.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
-/* end "revolution/OS/OSAudioSystem.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
-/* end "revolution/OS/OSCache.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
-/* end "revolution/OS/OSCrc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
-/* end "revolution/OS/OSError.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
-/* end "revolution/OS/OSExec.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
-/* end "revolution/OS/OSFastCast.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
-/* end "revolution/OS/OSFatal.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
-/* end "revolution/OS/OSFont.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap4.html#sec4
- * https://www.gc-forever.com/yagcd/chap13.html#sec13
- * https://wiibrew.org/wiki/Memory_map
- */
-
-#ifndef RVL_SDK_OS_HARDWARE_H
-#define RVL_SDK_OS_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
-/* end "revolution/DVD/dvd.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSContext;
-typedef struct OSExecParams;
-
-// Derive offsets for use with OSAddress functions
-#define __DEF_ADDR_OFFSETS(name, addr)                                         \
-    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
-    static const u32 OS_CACHED_##name = (addr);                                \
-    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
-
-// Define a global variable in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name DECL_ADDRESS(addr);                                         \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define a global array in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name arr DECL_ADDRESS(addr);                                     \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define an global variable in the hardware-register range.
-#define OS_DEF_HW_REG(type, name, addr)                                        \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name : (addr);
-
-typedef enum {
-    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
-    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
-} OSBootMagic;
-
-typedef struct OSBootInfo {
-    DVDDiskID diskID; // at 0x0
-    u32 bootMagic;    // at 0x20
-    u32 aplVersion;   // at 0x24
-    u32 physMemSize;  // at 0x28
-    u32 consoleType;  // at 0x2C
-    void* arenaLo;    // at 0x30
-    void* arenaHi;    // at 0x34
-    void* fstStart;   // at 0x38
-    u32 fstSize;      // at 0x3C
-} OSBootInfo;
-
-typedef struct OSDebugInterface {
-    BOOL usingDebugger;    // at 0x0
-    u32 exceptionMask;     // at 0x4
-    void* exceptionHook;   // at 0x8
-    void* exceptionHookLR; // at 0xC
-} OSDebugInterface;
-
-typedef struct OSBI2 {
-    u32 dbgMonitorSize;   // at 0x0
-    u32 simulatedMemSize; // at 0x4
-    u32 argumentOfs;      // at 0x8
-    u32 debugFlag;        // at 0xC
-    u32 trackLocation;    // at 0x10
-    u32 trackSize;        // at 0x14
-    u32 countryCode;      // at 0x18
-    u32 WORD_0x1C;
-    u32 lastInsert;
-    u32 padSpec;            // at 0x24
-    u32 totalTextDataLimit; // at 0x28
-    u32 simulatedMem2Size;  // at 0x2C
-} OSBI2;
-
-/**
- * 0x80000000 - 0x80000100
- */
-// clang-format off
-OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
-OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
-OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
-OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
-OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
-OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
-OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
-OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
-OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
-OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
-OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
-OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
-OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
-// clang-format on
-
-/**
- * 0x80003000 - 0x80003F00
- */
-// clang-format off
-OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
-OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
-OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
-OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
-OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
-OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
-OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
-OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
-OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
-OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
-OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
-OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
-OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
-OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
-OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
-OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
-OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
-OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
-OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
-OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
-OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
-OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
-OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
-OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
-OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
-OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
-OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
-OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
-// clang-format on
-
-/**
- * PI hardware globals
- */
-volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
-typedef enum {
-    PI_INTSR,    //!< 0xCC003000
-    PI_INTMR,    //!< 0xCC003004
-    PI_REG_0x8,  //!< 0xCC003008
-    PI_REG_0xC,  //!< 0xCC00300C
-    PI_REG_0x10, //!< 0xCC003010
-    PI_REG_0x14, //!< 0xCC003014
-    PI_REG_0x18, //!< 0xCC003018
-    PI_REG_0x1C, //!< 0xCC00301C
-    PI_REG_0x20, //!< 0xCC003020
-    PI_RESET,    //!< 0xCC003024
-    // . . .
-} PIHwReg;
-
-// INTSR - Interrupt Cause Register
-#define PI_INTSR_ERROR (1 << 0)
-#define PI_INTSR_RSW (1 << 1)
-#define PI_INTSR_DI (1 << 2)
-#define PI_INTSR_SI (1 << 3)
-#define PI_INTSR_EXI (1 << 4)
-#define PI_INTSR_AI (1 << 5)
-#define PI_INTSR_DSP (1 << 6)
-#define PI_INTSR_MEM (1 << 7)
-#define PI_INTSR_VI (1 << 8)
-#define PI_INTSR_PE_TOKEN (1 << 9)
-#define PI_INTSR_PE_FINISH (1 << 10)
-#define PI_INTSR_CP (1 << 11)
-#define PI_INTSR_DEBUG (1 << 12)
-#define PI_INTSR_HSP (1 << 13)
-#define PI_INTSR_ACR (1 << 14)
-#define PI_INTSR_RSWST (1 << 16)
-
-// INTMR - Interrupt Mask Register
-#define PI_INTMR_ERROR (1 << 0)
-#define PI_INTMR_RSW (1 << 1)
-#define PI_INTMR_DI (1 << 2)
-#define PI_INTMR_SI (1 << 3)
-#define PI_INTMR_EXI (1 << 4)
-#define PI_INTMR_AI (1 << 5)
-#define PI_INTMR_DSP (1 << 6)
-#define PI_INTMR_MEM (1 << 7)
-#define PI_INTMR_VI (1 << 8)
-#define PI_INTMR_PE_TOKEN (1 << 9)
-#define PI_INTMR_PE_FINISH (1 << 10)
-#define PI_INTMR_CP (1 << 11)
-#define PI_INTMR_DEBUG (1 << 12)
-#define PI_INTMR_HSP (1 << 13)
-#define PI_INTMR_ACR (1 << 14)
-
-/**
- * MI hardware registers
- */
-volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
-typedef enum {
-    MI_PAGE_MEM0_H, //!< 0xCC004000
-    MI_PAGE_MEM0_L, //!< 0xCC004002
-    MI_PAGE_MEM1_H, //!< 0xCC004004
-    MI_PAGE_MEM1_L, //!< 0xCC004006
-    MI_PAGE_MEM2_H, //!< 0xCC004008
-    MI_PAGE_MEM2_L, //!< 0xCC00400A
-    MI_PAGE_MEM3_H, //!< 0xCC00400C
-    MI_PAGE_MEM3_L, //!< 0xCC00400E
-    MI_PROT_MEM0,   //!< 0xCC004010
-    MI_PROT_MEM1,   //!< 0xCC004012
-    MI_PROT_MEM2,   //!< 0xCC004014
-    MI_PROT_MEM3,   //!< 0xCC004016
-    MI_REG_0x18,    //!< 0xCC004018
-    MI_REG_0x1A,    //!< 0xCC00401A
-    MI_INTMR,       //!< 0xCC00401C
-    MI_INTSR,       //!< 0xCC00401E
-    MI_REG_0x20,    //!< 0xCC004020
-    MI_ADDRLO,      //!< 0xCC004022
-    MI_ADDRHI,      //!< 0xCC004024
-    MI_REG_0x26,    //!< 0xCC004026
-    MI_REG_0x28,    //!< 0xCC004028
-    // . . .
-} MIHwReg;
-
-// INTMR - Interrupt Mask Register
-#define MI_INTMR_MEM0 (1 << 0)
-#define MI_INTMR_MEM1 (1 << 1)
-#define MI_INTMR_MEM2 (1 << 2)
-#define MI_INTMR_MEM3 (1 << 3)
-#define MI_INTMR_ADDR (1 << 4)
-
-// INTSR - Interrupt Cause Register
-#define MI_INTSR_MEM0 (1 << 0)
-#define MI_INTSR_MEM1 (1 << 1)
-#define MI_INTSR_MEM2 (1 << 2)
-#define MI_INTSR_MEM3 (1 << 3)
-#define MI_INTSR_ADDR (1 << 4)
-
-/**
- * DI hardware registers
- */
-volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
-typedef enum {
-    DI_DMA_ADDR = 5, // !< 0xCD006014
-    DI_CONFIG = 9,   // !< 0xCD006024
-} DIHwReg;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSHardware.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
-/* end "revolution/OS/OSInterrupt.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
-/* end "revolution/OS/OSIpc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
-/* end "revolution/OS/OSLink.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
-/* end "revolution/OS/OSMemory.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
-/* end "revolution/OS/OSMessage.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
-/* end "revolution/OS/OSMutex.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
-/* end "revolution/OS/OSNet.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
-/* end "revolution/OS/OSPlayRecord.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
-/* end "revolution/OS/OSPlayTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
-/* end "revolution/OS/OSReset.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
-/* end "revolution/OS/OSRtc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
-/* end "revolution/OS/OSSerial.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
-/* end "revolution/OS/OSStateFlags.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
-/* end "revolution/OS/OSStateTM.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
-/* end "revolution/OS/OSSync.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
-/* end "revolution/OS/OSTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
-/* end "revolution/OS/OSUtf.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
-/* end "revolution/OS/__ppc_eabi_init.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS.h" */
-/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 5 "revolution/VI.h" */
-#ifndef RVL_SDK_PUBLIC_VI_H
-#define RVL_SDK_PUBLIC_VI_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/VI.h" line 6 "revolution/VI/vi.h" */
-#ifndef RVL_SDK_VI_H
-#define RVL_SDK_VI_H
-/* "libs/RVL_SDK/include/revolution/VI/vi.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/VI/vi.h" line 4 "revolution/GX.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 4 "nw4r/g3d/g3d_light.h" */
+#ifndef NW4R_G3D_LIGHT_H
+#define NW4R_G3D_LIGHT_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 4 "nw4r/g3d/g3d_state.h" */
+#ifndef NW4R_G3D_STATE_H
+#define NW4R_G3D_STATE_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 4 "nw4r/g3d/g3d_camera.h" */
+#ifndef NW4R_G3D_CAMERA_H
+#define NW4R_G3D_CAMERA_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+#ifndef NW4R_G3D_RES_RES_COMMON_H
+#define NW4R_G3D_RES_RES_COMMON_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 4 "revolution/GX.h" */
 /**
  * References: YAGCD, Dolphin Emulator, publicly available patents
  */
@@ -13051,3417 +12366,505 @@ static inline void GXTexCoord1x8(u8 uc) {
 #endif
 #endif
 /* end "revolution/GX.h" */
-/* "libs/RVL_SDK/include/revolution/VI/vi.h" line 5 "revolution/VI/vitypes.h" */
-/* end "revolution/VI/vitypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef void (*VIRetraceCallback)(u32 retraceCount);
-typedef void (*VIPositionCallback)(s16 displayX, s16 displayY);
-
-VIRetraceCallback VISetPreRetraceCallback(VIRetraceCallback callback);
-VIRetraceCallback VISetPostRetraceCallback(VIRetraceCallback callback);
-
-void VIInit(void);
-void VIWaitForRetrace(void);
-
-void VIConfigure(const GXRenderModeObj* rmo);
-void VIConfigurePan(u16 x, u16 y, u16 w, u16 h);
-void VIFlush(void);
-
-void VISetNextFrameBuffer(void* fb);
-void* VIGetCurrentFrameBuffer(void);
-
-void VISetBlack(BOOL black);
-s32 VIGetRetraceCount(void);
-
-VITVFormat VIGetTvFormat(void);
-VIScanMode VIGetScanMode(void);
-u32 VIGetDTVStatus(void);
-u32 VIGetDimmingCount(void);
-BOOL VIEnableDimming(BOOL enable);
-s32 VISetTimeToDimming(s32 time);
-BOOL VIResetDimmingCount(void);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/VI/vi.h" */
-/* "libs/RVL_SDK/include/revolution/VI.h" line 7 "revolution/VI/vi3in1.h" */
-#ifndef RVL_SDK_VI_VI3IN1_H
-#define RVL_SDK_VI_VI3IN1_H
-/* "libs/RVL_SDK/include/revolution/VI/vi3in1.h" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/RVL_SDK/include/revolution/VI/vi3in1.h" line 3 "revolution/vi/vitypes.h" */
-/* end "revolution/vi/vitypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void __VISetRGBModeImm(void);
-
-void __VISetRevolutionModeSimple(void);
-
-void VISetGamma(VIGamma gamma);
-void VISetTrapFilter(VIBool filter);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/VI/vi3in1.h" */
-/* "libs/RVL_SDK/include/revolution/VI.h" line 8 "revolution/VI/vihardware.h" */
-#ifndef RVL_SDK_VI_HARDWARE_H
-#define RVL_SDK_VI_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/VI/vihardware.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * VI hardware registers
- */
-volatile u16 DECL_HW_REGS(VI) DECL_ADDRESS(0xCC002000);
-
-/**
- * Hardware register indexes
- */
-typedef enum {
-    VI_VTR,    //!< 0xCC002000
-    VI_DCR,    //!< 0xCC002002
-    VI_HTR0_H, //!< 0xCC002004
-    VI_HTR0_L, //!< 0xCC002006
-    VI_HTR1_H, //!< 0xCC002008
-    VI_HTR1_L, //!< 0xCC00200A
-    VI_VTO_H,  //!< 0xCC00200C
-    VI_VTO_L,  //!< 0xCC00200E
-    VI_VTE_H,  //!< 0xCC002010
-    VI_VTE_L,  //!< 0xCC002012
-    VI_BBEI_H, //!< 0xCC002014
-    VI_BBEI_L, //!< 0xCC002016
-    VI_BBOI_H, //!< 0xCC002018
-    VI_BBOI_L, //!< 0xCC00201A
-    VI_TFBL_H, //!< 0xCC00201C
-    VI_TFBL_L, //!< 0xCC00201E
-    VI_TFBR_H, //!< 0xCC002020
-    VI_TFBR_L, //!< 0xCC002022
-    VI_BFBL_H, //!< 0xCC002024
-    VI_BFBL_L, //!< 0xCC002026
-    VI_BFBR_H, //!< 0xCC002028
-    VI_BFBR_L, //!< 0xCC00202A
-    VI_DPV,    //!< 0xCC00202C
-    VI_DPH,    //!< 0xCC00202E
-    VI_DI0_H,  //!< 0xCC002030
-    VI_DI0_L,  //!< 0xCC002032
-    VI_DI1_H,  //!< 0xCC002034
-    VI_DI1_L,  //!< 0xCC002036
-    VI_DI2_H,  //!< 0xCC002038
-    VI_DI2_L,  //!< 0xCC00203A
-    VI_DI3_H,  //!< 0xCC00203C
-    VI_DI3_L,  //!< 0xCC00203E
-    VI_DL0_H,  //!< 0xCC002040
-    VI_DL0_L,  //!< 0xCC002042
-    VI_DL1_H,  //!< 0xCC002044
-    VI_DL1_L,  //!< 0xCC002046
-    VI_HSW,    //!< 0xCC002048
-    VI_HSR,    //!< 0xCC00204A
-    VI_FCT0_H, //!< 0xCC00204C
-    VI_FCT0_L, //!< 0xCC00204E
-    VI_FCT1_H, //!< 0xCC002050
-    VI_FCT1_L, //!< 0xCC002052
-    VI_FCT2_H, //!< 0xCC002054
-    VI_FCT2_L, //!< 0xCC002056
-    VI_FCT3_H, //!< 0xCC002058
-    VI_FCT3_L, //!< 0xCC00205A
-    VI_FCT4_H, //!< 0xCC00205C
-    VI_FCT4_L, //!< 0xCC00205E
-    VI_FCT5_H, //!< 0xCC002060
-    VI_FCT5_L, //!< 0xCC002062
-    VI_FCT6_H, //!< 0xCC002064
-    VI_FCT6_L, //!< 0xCC002066
-    VI_0x68,   //!< 0xCC002068
-    VI_0x6A,   //!< 0xCC00206A
-    VI_VICLK,  //!< 0xCC00206C
-    VI_VISEL,  //!< 0xCC00206E
-    VI_0x70,   //!< 0xCC002070
-    VI_HBE,    //!< 0xCC002072
-    VI_HBS,    //!< 0xCC002074
-    VI_0x76,   //!< 0xCC002076
-    VI_0x78,   //!< 0xCC002078
-    VI_0x7A,   //!< 0xCC00207A
-    VI_0x7C,   //!< 0xCC00207C
-} VIHwReg;
-
-// DCR - Display Configuration Register
-#define VI_DCR_ENB (1 << 0)
-#define VI_DCR_RST (1 << 1)
-#define VI_DCR_NIN (1 << 2)
-#define VI_DCR_FMT (0b11 << 8)
-
-// DI{n} - Display Interrupt Register N
-#define VI_DI_INT (1 << 15)
-#define VI_DI_ENB (1 << 12)
-
-// VICLK - VI Clock Select Register
-#define VI_VICLK_SPEED (1 << 0)
-typedef enum { VI_VICLK_27MHZ, VI_VICLK_54MHZ } VIClkSpeed;
-
-// VISEL - VI DTV Status Register
-#define VI_VISEL_COMPONENT (1 << 0)
-
-// HBE - Border HBE
-#define VI_HBE_BRDR_EN (1 << 15)
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/VI/vihardware.h" */
-/* "libs/RVL_SDK/include/revolution/VI.h" line 9 "revolution/VI/vitypes.h" */
-/* end "revolution/VI/vitypes.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/VI.h" */
-
-class IErrorWii {
-public:
-    IErrorWii(){}
-    virtual ~IErrorWii(){}
-    virtual void errorWiiCB() = 0;
-};
-
-class CErrorWii {
-public:
-    CErrorWii();
-    ~CErrorWii();
-
-    static void addCallback(IErrorWii* pError);
-    static void removeCallback(IErrorWii* pError);
-
-    static void initialize();
-    static void destroy();
-
-    static void errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar);
-    static void postExceptionCallback();
-
-    static void powerCallback();
-    static bool isPowerCallbackCalled();
-    static void resetCallback();
-    static bool isResetCallbackCalled();
-
-private:
-    static void setErrorHandler(u16 error);
-    static void resetErrorHandler(u16 error);
-
-    //Unused in release
-    mtl::fixed_vector<IErrorWii*, 8> mCallbackList; //0x0
-    u8 unk24[4]; //part of previous class?
-    OSContext mContext; //0x28
-    u16 unk2F0;
-    u32 unk2F4;
-    u32 unk2F8;
-
-    static CErrorWii* spInstance;
-    static bool sPowerCallbackCalled;
-    static bool sResetCallbackCalled;
-};
-/* end "monolib/util/CErrorWii.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 3 "monolib/util/FixStr.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/FixStr.hpp" line 2 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
-
-#endif
-#endif
-/* end "cstring" */
-/* "libs/monolib/include/monolib/util/FixStr.hpp" line 3 "cstdio" */
-#ifndef MSL_CPP_CSTDIO_H
-#define MSL_CPP_CSTDIO_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstdio" line 2 "stdio.h" */
-#ifndef MSL_STDIO_H
-#define MSL_STDIO_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
-#ifndef STDIO_API_H
-#define STDIO_API_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
-#ifndef _MSL_COMMON_FILE_STRUC_H
-#define _MSL_COMMON_FILE_STRUC_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
-/* end "types.h" */
-
-typedef unsigned long __file_handle;
-typedef unsigned long fpos_t;
-typedef struct _FILE _FILE, *P_FILE;
-
-#define __ungetc_buffer_size 2
-
-enum __file_kinds {
-    __closed_file,
-    __disk_file,
-    __console_file,
-    __unavailable_file
-};
-
-enum __open_modes {
-    __must_exist,
-    __create_if_necessary,
-    __create_or_truncate
-};
-
-enum __file_orientation {
-    __unoriented,
-    __char_oriented,
-    __wide_oriented
-};
-
-enum __io_modes {
-    __read = 1,
-    __write = 2,
-    __read_write = 3,
-    __append = 4
-};
-
-typedef struct __file_modes {
-    u32 open_mode : 2;
-    u32 io_mode : 3;
-    u32 buffer_mode : 2;
-    u32 file_kind : 3;
-
-#ifdef _MSL_WIDE_CHAR
-    u32 file_orientation : 2;
-#endif /* _MSL_WIDE_CHAR */
-
-    u32 binary_io : 1;
-} __file_modes;
-
-enum __io_states {
-    __neutral,
-    __writing,
-    __reading,
-    __rereading
-};
-
-typedef struct __file_state {
-    u32 io_state : 3;
-    u32 free_buffer : 1;
-    u8 eof;
-    u8 error;
-} __file_state;
-
-typedef void* __ref_con;
-typedef void (*__idle_proc)(void);
-typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
-typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
-typedef int (*__close_proc)(__file_handle file);
-
-struct _FILE {
-    __file_handle handle;                           // _00
-    __file_modes mode;                              // _04
-    __file_state state;                              // _08
-    u8 is_dynamically_allowed;                      // _0C
-    u8 char_buffer;                                 // _0D
-    u8 char_buffer_overflow;                        // _0E
-    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
-    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
-    u32 position;                                   // _18
-    u8* buffer;                                   // _1C
-    u32 buffer_size;                                // _20
-    u8* buffer_ptr;                               // _24
-    u32 buffer_len;                                 // _28
-    u32 buffer_alignment;                           // _2C
-    u32 saved_buffer_len;                           // _30
-    u32 buffer_pos;                                 // _34
-    __pos_proc position_proc;                       // _38
-    __io_proc read_proc;                            // _3C
-    __io_proc write_proc;                           // _40
-    __close_proc close_proc;                        // _44
-    __ref_con ref_con;                              // _48
-    _FILE* next_file_struct;                        // _4C
-};
-
-typedef struct _FILE FILE;
-
-
-#define _IONBF 0
-#define _IOLBF 1
-#define _IOFBF 2
-
-// define standard C file pointer location names
-#define SEEK_SET (0)
-#define SEEK_CUR (1)
-#define SEEK_END (2)
-
-#define stdin &(__files[0])
-#define stdout &(__files[1])
-#define stderr &(__files[2])
-
-#define _STATIC_FILES 4
-
-extern FILE __files[];
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
-#ifndef MSL_WCHAR_H
-#define MSL_WCHAR_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
-#ifndef _WCHAR_IO_H
-#define _WCHAR_IO_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-int fwide(FILE* stream, int mode);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
-#ifndef MSL_WCSTOUL_H
-#define MSL_WCSTOUL_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
-/* end "types.h" */
-
-
-unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
-//__wcstoull
-//wcstoul
-//wcstoull
-long wcstol(const wchar_t*, wchar_t**, int);
-//wcstoll
-//watoi
-//watol
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
-#ifndef MSL_WMEM_H
-#define MSL_WMEM_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
-/* end "types.h" */
-
-wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
-wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
-void* memmove(void*, const void*, size_t);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
-#ifndef MSL_WPRINTF_H
-#define MSL_WPRINTF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
-/* end "stdarg.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
-/* end "stdio.h" */
-
-//wprintf
-//wprintf_s
-//fwprintf
-//fwprintf_s
-//vwprintf
-//vwprintf_s
-//vfwprintf
-//vfwprintf_s
-int swprintf(wchar_t*, size_t, const wchar_t*, ...);
-//swprintf_s
-//snwprintf_s
-int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
-//vswprintf_s
-//vsnwprintf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
-#ifndef MSL_WSTRING_H
-#define MSL_WSTRING_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
-/* end "types.h" */
-
-size_t wcslen(const wchar_t*);
-wchar_t* wcscpy(wchar_t*, const wchar_t*);
-wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
-wchar_t* wcscat(wchar_t*, const wchar_t*);
-int wcscmp(const wchar_t*, const wchar_t*);
-wchar_t* wcschr(const wchar_t*, wchar_t);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "wchar.h" */
-
-enum __ReadProcActions {
-    __GetAChar,
-    __UngetAChar,
-    __TestForError
-};
-
-enum __WReadProcActions
-{
-    __GetAwChar,
-    __UngetAwChar,
-    __TestForwcsError
-};
-
-typedef struct {
-    char* CharStr;
-    size_t MaxCharCount;
-    size_t CharsWritten;
-} __OutStrCtrl;
-
-typedef struct{
-    char* NextChar;
-    int NullCharDetected;
-} __InStrCtrl;
-
-typedef struct {
-    wchar_t * wCharStr;
-    size_t MaxCharCount;
-    size_t CharsWritten;
-} __wOutStrCtrl;
-
-typedef struct {
-    wchar_t * wNextChar;
-    int    wNullCharDetected;
-} __wInStrCtrl;
-
-//__fread
-size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
-int __StringRead(void *, int, int);
-wint_t __wStringRead(void*, wint_t, int);
-
-#endif // STDIO_API_H
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
-#ifndef MSL_FILE_POS_H
-#define MSL_FILE_POS_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-int fseek(FILE* stream, u32 offset, int whence);
-int _fseek(FILE* stream, u32 offset, int whence);
-int ftell(FILE* stream);
-int _ftell(FILE* stream);
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
-#ifndef MSL_FILE_IO_H
-#define MSL_FILE_IO_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-int fclose(FILE* file);
-int fflush(FILE* file);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
-#ifndef MSL_PRINTF_H
-#define MSL_PRINTF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
-/* end "stdarg.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-
-//printf
-//printf_s
-int fprintf(FILE*, const char* format, ...);
-//fprintf_s
-int vprintf(const char*, va_list);
-//vprintf_s
-//vfprintf
-//vfprintf_s
-int vsnprintf(char*, size_t, const char*, va_list);
-//vsnprintf_s
-int vsprintf(char*, const char*, va_list);
-//vsprintf_s
-int snprintf(char*, size_t, const char*, ...);
-//snprintf_s
-int sprintf(char*, const char*, ...);
-//sprintf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
-#ifndef MSL_SCANF_H
-#define MSL_SCANF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
-/* end "stdarg.h" */
-
-//fscanf
-//fscanf_s
-//vscanf
-//scanf
-//scanf_s
-//vfscanf
-//vfscanf_s
-int vsscanf(const char*, const char*, va_list);
-//vsscanf_s
-int sscanf(const char*, const char*, ...);
-//sscanf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "stdio.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::fclose;
-using ::fflush;
-using ::FILE;
-using ::ftell;
-using ::fwide;
-using ::snprintf;
-using ::sprintf;
-using ::sscanf;
-using ::vprintf;
-using ::vsnprintf;
-using ::vsprintf;
-} // namespace std
-
-#endif
-#endif
-/* end "cstdio" */
-
-namespace ml{
-
-    template <size_t N>
-    struct FixStr{
-        FixStr(){
-            clear();
-        }
-
-        //probably fake
-        FixStr(bool initialize){
-            if(initialize){
-                clear();
-            }
-        }
-
-        FixStr(const FixStr<N>& str){
-            *this = str;
-        }
-
-        FixStr(const char* str){
-            *this = str;
-        }
-
-        FixStr(const FixStr<N>& str, int pos, int length){
-            copy(str, pos, length);
-        }
-
-        void copy(const FixStr<N>& str, int pos, int length){
-            clear();
-            if (str.empty()) return;
-
-            //Copy entire string if length is -1
-            if (length == npos) length = str.size();
-            std::strncpy(mString, str.mString + pos, length);
-            //Stop the string after the copied characters, and recalculate the length
-            mString[length] = 0;
-            mLength = std::strlen(mString);
-        }
-
-        void clear(){
-            mString[0] = 0;
-            mLength = 0;
-        }
-
-        void operator=(const FixStr<N>& str){
-            mLength = std::strlen(str.mString);
-            std::strcpy(mString, str.mString);
-        }
-
-        void operator=(const char* str){
-            mLength = std::strlen(str);
-            std::strcpy(mString, str);
-        }
-
-        void operator+=(const FixStr<N>& str){
-            int strLength = std::strlen(str.mString);
-            std::strcat(mString, str.mString);
-            mLength += strLength;
-        }
-
-        void operator+=(const char* str){
-            int strLength = std::strlen(str);
-            std::strcat(mString, str);
-            mLength += strLength;
-        }
-
-        bool operator==(const char* str) const {
-            return std::strcmp(c_str(), str) == 0;
-        }
-
-        bool operator!=(const char* str) const {
-            return std::strcmp(c_str(), str) != 0;
-        }
-
-        FixStr<N> operator+(const FixStr<N>& str) const {
-            FixStr<N> result = *this;
-            result += str;
-            return result;
-        }
-
-        char operator[](int index) {
-            return mString[index];
-        }
-
-        const char* c_str() const {
-            return mString;
-        }
-
-        int size() const {
-            return mLength;
-        }
-
-        bool empty() const {
-            return size() == 0;
-        }
-        
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
-
-        //Sets the given string to the first characters of this string, up to the specified length.
-        //TODO: This might just be substr, but when the start index is 0?
-        const char* substr(int pos = 0, int length = npos) const {
-            FixStr<N> str = FixStr(*this, pos, length);
-            return str.c_str();
-        }
-
-        //void erase(int, int){}
-        //void erase(const char*){}
-        //append_int(const int&){}
-        //void insert(int r4, char const* str, int r6){}
-        //slice(int){}
-
-        //also has version with const char& and const FixStr<64>&
-        int append_back(const char* str){
-
-        }
-
-        int append_front(const char* str){
-
-        }
-
-        int find(const char* str, int pos) const {
-
-        }
-
-        int rfind(const char* str, int pos = npos) const {
-            int length = mLength;
-            
-            if (length == 0) {
-                //Return -1 if the string is empty
-                return npos;
-            }
-            
-            int strLength = std::strlen(str);
-
-            char* string = (char*)mString + pos;
-
-            for (char* p = string + length; p != string; p--) {
-                if (!std::strncmp(p, str, strLength)) {
-                    return (int)(p - mString);
-                }
-            }
-
-            //Reached start of string without finding the string, return -1
-            return npos;
-        }
-
-        int find_last_of(char c, int pos) const {
-
-        }
-
-        //TODO: this might be a CPathUtil inline?
-        void unkInline1(const char* str){
-            int index = rfind(str, -1);
-
-            if(index != -1 && index + 1 < mLength){
-                mString[index + 1] = 0;
-                mLength = index;
-            }
-        }
-
-    private:
-        char mString[N];
-        int mLength;
-
-    public:
-        static const int npos = -1;
-    };
-
-}
-/* end "monolib/util/FixStr.hpp" */
-
-namespace ml{
-
-    class CPathUtil {
-    public:
-        static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
-
-        static inline void removeExt(FixStr<32>& str){
-            int length = str.rfind(".", -1);
-
-            if((u32)length + 1 > 1){
-                str = str.substr(0, length);
-            }
-        }
-    };
-
-}
-/* end "monolib/util/CPathUtil.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 7 "monolib/util/CStopwatchUtil.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/CStopwatchUtil.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-//Unofficial name
-class CStopwatchUtil {
-    struct StopwatchEntry{
-        enum Flags{
-            FLAGS_OCCUPIED = (1 << 0)
-        };
-
-        u8 mFlags; //0x0
-        char mString[23]; //0x1
-        s64 mTime; //0x18
-        float mCostTime; //0x20
-        u8 unk24[0x28 - 0x24];
-    };
-
-public:
-    static void initialize();
-    static void entry(const char* pStr);
-    static void updateCostTime(const char* pStr);
-    static float getCostTime(const char* pStr);
-
-    static inline StopwatchEntry* findEntry(const char* pStr);
-    static inline StopwatchEntry* findEmptyEntry();
-
-private:
-    static const int MAX_ENTRIES = 16;
-
-    static StopwatchEntry sEntries[MAX_ENTRIES];
-};
-/* end "monolib/util/CStopwatchUtil.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 8 "monolib/util/fixed_vector.hpp" */
-/* end "monolib/util/fixed_vector.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 9 "monolib/util/FixStr.hpp" */
-/* end "monolib/util/FixStr.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 10 "monolib/util/MemManager.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 2 "decomp.h" */
-/**
- * Codewarrior tricks for matching decomp
- * (Macros generate prototypes to satisfy -requireprotos)
- */
-
-#ifndef DECOMP_H
-#define DECOMP_H
-
-/* "include/decomp.h" line 8 "macros.h" */
-/**
- * Common macros
- */
-
-#ifndef MACROS_H
-#define MACROS_H
 
 /******************************************************************************
  *
- * Strings
+ * Macros
  *
  ******************************************************************************/
-
-// Stringify expression
-#define __STR(x) #x
-#define STR(x) __STR(x)
-
-// Concatenate strings
-#define __CONCAT(x, y) x##y
-#define CONCAT(x, y) __CONCAT(x, y)
-
-// Multi-character character constants
-// clang-format off
-#define TWOCC(c0, c1)                                                          \
-    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
-#define THREECC(c0, c1, c2)                                                    \
-    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
-#define FOURCC(c0, c1, c2, c3)                                                 \
-    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
-// clang-format on
-
-/******************************************************************************
- *
- * Arithmetic
- *
- ******************************************************************************/
-
-// Min/max expression
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-
-// Clamp to a range
-#define CLAMP(low, high, x)                                                    \
-    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
-
-// Round up value
-#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
-#define ROUND_UP_PTR(x, align)                                                 \
-    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
-
-// Round down value
-#define ROUND_DOWN(x, align) ((x) & (-(align)))
-#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
-
-// Distance between pointers
-#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
-
-/******************************************************************************
- *
- * Arrays
- *
- ******************************************************************************/
-
-// Size of compile-time arrays
-#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
-#define LENGTHOF(x) ARRAY_SIZE(x)
-
-// Declare an array of hardware registers
-#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
-
-/******************************************************************************
- *
- * Intrinsics
- *
- ******************************************************************************/
-
-// Memory clear intrinsic
-#define MEMCLR(x) __memclr((x), sizeof(*(x)))
-
-/******************************************************************************
- *
- * Attributes
- *
- ******************************************************************************/
-
-// Alignment attribute
-#define ALIGN(x) __attribute__((aligned(x)))
-
-// Place a symbol in a specific ELF section
-#define DECL_SECTION(x) __declspec(section x)
-
-// Give a symbol weak linkage
-#define DECL_WEAK __declspec(weak)
-
-#endif
-/* end "macros.h" */
-
-// Compile without matching hacks.
-#if defined(NONMATCHING) || defined(COMPAT_ANY)
-#define DECOMP_FORCEACTIVE(module, ...)
-#define DECOMP_FORCELITERAL(module, ...)
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)
-#define DECOMP_INLINE
-#define DECOMP_DONT_INLINE
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
-#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
-// Compile with matching hacks.
-// (This version of CW does not support pragmas inside macros.)
-#else
-// Force reference specific data
-#define DECOMP_FORCEACTIVE(module, ...)                                        \
-    void fake_function(...);                                                   \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
-        fake_function(__VA_ARGS__);                                            \
-    }
-
-// Force literal ordering, such as floats in sdata2
-#define DECOMP_FORCELITERAL(module, ...)                                       \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
-        (__VA_ARGS__);                                                         \
-    }
-
-// Force reference destructor
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
-        cls dummy;                                                             \
-        dummy.~cls();                                                          \
-    }
-
-#define DECOMP_INLINE inline
-#define DECOMP_DONT_INLINE __attribute__((never_inline))
 
 /**
- * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
- * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
+ * Define ResName pascal string for file resource groups.
  */
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
-/** slwi expansion: rlwinm rD,rA,1,0,30 */
-#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
+#define NW4R_G3D_RESFILE_NAME_DEF(VAR, STR)                                    \
+    nw4r::g3d::ResNameData27 ResNameData_##VAR ALIGN(32) = {sizeof(STR) - 1,   \
+                                                            STR}
 
 /**
- * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
- * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ * Similar to "ofs_to_obj" but accounting for the additional -4 offset.
+ * Debug builds show this behavior was not achieved through a function.
  */
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
+#define NW4R_G3D_OFS_TO_RESNAME(BASE, OFS)                                     \
+    nw4r::g3d::ResName((char*)(BASE) + (OFS) - sizeof(u32))
 
-#endif
+/**
+ * Define common functions for resource classes.
+ * @note Hides ResCommon::ref, why did they do this???
+ */
+#define NW4R_G3D_RESOURCE_FUNC_DEF(T)                                          \
+    NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(T, T##Data)
+#define NW4R_G3D_RESOURCE_FUNC_DEF_EX(TCLS, TDATA)                             \
+    NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(TCLS, TDATA)
 
-#endif
-/* end "decomp.h" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 4 "monolib/util/FixStr.hpp" */
-/* end "monolib/util/FixStr.hpp" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 5 "monolib/util/RawArray.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/RawArray.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace mtl{
-
-template <typename T>
-struct RawArrayEntry {
-    u8 data[sizeof(T)];
-
-    void initialize(){
-        T* element = getValue();
-        new (element) T();
+#define NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(TCLS, TDATA)                           \
+    explicit TCLS(void* pData = NULL) : nw4r::g3d::ResCommon<TDATA>(pData) {}  \
+                                                                               \
+    TDATA& ref() {                                                             \
+        return *ptr();                                                         \
+    }                                                                          \
+                                                                               \
+    const TDATA& ref() const {                                                 \
+        return *ptr();                                                         \
+    }                                                                          \
+                                                                               \
+    bool operator==(const TCLS& rOther) const {                                \
+        return ptr() == rOther.ptr();                                          \
+    }                                                                          \
+                                                                               \
+    bool operator!=(const TCLS& rOther) const {                                \
+        return ptr() != rOther.ptr();                                          \
     }
 
-    T* getValue(){
-        return reinterpret_cast<T*>(data);
-    }
-};
+namespace nw4r {
+namespace g3d {
 
-template <typename T, size_t N>
-class RawArray {
+/******************************************************************************
+ *
+ * Common resource wrapper
+ *
+ ******************************************************************************/
+template <typename T> class ResCommon {
 public:
-    static const int MAX_ELEMENTS = N;
+    explicit ResCommon(void* pData) : mpData(static_cast<T*>(pData)) {}
 
-    void initialize(){
-        for(int i = 0; i < MAX_ELEMENTS; i++){
-            values[i].initialize();
-        }
+    explicit ResCommon(const void* pData)
+        : mpData(static_cast<const T*>(pData)) {}
+
+    bool IsValid() const {
+        return mpData != NULL;
     }
 
-    T* operator[](u32 index){
-        return values[index].getValue();
+    T* ptr() {
+        return mpData;
+    }
+    const T* ptr() const {
+        return mpData;
+    }
+
+    T& ref() {
+        return *mpData;
+    }
+    const T& ref() const {
+        return *mpData;
+    }
+
+    template <typename TTo> TTo* ofs_to_ptr_raw(s32 ofs) {
+        return reinterpret_cast<TTo*>((char*)mpData + ofs);
+    }
+    template <typename TTo> const TTo* ofs_to_ptr_raw(s32 ofs) const {
+        return reinterpret_cast<const TTo*>((char*)mpData + ofs);
+    }
+
+    template <typename TTo> TTo* ofs_to_ptr(s32 ofs) {
+        u8* pPtr = reinterpret_cast<u8*>(mpData);
+
+        if (ofs != 0) {
+            return reinterpret_cast<TTo*>(pPtr + ofs);
+        }
+
+        return NULL;
+    }
+    template <typename TTo> const TTo* ofs_to_ptr(s32 ofs) const {
+        const u8* pPtr = reinterpret_cast<const u8*>(mpData);
+
+        if (ofs != 0) {
+            return reinterpret_cast<const TTo*>(pPtr + ofs);
+        }
+
+        return NULL;
+    }
+
+    template <typename TTo> TTo ofs_to_obj(s32 ofs) {
+        u8* pPtr = reinterpret_cast<u8*>(mpData);
+
+        if (ofs != 0) {
+            return TTo(pPtr + ofs);
+        }
+
+        return TTo(NULL);
+    }
+    template <typename TTo> const TTo ofs_to_obj(s32 ofs) const {
+        const u8* pPtr = reinterpret_cast<const u8*>(mpData);
+
+        if (ofs != 0) {
+            return TTo(const_cast<u8*>(pPtr + ofs));
+        }
+
+        return TTo(NULL);
     }
 
 private:
-    RawArrayEntry<T> values[N];
+    T* mpData;
 };
 
-} //namespace mtl
-/* end "monolib/util/RawArray.hpp" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 6 "cstring" */
-/* end "cstring" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 7 "cstddef" */
-/* end "cstddef" */
-
-namespace mtl {
-    
-    /*
-    Handle to an allocation region (MemRegion).
-    Bits 16-23: Region UID
-    Bits 24-31: Region index
-    */
-    typedef u32 ALLOC_HANDLE;
-    static const ALLOC_HANDLE INVALID_HANDLE = 0xFFFFFFFF;
-
-    #define ALLOC_HANDLE_UID(handle) ((handle) >> 8 & 0xFF)
-    #define ALLOC_HANDLE_REGION(handle) ((handle) & 0xFF)
-
-    static const int MAX_ALLOC_REGION = 80;
-
-    /*
-    Allocatable block inside of a memory region.
-    */
-    struct MemBlock {
-        //Minimum size of allocated data
-        static const int MIN_SIZE = 64;
-        //Maximum size of allocated data
-        static const int MAX_SIZE = 0x7FFFFFF;
-
-        MemBlock* prev; //0x0
-        MemBlock* next; //0x4
-        MemBlock* aligned; //0x8
-        u32 size; //0xC
-        u16 region; //0x10
-        u8 padding[32 - 0x12]; //0x12
-
-        u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
-        }
-        u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
-        }
-
-        u32 getDataSize() const {
-            return size - sizeof(MemBlock);            
-        }
-
-        static MemBlock* getBlockAddr(void* p) {
-            return reinterpret_cast<MemBlock*>(
-                static_cast<u8*>(p) - sizeof(MemBlock));
-        }
-    };
-
-    class MemManager {
-    public:
-        /*
-        Region or section of the memory heap.
-        */
-        class MemRegion {
-            friend class MemManager;
-
-        public:
-            MemRegion();
-            ~MemRegion();
-
-            static void setRegionMaxSize(u32 maxMEM1, u32 maxMEM2);
-            static u32 getMEM1MaxSize();
-            static u32 getMEM2MaxSize();
-
-            void* allocate(void* buffer, u32 size, int align);
-
-            MemBlock* reallocate(MemBlock* block);
-            MemBlock* coalesceRecursive(MemBlock* block);
-
-            MemBlock* getTailBuffer(u32 size, int align, void** buffer);
-
-            static inline void initialize(){
-                setRegionMaxSize(MEM1_MAX_SIZE, MEM2_MAX_SIZE);
-            }
-
-        private:
-            void* allocateImpl(MemBlock* block, void* buffer, u32 size, int align);
-
-            MemBlock* mHead; //0x0
-            MemBlock* mTail; //0x4
-            MemBlock* mOldest; //0x8
-            MemBlock* mYoungest; //0xC
-            void* mStartAddress; //0x10
-            void* mEndAddress; //0x14
-            u32 mNumAlloc; //0x18
-            u32 mSize; //0x1C
-            u32 mFreeBytes; //0x20
-            ml::FixStr<64> mName; //0x24
-            ALLOC_HANDLE mHandle; //0x68
-            u8 unk6C;
-
-            static u32 sMaxSizeMEM1;
-            static u32 sMaxSizeMEM2;
-
-            static const int MEM1_MAX_SIZE = 0x680000;
-            static const int MEM2_MAX_SIZE = 0;
-        };
-
-        static void initialize();
-        static void finalize();
-
-        static DECOMP_INLINE ALLOC_HANDLE create(void* head, u32 size, const char* name);
-        static ALLOC_HANDLE create(ALLOC_HANDLE handle, u32 size, const char* name);
-        static ALLOC_HANDLE create_tail(ALLOC_HANDLE handle, u32 size, const char* name);
-
-        static ALLOC_HANDLE getHandleMEM1();
-        static void setHandleMEM1(ALLOC_HANDLE handle);
-
-        static ALLOC_HANDLE getHandleMEM2();
-        static void setHandleMEM2(ALLOC_HANDLE handle);
-        
-        static ALLOC_HANDLE getHandleStatic();
-        static void setHandleStatic(ALLOC_HANDLE handle);
-
-        static bool erase(ALLOC_HANDLE handle);
-        static bool empty(ALLOC_HANDLE handle);
-
-        static void* allocate_head(ALLOC_HANDLE handle, u32 size, int align);
-        static void* allocate_tail(ALLOC_HANDLE handle, u32 size, int align);
-        static bool deallocate(void* p);
-        static bool deallocateImpl(void* p);
-
-        static MemRegion* getRegion(ALLOC_HANDLE handle);
-        static u32 getRegionSize(ALLOC_HANDLE handle);
-        static u32 getBlockSize(ALLOC_HANDLE handle);
-        static MemBlock* getTailBuffer(MemRegion* region, u32 size, int align, void** buffer);
-        static MemBlock* getMaxBlock(ALLOC_HANDLE handle);
-        static u32 getMaxAllocSize(ALLOC_HANDLE handle);
-        static void* getMaxAllocData(ALLOC_HANDLE handle);
-        static f32 getPercentAlloc(ALLOC_HANDLE handle);
-        static void func_804348A4(ALLOC_HANDLE handle, u8 val);
-
-        static u16 calculateCrc(const void* data, u32 len);
-        static void func_80434A4C(bool value);
-
-        static bool isOptimalAlloc();
-        static void setOptimalAlloc(bool enable);
-
-        static void* allocate(u32 size, ALLOC_HANDLE handle);
-        static void* allocate_array(u32 size, ALLOC_HANDLE handle);
-
-        static void* allocate_ex(u32 size, ALLOC_HANDLE handle, int align);
-        static void* allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align);
-
-        /* Commented out log function, which would have printed debug messages. It seems like
-        monolithsoft had log functions for many classes in addition to this one. */
-        //static void log(int something);
-
-    private:
-        static const char* scRegionNameMEM1;
-        static const char* scRegionNameMEM2;
-
-        static ALLOC_HANDLE sHandleMEM1;
-        static ALLOC_HANDLE sHandleMEM2;
-
-        static RawArray<MemRegion, MAX_ALLOC_REGION> sRegionArray;
-        static u32 sRegionUniqueId;
-
-        static bool lbl_80667E54;
-        static bool lbl_80665E38;
-        static bool lbl_80665E39;        
-        static bool sIsOptimalAlloc;
-    };
-
-}
-
-/*
-Allocates object memory from the specified region.
-*/
-inline void* operator new(size_t size, mtl::ALLOC_HANDLE handle) {
-    return mtl::MemManager::allocate(size, handle);
-}
-
-/*
-Allocates aligned object memory from the specified region.
-Specify negative alignment to perform a tail allocation.
-*/
-inline void* operator new(size_t size, int align, mtl::ALLOC_HANDLE handle) {
-    return mtl::MemManager::allocate_ex(size, handle, align);
-}
-
-/*
-Allocates array memory from the specified region.
-*/
-inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle) {
-    return mtl::MemManager::allocate_array(size, handle);
-}
-
-/*
-Allocates aligned array memory from the specified region.
-Specify negative alignment to perform a tail allocation.
-*/
-inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle, int align) {
-    return mtl::MemManager::allocate_array_ex(size, handle, align);
-}
-
-//Utility macros
-
-#define DELETE_OBJ(p)                   \
-    {                                   \
-    if (p != nullptr){                  \
-        mtl::MemManager::deallocate(p); \
-        p = nullptr;                    \
-    }                                   \
-    }                                   \
-
-
-#define DELETE_ARRAY(p)                   \
-    {                                     \
-    if (p != nullptr){                    \
-        delete[] p;                       \
-        p = nullptr;                      \
-    }                                     \
-    }                                     \
-/* end "monolib/util/MemManager.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 11 "monolib/util/PtrSingleton.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/PtrSingleton.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace mtl{
-
-template <typename T>
-class PtrSingleton{
-public:
-    PtrSingleton(){
-        spInstance = static_cast<T*>(this);
-    }
-
-    ~PtrSingleton(){
-        spInstance = nullptr;
-    }
-
-    static T* getInstance(){
-        return spInstance;
-    }
-
-protected:
-    static T* spInstance;
-};
-
-template <typename T> T* PtrSingleton<T>::spInstance;
-
-}
-/* end "monolib/util/PtrSingleton.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 12 "monolib/util/RawArray.hpp" */
-/* end "monolib/util/RawArray.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 13 "monolib/util/reslist.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
-/* end "monolib/util/MemManager.hpp" */
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
-#ifndef MSL_CPP_ALGORITHM_H
-#define MSL_CPP_ALGORITHM_H
-/* "libs/PowerPC_EABI_Support/include/stl/algorithm" line 2 "iterator" */
-#ifndef MSL_CPP_ITERATOR_H
-#define MSL_CPP_ITERATOR_H
-
-namespace std {
-
-    struct random_access_iterator_tag {};
-
-} // namespace std
-
-#endif
-/* end "iterator" */
-
-namespace std {
-
-template <typename T> inline const T& max(const T& a, const T& b) {
-    return (a < b) ? b : a;
-}
-
-template <typename T> inline const T& min(const T& a, const T& b) {
-    return (b < a) ? b : a;
-}
-
-template <typename TPtr, typename T>
-inline TPtr find(TPtr first, TPtr last, const T& value) {
-    while (first != last && *first != value) {
-        ++first;
-    }
-
-    return first;
-}
-
-template <typename TPtr> inline long distance(TPtr first, TPtr last) {
-    random_access_iterator_tag tag;
-    return __distance(first, last, tag);
-}
-
-template <typename TPtr>
-inline long __distance(TPtr first, TPtr last, random_access_iterator_tag tag) {
-    long dist = reinterpret_cast<long>(last) - reinterpret_cast<long>(first);
-    return dist / static_cast<long>(sizeof(TPtr));
-}
-
-template <typename T> inline T& move(T& x) { return x; }
-
-template <typename T> inline void swap(T& a, T& b) {
-    T tmp = move(a);
-    a = move(b);
-    b = move(tmp);
-}
-
-} // namespace std
-
-#endif
-/* end "algorithm" */
-
-/* TODO: This breaks ctors/dtors, but it looks alot nicer than the method below. Maybe there's a way to get
-this to work */
-template <typename T>
-struct _reslist_node_item {
-    _reslist_node_item(){}
-    _reslist_node_item(const T& value) try :
-    item(value) {} catch(...){}
-    T item;
-};
-
-template <typename T>
-struct _reslist_node{
-    void setItem(const T& value){
-        //This doesn't work
-        //new (&mItem) _reslist_node_item<T>(value);
-        //Possibly fake?
-        T* ptr = &mItem;
-        if(ptr != nullptr) {
-            try{
-                *ptr = value;
-            }catch(...){
-                throw;
-            }
-        }
-    }
-
-    _reslist_node<T>* mNext; //0x0
-    _reslist_node<T>* mPrev; //0x4
-    T mItem; //0x8
-
-};
-
-template <typename T>
-class _reslist_base{
-public:
-    _reslist_base(){
-        mList = nullptr;
-        mCapacity = 0;
-        unk1C = false;
-        mStartNodePtr = &mStartNode;
-        mStartNodePtr->mNext = &mStartNode;
-        mStartNodePtr->mPrev = mStartNode.mNext;
-    }
-
-    virtual ~_reslist_base(){
-        clearList();
-
-        if (unk1C == false) DELETE_ARRAY(mList);
-    }
-
-    void func_8049CB6C(T* item){
-
-    }
-
-    void func_8049CB70(_reslist_node<T>* r4){
-        r4->mNext = nullptr;
-    }
-
-    int findFirstEmptySlotIndex(){
-        int i = 0;
-        
-        //Go through the list until we find an empty slot
-        while(i < mCapacity){
-            if(mList[i].mNext == nullptr) break;
-
-            //BUG: There's no handling for if no empty slot is found. As is,
-            //the last element index will get returned if that happens.
-            //if(i == mCapacity - 1) return -1;
-
-            i++;
-        }
-
-        return i;
-    }
-
-    //func_8049CAF4
-    void clearList(){
-        _reslist_node<T>* r5 = mStartNodePtr->mNext;
-        
-        while (r5 != mStartNodePtr) {
-            _reslist_node<T>* r4 = r5;
-            r5 = r5->mNext;
-            func_8049CB6C(&r4->mItem);
-            func_8049CB70(r4);
-        }
-    
-        mStartNodePtr->mNext = mStartNodePtr;
-        mStartNodePtr->mPrev = mStartNodePtr;
-    }
-
-    //0x0: vtable
-    _reslist_node<T>* mStartNodePtr; //0x4
-    _reslist_node<T> mStartNode; //0x8
-    _reslist_node<T>* mList; //0x14
-    int mCapacity; //0x18
-    bool unk1C; //0x1C
-};
-
-template <typename T>
-class reslist;
-
-//Unofficial name
-template <typename T, typename Ref, typename Ptr>
-class _reslist_iterator {
-    friend class reslist<T>;
-public:
-    _reslist_iterator() : mNode(nullptr){}
-    explicit _reslist_iterator(_reslist_node<T>* node) : mNode(node){}
-
-    _reslist_iterator& operator++(){
-        mNode = mNode->mNext;
-        return *this;
-    }
-
-    _reslist_iterator operator++(int){
-
-        _reslist_iterator temp = *this;
-        mNode = mNode->mNext;
-        return temp;
-    }
-
-    _reslist_iterator& operator--(){
-        mNode = mNode->mPrev;
-        return *this;
-    }
-
-    _reslist_iterator operator--(int){
-        _reslist_iterator temp = *this;
-        mNode = mNode->mPrev;
-        return temp;
-    }
-
-    Ref operator*() const {
-        return mNode->mItem;
-    }
-
-    Ptr operator->() const {
-        return &operator*();
-    }
-
-    bool operator==(_reslist_iterator const& rhs) const {
-        return mNode == rhs.mNode;
-    }
-
-    bool operator!=(_reslist_iterator const& rhs) const {
-        return mNode != rhs.mNode;
-    }
-
-private:
-    _reslist_node<T>* mNode; //0x0
-};
-
-//size: 0x20
-template <typename T>
-class reslist : public _reslist_base<T> {
-public:
-    typedef _reslist_iterator<T, T&, T*> iterator;
-
-    reslist() : _reslist_base<T>() {
-    }
-    virtual ~reslist(){
-    }
-
-    iterator begin() const {
-        return iterator(mStartNodePtr->mNext);
-    }
-    iterator end() const {
-        return iterator(mStartNodePtr);
-    }
-
-    T& front() {
-        return *begin();
-    }
-    T& back() {
-        return *begin();
-    }
-
-    const T& front() const {
-        return *begin();
-    }
-    const T& back() const {
-        return *begin();
-    }
-
-    u32 size() const {
-        _reslist_node<T>* curNode;
-        _reslist_node<T>* endNode;
-        
-        u32 length = 0;
-        endNode = mStartNodePtr;
-        curNode = mStartNodePtr->mNext;
-
-        while(curNode != endNode){
-            length++;
-            curNode = curNode->mNext;
-        }
-        
-        return length;
-    }
-
-    bool empty() const {
-        return mStartNodePtr->mNext == mStartNodePtr;
-    }
-
-    inline void reserve(mtl::ALLOC_HANDLE handle, int capacity) {
-        mList = new (handle) _reslist_node<T>[capacity];
-
-        for(int i = 0; i < capacity; i++){
-            mList[i].mNext = nullptr;
-        }
-
-        mCapacity = capacity;
-    }
-
-    iterator find(const T& item){
-        return std::find(begin(), end(), item);
-    }
-
-    void push_front(const T& item){
-        _reslist_node<T>* startNode = mStartNodePtr->mNext;
-        int i = findFirstEmptySlotIndex();
-
-        _reslist_node<T>* temp = &mList[i];
-        temp->setItem(item);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
-    }
-
-    void push_back(const T& item){
-        _reslist_node<T>* startNode = mStartNodePtr;
-        int i = findFirstEmptySlotIndex();
-
-        _reslist_node<T>* temp = &mList[i];
-
-        temp->setItem(item);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
-    }
-
-    void remove(const T& item){
-        _reslist_node<T>* curr;
-        _reslist_node<T>* next;
-        _reslist_node<T>* head;
-
-        head = mStartNodePtr;
-        curr = head->mNext;
-        
-        //Walk through the list
-        while(curr != head){
-            //Save next node in case we invalidate the curr iterator
-            next = curr->mNext;
-
-            //If we find an entry containing the item, remove the entry
-            if(curr->mItem == item){
-                _reslist_node<T>* prev = curr->mPrev;
-                prev->mNext = next;
-                next->mPrev = prev;
-                curr->mNext = nullptr;
-            }
-
-            curr = next;
-        }
-    }
-
-    void pop_front(){
-        _reslist_node<T>* prevNode;
-        _reslist_node<T>* nextNode;
-        _reslist_node<T>* frontNode;
-
-        frontNode = mStartNodePtr->mNext;
-        nextNode = frontNode->mNext;
-        prevNode = frontNode->mPrev;
-        prevNode->mNext = nextNode;
-        nextNode->mPrev = prevNode;
-        frontNode->mNext = nullptr;
-    }
-
-    void erase(iterator& it){
-        _reslist_node<T>* r5;
-        _reslist_node<T>* r4;
-        _reslist_node<T>* node = it.mNode;
-        
-        r4 = node->mPrev;
-        r5 = node->mNext;
-        r4->mNext = r5;
-        r5->mPrev = r4;
-        node->mNext = nullptr;
-    }
-
-    void clear(){
-        clearList();
-    }
-
-    void destroyList(){
-        clearList();
-        if (unk1C == false && mList != nullptr) {
-            delete[](this->mList);
-            mList = nullptr;
-        }
-        mCapacity = 0;
-    }
-};
-/* end "monolib/util/reslist.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 14 "monolib/util/resvector.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/resvector.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/util/resvector.hpp" line 3 "monolib/util/MemManager.hpp" */
-/* end "monolib/util/MemManager.hpp" */
-
-template <typename T>
-class resvector {
-public:
-    resvector() : mArray(nullptr), mCount(0) {
-    }
-    resvector(mtl::ALLOC_HANDLE handle) : mArray(nullptr), mCount(0), mHandle(handle) {
-    }
-    ~resvector(){   
-        destroy();
-    }
-    
-    T* begin(){
-        return &mArray[0];
-    }
-
-    T* end(){
-        return &mArray[mCount];
-    }
-
-    const T* begin() const{
-        return begin();
-    }
-
-    const T* end() const{
-        return end();
-    }
-
-    u32 size() const {
-        return mCount;
-    }
-
-    T& operator[](int index){
-        return mArray[index];
-    }
-
-    const T& operator[](int index) const {
-        return mArray[index];
-    }
-
-    void reserve(mtl::ALLOC_HANDLE handle, u32 size){
-        mHandle = handle;
-        mArray = static_cast<T*>(mtl::MemManager::allocate_head(handle, size * sizeof(T), 4));
-        mCount = 0;
-        mSize = size;
-    }
-
-    void push_back(T item){
-        //NOTE: no bounds check
-        mArray[mCount++] = item;
-    }
-
-    void destroy(){
-        mCount = 0;
-        if(mHandle != mtl::INVALID_HANDLE){
-            DELETE_OBJ(mArray);
-        }
-
-        mArray = nullptr;
-        mSize = 0;
-        mHandle = mtl::INVALID_HANDLE;
-    }
-
-    void clearList(){
-        T* ptr = mArray;
-        while(ptr != &mArray[mCount]){
-            DELETE_OBJ(*ptr);
-            ptr++;
-        }
-    }
-
-    void resetCount(){
-        mCount = 0;
-    }
-
-private:
-    T* mArray; //0x0
-    u32 mCount; //0x4
-    u32 mSize; //0x8
-    u32 mHandle; //0xC
-};
-/* end "monolib/util/resvector.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 15 "monolib/util/TPLUtils.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/TPLUtils.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/util/TPLUtils.hpp" line 3 "revolution/TPL.h" */
 /**
- * References: YAGCD, BrawlBox
+ * Header for resource data structures.
  */
+struct ResBlockHeaderData {
+    char kind[4]; // at 0x0
+    u32 size;     // at 0x4
+};
 
-#ifndef RVL_SDK_PUBLIC_TPL_H
-#define RVL_SDK_PUBLIC_TPL_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/TPL.h" line 10 "revolution/TPL/TPL.h" */
-#ifndef RVL_SDK_TPL_H
-#define RVL_SDK_TPL_H
-/* "libs/RVL_SDK/include/revolution/TPL/TPL.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/TPL/TPL.h" line 4 "revolution/GX.h" */
 /**
- * References: YAGCD, Dolphin Emulator, publicly available patents
+ * Name for file resource groups.
  */
+struct ResNameData27 {
+    u32 len;                    // at 0x0
+    char str[32 - sizeof(u32)]; // at 0x4
+};
 
-#ifndef RVL_SDK_PUBLIC_GX_H
-#define RVL_SDK_PUBLIC_GX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
-/* end "revolution/GX/GXAttr.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
-/* end "revolution/GX/GXBump.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
-/* end "revolution/GX/GXDisplayList.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
-/* end "revolution/GX/GXDraw.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
-/* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
-/* end "revolution/GX/GXFrameBuf.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
-/* end "revolution/GX/GXGeometry.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap8.html#sec8
- * https://www.gc-forever.com/yagcd/chap5.html#sec5
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
- * https://patents.google.com/patent/US6700586B1/en
- * https://patents.google.com/patent/US6639595B1/en
- * https://patents.google.com/patent/US7002591
- * https://patents.google.com/patent/US6697074
- */
-
-#ifndef RVL_SDK_GX_HARDWARE_H
-#define RVL_SDK_GX_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/************************************************************
+/******************************************************************************
  *
+ * Named resource
  *
- * GX FIFO
- *
- *
- ***********************************************************/
+ ******************************************************************************/
+struct ResNameData {
+    u32 len;     // at 0x0
+    char str[4]; // at 0x4
+};
 
-/**
- * FIFO write/gather pipe
- */
-extern volatile union {
-    // 1-byte
-    char c;
-    unsigned char uc;
-    // 2-byte
-    short s;
-    unsigned short us;
-    // 4-byte
-    int i;
-    unsigned int ui;
-    void* p;
-    float f;
-} WGPIPE DECL_ADDRESS(0xCC008000);
+class ResName : public ResCommon<const ResNameData> {
+public:
+    explicit ResName(const void* pData) : ResCommon(pData) {}
 
-/**
- * FIFO commands
- */
-typedef enum {
-    GX_FIFO_CMD_NOOP = 0x00,
-
-    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
-    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
-    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
-
-    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
-    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
-    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
-    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
-
-    GX_FIFO_CMD_CALL_DL = 0x40,
-    GX_FIFO_CMD_INVAL_VTX = 0x48,
-
-    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
-    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
-    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
-    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
-    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
-} GXFifoCmd;
-
-/**
- * FIFO command sizes
- */
-#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
-#define GX_FIFO_CMD_DRAW_SIZE 3
-
-#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
-#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
-#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
-
-#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
-        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
-        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
-        WGPIPE.c = reg;                                                        \
-        WGPIPE.i = cmd;                                                        \
+    u32 GetLength() const {
+        return ref().len;
     }
 
-#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+    const char* GetName() const {
+        return ref().str;
+    }
 
-#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+    bool operator==(const ResName rhs) const;
+};
 
-#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
-
-/************************************************************
+/******************************************************************************
  *
+ * Generic display list
+ *
+ ******************************************************************************/
+struct ResTagDLData {
+    u32 bufSize; // at 0x0
+    u32 cmdSize; // at 0x4
+    s32 toDL;    // at 0x8
+};
+
+class ResTagDL : public ResCommon<ResTagDLData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTagDL);
+
+    u32 GetBufSize() const {
+        return ref().bufSize;
+    }
+
+    u32 GetCmdSize() const {
+        return ref().cmdSize;
+    }
+
+    u8* GetDL() {
+        return const_cast<u8*>(ofs_to_ptr<u8>(ref().toDL));
+    }
+    const u8* GetDL() const {
+        return ofs_to_ptr<u8>(ref().toDL);
+    }
+};
+
+/******************************************************************************
+ *
+ * Model bytecode
+ *
+ ******************************************************************************/
+namespace ResByteCodeData {
+
+enum OpCode {
+    NOOP,   // No operation
+    END,    // End of bytecode
+    CALC,   // Calculate matrix
+    WEIGHT, // Apply weighting
+    DRAW,   // Draw polygon
+    EVPMTX, // Envelope matrix
+    MTXDUP  // Duplicate matrix
+};
+
+// CALC opcode layout
+struct CalcParams {
+    u8 opcode;        // at 0x0
+    u8 nodeIdHi;      // at 0x1
+    u8 nodeIdLo;      // at 0x2
+    u8 parentMtxIdHi; // at 0x1
+    u8 parentMtxIdLo; // at 0x2
+};
+
+// WEIGHT opcode layout
+struct WeightParams {
+    u8 opcode;      // at 0x0
+    u8 tgtIdHi;     // at 0x1
+    u8 tgtIdLo;     // at 0x2
+    u8 numBlendMtx; // at 0x3
+};
+// WEIGHT opcode layout - weighting entry
+struct WeightEntry {
+    u8 mtxIdHi;  // at 0x0
+    u8 mtxIdLo;  // at 0x1
+    u8 fWeight0; // at 0x2
+    u8 fWeight1; // at 0x3
+    u8 fWeight2; // at 0x4
+    u8 fWeight3; // at 0x5
+};
+
+// DRAW opcode layout
+struct DrawParams {
+    u8 opcode;   // at 0x0
+    u8 matIdHi;  // at 0x3
+    u8 matIdLo;  // at 0x4
+    u8 shpIdHi;  // at 0x1
+    u8 shpIdLo;  // at 0x2
+    u8 nodeIdHi; // at 0x5
+    u8 nodeIdLo; // at 0x6
+    u8 priority; // at 0x7
+};
+
+// EVPMTX opcode layout
+struct EvpMtxParams {
+    u8 opcode;   // at 0x0
+    u8 mtxIdHi;  // at 0x1
+    u8 mtxIdLo;  // at 0x2
+    u8 nodeIdHi; // at 0x1
+    u8 nodeIdLo; // at 0x2
+};
+
+// MTXDUP opcode layout
+struct MtxDupParams {
+    u8 opcode;      // at 0x0
+    u8 toMtxIdHi;   // at 0x1
+    u8 toMtxIdLo;   // at 0x2
+    u8 fromMtxIdHi; // at 0x1
+    u8 fromMtxIdLo; // at 0x2
+};
+
+} // namespace ResByteCodeData
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * Primitive read/write
+ *
+ ******************************************************************************/
+inline u8 ResRead_u8(const u8* pPtr) {
+    return *pPtr;
+}
+
+inline u32 ResRead_u32(const u8* pPtr) {
+    u32 value = ResRead_u8(pPtr++) << 24;
+    value |= ResRead_u8(pPtr++) << 16;
+    value |= ResRead_u8(pPtr++) << 8;
+    value |= ResRead_u8(pPtr++) << 0;
+    return value;
+}
+
+inline void ResWrite_u8(u8* pPtr, u8 data) {
+    *pPtr = data;
+}
+
+inline void ResWrite_u16(u8* pPtr, u16 data) {
+    ResWrite_u8(pPtr++, data >> 8);
+    ResWrite_u8(pPtr++, data >> 0);
+}
+
+inline void ResWrite_u32(u8* pPtr, u32 data) {
+    ResWrite_u8(pPtr++, data >> 24);
+    ResWrite_u8(pPtr++, data >> 16);
+    ResWrite_u8(pPtr++, data >> 8);
+    ResWrite_u8(pPtr++, data >> 0);
+}
+
+/******************************************************************************
  *
  * GX Blitting Processor (BP)
  *
- *
- ***********************************************************/
+ ******************************************************************************/
+inline void ResReadBPCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte
+    *pOut = ResRead_u32(pPtr + 1);
+}
 
-/**
- * Load immediate value into BP register
- */
-#define GX_BP_LOAD_REG(data)                                                   \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
-    WGPIPE.i = (data);
+void ResWriteBPCmd(u8* pPtr, u32 reg);
+void ResWriteBPCmd(u8* pPtr, u32 reg, u32 mask);
+void ResWriteSSMask(u8* pPtr, u32 value);
 
-/**
- * Set BP command opcode (first 8 bits)
- */
-#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
-
-#define GX_BP_OPCODE_SHIFT 24
-#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
+/******************************************************************************
  *
  * GX Command Processor (CP)
  *
- *
- ***********************************************************/
+ ******************************************************************************/
+inline void ResReadCPCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte + addr byte
+    *pOut = ResRead_u32(pPtr + 2);
+}
 
-/**
- * Load immediate value into CP register
- */
-#define GX_CP_LOAD_REG(addr, data)                                             \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
-    WGPIPE.c = (addr);                                                         \
-    WGPIPE.i = (data);
+void ResWriteCPCmd(u8* pPtr, u8 addr, u32 value);
 
-#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
+/******************************************************************************
  *
  * GX Transform Unit (XF)
  *
+ ******************************************************************************/
+inline void ResReadXFCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte + size short + addr short
+    *pOut = ResRead_u32(pPtr + 5);
+}
+
+void ResWriteXFCmd(u8* pPtr, u16 addr, u32 value);
+
+/******************************************************************************
  *
- ***********************************************************/
-
-/**
- * XF memory
- */
-typedef enum {
-    GX_XF_MEM_POSMTX = 0x0000,
-    GX_XF_MEM_NRMMTX = 0x0400,
-    GX_XF_MEM_DUALTEXMTX = 0x0500,
-    GX_XF_MEM_LIGHTOBJ = 0x0600
-} GXXfMem;
-
-/**
- * Header for an XF register load
- */
-#define GX_XF_LOAD_REG_HDR(addr)                                               \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
-    WGPIPE.i = (addr);
-
-/**
- * Load immediate value into XF register
- */
-#define GX_XF_LOAD_REG(addr, data)                                             \
-    GX_XF_LOAD_REG_HDR(addr);                                                  \
-    WGPIPE.i = (data);
-
-#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
-
-/**
- * Load immediate values into multiple XF registers
- */
-#define GX_XF_LOAD_REGS(size, addr)                                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        cmd |= (addr);                                                         \
-        cmd |= (size) << 16;                                                   \
-        GX_XF_LOAD_REG_HDR(cmd);                                               \
-    }
-
-/**
- * Enums for Tex0-Tex7 register fields
- */
-typedef enum {
-    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
-    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
-} GXXfTexProj;
-
-typedef enum {
-    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
-    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
-} GXXfTexForm;
-
-typedef enum {
-    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
-    GX_XF_TG_BUMP,    // Texgen bump mapping
-
-    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                   // color0
-
-    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                  // color1
-} GXXfTexGen;
-
-/**
- * Misc. hardware enums
- */
-typedef enum {
-    GX_RAS_COLOR0A0,
-    GX_RAS_COLOR1A1,
-    GX_RAS_ALPHA_BUMP = 5,
-    GX_RAS_ALPHA_BUMPN,
-    GX_RAS_COLOR_ZERO,
-
-    GX_RAS_MAX_CHANNEL
-} GXRasChannelID;
-
-typedef enum {
-    GX_TEVREG_COLOR,
-    GX_TEVREG_KONST,
-} GXTevRegType;
-
-#ifdef __cplusplus
+ * Utility functions
+ *
+ ******************************************************************************/
+inline GXColor GetRGBA(u8 r, u8 g, u8 b, u8 a) {
+    return (GXColor){r, g, b, a};
 }
-#endif
-#endif
-/* end "revolution/GX/GXHardware.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
-/* end "revolution/GX/GXHardwareBP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
-/* end "revolution/GX/GXHardwareCP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
-/* end "revolution/GX/GXHardwareXF.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
-/* end "revolution/GX/GXInit.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
-/* end "revolution/GX/GXLight.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
-/* end "revolution/GX/GXMisc.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
-/* end "revolution/GX/GXPixel.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
-/* end "revolution/GX/GXTev.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-/* end "revolution/GX/GXTexture.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
-/* end "revolution/GX/GXTransform.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
-/* end "revolution/GX/GXVert.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct TPLHeader {
-    u16 height;            // at 0x0
-    u16 width;             // at 0x2
-    u32 format;            // at 0x4
-    char* data;            // at 0x8
-    GXTexWrapMode wrapS;   // at 0xC
-    GXTexWrapMode wrapT;   // at 0x10
-    GXTexFilter minFilter; // at 0x14
-    GXTexFilter magFilter; // at 0x18
-    f32 LODBias;           // at 0x1C
-    u8 edgeLODEnable;      // at 0x20
-    u8 minLOD;             // at 0x21
-    u8 maxLOD;             // at 0x22
-    u8 unpacked;           // at 0x23
-} TPLHeader;
-
-typedef struct TPLClutHeader {
-    u16 numEntries;   // at 0x0
-    u8 unpacked;      // at 0x1
-    u8 pad8;          // at 0x2
-    GXTlutFmt format; // at 0x4
-    char* data;       // at 0x8
-} TPLClutHeader;
-
-typedef struct TPLDescriptor {
-    TPLHeader* textureHeader;  // at 0x0
-    TPLClutHeader* CLUTHeader; // at 0x4
-} TPLDescriptor;
-
-typedef struct TPLPalette {
-    u32 versionNumber;              // at 0x0
-    u32 numDescriptors;             // at 0x4
-    TPLDescriptor* descriptorArray; // at 0x8
-} TPLPalette;
-
-void TPLBind(TPLPalette* pal);
-TPLDescriptor* TPLGet(TPLPalette* pal, u32 id);
-void TPLGetGXTexObjFromPalette(TPLPalette* pal, GXTexObj* to, u32 id);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/TPL/TPL.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/TPL.h" */
-
-namespace ml{
-
-    /* Wrapper TPL file struct to allow for easy access to the image header data in simple single image
-    TPL files without needing to resort to raw pointer/macro abuse. Note that this struct only is valid for
-    TPL files that have a single image in them and don't use a palette based format. */
-    struct CTPLData{
-        TPLPalette fileHeader; //0x0
-        TPLDescriptor descriptor; //0xC
-        TPLHeader imageHeader; //0x14
-    };
-
-}
-/* end "monolib/util/TPLUtils.hpp" */
-/* end "monolib/util.hpp" */
-
-/*
-Handle to a work memory region
-*/
-typedef u32 WORK_ID;
-static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
-
-class CWorkThreadSystem{
-    friend class CWorkThread;
-
-public:
-    static void initialize();
-    static void destroy();
-
-    static WORK_ID allocWID(CWorkThread* thread);
-    static void freeWID(WORK_ID wid){
-        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
-        sWorkThreads[wid] = nullptr;
-    }
-
-    static mtl::ALLOC_HANDLE getWorkMem();
-
-private:
-    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
-
-    //Highest allowed work ID
-    static const WORK_ID MAX_WORK_ID = 2048;
-    //One registration bit flag per work ID
-    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
-
-    static const char* scRegionName;
-    static BOOL sMemAvailable;
-
-    //Handle for all work memory allocations
-    static mtl::ALLOC_HANDLE sAllocHandle;
-
-    //Work thread registration flags, by ID
-    static u32* sAllocFlags;
-
-    //Registered work threads, by ID
-    static CWorkThread** sWorkThreads;
-};
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-
-//Message param entry format:
-//0x0: message id
-//0x4: work ID
-//0x8: address
-//0xC: code address
-//0x10: value
-//0x14: address
-//0x18: address
-//0x1C: address
-//0x20: address (pointer to string?)
-struct CMsgParamEntry{
-    u32 command; //0x0
-    WORK_ID wid; //0x4
-    u32 unk8;
-    u32 unkC;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u16 unk20;
-    u8 unk22;
-    u8 unk23;
-};
-
-template <int N>
-class CMsgParam{
-public:
-    CMsgParam(u32 r4){
-        mCapacity = N;
-        mArrayPtr = mEntries;
-        mSize = 0;
-        mFront = 0;
-        field6 = 0;
-        field7 = r4;
-    }
-
-    virtual ~CMsgParam(){
-        clear();
-    }
-
-    void clear(){
-        mSize = 0;
-        mFront = 0;
-    }
-
-    bool empty() const{
-        return mSize == 0;
-    }
-
-    u32 size() const{
-        return mSize;
-    }
-
-    const CMsgParamEntry& front() const{
-        return mArrayPtr[mFront % mCapacity];
-    }
-
-    void enqueue(u32 msg){
-        volatile CMsgParamEntry entry;
-        u32 wid = entry.wid;
-        u32 value8 = entry.unk8;
-        u32 valueC = entry.unkC;
-        u32 value10 = entry.unk10;
-        u32 value14 = entry.unk14;
-        u32 value18 = entry.unk18;
-        u32 value1C = entry.unk1C;
-        u16 value20 = entry.unk20;
-        u8 value22 = entry.unk22;
-        int index = (int)(mFront + mSize) % (int)mCapacity;
-        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
-
-        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
-        *reinterpret_cast<u32*>(dst + 0x4) = wid;
-        *reinterpret_cast<u32*>(dst + 0x8) = value8;
-        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
-        *reinterpret_cast<u32*>(dst + 0x10) = value10;
-        *reinterpret_cast<u32*>(dst + 0x14) = value14;
-        *reinterpret_cast<u32*>(dst + 0x18) = value18;
-        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
-        *reinterpret_cast<u16*>(dst + 0x20) = value20;
-        *(dst + 0x22) = value22;
-        *(dst + 0x23) = 0;
-
-        mSize++;
-        field6 = mSize - 1;
-    }
-
-    CMsgParamEntry& last(){
-        return mArrayPtr[(mFront + field6) % mCapacity];
-    }
-
-    void pop(){
-        mSize--;
-        mFront = (mFront + 1) % mCapacity;
-    }
-
-    int find(u32 msg) const{
-        for(int i = 0; i < mSize; i++){
-            if(mArrayPtr[(mFront + i) % mCapacity].command == msg){
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-private:
-    //0x0: vtable
-    CMsgParamEntry mEntries[N]; //0x4
-    CMsgParamEntry* mArrayPtr; //N*0x24 + 0x4
-    u32 mFront; //N*0x24 + 0x8
-    u32 mSize; //N*0x24 + 0xC
-    u32 mCapacity; //N*0x24 + 0x10
-    u32 field6; //N*0x24 + 0x14
-    u32 field7; //N*0x24 + 0x18
-};
-/* end "monolib/work/CMsgParam.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 4 "monolib/work/CTTask.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CTTask.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CTTask.hpp" line 3 "monolib/work/CProcess.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CProcess.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CProcess.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-/*
-Instance of a game task.
-
-Processes can contain child sub-processes,
-and somewhat maintain a priority system.
-
-Each process can implement specific behavior
-for its initialization/termination,
-and for the update ("Move") and render ("Draw") game events.
-*/
-class CProcess : public CChildListNode{
-    friend class CProcessMan;
-
-public:
-    CProcess();
-    virtual ~CProcess();
-
-    virtual void Init() = 0;
-    virtual void Term() = 0;
-
-    virtual void Move() = 0;
-    virtual void Draw() = 0;
-    // Out-of-line: inline `{}` emits Tail__8CProcessFv into every derived TU (CfPadTask +.text).
-    virtual void Tail();
-
-    void Regist(CProcess* parent, bool insertTop);
-    void Remove();
-
-    void SetRemove(){
-        mIsRemove = true;    
-    }
-
-private:
-    //0x0-10: CDoubleListNode
-    //0x10: vtable
-    //0x14-38: CChildListNode
-    bool mIsRegist; //0x38
-    bool mIsRemove; //0x39
-    bool mIsDisableMove; //0x3A
-    bool mIsDisableDraw; //0x3B
-};
-
-/*
-Process manager.
-
-Responsible for dispatching all process events every tick,
-and for maintaining the lists of both root-level processes and released processes.
-*/
-class CProcessMan {
-public:
-    static void Reset();
-    static void Delete();
-
-    static void Init();
-    static void Term();
-    
-    static void Move();
-    static void Draw();
-    // Not present as OOL in retail CProcess.s; keep inline API for callers.
-    static void Tail() {
-        TChildListHeader<CProcess>& list = GetRootProcessList();
-        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
-            TailImpl(proc);
-        }
-    }
-
-    static TChildListHeader<CProcess>& GetFreeProcessList() {
-        return sFreeProcessList;
-    }
-    static TChildListHeader<CProcess>& GetRootProcessList() {
-        return sRootProcessList;
-    }
-
-private:
-    static void MoveImpl(CProcess* proc);
-    static void DrawImpl(CProcess* proc);
-    static void TailImpl(CProcess* proc);
-
-    static bool Remove(CProcess* proc);
-
-    static void DeleteImpl(CProcess* proc);
-
-    static bool sIsInitialized;
-    static TChildListHeader<CProcess> sFreeProcessList;
-    static TChildListHeader<CProcess> sRootProcessList;
-};
-/* end "monolib/work/CProcess.hpp" */
-
-/*
-Generic task object.
-
-Provides a way to implement Move/Draw behavior without needing to work with the
-CProcess api.
-
-Derived classes must inherit using CRTP to allow binding the move/draw functions.
-*/
-template <typename TDerived>
-class CTTask : public CProcess {
-public:
-    typedef void (TDerived::*MoveFunc)();
-    typedef void (TDerived::*DrawFunc)();
-
-public:
-    CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
-
-    virtual void Move() {
-        if (mMoveFunc) {
-            (static_cast<TDerived*>(this)->*mMoveFunc)();
-        }
-    }
-    virtual void Draw() {
-        if (mDrawFunc) {
-            (static_cast<TDerived*>(this)->*mDrawFunc)();
-        }
-    }
-
-protected:
-    //0x0-10: CDoubleListNode
-    //0x10: vtable
-    //0x14-3C: CProcess
-    MoveFunc mMoveFunc; //0x3C
-    DrawFunc mDrawFunc; //0x48
-}; // size: 0x54
-/* end "monolib/work/CTTask.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 5 "monolib/work/CWorkControl.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 4 "monolib/work/CMsgParam.hpp" */
-/* end "monolib/work/CMsgParam.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 5 "monolib/work/IWorkEvent.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-
-/* Interface for work events, which provides a set of 32 event handler functions that
-get triggered when a certain event happens (such as when loading a file for OnFileEvent).
-Deriving classes can override any of these functions to run their own code when the
-corresponding event happens.
-
-Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
-being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
-out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
-with no apparent calls to the other 3 (possibly debug only).
-
-In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
-with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well.
-
-Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
-kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
-IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
-into every overriding TU and blows split budgets (see MWCC_REFERENCE
-CBattery/CBgTex note). */
-class IWorkEvent {
-public:
-    virtual ~IWorkEvent();
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
-    virtual bool OnFileEvent(CEventFile* pEventFile);
-    virtual bool WorkEvent3(UNKTYPE* r4);
-    virtual bool WorkEvent4();
-    virtual void OnPauseTrigger(bool paused);
-    // Completely unused, but still left in...
-    virtual bool WorkEvent6();
-    virtual bool WorkEvent7();
-    virtual bool WorkEvent8();
-    virtual bool WorkEvent9();
-    virtual bool WorkEvent10();
-    virtual bool WorkEvent11();
-    virtual bool WorkEvent12();
-    virtual bool WorkEvent13();
-    virtual bool WorkEvent14();
-    virtual bool WorkEvent15();
-    virtual bool WorkEvent16();
-    virtual bool WorkEvent17();
-    virtual bool WorkEvent18();
-    virtual bool WorkEvent19();
-    virtual bool WorkEvent20();
-    virtual bool WorkEvent21();
-    virtual bool WorkEvent22();
-    virtual bool WorkEvent23();
-    virtual bool WorkEvent24();
-    virtual bool WorkEvent25();
-    virtual bool WorkEvent26();
-    virtual bool WorkEvent27();
-    virtual bool WorkEvent28();
-    virtual bool WorkEvent29();
-    virtual bool WorkEvent30();
-    virtual void WorkEvent31();
-};
-/* end "monolib/work/IWorkEvent.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 7 "monolib/work/CWorkUtil.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 2 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 3 "monolib/work/UnkStruct_80438AF0.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/UnkStruct_80438AF0.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-struct UnkStruct_80438AF0_3 {};
-
-struct UnkStruct_80438AF0_2 {
-    UnkStruct_80438AF0_3* unk0;
-};
-
-struct UnkStruct_80438AF0 {
-    char unk0[0x4];
-    UnkStruct_80438AF0_2* unk4;
-};
-/* end "monolib/work/UnkStruct_80438AF0.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-
-class CWorkUtil{
-public:
-    static UnkStruct_80438AF0_3* func_80438AF0(UnkStruct_80438AF0* arg0);
-    static CWorkThread* getWorkThread(WORK_ID wid);
-    static void dispTree(const CWorkThread* pThread, int indent = 0);
-    static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);
-};
-
-//Possibly member of CWorkThread?
-extern bool hasChild(CWorkThread* pThread);
-/* end "monolib/work/CWorkUtil.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 8 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-//size: 0x1C4
-class CWorkThread : public IWorkEvent{
-public:
-    /* Enum used to keep track of the type of this work thread, which is useful when
-     casting from a generic instance of CWorkThread. Most classes inheriting from
-     CWorkThread have a unique value reserved, but not all do. If a custom value
-     isn't set, derived classes will default to the value for CWorkThread.
-     
-     Special type ranges:
-     23-47: CProc inheriting classes
-     48-52: CView inheriting classes
-    */
-    enum ThreadType{
-        //Work classes
-        THREAD_CWORKTHREAD = 0,
-        THREAD_CWORKCONTROL = 1,
-        THREAD_CWORKSYSTEM = 2,
-        THREAD_03 = 3,
-        THREAD_04 = 4,
-        THREAD_05 = 5,
-        THREAD_CWORKSYSTEMCACHE = 6,
-        THREAD_CWORKSYSTEMPACK = 7,
-        THREAD_08 = 8,
-        THREAD_09 = 9,
-        THREAD_CDEVICE = 10,
-        //CLib classes
-        THREAD_CLIB = 11,
-        THREAD_CLIBG3D = 12,
-        THREAD_CLIBHBM = 13,
-        THREAD_CLIBLAYOUT = 14,
-        THREAD_CLIBCRI = 15,
-        THREAD_CLIBCRIMOVIEPLAY = 16,
-        THREAD_CLIBCRISTREAMINGPLAY = 17,
-        THREAD_CLIBVM = 18,
-        THREAD_CLIBSTATICDATA = 19,
-        THREAD_20 = 20,
-        //Root classes
-        THREAD_CPROCROOT = 21,
-        THREAD_CVIEWROOT = 22,
-        //CProc inheriting classes
-        THREAD_CPROC = 23,
-        THREAD_CDESKTOP = 24,
-        THREAD_CEXCEPTION = 25,
-        THREAD_CLIBHBMCONTROL = 45,
-        THREAD_CPROC_MAX = 47,
-        //CView inheriting classes
-        THREAD_CVIEW = 48,
-        THREAD_CVIEW_MAX = 53,
-        THREAD_CRSRCDATA = 56,
-        THREAD_CSCRIPTCODE = 59,
-        //Misc device classes
-        THREAD_CDEVICEFONTLAYER = 63,
-        THREAD_CDEVICEFONTLOADER = 64,
-        THREAD_CDEVICEFILEJOB = 65,
-        THREAD_CDEVICEFILEJOBREADDVD = 68
-    };
-
-    enum EVT{
-        EVT_NONE,
-        EVT_1,
-        EVT_EXCEPTION,
-        EVT_3,
-        EVT_4,
-        EVT_PAUSE,
-        EVT_UNPAUSE,
-        EVT_7,
-        EVT_8,
-        EVT_9,
-        EVT_APPEXCEPTION_ON,
-        EVT_APPEXCEPTION_OFF,
-    };
-
-    enum ThreadFlags{
-        THREAD_FLAG_NO_EVENT = 1 << 0,
-        THREAD_FLAG_EVT1 = 1 << 1,
-        THREAD_FLAG_2 = 1 << 2,
-        THREAD_FLAG_3 = 1 << 3,
-        THREAD_FLAG_EXCEPTION = 1 << 4,
-        THREAD_FLAG_EVT3 = 1 << 5,
-        THREAD_FLAG_EVT4 = 1 << 6,
-        THREAD_FLAG_PAUSE = 1 << 7,
-        THREAD_FLAG_EVT9 = 1 << 8,
-        THREAD_FLAG_EVT7 = 1 << 9,
-        THREAD_FLAG_APPEXCEPTION = 1 << 10,
-    };
-
-    enum ThreadState{
-        THREAD_STATE_NONE,
-        THREAD_STATE_INIT,
-        THREAD_STATE_LOGIN,
-        THREAD_STATE_RUN,
-        THREAD_STATE_LOGOUT,
-        THREAD_STATE_SHUTDOWN,
-    };
-
-public:
-    CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
-    virtual ~CWorkThread();
-    virtual void wkUpdate();                           //0x88
-    virtual void wkRender(){}                          //0x8C
-    virtual void wkRenderAfter(){}                     //0x90
-    virtual bool wkStandbyLogin();                     //0x94
-    virtual bool wkStandbyLogout();                    //0x98
-    virtual bool wkStandbyExceptionRetry(WORK_ID wid){ //0x9C
-        return true;
-    }
-
-    void wkReplaceHasChild(int capacity);
-    void wkEntryChild(CWorkThread* pChild, bool prepend);
-    void wkRemoveChild(CWorkThread* pChild);
-
-    void wkSetEvent(EVT evt);
-    void wkSetEventChild(EVT evt);
-
-    bool wkCheckTimeout(u32 arg0, bool arg1, const char* pMessage);
-    bool wkIsCurrent() const;
-    void func_804385CC(u32);
-
-    void wkTimeoutInit();
-    void wkStandby();
-
-    static CWorkThread* getWorkThread(WORK_ID wid);
-    CWorkThread* getWorkThread(const char* name);
-
-    CWorkThread* wkGetChild(){
-        return mChildren.front();
-    }
-    CWorkThread* wkGetChild() const {
-        return mChildren.front();
-    }
-
-    bool isRunning() const {
-        return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
-    }
-
-    bool isException() const {
-        return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
-    }
-
-    bool isEvent3() const {
-        return checkFlag(THREAD_FLAG_EVT3) ? true : mMsgQueue.find(EVT_3) >= 0;
-    }
-    
-    bool isNoEvent() const {
-        return checkFlag(THREAD_FLAG_NO_EVENT);
-    }
-
-    bool isPaused() const {
-        return checkFlag(THREAD_FLAG_PAUSE) && checkFlag(THREAD_FLAG_EVT4);
-    }
-
-    bool isEvent7() const {
-        return checkFlag(THREAD_FLAG_EVT7) && !checkFlag(THREAD_FLAG_EVT9);
-    }
-
-    bool isAppException() const {
-        return checkFlag(THREAD_FLAG_APPEXCEPTION);
-    }
-
-    bool checkFlag(ThreadFlags flag) const {
-        return mFlags & flag;
-    }
-
-    bool hasSingleChild() const {
-        return mChildren.size() == 1;
-    }
-
-    //0x0: vtable
-    ml::FixStr<64> mName;            //0x4
-    ThreadState mState;              //0x48
-    WORK_ID mWorkID;                 //0x4C
-    ThreadType mType;                //0x50
-    mtl::ALLOC_HANDLE mAllocHandle;  //0x54
-    CWorkThread* mParent;            //0x58
-    reslist<CWorkThread*> mChildren; //0x5C
-    u32 mFlags;                      //0x7C
-    CMsgParam<8> mMsgQueue;          //0x80
-    u32 unk1BC;
-    WORK_ID mExceptionWorkID; //0x1C0
-
-private:
-    bool wkStandbyInit();
-    bool wkStandbyRun();
-    bool wkStandbyShutdown();
-};
-
-//Utility macros b/c i don't wanna type this out every time
-//TODO: improve these macros
-
-#define DECL_WORKTHREAD_CREATE(class)                                            \
-    static class* create(const char* pName, CWorkThread* pParent){               \
-        WORK_ID id = CWorkThreadSystem::getWorkMem();                            \
-        class* threadClass = new (id) class(pName, pParent);                     \
-        CWorkUtil::entryWork(threadClass, pParent, false);                       \
-        return threadClass;                                                      \
-    }                                                                            \
-
-#define CREATE_WORKTHREAD(class, parent) class::create(#class, parent);
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 5 "monolib/work/CWorkUtil.hpp" */
-/* end "monolib/work/CWorkUtil.hpp" */
-
-class CWorkControl : public CWorkThread{
-public:
-    static CWorkControl* getInstance();
-    static CWorkControl* create(CWorkThread* pParent);
-    static CWorkControl* create(const char* pName, CWorkThread* pParent);
-
-    static bool setFlowSetup();
-    static void pause(bool paused);
-    static bool hasFlow();
-
-    virtual bool wkStandbyLogin();  //0x94
-    virtual bool wkStandbyLogout(); //0x98
-
-private:
-    static const int MAX_CHILD = 32;
-
-private:
-    CWorkControl(const char* pName, CWorkThread* pParent);
-    virtual ~CWorkControl();
-
-private:
-    char unk1C8[4];
-
-private:
-    static CWorkControl* spInstance;
-};
-/* end "monolib/work/CWorkControl.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 6 "monolib/work/CWorkFlowSetup.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 5 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 6 "monolib/work/CWorkUtil.hpp" */
-/* end "monolib/work/CWorkUtil.hpp" */
-
-class CWorkFlowSetup : public CWorkThread{
-public:
-    static CWorkFlowSetup* getInstance();
-
-    DECL_WORKTHREAD_CREATE(CWorkFlowSetup);
-
-    virtual bool wkStandbyLogin();  //0x94
-    virtual bool wkStandbyLogout(); //0x98
-
-private:
-    CWorkFlowSetup(const char* pName, CWorkThread* pParent);
-    virtual ~CWorkFlowSetup();
-
-private:
-    u32 unk1C4;
-
-    static CWorkFlowSetup* spInstance;
-};
-/* end "monolib/work/CWorkFlowSetup.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 7 "monolib/work/CWorkFlowShutdownAll.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowShutdownAll.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowShutdownAll.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowShutdownAll : public CWorkThread{
-public:
-    static CWorkFlowShutdownAll* getInstance();
-
-private:
-    static CWorkFlowShutdownAll* spInstance;
-};
-/* end "monolib/work/CWorkFlowShutdownAll.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 8 "monolib/work/CWorkFlowWiiMenu.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiMenu.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiMenu.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowWiiMenu : public CWorkThread{
-public:
-    static CWorkFlowWiiMenu* getInstance();
-
-private:
-    static CWorkFlowWiiMenu* spInstance;
-};
-/* end "monolib/work/CWorkFlowWiiMenu.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 9 "monolib/work/CWorkFlowWiiPowerOff.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiPowerOff.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiPowerOff.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowWiiPowerOff : public CWorkThread{
-public:
-    static CWorkFlowWiiPowerOff* getInstance();
-
-private:
-    static CWorkFlowWiiPowerOff* spInstance;
-};
-/* end "monolib/work/CWorkFlowWiiPowerOff.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 10 "monolib/work/CWorkFlowWiiReset.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiReset.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkFlowWiiReset.hpp" line 4 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkFlowWiiReset : public CWorkThread{
-public:
-    static CWorkFlowWiiReset* getInstance();
-
-private:
-    static CWorkFlowWiiReset* spInstance;
-};
-/* end "monolib/work/CWorkFlowWiiReset.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 11 "monolib/work/CWorkRoot.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 4 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-/*
-Main game framework class. It handles setting up/cleaning up most of the framework
-components, and contains the core program loop, which is responsible for managing/
-updating all of the threads/processes the game uses as well as other things. This
-includes the main game process, which gets ran by CDesktop, which itself is ran
-by this class.
-*/
-class CWorkRoot{
-public:
-
-    static void initialize();
-    static void destroy();
-
-    static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);
-    static void standbyWork(CWorkThread* pThread, bool arg1);
-    static void updateWork(CWorkThread* pThread, bool arg1);
-    static void standbyWork();
-    static void renderWork();
-
-    static bool runSingle();
-    static void exit();
-    static void run();
-    static void preRetraceCallback(u32 retraceCount);
-
-    static void setException(CException* pException);
-    static CException* getException();
-
-private:
-    enum ExitMode {
-        EXIT_PROG_END,
-        EXIT_WII_MENU,
-        EXIT_RESTART,
-        EXIT_SHUTDOWN
-    };
-
-    static bool dummy1(CWorkThread* pThread);
-    static inline bool isShutdownAll();
-    static inline void initializeComponents();
-    static inline void destroyComponents();
-
-    static ExitMode sExitMode;
-    static CException* sException;
-    static CErrorWii sErrorWii;
-};
-/* end "monolib/work/CWorkRoot.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 12 "monolib/work/CWorkSystem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystem.hpp" line 2 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkSystem.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-class CWorkSystem : public CWorkThread {
-public:
-    typedef void (*ExitFunc)();
-
-public:
-    CWorkSystem(const char *pName, CWorkThread *pParent);
-    virtual ~CWorkSystem();
-
-    static CWorkSystem* getInstance();
-    static bool isOff();
-    static mtl::ALLOC_HANDLE getMem();
-    static bool isPowerOff();
-    static bool isReset();
-    static void setSaveLoadInvalidReset(bool state);
-
-    virtual void wkUpdate();
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-    static CWorkSystem* create();
-    DECL_WORKTHREAD_CREATE(CWorkSystem);
-
-    static void setExitFunc(ExitFunc func);
-    static void callExitFunc();
-
-private:
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    mtl::ALLOC_HANDLE mMemHandle; //0x1C4
-    bool mPowerOff; //0x1C8
-    bool mReset; //0x1C9
-    bool mSaveLoadInvalidReset; //0x1CA
-    u8 unk1CB[0x1D0 - 0x1CB];
-
-    static CWorkSystem* spInstance;
-    static ExitFunc sExitFunc;
-};
-
-//Reset handling functions. Due to string pooling, these had to have been defined outside of a class as static functions.
-
-/* TODO: Ideally this wouldn't need to be a macro, but for files using O4,s (CWorkSystem.cpp), if a function
-ends up calling the same function twice, which happens in CWorkSystem::wkUpdate, it refuses to inline it. */
-#define prepareReset(){          \
-    CWorkSystem::callExitFunc(); \
-                                 \
-    VISetBlack(VI_TRUE);         \
-    VIFlush();                   \
-                                 \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-    VIWaitForRetrace();          \
-}                           
-
-static inline void resetGame(bool direct){
-    if(!direct){
-        prepareReset();
-    }
-
-    //Restart
-    OSReport("exit wii reset\n");
-    OSRestart(0);
+inline GXColorS10 GetRGBAS10(s16 r, s16 g, s16 b, s16 a) {
+    return (GXColorS10){r, g, b, a};
 }
 
-static inline void shutdownGame(bool direct){
-    if(!direct){
-        prepareReset();
-    }
+} // namespace detail
+} // namespace g3d
+} // namespace nw4r
 
-    //Restart
-    OSReport("exit wii power off\n");
-    OSShutdownSystem();
-}
+#endif
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
 
-
-static inline void returnToWiiMenu(bool direct){
-    if(!direct){
-        prepareReset();
-    }
-
-    //Restart
-    OSReport("exit wii menu\n");
-    OSShutdownSystem();
-}
-/* end "monolib/work/CWorkSystem.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 13 "monolib/work/CWorkSystemMem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystemMem.hpp" line 2 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkSystemMem.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-class CWorkSystemMem : public CWorkThread {
-public:
-    CWorkSystemMem(const char* pName, CWorkThread* pParent);
-    virtual ~CWorkSystemMem();
-
-    DECL_WORKTHREAD_CREATE(CWorkSystemMem);
-
-    static mtl::ALLOC_HANDLE getHandle();
-
-    virtual bool wkStandbyLogin();
-    virtual bool wkStandbyLogout();
-
-private:
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    mtl::ALLOC_HANDLE mHandle; //0x1C4
-
-    static const u32 REGION_SIZE = 0x1000 - sizeof(mtl::MemBlock);
-
-    static CWorkSystemMem* spInstance;
-};
-/* end "monolib/work/CWorkSystemMem.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 14 "monolib/work/CWorkSystemCache.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystemCache.hpp" line 2 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkSystemCache.hpp" line 3 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-
-class CWorkSystemCache : public CWorkThread {
-public:
-    CWorkSystemCache(const char* pName, CWorkThread* pParent);
-
-    DECL_WORKTHREAD_CREATE(CWorkSystemCache);
-
-    //inline CWorkSystemCache* create(){
-    //    return new (CWorkThreadSystem::getWorkMem()) CWorkSystemCache()
-    //}
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u8 unk1E8[0x1E8 - 0x1C4];
-};
-/* end "monolib/work/CWorkSystemCache.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 15 "monolib/work/CWorkSystemPack.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkSystemPack.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkSystemPack.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-
-class CWorkSystemPack : public CWorkThread {
-public:
-    CWorkSystemPack(const char* pName, CWorkThread* pParent);
-
-    DECL_WORKTHREAD_CREATE(CWorkSystemPack);
-
-    static bool func_804DDFBC(UNKWORD r3);
-    static bool func_804DDDF4(const char* r3, void* r4, u32* r5);
-    static bool func_804DE08C();
-    static bool func_804DE100();
-    static void SavePkhFilenamesArrayPtr(const char* const[]);
-    static void SaveStaticArcFilenameStringPtr(const char* const*);
-
-    //0x0: vtable
-    //0x0-1c4: CWorkThread
-    u8 unk1C4[0x208 - 0x1C4];
-};
-/* end "monolib/work/CWorkSystemPack.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 16 "monolib/work/CWorkThread.hpp" */
-/* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 17 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 18 "monolib/work/CWorkUtil.hpp" */
-/* end "monolib/work/CWorkUtil.hpp" */
-/* "libs/monolib/include/monolib/work.hpp" line 19 "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work/IWorkEvent.hpp" */
-/* end "monolib/work.hpp" */
-
-struct ScnRenderCB {
-    IScnRender* cb; //0x0
-    u32 prio; //0x4
-    u8 flag; //0x8
-}; // size = 0xC
-
-// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
-struct UnkScn68 {
-    u8 unk00[0x34];
-    s32 unk34; //0x34
-};
-
-// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
-struct UnkScn8C {
-    virtual ~UnkScn8C() {}
-    virtual void vf0C() = 0;
-    virtual void vf10() = 0;
-    virtual void vf14() = 0;
-    virtual void vf18() = 0;
-    virtual void vf1C() = 0;
-};
-
-// IScnRender draw callback shape: vt+0xC(cb, scn).
-struct IScnRenderDraw {
-    virtual ~IScnRenderDraw() {}
-    virtual void onRender(CScn* scn) = 0;
-};
-
-class CScn : public CTTask<CScn>, public IWorkEvent{
-public:
-    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
-    void removeRenderCB(IScnRender* cb);
-    virtual void Draw();
-
-    //0x000: vtable 1 (CTTask)
-    //0x000-054: CTTask
-    //0x054: vtable 2 (IWorkEvent)
-    u8 unk58[0x68 - 0x058]; //0x058
-    UnkScn68* mCamWork; //0x068
-    u8 unk6C[0x8C - 0x06C]; //0x06C
-    UnkScn8C* mUnk8C; //0x08C
-    u8 unk90[0x0B4 - 0x090]; //0x090
-    ICulling* unkB4; //0x0B4
-    u32 unkB8; //0x0B8
-    ScnRenderCB mRenderCBs[64]; //0x0BC
-    u32 mRenderCBCount; //0x3BC
-    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
-    u8 unk_3E4; //0x3E4
-    u8 unk_3E5; //0x3E5
-    u8 unk_3E6; //0x3E6
-    u8 unk_3E7; //0x3E7
-    u8 unk_3E8; //0x3E8
-    u8 unk_3E9; //0x3E9
-    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
-}; // size = 0x3EC
-/* end "monolib/scn/CScn.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 5 "monolib/scn/CScnNw4r.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 2 "monolib/scn/CScn.hpp" */
-/* end "monolib/scn/CScn.hpp" */
-/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 3 "functions.hpp" */
-#pragma once
-
-/* "include/functions.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-//Vec4 constructor? Defined before CTaskGame::Term
-struct func_800407C8_tmp {
-    f32 unk00[4];
-};
-func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
-
-void func_8004302C(int, int);
-bool func_8009CF8C(int);
-void func_8009D018(int, int);
-// Unmangled retail symbol (not func_8009ECB0__Fv).
-extern "C" int* func_8009ECB0();
-void func_8009E574(int*, int, int, int);
-/* end "functions.hpp" */
-
-class CScnNw4r : public CScn{
-public:
-    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
-    void func_8007DAE0(int arg1, f32* arg2);
-
-private:
-    //0x000-0x3EC CScn
-}; // size = 0x3EC
-/* end "monolib/scn/CScnNw4r.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 6 "monolib/scn/CScnRootNw4r.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnRootNw4r.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* end "monolib/scn/CScnRootNw4r.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 7 "monolib/scn/CScnTexWorkMan.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 3 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-mtl::ALLOC_HANDLE func_80490098();
-void func_804900A0(u32 r3);
-/* end "monolib/scn/CScnTexWorkMan.hpp" */
-/* "libs/monolib/include/monolib/scn.hpp" line 8 "monolib/scn/IScnRender.hpp" */
-#pragma once
-
-class IScnRender {
-public:
-    virtual ~IScnRender(){}
-    virtual void cbRenderBefore();
-};
-/* end "monolib/scn/IScnRender.hpp" */
-/* end "monolib/scn.hpp" */
-/* "src/kyoshin/menu/CMenuArtsSelect.hpp" line 5 "nw4r/lyt/lyt_layout.h" */
-#ifndef NW4R_LYT_LAYOUT_H
-#define NW4R_LYT_LAYOUT_H
-/* "libs/nw4r/include/nw4r/lyt/lyt_layout.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/lyt/lyt_layout.h" line 4 "nw4r/lyt/lyt_animation.h" */
-#ifndef NW4R_LYT_ANIMATION_H
-#define NW4R_LYT_ANIMATION_H
-/* "libs/nw4r/include/nw4r/lyt/lyt_animation.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/lyt/lyt_animation.h" line 4 "nw4r/lyt/lyt_common.h" */
-#ifndef NW4R_LYT_COMMON_H
-#define NW4R_LYT_COMMON_H
-/* "libs/nw4r/include/nw4r/lyt/lyt_common.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/lyt/lyt_common.h" line 4 "nw4r/math.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 6 "nw4r/math.h" */
 /* end "nw4r/math.h" */
-/* "libs/nw4r/include/nw4r/lyt/lyt_common.h" line 5 "nw4r/ut.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 8 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct CameraData {
+    enum Flag {
+        FLAG_CAM_LOOKAT = (1 << 0),
+        FLAG_CAM_ROTATE = (1 << 1),
+        FLAG_CAM_AIM = (1 << 2),
+        FLAG_CAM_MTX_READY = (1 << 3),
+
+        FLAG_PROJ_FRUSTUM = (1 << 4),
+        FLAG_PROJ_PERSP = (1 << 5),
+        FLAG_PROJ_ORTHO = (1 << 6),
+        FLAG_PROJ_MTX_READY = (1 << 7),
+
+        FLAG_VI_ODD_FIELD = (1 << 8),
+    };
+
+    math::MTX34 cameraMtx;     // at 0x0
+    math::MTX44 projMtx;       // at 0x30
+    u32 flags;                 // at 0x70
+    math::VEC3 cameraPos;      // at 0x74
+    math::VEC3 cameraUp;       // at 0x80
+    math::VEC3 cameraTarget;   // at 0x8C
+    math::VEC3 cameraRotate;   // at 0x98
+    f32 cameraTwist;           // at 0xA4
+    GXProjectionType projType; // at 0xA8
+    f32 projFovy;              // at 0xAC
+    f32 projAspect;            // at 0xB0
+    f32 projNear;              // at 0xB4
+    f32 projFar;               // at 0xB8
+    f32 projTop;               // at 0xBC
+    f32 projBottom;            // at 0xC0
+    f32 projLeft;              // at 0xC4
+    f32 projRight;             // at 0xC8
+    f32 lightScaleS;           // at 0xCC
+    f32 lightScaleT;           // at 0xD0
+    f32 lightTransS;           // at 0xD4
+    f32 lightTransT;           // at 0xD8
+    math::VEC2 viewportOrigin; // at 0xDC
+    math::VEC2 viewportSize;   // at 0xE4
+    f32 viewportNear;          // at 0xEC
+    f32 viewportFar;           // at 0xF0
+    u32 scissorX;              // at 0xF4
+    u32 scissorY;              // at 0xF8
+    u32 scissorWidth;          // at 0xFC
+    u32 scissorHeight;         // at 0x100
+    s32 scissorOffsetX;        // at 0x104
+    s32 scissorOffsetY;        // at 0x108
+};
+
+class Camera : public ResCommon<CameraData> {
+public:
+    enum PostureType { POSTURE_LOOKAT, POSTURE_ROTATE, POSTURE_AIM };
+
+    struct PostureInfo {
+        PostureType tp;          // at 0x0
+        math::VEC3 cameraUp;     // at 0x4
+        math::VEC3 cameraTarget; // at 0x10
+        math::VEC3 cameraRotate; // at 0x1C
+        f32 cameraTwist;         // at 0x28
+    };
+
+public:
+    explicit Camera(CameraData* pData);
+
+    void Init();
+    void Init(u16 efbWidth, u16 efbHeight, u16 xfbWidth, u16 xfbHeight,
+              u16 viWidth, u16 viHeight);
+
+    void SetPosition(f32 x, f32 y, f32 z);
+    void SetPosition(const math::VEC3& rPos);
+
+    void SetPosture(const PostureInfo& rInfo);
+    void SetCameraMtxDirectly(const math::MTX34& rMtx);
+    void SetPerspective(f32 fovy, f32 aspect, f32 near, f32 far);
+    void SetOrtho(f32 top, f32 bottom, f32 left, f32 right, f32 near, f32 far);
+    void SetProjectionMtxDirectly(const math::MTX44* pMtx);
+
+    void SetScissor(u32 x, u32 y, u32 width, u32 height);
+    void SetScissorBoxOffset(s32 ox, s32 oy);
+
+    void SetViewport(f32 x, f32 y, f32 width, f32 height);
+    void SetViewportZRange(f32 near, f32 far);
+    void GetViewport(f32* pX, f32* pY, f32* pWidth, f32* pHeight, f32* pNear,
+                     f32* pFar) const;
+
+    void GetCameraMtx(math::MTX34* pMtx) const;
+    void GetProjectionMtx(math::MTX44* pMtx) const;
+    void GetProjectionTexMtx(math::MTX34* pMtx) const;
+    void GetEnvironmentTexMtx(math::MTX34* pMtx) const;
+
+    void GXSetViewport() const;
+    void GXSetProjection() const;
+    void GXSetScissor() const;
+    void GXSetScissorBoxOffset() const;
+
+    GXProjectionType GetProjectionType() const {
+        return ref().projType;
+    }
+
+private:
+    void UpdateCameraMtx() const;
+    void UpdateProjectionMtx() const;
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_camera.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 5 "nw4r/g3d/g3d_fog.h" */
+#ifndef NW4R_G3D_FOG_H
+#define NW4R_G3D_FOG_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 6 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 7 "nw4r/ut.h" */
 #ifndef NW4R_PUBLIC_UT_H
 #define NW4R_PUBLIC_UT_H
 
@@ -22039,7 +18442,8 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
@@ -22171,6 +18575,405 @@ typedef TagProcessorBase<char> TagProcessor;
 /* end "nw4r/math.h" */
 
 /* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 9 "cstdio" */
+#ifndef MSL_CPP_CSTDIO_H
+#define MSL_CPP_CSTDIO_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstdio" line 2 "stdio.h" */
+#ifndef MSL_STDIO_H
+#define MSL_STDIO_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+#ifndef STDIO_API_H
+#define STDIO_API_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+#ifndef _MSL_COMMON_FILE_STRUC_H
+#define _MSL_COMMON_FILE_STRUC_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
+/* end "types.h" */
+
+typedef unsigned long __file_handle;
+typedef unsigned long fpos_t;
+typedef struct _FILE _FILE, *P_FILE;
+
+#define __ungetc_buffer_size 2
+
+enum __file_kinds {
+    __closed_file,
+    __disk_file,
+    __console_file,
+    __unavailable_file
+};
+
+enum __open_modes {
+    __must_exist,
+    __create_if_necessary,
+    __create_or_truncate
+};
+
+enum __file_orientation {
+    __unoriented,
+    __char_oriented,
+    __wide_oriented
+};
+
+enum __io_modes {
+    __read = 1,
+    __write = 2,
+    __read_write = 3,
+    __append = 4
+};
+
+typedef struct __file_modes {
+    u32 open_mode : 2;
+    u32 io_mode : 3;
+    u32 buffer_mode : 2;
+    u32 file_kind : 3;
+
+#ifdef _MSL_WIDE_CHAR
+    u32 file_orientation : 2;
+#endif /* _MSL_WIDE_CHAR */
+
+    u32 binary_io : 1;
+} __file_modes;
+
+enum __io_states {
+    __neutral,
+    __writing,
+    __reading,
+    __rereading
+};
+
+typedef struct __file_state {
+    u32 io_state : 3;
+    u32 free_buffer : 1;
+    u8 eof;
+    u8 error;
+} __file_state;
+
+typedef void* __ref_con;
+typedef void (*__idle_proc)(void);
+typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
+typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
+typedef int (*__close_proc)(__file_handle file);
+
+struct _FILE {
+    __file_handle handle;                           // _00
+    __file_modes mode;                              // _04
+    __file_state state;                              // _08
+    u8 is_dynamically_allowed;                      // _0C
+    u8 char_buffer;                                 // _0D
+    u8 char_buffer_overflow;                        // _0E
+    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
+    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
+    u32 position;                                   // _18
+    u8* buffer;                                   // _1C
+    u32 buffer_size;                                // _20
+    u8* buffer_ptr;                               // _24
+    u32 buffer_len;                                 // _28
+    u32 buffer_alignment;                           // _2C
+    u32 saved_buffer_len;                           // _30
+    u32 buffer_pos;                                 // _34
+    __pos_proc position_proc;                       // _38
+    __io_proc read_proc;                            // _3C
+    __io_proc write_proc;                           // _40
+    __close_proc close_proc;                        // _44
+    __ref_con ref_con;                              // _48
+    _FILE* next_file_struct;                        // _4C
+};
+
+typedef struct _FILE FILE;
+
+
+#define _IONBF 0
+#define _IOLBF 1
+#define _IOFBF 2
+
+// define standard C file pointer location names
+#define SEEK_SET (0)
+#define SEEK_CUR (1)
+#define SEEK_END (2)
+
+#define stdin &(__files[0])
+#define stdout &(__files[1])
+#define stderr &(__files[2])
+
+#define _STATIC_FILES 4
+
+extern FILE __files[];
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
+#ifndef MSL_WCHAR_H
+#define MSL_WCHAR_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+#ifndef _WCHAR_IO_H
+#define _WCHAR_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fwide(FILE* stream, int mode);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+#ifndef MSL_WCSTOUL_H
+#define MSL_WCSTOUL_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
+/* end "types.h" */
+
+
+unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
+//__wcstoull
+//wcstoul
+//wcstoull
+long wcstol(const wchar_t*, wchar_t**, int);
+//wcstoll
+//watoi
+//watol
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+#ifndef MSL_WMEM_H
+#define MSL_WMEM_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
+/* end "types.h" */
+
+wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
+wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
+void* memmove(void*, const void*, size_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+#ifndef MSL_WPRINTF_H
+#define MSL_WPRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
+/* end "stdio.h" */
+
+//wprintf
+//wprintf_s
+//fwprintf
+//fwprintf_s
+//vwprintf
+//vwprintf_s
+//vfwprintf
+//vfwprintf_s
+int swprintf(wchar_t*, size_t, const wchar_t*, ...);
+//swprintf_s
+//snwprintf_s
+int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
+//vswprintf_s
+//vsnwprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+#ifndef MSL_WSTRING_H
+#define MSL_WSTRING_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
+/* end "types.h" */
+
+size_t wcslen(const wchar_t*);
+wchar_t* wcscpy(wchar_t*, const wchar_t*);
+wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
+wchar_t* wcscat(wchar_t*, const wchar_t*);
+int wcscmp(const wchar_t*, const wchar_t*);
+wchar_t* wcschr(const wchar_t*, wchar_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "wchar.h" */
+
+enum __ReadProcActions {
+    __GetAChar,
+    __UngetAChar,
+    __TestForError
+};
+
+enum __WReadProcActions
+{
+    __GetAwChar,
+    __UngetAwChar,
+    __TestForwcsError
+};
+
+typedef struct {
+    char* CharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __OutStrCtrl;
+
+typedef struct{
+    char* NextChar;
+    int NullCharDetected;
+} __InStrCtrl;
+
+typedef struct {
+    wchar_t * wCharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __wOutStrCtrl;
+
+typedef struct {
+    wchar_t * wNextChar;
+    int    wNullCharDetected;
+} __wInStrCtrl;
+
+//__fread
+size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
+int __StringRead(void *, int, int);
+wint_t __wStringRead(void*, wint_t, int);
+
+#endif // STDIO_API_H
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+#ifndef MSL_FILE_POS_H
+#define MSL_FILE_POS_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+int fseek(FILE* stream, u32 offset, int whence);
+int _fseek(FILE* stream, u32 offset, int whence);
+int ftell(FILE* stream);
+int _ftell(FILE* stream);
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+#ifndef MSL_FILE_IO_H
+#define MSL_FILE_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fclose(FILE* file);
+int fflush(FILE* file);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+#ifndef MSL_PRINTF_H
+#define MSL_PRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+
+//printf
+//printf_s
+int fprintf(FILE*, const char* format, ...);
+//fprintf_s
+int vprintf(const char*, va_list);
+//vprintf_s
+//vfprintf
+//vfprintf_s
+int vsnprintf(char*, size_t, const char*, va_list);
+//vsnprintf_s
+int vsprintf(char*, const char*, va_list);
+//vsprintf_s
+int snprintf(char*, size_t, const char*, ...);
+//snprintf_s
+int sprintf(char*, const char*, ...);
+//sprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+#ifndef MSL_SCANF_H
+#define MSL_SCANF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+
+//fscanf
+//fscanf_s
+//vscanf
+//scanf
+//scanf_s
+//vfscanf
+//vfscanf_s
+int vsscanf(const char*, const char*, va_list);
+//vsscanf_s
+int sscanf(const char*, const char*, ...);
+//sscanf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "stdio.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::fclose;
+using ::fflush;
+using ::FILE;
+using ::ftell;
+using ::fwide;
+using ::snprintf;
+using ::sprintf;
+using ::sscanf;
+using ::vprintf;
+using ::vsnprintf;
+using ::vsprintf;
+} // namespace std
+
+#endif
+#endif
 /* end "cstdio" */
 /* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 10 "cwchar" */
 #ifndef MSL_CPP_CWCHAR_H
@@ -23142,6 +19945,8043 @@ private:
 /* end "nw4r/ut/ut_lock.h" */
 
 #endif
+/* end "nw4r/ut.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 9 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct FogData {
+    GXFogType type;         // at 0x0
+    f32 startz;             // at 0x4
+    f32 endz;               // at 0x8
+    f32 nearz;              // at 0xC
+    f32 farz;               // at 0x10
+    GXColor color;          // at 0x14
+    GXBool adjEnable;       // at 0x18
+    u8 PADDING_0x19;        // at 0x19
+    u16 adjCenter;          // at 0x1A
+    GXFogAdjTable adjTable; // at 0x1C
+};
+
+class Fog : public ResCommon<FogData> {
+public:
+    explicit Fog(FogData* pData);
+
+    void Init();
+    Fog CopyTo(void* pDst) const;
+
+    void SetFogRangeAdjParam(u16 width, u16 center,
+                             const math::MTX44& rProjMtx);
+    void SetGP() const;
+
+    void SetFogType(GXFogType type) {
+        if (!IsValid()) {
+            return;
+        }
+
+        ref().type = type;
+    }
+
+    void SetZ(f32 startZ, f32 endZ) {
+        if (!IsValid()) {
+            return;
+        }
+
+        FogData& r = ref();
+
+        r.startz = startZ;
+        r.endz = endZ;
+    }
+
+    void SetNearFar(f32 nearZ, f32 farZ) {
+        if (!IsValid()) {
+            return;
+        }
+
+        FogData& r = ref();
+
+        r.nearz = nearZ;
+        r.farz = farZ;
+    }
+
+    void SetFogColor(GXColor color) {
+        if (!IsValid()) {
+            return;
+        }
+
+        ref().color = color;
+    }
+
+    void GetFog(GXFogType* type, f32* startz, f32* endz,
+                f32* nearz, f32* farz, GXColor* color);
+
+    bool IsFogRangeAdjEnable() const {
+        return IsValid() && ref().adjEnable == TRUE;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_fog.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 6 "nw4r/g3d/res/g3d_resmat.h" */
+#ifndef NW4R_G3D_RES_RES_MAT_H
+#define NW4R_G3D_RES_RES_MAT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 4 "nw4r/g3d/res/g3d_resanmtexsrt.h" */
+#ifndef NW4R_G3D_RES_RES_ANM_TEX_SRT_H
+#define NW4R_G3D_RES_RES_ANM_TEX_SRT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 4 "nw4r/g3d/res/g3d_resanm.h" */
+#ifndef NW4R_G3D_RES_RES_ANM_H
+#define NW4R_G3D_RES_RES_ANM_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanm.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * ResKeyFrame
+ *
+ ******************************************************************************/
+struct ResKeyFrameData {
+    f32 frame; // at 0x0
+    f32 value; // at 0x4
+    f32 slope; // at 0x8
+};
+
+struct ResKeyFrameAnmData {
+    u16 numKeyFrame;              // at 0x0
+    u8 PADDING_0x2[0x4 - 0x2];    // at 0x2
+    f32 invKeyFrameRange;         // at 0x4
+    ResKeyFrameData keyFrames[1]; // at 0x8
+};
+
+namespace detail {
+
+f32 GetResKeyFrameAnmResult(const ResKeyFrameAnmData* pData, f32 frame);
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResAnm
+ *
+ ******************************************************************************/
+enum AnmPolicy { ANM_POLICY_ONETIME, ANM_POLICY_LOOP, ANM_POLICY_MAX };
+
+union ResAnmData {
+    f32 constValue;           // at 0x0
+    s32 toResKeyFrameAnmData; // at 0x0
+};
+
+namespace detail {
+
+inline f32 GetResAnmResult(const ResAnmData* pData, f32 frame, bool constant) {
+    if (constant) {
+        return pData->constValue;
+    }
+
+    const ResKeyFrameAnmData* pFrameData =
+        reinterpret_cast<const ResKeyFrameAnmData*>(
+            reinterpret_cast<const char*>(pData) + pData->toResKeyFrameAnmData);
+
+    return GetResKeyFrameAnmResult(pFrameData, frame);
+}
+
+template <typename T> inline f32 ClipFrame(const T& rInfo, f32 frame) {
+    if (frame <= 0.0f) {
+        return 0.0f;
+    }
+
+    if (rInfo.numFrame <= frame) {
+        return rInfo.numFrame;
+    }
+
+    return frame;
+}
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResColorAnm
+ *
+ ******************************************************************************/
+union ResColorAnmData {
+    u32 constValue;              // at 0x0
+    s32 toResColorAnmFramesData; // at 0x0
+};
+struct ResColorAnmFramesData {
+    u32 frameColors[1]; // at 0x0
+};
+
+namespace detail {
+
+u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame);
+
+inline u32 GetResColorAnmResult(const ResColorAnmData* pData, f32 frame,
+                                bool constant) {
+    if (constant) {
+        return pData->constValue;
+    }
+
+    const ResColorAnmFramesData* pFrameData =
+        reinterpret_cast<const ResColorAnmFramesData*>(
+            reinterpret_cast<const char*>(pData) +
+            pData->toResColorAnmFramesData);
+
+    return GetResColorAnmResult(pFrameData, frame);
+}
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResBoolAnm
+ *
+ ******************************************************************************/
+union ResBoolAnmData {
+    s32 toResBoolAnmFramesData; // at 0x0
+};
+struct ResBoolAnmFramesData {
+    u32 boolBits[1]; // at 0x0
+};
+
+namespace detail {
+
+inline bool GetResBoolAnmFramesResult(const ResBoolAnmFramesData* pData,
+                                      int frame) {
+    const u32* pBits = pData->boolBits;
+    u32 index = static_cast<u32>(frame);
+
+    u32 wordIdx = index / 32;
+    u32 bitIdx = index % 32;
+
+    u32 targetBit = (1U << 31) >> bitIdx;
+    u32 bitWord = pBits[wordIdx];
+
+    return bitWord & targetBit;
+}
+
+inline bool GetResBoolAnmResult(const ResBoolAnmData* pData, int frame) {
+    const ResBoolAnmFramesData* pFrameData =
+        reinterpret_cast<const ResBoolAnmFramesData*>(
+            reinterpret_cast<const char*>(pData) +
+            pData->toResBoolAnmFramesData);
+
+    return GetResBoolAnmFramesResult(pFrameData, frame);
+}
+
+} // namespace detail
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resanm.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 6 "nw4r/g3d/res/g3d_resdict.h" */
+#ifndef NW4R_G3D_RES_RES_DICT_H
+#define NW4R_G3D_RES_RES_DICT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resdict.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resdict.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResDicNodeData {
+    u16 ref;       // at 0x0
+    u16 flag;      // at 0x2
+    u16 idxLeft;   // at 0x4
+    u16 idxRight;  // at 0x6
+    s32 ofsString; // at 0x8
+    s32 ofsData;   // at 0xC
+};
+
+struct ResDicData {
+    u32 size;               // at 0x0
+    u32 numData;            // at 0x4
+    ResDicNodeData data[1]; // at 0x8
+};
+
+class ResDic : public ResCommon<ResDicData> {
+public:
+    static const s32 NOT_FOUND = -1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResDic);
+
+    void* operator[](const char* pName) const;
+    void* operator[](const ResName name) const;
+    void* operator[](int idx) const {
+        if (IsValid()) {
+            return const_cast<void*>(
+                ofs_to_ptr<void>(ref().data[idx + 1].ofsData));
+        }
+
+        return NULL;
+    }
+
+    s32 GetIndex(const char* s) const;
+    s32 GetIndex(const ResName name) const;
+
+    u32 GetNumData() const {
+        if (IsValid()) {
+            return ptr()->numData;
+        }
+
+        return 0;
+    }
+
+private:
+    ResDicNodeData* Get(const ResName name) const;
+    ResDicNodeData* Get(const char* pName, u32 len) const;
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resdict.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * Common types
+ *
+ ******************************************************************************/
+struct ResAnmTexSrtDataTypedef {
+    static const int NUM_OF_MAT_TEX_MTX = 8;
+    static const int NUM_OF_IND_TEX_MTX = 3;
+    static const int NUM_OF_TEX_MTX = NUM_OF_MAT_TEX_MTX + NUM_OF_IND_TEX_MTX;
+};
+
+struct TexSrtTypedef {
+    enum TexMatrixMode {
+        TEXMATRIXMODE_MAYA,
+        TEXMATRIXMODE_XSI,
+        TEXMATRIXMODE_3DSMAX
+    };
+};
+
+/******************************************************************************
+ *
+ * TexSrtAnmResult
+ *
+ ******************************************************************************/
+struct TexSrt : TexSrtTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        FLAGSET_IDENTITY = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3),
+        NUM_OF_FLAGS = 4
+    };
+
+    f32 Su; // at 0x0
+    f32 Sv; // at 0x4
+    f32 R;  // at 0x8
+    f32 Tu; // at 0xC
+    f32 Tv; // at 0x10
+};
+
+struct TexSrtAnmResult : ResAnmTexSrtDataTypedef, TexSrtTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        // Four bits in 'flags' for each animation
+        NUM_OF_FLAGS = 4
+    };
+
+    u32 flags;                  // at 0x0
+    u32 indFlags;               // at 0x4
+    TexMatrixMode texMtxMode;   // at 0x8
+    TexSrt srt[NUM_OF_TEX_MTX]; // at 0xC
+};
+
+/******************************************************************************
+ *
+ * ResAnmTexSrt
+ *
+ ******************************************************************************/
+struct ResAnmTexSrtTexData {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        FLAG_SCALE_UNIFORM = (1 << 4),
+        FLAG_SCALE_U_CONST = (1 << 5),
+        FLAG_SCALE_V_CONST = (1 << 6),
+
+        FLAG_ROT_CONST = (1 << 7),
+        FLAG_TRANS_U_CONST = (1 << 8),
+        FLAG_TRANS_V_CONST = (1 << 9),
+    };
+
+    u32 flags;          // at 0x0
+    ResAnmData anms[1]; // at 0x4
+};
+
+struct ResAnmTexSrtMatData : ResAnmTexSrtDataTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+
+        NUM_OF_FLAGS = 1
+    };
+
+    s32 name;                     // at 0x0
+    u32 flags;                    // at 0x4
+    u32 indFlags;                 // at 0x8
+    s32 toResAnmTexSrtTexData[1]; // at 0xC
+};
+
+struct ResAnmTexSrtInfoData : TexSrtTypedef {
+    u16 numFrame;             // at 0x0
+    u16 numMaterial;          // at 0x2
+    TexMatrixMode texMtxMode; // at 0x4
+    AnmPolicy policy;         // at 0x8
+};
+
+struct ResAnmTexSrtData {
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toTexSrtDataDic;       // at 0x10
+    s32 toResUserData;         // at 0x14
+    s32 name;                  // at 0x18
+    s32 original_path;         // at 0x1C
+    ResAnmTexSrtInfoData info; // at 0x20
+};
+
+class ResAnmTexSrt : public ResCommon<ResAnmTexSrtData> {
+public:
+    static const u32 SIGNATURE = FOURCC('S', 'R', 'T', '0');
+    static const int REVISION = 5;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResAnmTexSrt);
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const {
+        return GetRevision() == REVISION;
+    }
+
+    void GetAnmResult(TexSrtAnmResult* pResult, u32 idx, f32 frame) const;
+
+    const ResAnmTexSrtMatData* GetMatAnm(int idx) const {
+        return static_cast<ResAnmTexSrtMatData*>(
+            ofs_to_obj<ResDic>(ref().toTexSrtDataDic)[idx]);
+    }
+    const ResAnmTexSrtMatData* GetMatAnm(u32 idx) const {
+        return static_cast<ResAnmTexSrtMatData*>(
+            ofs_to_obj<ResDic>(ref().toTexSrtDataDic)[idx]);
+    }
+
+    int GetNumFrame() const {
+        return ref().info.numFrame;
+    }
+
+    int GetNumMaterial() const {
+        return ref().info.numMaterial;
+    }
+
+    AnmPolicy GetAnmPolicy() const {
+        return ref().info.policy;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resanmtexsrt.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 6 "nw4r/g3d/res/g3d_respltt.h" */
+#ifndef NW4R_G3D_RES_RES_PLTT_H
+#define NW4R_G3D_RES_RES_PLTT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 3 "decomp.h" */
+/**
+ * Codewarrior tricks for matching decomp
+ * (Macros generate prototypes to satisfy -requireprotos)
+ */
+
+#ifndef DECOMP_H
+#define DECOMP_H
+
+/* "include/decomp.h" line 8 "macros.h" */
+/**
+ * Common macros
+ */
+
+#ifndef MACROS_H
+#define MACROS_H
+
+/******************************************************************************
+ *
+ * Strings
+ *
+ ******************************************************************************/
+
+// Stringify expression
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
+// Concatenate strings
+#define __CONCAT(x, y) x##y
+#define CONCAT(x, y) __CONCAT(x, y)
+
+// Multi-character character constants
+// clang-format off
+#define TWOCC(c0, c1)                                                          \
+    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
+#define THREECC(c0, c1, c2)                                                    \
+    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
+#define FOURCC(c0, c1, c2, c3)                                                 \
+    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
+// clang-format on
+
+/******************************************************************************
+ *
+ * Arithmetic
+ *
+ ******************************************************************************/
+
+// Min/max expression
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+// Clamp to a range
+#define CLAMP(low, high, x)                                                    \
+    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
+
+// Round up value
+#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
+#define ROUND_UP_PTR(x, align)                                                 \
+    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
+
+// Round down value
+#define ROUND_DOWN(x, align) ((x) & (-(align)))
+#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
+
+// Distance between pointers
+#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
+
+/******************************************************************************
+ *
+ * Arrays
+ *
+ ******************************************************************************/
+
+// Size of compile-time arrays
+#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#define LENGTHOF(x) ARRAY_SIZE(x)
+
+// Declare an array of hardware registers
+#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
+
+/******************************************************************************
+ *
+ * Intrinsics
+ *
+ ******************************************************************************/
+
+// Memory clear intrinsic
+#define MEMCLR(x) __memclr((x), sizeof(*(x)))
+
+/******************************************************************************
+ *
+ * Attributes
+ *
+ ******************************************************************************/
+
+// Alignment attribute
+#define ALIGN(x) __attribute__((aligned(x)))
+
+// Place a symbol in a specific ELF section
+#define DECL_SECTION(x) __declspec(section x)
+
+// Give a symbol weak linkage
+#define DECL_WEAK __declspec(weak)
+
+#endif
+/* end "macros.h" */
+
+// Compile without matching hacks.
+#if defined(NONMATCHING) || defined(COMPAT_ANY)
+#define DECOMP_FORCEACTIVE(module, ...)
+#define DECOMP_FORCELITERAL(module, ...)
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)
+#define DECOMP_INLINE
+#define DECOMP_DONT_INLINE
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
+#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+// Compile with matching hacks.
+// (This version of CW does not support pragmas inside macros.)
+#else
+// Force reference specific data
+#define DECOMP_FORCEACTIVE(module, ...)                                        \
+    void fake_function(...);                                                   \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
+        fake_function(__VA_ARGS__);                                            \
+    }
+
+// Force literal ordering, such as floats in sdata2
+#define DECOMP_FORCELITERAL(module, ...)                                       \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
+        (__VA_ARGS__);                                                         \
+    }
+
+// Force reference destructor
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
+        cls dummy;                                                             \
+        dummy.~cls();                                                          \
+    }
+
+#define DECOMP_INLINE inline
+#define DECOMP_DONT_INLINE __attribute__((never_inline))
+
+/**
+ * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
+ * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
+ */
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
+/** slwi expansion: rlwinm rD,rA,1,0,30 */
+#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
+
+/**
+ * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
+ * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ */
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+
+#endif
+
+#endif
+/* end "decomp.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 7 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResPlttData {
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toPlttData;            // at 0x10
+    s32 name;                  // at 0x14
+    GXTlutFmt fmt;             // at 0x18
+    u16 numEntries;            // at 0x1C
+    u16 PADDING_0x1E;          // at 0x1E
+    s32 original_path;         // at 0x20
+    s32 toResUserData;         // at 0x24
+};
+
+class ResPltt : public ResCommon<ResPlttData> {
+public:
+    static const u32 SIGNATURE = FOURCC('P', 'L', 'T', '0');
+    static const int REVISION = 1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResPltt);
+
+    void Init() {
+        DCStore(false);
+    }
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const DECOMP_DONT_INLINE {
+        return GetRevision() == REVISION;
+    }
+
+    void DCStore(bool sync);
+
+    u16* GetPlttData() {
+        ResPlttData& r = ref();
+
+        // clang-format off
+        return r.toPlttData != 0
+            ? reinterpret_cast<u16*>(reinterpret_cast<u8*>(&r) + r.toPlttData)
+            : NULL;
+        // clang-format on
+    }
+
+    const u16* GetPlttData() const {
+        const ResPlttData& r = ref();
+
+        // clang-format off
+        return r.toPlttData != 0
+            ? reinterpret_cast<const u16*>(reinterpret_cast<const u8*>(&r) + r.toPlttData)
+            : NULL;
+        // clang-format on
+    }
+
+    GXTlutFmt GetFmt() const {
+        return ref().fmt;
+    }
+
+    u32 GetNumEntries() const {
+        return ref().numEntries;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_respltt.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 7 "nw4r/g3d/res/g3d_restev.h" */
+#ifndef NW4R_G3D_RES_RES_TEV_H
+#define NW4R_G3D_RES_RES_TEV_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// TODO(kiwi) Why?
+static const int TEV_STAGES_PER_DL = 2;
+
+struct ResTevCommonDL {
+    union {
+        struct {
+            u8 swapModeTable[GX_MAX_TEVSWAP][GX_BP_CMD_SZ * 4]; // at 0x0
+            u8 indTexOrder[1][GX_BP_CMD_SZ];                    // at 0x50
+            u8 PADDING_0x55[0x60 - 0x55];                       // at 0x55
+        } dl;
+
+        u8 data[0x60]; // at 0x0
+    };
+};
+
+struct ResTevVariableDL {
+    union {
+        struct {
+            u8 tevKonstantSel[GX_BP_CMD_SZ * 2];                  // at 0x0
+            u8 tevOrder[GX_BP_CMD_SZ];                            // at 0xA
+            u8 tevColorCalc[TEV_STAGES_PER_DL][GX_BP_CMD_SZ];     // at 0xF
+            u8 alphaCalcAndSwap[TEV_STAGES_PER_DL][GX_BP_CMD_SZ]; // at 0x19
+            u8 tevIndirect[TEV_STAGES_PER_DL][GX_BP_CMD_SZ];      // at 0x23
+            u8 PADDING_0x2D[0x30 - 0x2D];                         // at 0x2D
+        } dl;
+
+        u8 data[0x30]; // at 0x0
+    };
+};
+
+struct ResTevDL {
+    union {
+        struct {
+            ResTevCommonDL common; // at 0x0
+            ResTevVariableDL
+                var[GX_MAX_TEVSTAGE / TEV_STAGES_PER_DL]; // at 0x60
+        } dl;
+
+        u8 data[0x1E0]; // at 0x0
+    };
+};
+
+struct ResTevData {
+    u32 size;                               // at 0x0
+    s32 toResMdlData;                       // at 0x4
+    u32 id;                                 // at 0x8
+    u8 nStages;                             // at 0xC
+    u8 PADDING_0xD[0x10 - 0xD];             // at 0xD
+    u8 texCoordToTexMapID[GX_MAX_TEXCOORD]; // at 0x10
+    u8 PADDING_0x18[0x20 - 0x18];           // at 0x18
+    ResTevDL dl;                            // at 0x20
+};
+
+class ResTev : public ResCommon<ResTevData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTev);
+
+    bool GXGetTevSwapModeTable(GXTevSwapSel swap, GXTevColorChan* pR,
+                               GXTevColorChan* pG, GXTevColorChan* pB,
+                               GXTevColorChan* pA) const;
+    void GXSetTevSwapModeTable(GXTevSwapSel swap, GXTevColorChan r,
+                               GXTevColorChan g, GXTevColorChan b,
+                               GXTevColorChan a);
+
+    bool GXGetTevOrder(GXTevStageID stage, GXTexCoordID* pCoord,
+                       GXTexMapID* pMap, GXChannelID* pChannel) const;
+
+    void GXSetTevColorIn(GXTevStageID stage, GXTevColorArg a, GXTevColorArg b,
+                         GXTevColorArg c, GXTevColorArg d);
+
+    void CallDisplayList(bool sync) const;
+
+    ResTev CopyTo(void* pDst);
+
+    void DCStore(bool sync);
+
+    u8 GetNumTevStages() const {
+        return ref().nStages;
+    }
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_restev.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 8 "nw4r/g3d/res/g3d_restex.h" */
+#ifndef NW4R_G3D_RES_RES_TEX_H
+#define NW4R_G3D_RES_RES_TEX_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResTexData {
+    enum Flag {
+        FLAG_CIFMT = (1 << 0),
+    };
+
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toTexData;             // at 0x10
+    s32 name;                  // at 0x14
+    u32 flag;                  // at 0x18
+    u16 width;                 // at 0x1C
+    u16 height;                // at 0x1E
+    union {
+        GXTexFmt fmt;
+        GXCITexFmt cifmt;
+    }; // at 0x20
+    u32 mipmap_level;  // at 0x24
+    f32 min_lod;       // at 0x28
+    f32 max_lod;       // at 0x2C
+    s32 original_path; // at 0x30
+    s32 toResUserData; // at 0x34
+};
+
+class ResTex : public ResCommon<ResTexData> {
+public:
+    static const u32 SIGNATURE = FOURCC('T', 'E', 'X', '0');
+    static const int REVISION = 1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTex);
+
+    void Init();
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const DECOMP_DONT_INLINE {
+        return GetRevision() == REVISION;
+    }
+
+    bool GetTexObjParam(void** ppTexData, u16* pWidth, u16* pHeight,
+                        GXTexFmt* pFormat, f32* pMinLod, f32* pMaxLod,
+                        GXBool* pMipMap) const;
+
+    bool GetTexObjCIParam(void** ppTexData, u16* pWidth, u16* pHeight,
+                          GXCITexFmt* pFormatCI, f32* pMinLod, f32* pMaxLod,
+                          GXBool* pMipMap) const;
+
+    bool IsCIFmt() const {
+        return ref().flag & ResTexData::FLAG_CIFMT;
+    }
+
+    u16 GetWidth() const {
+        return ref().width;
+    }
+    u16 GetHeight() const {
+        return ref().height;
+    }
+
+    const void* GetTexData() const {
+        return ofs_to_ptr<void>(ref().toTexData);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_restex.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 10 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 12 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// Forward declarations
+class ResFile;
+class ResMdl;
+
+/******************************************************************************
+ *
+ * ResGenMode
+ *
+ ******************************************************************************/
+struct ResGenModeData {
+    u8 nTexGens;         // at 0x0
+    u8 nChans;           // at 0x1
+    u8 nTevs;            // at 0x2
+    u8 nInds;            // at 0x3
+    GXCullMode cullMode; // at 0x4
+};
+
+class ResGenMode : public ResCommon<ResGenModeData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResGenMode);
+
+    ResGenMode CopyTo(void* pDst) const;
+
+    void GXSetNumTexGens(u8 num);
+    void GXSetNumChans(u8 num);
+    void GXSetNumTevStages(u8 num);
+    void GXSetNumIndStages(u8 num);
+    void GXSetCullMode(GXCullMode mode);
+
+    u8 GXGetNumTexGens() const {
+        return IsValid() ? ptr()->nTexGens : 0;
+    }
+
+    u8 GXGetNumChans() const {
+        return IsValid() ? ptr()->nChans : 0;
+    }
+
+    u8 GXGetNumTevStages() const {
+        return IsValid() ? ptr()->nTevs : 0;
+    }
+
+    u8 GXGetNumIndStages() const {
+        return IsValid() ? ptr()->nInds : 0;
+    }
+
+    GXCullMode GXGetCullMode() const {
+        return IsValid() ? ptr()->cullMode : GX_CULL_ALL;
+    }
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatMisc
+ *
+ ******************************************************************************/
+struct ResMatMiscData {
+    enum IndirectMethod {
+        WARP,
+        NORMAL_MAP,
+        NORMAL_MAP_SPECULAR,
+        FUR,
+
+        _RESERVED0,
+        _RESERVED1,
+
+        USER0,
+        USER1,
+
+        NUM_OF_INDIRECT_METHOD,
+    };
+
+    GXBool zCompLoc;                       // at 0x0
+    s8 light_set_idx;                      // at 0x1
+    s8 fog_idx;                            // at 0x2
+    u8 PADDING_0x3;                        // at 0x3
+    u8 indirect_method[GX_ITM_2 + 1];      // at 0x4
+    s8 normal_map_ref_light[GX_ITM_2 + 1]; // at 0x8
+};
+
+class ResMatMisc : public ResCommon<ResMatMiscData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMatMisc);
+
+    ResMatMisc CopyTo(void* pDst) const;
+
+    GXBool GXGetZCompLoc() const;
+    int GetLightSetIdx() const;
+    int GetFogIdx() const;
+
+    void GetIndirectTexMtxCalcMethod(GXIndTexMtxID id,
+                                     ResMatMiscData::IndirectMethod* pMethod,
+                                     s8* pLightRef);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatTexCoordGen
+ *
+ ******************************************************************************/
+struct ResTexCoordGenDL {
+    union {
+        struct {
+            u8 texCoordGen[GX_MAX_TEXCOORD][GX_XF_CMD_SZ * 2]; // at 0x0
+            u8 PADDING_0x90[0xA0 - 0x90];                      // at 0x90
+        } dl;
+
+        u8 data[0xA0];
+    };
+};
+
+class ResMatTexCoordGen : public ResCommon<ResTexCoordGenDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTexCoordGen, ResTexCoordGenDL);
+
+    void DCStore(bool sync);
+    ResMatTexCoordGen CopyTo(void* pDst) const;
+
+    void CallDisplayList(u8 numGens, bool sync) const;
+
+    bool GXGetTexCoordGen2(GXTexCoordID id, GXTexGenType* pFunc,
+                           GXTexGenSrc* pParam, GXBool* pNormalize,
+                           u32* pPostMtx) const;
+    void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType func,
+                           GXTexGenSrc param, GXBool normalize, u32 postMtx);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResTexObj
+ *
+ ******************************************************************************/
+struct ResTexObjData {
+    u32 flagUsedTexMapID;           // at 0x0
+    GXTexObj texObj[GX_MAX_TEXMAP]; // at 0x4
+};
+
+class ResTexObj : public ResCommon<ResTexObjData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexObj);
+
+    ResTexObj CopyTo(void* pDst) const;
+
+    const GXTexObj* GetTexObj(GXTexMapID id) const;
+    GXTexObj* GetTexObj(GXTexMapID id);
+
+    bool IsValidTexObj(GXTexMapID id) const;
+
+    void Validate(GXTexMapID id);
+    void Invalidate(GXTexMapID id);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResTlutObj
+ *
+ ******************************************************************************/
+struct ResTlutObjData {
+    u32 flagUsedTlutID;                     // at 0x0
+    GXTlutObj tlutObj[GX_TLUT8 - GX_TLUT0]; // at 0x4
+};
+
+class ResTlutObj : public ResCommon<ResTlutObjData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTlutObj);
+
+    ResTlutObj CopyTo(void* pDst) const;
+
+    const GXTlutObj* GetTlut(GXTlut tlut) const;
+    GXTlutObj* GetTlut(GXTlut tlut);
+
+    bool IsValidTlut(GXTlut tlut) const;
+
+    void Validate(GXTlut tlut);
+    void Invalidate(GXTlut tlut);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResTexSrt
+ *
+ ******************************************************************************/
+struct TexMtxEffect : TexSrtTypedef {
+    enum Flag {
+        FLAG_IDENT = (1 << 0),
+    };
+
+    s8 ref_camera;          // at 0x0
+    s8 ref_light;           // at 0x1
+    u8 map_mode;            // at 0x2
+    u8 misc_flag;           // at 0x3
+    math::_MTX34 effectMtx; // at 0x4
+};
+
+struct ResTexSrtData : TexSrtTypedef {
+    static const int NUM_OF_TEXTURE = 8;
+
+    u32 flag;                            // at 0x0
+    TexMatrixMode texMtxMode;            // at 0x4
+    TexSrt texSrt[NUM_OF_TEXTURE];       // at 0x8
+    TexMtxEffect effect[NUM_OF_TEXTURE]; // at 0xA8
+};
+
+class ResTexSrt : public ResCommon<ResTexSrtData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexSrt);
+
+    ResTexSrt CopyTo(void* pDst) const;
+
+    bool GetEffectMtx(u32 id, math::MTX34* pMtx) const;
+    bool SetEffectMtx(u32 id, const math::MTX34* pMtx);
+
+    bool GetMapMode(u32 id, u32* pMode, int* pCamRef, int* pLightRef) const;
+    bool SetMapMode(u32 id, u32 mode, int camRef, int lightRef);
+
+    TexSrt::Flag GetTexSrtFlag(u32 id) const {
+        return static_cast<TexSrt::Flag>(
+            (ref().flag >> id * TexSrt::NUM_OF_FLAGS) &
+            (TexSrt::FLAG_ANM_EXISTS | TexSrt::FLAG_SCALE_ONE |
+             TexSrt::FLAG_ROT_ZERO | TexSrt::FLAG_TRANS_ZERO));
+    }
+
+    bool IsExist(u32 id) const {
+        if (IsValid()) {
+            return ptr()->flag & (1 << id * TexSrt::NUM_OF_FLAGS);
+        } else {
+            return false;
+        }
+    }
+
+    bool IsIdentity(u32 id) const {
+        return (((ref().flag >> id * TexSrt::NUM_OF_FLAGS) &
+                 TexSrt::FLAGSET_IDENTITY) == TexSrt::FLAGSET_IDENTITY) &&
+               (ref().effect[id].misc_flag & TexMtxEffect::FLAG_IDENT);
+    }
+
+    TexSrtTypedef::TexMatrixMode GetTexMtxMode() const {
+        return ref().texMtxMode;
+    }
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatChan
+ *
+ ******************************************************************************/
+struct Chan {
+    enum Flag {
+        FLAG_MAT_COLOR_ENABLE = (1 << 0),
+        FLAG_MAT_ALPHA_ENABLE = (1 << 1),
+
+        FLAG_AMB_COLOR_ENABLE = (1 << 2),
+        FLAG_AMB_ALPHA_ENABLE = (1 << 3),
+
+        FLAG_CTRL_COLOR_ENABLE = (1 << 4),
+        FLAG_CTRL_ALPHA_ENABLE = (1 << 5),
+    };
+
+    u32 flag;           // at 0x0
+    GXColor matColor;   // at 0x4
+    GXColor ambColor;   // at 0x8
+    u32 paramChanCtrlC; // at 0xC
+    u32 paramChanCtrlA; // at 0x10
+};
+
+struct ResChanData {
+    Chan chan[2]; // at 0x0
+};
+
+class ResMatChan : public ResCommon<ResChanData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatChan, ResChanData);
+
+    ResMatChan CopyTo(void* pDst) const;
+
+    bool GXGetChanMatColor(GXChannelID id, GXColor* pColor) const;
+    void GXSetChanMatColor(GXChannelID id, GXColor color);
+
+    bool GXGetChanAmbColor(GXChannelID id, GXColor* pColor) const;
+    void GXSetChanAmbColor(GXChannelID id, GXColor color);
+
+    bool GXGetChanCtrl(GXChannelID id, GXBool* pEnable, GXColorSrc* pAmbSrc,
+                       GXColorSrc* pMatSrc, GXLightID* pLightMask,
+                       GXDiffuseFn* pDiffuseFn, GXAttnFn* pAttnFn) const;
+    void GXSetChanCtrl(GXChannelID id, GXBool enable, GXColorSrc ambSrc,
+                       GXColorSrc matSrc, GXLightID lightMask,
+                       GXDiffuseFn diffuseFn, GXAttnFn attnFn);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatPix
+ *
+ ******************************************************************************/
+struct ResPixDL {
+    union {
+        struct {
+            u8 alphaCompare[GX_BP_CMD_SZ];  // at 0x0
+            u8 zMode[GX_BP_CMD_SZ];         // at 0x5
+            u8 blendMode[GX_BP_CMD_SZ * 2]; // at 0xA
+            u8 setDstAlpha[GX_BP_CMD_SZ];   // at 0x14
+            u8 PADDING_0x19[32 - 0x19];     // at 0x19
+        } dl;
+
+        u8 data[32]; // at 0x0
+    };
+};
+
+class ResMatPix : public ResCommon<ResPixDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatPix, ResPixDL);
+
+    void DCStore(bool sync);
+    ResMatPix CopyTo(void* pDst) const;
+
+    void CallDisplayList(bool sync) const;
+
+    bool GXGetAlphaCompare(GXCompare* pComp0, u8* pRef0, GXAlphaOp* pLogic,
+                           GXCompare* pComp1, u8* pRef1) const;
+    void GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp logic,
+                           GXCompare comp1, u8 ref1);
+
+    bool GXGetZMode(GXBool* pTest, GXCompare* pCompare, GXBool* pUpdate) const;
+    void GXSetZMode(GXBool test, GXCompare compare, GXBool update);
+
+    bool GXGetBlendMode(GXBlendMode* pMode, GXBlendFactor* pSrcFactor,
+                        GXBlendFactor* pDstFactor, GXLogicOp* pLogic) const;
+    void GXSetBlendMode(GXBlendMode mode, GXBlendFactor srcFactor,
+                        GXBlendFactor dstFactor, GXLogicOp logic);
+
+    bool GXGetDstAlpha(GXBool* pEnable, u8* pAlpha) const;
+    void GXSetDstAlpha(GXBool enable, u8 alpha);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResMatTevColor
+ *
+ ******************************************************************************/
+struct ResTevColorDL {
+    union {
+        struct {
+            u8 tevColor[GX_MAX_TEVREG - GX_TEVREG0][GX_BP_CMD_SZ * 4]; // at 0x0
+            u8 PADDING_0x3C[64 - 0x3C];                    // at 0x3C
+            u8 tevKColor[GX_MAX_KCOLOR][GX_BP_CMD_SZ * 2]; // at 0x40
+            u8 PADDING_0x68[128 - 0x68];                   // at 0x68
+        } dl;
+
+        u8 data[128];
+    };
+};
+
+class ResMatTevColor : public ResCommon<ResTevColorDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTevColor, ResTevColorDL);
+
+    void DCStore(bool sync);
+    ResMatTevColor CopyTo(void* pDst) const;
+
+    void CallDisplayList(bool sync) const;
+
+    bool GXGetTevColor(GXTevRegID id, GXColor* pColor) const;
+    void GXSetTevColor(GXTevRegID id, GXColor color);
+
+    bool GXGetTevColorS10(GXTevRegID id, GXColorS10* pColor) const;
+    void GXSetTevColorS10(GXTevRegID id, GXColorS10 color);
+
+    bool GXGetTevKColor(GXTevKColorID id, GXColor* pColor) const;
+    void GXSetTevKColor(GXTevKColorID id, GXColor color);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResMatIndMtxAndScale
+ *
+ ******************************************************************************/
+struct ResIndMtxAndScaleDL {
+    union {
+        struct {
+            u8 indTexCoordScale[2][GX_BP_CMD_SZ]; // at 0x0
+            u8 indTexMtx0[GX_BP_CMD_SZ * 3];      // at 0xA
+            u8 PADDING_0x19[32 - 0x19];           // at 0x19
+            u8 indTexMtx1[GX_BP_CMD_SZ * 3];      // at 0x20
+            u8 indTexMtx2[GX_BP_CMD_SZ * 3];      // at 0x2F
+            u8 PADDING_0x3E[64 - 0x3E];           // at 0x3E
+        } dl;
+
+        u8 data[64]; // at 0x0
+    };
+};
+
+class ResMatIndMtxAndScale : public ResCommon<ResIndMtxAndScaleDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatIndMtxAndScale, ResIndMtxAndScaleDL);
+
+    void DCStore(bool sync);
+    ResMatIndMtxAndScale CopyTo(void* pDst) const;
+
+    void CallDisplayList(u8 indNum, bool sync) const;
+
+    bool GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx) const;
+    void GXSetIndTexMtx(GXIndTexMtxID id, const math::MTX34& rMtx, s8 scaleExp);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResTexPlttInfo
+ *
+ ******************************************************************************/
+struct ResTexPlttInfoData {
+    s32 nameTex;            // at 0x0
+    s32 namePltt;           // at 0x4
+    ResTexData* pTexData;   // at 0x8
+    ResPlttData* pPlttData; // at 0xC
+    GXTexMapID mapID;       // at 0x10
+    GXTlut tlutID;          // at 0x14
+    GXTexWrapMode wrap_s;   // at 0x18
+    GXTexWrapMode wrap_t;   // at 0x1C
+    GXTexFilter min_filt;   // at 0x20
+    GXTexFilter mag_filt;   // at 0x24
+    f32 lod_bias;           // at 0x28
+    GXAnisotropy max_aniso; // at 0x2C
+    bool bias_clamp;        // at 0x30
+    bool do_edge_lod;       // at 0x31
+    u8 PADDING_0x32;        // at 0x32
+    u8 PADDING_0x33;        // at 0x33
+};
+
+class ResTexPlttInfo : public ResCommon<ResTexPlttInfoData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexPlttInfo);
+
+    bool Bind(const ResFile file, ResTexObj texObj, ResTlutObj tlutObj);
+    void Release(ResTexObj texObj, ResTlutObj tlutObj);
+
+    ResName GetTexResName() const {
+        const ResTexPlttInfoData& r = ref();
+
+        if (r.nameTex != 0) {
+            return NW4R_G3D_OFS_TO_RESNAME(&r, r.nameTex);
+        }
+
+        return ResName(NULL);
+    }
+
+    ResName GetPlttResName() const {
+        const ResTexPlttInfoData& r = ref();
+
+        if (r.namePltt != 0) {
+            return NW4R_G3D_OFS_TO_RESNAME(&r, r.namePltt);
+        }
+
+        return ResName(NULL);
+    }
+
+    bool IsCIFmt() const {
+        return ref().namePltt != 0;
+    }
+
+private:
+    void BindTex_(const ResTex tex, ResTexObj texObj);
+    void BindPltt_(const ResPltt pltt, ResTlutObj tlutObj);
+};
+
+/******************************************************************************
+ *
+ * ResMat
+ *
+ ******************************************************************************/
+struct ResMatDLData {
+    ResPixDL dlPix;                       // at 0x0
+    ResTevColorDL dlTevColor;             // at 0x20
+    ResIndMtxAndScaleDL dlIndMtxAndScale; // at 0xA0
+    ResTexCoordGenDL dlTexCoordGen;       // at 0xE0
+};
+
+struct ResMatData {
+    u32 size;                   // at 0x0
+    s32 toResMdlData;           // at 0x4
+    s32 name;                   // at 0x8
+    u32 id;                     // at 0xC
+    u32 flag;                   // at 0x10
+    ResGenModeData genMode;     // at 0x14
+    ResMatMiscData misc;        // at 0x1C
+    s32 toResTevData;           // at 0x28
+    u32 numResTexPlttInfo;      // at 0x2C
+    s32 toResTexPlttInfo;       // at 0x30
+    s32 toResMatFurData;        // at 0x34
+    s32 toResUserData;          // at 0x38
+    s32 toResMatDLData;         // at 0x3C
+    ResTexObjData texObjData;   // at 0x140
+    ResTlutObjData tlutObjData; // at 0x1A4
+    ResTexSrtData texSrtData;   // at 0x3EC
+    ResChanData chan;           // at 0x3F0
+};
+
+class ResMat : public ResCommon<ResMatData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMat);
+
+    void Init();
+
+    bool Bind(const ResFile file);
+    void Release();
+
+    ResMdl GetParent();
+
+    u32 GetID() const {
+        return ref().id;
+    }
+
+    ResGenMode GetResGenMode() {
+        return ResGenMode(&ref().genMode);
+    }
+
+    ResMatMisc GetResMatMisc() {
+        return ResMatMisc(&ref().misc);
+    }
+
+    ResTev GetResTev();
+    ResTev GetResTev() const;
+
+    u32 GetNumResTexPlttInfo() const {
+        return ref().numResTexPlttInfo;
+    }
+
+    ResTexPlttInfo GetResTexPlttInfo(u32 id) {
+        ResTexPlttInfoData* pData =
+            ofs_to_ptr<ResTexPlttInfoData>(ref().toResTexPlttInfo);
+
+        return ResTexPlttInfo(&pData[id]);
+    }
+
+    ResMatDLData* GetResMatDLData() {
+        return ofs_to_ptr<ResMatDLData>(ref().toResMatDLData);
+    }
+
+    ResMatPix GetResMatPix() {
+        return ResMatPix(&GetResMatDLData()->dlPix);
+    }
+
+    ResMatTevColor GetResMatTevColor() {
+        return ResMatTevColor(&GetResMatDLData()->dlTevColor);
+    }
+
+    ResMatIndMtxAndScale GetResMatIndMtxAndScale() {
+        return ResMatIndMtxAndScale(&GetResMatDLData()->dlIndMtxAndScale);
+    }
+
+    ResMatTexCoordGen GetResMatTexCoordGen() {
+        return ResMatTexCoordGen(&GetResMatDLData()->dlTexCoordGen);
+    }
+
+    ResTlutObj GetResTlutObj() {
+        return ResTlutObj(&ref().tlutObjData);
+    }
+
+    ResTexObj GetResTexObj() {
+        return ResTexObj(&ref().texObjData);
+    }
+
+    ResTexSrt GetResTexSrt() {
+        return ResTexSrt(&ref().texSrtData);
+    }
+
+    ResMatChan GetResMatChan() {
+        return ResMatChan(&ref().chan);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resmat.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 8 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 10 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// Forward declarations
+struct AmbLightObj;
+class LightObj;
+class LightSetting;
+class ResShp;
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * ScnDependentMtxFunc
+ *
+ ******************************************************************************/
+namespace ScnDependentMtxFunc {
+
+void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void ProjectionMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void DefaultMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+
+} // namespace ScnDependentMtxFunc
+} // namespace detail
+
+/******************************************************************************
+ *
+ * G3DState
+ *
+ ******************************************************************************/
+namespace G3DState {
+
+static const int NUM_LIGHT = 128;
+static const int NUM_LIGHT_SET = 128;
+
+static const int NUM_LIGHT_IN_LIGHT_SET = 8;
+
+static const int NUM_CAMERA = 32;
+static const int NUM_FOG = 32;
+
+static const int NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE = 256;
+
+enum InvalidateFlag {
+    INVALIDATE_SYNCGX = 0,
+    INVALIDATE_TEX = (1 << 0),
+    INVALIDATE_TLUT = (1 << 1),
+    INVALIDATE_TEV = (1 << 2),
+    INVALIDATE_GENMODE = (1 << 3),
+    INVALIDATE_SHP = (1 << 4),
+    INVALIDATE_CURRMTX = (1 << 5),
+    INVALIDATE_TEXMTX = (1 << 6),
+    INVALIDATE_MISC = (1 << 7),
+    INVALIDATE_FOG = (1 << 8),
+    INVALIDATE_LIGHT = (1 << 9),
+    INVALIDATE_POSMTX = (1 << 10),
+
+    INVALIDATE_ALL = INVALIDATE_TEX | INVALIDATE_TLUT | INVALIDATE_TEV |
+                     INVALIDATE_GENMODE | INVALIDATE_SHP | INVALIDATE_CURRMTX |
+                     INVALIDATE_TEXMTX | INVALIDATE_MISC | INVALIDATE_FOG |
+                     INVALIDATE_LIGHT | INVALIDATE_POSMTX
+};
+
+enum ScnDependentTexMtxFuncType {
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_TEXCOORD,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_NRM,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_POS,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_COLOR,
+
+    MAX_SCNDEPENDENT_TEXMTX_FUNCTYPE,
+
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_TEXMTX_NOT_EXIST =
+        SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_TEXCOORD,
+};
+
+typedef void (*ScnDependentTexMtxFuncPtr)(math::MTX34* pMtx, s8 camRef,
+                                          s8 lightRef);
+
+/******************************************************************************
+ *
+ * IndTexMtxInfo
+ *
+ ******************************************************************************/
+struct IndTexMtxInfo {
+    u32 flag;                                        // at 0x0
+    math::MTX34 offset_mtx[GX_ITM_2 - GX_ITM_0 + 1]; // at 0x4
+
+    IndTexMtxInfo() : flag(0) {}
+    explicit IndTexMtxInfo(const ResMatIndMtxAndScale ind);
+
+    void FifoSend() const;
+    void SetMtx(GXIndTexMtxID id, const math::MTX34& rMtx);
+};
+
+/******************************************************************************
+ *
+ * IndMtxOp
+ *
+ ******************************************************************************/
+class IndMtxOp {
+public:
+    virtual void operator()(IndTexMtxInfo* pInfo) = 0; // at 0x8
+
+    virtual ~IndMtxOp() {}    // at 0xC
+    virtual void Reset() = 0; // at 0x10
+
+    virtual void
+    SetNrmMapMtx(GXIndTexMtxID id, const math::VEC3* pLightVec,
+                 const math::MTX34* pNrmMtx,
+                 ResMatMiscData::IndirectMethod method) = 0; // at 0x14
+};
+
+/******************************************************************************
+ *
+ * IndMtxOpStd
+ *
+ ******************************************************************************/
+class IndMtxOpStd : public IndMtxOp {
+public:
+    IndMtxOpStd();
+
+    virtual void operator()(IndTexMtxInfo* pInfo); // at 0x8
+
+    virtual ~IndMtxOpStd() {} // at 0xC
+    virtual void Reset();     // at 0x10
+
+    virtual void SetNrmMapMtx(GXIndTexMtxID id, const math::VEC3* pLightVec,
+                              const math::MTX34* pNrmMtx,
+                              ResMatMiscData::IndirectMethod method); // at 0x14
+
+private:
+    bool mIsValidMtx[GX_ITM_2 - GX_ITM_0 + 1];    // at 0x4
+    u8 PADDING_0x7;                               // at 0x7
+    math::MTX34 mIndMtx[GX_ITM_2 - GX_ITM_0 + 1]; // at 0x8
+};
+
+/******************************************************************************
+ *
+ * Functions
+ *
+ ******************************************************************************/
+void LoadResMatMisc(const ResMatMisc misc);
+void LoadResTexObj(const ResTexObj texObj);
+void LoadResTlutObj(const ResTlutObj tlutObj);
+void LoadResGenMode(const ResGenMode mode);
+void LoadResTev(const ResTev tev);
+void LoadResMatPix(const ResMatPix pix);
+void LoadResMatTevColor(const ResMatTevColor color);
+void LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind);
+void LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind, IndMtxOp& rOp);
+void LoadResMatChan(const ResMatChan chan, u32 maskDiffColor, u32 maskDiffAlpha,
+                    u32 maskSpecColor, u32 maskSpecAlpha, GXColor amb,
+                    bool lightOff);
+void LoadResMatTexCoordGen(const ResMatTexCoordGen gen);
+void LoadResTexSrt(const ResTexSrt srt);
+void LoadResShpPrePrimitive(const ResShp shp);
+void LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos,
+                         const math::MTX34* pViewNrm);
+
+void SetViewPosNrmMtxArray(const math::MTX34* pViewPosMtxArray,
+                           const math::MTX33* pViewNrmMtxArray,
+                           const math::MTX34* pViewEnvTexMtxArray);
+const math::MTX33* GetViewNrmMtxPtr(u32 id);
+
+void SetScnDependentTexMtxFunc(u32 id, ScnDependentTexMtxFuncPtr func,
+                               ScnDependentTexMtxFuncType type);
+bool GetScnDependentTexMtxFunc(u32 id, ScnDependentTexMtxFuncPtr* pFunc,
+                               ScnDependentTexMtxFuncType* pType);
+
+IndMtxOp* GetIndMtxOp();
+
+void SetFog(const Fog fog, int id);
+void LoadFog(int id);
+
+void SetLightSetting(const LightSetting& rSetting);
+const LightObj* GetLightObj(int id);
+void LoadLightSet(int id, u32* pDiffColorMask, u32* pDiffAlphaMask,
+                  u32* pSpecColorMask, u32* pSpecAlphaMask, AmbLightObj* pAmb);
+void LoadLightSet(int id, u32* pDiffMask, u32* pSpecMask, AmbLightObj* pAmb);
+
+void SetCameraProjMtx(const Camera& rCam, int id, bool view);
+const math::MTX34* GetCameraMtxPtr();
+const math::MTX34* GetInvCameraMtxPtr();
+const math::MTX34* GetCameraMtxPtr(int id);
+const math::MTX34* GetProjectionTexMtxPtr();
+const math::MTX34* GetProjectionTexMtxPtr(int id);
+const math::MTX34* GetEnvironmentTexMtxPtr();
+
+void SetRenderModeObj(const GXRenderModeObj& rObj);
+const GXRenderModeObj* GetRenderModeObj();
+
+void Invalidate(u32 flag = INVALIDATE_ALL);
+
+} // namespace G3DState
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_state.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 7 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * LightObj
+ *
+ ******************************************************************************/
+class LightObj {
+public:
+    LightObj(const LightObj& rLightObj);
+    LightObj() : mFlag(0) {}
+    ~LightObj() {}
+
+    LightObj& operator=(const LightObj& rOther);
+    bool operator!=(const LightObj& rOther) const;
+
+    operator GXLightObj*() {
+        return &mObj;
+    }
+    operator const GXLightObj*() const {
+        return &mObj;
+    }
+
+    void Clear();
+
+    void InitLightColor(GXColor color);
+    void InitLightPos(f32 x, f32 y, f32 z);
+    void InitLightDir(f32 nx, f32 ny, f32 nz);
+    void InitLightSpot(f32 cutoff, GXSpotFn spotFn);
+    void InitLightAttnA(f32 aa, f32 ab, f32 ac);
+    void InitLightDistAttn(f32 distance, f32 brightness,
+                           GXDistAttnFn distAttnFn);
+    void InitLightAttnK(f32 ka, f32 kb, f32 kc);
+    void InitSpecularDir(f32 nx, f32 ny, f32 nz);
+    void InitLightShininess(f32 shininess);
+
+    void GetLightPos(math::VEC3* pPos) const;
+    void GetLightDir(math::VEC3* pDir) const;
+
+    void ApplyViewMtx(const math::MTX34& rCamera);
+
+    void Enable() {
+        mFlag |= FLAG_ENABLE_LIGHT;
+    }
+    void Disable() {
+        mFlag &= ~FLAG_ENABLE_LIGHT;
+    }
+
+    bool IsEnable() const {
+        return (mFlag & FLAG_ENABLE_LIGHT) ? true : false;
+    }
+
+    bool IsSpotLight() const {
+        return (mFlag & FLAG_SPOT) ? true : false;
+    }
+    bool IsSpecularLight() const {
+        return (mFlag & FLAG_SPECULAR) ? true : false;
+    }
+    bool IsSpecularDir() const {
+        return (mFlag & FLAG_SPECULAR_DIR) ? true : false;
+    }
+
+    bool IsColorEnable() const {
+        return !(mFlag & FLAG_DISABLE_COLOR);
+    }
+    void DisableColor() {
+        mFlag |= FLAG_DISABLE_COLOR;
+    }
+
+    bool IsAlphaEnable() const {
+        return !(mFlag & FLAG_DISABLE_ALPHA);
+    }
+    void DisableAlpha() {
+        mFlag |= FLAG_DISABLE_ALPHA;
+    }
+
+    bool IsDiffuseLight() const {
+        return !IsSpotLight() && !IsSpecularLight();
+    }
+
+private:
+    enum LightObjFlag {
+        FLAG_SPOT = (1 << 0),
+        FLAG_SPECULAR = (1 << 1),
+        FLAG_ENABLE_LIGHT = (1 << 2),
+        FLAG_SPECULAR_DIR = (1 << 3),
+        FLAG_DISABLE_COLOR = (1 << 4),
+        FLAG_DISABLE_ALPHA = (1 << 5)
+    };
+
+private:
+    u32 mFlag;       // at 0x0
+    GXLightObj mObj; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * LightSet
+ *
+ ******************************************************************************/
+struct LightSetData {
+    static const int IDX_INVALID_LIGHT = -1;
+
+    s8 idxLight[G3DState::NUM_LIGHT_IN_LIGHT_SET]; // at 0x0
+    s8 idxAmbLight;                                // at 0x8
+    u8 PADDING_0x9[0xC - 0X9];                     // at 0x9
+};
+
+class LightSet {
+public:
+    LightSet(LightSetting* pSetting, LightSetData* pData)
+        : mpSetting(pSetting), mpLightSetData(pData) {}
+    ~LightSet() {}
+
+    bool IsValid() const {
+        return mpSetting != NULL && mpLightSetData != NULL;
+    }
+
+    LightObj* GetLightObj(u32 lightIdx);
+    AmbLightObj* GetAmbLightObj();
+
+    bool SelectLightObj(u32 lightIdx, int lightObjIdx);
+    bool SelectAmbLightObj(int lightObjIdx);
+
+private:
+    LightSetting* mpSetting;      // at 0x0
+    LightSetData* mpLightSetData; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * LightSetting
+ *
+ ******************************************************************************/
+struct AmbLightObj {
+    u8 r, g, b, a;
+};
+
+class LightSetting {
+public:
+    LightSetting(LightObj* pLightObjArray, AmbLightObj* pAmbLightObjArray,
+                 u32 numLight, LightSetData* pLightSetDataArray,
+                 u32 numLightSet);
+    ~LightSetting() {}
+
+    bool Import(const LightSetting& rSetting);
+    void ApplyViewMtx(const math::MTX34& rCamera, u32 numLight);
+
+    u32 GetNumLightObj() const {
+        return mNumLight;
+    }
+    u32 GetNumLightSet() const {
+        return mNumLightSet;
+    }
+
+    LightObj* GetLightObjArray() const {
+        return mpLightObjArray;
+    }
+    AmbLightObj* GetAmbLightObjArray() const {
+        return mpAmbLightObjArray;
+    }
+
+    LightSet GetLightSet(int idx) {
+        if (idx < mNumLightSet && idx >= 0) {
+            return LightSet(this, &mpLightSetDataArray[idx]);
+        }
+
+        return LightSet(this, NULL);
+    }
+
+private:
+    u16 mNumLight;                     // at 0x0
+    u16 mNumLightSet;                  // at 0x2
+    LightObj* mpLightObjArray;         // at 0x4
+    AmbLightObj* mpAmbLightObjArray;   // at 0x8
+    LightSetData* mpLightSetDataArray; // at 0xC
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_light.h" */
+
+class CLight{
+public:
+    CLight();
+    virtual ~CLight(){}
+
+    ml::CVec3 unk4;
+    ml::CVec3 unk10;
+    ml::CVec3 unk1C;
+    float unk28;
+    nw4r::g3d::LightObj* mpLightObj;
+    u32 mFlags;
+    u32 unk34;
+    float unk38;
+    float unk3C;
+};
+/* end "monolib/scn/CLight.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/ICulling.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+
+//Unofficial name
+class ICulling {
+public:
+    virtual ~ICulling(){}
+    virtual bool ICulling_UnkVirtualFunc1(ml::CFrustum* r4);
+    virtual bool ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5);
+    virtual bool ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6);
+};
+/* end "monolib/scn/ICulling.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 4 "monolib/scn/CScn.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work.hpp" line 2 "monolib/work/CEventFile.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+class CEventFile {
+public:
+    BOOL unk0;
+    CFileHandle* mFileHandle; //0x4
+
+    void* getFileDataPtr();
+};
+/* end "monolib/work/CEventFile.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 3 "monolib/work/CMsgParam.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
+#pragma once
+
+namespace ml {
+    /* Optimized way of calculating if only one of two bools are true. This may
+    or may not have had a dedicated inline function, but it'll get one anyway */
+    inline bool boolXor(bool a, bool b){
+        return a ^ b;
+    }
+}
+/* end "monolib/util/BoolUtils.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 3 "monolib/util/CChildListNode.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/CChildListNode.hpp" line 2 "monolib/util/CDoubleListNode.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/CDoubleListNode.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/*
+Doubly-linked list node
+*/
+class CDoubleListNode {
+public:
+    CDoubleListNode* mPrev; //0x0
+    CDoubleListNode* mNext; //0x4
+    u8 unk8;
+    int unkC;
+
+public:
+    CDoubleListNode();
+    virtual ~CDoubleListNode() {}
+    virtual void Reset();
+
+    //Node links
+    CDoubleListNode* GetPrev() const { return mPrev; }
+    CDoubleListNode* GetNext() const { return mNext; }
+    void SetPrev(CDoubleListNode* prev) { mPrev = prev; }
+    void SetNext(CDoubleListNode* next) { mNext = next; }
+}; // size = 0x10
+
+/*
+Doubly-linked, circular list
+*/
+class CDoubleListHeader {
+private:
+    /* Circular list which begins *AFTER* mEnd:
+    mEnd ("End") -> X ("Top") -> Y -> Z -> mEnd */
+    CDoubleListNode* mEnd; //0x0
+
+public:
+    CDoubleListHeader() { Reset(); }
+    
+    void Reset() { mEnd = nullptr; }
+
+    //List iterators
+    CDoubleListNode* Begin() const {
+        return mEnd != nullptr ? mEnd->GetNext() : nullptr;
+    }
+    CDoubleListNode* End() const { return mEnd; }
+
+    //Add/remove nodes
+    CDoubleListNode* InsertTop(CDoubleListNode* node);
+    CDoubleListNode* InsertEnd(CDoubleListNode* node);
+    CDoubleListNode* Remove(CDoubleListNode* node);
+};
+/* end "monolib/util/CDoubleListNode.hpp" */
+
+//Forward declarations
+class CChildListNode;
+
+/*
+List containing nodes designated as children
+*/
+template <typename T>
+class TChildListHeader : private CDoubleListHeader {
+private:
+    //Many methods delegate to the implementation
+    typedef CDoubleListHeader Base;
+
+private:
+    //0x0-4: CDoubleListHeader
+    char unk4[0x10 - 0x4];
+
+public:
+    TChildListHeader() { Reset(); }
+    virtual ~TChildListHeader() {}
+    
+    void Reset() { Base::Reset(); }
+
+    //List iterators/elements
+    T* Begin() const {
+        return static_cast<T*>(Base::Begin());
+    }
+    T* End() const {
+        return static_cast<T*>(Base::End());
+    }
+
+    //Add/remove nodes
+    CChildListNode* InsertTop(CChildListNode* node) {
+        return static_cast<CChildListNode*>(Base::InsertTop(node));
+    }
+    CChildListNode* InsertEnd(CChildListNode* node) {
+        return static_cast<CChildListNode*>(Base::InsertEnd(node));
+    }
+    CChildListNode* Remove(CChildListNode* node) {
+        return static_cast<CChildListNode*>(Base::Remove(node));
+    }
+
+    //Advance iterators
+    T* IterNext(const T* iter) const {
+        //Need specific inline depth
+        (void)0;
+        
+        if (iter != nullptr) {
+            return iter != static_cast<T*>(End())
+                ? static_cast<T*>(iter->GetNext()) : nullptr;
+        }
+
+        return nullptr;
+    }
+    T* IterPrev(const T* iter) const {
+        //Need specific inline depth
+        (void)0;
+        
+        if (iter != nullptr) {
+            return iter != static_cast<T*>(Begin())
+                ? static_cast<T*>(iter->GetPrev()) : nullptr;
+        }
+
+        return nullptr;
+    }
+};
+
+/*
+Children-list node
+*/
+class CChildListNode : public CDoubleListNode {
+private:
+    typedef TChildListHeader<CChildListNode> ChildrenType;
+
+public:
+    CChildListNode();
+    virtual ~CChildListNode() {}
+    virtual void Reset();
+
+    //Parent node
+    CChildListNode* GetParent() const { return mParent; }
+    void SetParent(CChildListNode* parent) { mParent = parent; }
+
+    //Children of this child
+    ChildrenType& GetChildren() { return mChildren; }
+    const ChildrenType& GetChildren() const { return mChildren; }
+
+protected:
+    //0x0-10: CDoubleListNode
+    //0x10: vtable
+    CChildListNode* mParent; //0x14
+    char unk18[0x24 - 0x18];
+    ChildrenType mChildren; //0x24
+};
+/* end "monolib/util/CChildListNode.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 4 "monolib/util/CDoubleListNode.hpp" */
+/* end "monolib/util/CDoubleListNode.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 5 "monolib/util/CErrorWii.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 3 "monolib/util/fixed_vector.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/fixed_vector.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace mtl {
+    template <typename T, size_t N>
+    struct fixed_vector {
+
+        fixed_vector(){
+            mCount = 0;
+        }
+
+        void erase(T& value){
+            for(int i = 0; i < size(); i++){
+                if(mArray[i] == value){
+                    while(i < mCount - 1){
+                        mArray[i] = mArray[i + 1];
+                        i++;
+                    }
+                
+                    mCount--;
+                    return;
+                }
+            }
+        }
+
+        //T* begin()
+        //T* end()
+        //T& at(u32 index)
+        //T* find(const T& value)
+        //T* erase(T* value)
+
+        int size() const {
+            return mCount;
+        }
+
+        bool empty() const {
+            return mCount == 0;
+        }
+
+        T& operator[](u32 index){
+            return mArray[index];
+        }
+
+        void push_back(const T& value){
+            mArray[mCount++] = value;
+        }
+
+        T mArray[N];
+        int mCount;
+    };
+} //namespace mtl
+/* end "monolib/util/fixed_vector.hpp" */
+/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 4 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+/* "libs/monolib/include/monolib/util/CErrorWii.hpp" line 5 "revolution/VI.h" */
+#ifndef RVL_SDK_PUBLIC_VI_H
+#define RVL_SDK_PUBLIC_VI_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/VI.h" line 6 "revolution/VI/vi.h" */
+#ifndef RVL_SDK_VI_H
+#define RVL_SDK_VI_H
+/* "libs/RVL_SDK/include/revolution/VI/vi.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/VI/vi.h" line 4 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+/* "libs/RVL_SDK/include/revolution/VI/vi.h" line 5 "revolution/VI/vitypes.h" */
+/* end "revolution/VI/vitypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*VIRetraceCallback)(u32 retraceCount);
+typedef void (*VIPositionCallback)(s16 displayX, s16 displayY);
+
+VIRetraceCallback VISetPreRetraceCallback(VIRetraceCallback callback);
+VIRetraceCallback VISetPostRetraceCallback(VIRetraceCallback callback);
+
+void VIInit(void);
+void VIWaitForRetrace(void);
+
+void VIConfigure(const GXRenderModeObj* rmo);
+void VIConfigurePan(u16 x, u16 y, u16 w, u16 h);
+void VIFlush(void);
+
+void VISetNextFrameBuffer(void* fb);
+void* VIGetCurrentFrameBuffer(void);
+
+void VISetBlack(BOOL black);
+s32 VIGetRetraceCount(void);
+
+VITVFormat VIGetTvFormat(void);
+VIScanMode VIGetScanMode(void);
+u32 VIGetDTVStatus(void);
+u32 VIGetDimmingCount(void);
+BOOL VIEnableDimming(BOOL enable);
+s32 VISetTimeToDimming(s32 time);
+BOOL VIResetDimmingCount(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/VI/vi.h" */
+/* "libs/RVL_SDK/include/revolution/VI.h" line 7 "revolution/VI/vi3in1.h" */
+#ifndef RVL_SDK_VI_VI3IN1_H
+#define RVL_SDK_VI_VI3IN1_H
+/* "libs/RVL_SDK/include/revolution/VI/vi3in1.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/RVL_SDK/include/revolution/VI/vi3in1.h" line 3 "revolution/vi/vitypes.h" */
+/* end "revolution/vi/vitypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void __VISetRGBModeImm(void);
+
+void __VISetRevolutionModeSimple(void);
+
+void VISetGamma(VIGamma gamma);
+void VISetTrapFilter(VIBool filter);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/VI/vi3in1.h" */
+/* "libs/RVL_SDK/include/revolution/VI.h" line 8 "revolution/VI/vihardware.h" */
+#ifndef RVL_SDK_VI_HARDWARE_H
+#define RVL_SDK_VI_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/VI/vihardware.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * VI hardware registers
+ */
+volatile u16 DECL_HW_REGS(VI) DECL_ADDRESS(0xCC002000);
+
+/**
+ * Hardware register indexes
+ */
+typedef enum {
+    VI_VTR,    //!< 0xCC002000
+    VI_DCR,    //!< 0xCC002002
+    VI_HTR0_H, //!< 0xCC002004
+    VI_HTR0_L, //!< 0xCC002006
+    VI_HTR1_H, //!< 0xCC002008
+    VI_HTR1_L, //!< 0xCC00200A
+    VI_VTO_H,  //!< 0xCC00200C
+    VI_VTO_L,  //!< 0xCC00200E
+    VI_VTE_H,  //!< 0xCC002010
+    VI_VTE_L,  //!< 0xCC002012
+    VI_BBEI_H, //!< 0xCC002014
+    VI_BBEI_L, //!< 0xCC002016
+    VI_BBOI_H, //!< 0xCC002018
+    VI_BBOI_L, //!< 0xCC00201A
+    VI_TFBL_H, //!< 0xCC00201C
+    VI_TFBL_L, //!< 0xCC00201E
+    VI_TFBR_H, //!< 0xCC002020
+    VI_TFBR_L, //!< 0xCC002022
+    VI_BFBL_H, //!< 0xCC002024
+    VI_BFBL_L, //!< 0xCC002026
+    VI_BFBR_H, //!< 0xCC002028
+    VI_BFBR_L, //!< 0xCC00202A
+    VI_DPV,    //!< 0xCC00202C
+    VI_DPH,    //!< 0xCC00202E
+    VI_DI0_H,  //!< 0xCC002030
+    VI_DI0_L,  //!< 0xCC002032
+    VI_DI1_H,  //!< 0xCC002034
+    VI_DI1_L,  //!< 0xCC002036
+    VI_DI2_H,  //!< 0xCC002038
+    VI_DI2_L,  //!< 0xCC00203A
+    VI_DI3_H,  //!< 0xCC00203C
+    VI_DI3_L,  //!< 0xCC00203E
+    VI_DL0_H,  //!< 0xCC002040
+    VI_DL0_L,  //!< 0xCC002042
+    VI_DL1_H,  //!< 0xCC002044
+    VI_DL1_L,  //!< 0xCC002046
+    VI_HSW,    //!< 0xCC002048
+    VI_HSR,    //!< 0xCC00204A
+    VI_FCT0_H, //!< 0xCC00204C
+    VI_FCT0_L, //!< 0xCC00204E
+    VI_FCT1_H, //!< 0xCC002050
+    VI_FCT1_L, //!< 0xCC002052
+    VI_FCT2_H, //!< 0xCC002054
+    VI_FCT2_L, //!< 0xCC002056
+    VI_FCT3_H, //!< 0xCC002058
+    VI_FCT3_L, //!< 0xCC00205A
+    VI_FCT4_H, //!< 0xCC00205C
+    VI_FCT4_L, //!< 0xCC00205E
+    VI_FCT5_H, //!< 0xCC002060
+    VI_FCT5_L, //!< 0xCC002062
+    VI_FCT6_H, //!< 0xCC002064
+    VI_FCT6_L, //!< 0xCC002066
+    VI_0x68,   //!< 0xCC002068
+    VI_0x6A,   //!< 0xCC00206A
+    VI_VICLK,  //!< 0xCC00206C
+    VI_VISEL,  //!< 0xCC00206E
+    VI_0x70,   //!< 0xCC002070
+    VI_HBE,    //!< 0xCC002072
+    VI_HBS,    //!< 0xCC002074
+    VI_0x76,   //!< 0xCC002076
+    VI_0x78,   //!< 0xCC002078
+    VI_0x7A,   //!< 0xCC00207A
+    VI_0x7C,   //!< 0xCC00207C
+} VIHwReg;
+
+// DCR - Display Configuration Register
+#define VI_DCR_ENB (1 << 0)
+#define VI_DCR_RST (1 << 1)
+#define VI_DCR_NIN (1 << 2)
+#define VI_DCR_FMT (0b11 << 8)
+
+// DI{n} - Display Interrupt Register N
+#define VI_DI_INT (1 << 15)
+#define VI_DI_ENB (1 << 12)
+
+// VICLK - VI Clock Select Register
+#define VI_VICLK_SPEED (1 << 0)
+typedef enum { VI_VICLK_27MHZ, VI_VICLK_54MHZ } VIClkSpeed;
+
+// VISEL - VI DTV Status Register
+#define VI_VISEL_COMPONENT (1 << 0)
+
+// HBE - Border HBE
+#define VI_HBE_BRDR_EN (1 << 15)
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/VI/vihardware.h" */
+/* "libs/RVL_SDK/include/revolution/VI.h" line 9 "revolution/VI/vitypes.h" */
+/* end "revolution/VI/vitypes.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/VI.h" */
+
+class IErrorWii {
+public:
+    IErrorWii(){}
+    virtual ~IErrorWii(){}
+    virtual void errorWiiCB() = 0;
+};
+
+class CErrorWii {
+public:
+    CErrorWii();
+    ~CErrorWii();
+
+    static void addCallback(IErrorWii* pError);
+    static void removeCallback(IErrorWii* pError);
+
+    static void initialize();
+    static void destroy();
+
+    static void errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar);
+    static void postExceptionCallback();
+
+    static void powerCallback();
+    static bool isPowerCallbackCalled();
+    static void resetCallback();
+    static bool isResetCallbackCalled();
+
+private:
+    static void setErrorHandler(u16 error);
+    static void resetErrorHandler(u16 error);
+
+    //Unused in release
+    mtl::fixed_vector<IErrorWii*, 8> mCallbackList; //0x0
+    u8 unk24[4]; //part of previous class?
+    OSContext mContext; //0x28
+    u16 unk2F0;
+    u32 unk2F4;
+    u32 unk2F8;
+
+    static CErrorWii* spInstance;
+    static bool sPowerCallbackCalled;
+    static bool sResetCallbackCalled;
+};
+/* end "monolib/util/CErrorWii.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 3 "monolib/util/FixStr.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/FixStr.hpp" line 2 "cstring" */
+#ifndef MSL_CPP_CSTRING_H
+#define MSL_CPP_CSTRING_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::__memrchr;
+using ::memchr;
+using ::memcmp;
+using ::memcpy;
+using ::memmove;
+using ::memset;
+using ::strcat;
+using ::strchr;
+using ::strcmp;
+using ::strcpy;
+using ::stricmp;
+using ::strlen;
+using ::strncat;
+using ::strncmp;
+using ::strncpy;
+using ::strstr;
+} // namespace std
+
+#endif
+#endif
+/* end "cstring" */
+/* "libs/monolib/include/monolib/util/FixStr.hpp" line 3 "cstdio" */
+/* end "cstdio" */
+
+namespace ml{
+
+    template <size_t N>
+    struct FixStr{
+        FixStr(){
+            clear();
+        }
+
+        //probably fake
+        FixStr(bool initialize){
+            if(initialize){
+                clear();
+            }
+        }
+
+        FixStr(const FixStr<N>& str){
+            *this = str;
+        }
+
+        FixStr(const char* str){
+            *this = str;
+        }
+
+        FixStr(const FixStr<N>& str, int pos, int length){
+            copy(str, pos, length);
+        }
+
+        void copy(const FixStr<N>& str, int pos, int length){
+            clear();
+            if (str.empty()) return;
+
+            //Copy entire string if length is -1
+            if (length == npos) length = str.size();
+            std::strncpy(mString, str.mString + pos, length);
+            //Stop the string after the copied characters, and recalculate the length
+            mString[length] = 0;
+            mLength = std::strlen(mString);
+        }
+
+        void clear(){
+            mString[0] = 0;
+            mLength = 0;
+        }
+
+        void operator=(const FixStr<N>& str){
+            mLength = std::strlen(str.mString);
+            std::strcpy(mString, str.mString);
+        }
+
+        void operator=(const char* str){
+            mLength = std::strlen(str);
+            std::strcpy(mString, str);
+        }
+
+        void operator+=(const FixStr<N>& str){
+            int strLength = std::strlen(str.mString);
+            std::strcat(mString, str.mString);
+            mLength += strLength;
+        }
+
+        void operator+=(const char* str){
+            int strLength = std::strlen(str);
+            std::strcat(mString, str);
+            mLength += strLength;
+        }
+
+        bool operator==(const char* str) const {
+            return std::strcmp(c_str(), str) == 0;
+        }
+
+        bool operator!=(const char* str) const {
+            return std::strcmp(c_str(), str) != 0;
+        }
+
+        FixStr<N> operator+(const FixStr<N>& str) const {
+            FixStr<N> result = *this;
+            result += str;
+            return result;
+        }
+
+        char operator[](int index) {
+            return mString[index];
+        }
+
+        const char* c_str() const {
+            return mString;
+        }
+
+        int size() const {
+            return mLength;
+        }
+
+        bool empty() const {
+            return size() == 0;
+        }
+        
+        void format(const char* format, ...){
+            //Why hardcode the buffer size to 256??
+            char buffer[256];
+            va_list args;
+            va_start(args, format);
+            std::vsnprintf(buffer, sizeof(buffer), format, args);
+            *this = buffer;
+        }
+
+        //Sets the given string to the first characters of this string, up to the specified length.
+        //TODO: This might just be substr, but when the start index is 0?
+        const char* substr(int pos = 0, int length = npos) const {
+            FixStr<N> str = FixStr(*this, pos, length);
+            return str.c_str();
+        }
+
+        //void erase(int, int){}
+        //void erase(const char*){}
+        //append_int(const int&){}
+        //void insert(int r4, char const* str, int r6){}
+        //slice(int){}
+
+        //also has version with const char& and const FixStr<64>&
+        int append_back(const char* str){
+
+        }
+
+        int append_front(const char* str){
+
+        }
+
+        int find(const char* str, int pos) const {
+
+        }
+
+        int rfind(const char* str, int pos = npos) const {
+            int length = mLength;
+            
+            if (length == 0) {
+                //Return -1 if the string is empty
+                return npos;
+            }
+            
+            int strLength = std::strlen(str);
+
+            char* string = (char*)mString + pos;
+
+            for (char* p = string + length; p != string; p--) {
+                if (!std::strncmp(p, str, strLength)) {
+                    return (int)(p - mString);
+                }
+            }
+
+            //Reached start of string without finding the string, return -1
+            return npos;
+        }
+
+        int find_last_of(char c, int pos) const {
+
+        }
+
+        //TODO: this might be a CPathUtil inline?
+        void unkInline1(const char* str){
+            int index = rfind(str, -1);
+
+            if(index != -1 && index + 1 < mLength){
+                mString[index + 1] = 0;
+                mLength = index;
+            }
+        }
+
+    private:
+        char mString[N];
+        int mLength;
+
+    public:
+        static const int npos = -1;
+    };
+
+}
+/* end "monolib/util/FixStr.hpp" */
+
+namespace ml{
+
+    /// Utility class for path and filename string manipulation.
+    class CPathUtil {
+    public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
+        static const char* getFilePtrFromPath(const char* pPath);
+
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
+        static inline void removeExt(FixStr<32>& str){
+            int length = str.rfind(".", -1);
+
+            if((u32)length + 1 > 1){
+                str = str.substr(0, length);
+            }
+        }
+    };
+
+}
+/* end "monolib/util/CPathUtil.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 7 "monolib/util/CStopwatchUtil.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/CStopwatchUtil.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+//Unofficial name
+class CStopwatchUtil {
+    struct StopwatchEntry{
+        enum Flags{
+            FLAGS_OCCUPIED = (1 << 0)
+        };
+
+        u8 mFlags; //0x0
+        char mString[23]; //0x1
+        s64 mTime; //0x18
+        float mCostTime; //0x20
+        u8 unk24[0x28 - 0x24];
+    };
+
+public:
+    static void initialize();
+    static void entry(const char* pStr);
+    static void updateCostTime(const char* pStr);
+    static float getCostTime(const char* pStr);
+
+    static inline StopwatchEntry* findEntry(const char* pStr);
+    static inline StopwatchEntry* findEmptyEntry();
+
+private:
+    static const int MAX_ENTRIES = 16;
+
+    static StopwatchEntry sEntries[MAX_ENTRIES];
+};
+/* end "monolib/util/CStopwatchUtil.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 8 "monolib/util/fixed_vector.hpp" */
+/* end "monolib/util/fixed_vector.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 9 "monolib/util/FixStr.hpp" */
+/* end "monolib/util/FixStr.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 10 "monolib/util/MemManager.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 2 "decomp.h" */
+/**
+ * Codewarrior tricks for matching decomp
+ * (Macros generate prototypes to satisfy -requireprotos)
+ */
+
+#ifndef DECOMP_H
+#define DECOMP_H
+
+/* "include/decomp.h" line 8 "macros.h" */
+/**
+ * Common macros
+ */
+
+#ifndef MACROS_H
+#define MACROS_H
+
+/******************************************************************************
+ *
+ * Strings
+ *
+ ******************************************************************************/
+
+// Stringify expression
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
+// Concatenate strings
+#define __CONCAT(x, y) x##y
+#define CONCAT(x, y) __CONCAT(x, y)
+
+// Multi-character character constants
+// clang-format off
+#define TWOCC(c0, c1)                                                          \
+    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
+#define THREECC(c0, c1, c2)                                                    \
+    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
+#define FOURCC(c0, c1, c2, c3)                                                 \
+    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
+// clang-format on
+
+/******************************************************************************
+ *
+ * Arithmetic
+ *
+ ******************************************************************************/
+
+// Min/max expression
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+// Clamp to a range
+#define CLAMP(low, high, x)                                                    \
+    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
+
+// Round up value
+#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
+#define ROUND_UP_PTR(x, align)                                                 \
+    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
+
+// Round down value
+#define ROUND_DOWN(x, align) ((x) & (-(align)))
+#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
+
+// Distance between pointers
+#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
+
+/******************************************************************************
+ *
+ * Arrays
+ *
+ ******************************************************************************/
+
+// Size of compile-time arrays
+#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#define LENGTHOF(x) ARRAY_SIZE(x)
+
+// Declare an array of hardware registers
+#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
+
+/******************************************************************************
+ *
+ * Intrinsics
+ *
+ ******************************************************************************/
+
+// Memory clear intrinsic
+#define MEMCLR(x) __memclr((x), sizeof(*(x)))
+
+/******************************************************************************
+ *
+ * Attributes
+ *
+ ******************************************************************************/
+
+// Alignment attribute
+#define ALIGN(x) __attribute__((aligned(x)))
+
+// Place a symbol in a specific ELF section
+#define DECL_SECTION(x) __declspec(section x)
+
+// Give a symbol weak linkage
+#define DECL_WEAK __declspec(weak)
+
+#endif
+/* end "macros.h" */
+
+// Compile without matching hacks.
+#if defined(NONMATCHING) || defined(COMPAT_ANY)
+#define DECOMP_FORCEACTIVE(module, ...)
+#define DECOMP_FORCELITERAL(module, ...)
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)
+#define DECOMP_INLINE
+#define DECOMP_DONT_INLINE
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
+#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+// Compile with matching hacks.
+// (This version of CW does not support pragmas inside macros.)
+#else
+// Force reference specific data
+#define DECOMP_FORCEACTIVE(module, ...)                                        \
+    void fake_function(...);                                                   \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
+        fake_function(__VA_ARGS__);                                            \
+    }
+
+// Force literal ordering, such as floats in sdata2
+#define DECOMP_FORCELITERAL(module, ...)                                       \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
+        (__VA_ARGS__);                                                         \
+    }
+
+// Force reference destructor
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
+        cls dummy;                                                             \
+        dummy.~cls();                                                          \
+    }
+
+#define DECOMP_INLINE inline
+#define DECOMP_DONT_INLINE __attribute__((never_inline))
+
+/**
+ * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
+ * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
+ */
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
+/** slwi expansion: rlwinm rD,rA,1,0,30 */
+#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
+
+/**
+ * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
+ * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ */
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+
+#endif
+
+#endif
+/* end "decomp.h" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 4 "monolib/util/FixStr.hpp" */
+/* end "monolib/util/FixStr.hpp" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 5 "monolib/util/RawArray.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/RawArray.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace mtl{
+
+template <typename T>
+struct RawArrayEntry {
+    u8 data[sizeof(T)];
+
+    void initialize(){
+        T* element = getValue();
+        new (element) T();
+    }
+
+    T* getValue(){
+        return reinterpret_cast<T*>(data);
+    }
+};
+
+template <typename T, size_t N>
+class RawArray {
+public:
+    static const int MAX_ELEMENTS = N;
+
+    void initialize(){
+        for(int i = 0; i < MAX_ELEMENTS; i++){
+            values[i].initialize();
+        }
+    }
+
+    T* operator[](u32 index){
+        return values[index].getValue();
+    }
+
+private:
+    RawArrayEntry<T> values[N];
+};
+
+} //namespace mtl
+/* end "monolib/util/RawArray.hpp" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 6 "cstring" */
+/* end "cstring" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 7 "cstddef" */
+/* end "cstddef" */
+
+namespace mtl {
+    
+    /*
+    Handle to an allocation region (MemRegion).
+    Bits 16-23: Region UID
+    Bits 24-31: Region index
+    */
+    typedef u32 ALLOC_HANDLE;
+    static const ALLOC_HANDLE INVALID_HANDLE = 0xFFFFFFFF;
+
+    #define ALLOC_HANDLE_UID(handle) ((handle) >> 8 & 0xFF)
+    #define ALLOC_HANDLE_REGION(handle) ((handle) & 0xFF)
+
+    static const int MAX_ALLOC_REGION = 80;
+
+    /*
+    Allocatable block inside of a memory region.
+    */
+    struct MemBlock {
+        //Minimum size of allocated data
+        static const int MIN_SIZE = 64;
+        //Maximum size of allocated data
+        static const int MAX_SIZE = 0x7FFFFFF;
+
+        MemBlock* prev; //0x0
+        MemBlock* next; //0x4
+        MemBlock* aligned; //0x8
+        u32 size; //0xC
+        u16 region; //0x10
+        u8 padding[32 - 0x12]; //0x12
+
+        u8* getStartAddr() {
+            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+        }
+        u8* getEndAddr() {
+            return reinterpret_cast<u8*>(this) + size;
+        }
+
+        u32 getDataSize() const {
+            return size - sizeof(MemBlock);            
+        }
+
+        static MemBlock* getBlockAddr(void* p) {
+            return reinterpret_cast<MemBlock*>(
+                static_cast<u8*>(p) - sizeof(MemBlock));
+        }
+    };
+
+    class MemManager {
+    public:
+        /*
+        Region or section of the memory heap.
+        */
+        class MemRegion {
+            friend class MemManager;
+
+        public:
+            MemRegion();
+            ~MemRegion();
+
+            static void setRegionMaxSize(u32 maxMEM1, u32 maxMEM2);
+            static u32 getMEM1MaxSize();
+            static u32 getMEM2MaxSize();
+
+            void* allocate(void* buffer, u32 size, int align);
+
+            MemBlock* reallocate(MemBlock* block);
+            MemBlock* coalesceRecursive(MemBlock* block);
+
+            MemBlock* getTailBuffer(u32 size, int align, void** buffer);
+
+            static inline void initialize(){
+                setRegionMaxSize(MEM1_MAX_SIZE, MEM2_MAX_SIZE);
+            }
+
+        private:
+            void* allocateImpl(MemBlock* block, void* buffer, u32 size, int align);
+
+            MemBlock* mHead; //0x0
+            MemBlock* mTail; //0x4
+            MemBlock* mOldest; //0x8
+            MemBlock* mYoungest; //0xC
+            void* mStartAddress; //0x10
+            void* mEndAddress; //0x14
+            u32 mNumAlloc; //0x18
+            u32 mSize; //0x1C
+            u32 mFreeBytes; //0x20
+            ml::FixStr<64> mName; //0x24
+            ALLOC_HANDLE mHandle; //0x68
+            u8 unk6C;
+
+            static u32 sMaxSizeMEM1;
+            static u32 sMaxSizeMEM2;
+
+            static const int MEM1_MAX_SIZE = 0x680000;
+            static const int MEM2_MAX_SIZE = 0;
+        };
+
+        static void initialize();
+        static void finalize();
+
+        static DECOMP_INLINE ALLOC_HANDLE create(void* head, u32 size, const char* name);
+        static ALLOC_HANDLE create(ALLOC_HANDLE handle, u32 size, const char* name);
+        static ALLOC_HANDLE create_tail(ALLOC_HANDLE handle, u32 size, const char* name);
+
+        static ALLOC_HANDLE getHandleMEM1();
+        static void setHandleMEM1(ALLOC_HANDLE handle);
+
+        static ALLOC_HANDLE getHandleMEM2();
+        static void setHandleMEM2(ALLOC_HANDLE handle);
+        
+        static ALLOC_HANDLE getHandleStatic();
+        static void setHandleStatic(ALLOC_HANDLE handle);
+
+        static bool erase(ALLOC_HANDLE handle);
+        static bool empty(ALLOC_HANDLE handle);
+
+        static void* allocate_head(ALLOC_HANDLE handle, u32 size, int align);
+        static void* allocate_tail(ALLOC_HANDLE handle, u32 size, int align);
+        static bool deallocate(void* p);
+        static bool deallocateImpl(void* p);
+
+        static MemRegion* getRegion(ALLOC_HANDLE handle);
+        static u32 getRegionSize(ALLOC_HANDLE handle);
+        static u32 getBlockSize(ALLOC_HANDLE handle);
+        static MemBlock* getTailBuffer(MemRegion* region, u32 size, int align, void** buffer);
+        static MemBlock* getMaxBlock(ALLOC_HANDLE handle);
+        static u32 getMaxAllocSize(ALLOC_HANDLE handle);
+        static void* getMaxAllocData(ALLOC_HANDLE handle);
+        static f32 getPercentAlloc(ALLOC_HANDLE handle);
+        static void func_804348A4(ALLOC_HANDLE handle, u8 val);
+
+        static u16 calculateCrc(const void* data, u32 len);
+        static void func_80434A4C(bool value);
+
+        static bool isOptimalAlloc();
+        static void setOptimalAlloc(bool enable);
+
+        static void* allocate(u32 size, ALLOC_HANDLE handle);
+        static void* allocate_array(u32 size, ALLOC_HANDLE handle);
+
+        static void* allocate_ex(u32 size, ALLOC_HANDLE handle, int align);
+        static void* allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align);
+
+        /* Commented out log function, which would have printed debug messages. It seems like
+        monolithsoft had log functions for many classes in addition to this one. */
+        //static void log(int something);
+
+    private:
+        static const char* scRegionNameMEM1;
+        static const char* scRegionNameMEM2;
+
+        static ALLOC_HANDLE sHandleMEM1;
+        static ALLOC_HANDLE sHandleMEM2;
+
+        static RawArray<MemRegion, MAX_ALLOC_REGION> sRegionArray;
+        static u32 sRegionUniqueId;
+
+        static bool lbl_80667E54;
+        static bool lbl_80665E38;
+        static bool lbl_80665E39;        
+        static bool sIsOptimalAlloc;
+    };
+
+}
+
+/*
+Allocates object memory from the specified region.
+*/
+inline void* operator new(size_t size, mtl::ALLOC_HANDLE handle) {
+    return mtl::MemManager::allocate(size, handle);
+}
+
+/*
+Allocates aligned object memory from the specified region.
+Specify negative alignment to perform a tail allocation.
+*/
+inline void* operator new(size_t size, int align, mtl::ALLOC_HANDLE handle) {
+    return mtl::MemManager::allocate_ex(size, handle, align);
+}
+
+/*
+Allocates array memory from the specified region.
+*/
+inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle) {
+    return mtl::MemManager::allocate_array(size, handle);
+}
+
+/*
+Allocates aligned array memory from the specified region.
+Specify negative alignment to perform a tail allocation.
+*/
+inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle, int align) {
+    return mtl::MemManager::allocate_array_ex(size, handle, align);
+}
+
+//Utility macros
+
+#define DELETE_OBJ(p)                   \
+    {                                   \
+    if (p != nullptr){                  \
+        mtl::MemManager::deallocate(p); \
+        p = nullptr;                    \
+    }                                   \
+    }                                   \
+
+
+#define DELETE_ARRAY(p)                   \
+    {                                     \
+    if (p != nullptr){                    \
+        delete[] p;                       \
+        p = nullptr;                      \
+    }                                     \
+    }                                     \
+/* end "monolib/util/MemManager.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 11 "monolib/util/PtrSingleton.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/PtrSingleton.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace mtl{
+
+template <typename T>
+class PtrSingleton{
+public:
+    PtrSingleton(){
+        spInstance = static_cast<T*>(this);
+    }
+
+    ~PtrSingleton(){
+        spInstance = nullptr;
+    }
+
+    static T* getInstance(){
+        return spInstance;
+    }
+
+protected:
+    static T* spInstance;
+};
+
+template <typename T> T* PtrSingleton<T>::spInstance;
+
+}
+/* end "monolib/util/PtrSingleton.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 12 "monolib/util/RawArray.hpp" */
+/* end "monolib/util/RawArray.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 13 "monolib/util/reslist.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
+#ifndef MSL_CPP_ALGORITHM_H
+#define MSL_CPP_ALGORITHM_H
+/* "libs/PowerPC_EABI_Support/include/stl/algorithm" line 2 "iterator" */
+#ifndef MSL_CPP_ITERATOR_H
+#define MSL_CPP_ITERATOR_H
+
+namespace std {
+
+    struct random_access_iterator_tag {};
+
+} // namespace std
+
+#endif
+/* end "iterator" */
+
+namespace std {
+
+template <typename T> inline const T& max(const T& a, const T& b) {
+    return (a < b) ? b : a;
+}
+
+template <typename T> inline const T& min(const T& a, const T& b) {
+    return (b < a) ? b : a;
+}
+
+template <typename TPtr, typename T>
+inline TPtr find(TPtr first, TPtr last, const T& value) {
+    while (first != last && *first != value) {
+        ++first;
+    }
+
+    return first;
+}
+
+template <typename TPtr> inline long distance(TPtr first, TPtr last) {
+    random_access_iterator_tag tag;
+    return __distance(first, last, tag);
+}
+
+template <typename TPtr>
+inline long __distance(TPtr first, TPtr last, random_access_iterator_tag tag) {
+    long dist = reinterpret_cast<long>(last) - reinterpret_cast<long>(first);
+    return dist / static_cast<long>(sizeof(TPtr));
+}
+
+template <typename T> inline T& move(T& x) { return x; }
+
+template <typename T> inline void swap(T& a, T& b) {
+    T tmp = move(a);
+    a = move(b);
+    b = move(tmp);
+}
+
+} // namespace std
+
+#endif
+/* end "algorithm" */
+
+/* TODO: This breaks ctors/dtors, but it looks alot nicer than the method below. Maybe there's a way to get
+this to work */
+template <typename T>
+struct _reslist_node_item {
+    _reslist_node_item(){}
+    _reslist_node_item(const T& value) try :
+    item(value) {} catch(...){}
+    T item;
+};
+
+template <typename T>
+struct _reslist_node{
+    void setItem(const T& value){
+        //This doesn't work
+        //new (&mItem) _reslist_node_item<T>(value);
+        //Possibly fake?
+        T* ptr = &mItem;
+        if(ptr != nullptr) {
+            try{
+                *ptr = value;
+            }catch(...){
+                throw;
+            }
+        }
+    }
+
+    _reslist_node<T>* mNext; //0x0
+    _reslist_node<T>* mPrev; //0x4
+    T mItem; //0x8
+
+};
+
+template <typename T>
+class _reslist_base{
+public:
+    _reslist_base(){
+        mList = nullptr;
+        mCapacity = 0;
+        unk1C = false;
+        mStartNodePtr = &mStartNode;
+        mStartNodePtr->mNext = &mStartNode;
+        mStartNodePtr->mPrev = mStartNode.mNext;
+    }
+
+    virtual ~_reslist_base(){
+        clearList();
+
+        if (unk1C == false) DELETE_ARRAY(mList);
+    }
+
+    void func_8049CB6C(T* item){
+
+    }
+
+    void func_8049CB70(_reslist_node<T>* r4){
+        r4->mNext = nullptr;
+    }
+
+    int findFirstEmptySlotIndex(){
+        int i = 0;
+        
+        //Go through the list until we find an empty slot
+        while(i < mCapacity){
+            if(mList[i].mNext == nullptr) break;
+
+            //BUG: There's no handling for if no empty slot is found. As is,
+            //the last element index will get returned if that happens.
+            //if(i == mCapacity - 1) return -1;
+
+            i++;
+        }
+
+        return i;
+    }
+
+    //func_8049CAF4
+    void clearList(){
+        _reslist_node<T>* r5 = mStartNodePtr->mNext;
+        
+        while (r5 != mStartNodePtr) {
+            _reslist_node<T>* r4 = r5;
+            r5 = r5->mNext;
+            func_8049CB6C(&r4->mItem);
+            func_8049CB70(r4);
+        }
+    
+        mStartNodePtr->mNext = mStartNodePtr;
+        mStartNodePtr->mPrev = mStartNodePtr;
+    }
+
+    //0x0: vtable
+    _reslist_node<T>* mStartNodePtr; //0x4
+    _reslist_node<T> mStartNode; //0x8
+    _reslist_node<T>* mList; //0x14
+    int mCapacity; //0x18
+    bool unk1C; //0x1C
+};
+
+template <typename T>
+class reslist;
+
+//Unofficial name
+template <typename T, typename Ref, typename Ptr>
+class _reslist_iterator {
+    friend class reslist<T>;
+public:
+    _reslist_iterator() : mNode(nullptr){}
+    explicit _reslist_iterator(_reslist_node<T>* node) : mNode(node){}
+
+    _reslist_iterator& operator++(){
+        mNode = mNode->mNext;
+        return *this;
+    }
+
+    _reslist_iterator operator++(int){
+
+        _reslist_iterator temp = *this;
+        mNode = mNode->mNext;
+        return temp;
+    }
+
+    _reslist_iterator& operator--(){
+        mNode = mNode->mPrev;
+        return *this;
+    }
+
+    _reslist_iterator operator--(int){
+        _reslist_iterator temp = *this;
+        mNode = mNode->mPrev;
+        return temp;
+    }
+
+    Ref operator*() const {
+        return mNode->mItem;
+    }
+
+    Ptr operator->() const {
+        return &operator*();
+    }
+
+    bool operator==(_reslist_iterator const& rhs) const {
+        return mNode == rhs.mNode;
+    }
+
+    bool operator!=(_reslist_iterator const& rhs) const {
+        return mNode != rhs.mNode;
+    }
+
+private:
+    _reslist_node<T>* mNode; //0x0
+};
+
+//size: 0x20
+template <typename T>
+class reslist : public _reslist_base<T> {
+public:
+    typedef _reslist_iterator<T, T&, T*> iterator;
+
+    reslist() : _reslist_base<T>() {
+    }
+    virtual ~reslist(){
+    }
+
+    iterator begin() const {
+        return iterator(mStartNodePtr->mNext);
+    }
+    iterator end() const {
+        return iterator(mStartNodePtr);
+    }
+
+    T& front() {
+        return *begin();
+    }
+    T& back() {
+        return *begin();
+    }
+
+    const T& front() const {
+        return *begin();
+    }
+    const T& back() const {
+        return *begin();
+    }
+
+    u32 size() const {
+        _reslist_node<T>* curNode;
+        _reslist_node<T>* endNode;
+        
+        u32 length = 0;
+        endNode = mStartNodePtr;
+        curNode = mStartNodePtr->mNext;
+
+        while(curNode != endNode){
+            length++;
+            curNode = curNode->mNext;
+        }
+        
+        return length;
+    }
+
+    bool empty() const {
+        return mStartNodePtr->mNext == mStartNodePtr;
+    }
+
+    inline void reserve(mtl::ALLOC_HANDLE handle, int capacity) {
+        mList = new (handle) _reslist_node<T>[capacity];
+
+        for(int i = 0; i < capacity; i++){
+            mList[i].mNext = nullptr;
+        }
+
+        mCapacity = capacity;
+    }
+
+    iterator find(const T& item){
+        return std::find(begin(), end(), item);
+    }
+
+    void push_front(const T& item){
+        _reslist_node<T>* startNode = mStartNodePtr->mNext;
+        int i = findFirstEmptySlotIndex();
+
+        _reslist_node<T>* temp = &mList[i];
+        temp->setItem(item);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+
+    void push_back(const T& item){
+        _reslist_node<T>* startNode = mStartNodePtr;
+        int i = findFirstEmptySlotIndex();
+
+        _reslist_node<T>* temp = &mList[i];
+
+        temp->setItem(item);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+
+    void remove(const T& item){
+        _reslist_node<T>* curr;
+        _reslist_node<T>* next;
+        _reslist_node<T>* head;
+
+        head = mStartNodePtr;
+        curr = head->mNext;
+        
+        //Walk through the list
+        while(curr != head){
+            //Save next node in case we invalidate the curr iterator
+            next = curr->mNext;
+
+            //If we find an entry containing the item, remove the entry
+            if(curr->mItem == item){
+                _reslist_node<T>* prev = curr->mPrev;
+                prev->mNext = next;
+                next->mPrev = prev;
+                curr->mNext = nullptr;
+            }
+
+            curr = next;
+        }
+    }
+
+    void pop_front(){
+        _reslist_node<T>* prevNode;
+        _reslist_node<T>* nextNode;
+        _reslist_node<T>* frontNode;
+
+        frontNode = mStartNodePtr->mNext;
+        nextNode = frontNode->mNext;
+        prevNode = frontNode->mPrev;
+        prevNode->mNext = nextNode;
+        nextNode->mPrev = prevNode;
+        frontNode->mNext = nullptr;
+    }
+
+    void erase(iterator& it){
+        _reslist_node<T>* r5;
+        _reslist_node<T>* r4;
+        _reslist_node<T>* node = it.mNode;
+        
+        r4 = node->mPrev;
+        r5 = node->mNext;
+        r4->mNext = r5;
+        r5->mPrev = r4;
+        node->mNext = nullptr;
+    }
+
+    void clear(){
+        clearList();
+    }
+
+    void destroyList(){
+        clearList();
+        if (unk1C == false && mList != nullptr) {
+            delete[](this->mList);
+            mList = nullptr;
+        }
+        mCapacity = 0;
+    }
+};
+/* end "monolib/util/reslist.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 14 "monolib/util/resvector.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/resvector.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/resvector.hpp" line 3 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+
+template <typename T>
+class resvector {
+public:
+    resvector() : mArray(nullptr), mCount(0) {
+    }
+    resvector(mtl::ALLOC_HANDLE handle) : mArray(nullptr), mCount(0), mHandle(handle) {
+    }
+    ~resvector(){   
+        destroy();
+    }
+    
+    T* begin(){
+        return &mArray[0];
+    }
+
+    T* end(){
+        return &mArray[mCount];
+    }
+
+    const T* begin() const{
+        return begin();
+    }
+
+    const T* end() const{
+        return end();
+    }
+
+    u32 size() const {
+        return mCount;
+    }
+
+    T& operator[](int index){
+        return mArray[index];
+    }
+
+    const T& operator[](int index) const {
+        return mArray[index];
+    }
+
+    void reserve(mtl::ALLOC_HANDLE handle, u32 size){
+        mHandle = handle;
+        mArray = static_cast<T*>(mtl::MemManager::allocate_head(handle, size * sizeof(T), 4));
+        mCount = 0;
+        mSize = size;
+    }
+
+    void push_back(T item){
+        //NOTE: no bounds check
+        mArray[mCount++] = item;
+    }
+
+    void destroy(){
+        mCount = 0;
+        if(mHandle != mtl::INVALID_HANDLE){
+            DELETE_OBJ(mArray);
+        }
+
+        mArray = nullptr;
+        mSize = 0;
+        mHandle = mtl::INVALID_HANDLE;
+    }
+
+    void clearList(){
+        T* ptr = mArray;
+        while(ptr != &mArray[mCount]){
+            DELETE_OBJ(*ptr);
+            ptr++;
+        }
+    }
+
+    void resetCount(){
+        mCount = 0;
+    }
+
+private:
+    T* mArray; //0x0
+    u32 mCount; //0x4
+    u32 mSize; //0x8
+    u32 mHandle; //0xC
+};
+/* end "monolib/util/resvector.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 15 "monolib/util/TPLUtils.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/TPLUtils.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/TPLUtils.hpp" line 3 "revolution/TPL.h" */
+/**
+ * References: YAGCD, BrawlBox
+ */
+
+#ifndef RVL_SDK_PUBLIC_TPL_H
+#define RVL_SDK_PUBLIC_TPL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/TPL.h" line 10 "revolution/TPL/TPL.h" */
+#ifndef RVL_SDK_TPL_H
+#define RVL_SDK_TPL_H
+/* "libs/RVL_SDK/include/revolution/TPL/TPL.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/TPL/TPL.h" line 4 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct TPLHeader {
+    u16 height;            // at 0x0
+    u16 width;             // at 0x2
+    u32 format;            // at 0x4
+    char* data;            // at 0x8
+    GXTexWrapMode wrapS;   // at 0xC
+    GXTexWrapMode wrapT;   // at 0x10
+    GXTexFilter minFilter; // at 0x14
+    GXTexFilter magFilter; // at 0x18
+    f32 LODBias;           // at 0x1C
+    u8 edgeLODEnable;      // at 0x20
+    u8 minLOD;             // at 0x21
+    u8 maxLOD;             // at 0x22
+    u8 unpacked;           // at 0x23
+} TPLHeader;
+
+typedef struct TPLClutHeader {
+    u16 numEntries;   // at 0x0
+    u8 unpacked;      // at 0x1
+    u8 pad8;          // at 0x2
+    GXTlutFmt format; // at 0x4
+    char* data;       // at 0x8
+} TPLClutHeader;
+
+typedef struct TPLDescriptor {
+    TPLHeader* textureHeader;  // at 0x0
+    TPLClutHeader* CLUTHeader; // at 0x4
+} TPLDescriptor;
+
+typedef struct TPLPalette {
+    u32 versionNumber;              // at 0x0
+    u32 numDescriptors;             // at 0x4
+    TPLDescriptor* descriptorArray; // at 0x8
+} TPLPalette;
+
+void TPLBind(TPLPalette* pal);
+TPLDescriptor* TPLGet(TPLPalette* pal, u32 id);
+void TPLGetGXTexObjFromPalette(TPLPalette* pal, GXTexObj* to, u32 id);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/TPL/TPL.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/TPL.h" */
+
+namespace ml{
+
+    /* Wrapper TPL file struct to allow for easy access to the image header data in simple single image
+    TPL files without needing to resort to raw pointer/macro abuse. Note that this struct only is valid for
+    TPL files that have a single image in them and don't use a palette based format. */
+    struct CTPLData{
+        TPLPalette fileHeader; //0x0
+        TPLDescriptor descriptor; //0xC
+        TPLHeader imageHeader; //0x14
+    };
+
+}
+/* end "monolib/util/TPLUtils.hpp" */
+/* end "monolib/util.hpp" */
+
+/*
+Handle to a work memory region
+*/
+typedef u32 WORK_ID;
+static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
+
+class CWorkThreadSystem{
+    friend class CWorkThread;
+
+public:
+    static void initialize();
+    static void destroy();
+
+    static WORK_ID allocWID(CWorkThread* thread);
+    static void freeWID(WORK_ID wid){
+        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
+        sWorkThreads[wid] = nullptr;
+    }
+
+    static mtl::ALLOC_HANDLE getWorkMem();
+
+private:
+    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
+
+    //Highest allowed work ID
+    static const WORK_ID MAX_WORK_ID = 2048;
+    //One registration bit flag per work ID
+    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
+
+    static const char* scRegionName;
+    static BOOL sMemAvailable;
+
+    //Handle for all work memory allocations
+    static mtl::ALLOC_HANDLE sAllocHandle;
+
+    //Work thread registration flags, by ID
+    static u32* sAllocFlags;
+
+    //Registered work threads, by ID
+    static CWorkThread** sWorkThreads;
+};
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+
+//Message param entry format:
+//0x0: message id
+//0x4: work ID
+//0x8: address
+//0xC: code address
+//0x10: value
+//0x14: address
+//0x18: address
+//0x1C: address
+//0x20: address (pointer to string?)
+struct CMsgParamEntry{
+    u32 command; //0x0
+    WORK_ID wid; //0x4
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
+};
+
+template <int N>
+class CMsgParam{
+public:
+    CMsgParam(u32 r4){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        field7 = r4;
+    }
+
+    virtual ~CMsgParam(){
+        clear();
+    }
+
+    void clear(){
+        mSize = 0;
+        mFront = 0;
+    }
+
+    bool empty() const{
+        return mSize == 0;
+    }
+
+    u32 size() const{
+        return mSize;
+    }
+
+    const CMsgParamEntry& front() const{
+        return mArrayPtr[mFront % mCapacity];
+    }
+
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
+
+    void pop(){
+        mSize--;
+        mFront = (mFront + 1) % mCapacity;
+    }
+
+    int find(u32 msg) const{
+        for(int i = 0; i < mSize; i++){
+            if(mArrayPtr[(mFront + i) % mCapacity].command == msg){
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+private:
+    //0x0: vtable
+    CMsgParamEntry mEntries[N]; //0x4
+    CMsgParamEntry* mArrayPtr; //N*0x24 + 0x4
+    u32 mFront; //N*0x24 + 0x8
+    u32 mSize; //N*0x24 + 0xC
+    u32 mCapacity; //N*0x24 + 0x10
+    u32 field6; //N*0x24 + 0x14
+    u32 field7; //N*0x24 + 0x18
+};
+/* end "monolib/work/CMsgParam.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 4 "monolib/work/CTTask.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CTTask.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CTTask.hpp" line 3 "monolib/work/CProcess.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CProcess.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CProcess.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+/*
+Instance of a game task.
+
+Processes can contain child sub-processes,
+and somewhat maintain a priority system.
+
+Each process can implement specific behavior
+for its initialization/termination,
+and for the update ("Move") and render ("Draw") game events.
+*/
+class CProcess : public CChildListNode{
+    friend class CProcessMan;
+
+public:
+    CProcess();
+    virtual ~CProcess();
+
+    virtual void Init() = 0;
+    virtual void Term() = 0;
+
+    virtual void Move() = 0;
+    virtual void Draw() = 0;
+    // Out-of-line: inline `{}` emits Tail__8CProcessFv into every derived TU (CfPadTask +.text).
+    virtual void Tail();
+
+    void Regist(CProcess* parent, bool insertTop);
+    void Remove();
+
+    void SetRemove(){
+        mIsRemove = true;    
+    }
+
+private:
+    //0x0-10: CDoubleListNode
+    //0x10: vtable
+    //0x14-38: CChildListNode
+    bool mIsRegist; //0x38
+    bool mIsRemove; //0x39
+    bool mIsDisableMove; //0x3A
+    bool mIsDisableDraw; //0x3B
+};
+
+/*
+Process manager.
+
+Responsible for dispatching all process events every tick,
+and for maintaining the lists of both root-level processes and released processes.
+*/
+class CProcessMan {
+public:
+    static void Reset();
+    static void Delete();
+
+    static void Init();
+    static void Term();
+    
+    static void Move();
+    static void Draw();
+    // Not present as OOL in retail CProcess.s; keep inline API for callers.
+    static void Tail() {
+        TChildListHeader<CProcess>& list = GetRootProcessList();
+        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
+            TailImpl(proc);
+        }
+    }
+
+    static TChildListHeader<CProcess>& GetFreeProcessList() {
+        return sFreeProcessList;
+    }
+    static TChildListHeader<CProcess>& GetRootProcessList() {
+        return sRootProcessList;
+    }
+
+private:
+    static void MoveImpl(CProcess* proc);
+    static void DrawImpl(CProcess* proc);
+    static void TailImpl(CProcess* proc);
+
+    static bool Remove(CProcess* proc);
+
+    static void DeleteImpl(CProcess* proc);
+
+    static bool sIsInitialized;
+    static TChildListHeader<CProcess> sFreeProcessList;
+    static TChildListHeader<CProcess> sRootProcessList;
+};
+/* end "monolib/work/CProcess.hpp" */
+
+/*
+Generic task object.
+
+Provides a way to implement Move/Draw behavior without needing to work with the
+CProcess api.
+
+Derived classes must inherit using CRTP to allow binding the move/draw functions.
+*/
+template <typename TDerived>
+class CTTask : public CProcess {
+public:
+    typedef void (TDerived::*MoveFunc)();
+    typedef void (TDerived::*DrawFunc)();
+
+public:
+    CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
+
+    virtual void Move() {
+        if (mMoveFunc) {
+            (static_cast<TDerived*>(this)->*mMoveFunc)();
+        }
+    }
+    virtual void Draw() {
+        if (mDrawFunc) {
+            (static_cast<TDerived*>(this)->*mDrawFunc)();
+        }
+    }
+
+protected:
+    //0x0-10: CDoubleListNode
+    //0x10: vtable
+    //0x14-3C: CProcess
+    MoveFunc mMoveFunc; //0x3C
+    DrawFunc mDrawFunc; //0x48
+}; // size: 0x54
+/* end "monolib/work/CTTask.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 5 "monolib/work/CWorkControl.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 4 "monolib/work/CMsgParam.hpp" */
+/* end "monolib/work/CMsgParam.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 5 "monolib/work/IWorkEvent.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+/* Interface for work events, which provides a set of 32 event handler functions that
+get triggered when a certain event happens (such as when loading a file for OnFileEvent).
+Deriving classes can override any of these functions to run their own code when the
+corresponding event happens.
+
+Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
+being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
+out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
+with no apparent calls to the other 3 (possibly debug only).
+
+In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
+with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
+};
+/* end "monolib/work/IWorkEvent.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 7 "monolib/work/CWorkUtil.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 2 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 3 "monolib/work/UnkStruct_80438AF0.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/UnkStruct_80438AF0.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+struct UnkStruct_80438AF0_3 {};
+
+struct UnkStruct_80438AF0_2 {
+    UnkStruct_80438AF0_3* unk0;
+};
+
+struct UnkStruct_80438AF0 {
+    char unk0[0x4];
+    UnkStruct_80438AF0_2* unk4;
+};
+/* end "monolib/work/UnkStruct_80438AF0.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+
+class CWorkUtil{
+public:
+    static UnkStruct_80438AF0_3* func_80438AF0(UnkStruct_80438AF0* arg0);
+    static CWorkThread* getWorkThread(WORK_ID wid);
+    static void dispTree(const CWorkThread* pThread, int indent = 0);
+    static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);
+};
+
+//Possibly member of CWorkThread?
+extern bool hasChild(CWorkThread* pThread);
+/* end "monolib/work/CWorkUtil.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 8 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+//size: 0x1C4
+class CWorkThread : public IWorkEvent{
+public:
+    /* Enum used to keep track of the type of this work thread, which is useful when
+     casting from a generic instance of CWorkThread. Most classes inheriting from
+     CWorkThread have a unique value reserved, but not all do. If a custom value
+     isn't set, derived classes will default to the value for CWorkThread.
+     
+     Special type ranges:
+     23-47: CProc inheriting classes
+     48-52: CView inheriting classes
+    */
+    enum ThreadType{
+        //Work classes
+        THREAD_CWORKTHREAD = 0,
+        THREAD_CWORKCONTROL = 1,
+        THREAD_CWORKSYSTEM = 2,
+        THREAD_03 = 3,
+        THREAD_04 = 4,
+        THREAD_05 = 5,
+        THREAD_CWORKSYSTEMCACHE = 6,
+        THREAD_CWORKSYSTEMPACK = 7,
+        THREAD_08 = 8,
+        THREAD_09 = 9,
+        THREAD_CDEVICE = 10,
+        //CLib classes
+        THREAD_CLIB = 11,
+        THREAD_CLIBG3D = 12,
+        THREAD_CLIBHBM = 13,
+        THREAD_CLIBLAYOUT = 14,
+        THREAD_CLIBCRI = 15,
+        THREAD_CLIBCRIMOVIEPLAY = 16,
+        THREAD_CLIBCRISTREAMINGPLAY = 17,
+        THREAD_CLIBVM = 18,
+        THREAD_CLIBSTATICDATA = 19,
+        THREAD_20 = 20,
+        //Root classes
+        THREAD_CPROCROOT = 21,
+        THREAD_CVIEWROOT = 22,
+        //CProc inheriting classes
+        THREAD_CPROC = 23,
+        THREAD_CDESKTOP = 24,
+        THREAD_CEXCEPTION = 25,
+        THREAD_CLIBHBMCONTROL = 45,
+        THREAD_CPROC_MAX = 47,
+        //CView inheriting classes
+        THREAD_CVIEW = 48,
+        THREAD_CVIEW_MAX = 53,
+        THREAD_CRSRCDATA = 56,
+        THREAD_CSCRIPTCODE = 59,
+        //Misc device classes
+        THREAD_CDEVICEFONTLAYER = 63,
+        THREAD_CDEVICEFONTLOADER = 64,
+        THREAD_CDEVICEFILEJOB = 65,
+        THREAD_CDEVICEFILEJOBREADDVD = 68
+    };
+
+    enum EVT{
+        EVT_NONE,
+        EVT_1,
+        EVT_EXCEPTION,
+        EVT_3,
+        EVT_4,
+        EVT_PAUSE,
+        EVT_UNPAUSE,
+        EVT_7,
+        EVT_8,
+        EVT_9,
+        EVT_APPEXCEPTION_ON,
+        EVT_APPEXCEPTION_OFF,
+    };
+
+    enum ThreadFlags{
+        THREAD_FLAG_NO_EVENT = 1 << 0,
+        THREAD_FLAG_EVT1 = 1 << 1,
+        THREAD_FLAG_2 = 1 << 2,
+        THREAD_FLAG_3 = 1 << 3,
+        THREAD_FLAG_EXCEPTION = 1 << 4,
+        THREAD_FLAG_EVT3 = 1 << 5,
+        THREAD_FLAG_EVT4 = 1 << 6,
+        THREAD_FLAG_PAUSE = 1 << 7,
+        THREAD_FLAG_EVT9 = 1 << 8,
+        THREAD_FLAG_EVT7 = 1 << 9,
+        THREAD_FLAG_APPEXCEPTION = 1 << 10,
+    };
+
+    enum ThreadState{
+        THREAD_STATE_NONE,
+        THREAD_STATE_INIT,
+        THREAD_STATE_LOGIN,
+        THREAD_STATE_RUN,
+        THREAD_STATE_LOGOUT,
+        THREAD_STATE_SHUTDOWN,
+    };
+
+public:
+    CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
+    virtual ~CWorkThread();
+    virtual void wkUpdate();                           //0x88
+    virtual void wkRender(){}                          //0x8C
+    virtual void wkRenderAfter(){}                     //0x90
+    virtual bool wkStandbyLogin();                     //0x94
+    virtual bool wkStandbyLogout();                    //0x98
+    virtual bool wkStandbyExceptionRetry(WORK_ID wid){ //0x9C
+        return true;
+    }
+
+    void wkReplaceHasChild(int capacity);
+    void wkEntryChild(CWorkThread* pChild, bool prepend);
+    void wkRemoveChild(CWorkThread* pChild);
+
+    void wkSetEvent(EVT evt);
+    void wkSetEventChild(EVT evt);
+
+    bool wkCheckTimeout(u32 arg0, bool arg1, const char* pMessage);
+    bool wkIsCurrent() const;
+    void func_804385CC(u32);
+
+    void wkTimeoutInit();
+    void wkStandby();
+
+    static CWorkThread* getWorkThread(WORK_ID wid);
+    CWorkThread* getWorkThread(const char* name);
+
+    CWorkThread* wkGetChild(){
+        return mChildren.front();
+    }
+    CWorkThread* wkGetChild() const {
+        return mChildren.front();
+    }
+
+    bool isRunning() const {
+        return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
+    }
+
+    bool isException() const {
+        return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
+    }
+
+    bool isEvent3() const {
+        return checkFlag(THREAD_FLAG_EVT3) ? true : mMsgQueue.find(EVT_3) >= 0;
+    }
+    
+    bool isNoEvent() const {
+        return checkFlag(THREAD_FLAG_NO_EVENT);
+    }
+
+    bool isPaused() const {
+        return checkFlag(THREAD_FLAG_PAUSE) && checkFlag(THREAD_FLAG_EVT4);
+    }
+
+    bool isEvent7() const {
+        return checkFlag(THREAD_FLAG_EVT7) && !checkFlag(THREAD_FLAG_EVT9);
+    }
+
+    bool isAppException() const {
+        return checkFlag(THREAD_FLAG_APPEXCEPTION);
+    }
+
+    bool checkFlag(ThreadFlags flag) const {
+        return mFlags & flag;
+    }
+
+    bool hasSingleChild() const {
+        return mChildren.size() == 1;
+    }
+
+    //0x0: vtable
+    ml::FixStr<64> mName;            //0x4
+    ThreadState mState;              //0x48
+    WORK_ID mWorkID;                 //0x4C
+    ThreadType mType;                //0x50
+    mtl::ALLOC_HANDLE mAllocHandle;  //0x54
+    CWorkThread* mParent;            //0x58
+    reslist<CWorkThread*> mChildren; //0x5C
+    u32 mFlags;                      //0x7C
+    CMsgParam<8> mMsgQueue;          //0x80
+    u32 unk1BC;
+    WORK_ID mExceptionWorkID; //0x1C0
+
+private:
+    bool wkStandbyInit();
+    bool wkStandbyRun();
+    bool wkStandbyShutdown();
+};
+
+//Utility macros b/c i don't wanna type this out every time
+//TODO: improve these macros
+
+#define DECL_WORKTHREAD_CREATE(class)                                            \
+    static class* create(const char* pName, CWorkThread* pParent){               \
+        WORK_ID id = CWorkThreadSystem::getWorkMem();                            \
+        class* threadClass = new (id) class(pName, pParent);                     \
+        CWorkUtil::entryWork(threadClass, pParent, false);                       \
+        return threadClass;                                                      \
+    }                                                                            \
+
+#define CREATE_WORKTHREAD(class, parent) class::create(#class, parent);
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkControl.hpp" line 5 "monolib/work/CWorkUtil.hpp" */
+/* end "monolib/work/CWorkUtil.hpp" */
+
+class CWorkControl : public CWorkThread{
+public:
+    static CWorkControl* getInstance();
+    static CWorkControl* create(CWorkThread* pParent);
+    static CWorkControl* create(const char* pName, CWorkThread* pParent);
+
+    static bool setFlowSetup();
+    static void pause(bool paused);
+    static bool hasFlow();
+
+    virtual bool wkStandbyLogin();  //0x94
+    virtual bool wkStandbyLogout(); //0x98
+
+private:
+    static const int MAX_CHILD = 32;
+
+private:
+    CWorkControl(const char* pName, CWorkThread* pParent);
+    virtual ~CWorkControl();
+
+private:
+    char unk1C8[4];
+
+private:
+    static CWorkControl* spInstance;
+};
+/* end "monolib/work/CWorkControl.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 6 "monolib/work/CWorkFlowSetup.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 5 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkFlowSetup.hpp" line 6 "monolib/work/CWorkUtil.hpp" */
+/* end "monolib/work/CWorkUtil.hpp" */
+
+class CWorkFlowSetup : public CWorkThread{
+public:
+    static CWorkFlowSetup* getInstance();
+
+    DECL_WORKTHREAD_CREATE(CWorkFlowSetup);
+
+    virtual bool wkStandbyLogin();  //0x94
+    virtual bool wkStandbyLogout(); //0x98
+
+private:
+    CWorkFlowSetup(const char* pName, CWorkThread* pParent);
+    virtual ~CWorkFlowSetup();
+
+private:
+    u32 unk1C4;
+
+    static CWorkFlowSetup* spInstance;
+};
+/* end "monolib/work/CWorkFlowSetup.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 7 "monolib/work/CWorkFlowShutdownAll.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkFlowShutdownAll.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkFlowShutdownAll.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CWorkFlowShutdownAll : public CWorkThread{
+public:
+    static CWorkFlowShutdownAll* getInstance();
+
+private:
+    /// Singleton instance pointer.
+    static CWorkFlowShutdownAll* spInstance;
+};
+/* end "monolib/work/CWorkFlowShutdownAll.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 8 "monolib/work/CWorkFlowWiiMenu.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkFlowWiiMenu.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkFlowWiiMenu.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CWorkFlowWiiMenu : public CWorkThread{
+public:
+    static CWorkFlowWiiMenu* getInstance();
+
+private:
+    static CWorkFlowWiiMenu* spInstance;
+};
+/* end "monolib/work/CWorkFlowWiiMenu.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 9 "monolib/work/CWorkFlowWiiPowerOff.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkFlowWiiPowerOff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkFlowWiiPowerOff.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CWorkFlowWiiPowerOff : public CWorkThread{
+public:
+    static CWorkFlowWiiPowerOff* getInstance();
+
+private:
+    static CWorkFlowWiiPowerOff* spInstance;
+};
+/* end "monolib/work/CWorkFlowWiiPowerOff.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 10 "monolib/work/CWorkFlowWiiReset.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkFlowWiiReset.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkFlowWiiReset.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CWorkFlowWiiReset : public CWorkThread{
+public:
+    static CWorkFlowWiiReset* getInstance();
+
+private:
+    static CWorkFlowWiiReset* spInstance;
+};
+/* end "monolib/work/CWorkFlowWiiReset.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 11 "monolib/work/CWorkRoot.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkRoot.hpp" line 4 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+/*
+Main game framework class. It handles setting up/cleaning up most of the framework
+components, and contains the core program loop, which is responsible for managing/
+updating all of the threads/processes the game uses as well as other things. This
+includes the main game process, which gets ran by CDesktop, which itself is ran
+by this class.
+*/
+class CWorkRoot{
+public:
+
+    static void initialize();
+    static void destroy();
+
+    static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);
+    static void standbyWork(CWorkThread* pThread, bool arg1);
+    static void updateWork(CWorkThread* pThread, bool arg1);
+    static void standbyWork();
+    static void renderWork();
+
+    static bool runSingle();
+    static void exit();
+    static void run();
+    static void preRetraceCallback(u32 retraceCount);
+
+    static void setException(CException* pException);
+    static CException* getException();
+
+private:
+    enum ExitMode {
+        EXIT_PROG_END,
+        EXIT_WII_MENU,
+        EXIT_RESTART,
+        EXIT_SHUTDOWN
+    };
+
+    static bool dummy1(CWorkThread* pThread);
+    static inline bool isShutdownAll();
+    static inline void initializeComponents();
+    static inline void destroyComponents();
+
+    static ExitMode sExitMode;
+    static CException* sException;
+    static CErrorWii sErrorWii;
+};
+/* end "monolib/work/CWorkRoot.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 12 "monolib/work/CWorkSystem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkSystem.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkSystem.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+class CWorkSystem : public CWorkThread {
+public:
+    typedef void (*ExitFunc)();
+
+public:
+    CWorkSystem(const char *pName, CWorkThread *pParent);
+    virtual ~CWorkSystem();
+
+    static CWorkSystem* getInstance();
+    static bool isOff();
+    static mtl::ALLOC_HANDLE getMem();
+    static bool isPowerOff();
+    static bool isReset();
+    static void setSaveLoadInvalidReset(bool state);
+
+    virtual void wkUpdate();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    static CWorkSystem* create();
+    DECL_WORKTHREAD_CREATE(CWorkSystem);
+
+    static void setExitFunc(ExitFunc func);
+    static void callExitFunc();
+
+private:
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    mtl::ALLOC_HANDLE mMemHandle; //0x1C4
+    bool mPowerOff; //0x1C8
+    bool mReset; //0x1C9
+    bool mSaveLoadInvalidReset; //0x1CA
+    u8 unk1CB[0x1D0 - 0x1CB];
+
+    static CWorkSystem* spInstance;
+    static ExitFunc sExitFunc;
+};
+
+//Reset handling functions. Due to string pooling, these had to have been defined outside of a class as static functions.
+
+/* TODO: Ideally this wouldn't need to be a macro, but for files using O4,s (CWorkSystem.cpp), if a function
+ends up calling the same function twice, which happens in CWorkSystem::wkUpdate, it refuses to inline it. */
+#define prepareReset(){          \
+    CWorkSystem::callExitFunc(); \
+                                 \
+    VISetBlack(VI_TRUE);         \
+    VIFlush();                   \
+                                 \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+    VIWaitForRetrace();          \
+}                           
+
+static inline void resetGame(bool direct){
+    if(!direct){
+        prepareReset();
+    }
+
+    //Restart
+    OSReport("exit wii reset\n");
+    OSRestart(0);
+}
+
+static inline void shutdownGame(bool direct){
+    if(!direct){
+        prepareReset();
+    }
+
+    //Restart
+    OSReport("exit wii power off\n");
+    OSShutdownSystem();
+}
+
+
+static inline void returnToWiiMenu(bool direct){
+    if(!direct){
+        prepareReset();
+    }
+
+    //Restart
+    OSReport("exit wii menu\n");
+    OSShutdownSystem();
+}
+/* end "monolib/work/CWorkSystem.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 13 "monolib/work/CWorkSystemMem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkSystemMem.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkSystemMem.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+class CWorkSystemMem : public CWorkThread {
+public:
+    CWorkSystemMem(const char* pName, CWorkThread* pParent);
+    virtual ~CWorkSystemMem();
+
+    DECL_WORKTHREAD_CREATE(CWorkSystemMem);
+
+    static mtl::ALLOC_HANDLE getHandle();
+
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+private:
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    mtl::ALLOC_HANDLE mHandle; //0x1C4
+
+    static const u32 REGION_SIZE = 0x1000 - sizeof(mtl::MemBlock);
+
+    static CWorkSystemMem* spInstance;
+};
+/* end "monolib/work/CWorkSystemMem.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 14 "monolib/work/CWorkSystemCache.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkSystemCache.hpp" line 2 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkSystemCache.hpp" line 3 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+
+class CWorkSystemCache : public CWorkThread {
+public:
+    CWorkSystemCache(const char* pName, CWorkThread* pParent);
+
+    DECL_WORKTHREAD_CREATE(CWorkSystemCache);
+
+    //inline CWorkSystemCache* create(){
+    //    return new (CWorkThreadSystem::getWorkMem()) CWorkSystemCache()
+    //}
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    u8 unk1E8[0x1E8 - 0x1C4];
+};
+/* end "monolib/work/CWorkSystemCache.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 15 "monolib/work/CWorkSystemPack.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkSystemPack.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CWorkSystemPack.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CWorkSystemPack : public CWorkThread {
+public:
+    CWorkSystemPack(const char* pName, CWorkThread* pParent);
+
+    DECL_WORKTHREAD_CREATE(CWorkSystemPack);
+
+    static bool func_804DDFBC(UNKWORD r3);
+    static bool func_804DDDF4(const char* r3, void* r4, u32* r5);
+    static bool func_804DE08C();
+    static bool func_804DE100();
+    static void SavePkhFilenamesArrayPtr(const char* const[]);
+    static void SaveStaticArcFilenameStringPtr(const char* const*);
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    u8 unk1C4[0x208 - 0x1C4];
+};
+/* end "monolib/work/CWorkSystemPack.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 16 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 17 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 18 "monolib/work/CWorkUtil.hpp" */
+/* end "monolib/work/CWorkUtil.hpp" */
+/* "libs/monolib/include/monolib/work.hpp" line 19 "monolib/work/IWorkEvent.hpp" */
+/* end "monolib/work/IWorkEvent.hpp" */
+/* end "monolib/work.hpp" */
+
+struct ScnRenderCB {
+    IScnRender* cb; //0x0
+    u32 prio; //0x4
+    u8 flag; //0x8
+}; // size = 0xC
+
+// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
+struct UnkScn68 {
+    u8 unk00[0x34];
+    s32 unk34; //0x34
+};
+
+// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
+struct UnkScn8C {
+    virtual ~UnkScn8C() {}
+    virtual void vf0C() = 0;
+    virtual void vf10() = 0;
+    virtual void vf14() = 0;
+    virtual void vf18() = 0;
+    virtual void vf1C() = 0;
+};
+
+// IScnRender draw callback shape: vt+0xC(cb, scn).
+struct IScnRenderDraw {
+    virtual ~IScnRenderDraw() {}
+    virtual void onRender(CScn* scn) = 0;
+};
+
+class CScn : public CTTask<CScn>, public IWorkEvent{
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+    virtual void Draw();
+
+    //0x000: vtable 1 (CTTask)
+    //0x000-054: CTTask
+    //0x054: vtable 2 (IWorkEvent)
+    u8 unk58[0x68 - 0x058]; //0x058
+    UnkScn68* mCamWork; //0x068
+    u8 unk6C[0x8C - 0x06C]; //0x06C
+    UnkScn8C* mUnk8C; //0x08C
+    u8 unk90[0x0B4 - 0x090]; //0x090
+    ICulling* unkB4; //0x0B4
+    u32 unkB8; //0x0B8
+    ScnRenderCB mRenderCBs[64]; //0x0BC
+    u32 mRenderCBCount; //0x3BC
+    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
+    u8 unk_3E4; //0x3E4
+    u8 unk_3E5; //0x3E5
+    u8 unk_3E6; //0x3E6
+    u8 unk_3E7; //0x3E7
+    u8 unk_3E8; //0x3E8
+    u8 unk_3E9; //0x3E9
+    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
+}; // size = 0x3EC
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 5 "monolib/scn/CScnNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 2 "monolib/scn/CScn.hpp" */
+/* end "monolib/scn/CScn.hpp" */
+/* "libs/monolib/include/monolib/scn/CScnNw4r.hpp" line 3 "functions.hpp" */
+#pragma once
+
+/* "include/functions.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+//Vec4 constructor? Defined before CTaskGame::Term
+struct func_800407C8_tmp {
+    f32 unk00[4];
+};
+func_800407C8_tmp* func_800407C8(func_800407C8_tmp*, f32, f32, f32, f32);
+
+void func_8004302C(int, int);
+bool func_8009CF8C(int);
+void func_8009D018(int, int);
+// Unmangled retail symbol (not func_8009ECB0__Fv).
+extern "C" int* func_8009ECB0();
+void func_8009E574(int*, int, int, int);
+/* end "functions.hpp" */
+
+class CScnNw4r : public CScn{
+public:
+    void func_8049602C(int arg1, func_800407C8_tmp* arg2);
+    void func_8007DAE0(int arg1, f32* arg2);
+
+private:
+    //0x000-0x3EC CScn
+}; // size = 0x3EC
+/* end "monolib/scn/CScnNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 6 "monolib/scn/CScnRootNw4r.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnRootNw4r.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* end "monolib/scn/CScnRootNw4r.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 7 "monolib/scn/CScnTexWorkMan.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/scn/CScnTexWorkMan.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+mtl::ALLOC_HANDLE func_80490098();
+void func_804900A0(u32 r3);
+/* end "monolib/scn/CScnTexWorkMan.hpp" */
+/* "libs/monolib/include/monolib/scn.hpp" line 8 "monolib/scn/IScnRender.hpp" */
+#pragma once
+
+class IScnRender {
+public:
+    virtual ~IScnRender(){}
+    virtual void cbRenderBefore();
+};
+/* end "monolib/scn/IScnRender.hpp" */
+/* end "monolib/scn.hpp" */
+/* "src/kyoshin/menu/CMenuArtsSelect.hpp" line 5 "nw4r/lyt/lyt_layout.h" */
+#ifndef NW4R_LYT_LAYOUT_H
+#define NW4R_LYT_LAYOUT_H
+/* "libs/nw4r/include/nw4r/lyt/lyt_layout.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/lyt/lyt_layout.h" line 4 "nw4r/lyt/lyt_animation.h" */
+#ifndef NW4R_LYT_ANIMATION_H
+#define NW4R_LYT_ANIMATION_H
+/* "libs/nw4r/include/nw4r/lyt/lyt_animation.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/lyt/lyt_animation.h" line 4 "nw4r/lyt/lyt_common.h" */
+#ifndef NW4R_LYT_COMMON_H
+#define NW4R_LYT_COMMON_H
+/* "libs/nw4r/include/nw4r/lyt/lyt_common.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/lyt/lyt_common.h" line 4 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+/* "libs/nw4r/include/nw4r/lyt/lyt_common.h" line 5 "nw4r/ut.h" */
 /* end "nw4r/ut.h" */
 
 /* "libs/nw4r/include/nw4r/lyt/lyt_common.h" line 7 "revolution/GX.h" */
@@ -242330,13 +247170,28 @@ public:
     s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/include/monolib/core/CView.hpp" line 8 "monolib/core/CFontLayer.hpp" */
+#pragma once
 
-//size: 0x4
+/* "libs/monolib/include/monolib/core/CFontLayer.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Forward declaration for tail-call target
+class CDeviceFont;
+
+/// Font layer base class (size 0x4: vtable pointer only).
+/// CView inherits from this via multiple inheritance.
 class CFontLayer {
 public:
     CFontLayer();
     virtual ~CFontLayer();
+
+    /// Flush pending font rendering state.
+    /// Delegates to CDeviceFont internally; the int parameter is passed
+    /// through to the device layer but may be unused depending on context.
+    void fontFlush(int channel);
 };
+/* end "monolib/core/CFontLayer.hpp" */
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {
@@ -243026,31 +247881,32 @@ public:
 /* end "monolib/util.hpp" */
 
 struct PackHeader {
-    u32 unk0; //always 00FE1200
-    u32 unk4; //always 00000002
-    u32 mFileHashTableOffset; //0x8
-    u32 mPkhFilesize; //0xC
-    u32 mFiles; //0x10
-    char mFilename[32]; //0x14
-    u32 mHashValTableLength; //0x34
-    u8 mHashValTable[0x40]; //0x38
-    //might be a struct?
-    u64 mFileHashTable[]; //0x78
+    u32 mMagic;                   // 0x00 - always 0x00FE1200
+    u32 mVersion;                 // 0x04 - always 0x00000002
+    u32 mFileHashTableOffset;     // 0x08
+    u32 mPkhFilesize;             // 0x0C - total pkh file size
+    u32 mFiles;                   // 0x10 - number of files in pack
+    char mFilename[32];           // 0x14 - pack filename
+    u32 mHashValTableLength;      // 0x34 - length of hash value table
+    u8 mHashValTable[0x40];       // 0x38 - bit-position table for hash calculation
+    // Hash table: array of u64 pairs (lower, upper) at 0x78
+    // Followed by u16 file IDs, then optionally u32 file data offsets
+    u64 mFileHashTable[];         // 0x78
 };
 
 //size: 0x88
 class CPackItem : public IWorkEvent {
 public:
-    CPackItem(const char* name, UNKWORD r5);
+    CPackItem(const char* name, int partitionId);
     virtual ~CPackItem();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     void update();
-    bool func_804DE78C(const char* filename, char** r5, u32* r6, u32* r7, u32* r8);
+    bool lookupFile(const char* filename, char** outPkbPath, u32* outEntryId, u32* outIndex, u32* outFileId);
     int findHashIndex(int startIndex, int endIndex);
     bool isNotLoaded();
     bool calculatePackFileHash(const char* filename);
-    void func_804DE948();
+    void setupHashTable();
 
     enum LoadState {
         LOAD_STATE_NOT_LOADED,
@@ -243063,26 +247919,26 @@ public:
     //0x0: vtable
     //0x0-4: IWorkEvent
 
-    ml::FixStr<32> unk4;
-    ml::FixStr<32> mPkbFilename; //0x28
-    CFileHandle* mFileHandle; //0x4C
-    PackHeader* mPackHeader; //0x50
-    const char* unk54;
-    u64* mFileHashTable; //0x58
-    u16* unk5C; //0x5C
-    u32* unk60; //0x60
-    int mAdxPartitionId; //0x64
-    void* mAhxAdxDataPtr; //0x68
-    u32 mHashLowerHalf; //0x6C
-    u32 mHashUpperHalf; //0x70
-    LoadState mLoadState; //0x74
-    u8 unk78;
-    u8 unk79;
-    bool mIsAhxAdxFile; //0x7A
-    u8 unk7B; //filler?
-    u32 unk7C;
-    u32 unk80;
-    const char* unk84;
+    ml::FixStr<32> mBaseName;       // 0x04 - filename without path or extension
+    ml::FixStr<32> mPkbFilename;     // 0x28 - pkb archive path
+    CFileHandle* mFileHandle;        // 0x4C
+    PackHeader* mPackHeader;         // 0x50
+    const char* mArchiveName;        // 0x54 - archive name from constructor
+    u64* mFileHashTable;             // 0x58
+    u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
+    u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
+    int mAdxPartitionId;             // 0x64
+    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x6C
+    u32 mHashUpperHalf;              // 0x70
+    LoadState mLoadState;            // 0x74
+    u8 mFileReadFailed;              // 0x78 - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7A
+    u8 unk7B;                        // 0x7B - padding
+    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
+    const char* mFilePath;           // 0x84 - full path to the pack file
 };
 /* end "monolib/core/CPackItem.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 7 "monolib/core/CPadManager.hpp" */
@@ -249165,7 +254021,11 @@ extern "C" CMenuArtsSelect* func_80104320() { if (lbl_eu_80663F20 == 0) return 0
 extern "C" int func_80104398() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
 // LLM-HARNESS-END: us-80104e80
 // LLM-HARNESS-BEGIN: us-80109718
-extern "C" bool func_80108C30() { return false; }
+extern "C" void __dt__15CMenuArtsSelectFv(void*);
+extern "C" bool func_80108C30(void* self) {
+    __dt__15CMenuArtsSelectFv((char*)self - 0x58);
+    return false;
+}
 // LLM-HARNESS-END: us-80109718
 // LLM-HARNESS-BEGIN: us-80109720
 extern "C" void func_80108C38(void* self) {

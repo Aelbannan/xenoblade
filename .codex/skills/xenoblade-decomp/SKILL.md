@@ -79,6 +79,24 @@ python3 tools/coop/run.py targets claim <target-id> --owner <agent>
 python3 tools/coop/run.py targets release <target-id> --owner <agent>
 ```
 
+To claim the smallest NOT_STARTED function(s) by binary size (useful for quick
+wins or onboarding new agents):
+
+```bash
+# Claim the single smallest function
+python3 tools/coop/run.py targets claim-smallest --owner <agent>
+
+# Claim the 5 smallest
+python3 tools/coop/run.py targets claim-smallest --owner <agent> --num 5
+
+# Just list the smallest without claiming
+python3 tools/coop/run.py targets claim-smallest --no-claim --num 10
+```
+
+Each claimed target prints its id, demangled function name, source path, and
+binary size. Only buildable function-kind targets with `NOT_STARTED` status
+are considered.
+
 `docs/ownership.csv` is legacy history, not current coordination state.
 
 ## Symbol recovery (`tools/symrecover.py`)
@@ -148,6 +166,50 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
 → optional: `behaviour ppc <test-id>` when a PPC harness exists
 → if `cycle` FAILS: inspect objdiff / build/coop-function-diff.json, revise, repeat
 → if `cycle` PASSES: the accepted state is persisted in `targets.json`; release the claim and do not edit the same function concurrently
+```
+
+### Batch cycle (mass-acceptance after matching)
+
+After matching a set of functions (e.g. an entire unit or milestone), mass-cycle
+all of them at once with `batch-cycle.py` instead of running `cycle` one-by-one:
+
+```bash
+# Per-target hypothesis/next-change via JSON map
+python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
+    --hypothesis-map batch-map.json
+
+# Shared defaults for all targets
+python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
+    --default-hypothesis "high-level C reconstruction complete" \
+    --default-next-change "verify static match and equivalence"
+
+# Dry-run to preview
+python3 tools/coop/batch-cycle.py us-80345678 \
+    --hypothesis-map batch-map.json --dry-run
+
+# Write structured JSON summary for agent handoff / CI
+python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
+    --default-hypothesis "batch cleanup" \
+    --default-next-change "accept if pass" \
+    --summary /tmp/batch-summary.json
+
+# Allow linked DOL/ELF fallback for SMT equivalence
+python3 tools/coop/batch-cycle.py us-80345678 --linked
+```
+
+Processes targets sequentially, continues on failure, exits 0 only when all pass.
+Full reference: `batch-cycle.py --help`.
+
+Hypothesis map JSON format (`target_id` → per-target overrides):
+
+```json
+{
+  "us-80345678": {
+    "hypothesis": "specific hypothesis text",
+    "next_change": "specific next change text",
+    "runtime_test": "behaviour:<test-id>"
+  }
+}
 ```
 
 ### Bounded attempt protocol
@@ -387,6 +449,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `tools/coop/targets.schema.json` | Registry data contract |
 | `configure.py` | Per-object matching flags and compiler options |
 | `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes, reg-swap detection, register mapping table); uses `ppc_equivalence` ELF parser |
+| `tools/coop/batch-cycle.py` | Mass-cycle multiple targets sequentially with per-target hypothesis/next-change, continues on failure, optional JSON summary |
 | `docs/MWCC_REFERENCE.md` | MWCC matching reference — read before matching; **append new patterns/breakthroughs here** |
 | `docs/MWCC_KNOWLEDGE_BASE.md` | Agent search protocol and structured-record migration plan |
 | `tools/mwcc_kb.py` | Search reference patterns + attempt history; use `--json` for agents |

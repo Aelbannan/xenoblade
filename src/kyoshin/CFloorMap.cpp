@@ -211,7 +211,11 @@ extern "C" void func_8024F1FC() {}
 // LLM-HARNESS-END: us-80251434
 
 // LLM-HARNESS-BEGIN: us-80251770
-extern "C" void func_8024F538() {}
+extern "C" u32 func_8024F538(void* self) {
+    u8 val = *(u8*)((u8*)self + 0x41);
+    u32 result = __cntlzw(val - 2);
+    return result >> 5;
+}
 // LLM-HARNESS-END: us-80251770
 
 // LLM-HARNESS-BEGIN: us-80251784

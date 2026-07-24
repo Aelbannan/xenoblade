@@ -93,7 +93,8 @@ extern "C" void func_80253B3C() {}
 // LLM-HARNESS-END: us-80255d78
 
 // LLM-HARNESS-BEGIN: us-80256124
-extern "C" void func_80253EE8() {}
+// Forward declaration - body in separate TU to prevent inlining
+extern "C" void func_80253EE8(void*, u8, u8);
 // LLM-HARNESS-END: us-80256124
 
 // LLM-HARNESS-BEGIN: us-80256178
@@ -245,7 +246,9 @@ extern "C" void func_802553AC() {}
 // LLM-HARNESS-END: us-802575e8
 
 // LLM-HARNESS-BEGIN: us-802578c4
-extern "C" void func_80255688() {}
+extern "C" void func_80255688(void* self) {
+    func_80253EE8((u8*)self + 0xE8, *(u8*)((u8*)self + 0xD9), *(u8*)((u8*)self + 0xD8));
+}
 // LLM-HARNESS-END: us-802578c4
 
 // LLM-HARNESS-BEGIN: us-802578d4

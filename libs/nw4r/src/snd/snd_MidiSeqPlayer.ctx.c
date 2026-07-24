@@ -241776,7 +241776,7 @@ public:
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
-        return mPreparedFlag;
+        return *(bool*)((u8*)this + 677);
     } // at 0x2C
 
     virtual void SetPlayerPriority(int priority); // at 0x4C
@@ -243978,13 +243978,13 @@ public:
     virtual void Pause(bool flag); // at 0x14
 
     virtual bool IsActive() const {
-        return mActiveFlag;
+        return *(bool*)((u8*)this + 289);
     } // at 0x18
     virtual bool IsStarted() const {
-        return mStartedFlag;
+        return *(bool*)((u8*)this + 290);
     } // at 0x1C
     virtual bool IsPause() const {
-        return mPauseFlag;
+        return *(bool*)((u8*)this + 295);
     }; // at 0x20
 
     virtual void OnUpdateFrameSoundThread() {
@@ -247101,21 +247101,6 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-/**
- * Dummy class to instantiate necessary weak functions
- */
-#if !defined(NONMATCHING)
-class MidiSeqPlayer : public SeqPlayer {
-private:
-    MidiSeqPlayer();
-
-    // Dummy implementation, must prevent instantiating SeqPlayer version
-    virtual void ChannelCallback(Channel* /* pChannel */) {}
-};
-
-MidiSeqPlayer::MidiSeqPlayer() {}
-#endif
-
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
@@ -247127,7 +247112,12 @@ extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9SeqPlayerFv(void) {
 }
 // LLM-HARNESS-END: us-80419900
 // LLM-HARNESS-BEGIN: us-80419904
-extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail9SeqPlayerFv() {}
+extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail9SeqPlayerFv(void* self) {
+    // vtable dispatch (empty virtual -> base class tail call)
+    typedef void (*VFunc)(void*);
+    VFunc* vtable = *(VFunc**)self;
+    vtable[4](self);
+}
 // LLM-HARNESS-END: us-80419904
 // LLM-HARNESS-BEGIN: us-80419914
 extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9SeqPlayerFPCvPCv(void) {

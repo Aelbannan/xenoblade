@@ -40,7 +40,11 @@ extern "C" cf::CfObjectSelectorObj* func_800FE68C() {
 // LLM-HARNESS-END: us-800ff174
 
 // LLM-HARNESS-BEGIN: us-800ff17c
-extern "C" void func_800FE694() {}
+extern "C" void func_800FE694(void* self, float val) {
+    float* base = (float*)((char*)self + 0x10000);
+    base[-0x6f08 / 4] = val;
+    base[-0x3e9c / 4] = val;
+}
 // LLM-HARNESS-END: us-800ff17c
 
 // LLM-HARNESS-BEGIN: us-800ff18c
@@ -60,7 +64,11 @@ extern "C" void func_800FE860() {}
 // LLM-HARNESS-END: us-800ff348
 
 // LLM-HARNESS-BEGIN: us-800ff3f8
-extern "C" void func_800FE910() {}
+extern "C" unsigned long func_800FE910(void* self) {
+    unsigned long* base = (unsigned long*)((char*)self + 0x10000);
+    unsigned long v = base[-0x3e80 / 4];
+    return (v >> 10) & 1;
+}
 // LLM-HARNESS-END: us-800ff3f8
 
 // LLM-HARNESS-BEGIN: us-800ff408

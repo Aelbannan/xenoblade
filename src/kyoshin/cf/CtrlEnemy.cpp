@@ -65,7 +65,9 @@ extern "C" void func_80088620() {}
 // LLM-HARNESS-END: us-80088ff8
 
 // LLM-HARNESS-BEGIN: us-800891bc
-extern "C" void CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv() {}
+extern "C" unsigned long CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv(void* self) {
+    return !!((unsigned char*)self)[0x1628];
+}
 // LLM-HARNESS-END: us-800891bc
 
 // LLM-HARNESS-BEGIN: us-800891d0

@@ -36,7 +36,9 @@ extern "C" void func_8008962C() {}
 // LLM-HARNESS-END: us-8008a004
 
 // LLM-HARNESS-BEGIN: us-8008a05c
-extern "C" void func_80089684() {}
+extern "C" void func_80089684(void* self) {
+    *(unsigned short*)((char*)self + 0x40) &= 1;
+}
 // LLM-HARNESS-END: us-8008a05c
 
 // LLM-HARNESS-BEGIN: us-8008a06c

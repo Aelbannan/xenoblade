@@ -175,5 +175,8 @@ extern "C" void func_8016EC58() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-801700f8
-extern "C" void sinit_8016ED44() {}
+extern "C" void sinit_8016ED44() {
+    extern unsigned short lbl_eu_80664288;
+    lbl_eu_80664288 = 0;
+}
 // LLM-HARNESS-END: us-801700f8

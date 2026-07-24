@@ -1339,58 +1339,28 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8020377c
-extern "C" void __ct__CEquipChange() {}
+extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 // LLM-HARNESS-END: us-8020377c
 
-// LLM-HARNESS-BEGIN: us-80203cec
-extern "C" void __dt__12CEquipChangeFv() {}
-// LLM-HARNESS-END: us-80203cec
 
-// LLM-HARNESS-BEGIN: us-80203d88
-extern "C" void func_80202090() {}
-// LLM-HARNESS-END: us-80203d88
 
-// LLM-HARNESS-BEGIN: us-80203e08
-extern "C" void func_80202110() {}
-// LLM-HARNESS-END: us-80203e08
 
-// LLM-HARNESS-BEGIN: us-80203edc
-extern "C" void func_802021E4() {}
-// LLM-HARNESS-END: us-80203edc
 
-// LLM-HARNESS-BEGIN: us-80203f84
-extern "C" void func_8020228C() {}
-// LLM-HARNESS-END: us-80203f84
 
-// LLM-HARNESS-BEGIN: us-8020405c
-extern "C" void func_80202364() {}
-// LLM-HARNESS-END: us-8020405c
 
-// LLM-HARNESS-BEGIN: us-802040b8
-extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
-// LLM-HARNESS-END: us-802040b8
 
 extern "C" void func_802865A0(void* self);
 // LLM-HARNESS-BEGIN: us-802040c0
 extern "C" void func_802023C8(void* self) { ((void(*)(void*))func_802865A0)((char*)self + 0x2b0); }
 // LLM-HARNESS-END: us-802040c0
 
-// LLM-HARNESS-BEGIN: us-802040c8
-extern "C" void func_802023D0() {}
-// LLM-HARNESS-END: us-802040c8
 
-// LLM-HARNESS-BEGIN: us-8020411c
-extern "C" void func_80202424() {}
-// LLM-HARNESS-END: us-8020411c
 
 extern "C" void func_80286650(void* self);
 // LLM-HARNESS-BEGIN: us-80204174
 extern "C" void func_8020247C(void* self) { ((void(*)(void*))func_80286650)((char*)self + 0x2b0); }
 // LLM-HARNESS-END: us-80204174
 
-// LLM-HARNESS-BEGIN: us-8020417c
-extern "C" void func_80202484() {}
-// LLM-HARNESS-END: us-8020417c
 
 // LLM-HARNESS-BEGIN: us-802041c4
 extern "C" void func_802024CC() {}
@@ -1524,7 +1494,10 @@ extern "C" void func_802042C0() {}
 // LLM-HARNESS-END: us-80205fb8
 
 // LLM-HARNESS-BEGIN: us-80207074
-extern "C" void func_80205294() {}
+extern "C" void func_80205294(void* dst, void* src) {
+    *(u16*)dst = *(u16*)src;
+    *(u32*)((u8*)dst + 4) = *(u32*)((u8*)src + 4);
+}
 // LLM-HARNESS-END: us-80207074
 
 // LLM-HARNESS-BEGIN: us-80207088

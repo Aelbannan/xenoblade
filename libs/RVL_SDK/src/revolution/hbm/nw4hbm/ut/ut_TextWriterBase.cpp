@@ -14,7 +14,6 @@ TagProcessorBase<T> TextWriterBase<T>::mDefaultTagProcessor;
 template <typename T>
 TextWriterBase<T>::TextWriterBase()
     : mCharSpace(0.0f),
-      mWidthLimit(NW4R_MATH_FLT_MAX),
       mLineSpace(0.0f),
       mTabWidth(4),
       mDrawFlag(0),
@@ -71,7 +70,7 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
                                          int len) {
     const T* pStrBegin = *ppStr;
     const T* pStrEnd = pStrBegin + len;
-    bool useLimit = mWidthLimit < NW4R_MATH_FLT_MAX;
+    bool useLimit = NW4R_MATH_FLT_MAX < NW4R_MATH_FLT_MAX;
 
     PrintContext<T> context = {
         this,     // writer
@@ -115,7 +114,7 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
                 mTagProcessor->CalcRect(&r, ch, &context2);
 
                 if (r.GetWidth() > 0.0f &&
-                    clone.GetCursorX() - context.x > mWidthLimit) {
+                    clone.GetCursorX() - context.x > NW4R_MATH_FLT_MAX) {
                     overLimit = true;
                     ch = '\n';
                     reader.Set(pPrevStream);
@@ -160,7 +159,7 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
                 dx += GetFont()->GetCharWidth(ch) * GetScaleH();
             }
 
-            if (useLimit && pPrevStream != NULL && x + dx > mWidthLimit) {
+            if (useLimit && pPrevStream != NULL && x + dx > NW4R_MATH_FLT_MAX) {
                 overLimit = true;
                 ch = '\n';
                 reader.Set(pPrevStream);
@@ -214,7 +213,7 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
     f32 cursorX = GetCursorX();
     f32 cursorY = GetCursorY();
 
-    bool useLimit = mWidthLimit < NW4R_MATH_FLT_MAX;
+    bool useLimit = NW4R_MATH_FLT_MAX < NW4R_MATH_FLT_MAX;
 
     f32 orgCursorX = cursorX;
     f32 orgCursorY = cursorY;
@@ -259,7 +258,7 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
                 oper = mTagProcessor->CalcRect(&rect, ch, &context2);
 
                 if (rect.GetWidth() > 0.0f &&
-                    clone.GetCursorX() - context.x > mWidthLimit) {
+                    clone.GetCursorX() - context.x > NW4R_MATH_FLT_MAX) {
                     ch = '\n';
                     reader.Set(pPrevStream);
                     continue;
@@ -315,7 +314,7 @@ template <typename T> f32 TextWriterBase<T>::PrintImpl(const T* pStr, int len, b
                                 ? GetFixedWidth()
                                 : GetFont()->GetCharWidth(ch) * GetScaleH();
 
-                if (baseX - cursorX + space + width > mWidthLimit) {
+                if (baseX - cursorX + space + width > NW4R_MATH_FLT_MAX) {
                     ch = '\n';
                     reader.Set(pPrevStream);
                     continue;
@@ -421,6 +420,77 @@ void TextWriterBase<T>::CalcStringRect(Rect* pRect, const T* pStr,
                                        int len) const {
     TextWriterBase<T> clone(*this);
     clone.CalcStringRectImpl(pRect, pStr, len);
+}
+
+// Explicit template instantiations for getter/setter functions.
+// These are defined out-of-class to force MWCC to emit out-of-line
+// copies (the inline definitions in the header are not always emitted
+// on explicit instantiation).
+
+template <>
+void TextWriterBase<char>::SetLineSpace(f32 space) {
+    mLineSpace = space;
+}
+template <>
+void TextWriterBase<char>::SetCharSpace(f32 space) {
+    mCharSpace = space;
+}
+template <>
+f32 TextWriterBase<char>::GetLineSpace() const {
+    return mLineSpace;
+}
+template <>
+void TextWriterBase<char>::SetTabWidth(int width) {
+    mTabWidth = width;
+}
+template <>
+void TextWriterBase<char>::SetDrawFlag(u32 flag) {
+    mDrawFlag = flag;
+}
+template <>
+u32 TextWriterBase<char>::GetDrawFlag() const {
+    return mDrawFlag;
+}
+template <>
+void TextWriterBase<char>::SetTagProcessor(TagProcessorBase<char>* pProcessor) {
+    mTagProcessor = pProcessor;
+}
+template <>
+TagProcessorBase<char>* TextWriterBase<char>::GetTagProcessor() const {
+    return mTagProcessor;
+}
+
+template <>
+void TextWriterBase<wchar_t>::SetLineSpace(f32 space) {
+    mLineSpace = space;
+}
+template <>
+void TextWriterBase<wchar_t>::SetCharSpace(f32 space) {
+    mCharSpace = space;
+}
+template <>
+f32 TextWriterBase<wchar_t>::GetLineSpace() const {
+    return mLineSpace;
+}
+template <>
+void TextWriterBase<wchar_t>::SetTabWidth(int width) {
+    mTabWidth = width;
+}
+template <>
+void TextWriterBase<wchar_t>::SetDrawFlag(u32 flag) {
+    mDrawFlag = flag;
+}
+template <>
+u32 TextWriterBase<wchar_t>::GetDrawFlag() const {
+    return mDrawFlag;
+}
+template <>
+void TextWriterBase<wchar_t>::SetTagProcessor(TagProcessorBase<wchar_t>* pProcessor) {
+    mTagProcessor = pProcessor;
+}
+template <>
+TagProcessorBase<wchar_t>* TextWriterBase<wchar_t>::GetTagProcessor() const {
+    return mTagProcessor;
 }
 
 template struct TextWriterBase<char>;

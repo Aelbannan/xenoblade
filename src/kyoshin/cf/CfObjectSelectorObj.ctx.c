@@ -1337,6 +1337,26 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfObjectSelectorObj.cpp" line 5 "kyoshin/cf/object/CfObjectSelectorObj.hpp" */
+#pragma once
+
+namespace cf{
+
+    class CfObjectSelectorObj{
+    public:        
+        virtual ~CfObjectSelectorObj();
+
+        static void create();
+        static void destroy();
+
+    private:
+        static CfObjectSelectorObj* spInstance;
+        
+        char unk0000[0xC188 - 0x0000]; //0x0000
+    }; //size = 0xC188
+
+} //namespace cf
+/* end "kyoshin/cf/object/CfObjectSelectorObj.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800fe25c
 extern "C" void func_800FD774() {}
@@ -1363,15 +1383,21 @@ extern "C" void func_800FE104() {}
 // LLM-HARNESS-END: us-800febec
 
 // LLM-HARNESS-BEGIN: us-800ff174
-extern "C" u32 lbl_eu_80663F14;
+// spInstance for the CfObjectSelectorObj singleton
+extern "C" cf::CfObjectSelectorObj* lbl_eu_80663F14;
 
-extern "C" u32 func_800FE68C() {
+// Returns the CfObjectSelectorObj singleton instance
+extern "C" cf::CfObjectSelectorObj* func_800FE68C() {
     return lbl_eu_80663F14;
 }
 // LLM-HARNESS-END: us-800ff174
 
 // LLM-HARNESS-BEGIN: us-800ff17c
-extern "C" void func_800FE694() {}
+extern "C" void func_800FE694(void* self, float val) {
+    float* base = (float*)((char*)self + 0x10000);
+    base[-0x6f08 / 4] = val;
+    base[-0x3e9c / 4] = val;
+}
 // LLM-HARNESS-END: us-800ff17c
 
 // LLM-HARNESS-BEGIN: us-800ff18c
@@ -1391,7 +1417,11 @@ extern "C" void func_800FE860() {}
 // LLM-HARNESS-END: us-800ff348
 
 // LLM-HARNESS-BEGIN: us-800ff3f8
-extern "C" void func_800FE910() {}
+extern "C" unsigned long func_800FE910(void* self) {
+    unsigned long* base = (unsigned long*)((char*)self + 0x10000);
+    unsigned long v = base[-0x3e80 / 4];
+    return (v >> 10) & 1;
+}
 // LLM-HARNESS-END: us-800ff3f8
 
 // LLM-HARNESS-BEGIN: us-800ff408

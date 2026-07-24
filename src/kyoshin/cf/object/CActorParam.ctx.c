@@ -7692,7 +7692,8 @@ extern "C" void CActorParam_UnkVirtualFunc13__Q22cf11CActorParamFv() {}
 extern "C" void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017e370
 // LLM-HARNESS-BEGIN: us-8017e474
-extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv() {}
+// Forward declaration - body kept in separate section
+extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv();
 // LLM-HARNESS-END: us-8017e474
 // LLM-HARNESS-BEGIN: us-8017e5b8
 extern "C" void CActorParam_UnkVirtualFunc5__Q22cf11CActorParamFv() {}
@@ -7754,3 +7755,37 @@ extern "C" void CActorParam_UnkVirtualFunc136__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-BEGIN: us-8017fe00
 extern "C" void CActorParam_UnkVirtualFunc137__Q22cf11CActorParamFv() {}
 // LLM-HARNESS-END: us-8017fe00
+
+// LLM-HARNESS-BEGIN: us-80180168
+extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv();
+extern "C" void CBattleState_UnkVirtualFunc18__Q22cf11CActorParamFv() {
+    CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv();
+}
+// LLM-HARNESS-END: us-80180168
+
+// BattleState thunks: adjust `this` by -8 and tail-call CActorParam methods.
+typedef void (*CActorFn)(void*);
+
+// us-80180170
+extern "C" void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv();
+extern "C" void CBattleState_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self) {
+    ((CActorFn)CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv)((void*)((char*)self - 8));
+}
+
+// us-80180178
+extern "C" void CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv();
+extern "C" void CBattleState_UnkVirtualFunc3__Q22cf11CActorParamFv(void* self) {
+    ((CActorFn)CActorParam_UnkVirtualFunc1__Q22cf11CActorParamFv)((void*)((char*)self - 8));
+}
+
+// us-80180180
+extern "C" int CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self);
+extern "C" int CBattleState_UnkVirtualFunc1__Q22cf11CActorParamFv(void* self) {
+    return ((int(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv)((char*)self - 8);
+}
+
+// us-80180188
+extern "C" void CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv();
+extern "C" void CBattleState_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) {
+    ((CActorFn)CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv)((char*)self - 8);
+}

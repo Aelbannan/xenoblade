@@ -77,11 +77,17 @@ extern "C" void func_80295DAC__Q22cf16CHelp_AlwaysTIPSFv(void) {}
 // LLM-HARNESS-END: us-802983a8
 
 // LLM-HARNESS-BEGIN: us-80298e94
-extern "C" void func_80296898__Q22cf14CHelp_ToAttackFv() {}
+extern "C" void func_80296898__Q22cf14CHelp_ToAttackFv(void* self) {
+    ((unsigned char*)self)[0xc] = 0;
+    ((unsigned char*)self)[0xd] = 0;
+}
 // LLM-HARNESS-END: us-80298e94
 
 // LLM-HARNESS-BEGIN: us-80298ea4
-extern "C" void func_802968A8() {}
+extern "C" void func_802968A8(void* self) {
+    *(unsigned long*)self = 0;
+    ((unsigned char*)self)[4] = 0;
+}
 // LLM-HARNESS-END: us-80298ea4
 
 // LLM-HARNESS-BEGIN: us-80298eb4

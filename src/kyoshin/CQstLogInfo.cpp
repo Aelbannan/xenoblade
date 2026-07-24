@@ -77,3 +77,11 @@ extern "C" void func_8022AFF8() {}
 // LLM-HARNESS-BEGIN: us-8022d194
 extern "C" void OnFileEvent__11CQstLogInfoFP10CEventFile() {}
 // LLM-HARNESS-END: us-8022d194
+
+// LLM-HARNESS-BEGIN: us-8022b438
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
+extern "C" void func_80229600(void* self) {
+    if (*(u8*)((u8*)self + 0x30) == 0) return;
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 0x20), 0, 0, 1);
+}
+// LLM-HARNESS-END: us-8022b438

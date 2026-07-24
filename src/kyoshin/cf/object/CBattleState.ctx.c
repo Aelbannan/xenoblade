@@ -2756,10 +2756,14 @@ extern "C" void* CBattleState_UnkVirtualFunc13__Q22cf12CBattleStateFv(cf::CBattl
 }
 // LLM-HARNESS-END: us-8014913c
 // LLM-HARNESS-BEGIN: us-8014914c
-extern "C" void CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv() {}
+extern "C" void* CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(void* self, unsigned long idx) {
+    return (char*)self + (idx * 0x34) + 8;
+}
 // LLM-HARNESS-END: us-8014914c
 // LLM-HARNESS-BEGIN: us-8014915c
-extern "C" void CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv() {}
+extern "C" void* CBattleState_UnkVirtualFunc15__Q22cf12CBattleStateFv(void* self, unsigned long idx) {
+    return (char*)self + (idx * 0x34) + 0x688;
+}
 // LLM-HARNESS-END: us-8014915c
 // LLM-HARNESS-BEGIN: us-8014916c
 extern "C" void CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv() {}

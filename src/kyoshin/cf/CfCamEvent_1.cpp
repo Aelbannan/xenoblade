@@ -25,7 +25,9 @@ extern "C" void func_80075540() {}
 // LLM-HARNESS-END: us-80075edc
 
 // LLM-HARNESS-BEGIN: us-80075f4c
-extern "C" void func_800755B0() {}
+extern "C" void* func_800755B0(void* self, unsigned long idx) {
+    return *(void**)((char*)self + (idx << 2));
+}
 // LLM-HARNESS-END: us-80075f4c
 
 // LLM-HARNESS-BEGIN: us-80075f58

@@ -756,7 +756,12 @@ extern "C" void func_80180664() {}
 // LLM-HARNESS-END: us-80181a60
 
 // LLM-HARNESS-BEGIN: us-80181d3c
-extern "C" void func_80180940() {}
+extern "C" unsigned long func_80180940() {
+    extern unsigned long lbl_eu_806642A8;
+    unsigned long* ptr = (unsigned long*)lbl_eu_806642A8;
+    unsigned long v = ptr[0xa0 / 4];
+    return v ? 0 : 1;
+}
 // LLM-HARNESS-END: us-80181d3c
 
 // LLM-HARNESS-BEGIN: us-80181d50

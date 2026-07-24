@@ -61,3 +61,12 @@ extern "C" void func_801EB644() {}
 // LLM-HARNESS-BEGIN: us-801ed304
 extern "C" void OnFileEvent__10CNumSelectFP10CEventFile() {}
 // LLM-HARNESS-END: us-801ed304
+
+// LLM-HARNESS-BEGIN: us-801ecc48
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(void*, void*, u8);
+extern u8 lbl_eu_80506C14[];
+extern "C" void func_801EB04C(void* self, u8 r4) {
+    void* layout = *(void**)((u8*)self + 0x1C);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(layout, (char*)lbl_eu_80506C14 + 0x20, r4);
+}
+// LLM-HARNESS-END: us-801ecc48

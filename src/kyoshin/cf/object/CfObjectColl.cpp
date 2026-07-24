@@ -33,7 +33,11 @@ extern "C" void func_800AB580() {}
 // LLM-HARNESS-END: us-800abe4c
 
 // LLM-HARNESS-BEGIN: us-800ac064
-extern "C" void func_800AB798__Q22cf12CfObjectCollFv() {}
+extern "C" void func_800AB798__Q22cf12CfObjectCollFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x9c / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800ac064
 
 // LLM-HARNESS-BEGIN: us-800ac074
@@ -105,11 +109,17 @@ extern "C" void func_800AC3F4() {}
 // LLM-HARNESS-END: us-800accc0
 
 // LLM-HARNESS-BEGIN: us-800acd1c
-extern "C" void func_800AC450() {}
+extern "C" void func_800AC450(void* self, unsigned long a, unsigned long b) {
+    *(unsigned long*)((char*)self + 0x9c) = (a << 16) + b;
+}
 // LLM-HARNESS-END: us-800acd1c
 
 // LLM-HARNESS-BEGIN: us-800acd2c
-extern "C" void func_800AC460() {}
+extern "C" unsigned long func_800AC460(void* self) {
+    extern unsigned long func_8009D018(unsigned long);
+    unsigned long v = *(unsigned long*)((char*)self + 0x9c);
+    return func_8009D018((v >> 16) + 0x20c8);
+}
 // LLM-HARNESS-END: us-800acd2c
 
 // LLM-HARNESS-BEGIN: us-800acd3c
@@ -228,7 +238,11 @@ extern "C" void* CfObject_UnkVirtualFunc24__Q22cf8CfObjectFv(void* self) { retur
 // LLM-HARNESS-END: us-800ace6c
 
 // LLM-HARNESS-BEGIN: us-800ace74
-extern "C" void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc21__Q22cf8CfObjectFv(void* self, float a, float b, float c) {
+    *(float*)((char*)self + 0x3c) = a;
+    *(float*)((char*)self + 0x40) = b;
+    *(float*)((char*)self + 0x44) = c;
+}
 // LLM-HARNESS-END: us-800ace74
 
 // LLM-HARNESS-BEGIN: us-800ace84
@@ -266,7 +280,11 @@ extern "C" void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-800aceb0
 
 // LLM-HARNESS-BEGIN: us-800acebc
-extern "C" void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x74 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800acebc
 
 // LLM-HARNESS-BEGIN: us-800acecc

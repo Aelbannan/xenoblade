@@ -808,7 +808,10 @@ void ADXSJD_SetLnkSw() {}
 // LLM-HARNESS-END: us-80383b38
 
 // LLM-HARNESS-BEGIN: us-80383b44
-void ADXSJD_SetDefFmt(void) {}
+void ADXB_SetDefFmt();
+void ADXSJD_SetDefFmt(void* self) {
+    ADXB_SetDefFmt(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383b44
 
 // LLM-HARNESS-BEGIN: us-80383b4c
@@ -832,35 +835,59 @@ void ADXSJD_SetTrapDtLen(void* self, u32 val) { *(u32*)((u8*)self + 0x44) = val;
 // LLM-HARNESS-END: us-80383b74
 
 // LLM-HARNESS-BEGIN: us-80383b7c
-void ADXSJD_GetFormat(void) {}
+s16 ADXB_GetFormat(void* self);
+s16 ADXSJD_GetFormat(void* self) {
+    return ADXB_GetFormat(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383b7c
 
 // LLM-HARNESS-BEGIN: us-80383b84
-void ADXSJD_GetSfreq(void) {}
+u32 ADXB_GetSfreq(void* self);
+u32 ADXSJD_GetSfreq(void* self) {
+    return ADXB_GetSfreq(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383b84
 
 // LLM-HARNESS-BEGIN: us-80383b8c
-void ADXSJD_GetNumChan(void) {}
+void ADXB_GetNumChan();
+void ADXSJD_GetNumChan(void* self) {
+    ADXB_GetNumChan(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383b8c
 
 // LLM-HARNESS-BEGIN: us-80383b94
-void ADXSJD_GetOutBps(void) {}
+void ADXB_GetOutBps();
+void ADXSJD_GetOutBps(void* self) {
+    ADXB_GetOutBps(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383b94
 
 // LLM-HARNESS-BEGIN: us-80383b9c
-void ADXSJD_GetBlkSmpl(void) {}
+u32 ADXB_GetBlkSmpl(void* self);
+u32 ADXSJD_GetBlkSmpl(void* self) {
+    return ADXB_GetBlkSmpl(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383b9c
 
 // LLM-HARNESS-BEGIN: us-80383ba4
-void ADXSJD_GetTotalNumSmpl(void) {}
+u32 ADXB_GetTotalNumSmpl(void* self);
+u32 ADXSJD_GetTotalNumSmpl(void* self) {
+    return ADXB_GetTotalNumSmpl(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383ba4
 
 // LLM-HARNESS-BEGIN: us-80383bac
-void ADXSJD_GetNumLoop(void) {}
+s16 ADXB_GetNumLoop(void* self);
+s16 ADXSJD_GetNumLoop(void* self) {
+    return ADXB_GetNumLoop(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383bac
 
 // LLM-HARNESS-BEGIN: us-80383bb4
-void ADXSJD_GetLpStartPos(void) {}
+u32 ADXB_GetLpStartPos(void* self);
+u32 ADXSJD_GetLpStartPos(void* self) {
+    return ADXB_GetLpStartPos(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383bb4
 
 // LLM-HARNESS-BEGIN: us-80383bbc
@@ -868,11 +895,17 @@ void ADXSJD_GetLpStartOfst() {}
 // LLM-HARNESS-END: us-80383bbc
 
 // LLM-HARNESS-BEGIN: us-80383bd8
-void ADXSJD_GetLpEndPos(void) {}
+u32 ADXB_GetLpEndPos(void* self);
+u32 ADXSJD_GetLpEndPos(void* self) {
+    return ADXB_GetLpEndPos(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383bd8
 
 // LLM-HARNESS-BEGIN: us-80383be0
-void ADXSJD_GetLpEndOfst(void) {}
+u32 ADXB_GetLpEndOfst(void* self);
+u32 ADXSJD_GetLpEndOfst(void* self) {
+    return ADXB_GetLpEndOfst(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383be0
 
 // LLM-HARNESS-BEGIN: us-80383be8
@@ -888,9 +921,15 @@ void* ADXSJD_GetSpsdInfo(void* self) { return (void*)((u8*)self + 0x60); }
 // LLM-HARNESS-END: us-80383cb0
 
 // LLM-HARNESS-BEGIN: us-80383cb8
-void ADXSJD_TakeSnapshot(void) {}
+void ADXB_TakeSnapshot();
+void ADXSJD_TakeSnapshot(void* self) {
+    ADXB_TakeSnapshot(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383cb8
 
 // LLM-HARNESS-BEGIN: us-80383cc0
-void ADXSJD_RestoreSnapshot(void) {}
+void ADXB_RestoreSnapshot();
+void ADXSJD_RestoreSnapshot(void* self) {
+    ADXB_RestoreSnapshot(*(void**)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383cc0

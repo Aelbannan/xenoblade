@@ -65,7 +65,13 @@ extern "C" void checkEvent() {}
 // LLM-HARNESS-END: us-8004773c
 
 // LLM-HARNESS-BEGIN: us-80047780
-extern "C" void clearEventSkip() {}
+extern "C" {
+extern u32 lbl_eu_80663E28;
+}
+extern "C" int clearEventSkip() {
+    lbl_eu_80663E28 &= ~0x100000;
+    return 0;
+}
 // LLM-HARNESS-END: us-80047780
 
 // LLM-HARNESS-BEGIN: us-80047794
@@ -81,5 +87,10 @@ extern "C" void isVisionEvent() {}
 // LLM-HARNESS-END: us-8004780c
 
 // LLM-HARNESS-BEGIN: us-80047848
-extern "C" void pluginEveRegist() {}
+extern "C" void pluginEveRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_804FACF0[];
+    extern char lbl_eu_80525EF8[];
+    vmPluginRegist((void*)lbl_eu_804FACF0, (void*)lbl_eu_80525EF8);
+}
 // LLM-HARNESS-END: us-80047848

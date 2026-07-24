@@ -185,7 +185,9 @@ extern "C" void func_8006842C() {}
 // LLM-HARNESS-END: us-80068e34
 
 // LLM-HARNESS-BEGIN: us-80068e4c
-extern "C" void func_80068444() {}
+extern "C" void func_80068444(void* self, unsigned long mask) {
+    *(unsigned long*)self &= ~mask;
+}
 // LLM-HARNESS-END: us-80068e4c
 
 // LLM-HARNESS-BEGIN: us-80068e5c

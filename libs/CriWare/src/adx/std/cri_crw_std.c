@@ -17,7 +17,11 @@ void CRICRW_Strncpy(void) {}
 // LLM-HARNESS-END: us-8039e788
 
 // LLM-HARNESS-BEGIN: us-8039e794
-void CRICRW_Strcat(void) {}
+// mr r4, r5; b strcat — copies 3rd arg to 2nd and calls strcat
+char* strcat(char*, const char*);
+char* CRICRW_Strcat(char* dst, const char* src1, const char* src2) {
+    return strcat(dst, src2);
+}
 // LLM-HARNESS-END: us-8039e794
 
 // LLM-HARNESS-BEGIN: us-8039e79c

@@ -36,7 +36,10 @@ extern "C" void* func_800F6E98(void* this_ptr, int index) {
 // LLM-HARNESS-END: us-800f7980
 
 // LLM-HARNESS-BEGIN: us-800f7994
-extern "C" void func_800F6EAC() {}
+extern "C" void* func_800F6EAC(void* self, unsigned long idx) {
+    void** arr = *(void***)((char*)self + 0x20);
+    return *(arr + idx);
+}
 // LLM-HARNESS-END: us-800f7994
 
 // LLM-HARNESS-BEGIN: us-800f79a8

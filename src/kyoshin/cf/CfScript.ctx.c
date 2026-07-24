@@ -1337,29 +1337,71 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfScript.cpp" line 5 "kyoshin/cf/CfScript.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CfScript.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+
+// Forward declarations
+class CfScriptManager;
+
+// CfScript - per-script state, 0x58 bytes each.
+// Layout hints from disassembly:
+//   0x00: vtable (4B)
+//   0x04: u8 flag
+//   0x44-0x53: data pointers / fields
+//   0x54: u16 counter  0x56: u16 index
+// TODO: replace placeholder with real members when this class is decompiled.
+class CfScript {
+    friend class CfScriptManager;
+    u8 gap00[0x58];
+public:
+    // Currently a placeholder - actual fields TBD.
+};
+
+// CfScriptManager - manages an array of up to 3 CfScript objects.
+// The array is embedded at offset 0. Singleton accessed via getInstance().
+class CfScriptManager {
+public:
+    static CfScriptManager* getInstance();
+    void init();
+
+    CfScript mScripts[3]; // 0x00, 0x58, 0xB0
+};
+
+} // namespace cf
+/* end "kyoshin/cf/CfScript.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80069430
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068A20() {
+    extern void func_80068A30(void*, unsigned long);
+    extern char lbl_eu_805708D0[];
+    extern unsigned long lbl_eu_80661AC0;
+    func_80068A30((void*)lbl_eu_805708D0, lbl_eu_80661AC0);
+}
 // LLM-HARNESS-END: us-80069430
 
 // LLM-HARNESS-BEGIN: us-80069440
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068A30() {}
 // LLM-HARNESS-END: us-80069440
 
 // LLM-HARNESS-BEGIN: us-80069490
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068A80() {}
 // LLM-HARNESS-END: us-80069490
 
 // LLM-HARNESS-BEGIN: us-800694b4
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068AA4() {}
 // LLM-HARNESS-END: us-800694b4
 
 // LLM-HARNESS-BEGIN: us-800694d8
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068AC8() {}
 // LLM-HARNESS-END: us-800694d8
 
 // LLM-HARNESS-BEGIN: us-800694fc
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068AEC() {}
 // LLM-HARNESS-END: us-800694fc
 
 // LLM-HARNESS-BEGIN: us-80069530
@@ -1367,20 +1409,27 @@ extern "C" void func_80068B20__Q22cf15CfScriptManagerFv(void) {}
 // LLM-HARNESS-END: us-80069530
 
 // LLM-HARNESS-BEGIN: us-80069534
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068B24() {}
 // LLM-HARNESS-END: us-80069534
 
-extern "C" void func_80068ECC(void* self);
+extern "C" void func_80068ECC(void* subObj, const char* name);
+
+// Thunk: forward to func_80068ECC with &manager->mScripts[1] and the script name.
 // LLM-HARNESS-BEGIN: us-80069568
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068B58(cf::CfScriptManager* manager, const char* name) {
+    func_80068ECC(&manager->mScripts[1], name);
+}
 // LLM-HARNESS-END: us-80069568
 
 // LLM-HARNESS-BEGIN: us-80069570
-extern "C" void func_80068B58(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0x58); }
+extern "C" void func_80068B60() {}
 // LLM-HARNESS-END: us-80069570
 
+// Thunk: forward to func_80068ECC with &manager->mScripts[2] and the script name.
 // LLM-HARNESS-BEGIN: us-800695a4
-extern "C" void func_80068B94(void* self) { ((void(*)(void*))func_80068ECC)((char*)self + 0xb0); }
+extern "C" void func_80068B94(cf::CfScriptManager* manager, const char* name) {
+    func_80068ECC(&manager->mScripts[2], name);
+}
 // LLM-HARNESS-END: us-800695a4
 
 // LLM-HARNESS-BEGIN: us-800695ac
@@ -1388,7 +1437,9 @@ extern "C" void func_80068B9C() {}
 // LLM-HARNESS-END: us-800695ac
 
 // LLM-HARNESS-BEGIN: us-800695d0
-extern "C" void func_80068BC0() {}
+extern "C" void func_80068BC0(void* self) {
+    *(unsigned long*)((char*)self + 0x4c) |= 4;
+}
 // LLM-HARNESS-END: us-800695d0
 
 // LLM-HARNESS-BEGIN: us-800695e0
@@ -1396,7 +1447,9 @@ extern "C" void func_80068BD0() {}
 // LLM-HARNESS-END: us-800695e0
 
 // LLM-HARNESS-BEGIN: us-80069604
-extern "C" void func_80068BF4() {}
+extern "C" void func_80068BF4(void* self) {
+    *(unsigned long*)((char*)self + 0xa4) |= 4;
+}
 // LLM-HARNESS-END: us-80069604
 
 // LLM-HARNESS-BEGIN: us-80069614
@@ -1404,7 +1457,9 @@ extern "C" void func_80068C04() {}
 // LLM-HARNESS-END: us-80069614
 
 // LLM-HARNESS-BEGIN: us-80069638
-extern "C" void func_80068C28() {}
+extern "C" void func_80068C28(void* self) {
+    *(unsigned long*)((char*)self + 0xfc) |= 4;
+}
 // LLM-HARNESS-END: us-80069638
 
 // LLM-HARNESS-BEGIN: us-80069648
@@ -1451,16 +1506,15 @@ extern "C" void func_80068E7C() {}
 extern "C" void func_80068E9C() {}
 // LLM-HARNESS-END: us-800698ac
 
-// LLM-HARNESS-BEGIN: us-800698dc
-extern "C" void func_80068ECC(void* self) {}
-// LLM-HARNESS-END: us-800698dc
 
 // LLM-HARNESS-BEGIN: us-80069bcc
 extern "C" void waitLoad__Q22cf8CfScriptFv() {}
 // LLM-HARNESS-END: us-80069bcc
 
 // LLM-HARNESS-BEGIN: us-80069c40
-extern "C" void update__Q22cf8CfScriptFv() {}
+extern "C" void update__Q22cf8CfScriptFv(void* self) {
+    *(unsigned long*)((char*)self + 0x4c) |= 0x20;
+}
 // LLM-HARNESS-END: us-80069c40
 
 // LLM-HARNESS-BEGIN: us-80069c50

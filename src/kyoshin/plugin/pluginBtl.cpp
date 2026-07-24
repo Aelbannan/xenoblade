@@ -77,5 +77,10 @@ extern "C" void test() {}
 // LLM-HARNESS-END: us-801876a8
 
 // LLM-HARNESS-BEGIN: us-80187730
-extern "C" void pluginBtlRegist() {}
+extern "C" void pluginBtlRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_805038B0[];
+    extern char lbl_eu_80532360[];
+    vmPluginRegist((void*)((char*)lbl_eu_805038B0 + 0xe), (void*)lbl_eu_80532360);
+}
 // LLM-HARNESS-END: us-80187730

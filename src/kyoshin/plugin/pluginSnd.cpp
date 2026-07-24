@@ -77,5 +77,10 @@ extern "C" void clearCamPos() {}
 // LLM-HARNESS-END: us-801ad4d4
 
 // LLM-HARNESS-BEGIN: us-801ad500
-extern "C" void pluginSndRegist() {}
+extern "C" void pluginSndRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_80504148[];
+    extern char lbl_eu_805333F8[];
+    vmPluginRegist((void*)((char*)lbl_eu_80504148 + 0x15), (void*)lbl_eu_805333F8);
+}
 // LLM-HARNESS-END: us-801ad500

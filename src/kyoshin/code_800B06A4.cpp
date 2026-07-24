@@ -21,7 +21,10 @@ extern "C" void func_800B0A90(void) {}
 
 
 // LLM-HARNESS-BEGIN: us-800b140c
-extern "C" void func_800B0B40() {}
+extern "C" void func_800B0B40(void* self) {
+    *(unsigned long*)((char*)self + 0xb00) = 0;
+    *(unsigned long*)((char*)self + 0xafc) = 0;
+}
 // LLM-HARNESS-END: us-800b140c
 
 // LLM-HARNESS-BEGIN: us-800b141c
@@ -58,7 +61,10 @@ extern "C" void __ct__cf_CfValueItemManager() {}
 // LLM-HARNESS-END: us-800b1bf8
 
 // LLM-HARNESS-BEGIN: us-800b1c34
-extern "C" void func_800B1368() {}
+extern "C" void func_800B1368(unsigned long flags) {
+    extern unsigned long lbl_eu_80663EE0;
+    lbl_eu_80663EE0 |= flags;
+}
 // LLM-HARNESS-END: us-800b1c34
 
 // LLM-HARNESS-BEGIN: us-800b1c44
@@ -70,11 +76,16 @@ extern "C" void func_800B137C() {}
 // LLM-HARNESS-END: us-800b1c48
 
 // LLM-HARNESS-BEGIN: us-800b1d90
-extern "C" void func_800B14C4() {}
+extern "C" void func_800B14C4(void* dst, void* src) {
+    void* ptr = *(void**)((char*)src + 4);
+    *(unsigned long*)dst = *(unsigned long*)ptr;
+}
 // LLM-HARNESS-END: us-800b1d90
 
 // LLM-HARNESS-BEGIN: us-800b1da0
-extern "C" u32 func_800B14D4(void* self) { return *(u32*)((u8*)self + 0); }
+extern "C" void* func_800B14D4(void* self) {
+    return (char*)(*(void**)self) + 8;
+}
 // LLM-HARNESS-END: us-800b1da0
 
 // LLM-HARNESS-BEGIN: us-800b1dac
@@ -82,7 +93,9 @@ extern "C" void func_800B14E0() {}
 // LLM-HARNESS-END: us-800b1dac
 
 // LLM-HARNESS-BEGIN: us-800b1dbc
-extern "C" void func_800B14F0() {}
+extern "C" void func_800B14F0(void* dst, void* src) {
+    *(unsigned long*)dst = *(unsigned long*)((char*)src + 4);
+}
 // LLM-HARNESS-END: us-800b1dbc
 
 // LLM-HARNESS-BEGIN: us-800b1dc8
@@ -145,7 +158,9 @@ extern "C" void func_800B1A8C() {}
 // LLM-HARNESS-END: us-800b2358
 
 // LLM-HARNESS-BEGIN: us-800b2368
-extern "C" u32 func_800B1A9C(void* self) { return *(u32*)((u8*)self + 0); }
+extern "C" void* func_800B1A9C(void* self) {
+    return (char*)(*(void**)self) + 8;
+}
 // LLM-HARNESS-END: us-800b2368
 
 // LLM-HARNESS-BEGIN: us-800b2374
@@ -159,7 +174,9 @@ extern "C" void func_800B1AC0(int* dst, int* src) {
 // LLM-HARNESS-END: us-800b238c
 
 // LLM-HARNESS-BEGIN: us-800b2398
-extern "C" void func_800B1ACC() {}
+extern "C" void func_800B1ACC(void* dst, void* src) {
+    *(unsigned long*)dst = *(unsigned long*)((char*)src + 4);
+}
 // LLM-HARNESS-END: us-800b2398
 
 // LLM-HARNESS-BEGIN: us-800b23a4
@@ -179,10 +196,9 @@ extern "C" void func_800B1BBC() {}
 // LLM-HARNESS-END: us-800b2488
 
 // LLM-HARNESS-BEGIN: us-800b24cc
-extern unsigned int lbl_eu_80663E28;
-
-extern "C" int func_800B1C00() {
-    return (lbl_eu_80663E28 >> 24) & 1;
+extern "C" unsigned long func_800B1C00() {
+    extern unsigned long lbl_eu_80663EE0;
+    return (lbl_eu_80663EE0 >> 25) & 1;
 }
 // LLM-HARNESS-END: us-800b24cc
 

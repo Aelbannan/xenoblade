@@ -41,7 +41,10 @@ extern "C" void func_8003C1D8() {}
 // LLM-HARNESS-END: us-8003c754
 
 // LLM-HARNESS-BEGIN: us-8003c7cc
-extern "C" void CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv() {}
+extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) {
+    float f = *(float*)((char*)self + 0x4c);
+    return f * 0.019592438f;
+}
 // LLM-HARNESS-END: us-8003c7cc
 
 // LLM-HARNESS-BEGIN: us-8003c7dc
@@ -89,7 +92,11 @@ extern "C" void func_8003C6E8() {}
 // LLM-HARNESS-END: us-8003cc64
 
 // LLM-HARNESS-BEGIN: us-8003ccf0
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0xC4 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8003ccf0
 
 // LLM-HARNESS-BEGIN: us-8003cd00
@@ -229,7 +236,9 @@ extern "C" void winTalk() {}
 // LLM-HARNESS-END: us-8003dfec
 
 // LLM-HARNESS-BEGIN: us-8003e1e0
-extern "C" void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv() {}
+extern "C" void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
+    *(unsigned long*)((char*)self + 4) |= bits;
+}
 // LLM-HARNESS-END: us-8003e1e0
 
 // LLM-HARNESS-BEGIN: us-8003e1f0
@@ -241,7 +250,9 @@ extern "C" void func_8003DC7C() {}
 // LLM-HARNESS-END: us-8003e1f8
 
 // LLM-HARNESS-BEGIN: us-8003e2b0
-extern "C" void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv() {}
+extern "C" void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
+    *(unsigned long*)((char*)self + 4) &= ~mask;
+}
 // LLM-HARNESS-END: us-8003e2b0
 
 // LLM-HARNESS-BEGIN: us-8003e2c0

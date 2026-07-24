@@ -1342,37 +1342,13 @@ void ocBdatRegist();
 extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-802965b4
 
-// LLM-HARNESS-BEGIN: us-80296640
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80296640
 
-// LLM-HARNESS-BEGIN: us-802967ec
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-802967ec
 
-// LLM-HARNESS-BEGIN: us-80296870
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80296870
 
-// LLM-HARNESS-BEGIN: us-80296a3c
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80296a3c
 
-// LLM-HARNESS-BEGIN: us-80296ad4
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80296ad4
 
-// LLM-HARNESS-BEGIN: us-80296c20
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80296c20
 
-// LLM-HARNESS-BEGIN: us-80296c34
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80296c34
 
-// LLM-HARNESS-BEGIN: us-80296e08
-extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-80296e08
 
 // LLM-HARNESS-BEGIN: us-80296e10
 extern "C" void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveFv)((char*)self - 0x70); }
@@ -1383,7 +1359,12 @@ extern "C" void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSave
 // LLM-HARNESS-END: us-80296e18
 
 // LLM-HARNESS-BEGIN: us-80296e20
-extern "C" void func_80294824__FPv() {}
+extern float lbl_eu_80668BA0[];
+extern "C" void func_80294824__FPv(void* self) {
+    float zero = lbl_eu_80668BA0[0];
+    *(float*)self = zero;
+    *((float*)self + 1) = zero;
+}
 // LLM-HARNESS-END: us-80296e20
 
 // LLM-HARNESS-BEGIN: us-80296e30

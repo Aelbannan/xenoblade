@@ -1589,7 +1589,10 @@ extern "C" void func_80129008() {}
 // LLM-HARNESS-END: us-80129ad4
 
 // LLM-HARNESS-BEGIN: us-80129be4
-extern "C" void func_80129118() {}
+extern "C" void* func_80129118(void* dummy, void* r4) {
+    *(u16*)r4 = 0xD;
+    return (u16*)r4 + 1;
+}
 // LLM-HARNESS-END: us-80129be4
 
 // LLM-HARNESS-BEGIN: us-80129bf4
@@ -1613,7 +1616,9 @@ extern "C" void func_80129564() {}
 // LLM-HARNESS-END: us-8012a030
 
 // LLM-HARNESS-BEGIN: us-8012a148
-extern "C" void func_8012967C() {}
+extern "C" void func_8012967C(void* self, float val) {
+    *(float*)((char*)self + 0xc) = *(float*)((char*)self + 4) + val;
+}
 // LLM-HARNESS-END: us-8012a148
 
 // LLM-HARNESS-BEGIN: us-8012a158
@@ -1705,11 +1710,17 @@ extern "C" void func_8012B944() {}
 // LLM-HARNESS-END: us-8012c410
 
 // LLM-HARNESS-BEGIN: us-8012c4ac
-extern "C" void func_8012B9E0() {}
+extern "C" void* func_8012B9E0(void* unused, void* buf) {
+    *(unsigned short*)buf = 3;
+    return (char*)buf + 2;
+}
 // LLM-HARNESS-END: us-8012c4ac
 
 // LLM-HARNESS-BEGIN: us-8012c4bc
-extern "C" void func_8012B9F0() {}
+extern "C" void* func_8012B9F0(void* unused, void* buf) {
+    *(unsigned short*)buf = 0xa;
+    return (char*)buf + 2;
+}
 // LLM-HARNESS-END: us-8012c4bc
 
 extern u32 lbl_eu_8052D9E0[];

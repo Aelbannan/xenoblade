@@ -121,7 +121,11 @@ extern "C" void* CfObjectMove_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(void* self)
 // LLM-HARNESS-END: us-80093680
 
 // LLM-HARNESS-BEGIN: us-80093688
-extern "C" void func_80092CB0() {}
+extern "C" void func_80092CB0(void* a, void* b, void* c) {
+    extern float lbl_eu_806665C0;
+    *(unsigned long*)b = 0;
+    *(float*)c = lbl_eu_806665C0;
+}
 // LLM-HARNESS-END: us-80093688
 
 // LLM-HARNESS-BEGIN: us-8009369c
@@ -141,7 +145,11 @@ extern "C" void func_80092EE0() {}
 // LLM-HARNESS-END: us-800938b8
 
 // LLM-HARNESS-BEGIN: us-8009396c
-extern "C" void func_80092F94() {}
+extern "C" void func_80092F94(void* a, void* b, void* c) {
+    extern float lbl_eu_806665E4;
+    *(unsigned long*)b = 0;
+    *(float*)c = lbl_eu_806665E4;
+}
 // LLM-HARNESS-END: us-8009396c
 
 // LLM-HARNESS-BEGIN: us-80093980

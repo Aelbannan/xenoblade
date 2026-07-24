@@ -52,3 +52,13 @@ extern "C" void CfObjectActor_UnkVirtualFunc7__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-BEGIN: us-80173924
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-80173924
+
+
+// LLM-HARNESS-BEGIN: us-80173818
+extern "C" void CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(void* self) {
+    self = (char*)self + 0x3e9c;
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0xe0 / 4];
+    func(self);
+}
+// LLM-HARNESS-END: us-80173818

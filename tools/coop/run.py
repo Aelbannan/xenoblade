@@ -392,9 +392,10 @@ def cmd_cycle(
             )
 
     size_check = _print_object_size(project, config, target.unit, unit)
-    if not size_check.ok:
-        return 1
 
+    # Always log the attempt and update the registry, even if the unit-level
+    # split size is over budget — so the target's match progress is recorded
+    # and claim-smallest will not re-pick it.
     attempt_num = count_attempts(config.resolve(config.attempt_log), target.id) + 1
     record = AttemptRecord(
         target_id=target.id,
@@ -434,8 +435,17 @@ def cmd_cycle(
         certificate_checked=evaluation.certificate_checked,
         equivalence_confidence=evaluation.equivalence_confidence,
         equivalence_policy=evaluation.equivalence_policy,
+        override_workflow=None if size_check.ok else "BACKLOG",
     )
     print(f"target registry updated: {target.id}")
+
+    if not size_check.ok:
+        print(
+            f"FAIL: unit size exceeds split budget "
+            f"(function match recorded but needs unit-level size fix)",
+            file=sys.stderr,
+        )
+        return 1
 
     fn_percent = fn_match.match_percent if fn_match else None
     if not meets_required_level(
@@ -776,6 +786,84 @@ def cmd_targets_release(config: CoopConfig, target_id: str, *, owner: Optional[s
     path = release_target(config, target_id, owner=owner)
     print(f"released {target_id}: {path}")
     return 0
+
+
+def cmd_targets_claim_smallest(
+    config: CoopConfig,
+    *,
+    num: int = 1,
+    owner: str = "",
+    no_claim: bool = False,
+) -> int:
+    """Claim and print the smallest NOT_STARTED function(s) by binary size."""
+    targets = load_targets(config)
+
+    # Filter to NOT_STARTED, buildable functions
+    candidates = [
+        t for t in targets
+        if t.status == "NOT_STARTED" and t.kind == "function" and t.buildable
+    ]
+
+    if not candidates:
+        print("no NOT_STARTED buildable functions found")
+        return 1
+
+    # Sort by size ascending (hex string like "0x29C")
+    def _size_key(t):
+        s = getattr(t, "extra", None) or {}
+        raw = s.get("size") or ""
+        if isinstance(raw, str) and raw.startswith("0x"):
+            return int(raw, 16)
+        return 0
+
+    # Also check on the Target directly
+    def _size_val(t):
+        # t.extra is a dict that holds leftover fields including "size"
+        raw = t.extra.get("size", "0x0")
+        if isinstance(raw, str) and raw.startswith("0x"):
+            return int(raw, 16)
+        if isinstance(raw, (int, float)):
+            return int(raw)
+        return 0
+
+    candidates.sort(key=_size_val)
+
+    selected = candidates[:num]
+    count = 0
+
+    for target in selected:
+        source = str(target.source.relative_to(config.project_root)) if target.source else "unresolved"
+        size_hex = target.extra.get("size", "?")
+        size_str = str(size_hex)
+
+        do_claim = owner and not no_claim
+        if do_claim:
+            allowed_paths = [source] if target.source else []
+            try:
+                claim_target(
+                    config,
+                    target.id,
+                    owner=owner,
+                    allowed_paths=allowed_paths,
+                    note=f"claimed via claim-smallest (size={size_str})",
+                )
+            except ValueError as exc:
+                print(f"WARNING: {exc}", file=sys.stderr)
+                continue
+
+        count += 1
+        claimed_mark = " [CLAIMED]" if do_claim else ""
+        parts = [
+            f"id:       {target.id}",
+            f"function: {target.function}",
+            f"source:   {source}",
+            f"size:     {size_str}",
+        ]
+        print(f"--- smallest NOT_STARTED #{count}{claimed_mark} ---")
+        for line in parts:
+            print(line)
+
+    return 0 if count == len(selected) else 1
 
 
 def _render_target_brief(config: CoopConfig, target_id: str) -> str:
@@ -1579,6 +1667,21 @@ def main() -> int:
             "objects are inconclusive due to relocations"
         ),
     )
+    p_targets_claim_smallest = p_targets_sub.add_parser(
+        "claim-smallest",
+        help="Claim and print the smallest NOT_STARTED function(s)",
+    )
+    p_targets_claim_smallest.add_argument(
+        "--num", type=int, default=1,
+        help="Number of smallest targets to claim (default: 1)",
+    )
+    p_targets_claim_smallest.add_argument("--owner", default="",
+        help="Owner name for claiming (skips claim if empty)",
+    )
+    p_targets_claim_smallest.add_argument("--no-claim", action="store_true",
+        help="Just list the smallest targets without claiming",
+    )
+
     p_targets_brief = p_targets_sub.add_parser(
         "brief", help="Generate a synchronized worker prompt for one target"
     )
@@ -1763,6 +1866,13 @@ def main() -> int:
             limit=args.limit,
             include_catalog=bool(args.include_catalog),
             linked=bool(args.linked),
+        )
+    if args.command == "targets" and args.targets_cmd == "claim-smallest":
+        return cmd_targets_claim_smallest(
+            config,
+            num=args.num,
+            owner=args.owner,
+            no_claim=args.no_claim,
         )
     if args.command == "targets" and args.targets_cmd == "brief":
         return cmd_targets_brief(config, args.target_id, output=args.output)

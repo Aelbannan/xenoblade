@@ -1399,7 +1399,10 @@ extern "C" void func_80124270() {}
 // LLM-HARNESS-END: us-80124d4c
 
 // LLM-HARNESS-BEGIN: us-80124d64
-extern "C" void func_80124288() {}
+extern "C" void func_80124288(void* self, void* src) {
+    *(float*)((u8*)self + 0x4C) = *(float*)src;
+    *(float*)((u8*)self + 0x50) = *(float*)((u8*)src + 4);
+}
 // LLM-HARNESS-END: us-80124d64
 
 // LLM-HARNESS-BEGIN: us-80124d78

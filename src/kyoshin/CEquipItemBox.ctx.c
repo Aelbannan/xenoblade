@@ -1342,41 +1342,14 @@ void ocBdatRegist();
 extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
 // LLM-HARNESS-END: us-80284938
 
-// LLM-HARNESS-BEGIN: us-802849f8
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-802849f8
 
-// LLM-HARNESS-BEGIN: us-80284a18
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-80284a18
 
-// LLM-HARNESS-BEGIN: us-80284a54
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-80284a54
 
-// LLM-HARNESS-BEGIN: us-80284a94
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-80284a94
 
-// LLM-HARNESS-BEGIN: us-802851e4
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-802851e4
 
-// LLM-HARNESS-BEGIN: us-8028527c
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-8028527c
 
-// LLM-HARNESS-BEGIN: us-802852a8
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-802852a8
 
-// LLM-HARNESS-BEGIN: us-802852d0
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-802852d0
 
-// LLM-HARNESS-BEGIN: us-80285348
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-80285348
 
 // LLM-HARNESS-BEGIN: us-802853b8
 extern "C" void func_80282F34() {}
@@ -1582,9 +1555,6 @@ extern "C" void func_80286454() {}
 extern "C" void func_8028652C() {}
 // LLM-HARNESS-END: us-802889b0
 
-// LLM-HARNESS-BEGIN: us-80288a24
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
-// LLM-HARNESS-END: us-80288a24
 
 // LLM-HARNESS-BEGIN: us-80288a2c
 extern "C" u8 func_802865A8(void* self) { return ((u8*)self)[0x43]; }
@@ -1659,7 +1629,11 @@ extern "C" void func_80287DB4() {}
 // LLM-HARNESS-END: us-8028a238
 
 // LLM-HARNESS-BEGIN: us-8028a36c
-extern "C" void func_80287EE8() {}
+extern "C" u8 func_80287EE8(void* self) {
+    u8 val = *(u8*)((u8*)self + 0x1FE);
+    *(u8*)((u8*)self + 0x1FE) = 0;
+    return val;
+}
 // LLM-HARNESS-END: us-8028a36c
 
 // LLM-HARNESS-BEGIN: us-8028a380

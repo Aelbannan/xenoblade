@@ -116,7 +116,11 @@ extern "C" void func_80041AFC() {}
 extern "C" void func_800426A4() {}
 // LLM-HARNESS-END: us-80042c1c
 // LLM-HARNESS-BEGIN: us-80042c68
-extern "C" void func_800426F0__9CTaskGameFv() {}
+extern "C" int func_800426F0__9CTaskGameFv() {
+    extern void* lbl_eu_80663D18;
+    if (lbl_eu_80663D18 == 0) return 1;
+    return *(reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(lbl_eu_80663D18) + 0x68)) & 1;
+}
 // LLM-HARNESS-END: us-80042c68
 // LLM-HARNESS-BEGIN: us-80042c88
 extern "C" void func_80042710__9CTaskGameFv() {}
@@ -212,7 +216,12 @@ extern "C" void func_80043730(void* obj, int val) {
 }
 // LLM-HARNESS-END: us-80043cac
 // LLM-HARNESS-BEGIN: us-80044140
-extern "C" void func_80043BA4() {}
+extern "C" int func_80043BA4() {
+    extern void* lbl_eu_80663D18;
+    extern int func_80459AA4__7CLibCriFv(unsigned int arg);
+    if (lbl_eu_80663D18 == 0) return 0;
+    return func_80459AA4__7CLibCriFv(*(reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(lbl_eu_80663D18) + 0xd8)));
+}
 // LLM-HARNESS-END: us-80044140
 // LLM-HARNESS-BEGIN: us-80044304
 extern "C" bool func_80043D68() {
@@ -384,7 +393,8 @@ extern "C" void func_80042874() {}
 extern "C" void func_8004302C() {}
 // LLM-HARNESS-END: us-800435a4
 // LLM-HARNESS-BEGIN: us-800436a4
-extern "C" void func_8004312C() {}
+// Forward declaration only - body kept in separate TU to prevent MWCC inlining
+extern "C" void func_8004312C();
 // LLM-HARNESS-END: us-800436a4
 // LLM-HARNESS-BEGIN: us-80043ba4
 extern "C" void func_8004362C() {}
@@ -425,3 +435,10 @@ extern "C" void func_80044070() {}
 // LLM-HARNESS-BEGIN: us-80044660
 extern "C" void func_800440C4() {}
 // LLM-HARNESS-END: us-80044660
+
+// LLM-HARNESS-BEGIN: us-80041010
+extern "C" void func_8004312C();
+extern "C" void Draw__9CTaskGameFv() {
+    func_8004312C();
+}
+// LLM-HARNESS-END: us-80041010

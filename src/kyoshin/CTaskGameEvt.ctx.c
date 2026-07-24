@@ -1339,12 +1339,9 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80297b60
-extern "C" void __ct__CTaskGameEvt() {}
+extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80297b60
 
-// LLM-HARNESS-BEGIN: us-80297c4c
-extern "C" void __dt__12CTaskGameEvtFv(void* self) {}
-// LLM-HARNESS-END: us-80297c4c
 
 // LLM-HARNESS-BEGIN: us-80297ca0
 extern "C" void func_802956A4(void) {}
@@ -1354,17 +1351,8 @@ extern "C" void func_802956A4(void) {}
 extern "C" void func_802956A8(void) {}
 // LLM-HARNESS-END: us-80297ca4
 
-// LLM-HARNESS-BEGIN: us-80297ca8
-extern "C" void Init__12CTaskGameEvtFv() {}
-// LLM-HARNESS-END: us-80297ca8
 
-// LLM-HARNESS-BEGIN: us-80297cc8
-extern "C" void Term__12CTaskGameEvtFv() {}
-// LLM-HARNESS-END: us-80297cc8
 
-// LLM-HARNESS-BEGIN: us-80297ce0
-extern "C" void Move__12CTaskGameEvtFv() {}
-// LLM-HARNESS-END: us-80297ce0
 
 // LLM-HARNESS-BEGIN: us-80297d5c
 extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) {}
@@ -1374,17 +1362,11 @@ extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) {}
 extern "C" int func_80295764(void* self) { return 0; }
 // LLM-HARNESS-END: us-80297d60
 
-// LLM-HARNESS-BEGIN: us-80297d68
-extern "C" void create__12CTaskGameEvtFv() {}
-// LLM-HARNESS-END: us-80297d68
 
 // LLM-HARNESS-BEGIN: us-80297dd0
 extern "C" void Draw__12CTaskGameEvtFv() {}
 // LLM-HARNESS-END: us-80297dd0
 
-// LLM-HARNESS-BEGIN: us-80297e64
-extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
-// LLM-HARNESS-END: us-80297e64
 
 // LLM-HARNESS-BEGIN: us-80297e6c
 extern "C" void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
@@ -1411,12 +1393,11 @@ public:
 };
 
 class CTaskGameEvt;
-// LLM-HARNESS-BEGIN: us-80297bfc
-template<> CTTask<CTaskGameEvt>::~CTTask() {}
-// LLM-HARNESS-END: us-80297bfc
-// LLM-HARNESS-BEGIN: us-80297dd4
-template<> void CTTask<CTaskGameEvt>::Move() {}
-// LLM-HARNESS-END: us-80297dd4
-// LLM-HARNESS-BEGIN: us-80297e1c
-template<> void CTTask<CTaskGameEvt>::Draw() {}
-// LLM-HARNESS-END: us-80297e1c
+// LLM-HARNESS-BEGIN: us-80297cc8
+extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
+extern "C" void Term__12CTaskGameEvtFv(void* self) {
+    void* r4 = self ? (u8*)self + 0x58 : 0;
+    void* scn = *(void**)((u8*)self + 0x5C);
+    removeRenderCB__4CScnFP10IScnRender(scn, r4);
+}
+// LLM-HARNESS-END: us-80297cc8

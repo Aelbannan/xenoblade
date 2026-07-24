@@ -178,7 +178,11 @@ extern "C" void Init__11CCol6InviteFv() {}
 // LLM-HARNESS-END: us-80164e38
 
 // LLM-HARNESS-BEGIN: us-80164f38
-extern "C" void Term__11CCol6InviteFv() {}
+extern u32 lbl_eu_8066423C;
+extern "C" void Term__11CCol6InviteFv(void* self) {
+    *((u8*)self + 0x67) = 0;
+    lbl_eu_8066423C = 0;
+}
 // LLM-HARNESS-END: us-80164f38
 
 // LLM-HARNESS-BEGIN: us-80164f48

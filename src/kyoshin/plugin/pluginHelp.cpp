@@ -17,5 +17,10 @@ extern "C" void func_802AEC9C() {}
 // LLM-HARNESS-END: us-802b170c
 
 // LLM-HARNESS-BEGIN: us-802b1768
-extern "C" void pluginHelpRegist() {}
+extern "C" void pluginHelpRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_8051347C[];
+    extern char lbl_eu_8053A498[];
+    vmPluginRegist((void*)lbl_eu_8051347C, (void*)lbl_eu_8053A498);
+}
 // LLM-HARNESS-END: us-802b1768

@@ -238,7 +238,11 @@ extern "C" void func_80268F7C() {}
 // LLM-HARNESS-END: us-8026b3ec
 
 // LLM-HARNESS-BEGIN: us-8026b45c
-extern "C" void func_80268FEC() {}
+extern "C" void func_80268FEC(void* self) {
+    if (*(u8*)((u8*)self + 0x13A) != 0) {
+        *(u8*)((u8*)self + 0xE8) = 2;
+    }
+}
 // LLM-HARNESS-END: us-8026b45c
 
 // LLM-HARNESS-BEGIN: us-8026b474

@@ -1342,29 +1342,11 @@ void ocBdatRegist();
 extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 // LLM-HARNESS-END: us-801feb2c
 
-// LLM-HARNESS-BEGIN: us-801febb8
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801febb8
 
-// LLM-HARNESS-BEGIN: us-801fec18
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fec18
 
-// LLM-HARNESS-BEGIN: us-801fecb4
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fecb4
 
-// LLM-HARNESS-BEGIN: us-801fed60
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fed60
 
-// LLM-HARNESS-BEGIN: us-801fedb4
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fedb4
 
-// LLM-HARNESS-BEGIN: us-801fee3c
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fee3c
 
 // LLM-HARNESS-BEGIN: us-801fee44
 extern "C" u8 func_801FD184(void* self) { return ((u8*)self)[0x31]; }
@@ -1374,21 +1356,9 @@ extern "C" u8 func_801FD184(void* self) { return ((u8*)self)[0x31]; }
 extern "C" u8 func_801FD18C(void* self) { return ((u8*)self)[0x57]; }
 // LLM-HARNESS-END: us-801fee4c
 
-// LLM-HARNESS-BEGIN: us-801fee54
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fee54
 
-// LLM-HARNESS-BEGIN: us-801fee7c
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fee7c
 
-// LLM-HARNESS-BEGIN: us-801feee0
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801feee0
 
-// LLM-HARNESS-BEGIN: us-801fef50
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801fef50
 
 // LLM-HARNESS-BEGIN: us-801fefc4
 extern "C" void func_801FD304() {}
@@ -1403,7 +1373,11 @@ extern "C" void func_801FD48C() {}
 // LLM-HARNESS-END: us-801ff14c
 
 // LLM-HARNESS-BEGIN: us-801ff240
-extern "C" void func_801FD580() {}
+extern "C" u32 func_801FD580(void* self) {
+    s8 val = *(s8*)((u8*)self + 0x4D);
+    // Match rlwinm extraction of sign bit followed by xori
+    return ((u32)(val >> 31) & 1) ^ 1;
+}
 // LLM-HARNESS-END: us-801ff240
 
 // LLM-HARNESS-BEGIN: us-801ff254

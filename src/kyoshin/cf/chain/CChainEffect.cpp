@@ -21,7 +21,10 @@ extern "C" void __ct__Q22cf12CChainEffectFv() {}
 // LLM-HARNESS-END: us-802a300c
 
 // LLM-HARNESS-BEGIN: us-802a3028
-extern "C" void func_802A08F4() {}
+extern "C" void func_802A08F4(void* self) {
+    *(unsigned long*)((char*)self + 4) = 0;
+    *(unsigned long*)((char*)self + 8) = 0;
+}
 // LLM-HARNESS-END: us-802a3028
 
 // LLM-HARNESS-BEGIN: us-802a3038

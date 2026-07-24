@@ -37,11 +37,19 @@ extern "C" void func_80109734() {}
 // LLM-HARNESS-END: us-8010a21c
 
 // LLM-HARNESS-BEGIN: us-8010a244
-extern "C" void func_8010975C() {}
+extern "C" void func_8010975C(unsigned char val) {
+    extern unsigned long lbl_eu_80663F28;
+    unsigned char* p = (unsigned char*)lbl_eu_80663F28;
+    if (p != 0) p[0x774] = val;
+}
 // LLM-HARNESS-END: us-8010a244
 
 // LLM-HARNESS-BEGIN: us-8010a258
-extern "C" void func_80109770() {}
+extern "C" void func_80109770(unsigned char val) {
+    extern unsigned long lbl_eu_80663F28;
+    unsigned char* p = (unsigned char*)lbl_eu_80663F28;
+    if (p != 0) p[0x775] = val;
+}
 // LLM-HARNESS-END: us-8010a258
 
 // LLM-HARNESS-BEGIN: us-8010a26c

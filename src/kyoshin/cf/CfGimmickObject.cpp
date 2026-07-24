@@ -18,11 +18,15 @@ extern "C" void func_801F5B00() {}
 // LLM-HARNESS-END: us-801f77bc
 
 // LLM-HARNESS-BEGIN: us-801f78b4
-extern "C" void func_801F5BF8() {}
+extern "C" void func_801F5BF8(void* self) {
+    *(unsigned long*)((char*)self + 0x74) |= 0x10000;
+}
 // LLM-HARNESS-END: us-801f78b4
 
 // LLM-HARNESS-BEGIN: us-801f78c4
-extern "C" void func_801F5C08() {}
+extern "C" void func_801F5C08(void* self) {
+    *(unsigned long*)((char*)self + 0x74) &= ~0x10000;
+}
 // LLM-HARNESS-END: us-801f78c4
 
 // LLM-HARNESS-BEGIN: us-801f78d4

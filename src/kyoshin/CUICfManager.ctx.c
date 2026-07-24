@@ -10812,13 +10812,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -12999,6 +13008,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -20607,7 +20617,8 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
@@ -26835,6 +26846,25 @@ static IWorkEvent* cfWorkEvent(CUICfManager* self) {
     return workEvent;
 }
 
+// Virtual function thunks: adjust `this` and tail-call.
+// us-80136a98
+extern "C" void __dt__12CUICfManagerFv(void*);
+extern "C" void func_80135FC4__12CUICfManagerFv(void* self) {
+    __dt__12CUICfManagerFv((void*)((char*)self - 0x54));
+}
+
+// us-80136aa0
+extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+extern "C" void func_80135FCC__12CUICfManagerFv(void* self, int id, int a1, int a2) {
+    func_80133324__12CUICfManagerFv((CUICfManager*)((char*)self - 0x58), id, a1, a2);
+}
+
+// us-80136aa8
+extern "C" void __dt__12CUICfManagerFv(void*);
+extern "C" void func_80135FD4__12CUICfManagerFv(void* self) {
+    __dt__12CUICfManagerFv((void*)((char*)self - 0x58));
+}
+
 void CUICfManager::Init() {
     CUICfInitProcess* process;
     u8* ptmfBase;
@@ -26969,7 +26999,7 @@ void CUICfManager::Term() {
 // Event-queue insert is the same shape as reslist::push_back -> setItem
 // (try/catch forces -0x80 / mr r31,r1 / stw r1 epilogue). Leaf body order
 // matches retail text: 221 -> 312c -> 7fc -> 22 -> 609.
-/* "src/kyoshin/CUICfManager.cpp" line 171 "monolib/util/reslist.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 190 "monolib/util/reslist.hpp" */
 /* end "monolib/util/reslist.hpp" */
 
 extern "C" {
@@ -27245,7 +27275,7 @@ end:
 // enum-list proximity spawn, then mark/clear walks of the menu queue.
 // ---------------------------------------------------------------------------
 
-/* "src/kyoshin/CUICfManager.cpp" line 446 "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 465 "monolib/device/CDeviceVI.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 2 "types.h" */
@@ -29061,7 +29091,7 @@ static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
 /* end "monolib/device/CDeviceVI.hpp" */
-/* "src/kyoshin/CUICfManager.cpp" line 447 "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/CUICfManager.cpp" line 466 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
@@ -29916,3 +29946,10 @@ extern "C" void func_80135D04() {}
 // LLM-HARNESS-BEGIN: us-80136a34
 extern "C" void __dt__Q212CUICfManager5CTestFv() {}
 // LLM-HARNESS-END: us-80136a34
+
+// LLM-HARNESS-BEGIN: us-80136a90
+extern "C" void OnFileEvent__12CUICfManagerFv();
+extern "C" void func_80135FBC__12CUICfManagerFv() {
+    OnFileEvent__12CUICfManagerFv();
+}
+// LLM-HARNESS-END: us-80136a90

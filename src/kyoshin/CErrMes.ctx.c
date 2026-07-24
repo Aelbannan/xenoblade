@@ -1,18 +1,15 @@
-// Auto-scaffolded catalog TU for kyoshin/CErrMes
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Error-message UI helper (EU region).
 
-/* "src/kyoshin/CErrMes.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CErrMes.cpp" line 2 "kyoshin/CErrMes.hpp" */
 #pragma once
 
 /**
- * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
+ * Error-message UI helper (EU region).
  *
- * Pulls recovered VM / script-helper headers only. Plugin units with their own
- * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
+ * Trampolines into CBdat for the error-screen bdat index.
  */
 
-/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* "src/kyoshin/CErrMes.hpp" line 8 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -720,105 +717,16 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 10 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
 
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+// Tail-call trampoline: sets error bdat index 6 and forwards to CBdat.
+void func_eu_802B1334();
+/* end "kyoshin/CErrMes.hpp" */
+/* "src/kyoshin/CErrMes.cpp" line 3 "kyoshin/plugin/ocBdat.hpp" */
+#pragma once
+
+/* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
 /* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
-
-#endif
-#endif
-/* end "cstring" */
-
-/* "src/kyoshin/harness_catalog.hpp" line 12 "monolib/vm/yvm2.h" */
+/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
 #pragma once
 
 /* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
@@ -1268,48 +1176,6 @@ void vmHalt();
 }
 #endif
 /* end "monolib/vm/yvm2.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 13 "kyoshin/code_801862C0.hpp" */
-#pragma once
-
-/**
- * Script / OC instance helpers (unit kyoshin/code_801862C0).
- * Names are still placeholder ``func_*`` until symbol recovery; signatures
- * match observed call sites in plugin TUs (VMThread in, OC object out).
- */
-
-/* "src/kyoshin/code_801862C0.hpp" line 8 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/code_801862C0.hpp" line 9 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* func_801862C0(VMThread* pThread);
-void* func_801862E0(void* p);
-void* func_801863F4(void* p);
-void* func_80186460(void* p);
-void* func_80186474(void* p);
-void* func_801864DC(void* pObj, int slot);
-void* func_80186664(void* p);
-void* func_801866F0(void* p);
-void* func_80186A70(void* p);
-void* func_80186BC8(void* p);
-void* func_80186C7C(void* p);
-void* func_80186D20(void* p);
-
-#ifdef __cplusplus
-}
-#endif
-/* end "kyoshin/code_801862C0.hpp" */
-/* "src/kyoshin/harness_catalog.hpp" line 14 "kyoshin/plugin/ocBdat.hpp" */
-#pragma once
-
-/* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
 
 void* getFP(const char* pName);
 
@@ -1336,12 +1202,9 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
-/* end "kyoshin/harness_catalog.hpp" */
-
-extern "C" void func_8003AA8C__5CBdatFUl(unsigned long);
 
 // LLM-HARNESS-BEGIN: us-802b12dc
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
+void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
 // LLM-HARNESS-END: us-802b12dc
 
 
@@ -1404,3 +1267,12 @@ extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 // LLM-HARNESS-BEGIN: us-802b14f8
 extern "C" void func_eu_802B14F8() {}
 // LLM-HARNESS-END: us-802b14f8
+
+// LLM-HARNESS-BEGIN: us-802b133c
+extern "C" void getBdatStringColumnValue(void*, void*, int);
+extern u32 lbl_eu_80664BF8;
+extern u8 lbl_eu_80513420[];
+extern "C" void func_eu_802B133C() {
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
+}
+// LLM-HARNESS-END: us-802b133c

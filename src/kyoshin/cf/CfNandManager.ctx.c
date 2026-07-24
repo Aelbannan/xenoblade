@@ -1351,7 +1351,11 @@ extern "C" void __dt__Q22cf13CfNandManagerFv(void* self) {}
 // LLM-HARNESS-END: us-8023e148
 
 // LLM-HARNESS-BEGIN: us-8023e22c
-extern "C" void Init__Q22cf13CfNandManagerFv() {}
+extern "C" void Init__Q22cf13CfNandManagerFv(void) {
+    extern void func_804DA1B4(void*);
+    extern char lbl_eu_8065FD00[];
+    func_804DA1B4((void*)lbl_eu_8065FD00);
+}
 // LLM-HARNESS-END: us-8023e22c
 
 // LLM-HARNESS-BEGIN: us-8023e238
@@ -1363,7 +1367,7 @@ extern "C" void Move__Q22cf13CfNandManagerFv() {}
 // LLM-HARNESS-END: us-8023e284
 
 // LLM-HARNESS-BEGIN: us-8023e2e4
-extern "C" void* func_8023C1B4(void) { return 0; }
+extern "C" void func_8023C1B4() {}
 // LLM-HARNESS-END: us-8023e2e4
 
 // LLM-HARNESS-BEGIN: us-8023e2f0

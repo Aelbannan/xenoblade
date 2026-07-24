@@ -233,7 +233,12 @@ extern "C" int CfObjectModel_UnkVirtualFunc6__Q22cf13CfObjectModelFv(void* self)
 // LLM-HARNESS-END: us-800bc508
 
 // LLM-HARNESS-BEGIN: us-800bc510
-extern "C" void CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc20__Q22cf8CfObjectFv(void* self, float a, float b) {
+    extern float lbl_eu_80666A68;
+    *(float*)((char*)self + 0x3c) = a;
+    *(float*)((char*)self + 0x40) = lbl_eu_80666A68;
+    *(float*)((char*)self + 0x44) = b;
+}
 // LLM-HARNESS-END: us-800bc510
 
 // LLM-HARNESS-BEGIN: us-800bc524

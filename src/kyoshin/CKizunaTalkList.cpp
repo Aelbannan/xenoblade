@@ -108,3 +108,11 @@ extern "C" void OnFileEvent__15CKizunaTalkListFP10CEventFile() {}
 // LLM-HARNESS-BEGIN: us-802768dc
 extern "C" void sinit_80274458() {}
 // LLM-HARNESS-END: us-802768dc
+
+// LLM-HARNESS-BEGIN: us-802754c4
+extern "C" void* func_80273040(void* self, u32 r4) {
+    // Use signed compare to match retail cmpwi
+    if ((s32)r4 >= 0x100) return 0;
+    return (u8*)self + r4 * 0x14;
+}
+// LLM-HARNESS-END: us-802754c4

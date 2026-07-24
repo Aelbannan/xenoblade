@@ -117,5 +117,10 @@ extern "C" void func_80229398() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-8022b1b0
-extern "C" void sinit_80229378() {}
+extern "C" void __construct_array(void*, void*, int, int, int);
+extern void func_80229398();
+extern u8 lbl_eu_80576670[];
+extern "C" void sinit_80229378() {
+    __construct_array(lbl_eu_80576670, (void*)func_80229398, 0, 0x22, 0x20);
+}
 // LLM-HARNESS-END: us-8022b1b0

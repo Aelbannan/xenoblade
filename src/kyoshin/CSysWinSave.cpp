@@ -25,11 +25,16 @@ extern "C" void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSave
 // LLM-HARNESS-END: us-80296e18
 
 // LLM-HARNESS-BEGIN: us-80296e20
-extern "C" void func_80294824__FPv() {}
+extern float lbl_eu_80668BA0;
+extern "C" void func_80294824__FPv(void* self) {
+    float zero = lbl_eu_80668BA0[0];
+    *(float*)self = zero;
+    *((float*)self + 1) = zero;
+}
 // LLM-HARNESS-END: us-80296e20
 
 // LLM-HARNESS-BEGIN: us-80296e30
-extern "C" void func_80294834__FPv() {}
+extern "C" void stub_us_80296e30() {}
 // LLM-HARNESS-END: us-80296e30
 
 // LLM-HARNESS-BEGIN: us-80296e40

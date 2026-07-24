@@ -168,3 +168,14 @@ extern "C" void func_801D2E4C() {}
 // LLM-HARNESS-BEGIN: us-801d4924
 extern "C" void func_801D2ED8() {}
 // LLM-HARNESS-END: us-801d4924
+
+// LLM-HARNESS-BEGIN: us-801d3b9c
+extern "C" void func_801D2150(void* self, void* src) {
+    float f0 = *(float*)src;
+    float f1 = *(float*)((u8*)src + 4);
+    float f2 = *(float*)((u8*)src + 8);
+    *(float*)((u8*)self + 0x2C) = f0;
+    *(float*)((u8*)self + 0x30) = f1;
+    *(float*)((u8*)self + 0x34) = f2;
+}
+// LLM-HARNESS-END: us-801d3b9c

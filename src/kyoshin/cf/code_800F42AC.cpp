@@ -36,7 +36,10 @@ extern "C" cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self) {
 // LLM-HARNESS-END: us-800f5264
 
 // LLM-HARNESS-BEGIN: us-800f526c
-extern "C" void func_800F4784() {}
+extern "C" void* func_800F4784(void* self) {
+    void* v = *(void**)((char*)self + 0xc);
+    return v ? v : 0;
+}
 // LLM-HARNESS-END: us-800f526c
 
 // LLM-HARNESS-BEGIN: us-800f5280

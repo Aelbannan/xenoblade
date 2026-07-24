@@ -61,7 +61,9 @@ extern "C" int func_801835BC(void* self) { return 1; }
 // LLM-HARNESS-END: us-801849d8
 
 // LLM-HARNESS-BEGIN: us-801849e0
-extern "C" void func_801835C4() {}
+extern "C" void func_801835C4(void* self) {
+    *(unsigned long*)((char*)self + 0x18) &= ~0x20;
+}
 // LLM-HARNESS-END: us-801849e0
 
 // LLM-HARNESS-BEGIN: us-801849f0

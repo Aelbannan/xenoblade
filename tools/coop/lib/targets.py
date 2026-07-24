@@ -367,8 +367,16 @@ def update_target_result(
     certificate_checked: bool = False,
     equivalence_confidence: Optional[str] = None,
     equivalence_policy: Optional[str] = None,
+    override_workflow: Optional[str] = None,
 ) -> Path:
-    """Persist the latest result so the registry remains current state."""
+    """Persist the latest result so the registry remains current state.
+
+    When *override_workflow* is set, use it instead of the automatic
+    ACCEPTED / ACTIVE deduction.  This allows callers to record a full
+    match result without promoting the target to ACCEPTED (e.g. when
+    the unit-level split size is over budget and the target cannot yet
+    be linked into main.dol).
+    """
     with exclusive_targets_lock(config):
         data = load_targets_document(config)
         for row in data.get("targets", []):
@@ -392,7 +400,9 @@ def update_target_result(
             else:
                 row.pop("equivalence_confidence", None)
                 row.pop("equivalence_policy", None)
-            if status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
+            if override_workflow is not None:
+                row["workflow_status"] = override_workflow
+            elif status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
                 row["workflow_status"] = "ACCEPTED"
             elif row.get("workflow_status") in {
                 None, "BACKLOG", "QUEUED", "CLAIMED", "ACCEPTED",

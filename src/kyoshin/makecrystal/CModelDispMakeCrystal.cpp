@@ -9,7 +9,11 @@ extern "C" void __ct__CModelDispMakeCrystal() {}
 // LLM-HARNESS-END: us-8021dac8
 
 // LLM-HARNESS-BEGIN: us-8021e334
-extern "C" void func_8021C4DC() {}
+extern "C" void func_8021C4DC(void* self) {
+    *(unsigned long*)self = 0;
+    *(unsigned long*)((char*)self + 4) = 0;
+    ((unsigned char*)self)[8] = 0;
+}
 // LLM-HARNESS-END: us-8021e334
 
 // LLM-HARNESS-BEGIN: us-8021e348

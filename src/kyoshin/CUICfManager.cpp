@@ -35,6 +35,25 @@ static IWorkEvent* cfWorkEvent(CUICfManager* self) {
     return workEvent;
 }
 
+// Virtual function thunks: adjust `this` and tail-call.
+// us-80136a98
+extern "C" void __dt__12CUICfManagerFv(void*);
+extern "C" void func_80135FC4__12CUICfManagerFv(void* self) {
+    __dt__12CUICfManagerFv((void*)((char*)self - 0x54));
+}
+
+// us-80136aa0
+extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+extern "C" void func_80135FCC__12CUICfManagerFv(void* self, int id, int a1, int a2) {
+    func_80133324__12CUICfManagerFv((CUICfManager*)((char*)self - 0x58), id, a1, a2);
+}
+
+// us-80136aa8
+extern "C" void __dt__12CUICfManagerFv(void*);
+extern "C" void func_80135FD4__12CUICfManagerFv(void* self) {
+    __dt__12CUICfManagerFv((void*)((char*)self - 0x58));
+}
+
 void CUICfManager::Init() {
     CUICfInitProcess* process;
     u8* ptmfBase;
@@ -1218,3 +1237,10 @@ extern "C" void func_80135D04() {}
 // LLM-HARNESS-BEGIN: us-80136a34
 extern "C" void __dt__Q212CUICfManager5CTestFv() {}
 // LLM-HARNESS-END: us-80136a34
+
+// LLM-HARNESS-BEGIN: us-80136a90
+extern "C" void OnFileEvent__12CUICfManagerFv();
+extern "C" void func_80135FBC__12CUICfManagerFv() {
+    OnFileEvent__12CUICfManagerFv();
+}
+// LLM-HARNESS-END: us-80136a90

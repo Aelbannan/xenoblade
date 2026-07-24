@@ -1339,39 +1339,39 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80297e84
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void __ct__Q22cf12CHelpManagerFv() {}
 // LLM-HARNESS-END: us-80297e84
 
 // LLM-HARNESS-BEGIN: us-80297f20
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void func_80295924() {}
 // LLM-HARNESS-END: us-80297f20
 
 // LLM-HARNESS-BEGIN: us-80297f68
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void __dt__Q22cf12CHelpManagerFv() {}
 // LLM-HARNESS-END: us-80297f68
 
 // LLM-HARNESS-BEGIN: us-80297fa8
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void func_802959AC() {}
 // LLM-HARNESS-END: us-80297fa8
 
 // LLM-HARNESS-BEGIN: us-80298084
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void func_80295A88() {}
 // LLM-HARNESS-END: us-80298084
 
 // LLM-HARNESS-BEGIN: us-802981a8
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void func_80295BAC() {}
 // LLM-HARNESS-END: us-802981a8
 
 // LLM-HARNESS-BEGIN: us-802981f0
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void func_80295BF4() {}
 // LLM-HARNESS-END: us-802981f0
 
 // LLM-HARNESS-BEGIN: us-802982c4
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void func_80295CC8() {}
 // LLM-HARNESS-END: us-802982c4
 
 // LLM-HARNESS-BEGIN: us-8029832c
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void func_80295D30() {}
 // LLM-HARNESS-END: us-8029832c
 
 // LLM-HARNESS-BEGIN: us-8029837c
@@ -1411,11 +1411,17 @@ extern "C" void func_80295DAC__Q22cf16CHelp_AlwaysTIPSFv(void) {}
 // LLM-HARNESS-END: us-802983a8
 
 // LLM-HARNESS-BEGIN: us-80298e94
-extern "C" void func_80296898__Q22cf14CHelp_ToAttackFv() {}
+extern "C" void func_80296898__Q22cf14CHelp_ToAttackFv(void* self) {
+    ((unsigned char*)self)[0xc] = 0;
+    ((unsigned char*)self)[0xd] = 0;
+}
 // LLM-HARNESS-END: us-80298e94
 
 // LLM-HARNESS-BEGIN: us-80298ea4
-extern "C" void func_802968A8() {}
+extern "C" void func_802968A8(void* self) {
+    *(unsigned long*)self = 0;
+    ((unsigned char*)self)[4] = 0;
+}
 // LLM-HARNESS-END: us-80298ea4
 
 // LLM-HARNESS-BEGIN: us-80298eb4
@@ -1428,5 +1434,5 @@ extern "C" void func_80296924() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-802983ac
-extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
+extern "C" void sinit_80295DB0() {}
 // LLM-HARNESS-END: us-802983ac

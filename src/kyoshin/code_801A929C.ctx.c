@@ -1339,7 +1339,9 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801aaa6c
-extern "C" void func_801A9338() {}
+extern "C" void func_801A9338(void* self) {
+    *(unsigned short*)((char*)self + 0x2c) = 0xFFFF;
+}
 // LLM-HARNESS-END: us-801aaa6c
 
 // LLM-HARNESS-BEGIN: us-801aaa7c

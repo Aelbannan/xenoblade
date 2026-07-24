@@ -1339,66 +1339,47 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80169238
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+extern "C" void __ct__cf_CTaskREvtSequence() {}
 // LLM-HARNESS-END: us-80169238
 
 // LLM-HARNESS-BEGIN: us-801694a8
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+extern "C" void __dt__801682AC() {}
 // LLM-HARNESS-END: us-801694a8
 
 // LLM-HARNESS-BEGIN: us-80169540
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void* self) {}
 // LLM-HARNESS-END: us-80169540
 
 // LLM-HARNESS-BEGIN: us-801695f8
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
+extern "C" unsigned long func_801683FC() {
+    extern unsigned long lbl_eu_80664268;
+    unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
+    return (ptr[0x5c/4] >> 17) & 1;
 }
 // LLM-HARNESS-END: us-801695f8
 
 // LLM-HARNESS-BEGIN: us-80169608
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
+extern "C" unsigned long func_8016840C() {
+    extern unsigned long lbl_eu_80664268;
+    unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
+    return (ptr[0x5c/4] >> 19) & 1;
 }
 // LLM-HARNESS-END: us-80169608
 
 // LLM-HARNESS-BEGIN: us-80169618
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+extern "C" void func_8016841C() {}
 // LLM-HARNESS-END: us-80169618
 
 // LLM-HARNESS-BEGIN: us-80169668
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+extern "C" void func_8016846C() {}
 // LLM-HARNESS-END: us-80169668
 
 // LLM-HARNESS-BEGIN: us-80169678
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+extern "C" bool func_8016847C() { return false; }
 // LLM-HARNESS-END: us-80169678
 
 // LLM-HARNESS-BEGIN: us-80169680
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+extern "C" void func_80168484() {}
 // LLM-HARNESS-END: us-80169680
 
 // LLM-HARNESS-BEGIN: us-801696f0
@@ -1643,10 +1624,7 @@ public:
 
 namespace cf { class CTaskREvtSequence; }
 // LLM-HARNESS-BEGIN: us-80169450
-extern "C" u32 func_8016847C(void) {
-    extern u32 lbl_eu_80664268;
-    return lbl_eu_80664268;
-}
+template<> CTTask<cf::CTaskREvtSequence>::~CTTask() {}
 // LLM-HARNESS-END: us-80169450
 // LLM-HARNESS-BEGIN: us-8016da9c
 template<> void CTTask<cf::CTaskREvtSequence>::Move() {}

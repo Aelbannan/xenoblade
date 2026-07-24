@@ -1399,7 +1399,9 @@ extern "C" void func_80088620() {}
 // LLM-HARNESS-END: us-80088ff8
 
 // LLM-HARNESS-BEGIN: us-800891bc
-extern "C" void CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv() {}
+extern "C" unsigned long CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv(void* self) {
+    return !!((unsigned char*)self)[0x1628];
+}
 // LLM-HARNESS-END: us-800891bc
 
 // LLM-HARNESS-BEGIN: us-800891d0
@@ -1411,7 +1413,7 @@ extern "C" void func_80088800() {}
 // LLM-HARNESS-END: us-800891d8
 
 // LLM-HARNESS-BEGIN: us-80089224
-extern "C" void func_8008884C(void) {}
+extern "C" void func_8008884C() {}
 // LLM-HARNESS-END: us-80089224
 
 extern "C" void func_80089B24(void* self);

@@ -60,3 +60,8 @@ template<> void CTTask<CTaskGamePic>::Move() {}
 // LLM-HARNESS-BEGIN: us-80297af8
 template<> void CTTask<CTaskGamePic>::Draw() {}
 // LLM-HARNESS-END: us-80297af8
+// LLM-HARNESS-BEGIN: us-80297984
+extern "C" s16 func_80295388(void* self) {
+    return *(s16*)((u8*)self + 2) + *(s16*)((u8*)self + 6);
+}
+// LLM-HARNESS-END: us-80297984

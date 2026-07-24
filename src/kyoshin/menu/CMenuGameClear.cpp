@@ -29,7 +29,10 @@ extern "C" void __ct__CMenuGameClear() {}
 // LLM-HARNESS-END: us-802b4c0c
 
 // LLM-HARNESS-BEGIN: us-802b4d50
-extern "C" void func_802B22E0() {}
+extern "C" unsigned long func_802B22E0() {
+    unsigned long v = *(unsigned long*)(lbl_eu_80664C08);
+    return !!v;
+}
 // LLM-HARNESS-END: us-802b4d50
 
 // LLM-HARNESS-BEGIN: us-802b4d64

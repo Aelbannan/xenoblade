@@ -1976,5 +1976,9 @@ extern "C" bool func_800539D8__13CActParamAnimFv() { return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-80054038
-extern "C" void sinit_800539E0() {}
+extern "C" void sinit_800539E0() {
+    extern float lbl_eu_8066AF20;
+    extern float lbl_eu_80663D48;
+    lbl_eu_80663D48 = lbl_eu_8066AF20;
+}
 // LLM-HARNESS-END: us-80054038

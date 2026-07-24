@@ -13377,6 +13377,103 @@ using ::wcsncpy;
 #endif
 #endif
 /* end "cwchar" */
+/* "libs/RVL_SDK/src/revolution/hbm/include/nw4hbm/ut/ut_TextWriterBase.h" line 11 "cstring" */
+#ifndef MSL_CPP_CSTRING_H
+#define MSL_CPP_CSTRING_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::__memrchr;
+using ::memchr;
+using ::memcmp;
+using ::memcpy;
+using ::memmove;
+using ::memset;
+using ::strcat;
+using ::strchr;
+using ::strcmp;
+using ::strcpy;
+using ::stricmp;
+using ::strlen;
+using ::strncat;
+using ::strncmp;
+using ::strncpy;
+using ::strstr;
+} // namespace std
+
+#endif
+#endif
+/* end "cstring" */
 
 namespace nw4hbm {
 namespace ut {
@@ -13430,7 +13527,7 @@ public:
     }
 
     f32 GetCharSpace() const {
-        return mCharSpace;
+        return *(f32*)((u8*)this + 76);
     }
     void SetCharSpace(f32 space) {
         mCharSpace = space;
@@ -13444,11 +13541,6 @@ public:
     }
 
     int GetTabWidth() const;
-    /*
-    int GetTabWidth() const {
-        return mTabWidth;
-    }
-    */
     void SetTabWidth(int width) {
         mTabWidth = width;
     }
@@ -13476,7 +13568,8 @@ public:
     f32 CalcStringWidth(const T* pStr, int len) const;
     void CalcStringRect(Rect* pRect, const T* pStr, int len) const;
 
-    int VSNPrintf(T* buffer, u32 count, const T* pStr, std::va_list args);
+    static int VSNPrintf(T* buffer, u32 count, const T* pStr, std::va_list args);
+    static int StrLen(const T* pStr);
     f32 VPrintf(const T* pStr, std::va_list args);
     f32 Print(const T* pStr, int len);
     f32 PrintMutable(const T* pStr, int len);
@@ -13527,20 +13620,20 @@ private:
 };
 
 template <>
-inline int TextWriterBase<char>::VSNPrintf(char* pBuffer, u32 count,
-                                           const char* pStr,
-                                           std::va_list args) {
-
-    return std::vsnprintf(pBuffer, count, pStr, args);
-}
+int TextWriterBase<char>::VSNPrintf(char* pBuffer, u32 count,
+                                    const char* pStr,
+                                    std::va_list args);
 
 template <>
-inline int TextWriterBase<wchar_t>::VSNPrintf(wchar_t* pBuffer, u32 count,
-                                              const wchar_t* pStr,
-                                              std::va_list args) {
+int TextWriterBase<wchar_t>::VSNPrintf(wchar_t* pBuffer, u32 count,
+                                       const wchar_t* pStr,
+                                       std::va_list args);
 
-    return std::vswprintf(pBuffer, count, pStr, args);
-}
+template <>
+int TextWriterBase<char>::StrLen(const char* pStr);
+
+template <>
+int TextWriterBase<wchar_t>::StrLen(const wchar_t* pStr);
 
 } // namespace ut
 } // namespace nw4hbm

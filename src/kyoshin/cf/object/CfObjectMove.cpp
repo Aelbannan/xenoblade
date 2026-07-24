@@ -325,7 +325,10 @@ extern "C" void func_800BE93C() {}
 // LLM-HARNESS-END: us-800bf2a8
 
 // LLM-HARNESS-BEGIN: us-800bf2b4
-extern "C" void func_800BE948() {}
+extern "C" void func_800BE948(void* self, unsigned short val) {
+    void* ptr = *(void**)((char*)self + 0xb0);
+    *(unsigned short*)((char*)ptr + 0xc) = val;
+}
 // LLM-HARNESS-END: us-800bf2b4
 
 // LLM-HARNESS-BEGIN: us-800bf2c0
@@ -333,7 +336,10 @@ extern "C" int func_800BE954(void* self) { return *(s16*)((u8*)*(void**)((u8*)se
 // LLM-HARNESS-END: us-800bf2c0
 
 // LLM-HARNESS-BEGIN: us-800bf2cc
-extern "C" void func_800BE960() {}
+extern "C" void func_800BE960(void* self, unsigned short val) {
+    void* ptr = *(void**)((char*)self + 0xb0);
+    *(unsigned short*)((char*)ptr + 0xa) = val;
+}
 // LLM-HARNESS-END: us-800bf2cc
 
 // LLM-HARNESS-BEGIN: us-800bf2d8
@@ -341,7 +347,10 @@ extern "C" int func_800BE96C(void* self) { return *(s16*)((u8*)*(void**)((u8*)se
 // LLM-HARNESS-END: us-800bf2d8
 
 // LLM-HARNESS-BEGIN: us-800bf2e4
-extern "C" void func_800BE978() {}
+extern "C" void func_800BE978(void* self, unsigned short val) {
+    void* ptr = *(void**)((char*)self + 0xb0);
+    *(unsigned short*)((char*)ptr + 0xe) = val;
+}
 // LLM-HARNESS-END: us-800bf2e4
 
 // LLM-HARNESS-BEGIN: us-800bf2f0
@@ -353,7 +362,11 @@ extern "C" void CfObject_UnkVirtualFunc10__Q22cf12CfObjectMoveFv() {}
 // LLM-HARNESS-END: us-800bf304
 
 // LLM-HARNESS-BEGIN: us-800bf318
-extern "C" void func_800BE9AC() {}
+extern "C" void func_800BE9AC(void* self) {
+    void** inner = *(void***)((char*)self + 0x10);
+    void (*func)(void*) = (void (*)(void*))inner[0x14 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800bf318
 
 // LLM-HARNESS-BEGIN: us-800bf328
@@ -501,7 +514,10 @@ extern "C" int func_800BF30C(void* self) { return 1; }
 // LLM-HARNESS-END: us-800bfc90
 
 // LLM-HARNESS-BEGIN: us-800bfc98
-extern "C" void func_800BF314() {}
+extern "C" void func_800BF314(void* self, unsigned long bit) {
+    unsigned char val = *(unsigned char*)((char*)self + 0x6c9);
+    *(unsigned char*)((char*)self + 0x6c9) = __rlwimi(val, bit, 0, 31, 31);
+}
 // LLM-HARNESS-END: us-800bfc98
 
 // LLM-HARNESS-BEGIN: us-800bfca8

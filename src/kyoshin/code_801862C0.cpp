@@ -17,7 +17,12 @@ extern "C" void* func_801863F4(void* p) { return 0; }
 // LLM-HARNESS-END: us-8018787c
 
 // LLM-HARNESS-BEGIN: us-801878e8
-extern "C" void* func_80186460(void* p) { return 0; }
+extern "C" void* func_80186460(void* dst, void* src) {
+    unsigned long v = *(unsigned long*)((char*)src + 0x74);
+    *(unsigned long*)((char*)dst + 0x1700) = v;
+    *(unsigned long*)((char*)dst + 0x1704) = (unsigned long)src;
+    return (void*)v;
+}
 // LLM-HARNESS-END: us-801878e8
 
 // LLM-HARNESS-BEGIN: us-801878fc

@@ -15,5 +15,5 @@ public:
     virtual ~CDeviceVICb();
     virtual void viBeforeDrawDone(){}
     virtual void viAfterDrawDone(){}
-    virtual void viBeginFrame(){}
+    virtual void viBeginFrame();
 };

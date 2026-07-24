@@ -10864,13 +10864,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -12936,6 +12945,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -20654,7 +20664,8 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
@@ -28213,13 +28224,28 @@ public:
     s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/include/monolib/core/CView.hpp" line 8 "monolib/core/CFontLayer.hpp" */
+#pragma once
 
-//size: 0x4
+/* "libs/monolib/include/monolib/core/CFontLayer.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Forward declaration for tail-call target
+class CDeviceFont;
+
+/// Font layer base class (size 0x4: vtable pointer only).
+/// CView inherits from this via multiple inheritance.
 class CFontLayer {
 public:
     CFontLayer();
     virtual ~CFontLayer();
+
+    /// Flush pending font rendering state.
+    /// Delegates to CDeviceFont internally; the int parameter is passed
+    /// through to the device layer but may be unused depending on context.
+    void fontFlush(int channel);
 };
+/* end "monolib/core/CFontLayer.hpp" */
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {
@@ -28909,31 +28935,32 @@ public:
 /* end "monolib/util.hpp" */
 
 struct PackHeader {
-    u32 unk0; //always 00FE1200
-    u32 unk4; //always 00000002
-    u32 mFileHashTableOffset; //0x8
-    u32 mPkhFilesize; //0xC
-    u32 mFiles; //0x10
-    char mFilename[32]; //0x14
-    u32 mHashValTableLength; //0x34
-    u8 mHashValTable[0x40]; //0x38
-    //might be a struct?
-    u64 mFileHashTable[]; //0x78
+    u32 mMagic;                   // 0x00 - always 0x00FE1200
+    u32 mVersion;                 // 0x04 - always 0x00000002
+    u32 mFileHashTableOffset;     // 0x08
+    u32 mPkhFilesize;             // 0x0C - total pkh file size
+    u32 mFiles;                   // 0x10 - number of files in pack
+    char mFilename[32];           // 0x14 - pack filename
+    u32 mHashValTableLength;      // 0x34 - length of hash value table
+    u8 mHashValTable[0x40];       // 0x38 - bit-position table for hash calculation
+    // Hash table: array of u64 pairs (lower, upper) at 0x78
+    // Followed by u16 file IDs, then optionally u32 file data offsets
+    u64 mFileHashTable[];         // 0x78
 };
 
 //size: 0x88
 class CPackItem : public IWorkEvent {
 public:
-    CPackItem(const char* name, UNKWORD r5);
+    CPackItem(const char* name, int partitionId);
     virtual ~CPackItem();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     void update();
-    bool func_804DE78C(const char* filename, char** r5, u32* r6, u32* r7, u32* r8);
+    bool lookupFile(const char* filename, char** outPkbPath, u32* outEntryId, u32* outIndex, u32* outFileId);
     int findHashIndex(int startIndex, int endIndex);
     bool isNotLoaded();
     bool calculatePackFileHash(const char* filename);
-    void func_804DE948();
+    void setupHashTable();
 
     enum LoadState {
         LOAD_STATE_NOT_LOADED,
@@ -28946,26 +28973,26 @@ public:
     //0x0: vtable
     //0x0-4: IWorkEvent
 
-    ml::FixStr<32> unk4;
-    ml::FixStr<32> mPkbFilename; //0x28
-    CFileHandle* mFileHandle; //0x4C
-    PackHeader* mPackHeader; //0x50
-    const char* unk54;
-    u64* mFileHashTable; //0x58
-    u16* unk5C; //0x5C
-    u32* unk60; //0x60
-    int mAdxPartitionId; //0x64
-    void* mAhxAdxDataPtr; //0x68
-    u32 mHashLowerHalf; //0x6C
-    u32 mHashUpperHalf; //0x70
-    LoadState mLoadState; //0x74
-    u8 unk78;
-    u8 unk79;
-    bool mIsAhxAdxFile; //0x7A
-    u8 unk7B; //filler?
-    u32 unk7C;
-    u32 unk80;
-    const char* unk84;
+    ml::FixStr<32> mBaseName;       // 0x04 - filename without path or extension
+    ml::FixStr<32> mPkbFilename;     // 0x28 - pkb archive path
+    CFileHandle* mFileHandle;        // 0x4C
+    PackHeader* mPackHeader;         // 0x50
+    const char* mArchiveName;        // 0x54 - archive name from constructor
+    u64* mFileHashTable;             // 0x58
+    u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
+    u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
+    int mAdxPartitionId;             // 0x64
+    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x6C
+    u32 mHashUpperHalf;              // 0x70
+    LoadState mLoadState;            // 0x74
+    u8 mFileReadFailed;              // 0x78 - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7A
+    u8 unk7B;                        // 0x7B - padding
+    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
+    const char* mFilePath;           // 0x84 - full path to the pack file
 };
 /* end "monolib/core/CPackItem.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 7 "monolib/core/CPadManager.hpp" */
@@ -245491,6 +245518,4835 @@ public:
 /* end "types.h" */
 /* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 4 "nw4r/g3d/g3d_light.h" */
+#ifndef NW4R_G3D_LIGHT_H
+#define NW4R_G3D_LIGHT_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 4 "nw4r/g3d/g3d_state.h" */
+#ifndef NW4R_G3D_STATE_H
+#define NW4R_G3D_STATE_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 4 "nw4r/g3d/g3d_camera.h" */
+#ifndef NW4R_G3D_CAMERA_H
+#define NW4R_G3D_CAMERA_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+#ifndef NW4R_G3D_RES_RES_COMMON_H
+#define NW4R_G3D_RES_RES_COMMON_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 4 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+/******************************************************************************
+ *
+ * Macros
+ *
+ ******************************************************************************/
+
+/**
+ * Define ResName pascal string for file resource groups.
+ */
+#define NW4R_G3D_RESFILE_NAME_DEF(VAR, STR)                                    \
+    nw4r::g3d::ResNameData27 ResNameData_##VAR ALIGN(32) = {sizeof(STR) - 1,   \
+                                                            STR}
+
+/**
+ * Similar to "ofs_to_obj" but accounting for the additional -4 offset.
+ * Debug builds show this behavior was not achieved through a function.
+ */
+#define NW4R_G3D_OFS_TO_RESNAME(BASE, OFS)                                     \
+    nw4r::g3d::ResName((char*)(BASE) + (OFS) - sizeof(u32))
+
+/**
+ * Define common functions for resource classes.
+ * @note Hides ResCommon::ref, why did they do this???
+ */
+#define NW4R_G3D_RESOURCE_FUNC_DEF(T)                                          \
+    NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(T, T##Data)
+#define NW4R_G3D_RESOURCE_FUNC_DEF_EX(TCLS, TDATA)                             \
+    NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(TCLS, TDATA)
+
+#define NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(TCLS, TDATA)                           \
+    explicit TCLS(void* pData = NULL) : nw4r::g3d::ResCommon<TDATA>(pData) {}  \
+                                                                               \
+    TDATA& ref() {                                                             \
+        return *ptr();                                                         \
+    }                                                                          \
+                                                                               \
+    const TDATA& ref() const {                                                 \
+        return *ptr();                                                         \
+    }                                                                          \
+                                                                               \
+    bool operator==(const TCLS& rOther) const {                                \
+        return ptr() == rOther.ptr();                                          \
+    }                                                                          \
+                                                                               \
+    bool operator!=(const TCLS& rOther) const {                                \
+        return ptr() != rOther.ptr();                                          \
+    }
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * Common resource wrapper
+ *
+ ******************************************************************************/
+template <typename T> class ResCommon {
+public:
+    explicit ResCommon(void* pData) : mpData(static_cast<T*>(pData)) {}
+
+    explicit ResCommon(const void* pData)
+        : mpData(static_cast<const T*>(pData)) {}
+
+    bool IsValid() const {
+        return mpData != NULL;
+    }
+
+    T* ptr() {
+        return mpData;
+    }
+    const T* ptr() const {
+        return mpData;
+    }
+
+    T& ref() {
+        return *mpData;
+    }
+    const T& ref() const {
+        return *mpData;
+    }
+
+    template <typename TTo> TTo* ofs_to_ptr_raw(s32 ofs) {
+        return reinterpret_cast<TTo*>((char*)mpData + ofs);
+    }
+    template <typename TTo> const TTo* ofs_to_ptr_raw(s32 ofs) const {
+        return reinterpret_cast<const TTo*>((char*)mpData + ofs);
+    }
+
+    template <typename TTo> TTo* ofs_to_ptr(s32 ofs) {
+        u8* pPtr = reinterpret_cast<u8*>(mpData);
+
+        if (ofs != 0) {
+            return reinterpret_cast<TTo*>(pPtr + ofs);
+        }
+
+        return NULL;
+    }
+    template <typename TTo> const TTo* ofs_to_ptr(s32 ofs) const {
+        const u8* pPtr = reinterpret_cast<const u8*>(mpData);
+
+        if (ofs != 0) {
+            return reinterpret_cast<const TTo*>(pPtr + ofs);
+        }
+
+        return NULL;
+    }
+
+    template <typename TTo> TTo ofs_to_obj(s32 ofs) {
+        u8* pPtr = reinterpret_cast<u8*>(mpData);
+
+        if (ofs != 0) {
+            return TTo(pPtr + ofs);
+        }
+
+        return TTo(NULL);
+    }
+    template <typename TTo> const TTo ofs_to_obj(s32 ofs) const {
+        const u8* pPtr = reinterpret_cast<const u8*>(mpData);
+
+        if (ofs != 0) {
+            return TTo(const_cast<u8*>(pPtr + ofs));
+        }
+
+        return TTo(NULL);
+    }
+
+private:
+    T* mpData;
+};
+
+/**
+ * Header for resource data structures.
+ */
+struct ResBlockHeaderData {
+    char kind[4]; // at 0x0
+    u32 size;     // at 0x4
+};
+
+/**
+ * Name for file resource groups.
+ */
+struct ResNameData27 {
+    u32 len;                    // at 0x0
+    char str[32 - sizeof(u32)]; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * Named resource
+ *
+ ******************************************************************************/
+struct ResNameData {
+    u32 len;     // at 0x0
+    char str[4]; // at 0x4
+};
+
+class ResName : public ResCommon<const ResNameData> {
+public:
+    explicit ResName(const void* pData) : ResCommon(pData) {}
+
+    u32 GetLength() const {
+        return ref().len;
+    }
+
+    const char* GetName() const {
+        return ref().str;
+    }
+
+    bool operator==(const ResName rhs) const;
+};
+
+/******************************************************************************
+ *
+ * Generic display list
+ *
+ ******************************************************************************/
+struct ResTagDLData {
+    u32 bufSize; // at 0x0
+    u32 cmdSize; // at 0x4
+    s32 toDL;    // at 0x8
+};
+
+class ResTagDL : public ResCommon<ResTagDLData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTagDL);
+
+    u32 GetBufSize() const {
+        return ref().bufSize;
+    }
+
+    u32 GetCmdSize() const {
+        return ref().cmdSize;
+    }
+
+    u8* GetDL() {
+        return const_cast<u8*>(ofs_to_ptr<u8>(ref().toDL));
+    }
+    const u8* GetDL() const {
+        return ofs_to_ptr<u8>(ref().toDL);
+    }
+};
+
+/******************************************************************************
+ *
+ * Model bytecode
+ *
+ ******************************************************************************/
+namespace ResByteCodeData {
+
+enum OpCode {
+    NOOP,   // No operation
+    END,    // End of bytecode
+    CALC,   // Calculate matrix
+    WEIGHT, // Apply weighting
+    DRAW,   // Draw polygon
+    EVPMTX, // Envelope matrix
+    MTXDUP  // Duplicate matrix
+};
+
+// CALC opcode layout
+struct CalcParams {
+    u8 opcode;        // at 0x0
+    u8 nodeIdHi;      // at 0x1
+    u8 nodeIdLo;      // at 0x2
+    u8 parentMtxIdHi; // at 0x1
+    u8 parentMtxIdLo; // at 0x2
+};
+
+// WEIGHT opcode layout
+struct WeightParams {
+    u8 opcode;      // at 0x0
+    u8 tgtIdHi;     // at 0x1
+    u8 tgtIdLo;     // at 0x2
+    u8 numBlendMtx; // at 0x3
+};
+// WEIGHT opcode layout - weighting entry
+struct WeightEntry {
+    u8 mtxIdHi;  // at 0x0
+    u8 mtxIdLo;  // at 0x1
+    u8 fWeight0; // at 0x2
+    u8 fWeight1; // at 0x3
+    u8 fWeight2; // at 0x4
+    u8 fWeight3; // at 0x5
+};
+
+// DRAW opcode layout
+struct DrawParams {
+    u8 opcode;   // at 0x0
+    u8 matIdHi;  // at 0x3
+    u8 matIdLo;  // at 0x4
+    u8 shpIdHi;  // at 0x1
+    u8 shpIdLo;  // at 0x2
+    u8 nodeIdHi; // at 0x5
+    u8 nodeIdLo; // at 0x6
+    u8 priority; // at 0x7
+};
+
+// EVPMTX opcode layout
+struct EvpMtxParams {
+    u8 opcode;   // at 0x0
+    u8 mtxIdHi;  // at 0x1
+    u8 mtxIdLo;  // at 0x2
+    u8 nodeIdHi; // at 0x1
+    u8 nodeIdLo; // at 0x2
+};
+
+// MTXDUP opcode layout
+struct MtxDupParams {
+    u8 opcode;      // at 0x0
+    u8 toMtxIdHi;   // at 0x1
+    u8 toMtxIdLo;   // at 0x2
+    u8 fromMtxIdHi; // at 0x1
+    u8 fromMtxIdLo; // at 0x2
+};
+
+} // namespace ResByteCodeData
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * Primitive read/write
+ *
+ ******************************************************************************/
+inline u8 ResRead_u8(const u8* pPtr) {
+    return *pPtr;
+}
+
+inline u32 ResRead_u32(const u8* pPtr) {
+    u32 value = ResRead_u8(pPtr++) << 24;
+    value |= ResRead_u8(pPtr++) << 16;
+    value |= ResRead_u8(pPtr++) << 8;
+    value |= ResRead_u8(pPtr++) << 0;
+    return value;
+}
+
+inline void ResWrite_u8(u8* pPtr, u8 data) {
+    *pPtr = data;
+}
+
+inline void ResWrite_u16(u8* pPtr, u16 data) {
+    ResWrite_u8(pPtr++, data >> 8);
+    ResWrite_u8(pPtr++, data >> 0);
+}
+
+inline void ResWrite_u32(u8* pPtr, u32 data) {
+    ResWrite_u8(pPtr++, data >> 24);
+    ResWrite_u8(pPtr++, data >> 16);
+    ResWrite_u8(pPtr++, data >> 8);
+    ResWrite_u8(pPtr++, data >> 0);
+}
+
+/******************************************************************************
+ *
+ * GX Blitting Processor (BP)
+ *
+ ******************************************************************************/
+inline void ResReadBPCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte
+    *pOut = ResRead_u32(pPtr + 1);
+}
+
+void ResWriteBPCmd(u8* pPtr, u32 reg);
+void ResWriteBPCmd(u8* pPtr, u32 reg, u32 mask);
+void ResWriteSSMask(u8* pPtr, u32 value);
+
+/******************************************************************************
+ *
+ * GX Command Processor (CP)
+ *
+ ******************************************************************************/
+inline void ResReadCPCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte + addr byte
+    *pOut = ResRead_u32(pPtr + 2);
+}
+
+void ResWriteCPCmd(u8* pPtr, u8 addr, u32 value);
+
+/******************************************************************************
+ *
+ * GX Transform Unit (XF)
+ *
+ ******************************************************************************/
+inline void ResReadXFCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte + size short + addr short
+    *pOut = ResRead_u32(pPtr + 5);
+}
+
+void ResWriteXFCmd(u8* pPtr, u16 addr, u32 value);
+
+/******************************************************************************
+ *
+ * Utility functions
+ *
+ ******************************************************************************/
+inline GXColor GetRGBA(u8 r, u8 g, u8 b, u8 a) {
+    return (GXColor){r, g, b, a};
+}
+inline GXColorS10 GetRGBAS10(s16 r, s16 g, s16 b, s16 a) {
+    return (GXColorS10){r, g, b, a};
+}
+
+} // namespace detail
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 6 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 8 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct CameraData {
+    enum Flag {
+        FLAG_CAM_LOOKAT = (1 << 0),
+        FLAG_CAM_ROTATE = (1 << 1),
+        FLAG_CAM_AIM = (1 << 2),
+        FLAG_CAM_MTX_READY = (1 << 3),
+
+        FLAG_PROJ_FRUSTUM = (1 << 4),
+        FLAG_PROJ_PERSP = (1 << 5),
+        FLAG_PROJ_ORTHO = (1 << 6),
+        FLAG_PROJ_MTX_READY = (1 << 7),
+
+        FLAG_VI_ODD_FIELD = (1 << 8),
+    };
+
+    math::MTX34 cameraMtx;     // at 0x0
+    math::MTX44 projMtx;       // at 0x30
+    u32 flags;                 // at 0x70
+    math::VEC3 cameraPos;      // at 0x74
+    math::VEC3 cameraUp;       // at 0x80
+    math::VEC3 cameraTarget;   // at 0x8C
+    math::VEC3 cameraRotate;   // at 0x98
+    f32 cameraTwist;           // at 0xA4
+    GXProjectionType projType; // at 0xA8
+    f32 projFovy;              // at 0xAC
+    f32 projAspect;            // at 0xB0
+    f32 projNear;              // at 0xB4
+    f32 projFar;               // at 0xB8
+    f32 projTop;               // at 0xBC
+    f32 projBottom;            // at 0xC0
+    f32 projLeft;              // at 0xC4
+    f32 projRight;             // at 0xC8
+    f32 lightScaleS;           // at 0xCC
+    f32 lightScaleT;           // at 0xD0
+    f32 lightTransS;           // at 0xD4
+    f32 lightTransT;           // at 0xD8
+    math::VEC2 viewportOrigin; // at 0xDC
+    math::VEC2 viewportSize;   // at 0xE4
+    f32 viewportNear;          // at 0xEC
+    f32 viewportFar;           // at 0xF0
+    u32 scissorX;              // at 0xF4
+    u32 scissorY;              // at 0xF8
+    u32 scissorWidth;          // at 0xFC
+    u32 scissorHeight;         // at 0x100
+    s32 scissorOffsetX;        // at 0x104
+    s32 scissorOffsetY;        // at 0x108
+};
+
+class Camera : public ResCommon<CameraData> {
+public:
+    enum PostureType { POSTURE_LOOKAT, POSTURE_ROTATE, POSTURE_AIM };
+
+    struct PostureInfo {
+        PostureType tp;          // at 0x0
+        math::VEC3 cameraUp;     // at 0x4
+        math::VEC3 cameraTarget; // at 0x10
+        math::VEC3 cameraRotate; // at 0x1C
+        f32 cameraTwist;         // at 0x28
+    };
+
+public:
+    explicit Camera(CameraData* pData);
+
+    void Init();
+    void Init(u16 efbWidth, u16 efbHeight, u16 xfbWidth, u16 xfbHeight,
+              u16 viWidth, u16 viHeight);
+
+    void SetPosition(f32 x, f32 y, f32 z);
+    void SetPosition(const math::VEC3& rPos);
+
+    void SetPosture(const PostureInfo& rInfo);
+    void SetCameraMtxDirectly(const math::MTX34& rMtx);
+    void SetPerspective(f32 fovy, f32 aspect, f32 near, f32 far);
+    void SetOrtho(f32 top, f32 bottom, f32 left, f32 right, f32 near, f32 far);
+    void SetProjectionMtxDirectly(const math::MTX44* pMtx);
+
+    void SetScissor(u32 x, u32 y, u32 width, u32 height);
+    void SetScissorBoxOffset(s32 ox, s32 oy);
+
+    void SetViewport(f32 x, f32 y, f32 width, f32 height);
+    void SetViewportZRange(f32 near, f32 far);
+    void GetViewport(f32* pX, f32* pY, f32* pWidth, f32* pHeight, f32* pNear,
+                     f32* pFar) const;
+
+    void GetCameraMtx(math::MTX34* pMtx) const;
+    void GetProjectionMtx(math::MTX44* pMtx) const;
+    void GetProjectionTexMtx(math::MTX34* pMtx) const;
+    void GetEnvironmentTexMtx(math::MTX34* pMtx) const;
+
+    void GXSetViewport() const;
+    void GXSetProjection() const;
+    void GXSetScissor() const;
+    void GXSetScissorBoxOffset() const;
+
+    GXProjectionType GetProjectionType() const {
+        return ref().projType;
+    }
+
+private:
+    void UpdateCameraMtx() const;
+    void UpdateProjectionMtx() const;
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_camera.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 5 "nw4r/g3d/g3d_fog.h" */
+#ifndef NW4R_G3D_FOG_H
+#define NW4R_G3D_FOG_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 6 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 7 "nw4r/ut.h" */
+/* end "nw4r/ut.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 9 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct FogData {
+    GXFogType type;         // at 0x0
+    f32 startz;             // at 0x4
+    f32 endz;               // at 0x8
+    f32 nearz;              // at 0xC
+    f32 farz;               // at 0x10
+    GXColor color;          // at 0x14
+    GXBool adjEnable;       // at 0x18
+    u8 PADDING_0x19;        // at 0x19
+    u16 adjCenter;          // at 0x1A
+    GXFogAdjTable adjTable; // at 0x1C
+};
+
+class Fog : public ResCommon<FogData> {
+public:
+    explicit Fog(FogData* pData);
+
+    void Init();
+    Fog CopyTo(void* pDst) const;
+
+    void SetFogRangeAdjParam(u16 width, u16 center,
+                             const math::MTX44& rProjMtx);
+    void SetGP() const;
+
+    void SetFogType(GXFogType type) {
+        if (!IsValid()) {
+            return;
+        }
+
+        ref().type = type;
+    }
+
+    void SetZ(f32 startZ, f32 endZ) {
+        if (!IsValid()) {
+            return;
+        }
+
+        FogData& r = ref();
+
+        r.startz = startZ;
+        r.endz = endZ;
+    }
+
+    void SetNearFar(f32 nearZ, f32 farZ) {
+        if (!IsValid()) {
+            return;
+        }
+
+        FogData& r = ref();
+
+        r.nearz = nearZ;
+        r.farz = farZ;
+    }
+
+    void SetFogColor(GXColor color) {
+        if (!IsValid()) {
+            return;
+        }
+
+        ref().color = color;
+    }
+
+    void GetFog(GXFogType* type, f32* startz, f32* endz,
+                f32* nearz, f32* farz, GXColor* color);
+
+    bool IsFogRangeAdjEnable() const {
+        return IsValid() && ref().adjEnable == TRUE;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_fog.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 6 "nw4r/g3d/res/g3d_resmat.h" */
+#ifndef NW4R_G3D_RES_RES_MAT_H
+#define NW4R_G3D_RES_RES_MAT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 4 "nw4r/g3d/res/g3d_resanmtexsrt.h" */
+#ifndef NW4R_G3D_RES_RES_ANM_TEX_SRT_H
+#define NW4R_G3D_RES_RES_ANM_TEX_SRT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 4 "nw4r/g3d/res/g3d_resanm.h" */
+#ifndef NW4R_G3D_RES_RES_ANM_H
+#define NW4R_G3D_RES_RES_ANM_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanm.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * ResKeyFrame
+ *
+ ******************************************************************************/
+struct ResKeyFrameData {
+    f32 frame; // at 0x0
+    f32 value; // at 0x4
+    f32 slope; // at 0x8
+};
+
+struct ResKeyFrameAnmData {
+    u16 numKeyFrame;              // at 0x0
+    u8 PADDING_0x2[0x4 - 0x2];    // at 0x2
+    f32 invKeyFrameRange;         // at 0x4
+    ResKeyFrameData keyFrames[1]; // at 0x8
+};
+
+namespace detail {
+
+f32 GetResKeyFrameAnmResult(const ResKeyFrameAnmData* pData, f32 frame);
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResAnm
+ *
+ ******************************************************************************/
+enum AnmPolicy { ANM_POLICY_ONETIME, ANM_POLICY_LOOP, ANM_POLICY_MAX };
+
+union ResAnmData {
+    f32 constValue;           // at 0x0
+    s32 toResKeyFrameAnmData; // at 0x0
+};
+
+namespace detail {
+
+inline f32 GetResAnmResult(const ResAnmData* pData, f32 frame, bool constant) {
+    if (constant) {
+        return pData->constValue;
+    }
+
+    const ResKeyFrameAnmData* pFrameData =
+        reinterpret_cast<const ResKeyFrameAnmData*>(
+            reinterpret_cast<const char*>(pData) + pData->toResKeyFrameAnmData);
+
+    return GetResKeyFrameAnmResult(pFrameData, frame);
+}
+
+template <typename T> inline f32 ClipFrame(const T& rInfo, f32 frame) {
+    if (frame <= 0.0f) {
+        return 0.0f;
+    }
+
+    if (rInfo.numFrame <= frame) {
+        return rInfo.numFrame;
+    }
+
+    return frame;
+}
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResColorAnm
+ *
+ ******************************************************************************/
+union ResColorAnmData {
+    u32 constValue;              // at 0x0
+    s32 toResColorAnmFramesData; // at 0x0
+};
+struct ResColorAnmFramesData {
+    u32 frameColors[1]; // at 0x0
+};
+
+namespace detail {
+
+u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame);
+
+inline u32 GetResColorAnmResult(const ResColorAnmData* pData, f32 frame,
+                                bool constant) {
+    if (constant) {
+        return pData->constValue;
+    }
+
+    const ResColorAnmFramesData* pFrameData =
+        reinterpret_cast<const ResColorAnmFramesData*>(
+            reinterpret_cast<const char*>(pData) +
+            pData->toResColorAnmFramesData);
+
+    return GetResColorAnmResult(pFrameData, frame);
+}
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResBoolAnm
+ *
+ ******************************************************************************/
+union ResBoolAnmData {
+    s32 toResBoolAnmFramesData; // at 0x0
+};
+struct ResBoolAnmFramesData {
+    u32 boolBits[1]; // at 0x0
+};
+
+namespace detail {
+
+inline bool GetResBoolAnmFramesResult(const ResBoolAnmFramesData* pData,
+                                      int frame) {
+    const u32* pBits = pData->boolBits;
+    u32 index = static_cast<u32>(frame);
+
+    u32 wordIdx = index / 32;
+    u32 bitIdx = index % 32;
+
+    u32 targetBit = (1U << 31) >> bitIdx;
+    u32 bitWord = pBits[wordIdx];
+
+    return bitWord & targetBit;
+}
+
+inline bool GetResBoolAnmResult(const ResBoolAnmData* pData, int frame) {
+    const ResBoolAnmFramesData* pFrameData =
+        reinterpret_cast<const ResBoolAnmFramesData*>(
+            reinterpret_cast<const char*>(pData) +
+            pData->toResBoolAnmFramesData);
+
+    return GetResBoolAnmFramesResult(pFrameData, frame);
+}
+
+} // namespace detail
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resanm.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 6 "nw4r/g3d/res/g3d_resdict.h" */
+#ifndef NW4R_G3D_RES_RES_DICT_H
+#define NW4R_G3D_RES_RES_DICT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resdict.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resdict.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResDicNodeData {
+    u16 ref;       // at 0x0
+    u16 flag;      // at 0x2
+    u16 idxLeft;   // at 0x4
+    u16 idxRight;  // at 0x6
+    s32 ofsString; // at 0x8
+    s32 ofsData;   // at 0xC
+};
+
+struct ResDicData {
+    u32 size;               // at 0x0
+    u32 numData;            // at 0x4
+    ResDicNodeData data[1]; // at 0x8
+};
+
+class ResDic : public ResCommon<ResDicData> {
+public:
+    static const s32 NOT_FOUND = -1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResDic);
+
+    void* operator[](const char* pName) const;
+    void* operator[](const ResName name) const;
+    void* operator[](int idx) const {
+        if (IsValid()) {
+            return const_cast<void*>(
+                ofs_to_ptr<void>(ref().data[idx + 1].ofsData));
+        }
+
+        return NULL;
+    }
+
+    s32 GetIndex(const char* s) const;
+    s32 GetIndex(const ResName name) const;
+
+    u32 GetNumData() const {
+        if (IsValid()) {
+            return ptr()->numData;
+        }
+
+        return 0;
+    }
+
+private:
+    ResDicNodeData* Get(const ResName name) const;
+    ResDicNodeData* Get(const char* pName, u32 len) const;
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resdict.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * Common types
+ *
+ ******************************************************************************/
+struct ResAnmTexSrtDataTypedef {
+    static const int NUM_OF_MAT_TEX_MTX = 8;
+    static const int NUM_OF_IND_TEX_MTX = 3;
+    static const int NUM_OF_TEX_MTX = NUM_OF_MAT_TEX_MTX + NUM_OF_IND_TEX_MTX;
+};
+
+struct TexSrtTypedef {
+    enum TexMatrixMode {
+        TEXMATRIXMODE_MAYA,
+        TEXMATRIXMODE_XSI,
+        TEXMATRIXMODE_3DSMAX
+    };
+};
+
+/******************************************************************************
+ *
+ * TexSrtAnmResult
+ *
+ ******************************************************************************/
+struct TexSrt : TexSrtTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        FLAGSET_IDENTITY = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3),
+        NUM_OF_FLAGS = 4
+    };
+
+    f32 Su; // at 0x0
+    f32 Sv; // at 0x4
+    f32 R;  // at 0x8
+    f32 Tu; // at 0xC
+    f32 Tv; // at 0x10
+};
+
+struct TexSrtAnmResult : ResAnmTexSrtDataTypedef, TexSrtTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        // Four bits in 'flags' for each animation
+        NUM_OF_FLAGS = 4
+    };
+
+    u32 flags;                  // at 0x0
+    u32 indFlags;               // at 0x4
+    TexMatrixMode texMtxMode;   // at 0x8
+    TexSrt srt[NUM_OF_TEX_MTX]; // at 0xC
+};
+
+/******************************************************************************
+ *
+ * ResAnmTexSrt
+ *
+ ******************************************************************************/
+struct ResAnmTexSrtTexData {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        FLAG_SCALE_UNIFORM = (1 << 4),
+        FLAG_SCALE_U_CONST = (1 << 5),
+        FLAG_SCALE_V_CONST = (1 << 6),
+
+        FLAG_ROT_CONST = (1 << 7),
+        FLAG_TRANS_U_CONST = (1 << 8),
+        FLAG_TRANS_V_CONST = (1 << 9),
+    };
+
+    u32 flags;          // at 0x0
+    ResAnmData anms[1]; // at 0x4
+};
+
+struct ResAnmTexSrtMatData : ResAnmTexSrtDataTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+
+        NUM_OF_FLAGS = 1
+    };
+
+    s32 name;                     // at 0x0
+    u32 flags;                    // at 0x4
+    u32 indFlags;                 // at 0x8
+    s32 toResAnmTexSrtTexData[1]; // at 0xC
+};
+
+struct ResAnmTexSrtInfoData : TexSrtTypedef {
+    u16 numFrame;             // at 0x0
+    u16 numMaterial;          // at 0x2
+    TexMatrixMode texMtxMode; // at 0x4
+    AnmPolicy policy;         // at 0x8
+};
+
+struct ResAnmTexSrtData {
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toTexSrtDataDic;       // at 0x10
+    s32 toResUserData;         // at 0x14
+    s32 name;                  // at 0x18
+    s32 original_path;         // at 0x1C
+    ResAnmTexSrtInfoData info; // at 0x20
+};
+
+class ResAnmTexSrt : public ResCommon<ResAnmTexSrtData> {
+public:
+    static const u32 SIGNATURE = FOURCC('S', 'R', 'T', '0');
+    static const int REVISION = 5;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResAnmTexSrt);
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const {
+        return GetRevision() == REVISION;
+    }
+
+    void GetAnmResult(TexSrtAnmResult* pResult, u32 idx, f32 frame) const;
+
+    const ResAnmTexSrtMatData* GetMatAnm(int idx) const {
+        return static_cast<ResAnmTexSrtMatData*>(
+            ofs_to_obj<ResDic>(ref().toTexSrtDataDic)[idx]);
+    }
+    const ResAnmTexSrtMatData* GetMatAnm(u32 idx) const {
+        return static_cast<ResAnmTexSrtMatData*>(
+            ofs_to_obj<ResDic>(ref().toTexSrtDataDic)[idx]);
+    }
+
+    int GetNumFrame() const {
+        return ref().info.numFrame;
+    }
+
+    int GetNumMaterial() const {
+        return ref().info.numMaterial;
+    }
+
+    AnmPolicy GetAnmPolicy() const {
+        return ref().info.policy;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resanmtexsrt.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 6 "nw4r/g3d/res/g3d_respltt.h" */
+#ifndef NW4R_G3D_RES_RES_PLTT_H
+#define NW4R_G3D_RES_RES_PLTT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 3 "decomp.h" */
+/**
+ * Codewarrior tricks for matching decomp
+ * (Macros generate prototypes to satisfy -requireprotos)
+ */
+
+#ifndef DECOMP_H
+#define DECOMP_H
+
+/* "include/decomp.h" line 8 "macros.h" */
+/**
+ * Common macros
+ */
+
+#ifndef MACROS_H
+#define MACROS_H
+
+/******************************************************************************
+ *
+ * Strings
+ *
+ ******************************************************************************/
+
+// Stringify expression
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
+// Concatenate strings
+#define __CONCAT(x, y) x##y
+#define CONCAT(x, y) __CONCAT(x, y)
+
+// Multi-character character constants
+// clang-format off
+#define TWOCC(c0, c1)                                                          \
+    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
+#define THREECC(c0, c1, c2)                                                    \
+    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
+#define FOURCC(c0, c1, c2, c3)                                                 \
+    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
+// clang-format on
+
+/******************************************************************************
+ *
+ * Arithmetic
+ *
+ ******************************************************************************/
+
+// Min/max expression
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+// Clamp to a range
+#define CLAMP(low, high, x)                                                    \
+    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
+
+// Round up value
+#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
+#define ROUND_UP_PTR(x, align)                                                 \
+    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
+
+// Round down value
+#define ROUND_DOWN(x, align) ((x) & (-(align)))
+#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
+
+// Distance between pointers
+#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
+
+/******************************************************************************
+ *
+ * Arrays
+ *
+ ******************************************************************************/
+
+// Size of compile-time arrays
+#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#define LENGTHOF(x) ARRAY_SIZE(x)
+
+// Declare an array of hardware registers
+#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
+
+/******************************************************************************
+ *
+ * Intrinsics
+ *
+ ******************************************************************************/
+
+// Memory clear intrinsic
+#define MEMCLR(x) __memclr((x), sizeof(*(x)))
+
+/******************************************************************************
+ *
+ * Attributes
+ *
+ ******************************************************************************/
+
+// Alignment attribute
+#define ALIGN(x) __attribute__((aligned(x)))
+
+// Place a symbol in a specific ELF section
+#define DECL_SECTION(x) __declspec(section x)
+
+// Give a symbol weak linkage
+#define DECL_WEAK __declspec(weak)
+
+#endif
+/* end "macros.h" */
+
+// Compile without matching hacks.
+#if defined(NONMATCHING) || defined(COMPAT_ANY)
+#define DECOMP_FORCEACTIVE(module, ...)
+#define DECOMP_FORCELITERAL(module, ...)
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)
+#define DECOMP_INLINE
+#define DECOMP_DONT_INLINE
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
+#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+// Compile with matching hacks.
+// (This version of CW does not support pragmas inside macros.)
+#else
+// Force reference specific data
+#define DECOMP_FORCEACTIVE(module, ...)                                        \
+    void fake_function(...);                                                   \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
+        fake_function(__VA_ARGS__);                                            \
+    }
+
+// Force literal ordering, such as floats in sdata2
+#define DECOMP_FORCELITERAL(module, ...)                                       \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
+        (__VA_ARGS__);                                                         \
+    }
+
+// Force reference destructor
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
+        cls dummy;                                                             \
+        dummy.~cls();                                                          \
+    }
+
+#define DECOMP_INLINE inline
+#define DECOMP_DONT_INLINE __attribute__((never_inline))
+
+/**
+ * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
+ * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
+ */
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
+/** slwi expansion: rlwinm rD,rA,1,0,30 */
+#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
+
+/**
+ * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
+ * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ */
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+
+#endif
+
+#endif
+/* end "decomp.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 7 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResPlttData {
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toPlttData;            // at 0x10
+    s32 name;                  // at 0x14
+    GXTlutFmt fmt;             // at 0x18
+    u16 numEntries;            // at 0x1C
+    u16 PADDING_0x1E;          // at 0x1E
+    s32 original_path;         // at 0x20
+    s32 toResUserData;         // at 0x24
+};
+
+class ResPltt : public ResCommon<ResPlttData> {
+public:
+    static const u32 SIGNATURE = FOURCC('P', 'L', 'T', '0');
+    static const int REVISION = 1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResPltt);
+
+    void Init() {
+        DCStore(false);
+    }
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const DECOMP_DONT_INLINE {
+        return GetRevision() == REVISION;
+    }
+
+    void DCStore(bool sync);
+
+    u16* GetPlttData() {
+        ResPlttData& r = ref();
+
+        // clang-format off
+        return r.toPlttData != 0
+            ? reinterpret_cast<u16*>(reinterpret_cast<u8*>(&r) + r.toPlttData)
+            : NULL;
+        // clang-format on
+    }
+
+    const u16* GetPlttData() const {
+        const ResPlttData& r = ref();
+
+        // clang-format off
+        return r.toPlttData != 0
+            ? reinterpret_cast<const u16*>(reinterpret_cast<const u8*>(&r) + r.toPlttData)
+            : NULL;
+        // clang-format on
+    }
+
+    GXTlutFmt GetFmt() const {
+        return ref().fmt;
+    }
+
+    u32 GetNumEntries() const {
+        return ref().numEntries;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_respltt.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 7 "nw4r/g3d/res/g3d_restev.h" */
+#ifndef NW4R_G3D_RES_RES_TEV_H
+#define NW4R_G3D_RES_RES_TEV_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// TODO(kiwi) Why?
+static const int TEV_STAGES_PER_DL = 2;
+
+struct ResTevCommonDL {
+    union {
+        struct {
+            u8 swapModeTable[GX_MAX_TEVSWAP][GX_BP_CMD_SZ * 4]; // at 0x0
+            u8 indTexOrder[1][GX_BP_CMD_SZ];                    // at 0x50
+            u8 PADDING_0x55[0x60 - 0x55];                       // at 0x55
+        } dl;
+
+        u8 data[0x60]; // at 0x0
+    };
+};
+
+struct ResTevVariableDL {
+    union {
+        struct {
+            u8 tevKonstantSel[GX_BP_CMD_SZ * 2];                  // at 0x0
+            u8 tevOrder[GX_BP_CMD_SZ];                            // at 0xA
+            u8 tevColorCalc[TEV_STAGES_PER_DL][GX_BP_CMD_SZ];     // at 0xF
+            u8 alphaCalcAndSwap[TEV_STAGES_PER_DL][GX_BP_CMD_SZ]; // at 0x19
+            u8 tevIndirect[TEV_STAGES_PER_DL][GX_BP_CMD_SZ];      // at 0x23
+            u8 PADDING_0x2D[0x30 - 0x2D];                         // at 0x2D
+        } dl;
+
+        u8 data[0x30]; // at 0x0
+    };
+};
+
+struct ResTevDL {
+    union {
+        struct {
+            ResTevCommonDL common; // at 0x0
+            ResTevVariableDL
+                var[GX_MAX_TEVSTAGE / TEV_STAGES_PER_DL]; // at 0x60
+        } dl;
+
+        u8 data[0x1E0]; // at 0x0
+    };
+};
+
+struct ResTevData {
+    u32 size;                               // at 0x0
+    s32 toResMdlData;                       // at 0x4
+    u32 id;                                 // at 0x8
+    u8 nStages;                             // at 0xC
+    u8 PADDING_0xD[0x10 - 0xD];             // at 0xD
+    u8 texCoordToTexMapID[GX_MAX_TEXCOORD]; // at 0x10
+    u8 PADDING_0x18[0x20 - 0x18];           // at 0x18
+    ResTevDL dl;                            // at 0x20
+};
+
+class ResTev : public ResCommon<ResTevData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTev);
+
+    bool GXGetTevSwapModeTable(GXTevSwapSel swap, GXTevColorChan* pR,
+                               GXTevColorChan* pG, GXTevColorChan* pB,
+                               GXTevColorChan* pA) const;
+    void GXSetTevSwapModeTable(GXTevSwapSel swap, GXTevColorChan r,
+                               GXTevColorChan g, GXTevColorChan b,
+                               GXTevColorChan a);
+
+    bool GXGetTevOrder(GXTevStageID stage, GXTexCoordID* pCoord,
+                       GXTexMapID* pMap, GXChannelID* pChannel) const;
+
+    void GXSetTevColorIn(GXTevStageID stage, GXTevColorArg a, GXTevColorArg b,
+                         GXTevColorArg c, GXTevColorArg d);
+
+    void CallDisplayList(bool sync) const;
+
+    ResTev CopyTo(void* pDst);
+
+    void DCStore(bool sync);
+
+    u8 GetNumTevStages() const {
+        return ref().nStages;
+    }
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_restev.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 8 "nw4r/g3d/res/g3d_restex.h" */
+#ifndef NW4R_G3D_RES_RES_TEX_H
+#define NW4R_G3D_RES_RES_TEX_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResTexData {
+    enum Flag {
+        FLAG_CIFMT = (1 << 0),
+    };
+
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toTexData;             // at 0x10
+    s32 name;                  // at 0x14
+    u32 flag;                  // at 0x18
+    u16 width;                 // at 0x1C
+    u16 height;                // at 0x1E
+    union {
+        GXTexFmt fmt;
+        GXCITexFmt cifmt;
+    }; // at 0x20
+    u32 mipmap_level;  // at 0x24
+    f32 min_lod;       // at 0x28
+    f32 max_lod;       // at 0x2C
+    s32 original_path; // at 0x30
+    s32 toResUserData; // at 0x34
+};
+
+class ResTex : public ResCommon<ResTexData> {
+public:
+    static const u32 SIGNATURE = FOURCC('T', 'E', 'X', '0');
+    static const int REVISION = 1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTex);
+
+    void Init();
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const DECOMP_DONT_INLINE {
+        return GetRevision() == REVISION;
+    }
+
+    bool GetTexObjParam(void** ppTexData, u16* pWidth, u16* pHeight,
+                        GXTexFmt* pFormat, f32* pMinLod, f32* pMaxLod,
+                        GXBool* pMipMap) const;
+
+    bool GetTexObjCIParam(void** ppTexData, u16* pWidth, u16* pHeight,
+                          GXCITexFmt* pFormatCI, f32* pMinLod, f32* pMaxLod,
+                          GXBool* pMipMap) const;
+
+    bool IsCIFmt() const {
+        return ref().flag & ResTexData::FLAG_CIFMT;
+    }
+
+    u16 GetWidth() const {
+        return ref().width;
+    }
+    u16 GetHeight() const {
+        return ref().height;
+    }
+
+    const void* GetTexData() const {
+        return ofs_to_ptr<void>(ref().toTexData);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_restex.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 10 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 12 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// Forward declarations
+class ResFile;
+class ResMdl;
+
+/******************************************************************************
+ *
+ * ResGenMode
+ *
+ ******************************************************************************/
+struct ResGenModeData {
+    u8 nTexGens;         // at 0x0
+    u8 nChans;           // at 0x1
+    u8 nTevs;            // at 0x2
+    u8 nInds;            // at 0x3
+    GXCullMode cullMode; // at 0x4
+};
+
+class ResGenMode : public ResCommon<ResGenModeData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResGenMode);
+
+    ResGenMode CopyTo(void* pDst) const;
+
+    void GXSetNumTexGens(u8 num);
+    void GXSetNumChans(u8 num);
+    void GXSetNumTevStages(u8 num);
+    void GXSetNumIndStages(u8 num);
+    void GXSetCullMode(GXCullMode mode);
+
+    u8 GXGetNumTexGens() const {
+        return IsValid() ? ptr()->nTexGens : 0;
+    }
+
+    u8 GXGetNumChans() const {
+        return IsValid() ? ptr()->nChans : 0;
+    }
+
+    u8 GXGetNumTevStages() const {
+        return IsValid() ? ptr()->nTevs : 0;
+    }
+
+    u8 GXGetNumIndStages() const {
+        return IsValid() ? ptr()->nInds : 0;
+    }
+
+    GXCullMode GXGetCullMode() const {
+        return IsValid() ? ptr()->cullMode : GX_CULL_ALL;
+    }
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatMisc
+ *
+ ******************************************************************************/
+struct ResMatMiscData {
+    enum IndirectMethod {
+        WARP,
+        NORMAL_MAP,
+        NORMAL_MAP_SPECULAR,
+        FUR,
+
+        _RESERVED0,
+        _RESERVED1,
+
+        USER0,
+        USER1,
+
+        NUM_OF_INDIRECT_METHOD,
+    };
+
+    GXBool zCompLoc;                       // at 0x0
+    s8 light_set_idx;                      // at 0x1
+    s8 fog_idx;                            // at 0x2
+    u8 PADDING_0x3;                        // at 0x3
+    u8 indirect_method[GX_ITM_2 + 1];      // at 0x4
+    s8 normal_map_ref_light[GX_ITM_2 + 1]; // at 0x8
+};
+
+class ResMatMisc : public ResCommon<ResMatMiscData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMatMisc);
+
+    ResMatMisc CopyTo(void* pDst) const;
+
+    GXBool GXGetZCompLoc() const;
+    int GetLightSetIdx() const;
+    int GetFogIdx() const;
+
+    void GetIndirectTexMtxCalcMethod(GXIndTexMtxID id,
+                                     ResMatMiscData::IndirectMethod* pMethod,
+                                     s8* pLightRef);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatTexCoordGen
+ *
+ ******************************************************************************/
+struct ResTexCoordGenDL {
+    union {
+        struct {
+            u8 texCoordGen[GX_MAX_TEXCOORD][GX_XF_CMD_SZ * 2]; // at 0x0
+            u8 PADDING_0x90[0xA0 - 0x90];                      // at 0x90
+        } dl;
+
+        u8 data[0xA0];
+    };
+};
+
+class ResMatTexCoordGen : public ResCommon<ResTexCoordGenDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTexCoordGen, ResTexCoordGenDL);
+
+    void DCStore(bool sync);
+    ResMatTexCoordGen CopyTo(void* pDst) const;
+
+    void CallDisplayList(u8 numGens, bool sync) const;
+
+    bool GXGetTexCoordGen2(GXTexCoordID id, GXTexGenType* pFunc,
+                           GXTexGenSrc* pParam, GXBool* pNormalize,
+                           u32* pPostMtx) const;
+    void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType func,
+                           GXTexGenSrc param, GXBool normalize, u32 postMtx);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResTexObj
+ *
+ ******************************************************************************/
+struct ResTexObjData {
+    u32 flagUsedTexMapID;           // at 0x0
+    GXTexObj texObj[GX_MAX_TEXMAP]; // at 0x4
+};
+
+class ResTexObj : public ResCommon<ResTexObjData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexObj);
+
+    ResTexObj CopyTo(void* pDst) const;
+
+    const GXTexObj* GetTexObj(GXTexMapID id) const;
+    GXTexObj* GetTexObj(GXTexMapID id);
+
+    bool IsValidTexObj(GXTexMapID id) const;
+
+    void Validate(GXTexMapID id);
+    void Invalidate(GXTexMapID id);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResTlutObj
+ *
+ ******************************************************************************/
+struct ResTlutObjData {
+    u32 flagUsedTlutID;                     // at 0x0
+    GXTlutObj tlutObj[GX_TLUT8 - GX_TLUT0]; // at 0x4
+};
+
+class ResTlutObj : public ResCommon<ResTlutObjData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTlutObj);
+
+    ResTlutObj CopyTo(void* pDst) const;
+
+    const GXTlutObj* GetTlut(GXTlut tlut) const;
+    GXTlutObj* GetTlut(GXTlut tlut);
+
+    bool IsValidTlut(GXTlut tlut) const;
+
+    void Validate(GXTlut tlut);
+    void Invalidate(GXTlut tlut);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResTexSrt
+ *
+ ******************************************************************************/
+struct TexMtxEffect : TexSrtTypedef {
+    enum Flag {
+        FLAG_IDENT = (1 << 0),
+    };
+
+    s8 ref_camera;          // at 0x0
+    s8 ref_light;           // at 0x1
+    u8 map_mode;            // at 0x2
+    u8 misc_flag;           // at 0x3
+    math::_MTX34 effectMtx; // at 0x4
+};
+
+struct ResTexSrtData : TexSrtTypedef {
+    static const int NUM_OF_TEXTURE = 8;
+
+    u32 flag;                            // at 0x0
+    TexMatrixMode texMtxMode;            // at 0x4
+    TexSrt texSrt[NUM_OF_TEXTURE];       // at 0x8
+    TexMtxEffect effect[NUM_OF_TEXTURE]; // at 0xA8
+};
+
+class ResTexSrt : public ResCommon<ResTexSrtData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexSrt);
+
+    ResTexSrt CopyTo(void* pDst) const;
+
+    bool GetEffectMtx(u32 id, math::MTX34* pMtx) const;
+    bool SetEffectMtx(u32 id, const math::MTX34* pMtx);
+
+    bool GetMapMode(u32 id, u32* pMode, int* pCamRef, int* pLightRef) const;
+    bool SetMapMode(u32 id, u32 mode, int camRef, int lightRef);
+
+    TexSrt::Flag GetTexSrtFlag(u32 id) const {
+        return static_cast<TexSrt::Flag>(
+            (ref().flag >> id * TexSrt::NUM_OF_FLAGS) &
+            (TexSrt::FLAG_ANM_EXISTS | TexSrt::FLAG_SCALE_ONE |
+             TexSrt::FLAG_ROT_ZERO | TexSrt::FLAG_TRANS_ZERO));
+    }
+
+    bool IsExist(u32 id) const {
+        if (IsValid()) {
+            return ptr()->flag & (1 << id * TexSrt::NUM_OF_FLAGS);
+        } else {
+            return false;
+        }
+    }
+
+    bool IsIdentity(u32 id) const {
+        return (((ref().flag >> id * TexSrt::NUM_OF_FLAGS) &
+                 TexSrt::FLAGSET_IDENTITY) == TexSrt::FLAGSET_IDENTITY) &&
+               (ref().effect[id].misc_flag & TexMtxEffect::FLAG_IDENT);
+    }
+
+    TexSrtTypedef::TexMatrixMode GetTexMtxMode() const {
+        return ref().texMtxMode;
+    }
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatChan
+ *
+ ******************************************************************************/
+struct Chan {
+    enum Flag {
+        FLAG_MAT_COLOR_ENABLE = (1 << 0),
+        FLAG_MAT_ALPHA_ENABLE = (1 << 1),
+
+        FLAG_AMB_COLOR_ENABLE = (1 << 2),
+        FLAG_AMB_ALPHA_ENABLE = (1 << 3),
+
+        FLAG_CTRL_COLOR_ENABLE = (1 << 4),
+        FLAG_CTRL_ALPHA_ENABLE = (1 << 5),
+    };
+
+    u32 flag;           // at 0x0
+    GXColor matColor;   // at 0x4
+    GXColor ambColor;   // at 0x8
+    u32 paramChanCtrlC; // at 0xC
+    u32 paramChanCtrlA; // at 0x10
+};
+
+struct ResChanData {
+    Chan chan[2]; // at 0x0
+};
+
+class ResMatChan : public ResCommon<ResChanData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatChan, ResChanData);
+
+    ResMatChan CopyTo(void* pDst) const;
+
+    bool GXGetChanMatColor(GXChannelID id, GXColor* pColor) const;
+    void GXSetChanMatColor(GXChannelID id, GXColor color);
+
+    bool GXGetChanAmbColor(GXChannelID id, GXColor* pColor) const;
+    void GXSetChanAmbColor(GXChannelID id, GXColor color);
+
+    bool GXGetChanCtrl(GXChannelID id, GXBool* pEnable, GXColorSrc* pAmbSrc,
+                       GXColorSrc* pMatSrc, GXLightID* pLightMask,
+                       GXDiffuseFn* pDiffuseFn, GXAttnFn* pAttnFn) const;
+    void GXSetChanCtrl(GXChannelID id, GXBool enable, GXColorSrc ambSrc,
+                       GXColorSrc matSrc, GXLightID lightMask,
+                       GXDiffuseFn diffuseFn, GXAttnFn attnFn);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatPix
+ *
+ ******************************************************************************/
+struct ResPixDL {
+    union {
+        struct {
+            u8 alphaCompare[GX_BP_CMD_SZ];  // at 0x0
+            u8 zMode[GX_BP_CMD_SZ];         // at 0x5
+            u8 blendMode[GX_BP_CMD_SZ * 2]; // at 0xA
+            u8 setDstAlpha[GX_BP_CMD_SZ];   // at 0x14
+            u8 PADDING_0x19[32 - 0x19];     // at 0x19
+        } dl;
+
+        u8 data[32]; // at 0x0
+    };
+};
+
+class ResMatPix : public ResCommon<ResPixDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatPix, ResPixDL);
+
+    void DCStore(bool sync);
+    ResMatPix CopyTo(void* pDst) const;
+
+    void CallDisplayList(bool sync) const;
+
+    bool GXGetAlphaCompare(GXCompare* pComp0, u8* pRef0, GXAlphaOp* pLogic,
+                           GXCompare* pComp1, u8* pRef1) const;
+    void GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp logic,
+                           GXCompare comp1, u8 ref1);
+
+    bool GXGetZMode(GXBool* pTest, GXCompare* pCompare, GXBool* pUpdate) const;
+    void GXSetZMode(GXBool test, GXCompare compare, GXBool update);
+
+    bool GXGetBlendMode(GXBlendMode* pMode, GXBlendFactor* pSrcFactor,
+                        GXBlendFactor* pDstFactor, GXLogicOp* pLogic) const;
+    void GXSetBlendMode(GXBlendMode mode, GXBlendFactor srcFactor,
+                        GXBlendFactor dstFactor, GXLogicOp logic);
+
+    bool GXGetDstAlpha(GXBool* pEnable, u8* pAlpha) const;
+    void GXSetDstAlpha(GXBool enable, u8 alpha);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResMatTevColor
+ *
+ ******************************************************************************/
+struct ResTevColorDL {
+    union {
+        struct {
+            u8 tevColor[GX_MAX_TEVREG - GX_TEVREG0][GX_BP_CMD_SZ * 4]; // at 0x0
+            u8 PADDING_0x3C[64 - 0x3C];                    // at 0x3C
+            u8 tevKColor[GX_MAX_KCOLOR][GX_BP_CMD_SZ * 2]; // at 0x40
+            u8 PADDING_0x68[128 - 0x68];                   // at 0x68
+        } dl;
+
+        u8 data[128];
+    };
+};
+
+class ResMatTevColor : public ResCommon<ResTevColorDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTevColor, ResTevColorDL);
+
+    void DCStore(bool sync);
+    ResMatTevColor CopyTo(void* pDst) const;
+
+    void CallDisplayList(bool sync) const;
+
+    bool GXGetTevColor(GXTevRegID id, GXColor* pColor) const;
+    void GXSetTevColor(GXTevRegID id, GXColor color);
+
+    bool GXGetTevColorS10(GXTevRegID id, GXColorS10* pColor) const;
+    void GXSetTevColorS10(GXTevRegID id, GXColorS10 color);
+
+    bool GXGetTevKColor(GXTevKColorID id, GXColor* pColor) const;
+    void GXSetTevKColor(GXTevKColorID id, GXColor color);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResMatIndMtxAndScale
+ *
+ ******************************************************************************/
+struct ResIndMtxAndScaleDL {
+    union {
+        struct {
+            u8 indTexCoordScale[2][GX_BP_CMD_SZ]; // at 0x0
+            u8 indTexMtx0[GX_BP_CMD_SZ * 3];      // at 0xA
+            u8 PADDING_0x19[32 - 0x19];           // at 0x19
+            u8 indTexMtx1[GX_BP_CMD_SZ * 3];      // at 0x20
+            u8 indTexMtx2[GX_BP_CMD_SZ * 3];      // at 0x2F
+            u8 PADDING_0x3E[64 - 0x3E];           // at 0x3E
+        } dl;
+
+        u8 data[64]; // at 0x0
+    };
+};
+
+class ResMatIndMtxAndScale : public ResCommon<ResIndMtxAndScaleDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatIndMtxAndScale, ResIndMtxAndScaleDL);
+
+    void DCStore(bool sync);
+    ResMatIndMtxAndScale CopyTo(void* pDst) const;
+
+    void CallDisplayList(u8 indNum, bool sync) const;
+
+    bool GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx) const;
+    void GXSetIndTexMtx(GXIndTexMtxID id, const math::MTX34& rMtx, s8 scaleExp);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResTexPlttInfo
+ *
+ ******************************************************************************/
+struct ResTexPlttInfoData {
+    s32 nameTex;            // at 0x0
+    s32 namePltt;           // at 0x4
+    ResTexData* pTexData;   // at 0x8
+    ResPlttData* pPlttData; // at 0xC
+    GXTexMapID mapID;       // at 0x10
+    GXTlut tlutID;          // at 0x14
+    GXTexWrapMode wrap_s;   // at 0x18
+    GXTexWrapMode wrap_t;   // at 0x1C
+    GXTexFilter min_filt;   // at 0x20
+    GXTexFilter mag_filt;   // at 0x24
+    f32 lod_bias;           // at 0x28
+    GXAnisotropy max_aniso; // at 0x2C
+    bool bias_clamp;        // at 0x30
+    bool do_edge_lod;       // at 0x31
+    u8 PADDING_0x32;        // at 0x32
+    u8 PADDING_0x33;        // at 0x33
+};
+
+class ResTexPlttInfo : public ResCommon<ResTexPlttInfoData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexPlttInfo);
+
+    bool Bind(const ResFile file, ResTexObj texObj, ResTlutObj tlutObj);
+    void Release(ResTexObj texObj, ResTlutObj tlutObj);
+
+    ResName GetTexResName() const {
+        const ResTexPlttInfoData& r = ref();
+
+        if (r.nameTex != 0) {
+            return NW4R_G3D_OFS_TO_RESNAME(&r, r.nameTex);
+        }
+
+        return ResName(NULL);
+    }
+
+    ResName GetPlttResName() const {
+        const ResTexPlttInfoData& r = ref();
+
+        if (r.namePltt != 0) {
+            return NW4R_G3D_OFS_TO_RESNAME(&r, r.namePltt);
+        }
+
+        return ResName(NULL);
+    }
+
+    bool IsCIFmt() const {
+        return ref().namePltt != 0;
+    }
+
+private:
+    void BindTex_(const ResTex tex, ResTexObj texObj);
+    void BindPltt_(const ResPltt pltt, ResTlutObj tlutObj);
+};
+
+/******************************************************************************
+ *
+ * ResMat
+ *
+ ******************************************************************************/
+struct ResMatDLData {
+    ResPixDL dlPix;                       // at 0x0
+    ResTevColorDL dlTevColor;             // at 0x20
+    ResIndMtxAndScaleDL dlIndMtxAndScale; // at 0xA0
+    ResTexCoordGenDL dlTexCoordGen;       // at 0xE0
+};
+
+struct ResMatData {
+    u32 size;                   // at 0x0
+    s32 toResMdlData;           // at 0x4
+    s32 name;                   // at 0x8
+    u32 id;                     // at 0xC
+    u32 flag;                   // at 0x10
+    ResGenModeData genMode;     // at 0x14
+    ResMatMiscData misc;        // at 0x1C
+    s32 toResTevData;           // at 0x28
+    u32 numResTexPlttInfo;      // at 0x2C
+    s32 toResTexPlttInfo;       // at 0x30
+    s32 toResMatFurData;        // at 0x34
+    s32 toResUserData;          // at 0x38
+    s32 toResMatDLData;         // at 0x3C
+    ResTexObjData texObjData;   // at 0x140
+    ResTlutObjData tlutObjData; // at 0x1A4
+    ResTexSrtData texSrtData;   // at 0x3EC
+    ResChanData chan;           // at 0x3F0
+};
+
+class ResMat : public ResCommon<ResMatData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMat);
+
+    void Init();
+
+    bool Bind(const ResFile file);
+    void Release();
+
+    ResMdl GetParent();
+
+    u32 GetID() const {
+        return ref().id;
+    }
+
+    ResGenMode GetResGenMode() {
+        return ResGenMode(&ref().genMode);
+    }
+
+    ResMatMisc GetResMatMisc() {
+        return ResMatMisc(&ref().misc);
+    }
+
+    ResTev GetResTev();
+    ResTev GetResTev() const;
+
+    u32 GetNumResTexPlttInfo() const {
+        return ref().numResTexPlttInfo;
+    }
+
+    ResTexPlttInfo GetResTexPlttInfo(u32 id) {
+        ResTexPlttInfoData* pData =
+            ofs_to_ptr<ResTexPlttInfoData>(ref().toResTexPlttInfo);
+
+        return ResTexPlttInfo(&pData[id]);
+    }
+
+    ResMatDLData* GetResMatDLData() {
+        return ofs_to_ptr<ResMatDLData>(ref().toResMatDLData);
+    }
+
+    ResMatPix GetResMatPix() {
+        return ResMatPix(&GetResMatDLData()->dlPix);
+    }
+
+    ResMatTevColor GetResMatTevColor() {
+        return ResMatTevColor(&GetResMatDLData()->dlTevColor);
+    }
+
+    ResMatIndMtxAndScale GetResMatIndMtxAndScale() {
+        return ResMatIndMtxAndScale(&GetResMatDLData()->dlIndMtxAndScale);
+    }
+
+    ResMatTexCoordGen GetResMatTexCoordGen() {
+        return ResMatTexCoordGen(&GetResMatDLData()->dlTexCoordGen);
+    }
+
+    ResTlutObj GetResTlutObj() {
+        return ResTlutObj(&ref().tlutObjData);
+    }
+
+    ResTexObj GetResTexObj() {
+        return ResTexObj(&ref().texObjData);
+    }
+
+    ResTexSrt GetResTexSrt() {
+        return ResTexSrt(&ref().texSrtData);
+    }
+
+    ResMatChan GetResMatChan() {
+        return ResMatChan(&ref().chan);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resmat.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 8 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 10 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// Forward declarations
+struct AmbLightObj;
+class LightObj;
+class LightSetting;
+class ResShp;
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * ScnDependentMtxFunc
+ *
+ ******************************************************************************/
+namespace ScnDependentMtxFunc {
+
+void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void ProjectionMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void DefaultMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+
+} // namespace ScnDependentMtxFunc
+} // namespace detail
+
+/******************************************************************************
+ *
+ * G3DState
+ *
+ ******************************************************************************/
+namespace G3DState {
+
+static const int NUM_LIGHT = 128;
+static const int NUM_LIGHT_SET = 128;
+
+static const int NUM_LIGHT_IN_LIGHT_SET = 8;
+
+static const int NUM_CAMERA = 32;
+static const int NUM_FOG = 32;
+
+static const int NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE = 256;
+
+enum InvalidateFlag {
+    INVALIDATE_SYNCGX = 0,
+    INVALIDATE_TEX = (1 << 0),
+    INVALIDATE_TLUT = (1 << 1),
+    INVALIDATE_TEV = (1 << 2),
+    INVALIDATE_GENMODE = (1 << 3),
+    INVALIDATE_SHP = (1 << 4),
+    INVALIDATE_CURRMTX = (1 << 5),
+    INVALIDATE_TEXMTX = (1 << 6),
+    INVALIDATE_MISC = (1 << 7),
+    INVALIDATE_FOG = (1 << 8),
+    INVALIDATE_LIGHT = (1 << 9),
+    INVALIDATE_POSMTX = (1 << 10),
+
+    INVALIDATE_ALL = INVALIDATE_TEX | INVALIDATE_TLUT | INVALIDATE_TEV |
+                     INVALIDATE_GENMODE | INVALIDATE_SHP | INVALIDATE_CURRMTX |
+                     INVALIDATE_TEXMTX | INVALIDATE_MISC | INVALIDATE_FOG |
+                     INVALIDATE_LIGHT | INVALIDATE_POSMTX
+};
+
+enum ScnDependentTexMtxFuncType {
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_TEXCOORD,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_NRM,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_POS,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_COLOR,
+
+    MAX_SCNDEPENDENT_TEXMTX_FUNCTYPE,
+
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_TEXMTX_NOT_EXIST =
+        SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_TEXCOORD,
+};
+
+typedef void (*ScnDependentTexMtxFuncPtr)(math::MTX34* pMtx, s8 camRef,
+                                          s8 lightRef);
+
+/******************************************************************************
+ *
+ * IndTexMtxInfo
+ *
+ ******************************************************************************/
+struct IndTexMtxInfo {
+    u32 flag;                                        // at 0x0
+    math::MTX34 offset_mtx[GX_ITM_2 - GX_ITM_0 + 1]; // at 0x4
+
+    IndTexMtxInfo() : flag(0) {}
+    explicit IndTexMtxInfo(const ResMatIndMtxAndScale ind);
+
+    void FifoSend() const;
+    void SetMtx(GXIndTexMtxID id, const math::MTX34& rMtx);
+};
+
+/******************************************************************************
+ *
+ * IndMtxOp
+ *
+ ******************************************************************************/
+class IndMtxOp {
+public:
+    virtual void operator()(IndTexMtxInfo* pInfo) = 0; // at 0x8
+
+    virtual ~IndMtxOp() {}    // at 0xC
+    virtual void Reset() = 0; // at 0x10
+
+    virtual void
+    SetNrmMapMtx(GXIndTexMtxID id, const math::VEC3* pLightVec,
+                 const math::MTX34* pNrmMtx,
+                 ResMatMiscData::IndirectMethod method) = 0; // at 0x14
+};
+
+/******************************************************************************
+ *
+ * IndMtxOpStd
+ *
+ ******************************************************************************/
+class IndMtxOpStd : public IndMtxOp {
+public:
+    IndMtxOpStd();
+
+    virtual void operator()(IndTexMtxInfo* pInfo); // at 0x8
+
+    virtual ~IndMtxOpStd() {} // at 0xC
+    virtual void Reset();     // at 0x10
+
+    virtual void SetNrmMapMtx(GXIndTexMtxID id, const math::VEC3* pLightVec,
+                              const math::MTX34* pNrmMtx,
+                              ResMatMiscData::IndirectMethod method); // at 0x14
+
+private:
+    bool mIsValidMtx[GX_ITM_2 - GX_ITM_0 + 1];    // at 0x4
+    u8 PADDING_0x7;                               // at 0x7
+    math::MTX34 mIndMtx[GX_ITM_2 - GX_ITM_0 + 1]; // at 0x8
+};
+
+/******************************************************************************
+ *
+ * Functions
+ *
+ ******************************************************************************/
+void LoadResMatMisc(const ResMatMisc misc);
+void LoadResTexObj(const ResTexObj texObj);
+void LoadResTlutObj(const ResTlutObj tlutObj);
+void LoadResGenMode(const ResGenMode mode);
+void LoadResTev(const ResTev tev);
+void LoadResMatPix(const ResMatPix pix);
+void LoadResMatTevColor(const ResMatTevColor color);
+void LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind);
+void LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind, IndMtxOp& rOp);
+void LoadResMatChan(const ResMatChan chan, u32 maskDiffColor, u32 maskDiffAlpha,
+                    u32 maskSpecColor, u32 maskSpecAlpha, GXColor amb,
+                    bool lightOff);
+void LoadResMatTexCoordGen(const ResMatTexCoordGen gen);
+void LoadResTexSrt(const ResTexSrt srt);
+void LoadResShpPrePrimitive(const ResShp shp);
+void LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos,
+                         const math::MTX34* pViewNrm);
+
+void SetViewPosNrmMtxArray(const math::MTX34* pViewPosMtxArray,
+                           const math::MTX33* pViewNrmMtxArray,
+                           const math::MTX34* pViewEnvTexMtxArray);
+const math::MTX33* GetViewNrmMtxPtr(u32 id);
+
+void SetScnDependentTexMtxFunc(u32 id, ScnDependentTexMtxFuncPtr func,
+                               ScnDependentTexMtxFuncType type);
+bool GetScnDependentTexMtxFunc(u32 id, ScnDependentTexMtxFuncPtr* pFunc,
+                               ScnDependentTexMtxFuncType* pType);
+
+IndMtxOp* GetIndMtxOp();
+
+void SetFog(const Fog fog, int id);
+void LoadFog(int id);
+
+void SetLightSetting(const LightSetting& rSetting);
+const LightObj* GetLightObj(int id);
+void LoadLightSet(int id, u32* pDiffColorMask, u32* pDiffAlphaMask,
+                  u32* pSpecColorMask, u32* pSpecAlphaMask, AmbLightObj* pAmb);
+void LoadLightSet(int id, u32* pDiffMask, u32* pSpecMask, AmbLightObj* pAmb);
+
+void SetCameraProjMtx(const Camera& rCam, int id, bool view);
+const math::MTX34* GetCameraMtxPtr();
+const math::MTX34* GetInvCameraMtxPtr();
+const math::MTX34* GetCameraMtxPtr(int id);
+const math::MTX34* GetProjectionTexMtxPtr();
+const math::MTX34* GetProjectionTexMtxPtr(int id);
+const math::MTX34* GetEnvironmentTexMtxPtr();
+
+void SetRenderModeObj(const GXRenderModeObj& rObj);
+const GXRenderModeObj* GetRenderModeObj();
+
+void Invalidate(u32 flag = INVALIDATE_ALL);
+
+} // namespace G3DState
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_state.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 7 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * LightObj
+ *
+ ******************************************************************************/
+class LightObj {
+public:
+    LightObj(const LightObj& rLightObj);
+    LightObj() : mFlag(0) {}
+    ~LightObj() {}
+
+    LightObj& operator=(const LightObj& rOther);
+    bool operator!=(const LightObj& rOther) const;
+
+    operator GXLightObj*() {
+        return &mObj;
+    }
+    operator const GXLightObj*() const {
+        return &mObj;
+    }
+
+    void Clear();
+
+    void InitLightColor(GXColor color);
+    void InitLightPos(f32 x, f32 y, f32 z);
+    void InitLightDir(f32 nx, f32 ny, f32 nz);
+    void InitLightSpot(f32 cutoff, GXSpotFn spotFn);
+    void InitLightAttnA(f32 aa, f32 ab, f32 ac);
+    void InitLightDistAttn(f32 distance, f32 brightness,
+                           GXDistAttnFn distAttnFn);
+    void InitLightAttnK(f32 ka, f32 kb, f32 kc);
+    void InitSpecularDir(f32 nx, f32 ny, f32 nz);
+    void InitLightShininess(f32 shininess);
+
+    void GetLightPos(math::VEC3* pPos) const;
+    void GetLightDir(math::VEC3* pDir) const;
+
+    void ApplyViewMtx(const math::MTX34& rCamera);
+
+    void Enable() {
+        mFlag |= FLAG_ENABLE_LIGHT;
+    }
+    void Disable() {
+        mFlag &= ~FLAG_ENABLE_LIGHT;
+    }
+
+    bool IsEnable() const {
+        return (mFlag & FLAG_ENABLE_LIGHT) ? true : false;
+    }
+
+    bool IsSpotLight() const {
+        return (mFlag & FLAG_SPOT) ? true : false;
+    }
+    bool IsSpecularLight() const {
+        return (mFlag & FLAG_SPECULAR) ? true : false;
+    }
+    bool IsSpecularDir() const {
+        return (mFlag & FLAG_SPECULAR_DIR) ? true : false;
+    }
+
+    bool IsColorEnable() const {
+        return !(mFlag & FLAG_DISABLE_COLOR);
+    }
+    void DisableColor() {
+        mFlag |= FLAG_DISABLE_COLOR;
+    }
+
+    bool IsAlphaEnable() const {
+        return !(mFlag & FLAG_DISABLE_ALPHA);
+    }
+    void DisableAlpha() {
+        mFlag |= FLAG_DISABLE_ALPHA;
+    }
+
+    bool IsDiffuseLight() const {
+        return !IsSpotLight() && !IsSpecularLight();
+    }
+
+private:
+    enum LightObjFlag {
+        FLAG_SPOT = (1 << 0),
+        FLAG_SPECULAR = (1 << 1),
+        FLAG_ENABLE_LIGHT = (1 << 2),
+        FLAG_SPECULAR_DIR = (1 << 3),
+        FLAG_DISABLE_COLOR = (1 << 4),
+        FLAG_DISABLE_ALPHA = (1 << 5)
+    };
+
+private:
+    u32 mFlag;       // at 0x0
+    GXLightObj mObj; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * LightSet
+ *
+ ******************************************************************************/
+struct LightSetData {
+    static const int IDX_INVALID_LIGHT = -1;
+
+    s8 idxLight[G3DState::NUM_LIGHT_IN_LIGHT_SET]; // at 0x0
+    s8 idxAmbLight;                                // at 0x8
+    u8 PADDING_0x9[0xC - 0X9];                     // at 0x9
+};
+
+class LightSet {
+public:
+    LightSet(LightSetting* pSetting, LightSetData* pData)
+        : mpSetting(pSetting), mpLightSetData(pData) {}
+    ~LightSet() {}
+
+    bool IsValid() const {
+        return mpSetting != NULL && mpLightSetData != NULL;
+    }
+
+    LightObj* GetLightObj(u32 lightIdx);
+    AmbLightObj* GetAmbLightObj();
+
+    bool SelectLightObj(u32 lightIdx, int lightObjIdx);
+    bool SelectAmbLightObj(int lightObjIdx);
+
+private:
+    LightSetting* mpSetting;      // at 0x0
+    LightSetData* mpLightSetData; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * LightSetting
+ *
+ ******************************************************************************/
+struct AmbLightObj {
+    u8 r, g, b, a;
+};
+
+class LightSetting {
+public:
+    LightSetting(LightObj* pLightObjArray, AmbLightObj* pAmbLightObjArray,
+                 u32 numLight, LightSetData* pLightSetDataArray,
+                 u32 numLightSet);
+    ~LightSetting() {}
+
+    bool Import(const LightSetting& rSetting);
+    void ApplyViewMtx(const math::MTX34& rCamera, u32 numLight);
+
+    u32 GetNumLightObj() const {
+        return mNumLight;
+    }
+    u32 GetNumLightSet() const {
+        return mNumLightSet;
+    }
+
+    LightObj* GetLightObjArray() const {
+        return mpLightObjArray;
+    }
+    AmbLightObj* GetAmbLightObjArray() const {
+        return mpAmbLightObjArray;
+    }
+
+    LightSet GetLightSet(int idx) {
+        if (idx < mNumLightSet && idx >= 0) {
+            return LightSet(this, &mpLightSetDataArray[idx]);
+        }
+
+        return LightSet(this, NULL);
+    }
+
+private:
+    u16 mNumLight;                     // at 0x0
+    u16 mNumLightSet;                  // at 0x2
+    LightObj* mpLightObjArray;         // at 0x4
+    AmbLightObj* mpAmbLightObjArray;   // at 0x8
+    LightSetData* mpLightSetDataArray; // at 0xC
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_light.h" */
 
 class CLight{
 public:
@@ -245501,8 +250357,8 @@ public:
     ml::CVec3 unk10;
     ml::CVec3 unk1C;
     float unk28;
-    u32 unk2C;
-    u32 unk30;
+    nw4r::g3d::LightObj* mpLightObj;
+    u32 mFlags;
     u32 unk34;
     float unk38;
     float unk3C;
@@ -249401,7 +254257,11 @@ void func_8010EA4C(void* _this) {
 }
 // LLM-HARNESS-END: us-8010f528
 // LLM-HARNESS-BEGIN: us-8010f530
-extern "C" bool func_8010EA54() { return false; }
+extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
+extern "C" bool func_8010EA54() {
+    cbRenderBefore__22CMenuBattlePlayerStateFv();
+    return false;
+}
 // LLM-HARNESS-END: us-8010f530
 // LLM-HARNESS-BEGIN: us-8010f538
 extern "C" void func_8010EA5C(void* self) {

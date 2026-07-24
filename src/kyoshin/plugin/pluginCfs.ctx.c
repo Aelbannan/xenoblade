@@ -1,8 +1,7 @@
-// Auto-scaffolded catalog TU for kyoshin/plugin/pluginCfs
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit for kyoshin/plugin/pluginCfs
+// Plugin script functions for the CFS (Common File System / script) subsystem.
 
-/* "src/kyoshin/plugin/pluginCfs.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/plugin/pluginCfs.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1337,9 +1336,23 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/plugin/pluginCfs.cpp" line 4 "kyoshin/plugin/pluginCfs.hpp" */
+#pragma once
+
+/* "src/kyoshin/plugin/pluginCfs.hpp" line 2 "monolib/vm/yvm2.h" */
+/* end "monolib/vm/yvm2.h" */
+
+// Plugin script functions for the CFS (Common File System / script) subsystem.
+// These are registered via pluginCfsRegist() and called from the VM.
+
+extern "C" bool func_8004A2E8();
+extern "C" void func_8004A400();
+
+extern "C" void pluginCfsRegist();
+/* end "kyoshin/plugin/pluginCfs.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8004785c
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void setMapJumpArea() {}
 // LLM-HARNESS-END: us-8004785c
 
 // LLM-HARNESS-BEGIN: us-80047dfc
@@ -1347,39 +1360,39 @@ extern "C" void func_80047814__Q22cf13CfObjectPointFv() {}
 // LLM-HARNESS-END: us-80047dfc
 
 // LLM-HARNESS-BEGIN: us-80047e18
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void setMapJumpAreaBox() {}
 // LLM-HARNESS-END: us-80047e18
 
 // LLM-HARNESS-BEGIN: us-80048238
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void setWarpArea() {}
 // LLM-HARNESS-END: us-80048238
 
 // LLM-HARNESS-BEGIN: us-800487dc
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void setMapPreloadArea() {}
 // LLM-HARNESS-END: us-800487dc
 
 // LLM-HARNESS-BEGIN: us-80048a5c
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void mapJump() {}
 // LLM-HARNESS-END: us-80048a5c
 
 // LLM-HARNESS-BEGIN: us-80048c84
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void setMapPreloadArea2() {}
 // LLM-HARNESS-END: us-80048c84
 
 // LLM-HARNESS-BEGIN: us-80048ecc
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void setEventArea() {}
 // LLM-HARNESS-END: us-80048ecc
 
 // LLM-HARNESS-BEGIN: us-80049130
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void delEventArea() {}
 // LLM-HARNESS-END: us-80049130
 
 // LLM-HARNESS-BEGIN: us-80049190
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void setTownArea() {}
 // LLM-HARNESS-END: us-80049190
 
 // LLM-HARNESS-BEGIN: us-8004953c
-extern "C" bool func_8004A2E8() { return false; }
+extern "C" void addPopID() {}
 // LLM-HARNESS-END: us-8004953c
 
 // LLM-HARNESS-BEGIN: us-80049574
@@ -1399,10 +1412,9 @@ extern "C" void eventStart() {}
 // LLM-HARNESS-END: us-80049624
 
 // LLM-HARNESS-BEGIN: us-800496e8
-extern "C" u32 lbl_eu_80663E24;
-
-extern "C" u32 battleEventStart() {
-    lbl_eu_80663E24 |= 0x00040000;
+extern "C" unsigned long battleEventStart() {
+    extern unsigned long lbl_eu_80663E24;
+    lbl_eu_80663E24 |= 0x40000;
     return 0;
 }
 // LLM-HARNESS-END: us-800496e8
@@ -1484,7 +1496,9 @@ extern "C" void getWeaponSlot() {}
 // LLM-HARNESS-END: us-8004a7c8
 
 // LLM-HARNESS-BEGIN: us-8004a8d0
-extern "C" bool func_8004A2E8() { return false; }
+bool func_8004A2E8() {
+    return false;
+}
 // LLM-HARNESS-END: us-8004a8d0
 
 // LLM-HARNESS-BEGIN: us-8004a8d8
@@ -1492,7 +1506,9 @@ extern "C" void setWeaponSlot() {}
 // LLM-HARNESS-END: us-8004a8d8
 
 // LLM-HARNESS-BEGIN: us-8004a9e8
-extern "C" void func_8004A400() {}
+void func_8004A400() {
+    // Intentionally empty
+}
 // LLM-HARNESS-END: us-8004a9e8
 
 // LLM-HARNESS-BEGIN: us-8004a9ec
@@ -1612,12 +1628,9 @@ extern "C" void setPcCtrl() {}
 // LLM-HARNESS-END: us-8004b49c
 
 // LLM-HARNESS-BEGIN: us-8004b4e8
-extern "C" u32 lbl_eu_80663E28;
-
-extern "C" int setFieldVision() {
-    u32 temp = lbl_eu_80663E28;
-    temp |= 0x20000000;
-    lbl_eu_80663E28 = temp;
+extern "C" unsigned long setFieldVision() {
+    extern unsigned long lbl_eu_80663E28;
+    lbl_eu_80663E28 |= 0x20000000;
     return 0;
 }
 // LLM-HARNESS-END: us-8004b4e8

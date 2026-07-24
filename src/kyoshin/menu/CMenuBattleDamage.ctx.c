@@ -1339,43 +1339,51 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80109740
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void __ct__CMenuBattleDamage() {}
 // LLM-HARNESS-END: us-80109740
 
 // LLM-HARNESS-BEGIN: us-80109910
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void __dt__17CMenuBattleDamageFv(void* self) {}
 // LLM-HARNESS-END: us-80109910
 
 // LLM-HARNESS-BEGIN: us-80109984
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void Init__17CMenuBattleDamageFv() {}
 // LLM-HARNESS-END: us-80109984
 
 // LLM-HARNESS-BEGIN: us-80109b6c
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void Term__17CMenuBattleDamageFv() {}
 // LLM-HARNESS-END: us-80109b6c
 
 // LLM-HARNESS-BEGIN: us-80109c48
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void Move__17CMenuBattleDamageFv() {}
 // LLM-HARNESS-END: us-80109c48
 
 // LLM-HARNESS-BEGIN: us-80109f2c
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void cbRenderBefore__17CMenuBattleDamageFv(void* self) {}
 // LLM-HARNESS-END: us-80109f2c
 
 // LLM-HARNESS-BEGIN: us-8010a1a0
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void func_801096B8() {}
 // LLM-HARNESS-END: us-8010a1a0
 
 // LLM-HARNESS-BEGIN: us-8010a21c
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void func_80109734() {}
 // LLM-HARNESS-END: us-8010a21c
 
 // LLM-HARNESS-BEGIN: us-8010a244
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void func_8010975C(unsigned char val) {
+    extern unsigned long lbl_eu_80663F28;
+    unsigned char* p = (unsigned char*)lbl_eu_80663F28;
+    if (p != 0) p[0x774] = val;
+}
 // LLM-HARNESS-END: us-8010a244
 
 // LLM-HARNESS-BEGIN: us-8010a258
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void func_80109770(unsigned char val) {
+    extern unsigned long lbl_eu_80663F28;
+    unsigned char* p = (unsigned char*)lbl_eu_80663F28;
+    if (p != 0) p[0x775] = val;
+}
 // LLM-HARNESS-END: us-8010a258
 
 // LLM-HARNESS-BEGIN: us-8010a26c

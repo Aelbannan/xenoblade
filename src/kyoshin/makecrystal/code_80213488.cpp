@@ -9,7 +9,10 @@ extern "C" void func_80213488() {}
 // LLM-HARNESS-END: us-802152e0
 
 // LLM-HARNESS-BEGIN: us-80215374
-extern "C" void func_8021351C() {}
+extern "C" void func_8021351C(void* dst, void* src) {
+    *(unsigned short*)dst = *(unsigned short*)src;
+    ((unsigned char*)dst)[2] = ((unsigned char*)src)[2];
+}
 // LLM-HARNESS-END: us-80215374
 
 // LLM-HARNESS-BEGIN: us-80215388

@@ -1337,49 +1337,237 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CMapSel.cpp" line 5 "kyoshin/CMapSel.hpp" */
+#pragma once
+
+/* "src/kyoshin/CMapSel.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/CMapSel.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+
+/* Interface for work events, which provides a set of 32 event handler functions that
+get triggered when a certain event happens (such as when loading a file for OnFileEvent).
+Deriving classes can override any of these functions to run their own code when the
+corresponding event happens.
+
+Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
+being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
+out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
+with no apparent calls to the other 3 (possibly debug only).
+
+In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
+with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
+};
+/* end "monolib/work/IWorkEvent.hpp" */
+/* "src/kyoshin/CMapSel.hpp" line 4 "monolib/lib/UnkClass_8045F564.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class UnkClass_8045F564{
+public:
+    int unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+
+    UnkClass_8045F564();
+    ~UnkClass_8045F564();
+
+    
+    void createRegion(int, int, const char*, int);
+    void func_8045F778();
+    void func_8045F810();
+};
+
+class Class_8045F858{
+public:
+    void* unk0;
+    u32 unk4;
+
+    Class_8045F858(UnkClass_8045F564* unkClass);
+    ~Class_8045F858();
+};
+/* end "monolib/lib/UnkClass_8045F564.hpp" */
+
+/* Map selection UI widget. Displays a grid of available maps for the player
+   to choose from. Contains a CScrollBar for scrolling through available maps
+   and a CCur18 cursor for highlighting the current selection.
+
+   State machine (mState at +0x31):
+     0 = uninitialized/hidden
+     1 = loading map data (active)
+     2 = fully loaded and visible
+     3 = transitioning out
+     4 = hidden/closed
+     5 = post-close cleanup
+
+   mFlag33 (+0x33) is a boolean that tracks whether the widget needs an initial
+   setup pass; it is set to 1 in the constructor and cleared when a "play" or
+   "close" state is entered. */
+class CMapSel : public IWorkEvent {
+private:
+    /* Layout (from constructor and extab analysis):
+       +0x00: IWorkEvent base (vptr, 4 bytes)
+       +0x04: UnkClass_8045F564 -- memory region for layout build (0x10 bytes)
+       +0x14: CFileHandle* -- file handle 1
+       +0x18: CFileHandle* -- file handle 2
+       +0x1C: nw4r::lyt::ArcResourceAccessor*
+       +0x20: void* -- allocated memory block
+       +0x24: nw4r::lyt::Layout*
+       +0x28: nw4r::lyt::AnimTransform*
+       +0x2C: nw4r::lyt::AnimTransform*
+       +0x30: u8 -- unknown
+       +0x31: u8 -- state
+       +0x32: u8 -- unknown
+       +0x33: u8 -- initial-setup flag (extern C-linkage functions need access)
+    */
+    UnkClass_8045F564 mMemRegion;            // +0x04, size 0x10
+    u32 mFileHandle;                          // +0x14
+    u32 mFileHandle2;                         // +0x18
+    u32 mArcAccessor;                         // +0x1C
+    u32 mAllocatedMem;                        // +0x20
+    u32 mLayout;                              // +0x24
+    u32 mAnimTransform1;                      // +0x28
+    u32 mAnimTransform2;                      // +0x2C
+    u8 field_0x30;                            // +0x30
+    u8 mState;                                // +0x31
+    u8 field_0x32;                            // +0x32
+
+public:
+    u8 mFlag33;                               // +0x33 -- initial-setup flag
+};
+/* end "kyoshin/CMapSel.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80245264
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void __ct__CMapSel() {}
 // LLM-HARNESS-END: us-80245264
 
 // LLM-HARNESS-BEGIN: us-80245588
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void __dt__7CMapSelFv() {}
 // LLM-HARNESS-END: us-80245588
 
 // LLM-HARNESS-BEGIN: us-802455f4
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_8024343C() {}
 // LLM-HARNESS-END: us-802455f4
 
 // LLM-HARNESS-BEGIN: us-80245658
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_802434A0() {}
 // LLM-HARNESS-END: us-80245658
 
 // LLM-HARNESS-BEGIN: us-80245718
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_80243560() {}
 // LLM-HARNESS-END: us-80245718
 
 // LLM-HARNESS-BEGIN: us-80245784
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_802435CC() {}
 // LLM-HARNESS-END: us-80245784
 
 // LLM-HARNESS-BEGIN: us-80245838
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_80243680() {}
 // LLM-HARNESS-END: us-80245838
 
 // LLM-HARNESS-BEGIN: us-8024587c
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+// FULL_MATCH: reads the initial-setup flag at +0x33 (set to 1 in ctor, cleared on play/close)
+extern "C" u8 func_802436C4(CMapSel* self) { return self->mFlag33; }
 // LLM-HARNESS-END: us-8024587c
 
 // LLM-HARNESS-BEGIN: us-80245884
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_802436CC() {}
 // LLM-HARNESS-END: us-80245884
 
 // LLM-HARNESS-BEGIN: us-802458d4
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_8024371C() {}
 // LLM-HARNESS-END: us-802458d4
 
 // LLM-HARNESS-BEGIN: us-80245920
-extern "C" u8 func_802436C4(void* self) { return ((u8*)self)[0x33]; }
+extern "C" void func_80243768() {}
 // LLM-HARNESS-END: us-80245920
 
 // LLM-HARNESS-BEGIN: us-802459f0
@@ -1395,7 +1583,11 @@ extern "C" void func_802439CC() {}
 // LLM-HARNESS-END: us-80245b84
 
 // LLM-HARNESS-BEGIN: us-80245c54
-extern "C" void func_80243A9C() {}
+extern "C" u8 func_80243A9C(void* self) {
+    s8 a = *(s8*)((u8*)self + 0x8D);
+    s8 b = *(s8*)((u8*)self + 0x8C);
+    return *((u8*)self + a + b + 0x8E);
+}
 // LLM-HARNESS-END: us-80245c54
 
 // LLM-HARNESS-BEGIN: us-80245c74

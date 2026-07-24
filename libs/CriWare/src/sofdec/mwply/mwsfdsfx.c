@@ -45,7 +45,10 @@ void mwsfsfx_SetYcc420plnInfToSfx() {}
 // LLM-HARNESS-END: us-803a17c8
 
 // LLM-HARNESS-BEGIN: us-803a1884
-void MWSFSFX_SetCompoMode(void) {}
+void SFX_SetCompoMode(void* a);
+void MWSFSFX_SetCompoMode(void* self) {
+    SFX_SetCompoMode(*(void**)((u8*)self + 0xC8));
+}
 // LLM-HARNESS-END: us-803a1884
 
 // LLM-HARNESS-BEGIN: us-803a188c

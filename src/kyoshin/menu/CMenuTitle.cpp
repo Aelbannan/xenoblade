@@ -17,7 +17,11 @@ extern "C" void func_802B5F18() {}
 // LLM-HARNESS-END: us-802b8988
 
 // LLM-HARNESS-BEGIN: us-802b89c8
-extern "C" void func_802B5F58() {}
+extern "C" void func_802B5F58(void* self) {
+    extern void func_802B75B8(void*);
+    ((unsigned char*)self)[0xe8] = 3;
+    func_802B75B8((char*)self + 0x60);
+}
 // LLM-HARNESS-END: us-802b89c8
 
 // LLM-HARNESS-BEGIN: us-802b89d8

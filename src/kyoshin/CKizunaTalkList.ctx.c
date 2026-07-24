@@ -2,17 +2,35 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CKizunaTalkList.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CKizunaTalkList.cpp" line 4 "kyoshin/CKizunaTalkList.hpp" */
 #pragma once
 
-/**
- * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
+/*
+ * CKizunaTalkList.hpp
+ * Kizuna (Friendship) Talk List manager.
+ * Displays affinity talk messages between characters.
  *
- * Pulls recovered VM / script-helper headers only. Plugin units with their own
- * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
+ * Layout (size 0x1494):
+ *   +0x00: IWorkEvent (vtable + virtual event handlers)
+ *   +0x04: UnkClass_8045F564 - memory region for entries
+ *   +0x14: mEntryCount (or part of header)
+ *   +0x18: mUnknown18
+ *   +0x1C: mUnknown1C
+ *   +0x20: mUnknown20
+ *   +0x24: mUnknown24
+ *   +0x28: mUnknown28
+ *   +0x2C: mCursor - CCur18 cursor widget (0x18 bytes)
+ *   +0x44: mScrollBar - CScrollBar widget (0x40 bytes)
+ *   +0x84: mState84
+ *   +0x85: mState85 (state machine progression)
+ *   +0x86: mUnknown86
+ *   +0x87: mNeedsRebuild - 1 = needs (re)build, 0 = current
+ *   +0x88: mUnknown88
+ *   +0x8A: mUnknown8A (short)
+ *   +0x8C: mEntryArray - array of talk entries (0x1408 bytes)
  */
 
-/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* "src/kyoshin/CKizunaTalkList.hpp" line 27 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -720,6 +738,167 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
+/* "src/kyoshin/CKizunaTalkList.hpp" line 28 "monolib/work/IWorkEvent.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+
+/* Interface for work events, which provides a set of 32 event handler functions that
+get triggered when a certain event happens (such as when loading a file for OnFileEvent).
+Deriving classes can override any of these functions to run their own code when the
+corresponding event happens.
+
+Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
+being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
+out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
+with no apparent calls to the other 3 (possibly debug only).
+
+In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
+with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
+};
+/* end "monolib/work/IWorkEvent.hpp" */
+
+// Forward declare with C linkage for friend
+class CKizunaTalkList;
+extern "C" u8 func_8027355C(CKizunaTalkList* self);
+
+// Talk list entry (0x14 bytes each, 256 max)
+struct TalkListEntry {
+    u32 field_00;   // 0x00
+    u32 field_04;   // 0x04
+    u32 field_08;   // 0x08
+    u32 field_0C;   // 0x0C
+    s16 field_10;   // 0x10
+    s8 field_12;    // 0x12, initialised to -1
+    u8 field_13;    // 0x13
+};
+
+// Array container holding up to 256 entries
+struct TalkListEntryArray {
+    TalkListEntry mEntries[256]; // 0x000-0x13FF
+    u8 mCount;                   // 0x1400
+    u32 mParent;                 // 0x1404
+};
+
+class CKizunaTalkList : public IWorkEvent {
+    friend u8 func_8027355C(CKizunaTalkList* self);
+private:
+    /* 0x04 */ u8 _pad04[0x10];     // UnkClass_8045F564 (stub)
+    /* 0x14 */ u32 mEntryCount;     // number of valid entries
+    /* 0x18 */ u32 mUnknown18;
+    /* 0x1C */ u32 mUnknown1C;
+    /* 0x20 */ u32 mUnknown20;
+    /* 0x24 */ u32 mUnknown24;
+    /* 0x28 */ u32 mUnknown28;
+    /* 0x2C */ u8 _pad2C[0x18];     // CCur18 cursor (stub, 0x18 bytes)
+    /* 0x44 */ u8 _pad44[0x40];     // CScrollBar (stub, 0x40 bytes)
+    /* 0x84 */ u8 mState84;
+    /* 0x85 */ u8 mState85;         // state machine progression flag
+    /* 0x86 */ u8 mUnknown86;
+    /* 0x87 */ u8 mNeedsRebuild;    // 1 = pending rebuild, 0 = built
+    /* 0x88 */ u8 mUnknown88;
+    /* 0x89 */ u8 _pad89;           // padding
+    /* 0x8A */ u16 mUnknown8A;
+    /* 0x8C */ TalkListEntryArray mEntryArray;
+};
+
+
+/* end "kyoshin/CKizunaTalkList.hpp" */
+/* "src/kyoshin/CKizunaTalkList.cpp" line 5 "kyoshin/harness_catalog.hpp" */
+#pragma once
+
+/**
+ * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
+ *
+ * Pulls recovered VM / script-helper headers only. Plugin units with their own
+ * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
+ */
+
+/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* end "types.h" */
 /* "src/kyoshin/harness_catalog.hpp" line 10 "cstring" */
 #ifndef MSL_CPP_CSTRING_H
 #define MSL_CPP_CSTRING_H
@@ -1338,45 +1517,11 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-80274b78
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-80274b78
-
-// LLM-HARNESS-BEGIN: us-80274bd0
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-80274bd0
-
-// LLM-HARNESS-BEGIN: us-80274bf8
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-80274bf8
-
-// LLM-HARNESS-BEGIN: us-80274c38
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-80274c38
-
-// LLM-HARNESS-BEGIN: us-80274c94
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-80274c94
-
-// LLM-HARNESS-BEGIN: us-8027542c
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-8027542c
-
-// LLM-HARNESS-BEGIN: us-8027544c
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-8027544c
-
-// LLM-HARNESS-BEGIN: us-80275488
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-80275488
-
-// LLM-HARNESS-BEGIN: us-802754c4
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-802754c4
-
-// LLM-HARNESS-BEGIN: us-802754e0
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-802754e0
+// LLM-HARNESS-BEGIN: us-802759e0
+extern "C" u8 func_8027355C(CKizunaTalkList* self) {
+    return self->mNeedsRebuild;
+}
+// LLM-HARNESS-END: us-802759e0
 
 // LLM-HARNESS-BEGIN: us-802755a4
 extern "C" void __ct__CKizunaTalkList() {}
@@ -1406,9 +1551,6 @@ extern "C" void func_8027346C() {}
 extern "C" void func_80273518() {}
 // LLM-HARNESS-END: us-8027599c
 
-// LLM-HARNESS-BEGIN: us-802759e0
-extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
-// LLM-HARNESS-END: us-802759e0
 
 // LLM-HARNESS-BEGIN: us-802759e8
 extern "C" void func_80273564() {}
@@ -1478,3 +1620,11 @@ extern "C" void OnFileEvent__15CKizunaTalkListFP10CEventFile() {}
 // LLM-HARNESS-BEGIN: us-802768dc
 extern "C" void sinit_80274458() {}
 // LLM-HARNESS-END: us-802768dc
+
+// LLM-HARNESS-BEGIN: us-802754c4
+extern "C" void* func_80273040(void* self, u32 r4) {
+    // Use signed compare to match retail cmpwi
+    if ((s32)r4 >= 0x100) return 0;
+    return (u8*)self + r4 * 0x14;
+}
+// LLM-HARNESS-END: us-802754c4

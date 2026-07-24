@@ -1,24 +1,11 @@
-/* "src/kyoshin/plugin/pluginUi.cpp" line 0 "monolib/util.hpp" */
+/* "src/kyoshin/plugin/pluginUi.cpp" line 0 "kyoshin/plugin/pluginUi.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
-#pragma once
+// pluginUi -- UI-related plugin commands for the VM scripting system.
+// All functions have C linkage because they are called by name from function
+// pointer tables registered with the VM plugin system.
 
-namespace ml {
-    /* Optimized way of calculating if only one of two bools are true. This may
-    or may not have had a dedicated inline function, but it'll get one anyway */
-    inline bool boolXor(bool a, bool b){
-        return a ^ b;
-    }
-}
-/* end "monolib/util/BoolUtils.hpp" */
-/* "libs/monolib/include/monolib/util.hpp" line 3 "monolib/util/CChildListNode.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/CChildListNode.hpp" line 2 "monolib/util/CDoubleListNode.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/CDoubleListNode.hpp" line 2 "types.h" */
+/* "src/kyoshin/plugin/pluginUi.hpp" line 6 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -725,6 +712,73 @@ enum { FALSE, TRUE };
 typedef int BOOL;
 
 #endif
+/* end "types.h" */
+
+extern "C" {
+
+bool func_800459FC(const unsigned int* self, unsigned int mask);
+void pluginUiRegist();
+
+void winTalk();
+void pcTalk();
+void winTalkWait();
+void winTalkNoName();
+void fadeIn_1();
+void fadeOut_1();
+void fadeWait_1();
+void createCol6Sys();
+void createCol6Hint();
+void createCol6Invite();
+void createCol6Init();
+void checkCol6Bat();
+void simpleEventStart();
+void simpleEventEnd();
+void setTrust();
+void setItemMulti();
+void setKizunaTalk();
+void winSys();
+void winSysSelect();
+void getSelectNum();
+void mesAddPT();
+void mesSubPT();
+void mesVisionON();
+void mesVisionOFF();
+void mesMonadoON();
+void mesMonadoOFF();
+void ptChangeNotice();
+void save();
+void kizunaTalkStart();
+void kizunaTalkEnd();
+void isPrioReq();
+void gameClear();
+void setLastTalkNpc();
+void isSETalkVoiceWait();
+void func_eu_80046DA0();
+void func_eu_80046DC4();
+
+}
+/* end "kyoshin/plugin/pluginUi.hpp" */
+/* "src/kyoshin/plugin/pluginUi.cpp" line 1 "monolib/util.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
+#pragma once
+
+namespace ml {
+    /* Optimized way of calculating if only one of two bools are true. This may
+    or may not have had a dedicated inline function, but it'll get one anyway */
+    inline bool boolXor(bool a, bool b){
+        return a ^ b;
+    }
+}
+/* end "monolib/util/BoolUtils.hpp" */
+/* "libs/monolib/include/monolib/util.hpp" line 3 "monolib/util/CChildListNode.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/CChildListNode.hpp" line 2 "monolib/util/CDoubleListNode.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/CDoubleListNode.hpp" line 2 "types.h" */
 /* end "types.h" */
 
 /*
@@ -10788,13 +10842,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -12256,7 +12319,7 @@ namespace ml{
 }
 /* end "monolib/util/TPLUtils.hpp" */
 /* end "monolib/util.hpp" */
-/* "src/kyoshin/plugin/pluginUi.cpp" line 1 "monolib/vm/yvm2.h" */
+/* "src/kyoshin/plugin/pluginUi.cpp" line 2 "monolib/vm/yvm2.h" */
 #pragma once
 
 /* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
@@ -12718,7 +12781,12 @@ void ui_mesGetArts(VMThread* pThread) {
 extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
 // LLM-HARNESS-END: us-80045f9c
 // LLM-HARNESS-BEGIN: us-80046de8
-extern "C" void pluginUiRegist() {}
+extern "C" void pluginUiRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_804FABF0[];
+    extern char lbl_eu_80525D68[];
+    vmPluginRegist((void*)((char*)lbl_eu_804FABF0 + 0x28), (void*)lbl_eu_80525D68);
+}
 // LLM-HARNESS-END: us-80046de8
 
 // LLM-HARNESS-BEGIN: us-80045e24

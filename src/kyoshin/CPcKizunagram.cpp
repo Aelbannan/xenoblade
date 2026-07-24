@@ -126,11 +126,16 @@ extern "C" void func_8025EDC8() {}
 // LLM-HARNESS-END: us-80260f14
 
 // LLM-HARNESS-BEGIN: us-80260fc8
-extern "C" void func_8025EE7C() {}
+extern "C" void func_8025EE7C(void* self, u32 r4) {
+    if (*(u32*)((u8*)self + 0x89C) != r4) {
+        *(u32*)((u8*)self + 0x89C) = r4;
+        func_8025EE94(self);
+    }
+}
 // LLM-HARNESS-END: us-80260fc8
 
 // LLM-HARNESS-BEGIN: us-80260fe0
-extern "C" void func_8025EE94() {}
+extern "C" void func_8025EE94(void*) { volatile int _x = 0; (void)_x; }
 // LLM-HARNESS-END: us-80260fe0
 
 // LLM-HARNESS-BEGIN: us-80261260

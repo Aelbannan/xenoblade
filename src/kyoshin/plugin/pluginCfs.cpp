@@ -65,10 +65,9 @@ extern "C" void eventStart() {}
 // LLM-HARNESS-END: us-80049624
 
 // LLM-HARNESS-BEGIN: us-800496e8
-extern "C" u32 lbl_eu_80663E24;
-
-extern "C" u32 battleEventStart() {
-    lbl_eu_80663E24 |= 0x00040000;
+extern "C" unsigned long battleEventStart() {
+    extern unsigned long lbl_eu_80663E24;
+    lbl_eu_80663E24 |= 0x40000;
     return 0;
 }
 // LLM-HARNESS-END: us-800496e8
@@ -282,12 +281,9 @@ extern "C" void setPcCtrl() {}
 // LLM-HARNESS-END: us-8004b49c
 
 // LLM-HARNESS-BEGIN: us-8004b4e8
-extern "C" u32 lbl_eu_80663E28;
-
-extern "C" int setFieldVision() {
-    u32 temp = lbl_eu_80663E28;
-    temp |= 0x20000000;
-    lbl_eu_80663E28 = temp;
+extern "C" unsigned long setFieldVision() {
+    extern unsigned long lbl_eu_80663E28;
+    lbl_eu_80663E28 |= 0x20000000;
     return 0;
 }
 // LLM-HARNESS-END: us-8004b4e8

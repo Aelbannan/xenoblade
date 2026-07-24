@@ -13,5 +13,11 @@ extern "C" void func_801857A8() {}
 // LLM-HARNESS-END: us-80186c30
 
 // LLM-HARNESS-BEGIN: us-80186c7c
-extern "C" void pluginTimeRegist() {}
+extern "C" {
+extern const char lbl_eu_80503818[];
+extern PluginFuncData lbl_eu_80532348[];
+}
+extern "C" void pluginTimeRegist() {
+    vmPluginRegist(lbl_eu_80503818, lbl_eu_80532348);
+}
 // LLM-HARNESS-END: us-80186c7c

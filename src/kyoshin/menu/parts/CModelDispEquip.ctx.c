@@ -1343,7 +1343,11 @@ extern "C" void __ct__CModelDispEquip() {}
 // LLM-HARNESS-END: us-80201254
 
 // LLM-HARNESS-BEGIN: us-802013cc
-extern "C" void func_801FF6DC() {}
+extern "C" void func_801FF6DC(void* self) {
+    *(unsigned long*)self = 0;
+    *(unsigned long*)((char*)self + 4) = 0;
+    ((unsigned char*)self)[8] = 0;
+}
 // LLM-HARNESS-END: us-802013cc
 
 // LLM-HARNESS-BEGIN: us-802013e0
@@ -1379,11 +1383,14 @@ extern "C" void func_801FF96C() {}
 // LLM-HARNESS-END: us-8020165c
 
 // LLM-HARNESS-BEGIN: us-8020167c
-extern "C" void func_801FF98C() {}
+extern "C" void func_801FF98C(void* self) {
+    ((unsigned char*)self)[0x1014] = 3;
+    ((unsigned char*)self)[0x1020] = 0;
+}
 // LLM-HARNESS-END: us-8020167c
 
 // LLM-HARNESS-BEGIN: us-80201690
-extern "C" u32 func_801FF9A0(u32 val) { return val & 0xFFFFFF; }
+extern "C" void func_801FF9A0() {}
 // LLM-HARNESS-END: us-80201690
 
 // LLM-HARNESS-BEGIN: us-8020169c
@@ -1415,7 +1422,7 @@ extern "C" void func_801FFDC4() {}
 // LLM-HARNESS-END: us-80201ab4
 
 // LLM-HARNESS-BEGIN: us-80202078
-extern "C" void func_80200388(void* self, u32 a, u32 b) {}
+extern "C" void func_80200388() {}
 // LLM-HARNESS-END: us-80202078
 
 // LLM-HARNESS-BEGIN: us-80202084

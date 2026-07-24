@@ -17,7 +17,10 @@ extern "C" void __ct__CTTask_IUIWindow() {}
 // LLM-HARNESS-END: us-801430d0
 
 // LLM-HARNESS-BEGIN: us-80143140
-extern "C" void __ct__IWorkEvent() {}
+extern "C" void __ct__IWorkEvent(void* self) {
+    extern char lbl_eu_80525A10[];
+    *(void**)self = (void*)lbl_eu_80525A10;
+}
 // LLM-HARNESS-END: us-80143140
 
 // LLM-HARNESS-BEGIN: us-80143150
@@ -25,7 +28,10 @@ extern "C" void __ct__8014274C() {}
 // LLM-HARNESS-END: us-80143150
 
 // LLM-HARNESS-BEGIN: us-80143168
-extern "C" void __ct__IScnRender() {}
+extern "C" void __ct__IScnRender(void* self) {
+    extern char lbl_eu_80525A00[];
+    *(void**)self = (void*)lbl_eu_80525A00;
+}
 // LLM-HARNESS-END: us-80143168
 
 // LLM-HARNESS-BEGIN: us-80143178
@@ -94,7 +100,10 @@ extern "C" void func_80142D60() {}
 // LLM-HARNESS-END: us-80143764
 
 // LLM-HARNESS-BEGIN: us-801444cc
-extern "C" void func_80143AC8() {}
+extern "C" void func_80143AC8(void* self, float a, float b) {
+    *(float*)((char*)self + 0) = a;
+    *(float*)((char*)self + 4) = b;
+}
 // LLM-HARNESS-END: us-801444cc
 
 // LLM-HARNESS-BEGIN: us-801444d8

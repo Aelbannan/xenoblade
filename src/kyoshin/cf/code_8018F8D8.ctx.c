@@ -1403,7 +1403,11 @@ extern "C" int func_8019027C(void* self) { return 0; }
 // LLM-HARNESS-END: us-801918c4
 
 // LLM-HARNESS-BEGIN: us-801918cc
-extern "C" void func_80190284() {}
+extern "C" unsigned long func_80190284() {
+    extern unsigned long lbl_eu_80663E24;
+    lbl_eu_80663E24 |= 8;
+    return 0;
+}
 // LLM-HARNESS-END: us-801918cc
 
 // LLM-HARNESS-BEGIN: us-801918e0
@@ -1439,7 +1443,11 @@ extern "C" void func_80190690() {}
 // LLM-HARNESS-END: us-80191cd8
 
 // LLM-HARNESS-BEGIN: us-80191d44
-extern "C" void func_801906FC() {}
+extern "C" unsigned long func_801906FC() {
+    extern unsigned long lbl_eu_80663E24;
+    lbl_eu_80663E24 &= ~0x40000;
+    return 0;
+}
 // LLM-HARNESS-END: us-80191d44
 
 // LLM-HARNESS-BEGIN: us-80191d58

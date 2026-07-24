@@ -13,7 +13,12 @@ void ui_mesGetArts(VMThread* pThread) {
 extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
 // LLM-HARNESS-END: us-80045f9c
 // LLM-HARNESS-BEGIN: us-80046de8
-extern "C" void pluginUiRegist() {}
+extern "C" void pluginUiRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_804FABF0[];
+    extern char lbl_eu_80525D68[];
+    vmPluginRegist((void*)((char*)lbl_eu_804FABF0 + 0x28), (void*)lbl_eu_80525D68);
+}
 // LLM-HARNESS-END: us-80046de8
 
 // LLM-HARNESS-BEGIN: us-80045e24

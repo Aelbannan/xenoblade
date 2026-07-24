@@ -332,10 +332,17 @@ extern "C" int func_80187710() {
 }
 // LLM-HARNESS-END: us-80188b98
 // LLM-HARNESS-BEGIN: us-801894b0
-extern "C" bool func_80187EFC() { return false; }
+extern "C" void __dt__12CMenuPTGaugeFv(void*);
+extern "C" bool func_80187EFC(void* self) {
+    __dt__12CMenuPTGaugeFv((char*)self - 0x58);
+    return false;
+}
 // LLM-HARNESS-END: us-801894b0
 // LLM-HARNESS-BEGIN: us-801894b8
-extern "C" bool func_80187F04() { return false; }
+extern "C" void func_80187F04(void* self) {
+    extern void cbRenderBefore__12CMenuPTGaugeFv(void*);
+    cbRenderBefore__12CMenuPTGaugeFv((char*)self - 0x5c);
+}
 // LLM-HARNESS-END: us-801894b8
 // LLM-HARNESS-BEGIN: us-801894c0
 extern "C" void __dt__12CMenuPTGaugeFv(void*);

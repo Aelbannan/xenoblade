@@ -129,7 +129,10 @@ extern "C" void func_80280F44() {}
 // LLM-HARNESS-END: us-802833c8
 
 // LLM-HARNESS-BEGIN: us-80283680
-extern "C" void func_802811FC() {}
+extern "C" void func_802811FC(void* self) {
+    *(u32*)((u8*)self + 0x1D80) = 0;
+    *(u32*)((u8*)self + 0x1D84) = 0;
+}
 // LLM-HARNESS-END: us-80283680
 
 // LLM-HARNESS-BEGIN: us-80283690

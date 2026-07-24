@@ -57,7 +57,10 @@ void AHXSJD_EntryFltFunc(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-8039017c
 
 // LLM-HARNESS-BEGIN: us-80390188
-void AHXSJD_SetExtPrm(void) {}
+void AHXDCD_SetExtPrm(void* a);
+void AHXSJD_SetExtPrm(void* self) {
+    AHXDCD_SetExtPrm(*(void**)((u8*)self + 0));
+}
 // LLM-HARNESS-END: us-80390188
 
 // LLM-HARNESS-BEGIN: us-80390190

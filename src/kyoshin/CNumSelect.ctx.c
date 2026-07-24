@@ -1342,29 +1342,11 @@ void ocBdatRegist();
 extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 // LLM-HARNESS-END: us-801ec9bc
 
-// LLM-HARNESS-BEGIN: us-801eca34
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801eca34
 
-// LLM-HARNESS-BEGIN: us-801eca88
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801eca88
 
-// LLM-HARNESS-BEGIN: us-801ecad0
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801ecad0
 
-// LLM-HARNESS-BEGIN: us-801ecb78
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801ecb78
 
-// LLM-HARNESS-BEGIN: us-801ecb98
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801ecb98
 
-// LLM-HARNESS-BEGIN: us-801ecc14
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801ecc14
 
 // LLM-HARNESS-BEGIN: us-801ecc1c
 extern "C" u8 func_801EB020(void* self) { return ((u8*)self)[0x2C]; }
@@ -1374,21 +1356,9 @@ extern "C" u8 func_801EB020(void* self) { return ((u8*)self)[0x2C]; }
 extern "C" u8 func_801EB028(void* self) { return ((u8*)self)[0x2E]; }
 // LLM-HARNESS-END: us-801ecc24
 
-// LLM-HARNESS-BEGIN: us-801ecc2c
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801ecc2c
 
-// LLM-HARNESS-BEGIN: us-801ecc48
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801ecc48
 
-// LLM-HARNESS-BEGIN: us-801ecc60
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801ecc60
 
-// LLM-HARNESS-BEGIN: us-801eccd0
-extern "C" u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
-// LLM-HARNESS-END: us-801eccd0
 
 // LLM-HARNESS-BEGIN: us-801ecd74
 extern "C" void func_801EB178() {}
@@ -1425,3 +1395,12 @@ extern "C" void func_801EB644() {}
 // LLM-HARNESS-BEGIN: us-801ed304
 extern "C" void OnFileEvent__10CNumSelectFP10CEventFile() {}
 // LLM-HARNESS-END: us-801ed304
+
+// LLM-HARNESS-BEGIN: us-801ecc48
+extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(void*, void*, u8);
+extern u8 lbl_eu_80506C14[];
+extern "C" void func_801EB04C(void* self, u8 r4) {
+    void* layout = *(void**)((u8*)self + 0x1C);
+    func_80136910__FPQ34nw4r3lyt6LayoutPcUc(layout, (char*)lbl_eu_80506C14 + 0x20, r4);
+}
+// LLM-HARNESS-END: us-801ecc48

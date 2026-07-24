@@ -13,7 +13,11 @@ extern "C" void func_8009377C() {}
 // LLM-HARNESS-END: us-80094154
 
 // LLM-HARNESS-BEGIN: us-800942fc
-extern "C" void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv() {}
+extern "C" void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self, unsigned long val) {
+    void* ptr = *(void**)((char*)self + 0xc4);
+    if (ptr != 0)
+        *(unsigned long*)((char*)ptr + 0x37c) = val;
+}
 // LLM-HARNESS-END: us-800942fc
 
 // LLM-HARNESS-BEGIN: us-80094310

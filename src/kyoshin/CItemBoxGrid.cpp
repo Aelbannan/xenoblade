@@ -550,3 +550,12 @@ extern "C" void func_801D1F9C() {}
 // LLM-HARNESS-BEGIN: us-801d387c
 extern "C" void sinit_801D1E30() {}
 // LLM-HARNESS-END: us-801d387c
+
+// LLM-HARNESS-BEGIN: us-801c6bc0
+extern u8 lbl_eu_805347F8[];
+extern "C" void __ct__CVisionItem(void* self) {
+    // Match retail store order: 0x804 first, then vtable
+    *(u16*)((u8*)self + 0x804) = 0;
+    *(void**)self = lbl_eu_805347F8;
+}
+// LLM-HARNESS-END: us-801c6bc0

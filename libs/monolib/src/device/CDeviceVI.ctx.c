@@ -10858,13 +10858,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -13330,6 +13339,9 @@ struct CFileHandle {
 };
 /* end "monolib/device/CFileHandle.hpp" */
 
+// Forward declaration for the parameter type of cancel overload
+struct CDeviceFileJob_UnkStruct1;
+
 //Base class for jobs carried out by CDeviceFile.
 class CDeviceFileJob : public CWorkThread {
 public:
@@ -13338,7 +13350,7 @@ public:
     virtual ~CDeviceFileJob(){}
     virtual bool CDeviceFileJob_UnkVirtualFunc1(){ return false; }
     virtual bool cancel(const char* pFilename);
-    virtual bool cancel(CFileHandle* pHandle){ return false; }
+    virtual bool cancel(CDeviceFileJob_UnkStruct1* pStruct){ return false; }
 
     inline const char* getFilename(){
         return mHandle->mName.c_str();
@@ -13349,13 +13361,13 @@ public:
     }
 
     //0x0: vtable
-    //0x0-1C4: CWorkThread
-    CFileHandle* mHandle; //0x1C4
-    u8 unk1C8; //FixStr<64>?
-    u8 unk1C9[0x208 - 0x1C9];
-    u32 unk208;
-    u32 unk20C;
-    u8 unk210;
+    //0x0-1C4: CWorkThread (parent class)
+    CFileHandle* mHandle; //0x1C4 — file handle for the current job
+    u8 unk1C8; //0x1C8 — unknown byte field (possibly FixStr-related)
+    u8 unk1C9[0x208 - 0x1C9]; //padding
+    u32 unk208; //0x208 — unknown status field
+    u32 unk20C; //0x20C — unknown status field
+    u8 unk210; //0x210 — unknown byte flag
 };
 /* end "monolib/device/CDeviceFileJob.hpp" */
 /* "libs/monolib/include/monolib/device.hpp" line 8 "monolib/device/CDeviceFileJobReadDvd.hpp" */
@@ -20742,7 +20754,8 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
@@ -24347,6 +24360,9 @@ public:
     // CMCEffCrystal::func_80224CE4
     // CTitleAHelp::OnFileEvent
     static void* func_80452C10(u32, nw4r::lyt::Layout*);
+
+    /// Flush font rendering state.
+    void func_80452CF8();
 
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 
@@ -243649,7 +243665,7 @@ public:
 
     static CLibHbmControl* create();
     static CLibHbmControl* getInstance();
-    static bool func_8045E530();
+    static bool isActive();
     static bool isInitialized();
 
     virtual void wkUpdate();
@@ -243660,9 +243676,9 @@ public:
     //0x0: vtable
     //0x0-1ec: CProc
     HBMControllerData mHBMControllerData; //0x1EC
-    u32 unk22C;
-    int unk230;
-    u32 unk234;
+    u32 mHbmPhase;   //0x22C: state machine phase (0=load arc, 1=wait filesys, 2=init HBM, 3=active)
+    int mWaitTimer;  //0x230: countdown timer, set to 210 in phase 0, decremented in phase 1
+    u32 mUnused;     //0x234: reserved, never accessed
 private:
     static const int MAX_CHILD = 8;
 
@@ -243875,10 +243891,12 @@ public:
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
 
+    virtual void wkUpdate() override;  //0x88
+
     //0x0: vtable
     //0x0-1c4: CWorkThread
-    u32 unk1C4;
-    u8 unk1C8[0x2C0 - 0x1C8];
+    u32 unk1C4;                       // 0x1C4: unknown field
+    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
 };
 /* end "monolib/lib/CLibLayout.hpp" */
 /* "libs/monolib/include/monolib/lib.hpp" line 8 "monolib/lib/CLibStaticData.hpp" */
@@ -243995,6 +244013,8 @@ public:
     //0x0: vtable
     //0x0-1c4: CWorkThread
     u32 unk1C4;
+
+    static CLibVM* spInstance;
 };
 /* end "monolib/lib/CLibVM.hpp" */
 /* "libs/monolib/include/monolib/lib.hpp" line 10 "monolib/lib/UnkClass_8045F564.hpp" */
@@ -244271,6 +244291,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */

@@ -21,7 +21,9 @@ extern "C" void func_802B2938() {}
 // LLM-HARNESS-END: us-802b53a8
 
 // LLM-HARNESS-BEGIN: us-802b5478
-extern "C" void func_802B2A08() {}
+extern "C" void func_802B2A08(void* self) {
+    *(unsigned long*)((char*)self + 0x1194) |= 2;
+}
 // LLM-HARNESS-END: us-802b5478
 
 // LLM-HARNESS-BEGIN: us-802b5488

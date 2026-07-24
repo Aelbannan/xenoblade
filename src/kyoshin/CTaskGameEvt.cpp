@@ -59,3 +59,11 @@ public:
 };
 
 class CTaskGameEvt;
+// LLM-HARNESS-BEGIN: us-80297cc8
+extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
+extern "C" void Term__12CTaskGameEvtFv(void* self) {
+    void* r4 = self ? (u8*)self + 0x58 : 0;
+    void* scn = *(void**)((u8*)self + 0x5C);
+    removeRenderCB__4CScnFP10IScnRender(scn, r4);
+}
+// LLM-HARNESS-END: us-80297cc8

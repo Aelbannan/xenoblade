@@ -67,3 +67,12 @@ extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 // LLM-HARNESS-BEGIN: us-802b14f8
 extern "C" void func_eu_802B14F8() {}
 // LLM-HARNESS-END: us-802b14f8
+
+// LLM-HARNESS-BEGIN: us-802b133c
+extern "C" void getBdatStringColumnValue(void*, void*, int);
+extern u32 lbl_eu_80664BF8;
+extern u8 lbl_eu_80513420[];
+extern "C" void func_eu_802B133C() {
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
+}
+// LLM-HARNESS-END: us-802b133c

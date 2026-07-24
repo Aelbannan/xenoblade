@@ -1475,7 +1475,11 @@ extern "C" void func_800987A0() {}
 // LLM-HARNESS-END: us-80099178
 
 // LLM-HARNESS-BEGIN: us-800991c4
-extern "C" void func_800987EC() {}
+extern "C" void func_800987EC(void* self) {
+    extern void func_800899C0(void*, float);
+    extern float lbl_eu_80666728;
+    func_800899C0((char*)self + 0x8c, lbl_eu_80666728);
+}
 // LLM-HARNESS-END: us-800991c4
 
 extern "C" void func_80089B24(void* self);

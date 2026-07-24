@@ -13,7 +13,10 @@ extern "C" void __dt__11CMenuVisionFv(void* self) {}
 // LLM-HARNESS-END: us-801ad748
 
 // LLM-HARNESS-BEGIN: us-801ad7bc
-extern "C" void func_801AC088() {}
+extern "C" unsigned long func_801AC088() {
+    unsigned long v = *(unsigned long*)(lbl_eu_80664388);
+    return !!v;
+}
 // LLM-HARNESS-END: us-801ad7bc
 
 // LLM-HARNESS-BEGIN: us-801ad7d0

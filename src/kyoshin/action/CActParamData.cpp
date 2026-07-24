@@ -194,7 +194,10 @@ extern "C" s16 func_80055F54(void* self) {
 // LLM-HARNESS-END: us-800565bc
 
 // LLM-HARNESS-BEGIN: us-800565ec
-extern "C" void func_80055F84() {}
+extern "C" void func_80055F84(void* self) {
+    *(unsigned long*)((char*)self + 0x2d4) = 0;
+    *(unsigned long*)((char*)self + 0x354) = 0;
+}
 // LLM-HARNESS-END: us-800565ec
 
 // LLM-HARNESS-BEGIN: us-800565fc
@@ -220,27 +223,51 @@ extern "C" bool func_8005609C() { return false; }
 // LLM-HARNESS-END: us-80056704
 
 // LLM-HARNESS-BEGIN: us-8005670c
-extern "C" void func_800560A4() {}
+extern "C" void func_800560A4(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x34 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8005670c
 
 // LLM-HARNESS-BEGIN: us-8005671c
-extern "C" void func_800560B4() {}
+extern "C" void func_800560B4(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x98 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8005671c
 
 // LLM-HARNESS-BEGIN: us-8005672c
-extern "C" void func_800560C4() {}
+extern "C" void func_800560C4(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x88 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8005672c
 
 // LLM-HARNESS-BEGIN: us-8005673c
-extern "C" void func_800560D4() {}
+extern "C" void func_800560D4(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x8c / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8005673c
 
 // LLM-HARNESS-BEGIN: us-8005674c
-extern "C" void func_800560E4() {}
+extern "C" void func_800560E4(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x90 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8005674c
 
 // LLM-HARNESS-BEGIN: us-8005675c
-extern "C" void func_800560F4() {}
+extern "C" void func_800560F4(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[148 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8005675c
 
 // LLM-HARNESS-BEGIN: us-8005676c
@@ -248,7 +275,11 @@ extern "C" void func_80056104() {}
 // LLM-HARNESS-END: us-8005676c
 
 // LLM-HARNESS-BEGIN: us-80056780
-extern "C" void func_80056118() {}
+extern "C" void func_80056118(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[48 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-80056780
 
 // LLM-HARNESS-BEGIN: us-80056790

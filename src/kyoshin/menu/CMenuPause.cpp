@@ -29,7 +29,10 @@ extern "C" void __ct__CMenuPause() {}
 // LLM-HARNESS-END: us-80254648
 
 // LLM-HARNESS-BEGIN: us-8025475c
-extern "C" void isInitialized__10CMenuPauseFv() {}
+extern "C" unsigned long isInitialized__10CMenuPauseFv() {
+    unsigned long v = *(unsigned long*)(lbl_eu_806647C8);
+    return !!v;
+}
 // LLM-HARNESS-END: us-8025475c
 
 // LLM-HARNESS-BEGIN: us-80254770

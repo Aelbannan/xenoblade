@@ -1192,7 +1192,11 @@ extern "C" CMenuArtsSelect* func_80104320() { if (lbl_eu_80663F20 == 0) return 0
 extern "C" int func_80104398() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
 // LLM-HARNESS-END: us-80104e80
 // LLM-HARNESS-BEGIN: us-80109718
-extern "C" bool func_80108C30() { return false; }
+extern "C" void __dt__15CMenuArtsSelectFv(void*);
+extern "C" bool func_80108C30(void* self) {
+    __dt__15CMenuArtsSelectFv((char*)self - 0x58);
+    return false;
+}
 // LLM-HARNESS-END: us-80109718
 // LLM-HARNESS-BEGIN: us-80109720
 extern "C" void func_80108C38(void* self) {

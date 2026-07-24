@@ -42,3 +42,11 @@ extern "C" void func_8012DF88(void* self) { ((void(*)(void*))__dt__11CTalkWindow
 // LLM-HARNESS-BEGIN: us-8012e968
 extern "C" void sinit_8012DE98() {}
 // LLM-HARNESS-END: us-8012e968
+
+// LLM-HARNESS-BEGIN: us-8012d7f4
+extern u32 lbl_eu_80664044;
+extern "C" bool func_8012CD24() {
+    u32 v = lbl_eu_80664044;
+    return ((-v) & ~v) >> 31;
+}
+// LLM-HARNESS-END: us-8012d7f4

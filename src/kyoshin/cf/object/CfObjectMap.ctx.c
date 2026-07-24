@@ -1355,7 +1355,9 @@ extern "C" void func_800B9C14() {}
 // LLM-HARNESS-END: us-800ba530
 
 // LLM-HARNESS-BEGIN: us-800ba580
-extern "C" void func_800B9C64__Q22cf11CfObjectMapFv() {}
+extern "C" void func_800B9C64__Q22cf11CfObjectMapFv(void* self) {
+    *(unsigned short*)((char*)self + 0x8e) = 0;
+}
 // LLM-HARNESS-END: us-800ba580
 
 // LLM-HARNESS-BEGIN: us-800ba58c
@@ -1367,7 +1369,10 @@ extern "C" void func_800B9C74() {}
 // LLM-HARNESS-END: us-800ba590
 
 // LLM-HARNESS-BEGIN: us-800ba75c
-extern "C" void func_800B9E3C__Q22cf11CfObjectMapFv() {}
+extern "C" void func_800B9E3C__Q22cf11CfObjectMapFv(void* self, unsigned long v) {
+    extern void func_800B9C74(void*, unsigned long, unsigned long);
+    func_800B9C74(self, (v >> 5) & 0x7F, (v >> 12) & 0x3FF);
+}
 // LLM-HARNESS-END: us-800ba75c
 
 // LLM-HARNESS-BEGIN: us-800ba76c
@@ -1403,11 +1408,19 @@ extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(void* self)
 // LLM-HARNESS-END: us-800bb05c
 
 // LLM-HARNESS-BEGIN: us-800bb064
-extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv() {}
+extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0xd0 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800bb064
 
 // LLM-HARNESS-BEGIN: us-800bb074
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv() {}
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf13CfObjectModelFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0xc4 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800bb074
 
 // LLM-HARNESS-BEGIN: us-800bb084

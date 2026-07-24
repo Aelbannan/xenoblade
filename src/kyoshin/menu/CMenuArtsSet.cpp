@@ -9,7 +9,10 @@ extern "C" void __ct__CMenuArtsSet() {}
 // LLM-HARNESS-END: us-80231300
 
 // LLM-HARNESS-BEGIN: us-80231428
-extern "C" void func_8022F530() {}
+extern "C" unsigned long func_8022F530() {
+    unsigned long v = *(unsigned long*)(lbl_eu_80664740);
+    return !!v;
+}
 // LLM-HARNESS-END: us-80231428
 
 // LLM-HARNESS-BEGIN: us-8023143c
@@ -175,7 +178,10 @@ extern "C" void func_802316F8() {}
 // LLM-HARNESS-END: us-802335f0
 
 // LLM-HARNESS-BEGIN: us-80233740
-extern "C" void func_80231848() {}
+extern "C" void func_80231848(void* self, void* src) {
+    *(float*)((char*)self + 0x44) = *(float*)((char*)src + 0);
+    *(float*)((char*)self + 0x48) = *(float*)((char*)src + 4);
+}
 // LLM-HARNESS-END: us-80233740
 
 // LLM-HARNESS-BEGIN: us-80233754

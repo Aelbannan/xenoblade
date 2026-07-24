@@ -165,7 +165,12 @@ extern "C" void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>
 extern "C" void func_800EA3AC() {}
 // LLM-HARNESS-END: us-800eae94
 // LLM-HARNESS-BEGIN: us-800eaef8
-extern "C" void func_800EA410() {}
+extern "C" void func_800EA410(void* self) {
+    self = (char*)self + 0x219c;
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x10 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800eaef8
 // LLM-HARNESS-BEGIN: us-800eaf08
 extern "C" void func_800EA420() {}
@@ -178,13 +183,24 @@ extern "C" void* func_800EA444(void* self) {
 }
 // LLM-HARNESS-END: us-800eaf2c
 // LLM-HARNESS-BEGIN: us-800eaf48
-extern "C" void func_800EA460() {}
+extern "C" void func_800EA460(void* self, float a, float b, unsigned long c) {
+    extern void func_800EA484(void*);
+    *(float*)((char*)self + 0x88) = b;
+    *(unsigned long*)((char*)self + 0x8c) = c;
+    *(float*)((char*)self + 0x90) = a;
+    func_800EA484(self);
+}
 // LLM-HARNESS-END: us-800eaf48
 // LLM-HARNESS-BEGIN: us-800eaf58
 extern "C" void func_800EA470() {}
 // LLM-HARNESS-END: us-800eaf58
 // LLM-HARNESS-BEGIN: us-800eb480
-extern "C" void func_800EA998() {}
+extern "C" void func_800EA998(void* self) {
+    self = (char*)self + 0x219c;
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x24 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800eb480
 // LLM-HARNESS-BEGIN: us-800ed3e4
 extern "C" void func_800EC8FC() {}

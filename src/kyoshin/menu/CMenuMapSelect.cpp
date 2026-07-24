@@ -9,7 +9,10 @@ extern "C" void __ct__CMenuMapSelect() {}
 // LLM-HARNESS-END: us-802443d4
 
 // LLM-HARNESS-BEGIN: us-8024450c
-extern "C" void func_80242354() {}
+extern "C" unsigned long func_80242354() {
+    unsigned long v = *(unsigned long*)(lbl_eu_80664790);
+    return !!v;
+}
 // LLM-HARNESS-END: us-8024450c
 
 // LLM-HARNESS-BEGIN: us-80244520

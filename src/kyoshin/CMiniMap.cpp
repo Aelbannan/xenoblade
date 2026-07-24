@@ -72,7 +72,11 @@ extern "C" void __ct__8011C1B8() {}
 
 extern u32 lbl_eu_80663F20;
 // LLM-HARNESS-BEGIN: us-8011cdc4
-extern "C" bool func_8011C2E8() { return lbl_eu_80663F20 != 0; }
+extern u32 lbl_eu_80663FB0;
+extern "C" bool func_8011C2E8() {
+    u32 v = lbl_eu_80663FB0;
+    return ((-v) | v) >> 31;
+}
 // LLM-HARNESS-END: us-8011cdc4
 
 // LLM-HARNESS-BEGIN: us-8011cdd8

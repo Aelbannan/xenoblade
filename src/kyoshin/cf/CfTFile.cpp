@@ -135,7 +135,10 @@ extern "C" u32 func_8006A80C() {
 // LLM-HARNESS-END: us-8006b224
 
 // LLM-HARNESS-BEGIN: us-8006b22c
-extern "C" void func_8006A814() {}
+extern "C" void func_8006A814(void* self) {
+    extern unsigned long lbl_eu_80663DA8;
+    lbl_eu_80663DA8 = *(unsigned long*)self;
+}
 // LLM-HARNESS-END: us-8006b22c
 
 // LLM-HARNESS-BEGIN: us-8006b238
@@ -144,5 +147,8 @@ extern "C" void func_eu_8006B238() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-8006b278
-extern "C" void sinit_8006A820() {}
+extern "C" void sinit_8006A820() {
+    extern unsigned long lbl_eu_80663DA8;
+    lbl_eu_80663DA8 = 0;
+}
 // LLM-HARNESS-END: us-8006b278

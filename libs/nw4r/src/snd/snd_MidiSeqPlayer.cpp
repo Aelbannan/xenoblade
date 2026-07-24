@@ -5,21 +5,6 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-/**
- * Dummy class to instantiate necessary weak functions
- */
-#if !defined(NONMATCHING)
-class MidiSeqPlayer : public SeqPlayer {
-private:
-    MidiSeqPlayer();
-
-    // Dummy implementation, must prevent instantiating SeqPlayer version
-    virtual void ChannelCallback(Channel* /* pChannel */) {}
-};
-
-MidiSeqPlayer::MidiSeqPlayer() {}
-#endif
-
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
@@ -31,7 +16,12 @@ extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9SeqPlayerFv(void) {
 }
 // LLM-HARNESS-END: us-80419900
 // LLM-HARNESS-BEGIN: us-80419904
-extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail9SeqPlayerFv() {}
+extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail9SeqPlayerFv(void* self) {
+    // vtable dispatch (empty virtual -> base class tail call)
+    typedef void (*VFunc)(void*);
+    VFunc* vtable = *(VFunc**)self;
+    vtable[4](self);
+}
 // LLM-HARNESS-END: us-80419904
 // LLM-HARNESS-BEGIN: us-80419914
 extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9SeqPlayerFPCvPCv(void) {

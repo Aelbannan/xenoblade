@@ -1339,44 +1339,17 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8026632c
-extern "C" void __ct__UI_CPassiveSkillCur() {}
+extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-8026632c
 
-// LLM-HARNESS-BEGIN: us-80266360
-extern "C" void __dt__Q22UI16CPassiveSkillCurFv() {}
-// LLM-HARNESS-END: us-80266360
 
-// LLM-HARNESS-BEGIN: us-802663a0
-extern "C" void func_80263F30() {}
-// LLM-HARNESS-END: us-802663a0
 
-// LLM-HARNESS-BEGIN: us-80266458
-extern "C" void func_80263FE8() {}
-// LLM-HARNESS-END: us-80266458
 
-// LLM-HARNESS-BEGIN: us-802664d0
-extern "C" void func_80264060() {}
-// LLM-HARNESS-END: us-802664d0
 
-// LLM-HARNESS-BEGIN: us-80266528
-extern "C" void func_802640B8() {}
-// LLM-HARNESS-END: us-80266528
 
-// LLM-HARNESS-BEGIN: us-802665b0
-extern "C" void func_80264140() {}
-// LLM-HARNESS-END: us-802665b0
 
-// LLM-HARNESS-BEGIN: us-80266640
-extern "C" void func_802641D0() {}
-// LLM-HARNESS-END: us-80266640
 
-// LLM-HARNESS-BEGIN: us-80266674
-extern "C" void func_80264204() {}
-// LLM-HARNESS-END: us-80266674
 
-// LLM-HARNESS-BEGIN: us-802667b4
-extern "C" void func_80264344() {}
-// LLM-HARNESS-END: us-802667b4
 
 // LLM-HARNESS-BEGIN: us-8026680c
 extern "C" void func_8026439C() {}
@@ -1599,7 +1572,11 @@ extern "C" void func_80268F7C() {}
 // LLM-HARNESS-END: us-8026b3ec
 
 // LLM-HARNESS-BEGIN: us-8026b45c
-extern "C" void func_80268FEC() {}
+extern "C" void func_80268FEC(void* self) {
+    if (*(u8*)((u8*)self + 0x13A) != 0) {
+        *(u8*)((u8*)self + 0xE8) = 2;
+    }
+}
 // LLM-HARNESS-END: us-8026b45c
 
 // LLM-HARNESS-BEGIN: us-8026b474
@@ -1778,9 +1755,6 @@ extern "C" void func_8026DA88() {}
 extern "C" void func_8026DAD0() {}
 // LLM-HARNESS-END: us-8026ff54
 
-// LLM-HARNESS-BEGIN: us-8026ffb8
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-8026ffb8
 
 // LLM-HARNESS-BEGIN: us-8026ffc0
 extern "C" void func_8026DB3C(void* self) { ((void(*)(void*))func_80267CE0)((char*)self + 0x28); }

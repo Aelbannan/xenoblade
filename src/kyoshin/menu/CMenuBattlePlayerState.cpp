@@ -1175,7 +1175,11 @@ void func_8010EA4C(void* _this) {
 }
 // LLM-HARNESS-END: us-8010f528
 // LLM-HARNESS-BEGIN: us-8010f530
-extern "C" bool func_8010EA54() { return false; }
+extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
+extern "C" bool func_8010EA54() {
+    cbRenderBefore__22CMenuBattlePlayerStateFv();
+    return false;
+}
 // LLM-HARNESS-END: us-8010f530
 // LLM-HARNESS-BEGIN: us-8010f538
 extern "C" void func_8010EA5C(void* self) {

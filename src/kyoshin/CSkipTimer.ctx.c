@@ -1540,7 +1540,12 @@ extern "C" void func_8029F73C() {}
 // LLM-HARNESS-END: us-802a1e70
 
 // LLM-HARNESS-BEGIN: us-802a1ebc
-extern "C" void func_8029F788() {}
+extern "C" void func_8029F788(void* self) {
+    if (*(u32*)((u8*)self + 0x14) != 0) {
+        *(u8*)((u8*)self + 0x22) = 1;
+        *(u8*)((u8*)self + 0x20) = 1;
+    }
+}
 // LLM-HARNESS-END: us-802a1ebc
 
 // LLM-HARNESS-BEGIN: us-802a1ed8

@@ -57,15 +57,20 @@ void sfbuf_RingGetSub() {}
 // LLM-HARNESS-END: us-803c1dc8
 
 // LLM-HARNESS-BEGIN: us-803c1f10
-void SFBUF_RingAddWrite(void) {}
+void sfbuf_RingAddSub(void* a, void* b, void* c, int mode);
+void SFBUF_RingAddWrite(void* a, void* b, void* c) {
+    sfbuf_RingAddSub(a, b, c, 0);
+}
 // LLM-HARNESS-END: us-803c1f10
 
 // LLM-HARNESS-BEGIN: us-803c1f18
-void SFBUF_RingAddRead(void) {}
+void SFBUF_RingAddRead(void* a, void* b, void* c) {
+    sfbuf_RingAddSub(a, b, c, 1);
+}
 // LLM-HARNESS-END: us-803c1f18
 
 // LLM-HARNESS-BEGIN: us-803c1f20
-void sfbuf_RingAddSub() {}
+void sfbuf_RingAddSub(void* a, void* b, void* c, int mode) {}
 // LLM-HARNESS-END: us-803c1f20
 
 // LLM-HARNESS-BEGIN: us-803c2198

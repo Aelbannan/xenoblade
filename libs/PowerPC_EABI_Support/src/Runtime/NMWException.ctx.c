@@ -897,34 +897,8 @@ namespace std{
     static terminate_handler thandler = dthandler;
 
 
-    static void duhandler(){
-        terminate();
-    }
-
-    static unexpected_handler uhandler = duhandler;
-
-
-    //unused
-    extern terminate_handler set_terminate(terminate_handler handler){
-        terminate_handler old = thandler;
-        thandler = handler;
-        return old;
-    }
-
     extern void terminate(){
         thandler();
-    }
-
-    //unused
-    extern unexpected_handler set_unexpected(unexpected_handler handler){
-        unexpected_handler old = uhandler;
-        uhandler = handler;
-        return old;
-    }
-
-    //unused
-    extern void unexpected(){
-        uhandler();
     }
 
 }
@@ -1097,10 +1071,3 @@ extern void __destroy_new_array(void* block, ConstructorDestructor dtor){
     }
 }
 
-//unused
-extern void __destroy_new_array2(){
-}
-
-//unused
-extern void __destroy_new_array3(){
-}

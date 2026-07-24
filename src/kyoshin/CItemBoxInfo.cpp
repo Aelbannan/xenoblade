@@ -177,7 +177,11 @@ extern "C" void func_801DF4B4() {}
 // LLM-HARNESS-END: us-801e1020
 
 // LLM-HARNESS-BEGIN: us-801e103c
-extern "C" void func_801DF4D0() {}
+extern "C" void func_801DF4D0(void* self, u16 r4, u32 r5, u8 r6) {
+    *(u16*)self = r4;
+    *((u32*)self + 1) = r5;
+    *((u8*)self + 8) = r6;
+}
 // LLM-HARNESS-END: us-801e103c
 
 // LLM-HARNESS-BEGIN: us-801e104c
@@ -375,7 +379,11 @@ extern "C" void func_801E9164() {}
 // LLM-HARNESS-END: us-801ead60
 
 // LLM-HARNESS-BEGIN: us-801ead7c
-extern "C" void func_801E9180() {}
+extern "C" void func_801E9180(void* self, unsigned short a, unsigned long b, unsigned char c) {
+    *(unsigned short*)self = a;
+    *(unsigned long*)((char*)self + 4) = b;
+    *(unsigned char*)((char*)self + 8) = c;
+}
 // LLM-HARNESS-END: us-801ead7c
 
 // LLM-HARNESS-BEGIN: us-801ead8c

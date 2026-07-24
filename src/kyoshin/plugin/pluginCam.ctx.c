@@ -1322,8 +1322,8 @@ public:
     static void func_8003AA8C(u32 val);
     static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
 
 #ifdef __cplusplus
@@ -1443,5 +1443,10 @@ extern "C" void stopShake() {}
 // LLM-HARNESS-END: us-80061bb8
 
 // LLM-HARNESS-BEGIN: us-80061be0
-extern "C" void pluginCamRegist() {}
+extern "C" void pluginCamRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_804FB1A4[];
+    extern char lbl_eu_80526560[];
+    vmPluginRegist((void*)lbl_eu_804FB1A4, (void*)lbl_eu_80526560);
+}
 // LLM-HARNESS-END: us-80061be0

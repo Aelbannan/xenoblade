@@ -752,9 +752,10 @@ void HBMSEQSetState() {}
 // LLM-HARNESS-END: us-80345420
 
 // LLM-HARNESS-BEGIN: us-80345570
-u32 HBMSEQGetState(void* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" u32 HBMSEQGetState(void* self) { return *(u32*)((u8*)self + 0x4); }
 // LLM-HARNESS-END: us-80345570
 
 // LLM-HARNESS-BEGIN: us-80345580
-void HBMSEQSetVolume(void* self) { ((void(*)(void*))HBMSYNSetMasterVolume)((char*)self + 0x14); }
+extern "C" void HBMSYNSetMasterVolume(void*);
+extern "C" void HBMSEQSetVolume(void* self) { HBMSYNSetMasterVolume((char*)self + 0x14); }
 // LLM-HARNESS-END: us-80345580

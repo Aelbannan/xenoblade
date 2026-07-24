@@ -17,11 +17,19 @@ extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void* self) {}
 // LLM-HARNESS-END: us-80169540
 
 // LLM-HARNESS-BEGIN: us-801695f8
-extern "C" void func_801683FC() {}
+extern "C" unsigned long func_801683FC() {
+    extern unsigned long lbl_eu_80664268;
+    unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
+    return (ptr[0x5c/4] >> 17) & 1;
+}
 // LLM-HARNESS-END: us-801695f8
 
 // LLM-HARNESS-BEGIN: us-80169608
-extern "C" void func_8016840C() {}
+extern "C" unsigned long func_8016840C() {
+    extern unsigned long lbl_eu_80664268;
+    unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
+    return (ptr[0x5c/4] >> 19) & 1;
+}
 // LLM-HARNESS-END: us-80169608
 
 // LLM-HARNESS-BEGIN: us-80169618

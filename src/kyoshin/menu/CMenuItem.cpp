@@ -9,7 +9,10 @@ extern "C" void __ct__CMenuItem() {}
 // LLM-HARNESS-END: us-80168aac
 
 // LLM-HARNESS-BEGIN: us-80168bd4
-extern "C" void func_80167A18() {}
+extern "C" unsigned long func_80167A18() {
+    unsigned long v = *(unsigned long*)(lbl_eu_80664258);
+    return !!v;
+}
 // LLM-HARNESS-END: us-80168bd4
 
 // LLM-HARNESS-BEGIN: us-80168be8

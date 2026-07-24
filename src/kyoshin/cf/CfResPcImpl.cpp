@@ -61,11 +61,13 @@ extern "C" void func_8018D0C4() {}
 // LLM-HARNESS-END: us-8018e72c
 
 // LLM-HARNESS-BEGIN: us-8018e79c
-extern "C" void func_8018D154() {}
+extern "C" void func_8018D154(u32 a, u32 b) { volatile int _x = 0; (void)_x; (void)a; (void)b; }
 // LLM-HARNESS-END: us-8018e79c
 
 // LLM-HARNESS-BEGIN: us-8018e8d0
-extern "C" bool func_8018D288() { return false; }
+extern "C" void func_8018D288(void) {
+    func_8018D154(0, 0);
+}
 // LLM-HARNESS-END: us-8018e8d0
 
 // LLM-HARNESS-BEGIN: us-8018e8d8
@@ -117,7 +119,10 @@ extern "C" void func_8018EEF0() {}
 // LLM-HARNESS-END: us-80190538
 
 // LLM-HARNESS-BEGIN: us-80190584
-extern "C" void __ct__Q22cf17UnkClass_8018EF3CFv() {}
+extern "C" void __ct__Q22cf17UnkClass_8018EF3CFv(void* self) {
+    *(unsigned long*)((char*)self + 0x400) = 0;
+    *(unsigned long*)((char*)self + 0x404) = 0;
+}
 // LLM-HARNESS-END: us-80190584
 
 // LLM-HARNESS-BEGIN: us-80190594
@@ -161,7 +166,14 @@ extern "C" void func_8018F46C() {}
 // LLM-HARNESS-END: us-80190ab4
 
 // LLM-HARNESS-BEGIN: us-80190b58
-extern "C" void func_8018F510() {}
+extern "C" void func_8018F510(void* self, unsigned long cond) {
+    extern void func_8018F368(void*);
+    extern void func_8018F46C(void*);
+    if (cond == 0)
+        func_8018F46C(self);
+    else
+        func_8018F368(self);
+}
 // LLM-HARNESS-END: us-80190b58
 
 // LLM-HARNESS-BEGIN: us-80190b68

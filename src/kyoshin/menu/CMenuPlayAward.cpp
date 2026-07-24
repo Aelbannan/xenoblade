@@ -33,7 +33,7 @@ extern "C" void func_80270308() {}
 // LLM-HARNESS-END: us-8027278c
 
 // LLM-HARNESS-BEGIN: us-80272800
-extern "C" void func_8027037C() {}
+extern "C" void stub_us_80272800() {}
 // LLM-HARNESS-END: us-80272800
 
 // LLM-HARNESS-BEGIN: us-80272810
@@ -65,7 +65,10 @@ extern "C" void func_80270654() {}
 // LLM-HARNESS-END: us-80272ad8
 
 // LLM-HARNESS-BEGIN: us-80272b48
-extern "C" void func_802706C4() {}
+extern "C" void func_802706C4(void* self) {
+    *(unsigned long*)((char*)self + 0) = 0;
+    *(unsigned long*)((char*)self + 4) = 0;
+}
 // LLM-HARNESS-END: us-80272b48
 
 // LLM-HARNESS-BEGIN: us-80272b58

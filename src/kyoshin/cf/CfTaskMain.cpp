@@ -17,7 +17,12 @@ extern "C" void Term__Q22cf10CfTaskMainFv() {}
 // LLM-HARNESS-END: us-8006a1dc
 
 // LLM-HARNESS-BEGIN: us-8006a1e0
-extern "C" void Move__Q22cf10CfTaskMainFv() {}
+extern "C" void Move__Q22cf10CfTaskMainFv() {
+    extern void func_8007F9C4__Q22cf13CfGameManagerFv(void);
+    extern unsigned long lbl_eu_80663E28;
+    if ((lbl_eu_80663E28 & 0x4000) != 0) return;
+    func_8007F9C4__Q22cf13CfGameManagerFv();
+}
 // LLM-HARNESS-END: us-8006a1e0
 
 // LLM-HARNESS-BEGIN: us-8006a1f4

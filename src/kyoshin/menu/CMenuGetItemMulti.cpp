@@ -53,7 +53,10 @@ extern "C" void func_801B4790() {}
 // LLM-HARNESS-END: us-801b6064
 
 // LLM-HARNESS-BEGIN: us-801b60f0
-extern "C" void func_801B481C() {}
+extern "C" unsigned long func_801B481C() {
+    unsigned long v = *(unsigned long*)(lbl_eu_80664414);
+    return !!v;
+}
 // LLM-HARNESS-END: us-801b60f0
 
 // LLM-HARNESS-BEGIN: us-801b6104

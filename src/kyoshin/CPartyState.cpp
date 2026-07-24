@@ -39,7 +39,11 @@ extern "C" void func_801FD48C() {}
 // LLM-HARNESS-END: us-801ff14c
 
 // LLM-HARNESS-BEGIN: us-801ff240
-extern "C" void func_801FD580() {}
+extern "C" u32 func_801FD580(void* self) {
+    s8 val = *(s8*)((u8*)self + 0x4D);
+    // Match rlwinm extraction of sign bit followed by xori
+    return ((u32)(val >> 31) & 1) ^ 1;
+}
 // LLM-HARNESS-END: us-801ff240
 
 // LLM-HARNESS-BEGIN: us-801ff254

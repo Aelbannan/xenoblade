@@ -1337,25 +1337,59 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfGimmickObject.cpp" line 5 "kyoshin/cf/CfGimmickObject.hpp" */
+#pragma once
+
+/**
+ * @file CfGimmickObject.hpp
+ * @brief cf::CfGimmickObject -- script/OC gimmick object class.
+ *
+ * CfGimmickObject is a gimmick entity managed by the cf script VM.
+ * Most functions are still placeholder until symbol recovery.
+ *
+ * FULL_MATCH symbols in this TU:
+ *   func_801F8564 -- returns constant 1 (8-byte leaf)
+ */
+
+/* "src/kyoshin/cf/CfGimmickObject.hpp" line 13 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+
+class CfGimmickObject {
+public:
+    CfGimmickObject();
+    ~CfGimmickObject();
+};
+
+} // namespace cf
+
+// Extern "C" exports -- linker names must match retail symbols.
+extern "C" int func_801F8564();
+/* end "kyoshin/cf/CfGimmickObject.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801f6c24
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void __ct__cf_CfGimmickObject() {}
 // LLM-HARNESS-END: us-801f6c24
 
 // LLM-HARNESS-BEGIN: us-801f7748
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void __dt__Q22cf15CfGimmickObjectFv() {}
 // LLM-HARNESS-END: us-801f7748
 
 // LLM-HARNESS-BEGIN: us-801f77bc
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F5B00() {}
 // LLM-HARNESS-END: us-801f77bc
 
 // LLM-HARNESS-BEGIN: us-801f78b4
-extern "C" void func_801F5BF8() {}
+extern "C" void func_801F5BF8(void* self) {
+    *(unsigned long*)((char*)self + 0x74) |= 0x10000;
+}
 // LLM-HARNESS-END: us-801f78b4
 
 // LLM-HARNESS-BEGIN: us-801f78c4
-extern "C" void func_801F5C08() {}
+extern "C" void func_801F5C08(void* self) {
+    *(unsigned long*)((char*)self + 0x74) &= ~0x10000;
+}
 // LLM-HARNESS-END: us-801f78c4
 
 // LLM-HARNESS-BEGIN: us-801f78d4
@@ -1363,31 +1397,31 @@ extern "C" void func_801F5C18() {}
 // LLM-HARNESS-END: us-801f78d4
 
 // LLM-HARNESS-BEGIN: us-801f78e8
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F5C2C() {}
 // LLM-HARNESS-END: us-801f78e8
 
 // LLM-HARNESS-BEGIN: us-801f7e6c
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F61B0() {}
 // LLM-HARNESS-END: us-801f7e6c
 
 // LLM-HARNESS-BEGIN: us-801f7f38
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F627C() {}
 // LLM-HARNESS-END: us-801f7f38
 
 // LLM-HARNESS-BEGIN: us-801f8008
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F634C() {}
 // LLM-HARNESS-END: us-801f8008
 
 // LLM-HARNESS-BEGIN: us-801f843c
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F6780() {}
 // LLM-HARNESS-END: us-801f843c
 
 // LLM-HARNESS-BEGIN: us-801f8854
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F6B98() {}
 // LLM-HARNESS-END: us-801f8854
 
 // LLM-HARNESS-BEGIN: us-801f8a48
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" void func_801F6D8C() {}
 // LLM-HARNESS-END: us-801f8a48
 
 // LLM-HARNESS-BEGIN: us-801f8b1c
@@ -1427,7 +1461,7 @@ extern "C" void func_801F7F24() {}
 // LLM-HARNESS-END: us-801f9be0
 
 // LLM-HARNESS-BEGIN: us-801fa220
-extern "C" int func_801F8564(void* self) { return 1; }
+extern "C" int func_801F8564() { return 1; }
 // LLM-HARNESS-END: us-801fa220
 
 // LLM-HARNESS-BEGIN: us-801fa228

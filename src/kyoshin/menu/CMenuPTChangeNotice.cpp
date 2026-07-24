@@ -37,7 +37,7 @@ extern "C" void func_80293B9C() {}
 // LLM-HARNESS-END: us-80296198
 
 // LLM-HARNESS-BEGIN: us-8029620c
-extern "C" void func_80293C10() {}
+extern "C" void stub_us_8029620c() {}
 // LLM-HARNESS-END: us-8029620c
 
 // LLM-HARNESS-BEGIN: us-8029621c

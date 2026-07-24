@@ -22,27 +22,49 @@ extern "C" int thread(VMThread* pThread) { return 0; }
 // LLM-HARNESS-END: us-8003a6f0
 
 // LLM-HARNESS-BEGIN: us-8003a784
-extern "C" int start(VMThread* pThread) { return 0; }
+extern "C" int start_8003A784(VMThread* pThread, u32 r4) {
+    vmThreadStart(pThread, r4);
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a784
 
 // LLM-HARNESS-BEGIN: us-8003a7a8
-extern "C" int end(VMThread* pThread) { return 0; }
+extern "C" int end_8003A7A8(VMThread* pThread, u32 threadId) {
+    vmThreadEnd(threadId);
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a7a8
 
 // LLM-HARNESS-BEGIN: us-8003a7d0
-extern "C" int isAlive(VMThread* pThread) { return 0; }
+extern "C" int isAlive_8003A7D0(VMThread* pThread, u32 threadId) {
+    VMArg result;
+    result.type = !vmThreadIsAlive(threadId) + 1;
+    vmRetValSet(pThread, &result);
+    return 1;
+}
 // LLM-HARNESS-END: us-8003a7d0
 
 // LLM-HARNESS-BEGIN: us-8003a820
-extern "C" int join(VMThread* pThread) { return 0; }
+extern "C" int join_8003A820(VMThread* pThread, u32 threadId) {
+    if (vmThreadIsAlive(threadId)) {
+        vmWaitModeSet(pThread);
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a820
 
 // LLM-HARNESS-BEGIN: us-8003a864
-extern "C" int sleep(VMThread* pThread) { return 0; }
+extern "C" int sleep_8003A864(VMThread* pThread, u32 threadId) {
+    vmThreadSleep(threadId);
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a864
 
 // LLM-HARNESS-BEGIN: us-8003a88c
-extern "C" int wakeup(VMThread* pThread) { return 0; }
+extern "C" int wakeup_8003A88C(VMThread* pThread, u32 threadId) {
+    vmThreadWakeup(threadId);
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a88c
 
 // LLM-HARNESS-BEGIN: us-8003a8b4

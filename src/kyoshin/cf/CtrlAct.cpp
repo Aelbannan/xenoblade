@@ -85,7 +85,10 @@ extern "C" void func_800D581C() {}
 // LLM-HARNESS-END: us-800d6304
 
 // LLM-HARNESS-BEGIN: us-800d6348
-extern "C" void func_800D5860() {}
+extern "C" unsigned long func_800D5860(void* self) {
+    unsigned long v = *(unsigned long*)((char*)self + 0x58);
+    return ((v >> 16) & 1) ? 0 : 1;
+}
 // LLM-HARNESS-END: us-800d6348
 
 // LLM-HARNESS-BEGIN: us-800d635c

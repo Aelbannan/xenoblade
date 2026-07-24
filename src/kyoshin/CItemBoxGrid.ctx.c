@@ -1342,41 +1342,14 @@ void ocBdatRegist();
 extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
 // LLM-HARNESS-END: us-801c6538
 
-// LLM-HARNESS-BEGIN: us-801c6578
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6578
 
-// LLM-HARNESS-BEGIN: us-801c6b1c
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6b1c
 
-// LLM-HARNESS-BEGIN: us-801c6b80
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6b80
 
-// LLM-HARNESS-BEGIN: us-801c6bc0
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6bc0
 
-// LLM-HARNESS-BEGIN: us-801c6bd8
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6bd8
 
-// LLM-HARNESS-BEGIN: us-801c6c18
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6c18
 
-// LLM-HARNESS-BEGIN: us-801c6d44
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6d44
 
-// LLM-HARNESS-BEGIN: us-801c6d5c
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6d5c
 
-// LLM-HARNESS-BEGIN: us-801c6d9c
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801c6d9c
 
 // LLM-HARNESS-BEGIN: us-801c6ed8
 extern "C" void __ct__801C5514() {}
@@ -1654,9 +1627,6 @@ extern "C" void func_801CAE9C() {}
 extern "C" void func_801CB038() {}
 // LLM-HARNESS-END: us-801cca8c
 
-// LLM-HARNESS-BEGIN: us-801ccb48
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
-// LLM-HARNESS-END: us-801ccb48
 
 // LLM-HARNESS-BEGIN: us-801ccb50
 extern "C" void func_801CB0FC() {}
@@ -1914,3 +1884,12 @@ extern "C" void func_801D1F9C() {}
 // LLM-HARNESS-BEGIN: us-801d387c
 extern "C" void sinit_801D1E30() {}
 // LLM-HARNESS-END: us-801d387c
+
+// LLM-HARNESS-BEGIN: us-801c6bc0
+extern u8 lbl_eu_805347F8[];
+extern "C" void __ct__CVisionItem(void* self) {
+    // Match retail store order: 0x804 first, then vtable
+    *(u16*)((u8*)self + 0x804) = 0;
+    *(void**)self = lbl_eu_805347F8;
+}
+// LLM-HARNESS-END: us-801c6bc0

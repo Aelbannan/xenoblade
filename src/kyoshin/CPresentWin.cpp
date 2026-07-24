@@ -89,5 +89,10 @@ extern "C" void func_8022E7F0() {}
 // LLM-HARNESS-END: us-802306e8
 
 // LLM-HARNESS-BEGIN: us-80230760
-extern "C" void func_8022E868() {}
+extern "C" u8 func_8022E868(void* self, u32 r4) {
+    u8 limit = *(u8*)((u8*)self + 0x41);
+    if (r4 >= limit) return 0;
+    // Force add r3,r3,r4 by using (u8*)self as base
+    return *(u8*)((u8*)self + 0x39 + r4);
+}
 // LLM-HARNESS-END: us-80230760

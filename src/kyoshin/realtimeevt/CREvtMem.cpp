@@ -29,5 +29,9 @@ extern "C" void func_80167FFC() {}
 // LLM-HARNESS-END: us-801691f8
 
 // LLM-HARNESS-BEGIN: us-80169224
-extern "C" void func_80168028() {}
+extern "C" void* func_80168028(unsigned long idx) {
+    extern unsigned long lbl_eu_80664260;
+    unsigned long* arr = (unsigned long*)(lbl_eu_80664260);
+    return (void*)(arr[idx + 4]);
+}
 // LLM-HARNESS-END: us-80169224

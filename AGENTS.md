@@ -24,6 +24,11 @@ python3 tools/coop/run.py targets sync-calls
 python3 tools/coop/run.py targets recertify --bottom-up --dry-run
 python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
 python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
+python3 tools/coop/batch-cycle.py <target-id> [<target-id> ...] \
+    --hypothesis-map map.json            # mass-cycle after matching
+python3 tools/coop/batch-cycle.py <target-id> \
+    --default-hypothesis "..." --default-next-change "..." \
+    --summary sum.json                   # with structured report
 python3 tools/llm_harness/run.py solve <target-id> --dry-run
 python3 tools/llm_harness/run.py solve <target-id>
 python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog

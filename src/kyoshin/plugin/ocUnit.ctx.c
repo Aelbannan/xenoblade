@@ -2293,23 +2293,23 @@ void ocUnitRegist();
 /* end "kyoshin/plugin/ocUnit.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8003c18c
-extern "C" bool isValid() { return false; }
+extern "C" void func_8003BC10() {}
 // LLM-HARNESS-END: us-8003c18c
 
 // LLM-HARNESS-BEGIN: us-8003c2e0
-extern "C" int CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv(void* self) { return (signed char)((u8*)self)[0]; }
+extern "C" void CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv() {}
 // LLM-HARNESS-END: us-8003c2e0
 
 // LLM-HARNESS-BEGIN: us-8003c2ec
-extern "C" int CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv(void* self) { return (signed char)((u8*)self)[0]; }
+extern "C" void CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv() {}
 // LLM-HARNESS-END: us-8003c2ec
 
 // LLM-HARNESS-BEGIN: us-8003c2f8
-extern "C" bool isValid() { return false; }
+extern "C" void func_8003BD7C() {}
 // LLM-HARNESS-END: us-8003c2f8
 
 // LLM-HARNESS-BEGIN: us-8003c5c0
-extern "C" bool isValid() { return false; }
+extern "C" void func_8003C044() {}
 // LLM-HARNESS-END: us-8003c5c0
 
 // LLM-HARNESS-BEGIN: us-8003c644
@@ -2317,23 +2317,26 @@ extern "C" bool CfObject_UnkVirtualFunc23__Q22cf8CfObjectFv() { return false; }
 // LLM-HARNESS-END: us-8003c644
 
 // LLM-HARNESS-BEGIN: us-8003c64c
-extern "C" bool isValid() { return false; }
+extern "C" void func_8003C0D0() {}
 // LLM-HARNESS-END: us-8003c64c
 
 // LLM-HARNESS-BEGIN: us-8003c6d0
-extern "C" bool isValid() { return false; }
+extern "C" void func_8003C154() {}
 // LLM-HARNESS-END: us-8003c6d0
 
 // LLM-HARNESS-BEGIN: us-8003c754
-extern "C" bool isValid() { return false; }
+extern "C" void func_8003C1D8() {}
 // LLM-HARNESS-END: us-8003c754
 
 // LLM-HARNESS-BEGIN: us-8003c7cc
-extern "C" bool isValid() { return false; }
+extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) {
+    float f = *(float*)((char*)self + 0x4c);
+    return f * 0.019592438f;
+}
 // LLM-HARNESS-END: us-8003c7cc
 
 // LLM-HARNESS-BEGIN: us-8003c7dc
-extern "C" bool isValid() { return false; }
+extern "C" void func_8003C260() {}
 // LLM-HARNESS-END: us-8003c7dc
 
 // LLM-HARNESS-BEGIN: us-8003c868
@@ -2377,7 +2380,11 @@ extern "C" void func_8003C6E8() {}
 // LLM-HARNESS-END: us-8003cc64
 
 // LLM-HARNESS-BEGIN: us-8003ccf0
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0xC4 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-8003ccf0
 
 // LLM-HARNESS-BEGIN: us-8003cd00
@@ -2517,7 +2524,9 @@ extern "C" void winTalk() {}
 // LLM-HARNESS-END: us-8003dfec
 
 // LLM-HARNESS-BEGIN: us-8003e1e0
-extern "C" void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv() {}
+extern "C" void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
+    *(unsigned long*)((char*)self + 4) |= bits;
+}
 // LLM-HARNESS-END: us-8003e1e0
 
 // LLM-HARNESS-BEGIN: us-8003e1f0
@@ -2529,7 +2538,9 @@ extern "C" void func_8003DC7C() {}
 // LLM-HARNESS-END: us-8003e1f8
 
 // LLM-HARNESS-BEGIN: us-8003e2b0
-extern "C" void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv() {}
+extern "C" void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
+    *(unsigned long*)((char*)self + 4) &= ~mask;
+}
 // LLM-HARNESS-END: us-8003e2b0
 
 // LLM-HARNESS-BEGIN: us-8003e2c0

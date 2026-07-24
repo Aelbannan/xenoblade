@@ -37,5 +37,11 @@ extern "C" void getTimeIdxMax() {}
 // LLM-HARNESS-END: us-80045d1c
 
 // LLM-HARNESS-BEGIN: us-80045da8
-extern "C" void ocCfpRegist(void) { vmOCRegist(); }
+extern "C" {
+BOOL vmOCRegist(OCData* pOC);
+}
+extern OCData lbl_eu_80525D58[];
+void ocCfpRegist() {
+    vmOCRegist(lbl_eu_80525D58);
+}
 // LLM-HARNESS-END: us-80045da8

@@ -295,7 +295,11 @@ extern "C" void func_80287DB4() {}
 // LLM-HARNESS-END: us-8028a238
 
 // LLM-HARNESS-BEGIN: us-8028a36c
-extern "C" void func_80287EE8() {}
+extern "C" u8 func_80287EE8(void* self) {
+    u8 val = *(u8*)((u8*)self + 0x1FE);
+    *(u8*)((u8*)self + 0x1FE) = 0;
+    return val;
+}
 // LLM-HARNESS-END: us-8028a36c
 
 // LLM-HARNESS-BEGIN: us-8028a380

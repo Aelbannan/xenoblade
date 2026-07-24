@@ -69,11 +69,19 @@ extern "C" void func_800C0474__Q22cf10CfObjectPcFv() {}
 // LLM-HARNESS-END: us-800c0ebc
 
 // LLM-HARNESS-BEGIN: us-800c0f4c
-extern "C" void func_800C0504__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800C0504__Q22cf10CfObjectPcFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x5f4 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800c0f4c
 
 // LLM-HARNESS-BEGIN: us-800c0f5c
-extern "C" void func_800C0514__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800C0514__Q22cf10CfObjectPcFv(void* self) {
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0x5f4 / 4];
+    func(self);
+}
 // LLM-HARNESS-END: us-800c0f5c
 
 // LLM-HARNESS-BEGIN: us-800c0f6c

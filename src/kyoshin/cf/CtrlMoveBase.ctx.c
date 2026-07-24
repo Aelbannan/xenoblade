@@ -1,8 +1,9 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/CtrlMoveBase
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit for kyoshin/cf/CCtrlMoveBase
+// This file implements the CtrlMoveBase class — base for move-control objects.
+// Two virtual stubs are FULL_MATCH (100% instruction match, semantically equivalent).
+// The remaining functions are scaffolded stubs awaiting decompilation.
 
-/* "src/kyoshin/cf/CtrlMoveBase.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CtrlMoveBase.cpp" line 5 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1322,8 +1323,8 @@ public:
     static void func_8003AA8C(u32 val);
     static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
 
 #ifdef __cplusplus
@@ -1337,6 +1338,46 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CtrlMoveBase.cpp" line 6 "kyoshin/cf/CtrlMoveBase.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CtrlMoveBase.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+
+    // Base class for move-control objects (CCtrlMovePC, CCtrlMoveEne, CCtrlMoveNpc, etc.)
+    // Manages position, velocity, and movement state for controllable entities.
+    //
+    // Layout (from constructor at 0x800892DC):
+    //   0x00: parent vtable / first field
+    //   0x0C: mPosition (CVec3, 12 bytes)
+    //   0x18: mVelocity (CVec3, 12 bytes)
+    //   0x24: padding/unknown (12 bytes)
+    //   0x30: mpSomePtr (initialized to NULL)
+    //   0x34: mpDataPtr (set from constructor param)
+    //   0x38: mFloatParam1 (from lbl_80666598)
+    //   0x3C: mFloatParam2 (from lbl_8066659C)
+    //   0x40: mFlagsU16_1
+    //   0x42: mFlagsU16_2
+    //   0x44: mByte1
+    //   0x45: mByte2
+    //   0x48: secondary vtable (interface or adjusted base)
+    // Minimum size: 0x4C
+    class CCtrlMoveBase {
+    public:
+        CCtrlMoveBase();
+        virtual ~CCtrlMoveBase();
+
+        // Empty virtual stub — no-op override for interface slot.
+        virtual void func_80089628();
+
+        // Empty virtual stub — no-op override for interface slot.
+        virtual void func_8008A0C4();
+    };
+
+} // namespace cf
+/* end "kyoshin/cf/CtrlMoveBase.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800892dc
 extern "C" void __ct__80088904() {}
@@ -1358,6 +1399,7 @@ extern "C" void func_80089398() {}
 extern "C" void func_800895A8() {}
 // LLM-HARNESS-END: us-80089f80
 
+// FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_80089628)
 // LLM-HARNESS-BEGIN: us-8008a000
 extern "C" void func_80089628() {}
 // LLM-HARNESS-END: us-8008a000
@@ -1367,7 +1409,9 @@ extern "C" void func_8008962C() {}
 // LLM-HARNESS-END: us-8008a004
 
 // LLM-HARNESS-BEGIN: us-8008a05c
-extern "C" void func_80089684() {}
+extern "C" void func_80089684(void* self) {
+    *(unsigned short*)((char*)self + 0x40) &= 1;
+}
 // LLM-HARNESS-END: us-8008a05c
 
 // LLM-HARNESS-BEGIN: us-8008a06c
@@ -1410,6 +1454,7 @@ extern "C" void func_80089F68() {}
 extern "C" void func_8008A01C() {}
 // LLM-HARNESS-END: us-8008a9f4
 
+// FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_8008A0C4)
 // LLM-HARNESS-BEGIN: us-8008aa9c
 extern "C" void func_8008A0C4() {}
 // LLM-HARNESS-END: us-8008aa9c

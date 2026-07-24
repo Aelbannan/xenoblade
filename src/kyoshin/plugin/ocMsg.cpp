@@ -165,5 +165,11 @@ extern "C" s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
 // LLM-HARNESS-END: us-8003ad88
 
 // LLM-HARNESS-BEGIN: us-8003ade0
-extern "C" void ocMsgRegist() {}
+extern "C" BOOL vmOCRegist(OCData* pOC);
+extern OCData lbl_eu_80524CE8[];
+extern OCData lbl_eu_80524D80[];
+void ocMsgRegist() {
+    vmOCRegist(lbl_eu_80524CE8);
+    vmOCRegist(lbl_eu_80524D80);
+}
 // LLM-HARNESS-END: us-8003ade0

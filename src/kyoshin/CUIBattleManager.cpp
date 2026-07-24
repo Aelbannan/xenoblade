@@ -676,7 +676,8 @@ extern "C" void __ct__CUIBattleManager() {}
 extern "C" void func_8012E630() {}
 // LLM-HARNESS-END: us-8012f104
 // LLM-HARNESS-BEGIN: us-8012fd94
-extern "C" void func_8012F2C0() {}
+// Forward declaration - used by OnFileEvent this-adjusting thunk
+extern "C" void func_8012F2C0(void*, void*);
 // LLM-HARNESS-END: us-8012fd94
 // LLM-HARNESS-BEGIN: us-8013002c
 extern "C" void func_8012F558() {}
@@ -702,3 +703,12 @@ extern "C" void func_8012FD60() {}
 // LLM-HARNESS-BEGIN: us-801309dc
 extern "C" void __dt__Q216CUIBattleManager5CTestFv() {}
 // LLM-HARNESS-END: us-801309dc
+
+// LLM-HARNESS-BEGIN: us-80130a38
+// This-adjusting thunk: subi r3, r3, 0x54; b func_8012F2C0
+// MWCC does not generate this automatically for non-dtor virtual overrides.
+// Accepting as-is; may need DECOMP_ASM_INSN for exact match.
+extern "C" void OnFileEvent__16CUIBattleManagerFP10CEventFile(void* self, void* file) {
+    func_8012F2C0((char*)self - 0x54, file);
+}
+// LLM-HARNESS-END: us-80130a38

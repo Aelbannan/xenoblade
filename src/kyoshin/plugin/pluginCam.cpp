@@ -109,5 +109,10 @@ extern "C" void stopShake() {}
 // LLM-HARNESS-END: us-80061bb8
 
 // LLM-HARNESS-BEGIN: us-80061be0
-extern "C" void pluginCamRegist() {}
+extern "C" void pluginCamRegist() {
+    extern void vmPluginRegist(void*, void*);
+    extern char lbl_eu_804FB1A4[];
+    extern char lbl_eu_80526560[];
+    vmPluginRegist((void*)lbl_eu_804FB1A4, (void*)lbl_eu_80526560);
+}
 // LLM-HARNESS-END: us-80061be0

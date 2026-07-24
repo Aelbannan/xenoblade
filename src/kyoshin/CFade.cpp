@@ -23,7 +23,12 @@ extern "C" u8 func_80244510(CFade* self) { return self->mVisible; }
 
 
 // LLM-HARNESS-BEGIN: us-802467a8
-extern "C" void func_802445F0() {}
+extern "C" void func_802445F0(void* self) {
+    if (*(u32*)((u8*)self + 0x1C) != 0) {
+        *(u8*)((u8*)self + 0x26) = 1;
+        *(u8*)((u8*)self + 0x24) = 1;
+    }
+}
 // LLM-HARNESS-END: us-802467a8
 
 // LLM-HARNESS-BEGIN: us-802467c4

@@ -2,7 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/code_800F42AC.hpp"
 
 // LLM-HARNESS-BEGIN: us-800f4d94
 extern "C" void func_800F42AC() {}
@@ -29,7 +29,10 @@ extern "C" void func_800F4730() {}
 // LLM-HARNESS-END: us-800f5218
 
 // LLM-HARNESS-BEGIN: us-800f5264
-extern "C" u32 func_800F477C(void* self) { return *(u32*)((u8*)self + 0xC); }
+/// Returns the sub-object pointer at offset 0x0C (field subObject).
+extern "C" cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self) {
+    return self->subObject;
+}
 // LLM-HARNESS-END: us-800f5264
 
 // LLM-HARNESS-BEGIN: us-800f526c

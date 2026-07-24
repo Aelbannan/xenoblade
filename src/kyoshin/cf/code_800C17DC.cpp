@@ -44,9 +44,10 @@ extern "C" void func_800C1E9C() {}
 extern "C" void func_800C1EB8() {}
 // LLM-HARNESS-END: us-800c2900
 
-// LLM-HARNESS-BEGIN: us-800c2970
+// Default no-op callback stored in the callback table at lbl_eu_805739F8.
+// Called by func_800C1EB8 when it iterates the callback array and a slot has no
+// registered handler.  The empty body corresponds to a single blr instruction.
 extern "C" void func_800C1F28(void) {}
-// LLM-HARNESS-END: us-800c2970
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-800c2974

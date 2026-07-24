@@ -2,14 +2,22 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/menu/CMenuItemExchange.hpp"
+
+/**
+ * Offset from the OC thunk interface (CMenuItemExchangeOC*) to the
+ * containing CMenuItemExchange object. The OC system passes a pointer
+ * to a sub-object embedded at this offset; thunks subtract this value
+ * to recover the real this pointer before delegating.
+ */
+static const u32 CMENU_ITEM_EXCHANGE_OC_OFFSET = 0x6c;
 
 // LLM-HARNESS-BEGIN: us-801bf69c
 extern "C" void __ct__CMenuItemExchange() {}
 // LLM-HARNESS-END: us-801bf69c
 
 // LLM-HARNESS-BEGIN: us-801bf7c0
-extern "C" void __dt__17CMenuItemExchangeFv(void* self) {}
+extern "C" void __dt__17CMenuItemExchangeFv(CMenuItemExchange* self) {}
 // LLM-HARNESS-END: us-801bf7c0
 
 // LLM-HARNESS-BEGIN: us-801bf844
@@ -41,7 +49,7 @@ extern "C" void Move__17CMenuItemExchangeFv() {}
 // LLM-HARNESS-END: us-801c0534
 
 // LLM-HARNESS-BEGIN: us-801c0628
-extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void* self) {}
+extern "C" void cbRenderBefore__17CMenuItemExchangeFv(CMenuItemExchange* self) {}
 // LLM-HARNESS-END: us-801c0628
 
 // LLM-HARNESS-BEGIN: us-801c06d8
@@ -94,9 +102,23 @@ extern "C" void func_801BF70C() {}
 // LLM-HARNESS-END: us-801c1004
 
 // LLM-HARNESS-BEGIN: us-801c1054
-extern "C" void func_801BF75C(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuItemExchangeFv)((char*)self - 0x6c); }
+/**
+ * OC thunk for cbRenderBefore. Adjusts the OC wrapper pointer back to the
+ * containing CMenuItemExchange and delegates to cbRenderBefore.
+ */
+extern "C" void func_801BF75C(CMenuItemExchangeOC* param) {
+    ((void(*)(CMenuItemExchange*))cbRenderBefore__17CMenuItemExchangeFv)(
+        (CMenuItemExchange*)((u32)param - CMENU_ITEM_EXCHANGE_OC_OFFSET));
+}
 // LLM-HARNESS-END: us-801c1054
 
 // LLM-HARNESS-BEGIN: us-801c105c
-extern "C" void func_801BF764(void* self) { ((void(*)(void*))__dt__17CMenuItemExchangeFv)((char*)self - 0x6c); }
+/**
+ * OC thunk for the destructor. Adjusts the OC wrapper pointer back to the
+ * containing CMenuItemExchange and delegates to the real destructor.
+ */
+extern "C" void func_801BF764(CMenuItemExchangeOC* param) {
+    ((void(*)(CMenuItemExchange*))__dt__17CMenuItemExchangeFv)(
+        (CMenuItemExchange*)((u32)param - CMENU_ITEM_EXCHANGE_OC_OFFSET));
+}
 // LLM-HARNESS-END: us-801c105c

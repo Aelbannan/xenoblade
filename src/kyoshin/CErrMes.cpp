@@ -4,11 +4,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+extern "C" void func_8003AA8C__5CBdatFUl(unsigned long);
+
 // LLM-HARNESS-BEGIN: us-802b12dc
 extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
 // LLM-HARNESS-END: us-802b12dc
-
-extern "C" void func_8003AA8C__5CBdatFUl(unsigned long);
 
 
 
@@ -63,7 +63,8 @@ extern "C" void* func_eu_802B14E0(void) { return 0; }
 // LLM-HARNESS-END: us-802b14e0
 
 // LLM-HARNESS-BEGIN: us-802b14ec
-extern "C" void* func_eu_802B14EC(void) { return 0; }
+extern "C" u32 lbl_eu_8053A478[];
+extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 // LLM-HARNESS-END: us-802b14ec
 
 // LLM-HARNESS-BEGIN: us-802b14f8

@@ -133,5 +133,8 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
 } // namespace nw4hbm
 
 // LLM-HARNESS-BEGIN: us-803356d0
-extern "C" void* GetRuntimeTypeInfo__Q36nw4hbm3lyt7PictureCFv(void) { return 0; }
+extern "C" void* GetRuntimeTypeInfo__Q36nw4hbm3lyt7PictureCFv(void) {
+    extern const char typeInfo__Q36nw4hbm3lyt7Picture[];
+    return (void*)typeInfo__Q36nw4hbm3lyt7Picture;
+}
 // LLM-HARNESS-END: us-803356d0

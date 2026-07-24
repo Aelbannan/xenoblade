@@ -89,7 +89,8 @@ extern "C" void GetTypeName__Q34nw4r3g3d15AnmObjMatClrResCFv() {}
 // LLM-HARNESS-END: us-803e4c14
 
 // LLM-HARNESS-BEGIN: us-803e4c44
-extern "C" void* GetTypeObj__Q34nw4r3g3d15AnmObjMatClrResCFv(void) { return 0; }
+extern "C" const char lbl_eu_8051D548[];
+extern "C" void* GetTypeObj__Q34nw4r3g3d15AnmObjMatClrResCFv(void) { return (void*)lbl_eu_8051D548; }
 // LLM-HARNESS-END: us-803e4c44
 
 // LLM-HARNESS-BEGIN: us-803e4c50
@@ -101,5 +102,6 @@ extern "C" void GetTypeName__Q34nw4r3g3d12AnmObjMatClrCFv() {}
 // LLM-HARNESS-END: us-803e4c94
 
 // LLM-HARNESS-BEGIN: us-803e4cc4
-extern "C" void* GetTypeObj__Q34nw4r3g3d12AnmObjMatClrCFv(void) { return 0; }
+extern "C" const char lbl_eu_8051D530[];
+extern "C" void* GetTypeObj__Q34nw4r3g3d12AnmObjMatClrCFv(void) { return (void*)lbl_eu_8051D530; }
 // LLM-HARNESS-END: us-803e4cc4

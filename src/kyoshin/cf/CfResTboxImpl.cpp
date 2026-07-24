@@ -1,15 +1,14 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/CfResTboxImpl
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit for kyoshin/cf/CfResTboxImpl
+// Resource textbox implementation.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfResTboxImpl.hpp"
 
 // LLM-HARNESS-BEGIN: us-801faaf0
 extern "C" void __ct__cf_CfResTboxImpl() {}
 // LLM-HARNESS-END: us-801faaf0
 
 // LLM-HARNESS-BEGIN: us-801fab2c
-extern "C" int func_801F8E70(void* self) { return 256; }
+extern "C" int func_801F8E70() { return 256; }
 // LLM-HARNESS-END: us-801fab2c
 
 // LLM-HARNESS-BEGIN: us-801fab34

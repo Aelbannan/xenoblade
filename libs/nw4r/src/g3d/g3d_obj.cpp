@@ -32,5 +32,5 @@ extern "C" void IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj() 
 extern "C" void GetTypeName__Q34nw4r3g3d6G3dObjCFv() {}
 // LLM-HARNESS-END: us-803e96d8
 // LLM-HARNESS-BEGIN: us-803e9708
-extern "C" void* GetTypeObj__Q34nw4r3g3d6G3dObjCFv(void) { return 0; }
+// Defined inline via NW4R_G3D_RTTI_DECL_BASE(G3dObj) in g3d_obj.h
 // LLM-HARNESS-END: us-803e9708

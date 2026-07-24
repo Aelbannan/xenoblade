@@ -1,16 +1,15 @@
-// Auto-scaffolded catalog TU for kyoshin/CItemBoxGridSubMenu
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// TU for kyoshin/CItemBoxGridSubMenu
+// Submenu overlay widget for the item grid screen.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CItemBoxGridSubMenu.hpp"
 
-// LLM-HARNESS-BEGIN: us-80209d20
-extern "C" u8 func_80208358(void* self) { return ((u8*)self)[0x20]; }
-// LLM-HARNESS-END: us-80209d20
+extern "C" u8 func_80208358(CItemBoxGridSubMenu* self) {
+    return self->mIsVisible;
+}
 
-// LLM-HARNESS-BEGIN: us-8020a140
-extern "C" u8 func_80208360(void* self) { return ((u8*)self)[0x21]; }
-// LLM-HARNESS-END: us-8020a140
+extern "C" u8 func_80208360(CItemBoxGridSubMenu* self) {
+    return self->mIsOpened;
+}
 
 // LLM-HARNESS-BEGIN: us-8020a1ac
 extern "C" void func_802083CC() {}

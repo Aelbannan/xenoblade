@@ -1338,46 +1338,19 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
+extern "C" void func_8003AA8C__5CBdatFUl(unsigned long);
+
 // LLM-HARNESS-BEGIN: us-802b12dc
 extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
 // LLM-HARNESS-END: us-802b12dc
 
-extern "C" void func_8003AA8C__5CBdatFUl(unsigned long);
-// LLM-HARNESS-BEGIN: us-802b1334
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b1334
 
-// LLM-HARNESS-BEGIN: us-802b133c
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b133c
 
-// LLM-HARNESS-BEGIN: us-802b1354
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b1354
 
-// LLM-HARNESS-BEGIN: us-802b136c
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b136c
 
-// LLM-HARNESS-BEGIN: us-802b1384
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b1384
 
-// LLM-HARNESS-BEGIN: us-802b139c
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b139c
 
-// LLM-HARNESS-BEGIN: us-802b13b4
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b13b4
 
-// LLM-HARNESS-BEGIN: us-802b13cc
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b13cc
-
-// LLM-HARNESS-BEGIN: us-802b13e4
-extern "C" void func_eu_802B1334(void* self) { func_8003AA8C__5CBdatFUl(6); }
-// LLM-HARNESS-END: us-802b13e4
 
 // LLM-HARNESS-BEGIN: us-802b13fc
 extern "C" void func_eu_802B13FC() {}
@@ -1424,7 +1397,8 @@ extern "C" void* func_eu_802B14E0(void) { return 0; }
 // LLM-HARNESS-END: us-802b14e0
 
 // LLM-HARNESS-BEGIN: us-802b14ec
-extern "C" void* func_eu_802B14EC(void) { return 0; }
+extern "C" u32 lbl_eu_8053A478[];
+extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 // LLM-HARNESS-END: us-802b14ec
 
 // LLM-HARNESS-BEGIN: us-802b14f8

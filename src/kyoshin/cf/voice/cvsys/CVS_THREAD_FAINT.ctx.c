@@ -1,18 +1,14 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// CVS_THREAD_FAINT: Voice thread for the "faint" status effect.
+// FULL_MATCH: func_802A6DEC -- buffer-size getter (virtual method override).
+// Remaining functions are NOT_STARTED harness stubs.
 
-/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp" line 4 "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.hpp" */
 #pragma once
 
-/**
- * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
- *
- * Pulls recovered VM / script-helper headers only. Plugin units with their own
- * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
- */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.hpp" line 2 "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+#pragma once
 
-/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -720,6 +716,52 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
+
+class CVS_THREAD{
+public:
+    u32* unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+
+    CVS_THREAD();
+
+    //Virtual table (0x1c)
+    virtual void func_802A3B50();
+    virtual void func_802A3BEC();
+    virtual void blank1();
+    virtual void func_802A1EA0();
+    virtual void func_802A3740();
+    virtual void blank2();
+};
+
+extern void func_802A35A0(u32* destPtr);
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+
+// CVS_THREAD_FAINT: voice thread state machine for the "faint" status effect.
+// Allocates 0xF0 (240) bytes.  Overrides vmethod[2] to return that size.
+// Fields and remaining method overrides are filled in as the TU is decompiled.
+class CVS_THREAD_FAINT : public CVS_THREAD {
+public:
+    // Size of the thread-local buffer in bytes.
+    static const int BUFFER_SIZE = 0xF0;
+};
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp" line 5 "kyoshin/harness_catalog.hpp" */
+#pragma once
+
+/**
+ * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
+ *
+ * Pulls recovered VM / script-helper headers only. Plugin units with their own
+ * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
+ */
+
+/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* end "types.h" */
 /* "src/kyoshin/harness_catalog.hpp" line 10 "cstring" */
 #ifndef MSL_CPP_CSTRING_H
 #define MSL_CPP_CSTRING_H
@@ -1359,7 +1401,11 @@ extern "C" void func_802A6D74() {}
 // LLM-HARNESS-END: us-802a94a8
 
 // LLM-HARNESS-BEGIN: us-802a9520
-extern "C" int func_802A6DEC(void* self) { return 240; }
+// Virtual method override: returns the buffer size for this thread type.
+// Matches CVS_THREAD::blank1 slot in vtable; FAINT subclass returns 0xF0 (240).
+extern "C" int func_802A6DEC(CVS_THREAD_FAINT* self) {
+    return CVS_THREAD_FAINT::BUFFER_SIZE;
+}
 // LLM-HARNESS-END: us-802a9520
 
 // LLM-HARNESS-BEGIN: us-802a9528

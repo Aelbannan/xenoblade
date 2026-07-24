@@ -1,6 +1,7 @@
-// Auto-scaffolded catalog TU for kyoshin/menu/CMenuCollepedia
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Catalog TU for kyoshin/menu/CMenuCollepedia
+// FULL_MATCH: func_80253188, func_80253190
+
+#include "kyoshin/menu/CMenuCollepedia.hpp"
 
 #include "kyoshin/harness_catalog.hpp"
 
@@ -60,10 +61,39 @@ extern "C" void func_802530BC() {}
 extern "C" void func_80253128() {}
 // LLM-HARNESS-END: us-80255364
 
+/**
+ * IScnRender vtable this-adjusting thunk for cbRenderBefore.
+ *
+ * IScnRender is a non-primary base at offset 0x58 within CMenuCollepedia.
+ * The thunk converts the subobject pointer (IScnRender*) back to the enclosing
+ * CMenuCollepedia* via integer-offset adjustment before forwarding to the
+ * real override. The function-pointer cast prevents MWCC from null-checking
+ * the static_cast chain (which would add a cmpwi/beq that the retail thunk
+ * does not have).
+ *
+ * Retail: subi r3, r3, 0x58; b cbRenderBefore__15CMenuCollepediaFv
+ */
 // LLM-HARNESS-BEGIN: us-802553c4
-extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
+extern "C" void func_80253188(IScnRender* self) {
+    ((void(*)(CMenuCollepedia*))cbRenderBefore__15CMenuCollepediaFv)(
+        (CMenuCollepedia*)((u32)self - 0x58));
+}
 // LLM-HARNESS-END: us-802553c4
 
+/**
+ * IScnRender vtable this-adjusting thunk for destructor.
+ *
+ * Same adjustment as func_80253188: converts IScnRender* (at offset 0x58)
+ * back to CMenuCollepedia* and forwards to ~CMenuCollepedia(). r4 (the
+ * MWCC deletion flag) is preserved from the caller because the cast to
+ * void(*)(CMenuCollepedia*) declares only one parameter, leaving r4
+ * unmodified in the tail call.
+ *
+ * Retail: subi r3, r3, 0x58; b __dt__15CMenuCollepediaFv
+ */
 // LLM-HARNESS-BEGIN: us-802553cc
-extern "C" void func_80253190(void* self) { ((void(*)(void*))__dt__15CMenuCollepediaFv)((char*)self - 0x58); }
+extern "C" void func_80253190(IScnRender* self) {
+    ((void(*)(CMenuCollepedia*))__dt__15CMenuCollepediaFv)(
+        (CMenuCollepedia*)((u32)self - 0x58));
+}
 // LLM-HARNESS-END: us-802553cc

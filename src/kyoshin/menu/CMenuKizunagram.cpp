@@ -2,7 +2,8 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <types.h>
+#include "kyoshin/menu/CMenuKizunagram.hpp"
 
 // LLM-HARNESS-BEGIN: us-80258ba4
 extern "C" void __ct__CMenuKizunagram() {}
@@ -80,10 +81,32 @@ extern "C" void func_80257994() {}
 extern "C" void func_80257A2C() {}
 // LLM-HARNESS-END: us-80259c68
 
+// Forward declarations for member functions called by adjustor thunks
+// (used via direct function pointer to guarantee tail-call match).
+extern "C" void cbRenderBefore__15CMenuKizunagramFv(CMenuKizunagram* self);
+extern "C" void __dt__15CMenuKizunagramFv(CMenuKizunagram* self, int deletionFlag);
+
 // LLM-HARNESS-BEGIN: us-80259cb8
-extern "C" void func_80257A7C(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunagramFv)((char*)self - 0x58); }
+// IScnRender vtable adjustor thunk for cbRenderBefore.
+// When IScnRender virtual functions dispatch through IScnRender*,
+// 'this' points to the IScnRender subobject at offset +0x58 within
+// CMenuKizunagram. This thunk adjusts it back and tail-calls the
+// real implementation.
+extern "C" void func_80257A7C(IScnRender* self) {
+    ((void(*)(CMenuKizunagram*))cbRenderBefore__15CMenuKizunagramFv)(
+        reinterpret_cast<CMenuKizunagram*>(
+            reinterpret_cast<uintptr_t>(self) - 0x58));
+}
 // LLM-HARNESS-END: us-80259cb8
 
 // LLM-HARNESS-BEGIN: us-80259cc0
-extern "C" void func_80257A84(void* self) { ((void(*)(void*))__dt__15CMenuKizunagramFv)((char*)self - 0x58); }
+// IScnRender vtable adjustor thunk for ~CMenuKizunagram.
+// Same pointer adjustment as func_80257A7C. r4 (deletion flag)
+// is passed through from the IScnRender vtable caller unchanged.
+// The single-arg function pointer cast avoids MWCC zeroing r4.
+extern "C" void func_80257A84(IScnRender* self) {
+    ((void(*)(CMenuKizunagram*))__dt__15CMenuKizunagramFv)(
+        reinterpret_cast<CMenuKizunagram*>(
+            reinterpret_cast<uintptr_t>(self) - 0x58));
+}
 // LLM-HARNESS-END: us-80259cc0

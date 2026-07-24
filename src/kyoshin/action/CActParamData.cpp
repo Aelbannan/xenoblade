@@ -339,120 +339,212 @@ extern "C" void func_80056268() {}
 extern "C" void func_8005627C() {}
 // LLM-HARNESS-END: us-800568e4
 
+// Fake SI iface for vt+0x7c tail-call (-RTTI on: omit _v000/_v004).
+struct CActParamDataVTableIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual int vf7C(int a, int b);
+};
+
 // LLM-HARNESS-BEGIN: us-800568f8
-extern "C" void func_80056290() {}
+extern "C" int func_80056290(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 3);
+}
 // LLM-HARNESS-END: us-800568f8
 
 // LLM-HARNESS-BEGIN: us-8005690c
-extern "C" void func_800562A4() {}
+extern "C" int func_800562A4(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 4);
+}
 // LLM-HARNESS-END: us-8005690c
 
 // LLM-HARNESS-BEGIN: us-80056920
-extern "C" void func_800562B8() {}
+extern "C" int func_800562B8(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 5);
+}
 // LLM-HARNESS-END: us-80056920
 
 // LLM-HARNESS-BEGIN: us-80056934
-extern "C" void func_800562CC() {}
+extern "C" int func_800562CC(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 6);
+}
 // LLM-HARNESS-END: us-80056934
 
 // LLM-HARNESS-BEGIN: us-80056948
-extern "C" void func_800562E0() {}
+extern "C" int func_800562E0(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 7);
+}
 // LLM-HARNESS-END: us-80056948
 
 // LLM-HARNESS-BEGIN: us-8005695c
-extern "C" void func_800562F4() {}
+extern "C" int func_800562F4(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 8);
+}
 // LLM-HARNESS-END: us-8005695c
 
 // LLM-HARNESS-BEGIN: us-80056970
-extern "C" void func_80056308() {}
+extern "C" int func_80056308(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 9);
+}
 // LLM-HARNESS-END: us-80056970
 
 // LLM-HARNESS-BEGIN: us-80056984
-extern "C" void func_8005631C() {}
+extern "C" int func_8005631C(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 10);
+}
 // LLM-HARNESS-END: us-80056984
 
 // LLM-HARNESS-BEGIN: us-80056998
-extern "C" void func_80056330() {}
+extern "C" int func_80056330(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 11);
+}
 // LLM-HARNESS-END: us-80056998
 
 // LLM-HARNESS-BEGIN: us-800569ac
-extern "C" void func_80056344() {}
+extern "C" int func_80056344(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 12);
+}
 // LLM-HARNESS-END: us-800569ac
 
 // LLM-HARNESS-BEGIN: us-800569c0
-extern "C" void func_80056358() {}
+extern "C" int func_80056358(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 13);
+}
 // LLM-HARNESS-END: us-800569c0
 
 // LLM-HARNESS-BEGIN: us-800569d4
-extern "C" void func_8005636C() {}
+extern "C" int func_8005636C(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 14);
+}
 // LLM-HARNESS-END: us-800569d4
 
 // LLM-HARNESS-BEGIN: us-800569e8
-extern "C" void func_80056380() {}
+extern "C" int func_80056380(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 15);
+}
 // LLM-HARNESS-END: us-800569e8
 
 // LLM-HARNESS-BEGIN: us-800569fc
-extern "C" void func_80056394() {}
+extern "C" int func_80056394(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 16);
+}
 // LLM-HARNESS-END: us-800569fc
 
 // LLM-HARNESS-BEGIN: us-80056a10
-extern "C" void func_800563A8() {}
+extern "C" int func_800563A8(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 17);
+}
 // LLM-HARNESS-END: us-80056a10
 
 // LLM-HARNESS-BEGIN: us-80056a24
-extern "C" void func_800563BC() {}
+extern "C" int func_800563BC(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 18);
+}
 // LLM-HARNESS-END: us-80056a24
 
 // LLM-HARNESS-BEGIN: us-80056a38
-extern "C" void func_800563D0() {}
+extern "C" int func_800563D0(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 19);
+}
 // LLM-HARNESS-END: us-80056a38
 
 // LLM-HARNESS-BEGIN: us-80056a4c
-extern "C" void func_800563E4() {}
+extern "C" int func_800563E4(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 20);
+}
 // LLM-HARNESS-END: us-80056a4c
 
 // LLM-HARNESS-BEGIN: us-80056a60
-extern "C" void func_800563F8() {}
+extern "C" int func_800563F8(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 21);
+}
 // LLM-HARNESS-END: us-80056a60
 
 // LLM-HARNESS-BEGIN: us-80056a74
-extern "C" void func_8005640C() {}
+extern "C" int func_8005640C(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 22);
+}
 // LLM-HARNESS-END: us-80056a74
 
 // LLM-HARNESS-BEGIN: us-80056a88
-extern "C" void func_80056420() {}
+extern "C" int func_80056420(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 23);
+}
 // LLM-HARNESS-END: us-80056a88
 
 // LLM-HARNESS-BEGIN: us-80056a9c
-extern "C" void func_80056434() {}
+extern "C" int func_80056434(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 24);
+}
 // LLM-HARNESS-END: us-80056a9c
 
 // LLM-HARNESS-BEGIN: us-80056ab0
-extern "C" void func_80056448() {}
+extern "C" int func_80056448(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 25);
+}
 // LLM-HARNESS-END: us-80056ab0
 
 // LLM-HARNESS-BEGIN: us-80056ac4
-extern "C" void func_8005645C() {}
+extern "C" int func_8005645C(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 26);
+}
 // LLM-HARNESS-END: us-80056ac4
 
 // LLM-HARNESS-BEGIN: us-80056ad8
-extern "C" void func_80056470() {}
+extern "C" int func_80056470(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 27);
+}
 // LLM-HARNESS-END: us-80056ad8
 
 // LLM-HARNESS-BEGIN: us-80056aec
-extern "C" void func_80056484() {}
+extern "C" int func_80056484(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 28);
+}
 // LLM-HARNESS-END: us-80056aec
 
 // LLM-HARNESS-BEGIN: us-80056b00
-extern "C" void func_80056498() {}
+extern "C" int func_80056498(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 29);
+}
 // LLM-HARNESS-END: us-80056b00
 
 // LLM-HARNESS-BEGIN: us-80056b14
-extern "C" void func_800564AC() {}
+extern "C" int func_800564AC(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 30);
+}
 // LLM-HARNESS-END: us-80056b14
 
 // LLM-HARNESS-BEGIN: us-80056b28
-extern "C" void func_800564C0() {}
+extern "C" int func_800564C0(void* self, int a) {
+    return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 31);
+}
 // LLM-HARNESS-END: us-80056b28
 
 // LLM-HARNESS-BEGIN: us-80056b3c

@@ -1,12 +1,12 @@
-// Auto-scaffolded catalog TU for kyoshin/CFade
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Catalog TU for kyoshin/CFade
+// FULL_MATCH: func_80244508 (returns mReady), func_80244510 (returns mVisible).
+// Remaining stubs are NOT_STARTED.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CFade.hpp"
 
-// LLM-HARNESS-BEGIN: us-80246498
-extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
-// LLM-HARNESS-END: us-80246498
+// LLM-HARNESS-BEGIN: us-802466c0
+extern "C" u8 func_80244508(CFade* self) { return self->mReady; }
+// LLM-HARNESS-END: us-802466c0
 
 
 
@@ -15,7 +15,7 @@ extern "C" u8 func_80244508(void* self) { return ((u8*)self)[0x26]; }
 
 
 // LLM-HARNESS-BEGIN: us-802466c8
-extern "C" u8 func_80244510(void* self) { return ((u8*)self)[0x27]; }
+extern "C" u8 func_80244510(CFade* self) { return self->mVisible; }
 // LLM-HARNESS-END: us-802466c8
 
 

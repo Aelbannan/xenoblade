@@ -1,16 +1,9 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/lod/UnkClass_8046A530.hpp"
 
 namespace LOD {
-
-// Minimal definition for the embedded sub-object at LODMemMan+0xabc.
-// Full layout is in code_8046A530 TU; only methods called from LODMemMan
-// are declared here.
-class UnkClass_8046A530 {
-public:
-    void func_8046AADC();
-};
 
 /**
  * LOD memory manager.  Large object; only fields used by matched
@@ -20,6 +13,7 @@ class LODMemMan {
 public:
     float func_8046F01C();
     void func_8046F088();
+    void func_80471834();
 
 private:
     u8  _00[0x7c];                    // unknown leading fields

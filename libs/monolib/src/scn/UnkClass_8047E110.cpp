@@ -1,8 +1,30 @@
-// Auto-scaffolded catalog TU for monolib/src/scn/UnkClass_8047E110
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit: monolib/src/scn/UnkClass_8047E110
+// Unknown scene class implementation.
+//
+// Status: Only sinit_80481E68 is FULL_MATCH (empty .ctors hook, 4 bytes).
+//         Remaining 29 functions are NOT_STARTED stubs.
 
-#include <harness_catalog.h>
+#include <monolib/scn/UnkClass_8047E110.hpp>
+
+// ============================================================
+// FULL_MATCH functions
+// ============================================================
+
+/**
+ * sinit_80481E68 -- static initializer registered in .ctors.
+ *
+ * Empty body (just blr). Referenced from the .ctors section at
+ * 0x804FA158 to trigger TU-level construction ordering.
+ *
+ * Retail: 4E 80 00 20  (blr)
+ */
+// LLM-HARNESS-BEGIN: us-80485e38
+extern "C" void sinit_80481E68() {}
+// LLM-HARNESS-END: us-80485e38
+
+// ============================================================
+// NOT_STARTED stubs (to be decompiled)
+// ============================================================
 
 // LLM-HARNESS-BEGIN: us-804820e0
 extern "C" void func_8047E110__17UnkClass_8047E110Fv() {}
@@ -119,8 +141,3 @@ extern "C" void func_804819AC__17UnkClass_8047E110Fv() {}
 // LLM-HARNESS-BEGIN: us-80485994
 extern "C" void func_804819C4__17UnkClass_8047E110Fv() {}
 // LLM-HARNESS-END: us-80485994
-
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// LLM-HARNESS-BEGIN: us-80485e38
-extern "C" void sinit_80481E68(void) {}
-// LLM-HARNESS-END: us-80485e38

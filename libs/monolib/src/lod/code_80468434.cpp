@@ -1,8 +1,4 @@
-// Auto-scaffolded catalog TU for monolib/src/lod/code_80468434
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
-
-#include <harness_catalog.h>
+#include <types.h>
 
 // LLM-HARNESS-BEGIN: us-8046c404
 extern "C" void func_80468434__Q23LOD17UnkClass_80468434Fv() {}
@@ -70,5 +66,5 @@ extern "C" void func_8046A3B4__Q23LOD17UnkClass_80468434Fv() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-8046e4fc
-extern "C" void sinit_8046A52C(void) {}
+extern "C" void sinit_8046A52C() {}
 // LLM-HARNESS-END: us-8046e4fc

@@ -232,3 +232,7 @@ extern "C" u8 func_80080E20__Q22cf13CfGameManagerFv() { return lbl_eu_80663E5D; 
 extern u8 lbl_eu_8066476D;
 extern "C" u8 func_80080E28__Q22cf13CfGameManagerFv() { return lbl_eu_8066476D; }
 // LLM-HARNESS-END: us-800817c8
+// LLM-HARNESS-BEGIN: us-8007e39c
+extern "C" u32 lbl_eu_8065FC18[];
+extern "C" void* func_8007DA00__Q22cf13CfGameManagerFv() { return (void*)lbl_eu_8065FC18; }
+// LLM-HARNESS-END: us-8007e39c

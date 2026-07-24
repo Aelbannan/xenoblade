@@ -218,5 +218,6 @@ const void* GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {
 extern "C" void GetTypeName__Q34nw4r3g3d6AnmScnCFv() {}
 // LLM-HARNESS-END: us-803e95bc
 // LLM-HARNESS-BEGIN: us-803e95ec
-extern "C" void* GetTypeObj__Q34nw4r3g3d6AnmScnCFv(void) { return 0; }
+extern "C" const char lbl_eu_8051D620[];
+extern "C" void* GetTypeObj__Q34nw4r3g3d6AnmScnCFv(void) { return (void*)lbl_eu_8051D620; }
 // LLM-HARNESS-END: us-803e95ec

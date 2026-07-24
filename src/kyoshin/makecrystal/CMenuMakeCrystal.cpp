@@ -2,7 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
 // LLM-HARNESS-BEGIN: us-80212a78
 extern "C" void __ct__CMenuMakeCrystal() {}
@@ -64,10 +64,28 @@ extern "C" void func_80212490() {}
 extern "C" void func_802124AC() {}
 // LLM-HARNESS-END: us-80214304
 
+// IScnRender vtable this-adjusting thunk for cbRenderBefore.
+// IScnRender is a non-primary base at offset 0x58 within CMenuMakeCrystal.
+// The thunk converts the subobject pointer (IScnRender*) to the enclosing
+// CMenuMakeCrystal* via integer-offset adjustment before forwarding to the
+// real override. The incompatible cast to void(*)(CMenuMakeCrystal*)
+// prevents MWCC from inlining the empty-stub body (which would collapse
+// the thunk to blr).
 // LLM-HARNESS-BEGIN: us-8021434c
-extern "C" void func_802124F4(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuMakeCrystalFv)((char*)self - 0x58); }
+extern "C" void func_802124F4(IScnRender* self) {
+    ((void(*)(CMenuMakeCrystal*))cbRenderBefore__16CMenuMakeCrystalFv)(
+        (CMenuMakeCrystal*)((u32)self - 0x58));
+}
 // LLM-HARNESS-END: us-8021434c
 
+// IScnRender vtable this-adjusting thunk for destructor.
+// Adjusts from IScnRender* (at offset 0x58) to full CMenuMakeCrystal* and
+// forwards to ~CMenuMakeCrystal(). r4 (deletion flag) is preserved from
+// the caller because the cast to void(*)(CMenuMakeCrystal*) declares only
+// one parameter, leaving r4 untouched.
 // LLM-HARNESS-BEGIN: us-80214354
-extern "C" void func_802124FC(void* self) { ((void(*)(void*))__dt__16CMenuMakeCrystalFv)((char*)self - 0x58); }
+extern "C" void func_802124FC(IScnRender* self) {
+    ((void(*)(CMenuMakeCrystal*))__dt__16CMenuMakeCrystalFv)(
+        (CMenuMakeCrystal*)((u32)self - 0x58));
+}
 // LLM-HARNESS-END: us-80214354

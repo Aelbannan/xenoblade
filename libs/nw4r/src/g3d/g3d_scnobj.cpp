@@ -718,11 +718,14 @@ extern "C" void IsDerivedFrom__Q34nw4r3g3d6ScnObjCFQ44nw4r3g3d6G3dObj7TypeObj() 
 extern "C" void GetTypeName__Q34nw4r3g3d8ScnGroupCFv() {}
 // LLM-HARNESS-END: us-803f7f2c
 // LLM-HARNESS-BEGIN: us-803f7f5c
-extern "C" void GetTypeObj__Q34nw4r3g3d8ScnGroupCFv() {}
+// Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros
+// LLM-HARNESS-BEGIN: us-803f7f5c
+// LLM-HARNESS-END: us-803f7f5c
 // LLM-HARNESS-END: us-803f7f5c
 // LLM-HARNESS-BEGIN: us-803f7f68
 extern "C" void GetTypeName__Q34nw4r3g3d6ScnObjCFv() {}
 // LLM-HARNESS-END: us-803f7f68
 // LLM-HARNESS-BEGIN: us-803f7f98
-extern "C" void GetTypeObj__Q34nw4r3g3d6ScnObjCFv() {}
+// LLM-HARNESS-BEGIN: us-803f7f98
+// LLM-HARNESS-END: us-803f7f98
 // LLM-HARNESS-END: us-803f7f98

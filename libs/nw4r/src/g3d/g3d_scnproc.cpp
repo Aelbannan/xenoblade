@@ -78,5 +78,7 @@ extern "C" void IsDerivedFrom__Q34nw4r3g3d7ScnProcCFQ44nw4r3g3d6G3dObj7TypeObj()
 extern "C" void GetTypeName__Q34nw4r3g3d7ScnProcCFv() {}
 // LLM-HARNESS-END: us-803ff410
 // LLM-HARNESS-BEGIN: us-803ff440
-extern "C" void* GetTypeObj__Q34nw4r3g3d7ScnProcCFv(void) { return 0; }
+// Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros
+// LLM-HARNESS-BEGIN: us-803ff440
+// LLM-HARNESS-END: us-803ff440
 // LLM-HARNESS-END: us-803ff440

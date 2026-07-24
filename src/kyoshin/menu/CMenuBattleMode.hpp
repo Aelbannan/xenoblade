@@ -23,9 +23,9 @@ public:
     void Init();
 
     // IWorkEvent @0x58; IScnRender @0x5c (extab)
-    UnkClass_8045F564 unk60; // 0x60 -- layout memory region
-    CScn* unk70;              // 0x70 -- owning scene (addRenderCB target)
-    nw4r::lyt::Layout* unk74; // 0x74 -- layout draw target
-    nw4r::lyt::AnimTransform* unk78; // 0x78
-    nw4r::lyt::AnimTransform* unk7C; // 0x7c
+    UnkClass_8045F564 mLayoutMem;        // 0x60 -- layout memory region (MEM2 alloc, scoped region guard)
+    CScn* mScn;                          // 0x70 -- owning scene; addRenderCB target
+    nw4r::lyt::Layout* mLayout;          // 0x74 -- layout draw target (hosts animations)
+    nw4r::lyt::AnimTransform* mAnimDefault; // 0x78 -- default animation (label text, enabled at init)
+    nw4r::lyt::AnimTransform* mAnimLabel;   // 0x7C -- label animation (disabled at init)
 };

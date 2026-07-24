@@ -68,11 +68,11 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     float xScale = pFrustum->mScale.x;
     float yScale = pFrustum->mScale.y;
     CMat34 rotMat;
-    // z-scale via SDA 1.0f (lbl_eu_80667C88) — slight fuzzy win vs literal 1.
+    // z-scale via SDA 1.0f (lbl_eu_80667C88)
     pFrustum->mMat.setScale(CVec3(xScale, yScale, lbl_eu_80667C88));
     rotMat.setRotXYZ(pFrustum->mRot);
 
-    CMat34::mul(pFrustum->mMat, pFrustum->mMat, rotMat);
+    CMat34::mul(rotMat, pFrustum->mMat, pFrustum->mMat);
 
     pFrustum->mMat.addTranslation(pFrustum->mPos);
     pFrustum->mMat.invert(&pFrustum->mMatInv);
@@ -100,11 +100,12 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
 
     if(pFrustum->mFlags & CCullFrustum::FLAGS_01){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);
-        pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
-        pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
-        pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
-        pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
     }
+
+    pFrustum->mPlane1.set(pFrustum->unk90[0], pFrustum->unk90[1]);
+    pFrustum->mPlane2.set(pFrustum->unk90[1], pFrustum->unk90[2]);
+    pFrustum->mPlane3.set(pFrustum->unk90[2], pFrustum->unk90[3]);
+    pFrustum->mPlane4.set(pFrustum->unk90[3], pFrustum->unk90[0]);
 }
 
 bool COccCulling::func_801A0F04(CFrustum* r4){

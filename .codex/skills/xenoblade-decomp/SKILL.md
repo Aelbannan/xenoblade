@@ -140,7 +140,7 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
     --hypothesis "..." --next-change "..." --runtime-test ""
 → verify split object size: `coop run size <unit>` (decomp `.text` ≤ retail split budget)
 → optional: `behaviour ppc <test-id>` when a PPC harness exists
-→ if FAIL: inspect objdiff / build/coop-function-diff.json, revise, repeat
+→ if FAIL: inspect objdiff / `coop hexdiff <unit> -s <symbol>` / build/coop-function-diff.json, revise, repeat
 → if PASS: `cycle` persists the accepted state in `targets.json`; release the claim and do not edit the same function concurrently
 ```
 
@@ -198,6 +198,46 @@ python3 tools/coop/run.py build kyoshin/cf/CfPadTask
 python3 tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol <mangled-symbol>
 python3 tools/coop/run.py size kyoshin/cf/CfPadTask
 ```
+
+### Instruction-level hex diff (`tools/coop/hexdiff.py`)
+
+When `objdiff-cli diff` is unavailable headless (the `-o`/`--format` flags
+require a newer objdiff-cli than the installed version), or when you need a
+quick instruction-level comparison without launching the GUI, use `hexdiff.py`:
+
+```bash
+# Terminal mode — colour-coded side-by-side
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol>
+
+# JSON mode — machine-readable, consumable by scripts / cycle fallback
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --json
+
+# Skip rebuild when the object is already up to date
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --no-build
+
+# Show relocation tables alongside the diff
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --relocs
+```
+
+Output legend:
+- **Green** — instruction bytes match
+- **Red** — byte mismatch (retail hex vs decomp hex shown side by side)
+- **Yellow** — unresolved ELF relocation placeholder (the linker will fill this)
+
+The `<unit>` argument accepts any objdiff unit hint (e.g. `kyoshin/COccCulling`)
+or source path (e.g. `src/kyoshin/COccCulling.cpp`). The `--symbol` accepts the
+mangled name, case-insensitive exact, or unique substring.
+
+The tool uses the same ELF parser as `ppc_equivalence`
+(`tools/ppc_equivalence/elf_symbols.py`) and automatically resolves the
+retail/decomp `.o` pair from the objdiff project config. It builds the decomp
+object via `ninja` before diffing unless `--no-build` is passed.
+
+**When to use:** before editing source to understand the exact mismatch pattern
+(register swap, instruction selection, branch target, relocation), and after
+each edit to verify improvement or spot regressions. The `--json` output is
+designed as a drop-in replacement for `objdiff-cli diff -o` when the cycle
+command's function-diff JSON is unavailable.
 
 ### PPC semantic equivalence (optional additional evidence)
 
@@ -337,7 +377,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `tools/coop/targets.json` | Canonical function registry and current target state |
 | `tools/coop/targets.schema.json` | Registry data contract |
 | `configure.py` | Per-object matching flags and compiler options |
-| `tools/decompctx.py` | Context for decomp.me / compilation |
+| `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes); uses `ppc_equivalence` ELF parser |
 | `docs/MWCC_REFERENCE.md` | MWCC matching reference — read before matching; **append new patterns/breakthroughs here** |
 | `docs/MWCC_KNOWLEDGE_BASE.md` | Agent search protocol and structured-record migration plan |
 | `tools/mwcc_kb.py` | Search reference patterns + attempt history; use `--json` for agents |

@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.hpp"
 
 // LLM-HARNESS-BEGIN: us-802aba10
 extern "C" void __ct__802A92D8() {}
@@ -21,7 +22,10 @@ extern "C" void func_802A95A4() {}
 // LLM-HARNESS-END: us-802abcdc
 
 // LLM-HARNESS-BEGIN: us-802abd34
-extern "C" int func_802A95FC(void* self) { return 15; }
+// Returns the thread-local buffer size for vision-break.
+extern "C" int func_802A95FC(CVS_THREAD* self) {
+    return CVS_THREAD_VISION_BREAK::BUFFER_SIZE;
+}
 // LLM-HARNESS-END: us-802abd34
 
 // LLM-HARNESS-BEGIN: us-802abd3c

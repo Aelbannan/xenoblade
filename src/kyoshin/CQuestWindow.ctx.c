@@ -1345,27 +1345,6 @@ extern "C" u32 func_80122448(void) {
 }
 // LLM-HARNESS-END: us-80122c40
 
-// LLM-HARNESS-BEGIN: us-80122e38
-extern "C" u32 func_80122448(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
-}
-// LLM-HARNESS-END: us-80122e38
-
-// LLM-HARNESS-BEGIN: us-80122e8c
-extern "C" u32 func_80122448(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
-}
-// LLM-HARNESS-END: us-80122e8c
-
-// LLM-HARNESS-BEGIN: us-80122f24
-extern "C" u32 func_80122448(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
-}
-// LLM-HARNESS-END: us-80122f24
-
 // LLM-HARNESS-BEGIN: us-80122f2c
 extern "C" int lbl_eu_80663D1C;
 
@@ -1374,30 +1353,10 @@ extern "C" int func_80042864() {
 }
 // LLM-HARNESS-END: us-80122f2c
 
+extern u32 lbl_eu_80663F24;
 // LLM-HARNESS-BEGIN: us-80122f3c
 extern "C" void func_80122460() { lbl_eu_80663F24 = 0; }
 // LLM-HARNESS-END: us-80122f3c
-
-// LLM-HARNESS-BEGIN: us-80122f48
-extern "C" u32 func_80122448(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
-}
-// LLM-HARNESS-END: us-80122f48
-
-// LLM-HARNESS-BEGIN: us-80122f6c
-extern "C" u32 func_80122448(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
-}
-// LLM-HARNESS-END: us-80122f6c
-
-// LLM-HARNESS-BEGIN: us-80123000
-extern "C" u32 func_80122448(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
-}
-// LLM-HARNESS-END: us-80123000
 
 // LLM-HARNESS-BEGIN: us-80123130
 extern "C" void func_80122654() {}
@@ -1455,6 +1414,7 @@ extern "C" void func_801242FC() {}
 extern "C" void func_8012435C() {}
 // LLM-HARNESS-END: us-80124e38
 
+extern "C" void __dt__12CQuestWindowFv();
 // LLM-HARNESS-BEGIN: us-801250a8
 extern "C" void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))func_8012278C)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801250a8
@@ -1484,12 +1444,6 @@ public:
 };
 
 class IUIWindow;
-// LLM-HARNESS-BEGIN: us-80122de8
-extern "C" u32 func_80122448(void) {
-    extern u32 lbl_eu_80663FD0;
-    return lbl_eu_80663FD0;
-}
-// LLM-HARNESS-END: us-80122de8
 // LLM-HARNESS-BEGIN: us-80125018
 template<> void CTTask<IUIWindow>::Move() {}
 // LLM-HARNESS-END: us-80125018

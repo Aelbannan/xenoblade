@@ -117,7 +117,7 @@ extern "C" void func_80156928() {}
 // LLM-HARNESS-END: us-801573f4
 
 // LLM-HARNESS-BEGIN: us-801573f8
-extern "C" bool func_8015692C() { return false; }
+extern "C" u8 func_8015692C(u32 unused, void* obj) { return *(u8*)((char*)obj + 22); }
 // LLM-HARNESS-END: us-801573f8
 
 // LLM-HARNESS-BEGIN: us-80157400

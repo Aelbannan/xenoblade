@@ -10956,13 +10956,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -13028,6 +13037,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -16542,18 +16552,18 @@ public:
     ml::CCol4 mFrameColor; // 0x8
     ml::CCol4 mColor18; // 0x18
     ml::CCol4 mColor28; // 0x28
-    u32 unk38; // 0x38 — render flags / mode bits (1=border expand, 2=split)
-    float unk3C; // 0x3C — possibly padding or unused alignment filler
-    float unk40; // 0x40 — unused alignment padding to align mBorder siblings
-    float unk44; // 0x44 — unused alignment padding
-    float unk48; // 0x48 — unused alignment padding
-    float unk4C; // 0x4C — unused alignment padding
-    s16 unk50; // 0x50 — unused padding
-    s16 unk52; // 0x52 — unused padding
-    s16 mContentX; // 0x54 — client-area origin X (pixels from frame left edge to content)
-    s16 mContentY; // 0x56 — client-area origin Y (pixels from frame top edge to content)
-    s16 mBorder; // 0x58 — frame border thickness in pixels (used for expand/split sizing)
-    s16 unk5A; // 0x5A — unused trailing padding; satisfies 0x5C sizeof
+    u32 unk38; // 0x38 - render flags / mode bits (1=border expand, 2=split)
+    float unk3C; // 0x3C - possibly padding or unused alignment filler
+    float unk40; // 0x40 - unused alignment padding to align mBorder siblings
+    float unk44; // 0x44 - unused alignment padding
+    float unk48; // 0x48 - unused alignment padding
+    float unk4C; // 0x4C - unused alignment padding
+    s16 unk50; // 0x50 - unused padding
+    s16 unk52; // 0x52 - unused padding
+    s16 mContentX; // 0x54 - client-area origin X (pixels from frame left edge to content)
+    s16 mContentY; // 0x56 - client-area origin Y (pixels from frame top edge to content)
+    s16 mBorder; // 0x58 - frame border thickness in pixels (used for expand/split sizing)
+    s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
 extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
@@ -16584,13 +16594,28 @@ public:
     s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/include/monolib/core/CView.hpp" line 8 "monolib/core/CFontLayer.hpp" */
+#pragma once
 
-//size: 0x4
+/* "libs/monolib/include/monolib/core/CFontLayer.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Forward declaration for tail-call target
+class CDeviceFont;
+
+/// Font layer base class (size 0x4: vtable pointer only).
+/// CView inherits from this via multiple inheritance.
 class CFontLayer {
 public:
     CFontLayer();
     virtual ~CFontLayer();
+
+    /// Flush pending font rendering state.
+    /// Delegates to CDeviceFont internally; the int parameter is passed
+    /// through to the device layer but may be unused depending on context.
+    void fontFlush(int channel);
 };
+/* end "monolib/core/CFontLayer.hpp" */
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {
@@ -17280,31 +17305,32 @@ public:
 /* end "monolib/util.hpp" */
 
 struct PackHeader {
-    u32 unk0; //always 00FE1200
-    u32 unk4; //always 00000002
-    u32 mFileHashTableOffset; //0x8
-    u32 mPkhFilesize; //0xC
-    u32 mFiles; //0x10
-    char mFilename[32]; //0x14
-    u32 mHashValTableLength; //0x34
-    u8 mHashValTable[0x40]; //0x38
-    //might be a struct?
-    u64 mFileHashTable[]; //0x78
+    u32 mMagic;                   // 0x00 - always 0x00FE1200
+    u32 mVersion;                 // 0x04 - always 0x00000002
+    u32 mFileHashTableOffset;     // 0x08
+    u32 mPkhFilesize;             // 0x0C - total pkh file size
+    u32 mFiles;                   // 0x10 - number of files in pack
+    char mFilename[32];           // 0x14 - pack filename
+    u32 mHashValTableLength;      // 0x34 - length of hash value table
+    u8 mHashValTable[0x40];       // 0x38 - bit-position table for hash calculation
+    // Hash table: array of u64 pairs (lower, upper) at 0x78
+    // Followed by u16 file IDs, then optionally u32 file data offsets
+    u64 mFileHashTable[];         // 0x78
 };
 
 //size: 0x88
 class CPackItem : public IWorkEvent {
 public:
-    CPackItem(const char* name, UNKWORD r5);
+    CPackItem(const char* name, int partitionId);
     virtual ~CPackItem();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     void update();
-    bool func_804DE78C(const char* filename, char** r5, u32* r6, u32* r7, u32* r8);
+    bool lookupFile(const char* filename, char** outPkbPath, u32* outEntryId, u32* outIndex, u32* outFileId);
     int findHashIndex(int startIndex, int endIndex);
     bool isNotLoaded();
     bool calculatePackFileHash(const char* filename);
-    void func_804DE948();
+    void setupHashTable();
 
     enum LoadState {
         LOAD_STATE_NOT_LOADED,
@@ -17317,26 +17343,26 @@ public:
     //0x0: vtable
     //0x0-4: IWorkEvent
 
-    ml::FixStr<32> unk4;
-    ml::FixStr<32> mPkbFilename; //0x28
-    CFileHandle* mFileHandle; //0x4C
-    PackHeader* mPackHeader; //0x50
-    const char* unk54;
-    u64* mFileHashTable; //0x58
-    u16* unk5C; //0x5C
-    u32* unk60; //0x60
-    int mAdxPartitionId; //0x64
-    void* mAhxAdxDataPtr; //0x68
-    u32 mHashLowerHalf; //0x6C
-    u32 mHashUpperHalf; //0x70
-    LoadState mLoadState; //0x74
-    u8 unk78;
-    u8 unk79;
-    bool mIsAhxAdxFile; //0x7A
-    u8 unk7B; //filler?
-    u32 unk7C;
-    u32 unk80;
-    const char* unk84;
+    ml::FixStr<32> mBaseName;       // 0x04 - filename without path or extension
+    ml::FixStr<32> mPkbFilename;     // 0x28 - pkb archive path
+    CFileHandle* mFileHandle;        // 0x4C
+    PackHeader* mPackHeader;         // 0x50
+    const char* mArchiveName;        // 0x54 - archive name from constructor
+    u64* mFileHashTable;             // 0x58
+    u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
+    u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
+    int mAdxPartitionId;             // 0x64
+    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x6C
+    u32 mHashUpperHalf;              // 0x70
+    LoadState mLoadState;            // 0x74
+    u8 mFileReadFailed;              // 0x78 - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7A
+    u8 unk7B;                        // 0x7B - padding
+    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
+    const char* mFilePath;           // 0x84 - full path to the pack file
 };
 /* end "monolib/core/CPackItem.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 7 "monolib/core/CPadManager.hpp" */

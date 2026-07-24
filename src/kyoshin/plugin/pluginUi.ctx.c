@@ -12722,31 +12722,31 @@ extern "C" void pluginUiRegist() {}
 // LLM-HARNESS-END: us-80046de8
 
 // LLM-HARNESS-BEGIN: us-80045e24
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void winTalk() {}
 // LLM-HARNESS-END: us-80045e24
 // LLM-HARNESS-BEGIN: us-80045e98
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void pcTalk() {}
 // LLM-HARNESS-END: us-80045e98
 // LLM-HARNESS-BEGIN: us-80045f0c
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void winTalkWait() {}
 // LLM-HARNESS-END: us-80045f0c
 // LLM-HARNESS-BEGIN: us-80045fb4
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void winTalkNoName() {}
 // LLM-HARNESS-END: us-80045fb4
 // LLM-HARNESS-BEGIN: us-80045ff4
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void fadeIn_1() {}
 // LLM-HARNESS-END: us-80045ff4
 // LLM-HARNESS-BEGIN: us-800460a4
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void fadeOut_1() {}
 // LLM-HARNESS-END: us-800460a4
 // LLM-HARNESS-BEGIN: us-80046154
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void fadeWait_1() {}
 // LLM-HARNESS-END: us-80046154
 // LLM-HARNESS-BEGIN: us-800461a0
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void createCol6Sys() {}
 // LLM-HARNESS-END: us-800461a0
 // LLM-HARNESS-BEGIN: us-800461c4
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+extern "C" void createCol6Hint() {}
 // LLM-HARNESS-END: us-800461c4
 // LLM-HARNESS-BEGIN: us-800461e8
 extern "C" void createCol6Invite() {}

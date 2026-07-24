@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/realtimeevt/CREvtModel.hpp"
 
 // LLM-HARNESS-BEGIN: us-801739e0
 extern "C" void __ct__CREvtModel() {}
@@ -45,6 +46,8 @@ extern "C" void func_801729F0() {}
 // LLM-HARNESS-END: us-80173dec
 
 // LLM-HARNESS-BEGIN: us-801740bc
+// Trivial no-op placeholder. The retail function is a bare blr — no
+// initialization or side effects are required at this stub stage.
 extern "C" void func_80172CC0(void) {}
 // LLM-HARNESS-END: us-801740bc
 
@@ -73,5 +76,7 @@ extern "C" void func_801731A0() {}
 // LLM-HARNESS-END: us-8017459c
 
 // LLM-HARNESS-BEGIN: us-801745a8
-extern "C" int func_801731AC(void* self) { return 0; }
+// Stub: unconditionally returns 0. Accepts a CREvtModel pointer for ABI
+// compatibility but does not access it.
+extern "C" int func_801731AC(CREvtModel* self) { return 0; }
 // LLM-HARNESS-END: us-801745a8

@@ -33,7 +33,7 @@ void WaveSound::Shutdown() {
     mManager->Free(this);
 }
 
-void WaveSound::SetChannelPriority__Q44nw4r3snd6detail9WaveSoundFi(int priority) {
+void WaveSound::SetChannelPriority(int priority) {
     mWsdPlayer.SetChannelPriority(priority);
 }
 

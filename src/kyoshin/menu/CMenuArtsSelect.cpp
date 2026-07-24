@@ -732,7 +732,6 @@ after_ce48:
             unk54 = 1;
         }
         if (unk308 & 0x2u) {
-            // f32[5] stack homes -> frame -0x70 with stfs at sp+0x10..0x20.
             f32 homes[5];
             homes[0] = lbl_eu_80666F28;
             homes[1] = lbl_eu_80666F40 * unk88->GetFrame();
@@ -744,10 +743,10 @@ after_ce48:
             t[0] = homes[0];
             t[1] = homes[1];
             t[2] = homes[2];
+            // Sink homes[3/4] so the array storage is not truncated.
+            (void)*(volatile f32*)&homes[3];
+            (void)*(volatile f32*)&homes[4];
             unk308 |= 0x1u;
-            if (homes[3] + homes[4] == 0.0f) {
-                t[0] = homes[4];
-            }
         }
         break;
     case 4:

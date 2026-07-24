@@ -9,7 +9,7 @@ extern "C" void __dt__8CTaskLODFv() {}
 // LLM-HARNESS-END: us-80466800
 
 // LLM-HARNESS-BEGIN: us-80466870
-extern "C" void Init__8CTaskLODFv() {}
+extern "C" void Init__8CTaskLODFv(void) {}
 // LLM-HARNESS-END: us-80466870
 
 // LLM-HARNESS-BEGIN: us-80466874
@@ -17,7 +17,8 @@ extern "C" void Term__8CTaskLODFv() {}
 // LLM-HARNESS-END: us-80466874
 
 // LLM-HARNESS-BEGIN: us-804668cc
-extern "C" bool Move__8CTaskLODFv() { return false; }
+extern void func_8046DBC8__Q23LOD9LODMemManFv();
+extern "C" void Move__8CTaskLODFv(void* self) { func_8046DBC8__Q23LOD9LODMemManFv(); }
 // LLM-HARNESS-END: us-804668cc
 
 // LLM-HARNESS-BEGIN: us-804668d4

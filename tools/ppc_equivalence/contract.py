@@ -26,8 +26,8 @@ class EquivalenceContract:
     def __post_init__(self) -> None:
         if not self.observables and self.name != "live-out":
             raise ValueError("at least one observable is required")
-        if not 1 <= self.timeout_ms <= 600_000:
-            raise ValueError("solver timeout must be between 1 and 600000 ms")
+        if not 1 <= self.timeout_ms <= 1_800_000:
+            raise ValueError("solver timeout must be between 1 and 1800000 ms")
 
     def resolution_dict(self) -> dict[str, object] | None:
         if self.base_name is None and self.abi_shape is None:

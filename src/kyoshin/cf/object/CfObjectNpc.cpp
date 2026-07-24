@@ -33,5 +33,5 @@ extern "C" void func_800BF920__Q22cf11CfObjectNpcFv() {}
 // LLM-HARNESS-END: us-800c0368
 
 // LLM-HARNESS-BEGIN: us-800c03cc
-extern "C" bool func_800BF984__Q22cf11CfObjectNpcFv() { return false; }
+extern "C" u8 func_800BF984__Q22cf11CfObjectNpcFv(void* self) { return ((u8*)self)[0x71C]; }
 // LLM-HARNESS-END: us-800c03cc

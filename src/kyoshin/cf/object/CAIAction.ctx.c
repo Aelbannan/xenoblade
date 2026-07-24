@@ -927,8 +927,9 @@ CAIAction::CAIAction() {
 
 } // namespace cf
 
-// symbols.txt: Fv; retail uses r3=this, r4=outA, r5=outB.
-// Soft-cap ~96%: stwux vs retail stwx+add (no .text insn_patches).
+// Soft-cap ~96.02941%: MWCC fuses first dest store to stwux; retail is stwx+add
+// (src in r9, 8-then-4). slots[]/dstBytes identical; dual buffer aliases regress.
+// EQUIVALENT blocked by ring-loop bounds / Z3 timeout. No insn_patches/asm void.
 extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
                                                               cf::CAIActionSlot* outA,
                                                               cf::CAIActionExport* outB) {

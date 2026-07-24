@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuKizunaTalk() {}
 // LLM-HARNESS-END: us-801be330
 
 // LLM-HARNESS-BEGIN: us-801be438
-extern "C" void __dt__15CMenuKizunaTalkFv() {}
+extern "C" void __dt__15CMenuKizunaTalkFv(void* self) {}
 // LLM-HARNESS-END: us-801be438
 
 // LLM-HARNESS-BEGIN: us-801be4b0
@@ -25,7 +25,7 @@ extern "C" void Move__15CMenuKizunaTalkFv() {}
 // LLM-HARNESS-END: us-801be5dc
 
 // LLM-HARNESS-BEGIN: us-801be6e4
-extern "C" void cbRenderBefore__15CMenuKizunaTalkFv() {}
+extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void* self) {}
 // LLM-HARNESS-END: us-801be6e4
 
 // LLM-HARNESS-BEGIN: us-801be7b4
@@ -61,21 +61,21 @@ extern "C" void func_801BD630() {}
 // LLM-HARNESS-END: us-801bef28
 
 // LLM-HARNESS-BEGIN: us-801bf0d0
-extern "C" void func_801BD7D8() {}
+extern "C" void func_801BD7D8(void* self) {}
 // LLM-HARNESS-END: us-801bf0d0
 
 // LLM-HARNESS-BEGIN: us-801bf67c
-extern "C" bool OnFileEvent__15CMenuKizunaTalkFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801bf67c
 
 // LLM-HARNESS-BEGIN: us-801bf684
-extern "C" bool func_801BDD8C() { return false; }
+extern "C" void func_801BDD8C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-801bf684
 
 // LLM-HARNESS-BEGIN: us-801bf68c
-extern "C" bool func_801BDD94() { return false; }
+extern "C" void func_801BDD94(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuKizunaTalkFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-801bf68c
 
 // LLM-HARNESS-BEGIN: us-801bf694
-extern "C" bool func_801BDD9C() { return false; }
+extern "C" void func_801BDD9C(void* self) { ((void(*)(void*))__dt__15CMenuKizunaTalkFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-801bf694

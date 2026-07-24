@@ -33,5 +33,5 @@ extern "C" void func_802A1304() {}
 // LLM-HARNESS-END: us-802a3a38
 
 // LLM-HARNESS-BEGIN: us-802a3aec
-extern "C" void func_802A13B8() {}
+extern "C" void func_802A13B8(void) {}
 // LLM-HARNESS-END: us-802a3aec

@@ -17,11 +17,11 @@ extern "C" void func_801C36C4() {}
 // LLM-HARNESS-END: us-801c5088
 
 // LLM-HARNESS-BEGIN: us-801c5188
-extern "C" void func_801C37C4() {}
+extern "C" void func_801C37C4(void) {}
 // LLM-HARNESS-END: us-801c5188
 
 // LLM-HARNESS-BEGIN: us-801c518c
-extern "C" void func_801C37C8() {}
+extern "C" void func_801C37C8(void) {}
 // LLM-HARNESS-END: us-801c518c
 
 // LLM-HARNESS-BEGIN: us-801c5190

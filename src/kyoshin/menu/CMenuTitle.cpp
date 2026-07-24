@@ -45,19 +45,21 @@ extern "C" void func_802B6240() {}
 // LLM-HARNESS-END: us-802b8cb0
 
 // LLM-HARNESS-BEGIN: us-802b8cf0
-extern "C" void func_802B6280() {}
+extern "C" void func_802B6280(void) {}
 // LLM-HARNESS-END: us-802b8cf0
 
+extern "C" void __dt__10CMenuTitleFv(void* self);
 // LLM-HARNESS-BEGIN: us-802b8d84
-extern "C" bool func_802B6314() { return false; }
+extern "C" void func_802B6314(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802b8d84
 
+extern "C" void cbRenderBefore__10CMenuTitleFv(void* self);
 // LLM-HARNESS-BEGIN: us-802b8d8c
-extern "C" bool func_802B631C() { return false; }
+extern "C" void func_802B631C(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuTitleFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802b8d8c
 
 // LLM-HARNESS-BEGIN: us-802b8d94
-extern "C" bool func_802B6324() { return false; }
+extern "C" void func_802B6324(void* self) { ((void(*)(void*))__dt__10CMenuTitleFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802b8d94
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

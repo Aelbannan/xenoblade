@@ -3,6 +3,8 @@
 #include "monolib/core/CDesktop.hpp"
 #include "monolib/core/CProc.hpp"
 #include "monolib/core/CDesktop.hpp"
+#include "monolib/device/CDeviceGX.hpp"
+#include "monolib/device/CGXCache.hpp"
 #include "monolib/work/CWorkUtil.hpp"
 #include "monolib/work/CMsgParam.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -56,6 +58,87 @@ CView* CViewRoot::getCurrent() {
     return root->mCurrentView;
 }
 
+bool CViewRoot::isCurrent(const CView* view) {
+    CViewRoot* root = lbl_eu_806655D0;
+    if (root == nullptr) {
+        return false;
+    }
+
+    CView* current = root->mCurrentView;
+    int result = 0;
+    if (current != nullptr) {
+        if (current == view) {
+            result = 1;
+        }
+    }
+    return (bool)result;
+}
+
+// Walk view's child tree looking for `current`. Retail unrolls three levels
+// then recurses (same convertToView / mChildren walk as setCurrent).
+bool CViewRoot::isCurrentChild(const CView* view, const CView* current) {
+    _reslist_node<CWorkThread*>* node;
+    _reslist_node<CWorkThread*>* gnode;
+    _reslist_node<CWorkThread*>* hnode;
+    CView* child;
+    CView* grand;
+    CView* great;
+    int found;
+
+    if (lbl_eu_806655D0 == nullptr) {
+        return false;
+    }
+    if (current == nullptr) {
+        return false;
+    }
+
+    node = view->mChildren.mStartNodePtr->mNext;
+    while (node != view->mChildren.mStartNodePtr) {
+        child = CView::convertToView(node->mItem);
+        if (current == child) {
+            return true;
+        }
+
+        found = 0;
+        if (lbl_eu_806655D0 != nullptr && current != nullptr && child != nullptr) {
+            gnode = child->mChildren.mStartNodePtr->mNext;
+            while (gnode != child->mChildren.mStartNodePtr) {
+                grand = CView::convertToView(gnode->mItem);
+                if (current == grand) {
+                    found = 1;
+                    break;
+                }
+                found = 0;
+                if (lbl_eu_806655D0 != nullptr && current != nullptr && grand != nullptr) {
+                    hnode = grand->mChildren.mStartNodePtr->mNext;
+                    while (hnode != grand->mChildren.mStartNodePtr) {
+                        great = CView::convertToView(hnode->mItem);
+                        if (current == great) {
+                            found = 1;
+                            break;
+                        }
+                        if (isCurrentChild(great, current)) {
+                            found = 1;
+                            break;
+                        }
+                        hnode = hnode->mNext;
+                    }
+                }
+                if (found != 0) {
+                    found = 1;
+                    break;
+                }
+                gnode = gnode->mNext;
+            }
+        }
+        if (found != 0) {
+            return true;
+        }
+        node = node->mNext;
+    }
+    return false;
+}
+
 void CViewRoot::destroyProc(CProc* proc) {
     CViewRoot* root = getInstance();
 
@@ -99,7 +182,131 @@ bool CViewRoot::isInitialized() {
     return getInstance() != nullptr;
 }
 
+extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c);
+
+// Retail symbol is FPvPv but call sites pass three rect pointers (r3/r4/r5).
+// Inline three ring pushes (divw/mullw/subf shape) with instance reloads.
+extern "C" void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c) {
+    CViewRoot* root;
+    u32 index;
+    u32 used;
+    u32 cap;
+    u32 sum;
+    u32 slot;
+    u32* base;
+    u32* p;
+    u32 w0;
+    u32 w1;
+    void* savedB;
+
+    root = lbl_eu_806655D0;
+    if (root == nullptr) {
+        return;
+    }
+
+    savedB = b;
+    w0 = ((u32*)a)[0];
+    w1 = ((u32*)a)[1];
+    index = *(u32*)&root->mPool0.mList;
+    used = root->mPool0.mUsed;
+    cap = (u32)root->mPool0.mCapacity;
+    base = (u32*)root->mPool0.mStartNodePtr;
+    sum = index + used;
+    slot = sum - (sum / cap) * cap;
+    p = (u32*)((u8*)base + (slot << 3));
+    p[0] = w0;
+    p[1] = w1;
+    root->mPool0.mUsed = used + 1;
+
+    root = lbl_eu_806655D0;
+    w0 = ((u32*)savedB)[0];
+    w1 = ((u32*)savedB)[1];
+    index = *(u32*)&root->mPool1.mList;
+    used = root->mPool1.mUsed;
+    cap = (u32)root->mPool1.mCapacity;
+    base = (u32*)root->mPool1.mStartNodePtr;
+    sum = index + used;
+    slot = sum - (sum / cap) * cap;
+    p = (u32*)((u8*)base + (slot << 3));
+    p[0] = w0;
+    p[1] = w1;
+    root->mPool1.mUsed = used + 1;
+
+    root = lbl_eu_806655D0;
+    w0 = ((u32*)c)[0];
+    w1 = ((u32*)c)[1];
+    index = *(u32*)&root->mPool2.mList;
+    used = root->mPool2.mUsed;
+    cap = (u32)root->mPool2.mCapacity;
+    base = (u32*)root->mPool2.mStartNodePtr;
+    sum = index + used;
+    slot = sum - (sum / cap) * cap;
+    p = (u32*)((u8*)base + (slot << 3));
+    p[0] = w0;
+    p[1] = w1;
+    root->mPool2.mUsed = used + 1;
+
+    func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0, 0);
+}
+
+static u32* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
+    u32 index = *(u32*)&pool->mList;
+    u32 cap = (u32)pool->mCapacity;
+    u32* base = (u32*)pool->mStartNodePtr;
+    u32 slot = (index + logicalIndex) % cap;
+    return (u32*)((u8*)base + slot * 8);
+}
+
+extern "C" void func_80442C68__9CViewRootFv() {
+    CViewRoot* root = lbl_eu_806655D0;
+    if (root == nullptr) {
+        return;
+    }
+
+    if (root->mPool0.mUsed != 0) {
+        root->mPool0.mUsed = root->mPool0.mUsed - 1;
+    }
+    root = lbl_eu_806655D0;
+    if (root->mPool2.mUsed != 0) {
+        root->mPool2.mUsed = root->mPool2.mUsed - 1;
+    }
+    root = lbl_eu_806655D0;
+    if (root->mPool1.mUsed != 0) {
+        root->mPool1.mUsed = root->mPool1.mUsed - 1;
+    }
+
+    root = lbl_eu_806655D0;
+    if (root->mPool0.mUsed == 0) {
+        return;
+    }
+    if (root->mPool1.mUsed == 0) {
+        return;
+    }
+    if (root->mPool2.mUsed == 0) {
+        return;
+    }
+
+    func_8044B298__8CGXCacheFv(
+        CDeviceGX::getCacheInstance(),
+        poolPairAt(&root->mPool0, root->mPool0.mUsed - 1),
+        poolPairAt(&root->mPool1, root->mPool1.mUsed - 1),
+        poolPairAt(&root->mPool2, root->mPool2.mUsed - 1));
+}
+
 void CViewRoot::func_80442DA8() {
+    CViewRoot* root = lbl_eu_806655D0;
+    if (root == nullptr) {
+        return;
+    }
+    if (root->mPool0.mUsed == 0) {
+        return;
+    }
+
+    func_8044B298__8CGXCacheFv(
+        CDeviceGX::getCacheInstance(),
+        poolPairAt(&root->mPool0, root->mPool0.mUsed - 1),
+        poolPairAt(&root->mPool1, root->mPool1.mUsed - 1),
+        poolPairAt(&root->mPool2, root->mPool2.mUsed - 1));
 }
 
 void CViewRoot::setCurrent(CView* view) {

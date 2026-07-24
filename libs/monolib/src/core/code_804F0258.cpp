@@ -81,7 +81,8 @@ extern "C" void func_804F45EC() {}
 // LLM-HARNESS-END: us-804f8b48
 
 // LLM-HARNESS-BEGIN: us-804f8b7c
-extern "C" bool func_804F4620() { return false; }
+extern void GXSetProjection(void*, int);
+extern "C" void func_804F4620(void* self) { GXSetProjection((void*)(intptr_t)0x0, 0); }
 // LLM-HARNESS-END: us-804f8b7c
 
 // LLM-HARNESS-BEGIN: us-804f8b84
@@ -89,5 +90,5 @@ extern "C" void func_804F4628() {}
 // LLM-HARNESS-END: us-804f8b84
 
 // LLM-HARNESS-BEGIN: us-804f92d0
-extern "C" bool func_804F4D74() { return false; }
+extern "C" void func_804F4D74(void* self) { GXSetProjection((void*)(intptr_t)0x1, 0); }
 // LLM-HARNESS-END: us-804f92d0

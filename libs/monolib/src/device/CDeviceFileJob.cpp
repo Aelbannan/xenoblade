@@ -11,7 +11,7 @@ unk210(0){
 }
 
 // LLM-HARNESS-BEGIN: us-80454bcc
-extern "C" bool cancel__14CDeviceFileJobFP25CDeviceFileJob_UnkStruct1(void*) { return false; }
+extern "C" int cancel__14CDeviceFileJobFP25CDeviceFileJob_UnkStruct1(void* self) { return 0; }
 // LLM-HARNESS-END: us-80454bcc
 
 bool CDeviceFileJob::cancel(const char* pFilename){

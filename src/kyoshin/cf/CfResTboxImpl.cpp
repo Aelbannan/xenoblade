@@ -9,7 +9,7 @@ extern "C" void __ct__cf_CfResTboxImpl() {}
 // LLM-HARNESS-END: us-801faaf0
 
 // LLM-HARNESS-BEGIN: us-801fab2c
-extern "C" bool func_801F8E70() { return false; }
+extern "C" int func_801F8E70(void* self) { return 256; }
 // LLM-HARNESS-END: us-801fab2c
 
 // LLM-HARNESS-BEGIN: us-801fab34
@@ -21,7 +21,7 @@ extern "C" void func_801F8EB0() {}
 // LLM-HARNESS-END: us-801fab6c
 
 // LLM-HARNESS-BEGIN: us-801fae6c
-extern "C" void func_801F91B0() {}
+extern "C" void func_801F91B0(void) {}
 // LLM-HARNESS-END: us-801fae6c
 
 // LLM-HARNESS-BEGIN: us-801fae70

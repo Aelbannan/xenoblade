@@ -13,7 +13,7 @@ extern "C" void __dt__8023BFCC() {}
 // LLM-HARNESS-END: us-8023e0fc
 
 // LLM-HARNESS-BEGIN: us-8023e148
-extern "C" void __dt__Q22cf13CfNandManagerFv() {}
+extern "C" void __dt__Q22cf13CfNandManagerFv(void* self) {}
 // LLM-HARNESS-END: us-8023e148
 
 // LLM-HARNESS-BEGIN: us-8023e22c
@@ -69,7 +69,7 @@ extern "C" void __dt__8023E448() {}
 // LLM-HARNESS-END: us-8024058c
 
 // LLM-HARNESS-BEGIN: us-80240618
-extern "C" void func_8023E4D4__Q22cf13CfNandManagerFv() {}
+extern "C" void func_8023E4D4__Q22cf13CfNandManagerFv(void* self) {}
 // LLM-HARNESS-END: us-80240618
 
 // LLM-HARNESS-BEGIN: us-80240688
@@ -161,23 +161,23 @@ extern "C" void func_80240420() {}
 // LLM-HARNESS-END: us-802425d8
 
 // LLM-HARNESS-BEGIN: us-80242634
-extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv() {}
+extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv(void* self) {}
 // LLM-HARNESS-END: us-80242634
 
 // LLM-HARNESS-BEGIN: us-802427ac
-extern "C" bool OnFileEvent__Q22cf13CfNandManagerFv() { return false; }
+extern "C" void OnFileEvent__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))func_8023E4D4__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802427ac
 
 // LLM-HARNESS-BEGIN: us-802427b4
-extern "C" bool func_802405FC__Q22cf13CfNandManagerFv() { return false; }
+extern "C" void func_802405FC__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-802427b4
 
 // LLM-HARNESS-BEGIN: us-802427bc
-extern "C" bool func_80240604__Q22cf13CfNandManagerFv() { return false; }
+extern "C" void func_80240604__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802427bc
 
 // LLM-HARNESS-BEGIN: us-802427c4
-extern "C" bool func_8024060C__Q22cf13CfNandManagerFv() { return false; }
+extern "C" void func_8024060C__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802427c4
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
@@ -203,5 +203,5 @@ template<> void CTTask<cf::CfNandManager>::Move() {}
 template<> void CTTask<cf::CfNandManager>::Draw() {}
 // LLM-HARNESS-END: us-80242760
 // LLM-HARNESS-BEGIN: us-802427a8
-extern "C" void sinit_802405F0() {}
+extern "C" void sinit_802405F0(void) {}
 // LLM-HARNESS-END: us-802427a8

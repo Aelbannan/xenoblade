@@ -9,7 +9,7 @@ extern "C" void __ct__CREvtModelMap() {}
 // LLM-HARNESS-END: us-80181db4
 
 // LLM-HARNESS-BEGIN: us-80181efc
-extern "C" void __ct__80180B00() {}
+extern "C" void __ct__80180B00(void* self) {}
 // LLM-HARNESS-END: us-80181efc
 
 // LLM-HARNESS-BEGIN: us-8018205c
@@ -61,13 +61,13 @@ extern "C" void func_8018196C() {}
 // LLM-HARNESS-END: us-80182d74
 
 // LLM-HARNESS-BEGIN: us-80182d90
-extern "C" void func_80181988() {}
+extern "C" void func_80181988(void* self) {}
 // LLM-HARNESS-END: us-80182d90
 
 // LLM-HARNESS-BEGIN: us-80182e54
-extern "C" bool OnFileEvent__13CREvtModelMapFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__13CREvtModelMapFP10CEventFile(void* self) { ((void(*)(void*))func_80181988)((char*)self - 0x38); }
 // LLM-HARNESS-END: us-80182e54
 
 // LLM-HARNESS-BEGIN: us-80182e5c
-extern "C" bool func_80181A54() { return false; }
+extern "C" void func_80181A54(void* self) { ((void(*)(void*))__ct__80180B00)((char*)self - 0x38); }
 // LLM-HARNESS-END: us-80182e5c

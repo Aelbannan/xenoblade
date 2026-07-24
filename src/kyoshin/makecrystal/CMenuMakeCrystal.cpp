@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuMakeCrystal() {}
 // LLM-HARNESS-END: us-80212a78
 
 // LLM-HARNESS-BEGIN: us-80212b38
-extern "C" void __dt__16CMenuMakeCrystalFv() {}
+extern "C" void __dt__16CMenuMakeCrystalFv(void* self) {}
 // LLM-HARNESS-END: us-80212b38
 
 // LLM-HARNESS-BEGIN: us-80212ba4
@@ -45,7 +45,7 @@ extern "C" void Move__16CMenuMakeCrystalFv() {}
 // LLM-HARNESS-END: us-802140b8
 
 // LLM-HARNESS-BEGIN: us-802141d8
-extern "C" void cbRenderBefore__16CMenuMakeCrystalFv() {}
+extern "C" void cbRenderBefore__16CMenuMakeCrystalFv(void* self) {}
 // LLM-HARNESS-END: us-802141d8
 
 // LLM-HARNESS-BEGIN: us-80214264
@@ -65,9 +65,9 @@ extern "C" void func_802124AC() {}
 // LLM-HARNESS-END: us-80214304
 
 // LLM-HARNESS-BEGIN: us-8021434c
-extern "C" bool func_802124F4() { return false; }
+extern "C" void func_802124F4(void* self) { ((void(*)(void*))cbRenderBefore__16CMenuMakeCrystalFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8021434c
 
 // LLM-HARNESS-BEGIN: us-80214354
-extern "C" bool func_802124FC() { return false; }
+extern "C" void func_802124FC(void* self) { ((void(*)(void*))__dt__16CMenuMakeCrystalFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80214354

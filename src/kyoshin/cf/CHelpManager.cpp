@@ -41,7 +41,7 @@ extern "C" void func_80295D30() {}
 // LLM-HARNESS-END: us-8029832c
 
 // LLM-HARNESS-BEGIN: us-8029837c
-extern "C" bool CHelp_UnkVirtualFunc5__Q22cf5CHelpFv() { return false; }
+extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-8029837c
 
 // LLM-HARNESS-BEGIN: us-80298384
@@ -49,31 +49,31 @@ extern "C" void CHelp_UnkVirtualFunc1__Q22cf5CHelpFv() {}
 // LLM-HARNESS-END: us-80298384
 
 // LLM-HARNESS-BEGIN: us-80298388
-extern "C" void func_80295D8C__Q22cf19CHelp_EtherMakeTIPSFv() {}
+extern "C" void func_80295D8C__Q22cf19CHelp_EtherMakeTIPSFv(void) {}
 // LLM-HARNESS-END: us-80298388
 
 // LLM-HARNESS-BEGIN: us-8029838c
-extern "C" bool CHelp_UnkVirtualFunc4__Q22cf5CHelpFv() { return false; }
+extern "C" int CHelp_UnkVirtualFunc4__Q22cf5CHelpFv(void* self) { return 0; }
 // LLM-HARNESS-END: us-8029838c
 
 // LLM-HARNESS-BEGIN: us-80298394
-extern "C" void func_80295D98__Q22cf14CHelp_TalkTIPSFv() {}
+extern "C" void func_80295D98__Q22cf14CHelp_TalkTIPSFv(void) {}
 // LLM-HARNESS-END: us-80298394
 
 // LLM-HARNESS-BEGIN: us-80298398
-extern "C" void func_80295D9C__Q22cf16CHelp_KizunaTIPSFv() {}
+extern "C" void func_80295D9C__Q22cf16CHelp_KizunaTIPSFv(void) {}
 // LLM-HARNESS-END: us-80298398
 
 // LLM-HARNESS-BEGIN: us-8029839c
-extern "C" void func_80295DA0__Q22cf18CHelp_EndEventTIPSFv() {}
+extern "C" void func_80295DA0__Q22cf18CHelp_EndEventTIPSFv(void) {}
 // LLM-HARNESS-END: us-8029839c
 
 // LLM-HARNESS-BEGIN: us-802983a0
-extern "C" bool func_80295DA4__Q22cf12CHelp_AlwaysFv() { return false; }
+extern "C" int func_80295DA4__Q22cf12CHelp_AlwaysFv(void* self) { return 1; }
 // LLM-HARNESS-END: us-802983a0
 
 // LLM-HARNESS-BEGIN: us-802983a8
-extern "C" void func_80295DAC__Q22cf16CHelp_AlwaysTIPSFv() {}
+extern "C" void func_80295DAC__Q22cf16CHelp_AlwaysTIPSFv(void) {}
 // LLM-HARNESS-END: us-802983a8
 
 // LLM-HARNESS-BEGIN: us-80298e94

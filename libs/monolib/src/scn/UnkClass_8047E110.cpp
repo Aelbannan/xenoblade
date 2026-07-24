@@ -122,5 +122,5 @@ extern "C" void func_804819C4__17UnkClass_8047E110Fv() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-80485e38
-extern "C" void sinit_80481E68() {}
+extern "C" void sinit_80481E68(void) {}
 // LLM-HARNESS-END: us-80485e38

@@ -41,7 +41,7 @@ extern "C" void HBMCreateSound() {}
 // LLM-HARNESS-END: us-80325660
 
 // LLM-HARNESS-BEGIN: us-803256c0
-extern "C" void HBMDeleteSound() {}
+extern "C" void HBMDeleteSound(void) {}
 // LLM-HARNESS-END: us-803256c0
 
 // LLM-HARNESS-BEGIN: us-803256d0

@@ -162,15 +162,16 @@ extern "C" void func_800FD3FC() {}
 // LLM-HARNESS-END: us-800fdee4
 
 // LLM-HARNESS-BEGIN: us-800fe174
-extern "C" void func_800FD68C() {}
+extern "C" void func_800FD68C(void* self) {}
 // LLM-HARNESS-END: us-800fe174
 
 // LLM-HARNESS-BEGIN: us-800fe180
-extern "C" bool func_800FD698() { return false; }
+extern "C" void func_800FD698(void* self) { ((void(*)(void*))func_800FD68C)((char*)self - 0x604); }
 // LLM-HARNESS-END: us-800fe180
 
+extern "C" void func_800F4798(void* self);
 // LLM-HARNESS-BEGIN: us-800fe188
-extern "C" bool func_800FD6A0() { return false; }
+extern "C" void func_800FD6A0(void* self) { ((void(*)(void*))func_800F4798)((char*)self - 0x604); }
 // LLM-HARNESS-END: us-800fe188
 
 // LLM-HARNESS-BEGIN: us-800fe190

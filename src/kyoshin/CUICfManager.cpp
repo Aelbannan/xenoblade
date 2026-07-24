@@ -190,14 +190,8 @@ u16 lbl_eu_804FFFDC[];
 void func_8013B428(u32);
 
 void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
-    // Decl order: savedRet@0x8, gap, setItem stw-r1 home, idTable@0x28 (retail frame).
+    // Decl order: savedRet@0x8, gap, setItem stw-r1 home@0x24, idTable@0x28 (retail frame).
     volatile int savedRet;
-    int pad0C;
-    int pad10;
-    int pad14;
-    int pad18;
-    int pad1C;
-    int pad20;
     CUICfIdTable idTable;
     u8 codePersist;
 
@@ -292,6 +286,8 @@ range_312c_31f3: {
         goto end;
     }
 
+    // Retail: addi r3,id,-0x312c / li r0,0xc8 / clrlwi. / clrlwi into codePersist (r30).
+    // Soft-cap: MWCC colors diff/code as r0/r3 (and codePersist r27) vs retail r3/r0 (r30).
     {
         u32 diff = id - 0x312c;
         u32 code = 0xc8;
@@ -310,17 +306,14 @@ range_312c_31f3: {
         if (tempRet != 0) {
             inst = (CUICfManager*)lbl_eu_80664054;
 
-            _reslist_node<u32>* startNode = (_reslist_node<u32>*)inst->unk128;
-            int capacity = inst->unk13C;
+            // Decl capacity before startNode so Chaitin colors capacity=r7, startNode=r8;
+            // assign startNode then capacity to keep retail load order (296 then 316).
             int i = 0;
             int byteOff = 0;
-            // Keep pads "live" enough that MWCC does not DCE them entirely.
-            pad0C = capacity;
-            pad10 = byteOff;
-            pad14 = i;
-            pad18 = pad0C;
-            pad1C = pad10;
-            pad20 = pad14;
+            int capacity;
+            CUICfListNode* startNode;
+            startNode = (CUICfListNode*)inst->unk128;
+            capacity = inst->unk13C;
             goto slot_check;
         slot_body:
             if (*(u32*)((u8*)inst->unk138 + byteOff) == 0) {
@@ -334,12 +327,20 @@ range_312c_31f3: {
             }
         slot_found:
             {
-                _reslist_node<u32>* temp = (_reslist_node<u32>*)((u8*)inst->unk138 + i * 0xc);
-                temp->setItem((u32)savedRet);
-                temp->mNext = startNode;
-                temp->mPrev = startNode->mPrev;
-                startNode->mPrev->mNext = temp;
-                startNode->mPrev = temp;
+                // Expand setItem so temp lands in r4 before savedRet reload (addic. r3,r4,8).
+                CUICfListNode* temp = (CUICfListNode*)((u8*)inst->unk138 + i * 0xc);
+                u32* ptr = &temp->item;
+                if (ptr != 0) {
+                    try {
+                        *ptr = (u32)savedRet;
+                    } catch (...) {
+                        throw;
+                    }
+                }
+                temp->next = startNode;
+                temp->prev = startNode->prev;
+                startNode->prev->next = temp;
+                startNode->prev = temp;
             }
         }
     }

@@ -307,8 +307,9 @@ class FloatingPointDomain:
 
 # Wave 5 GX FIFO Tier-A architecture bump (GX_FIFO_TIER_A.md). v42 is
 # reserved for the Phase 12 scalar FP exact v2 production switch
-# (SCALAR_FP_V2.md); this fork's live architecture moves to v43.
-ARCHITECTURE_MODEL = "broadway-ppc32-be-v44"
+# (SCALAR_FP_V2.md). v45–v50: CR/XER/FPSCR/LR/MSR–SPR/FMR callee-summary fixes.
+# v51: record-form CR0 reads xer.so; logical immediates in destination_ops.
+ARCHITECTURE_MODEL = "broadway-ppc32-be-v51"
 RESULT_FORMAT = 24
 
 

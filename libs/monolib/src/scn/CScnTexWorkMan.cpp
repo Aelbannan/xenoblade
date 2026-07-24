@@ -21,7 +21,7 @@ extern "C" void func_804902D8() {}
 // LLM-HARNESS-END: us-8049434c
 
 // LLM-HARNESS-BEGIN: us-80494384
-extern "C" void func_80490310__14CScnTexWorkManFv() {}
+extern "C" void func_80490310__14CScnTexWorkManFv(void) {}
 // LLM-HARNESS-END: us-80494384
 
 // LLM-HARNESS-BEGIN: us-80494388

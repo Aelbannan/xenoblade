@@ -9,15 +9,15 @@ extern "C" void __ct__CTaskGameEvt() {}
 // LLM-HARNESS-END: us-80297b60
 
 // LLM-HARNESS-BEGIN: us-80297c4c
-extern "C" void __dt__12CTaskGameEvtFv() {}
+extern "C" void __dt__12CTaskGameEvtFv(void* self) {}
 // LLM-HARNESS-END: us-80297c4c
 
 // LLM-HARNESS-BEGIN: us-80297ca0
-extern "C" void func_802956A4() {}
+extern "C" void func_802956A4(void) {}
 // LLM-HARNESS-END: us-80297ca0
 
 // LLM-HARNESS-BEGIN: us-80297ca4
-extern "C" void func_802956A8() {}
+extern "C" void func_802956A8(void) {}
 // LLM-HARNESS-END: us-80297ca4
 
 // LLM-HARNESS-BEGIN: us-80297ca8
@@ -33,11 +33,11 @@ extern "C" void Move__12CTaskGameEvtFv() {}
 // LLM-HARNESS-END: us-80297ce0
 
 // LLM-HARNESS-BEGIN: us-80297d5c
-extern "C" void cbRenderBefore__12CTaskGameEvtFv() {}
+extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) {}
 // LLM-HARNESS-END: us-80297d5c
 
 // LLM-HARNESS-BEGIN: us-80297d60
-extern "C" bool func_80295764() { return false; }
+extern "C" int func_80295764(void* self) { return 0; }
 // LLM-HARNESS-END: us-80297d60
 
 // LLM-HARNESS-BEGIN: us-80297d68
@@ -49,19 +49,19 @@ extern "C" void Draw__12CTaskGameEvtFv() {}
 // LLM-HARNESS-END: us-80297dd0
 
 // LLM-HARNESS-BEGIN: us-80297e64
-extern "C" bool OnFileEvent__12CTaskGameEvtFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80297e64
 
 // LLM-HARNESS-BEGIN: us-80297e6c
-extern "C" bool func_80295870() { return false; }
+extern "C" void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80297e6c
 
 // LLM-HARNESS-BEGIN: us-80297e74
-extern "C" bool func_80295878() { return false; }
+extern "C" void func_80295878(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGameEvtFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80297e74
 
 // LLM-HARNESS-BEGIN: us-80297e7c
-extern "C" bool func_80295880() { return false; }
+extern "C" void func_80295880(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80297e7c
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

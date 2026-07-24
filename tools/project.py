@@ -1340,16 +1340,15 @@ def generate_build_ninja(
             command=f"$python {configure_script} $configure_args progress",
             description="PROGRESS",
         )
-        # Progress is driven by objdiff report.json (compiled objects), not by
-        # a successful link/hash check — so `ninja progress` still works when
-        # the linker is broken.
+        # Progress reads whatever report.json exists — no implicit dep on
+        # compiled objects, so `ninja progress` works immediately even when
+        # some translation units fail to compile or the linker is broken.
         n.build(
             outputs="progress",
             rule="progress",
             implicit=[
                 configure_script,
                 python_lib,
-                report_path,
             ],
             order_only="post-build",
         )

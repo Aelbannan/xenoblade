@@ -101,11 +101,11 @@ extern "C" void func_804B4C7C() {}
 // LLM-HARNESS-END: us-804b8dd8
 
 // LLM-HARNESS-BEGIN: us-804b8eac
-extern "C" void Init__16CTaskColiManagerFv() {}
+extern "C" void Init__16CTaskColiManagerFv(void) {}
 // LLM-HARNESS-END: us-804b8eac
 
 // LLM-HARNESS-BEGIN: us-804b8eb0
-extern "C" void Term__16CTaskColiManagerFv() {}
+extern "C" void Term__16CTaskColiManagerFv(void) {}
 // LLM-HARNESS-END: us-804b8eb0
 
 // LLM-HARNESS-BEGIN: us-804b8eb4
@@ -113,7 +113,7 @@ extern "C" void Move__16CTaskColiManagerFv() {}
 // LLM-HARNESS-END: us-804b8eb4
 
 // LLM-HARNESS-BEGIN: us-804b8f68
-extern "C" void Draw__16CTaskColiManagerFv() {}
+extern "C" void Draw__16CTaskColiManagerFv(void) {}
 // LLM-HARNESS-END: us-804b8f68
 
 // LLM-HARNESS-BEGIN: us-804b8f6c

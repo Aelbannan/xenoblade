@@ -25,7 +25,7 @@ extern "C" void __dt__800FED0C() {}
 // LLM-HARNESS-END: us-800ff7f4
 
 // LLM-HARNESS-BEGIN: us-800ff850
-extern "C" void __dt__9CMainMenuFv() {}
+extern "C" void __dt__9CMainMenuFv(void* self) {}
 // LLM-HARNESS-END: us-800ff850
 
 // LLM-HARNESS-BEGIN: us-800ff8e0
@@ -49,11 +49,11 @@ extern "C" void func_800FEF4C() {}
 // LLM-HARNESS-END: us-800ffa34
 
 // LLM-HARNESS-BEGIN: us-800ffde8
-extern "C" void __ct__800FF300() {}
+extern "C" void __ct__800FF300(void* self) {}
 // LLM-HARNESS-END: us-800ffde8
 
 // LLM-HARNESS-BEGIN: us-801000ec
-extern "C" void cbRenderBefore__9CMainMenuFv() {}
+extern "C" void cbRenderBefore__9CMainMenuFv(void* self) {}
 // LLM-HARNESS-END: us-801000ec
 
 // LLM-HARNESS-BEGIN: us-801001a4
@@ -101,19 +101,19 @@ extern "C" void func_80101BF8() {}
 // LLM-HARNESS-END: us-801026e0
 
 // LLM-HARNESS-BEGIN: us-80102ae8
-extern "C" bool OnFileEvent__9CMainMenuFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80102ae8
 
 // LLM-HARNESS-BEGIN: us-80102af0
-extern "C" bool func_80102008() { return false; }
+extern "C" void func_80102008(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80102af0
 
 // LLM-HARNESS-BEGIN: us-80102af8
-extern "C" bool func_80102010() { return false; }
+extern "C" void func_80102010(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-80102af8
 
 // LLM-HARNESS-BEGIN: us-80102b00
-extern "C" bool func_80102018() { return false; }
+extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-80102b00
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuShopSell() {}
 // LLM-HARNESS-END: us-8018bbdc
 
 // LLM-HARNESS-BEGIN: us-8018bcac
-extern "C" void __dt__13CMenuShopSellFv() {}
+extern "C" void __dt__13CMenuShopSellFv(void* self) {}
 // LLM-HARNESS-END: us-8018bcac
 
 // LLM-HARNESS-BEGIN: us-8018bd24
@@ -33,7 +33,7 @@ extern "C" void Move__13CMenuShopSellFv() {}
 // LLM-HARNESS-END: us-8018c780
 
 // LLM-HARNESS-BEGIN: us-8018c834
-extern "C" void cbRenderBefore__13CMenuShopSellFv() {}
+extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self) {}
 // LLM-HARNESS-END: us-8018c834
 
 // LLM-HARNESS-BEGIN: us-8018c8d8
@@ -61,9 +61,9 @@ extern "C" void func_8018B658() {}
 // LLM-HARNESS-END: us-8018cc0c
 
 // LLM-HARNESS-BEGIN: us-8018cc5c
-extern "C" bool func_8018B6A8() { return false; }
+extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018cc5c
 
 // LLM-HARNESS-BEGIN: us-8018cc64
-extern "C" bool func_8018B6B0() { return false; }
+extern "C" void func_8018B6B0(void* self) { ((void(*)(void*))__dt__13CMenuShopSellFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8018cc64

@@ -351,8 +351,22 @@ class TargetRegistryTests(unittest.TestCase):
         )
         parsed = parse_asm_calls(asm)
         self.assertEqual(parsed[0].address, 0x80001000)
-        self.assertEqual(parsed[0].direct, [("callee", 0x80001008)])
+        self.assertEqual(parsed[0].direct, [("callee", 0x80001008, "bl")])
         self.assertTrue(parsed[0].has_indirect)
+
+    def test_parse_calls_includes_tail_b_but_skips_local_labels(self) -> None:
+        asm = self.root / "tail.s"
+        asm.write_text(
+            ".fn caller, global\n"
+            "/* 80001000 00000000  41 82 00 08 */\tbeq .L_local\n"
+            "/* 80001004 00000004  48 00 00 04 */\tb .L_local\n"
+            "/* 80001008 00000008  48 00 01 D8 */\tb func_8003B6A0\n"
+            ".endfn caller\n",
+            encoding="utf-8",
+        )
+        parsed = parse_asm_calls(asm)
+        self.assertEqual(parsed[0].direct, [("func_8003B6A0", 0x800011E0, "b")])
+        self.assertFalse(parsed[0].has_indirect)
 
     def test_harness_bottom_up_selections(self) -> None:
         def target(target_id: str, status: str, **extra) -> Target:

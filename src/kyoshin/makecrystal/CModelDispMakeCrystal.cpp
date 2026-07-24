@@ -21,7 +21,7 @@ extern "C" void __dt__8021C540() {}
 // LLM-HARNESS-END: us-8021e398
 
 // LLM-HARNESS-BEGIN: us-8021e3ec
-extern "C" void __dt__21CModelDispMakeCrystalFv() {}
+extern "C" void __dt__21CModelDispMakeCrystalFv(void* self) {}
 // LLM-HARNESS-END: us-8021e3ec
 
 // LLM-HARNESS-BEGIN: us-8021e53c
@@ -41,7 +41,7 @@ extern "C" void func_8021C928() {}
 // LLM-HARNESS-END: us-8021e780
 
 // LLM-HARNESS-BEGIN: us-8021e88c
-extern "C" bool func_8021CA34() { return false; }
+extern "C" u8 func_8021CA34(void* self) { return ((u8*)self)[0xBE8]; }
 // LLM-HARNESS-END: us-8021e88c
 
 // LLM-HARNESS-BEGIN: us-8021e894
@@ -49,11 +49,11 @@ extern "C" void func_8021CA3C() {}
 // LLM-HARNESS-END: us-8021e894
 
 // LLM-HARNESS-BEGIN: us-8021e968
-extern "C" bool func_8021CB10() { return false; }
+extern "C" u8 func_8021CB10(void* self) { return ((u8*)self)[0x2DC3]; }
 // LLM-HARNESS-END: us-8021e968
 
 // LLM-HARNESS-BEGIN: us-8021e970
-extern "C" bool func_8021CB18() { return false; }
+extern "C" u8 func_8021CB18(void* self) { return ((u8*)self)[0x2DD2]; }
 // LLM-HARNESS-END: us-8021e970
 
 // LLM-HARNESS-BEGIN: us-8021e978
@@ -293,7 +293,7 @@ extern "C" void func_80221B90() {}
 // LLM-HARNESS-END: us-802239d0
 
 // LLM-HARNESS-BEGIN: us-80223b08
-extern "C" bool func_80221CC8() { return false; }
+extern "C" void func_80221CC8(void* self, u32 val) { *(u32*)((u8*)self + 0xE1C) = val; }
 // LLM-HARNESS-END: us-80223b08
 
 // LLM-HARNESS-BEGIN: us-80223b10
@@ -301,7 +301,7 @@ extern "C" void func_80221CD0() {}
 // LLM-HARNESS-END: us-80223b10
 
 // LLM-HARNESS-BEGIN: us-80223b98
-extern "C" void func_80221D58() {}
+extern "C" void func_80221D58(void* self) {}
 // LLM-HARNESS-END: us-80223b98
 
 // LLM-HARNESS-BEGIN: us-80223c78
@@ -309,15 +309,15 @@ extern "C" void func_80221E38() {}
 // LLM-HARNESS-END: us-80223c78
 
 // LLM-HARNESS-BEGIN: us-80223c94
-extern "C" bool func_80221E54() { return false; }
+extern "C" void func_80221E54(void* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x4); }
 // LLM-HARNESS-END: us-80223c94
 
 // LLM-HARNESS-BEGIN: us-80223c9c
-extern "C" bool func_80221E5C() { return false; }
+extern "C" void func_80221E5C(void* self) { ((void(*)(void*))func_80221D58)((char*)self - 0x8); }
 // LLM-HARNESS-END: us-80223c9c
 
 // LLM-HARNESS-BEGIN: us-80223ca4
-extern "C" bool func_80221E64() { return false; }
+extern "C" void func_80221E64(void* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x8); }
 // LLM-HARNESS-END: us-80223ca4
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

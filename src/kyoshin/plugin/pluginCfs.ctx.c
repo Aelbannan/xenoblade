@@ -1311,17 +1311,19 @@ void* func_80186D20(void* p);
 /* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
 /* end "monolib/vm/yvm2.h" */
 
+void* getFP(const char* pName);
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
-    static void func_8003AA34();
-    static void func_8003AA50();
-    static void func_8003AA78(u32, void*);
+    static void* func_8003AA34();
+    static void* func_8003AA50();
+    static void* func_8003AA78(u32, void*);
     static void func_8003AA8C(u32 val);
-    static void* getFP(const char* pName);
+    static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
 
 #ifdef __cplusplus

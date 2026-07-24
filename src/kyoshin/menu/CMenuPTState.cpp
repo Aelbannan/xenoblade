@@ -12,12 +12,14 @@ extern "C" void __ct__CMenuPTState() {}
 extern "C" void func_80192BD0() {}
 // LLM-HARNESS-END: us-801942ec
 
+extern "C" void cbRenderBefore__12CMenuPTStateFv(void* self);
 // LLM-HARNESS-BEGIN: us-80194300
-extern "C" bool func_80192BE4() { return false; }
+extern "C" void func_80192BE4(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuPTStateFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80194300
 
+extern "C" void __dt__12CMenuPTStateFv(void* self);
 // LLM-HARNESS-BEGIN: us-80194308
-extern "C" bool func_80192BEC() { return false; }
+extern "C" void func_80192BEC(void* self) { ((void(*)(void*))__dt__12CMenuPTStateFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80194308
 
 // LLM-HARNESS-BEGIN: us-80194310

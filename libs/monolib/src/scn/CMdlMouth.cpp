@@ -21,7 +21,7 @@ extern "C" void func_804E679C() {}
 // LLM-HARNESS-END: us-804eac38
 
 // LLM-HARNESS-BEGIN: us-804ead34
-extern "C" bool func_804E6898() { return false; }
+extern "C" void func_804E6898(void* self, float val) { *(float*)((u8*)self + 0x2c) = val; }
 // LLM-HARNESS-END: us-804ead34
 
 // LLM-HARNESS-BEGIN: us-804ead3c

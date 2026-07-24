@@ -93,5 +93,6 @@ extern "C" void checkExistRsrc__11CFileHandleF3CBM() {}
 // LLM-HARNESS-END: us-80454ab8
 
 // LLM-HARNESS-BEGIN: us-80454b5c
-extern "C" bool getRsrc__11CFileHandleFv() { return false; }
+extern void getRsrc__5CRsrcFUl(unsigned long);
+extern "C" void getRsrc__11CFileHandleFv(void* self) { getRsrc__5CRsrcFUl((unsigned long)*(void**)((char*)self + 0x14)); }
 // LLM-HARNESS-END: us-80454b5c

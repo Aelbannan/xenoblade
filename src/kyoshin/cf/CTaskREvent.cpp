@@ -9,7 +9,7 @@ extern "C" void __ct__cf_CTaskREvent() {}
 // LLM-HARNESS-END: us-801652b8
 
 // LLM-HARNESS-BEGIN: us-801654ac
-extern "C" void __dt__Q22cf11CTaskREventFv() {}
+extern "C" void __dt__Q22cf11CTaskREventFv(void* self) {}
 // LLM-HARNESS-END: us-801654ac
 
 // LLM-HARNESS-BEGIN: us-801655a8
@@ -33,7 +33,7 @@ extern "C" void func_801644BC__FUl() {}
 // LLM-HARNESS-END: us-80165654
 
 // LLM-HARNESS-BEGIN: us-80165670
-extern "C" void func_801644D8() {}
+extern "C" void func_801644D8(void* self) {}
 // LLM-HARNESS-END: us-80165670
 
 // LLM-HARNESS-BEGIN: us-801656f4
@@ -105,7 +105,7 @@ extern "C" void func_80165014() {}
 // LLM-HARNESS-END: us-801661b0
 
 // LLM-HARNESS-BEGIN: us-801661d4
-extern "C" void func_80165038() {}
+extern "C" void func_80165038(void) {}
 // LLM-HARNESS-END: us-801661d4
 
 // LLM-HARNESS-BEGIN: us-801661d8
@@ -133,15 +133,15 @@ extern "C" void func_80166150() {}
 // LLM-HARNESS-END: us-801672ec
 
 // LLM-HARNESS-BEGIN: us-801673ec
-extern "C" void cbRenderBefore__Q22cf11CTaskREventFv() {}
+extern "C" void cbRenderBefore__Q22cf11CTaskREventFv(void* self) {}
 // LLM-HARNESS-END: us-801673ec
 
 // LLM-HARNESS-BEGIN: us-80167484
-extern "C" void func_801662E8() {}
+extern "C" void func_801662E8(void* self) {}
 // LLM-HARNESS-END: us-80167484
 
 // LLM-HARNESS-BEGIN: us-80167564
-extern "C" void func_801663A8() {}
+extern "C" void func_801663A8(void* self) {}
 // LLM-HARNESS-END: us-80167564
 
 // LLM-HARNESS-BEGIN: us-80167760
@@ -157,35 +157,35 @@ extern "C" void viBeforeDrawDone__11CDeviceVICbFv() {}
 // LLM-HARNESS-END: us-801677ec
 
 // LLM-HARNESS-BEGIN: us-80167880
-extern "C" bool func_801666C4() { return false; }
+extern "C" void func_801666C4(void* self) { ((void(*)(void*))func_801662E8)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80167880
 
 // LLM-HARNESS-BEGIN: us-80167888
-extern "C" bool func_801666CC() { return false; }
+extern "C" void func_801666CC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80167888
 
 // LLM-HARNESS-BEGIN: us-80167890
-extern "C" bool func_801666D4() { return false; }
+extern "C" void func_801666D4(void* self) { ((void(*)(void*))func_801644D8)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80167890
 
 // LLM-HARNESS-BEGIN: us-80167898
-extern "C" bool func_801666DC() { return false; }
+extern "C" void func_801666DC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80167898
 
 // LLM-HARNESS-BEGIN: us-801678a0
-extern "C" bool func_801666E4() { return false; }
+extern "C" void func_801666E4(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-801678a0
 
 // LLM-HARNESS-BEGIN: us-801678a8
-extern "C" bool func_801666EC() { return false; }
+extern "C" void func_801666EC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-801678a8
 
 // LLM-HARNESS-BEGIN: us-801678b0
-extern "C" bool OnFileEvent__11CTaskREventFP10CEventFile() { return false; }
+extern "C" void OnFileEvent__11CTaskREventFP10CEventFile(void* self) { ((void(*)(void*))func_801663A8)((char*)self - 0x60); }
 // LLM-HARNESS-END: us-801678b0
 
 // LLM-HARNESS-BEGIN: us-801678b8
-extern "C" bool func_801666FC() { return false; }
+extern "C" void func_801666FC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x60); }
 // LLM-HARNESS-END: us-801678b8
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

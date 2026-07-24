@@ -1224,49 +1224,43 @@ extern "C" void func_8003A6D4() {}
 
 // LLM-HARNESS-BEGIN: us-8003aaf4
 extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
-    u32 writeIdx = list->writeIdx;
-    u32 capacity = list->capacity;
-    u32 newWriteIdx = writeIdx + 1;
-    u32 count = list->count;
-
+    // Reuse `ret` for writeIdx then count so +1 lands in a distinct reg (retail addi r5,r3,1).
+    // Signed compare → cmpw (u32 > emits cmplw).
+    ret = list->writeIdx;
+    s32 capacity = list->capacity;
+    s32 newWriteIdx = ret + 1;
+    ret = list->count;
     list->writeIdx = newWriteIdx;
-    list->count = count + 1;
-
+    list->count = ret + 1;
     if (newWriteIdx > capacity) {
         list->writeIdx = list->wrap;
     }
-
-    writeIdx = list->writeIdx;
-    ret = 0;
+    newWriteIdx = list->writeIdx;
     char* obj = reinterpret_cast<char*>(list);
-    char* slotBase = obj + writeIdx * 8;
+    char* slotBase = obj + newWriteIdx * 8;
     *reinterpret_cast<u32*>(slotBase + 0x14) = *reinterpret_cast<u32*>(obj + 0x64);
     *reinterpret_cast<u32*>(slotBase + 0x18) = *reinterpret_cast<u32*>(obj + 0x68);
-    return ret;
+    return 0;
 }
 // LLM-HARNESS-END: us-8003aaf4
 
 // LLM-HARNESS-BEGIN: us-8003ab44
 extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
-    u32 readIdx = list->readIdx;
-    u32 capacity = list->capacity;
-    u32 newReadIdx = readIdx + 1;
-    u32 count = list->count;
-
+    ret = list->readIdx;
+    s32 capacity = list->capacity;
+    s32 newReadIdx = ret + 1;
+    ret = list->count;
     list->readIdx = newReadIdx;
-    list->count = count - 1;
-
+    list->count = ret - 1;
     if (newReadIdx > capacity) {
         list->readIdx = list->wrap;
     }
-
-    readIdx = list->readIdx;
-    ret = 0;
+    newReadIdx = list->readIdx;
     char* obj = reinterpret_cast<char*>(list);
-    char* slotBase = obj + readIdx * 8;
+    char* slotBase = obj + newReadIdx * 8;
     *reinterpret_cast<u32*>(obj + 0x64) = *reinterpret_cast<u32*>(slotBase + 0x14);
     *reinterpret_cast<u32*>(obj + 0x68) = *reinterpret_cast<u32*>(slotBase + 0x18);
-    return ret;
+    return 0;
 }
 // LLM-HARNESS-END: us-8003ab44
 
@@ -1300,51 +1294,43 @@ extern "C" void func_8003A918() {}
 
 // LLM-HARNESS-BEGIN: us-8003ad30
 extern "C" s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
-    u32 writeIdx = list->writeIdx;
-    u32 capacity = list->capacity;
-    u32 newWriteIdx = writeIdx + 1;
-    u32 count = list->count;
-
+    ret = list->writeIdx;
+    s32 capacity = list->capacity;
+    s32 newWriteIdx = ret + 1;
+    ret = list->count;
     list->writeIdx = newWriteIdx;
-    list->count = count + 1;
-
+    list->count = ret + 1;
     if (newWriteIdx > capacity) {
         list->writeIdx = list->wrap;
     }
-
-    writeIdx = list->writeIdx;
-    ret = 0;
+    newWriteIdx = list->writeIdx;
     char* obj = reinterpret_cast<char*>(list);
-    char* slotBase = obj + writeIdx * 12;
+    char* slotBase = obj + newWriteIdx * 12;
     *reinterpret_cast<u32*>(slotBase + 0x14) = *reinterpret_cast<u32*>(obj + 0x8c);
     *reinterpret_cast<u32*>(slotBase + 0x18) = *reinterpret_cast<u32*>(obj + 0x90);
     *reinterpret_cast<u32*>(slotBase + 0x1c) = *reinterpret_cast<u32*>(obj + 0x94);
-    return ret;
+    return 0;
 }
 // LLM-HARNESS-END: us-8003ad30
 
 // LLM-HARNESS-BEGIN: us-8003ad88
 extern "C" s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
-    u32 readIdx = list->readIdx;
-    u32 capacity = list->capacity;
-    u32 newReadIdx = readIdx + 1;
-    u32 count = list->count;
-
+    ret = list->readIdx;
+    s32 capacity = list->capacity;
+    s32 newReadIdx = ret + 1;
+    ret = list->count;
     list->readIdx = newReadIdx;
-    list->count = count - 1;
-
+    list->count = ret - 1;
     if (newReadIdx > capacity) {
         list->readIdx = list->wrap;
     }
-
-    readIdx = list->readIdx;
-    ret = 0;
+    newReadIdx = list->readIdx;
     char* obj = reinterpret_cast<char*>(list);
-    char* slotBase = obj + readIdx * 12;
+    char* slotBase = obj + newReadIdx * 12;
     *reinterpret_cast<u32*>(obj + 0x8c) = *reinterpret_cast<u32*>(slotBase + 0x14);
     *reinterpret_cast<u32*>(obj + 0x90) = *reinterpret_cast<u32*>(slotBase + 0x18);
     *reinterpret_cast<u32*>(obj + 0x94) = *reinterpret_cast<u32*>(slotBase + 0x1c);
-    return ret;
+    return 0;
 }
 // LLM-HARNESS-END: us-8003ad88
 

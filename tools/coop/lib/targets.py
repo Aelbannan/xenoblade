@@ -1257,7 +1257,8 @@ def import_symbols(
 class FunctionCalls:
     symbol: str
     address: Optional[int]
-    direct: List[tuple[Optional[str], int]] = field(default_factory=list)
+    # (operand, destination, kind) where kind is "bl" or tail "b"
+    direct: List[tuple[Optional[str], int, str]] = field(default_factory=list)
     has_indirect: bool = False
 
 
@@ -1301,10 +1302,17 @@ def parse_asm_calls(path: Path) -> List[FunctionCalls]:
         if current.address is None:
             current.address = address
         mnemonic = instruction.group("mnemonic")
-        if mnemonic == "bl":
+        if mnemonic in {"bl", "b"}:
             word = int(instruction.group("bytes").replace(" ", ""), 16)
             operand = (instruction.group("operand") or "").split("+")[0]
-            current.direct.append((operand or None, _branch_destination(address, word)))
+            # Tail calls are plain `b symbol` (LK=0) with a reloc; local labels
+            # (`.L…` / `lbl_…`) stay intra-function control flow, not callees.
+            if mnemonic == "b":
+                if not operand or operand.startswith(".") or operand.startswith("lbl_"):
+                    continue
+            current.direct.append(
+                (operand or None, _branch_destination(address, word), mnemonic)
+            )
         elif mnemonic in {"bctrl", "blrl"}:
             current.has_indirect = True
     return functions
@@ -1356,7 +1364,7 @@ def sync_called_functions(
             called_ids: set[str] = set()
             unresolved: set[str] = set()
             abi_helpers: set[str] = set()
-            for operand, destination in function.direct:
+            for operand, destination, kind in function.direct:
                 if operand and _ABI_HELPER_RE.match(operand):
                     abi_helpers.add(operand)
                     continue
@@ -1372,7 +1380,9 @@ def sync_called_functions(
                 if destination_rows:
                     called_ids.add(str(destination_rows[0]["id"]))
                     resolved_edges += 1
-                else:
+                elif kind == "bl":
+                    # Tail `b` misses stay silent — many non-local names are not
+                    # registry targets; only `bl` must fail closed as unresolved.
                     unresolved.add(operand or f"0x{destination:08X}")
                     unresolved_edges += 1
             for row in caller_rows:
@@ -1387,7 +1397,7 @@ def sync_called_functions(
         "region": config.region,
         "source": f"build/{config.region}/asm",
         "format": 1,
-        "direct_calls": "PPC bl destination",
+        "direct_calls": "PPC bl destination + tail b to non-local symbol",
         "indirect_calls_are_unresolved": True,
     }
     return data, scanned, resolved_edges, unresolved_edges

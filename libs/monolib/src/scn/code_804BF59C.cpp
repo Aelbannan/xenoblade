@@ -5,7 +5,7 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804c36f8
-extern "C" void func_804BF59C() {}
+extern "C" void func_804BF59C(void) {}
 // LLM-HARNESS-END: us-804c36f8
 
 // LLM-HARNESS-BEGIN: us-804c36fc
@@ -25,7 +25,7 @@ extern "C" void func_804BF8A8() {}
 // LLM-HARNESS-END: us-804c3a04
 
 // LLM-HARNESS-BEGIN: us-804c3a9c
-extern "C" void func_804BF940() {}
+extern "C" void func_804BF940(void) {}
 // LLM-HARNESS-END: us-804c3a9c
 
 // LLM-HARNESS-BEGIN: us-804c3aa0

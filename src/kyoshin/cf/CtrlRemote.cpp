@@ -17,7 +17,7 @@ extern "C" void func_80098EF8() {}
 // LLM-HARNESS-END: us-800998d0
 
 // LLM-HARNESS-BEGIN: us-8009abac
-extern "C" bool CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv() { return false; }
+extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
 // LLM-HARNESS-END: us-8009abac
 
 // LLM-HARNESS-BEGIN: us-8009abb4
@@ -97,7 +97,7 @@ extern "C" void func_8009CF0C() {}
 // LLM-HARNESS-END: us-8009d8e4
 
 // LLM-HARNESS-BEGIN: us-8009d95c
-extern "C" bool func_8009CF84() { return false; }
+extern "C" int func_8009CF84(void* self) { return 4628; }
 // LLM-HARNESS-END: us-8009d95c
 
 // LLM-HARNESS-BEGIN: us-8009d964

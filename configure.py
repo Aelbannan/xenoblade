@@ -1699,7 +1699,7 @@ config.libs = [
             Object(MatchingFor("jp"), "monolib/src/work/CWorkUtil.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(MatchingFor("us"), "monolib/src/core/CProc.cpp"),
             Object(MatchingFor("jp", "us"), "monolib/src/core/CProcRoot.cpp"),
-            Object(NonMatching, "monolib/src/core/CRsrc.cpp"),
+            Object(MatchingFor("us"), "monolib/src/core/CRsrc.cpp"),
             Object(MatchingFor("us"), "monolib/src/core/CRsrcData.cpp"),
             Object(NonMatching, "monolib/src/core/CScriptCode.cpp"),
             Object(NonMatching, "monolib/src/core/CToken.cpp"),

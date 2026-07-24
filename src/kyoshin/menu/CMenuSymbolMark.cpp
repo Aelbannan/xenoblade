@@ -13,7 +13,7 @@ extern "C" void __ct__CMenuSymbolMark() {}
 // LLM-HARNESS-END: us-8011df00
 
 // LLM-HARNESS-BEGIN: us-8011e49c
-extern "C" void __dt__15CMenuSymbolMarkFv() {}
+extern "C" void __dt__15CMenuSymbolMarkFv(void* self) {}
 // LLM-HARNESS-END: us-8011e49c
 
 // LLM-HARNESS-BEGIN: us-8011e510
@@ -29,7 +29,7 @@ extern "C" void Move__15CMenuSymbolMarkFv() {}
 // LLM-HARNESS-END: us-8011e7e0
 
 // LLM-HARNESS-BEGIN: us-8011ee9c
-extern "C" void cbRenderBefore__15CMenuSymbolMarkFv() {}
+extern "C" void cbRenderBefore__15CMenuSymbolMarkFv(void* self) {}
 // LLM-HARNESS-END: us-8011ee9c
 
 // LLM-HARNESS-BEGIN: us-8011efa0
@@ -77,15 +77,15 @@ extern "C" void func_801209BC() {}
 // LLM-HARNESS-END: us-80121498
 
 // LLM-HARNESS-BEGIN: us-801219d0
-extern "C" void __dt__8CArrow3DFv() {}
+extern "C" void __dt__8CArrow3DFv(void* self) {}
 // LLM-HARNESS-END: us-801219d0
 
 // LLM-HARNESS-BEGIN: us-80121a2c
-extern "C" void cbRenderBefore__8CArrow3DFv() {}
+extern "C" void cbRenderBefore__8CArrow3DFv(void* self) {}
 // LLM-HARNESS-END: us-80121a2c
 
 // LLM-HARNESS-BEGIN: us-8012297c
-extern "C" void Move__8CArrow3DFv() {}
+extern "C" void Move__8CArrow3DFv(void) {}
 // LLM-HARNESS-END: us-8012297c
 
 // LLM-HARNESS-BEGIN: us-80122980
@@ -97,23 +97,23 @@ extern "C" void Init__8CArrow3DFv() {}
 // LLM-HARNESS-END: us-801229f0
 
 // LLM-HARNESS-BEGIN: us-80122c18
-extern "C" bool func_8012213C() { return false; }
+extern "C" void func_8012213C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-80122c18
 
 // LLM-HARNESS-BEGIN: us-80122c20
-extern "C" bool func_80122144() { return false; }
+extern "C" void func_80122144(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-80122c20
 
 // LLM-HARNESS-BEGIN: us-80122c28
-extern "C" bool func_8012214C() { return false; }
+extern "C" void func_8012214C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-80122c28
 
 // LLM-HARNESS-BEGIN: us-80122c30
-extern "C" bool func_80122154() { return false; }
+extern "C" void func_80122154(void* self) { ((void(*)(void*))cbRenderBefore__8CArrow3DFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80122c30
 
 // LLM-HARNESS-BEGIN: us-80122c38
-extern "C" bool func_8012215C() { return false; }
+extern "C" void func_8012215C(void* self) { ((void(*)(void*))__dt__8CArrow3DFv)((char*)self - 0x54); }
 // LLM-HARNESS-END: us-80122c38
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

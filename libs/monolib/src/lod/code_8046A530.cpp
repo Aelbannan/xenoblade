@@ -17,7 +17,7 @@ extern "C" void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv() {}
 // LLM-HARNESS-END: us-8046e594
 
 // LLM-HARNESS-BEGIN: us-8046eaa8
-extern "C" void func_8046AAD8__Q23LOD17UnkClass_8046A530Fv() {}
+extern "C" void func_8046AAD8__Q23LOD17UnkClass_8046A530Fv(void) {}
 // LLM-HARNESS-END: us-8046eaa8
 
 // LLM-HARNESS-BEGIN: us-8046eaac
@@ -48,6 +48,7 @@ extern "C" void func_8046C580__Q23LOD17UnkClass_8046A530Fv() {}
 extern "C" void func_8046CFB4__Q23LOD17UnkClass_8046A530Fv() {}
 // LLM-HARNESS-END: us-80470f84
 
+extern "C" void func_80471834__Q23LOD9LODMemManFv(void* self);
 // LLM-HARNESS-BEGIN: us-80470fa8
-extern "C" bool func_8046CFD8__Q23LOD17UnkClass_8046A530Fv() { return false; }
+extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
 // LLM-HARNESS-END: us-80470fa8

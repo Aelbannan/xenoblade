@@ -447,6 +447,13 @@ class CalleeContract:
                 *(f"f{i}.ps1" for i in range(14)),
                 "cr0", "cr1", "cr5", "cr6", "cr7",
                 "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr",
+                # Persistent / privileged state an unknown callee may clobber.
+                # Omitting these preserved entry MSR/GQR/… across opaque calls
+                # (false EQUIVALENT when a later mfmsr/mfspr observes them).
+                "msr", "time_base", "srr0", "srr1",
+                *(f"gqr{i}" for i in range(8)),
+                *(f"sr{i}" for i in range(16)),
+                *AUX_SPR_NAMES.values(),
                 "memory", "valid", "invalid_reason",
             }),
             "opaque-eabi",
@@ -4677,14 +4684,24 @@ def _apply_call_summary(
         result("xer.ov", state.xer.ov.sort()) if "xer.ov" in contract.writes else state.xer.ov,
         result("xer.so", state.xer.so.sort()) if "xer.so" in contract.writes else state.xer.so,
     )
-    volatile_cr_mask = sum(
-        0xF << ((7 - field) * 4)
-        for field in (0, 1, 5, 6, 7)
-        if f"cr{field}" in contract.writes or "cr" in contract.writes
-    )
+    # Refresh exactly the CR fields declared in ``contract.writes``.
+    # Historical bug: only volatile fields (0/1/5/6/7) were taken from the UF,
+    # even when inference listed ``cr2``/``cr3``/``cr4`` or whole ``cr`` (mtcrf).
+    # That preserved entry nonvolatile CR across a leaf that overwrites it and
+    # allowed false EQUIVALENT when callers diverge only in the leaf's CR2–CR4
+    # result (or false refusal of EQUIVALENT when entry CR2–CR4 differed but the
+    # leaf overwrote them). Opaque EABI lists only volatile fields, so CR2–CR4
+    # stay preserved under that contract.
+    if "cr" in contract.writes:
+        cr_fields = range(8)
+    else:
+        cr_fields = (
+            field for field in range(8) if f"cr{field}" in contract.writes
+        )
+    cr_write_mask = sum(0xF << ((7 - field) * 4) for field in cr_fields)
     fresh_cr = ops.bor(
-        ops.band(state.cr, ops.const(~volatile_cr_mask & MASK32)),
-        ops.band(result("cr", state.cr.sort()), ops.const(volatile_cr_mask)),
+        ops.band(state.cr, ops.const(~cr_write_mask & MASK32)),
+        ops.band(result("cr", state.cr.sort()), ops.const(cr_write_mask)),
     )
     memory = (
         result("memory", state.memory.sort())
@@ -4710,22 +4727,43 @@ def _apply_call_summary(
         )
     else:
         fresh_reason = state.invalid_reason
+    fresh_gqr = tuple(
+        result(f"gqr{i}", state.gqr[i].sort())
+        if f"gqr{i}" in contract.writes else state.gqr[i]
+        for i in range(8)
+    )
+    fresh_sr = tuple(
+        result(f"sr{i}", state.sr[i].sort())
+        if f"sr{i}" in contract.writes else state.sr[i]
+        for i in range(16)
+    )
+    fresh_spr = list(state.spr)
+    for number, index in AUX_SPR_INDEX.items():
+        name = AUX_SPR_NAMES[number]
+        if name in contract.writes:
+            fresh_spr[index] = result(name, state.spr[index].sort())
     return MachineState(
         tuple(fresh_gprs),
         tuple(fresh_fprs),
         tuple(fresh_ps1),
-        state.gqr,
+        fresh_gqr,
         fresh_cr,
         fresh_xer,
         result("fpscr", state.fpscr.sort()) if "fpscr" in contract.writes else state.fpscr,
-        state.lr,
+        # LR must be refreshable: trampolines ``mtlr rN; blr`` publish the
+        # return/exit target through LR. Preserving entry LR here allowed false
+        # EQUIVALENT across callers that only diverged in the mtlr source.
+        result("lr", state.lr.sort()) if "lr" in contract.writes else state.lr,
         result("ctr", state.ctr.sort()) if "ctr" in contract.writes else state.ctr,
-        state.msr,
-        state.sr,
-        state.time_base,
-        state.srr0,
-        state.srr1,
-        state.spr,
+        # MSR / SR / time-base / SRR* / GQR / aux SPR: same class of hole —
+        # declared writes must reach the post-call state (mtmsr/mtspr leaves).
+        result("msr", state.msr.sort()) if "msr" in contract.writes else state.msr,
+        fresh_sr,
+        result("time_base", state.time_base.sort())
+        if "time_base" in contract.writes else state.time_base,
+        result("srr0", state.srr0.sort()) if "srr0" in contract.writes else state.srr0,
+        result("srr1", state.srr1.sort()) if "srr1" in contract.writes else state.srr1,
+        tuple(fresh_spr),
         memory,
         fresh_valid,
         fresh_reason,
@@ -5514,13 +5552,24 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
         writes.add(f"cr{a[0]}")
         writes.add("fpscr")
     elif op in (Opcode.MFFS, Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS):
-        reads.add("fpscr" if op == Opcode.MFFS else f"f{a[1]}" if len(a) > 1 else "")
+        # Decoder emits (fd, fa, fb, fc) for FMR/FNEG/FABS/FNABS with reserved
+        # fa==0; the architectural source is fb (a[2]). Using a[1] made inference
+        # depend on f0 and omit the real source — false EQUIVALENT on summarized
+        # fmr/fneg/… leaves when callers only diverged in fb.
+        if op == Opcode.MFFS:
+            reads.add("fpscr")
+        else:
+            reads.add(f"f{a[2]}")
         writes.add(f"f{a[0]}")
         if insn.record: writes.add("cr1")
     elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP):
-        reads.add(f"f{a[1]}" if len(a) > 1 else "")
+        # Same (fd, fa, fb, fc) layout; source is fb.
+        reads.add(f"f{a[2]}")
         reads.add("fpscr")
         writes.add(f"f{a[0]}")
+        # Broadway single-precision results also update the PS1 lane.
+        if op == Opcode.FRSP:
+            writes.add(f"f{a[0]}.ps1")
         writes.add("fpscr")
         if insn.record: writes.add("cr1")
     elif op in (Opcode.MTFSF, Opcode.MTFSFI, Opcode.MTFSB0, Opcode.MTFSB1):
@@ -5538,7 +5587,9 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
             writes.add(f"f{a[0]}.ps1")
         for idx in a[1:]:
             if 0 <= idx < 32: reads.add(f"f{idx}")
-        if op in (Opcode.FCTIW, Opcode.FCTIWZ):
+        # Move/select ops do not update FPSCR; arithmetic / convert / estimate do.
+        # (FNEG/FMR/…/MFFS/MTFS*/FRSP/FCTIW are handled in earlier branches.)
+        if op not in {Opcode.FSEL}:
             reads.add("fpscr")
             writes.add("fpscr")
         if insn.record: writes.add("cr1")
@@ -5638,6 +5689,8 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
             if 0 <= value < 32: reads.add(f"r{value}")
         destination_ops = set(LOADS) | {
             Opcode.ADDI, Opcode.ADDIS, Opcode.ADDIC, Opcode.ADDIC_DOT, Opcode.SUBFIC, Opcode.MULLI,
+            Opcode.ORI, Opcode.ORIS, Opcode.XORI, Opcode.XORIS,
+            Opcode.ANDI_DOT, Opcode.ANDIS_DOT,
             Opcode.RLWINM, Opcode.RLWIMI, Opcode.RLWNM, Opcode.AND, Opcode.ANDC, Opcode.EQV,
             Opcode.NAND, Opcode.NOR, Opcode.OR, Opcode.ORC, Opcode.XOR, Opcode.SLW, Opcode.SRW,
             Opcode.SRAW, Opcode.SRAWI, Opcode.ADD, Opcode.ADDC, Opcode.ADDE, Opcode.ADDME,
@@ -5646,7 +5699,33 @@ def register_effects(insn: Instruction) -> tuple[set[str], set[str]]:
             Opcode.EXTSB, Opcode.EXTSH, Opcode.CNTLZW,
         }
         if op in destination_ops: writes.add(f"r{a[0]}")
-        if insn.record or op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT): writes.add("cr0")
+        # Record-form CR0 (and always-record andi./addic.) embeds XER.SO via
+        # ``_record_cr0`` → ``_comparison_nibble``. Omitting that read let
+        # inferred summaries unify callers that differed only in SO.
+        if insn.record or op in (Opcode.ADDIC_DOT, Opcode.ANDI_DOT, Opcode.ANDIS_DOT):
+            writes.add("cr0")
+            reads.add("xer.so")
+        # Carry / overflow: keep in sync with execute_instruction + automatic_live_out.
+        # Omitting xer.ca from adde/addic/… reads or writes allowed false EQUIVALENT
+        # across callers that differ only in CA (summary UF unified on GPRs alone).
+        ca_writers = {
+            Opcode.ADDIC, Opcode.ADDIC_DOT, Opcode.SUBFIC,
+            Opcode.ADDC, Opcode.ADDE, Opcode.ADDME, Opcode.ADDZE,
+            Opcode.SUBFC, Opcode.SUBFE, Opcode.SUBFME, Opcode.SUBFZE,
+            Opcode.SRAW, Opcode.SRAWI,
+        }
+        ca_readers = {
+            Opcode.ADDE, Opcode.ADDME, Opcode.ADDZE,
+            Opcode.SUBFE, Opcode.SUBFME, Opcode.SUBFZE,
+        }
+        if op in ca_writers:
+            writes.add("xer.ca")
+        if op in ca_readers:
+            reads.add("xer.ca")
+        if insn.overflow:
+            # OE forms update OV and sticky-OR into SO (read-modify-write on SO).
+            reads.add("xer.so")
+            writes.update({"xer.ov", "xer.so"})
     return reads, writes
 
 
@@ -5745,7 +5824,17 @@ def infer_callee_contract(
         *(f"f{i}" for i in range(14)),
         *(f"f{i}.ps1" for i in range(14)),
         "cr", "cr0", "cr1", "cr5", "cr6", "cr7",
-        "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr", "memory",
+        # ``lr`` is caller-saved / return-address state: keep ``mtlr`` / linked
+        # branches in the write set so trampoline exit targets are not glued to
+        # the entry link register. Opaque EABI still omits ``lr`` (preserve).
+        "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr", "lr", "memory",
+        # Persistent architectural state (also ``AUTO_PERSISTENT_OBSERVABLES``):
+        # ``mtmsr`` / ``mtspr GQR`` / ``mtsr`` / … must survive the volatile
+        # filter or summaries silently preserve entry values.
+        "msr", "time_base", "srr0", "srr1",
+        *(f"gqr{i}" for i in range(8)),
+        *(f"sr{i}" for i in range(16)),
+        *AUX_SPR_NAMES.values(),
     }
 
     if has_indirect_call or nested_targets:
@@ -5773,8 +5862,12 @@ def infer_callee_contract(
     writes |= observed_writes & {"cr2", "cr3", "cr4"}
     if "memory" in writes:
         reads.add("memory")
-    if any(name == "cr" or name.startswith("cr") for name in writes):
-        reads.add("cr")
+    # Do NOT force ``cr`` into reads merely because a CR field is written.
+    # ``cmpwi``/``fcmp*`` overwrite a field from GPR/FPR (+ XER.SO) and do not
+    # architecturally read CR; stuffing entry CR into the call token makes
+    # divergent pre-call CR2–CR4 (about to be overwritten) spuriously split the
+    # UF and refuse EQUIVALENT. True CR RMW ops (``mtcrf``, ``crand``, …) already
+    # list ``cr`` in ``register_effects`` reads.
     writes.add("valid")
     invalid_reasons = _infer_invalid_reasons(instructions)
     if nested_targets and nested_contracts:
@@ -5833,6 +5926,18 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
                      Opcode.PS_CMPU1, Opcode.PS_CMPO1):
             written.add(f"cr{a[0]}")
             written.add("fpscr")
+        elif op in (
+            Opcode.MTFSF, Opcode.MTFSFI, Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS,
+        ):
+            # Must precede the broad ``_FP_SCALAR_ARITH`` arm: these opcodes live
+            # in ``_FP_AUX_OPS`` and would otherwise be mis-tabled as writing
+            # ``f{operands[0]}`` (e.g. ``mtfsb0`` → false ``f0`` write).
+            written.add("fpscr")
+            if op == Opcode.MCRFS:
+                written.add(f"cr{a[0]}")
+        elif op in (Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS, Opcode.MFFS):
+            # MFFS reads FPSCR into an FPR; it does not write FPSCR.
+            written.add(f"f{a[0]}")
         elif op in (_FP_SCALAR_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | _FP_PS_ESTIMATE | _FP_PS_SELECT | _FP_PS_CMP | _FP_PS_SIMPLE):
             written.add(f"f{a[0]}")
             if op in (_FP_SINGLE_ARITH | _FP_PS_BASIC | _FP_PS_FUSED | _FP_PS_SUM | _FP_PS_DIV | _FP_PS_ESTIMATE | _FP_PS_SELECT | _FP_PS_SIMPLE):
@@ -5842,12 +5947,9 @@ def automatic_live_out(instructions: list[Instruction]) -> tuple[str, ...]:
         elif op in (Opcode.FCTIW, Opcode.FCTIWZ, Opcode.FRSP):
             # Convert / round-to-single update FPSCR (FI/FR/FPRF/exceptions).
             written.add(f"f{a[0]}")
+            if op == Opcode.FRSP:
+                written.add(f"f{a[0]}.ps1")
             written.add("fpscr")
-        elif op in (Opcode.FNEG, Opcode.FMR, Opcode.FNABS, Opcode.FABS, Opcode.MFFS):
-            written.add(f"f{a[0]}")
-        elif op in (Opcode.MTFSF, Opcode.MTFSFI, Opcode.MTFSB0, Opcode.MTFSB1, Opcode.MCRFS):
-            written.add("fpscr")
-            if op == Opcode.MCRFS: written.add(f"cr{a[0]}")
         elif op in _FP_PSQ_OPS:
             if op in (Opcode.PSQ_L, Opcode.PSQ_LU, Opcode.PSQ_LX, Opcode.PSQ_LUX):
                 written.add(f"f{a[0]}")

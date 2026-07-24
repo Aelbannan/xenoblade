@@ -5,7 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802965b4
-extern "C" void __dt__11CSysWinSaveFv() {}
+extern "C" void __dt__11CSysWinSaveFv(void* self) {}
 // LLM-HARNESS-END: us-802965b4
 
 // LLM-HARNESS-BEGIN: us-80296640
@@ -21,7 +21,7 @@ extern "C" void Move__11CSysWinSaveFv() {}
 // LLM-HARNESS-END: us-80296870
 
 // LLM-HARNESS-BEGIN: us-80296a3c
-extern "C" void cbRenderBefore__11CSysWinSaveFv() {}
+extern "C" void cbRenderBefore__11CSysWinSaveFv(void* self) {}
 // LLM-HARNESS-END: us-80296a3c
 
 // LLM-HARNESS-BEGIN: us-80296ad4
@@ -37,15 +37,15 @@ extern "C" void func_80294638() {}
 // LLM-HARNESS-END: us-80296c34
 
 // LLM-HARNESS-BEGIN: us-80296e08
-extern "C" bool func_8029480C() { return false; }
+extern "C" void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-80296e08
 
 // LLM-HARNESS-BEGIN: us-80296e10
-extern "C" bool func_80294814() { return false; }
+extern "C" void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-80296e10
 
 // LLM-HARNESS-BEGIN: us-80296e18
-extern "C" bool func_8029481C() { return false; }
+extern "C" void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-80296e18
 
 // LLM-HARNESS-BEGIN: us-80296e20

@@ -41,7 +41,7 @@ extern "C" void wkUpdate__16CWorkSystemCacheFv() {}
 // LLM-HARNESS-END: us-804dd1d8
 
 // LLM-HARNESS-BEGIN: us-804dd280
-extern "C" void wkStandbyLogin__16CWorkSystemCacheFv() {}
+extern "C" void wkStandbyLogin__16CWorkSystemCacheFv(void) {}
 // LLM-HARNESS-END: us-804dd280
 
 // LLM-HARNESS-BEGIN: us-804dd284

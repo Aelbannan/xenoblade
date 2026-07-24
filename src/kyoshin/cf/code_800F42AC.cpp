@@ -29,7 +29,7 @@ extern "C" void func_800F4730() {}
 // LLM-HARNESS-END: us-800f5218
 
 // LLM-HARNESS-BEGIN: us-800f5264
-extern "C" bool func_800F477C() { return false; }
+extern "C" u32 func_800F477C(void* self) { return *(u32*)((u8*)self + 0xC); }
 // LLM-HARNESS-END: us-800f5264
 
 // LLM-HARNESS-BEGIN: us-800f526c

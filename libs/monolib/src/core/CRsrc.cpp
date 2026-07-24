@@ -18,6 +18,7 @@ bool isExistData__5CRsrcFPCv(const void* data);
 bool releaseCache__5CRsrcFPCv(const void* data);
 size_t strlen(const char* str);
 char* strcpy(char* dst, const char* src);
+UnkStruct_80438AF0* func_80438AF0__9CWorkUtilFP18UnkStruct_80438AF0(UnkStruct_80438AF0* p);
 }
 
 CRsrcData* CRsrc::convertToRsrcData(CWorkThread* pThread) {
@@ -35,17 +36,20 @@ CRsrcData* CRsrc::convertToRsrcData(CWorkThread* pThread) {
 #pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data) {
-    _reslist_node<CWorkThread*>* head;
     _reslist_node<CWorkThread*>* node;
 
-    head = parent->mChildren.mStartNodePtr;
-    node = head->mNext;
-
-    while (node != head) {
-        if (releaseCache__9CRsrcDataFPCv(convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem), data)) {
-            return true;
-        }
-        node = node->mNext;
+    // Retail: seed next from head->mNext, bottom-tested with per-iter lwz 0x60(parent).
+    node = (*(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60))->mNext;
+    goto check;
+loop:
+    if (releaseCache__9CRsrcDataFPCv(convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem),
+                                      data)) {
+        return true;
+    }
+    node = node->mNext;
+check:
+    if (node != *(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60)) {
+        goto loop;
     }
 
     return false;
@@ -112,22 +116,23 @@ bool hasChild(CWorkThread* pThread) {
 }
 
 CRsrcData* CRsrc::getRsrc(u32 id) {
-    s16 index;
-    s16 count;
     CRsrcData* entry;
+    s16 index;
+    u32 off;
 
-    count = lbl_eu_806655A8;
+    // Decl order: entry before index -> retail r6/r7 coloring.
     index = 0;
-
-    while (index < count) {
-        entry = sRsrcPointerList__5CRsrc[index];
-
-        // List slots are parent work threads; retail compares u32 @ 0x1C4.
-        if (*(u32*)((u8*)entry + 0x1C4) == id) {
-            return entry;
-        }
-
-        index++;
+    goto check;
+loop:
+    off = (u32)index;
+    entry = *(CRsrcData**)((u8*)sRsrcPointerList__5CRsrc + (off << 2));
+    if (id == *(u32*)((u8*)entry + 0x1C4)) {
+        return entry;
+    }
+    index++;
+check:
+    if (index < lbl_eu_806655A8) {
+        goto loop;
     }
 
     return nullptr;
@@ -177,24 +182,38 @@ check:
 #pragma dont_inline off
 #pragma optimize_for_size reset
 
+#pragma optimize_for_size on
+#pragma dont_inline on
 extern "C" bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* data) {
     _reslist_node<CWorkThread*>* node;
     CRsrcData* rsrcData;
+    int flag;
 
     node = reinterpret_cast<_reslist_node<CWorkThread*>*>(
-        CWorkUtil::func_80438AF0(reinterpret_cast<UnkStruct_80438AF0*>(&parent->mChildren)));
-
-    while (node != parent->mChildren.mStartNodePtr) {
-        rsrcData = convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem);
-
-        if (rsrcData->mCacheData == data) {
-            if (data == nullptr || rsrcData->mRefCount == 0) {
-                return true;
+        func_80438AF0__9CWorkUtilFP18UnkStruct_80438AF0(
+            reinterpret_cast<UnkStruct_80438AF0*>((u8*)parent + 0x5C)));
+    goto check;
+loop:
+    rsrcData = convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem);
+    if (rsrcData->mCacheData == data) {
+        // Retail: match when cache==data and NOT (non-null && refCount==0).
+        flag = 0;
+        if (rsrcData->mCacheData != nullptr) {
+            if (rsrcData->mRefCount == 0) {
+                flag = 1;
             }
         }
-
-        node = node->mNext;
+        if (flag == 0) {
+            return true;
+        }
+    }
+    node = node->mNext;
+check:
+    if (node != *(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60)) {
+        goto loop;
     }
 
     return false;
 }
+#pragma dont_inline off
+#pragma optimize_for_size reset

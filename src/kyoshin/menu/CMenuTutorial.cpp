@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuTutorial() {}
 // LLM-HARNESS-END: us-8029c780
 
 // LLM-HARNESS-BEGIN: us-8029c8a0
-extern "C" void __dt__13CMenuTutorialFv() {}
+extern "C" void __dt__13CMenuTutorialFv(void* self) {}
 // LLM-HARNESS-END: us-8029c8a0
 
 // LLM-HARNESS-BEGIN: us-8029c90c
@@ -25,7 +25,7 @@ extern "C" void Move__13CMenuTutorialFv() {}
 // LLM-HARNESS-END: us-8029cb60
 
 // LLM-HARNESS-BEGIN: us-8029cc0c
-extern "C" void cbRenderBefore__13CMenuTutorialFv() {}
+extern "C" void cbRenderBefore__13CMenuTutorialFv(void* self) {}
 // LLM-HARNESS-END: us-8029cc0c
 
 // LLM-HARNESS-BEGIN: us-8029cca4
@@ -53,9 +53,9 @@ extern "C" void func_8029A8D4() {}
 // LLM-HARNESS-END: us-8029cf9c
 
 // LLM-HARNESS-BEGIN: us-8029cfec
-extern "C" bool func_8029A924() { return false; }
+extern "C" void func_8029A924(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuTutorialFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029cfec
 
 // LLM-HARNESS-BEGIN: us-8029cff4
-extern "C" bool func_8029A92C() { return false; }
+extern "C" void func_8029A92C(void* self) { ((void(*)(void*))__dt__13CMenuTutorialFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-8029cff4

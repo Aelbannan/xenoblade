@@ -44,10 +44,12 @@ extern "C" void func_801A048C(CMenuBattleMode* param_1) {
 }
 // LLM-HARNESS-END: us-801a1ba8
 // LLM-HARNESS-BEGIN: us-801a1bb0
-extern "C" bool func_801A0494() { return false; }
+extern void cbRenderBefore__15CMenuBattleModeFv();
+extern "C" void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-801a1bb0
 // LLM-HARNESS-BEGIN: us-801a1bb8
-extern "C" bool func_801A049C() { return false; }
+extern void __dt__15CMenuBattleModeFv();
+extern "C" void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 // LLM-HARNESS-END: us-801a1bb8
 
 // LLM-HARNESS-BEGIN: us-801a1a90

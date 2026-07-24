@@ -9,7 +9,7 @@ extern "C" void __ct__CMenuCollepedia() {}
 // LLM-HARNESS-END: us-8025487c
 
 // LLM-HARNESS-BEGIN: us-8025494c
-extern "C" void __dt__15CMenuCollepediaFv() {}
+extern "C" void __dt__15CMenuCollepediaFv(void* self) {}
 // LLM-HARNESS-END: us-8025494c
 
 // LLM-HARNESS-BEGIN: us-802549c4
@@ -25,7 +25,7 @@ extern "C" void Move__15CMenuCollepediaFv() {}
 // LLM-HARNESS-END: us-80254d74
 
 // LLM-HARNESS-BEGIN: us-80254df8
-extern "C" void cbRenderBefore__15CMenuCollepediaFv() {}
+extern "C" void cbRenderBefore__15CMenuCollepediaFv(void* self) {}
 // LLM-HARNESS-END: us-80254df8
 
 // LLM-HARNESS-BEGIN: us-80254e9c
@@ -61,9 +61,9 @@ extern "C" void func_80253128() {}
 // LLM-HARNESS-END: us-80255364
 
 // LLM-HARNESS-BEGIN: us-802553c4
-extern "C" bool func_80253188() { return false; }
+extern "C" void func_80253188(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802553c4
 
 // LLM-HARNESS-BEGIN: us-802553cc
-extern "C" bool func_80253190() { return false; }
+extern "C" void func_80253190(void* self) { ((void(*)(void*))__dt__15CMenuCollepediaFv)((char*)self - 0x58); }
 // LLM-HARNESS-END: us-802553cc

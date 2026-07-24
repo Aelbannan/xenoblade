@@ -9,7 +9,7 @@ extern "C" void __ct__CTalkWindow() {}
 // LLM-HARNESS-END: us-8012c710
 
 // LLM-HARNESS-BEGIN: us-8012c828
-extern "C" void __dt__11CTalkWindowFv() {}
+extern "C" void __dt__11CTalkWindowFv(void* self) {}
 // LLM-HARNESS-END: us-8012c828
 
 // LLM-HARNESS-BEGIN: us-8012c89c
@@ -33,7 +33,7 @@ extern "C" void Draw__11CTalkWindowFv() {}
 // LLM-HARNESS-END: us-8012d69c
 
 // LLM-HARNESS-BEGIN: us-8012d6a0
-extern "C" void cbRenderBefore__11CTalkWindowFv() {}
+extern "C" void cbRenderBefore__11CTalkWindowFv(void* self) {}
 // LLM-HARNESS-END: us-8012d6a0
 
 // LLM-HARNESS-BEGIN: us-8012d744
@@ -61,15 +61,15 @@ extern "C" void func_8012DA6C() {}
 // LLM-HARNESS-END: us-8012e53c
 
 // LLM-HARNESS-BEGIN: us-8012ea48
-extern "C" bool func_8012DF78() { return false; }
+extern "C" void func_8012DF78(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x6c); }
 // LLM-HARNESS-END: us-8012ea48
 
 // LLM-HARNESS-BEGIN: us-8012ea50
-extern "C" bool func_8012DF80() { return false; }
+extern "C" void func_8012DF80(void* self) { ((void(*)(void*))cbRenderBefore__11CTalkWindowFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-8012ea50
 
 // LLM-HARNESS-BEGIN: us-8012ea58
-extern "C" bool func_8012DF88() { return false; }
+extern "C" void func_8012DF88(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x70); }
 // LLM-HARNESS-END: us-8012ea58
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

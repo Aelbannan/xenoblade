@@ -105,7 +105,7 @@ extern "C" void func_804CBE48() {}
 // LLM-HARNESS-END: us-804cffa4
 
 // LLM-HARNESS-BEGIN: us-804d0044
-extern "C" void func_804CBEE8() {}
+extern "C" void func_804CBEE8(void) {}
 // LLM-HARNESS-END: us-804d0044
 
 // LLM-HARNESS-BEGIN: us-804d0048
@@ -133,10 +133,10 @@ extern "C" void func_804CC1F4() {}
 // LLM-HARNESS-END: us-804d0350
 
 // LLM-HARNESS-BEGIN: us-804d040c
-extern "C" void func_804CC2B0() {}
+extern "C" void func_804CC2B0(void) {}
 // LLM-HARNESS-END: us-804d040c
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-804d0410
-extern "C" void sinit_804CC2B4() {}
+extern "C" void sinit_804CC2B4(void) {}
 // LLM-HARNESS-END: us-804d0410

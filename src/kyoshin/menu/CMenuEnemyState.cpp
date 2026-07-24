@@ -477,17 +477,17 @@ after_bit21:
 
     func_801127B0(this);
 
+    // Retail pre-loop materialization (80110A88..AA4): pc call, then
+    // f30/r30/f31/r29/f28/r28/r27/r31 — declare in that dependence order.
     cf::CfObjectPc* pc =
         func_800BFC68(cf::CfGameManager::func_80082D54(0));
-
-    // Stack Vec homes + loop-invariant floats (retail: f28/f30/f31, r28/r29
-    // before the panel loop). Explicit address locals match r28/r29; a separate
-    // zero local matches r31 — keep the live set at _savegpr_22 (not 21/23).
-    nw4r::math::VEC3 delta;
-    nw4r::math::VEC3 scratch;
-    f32 one = lbl_eu_80666FE8;
     f32 animMarker = lbl_eu_80666FEC;
     f32 distThresh = lbl_eu_80667014;
+    nw4r::math::VEC3 scratch;
+    nw4r::math::VEC3* pScratch = &scratch;
+    f32 one = lbl_eu_80666FE8;
+    nw4r::math::VEC3 delta;
+    nw4r::math::VEC3* pDelta = &delta;
     u8 i = 0;
     u8 z = 0;
 
@@ -566,12 +566,12 @@ after_bit21:
             void* pcPos = vslot<GetPosFn>(pcEmbed, 0xAC)(pcEmbed);
 
             nw4r::math::VEC3Sub(
-                &delta,
+                pDelta,
                 reinterpret_cast<const nw4r::math::VEC3*>(pcPos),
                 reinterpret_cast<const nw4r::math::VEC3*>(handlePos));
             scratch = delta;
-            f32 distSq = scratch.x * scratch.x + scratch.y * scratch.y +
-                         scratch.z * scratch.z;
+            // Retail: interleaved assign + VEC3LenSq (ps_mul/ps_madd/ps_sum0).
+            f32 distSq = nw4r::math::VEC3LenSq(pScratch);
             if (distSq > distThresh) {
                 panelData[0x15] = z;
                 continue;

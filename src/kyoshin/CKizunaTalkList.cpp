@@ -73,7 +73,7 @@ extern "C" void func_80273518() {}
 // LLM-HARNESS-END: us-8027599c
 
 // LLM-HARNESS-BEGIN: us-802759e0
-extern "C" bool func_8027355C() { return false; }
+extern "C" u8 func_8027355C(void* self) { return ((u8*)self)[0x87]; }
 // LLM-HARNESS-END: us-802759e0
 
 // LLM-HARNESS-BEGIN: us-802759e8

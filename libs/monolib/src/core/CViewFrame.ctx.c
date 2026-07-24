@@ -17083,8 +17083,85 @@ bool CViewFrame::render() {
 extern "C" void __ct__CViewFrame() {}
 // LLM-HARNESS-END: us-80442564
 // LLM-HARNESS-BEGIN: us-80442600
-extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame() {}
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* out, const CViewFrame* frame) {
+    out->mPos.x = 0;
+    out->mPos.y = 0;
+
+    CView* owner = frame->mOwner;
+    int apply = 0;
+    if ((owner->unk27C & 1) != 0) {
+        u32 flags = owner->unk278;
+        if ((flags & 1) == 0 && (flags & 2) == 0) {
+            apply = 1;
+        }
+    }
+    if (apply == 0) {
+        return;
+    }
+
+    out->mPos.x = (s16)(out->mPos.x + frame->unk58);
+    out->mPos.y = (s16)(out->mPos.y + frame->unk58);
+
+    apply = 0;
+    owner = frame->mOwner;
+    if ((owner->unk27C & 2) != 0) {
+        u32 flags = owner->unk278;
+        if ((flags & 1) == 0 && (flags & 2) == 0) {
+            apply = 1;
+        }
+    }
+    if (apply == 0) {
+        return;
+    }
+
+    out->mPos.y = (s16)(out->mPos.y + (s16)(frame->unk58 + 0x16));
+}
 // LLM-HARNESS-END: us-80442600
+
+// Owner client rect into out; optional border expand (same gates as render()).
+extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* out, const CViewFrame* frame) {
+    CView* view = frame->mOwner;
+    int expand = 0;
+
+    out->mPos.x = view->unk1DC.unk54;
+    out->mPos.y = view->unk1DC.unk56;
+    out->mSize.x = view->unk1C8.unk0;
+    out->mSize.y = view->unk1C8.unk2;
+
+    if ((view->unk27C & 1) != 0) {
+        u32 mode = view->unk278;
+        if ((mode & 1) == 0 && (mode & 2) == 0) {
+            expand = 1;
+        }
+    }
+    if (expand == 0) {
+        return;
+    }
+
+    {
+        s16 border = frame->unk58;
+        out->mSize.x = (s16)(out->mSize.x + (s16)(border * 2));
+    }
+
+    expand = 0;
+    view = frame->mOwner;
+    if ((view->unk27C & 2) != 0) {
+        u32 mode = view->unk278;
+        if ((mode & 1) == 0 && (mode & 2) == 0) {
+            expand = 1;
+        }
+    }
+    if (expand != 0) {
+        s16 border = frame->unk58;
+        out->mSize.y = (s16)(out->mSize.y + (s16)(border * 3 + 0x16));
+    } else {
+        s16 border = frame->unk58;
+        out->mSize.y = (s16)(out->mSize.y + (s16)(border * 2));
+    }
+}
+
 // LLM-HARNESS-BEGIN: us-80444550
 extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
 // LLM-HARNESS-END: us-80444550

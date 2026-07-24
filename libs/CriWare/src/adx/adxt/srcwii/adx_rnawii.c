@@ -5,19 +5,27 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8039e6c4
-void ADXRNA_Init() {}
+void ADXRNA_Init(void) {
+    AXRNA_Init();
+}
 // LLM-HARNESS-END: us-8039e6c4
 
 // LLM-HARNESS-BEGIN: us-8039e6c8
-void ADXRNA_Finish() {}
+void ADXRNA_Finish(void) {
+    AXRNA_Finish();
+}
 // LLM-HARNESS-END: us-8039e6c8
 
 // LLM-HARNESS-BEGIN: us-8039e6cc
-void ADXRNA_EntryErrFunc() {}
+void ADXRNA_EntryErrFunc(void) {
+    AXRNA_EntryErrFunc();
+}
 // LLM-HARNESS-END: us-8039e6cc
 
 // LLM-HARNESS-BEGIN: us-8039e6d0
-void ADXRNA_Create() {}
+void ADXRNA_Create(void) {
+    AXRNA_Create();
+}
 // LLM-HARNESS-END: us-8039e6d0
 
 // LLM-HARNESS-BEGIN: us-8039e6d4
@@ -25,23 +33,33 @@ void ADXRNA_Destroy() {}
 // LLM-HARNESS-END: us-8039e6d4
 
 // LLM-HARNESS-BEGIN: us-8039e718
-void ADXRNA_SetTransSw() {}
+void ADXRNA_SetTransSw(void) {
+    AXRNA_SetTransSw();
+}
 // LLM-HARNESS-END: us-8039e718
 
 // LLM-HARNESS-BEGIN: us-8039e71c
-void ADXRNA_SetPlaySw() {}
+void ADXRNA_SetPlaySw(void) {
+    AXRNA_SetPlaySw();
+}
 // LLM-HARNESS-END: us-8039e71c
 
 // LLM-HARNESS-BEGIN: us-8039e720
-void ADXRNA_GetNumData() {}
+void ADXRNA_GetNumData(void) {
+    AXRNA_GetNumData();
+}
 // LLM-HARNESS-END: us-8039e720
 
 // LLM-HARNESS-BEGIN: us-8039e724
-void ADXRNA_GetNumRoom() {}
+void ADXRNA_GetNumRoom(void) {
+    AXRNA_GetNumRoom();
+}
 // LLM-HARNESS-END: us-8039e724
 
 // LLM-HARNESS-BEGIN: us-8039e728
-void ADXRNA_ExecServer() {}
+void ADXRNA_ExecServer(void) {
+    AXRNA_ExecServer();
+}
 // LLM-HARNESS-END: us-8039e728
 
 // LLM-HARNESS-BEGIN: us-8039e72c

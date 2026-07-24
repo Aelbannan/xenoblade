@@ -41,14 +41,10 @@ CTaskGameCf* CTaskGameCf::getInstance() {
         }
     }
 
+extern const CTaskGameCf::MoveFunc lbl_eu_80525AB8;
+
 void CTaskGameCf::func_8004431C() {
-    extern const u32 lbl_eu_80525AB8[3];
-    u32 v1 = lbl_eu_80525AB8[1];
-    *(u32*)((u8*)this + 0x40) = v1;
-    u32 v0 = lbl_eu_80525AB8[0];
-    *(u32*)((u8*)this + 0x3c) = v0;
-    u32 v2 = lbl_eu_80525AB8[2];
-    *(u32*)((u8*)this + 0x44) = v2;
+    mMoveFunc = lbl_eu_80525AB8;
 }
 
 extern const u32 lbl_eu_80525AC4[3];
@@ -111,14 +107,9 @@ void CTaskGameCf::Draw() {}
         mMoveFunc = &CTaskGameCf::func_8004451C;
     }
 
-extern "C" u32 lbl_eu_80525B0C[3];
-
-void CTaskGameCf::func_800444DC() {
-    const u32* src = reinterpret_cast<u32*>(lbl_eu_80525B0C);
-    u32* dest = reinterpret_cast<u32*>(reinterpret_cast<u8*>(this) + 0x3C);
-    dest[1] = src[1];
-    dest[0] = src[0];
-    dest[2] = src[2];
+extern "C" void func_800444DC(cf::CTaskGameCf* self) {
+    typedef void (cf::CTaskGameCf::*Ptmf)();
+    *(Ptmf*)((char*)self + 0x3C) = &cf::CTaskGameCf::func_800444FC;
 }
 
 extern "C" u32 lbl_eu_80525B18[3];

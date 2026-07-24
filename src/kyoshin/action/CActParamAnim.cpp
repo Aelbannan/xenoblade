@@ -33,7 +33,9 @@ extern "C" void* func_8004B344(void* self) { return static_cast<char*>(self) + 0
 // LLM-HARNESS-END: us-8004ba1c
 
 // LLM-HARNESS-BEGIN: us-8004ba24
-extern "C" bool func_8004B34C() { return false; }
+extern "C" float func_8004B34C(void* self) {
+    return *(float*)((char*)self + 0x43c);
+}
 // LLM-HARNESS-END: us-8004ba24
 
 // LLM-HARNESS-BEGIN: us-8004ba2c
@@ -57,7 +59,9 @@ extern "C" void func_8004B4A4() {}
 // LLM-HARNESS-END: us-8004bb7c
 
 // LLM-HARNESS-BEGIN: us-8004bbf4
-extern "C" bool func_8004B51C() { return false; }
+extern "C" void* func_8004B51C(void* self) {
+    return *(void**)((char*)self + 8);
+}
 // LLM-HARNESS-END: us-8004bbf4
 
 // LLM-HARNESS-BEGIN: us-8004bbfc
@@ -77,7 +81,9 @@ extern "C" void func_8004B60C(float *data, float a, float b, float c) { data[0] 
 // LLM-HARNESS-END: us-8004bce4
 
 // LLM-HARNESS-BEGIN: us-8004bcf4
-extern "C" bool func_8004B61C() { return false; }
+extern "C" float func_8004B61C(void* self) {
+    return *(float*)((char*)self + 0x444);
+}
 // LLM-HARNESS-END: us-8004bcf4
 
 // LLM-HARNESS-BEGIN: us-8004bcfc
@@ -133,7 +139,9 @@ extern "C" void func_8004B7DC() {}
 // LLM-HARNESS-END: us-8004beb4
 
 // LLM-HARNESS-BEGIN: us-8004bf18
-extern "C" bool func_8004B840() { return false; }
+extern "C" void func_8004B840(void* self, float val) {
+    *(float*)((char*)self + 0x3c4) = val;
+}
 // LLM-HARNESS-END: us-8004bf18
 
 // LLM-HARNESS-BEGIN: us-8004bf20
@@ -291,7 +299,9 @@ extern "C" void func_8004D950__13CActParamAnimFv() {}
 // LLM-HARNESS-END: us-8004dfa8
 
 // LLM-HARNESS-BEGIN: us-8004e11c
-extern "C" bool func_8004DAC4() { return false; }
+extern "C" void* func_8004DAC4(void* self) {
+    return *(void**)((char*)self + 0x4c0);
+}
 // LLM-HARNESS-END: us-8004e11c
 
 // LLM-HARNESS-BEGIN: us-8004e124

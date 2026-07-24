@@ -4,6 +4,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectPc.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/work/CProcess.hpp"
 
@@ -213,7 +214,7 @@ extern const f32 lbl_eu_80667014; // distance^2 threshold
 extern const f32 lbl_eu_80666FEC; // anim-state marker value
 extern const f32 lbl_eu_8066A1F8; // pulse amplitude
 
-void* func_800FE68C();
+cf::CfObjectSelectorObj* func_800FE68C();
 void* func_8016FE34();
 int func_8013BF48();
 void func_800BBA08(void* r3);

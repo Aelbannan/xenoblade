@@ -2,7 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CActParamAnimGame.hpp"
 
 // LLM-HARNESS-BEGIN: us-8005aa64
 extern "C" void __ct__8005A3FC() {}
@@ -93,6 +93,8 @@ extern "C" void func_8005DC30__Q22cf17CActParamAnimGame() {}
 // LLM-HARNESS-END: us-8005e278
 
 // LLM-HARNESS-BEGIN: us-8005e2e8
+// cf::CActParamAnimGame::func_8005DCA0 — trivial leaf, returns false
+// Retail symbol lacks Fv suffix; extern "C" preserves exact mangling for FULL_MATCH
 extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 // LLM-HARNESS-END: us-8005e2e8
 

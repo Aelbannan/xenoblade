@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 
 // LLM-HARNESS-BEGIN: us-800fe25c
 extern "C" void func_800FD774() {}
@@ -29,9 +30,11 @@ extern "C" void func_800FE104() {}
 // LLM-HARNESS-END: us-800febec
 
 // LLM-HARNESS-BEGIN: us-800ff174
-extern "C" u32 lbl_eu_80663F14;
+// spInstance for the CfObjectSelectorObj singleton
+extern "C" cf::CfObjectSelectorObj* lbl_eu_80663F14;
 
-extern "C" u32 func_800FE68C() {
+// Returns the CfObjectSelectorObj singleton instance
+extern "C" cf::CfObjectSelectorObj* func_800FE68C() {
     return lbl_eu_80663F14;
 }
 // LLM-HARNESS-END: us-800ff174

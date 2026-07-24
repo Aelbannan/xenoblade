@@ -1364,7 +1364,8 @@ extern "C" int func_80061FD8() { return lbl_eu_80663D80; }
 // LLM-HARNESS-END: us-800626d8
 
 // LLM-HARNESS-BEGIN: us-800626e0
-extern "C" bool func_80061FE0() { return false; }
+extern u32 lbl_eu_80663D80;
+extern "C" u32 func_80061FE0(u32 val) { lbl_eu_80663D80 = val; return val; }
 // LLM-HARNESS-END: us-800626e0
 
 // LLM-HARNESS-BEGIN: us-800626e8
@@ -2199,7 +2200,7 @@ extern "C" void func_80065D90() {}
 // LLM-HARNESS-END: us-80066714
 
 // LLM-HARNESS-BEGIN: us-80066784
-extern "C" bool func_80065E00() { return false; }
+extern "C" u32 func_80065E00(u32 unused, void* obj) { return *(u32*)((char*)obj + 24); }
 // LLM-HARNESS-END: us-80066784
 
 // LLM-HARNESS-BEGIN: us-8006678c

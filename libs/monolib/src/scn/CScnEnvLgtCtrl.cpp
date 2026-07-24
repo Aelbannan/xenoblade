@@ -9,39 +9,30 @@ extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) =
 // LLM-HARNESS-END: us-804c4d40
 
 // LLM-HARNESS-BEGIN: us-804c4e38
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c4e38
 
 // LLM-HARNESS-BEGIN: us-804c4eec
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c4eec
 
 // LLM-HARNESS-BEGIN: us-804c4fa4
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c4fa4
 
 // LLM-HARNESS-BEGIN: us-804c51b0
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c51b0
 
 // LLM-HARNESS-BEGIN: us-804c51f0
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c51f0
 
 // LLM-HARNESS-BEGIN: us-804c5398
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c5398
 
 // LLM-HARNESS-BEGIN: us-804c53cc
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c53cc
 
 // LLM-HARNESS-BEGIN: us-804c5400
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c5400
 
 // LLM-HARNESS-BEGIN: us-804c5494
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804c5494
 
 // LLM-HARNESS-BEGIN: us-804c565c
@@ -311,7 +302,6 @@ extern "C" void func_804C6B44() {}
 // LLM-HARNESS-END: us-804caca0
 
 // LLM-HARNESS-BEGIN: us-804cacc0
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 // LLM-HARNESS-END: us-804cacc0
 
 // LLM-HARNESS-BEGIN: us-804cacc8
@@ -371,15 +361,15 @@ extern "C" void func_804C75A0() {}
 // LLM-HARNESS-END: us-804cb6fc
 
 // LLM-HARNESS-BEGIN: us-804cb710
-extern "C" bool func_804C75B4() { return false; }
+extern "C" u32 func_804C75B4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 0) = val; return unused; }
 // LLM-HARNESS-END: us-804cb710
 
 // LLM-HARNESS-BEGIN: us-804cb718
-extern "C" bool func_804C75BC() { return false; }
+extern "C" u32 func_804C75BC(u32 unused, void* obj, float val) { *(float*)((char*)obj + 4) = val; return unused; }
 // LLM-HARNESS-END: us-804cb718
 
 // LLM-HARNESS-BEGIN: us-804cb720
-extern "C" bool func_804C75C4() { return false; }
+extern "C" u32 func_804C75C4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 8) = val; return unused; }
 // LLM-HARNESS-END: us-804cb720
 
 // LLM-HARNESS-BEGIN: us-804cb728
@@ -395,15 +385,15 @@ extern "C" void func_804C75F4() {}
 // LLM-HARNESS-END: us-804cb750
 
 // LLM-HARNESS-BEGIN: us-804cb764
-extern "C" bool func_804C7608() { return false; }
+extern "C" u32 func_804C7608(u32 unused, void* obj, float val) { *(float*)((char*)obj + 40) = val; return unused; }
 // LLM-HARNESS-END: us-804cb764
 
 // LLM-HARNESS-BEGIN: us-804cb76c
-extern "C" bool func_804C7610() { return false; }
+extern "C" u32 func_804C7610(u32 unused, void* obj, float val) { *(float*)((char*)obj + 44) = val; return unused; }
 // LLM-HARNESS-END: us-804cb76c
 
 // LLM-HARNESS-BEGIN: us-804cb774
-extern "C" bool func_804C7618() { return false; }
+extern "C" u32 func_804C7618(u32 unused, void* obj, float val) { *(float*)((char*)obj + 48) = val; return unused; }
 // LLM-HARNESS-END: us-804cb774
 
 // LLM-HARNESS-BEGIN: us-804cb77c
@@ -419,31 +409,31 @@ extern "C" void func_804C7658() {}
 // LLM-HARNESS-END: us-804cb7b4
 
 // LLM-HARNESS-BEGIN: us-804cb7d0
-extern "C" bool func_804C7674() { return false; }
+extern "C" u32 func_804C7674(u32 unused, void* obj, float val) { *(float*)((char*)obj + 184) = val; return unused; }
 // LLM-HARNESS-END: us-804cb7d0
 
 // LLM-HARNESS-BEGIN: us-804cb7d8
-extern "C" bool func_804C767C() { return false; }
+extern "C" u32 func_804C767C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 188) = val; return unused; }
 // LLM-HARNESS-END: us-804cb7d8
 
 // LLM-HARNESS-BEGIN: us-804cb7e0
-extern "C" bool func_804C7684() { return false; }
+extern "C" u32 func_804C7684(u32 unused, void* obj, float val) { *(float*)((char*)obj + 192) = val; return unused; }
 // LLM-HARNESS-END: us-804cb7e0
 
 // LLM-HARNESS-BEGIN: us-804cb7e8
-extern "C" bool func_804C768C() { return false; }
+extern "C" u32 func_804C768C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 196) = val; return unused; }
 // LLM-HARNESS-END: us-804cb7e8
 
 // LLM-HARNESS-BEGIN: us-804cb7f0
-extern "C" bool func_804C7694() { return false; }
+extern "C" u32 func_804C7694(u32 unused, void* obj, float val) { *(float*)((char*)obj + 200) = val; return unused; }
 // LLM-HARNESS-END: us-804cb7f0
 
 // LLM-HARNESS-BEGIN: us-804cb7f8
-extern "C" bool func_804C769C() { return false; }
+extern "C" u32 func_804C769C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 204) = val; return unused; }
 // LLM-HARNESS-END: us-804cb7f8
 
 // LLM-HARNESS-BEGIN: us-804cb800
-extern "C" bool func_804C76A4() { return false; }
+extern "C" u32 func_804C76A4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 208) = val; return unused; }
 // LLM-HARNESS-END: us-804cb800
 
 // LLM-HARNESS-BEGIN: us-804cb808
@@ -471,19 +461,19 @@ extern "C" void func_804C7738() {}
 // LLM-HARNESS-END: us-804cb894
 
 // LLM-HARNESS-BEGIN: us-804cb8b0
-extern "C" bool func_804C7754() { return false; }
+extern "C" u32 func_804C7754(u32 unused, void* obj, float val) { *(float*)((char*)obj + 200) = val; return unused; }
 // LLM-HARNESS-END: us-804cb8b0
 
 // LLM-HARNESS-BEGIN: us-804cb8b8
-extern "C" bool func_804C775C() { return false; }
+extern "C" u32 func_804C775C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 204) = val; return unused; }
 // LLM-HARNESS-END: us-804cb8b8
 
 // LLM-HARNESS-BEGIN: us-804cb8c0
-extern "C" bool func_804C7764() { return false; }
+extern "C" u32 func_804C7764(u32 unused, void* obj, float val) { *(float*)((char*)obj + 208) = val; return unused; }
 // LLM-HARNESS-END: us-804cb8c0
 
 // LLM-HARNESS-BEGIN: us-804cb8c8
-extern "C" bool func_804C776C() { return false; }
+extern "C" u32 func_804C776C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 212) = val; return unused; }
 // LLM-HARNESS-END: us-804cb8c8
 
 // LLM-HARNESS-BEGIN: us-804cb8d0

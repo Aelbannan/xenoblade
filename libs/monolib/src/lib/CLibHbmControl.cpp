@@ -7,8 +7,8 @@
 #include <cstring>
 
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),
-unk22C(0),
-unk230(0) {
+mHbmPhase(0),
+mWaitTimer(0) {
     spInstance = this;
     mType = THREAD_CLIBHBMCONTROL;
     std::memset(&mHBMControllerData, 0, sizeof(HBMControllerData));
@@ -22,24 +22,29 @@ CLibHbmControl* CLibHbmControl::getInstance(){
     return spInstance;
 }
 
-bool CLibHbmControl::func_8045E530(){
+bool CLibHbmControl::isActive(){
     CLibHbmControl* hbmControl = spInstance;
 
     if(hbmControl == nullptr) return false;
-    return hbmControl->unk22C == 3;
+    return hbmControl->mHbmPhase == 3;
 }
 
+// Advances the HBM (Home Button Menu) state machine each frame.
+// Phase 0: load arc file   → 1
+// Phase 1: wait for file I/O, countdown timer, then → 2 (or back to 0 on error)
+// Phase 2: init HBM system  → 3
+// Phase 3: active — polls WPAD controllers, processes HBM button selections
 void CLibHbmControl::wkUpdate(){
-    switch(unk22C){
+    switch(mHbmPhase){
         case 0:
             CLibHbm::loadHbmArcFile();
-            unk230 = 0xD2;
-            unk22C++;
+            mWaitTimer = 0xD2;
+            mHbmPhase++;
             break;
         case 1:
             if(!CDeviceFileCri::getInstance()->isException()){
-                unk230--;
-                if(unk230 <= 0){
+                mWaitTimer--;
+                if(mWaitTimer <= 0){
                     wkSetEvent(EVT_NONE);
                 }
 
@@ -49,14 +54,14 @@ void CLibHbmControl::wkUpdate(){
             wkSetEvent(EVT_NONE);
 
             if(CLibHbm::checkFlag6()){
-                unk22C = 0;
+                mHbmPhase = 0;
             }else if(CLibHbm::isHbmMemPointerValid()){
-                unk22C++;
+                mHbmPhase++;
             }
             break;
         case 2:
             CLibHbm::initHbm();
-            unk22C++;
+            mHbmPhase++;
             break;
         case 3:
             for(int i = 0; i < WPAD_MAX_CONTROLLERS; i++){

@@ -176,7 +176,7 @@ void CLibHbm::wkUpdate(){
         int channel = sCurWpadChannel >= 0 ? sCurWpadChannel : CDeviceRemotePad::getFirstConnectedWpadPort();
 
         if(CLibHbmControl::getInstance() != nullptr){
-            if(CLibHbmControl::func_8045E530()) return;
+            if(CLibHbmControl::isActive()) return;
 
             if(CDeviceFileCri::getInstance()->isException()){
                 if(!CLibHbmControl::getInstance()->isNoEvent() && mState < STATE_0 && !unk264){
@@ -292,7 +292,7 @@ bool CLibHbm::isHbmControlInitialized(){
 }
 
 bool CLibHbm::func_8045DE00(){
-    return CLibHbmControl::func_8045E530();
+    return CLibHbmControl::isActive();
 }
 
 bool CLibHbm::wkStandbyLogin(){

@@ -181,11 +181,11 @@ void CTaskGameCf::func_800444FC() {
     }
 
     void CTaskGameCf::func_800447B4(){
-        if(Class_80296898::getInstance()->unk_0F == 0){
-            Class_80296898::getInstance()->unk_0F = 10;
+        if(Class_80296898::getInstance()->mFrameCount == 0){
+            Class_80296898::getInstance()->mFrameCount = 10;
         }
 
-        CDeviceVI::func_804483DC(Class_80296898::getInstance()->unk_0F - 1);
+        CDeviceVI::func_804483DC(Class_80296898::getInstance()->mFrameCount - 1);
 
         if(unk_54 & 1){
             unk_54 &= ~1;

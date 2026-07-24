@@ -3,6 +3,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/chain/CChainActorEne.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
+
+// Operates on the CChainEffect at offset 0x74; compares r4 against effect.unk8's target
+extern "C" void func_802A0AA0(cf::CChainEffect* effect);
 
 // LLM-HARNESS-BEGIN: us-8028378c
 extern "C" void func_80281308() {}
@@ -44,13 +49,18 @@ extern "C" void func_802816FC() {}
 extern "C" void func_8028183C() {}
 // LLM-HARNESS-END: us-80283cc0
 
-extern "C" void func_802A0AA0(void* self);
 // LLM-HARNESS-BEGIN: us-80283d58
-extern "C" void func_802818D4(void* self) { ((void(*)(void*))func_802A0AA0)((char*)self + 0x74); }
+// Tail-calls func_802A0AA0 with &self->mChainEffect, forwarding remaining arguments
+extern "C" void func_802818D4(cf::CChainActorEne* self) {
+    func_802A0AA0(&self->mChainEffect);
+}
 // LLM-HARNESS-END: us-80283d58
 
 // LLM-HARNESS-BEGIN: us-80283d60
-extern "C" int func_802818DC(void* self) { return 1; }
+// Returns whether the enemy chain actor is valid/active
+extern "C" s32 func_802818DC(cf::CChainActorEne* self) {
+    return 1;
+}
 // LLM-HARNESS-END: us-80283d60
 
 // LLM-HARNESS-BEGIN: us-80283d68

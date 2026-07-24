@@ -1,8 +1,4 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/CfSoundMan
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
-
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
 // LLM-HARNESS-BEGIN: us-801c1064
 extern "C" void __ct__801BF76C() {}
@@ -188,9 +184,9 @@ extern "C" void func_801C0D10() {}
 extern "C" void func_801C0D28() {}
 // LLM-HARNESS-END: us-801c26ec
 
-// LLM-HARNESS-BEGIN: us-801c2784
-extern "C" void func_801C0DC0(void) {}
-// LLM-HARNESS-END: us-801c2784
+// No-op: called when nw4r sound playback starts successfully.
+// Retained as an empty hook in the retail binary (single blr).
+extern "C" void func_801C0DC0() {}
 
 // LLM-HARNESS-BEGIN: us-801c2788
 extern "C" void func_801C0DC4() {}

@@ -3,9 +3,11 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CBaseCur.hpp"
 
 // LLM-HARNESS-BEGIN: us-801d3a0c
-extern "C" void func_801D216C(void* self, u8 val) { ((u8*)self)[0x15] = val; }
+/* Sets the visible flag on a CBaseCur cursor widget. */
+extern "C" void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
 // LLM-HARNESS-END: us-801d3a0c
 
 

@@ -17,7 +17,8 @@ extern "C" void func_8016CE5C() {}
 // LLM-HARNESS-END: us-8016e1b8
 
 // LLM-HARNESS-BEGIN: us-8016e278
-extern "C" int func_8016CF1C(void* self) { return 12; }
+// FULL_MATCH: vtable slot 6 - returns constant resource type identifier
+extern "C" int func_8016CF1C() { return 12; }
 // LLM-HARNESS-END: us-8016e278
 
 // LLM-HARNESS-BEGIN: us-8016e280
@@ -89,7 +90,8 @@ extern "C" void func_8016DE8C() {}
 // LLM-HARNESS-END: us-8016f240
 
 // LLM-HARNESS-BEGIN: us-8016f280
-extern "C" int func_8016DECC(void* self) { return 1; }
+// FULL_MATCH: vtable slot 23 - returns constant resource sub-type
+extern "C" int func_8016DECC() { return 1; }
 // LLM-HARNESS-END: us-8016f280
 
 // LLM-HARNESS-BEGIN: us-8016f288

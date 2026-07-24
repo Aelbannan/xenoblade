@@ -1,30 +1,46 @@
-// Auto-scaffolded catalog TU for monolib/src/scn/CScnItemAnim
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+/**
+ * CScnItemAnim - Scene animation item
+ *
+ * Manages a character animation resource (nw4r::g3d::ResFile) within
+ * the scene graph. Provides access to the embedded ResFile handle,
+ * animation name, and related metadata.
+ */
 
-#include <harness_catalog.h>
+#include <monolib/scn/CScnItemAnim.hpp>
 
-// LLM-HARNESS-BEGIN: us-804a2738
-extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw4r3g3d7ResFileCFi)((char*)self + 0xc); }
-// LLM-HARNESS-END: us-804a2738
-
-// LLM-HARNESS-BEGIN: us-804a27a4
-extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw4r3g3d7ResFileCFi)((char*)self + 0xc); }
-// LLM-HARNESS-END: us-804a27a4
-
-extern "C" void GetResAnmChr__Q34nw4r3g3d7ResFileCFi(void* self);
 // LLM-HARNESS-BEGIN: us-804a2864
-extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw4r3g3d7ResFileCFi)((char*)self + 0xc); }
+/**
+ * Get a character animation resource by index from the embedded ResFile.
+ *
+ * Computes `&this->mResFile` (offset 0x0C) and delegates to
+ * nw4r::g3d::ResFile::GetResAnmChr(int).  Implemented as a tail
+ * call in the original binary.
+ */
+extern "C" nw4r::g3d::ResAnmChr func_8049E708(CScnItemAnim* self, int index) {
+    return self->mResFile.GetResAnmChr(index);
+}
 // LLM-HARNESS-END: us-804a2864
 
-// LLM-HARNESS-BEGIN: us-804a286c
-extern "C" void func_8049E708(void* self) { ((void(*)(void*))GetResAnmChr__Q34nw4r3g3d7ResFileCFi)((char*)self + 0xc); }
-// LLM-HARNESS-END: us-804a286c
-
 // LLM-HARNESS-BEGIN: us-804a2a10
-extern "C" void* func_8049E8B4(void* self) { return (void*)((u8*)self + 0x10); }
+/**
+ * Return pointer to the animation name buffer at offset 0x10.
+ *
+ * The name is a C-string copied from the first animation entry
+ * during construction.  The buffer is 0x40 bytes.
+ */
+extern "C" char* func_8049E8B4(CScnItemAnim* self) {
+    return self->mName;
+}
 // LLM-HARNESS-END: us-804a2a10
 
 // LLM-HARNESS-BEGIN: us-804a2a18
-extern "C" u32 func_8049E8BC(void* self) { return *(u32*)((u8*)self + 0x54); }
+/**
+ * Return the value at offset 0x54 of the object.
+ *
+ * This field is initialised to the same value as mResFile during
+ * construction and may serve as a cached identifier.
+ */
+extern "C" nw4r::g3d::ResFile func_8049E8BC(CScnItemAnim* self) {
+    return self->mResFileCopy;
+}
 // LLM-HARNESS-END: us-804a2a18

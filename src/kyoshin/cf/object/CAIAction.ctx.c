@@ -958,8 +958,9 @@ extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self
         cf::CAIActionSlot* src =
             (cf::CAIActionSlot*)((u8*)self->unk20C + (ringIdx << 5));
 
-        cf::CAIActionSlot* dst =
-            (cf::CAIActionSlot*)((u8*)outB->buffer + ((u32)outIdx << 5));
+        u8* dstBytes = (u8*)outB->buffer + ((u32)outIdx << 5);
+        *(u32*)dstBytes = src->unk00;
+        cf::CAIActionSlot* dst = (cf::CAIActionSlot*)dstBytes;
 
         {
             u32 t8 = src->unk08;
@@ -973,8 +974,6 @@ extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self
         dst->unk14 = src->unk14;
         dst->unk18 = src->unk18;
         dst->unk1C = src->unk1C;
-
-        *(u32*)dst = src->unk00;
 
         outB->unk208 = outB->unk208 + 1;
     }

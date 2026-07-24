@@ -1,8 +1,7 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_EHP
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit for CVS_THREAD_EHP voice thread.
+// Full stubs for functions not yet decompiled; clean implementations for matched ones.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
 
 // LLM-HARNESS-BEGIN: us-802a8608
 extern "C" void __ct__802A5ED4() {}
@@ -32,8 +31,10 @@ extern "C" void func_802A6718() {}
 extern "C" void func_802A6760() {}
 // LLM-HARNESS-END: us-802a8e94
 
+// Virtual override: returns the allocation size for CVS_THREAD_EHP instances.
+// Caller passes an unused implicit this pointer per EABI; the body ignores it.
 // LLM-HARNESS-BEGIN: us-802a8f4c
-extern "C" int func_802A6818(void* self) { return 180; }
+extern "C" int func_802A6818() { return 0xB4; }
 // LLM-HARNESS-END: us-802a8f4c
 
 // LLM-HARNESS-BEGIN: us-802a8f54

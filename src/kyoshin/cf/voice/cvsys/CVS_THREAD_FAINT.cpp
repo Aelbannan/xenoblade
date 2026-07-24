@@ -1,7 +1,8 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// CVS_THREAD_FAINT: Voice thread for the "faint" status effect.
+// FULL_MATCH: func_802A6DEC -- buffer-size getter (virtual method override).
+// Remaining functions are NOT_STARTED harness stubs.
 
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802a91dc
@@ -25,7 +26,11 @@ extern "C" void func_802A6D74() {}
 // LLM-HARNESS-END: us-802a94a8
 
 // LLM-HARNESS-BEGIN: us-802a9520
-extern "C" int func_802A6DEC(void* self) { return 240; }
+// Virtual method override: returns the buffer size for this thread type.
+// Matches CVS_THREAD::blank1 slot in vtable; FAINT subclass returns 0xF0 (240).
+extern "C" int func_802A6DEC(CVS_THREAD_FAINT* self) {
+    return CVS_THREAD_FAINT::BUFFER_SIZE;
+}
 // LLM-HARNESS-END: us-802a9520
 
 // LLM-HARNESS-BEGIN: us-802a9528

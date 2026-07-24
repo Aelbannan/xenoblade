@@ -3,9 +3,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSkipTimer.hpp"
 
 // LLM-HARNESS-BEGIN: us-802a1904
-extern "C" u8 func_8029FF1C(void* self) { return ((u8*)self)[0x30]; }
+// TODO(catalog): replace with proper CSkipTimer2 constructor
+// Currently generates func_8029FF1C body as a placeholder
+extern "C" u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
 // LLM-HARNESS-END: us-802a1904
 
 

@@ -1,3 +1,4 @@
+#include "kyoshin/plugin/pluginUi.hpp"
 #include "monolib/util.hpp"
 #include "monolib/vm/yvm2.h"
 

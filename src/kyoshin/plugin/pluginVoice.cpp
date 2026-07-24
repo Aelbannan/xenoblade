@@ -6,7 +6,7 @@
 extern reslist<cf::CfObject*>* func_800B6BA4();
 
 extern "C" {
-    extern char lbl_eu_80513988[];
+    extern const char lbl_eu_80513988[];
     extern PluginFuncData lbl_eu_8053B880[];
     extern float lbl_eu_80669008;
     extern float lbl_eu_8066900C;
@@ -32,6 +32,8 @@ int voice_play(VMThread* pThread) {
     return 0;
 }
 
+/// Registers the "voice" plugin with the YGG VM, linking script function names
+/// ("play") to C handler implementations.
 void pluginVoiceRegist(){
     vmPluginRegist(lbl_eu_80513988, lbl_eu_8053B880);
 }

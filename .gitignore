@@ -44,3 +44,5 @@ web_batches/
 # Coop registry coordination (fcntl sidecar; not source of truth)
 tools/coop/targets.json.lock
 *.json.lock
+*.d
+*.ctx.c

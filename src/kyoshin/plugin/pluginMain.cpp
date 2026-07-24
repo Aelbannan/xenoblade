@@ -1,8 +1,13 @@
 #include "kyoshin/plugin/plugins.hpp"
 #include "kyoshin/plugin/pluginMain.hpp"
 
-//Register all the plugins (SB script helper function modules) into the VM.
-void pluginRegist(){
+// Registers all SB script plugin modules and OC (object command) handlers
+// into the VM. Each plugin provides script-callable function modules for
+// a specific subsystem (game, debug, battle, units, UI, events, camera,
+// math, input, timing, audio, voice, help) and OC handlers provide core
+// object-command operations (builtins, bdat data access, threads, messages,
+// units, cfp).
+void pluginRegist() {
     pluginGameRegist();
     pluginDebRegist();
     pluginBtlRegist();

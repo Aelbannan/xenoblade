@@ -6,11 +6,11 @@
 #include "kyoshin/plugin/pluginMath.hpp"
 #include "kyoshin/plugin/pluginPad.hpp"
 #include "kyoshin/plugin/pluginVoice.hpp"
+#include "kyoshin/plugin/pluginUi.hpp"
 
 extern "C"{
 void pluginBtlRegist();
 void pluginUnitRegist();
-void pluginUiRegist();
 void pluginEveRegist();
 void pluginCfsRegist();
 void pluginCamRegist();

@@ -84,13 +84,17 @@ extern "C" void func_8011D22C() {}
 extern "C" void func_8011D298() {}
 // LLM-HARNESS-END: us-8011dd74
 
-// LLM-HARNESS-BEGIN: us-8011ddc4
-extern "C" void func_8011D2E8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-8011ddc4
+// Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
+// to the full CMenuQuestLog, then tail-calls cbRenderBefore.
+extern "C" void func_8011D2E8(void* self) {
+    ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)(static_cast<char*>(self) - 0x58);
+}
 
-// LLM-HARNESS-BEGIN: us-8011ddcc
-extern "C" void func_8011D2F0(void* self) { ((void(*)(void*))__dt__13CMenuQuestLogFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-8011ddcc
+// Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
+// to the full CMenuQuestLog, then tail-calls the destructor.
+extern "C" void func_8011D2F0(void* self) {
+    ((void(*)(void*))__dt__13CMenuQuestLogFv)(static_cast<char*>(self) - 0x58);
+}
 
 // LLM-HARNESS-BEGIN: us-8011ddd4
 extern "C" void __dt__8011D2F8() {}

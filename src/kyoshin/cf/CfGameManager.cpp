@@ -173,3 +173,18 @@ extern "C" void func_8007FE1C__Q22cf13CfGameManagerFv() {}
 // LLM-HARNESS-BEGIN: us-800807c0
 extern "C" void func_8007FE20__Q22cf13CfGameManagerFv() {}
 // LLM-HARNESS-END: us-800807c0
+// LLM-HARNESS-BEGIN: us-8007fa40
+extern "C" int func_8007F0A4__Q22cf13CfGameManagerFv() { return 0; }
+// LLM-HARNESS-END: us-8007fa40
+// LLM-HARNESS-BEGIN: us-8007fab0
+extern "C" int func_8007F114__Q22cf13CfGameManagerFv() { return 0; }
+// LLM-HARNESS-END: us-8007fab0
+// LLM-HARNESS-BEGIN: us-800807c4
+extern "C" int func_8007FE24__Q22cf13CfGameManagerFv() { return 0; }
+// LLM-HARNESS-END: us-800807c4
+// LLM-HARNESS-BEGIN: us-80087d34
+extern "C" int CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv() { return 0; }
+// LLM-HARNESS-END: us-80087d34
+// LLM-HARNESS-BEGIN: us-80087d98
+extern "C" int CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv() { return 0; }
+// LLM-HARNESS-END: us-80087d98

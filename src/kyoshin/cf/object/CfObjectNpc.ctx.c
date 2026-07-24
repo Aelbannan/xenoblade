@@ -1,18 +1,10 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectNpc
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Decompiled TU for kyoshin/cf/object/CfObjectNpc
+// NPC object implementation.
 
-/* "src/kyoshin/cf/object/CfObjectNpc.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/object/CfObjectNpc.cpp" line 3 "kyoshin/cf/object/CfObjectNpc.hpp" */
 #pragma once
 
-/**
- * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
- *
- * Pulls recovered VM / script-helper headers only. Plugin units with their own
- * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
- */
-
-/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* "src/kyoshin/cf/object/CfObjectNpc.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -720,652 +712,299 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 10 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
-
-#endif
-#endif
-/* end "cstring" */
-
-/* "src/kyoshin/harness_catalog.hpp" line 12 "monolib/vm/yvm2.h" */
+/* "src/kyoshin/cf/object/CfObjectNpc.hpp" line 3 "kyoshin/cf/object/CfObjectMove.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
+/* "src/kyoshin/cf/object/CfObjectMove.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
+/* "src/kyoshin/cf/object/CfObjectMove.hpp" line 3 "kyoshin/cf/object/CfObjectModel.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
+/* "src/kyoshin/cf/object/CfObjectModel.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
+/* "src/kyoshin/cf/object/CfObjectModel.hpp" line 3 "kyoshin/cf/object/CfObject.hpp" */
 #pragma once
 
-//Types/defines for SB script files.
-
-/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
+/* "src/kyoshin/cf/object/CfObject.hpp" line 2 "types.h" */
 /* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Minimum supported SB version
-#define SB_MIN_VERSION 2
-
-enum SBFlags{
-    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
-    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
-};
-
-typedef struct SBSectionHeader{
-    int entriesOffset;  //0x0
-    int entries; //0x4
-    int offsetSize;  //0x8
-} SBSectionHeader;
-
-typedef struct SBHeader{
-    char magic[4];                      //0x0
-    u8 version;                         //0x4
-    u8 unk5; //unused?
-    u8 flags;                           //0x6
-    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
-    (for the loaded flag) gets used, however. */
-    u8 vmFlags;                         //0x7
-    SBSectionHeader* codeOfs;            //0x8
-    SBSectionHeader* idPoolOfs;          //0xC
-    SBSectionHeader* intPoolOfs;         //0x10
-    SBSectionHeader* fixedPoolOfs;       //0x14
-    SBSectionHeader* stringPoolOfs;      //0x18
-    SBSectionHeader* functionPoolOfs;    //0x1C
-    SBSectionHeader* pluginImportsOfs;   //0x20
-    SBSectionHeader* ocImportsOfs;       //0x24
-    SBSectionHeader* functionImportsOfs; //0x28
-    SBSectionHeader* staticVarsOfs;      //0x2C
-    SBSectionHeader* localPoolOfs;       //0x30
-    SBSectionHeader* sysAtrPoolOfs;      //0x34
-    SBSectionHeader* usrAtrPoolOfs;      //0x38
-    SBSectionHeader* debugSymbolsOfs;    //0x3C
-} SBHeader;
-
-//Section specific structs
-
-//Function pool
-
-typedef struct FunctionPoolEntry{
-    u16 unk0;
-    s16 unk2;
-    u16 unk4;
-    u8 unk8[0xC - 0x8];
-    u32 unkC;
-    u8 unk10[0x14 - 0x10];
-} FunctionPoolEntry;
-
-//Plugin imports
-
-typedef struct PluginImportEntry{
-    u16 unk0;
-    u16 unk2;
-} PluginImportEntry;
-
-//OC imports
-
-typedef struct OCImportEntry{
-    u16 unk0;
-} OCImportEntry;
-
-//Function imports
-
-typedef struct FunctionImportEntry{
-    u16 unk0;
-    u16 unk2;
-} FunctionImportEntry;
-
-//Static vars
-
-typedef struct StaticVarsEntry{
-    u32 unk0;
-    u32 unk4;
-} StaticVarsEntry;
-
-//Local pool
-
-typedef struct LocalPoolEntry{
-    u32 unk0;
-    u32 unk4;
-} LocalPoolEntry;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/sb_types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Misc constants
-
-#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
-#define MAX_PLUGINS 48
-#define MAX_OCS 48
-#define MAX_THREADS 16
-#define MAX_BREAKPOINTS 4
-#define MAX_STACK_ENTRIES 128
-
-#define VMC_MAX 96 //Max number of opcodes
-
-typedef struct VMArg{
-    u8 type; //0x0
-    u16 unk2;
-    union {
-        void* pointerVal;
-        u32 uintVal;
-        int intVal;   
-    } value; //0x4
-} VMArg;
-
-typedef struct VMReg{
-    int pc; //0x0
-    int sp; //0x4
-    int unk8; //0x8
-    int exception; //0xC
-    int unk10; //0x10
-} VMReg;
-
-typedef struct _sVMThread{
-    VMReg reg; //0x0
-    VMArg unk14[2];
-    s16 unk24;
-    u8 unk26[2];
-    u32 unk28;
-    s16 unk2C;
-    u8 unk2E[2];
-    SBHeader* scriptData; //0x30
-    u8* codeData; //0x34
-    StaticVarsEntry* staticVarsEntries; //0x38
-    VMArg* stack; //0x3C
-    u32 unk40;
-    u32 id; //0x44
-    int unk48;
-    BOOL waitMode; //0x4C
-    u32 wkIdx; //0x50
-    u32 unk54;
-    u8 unk58[0x60 - 0x58];
-} VMThread;
-
-//Forward declaration
-struct OCData;
-
-typedef int (*PluginFunc)(VMThread* pThread);
-typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
-typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
-typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
-
-typedef struct PluginFuncData{
-    const char* name; //0x0
-    PluginFunc func; //0x4
-} PluginFuncData;
-
-typedef struct OCProperty{
-    const char* name; //0x0
-    OCGetSetFunc getFunc; //0x4
-    OCGetSetFunc setFunc; //0x8
-    int nameLength; //0xC
-} OCProperty;
-
-typedef struct OCSelector{
-    const char* name; //0x0
-    OCSelectorFunc func; //0x4
-    int nameLength; //0x8
-} OCSelector;
-
-typedef struct OCData{
-    const char* name; //0x0
-    OCCtorFunc ctor; //0x4
-    OCProperty* properties; //0x8
-    OCSelector* selectors; //0xC
-} OCData;
-
-typedef struct VMPackage{
-    SBHeader* scriptDataPtr; //0x0
-    u32 unk4;
-} VMPackage;
-
-typedef struct VMPlugin{
-    char* unk0;
-    PluginFuncData* unk4;
-} VMPlugin;
-
-typedef struct VMOC{
-    OCData* unk0;
-} VMOC;
-
-typedef struct VMBreakpoint{
-    u8 unk0[0xC];
-} VMBreakpoint;
-
-typedef struct VMState{
-    VMPackage packages[MAX_PACKAGES]; //0x0
-    VMThread* activeThread; //0x40
-    u32 nextThreadId; //0x44
-    VMThread* unk48[MAX_THREADS]; //0x48
-    VMThread threads[MAX_THREADS]; //0x88
-    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
-    VMPlugin plugins[MAX_PLUGINS]; //0x4688
-    VMOC ocs[MAX_OCS]; //0x4808
-    OCData* builtinOC; //0x48C8
-    //Unused debug data (based on info from XCX)
-    BOOL debMode; //0x48CC
-    u8 unk48D0[0xC];
-    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
-} VMState;
-
-//Enums
-
-typedef enum VMCResult{
-    VMC_RESULT_0,
-    VMC_RESULT_1,
-    VMC_RESULT_2,
-    VMC_RESULT_3
-} VMCResult;
-
-typedef enum VMCOpcodeType{
-    VMC_OP_NOP,
-    VMC_OP_CONST_0,
-    VMC_OP_CONST_1,
-    VMC_OP_CONST_2,
-    VMC_OP_CONST_3,
-    VMC_OP_CONST_4,
-    VMC_OP_CONST_I,
-    VMC_OP_CONST_I_W,
-    VMC_OP_POOL_INT,
-    VMC_OP_POOL_INT_W,
-    VMC_OP_POOL_FIXED,
-    VMC_OP_POOL_FIXED_W,
-    VMC_OP_POOL_STR,
-    VMC_OP_POOL_STR_W,
-    VMC_OP_LD,
-    VMC_OP_ST,
-    VMC_OP_LD_ARG,
-    VMC_OP_ST_ARG,
-    VMC_OP_ST_ARG_OMIT,
-    VMC_OP_LD_0,
-    VMC_OP_LD_1,
-    VMC_OP_LD_2,
-    VMC_OP_LD_3,
-    VMC_OP_ST_0,
-    VMC_OP_ST_1,
-    VMC_OP_ST_2,
-    VMC_OP_ST_3,
-    VMC_OP_LD_ARG_0,
-    VMC_OP_LD_ARG_1,
-    VMC_OP_LD_ARG_2,
-    VMC_OP_LD_ARG_3,
-    VMC_OP_ST_ARG_0,
-    VMC_OP_ST_ARG_1,
-    VMC_OP_ST_ARG_2,
-    VMC_OP_ST_ARG_3,
-    VMC_OP_LD_STATIC,
-    VMC_OP_LD_STATIC_W,
-    VMC_OP_ST_STATIC,
-    VMC_OP_ST_STATIC_W,
-    VMC_OP_LD_AR,
-    VMC_OP_ST_AR,
-    VMC_OP_LD_NIL,
-    VMC_OP_LD_TRUE,
-    VMC_OP_LD_FALSE,
-    VMC_OP_LD_FUNC,
-    VMC_OP_LD_FUNC_W,
-    VMC_OP_LD_PLUGIN,
-    VMC_OP_LD_PLUGIN_W,
-    VMC_OP_LD_FUNC_FAR,
-    VMC_OP_LD_FUNC_FAR_W,
-    VMC_OP_MINUS,
-    VMC_OP_NOT,
-    VMC_OP_L_NOT,
-    VMC_OP_ADD,
-    VMC_OP_SUB,
-    VMC_OP_MUL,
-    VMC_OP_DIV,
-    VMC_OP_MOD,
-    VMC_OP_OR,
-    VMC_OP_AND,
-    VMC_OP_R_SHIFT,
-    VMC_OP_L_SHIFT,
-    VMC_OP_EQ,
-    VMC_OP_NE,
-    VMC_OP_GT,
-    VMC_OP_LT,
-    VMC_OP_GE,
-    VMC_OP_LE,
-    VMC_OP_L_OR,
-    VMC_OP_L_AND,
-    VMC_OP_JMP,
-    VMC_OP_JPF,
-    VMC_OP_CALL,
-    VMC_OP_CALL_W,
-    VMC_OP_CALL_IND,
-    VMC_OP_RET,
-    VMC_OP_NEXT,
-    VMC_OP_PLUGIN,
-    VMC_OP_PLUGIN_W,
-    VMC_OP_CALL_FAR,
-    VMC_OP_CALL_FAR_W,
-    VMC_OP_GET_OC,
-    VMC_OP_GET_OC_W,
-    VMC_OP_GETTER,
-    VMC_OP_GETTER_W,
-    VMC_OP_SETTER,
-    VMC_OP_SETTER_W,
-    VMC_OP_SEND,
-    VMC_OP_SEND_W,
-    VMC_OP_TYPEOF,
-    VMC_OP_SIZEOF,
-    VMC_OP_SWITCH,
-    VMC_OP_INC,
-    VMC_OP_DEC,
-    VMC_OP_EXIT,
-    VMC_OP_BP //Breakpoint
-} VMCOpcodeType;
-
-typedef enum _VMTypes {
-    VM_TYPE_NIL,
-    VM_TYPE_TRUE,
-    VM_TYPE_FALSE,
-    VM_TYPE_INT,
-    VM_TYPE_FIXED,
-    VM_TYPE_STRING,
-    VM_TYPE_ARRAY,
-    VM_TYPE_FUNCTION,
-    VM_TYPE_PLUGIN,
-    VM_TYPE_OC,
-    VM_TYPE_SYS,
-
-    VM_MAX_TYPE = 11
-} VMTypes;
-
-typedef enum VMException {
-    VM_EXCEPTION_NONE,
-    VM_EXCEPTION_PLUGIN,
-    VM_EXCEPTION_OC,
-    VM_EXCEPTION_DIV_BY_ZERO,
-    VM_EXCEPTION_INVALID_ARRAY,
-    VM_EXCEPTION_INDEX_OOB,
-    VM_EXCEPTION_MATH_INVALID_ARG,
-    VM_EXCEPTION_CALC_INVALID_ARG,
-    VM_EXCEPTION_8,
-    VM_EXCEPTION_JPF_INVALID_ARG,
-    VM_EXCEPTION_CALLIND_INVALID_ARG,
-    VM_EXCEPTION_INVALID_OC,
-    VM_EXCEPTION_SEND_ERROR,
-    VM_EXCEPTION_INVALID_PROPERTY,
-    VM_EXCEPTION_INVALID_GETSET_FUNC
-} VMException;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/yvm_types.h" */
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void vmInit();
-BOOL vmLink(u8* pData);
-BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
-void vmStart(u8* pData);
-
-VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
-void vmThreadStart(VMThread* pThread, u32 r4);
-BOOL vmThreadEnd(u32 r3);
-BOOL vmThreadIsAlive(u32 r3);
-BOOL vmThreadSleep(u32 r3);
-BOOL vmThreadWakeup(u32 r3);
-void vmThreadSleepAll(u8* pScriptData);
-void vmThreadWakeupAll(u8* pScriptData);
-BOOL vmThreadIsFinish(u8* pScriptData);
-BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
-
-VMArg* vmArgPtrGet(VMThread* pThread, int r4);
-BOOL vmArgOmitChk(VMThread* pThread, int r4);
-BOOL vmArgBoolGet(u32 r3, VMArg* r4);
-int vmArgIntGet(u32 r3, VMArg* r4);
-int vmArgFixedGet(u32 r3, VMArg* r4);
-const char* vmArgStringGet(u32 r3, VMArg* r4);
-u32 vmArgFunctionGet(u32 r3, VMArg* r4);
-void* vmArgArrayGet(u32 r3, VMArg* r4);
-void* vmArgOCGet(u32 r3, VMArg* r4);
-u32 vmDataGet(VMThread* pThread, int startIndex, int length);
-
-void vmRetValSet(VMThread* pThread, VMArg* pArg);
-void* vmOCPropertyGet(VMThread* pThread);
-void vmWaitModeSet(VMThread* pThread);
-u32 vmWkIdxGet(VMThread* pThread);
-void vmWkIdxSet(VMThread* pThread, u32 r4);
-u32* vmWkGet(VMThread* pThread, u32 r4);
-
-void vmPluginExceptionThrow(VMThread* pThread);
-void vmOCExceptionThrow(VMThread* pThread);
-DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
-void vmExceptionThrow(VMThread* pThread, u32 exception);
-
-const char* vmIdPoolGet(SBHeader* data, u32 no);
-int vmIntPoolGet(SBHeader* data, u32 no);
-int vmFixedPoolGet(SBHeader* data, u32 no);
-void* vmStringPoolGet(SBHeader* data, u32 no);
-void* vmLocalPoolGet(SBHeader* data, u32 no);
-void* vmFunctionPoolGet(SBHeader* data, u32 no);
-u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
-u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
-
-u32 vmSysAtrSearch(SBHeader* data, u32 no);
-u32 vmPluginSearch(const char* param1, const char* param2);
-u32 vmOCSearch(const char* pName);
-u32 vmPropertySearch(OCData* pOC, const char* pName);
-u32 vmSelectorSearch(OCData* pOC, const char* pName);
-u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
-
-void encodeScramble(u8* data);
-int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
-
-void vmArgErr();
-void vmHalt();
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/yvm2.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 13 "kyoshin/code_801862C0.hpp" */
+/* "src/kyoshin/cf/object/CfObject.hpp" line 3 "kyoshin/cf/object/CObjectParam.hpp" */
 #pragma once
 
-/**
- * Script / OC instance helpers (unit kyoshin/code_801862C0).
- * Names are still placeholder ``func_*`` until symbol recovery; signatures
- * match observed call sites in plugin TUs (VMThread in, OC object out).
- */
-
-/* "src/kyoshin/code_801862C0.hpp" line 8 "types.h" */
+/* "src/kyoshin/cf/object/CObjectParam.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "src/kyoshin/code_801862C0.hpp" line 9 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* func_801862C0(VMThread* pThread);
-void* func_801862E0(void* p);
-void* func_801863F4(void* p);
-void* func_80186460(void* p);
-void* func_80186474(void* p);
-void* func_801864DC(void* pObj, int slot);
-void* func_80186664(void* p);
-void* func_801866F0(void* p);
-void* func_80186A70(void* p);
-void* func_80186BC8(void* p);
-void* func_80186C7C(void* p);
-void* func_80186D20(void* p);
-
-#ifdef __cplusplus
-}
-#endif
-/* end "kyoshin/code_801862C0.hpp" */
-/* "src/kyoshin/harness_catalog.hpp" line 14 "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/cf/object/CObjectParam.hpp" line 3 "kyoshin/cf/object/CObjectState.hpp" */
 #pragma once
 
-/* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
+/* "src/kyoshin/cf/object/CObjectState.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
 
-void* getFP(const char* pName);
+namespace cf {
+    //min size: 0x10
+    class CObjectState {
+    public:
+        virtual void CObjectState_UnkVirtualFunc1();  //0x8
+        virtual void CObjectState_UnkVirtualFunc2();  //0xC
+        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc4();  //0x14
+        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc6();  //0x1C
+        virtual void CObjectState_UnkVirtualFunc7();  //0x20
+        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc9();  //0x28
+        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual void CObjectState_UnkVirtualFunc11(); //0x30
+        virtual void CObjectState_UnkVirtualFunc12(); //0x34
+        virtual void CObjectState_UnkVirtualFunc13(); //0x38
 
-// Utility class for handling bdat files.
-class CBdat {
-public:
-    static void* func_8003AA34();
-    static void* func_8003AA50();
-    static void* func_8003AA78(u32, void*);
-    static void func_8003AA8C(u32 val);
-    static void* getFP(const char* pName) { return ::getFP(pName); }
-    static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u32 func_8003B1EC(void* pData);
-    static u32 func_8003B41C(void* pData);
-};
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void ocBdatRegist();
-
-#ifdef __cplusplus
+        //0x0: vtable
+        u8 unk4_3[0xC];
+    };
 }
-#endif
-/* end "kyoshin/plugin/ocBdat.hpp" */
-/* end "kyoshin/harness_catalog.hpp" */
+/* end "kyoshin/cf/object/CObjectState.hpp" */
 
-// LLM-HARNESS-BEGIN: us-800bfd48
-extern "C" void __ct__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfd48
+namespace cf {
+    //min size: 0x38
+    class CObjectParam : public CObjectState {
+    public:
+        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
+        virtual void CObjectParam_UnkVirtualFunc2(); //0x40
+        virtual void CObjectParam_UnkVirtualFunc3(); //0x44
+        virtual void CObjectParam_UnkVirtualFunc4(); //0x48
+        virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
+        virtual void CObjectParam_UnkVirtualFunc6(); //0x50
 
-// LLM-HARNESS-BEGIN: us-800bfe00
-extern "C" void __dt__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfe00
+        //0x0: vtable
+        //0x0-10: CObjectState
+        u8 unk10_3[0x28];
+    };
+}
+/* end "kyoshin/cf/object/CObjectParam.hpp" */
 
-// LLM-HARNESS-BEGIN: us-800bfe74
-extern "C" void func_800BF46C__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfe74
+namespace cf {
+    //min size: 0x70
+    class CfObject : public CObjectParam {
+    public:
+        //vtable 1 (CfObject)
+        virtual ~CfObject();                      //0x54
+        virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
+        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
+        virtual void CfObject_UnkVirtualFunc5();      //0x64
+        virtual void CfObject_UnkVirtualFunc6();      //0x68
+        virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
+        virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
+        virtual void CfObject_UnkVirtualFunc9();      //0x74
+        virtual void CfObject_UnkVirtualFunc10();     //0x78
+        virtual void CfObject_UnkVirtualFunc11();     //0x7C
+        virtual void CfObject_UnkVirtualFunc12();     //0x80
+        virtual void CfObject_UnkVirtualFunc13();     //0x84
+        virtual void CfObject_UnkVirtualFunc14();     //0x88
+        virtual void CfObject_UnkVirtualFunc15();     //0x8C
+        virtual void CfObject_UnkVirtualFunc16();     //0x90
+        virtual void CfObject_UnkVirtualFunc17();     //0x94
+        virtual void CfObject_UnkVirtualFunc18();     //0x98
+        virtual void CfObject_UnkVirtualFunc19();     //0x9C
+        virtual void CfObject_UnkVirtualFunc20();     //0xA0
+        virtual void CfObject_UnkVirtualFunc21();     //0xA4
+        virtual void CfObject_UnkVirtualFunc22();     //0xA8
+        virtual void CfObject_UnkVirtualFunc23();     //0xAC
+        virtual void CfObject_UnkVirtualFunc24();     //0xB0
+        virtual void CfObject_UnkVirtualFunc25();     //0xB4
+        virtual void CfObject_UnkVirtualFunc26();     //0xB8
+        virtual void CfObject_UnkVirtualFunc27();     //0xBC
+        virtual void CfObject_UnkVirtualFunc28();     //0xC0
+        virtual void CfObject_UnkVirtualFunc29();     //0xC4
+        virtual void CfObject_UnkVirtualFunc30();     //0xC8
+        virtual void CfObject_UnkVirtualFunc31();     //0xCC
+        virtual void CfObject_UnkVirtualFunc32();     //0xD0
+        virtual void CfObject_UnkVirtualFunc33();     //0xD4
+        virtual void CfObject_UnkVirtualFunc34();     //0xD8
+        virtual void CfObject_UnkVirtualFunc35();     //0xDC
+        virtual void CfObject_UnkVirtualFunc36();     //0xE0
+        virtual void CfObject_UnkVirtualFunc37();     //0xE4
+        virtual void CfObject_UnkVirtualFunc38();     //0xE8
+        virtual void CfObject_UnkVirtualFunc39();     //0xEC
+        virtual void CfObject_UnkVirtualFunc40();     //0xF0
+        virtual void CfObject_UnkVirtualFunc41();     //0xF4
+        virtual void CfObject_UnkVirtualFunc42();     //0xF8
+        virtual void CfObject_UnkVirtualFunc43();     //0xFC
+        virtual void CfObject_UnkVirtualFunc44();     //0x100
+        virtual void CfObject_UnkVirtualFunc45();     //0x104
+        virtual void CfObject_UnkVirtualFunc46();     //0x108
+        virtual void CfObject_UnkVirtualFunc47();     //0x10C
+        virtual void CfObject_UnkVirtualFunc48();     //0x110
+        virtual void CfObject_UnkVirtualFunc49();     //0x114
+        virtual void CfObject_UnkVirtualFunc50();     //0x118
+        virtual void CfObject_UnkVirtualFunc51();     //0x11C
+        virtual void CfObject_UnkVirtualFunc52();     //0x120
+        virtual void CfObject_UnkVirtualFunc53();     //0x124
+        virtual void CfObject_UnkVirtualFunc54();     //0x128
+        virtual void CfObject_UnkVirtualFunc55();     //0x12C
+        virtual void CfObject_UnkVirtualFunc56();     //0x130
+        virtual void CfObject_UnkVirtualFunc57();     //0x134
+        virtual void CfObject_UnkVirtualFunc58();     //0x138
+        virtual void CfObject_UnkVirtualFunc59();     //0x13C
+        virtual void CfObject_UnkVirtualFunc60();     //0x140
+        virtual void CfObject_UnkVirtualFunc61();     //0x144
+        virtual void CfObject_UnkVirtualFunc62();     //0x148
+        virtual void CfObject_UnkVirtualFunc63();     //0x14C
+        virtual void CfObject_UnkVirtualFunc64();     //0x150
+        virtual void CfObject_UnkVirtualFunc65();     //0x154
+        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc67();     //0x15C
+        virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
+        virtual void CfObject_UnkVirtualFunc69();     //0x164
+        virtual void CfObject_UnkVirtualFunc70();     //0x168
+        virtual void CfObject_UnkVirtualFunc71();     //0x16C
+        virtual void CfObject_UnkVirtualFunc72();     //0x170
+        virtual void CfObject_UnkVirtualFunc73();     //0x174
 
-// LLM-HARNESS-BEGIN: us-800bfee4
-extern "C" void func_800BF4DC__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800bfee4
+        //not sure if belongs here? (can be in any class from CObjectState to CfObjectMove)
+        void func_800BE898(int, u32, float, float);
 
-// LLM-HARNESS-BEGIN: us-800c016c
-extern "C" void func_800BF764__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800c016c
 
-// LLM-HARNESS-BEGIN: us-800c0314
-extern "C" void func_800BF8CC__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800c0314
+        //0x0: vtable
+        //0x0-38: CObjectParam
+        u8 unk38_3[0x14];       // 0x38-0x4B
+        float mMoveFloat;        // 0x4C-0x4F (CfObjectActor::UnkVirtualFunc6)
+        u8 unk50_3[0x14];       // 0x50-0x63
+        u32 unk64;               // 0x64
+        u8 unk68[0x70 - 0x68];   // 0x68-0x6F
+    };
+}
+/* end "kyoshin/cf/object/CfObject.hpp" */
 
-// LLM-HARNESS-BEGIN: us-800c0368
-extern "C" void func_800BF920__Q22cf11CfObjectNpcFv() {}
-// LLM-HARNESS-END: us-800c0368
+namespace cf {
+    //min size: 0xbe
+    class CfObjectModel : public CfObject {
+    public:
+        //vtable 1 (CfObject)
+        virtual ~CfObjectModel();
+        //vtable 1 (CfObjectModel)
+        virtual void CfObjectModel_UnkVirtualFunc1();  //0x178
+        virtual void CfObjectModel_UnkVirtualFunc2();  //0x17C
+        virtual void CfObjectModel_UnkVirtualFunc3();  //0x180
+        virtual void CfObjectModel_UnkVirtualFunc4();  //0x184
+        virtual void CfObjectModel_UnkVirtualFunc5();  //0x188
+        virtual void CfObjectModel_UnkVirtualFunc6();  //0x18C
+        virtual void CfObjectModel_UnkVirtualFunc7();  //0x190
+        virtual void CfObjectModel_UnkVirtualFunc8();  //0x194
+        virtual void CfObjectModel_UnkVirtualFunc9();  //0x198
+        virtual void CfObjectModel_UnkVirtualFunc10(); //0x19C
+        virtual void CfObjectModel_UnkVirtualFunc11(); //0x1A0
+        virtual void CfObjectModel_UnkVirtualFunc12(); //0x1A4
+        virtual void CfObjectModel_UnkVirtualFunc13(); //0x1A8
+        virtual void CfObjectModel_UnkVirtualFunc14(); //0x1AC
+        virtual void CfObjectModel_UnkVirtualFunc15(); //0x1B0
+        virtual void CfObjectModel_UnkVirtualFunc16(); //0x1B4
+        virtual void CfObjectModel_UnkVirtualFunc17(); //0x1B8
+        virtual void CfObjectModel_UnkVirtualFunc18(); //0x1BC
+        virtual void CfObjectModel_UnkVirtualFunc19(); //0x1C0
+        virtual void CfObjectModel_UnkVirtualFunc20(); //0x1C4
 
-// LLM-HARNESS-BEGIN: us-800c03cc
-extern "C" u8 func_800BF984__Q22cf11CfObjectNpcFv(void* self) { return ((u8*)self)[0x71C]; }
-// LLM-HARNESS-END: us-800c03cc
+        //0x0: vtable
+        //0x0-70: CfObject
+        u8 unk70_3[0x1C];
+        u16 unk8C_3;
+        u8 unk8E_3[0x30];
+    };
+}
+/* end "kyoshin/cf/object/CfObjectModel.hpp" */
+
+namespace cf {
+    //min size: 0x715
+    class CfObjectMove : public CfObjectModel {
+    public:
+        CfObjectMove();
+        //vtable 1 (CfObject)
+        virtual ~CfObjectMove();
+        //vtable 1 (CfObjectMove)
+        virtual void CfObjectMove_UnkVirtualFunc1();  //0x1C8
+        virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
+        virtual void CfObjectMove_UnkVirtualFunc3();  //0x1D0
+        virtual void CfObjectMove_UnkVirtualFunc4();  //0x1D4
+        virtual void CfObjectMove_UnkVirtualFunc5();  //0x1D8
+        virtual void CfObjectMove_UnkVirtualFunc6();  //0x1DC
+        virtual void CfObjectMove_UnkVirtualFunc7();  //0x1E0
+        virtual void CfObjectMove_UnkVirtualFunc8();  //0x1E4
+        virtual void CfObjectMove_UnkVirtualFunc9();  //0x1E8
+        virtual void CfObjectMove_UnkVirtualFunc10(); //0x1EC
+        virtual void CfObjectMove_UnkVirtualFunc11(); //0x1F0
+        virtual void CfObjectMove_UnkVirtualFunc12(); //0x1F4
+        virtual void CfObjectMove_UnkVirtualFunc13(); //0x1F8
+        virtual void CfObjectMove_UnkVirtualFunc14(); //0x1FC
+        virtual void CfObjectMove_UnkVirtualFunc15(); //0x200
+        virtual void CfObjectMove_UnkVirtualFunc16(); //0x204
+        virtual void CfObjectMove_UnkVirtualFunc17(); //0x208
+        virtual void CfObjectMove_UnkVirtualFunc18(); //0x20C
+        virtual void CfObjectMove_UnkVirtualFunc19(); //0x210
+        virtual void CfObjectMove_UnkVirtualFunc20(); //0x214
+        virtual void CfObjectMove_UnkVirtualFunc21(); //0x218
+        virtual void CfObjectMove_UnkVirtualFunc22(); //0x21C
+        virtual void CfObjectMove_UnkVirtualFunc23(); //0x220
+
+        //0x0: vtable
+        //0x0-BE: CfObjectModel
+        u8 unkBE_3[0x657];
+        u8 unk715[3]; //might not belong here
+    };
+}
+/* end "kyoshin/cf/object/CfObjectMove.hpp" */
+
+namespace cf {
+    // size: 0x724
+    class CfObjectNpc : public CfObjectMove {
+    public:
+        CfObjectNpc(bool param1);
+        virtual ~CfObjectNpc();
+
+        // Non-virtual member functions for NPC-specific logic
+        bool func_800BF46C();
+        void func_800BF4DC();
+        void func_800BF764();
+        void func_800BF8CC();
+        s16 func_800BF920();
+        u8 func_800BF984();
+
+        // 0x0: vtable
+        // 0x0-718: CfObjectMove
+
+        // NPC-specific fields
+        u8  pad_718[4];   // 0x718 - unknown padding or fields
+        u8  mIconType;    // 0x71C - NPC icon type (from BDAT icon_type column)
+        u8  pad_71D;      // 0x71D - alignment padding
+        s16 mRltMeet;     // 0x71E - relationship meet value, -1 = uninitialized
+        f32 mTimer;       // 0x720 - timer for NPC dialogue trigger
+    };
+}
+/* end "kyoshin/cf/object/CfObjectNpc.hpp" */
+
+namespace cf {
+
+// 0x800BFD48
+CfObjectNpc::CfObjectNpc(bool param1) {}
+
+// 0x800BFE00
+CfObjectNpc::~CfObjectNpc() {}
+
+// 0x800BFE74
+bool CfObjectNpc::func_800BF46C() { return false; }
+
+// 0x800BFEE4
+void CfObjectNpc::func_800BF4DC() {}
+
+// 0x800C016C
+void CfObjectNpc::func_800BF764() {}
+
+// 0x800C0314
+void CfObjectNpc::func_800BF8CC() {}
+
+// 0x800C0368
+s16 CfObjectNpc::func_800BF920() { return 0; }
+
+// 0x800C03CC
+u8 CfObjectNpc::func_800BF984() {
+    return mIconType;
+}
+
+} // namespace cf

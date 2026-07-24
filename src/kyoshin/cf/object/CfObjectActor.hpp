@@ -16,7 +16,7 @@ namespace cf {
         virtual void CfObjectActor_UnkVirtualFunc3();  //0x5A8
         virtual void CfObjectActor_UnkVirtualFunc4();  //0x5AC
         virtual void CfObjectActor_UnkVirtualFunc5();  //0x5B0
-        virtual void CfObjectActor_UnkVirtualFunc6();  //0x5B4
+        virtual float CfObjectActor_UnkVirtualFunc6();  //0x5B4
         virtual void CfObjectActor_UnkVirtualFunc7();  //0x5B8
         virtual void CfObjectActor_UnkVirtualFunc8();  //0x5BC
         virtual void CfObjectActor_UnkVirtualFunc9();  //0x5C0

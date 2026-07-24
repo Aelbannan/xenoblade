@@ -11,68 +11,14 @@ extern "C" u32 func_8027EA64(void) {
 }
 // LLM-HARNESS-END: us-80280934
 
-// LLM-HARNESS-BEGIN: us-80280a38
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280a38
 
-// LLM-HARNESS-BEGIN: us-80280aac
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280aac
 
-// LLM-HARNESS-BEGIN: us-80280b60
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280b60
 
-// LLM-HARNESS-BEGIN: us-80280c54
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280c54
 
-// LLM-HARNESS-BEGIN: us-80280dc0
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280dc0
 
-// LLM-HARNESS-BEGIN: us-80280e6c
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280e6c
 
-// LLM-HARNESS-BEGIN: us-80280ee8
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280ee8
 
-// LLM-HARNESS-BEGIN: us-80280ef0
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80280ef0
 
-// LLM-HARNESS-BEGIN: us-80281104
-extern "C" u32 func_8027EA64(void) {
-    extern u32 lbl_eu_80664908;
-    return lbl_eu_80664908;
-}
-// LLM-HARNESS-END: us-80281104
 
 // LLM-HARNESS-BEGIN: us-802812ec
 extern "C" void OnFileEvent__18CSysWinScenarioLogFP10CEventFile(void* self) { ((void(*)(void*))func_8027EC80)((char*)self - 0x6c); }

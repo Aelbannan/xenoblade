@@ -16542,18 +16542,18 @@ public:
     ml::CCol4 mFrameColor; // 0x8
     ml::CCol4 mColor18; // 0x18
     ml::CCol4 mColor28; // 0x28
-    u32 unk38; // 0x38
-    float unk3C; // 0x3C
-    float unk40; // 0x40
-    float unk44; // 0x44
-    float unk48; // 0x48
-    float unk4C; // 0x4C
-    s16 unk50; // 0x50
-    s16 unk52; // 0x52
-    s16 unk54; // 0x54 position / client origin x
-    s16 unk56; // 0x56 position / client origin y
-    s16 unk58; // 0x58 border thickness
-    s16 unk5A; // 0x5A
+    u32 unk38; // 0x38 — render flags / mode bits (1=border expand, 2=split)
+    float unk3C; // 0x3C — possibly padding or unused alignment filler
+    float unk40; // 0x40 — unused alignment padding to align mBorder siblings
+    float unk44; // 0x44 — unused alignment padding
+    float unk48; // 0x48 — unused alignment padding
+    float unk4C; // 0x4C — unused alignment padding
+    s16 unk50; // 0x50 — unused padding
+    s16 unk52; // 0x52 — unused padding
+    s16 mContentX; // 0x54 — client-area origin X (pixels from frame left edge to content)
+    s16 mContentY; // 0x56 — client-area origin Y (pixels from frame top edge to content)
+    s16 mBorder; // 0x58 — frame border thickness in pixels (used for expand/split sizing)
+    s16 unk5A; // 0x5A — unused trailing padding; satisfies 0x5C sizeof
 };
 
 extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
@@ -16566,23 +16566,22 @@ extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
 /* "libs/monolib/include/monolib/core/CViewRectData.hpp" line 3 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
 
-// CViewRectDataCore: viewport rectangle state at CView::unk1C8 (size 0x14).
+// CViewRectDataCore: viewport rectangle state at CView::mRectData (size 0x14).
 class CViewRectDataCore {
 public:
     CViewRectDataCore* func_80459270();
     void func_804592F0(const ml::CPnt16& size);
     void func_80459384(const ml::CPnt16& maxSize);
 
-    s16 unk0;
-    s16 unk2;
-    s16 unk4;
-    s16 unk6;
-    s16 unk8;
-    s16 unkA;
-    s16 unkC;
-    s16 unkE;
-    s16 unk10;
-    s16 unk12;
+    // Viewport rect data: first two pairs are CPnt16 structs for lwz/stw copies.
+    ml::CPnt16 mViewSize;      // offset 0x00 - current viewport size (x=width, y=height)
+    ml::CPnt16 mBoundsSize;    // offset 0x04 - maximum bounding size
+    s16 mScrollX;              // offset 0x08 - horizontal scroll/offset
+    s16 mScrollY;              // offset 0x0A - vertical scroll/offset
+    s16 mInsetLeft;            // offset 0x0C - left inset
+    s16 mInsetTop;             // offset 0x0E - top inset
+    s16 mInsetRight;           // offset 0x10 - right inset
+    s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
 
@@ -16682,19 +16681,19 @@ public:
     
     void getRect(ml::CRect16& rect){
         ml::CRect16 tempRect;
-        getFrame2ViewOffset(tempRect, &unk1DC);
+        getFrame2ViewOffset(tempRect, &mFrame);
 
-        rect.mPos.x = tempRect.mPos.x + unk1DC.unk54;
-        rect.mPos.y = tempRect.mPos.y + unk1DC.unk56;
-        rect.mSize.x = unk1C8.unk0;
-        rect.mSize.y = unk1C8.unk2;
+        rect.mPos.x = tempRect.mPos.x + mFrame.mContentX;
+        rect.mPos.y = tempRect.mPos.y + mFrame.mContentY;
+        rect.mSize.x = mRectData.mViewSize.x;
+        rect.mSize.y = mRectData.mViewSize.y;
     }
 
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CViewRectDataCore unk1C8; //0x1C8
-    CViewFrame unk1DC; //0x1DC
+    CViewRectDataCore mRectData; //0x1C8
+    CViewFrame mFrame; //0x1DC
     CViewResList unk238; //0x238 reslist<WORK_ID>
     CViewResList unk258; //0x258 reslist<IWorkEvent*>
     u32 unk278; //0x278
@@ -16708,7 +16707,8 @@ public:
     u32 unk3FC; //0x3FC
     ml::FixStr<64> mName; //0x400
     ml::CVec4 unk444; //0x444
-    u8 unk454[0x45C - 0x454]; //0x454
+    u32 mGXCacheId; //0x454
+    float mAlpha; //0x458
     void* unk45C; //0x45C
     u32 unk460; //0x460
     s16 unk464;
@@ -234032,3 +234032,15 @@ extern "C" void setCurrentPadPtr__Q22cf13CfGameManagerFPC4CPadUl() {}
 // LLM-HARNESS-BEGIN: us-80087f60
 extern "C" void func_80087588() {}
 // LLM-HARNESS-END: us-80087f60
+// LLM-HARNESS-BEGIN: us-8007f8e4
+extern "C" void func_8007EF48__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-8007f8e4
+// LLM-HARNESS-BEGIN: us-800807b8
+extern "C" void func_8007FE18__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800807b8
+// LLM-HARNESS-BEGIN: us-800807bc
+extern "C" void func_8007FE1C__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800807bc
+// LLM-HARNESS-BEGIN: us-800807c0
+extern "C" void func_8007FE20__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800807c0

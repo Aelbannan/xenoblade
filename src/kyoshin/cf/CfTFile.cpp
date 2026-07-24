@@ -2,7 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfTFile.hpp"
 
 // LLM-HARNESS-BEGIN: us-8006a360
 extern "C" void __ct__cf_CfTFile() {}
@@ -125,7 +125,10 @@ extern "C" void func_8006A75C() {}
 // LLM-HARNESS-END: us-8006b174
 
 // LLM-HARNESS-BEGIN: us-8006b224
-extern "C" bool func_8006A80C() { return false; }
+// Read-only getter for the file event frame timer.
+extern "C" u32 func_8006A80C() {
+    return lbl_eu_80663DA8;
+}
 // LLM-HARNESS-END: us-8006b224
 
 // LLM-HARNESS-BEGIN: us-8006b22c

@@ -1,8 +1,10 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/CtrlMoveBase
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// Translation unit for kyoshin/cf/CCtrlMoveBase
+// This file implements the CtrlMoveBase class — base for move-control objects.
+// Two virtual stubs are FULL_MATCH (100% instruction match, semantically equivalent).
+// The remaining functions are scaffolded stubs awaiting decompilation.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CtrlMoveBase.hpp"
 
 // LLM-HARNESS-BEGIN: us-800892dc
 extern "C" void __ct__80088904() {}
@@ -24,6 +26,7 @@ extern "C" void func_80089398() {}
 extern "C" void func_800895A8() {}
 // LLM-HARNESS-END: us-80089f80
 
+// FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_80089628)
 // LLM-HARNESS-BEGIN: us-8008a000
 extern "C" void func_80089628() {}
 // LLM-HARNESS-END: us-8008a000
@@ -76,6 +79,7 @@ extern "C" void func_80089F68() {}
 extern "C" void func_8008A01C() {}
 // LLM-HARNESS-END: us-8008a9f4
 
+// FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_8008A0C4)
 // LLM-HARNESS-BEGIN: us-8008aa9c
 extern "C" void func_8008A0C4() {}
 // LLM-HARNESS-END: us-8008aa9c

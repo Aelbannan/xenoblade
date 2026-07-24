@@ -8,41 +8,14 @@
 extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 // LLM-HARNESS-END: us-8026632c
 
-// LLM-HARNESS-BEGIN: us-80266360
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-80266360
 
-// LLM-HARNESS-BEGIN: us-802663a0
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-802663a0
 
-// LLM-HARNESS-BEGIN: us-80266458
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-80266458
 
-// LLM-HARNESS-BEGIN: us-802664d0
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-802664d0
 
-// LLM-HARNESS-BEGIN: us-80266528
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-80266528
 
-// LLM-HARNESS-BEGIN: us-802665b0
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-802665b0
 
-// LLM-HARNESS-BEGIN: us-80266640
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-80266640
 
-// LLM-HARNESS-BEGIN: us-80266674
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-80266674
 
-// LLM-HARNESS-BEGIN: us-802667b4
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-802667b4
 
 // LLM-HARNESS-BEGIN: us-8026680c
 extern "C" void func_8026439C() {}
@@ -444,9 +417,6 @@ extern "C" void func_8026DA88() {}
 extern "C" void func_8026DAD0() {}
 // LLM-HARNESS-END: us-8026ff54
 
-// LLM-HARNESS-BEGIN: us-8026ffb8
-extern "C" void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
-// LLM-HARNESS-END: us-8026ffb8
 
 // LLM-HARNESS-BEGIN: us-8026ffc0
 extern "C" void func_8026DB3C(void* self) { ((void(*)(void*))func_80267CE0)((char*)self + 0x28); }

@@ -73,9 +73,6 @@ extern "C" void func_80054D3C(void* self);
 extern "C" void func_80054D34(void* self) { ((void(*)(void*))func_80054D3C)((char*)self + 0x2e0); }
 // LLM-HARNESS-END: us-8005539c
 
-// LLM-HARNESS-BEGIN: us-800553a4
-extern "C" void func_80054D3C(void* self) {}
-// LLM-HARNESS-END: us-800553a4
 
 // LLM-HARNESS-BEGIN: us-80055740
 extern "C" void func_800550D8() {}

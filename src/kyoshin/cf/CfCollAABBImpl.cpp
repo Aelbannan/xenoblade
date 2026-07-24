@@ -1,4 +1,5 @@
 #include "types.h"
+#include "kyoshin/cf/CfCollAABBImpl.hpp"
 
 extern "C" void __ct__7CDrawGXFv(void* self);
 extern "C" void __dt__7CDrawGXFv(void* self, int param);
@@ -69,6 +70,8 @@ extern "C" void func_800AAE24(void* r3, void* r4) {
     __dt__7CDrawGXFv(gx, -1);
 }
 
-extern "C" void func_800AAFF4(void* r3, void* r4, void* r5, void* r6) {
-    func_800A5FE8(r5, (char*)r4 + 0xD8, (char*)r4 + 0xE4, (char*)r4 + 0xF0, r6);
+// Render AABB collision shape into a collision query context.
+// r4 is the AABB collision shape; r3 (unused) and r5/r6 pass through to func_800A5FE8.
+extern "C" void func_800AAFF4(void* r3, cf::CfCollAABBImpl* aabb, void* query, void* result) {
+    func_800A5FE8(query, &aabb->mMin, &aabb->mMax, &aabb->mCenter, result);
 }

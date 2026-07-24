@@ -161,3 +161,15 @@ extern "C" void setCurrentPadPtr__Q22cf13CfGameManagerFPC4CPadUl() {}
 // LLM-HARNESS-BEGIN: us-80087f60
 extern "C" void func_80087588() {}
 // LLM-HARNESS-END: us-80087f60
+// LLM-HARNESS-BEGIN: us-8007f8e4
+extern "C" void func_8007EF48__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-8007f8e4
+// LLM-HARNESS-BEGIN: us-800807b8
+extern "C" void func_8007FE18__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800807b8
+// LLM-HARNESS-BEGIN: us-800807bc
+extern "C" void func_8007FE1C__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800807bc
+// LLM-HARNESS-BEGIN: us-800807c0
+extern "C" void func_8007FE20__Q22cf13CfGameManagerFv() {}
+// LLM-HARNESS-END: us-800807c0

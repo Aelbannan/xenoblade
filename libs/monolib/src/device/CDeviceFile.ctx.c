@@ -762,10 +762,8 @@ extern "C" u32 getInstance__11CDeviceFileFv(void) {
 // LLM-HARNESS-END: us-80450fa8
 
 // LLM-HARNESS-BEGIN: us-804511fc
-extern "C" u32 getInstance__11CDeviceFileFv(void) {
-    extern u32 lbl_eu_80665660;
-    return lbl_eu_80665660;
-}
+extern u8 lbl_eu_806636A8;
+extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8; }
 // LLM-HARNESS-END: us-804511fc
 
 // LLM-HARNESS-BEGIN: us-80451204

@@ -69,7 +69,8 @@ extern "C" bool func_80142C70() { return false; }
 // LLM-HARNESS-END: us-80143674
 
 // LLM-HARNESS-BEGIN: us-8014367c
-extern "C" bool func_80142C78() { return false; }
+extern u32 lbl_eu_806640E0;
+extern "C" int func_80142C78() { return lbl_eu_806640E0; }
 // LLM-HARNESS-END: us-8014367c
 
 // LLM-HARNESS-BEGIN: us-80143684

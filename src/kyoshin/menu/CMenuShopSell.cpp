@@ -3,6 +3,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/menu/CMenuShopSell.hpp"
 
 // LLM-HARNESS-BEGIN: us-8018bbdc
 extern "C" void __ct__CMenuShopSell() {}
@@ -61,9 +62,19 @@ extern "C" void func_8018B658() {}
 // LLM-HARNESS-END: us-8018cc0c
 
 // LLM-HARNESS-BEGIN: us-8018cc5c
-extern "C" void func_8018B6A8(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)((char*)self - 0x58); }
+// Adjusting thunk: upcasts from secondary base (at offset +0x58 within CMenuShopSell)
+// to the full object, then tail-calls cbRenderBefore.
+// NOTE: Function-pointer call prevents MWCC from inlining the empty stub.
+extern "C" void func_8018B6A8(CMenuShopSell* self) {
+    ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)(reinterpret_cast<char*>(self) - 0x58);
+}
 // LLM-HARNESS-END: us-8018cc5c
 
 // LLM-HARNESS-BEGIN: us-8018cc64
-extern "C" void func_8018B6B0(void* self) { ((void(*)(void*))__dt__13CMenuShopSellFv)((char*)self - 0x58); }
+// Adjusting thunk: upcasts from secondary base (at offset +0x58 within CMenuShopSell)
+// to the full object, then tail-calls the destructor.
+// NOTE: Function-pointer call prevents MWCC from inlining the empty stub.
+extern "C" void func_8018B6B0(CMenuShopSell* self) {
+    ((void(*)(void*))__dt__13CMenuShopSellFv)(reinterpret_cast<char*>(self) - 0x58);
+}
 // LLM-HARNESS-END: us-8018cc64

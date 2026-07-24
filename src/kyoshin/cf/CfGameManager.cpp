@@ -188,3 +188,47 @@ extern "C" int CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv() { return 0; }
 // LLM-HARNESS-BEGIN: us-80087d98
 extern "C" int CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv() { return 0; }
 // LLM-HARNESS-END: us-80087d98
+// lwz getters — return global vars
+// LLM-HARNESS-BEGIN: us-80083e14
+extern u32 lbl_eu_80664188;
+extern "C" int func_80083458__Q22cf13CfGameManagerFv() { return lbl_eu_80664188; }
+// LLM-HARNESS-END: us-80083e14
+// LLM-HARNESS-BEGIN: us-80083e1c
+extern u32 lbl_eu_80664184;
+extern "C" int func_80083460__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
+// LLM-HARNESS-END: us-80083e1c
+// LLM-HARNESS-BEGIN: us-800874f4
+extern "C" int func_80086B1C__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
+// LLM-HARNESS-END: us-800874f4
+// LLM-HARNESS-BEGIN: us-800874fc
+extern u32 lbl_eu_8066409C;
+extern "C" int func_80086B24__Q22cf13CfGameManagerFv() { return lbl_eu_8066409C; }
+// LLM-HARNESS-END: us-800874fc
+// LLM-HARNESS-BEGIN: us-80087504
+extern u32 lbl_eu_806640A8;
+extern "C" int func_80086B2C__Q22cf13CfGameManagerFv() { return lbl_eu_806640A8; }
+// LLM-HARNESS-END: us-80087504
+// LLM-HARNESS-BEGIN: us-8008750c
+extern u32 lbl_eu_806640A4;
+extern "C" int func_80086B34__Q22cf13CfGameManagerFv() { return lbl_eu_806640A4; }
+// LLM-HARNESS-END: us-8008750c
+// LLM-HARNESS-BEGIN: us-80087514
+extern u32 lbl_eu_806640F4;
+extern "C" int func_80086B3C__Q22cf13CfGameManagerFv() { return lbl_eu_806640F4; }
+// LLM-HARNESS-END: us-80087514
+// LLM-HARNESS-BEGIN: us-8008778c
+extern u32 lbl_eu_80663D90;
+extern "C" int func_80086DB4__Q22cf13CfGameManagerFv() { return lbl_eu_80663D90; }
+// LLM-HARNESS-END: us-8008778c
+// LLM-HARNESS-BEGIN: us-80080358
+extern u8 lbl_eu_80663E34;
+extern "C" u8 func_8007F9BC__Q22cf13CfGameManagerFv() { return lbl_eu_80663E34; }
+// LLM-HARNESS-END: us-80080358
+// LLM-HARNESS-BEGIN: us-800817c0
+extern u8 lbl_eu_80663E5D;
+extern "C" u8 func_80080E20__Q22cf13CfGameManagerFv() { return lbl_eu_80663E5D; }
+// LLM-HARNESS-END: us-800817c0
+// LLM-HARNESS-BEGIN: us-800817c8
+extern u8 lbl_eu_8066476D;
+extern "C" u8 func_80080E28__Q22cf13CfGameManagerFv() { return lbl_eu_8066476D; }
+// LLM-HARNESS-END: us-800817c8

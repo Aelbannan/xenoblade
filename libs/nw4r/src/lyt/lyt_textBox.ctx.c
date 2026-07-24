@@ -23502,5 +23502,5 @@ extern "C" void GetCharStrmReader__Q34nw4r2ut4FontCFv() {}
 extern "C" void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo() {}
 // LLM-HARNESS-END: us-80404b9c
 // LLM-HARNESS-BEGIN: us-80405178
-extern "C" bool GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv() { return false; }
+extern "C" int GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv(void) { return lbl_eu_80665488@sda21; }
 // LLM-HARNESS-END: us-80405178

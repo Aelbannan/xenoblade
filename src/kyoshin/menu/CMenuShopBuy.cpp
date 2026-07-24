@@ -56,10 +56,16 @@ extern "C" void func_8018C258() {}
 extern "C" void func_8018C59C() {}
 // LLM-HARNESS-END: us-8018db50
 
-// LLM-HARNESS-BEGIN: us-8018dba0
-extern "C" void func_8018C5EC(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuShopBuyFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-8018dba0
+// Adjusting thunk: upcasts from base sub-object (at offset +0x58 within CMenuShopBuy)
+// to the full CMenuShopBuy, then tail-calls cbRenderBefore.
+// Uses function-pointer cast to prevent MWCC from inlining the (empty stub) callee.
+extern "C" void func_8018C5EC(void* self) {
+    ((void(*)(void*))cbRenderBefore__12CMenuShopBuyFv)(static_cast<char*>(self) - 0x58);
+}
 
-// LLM-HARNESS-BEGIN: us-8018dba8
-extern "C" void func_8018C5F4(void* self) { ((void(*)(void*))__dt__12CMenuShopBuyFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-8018dba8
+// Adjusting thunk: upcasts from base sub-object (at offset +0x58 within CMenuShopBuy)
+// to the full CMenuShopBuy, then tail-calls the destructor.
+// Uses function-pointer cast to prevent MWCC from inlining the (empty stub) callee.
+extern "C" void func_8018C5F4(void* self) {
+    ((void(*)(void*))__dt__12CMenuShopBuyFv)(static_cast<char*>(self) - 0x58);
+}

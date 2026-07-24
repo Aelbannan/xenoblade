@@ -807,11 +807,13 @@ extern "C" void func_804BE5AC() {}
 // LLM-HARNESS-END: us-804c2708
 
 // LLM-HARNESS-BEGIN: us-804c2714
-extern "C" bool func_804BE5B8() { return false; }
+extern u8 lbl_eu_8066597C;
+extern "C" u8 func_804BE5B8() { return lbl_eu_8066597C; }
 // LLM-HARNESS-END: us-804c2714
 
 // LLM-HARNESS-BEGIN: us-804c271c
-extern "C" bool func_804BE5C0() { return false; }
+extern u8 lbl_eu_8066597D;
+extern "C" u8 func_804BE5C0() { return lbl_eu_8066597D; }
 // LLM-HARNESS-END: us-804c271c
 
 // LLM-HARNESS-BEGIN: us-804c2724

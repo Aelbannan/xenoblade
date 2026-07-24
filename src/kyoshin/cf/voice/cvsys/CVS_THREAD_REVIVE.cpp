@@ -2,6 +2,7 @@
 // Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-802aae00
@@ -25,7 +26,11 @@ extern "C" void func_802A8A48() {}
 // LLM-HARNESS-END: us-802ab17c
 
 // LLM-HARNESS-BEGIN: us-802ab1f4
-extern "C" int func_802A8AC0(void* self) { return 230; }
+// Virtual method override: returns the buffer size for this thread type.
+// Matches CVS_THREAD::blank1 slot in vtable; REVIVE subclass returns 0xE6 (230).
+extern "C" int func_802A8AC0(CVS_THREAD_REVIVE* self) {
+    return CVS_THREAD_REVIVE::BUFFER_SIZE;
+}
 // LLM-HARNESS-END: us-802ab1f4
 
 // LLM-HARNESS-BEGIN: us-802ab1fc

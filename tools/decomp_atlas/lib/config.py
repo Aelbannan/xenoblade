@@ -6,7 +6,7 @@ from pathlib import Path
 
 ATLAS_SCHEMA_VERSION = 1
 INDEXER_VERSION = "1.0.0"
-VECTOR_METHOD = "structural-v1"
+VECTOR_METHOD = "structural-v3"
 PROJECTION_SEED = 0xA71A5
 PROJECTION_VERSION = "pca2-v1"
 

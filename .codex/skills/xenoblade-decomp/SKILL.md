@@ -136,12 +136,18 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
 → search MWCC knowledge by identity + mismatch; open top records
 → draft/edit **high-level C or C++** in the owning translation unit
 → python3 tools/coop/run.py ctx <source.cpp>
-→ python3 tools/coop/run.py cycle <target-id> \
-    --hypothesis "..." --next-change "..." --runtime-test ""
+→ **Rapid feedback loop** (use `hexdiff`, not `cycle`; ~1s vs 2-3min):
+    python3 tools/coop/run.py build kyoshin/SomeUnit
+    python3 tools/coop/hexdiff.py kyoshin/SomeUnit --symbol <mangled-symbol> --json
+    → check `mismatch_count` went down; if it went up, revert the edit
+    → iterate until mismatch_count is 0 or stalls for 3 attempts
+→ **Final acceptance** (only when hexdiff shows few misses or 3 attempts stalled):
+    python3 tools/coop/run.py cycle <target-id> \
+        --hypothesis "..." --next-change "..." --runtime-test ""
 → verify split object size: `coop run size <unit>` (decomp `.text` ≤ retail split budget)
 → optional: `behaviour ppc <test-id>` when a PPC harness exists
-→ if FAIL: inspect objdiff / `coop hexdiff <unit> -s <symbol>` / build/coop-function-diff.json, revise, repeat
-→ if PASS: `cycle` persists the accepted state in `targets.json`; release the claim and do not edit the same function concurrently
+→ if `cycle` FAILS: inspect objdiff / build/coop-function-diff.json, revise, repeat
+→ if `cycle` PASSES: the accepted state is persisted in `targets.json`; release the claim and do not edit the same function concurrently
 ```
 
 ### Bounded attempt protocol
@@ -201,9 +207,7 @@ python3 tools/coop/run.py size kyoshin/cf/CfPadTask
 
 ### Instruction-level hex diff (`tools/coop/hexdiff.py`)
 
-When `objdiff-cli diff` is unavailable headless (the `-o`/`--format` flags
-require a newer objdiff-cli than the installed version), or when you need a
-quick instruction-level comparison without launching the GUI, use `hexdiff.py`:
+**Primary rapid feedback tool** — ~1s per build+diff vs 2-3min for `cycle`. Use hexdiff during iterative editing, run `cycle` only for final acceptance.
 
 ```bash
 # Terminal mode — colour-coded side-by-side
@@ -218,6 +222,11 @@ python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --no-build
 # Show relocation tables alongside the diff
 python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --relocs
 ```
+
+**Enhanced output** (terminal and JSON):
+- **Reg-swap vs structural breakdown** — terminal e.g. `6 mismatch(es), 6 pure reg-swaps (100%), 13 relocs`. JSON: `reg_swap_count`, `structural_count`.
+- **Register mapping table** — terminal and JSON `reg_mapping` show retail→decomp register pairs per instruction/opcode/operand-position. E.g. `addi: r3→r5, lwz: r5→r3, psq_l: r3→r5, r5→r3` — instantly reveals Chaitin swap patterns.
+- **Per-instruction flags** — JSON per-offset entries include `retail_asm`, `decomp_asm`, `reg_swap` (bool), `structural` (bool).
 
 Output legend:
 - **Green** — instruction bytes match
@@ -377,7 +386,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `tools/coop/targets.json` | Canonical function registry and current target state |
 | `tools/coop/targets.schema.json` | Registry data contract |
 | `configure.py` | Per-object matching flags and compiler options |
-| `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes); uses `ppc_equivalence` ELF parser |
+| `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes, reg-swap detection, register mapping table); uses `ppc_equivalence` ELF parser |
 | `docs/MWCC_REFERENCE.md` | MWCC matching reference — read before matching; **append new patterns/breakthroughs here** |
 | `docs/MWCC_KNOWLEDGE_BASE.md` | Agent search protocol and structured-record migration plan |
 | `tools/mwcc_kb.py` | Search reference patterns + attempt history; use `--json` for agents |

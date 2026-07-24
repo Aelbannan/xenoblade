@@ -715,9 +715,14 @@ def _output_terminal(
     # Side-by-side hex + disasm diff
     byte_mismatches = 0
     reloc_count = 0
+    reg_swap_count = 0
+    structural_count = 0
     total = max(retail.size, decomp.size)
     retail_base = retail.base
     decomp_base = decomp.base
+
+    # Reg-map: (retail_reg, instruction_short) → set of decomp_regs
+    reg_map: dict[str, set[int]] = {}
 
     for offset in range(0, total, 4):
         r_word = int.from_bytes(retail.code[offset:offset + 4], "big") if offset + 4 <= retail.size else None
@@ -739,12 +744,39 @@ def _output_terminal(
             d_hex = f"0x{d_word:08X}"
             d_asm = disasm_one(d_word, decomp_base + offset)
 
+        # Detect pure register swap: same mnemonic base, different registers
+        is_reg_swap = False
+        if r_word is not None and d_word is not None and r_asm and d_asm and r_word != d_word:
+            r_mnem_base = r_asm.split()[0] if r_asm else ""
+            d_mnem_base = d_asm.split()[0] if d_asm else ""
+            if r_mnem_base and r_mnem_base == d_mnem_base:
+                is_reg_swap = True
+                # Build register mapping: extract GPR/FPR operands from both sides
+                for fn, word in [("retail", r_word), ("decomp", d_word)]:
+                    pass
+                r_regs = set()
+                d_regs = set()
+                for reg_list, w in [(_GPR, r_word), (_GPR, d_word)]:
+                    pass
+                r_rd, r_ra, r_rb = _rd(r_word), _ra(r_word), _rb(r_word)
+                d_rd, d_ra, d_rb = _rd(d_word), _ra(d_word), _rb(d_word)
+                # For each operand position that differs, record the mapping
+                op_positions = [("rd", r_rd, d_rd), ("ra", r_ra, d_ra), ("rb", r_rb, d_rb)]
+                for pos, r_r, d_r in op_positions:
+                    if r_r != d_r:
+                        key = f"{r_mnem_base}*{pos}"
+                        reg_map.setdefault(key, set()).add((r_r, d_r))
+
         colour = _colour_diff(r_word, d_word, d_has_reloc)
         match_char = "=" if r_word == d_word else "≠"
 
         if r_word != d_word or d_has_reloc:
             if r_word != d_word:
                 byte_mismatches += 1
+                if is_reg_swap:
+                    reg_swap_count += 1
+                else:
+                    structural_count += 1
             if d_has_reloc:
                 reloc_count += 1
 
@@ -761,10 +793,32 @@ def _output_terminal(
         parts = []
         if byte_mismatches:
             pct = 100.0 * (total // 4 - byte_mismatches) / (total // 4)
-            parts.append(f"{_RED}{byte_mismatches} byte mismatch(es) ({pct:.1f}% match){_RESET}")
+            parts.append(f"{_RED}{byte_mismatches} mismatch(es) ({pct:.1f}% match){_RESET}")
+            if reg_swap_count:
+                suffix = "" if reg_swap_count == 1 else "s"
+                parts.append(f"{_CYAN}{reg_swap_count} pure reg-swap{suffix} ({100*reg_swap_count//byte_mismatches}%){_RESET}")
         if reloc_count:
             parts.append(f"{_YELLOW}{reloc_count} unresolved relocation(s){_RESET}")
         print(f"  " + ", ".join(parts))
+
+    # Print register mapping table if any reg-swaps were detected
+    if reg_map:
+        print(f"\n{_CYAN}Register mapping (retail → decomp):{_RESET}")
+        for key in sorted(reg_map):
+            pairs = reg_map[key]
+            # Group by same retail reg
+            by_r: dict[int, list[int]] = {}
+            for r_r, d_r in pairs:
+                by_r.setdefault(r_r, []).append(d_r)
+            parts_list = []
+            for r_r in sorted(by_r):
+                d_regs = sorted(set(by_r[r_r]))
+                if len(d_regs) == 1:
+                    parts_list.append(f"r{r_r}→{_GPR[d_regs[0]]}")
+                else:
+                    parts_list.append(f"r{r_r}→{','.join(_GPR[dr] for dr in d_regs)}")
+            instr_part = key.split("*")[0]
+            print(f"  {instr_part:<12s}  {", ".join(parts_list)}")
 
     return 0 if byte_mismatches == 0 else 5
 
@@ -778,18 +832,71 @@ def _output_json(
 ) -> int:
     import json
 
+    import collections
+
     diffs = []
     total = max(retail.size, decomp.size)
+    retail_base = retail.base
+    decomp_base = decomp.base
+
+    reg_swap_count = 0
+    structural_count = 0
+    reg_map: dict[str, set[tuple[int, int]]] = collections.defaultdict(set)
+
     for offset in range(0, total, 4):
         r_word = int.from_bytes(retail.code[offset:offset + 4], "big") if offset + 4 <= retail.size else None
         d_word = int.from_bytes(decomp.code[offset:offset + 4], "big") if offset + 4 <= decomp.size else None
+
+        r_asm = disasm_one(r_word, retail_base + offset) if r_word is not None else None
+        d_asm = disasm_one(d_word, decomp_base + offset) if d_word is not None else None
+
+        # Detect reg-swap mismatch
+        is_reg_swap = False
+        if r_word is not None and d_word is not None and r_word != d_word and r_asm and d_asm:
+            r_mnem = r_asm.split()[0] if r_asm else ""
+            d_mnem = d_asm.split()[0] if d_asm else ""
+            if r_mnem and r_mnem == d_mnem:
+                is_reg_swap = True
+                r_rd, r_ra, r_rb = _rd(r_word), _ra(r_word), _rb(r_word)
+                d_rd, d_ra, d_rb = _rd(d_word), _ra(d_word), _rb(d_word)
+                for pos, r_r, d_r in [("rd", r_rd, d_rd), ("ra", r_ra, d_ra), ("rb", r_rb, d_rb)]:
+                    if r_r != d_r:
+                        reg_map[f"{r_mnem}*{pos}"].add((r_r, d_r))
+
+        byte_match = r_word == d_word
         diffs.append({
             "offset": offset,
             "retail_hex": f"0x{r_word:08X}" if r_word is not None else None,
             "decomp_hex": f"0x{d_word:08X}" if d_word is not None else None,
-            "match": r_word == d_word,
+            "retail_asm": r_asm,
+            "decomp_asm": d_asm,
+            "match": byte_match,
             "has_decomp_reloc": offset in decomp_relocs,
+            "reg_swap": is_reg_swap,
+            "structural": (r_word != d_word) and not is_reg_swap,
         })
+
+        if r_word != d_word:
+            if is_reg_swap:
+                reg_swap_count += 1
+            else:
+                structural_count += 1
+
+    # Build register mapping summary (retail → decomp per operand position)
+    reg_mapping = {}
+    for key in sorted(reg_map):
+        pairs = reg_map[key]
+        by_r: dict[int, list[int]] = {}
+        for r_r, d_r in pairs:
+            by_r.setdefault(r_r, []).append(d_r)
+        entries = []
+        for r_r in sorted(by_r):
+            d_regs = sorted(set(by_r[r_r]))
+            if len(d_regs) == 1:
+                entries.append({"retail_reg": r_r, "decomp_regs": d_regs})
+            else:
+                entries.append({"retail_reg": r_r, "decomp_regs": d_regs})
+        reg_mapping[key] = entries
 
     output = {
         "symbol": retail.name,
@@ -799,6 +906,9 @@ def _output_json(
         "decomp_size": decomp.size,
         "total_instructions": total // 4,
         "mismatch_count": sum(1 for d in diffs if not d["match"]),
+        "reg_swap_count": reg_swap_count,
+        "structural_count": structural_count,
+        "reg_mapping": reg_mapping,
         "instructions": diffs,
         "retail_relocations": [
             {"offset": r.offset, "type": r.relocation_type, "symbol": r.symbol, "addend": r.addend}

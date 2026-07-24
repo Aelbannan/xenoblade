@@ -12,13 +12,11 @@ from tools.decomp_atlas.lib.config import PROJECTION_SEED, PROJECTION_VERSION, V
 # Fixed feature layout so cosine similarity is comparable across functions.
 FEATURE_KEYS: Tuple[str, ...] = (
     "len_log",
-    "size_log",
-    "branch_density",
+    "stack_frame_log",
     "call_direct",
     "call_unresolved",
     "indirect",
     "reloc_count",
-    "stack_frame_log",
     "match_percent",
     "cls_arith",
     "cls_logical",
@@ -28,6 +26,13 @@ FEATURE_KEYS: Tuple[str, ...] = (
     "cls_float",
     "cls_compare",
     "cls_other",
+    "ps_density",
+    "stmw_density",
+    "rlwinm_density",
+    "ext_density",
+    "div_density",
+    "blr_ratio",
+    "reloc_per_insn",
 )
 
 _ARITH = {
@@ -99,12 +104,30 @@ def structural_vector(
     """Build a fixed-length structural feature vector."""
     features = {key: 0.0 for key in FEATURE_KEYS}
     insn_n = float(instruction_count or 0.0)
-    branch_n = float(branch_count or 0.0)
     size_n = float(size or 0.0)
+
+    _PS_OPS = {"psq_l", "psq_lu", "psq_st", "psq_stu",
+                "ps_add", "ps_sub", "ps_mul", "ps_div",
+                "ps_madd", "ps_msub", "ps_nmadd", "ps_nmsub",
+                "ps_sum0", "ps_sum1", "ps_muls0", "ps_muls1",
+                "ps_madds0", "ps_madds1", "ps_sel", "ps_res",
+                "ps_cmpo0", "ps_cmpu0", "ps_neg", "ps_mr", "ps_nabs"}
+    _STMW_OPS = {"lmw", "stmw"}
+    _RLWINM = {"rlwinm", "rlwimi", "rlwnm"}
+    _EXT = {"extsb", "extsh"}
+    _DIV = {"divw", "divwu", "divw.", "divwu."}
+    _BLR = {"bclr"}  # bclr 20,0 = blr; bclrl = bctrl
 
     if instructions:
         insn_n = float(len(instructions))
+        ps_n = 0.0
+        stmw_n = 0.0
+        rlwinm_n = 0.0
+        ext_n = 0.0
+        div_n = 0.0
         branch_n = 0.0
+        blr_n = 0.0
+
         for insn in instructions:
             opcode = getattr(getattr(insn, "opcode", None), "value", None)
             if opcode is None:
@@ -113,21 +136,43 @@ def structural_vector(
             features[_opcode_class(opcode)] += 1.0
             if opcode in _BRANCH:
                 branch_n += 1.0
+            if opcode in _PS_OPS:
+                ps_n += 1.0
+            if opcode in _STMW_OPS:
+                stmw_n += 1.0
+            if opcode in _RLWINM:
+                rlwinm_n += 1.0
+            if opcode in _EXT:
+                ext_n += 1.0
+            if opcode in _DIV:
+                div_n += 1.0
+            # Detect blr/bctrl: bclr with bo=20
+            if opcode.startswith("bclr"):
+                operands = getattr(insn, "operands", ())
+                bo = operands[0] if len(operands) > 0 else 0
+                if bo == 20:
+                    blr_n += 1.0
+
         if insn_n > 0:
             for key in (
                 "cls_arith", "cls_logical", "cls_load", "cls_store",
                 "cls_branch", "cls_float", "cls_compare", "cls_other",
             ):
                 features[key] /= insn_n
+            features["ps_density"] = ps_n / insn_n
+            features["stmw_density"] = stmw_n / insn_n
+            features["rlwinm_density"] = rlwinm_n / insn_n
+            features["ext_density"] = ext_n / insn_n
+            features["div_density"] = div_n / insn_n
+            features["blr_ratio"] = blr_n / max(1.0, branch_n) if branch_n > 0 else 0.0
 
     features["len_log"] = _log1p(insn_n)
-    features["size_log"] = _log1p(size_n if size_n > 0 else insn_n * 4.0)
-    features["branch_density"] = (branch_n / insn_n) if insn_n > 0 else 0.0
+    features["stack_frame_log"] = _log1p(float(stack_frame or 0.0))
     features["call_direct"] = _log1p(float(direct_call_count))
     features["call_unresolved"] = _log1p(float(unresolved_call_count))
     features["indirect"] = 1.0 if has_indirect_calls else 0.0
     features["reloc_count"] = _log1p(float(relocation_count or 0.0))
-    features["stack_frame_log"] = _log1p(float(stack_frame or 0.0))
+    features["reloc_per_insn"] = (float(relocation_count or 0.0) / insn_n) if insn_n > 0 else 0.0
     features["match_percent"] = max(0.0, min(1.0, float(match_percent or 0.0) / 100.0))
     return [features[key] for key in FEATURE_KEYS]
 

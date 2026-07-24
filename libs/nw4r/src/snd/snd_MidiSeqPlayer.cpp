@@ -25,6 +25,7 @@ MidiSeqPlayer::MidiSeqPlayer() {}
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-80419900
+extern "C" void Update__Q44nw4r3snd6detail9SeqPlayerFv(void);
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9SeqPlayerFv(void) {
     Update__Q44nw4r3snd6detail9SeqPlayerFv();
 }

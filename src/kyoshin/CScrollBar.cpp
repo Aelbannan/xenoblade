@@ -3,9 +3,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CScrollBar.hpp"
 
 // LLM-HARNESS-BEGIN: us-801f50cc
-extern "C" u8 func_801F3660(void* self) { return ((u8*)self)[0x25]; }
+extern "C" u8 func_801F3660(CScrollBar* self) { return self->mVisible; }
 // LLM-HARNESS-END: us-801f50cc
 
 
@@ -15,7 +16,7 @@ extern "C" u8 func_801F3660(void* self) { return ((u8*)self)[0x25]; }
 
 
 // LLM-HARNESS-BEGIN: us-801f5324
-extern "C" u8 func_801F3668(void* self) { return ((u8*)self)[0x27]; }
+extern "C" u8 func_801F3668(CScrollBar* self) { return self->mActive; }
 // LLM-HARNESS-END: us-801f5324
 
 // LLM-HARNESS-BEGIN: us-801f532c

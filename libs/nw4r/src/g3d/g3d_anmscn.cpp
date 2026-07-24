@@ -110,6 +110,7 @@ int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
 }
 // LLM-HARNESS-END: us-803e870c
 // LLM-HARNESS-BEGIN: us-803e8714
+extern "C" void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(void*);
 extern "C" void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(void* self) { ((void(*)(void*))GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)((char*)self + 0x20); }
 // LLM-HARNESS-END: us-803e8714
 // LLM-HARNESS-BEGIN: us-803e871c

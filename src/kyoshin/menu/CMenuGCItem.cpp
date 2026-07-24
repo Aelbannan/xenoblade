@@ -1,6 +1,6 @@
-// Auto-scaffolded catalog TU for kyoshin/menu/CMenuGCItem
-// Mangled extern stubs for llm-harness / coop selection.
-// Replace stubs with high-level C/C++ during decomp.
+// FULL_MATCH: func_802B0F08, func_802B0F10
+
+#include "kyoshin/menu/CMenuGCItem.hpp"
 
 #include "kyoshin/harness_catalog.hpp"
 
@@ -36,10 +36,35 @@ extern "C" void func_802B0D10() {}
 extern "C" void func_802B0D24() {}
 // LLM-HARNESS-END: us-802b3794
 
+/**
+ * IScnRender vtable this-adjusting thunk for cbRenderBefore.
+ *
+ * IScnRender is a non-primary base at offset 0x58 within CMenuGCItem.
+ * Adjusts the subobject pointer back to CMenuGCItem* before forwarding
+ * to the real cbRenderBefore override.
+ *
+ * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
+ */
 // LLM-HARNESS-BEGIN: us-802b3978
-extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
+extern "C" void func_802B0F08(IScnRender* self) {
+    ((void(*)(CMenuGCItem*))cbRenderBefore__11CMenuGCItemFv)(
+        (CMenuGCItem*)((uintptr_t)self - 0x58));
+}
 // LLM-HARNESS-END: us-802b3978
 
+/**
+ * IScnRender vtable this-adjusting thunk for ~CMenuGCItem.
+ *
+ * Same adjustment as func_802B0F08 but forwards to the destructor.
+ * r4 (the MWCC deletion flag) is preserved from the caller because the cast
+ * to void(*)(CMenuGCItem*) declares only one parameter, leaving r4 unmodified
+ * in the tail call.
+ *
+ * Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
+ */
 // LLM-HARNESS-BEGIN: us-802b3980
-extern "C" void func_802B0F10(void* self) { ((void(*)(void*))__dt__11CMenuGCItemFv)((char*)self - 0x58); }
+extern "C" void func_802B0F10(IScnRender* self) {
+    ((void(*)(CMenuGCItem*))__dt__11CMenuGCItemFv)(
+        (CMenuGCItem*)((uintptr_t)self - 0x58));
+}
 // LLM-HARNESS-END: us-802b3980

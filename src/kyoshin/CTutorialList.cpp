@@ -3,9 +3,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTutorialList.hpp"
 
 // LLM-HARNESS-BEGIN: us-802af314
-extern "C" u8 func_802AD300(void* self) { return ((u8*)self)[0x177]; }
+extern "C" u8 func_802AD300(CTutorialList* self) { return self->mInitialized; }
 // LLM-HARNESS-END: us-802af314
 
 
@@ -58,9 +59,9 @@ extern "C" void func_802AD854(void) {}
 extern "C" void func_802AD858() {}
 // LLM-HARNESS-END: us-802aff90
 
-extern "C" void func_801D3320(void* self);
+extern "C" u8 func_801D3320(void* self);
 // LLM-HARNESS-BEGIN: us-802b00bc
-extern "C" void func_802AD984(void* self) { ((void(*)(void*))func_801D3320)((char*)self + 0x84); }
+extern "C" u8 func_802AD984(CTutorialList* self) { return func_801D3320(&self->mSortMenu); }
 // LLM-HARNESS-END: us-802b00bc
 
 // LLM-HARNESS-BEGIN: us-802b00c4

@@ -3,45 +3,64 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/lod/LODMemMan.hpp"
+
+// --- FULL_MATCH functions ---
+
+// LLM-HARNESS-BEGIN: us-80472fec
+// Simple getter: return the float at offset 0x7c.
+float LOD::LODMemMan::func_8046F01C() {
+    return mFloat_7C;
+}
+// LLM-HARNESS-END: us-80472fec
+
+// LLM-HARNESS-BEGIN: us-80473058
+// Tail-forward call to embedded sub-object's func_8046AADC.
+void LOD::LODMemMan::func_8046F088() {
+    mSubObject.func_8046AADC();
+}
+// LLM-HARNESS-END: us-80473058
+
+// --- Remaining harness stubs (empty bodies) ---
 
 // LLM-HARNESS-BEGIN: us-80470fb0
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void __ct__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80470fb0
 
 // LLM-HARNESS-BEGIN: us-804710d4
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void __dt__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-804710d4
 
 // LLM-HARNESS-BEGIN: us-80471114
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void __dt__8046D144() {}
 // LLM-HARNESS-END: us-80471114
 
 // LLM-HARNESS-BEGIN: us-80471234
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void func_8046D264__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80471234
 
 // LLM-HARNESS-BEGIN: us-80471868
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void func_8046D898__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80471868
 
 // LLM-HARNESS-BEGIN: us-804719d4
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void func_8046DA04__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-804719d4
 
 // LLM-HARNESS-BEGIN: us-80471a34
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void func_8046DA64__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80471a34
 
 // LLM-HARNESS-BEGIN: us-80471a90
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void func_8046DAC0__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80471a90
 
 // LLM-HARNESS-BEGIN: us-80471b98
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void func_8046DBC8__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80471b98
 
 // LLM-HARNESS-BEGIN: us-80471d6c
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
+extern "C" void func_8046DD9C__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80471d6c
 
 // LLM-HARNESS-BEGIN: us-804721ac
@@ -136,18 +155,9 @@ extern "C" void func_8046EF7C__Q23LOD9LODMemManFv() {}
 extern "C" void func_8046F010__Q23LOD9LODMemManFv(void* self, float a, float b) {}
 // LLM-HARNESS-END: us-80472fe0
 
-// LLM-HARNESS-BEGIN: us-80472fec
-extern "C" float func_8046F01C__Q23LOD9LODMemManFv(void* self) { return *(float*)((u8*)self + 0x7c); }
-// LLM-HARNESS-END: us-80472fec
-
 // LLM-HARNESS-BEGIN: us-80472ff4
 extern "C" void func_8046F024__Q23LOD9LODMemManFv() {}
 // LLM-HARNESS-END: us-80472ff4
-
-extern "C" void func_8046AADC__Q23LOD17UnkClass_8046A530Fv(void* self);
-// LLM-HARNESS-BEGIN: us-80473058
-extern "C" void func_8046F088__Q23LOD9LODMemManFv(void* self) { ((void(*)(void*))func_8046AADC__Q23LOD17UnkClass_8046A530Fv)((char*)self + 0xabc); }
-// LLM-HARNESS-END: us-80473058
 
 // LLM-HARNESS-BEGIN: us-80473060
 extern "C" void func_8046F090__Q23LOD9LODMemManFv() {}

@@ -49,16 +49,20 @@ extern "C" void func_804DDDF4__15CWorkSystemPackFPCcPvPUl() {}
 // LLM-HARNESS-END: us-804e2104
 
 // LLM-HARNESS-BEGIN: us-804e213c
-extern "C" void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(u32 val) {
-    extern u32 lbl_eu_80665A14;
-    lbl_eu_80665A14 = val;
+extern "C" const char* const* lbl_eu_80665A14;
+
+// Store the PKH filenames array pointer for later retrieval by the work system.
+extern "C" void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(const char* const* pArray) {
+    lbl_eu_80665A14 = pArray;
 }
 // LLM-HARNESS-END: us-804e213c
 
 // LLM-HARNESS-BEGIN: us-804e2144
-extern "C" void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(u32 val) {
-    extern u32 lbl_eu_80665A18;
-    lbl_eu_80665A18 = val;
+extern "C" const char* const* lbl_eu_80665A18;
+
+// Store the static arc filename string pointer for later retrieval by the work system.
+extern "C" void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* pFilenameStr) {
+    lbl_eu_80665A18 = pFilenameStr;
 }
 // LLM-HARNESS-END: us-804e2144
 

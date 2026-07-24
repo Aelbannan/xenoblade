@@ -5,24 +5,24 @@
 #include <criware/cri_adxf.h>
 #include <cstring>
 
-CPackItem::CPackItem(const char* name, int r5) :
-unk4(),
+CPackItem::CPackItem(const char* name, int partitionId) :
+mBaseName(),
 mPkbFilename(),
 mFileHandle(nullptr),
 mPackHeader(nullptr),
-unk54(name),
-unk84(name),
+mArchiveName(name),
+mFilePath(name),
 mFileHashTable(nullptr),
-unk5C(nullptr),
-unk60(nullptr),
-mAdxPartitionId(r5),
-mAhxAdxDataPtr(nullptr),
+mFileIds(nullptr),
+mFileDataOffsets(nullptr),
+mAdxPartitionId(partitionId),
+mAhxAdxBuffer(nullptr),
 mLoadState(LOAD_STATE_NOT_LOADED),
-unk78(0),
-unk79(0),
+mFileReadFailed(0),
+mPackHeaderExternal(0),
 mIsAhxAdxFile(false),
-unk7C(0),
-unk80(0) {
+mWorkPackDataPtr(0),
+mWorkPackDataSize(0) {
     //Check if the file is a adx/ahx pack file from the filename
     if(std::strstr(name, "adx") != nullptr || std::strstr(name, "ahx") != nullptr){
         mIsAhxAdxFile = true;
@@ -34,38 +34,40 @@ CPackItem::~CPackItem(){
         CDeviceFile::cancel(mFileHandle);
     }
 
-    if(unk79 != 0){
+    if(mPackHeaderExternal != 0){
         mPackHeader = nullptr;
     }
 
     DELETE_OBJ(mPackHeader);
-    DELETE_OBJ(mAhxAdxDataPtr);
+    DELETE_OBJ(mAhxAdxBuffer);
 }
 
+/* Main update tick for pack file loading state machine.
+   Transitions through: NOT_LOADED → OPENED_PKH_FILE → (LOADING_AHX_ADX_FILE) → LOADED */
 void CPackItem::update(){
     if(mLoadState == LOAD_STATE_NOT_LOADED){
         if(CWorkSystemPack::func_804DE100() == 0) return;
 
-        if(CWorkSystemPack::func_804DDDF4(unk84, &unk7C, &unk80) != 0){
-            unk79 = 1;
-            mPackHeader = (PackHeader*)unk7C;
-            func_804DE948();
+        if(CWorkSystemPack::func_804DDDF4(mFilePath, &mWorkPackDataPtr, &mWorkPackDataSize) != 0){
+            mPackHeaderExternal = 1;
+            mPackHeader = (PackHeader*)mWorkPackDataPtr;
+            setupHashTable();
         }else{
-            mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), unk84, this, 0, 0);
+            mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), mFilePath, this, 0, 0);
         }
 
         //TODO: What did they do here? They likely didnt have a constructor like this to skip
         //initialization, but using a raw buffer feels wrong
         ml::FixStr<64> tempString = ml::FixStr<64>(false); //0x2C
 
-        ml::CPathUtil::getNoPathExtName(tempString, unk84);
-        unk4 = tempString.c_str();
-        mPkbFilename = unk84;
+        ml::CPathUtil::getNoPathExtName(tempString, mFilePath);
+        mBaseName = tempString.c_str();
+        mPkbFilename = mFilePath;
         ml::CPathUtil::removeExt(mPkbFilename);
         mPkbFilename += ".pkb";
         mLoadState = LOAD_STATE_OPENED_PKH_FILE;
     }else if(mLoadState == LOAD_STATE_OPENED_PKH_FILE){
-        if(unk78 != 0){
+        if(mFileReadFailed != 0){
             mLoadState = LOAD_STATE_LOADED;
             return;
         }
@@ -74,9 +76,9 @@ void CPackItem::update(){
 
         if(mIsAhxAdxFile){
             if(CWorkSystemPack::func_804DDFBC((u32)this) == false) return;
-            u32 r4 = ROUND_DOWN((mPackHeader->mFiles + 1)*2 + 0x11a, 4); //TODO: figure out the corresponding Criware struct here.
-            mAhxAdxDataPtr = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), r4, 4);
-            ADXF_LoadPartitionNw(mAdxPartitionId, mPkbFilename.c_str(), nullptr, mAhxAdxDataPtr);
+            u32 bufferSize = ROUND_DOWN((mPackHeader->mFiles + 1)*2 + 0x11a, 4); //TODO: figure out the corresponding Criware struct here.
+            mAhxAdxBuffer = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), bufferSize, 4);
+            ADXF_LoadPartitionNw(mAdxPartitionId, mPkbFilename.c_str(), nullptr, mAhxAdxBuffer);
             mLoadState = LOAD_STATE_LOADING_AHX_ADX_FILE;
         }else{
             mLoadState = LOAD_STATE_LOADED;
@@ -88,7 +90,9 @@ void CPackItem::update(){
     }
 }
 
-bool CPackItem::func_804DE78C(const char* filename, char** r5, u32* r6, u32* r7, u32* r8){
+/* Looks up a file by name in the pack's hash table.
+   On success, returns true and fills outPkbPath, outEntryId, outIndex, and outFileId. */
+bool CPackItem::lookupFile(const char* filename, char** outPkbPath, u32* outEntryId, u32* outIndex, u32* outFileId){
     if(mPackHeader == nullptr){
         return false;
     }
@@ -103,26 +107,29 @@ bool CPackItem::func_804DE78C(const char* filename, char** r5, u32* r6, u32* r7,
         return false;
     }
 
-    *r5 = (char*)mPkbFilename.c_str();
+    *outPkbPath = (char*)mPkbFilename.c_str();
 
-    if(unk60 != nullptr){
-        *r6 = unk60[hashIndex];
+    if(mFileDataOffsets != nullptr){
+        *outEntryId = mFileDataOffsets[hashIndex];
     }else{
-        *r6 = mAdxPartitionId;
+        *outEntryId = mAdxPartitionId;
     }
 
-    *r7 = hashIndex;
-    *r8 = unk5C[hashIndex];
+    *outIndex = hashIndex;
+    *outFileId = mFileIds[hashIndex];
     return true;
 }
 
 /* Tries to locate the hash of this item in the hash table. If successful,
-returns the corresponding index. If not successful, returns -1. */
+returns the corresponding index. If not successful, returns -1.
+   Each hash table entry is two u32s (lower half, upper half) stored
+   consecutively. The table is accessed as a flat u32 array for matching. */
 int CPackItem::findHashIndex(int startIndex, int endIndex){
     int length = endIndex - startIndex;
 
     if(length < 16){
         //If the length is less than 16, just search for a match with a for loop
+        // Access the hash table as u32* for word-by-word comparison (required for matching)
         u32* pHashTable = (u32*)&mFileHashTable[startIndex];
         int i = startIndex;
 
@@ -132,7 +139,7 @@ int CPackItem::findHashIndex(int startIndex, int endIndex){
             }
 
             i++;
-            pHashTable += 2;
+            pHashTable += 2; // advance by two u32s per entry
         }
         
         //If the hash couldn't be found, return -1
@@ -141,6 +148,7 @@ int CPackItem::findHashIndex(int startIndex, int endIndex){
 
     //If not, use binary search to narrow down the search space
     int midIndex = (endIndex + startIndex)/2;
+    // Access the hash table as u32* for word-by-word comparison (required for matching)
     u32* pHashTable = (u32*)&mFileHashTable[midIndex];
 
     /* If the entry at the middle index happens to be the right one, return the index. If not,
@@ -166,28 +174,36 @@ bool CPackItem::isNotLoaded(){
     return mLoadState != LOAD_STATE_LOADED && !mIsAhxAdxFile;
 }
 
-void CPackItem::func_804DE948() {
+/* Sets up the hash table and per-file ID pointers from the pack header.
+   The layout after the hash table is: mFileIds (u16 per file), then optionally
+   mFileDataOffsets (u32 per file) if the pkh file is large enough. */
+void CPackItem::setupHashTable() {
     if(mPackHeader != nullptr){
         mFileHashTable = mPackHeader->mFileHashTable;
-        unk5C = (u16*)&mFileHashTable[mPackHeader->mFiles];
+        // mFileIds starts right after the hash table entries
+        mFileIds = (u16*)&mFileHashTable[mPackHeader->mFiles];
 
-        u16* temp = unk5C + mPackHeader->mFiles;
-
-        if(mPackHeader->mPkhFilesize > (u32)temp - (u32)mPackHeader){
-            unk60 = (u32*)temp;
+        // Check if there is room for mFileDataOffsets after mFileIds
+        u32 fileIdsEnd = (u32)(mFileIds + mPackHeader->mFiles);
+        if(mPackHeader->mPkhFilesize > fileIdsEnd - (u32)mPackHeader){
+            mFileDataOffsets = (u32*)(mFileIds + mPackHeader->mFiles);
         }
     }
 }
 
+/* Handles async file read completion events.
+   On success, takes ownership of the file data as a PackHeader and sets up the hash table.
+   On failure, sets mFileReadFailed to move the state machine past the file-open phase. */
 bool CPackItem::OnFileEvent(CEventFile* pEventFile){
     if(pEventFile->mFileHandle == mFileHandle){
         if(pEventFile->unk0 == 1){
+            // Local void* is required for matching (R7 overrides R1/R3)
             void* data = mFileHandle->mData;
             mFileHandle->mData = nullptr;
             mPackHeader = static_cast<PackHeader*>(data);
-            func_804DE948();
+            setupHashTable();
         }else{
-            unk78 = 1;
+            mFileReadFailed = 1;
         }
 
         mFileHandle = nullptr;

@@ -1343,7 +1343,31 @@ extern "C" void func_80155660() {}
 // LLM-HARNESS-END: us-8015612c
 
 // LLM-HARNESS-BEGIN: us-80156320
-extern "C" void func_80155854() {}
+extern "C" int func_80155854(unsigned int param_1) {
+    int result;
+    if (param_1 < 0xC9) {
+        if (param_1 < 0x65) {
+            if (param_1 < 1) {
+                result = 0;
+            } else {
+                result = 1;
+            }
+        } else {
+            result = 2;
+        }
+    } else {
+        if (param_1 < 0x191) {
+            if (param_1 < 0x12D) {
+                result = 3;
+            } else {
+                result = 4;
+            }
+        } else {
+            result = 0;
+        }
+    }
+    return result;
+}
 // LLM-HARNESS-END: us-80156320
 
 // LLM-HARNESS-BEGIN: us-80156380
@@ -1382,6 +1406,8 @@ extern "C" char* func_80155D28() {
     extern char lbl_eu_80501C58[];
     return lbl_eu_80501C58 + 0x63;
 }
+
+extern "C" char lbl_eu_806641B8[];
 // LLM-HARNESS-END: us-801567f4
 
 // LLM-HARNESS-BEGIN: us-80156804
@@ -1559,8 +1585,6 @@ extern "C" unsigned short func_8015780C(int index) {
 // LLM-HARNESS-END: us-801582d8
 
 // LLM-HARNESS-BEGIN: us-801582f0
-extern "C" void* lbl_eu_806641B8;
-
 extern "C" void func_80157824(int index, short value) {
     ((short*)((char*)lbl_eu_806641B8 + 0x120EC))[index] = value;
 }

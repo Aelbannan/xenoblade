@@ -61,9 +61,9 @@
   "models": {
     "default": [
       {
-		"id": "or-kimi-k3",
+		"id": "or-glm-52",
 		"provider": "openrouter",
-		"model": "deepseek/deepseek-v4-flash",
+		"model": "z-ai/glm-5.2",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"

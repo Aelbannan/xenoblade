@@ -63,7 +63,21 @@ extern "C" void func_801AACA8() {}
 // LLM-HARNESS-END: us-801ac3dc
 
 // LLM-HARNESS-BEGIN: us-801ac3f0
-extern "C" void func_801AACBC() {}
+extern "C" void func_801AACBC(void *r3, void *r4) {
+    extern unsigned char lbl_eu_80664330;
+    unsigned int *p = (unsigned int *)&lbl_eu_80664330;
+    if (!*p) return;
+    unsigned int *dst = (unsigned int *)*p;
+    unsigned int *src1 = (unsigned int *)r3;
+    unsigned int *src2 = (unsigned int *)r4;
+    dst[0] = src1[0];
+    dst[1] = src1[1];
+    dst[2] = src1[2];
+    dst[3] = src2[0];
+    dst[4] = src2[1];
+    dst[5] = src2[2];
+    ((unsigned char *)dst)[0x18] = 1;
+}
 // LLM-HARNESS-END: us-801ac3f0
 
 // LLM-HARNESS-BEGIN: us-801ac43c

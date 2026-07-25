@@ -8,8 +8,7 @@
 extern u32 lbl_eu_80518840;
 extern char lbl_eu_80565B98[];
 void* mfCiGetInterface(void) {
-    u32 val = lbl_eu_80518840;
-    (void)val;
+    *(volatile u32*)&lbl_eu_80518840;
     return lbl_eu_80565B98;
 }
 // LLM-HARNESS-END: us-80395a1c

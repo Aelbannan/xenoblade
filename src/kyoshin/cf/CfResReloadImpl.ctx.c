@@ -1487,7 +1487,20 @@ extern "C" void func_8016E13C() {}
 // LLM-HARNESS-END: us-8016f4f0
 
 // LLM-HARNESS-BEGIN: us-8016f518
-extern "C" void func_8016E164() {}
+extern "C" void func_8016E164(u16 r3, u16 r4) {
+    extern u16 lbl_eu_8066427A;
+    extern u16 lbl_eu_8066427C;
+    extern u16 lbl_eu_80664288;
+    extern float lbl_eu_806676C8;
+    if (lbl_eu_8066427A == r3 && lbl_eu_8066427C == r4) {
+        lbl_eu_80664288 &= 0xFFFE;
+    } else {
+        lbl_eu_80664288 |= 0x1;
+    }
+    lbl_eu_80664284 = lbl_eu_806676C8;
+    lbl_eu_8066427A = r3;
+    lbl_eu_8066427C = r4;
+}
 // LLM-HARNESS-END: us-8016f518
 
 // LLM-HARNESS-BEGIN: us-8016f560

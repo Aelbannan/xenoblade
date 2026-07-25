@@ -156,7 +156,16 @@ extern "C" void func_801C7730() {}
 // LLM-HARNESS-END: us-801c9184
 
 // LLM-HARNESS-BEGIN: us-801c9368
-extern "C" void func_801C7914() {}
+extern "C" void func_801C7914(void *dst, const void *src) {
+    *(short*)((char*)dst + 0) = *(short*)((char*)src + 0);
+    *(char*)((char*)dst + 2) = *(char*)((char*)src + 2);
+    *(char*)((char*)dst + 3) = *(char*)((char*)src + 3);
+    *(char*)((char*)dst + 4) = *(char*)((char*)src + 4);
+    *(char*)((char*)dst + 5) = *(char*)((char*)src + 5);
+    *(char*)((char*)dst + 6) = *(char*)((char*)src + 6);
+    *(char*)((char*)dst + 7) = *(char*)((char*)src + 7);
+    *(char*)((char*)dst + 8) = *(char*)((char*)src + 8);
+}
 // LLM-HARNESS-END: us-801c9368
 
 // LLM-HARNESS-BEGIN: us-801c93ac

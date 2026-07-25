@@ -9,7 +9,31 @@ extern "C" void func_80155660() {}
 // LLM-HARNESS-END: us-8015612c
 
 // LLM-HARNESS-BEGIN: us-80156320
-extern "C" void func_80155854() {}
+extern "C" int func_80155854(unsigned int param_1) {
+    int result;
+    if (param_1 < 0xC9) {
+        if (param_1 < 0x65) {
+            if (param_1 < 1) {
+                result = 0;
+            } else {
+                result = 1;
+            }
+        } else {
+            result = 2;
+        }
+    } else {
+        if (param_1 < 0x191) {
+            if (param_1 < 0x12D) {
+                result = 3;
+            } else {
+                result = 4;
+            }
+        } else {
+            result = 0;
+        }
+    }
+    return result;
+}
 // LLM-HARNESS-END: us-80156320
 
 // LLM-HARNESS-BEGIN: us-80156380

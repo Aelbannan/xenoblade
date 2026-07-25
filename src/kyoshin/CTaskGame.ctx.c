@@ -246037,7 +246037,12 @@ extern "C" void func_80043E08() {}
 extern "C" void func_80044070() {}
 // LLM-HARNESS-END: us-8004460c
 // LLM-HARNESS-BEGIN: us-80044660
-extern "C" void func_800440C4() {}
+extern "C" char* func_800440C4(char* r3_this, const char* r4_str) {
+    size_t len = strlen(r4_str);
+    strcat(r3_this, r4_str);
+    *(int*)(r3_this + 0x20) += (int)len;
+    return r3_this;
+}
 // LLM-HARNESS-END: us-80044660
 
 // LLM-HARNESS-BEGIN: us-80041010

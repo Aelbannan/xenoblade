@@ -17,7 +17,25 @@ extern "C" void func_802408D4() {}
 // LLM-HARNESS-END: us-80242a8c
 
 // LLM-HARNESS-BEGIN: us-80242c1c
-extern "C" void func_80240A64() {}
+extern "C" void func_80240A64(void *r3) {
+    unsigned char *base = (unsigned char *)r3;
+    base[0x0] = 0;
+    *(int *)(base + 0x4) = 0;
+    base[0x188] = 0;
+    *(int *)(base + 0x18c) = 0;
+    base[0x310] = 0;
+    *(int *)(base + 0x314) = 0;
+    base[0x498] = 0;
+    *(int *)(base + 0x49c) = 0;
+    base[0x620] = 0;
+    *(int *)(base + 0x624) = 0;
+    base[0x7a8] = 0;
+    *(int *)(base + 0x7ac) = 0;
+    base[0x930] = 0;
+    *(int *)(base + 0x934) = 0;
+    base[0xab8] = 0;
+    *(int *)(base + 0xabc) = 0;
+}
 // LLM-HARNESS-END: us-80242c1c
 
 // LLM-HARNESS-BEGIN: us-80242c64

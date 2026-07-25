@@ -61,9 +61,9 @@
   "models": {
     "default": [
       {
-		"id": "or-kimi-2.6",
+		"id": "or-gemini-3.6flash",
 		"provider": "openrouter",
-		"model": "moonshotai/kimi-k2.6",
+		"model": "google/gemini-3.6-flash",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"

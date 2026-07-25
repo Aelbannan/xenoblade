@@ -33,7 +33,16 @@ void VER2_AnlyHdrModuleVer() {}
 // LLM-HARNESS-END: us-803d5b60
 
 // LLM-HARNESS-BEGIN: us-803d5bf0
-void VER2_AnlyHdrSiz() {}
+extern int SFHLOCAL_GetSizeofMember(int, int);
+extern int SFHLOCAL_GetNbyteB(int, int);
+
+int VER2_AnlyHdrSiz(const unsigned int *hdr, int *out_size) {
+    int sz;
+    *out_size = 0;
+    sz = SFHLOCAL_GetSizeofMember(0x12, 0x14);
+    *out_size = SFHLOCAL_GetNbyteB(hdr[1] + 0x12, sz);
+    return 1;
+}
 // LLM-HARNESS-END: us-803d5bf0
 
 // LLM-HARNESS-BEGIN: us-803d5c50
@@ -55,7 +64,15 @@ void VER2_AnlyPackSiz() {}
 // LLM-HARNESS-END: us-803d5c70
 
 // LLM-HARNESS-BEGIN: us-803d5cd0
-void VER2_AnlyNumElemTot() {}
+int SFHLOCAL_GetSizeofMember(int, int);
+int SFHLOCAL_GetNbyteB(void *, int);
+
+int VER2_AnlyNumElemTot(char *work, int *out) {
+    *out = 0;
+    int size = SFHLOCAL_GetSizeofMember(0xc0, 0xc1);
+    *out = SFHLOCAL_GetNbyteB(*(char **)(work + 4) + 0xc0, size);
+    return 1;
+}
 // LLM-HARNESS-END: us-803d5cd0
 
 // LLM-HARNESS-BEGIN: us-803d5d30
@@ -63,7 +80,15 @@ void VER2_AnlyNumElemAud() {}
 // LLM-HARNESS-END: us-803d5d30
 
 // LLM-HARNESS-BEGIN: us-803d5d90
-void VER2_AnlyNumElemVid() {}
+int SFHLOCAL_GetSizeofMember(int, int);
+int SFHLOCAL_GetNbyteB(const unsigned char *, int);
+
+int VER2_AnlyNumElemVid(unsigned char **ctx, int *out) {
+    *out = 0;
+    int size = SFHLOCAL_GetSizeofMember(0xc2, 0xc3);
+    *out = SFHLOCAL_GetNbyteB(ctx[1] + 0xc2, size);
+    return 1;
+}
 // LLM-HARNESS-END: us-803d5d90
 
 // LLM-HARNESS-BEGIN: us-803d5df0
@@ -71,7 +96,11 @@ void VER2_AnlyNumElemPrv() {}
 // LLM-HARNESS-END: us-803d5df0
 
 // LLM-HARNESS-BEGIN: us-803d5e50
-void VER2_AnlyByteRate() {}
+int VER2_AnlyByteRate(unsigned char **work, int *out) {
+    *out = 0;
+    *out = SFHLOCAL_GetNbyteB(work[1] + 0xc4, SFHLOCAL_GetSizeofMember(0xc4, 0xc8));
+    return 1;
+}
 // LLM-HARNESS-END: us-803d5e50
 
 // LLM-HARNESS-BEGIN: us-803d5eb0

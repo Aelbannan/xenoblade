@@ -720,7 +720,26 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-803cf034
-void SFTIM_Init() {}
+typedef struct SFTIM {
+    int field_0;
+    int field_4;
+    int field_8;
+    int field_C;
+    int field_10;
+} SFTIM;
+
+void SFTIM_Init(SFTIM *sftim, int val) {
+    sftim->field_0 = 0;
+    sftim->field_4 = 0;
+    sftim->field_8 = val;
+    if (val % 10 == 0) {
+        sftim->field_C = val / 10;
+        sftim->field_10 = 100;
+    } else {
+        sftim->field_C = val;
+        sftim->field_10 = 1000;
+    }
+}
 // LLM-HARNESS-END: us-803cf034
 
 // LLM-HARNESS-BEGIN: us-803cf094
@@ -796,7 +815,15 @@ void sftim_GetTimeExtClock() {}
 // LLM-HARNESS-END: us-803cfc80
 
 // LLM-HARNESS-BEGIN: us-803cfdd8
-void SFTIM_ChkRegularTime() {}
+int SFTIM_ChkRegularTime(const void *tim, int *a2, int *a3) {
+    int val = *(const int *)((const char *)tim + 0x54);
+    if (val == 4 || val == -4 || val == 6 || val == -6) {
+        return 1;
+    }
+    *a2 = -1;
+    *a3 = 1;
+    return 0;
+}
 // LLM-HARNESS-END: us-803cfdd8
 
 // LLM-HARNESS-BEGIN: us-803cfe1c

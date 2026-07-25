@@ -756,7 +756,7 @@ void AXRNA_GetNumData() {}
 // LLM-HARNESS-END: us-8039ce90
 
 // LLM-HARNESS-BEGIN: us-8039cf04
-void AXRNA_GetNumRoom() {}
+typedef struct AXRNA { char pad0[3]; signed char type; char pad4[0x2c]; void *objs[1]; } AXRNA; int AXRNA_GetNumRoom(AXRNA *rna) { if (rna == NULL) { return -1; } void *obj = rna->objs[rna->type - 1]; int (*func)(void *, int) = ((int (**)(void *, int))(*(void ***)obj))[9]; return (unsigned int)func(obj, 0) >> 1; }
 // LLM-HARNESS-END: us-8039cf04
 
 // LLM-HARNESS-BEGIN: us-8039cf60

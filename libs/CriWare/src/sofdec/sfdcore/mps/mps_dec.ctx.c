@@ -736,7 +736,21 @@ void MPS_SetPsMapFn() {}
 // LLM-HARNESS-END: us-803bdfb0
 
 // LLM-HARNESS-BEGIN: us-803be004
-void MPS_SetPesFn() {}
+typedef struct MPS_WORK MPS_WORK;
+struct MPS_WORK {
+    unsigned char pad[0xf4];
+    void *pes_fn;
+    void *pes_obj;
+};
+
+extern int MPSLIB_CheckHn(MPS_WORK *hn);
+
+void MPS_SetPesFn(MPS_WORK *hn, void *pes_fn, void *pes_obj) {
+    if (MPSLIB_CheckHn(hn) == 0) {
+        hn->pes_fn = pes_fn;
+        hn->pes_obj = pes_obj;
+    }
+}
 // LLM-HARNESS-END: us-803be004
 
 // LLM-HARNESS-BEGIN: us-803be058

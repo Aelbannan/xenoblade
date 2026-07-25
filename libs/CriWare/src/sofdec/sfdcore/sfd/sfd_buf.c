@@ -78,7 +78,17 @@ void SFBUF_RingGetDlm() {}
 // LLM-HARNESS-END: us-803c2198
 
 // LLM-HARNESS-BEGIN: us-803c21fc
-void SFBUF_RingSetDlm() {}
+extern void SFLIB_LockCs(void *);
+extern void SFLIB_UnlockCs(void *);
+
+void SFBUF_RingSetDlm(char *buf, int idx, void *dlm, int size) {
+    void *cs;
+    char *p = buf + idx * 0x74;
+    SFLIB_LockCs(&cs);
+    *(void **)(p + 0x13e0) = dlm;
+    *(int *)(p + 0x13e4) = size;
+    SFLIB_UnlockCs(&cs);
+}
 // LLM-HARNESS-END: us-803c21fc
 
 // LLM-HARNESS-BEGIN: us-803c2258

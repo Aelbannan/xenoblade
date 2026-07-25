@@ -61,9 +61,9 @@
   "models": {
     "default": [
       {
-		"id": "or-5.6-luna",
+		"id": "or-minimax-m3",
 		"provider": "openrouter",
-		"model": "openai/gpt-5.6-luna",
+		"model": "minimax/minimax-m3",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"

@@ -461,6 +461,23 @@ class ModelConfig:
     enable_thinking: Optional[bool] = None
     thinking_budget: Optional[int] = None
     reasoning_effort: Optional[str] = None
+    # Set via config strings "max_tokens": "unlimited" /
+    # "thinking_budget": "unlimited" (see HarnessRunner._load_models).
+    # unlimited_output: omit max_tokens from the provider request and skip the
+    #   per-target output-budget clamp.
+    # unlimited_thinking: do not cap reasoning tokens (omit reasoning budget);
+    #   the completion budget still applies, so pair with a generous max_tokens.
+    unlimited_output: bool = False
+    unlimited_thinking: bool = False
+
+    def reasoning_enabled(self) -> bool:
+        """True when the model may spend completion tokens on hidden reasoning."""
+        if self.unlimited_thinking:
+            return True
+        if self.thinking_budget is not None and int(self.thinking_budget) > 0:
+            return True
+        effort = str(self.reasoning_effort or "").strip().lower()
+        return bool(effort) and effort != "none"
 
 
 @dataclass
@@ -516,6 +533,7 @@ class ProviderResult:
     cache_write_tokens: Optional[int] = None
     cost: Optional[float] = None
     raw_events: List[Dict[str, Any]] = field(default_factory=list)
+    finish_reason: Optional[str] = None
 
 
 @dataclass
@@ -540,6 +558,7 @@ class ExperimentRecord:
     cache_read_tokens: Optional[int] = None
     cache_write_tokens: Optional[int] = None
     timed_out: bool = False
+    finish_reason: Optional[str] = None
 
     def to_json(self) -> Dict[str, Any]:
         return asdict(self)

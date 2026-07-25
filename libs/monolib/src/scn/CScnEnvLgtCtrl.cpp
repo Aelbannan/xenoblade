@@ -285,7 +285,7 @@ extern "C" u32 func_804C6ADC(u32 val) { return (val >> 16) & 0xFF; }
 
 // LLM-HARNESS-BEGIN: us-804cac44
 extern "C" int func_804C6AE8(unsigned int* arg0) {
-    return (arg0[1] >> 9) & 1;
+    return (arg0[1] >> 28) & 1;
 }
 // LLM-HARNESS-END: us-804cac44
 

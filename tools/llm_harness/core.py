@@ -150,6 +150,7 @@ class Harness:
                     temperature=float(cfg.get("temperature", 0.1)),
                     max_tokens=int(cfg.get("max_tokens", 4096)),
                     json_object=bool(cfg.get("json_object", True)),
+                    json_schema=bool(cfg.get("json_schema", False)),
                     api_key=str(api_key_raw) if api_key_raw is not None else None,
                     site_url=str(
                         cfg.get("site_url", OpenRouterProvider.DEFAULT_SITE_URL)
@@ -436,11 +437,30 @@ class Harness:
         return module.create_adapter(root, settings)
 
     @staticmethod
+    def _normalize_model_row(row: Dict[str, Any]) -> Dict[str, Any]:
+        """Translate string sentinels in llm-harness.json model entries.
+
+        ``"max_tokens": "unlimited"`` -> omit the provider max_tokens and skip
+        the per-target output-budget clamp (``unlimited_output``).
+        ``"thinking_budget": "unlimited"`` -> do not cap reasoning tokens
+        (``unlimited_thinking``); the completion budget still applies.
+        """
+        out = dict(row)
+        if str(out.get("max_tokens", "")).strip().lower() == "unlimited":
+            out["max_tokens"] = None
+            out["unlimited_output"] = True
+        if str(out.get("thinking_budget", "")).strip().lower() == "unlimited":
+            out["thinking_budget"] = None
+            out["unlimited_thinking"] = True
+        return out
+
+    @classmethod
     def _load_models(
+        cls,
         configured: Any,
     ) -> tuple[List[ModelConfig], Dict[str, List[ModelConfig]]]:
         if isinstance(configured, list):
-            models = [ModelConfig(**row) for row in configured]
+            models = [ModelConfig(**cls._normalize_model_row(row)) for row in configured]
             if not models:
                 raise ValueError("Harness config must define at least one model")
             return models, {}
@@ -458,7 +478,9 @@ class Harness:
         for workflow, rows in configured.items():
             if not isinstance(rows, list):
                 raise ValueError(f"Harness models.{workflow} must be a list")
-            pipelines[workflow] = [ModelConfig(**row) for row in rows]
+            pipelines[workflow] = [
+                ModelConfig(**cls._normalize_model_row(row)) for row in rows
+            ]
         if not any(pipelines.values()):
             raise ValueError("Harness config must define at least one model")
         return pipelines.get("default", []), pipelines
@@ -1213,7 +1235,7 @@ class Harness:
         self, model: ModelConfig, target_id: str, workflow: str
     ) -> ModelConfig:
         """Clamp generation length so stub functions cannot emit 8k-token essays."""
-        if model.max_tokens is not None:
+        if model.max_tokens is not None or model.unlimited_output:
             return model
         prompt_cfg = self.config.get("prompt", {}) or {}
         configured_cap = int(prompt_cfg.get("max_output_tokens", 4096))
@@ -1224,7 +1246,16 @@ class Harness:
                 suggested = int(suggest(target_id))
             except Exception:
                 suggested = configured_cap
-        effective = max(512, min(configured_cap, suggested))
+        # Reasoning models spend hidden thinking tokens inside the same
+        # completion budget as visible output. The size-based suggestion (768
+        # for tiny stubs) starves them into empty/truncated responses, so floor
+        # the budget higher when reasoning may be active. Configurable via
+        # prompt.reasoning_output_floor; may intentionally exceed
+        # max_output_tokens because reasoning tokens are not visible output.
+        floor = 512
+        if model.reasoning_enabled():
+            floor = int(prompt_cfg.get("reasoning_output_floor", 4096))
+        effective = max(floor, min(configured_cap, suggested))
         return replace(model, max_tokens=effective)
 
     @staticmethod
@@ -1299,6 +1330,11 @@ class Harness:
                 )
             except (json.JSONDecodeError, ValueError) as parse_exc:
                 error_msg = f"{type(parse_exc).__name__}: {parse_exc}"
+                if result.finish_reason == "length":
+                    error_msg += (
+                        " (output truncated: finish_reason=length — raise "
+                        "max_tokens / enable unlimited_output, or reduce thinking)"
+                    )
                 self._debug(
                     f"agent format-repair target={target_id} agent={agent} model={model.model} "
                     f"run={index} error={_debug_value(error_msg)}"
@@ -1381,6 +1417,7 @@ class Harness:
             artifact=str(artifact.relative_to(self.root)),
             candidate_summary=candidate_summary,
             error=error,
+            finish_reason=result.finish_reason if result else None,
         )
         # Log full prompt/response to io.jsonl when a provider result was received
         if result is not None:
@@ -1675,6 +1712,8 @@ class Harness:
         fingerprint_counts: Dict[str, int] = {}
         compile_used = 0
         match_used = 0
+        no_feedback_streak = 0
+        repeated_candidate_streak = 0
         solve_workspace: Optional[Path] = None
 
         def persist() -> None:
@@ -1833,6 +1872,17 @@ class Harness:
                 fingerprint = str(metrics.get("mismatch_fingerprint") or "")
 
                 if status == "COMPILE_ERROR":
+                    # Missing class/namespace declarations need a header edit
+                    # the model cannot legally perform; retrying is waste.
+                    blocked = str(
+                        evaluation.get("blocked_reason")
+                        or metrics.get("blocked_reason")
+                        or ""
+                    )
+                    if blocked.startswith("missing_type_declaration"):
+                        state["reason"] = "blocked_missing_type_declaration"
+                        state["blocked_reason"] = blocked
+                        break
                     if compile_used >= compile_budget:
                         state["reason"] = "compile_repair_budget_exhausted"
                         break
@@ -1846,6 +1896,23 @@ class Harness:
                     if match_used >= match_budget:
                         state["reason"] = "match_repair_budget_exhausted"
                         break
+                    # Stop early when the evaluator gives the repair loop no
+                    # actionable signal: 0.0% with neither binary feedback nor
+                    # a linkage diagnostic means another blind guess.
+                    feedback_missing = (
+                        not metrics.get("binary_feedback")
+                        and not metrics.get("binary_feedback_error")
+                        and metrics.get("symbol_exact", True) is True
+                        and metrics.get("objdiff_mapped", True) is not False
+                    )
+                    best_match = evaluation.get("match_percent")
+                    if feedback_missing and float(best_match or 0.0) == 0.0:
+                        no_feedback_streak += 1
+                        if no_feedback_streak >= 2:
+                            state["reason"] = "no_binary_feedback"
+                            break
+                    else:
+                        no_feedback_streak = 0
                     phase = "match_repair"
                     match_used += 1
 
@@ -1983,6 +2050,19 @@ class Harness:
                     persist()
                     continue
 
+                # Repeated identical match-repair candidates mean the model has
+                # no new information to act on — stop instead of burning the
+                # remaining repair budget on the same source.
+                if (
+                    phase == "match_repair"
+                    and not record.error
+                    and bool(child_source)
+                    and normalize_source_for_compare(child_source)
+                    == normalize_source_for_compare(parent_candidate.source)
+                ):
+                    repeated_candidate_streak += 1
+                elif not record.error:
+                    repeated_candidate_streak = 0
                 child_fp = ((record.evaluation or {}).get("metrics") or {}).get(
                     "mismatch_fingerprint", ""
                 )
@@ -2019,6 +2099,11 @@ class Harness:
                         state["reason"] = "repeated_fingerprint"
                         persist()
                         break
+
+                if repeated_candidate_streak >= max_repeated:
+                    state["reason"] = "repeated_candidate"
+                    persist()
+                    break
 
                 persist()
                 if self._record_is_symbol_accepted(record.to_json()):
@@ -2210,6 +2295,7 @@ class Harness:
             "match_percent": (record.evaluation or {}).get("match_percent"),
             "accepted": (record.evaluation or {}).get("accepted"),
             "error": record.error,
+            "finish_reason": record.finish_reason,
             "prompt": prompt,
             "response": response,
         }
@@ -2987,6 +3073,7 @@ class Harness:
                 enable_thinking=False,
                 thinking_budget=0,
                 reasoning_effort="none",
+                unlimited_output=model.unlimited_output,
             )
             result = provider.invoke(
                 prompt_text, repair_model, context_dir or Path(self.adapter.root)

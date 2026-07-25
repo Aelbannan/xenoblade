@@ -45,7 +45,10 @@ extern "C" void* CActorParam_UnkVirtualFunc113__Q22cf11CActorParamFv(void* self)
 // LLM-HARNESS-END: us-80088fc0
 
 // LLM-HARNESS-BEGIN: us-80088fc8
-extern "C" void func_800885F0() {}
+extern "C" bool func_800885F0(void* obj, unsigned int mask)
+{
+    return (*(unsigned int*)((char*)obj + 0x84) & mask) != 0;
+}
 // LLM-HARNESS-END: us-80088fc8
 
 // LLM-HARNESS-BEGIN: us-80088fe0

@@ -26,6 +26,7 @@ class AbiShape:
     outgoing_gpr_args: int = 8  # count of live r3.. among r3–r10 at indirect exits
     outgoing_fpr_args: int = 8  # count of live f1.. among f1–f8 at indirect exits
     source: str = "default-conservative"
+    declared_return: str | None = None
 
     def __post_init__(self) -> None:
         if not 0 <= self.outgoing_gpr_args <= 8:
@@ -34,7 +35,10 @@ class AbiShape:
             raise ValueError("outgoing_fpr_args must be in 0..8")
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        d = asdict(self)
+        if d.get("declared_return") is None:
+            del d["declared_return"]
+        return d
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any] | None) -> AbiShape:
@@ -46,6 +50,7 @@ class AbiShape:
             outgoing_gpr_args=int(data.get("outgoing_gpr_args", 8)),
             outgoing_fpr_args=int(data.get("outgoing_fpr_args", 8)),
             source=str(data.get("source", "from-dict")),
+            declared_return=data.get("declared_return"),
         )
 
     @classmethod

@@ -29,6 +29,7 @@ class AttemptRecord:
     equivalence_confidence: Optional[str] = None
     equivalence_policy: Optional[str] = None
     add_to_kb: str = ""
+    declared_return: Optional[str] = None
 
     def to_json(self) -> Dict[str, Any]:
         data = asdict(self)

@@ -1339,45 +1339,27 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800f52b0
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
-}
+extern "C" void __ct__cf_CfObjEnumList() {}
 // LLM-HARNESS-END: us-800f52b0
 
 // LLM-HARNESS-BEGIN: us-800f54e0
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
-}
+extern "C" void func_800F49F8() {}
 // LLM-HARNESS-END: us-800f54e0
 
 // LLM-HARNESS-BEGIN: us-800f5580
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
-}
+extern "C" void func_800F4A98() {}
 // LLM-HARNESS-END: us-800f5580
 
 // LLM-HARNESS-BEGIN: us-800f5644
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
-}
+extern "C" void func_800F4B5C() {}
 // LLM-HARNESS-END: us-800f5644
 
 // LLM-HARNESS-BEGIN: us-800f7838
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
-}
+extern "C" void func_800F6D50() {}
 // LLM-HARNESS-END: us-800f7838
 
 // LLM-HARNESS-BEGIN: us-800f78f0
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
-}
+extern "C" void func_800F6E08() {}
 // LLM-HARNESS-END: us-800f78f0
 
 // LLM-HARNESS-BEGIN: us-800f7980
@@ -1388,9 +1370,10 @@ extern "C" void* func_800F6E98(void* this_ptr, int index) {
 // LLM-HARNESS-END: us-800f7980
 
 // LLM-HARNESS-BEGIN: us-800f7994
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
+extern "C" void* func_800F6EAC(void* self, unsigned long idx) {
+    void** arr = (void**)((uint8_t*)self + 0x20);
+    void* ptr = arr[idx];
+    return *(void**)((uint8_t*)ptr + 4);
 }
 // LLM-HARNESS-END: us-800f7994
 
@@ -1401,10 +1384,7 @@ extern "C" void* func_800F6EC0(void* this_ptr, int index) {
 // LLM-HARNESS-END: us-800f79a8
 
 // LLM-HARNESS-BEGIN: us-800f79b8
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
-}
+extern "C" void func_800F6ED0() {}
 // LLM-HARNESS-END: us-800f79b8
 
 // LLM-HARNESS-BEGIN: us-800f88d4
@@ -1520,7 +1500,7 @@ extern "C" void func_800FD3FC() {}
 // LLM-HARNESS-END: us-800fdee4
 
 // LLM-HARNESS-BEGIN: us-800fe174
-extern "C" void* func_800FD68C(void* self) { return 0; }
+extern "C" void func_800FD68C(void* self) {}
 // LLM-HARNESS-END: us-800fe174
 
 // LLM-HARNESS-BEGIN: us-800fe180

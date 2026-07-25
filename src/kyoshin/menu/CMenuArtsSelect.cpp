@@ -673,7 +673,7 @@ after_ce48:
     }
 
     if (unk298 >= 2) {
-        void* move = cf::CfGameManager::func_80082D54(0);
+        void* move = cf::CfGameManager::getPlayer(0);
         void* actor = move;
         if (move != NULL) {
             actor = reinterpret_cast<u8*>(move) - 0x3e9c;
@@ -792,7 +792,7 @@ after_ce48:
     }
 
     if (unk298 != 0) {
-        void* move = cf::CfGameManager::func_80082D54(0);
+        void* move = cf::CfGameManager::getPlayer(0);
         void* actor = move;
         if (move != NULL) {
             actor = reinterpret_cast<u8*>(move) - 0x3e9c;
@@ -826,7 +826,7 @@ after_ce48:
                         break;
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
-                        cf::CfGameManager::func_80082D54(0);
+                        cf::CfGameManager::getPlayer(0);
                         void* skillSrc = func_8016FE34();
                         int ready = 0;
                         if (skillSrc != NULL) {

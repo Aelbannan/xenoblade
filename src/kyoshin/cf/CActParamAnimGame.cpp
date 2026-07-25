@@ -53,7 +53,13 @@ extern "C" void func_8005D6C0__Q22cf17CActParamAnimGame() {}
 // LLM-HARNESS-END: us-8005dd08
 
 // LLM-HARNESS-BEGIN: us-8005dd54
-extern "C" void func_8005D70C__Q22cf17CActParamAnimGame() {}
+extern "C" bool func_8004ECF4__13CActParamAnimFv(void* self);
+extern "C" bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
+    if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 2) {
+        return false;
+    }
+    return func_8004ECF4__13CActParamAnimFv(self);
+}
 // LLM-HARNESS-END: us-8005dd54
 
 // LLM-HARNESS-BEGIN: us-8005dd70

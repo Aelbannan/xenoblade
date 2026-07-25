@@ -836,7 +836,7 @@ after_flags:
             goto after_enum;
         }
     }
-    party = cf::CfGameManager::func_80082D54(0);
+    party = cf::CfGameManager::getPlayer(0);
     if (party == NULL) {
         goto after_enum;
     }
@@ -844,7 +844,7 @@ after_flags:
     func_80043D90(&holder);
     list = func_80043F18(&holder);
     func_800F4A98(list, 0x130, 0);
-    party = cf::CfGameManager::func_80082D54(0);
+    party = cf::CfGameManager::getPlayer(0);
     {
         void** vt = *reinterpret_cast<void***>(party);
         partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);

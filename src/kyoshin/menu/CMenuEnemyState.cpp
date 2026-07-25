@@ -407,7 +407,7 @@ after_bit21:
     {
         int noTarget = 1;
 
-        if (cf::CfGameManager::func_80082D54(0) != NULL) {
+        if (cf::CfGameManager::getPlayer(0) != NULL) {
             u32 lastId = *reinterpret_cast<u32*>(
                 reinterpret_cast<u8*>(func_800FE68C()) + 0x90E4);
 
@@ -481,7 +481,7 @@ after_bit21:
     // Retail pre-loop materialization (80110A88..AA4): pc call, then
     // f30/r30/f31/r29/f28/r28/r27/r31 — declare in that dependence order.
     cf::CfObjectPc* pc =
-        func_800BFC68(cf::CfGameManager::func_80082D54(0));
+        func_800BFC68(cf::CfGameManager::getPlayer(0));
     f32 animMarker = lbl_eu_80666FEC;
     f32 distThresh = lbl_eu_80667014;
     nw4r::math::VEC3 scratch;

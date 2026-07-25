@@ -215,7 +215,9 @@ class StripRedundantExternTests(unittest.TestCase):
         )
         self.assertEqual(cleaned.strip(), body.strip())
 
-        # Mangled C++: strip only the extern "C" prefix.
+        # Flat pre-mangled name: extern "C" is load-bearing — stripping it
+        # would make MWCC re-mangle the identifier (``…CFv__FPCv`` garbage)
+        # and objdiff could no longer pair the symbol (silent 0.0% match).
         mangled_body = (
             'extern "C" float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) '
             "{ return 1.0f; }\n"
@@ -239,9 +241,26 @@ class StripRedundantExternTests(unittest.TestCase):
             target_symbol="GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv",
             source_path="libs/nw4r/src/g3d/g3d_anmscn.cpp",
         )
-        self.assertNotIn('extern "C"', cleaned_m)
+        self.assertIn('extern "C"', cleaned_m)
         self.assertIn("float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv", cleaned_m)
         self.assertIn("return 1.0f", cleaned_m)
+
+    def test_strips_extern_c_before_qualified_cpp_definition(self) -> None:
+        # Qualified C++ declarator mangles to the target symbol on its own;
+        # extern "C" would suppress that mangling, so it is stripped.
+        body = 'extern "C" float nw4r::g3d::AnmScnRes::GetUpdateRate() const { return 1.0f; }\n'
+        source = begin_marker("m") + "\n" + body + end_marker("m") + "\n"
+        region = self._region(source, "m", "GetUpdateRate")
+        cleaned = strip_redundant_extern_decls(
+            source,
+            region,
+            body,
+            target_function="nw4r::g3d::AnmScnRes::GetUpdateRate() const",
+            target_symbol="GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv",
+            source_path="libs/nw4r/src/g3d/g3d_anmscn.cpp",
+        )
+        self.assertNotIn('extern "C"', cleaned)
+        self.assertIn("AnmScnRes::GetUpdateRate()", cleaned)
 
     def test_same_slot_drops_prototype_before_definition(self) -> None:
         source = (

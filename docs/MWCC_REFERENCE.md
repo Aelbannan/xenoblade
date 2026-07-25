@@ -560,6 +560,44 @@ For simple C functions with few locals, MWCC's Chaitin allocator may differ from
 - **Extra unused param** (`void f(void* self, u32 unused, u32 addend)`) can push the third argument into `r5` matching retail where `addend` naturally lands. The middle param is dead but occupies `r4` so the active value goes to `r5` (same as retail).
 - **Global function pointers** (`lbl_eu_*`: `extern void (*lbl)(void)`) may load the symbol address into a different register (`lis r3` vs retail `lis r4`). The reg-swap is harmless for leaf void functions but causes `not_equivalent` in SMT when `r3` is live-out (the equivalence checker treats it as an observable). Use `extern u32 lbl_eu_*[]` + manual cast if register pressure is high, though this rarely changes the allocation.
 
+### 8. Dead return half / Chaitin rotation — `EQUIVALENT_MATCH` workflow
+
+**Symptom:** 95–99% fuzzy, pure register-swap (instructions functionally
+identical, only reg names differ between decompiled and retail). The SMT proof
+reports `not_equivalent` with `mismatch.name == "r4"` or `"f1"` even though
+the register is dead at `blr`. The `auto` contract keeps `r4` because the
+body writes it, so `returns_i64=True` and `r4` stays an observable.
+
+**Cause:** `returns_i64` write-based inference in
+`tools/ppc_equivalence/abi_infer.py::infer_abi_shape` sets
+`returns_i64=False` only when **both** sides return and **neither** writes
+`r4`. Under a Chaitin rotation the decompiled body writes `r4` as scratch —
+the inference conservatively keeps `returns_i64=True` and the proof fails on a
+dead volatile.
+
+**Fix:** set `declared_return` on the target from the C/C++ source return type:
+
+```bash
+# Edit targets.json: add "declared_return": "void" (or "i32", "u32", etc.)
+python3 tools/coop/run.py targets validate
+python3 tools/coop/run.py cycle <target-id> --hypothesis "reg-swap only; r4 dead" \
+  --next-change "declared_return on target"
+```
+
+The probe combines the declaration with the inferred shape via fail-closed
+conjunction, drops `r4` from observables at return/fallthrough exits, and the
+proof passes. The result is capped at Tier C.
+
+**Motivating example:** `__prep_buffer` (`us-802c06ec`, MSL `buffer_io.c`).
+Pure Chaitin register-swap vs retail, proven memory-equivalent, but the auto
+contract kept `r4` as a live-out (i64-return-half assumption). Setting
+`declared_return = "void"` from the source return type (`void __prep_buffer()`)
+let the proof pass as `EQUIVALENT_MATCH`.
+
+See
+[`docs/ppc_equiv_work/29-declared-return-abi-shapes.md`](../../docs/ppc_equiv_work/29-declared-return-abi-shapes.md)
+for the full design.
+
 ---
 
 ## Policy exceptions (`PLAN.md` §17.6)

@@ -84,7 +84,13 @@ extern "C" void func_8011C2FC() {}
 // LLM-HARNESS-END: us-8011cdd8
 
 // LLM-HARNESS-BEGIN: us-8011cedc
-extern "C" void func_8011C400() {}
+extern "C" void func_8011C400()
+{
+    if (lbl_eu_80663FB0 != 0)
+    {
+        *((unsigned char*)lbl_eu_80663FB0 + 0x54) = 1;
+    }
+}
 // LLM-HARNESS-END: us-8011cedc
 
 // LLM-HARNESS-BEGIN: us-8011cf18
@@ -97,5 +103,12 @@ extern "C" void func_8011C444(void* self) { ((void(*)(void*))__dt__13CMenuMiniMa
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-8011cef4
-extern "C" void sinit_8011C418() {}
+extern "C" float lbl_eu_806670A0;
+extern "C" float lbl_eu_80661E48;
+extern "C" float lbl_eu_806670CC;
+extern "C" float lbl_eu_80663FB4;
+
+extern "C" void sinit_8011C418() {
+    lbl_eu_80663FB4 = lbl_eu_806670CC * (lbl_eu_806670A0 * lbl_eu_80661E48);
+}
 // LLM-HARNESS-END: us-8011cef4

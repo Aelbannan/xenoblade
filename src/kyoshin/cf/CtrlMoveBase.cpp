@@ -54,11 +54,23 @@ extern "C" void func_800898D4() {}
 // LLM-HARNESS-END: us-8008a2ac
 
 // LLM-HARNESS-BEGIN: us-8008a368
-extern "C" void func_80089990() {}
+struct func_80089990_child { char pad[0x10]; unsigned short flags; };
+struct func_80089990_obj { char pad[0x30]; func_80089990_child* child; };
+extern "C" void func_80089990(func_80089990_obj* self) {
+    func_80089990_child* p = self->child;
+    if (p != 0) {
+        p->flags &= 0xff83;
+    }
+}
 // LLM-HARNESS-END: us-8008a368
 
 // LLM-HARNESS-BEGIN: us-8008a384
-extern "C" void func_800899AC() {}
+extern "C" void func_800899AC(void* obj, float val) {
+    void* it = *(void**)((char*)obj + 0x30);
+    if (it) {
+        *(float*)((char*)it + 0x4) = val;
+    }
+}
 // LLM-HARNESS-END: us-8008a384
 
 // LLM-HARNESS-BEGIN: us-8008a398

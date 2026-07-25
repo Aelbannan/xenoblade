@@ -243,3 +243,93 @@ def _skip_q_encoding(tail: str) -> int | None:
             return None
         pos = nxt
     return pos
+
+
+# Mapping per §2.1: declared return type class to narrowing AbiShape.
+# ``aggregate``, ``f128``, and unknown/absent types produce no narrowing.
+DECLARED_RETURN_SHAPES: dict[str, AbiShape] = {
+    "void": AbiShape(
+        returns_i64=False, returns_float=False,
+        source="declared-return:void", declared_return="void",
+    ),
+    "i32": AbiShape(
+        returns_i64=False, returns_float=False,
+        source="declared-return:i32", declared_return="i32",
+    ),
+    "u32": AbiShape(
+        returns_i64=False, returns_float=False,
+        source="declared-return:u32", declared_return="u32",
+    ),
+    "bool": AbiShape(
+        returns_i64=False, returns_float=False,
+        source="declared-return:bool", declared_return="bool",
+    ),
+    "ptr": AbiShape(
+        returns_i64=False, returns_float=False,
+        source="declared-return:ptr", declared_return="ptr",
+    ),
+    "f32": AbiShape(
+        returns_i64=False, returns_float=True,
+        source="declared-return:f32", declared_return="f32",
+    ),
+    "f64": AbiShape(
+        returns_i64=False, returns_float=True,
+        source="declared-return:f64", declared_return="f64",
+    ),
+    "i64": AbiShape(
+        returns_i64=True, returns_float=False,
+        source="declared-return:i64", declared_return="i64",
+    ),
+    "u64": AbiShape(
+        returns_i64=True, returns_float=False,
+        source="declared-return:u64", declared_return="u64",
+    ),
+}
+
+
+def abi_shape_from_declared_return(declared: str | None) -> AbiShape | None:
+    """Narrowing shape for a trusted return-type declaration.
+
+    Returns None for None/unknown/``"aggregate"``/``"f128"`` (no narrowing).
+    Returns a narrowing :class:`AbiShape` for all other §2.1 type classes.
+
+    Shape source is ``"declared-return:<declared>"``.
+    """
+    if declared is None:
+        return None
+    return DECLARED_RETURN_SHAPES.get(declared)
+
+
+def combine_abi_shapes(
+    inferred: AbiShape,
+    declared: AbiShape | None,
+) -> AbiShape:
+    """Fail-closed conjunction of inferred and declared ABI shapes (§2.3).
+
+    ``declared=None`` returns ``inferred`` unchanged.
+    When both shapes are present, the combined shape's ``returns_i64`` is
+    ``inferred.returns_i64 AND declared.returns_i64``; same for
+    ``returns_float``. ``outgoing_gpr_args`` / ``outgoing_fpr_args`` come from
+    the inferred shape. ``declared_return`` is preserved from the declared
+    shape (or from inferred if declared is None).
+
+    Source strings are joined with ``"+"`` in order (inferred first, then
+    declared), skipping ``"default-conservative"`` and duplicates.
+    """
+    if declared is None:
+        return inferred
+
+    sources: list[str] = []
+    for src in (inferred.source, declared.source):
+        if src != "default-conservative" and src not in sources:
+            sources.append(src)
+    source = "+".join(sources) if sources else "default-conservative"
+
+    return AbiShape(
+        returns_i64=inferred.returns_i64 and declared.returns_i64,
+        returns_float=inferred.returns_float and declared.returns_float,
+        outgoing_gpr_args=inferred.outgoing_gpr_args,
+        outgoing_fpr_args=inferred.outgoing_fpr_args,
+        source=source,
+        declared_return=declared.declared_return,
+    )

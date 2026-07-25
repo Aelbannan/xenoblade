@@ -127,7 +127,10 @@ extern "C" void func_8012615C() {}
 // LLM-HARNESS-END: us-80126c38
 
 // LLM-HARNESS-BEGIN: us-8012810c
-extern "C" void func_80127630() {}
+extern "C" void func_80127630(float *dst, const float *src) {
+    dst[0] = src[0];
+    dst[1] = src[1];
+}
 // LLM-HARNESS-END: us-8012810c
 
 // LLM-HARNESS-BEGIN: us-80128120

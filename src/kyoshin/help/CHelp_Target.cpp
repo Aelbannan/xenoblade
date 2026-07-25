@@ -30,7 +30,7 @@ namespace cf{
     // for this help type. Checks object existence, global state,
     // and type-specific criteria via switch on unkC (1=simple, 2=enemy, 3=object).
     bool CHelp_Target::CHelp_UnkVirtualFunc3(){
-        CfObjectMove* objMove = cf::CfGameManager::func_80082D54(0);
+        CfObjectMove* objMove = cf::CfGameManager::getPlayer(0);
         CfObjectPc* objPc = func_800BFC68(objMove);
         if(cf::CfGameManager::func_800829B8() != 0) return false;
         

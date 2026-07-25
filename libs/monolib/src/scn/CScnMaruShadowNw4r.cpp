@@ -70,7 +70,11 @@ extern "C" void func_8048EA38() {}
 
 // us-80492ab4: func_8048EA40 (0x8 bytes) — loads float from sda21 global
 // LLM-HARNESS-BEGIN: us-80492ab4
-extern "C" void func_8048EA40() {}
+extern "C" float func_8048EA40()
+{
+    extern float lbl_eu_80663964;
+    return lbl_eu_80663964;
+}
 // LLM-HARNESS-END: us-80492ab4
 
 // us-80492abc: func_8048EA48 (0x2C bytes) — sets/clears flag 0x80 in halfword + stores float

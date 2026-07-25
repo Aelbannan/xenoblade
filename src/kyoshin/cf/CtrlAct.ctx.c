@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800d1bc4
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void __ct__800D10DC() {}
 // LLM-HARNESS-END: us-800d1bc4
 
 // LLM-HARNESS-BEGIN: us-800d1c98
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D11B0() {}
 // LLM-HARNESS-END: us-800d1c98
 
 // LLM-HARNESS-BEGIN: us-800d27e4
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D1CFC() {}
 // LLM-HARNESS-END: us-800d27e4
 
 // LLM-HARNESS-BEGIN: us-800d29f4
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D1F0C() {}
 // LLM-HARNESS-END: us-800d29f4
 
 // LLM-HARNESS-BEGIN: us-800d34cc
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void CAttackParam_UnkVirtualFunc4__Q22cf12CAttackParamFv() {}
 // LLM-HARNESS-END: us-800d34cc
 
 // LLM-HARNESS-BEGIN: us-800d3544
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D2A5C() {}
 // LLM-HARNESS-END: us-800d3544
 
 // LLM-HARNESS-BEGIN: us-800d384c
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D2D64() {}
 // LLM-HARNESS-END: us-800d384c
 
 // LLM-HARNESS-BEGIN: us-800d3fbc
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D34D4() {}
 // LLM-HARNESS-END: us-800d3fbc
 
 // LLM-HARNESS-BEGIN: us-800d4480
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D3998() {}
 // LLM-HARNESS-END: us-800d4480
 
 // LLM-HARNESS-BEGIN: us-800d481c
-extern "C" int func_800D49E4(void* self) { return 0; }
+extern "C" void func_800D3D34() {}
 // LLM-HARNESS-END: us-800d481c
 
 // LLM-HARNESS-BEGIN: us-800d4ae4
@@ -1419,7 +1419,10 @@ extern "C" void func_800D581C() {}
 // LLM-HARNESS-END: us-800d6304
 
 // LLM-HARNESS-BEGIN: us-800d6348
-extern "C" void func_800D5860() {}
+extern "C" unsigned long func_800D5860(void* self) {
+    unsigned long v = *(unsigned long*)((char*)self + 0x58);
+    return !((v >> 15) & 1);
+}
 // LLM-HARNESS-END: us-800d6348
 
 // LLM-HARNESS-BEGIN: us-800d635c

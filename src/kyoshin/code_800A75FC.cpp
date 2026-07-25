@@ -149,7 +149,15 @@ extern "C" void func_800A92F8() {}
 // LLM-HARNESS-END: us-800a9bc4
 
 // LLM-HARNESS-BEGIN: us-800a9c10
-extern "C" void func_800A9344() {}
+extern "C" char lbl_eu_80572B78[];
+extern "C" void func_800A37CC(void*, void*);
+
+extern "C" void func_800A9344(void* p)
+{
+    if (p != 0) {
+        func_800A37CC(lbl_eu_80572B78, p);
+    }
+}
 // LLM-HARNESS-END: us-800a9c10
 
 // LLM-HARNESS-BEGIN: us-800a9c2c

@@ -383,7 +383,7 @@ after_bit10:
     }
 
     if (unkE9 == 0 && func_80164410() == 0) {
-        if (cf::CfGameManager::func_80082D54(0) != NULL) {
+        if (cf::CfGameManager::getPlayer(0) != NULL) {
             if (mFileArtsElemDone == NULL) {
                 mFileArtsElem =
                     CDeviceFile::readFile(mHeap, lbl_eu_804FFF2C + 0xa, battleWorkEvent(this), 0, 0);
@@ -452,7 +452,7 @@ after_assets:
         if (func_801042A4() == 0) {
             cf::CfGameManager::getInstance();
             if (func_8006EF04(0x10000000) == 0) {
-                objMove = cf::CfGameManager::func_80082D54(0);
+                objMove = cf::CfGameManager::getPlayer(0);
                 if (objMove != NULL) {
                     actor2 = func_8016FE34();
                     subObj = *(void**)((u8*)actor2 + 4);

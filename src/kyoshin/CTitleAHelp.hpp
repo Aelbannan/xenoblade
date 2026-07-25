@@ -18,7 +18,7 @@ public:
     void func_801C40A0();
     u8 func_801C4114();
     u8 func_801C411C();
-    u8 func_801C4124();
+    u8 isIdle();
     void func_801C412C();
     void func_801C414C();
     void func_801C416C();

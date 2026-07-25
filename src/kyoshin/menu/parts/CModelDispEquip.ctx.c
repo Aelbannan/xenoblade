@@ -1398,7 +1398,12 @@ extern "C" void func_801FF9AC() {}
 // LLM-HARNESS-END: us-8020169c
 
 // LLM-HARNESS-BEGIN: us-802017a4
-extern "C" void func_801FFAB4() {}
+extern "C" void func_801FFAB4(float* dest, float a, float b, float c, float d) {
+    dest[0] = a;
+    dest[1] = b;
+    dest[2] = c;
+    dest[3] = d;
+}
 // LLM-HARNESS-END: us-802017a4
 
 // LLM-HARNESS-BEGIN: us-802017b8

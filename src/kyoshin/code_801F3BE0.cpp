@@ -5,7 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-801f589c
-extern "C" u32 func_801F3BE0(void) {
+extern "C" u32 getUnk80664658(void) {
     extern u32 lbl_eu_80664658;
     return lbl_eu_80664658;
 }

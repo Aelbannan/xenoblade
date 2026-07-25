@@ -54,7 +54,14 @@ extern "C" void func_800BA610__Q22cf11CfObjectMapFv() {}
 // LLM-HARNESS-END: us-800baf30
 
 // LLM-HARNESS-BEGIN: us-800baf70
-extern "C" void func_800BA650__Q22cf11CfObjectMapFv() {}
+extern "C" void func_800BA650__Q22cf11CfObjectMapFv(void* self, float f) {
+    extern void func_80484E5C(void*);
+    void* unk = *(void**)((char*)self + 0x98);
+    *(float*)((char*)self + 0x2F48) = f;
+    if (unk != 0) {
+        func_80484E5C(unk);
+    }
+}
 // LLM-HARNESS-END: us-800baf70
 
 // LLM-HARNESS-BEGIN: us-800baf8c

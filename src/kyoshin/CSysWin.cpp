@@ -5,7 +5,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // LLM-HARNESS-BEGIN: us-8022d450
-extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
+extern "C" u8 CSysWin_isReady(void* self) { return ((u8*)self)[0x28]; }
 // LLM-HARNESS-END: us-8022d450
 
 
@@ -15,11 +15,11 @@ extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 
 
 // LLM-HARNESS-BEGIN: us-8022d6e0
-extern "C" u8 func_8022B8A8(void* self) { return ((u8*)self)[0x34]; }
+extern "C" u8 CSysWin_getUnk34(void* self) { return ((u8*)self)[0x34]; }
 // LLM-HARNESS-END: us-8022d6e0
 
 // LLM-HARNESS-BEGIN: us-8022d6e8
-extern "C" u8 func_8022B8B0(void* self) { return ((u8*)self)[0x36]; }
+extern "C" u8 CSysWin_isActive(void* self) { return ((u8*)self)[0x36]; }
 // LLM-HARNESS-END: us-8022d6e8
 
 

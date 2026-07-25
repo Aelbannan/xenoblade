@@ -72,15 +72,28 @@ extern "C" unsigned long func_800FE910(void* self) {
 // LLM-HARNESS-END: us-800ff3f8
 
 // LLM-HARNESS-BEGIN: us-800ff408
-extern "C" void func_800FE920() {}
+extern "C" void func_800FE920(char* p)
+{
+    char* obj = *(char**)(p + 0xC178);
+    *(unsigned int*)(obj + 0x3068) |= 4;
+}
 // LLM-HARNESS-END: us-800ff408
 
 // LLM-HARNESS-BEGIN: us-800ff420
-extern "C" void func_800FE938() {}
+extern "C" void func_800FE938(char* param_1) {
+    char* obj = *(char**)(param_1 + 0xC178);
+    *(unsigned int*)(obj + 0x3068) |= 8u;
+}
 // LLM-HARNESS-END: us-800ff420
 
 // LLM-HARNESS-BEGIN: us-800ff438
-extern "C" void func_800FE950() {}
+extern "C" void func_800FE950(char* this_, unsigned int a, unsigned int b, unsigned int c) {
+    *(unsigned int*)(this_ + 0x608c) = a;
+    *(unsigned int*)(this_ + 0x6094) = b;
+    *(unsigned int*)(this_ + 0x6098) = c;
+    *(unsigned int*)(this_ + 0x90e8) = a;
+    *(unsigned int*)(this_ + 0x90ec) = b;
+}
 // LLM-HARNESS-END: us-800ff438
 
 // LLM-HARNESS-BEGIN: us-800ff454

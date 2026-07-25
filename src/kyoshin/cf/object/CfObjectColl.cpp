@@ -296,5 +296,10 @@ extern "C" void func_800AC604__Q22cf13CfObjectPointFv() {}
 // LLM-HARNESS-END: us-800aced0
 
 // LLM-HARNESS-BEGIN: us-800acedc
-extern "C" void func_800AC610() {}
+extern "C" void* func_800AC610(void* param_1) {
+    if (param_1 != NULL && (*(unsigned int*)((char*)param_1 + 0x64) & 0x20)) {
+        return param_1;
+    }
+    return NULL;
+}
 // LLM-HARNESS-END: us-800acedc

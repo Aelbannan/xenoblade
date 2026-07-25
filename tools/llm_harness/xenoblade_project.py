@@ -56,7 +56,7 @@ from tools.llm_harness.match_improve import (
     normalize_objdiff_feedback,
     format_objdiff_feedback_text,
 )
-from tools.llm_harness.match_improve import normalize_objdiff_feedback
+from tools.llm_harness.structural import compare_structural
 from tools.llm_harness.types import (
     Candidate,
     CandidateEvaluation,
@@ -90,6 +90,7 @@ from tools.llm_harness.asm_listings import (
 from tools.llm_harness.source_regions import (
     SourceRegion,
     TuSlot,
+    _mask_block_scopes,
     apply_strip_redundant_externs_to_regions,
     begin_marker as _begin_marker,
     end_marker as _end_marker,
@@ -157,6 +158,10 @@ class XenobladeAdapter:
         # during prompt construction (web-export builds hundreds of prompts).
         self._targets_cache: Optional[List[Target]] = None
         self._targets_by_id: Optional[Dict[str, Target]] = None
+        # Cache resolve_unit results to avoid re-parsing objdiff.json on every call.
+        self._unit_cache: Dict[str, Any] = {}
+        # Cache load_objdiff_units() result so repeated calls don't re-read the file.
+        self._objdiff_units: Optional[List[Any]] = None
 
     def _phase(self, name: str) -> AbstractContextManager[Any]:
         """Record ``name`` into ``self.timings`` when the harness attached a recorder."""
@@ -174,12 +179,32 @@ class XenobladeAdapter:
         """Drop cached registry rows after claim/promote/status writes."""
         self._targets_cache = None
         self._targets_by_id = None
+        self._unit_cache.clear()
+        self._objdiff_units = None
 
     def _cached_targets(self) -> List[Target]:
         if self._targets_cache is None:
             self._targets_cache = load_targets(self.config)
             self._targets_by_id = {target.id: target for target in self._targets_cache}
         return self._targets_cache
+
+    def _resolve_unit(self, hint: str) -> Any:
+        """Cached resolve_unit that avoids re-parsing objdiff.json on every call."""
+        cached = self._unit_cache.get(hint)
+        if cached is not None:
+            return cached
+        # Warm and lock the objdiff units list so resolve_unit never re-reads the file.
+        if self._objdiff_units is None:
+            self._objdiff_units = self.project.load_objdiff_units()
+        self.project._objdiff_units_cached = self._objdiff_units
+        orig_load = self.project.load_objdiff_units
+        self.project.load_objdiff_units = lambda: self._objdiff_units  # type: ignore[method-assign]
+        try:
+            unit = self.project.resolve_unit(hint)
+        finally:
+            self.project.load_objdiff_units = orig_load
+        self._unit_cache[hint] = unit
+        return unit
 
     def _target(self, target_id: str) -> Target:
         target = self._any_target(target_id)
@@ -322,40 +347,57 @@ class XenobladeAdapter:
         selected: List[str] = []
         source_cache: Dict[Path, str] = {}
         decomp_symbol_cache: Dict[Path, set[str]] = {}
+        unit_cache: Dict[str, Any] = {}
+        retail_funcs_cache: Dict[Path, Dict[str, int]] = {}
+
+        # Single pass: iterate candidates, caching unit and ELF data, and applying
+        # all checks (size, region, placeholder) in one go. Stops when we have enough.
+        selected: List[str] = []
         for target in candidates:
-            assert (
-                target.source is not None
-                and target.unit is not None
-                and target.symbol is not None
-            )
+            assert target.source is not None and target.unit is not None and target.symbol is not None
+            unit = unit_cache.get(target.unit)
+            if unit is None:
+                unit = self._resolve_unit(target.unit)
+                unit_cache[target.unit] = unit
+            if unit.target_path is None or not unit.target_path.is_file():
+                continue
+            funcs = retail_funcs_cache.get(unit.target_path)
+            if funcs is None:
+                try:
+                    funcs = {fn.name: fn.size for fn in list_text_functions(unit.target_path)}
+                except (OSError, ValueError):
+                    funcs = {}
+                retail_funcs_cache[unit.target_path] = funcs
+            sz = funcs.get(target.symbol)
+            if sz is None:
+                continue
+            if max_func_size is not None and sz > max_func_size:
+                continue
+            # Size passed — now do the expensive checks.
+            assert target.source is not None
             source = source_cache.get(target.source)
             if source is None:
                 source = target.source.read_text(encoding="utf-8")
                 source_cache[target.source] = source
             try:
                 region = _find_function_region(source, target)
+            except (OSError, ValueError):
+                continue
+            if not all_funcs:
                 body = source[region.content_start : region.content_end].strip()
-                # `new` is for empty/placeholder slots; real bodies belong to improve
-                # (and already-matching NOT_STARTED work should not consume a pick).
                 if body and not detector.is_placeholder(body):
                     continue
-                unit = self.project.resolve_unit(target.unit)
-                if unit.target_path is None or not unit.target_path.is_file():
-                    continue
-                retail = extract_function(unit.target_path, target.symbol)
-                if max_func_size is not None and retail.size > max_func_size:
-                    continue
-                # Skip stubs that already byte-match the built decomp object.
                 if unit.base_path is not None and unit.base_path.is_file():
+                    try:
+                        retail = extract_function(unit.target_path, target.symbol)
+                    except (OSError, ValueError):
+                        continue
                     try:
                         decomp = extract_function(unit.base_path, target.symbol)
                     except ValueError:
                         decomp = None
                     if decomp is not None and decomp.code == retail.code:
                         continue
-                    # Unmarked overloads can resolve to the wrong body (e.g. two
-                    # cancel() methods). Skip when that body already produces a
-                    # different symbol present in the decomp object.
                     if (
                         decomp is None
                         and not region.marked
@@ -370,16 +412,18 @@ class XenobladeAdapter:
                         )
                     ):
                         continue
-            except (OSError, ValueError):
-                continue
             selected.append(target.id)
-            if len(selected) == number:
+            if len(selected) >= number:
                 return selected
-        label = "unrestricted" if all_funcs else "ready"
-        raise ValueError(
-            f"Only {len(selected)} unattempted, {label} placeholder functions are available; "
-            f"requested {number}"
-        )
+
+        if len(selected) < number:
+            label = "unrestricted" if all_funcs else "ready"
+            raise ValueError(
+                f"Only {len(selected)} unattempted, {label} "
+                f"({'size <= ' + str(max_func_size) + ' ' if max_func_size else ''})"
+                f"functions are available; requested {number}"
+            )
+        return selected
 
     @staticmethod
     def _region_owned_by_other_decomp_symbol(
@@ -1595,6 +1639,18 @@ class XenobladeAdapter:
                 "binary_feedback": repair_context.get("binary_feedback"),
                 "rejected_fingerprints": repair_context.get("rejected_fingerprints") or [],
             }
+            # Actionable evaluator diagnostics (linkage/symbol mismatches,
+            # missing feedback causes) — without these the model cannot tell a
+            # real 0% diff from an unscored/unmapped candidate.
+            eval_metrics = evaluation.get("metrics") or {}
+            candidate_detail = str(evaluation.get("detail") or "").strip()
+            if candidate_detail:
+                repair_payload["candidate_detail"] = candidate_detail[:500]
+            for flag in ("symbol_exact", "objdiff_mapped", "binary_feedback_error"):
+                if eval_metrics.get(flag) not in (None, True, ""):
+                    repair_payload[flag] = eval_metrics[flag]
+            if eval_metrics.get("symbol_exact") is False and eval_metrics.get("emitted_symbol"):
+                repair_payload["emitted_symbol"] = eval_metrics["emitted_symbol"]
             rc_source = str(repair_context.get("source") or "").strip()
             if rc_source and rc_source != current_function:
                 repair_payload["candidate_source"] = rc_source
@@ -1913,6 +1969,15 @@ class XenobladeAdapter:
         assert target.source is not None and target.unit is not None
         original = target.source.read_text(encoding="utf-8")
         region = _find_function_region(original, target)
+        # Inject extern "C" declarations for flat lbl_* data symbols the
+        # retail asm references but nothing declares. Prepending them to the
+        # candidate keeps them inside the slot region so accepted artifacts
+        # and TU promotion stay self-contained.
+        missing_decls = _missing_data_extern_decls(
+            original, candidate.source, self._retail_assembly(target)
+        )
+        if missing_decls:
+            candidate.source = "\n".join(missing_decls) + "\n" + candidate.source
         self._validate_source(original[region.content_start : region.content_end], candidate.source)
         candidate_file = _replace_function_source(
             original,
@@ -1933,11 +1998,14 @@ class XenobladeAdapter:
             unit.base_path.unlink(missing_ok=True)
             build_error = self._build_object(unit.base_path)
             if build_error:
+                blocked = _missing_type_blocked_reason(build_error, target.symbol or "")
                 return Evaluation(
                     status="COMPILE_ERROR",
                     match_percent=0.0,
                     accepted=False,
                     detail=build_error,
+                    blocked_reason=blocked,
+                    metrics={"blocked_reason": blocked} if blocked else {},
                 )
             try:
                 evaluation = evaluate_unit_match(
@@ -1985,6 +2053,7 @@ class XenobladeAdapter:
             structural_report = None
             binary_feedback = None
             mismatch_fingerprint = ""
+            binary_feedback_error = ""
             try:
                 structural_report = compare_structural(
                     retail_function, candidate_function,
@@ -1997,7 +2066,38 @@ class XenobladeAdapter:
                 )
                 mismatch_fingerprint = fingerprint_binary_feedback(binary_feedback)
             except Exception as exc:
-                pass
+                # Never leave the repair loop blind: record why feedback is
+                # missing instead of silently shipping binary_feedback=None.
+                binary_feedback_error = f"{type(exc).__name__}: {exc}"
+
+            # Name/linkage diagnostics: extract_function falls back to substring
+            # matching, so a candidate that emits the wrong symbol (e.g. MWCC
+            # re-mangled `Name__Fv` into `Name__Fv__FPv` after extern "C" was
+            # dropped) still extracts fine but objdiff cannot pair it — the
+            # report then omits fuzzy_match_percent and the naive parse reads a
+            # misleading 0.0%. Make that actionable for the repair loop.
+            symbol_exact = candidate_function.name == (target.symbol or "")
+            fn_unmapped = bool(
+                evaluation.fn_match is not None
+                and not getattr(evaluation.fn_match, "mapped", True)
+            )
+            linkage_detail = ""
+            if not symbol_exact:
+                linkage_detail = (
+                    f"candidate emits symbol {candidate_function.name!r} instead of "
+                    f"{target.symbol!r} — fix the function name/linkage (e.g. keep "
+                    'extern "C" on a flat pre-mangled name, or use the qualified '
+                    "C++ declarator)"
+                )
+            if fn_unmapped:
+                unmapped_note = (
+                    "objdiff could not pair the candidate symbol with the retail "
+                    "symbol (name/linkage mismatch); match score unavailable, "
+                    "treat 0.0% as unscored"
+                )
+                linkage_detail = (
+                    f"{linkage_detail}; {unmapped_note}" if linkage_detail else unmapped_note
+                )
 
             size_ok, size_detail = _function_size_comparison(
                 retail_function.size, candidate_function.size
@@ -2052,8 +2152,14 @@ class XenobladeAdapter:
                     value
                     for value in (
                         evaluation.equivalence_detail,
+                        linkage_detail,
                         size_detail,
                         mismatch_detail,
+                        (
+                            f"binary feedback unavailable: {binary_feedback_error}"
+                            if binary_feedback_error
+                            else ""
+                        ),
                     )
                     if value
                 ),
@@ -2066,6 +2172,10 @@ class XenobladeAdapter:
                     "candidate_function_size": candidate_function.size,
                     "function_size_delta": candidate_function.size - retail_function.size,
                     "binary_feedback": binary_feedback,
+                    "binary_feedback_error": binary_feedback_error or None,
+                    "symbol_exact": symbol_exact,
+                    "emitted_symbol": candidate_function.name,
+                    "objdiff_mapped": not fn_unmapped,
                     "mismatch_fingerprint": mismatch_fingerprint,
                     "symbol_accepted": symbol_accepted,
                     "project_ready": project_ready,
@@ -3588,6 +3698,139 @@ def _has_mapped_imperfect_function(
             continue
         return True
     return False
+
+
+# Flat auto-named data symbols (lbl_eu_*/lbl_*) can never be declared by a
+# header — they only exist in relocation tables. When a candidate (or the TU)
+# lacks a declaration, inject one so the slot compiles.
+_LBL_DATA_SYMBOL = re.compile(r"\blbl_\w+\b")
+
+_DATA_TYPE_BY_MNEMONIC = {
+    "stfs": "float", "lfs": "float",
+    "stfd": "double", "lfd": "double",
+    "sth": "u16", "lhz": "u16", "lha": "s16",
+    "stb": "u8", "lbz": "u8",
+    "stw": "u32", "lwz": "u32",
+}
+
+
+def _retail_data_symbol_types(retail_asm: str) -> Dict[str, str]:
+    """Map each ``lbl_*`` symbol in the retail listing to a guessed C type."""
+    seen: List[str] = []
+    typed: Dict[str, str] = {}
+    for line in (retail_asm or "").splitlines():
+        stripped = line.strip()
+        # Listings may carry a leading ``/* VA OFFSET BYTES */`` comment.
+        if stripped.startswith("/*"):
+            end = stripped.find("*/")
+            stripped = stripped[end + 2 :].strip() if end >= 0 else ""
+        if not stripped or stripped.startswith((".", "#")):
+            continue
+        mnemonic = stripped.split(None, 1)[0]
+        guessed = _DATA_TYPE_BY_MNEMONIC.get(mnemonic)
+        for sym in _LBL_DATA_SYMBOL.findall(line):
+            if sym not in seen:
+                seen.append(sym)
+            if guessed and sym not in typed:
+                typed[sym] = guessed
+    return {sym: typed.get(sym, "u32") for sym in seen}
+
+
+def _missing_data_extern_decls(
+    tu_source: str, candidate_source: str, retail_asm: str
+) -> List[str]:
+    """``extern "C"`` declarations for data symbols nothing declares.
+
+    Skips symbols already declared at file scope in the TU or anywhere in the
+    candidate (block-scope declarations inside the candidate are sufficient).
+    """
+    symbol_types = _retail_data_symbol_types(retail_asm)
+    if not symbol_types:
+        return []
+    file_scope = _mask_block_scopes(tu_source)
+    decls: List[str] = []
+    for sym, ctype in symbol_types.items():
+        escaped = re.escape(sym)
+        if re.search(
+            rf"(?m)^[ \t]*(?:extern\b[^\n;]*|[\w:\s\*\&]+?)\b{escaped}\b"
+            rf"\s*(?:\[[^\]]*\])?\s*[;=]",
+            file_scope,
+        ):
+            continue
+        if re.search(
+            rf"\bextern\b[^\n;{{}}]*\b{escaped}\b\s*(?:\[[^\]]*\])?\s*;",
+            candidate_source or "",
+        ):
+            continue
+        decls.append(f'extern "C" {ctype} {sym};')
+    return decls
+
+
+def _mangled_class_qualifiers(symbol: str) -> List[str]:
+    """Class/namespace qualifier names encoded in an MWCC-mangled symbol.
+
+    ``Move__Q216CUIWindowManager5CTestFv`` → ``['CUIWindowManager', 'CTest']``;
+    ``__dt__12CUIErrMesWinFv`` → ``['CUIErrMesWin']``.
+    """
+    if not symbol or "__" not in symbol:
+        return []
+    tail = symbol.rsplit("__", 1)[1]
+
+    def parse(t: str, count_width: int) -> Optional[List[str]]:
+        """Parse qualifiers; require the tail to end at the F/C/v marker."""
+        i = 0
+        if t.startswith("Q"):
+            count_text = t[1 : 1 + count_width]
+            if len(count_text) != count_width or not count_text.isdigit():
+                return None
+            count = int(count_text)
+            i = 1 + count_width
+        else:
+            count = 1
+        quals: List[str] = []
+        for _ in range(count):
+            j = i
+            while j < len(t) and t[j].isdigit():
+                j += 1
+            if j == i:
+                return None
+            size = int(t[i:j])
+            name = t[j : j + size]
+            if len(name) < size:
+                return None
+            quals.append(name)
+            i = j + size
+        rest = t[i:]
+        # Function-encoding marker: F…, or bare ``v`` (void params, ct/dt).
+        if rest[:1] in ("F", "C", "v", ""):
+            return quals
+        return None
+
+    if tail.startswith("Q"):
+        # Qualifier count is usually one digit (Q2..Q9); allow two (Q10+).
+        for width in (1, 2):
+            quals = parse(tail, width)
+            if quals is not None:
+                return quals
+        return []
+    return parse(tail, 1) or []
+
+
+def _missing_type_blocked_reason(build_error: str, target_symbol: str) -> Optional[str]:
+    """Flag compile errors the model cannot legally fix.
+
+    When the undefined identifier is a class/namespace qualifier of the target
+    symbol (e.g. nested ``CTest`` in ``CUIWindowManager::CTest::Move``), the
+    declaration must come from a header edit the candidate cannot perform —
+    burn no more repair iterations on it.
+    """
+    match = re.search(r"undefined identifier\s+'([^']+)'", build_error or "")
+    if not match:
+        return None
+    missing = match.group(1)
+    if missing in _mangled_class_qualifiers(target_symbol or ""):
+        return f"missing_type_declaration:{missing}"
+    return None
 
 
 def _function_size_comparison(retail_size: int, candidate_size: int) -> tuple[bool, str]:

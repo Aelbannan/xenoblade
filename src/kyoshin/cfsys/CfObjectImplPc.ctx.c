@@ -1403,7 +1403,16 @@ extern "C" void func_800CA104() {}
 // LLM-HARNESS-END: us-800cab38
 
 // LLM-HARNESS-BEGIN: us-800caca8
-extern "C" void func_800CA274() {}
+extern "C" void func_800CEA34(void*);
+
+extern "C" void func_800CA274(void* self, int value)
+{
+    char* sub = *(char**)((char*)self + 0x18);
+    if (*(int*)(sub + 0x3e98) != 0 && value != 0) {
+        *(int*)(sub + 0x3e98) = value;
+    }
+    func_800CEA34(self);
+}
 // LLM-HARNESS-END: us-800caca8
 
 // LLM-HARNESS-BEGIN: us-800cacc8
@@ -1419,10 +1428,17 @@ extern "C" void func_800CA458() {}
 // LLM-HARNESS-END: us-800cae8c
 
 extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);
-// LLM-HARNESS-BEGIN: us-800caf10
-extern "C" void func_800CA4DC(void* self) { ((void(*)(void*))__dt__Q22cf14CfObjectImplPcFv)((char*)self - 0xc); }
-// LLM-HARNESS-END: us-800caf10
 
-// LLM-HARNESS-BEGIN: us-800caf18
-extern "C" void func_800CA4E4(void* self) { ((void(*)(void*))__dt__Q22cf14CfObjectImplPcFv)((char*)self - 0x10); }
-// LLM-HARNESS-END: us-800caf18
+// Adjuster thunk for CfObjectImplPc virtual destructor at vtable slot this-0xc.
+// Adjusts this pointer to the complete object, then tail-calls the real destructor.
+extern "C" void func_800CA4DC(void* self)
+{
+    __dt__Q22cf14CfObjectImplPcFv((u8*)self - 0xc);
+}
+
+// Adjuster thunk for CfObjectImplPc virtual destructor at vtable slot this-0x10.
+// Adjusts this pointer to the complete object, then tail-calls the real destructor.
+extern "C" void func_800CA4E4(void* self)
+{
+    __dt__Q22cf14CfObjectImplPcFv((u8*)self - 0x10);
+}

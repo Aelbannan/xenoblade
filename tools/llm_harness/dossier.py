@@ -724,10 +724,14 @@ def _store_width(opcode: Opcode) -> int:
 # ---------------------------------------------------------------------------
 
 def _find_class_name(signature: str) -> Optional[str]:
-    """Extract the class name from a function signature like `Class::method`."""
-    m = re.search(r'(\w+)::\w+\s*\(', signature)
+    """Extract the class name from a function signature like `Class::method`.
+
+    For nested classes (`Outer::Inner::method`) returns the innermost class —
+    its declaration carries the members the method actually touches.
+    """
+    m = re.search(r'((?:\w+::)+)\w+\s*\(', signature)
     if m:
-        return m.group(1)
+        return m.group(1).split("::")[-2]
     return None
 
 
@@ -840,29 +844,41 @@ def build_declaration_context(
 
 
 # Phase 6: Enhanced type context extraction
-def _extract_owner_class_declaration(source_text: str, class_name: str, max_chars: int = 5000) -> str:
-    """Extract the owner class declaration with relevant members."""
+def _extract_owner_class_declaration(
+    source_text: str,
+    class_name: str,
+    max_chars: int = 5000,
+    header_text: str = "",
+) -> str:
+    """Extract the owner class declaration with relevant members.
+
+    Searches the TU source first, then the header blob: class declarations
+    (including nested ones) usually live in headers, not the .cpp.
+    """
     if not class_name:
         return ""
     # Look for class/struct declaration
     patterns = [
-        rf'class\s+{re.escape(class_name)}\s*\{{',
-        rf'struct\s+{re.escape(class_name)}\s*\{{',
+        rf'class\s+{re.escape(class_name)}(?:\s*:[^\{{]*)?\s*\{{',
+        rf'struct\s+{re.escape(class_name)}(?:\s*:[^\{{]*)?\s*\{{',
     ]
+    haystacks = [source_text, header_text] if header_text else [source_text]
     for pattern in patterns:
-        match = re.search(pattern, source_text)
-        if match:
+        for text in haystacks:
+            match = re.search(pattern, text or "")
+            if not match:
+                continue
             start = match.start()
             # Find matching closing brace
             depth = 0
-            for i, ch in enumerate(source_text[start:]):
+            for i, ch in enumerate(text[start:]):
                 if ch == '{':
                     depth += 1
                 elif ch == '}':
                     depth -= 1
                     if depth == 0:
                         end = start + i + 1
-                        decl = source_text[start:end]
+                        decl = text[start:end]
                         return decl[:max_chars]
             break
     return ""
@@ -1294,7 +1310,7 @@ def build_target_dossier(
 
     # Phase 6: Enhanced type context
     cls = _find_class_name(demangled) or ""
-    owner_decl = _extract_owner_class_declaration(source_text, cls)
+    owner_decl = _extract_owner_class_declaration(source_text, cls, header_text=header_text)
     callee_decls = _extract_callee_declarations(source_text, header_text, callee_symbols or [])
 
     symbols = SymbolInventory(

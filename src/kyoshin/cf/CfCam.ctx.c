@@ -1213,7 +1213,11 @@ extern "C" void func_80073C74(void* p) {
 extern "C" void func_8007420C() {}
 // LLM-HARNESS-END: us-80074ba8
 // LLM-HARNESS-BEGIN: us-80074d40
-extern "C" void func_800743A4() {}
+extern "C" void func_800743A4(float* dst, const float* src) {
+    dst[3] = src[0];
+    dst[7] = src[1];
+    dst[11] = src[2];
+}
 // LLM-HARNESS-END: us-80074d40
 // LLM-HARNESS-BEGIN: us-80074d5c
 extern "C" void func_800743C0() {}
@@ -1233,7 +1237,12 @@ extern "C" void* func_80074D4C(void* p) {
 extern "C" float func_80074D58(void* self) { return *(float*)((char*)self + 0x1e0); }
 // LLM-HARNESS-END: us-800756f4
 // LLM-HARNESS-BEGIN: us-800756fc
-extern "C" void func_80074D60() {}
+extern "C" void func_80074D60(u32* self, const u32* src)
+{
+    self[10] = src[0];
+    self[11] = src[1];
+    self[12] = src[2];
+}
 // LLM-HARNESS-END: us-800756fc
 // LLM-HARNESS-BEGIN: us-80075718
 extern "C" void sinit_80074D7C() {}

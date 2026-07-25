@@ -1449,7 +1449,13 @@ extern "C" void func_80143ADC() {}
 // LLM-HARNESS-END: us-801444e0
 
 // LLM-HARNESS-BEGIN: us-8014493c
-extern "C" void func_80143F38() {}
+extern "C" void func_80143F38(void* self, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
+    uint32_t* p = (uint32_t*)self;
+    p[0] = v0;
+    p[1] = v1;
+    p[2] = v2;
+    p[3] = v3;
+}
 // LLM-HARNESS-END: us-8014493c
 
 // LLM-HARNESS-BEGIN: us-80144950

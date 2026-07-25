@@ -466,9 +466,9 @@ extern "C" void func_8026DC98(void* self) { ((void(*)(void*))func_80268C38)((cha
 extern "C" void func_8026DCA0() {}
 // LLM-HARNESS-END: us-80270124
 
-extern "C" void func_8022B8A8(void* self);
+extern "C" u8 CSysWin_getUnk34(void* self);
 // LLM-HARNESS-BEGIN: us-80270170
-extern "C" void func_8026DCEC(void* self) { ((void(*)(void*))func_8022B8A8)((char*)self + 0x1b8); }
+extern "C" void func_8026DCEC(void* self) { CSysWin_getUnk34((char*)self + 0x1b8); }
 // LLM-HARNESS-END: us-80270170
 
 // LLM-HARNESS-BEGIN: us-80270178

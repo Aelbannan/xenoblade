@@ -226,6 +226,22 @@ Outputs are capped: metadata fields have hard length limits, and `max_tokens` is
 from retail function size (see `prompt.max_output_tokens`, default 4096). Harness
 `prompt.*` caps are applied by the adapter when building dossiers.
 
+Reasoning models (e.g. `moonshotai/kimi-k3`) spend hidden thinking tokens inside the
+same completion budget, so the size-based cap is floored at
+`prompt.reasoning_output_floor` (default 4096) whenever reasoning may be active.
+Model entries accept two string sentinels:
+
+- `"thinking_budget": "unlimited"` — no reasoning-token cap (OpenRouter omits
+  `reasoning.max_tokens`). The completion budget still applies, so pair it with a
+  generous `max_tokens`.
+- `"max_tokens": "unlimited"` — omit `max_tokens` from the provider request
+  entirely and skip the per-target output clamp.
+
+Provider responses record `finish_reason` into `experiments.jsonl` / `io.jsonl`;
+truncated outputs (`finish_reason=length`) are annotated in run errors, and empty
+responses whose budget was consumed by reasoning are terminal (repair budget is
+refunded, not burned).
+
 Human references such as `docs/MWCC_REFERENCE.md` remain available outside the model path
 and must never appear in solve prompts.
 

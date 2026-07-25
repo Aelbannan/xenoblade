@@ -85,7 +85,7 @@ extern "C" void CfObject_UnkVirtualFunc23__Q22cf13CfObjectModelFv() {}
 // LLM-HARNESS-END: us-800bba4c
 
 // LLM-HARNESS-BEGIN: us-800bba88
-extern "C" void CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv() {}
+extern "C" void* CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv(void* self) { void* p = *(void**)((u8*)self + 0x98); if (p != 0) { return (u8*)p + 0x310; } return (u8*)self + 0x3c; }
 // LLM-HARNESS-END: us-800bba88
 
 // LLM-HARNESS-BEGIN: us-800bbaa4
@@ -113,7 +113,15 @@ extern "C" void CfObject_UnkVirtualFunc34__Q22cf13CfObjectModelFv() {}
 // LLM-HARNESS-END: us-800bbc04
 
 // LLM-HARNESS-BEGIN: us-800bbc38
-extern "C" void CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv() {}
+extern "C" void CfObject_UnkVirtualFunc35__Q22cf13CfObjectModelFv(void* self, float f) {
+    void* p = *(void**)((u8*)self + 0x98);
+    if (p != 0) {
+        *(float*)((u8*)p + 0x304) = f;
+        *(float*)((u8*)p + 0x308) = f;
+        *(float*)((u8*)p + 0x30c) = f;
+    }
+    *(float*)((u8*)self + 0x60) = f;
+}
 // LLM-HARNESS-END: us-800bbc38
 
 // LLM-HARNESS-BEGIN: us-800bbc58

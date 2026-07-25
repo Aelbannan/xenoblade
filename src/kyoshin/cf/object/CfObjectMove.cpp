@@ -53,7 +53,13 @@ extern "C" void func_800BC3B0() {}
 // LLM-HARNESS-END: us-800bccd4
 
 // LLM-HARNESS-BEGIN: us-800bccfc
-extern "C" void func_800BC3D8() {}
+extern "C" void func_800BC3D8(void* obj, float value)
+{
+    *(float*)((char*)obj + 0x6f0) = value;
+    unsigned int flags = *(unsigned int*)((char*)obj + 0x68);
+    flags = (flags & ~0x400u) | 0x800u;
+    *(unsigned int*)((char*)obj + 0x68) = flags;
+}
 // LLM-HARNESS-END: us-800bccfc
 
 // LLM-HARNESS-BEGIN: us-800bcd14
@@ -65,7 +71,14 @@ extern "C" void func_800BC458() {}
 // LLM-HARNESS-END: us-800bcd7c
 
 // LLM-HARNESS-BEGIN: us-800bcdc4
-extern "C" void func_800BC4A0() {}
+extern "C" f32 lbl_eu_80666A88;
+
+extern "C" void func_800BC4A0(u8* arg0) {
+    u32 flags = *(u32*)(arg0 + 0x68);
+    f32 value = lbl_eu_80666A88;
+    *(f32*)(arg0 + 0x6F0) = value;
+    *(u32*)(arg0 + 0x68) = flags & ~0xC00;
+}
 // LLM-HARNESS-END: us-800bcdc4
 
 // LLM-HARNESS-BEGIN: us-800bcddc
@@ -129,7 +142,13 @@ extern "C" void CfObject_UnkVirtualFunc65__Q22cf12CfObjectMoveFv() {}
 // LLM-HARNESS-END: us-800be460
 
 // LLM-HARNESS-BEGIN: us-800be4b8
-extern "C" void func_800BDB4C() {}
+extern "C" void func_804B0B54(void*, void*);
+
+extern "C" void func_800BDB4C(unsigned int* param_1) {
+    if ((param_1[0x19] & 8) != 0) {
+        func_804B0B54((char*)param_1 + 0x60c, (char*)param_1 + 0x3c);
+    }
+}
 // LLM-HARNESS-END: us-800be4b8
 
 // LLM-HARNESS-BEGIN: us-800be4d8
@@ -317,7 +336,14 @@ extern "C" void func_800BE8F4() {}
 // LLM-HARNESS-END: us-800bf260
 
 // LLM-HARNESS-BEGIN: us-800bf290
-extern "C" void func_800BE924() {}
+extern "C" void func_800BE924(void* self)
+{
+    extern void func_802A1304(void*);
+    char* sub = *reinterpret_cast<char**>(reinterpret_cast<char*>(self) + 0x38);
+    if (sub != 0) {
+        func_802A1304(sub + 0x28);
+    }
+}
 // LLM-HARNESS-END: us-800bf290
 
 // LLM-HARNESS-BEGIN: us-800bf2a8
@@ -525,5 +551,10 @@ extern "C" void CfObject_UnkVirtualFunc70__Q22cf12CfObjectMoveFv() {}
 // LLM-HARNESS-END: us-800bfca8
 
 // LLM-HARNESS-BEGIN: us-800bfd2c
-extern "C" void func_800BF324() {}
+extern "C" void* func_800BF324(void* param_1) {
+    if (param_1 != NULL && (*reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(param_1) + 0x64) & 8) != 0) {
+        return param_1;
+    }
+    return NULL;
+}
 // LLM-HARNESS-END: us-800bfd2c

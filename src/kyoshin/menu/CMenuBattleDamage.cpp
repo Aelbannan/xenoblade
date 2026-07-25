@@ -89,7 +89,13 @@ extern "C" void __dt__17CPcSelectCursor01Fv() {}
 // LLM-HARNESS-END: us-8010b170
 
 // LLM-HARNESS-BEGIN: us-8010b1cc
-extern "C" void func_8010A6F0() {}
+extern "C" void func_8010A6F0(char* this_) {
+    if (*(int*)(this_ + 0x2c) != 0) {
+        return;
+    }
+    *(int*)(this_ + 0x2c) = 1;
+    this_[0x28] = 0;
+}
 // LLM-HARNESS-END: us-8010b1cc
 
 // LLM-HARNESS-BEGIN: us-8010b1ec

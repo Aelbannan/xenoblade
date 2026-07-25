@@ -13,6 +13,22 @@ from tools.llm_harness.providers import OpenRouterProvider
 from tools.llm_harness.types import ModelConfig
 
 
+# Minimal valid schema for testing (avoids the full CANDIDATE_JSON_SCHEMA import)
+_TEST_SCHEMA = {
+    "name": "decomp_candidate",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "source": {"type": "string"},
+            "hypothesis": {"type": "string"},
+        },
+        "required": ["source", "hypothesis"],
+        "additionalProperties": False,
+    },
+}
+
+
 def _curl_ok(payload: dict, http_code: str = "200") -> SimpleNamespace:
     return SimpleNamespace(
         returncode=0,
@@ -108,9 +124,66 @@ class OpenRouterProviderTests(unittest.TestCase):
         body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
         self.assertEqual(body["reasoning"], {"effort": "high", "max_tokens": 2048})
 
+    def test_json_schema_sends_candidate_schema(self) -> None:
+        response = {"choices": [{"message": {"content": '{"source":"int f(){}","hypothesis":"ok"}'}}], "usage": {}}
+        provider = OpenRouterProvider(api_key="k", json_object=False, json_schema=True)
+        with mock.patch(
+            "tools.llm_harness.providers.subprocess.run",
+            return_value=_curl_ok(response),
+        ) as run:
+            provider.invoke(
+                "test",
+                ModelConfig(id="or", provider="openrouter", model="m"),
+                Path("."),
+            )
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
+        rf = body["response_format"]
+        self.assertEqual(rf["type"], "json_schema")
+        self.assertIn("json_schema", rf)
+        schema = rf["json_schema"]
+        self.assertEqual(schema["name"], "decomp_candidate")
+        self.assertTrue(schema["strict"])
+        props = schema["schema"]["properties"]
+        self.assertIn("source", props)
+        self.assertIn("hypothesis", props)
+        self.assertIn("notes", props)
+        self.assertIn("next_change", props)
+        self.assertIn("change", props)
+
+    def test_json_schema_takes_priority_over_json_object(self) -> None:
+        """When both json_schema and json_object are True, json_schema wins."""
+        response = {"choices": [{"message": {"content": '{"source":"int f(){}","hypothesis":"ok"}'}}], "usage": {}}
+        provider = OpenRouterProvider(api_key="k", json_object=True, json_schema=True)
+        with mock.patch(
+            "tools.llm_harness.providers.subprocess.run",
+            return_value=_curl_ok(response),
+        ) as run:
+            provider.invoke(
+                "test",
+                ModelConfig(id="or", provider="openrouter", model="m"),
+                Path("."),
+            )
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
+        self.assertEqual(body["response_format"]["type"], "json_schema")
+
     def test_json_object_can_be_disabled(self) -> None:
         response = {"choices": [{"message": {"content": "ok"}}], "usage": {}}
         provider = OpenRouterProvider(api_key="k", json_object=False)
+        with mock.patch(
+            "tools.llm_harness.providers.subprocess.run",
+            return_value=_curl_ok(response),
+        ) as run:
+            provider.invoke(
+                "hi",
+                ModelConfig(id="or", provider="openrouter", model="m"),
+                Path("."),
+            )
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
+        self.assertNotIn("response_format", body)
+
+    def test_both_disabled_no_response_format(self) -> None:
+        response = {"choices": [{"message": {"content": "ok"}}], "usage": {}}
+        provider = OpenRouterProvider(api_key="k", json_object=False, json_schema=False)
         with mock.patch(
             "tools.llm_harness.providers.subprocess.run",
             return_value=_curl_ok(response),
@@ -174,6 +247,91 @@ class OpenRouterProviderTests(unittest.TestCase):
                     Path("."),
                 )
         self.assertIn("HTTP 401", str(ctx.exception))
+
+
+    def test_finish_reason_captured(self) -> None:
+        response = {
+            "choices": [
+                {"message": {"content": "{}"}, "finish_reason": "length"}
+            ],
+            "usage": {},
+        }
+        provider = OpenRouterProvider(api_key="k")
+        with mock.patch(
+            "tools.llm_harness.providers.subprocess.run",
+            return_value=_curl_ok(response),
+        ):
+            result = provider.invoke(
+                "{}",
+                ModelConfig(id="or", provider="openrouter", model="m"),
+                Path("."),
+            )
+        self.assertEqual(result.finish_reason, "length")
+
+    def test_unlimited_output_omits_max_tokens(self) -> None:
+        response = {"choices": [{"message": {"content": "{}"}}], "usage": {}}
+        provider = OpenRouterProvider(api_key="k")
+        with mock.patch(
+            "tools.llm_harness.providers.subprocess.run",
+            return_value=_curl_ok(response),
+        ) as run:
+            provider.invoke(
+                "{}",
+                ModelConfig(
+                    id="or", provider="openrouter", model="m",
+                    unlimited_output=True,
+                ),
+                Path("."),
+            )
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
+        self.assertNotIn("max_tokens", body)
+
+    def test_unlimited_thinking_omits_reasoning_budget(self) -> None:
+        response = {"choices": [{"message": {"content": "{}"}}], "usage": {}}
+        provider = OpenRouterProvider(api_key="k")
+        with mock.patch(
+            "tools.llm_harness.providers.subprocess.run",
+            return_value=_curl_ok(response),
+        ) as run:
+            provider.invoke(
+                "{}",
+                ModelConfig(
+                    id="or", provider="openrouter", model="m",
+                    reasoning_effort="high",
+                    unlimited_thinking=True,
+                ),
+                Path("."),
+            )
+        body = json.loads(run.call_args.args[0][run.call_args.args[0].index("-d") + 1])
+        self.assertEqual(body["reasoning"], {"effort": "high"})
+
+    def test_empty_content_with_reasoning_raises_terminal_error(self) -> None:
+        # Reasoning models can burn the whole completion budget on hidden
+        # thinking, returning empty content. This must surface as the
+        # "empty assistant text" error class so the harness treats it as
+        # terminal and refunds repair budget.
+        response = {
+            "choices": [
+                {
+                    "message": {"content": "", "reasoning": "thinking..."},
+                    "finish_reason": "length",
+                }
+            ],
+            "usage": {},
+        }
+        provider = OpenRouterProvider(api_key="k")
+        with mock.patch(
+            "tools.llm_harness.providers.subprocess.run",
+            return_value=_curl_ok(response),
+        ):
+            with self.assertRaises(RuntimeError) as ctx:
+                provider.invoke(
+                    "{}",
+                    ModelConfig(id="or", provider="openrouter", model="m"),
+                    Path("."),
+                )
+        self.assertIn("empty assistant text", str(ctx.exception))
+        self.assertIn("finish_reason=length", str(ctx.exception))
 
 
 if __name__ == "__main__":

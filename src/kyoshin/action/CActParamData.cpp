@@ -57,7 +57,12 @@ extern "C" void func_80054A20() {}
 // LLM-HARNESS-END: us-80055088
 
 // LLM-HARNESS-BEGIN: us-8005508c
-extern "C" void func_80054A24() {}
+extern "C" unsigned char func_80054A24(unsigned char* p, int sel) {
+    if (sel != 0) {
+        return p[0x344];
+    }
+    return p[0x2c4];
+}
 // LLM-HARNESS-END: us-8005508c
 
 // LLM-HARNESS-BEGIN: us-800550a4

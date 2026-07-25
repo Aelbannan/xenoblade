@@ -119,6 +119,22 @@ def equivalence_certificate_error(
     if certificate.get("certificate_sha256") != equivalence_certificate_hash(certificate):
         return "certificate_sha256 does not match certificate payload"
 
+    # §2.5.4: declared_return staleness check — if the registry target's current
+    # declared_return differs from the certificate's abi_shape.declared_return,
+    # the certificate is stale. Absent-on-both-sides is treated as equal.
+    registry_declared = row.get("declared_return")
+    cert_abi_shape = certificate.get("abi_shape")
+    cert_declared = None
+    if isinstance(cert_abi_shape, dict):
+        cert_declared = cert_abi_shape.get("declared_return")
+    if registry_declared != cert_declared and not (
+        registry_declared is None and cert_declared is None
+    ):
+        return (
+            f"declared_return mismatch: registry={registry_declared!r} "
+            f"certificate={cert_declared!r}"
+        )
+
     proof_features_error = validate_proof_features(
         certificate,
         require_equivalent_ready=row.get("status") == "EQUIVALENT_MATCH",

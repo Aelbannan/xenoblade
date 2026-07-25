@@ -187,6 +187,40 @@ UNIT_RULES: dict[str, UnitRules] = {
             ),
         ),
     ),
+    "buffer_io.o": UnitRules(
+        # Retail dead-strips these empty/unused stubs; MWCC still emits them.
+        drop_text_symbols=(
+            "__convert_from_newlines",
+            "__convert_to_newlines",
+            "__load_buffer",
+            "setvbuf",
+            "setbuf",
+        ),
+    ),
+    "msgbuf.o": UnitRules(
+        # Retail dead-strips these unreferenced API wrappers; MWCC still emits
+        # them. Drop them so decomp .text fits the retail split budget.
+        drop_text_symbols=(
+            "TRK_SetBufferUsed",
+            "TRKAppendBuffer1_ui16",
+            "TRKAppendBuffer1_ui128",
+            "TRKAppendBuffer_ui16",
+            "TRKAppendBuffer_ui64",
+            "TRKAppendBuffer_ui128",
+            "TRKReadBuffer1_ui8",
+            "TRKReadBuffer1_ui16",
+            "TRKReadBuffer1_ui32",
+            "TRKReadBuffer1_ui128",
+            "TRKReadBuffer_ui16",
+            "TRKReadBuffer_ui64",
+            "TRKReadBuffer_ui128",
+        ),
+    ),
+    "CVec3.o": UnitRules(
+        # __sinit_ loads the CVec3::zero base address via a section-relative
+        # reloc (...bss.0); retail references the named symbol instead.
+        exact_renames=(("...bss.0", "zero__Q22ml5CVec3"),),
+    ),
     "AXFXChorusExp.o": UnitRules(
         reverse_sdata2_trailing_f32x4=True,
     ),

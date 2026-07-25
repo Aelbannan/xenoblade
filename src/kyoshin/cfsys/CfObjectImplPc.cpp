@@ -69,7 +69,16 @@ extern "C" void func_800CA104() {}
 // LLM-HARNESS-END: us-800cab38
 
 // LLM-HARNESS-BEGIN: us-800caca8
-extern "C" void func_800CA274() {}
+extern "C" void func_800CEA34(void*);
+
+extern "C" void func_800CA274(void* self, int value)
+{
+    char* sub = *(char**)((char*)self + 0x18);
+    if (*(int*)(sub + 0x3e98) != 0 && value != 0) {
+        *(int*)(sub + 0x3e98) = value;
+    }
+    func_800CEA34(self);
+}
 // LLM-HARNESS-END: us-800caca8
 
 // LLM-HARNESS-BEGIN: us-800cacc8

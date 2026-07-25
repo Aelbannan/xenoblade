@@ -845,7 +845,7 @@ after_bit21:
                 slot->unk240 = static_cast<u8>(nonempty);
                 if (nonempty == 0) {
                     MenuBpsMoveIf* move = reinterpret_cast<MenuBpsMoveIf*>(
-                        cf::CfGameManager::func_80082D54(0));
+                        cf::CfGameManager::getPlayer(0));
                     if (move != NULL) {
                         int id = move->vf4C();
                         if (id != 0) {

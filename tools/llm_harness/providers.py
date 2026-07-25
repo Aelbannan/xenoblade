@@ -645,6 +645,7 @@ class DeepSeekRawProvider:
             )
 
         text = choices[0].get("message", {}).get("content", "").strip()
+        finish_reason = choices[0].get("finish_reason")
         usage = result.get("usage", {}) or {}
 
         return ProviderResult(
@@ -661,6 +662,7 @@ class DeepSeekRawProvider:
             ),
             cost=None,
             raw_events=[result],
+            finish_reason=str(finish_reason) if finish_reason is not None else None,
         )
 
 
@@ -937,6 +939,11 @@ class LMStudioProvider:
             cache_write_tokens=None,
             cost=None,
             raw_events=[result],
+            finish_reason=(
+                str(choices[0].get("finish_reason"))
+                if choices and choices[0].get("finish_reason") is not None
+                else None
+            ),
         )
 
 
@@ -1121,6 +1128,11 @@ class OmlxProvider:
             cache_write_tokens=None,
             cost=None,
             raw_events=[result],
+            finish_reason=(
+                str(choices[0].get("finish_reason"))
+                if choices[0].get("finish_reason") is not None
+                else None
+            ),
         )
 
 
@@ -1164,12 +1176,19 @@ class OpenRouterProvider:
 
     Optional ``ModelConfig.variant`` is treated as an upstream provider preference
     (``provider.order``), e.g. ``"anthropic"`` / ``"deepseek"``.
+
+    JSON schema support (``json_schema=True``) sends the shared candidate schema
+    as ``response_format.type=json_schema`` — stricter than plain ``json_object``
+    and supported by many OpenRouter endpoints. Falls back to ``json_object``
+    when ``json_schema=False, json_object=True``. Omits ``response_format``
+    entirely when both are ``False``.
     """
 
     API_URL = "https://openrouter.ai/api/v1/chat/completions"
     API_KEY_ENV = "OPENROUTER_API_KEY"
     DEFAULT_SITE_URL = "https://github.com/xbret/xenoblade"
     DEFAULT_APP_NAME = "Xenoblade LLM Harness"
+    CANDIDATE_JSON_SCHEMA: Dict[str, Any] = SHARED_CANDIDATE_JSON_SCHEMA
 
     def __init__(
         self,
@@ -1177,6 +1196,7 @@ class OpenRouterProvider:
         temperature: float = 0.1,
         max_tokens: int = 4096,
         json_object: bool = True,
+        json_schema: bool = False,
         api_key: Optional[str] = None,
         site_url: str = DEFAULT_SITE_URL,
         app_name: str = DEFAULT_APP_NAME,
@@ -1188,6 +1208,7 @@ class OpenRouterProvider:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.json_object = json_object
+        self.json_schema = json_schema
         self._api_key = api_key
         self.site_url = site_url
         self.app_name = app_name
@@ -1234,14 +1255,24 @@ class OpenRouterProvider:
                 f"or your shell profile"
             )
 
-        max_tokens = int(model.max_tokens) if model.max_tokens else self.max_tokens
+        if model.unlimited_output:
+            # Omit max_tokens entirely: provider/upstream default applies.
+            max_tokens = None
+        else:
+            max_tokens = int(model.max_tokens) if model.max_tokens else self.max_tokens
         body: Dict[str, Any] = {
             "model": model.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": self.temperature,
-            "max_tokens": max_tokens,
         }
-        if self.json_object:
+        if max_tokens is not None:
+            body["max_tokens"] = max_tokens
+        if self.json_schema:
+            body["response_format"] = {
+                "type": "json_schema",
+                "json_schema": self.CANDIDATE_JSON_SCHEMA,
+            }
+        elif self.json_object:
             body["response_format"] = {"type": "json_object"}
 
         # Upstream provider preference via ModelConfig.variant (optional).
@@ -1252,12 +1283,16 @@ class OpenRouterProvider:
             }
 
         # OpenRouter reasoning controls (effort and/or max_tokens budget).
+        # unlimited_thinking: no reasoning token cap — the model reasons as much
+        # as it wants inside the completion budget.
         reasoning: Dict[str, Any] = {}
         if model.reasoning_effort:
             effort = str(model.reasoning_effort).strip().lower()
             if effort and effort != "none":
                 reasoning["effort"] = effort
-        if model.thinking_budget is not None and int(model.thinking_budget) > 0:
+        if model.unlimited_thinking:
+            pass
+        elif model.thinking_budget is not None and int(model.thinking_budget) > 0:
             reasoning["max_tokens"] = int(model.thinking_budget)
         if reasoning:
             body["reasoning"] = reasoning
@@ -1309,11 +1344,19 @@ class OpenRouterProvider:
             )
 
         message = choices[0].get("message", {}) or {}
+        finish_reason = choices[0].get("finish_reason")
         content = _strip_think_blocks(self._message_text(message)).strip()
         reasoning_text = str(
             message.get("reasoning") or message.get("reasoning_content") or ""
         ).strip()
         text = _coerce_json_text(content) or _coerce_json_text(reasoning_text) or content
+        if not text and reasoning_text:
+            raise RuntimeError(
+                "OpenRouter returned empty assistant text with reasoning content "
+                f"(finish_reason={finish_reason}) — reasoning consumed the "
+                "completion budget. Raise max_tokens, enable unlimited_output, "
+                "or reduce/disable thinking."
+            )
 
         usage = result.get("usage", {}) or {}
         details = usage.get("prompt_tokens_details")
@@ -1334,6 +1377,7 @@ class OpenRouterProvider:
             cache_write_tokens=_int_or_none(usage.get("prompt_cache_miss_tokens")),
             cost=_float_or_none(usage.get("cost")),
             raw_events=[result],
+            finish_reason=str(finish_reason) if finish_reason is not None else None,
         )
 
 

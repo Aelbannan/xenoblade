@@ -105,7 +105,13 @@ extern "C" void func_80095450() {}
 // LLM-HARNESS-END: us-80095e28
 
 // LLM-HARNESS-BEGIN: us-80096014
-extern "C" void func_8009563C() {}
+extern "C" void func_8009563C(char* p) {
+    short v = *(short*)(p + 0xBA) - 1;
+    *(short*)(p + 0xBA) = v;
+    if (v <= 0) {
+        *(short*)(p + 0xBE) = 1;
+    }
+}
 // LLM-HARNESS-END: us-80096014
 
 // LLM-HARNESS-BEGIN: us-80096034

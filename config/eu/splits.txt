@@ -4670,7 +4670,7 @@ monolib/src/lod/CTaskLOD.cpp:
 	extabindex  start:0x80035884 end:0x8003592C
 	.text       start:0x804667A8 end:0x80467090
 
-monolib/src/lod/UnkClass_804630C0.cpp:
+monolib/src/lod/CLODCacheManagerS.cpp:
 	extab       start:0x8001DB90 end:0x8001DBB8
 	extabindex  start:0x8003592C end:0x80035968
 	.text       start:0x80467090 end:0x8046773C

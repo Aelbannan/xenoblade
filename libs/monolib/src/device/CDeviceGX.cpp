@@ -9,8 +9,6 @@ using namespace ml;
 
 extern "C" {
 CDeviceGX* lbl_eu_806656A0;
-const char* lbl_eu_80663754;
-int lbl_eu_80663750;
 extern const f64 lbl_eu_8066A440;  // int→double magic (unsigned)
 extern const f64 lbl_eu_8066A448;  // int→double magic (signed)
 extern const f32 lbl_eu_8066A438;
@@ -120,9 +118,9 @@ void CDeviceGX::viAfterDrawDone(){
         temp2 = temp - temp1;
     }else{
         temp1 -= temp;
-        temp2 = lbl_eu_80663750 - temp1;
+        temp2 = gxHeapSize - temp1;
     }
-    unk264 = ((f32)temp2 / (f32)lbl_eu_80663750) * lbl_eu_8066A438;
+    unk264 = ((f32)temp2 / (f32)gxHeapSize) * lbl_eu_8066A438;
 }
 
 void CDeviceGX::viBeginFrame(){
@@ -158,7 +156,7 @@ void CDeviceGX::drawFrame(){
             something.renderRect(rect);
         }
     }else{
-        CStopwatchUtil::entry(lbl_eu_80663754);
+        CStopwatchUtil::entry(someString);
     }
 }
 
@@ -175,9 +173,9 @@ void CDeviceGX::copyEfbToXfb(void* pDestFrameBuffer){
 }
 
 void CDeviceGX::calculateCost(){
-    CStopwatchUtil::updateCostTime(lbl_eu_80663754);
+    CStopwatchUtil::updateCostTime(someString);
     f32 visPerFrame = (f32)CDeviceVI::getVisPerFrame();
-    f32 costTime = CStopwatchUtil::getCostTime(lbl_eu_80663754);
+    f32 costTime = CStopwatchUtil::getCostTime(someString);
     lbl_eu_80665698 = costTime / visPerFrame;
 }
 
@@ -200,8 +198,7 @@ void CDeviceGX::onRenderWork(){
 }
 
 int CDeviceGX::getHeapSize(){
-    // Retail SDA reloc is lbl_eu_80663750@sda21, not spInstance->gxHeapSize.
-    return lbl_eu_80663750;
+    return gxHeapSize;
 }
 
 bool CDeviceGX::wkStandbyLogin(){
@@ -255,7 +252,7 @@ bool CDeviceGX::wkStandbyLogout(){
 
 void CDeviceGX::drawSyncCallback(u16 token){
     if(token == token1){
-        CStopwatchUtil::entry(lbl_eu_80663754);
+        CStopwatchUtil::entry(someString);
     }else if(token == token2){
         calculateCost();
     }

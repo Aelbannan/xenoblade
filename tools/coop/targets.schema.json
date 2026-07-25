@@ -117,6 +117,10 @@
           "uniqueItems": true
         },
         "has_indirect_calls": { "type": "boolean" },
+        "declared_return": {
+          "type": "string",
+          "enum": ["void","i32","u32","bool","ptr","f32","f64","i64","u64","aggregate","f128"]
+        },
         "callgraph_status": { "enum": ["complete"] },
         "callgraph_source": { "type": "string" },
         "claim": {

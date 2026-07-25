@@ -105,7 +105,7 @@ extern "C" void func_800A72E0() {}
 // LLM-HARNESS-END: us-800a7ba8
 
 // LLM-HARNESS-BEGIN: us-800a7eb4
-extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self) { renderCylinder__Q22cf18CfDebugDrawManagerFb(); }
+void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self) { renderCylinder__Q22cf18CfDebugDrawManagerFb(); }
 // LLM-HARNESS-END: us-800a7eb4
 
 // LLM-HARNESS-BEGIN: us-800a7ebc

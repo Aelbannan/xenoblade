@@ -84,7 +84,7 @@ extern "C" u16 func_80453818__18CDeviceFontInfoRomFv(void* self) {
 
 // ---- func_80453824 (0x804578F4) — reads mFontInfo->field_0x1E ----
 // LLM-HARNESS-BEGIN: us-804578f4
-extern "C" u16 func_80453824__18CDeviceFontInfoRomFv(void* self) {
+u16 func_80453824__18CDeviceFontInfoRomFv(void* self) {
     return *(u16*)((u8*)self + 0x0C + 0x1E);
 }
 // LLM-HARNESS-END: us-804578f4

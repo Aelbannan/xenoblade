@@ -25,11 +25,12 @@ OBJ_DIR = BUILD_US / "obj"
 SRC_DIR = BUILD_US / "src"
 
 
-def run_objcopy(*args: str, input_file: Path) -> None:
+def run_objcopy(*args: str, input_file: Path) -> subprocess.CompletedProcess:
     cmd = [str(OBJCOPY), *args, str(input_file)]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"WARNING: objcopy failed for {input_file}: {result.stderr.strip()}")
+    return result
 
 
 def globalize_symbols(obj: Path, symbols: list[str]) -> None:
@@ -39,10 +40,36 @@ def globalize_symbols(obj: Path, symbols: list[str]) -> None:
     run_objcopy(f"--globalize-symbols={sym_file}", input_file=obj)
 
 
-def localize_symbols(obj: Path, symbols: list[str]) -> None:
-    """Localize symbols to avoid multiply-defined errors."""
+def strip_symbols(obj: Path, symbols: list[str]) -> None:
+    """Strip (remove) symbols from an object file.
+    These symbols are now provided by matched source objects, so they
+    should not exist in the retail data objects at all.
+    """
+    if not symbols:
+        return
+    args = []
     for sym in symbols:
-        run_objcopy(f"--localize-symbol={sym}", input_file=obj)
+        args.append(f"--strip-symbol={sym}")
+    run_objcopy(*args, input_file=obj)
+
+
+def batch_transform(obj: Path, **kwargs) -> None:
+    """Apply multiple transformations to an object in a single objcopy call.
+    
+    Keyword args:
+        localize: list[str] — symbols to localize
+        globalize: list[str] — symbols to globalize
+        rename: dict[str, str] — old->new symbol mappings
+    """
+    args = []
+    for sym in kwargs.get("localize", []):
+        args.append(f"--localize-symbol={sym}")
+    for sym in kwargs.get("globalize", []):
+        args.append(f"--globalize-symbol={sym}")
+    for old, new in kwargs.get("rename", {}).items():
+        args.append(f"--redefine-sym={old}={new}")
+    if args:
+        run_objcopy(*args, input_file=obj)
 
 
 def rename_symbol(obj: Path, old: str, new: str) -> None:
@@ -51,26 +78,18 @@ def rename_symbol(obj: Path, old: str, new: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 1. Rename missing vtable / RTTI labels in retail data objects
+# 1. Rename + localize multiply-defined symbols in retail data objects.
+#    MWLD (Wii/1.1) has a bug where multiple objcopy invocations on the
+#    same file cause ELF_gen.c:2802 internal error, so all transforms per
+#    file are done in a single call.
 # ---------------------------------------------------------------------------
 
-# CDeviceBase vtable lives in monolibdata1.o under the generic label
-rename_symbol(
-    OBJ_DIR / "monolibdata1.o",
-    "lbl_eu_8056BC80",
-    "__vt__11CDeviceBase",
-)
+# nw4r_data.o — remove symbol now provided by matched ut_FileStream.o
+strip_symbols(OBJ_DIR / "nw4r_data.o", ["lbl_eu_80665548"])
 
-# ---------------------------------------------------------------------------
-# 2. Localize multiply-defined symbols in retail data assembly objects
-#    (symbols that are now provided by compiled C++ Matching objects)
-# ---------------------------------------------------------------------------
-
-# nw4r_data.o
-localize_symbols(OBJ_DIR / "nw4r_data.o", ["lbl_eu_80665548"])
-
-# monolibdata1.o
-localize_symbols(
+# monolibdata1.o — rename vtable label + strip matched symbols
+# (strip removes them entirely; they're now provided by source objects)
+strip_symbols(
     OBJ_DIR / "monolibdata1.o",
     [
         "getInstance__Q22ml6MTRandFv",
@@ -78,6 +97,8 @@ localize_symbols(
         "lbl_eu_80665588",
         "__dt__9CProcRootFv",
         "lbl_eu_806655A0",
+        "lbl_eu_806655A8",
+        "sRsrcPointerList__5CRsrc",
         "wkStandbyLogin__9CProcRootFv",
         "wkStandbyLogout__9CProcRootFv",
         "Tail__8CProcessFv",
@@ -86,9 +107,14 @@ localize_symbols(
         "sRootProcessList__11CProcessMan",
     ],
 )
+# Separate rename (objcopy can't combine --strip-symbol with --redefine-sym)
+batch_transform(
+    OBJ_DIR / "monolibdata1.o",
+    rename={"lbl_eu_8056BC80": "__vt__11CDeviceBase"},
+)
 
-# monolibdata2.o
-localize_symbols(
+# monolibdata2.o — strip symbols now provided by matched CDeviceGX.o
+strip_symbols(
     OBJ_DIR / "monolibdata2.o",
     [
         "__dt__9CDeviceGXFv",
@@ -105,7 +131,11 @@ localize_symbols(
 )
 
 # CTaskGame.o (contains CProcess functions from retail split overlap)
-localize_symbols(
+# The decompiled CProcess.o (MatchingFor US) references these CProcess
+# member functions but they were placed in CTaskGame.o by the original
+# compiler with LOCAL visibility. Globalize them so the linker resolves
+# the references.
+globalize_symbols(
     OBJ_DIR / "kyoshin" / "CTaskGame.o",
     [
         "Regist__8CProcessFP8CProcessb",
@@ -147,18 +177,28 @@ for obj_path, symbols in _sinit_targets.items():
         globalize_symbols(obj_path, symbols)
 
 # ---------------------------------------------------------------------------
-# 4b. MWCC C++ linkage: __unregister_fragment is defined with unsigned int
-#     in Gecko_ExceptionPPC.cp while NMWException.h declares extern "C" int;
-#     the definition gets a mangled export (__unregister_fragment__FUi) that
-#     __init_cpp_exceptions.o cannot resolve.
+# 4b. MWCC C++ linkage fixes for Runtime exception support.
 # ---------------------------------------------------------------------------
 
 _gecko_exception = SRC_DIR / "PowerPC_EABI_Support" / "src" / "Runtime" / "Gecko_ExceptionPPC.o"
 if _gecko_exception.exists():
+    # __unregister_fragment: defined as C++ (mangled __FUi) in NMWException.cp
+    # but __init_cpp_exceptions.o references the C-linkage name.
     rename_symbol(
         _gecko_exception,
         "__unregister_fragment__FUi",
         "__unregister_fragment",
+    )
+
+_nmwexception = SRC_DIR / "PowerPC_EABI_Support" / "src" / "Runtime" / "NMWException.o"
+if _nmwexception.exists():
+    # __throw_catch_compare: defined without extern "C" in NMWException.cp
+    # so it gets C++ mangling (__FPCcPCcPi), but Gecko_ExceptionPPC.cp calls it
+    # via an extern "C" header declaration expecting the unmangled name.
+    rename_symbol(
+        _nmwexception,
+        "__throw_catch_compare__FPCcPCcPi",
+        "__throw_catch_compare",
     )
 
 # ---------------------------------------------------------------------------
@@ -166,6 +206,33 @@ if _gecko_exception.exists():
 #    Extend as needed when new multiply-defined or undefined errors appear.
 #    Each entry should eventually be solved at the source/splits level.
 # ---------------------------------------------------------------------------
+# 6. Inject vtable symbols from CDevice_vt.o into CDevice.o.
+#    CDevice_vt.o is a retail object containing the CDeviceBase vtable that
+#    CDeviceGX.o needs, but it is not tracked in the project config and
+#    therefore not listed in the link rspfile. We use partial linking to
+#    merge its symbols into CDevice.o so the linker can resolve them.
+# ---------------------------------------------------------------------------
 
+# CDevice_vt.o handling disabled: the vtable symbols it provides are already
+# renamed in monolibdata1.o (see step 1). CDevice_vt.o has empty sections
+# and linking it causes mwld internal errors.
+# _cdevice_vt = OBJ_DIR / ...
+# (disabled)
+
+# ---------------------------------------------------------------------------
+# 7. Redirect CLibVM.o's reference to the generic label used by .bak
+#    monolibdata2.o (MWLD ELF_gen.c:2802 crash with spInstance__6CLibVM
+#    when other symbols in the same object are localized).
+# ---------------------------------------------------------------------------
+
+_clibvm_retail = OBJ_DIR / "monolib" / "src" / "lib" / "CLibVM.o"
+if _clibvm_retail.exists():
+    rename_symbol(
+        _clibvm_retail,
+        "spInstance__6CLibVM",
+        "lbl_eu_80665720",
+    )
+
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     print("postprocess_link_fixes: applied symbol transformations")

@@ -1530,5 +1530,10 @@ extern "C" void func_80098B74() {}
 // LLM-HARNESS-END: us-8009954c
 
 // LLM-HARNESS-BEGIN: us-800995a8
-extern "C" void func_80098BD0() {}
+extern "C" int lbl_eu_80527E98[];
+
+extern "C" void func_80098BD0(int idx, int val)
+{
+    lbl_eu_80527E98[idx] = val;
+}
 // LLM-HARNESS-END: us-800995a8

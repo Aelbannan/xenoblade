@@ -51,5 +51,16 @@ extern "C" void func_800C1F28(void) {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-800c2974
-extern "C" void sinit_800C1F2C() {}
+struct Unk805739F8 {
+    unsigned char pad[0x20];
+    unsigned int field20;
+    unsigned char field24;
+};
+
+extern "C" Unk805739F8 lbl_eu_805739F8;
+
+extern "C" void sinit_800C1F2C() {
+    lbl_eu_805739F8.field20 = 0;
+    lbl_eu_805739F8.field24 = 0;
+}
 // LLM-HARNESS-END: us-800c2974

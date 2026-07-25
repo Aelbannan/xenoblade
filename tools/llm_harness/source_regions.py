@@ -198,6 +198,75 @@ def _extern_object_symbol(statement: str) -> Optional[str]:
     return None
 
 
+def _mask_block_scopes(text: str) -> str:
+    """Blank out everything inside ``{ … }`` so only file-scope lines remain.
+
+    Block-scope ``extern`` declarations (e.g. a sibling function's
+    ``extern float lbl_eu_…;``) do not leak into other scopes, so they must
+    not count as visible declarations for a different function slot.
+    """
+    chars = list(text)
+    depth = 0
+    state = "code"
+    i = 0
+    n = len(chars)
+    while i < n:
+        ch = chars[i]
+        nxt = chars[i + 1] if i + 1 < n else ""
+        if state == "code":
+            if ch == "/" and nxt == "/":
+                state = "line_comment"
+                i += 2
+                continue
+            if ch == "/" and nxt == "*":
+                state = "block_comment"
+                chars[i] = " "
+                if i + 1 < n:
+                    chars[i + 1] = " "
+                i += 2
+                continue
+            if ch in ('"', "'"):
+                state = ch
+                i += 1
+                continue
+            if ch == "{":
+                depth += 1
+                chars[i] = " "
+            elif ch == "}":
+                depth = max(0, depth - 1)
+                chars[i] = " "
+            elif depth > 0 and ch != "\n":
+                chars[i] = " "
+        elif state == "line_comment":
+            if ch == "\n":
+                state = "code"
+        elif state == "block_comment":
+            if ch == "*" and nxt == "/":
+                chars[i] = " "
+                if i + 1 < n:
+                    chars[i + 1] = " "
+                state = "code"
+                i += 2
+                continue
+            if ch != "\n":
+                chars[i] = " "
+        else:
+            # Inside a string/char literal: keep newlines, blank the rest so
+            # braces in literals don't skew depth.
+            if ch == "\\" and nxt:
+                chars[i] = " "
+                if i + 1 < n and chars[i + 1] != "\n":
+                    chars[i + 1] = " "
+                i += 2
+                continue
+            if ch == state:
+                state = "code"
+            elif ch != "\n":
+                chars[i] = " "
+        i += 1
+    return "".join(chars)
+
+
 def _symbol_declared_outside(
     tu_source: str,
     region: SourceRegion,
@@ -210,20 +279,26 @@ def _symbol_declared_outside(
     When *earlier_only* is set, only declarations that appear before the region
     count. That keeps the first writer of a shared global and is the right
     policy for cleaning already-accepted slots in file order.
+
+    Only file-scope declarations count: block-scope ``extern`` lines inside
+    other function bodies are not visible to this slot and are masked out.
     """
     if earlier_only:
         outside = tu_source[: region.content_start]
     else:
         outside = tu_source[: region.content_start] + "\n" + tu_source[region.content_end :]
+    outside = _mask_block_scopes(outside)
     escaped = re.escape(name)
     patterns = (
         rf"(?m)^[ \t]*extern\b[^\n;]*\b{escaped}\b",
         rf"\(\s*\*\s*{escaped}\s*\)",
         rf"(?m)^[ \t]*(?!extern\b)[\w:\s\*\&]+?\b{escaped}\s*(?:\[[^\]]*\]\s*)?[;=]",
         # Function definition or prototype (possibly under ``extern "C"``).
-        rf"(?m)^[ \t]*(?:extern\s+\"C\"\s+)?[\w:\s\*\&]+?\b{escaped}\s*\([^;{{}}]*\)\s*(?:const\s*)?\{{",
+        # Block-scope masking blanks the body ``{`` of definitions, so accept
+        # end-of-line where the opening brace used to be.
+        rf"(?m)^[ \t]*(?:extern\s+\"C\"\s+)?[\w:\s\*\&]+?\b{escaped}\s*\([^;{{}}]*\)\s*(?:const\s*)?(?:\{{|$)",
         rf"(?m)^[ \t]*extern(?:\s+\"C\")?\s+[^\n(]+?\b{escaped}\s*\([^;]*\)\s*;",
-        rf"(?m)^[ \t]*(?!extern\b)[\w:\s\*\&]+?\b{escaped}\s*\([^;{{}}]*\)\s*(?:const\s*)?[;{{]",
+        rf"(?m)^[ \t]*(?!extern\b)[\w:\s\*\&]+?\b{escaped}\s*\([^;{{}}]*\)\s*(?:const\s*)?(?:[;{{]]|$)",
     )
     return any(re.search(pattern, outside) for pattern in patterns)
 
@@ -233,16 +308,25 @@ def _strip_unneeded_extern_c_prefix(candidate: str) -> tuple[str, list[str]]:
 
     Only the prefix form is handled (``extern "C" Ret name(...) {{``). Block
     form ``extern "C" {{ … }}`` is left alone.
+
+    ``extern "C"`` is load-bearing (never stripped) when the declarator name is
+    a flat, already-mangled identifier (``Name__Q22cf8CfObjectFv``): MWCC would
+    re-mangle it into garbage like ``…Fv__FPv`` and objdiff can no longer pair
+    the symbol. It is only stripped before normal C++ declarators (qualified
+    ``A::B::c`` or unmangled names) where C++ mangling produces the target.
     """
     removed: list[str] = []
 
     def replacer(match: re.Match[str]) -> str:
+        name = match.group(2)
+        if "::" not in name and is_mwcc_mangled_symbol(name):
+            return match.group(0)
         removed.append('extern "C"')
         return match.group(1)
 
     cleaned = re.sub(
         r'(?m)^([ \t]*)extern\s+"C"\s+'
-        r"(?=[\w:\s\*\&]+?\b[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*\s*\([^;]*\)\s*(?:const\s*)?\{)",
+        r"(?=[\w:\s\*\&]+?\b([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)\s*\([^;]*\)\s*(?:const\s*)?\{)",
         replacer,
         candidate,
     )

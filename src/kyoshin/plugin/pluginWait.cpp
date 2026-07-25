@@ -16,7 +16,7 @@ extern "C" {
  * On first call: initialises counter = frameCount << 12.
  * On subsequent calls: decrements counter by 0x1000 (NTSC 60fps) or
  * 0x1333 (PAL 50fps), keeping the thread asleep while counter > 0.
- * The 0x1000/0x1333 ratio (≈ 50/60) normalises real time across
+ * The 0x1000/0x1333 ratio (~ 50/60) normalises real time across
  * the two display standards.
  */
 int wait_frame(VMThread* pThread) {

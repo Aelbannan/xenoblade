@@ -1399,7 +1399,11 @@ extern "C" void func_800ACBCC__Q22cf11CfObjectEffFv() {}
 // LLM-HARNESS-END: us-800ad498
 
 // LLM-HARNESS-BEGIN: us-800ad4e0
-extern "C" void func_800ACC14() {}
+extern "C" void func_800ACC14(void* self, unsigned char val) {
+    void* ptr = *(void**)((char*)self + 0x94);
+    if (ptr != nullptr)
+        *(unsigned char*)((char*)ptr + 0x59) = val;
+}
 // LLM-HARNESS-END: us-800ad4e0
 
 // LLM-HARNESS-BEGIN: us-800ad4f4
@@ -1459,7 +1463,13 @@ extern "C" void func_800ACDFC__Q22cf11CfObjectEffFv() {}
 // LLM-HARNESS-END: us-800ad6c8
 
 // LLM-HARNESS-BEGIN: us-800ad710
-extern "C" void func_800ACE44__Q22cf11CfObjectEffFv() {}
+extern "C" float func_800ACE44__Q22cf11CfObjectEffFv(void* self) {
+    char* p = *(char**)((char*)self + 0x94);
+    if (p != 0) {
+        return *(float*)(p + 0x2c);
+    }
+    return *(float*)((char*)self + 0x4c);
+}
 // LLM-HARNESS-END: us-800ad710
 
 // LLM-HARNESS-BEGIN: us-800ad72c
@@ -1479,7 +1489,13 @@ extern "C" void func_800ACEF8() {}
 // LLM-HARNESS-END: us-800ad7c4
 
 // LLM-HARNESS-BEGIN: us-800ad800
-extern "C" void func_800ACF34__Q22cf11CfObjectEffFv() {}
+extern "C" float func_800ACF34__Q22cf11CfObjectEffFv(char* self) {
+    char* unk = *(char**)(self + 0x94);
+    if (unk != 0) {
+        return *(float*)(unk + 0x38);
+    }
+    return *(float*)(self + 0x60);
+}
 // LLM-HARNESS-END: us-800ad800
 
 // LLM-HARNESS-BEGIN: us-800ad81c
@@ -1495,7 +1511,13 @@ extern "C" void func_800ACFD8() {}
 // LLM-HARNESS-END: us-800ad8a4
 
 // LLM-HARNESS-BEGIN: us-800ad90c
-extern "C" void func_800AD040() {}
+extern "C" void func_800AD040(char* obj, int flag) {
+    char* child = *(char**)(obj + 0x94);
+    if (child == 0) {
+        return;
+    }
+    *(int*)(child + 0x5c) = (flag != 0);
+}
 // LLM-HARNESS-END: us-800ad90c
 
 // LLM-HARNESS-BEGIN: us-800ad92c

@@ -266,7 +266,46 @@ observable, and which side wrote it.
 The fixed ABI preset intentionally excludes
 volatile scratch registers and flags. It conservatively treats `r3:r4` as a
 return pair; for a `void` function or a known narrower return contract, use a
-manual list. For an internal basic block, pass the
+manual list.
+
+### Declared-return ABI shapes
+
+The `auto` contract conservatively treats `r3:r4` as an i64 return pair. Under a
+pure register-allocation difference (Chaitin rotation), the decompiled body may
+write `r4` as scratch that is dead at the `blr`, but the write-based inference
+(`returns_i64=True`) keeps `r4` as an observable and the proof reports
+`not_equivalent` on a register no caller can observe.
+
+**Opt-in:** set `declared_return` on the function target in `targets.json` (enum:
+`void`, `i32`, `u32`, `bool`, `ptr`, `f32`, `f64`, `i64`, `u64`, `aggregate`,
+`f128`), or pass `--declared-return` to `equivalence check-unit`. The probe
+derives a narrowing `AbiShape` from the declaration and combines it with the
+inferred shape via fail-closed conjunction:
+
+| `declared_return`          | returns_i64 | returns_float | Compared at exit        |
+|---------------------------|-------------|---------------|--------------------------|
+| `void`                    | False       | False         | r4, f1(+ps1) dropped     |
+| `i32`,`u32`,`bool`,`ptr`  | False       | False         | r4, f1(+ps1) dropped     |
+| `f32`,`f64`               | False       | **True**      | r4 dropped; **f1 kept**  |
+| `i64`,`u64`               | True        | False         | r4 kept; f1 dropped      |
+| `aggregate`,`f128`        | —           | —             | no narrowing (None)      |
+| unknown / absent          | —           | —             | no narrowing (None)      |
+
+Only `r4` / `f1` / `f1.ps1` are ever dropped, matching the existing
+`observables_for_exit()` behavior. `r3` is always kept, even for `void`.
+
+**Caller-corroboration gate:** narrowing is refused unless the target has at
+least one direct in-registry caller (address-taken-only functions get no
+narrowing). Use `--force-declared-return` to bypass.
+
+**Tier cap:** proofs relying on a declaration are capped at confidence **Tier
+C**. Certificates carry `abi_shape.declared_return`; changing the declaration
+invalidates stored certificates via recertification.
+
+See [`docs/ppc_equiv_work/29-declared-return-abi-shapes.md`](../../docs/ppc_equiv_work/29-declared-return-abi-shapes.md)
+for the full design.
+
+For an internal basic block, pass the
 actual live-outs manually because a volatile register can still be live. The
 automatic `live-out` contract is sound but intentionally conservative; it can
 reject a transformation that only changes a dead write:

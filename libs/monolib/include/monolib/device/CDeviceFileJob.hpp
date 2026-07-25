@@ -27,10 +27,10 @@ public:
 
     //0x0: vtable
     //0x0-1C4: CWorkThread (parent class)
-    CFileHandle* mHandle; //0x1C4 — file handle for the current job
-    u8 unk1C8; //0x1C8 — unknown byte field (possibly FixStr-related)
+    CFileHandle* mHandle; //0x1C4 -- file handle for the current job
+    u8 unk1C8; //0x1C8 -- unknown byte field (possibly FixStr-related)
     u8 unk1C9[0x208 - 0x1C9]; //padding
-    u32 unk208; //0x208 — unknown status field
-    u32 unk20C; //0x20C — unknown status field
-    u8 unk210; //0x210 — unknown byte flag
+    u32 unk208; //0x208 -- unknown status field
+    u32 unk20C; //0x20C -- unknown status field
+    u8 unk210; //0x210 -- unknown byte flag
 };

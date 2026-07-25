@@ -26,7 +26,8 @@
       "max_tokens": 4096,
       "json_object": true,
       "allow_fallbacks": true,
-      "pure": true
+      "pure": true,
+      "json_schema": true
     },
     "lmstudio": {
       "base_url": "http://localhost:1234/v1",
@@ -60,16 +61,18 @@
   "models": {
     "default": [
       {
-		"id": "oc-deepseek-4-flash",
-		"provider": "opencode",
-		"model": "opencode/deepseek-v4-flash-free",
-		"runs": 1
+		"id": "or-kimi-k3",
+		"provider": "openrouter",
+		"model": "moonshotai/kimi-k3",
+		"runs": 1,
+		"max_tokens": 16384,
+		"thinking_budget": "unlimited"
 	  }
     ]
   },
   "execution": {
-    "initial_parallel": 2,
-    "target_parallel": 4,
+    "initial_parallel": 1,
+    "target_parallel": 20,
     "max_retries": 0,
     "auto_promote": true,
     "auto_promote_owner": "llm-harness",

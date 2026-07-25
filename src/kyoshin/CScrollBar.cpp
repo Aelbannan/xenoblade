@@ -6,7 +6,7 @@
 #include "kyoshin/CScrollBar.hpp"
 
 // LLM-HARNESS-BEGIN: us-801f50cc
-extern "C" u8 func_801F3660(CScrollBar* self) { return self->mVisible; }
+extern "C" u8 CScrollBar_isVisible(CScrollBar* self) { return self->mVisible; }
 // LLM-HARNESS-END: us-801f50cc
 
 

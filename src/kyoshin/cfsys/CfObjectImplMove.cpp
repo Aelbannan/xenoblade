@@ -77,7 +77,14 @@ extern "C" void func_800CD460() {}
 // LLM-HARNESS-END: us-800cded0
 
 // LLM-HARNESS-BEGIN: us-800ce030
-extern "C" void func_800CD5C0() {}
+extern "C" void func_800BE824(void*, unsigned int);
+
+extern "C" void func_800CD5C0(char* self, unsigned int a, unsigned int b) {
+    void* inner = *(void**)(self + 0x14);
+    if (a == *(unsigned int*)((char*)inner + 0xc4)) {
+        func_800BE824(inner, b);
+    }
+}
 // LLM-HARNESS-END: us-800ce030
 
 // LLM-HARNESS-BEGIN: us-800ce04c
@@ -137,7 +144,12 @@ extern "C" void func_800CF810() {}
 // LLM-HARNESS-END: us-800d02e0
 
 // LLM-HARNESS-BEGIN: us-800d0a88
-extern "C" void func_800CFFA0() {}
+extern "C" void func_800CFFA0(unsigned int* self, unsigned int* param) {
+    if (param == (unsigned int*)self[7]) {
+        param[44] = 0;
+        self[7] = 0;
+    }
+}
 // LLM-HARNESS-END: us-800d0a88
 
 extern "C" void __dt__Q22cf16CfObjectImplMoveFv(void* self);

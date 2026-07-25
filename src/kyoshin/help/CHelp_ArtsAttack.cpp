@@ -11,7 +11,7 @@ namespace cf {
 typedef void* (*GetPtrFn)(void*);
 
 bool CHelp_ArtsAttack::func_802B7D00() {
-    CfObjectPc* objPc = func_800BFC68(CfGameManager::func_80082D54(0));
+    CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
 
     if (objPc != nullptr) {
         void* sub = *reinterpret_cast<void**>(reinterpret_cast<u8*>(objPc) + 4);

@@ -17,7 +17,7 @@ u32 lbl_eu_80663E64;
 u32 lbl_eu_80663E24;
 u32 lbl_eu_80663E28;
 
-// symbols.txt: Fv, but callers leave the index in r4 (see func_80082D54).
+// symbols.txt: Fv, but callers leave the index in r4 (see getPlayer).
 cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
 
 void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
@@ -85,7 +85,7 @@ CPad* CfGameManager::getCurrentPad() {
     return &lbl_eu_80570D40[channel & 7];
 }
 
-CfObjectMove* CfGameManager::func_80082D54(int playerIndex) {
+CfObjectMove* CfGameManager::getPlayer(int playerIndex) {
     return *func_8007C6B4__Q22cf13CfGameManagerFv(getInstance()->unk94, playerIndex);
 }
 

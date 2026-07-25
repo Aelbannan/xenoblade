@@ -396,6 +396,13 @@ def cmd_cycle(
     # Always log the attempt and update the registry, even if the unit-level
     # split size is over budget — so the target's match progress is recorded
     # and claim-smallest will not re-pick it.
+    # §2.7.6: extract declared_return from the certificate's abi_shape.
+    declared_return_value: str | None = None
+    if evaluation.equivalence_certificate is not None:
+        cert_abi = evaluation.equivalence_certificate.get("abi_shape")
+        if isinstance(cert_abi, dict):
+            declared_return_value = cert_abi.get("declared_return")
+
     attempt_num = count_attempts(config.resolve(config.attempt_log), target.id) + 1
     record = AttemptRecord(
         target_id=target.id,
@@ -417,6 +424,7 @@ def cmd_cycle(
         equivalence_confidence=evaluation.equivalence_confidence,
         equivalence_policy=evaluation.equivalence_policy,
         add_to_kb=add_to_kb,
+        declared_return=declared_return_value,
     )
     log_path = append_attempt(config.resolve(config.attempt_log), record)
     print(f"attempt #{attempt_num} logged to {log_path}")
@@ -1303,6 +1311,16 @@ def _cmd_equivalence_check_unit(project: Project, config: CoopConfig, unit_args:
             "candidate side."
         ),
     )
+    parser.add_argument(
+        "--declared-return",
+        choices=["void","i32","u32","bool","ptr","f32","f64","i64","u64","aggregate","f128"],
+        help="Source-level return-type class for narrowing AbiShape",
+    )
+    parser.add_argument(
+        "--force-declared-return",
+        action="store_true",
+        help="Override the §2.8 caller-corroboration gate and force narrowing",
+    )
     parsed, rest = parser.parse_known_args(unit_args)
 
     unit = project.resolve_unit(parsed.unit)
@@ -1339,7 +1357,20 @@ def _cmd_equivalence_check_unit(project: Project, config: CoopConfig, unit_args:
         print(f"warning: objdiff report unavailable ({exc})", file=sys.stderr)
 
     if parsed.linked:
-        return _run_check_unit_linked(project, config, unit, symbol, parsed.candidate_symbol, rest)
+        return _run_check_unit_linked(
+            project, config, unit, symbol, parsed.candidate_symbol, rest,
+            declared_return=parsed.declared_return,
+            force_declared_return=parsed.force_declared_return,
+        )
+
+    # When --declared-return or --force-declared-return is set, bypass the
+    # upstream CLI (which doesn't support these flags) and call prove_unit_symbol directly.
+    if parsed.declared_return is not None or parsed.force_declared_return:
+        return _run_check_unit_direct(
+            project, unit, symbol, parsed.candidate_symbol, rest,
+            declared_return=parsed.declared_return,
+            force_declared_return=parsed.force_declared_return,
+        )
 
     forwarded = [
         "check-objects",
@@ -1356,6 +1387,65 @@ def _cmd_equivalence_check_unit(project: Project, config: CoopConfig, unit_args:
     return cmd_equivalence(project, config, forwarded)
 
 
+def _run_check_unit_direct(
+    project: Project,
+    unit: ObjdiffUnit,
+    symbol: str,
+    candidate_symbol: str | None,
+    rest: list[str],
+    *,
+    declared_return: str | None = None,
+    force_declared_return: bool = False,
+) -> int:
+    """Run prove_unit_symbol directly (bypasses ppc_equivalence CLI).
+
+    Used when --declared-return or --force-declared-return is set, since
+    the upstream CLI does not support these flags.
+    """
+    from tools.coop.lib.equivalence_check import prove_unit_symbol
+    from tools.ppc_equivalence.result import ProofStatus
+
+    contract = "auto"
+    rest_iter = iter(rest)
+    for arg in rest_iter:
+        if arg == "--contract":
+            contract = next(rest_iter, contract)
+        elif arg.startswith("--contract="):
+            contract = arg.split("=", 1)[1]
+        elif arg == "--observe":
+            # consume but unused here; prove_unit_symbol uses contract-based obs
+            next(rest_iter, None)
+        elif arg.startswith("--observe="):
+            pass
+
+    probe = prove_unit_symbol(
+        project, unit, symbol,
+        contract=contract,
+        candidate_symbol=candidate_symbol,
+        declared_return=declared_return,
+        force_declared_return=force_declared_return,
+    )
+    status = probe.status
+    label = {
+        ProofStatus.EQUIVALENT: "EQUIVALENT",
+        ProofStatus.NOT_EQUIVALENT: "NOT_EQUIVALENT",
+        ProofStatus.INCONCLUSIVE_UNSUPPORTED: "INCONCLUSIVE_UNSUPPORTED",
+        ProofStatus.INVALID_INPUT: "INVALID_INPUT",
+        ProofStatus.INTERNAL_ERROR: "INTERNAL_ERROR",
+    }.get(status, status.value)
+    print(f"check-unit: {label}")
+    if probe.detail:
+        print(f"  detail: {probe.detail}")
+
+    if status == ProofStatus.EQUIVALENT:
+        return 0
+    if status == ProofStatus.NOT_EQUIVALENT:
+        return 1
+    if status == ProofStatus.INVALID_INPUT:
+        return 3
+    return 2
+
+
 def _run_check_unit_linked(
     project: Project,
     config: CoopConfig,
@@ -1363,6 +1453,9 @@ def _run_check_unit_linked(
     symbol: str,
     candidate_symbol: Optional[str],
     rest: list[str],
+    *,
+    declared_return: Optional[str] = None,
+    force_declared_return: bool = False,
 ) -> int:
     """`check-unit --linked`: invoke prove_unit_symbol directly and print the result.
 
@@ -1387,6 +1480,8 @@ def _run_check_unit_linked(
         contract=contract,
         candidate_symbol=candidate_symbol,
         linked=True,
+        declared_return=declared_return,
+        force_declared_return=force_declared_return,
     )
     status = probe.status
     label = {

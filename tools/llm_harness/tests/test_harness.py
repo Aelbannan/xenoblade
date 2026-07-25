@@ -1478,6 +1478,95 @@ class BatchTests(unittest.TestCase):
             self.assertEqual(state["context_mode"], "inline")
 
 
+class ModelBudgetTests(unittest.TestCase):
+    @staticmethod
+    def _write_adapter(root: Path, suggest: int = 768) -> None:
+        (root / "adapter.py").write_text(
+            "class A:\n"
+            " def __init__(self, root): self.root=root\n"
+            " def finalize(self): pass\n"
+            f" def suggest_max_output_tokens(self, target_id): return {suggest}\n"
+            "def create_adapter(root, settings): return A(root)\n",
+            encoding="utf-8",
+        )
+
+    def _harness(self, root: Path, model_row: dict, prompt_cfg: dict | None = None) -> Harness:
+        self._write_adapter(root)
+        config: dict = {
+            "project_adapter": "adapter.py",
+            "models": [model_row],
+        }
+        if prompt_cfg is not None:
+            config["prompt"] = prompt_cfg
+        (root / "config.json").write_text(json.dumps(config), encoding="utf-8")
+        return Harness(root / "config.json")
+
+    def test_unlimited_sentinels_normalized(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            harness = self._harness(
+                Path(tmp),
+                {
+                    "id": "kimi",
+                    "provider": "openrouter",
+                    "model": "moonshotai/kimi-k3",
+                    "max_tokens": "unlimited",
+                    "thinking_budget": "unlimited",
+                },
+            )
+            model = harness.models[0]
+            self.assertTrue(model.unlimited_output)
+            self.assertTrue(model.unlimited_thinking)
+            self.assertIsNone(model.max_tokens)
+            self.assertIsNone(model.thinking_budget)
+            self.assertTrue(model.reasoning_enabled())
+
+    def test_unlimited_output_skips_budget_clamp(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            harness = self._harness(
+                Path(tmp),
+                {
+                    "id": "kimi",
+                    "provider": "openrouter",
+                    "model": "m",
+                    "max_tokens": "unlimited",
+                },
+            )
+            model = harness.models[0]
+            effective = harness._model_with_output_budget(model, "t", "new")
+            self.assertIsNone(effective.max_tokens)
+            self.assertTrue(effective.unlimited_output)
+
+    def test_reasoning_model_gets_output_floor(self) -> None:
+        # Adapter suggests 768 for a tiny stub; a reasoning model must not be
+        # clamped that low — thinking shares the completion budget.
+        with tempfile.TemporaryDirectory() as tmp:
+            harness = self._harness(
+                Path(tmp),
+                {
+                    "id": "kimi",
+                    "provider": "openrouter",
+                    "model": "m",
+                    "thinking_budget": "unlimited",
+                },
+                {"max_output_tokens": 4096},
+            )
+            model = harness.models[0]
+            effective = harness._model_with_output_budget(model, "t", "new")
+            self.assertEqual(effective.max_tokens, 4096)
+
+    def test_non_reasoning_model_keeps_suggested_cap(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            harness = self._harness(
+                Path(tmp),
+                {"id": "plain", "provider": "openrouter", "model": "m"},
+                {"max_output_tokens": 4096},
+            )
+            model = harness.models[0]
+            self.assertFalse(model.reasoning_enabled())
+            effective = harness._model_with_output_budget(model, "t", "new")
+            self.assertEqual(effective.max_tokens, 768)
+
+
 class WorkflowModelTests(unittest.TestCase):
     @staticmethod
     def _write_adapter(root: Path) -> None:

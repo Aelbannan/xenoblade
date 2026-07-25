@@ -11,9 +11,13 @@ void __convert_to_newlines(){
 
 void __prep_buffer(FILE *file)
 {
+    u32 size = file->buffer_size;
+    u32 pos = file->position;
+    u32 align = file->buffer_alignment;
+
     file->buffer_ptr = file->buffer;
-    file->buffer_len = file->buffer_size - (file->position & file->buffer_alignment);
-    file->buffer_pos = file->position;
+    file->buffer_len = size - (pos & align);
+    file->buffer_pos = pos;
 }
 
 //unused

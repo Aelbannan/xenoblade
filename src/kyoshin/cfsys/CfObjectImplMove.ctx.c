@@ -1339,19 +1339,19 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-800cb37c
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CA948() {}
 // LLM-HARNESS-END: us-800cb37c
 
 // LLM-HARNESS-BEGIN: us-800cb398
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CA964() {}
 // LLM-HARNESS-END: us-800cb398
 
 // LLM-HARNESS-BEGIN: us-800cb478
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CAA44() {}
 // LLM-HARNESS-END: us-800cb478
 
 // LLM-HARNESS-BEGIN: us-800cb534
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CAB00() {}
 // LLM-HARNESS-END: us-800cb534
 
 // LLM-HARNESS-BEGIN: us-800cb560
@@ -1359,27 +1359,27 @@ extern "C" void func_800CAB2C(void) {}
 // LLM-HARNESS-END: us-800cb560
 
 // LLM-HARNESS-BEGIN: us-800cb564
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CAB30() {}
 // LLM-HARNESS-END: us-800cb564
 
 // LLM-HARNESS-BEGIN: us-800cbc50
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CB21C() {}
 // LLM-HARNESS-END: us-800cbc50
 
 // LLM-HARNESS-BEGIN: us-800cbe88
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CB454() {}
 // LLM-HARNESS-END: us-800cbe88
 
 // LLM-HARNESS-BEGIN: us-800cc380
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CB94C() {}
 // LLM-HARNESS-END: us-800cc380
 
 // LLM-HARNESS-BEGIN: us-800cc3e0
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CB9AC() {}
 // LLM-HARNESS-END: us-800cc3e0
 
 // LLM-HARNESS-BEGIN: us-800cc60c
-extern "C" void func_800CAB2C(void) {}
+extern "C" void func_800CBBD8() {}
 // LLM-HARNESS-END: us-800cc60c
 
 // LLM-HARNESS-BEGIN: us-800cca50
@@ -1411,7 +1411,14 @@ extern "C" void func_800CD460() {}
 // LLM-HARNESS-END: us-800cded0
 
 // LLM-HARNESS-BEGIN: us-800ce030
-extern "C" void func_800CD5C0() {}
+extern "C" void func_800BE824(void*, unsigned int);
+
+extern "C" void func_800CD5C0(char* self, unsigned int a, unsigned int b) {
+    void* inner = *(void**)(self + 0x14);
+    if (a == *(unsigned int*)((char*)inner + 0xc4)) {
+        func_800BE824(inner, b);
+    }
+}
 // LLM-HARNESS-END: us-800ce030
 
 // LLM-HARNESS-BEGIN: us-800ce04c
@@ -1471,7 +1478,12 @@ extern "C" void func_800CF810() {}
 // LLM-HARNESS-END: us-800d02e0
 
 // LLM-HARNESS-BEGIN: us-800d0a88
-extern "C" void func_800CFFA0() {}
+extern "C" void func_800CFFA0(unsigned int* self, unsigned int* param) {
+    if (param == (unsigned int*)self[7]) {
+        param[44] = 0;
+        self[7] = 0;
+    }
+}
 // LLM-HARNESS-END: us-800d0a88
 
 extern "C" void __dt__Q22cf16CfObjectImplMoveFv(void* self);

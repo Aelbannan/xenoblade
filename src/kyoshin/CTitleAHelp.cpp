@@ -90,7 +90,7 @@ u8 CTitleAHelp::func_801C411C() {
 	return unk28;
 }
 
-u8 CTitleAHelp::func_801C4124() { return unk36; }
+u8 CTitleAHelp::isIdle() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
     if (unk2c != 0) {

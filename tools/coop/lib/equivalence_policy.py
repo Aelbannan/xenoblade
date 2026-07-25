@@ -374,9 +374,8 @@ def _compute_confidence_tier_legacy(
         and result.memory_scope is not None
         and result.memory_scope.masking_semantics == MASKING_SEMANTICS
     ):
-        return "A"
-
-    if (
+        tier = "A"
+    elif (
         has_fp
         or has_assumed_fp
         or has_domain_exceptions
@@ -386,9 +385,21 @@ def _compute_confidence_tier_legacy(
         or not has_complete_provenance
         or ledger_incomplete
     ):
-        return "C"
+        tier = "C"
+    else:
+        tier = "B"
 
-    return "B"
+    # §2.9 Cap: declared-return ABI-shape narrowing limits to Tier C.
+    # See docs/ppc_equiv_work/29-declared-return-abi-shapes.md
+    if (
+        isinstance(result.contract_resolution, dict)
+        and isinstance(result.contract_resolution.get("abi_shape"), dict)
+        and result.contract_resolution["abi_shape"].get("declared_return")
+    ):
+        if tier in ("A", "B"):
+            tier = "C"
+
+    return tier
 
 
 def resolve_capability_manifest(
@@ -831,6 +842,18 @@ def proof_result_from_certificate(
     raw_oracle = certificate.get("fp_oracle_version")
     if raw_oracle:
         result.fp_oracle_version = str(raw_oracle)
+
+    # Restore contract_resolution (including abi_shape) from certificate.
+    contract_resolution: dict[str, Any] = {}
+    raw_abi_shape = certificate.get("abi_shape")
+    if isinstance(raw_abi_shape, dict):
+        contract_resolution["abi_shape"] = dict(raw_abi_shape)
+    raw_contract = certificate.get("contract", "")
+    if raw_contract:
+        contract_resolution["contract"] = str(raw_contract)
+    if contract_resolution:
+        result.contract_resolution = contract_resolution
+
     apply_proof_obligations(result, parsed.obligations)
     if assumptions is not None:
         result.assumptions = list(assumptions)

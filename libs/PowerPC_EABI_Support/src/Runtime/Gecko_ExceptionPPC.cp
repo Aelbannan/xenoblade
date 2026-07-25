@@ -4,6 +4,12 @@
 #include "PowerPC_EABI_Support/Runtime/NMWException.h"
 #include "PowerPC_EABI_Support/Runtime/__ppc_eabi_linker.h"
 
+// Defined in NMWException.cp with C++ linkage. Declared locally (not in
+// NMWException.h) so the definition there compiles without a visible
+// prototype, matching retail codegen. The (char) casts at call sites keep
+// the caller-side sign extension the original C header declaration produced.
+int __throw_catch_compare(const char* throwtype, const char* catchtype, int* offset_result);
+
 
 #define RETURN_ADDRESS 4
 
@@ -99,11 +105,16 @@ int __register_fragment(struct __eti_init_info* info, char* TOC){
 
 void __unregister_fragment(unsigned int fragmentID)
 {
-    if (fragmentID < 32) {
-        fragmentinfo[fragmentID].exception_info = 0;
-        fragmentinfo[0].TOC = 0;
-        fragmentinfo[0].active = 0;
+    ProcessInfo* f;
+
+    if (fragmentID > 31) {
+        return;
     }
+
+    f = &fragmentinfo[fragmentID];
+    f->exception_info = 0;
+    f->TOC = 0;
+    f->active = 0;
 }
 
 int ExPPC_FindExceptionFragment(char* returnaddr, FragmentInfo* frag)
@@ -527,10 +538,10 @@ static void ExPPC_UnwindStack(ThrowContext* context, MWExceptionInfo* info, void
 }
 
 static int ExPPC_IsInSpecification(char* extype, ex_specification* spec){
-    long i, offset;
+    int i, offset;
 
     for(i = 0; i < spec->specs; i++){
-        if(__throw_catch_compare(extype, spec->spec[i], &offset)) return 1;
+        if((char)__throw_catch_compare(extype, spec->spec[i], &offset)) return 1;
     }
 
     return 0;
@@ -671,7 +682,7 @@ static void ExPPC_ThrowHandler(ThrowContext* context){
     MWExceptionInfo info;
     exaction_type action;
     CatchInfo* catchinfo;
-    long offset;
+    int offset;
     
     ExPPC_FindExceptionRecord(context->returnaddr, &info);
 
@@ -730,12 +741,12 @@ static void ExPPC_ThrowHandler(ThrowContext* context){
     for(action = ExPPC_CurrentAction(&iter);; action = ExPPC_NextAction(&iter)){
         switch(action){
             case EXACTION_CATCHBLOCK_32:
-                if(__throw_catch_compare(context->throwtype, ((ex_catchblock_32*)iter.info.action_pointer)->catch_type, &offset)){
+                if((char)__throw_catch_compare(context->throwtype, ((ex_catchblock_32*)iter.info.action_pointer)->catch_type, &offset)){
                     break;
                 }
                 continue;
             case EXACTION_CATCHBLOCK:
-                if(__throw_catch_compare(context->throwtype, ((ex_catchblock*)iter.info.action_pointer)->catch_type, &offset)){
+                if((char)__throw_catch_compare(context->throwtype, ((ex_catchblock*)iter.info.action_pointer)->catch_type, &offset)){
                     break;
                 }
                 continue;

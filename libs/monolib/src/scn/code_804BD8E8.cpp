@@ -130,7 +130,10 @@ extern "C" void func_804BEEAC() {}
 // LLM-HARNESS-END: us-804c3008
 
 // LLM-HARNESS-BEGIN: us-804c3048
-extern "C" void func_804BEEEC() {}
+extern "C" void func_804BEEEC() {
+    extern void *lbl_eu_80663AD8;
+    ((void (*)())lbl_eu_80663AD8)();
+}
 // LLM-HARNESS-END: us-804c3048
 
 // LLM-HARNESS-BEGIN: us-804c3054

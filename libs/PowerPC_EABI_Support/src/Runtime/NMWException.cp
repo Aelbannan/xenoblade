@@ -27,52 +27,50 @@ namespace std{
 int __throw_catch_compare(const char* throwtype, const char* catchtype, int* offset_result) {
     const char* p1;
     const char* p2;
+    int offset;
 
+    p2 = catchtype;
     *offset_result = 0;
 
     if (catchtype == 0) {
         return 1;
     }
 
-    p2 = catchtype;
+    p1 = throwtype;
     if (*p2 == 'P') {
         p2++;
         if (*p2 == 'C') p2++;
         if (*p2 == 'V') p2++;
         if (*p2 == 'v') {
-            if (*throwtype == 'P' || *throwtype == '*') {
+            if (*p1 == 'P' || *p1 == '*') {
                 return 1;
             }
         }
         p2 = catchtype; /* reset */
     }
 
-    p1 = throwtype;
     if (*p1 == '*' || *p1 == '!') {
+        if (*p1++ != *p2++) {
+            return 0;
+        }
         while (1) {
-            if (*p1 == *p2) {
-                p1++;
-                p2++;
-                if (p1[-1] == '!') {
-                    int offset = 0;
+            if (*p1 == *p2++) {
+                if (*p1++ == '!') {
+                    offset = 0;
                     while (*p1 != '!') {
-                        offset = offset * 10 + (*p1 - '0');
-                        p1++;
+                        offset = offset * 10 + *p1++ - '0';
                     }
                     *offset_result = offset;
                     return 1;
                 }
             } else {
                 /* skip to next '!' in throwtype */
-                while (*p1 != '!') p1++;
-                p1++; /* skip '!' */
-                while (*p1 != '!') p1++;
-                p1++; /* skip second '!' */
+                while (*p1++ != '!') {}
+                while (*p1++ != '!') {}
                 if (*p1 == 0) return 0;
                 p2 = catchtype + 1;
             }
         }
-        return 0;
     }
 
     /* skip leading qualifiers */

@@ -1284,6 +1284,19 @@ def _build_equivalence_certificate(
         certificate["equivalence_strength"] = _equivalence_strength_for_proof(proof)
     else:
         certificate["equivalence_strength"] = "uncertified-summary"
+
+    # §2.5.1: embed abi_shape when the proof used one so certificates carry
+    # the declaration, making invalidation (§2.5.4) implementable.
+    if proof is not None:
+        contract_res = getattr(proof, "contract_resolution", None) or {}
+        raw_abi_shape = contract_res.get("abi_shape")
+        if isinstance(raw_abi_shape, dict) and raw_abi_shape.get("declared_return"):
+            certificate["abi_shape"] = dict(raw_abi_shape)
+        elif isinstance(raw_abi_shape, dict) and "declared_return" in raw_abi_shape:
+            # Also embed when declared_return is explicitly None/absent so
+            # the certificate carries an explicit record.
+            certificate["abi_shape"] = dict(raw_abi_shape)
+
     # Bind live trust-boundary trees last so stale proof/cache provenance cannot win.
     certificate["engine_hash"] = _current_engine_hash()
     certificate["certifier_hash"] = _current_certifier_hash()
@@ -1339,6 +1352,8 @@ def _prove_bytes(
     proof_features: list[str] | None = None,
     address_space: dict[str, Any] | None = None,
     indirect_targets: dict[str, Any] | None = None,
+    declared_return: str | None = None,
+    force_declared_return: bool = False,
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
 
@@ -1551,6 +1566,7 @@ def _prove_bytes(
     # Opt-in AbiShape inference: only attach when narrowed away from the
     # fail-closed conservative default (keeps cache / resolution clean).
     abi_shape_payload: dict[str, Any] | None = None
+    inferred_shape: Any | None = None
     if project is not None:
         from tools.coop.lib.config import abi_shape_inference_enabled
         from tools.ppc_equivalence.abi_infer import infer_abi_shape
@@ -1563,6 +1579,106 @@ def _prove_bytes(
             if inferred.source != "default-conservative":
                 resolved_contract = with_abi_shape(resolved_contract, inferred)
                 abi_shape_payload = inferred.to_dict()
+                inferred_shape = inferred
+
+    # §2.7.1: Resolve declared_return (explicit kwarg > registry lookup via target_id).
+    # Registry lookup is NOT gated on abi_shape_inference_enabled.
+    declared_return_value: str | None = declared_return
+    if declared_return_value is None and certificate_target_id is not None and project is not None:
+        try:
+            from tools.coop.lib.targets import get_target, load_targets
+            from tools.coop.lib.config import load_config
+
+            config = load_config(None, project.root)
+            targets = load_targets(config)
+            registry_target = get_target(targets, certificate_target_id)
+            registry_declared = registry_target.extra.get("declared_return")
+            if registry_declared is not None:
+                declared_return_value = str(registry_declared)
+            # §2.7.2: symbol mismatch → INVALID_INPUT (fail closed)
+            if (
+                registry_target.symbol is not None
+                and registry_target.symbol != symbol
+            ):
+                return EquivalenceProbe(
+                    ProofStatus.INVALID_INPUT,
+                    f"declared_return from registry target {certificate_target_id!r} "
+                    f"symbol {registry_target.symbol!r} differs from proved symbol {symbol!r}",
+                )
+        except KeyError:
+            # Target not in registry → no declaration.
+            pass
+        except Exception:
+            # Any other error → no declaration (fail closed, no narrowing).
+            pass
+
+    # §2.7.3: Attach declared-return ABI shape when a declaration was resolved.
+    declared_shape: Any | None = None
+    gate_refused = False
+    gate_forced = False
+    if declared_return_value is not None:
+        from tools.ppc_equivalence.abi_infer import (
+            DECLARED_RETURN_SHAPES,
+            abi_shape_from_declared_return,
+            combine_abi_shapes,
+        )
+        from tools.ppc_equivalence.contract import with_abi_shape as _with_abi_shape
+
+        declared_shape = abi_shape_from_declared_return(declared_return_value)
+        if declared_shape is not None:
+            # §2.8: caller-corroboration gate — refuse narrowing unless
+            # the target has no indirect calls, no unresolved callees, and
+            # at least one direct in-registry caller; unless force_declared_return.
+            gate_refused = False
+            if not force_declared_return and project is not None and certificate_target_id is not None:
+                try:
+                    from tools.coop.lib.targets import get_target, load_targets
+                    from tools.coop.lib.config import load_config
+
+                    config = load_config(None, project.root)
+                    all_targets = load_targets(config)
+                    reg_target = get_target(all_targets, certificate_target_id)
+                    has_indirect = bool(reg_target.extra.get("has_indirect_calls", False))
+                    unresolved = reg_target.extra.get("unresolved_called_functions", [])
+                    if has_indirect or unresolved:
+                        gate_refused = True
+                    else:
+                        # Scan registry for callers that reference this target's symbol.
+                        called_by = reg_target.extra.get("called_functions", [])
+                        # Find any target that calls this target.
+                        has_caller = False
+                        target_symbol = reg_target.symbol
+                        if target_symbol is not None:
+                            for t in all_targets:
+                                callees = t.extra.get("called_functions", [])
+                                if isinstance(callees, list) and certificate_target_id in callees:
+                                    has_caller = True
+                                    break
+                        if not has_caller:
+                            gate_refused = True
+                except (KeyError, Exception):
+                    gate_refused = True
+
+            if gate_refused and not force_declared_return:
+                # Narrowing refused — treat as no declaration.
+                declared_shape = None
+            elif gate_refused and force_declared_return:
+                gate_forced = True
+
+        if declared_shape is not None:
+            # Combine declared shape with inference (or conservative if none).
+            inf = inferred_shape if inferred_shape is not None else None
+            if inf is None:
+                from tools.ppc_equivalence.abi_shape import AbiShape
+                inf = AbiShape.conservative()
+            combined = combine_abi_shapes(inf, declared_shape)
+            resolved_contract = _with_abi_shape(resolved_contract, combined)
+            # Build payload: start from combined shape, add declaration info.
+            abi_shape_payload = combined.to_dict()
+            # Ensure declared_return is in the payload even if to_dict omitted it.
+            abi_shape_payload["declared_return"] = declared_return_value
+            if gate_forced:
+                abi_shape_payload["declared_return_forced"] = True
 
     observables = tuple(item.name for item in resolved_contract.observables)
     orig_hex = orig_code.hex()
@@ -1949,6 +2065,8 @@ def prove_unit_symbol(
     linked: bool = False,
     target_id: str | None = None,
     memory_environment: dict[str, Any] | None = None,
+    declared_return: str | None = None,
+    force_declared_return: bool = False,
 ) -> EquivalenceProbe:
     """SMT-check one named function from the unit's retail/decomp objects.
 
@@ -1987,6 +2105,8 @@ def prove_unit_symbol(
                 certificate_target_id=target_id,
                 certified_context=certified_context,
                 memory_environment=memory_environment,
+                declared_return=declared_return,
+                force_declared_return=force_declared_return,
             )
         except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
             if not linked or not (left.relocations or right.relocations):
@@ -1998,6 +2118,8 @@ def prove_unit_symbol(
                 target_id=target_id,
                 certified_context=certified_context,
                 memory_environment=memory_environment,
+                declared_return=declared_return,
+                force_declared_return=force_declared_return,
             )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, str(exc))
@@ -2016,6 +2138,8 @@ def certify_unit_symbol(
     max_instructions: int = _DEFAULT_MAX_INSTRUCTIONS,
     max_paths: int = _DEFAULT_MAX_PATHS,
     max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
+    declared_return: str | None = None,
+    force_declared_return: bool = False,
 ) -> EquivalenceProbe:
     """Issue a current semantic effect certificate for an already-equal pair.
 
@@ -2046,6 +2170,8 @@ def certify_unit_symbol(
                         max_instructions=max_instructions,
                         max_paths=max_paths,
                         max_loop_iterations=max_loop_iterations,
+                        declared_return=declared_return,
+                        force_declared_return=force_declared_return,
                     )
                     if (
                         proved.status == ProofStatus.EQUIVALENT
@@ -2184,6 +2310,8 @@ def _run_linked_fallback(
     target_id: str | None = None,
     certified_context: CertifiedCalleeContext | None = None,
     memory_environment: dict[str, Any] | None = None,
+    declared_return: str | None = None,
+    force_declared_return: bool = False,
 ) -> EquivalenceProbe:
     """Retry the proof using linked bytes from ``main.dol`` + ``main.elf``.
 
@@ -2247,6 +2375,8 @@ def _run_linked_fallback(
             certificate_target_id=target_id,
             certified_context=certified_context,
             memory_environment=memory_environment,
+            declared_return=declared_return,
+            force_declared_return=force_declared_return,
         )
     except (ElfSymbolError, DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError) as exc:
         return EquivalenceProbe(ProofStatus.INCONCLUSIVE_UNSUPPORTED, f"{note}; {exc}")

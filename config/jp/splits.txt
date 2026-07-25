@@ -6504,7 +6504,7 @@ monolib/src/lod/CTaskLOD.cpp:
 	.sbss       start:0x80668008 end:0x80668010
 	.sdata2     start:0x8066CD78 end:0x8066CD80
 
-monolib/src/lod/UnkClass_804630C0.cpp:
+monolib/src/lod/CLODCacheManagerS.cpp:
 	extab       start:0x8001DA44 end:0x8001DA64
 	extabindex  start:0x80035630 end:0x80035660
 	.text       start:0x804630C0 end:0x8046368C

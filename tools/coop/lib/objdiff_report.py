@@ -29,6 +29,10 @@ class FunctionMatch:
     demangled_name: Optional[str]
     match_percent: float
     size: int
+    # False when objdiff omitted fuzzy_match_percent: the symbol could not be
+    # paired between retail and candidate objects (name/linkage mismatch), so
+    # match_percent is a meaningless 0.0 default rather than a real diff score.
+    mapped: bool = True
 
 
 @dataclass
@@ -367,6 +371,7 @@ def _parse_unit_report(report_path: Path, unit_name: str) -> UnitReport:
                     demangled_name=meta.get("demangled_name"),
                     match_percent=float(fn.get("fuzzy_match_percent", 0.0)),
                     size=int(fn.get("size", 0)),
+                    mapped="fuzzy_match_percent" in fn,
                 )
             )
         return UnitReport(

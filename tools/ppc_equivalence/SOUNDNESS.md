@@ -845,6 +845,37 @@ mmio-loop-emission allowlist empty; staged canaries live at
 - Cache entries include `architecture` and `result_format`; stale entries are
   rejected at read time.
 
+## Declared-return trust boundary
+
+`declared_return` is agent-supplied trusted input — the engine does not
+validate that the C/C++ source return type matches the declaration.
+
+**Soundness argument** (from §3 of the design doc):
+
+1. **Caller corroboration:** a wrong declaration (e.g. `void` on a true i64
+   return) would be caught when the retail caller, which reads `r4` after the
+   call, fails its own proof against a decomp caller compiled against the void
+   declaration. The caller-corroboration gate (§2.8) guarantees at least one
+   direct in-registry caller exists.
+2. **Load-bearing invariant:** certified callee summaries derive their `writes`
+   from body analysis, not from narrowed observables — a parent proof still
+   sees `r4` clobbered by a narrowed callee and fails if it depends on it.
+3. **Only `r4`/`f1`/`f1.ps1` droppable:** memory, nonvolatiles, `r3`, CR
+   fields remain compared. Real semantic differences still fail.
+4. **Fail-closed conjunction:** a declaration may only narrow; it never
+   re-adds an observable that body inference removed. Unknown/aggregate types
+   get no narrowing.
+5. **Certificate binding + invalidation:** certificates carry
+   `abi_shape.declared_return`; `proof_request_identity` binds it. Declaration
+   changes invalidate stored certificates via consistency check.
+6. **Tier C capping:** all declaration-dependent proofs are Tier C, never
+   eligible for promotion to A/B.
+
+**Accepted residual risk:** a wrong declaration whose only consumers are
+matched-never (unmatched forever) would not be caught by caller corroboration.
+Mitigated by Tier-C capping and bottom-up recertification flags on declaration
+change.
+
 ## Traceability
 
 | Soundness claim | Implementation | Tests | Result field |
